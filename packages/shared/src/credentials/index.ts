@@ -26,3 +26,19 @@ export { CredentialManager, getCredentialManager } from './manager.ts';
 export type { CredentialId, CredentialType, StoredCredential } from './types.ts';
 export { credentialIdToAccount, accountToCredentialId, SOURCE_CREDENTIAL_TYPES } from './types.ts';
 export type { CredentialBackend } from './backends/types.ts';
+
+export {
+  CREDENTIAL_ENVELOPE_CODEC,
+  CREDENTIAL_ENVELOPE_FINGERPRINT_ALGORITHM,
+  CREDENTIAL_ENVELOPE_FORMAT,
+  CREDENTIAL_ENVELOPE_VERSION,
+  credentialPayloadFingerprint,
+  decodeCredentialEnvelope,
+  decodeCredentialEnvelopeOrLegacy,
+  encodeCredentialEnvelope,
+} from './envelope.ts';
+export type {
+  CredentialEnvelopeContext,
+  CredentialEnvelopeInput,
+  CredentialEnvelopeV1,
+} from './envelope.ts';
