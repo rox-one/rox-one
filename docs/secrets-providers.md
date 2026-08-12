@@ -88,8 +88,12 @@ keys (`CRAFT_WORKSPACE_PATH`, mini-model) applied afterwards still win.
    only the env object handed to `spawn()`. Covered by
    `secrets/__tests__/non-serialization.test.ts`.
 4. **Value-free diagnostics.** Per-entry outcomes carry
-   name/envVar/status/errorCode only; the chain's own debug logging passes
-   through the redaction registry.
+   name/envVar/status/errorCode only; error messages from providers are
+   scrubbed through the redaction registry before landing in diagnostics, and
+   the chain's own debug logging passes through it too. **Provider contract:**
+   a provider must never embed resolved values in its error messages — the
+   registry can only redact values it has already seen (a value echoed by a
+   failing provider before it was ever resolved cannot be redacted).
 5. **Redaction utility.** `redactSecrets(text, values)` masks known values
    (min length 4, literal substring, longest-first); a process-wide registry
    (`registerSecretValues` / `redactRegisteredSecrets`) is fed on every

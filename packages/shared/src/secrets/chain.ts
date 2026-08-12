@@ -70,6 +70,13 @@ export async function resolveSecretsForSpawn(
   const env: Record<string, string> = {};
   const values: string[] = [];
   const diagnostics: SecretResolutionDiagnostic[] = [];
+  // Values register for redaction as they resolve, so an error message from a
+  // LATER entry that echoes an earlier entry's value is scrubbed before it
+  // lands in diagnostics (see the error branch below).
+  const registerValue = (value: string): void => {
+    values.push(value);
+    registerSecretValues([value]);
+  };
 
   for (const entry of entries) {
     // Resolution-time denylist: config.json can be edited directly, bypassing
@@ -111,7 +118,7 @@ export async function resolveSecretsForSpawn(
         const value = await provider.resolve({ name: entry.name, ref: entry.ref });
         if (value !== null) {
           env[entry.envVar] = value;
-          values.push(value);
+          registerValue(value);
           diagnostics.push({ name: entry.name, envVar: entry.envVar, status: 'resolved', provider: provider.id });
           resolved = true;
           break;
@@ -128,14 +135,17 @@ export async function resolveSecretsForSpawn(
     if (!resolved) {
       if (lastError) {
         // An available provider failed operationally — surface that, not a
-        // misleading "not found".
+        // misleading "not found". Redact the message: a failing provider may
+        // echo secret material in its error text, and diagnostics are
+        // contractually value-free (providers must never embed values in
+        // errors — see docs/secrets-providers.md).
         diagnostics.push({
           name: entry.name,
           envVar: entry.envVar,
           status: 'error',
           provider: lastError.provider,
           errorCode: lastError.code,
-          message: lastError.message,
+          message: redactRegisteredSecrets(lastError.message),
         });
       } else {
         diagnostics.push({ name: entry.name, envVar: entry.envVar, status: 'not-found', errorCode: 'SECRET_NOT_FOUND' });
@@ -143,8 +153,8 @@ export async function resolveSecretsForSpawn(
     }
   }
 
-  // Register resolved values for redaction, then log a redacted summary.
-  registerSecretValues(values);
+  // Values were registered for redaction as they resolved (registerValue);
+  // log a redacted summary.
   for (const d of diagnostics) {
     debug(
       `[secrets] ${d.name} → ${d.envVar}: ${redactRegisteredSecrets(

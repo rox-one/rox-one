@@ -20,13 +20,24 @@ export interface RefreshRuntimeSecretEnvOptions extends ResolveSecretsOptions {
   refs?: SecretRefEntry[];
 }
 
+/**
+ * Monotonic refresh generation — a slower stale refresh must not overwrite
+ * the fragment written by a newer completed refresh (last-finisher-wins race).
+ */
+let refreshGeneration = 0;
+
 export async function refreshRuntimeSecretEnv(
   options: RefreshRuntimeSecretEnvOptions = {},
 ): Promise<ResolveSecretsResult> {
+  const generation = ++refreshGeneration;
   try {
     const refs = options.refs ?? getRuntimeSecretRefs();
     const result = await resolveSecretsForSpawn(refs, {}, options);
-    setRuntimeSecretEnvFragment(result.env);
+    if (generation === refreshGeneration) {
+      setRuntimeSecretEnvFragment(result.env);
+    } else {
+      debug('[secrets] stale refresh discarded (a newer refresh completed first)');
+    }
     return result;
   } catch (error) {
     // Fail-safe: keep the last-known fragment, never break a spawn.

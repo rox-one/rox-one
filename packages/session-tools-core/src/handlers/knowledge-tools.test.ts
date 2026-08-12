@@ -215,6 +215,27 @@ describe('knowledge_search', () => {
     expect(input.limit).toBe(KNOWLEDGE_SEARCH_MAX_LIMIT);
   });
 
+  it('re-bounds an oversized provider page (response-side cap)', async () => {
+    // A misbehaving provider can return far more items than requested — the
+    // request clamp says nothing about the page size.
+    registerRuntimeDouble({
+      async search() {
+        return {
+          items: Array.from({ length: 2000 }, (_, i) => ({
+            ref: { scheme: 'siyuan' as const, kind: 'block' as const, id: `blk-${i}` },
+            title: `Hit ${i}`,
+          })),
+        };
+      },
+    });
+    const res = await handleKnowledgeSearch(CTX, { query: 'kernel', limit: 5 });
+    const text = res.content.map((c) => c.text).join('\n');
+    expect(text).toContain(`${KNOWLEDGE_SEARCH_MAX_LIMIT} result(s)`);
+    expect(text).toContain('extra item(s) beyond the cap');
+    expect(text).not.toContain('Hit 50');
+    expect(text).toContain('Hit 49');
+  });
+
   it('truncates overlong snippets instead of passing them through verbatim', async () => {
     const longSnippet = 'x'.repeat(5000);
     registerRuntimeDouble({

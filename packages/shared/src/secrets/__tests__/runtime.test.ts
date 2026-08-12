@@ -158,4 +158,26 @@ describe('refreshRuntimeSecretEnv', () => {
     expect(out.spawn).toEqual({ PLAIN: 'plain', SHARED: 'secret-value' })
     expect(out.persisted).toEqual({ PLAIN: 'plain', SHARED: 'plain-value' })
   })
+
+  it('a slow stale refresh must not overwrite a newer completed refresh', () => {
+    const configDir = setupConfigDir()
+    const r = runScenario(
+      configDir,
+      `const slow = {
+         id: 'environment',
+         async isAvailable() { return true },
+         async resolve(ref) {
+           await new Promise((res) => setTimeout(res, 150));
+           return 'OLD-VALUE';
+         },
+       };
+       const fast = envProvider({ K: 'NEW-VALUE' });
+       const stale = refreshRuntimeSecretEnv({ refs: [{ name: 'k', envVar: 'K', ref: 'K' }], providers: [slow] });
+       await refreshRuntimeSecretEnv({ refs: [{ name: 'k', envVar: 'K', ref: 'K' }], providers: [fast] });
+       await stale;
+       console.log(JSON.stringify(getRuntimeSecretEnvFragment()))`,
+    )
+    expect(r.exitCode).toBe(0)
+    expect(JSON.parse(r.stdout)).toEqual({ K: 'NEW-VALUE' })
+  })
 })

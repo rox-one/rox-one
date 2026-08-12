@@ -237,4 +237,29 @@ describe('resolveSecretsForSpawn', () => {
     expect(result.env).toEqual({ MY_SECRET: 'resolved-value-ok' })
     expect(result.diagnostics.map((d) => d.status)).toEqual(['error', 'resolved'])
   })
+
+  it('redacts registered secret values echoed inside provider error messages', async () => {
+    // A failing provider may embed secret material in its error text —
+    // diagnostics are contractually value-free, so the chain redacts.
+    const ok = stubProvider('environment', { K: 'supersecretvalue1' })
+    const broken: SecretProvider = {
+      id: 'local-encrypted',
+      async isAvailable() { return true },
+      async resolve() { throw new SecretResolveError('INFISICAL_UNAVAILABLE', 'local-encrypted', 'decryption failed near "supersecretvalue1" — bad padding') },
+    }
+
+    const result = await resolveSecretsForSpawn(
+      [
+        { name: 'a', envVar: 'A', ref: 'K' },
+        { name: 'b', envVar: 'B', ref: 'K2', provider: 'local-encrypted' },
+      ],
+      {},
+      { providers: [ok, broken] },
+    )
+
+    expect(result.env).toEqual({ A: 'supersecretvalue1' })
+    const diag = result.diagnostics.find((d) => d.name === 'b')
+    expect(diag?.status).toBe('error')
+    expect(JSON.stringify(result.diagnostics)).not.toContain('supersecretvalue1')
+  })
 })

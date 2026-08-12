@@ -72,7 +72,12 @@ export async function handleKnowledgeSearch(
         ? { connectionId: args.connectionId }
         : {}),
     });
-    const items = page.items ?? [];
+    // Re-bound the RESPONSE, not just the request: a misbehaving provider can
+    // return far more items than requested (the request clamp says nothing
+    // about the page size) — an unbounded page would flood the tool result.
+    const rawItems = page.items ?? [];
+    const items = rawItems.slice(0, KNOWLEDGE_SEARCH_MAX_LIMIT);
+    const overReturned = rawItems.length - items.length;
     const shownConnection =
       (typeof args.connectionId === 'string' && args.connectionId) ||
       runtime.defaultConnectionId?.() ||
@@ -84,6 +89,7 @@ export async function handleKnowledgeSearch(
         ? 'No results.'
         : `${items.length} result(s)` +
           (typeof page.totalEstimate === 'number' ? `, ~${page.totalEstimate} total` : '') +
+          (overReturned > 0 ? ` (provider returned ${overReturned} extra item(s) beyond the cap — dropped)` : '') +
           (page.nextCursor
             ? `. More pages available — pass cursor "${page.nextCursor}" to continue.`
             : ''),
