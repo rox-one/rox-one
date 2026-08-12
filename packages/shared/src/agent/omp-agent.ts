@@ -820,8 +820,12 @@ export class OmpAgent extends BaseAgent {
               stderr: this.recentStderr.trim(),
               cause: error,
             }));
-      } else if (this._isProcessing) {
+      } else if (this._isProcessing && !this.eventQueue.isComplete) {
+        // Mid-turn transport error — mirror handleAgentEnd's terminal
+        // behavior (error + complete); the exit handler may report the same
+        // crash, so skip when the queue is already closed.
         this.eventQueue.enqueue({ type: 'error', message: `OMP subprocess error: ${error.message}` });
+        this.eventQueue.enqueue({ type: 'complete' });
         this.eventQueue.complete();
       }
     });
@@ -1058,11 +1062,15 @@ export class OmpAgent extends BaseAgent {
     // Mid-turn crash after a successful startup: surface it. Exits after a
     // FAILED startup (timeout kill, abort kill, spawn error) are already
     // reported through the rejected ready wait — nothing more to add.
-    if (this._isProcessing && wasReady) {
+    // Mirrors handleAgentEnd's terminal behavior: the stream must end with a
+    // `complete` event, and the report must not duplicate one already sent
+    // (the 'error' listener or a rejected prompt RPC can race this).
+    if (this._isProcessing && wasReady && !this.eventQueue.isComplete) {
       this.eventQueue.enqueue({
         type: 'error',
         message: `OMP subprocess exited unexpectedly (${exitReason})`,
       });
+      this.eventQueue.enqueue({ type: 'complete' });
       this.eventQueue.complete();
     }
 
@@ -1882,7 +1890,10 @@ export class OmpAgent extends BaseAgent {
       await this.ensureSubprocess();
 
       this.sendCommand('prompt', { message: effectiveMessage }).catch((error) => {
-        // prompt is async — failure response = turn failed
+        // prompt is async — failure response = turn failed. When the failure
+        // is the subprocess crashing mid-turn, handleSubprocessExit already
+        // reported it and closed the queue — don't double-report.
+        if (this.eventQueue.isComplete) return;
         this.eventQueue.enqueue({ type: 'error', message: `OMP prompt failed: ${error.message}` });
         this.eventQueue.complete();
       });
