@@ -148,6 +148,9 @@ mock.module('@craft-agent/shared/credentials', () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
     },
+    async set(id: CredentialId, credential: { value: string }) {
+      credentials.set(`${id.type}::${id.workspaceId}::${id.sourceId}`, credential)
+    },
   }),
 }))
 
@@ -231,6 +234,7 @@ describe('registration', () => {
       RPC_CHANNELS.knowledge.GET_BACKLINKS,
       RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
       RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+      RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
       RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
       RPC_CHANNELS.knowledge.SNAPSHOT_GET,
       RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -266,7 +270,7 @@ describe('registration', () => {
     expect(HANDLED_CHANNELS.some((ch) => /engineStop/i.test(ch))).toBe(false)
     // CHANGED is a server→client push event subscribed via knowledge.onChanged, not a handler.
     expect([...HANDLED_CHANNELS]).not.toContain(RPC_CHANNELS.knowledge.CHANGED)
-    expect(HANDLED_CHANNELS).toHaveLength(38) // + DETECT_ENGINE + METRICS_GET + LIST_NOTEBOOKS
+    expect(HANDLED_CHANNELS).toHaveLength(39) // + DETECT_ENGINE + METRICS_GET + LIST_NOTEBOOKS + UPDATE_CONNECTION
   })
 
   it('registers a handler for every declared channel and nothing else', () => {
@@ -396,6 +400,67 @@ describe('listNotebooks', () => {
     await expect(
       invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-1' }),
     ).rejects.toMatchObject({ code: 'CONNECTION_UNAVAILABLE' })
+  })
+})
+
+describe('updateConnection', () => {
+  it('updates baseUrl on an existing record and returns the contract connection (no credentialRef leak)', async () => {
+    seedConnection('conn-1', { status: 'unknown' })
+    const { invoke } = createHarness()
+    const updated = (await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, {
+      connectionId: 'conn-1',
+      baseUrl: 'http://127.0.0.1:6807/',
+    })) as KnowledgeConnection
+    expect(updated.baseUrl).toBe('http://127.0.0.1:6807')
+    expect(updated.id).toBe('conn-1')
+    expect('credentialRef' in updated).toBe(false)
+    // The store persists the change.
+    expect(new KnowledgeConnectionsStore().get('conn-1')!.baseUrl).toBe('http://127.0.0.1:6807')
+    // A reachable kernel flips the cached probe status to ok → 'connected' on the wire.
+    expect(updated.status).toBe('connected')
+  })
+
+  it('rejects a malformed baseUrl with typed INVALID_REF and leaves the record untouched', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-1', baseUrl: 'not a url' }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-1', baseUrl: 'ftp://example.com' }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(new KnowledgeConnectionsStore().get('conn-1')!.baseUrl).toBe('http://127.0.0.1:6806')
+  })
+
+  it('rejects an unknown connectionId with CodedError NOT_FOUND', async () => {
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-missing', baseUrl: 'http://127.0.0.1:6806' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  it('saves a provided token under the record credentialRef workspace (not the caller workspace)', async () => {
+    // The record's credentialRef pins ws1; a caller from another workspace context must
+    // still land the token where the read path resolves it (P2-12 semantics).
+    seedConnection('conn-1', { status: 'unknown' })
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-1', token: 'fresh-token' })
+    expect(credentials.get('source_bearer::ws1::conn-1')?.value).toBe('fresh-token')
+  })
+
+  it('keeps the auto-seeded siyuan-local row updatable and survives an offline kernel (save still succeeds)', async () => {
+    const { invoke } = createHarness()
+    // Seed via the listConnections path (ensureDefaultLocalConnection).
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    kernelProbeError = new Error('connect ECONNREFUSED 127.0.0.1:6806')
+    const updated = (await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, {
+      connectionId: 'siyuan-local',
+      baseUrl: 'http://localhost:6807',
+    })) as KnowledgeConnection
+    expect(updated.id).toBe('siyuan-local')
+    expect(updated.baseUrl).toBe('http://localhost:6807')
+    // Probe failed → status 'failed' maps to 'offline' on the wire, but the save succeeded.
+    expect(updated.status).toBe('offline')
   })
 })
 

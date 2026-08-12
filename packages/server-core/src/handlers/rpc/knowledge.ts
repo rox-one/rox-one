@@ -116,6 +116,8 @@ import {
   getKernelBootstrapStatus,
   KnowledgeMetricsStore,
   maybeAutoStartLocalKernel,
+  normalizeKnowledgeBaseUrl,
+  probeKernelHealth,
   SIYUAN_INSTALL_URL,
   SIYUAN_LOCAL_CONNECTION_ID,
 } from '../../knowledge'
@@ -178,6 +180,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.knowledge.GET_BACKLINKS,
   RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
   RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+  RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
   RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
   RPC_CHANNELS.knowledge.SNAPSHOT_GET,
   RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -263,6 +266,14 @@ export interface KnowledgeSnapshotCreateArgs extends KnowledgeConnectionArgs {
 export interface KnowledgeSnapshotGetArgs {
   workspaceId: string
   snapshotId: string
+}
+
+/** Settings → Knowledge edit flow: patch baseUrl and/or token on an existing connection. */
+export interface KnowledgeUpdateConnectionArgs {
+  connectionId: string
+  baseUrl?: string
+  /** Plain token; empty/undefined leaves the stored credential untouched. */
+  token?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -753,6 +764,48 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       }
 
       return payload
+    },
+  )
+
+  // ——— UPDATE_CONNECTION({connectionId, baseUrl?, token?}) → KnowledgeConnection ———
+  // Settings → Knowledge edit flow. baseUrl is validated (absolute http(s), trailing
+  // slashes stripped); the token lands in CredentialManager under the workspace pinned
+  // by the record's credentialRef (same key contract as the sources:saveCredentials
+  // knowledge fallback — P2-12: never the caller's workspace). A best-effort health
+  // probe refreshes the cached status but never fails the save; the auto-seeded
+  // siyuan-local row is updatable like any other.
+  server.handle(
+    RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
+    async (_ctx, args: KnowledgeUpdateConnectionArgs): Promise<KnowledgeConnection> => {
+      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
+        throw new CodedError('INVALID_REF', 'knowledge.updateConnection: connectionId is required')
+      }
+      const store = new KnowledgeConnectionsStore()
+      const record = store.get(args.connectionId)
+      if (!record) {
+        throw new CodedError('NOT_FOUND', `Knowledge connection not found: ${args.connectionId}`)
+      }
+
+      const nextBaseUrl = args.baseUrl !== undefined ? normalizeKnowledgeBaseUrl(args.baseUrl) : record.baseUrl
+
+      const token = typeof args.token === 'string' && args.token.trim() ? args.token.trim() : undefined
+      if (token !== undefined) {
+        const credentialId = credentialIdFromRef(record.credentialRef)
+        if (!credentialId) {
+          throw new CodedError(
+            'CONNECTION_UNAVAILABLE',
+            `Knowledge connection '${record.id}' has a malformed credential reference`,
+          )
+        }
+        await getCredentialManager().set(credentialId, { value: token })
+      }
+
+      store.save({ id: record.id, baseUrl: nextBaseUrl, credentialRef: record.credentialRef })
+
+      // Best-effort probe (token-free health endpoint): refresh the cached status only.
+      const health = await probeKernelHealth(nextBaseUrl)
+      const updated = store.setStatus(record.id, health.running ? 'ok' : 'failed') ?? store.get(record.id)
+      return toContractConnection(updated!)
     },
   )
 
