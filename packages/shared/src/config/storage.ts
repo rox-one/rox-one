@@ -26,6 +26,7 @@ import { type ConfigDefaults } from './config-defaults-schema.ts';
 import { isValidThemeFile } from './validators.ts';
 import { isToolName } from '../toolchain/types.ts';
 import type { ToolName } from '../toolchain/types.ts';
+import { SECRET_PROVIDER_IDS, type SecretRefEntry } from '../secrets/types.ts';
 
 // Re-export CONFIG_DIR for convenience (centralized in paths.ts)
 export { CONFIG_DIR } from './paths.ts';
@@ -128,6 +129,11 @@ export interface StoredConfig {
   // overrides (CRAFT_WORKSPACE_PATH, mini-model) — session-specific values win.
   runtime?: {
     envOverrides?: Record<string, string>;
+    // Scoped secret injections (docs/secrets-providers.md). Refs only — never
+    // values. Resolved at spawn time via the secrets provider chain; the
+    // resolved env fragment lives in memory (setRuntimeSecretEnvFragment) and
+    // merges into getRuntimeEnvOverrides() output.
+    secretRefs?: SecretRefEntry[];
   };
   // Marketplace catalog meta (ETag + last fetch). Persisted by createConfigMetaStore
   // in marketplace RPC handlers (plan §0.1).
@@ -784,11 +790,44 @@ export function setBundledSkillsDisabled(slugs: string[]): void {
 }
 
 /**
+ * Resolved secret env fragment (from runtime.secretRefs via the secrets
+ * provider chain). In-memory ONLY — never persisted, never returned to the
+ * renderer (settings RPC uses getPersistedRuntimeEnvOverrides).
+ */
+let runtimeSecretEnvFragment: Record<string, string> = {};
+
+/** Store the resolved secret env fragment. Called by the secrets runtime after a refresh. */
+export function setRuntimeSecretEnvFragment(fragment: Record<string, string>): void {
+  runtimeSecretEnvFragment = { ...fragment };
+}
+
+/** Current resolved secret env fragment (empty until the first refresh). */
+export function getRuntimeSecretEnvFragment(): Record<string, string> {
+  return { ...runtimeSecretEnvFragment };
+}
+
+/**
  * Runtime: пользовательские переменные окружения для всех агент-сессий
  * (config runtime.envOverrides). Сливаются в env подпроцесса ПОСЛЕ process.env
  * и proxy, но ДО per-session envOverrides (CRAFT_WORKSPACE_PATH и пр. побеждают).
+ *
+ * Resolved secrets (runtime.secretRefs) merge ON TOP of plain envOverrides —
+ * on key collision the secret wins (it is the more deliberate mechanism).
+ * Per-session structural keys applied by callers after this still win.
+ *
+ * NOTE: the merged result contains resolved secret values. UI/RPC surfaces
+ * must use getPersistedRuntimeEnvOverrides() instead.
  */
 export function getRuntimeEnvOverrides(): Record<string, string> {
+  const config = loadStoredConfig();
+  return { ...(config?.runtime?.envOverrides ?? {}), ...runtimeSecretEnvFragment };
+}
+
+/**
+ * Only the persisted config runtime.envOverrides — no resolved secrets.
+ * Safe to return to the renderer / settings UI.
+ */
+export function getPersistedRuntimeEnvOverrides(): Record<string, string> {
   const config = loadStoredConfig();
   return { ...(config?.runtime?.envOverrides ?? {}) };
 }
@@ -845,6 +884,54 @@ export function setRuntimeEnvOverrides(env: Record<string, string>): void {
     cleaned[trimmedKey] = String(value);
   }
   config.runtime = { ...config.runtime, envOverrides: cleaned };
+  saveConfig(config);
+}
+
+/**
+ * Configured secret refs (config runtime.secretRefs). Refs only — resolution
+ * happens at spawn time via refreshRuntimeSecretEnv() (secrets/runtime.ts).
+ */
+export function getRuntimeSecretRefs(): SecretRefEntry[] {
+  const config = loadStoredConfig();
+  return (config?.runtime?.secretRefs ?? []).map((entry) => ({ ...entry }));
+}
+
+/**
+ * Persist runtime.secretRefs. Same envVar rules as env overrides (POSIX name,
+ * denylist) — a secret must not be injectable as PATH/NODE_OPTIONS/etc.
+ * Values are never stored here, only references.
+ */
+export function setRuntimeSecretRefs(refs: SecretRefEntry[]): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  if (!Array.isArray(refs)) {
+    throw new Error('secret refs must be an array');
+  }
+  const cleaned: SecretRefEntry[] = [];
+  for (const entry of refs) {
+    const name = typeof entry?.name === 'string' ? entry.name.trim() : '';
+    if (!name) {
+      throw new Error('secret ref name must be a non-empty string');
+    }
+    const envVar = typeof entry?.envVar === 'string' ? entry.envVar.trim() : '';
+    if (!ENV_OVERRIDE_KEY_RE.test(envVar)) {
+      throw new Error(`invalid secret ref envVar: ${envVar}`);
+    }
+    if (ENV_OVERRIDE_DENY[envVar]) {
+      throw new Error(`secret ref envVar not allowed: ${envVar}`);
+    }
+    if (entry.provider !== undefined && !(SECRET_PROVIDER_IDS as readonly string[]).includes(entry.provider)) {
+      throw new Error(`unknown secret provider: ${entry.provider}`);
+    }
+    if (entry.ref !== undefined && (typeof entry.ref !== 'string' || !entry.ref.trim())) {
+      throw new Error(`secret ref "ref" must be a non-empty string when set (name: ${name})`);
+    }
+    const clean: SecretRefEntry = { name, envVar };
+    if (entry.provider !== undefined) clean.provider = entry.provider;
+    if (entry.ref !== undefined) clean.ref = entry.ref;
+    cleaned.push(clean);
+  }
+  config.runtime = { ...config.runtime, secretRefs: cleaned };
   saveConfig(config);
 }
 

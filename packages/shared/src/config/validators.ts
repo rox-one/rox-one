@@ -22,6 +22,7 @@ import { THINKING_LEVEL_IDS } from '../agent/thinking-levels.ts';
 import { isValidProviderAuthCombination } from './llm-connections.ts';
 import { SUPPORTED_LANGUAGE_CODES } from '../i18n/languages.ts';
 import type { LanguageCode } from '../i18n/languages.ts';
+import { SecretRefEntrySchema } from '../secrets/types.ts';
 
 // ============================================================
 // Config Directory
@@ -109,6 +110,16 @@ const CloudRunsConfigSchema = z.object({
   cheapModelId: z.string().optional(),
   personas: z.boolean().optional(),
 }).passthrough();
+/**
+ * Agent session runtime settings (additive). envOverrides values are
+ * free-form; secretRefs entries are validated structurally — they carry
+ * references only, never secret values (docs/secrets-providers.md).
+ */
+const RuntimeConfigSchema = z.object({
+  envOverrides: z.record(z.string(), z.string()).optional(),
+  secretRefs: z.array(SecretRefEntrySchema).optional(),
+}).passthrough();
+
 export const StoredConfigSchema = z.object({
   workspaces: z.array(WorkspaceSchema).min(0),
   activeWorkspaceId: z.string().nullable(),
@@ -117,6 +128,7 @@ export const StoredConfigSchema = z.object({
   defaultLlmConnection: z.string().optional(),
   cloudRuns: CloudRunsConfigSchema.optional(),
   defaultThinkingLevel: z.enum([...THINKING_LEVEL_IDS, 'think'] as [string, ...string[]]).transform(v => v === 'think' ? 'medium' : v).optional(),
+  runtime: RuntimeConfigSchema.optional(),
   // Note: tokenDisplay, showCost, cumulativeUsage, defaultPermissionMode removed
   // Permission mode and cyclable modes are now per-workspace in workspace config.json
 });

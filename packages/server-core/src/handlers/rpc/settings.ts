@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getRuntimeEnvOverrides, setRuntimeEnvOverrides } from '@craft-agent/shared/config'
+import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getPersistedRuntimeEnvOverrides, setRuntimeEnvOverrides } from '@craft-agent/shared/config'
 import { isValidThinkingLevel, normalizeThinkingLevel, THINKING_LEVEL_IDS } from '@craft-agent/shared/agent/thinking-levels'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
@@ -74,9 +74,12 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Settings - Session Environment Overrides (App-Level)
   // ============================================================
 
-  // Get user-configured env vars merged into every spawned agent session
+  // Get user-configured env vars merged into every spawned agent session.
+  // Returns ONLY persisted config values — getRuntimeEnvOverrides() also
+  // carries resolved secrets (runtime.secretRefs) which must never reach
+  // the renderer.
   server.handle(RPC_CHANNELS.settings.GET_ENV_OVERRIDES, async () => {
-    return getRuntimeEnvOverrides()
+    return getPersistedRuntimeEnvOverrides()
   })
 
   // Replace session env overrides (persisted to config runtime.envOverrides)
