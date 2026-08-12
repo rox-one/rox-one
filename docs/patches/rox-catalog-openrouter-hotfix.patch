@@ -1,0 +1,748 @@
+From 8aaa9d03906de936cbde13aae6b50367b3e20b24 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Wed, 12 Aug 2026 03:04:10 +0000
+Subject: [PATCH] fix(catalog): enforce OpenRouter exclusion across every
+ catalog path
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The merged ROX public-models change filtered the catalog with a predicate that
+only recognized the legacy The Old LLM ids (`openrouter_gpt_4_o`), while the
+builder emits canonical records (`openrouter/<vendor>/<model>`, owned_by
+"openrouter"). The filter was a no-op for live and synced OpenRouter entries, so
+/v1/models kept publishing them.
+
+Three paths republished OpenRouter or raw ids:
+
+- the global filter missed every canonical entry;
+- the DB-backed key branch iterated the pre-policy `models` collection, so a key
+  whose permissions named an OpenRouter model added it back after it had been
+  removed;
+- the quota-exclusive short circuit returns before the ROX public projection, so
+  a quota key was served `qtSd/*` ids even with ROX_PUBLIC_CATALOG_ONLY on.
+
+The predicate now matches ownership exactly and model paths per segment, per-key
+filtering runs on the policy-filtered list, and the exclusion is re-applied in
+finalizeCatalogResponse — the single exit both catalog paths share — so a branch
+added later cannot republish OpenRouter by omission.
+
+openrouter-vision-sync-4264 and specialty-model-hidden-openrouter-9293 asserted
+that OpenRouter models are published, which is what this fork forbids. #4264's
+catalog coverage moves to another provider on the same synced path; #9293 keeps
+its hidden-flag assertions and now pins the exclusion instead.
+---
+ src/app/api/v1/models/catalog.ts              |  69 +++---
+ src/app/api/v1/models/catalogResponse.ts      |   8 +
+ src/lib/roxPublicModelPolicy.ts               |  55 ++++-
+ .../unit/openrouter-vision-sync-4264.test.ts  |  63 ++++-
+ .../rox-openrouter-catalog-exclusion.test.ts  | 221 ++++++++++++++++++
+ tests/unit/rox-public-model-policy.test.ts    | 105 ++++++---
+ ...ialty-model-hidden-openrouter-9293.test.ts |  19 +-
+ 7 files changed, 461 insertions(+), 79 deletions(-)
+ create mode 100644 tests/unit/rox-openrouter-catalog-exclusion.test.ts
+
+diff --git a/src/app/api/v1/models/catalog.ts b/src/app/api/v1/models/catalog.ts
+index 736529d3e..8631ccd07 100644
+--- a/src/app/api/v1/models/catalog.ts
++++ b/src/app/api/v1/models/catalog.ts
+@@ -103,10 +103,10 @@ import { isFreeModel, providerHasFreeModels } from "@/shared/utils/freeModels";
+ import { isCodexDiscoveryModelExcluded } from "@/shared/services/codexDiscoveryPolicy";
+ import { buildErrorBody } from "@omniroute/open-sse/utils/error";
+ import {
+-	buildRoxPublicCatalog,
+-	isOpenRouterCatalogEntry,
+-	isRoxPublicCatalogOnly,
+-	isRoxPublicModelId,
++  buildRoxPublicCatalog,
++  isOpenRouterCatalogEntry,
++  isRoxPublicCatalogOnly,
++  scopeRoxPublicCatalogForKey,
+ } from "@/lib/roxPublicModelPolicy";
+ 
+ // Public API of this module is preserved after the catalog helper extraction:
+@@ -571,24 +571,37 @@ async function buildUnifiedModelsResponseCore(
+     // Everything the quota path needs (`combos`, `timestamp`,
+     // `buildComboCatalogMetadata`) already exists here, so return before the
+     // provider/auto-combo/registry loops start.
++    const publicCatalogOnly = isRoxPublicCatalogOnly(settings);
+     const earlyApiKey = extractApiKey(request);
+     if (earlyApiKey) {
+-      const { getApiKeyMetadata } = await import("@/lib/db/apiKeys");
++      const { getApiKeyMetadata, isModelAllowedForKey } = await import("@/lib/db/apiKeys");
+       const earlyKeyMeta = await getApiKeyMetadata(earlyApiKey);
+       if (earlyKeyMeta?.allowedQuotas && earlyKeyMeta.allowedQuotas.length > 0) {
+-        const { buildQuotaExclusiveModels } = await import("@/lib/quota/quotaCombos");
+-        const quotaModels = await buildQuotaExclusiveModels(
+-          earlyKeyMeta.allowedQuotas,
+-          combos,
+-          timestamp,
+-          (c) => buildComboCatalogMetadata(c, combos)
+-        );
+-        const quotaFinal = applyCatalogPostFilters(request, quotaModels, {
+-          connections,
+-          prefixMode,
+-          aliasToProviderId,
+-          hideNoThinkVariants: settings.hideNoThinkVariants === true,
+-        });
++        let quotaFinal: Array<Record<string, unknown>>;
++        if (publicCatalogOnly) {
++          // ROX public mode publishes `rox/*` and nothing else. This short circuit
++          // returns before the public projection further down, so a quota-exclusive
++          // key would otherwise receive the pool's raw `qtSd/*` ids instead.
++          quotaFinal = await scopeRoxPublicCatalogForKey(
++            buildRoxPublicCatalog(timestamp),
++            earlyApiKey,
++            isModelAllowedForKey
++          );
++        } else {
++          const { buildQuotaExclusiveModels } = await import("@/lib/quota/quotaCombos");
++          const quotaModels = await buildQuotaExclusiveModels(
++            earlyKeyMeta.allowedQuotas,
++            combos,
++            timestamp,
++            (c) => buildComboCatalogMetadata(c, combos)
++          );
++          quotaFinal = applyCatalogPostFilters(request, quotaModels, {
++            connections,
++            prefixMode,
++            aliasToProviderId,
++            hideNoThinkVariants: settings.hideNoThinkVariants === true,
++          });
++        }
+         return finalizeCatalogResponse(request, quotaFinal, () => undefined, {
+           ...corsHeaders,
+           ...diagnosticHeaders,
+@@ -1531,7 +1544,6 @@ async function buildUnifiedModelsResponseCore(
+ 
+     // Filter by API key permissions if requested
+     const apiKey = extractApiKey(request);
+-    const publicCatalogOnly = isRoxPublicCatalogOnly(settings);
+     let finalModels = publicCatalogOnly
+       ? buildRoxPublicCatalog(timestamp)
+       : models.filter((model) => !isOpenRouterCatalogEntry(model));
+@@ -1544,16 +1556,11 @@ async function buildUnifiedModelsResponseCore(
+       const keyMeta = await getApiKeyMetadata(apiKey);
+       if (publicCatalogOnly) {
+         if (keyMeta) {
+-          const filtered = [];
+-          for (const model of finalModels) {
+-            if (
+-              isRoxPublicModelId(model.id) &&
+-              (await isModelAllowedForKey(apiKey, model.id))
+-            ) {
+-              filtered.push(model);
+-            }
+-          }
+-          finalModels = filtered;
++          finalModels = await scopeRoxPublicCatalogForKey(
++            finalModels,
++            apiKey,
++            isModelAllowedForKey
++          );
+         }
+       } else if (keyMeta && keyMeta.allowedQuotas && keyMeta.allowedQuotas.length > 0) {
+         const { buildQuotaExclusiveModels } = await import("@/lib/quota/quotaCombos");
+@@ -1573,7 +1580,9 @@ async function buildUnifiedModelsResponseCore(
+         // (metadata missing → deny), collapsing /v1/models to 0 entries.
+       } else {
+         const filtered = [];
+-        for (const m of models) {
++        // Iterate the policy-filtered list, not the raw `models` collection: a key
++        // whose permissions name an excluded model would otherwise put it back.
++        for (const m of finalModels) {
+           // m.id is the full identifier (e.g. openai/gpt-4o), m.root is the raw model string
+           // check either one as the config could use either patterns
+           if (
+diff --git a/src/app/api/v1/models/catalogResponse.ts b/src/app/api/v1/models/catalogResponse.ts
+index e02ca3a06..656b884e2 100644
+--- a/src/app/api/v1/models/catalogResponse.ts
++++ b/src/app/api/v1/models/catalogResponse.ts
+@@ -18,6 +18,7 @@ import {
+ } from "@omniroute/open-sse/utils/functionalGatewayMirrors";
+ import { isCcAliasGlobalEnabled, getCcAliasSettingsBulk } from "@/lib/db/ccDiscoveryAliases";
+ import { buildCcAliasPredicate } from "./ccAliasPredicate";
++import { isOpenRouterCatalogEntry } from "@/lib/roxPublicModelPolicy";
+ import {
+   isFunctionalGatewayGlobalEnabled,
+   getFunctionalGatewaySettingsBulk,
+@@ -191,6 +192,13 @@ export async function finalizeCatalogResponse(
+   getContextFallback: (model: Record<string, unknown>) => number | undefined,
+   headers: Record<string, string>
+ ): Promise<Response> {
++  // Fail-closed OpenRouter exclusion. Every catalog response is serialized here,
++  // while the branches that assemble `finalModels` upstream each rebuild it from
++  // collections that predate the policy filter (per-key permissions, quota combos).
++  // Enforcing the exclusion at the single exit means a branch added later cannot
++  // republish OpenRouter by omission.
++  finalModels = finalModels.filter((model) => !isOpenRouterCatalogEntry(model));
++
+   const apiKey = extractApiKey(request);
+   if (apiKey) {
+     const { getApiKeyMetadata, isModelAllowedForKey } = await import("@/lib/db/apiKeys");
+diff --git a/src/lib/roxPublicModelPolicy.ts b/src/lib/roxPublicModelPolicy.ts
+index 8540094fb..55e368211 100644
+--- a/src/lib/roxPublicModelPolicy.ts
++++ b/src/lib/roxPublicModelPolicy.ts
+@@ -47,7 +47,13 @@ const ROX_PUBLIC_MODEL_SPECS: readonly RoxPublicModelSpec[] = [
+     contextLength: 1_048_576,
+     maxInputTokens: 1_048_576,
+     maxOutputTokens: 131_072,
+-    capabilities: { tool_calling: true, reasoning: true, thinking: true, temperature: true, vision: true },
++    capabilities: {
++      tool_calling: true,
++      reasoning: true,
++      thinking: true,
++      temperature: true,
++      vision: true,
++    },
+   },
+   {
+     id: "rox/fast",
+@@ -102,10 +108,51 @@ export function isRoxPublicCatalogOnly(settings: Record<string, unknown>): boole
+   );
+ }
+ 
++const OPENROUTER_ALIAS = "openrouter";
++const OPENROUTER_OWNER_FIELDS = ["owned_by", "provider", "providerId", "provider_id"] as const;
++const OPENROUTER_PATH_FIELDS = ["id", "root", "parent"] as const;
++
++function normalizeCatalogField(value: unknown): string | null {
++  return typeof value === "string" ? value.trim().toLowerCase() : null;
++}
++
++/**
++ * Recognize every representation of an OpenRouter model the catalog can emit:
++ * canonical live entries (`openrouter/<vendor>/<model>`, `owned_by: "openrouter"`),
++ * provider-scoped paths that nest the alias deeper, and the legacy The Old LLM
++ * free-tier ids (`openrouter_gpt_4_o`). Ownership is compared exactly and paths are
++ * matched per segment so a model that merely mentions the word is not swept up.
++ */
+ export function isOpenRouterCatalogEntry(entry: Record<string, unknown>): boolean {
+-  return [entry.id, entry.root, entry.parent]
+-    .filter((value): value is string => typeof value === "string")
+-    .some((value) => value.toLowerCase().includes("openrouter_"));
++  const ownedByOpenRouter = OPENROUTER_OWNER_FIELDS.some(
++    (field) => normalizeCatalogField(entry[field]) === OPENROUTER_ALIAS
++  );
++  if (ownedByOpenRouter) return true;
++
++  return OPENROUTER_PATH_FIELDS.some((field) => {
++    const value = normalizeCatalogField(entry[field]);
++    if (!value) return false;
++    return value.includes("openrouter_") || value.split("/").includes(OPENROUTER_ALIAS);
++  });
++}
++
++/**
++ * Restrict a ROX public catalog to what a DB-backed key may use. Entries that are
++ * not canonical `rox/*` ids are dropped outright: public mode publishes the public
++ * surface and nothing else, whichever branch assembled the list.
++ */
++export async function scopeRoxPublicCatalogForKey(
++  catalog: Array<Record<string, unknown>>,
++  apiKey: string,
++  isModelAllowedForKey: (key: string, modelId: string) => Promise<boolean>
++): Promise<Array<Record<string, unknown>>> {
++  const scoped: Array<Record<string, unknown>> = [];
++  for (const entry of catalog) {
++    if (!isRoxPublicModelId(entry.id)) continue;
++    if (!(await isModelAllowedForKey(apiKey, entry.id))) continue;
++    scoped.push(entry);
++  }
++  return scoped;
+ }
+ 
+ export function buildRoxPublicCatalog(timestamp: number): Array<Record<string, unknown>> {
+diff --git a/tests/unit/openrouter-vision-sync-4264.test.ts b/tests/unit/openrouter-vision-sync-4264.test.ts
+index ac00c42e6..dd1d3ff7a 100644
+--- a/tests/unit/openrouter-vision-sync-4264.test.ts
++++ b/tests/unit/openrouter-vision-sync-4264.test.ts
+@@ -71,22 +71,26 @@ test("#4264 normalizeDiscoveredModels captures vision from OpenRouter architectu
+   assert.equal(byId["some/text-only"].supportsVision, undefined);
+ });
+ 
+-test("#4264 synced OpenRouter vision model surfaces capabilities.vision in /v1/models", async () => {
++// ROX divergence: this fork never publishes OpenRouter models (see
++// roxPublicModelPolicy.isOpenRouterCatalogEntry), so the catalog-level half of
++// #4264 is asserted through another provider that takes the same synced path.
++// The OpenRouter exclusion itself is pinned by the last test in this file.
++test("#4264 synced vision model surfaces capabilities.vision in /v1/models", async () => {
+   const connection = await providersDb.createProviderConnection({
+-    provider: "openrouter",
++    provider: "deepinfra",
+     authType: "apikey",
+-    name: "openrouter-test",
+-    apiKey: "sk-or-test",
++    name: "deepinfra-test",
++    apiKey: "sk-di-test",
+     isActive: true,
+     testStatus: "active",
+     providerSpecificData: {},
+   });
+ 
+-  // Simulate "import models": persist the raw OpenRouter /models entries (with
++  // Simulate "import models": persist raw OpenRouter-shaped /models entries (with
+   // architecture) through the real discovery path. Having synced models makes the
+-  // catalog use the synced path (the OpenRouter live-enrichment block is skipped),
+-  // which is exactly the path that dropped vision before this fix.
+-  await modelDiscovery.persistDiscoveredModels("openrouter", connection.id, [
++  // catalog use the synced path (the live-enrichment block is skipped), which is
++  // exactly the path that dropped vision before this fix.
++  await modelDiscovery.persistDiscoveredModels("deepinfra", connection.id, [
+     {
+       id: "nex-agi/nex-n2-pro:free",
+       name: "Nex AGI: Nex-N2-Pro (free)",
+@@ -107,9 +111,7 @@ test("#4264 synced OpenRouter vision model surfaces capabilities.vision in /v1/m
+   assert.equal(response.status, 200);
+   const body = (await response.json()) as any;
+ 
+-  const visionModel = body.data.find((m: any) =>
+-    String(m.id).endsWith("nex-agi/nex-n2-pro:free")
+-  );
++  const visionModel = body.data.find((m: any) => String(m.id).endsWith("nex-agi/nex-n2-pro:free"));
+   assert.ok(visionModel, `expected the synced vision model in the catalog`);
+   // RED before the fix: synced models carried no capabilities at all.
+   assert.equal(visionModel.capabilities?.vision, true);
+@@ -121,3 +123,42 @@ test("#4264 synced OpenRouter vision model surfaces capabilities.vision in /v1/m
+     `text-only model must not be marked vision-capable`
+   );
+ });
++
++test("ROX withholds synced OpenRouter models from /v1/models", async () => {
++  const connection = await providersDb.createProviderConnection({
++    provider: "openrouter",
++    authType: "apikey",
++    name: "openrouter-test",
++    apiKey: "sk-or-test",
++    isActive: true,
++    testStatus: "active",
++    providerSpecificData: {},
++  });
++
++  await modelDiscovery.persistDiscoveredModels("openrouter", connection.id, [
++    {
++      id: "nex-agi/nex-n2-pro:free",
++      name: "Nex AGI: Nex-N2-Pro (free)",
++      architecture: { modality: "text+image->text", input_modalities: ["text", "image"] },
++      context_length: 262144,
++    },
++  ]);
++
++  const response = await v1ModelsCatalog.getUnifiedModelsResponse(
++    new Request("http://localhost/api/v1/models")
++  );
++  assert.equal(response.status, 200);
++  const body = (await response.json()) as { data: Array<Record<string, unknown>> };
++
++  // Syncing a provider bypasses the live OpenRouter block, so this is the second
++  // way an OpenRouter model can reach the catalog. Both are excluded.
++  assert.deepEqual(
++    body.data
++      .filter(
++        (model) =>
++          String(model.owned_by) === "openrouter" || String(model.id).startsWith("openrouter/")
++      )
++      .map((model) => model.id),
++    []
++  );
++});
+diff --git a/tests/unit/rox-openrouter-catalog-exclusion.test.ts b/tests/unit/rox-openrouter-catalog-exclusion.test.ts
+new file mode 100644
+index 000000000..2fb99b658
+--- /dev/null
++++ b/tests/unit/rox-openrouter-catalog-exclusion.test.ts
+@@ -0,0 +1,221 @@
++/**
++ * tests/unit/rox-openrouter-catalog-exclusion.test.ts
++ *
++ * ROX contract: OpenRouter is not part of the published model list, and the ROX
++ * public catalog publishes nothing but `rox/*`. Both are end-to-end properties of
++ * `GET /v1/models`, so they are asserted against the real response body rather
++ * than against the policy helper — a predicate that fails to recognize an entry
++ * is exactly the failure mode this file exists to catch.
++ *
++ * The three request shapes below are the ones that reach `finalizeCatalogResponse`
++ * through different branches: the global filter (no key), the per-key allow-list
++ * (DB-backed key), and the quota-exclusive short circuit, which returns before the
++ * catalog is ever built.
++ */
++
++import test from "node:test";
++import assert from "node:assert/strict";
++import fs from "node:fs";
++import os from "node:os";
++import path from "node:path";
++
++const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-rox-openrouter-"));
++const ORIGINAL_ROX_PUBLIC_CATALOG_ONLY = process.env.ROX_PUBLIC_CATALOG_ONLY;
++
++process.env.DATA_DIR = TEST_DATA_DIR;
++process.env.API_KEY_SECRET = process.env.API_KEY_SECRET || "rox-openrouter-exclusion-secret";
++
++const core = await import("../../src/lib/db/core.ts");
++const apiKeysDb = await import("../../src/lib/db/apiKeys.ts");
++const providersDb = await import("../../src/lib/db/providers.ts");
++const poolsDb = await import("../../src/lib/db/quotaPools.ts");
++const groupsDb = await import("../../src/lib/db/quotaGroups.ts");
++const { syncQuotaCombos } = await import("../../src/lib/quota/quotaCombos.ts");
++const { isOpenRouterCatalogEntry, isRoxPublicModelId } =
++  await import("../../src/lib/roxPublicModelPolicy.ts");
++const v1ModelsCatalog = await import("../../src/app/api/v1/models/catalog.ts");
++
++const OPENROUTER_MODEL_ID = "google/gemini-2.5-flash";
++const QUALIFIED_OPENROUTER_ID = `openrouter/${OPENROUTER_MODEL_ID}`;
++
++interface CatalogEntry extends Record<string, unknown> {
++  id: string;
++}
++
++const originalFetch = globalThis.fetch;
++
++/** Serve a canonical OpenRouter catalog payload without touching the network. */
++function installOpenRouterCatalogStub(): void {
++  globalThis.fetch = (async (input: unknown, init?: unknown) => {
++    const url = typeof input === "string" ? input : String((input as { url?: string })?.url ?? "");
++    if (url.includes("openrouter.ai")) {
++      return new Response(
++        JSON.stringify({
++          data: [
++            {
++              id: OPENROUTER_MODEL_ID,
++              name: "Gemini 2.5 Flash",
++              context_length: 1_048_576,
++              architecture: { input_modalities: ["text"], output_modalities: ["text"] },
++              supported_parameters: ["tools"],
++              top_provider: { max_completion_tokens: 65_536 },
++            },
++          ],
++        }),
++        { status: 200, headers: { "content-type": "application/json" } }
++      );
++    }
++    return originalFetch(input as never, init as never);
++  }) as typeof globalThis.fetch;
++}
++
++/**
++ * Detect OpenRouter entries from the response shape alone. Deliberately does not
++ * call `isOpenRouterCatalogEntry` — the production predicate is one of the things
++ * under test.
++ */
++function findOpenRouterEntries(models: CatalogEntry[]): CatalogEntry[] {
++  return models.filter((model) => {
++    const ownedBy = String(model.owned_by ?? "")
++      .trim()
++      .toLowerCase();
++    if (ownedBy === "openrouter") return true;
++    return [model.id, model.root, model.parent].some((value) => {
++      if (typeof value !== "string") return false;
++      const normalized = value.trim().toLowerCase();
++      return normalized.includes("openrouter_") || normalized.split("/").includes("openrouter");
++    });
++  });
++}
++
++async function readCatalog(apiKey?: string): Promise<CatalogEntry[]> {
++  v1ModelsCatalog.__expireCatalogCacheForTest(
++    v1ModelsCatalog.CATALOG_STALE_WHILE_REVALIDATE_MS + 1000
++  );
++  v1ModelsCatalog.__resetCatalogBuilderRunsForTest();
++  const response = await v1ModelsCatalog.getUnifiedModelsResponse(
++    new Request(
++      "http://localhost/api/v1/models",
++      apiKey ? { headers: { Authorization: `Bearer ${apiKey}` } } : undefined
++    )
++  );
++  assert.equal(response.status, 200);
++  const body = (await response.json()) as { data: CatalogEntry[] };
++  return body.data;
++}
++
++test.before(async () => {
++  installOpenRouterCatalogStub();
++  await providersDb.createProviderConnection({
++    provider: "openrouter",
++    authType: "apikey",
++    name: "rox-exclusion-openrouter",
++    apiKey: "sk-or-rox-exclusion",
++    isActive: true,
++    testStatus: "active",
++  });
++});
++
++test.beforeEach(() => {
++  delete process.env.ROX_PUBLIC_CATALOG_ONLY;
++});
++
++test.after(() => {
++  globalThis.fetch = originalFetch;
++  apiKeysDb.resetApiKeyState();
++  core.resetDbInstance();
++  if (ORIGINAL_ROX_PUBLIC_CATALOG_ONLY === undefined) {
++    delete process.env.ROX_PUBLIC_CATALOG_ONLY;
++  } else {
++    process.env.ROX_PUBLIC_CATALOG_ONLY = ORIGINAL_ROX_PUBLIC_CATALOG_ONLY;
++  }
++  try {
++    fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true });
++  } catch {
++    /* ignore */
++  }
++});
++
++test("the OpenRouter catalog entry this suite relies on is actually produced", async () => {
++  // Guards every assertion below: if the connection stops yielding an OpenRouter
++  // entry, the exclusion tests would pass without proving anything.
++  const { getOpenRouterCatalog } = await import("../../src/lib/catalog/openrouterCatalog.ts");
++  const catalog = await getOpenRouterCatalog();
++  assert.deepEqual(
++    catalog.data.map((entry) => entry.id),
++    [OPENROUTER_MODEL_ID]
++  );
++});
++
++test("the policy predicate recognizes the catalog's canonical OpenRouter shape", () => {
++  // The exact record `buildUnifiedModelsResponseCore` pushes for a live entry.
++  assert.equal(
++    isOpenRouterCatalogEntry({
++      id: QUALIFIED_OPENROUTER_ID,
++      owned_by: "openrouter",
++      root: OPENROUTER_MODEL_ID,
++      parent: null,
++    }),
++    true
++  );
++});
++
++test("normal catalog mode drops OpenRouter for an unauthenticated caller", async () => {
++  const models = await readCatalog();
++
++  assert.ok(models.length > 0, "the catalog must not be empty, or the test proves nothing");
++  assert.deepEqual(
++    findOpenRouterEntries(models).map((model) => model.id),
++    []
++  );
++});
++
++test("a DB-backed key permitted to use an OpenRouter model still cannot see it", async () => {
++  const key = await apiKeysDb.createApiKey("rox-openrouter-scoped", "rox-openrouter-machine");
++  await apiKeysDb.updateApiKeyPermissions(key.id, {
++    allowedModels: [QUALIFIED_OPENROUTER_ID, OPENROUTER_MODEL_ID],
++  });
++
++  const models = await readCatalog(key.key);
++
++  assert.deepEqual(
++    findOpenRouterEntries(models).map((model) => model.id),
++    [],
++    "per-key permissions must be applied to the OpenRouter-free list, not the raw one"
++  );
++});
++
++test("a quota-exclusive key gets rox IDs only while the ROX public catalog is on", async () => {
++  const group = groupsDb.createGroup("Rox Exclusion");
++  const connection = await providersDb.createProviderConnection({
++    provider: "glm",
++    authType: "apikey",
++    name: "rox-exclusion-glm",
++    apiKey: "sk-glm-rox-exclusion",
++    isActive: true,
++    testStatus: "active",
++  });
++  const pool = poolsDb.createPool({
++    connectionId: (connection as Record<string, unknown>).id as string,
++    name: "Rox Exclusion",
++    groupId: group.id,
++  });
++  await syncQuotaCombos(pool.id);
++
++  const quotaKey = await apiKeysDb.createApiKey("rox-openrouter-quota", "rox-quota-machine");
++  await apiKeysDb.updateApiKeyPermissions(quotaKey.id, { allowedQuotas: [pool.id] });
++
++  process.env.ROX_PUBLIC_CATALOG_ONLY = "true";
++  const models = await readCatalog(quotaKey.key);
++
++  const nonRoxIds = models.map((model) => model.id).filter((id) => !isRoxPublicModelId(id));
++  assert.deepEqual(
++    nonRoxIds,
++    [],
++    "the quota short circuit returns before the ROX public catalog is applied"
++  );
++  assert.deepEqual(
++    findOpenRouterEntries(models).map((model) => model.id),
++    []
++  );
++});
+diff --git a/tests/unit/rox-public-model-policy.test.ts b/tests/unit/rox-public-model-policy.test.ts
+index 1bf036723..2ae35b7c9 100644
+--- a/tests/unit/rox-public-model-policy.test.ts
++++ b/tests/unit/rox-public-model-policy.test.ts
+@@ -1,12 +1,12 @@
+ import test from "node:test";
+ import assert from "node:assert/strict";
+ import {
+-	buildRoxPublicCatalog,
+-	getRoxPublicModelFallbackChain,
+-	getRoxPublicModelSpecs,
+-	isOpenRouterCatalogEntry,
+-	isRoxPublicModelId,
+-	ROX_FALLBACK_CHAINS,
++  buildRoxPublicCatalog,
++  getRoxPublicModelFallbackChain,
++  getRoxPublicModelSpecs,
++  isOpenRouterCatalogEntry,
++  isRoxPublicModelId,
++  ROX_FALLBACK_CHAINS,
+ } from "../../src/lib/roxPublicModelPolicy.ts";
+ 
+ test("ROX public catalog exposes stable endpoint IDs and hides upstream targets", () => {
+@@ -26,39 +26,86 @@ test("ROX public catalog exposes stable endpoint IDs and hides upstream targets"
+ });
+ 
+ test("ROX catalog filter recognizes every OpenRouter The Old LLM representation", () => {
+-  assert.equal(isOpenRouterCatalogEntry({ id: "openrouter_gpt_4_o", parent: "tllm/openrouter_gpt_4_o" }), true);
+-  assert.equal(isOpenRouterCatalogEntry({ id: "tllm/openrouter_grok_4", root: "openrouter_grok_4" }), true);
++  assert.equal(
++    isOpenRouterCatalogEntry({ id: "openrouter_gpt_4_o", parent: "tllm/openrouter_gpt_4_o" }),
++    true
++  );
++  assert.equal(
++    isOpenRouterCatalogEntry({ id: "tllm/openrouter_grok_4", root: "openrouter_grok_4" }),
++    true
++  );
+   assert.equal(isOpenRouterCatalogEntry({ id: "tllm/GPT_5_4", root: "GPT_5_4" }), false);
+ });
+ 
++test("ROX catalog filter recognizes canonical OpenRouter catalog entries", () => {
++  // The record the live OpenRouter branch of the catalog builder pushes.
++  assert.equal(
++    isOpenRouterCatalogEntry({
++      id: "openrouter/google/gemini-2.5-flash",
++      owned_by: "openrouter",
++      root: "google/gemini-2.5-flash",
++      parent: null,
++    }),
++    true
++  );
++  // Ownership alone is enough: prefix modes rewrite ids, they do not rewrite owners.
++  assert.equal(
++    isOpenRouterCatalogEntry({ id: "google/gemini-2.5-flash", owned_by: "OpenRouter " }),
++    true
++  );
++  // The alias can sit deeper in a provider-scoped path.
++  assert.equal(isOpenRouterCatalogEntry({ id: "agy/openrouter/google/chirp-3" }), true);
++  assert.equal(isOpenRouterCatalogEntry({ id: "openrouter/auto", owned_by: "openrouter" }), true);
++  assert.equal(isOpenRouterCatalogEntry({ id: "custom/x", provider: "openrouter" }), true);
++});
++
++test("ROX catalog filter leaves non-OpenRouter entries alone", () => {
++  assert.equal(
++    isOpenRouterCatalogEntry({ id: "openai/gpt-5", owned_by: "openai", root: "gpt-5" }),
++    false
++  );
++  assert.equal(
++    isOpenRouterCatalogEntry({ id: "rox/max", owned_by: "rox", root: "rox/max" }),
++    false
++  );
++  // Substring lookalikes must not be swept up: only exact owners and path segments.
++  assert.equal(isOpenRouterCatalogEntry({ id: "acme/openrouter-proxy", owned_by: "acme" }), false);
++  assert.equal(isOpenRouterCatalogEntry({ id: "acme/router", owned_by: "openrouterish" }), false);
++  assert.equal(isOpenRouterCatalogEntry({}), false);
++});
++
+ test("ROX fallback chains start with the public spec target and never downgrade max", () => {
+   for (const spec of getRoxPublicModelSpecs()) {
+     assert.equal(ROX_FALLBACK_CHAINS[spec.id]?.[0], spec.target);
+   }
+-	assert.deepEqual(ROX_FALLBACK_CHAINS["rox/max"], ["opencode-go/kimi-k3"]);
++  assert.deepEqual(ROX_FALLBACK_CHAINS["rox/max"], ["opencode-go/kimi-k3"]);
+ });
+ 
+ test("ROX public IDs resolve to exact immutable fallback chains", () => {
+-	const expectedChains = {
+-		"rox/explore": ["kmc/kimi-for-coding", "opencode-go/kimi-k2.7-code", "opencode-go/kimi-k2.6"],
+-		"rox/standard": ["opencode-go/kimi-k2.6", "fireworks/kimi-k2p6", "baseten/moonshotai/Kimi-K2.6"],
+-		"rox/max": ["opencode-go/kimi-k3"],
+-		"rox/vision": ["agy/gemini-3.6-flash-high", "agy/gemini-2.5-flash"],
+-		"rox/fast": ["agy/gemini-3.6-flash-low", "agy/gemini-2.5-flash-lite"],
+-	};
++  const expectedChains = {
++    "rox/explore": ["kmc/kimi-for-coding", "opencode-go/kimi-k2.7-code", "opencode-go/kimi-k2.6"],
++    "rox/standard": [
++      "opencode-go/kimi-k2.6",
++      "fireworks/kimi-k2p6",
++      "baseten/moonshotai/Kimi-K2.6",
++    ],
++    "rox/max": ["opencode-go/kimi-k3"],
++    "rox/vision": ["agy/gemini-3.6-flash-high", "agy/gemini-2.5-flash"],
++    "rox/fast": ["agy/gemini-3.6-flash-low", "agy/gemini-2.5-flash-lite"],
++  };
+ 
+-	for (const spec of getRoxPublicModelSpecs()) {
+-		assert.equal(isRoxPublicModelId(spec.id), true);
+-		assert.equal(getRoxPublicModelFallbackChain(spec.id), ROX_FALLBACK_CHAINS[spec.id]);
+-		assert.deepEqual(getRoxPublicModelFallbackChain(spec.id), expectedChains[spec.id]);
+-		assert.equal(Object.isFrozen(getRoxPublicModelFallbackChain(spec.id)), true);
+-	}
++  for (const spec of getRoxPublicModelSpecs()) {
++    assert.equal(isRoxPublicModelId(spec.id), true);
++    assert.equal(getRoxPublicModelFallbackChain(spec.id), ROX_FALLBACK_CHAINS[spec.id]);
++    assert.deepEqual(getRoxPublicModelFallbackChain(spec.id), expectedChains[spec.id]);
++    assert.equal(Object.isFrozen(getRoxPublicModelFallbackChain(spec.id)), true);
++  }
+ 
+-	assert.equal(isRoxPublicModelId("rox/unknown"), false);
+-	assert.equal(getRoxPublicModelFallbackChain("rox/unknown"), null);
+-	assert.equal(isRoxPublicModelId("openai/gpt-5"), false);
+-	assert.equal(getRoxPublicModelFallbackChain("openai/gpt-5"), null);
+-	assert.equal(getRoxPublicModelFallbackChain(null), null);
+-	assert.deepEqual(getRoxPublicModelFallbackChain("rox/max"), ["opencode-go/kimi-k3"]);
+-	assert.equal(getRoxPublicModelFallbackChain("rox/max")?.length, 1);
++  assert.equal(isRoxPublicModelId("rox/unknown"), false);
++  assert.equal(getRoxPublicModelFallbackChain("rox/unknown"), null);
++  assert.equal(isRoxPublicModelId("openai/gpt-5"), false);
++  assert.equal(getRoxPublicModelFallbackChain("openai/gpt-5"), null);
++  assert.equal(getRoxPublicModelFallbackChain(null), null);
++  assert.deepEqual(getRoxPublicModelFallbackChain("rox/max"), ["opencode-go/kimi-k3"]);
++  assert.equal(getRoxPublicModelFallbackChain("rox/max")?.length, 1);
+ });
+diff --git a/tests/unit/specialty-model-hidden-openrouter-9293.test.ts b/tests/unit/specialty-model-hidden-openrouter-9293.test.ts
+index 4599b2690..23deadc2d 100644
+--- a/tests/unit/specialty-model-hidden-openrouter-9293.test.ts
++++ b/tests/unit/specialty-model-hidden-openrouter-9293.test.ts
+@@ -10,8 +10,13 @@
+  *
+  * This test: seeds an OpenRouter connection, hides two OpenRouter specialty
+  * models (audio: google/chirp-3, image: black-forest-labs/flux.2-pro), then
+- * verifies the hidden models are excluded from the /v1/models catalog while
+- * non-hidden models still appear.
++ * verifies the hidden models are excluded from the /v1/models catalog.
++ *
++ * ROX divergence: this fork publishes no OpenRouter model at all, so the catalog
++ * can no longer distinguish "hidden" from "visible" for this provider — the
++ * non-hidden control (deepgram/nova-3) is withheld too. The hidden-flag storage
++ * and path matching that #9293 fixed are asserted directly against
++ * getModelIsHidden below; the catalog half now pins the ROX exclusion instead.
+  */
+ import test from "node:test";
+ import assert from "node:assert/strict";
+@@ -114,8 +119,12 @@ test("#9293 hidden OpenRouter specialty models are excluded from /v1/models cata
+     "#9293 RED: hidden image model openrouter/black-forest-labs/flux.2-pro should NOT appear in catalog"
+   );
+ 
+-  // Verify non-hidden audio models from OpenRouter still appear
+-  // deepgram/nova-3 is not hidden, so it should be present
++  // ROX: the non-hidden control is withheld as well — no OpenRouter specialty
++  // model is published, hidden flag or not.
+   const visibleAudio = audioModels.find((m) => String(m.id).endsWith("deepgram/nova-3"));
+-  assert.ok(visibleAudio, "non-hidden audio model deepgram/nova-3 should still appear in catalog");
++  assert.equal(visibleAudio, undefined, "ROX excludes OpenRouter audio models from the catalog");
++  assert.deepEqual(
++    body.data.filter((m) => String(m.id).startsWith("openrouter/")).map((m) => m.id),
++    []
++  );
+ });
+-- 
+2.43.0
+
