@@ -27,7 +27,7 @@ This correction does not introduce the provider, importer, broker, runtime lease
 
 ## Additional adversarial invariants
 
-- Metadata registration rejects unknown top-level and nested locator fields, including secret-shaped widening.
+- Metadata registration rejects unknown enumerable top-level and nested locator fields, including secret-shaped widening. Non-enumerable and symbol-keyed properties are dropped rather than rejected, because both modules rebuild a fresh object from allowlisted keys; no such value reaches stored metadata.
 - Version fingerprints must be 64 lowercase hexadecimal characters; a raw secret cannot occupy the fingerprint slot.
 - A newly registered active version cannot silently replace a newer active version.
 - Revoked and invalid versions are terminal.
@@ -75,12 +75,29 @@ result and is never serialized.
 2. Payload fields are read exactly once. Re-reading a caller object let an
    accessor return a conforming value to the validation and a different one to
    the stored copy.
-3. The authenticated data covers the codec and envelope version, so a future
-   v2 envelope cannot be presented as a v1 one carrying the same digest.
+3. The authenticated data covers every envelope constant — format, version,
+   codec and fingerprint algorithm — so a future v2 envelope or a different
+   digest algorithm cannot be presented as a v1 one carrying the same digest.
 4. Payload size is bounded in total, not only per field; per-field bounds alone
    let a many-field legacy object reach several megabytes.
 5. Caller-controlled keys and identifiers interpolated into error messages are
    truncated, so one rejected call cannot write an unbounded string to logs.
+6. The fingerprint binding is a structured `{ credentialRefId, providerVersion }`
+   rather than a caller-joined string. Joining reintroduced the ambiguity the
+   canonical encoding exists to prevent, because `'cred_a/b' + '/' + 'c'` and
+   `'cred_a' + '/' + 'b/c'` are the same string.
+7. The payload allowlist is bound to `StoredCredential` at compile time, so
+   adding a field there without classifying it in the codec fails the
+   typecheck instead of silently making every payload carrying that field
+   throw on encode and decode to null.
+
+## Naming collision to resolve in CF-2
+
+`ServiceConnection.credentialRef` in `platform/identity/types.ts` is a
+pre-existing, weaker "opaque ref into CredentialManager" and has no linkage to
+the `CredentialRefId` introduced here. Two unrelated credential-reference
+notions now live one file apart. CF-2 should reconcile them rather than let
+both grow.
 
 ## Deferred work
 

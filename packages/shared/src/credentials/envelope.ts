@@ -37,32 +37,57 @@ export interface DecodedCredentialEnvelope extends CredentialEnvelopeV1 {
 }
 
 /**
- * The key is installation/provider material and MUST NOT be serialized with the
- * envelope. `binding` is stable metadata such as credentialRef + provider
- * version; it prevents equal payloads in unrelated credentials from sharing a
- * public comparison digest.
+ * Stable metadata identifying which credential and provider version a digest
+ * belongs to, so equal payloads in unrelated credentials cannot share a public
+ * comparison digest.
+ *
+ * Structured rather than a caller-joined string: joining reintroduces exactly
+ * the ambiguity the canonical encoding exists to prevent, because
+ * `'cred_a/b' + '/' + 'c'` and `'cred_a' + '/' + 'b/c'` are the same string.
+ */
+export interface CredentialEnvelopeBinding {
+  readonly credentialRefId: string;
+  readonly providerVersion?: string;
+}
+
+/**
+ * The key is installation/provider material and MUST NOT be serialized with
+ * the envelope.
  */
 export interface CredentialEnvelopeContext {
   readonly fingerprintKey: Uint8Array;
-  readonly binding: string;
+  readonly binding: CredentialEnvelopeBinding;
 }
 
-const STRING_FIELDS = new Set([
-  'value',
-  'refreshToken',
-  'clientId',
-  'clientSecret',
-  'tokenType',
-  'idToken',
-  'awsAccessKeyId',
-  'awsRegion',
-  'awsSessionToken',
-  'gcpProjectId',
-  'gcpRegion',
-  'serviceAccountEmail',
-]);
+/**
+ * Bound to `StoredCredential` at compile time. Adding a field there without
+ * classifying it here fails the typecheck, rather than silently making every
+ * payload that carries the new field throw on encode and decode to null.
+ */
+const PAYLOAD_FIELD_KINDS = {
+  value: 'string',
+  refreshToken: 'string',
+  expiresAt: 'timestamp',
+  clientId: 'string',
+  clientSecret: 'string',
+  tokenType: 'string',
+  source: 'source',
+  idToken: 'string',
+  awsAccessKeyId: 'string',
+  awsRegion: 'string',
+  awsSessionToken: 'string',
+  gcpProjectId: 'string',
+  gcpRegion: 'string',
+  serviceAccountEmail: 'string',
+} satisfies Record<keyof Required<StoredCredential>, 'string' | 'timestamp' | 'source'>;
 
-const ALLOWED_PAYLOAD_FIELDS = new Set([...STRING_FIELDS, 'expiresAt', 'source']);
+const STRING_FIELDS = new Set(
+  Object.entries(PAYLOAD_FIELD_KINDS)
+    .filter(([, fieldKind]) => fieldKind === 'string')
+    .map(([field]) => field),
+);
+
+const ALLOWED_PAYLOAD_FIELDS = new Set(Object.keys(PAYLOAD_FIELD_KINDS));
 const ENVELOPE_FIELDS = new Set([
   'format',
   'version',
@@ -74,6 +99,7 @@ const ENVELOPE_FIELDS = new Set([
 ]);
 const ENVELOPE_INPUT_FIELDS = new Set(['kind', 'payload']);
 const CONTEXT_FIELDS = new Set(['fingerprintKey', 'binding']);
+const BINDING_FIELDS = new Set(['credentialRefId', 'providerVersion']);
 const FINGERPRINT_PATTERN = /^[0-9a-f]{64}$/;
 const MAX_CREDENTIAL_FIELD_LENGTH = 1_048_576;
 const MAX_CREDENTIAL_ENVELOPE_LENGTH = 1_100_000;
@@ -195,17 +221,32 @@ function normalizeContext(value: CredentialEnvelopeContext): CredentialEnvelopeC
   if (!(value.fingerprintKey instanceof Uint8Array) || value.fingerprintKey.byteLength < 32) {
     throw new Error('Credential envelope fingerprint key must contain at least 32 bytes');
   }
-  if (typeof value.binding !== 'string') {
-    throw new Error('Credential envelope binding is invalid');
-  }
-  const binding = value.binding.trim();
-  if (binding.length === 0 || binding.length > MAX_BINDING_LENGTH) {
-    throw new Error('Credential envelope binding is invalid');
-  }
   return {
     fingerprintKey: new Uint8Array(value.fingerprintKey),
-    binding,
+    binding: normalizeBinding(value.binding),
   };
+}
+
+function normalizeBinding(value: unknown): CredentialEnvelopeBinding {
+  if (!isRecord(value) || !hasOnlyKeys(value, BINDING_FIELDS)) {
+    throw new Error('Credential envelope binding is invalid');
+  }
+
+  const credentialRefId = boundedBindingPart(value.credentialRefId);
+  if (value.providerVersion === undefined) return { credentialRefId };
+
+  return { credentialRefId, providerVersion: boundedBindingPart(value.providerVersion) };
+}
+
+function boundedBindingPart(value: unknown): string {
+  if (typeof value !== 'string') {
+    throw new Error('Credential envelope binding is invalid');
+  }
+  const trimmed = value.trim();
+  if (trimmed.length === 0 || trimmed.length > MAX_BINDING_LENGTH) {
+    throw new Error('Credential envelope binding is invalid');
+  }
+  return trimmed;
 }
 
 function hexToBytes(value: string): Uint8Array {
@@ -241,9 +282,12 @@ export function credentialPayloadFingerprint(
     .update(
       canonicalize({
         binding: normalizedContext.binding,
-        // Codec and version are part of the authenticated data so a future v2
-        // envelope can never be presented as a v1 one carrying the same digest.
+        // Every envelope constant is authenticated, so a future v2 envelope or
+        // a different codec/digest algorithm can never be presented as a v1 one
+        // carrying the same digest.
         codec: CREDENTIAL_ENVELOPE_CODEC,
+        fingerprintAlgorithm: CREDENTIAL_ENVELOPE_FINGERPRINT_ALGORITHM,
+        format: CREDENTIAL_ENVELOPE_FORMAT,
         kind,
         payload: normalizedPayload,
         version: CREDENTIAL_ENVELOPE_VERSION,

@@ -38,6 +38,7 @@ export {
   encodeCredentialEnvelope,
 } from './envelope.ts';
 export type {
+  CredentialEnvelopeBinding,
   CredentialEnvelopeContext,
   CredentialEnvelopeInput,
   CredentialEnvelopeProvenance,

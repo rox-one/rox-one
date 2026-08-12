@@ -352,6 +352,9 @@ export class CredentialRefRegistry {
       throw new Error('Invalid credential version status');
     }
 
+    if (!isCredentialRefId(input.credentialRefId)) {
+      throw new Error('Invalid credential metadata: credentialRefId');
+    }
     this.requireRef(input.credentialRefId);
     // Normalize before the collision check: the stored key is the trimmed id,
     // so checking the raw input would let " ver_1" overwrite "ver_1" and

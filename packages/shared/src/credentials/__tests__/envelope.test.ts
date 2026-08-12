@@ -10,13 +10,14 @@ import {
 
 const KEY_A = Uint8Array.from({ length: 32 }, (_, index) => index + 1);
 const KEY_B = Uint8Array.from({ length: 32 }, (_, index) => 255 - index);
+const CREDENTIAL_REF = 'cred_123e4567-e89b-12d3-a456-426614174000';
 const CONTEXT_A = {
   fingerprintKey: KEY_A,
-  binding: 'cred_123e4567-e89b-12d3-a456-426614174000/provider-version-1',
+  binding: { credentialRefId: CREDENTIAL_REF, providerVersion: 'provider-version-1' },
 };
 const CONTEXT_B = {
   fingerprintKey: KEY_A,
-  binding: 'cred_123e4567-e89b-12d3-a456-426614174000/provider-version-2',
+  binding: { credentialRefId: CREDENTIAL_REF, providerVersion: 'provider-version-2' },
 };
 
 describe('credential envelope v1', () => {
@@ -122,7 +123,8 @@ describe('credential envelope v1', () => {
 
     expect('fingerprintKey' in parsed).toBe(false);
     expect('binding' in parsed).toBe(false);
-    expect(encoded).not.toContain(CONTEXT_A.binding);
+    expect(encoded).not.toContain(CONTEXT_A.binding.credentialRefId);
+    expect(encoded).not.toContain(CONTEXT_A.binding.providerVersion);
   });
 
   it('rejects a wrong key or binding without exposing the payload', () => {
@@ -197,7 +199,7 @@ describe('credential envelope v1', () => {
     expect(() =>
       encodeCredentialEnvelope(
         { kind: 'api_key', payload: { value: 'secret' } },
-        { fingerprintKey: new Uint8Array(31), binding: 'binding' },
+        { fingerprintKey: new Uint8Array(31), binding: { credentialRefId: CREDENTIAL_REF } },
       ),
     ).toThrow();
 
@@ -206,7 +208,7 @@ describe('credential envelope v1', () => {
         { kind: 'api_key', payload: { value: 'secret' } },
         {
           fingerprintKey: KEY_A,
-          binding: 'binding',
+          binding: { credentialRefId: CREDENTIAL_REF },
           leaked: 'secret',
         } as never,
       ),
@@ -336,14 +338,58 @@ describe('credential envelope v1', () => {
     ).toBeNull();
   });
 
-  it('authenticates the codec and version alongside binding, kind and payload', () => {
+  it('authenticates every envelope constant, not just kind and payload', () => {
     const actual = credentialPayloadFingerprint('api_key', { value: 'secret' }, CONTEXT_A);
-    const withoutCodecAndVersion = createHmac('sha256', KEY_A)
+    const withoutEnvelopeConstants = createHmac('sha256', KEY_A)
       .update(
-        `{"binding":${JSON.stringify(CONTEXT_A.binding)},"kind":"api_key","payload":{"value":"secret"}}`,
+        `{"binding":{"credentialRefId":${JSON.stringify(CREDENTIAL_REF)},"providerVersion":"provider-version-1"},"kind":"api_key","payload":{"value":"secret"}}`,
       )
       .digest('hex');
 
-    expect(actual).not.toBe(withoutCodecAndVersion);
+    expect(actual).not.toBe(withoutEnvelopeConstants);
+  });
+
+  it('keeps binding components separate so a different split cannot collide', () => {
+    const payload = { value: 'secret' };
+    const left = credentialPayloadFingerprint('api_key', payload, {
+      fingerprintKey: KEY_A,
+      binding: { credentialRefId: 'cred_a/b', providerVersion: 'c' },
+    });
+    const right = credentialPayloadFingerprint('api_key', payload, {
+      fingerprintKey: KEY_A,
+      binding: { credentialRefId: 'cred_a', providerVersion: 'b/c' },
+    });
+
+    expect(left).not.toBe(right);
+  });
+
+  it('rejects malformed bindings', () => {
+    const payload = { value: 'secret' };
+
+    for (const binding of [
+      'cred_a/v1',
+      {},
+      { providerVersion: 'v1' },
+      { credentialRefId: '   ' },
+      { credentialRefId: CREDENTIAL_REF, providerVersion: '' },
+      { credentialRefId: CREDENTIAL_REF, extra: 'nope' },
+    ]) {
+      expect(() =>
+        credentialPayloadFingerprint('api_key', payload, {
+          fingerprintKey: KEY_A,
+          binding,
+        } as never),
+      ).toThrow();
+    }
+  });
+
+  it('omitting providerVersion is distinct from supplying one', () => {
+    const payload = { value: 'secret' };
+    const bare = credentialPayloadFingerprint('api_key', payload, {
+      fingerprintKey: KEY_A,
+      binding: { credentialRefId: CREDENTIAL_REF },
+    });
+
+    expect(bare).not.toBe(credentialPayloadFingerprint('api_key', payload, CONTEXT_A));
   });
 });
