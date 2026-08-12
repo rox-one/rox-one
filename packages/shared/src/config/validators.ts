@@ -411,7 +411,28 @@ const SourceTypeSchema = z.enum(['mcp', 'api', 'local']);
 const McpSourceConfigSchema = z.object({
   transport: z.enum(['http', 'sse', 'stdio']).optional(),
   // HTTP/SSE fields
-  url: z.string().url().optional(),
+  url: z
+    .string()
+    .url()
+    .optional()
+    .refine(
+      (url) => {
+        if (!url) return true;
+        try {
+          const parsed = new URL(url);
+          // Credentialed URLs (http://user:pass@host) leak credentials into
+          // logs and onto the wire — auth belongs in headers/authType.
+          return !parsed.username && !parsed.password;
+        } catch {
+          // Malformed URLs are already reported by z.string().url().
+          return true;
+        }
+      },
+      {
+        message:
+          'MCP URL must not contain credentials (userinfo like user:pass@host); use authType/headers instead',
+      }
+    ),
   authType: z.enum(['oauth', 'bearer', 'none']).optional(),
   clientId: z.string().optional(),
   // Stdio fields

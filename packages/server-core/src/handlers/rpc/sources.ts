@@ -329,7 +329,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
         return { success: false, error: 'Source has not been tested yet' }
       }
 
-      const { CraftMcpClient } = await import('@craft-agent/shared/mcp')
+      const { CraftMcpClient, formatMcpUrlForLog } = await import('@craft-agent/shared/mcp')
       let client: InstanceType<typeof CraftMcpClient>
 
       if (source.config.mcp.transport === 'stdio') {
@@ -363,7 +363,10 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
           accessToken = credential?.value
         }
 
-        log.info(`Fetching MCP tools from ${source.config.mcp.url}`)
+        // Log only origin + pathname — the configured URL may carry userinfo
+        // or query-string credentials (hand-edited config.json bypasses
+        // save-time validation).
+        log.info(`Fetching MCP tools from ${formatMcpUrlForLog(source.config.mcp.url)}`)
         const headers: Record<string, string> = {
           ...(source.config.mcp.headers || {}),
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),

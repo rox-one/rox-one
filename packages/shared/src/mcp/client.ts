@@ -98,6 +98,32 @@ export function isBlockedEnvVar(key: string): boolean {
 }
 
 /**
+ * Defensive userinfo strip for remote MCP endpoint URLs. Credentialed URLs
+ * (`http://user:pass@host`) are rejected at source-config validation, but a
+ * hand-edited config.json can still reach this constructor — never let
+ * credentials ride the wire or echo back through SDK error messages.
+ */
+function withoutUserinfo(rawUrl: string): URL {
+  const url = new URL(rawUrl);
+  url.username = '';
+  url.password = '';
+  return url;
+}
+
+/**
+ * Log-safe rendering of an MCP endpoint URL: origin + pathname only — never
+ * userinfo, query string, or hash (all of which may carry credentials).
+ */
+export function formatMcpUrlForLog(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    return `${url.origin}${url.pathname}`;
+  } catch {
+    return '<invalid-url>';
+  }
+}
+
+/**
  * Interface for clients managed by McpClientPool.
  * Both CraftMcpClient (remote MCP sources) and ApiSourcePoolClient (API sources) implement this.
  */
@@ -141,7 +167,7 @@ export class CraftMcpClient {
       // covers both paths (handshake via the eventsource fetch passthrough,
       // POSTs via transport fetch) — SSRF: no cross-origin redirect follows.
       this.transport = new SSEClientTransport(
-        new URL(config.url),
+        withoutUserinfo(config.url),
         {
           requestInit: {
             headers: config.headers,
@@ -153,7 +179,7 @@ export class CraftMcpClient {
       // Streamable HTTP transport for remote MCP servers. Guarded fetch:
       // same-origin redirects only (SSRF protection, see guarded-fetch.ts).
       this.transport = new StreamableHTTPClientTransport(
-        new URL(config.url),
+        withoutUserinfo(config.url),
         {
           requestInit: {
             headers: config.headers,

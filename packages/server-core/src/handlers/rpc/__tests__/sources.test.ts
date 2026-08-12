@@ -34,6 +34,10 @@ import {
 } from '@craft-agent/shared/sources'
 import { resolveStdioConfig } from '@craft-agent/shared/utils'
 
+// Real log-scrub helper, imported by relative path so the barrel mock below
+// doesn't shadow it — the handler must log THIS function's output.
+import { formatMcpUrlForLog } from '../../../../../shared/src/mcp/client.ts'
+
 // Captured constructor configs of CraftMcpClient (module seam below) — lets
 // the GET_MCP_TOOLS tests assert exactly which client config the handler built
 // without spawning real MCP servers.
@@ -49,6 +53,7 @@ mock.module('@craft-agent/shared/mcp', () => ({
     }
     async close() {}
   },
+  formatMcpUrlForLog,
 }))
 
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
@@ -79,7 +84,7 @@ mock.module('@craft-agent/shared/config', () => ({
   getWorkspaces: () => [...mockWorkspaces],
 }))
 
-function createHarness() {
+function createHarness(infoLog?: string[]) {
   const handlers = new Map<string, HandlerFn>()
   const server: RpcServer = {
     handle(channel, handler) { handlers.set(channel, handler) },
@@ -97,7 +102,12 @@ function createHarness() {
       isPackaged: false,
       appVersion: '0.0.0-test',
       isDebugMode: true,
-      logger: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
+      logger: {
+        info: (msg: unknown) => { infoLog?.push(String(msg)) },
+        warn: () => {},
+        error: () => {},
+        debug: () => {},
+      },
       imageProcessor: { getMetadata: async () => null, process: async () => Buffer.from('') },
     },
   }
@@ -302,5 +312,49 @@ describe('sources:getMcpTools — stdio config normalization', () => {
     expect(result.success).toBe(false)
     expect(result.error).toContain('command')
     expect(mcpClientConfigs).toHaveLength(0)
+  })
+})
+
+describe('sources:getMcpTools — MCP URL log scrubbing', () => {
+  it('logs only origin + pathname for a credentialed URL (no userinfo, no query)', async () => {
+    const rootPath = mockWorkspaces[1]!.rootPath
+    // Credentialed URLs are rejected by saveSourceConfig validation, so write
+    // config.json directly — simulates a hand-edited or legacy file.
+    const { mkdirSync, writeFileSync } = await import('fs')
+    const dir = join(rootPath, 'sources', 'cred-url')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(
+      join(dir, 'config.json'),
+      JSON.stringify({
+        id: 'src-cred-url',
+        name: 'Credentialed URL',
+        slug: 'cred-url',
+        enabled: true,
+        provider: 'test',
+        type: 'mcp',
+        connectionStatus: 'connected',
+        mcp: {
+          transport: 'http',
+          url: 'http://user:pass@example.com:8080/mcp?apikey=secret123',
+          authType: 'none',
+        },
+      }),
+    )
+    const infoLog: string[] = []
+    const { invoke } = createHarness(infoLog)
+
+    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', 'cred-url')) as {
+      success: boolean
+      error?: string
+    }
+    expect(result.success).toBe(true)
+
+    const fetchLines = infoLog.filter((l) => l.includes('Fetching MCP tools from'))
+    expect(fetchLines).toHaveLength(1)
+    expect(fetchLines[0]).toContain('http://example.com:8080/mcp')
+    const allLogs = infoLog.join('\n')
+    expect(allLogs).not.toContain('user:pass')
+    expect(allLogs).not.toContain('apikey')
+    expect(allLogs).not.toContain('secret123')
   })
 })
