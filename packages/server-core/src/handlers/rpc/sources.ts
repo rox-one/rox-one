@@ -333,15 +333,20 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       let client: InstanceType<typeof CraftMcpClient>
 
       if (source.config.mcp.transport === 'stdio') {
-        if (!source.config.mcp.command) {
+        // Resolve platform overrides + expand ${WORKSPACE}/${SOURCE_DIR} exactly
+        // like the real session path (server-builder buildMcpServer) so tool
+        // discovery and the actual connection use the same command/args/env.
+        const { resolveStdioConfig } = await import('@craft-agent/shared/utils')
+        const resolved = resolveStdioConfig(source.config.mcp, workspace.rootPath, source.folderPath)
+        if (!resolved) {
           return { success: false, error: 'Stdio MCP source is missing required "command" field' }
         }
-        log.info(`Fetching MCP tools via stdio: ${source.config.mcp.command}`)
+        log.info(`Fetching MCP tools via stdio: ${resolved.command}`)
         client = new CraftMcpClient({
           transport: 'stdio',
-          command: source.config.mcp.command,
-          args: source.config.mcp.args,
-          env: source.config.mcp.env,
+          command: resolved.command,
+          args: resolved.args,
+          env: resolved.env,
         })
       } else {
         if (!source.config.mcp.url) {
@@ -364,7 +369,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         }
         client = new CraftMcpClient({
-          transport: 'http',
+          // Honor the declared transport — CraftMcpClient supports legacy SSE.
+          transport: source.config.mcp.transport === 'sse' ? 'sse' : 'http',
           url: source.config.mcp.url,
           headers: Object.keys(headers).length > 0 ? headers : undefined,
         })

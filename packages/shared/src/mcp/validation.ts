@@ -155,10 +155,11 @@ export async function validateMcpConnection(
     ...(config.mcpAccessToken ? { Authorization: `Bearer ${config.mcpAccessToken}` } : {}),
   };
 
-  // SSE transport is not supported by CraftMcpClient (HTTP only). Streamable
-  // HTTP is the modern transport; SSE servers will surface a clear connect error.
+  // Honor the declared transport: CraftMcpClient supports both Streamable
+  // HTTP and legacy SSE. Coercing sse → http fails deterministically against
+  // SSE-only servers.
   const mcpClient = new CraftMcpClient({
-    transport: 'http',
+    transport: config.mcpTransport === 'sse' ? 'sse' : 'http',
     url: mcpUrl,
     headers: Object.keys(headers).length > 0 ? headers : undefined,
   });
