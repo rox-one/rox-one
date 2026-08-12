@@ -84,6 +84,19 @@ const KERNEL_SEARCH_RESPONSE = {
   },
 }
 
+// Kernel-wire fixture for lsNotebooks (POST /api/notebook/lsNotebooks).
+const KERNEL_NOTEBOOKS_RESPONSE = {
+  code: 0,
+  msg: '',
+  data: {
+    notebooks: [
+      { id: 'nb-1', name: 'Research', icon: '1f4da', sort: 0, sortMode: 0, closed: false, subFileCount: 12 },
+      { id: 'nb-2', name: 'Inbox', icon: '', sort: 1, sortMode: 0, closed: true, subFileCount: 3 },
+    ],
+    boxDocEnabled: true,
+  },
+}
+
 const credentials = new Map<string, { value: string }>()
 const fetchCalls: Array<{ url: string; init: RequestInit }> = []
 let kernelProbeError: Error | null = null
@@ -105,6 +118,12 @@ function installFetchSeam() {
     }
     if (u.endsWith('/api/search/fullTextSearchBlock')) {
       return new Response(JSON.stringify(KERNEL_SEARCH_RESPONSE), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    if (u.endsWith('/api/notebook/lsNotebooks')) {
+      return new Response(JSON.stringify(KERNEL_NOTEBOOKS_RESPONSE), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
@@ -211,6 +230,7 @@ describe('registration', () => {
       RPC_CHANNELS.knowledge.GET_CONTEXT,
       RPC_CHANNELS.knowledge.GET_BACKLINKS,
       RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
+      RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
       RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
       RPC_CHANNELS.knowledge.SNAPSHOT_GET,
       RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -246,7 +266,7 @@ describe('registration', () => {
     expect(HANDLED_CHANNELS.some((ch) => /engineStop/i.test(ch))).toBe(false)
     // CHANGED is a server→client push event subscribed via knowledge.onChanged, not a handler.
     expect([...HANDLED_CHANNELS]).not.toContain(RPC_CHANNELS.knowledge.CHANGED)
-    expect(HANDLED_CHANNELS).toHaveLength(37) // + DETECT_ENGINE + METRICS_GET
+    expect(HANDLED_CHANNELS).toHaveLength(38) // + DETECT_ENGINE + METRICS_GET + LIST_NOTEBOOKS
   })
 
   it('registers a handler for every declared channel and nothing else', () => {
@@ -343,6 +363,39 @@ describe('knowledge session-tool runtime registration', () => {
     expect(text).toContain('Kernel Guide')
     expect(text).toContain('siyuan/document/doc-1')
     expect(text).toContain('siyuan://blocks/doc-1')
+  })
+})
+
+describe('listNotebooks', () => {
+  it('serves the kernel notebook list for a configured connection (navigator tree)', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    const { invoke } = createHarness()
+    const notebooks = (await invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-1' })) as Array<Record<string, unknown>>
+    expect(notebooks).toEqual([
+      { id: 'nb-1', name: 'Research', icon: '1f4da', closed: false },
+      { id: 'nb-2', name: 'Inbox', icon: '', closed: true },
+    ])
+    const call = fetchCalls.find((c) => c.url.endsWith('/api/notebook/lsNotebooks'))!
+    expect((call.init.headers as Record<string, string>)['Authorization']).toBe('Token secret-token-1')
+  })
+
+  it('rejects an unknown connectionId with CodedError NOT_FOUND before touching the kernel', async () => {
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-missing' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('maps an unreachable kernel to a typed CONNECTION_UNAVAILABLE (never a raw throw)', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    kernelProbeError = new Error('connect ECONNREFUSED 127.0.0.1:6806')
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-1' }),
+    ).rejects.toMatchObject({ code: 'CONNECTION_UNAVAILABLE' })
   })
 })
 

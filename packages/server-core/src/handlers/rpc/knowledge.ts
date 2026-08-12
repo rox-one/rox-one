@@ -79,6 +79,7 @@ import type {
   ContextPayload,
   ContextSnapshot,
   KnowledgeConnection,
+  KnowledgeNotebookInfo,
   KnowledgeProvider,
   KnowledgeRef,
   KnowledgeWorkEnvelope,
@@ -176,6 +177,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.knowledge.GET_CONTEXT,
   RPC_CHANNELS.knowledge.GET_BACKLINKS,
   RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
+  RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
   RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
   RPC_CHANNELS.knowledge.SNAPSHOT_GET,
   RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -664,6 +666,34 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     )
     return payload.backlinks
   })
+
+  // ——— LIST_NOTEBOOKS({connectionId}) → KnowledgeNotebookInfo[] ———
+  // Navigator tree data. The KnowledgeProvider contract has no listNotebooks method
+  // (K-03 §3.2), so this reads the kernel client's lsNotebooks wrapper directly —
+  // same token/baseUrl resolution as MIGRATE_NOTES. Typed errors only
+  // (NOT_FOUND / CONNECTION_UNAVAILABLE via toTransportError).
+  server.handle(
+    RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+    async (_ctx, args: KnowledgeConnectionArgs): Promise<KnowledgeNotebookInfo[]> => {
+      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
+        throw new CodedError('INVALID_REF', 'knowledge.listNotebooks: connectionId is required')
+      }
+      const record = requireConnection(args.connectionId)
+      const token = await readToken(record)
+      try {
+        const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
+        const notebooks = await client.listNotebooks()
+        return notebooks.map((notebook) => ({
+          id: notebook.id,
+          name: notebook.name,
+          icon: notebook.icon,
+          closed: notebook.closed === true,
+        }))
+      } catch (error) {
+        throw toTransportError(error)
+      }
+    },
+  )
 
   // ——— GET_EXPORT_PAYLOAD({connectionId, ref, formats?}) → KnowledgeExportPayload ———
   // P4.3 Craft chrome copy/export. Read-only: deep link always; content via provider.get

@@ -164,6 +164,8 @@ export const RPC_CHANNELS = {
     GET: 'knowledge:get',
     GET_CONTEXT: 'knowledge:getContext',
     GET_BACKLINKS: 'knowledge:getBacklinks',
+    /** Notebook listing for the navigator tree (read; kernel lsNotebooks). */
+    LIST_NOTEBOOKS: 'knowledge:listNotebooks',
     /** P4.3 Craft chrome copy/export payload (read-only; REMOTE_ELIGIBLE). */
     GET_EXPORT_PAYLOAD: 'knowledge:getExportPayload',
     SNAPSHOT_CREATE: 'knowledge:snapshotCreate',

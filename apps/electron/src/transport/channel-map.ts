@@ -302,6 +302,7 @@ export const CHANNEL_MAP = {
   'knowledge.get': invoke(RPC_CHANNELS.knowledge.GET),
   'knowledge.getContext': invoke(RPC_CHANNELS.knowledge.GET_CONTEXT),
   'knowledge.getBacklinks': invoke(RPC_CHANNELS.knowledge.GET_BACKLINKS),
+  'knowledge.listNotebooks': invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS),
   'knowledge.getExportPayload': invoke(RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD),
   'knowledge.createSnapshot': invoke(RPC_CHANNELS.knowledge.SNAPSHOT_CREATE),
   'knowledge.getSnapshot': invoke(RPC_CHANNELS.knowledge.SNAPSHOT_GET),

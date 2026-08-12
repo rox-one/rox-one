@@ -1,21 +1,27 @@
 /**
  * KnowledgeNotebookTree (W2, spec S-01 §Режим Знания) — left-nav section tree
- * for the Knowledge mode: notebooks + the static sections S-01 lists
- * (Inbox / Daily / Recent / Databases / Tags / Favorites / Saved Views).
+ * for the Knowledge mode.
  *
- * Data-mode notes:
- * - Notebooks rows are dynamic-empty: the P1 renderer surface
- *   (`window.electronAPI.knowledge`) exposes listConnections / capabilities /
- *   search / get / getContext / getBacklinks / engineStatus — but NO notebook
- *   listing RPC. A live tree replaces the empty state once such an RPC lands.
- * - Inbox/Daily/Recent/Databases/Tags/Favorites/SavedViews are static sections
- *   (dynamic-empty by design in S-01): each renders an honest empty-state row
- *   describing what will populate it.
+ * Data-mode (this slice wires the supported concepts; the rest stay honest
+ * dynamic-empty rows):
+ * - Notebooks: live via `knowledge.listNotebooks` RPC (kernel lsNotebooks).
+ *   States: loading / ok / empty / unavailable (offline kernel, missing
+ *   connection, or a preload that predates the channel — never a raw throw).
+ * - Recent: work envelopes (S-08) sorted by updatedAt desc (top 10).
+ * - Favorites: flagged work envelopes, newest first.
+ * - Saved views: workspace views.json via `knowledge.viewsList` (knowledge
+ *   domain only) — clicking a view deep-links to `knowledge/view/{id}`.
+ * - Inbox / Daily / Databases / Tags: no provider surface exists (no contract
+ *   endpoint); they keep the honest dynamic-empty row.
  *
- * i18n: agreed knowledge.* keys are used verbatim. Labels/copies absent from
- * the agreed key list (inbox/daily/tags/favorites/notebooksEmpty/sectionEmpty)
- * were added to all locales by W2-FLAG (2026-08-07) on this slice's request.
+ * Envelope rows resolve document titles best-effort through `knowledge.get`
+ * (Promise.all in the loader, fail-soft per row to the short id).
+ *
+ * i18n: agreed knowledge.* keys are used verbatim; new copy lands in all 10
+ * locales in the same change (knowledge.nav.notebooksUnavailable, updated
+ * knowledge.nav.notebooksEmpty).
  */
+import * as React from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Book,
@@ -27,9 +33,164 @@ import {
   Star,
   Tag as TagIcon,
 } from 'lucide-react'
-import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
+import { windowWorkspaceIdAtom } from '@/atoms/sessions'
+import { useNavigation } from '@/contexts/NavigationContext'
+import { routes } from '@/lib/navigate'
+import type {
+  KnowledgeNotebookInfo,
+  KnowledgeNode,
+  KnowledgeRef,
+  KnowledgeViewConfig,
+  KnowledgeWorkEnvelope,
+} from '../../shared/types'
+
+// ---------------------------------------------------------------------------
+// Data plumbing (exported for logic-level tests — KnowledgeHome precedent)
+// ---------------------------------------------------------------------------
+
+/** Subset of ElectronAPI.knowledge the navigator consumes (structural for tests). */
+export interface KnowledgeNavigatorApi {
+  listConnections(): Promise<Array<{ id: string }>>
+  listNotebooks?(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
+  viewsList?(args?: { connectionId?: string }): Promise<KnowledgeViewConfig[]>
+  envelopeList?(args?: { connectionId?: string }): Promise<KnowledgeWorkEnvelope[]>
+  get?(args: { workspaceId?: string; connectionId: string; ref: KnowledgeRef }): Promise<KnowledgeNode>
+}
+
+export interface NotebookSectionState {
+  status: 'ok' | 'empty' | 'unavailable'
+  items: KnowledgeNotebookInfo[]
+}
+
+export interface NavigatorEnvelopeRow {
+  envelope: KnowledgeWorkEnvelope
+  /** Resolved document title when the kernel answered; rows fall back to the ref id. */
+  title?: string
+}
+
+export interface KnowledgeNavigatorData {
+  notebooks: NotebookSectionState
+  views: KnowledgeViewConfig[]
+  recent: NavigatorEnvelopeRow[]
+  favorites: NavigatorEnvelopeRow[]
+}
+
+export const RECENT_SECTION_LIMIT = 10
+export const FAVORITES_SECTION_LIMIT = 10
+
+/** Recently touched work items: non-archived envelopes, updatedAt desc, capped. */
+export function selectRecentEnvelopes(
+  envelopes: KnowledgeWorkEnvelope[],
+  limit: number = RECENT_SECTION_LIMIT,
+): KnowledgeWorkEnvelope[] {
+  return envelopes
+    .filter((entry) => entry.archived !== true)
+    .sort((a, b) => b.updatedAt - a.updatedAt || a.knowledgeRef.id.localeCompare(b.knowledgeRef.id))
+    .slice(0, Math.max(limit, 0))
+}
+
+/** Pinned work items: flagged, non-archived envelopes, newest first. */
+export function selectFavoriteEnvelopes(
+  envelopes: KnowledgeWorkEnvelope[],
+  limit: number = FAVORITES_SECTION_LIMIT,
+): KnowledgeWorkEnvelope[] {
+  return envelopes
+    .filter((entry) => entry.flagged === true && entry.archived !== true)
+    .sort((a, b) => b.updatedAt - a.updatedAt || a.knowledgeRef.id.localeCompare(b.knowledgeRef.id))
+    .slice(0, Math.max(limit, 0))
+}
+
+/**
+ * Loads all navigator sections. Honest fallbacks: notebooks report
+ * 'unavailable' on a typed RPC failure / missing channel / no connection;
+ * views and envelopes fail soft to empty lists (workspace-local stores).
+ */
+export async function loadKnowledgeNavigatorData(
+  api: KnowledgeNavigatorApi,
+): Promise<KnowledgeNavigatorData> {
+  const connections = await api.listConnections().catch(() => [] as Array<{ id: string }>)
+  const connectionId = connections[0]?.id
+
+  const notebooksPromise = (async (): Promise<NotebookSectionState> => {
+    if (!connectionId || typeof api.listNotebooks !== 'function') {
+      return { status: 'unavailable', items: [] }
+    }
+    try {
+      const items = await api.listNotebooks({ connectionId })
+      return items.length === 0 ? { status: 'empty', items } : { status: 'ok', items }
+    } catch {
+      return { status: 'unavailable', items: [] }
+    }
+  })()
+
+  const viewsPromise = (async (): Promise<KnowledgeViewConfig[]> => {
+    if (typeof api.viewsList !== 'function') return []
+    try {
+      const views = await api.viewsList(connectionId ? { connectionId } : undefined)
+      return views.filter((view) => !view.domain || view.domain === 'knowledge')
+    } catch {
+      return []
+    }
+  })()
+
+  const rowsPromise = (async (): Promise<{ recent: NavigatorEnvelopeRow[]; favorites: NavigatorEnvelopeRow[] }> => {
+    if (typeof api.envelopeList !== 'function') return { recent: [], favorites: [] }
+    let envelopes: KnowledgeWorkEnvelope[]
+    try {
+      envelopes = await api.envelopeList(connectionId ? { connectionId } : undefined)
+    } catch {
+      return { recent: [], favorites: [] }
+    }
+    const recentEnvelopes = selectRecentEnvelopes(envelopes)
+    const favoriteEnvelopes = selectFavoriteEnvelopes(envelopes)
+
+    // Best-effort title resolution in parallel; per-row failure keeps the row
+    // (label falls back to the ref id) rather than poisoning the section.
+    const titles = new Map<string, string>()
+    if (typeof api.get === 'function' && connectionId) {
+      const uniqueRefs = new Map<string, KnowledgeRef>()
+      for (const entry of [...recentEnvelopes, ...favoriteEnvelopes]) {
+        uniqueRefs.set(`${entry.knowledgeRef.kind}:${entry.knowledgeRef.id}`, entry.knowledgeRef)
+      }
+      await Promise.all(
+        [...uniqueRefs.values()].map(async (ref) => {
+          try {
+            const node = await api.get!({ connectionId, ref })
+            if (typeof node?.title === 'string' && node.title) {
+              titles.set(`${ref.kind}:${ref.id}`, node.title)
+            }
+          } catch {
+            /* row keeps its ref-id label */
+          }
+        }),
+      )
+    }
+
+    const toRow = (entry: KnowledgeWorkEnvelope): NavigatorEnvelopeRow => {
+      const title = titles.get(`${entry.knowledgeRef.kind}:${entry.knowledgeRef.id}`)
+      return title === undefined ? { envelope: entry } : { envelope: entry, title }
+    }
+    return { recent: recentEnvelopes.map(toRow), favorites: favoriteEnvelopes.map(toRow) }
+  })()
+
+  const [notebooks, views, rows] = await Promise.all([notebooksPromise, viewsPromise, rowsPromise])
+  return { notebooks, views, recent: rows.recent, favorites: rows.favorites }
+}
+
+/** Compact row label: resolved title, else the ref id (long SiYuan ids shorten to the suffix). */
+export function navigatorRowLabel(row: NavigatorEnvelopeRow): string {
+  if (row.title) return row.title
+  const id = row.envelope.knowledgeRef.id
+  const dash = id.indexOf('-')
+  return dash > 0 && dash < id.length - 1 ? id.slice(dash + 1) : id
+}
+
+// ---------------------------------------------------------------------------
+// Presentation
+// ---------------------------------------------------------------------------
 
 interface StaticSection {
   id: string
@@ -37,15 +198,12 @@ interface StaticSection {
   labelKey: string
 }
 
-/** Static nav sections per S-01 §Режим Знания (dynamic-empty by design). */
+/** Sections with no provider/contract surface yet — honest dynamic-empty rows. */
 const STATIC_SECTIONS: StaticSection[] = [
   { id: 'inbox', icon: FolderInput, labelKey: 'knowledge.nav.inbox' },
   { id: 'daily', icon: CalendarDays, labelKey: 'knowledge.nav.daily' },
-  { id: 'recent', icon: Clock, labelKey: 'knowledge.nav.recent' },
   { id: 'databases', icon: Database, labelKey: 'knowledge.nav.databases' },
   { id: 'tags', icon: TagIcon, labelKey: 'knowledge.nav.tags' },
-  { id: 'favorites', icon: Star, labelKey: 'knowledge.nav.favorites' },
-  { id: 'savedViews', icon: LayoutGrid, labelKey: 'knowledge.nav.savedViews' },
 ]
 
 function SectionHeader({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
@@ -65,23 +223,148 @@ function EmptyRow({ children }: { children: string }) {
   )
 }
 
-/** Body of the notebooks section — rendered wherever its data mode demands. */
-function NotebooksBody({ t }: { t: TFunction }) {
-  return <EmptyRow>{t('knowledge.nav.notebooksEmpty')}</EmptyRow>
+function NavRow({
+  icon: Icon,
+  label,
+  title,
+  onClick,
+}: {
+  icon: LucideIcon
+  label: string
+  title?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title ?? label}
+      className={cn(
+        'mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2 rounded-md px-2.5 py-1.5 text-left',
+        'text-[12px] font-medium text-foreground/80',
+        'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+      )}
+    >
+      <Icon className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+      <span className="min-w-0 flex-1 truncate">{label}</span>
+    </button>
+  )
 }
 
 export function KnowledgeNotebookTree() {
   const { t } = useTranslation()
+  const { navigate } = useNavigation()
+  const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  const [data, setData] = React.useState<KnowledgeNavigatorData | null>(null)
+
+  React.useEffect(() => {
+    const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
+    if (!api) return
+    let cancelled = false
+    void loadKnowledgeNavigatorData(api).then((result) => {
+      if (!cancelled) setData(result)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [workspaceId])
+
   return (
     <nav aria-label={t('knowledge.nav.title')} className="flex flex-col gap-0.5 py-1">
       <SectionHeader icon={Book} label={t('knowledge.nav.notebooks')} />
-      <NotebooksBody t={t} />
-      {STATIC_SECTIONS.map((section) => (
+      {data === null ? (
+        <EmptyRow>{t('knowledge.surface.loading')}</EmptyRow>
+      ) : data.notebooks.status === 'unavailable' ? (
+        <EmptyRow>{t('knowledge.nav.notebooksUnavailable')}</EmptyRow>
+      ) : data.notebooks.status === 'empty' ? (
+        <EmptyRow>{t('knowledge.nav.notebooksEmpty')}</EmptyRow>
+      ) : (
+        <div className="mb-2 flex flex-col gap-0.5">
+          {data.notebooks.items.map((notebook) => (
+            <NavRow
+              key={notebook.id}
+              icon={Book}
+              label={notebook.name || notebook.id}
+              onClick={() => navigate(routes.view.siyuan({ kind: 'notebook', id: notebook.id }))}
+            />
+          ))}
+        </div>
+      )}
+
+      {STATIC_SECTIONS.slice(0, 2).map((section) => (
         <div key={section.id}>
           <SectionHeader icon={section.icon} label={t(section.labelKey)} />
           <EmptyRow>{t('knowledge.nav.sectionEmpty')}</EmptyRow>
         </div>
       ))}
+
+      <SectionHeader icon={Clock} label={t('knowledge.nav.recent')} />
+      {data === null ? (
+        <EmptyRow>{t('knowledge.surface.loading')}</EmptyRow>
+      ) : data.recent.length === 0 ? (
+        <EmptyRow>{t('knowledge.nav.sectionEmpty')}</EmptyRow>
+      ) : (
+        <div className="mb-2 flex flex-col gap-0.5">
+          {data.recent.map((row) => (
+            <NavRow
+              key={`${row.envelope.knowledgeRef.kind}:${row.envelope.knowledgeRef.id}`}
+              icon={Clock}
+              label={navigatorRowLabel(row)}
+              title={row.envelope.knowledgeRef.id}
+              onClick={() =>
+                navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
+              }
+            />
+          ))}
+        </div>
+      )}
+
+      {STATIC_SECTIONS.slice(2).map((section) => (
+        <div key={section.id}>
+          <SectionHeader icon={section.icon} label={t(section.labelKey)} />
+          <EmptyRow>{t('knowledge.nav.sectionEmpty')}</EmptyRow>
+        </div>
+      ))}
+
+      <SectionHeader icon={Star} label={t('knowledge.nav.favorites')} />
+      {data === null ? (
+        <EmptyRow>{t('knowledge.surface.loading')}</EmptyRow>
+      ) : data.favorites.length === 0 ? (
+        <EmptyRow>{t('knowledge.nav.sectionEmpty')}</EmptyRow>
+      ) : (
+        <div className="mb-2 flex flex-col gap-0.5">
+          {data.favorites.map((row) => (
+            <NavRow
+              key={`${row.envelope.knowledgeRef.kind}:${row.envelope.knowledgeRef.id}`}
+              icon={Star}
+              label={navigatorRowLabel(row)}
+              title={row.envelope.knowledgeRef.id}
+              onClick={() =>
+                navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
+              }
+            />
+          ))}
+        </div>
+      )}
+
+      <SectionHeader icon={LayoutGrid} label={t('knowledge.nav.savedViews')} />
+      {data === null ? (
+        <EmptyRow>{t('knowledge.surface.loading')}</EmptyRow>
+      ) : data.views.length === 0 ? (
+        <EmptyRow>{t('knowledge.nav.sectionEmpty')}</EmptyRow>
+      ) : (
+        <div className="mb-2 flex flex-col gap-0.5">
+          {data.views.map((view) => (
+            <NavRow
+              key={view.id}
+              icon={LayoutGrid}
+              label={view.name}
+              title={view.description || view.name}
+              onClick={() => navigate(routes.view.knowledgeView(view.id))}
+            />
+          ))}
+        </div>
+      )}
     </nav>
   )
 }
