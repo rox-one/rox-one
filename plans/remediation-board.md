@@ -1,6 +1,6 @@
 # Rox — Remediation Board
 
-Source: `plans/integration-audit.md` (2026-08-12). Integration branch: `integration/remediation-7c33` (from `main` @ `5797f431`).
+Source: `plans/integration-audit.md` (2026-08-12). Integration branch: `rox-integration-remediation-7c33` (from `main` @ `5797f431`; PR #5). NOTE: repo PR policy requires the `rox` branch prefix — subagent branches must be pushed as `rox/<name>` for their own PRs; workstream branch names below are the local/logical names.
 Lead agent owns: integration, review gate, cross-cutting verification, final release test.
 
 ## Skill inventory (available in this environment)
@@ -51,7 +51,7 @@ Shared/high-conflict files (`SessionManager.ts`, `packages/shared/src/protocol/*
 | F Secrets | `feat/secrets-provider-runtime` | DISPATCHED (wave 2, parallel) | implement, test-driven-development | — |
 | G Collections/Shell | `fix/collections-shell` | DISPATCHED (wave 3, parallel) | react-best-practices, verification-before-completion | — |
 | H Docs/Branches | `chore/repo-hygiene` | DISPATCHED (wave 3, parallel) | writing-plans, verification-before-completion | — |
-| Integration | `integration/remediation-7c33` | ACTIVE | code-review, resolving-merge-conflicts | — |
+| Integration | `rox-integration-remediation-7c33` | ACTIVE (PR #5) | code-review, resolving-merge-conflicts | — |
 
 Dispatch note (2026-08-12): all eight workstreams run in parallel in isolated worktrees (best-of-n-runner). Waves indicate merge priority at the integration gate, not dispatch order: A/B/C merge first, then D/E/F, then G/H. Wave-4 reviewers (integration verification, browser QA, security regression, test adversary) and the Wave-5 fresh-machine E2E run after integration.
 
