@@ -304,6 +304,15 @@ export class OmpAgent extends BaseAgent {
   private subprocessReady: Promise<void> | null = null;
   private subprocessReadyResolve: (() => void) | null = null;
   private subprocessReadyReject: ((error: Error) => void) | null = null;
+  /**
+   * In-flight spawn memo. Concurrent chat() calls during startup share ONE
+   * spawnSubprocess() handshake — without it a second entrant would spawn a
+   * second child and overwrite subprocessReadyResolve/Reject, leaving the
+   * first entrant's ready-wait unsettleable (hang) and the loser child
+   * orphaned. Cleared when the spawn attempt settles (ready or failed), so a
+   * retry after a failed startup spawns fresh.
+   */
+  private spawnPromise: Promise<void> | null = null;
   /** True from spawn until the ready handshake settles (ready / typed failure). */
   private startupInFlight = false;
   /** True once the ready handshake succeeded; cleared again on exit/kill. */
@@ -451,11 +460,21 @@ export class OmpAgent extends BaseAgent {
   }
 
   private async ensureSubprocess(): Promise<void> {
-    if (this.subprocess && this.subprocessReady) {
-      // Rejects with a typed OmpStartupError when startup failed.
+    if (this.spawnPromise) {
+      // A spawn is already in flight (concurrent chat during startup) — share
+      // its handshake instead of double-spawning.
+      await this.spawnPromise;
+    } else if (this.subprocess && this.subprocessReady && this.readyAccepted) {
+      // Live child with a succeeded handshake. A child whose handshake FAILED
+      // (rejected subprocessReady) or never completed (wedged startup) is
+      // dead state — fall through to a fresh spawn instead of re-awaiting a
+      // known-dead promise.
       await this.subprocessReady;
     } else {
-      await this.spawnSubprocess();
+      this.spawnPromise = this.spawnSubprocess().finally(() => {
+        this.spawnPromise = null;
+      });
+      await this.spawnPromise;
     }
     // Branch fork: after spawn, attach to the parent OMP transcript and cut
     // it at the persisted anchor. Runs exactly once per agent instance.
@@ -1763,6 +1782,18 @@ export class OmpAgent extends BaseAgent {
   ): AsyncGenerator<AgentEvent> {
     // Idle point between turns: pick up source-proxy changes since spawn.
     await this.refreshHostToolsFromPool();
+    // BaseAgent.chat does not serialize concurrent chat() calls, and two
+    // interleaved turns would corrupt each other on the shared event queue.
+    // The first entrant claims the turn; a concurrent entrant fails fast
+    // (bounded) instead of double-prompting the subprocess. The claim sits
+    // after the refresh await so microtask FIFO makes the winner the first
+    // chat() caller, and so an idle-point crash during the refresh can still
+    // take the transparent respawn path in ensureSubprocess.
+    if (this._isProcessing) {
+      yield { type: 'error', message: 'OMP session is already processing a turn — concurrent chat() is not supported.' };
+      yield { type: 'complete' };
+      return;
+    }
     this._isProcessing = true;
     this.abortReason = undefined;
     this.eventQueue.reset();
