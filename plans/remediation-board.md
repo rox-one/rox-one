@@ -46,12 +46,14 @@ Shared/high-conflict files (`SessionManager.ts`, `packages/shared/src/protocol/*
 | A OMP first-run | `fix/p0-omp-first-run` | DISPATCHED (wave 1) | systematic-debugging, test-driven-development, verification-before-completion | — |
 | B Viewer security | `security/p0-viewer-share-auth` | DISPATCHED (wave 1) | threat modeling (manual), test-driven-development, verification-before-completion | — |
 | C Knowledge | `feat/knowledge-runtime-completion` | DISPATCHED (wave 1) | implement, test-driven-development, react-best-practices | — |
-| D Identity | `fix/rox-identity-coherence` | PENDING (wave 2) | writing-plans (migration), react-best-practices, i18n parity gates | — |
-| E MCP | `fix/mcp-runtime-contract` | PENDING (wave 2) | systematic-debugging, test-driven-development | — |
-| F Secrets | `feat/secrets-provider-runtime` | PENDING (wave 2) | implement, test-driven-development | — |
-| G Collections/Shell | `fix/collections-shell` | PENDING (wave 3) | react-best-practices, verification-before-completion, computerUse | — |
-| H Docs/Branches | `chore/repo-hygiene` | PENDING (wave 3) | writing-plans, git archaeology (manual) | — |
+| D Identity | `fix/rox-identity-coherence` | DISPATCHED (wave 2, parallel) | writing-plans (migration), react-best-practices, i18n parity gates | — |
+| E MCP | `fix/mcp-runtime-contract` | DISPATCHED (wave 2, parallel) | systematic-debugging, test-driven-development | — |
+| F Secrets | `feat/secrets-provider-runtime` | DISPATCHED (wave 2, parallel) | implement, test-driven-development | — |
+| G Collections/Shell | `fix/collections-shell` | DISPATCHED (wave 3, parallel) | react-best-practices, verification-before-completion | — |
+| H Docs/Branches | `chore/repo-hygiene` | DISPATCHED (wave 3, parallel) | writing-plans, verification-before-completion | — |
 | Integration | `integration/remediation-7c33` | ACTIVE | code-review, resolving-merge-conflicts | — |
+
+Dispatch note (2026-08-12): all eight workstreams run in parallel in isolated worktrees (best-of-n-runner). Waves indicate merge priority at the integration gate, not dispatch order: A/B/C merge first, then D/E/F, then G/H. Wave-4 reviewers (integration verification, browser QA, security regression, test adversary) and the Wave-5 fresh-machine E2E run after integration.
 
 ## Review gate checklist (per returned branch)
 
