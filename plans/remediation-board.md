@@ -68,6 +68,10 @@ All 8 workstreams merged into `rox-integration-remediation-7c33`. Lead cross-cut
 
 Wave 4 dispatched: R1 integration verification, R2 browser verification (against the live server), R3 security regression, R4 test adversary.
 
+Wave-4 results so far:
+- **R1: PASS_WITH_KNOWN_FAILURES, merge-ready** — zero regressions; surfaced two operational constraints (token ≥16 chars, config-dir single-instance lock), now documented in `docs/repo-known-issues.md`.
+- **R3: MERGE-READY with one required fast-follow** — MEDIUM: secretRefs envVar denylist was setter-only while documented intake is raw config.json. **Fixed on the integration branch** (resolution-time enforcement + `SECRET_ENVVAR_DENIED`, 5 new tests, secrets 67 + agent 904 green). Also fixed R3's LOW: OMP stderr is now token-scrubbed (`scrubOmpStderr`) before entering typed errors. Deferred per R3: CF rate-limit rule (dashboard), R2 conditional writes, OAuth callback `errorDetail` escaping (pre-existing on main, separate ticket).
+
 ## Review gate checklist (per returned branch)
 
 1. Full diff inspection — scope discipline vs ownership map.
