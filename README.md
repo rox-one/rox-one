@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
+> **Note — Rox fork:** this repository is the Rox fork of [craft-ai-agents/craft-agents-oss](https://github.com/craft-ai-agents/craft-agents-oss). It adds Rox-specific surfaces (Rox Cloud Connect, the `omp` agent backend, knowledge/collections/toolchain subsystems) on top of upstream Craft Agents. See [docs/ROX_CLOUD_CONNECT.md](docs/ROX_CLOUD_CONNECT.md) for the Rox cloud integration and [plans/integration-audit.md](plans/integration-audit.md) for a full inventory of Rox deltas vs upstream. Sections below describe the upstream Craft product; install links point at upstream craft.do infrastructure.
+
 ## How it Works (Video)
 To understand what Craft Agents does and how it works watch this video.
 
@@ -293,7 +295,7 @@ For TLS connections (`wss://`), use `--tls-ca <path>` for self-signed certificat
 | `invoke <channel> [args]` | Raw RPC call with JSON args |
 | `listen <channel>` | Subscribe to push events (Ctrl+C to stop) |
 | `run <prompt>` | Self-contained: spawn server, run prompt, stream response, exit |
-| `--validate-server` | 21-step integration test (auto-spawns server if no `--url`) |
+| `--validate-server` | 40-step integration test (auto-spawns server if no `--url`) |
 
 #### Run Command Flags
 

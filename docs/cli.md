@@ -12,8 +12,8 @@ Terminal client for Craft Agent server. Connects over WebSocket (`ws://` or `wss
 
 ```bash
 # Clone the repository
-git clone https://github.com/anthropics/craft-agents.git
-cd craft-agents
+git clone https://github.com/rox-one/rox-one.git
+cd rox-one
 
 # Install dependencies
 bun install
@@ -167,7 +167,7 @@ craft-cli --validate-server
 
 When no `--url` is provided, `--validate-server` automatically spawns a local headless server (same as the `run` command), runs the validation, and shuts it down.
 
-Runs a 21-step integration test covering the full server lifecycle including source and skill creation:
+Runs a 40-step integration test (see `getValidateSteps()` in `apps/cli/src/index.ts`) covering the full server lifecycle including labels, branching, sources, MCP sources, skills, automations, and webhooks:
 
 1. Connect + handshake
 2. `credentials:healthCheck`
@@ -175,23 +175,42 @@ Runs a 21-step integration test covering the full server lifecycle including sou
 4. `system:homeDir`
 5. `workspaces:get`
 6. `sessions:get`
-7. `LLM_Connection:list`
+7. `LLM_Connection:list` (auto-creates a connection when `--api-key`/`$LLM_API_KEY` is provided)
 8. `sources:get`
 9. `sessions:create` (temporary `__cli-validate-*` session)
 10. `sessions:getMessages`
 11. Send message + stream (text response)
 12. Send message + tool use (Bash tool)
-13. `sources:create` (temporary Cat Facts API source)
-14. Send + source mention (uses the created source)
-15. Send + skill create (writes SKILL.md via Bash)
-16. `skills:get` (verify skill appears)
-17. Send + skill mention (invokes the created skill)
-18. `skills:delete` (cleanup)
-19. `sources:delete` (cleanup)
-20. `sessions:delete` (cleanup)
-21. Disconnect
+13. `labels:create` (temporary e2e-test label)
+14. `session-tools:set_session_labels`
+15. `session-tools:get_session_info`
+16. `session-tools:list_sessions`
+17. `sessions:branch`
+18. `sessions:branch verify`
+19. `sessions:branch send`
+20. `sources:create` (temporary Cat Facts API source)
+21. Send + source mention (uses the created source)
+22. `mcp:craft-public` (MCP source, auth:none)
+23. `mcp:stitch-mcp` (MCP source, header auth)
+24. Send + skill create (writes SKILL.md via Bash)
+25. `skills:get` (verify skill appears)
+26. Send + skill mention (invokes the created skill)
+27. `skills:delete` (cleanup)
+28. `automation:create`
+29. `automation:trigger` (status change)
+30. `automation:verify session`
+31. `automation:verify labels`
+32. `automations:getLastExecuted`
+33. `webhook:test` (RPC)
+34. `webhook:verify failure`
+35. `automation:cleanup`
+36. `sessions:branch delete`
+37. `sources:delete` (cleanup)
+38. `labels:delete` (cleanup)
+39. `sessions:delete` (cleanup)
+40. Disconnect
 
-**Note:** This test mutates workspace state — it creates and deletes a temporary session, source, and skill. All resources are cleaned up on completion. Continues on failure and reports a summary. Use `--json` for machine-readable output.
+**Note:** This test mutates workspace state — it creates and deletes a temporary session, label, sources, automations, and a skill. All resources are cleaned up on completion. Continues on failure and reports a summary. Steps 11+ require a working LLM connection (any provider key via `--api-key`/`$LLM_API_KEY`). Use `--json` for machine-readable output.
 
 ## Scripting Patterns
 
