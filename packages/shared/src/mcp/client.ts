@@ -10,6 +10,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { createMcpGuardedFetch } from './guarded-fetch.ts';
 
 /**
  * HTTP transport config for remote MCP servers
@@ -136,23 +137,28 @@ export class CraftMcpClient {
       // Legacy SSE transport for remote MCP servers. The SDK applies
       // requestInit.headers to BOTH the SSE handshake GET and the message
       // POSTs (see SSEClientTransport._commonHeaders), so auth/custom
-      // headers behave the same as on the HTTP transport.
+      // headers behave the same as on the HTTP transport. The guarded fetch
+      // covers both paths (handshake via the eventsource fetch passthrough,
+      // POSTs via transport fetch) — SSRF: no cross-origin redirect follows.
       this.transport = new SSEClientTransport(
         new URL(config.url),
         {
           requestInit: {
             headers: config.headers,
           },
+          fetch: createMcpGuardedFetch(),
         }
       );
     } else {
-      // Streamable HTTP transport for remote MCP servers
+      // Streamable HTTP transport for remote MCP servers. Guarded fetch:
+      // same-origin redirects only (SSRF protection, see guarded-fetch.ts).
       this.transport = new StreamableHTTPClientTransport(
         new URL(config.url),
         {
           requestInit: {
             headers: config.headers,
           },
+          fetch: createMcpGuardedFetch(),
         }
       );
     }
