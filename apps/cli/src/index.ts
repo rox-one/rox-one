@@ -1891,7 +1891,7 @@ export async function runValidation(
 // ---------------------------------------------------------------------------
 
 function printHelp(): void {
-  process.stdout.write(`craft-cli — Terminal client for Craft Agent server
+  process.stdout.write(`craft-cli — Terminal client for the Rox server
 
 Usage: craft-cli [options] <command> [args...]
 
