@@ -22,15 +22,37 @@ export const BLOCKED_ENV_VARS = [
   'GOOGLE_API_KEY',
   'STRIPE_SECRET_KEY',
   'NPM_TOKEN',
+  // Secrets-runtime provider auth (Infisical service token).
+  'INFISICAL_TOKEN',
 ] as const;
+
+/**
+ * Prefix-based blocks: `ROX_SECRET_` is the secrets-runtime env-provider
+ * staging prefix — staged secrets ride in process.env under it and must never
+ * reach subprocesses. NOTE: Keep in sync with mcp/client.ts.
+ */
+export const BLOCKED_ENV_VAR_PREFIXES = ['ROX_SECRET_'] as const;
+
+/**
+ * Whether an env var must be stripped from subprocess envs: exact blocklist
+ * match OR a blocked prefix.
+ */
+export function isBlockedEnvVar(key: string): boolean {
+  return (
+    (BLOCKED_ENV_VARS as readonly string[]).includes(key) ||
+    BLOCKED_ENV_VAR_PREFIXES.some((prefix) => key.startsWith(prefix))
+  );
+}
 
 /**
  * Return a shallow-copied environment with sensitive variables removed.
  */
 export function createSanitizedEnv(baseEnv: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = { ...baseEnv };
-  for (const key of BLOCKED_ENV_VARS) {
-    delete env[key];
+  for (const key of Object.keys(env)) {
+    if (isBlockedEnvVar(key)) {
+      delete env[key];
+    }
   }
   return env;
 }

@@ -24,6 +24,28 @@ Streamable HTTP, legacy SSE (since the truthful-SSE fix), stdio.
   `validateMcpConnection`/`validateStdioMcpConnection` (`mcp/validation.ts`),
   `sources:getMcpTools` handler (`packages/server-core/src/handlers/rpc/sources.ts`).
 
+**SSRF / credential policy (enforced here):**
+- **No cross-origin redirect follows.** Both remote transports get a guarded
+  fetch (`mcp/guarded-fetch.ts`, `createMcpGuardedFetch`) that forces
+  `redirect: 'manual'` and re-follows only same-origin redirects (fetch-spec
+  method semantics: 303 → GET, 301/302 → GET for non-GET/HEAD, 307/308
+  preserve; capped at 5 hops). A cross-origin redirect target is never
+  requested and raises a typed `McpRedirectError`. Rationale: the SDK default
+  (`redirect: 'follow'`) lets a hostile/compromised MCP endpoint 302 the
+  main/desktop process onto internal targets (cloud metadata, intranet).
+  Same-origin allowance keeps legitimate reverse-proxy/trailing-slash
+  redirects working — the SDK itself has no internal redirect handling.
+- **No credentialed URLs.** `http://user:pass@host` is rejected at save time
+  (`McpSourceConfigSchema` in `config/validators.ts`); the client additionally
+  strips userinfo defensively so hand-edited configs can't put credentials on
+  the wire, and URL logging goes through `formatMcpUrlForLog`
+  (origin + pathname only).
+- **Stdio env blocklist.** Inherited `process.env` is filtered through
+  `isBlockedEnvVar` (exact list + `ROX_SECRET_` prefix for secrets-runtime
+  staging vars + `INFISICAL_TOKEN`); explicit source `config.env` entries
+  still win (user intent). Duplicate list:
+  `packages/session-tools-core/src/runtime/sandbox-env.ts`.
+
 ### `packages/shared/src/mcp/mcp-pool.ts` — `McpClientPool`
 Owns all MCP source connections in the main process; backends receive proxy
 tool defs (`mcp__{slug}__{tool}`) and route calls back through the pool.
