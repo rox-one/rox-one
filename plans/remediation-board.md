@@ -43,7 +43,7 @@ Shared/high-conflict files (`SessionManager.ts`, `packages/shared/src/protocol/*
 
 | WS | Branch | Status | Owner skill(s) | Result |
 |---|---|---|---|---|
-| A OMP first-run | `fix/p0-omp-first-run` | DISPATCHED (wave 1) | systematic-debugging, test-driven-development, verification-before-completion | — |
+| A OMP first-run | `fix/p0-omp-first-run` | ✅ MERGED (57e721dd, a308b627, 8cc2da4c, fcf4da70; lead-verified: 898 agent tests green, tsc clean, **original hang repro → typed OMP_NO_MODELS + idle in 23 ms**) | systematic-debugging, test-driven-development, verification-before-completion | P0 hang fixed (settleReady exactly-once + child-scoped handlers + generation guard); 6 typed startup codes with stderr classification; queryLlm honors request.model truthfully; 30 regression tests; remaining: OMP codes ride wire as strings (core union untouched by design) |
 | B Viewer security | `security/p0-viewer-share-auth` | ✅ MERGED (78939f19, 83938a02, 72a8b1f2; lead-verified: 27 viewer + 129 server-core sessions + 74 shared sessions tests green, viewer+server-core tsc clean) | threat modeling (manual), test-driven-development, verification-before-completion | Owner-capability auth on share mutations; legacy shares immutable; desktop persists `sharedOwnerKey` stripped from renderer; follow-ups: CF rate-limit rule (dashboard), R2 lifecycle for legacy shares, conditional PUTs |
 | C Knowledge | `feat/knowledge-runtime-completion` | DISPATCHED (wave 1) | implement, test-driven-development, react-best-practices | — |
 | D Identity | `fix/rox-identity-coherence` | DISPATCHED (wave 2, parallel) | writing-plans (migration), react-best-practices, i18n parity gates | — |
