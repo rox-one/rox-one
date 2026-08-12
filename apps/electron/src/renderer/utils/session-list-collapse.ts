@@ -1,9 +1,10 @@
 import type { SessionFilter } from '../../shared/types'
+import type { ListGroupingMode } from '../components/app-shell/session-list/list-grouping'
 
 export interface CollapsedGroupScopeOptions {
   workspaceId?: string
   currentFilter?: SessionFilter
-  groupingMode: 'date' | 'status' | 'unread' | 'project'
+  groupingMode: ListGroupingMode
 }
 
 export function serializeSessionFilterForScope(filter?: SessionFilter): string {

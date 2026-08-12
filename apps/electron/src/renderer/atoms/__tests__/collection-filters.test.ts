@@ -108,7 +108,7 @@ describe('loadCollectionFiltersAtom', () => {
   it('drops stale responses after a workspace switch', async () => {
     const store = createStore()
     store.set(windowWorkspaceIdAtom, 'ws-1')
-    let resolveWs1: ((map: Record<string, never>) => void) | null = null
+    let resolveWs1: ((map: Record<string, { status: string[] }>) => void) | null = null
     shimWindow({
       getCollectionFilters: (ws: string) => {
         if (ws === 'ws-1') {
