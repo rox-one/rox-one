@@ -74,6 +74,31 @@ Wave-4 results so far:
 - **R3: MERGE-READY with one required fast-follow** — MEDIUM: secretRefs envVar denylist was setter-only while documented intake is raw config.json. **Fixed on the integration branch** (resolution-time enforcement + `SECRET_ENVVAR_DENIED`, 5 new tests, secrets 67 + agent 904 green). Also fixed R3's LOW: OMP stderr is now token-scrubbed (`scrubOmpStderr`) before entering typed errors. Deferred per R3: CF rate-limit rule (dashboard), R2 conditional writes, OAuth callback `errorDetail` escaping (pre-existing on main, separate ticket).
 - **R4: HOLES FOUND — fixed.** Verified all 4 OMP + MCP + secrets + knowledge attack suites against the integration tree (reproduced A1/A2/A4/A6, M1/M4, S1/S4, K3). Fixed directly by lead: S1 diagnostics redaction (+ registration-ordering fix), S4 refresh race (generation counter), K3 response-side cap — with regression tests. **E2 merged** (`rox-mcp-env-hardening`: ROX_SECRET_*/INFISICAL_TOKEN blocklist + real-spawn regression killing the false-green class; same-origin-only redirect guard against SSRF; credentialed-URL rejection + log scrubbing; adversary suite 8/8 after fix). **A2 merged** (`rox-omp-lifecycle-hardening`: spawn memoization closes the concurrent-startup hang, SIGKILL escalation + fresh respawn after ready timeout, stderr signature latching, terminal complete on crash; adversary suite 10/10 after fix, agent suite 908 green, tsc clean — all lead-verified). All R4 CRITICAL/HIGH/MEDIUM holes are now fixed on the integration branch. Filed LOWs (V3 UTF-16 size measurement, V7 PUT/DELETE TOCTOU + nosniff) for the next pass.
 
+## Wave 5 — fresh-machine release test (2026-08-12, pristine `CRAFT_CONFIG_DIR`, no credentials)
+
+| Step | Result |
+|---|---|
+| install → build → boot | **VERIFIED** (clean boot, rox-kimi seeded, toolchain ensureAll scheduled; omp auto-installed into the fresh config dir) |
+| onboarding → identity/provider | **VERIFIED (server-side)** — connection seeded, auth env initialized; desktop onboarding UI not exercisable headlessly |
+| runtime readiness | **VERIFIED** — toolchain install + `omp --mode rpc` handshake (probe-verified earlier) |
+| create session → send prompt | **VERIFIED** — session created; prompt fails bounded in ~0.8 s with typed `OMP_NO_MODELS` (no credentials on a fresh machine — the honest, actionable failure) |
+| stream answer / host tool / MCP tool / permission interaction | **BLOCKED** — requires a live LLM credential (none available in this environment); the tool plumbing itself is covered by the omp-source-proxy/session-flow regression suites |
+| restart → restore | **VERIFIED** — server restarted; 2 sessions loaded from disk; web login (200) + `/api/config` intact |
+| web login → same workspace/session | **VERIFIED** — cookie auth, same workspace + sessions visible after restart |
+
+Negative paths (each must end bounded + typed + idle):
+| Case | Result |
+|---|---|
+| no credentials | **VERIFIED** — typed `OMP_NO_MODELS` in <1 s, session idle (CLI + server log) |
+| invalid credentials | **VERIFIED** — provider 401 surfaces as typed API error, session completes without hang |
+| OMP missing | **VERIFIED** — typed `OMP_NOT_CONFIGURED`/`OMP_START_FAILED`, bounded, idle (suite + live) |
+| OMP exits before ready | **VERIFIED** — typed classification (NO_MODELS/AUTH_REQUIRED/START_FAILED), bounded, idle |
+| malformed OMP protocol | **VERIFIED** — `OMP_PROTOCOL_ERROR` for a malformed ready frame (sh-fake, hanging); non-JSON-then-exit classified `OMP_START_FAILED` (exit-classification wins over partial garbage — documented behavior); both bounded + idle |
+| MCP down | **VERIFIED** — validation suite green (typed connect errors) |
+| SiYuan down | **VERIFIED** — `CONNECTION_UNAVAILABLE` typed tool error (smoke) |
+| expired/invalid auth | **VERIFIED** — `/api/auth` wrong password → 401 `Invalid credentials` |
+| unauthorized share mutation | **VERIFIED** — 24 share-auth tests green (401/403/legacy-immutable matrix) |
+
 ## Review gate checklist (per returned branch)
 
 1. Full diff inspection — scope discipline vs ownership map.
