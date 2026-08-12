@@ -2906,6 +2906,8 @@
   "turnCard.stepsCompleted": "Шагов выполнено",
   "turnCard.thinking": "Рассуждение",
   "viewer.clearSession": "Очистить сессию",
+  "viewer.themeToDark": "Переключить на тёмную тему",
+  "viewer.themeToLight": "Переключить на светлую тему",
   "webui.connectingToServer": "Подключение к серверу...",
   "webui.connectionFailed": "Сбой подключения",
   "webui.logOut": "Выйти",

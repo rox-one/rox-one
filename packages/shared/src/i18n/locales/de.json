@@ -2906,6 +2906,8 @@
   "turnCard.stepsCompleted": "Schritte abgeschlossen",
   "turnCard.thinking": "Denken",
   "viewer.clearSession": "Sitzung zurücksetzen",
+  "viewer.themeToDark": "Zum dunklen Modus wechseln",
+  "viewer.themeToLight": "Zum hellen Modus wechseln",
   "webui.connectingToServer": "Verbindung zum Server wird hergestellt...",
   "webui.connectionFailed": "Verbindung fehlgeschlagen",
   "webui.logOut": "Abmelden",

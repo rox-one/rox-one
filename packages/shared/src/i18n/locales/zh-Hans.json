@@ -2906,6 +2906,8 @@
   "turnCard.stepsCompleted": "步骤已完成",
   "turnCard.thinking": "思考中",
   "viewer.clearSession": "清除会话",
+  "viewer.themeToDark": "切换到深色模式",
+  "viewer.themeToLight": "切换到浅色模式",
   "webui.connectingToServer": "正在连接服务器...",
   "webui.connectionFailed": "连接失败",
   "webui.logOut": "退出登录",

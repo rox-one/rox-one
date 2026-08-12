@@ -2906,6 +2906,8 @@
   "turnCard.stepsCompleted": "Lépések befejezve",
   "turnCard.thinking": "Gondolkodás",
   "viewer.clearSession": "Munkamenet törlése",
+  "viewer.themeToDark": "Váltás sötét módra",
+  "viewer.themeToLight": "Váltás világos módra",
   "webui.connectingToServer": "Csatlakozás a szerverhez...",
   "webui.connectionFailed": "Kapcsolódás sikertelen",
   "webui.logOut": "Kijelentkezés",

@@ -2906,6 +2906,8 @@
   "turnCard.stepsCompleted": "Pasos completados",
   "turnCard.thinking": "Razonamiento",
   "viewer.clearSession": "Limpiar sesión",
+  "viewer.themeToDark": "Cambiar al modo oscuro",
+  "viewer.themeToLight": "Cambiar al modo claro",
   "webui.connectingToServer": "Conectando al servidor...",
   "webui.connectionFailed": "Error de conexión",
   "webui.logOut": "Cerrar sesión",

@@ -2906,6 +2906,8 @@
   "turnCard.stepsCompleted": "ステップ完了",
   "turnCard.thinking": "思考中",
   "viewer.clearSession": "セッションをクリア",
+  "viewer.themeToDark": "ダークモードに切り替え",
+  "viewer.themeToLight": "ライトモードに切り替え",
   "webui.connectingToServer": "サーバーに接続中...",
   "webui.connectionFailed": "接続に失敗しました",
   "webui.logOut": "ログアウト",
