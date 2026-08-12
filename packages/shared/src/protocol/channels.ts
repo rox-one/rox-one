@@ -665,6 +665,9 @@ export const RPC_CHANNELS = {
     GET_DISPLAY: 'collection:getDisplay',
     SET_DISPLAY: 'collection:setDisplay',
     CHANGED: 'collection:changed',
+    GET_FILTERS: 'collection:getFilters',
+    SET_FILTERS: 'collection:setFilters',
+    FILTERS_CHANGED: 'collection:filtersChanged',
   },
 
   mindmap: {

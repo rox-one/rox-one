@@ -632,6 +632,11 @@ export const CHANNEL_MAP = {
   setCollectionDisplay: invoke(RPC_CHANNELS.collection.SET_DISPLAY),
   onCollectionDisplayChanged: listener(RPC_CHANNELS.collection.CHANGED),
 
+  // Sessions collection filters (per navigator filter key, FR-11)
+  getCollectionFilters: invoke(RPC_CHANNELS.collection.GET_FILTERS),
+  setCollectionFilters: invoke(RPC_CHANNELS.collection.SET_FILTERS),
+  onCollectionFiltersChanged: listener(RPC_CHANNELS.collection.FILTERS_CHANGED),
+
   // B4 bulk sessions
   bulkUpdateSessions: invoke(RPC_CHANNELS.sessions.BULK_UPDATE),
   onSessionsBulkChanged: listener(RPC_CHANNELS.sessions.BULK_CHANGED),

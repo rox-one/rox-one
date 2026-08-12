@@ -9,6 +9,7 @@ import type { LoadedSkill } from '../skills/types'
 import type { LoadedProject } from '../projects/types'
 import type { KanbanBoardConfig } from '../kanban/types'
 import type { CollectionDisplay } from '../sessions/collection-display-storage'
+import type { CollectionFilters } from '../sessions/collection-types'
 
 import type { ToolStatus } from '../toolchain/types'
 import { RPC_CHANNELS } from './channels'
@@ -62,6 +63,7 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.projects.CHANGED]: [workspaceId: string, projects: LoadedProject[]]
   [RPC_CHANNELS.kanban.CHANGED]: [workspaceId: string, config: KanbanBoardConfig]
   [RPC_CHANNELS.collection.CHANGED]: [workspaceId: string, display: CollectionDisplay]
+  [RPC_CHANNELS.collection.FILTERS_CHANGED]: [workspaceId: string, filtersByKey: Record<string, CollectionFilters>]
 
   [RPC_CHANNELS.tasks.GENERATED]: [workspaceId: string, result: TaskGenerateResult]
   [RPC_CHANNELS.notes.CHANGED]: [payload: NoteChangedPayload]
