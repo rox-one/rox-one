@@ -1,17 +1,25 @@
 /**
  * KnowledgeAgentPanel — compact agent companion for the knowledge surface (W2).
  *
- * Shows the current document as the context a future agent session would attach to.
- * Both CTAs are intentionally disabled: no renderer helper can create a session WITH
- * initial text today — useSessionActions has no createSession, and onCreateSession's
- * CreateSessionOptions carries no initial-message field (chat-input pre-fill is a
- * separate post-mount channel, not a trivial wiring). Disabled-with-tooltip is the
- * honest state instead of faking the flow; wiring lands with the agent-integration slice.
+ * Shows the current document as context and offers two live CTAs that create an
+ * agent session WITH the document attached:
+ * - "Ask about this document": creates a session and pre-fills the composer
+ *   (action/new-session?input=… — the user reviews and sends).
+ * - "Open full session": creates a session and sends a context brief
+ *   immediately (action/new-session?input=…&send=true).
+ *
+ * The document survives session creation as a verbatim [knowledge:…] mention
+ * token: the new session's composer renders it as a knowledge badge, and the
+ * agent resolves it with the knowledge_read session tool (its description
+ * documents the mention form). This is the existing new-session route seam —
+ * no new session-creation channel.
  */
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
+import { useNavigation } from '@/contexts/NavigationContext'
+import { routes } from '@/lib/navigate'
 import { useKnowledgeNode } from './KnowledgeInspector'
 import type { KnowledgeRef } from '../../shared/types'
 
@@ -28,8 +36,49 @@ function formatKnowledgeDisplay(ref: KnowledgeRef): string {
   return `@${ref.provider ?? ref.scheme}/${ref.kind}/${ref.id}`
 }
 
+/** Full-form [knowledge:<provider>/<kind>/<id>] mention token for a ref. */
+export function knowledgeMentionToken(ref: KnowledgeRef): string {
+  return `[knowledge:${ref.provider ?? ref.scheme}/${ref.kind}/${ref.id}]`
+}
+
+type Translate = (key: string, params?: Record<string, unknown>) => string
+
+/**
+ * Composer prefill for "Ask about this document": mention token first (it
+ * renders as the knowledge badge), then a stem the user completes. The title
+ * slot falls back to the '@provider/kind/id' display form when the node has
+ * not loaded yet — never an empty hole in the sentence.
+ */
+export function buildAskAboutPrefill(
+  ref: KnowledgeRef,
+  title: string | null,
+  t: Translate,
+): string {
+  return t('knowledge.agent.askPrefill', {
+    mention: knowledgeMentionToken(ref),
+    title: title ?? formatKnowledgeDisplay(ref),
+  })
+}
+
+/**
+ * Auto-sent brief for "Open full session": grounds the fresh session in the
+ * document via the knowledge_read tool (snapshot context), then waits for the
+ * user's questions.
+ */
+export function buildOpenSessionBrief(
+  ref: KnowledgeRef,
+  title: string | null,
+  t: Translate,
+): string {
+  return t('knowledge.agent.openSessionBrief', {
+    mention: knowledgeMentionToken(ref),
+    title: title ?? formatKnowledgeDisplay(ref),
+  })
+}
+
 export function KnowledgeAgentPanel({ knowledgeRef }: KnowledgeAgentPanelProps) {
   const { t } = useTranslation()
+  const { navigate } = useNavigation()
   const { node, loading } = useKnowledgeNode(knowledgeRef)
 
   if (!knowledgeRef) {
@@ -42,6 +91,22 @@ export function KnowledgeAgentPanel({ knowledgeRef }: KnowledgeAgentPanelProps) 
   }
 
   const displayRef = formatKnowledgeDisplay(knowledgeRef)
+  const title = node?.title ?? null
+
+  const handleAskAbout = () => {
+    navigate(routes.action.newSession({
+      input: buildAskAboutPrefill(knowledgeRef, title, t),
+      ...(title ? { name: title } : {}),
+    }))
+  }
+
+  const handleOpenSession = () => {
+    navigate(routes.action.newSession({
+      input: buildOpenSessionBrief(knowledgeRef, title, t),
+      send: true,
+      ...(title ? { name: title } : {}),
+    }))
+  }
 
   return (
     <div className="flex flex-col gap-3 p-4">
@@ -51,13 +116,11 @@ export function KnowledgeAgentPanel({ knowledgeRef }: KnowledgeAgentPanelProps) 
         </p>
         <p className="truncate text-xs text-muted-foreground">{displayRef}</p>
       </div>
-      {/* Wrapper owns the tooltip: the Button sets disabled:pointer-events-none,
-          which would swallow title on the button itself. */}
-      <div className="flex flex-col gap-2" title={t('knowledge.agent.ctasDisabled')}>
-        <Button size="sm" disabled aria-disabled="true">
+      <div className="flex flex-col gap-2">
+        <Button size="sm" onClick={handleAskAbout}>
           {t('knowledge.agent.askAbout')}
         </Button>
-        <Button size="sm" variant="outline" disabled aria-disabled="true">
+        <Button size="sm" variant="outline" onClick={handleOpenSession}>
           {t('knowledge.agent.openFullSession')}
         </Button>
       </div>
