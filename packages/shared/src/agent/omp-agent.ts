@@ -819,17 +819,16 @@ export class OmpAgent extends BaseAgent {
       readyPromise,
       new Promise<void>(() => {
         const timer = setTimeout(() => {
+          // Late timer against an already-settled handshake (e.g. the ready
+          // frame landed in the same tick) must not kill a healthy child.
+          if (!this.startupInFlight || this.subprocess !== childRef) return;
           this.settleReady(new OmpStartupError({
             code: 'OMP_READY_TIMEOUT',
             message: `OMP did not send the ready frame within ${Math.floor(OMP_READY_TIMEOUT_MS / 1000)}s.`,
             hint: 'Check that the omp binary is healthy (omp --mode rpc) and that no wrapper swallows its stdout.',
             stderr: this.recentStderr.trim(),
           }));
-          try {
-            childRef.kill('SIGTERM');
-          } catch {
-            // already gone
-          }
+          this.teardownUnreadySubprocess(childRef);
         }, OMP_READY_TIMEOUT_MS);
         const clear = () => clearTimeout(timer);
         readyPromise.then(clear, clear);
@@ -854,6 +853,48 @@ export class OmpAgent extends BaseAgent {
     // without them, tools just won't be visible to the OMP model.
     this.registerHostTools()
       .catch((err) => this.debug(`set_host_tools failed: ${err instanceof Error ? err.message : err}`));
+  }
+
+  /**
+   * Ready-timeout teardown for a child that never sent the ready frame.
+   * Detaches the spawn state SYNCHRONOUSLY (a retry must spawn fresh, not
+   * re-await the dead handshake or trip over the wedged child), then
+   * escalates SIGTERM → SIGKILL so a SIGTERM-immune child cannot leak.
+   * The child's late exit event is ignored as stale (no longer current).
+   */
+  private teardownUnreadySubprocess(child: ChildProcess): void {
+    if (this.subprocess === child) {
+      this.subprocess = null;
+      this.subprocessReady = null;
+      this.subprocessReadyResolve = null;
+      this.subprocessReadyReject = null;
+      this.readyAccepted = false;
+      if (this.readline) {
+        this.readline.close();
+        this.readline = null;
+      }
+    }
+    try {
+      child.stdin?.end();
+    } catch {
+      // stdin may already be closed
+    }
+    try {
+      child.kill('SIGTERM');
+    } catch {
+      // already gone
+    }
+    const killer = setTimeout(() => {
+      if (child.exitCode === null && !child.signalCode) {
+        this.debug('OMP subprocess ignored SIGTERM after ready timeout; SIGKILL');
+        try {
+          child.kill('SIGKILL');
+        } catch {
+          // already gone
+        }
+      }
+    }, 2_000);
+    killer.unref?.();
   }
 
   /**
