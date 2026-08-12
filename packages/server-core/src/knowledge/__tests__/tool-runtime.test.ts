@@ -163,6 +163,13 @@ describe('createKnowledgeToolRuntime', () => {
     expect((error as KnowledgeError).code).toBe('NOT_FOUND')
   })
 
+  it('defaultConnectionId returns the first configured connection, null when none', async () => {
+    const { runtime } = makeRuntime({ connectionIds: ['conn-1', 'conn-2'] })
+    expect(runtime.defaultConnectionId?.()).toBe('conn-1')
+    const empty = makeRuntime({ connectionIds: [] })
+    expect(empty.runtime.defaultConnectionId?.()).toBeNull()
+  })
+
   it('wraps raw provider errors as PROVIDER_ERROR (never raw across the seam)', async () => {
     const { provider } = providerDouble({
       async get() {

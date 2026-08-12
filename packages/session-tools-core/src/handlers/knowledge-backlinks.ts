@@ -52,7 +52,7 @@ export async function handleKnowledgeGetBacklinks(
 
     const header = [
       `## Backlinks for ${formatRef(ref)}`,
-      provenanceLine(connectionId ?? '(default)'),
+      provenanceLine(connectionId ?? runtime.defaultConnectionId?.() ?? '(default)'),
     ].join('\n');
 
     if (backlinks.length === 0) {

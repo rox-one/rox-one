@@ -190,6 +190,22 @@ describe('knowledge_search', () => {
     expect(text).toContain('/Research');
   });
 
+  it('shows the resolved default connection id in the provenance line when the arg is omitted', async () => {
+    registerRuntimeDouble({
+      defaultConnectionId: () => 'conn-default',
+    });
+    const res = await handleKnowledgeSearch(CTX, { query: 'kernel' });
+    const text = res.content.map((c) => c.text).join('\n');
+    expect(text).toContain('conn-default');
+  });
+
+  it('filters unknown kinds instead of forwarding them to the provider', async () => {
+    const { calls } = registerRuntimeDouble();
+    await handleKnowledgeSearch(CTX, { query: 'kernel', kinds: ['document', 'nonsense' as never] });
+    const input = (calls[0]!.args as { input: { kinds?: string[] } }).input;
+    expect(input.kinds).toEqual(['document']);
+  });
+
   it('clamps the requested limit to the hard cap before calling the runtime', async () => {
     const { calls } = registerRuntimeDouble();
     await handleKnowledgeSearch(CTX, { query: 'kernel', limit: 5000 });

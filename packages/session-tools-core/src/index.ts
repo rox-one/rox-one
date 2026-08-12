@@ -187,9 +187,14 @@ export {
 } from './handlers/index.ts';
 
 // Knowledge handlers (registered in SESSION_TOOL_DEFS)
-export { handleKnowledgeSearch, KNOWLEDGE_SEARCH_MAX_LIMIT } from './handlers/knowledge-search.ts';
-export { handleKnowledgeRead, KNOWLEDGE_READ_MAX_MARKDOWN_CHARS } from './handlers/knowledge-read.ts';
-export { handleKnowledgeGetBacklinks, KNOWLEDGE_BACKLINKS_MAX_ITEMS } from './handlers/knowledge-backlinks.ts';
+export {
+  handleKnowledgeSearch,
+  handleKnowledgeRead,
+  handleKnowledgeGetBacklinks,
+  KNOWLEDGE_SEARCH_MAX_LIMIT,
+  KNOWLEDGE_READ_MAX_MARKDOWN_CHARS,
+  KNOWLEDGE_BACKLINKS_MAX_ITEMS,
+} from './handlers/index.ts';
 
 export type {
   SubmitPlanArgs,

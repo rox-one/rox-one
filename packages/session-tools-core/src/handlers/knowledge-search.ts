@@ -9,6 +9,7 @@
  */
 
 import type { SearchHit, SearchInput } from '@craft-agent/core/knowledge';
+import { KNOWLEDGE_KINDS } from '@craft-agent/core/knowledge';
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
 import { errorResponse, successResponse } from '../response.ts';
@@ -53,7 +54,11 @@ export async function handleKnowledgeSearch(
   const { runtime } = resolved;
 
   const input: SearchInput = { query };
-  if (Array.isArray(args.kinds) && args.kinds.length > 0) input.kinds = args.kinds;
+  // Pi/OMP dispatch raw args (no zod parse) — filter unknown kinds defensively.
+  if (Array.isArray(args.kinds) && args.kinds.length > 0) {
+    const kinds = args.kinds.filter((kind) => (KNOWLEDGE_KINDS as readonly string[]).includes(kind));
+    if (kinds.length > 0) input.kinds = kinds;
+  }
   if (typeof args.notebookId === 'string' && args.notebookId) input.notebookId = args.notebookId;
   if (typeof args.pathPrefix === 'string' && args.pathPrefix) input.pathPrefix = args.pathPrefix;
   const requestedLimit = typeof args.limit === 'number' && Number.isFinite(args.limit) ? args.limit : DEFAULT_LIMIT;
@@ -68,9 +73,13 @@ export async function handleKnowledgeSearch(
         : {}),
     });
     const items = page.items ?? [];
+    const shownConnection =
+      (typeof args.connectionId === 'string' && args.connectionId) ||
+      runtime.defaultConnectionId?.() ||
+      '(default)';
     const header = [
       `## Knowledge search: "${query}"`,
-      provenanceLine(args.connectionId ?? '(default)'),
+      provenanceLine(shownConnection),
       items.length === 0
         ? 'No results.'
         : `${items.length} result(s)` +

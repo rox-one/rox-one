@@ -55,6 +55,8 @@ export function createKnowledgeToolRuntime(deps: KnowledgeToolRuntimeDeps): Know
   }
 
   return {
+    defaultConnectionId: () => listConnections()[0]?.id ?? null,
+
     search: ({ connectionId, input }) => call(connectionId, (provider) => provider.search(input)),
 
     read: async ({ connectionId, ref, contextMode }) => {

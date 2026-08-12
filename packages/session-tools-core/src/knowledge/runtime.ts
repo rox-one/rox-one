@@ -49,6 +49,12 @@ export interface KnowledgeToolRuntime {
     contextMode?: KnowledgeReadContextMode;
   }): Promise<KnowledgeReadResult>;
   getBacklinks(args: { connectionId?: string; ref: KnowledgeRef }): Promise<KnowledgeBacklink[]>;
+  /**
+   * The connection id a call WITHOUT an explicit connectionId resolves to
+   * (first configured connection), or null when none exists. Handlers use it
+   * so the provenance line names the real connection instead of a placeholder.
+   */
+  defaultConnectionId?(): string | null;
 }
 
 let registeredRuntime: KnowledgeToolRuntime | null = null;

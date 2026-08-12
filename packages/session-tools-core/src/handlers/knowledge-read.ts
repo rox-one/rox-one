@@ -90,7 +90,7 @@ export async function handleKnowledgeRead(
       contextMode,
       ...(connectionId ? { connectionId } : {}),
     });
-    const parts = [formatNode(node, connectionId ?? '(default)')];
+    const parts = [formatNode(node, connectionId ?? runtime.defaultConnectionId?.() ?? '(default)')];
 
     if (context) {
       const sections: string[] = [];
