@@ -50,7 +50,7 @@ Shared/high-conflict files (`SessionManager.ts`, `packages/shared/src/protocol/*
 | E MCP | `fix/mcp-runtime-contract` | DISPATCHED (wave 2, parallel) | systematic-debugging, test-driven-development | — |
 | F Secrets | `feat/secrets-provider-runtime` | DISPATCHED (wave 2, parallel) | implement, test-driven-development | — |
 | G Collections/Shell | `fix/collections-shell` | DISPATCHED (wave 3, parallel) | react-best-practices, verification-before-completion | — |
-| H Docs/Branches | `chore/repo-hygiene` | DISPATCHED (wave 3, parallel) | writing-plans, verification-before-completion | — |
+| H Docs/Branches | `chore/repo-hygiene` | ✅ MERGED into integration (e4c7a36c, a0b153d6, 5427f76c; merge commit on `rox-integration-remediation-7c33`) | writing-plans, verification-before-completion | Docs aligned with v2; 94 branches classified (85 rox + 9 donor SAFE_TO_DELETE, proposed commands in `plans/branch-disposition.md` §5); corrected audit: all 62 `feature/pr-*` tips are ancestors of main; donor `feat/shell-ext-activate2` has one unique 142-line test to port/discard before donor archival |
 | Integration | `rox-integration-remediation-7c33` | ACTIVE (PR #5) | code-review, resolving-merge-conflicts | — |
 
 Dispatch note (2026-08-12): all eight workstreams run in parallel in isolated worktrees (best-of-n-runner). Waves indicate merge priority at the integration gate, not dispatch order: A/B/C merge first, then D/E/F, then G/H. Wave-4 reviewers (integration verification, browser QA, security regression, test adversary) and the Wave-5 fresh-machine E2E run after integration.
