@@ -2,6 +2,8 @@
 
 Verified empirically against `omp` v17.2.9 (2026-08-06) with probe scripts. Transport: NDJSON over stdio — one JSON object per line, both directions.
 
+> **Version note (2026-08-12):** the toolchain manifest installs **17.2.10** (`packages/shared/src/toolchain/manifest-data.ts`). The 17.2.10 binary was probe-verified against this document during the 2026-08-12 integration audit: identical ready frame (`{protocolVersion:1, supportedProtocolVersions:[1,2], maxFrameBytes:1048576, maxReassembledFrameBytes:67108864}`), `extension_ui_request` flow, `get_state` / `get_available_models` / `set_host_tools` shapes all unchanged. This doc remains accurate for 17.2.10.
+
 ## Lifecycle
 
 1. Spawn: `omp --mode rpc` (optional flags: `--approval-mode <mode>`, `--auto-approve` yolo, `--model`, `--session <dir>`…). cwd = workspace root; OMP session files live in its own session dir (under `~/.omp`), keyed by cwd.
