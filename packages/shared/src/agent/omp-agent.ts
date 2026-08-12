@@ -236,6 +236,12 @@ function normalizeModelId(id: string): string {
   return id.toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 
+/** Detect OMP's rejection of a `--model <id>` one-shot (vs. a real failure). */
+function isOmpModelNotFoundError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /model not found|unknown model|no such model|invalid model/i.test(message);
+}
+
 /**
  * OMP session transcript entry (one JSONL line of the session file).
  * `id` is a short 8-hex entry id; `parentId` chains entries. Verified in
@@ -2006,7 +2012,7 @@ export class OmpAgent extends BaseAgent {
   // One-shot LLM calls (`omp -p <prompt>`)
   // ============================================================
 
-  private async runOneShot(prompt: string): Promise<string> {
+  private async runOneShot(prompt: string, model?: string): Promise<string> {
     this.debug(`runOneShot: resolving bin (prompt ${prompt.length} chars)`);
     const bin = await resolveOmpExecutableOrExplain();
     this.debug(`runOneShot: bin=${bin}`);
@@ -2022,9 +2028,10 @@ export class OmpAgent extends BaseAgent {
     // default piped stdin makes omp read the prompt from stdin and wait for
     // EOF forever (title generation / one-shot completions hang to timeout).
     // We explicitly end stdin → omp treats the argv prompt as authoritative.
+    const args = model ? ['--model', model, '-p', prompt] : ['-p', prompt];
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
-      const child = spawn(bin, ['-p', prompt], { cwd, env });
+      const child = spawn(bin, args, { cwd, env });
       this.debug(`runOneShot: spawned pid=${child.pid}`);
       const timer = setTimeout(() => {
         child.kill('SIGKILL');
@@ -2064,8 +2071,32 @@ export class OmpAgent extends BaseAgent {
     const prompt = request.systemPrompt
       ? `${request.systemPrompt}\n\n${request.prompt}`
       : request.prompt;
+
+    // Honor request.model by passing it through to the one-shot
+    // (`omp --model <id> -p`). When OMP rejects the model, fall back to its
+    // configured default and say so — the effective model is always reported
+    // truthfully, never fabricated (packages/shared/CLAUDE.md §queryLlm
+    // backend contract).
+    const requestedModel = request.model?.trim() || undefined;
+    if (requestedModel) {
+      try {
+        const text = await this.runOneShot(prompt, requestedModel);
+        return { text, model: requestedModel };
+      } catch (error) {
+        if (!isOmpModelNotFoundError(error)) throw error;
+        this.debug(`queryLlm: OMP rejected model "${requestedModel}"; falling back to the OMP default model`);
+        const text = await this.runOneShot(prompt);
+        return {
+          text,
+          warning: `Requested model "${requestedModel}" is not available in OMP; used the OMP default model instead.`,
+        };
+      }
+    }
+
     const text = await this.runOneShot(prompt);
-    return { text, model: this._model };
+    // The one-shot ran on OMP's own configured default model, which this
+    // backend did not pin — the effective model is honestly unknown here.
+    return { text };
   }
 
   // ============================================================
