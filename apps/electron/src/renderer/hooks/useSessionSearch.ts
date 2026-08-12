@@ -5,10 +5,11 @@ import { searchLog } from "@/lib/logger"
 import { parseLabelEntry, matchesLabelFilter } from "@craft-agent/shared/labels"
 import type { LabelConfig } from "@craft-agent/shared/labels"
 import { fuzzyScore } from "@craft-agent/shared/search"
-import { getSessionTitle, getSessionStatus } from "@/utils/session"
+import { getSessionTitle } from "@/utils/session"
 import type { SessionMeta } from "@/atoms/sessions"
 import type { ViewConfig } from "@craft-agent/shared/views"
 import type { SessionFilter } from "@/contexts/NavigationContext"
+import { getListGroupKey, type ListGroupingMode } from "@/components/app-shell/session-list/list-grouping"
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -56,7 +57,7 @@ export interface UseSessionSearchOptions {
   /** Collapsed group keys — collapsed items are excluded from pagination and flatItems */
   collapsedGroups?: Set<string>
   /** Grouping mode — needed to compute group keys for collapse-aware pagination */
-  groupingMode?: 'date' | 'status' | 'unread' | 'project'
+  groupingMode?: ListGroupingMode
   /** sessionId → family bucket representative; keeps session families in one collapse bucket */
   bucketRepresentatives?: Map<string, SessionMeta>
   /** Ref to the ScrollArea viewport element — used for scroll-based pagination */
@@ -124,11 +125,8 @@ function groupSessionsByDate(sessions: SessionMeta[]): DateGroup[] {
     }))
 }
 
-function getCollapseGroupKey(item: SessionMeta, groupingMode?: 'date' | 'status' | 'unread' | 'project'): string {
-  if (groupingMode === 'status') return `status-${getSessionStatus(item)}`
-  if (groupingMode === 'unread') return item.hasUnread ? 'unread-yes' : 'unread-no'
-  if (groupingMode === 'project') return `project-${(item as { projectId?: string }).projectId ?? '__none__'}`
-  return startOfDay(new Date(item.lastMessageAt || 0)).toISOString()
+function getCollapseGroupKey(item: SessionMeta, groupingMode?: ListGroupingMode): string {
+  return getListGroupKey(item, groupingMode ?? 'date')
 }
 
 export interface CollapsedPaginationResult {
@@ -141,7 +139,7 @@ export function computeCollapsedPagination(
   items: SessionMeta[],
   displayLimit: number,
   collapsedGroups?: Set<string>,
-  groupingMode?: 'date' | 'status' | 'unread' | 'project',
+  groupingMode?: ListGroupingMode,
   /**
    * sessionId → the session family's bucket representative (max-activity member).
    * When provided, collapse group keys are derived from the representative so a
@@ -163,7 +161,12 @@ export function computeCollapsedPagination(
   // *per group* — each group reveals up to `displayLimit` of its own most-recent
   // items — so small open-work groups show in full while large groups (e.g.
   // Done) stay bounded. `displayLimit` still grows on scroll via the caller.
-  const perGroup = groupingMode === 'status' || groupingMode === 'unread'
+  const perGroup =
+    groupingMode === 'status' ||
+    groupingMode === 'unread' ||
+    groupingMode === 'priority' ||
+    groupingMode === 'dueDate' ||
+    groupingMode === 'label'
 
   // Pick the visible items honoring `displayLimit`, optionally skipping groups in
   // `excludeKeys` (collapsed groups). Preserves the incoming item order.

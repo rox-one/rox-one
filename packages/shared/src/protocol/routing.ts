@@ -670,10 +670,13 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.kanban.SET_CONFIG,
   RPC_CHANNELS.kanban.CHANGED,
 
-  // collection — workspace sessions collection display prefs
+  // collection — workspace sessions collection display prefs + filters
   RPC_CHANNELS.collection.GET_DISPLAY,
   RPC_CHANNELS.collection.SET_DISPLAY,
   RPC_CHANNELS.collection.CHANGED,
+  RPC_CHANNELS.collection.GET_FILTERS,
+  RPC_CHANNELS.collection.SET_FILTERS,
+  RPC_CHANNELS.collection.FILTERS_CHANGED,
 
   // git — workspace filesystem
   RPC_CHANNELS.git.GET_BRANCH,

@@ -180,3 +180,13 @@ export {
   saveCollectionDisplay,
 } from './collection-display-storage.ts'
 
+// Collection filters persistence (workspace collection/filters.json, FR-11)
+export {
+  COLLECTION_FILTERS_RELATIVE_PATH,
+  getCollectionFiltersPath,
+  loadCollectionFiltersMap,
+  normalizeCollectionFilters,
+  normalizeCollectionFiltersMap,
+  saveCollectionFiltersMap,
+} from './collection-filters-storage.ts'
+

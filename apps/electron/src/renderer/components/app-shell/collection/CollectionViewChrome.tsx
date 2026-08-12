@@ -9,7 +9,11 @@ import {
   replaceCollectionDisplayAtom,
   setCollectionDisplayAtom,
 } from '@/atoms/collection-display'
-import { collectionFiltersAtom } from '@/atoms/collection-filters'
+import {
+  collectionFiltersAtom,
+  loadCollectionFiltersAtom,
+  replaceCollectionFiltersMapAtom,
+} from '@/atoms/collection-filters'
 import { CollectionViewToggle, type CollectionViewMode } from '../kanban/BoardListToggle'
 import { CollectionDisplayPopover } from './CollectionDisplayPopover'
 import { CollectionOpsBar } from './CollectionOpsBar'
@@ -52,10 +56,16 @@ export function CollectionViewChrome({
   const loadDisplay = useSetAtom(loadCollectionDisplayAtom)
   const filters = useAtomValue(collectionFiltersAtom)
   const setFilters = useSetAtom(collectionFiltersAtom)
+  const loadFilters = useSetAtom(loadCollectionFiltersAtom)
+  const replaceFiltersMap = useSetAtom(replaceCollectionFiltersMapAtom)
 
   React.useEffect(() => {
     void loadDisplay(workspaceId)
   }, [workspaceId, loadDisplay])
+
+  React.useEffect(() => {
+    void loadFilters(workspaceId)
+  }, [workspaceId, loadFilters])
 
   React.useEffect(() => {
     if (!workspaceId || typeof window === 'undefined') return
@@ -66,6 +76,16 @@ export function CollectionViewChrome({
       replaceDisplay(next)
     })
   }, [workspaceId, replaceDisplay])
+
+  React.useEffect(() => {
+    if (!workspaceId || typeof window === 'undefined') return
+    const api = window.electronAPI
+    if (!api?.onCollectionFiltersChanged) return
+    return api.onCollectionFiltersChanged((wsId, next) => {
+      if (wsId !== workspaceId) return
+      replaceFiltersMap(next)
+    })
+  }, [workspaceId, replaceFiltersMap])
 
   const handleDisplayChange = React.useCallback(
     (next: CollectionDisplay) => {

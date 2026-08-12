@@ -80,6 +80,8 @@ export const KEYS = {
   activityRailCollapsed: 'activity-rail-collapsed',
   inspectorVisible: 'inspector-visible',
   inspectorSection: 'inspector-section',
+  // Panel registry user overrides (S-03 §3.7), workspace-scoped via suffix
+  panelState: 'panel-registry-state',
 } as const
 
 export const EVENTS = {
