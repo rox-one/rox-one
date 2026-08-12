@@ -21,6 +21,7 @@ import {
   type PostInitResult,
 } from '@craft-agent/shared/agent/backend'
 import { getLlmConnection, getLlmConnections, getDefaultLlmConnection, getDefaultThinkingLevel, getRuntimeEnvOverrides, resetManagedAnthropicAuthEnvVars, resolveMidStreamBehavior, getPersistedUiLanguage, resolveTitleLanguageName } from '@craft-agent/shared/config'
+import { refreshRuntimeSecretEnv } from '@craft-agent/shared/secrets'
 import type { MidStreamBehavior, LlmProviderType } from '@craft-agent/shared/config'
 import { PrivilegedExecutionBroker } from '@craft-agent/server-core/services'
 import { isValidWorkingDirectory } from '../utils/path-validation'
@@ -3962,6 +3963,11 @@ export class SessionManager implements ISessionManager {
         poolServerUrl = await managed.poolServer.start()
         await managed.mcpPool.sync(mcpServers) // Ensure pool has tools before SDK connects
       }
+
+      // Resolve configured secret refs (runtime.secretRefs) into the in-memory
+      // fragment that getRuntimeEnvOverrides() merges — every backend spawning
+      // from here inherits the values via subprocess env. Never throws.
+      await refreshRuntimeSecretEnv()
 
       // Per-session env overrides
       const miniModel = connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined
