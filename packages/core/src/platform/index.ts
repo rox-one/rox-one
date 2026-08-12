@@ -14,6 +14,9 @@ export * from './panels/index.ts';
 export * from './commands/index.ts';
 export * from './resources/index.ts';
 export * from './surfaces/index.ts';
+export * from './feature-flags/index.ts';
+export * from './modes/index.ts';
+export * from './workbench/index.ts';
 export type {
   Profile,
   ProfileMode,
