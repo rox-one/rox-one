@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'bun:test';
 import {
   CREDENTIAL_ENVELOPE_FINGERPRINT_ALGORITHM,
@@ -282,5 +283,67 @@ describe('credential envelope v1', () => {
     expect(decodeCredentialEnvelope(encoded, CONTEXT_A)?.payload.clientId).toBe(
       'client',
     );
+  });
+
+  it('distinguishes a verified decode from a wrapped legacy object', () => {
+    const encoded = encodeCredentialEnvelope(
+      { kind: 'api_key', payload: { value: 'secret' } },
+      CONTEXT_A,
+    );
+
+    expect(decodeCredentialEnvelope(encoded, CONTEXT_A)?.provenance).toBe('verified');
+    expect(
+      decodeCredentialEnvelopeOrLegacy(encoded, 'api_key', CONTEXT_A)?.provenance,
+    ).toBe('verified');
+    expect(
+      decodeCredentialEnvelopeOrLegacy({ value: 'secret' }, 'api_key', CONTEXT_A)
+        ?.provenance,
+    ).toBe('legacy');
+  });
+
+  it('reads each payload field exactly once so accessors cannot swap it', () => {
+    let reads = 0;
+    const payload = {
+      get value() {
+        reads += 1;
+        return reads === 1 ? 'validated' : 'swapped';
+      },
+    } as never;
+
+    const encoded = encodeCredentialEnvelope({ kind: 'api_key', payload }, CONTEXT_A);
+
+    expect(reads).toBe(1);
+    expect(decodeCredentialEnvelope(encoded, CONTEXT_A)?.payload.value).toBe(
+      'validated',
+    );
+  });
+
+  it('bounds the combined payload size, not just each field', () => {
+    const half = 'x'.repeat(600_000);
+
+    expect(() =>
+      encodeCredentialEnvelope(
+        { kind: 'oauth2_token_set', payload: { value: half, refreshToken: half } },
+        CONTEXT_A,
+      ),
+    ).toThrow();
+    expect(
+      decodeCredentialEnvelopeOrLegacy(
+        { value: half, refreshToken: half },
+        'oauth2_token_set',
+        CONTEXT_A,
+      ),
+    ).toBeNull();
+  });
+
+  it('authenticates the codec and version alongside binding, kind and payload', () => {
+    const actual = credentialPayloadFingerprint('api_key', { value: 'secret' }, CONTEXT_A);
+    const withoutCodecAndVersion = createHmac('sha256', KEY_A)
+      .update(
+        `{"binding":${JSON.stringify(CONTEXT_A.binding)},"kind":"api_key","payload":{"value":"secret"}}`,
+      )
+      .digest('hex');
+
+    expect(actual).not.toBe(withoutCodecAndVersion);
   });
 });

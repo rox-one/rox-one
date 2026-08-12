@@ -22,6 +22,20 @@ export interface CredentialEnvelopeInput {
   readonly payload: StoredCredential;
 }
 
+export type CredentialEnvelopeProvenance = 'verified' | 'legacy';
+
+/**
+ * A decode result carries how it was obtained, because the two paths differ in
+ * what they prove. `verified` means the stored fingerprint was recomputed and
+ * matched. `legacy` means a pre-envelope object was wrapped in memory and its
+ * fingerprint was computed here, so it authenticates nothing about the source.
+ * Without this field the two are structurally identical and a caller can treat
+ * unauthenticated data as authenticated.
+ */
+export interface DecodedCredentialEnvelope extends CredentialEnvelopeV1 {
+  readonly provenance: CredentialEnvelopeProvenance;
+}
+
 /**
  * The key is installation/provider material and MUST NOT be serialized with the
  * envelope. `binding` is stable metadata such as credentialRef + provider
@@ -111,27 +125,38 @@ function canonicalize(value: unknown): string {
 }
 
 function normalizePayload(value: unknown): StoredCredential {
+  if (!isRecord(value)) {
+    throw new Error('Credential payload must contain a bounded non-empty scalar value');
+  }
+
+  // Read every field exactly once. Re-reading a caller-supplied object lets an
+  // accessor return a conforming value to the validation and a different one
+  // to the stored copy, so validation and storage must share one snapshot.
+  const source = new Map<string, unknown>(Object.entries(value));
+  const primary = source.get('value');
   if (
-    !isRecord(value) ||
-    typeof value.value !== 'string' ||
-    value.value.length === 0 ||
-    value.value.length > MAX_CREDENTIAL_FIELD_LENGTH
+    typeof primary !== 'string' ||
+    primary.length === 0 ||
+    primary.length > MAX_CREDENTIAL_FIELD_LENGTH
   ) {
     throw new Error('Credential payload must contain a bounded non-empty scalar value');
   }
-  if (!hasOnlyKeys(value, ALLOWED_PAYLOAD_FIELDS)) {
-    throw new Error('Credential payload contains an unsupported field');
+  for (const key of source.keys()) {
+    if (!ALLOWED_PAYLOAD_FIELDS.has(key)) {
+      throw new Error('Credential payload contains an unsupported field');
+    }
   }
 
-  const payload: Record<string, unknown> = { value: value.value };
-  for (const key of Object.keys(value)) {
+  const payload: Record<string, unknown> = { value: primary };
+  let totalLength = primary.length;
+  for (const [key, field] of source) {
     if (key === 'value') continue;
-    const field = value[key];
 
     if (STRING_FIELDS.has(key)) {
       if (typeof field !== 'string' || field.length > MAX_CREDENTIAL_FIELD_LENGTH) {
         throw new Error(`Credential payload field must be a bounded scalar: ${key}`);
       }
+      totalLength += field.length;
       payload[key] = field;
       continue;
     }
@@ -150,6 +175,13 @@ function normalizePayload(value: unknown): StoredCredential {
       }
       payload[key] = field;
     }
+  }
+
+  // Per-field bounds alone let a many-field object reach several megabytes,
+  // which the encode-time envelope cap would catch but the legacy read path
+  // would not.
+  if (totalLength > MAX_CREDENTIAL_FIELD_LENGTH) {
+    throw new Error('Credential payload exceeds the size limit');
   }
 
   return payload as unknown as StoredCredential;
@@ -209,8 +241,12 @@ export function credentialPayloadFingerprint(
     .update(
       canonicalize({
         binding: normalizedContext.binding,
+        // Codec and version are part of the authenticated data so a future v2
+        // envelope can never be presented as a v1 one carrying the same digest.
+        codec: CREDENTIAL_ENVELOPE_CODEC,
         kind,
         payload: normalizedPayload,
+        version: CREDENTIAL_ENVELOPE_VERSION,
       }),
     )
     .digest('hex');
@@ -251,7 +287,7 @@ export function encodeCredentialEnvelope(
 export function decodeCredentialEnvelope(
   serialized: string,
   context: CredentialEnvelopeContext,
-): CredentialEnvelopeV1 | null {
+): DecodedCredentialEnvelope | null {
   try {
     if (serialized.length > MAX_CREDENTIAL_ENVELOPE_LENGTH) return null;
     const parsed: unknown = JSON.parse(serialized);
@@ -280,6 +316,7 @@ export function decodeCredentialEnvelope(
       kind: parsed.kind,
       payload,
       fingerprint,
+      provenance: 'verified',
     };
   } catch {
     return null;
@@ -295,7 +332,7 @@ export function decodeCredentialEnvelopeOrLegacy(
   raw: unknown,
   kind: CredentialKind,
   context: CredentialEnvelopeContext,
-): CredentialEnvelopeV1 | null {
+): DecodedCredentialEnvelope | null {
   if (!isCredentialKind(kind)) return null;
   if (typeof raw === 'string') return decodeCredentialEnvelope(raw, context);
 
@@ -309,6 +346,7 @@ export function decodeCredentialEnvelopeOrLegacy(
       kind,
       payload,
       fingerprint: credentialPayloadFingerprint(kind, payload, context),
+      provenance: 'legacy',
     };
   } catch {
     return null;

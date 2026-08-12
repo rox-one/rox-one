@@ -270,7 +270,7 @@ describe('CredentialRefRegistry', () => {
     expect(registry.getVersion('ver_old')).toBeUndefined();
   });
 
-  it('requires monotonic ref timestamps when clearing the current version', () => {
+  it('keeps ref timestamps monotonic by clamping instead of blocking revocation', () => {
     const registry = new CredentialRefRegistry(() => FIXED_REF);
     const ref = registry.register({
       kind: 'api_key',
@@ -285,9 +285,110 @@ describe('CredentialRefRegistry', () => {
       createdAt: 200,
     });
 
-    expect(() => registry.setVersionStatus(version.id, 'revoked', 199)).toThrow();
-    expect(registry.getVersion(version.id)?.status).toBe('active');
-    expect(registry.get(ref.id)?.currentVersionId).toBe(version.id);
+    const revoked = registry.setVersionStatus(version.id, 'revoked', 199);
+
+    expect(revoked.status).toBe('revoked');
+    expect(registry.get(ref.id)?.currentVersionId).toBeUndefined();
+    expect(registry.get(ref.id)?.updatedAt).toBe(200);
+  });
+
+  it('revokes a version whose createdAt is far in the future', () => {
+    const registry = new CredentialRefRegistry(() => FIXED_REF);
+    const ref = registry.register({
+      kind: 'api_key',
+      providerId: 'local',
+      locator: { type: 'local', key: 'key' },
+      now: 100,
+    });
+    const farFuture = 100 + 10 * 365 * 24 * 60 * 60 * 1000;
+    const version = registry.registerVersion({
+      credentialRefId: ref.id,
+      codec: 'stored-credential/v1',
+      fingerprint: 'a'.repeat(64),
+      createdAt: farFuture,
+    });
+
+    const revoked = registry.setVersionStatus(version.id, 'revoked', 300);
+
+    expect(revoked.status).toBe('revoked');
+    expect(registry.get(ref.id)?.currentVersionId).toBeUndefined();
+    expect(registry.get(ref.id)?.updatedAt).toBe(farFuture);
+  });
+
+  it('moves ref updatedAt forward only when provider metadata changes', () => {
+    const registry = new CredentialRefRegistry(() => FIXED_REF);
+    const ref = registry.register({
+      kind: 'api_key',
+      providerId: 'local',
+      locator: { type: 'local', key: 'key' },
+      now: 500,
+    });
+
+    const moved = registry.updateProvider(ref.id, 'keychain', { type: 'keychain', service: 's', account: 'a' }, 200);
+
+    expect(moved.updatedAt).toBe(500);
+    expect(moved.providerId).toBe('keychain');
+  });
+
+  it('does not let an untrimmed id overwrite an existing version', () => {
+    const registry = new CredentialRefRegistry(() => FIXED_REF);
+    const ref = registry.register({
+      kind: 'api_key',
+      providerId: 'local',
+      locator: { type: 'local', key: 'key' },
+      now: 100,
+    });
+    registry.registerVersion({
+      id: 'ver_x',
+      credentialRefId: ref.id,
+      codec: 'stored-credential/v1',
+      fingerprint: 'a'.repeat(64),
+      createdAt: 110,
+    });
+    registry.setVersionStatus('ver_x', 'revoked', 120);
+
+    expect(() =>
+      registry.registerVersion({
+        id: ' ver_x ',
+        credentialRefId: ref.id,
+        codec: 'stored-credential/v1',
+        fingerprint: 'b'.repeat(64),
+        createdAt: 130,
+      }),
+    ).toThrow();
+    expect(registry.getVersion('ver_x')?.status).toBe('revoked');
+    expect(registry.getVersion('ver_x')?.fingerprint).toBe('a'.repeat(64));
+    expect(registry.listVersions(ref.id)).toHaveLength(1);
+  });
+
+  it('treats credential ref ids as case-sensitive', () => {
+    const registry = new CredentialRefRegistry(() => FIXED_REF);
+    const upper = FIXED_REF.toUpperCase() as typeof FIXED_REF;
+
+    expect(isCredentialRefId(upper)).toBe(false);
+    expect(() =>
+      registry.register({
+        id: upper,
+        kind: 'api_key',
+        providerId: 'local',
+        locator: { type: 'local', key: 'key' },
+        now: 100,
+      }),
+    ).toThrow();
+  });
+
+  it('bounds caller-controlled text interpolated into errors', () => {
+    const registry = new CredentialRefRegistry(() => FIXED_REF);
+    const hugeKey = 'k'.repeat(200_000);
+
+    expect(() =>
+      registry.register({
+        kind: 'api_key',
+        providerId: 'local',
+        locator: { type: 'local', key: 'key' },
+        [hugeKey]: 'x',
+      } as never),
+    ).toThrow(/^Invalid credential metadata field: k{64}\.\.\.$/);
   });
 
   it('lists versions deterministically by creation time and id', () => {

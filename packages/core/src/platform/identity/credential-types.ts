@@ -71,8 +71,13 @@ export interface RegisterCredentialVersionInput {
 
 export type CredentialRefIdFactory = () => CredentialRefId;
 
+/**
+ * Lowercase-only: the `CredentialRefId` template type requires a lowercase
+ * `cred_` prefix and `randomUUID` emits lowercase hex, so accepting other
+ * casings would let two spellings of one UUID register as distinct refs.
+ */
 const CREDENTIAL_REF_ID_PATTERN =
-  /^cred_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  /^cred_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 const CREDENTIAL_KINDS: readonly CredentialKind[] = [
   'api_key',
@@ -129,7 +134,19 @@ const VERSION_TRANSITIONS: Record<CredentialVersionStatus, readonly CredentialVe
 };
 
 const MAX_METADATA_STRING_LENGTH = 4_096;
+const MAX_ERROR_LABEL_LENGTH = 64;
 const VERSION_FINGERPRINT_PATTERN = /^[0-9a-f]{64}$/;
+
+/**
+ * Callers control both object keys and identifiers, so echoing them verbatim
+ * lets a single rejected call write an unbounded string into logs.
+ */
+function errorLabel(value: unknown): string {
+  const text = typeof value === 'string' ? value : String(value);
+  return text.length > MAX_ERROR_LABEL_LENGTH
+    ? `${text.slice(0, MAX_ERROR_LABEL_LENGTH)}...`
+    : text;
+}
 
 export function isCredentialRefId(value: unknown): value is CredentialRefId {
   return typeof value === 'string' && CREDENTIAL_REF_ID_PATTERN.test(value);
@@ -184,7 +201,7 @@ function assertExactKeys(
   errorPrefix: string,
 ): void {
   for (const key of Object.keys(value)) {
-    if (!allowed.has(key)) throw new Error(`${errorPrefix}: ${key}`);
+    if (!allowed.has(key)) throw new Error(`${errorPrefix}: ${errorLabel(key)}`);
   }
 }
 
@@ -276,7 +293,7 @@ export class CredentialRefRegistry {
 
     const id = input.id ?? this.idFactory();
     if (!isCredentialRefId(id)) throw new Error('Invalid credential metadata: id');
-    if (this.refs.has(id)) throw new Error(`CredentialRef already exists: ${id}`);
+    if (this.refs.has(id)) throw new Error(`CredentialRef already exists: ${errorLabel(id)}`);
     if (!isCredentialKind(input.kind)) throw new Error('Invalid credential metadata: kind');
 
     const providerId = nonEmptyString(input.providerId, 'providerId');
@@ -313,16 +330,12 @@ export class CredentialRefRegistry {
     now = Date.now(),
   ): CredentialRef {
     const current = this.requireRef(id);
-    const updatedAt = finiteTimestamp(now, 'updatedAt');
-    if (updatedAt < current.createdAt) {
-      throw new Error('Invalid credential metadata: updatedAt precedes createdAt');
-    }
-
     const updated: CredentialRef = {
       ...current,
       providerId: nonEmptyString(providerId, 'providerId'),
       locator: validateLocator(locator),
-      updatedAt,
+      // Same clamp as setVersionStatus: `updatedAt` only ever moves forward.
+      updatedAt: Math.max(current.updatedAt, finiteTimestamp(now, 'updatedAt')),
     };
 
     this.refs.set(id, updated);
@@ -340,13 +353,19 @@ export class CredentialRefRegistry {
     }
 
     this.requireRef(input.credentialRefId);
-    let id = input.id;
-    if (id === undefined) {
+    // Normalize before the collision check: the stored key is the trimmed id,
+    // so checking the raw input would let " ver_1" overwrite "ver_1" and
+    // resurrect a terminal version.
+    let id: string;
+    if (input.id === undefined) {
       do {
         id = `ver_${++this.sequence}`;
       } while (this.versions.has(id));
-    } else if (this.versions.has(id)) {
-      throw new Error(`CredentialVersion already exists: ${id}`);
+    } else {
+      id = nonEmptyString(input.id, 'version.id');
+      if (this.versions.has(id)) {
+        throw new Error(`CredentialVersion already exists: ${errorLabel(id)}`);
+      }
     }
 
     const createdAt = finiteTimestamp(input.createdAt ?? Date.now(), 'version.createdAt');
@@ -359,7 +378,7 @@ export class CredentialRefRegistry {
     }
 
     const version: CredentialVersion = {
-      id: nonEmptyString(id, 'version.id'),
+      id,
       credentialRefId: input.credentialRefId,
       codec: nonEmptyString(input.codec, 'version.codec'),
       fingerprint: versionFingerprint(input.fingerprint),
@@ -421,7 +440,7 @@ export class CredentialRefRegistry {
     if (!isVersionStatus(status)) throw new Error('Invalid credential version status');
 
     const current = this.versions.get(id);
-    if (!current) throw new Error(`CredentialVersion not found: ${id}`);
+    if (!current) throw new Error(`CredentialVersion not found: ${errorLabel(id)}`);
     if (!VERSION_TRANSITIONS[current.status].includes(status)) {
       throw new Error(`Invalid credential version transition: ${current.status} -> ${status}`);
     }
@@ -433,14 +452,14 @@ export class CredentialRefRegistry {
       (status === 'revoked' || status === 'invalid' || status === 'superseded') &&
       ref?.currentVersionId === id
     ) {
-      const updatedAt = finiteTimestamp(now, 'updatedAt');
-      if (updatedAt < Math.max(ref.updatedAt, current.createdAt)) {
-        throw new Error('Invalid credential metadata: updatedAt is not monotonic');
-      }
+      // Clamp forward rather than reject. A future-dated version or a
+      // backwards-stepping clock must never be able to block revocation —
+      // refusing to retire a compromised credential is worse than a
+      // timestamp that stands still.
       refUpdate = {
         ...ref,
         currentVersionId: undefined,
-        updatedAt,
+        updatedAt: Math.max(ref.updatedAt, finiteTimestamp(now, 'updatedAt')),
       };
     }
 
@@ -453,7 +472,7 @@ export class CredentialRefRegistry {
 
   private requireRef(id: CredentialRefId): CredentialRef {
     const ref = this.refs.get(id);
-    if (!ref) throw new Error(`CredentialRef not found: ${id}`);
+    if (!ref) throw new Error(`CredentialRef not found: ${errorLabel(id)}`);
     return ref;
   }
 }

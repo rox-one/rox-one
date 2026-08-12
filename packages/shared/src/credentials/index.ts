@@ -40,5 +40,7 @@ export {
 export type {
   CredentialEnvelopeContext,
   CredentialEnvelopeInput,
+  CredentialEnvelopeProvenance,
   CredentialEnvelopeV1,
+  DecodedCredentialEnvelope,
 } from './envelope.ts';
