@@ -52,7 +52,8 @@ export interface SecretRef {
 export type SecretErrorCode =
   | 'INFISICAL_UNAVAILABLE' // not configured, network failure, or unexpected response
   | 'INFISICAL_AUTH_FAILED' // 401/403 from the Infisical API
-  | 'SECRET_NOT_FOUND'; // no provider in the chain produced a value
+  | 'SECRET_NOT_FOUND' // no provider in the chain produced a value
+  | 'SECRET_ENVVAR_DENIED'; // target envVar is on the injection denylist (checked at resolution time)
 
 /** Operational resolution failure. "Not found" is NOT an error — resolve() returns null. */
 export class SecretResolveError extends Error {

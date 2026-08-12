@@ -843,7 +843,12 @@ export function getPersistedRuntimeEnvOverrides(): Record<string, string> {
  * тоже запрещены — они выставляются кодом, не пользователем.
  */
 const ENV_OVERRIDE_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/
-const ENV_OVERRIDE_DENY: Record<string, true> = {
+/**
+ * Env var names that must never be injected via runtime overrides/secret refs.
+ * Exported for the secrets chain, which enforces the same denylist at
+ * RESOLUTION time (config.json can be edited directly, bypassing setters).
+ */
+export const ENV_OVERRIDE_DENY: Record<string, true> = {
   PATH: true,
   Path: true, // win32 casing
   LD_PRELOAD: true,

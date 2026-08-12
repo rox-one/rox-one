@@ -14,6 +14,7 @@
  */
 
 import { debug } from '../utils/debug.ts';
+import { ENV_OVERRIDE_DENY } from '../config/storage.ts';
 import { redactRegisteredSecrets, registerSecretValues } from './redact.ts';
 import { EnvironmentProvider } from './providers/environment.ts';
 import { LocalEncryptedProvider } from './providers/local.ts';
@@ -71,6 +72,21 @@ export async function resolveSecretsForSpawn(
   const diagnostics: SecretResolutionDiagnostic[] = [];
 
   for (const entry of entries) {
+    // Resolution-time denylist: config.json can be edited directly, bypassing
+    // the setRuntimeSecretRefs setter validation. A denied envVar (PATH,
+    // NODE_OPTIONS, CRAFT_*…) must never receive a resolved secret — refuse
+    // the entry here, at the one choke point every intake path crosses.
+    if (ENV_OVERRIDE_DENY[entry.envVar]) {
+      diagnostics.push({
+        name: entry.name,
+        envVar: entry.envVar,
+        status: 'error',
+        errorCode: 'SECRET_ENVVAR_DENIED',
+        message: `envVar "${entry.envVar}" is denied for secret injection`,
+      });
+      continue;
+    }
+
     const candidates = entry.provider
       ? providers.filter((p) => p.id === entry.provider)
       : providers;

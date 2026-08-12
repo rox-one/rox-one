@@ -98,7 +98,11 @@ keys (`CRAFT_WORKSPACE_PATH`, mini-model) applied afterwards still win.
    the agent subprocess env, and like any env var could be read by tools the
    agent runs — same trust model as `runtime.envOverrides`.
 6. **envVar denylist.** Secret targets go through the same validation as env
-   overrides: no `PATH`, `LD_PRELOAD`, `NODE_OPTIONS`, `CRAFT_*`, etc.
+   overrides: no `PATH`, `LD_PRELOAD`, `NODE_OPTIONS`, `CRAFT_*`, etc. The
+   denylist is enforced at **resolution time** in `resolveSecretsForSpawn`
+   (typed `SECRET_ENVVAR_DENIED` diagnostic, entry skipped), not only in the
+   `setRuntimeSecretRefs` setter — direct `config.json` edits bypass setters,
+   so the spawn path is the choke point.
 
 ## Failure semantics
 

@@ -663,6 +663,21 @@ const OMP_AUTH_PATTERN =
   /(\/login\b|please log in|not logged in|authentication required|no credentials|unauthorized|invalid api key|api key (missing|required|invalid))/i;
 
 /**
+ * Scrub token-shaped strings from subprocess stderr before it is folded into
+ * typed errors (which reach the renderer and can be shared online). Matches
+ * common API-key shapes (sk-*, ghp_*, AKIA*, xox*…) and long hex/base64
+ * runs; classification patterns above match on the scrubbed text safely
+ * because none of them rely on token-shaped content.
+ */
+export function scrubOmpStderr(text: string): string {
+  return text
+    .replace(/\b(sk|pk|xox[baprs]|ghp|gho|ghu|ghs|ghr|github_pat|glpat|AKIA|ASIA|AIza|ya29|shpat)[-_A-Za-z0-9]{6,}/g, '$1…[redacted]')
+    .replace(/\b(eyJ[-_A-Za-z0-9]{10,})/g, '[redacted-jwt]')
+    .replace(/\b([0-9a-fA-F]{32,})\b/g, '[redacted-hex]')
+    .replace(/\b(Bearer\s+)\S+/gi, '$1[redacted]');
+}
+
+/**
  * Classify a subprocess exit that happened BEFORE the RPC ready frame into a
  * typed startup error, using captured stderr as evidence.
  */
@@ -671,8 +686,8 @@ export function classifyOmpStartupExit(input: {
   signal: string | null;
   stderr: string;
 }): OmpStartupError {
-  const { exitCode, signal, stderr } = input;
-  const tail = stderr.trim();
+  const { exitCode, signal } = input;
+  const tail = scrubOmpStderr(input.stderr.trim());
   const evidence = tail ? ` OMP output: ${tail.slice(-500)}` : '';
 
   if (OMP_NO_MODELS_PATTERN.test(tail)) {

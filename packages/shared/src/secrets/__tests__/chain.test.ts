@@ -196,4 +196,45 @@ describe('resolveSecretsForSpawn', () => {
     expect(JSON.stringify(result.diagnostics)).not.toContain('super-secret-value-123')
     expect(result.env.K).toBe('super-secret-value-123')
   })
+
+  it('refuses denied envVar targets at resolution time (config.json can bypass the setter)', async () => {
+    const env = stubProvider('environment', { K: 'x'.repeat(40) })
+
+    for (const denied of ['PATH', 'Path', 'NODE_OPTIONS', 'LD_PRELOAD', 'CRAFT_CONFIG_DIR']) {
+      const result = await resolveSecretsForSpawn(
+        [{ name: 'planted', envVar: denied, ref: 'K' }],
+        {},
+        { providers: [env] },
+      )
+      expect(result.env).toEqual({})
+      expect(result.values).toEqual([])
+      expect(result.diagnostics).toEqual([
+        {
+          name: 'planted',
+          envVar: denied,
+          status: 'error',
+          errorCode: 'SECRET_ENVVAR_DENIED',
+          message: `envVar "${denied}" is denied for secret injection`,
+        },
+      ])
+    }
+    // Provider never consulted for denied entries.
+    expect(env.calls).toHaveLength(0)
+  })
+
+  it('still resolves allowed envVars alongside denied ones', async () => {
+    const env = stubProvider('environment', { K: 'resolved-value-ok' })
+
+    const result = await resolveSecretsForSpawn(
+      [
+        { name: 'bad', envVar: 'PATH', ref: 'K' },
+        { name: 'good', envVar: 'MY_SECRET', ref: 'K' },
+      ],
+      {},
+      { providers: [env] },
+    )
+
+    expect(result.env).toEqual({ MY_SECRET: 'resolved-value-ok' })
+    expect(result.diagnostics.map((d) => d.status)).toEqual(['error', 'resolved'])
+  })
 })

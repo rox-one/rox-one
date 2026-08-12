@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { parseError } from '../errors.ts'
+import { parseError, classifyOmpStartupExit, scrubOmpStderr } from '../errors.ts'
 
 describe('parseError proxy interception handling', () => {
   it('maps interceptor proxy marker message to proxy_error', () => {
@@ -106,5 +106,44 @@ describe('parseError context overflow detection (#666)', () => {
   it('does not misclassify unrelated errors as context_overflow', () => {
     const parsed = parseError(new Error('500 Internal Server Error'))
     expect(parsed.code).toBe('service_error')
+  })
+})
+
+describe('scrubOmpStderr', () => {
+  it('redacts common API-key shapes before stderr enters typed errors', () => {
+    const stderr =
+      'fatal: auth failed for sk-ant-api03-AbCdEf123456 and ghp_0123456789abcdef; ' +
+      'jwt eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.sig; hex 0123456789abcdef0123456789abcdef; ' +
+      'header: Bearer my-secret-bearer-token'
+    const scrubbed = scrubOmpStderr(stderr)
+    expect(scrubbed).not.toContain('AbCdEf123456')
+    expect(scrubbed).not.toContain('ghp_0123456789abcdef')
+    expect(scrubbed).not.toContain('eyJhbGciOiJIUzI1NiJ9')
+    expect(scrubbed).not.toContain('0123456789abcdef0123456789abcdef')
+    expect(scrubbed).not.toContain('my-secret-bearer-token')
+    expect(scrubbed).toContain('auth failed')
+  })
+
+  it('keeps classification evidence intact (no-models message survives scrubbing)', () => {
+    const scrubbed = scrubOmpStderr('No models available. Use /login or set an API key environment variable.')
+    expect(scrubbed).toContain('No models available')
+    expect(scrubbed).toContain('/login')
+  })
+
+  it('leaves ordinary output untouched', () => {
+    expect(scrubOmpStderr('listening on port 6806')).toBe('listening on port 6806')
+  })
+})
+
+describe('classifyOmpStartupExit stderr scrubbing', () => {
+  it('typed error message and stderr carry no token-shaped content', () => {
+    const err = classifyOmpStartupExit({
+      exitCode: 1,
+      signal: null,
+      stderr: 'Error: invalid api key sk-ant-api03-SecretKey12345678 — aborting',
+    })
+    expect(err.ompCode).toBe('OMP_AUTH_REQUIRED')
+    expect(err.message).not.toContain('SecretKey12345678')
+    expect(err.stderr ?? '').not.toContain('SecretKey12345678')
   })
 })
