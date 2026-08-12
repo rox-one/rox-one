@@ -28,7 +28,7 @@ interface AddWorkspaceStep_ConnectRemoteProps {
 }
 
 /**
- * AddWorkspaceStep_ConnectRemote - Connect to a remote Craft Agent Server
+ * AddWorkspaceStep_ConnectRemote - Connect to a remote Rox server
  *
  * Two paths:
  * 1. Connect to existing workspace — select from dropdown, no name needed, auto-resolve local slug
