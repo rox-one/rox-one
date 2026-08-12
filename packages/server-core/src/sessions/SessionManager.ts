@@ -977,6 +977,9 @@ interface ManagedSession {
   sharedUrl?: string
   // Shared session ID in viewer (for revoke)
   sharedId?: string
+  // Owner capability secret for share update/revoke. Main-process only —
+  // stripped in managedToSession before any renderer-bound payload.
+  sharedOwnerKey?: string
   // Model to use for this session (overrides global config if set)
   model?: string
   // LLM connection slug for this session (locked after first message)
@@ -1231,12 +1234,60 @@ const DEFAULT_TOKEN_USAGE = {
 }
 
 /**
+ * Map a failed share-API response to a typed ShareResult.
+ * Reads the API's JSON error body ({ error, code }) defensively so the UI can
+ * distinguish legacy-immutable shares from missing/invalid owner keys.
+ */
+async function shareApiError(
+  response: Response,
+  fallback: string,
+): Promise<{ success: false; error: string; errorCode?: string }> {
+  let code: string | undefined
+  let serverMessage: string | undefined
+  try {
+    const body = await response.json() as { error?: unknown; code?: unknown }
+    if (typeof body.code === 'string') code = body.code
+    if (typeof body.error === 'string') serverMessage = body.error
+  } catch {
+    // Non-JSON error body (proxy error pages etc.) — fall through to status mapping.
+  }
+
+  if (response.status === 413 || code === 'SHARE_TOO_LARGE') {
+    return { success: false, error: 'Session file is too large to share', errorCode: 'SHARE_TOO_LARGE' }
+  }
+  if (code === 'LEGACY_SHARE_IMMUTABLE') {
+    return {
+      success: false,
+      error: 'This share was created before share protection existed and can no longer be modified or revoked. Create a new share instead.',
+      errorCode: 'LEGACY_SHARE_IMMUTABLE',
+    }
+  }
+  if (response.status === 401 || response.status === 403) {
+    return {
+      success: false,
+      error: serverMessage || 'Share authorization failed. Re-share the session to generate a new owner key.',
+      errorCode: code ?? (response.status === 401 ? 'SHARE_OWNER_KEY_REQUIRED' : 'SHARE_OWNER_KEY_INVALID'),
+    }
+  }
+  if (response.status === 429) {
+    return { success: false, error: 'Share service rate limit exceeded, please retry later', errorCode: code ?? 'RATE_LIMITED' }
+  }
+  return { success: false, error: serverMessage || fallback, errorCode: code }
+}
+
+/**
  * Convert a ManagedSession to a renderer-side Session object.
  * Uses pickSessionFields() for persistent fields so new fields propagate automatically.
+ *
+ * SECURITY: sharedOwnerKey (the share mutation capability) is persisted via
+ * SESSION_PERSISTENT_FIELDS, so pickSessionFields would propagate it here. It
+ * must never cross into renderer payloads — strip it explicitly.
  */
-function managedToSession(m: ManagedSession, overrides?: Partial<Session>): Session {
+export function managedToSession(m: ManagedSession, overrides?: Partial<Session>): Session {
+  const picked = pickSessionFields(m)
+  delete picked.sharedOwnerKey
   return {
-    ...pickSessionFields(m),
+    ...picked,
     // Pre-computed fields from header (not in SESSION_PERSISTENT_FIELDS)
     preview: m.preview,
     lastMessageRole: m.lastMessageRole,
@@ -2514,6 +2565,7 @@ export class SessionManager implements ISessionManager {
       if (managed.hasUnread === undefined) managed.hasUnread = stored.hasUnread
       if (managed.sharedUrl === undefined) managed.sharedUrl = stored.sharedUrl
       if (managed.sharedId === undefined) managed.sharedId = stored.sharedId
+      if (managed.sharedOwnerKey === undefined) managed.sharedOwnerKey = stored.sharedOwnerKey
       if (managed.transferredSessionSummary === undefined) managed.transferredSessionSummary = stored.transferredSessionSummary
       if (managed.transferredSessionSummaryApplied === undefined) managed.transferredSessionSummaryApplied = stored.transferredSessionSummaryApplied
 
@@ -3020,6 +3072,7 @@ export class SessionManager implements ISessionManager {
       managed.enabledSourceSlugs = storedSession.enabledSourceSlugs
       managed.sharedUrl = storedSession.sharedUrl
       managed.sharedId = storedSession.sharedId
+      managed.sharedOwnerKey = storedSession.sharedOwnerKey
       // Sync name from disk - ensures title persistence across lazy loading
       managed.name = storedSession.name
       // Restore LLM connection state - ensures correct provider on resume
@@ -5530,21 +5583,22 @@ export class SessionManager implements ISessionManager {
 
       if (!response.ok) {
         sessionLog.error(`Share failed with status ${response.status}`)
-        if (response.status === 413) {
-          return { success: false, error: 'Session file is too large to share' }
-        }
-        return { success: false, error: 'Failed to upload session' }
+        return shareApiError(response, 'Failed to upload session')
       }
 
-      const data = await response.json() as { id: string; url: string }
+      const data = await response.json() as { id: string; url: string; ownerKey?: string }
 
-      // Store shared info in session
+      // Store shared info in session. The ownerKey is the mutation capability
+      // for this share — persisted locally, sent as Bearer on update/revoke,
+      // and never exposed to renderer payloads (managedToSession strips it).
       managed.sharedUrl = data.url
       managed.sharedId = data.id
+      managed.sharedOwnerKey = data.ownerKey
       const workspaceRootPath = managed.workspace.rootPath
       await updateSessionMetadata(workspaceRootPath, sessionId, {
         sharedUrl: data.url,
         sharedId: data.id,
+        sharedOwnerKey: data.ownerKey,
       })
 
       sessionLog.info(`Session ${sessionId} shared at ${data.url}`)
@@ -5586,18 +5640,17 @@ export class SessionManager implements ISessionManager {
       }
 
       const { VIEWER_URL } = await import('@craft-agent/shared/branding')
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (managed.sharedOwnerKey) headers['Authorization'] = `Bearer ${managed.sharedOwnerKey}`
       const response = await fetch(`${VIEWER_URL}/s/api/${managed.sharedId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(storedSession)
       })
 
       if (!response.ok) {
         sessionLog.error(`Update share failed with status ${response.status}`)
-        if (response.status === 413) {
-          return { success: false, error: 'Session file is too large to share' }
-        }
-        return { success: false, error: 'Failed to update shared session' }
+        return shareApiError(response, 'Failed to update shared session')
       }
 
       sessionLog.info(`Session ${sessionId} share updated at ${managed.sharedUrl}`)
@@ -5631,23 +5684,27 @@ export class SessionManager implements ISessionManager {
 
     try {
       const { VIEWER_URL } = await import('@craft-agent/shared/branding')
+      const headers: Record<string, string> = {}
+      if (managed.sharedOwnerKey) headers['Authorization'] = `Bearer ${managed.sharedOwnerKey}`
       const response = await fetch(
         `${VIEWER_URL}/s/api/${managed.sharedId}`,
-        { method: 'DELETE' }
+        { method: 'DELETE', headers }
       )
 
       if (!response.ok) {
         sessionLog.error(`Revoke failed with status ${response.status}`)
-        return { success: false, error: 'Failed to revoke share' }
+        return shareApiError(response, 'Failed to revoke share')
       }
 
-      // Clear shared info
+      // Clear shared info (including the owner capability secret)
       delete managed.sharedUrl
       delete managed.sharedId
+      delete managed.sharedOwnerKey
       const workspaceRootPath = managed.workspace.rootPath
       await updateSessionMetadata(workspaceRootPath, sessionId, {
         sharedUrl: undefined,
         sharedId: undefined,
+        sharedOwnerKey: undefined,
       })
 
       sessionLog.info(`Session ${sessionId} share revoked`)
@@ -6331,9 +6388,11 @@ export class SessionManager implements ISessionManager {
     if (managed.sharedId) {
       try {
         const { VIEWER_URL } = await import('@craft-agent/shared/branding')
+        const headers: Record<string, string> = {}
+        if (managed.sharedOwnerKey) headers['Authorization'] = `Bearer ${managed.sharedOwnerKey}`
         const response = await fetch(
           `${VIEWER_URL}/s/api/${managed.sharedId}`,
-          { method: 'DELETE', signal: AbortSignal.timeout(5000) }
+          { method: 'DELETE', headers, signal: AbortSignal.timeout(5000) }
         )
         if (!response.ok) {
           sessionLog.warn(`Failed to revoke share for ${sessionId}: HTTP ${response.status}`)
@@ -9829,6 +9888,7 @@ export class SessionManager implements ISessionManager {
     if (mode === 'fork') {
       storedSession.sharedUrl = undefined
       storedSession.sharedId = undefined
+      storedSession.sharedOwnerKey = undefined
 
       // Resume-first: try to find a compatible LLM connection on the target workspace.
       // If found and the session has an sdkSessionId, preserve it for API-level resume.
