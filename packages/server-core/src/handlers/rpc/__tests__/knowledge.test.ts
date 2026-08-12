@@ -142,6 +142,7 @@ mock.module('@craft-agent/shared/config', () => ({
 }))
 
 import { registerKnowledgeHandlers, HANDLED_CHANNELS, __setSkipKnowledgeWatchAutoStart } from '../knowledge'
+import { getKnowledgeToolRuntime, handleKnowledgeSearch } from '@craft-agent/session-tools-core'
 
 // ---------------------------------------------------------------------------
 // Harness
@@ -294,6 +295,54 @@ describe('search', () => {
       invoke(RPC_CHANNELS.knowledge.SEARCH, { connectionId: 'conn-missing', input: { query: 'x' } }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' })
     expect(fetchCalls).toHaveLength(0)
+  })
+})
+
+// K-10 §3.1: registerKnowledgeHandlers publishes the KnowledgeToolRuntime consumed by
+// the knowledge_search / knowledge_read / knowledge_get_backlinks session tools.
+describe('knowledge session-tool runtime registration', () => {
+  it('registers a runtime whose search flows through the same provider resolution as the RPC read channels', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    createHarness()
+    const runtime = getKnowledgeToolRuntime()
+    expect(runtime).not.toBeNull()
+    const page = await runtime!.search({ input: { query: 'kernel' } })
+    expect(page.items).toHaveLength(1)
+    expect(page.items[0]!.ref).toEqual(DOC_REF)
+    const call = fetchCalls.find((c) => c.url.endsWith('/api/search/fullTextSearchBlock'))!
+    expect((call.init.headers as Record<string, string>)['Authorization']).toBe('Token secret-token-1')
+  })
+
+  it('resolves the default (first) connection when the tool call omits connectionId', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    createHarness()
+    const runtime = getKnowledgeToolRuntime()!
+    // No connectionId — the runtime must default to the only configured connection.
+    const page = await runtime.search({ input: { query: 'kernel' } })
+    expect(page.items).toHaveLength(1)
+  })
+
+  it('answers a typed CONNECTION_UNAVAILABLE when no connection is configured', async () => {
+    createHarness()
+    const runtime = getKnowledgeToolRuntime()!
+    await expect(runtime.search({ input: { query: 'x' } })).rejects.toMatchObject({
+      code: 'CONNECTION_UNAVAILABLE',
+    })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('end-to-end: the knowledge_search handler returns bounded provenance-rich text via the registered runtime', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    createHarness()
+    const result = await handleKnowledgeSearch({ sessionId: 'sess-1' } as never, { query: 'kernel' })
+    expect(result.isError).toBeFalsy()
+    const text = result.content.map((c) => c.text).join('\n')
+    expect(text).toContain('Kernel Guide')
+    expect(text).toContain('siyuan/document/doc-1')
+    expect(text).toContain('siyuan://blocks/doc-1')
   })
 })
 

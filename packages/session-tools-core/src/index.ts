@@ -140,6 +140,21 @@ export type {
 
 export { createNodeFileSystem } from './context.ts';
 
+// Knowledge tool runtime (K-10 §3.1 read capabilities) — registered by the
+// server-core knowledge RPC layer; consumed by the knowledge_* handlers.
+export {
+  registerKnowledgeToolRuntime,
+  getKnowledgeToolRuntime,
+  clearKnowledgeToolRuntime,
+} from './knowledge/runtime.ts';
+export type {
+  KnowledgeToolRuntime,
+  KnowledgeReadContextMode,
+  KnowledgeReadResult,
+  KnowledgeBacklink,
+} from './knowledge/runtime.ts';
+export { parseKnowledgeRefArg, KNOWLEDGE_REF_ACCEPTED_FORMS } from './knowledge/parse-ref.ts';
+
 // Handlers
 export {
   // SubmitPlan
@@ -170,6 +185,11 @@ export {
   // Send Developer Feedback
   handleSendDeveloperFeedback,
 } from './handlers/index.ts';
+
+// Knowledge handlers (registered in SESSION_TOOL_DEFS)
+export { handleKnowledgeSearch, KNOWLEDGE_SEARCH_MAX_LIMIT } from './handlers/knowledge-search.ts';
+export { handleKnowledgeRead, KNOWLEDGE_READ_MAX_MARKDOWN_CHARS } from './handlers/knowledge-read.ts';
+export { handleKnowledgeGetBacklinks, KNOWLEDGE_BACKLINKS_MAX_ITEMS } from './handlers/knowledge-backlinks.ts';
 
 export type {
   SubmitPlanArgs,
@@ -208,6 +228,10 @@ export {
   BrowserToolSchema,
   // Developer feedback schema
   SendDeveloperFeedbackSchema,
+  // Knowledge tool schemas
+  KnowledgeSearchSchema,
+  KnowledgeReadSchema,
+  KnowledgeGetBacklinksSchema,
   // Descriptions
   TOOL_DESCRIPTIONS,
   // Registry
@@ -240,4 +264,7 @@ export type {
   JsonSchemaToolDef,
   SessionToolFilterOptions,
   SessionToolNameOptions,
+  KnowledgeSearchArgs,
+  KnowledgeReadArgs,
+  KnowledgeGetBacklinksArgs,
 } from './tool-defs.ts';

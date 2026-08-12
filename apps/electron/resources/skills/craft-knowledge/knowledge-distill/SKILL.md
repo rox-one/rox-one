@@ -21,7 +21,7 @@ You receive some of:
 
 - Session transcript messages (`role`, `content`, message ids)
 - Optional cloud-run artifact text (e.g. `notes.md`)
-- Optional related SiYuan blocks already in context (via `knowledge.read` / `knowledge.search` / `knowledge.get_backlinks`)
+- Optional related SiYuan blocks already in context (via the `knowledge_read` / `knowledge_search` / `knowledge_get_backlinks` session tools — the read capabilities listed in `alwaysAllow`)
 
 ## Distillation rules
 

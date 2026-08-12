@@ -122,6 +122,8 @@ import {
   KnowledgeBridgeService,
   type KnowledgeProposalFileRecord,
 } from '../../knowledge/bridge-service'
+import { registerKnowledgeToolRuntime } from '@craft-agent/session-tools-core'
+import { createKnowledgeToolRuntime } from '../../knowledge/tool-runtime'
 import {
   startKnowledgeWatch,
   stopKnowledgeWatch,
@@ -510,6 +512,12 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       throw toTransportError(error)
     }
   }
+
+  // K-10 §3.1: publish the knowledge read runtime for the knowledge_search /
+  // knowledge_read / knowledge_get_backlinks session tools (Claude, Pi and OMP all
+  // execute registry session tools in this process). The runtime reuses the exact
+  // provider resolution above, so token rotation semantics match the read channels.
+  registerKnowledgeToolRuntime(createKnowledgeToolRuntime({ resolveProvider }))
 
   function requireWorkspaceRoot(workspaceId: string): string {
     const workspace = getWorkspaceByNameOrId(workspaceId)
