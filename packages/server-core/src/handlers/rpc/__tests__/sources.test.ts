@@ -26,6 +26,30 @@ import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-c
 import type { HandlerDeps } from '../../handler-deps'
 import { KnowledgeConnectionsStore } from '../../../knowledge'
 import { registerSourcesHandlers } from '../sources'
+import {
+  loadSource,
+  saveSourceConfig,
+  getSourceServerBuilder,
+  type FolderSourceConfig,
+} from '@craft-agent/shared/sources'
+import { resolveStdioConfig } from '@craft-agent/shared/utils'
+
+// Captured constructor configs of CraftMcpClient (module seam below) — lets
+// the GET_MCP_TOOLS tests assert exactly which client config the handler built
+// without spawning real MCP servers.
+const mcpClientConfigs: unknown[] = []
+
+mock.module('@craft-agent/shared/mcp', () => ({
+  CraftMcpClient: class MockCraftMcpClient {
+    constructor(config: unknown) {
+      mcpClientConfigs.push(config)
+    }
+    async listTools() {
+      return []
+    }
+    async close() {}
+  },
+}))
 
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
@@ -133,5 +157,150 @@ describe('sources:saveCredentials — knowledge-connection fallback (P2-12)', ()
     await expect(
       invoke(RPC_CHANNELS.sources.SAVE_CREDENTIALS, 'ws-active', 'not-a-thing', 'tok'),
     ).rejects.toThrow('Source not found: not-a-thing')
+  })
+})
+
+describe('sources:getMcpTools — stdio config normalization', () => {
+  // Regression: the discovery path used to pass the raw source config to
+  // CraftMcpClient, skipping resolveStdioConfig — so ${WORKSPACE}/${SOURCE_DIR}
+  // expansion and platform.{win32,darwin,linux} overrides applied on the real
+  // session path (server-builder buildMcpServer) were silently dropped here.
+
+  const SLUG = 'stdio-vars'
+
+  function writeStdioSource(rootPath: string): FolderSourceConfig {
+    const config: FolderSourceConfig = {
+      id: 'src-stdio-vars',
+      name: 'Stdio Vars',
+      slug: SLUG,
+      enabled: true,
+      provider: 'test',
+      type: 'mcp',
+      connectionStatus: 'connected',
+      mcp: {
+        transport: 'stdio',
+        command: '${SOURCE_DIR}/bin/default-server',
+        args: ['--root', '${WORKSPACE}', '--src', '${SOURCE_DIR}'],
+        env: { DATA_DIR: '${WORKSPACE}/data', STATIC: 'keepme' },
+        platform: {
+          // Keyed by the test runner's platform so the override always applies.
+          [process.platform]: {
+            command: '${SOURCE_DIR}/bin/platform-server',
+            env: { PLATFORM_OVERRIDE: 'yes' },
+          },
+        },
+      },
+    }
+    saveSourceConfig(rootPath, config)
+    return config
+  }
+
+  beforeEach(() => {
+    mcpClientConfigs.length = 0
+  })
+
+  it('passes the resolved stdio config (variables + platform overrides) to CraftMcpClient', async () => {
+    const rootPath = mockWorkspaces[1]!.rootPath // ws-active
+    writeStdioSource(rootPath)
+    const { invoke } = createHarness()
+
+    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', SLUG)) as {
+      success: boolean
+      error?: string
+    }
+
+    expect(result.success).toBe(true)
+    expect(mcpClientConfigs).toHaveLength(1)
+
+    const expected = resolveStdioConfig(
+      {
+        command: '${SOURCE_DIR}/bin/default-server',
+        args: ['--root', '${WORKSPACE}', '--src', '${SOURCE_DIR}'],
+        env: { DATA_DIR: '${WORKSPACE}/data', STATIC: 'keepme' },
+        platform: {
+          [process.platform]: {
+            command: '${SOURCE_DIR}/bin/platform-server',
+            env: { PLATFORM_OVERRIDE: 'yes' },
+          },
+        },
+      },
+      rootPath,
+      join(rootPath, 'sources', SLUG),
+    )!
+
+    if (!expected.env) throw new Error('test setup: expected resolved env to be defined')
+    const expectedEnv: Record<string, string> = expected.env
+
+    const captured = mcpClientConfigs[0] as {
+      transport: string
+      command: string
+      args: string[]
+      env: Record<string, string>
+    }
+    expect(captured.transport).toBe('stdio')
+    expect(captured.command).toBe(expected.command)
+    expect(captured.args).toEqual(expected.args)
+    expect(captured.env).toEqual(expectedEnv)
+    // No unexpanded variables may survive into the client config.
+    expect(captured.command).not.toContain('${')
+    expect(captured.args.join(' ')).not.toContain('${')
+  })
+
+  it('matches the config the real session path builds (buildMcpServer parity)', async () => {
+    const rootPath = mockWorkspaces[1]!.rootPath
+    writeStdioSource(rootPath)
+    const { invoke } = createHarness()
+
+    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', SLUG)) as {
+      success: boolean
+    }
+    expect(result.success).toBe(true)
+
+    const loaded = loadSource(rootPath, SLUG)!
+    const built = getSourceServerBuilder().buildMcpServer(loaded, null)
+    expect(built).not.toBeNull()
+    if (built?.type !== 'stdio') throw new Error('expected stdio server config')
+
+    const captured = mcpClientConfigs[0] as {
+      command: string
+      args: string[]
+      env: Record<string, string> | undefined
+    }
+    expect({ command: captured.command, args: captured.args, env: captured.env }).toEqual({
+      command: built.command,
+      args: built.args ?? [],
+      env: built.env,
+    })
+  })
+
+  it('returns the typed missing-command error when stdio config has no command', async () => {
+    const rootPath = mockWorkspaces[1]!.rootPath
+    // saveSourceConfig's zod schema refuses command-less stdio configs, so
+    // write config.json directly — this simulates a hand-edited file.
+    const { mkdirSync, writeFileSync } = await import('fs')
+    const dir = join(rootPath, 'sources', 'no-cmd')
+    mkdirSync(dir, { recursive: true })
+    writeFileSync(
+      join(dir, 'config.json'),
+      JSON.stringify({
+        id: 'src-no-cmd',
+        name: 'No Command',
+        slug: 'no-cmd',
+        enabled: true,
+        provider: 'test',
+        type: 'mcp',
+        connectionStatus: 'connected',
+        mcp: { transport: 'stdio' },
+      }),
+    )
+    const { invoke } = createHarness()
+
+    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', 'no-cmd')) as {
+      success: boolean
+      error?: string
+    }
+    expect(result.success).toBe(false)
+    expect(result.error).toContain('command')
+    expect(mcpClientConfigs).toHaveLength(0)
   })
 })
