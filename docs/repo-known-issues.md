@@ -14,4 +14,13 @@ Small hygiene items found by the 2026-08-12 integration audit. Listed here becau
 
 ## Stale code comment (owned by another workstream)
 
-- `packages/shared/src/agent/omp-agent.ts` header comment (~line 41) still says MCP source-proxy tools are "NOT bridged in v1", contradicted by the v2 G1 implementation in the same file (`registerHostTools()` → `buildSessionToolDefs({ includePoolProxyDefs: true })`, line ~1054). Tracked in the integration audit; fix assigned to the code-owning subagent.
+- `packages/shared/src/agent/omp-agent.ts` header comment (~line 41) still says MCP source-proxy tools are "NOT bridged in v1", contradicted by the v2 G1 implementation in the same file (`registerHostTools()` → `buildSessionToolDefs({ includePoolProxyDefs: true })`, line ~1054). Tracked in the integration audit; fix assigned to the code-owning subagent. *(Fixed on the integration branch by subagent A, commit fcf4da70.)*
+
+## Headless server operational constraints (verified 2026-08-12 by integration reviewer R1)
+
+| Constraint | Behavior | Evidence |
+|---|---|---|
+| `CRAFT_SERVER_TOKEN` minimum length | Tokens shorter than 16 chars are **fatal at boot** (startup throws) — deliberate hardening, but breaks naive copy-paste runbooks using short tokens | `packages/server-core/src/bootstrap/headless-start.ts` `validateTokenEntropy` (`token.length < MIN_TOKEN_LENGTH` → error at startup); use `bun run packages/server/src/index.ts --generate-token` |
+| Config-dir single-instance lock | A second server booted against the same `CRAFT_CONFIG_DIR` refuses to start (`Another server instance is already running (PID …)`); scripted restarts must stop the old process first or use a separate config dir | `packages/server-core/src/bootstrap/lock-identity.ts`; observed live: second instance rejected while the first held `~/.craft-agent` |
+
+**Proposed fix (docs-owned):** mention both constraints in `docs/cli.md` / README server section so runbooks don't fail at boot.
