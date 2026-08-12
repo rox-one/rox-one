@@ -52,13 +52,13 @@ export function RoxConnectStep({
           <CraftAgentsSymbol className="size-10 text-accent" />
         </div>
       }
-      title="Sign in to Rox"
+      title={t('onboarding.roxConnect.title')}
       description={
         <>
-          Connect your Rox account to use agents, billing, and sync.
+          {t('onboarding.roxConnect.description')}
           <br />
           <span className="text-muted-foreground/70 text-xs mt-2 block">
-            Auth host: {authBaseUrl}
+            {t('onboarding.roxConnect.authHost', { host: authBaseUrl })}
           </span>
         </>
       }
@@ -74,10 +74,10 @@ export function RoxConnectStep({
               {status === 'starting' ? (
                 <>
                   <Spinner className="mr-2" />
-                  Starting…
+                  {t('onboarding.roxConnect.starting')}
                 </>
               ) : (
-                'Connect with Rox'
+                t('onboarding.roxConnect.connect')
               )}
             </Button>
           ) : null}
@@ -86,8 +86,8 @@ export function RoxConnectStep({
             <>
               <div className="rounded-lg border bg-background p-4 text-center">
                 <p className="text-xs text-muted-foreground mb-2">
-                  Enter this code on the website
-                  {copied ? ' (copied)' : ''}
+                  {t('onboarding.roxConnect.enterCode')}
+                  {copied ? ` (${t('onboarding.roxConnect.copied')})` : ''}
                 </p>
                 <p className="font-mono text-2xl tracking-widest font-semibold">
                   {codes.userCode}
@@ -95,21 +95,21 @@ export function RoxConnectStep({
               </div>
               <Button onClick={onOpenBrowser} className="w-full" size="lg" variant="default">
                 <ExternalLink className="mr-2 size-4" />
-                Open browser to approve
+                {t('onboarding.roxConnect.openBrowser')}
               </Button>
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Spinner className="size-4" />
-                Waiting for approval…
+                {t('onboarding.roxConnect.waiting')}
               </div>
               <Button onClick={onStart} variant="ghost" size="sm" className="w-full">
                 <RefreshCw className="mr-2 size-3" />
-                Restart
+                {t('onboarding.roxConnect.restart')}
               </Button>
             </>
           ) : null}
 
           {status === 'success' ? (
-            <div className="text-sm text-emerald-600 text-center">Connected. Continuing…</div>
+            <div className="text-sm text-emerald-600 text-center">{t('onboarding.roxConnect.success')}</div>
           ) : null}
 
           {errorMessage ? (
