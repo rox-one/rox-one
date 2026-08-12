@@ -223,7 +223,7 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   server.handle(RPC_CHANNELS.onboarding.START_ROX_CONNECT, async () => {
     log.info('[Onboarding] Starting Rox cloud Connect device flow')
     try {
-      const started = await startRoxDeviceFlow('craft-agents-desktop')
+      const started = await startRoxDeviceFlow()
       const key = started.deviceCode
       if (!roxConnectInFlight.has(key)) {
         const p = waitForRoxDeviceApproval(started.deviceCode, {

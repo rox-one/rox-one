@@ -6,9 +6,9 @@ import { Sun, Moon, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 /**
- * CraftAgentLogo - The Craft Agent "C" logo
+ * RoxLogo - The Rox pixel glyph (same mark used across the product)
  */
-function CraftAgentLogo({ className }: { className?: string }) {
+function RoxLogo({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -42,9 +42,9 @@ export function Header({ hasSession, sessionTitle, isDark, onToggleTheme, onClea
       <a
         href="https://agents.rox.one"
         className="hover:opacity-80 transition-opacity"
-        title="Craft Agent"
+        title="Rox"
       >
-        <CraftAgentLogo className="w-6 h-6 text-[#9570BE]" />
+        <RoxLogo className="w-6 h-6 text-[#9570BE]" />
       </a>
 
       {/* Session title - centered */}
@@ -72,7 +72,7 @@ export function Header({ hasSession, sessionTitle, isDark, onToggleTheme, onClea
         <button
           onClick={onToggleTheme}
           className="p-1.5 rounded-md bg-background shadow-minimal text-foreground/40 hover:text-foreground/70 transition-colors"
-          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            title={isDark ? t('viewer.themeToLight') : t('viewer.themeToDark')}
         >
           {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
