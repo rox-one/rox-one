@@ -48,7 +48,7 @@ Shared/high-conflict files (`SessionManager.ts`, `packages/shared/src/protocol/*
 | C Knowledge | `feat/knowledge-runtime-completion` | DISPATCHED (wave 1) | implement, test-driven-development, react-best-practices | — |
 | D Identity | `fix/rox-identity-coherence` | DISPATCHED (wave 2, parallel) | writing-plans (migration), react-best-practices, i18n parity gates | — |
 | E MCP | `fix/mcp-runtime-contract` | DISPATCHED (wave 2, parallel) | systematic-debugging, test-driven-development | — |
-| F Secrets | `feat/secrets-provider-runtime` | DISPATCHED (wave 2, parallel) | implement, test-driven-development | — |
+| F Secrets | `feat/secrets-provider-runtime` | ✅ MERGED (135635db, 22515bed, 8eec20f5; lead-verified: 65 secrets + 201 config + 719 server-core tests green, tsc clean ×2) | implement, test-driven-development | Full vertical slice incl. real Infisical REST v3 provider; anti-leak fix in settings RPC; no UI (per scope); gaps documented in `docs/secrets-providers.md` |
 | G Collections/Shell | `fix/collections-shell` | DISPATCHED (wave 3, parallel) | react-best-practices, verification-before-completion | — |
 | H Docs/Branches | `chore/repo-hygiene` | ✅ MERGED into integration (e4c7a36c, a0b153d6, 5427f76c; merge commit on `rox-integration-remediation-7c33`) | writing-plans, verification-before-completion | Docs aligned with v2; 94 branches classified (85 rox + 9 donor SAFE_TO_DELETE, proposed commands in `plans/branch-disposition.md` §5); corrected audit: all 62 `feature/pr-*` tips are ancestors of main; donor `feat/shell-ext-activate2` has one unique 142-line test to port/discard before donor archival |
 | Integration | `rox-integration-remediation-7c33` | ACTIVE (PR #5) | code-review, resolving-merge-conflicts | — |
