@@ -38,7 +38,10 @@
  *   getSessionToolProxyDefs) via the `set_host_tools` RPC. When the OMP model
  *   invokes one, OMP emits `host_tool_call`; craft executes it with the same
  *   semantics as PiAgent.handleToolExecute and answers `host_tool_result`.
- *   MCP source-proxy tools from the pool are NOT bridged in v1.
+ *   MCP source-proxy tools from the pool ARE bridged (since v2):
+ *   registerHostTools builds the merged set via buildSessionToolDefs with
+ *   includePoolProxyDefs, and source-proxy calls execute through the same
+ *   mcpPool.callTool path as PiAgent (see executeHostSessionTool).
  */
 
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
