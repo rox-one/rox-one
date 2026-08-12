@@ -93,7 +93,9 @@ function buildSafeProxyToolName(slug: string, originalName: string, usedNames: S
 function sdkConfigToClientConfig(config: SdkMcpServerConfig): McpClientConfig | null {
   if (config.type === 'http' || config.type === 'sse') {
     return {
-      transport: 'http',
+      // Keep the declared transport: coercing sse → http deterministically
+      // fails against pure legacy SSE servers (they 405 plain JSON-RPC POSTs).
+      transport: config.type,
       url: config.url,
       headers: config.headers,
     };
