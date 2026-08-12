@@ -55,6 +55,19 @@ Shared/high-conflict files (`SessionManager.ts`, `packages/shared/src/protocol/*
 
 Dispatch note (2026-08-12): all eight workstreams run in parallel in isolated worktrees (best-of-n-runner). Waves indicate merge priority at the integration gate, not dispatch order: A/B/C merge first, then D/E/F, then G/H. Wave-4 reviewers (integration verification, browser QA, security regression, test adversary) and the Wave-5 fresh-machine E2E run after integration.
 
+## Integration state (2026-08-12, post-merge)
+
+All 8 workstreams merged into `rox-integration-remediation-7c33`. Lead cross-cutting verification on the integrated tree:
+
+- Typechecks clean: shared, server-core, session-tools-core, core, electron, webui, viewer (root `tsc --noEmit` is a pre-existing broken script — root tsconfig has no inputs; not a regression).
+- i18n gates green: parity (2986 keys × 9), sorted, coverage.
+- Tests: shared 3619 pass / 0 fail; server-core 752 / 0; session-tools-core 119 / 0; viewer 27 / 0; renderer 765 pass / 3 fail (the 3 pdfjs `?url` failures proven pre-existing on base `5797f431`).
+- Builds: subprocess bundles + webui build OK.
+- Live server on integrated tree: boots clean, `/login` serves `<title>Rox — Вход</title>`, CLI `ping`/`health` OK.
+- CLI `--validate-server`: infra steps pass; step 11 now fails in **1.2 s** with `No text_delta events received` (was: 60 s timeout). Server log shows the typed `OMP_NO_MODELS` error with actionable message reaching the session. The original infinite hang is fixed end-to-end.
+
+Wave 4 dispatched: R1 integration verification, R2 browser verification (against the live server), R3 security regression, R4 test adversary.
+
 ## Review gate checklist (per returned branch)
 
 1. Full diff inspection — scope discipline vs ownership map.
