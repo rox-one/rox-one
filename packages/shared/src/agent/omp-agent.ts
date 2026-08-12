@@ -759,6 +759,11 @@ export class OmpAgent extends BaseAgent {
     // so the exit-time classification sees the full evidence ('exit' can
     // fire before the final stderr flush; 'close' trails it).
     let childStderr = '';
+    // The ring keeps only the TAIL, so a stderr flood evicts an early
+    // classifying line ("No models available…") before the exit-time
+    // classification runs. Scan the evidence as it arrives and latch the
+    // first classified startup error — the latch survives ring eviction.
+    let latchedStartupError: OmpStartupError | null = null;
 
     this.readline = createInterface({ input: child.stdout!, crlfDelay: Infinity });
     this.readline.on('line', (line: string) => {
@@ -767,9 +772,21 @@ export class OmpAgent extends BaseAgent {
 
     child.stderr?.on('data', (data: Buffer) => {
       const text = data.toString();
-      childStderr = (childStderr + text).slice(-OMP_STDERR_RING_LIMIT);
+      // Evidence BEFORE ring eviction — a single chunk can exceed the ring
+      // and wash away its own head (pipe reads are up to 64KB).
+      const evidence = childStderr + text;
+      childStderr = evidence.slice(-OMP_STDERR_RING_LIMIT);
       if (isCurrentChild()) {
         this.recentStderr = childStderr;
+        if (!latchedStartupError) {
+          // Probe the pre-eviction evidence (bounded by ring + chunk size).
+          // Only actionable signature-based codes are latched — generic
+          // codes depend on the exit reason, unknown until the exit lands.
+          const probe = classifyOmpStartupExit({ exitCode: null, signal: null, stderr: evidence });
+          if (probe.ompCode === 'OMP_NO_MODELS' || probe.ompCode === 'OMP_AUTH_REQUIRED') {
+            latchedStartupError = probe;
+          }
+        }
         const trimmed = text.trim();
         if (trimmed) this.debug(`[omp stderr] ${trimmed}`);
       }
@@ -780,7 +797,7 @@ export class OmpAgent extends BaseAgent {
         this.debug(`Ignoring exit from stale OMP subprocess (code=${code}, signal=${signal})`);
         return;
       }
-      this.handleSubprocessExit(child, code, signal, () => childStderr);
+      this.handleSubprocessExit(child, code, signal, () => childStderr, () => latchedStartupError);
     });
 
     child.on('error', (error) => {
@@ -988,6 +1005,7 @@ export class OmpAgent extends BaseAgent {
     code: number | null,
     signal: string | null,
     stderrEvidence: () => string,
+    latchedStartupError: () => OmpStartupError | null,
   ): void {
     this.debug(`OMP subprocess exited: code=${code}, signal=${signal}`);
 
@@ -1008,9 +1026,11 @@ export class OmpAgent extends BaseAgent {
       const rejectCaptured = this.subprocessReadyReject;
       const wasAbort = this.abortReason !== undefined;
       const settle = () => {
+        // A signature latched while stderr was streaming wins over tail-only
+        // classification — a flood may have evicted the evidence by now.
         const error = wasAbort
           ? new OmpStartupAbortedError(`OMP subprocess terminated during abort (${exitReason})`)
-          : classifyOmpStartupExit({ exitCode: code, signal, stderr: stderrEvidence() });
+          : (latchedStartupError() ?? classifyOmpStartupExit({ exitCode: code, signal, stderr: stderrEvidence() }));
         if (this.startupGeneration === generation) {
           this.settleReady(error);
         } else {
