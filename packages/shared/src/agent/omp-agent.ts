@@ -304,6 +304,15 @@ export class OmpAgent extends BaseAgent {
   private subprocessReady: Promise<void> | null = null;
   private subprocessReadyResolve: (() => void) | null = null;
   private subprocessReadyReject: ((error: Error) => void) | null = null;
+  /**
+   * In-flight spawn memo. Concurrent chat() calls during startup share ONE
+   * spawnSubprocess() handshake — without it a second entrant would spawn a
+   * second child and overwrite subprocessReadyResolve/Reject, leaving the
+   * first entrant's ready-wait unsettleable (hang) and the loser child
+   * orphaned. Cleared when the spawn attempt settles (ready or failed), so a
+   * retry after a failed startup spawns fresh.
+   */
+  private spawnPromise: Promise<void> | null = null;
   /** True from spawn until the ready handshake settles (ready / typed failure). */
   private startupInFlight = false;
   /** True once the ready handshake succeeded; cleared again on exit/kill. */
@@ -451,11 +460,21 @@ export class OmpAgent extends BaseAgent {
   }
 
   private async ensureSubprocess(): Promise<void> {
-    if (this.subprocess && this.subprocessReady) {
-      // Rejects with a typed OmpStartupError when startup failed.
+    if (this.spawnPromise) {
+      // A spawn is already in flight (concurrent chat during startup) — share
+      // its handshake instead of double-spawning.
+      await this.spawnPromise;
+    } else if (this.subprocess && this.subprocessReady && this.readyAccepted) {
+      // Live child with a succeeded handshake. A child whose handshake FAILED
+      // (rejected subprocessReady) or never completed (wedged startup) is
+      // dead state — fall through to a fresh spawn instead of re-awaiting a
+      // known-dead promise.
       await this.subprocessReady;
     } else {
-      await this.spawnSubprocess();
+      this.spawnPromise = this.spawnSubprocess().finally(() => {
+        this.spawnPromise = null;
+      });
+      await this.spawnPromise;
     }
     // Branch fork: after spawn, attach to the parent OMP transcript and cut
     // it at the persisted anchor. Runs exactly once per agent instance.
@@ -740,6 +759,11 @@ export class OmpAgent extends BaseAgent {
     // so the exit-time classification sees the full evidence ('exit' can
     // fire before the final stderr flush; 'close' trails it).
     let childStderr = '';
+    // The ring keeps only the TAIL, so a stderr flood evicts an early
+    // classifying line ("No models available…") before the exit-time
+    // classification runs. Scan the evidence as it arrives and latch the
+    // first classified startup error — the latch survives ring eviction.
+    let latchedStartupError: OmpStartupError | null = null;
 
     this.readline = createInterface({ input: child.stdout!, crlfDelay: Infinity });
     this.readline.on('line', (line: string) => {
@@ -748,9 +772,21 @@ export class OmpAgent extends BaseAgent {
 
     child.stderr?.on('data', (data: Buffer) => {
       const text = data.toString();
-      childStderr = (childStderr + text).slice(-OMP_STDERR_RING_LIMIT);
+      // Evidence BEFORE ring eviction — a single chunk can exceed the ring
+      // and wash away its own head (pipe reads are up to 64KB).
+      const evidence = childStderr + text;
+      childStderr = evidence.slice(-OMP_STDERR_RING_LIMIT);
       if (isCurrentChild()) {
         this.recentStderr = childStderr;
+        if (!latchedStartupError) {
+          // Probe the pre-eviction evidence (bounded by ring + chunk size).
+          // Only actionable signature-based codes are latched — generic
+          // codes depend on the exit reason, unknown until the exit lands.
+          const probe = classifyOmpStartupExit({ exitCode: null, signal: null, stderr: evidence });
+          if (probe.ompCode === 'OMP_NO_MODELS' || probe.ompCode === 'OMP_AUTH_REQUIRED') {
+            latchedStartupError = probe;
+          }
+        }
         const trimmed = text.trim();
         if (trimmed) this.debug(`[omp stderr] ${trimmed}`);
       }
@@ -761,7 +797,7 @@ export class OmpAgent extends BaseAgent {
         this.debug(`Ignoring exit from stale OMP subprocess (code=${code}, signal=${signal})`);
         return;
       }
-      this.handleSubprocessExit(child, code, signal, () => childStderr);
+      this.handleSubprocessExit(child, code, signal, () => childStderr, () => latchedStartupError);
     });
 
     child.on('error', (error) => {
@@ -784,8 +820,12 @@ export class OmpAgent extends BaseAgent {
               stderr: this.recentStderr.trim(),
               cause: error,
             }));
-      } else if (this._isProcessing) {
+      } else if (this._isProcessing && !this.eventQueue.isComplete) {
+        // Mid-turn transport error — mirror handleAgentEnd's terminal
+        // behavior (error + complete); the exit handler may report the same
+        // crash, so skip when the queue is already closed.
         this.eventQueue.enqueue({ type: 'error', message: `OMP subprocess error: ${error.message}` });
+        this.eventQueue.enqueue({ type: 'complete' });
         this.eventQueue.complete();
       }
     });
@@ -800,17 +840,16 @@ export class OmpAgent extends BaseAgent {
       readyPromise,
       new Promise<void>(() => {
         const timer = setTimeout(() => {
+          // Late timer against an already-settled handshake (e.g. the ready
+          // frame landed in the same tick) must not kill a healthy child.
+          if (!this.startupInFlight || this.subprocess !== childRef) return;
           this.settleReady(new OmpStartupError({
             code: 'OMP_READY_TIMEOUT',
             message: `OMP did not send the ready frame within ${Math.floor(OMP_READY_TIMEOUT_MS / 1000)}s.`,
             hint: 'Check that the omp binary is healthy (omp --mode rpc) and that no wrapper swallows its stdout.',
             stderr: this.recentStderr.trim(),
           }));
-          try {
-            childRef.kill('SIGTERM');
-          } catch {
-            // already gone
-          }
+          this.teardownUnreadySubprocess(childRef);
         }, OMP_READY_TIMEOUT_MS);
         const clear = () => clearTimeout(timer);
         readyPromise.then(clear, clear);
@@ -835,6 +874,48 @@ export class OmpAgent extends BaseAgent {
     // without them, tools just won't be visible to the OMP model.
     this.registerHostTools()
       .catch((err) => this.debug(`set_host_tools failed: ${err instanceof Error ? err.message : err}`));
+  }
+
+  /**
+   * Ready-timeout teardown for a child that never sent the ready frame.
+   * Detaches the spawn state SYNCHRONOUSLY (a retry must spawn fresh, not
+   * re-await the dead handshake or trip over the wedged child), then
+   * escalates SIGTERM → SIGKILL so a SIGTERM-immune child cannot leak.
+   * The child's late exit event is ignored as stale (no longer current).
+   */
+  private teardownUnreadySubprocess(child: ChildProcess): void {
+    if (this.subprocess === child) {
+      this.subprocess = null;
+      this.subprocessReady = null;
+      this.subprocessReadyResolve = null;
+      this.subprocessReadyReject = null;
+      this.readyAccepted = false;
+      if (this.readline) {
+        this.readline.close();
+        this.readline = null;
+      }
+    }
+    try {
+      child.stdin?.end();
+    } catch {
+      // stdin may already be closed
+    }
+    try {
+      child.kill('SIGTERM');
+    } catch {
+      // already gone
+    }
+    const killer = setTimeout(() => {
+      if (child.exitCode === null && !child.signalCode) {
+        this.debug('OMP subprocess ignored SIGTERM after ready timeout; SIGKILL');
+        try {
+          child.kill('SIGKILL');
+        } catch {
+          // already gone
+        }
+      }
+    }, 2_000);
+    killer.unref?.();
   }
 
   /**
@@ -928,6 +1009,7 @@ export class OmpAgent extends BaseAgent {
     code: number | null,
     signal: string | null,
     stderrEvidence: () => string,
+    latchedStartupError: () => OmpStartupError | null,
   ): void {
     this.debug(`OMP subprocess exited: code=${code}, signal=${signal}`);
 
@@ -948,9 +1030,11 @@ export class OmpAgent extends BaseAgent {
       const rejectCaptured = this.subprocessReadyReject;
       const wasAbort = this.abortReason !== undefined;
       const settle = () => {
+        // A signature latched while stderr was streaming wins over tail-only
+        // classification — a flood may have evicted the evidence by now.
         const error = wasAbort
           ? new OmpStartupAbortedError(`OMP subprocess terminated during abort (${exitReason})`)
-          : classifyOmpStartupExit({ exitCode: code, signal, stderr: stderrEvidence() });
+          : (latchedStartupError() ?? classifyOmpStartupExit({ exitCode: code, signal, stderr: stderrEvidence() }));
         if (this.startupGeneration === generation) {
           this.settleReady(error);
         } else {
@@ -978,11 +1062,15 @@ export class OmpAgent extends BaseAgent {
     // Mid-turn crash after a successful startup: surface it. Exits after a
     // FAILED startup (timeout kill, abort kill, spawn error) are already
     // reported through the rejected ready wait — nothing more to add.
-    if (this._isProcessing && wasReady) {
+    // Mirrors handleAgentEnd's terminal behavior: the stream must end with a
+    // `complete` event, and the report must not duplicate one already sent
+    // (the 'error' listener or a rejected prompt RPC can race this).
+    if (this._isProcessing && wasReady && !this.eventQueue.isComplete) {
       this.eventQueue.enqueue({
         type: 'error',
         message: `OMP subprocess exited unexpectedly (${exitReason})`,
       });
+      this.eventQueue.enqueue({ type: 'complete' });
       this.eventQueue.complete();
     }
 
@@ -1763,6 +1851,18 @@ export class OmpAgent extends BaseAgent {
   ): AsyncGenerator<AgentEvent> {
     // Idle point between turns: pick up source-proxy changes since spawn.
     await this.refreshHostToolsFromPool();
+    // BaseAgent.chat does not serialize concurrent chat() calls, and two
+    // interleaved turns would corrupt each other on the shared event queue.
+    // The first entrant claims the turn; a concurrent entrant fails fast
+    // (bounded) instead of double-prompting the subprocess. The claim sits
+    // after the refresh await so microtask FIFO makes the winner the first
+    // chat() caller, and so an idle-point crash during the refresh can still
+    // take the transparent respawn path in ensureSubprocess.
+    if (this._isProcessing) {
+      yield { type: 'error', message: 'OMP session is already processing a turn — concurrent chat() is not supported.' };
+      yield { type: 'complete' };
+      return;
+    }
     this._isProcessing = true;
     this.abortReason = undefined;
     this.eventQueue.reset();
@@ -1790,7 +1890,10 @@ export class OmpAgent extends BaseAgent {
       await this.ensureSubprocess();
 
       this.sendCommand('prompt', { message: effectiveMessage }).catch((error) => {
-        // prompt is async — failure response = turn failed
+        // prompt is async — failure response = turn failed. When the failure
+        // is the subprocess crashing mid-turn, handleSubprocessExit already
+        // reported it and closed the queue — don't double-report.
+        if (this.eventQueue.isComplete) return;
         this.eventQueue.enqueue({ type: 'error', message: `OMP prompt failed: ${error.message}` });
         this.eventQueue.complete();
       });
