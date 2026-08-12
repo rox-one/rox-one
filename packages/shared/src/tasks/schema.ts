@@ -253,6 +253,19 @@ export type TaskNode = z.infer<typeof TaskNodeSchema>;
 export type TaskSpec = z.infer<typeof TaskSpecSchema>;
 
 // ---------------------------------------------------------------------------
+// ADR-0001 naming convergence (docs/architecture/adr/0001)
+// ---------------------------------------------------------------------------
+
+/**
+ * Canonical name for the DAG spec: a user-facing task is a `WorkItem`, so the
+ * declarative graph the Conductor executes is a `WorkflowSpec`. Alias-only —
+ * the task.yaml wire format and `tasks:*` RPC channels are unchanged and are
+ * now considered legacy-stable. New code should prefer `WorkflowSpec`.
+ */
+export type WorkflowSpec = TaskSpec;
+export const WorkflowSpecSchema = TaskSpecSchema;
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

@@ -333,6 +333,13 @@ export interface TaskRunSnapshotDto {
   tokensUsed: number
 }
 
+/**
+ * ADR-0001 naming convergence (docs/architecture/adr/0001): a run of a
+ * WorkflowSpec. Alias-only — wire shape and `tasks:*` channels are unchanged.
+ */
+export type WorkflowRunRequest = TaskRunRequest
+export type WorkflowRunSnapshotDto = TaskRunSnapshotDto
+
 export interface TaskGetResult {
   slug: string
   validation: TaskValidationResultDto
