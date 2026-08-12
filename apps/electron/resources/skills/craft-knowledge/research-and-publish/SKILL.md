@@ -16,11 +16,13 @@ requiredSources:
 ## Вход (`input`)
 Один аргумент — knowledge ref: `siyuan://blocks/<id>` или `siyuan://documents/<id>`
 (грамматика `[knowledge:…]` mentions).
-Получи контекст через `knowledge.read` в режиме `snapshot` (воспроизводимость);
-backlinks — через `knowledge.get_backlinks` для карты смежных документов.
+Получи контекст через сессионный инструмент `knowledge_read` с `contextMode: "snapshot"` (воспроизводимость);
+backlinks — через `knowledge_get_backlinks` для карты смежных документов.
+(Инструменты реализуют capabilities `knowledge.read` / `knowledge.get_backlinks` из `alwaysAllow`;
+wire-имена с подчёркиваниями — требование tool-name грамматик LLM API.)
 
 ## Порядок работы
-1. READ: `knowledge.read(ref, mode: "snapshot")` → зафиксируй `content_hash`.
+1. READ: `knowledge_read(ref, contextMode: "snapshot")` → зафиксируй `content_hash` (поле `contentHash` в ответе).
 2. RESEARCH: web.search / browser.navigate по теме узла; источники фиксируй списком.
 3. SYNTHESIZE: сопоставь найденное с текущим содержимым; ничего не переписывай молча.
 4. WRITE — один из двух исходов:

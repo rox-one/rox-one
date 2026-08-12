@@ -178,6 +178,7 @@ import type {
   KnowledgeCapabilities,
   KnowledgeConnection,
   KnowledgeNode,
+  KnowledgeNotebookInfo,
   KnowledgeRef,
   KnowledgeWorkEnvelope,
   SearchHit,
@@ -191,6 +192,7 @@ export type {
   KnowledgeCapabilities,
   KnowledgeConnection,
   KnowledgeNode,
+  KnowledgeNotebookInfo,
   KnowledgeRef,
   KnowledgeWorkEnvelope,
   SearchHit,
@@ -651,6 +653,10 @@ export interface ElectronAPI {
     get(args: { workspaceId: string; connectionId: string; ref: KnowledgeRef }): Promise<KnowledgeNode>
     getContext(args: { workspaceId: string; connectionId: string; ref: KnowledgeRef; mode: ContextMode }): Promise<ContextPayload>
     getBacklinks(args: { workspaceId: string; connectionId: string; ref: KnowledgeRef }): Promise<ContextPayload['backlinks']>
+    /** Notebook listing for the knowledge navigator tree (kernel lsNotebooks). */
+    listNotebooks(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
+    /** Settings → Knowledge: patch baseUrl and/or token on an existing connection. */
+    updateConnection(args: { connectionId: string; baseUrl?: string; token?: string }): Promise<KnowledgeConnection>
     getExportPayload(args: {
       connectionId: string
       ref: KnowledgeRef

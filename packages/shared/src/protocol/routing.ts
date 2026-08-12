@@ -458,6 +458,10 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.knowledge.GET_CONTEXT,
   RPC_CHANNELS.knowledge.GET_BACKLINKS,
   RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
+  // Navigator notebook listing (kernel read) + Settings connection edit both act
+  // on the workspace-owning server's config/credential stores — proxied.
+  RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+  RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
   RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
   RPC_CHANNELS.knowledge.SNAPSHOT_GET,
   RPC_CHANNELS.knowledge.CHANGED,
