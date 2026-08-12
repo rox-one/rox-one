@@ -413,9 +413,12 @@ function headerToMetadata(header: SessionHeader, workspaceRootPath: string): Ses
     const workingDir = header.workingDirectory ? expandPath(header.workingDirectory) : undefined;
     const sdkCwd = header.sdkCwd ? expandPath(header.sdkCwd) : workingDir;
 
-    // Destructure fields that don't exist on SessionMetadata or need overrides
+    // Destructure fields that don't exist on SessionMetadata or need overrides.
+    // sharedOwnerKey is the share mutation capability secret — it must never
+    // reach list payloads (defense in depth; see apps/viewer/SECURITY.md).
     const {
       pendingPlanExecution: _pp,
+      sharedOwnerKey: _sok,
       sessionStatus: _ss, workingDirectory: _wd, sdkCwd: _sc,
       workspaceRootPath: _wrp, ...headerFields
     } = header;
@@ -549,6 +552,7 @@ export async function updateSessionMetadata(
     | 'permissionMode'
     | 'sharedUrl'
     | 'sharedId'
+    | 'sharedOwnerKey'
     | 'model'
     | 'llmConnection'
     | 'isArchived'
@@ -571,6 +575,7 @@ export async function updateSessionMetadata(
   if ('hasUnread' in updates) session.hasUnread = updates.hasUnread;
   if ('sharedUrl' in updates) session.sharedUrl = updates.sharedUrl;
   if ('sharedId' in updates) session.sharedId = updates.sharedId;
+  if ('sharedOwnerKey' in updates) session.sharedOwnerKey = updates.sharedOwnerKey;
   if (updates.model !== undefined) session.model = updates.model;
   if (updates.llmConnection !== undefined) session.llmConnection = updates.llmConnection;
   if (updates.isArchived !== undefined) session.isArchived = updates.isArchived;
