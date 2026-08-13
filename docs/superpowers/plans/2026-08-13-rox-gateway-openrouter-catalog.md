@@ -4,6 +4,8 @@
 
 **Goal:** On `agisota/zed-api` `release/v3.8.50`, publish no OpenRouter rows on catalog paths, and make every advertised id for a quota-exclusive key a `qtSd/*` id that `validateQuotaAccess` will admit.
 
+**Status 2026-08-13:** Exclusion merged in #2 (`406ccebb`). Honesty follow-up is [zed-api#4](https://github.com/agisota/zed-api/pull/4) (`d93f945a`). Do not `git am` the `2e7732427` two-commit patch onto current tip. Staging (Task 7) still open.
+
 **Architecture:** Keep OpenRouter ownership/path matching and `finalizeCatalogResponse` fail-closed strip. Change only the quota short circuit: never substitute `buildRoxPublicCatalog()` for quota-exclusive keys. Public-mode non-quota keys still see `rox/*`. Request policy stays quota-only for those keys.
 
 **Tech Stack:** Node native test runner, tsx, Next.js route handlers in `zed-api`, SQLite test fixtures via `DATA_DIR`.
@@ -263,7 +265,7 @@ Expected: 0 fail. Record the `# tests` / `# pass` / `# fail` lines.
 
 **Files:** none in this environment unless write appears
 
-- [ ] Open PR `hotfix/rox-catalog-openrouter` -> `release/v3.8.50` on `agisota/zed-api`.
+- [x] Open follow-up PR `hotfix/rox-catalog-honesty` -> `release/v3.8.50` on `agisota/zed-api` ([#4](https://github.com/agisota/zed-api/pull/4)). Exclusion itself already merged as [#2](https://github.com/agisota/zed-api/pull/2).
 - [ ] Deploy that SHA to an isolated staging host (not `api.rox.one`, not the Swiss migration node).
 - [ ] Smoke: unauthenticated `GET /v1/models` has no OpenRouter ids; quota key GET lists `qtSd/*` and POST of a listed id is not `QUOTA_ONLY`; process restart still serves the same catalog contract.
 

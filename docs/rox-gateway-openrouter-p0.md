@@ -1,15 +1,15 @@
 # ROX gateway — P0 OpenRouter exclusion (честный каталог)
 
-Статус на 2026-08-13: **применять этот патч** (`git am --3way` на `release/v3.8.50`). Два коммита:
+Статус на 2026-08-13 (продолжение): **не `git am` старый двухкоммитный патч на текущий `release/v3.8.50`**. Exclusion уже в tip.
 
-1. OpenRouter exclusion (`isOpenRouterCatalogEntry` + serialize-time strip).
-2. Quota honesty: quota-exclusive ключи в public mode видят callable `qtSd/*`, не `rox/*`.
-
-Локальный gateway HEAD: `48e22773c` на `hotfix/rox-catalog-openrouter` (parent `8aaa9d039`, base `2e7732427`). Push в `agisota/zed-api` — 403 (`cursor[bot]`). PR/staging должен сделать тот, у кого есть write.
+1. **Merged:** [agisota/zed-api#2](https://github.com/agisota/zed-api/pull/2) → `release/v3.8.50` @ `406ccebb06ef91f6c3de320aff4917ad34a65cbd`. OpenRouter отсутствует на assembly-путях `/v1/models`. Quota short circuit отдаёт `qtSd/*` (без remap на `rox/*`).
+2. **Open follow-up:** [agisota/zed-api#4](https://github.com/agisota/zed-api/pull/4) `hotfix/rox-catalog-honesty` @ `d93f945a8323b31b5cdc5e1378a6cdba827d0879`. Serialize-time strip в `finalizeCatalogResponse`, quota honesty + listed-id policy test, dead late `allowedQuotas` branch удалён, `#4264`/`#9293` приведены к ROX (на `406ccebb` они падали, потому что ждали OpenRouter в каталоге).
 
 Контракт: [`../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md`](../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md). План: [`../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md`](../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md).
 
-Патч: [`patches/rox-catalog-openrouter-hotfix.patch`](patches/rox-catalog-openrouter-hotfix.patch). `git am --3way` на чистом `2e7732427` проверен (`AM_EXIT=0`).
+Follow-up патч (поверх `406ccebb`): [`patches/rox-catalog-honesty-followup.patch`](patches/rox-catalog-honesty-followup.patch). Исторический двухкоммитный патч на `2e7732427`: [`patches/rox-catalog-openrouter-hotfix.patch`](patches/rox-catalog-openrouter-hotfix.patch) — не накатывать на tip.
+
+`git push` от `cursor[bot]` на `agisota/zed-api` по-прежнему 403; PR #4 открыт через GitHub MCP как `agisota`. AC-07/08 (изолированный staging + runtime smoke) не закрыты.
 
 ---
 
@@ -72,19 +72,11 @@
 
 Оба места помечены комментарием `ROX divergence:` — при ежедневном upstream-мерже конфликт в них ожидаем и разрешается в пользу ROX-версии.
 
-## Как доставить
+## Как доставить follow-up (поверх merged #2)
 
 ```bash
-git switch -c hotfix/rox-catalog-openrouter release/v3.8.50
-git am --3way docs/patches/rox-catalog-openrouter-hotfix.patch
-npm ci
-npx cross-env DISABLE_SQLITE_AUTO_BACKUP=true node --import tsx/esm \
-  --import ./open-sse/utils/setupPolyfill.ts --import ./tests/_setup/isolateDataDir.ts \
-  --test --test-force-exit --test-concurrency=4 \
-  tests/unit/rox-*.test.ts tests/unit/openrouter-vision-sync-4264.test.ts \
-  tests/unit/specialty-model-hidden-openrouter-9293.test.ts \
-  tests/unit/catalog-response-openrouter-filter.test.ts
-npm run typecheck:core
+git switch -c hotfix/rox-catalog-honesty 406ccebb06ef91f6c3de320aff4917ad34a65cbd
+git am --3way docs/patches/rox-catalog-honesty-followup.patch
 ```
 
-Дальше — PR в `release/v3.8.50` и деплой конкретного SHA на изолированный staging. Staging по-прежнему не выбран: `api.rox.one` — production, швейцарская нода — живая migration-нода, третий хост не принимает SSH. Runtime-проверки (JSON/SSE/telemetry/restart persistence) на этом hotfix ещё не выполнялись — unit-уровень доказывает семантику каталога, но не поведение развёрнутого сервиса.
+Или ревью/мерж [zed-api#4](https://github.com/agisota/zed-api/pull/4). После merge — деплой конкретного SHA на изолированный staging. Staging по-прежнему не выбран: `api.rox.one` — production, швейцарская нода — живая migration-нода, третий хост не принимает SSH. Runtime-проверки (JSON/SSE/telemetry/restart persistence) на follow-up ещё не выполнялись.
