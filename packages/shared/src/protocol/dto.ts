@@ -333,6 +333,11 @@ export interface TaskRunSnapshotDto {
   tokensUsed: number
 }
 
+/** Conductor run request (ADR-0001). Wire name `TaskRunRequest` is unchanged. */
+export type WorkflowRunRequest = TaskRunRequest
+/** Conductor run snapshot (ADR-0001). Wire name `TaskRunSnapshotDto` is unchanged. */
+export type WorkflowRunSnapshot = TaskRunSnapshotDto
+
 export interface TaskGetResult {
   slug: string
   validation: TaskValidationResultDto
