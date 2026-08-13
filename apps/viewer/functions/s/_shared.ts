@@ -28,6 +28,7 @@ export type ShareErrorCode =
   | 'LEGACY_SHARE_IMMUTABLE'
   | 'SHARE_NOT_FOUND'
   | 'SHARE_TOO_LARGE'
+  | 'SHARE_CONFLICT'
   | 'RATE_LIMITED'
   | 'SHARE_STORAGE_NOT_CONFIGURED'
 
@@ -35,6 +36,7 @@ export const CORS: Record<string, string> = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Share-Owner-Key',
+  'X-Content-Type-Options': 'nosniff',
 }
 
 export function json(data: unknown, status = 200, extraHeaders?: Record<string, string>): Response {
@@ -166,6 +168,14 @@ export function isSessionPayload(v: unknown): v is { id: string; messages: unkno
 export function checkDeclaredSize(request: Request): Response | null {
   const declared = Number(request.headers.get('Content-Length') ?? 0)
   if (Number.isFinite(declared) && declared > MAX_SHARE_BYTES) {
+    return shareError('SHARE_TOO_LARGE', 'Session file is too large to share', 413)
+  }
+  return null
+}
+
+/** Post-parse 413 using UTF-8 bytes — `String.length` is UTF-16 code units and under-counts. */
+export function checkSharePayloadSize(raw: string): Response | null {
+  if (new TextEncoder().encode(raw).byteLength > MAX_SHARE_BYTES) {
     return shareError('SHARE_TOO_LARGE', 'Session file is too large to share', 413)
   }
   return null

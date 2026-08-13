@@ -1,8 +1,8 @@
 import {
   CORS,
-  MAX_SHARE_BYTES,
   checkDeclaredSize,
   checkOwnerCapability,
+  checkSharePayloadSize,
   isSessionPayload,
   isValidShareId,
   json,
@@ -53,13 +53,22 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, params, env })
     return shareError('INVALID_SESSION_PAYLOAD', 'Invalid session: must have id (string) and messages (array)', 400)
   }
   const raw = JSON.stringify(body)
-  if (raw.length > MAX_SHARE_BYTES) return shareError('SHARE_TOO_LARGE', 'Session file is too large to share', 413)
+  const tooBig = checkSharePayloadSize(raw)
+  if (tooBig) return tooBig
 
-  await env.SHARES.put(id, raw, {
+  const stored = await env.SHARES.put(id, raw, {
     httpMetadata: { contentType: 'application/json' },
     // Preserve ownerkeyhash (and original createdAt) across updates.
     customMetadata: { ...(existing.customMetadata || {}), sessionId: body.id, updatedAt: String(Date.now()) },
+    onlyIf: { etagMatches: existing.etag },
   })
+  if (stored === null) {
+    return shareError(
+      'SHARE_CONFLICT',
+      'The share was modified concurrently; retry the update.',
+      409,
+    )
+  }
   return json({ id, url: `${originOf(request, env)}/s/${id}` })
 }
 
