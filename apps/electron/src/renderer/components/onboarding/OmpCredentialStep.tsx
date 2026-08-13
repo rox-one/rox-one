@@ -35,6 +35,19 @@ export function OmpCredentialStep({
   const [apiKey, setApiKey] = useState('')
   const isDisabled = status === 'validating'
 
+  const title =
+    typedCode === 'OMP_AUTH_REQUIRED'
+      ? t('errors.omp.authRequired.title')
+      : typedCode === 'OMP_NO_MODELS'
+        ? t('errors.omp.noModels.title')
+        : t('onboarding.ompCredential.title')
+  const description =
+    typedCode === 'OMP_AUTH_REQUIRED'
+      ? t('errors.omp.authRequired.message')
+      : typedCode === 'OMP_NO_MODELS'
+        ? t('errors.omp.noModels.message')
+        : t('onboarding.ompCredential.description')
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const trimmed = apiKey.trim()
@@ -49,8 +62,8 @@ export function OmpCredentialStep({
           <KeyRound className="size-10 text-accent" />
         </div>
       }
-      title={t('onboarding.ompCredential.title')}
-      description={t('onboarding.ompCredential.description')}
+      title={title}
+      description={description}
       actions={
         <>
           {onBack && !compact ? (

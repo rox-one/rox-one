@@ -111,7 +111,19 @@ describe('OnboardingWizard', () => {
       />,
     )
 
-    expect(html).toContain('onboarding.ompCredential.title')
+    expect(html).toContain('errors.omp.noModels.title')
+    expect(html).toContain('errors.omp.noModels.message')
     expect(html).toContain('OMP_NO_MODELS')
+  })
+
+  test('in-chat OMP_AUTH_REQUIRED uses error-code i18n copy', async () => {
+    const { OmpCredentialStep } = await import('../OmpCredentialStep')
+    const html = renderToStaticMarkup(
+      <OmpCredentialStep compact typedCode="OMP_AUTH_REQUIRED" onSubmit={() => {}} />,
+    )
+
+    expect(html).toContain('errors.omp.authRequired.title')
+    expect(html).toContain('errors.omp.authRequired.message')
+    expect(html).toContain('OMP_AUTH_REQUIRED')
   })
 })
