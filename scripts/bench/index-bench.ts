@@ -6,7 +6,7 @@
  *   bun scripts/bench/index-bench.ts
  *   node --experimental-strip-types scripts/bench/index-bench.ts  (documents bun:sqlite miss)
  */
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs'
+import { mkdirSync, writeFileSync, rmSync, existsSync, mkdtempSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
@@ -37,7 +37,7 @@ async function main(): Promise<void> {
   const results: Array<Record<string, unknown>> = []
 
   for (const n of SIZES) {
-    const workspace = join(tmpdir(), `craft-index-bench-${runtime}-${n}-${Date.now()}`)
+    const workspace = mkdtempSync(join(tmpdir(), `craft-index-bench-${runtime}-${n}-`))
     const folder = join(workspace, 'docs')
     try {
       makeTree(folder, n)

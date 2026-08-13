@@ -18,7 +18,18 @@ describe('privileged-policy', () => {
     expect(matchPrivilegedCommand('rm -rf /')).toBeNull();
     expect(matchPrivilegedCommand('brew install wget')).toBeNull();
     expect(matchPrivilegedCommand('sudo installer -pkg Foo.pkg -target /')).toBeNull();
+    expect(matchPrivilegedCommand('installer -pkg -target /')).toBeNull();
     expect(isPrivilegedCommandAllowed('echo hi')).toBe(false);
+  });
+
+  it('classifies long adversarial input without hanging', () => {
+    const bangs = '!'.repeat(20_000);
+    const start = process.hrtime.bigint();
+    expect(matchPrivilegedCommand(`brew install --cask ${bangs}`)?.kind).toBe('brew-install-cask');
+    expect(matchPrivilegedCommand(`installer -pkg ${bangs} -target /`)?.kind).toBe('installer-pkg');
+    expect(matchPrivilegedCommand(`${bangs} brew install --cask docker`)).toBeNull();
+    const ms = Number(process.hrtime.bigint() - start) / 1e6;
+    expect(ms).toBeLessThan(200);
   });
 
   it('hashes the raw command with sha256 hex', () => {

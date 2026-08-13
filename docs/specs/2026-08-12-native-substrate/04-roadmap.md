@@ -14,10 +14,11 @@
 
 ## Следом
 
-- Расширить conformance: process-tree kill, budget_exceeded (local-only где pid недоступен у cloud).
 - `craft-rund` как adapter `CloudRunProvider`.
 - Session journal dual-write.
 - Host-tool Bash для Pi/OMP → затем `craft-exec`.
+
+Local-only process-tree kill и `budget_exceeded` закрыты тестами в `local-provider.test.ts` (не в shared conformance — у Cloudflare нет pid).
 
 ## По метрикам
 

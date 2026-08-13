@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -33,19 +33,21 @@ describe.skipIf(!bin)('craft-index path-set parity', () => {
   })
 
   it('matches TypeScript search paths for unique keywords', async () => {
+    const sockDir = mkdtempSync(join(tmpdir(), 'craft-native-parity-'))
+    dirs.push(sockDir)
     supervisor = new NativeSupervisor({
       enabled: true,
       resolveBin: () => bin,
       logger: silentLogger(),
       connectTimeoutMs: 8_000,
       cwd: repoRoot,
-      socketPath: join(tmpdir(), `craft-native-parity-${Date.now()}.sock`),
+      socketPath: join(sockDir, 'n.sock'),
     })
     await supervisor.start()
     const client = supervisor.getClient()
     expect(client).not.toBeNull()
 
-    const workspace = join(tmpdir(), `native-parity-${Date.now()}`)
+    const workspace = mkdtempSync(join(tmpdir(), 'native-parity-'))
     dirs.push(workspace)
     const folderA = join(workspace, 'src-a')
     const folderB = join(workspace, 'src-b')

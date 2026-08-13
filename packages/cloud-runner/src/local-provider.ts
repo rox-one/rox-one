@@ -103,6 +103,22 @@ async function readJson<T>(path: string): Promise<T | null> {
   try { return JSON.parse(raw) as T; } catch { return null; }
 }
 
+function killProcessTree(pid: number, signal: NodeJS.Signals): void {
+  try {
+    if (process.platform === 'win32') {
+      process.kill(pid, signal);
+      return;
+    }
+    process.kill(-pid, signal);
+  } catch {
+    try {
+      process.kill(pid, signal);
+    } catch {
+      /* already dead */
+    }
+  }
+}
+
 /** 3 call sites need lockstep liveness semantics: cancel, reconcile, watchdog. */
 function pidAlive(pid: number): boolean {
   try { process.kill(pid, 0); return true; } catch { return false; }
@@ -142,7 +158,9 @@ export class LocalSubprocessProvider implements CloudRunProvider {
     const child = spawn(cmd[0]!, [...cmd.slice(1), '--dir', dir], {
       cwd: dir,
       stdio: ['ignore', 'inherit', 'inherit'],
-      detached: false,
+      // Own process group so cancel/budget can SIGKILL the tree without
+      // signalling the Electron/headless parent (local-only; Windows stays pid-only).
+      detached: process.platform !== 'win32',
     });
     await writeFile(join(dir, 'runner.pid'), String(child.pid));
     child.unref();
@@ -185,8 +203,8 @@ export class LocalSubprocessProvider implements CloudRunProvider {
     if (state.state === 'done' || state.state === 'failed' || state.state === 'cancelled') return;
     const pid = await this.readPid(dir);
     if (pid !== null && pidAlive(pid)) {
-      try { process.kill(pid, 'SIGTERM'); } catch { /* already dead */ }
-      setTimeout(() => { try { process.kill(pid, 'SIGKILL'); } catch { /* noop */ } }, 3000).unref();
+      try { killProcessTree(pid, 'SIGTERM'); } catch { /* already dead */ }
+      setTimeout(() => { try { killProcessTree(pid, 'SIGKILL'); } catch { /* noop */ } }, 3000).unref();
     }
     const cancelled: StateFile = {
       ...state, state: 'cancelled', failureReason: 'cancelled', finishedAt: Date.now(),
@@ -278,7 +296,7 @@ export class LocalSubprocessProvider implements CloudRunProvider {
     const state = await readJson<StateFile>(join(dir, 'state.json'));
     if (!state || state.state === 'done' || state.state === 'failed' || state.state === 'cancelled') return;
     if (child.pid && pidAlive(child.pid)) {
-      try { process.kill(child.pid, 'SIGKILL'); } catch { /* noop */ }
+      try { killProcessTree(child.pid, 'SIGKILL'); } catch { /* noop */ }
     }
     const failed: StateFile = {
       ...state, state: 'failed', failureReason: 'budget_exceeded', finishedAt: Date.now(),
