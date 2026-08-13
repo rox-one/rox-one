@@ -195,10 +195,24 @@ export function createWebApi(options: WebApiOptions): {
     onBadgeDraw: () => () => {},
     onBadgeDrawWindows: () => () => {},
 
-    // Notifications — Web Notifications API
+    // Notifications — Web Notifications API.
+    // Desktop handlers are LOCAL_ONLY (`notification:getEnabled` / `setEnabled`);
+    // without these stubs the web UI logs "No handler" from AppSettingsPage.
     showNotification: async (title: string, body: string) => {
-      if ('Notification' in window && Notification.permission === 'granted') {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         new Notification(title, { body })
+      }
+    },
+    getNotificationsEnabled: async () => {
+      return typeof Notification !== 'undefined' && Notification.permission === 'granted'
+    },
+    setNotificationsEnabled: async (enabled: boolean) => {
+      if (
+        enabled &&
+        typeof Notification !== 'undefined' &&
+        Notification.permission === 'default'
+      ) {
+        await Notification.requestPermission()
       }
     },
     onNotificationNavigate: () => () => {},

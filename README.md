@@ -189,13 +189,16 @@ In thin-client mode, the desktop app renders the UI but all session logic, tool 
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `CRAFT_SERVER_TOKEN` | Yes | — | Bearer token for client authentication |
+| `CRAFT_SERVER_TOKEN` | Yes | — | Bearer token for client authentication. **Must be ≥16 characters** or startup is fatal (`Token too short`). Generate with `openssl rand -hex 32` or `bun run packages/server/src/index.ts --generate-token`. |
+| `CRAFT_CONFIG_DIR` | No | `~/.craft-agent` | Config + session store. A second process against the same dir is rejected (`Another server instance is already running`); stop the old PID or pick a different dir. |
 | `CRAFT_RPC_HOST` | No | `127.0.0.1` | Bind address (`0.0.0.0` for remote access) |
 | `CRAFT_RPC_PORT` | No | `9100` | Bind port |
 | `CRAFT_RPC_TLS_CERT` | No | — | Path to PEM certificate file (enables `wss://`) |
 | `CRAFT_RPC_TLS_KEY` | No | — | Path to PEM private key file (required with cert) |
 | `CRAFT_RPC_TLS_CA` | No | — | Path to PEM CA chain file (optional, for client cert verification) |
 | `CRAFT_DEBUG` | No | `false` | Enable debug logging |
+
+The web UI is served on the RPC port (`CRAFT_RPC_PORT`, default `9100`), not a separate `CRAFT_WEBUI_PORT`. Point `CRAFT_WEBUI_DIR` at `apps/webui/dist` when embedding the built UI.
 
 ### TLS (Recommended for Remote Access)
 
