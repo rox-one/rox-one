@@ -4,11 +4,12 @@ Audit of every MCP-flavored component in the repo: who spawns/loads it, under
 which backend flags, and its resulting lifecycle class. Classes:
 
 - **ACTIVE** — reachable and exercised on a current runtime path.
-- **COMPATIBILITY** — live code path retained for backward/forward compat;
-  executes only for specific (declared) configurations.
+- **COMPATIBILITY (KEEP)** — live code path retained for backward/forward compat;
+  executes only for specific (declared) configurations. `McpPoolServer` is the
+  designated seam for a future external-subprocess backend.
 - **LEGACY** — still built/staged/resolved, but no registered backend or
-  runtime caller reaches it. Kept intentionally; do not extend.
-- **DEAD** — unreferenced (none found in this audit).
+    runtime caller reaches it. Kept intentionally; do not extend.
+- **DEAD** — unreferenced at runtime / not packaged. Source may be retained.
 
 Backend registry context: `AgentProvider = 'anthropic' | 'pi' | 'omp'`
 (`packages/shared/src/agent/backend/factory.ts` — `BACKEND_CAPABILITIES`),
@@ -82,43 +83,54 @@ HTTP (Streamable HTTP, stateless) facade exposing pool-managed tools to
   registered backends (anthropic/pi/omp) → the server is never started today.
 - Kept as the designated seam for any future external-subprocess backend
   (flip the capability flag, `poolServerUrl` is already plumbed into
-  `BackendConfig` / `applyBridgeUpdates`). Dormant, not dead.
+  `BackendConfig` / `applyBridgeUpdates`). **KEEP** — dormant, not dead.
+  Do not delete.
 
 ## LEGACY
+
+None. `session-mcp-server` and `bridge-mcp-server` are no longer built,
+staged, or resolved (see DEAD).
+
+## DEAD (source retained, not packaged)
 
 ### `packages/session-mcp-server`
 Standalone stdio MCP server (`--session-id --workspace-root --plans-folder`)
 exposing craft session tools (SubmitPlan, source_oauth_trigger, …) to
 backends that could not execute them in-process. Codex-era.
-- Still built/staged: `scripts/build-server.ts`, `scripts/build/common.ts`,
-  `scripts/build/stage-servers.ts`, `scripts/electron-build-*.ts`;
-  staged into `resources/session-mcp-server/`.
-- Path still resolved: `runtime-resolver.ts` → `sessionServerPath`.
+- **Not staged, not resolved.** Packaged builds skip this server
+  (`scripts/build/staged-servers.ts`, `copySessionServer` is a no-op,
+  `electron-builder.yml` excludes it). `runtime-resolver.ts` does not
+  populate `sessionServerPath` even when the directory exists.
 - **No consumer**: the three drivers' `buildRuntime` never read
   `sessionServerPath`; nothing spawns the binary. Session tools are now
   executed in-process: Claude via SDK in-process MCP servers, Pi via
   `register_tools`, OMP via `set_host_tools`/`host_tool_call`.
+- Source tree retained (not deleted this ticket). Do not re-add staging.
 - Doc comments referencing this architecture: `base-agent.ts`
   (`handleSessionMcpToolCompletion`), `session-tools-core/src/context.ts`,
   `session-tools-core/src/tool-defs.ts`.
 
 ### `apps/electron/resources/bridge-mcp-server/`
 Committed pre-built bundle (`index.js`, "Usage: bridge-mcp-server --config
-<path>") bridging API sources for Codex/Copilot. Listed in
-`apps/electron/electron-builder.yml` and `scripts/build-server.ts`.
-- Path still resolved: `runtime-resolver.ts` → `bridgeServerPath` — no
-  consumer.
+<path>") bridging API sources for Codex/Copilot.
+- **Not packaged.** `copy-assets.ts` / `copyElectronResourceTree` omit this
+  directory; `electron-builder.yml` excludes `resources/bridge-mcp-server`
+  and `dist/resources/bridge-mcp-server`. Path is not resolved
+  (`bridgeServerPath` remains an unused optional field).
 - `BaseAgent.applyBridgeUpdates()` is a documented no-op
   ("Override in Codex/Copilot"); no current backend overrides it.
   `SessionManager` still calls it on source changes (harmless no-op).
+- Bundle retained in git; do not re-add to electron-builder.yml.
 - Release-note archaeology: `resources/release-notes/0.4.4.md` mentions
   adding both servers to the OSS allow list.
 
 ## Notes
 
-- `runtime-resolver.ts` keeps resolving `sessionServerPath`/`bridgeServerPath`
-  for packaged-build layout parity; the fields are unread. Removing the
-  resolution (not done here) is safe only together with the staging scripts.
-- Nothing was deleted. If a Codex/Copilot-class backend is ever re-added,
-  `McpPoolServer` + `session-mcp-server` + `bridge-mcp-server` are the pieces
-  it was designed around.
+- `sessionServerPath` / `bridgeServerPath` remain optional unused fields on
+  `ResolvedBackendRuntimePaths` with KEEP comments pointing at `McpPoolServer`.
+  They are not populated.
+- `pi-agent-server` is still built and staged (`copyPiAgentServer`,
+  `resources/pi-agent-server/**/*` in electron-builder.yml).
+- If a Codex/Copilot-class backend is ever re-added, **`McpPoolServer`** is
+  the designated HTTP-pool seam (`needsHttpPoolServer`). Do not revive
+  session/bridge staging without a new driver that reads those paths.
