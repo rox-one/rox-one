@@ -39,6 +39,7 @@ describe.skipIf(!bin)('craft-index path-set parity', () => {
       logger: silentLogger(),
       connectTimeoutMs: 8_000,
       cwd: repoRoot,
+      socketPath: join(tmpdir(), `craft-native-parity-${Date.now()}.sock`),
     })
     await supervisor.start()
     const client = supervisor.getClient()

@@ -1,4 +1,5 @@
 import { spawn as nodeSpawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
 import { existsSync, unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -58,11 +59,12 @@ export class NativeSupervisor {
   private readonly resolveBinFn: () => string | null
   private readonly spawnFn: (bin: string, args: string[]) => NativeChild
   private readonly connectFn: (socketPath: string) => Promise<NativeSidecarClient>
+  private readonly waitForSocketFile: boolean
   private readonly enabledOverride: boolean | undefined
 
   constructor(opts: NativeSupervisorOptions = {}) {
     this.enabledOverride = opts.enabled
-    this.socketPath = opts.socketPath ?? join(tmpdir(), `craft-native-${process.pid}.sock`)
+    this.socketPath = opts.socketPath ?? join(tmpdir(), `craft-native-${process.pid}-${randomUUID().slice(0, 8)}.sock`)
     this.maxCrashes = opts.maxCrashes ?? DEFAULT_MAX_CRASHES
     this.connectTimeoutMs = opts.connectTimeoutMs ?? DEFAULT_CONNECT_TIMEOUT_MS
     this.backoffMs = opts.backoffMs ?? DEFAULT_BACKOFF_MS
@@ -73,6 +75,7 @@ export class NativeSupervisor {
       nodeSpawn(bin, args, { stdio: ['ignore', 'pipe', 'pipe'] }) as unknown as NativeChild)
     this.connectFn = opts.connect ?? ((path) =>
       connectNativeSidecar(path, { timeoutMs: this.connectTimeoutMs }))
+    this.waitForSocketFile = opts.connect === undefined
   }
 
   isDisabled(): boolean {
@@ -178,6 +181,10 @@ export class NativeSupervisor {
     while (Date.now() < deadline) {
       if (isDead()) {
         throw lastError ?? new Error('craft-native exited before handshake')
+      }
+      if (this.waitForSocketFile && !existsSync(socketPath)) {
+        await sleep(20)
+        continue
       }
       try {
         return await this.connectFn(socketPath)

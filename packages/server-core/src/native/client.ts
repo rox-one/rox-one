@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { createConnection, type Socket } from 'node:net'
+import { Socket } from 'node:net'
 import {
   PROTOCOL_VERSION,
   type MessageEnvelope,
@@ -167,7 +167,7 @@ export async function connectNativeSidecar(
 
 function openUnixSocket(socketPath: string, timeoutMs: number): Promise<Socket> {
   return new Promise((resolve, reject) => {
-    const socket = createConnection({ path: socketPath })
+    const socket = new Socket()
     const timer = setTimeout(() => {
       socket.destroy()
       reject(new Error(`native sidecar connect timed out after ${timeoutMs}ms`))
@@ -179,7 +179,9 @@ function openUnixSocket(socketPath: string, timeoutMs: number): Promise<Socket> 
     })
     socket.once('error', (error: Error) => {
       clearTimeout(timer)
+      socket.destroy()
       reject(error)
     })
+    socket.connect({ path: socketPath })
   })
 }
