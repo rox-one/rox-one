@@ -1,6 +1,8 @@
 # ROX gateway — P0 OpenRouter exclusion (проверенный hotfix)
 
-Статус на 2026-08-12. Репозиторий gateway: `agisota/zed-api`, ветка `release/v3.8.50` @ `2e7732427fdf13a06e959fd043385c611647de17` (merge PR #1, `feat(api): add stable ROX public models`).
+Статус на 2026-08-13: **не применять `8aaa9d039` / этот патч as-is.** Review: quota-public remap рекламирует `rox/*` ключам с `allowedQuotas`, а `validateQuotaAccess` отвечает `QUOTA_ONLY`. Контракт и план: [`../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md`](../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md), [`../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md`](../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md).
+
+Статус на 2026-08-12 (ниже без изменений как историческая запись). Репозиторий gateway: `agisota/zed-api`, ветка `release/v3.8.50` @ `2e7732427fdf13a06e959fd043385c611647de17` (merge PR #1, `feat(api): add stable ROX public models`).
 
 Патч: [`patches/rox-catalog-openrouter-hotfix.patch`](patches/rox-catalog-openrouter-hotfix.patch). Применяется к `release/v3.8.50` без конфликтов (`git am --3way`, проверено на чистом клоне).
 
