@@ -63,12 +63,13 @@ Two independent, unguessable tokens:
 | T2 | **Unauthorized overwrite / content injection** — `PUT /s/api/:id` was unauthenticated; attacker replaces a victim's share with hostile content rendered by the public viewer | Fully exploitable | `PUT` requires `ownerKey` (401 `SHARE_OWNER_KEY_REQUIRED` / 403 `SHARE_OWNER_KEY_INVALID`); hash compared in constant time. |
 | T3 | **Unauthorized delete** — `DELETE /s/api/:id` was unauthenticated | Fully exploitable | Same owner-capability gate as T2. |
 | T4 | Unauthenticated spam upload via `POST /s/api` | Open (by design — desktop has no account) | 25 MiB hard cap + best-effort per-IP in-isolate rate limit (429 `RATE_LIMITED`); recommend a Cloudflare **Rate Limiting rule** as the durable layer (see §7). |
-| T5 | Oversized payload / memory DoS | Cap checked only after full body parse | Early `Content-Length` check → 413 before reading the body; post-parse size re-check retained. |
+| T5 | Oversized payload / memory DoS | Cap checked only after full body parse; post-parse used `String.length` (UTF-16 code units), so a payload under 25 MiB in UTF-16 but over in UTF-8 bytes was accepted | Early `Content-Length` check → 413 before reading the body; post-parse re-check uses UTF-8 byte length (`TextEncoder`). |
 | T6 | CORS abuse (`*` origin lets any website call the API from a victim's browser) | Site could mutate any known share from any browser | Mutation now requires the `ownerKey`, which never enters a browser context (desktop main process only). A malicious site can still *create* shares (bounded by T4 mitigations) and *read* shares it already knows (public anyway). Therefore `*` origin is acceptable **only because mutation is capability-gated**; allow-listed methods/headers are kept to the exact set used (`GET, POST, PUT, DELETE, OPTIONS` / `Content-Type, Authorization, X-Share-Owner-Key`). |
 | T7 | `ownerKey` theft at rest / in transit | n/a (no key existed) | SHA-256 hash at rest in R2; TLS in transit; desktop persistence is local-only and renderer-invisible; constant-time comparison (T8). |
 | T8 | Timing side-channel on key check | n/a | SHA-256 digests compared with a fixed-length XOR-accumulator loop (no early exit). |
 | T9 | Replay of a captured bearer token | n/a | All-or-nothing capability, TLS-only transport. No per-request signing — accepted for this scale. |
-| T10 | Lost-update races on concurrent `PUT` | Existed pre-fix | Out of scope (R2 `onlyIf`/etag conditional writes are a follow-up); noted in §8. |
+| T10 | Lost-update races on concurrent `PUT` | `head` → check owner → `put` with no precondition | `PUT` writes with R2 `onlyIf: { etagMatches }` from the `head` etag; failed precondition → 409 `SHARE_CONFLICT`. Client retries against the latest object. |
+| T11 | MIME sniffing of share JSON as HTML/script | GET (and other responses) omitted `X-Content-Type-Options` | `nosniff` on all share API responses (CORS/JSON helpers and GET). |
 
 ## 6. Error taxonomy
 
@@ -81,7 +82,8 @@ All errors are JSON: `{ "error": "<human message>", "code": "<MACHINE_CODE>" }`.
 | 403 | `SHARE_OWNER_KEY_INVALID` | Key present but does not match the stored hash. |
 | 403 | `LEGACY_SHARE_IMMUTABLE` | Share predates owner keys; mutation is permanently rejected (see §7). |
 | 404 | `SHARE_NOT_FOUND` | Unknown (or already-deleted) share id — same response whether the id never existed or was revoked, so deletion is not distinguishable. |
-| 413 | `SHARE_TOO_LARGE` | Payload exceeds 25 MiB (checked on `Content-Length` pre-read and on the parsed body). |
+| 409 | `SHARE_CONFLICT` | Conditional `PUT` lost the R2 etag race; retry. |
+| 413 | `SHARE_TOO_LARGE` | Payload exceeds 25 MiB UTF-8 bytes (checked on `Content-Length` pre-read and on the parsed body). |
 | 429 | `RATE_LIMITED` | Best-effort per-IP limit exceeded. |
 | 503 | `SHARE_STORAGE_NOT_CONFIGURED` | R2 binding missing. |
 
