@@ -31,6 +31,7 @@
 |---|---|---|
 | Lead | `dispatching-parallel-agents`, `using-git-worktrees`, `code-review`, `verification-before-completion` | оркестрация, review gate |
 | 01 first-run | `systematic-debugging`, `test-driven-development` | credential path, bounded failure |
+| 15 factory OMP | `test-driven-development` | `getAvailableProviders()` must include `omp` |
 | 02 callback XSS | `test-driven-development` + security review | escape — единственный HTML builder |
 | 03 viewer residuals | threat-model / `test-driven-development` | bytes, nosniff, conditional put |
 | 04 defaults | `test-driven-development` | один JSON = истина |
