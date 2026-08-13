@@ -295,13 +295,15 @@ export class LocalSubprocessProvider implements CloudRunProvider {
   private async enforceClockBudget(dir: string, child: ChildProcess): Promise<void> {
     const state = await readJson<StateFile>(join(dir, 'state.json'));
     if (!state || state.state === 'done' || state.state === 'failed' || state.state === 'cancelled') return;
-    if (child.pid && pidAlive(child.pid)) {
-      try { killProcessTree(child.pid, 'SIGKILL'); } catch { /* noop */ }
-    }
+    // Write terminal state first so a concurrent getStatus cannot race the
+    // dead pid into runner_error and swallow budget_exceeded.
     const failed: StateFile = {
       ...state, state: 'failed', failureReason: 'budget_exceeded', finishedAt: Date.now(),
     };
     await writeFile(join(dir, 'state.json'), JSON.stringify(failed, null, 2));
     await appendFile(join(dir, 'events.jsonl'), JSON.stringify({ type: 'state', status: failed }) + '\n');
+    if (child.pid && pidAlive(child.pid)) {
+      try { killProcessTree(child.pid, 'SIGKILL'); } catch { /* noop */ }
+    }
   }
 }

@@ -11,6 +11,12 @@
     "index:search",
     "index:retrieve",
     "index:count",
-    "index:status"
+    "index:status",
+    "run:create",
+    "run:status",
+    "run:cancel",
+    "run:listArtifacts",
+    "run:fetchArtifact",
+    "run:events"
   ]
 }

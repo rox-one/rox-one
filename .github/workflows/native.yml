@@ -6,6 +6,7 @@ on:
       - 'native/**'
       - 'packages/server-core/src/native/**'
       - 'packages/server-core/src/sources/**'
+      - 'packages/cloud-runner/**'
       - 'packages/shared/src/protocol/**'
       - 'packages/shared/src/feature-flags.ts'
       - '.github/workflows/native.yml'
@@ -14,6 +15,7 @@ on:
       - 'native/**'
       - 'packages/server-core/src/native/**'
       - 'packages/server-core/src/sources/**'
+      - 'packages/cloud-runner/**'
       - 'packages/shared/src/protocol/**'
       - 'packages/shared/src/feature-flags.ts'
       - '.github/workflows/native.yml'
@@ -67,7 +69,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: TS native + source-index (flag off)
-        run: bun test packages/server-core/src/native packages/server-core/src/sources packages/shared/src/__tests__/feature-flags.test.ts packages/shared/src/protocol/__tests__/handshake-fixture.test.ts
+        run: bun test packages/server-core/src/native packages/server-core/src/sources packages/cloud-runner/src/__tests__ packages/shared/src/__tests__/feature-flags.test.ts packages/shared/src/protocol/__tests__/handshake-fixture.test.ts
 
       - name: TS source-index shadow (flag on)
         run: bun test packages/server-core/src/native packages/server-core/src/sources

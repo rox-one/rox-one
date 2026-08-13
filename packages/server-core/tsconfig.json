@@ -20,7 +20,8 @@
     "baseUrl": ".",
     "paths": {
       "@craft-agent/shared": ["../shared/src/index.ts"],
-      "@craft-agent/shared/*": ["../shared/src/*"]
+      "@craft-agent/shared/*": ["../shared/src/*"],
+      "@craft-agent/cloud-runner": ["../cloud-runner/src/index.ts"]
     }
   },
   "include": ["src/**/*", "../shared/src/agent/bash-parser.d.ts"],

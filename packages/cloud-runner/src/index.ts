@@ -2,7 +2,8 @@
  * @craft-agent/cloud-runner — Cloud Runs contract + local provider.
  *
  * See docs/cloud-runs-prd.md. Providers: LocalSubprocessProvider
- * (reference + dev mode); CloudflareComputerProvider (PRD phase G2).
+ * (reference + dev mode); CloudflareComputerProvider (PRD phase G2);
+ * NativeRunProvider (craft-rund adapter, not the production default).
  */
 export {
   CloudRunnerError,
@@ -22,8 +23,8 @@ export type {
   RunState,
   RunStatus,
 } from './types.ts';
-export { LocalSubprocessProvider } from './local-provider.ts';
-export type { LocalProviderOptions } from './local-provider.ts';
+export { NativeRunProvider } from './native-provider.ts';
+export type { NativeRunProviderOptions, NativeRunRpc } from './native-provider.ts';
 export { CloudflareComputerProvider } from './cloudflare-provider.ts';
 export type { CloudflareProviderOptions } from './cloudflare-provider.ts';
 export { ModalProvider } from './modal-provider.ts';

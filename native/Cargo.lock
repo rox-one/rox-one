@@ -107,6 +107,7 @@ version = "0.1.0"
 dependencies = [
  "craft-index",
  "craft-protocol",
+ "craft-rund",
  "serde",
  "serde_json",
  "tokio",
@@ -118,6 +119,16 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "craft-rund"
+version = "0.1.0"
+dependencies = [
+ "libc",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

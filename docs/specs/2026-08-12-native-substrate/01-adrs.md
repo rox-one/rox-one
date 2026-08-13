@@ -36,4 +36,4 @@ DoD этого среза: Linux x64 locally + self-hosted linux/macos CI. Не 
 
 ## ADR-N8. CloudRunProvider остаётся test surface для rund
 
-Когда появится `craft-rund`, это третий adapter существующего интерфейса, плюс local-only crash-reconcile тесты (kill -9 нельзя гонять против Cloudflare).
+`craft-rund` — третий adapter существующего интерфейса (`NativeRunProvider`), плюс local-only crash-reconcile тесты (kill -9 нельзя гонять против Cloudflare). `makeProvider` не переключается на native в этом срезе.

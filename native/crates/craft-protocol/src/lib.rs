@@ -14,6 +14,12 @@ pub const NATIVE_CHANNELS: &[&str] = &[
     "index:retrieve",
     "index:count",
     "index:status",
+    "run:create",
+    "run:status",
+    "run:cancel",
+    "run:listArtifacts",
+    "run:fetchArtifact",
+    "run:events",
 ];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -135,12 +141,13 @@ mod tests {
     }
 
     #[test]
-    fn handshake_ack_fixture_lists_index_channels() {
+    fn handshake_ack_fixture_lists_index_and_run_channels() {
         let env: MessageEnvelope = serde_json::from_str(HANDSHAKE_ACK_FIXTURE).unwrap();
         assert_eq!(env.msg_type, "handshake_ack");
         let channels = env.registered_channels.expect("channels");
         assert!(channels.iter().any(|c| c == "native:health"));
         assert!(channels.iter().any(|c| c == "index:reindex"));
+        assert!(channels.iter().any(|c| c == "run:create"));
     }
 
     #[test]

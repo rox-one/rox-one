@@ -29,7 +29,8 @@ Electron / headless server
         ▼
    craft-native
         ├── native:health | version | capabilities
-        └── index:reindex | search | retrieve | count | status
+        ├── index:reindex | search | retrieve | count | status
+        └── run:create | status | cancel | listArtifacts | fetchArtifact | events
 ```
 
 Падение sidecar не роняет Electron: супервизор отключает native после N рестартов, TS-путь остаётся primary.
