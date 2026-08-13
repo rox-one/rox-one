@@ -6,6 +6,6 @@
 
 **Status:** done locally (`48e22773c`). Gateway PR blocked on write.
 
-- [ ] Quota key + `ROX_PUBLIC_CATALOG_ONLY=true` + glm pool: catalog contains `qtSd/*`, contains no `rox/*`, contains no OpenRouter
-- [ ] Same key: `enforceApiKeyPolicy` does not return `QUOTA_ONLY` for a listed id
-- [ ] Non-quota key in public mode still sees only `rox/*`
+- [x] Quota key + `ROX_PUBLIC_CATALOG_ONLY=true` + glm pool: catalog contains `qtSd/*`, contains no `rox/*`, contains no OpenRouter
+- [x] Same key: `enforceApiKeyPolicy` does not return `QUOTA_ONLY` for a listed id
+- [x] Non-quota key in public mode still sees only `rox/*`

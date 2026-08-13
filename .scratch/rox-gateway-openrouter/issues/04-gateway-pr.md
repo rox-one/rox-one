@@ -8,4 +8,4 @@
 
 - [x] Focused ROX suite 0 fail and `typecheck:core` exit 0, fresh this session
 - [x] Patch applies with `git am --3way` on a clean `release/v3.8.50` clone
-- [ ] PR opened, or write-denied blocker reported with the patch attached
+- [x] PR opened, or write-denied blocker reported with the patch attached

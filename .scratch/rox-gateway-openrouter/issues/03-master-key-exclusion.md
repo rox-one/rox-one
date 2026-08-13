@@ -6,5 +6,5 @@
 
 **Status:** done locally.
 
-- [ ] Exclusion suite covers the `!keyMeta` request shape
-- [ ] `findOpenRouterEntries` is empty
+- [x] Exclusion suite covers the `!keyMeta` / env-var master-key request shape
+- [x] `findOpenRouterEntries` is empty
