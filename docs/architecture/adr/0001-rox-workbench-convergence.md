@@ -103,7 +103,8 @@ write path is still panel-stack / URL.
 `closeSurface` returns `LayoutMutation`. Closing a dirty tab without
 `force: true` is `{ ok: false, code: 'DIRTY_SURFACE' }` and the same layout
 object. Opening a new preview over a dirty preview pins the dirty tab and
-appends the new one.
+appends the new one. Closing the last tab of the **active** group focuses
+the neighbor that lands in the vacated index, not the leftmost group.
 
 ### Parse and persist
 

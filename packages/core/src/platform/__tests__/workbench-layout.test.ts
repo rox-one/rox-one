@@ -178,6 +178,21 @@ describe('openSurface / preview / split / move / close', () => {
     expect(result.layout.activeGroupId).toBe('g2')
   })
 
+  it('closing the last tab of the active middle group focuses the neighbor at the vacated index', () => {
+    const three = openSurface(
+      twoColumn(),
+      instance('c', 'allSessions/session/c'),
+      { target: 'new-group-right', mode: 'pinned', focus: true },
+      'g3',
+    )
+    expect(three.groups.map((group) => group.id)).toEqual(['g1', 'g3', 'g2'])
+    const closed = closeSurface(three, 'c')
+    expect(closed.ok).toBe(true)
+    if (!closed.ok) throw new Error('expected close')
+    expect(closed.layout.groups.map((group) => group.id)).toEqual(['g1', 'g2'])
+    expect(closed.layout.activeGroupId).toBe('g2')
+  })
+
   it('refuses to close a dirty tab without force and keeps the same layout object', () => {
     const opened = openSurface(twoColumn(), instance('d', 'allSessions/session/d', { dirty: true }), { mode: 'pinned' })
     const denied = closeSurface(opened, 'd')

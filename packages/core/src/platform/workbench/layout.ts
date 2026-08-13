@@ -104,6 +104,7 @@ export function closeSurface(
   if (dirty && !options.force) return { ok: false, code: 'DIRTY_SURFACE', layout };
 
   const groups: TabGroup[] = [];
+  let vacatedGroupIndex = -1;
   for (const group of layout.groups) {
     const index = group.tabs.findIndex((tab) => tab.id === surfaceInstanceId);
     if (index < 0) {
@@ -111,7 +112,10 @@ export function closeSurface(
       continue;
     }
     const tabs = group.tabs.filter((tab) => tab.id !== surfaceInstanceId);
-    if (tabs.length === 0) continue;
+    if (tabs.length === 0) {
+      vacatedGroupIndex = groups.length;
+      continue;
+    }
     const fallback = tabs[Math.min(index, tabs.length - 1)];
     groups.push({
       ...group,
@@ -119,10 +123,14 @@ export function closeSurface(
       activeTabId: group.activeTabId === surfaceInstanceId ? (fallback?.id ?? null) : group.activeTabId,
     });
   }
+  const neighbor =
+    vacatedGroupIndex >= 0
+      ? groups[Math.min(vacatedGroupIndex, Math.max(groups.length - 1, 0))]
+      : undefined;
   const activeGroupId =
     groups.some((group) => group.id === layout.activeGroupId)
       ? layout.activeGroupId
-      : (groups[0]?.id ?? null);
+      : (neighbor?.id ?? groups[0]?.id ?? null);
   return { ok: true, layout: { ...layout, groups: renormalize(groups), activeGroupId } };
 }
 
