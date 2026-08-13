@@ -1488,7 +1488,7 @@ export class OmpAgent extends BaseAgent {
             requestId,
             toolName,
             description: `OMP agent wants to run craft tool '${toolName}'`,
-            type: 'admin_approval',
+            type: 'mcp_mutation',
           });
           // Fail-safe: never hang the turn if the dialog answer is lost.
           setTimeout(() => {

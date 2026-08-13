@@ -13,6 +13,7 @@ import {
 } from './share-capability'
 import { composeSpawnEnv } from './spawn-env'
 import { emitTurnComplete } from './turn-complete'
+import { shouldBrokerGatePermission } from './permission-broker-gate'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
 import { createScopedLogger, CONSOLE_LOGGER, type PlatformServices, type Logger } from '@craft-agent/server-core/runtime'
 import { basename, dirname, join } from 'path'
@@ -7709,7 +7710,7 @@ export class SessionManager implements ISessionManager {
       const requestMeta = this.pendingPermissionRequests.get(requestId)
       this.pendingPermissionRequests.delete(requestId)
 
-      if (requestMeta?.type === 'admin_approval') {
+      if (shouldBrokerGatePermission(requestMeta)) {
         const brokerResult = this.privilegedExecutionBroker.resolveApproval(requestId, allowed, {
           expectedCommandHash: requestMeta.commandHash,
         })
