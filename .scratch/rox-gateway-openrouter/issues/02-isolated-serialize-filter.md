@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately (parallel with 01).
 
-**Status:** ready-for-agent
+**Status:** done locally.
 
-- [ ] Mixed-list unit test: OpenRouter row absent, non-OpenRouter row present
-- [ ] Worktree check: commenting the filter fails the test
+- [x] Mixed-list unit test: OpenRouter row absent, non-OpenRouter row present
+- [x] Worktree check: commenting the filter fails the test

@@ -1,7 +1,7 @@
 From 8aaa9d03906de936cbde13aae6b50367b3e20b24 Mon Sep 17 00:00:00 2001
 From: Cursor Agent <cursoragent@cursor.com>
 Date: Wed, 12 Aug 2026 03:04:10 +0000
-Subject: [PATCH] fix(catalog): enforce OpenRouter exclusion across every
+Subject: [PATCH 1/2] fix(catalog): enforce OpenRouter exclusion across every
  catalog path
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -743,6 +743,240 @@ index 4599b2690..23deadc2d 100644
 +    []
 +  );
  });
+-- 
+2.43.0
+
+
+From 48e22773cb30da9ff8165a4acc20d7a69965d98b Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Thu, 13 Aug 2026 08:53:34 +0000
+Subject: [PATCH 2/2] fix(catalog): keep qtSd ids for quota keys in ROX public
+ mode
+
+Quota-exclusive keys may only POST qtSd/* ids. Advertising rox/* made
+GET /v1/models disagree with validateQuotaAccess (QUOTA_ONLY).
+---
+ src/app/api/v1/models/catalog.ts              | 54 ++++++-------------
+ ...catalog-response-openrouter-filter.test.ts | 36 +++++++++++++
+ .../rox-openrouter-catalog-exclusion.test.ts  | 52 ++++++++++++++----
+ 3 files changed, 95 insertions(+), 47 deletions(-)
+ create mode 100644 tests/unit/catalog-response-openrouter-filter.test.ts
+
+diff --git a/src/app/api/v1/models/catalog.ts b/src/app/api/v1/models/catalog.ts
+index 8631ccd07..16c6665e1 100644
+--- a/src/app/api/v1/models/catalog.ts
++++ b/src/app/api/v1/models/catalog.ts
+@@ -574,34 +574,25 @@ async function buildUnifiedModelsResponseCore(
+     const publicCatalogOnly = isRoxPublicCatalogOnly(settings);
+     const earlyApiKey = extractApiKey(request);
+     if (earlyApiKey) {
+-      const { getApiKeyMetadata, isModelAllowedForKey } = await import("@/lib/db/apiKeys");
++      const { getApiKeyMetadata } = await import("@/lib/db/apiKeys");
+       const earlyKeyMeta = await getApiKeyMetadata(earlyApiKey);
+       if (earlyKeyMeta?.allowedQuotas && earlyKeyMeta.allowedQuotas.length > 0) {
+-        let quotaFinal: Array<Record<string, unknown>>;
+-        if (publicCatalogOnly) {
+-          // ROX public mode publishes `rox/*` and nothing else. This short circuit
+-          // returns before the public projection further down, so a quota-exclusive
+-          // key would otherwise receive the pool's raw `qtSd/*` ids instead.
+-          quotaFinal = await scopeRoxPublicCatalogForKey(
+-            buildRoxPublicCatalog(timestamp),
+-            earlyApiKey,
+-            isModelAllowedForKey
+-          );
+-        } else {
+-          const { buildQuotaExclusiveModels } = await import("@/lib/quota/quotaCombos");
+-          const quotaModels = await buildQuotaExclusiveModels(
+-            earlyKeyMeta.allowedQuotas,
+-            combos,
+-            timestamp,
+-            (c) => buildComboCatalogMetadata(c, combos)
+-          );
+-          quotaFinal = applyCatalogPostFilters(request, quotaModels, {
+-            connections,
+-            prefixMode,
+-            aliasToProviderId,
+-            hideNoThinkVariants: settings.hideNoThinkVariants === true,
+-          });
+-        }
++        // Quota-exclusive keys may only POST qtSd/* ids (validateQuotaAccess).
++        // Public mode must not advertise rox/* here — those ids 403 with QUOTA_ONLY.
++        // OpenRouter rows are stripped at finalizeCatalogResponse.
++        const { buildQuotaExclusiveModels } = await import("@/lib/quota/quotaCombos");
++        const quotaModels = await buildQuotaExclusiveModels(
++          earlyKeyMeta.allowedQuotas,
++          combos,
++          timestamp,
++          (c) => buildComboCatalogMetadata(c, combos)
++        );
++        const quotaFinal = applyCatalogPostFilters(request, quotaModels, {
++          connections,
++          prefixMode,
++          aliasToProviderId,
++          hideNoThinkVariants: settings.hideNoThinkVariants === true,
++        });
+         return finalizeCatalogResponse(request, quotaFinal, () => undefined, {
+           ...corsHeaders,
+           ...diagnosticHeaders,
+@@ -1550,9 +1541,6 @@ async function buildUnifiedModelsResponseCore(
+     if (apiKey) {
+       const { isModelAllowedForKey, getApiKeyMetadata } = await import("@/lib/db/apiKeys");
+ 
+-      // Quota-exclusive keys (allowedQuotas non-empty): list ONLY the pool's qtSd/*
+-      // virtual models. #4806: build from the hidden qtSd/* combos directly — the base
+-      // `models` list drops hidden combos, so filtering it returned nothing (0 models).
+       const keyMeta = await getApiKeyMetadata(apiKey);
+       if (publicCatalogOnly) {
+         if (keyMeta) {
+@@ -1562,14 +1550,6 @@ async function buildUnifiedModelsResponseCore(
+             isModelAllowedForKey
+           );
+         }
+-      } else if (keyMeta && keyMeta.allowedQuotas && keyMeta.allowedQuotas.length > 0) {
+-        const { buildQuotaExclusiveModels } = await import("@/lib/quota/quotaCombos");
+-        finalModels = await buildQuotaExclusiveModels(
+-          keyMeta.allowedQuotas,
+-          combos,
+-          timestamp,
+-          (c) => buildComboCatalogMetadata(c, combos)
+-        );
+       } else if (!keyMeta) {
+         // #6406: A valid apiKey without a DB metadata row is an env-var master key
+         // (OMNIROUTE_API_KEY / ROUTER_API_KEY per isValidApiKey). Those keys have no
+diff --git a/tests/unit/catalog-response-openrouter-filter.test.ts b/tests/unit/catalog-response-openrouter-filter.test.ts
+new file mode 100644
+index 000000000..db9a20080
+--- /dev/null
++++ b/tests/unit/catalog-response-openrouter-filter.test.ts
+@@ -0,0 +1,36 @@
++/**
++ * Isolate the serialize-time OpenRouter strip in finalizeCatalogResponse.
++ * Upstream catalog.ts already filters; this file feeds a mixed list so deleting
++ * the exit filter turns this test red.
++ */
++import test from "node:test";
++import assert from "node:assert/strict";
++import fs from "node:fs";
++import os from "node:os";
++import path from "node:path";
++
++const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-catalog-response-or-"));
++process.env.DATA_DIR = TEST_DATA_DIR;
++process.env.API_KEY_SECRET = process.env.API_KEY_SECRET || "catalog-response-or-secret";
++
++const { finalizeCatalogResponse } = await import("../../src/app/api/v1/models/catalogResponse.ts");
++
++test.after(() => {
++  try {
++    fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true });
++  } catch {
++    /* ignore */
++  }
++});
++
++test("finalizeCatalogResponse drops OpenRouter rows the caller forgot to filter", async () => {
++  const request = new Request("http://127.0.0.1/v1/models");
++  const finalModels = [
++    { id: "openrouter/test", owned_by: "openrouter", root: "test", parent: null },
++    { id: "glm/kept", owned_by: "glm", root: "glm/kept", parent: null },
++  ];
++  const response = await finalizeCatalogResponse(request, finalModels, () => 8192, {});
++  assert.equal(response.status, 200);
++  const body = (await response.json()) as { data: Array<{ id: string }> };
++  assert.deepEqual(body.data.map((model) => model.id).sort(), ["glm/kept"]);
++});
+diff --git a/tests/unit/rox-openrouter-catalog-exclusion.test.ts b/tests/unit/rox-openrouter-catalog-exclusion.test.ts
+index 2fb99b658..87beda7ac 100644
+--- a/tests/unit/rox-openrouter-catalog-exclusion.test.ts
++++ b/tests/unit/rox-openrouter-catalog-exclusion.test.ts
+@@ -7,10 +7,9 @@
+  * than against the policy helper — a predicate that fails to recognize an entry
+  * is exactly the failure mode this file exists to catch.
+  *
+- * The three request shapes below are the ones that reach `finalizeCatalogResponse`
+- * through different branches: the global filter (no key), the per-key allow-list
+- * (DB-backed key), and the quota-exclusive short circuit, which returns before the
+- * catalog is ever built.
++ * The request shapes below reach `finalizeCatalogResponse` through different
++ * branches: unauthenticated, DB-backed allow-list, quota-exclusive short circuit,
++ * and env-var master key.
+  */
+ 
+ import test from "node:test";
+@@ -21,6 +20,7 @@ import path from "node:path";
+ 
+ const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-rox-openrouter-"));
+ const ORIGINAL_ROX_PUBLIC_CATALOG_ONLY = process.env.ROX_PUBLIC_CATALOG_ONLY;
++const ORIGINAL_OMNIROUTE_API_KEY = process.env.OMNIROUTE_API_KEY;
+ 
+ process.env.DATA_DIR = TEST_DATA_DIR;
+ process.env.API_KEY_SECRET = process.env.API_KEY_SECRET || "rox-openrouter-exclusion-secret";
+@@ -129,6 +129,11 @@ test.after(() => {
+   } else {
+     process.env.ROX_PUBLIC_CATALOG_ONLY = ORIGINAL_ROX_PUBLIC_CATALOG_ONLY;
+   }
++  if (ORIGINAL_OMNIROUTE_API_KEY === undefined) {
++    delete process.env.OMNIROUTE_API_KEY;
++  } else {
++    process.env.OMNIROUTE_API_KEY = ORIGINAL_OMNIROUTE_API_KEY;
++  }
+   try {
+     fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true });
+   } catch {
+@@ -185,7 +190,7 @@ test("a DB-backed key permitted to use an OpenRouter model still cannot see it",
+   );
+ });
+ 
+-test("a quota-exclusive key gets rox IDs only while the ROX public catalog is on", async () => {
++test("a quota-exclusive key keeps callable qtSd ids when the ROX public catalog is on", async () => {
+   const group = groupsDb.createGroup("Rox Exclusion");
+   const connection = await providersDb.createProviderConnection({
+     provider: "glm",
+@@ -208,12 +213,39 @@ test("a quota-exclusive key gets rox IDs only while the ROX public catalog is on
+   process.env.ROX_PUBLIC_CATALOG_ONLY = "true";
+   const models = await readCatalog(quotaKey.key);
+ 
+-  const nonRoxIds = models.map((model) => model.id).filter((id) => !isRoxPublicModelId(id));
+-  assert.deepEqual(
+-    nonRoxIds,
+-    [],
+-    "the quota short circuit returns before the ROX public catalog is applied"
++  assert.equal(findOpenRouterEntries(models).length, 0);
++  assert.equal(
++    models.filter((model) => isRoxPublicModelId(model.id)).length,
++    0,
++    "quota keys must not be advertised rox/* ids they cannot POST"
++  );
++  assert.ok(
++    models.some((model) => String(model.id).startsWith("qtSd/")),
++    "quota keys must still see pool qtSd/* ids"
+   );
++
++  const listedId = models.find((model) => String(model.id).startsWith("qtSd/"))?.id;
++  assert.ok(listedId, "need a listed quota id to check request policy");
++  const { enforceApiKeyPolicy } = await import("../../src/shared/utils/apiKeyPolicy.ts");
++  const policy = await enforceApiKeyPolicy(
++    new Request("http://localhost/v1/chat/completions", {
++      method: "POST",
++      headers: { Authorization: `Bearer ${quotaKey.key}` },
++    }),
++    listedId
++  );
++  assert.equal(
++    policy.rejection,
++    null,
++    "a listed quota catalog id must pass enforceApiKeyPolicy for the same key"
++  );
++});
++
++test("an env-var master key still cannot see OpenRouter in the catalog", async () => {
++  const masterKey = "rox-exclusion-env-master-key";
++  process.env.OMNIROUTE_API_KEY = masterKey;
++  const models = await readCatalog(masterKey);
++  assert.ok(models.length > 0, "master-key catalog must not be empty");
+   assert.deepEqual(
+     findOpenRouterEntries(models).map((model) => model.id),
+     []
 -- 
 2.43.0
 

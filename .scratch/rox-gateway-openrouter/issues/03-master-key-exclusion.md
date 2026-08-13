@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately (parallel with 01).
 
-**Status:** ready-for-agent
+**Status:** done locally.
 
 - [ ] Exclusion suite covers the `!keyMeta` request shape
 - [ ] `findOpenRouterEntries` is empty

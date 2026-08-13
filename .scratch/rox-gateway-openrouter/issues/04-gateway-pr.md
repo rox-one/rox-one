@@ -4,8 +4,8 @@
 
 **Blocked by:** 01, 02, 03
 
-**Status:** ready-for-agent
+**Status:** patch exported; `git am --3way` verified; push to `agisota/zed-api` denied (403).
 
-- [ ] Focused ROX suite 0 fail and `typecheck:core` exit 0, fresh this session
-- [ ] Patch applies with `git am --3way` on a clean `release/v3.8.50` clone
+- [x] Focused ROX suite 0 fail and `typecheck:core` exit 0, fresh this session
+- [x] Patch applies with `git am --3way` on a clean `release/v3.8.50` clone
 - [ ] PR opened, or write-denied blocker reported with the patch attached

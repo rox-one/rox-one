@@ -1,8 +1,21 @@
-# ROX gateway — P0 OpenRouter exclusion (проверенный hotfix)
+# ROX gateway — P0 OpenRouter exclusion (честный каталог)
 
-Статус на 2026-08-13: **не применять `8aaa9d039` / этот патч as-is.** Review: quota-public remap рекламирует `rox/*` ключам с `allowedQuotas`, а `validateQuotaAccess` отвечает `QUOTA_ONLY`. Контракт и план: [`../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md`](../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md), [`../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md`](../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md).
+Статус на 2026-08-13: **применять этот патч** (`git am --3way` на `release/v3.8.50`). Два коммита:
 
-Статус на 2026-08-12 (ниже без изменений как историческая запись). Репозиторий gateway: `agisota/zed-api`, ветка `release/v3.8.50` @ `2e7732427fdf13a06e959fd043385c611647de17` (merge PR #1, `feat(api): add stable ROX public models`).
+1. OpenRouter exclusion (`isOpenRouterCatalogEntry` + serialize-time strip).
+2. Quota honesty: quota-exclusive ключи в public mode видят callable `qtSd/*`, не `rox/*`.
+
+Локальный gateway HEAD: `48e22773c` на `hotfix/rox-catalog-openrouter` (parent `8aaa9d039`, base `2e7732427`). Push в `agisota/zed-api` — 403 (`cursor[bot]`). PR/staging должен сделать тот, у кого есть write.
+
+Контракт: [`../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md`](../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md). План: [`../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md`](../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md).
+
+Патч: [`patches/rox-catalog-openrouter-hotfix.patch`](patches/rox-catalog-openrouter-hotfix.patch). `git am --3way` на чистом `2e7732427` проверен (`AM_EXIT=0`).
+
+---
+
+Историческая запись 2026-08-12 ниже описывает первый hotfix, который **рекламировал uncallable `rox/*` quota-ключам**. Не `git am` только первый коммит.
+
+Репозиторий gateway: `agisota/zed-api`, ветка `release/v3.8.50` @ `2e7732427fdf13a06e959fd043385c611647de17`.
 
 Патч: [`patches/rox-catalog-openrouter-hotfix.patch`](patches/rox-catalog-openrouter-hotfix.patch). Применяется к `release/v3.8.50` без конфликтов (`git am --3way`, проверено на чистом клоне).
 
@@ -21,14 +34,24 @@
 ## Что исправлено
 
 - `src/lib/roxPublicModelPolicy.ts` — predicate сверяет ownership точным сравнением (`owned_by`, `provider`, `providerId`, `provider_id`) и разбирает пути посегментно, поэтому ловит и `openrouter/...`, и вложенный `/openrouter/`, и legacy `openrouter_*`, но не задевает `acme/openrouter-proxy`. Добавлен `scopeRoxPublicCatalogForKey()` — одна реализация scoping публичного каталога по DB-ключу вместо двух копий цикла.
-- `src/app/api/v1/models/catalog.ts` — per-key фильтрация идёт по `finalModels`; quota short circuit в public mode отдаёт `rox/*`, а не `qtSd/*`.
+- `src/app/api/v1/models/catalog.ts` — per-key фильтрация идёт по `finalModels`; quota short circuit **всегда** отдаёт `qtSd/*` пула (OpenRouter режется в `finalizeCatalogResponse`). Public `rox/*` — только для не-quota ключей. Нельзя рекламировать `rox/*` quota-ключам: `validateQuotaAccess` отвечает `QUOTA_ONLY`.
 - `src/app/api/v1/models/catalogResponse.ts` — exclusion продублирован в `finalizeCatalogResponse()`. Это единственный выход, общий для полной сборки каталога и для quota-пути, так что новая ветка не сможет опубликовать OpenRouter по забывчивости (fail-close).
 
 Затронуты все поверхности каталога сразу: `getUnifiedModelsResponse` — общая точка для `/v1/models`, `/v1/models/{id}`, `/api/models/catalog`, `/v1/providers/{provider}/models`, specialty-каталогов и vscode-роутов. Админский `/api/models` собирается отдельно и не тронут — управление OpenRouter-подключениями в дашборде работает как раньше.
 
 ## Доказательства
 
-| Проверка | Результат |
+| Проверка (2026-08-13, honesty) | Результат |
+|---|---|
+| RED: quota+public must not list `rox/*` на hotfix `8aaa9d039` | fail: `5 !== 0` (`rox/*` advertised) |
+| GREEN: тот же тест после `48e22773c` | 6/6 pass в exclusion file (включая master-key + policy на listed `qtSd/*`) |
+| Isolated `finalizeCatalogResponse` mixed-list | pass; commenting the filter → `openrouter/test` leaks (RED proven) |
+| Focused suite (rox-*, #4264, #9293, isolated filter, quota-exclusive 4806/short-circuit) | 46 pass / 0 fail, `FOCUSED_EXIT=0` |
+| `npm run typecheck:core` | `TYPECHECK_EXIT=0` |
+| `git am --3way` на чистом `2e7732427` | `AM_EXIT=0` (2 коммита) |
+| `git push origin hotfix/rox-catalog-openrouter` | 403 Permission denied `cursor[bot]` |
+
+| Проверка (2026-08-12, первый hotfix — не применять один) | Результат |
 |---|---|
 | Новый e2e regression до фикса | 4 из 5 падают: канонические записи в ответе, DB-key возвращает `openrouter/google/gemini-2.5-flash`, quota-ключ отдаёт `qtSd/*` |
 | Тот же regression после фикса | 5/5 pass |
@@ -53,13 +76,14 @@
 
 ```bash
 git switch -c hotfix/rox-catalog-openrouter release/v3.8.50
-git am --3way docs/patches/rox-catalog-openrouter-hotfix.patch   # путь к копии патча
+git am --3way docs/patches/rox-catalog-openrouter-hotfix.patch
 npm ci
 npx cross-env DISABLE_SQLITE_AUTO_BACKUP=true node --import tsx/esm \
   --import ./open-sse/utils/setupPolyfill.ts --import ./tests/_setup/isolateDataDir.ts \
   --test --test-force-exit --test-concurrency=4 \
   tests/unit/rox-*.test.ts tests/unit/openrouter-vision-sync-4264.test.ts \
-  tests/unit/specialty-model-hidden-openrouter-9293.test.ts
+  tests/unit/specialty-model-hidden-openrouter-9293.test.ts \
+  tests/unit/catalog-response-openrouter-filter.test.ts
 npm run typecheck:core
 ```
 

@@ -1,6 +1,6 @@
 # ROX gateway OpenRouter catalog — design
 
-Дата: 2026-08-13. Статус: синтез review + verification; контракт квот в public mode = **B** (оставить `qtSd/*`, затем strip OpenRouter).  
+Дата: 2026-08-13. Статус: контракт B **реализован локально** (`48e22773c` на `/tmp/zed-api` `hotfix/rox-catalog-openrouter`). Патч в `docs/patches/rox-catalog-openrouter-hotfix.patch` (2 коммита, `git am --3way` на `2e7732427` проверен). Push/PR на `agisota/zed-api` и AC-07/08 — blocked.  
 Репо: `agisota/zed-api` `release/v3.8.50` @ `2e7732427`. Локальный hotfix: `8aaa9d039`. Патч в `rox-one`: `docs/patches/rox-catalog-openrouter-hotfix.patch`.  
 Канон артефактов на самом gateway: `_tasks/superpowers/specs/` (gitignored). Эта копия живёт в `rox-one`, потому что write на `agisota/zed-api` у cursor[bot] нет.
 

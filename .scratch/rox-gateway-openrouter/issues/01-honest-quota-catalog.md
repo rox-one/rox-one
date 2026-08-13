@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done locally (`48e22773c`). Gateway PR blocked on write.
 
 - [ ] Quota key + `ROX_PUBLIC_CATALOG_ONLY=true` + glm pool: catalog contains `qtSd/*`, contains no `rox/*`, contains no OpenRouter
 - [ ] Same key: `enforceApiKeyPolicy` does not return `QUOTA_ONLY` for a listed id
