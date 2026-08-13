@@ -9,6 +9,7 @@ export { PiAgent, PiBackend } from './pi-agent.ts';
 export { OmpAgent, OmpBackend } from './omp-agent.ts';
 export * from './errors.ts';
 export * from './omp-first-run.ts';
+export * from './live-turn-gate.ts';
 export * from './options.ts';
 
 // Export session-scoped-tools - tools scoped to a specific session

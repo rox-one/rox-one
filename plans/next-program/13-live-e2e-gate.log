@@ -1,0 +1,19 @@
+# Ticket 13 — live-turn gate log (2026-08-13)
+
+Command: bun packages/shared/src/agent/live-turn-e2e.ts
+Working tree: rox/next-program-t13-e2e-7c33 @ wave1 0ffb165c
+Host: cloud-agent environment (no ROX_API_KEY in process env)
+~/.omp/agent/: agent.db, models.db, sessions/ — no models.yml, no config.yml
+
+status: BLOCKED
+claim: live-turn-not-claimed
+missingSecret: ROX_API_KEY
+reason: Live first-turn E2E is BLOCKED — missing secret ROX_API_KEY. Do not claim stream / host tool / MCP tool / permission as VERIFIED.
+steps:
+  stream_answer: BLOCKED
+  host_tool: BLOCKED
+  mcp_tool: BLOCKED
+  permission_prompt: BLOCKED
+  restart_restore: BLOCKED
+
+exit=0
