@@ -4,7 +4,7 @@
 
 **Goal:** On `agisota/zed-api` `release/v3.8.50`, publish no OpenRouter rows on catalog paths, and make every advertised id for a quota-exclusive key a `qtSd/*` id that `validateQuotaAccess` will admit.
 
-**Status 2026-08-13:** Exclusion merged in #2 (`406ccebb`). Honesty follow-up is [zed-api#4](https://github.com/agisota/zed-api/pull/4) (`3b5181c3`). Do not `git am` the `2e7732427` two-commit patch onto current tip. Staging (Task 7) still open. GitHub Actions on #4 do not start (org billing lock).
+**Status 2026-08-13:** Exclusion #2 (`406ccebb`), honesty #4 squash (`df2a0fa5e`), loopback smoke #3 squash (`c2f356833`) are all on `origin/release/v3.8.50`. Do not `git am` local patches onto current tip. Staging (Task 7 / AC-07/08) still open. GitHub Actions do not start (org billing lock).
 
 **Architecture:** Keep OpenRouter ownership/path matching and `finalizeCatalogResponse` fail-closed strip. Change only the quota short circuit: never substitute `buildRoxPublicCatalog()` for quota-exclusive keys. Public-mode non-quota keys still see `rox/*`. Request policy stays quota-only for those keys.
 

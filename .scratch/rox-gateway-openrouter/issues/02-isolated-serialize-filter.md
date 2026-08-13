@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately (parallel with 01).
 
-**Status:** landed in [zed-api#4](https://github.com/agisota/zed-api/pull/4) (`finalizeCatalogResponse` + isolated test). RED on `406ccebb` before the filter: `openrouter/test` leaked.
+**Status:** landed in [zed-api#4](https://github.com/agisota/zed-api/pull/4) squash `df2a0fa5e` (`finalizeCatalogResponse` + isolated test, including claude/combo glm aliases). RED on `406ccebb` before the filter: `openrouter/test` leaked.
 
 - [x] Mixed-list unit test: OpenRouter row absent, non-OpenRouter row present
 - [x] Worktree check: commenting the filter fails the test

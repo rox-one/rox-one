@@ -4,7 +4,8 @@
 
 **Blocked by:** 04
 
-**Status:** blocked — no isolated staging host. [zed-api#3](https://github.com/agisota/zed-api/pull/3) is loopback-only, not a staging deploy.
+**Status:** loopback harness merged in [zed-api#3](https://github.com/agisota/zed-api/pull/3) squash `c2f356833` (tip of `release/v3.8.50`). That is **not** AC-07/08. No isolated staging host (`api.rox.one` = prod; Swiss node = live migration; Railway MCP unavailable).
 
-- [ ] Immutable SHA recorded (AC-07)
+- [x] Loopback `getUnifiedModelsResponse` smoke on tip `c2f356833`: public-only 200 / five `rox/*`; normal 200 / 281 models / OpenRouter 0
+- [ ] Immutable SHA recorded on an isolated staging host (AC-07)
 - [ ] JSON/SSE/telemetry/restart-persistence smoke recorded (AC-08)

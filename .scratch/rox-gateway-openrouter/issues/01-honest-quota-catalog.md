@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** landed in [zed-api#4](https://github.com/agisota/zed-api/pull/4) (quota honesty test). Production short circuit already on `406ccebb` (#2).
+**Status:** landed in [zed-api#4](https://github.com/agisota/zed-api/pull/4) squash `df2a0fa5e` (quota honesty + provider-segment + claude/combo glm aliases). Production short circuit already on `406ccebb` (#2).
 
 - [x] Quota key + `ROX_PUBLIC_CATALOG_ONLY=true` + glm pool: catalog contains `qtSd/*`, contains no `rox/*`, contains no OpenRouter
 - [x] Same key: `enforceApiKeyPolicy` does not return `QUOTA_ONLY` for a listed id
