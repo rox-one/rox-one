@@ -99,3 +99,51 @@ Legacy `SurfaceLayoutSnapshot` v1 remains readable for at least two releases;
 the pure migration `migrateSurfaceLayoutSnapshotToWorkbench`
 (`platform/workbench/migrate.ts`) maps every legacy panel to a single-tab
 TabGroup so no open surface is lost.
+
+## Addendum (2026-08-13) — shell seam
+
+Implements `docs/superpowers/specs/2026-08-13-workbench-shell-seam-design.md`.
+This addendum wins over the first-increment sketch where they disagree.
+
+### Geometry is 1D
+
+`OpenSurfaceTarget` is `'active-group' | 'new-group-right' | 'new-window'`.
+`'new-group-bottom'` is not part of the model. `WorkspaceSurfaceHost.split`
+with `'down'` inserts a group to the right until a split-tree increment.
+
+### Preview is a single bit
+
+`SurfaceInstance` has `preview: boolean` (`false` ⇒ pinned). There is no
+`pinned` field, so a tab cannot be both preview and pinned.
+
+### Dirty close / replace is a Result
+
+`closeSurface` returns `LayoutMutation`. Closing a dirty tab without
+`force: true` is `{ ok: false, code: 'DIRTY_SURFACE' }`. Opening a new
+preview over a dirty preview pins the dirty tab and appends the new one.
+
+### One host
+
+`WorkbenchApi` is removed. `WorkspaceSurfaceHost` is the only host and
+speaks `WorkbenchLayout` (`restore` / `serializeLayout`). Core ships an
+in-memory adapter; the renderer adapter keeps URL writes on the panel
+stack in this increment.
+
+### Flag resolution is deterministic
+
+Unknown dependencies disable the dependent flag. One-way
+`incompatibleWith`: the declarer yields. Mutual incompatibility: the
+lexicographically smaller id wins. `featureUnifiedShellAtom` is an
+OR-fallback for `workbench.*` flags only.
+
+### Rollback
+
+`migrateWorkbenchToSurfaceLayoutSnapshot` flattens every v2 tab into its
+own v1 panel so no surface is lost. Grouping is not preserved.
+
+### Status slot
+
+`StatusBarHost` occupies `PanelSlot` `'status'`. Ready transport/runtime
+and permission mode live there. Failures stay
+`TransportConnectionBanner` / `ToolchainStatusBanner`. Composer
+`ToolbarStatusSlot` is unrelated.

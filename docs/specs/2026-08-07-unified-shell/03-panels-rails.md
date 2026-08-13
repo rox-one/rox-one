@@ -5,6 +5,13 @@
 - **Дата**: 2026-08-07
 - **Входные документы**: «Единая оболочка» (att2, §§1–3, 9, 16–17), scout-отчёты `scout-AppShell` и `scout-SessionsViews` по `/Users/marklindgreen/Projects/craft-agents`.
 - **Связанные документы**: [S-01 Shell slots](./01-shell-slots.md), [S-02 Surface registry и вкладки](./02-surface-registry-tabs.md), [S-04 Omnibox](./04-omnibox.md), [S-05 Extension Center](./05-extension-center.md), [S-09 Roadmap](./09-roadmap-waves.md), [S-10 Anti-goals](./10-anti-goals.md), [K-03 Knowledge Provider Contract](../2026-08-07-siyuan-integration/03-knowledge-provider-contract.md).
+- **Workbench seam (2026-08-13):** ModeRegistry, Activity Rail seed, status slot
+  and granular flags are implemented against
+  [ADR-0001](../../architecture/adr/0001-rox-workbench-convergence.md) and
+  [2026-08-13-workbench-shell-seam-design.md](../../superpowers/specs/2026-08-13-workbench-shell-seam-design.md).
+  On conflict, those documents win. `PanelSlot` `'status'` is `StatusBarHost`,
+  not `ToolbarStatusSlot`. Chrome widths stay in `LayoutProfile` /
+  `PanelRegistryState`, not in `WorkbenchLayout`.
 
 ## 1. Цель
 

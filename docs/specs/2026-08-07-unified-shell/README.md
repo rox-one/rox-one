@@ -4,7 +4,7 @@
 - **Статус**: draft
 - **Дата**: 2026-08-07
 - **Входные документы**: исходный документ UI-интеграции «Единая оболочка» (att2); scout-отчёты `scout-RepoMap.md`, `scout-AppShell.md`, `scout-SessionsViews.md`, `scout-SurfacesBrowser.md`, `scout-ServerCore.md`, `scout-SkillsCloud.md`
-- **Связанные документы**: suite K (архитектура интеграции) — [../2026-08-07-siyuan-integration/README.md](../2026-08-07-siyuan-integration/README.md)
+- **Связанные документы**: suite K (архитектура интеграции) — [../2026-08-07-siyuan-integration/README.md](../2026-08-07-siyuan-integration/README.md); workbench seam — [ADR-0001](../../architecture/adr/0001-rox-workbench-convergence.md), [spec](../../superpowers/specs/2026-08-13-workbench-shell-seam-design.md) (wins on conflict with S-02/S-03)
 - **Репозиторий**: agisota/craft-agents-oss (форк craft-ai-agents/craft-agents-oss)
 
 ---

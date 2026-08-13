@@ -5,6 +5,13 @@
 > Дата: 2026-08-07
 > Входные документы: вердикт архитектуры интеграции (`att1`, §2.4, §3.2, §3.3, §4.2, §16), документ единой оболочки (`att2`, §2 «Верхняя система вкладок», §9, §17-W1, §18), скаут кодовой базы `SurfacesBrowser` (craft-agents main @ 961c1f450).
 > Связанные: [README](./README.md), [слоты оболочки](./01-shell-slots.md), [панели и рейлы](./03-panels-rails.md), [Omnibox](./04-omnibox.md), [контракт Knowledge Provider](../2026-08-07-siyuan-integration/03-knowledge-provider-contract.md), [контур записи](../2026-08-07-siyuan-integration/05-mutation-safety.md), [roadmap](./09-roadmap-waves.md).
+>
+> **Workbench seam (2026-08-13):** layout host, tab groups, dirty/preview and
+> `SurfaceTab` canonicalization are specified in
+> [ADR-0001](../../architecture/adr/0001-rox-workbench-convergence.md) and
+> [2026-08-13-workbench-shell-seam-design.md](../../superpowers/specs/2026-08-13-workbench-shell-seam-design.md).
+> On conflict, ADR-0001 + that spec win over this document. The `SurfaceTab`
+> union here remains the canonical seven variants; do not fork a second tab type.
 
 ## 1. Цель
 
