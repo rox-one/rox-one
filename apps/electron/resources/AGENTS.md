@@ -48,7 +48,7 @@ The files in this folder are the **source of truth** for bundled defaults:
 - Edit files in `docs/` to update documentation
 - Edit files in `themes/` to update bundled themes
 
-There is no TypeScript fallback - if the bundled JSON file is missing, the app will fail with a clear error.
+Headless and CI runs (no Electron bundle on disk) use a TypeScript copy, `FALLBACK_CONFIG_DEFAULTS` in `packages/shared/src/config/storage.ts`. That fallback must stay identical to this JSON — `packages/shared/src/config/__tests__/config-defaults-parity.test.ts` fails if they diverge. Edit this JSON first, then update the fallback to match.
 
 ## Release Notes Authoring
 
