@@ -137,8 +137,9 @@ export function resolveSlotPanels(
 }
 
 // -----------------------------------------------------------------------------
-// App panel registry singleton (renderer). Core contributions register here;
-// extension/siyuan-plugin sources arrive with their waves (S-05/S-06).
+// App panel registry singleton (renderer). Core contributions register via
+// `registerCorePanels` (ticket 11: knowledge.inspector). Extension/plugin
+// sources arrive with later waves (S-05/S-06).
 // -----------------------------------------------------------------------------
 
 let appPanelRegistry: PanelRegistry | null = null
