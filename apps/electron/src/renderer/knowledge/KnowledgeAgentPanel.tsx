@@ -19,8 +19,8 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { useNavigation } from '@/contexts/NavigationContext'
-import { routes } from '@/lib/navigate'
-import { useKnowledgeNode } from './KnowledgeInspector'
+import { routes, type Route } from '@/lib/navigate'
+import { useKnowledgeNode } from './use-knowledge-node'
 import type { KnowledgeRef } from '../../shared/types'
 
 export interface KnowledgeAgentPanelProps {
@@ -76,6 +76,31 @@ export function buildOpenSessionBrief(
   })
 }
 
+/** Existing new-session route: composer prefill, user reviews and sends. */
+export function buildAskAboutSessionRoute(
+  ref: KnowledgeRef,
+  title: string | null,
+  t: Translate,
+): Route {
+  return routes.action.newSession({
+    input: buildAskAboutPrefill(ref, title, t),
+    ...(title ? { name: title } : {}),
+  })
+}
+
+/** Existing new-session route: create the session and send the brief immediately. */
+export function buildOpenSessionRoute(
+  ref: KnowledgeRef,
+  title: string | null,
+  t: Translate,
+): Route {
+  return routes.action.newSession({
+    input: buildOpenSessionBrief(ref, title, t),
+    send: true,
+    ...(title ? { name: title } : {}),
+  })
+}
+
 export function KnowledgeAgentPanel({ knowledgeRef }: KnowledgeAgentPanelProps) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
@@ -94,18 +119,11 @@ export function KnowledgeAgentPanel({ knowledgeRef }: KnowledgeAgentPanelProps) 
   const title = node?.title ?? null
 
   const handleAskAbout = () => {
-    navigate(routes.action.newSession({
-      input: buildAskAboutPrefill(knowledgeRef, title, t),
-      ...(title ? { name: title } : {}),
-    }))
+    navigate(buildAskAboutSessionRoute(knowledgeRef, title, t))
   }
 
   const handleOpenSession = () => {
-    navigate(routes.action.newSession({
-      input: buildOpenSessionBrief(knowledgeRef, title, t),
-      send: true,
-      ...(title ? { name: title } : {}),
-    }))
+    navigate(buildOpenSessionRoute(knowledgeRef, title, t))
   }
 
   return (

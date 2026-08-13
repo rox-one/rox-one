@@ -10,6 +10,8 @@ import {
   loadKnowledgeNavigatorData,
   selectFavoriteEnvelopes,
   selectRecentEnvelopes,
+  uncontractedNavSectionPresentation,
+  UNCONTRACTED_NAV_SECTION_IDS,
   type KnowledgeNavigatorApi,
 } from '../KnowledgeNotebookTree'
 
@@ -162,5 +164,22 @@ describe('loadKnowledgeNavigatorData', () => {
     const data = await loadKnowledgeNavigatorData(api)
     expect(data.favorites).toHaveLength(1)
     expect(data.favorites[0]!.title).toBeUndefined()
+  })
+})
+
+describe('uncontractedNavSectionPresentation', () => {
+  it('hides empty Inbox/Daily/Tags so they do not look like a load failure', () => {
+    expect(UNCONTRACTED_NAV_SECTION_IDS).toEqual(['inbox', 'daily', 'databases', 'tags'])
+    for (const id of ['inbox', 'daily', 'tags'] as const) {
+      expect(UNCONTRACTED_NAV_SECTION_IDS).toContain(id)
+      expect(uncontractedNavSectionPresentation(0)).toBe('hidden')
+    }
+    expect(uncontractedNavSectionPresentation(0)).not.toBe('unavailable')
+    expect(uncontractedNavSectionPresentation(0)).not.toBe('error')
+    expect(uncontractedNavSectionPresentation(0)).not.toBe('loading')
+  })
+
+  it('lists items when a future provider actually returns some', () => {
+    expect(uncontractedNavSectionPresentation(3)).toBe('items')
   })
 })
