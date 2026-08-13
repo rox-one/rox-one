@@ -144,11 +144,11 @@ export async function validateFilePath(
   // Block sensitive files even within allowed directories.
   // Use [\\/] to match both Unix / and Windows \ separators.
   const sensitivePatterns = [
-    /\.ssh[\\/]/,
-    /\.gnupg[\\/]/,
-    /\.aws[\\/]credentials/,
-    /\.env$/,
-    /\.env\./,
+    /(^|[\\/])\.ssh([\\/]|$)/,
+    /(^|[\\/])\.gnupg([\\/]|$)/,
+    /(^|[\\/])\.aws[\\/]credentials/,
+    /(^|[\\/])\.env$/,
+    /(^|[\\/])\.env\./,
     /credentials\.json$/,
     /secrets?\./i,
     /\.pem$/,

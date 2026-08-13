@@ -54,6 +54,11 @@ describe('validateFilePath', () => {
     await expect(validateFilePath(path)).rejects.toThrow('sensitive')
   })
 
+  it('blocks the .ssh directory itself, not only files under it', async () => {
+    await expect(validateFilePath(join(home, '.ssh'))).rejects.toThrow('sensitive')
+    await expect(validateFilePath(join(home, '.gnupg'))).rejects.toThrow('sensitive')
+  })
+
   it('sensitive patterns match Windows backslash separators', () => {
     // Verify the regex patterns used in validateFilePath match both / and \
     const sshPatternUnix = /\.ssh[\\/]/

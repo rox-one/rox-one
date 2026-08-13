@@ -9,6 +9,7 @@ import {
   isValidWorkspaceRootPath,
   isValidNotesPath,
   isPathInsideBase,
+  resolveContainedRelativePath,
 } from './path-validation'
 
 function directoryStats(): Stats {
@@ -174,5 +175,33 @@ describe('isValidNotesPath', () => {
   it('treats /home as outside a nested workspace', () => {
     expect(isPathInsideBase('/home/user/.ssh', '/home/user/ws', 'linux')).toBe(false)
     expect(isPathInsideBase('/home/user/ws/notes', '/home/user/ws', 'linux')).toBe(true)
+  })
+})
+
+describe('resolveContainedRelativePath', () => {
+  it('resolves a nested relative path inside the base', () => {
+    expect(resolveContainedRelativePath('/home/user/ws', './icon.png', 'linux')).toBe('/home/user/ws/icon.png')
+    expect(resolveContainedRelativePath('/home/user/ws', 'icons/status.png', 'linux')).toBe('/home/user/ws/icons/status.png')
+  })
+
+  it('rejects absolute inputs that would ignore the base', () => {
+    expect(() => resolveContainedRelativePath('/home/user/ws', '/home/user/ws2/icon.png', 'linux')).toThrow('absolute')
+    expect(() => resolveContainedRelativePath('/home/user/ws', '/etc/passwd.svg', 'linux')).toThrow('absolute')
+  })
+
+  it('rejects parent traversal and prefix-sibling escapes', () => {
+    expect(() => resolveContainedRelativePath('/home/user/ws', '../ws2/icon.png', 'linux')).toThrow('outside')
+    expect(() => resolveContainedRelativePath('/home/user/ws', 'subdir/../../ws2/icon.png', 'linux')).toThrow('outside')
+  })
+
+  it('rejects empty and NUL paths', () => {
+    expect(() => resolveContainedRelativePath('/home/user/ws', '  ', 'linux')).toThrow('required')
+    expect(() => resolveContainedRelativePath('/home/user/ws', 'icon\0.png', 'linux')).toThrow('traversal')
+  })
+
+  it('rejects Windows absolute and traversal on win32', () => {
+    expect(() => resolveContainedRelativePath('C:\\ws', 'C:\\ws2\\icon.png', 'win32')).toThrow('absolute')
+    expect(() => resolveContainedRelativePath('C:\\ws', '..\\ws2\\icon.png', 'win32')).toThrow('outside')
+    expect(resolveContainedRelativePath('C:\\ws', 'icon.png', 'win32').replace(/\//g, '\\')).toBe('C:\\ws\\icon.png')
   })
 })

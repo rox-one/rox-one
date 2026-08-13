@@ -143,6 +143,41 @@ export function isPathInsideBase(
 }
 
 /**
+ * Resolve `relativePath` against `base` and require the result to stay inside
+ * `base`. Rejects absolute inputs (POSIX `/…`, Windows drive/UNC) so
+ * `join(base, "/etc/passwd")` cannot ignore the base. Throws on escape.
+ */
+export function resolveContainedRelativePath(
+  base: string,
+  relativePath: string,
+  platform: NodeJS.Platform = process.platform,
+): string {
+  const trimmed = relativePath.trim()
+  if (!trimmed) {
+    throw new Error('Invalid path: path is required')
+  }
+  if (trimmed.includes('\0')) {
+    throw new Error('Invalid path: directory traversal not allowed')
+  }
+  if (isAbsolutePathForPlatform(trimmed, platform)) {
+    throw new Error('Invalid path: absolute paths are not allowed')
+  }
+
+  const resolvedBase = resolveForPlatform(base, platform)
+  const resolved = resolveForPlatform(
+    platform === 'win32'
+      ? pathWin32.join(resolvedBase, trimmed)
+      : pathPosix.join(resolvedBase, trimmed),
+    platform,
+  )
+
+  if (!isPathInsideBase(resolved, resolvedBase, platform)) {
+    throw new Error('Invalid path: outside workspace directory')
+  }
+  return resolved
+}
+
+/**
  * Notes vault paths may be customized, but must stay inside the workspace
  * (or an extra allowed root such as the default per-workspace notes dir).
  * Otherwise notes:deleteFolder can recursively destroy arbitrary directories.
