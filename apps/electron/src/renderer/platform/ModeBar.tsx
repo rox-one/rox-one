@@ -3,7 +3,6 @@
  * ModeRegistry as ActivityRail (no second catalog).
  */
 
-import { BookOpen, MessageSquare, Settings, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import {
@@ -15,19 +14,9 @@ import {
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { getWorkbenchModeRegistry } from './modes-bootstrap'
 import { coreModeIsActive } from './mode-rail-model'
+import { modeIcon } from './mode-icons'
 import { TopBarButton } from '../components/ui/TopBarButton'
-import type { ModeContribution } from '@craft-agent/core/platform'
 import type { ViewRoute } from '../../shared/routes'
-
-const MODE_ICONS: Record<string, LucideIcon> = {
-  'message-square': MessageSquare,
-  'book-open': BookOpen,
-  settings: Settings,
-}
-
-function modeIcon(mode: ModeContribution): LucideIcon {
-  return MODE_ICONS[mode.icon] ?? MessageSquare
-}
 
 export function ModeBar() {
   const { t } = useTranslation()
@@ -37,7 +26,7 @@ export function ModeBar() {
   const active = modes.find((mode) => coreModeIsActive(mode.id, navState)) ?? modes[0]
   if (!active) return null
 
-  const ActiveIcon = modeIcon(active)
+  const ActiveIcon = modeIcon(active.icon)
 
   return (
     <DropdownMenu>
@@ -56,7 +45,7 @@ export function ModeBar() {
       </Tooltip>
       <StyledDropdownMenuContent align="start" minWidth="min-w-44">
         {modes.map((mode) => {
-          const Icon = modeIcon(mode)
+          const Icon = modeIcon(mode.icon)
           const selected = coreModeIsActive(mode.id, navState)
           return (
             <StyledDropdownMenuItem

@@ -1,10 +1,11 @@
 /**
  * SurfaceTabs (W1 unified shell, spec S-02 §3.3/§3.5) — tab strip over the
  * panel-stack area. Derives tabs from the existing panel-stack atoms
- * (read-only consumption: the URL/NavigationContext remains the single source
- * of truth; no forked persistence). Focus/close delegate to the existing
- * stack ops (`focusedPanelIdAtom` / `closePanelAtom`), which NavigationContext
- * syncs back to the URL.
+ * (read-only consumption: URL/NavigationContext remains focus SoT).
+ * When `workbench.tab-groups.v2` is on, a parsed WorkbenchLayout v2 mirror
+ * is written to `KEYS.workbenchLayout` (not grouping SoT). Focus/close
+ * delegate to the existing stack ops (`focusedPanelIdAtom` / `closePanelAtom`),
+ * which NavigationContext syncs back to the URL.
  *
  * Kind mapping lives in `surface-tab-model.ts`: session/browser map onto real
  * SurfaceTab kinds; legacy navigator panels (source/settings/skills/other)
@@ -35,7 +36,7 @@ import {
   knowledgeRefKey,
   type SurfaceTabView,
 } from './surface-tab-model'
-import { workbenchLayoutFromPanelEntries } from './workbench-layout-sync'
+import { workbenchLayoutFromPanelEntries, persistableWorkbenchLayout, previewPanelIdsFromLayout } from './workbench-layout-sync'
 
 const TAB_STRIP_HEIGHT = 36
 
@@ -216,18 +217,14 @@ export function SurfaceTabs() {
 
   useEffect(() => {
     if (!tabGroupsEnabled || !workspaceId || !workbenchLayout) return
-    persistStorage(KEYS.workbenchLayout, workbenchLayout, workspaceId)
+    const persistable = persistableWorkbenchLayout(workbenchLayout)
+    if (!persistable) return
+    persistStorage(KEYS.workbenchLayout, persistable, workspaceId)
   }, [tabGroupsEnabled, workspaceId, workbenchLayout])
 
   const previewPanelIds = useMemo(() => {
     if (!workbenchLayout) return new Set<string>()
-    const ids = new Set<string>()
-    for (const group of workbenchLayout.groups) {
-      for (const instance of group.tabs) {
-        if (instance.preview) ids.add(group.id)
-      }
-    }
-    return ids
+    return previewPanelIdsFromLayout(workbenchLayout)
   }, [workbenchLayout])
 
   return (

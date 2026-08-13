@@ -88,11 +88,11 @@ export function createInMemoryWorkspaceSurfaceHost(
     },
 
     async restore(layout: WorkbenchLayout): Promise<void> {
-      setLayout(layout);
+      setLayout(structuredClone(layout));
     },
 
     serializeLayout(): WorkbenchLayout {
-      return current;
+      return structuredClone(current);
     },
 
     manageBounds(surfaceInstanceId, rect): void {
@@ -100,7 +100,7 @@ export function createInMemoryWorkspaceSurfaceHost(
     },
 
     layout(): WorkbenchLayout {
-      return current;
+      return structuredClone(current);
     },
 
     onDidChange(listener: () => void): Disposable {

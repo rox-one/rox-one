@@ -12,11 +12,11 @@
  * Collapsed = destinations hidden, only the expand chevron stays (atom contract).
  *
  * Mounted by `UnifiedShellLayout`. When `workbench.mode-registry.v1` is on
- * (or unified-shell fallback), destinations come from ModeRegistry; otherwise
- * from `APP_NAV_DESTINATIONS`.
+ * (explicit override, not the unified-shell wave), destinations come from
+ * ModeRegistry; otherwise from `APP_NAV_DESTINATIONS`.
  */
 import { useAtom } from 'jotai'
-import { BookOpen, ChevronsLeft, ChevronsRight, MessageSquare, Settings, type LucideIcon } from 'lucide-react'
+import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import { activityRailCollapsedAtom, useWorkbenchFlag } from '@/atoms/unified-shell'
@@ -30,6 +30,7 @@ import type { ModeContribution } from '@craft-agent/core/platform'
 import type { ViewRoute } from '../../shared/routes'
 import { getWorkbenchModeRegistry } from './modes-bootstrap'
 import { coreModeIsActive } from './mode-rail-model'
+import { modeIcon } from './mode-icons'
 
 /** Expanded rail width — AppShell uses it to offset the absolute resize sashes. */
 export const ACTIVITY_RAIL_WIDTH = 48
@@ -73,17 +74,11 @@ function RailItem({ dest }: { dest: AppNavDestination }) {
   )
 }
 
-const MODE_ICONS: Record<string, LucideIcon> = {
-  'message-square': MessageSquare,
-  'book-open': BookOpen,
-  settings: Settings,
-}
-
 function ModeRailItem({ mode }: { mode: ModeContribution }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const navState = useNavigationState()
-  const Icon = MODE_ICONS[mode.icon] ?? MessageSquare
+  const Icon = modeIcon(mode.icon)
   const label = t(mode.title)
   const active = coreModeIsActive(mode.id, navState)
 

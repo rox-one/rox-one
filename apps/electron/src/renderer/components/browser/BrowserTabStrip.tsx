@@ -23,8 +23,6 @@ import {
   activeBrowserInstanceIdAtom,
   browserInstancesAtom,
   filterInstancesForWorkspace,
-  setBrowserInstancesAtom,
-  updateBrowserInstanceAtom,
   removeBrowserInstanceAtom,
 } from '@/atoms/browser-pane'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -32,6 +30,7 @@ import { BrowserTabBadge } from './BrowserTabBadge'
 import type { BrowserInstanceInfo } from '../../../shared/types'
 import { getHostname } from './utils'
 import { navigate, routes } from '@/lib/navigate'
+import { useBrowserPaneLifecycle } from '@/platform/browser-pane-lifecycle'
 
 const DEFAULT_MAX_VISIBLE_BADGES = 3
 
@@ -61,8 +60,6 @@ export function BrowserTabStrip({
     () => filterInstancesForWorkspace(allInstances, activeWorkspaceId, remoteWorkspaceId),
     [allInstances, activeWorkspaceId, remoteWorkspaceId],
   )
-  const setInstances = useSetAtom(setBrowserInstancesAtom)
-  const updateInstance = useSetAtom(updateBrowserInstanceAtom)
   const removeInstance = useSetAtom(removeBrowserInstanceAtom)
   const [activeInstanceId, setActiveInstanceId] = useAtom(activeBrowserInstanceIdAtom)
   const effectiveInstances = useMemo(
@@ -70,7 +67,7 @@ export function BrowserTabStrip({
     [instancesOverride, instances],
   )
   const instancesRef = useRef(effectiveInstances)
-  const removeReconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useBrowserPaneLifecycle(manageLifecycle && !instancesOverride)
 
   const orderedInstances = useMemo(() => {
     const items = [...effectiveInstances]
@@ -94,85 +91,6 @@ export function BrowserTabStrip({
   useEffect(() => {
     instancesRef.current = effectiveInstances
   }, [effectiveInstances])
-
-  useEffect(() => {
-    if (!manageLifecycle || instancesOverride) return
-
-    const browserPaneApi = window.electronAPI?.browserPane
-    if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) {
-      setInstances([])
-      setActiveInstanceId(null)
-      return
-    }
-
-    browserPaneApi.list()
-      .then((items) => {
-        setInstances(items)
-        if (items.length === 0) {
-          setActiveInstanceId(null)
-          return
-        }
-        setActiveInstanceId((prev) => prev ?? items[0].id)
-      })
-      .catch((error) => {
-        console.warn('[BrowserTabStrip] Failed to list browser panes:', error)
-        setInstances([])
-        setActiveInstanceId(null)
-      })
-  }, [manageLifecycle, instancesOverride, setInstances, setActiveInstanceId])
-
-  useEffect(() => {
-    if (!manageLifecycle || instancesOverride) return
-
-    const browserPaneApi = window.electronAPI?.browserPane
-    if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) return
-
-    const cleanupState = browserPaneApi.onStateChanged((info: BrowserInstanceInfo) => {
-      updateInstance(info)
-    })
-
-    const cleanupRemoved = browserPaneApi.onRemoved((id: string) => {
-      removeInstance(id)
-      setActiveInstanceId((prev) => {
-        if (prev !== id) return prev
-        const remaining = instancesRef.current.filter((item) => item.id !== id)
-        return remaining[0]?.id ?? null
-      })
-
-      if (removeReconcileTimerRef.current) {
-        clearTimeout(removeReconcileTimerRef.current)
-      }
-
-      removeReconcileTimerRef.current = setTimeout(() => {
-        removeReconcileTimerRef.current = null
-        void browserPaneApi.list()
-          .then((items) => {
-            setInstances(items)
-            setActiveInstanceId((prev) => {
-              if (!prev) return items[0]?.id ?? null
-              return items.some((item) => item.id === prev) ? prev : (items[0]?.id ?? null)
-            })
-          })
-          .catch((error) => {
-            console.warn('[BrowserTabStrip] Reconcile list failed after remove:', error)
-          })
-      }, 75)
-    })
-
-    const cleanupInteracted = browserPaneApi.onInteracted((id: string) => {
-      setActiveInstanceId(id)
-    })
-
-    return () => {
-      cleanupState()
-      cleanupRemoved()
-      cleanupInteracted()
-      if (removeReconcileTimerRef.current) {
-        clearTimeout(removeReconcileTimerRef.current)
-        removeReconcileTimerRef.current = null
-      }
-    }
-  }, [manageLifecycle, instancesOverride, updateInstance, removeInstance, setActiveInstanceId, setInstances])
 
   useEffect(() => {
     if (orderedInstances.length === 0) {

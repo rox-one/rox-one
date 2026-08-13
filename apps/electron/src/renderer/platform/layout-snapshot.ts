@@ -6,9 +6,10 @@
  * `NavigationContext.syncUrl` already writes (`?route=`, `?panels=<route>:<prop>,…`,
  * `?fi=<focusedIndex>`) and `reconcileFromUrlParams` reads back. This module
  * only derives `SurfaceLayoutSnapshot` from that encoding and re-encodes
- * snapshots into it; `KEYS.workspaceUrl` remains the source of truth and wins
- * on conflict (S-02 §3.10). No layout data is persisted in a snapshot-only
- * format.
+ * snapshots into it; `KEYS.workspaceUrl` remains the source of truth for
+ * **focus** and wins on conflict (S-02 §3.10). `KEYS.workbenchLayout` is a
+ * typed mirror of the 1D panel stack (WorkbenchLayout v2), not grouping SoT
+ * and not a second focus channel.
  *
  * Tab identity (S-02 §3.7): a tab carries only its DURABLE ref (sessionId,
  * runId, KnowledgeRef, proposalId, extensionId+viewId). Ephemeral instance ids

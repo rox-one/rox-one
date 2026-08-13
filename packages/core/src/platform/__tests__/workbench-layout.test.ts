@@ -314,15 +314,34 @@ describe('moveSurfaceToNewGroup (drag-to-edge split)', () => {
     expect(total).toBeCloseTo(1)
   })
 
-  it('moving the only tab out of its group still yields exactly one group with that tab', () => {
-    const layout = openInActiveGroup(createEmptyWorkbenchLayout('ws-1'), sessionA).layout
-    const onlyId = layout.groups[0]?.tabs[0]?.id
-    if (!onlyId) throw new Error('expected a tab')
+    it('moving the only tab out of its group still yields exactly one group with that tab', () => {
+      const layout = openInActiveGroup(createEmptyWorkbenchLayout('ws-1'), sessionA).layout
+      const onlyId = layout.groups[0]?.tabs[0]?.id
+      if (!onlyId) throw new Error('expected a tab')
 
-    const result = moveSurfaceToNewGroup(layout, onlyId, ids(), NOW)
+      const result = moveSurfaceToNewGroup(layout, onlyId, ids(), NOW)
 
-    expect(result.layout.groups).toHaveLength(1)
-    expect(result.layout.groups[0]?.tabs[0]?.id).toBe(onlyId)
-    expect(result.layout.activeGroupId).toBe(result.groupId)
+      expect(result.layout.groups).toHaveLength(1)
+      expect(result.layout.groups[0]?.tabs[0]?.id).toBe(onlyId)
+      expect(result.layout.activeGroupId).toBe(result.groupId)
+    })
+
+    it('splitting the only tab of a middle group keeps group order', () => {
+      const gen = ids()
+      let layout = openSurface(createEmptyWorkbenchLayout('ws-1'), sessionA, { target: 'active-group', mode: 'pinned', focus: true }, gen, NOW).layout
+      layout = openSurface(layout, sessionB, { target: 'new-group-right', mode: 'pinned', focus: true }, gen, NOW).layout
+      layout = openSurface(layout, sessionC, { target: 'new-group-right', mode: 'pinned', focus: true }, gen, NOW).layout
+      const middleId = layout.groups[1]?.tabs[0]?.id
+      if (!middleId) throw new Error('expected a middle tab')
+
+      const result = moveSurfaceToNewGroup(layout, middleId, ids(), NOW)
+
+      expect(result.layout.groups.map((g) => g.tabs.map((t) => t.tab))).toEqual([
+        [sessionA],
+        [sessionB],
+        [sessionC],
+      ])
+      expect(result.layout.activeGroupId).toBe(result.groupId)
+      expect(result.layout.groups[1]?.tabs[0]?.id).toBe(middleId)
+    })
   })
-})

@@ -134,7 +134,10 @@ stack in this increment.
 Unknown dependencies disable the dependent flag. One-way
 `incompatibleWith`: the declarer yields. Mutual incompatibility: the
 lexicographically smaller id wins. `featureUnifiedShellAtom` is an
-OR-fallback for `workbench.*` flags only.
+OR-fallback only for additive `workbench.*` chrome (`status-bar.v1`,
+`tab-groups.v2`). Flags that replace W1 destinations or hide
+`BrowserTabStrip` (`mode-registry.v1`, `top-chrome.v2`,
+`browser-surface.v2`) require an explicit override.
 
 ### Rollback
 

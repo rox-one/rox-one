@@ -6,6 +6,8 @@ export type {
   FeatureFlagResolutionSource,
 } from './types.ts';
 export {
+  UNIFIED_SHELL_FALLBACK_FLAG_IDS,
+  inheritsUnifiedShellFallback,
   isWorkbenchNamespace,
   resolveFlagWithUnifiedShellFallback,
 } from './types.ts';

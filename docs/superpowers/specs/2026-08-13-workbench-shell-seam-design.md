@@ -81,7 +81,8 @@ Resolution is two-phase and order-independent:
 Renderer adapter:
 
 - Persist overrides under `KEYS.featureFlagOverrides`.
-- `featureUnifiedShellAtom` remains an **OR-fallback for `workbench.*` flags only**.
+- `featureUnifiedShellAtom` is an OR-fallback only for workbench chrome whose ON state is a **strict superset of W1**: `workbench.status-bar.v1`, `workbench.tab-groups.v2`.
+- `workbench.mode-registry.v1`, `workbench.top-chrome.v2`, and `workbench.browser-surface.v2` stay off until an explicit override — they replace W1 destinations or hide `BrowserTabStrip`.
 - Domain / workgraph flags never inherit that fallback.
 
 ## 7. One host (T1)
@@ -126,14 +127,14 @@ When `workbench.tab-groups.v2` is on:
 
 - SurfaceTabs **reads** `WorkbenchLayout` (derived from the live panel stack via the v1→v2 migration, then persisted).
 - Focus/close still write through existing panel-stack / NavigationContext (URL remains focus SoT).
-- Persist key: `KEYS.workbenchLayout` with workspace suffix. Typed parse with fallback (never throw).
+- Persist key: `KEYS.workbenchLayout` with workspace suffix. Writes go through `parseWorkbenchLayout` (drop on `null`); readers use the same parser. This persist is a mirror of the 1D stack, not grouping SoT.
 - Renderer `SurfaceTabLike` becomes a type alias of canonical `SurfaceTab` from `@craft-agent/core/platform`.
 
 ## 11. Browser (T6)
 
 Browser windows are `SurfaceTab { kind: 'browser' }`.
 
-- Extract pane lifecycle (list / state / removed / interacted) out of `BrowserTabStrip` so TopBar is not the only owner.
+- Extract pane lifecycle (list / state / removed / interacted) out of `BrowserTabStrip` so TopBar is not the only owner. The strip calls `useBrowserPaneLifecycle(enabled)` when it owns IPC (playground).
 - When `workbench.browser-surface.v2` is on, **do not** render `BrowserTabStrip` in TopBar. Playground may still mount the strip.
 - SurfaceTabs already projects browser panels from the stack.
 
@@ -141,7 +142,7 @@ Browser windows are `SurfaceTab { kind: 'browser' }`.
 
 `StatusBarHost` mounts on `PanelSlot` `'status'` at the bottom of `UnifiedShellLayout` when `workbench.status-bar.v1` is on.
 
-Shows ready-state: transport (local / connected), runtime (omp ready), permission mode (`mode.safe` / `mode.ask` / `mode.allow-all`).
+Shows ready-state: transport (local / connected), runtime (omp ready / outdated). Permission mode of the **focused session** (`mode.safe` / `mode.ask` / `mode.allow-all`); off a session the chip is hidden rather than showing `defaultSessionOptions` (`ask`).
 
 Intervening failures stay banners: `TransportConnectionBanner`, `ToolchainStatusBanner`. Do not reuse `ToolbarStatusSlot` (composer overlay).
 

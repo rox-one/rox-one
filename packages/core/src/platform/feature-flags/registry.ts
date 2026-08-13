@@ -123,9 +123,16 @@ class FeatureFlagRegistryImpl implements FeatureFlagRegistry {
           base.set(id, disabled);
           return disabled;
         }
-        if (!resolveBase(dep).enabled) {
+        const depRes = resolveBase(dep);
+        if (!depRes.enabled) {
           visiting.delete(id);
-          const disabled: FeatureFlagResolution = { id, enabled: false, source: 'disabled-by-dependency' };
+          const existing = base.get(id);
+          if (existing?.source === 'disabled-by-cycle') return existing;
+          const source: FeatureFlagResolutionSource =
+            depRes.source === 'disabled-by-cycle' && visiting.size > 0
+              ? 'disabled-by-cycle'
+              : 'disabled-by-dependency';
+          const disabled: FeatureFlagResolution = { id, enabled: false, source };
           base.set(id, disabled);
           return disabled;
         }

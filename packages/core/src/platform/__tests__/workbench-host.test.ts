@@ -83,4 +83,36 @@ describe('createInMemoryWorkspaceSurfaceHost', () => {
     const host = createInMemoryWorkspaceSurfaceHost({ workspaceId: 'ws-9' })
     expect(host.layout()).toEqual(createEmptyWorkbenchLayout('ws-9'))
   })
+
+  it('split of a 1-tab middle group inserts at the vacated index', () => {
+    const host = createInMemoryWorkspaceSurfaceHost({ workspaceId: 'ws-1', ids: ids(), now: () => NOW })
+    const aId = host.open(sessionA, { target: 'active-group', mode: 'pinned', focus: true })
+    const bId = host.open(sessionB, { target: 'new-group-right', mode: 'pinned', focus: true })
+    const cId = host.open(browserX, { target: 'new-group-right', mode: 'pinned', focus: true })
+    if (!aId || !bId || !cId) throw new Error('expected three groups')
+
+    const newGroupId = host.split(bId, 'right')
+    expect(host.layout().groups.map((g) => g.tabs.map((t) => t.tab))).toEqual([
+      [sessionA],
+      [sessionB],
+      [browserX],
+    ])
+    expect(host.layout().groups[1]?.id).toBe(newGroupId as string)
+  })
+
+  it('restore and serialize copy the layout so callers cannot mutate host state', async () => {
+    const host = createInMemoryWorkspaceSurfaceHost({ workspaceId: 'ws-1', ids: ids(), now: () => NOW })
+    host.open(sessionA, { target: 'active-group', mode: 'pinned', focus: true })
+
+    const serialized = host.serializeLayout()
+    serialized.groups = []
+    expect(host.layout().groups).toHaveLength(1)
+
+    const input = structuredClone(host.serializeLayout())
+    await host.restore(input)
+    input.groups = []
+    expect(host.layout().groups).toHaveLength(1)
+    host.layout().groups = []
+    expect(host.serializeLayout().groups).toHaveLength(1)
+  })
 })

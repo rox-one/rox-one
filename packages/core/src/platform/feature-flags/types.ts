@@ -60,11 +60,22 @@ export interface FeatureFlagRegistry {
 }
 
 /**
- * Unified-shell OR-fallback applies only to `workbench.*` flags.
- * Domain / workgraph flags never inherit the wave gate.
+ * Unified-shell OR-fallback applies only to workbench chrome whose ON
+ * state is a strict superset of W1 (status bar, tab-group persist).
+ * Flags that replace W1 destinations or hide BrowserTabStrip stay off
+ * until an explicit override. Domain / workgraph flags never inherit.
  */
 export function isWorkbenchNamespace(id: string): boolean {
   return id.startsWith('workbench.');
+}
+
+export const UNIFIED_SHELL_FALLBACK_FLAG_IDS = [
+  'workbench.status-bar.v1',
+  'workbench.tab-groups.v2',
+] as const;
+
+export function inheritsUnifiedShellFallback(id: string): boolean {
+  return (UNIFIED_SHELL_FALLBACK_FLAG_IDS as readonly string[]).includes(id);
 }
 
 export function resolveFlagWithUnifiedShellFallback(
@@ -74,5 +85,5 @@ export function resolveFlagWithUnifiedShellFallback(
   unifiedShellFallback = false,
 ): boolean {
   if (registry.isEnabled(id, overrides)) return true;
-  return unifiedShellFallback && isWorkbenchNamespace(id);
+  return unifiedShellFallback && inheritsUnifiedShellFallback(id);
 }

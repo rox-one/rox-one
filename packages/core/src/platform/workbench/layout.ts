@@ -364,8 +364,10 @@ export function moveSurfaceToNewGroup(
   if (!location) return { layout, groupId: null };
 
   const moved: SurfaceInstance = { ...location.instance, preview: false, lastFocusedAt: now };
+  const sourceGroupId = location.group.id;
   const sourceIndex = location.groupIndex;
   const withoutSource = closeSurface(layout, instanceId, { force: true });
+  if (!withoutSource.ok) return { layout, groupId: null };
 
   const group: TabGroup = {
     id: ids.next(),
@@ -373,9 +375,9 @@ export function moveSurfaceToNewGroup(
     activeTabId: moved.id,
     proportion: 1,
   };
-  const anchorId = withoutSource.layout.groups[sourceIndex]?.id ?? withoutSource.layout.groups[sourceIndex - 1]?.id;
-  const anchorIndex = withoutSource.layout.groups.findIndex((g) => g.id === anchorId);
-  const groups = insertGroup(withoutSource.layout.groups, group, anchorIndex + 1);
+  const sourceSurvived = withoutSource.layout.groups.some((g) => g.id === sourceGroupId);
+  const insertAt = sourceSurvived ? sourceIndex + 1 : sourceIndex;
+  const groups = insertGroup(withoutSource.layout.groups, group, insertAt);
   return {
     layout: { ...withoutSource.layout, groups, activeGroupId: group.id },
     groupId: group.id,

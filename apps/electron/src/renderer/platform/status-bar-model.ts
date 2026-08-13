@@ -43,3 +43,11 @@ export function permissionModeI18nKey(mode: PermissionMode): string {
     }
   }
 }
+
+export function statusBarPermissionMode(
+  sessionId: string | null | undefined,
+  sessionMode: PermissionMode | undefined,
+): PermissionMode | null {
+  if (!sessionId) return null
+  return sessionMode ?? null
+}

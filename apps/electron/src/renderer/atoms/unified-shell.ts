@@ -1,8 +1,10 @@
 /**
  * Unified Shell (W1) — feature flag + chrome state atoms.
  *
- * Wave gate: `featureUnifiedShellAtom`. Granular `workbench.*` flags OR-fall
- * back to that atom (ADR-0001 addendum); domain/workgraph flags do not.
+ * Wave gate: `featureUnifiedShellAtom`. Additive `workbench.*` chrome
+ * (status bar, tab-group persist) OR-falls back to that atom
+ * (ADR-0001 addendum). Mode-registry / top-chrome / browser-surface
+ * and domain/workgraph flags do not.
  */
 import { useAtomValue } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'

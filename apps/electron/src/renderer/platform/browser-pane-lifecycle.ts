@@ -1,6 +1,8 @@
 /**
  * Browser pane lifecycle — list / state / removed / interacted.
  * Extracted from BrowserTabStrip so TopBar is not the only owner (T6).
+ * AppShell always mounts this; the strip calls it when it owns IPC
+ * (playground, `manageLifecycle`).
  */
 
 import { useEffect, useRef } from 'react'
@@ -13,7 +15,7 @@ import {
   updateBrowserInstanceAtom,
 } from '@/atoms/browser-pane'
 
-export function useBrowserPaneLifecycle(): void {
+export function useBrowserPaneLifecycle(enabled = true): void {
   const setInstances = useSetAtom(setBrowserInstancesAtom)
   const updateInstance = useSetAtom(updateBrowserInstanceAtom)
   const removeInstance = useSetAtom(removeBrowserInstanceAtom)
@@ -27,6 +29,7 @@ export function useBrowserPaneLifecycle(): void {
   }, [instances])
 
   useEffect(() => {
+    if (!enabled) return
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) {
       setInstances([])
@@ -48,9 +51,10 @@ export function useBrowserPaneLifecycle(): void {
         setInstances([])
         setActiveInstanceId(null)
       })
-  }, [setInstances, setActiveInstanceId])
+  }, [enabled, setInstances, setActiveInstanceId])
 
   useEffect(() => {
+    if (!enabled) return
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) return
 
@@ -99,9 +103,10 @@ export function useBrowserPaneLifecycle(): void {
         removeReconcileTimerRef.current = null
       }
     }
-  }, [updateInstance, removeInstance, setActiveInstanceId, setInstances])
+  }, [enabled, updateInstance, removeInstance, setActiveInstanceId, setInstances])
 
   useEffect(() => {
+    if (!enabled) return
     if (instances.length === 0) {
       setActiveInstanceId(null)
       return
@@ -109,5 +114,5 @@ export function useBrowserPaneLifecycle(): void {
     if (!activeInstanceId || !instances.some((item) => item.id === activeInstanceId)) {
       setActiveInstanceId(instances[0].id)
     }
-  }, [instances, activeInstanceId, setActiveInstanceId])
+  }, [enabled, instances, activeInstanceId, setActiveInstanceId])
 }

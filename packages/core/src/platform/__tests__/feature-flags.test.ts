@@ -122,6 +122,9 @@ describe('FeatureFlagRegistry', () => {
     expect(registry.isEnabled('x')).toBe(false)
     expect(registry.isEnabled('y')).toBe(false)
     expect(registry.isEnabled('z')).toBe(false)
+    expect(registry.resolve('x').source).toBe('disabled-by-cycle')
+    expect(registry.resolve('y').source).toBe('disabled-by-cycle')
+    expect(registry.resolve('z').source).toBe('disabled-by-dependency')
     expect(registry.validate().join('\n')).toContain('cycle')
   })
 
@@ -193,11 +196,15 @@ describe('WORKBENCH_FEATURE_FLAGS catalog (ADR-0001 §39)', () => {
 })
 
 describe('resolveFlagWithUnifiedShellFallback', () => {
-  it('OR-falls back to unified shell for workbench.* flags only', () => {
+  it('OR-falls back to unified shell for additive workbench.* flags only', () => {
     const registry = createWorkbenchFeatureFlagRegistry()
 
     expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.status-bar.v1', {}, false)).toBe(false)
     expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.status-bar.v1', {}, true)).toBe(true)
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.tab-groups.v2', {}, true)).toBe(true)
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.mode-registry.v1', {}, true)).toBe(false)
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.browser-surface.v2', {}, true)).toBe(false)
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.top-chrome.v2', {}, true)).toBe(false)
     expect(resolveFlagWithUnifiedShellFallback(registry, 'workgraph.read.v1', {}, true)).toBe(false)
     expect(resolveFlagWithUnifiedShellFallback(registry, 'tasks.work-items.v1', {}, true)).toBe(false)
     expect(
@@ -205,6 +212,14 @@ describe('resolveFlagWithUnifiedShellFallback', () => {
         registry,
         'workbench.status-bar.v1',
         { 'workbench.status-bar.v1': true },
+        false,
+      ),
+    ).toBe(true)
+    expect(
+      resolveFlagWithUnifiedShellFallback(
+        registry,
+        'workbench.mode-registry.v1',
+        { 'workbench.mode-registry.v1': true },
         false,
       ),
     ).toBe(true)

@@ -11,6 +11,7 @@ import { useTransportConnectionState } from '@/hooks/useTransportConnectionState
 import { useToolchainStatus } from '@/hooks/useToolchainStatus'
 import {
   permissionModeI18nKey,
+  statusBarPermissionMode,
   statusBarRuntimeKind,
   statusBarTransportKind,
 } from './status-bar-model'
@@ -25,9 +26,10 @@ export function StatusBarHost() {
   const sessionId = isSessionsNavigation(navState) && navState.details?.type === 'session'
     ? navState.details.sessionId
     : ''
-  const { options } = useSessionOptionsFor(sessionId || '__workbench-status__')
+  const { options } = useSessionOptionsFor(sessionId)
   const transport = statusBarTransportKind(connectionState)
   const runtime = statusBarRuntimeKind(available ? getTool('omp') : undefined)
+  const permissionMode = statusBarPermissionMode(sessionId || null, options.permissionMode)
 
   return (
     <footer
@@ -47,9 +49,11 @@ export function StatusBarHost() {
           {t('statusBar.runtime')}: {t('statusBar.runtimeReady')}
         </span>
       )}
-      <span className="ml-auto">
-        {t('statusBar.permissionMode')}: {t(permissionModeI18nKey(options.permissionMode))}
-      </span>
+      {permissionMode && (
+        <span className="ml-auto">
+          {t('statusBar.permissionMode')}: {t(permissionModeI18nKey(permissionMode))}
+        </span>
+      )}
     </footer>
   )
 }

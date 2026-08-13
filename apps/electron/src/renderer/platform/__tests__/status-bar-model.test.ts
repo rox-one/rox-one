@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'bun:test'
 import {
   permissionModeI18nKey,
+  statusBarPermissionMode,
   statusBarRuntimeKind,
   statusBarTransportKind,
 } from '../status-bar-model'
@@ -33,5 +34,14 @@ describe('permissionModeI18nKey', () => {
     expect(permissionModeI18nKey('safe')).toBe('mode.safe')
     expect(permissionModeI18nKey('ask')).toBe('mode.ask')
     expect(permissionModeI18nKey('allow-all')).toBe('mode.allow-all')
+  })
+})
+
+describe('statusBarPermissionMode', () => {
+  it('shows the focused session mode and hides the chip off a session', () => {
+    expect(statusBarPermissionMode('session-1', 'allow-all')).toBe('allow-all')
+    expect(statusBarPermissionMode('session-1', 'ask')).toBe('ask')
+    expect(statusBarPermissionMode('', 'ask')).toBeNull()
+    expect(statusBarPermissionMode(null, 'ask')).toBeNull()
   })
 })

@@ -25,7 +25,7 @@ Agent-facing map of the workbench increment. Read this before changing chrome, t
 
 Catalog: `WORKBENCH_FEATURE_FLAGS`. All default OFF.
 
-Renderer: a `workbench.*` flag is on if the registry resolves it **or** `featureUnifiedShellAtom` is on. `workgraph.*` / domain flags never get that fallback.
+Renderer: additive `workbench.*` chrome (`status-bar.v1`, `tab-groups.v2`) is on if the registry resolves it **or** `featureUnifiedShellAtom` is on. `mode-registry.v1` / `top-chrome.v2` / `browser-surface.v2` need an explicit override — they are not W1 supersets. `workgraph.*` / domain flags never get that fallback. `override: false` cannot turn off a flag the wave gate enables; those flags simply are not in the fallback set.
 
 Relevant shell flags: `workbench.mode-registry.v1`, `workbench.top-chrome.v2`, `workbench.tab-groups.v2`, `workbench.browser-surface.v2`, `workbench.status-bar.v1`.
 
