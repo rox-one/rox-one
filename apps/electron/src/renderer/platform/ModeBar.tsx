@@ -137,6 +137,7 @@ export function ModeBar() {
                 <StyledDropdownMenuItem
                   key={mode.id}
                   disabled={disabled}
+                  title={disabled ? t('workbench.mode.unavailable') : undefined}
                   onSelect={() => {
                     if (mode.rootRoute) void navigate(mode.rootRoute as Route)
                   }}

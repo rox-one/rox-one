@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { buildStatusBarModel } from '../status-model'
+import { buildStatusBarModel, countActiveRuns, countPendingApprovals } from '../status-model'
 
 describe('buildStatusBarModel', () => {
   it('defaults to local with sync OK and zero counts', () => {
@@ -43,5 +43,25 @@ describe('buildStatusBarModel', () => {
     expect(model.permissionMode).toBe('ask')
     expect(model.peopleCount).toBe(2)
     expect(model.agentCount).toBe(4)
+  })
+})
+
+describe('countPendingApprovals / countActiveRuns', () => {
+  it('sums permission queues across sessions', () => {
+    expect(countPendingApprovals(undefined)).toBe(0)
+    expect(countPendingApprovals(new Map([
+      ['a', [{}, {}]],
+      ['b', [{}]],
+    ]))).toBe(3)
+  })
+
+  it('counts running and stale tasks only', () => {
+    expect(countActiveRuns(undefined)).toBe(0)
+    expect(countActiveRuns([
+      { status: 'running' },
+      { status: 'stale' },
+      { status: 'completed' },
+      { status: 'failed' },
+    ])).toBe(2)
   })
 })

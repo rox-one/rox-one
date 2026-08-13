@@ -71,9 +71,8 @@ export function listPinnedModes(
   const pinned: ModeContribution[] = [];
   const overflow: ModeContribution[] = [];
   for (const mode of modes) {
-    if (mode.defaultPinned) pinned.push(mode);
+    if (mode.defaultPinned && isModeNavigable(mode, capabilities)) pinned.push(mode);
     else overflow.push(mode);
   }
-  void capabilities;
   return { pinned, overflow };
 }

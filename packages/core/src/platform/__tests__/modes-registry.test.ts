@@ -70,4 +70,21 @@ describe('isModeNavigable / listPinnedModes', () => {
     expect(pinned.map((item) => item.id)).toEqual(['chat'])
     expect(overflow.map((item) => item.id)).toEqual(['projects'])
   })
+
+  it('keeps non-navigable modes in overflow even when defaultPinned', () => {
+    const { pinned, overflow } = listPinnedModes([
+      mode('chat', { defaultPinned: true }),
+      mode('meetings', { defaultPinned: true, rootRoute: null }),
+    ])
+    expect(pinned.map((item) => item.id)).toEqual(['chat'])
+    expect(overflow.map((item) => item.id)).toEqual(['meetings'])
+  })
+
+  it('pins a capability-gated mode only when the capability is present', () => {
+    const meetings = mode('meetings', { requiredCapabilities: ['meetings.pipeline.v1'] })
+    expect(listPinnedModes([meetings]).pinned).toEqual([])
+    expect(
+      listPinnedModes([meetings], new Set(['meetings.pipeline.v1'])).pinned.map((item) => item.id),
+    ).toEqual(['meetings'])
+  })
 })

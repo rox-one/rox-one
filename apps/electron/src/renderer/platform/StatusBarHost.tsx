@@ -4,7 +4,7 @@
  * Mounted at the bottom of AppShell's main column. Hidden when the flag is
  * off, and not mounted in compact layout or on the session-load error screen.
  *
- * Durable Local/Remote/Offline + sync, run/approval placeholders, permission
+ * Durable Local/Remote/Offline + sync, live run/approval counts, permission
  * label, presence/usage placeholders. Transport/toolchain banners stay for
  * failed/installing states that need intervention.
  */
@@ -12,10 +12,11 @@ import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
-import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { backgroundTasksAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
+import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
-import { buildStatusBarModel } from './status-model'
+import { buildStatusBarModel, countActiveRuns, countPendingApprovals } from './status-model'
 
 const STATUS_BAR_HEIGHT = 28
 
@@ -58,6 +59,8 @@ function StatusBarInner() {
   const transport = useTransportConnectionState()
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const tasks = useAtomValue(backgroundTasksAtomFamily(focusedSessionId ?? ''))
+  const pendingPermissions = useOptionalAppShellContext()?.pendingPermissions
   const permissionMode = focusedSessionId
     ? sessionMetaMap.get(focusedSessionId)?.permissionMode ?? null
     : null
@@ -66,6 +69,8 @@ function StatusBarInner() {
     transportMode: transport?.mode,
     transportStatus: transport?.status,
     permissionMode,
+    runCount: countActiveRuns(tasks),
+    approvalCount: countPendingApprovals(pendingPermissions),
   })
 
   return (

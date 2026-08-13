@@ -20,6 +20,24 @@ export interface StatusBarModel {
   agentCount: number
 }
 
+const ACTIVE_RUN_STATUSES = new Set(['running', 'stale'])
+
+export function countPendingApprovals(
+  pending: ReadonlyMap<string, readonly unknown[]> | null | undefined,
+): number {
+  if (!pending) return 0
+  let total = 0
+  for (const requests of pending.values()) total += requests.length
+  return total
+}
+
+export function countActiveRuns(
+  tasks: readonly { status: string }[] | null | undefined,
+): number {
+  if (!tasks) return 0
+  return tasks.filter((task) => ACTIVE_RUN_STATUSES.has(task.status)).length
+}
+
 export function buildStatusBarModel(input: StatusBarInput): StatusBarModel {
   let workspaceMode: WorkspaceRuntimeMode = 'local'
   if (input.transportMode === 'remote') {
