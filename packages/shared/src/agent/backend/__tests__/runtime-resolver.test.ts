@@ -57,6 +57,52 @@ describe('resolveServerPath fallback', () => {
     const paths = resolveBackendRuntimePaths(hostRuntime);
     expect(paths.piServerPath).toBe(join(primaryDir, 'index.js'));
   });
+
+  it('does not populate sessionServerPath or bridgeServerPath even when those dirs exist (packaged)', () => {
+    const appRoot = join(tmpBase, 'unread-mcp');
+    const piDir = join(appRoot, 'resources', 'pi-agent-server');
+    const sessionDir = join(appRoot, 'resources', 'session-mcp-server');
+    const bridgeDir = join(appRoot, 'resources', 'bridge-mcp-server');
+    mkdirSync(piDir, { recursive: true });
+    mkdirSync(sessionDir, { recursive: true });
+    mkdirSync(bridgeDir, { recursive: true });
+    writeFileSync(join(piDir, 'index.js'), '// pi');
+    writeFileSync(join(sessionDir, 'index.js'), '// session');
+    writeFileSync(join(bridgeDir, 'index.js'), '// bridge');
+
+    const hostRuntime: BackendHostRuntimeContext = {
+      appRootPath: appRoot,
+      resourcesPath: appRoot,
+      isPackaged: true,
+    };
+
+    const paths = resolveBackendRuntimePaths(hostRuntime);
+    expect(paths.piServerPath).toBe(join(piDir, 'index.js'));
+    expect(paths.sessionServerPath).toBeUndefined();
+    expect(paths.bridgeServerPath).toBeUndefined();
+  });
+
+  it('does not populate sessionServerPath or bridgeServerPath in unpackaged mode even when package dist exists', () => {
+    const monorepo = join(tmpBase, 'monorepo-unread');
+    const appRoot = join(monorepo, 'apps', 'electron');
+    mkdirSync(appRoot, { recursive: true });
+    for (const server of ['pi-agent-server', 'session-mcp-server', 'bridge-mcp-server']) {
+      const distDir = join(monorepo, 'packages', server, 'dist');
+      mkdirSync(distDir, { recursive: true });
+      writeFileSync(join(distDir, 'index.js'), `// ${server}`);
+    }
+
+    const hostRuntime: BackendHostRuntimeContext = {
+      appRootPath: appRoot,
+      resourcesPath: appRoot,
+      isPackaged: false,
+    };
+
+    const paths = resolveBackendRuntimePaths(hostRuntime);
+    expect(paths.piServerPath).toBe(join(monorepo, 'packages', 'pi-agent-server', 'dist', 'index.js'));
+    expect(paths.sessionServerPath).toBeUndefined();
+    expect(paths.bridgeServerPath).toBeUndefined();
+  });
 });
 
 describe('resolveRipgrepPath', () => {

@@ -1,15 +1,16 @@
 /**
- * Stage the Session MCP server and Pi agent server into
+ * Stage the Pi agent server into
  * apps/electron/resources/ before electron-builder packages the app.
  *
- * Unlike the committed bridge-mcp-server (which lives in git under
- * resources/), these two servers are gitignored and produced at build time.
- * The copy logic already exists in ./common.ts; this thin entrypoint wires it
- * into build-dmg.sh, which predates those copy steps and otherwise leaves
- * resources/{pi-agent-server,session-mcp-server}/ empty — causing the packaged
- * app to fail at runtime with "piServerPath not configured".
+ * pi-agent-server is gitignored and produced at build time. The copy logic
+ * lives in ./common.ts; this thin entrypoint wires it into build-dmg.sh.
+ * Without this step resources/pi-agent-server/ is empty and the packaged
+ * app fails at runtime with "piServerPath not configured".
  *
- * Run AFTER `electron:build` (which produces packages/<server>/dist/index.js)
+ * session-mcp-server and bridge-mcp-server are unread by registered backends
+ * and are not staged (ticket 10). See scripts/build/staged-servers.ts.
+ *
+ * Run AFTER `electron:build` (which produces packages/pi-agent-server/dist/index.js)
  * and BEFORE electron-builder.
  *
  * Usage: bun run scripts/build/stage-servers.ts <platform> <arch>
@@ -18,7 +19,6 @@
  */
 import { join } from "path";
 import {
-  copySessionServer,
   copyCloudRunner,
   copyPiAgentServer,
   type Arch,
@@ -51,8 +51,7 @@ const config: BuildConfig = {
   electronDir,
 };
 
-console.log(`Staging MCP/Pi servers into resources/ (${platform}-${arch})...`);
-copySessionServer(config);
+console.log(`Staging Pi agent server into resources/ (${platform}-${arch})...`);
 copyPiAgentServer(config);
 copyCloudRunner(config);
 console.log("✅ Servers staged into apps/electron/resources/");
