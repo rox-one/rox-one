@@ -2,6 +2,17 @@ import type { EventSink, RpcServer } from '@craft-agent/server-core/transport'
 import { CLIENT_BROWSER_INVOKE } from '@craft-agent/server-core/transport'
 import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@craft-agent/server-core/handlers'
 import { RemoteBrowserPaneManager } from './RemoteBrowserPaneManager'
+import {
+  applyShareRevoked,
+  ownerCapabilityHeaders,
+  revokeShare as executeRevokeShare,
+  shareToViewer as executeShareToViewer,
+  stripSharedOwnerKey,
+  updateShare as executeUpdateShare,
+  type ShareCapabilityHost,
+} from './share-capability'
+import { composeSpawnEnv } from './spawn-env'
+import { emitTurnComplete } from './turn-complete'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
 import { createScopedLogger, CONSOLE_LOGGER, type PlatformServices, type Logger } from '@craft-agent/server-core/runtime'
 import { basename, dirname, join } from 'path'
@@ -20,8 +31,7 @@ import {
   type BackendHostRuntimeContext,
   type PostInitResult,
 } from '@craft-agent/shared/agent/backend'
-import { getLlmConnection, getLlmConnections, getDefaultLlmConnection, getDefaultThinkingLevel, getRuntimeEnvOverrides, resetManagedAnthropicAuthEnvVars, resolveMidStreamBehavior, getPersistedUiLanguage, resolveTitleLanguageName } from '@craft-agent/shared/config'
-import { refreshRuntimeSecretEnv } from '@craft-agent/shared/secrets'
+import { getLlmConnection, getLlmConnections, getDefaultLlmConnection, getDefaultThinkingLevel, resetManagedAnthropicAuthEnvVars, resolveMidStreamBehavior, getPersistedUiLanguage, resolveTitleLanguageName } from '@craft-agent/shared/config'
 import type { MidStreamBehavior, LlmProviderType } from '@craft-agent/shared/config'
 import { PrivilegedExecutionBroker } from '@craft-agent/server-core/services'
 import { isValidWorkingDirectory } from '../utils/path-validation'
@@ -1235,48 +1245,6 @@ const DEFAULT_TOKEN_USAGE = {
 }
 
 /**
- * Map a failed share-API response to a typed ShareResult.
- * Reads the API's JSON error body ({ error, code }) defensively so the UI can
- * distinguish legacy-immutable shares from missing/invalid owner keys.
- */
-async function shareApiError(
-  response: Response,
-  fallback: string,
-): Promise<{ success: false; error: string; errorCode?: string }> {
-  let code: string | undefined
-  let serverMessage: string | undefined
-  try {
-    const body = await response.json() as { error?: unknown; code?: unknown }
-    if (typeof body.code === 'string') code = body.code
-    if (typeof body.error === 'string') serverMessage = body.error
-  } catch {
-    // Non-JSON error body (proxy error pages etc.) — fall through to status mapping.
-  }
-
-  if (response.status === 413 || code === 'SHARE_TOO_LARGE') {
-    return { success: false, error: 'Session file is too large to share', errorCode: 'SHARE_TOO_LARGE' }
-  }
-  if (code === 'LEGACY_SHARE_IMMUTABLE') {
-    return {
-      success: false,
-      error: 'This share was created before share protection existed and can no longer be modified or revoked. Create a new share instead.',
-      errorCode: 'LEGACY_SHARE_IMMUTABLE',
-    }
-  }
-  if (response.status === 401 || response.status === 403) {
-    return {
-      success: false,
-      error: serverMessage || 'Share authorization failed. Re-share the session to generate a new owner key.',
-      errorCode: code ?? (response.status === 401 ? 'SHARE_OWNER_KEY_REQUIRED' : 'SHARE_OWNER_KEY_INVALID'),
-    }
-  }
-  if (response.status === 429) {
-    return { success: false, error: 'Share service rate limit exceeded, please retry later', errorCode: code ?? 'RATE_LIMITED' }
-  }
-  return { success: false, error: serverMessage || fallback, errorCode: code }
-}
-
-/**
  * Convert a ManagedSession to a renderer-side Session object.
  * Uses pickSessionFields() for persistent fields so new fields propagate automatically.
  *
@@ -1286,7 +1254,7 @@ async function shareApiError(
  */
 export function managedToSession(m: ManagedSession, overrides?: Partial<Session>): Session {
   const picked = pickSessionFields(m)
-  delete picked.sharedOwnerKey
+  stripSharedOwnerKey(picked)
   return {
     ...picked,
     // Pre-computed fields from header (not in SESSION_PERSISTENT_FIELDS)
@@ -4017,22 +3985,13 @@ export class SessionManager implements ISessionManager {
         await managed.mcpPool.sync(mcpServers) // Ensure pool has tools before SDK connects
       }
 
-      // Resolve configured secret refs (runtime.secretRefs) into the in-memory
-      // fragment that getRuntimeEnvOverrides() merges — every backend spawning
-      // from here inherits the values via subprocess env. Never throws.
-      await refreshRuntimeSecretEnv()
-
-      // Per-session env overrides
+      // Per-session env overrides: refresh secret fragment, merge persisted env,
+      // then overlay structural keys (workspace path, mini model) which always win.
       const miniModel = connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined
-      const envOverrides: Record<string, string> = {
-        // User-configured session env (config runtime.envOverrides); the
-        // structural keys below (workspace path, mini model) always win.
-        ...getRuntimeEnvOverrides(),
-        CRAFT_WORKSPACE_PATH: managed.workspace.rootPath,
-        // Pass mini model to SDK subprocess so built-in tools like WebFetch
-        // use the correct model for summarization (instead of hardcoded Haiku)
-        ...(miniModel ? { ANTHROPIC_DEFAULT_HAIKU_MODEL: miniModel } : {}),
-      }
+      const envOverrides = await composeSpawnEnv({
+        workspaceRootPath: managed.workspace.rootPath,
+        miniModel,
+      })
       managed.envOverrides = envOverrides
 
       // ============================================================
@@ -4802,7 +4761,11 @@ export class SessionManager implements ISessionManager {
             )
 
             // Send complete event so renderer knows processing stopped (include tokenUsage for real-time updates)
-            this.sendEvent({ type: 'complete', sessionId: managed.id, tokenUsage: managed.tokenUsage, backgroundTasksAlive: this.keepBackgroundTasksAlive }, managed.workspace.id)
+            emitTurnComplete(this.sendEvent.bind(this), managed.workspace.id, {
+              sessionId: managed.id,
+              tokenUsage: managed.tokenUsage,
+              backgroundTasksAlive: this.keepBackgroundTasksAlive,
+            })
 
             // Persist session state
             this.persistSession(managed)
@@ -4860,7 +4823,11 @@ export class SessionManager implements ISessionManager {
           )
 
           // Send complete event so renderer knows processing stopped (include tokenUsage for real-time updates)
-          this.sendEvent({ type: 'complete', sessionId: managed.id, tokenUsage: managed.tokenUsage, backgroundTasksAlive: this.keepBackgroundTasksAlive }, managed.workspace.id)
+          emitTurnComplete(this.sendEvent.bind(this), managed.workspace.id, {
+            sessionId: managed.id,
+            tokenUsage: managed.tokenUsage,
+            backgroundTasksAlive: this.keepBackgroundTasksAlive,
+          })
         }
 
         // Emit auth_request event to renderer
@@ -5559,66 +5526,20 @@ export class SessionManager implements ISessionManager {
   // Session Sharing
   // ============================================
 
+  private shareHost(): ShareCapabilityHost {
+    return {
+      getSession: (id) => this.sessions.get(id),
+      sendEvent: (event, workspaceId) => this.sendEvent(event, workspaceId),
+      log: sessionLog,
+    }
+  }
+
   /**
    * Share session to the web viewer
    * Uploads session data and returns shareable URL
    */
   async shareToViewer(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
-    const managed = this.sessions.get(sessionId)
-    if (!managed) {
-      return { success: false, error: 'Session not found' }
-    }
-
-    // Signal async operation start for shimmer effect
-    managed.isAsyncOperationOngoing = true
-    this.sendEvent({ type: 'async_operation', sessionId, isOngoing: true }, managed.workspace.id)
-
-    try {
-      // Load session directly from disk (already in correct format)
-      const storedSession = loadStoredSession(managed.workspace.rootPath, sessionId)
-      if (!storedSession) {
-        return { success: false, error: 'Session file not found' }
-      }
-
-      const { VIEWER_URL } = await import('@craft-agent/shared/branding')
-      const response = await fetch(`${VIEWER_URL}/s/api`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(storedSession)
-      })
-
-      if (!response.ok) {
-        sessionLog.error(`Share failed with status ${response.status}`)
-        return shareApiError(response, 'Failed to upload session')
-      }
-
-      const data = await response.json() as { id: string; url: string; ownerKey?: string }
-
-      // Store shared info in session. The ownerKey is the mutation capability
-      // for this share — persisted locally, sent as Bearer on update/revoke,
-      // and never exposed to renderer payloads (managedToSession strips it).
-      managed.sharedUrl = data.url
-      managed.sharedId = data.id
-      managed.sharedOwnerKey = data.ownerKey
-      const workspaceRootPath = managed.workspace.rootPath
-      await updateSessionMetadata(workspaceRootPath, sessionId, {
-        sharedUrl: data.url,
-        sharedId: data.id,
-        sharedOwnerKey: data.ownerKey,
-      })
-
-      sessionLog.info(`Session ${sessionId} shared at ${data.url}`)
-      // Notify all windows for this workspace
-      this.sendEvent({ type: 'session_shared', sessionId, sharedUrl: data.url }, managed.workspace.id)
-      return { success: true, url: data.url }
-    } catch (error) {
-      sessionLog.error('Share error:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-    } finally {
-      // Signal async operation end
-      managed.isAsyncOperationOngoing = false
-      this.sendEvent({ type: 'async_operation', sessionId, isOngoing: false }, managed.workspace.id)
-    }
+    return executeShareToViewer(this.shareHost(), sessionId)
   }
 
   /**
@@ -5626,49 +5547,7 @@ export class SessionManager implements ISessionManager {
    * Re-uploads session data to the same URL
    */
   async updateShare(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
-    const managed = this.sessions.get(sessionId)
-    if (!managed) {
-      return { success: false, error: 'Session not found' }
-    }
-    if (!managed.sharedId) {
-      return { success: false, error: 'Session not shared' }
-    }
-
-    // Signal async operation start for shimmer effect
-    managed.isAsyncOperationOngoing = true
-    this.sendEvent({ type: 'async_operation', sessionId, isOngoing: true }, managed.workspace.id)
-
-    try {
-      // Load session directly from disk (already in correct format)
-      const storedSession = loadStoredSession(managed.workspace.rootPath, sessionId)
-      if (!storedSession) {
-        return { success: false, error: 'Session file not found' }
-      }
-
-      const { VIEWER_URL } = await import('@craft-agent/shared/branding')
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (managed.sharedOwnerKey) headers['Authorization'] = `Bearer ${managed.sharedOwnerKey}`
-      const response = await fetch(`${VIEWER_URL}/s/api/${managed.sharedId}`, {
-        method: 'PUT',
-        headers,
-        body: JSON.stringify(storedSession)
-      })
-
-      if (!response.ok) {
-        sessionLog.error(`Update share failed with status ${response.status}`)
-        return shareApiError(response, 'Failed to update shared session')
-      }
-
-      sessionLog.info(`Session ${sessionId} share updated at ${managed.sharedUrl}`)
-      return { success: true, url: managed.sharedUrl }
-    } catch (error) {
-      sessionLog.error('Update share error:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-    } finally {
-      // Signal async operation end
-      managed.isAsyncOperationOngoing = false
-      this.sendEvent({ type: 'async_operation', sessionId, isOngoing: false }, managed.workspace.id)
-    }
+    return executeUpdateShare(this.shareHost(), sessionId)
   }
 
   /**
@@ -5676,55 +5555,7 @@ export class SessionManager implements ISessionManager {
    * Deletes from viewer and clears local shared state
    */
   async revokeShare(sessionId: string): Promise<import('@craft-agent/shared/protocol').ShareResult> {
-    const managed = this.sessions.get(sessionId)
-    if (!managed) {
-      return { success: false, error: 'Session not found' }
-    }
-    if (!managed.sharedId) {
-      return { success: false, error: 'Session not shared' }
-    }
-
-    // Signal async operation start for shimmer effect
-    managed.isAsyncOperationOngoing = true
-    this.sendEvent({ type: 'async_operation', sessionId, isOngoing: true }, managed.workspace.id)
-
-    try {
-      const { VIEWER_URL } = await import('@craft-agent/shared/branding')
-      const headers: Record<string, string> = {}
-      if (managed.sharedOwnerKey) headers['Authorization'] = `Bearer ${managed.sharedOwnerKey}`
-      const response = await fetch(
-        `${VIEWER_URL}/s/api/${managed.sharedId}`,
-        { method: 'DELETE', headers }
-      )
-
-      if (!response.ok) {
-        sessionLog.error(`Revoke failed with status ${response.status}`)
-        return shareApiError(response, 'Failed to revoke share')
-      }
-
-      // Clear shared info (including the owner capability secret)
-      delete managed.sharedUrl
-      delete managed.sharedId
-      delete managed.sharedOwnerKey
-      const workspaceRootPath = managed.workspace.rootPath
-      await updateSessionMetadata(workspaceRootPath, sessionId, {
-        sharedUrl: undefined,
-        sharedId: undefined,
-        sharedOwnerKey: undefined,
-      })
-
-      sessionLog.info(`Session ${sessionId} share revoked`)
-      // Notify all windows for this workspace
-      this.sendEvent({ type: 'session_unshared', sessionId }, managed.workspace.id)
-      return { success: true }
-    } catch (error) {
-      sessionLog.error('Revoke error:', error)
-      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-    } finally {
-      // Signal async operation end
-      managed.isAsyncOperationOngoing = false
-      this.sendEvent({ type: 'async_operation', sessionId, isOngoing: false }, managed.workspace.id)
-    }
+    return executeRevokeShare(this.shareHost(), sessionId)
   }
 
   // ============================================
@@ -6394,8 +6225,9 @@ export class SessionManager implements ISessionManager {
     if (managed.sharedId) {
       try {
         const { VIEWER_URL } = await import('@craft-agent/shared/branding')
-        const headers: Record<string, string> = {}
-        if (managed.sharedOwnerKey) headers['Authorization'] = `Bearer ${managed.sharedOwnerKey}`
+        const headers: Record<string, string> = {
+          ...ownerCapabilityHeaders(managed.sharedOwnerKey),
+        }
         const response = await fetch(
           `${VIEWER_URL}/s/api/${managed.sharedId}`,
           { method: 'DELETE', headers, signal: AbortSignal.timeout(5000) }
@@ -7576,19 +7408,18 @@ export class SessionManager implements ISessionManager {
       // No queue - emit complete to UI (include tokenUsage and hasUnread for state updates).
       // reason + didReceiveNewFinalMessage let the renderer distinguish a real
       // completion from an error/interrupt cleanup so it can gate notifications (#664).
-      this.sendEvent({
-        type: 'complete',
+      // WS2: when keep-alive keeps the persistent query open across turns, the
+      // turn ending does NOT kill background sub-agents. Tell the renderer so its
+      // chip orphan-backstop does not falsely flip live tasks to `orphaned`; a
+      // real `task_completed` will arrive when the agent actually finishes.
+      emitTurnComplete(this.sendEvent.bind(this), managed.workspace.id, {
         sessionId,
         tokenUsage: managed.tokenUsage,
-        hasUnread: managed.hasUnread,  // Propagate unread state to renderer
-        // WS2: when keep-alive keeps the persistent query open across turns, the
-        // turn ending does NOT kill background sub-agents. Tell the renderer so its
-        // chip orphan-backstop does not falsely flip live tasks to `orphaned`; a
-        // real `task_completed` will arrive when the agent actually finishes.
+        hasUnread: managed.hasUnread,
         backgroundTasksAlive: this.keepBackgroundTasksAlive,
         reason,
         didReceiveNewFinalMessage,
-      }, managed.workspace.id)
+      })
 
       // Tasks Conductor seam: signal true completion (queue empty) with the stop
       // reason + this turn's final assistant message, so the Conductor can advance
@@ -9892,9 +9723,7 @@ export class SessionManager implements ISessionManager {
 
     // Fork-specific: clear sharing state and attempt resume-first strategy
     if (mode === 'fork') {
-      storedSession.sharedUrl = undefined
-      storedSession.sharedId = undefined
-      storedSession.sharedOwnerKey = undefined
+      applyShareRevoked(storedSession)
 
       // Resume-first: try to find a compatible LLM connection on the target workspace.
       // If found and the session has an sdkSessionId, preserve it for API-level resume.
