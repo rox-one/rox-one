@@ -39,8 +39,8 @@ ANTHROPIC_API_KEY=sk-... bun run apps/cli/src/index.ts run "Hello, world!"
 
 | Flag | Env var | Default | Description |
 |------|---------|---------|-------------|
-| `--url <ws[s]://...>` | `CRAFT_SERVER_URL` | — | Server WebSocket URL |
-| `--token <secret>` | `CRAFT_SERVER_TOKEN` | — | Authentication token (**≥16 characters**; shorter tokens are fatal at server boot) |
+| `--url <ws[s]://...>` | `ROX_SERVER_URL` (`CRAFT_SERVER_URL`) | — | Server WebSocket URL |
+| `--token <secret>` | `ROX_SERVER_TOKEN` (`CRAFT_SERVER_TOKEN`) | — | Authentication token (**≥16 characters**; shorter tokens are fatal at server boot) |
 | `--workspace <id>` | — | auto-detect | Workspace ID |
 | `--timeout <ms>` | — | `10000` | Request timeout |
 | `--tls-ca <path>` | `CRAFT_TLS_CA` | — | Custom CA cert for self-signed TLS |
@@ -53,8 +53,8 @@ Flags take precedence over environment variables. If `--workspace` is omitted, t
 
 These apply to the server the CLI talks to, not to the CLI binary itself:
 
-- **`CRAFT_SERVER_TOKEN` ≥ 16 characters.** Tokens shorter than 16 chars fail at boot (`Token too short`). Generate one with `bun run packages/server/src/index.ts --generate-token` or `openssl rand -hex 32`.
-- **Config-dir single-instance lock.** A second server process against the same `CRAFT_CONFIG_DIR` (default `~/.craft-agent`) refuses to start (`Another server instance is already running (PID …)`). Stop the old process first, or set `CRAFT_CONFIG_DIR` to a different path for a parallel instance.
+- **`ROX_SERVER_TOKEN` ≥ 16 characters.** `CRAFT_SERVER_TOKEN` still works. Tokens shorter than 16 chars fail at boot (`Token too short`). Generate one with `bun run packages/server/src/index.ts --generate-token` or `openssl rand -hex 32`.
+- **Config-dir single-instance lock.** A second server process against the same `ROX_CONFIG_DIR` (or `CRAFT_CONFIG_DIR`; default `~/.craft-agent`) refuses to start (`Another server instance is already running (PID …)`). Stop the old process first, or set `ROX_CONFIG_DIR` to a different path for a parallel instance.
 
 ## Commands
 
@@ -260,9 +260,9 @@ The `--tls-ca` flag sets `NODE_EXTRA_CA_CERTS` before connecting. You can also s
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `Connection timeout` | Server not running or unreachable | Check server is started, verify URL |
-| Server exits: `Token too short` | `CRAFT_SERVER_TOKEN` has fewer than 16 characters | Use `openssl rand -hex 32` or `bun run packages/server/src/index.ts --generate-token` |
-| Server exits: `Another server instance is already running` | Config-dir single-instance lock | Stop the existing process, or set `CRAFT_CONFIG_DIR` to a different path |
-| `AUTH_FAILED` | Wrong token | Check `CRAFT_SERVER_TOKEN` matches server |
+| Server exits: `Token too short` | `ROX_SERVER_TOKEN` / `CRAFT_SERVER_TOKEN` has fewer than 16 characters | Use `openssl rand -hex 32` or `bun run packages/server/src/index.ts --generate-token` |
+| Server exits: `Another server instance is already running` | Config-dir single-instance lock | Stop the existing process, or set `ROX_CONFIG_DIR` to a different path |
+| `AUTH_FAILED` | Wrong token | Check `ROX_SERVER_TOKEN` matches server |
 | `PROTOCOL_VERSION_UNSUPPORTED` | Version mismatch | Update CLI and server to same version |
 | `WebSocket connection error` | Network issue or TLS problem | For self-signed certs, use `--tls-ca` |
 | `No workspace available` | Workspace not yet created | Create one via desktop app or API |

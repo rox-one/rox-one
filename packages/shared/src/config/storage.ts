@@ -870,6 +870,7 @@ export const ENV_OVERRIDE_DENY: Record<string, true> = {
   RUBYLIB: true,
   CRAFT_WORKSPACE_PATH: true,
   CRAFT_CONFIG_DIR: true,
+  ROX_CONFIG_DIR: true,
   CRAFT_BUN_PATH: true,
   CRAFT_SESSION_DIR: true,
   CRAFT_STUB_RUNNER: true,

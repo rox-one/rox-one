@@ -9,6 +9,7 @@
 
 import { resolve } from 'path'
 import { formatTypedErrorForCli } from '@craft-agent/shared/agent'
+import { getEnv } from '@craft-agent/shared/config'
 import { CliRpcClient } from './client.ts'
 
 export function formatCliSessionError(ev: { type: string; error?: unknown }): string | null {
@@ -156,9 +157,9 @@ export function parseArgs(argv: string[]): CliArgs {
     }
   }
 
-  // Env var fallbacks
-  if (!url) url = process.env.CRAFT_SERVER_URL ?? ''
-  if (!token) token = process.env.CRAFT_SERVER_TOKEN ?? ''
+  // Env var fallbacks (ROX_* preferred, CRAFT_* still accepted)
+  if (!url) url = getEnv('SERVER_URL') ?? ''
+  if (!token) token = getEnv('SERVER_TOKEN') ?? ''
   if (!tlsCa) tlsCa = process.env.CRAFT_TLS_CA
   if (!provider) provider = process.env.LLM_PROVIDER ?? 'anthropic'
   if (!model) model = process.env.LLM_MODEL ?? ''
@@ -1914,7 +1915,7 @@ Usage: craft-cli [options] <command> [args...]
 
 Connection:
   --url <ws[s]://...>    Server URL (default: $CRAFT_SERVER_URL)
-  --token <secret>       Auth token (default: $CRAFT_SERVER_TOKEN)
+  --token <secret>       Auth token (default: $ROX_SERVER_TOKEN or $CRAFT_SERVER_TOKEN)
   --workspace <id>       Workspace ID (auto-detected if omitted)
   --timeout <ms>         Request timeout (default: 10000)
   --tls-ca <path>        Custom CA cert for self-signed TLS
