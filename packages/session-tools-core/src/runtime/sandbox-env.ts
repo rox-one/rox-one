@@ -1,48 +1,20 @@
 /**
  * Shared environment sanitization for script-execution tools.
+ *
+ * The credential blocklist lives in `@craft-agent/core/env` so MCP stdio
+ * spawn cannot drift from this sanitizer (inventory 6.4).
  */
 
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import {
+  BLOCKED_ENV_VAR_PREFIXES,
+  BLOCKED_ENV_VARS,
+  isBlockedEnvVar,
+} from '@craft-agent/core/env';
 import type { ScriptRuntimeLanguage } from './resolve-script-runtime.ts';
 
-/**
- * Env vars stripped from subprocesses to prevent credential leakage.
- * NOTE: Keep in sync with packages/shared/src/mcp/client.ts (BLOCKED_ENV_VARS).
- */
-export const BLOCKED_ENV_VARS = [
-  'ANTHROPIC_API_KEY',
-  'CLAUDE_CODE_OAUTH_TOKEN',
-  'AWS_ACCESS_KEY_ID',
-  'AWS_SECRET_ACCESS_KEY',
-  'AWS_SESSION_TOKEN',
-  'GITHUB_TOKEN',
-  'GH_TOKEN',
-  'OPENAI_API_KEY',
-  'GOOGLE_API_KEY',
-  'STRIPE_SECRET_KEY',
-  'NPM_TOKEN',
-  // Secrets-runtime provider auth (Infisical service token).
-  'INFISICAL_TOKEN',
-] as const;
-
-/**
- * Prefix-based blocks: `ROX_SECRET_` is the secrets-runtime env-provider
- * staging prefix — staged secrets ride in process.env under it and must never
- * reach subprocesses. NOTE: Keep in sync with mcp/client.ts.
- */
-export const BLOCKED_ENV_VAR_PREFIXES = ['ROX_SECRET_'] as const;
-
-/**
- * Whether an env var must be stripped from subprocess envs: exact blocklist
- * match OR a blocked prefix.
- */
-export function isBlockedEnvVar(key: string): boolean {
-  return (
-    (BLOCKED_ENV_VARS as readonly string[]).includes(key) ||
-    BLOCKED_ENV_VAR_PREFIXES.some((prefix) => key.startsWith(prefix))
-  );
-}
+export { BLOCKED_ENV_VAR_PREFIXES, BLOCKED_ENV_VARS, isBlockedEnvVar };
 
 /**
  * Return a shallow-copied environment with sensitive variables removed.

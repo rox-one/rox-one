@@ -10,6 +10,7 @@ import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { isBlockedEnvVar } from '@craft-agent/core/env';
 import { createMcpGuardedFetch } from './guarded-fetch.ts';
 
 /**
@@ -46,56 +47,6 @@ export interface StdioMcpClientConfig {
  * Unified config supporting all transport types
  */
 export type McpClientConfig = HttpMcpClientConfig | SseMcpClientConfig | StdioMcpClientConfig;
-
-/**
- * Sensitive environment variables that should NOT be passed to MCP subprocesses.
- * These could contain API keys, tokens, or credentials that MCP servers don't need
- * and shouldn't have access to.
- * NOTE: This list is duplicated in packages/session-tools-core/src/runtime/sandbox-env.ts
- * (BLOCKED_ENV_VARS). If you add a new entry here, update it there too.
- */
-const BLOCKED_ENV_VARS = [
-  // Craft Agent auth (set by the app itself)
-  'ANTHROPIC_API_KEY',
-  'CLAUDE_CODE_OAUTH_TOKEN',
-
-  // AWS credentials
-  'AWS_ACCESS_KEY_ID',
-  'AWS_SECRET_ACCESS_KEY',
-  'AWS_SESSION_TOKEN',
-
-  // Common API keys/tokens
-  'GITHUB_TOKEN',
-  'GH_TOKEN',
-  'OPENAI_API_KEY',
-  'GOOGLE_API_KEY',
-  'STRIPE_SECRET_KEY',
-  'NPM_TOKEN',
-
-  // Secrets-runtime provider auth (Infisical service token, see
-  // packages/shared/src/secrets/providers/infisical.ts)
-  'INFISICAL_TOKEN',
-];
-
-/**
- * Prefix-based env blocks. `ROX_SECRET_` is the secrets-runtime env-provider
- * staging prefix (DEFAULT_ENV_PREFIXES in secrets/providers/environment.ts):
- * every staged secret rides in process.env under this prefix, so exact-match
- * enumeration can't keep up — block the whole prefix.
- * NOTE: Keep in sync with sandbox-env.ts (BLOCKED_ENV_VAR_PREFIXES).
- */
-const BLOCKED_ENV_VAR_PREFIXES = ['ROX_SECRET_'];
-
-/**
- * Whether an inherited process.env var must be stripped from MCP subprocess
- * envs. Exact blocklist match OR a blocked prefix.
- */
-export function isBlockedEnvVar(key: string): boolean {
-  return (
-    BLOCKED_ENV_VARS.includes(key) ||
-    BLOCKED_ENV_VAR_PREFIXES.some((prefix) => key.startsWith(prefix))
-  );
-}
 
 /**
  * Defensive userinfo strip for remote MCP endpoint URLs. Credentialed URLs
