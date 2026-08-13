@@ -169,6 +169,8 @@ export type { ExportResourcesOptions, ExportResult, ResourceImportMode, Resource
 // LLM connection types
 import type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings } from '@craft-agent/shared/config';
 export type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings };
+import type { SecretRefEntry, SecretRefsSettingsPayload } from '@craft-agent/shared/secrets';
+export type { SecretRefEntry, SecretRefsSettingsPayload };
 // Knowledge provider contract types (P1 read-only — spec 2026-08-07-siyuan-integration/03;
 // mutation types are intentionally not surfaced: no mutation channels exist at P1)
 import type {
@@ -828,6 +830,10 @@ export interface ElectronAPI {
   // Session env overrides (config runtime.envOverrides — applied to new agent subprocesses)
   getEnvOverrides(): Promise<Record<string, string>>
   setEnvOverrides(env: Record<string, string>): Promise<{ success: boolean; error?: string }>
+
+  // Secret refs (config runtime.secretRefs — refs only, never resolved values)
+  getSecretRefs(): Promise<SecretRefsSettingsPayload>
+  setSecretRefs(refs: SecretRefEntry[]): Promise<{ success: boolean; error?: string }>
 
   // Release notes
   getReleaseNotes(): Promise<string>

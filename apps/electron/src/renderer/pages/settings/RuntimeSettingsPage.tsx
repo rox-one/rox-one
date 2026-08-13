@@ -31,6 +31,7 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { PermissionMode, ThinkingLevel, ToolchainToolName, ToolchainToolStatus } from '../../../shared/types'
 import { cn } from '@/lib/utils'
 import { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@craft-agent/shared/agent/thinking-levels'
+import { SecretRefsSection } from './SecretRefsSection'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -824,6 +825,8 @@ export default function RuntimeSettingsPage() {
                 </div>
               </SettingsCard>
             </SettingsSection>
+
+            <SecretRefsSection onError={setPageError} />
           </div>
         </ScrollArea>
       </div>
