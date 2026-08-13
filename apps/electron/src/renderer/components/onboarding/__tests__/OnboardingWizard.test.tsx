@@ -66,23 +66,23 @@ describe('OnboardingWizard', () => {
   test('renders the Rox Connect gate', () => {
     const html = renderRoxConnect()
 
-    expect(html).toContain('Sign in to Rox')
-    expect(html).toContain('Connect with Rox')
+    expect(html).toContain('onboarding.roxConnect.title')
+    expect(html).toContain('onboarding.roxConnect.connect')
   })
 
   test('renders a waiting Rox device flow with its approval controls', () => {
     const html = renderRoxConnect({ codes: roxConnectCodes, status: 'waiting' })
 
     expect(html).toContain('ABCD-1234')
-    expect(html).toContain('Open browser to approve')
-    expect(html).toContain('Waiting for approval…')
-    expect(html).toContain('Restart')
+    expect(html).toContain('onboarding.roxConnect.openBrowser')
+    expect(html).toContain('onboarding.roxConnect.waiting')
+    expect(html).toContain('onboarding.roxConnect.restart')
   })
 
   test('renders Rox connection completion', () => {
     const html = renderRoxConnect({ status: 'success' })
 
-    expect(html).toContain('Connected. Continuing…')
+    expect(html).toContain('onboarding.roxConnect.success')
   })
 
   test('renders an error with a recovery action', () => {
@@ -92,6 +92,26 @@ describe('OnboardingWizard', () => {
     })
 
     expect(html).toContain('Unable to start Rox Connect')
-    expect(html).toContain('Connect with Rox')
+    expect(html).toContain('onboarding.roxConnect.connect')
+  })
+
+  test('renders the OMP first-run credential step with the typed code', () => {
+    const html = renderToStaticMarkup(
+      <OnboardingWizard
+        state={{
+          ...roxConnectState,
+          step: 'omp-credential',
+        }}
+        onContinue={() => {}}
+        onBack={() => {}}
+        onSelectApiSetupMethod={() => {}}
+        onSubmitCredential={() => {}}
+        onSubmitOmpCredential={() => {}}
+        onFinish={() => {}}
+      />,
+    )
+
+    expect(html).toContain('onboarding.ompCredential.title')
+    expect(html).toContain('OMP_NO_MODELS')
   })
 })

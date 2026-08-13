@@ -1,5 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
+import { homedir } from 'os';
+import { ensureOmpRoxFirstRun } from '../agent/omp-first-run.ts';
 import { getCredentialManager } from '../credentials/index.ts';
 import { getOrCreateLatestSession, type SessionConfig } from '../sessions/index.ts';
 import {
@@ -3031,6 +3033,19 @@ export async function seedDefaultLlmConnection(): Promise<void> {
     } catch (error) {
       console.error('[config] Failed to seed API key for default connection:', error);
     }
+  }
+
+  // Provision missing ~/.omp/agent files when a key is already present so
+  // the first turn can start. Existing user OMP files are never overwritten.
+  try {
+    ensureOmpRoxFirstRun({
+      homeDir: homedir(),
+      env: process.env,
+      storedApiKey: envApiKey,
+      baseUrl: connection.baseUrl,
+    });
+  } catch (error) {
+    console.error('[config] Failed to provision OMP first-run config:', error);
   }
 }
 

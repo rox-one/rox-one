@@ -74,7 +74,9 @@ import type { PermissionMode } from './mode-manager.ts';
 import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 
 import { BaseAgent } from './base-agent.ts';
-import { getRuntimeEnvOverrides, type Workspace } from '../config/storage.ts';
+import { getRuntimeEnvOverrides, ROX_DEFAULT_CONNECTION_SLUG, type Workspace } from '../config/storage.ts';
+import { getCredentialManager } from '../credentials/index.ts';
+import { buildOmpSpawnCredentialEnv, ensureOmpRoxFirstRun } from './omp-first-run.ts';
 import {
   parseError,
   classifyOmpStartupExit,
@@ -733,12 +735,29 @@ export class OmpAgent extends BaseAgent {
     // trips unhandledRejection.
     readyPromise.catch(() => {});
 
+    let storedOmpKey: string | null = null;
+    try {
+      storedOmpKey = await getCredentialManager().getLlmApiKey(ROX_DEFAULT_CONNECTION_SLUG);
+    } catch {
+      storedOmpKey = null;
+    }
+    ensureOmpRoxFirstRun({
+      homeDir: homedir(),
+      env: process.env,
+      storedApiKey: storedOmpKey,
+    });
+    const credentialEnv = buildOmpSpawnCredentialEnv({
+      env: process.env,
+      storedApiKey: storedOmpKey,
+    });
+
     const env: NodeJS.ProcessEnv = await withToolchainPathPrefix({
       ...process.env,
       ...getProxyEnvVars(),
       // User-configured runtime env overrides (config runtime.envOverrides);
       // per-session envOverrides below always win.
       ...getRuntimeEnvOverrides(),
+      ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
 

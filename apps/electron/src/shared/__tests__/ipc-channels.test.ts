@@ -360,6 +360,7 @@ const EXPECTED_CHANNELS: string[] = [
   'onboarding:getAuthState',
   'onboarding:getRoxCloudState',
   'onboarding:hasClaudeOAuthState',
+  'onboarding:saveOmpCredential',
   'onboarding:startClaudeOAuth',
   'onboarding:startMcpOAuth',
   'onboarding:startRoxConnect',

@@ -11,6 +11,7 @@
 
 import type { ErrorCode } from '@craft-agent/core/types';
 import { getProviderMetadata } from '../config/provider-metadata.ts';
+import { isOmpCredentialErrorCode } from './omp-first-run.ts';
 
 export type { ErrorCode };
 
@@ -746,11 +747,15 @@ export function ompStartupErrorToAgentError(error: OmpStartupError): AgentError 
   const text = OMP_STARTUP_ERROR_TEXT[error.ompCode];
   const details: string[] = [];
   if (error.stderr) details.push(`stderr: ${error.stderr.slice(-500)}`);
+  const actions: RecoveryAction[] = [{ key: 'r', label: 'Retry', action: 'retry' }];
+  if (isOmpCredentialErrorCode(error.ompCode)) {
+    actions.push({ key: 's', label: 'Add credential', action: 'settings' });
+  }
   return {
     code: error.ompCode as unknown as ErrorCode,
     title: text.title,
     message: error.hint ? `${error.message} ${error.hint}` : error.message,
-    actions: [{ key: 'r', label: 'Retry', action: 'retry' }],
+    actions,
     canRetry: text.canRetry,
     originalError: error.message,
     details,

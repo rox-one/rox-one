@@ -8,7 +8,18 @@
  */
 
 import { resolve } from 'path'
+import { formatTypedErrorForCli } from '@craft-agent/shared/agent'
 import { CliRpcClient } from './client.ts'
+
+export function formatCliSessionError(ev: { type: string; error?: unknown }): string | null {
+  if (ev.type === 'typed_error') {
+    return formatTypedErrorForCli((ev.error ?? {}) as { code?: string; title?: string; message?: string })
+  }
+  if (ev.type === 'error') {
+    return String(ev.error ?? '')
+  }
+  return null
+}
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -433,6 +444,12 @@ async function sendAndStream(
             process.stdout.write(`${result}\n`)
           }
         }
+        break
+      }
+      case 'typed_error': {
+        const line = formatCliSessionError(ev)
+        if (!streamJson && line) err(line)
+        exitCode = 1
         break
       }
       case 'error':

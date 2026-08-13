@@ -1016,6 +1016,12 @@ export interface ElectronAPI {
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
   deferSetup(): Promise<{ success: boolean }>
+  saveOmpCredential(apiKey: string): Promise<{
+    success: boolean
+    ready?: boolean
+    code?: string
+    error?: string
+  }>
 
   // ChatGPT OAuth (for Codex chatgptAuthTokens mode)
   startChatGptOAuth(connectionSlug: string): Promise<{ success: boolean; error?: string }>

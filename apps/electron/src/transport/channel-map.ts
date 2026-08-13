@@ -215,6 +215,7 @@ export const CHANNEL_MAP = {
   hasClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.HAS_CLAUDE_OAUTH_STATE),
   clearClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE),
   deferSetup: invoke(RPC_CHANNELS.onboarding.DEFER_SETUP),
+  saveOmpCredential: invoke(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL),
   startRoxConnect: invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT),
   getRoxCloudState: invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE),
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { parseArgs, resolveApiKey, shouldSetupLlmConnection } from './index.ts'
+import { formatCliSessionError, parseArgs, resolveApiKey, shouldSetupLlmConnection } from './index.ts'
 
 // ---------------------------------------------------------------------------
 // Arg parsing tests
@@ -399,5 +399,20 @@ describe('getValidateSteps', () => {
     const srcDelete = names.indexOf('sources:delete')
     expect(cleanup).toBeGreaterThan(-1)
     expect(cleanup).toBeLessThan(srcDelete)
+  })
+})
+
+describe('formatCliSessionError', () => {
+  it('prints typed OMP_NO_MODELS the same way the UI names it', () => {
+    const line = formatCliSessionError({
+      type: 'typed_error',
+      error: { code: 'OMP_NO_MODELS', title: 'ignored', message: 'ignored' },
+    })
+    expect(line).toContain('OMP_NO_MODELS:')
+    expect(line).toContain('OMP has no models configured')
+  })
+
+  it('prints a generic error event as a string', () => {
+    expect(formatCliSessionError({ type: 'error', error: 'boom' })).toBe('boom')
   })
 })
