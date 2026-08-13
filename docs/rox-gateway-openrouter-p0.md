@@ -3,7 +3,7 @@
 Статус на 2026-08-13 (продолжение): **не `git am` старый двухкоммитный патч на текущий `release/v3.8.50`**. Exclusion уже в tip.
 
 1. **Merged:** [agisota/zed-api#2](https://github.com/agisota/zed-api/pull/2) → `release/v3.8.50` @ `406ccebb06ef91f6c3de320aff4917ad34a65cbd`. OpenRouter отсутствует на assembly-путях `/v1/models`. Quota short circuit отдаёт `qtSd/*` (без remap на `rox/*`).
-2. **Open follow-up:** [agisota/zed-api#4](https://github.com/agisota/zed-api/pull/4) `hotfix/rox-catalog-honesty` @ `d93f945a8323b31b5cdc5e1378a6cdba827d0879`. Serialize-time strip в `finalizeCatalogResponse`, quota honesty + listed-id policy test, dead late `allowedQuotas` branch удалён, `#4264`/`#9293` приведены к ROX (на `406ccebb` они падали, потому что ждали OpenRouter в каталоге).
+2. **Open follow-up:** [agisota/zed-api#4](https://github.com/agisota/zed-api/pull/4) `hotfix/rox-catalog-honesty` @ `3b5181c3a6c24124486d62264cbdc73a3f250f6c`. Serialize-time strip в `finalizeCatalogResponse`, quota honesty + listed-id policy test, `qtSd` provider-segment (не group slug), dead late `allowedQuotas` branch удалён, `#4264`/`#9293` приведены к ROX. GitHub Actions не стартуют: org billing lock (то же, что на #2).
 
 Контракт: [`../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md`](../superpowers/specs/2026-08-13-rox-gateway-openrouter-catalog-design.md). План: [`../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md`](../superpowers/plans/2026-08-13-rox-gateway-openrouter-catalog.md).
 

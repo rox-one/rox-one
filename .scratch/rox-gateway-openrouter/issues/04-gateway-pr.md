@@ -9,4 +9,4 @@
 - [x] Focused ROX suite 0 fail and `typecheck:core` exit 0, fresh this session
 - [x] Patch applies with `git am --3way` on a clean `release/v3.8.50` clone
 - [x] PR opened, or write-denied blocker reported with the patch attached
-- [x] Follow-up PR: https://github.com/agisota/zed-api/pull/4
+- [x] Follow-up PR: https://github.com/agisota/zed-api/pull/4 @ `3b5181c3` (serialize-time strip + qtSd provider-segment). CI jobs do not start: org billing lock.

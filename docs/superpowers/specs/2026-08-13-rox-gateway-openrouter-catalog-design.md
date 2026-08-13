@@ -1,6 +1,6 @@
 # ROX gateway OpenRouter catalog — design
 
-Дата: 2026-08-13. Статус: контракт B **на gateway**. Exclusion merged в `release/v3.8.50` @ `406ccebb` ([zed-api#2](https://github.com/agisota/zed-api/pull/2)). Serialize-time strip + quota honesty tests + `#4264`/`#9293` ROX divergence — [zed-api#4](https://github.com/agisota/zed-api/pull/4) `hotfix/rox-catalog-honesty` @ `d93f945a`. AC-07/08 (staging SHA + runtime smoke) — blocked.  
+Дата: 2026-08-13. Статус: контракт B **на gateway**. Exclusion merged в `release/v3.8.50` @ `406ccebb` ([zed-api#2](https://github.com/agisota/zed-api/pull/2)). Serialize-time strip + quota honesty + qtSd provider-segment — [zed-api#4](https://github.com/agisota/zed-api/pull/4) `hotfix/rox-catalog-honesty` @ `3b5181c3`. AC-07/08 (staging SHA + runtime smoke) — blocked. GitHub Actions на #4 не стартуют (org billing lock).  
 Репо: `agisota/zed-api` `release/v3.8.50` @ `406ccebb`. Follow-up патч: `docs/patches/rox-catalog-honesty-followup.patch`. Исторический патч на `2e7732427`: `docs/patches/rox-catalog-openrouter-hotfix.patch` — не `git am` на tip.  
 Канон артефактов на самом gateway: `_tasks/superpowers/specs/` (gitignored). Эта копия живёт в `rox-one`.
 
