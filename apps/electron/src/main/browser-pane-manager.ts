@@ -1662,7 +1662,9 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     const safePaths: string[] = []
     for (const p of filePaths) {
       const workspaceId = this.resolveLaunchWorkspaceId()
-      const safePath = await validateFilePath(p, getWorkspaceAllowedDirs(workspaceId))
+      const safePath = await validateFilePath(p, getWorkspaceAllowedDirs(workspaceId), {
+        includeHome: true,
+      })
       if (!existsSync(safePath)) throw new Error(`File not found: ${p}`)
       safePaths.push(safePath)
     }

@@ -17,8 +17,8 @@ import { tmpdir } from 'node:os';
 import { createScriptRuntimeEnv } from '../runtime/sandbox-env.ts';
 import { isPathWithinDirectory, isPathWithinDirectoryForCreation } from '../runtime/path-security.ts';
 import { resolveScriptRuntime } from '../runtime/resolve-script-runtime.ts';
-import { applyNetworkIsolation } from '../runtime/network-isolation.ts';
-import { applyFilesystemIsolation } from '../runtime/filesystem-isolation.ts';
+import { applyNetworkIsolation, type NetworkIsolationPlan } from '../runtime/network-isolation.ts';
+import { applyFilesystemIsolation, type FilesystemIsolationPlan } from '../runtime/filesystem-isolation.ts';
 
 export interface TransformDataArgs {
   language: 'python3' | 'node' | 'bun';
@@ -94,8 +94,8 @@ export async function handleTransformData(
     const runtime = resolveScriptRuntime(args.language);
     const spawnArgs = [...runtime.argsPrefix, tempScript, ...resolvedInputs, resolvedOutput];
 
-    let networkIsolation
-    let filesystemIsolation
+    let networkIsolation: NetworkIsolationPlan;
+    let filesystemIsolation: FilesystemIsolationPlan;
 
     if (process.platform === 'darwin') {
       filesystemIsolation = applyFilesystemIsolation(runtime.command, spawnArgs, sessionDir, {
