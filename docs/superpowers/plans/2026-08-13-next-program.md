@@ -42,7 +42,7 @@
 
 ```
 WAVE 0  09 session prefactor          (start immediately; unblocks 12)
-WAVE 1  01 02 03 04 05 06 08 10       (parallel; 04/07 share config — 07 waits)
+WAVE 1  01 02 03 04 05 06 08 10 15    (parallel; 04/07 share config — 07 waits)
 WAVE 2  07 11 12                      (07 after 04; 11 after 05; 12 after 09)
 WAVE 3  13 live E2E                   (needs 01 + 12 + human credential)
         14 decisions                  (human, any time)

@@ -96,7 +96,7 @@ COMMIT(S)
 
 ```
 WAVE 0  тикет 09
-WAVE 1  01 02 03 04 05 06 08 10   параллельно
+WAVE 1  01 02 03 04 05 06 08 10 15   параллельно
 WAVE 2  07 (после 04)  11 (после 05)  12 (после 09)
 WAVE 3  reviewers (integration / browser / security / adversary)
         13 live E2E
@@ -165,5 +165,5 @@ VERIFIED / MOCK-VERIFIED / BLOCKED + почему. Отдельно: stream, hos
 
 1. Прочитай скиллы и документы выше.
 2. Создай integration branch от `rox-integration-remediation-7c33`.
-3. Сразу запусти WAVE 0 (09) и параллельно WAVE 1 (01, 02, 03, 04, 05, 06, 08, 10).
+3. Сразу запусти WAVE 0 (09) и параллельно WAVE 1 (01, 02, 03, 04, 05, 06, 08, 10, 15).
 4. Не останавливайся после планирования. Первый коммит — либо extract, либо failing test тикета 01/02/03.

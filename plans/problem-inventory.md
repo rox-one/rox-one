@@ -79,6 +79,12 @@
 
 - Wave 5 проверил seed + auth env, не сам UI wizard.
 
+### 1.13 Factory скрывает OMP как unavailable — `OPEN`
+
+- `getAvailableProviders()` возвращает только `['anthropic', 'pi']`.
+- `initializeBackendHostRuntime` из-за этого не инициализирует OMP driver.
+- `createBackend('omp')` и seed `rox-kimi` при этом first-class. Любой UI/тест, который верит registry, считает дефолтный бэкенд несуществующим.
+
 ---
 
 ## 2. Runtime controls (режимы / thinking / steer)
@@ -340,6 +346,12 @@
 
 - Третий движок коллекций рядом с Linear-views и Filtrex `views.json`.
 
+### 8.10 Два query DSL на один список сессий — `OPEN`
+
+- Smart views: Filtrex над `views.json`.
+- Collection chips: императивный `filterSessionMeta` над `collection/filters.json`.
+- `AppShell` AND-ит оба контура. Expansion потомков лейблов продублирован (`matchesLabelFilter` vs ручной код в AppShell). Due-диапазоны и `dueBucket` могут расходиться.
+
 ---
 
 ## 9. Remote / cloud / messaging / iOS
@@ -492,4 +504,4 @@
 | HYGIENE | 8 |
 | Архитектурные deepening (не баги) | 5 крупных |
 
-P0, которые **ещё открыты:** нет. Самый дорогой OPEN: first-run credentials (1.7) + OAuth callback XSS (4.9) + viewer V3/V7 (3.2–3.3) + KnowledgeAgentPanel unmounted (5.5) + SessionManager god-module (13.1).
+P0, которые **ещё открыты:** нет. Самый дорогой OPEN: first-run credentials (1.7) + factory скрывает OMP (1.13) + OAuth callback XSS (4.9) + viewer V3/V7 (3.2–3.3) + KnowledgeAgentPanel unmounted (5.5) + SessionManager god-module (13.1).

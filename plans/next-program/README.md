@@ -12,6 +12,7 @@ Tracer-bullet slices for the program in `plans/next-program-spec.md`.
 | 06 | Secrets settings vertical slice | — | 1 |
 | 08 | Web UI parity and dead knobs | — | 1 |
 | 10 | Contract leftover MCP servers | — | 1 |
+| 15 | Register OMP on the backend factory | — | 1 |
 | 09 | Deepen the session module | — | 0 (start first) |
 | 07 | Identity env/config-dir resolver | 04 | 2 |
 | 11 | One real unified-shell panel | 05 | 2 |
@@ -19,4 +20,4 @@ Tracer-bullet slices for the program in `plans/next-program-spec.md`.
 | 13 | Live-credential first-turn E2E | 01, 12 + human secret | 3 |
 | 14 | Decision tickets | — (human) | any |
 
-Frontier (can start now): 01, 02, 03, 04, 05, 06, 08, 09, 10, 14.
+Frontier (can start now): 01, 02, 03, 04, 05, 06, 08, 09, 10, 14, 15.
