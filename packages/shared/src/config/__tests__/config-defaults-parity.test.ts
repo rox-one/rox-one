@@ -87,8 +87,10 @@ function workspaceDefaults(doc: Record<string, unknown>): Record<string, unknown
 describe('config-defaults source of truth', () => {
   it('bundled thinkingLevel is a current value, not legacy "think"', () => {
     const thinkingLevel = workspaceDefaults(loadBundledDefaults()).thinkingLevel
+    expect(typeof thinkingLevel).toBe('string')
+    if (typeof thinkingLevel !== 'string') throw new Error('thinkingLevel must be a string')
     expect(thinkingLevel).not.toBe('think')
-    expect(THINKING_LEVEL_IDS as readonly string[]).toContain(thinkingLevel)
+    expect((THINKING_LEVEL_IDS as readonly string[]).includes(thinkingLevel)).toBe(true)
   })
 
   it('fallback permission mode matches the bundle (allow-all) and cyclable modes match', () => {

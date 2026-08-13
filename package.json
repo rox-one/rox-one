@@ -18,8 +18,6 @@
   "workspaces": [
     "packages/*",
     "apps/*",
-    "!apps/online-docs",
-    "!apps/marketing",
     "!packages/craft-cli",
     "!packages/craft-agents-commands"
   ],

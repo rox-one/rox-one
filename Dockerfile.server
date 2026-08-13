@@ -63,6 +63,7 @@ COPY packages/pi-agent-server/package.json packages/pi-agent-server/
 COPY packages/ui/package.json packages/ui/
 COPY packages/messaging-gateway/package.json packages/messaging-gateway/
 COPY packages/messaging-whatsapp-worker/package.json packages/messaging-whatsapp-worker/
+COPY packages/messaging-discord-worker/package.json packages/messaging-discord-worker/
 COPY apps/electron/package.json apps/electron/
 COPY apps/cli/package.json apps/cli/
 COPY apps/viewer/package.json apps/viewer/
@@ -79,8 +80,8 @@ RUN bun build packages/session-mcp-server/src/index.ts \
     bun build packages/pi-agent-server/src/index.ts \
       --outfile packages/pi-agent-server/dist/index.js --target node --format cjs
 
-# Build the WhatsApp worker bundle (CJS, Node target — Bun cannot run it).
-RUN bun run scripts/build-wa-worker.ts
+# Build the WhatsApp + Discord worker bundles (CJS, Node target — Bun cannot run them).
+RUN bun run scripts/build-wa-worker.ts && bun run scripts/build-discord-worker.ts
 
 # Build web UI assets (served by the server on the RPC port).
 # vite's bundler runs under Node (via shebang in vite's bin) and hits V8's
@@ -109,6 +110,7 @@ ENV CRAFT_BUNDLED_ASSETS_ROOT=/app/apps/electron
 # CRAFT_MESSAGING_WA_WORKER to match; the default in packages/server resolves
 # against CRAFT_BUNDLED_ASSETS_ROOT, but the layout above flattens to /app.
 ENV CRAFT_MESSAGING_WA_WORKER=/app/packages/messaging-whatsapp-worker/dist/worker.cjs
+ENV CRAFT_MESSAGING_DISCORD_WORKER=/app/packages/messaging-discord-worker/dist/worker.cjs
 ENV CRAFT_MESSAGING_NODE_BIN=node
 
 EXPOSE 9100
