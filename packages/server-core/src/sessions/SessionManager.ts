@@ -38,6 +38,8 @@ import {
   migrateLegacyLlmConnectionsConfig,
   migrateOrphanedDefaultConnections,
   seedDefaultLlmConnection,
+  resolveSpawnSessionModel,
+  ROX_DEFAULT_CONNECTION_SLUG,
   MODEL_REGISTRY,
   type Workspace,
   type WorkspaceInfo,
@@ -4826,7 +4828,12 @@ export class SessionManager implements ISessionManager {
         const session = await this.createSession(managed.workspace.id, {
           name: request.name,
           llmConnection: request.llmConnection ?? managed.llmConnection,
-          model: request.model ?? managed.model,
+          model: resolveSpawnSessionModel({
+            requested: request.model,
+            parentModel: managed.model,
+            connectionSlug: request.llmConnection ?? managed.llmConnection,
+            roxConnectionSlug: ROX_DEFAULT_CONNECTION_SLUG,
+          }),
           enabledSourceSlugs: request.enabledSourceSlugs ?? managed.enabledSourceSlugs,
           permissionMode: request.permissionMode ?? managed.permissionMode,
           thinkingLevel: request.thinkingLevel ?? managed.thinkingLevel,

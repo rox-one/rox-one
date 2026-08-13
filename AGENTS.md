@@ -14,7 +14,7 @@
 - Реализация: `packages/shared/src/agent/omp-agent.ts` (OmpAgent extends BaseAgent).
 - Протокол: `docs/omp-rpc-notes.md` (**обязательно к прочтению перед изменениями транспорта** — там критичный факт про обязательные `extension_ui_response` и shape `set_model`).
 - Интеграционный гэп/статус: `docs/omp-integration-gap.md`.
-- Подключение дефолта: `storage.ts#seedDefaultLlmConnection` создаёт `rox-kimi` (providerType `'omp'`, authType `'none'`, defaultModel `kimi-K3`) — OMP берёт auth из `~/.omp/agent/config.yml`.
+- Подключение дефолта: `storage.ts#seedDefaultLlmConnection` создаёт `rox-kimi` (providerType `'omp'`, authType `'none'`, defaultModel `rox/standard`, публичный каталог `rox/explore|standard|max|vision|fast`) — OMP берёт auth из `~/.omp/agent/config.yml`. `spawn_session` без `model` на ROX-родителе уходит в `rox/fast`.
 - Permission mapping: craft `allow-all` ⇄ `--approval-mode yolo` (spawn-time, флип режима = респавн); `ask/safe` — диалоги `extension_ui_request`-времени проксируются в craft-пермишны.
 
 ### Craft-инструменты внутри OMP (host tools)

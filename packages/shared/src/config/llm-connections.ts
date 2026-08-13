@@ -17,6 +17,11 @@ import {
   normalizeDeprecatedModelId,
 } from './models';
 import type { CredentialManager } from '../credentials/manager.ts';
+import {
+  ROX_DEFAULT_PARENT_MODEL,
+  ROX_DEFAULT_SUBAGENT_MODEL,
+  toRoxPublicModelDefinitions,
+} from './rox-public-models.ts';
 
 // ============================================================
 // Pi Model Resolver (dependency injection to avoid Pi SDK in renderer)
@@ -323,6 +328,12 @@ function findSmallModel(
     keywords.push('haiku');
   } else if (isPiProvider(connection.providerType)) {
     keywords.push('mini', 'flash');
+  } else if (isOmpProvider(connection.providerType)) {
+    const publicFast = connection.models.find(
+      (m) => isAllowedModel(m) && toId(m) === ROX_DEFAULT_SUBAGENT_MODEL,
+    );
+    if (publicFast) return toId(publicFast);
+    keywords.push('fast');
   } else {
     // Aggregator providers (copilot, etc.) — try all common small-model keywords
     keywords.push('mini', 'haiku', 'flash');
@@ -680,20 +691,22 @@ export function getDefaultModelsForConnection(providerType: LlmProviderType, piA
     return models;
   }
   if (isCompatProvider(providerType)) return [];  // Dynamic — user specifies
-  if (providerType === 'omp') return [];  // Dynamic — OMP CLI owns its model catalog
+  if (providerType === 'omp') return toRoxPublicModelDefinitions();
   // anthropic
   return ANTHROPIC_MODELS;
 }
 
 /**
  * Get the default model ID for a connection's provider type.
- * Derived from the first entry in getDefaultModelsForConnection() — single source of truth.
+ * Derived from the first entry in getDefaultModelsForConnection() — except
+ * OMP, which defaults to `rox/standard` even though explore is listed first.
  *
  * @param providerType - Provider type from the connection
  * @param piAuthProvider - Optional Pi auth provider for filtering Pi models
  * @returns Default model ID string
  */
 export function getDefaultModelForConnection(providerType: LlmProviderType, piAuthProvider?: string): string {
+  if (providerType === 'omp') return ROX_DEFAULT_PARENT_MODEL;
   const models = getDefaultModelsForConnection(providerType, piAuthProvider);
   const first = models[0];
   if (!first) return '';  // Dynamic provider — no default
