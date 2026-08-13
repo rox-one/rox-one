@@ -385,13 +385,18 @@ describe('CORS', () => {
 
 /**
  * R2-faithful fake: assigns etags and honors `put(..., { onlyIf: { etagMatches } })`.
- * `FakeR2Bucket` ignores preconditions (the production bug); this double is what
- * makes a lost-update observable in-process.
+ * Composes `FakeR2Bucket` (whose `put` cannot return null) so a lost-update is
+ * observable in-process the same way real R2 returns null on a failed precondition.
  */
-class EtagR2Bucket extends FakeR2Bucket {
+class EtagR2Bucket {
+  private inner = new FakeR2Bucket()
   private etags = new Map<string, string>()
   private seq = 0
   private headBarrier: { needed: number; started: number; wait: Promise<void>; release: () => void } | null = null
+
+  inspect(key: string) {
+    return this.inner.inspect(key)
+  }
 
   /** Next `n` head() calls wait until all n have started, so they observe the same etag. */
   barrierNextHeads(n: number) {
@@ -400,7 +405,7 @@ class EtagR2Bucket extends FakeR2Bucket {
     this.headBarrier = { needed: n, started: 0, wait, release }
   }
 
-  override async put(
+  async put(
     key: string,
     value: string,
     opts?: {
@@ -413,14 +418,14 @@ class EtagR2Bucket extends FakeR2Bucket {
     if (opts?.onlyIf?.etagMatches !== undefined && current !== opts.onlyIf.etagMatches) {
       return null
     }
-    await super.put(key, value, opts)
+    await this.inner.put(key, value, opts)
     this.seq += 1
     const etag = String(this.seq)
     this.etags.set(key, etag)
     return { key, etag }
   }
 
-  override async head(key: string) {
+  async head(key: string) {
     const barrier = this.headBarrier
     if (barrier) {
       barrier.started += 1
@@ -430,19 +435,19 @@ class EtagR2Bucket extends FakeR2Bucket {
       }
       await barrier.wait
     }
-    const obj = await super.head(key)
+    const obj = await this.inner.head(key)
     if (!obj) return null
     return { ...obj, etag: this.etags.get(key) }
   }
 
-  override async get(key: string) {
-    const obj = await super.get(key)
+  async get(key: string) {
+    const obj = await this.inner.get(key)
     if (!obj) return null
     return { ...obj, etag: this.etags.get(key) }
   }
 
-  override async delete(key: string) {
-    await super.delete(key)
+  async delete(key: string) {
+    await this.inner.delete(key)
     this.etags.delete(key)
   }
 }
