@@ -415,6 +415,8 @@ export const RPC_CHANNELS = {
     GET_SERVER_STATUS: 'settings:getServerStatus',
     GET_ENV_OVERRIDES: 'settings:getEnvOverrides',
     SET_ENV_OVERRIDES: 'settings:setEnvOverrides',
+    GET_SECRET_REFS: 'settings:getSecretRefs',
+    SET_SECRET_REFS: 'settings:setSecretRefs',
   },
   pi: {
     GET_API_KEY_PROVIDERS: 'pi:getApiKeyProviders',

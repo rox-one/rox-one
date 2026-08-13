@@ -96,6 +96,40 @@ describe('setRuntimeSecretRefs / getRuntimeSecretRefs', () => {
     expect(cfg.runtime?.secretRefs ?? []).toEqual([])
   })
 
+  it('rejects PATH and NODE_OPTIONS with typed SECRET_ENVVAR_DENIED', () => {
+    const configDir = setupConfigDir()
+    for (const envVar of ['PATH', 'NODE_OPTIONS']) {
+      const r = runEval(
+        configDir,
+        `try { setRuntimeSecretRefs([{ name: 'x', envVar: ${JSON.stringify(envVar)} }]); console.log(JSON.stringify({ ok: true })) } catch (e) { console.log(JSON.stringify({ code: e.code, name: e.name, message: e.message })) }`,
+      )
+      expect(r.exitCode).toBe(0)
+      const out = JSON.parse(r.stdout)
+      expect(out.code).toBe('SECRET_ENVVAR_DENIED')
+      expect(out.name).toBe('SecretConfigError')
+      expect(out.message).toContain(envVar)
+    }
+  })
+
+  it('getRuntimeSecretRefs never includes a value field even if planted in config.json', () => {
+    const configDir = setupConfigDir()
+    const planted = 'sk-planted-must-not-surface'
+    const cfgPath = join(configDir, 'config.json')
+    const cfg = JSON.parse(readFileSync(cfgPath, 'utf8'))
+    cfg.runtime = {
+      secretRefs: [{ name: 'openai', envVar: 'OPENAI_API_KEY', value: planted, extra: 'nope' }],
+    }
+    writeFileSync(cfgPath, JSON.stringify(cfg))
+    const r = runEval(configDir, `console.log(JSON.stringify(getRuntimeSecretRefs()))`)
+    expect(r.exitCode).toBe(0)
+    const refs = JSON.parse(r.stdout)
+    expect(JSON.stringify(refs)).not.toContain(planted)
+    expect(refs).toHaveLength(1)
+    expect(refs[0].value).toBeUndefined()
+    expect(refs[0].extra).toBeUndefined()
+    expect(Object.keys(refs[0]).sort()).toEqual(['envVar', 'name'])
+  })
+
   it('rejects empty names, unknown providers and empty refs', () => {
     const configDir = setupConfigDir()
     const cases = [

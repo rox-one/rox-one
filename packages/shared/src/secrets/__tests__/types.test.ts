@@ -4,8 +4,10 @@
 import { describe, expect, it } from 'bun:test'
 import {
   SECRET_PROVIDER_IDS,
+  SecretConfigError,
   SecretRefEntrySchema,
   SecretResolveError,
+  toPublicSecretRef,
 } from '../types.ts'
 
 describe('SECRET_PROVIDER_IDS', () => {
@@ -58,5 +60,36 @@ describe('SecretResolveError', () => {
     expect(err.provider).toBe('infisical')
     expect(err.message).toBe('bad token')
     expect(err instanceof Error).toBe(true)
+  })
+})
+
+describe('SecretConfigError', () => {
+  it('carries typed SECRET_ENVVAR_DENIED without a provider', () => {
+    const err = new SecretConfigError('SECRET_ENVVAR_DENIED', 'secret ref envVar not allowed: PATH', 'PATH')
+    expect(err.name).toBe('SecretConfigError')
+    expect(err.code).toBe('SECRET_ENVVAR_DENIED')
+    expect(err.envVar).toBe('PATH')
+    expect(err instanceof Error).toBe(true)
+  })
+})
+
+describe('toPublicSecretRef', () => {
+  it('keeps name/envVar/provider/ref and strips value', () => {
+    const planted = 'sk-must-not-appear'
+    const out = toPublicSecretRef({
+      name: 'openai',
+      envVar: 'OPENAI_API_KEY',
+      provider: 'infisical',
+      ref: 'OPENAI_API_KEY',
+      value: planted,
+    } as { name: string; envVar: string; provider: 'infisical'; ref: string; value: string })
+    expect(out).toEqual({
+      name: 'openai',
+      envVar: 'OPENAI_API_KEY',
+      provider: 'infisical',
+      ref: 'OPENAI_API_KEY',
+    })
+    expect(JSON.stringify(out)).not.toContain(planted)
+    expect('value' in out).toBe(false)
   })
 })

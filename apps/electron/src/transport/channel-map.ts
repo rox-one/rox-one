@@ -142,6 +142,10 @@ export const CHANNEL_MAP = {
   getEnvOverrides: invoke(RPC_CHANNELS.settings.GET_ENV_OVERRIDES),
   setEnvOverrides: invoke(RPC_CHANNELS.settings.SET_ENV_OVERRIDES),
 
+  // Secret refs (config runtime.secretRefs — refs only, never values)
+  getSecretRefs: invoke(RPC_CHANNELS.settings.GET_SECRET_REFS),
+  setSecretRefs: invoke(RPC_CHANNELS.settings.SET_SECRET_REFS),
+
   // Release notes
   getReleaseNotes: invoke(RPC_CHANNELS.releaseNotes.GET),
   getLatestReleaseVersion: invoke(RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION),

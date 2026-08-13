@@ -28,7 +28,7 @@ import { type ConfigDefaults } from './config-defaults-schema.ts';
 import { isValidThemeFile } from './validators.ts';
 import { isToolName } from '../toolchain/types.ts';
 import type { ToolName } from '../toolchain/types.ts';
-import { SECRET_PROVIDER_IDS, type SecretRefEntry } from '../secrets/types.ts';
+import { SECRET_PROVIDER_IDS, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '../secrets/types.ts';
 
 // Re-export CONFIG_DIR for convenience (centralized in paths.ts)
 export { CONFIG_DIR } from './paths.ts';
@@ -900,7 +900,7 @@ export function setRuntimeEnvOverrides(env: Record<string, string>): void {
  */
 export function getRuntimeSecretRefs(): SecretRefEntry[] {
   const config = loadStoredConfig();
-  return (config?.runtime?.secretRefs ?? []).map((entry) => ({ ...entry }));
+  return (config?.runtime?.secretRefs ?? []).map((entry) => toPublicSecretRef(entry));
 }
 
 /**
@@ -925,7 +925,11 @@ export function setRuntimeSecretRefs(refs: SecretRefEntry[]): void {
       throw new Error(`invalid secret ref envVar: ${envVar}`);
     }
     if (ENV_OVERRIDE_DENY[envVar]) {
-      throw new Error(`secret ref envVar not allowed: ${envVar}`);
+      throw new SecretConfigError(
+        'SECRET_ENVVAR_DENIED',
+        `secret ref envVar not allowed: ${envVar}`,
+        envVar,
+      );
     }
     if (entry.provider !== undefined && !(SECRET_PROVIDER_IDS as readonly string[]).includes(entry.provider)) {
       throw new Error(`unknown secret provider: ${entry.provider}`);

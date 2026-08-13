@@ -1,7 +1,8 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname } from 'path'
-import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getPersistedRuntimeEnvOverrides, setRuntimeEnvOverrides } from '@craft-agent/shared/config'
+import { RPC_CHANNELS, CodedError, isErrorCode } from '@craft-agent/shared/protocol'
+import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getPersistedRuntimeEnvOverrides, setRuntimeEnvOverrides, getRuntimeSecretRefs, setRuntimeSecretRefs } from '@craft-agent/shared/config'
+import { diagnoseInfisicalAvailability, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '@craft-agent/shared/secrets'
 import { isValidThinkingLevel, normalizeThinkingLevel, THINKING_LEVEL_IDS } from '@craft-agent/shared/agent/thinking-levels'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
@@ -40,6 +41,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.settings.SET_DEFAULT_THINKING_LEVEL,
   RPC_CHANNELS.settings.GET_ENV_OVERRIDES,
   RPC_CHANNELS.settings.SET_ENV_OVERRIDES,
+  RPC_CHANNELS.settings.GET_SECRET_REFS,
+  RPC_CHANNELS.settings.SET_SECRET_REFS,
   RPC_CHANNELS.tools.GET_BROWSER_TOOL_ENABLED,
   RPC_CHANNELS.tools.SET_BROWSER_TOOL_ENABLED,
   RPC_CHANNELS.settings.GET_NETWORK_PROXY,
@@ -93,6 +96,33 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
       }
     }
     setRuntimeEnvOverrides(env)
+    return { success: true }
+  })
+
+  // ============================================================
+  // Settings - Secret refs (config runtime.secretRefs — refs only)
+  // ============================================================
+
+  // GET returns name/envVar/provider/ref plus Infisical availability.
+  // Never resolved values — those live in the in-memory spawn fragment.
+  server.handle(RPC_CHANNELS.settings.GET_SECRET_REFS, async () => {
+    const refs = getRuntimeSecretRefs().map(toPublicSecretRef)
+    const infisical = await diagnoseInfisicalAvailability()
+    return { refs, infisical }
+  })
+
+  server.handle(RPC_CHANNELS.settings.SET_SECRET_REFS, async (_ctx, refs: SecretRefEntry[]) => {
+    if (!Array.isArray(refs)) {
+      throw new Error('secret refs must be an array')
+    }
+    try {
+      setRuntimeSecretRefs(refs.map(toPublicSecretRef))
+    } catch (error) {
+      if (error instanceof SecretConfigError && isErrorCode(error.code)) {
+        throw new CodedError(error.code, error.message)
+      }
+      throw error
+    }
     return { success: true }
   })
 
