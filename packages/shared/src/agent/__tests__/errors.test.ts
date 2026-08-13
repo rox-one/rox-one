@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'bun:test'
-import { parseError, classifyOmpStartupExit, scrubOmpStderr } from '../errors.ts'
+import { isAgentErrorCode } from '@craft-agent/core/types'
+import {
+  parseError,
+  classifyOmpStartupExit,
+  scrubOmpStderr,
+  ompStartupErrorToAgentError,
+  OmpStartupError,
+  type OmpStartupErrorCode,
+} from '../errors.ts'
 
 describe('parseError proxy interception handling', () => {
   it('maps interceptor proxy marker message to proxy_error', () => {
@@ -145,5 +153,29 @@ describe('classifyOmpStartupExit stderr scrubbing', () => {
     expect(err.ompCode).toBe('OMP_AUTH_REQUIRED')
     expect(err.message).not.toContain('SecretKey12345678')
     expect(err.stderr ?? '').not.toContain('SecretKey12345678')
+  })
+})
+
+const OMP_STARTUP_CODES: OmpStartupErrorCode[] = [
+  'OMP_NOT_CONFIGURED',
+  'OMP_NO_MODELS',
+  'OMP_AUTH_REQUIRED',
+  'OMP_START_FAILED',
+  'OMP_READY_TIMEOUT',
+  'OMP_PROTOCOL_ERROR',
+]
+
+describe('ompStartupErrorToAgentError core ErrorCode union', () => {
+  it('maps every OMP startup code onto AgentError.code without a string cast', () => {
+    for (const code of OMP_STARTUP_CODES) {
+      const agentError = ompStartupErrorToAgentError(new OmpStartupError({
+        code,
+        message: `${code} diagnostic`,
+      }))
+      expect(agentError.code).toBe(code)
+      expect(isAgentErrorCode(agentError.code)).toBe(true)
+      expect(agentError.title.length).toBeGreaterThan(0)
+      expect(agentError.message).toContain(code)
+    }
   })
 })

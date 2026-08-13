@@ -219,7 +219,7 @@ describe('ompStartupErrorToAgentError credential actions', () => {
       hint: 'Create ~/.omp/agent/models.yml or set ROX_API_KEY.',
     }));
 
-    expect(String(agentError.code)).toBe('OMP_NO_MODELS');
+    expect(agentError.code).toBe('OMP_NO_MODELS');
     expect(agentError.actions.some((a) => a.action === 'settings')).toBe(true);
     expect(agentError.canRetry).toBe(true);
   });
