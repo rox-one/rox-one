@@ -94,8 +94,8 @@ export async function handleTransformData(
     const runtime = resolveScriptRuntime(args.language);
     const spawnArgs = [...runtime.argsPrefix, tempScript, ...resolvedInputs, resolvedOutput];
 
-    let networkIsolation = applyNetworkIsolation(runtime.command, spawnArgs);
-    let filesystemIsolation = applyFilesystemIsolation(runtime.command, spawnArgs, sessionDir);
+    let networkIsolation
+    let filesystemIsolation
 
     if (process.platform === 'darwin') {
       filesystemIsolation = applyFilesystemIsolation(runtime.command, spawnArgs, sessionDir, {
@@ -109,13 +109,11 @@ export async function handleTransformData(
       };
     } else {
       networkIsolation = applyNetworkIsolation(runtime.command, spawnArgs);
-      if (networkIsolation.status === 'enforced') {
-        filesystemIsolation = applyFilesystemIsolation(
-          networkIsolation.command,
-          networkIsolation.args,
-          sessionDir,
-        );
-      }
+      filesystemIsolation = applyFilesystemIsolation(
+        networkIsolation.status === 'enforced' ? networkIsolation.command : runtime.command,
+        networkIsolation.status === 'enforced' ? networkIsolation.args : spawnArgs,
+        sessionDir,
+      );
     }
 
     if (networkIsolation.status !== 'enforced' || filesystemIsolation.status !== 'enforced') {

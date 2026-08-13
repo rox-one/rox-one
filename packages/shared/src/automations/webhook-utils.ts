@@ -9,6 +9,7 @@
 import type { WebhookAction, WebhookActionResult } from './types.ts';
 import { expandEnvVars } from './utils.ts';
 import { DEFAULT_WEBHOOK_METHOD, HISTORY_FIELD_MAX_LENGTH } from './constants.ts';
+import { lookup as dnsLookup } from 'node:dns/promises';
 
 function isPrivateIPv4(host: string): boolean {
   const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host)
@@ -63,6 +64,52 @@ export function blockedWebhookDestination(parsed: URL): string | null {
     }
   }
 
+  return null
+}
+
+function isIpLiteral(host: string): boolean {
+  if (host.includes(':')) return true
+  return /^\d{1,3}(?:\.\d{1,3}){3}$/.test(host)
+}
+
+export type WebhookDnsLookup = (
+  hostname: string,
+  options: { all: true },
+) => Promise<Array<{ address: string; family: number }>>
+
+/**
+ * After the hostname/literal check, resolve DNS and reject private answers.
+ * Closes the DNS-rebinding gap where a public name points at 127.0.0.1.
+ * Fails closed when lookup throws or returns nothing.
+ */
+export async function blockedWebhookResolvedAddresses(
+  parsed: URL,
+  lookupFn: WebhookDnsLookup = dnsLookup,
+): Promise<string | null> {
+  const literal = blockedWebhookDestination(parsed)
+  if (literal) return literal
+
+  const host = normalizeWebhookHostname(parsed.hostname)
+  if (isIpLiteral(host)) return null
+
+  let records: Array<{ address: string; family: number }>
+  try {
+    records = await lookupFn(host, { all: true })
+  } catch {
+    return `Webhook host "${host}" could not be resolved`
+  }
+  if (!records.length) {
+    return `Webhook host "${host}" could not be resolved`
+  }
+
+  for (const rec of records) {
+    const ipUrl = rec.family === 6
+      ? new URL(`http://[${rec.address}]/`)
+      : new URL(`http://${rec.address}/`)
+    if (blockedWebhookDestination(ipUrl)) {
+      return `Webhook host "${host}" resolved to a private address`
+    }
+  }
   return null
 }
 
@@ -193,6 +240,8 @@ export interface ExecuteWebhookOptions {
   env?: Record<string, string>;
   /** Retry config for transient failures. Disabled by default. */
   retry?: RetryConfig;
+  /** Injectable DNS lookup for tests. Defaults to dns.promises.lookup. */
+  lookup?: WebhookDnsLookup;
 }
 
 /**
@@ -226,7 +275,7 @@ export async function executeWebhookRequest(
         durationMs: 0,
       };
     }
-    const blocked = blockedWebhookDestination(parsed);
+    const blocked = await blockedWebhookResolvedAddresses(parsed, options?.lookup);
     if (blocked) {
       return {
         type: 'webhook', url, statusCode: 0, success: false,
@@ -310,6 +359,7 @@ export async function executeWebhookRequest(
       headers,
       body: requestBody,
       signal: controller.signal,
+      redirect: 'manual',
     });
 
     const success = response.status >= 200 && response.status < 300;

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { createWebuiHandler, startWebuiHttpServer } from '../http-server'
+import { createWebuiHandler, resolveWebuiFile, startWebuiHttpServer } from '../http-server'
 
 const SECRET = 'test-server-secret'
 const PASSWORD = 'test-password'
@@ -21,6 +21,8 @@ function createTestWebuiDir(): string {
   TEMP_DIRS.push(dir)
   writeFileSync(join(dir, 'login.html'), '<!doctype html><html><body>login</body></html>')
   writeFileSync(join(dir, 'index.html'), '<!doctype html><html><body>app</body></html>')
+  mkdirSync(join(dir, 'login-assets'))
+  writeFileSync(join(dir, 'login-assets', 'ok.css'), 'body{}')
   return dir
 }
 
@@ -266,5 +268,46 @@ describe('WebUI login rate-limit IP keying', () => {
     }
     expect((await auth(handler, { 'X-Forwarded-For': '203.0.113.40' })).status).toBe(429)
     expect((await auth(handler, { 'X-Forwarded-For': '203.0.113.41' })).status).toBe(401)
+  })
+})
+
+describe('resolveWebuiFile', () => {
+  it('keeps assets inside the webui dir and rejects traversal', () => {
+    const dir = createTestWebuiDir()
+    expect(resolveWebuiFile(dir, '/login-assets/ok.css')).toBe(join(dir, 'login-assets', 'ok.css'))
+    expect(resolveWebuiFile(dir, '/login-assets/../login.html')).toBe(join(dir, 'login.html'))
+    expect(resolveWebuiFile(dir, '/login-assets/../../etc/passwd')).toBeNull()
+    expect(resolveWebuiFile(dir, '/login-assets/..%2f..%2fetc/passwd')).toBeNull()
+    expect(resolveWebuiFile(dir, '/login-assets/%2e%2e/%2e%2e/etc/passwd')).toBeNull()
+  })
+})
+
+describe('WebUI static path containment', () => {
+  it('does not serve files outside webuiDir via unauthenticated login-assets', async () => {
+    const webuiDir = createTestWebuiDir()
+    const outside = join(webuiDir, '..', 'secret.txt')
+    writeFileSync(outside, 'classified')
+
+    const handler = createWebuiHandler({
+      webuiDir,
+      secret: SECRET,
+      password: PASSWORD,
+      wsProtocol: 'ws',
+      wsPort: 9100,
+      getHealthCheck: () => ({ status: 'ok' }),
+      logger,
+    })
+
+    try {
+      const res = await handler.fetch(new Request('http://127.0.0.1/login-assets/..%2f..%2fsecret.txt'))
+      expect(res.status).toBe(404)
+      expect(await res.text()).not.toContain('classified')
+
+      const ok = await handler.fetch(new Request('http://127.0.0.1/login-assets/ok.css'))
+      expect(ok.status).toBe(200)
+      expect(await ok.text()).toBe('body{}')
+    } finally {
+      handler.dispose()
+    }
   })
 })

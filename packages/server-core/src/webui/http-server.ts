@@ -10,7 +10,8 @@
  *    for separate-port deployments or development.
  */
 
-import { join, extname } from 'node:path'
+import { join, extname, resolve } from 'node:path'
+import { isPathInsideBase } from '../utils/path-validation'
 import {
   RateLimiter,
   initPasswordHash,
@@ -48,6 +49,26 @@ const MIME_TYPES: Record<string, string> = {
 
 function getMimeType(path: string): string {
   return MIME_TYPES[extname(path).toLowerCase()] ?? 'application/octet-stream'
+}
+
+/**
+ * Resolve a URL path to a file inside webuiDir. Rejects traversal, absolute
+ * segments, and NUL bytes so /login-assets/../… cannot read the host.
+ */
+export function resolveWebuiFile(webuiDir: string, urlPath: string): string | null {
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(urlPath)
+  } catch {
+    return null
+  }
+  const trimmed = decoded.split('?')[0]?.split('#')[0] ?? ''
+  if (!trimmed || trimmed.includes('\0')) return null
+  const relative = trimmed.replace(/^\/+/, '')
+  if (!relative) return null
+  const resolved = resolve(webuiDir, relative)
+  if (!isPathInsideBase(resolved, webuiDir)) return null
+  return resolved
 }
 
 function getForwardedValue(req: Request, key: 'proto' | 'host'): string | null {
@@ -232,7 +253,9 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
 
     // ── Static assets that login page needs (no auth) ──
     if (path === '/favicon.ico' || path.startsWith('/login-assets/')) {
-      const file = Bun.file(join(webuiDir, path))
+      const safePath = resolveWebuiFile(webuiDir, path)
+      if (!safePath) return new Response('Not Found', { status: 404 })
+      const file = Bun.file(safePath)
       if (await file.exists()) {
         return new Response(file, {
           headers: { 'Content-Type': getMimeType(path) },
@@ -390,11 +413,14 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
 
     // ── Serve SPA static files ──
     if (path !== '/') {
-      const file = Bun.file(join(webuiDir, path))
-      if (await file.exists()) {
-        return new Response(file, {
-          headers: { 'Content-Type': getMimeType(path) },
-        })
+      const safePath = resolveWebuiFile(webuiDir, path)
+      if (safePath) {
+        const file = Bun.file(safePath)
+        if (await file.exists()) {
+          return new Response(file, {
+            headers: { 'Content-Type': getMimeType(path) },
+          })
+        }
       }
     }
 
