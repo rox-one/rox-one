@@ -80,6 +80,10 @@ export const KEYS = {
   activityRailCollapsed: 'activity-rail-collapsed',
   inspectorVisible: 'inspector-visible',
   inspectorSection: 'inspector-section',
+  // Workbench seam (ADR-0001)
+  featureFlagOverrides: 'feature-flag-overrides',
+  workbenchLayout: 'workbench-layout', // workspace-scoped via suffix
+  panelProfile: 'panel-profile', // LayoutProfile persist (S-03 §3.7)
 } as const
 
 export const EVENTS = {

@@ -87,8 +87,9 @@ import {
   UnifiedShellLayout,
   ACTIVITY_RAIL_WIDTH,
   ACTIVITY_RAIL_COLLAPSED_WIDTH,
+  useBrowserPaneLifecycle,
 } from "../../platform"
-import { featureUnifiedShellAtom, activityRailCollapsedAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, activityRailCollapsedAtom, useWorkbenchFlag } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -256,7 +257,10 @@ function AppShellContent({
   // sashes shift right by the rail width (+ one PANEL_GAP); zero when OFF.
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const activityRailCollapsed = useAtomValue(activityRailCollapsedAtom)
-  const unifiedRailOffset = unifiedShellEnabled
+  const modeRegistryEnabled = useWorkbenchFlag('workbench.mode-registry.v1')
+  const showActivityRail = unifiedShellEnabled || modeRegistryEnabled
+  useBrowserPaneLifecycle()
+  const unifiedRailOffset = showActivityRail
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
   const [sidebarWidth, setSidebarWidth] = React.useState(() => {

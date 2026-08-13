@@ -35,15 +35,15 @@ import { routes } from '../../shared/routes'
 import type { ViewRoute } from '../../shared/routes'
 import { parseRouteToNavigationState } from '../../shared/route-parser'
 import type { KnowledgeRefKind } from '../../shared/types'
+import type { SurfaceTab } from '@craft-agent/core/platform'
 
 // =============================================================================
-// Surface tab model (structural twin of S-02 §3.1 SurfaceTab)
+// Surface tab model — canonical SurfaceTab from @craft-agent/core/platform
 // =============================================================================
 
 /**
  * SiYuan ref as serialized in a surface tab. Kept structurally identical to
- * the Knowledge Provider contract (K-03 §3.1); apps/electron does not import
- * @craft-agent/core's knowledge module, so the shape is declared locally.
+ * the Knowledge Provider contract (K-03 §3.1).
  */
 export interface SurfaceKnowledgeRef {
   scheme: 'siyuan'
@@ -51,14 +51,8 @@ export interface SurfaceKnowledgeRef {
   id: string
 }
 
-export type SurfaceTabLike =
-  | { kind: 'session'; sessionId: string }
-  | { kind: 'knowledge'; ref: SurfaceKnowledgeRef }
-  | { kind: 'browser'; tabId: string }
-  | { kind: 'database'; ref: SurfaceKnowledgeRef }
-  | { kind: 'cloud-run'; runId: string }
-  | { kind: 'extension'; extensionId: string; viewId: string }
-  | { kind: 'diff'; proposalId: string }
+/** Alias of the canonical union — do not fork a second tab type (ADR-0001). */
+export type SurfaceTabLike = SurfaceTab
 
 // =============================================================================
 // Snapshot model (S-02 §3.10)

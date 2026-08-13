@@ -11,20 +11,25 @@
  * Collapse state persists via `activityRailCollapsedAtom` (KEYS.activityRailCollapsed).
  * Collapsed = destinations hidden, only the expand chevron stays (atom contract).
  *
- * Mounted by `UnifiedShellLayout` (platform/index.tsx) — rendered only when
- * `featureUnifiedShellAtom` is ON, so there is no flag check in here.
+ * Mounted by `UnifiedShellLayout`. When `workbench.mode-registry.v1` is on
+ * (or unified-shell fallback), destinations come from ModeRegistry; otherwise
+ * from `APP_NAV_DESTINATIONS`.
  */
 import { useAtom } from 'jotai'
-import { ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { BookOpen, ChevronsLeft, ChevronsRight, MessageSquare, Settings, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
-import { activityRailCollapsedAtom } from '@/atoms/unified-shell'
+import { activityRailCollapsedAtom, useWorkbenchFlag } from '@/atoms/unified-shell'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import {
   APP_NAV_DESTINATIONS,
   type AppNavDestination,
 } from '../components/app-shell/nav-destinations'
+import type { ModeContribution } from '@craft-agent/core/platform'
+import type { ViewRoute } from '../../shared/routes'
+import { getWorkbenchModeRegistry } from './modes-bootstrap'
+import { coreModeIsActive } from './mode-rail-model'
 
 /** Expanded rail width — AppShell uses it to offset the absolute resize sashes. */
 export const ACTIVITY_RAIL_WIDTH = 48
@@ -68,9 +73,48 @@ function RailItem({ dest }: { dest: AppNavDestination }) {
   )
 }
 
+const MODE_ICONS: Record<string, LucideIcon> = {
+  'message-square': MessageSquare,
+  'book-open': BookOpen,
+  settings: Settings,
+}
+
+function ModeRailItem({ mode }: { mode: ModeContribution }) {
+  const { t } = useTranslation()
+  const { navigate } = useNavigation()
+  const navState = useNavigationState()
+  const Icon = MODE_ICONS[mode.icon] ?? MessageSquare
+  const label = t(mode.title)
+  const active = coreModeIsActive(mode.id, navState)
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          aria-current={active ? 'page' : undefined}
+          onClick={() => void navigate(mode.rootRoute as ViewRoute)}
+          className={cn(
+            'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
+            active
+              ? 'bg-accent/10 text-accent'
+              : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+          )}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
+  )
+}
+
 export function ActivityRail() {
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useAtom(activityRailCollapsedAtom)
+  const useModeRegistry = useWorkbenchFlag('workbench.mode-registry.v1')
+  const modes = useModeRegistry ? getWorkbenchModeRegistry().list({}) : []
 
   if (collapsed) {
     return (
@@ -102,9 +146,11 @@ export function ActivityRail() {
       style={{ width: ACTIVITY_RAIL_WIDTH }}
     >
       <div className="flex flex-col items-center gap-0.5">
-        {APP_NAV_DESTINATIONS.map((dest) => (
-          <RailItem key={dest.id} dest={dest} />
-        ))}
+        {useModeRegistry
+          ? modes.map((mode) => <ModeRailItem key={mode.id} mode={mode} />)
+          : APP_NAV_DESTINATIONS.map((dest) => (
+              <RailItem key={dest.id} dest={dest} />
+            ))}
       </div>
       <div className="mt-auto">
         <Tooltip>

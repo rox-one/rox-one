@@ -24,8 +24,10 @@ import {
   type PanelType,
 } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { useWorkbenchFlag } from '@/atoms/unified-shell'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
+import { KEYS, set as persistStorage } from '@/lib/local-storage'
 import { getSessionTitle } from '@/utils/session'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
 import {
@@ -33,6 +35,7 @@ import {
   knowledgeRefKey,
   type SurfaceTabView,
 } from './surface-tab-model'
+import { workbenchLayoutFromPanelEntries } from './workbench-layout-sync'
 
 const TAB_STRIP_HEIGHT = 36
 
@@ -54,7 +57,7 @@ function tabIcon(tab: SurfaceTabView): LucideIcon {
   }
 }
 
-function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
+function SurfaceTabItem({ tab, preview }: { tab: SurfaceTabView; preview?: boolean }) {
   const { t } = useTranslation()
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
   const closePanel = useSetAtom(closePanelAtom)
@@ -84,7 +87,9 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
         'group flex h-7 max-w-[220px] min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] transition-colors',
         tab.focused
           ? 'bg-background text-foreground shadow-minimal'
-          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+          : preview
+            ? 'italic text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
+            : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
       )}
     >
       <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
@@ -114,6 +119,7 @@ export function SurfaceTabs() {
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id
+  const tabGroupsEnabled = useWorkbenchFlag('workbench.tab-groups.v2')
 
   const resolveSessionTitle = useCallback(
     (sessionId: string) => {
@@ -199,6 +205,31 @@ export function SurfaceTabs() {
     },
   })
 
+  const workbenchLayout = useMemo(() => {
+    if (!tabGroupsEnabled || !workspaceId) return null
+    return workbenchLayoutFromPanelEntries(
+      workspaceId,
+      entries.map((entry) => ({ id: entry.id, route: entry.route, proportion: entry.proportion })),
+      focusedPanelId,
+    )
+  }, [tabGroupsEnabled, workspaceId, entries, focusedPanelId])
+
+  useEffect(() => {
+    if (!tabGroupsEnabled || !workspaceId || !workbenchLayout) return
+    persistStorage(KEYS.workbenchLayout, workbenchLayout, workspaceId)
+  }, [tabGroupsEnabled, workspaceId, workbenchLayout])
+
+  const previewPanelIds = useMemo(() => {
+    if (!workbenchLayout) return new Set<string>()
+    const ids = new Set<string>()
+    for (const group of workbenchLayout.groups) {
+      for (const instance of group.tabs) {
+        if (instance.preview) ids.add(group.id)
+      }
+    }
+    return ids
+  }, [workbenchLayout])
+
   return (
     <div
       role="tablist"
@@ -208,7 +239,9 @@ export function SurfaceTabs() {
       {tabs.length === 0 ? (
         <span className="px-1 text-[12px] text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
-        tabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)
+        tabs.map((tab) => (
+          <SurfaceTabItem key={tab.panelId} tab={tab} preview={previewPanelIds.has(tab.panelId)} />
+        ))
       )}
     </div>
   )

@@ -26,6 +26,8 @@ import type { SettingsMenuItem } from "../../../shared/menu-schema"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { useEffect, useRef, useState } from "react"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
+import { ModeBar } from "../../platform/ModeBar"
+import { useWorkbenchFlag } from "@/atoms/unified-shell"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
 import { getDocUrl } from "@craft-agent/shared/docs/doc-links"
@@ -109,6 +111,8 @@ export function TopBar({
   const { t } = useTranslation()
   const [maxVisibleBrowserBadges, setMaxVisibleBrowserBadges] = useState(3)
   const rightSlotRef = useRef<HTMLDivElement | null>(null)
+  const showModeBar = useWorkbenchFlag('workbench.top-chrome.v2')
+  const hideBrowserStrip = useWorkbenchFlag('workbench.browser-surface.v2')
 
   const goBackHotkey = useActionLabel('nav.goBackAlt').hotkey
   const goForwardHotkey = useActionLabel('nav.goForwardAlt').hotkey
@@ -238,6 +242,11 @@ export function TopBar({
               />
             </div>
           )}
+          {showModeBar && !isCompact && (
+            <div className="ml-1 shrink-0">
+              <ModeBar />
+            </div>
+          )}
         </div>
 
         {isCompact && compactHeaderRenderer && (
@@ -252,7 +261,13 @@ export function TopBar({
       {!isCompact && (
       <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-1" style={{ paddingRight: 12 }}>
         <div className="min-w-0">
-          <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
+          {!hideBrowserStrip && (
+            <BrowserTabStrip
+              activeSessionId={activeSessionId}
+              maxVisibleBadges={maxVisibleBrowserBadges}
+              manageLifecycle={false}
+            />
+          )}
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

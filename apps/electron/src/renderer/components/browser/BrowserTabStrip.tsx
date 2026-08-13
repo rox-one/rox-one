@@ -39,12 +39,15 @@ interface BrowserTabStripProps {
   activeSessionId?: string | null
   instancesOverride?: BrowserInstanceInfo[]
   maxVisibleBadges?: number
+  /** When false, AppShell (or a test) owns pane IPC. Default true for playground. */
+  manageLifecycle?: boolean
 }
 
 export function BrowserTabStrip({
   activeSessionId,
   instancesOverride,
   maxVisibleBadges = DEFAULT_MAX_VISIBLE_BADGES,
+  manageLifecycle = true,
 }: BrowserTabStripProps) {
   // Filter the badge strip to the workspace currently in focus. Remote-connected
   // workspaces have a different `remoteWorkspaceId` (what the remote agent
@@ -93,7 +96,7 @@ export function BrowserTabStrip({
   }, [effectiveInstances])
 
   useEffect(() => {
-    if (instancesOverride) return
+    if (!manageLifecycle || instancesOverride) return
 
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) {
@@ -116,10 +119,10 @@ export function BrowserTabStrip({
         setInstances([])
         setActiveInstanceId(null)
       })
-  }, [instancesOverride, setInstances, setActiveInstanceId])
+  }, [manageLifecycle, instancesOverride, setInstances, setActiveInstanceId])
 
   useEffect(() => {
-    if (instancesOverride) return
+    if (!manageLifecycle || instancesOverride) return
 
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) return
@@ -169,7 +172,7 @@ export function BrowserTabStrip({
         removeReconcileTimerRef.current = null
       }
     }
-  }, [instancesOverride, updateInstance, removeInstance, setActiveInstanceId, setInstances])
+  }, [manageLifecycle, instancesOverride, updateInstance, removeInstance, setActiveInstanceId, setInstances])
 
   useEffect(() => {
     if (orderedInstances.length === 0) {

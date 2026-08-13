@@ -1,17 +1,17 @@
 /**
  * Unified Shell (W1) — feature flag + chrome state atoms.
  *
- * Single gate: `featureUnifiedShellAtom` (localStorage `craft-feature-unified-shell`,
- * default OFF). When OFF, AppShell renders zero unified-shell chrome — use this
- * atom as the runtime switch: writing it from any component/devtools flips the
- * chrome live (`atomWithStorage` persists + re-renders subscribers).
- *
- * Chrome state mirrors the sidebarVisible pattern (`AppShell.tsx`): rail collapse,
- * inspector visibility and the active inspector section persist to localStorage
- * and restore across restarts. All keys are contract fields in
- * `lib/local-storage.ts` (KEYS.*, W1 block).
+ * Wave gate: `featureUnifiedShellAtom`. Granular `workbench.*` flags OR-fall
+ * back to that atom (ADR-0001 addendum); domain/workgraph flags do not.
  */
+import { useAtomValue } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
+import {
+  createWorkbenchFeatureFlagRegistry,
+  resolveFlagWithUnifiedShellFallback,
+  type FeatureFlagOverrides,
+  type FeatureFlagRegistry,
+} from '@craft-agent/core/platform'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). */
@@ -21,6 +21,33 @@ export const featureUnifiedShellAtom = atomWithStorage<boolean>(
   undefined,
   { getOnInit: true },
 )
+
+export const featureFlagOverridesAtom = atomWithStorage<FeatureFlagOverrides>(
+  getKeyString(KEYS.featureFlagOverrides),
+  {},
+  undefined,
+  { getOnInit: true },
+)
+
+let workbenchFlagRegistry: FeatureFlagRegistry | null = null
+
+export function getWorkbenchFlagRegistry(): FeatureFlagRegistry {
+  if (!workbenchFlagRegistry) {
+    workbenchFlagRegistry = createWorkbenchFeatureFlagRegistry()
+  }
+  return workbenchFlagRegistry
+}
+
+export function useWorkbenchFlag(id: string): boolean {
+  const unifiedShell = useAtomValue(featureUnifiedShellAtom)
+  const overrides = useAtomValue(featureFlagOverridesAtom)
+  return resolveFlagWithUnifiedShellFallback(
+    getWorkbenchFlagRegistry(),
+    id,
+    overrides,
+    unifiedShell,
+  )
+}
 
 /** Activity rail collapsed (destinations hidden, expand chevron stays). */
 export const activityRailCollapsedAtom = atomWithStorage<boolean>(
