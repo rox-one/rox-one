@@ -5,6 +5,7 @@ import {
   closeSurface,
   createEmptyWorkbenchLayout,
   getActiveSurface,
+  isPinnedSurface,
   markSurfaceDirty,
   moveSurface,
   moveSurfaceToNewGroup,
@@ -60,6 +61,28 @@ describe('openSurface', () => {
     const group = layout.groups[0]
     expect(group?.tabs.map((t) => t.tab)).toEqual([sessionB])
     expect(group?.tabs[0]?.preview).toBe(true)
+    expect(isPinnedSurface(group!.tabs[0]!)).toBe(false)
+  })
+
+  it('a dirty preview is pinned instead of being replaced by the next preview', () => {
+    const opened = openInActiveGroup(createEmptyWorkbenchLayout('ws-1'), sessionA, 'preview')
+    const previewId = opened.layout.groups[0]?.tabs[0]?.id
+    if (!previewId) throw new Error('expected a preview tab')
+    // Dirty while still a preview (not via markSurfaceDirty, which also pins).
+    const dirtyPreviewLayout = {
+      ...opened.layout,
+      groups: opened.layout.groups.map((g) => ({
+        ...g,
+        tabs: g.tabs.map((t) => (t.id === previewId ? { ...t, dirty: true } : t)),
+      })),
+    }
+
+    const layout = openInActiveGroup(dirtyPreviewLayout, sessionB, 'preview').layout
+
+    const tabs = layout.groups[0]?.tabs ?? []
+    expect(tabs.map((t) => t.tab)).toEqual([sessionA, sessionB])
+    expect(tabs[0]).toMatchObject({ id: previewId, dirty: true, preview: false })
+    expect(tabs[1]).toMatchObject({ dirty: false, preview: true })
   })
 
   it('pinned tabs survive; only the preview slot gets replaced', () => {
@@ -69,7 +92,8 @@ describe('openSurface', () => {
 
     const tabs = layout.groups[0]?.tabs ?? []
     expect(tabs.map((t) => t.tab)).toEqual([sessionA, sessionC])
-    expect(tabs[0]?.pinned).toBe(true)
+    expect(tabs[0]?.preview).toBe(false)
+    expect(isPinnedSurface(tabs[0]!)).toBe(true)
     expect(tabs[1]?.preview).toBe(true)
   })
 
@@ -92,8 +116,8 @@ describe('openSurface', () => {
 
     const tab = layout.groups[0]?.tabs[0]
     expect(layout.groups[0]?.tabs).toHaveLength(1)
-    expect(tab?.pinned).toBe(true)
     expect(tab?.preview).toBe(false)
+    expect(isPinnedSurface(tab!)).toBe(true)
   })
 
   it('focus:false opens in the background without changing the active tab', () => {
@@ -140,7 +164,9 @@ describe('closeSurface', () => {
     if (!group || !bId) throw new Error('expected three tabs')
 
     layout = activateTab(layout, group.id, bId, NOW)
-    layout = closeSurface(layout, bId)
+    const closed = closeSurface(layout, bId)
+    expect(closed.ok).toBe(true)
+    layout = closed.layout
 
     const after = layout.groups[0]
     expect(after?.tabs.map((t) => t.tab)).toEqual([sessionA, sessionC])
@@ -155,7 +181,9 @@ describe('closeSurface', () => {
     const browserInstanceId = layout.groups[1]?.tabs[0]?.id
     if (!secondGroupId || !browserInstanceId) throw new Error('expected two groups')
 
-    layout = closeSurface(layout, browserInstanceId)
+    const closed = closeSurface(layout, browserInstanceId)
+    expect(closed.ok).toBe(true)
+    layout = closed.layout
 
     expect(layout.groups).toHaveLength(1)
     expect(layout.groups[0]?.tabs[0]?.tab).toEqual(sessionA)
@@ -166,7 +194,29 @@ describe('closeSurface', () => {
   it('closing an unknown instance is a no-op', () => {
     const layout = openInActiveGroup(createEmptyWorkbenchLayout('ws-1'), sessionA).layout
 
-    expect(closeSurface(layout, 'missing')).toBe(layout)
+    const result = closeSurface(layout, 'missing')
+    expect(result.ok).toBe(false)
+    if (result.ok) throw new Error('expected NOT_FOUND')
+    expect(result.code).toBe('NOT_FOUND')
+    expect(result.layout).toBe(layout)
+  })
+
+  it('refuses to close a dirty tab unless force is set', () => {
+    let layout = openInActiveGroup(createEmptyWorkbenchLayout('ws-1'), sessionA, 'pinned').layout
+    const instanceId = layout.groups[0]?.tabs[0]?.id
+    if (!instanceId) throw new Error('expected a tab')
+    layout = markSurfaceDirty(layout, instanceId, true)
+
+    const denied = closeSurface(layout, instanceId)
+    expect(denied.ok).toBe(false)
+    if (denied.ok) throw new Error('expected DIRTY_SURFACE')
+    expect(denied.code).toBe('DIRTY_SURFACE')
+    expect(denied.layout).toBe(layout)
+    expect(denied.layout.groups[0]?.tabs).toHaveLength(1)
+
+    const forced = closeSurface(layout, instanceId, { force: true })
+    expect(forced.ok).toBe(true)
+    expect(forced.layout.groups).toHaveLength(0)
   })
 })
 
@@ -178,8 +228,8 @@ describe('pin / dirty', () => {
 
     layout = pinSurface(layout, instanceId)
 
-    expect(layout.groups[0]?.tabs[0]?.pinned).toBe(true)
     expect(layout.groups[0]?.tabs[0]?.preview).toBe(false)
+    expect(isPinnedSurface(layout.groups[0]!.tabs[0]!)).toBe(true)
   })
 
   it('editing (dirty) a preview tab pins it; clearing dirty keeps it pinned', () => {
@@ -188,10 +238,10 @@ describe('pin / dirty', () => {
     if (!instanceId) throw new Error('expected a tab')
 
     layout = markSurfaceDirty(layout, instanceId, true)
-    expect(layout.groups[0]?.tabs[0]).toMatchObject({ dirty: true, pinned: true, preview: false })
+    expect(layout.groups[0]?.tabs[0]).toMatchObject({ dirty: true, preview: false })
 
     layout = markSurfaceDirty(layout, instanceId, false)
-    expect(layout.groups[0]?.tabs[0]).toMatchObject({ dirty: false, pinned: true, preview: false })
+    expect(layout.groups[0]?.tabs[0]).toMatchObject({ dirty: false, preview: false })
   })
 })
 

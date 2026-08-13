@@ -5,6 +5,10 @@ export type {
   FeatureFlagResolution,
   FeatureFlagResolutionSource,
 } from './types.ts';
+export {
+  isWorkbenchNamespace,
+  resolveFlagWithUnifiedShellFallback,
+} from './types.ts';
 export { createFeatureFlagRegistry } from './registry.ts';
 export {
   WORKBENCH_FEATURE_FLAGS,

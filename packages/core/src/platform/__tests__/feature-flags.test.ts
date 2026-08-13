@@ -2,6 +2,7 @@ import { describe, it, expect } from 'bun:test'
 import {
   createFeatureFlagRegistry,
   createWorkbenchFeatureFlagRegistry,
+  resolveFlagWithUnifiedShellFallback,
   WORKBENCH_FEATURE_FLAGS,
 } from '../feature-flags/index.ts'
 import type { FeatureFlagDefinition } from '../feature-flags/index.ts'
@@ -48,6 +49,27 @@ describe('FeatureFlagRegistry', () => {
 
     expect(registry.isEnabled('l3', { l1: true, l2: true, l3: true })).toBe(true)
     expect(registry.isEnabled('l3', { l1: true, l3: true })).toBe(false)
+  })
+
+  it('an unknown dependency disables the flag (validate still reports it)', () => {
+    const registry = createFeatureFlagRegistry([
+      flag('dependent', { defaultValue: true, dependencies: ['missing-dep'] }),
+    ])
+
+    expect(registry.isEnabled('dependent')).toBe(false)
+    expect(registry.resolve('dependent').source).toBe('disabled-by-dependency')
+    expect(registry.validate()).toEqual(['dependent: unknown dependency "missing-dep"'])
+  })
+
+  it('mutual incompatibility is order-independent: lexicographically smaller id wins', () => {
+    const registry = createFeatureFlagRegistry([
+      flag('beta', { defaultValue: true, incompatibleWith: ['alpha'] }),
+      flag('alpha', { defaultValue: true, incompatibleWith: ['beta'] }),
+    ])
+
+    expect(registry.isEnabled('alpha')).toBe(true)
+    expect(registry.isEnabled('beta')).toBe(false)
+    expect(registry.resolve('beta').source).toBe('disabled-by-incompatibility')
   })
 
   it('the flag declaring an incompatibility yields to the other one', () => {
@@ -167,5 +189,24 @@ describe('WORKBENCH_FEATURE_FLAGS catalog (ADR-0001 §39)', () => {
     expect(registry.get('workbench.tab-groups.v2')?.migrationRequired).toBe(true)
     expect(registry.get('tasks.work-items.v1')?.migrationRequired).toBe(true)
     expect(registry.get('workbench.status-bar.v1')?.migrationRequired).toBeUndefined()
+  })
+})
+
+describe('resolveFlagWithUnifiedShellFallback', () => {
+  it('OR-falls back to unified shell for workbench.* flags only', () => {
+    const registry = createWorkbenchFeatureFlagRegistry()
+
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.status-bar.v1', {}, false)).toBe(false)
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'workbench.status-bar.v1', {}, true)).toBe(true)
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'workgraph.read.v1', {}, true)).toBe(false)
+    expect(resolveFlagWithUnifiedShellFallback(registry, 'tasks.work-items.v1', {}, true)).toBe(false)
+    expect(
+      resolveFlagWithUnifiedShellFallback(
+        registry,
+        'workbench.status-bar.v1',
+        { 'workbench.status-bar.v1': true },
+        false,
+      ),
+    ).toBe(true)
   })
 })

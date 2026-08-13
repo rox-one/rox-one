@@ -58,3 +58,21 @@ export interface FeatureFlagRegistry {
   validate(): string[];
   onDidChange(listener: () => void): Disposable;
 }
+
+/**
+ * Unified-shell OR-fallback applies only to `workbench.*` flags.
+ * Domain / workgraph flags never inherit the wave gate.
+ */
+export function isWorkbenchNamespace(id: string): boolean {
+  return id.startsWith('workbench.');
+}
+
+export function resolveFlagWithUnifiedShellFallback(
+  registry: FeatureFlagRegistry,
+  id: string,
+  overrides: FeatureFlagOverrides = {},
+  unifiedShellFallback = false,
+): boolean {
+  if (registry.isEnabled(id, overrides)) return true;
+  return unifiedShellFallback && isWorkbenchNamespace(id);
+}

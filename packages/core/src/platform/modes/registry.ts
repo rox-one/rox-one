@@ -10,6 +10,22 @@ import { evaluateWhen } from '../context-keys/evaluate-when.ts';
 import type { ContextKeys } from '../context-keys/types.ts';
 import type { ModeContribution, ModeRegistry } from './types.ts';
 
+function hasRequiredCapabilities(
+  required: readonly string[] | undefined,
+  ctx: ContextKeys,
+): boolean {
+  if (!required || required.length === 0) return true;
+  const listed = ctx.capabilities;
+  const set = Array.isArray(listed) ? new Set(listed as unknown[]) : null;
+  return required.every((cap) => {
+    if (ctx[cap] === true) return true;
+    if (ctx[`capability.${cap}`] === true) return true;
+    if (ctx.capability === cap) return true;
+    if (set?.has(cap)) return true;
+    return false;
+  });
+}
+
 class ModeRegistryImpl implements ModeRegistry {
   private readonly contributions = new Map<string, ModeContribution>();
   private readonly listeners = new Set<() => void>();
@@ -40,6 +56,7 @@ class ModeRegistryImpl implements ModeRegistry {
     const matching: ModeContribution[] = [];
     for (const contribution of this.contributions.values()) {
       if (!evaluateWhen(contribution.when, ctx)) continue;
+      if (!hasRequiredCapabilities(contribution.requiredCapabilities, ctx)) continue;
       matching.push(contribution);
     }
     return matching.sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));

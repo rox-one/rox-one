@@ -1,6 +1,6 @@
 /**
  * WorkbenchLayout v2 — real tab groups over the canonical SurfaceTab union
- * (ADR-0001 decisions 1/2/14/15).
+ * (ADR-0001 decisions 1/2/14/15; 2026-08-13 addendum).
  *
  * Replaces the flat `panelStackAtom` projection: each visible split is a
  * TabGroup with its own tabs and active tab; exactly one tab per group is
@@ -15,9 +15,9 @@
  *   for the focused surface.
  * - Persisted layouts never contain empty groups (closing the last tab of a
  *   group closes the group); a host may render an empty group transiently.
+ * - Geometry is 1D: groups are a row. Split-tree (`down`) is a later increment.
  */
 
-import type { Disposable } from '../types.ts';
 import type { SurfaceTab } from '../surfaces/types.ts';
 
 export type SurfaceInstanceId = string;
@@ -29,15 +29,20 @@ export interface SurfaceInstance {
   id: SurfaceInstanceId;
   /** Durable ref (S-02 §3.7) — the only identity that survives restart. */
   tab: SurfaceTab;
-  pinned: boolean;
   /**
    * Preview tabs (single-click open): one per group, replaced by the next
-   * preview, promoted to pinned on edit or explicit pin.
+   * *clean* preview, promoted (preview → false) on edit, explicit pin, or
+   * when a dirty preview would otherwise be replaced.
+   * `preview === false` means the tab is pinned.
    */
   preview: boolean;
   dirty: boolean;
   openedAt: number;
   lastFocusedAt: number;
+}
+
+export function isPinnedSurface(instance: SurfaceInstance): boolean {
+  return !instance.preview;
 }
 
 export interface TabGroup {
@@ -58,7 +63,6 @@ export interface WorkbenchLayout {
 export type OpenSurfaceTarget =
   | 'active-group'
   | 'new-group-right'
-  | 'new-group-bottom'
   /** Host concern: the pure reducers leave the layout unchanged. */
   | 'new-window';
 
@@ -74,22 +78,18 @@ export const DEFAULT_OPEN_SURFACE_OPTIONS: OpenSurfaceOptions = {
   focus: true,
 };
 
-/**
- * Host-facing workbench API (convergence plan §35.1). Implementations keep
- * `WorkbenchLayout` as the single layout state and emit onDidChange after
- * every mutation.
- */
-export interface WorkbenchApi {
-  open(tab: SurfaceTab, options?: Partial<OpenSurfaceOptions>): SurfaceInstanceId | null;
-  close(surfaceInstanceId: SurfaceInstanceId): void;
-  pin(surfaceInstanceId: SurfaceInstanceId): void;
-  move(surfaceInstanceId: SurfaceInstanceId, targetGroupId: TabGroupId): void;
-  activate(groupId: TabGroupId, surfaceInstanceId: SurfaceInstanceId): void;
-  layout(): WorkbenchLayout;
-  onDidChange(listener: () => void): Disposable;
-}
+export type LayoutMutationCode = 'DIRTY_SURFACE' | 'NOT_FOUND';
+
+export type LayoutMutation =
+  | { ok: true; layout: WorkbenchLayout }
+  | { ok: false; code: LayoutMutationCode; layout: WorkbenchLayout };
 
 /** Injectable id source so reducers stay deterministic under test. */
 export interface IdGenerator {
   next(): string;
+}
+
+export function createSequentialIdGenerator(prefix = 'id'): IdGenerator {
+  let next = 0;
+  return { next: () => `${prefix}-${++next}` };
 }

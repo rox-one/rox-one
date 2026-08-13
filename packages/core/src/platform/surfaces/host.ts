@@ -1,37 +1,47 @@
 /**
- * WorkspaceSurfaceHost — verbatim API from S-02 §3.4.
+ * WorkspaceSurfaceHost — S-02 §3.4 rewritten to speak WorkbenchLayout
+ * (ADR-0001 2026-08-13 addendum). There is no second WorkbenchApi.
  *
- * Interface only: the implementation is the renderer adapter over
- * panel-stack/NavigationContext (URL remains the single source of truth;
- * the host adds no second state-of-truth).
+ * Geometry is 1D: split('right' | 'down') both insert a group to the right.
+ * URL/NavigationContext remains focus SoT in the renderer adapter; this
+ * interface owns TabGroup membership, preview/dirty, and split shares.
  */
 
-import type { PanelLaneId, SurfaceLayoutSnapshot, SurfaceTab } from './types.ts';
+import type { Disposable } from '../types.ts';
+import type { SurfaceTab } from './types.ts';
+import type {
+  LayoutMutation,
+  OpenSurfaceOptions,
+  SurfaceInstanceId,
+  TabGroupId,
+  WorkbenchLayout,
+} from '../workbench/types.ts';
 
 export interface WorkspaceSurfaceHost {
+  open(tab: SurfaceTab, options?: Partial<OpenSurfaceOptions>): SurfaceInstanceId | null;
+  close(surfaceInstanceId: SurfaceInstanceId, options?: { force?: boolean }): LayoutMutation;
+  pin(surfaceInstanceId: SurfaceInstanceId): void;
+  move(
+    surfaceInstanceId: SurfaceInstanceId,
+    targetGroupId: TabGroupId,
+    targetIndex?: number,
+  ): void;
+  activate(groupId: TabGroupId, surfaceInstanceId: SurfaceInstanceId): void;
   /**
-   * Single creation point. Dedups by policy.singletonPer (generalizes the
-   * AppShell.tsx:640-646 check): re-opening focuses the existing panel.
-   * Returns the panelId. opts.targetLaneId flows to
-   * navigate(route, { newPanel, targetLaneId }).
+   * Returns the new group id. Both directions insert to the right until a
+   * split-tree increment exists.
    */
-  open(tab: SurfaceTab, opts?: { newPanel?: boolean; targetLaneId?: PanelLaneId; focus?: boolean }): string;
-  close(panelId: string): void;
-  focus(panelId: string): void;
-  /** Returns the new panelId; resize via PanelResizeSash as today. */
-  split(panelId: string, direction: 'right' | 'down', proportion?: number): string;
-  /**
-   * Restore a snapshot (S-02 §3.10): reconcile via the key-preserving
-   * reconcilePanelStackAtom; bounds-managed tabs mount lazily on first
-   * focus; broken refs render as error cards without dropping the stack.
-   */
-  restore(snapshot: SurfaceLayoutSnapshot): Promise<void>;
-  /** Written on window close / workspace switch + debounced on resize. */
-  serializeLayout(): SurfaceLayoutSnapshot;
-  /**
-   * Bounds contract for bounds-managed surfaces (generalizes
-   * browserPane.syncBounds, S-02 §3.8): null hides/parks the webContents —
-   * it never destroys state (switching must not destroy context, S-02 §3.9).
-   */
-  manageBounds(panelId: string, rect: { x: number; y: number; width: number; height: number } | null): void;
+  split(
+    surfaceInstanceId: SurfaceInstanceId,
+    direction: 'right' | 'down',
+    proportion?: number,
+  ): TabGroupId | null;
+  restore(layout: WorkbenchLayout): Promise<void>;
+  serializeLayout(): WorkbenchLayout;
+  manageBounds(
+    surfaceInstanceId: SurfaceInstanceId,
+    rect: { x: number; y: number; width: number; height: number } | null,
+  ): void;
+  layout(): WorkbenchLayout;
+  onDidChange(listener: () => void): Disposable;
 }

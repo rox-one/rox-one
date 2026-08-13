@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { createModeRegistry } from '../modes/index.ts'
+import { createModeRegistry, createCoreModeContributions } from '../modes/index.ts'
 import type { ModeContribution } from '../modes/index.ts'
 
 function mode(id: string, order: number, when?: string): ModeContribution {
@@ -83,9 +83,47 @@ describe('ModeRegistry', () => {
     expect(calls).toBe(4)
   })
 
+  it('filters contributions that declare requiredCapabilities', () => {
+    const registry = createModeRegistry()
+    registry.register(mode('core.chat', 20))
+    registry.register({
+      ...mode('core.feed', 60),
+      requiredCapabilities: ['feed.ingest'],
+    })
+
+    expect(registry.list({}).map((m) => m.id)).toEqual(['core.chat'])
+    expect(registry.list({ 'feed.ingest': true }).map((m) => m.id)).toEqual(['core.chat', 'core.feed'])
+    expect(registry.list({ capability: 'feed.ingest' }).map((m) => m.id)).toEqual([
+      'core.chat',
+      'core.feed',
+    ])
+    expect(registry.list({ capabilities: ['feed.ingest'] }).map((m) => m.id)).toEqual([
+      'core.chat',
+      'core.feed',
+    ])
+  })
+
   it('accepts an initial catalog via the factory', () => {
     const registry = createModeRegistry([mode('core.home', 10), mode('core.chat', 20)])
 
     expect(registry.list({}).map((m) => m.id)).toEqual(['core.home', 'core.chat'])
+  })
+})
+
+describe('createCoreModeContributions', () => {
+  it('seeds Chat, Knowledge and Settings with i18n title keys', () => {
+    const modes = createCoreModeContributions({
+      chat: '/allSessions',
+      knowledge: '/knowledge',
+      settings: '/settings',
+    })
+
+    expect(modes.map((m) => m.id)).toEqual(['core.chat', 'core.knowledge', 'core.settings'])
+    expect(modes.map((m) => m.title)).toEqual([
+      'modes.core.chat.title',
+      'modes.core.knowledge.title',
+      'modes.core.settings.title',
+    ])
+    expect(modes.every((m) => m.source.type === 'core')).toBe(true)
   })
 })

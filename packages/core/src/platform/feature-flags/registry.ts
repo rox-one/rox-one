@@ -1,14 +1,11 @@
 /**
- * FeatureFlagRegistry implementation (ADR-0001 decision 16).
+ * FeatureFlagRegistry implementation (ADR-0001 decision 16; 2026-08-13 addendum).
  *
- * Resolution semantics:
- * - base value = override ?? defaultValue;
- * - a flag is enabled only when its base value is true AND every dependency
- *   resolves enabled (recursively) AND no flag listed in `incompatibleWith`
- *   resolves enabled;
- * - the flag that DECLARES the incompatibility yields to the other one;
- * - dependency cycles disable every flag in the cycle (reported by
- *   `validate()`), never crash resolution.
+ * Two-phase resolution (order-independent):
+ * 1. base = override ?? defaultValue; unknown deps and cycles disable;
+ * 2. incompatibility:
+ *    - one-way (A lists B, B does not list A): A yields;
+ *    - mutual: lexicographically smaller id wins, larger yields.
  */
 
 import type { Disposable } from '../types.ts';
@@ -53,13 +50,18 @@ class FeatureFlagRegistryImpl implements FeatureFlagRegistry {
   }
 
   resolve(id: string, overrides: FeatureFlagOverrides = NO_OVERRIDES): FeatureFlagResolution {
-    return this.resolveInner(id, overrides, new Set());
+    const all = this.resolveAllInner(overrides);
+    const resolved = all.get(id);
+    if (!resolved) {
+      throw new Error(`Unknown feature flag: ${id}`);
+    }
+    return resolved;
   }
 
   resolveAll(overrides: FeatureFlagOverrides = NO_OVERRIDES): Record<string, boolean> {
     const result: Record<string, boolean> = {};
-    for (const id of this.definitions.keys()) {
-      result[id] = this.resolve(id, overrides).enabled;
+    for (const [id, resolution] of this.resolveAllInner(overrides)) {
+      result[id] = resolution.enabled;
     }
     return result;
   }
@@ -89,40 +91,80 @@ class FeatureFlagRegistryImpl implements FeatureFlagRegistry {
     return { dispose: () => this.listeners.delete(listener) };
   }
 
-  private resolveInner(
-    id: string,
-    overrides: FeatureFlagOverrides,
-    visiting: Set<string>,
-  ): FeatureFlagResolution {
-    const def = this.definitions.get(id);
-    if (!def) {
-      throw new Error(`Unknown feature flag: ${id}`);
-    }
-    if (visiting.has(id)) {
-      return { id, enabled: false, source: 'disabled-by-cycle' };
-    }
-    const override = overrides[id];
-    const base = override ?? def.defaultValue;
-    let source: FeatureFlagResolutionSource = override === undefined ? 'default' : 'override';
-    if (!base) return { id, enabled: false, source };
+  private resolveAllInner(overrides: FeatureFlagOverrides): Map<string, FeatureFlagResolution> {
+    const base = new Map<string, FeatureFlagResolution>();
+    const visiting = new Set<string>();
 
-    visiting.add(id);
-    for (const dep of def.dependencies) {
-      if (!this.definitions.has(dep)) continue; // reported by validate()
-      if (!this.resolveInner(dep, overrides, visiting).enabled) {
-        visiting.delete(id);
-        return { id, enabled: false, source: 'disabled-by-dependency' };
+    const resolveBase = (id: string): FeatureFlagResolution => {
+      const cached = base.get(id);
+      if (cached) return cached;
+      const def = this.definitions.get(id);
+      if (!def) {
+        throw new Error(`Unknown feature flag: ${id}`);
+      }
+      if (visiting.has(id)) {
+        const cycle: FeatureFlagResolution = { id, enabled: false, source: 'disabled-by-cycle' };
+        base.set(id, cycle);
+        return cycle;
+      }
+      const override = overrides[id];
+      const requested = override ?? def.defaultValue;
+      let source: FeatureFlagResolutionSource = override === undefined ? 'default' : 'override';
+      if (!requested) {
+        const off: FeatureFlagResolution = { id, enabled: false, source };
+        base.set(id, off);
+        return off;
+      }
+      visiting.add(id);
+      for (const dep of def.dependencies) {
+        if (!this.definitions.has(dep)) {
+          visiting.delete(id);
+          const disabled: FeatureFlagResolution = { id, enabled: false, source: 'disabled-by-dependency' };
+          base.set(id, disabled);
+          return disabled;
+        }
+        if (!resolveBase(dep).enabled) {
+          visiting.delete(id);
+          const disabled: FeatureFlagResolution = { id, enabled: false, source: 'disabled-by-dependency' };
+          base.set(id, disabled);
+          return disabled;
+        }
+      }
+      visiting.delete(id);
+      const on: FeatureFlagResolution = { id, enabled: true, source };
+      base.set(id, on);
+      return on;
+    };
+
+    for (const id of this.definitions.keys()) resolveBase(id);
+
+    // Phase 2: incompatibilities over the base-enabled set.
+    const yielded = new Set<string>();
+    for (const def of this.definitions.values()) {
+      if (!base.get(def.id)?.enabled) continue;
+      for (const other of def.incompatibleWith ?? []) {
+        const otherDef = this.definitions.get(other);
+        if (!otherDef) continue;
+        if (!base.get(other)?.enabled) continue;
+        const mutual = otherDef.incompatibleWith?.includes(def.id) ?? false;
+        if (mutual) {
+          const loser = def.id < other ? other : def.id;
+          yielded.add(loser);
+        } else {
+          yielded.add(def.id);
+        }
       }
     }
-    for (const other of def.incompatibleWith ?? []) {
-      if (!this.definitions.has(other)) continue;
-      if (this.resolveInner(other, overrides, visiting).enabled) {
-        visiting.delete(id);
-        return { id, enabled: false, source: 'disabled-by-incompatibility' };
+
+    const result = new Map<string, FeatureFlagResolution>();
+    for (const [id, resolution] of base) {
+      if (yielded.has(id) && resolution.enabled) {
+        result.set(id, { id, enabled: false, source: 'disabled-by-incompatibility' });
+      } else {
+        result.set(id, resolution);
       }
     }
-    visiting.delete(id);
-    return { id, enabled: true, source };
+    return result;
   }
 
   private findCycleMembers(): string[] {

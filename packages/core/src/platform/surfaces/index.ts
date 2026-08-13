@@ -15,6 +15,6 @@ export type {
   SurfaceTab,
   SurfaceTabKind,
 } from './types.ts';
-export { surfaceTabDurableKey, surfaceTabToDescriptor } from './descriptor.ts';
+export { surfaceTabDurableKey, surfaceTabToDescriptor, parseSurfaceTab } from './descriptor.ts';
 export { createSurfaceRegistry } from './registry.ts';
 export type { WorkspaceSurfaceHost } from './host.ts';
