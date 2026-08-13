@@ -383,6 +383,228 @@ describe('CORS', () => {
   })
 })
 
+/**
+ * R2-faithful fake: assigns etags and honors `put(..., { onlyIf: { etagMatches } })`.
+ * `FakeR2Bucket` ignores preconditions (the production bug); this double is what
+ * makes a lost-update observable in-process.
+ */
+class EtagR2Bucket extends FakeR2Bucket {
+  private etags = new Map<string, string>()
+  private seq = 0
+  private headBarrier: { needed: number; started: number; wait: Promise<void>; release: () => void } | null = null
+
+  /** Next `n` head() calls wait until all n have started, so they observe the same etag. */
+  barrierNextHeads(n: number) {
+    let release!: () => void
+    const wait = new Promise<void>((resolve) => { release = resolve })
+    this.headBarrier = { needed: n, started: 0, wait, release }
+  }
+
+  override async put(
+    key: string,
+    value: string,
+    opts?: {
+      httpMetadata?: { contentType?: string }
+      customMetadata?: Record<string, string>
+      onlyIf?: { etagMatches?: string }
+    },
+  ) {
+    const current = this.etags.get(key)
+    if (opts?.onlyIf?.etagMatches !== undefined && current !== opts.onlyIf.etagMatches) {
+      return null
+    }
+    await super.put(key, value, opts)
+    this.seq += 1
+    const etag = String(this.seq)
+    this.etags.set(key, etag)
+    return { key, etag }
+  }
+
+  override async head(key: string) {
+    const barrier = this.headBarrier
+    if (barrier) {
+      barrier.started += 1
+      if (barrier.started >= barrier.needed) {
+        this.headBarrier = null
+        barrier.release()
+      }
+      await barrier.wait
+    }
+    const obj = await super.head(key)
+    if (!obj) return null
+    return { ...obj, etag: this.etags.get(key) }
+  }
+
+  override async get(key: string) {
+    const obj = await super.get(key)
+    if (!obj) return null
+    return { ...obj, etag: this.etags.get(key) }
+  }
+
+  override async delete(key: string) {
+    await super.delete(key)
+    this.etags.delete(key)
+  }
+}
+
+/** 3-byte UTF-8 / 1 UTF-16 code unit. Count chosen so stringify UTF-16 is under 25 MiB and UTF-8 is over. */
+function utf16UnderUtf8OverPayload() {
+  const content = '€'.repeat(8_800_000)
+  const body = { id: 'session-1', messages: [{ type: 'user', content }] }
+  const raw = JSON.stringify(body)
+  return { body, raw }
+}
+
+describe('payload size is UTF-8 bytes, not UTF-16 code units', () => {
+  it('rejects POST when UTF-16 length is under 25 MiB but UTF-8 bytes are over', async () => {
+    const { body, raw } = utf16UnderUtf8OverPayload()
+    expect(raw.length).toBeLessThan(MAX_SHARE_BYTES)
+    expect(new TextEncoder().encode(raw).byteLength).toBeGreaterThan(MAX_SHARE_BYTES)
+
+    const env = makeEnv()
+    const res = await onRequestPost({
+      request: jsonRequest('https://viewer.test/s/api', 'POST', body, {}, uniqueIp()),
+      env,
+    } as never)
+    expect(res.status).toBe(413)
+    expect(((await res.json()) as Record<string, unknown>).code).toBe('SHARE_TOO_LARGE')
+  })
+
+  it('rejects PUT when UTF-16 length is under 25 MiB but UTF-8 bytes are over', async () => {
+    const env = makeEnv()
+    const { data } = await createShare(env)
+    const { body, raw } = utf16UnderUtf8OverPayload()
+    expect(raw.length).toBeLessThan(MAX_SHARE_BYTES)
+    expect(new TextEncoder().encode(raw).byteLength).toBeGreaterThan(MAX_SHARE_BYTES)
+
+    const res = await onRequestPut({
+      request: jsonRequest(`https://viewer.test/s/api/${data.id}`, 'PUT', body, {
+        Authorization: `Bearer ${data.ownerKey}`,
+      }, uniqueIp()),
+      env,
+      params: { id: data.id },
+    } as never)
+    expect(res.status).toBe(413)
+    expect(((await res.json()) as Record<string, unknown>).code).toBe('SHARE_TOO_LARGE')
+    const stored = env.SHARES.inspect(data.id as string)
+    expect(stored!.body).not.toContain('€')
+  })
+})
+
+describe('X-Content-Type-Options: nosniff', () => {
+  it('is present on public GET of share JSON', async () => {
+    const env = makeEnv()
+    const { data } = await createShare(env)
+    const res = await onRequestGet({
+      request: new Request(`https://viewer.test/s/api/${data.id}`),
+      env,
+      params: { id: data.id },
+    } as never)
+    expect(res.status).toBe(200)
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff')
+  })
+
+  it('is present on create, update, and mutation-error JSON responses', async () => {
+    const env = makeEnv()
+    const created = await onRequestPost({
+      request: jsonRequest('https://viewer.test/s/api', 'POST', { id: 'n', messages: [] }, {}, uniqueIp()),
+      env,
+    } as never)
+    expect(created.status).toBe(201)
+    expect(created.headers.get('X-Content-Type-Options')).toBe('nosniff')
+    const { id, ownerKey } = (await created.json()) as { id: string; ownerKey: string }
+
+    const updated = await onRequestPut({
+      request: jsonRequest(`https://viewer.test/s/api/${id}`, 'PUT', { id: 'n', messages: [] }, {
+        Authorization: `Bearer ${ownerKey}`,
+      }, uniqueIp()),
+      env,
+      params: { id },
+    } as never)
+    expect(updated.status).toBe(200)
+    expect(updated.headers.get('X-Content-Type-Options')).toBe('nosniff')
+
+    const denied = await onRequestPut({
+      request: jsonRequest(`https://viewer.test/s/api/${id}`, 'PUT', { id: 'n', messages: [] }, {}, uniqueIp()),
+      env,
+      params: { id },
+    } as never)
+    expect(denied.status).toBe(401)
+    expect(denied.headers.get('X-Content-Type-Options')).toBe('nosniff')
+  })
+})
+
+describe('conditional PUT prevents lost update', () => {
+  it('rejects the losing concurrent PUT with 409 SHARE_CONFLICT and keeps one complete version', async () => {
+    const shares = new EtagR2Bucket()
+    const env = { SHARES: shares }
+    const created = await onRequestPost({
+      request: jsonRequest('https://viewer.test/s/api', 'POST', { id: 'race', messages: [{ v: 1 }] }, {}, uniqueIp()),
+      env,
+    } as never)
+    expect(created.status).toBe(201)
+    const { id, ownerKey } = (await created.json()) as { id: string; ownerKey: string }
+    const auth = { Authorization: `Bearer ${ownerKey}` }
+
+    shares.barrierNextHeads(2)
+    const [a, b] = await Promise.all([
+      onRequestPut({
+        request: jsonRequest(`https://viewer.test/s/api/${id}`, 'PUT', { id: 'race', messages: [{ v: 2 }] }, auth, uniqueIp()),
+        env,
+        params: { id },
+      } as never),
+      onRequestPut({
+        request: jsonRequest(`https://viewer.test/s/api/${id}`, 'PUT', { id: 'race', messages: [{ v: 3 }] }, auth, uniqueIp()),
+        env,
+        params: { id },
+      } as never),
+    ])
+
+    const statuses = [a.status, b.status].sort((x, y) => x - y)
+    expect(statuses).toEqual([200, 409])
+    const loser = a.status === 409 ? a : b
+    expect(((await loser.json()) as Record<string, unknown>).code).toBe('SHARE_CONFLICT')
+
+    const got = await onRequestGet({
+      request: new Request(`https://viewer.test/s/api/${id}`),
+      env,
+      params: { id },
+    } as never)
+    const stored = (await got.json()) as { messages: { v: number }[] }
+    expect([2, 3]).toContain(stored.messages[0]!.v)
+  })
+
+  it('still accepts a later PUT that re-reads the share after the previous write', async () => {
+    const env = { SHARES: new EtagR2Bucket() }
+    const created = await onRequestPost({
+      request: jsonRequest('https://viewer.test/s/api', 'POST', { id: 'seq', messages: [{ v: 1 }] }, {}, uniqueIp()),
+      env,
+    } as never)
+    const { id, ownerKey } = (await created.json()) as { id: string; ownerKey: string }
+    const auth = { Authorization: `Bearer ${ownerKey}` }
+
+    const first = await onRequestPut({
+      request: jsonRequest(`https://viewer.test/s/api/${id}`, 'PUT', { id: 'seq', messages: [{ v: 2 }] }, auth, uniqueIp()),
+      env,
+      params: { id },
+    } as never)
+    expect(first.status).toBe(200)
+    const second = await onRequestPut({
+      request: jsonRequest(`https://viewer.test/s/api/${id}`, 'PUT', { id: 'seq', messages: [{ v: 3 }] }, auth, uniqueIp()),
+      env,
+      params: { id },
+    } as never)
+    expect(second.status).toBe(200)
+
+    const got = await onRequestGet({
+      request: new Request(`https://viewer.test/s/api/${id}`),
+      env,
+      params: { id },
+    } as never)
+    expect(((await got.json()) as { messages: { v: number }[] }).messages[0]!.v).toBe(3)
+  })
+})
+
 describe('full lifecycle smoke (create → read → authed update → unauthed rejected → authed delete)', () => {
   it('walks the owner capability lifecycle end to end', async () => {
     const env = makeEnv()
