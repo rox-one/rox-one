@@ -83,43 +83,12 @@ function sendCallback(callback: CallbackMessage): void {
  * Credential cache entry format (matches main process format).
  * Written by Electron main process, read by this server.
  */
-interface CredentialCacheEntry {
-  value: string;
-  expiresAt?: number;
-}
-
 /**
- * Get the path to a source's credential cache file.
- * The main process writes decrypted credentials to these files.
+ * Retired: the main process no longer writes decrypted `.credential-cache.json`.
+ * Live credentials stay in `credentials.enc` and in-memory MCP pool headers.
  */
-function getCredentialCachePath(workspaceRootPath: string, sourceSlug: string): string {
-  return join(workspaceRootPath, 'sources', sourceSlug, '.credential-cache.json');
-}
-
-/**
- * Read credentials from the cache file for a source.
- * Returns null if the cache doesn't exist or is expired.
- */
-function readCredentialCache(workspaceRootPath: string, sourceSlug: string): string | null {
-  const cachePath = getCredentialCachePath(workspaceRootPath, sourceSlug);
-
-  try {
-    if (!existsSync(cachePath)) {
-      return null;
-    }
-
-    const content = readFileSync(cachePath, 'utf-8');
-    const cache = JSON.parse(content) as CredentialCacheEntry;
-
-    // Check expiry if set
-    if (cache.expiresAt && Date.now() > cache.expiresAt) {
-      return null;
-    }
-
-    return cache.value || null;
-  } catch {
-    return null;
-  }
+function readCredentialCache(_workspaceRootPath: string, _sourceSlug: string): string | null {
+  return null
 }
 
 /**

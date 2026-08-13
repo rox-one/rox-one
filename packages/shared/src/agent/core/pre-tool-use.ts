@@ -18,8 +18,11 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { createHash } from 'node:crypto';
 import { join, resolve } from 'node:path';
+import {
+  hashPrivilegedCommand,
+  matchPrivilegedCommand,
+} from './privileged-policy.ts';
 import { expandPath } from '../../utils/paths.ts';
 import {
   detectConfigFileType,
@@ -951,68 +954,60 @@ interface PromptInfo {
   approvalTtlSeconds?: number;
 }
 
-function hashCommand(command: string): string {
-  return createHash('sha256').update(command, 'utf8').digest('hex');
-}
-
 function toDisplayName(token: string): string {
   return token.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function classifyAdminApproval(command: string): PromptInfo | null {
-  const trimmed = command.trim();
-  const normalized = trimmed.toLowerCase();
+  const match = matchPrivilegedCommand(command);
+  if (!match) return null;
 
-  const brewInstallCask = normalized.match(/^brew\s+install\s+--cask\s+([^\s]+).*$/);
-  if (brewInstallCask) {
-    const appToken = brewInstallCask[1] ?? 'application';
+  const commandHash = hashPrivilegedCommand(match.command);
+
+  if (match.kind === 'brew-install-cask') {
+    const appToken = match.appToken ?? 'application';
     return {
       promptType: 'admin_approval',
       description: `Admin approval required for cask install: ${appToken}`,
-      command: trimmed,
+      command: match.command,
       appName: toDisplayName(appToken),
       reason: 'Homebrew needs admin access to complete post-install steps.',
       impact: 'May install files in /Applications and system-managed directories.',
       requiresSystemPrompt: process.platform === 'darwin',
       rememberForMinutes: 10,
-      commandHash: hashCommand(trimmed),
+      commandHash,
       approvalTtlSeconds: 120,
     };
   }
 
-  const brewUpgradeCask = normalized.match(/^brew\s+upgrade\s+--cask\s+([^\s]+).*$/);
-  if (brewUpgradeCask) {
-    const appToken = brewUpgradeCask[1] ?? 'application';
+  if (match.kind === 'brew-upgrade-cask') {
+    const appToken = match.appToken ?? 'application';
     return {
       promptType: 'admin_approval',
       description: `Admin approval required for cask upgrade: ${appToken}`,
-      command: trimmed,
+      command: match.command,
       appName: toDisplayName(appToken),
       reason: 'Homebrew needs admin access to replace app files in protected locations.',
       impact: 'May replace app binaries in /Applications and system-managed directories.',
       requiresSystemPrompt: process.platform === 'darwin',
       rememberForMinutes: 10,
-      commandHash: hashCommand(trimmed),
+      commandHash,
       approvalTtlSeconds: 120,
     };
   }
 
-  if (/^installer\s+-pkg\s+.+\s+-target\s+\//.test(normalized)) {
-    return {
-      promptType: 'admin_approval',
-      description: 'Admin approval required for macOS installer package',
-      command: trimmed,
-      appName: 'Installer Package',
-      reason: 'The installer writes files to protected system locations.',
-      impact: 'May install system services, app files, or startup items.',
-      requiresSystemPrompt: process.platform === 'darwin',
-      rememberForMinutes: 5,
-      commandHash: hashCommand(trimmed),
-      approvalTtlSeconds: 120,
-    };
-  }
-
-  return null;
+  return {
+    promptType: 'admin_approval',
+    description: 'Admin approval required for macOS installer package',
+    command: match.command,
+    appName: 'Installer Package',
+    reason: 'The installer writes files to protected system locations.',
+    impact: 'May install system services, app files, or startup items.',
+    requiresSystemPrompt: process.platform === 'darwin',
+    rememberForMinutes: 5,
+    commandHash,
+    approvalTtlSeconds: 120,
+  };
 }
 
 function wrapCommandForMacAdminPrompt(command: string): string {

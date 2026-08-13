@@ -29,6 +29,11 @@ function getDatabaseCtor(): DatabaseCtor | null {
 
 export const SOURCE_INDEX_REL = join('.craft', 'source-index.sqlite')
 
+/** True when `bun:sqlite` loaded. False under Electron/Node — search/index fail-soft. */
+export function isSourceIndexFtsAvailable(): boolean {
+  return getDatabaseCtor() !== null
+}
+
 const TEXT_EXTS = new Set([
   '.md',
   '.mdx',

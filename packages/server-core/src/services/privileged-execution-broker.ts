@@ -1,8 +1,12 @@
-import { createHash } from 'node:crypto'
 import { appendFile, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type { Logger } from '../runtime/platform'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
+import {
+  hashPrivilegedCommand,
+  isPrivilegedCommandAllowed,
+  PRIVILEGED_POLICY_REASON,
+} from '@craft-agent/shared/agent/core/privileged-policy'
 
 export interface PrivilegedExecutionRequest {
   requestId: string
@@ -22,7 +26,11 @@ interface PendingPrivilegedRequest extends PrivilegedExecutionRequest {
 }
 
 const DEFAULT_APPROVAL_TTL_SECONDS = 120
-const AUDIT_LOG_PATH = join(CONFIG_DIR, 'logs', 'privileged-actions.jsonl')
+
+function auditLogPath(): string {
+  const dir = process.env.CRAFT_CONFIG_DIR || CONFIG_DIR
+  return join(dir, 'logs', 'privileged-actions.jsonl')
+}
 
 /**
  * PrivilegedExecutionBroker
@@ -151,23 +159,13 @@ export class PrivilegedExecutionBroker {
   }
 
   private hashCommand(command: string): string {
-    return createHash('sha256').update(command, 'utf8').digest('hex')
+    return hashPrivilegedCommand(command)
   }
 
   private validatePolicy(command: string): { allowed: boolean; reason?: string } {
-    const normalized = command.trim().toLowerCase()
-    const allowlisted =
-      /^brew\s+install\s+--cask\s+/.test(normalized) ||
-      /^brew\s+upgrade\s+--cask\s+/.test(normalized) ||
-      /^installer\s+-pkg\s+.+\s+-target\s+\//.test(normalized)
-
-    if (!allowlisted) {
-      return {
-        allowed: false,
-        reason: 'Privileged execution policy only allows brew cask install/upgrade and installer -pkg -target / commands',
-      }
+    if (!isPrivilegedCommandAllowed(command)) {
+      return { allowed: false, reason: PRIVILEGED_POLICY_REASON }
     }
-
     return { allowed: true }
   }
 
@@ -177,8 +175,9 @@ export class PrivilegedExecutionBroker {
 
   private async appendAudit(payload: Record<string, unknown>): Promise<void> {
     try {
-      await mkdir(dirname(AUDIT_LOG_PATH), { recursive: true })
-      await appendFile(AUDIT_LOG_PATH, `${JSON.stringify({ timestamp: new Date().toISOString(), ...payload })}\n`, 'utf8')
+      const path = auditLogPath()
+      await mkdir(dirname(path), { recursive: true })
+      await appendFile(path, `${JSON.stringify({ timestamp: new Date().toISOString(), ...payload })}\n`, 'utf8')
     } catch (error) {
       this.logger.warn('[PrivilegedExecutionBroker] Failed to write audit log:', error)
     }
