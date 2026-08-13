@@ -1,0 +1,14 @@
+[package]
+name = "craft-native"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Craft native sidecar (Unix socket MessageEnvelope server)"
+
+[dependencies]
+craft-protocol.workspace = true
+craft-index.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio.workspace = true

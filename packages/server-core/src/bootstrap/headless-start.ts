@@ -13,6 +13,7 @@ import { WsRpcServer, type WsRpcTlsOptions } from '../transport/server'
 import type { EventSink, RpcServer } from '../transport/types'
 import { createHeadlessPlatform } from '../runtime/platform-headless'
 import type { PlatformServices } from '../runtime/platform'
+import { startNativeSidecar, stopNativeSidecar } from '../native/supervisor.ts'
 
 interface ModelRefreshServiceLike {
   startAll(): void
@@ -427,6 +428,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
 
   await wsServer.listen()
 
+  try {
+    await startNativeSidecar(platform.logger)
+  } catch (error) {
+    platform.logger.warn('[bootstrap] native sidecar skipped', error)
+  }
+
   options.bindRpcServer?.(sessionManager, wsServer)
 
   const oauthFlowStore = new OAuthFlowStore()
@@ -472,6 +479,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       await new Promise(resolve => setTimeout(resolve, 2000))
     } catch (error) {
       platform.logger.error('[bootstrap] Failed to send shutdown notification:', error)
+    }
+
+    try {
+      await stopNativeSidecar()
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to stop native sidecar:', error)
     }
 
     try {

@@ -1,0 +1,67 @@
+name: Native substrate
+
+on:
+  push:
+    paths:
+      - 'native/**'
+      - 'packages/server-core/src/native/**'
+      - 'packages/server-core/src/sources/**'
+      - 'packages/shared/src/protocol/**'
+      - 'packages/shared/src/feature-flags.ts'
+      - '.github/workflows/native.yml'
+  pull_request:
+    paths:
+      - 'native/**'
+      - 'packages/server-core/src/native/**'
+      - 'packages/server-core/src/sources/**'
+      - 'packages/shared/src/protocol/**'
+      - 'packages/shared/src/feature-flags.ts'
+      - '.github/workflows/native.yml'
+  workflow_dispatch:
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - [self-hosted, linux-toolchain]
+          - [self-hosted, macos-toolchain]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@1.83.0
+        with:
+          components: rustfmt, clippy
+
+      - name: cargo fmt
+        run: cargo fmt --all --check --manifest-path native/Cargo.toml
+
+      - name: cargo clippy
+        run: cargo clippy --manifest-path native/Cargo.toml --workspace --all-targets -- -D warnings
+
+      - name: cargo test
+        run: cargo test --manifest-path native/Cargo.toml --workspace
+
+      - name: cargo build sidecar
+        run: cargo build --manifest-path native/Cargo.toml -p craft-native
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+
+      - name: bun install
+        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: TS native + source-index (flag off)
+        run: bun test packages/server-core/src/native packages/server-core/src/sources packages/shared/src/__tests__/feature-flags.test.ts packages/shared/src/protocol/__tests__/handshake-fixture.test.ts
+
+      - name: TS source-index shadow (flag on)
+        run: bun test packages/server-core/src/native packages/server-core/src/sources
+        env:
+          CRAFT_FEATURE_NATIVE_SIDECAR: '1'
+          CRAFT_NATIVE_BIN: ${{ github.workspace }}/native/target/debug/craft-native

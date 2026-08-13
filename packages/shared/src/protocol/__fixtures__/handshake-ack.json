@@ -1,0 +1,16 @@
+{
+  "id": "11111111-1111-4111-8111-111111111111",
+  "type": "handshake_ack",
+  "protocolVersion": "1.0",
+  "clientId": "native-sidecar",
+  "registeredChannels": [
+    "native:health",
+    "native:version",
+    "native:capabilities",
+    "index:reindex",
+    "index:search",
+    "index:retrieve",
+    "index:count",
+    "index:status"
+  ]
+}

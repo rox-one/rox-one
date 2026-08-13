@@ -69,6 +69,17 @@ export function isKnowledgeFeatureEnabled(): boolean {
   return true;
 }
 
+/**
+ * Runtime-evaluated check for the native craft-native sidecar (UDS + index).
+ *
+ * Defaults to disabled. Override with CRAFT_FEATURE_NATIVE_SIDECAR=1|0.
+ */
+export function isNativeSidecarEnabled(): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_NATIVE_SIDECAR'));
+  if (override !== undefined) return override;
+  return false;
+}
+
 export const FEATURE_FLAGS = {
   /** Enable Opus 4.7 fast mode (speed:"fast" + beta header). 6x pricing. */
   fastMode: false,
@@ -104,5 +115,13 @@ export const FEATURE_FLAGS = {
    */
   get knowledge(): boolean {
     return isKnowledgeFeatureEnabled();
+  },
+  /**
+   * Enable the Rust craft-native sidecar (source-index shadow).
+   *
+   * Defaults to disabled. Override with CRAFT_FEATURE_NATIVE_SIDECAR=1|0.
+   */
+  get nativeSidecar(): boolean {
+    return isNativeSidecarEnabled();
   },
 } as const;
