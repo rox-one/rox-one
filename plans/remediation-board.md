@@ -82,7 +82,7 @@ Wave-4 results so far:
 | onboarding → identity/provider | **VERIFIED (server-side)** — connection seeded, auth env initialized; desktop onboarding UI not exercisable headlessly |
 | runtime readiness | **VERIFIED** — toolchain install + `omp --mode rpc` handshake (probe-verified earlier) |
 | create session → send prompt | **VERIFIED** — session created; prompt fails bounded in ~0.8 s with typed `OMP_NO_MODELS` (no credentials on a fresh machine — the honest, actionable failure) |
-| stream answer / host tool / MCP tool / permission interaction | **BLOCKED** — requires a live LLM credential (none available in this environment); the tool plumbing itself is covered by the omp-source-proxy/session-flow regression suites |
+| stream answer / host tool / MCP tool / permission interaction | **BLOCKED** — missing secret `ROX_API_KEY` (ticket 13, 2026-08-13 re-check; see `plans/next-program/13-live-e2e-evidence.md`). Not a live turn. Do not claim VERIFIED. Tool plumbing remains covered by omp-source-proxy/session-flow suites |
 | restart → restore | **VERIFIED** — server restarted; 2 sessions loaded from disk; web login (200) + `/api/config` intact |
 | web login → same workspace/session | **VERIFIED** — cookie auth, same workspace + sessions visible after restart |
 
@@ -98,6 +98,10 @@ Negative paths (each must end bounded + typed + idle):
 | SiYuan down | **VERIFIED** — `CONNECTION_UNAVAILABLE` typed tool error (smoke) |
 | expired/invalid auth | **VERIFIED** — `/api/auth` wrong password → 401 `Invalid credentials` |
 | unauthorized share mutation | **VERIFIED** — 24 share-auth tests green (401/403/legacy-immutable matrix) |
+
+### Ticket 13 re-check (2026-08-13)
+
+Honest gate on `rox/next-program-t13-e2e-7c33`: `ROX_API_KEY` unset, no `~/.omp/agent/models.yml`. Runner (`bun packages/shared/src/agent/live-turn-e2e.ts`) printed `status: BLOCKED`, `missingSecret: ROX_API_KEY`, `claim: live-turn-not-claimed`. No browser trace — there was no live turn. Negative-path suites re-run green (live-turn-gate 11, omp-first-run 12, error-code-omp 3, errors 18, omp-lifecycle-hardening 4, share-capability 12, share-owner-key 7). Evidence: `plans/next-program/13-live-e2e-evidence.md`.
 
 ## Review gate checklist (per returned branch)
 
