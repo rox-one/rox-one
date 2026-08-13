@@ -131,6 +131,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isHomeNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
@@ -1974,6 +1975,10 @@ function AppShellContent({
       return t("sidebar.memory")
     }
 
+    if (isHomeNavigation(navState)) {
+      return t("workbench.home.title")
+    }
+
     // Projects navigator
     if (isProjectsNavigation(navState)) {
       return t("sidebar.allProjects")
@@ -2633,7 +2638,7 @@ function AppShellContent({
             )}
             </div>
           )}
-          navigatorWidth={isNotesNavigation(navState) ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView ? 0 : sessionListWidth))}
+          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false}
           isCompact={isAutoCompact}

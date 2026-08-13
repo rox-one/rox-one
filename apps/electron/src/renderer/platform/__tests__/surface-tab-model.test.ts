@@ -21,6 +21,7 @@ const LABELS: SurfaceTabLabels = {
   skills: 'Skills',
   knowledge: 'Knowledge',
   knowledgeDiff: 'Review changes',
+  home: 'Home',
 }
 
 function entry(route: ViewRoute, id = `p-${route}`): PanelStackEntry {
@@ -81,5 +82,16 @@ describe('buildSurfaceTabViews: knowledge panels', () => {
     const [tab] = build([entry(routes.view.knowledge())])
     expect(tab.kind).toBe('knowledge')
     expect(tab.title).toBe('Knowledge')
+  })
+})
+
+describe('buildSurfaceTabViews: home', () => {
+  it('names the home route from the home label, not "Panel"', () => {
+    const [tab] = build([
+      { id: 'p-home', route: routes.view.home(), proportion: 1, panelType: 'other', laneId: 'main' },
+    ])
+    expect(tab.kind).toBeNull()
+    expect(tab.title).toBe('Home')
+    expect(tab.title).not.toBe(LABELS.panel)
   })
 })

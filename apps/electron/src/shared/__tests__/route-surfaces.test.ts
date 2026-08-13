@@ -186,6 +186,7 @@ describe('route-parser: unified shell surfaces', () => {
     'board',
     'table',
     'memory',
+    'home',
     'allSessions/session/abc123',
     'flagged/session/abc123',
     'state/todo/session/abc123',

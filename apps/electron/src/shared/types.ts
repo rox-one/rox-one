@@ -1766,6 +1766,16 @@ export interface MemoryNavigationState {
 }
 
 /**
+ * Workbench Home Front Page (mode `home`). Dashboard over existing objects;
+ * not a WorkGraph surface.
+ */
+export interface HomeNavigationState {
+  navigator: 'home'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Knowledge ref kinds, mirrored from the Knowledge Provider contract
  * (spec K-03 §3.1: `KnowledgeRef { scheme:'siyuan'; kind; id }`). Declared
  * locally because apps/electron does not import @craft-agent/core.
@@ -1827,6 +1837,7 @@ export type NavigationState =
   | ProjectsNavigationState
   | BrowserNavigationState
   | MemoryNavigationState
+  | HomeNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
   | ExtensionNavigationState
@@ -1866,6 +1877,10 @@ export const isBrowserNavigation = (
 export const isMemoryNavigation = (
   state: NavigationState
 ): state is MemoryNavigationState => state.navigator === 'memory'
+
+export const isHomeNavigation = (
+  state: NavigationState
+): state is HomeNavigationState => state.navigator === 'home'
 
 export const isKnowledgeNavigation = (
   state: NavigationState
@@ -1933,6 +1948,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'memory') {
     return 'memory'
+  }
+  if (state.navigator === 'home') {
+    return 'home'
   }
   // Unified-shell surfaces (W1) — key format mirrors the route format
   if (state.navigator === 'knowledge') {
@@ -2102,6 +2120,7 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
     return { navigator: 'extension', details: null }
   }
 
+  if (key === 'home') return { navigator: 'home', details: null }
   if (key === 'diff') return { navigator: 'diff', details: null }
   if (key.startsWith('diff/')) {
     const proposalId = key.slice(5)
