@@ -134,16 +134,24 @@ describe('openSurface / preview / split / move / close', () => {
     expect(active?.tabs[0]?.id).toBe('g1')
   })
 
-  it('open to the side creates a new group', () => {
+  it('open to the side inserts after the active group', () => {
     const layout = openSurface(
       twoColumn(),
       instance('c', 'allSessions/session/c'),
       { target: 'new-group-right', mode: 'pinned', focus: true },
       'g3',
     )
-    expect(layout.groups).toHaveLength(3)
+    expect(layout.groups.map((group) => group.id)).toEqual(['g1', 'g3', 'g2'])
     expect(layout.activeGroupId).toBe('g3')
     expect(layout.groups.map((group) => group.proportion).reduce((sum, value) => sum + value, 0)).toBeCloseTo(1)
+
+    const fromRight = openSurface(
+      { ...twoColumn(), activeGroupId: 'g2' },
+      instance('c', 'allSessions/session/c'),
+      { target: 'new-group-right', mode: 'pinned', focus: true },
+      'g3',
+    )
+    expect(fromRight.groups.map((group) => group.id)).toEqual(['g1', 'g2', 'g3'])
   })
 
   it('split clones the active tab into a new group', () => {

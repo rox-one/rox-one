@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { buildStatusBarModel, countActiveRuns, countPendingApprovals } from '../status-model'
+import { buildStatusBarModel, countActiveRuns, countPendingApprovals, statusBarPermissionMode } from '../status-model'
 
 describe('buildStatusBarModel', () => {
   it('defaults to local with sync OK and zero counts', () => {
@@ -63,5 +63,15 @@ describe('countPendingApprovals / countActiveRuns', () => {
       { status: 'completed' },
       { status: 'failed' },
     ])).toBe(2)
+  })
+})
+
+describe('statusBarPermissionMode', () => {
+  it('shows the focused session mode and hides the chip off a session', () => {
+    expect(statusBarPermissionMode('session-1', 'allow-all')).toBe('allow-all')
+    expect(statusBarPermissionMode('session-1', 'ask')).toBe('ask')
+    expect(statusBarPermissionMode('', 'ask')).toBeNull()
+    expect(statusBarPermissionMode(null, 'ask')).toBeNull()
+    expect(statusBarPermissionMode('session-1', undefined)).toBeNull()
   })
 })

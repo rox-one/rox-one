@@ -151,11 +151,9 @@ export function splitGroup(
     activeTabId: clone.id,
     proportion: source.proportion,
   };
-  const groups = [...layout.groups];
-  groups.splice(sourceIndex + 1, 0, newGroup);
   return {
     ...layout,
-    groups: renormalize(groups),
+    groups: insertGroup(layout.groups, newGroup, sourceIndex + 1),
     activeGroupId: newGroupId,
   };
 }
@@ -214,16 +212,18 @@ export function openSurface(
   }
   if (resolved.target === 'new-group-right') {
     const groupId = newGroupId ?? instance.id;
+    const activeIndex = layout.groups.findIndex((group) => group.id === layout.activeGroupId);
+    const neighbor = activeIndex >= 0 ? layout.groups[activeIndex] : layout.groups[layout.groups.length - 1];
     const group: TabGroup = {
       id: groupId,
       tabs: [{ ...instance, preview: resolved.mode === 'preview' }],
       activeTabId: instance.id,
-      proportion: 1,
+      proportion: neighbor?.proportion ?? 1,
     };
-    const groups = [...layout.groups, group];
+    const insertAt = activeIndex >= 0 ? activeIndex + 1 : layout.groups.length;
     return {
       ...layout,
-      groups: renormalize(groups),
+      groups: insertGroup(layout.groups, group, insertAt),
       activeGroupId: resolved.focus ? groupId : layout.activeGroupId ?? groupId,
     };
   }
@@ -294,6 +294,11 @@ export function workbenchLayoutToPanelEntries(
       proportion: group.proportion,
     };
   });
+}
+
+function insertGroup(groups: TabGroup[], group: TabGroup, insertIndex: number): TabGroup[] {
+  const at = Math.min(Math.max(insertIndex, 0), groups.length);
+  return renormalize([...groups.slice(0, at), group, ...groups.slice(at)]);
 }
 
 function renormalize(groups: TabGroup[]): TabGroup[] {

@@ -86,7 +86,8 @@ the Appearance `workbench.*` toggles.
 ### Geometry is 1D
 
 `OpenSurfaceOptions.target` is `'active-group' | 'new-group-right' | 'new-window'`.
-`'new-group-bottom'` is not part of the model. `splitGroup` still clones the
+`'new-group-bottom'` is not part of the model. `new-group-right` inserts after
+the active group (not appended at the end). `splitGroup` still clones the
 active tab into a new group to the right (`down` is accepted on the parallel
 host and inserts right until a split-tree increment).
 
