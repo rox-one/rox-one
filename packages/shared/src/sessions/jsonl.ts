@@ -15,6 +15,7 @@ import { toPortablePath, expandPath, normalizePath } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { safeJsonParse } from '../utils/files.ts';
 import { pickSessionFields } from './utils.ts';
+import { notifySessionJournalShadow } from './journal-shadow.ts';
 
 // ============================================================
 // Session Path Portability
@@ -165,6 +166,7 @@ export function writeSessionJsonl(sessionFile: string, session: StoredSession): 
   // On Windows, rename fails if target exists. Delete first for cross-platform compatibility.
   try { unlinkSync(sessionFile); } catch { /* ignore if doesn't exist */ }
   renameSync(tmpFile, sessionFile);
+  notifySessionJournalShadow(sessionDir, lines);
 }
 
 /**

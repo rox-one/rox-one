@@ -102,10 +102,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "craft-journal"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "tempfile",
+]
+
+[[package]]
 name = "craft-native"
 version = "0.1.0"
 dependencies = [
  "craft-index",
+ "craft-journal",
  "craft-protocol",
  "craft-rund",
  "serde",

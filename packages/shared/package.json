@@ -32,6 +32,7 @@
     "./prompts": "./src/prompts/index.ts",
     "./sessions": "./src/sessions/index.ts",
     "./sessions/collection": "./src/sessions/collection.ts",
+    "./sessions/journal-shadow": "./src/sessions/journal-shadow.ts",
     "./projects": "./src/projects/index.ts",
     "./projects/types": "./src/projects/types.ts",
     "./kanban": "./src/kanban/index.ts",

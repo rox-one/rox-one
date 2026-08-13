@@ -10,6 +10,7 @@ description = "Craft native sidecar (Unix socket MessageEnvelope server)"
 craft-protocol.workspace = true
 craft-index.workspace = true
 craft-rund.workspace = true
+craft-journal.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

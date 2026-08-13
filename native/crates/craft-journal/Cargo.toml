@@ -1,0 +1,14 @@
+[package]
+name = "craft-journal"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Session JSONL shadow store (never the TypeScript session.jsonl file)"
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

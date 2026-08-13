@@ -20,7 +20,7 @@ describe('native sidecar handshake fixtures', () => {
     expect(handshake.id.length).toBeGreaterThan(0)
   })
 
-  it('handshake_ack lists native, index, and run channels', () => {
+  it('handshake_ack lists native, index, run, and journal channels', () => {
     const ack = JSON.parse(readFileSync(join(fixtures, 'handshake-ack.json'), 'utf8')) as {
       type: string
       protocolVersion: string
@@ -32,5 +32,6 @@ describe('native sidecar handshake fixtures', () => {
     expect(ack.registeredChannels).toContain('index:reindex')
     expect(ack.registeredChannels).toContain('index:search')
     expect(ack.registeredChannels).toContain('run:create')
+    expect(ack.registeredChannels).toContain('journal:write')
   })
 })

@@ -4,6 +4,7 @@ import { existsSync, unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
+import { setSessionJournalShadow } from '@craft-agent/shared/sessions/journal-shadow.ts'
 import type { Logger } from '../runtime/platform.ts'
 import { connectNativeSidecar, type NativeSidecarClient } from './client.ts'
 
@@ -222,10 +223,12 @@ export async function startNativeSidecar(logger?: Logger, cwd?: string): Promise
   if (!isNativeSidecarEnabled()) return null
   if (!singleton) singleton = new NativeSupervisor({ logger, cwd })
   await singleton.start()
+  installJournalShadow()
   return singleton
 }
 
 export async function stopNativeSidecar(): Promise<void> {
+  setSessionJournalShadow(null)
   if (!singleton) return
   await singleton.stop()
   singleton = null
@@ -233,6 +236,27 @@ export async function stopNativeSidecar(): Promise<void> {
 
 export function getNativeSidecarClient(): NativeSidecarClient | null {
   return singleton?.getClient() ?? null
+}
+
+function installJournalShadow(): void {
+  setSessionJournalShadow(({ sessionDir, lines }) => {
+    const client = getNativeSidecarClient()
+    if (!client) return
+    void (async () => {
+      const written = await client.invoke<{ valid: number }>('journal:write', sessionDir, lines)
+      if (written.valid !== lines.length) {
+        console.warn('[session-journal-shadow] line count diff', {
+          ts: lines.length,
+          rust: written.valid,
+        })
+      }
+    })().catch((error) => {
+      console.warn(
+        '[session-journal-shadow] native invoke failed',
+        error instanceof Error ? error.message : error,
+      )
+    })
+  })
 }
 
 /** Test-only: replace the process-wide supervisor (or clear with null). */

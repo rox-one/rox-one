@@ -1,4 +1,5 @@
 use craft_index::{count_indexed, reindex_workspace, retrieve, search, status, SourceRoot};
+use craft_journal::{self, JournalError};
 use craft_protocol::{
     encode_frame, protocol_major_matches, FrameDecoder, MessageEnvelope, WireError,
     NATIVE_CHANNELS, PROTOCOL_VERSION,
@@ -32,6 +33,15 @@ impl From<String> for HandlerError {
 
 impl From<craft_rund::RundError> for HandlerError {
     fn from(error: craft_rund::RundError) -> Self {
+        Self {
+            code: error.code.to_string(),
+            message: error.message,
+        }
+    }
+}
+
+impl From<JournalError> for HandlerError {
+    fn from(error: JournalError) -> Self {
         Self {
             code: error.code.to_string(),
             message: error.message,
@@ -296,6 +306,22 @@ fn handle_request(channel: &str, args: &[Value]) -> Result<Value, HandlerError> 
             let page = craft_rund::read_events(Path::new(base), id, offset)?;
             serde_json::to_value(page).map_err(|e| e.to_string().into())
         }
+        "journal:write" => {
+            let session_dir = PathBuf::from(arg_str(args, 0)?);
+            let lines = parse_journal_lines(args.get(1))?;
+            let status = craft_journal::write_journal(&session_dir, &lines)?;
+            serde_json::to_value(status).map_err(|e| e.to_string().into())
+        }
+        "journal:read" => {
+            let session_dir = arg_str(args, 0)?;
+            let page = craft_journal::read_journal(Path::new(session_dir))?;
+            serde_json::to_value(page).map_err(|e| e.to_string().into())
+        }
+        "journal:status" => {
+            let session_dir = arg_str(args, 0)?;
+            let status = craft_journal::read_status(Path::new(session_dir))?;
+            serde_json::to_value(status).map_err(|e| e.to_string().into())
+        }
         _ => Err(format!("unknown channel: {channel}").into()),
     }
 }
@@ -311,6 +337,19 @@ fn parse_roots(value: Option<&Value>) -> Result<Vec<SourceRoot>, HandlerError> {
         return Ok(Vec::new());
     };
     serde_json::from_value(value.clone()).map_err(|e| format!("invalid roots: {e}").into())
+}
+
+fn parse_journal_lines(value: Option<&Value>) -> Result<Vec<String>, HandlerError> {
+    let Some(value) = value else {
+        return Err("args[1] must be an array of JSONL lines".to_string().into());
+    };
+    let arr = value
+        .as_array()
+        .ok_or_else(|| "args[1] must be an array of JSONL lines".to_string())?;
+    Ok(arr
+        .iter()
+        .filter_map(|item| item.as_str().map(str::to_string))
+        .collect())
 }
 
 fn parse_runner_command(value: Option<&Value>) -> Option<Vec<String>> {

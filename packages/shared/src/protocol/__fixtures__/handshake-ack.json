@@ -17,6 +17,9 @@
     "run:cancel",
     "run:listArtifacts",
     "run:fetchArtifact",
-    "run:events"
+    "run:events",
+    "journal:write",
+    "journal:read",
+    "journal:status"
   ]
 }

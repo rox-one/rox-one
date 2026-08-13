@@ -37,3 +37,7 @@ DoD этого среза: Linux x64 locally + self-hosted linux/macos CI. Не 
 ## ADR-N8. CloudRunProvider остаётся test surface для rund
 
 `craft-rund` — третий adapter существующего интерфейса (`NativeRunProvider`), плюс local-only crash-reconcile тесты (kill -9 нельзя гонять против Cloudflare). `makeProvider` не переключается на native в этом срезе.
+
+## ADR-N9. Session journal dual-write, не PersistencePort
+
+TS остаётся writer `session.jsonl` (atomic tmp+rename). Sidecar пишет только `{sessionDir}/session.native.jsonl`. Шов — `setSessionJournalShadow` после успешного persist; SessionManager не переписывается. Чтение native skip'ает оборванную последнюю строку так же, как `parseMessagesResilient`.
