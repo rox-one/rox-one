@@ -84,7 +84,7 @@ describe('setRuntimeSecretRefs / getRuntimeSecretRefs', () => {
 
   it('rejects denylisted / invalid envVar targets', () => {
     const configDir = setupConfigDir()
-    for (const envVar of ['PATH', 'NODE_OPTIONS', 'CRAFT_CONFIG_DIR', 'bad-name', '1ABC']) {
+    for (const envVar of ['PATH', 'NODE_OPTIONS', 'CRAFT_CONFIG_DIR', 'ROX_CONFIG_DIR', 'bad-name', '1ABC']) {
       const r = runEval(
         configDir,
         `try { setRuntimeSecretRefs([{ name: 'x', envVar: ${JSON.stringify(envVar)} }]); console.log('OK') } catch (e) { console.log('ERR:' + e.message) }`,

@@ -18,7 +18,7 @@ Small hygiene items found by the 2026-08-12 integration audit. Listed here becau
 
 | Constraint | Behavior | Evidence |
 |---|---|---|
-| `CRAFT_SERVER_TOKEN` minimum length | Tokens shorter than 16 chars are **fatal at boot** (startup throws) — deliberate hardening, but breaks naive copy-paste runbooks using short tokens | `packages/server-core/src/bootstrap/headless-start.ts` `validateTokenEntropy` (`token.length < MIN_TOKEN_LENGTH` → error at startup); use `bun run packages/server/src/index.ts --generate-token` |
-| Config-dir single-instance lock | A second server booted against the same `CRAFT_CONFIG_DIR` refuses to start (`Another server instance is already running (PID …)`); scripted restarts must stop the old process first or use a separate config dir | `packages/server-core/src/bootstrap/lock-identity.ts`; observed live: second instance rejected while the first held `~/.craft-agent` |
+| `ROX_SERVER_TOKEN` / `CRAFT_SERVER_TOKEN` minimum length | Tokens shorter than 16 chars are **fatal at boot** (startup throws) — deliberate hardening, but breaks naive copy-paste runbooks using short tokens | `packages/server-core/src/bootstrap/headless-start.ts` `validateTokenEntropy` (`token.length < MIN_TOKEN_LENGTH` → error at startup); use `bun run packages/server/src/index.ts --generate-token` |
+| Config-dir single-instance lock | A second server booted against the same `ROX_CONFIG_DIR` / `CRAFT_CONFIG_DIR` refuses to start (`Another server instance is already running (PID …)`); scripted restarts must stop the old process first or use a separate config dir | `packages/server-core/src/bootstrap/lock-identity.ts`; observed live: second instance rejected while the first held `~/.craft-agent` |
 
 Documented in `docs/cli.md` (Connection Options + Troubleshooting) and the README Remote Server section.

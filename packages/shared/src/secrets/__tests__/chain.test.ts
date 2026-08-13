@@ -200,7 +200,7 @@ describe('resolveSecretsForSpawn', () => {
   it('refuses denied envVar targets at resolution time (config.json can bypass the setter)', async () => {
     const env = stubProvider('environment', { K: 'x'.repeat(40) })
 
-    for (const denied of ['PATH', 'Path', 'NODE_OPTIONS', 'LD_PRELOAD', 'CRAFT_CONFIG_DIR']) {
+    for (const denied of ['PATH', 'Path', 'NODE_OPTIONS', 'LD_PRELOAD', 'CRAFT_CONFIG_DIR', 'ROX_CONFIG_DIR']) {
       const result = await resolveSecretsForSpawn(
         [{ name: 'planted', envVar: denied, ref: 'K' }],
         {},

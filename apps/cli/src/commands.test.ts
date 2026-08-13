@@ -55,8 +55,12 @@ describe('parseArgs', () => {
   it('falls back to env vars for url and token', () => {
     const prevUrl = process.env.CRAFT_SERVER_URL
     const prevToken = process.env.CRAFT_SERVER_TOKEN
+    const prevRoxUrl = process.env.ROX_SERVER_URL
+    const prevRoxToken = process.env.ROX_SERVER_TOKEN
     const prevCa = process.env.CRAFT_TLS_CA
 
+    delete process.env.ROX_SERVER_URL
+    delete process.env.ROX_SERVER_TOKEN
     process.env.CRAFT_SERVER_URL = 'ws://env-server:8080'
     process.env.CRAFT_SERVER_TOKEN = 'env-token'
     process.env.CRAFT_TLS_CA = '/env/ca.pem'
@@ -71,8 +75,28 @@ describe('parseArgs', () => {
       else process.env.CRAFT_SERVER_URL = prevUrl
       if (prevToken === undefined) delete process.env.CRAFT_SERVER_TOKEN
       else process.env.CRAFT_SERVER_TOKEN = prevToken
+      if (prevRoxUrl === undefined) delete process.env.ROX_SERVER_URL
+      else process.env.ROX_SERVER_URL = prevRoxUrl
+      if (prevRoxToken === undefined) delete process.env.ROX_SERVER_TOKEN
+      else process.env.ROX_SERVER_TOKEN = prevRoxToken
       if (prevCa === undefined) delete process.env.CRAFT_TLS_CA
       else process.env.CRAFT_TLS_CA = prevCa
+    }
+  })
+
+  it('prefers ROX_SERVER_TOKEN over CRAFT_SERVER_TOKEN', () => {
+    const prevCraft = process.env.CRAFT_SERVER_TOKEN
+    const prevRox = process.env.ROX_SERVER_TOKEN
+    process.env.CRAFT_SERVER_TOKEN = 'craft-token'
+    process.env.ROX_SERVER_TOKEN = 'rox-token'
+    try {
+      const args = parseArgs(['bun', 'index.ts', 'ping'])
+      expect(args.token).toBe('rox-token')
+    } finally {
+      if (prevCraft === undefined) delete process.env.CRAFT_SERVER_TOKEN
+      else process.env.CRAFT_SERVER_TOKEN = prevCraft
+      if (prevRox === undefined) delete process.env.ROX_SERVER_TOKEN
+      else process.env.ROX_SERVER_TOKEN = prevRox
     }
   })
 
