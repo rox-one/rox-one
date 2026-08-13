@@ -49,7 +49,7 @@ import {
   knowledgeRefKey,
   type SurfaceTabView,
 } from './surface-tab-model'
-import { groupTabsByLayout, panelStackToWorkbenchLayout } from './tab-groups'
+import { groupTabsByLayout, panelStackToWorkbenchLayout, persistableWorkbenchLayout } from './tab-groups'
 
 const TAB_STRIP_HEIGHT = 36
 
@@ -318,7 +318,9 @@ export function SurfaceTabs() {
 
   useEffect(() => {
     if (!layout || !workspaceId) return
-    storage.set(storage.KEYS.workbenchLayout, layout, workspaceId)
+    const persistable = persistableWorkbenchLayout(layout)
+    if (!persistable) return
+    storage.set(storage.KEYS.workbenchLayout, persistable, workspaceId)
   }, [layout, workspaceId])
 
   const grouped = tabGroupsEnabled

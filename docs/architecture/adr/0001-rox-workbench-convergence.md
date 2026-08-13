@@ -78,6 +78,52 @@ URL `?panels=` remain readable. New writes of `WorkbenchLayout` v2 happen
 only when `workbench.tab-groups.v2` is on; v1 snapshots stay readable for
 at least two releases.
 
+## Addendum (2026-08-13) — layout seam
+
+Hardens the WorkbenchLayout contract without replacing suite S hosts or
+the Appearance `workbench.*` toggles.
+
+### Geometry is 1D
+
+`OpenSurfaceOptions.target` is `'active-group' | 'new-group-right' | 'new-window'`.
+`'new-group-bottom'` is not part of the model. `splitGroup` still clones the
+active tab into a new group to the right (`down` is accepted on the parallel
+host and inserts right until a split-tree increment).
+
+### Preview is a single bit
+
+`SurfaceInstance` has `preview: boolean` (`false` ⇒ pinned via
+`isPinnedSurface`). There is no `pinned` field, so a tab cannot be both.
+This increment **keeps** `SurfaceInstance.route` because the live renderer
+write path is still panel-stack / URL.
+
+### Dirty close is a Result
+
+`closeSurface` returns `LayoutMutation`. Closing a dirty tab without
+`force: true` is `{ ok: false, code: 'DIRTY_SURFACE' }` and the same layout
+object. Opening a new preview over a dirty preview pins the dirty tab and
+appends the new one.
+
+### Parse and persist
+
+`parseWorkbenchLayout` never throws. v1 snapshots are rejected (callers
+use `migrateLegacyLayout`). Legacy JSON that still has `pinned` is
+accepted; `preview` wins when both are present. Renderer writes to
+`KEYS.workbenchLayout` only after a successful parse.
+
+### Two hosts, two snapshots
+
+S-02 `WorkspaceSurfaceHost` still speaks `SurfaceLayoutSnapshot` (panel
+stack). `WorkbenchLayoutHost` is a **parallel** layout seam with an
+in-memory adapter. The renderer does not yet own TabGroups as write-path
+state.
+
+### Rollback
+
+`flattenWorkbenchLayoutToLegacyEntries` maps every v2 tab to its own
+legacy panel so no surface is lost. Grouping is not preserved. Live
+`workbenchLayoutToPanelEntries` stays one panel per **group**.
+
 ## Out of scope
 
 WorkGraph kernel, WorkItems UI, Meetings, Feed, Mail, CRDT, hosted email,
