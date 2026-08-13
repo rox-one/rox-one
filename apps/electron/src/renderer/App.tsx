@@ -91,7 +91,6 @@ import { getFileManagerName } from '@/lib/platform'
 import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { OmniboxHost } from '@/platform/OmniboxHost'
-import { StatusBarHost } from '@/platform/StatusBarHost'
 import { toast } from 'sonner'
 
 type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready'
@@ -2217,7 +2216,6 @@ export default function App() {
                   />
                 )}
               </div>
-              <StatusBarHost />
               <ResetConfirmationDialog
                 open={showResetDialog}
                 onConfirm={executeReset}

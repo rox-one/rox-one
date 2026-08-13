@@ -160,6 +160,12 @@ function OsBrowserTabItem({
               onFocus(instance)
             }
           }}
+          onAuxClick={(e) => {
+            if (e.button === 1 && liveWindowActions) {
+              e.preventDefault()
+              onTerminate(instance)
+            }
+          }}
           className={cn(
             'group flex h-7 max-w-[220px] min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] transition-colors',
             tab.focused

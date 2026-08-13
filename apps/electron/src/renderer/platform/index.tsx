@@ -29,7 +29,7 @@ export { StatusBarHost } from './StatusBarHost'
 export { Omnibox } from './Omnibox'
 export { OmniboxHost } from './OmniboxHost'
 export { parsePrefix, scoreMatch } from './omnibox-helpers'
-export { resolveWorkbenchChrome } from './workbench-chrome'
+export { resolveWorkbenchChrome, shouldShowStatusBar } from './workbench-chrome'
 
 export function UnifiedShellLayout({ children }: { children: ReactNode }) {
   const chrome = resolveWorkbenchChrome({

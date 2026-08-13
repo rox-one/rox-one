@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { resolveWorkbenchChrome } from '../workbench-chrome'
+import { resolveWorkbenchChrome, shouldShowStatusBar } from '../workbench-chrome'
 
 const OFF = {
   unifiedShell: false,
@@ -51,5 +51,12 @@ describe('resolveWorkbenchChrome', () => {
       hideBrowserTabStrip: true,
       showInspector: false,
     })
+  })
+
+  it('hides the status bar in compact layout even when the flag is on', () => {
+    expect(resolveWorkbenchChrome({ ...OFF, statusBar: true }).showStatusBar).toBe(true)
+    expect(shouldShowStatusBar(true, false)).toBe(true)
+    expect(shouldShowStatusBar(true, true)).toBe(false)
+    expect(shouldShowStatusBar(false, false)).toBe(false)
   })
 })

@@ -87,8 +87,10 @@ import {
   UnifiedShellLayout,
   ACTIVITY_RAIL_WIDTH,
   ACTIVITY_RAIL_COLLAPSED_WIDTH,
+  StatusBarHost,
+  shouldShowStatusBar,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchTopChromeV2Atom, activityRailCollapsedAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, activityRailCollapsedAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -256,6 +258,7 @@ function AppShellContent({
   // sashes shift right by the rail width (+ one PANEL_GAP); zero when OFF.
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
+  const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
   const activityRailCollapsed = useAtomValue(activityRailCollapsedAtom)
   const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled)
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
@@ -304,6 +307,7 @@ function AppShellContent({
   const shellWidth = useContainerWidth(shellRef)
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
+  const showStatusBar = shouldShowStatusBar(statusBarEnabled, isAutoCompact)
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -2107,13 +2111,13 @@ function AppShellContent({
         {isWebUI && <WebBrowserPanel open={webBrowserOpen} onClose={() => setWebBrowserOpen(false)} />}
 
       {/* === OUTER LAYOUT: Unified Panel Stack | Right Sidebar === */}
+      <div className="flex h-full min-h-0 flex-col">
       <div
         ref={shellRef}
-        className="flex items-stretch relative"
+        className="relative flex min-h-0 flex-1 items-stretch"
         style={{
-          height: '100%',
           paddingRight: isAutoCompact ? 0 : PANEL_EDGE_INSET,
-          paddingBottom: isAutoCompact ? 0 : PANEL_EDGE_INSET,
+          paddingBottom: (isAutoCompact || showStatusBar) ? 0 : PANEL_EDGE_INSET,
           paddingLeft: 0,
           gap: PANEL_GAP,
         }}
@@ -2706,6 +2710,8 @@ function AppShellContent({
         </div>
         )}
 
+      </div>
+      {showStatusBar && <StatusBarHost />}
       </div>
 
       {/* ============================================================================

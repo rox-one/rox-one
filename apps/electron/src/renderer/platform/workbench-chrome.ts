@@ -36,3 +36,8 @@ export function resolveWorkbenchChrome(input: WorkbenchChromeInput): WorkbenchCh
     utilityRail: input.topChrome,
   }
 }
+
+/** Status bar sits in the main column only when the flag is on and the shell is not compact. */
+export function shouldShowStatusBar(statusBar: boolean, compact: boolean): boolean {
+  return statusBar && !compact
+}

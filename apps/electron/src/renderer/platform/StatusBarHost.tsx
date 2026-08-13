@@ -1,6 +1,9 @@
 /**
  * Status Bar host — occupies platform slot `status` (ADR-0001).
  *
+ * Mounted at the bottom of AppShell's main column. Hidden when the flag is
+ * off, and not mounted in compact layout or on the session-load error screen.
+ *
  * Durable Local/Remote/Offline + sync, run/approval placeholders, permission
  * label, presence/usage placeholders. Transport/toolchain banners stay for
  * failed/installing states that need intervention.
