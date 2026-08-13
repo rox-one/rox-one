@@ -54,4 +54,11 @@ describe('knowledge entity surface mounts KnowledgeAgentPanel', () => {
     expect(src).toContain('<KnowledgeInspector')
     expect(src).toContain('knowledgeEntityCompanionRef')
   })
+
+  it('classic aside stays on the flag-off path; unified shell hides the duplicate', () => {
+    const src = readFileSync(join(pagesDir, 'KnowledgeEntityPage.tsx'), 'utf8')
+    expect(src).toContain('featureUnifiedShellAtom')
+    expect(src).toContain('!unifiedShellEnabled')
+    expect(src).toContain('<KnowledgeInspector')
+  })
 })

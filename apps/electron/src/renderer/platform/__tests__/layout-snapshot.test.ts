@@ -1,4 +1,10 @@
 import { describe, it, expect } from 'bun:test'
+import { getAppPanelRegistry } from '../panel-registry-state'
+import {
+  KNOWLEDGE_INSPECTOR_PANEL_ID,
+  registerCorePanels,
+} from '../core-panels'
+import { panelContextKeysFromRoute } from '../surface-tab-model'
 import {
   surfaceTabToRoute,
   surfaceTabFromRoute,
@@ -175,5 +181,34 @@ describe('layout-snapshot: snapshot ↔ open surfaces', () => {
       ['knowledge', 0.25],
       ['cloud-run', 0.75],
     ])
+  })
+})
+
+describe('layout-snapshot restore → inspector contribution', () => {
+  it('restored knowledge tab yields activeSurface knowledge so knowledge.inspector is listed', () => {
+    registerCorePanels(getAppPanelRegistry(), () => null)
+    const snapshot = snapshotFromUrlSearch(
+      snapshotToUrlSearch(makeSnapshot([knowledgeTab], 0)),
+      WS,
+      SAVED_AT,
+    )
+    expect(snapshot.tabs[snapshot.focusedIndex].tab).toEqual(knowledgeTab)
+    const route = surfaceTabToRoute(snapshot.tabs[snapshot.focusedIndex].tab)
+    const ctx = panelContextKeysFromRoute(route)
+    expect(ctx.activeSurface).toBe('knowledge')
+    const listed = getAppPanelRegistry().list('inspector', ctx)
+    expect(listed.map((p) => p.id)).toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
+  })
+
+  it('restored session tab does not list knowledge.inspector', () => {
+    registerCorePanels(getAppPanelRegistry(), () => null)
+    const snapshot = snapshotFromUrlSearch(
+      snapshotToUrlSearch(makeSnapshot([sessionTab], 0)),
+      WS,
+      SAVED_AT,
+    )
+    const route = surfaceTabToRoute(snapshot.tabs[snapshot.focusedIndex].tab)
+    const listed = getAppPanelRegistry().list('inspector', panelContextKeysFromRoute(route))
+    expect(listed.map((p) => p.id)).not.toContain(KNOWLEDGE_INSPECTOR_PANEL_ID)
   })
 })

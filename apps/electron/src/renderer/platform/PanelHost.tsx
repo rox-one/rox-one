@@ -10,12 +10,12 @@
  *   `panel-registry-state:${workspaceId}` (S-03 §3.7, KEYS.panelState);
  * - re-renders on `registry.onDidChange` and on workspace switch (state is
  *   re-read per workspace; absence/parse-failure yields defaults);
- * - renders nothing when the slot has no visible contributions — with zero
- *   registrations (W1) mounting PanelHost is a no-op, so UnifiedShellLayout
- *   can wire the slots before extension/plugin panels exist (S-05/S-06).
+ * - renders nothing when the slot has no visible contributions. Ticket 11
+ *   registers `knowledge.inspector` on slot `inspector`; other slots stay
+ *   empty until later waves.
  *
  * The default context snapshot publishes `activeSurface` from the focused
- * panel route (same derivation as InspectorHost); callers may pass a full
+ * panel route (`panelContextKeysFromRoute`); callers may pass a full
  * `contextKeys` to override.
  *
  * Write path for future panel chrome (hide/pin/reorder menus):
@@ -31,17 +31,21 @@ import type {
   PanelSlot,
 } from '@craft-agent/core/platform'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
-import { focusedPanelRouteAtom, getPanelTypeFromRoute } from '@/atoms/panel-stack'
+import { focusedPanelRouteAtom } from '@/atoms/panel-stack'
 import * as storage from '@/lib/local-storage'
 import { KEYS } from '@/lib/local-storage'
 import { cn } from '@/lib/utils'
+import { registerCorePanels } from './core-panels'
+import { KnowledgeInspectorPanel } from './KnowledgeInspectorPanel'
 import {
   DEFAULT_PANEL_REGISTRY_STATE,
   getAppPanelRegistry,
   normalizePanelRegistryState,
   resolveSlotPanels,
 } from './panel-registry-state'
-import { panelTypeToSurfaceKind } from './surface-tab-model'
+import { panelContextKeysFromRoute } from './surface-tab-model'
+
+registerCorePanels(getAppPanelRegistry(), KnowledgeInspectorPanel)
 
 export interface PanelHostProps {
   slot: PanelSlot
@@ -88,12 +92,10 @@ export function PanelHost({
     return () => sub.dispose()
   }, [resolvedRegistry])
 
-  const ctx = React.useMemo<ContextKeys>(() => {
-    if (contextKeys) return contextKeys
-    const panelType = route ? getPanelTypeFromRoute(route) : null
-    const activeSurface = panelType ? panelTypeToSurfaceKind(panelType) : null
-    return activeSurface ? { activeSurface } : {}
-  }, [contextKeys, route])
+  const ctx = React.useMemo<ContextKeys>(
+    () => contextKeys ?? panelContextKeysFromRoute(route),
+    [contextKeys, route],
+  )
 
   const panels = React.useMemo(
     () => resolveSlotPanels(resolvedRegistry, slot, ctx, state.overrides),
