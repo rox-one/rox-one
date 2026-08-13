@@ -151,6 +151,8 @@ Donor `main` == rox `main` (`5797f431`). `fix/sandbox-env-strip` and `fix/test-p
 
 Everything below is a **proposal** — review and run manually. Order: donor branches first (donor archival), then rox-one. Branches with open PRs (§3, dependabot) are intentionally excluded.
 
+Ticket 14 binding: [plans/next-program/decisions/006-branch-deletion.md](./next-program/decisions/006-branch-deletion.md) — **do not execute** these deletes until a human ports or discards the 142-line `worker-list-commands.test.ts` residual and runs §5 themselves. Agents must not `git push --delete` remotes.
+
 ### Donor repo `agisota/craft-agents-oss`
 
 ```bash

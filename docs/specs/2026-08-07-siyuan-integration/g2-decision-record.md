@@ -2,7 +2,8 @@
 
 > **Status: OPEN — blocked on legal/commercial decision**  
 > **Date:** 2026-08-08  
-> **Parent:** [08-licensing.md](./08-licensing.md) (K-08)
+> **Parent:** [08-licensing.md](./08-licensing.md) (K-08)  
+> **Ticket 14:** [plans/next-program/decisions/001-g2-managed-siyuan.md](../../../plans/next-program/decisions/001-g2-managed-siyuan.md) records the same binding. That ADR is **not** a flip to B or C.
 
 ## Recommendation order
 
