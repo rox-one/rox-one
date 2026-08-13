@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import * as Icons from 'lucide-react'
 import { Spinner } from '@craft-agent/ui'
 import {
@@ -36,6 +37,7 @@ export function BrowserTabStrip({
   instancesOverride,
   maxVisibleBadges = DEFAULT_MAX_VISIBLE_BADGES,
 }: BrowserTabStripProps) {
+  const { t } = useTranslation()
   const {
     orderedInstances,
     activeInstanceId,
@@ -49,8 +51,8 @@ export function BrowserTabStrip({
     const targetSessionId = instance.boundSessionId ?? instance.ownerSessionId
     const canOpenSession = !!targetSessionId
     const openSessionLabel = instance.agentControlActive
-      ? 'Open Session Using this Window'
-      : 'Open Session Which Used this Window'
+      ? t('workbench.browser.openSessionUsing')
+      : t('workbench.browser.openSession')
 
     return (
       <>
@@ -59,7 +61,7 @@ export function BrowserTabStrip({
           onSelect={() => focusBrowserWindow(instance)}
         >
           <Icons.Monitor className="h-3.5 w-3.5" />
-          Show Browser Window
+          {t('workbench.browser.showWindow')}
         </StyledDropdownMenuItem>
 
         <StyledDropdownMenuItem
@@ -78,11 +80,11 @@ export function BrowserTabStrip({
           onSelect={() => terminateBrowserWindow(instance)}
         >
           <Icons.XCircle className="h-3.5 w-3.5" />
-          Terminate Browser
+          {t('workbench.browser.terminate')}
         </StyledDropdownMenuItem>
       </>
     )
-  }, [liveWindowActions, focusBrowserWindow, openSessionUsingWindow, terminateBrowserWindow])
+  }, [t, liveWindowActions, focusBrowserWindow, openSessionUsingWindow, terminateBrowserWindow])
 
   const visibleBadgeCount = Math.max(1, maxVisibleBadges)
   const visible = useMemo(
@@ -125,7 +127,7 @@ export function BrowserTabStrip({
           <StyledDropdownMenuContent align="end" minWidth="min-w-64">
             {overflow.map((instance) => {
               const hostname = getHostname(instance.url)
-              const displayLabel = instance.title.trim() || hostname || 'Local File'
+              const displayLabel = instance.title.trim() || hostname || t('surfaceTabs.browser')
               return (
                 <DropdownMenuSub key={instance.id}>
                   <StyledDropdownMenuSubTrigger>
