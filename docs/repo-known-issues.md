@@ -4,13 +4,11 @@ Small hygiene items found by the 2026-08-12 integration audit. Listed here becau
 
 ## Root `package.json` dead knobs
 
+`marketing:*` and `docs:dev` scripts, and the unused `CRAFT_WEBUI_PORT=3100` knob on `server:dev:webui`, were removed (ticket 08). Remaining:
+
 | Location | Issue | Evidence |
 |---|---|---|
-| scripts `marketing:dev` / `marketing:build` / `marketing:preview` | Reference `apps/marketing/vite.config.ts`, but `apps/marketing` does not exist in this repo | `ls apps/` → `cli cloud-gateway electron ios modal-gateway viewer webui` only; the directory is also excluded in `workspaces` (`"!apps/marketing"`, package.json:21-22). Running any of these scripts fails with a missing-config error. |
-| script `docs:dev` | Runs `cd apps/online-docs && npm install && npx mintlify dev`, but `apps/online-docs` does not exist | Same exclusion block (`"!apps/online-docs"`), directory physically absent. |
-| script `server:dev:webui` | Sets `CRAFT_WEBUI_PORT=3100`, but **nothing reads `CRAFT_WEBUI_PORT`** | `grep -rn CRAFT_WEBUI_PORT packages apps scripts` → only hit is package.json itself. The webui is embedded on the RPC port (`CRAFT_RPC_PORT`, default `9100`, parsed in `packages/server-core/src/bootstrap/headless-start.ts:396`); the working knob in that script is `CRAFT_WEBUI_DIR=apps/webui/dist` (read in `packages/server/src/index.ts`). |
-
-**Proposed fix (code-owned, not applied here):** delete the five dead scripts and the two stale `workspaces` exclusions, and drop `CRAFT_WEBUI_PORT=3100` from `server:dev:webui`.
+| `workspaces` exclusions `"!apps/online-docs"` / `"!apps/marketing"` | Directories do not exist; exclusions are now leftover | `ls apps/` → `cli cloud-gateway electron ios modal-gateway viewer webui` only |
 
 ## Stale code comment (owned by another workstream)
 
@@ -23,4 +21,4 @@ Small hygiene items found by the 2026-08-12 integration audit. Listed here becau
 | `CRAFT_SERVER_TOKEN` minimum length | Tokens shorter than 16 chars are **fatal at boot** (startup throws) — deliberate hardening, but breaks naive copy-paste runbooks using short tokens | `packages/server-core/src/bootstrap/headless-start.ts` `validateTokenEntropy` (`token.length < MIN_TOKEN_LENGTH` → error at startup); use `bun run packages/server/src/index.ts --generate-token` |
 | Config-dir single-instance lock | A second server booted against the same `CRAFT_CONFIG_DIR` refuses to start (`Another server instance is already running (PID …)`); scripted restarts must stop the old process first or use a separate config dir | `packages/server-core/src/bootstrap/lock-identity.ts`; observed live: second instance rejected while the first held `~/.craft-agent` |
 
-**Proposed fix (docs-owned):** mention both constraints in `docs/cli.md` / README server section so runbooks don't fail at boot.
+Documented in `docs/cli.md` (Connection Options + Troubleshooting) and the README Remote Server section.
