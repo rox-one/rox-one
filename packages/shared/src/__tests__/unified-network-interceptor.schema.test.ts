@@ -1,7 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'bun:test';
 import { writeFileSync, unlinkSync, mkdirSync } from 'node:fs';
-import { join } from 'node:path';
-import { homedir } from 'node:os';
+import { dirname } from 'node:path';
 
 let injectMetadataIntoToolSchema: typeof import('../unified-network-interceptor.ts').injectMetadataIntoToolSchema;
 let sanitizeEmptyTextCacheControl: typeof import('../unified-network-interceptor.ts').sanitizeEmptyTextCacheControl;
@@ -123,8 +122,15 @@ describe('sanitizeEmptyTextCacheControl', () => {
 });
 
 describe('upgradePromptCacheTtl', () => {
-  const configFile = join(homedir(), '.craft-agent', 'config.json');
+  // The same path the interceptor reads. Hardcoding ~/.craft-agent here made
+  // the suite edit the developer's real config, and silently stopped matching
+  // the code under test once the config root became overridable.
+  let configFile: string;
   let originalConfig: string | null = null;
+
+  beforeAll(async () => {
+    ({ CONFIG_FILE: configFile } = await import('../interceptor-common.ts'));
+  });
 
   beforeEach(() => {
     // Save original config if it exists
@@ -145,20 +151,19 @@ describe('upgradePromptCacheTtl', () => {
     _resetConfigCacheForTesting();
   });
 
-  function enableExtendedCache() {
-    const dir = join(homedir(), '.craft-agent');
-    mkdirSync(dir, { recursive: true });
+  function writeExtendedCache(enabled: boolean) {
+    mkdirSync(dirname(configFile), { recursive: true });
     const existing = originalConfig ? JSON.parse(originalConfig) : {};
-    writeFileSync(configFile, JSON.stringify({ ...existing, extendedPromptCache: true }));
+    writeFileSync(configFile, JSON.stringify({ ...existing, extendedPromptCache: enabled }));
     _resetConfigCacheForTesting();
   }
 
+  function enableExtendedCache() {
+    writeExtendedCache(true);
+  }
+
   function disableExtendedCache() {
-    const dir = join(homedir(), '.craft-agent');
-    mkdirSync(dir, { recursive: true });
-    const existing = originalConfig ? JSON.parse(originalConfig) : {};
-    writeFileSync(configFile, JSON.stringify({ ...existing, extendedPromptCache: false }));
-    _resetConfigCacheForTesting();
+    writeExtendedCache(false);
   }
 
   it('leaves blocks without ttl untouched when disabled', () => {

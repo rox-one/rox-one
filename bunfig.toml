@@ -8,3 +8,7 @@ preload = ["./packages/shared/src/unified-network-interceptor.ts"]
 # `bun install --linker=hoisted` for the same reason.
 [install]
 linker = "hoisted"
+
+[test]
+# Keep test runs out of the real ~/.craft-agent (see the script header).
+preload = ["./scripts/test-config-isolation.ts"]

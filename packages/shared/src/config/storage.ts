@@ -15,7 +15,7 @@ import { initializeDocs } from '../docs/index.ts';
 import { expandPath, toPortablePath, getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync } from '../utils/files.ts';
-import { CONFIG_DIR } from './paths.ts';
+import { resolveConfigDir } from './paths.ts';
 import type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
 import type { Plan } from '../agent/plan-types.ts';
 import type { PermissionMode } from '../agent/mode-manager.ts';
@@ -27,8 +27,17 @@ import { isValidThemeFile } from './validators.ts';
 import { isToolName } from '../toolchain/types.ts';
 import type { ToolName } from '../toolchain/types.ts';
 
-// Re-export CONFIG_DIR for convenience (centralized in paths.ts)
-export { CONFIG_DIR } from './paths.ts';
+/**
+ * Resolved when this module is evaluated rather than re-exported from
+ * `paths.ts`, so it reflects `CRAFT_CONFIG_DIR` as of this module's own load
+ * rather than whenever `paths.ts` happened to load first.
+ *
+ * Note this is still a snapshot: the derived paths below capture it, and
+ * re-importing this module does not re-run it — Bun keys the module cache on
+ * the resolved path and ignores a `?query` suffix. Making the config root
+ * switchable at runtime means turning these constants into accessors.
+ */
+export const CONFIG_DIR = resolveConfigDir();
 
 // Re-export base types from core (single source of truth)
 export type {

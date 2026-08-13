@@ -9,6 +9,7 @@ import type { StoredCredential } from '../../credentials/types.ts'
 // paths.ts reads CRAFT_CONFIG_DIR at first import, so set it before importing
 // the store and use one config dir for the whole suite (cleared between tests).
 const CONFIG_DIR = mkdtempSync(join(tmpdir(), 'craft-ssh-hosts-'))
+const PREVIOUS_CONFIG_DIR = process.env.CRAFT_CONFIG_DIR
 process.env.CRAFT_CONFIG_DIR = CONFIG_DIR
 
 // In-memory credential store so tests never touch ~/.craft-agent/credentials.enc.
@@ -38,6 +39,10 @@ beforeAll(async () => {
 
 afterAll(() => {
   for (const spy of spies) spy.mockRestore()
+  // Config paths are resolved per call, so leaving this set would point every
+  // later test file at this suite's scratch directory.
+  if (PREVIOUS_CONFIG_DIR === undefined) delete process.env.CRAFT_CONFIG_DIR
+  else process.env.CRAFT_CONFIG_DIR = PREVIOUS_CONFIG_DIR
 })
 
 beforeEach(() => {
