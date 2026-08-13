@@ -162,25 +162,27 @@ export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): voi
     }
   })
 
-  // Read a user-attached file (bypasses workspace-dir validation).
-  // Used only by renderer draft hydration: the path was written to drafts.json by a
-  // previous user-initiated OS-picker / Finder-drag attach, so the path implies consent.
+  // Read a user-attached file for renderer draft hydration.
+  // Paths still must pass validateFilePath against the workspace allowed dirs —
+  // a stored drafts.json path is not enough to read arbitrary files.
   // NOT exposed to agent code — no equivalent MCP tool. Kept separate from readFileAttachment
   // on purpose to preserve the agent-facing read's narrow trust boundary.
   const USER_ATTACHMENT_MAX_BYTES = 50 * 1024 * 1024
-  server.handle(RPC_CHANNELS.file.READ_USER_ATTACHMENT, async (_ctx, path: string) => {
+  server.handle(RPC_CHANNELS.file.READ_USER_ATTACHMENT, async (ctx, path: string) => {
     try {
       if (!path || typeof path !== 'string' || !isAbsolute(path)) return null
-      const info = await stat(path).catch(() => null)
+      const workspaceId = ctx.workspaceId ?? deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId!)
+      const safePath = await validateFilePath(path, getWorkspaceAllowedDirs(workspaceId))
+      const info = await stat(safePath).catch(() => null)
       if (!info || !info.isFile()) return null
       if (info.size > USER_ATTACHMENT_MAX_BYTES) {
         deps.platform.logger.warn(`[readUserAttachment] file exceeds ${USER_ATTACHMENT_MAX_BYTES} bytes, skipping: ${path}`)
         return null
       }
-      const attachment = readFileAttachment(path)
+      const attachment = readFileAttachment(safePath)
       if (!attachment) return null
       try {
-        const thumbBuffer = await deps.platform.imageProcessor.process(path, {
+        const thumbBuffer = await deps.platform.imageProcessor.process(safePath, {
           resize: { width: 200, height: 200 },
           format: 'png',
         })

@@ -17,6 +17,8 @@ import { tmpdir } from 'node:os';
 import { createScriptRuntimeEnv } from '../runtime/sandbox-env.ts';
 import { isPathWithinDirectory, isPathWithinDirectoryForCreation } from '../runtime/path-security.ts';
 import { resolveScriptRuntime } from '../runtime/resolve-script-runtime.ts';
+import { applyNetworkIsolation } from '../runtime/network-isolation.ts';
+import { applyFilesystemIsolation } from '../runtime/filesystem-isolation.ts';
 
 export interface TransformDataArgs {
   language: 'python3' | 'node' | 'bun';
@@ -90,20 +92,49 @@ export async function handleTransformData(
   try {
     // Build command from shared runtime resolver
     const runtime = resolveScriptRuntime(args.language);
-    const cmd = runtime.command;
     const spawnArgs = [...runtime.argsPrefix, tempScript, ...resolvedInputs, resolvedOutput];
 
-    // Strip sensitive env vars + redirect runtime cache/temp paths to session data dir
+    let networkIsolation = applyNetworkIsolation(runtime.command, spawnArgs);
+    let filesystemIsolation = applyFilesystemIsolation(runtime.command, spawnArgs, sessionDir);
+
+    if (process.platform === 'darwin') {
+      filesystemIsolation = applyFilesystemIsolation(runtime.command, spawnArgs, sessionDir, {
+        includeNetworkDeny: true,
+      });
+      networkIsolation = {
+        status: filesystemIsolation.status,
+        backend: filesystemIsolation.status === 'enforced' ? 'sandbox-exec' : 'none',
+        command: runtime.command,
+        args: spawnArgs,
+      };
+    } else {
+      networkIsolation = applyNetworkIsolation(runtime.command, spawnArgs);
+      if (networkIsolation.status === 'enforced') {
+        filesystemIsolation = applyFilesystemIsolation(
+          networkIsolation.command,
+          networkIsolation.args,
+          sessionDir,
+        );
+      }
+    }
+
+    if (networkIsolation.status !== 'enforced' || filesystemIsolation.status !== 'enforced') {
+      return errorResponse(
+        'transform_data requires network and filesystem isolation, but no supported isolation backend is available on this platform/runtime.',
+      );
+    }
+
     const env = createScriptRuntimeEnv({
       language: args.language,
       dataDir,
     });
+    const cmd = filesystemIsolation.command;
 
     // Spawn subprocess with manual timeout that escalates to SIGKILL.
     // We can't rely on spawn()'s built-in `timeout` option because it only sends
     // SIGTERM, which can be caught/ignored — leaving the promise hanging forever.
     const result = await new Promise<{ stdout: string; stderr: string; code: number | null }>((resolvePromise, reject) => {
-      const child = spawn(cmd, spawnArgs, {
+      const child = spawn(cmd, filesystemIsolation.args, {
         cwd: dataDir,
         env,
         stdio: ['ignore', 'pipe', 'pipe'],

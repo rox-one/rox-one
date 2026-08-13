@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import type { Stats } from 'fs'
@@ -7,6 +7,8 @@ import {
   validatePathFormat,
   isValidWorkingDirectory,
   isValidWorkspaceRootPath,
+  isValidNotesPath,
+  isPathInsideBase,
 } from './path-validation'
 
 function directoryStats(): Stats {
@@ -140,5 +142,37 @@ describe('isValidWorkspaceRootPath', () => {
       valid: false,
       reason: 'Parent path is not a directory: C:\\workspaces',
     })
+  })
+})
+
+describe('isValidNotesPath', () => {
+  it('accepts a directory inside the workspace', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'craft-notes-path-'))
+    const notes = join(dir, 'notes')
+    mkdirSync(notes)
+    try {
+      expect(isValidNotesPath(notes, dir, [], 'linux')).toEqual({ valid: true })
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects a directory outside the workspace', () => {
+    const workspace = mkdtempSync(join(tmpdir(), 'craft-notes-ws-'))
+    const outside = mkdtempSync(join(tmpdir(), 'craft-notes-out-'))
+    try {
+      expect(isValidNotesPath(outside, workspace, [], 'linux')).toEqual({
+        valid: false,
+        reason: 'Notes path must be inside the workspace.',
+      })
+    } finally {
+      rmSync(workspace, { recursive: true, force: true })
+      rmSync(outside, { recursive: true, force: true })
+    }
+  })
+
+  it('treats /home as outside a nested workspace', () => {
+    expect(isPathInsideBase('/home/user/.ssh', '/home/user/ws', 'linux')).toBe(false)
+    expect(isPathInsideBase('/home/user/ws/notes', '/home/user/ws', 'linux')).toBe(true)
   })
 })

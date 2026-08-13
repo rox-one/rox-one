@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { startWebuiHttpServer } from '../http-server'
+import { createWebuiHandler, startWebuiHttpServer } from '../http-server'
 
 const SECRET = 'test-server-secret'
 const PASSWORD = 'test-password'
@@ -187,5 +187,84 @@ describe('startWebuiHttpServer', () => {
     expect(await configRes.json()).toEqual({
       wsUrl: 'wss://craft.example.com/ws',
     })
+  })
+})
+
+describe('WebUI login rate-limit IP keying', () => {
+  const HANDLERS: Array<{ dispose: () => void }> = []
+
+  afterEach(() => {
+    while (HANDLERS.length > 0) {
+      HANDLERS.pop()?.dispose()
+    }
+    while (TEMP_DIRS.length > 0) {
+      const dir = TEMP_DIRS.pop()
+      if (dir) rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  function createHandler(opts?: {
+    resolveClientIp?: (req: Request) => string | null
+    trustedProxies?: string[]
+  }) {
+    const handler = createWebuiHandler({
+      webuiDir: createTestWebuiDir(),
+      secret: SECRET,
+      password: PASSWORD,
+      wsProtocol: 'ws',
+      wsPort: 9100,
+      getHealthCheck: () => ({ status: 'ok' }),
+      logger,
+      resolveClientIp: opts?.resolveClientIp,
+      trustedProxies: opts?.trustedProxies,
+    })
+    HANDLERS.push(handler)
+    return handler
+  }
+
+  async function auth(handler: { fetch: (req: Request) => Promise<Response> }, extraHeaders?: Record<string, string>) {
+    return handler.fetch(new Request('http://127.0.0.1/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...extraHeaders },
+      body: JSON.stringify({ password: 'wrong-password' }),
+    }))
+  }
+
+  it('rate-limits each resolved client IP independently', async () => {
+    let ip = '203.0.113.10'
+    const handler = createHandler({ resolveClientIp: () => ip })
+
+    for (let i = 0; i < 5; i++) {
+      expect((await auth(handler)).status).toBe(401)
+    }
+    expect((await auth(handler)).status).toBe(429)
+
+    ip = '203.0.113.20'
+    expect((await auth(handler)).status).toBe(401)
+  })
+
+  it('ignores spoofed X-Forwarded-For when the socket is not a trusted proxy', async () => {
+    const handler = createHandler({
+      resolveClientIp: () => '198.51.100.7',
+      trustedProxies: ['10.0.0.1'],
+    })
+
+    for (let i = 0; i < 5; i++) {
+      expect((await auth(handler, { 'X-Forwarded-For': '203.0.113.99' })).status).toBe(401)
+    }
+    expect((await auth(handler, { 'X-Forwarded-For': '203.0.113.1' })).status).toBe(429)
+  })
+
+  it('uses X-Forwarded-For only when the socket IP is a trusted proxy', async () => {
+    const handler = createHandler({
+      resolveClientIp: () => '10.0.0.1',
+      trustedProxies: ['10.0.0.1'],
+    })
+
+    for (let i = 0; i < 5; i++) {
+      expect((await auth(handler, { 'X-Forwarded-For': '203.0.113.40' })).status).toBe(401)
+    }
+    expect((await auth(handler, { 'X-Forwarded-For': '203.0.113.40' })).status).toBe(429)
+    expect((await auth(handler, { 'X-Forwarded-For': '203.0.113.41' })).status).toBe(401)
   })
 })

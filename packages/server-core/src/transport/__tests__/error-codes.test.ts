@@ -12,8 +12,8 @@
 import { describe, it, expect, afterEach } from 'bun:test'
 import { WsRpcServer } from '../server'
 import { WsRpcClient } from '../client'
-import { CLIENT_BROWSER_INVOKE } from '../capabilities'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CLIENT_BROWSER_INVOKE, CLIENT_OPEN_FILE_DIALOG } from '../capabilities'
+import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
 
 const TEST_TOKEN = 'test-token-with-enough-entropy-to-pass'
 
@@ -25,11 +25,15 @@ afterEach(async () => {
   }
 })
 
-async function startPair(opts?: { clientCapabilities?: string[]; workspaceId?: string }) {
+async function startPair(opts?: {
+  clientCapabilities?: string[]
+  workspaceId?: string
+  requireAuth?: boolean
+}) {
   const server = new WsRpcServer({
     host: '127.0.0.1',
     port: 0,
-    requireAuth: true,
+    requireAuth: opts?.requireAuth ?? true,
     validateToken: async (t) => t === TEST_TOKEN,
     serverId: 'test',
   })
@@ -129,5 +133,34 @@ describe('Transport — capability introspection', () => {
     const { server } = await startPair({ clientCapabilities: [CLIENT_BROWSER_INVOKE], workspaceId: 'ws-a' })
     expect(server.findClientsWithCapability(CLIENT_BROWSER_INVOKE, { workspaceId: 'ws-a' })).toHaveLength(1)
     expect(server.findClientsWithCapability(CLIENT_BROWSER_INVOKE, { workspaceId: 'ws-other' })).toHaveLength(0)
+  })
+})
+
+describe('Transport — LOCAL_ONLY enforcement', () => {
+  const localOnlyChannel = RPC_CHANNELS.file.READ_USER_ATTACHMENT
+
+  it('denies LOCAL_ONLY channels when auth is required and the client is not the desktop', async () => {
+    const { server, client } = await startPair()
+    server.handle(localOnlyChannel, async () => ({ ok: true }))
+
+    let caught: unknown
+    try {
+      await client.invoke(localOnlyChannel)
+    } catch (err) {
+      caught = err
+    }
+    expect((caught as { code?: string }).code).toBe('LOCAL_ONLY_DENIED')
+  })
+
+  it('allows LOCAL_ONLY channels when the desktop advertises openFileDialog', async () => {
+    const { server, client } = await startPair({ clientCapabilities: [CLIENT_OPEN_FILE_DIALOG] })
+    server.handle(localOnlyChannel, async () => ({ ok: true }))
+    await expect(client.invoke(localOnlyChannel)).resolves.toEqual({ ok: true })
+  })
+
+  it('does not enforce LOCAL_ONLY on loopback without requireAuth', async () => {
+    const { server, client } = await startPair({ requireAuth: false })
+    server.handle(localOnlyChannel, async () => ({ ok: true }))
+    await expect(client.invoke(localOnlyChannel)).resolves.toEqual({ ok: true })
   })
 })

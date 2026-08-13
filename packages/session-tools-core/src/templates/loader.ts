@@ -14,7 +14,7 @@
  * -->
  */
 
-import { join } from 'node:path';
+import { join, resolve, relative, isAbsolute } from 'node:path';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 
 // ============================================================
@@ -98,11 +98,19 @@ export function parseTemplateHeader(content: string): TemplateMeta | null {
  * @param templateId - The template identifier (e.g., "issue-detail")
  * @returns The loaded template, or null if not found
  */
-export function loadTemplate(sourcePath: string, templateId: string): LoadedTemplate | null {
-  const templatesDir = join(sourcePath, 'templates');
+const SAFE_TEMPLATE_ID = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
 
-  // Try exact filename match: {templateId}.html
-  const filePath = join(templatesDir, `${templateId}.html`);
+export function loadTemplate(sourcePath: string, templateId: string): LoadedTemplate | null {
+  if (!SAFE_TEMPLATE_ID.test(templateId) || templateId.includes('..')) {
+    return null;
+  }
+
+  const templatesDir = resolve(sourcePath, 'templates');
+  const filePath = resolve(templatesDir, `${templateId}.html`);
+  const rel = relative(templatesDir, filePath);
+  if (rel.startsWith('..') || isAbsolute(rel)) {
+    return null;
+  }
   if (!existsSync(filePath)) {
     return null;
   }

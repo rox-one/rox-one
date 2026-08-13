@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'bun:test';
-import { expandWebhookAction } from './webhook-utils.ts';
+import { expandWebhookAction, blockedWebhookDestination, executeWebhookRequest } from './webhook-utils.ts';
 import type { WebhookAction } from './types.ts';
 
 const env = {
@@ -86,5 +86,34 @@ describe('expandWebhookAction', () => {
     expect(result.method).toBe('PUT');
     expect(result.bodyFormat).toBe('json');
     expect(result.captureResponse).toBe(true);
+  });
+});
+
+describe('blockedWebhookDestination', () => {
+  it('blocks loopback and RFC1918 hosts', async () => {
+    for (const url of [
+      'http://127.0.0.1/secret',
+      'http://localhost/secret',
+      'http://192.168.1.1/hook',
+      'http://10.0.0.8/hook',
+      'http://169.254.169.254/latest/meta-data/',
+      'http://metadata.google.internal/',
+    ]) {
+      const result = await executeWebhookRequest({ type: 'webhook', url });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not allowed');
+    }
+  });
+
+  it('allows public https hosts', () => {
+    expect(blockedWebhookDestination(new URL('https://example.com/hook'))).toBeNull();
+    expect(blockedWebhookDestination(new URL('https://facebook.com/hook'))).toBeNull();
+    expect(blockedWebhookDestination(new URL('https://fdx.com/hook'))).toBeNull();
+  });
+
+  it('blocks IPv6 loopback and unique-local literals without matching hostnames', () => {
+    expect(blockedWebhookDestination(new URL('http://[::1]/hook'))).not.toBeNull();
+    expect(blockedWebhookDestination(new URL('http://[fc00::1]/hook'))).not.toBeNull();
+    expect(blockedWebhookDestination(new URL('http://[fd12:3456::1]/hook'))).not.toBeNull();
   });
 });

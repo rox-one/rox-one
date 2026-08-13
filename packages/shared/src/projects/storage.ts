@@ -18,7 +18,7 @@ import {
   unlinkSync,
   readFileSync,
 } from 'fs';
-import { basename, extname, join } from 'path';
+import { basename, extname, join, resolve, relative, isAbsolute } from 'path';
 import { randomUUID } from 'crypto';
 import { atomicWriteFileSync, readJsonFileSync, getMimeType } from '../utils/files.ts';
 import { debug } from '../utils/debug.ts';
@@ -34,6 +34,13 @@ import type {
 // ============================================================
 // Directory Utilities
 // ============================================================
+
+function isPathInsideDirectory(baseDir: string, targetPath: string): boolean {
+  const resolvedBase = resolve(baseDir);
+  const resolvedTarget = resolve(targetPath);
+  const rel = relative(resolvedBase, resolvedTarget);
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+}
 
 /**
  * Get path to workspace projects directory.
@@ -440,6 +447,9 @@ export function uploadProjectAsset(
   } else if (input.text !== undefined) {
     writeFileSync(targetPath, input.text, 'utf-8');
   } else if (input.sourcePath) {
+    if (!isPathInsideDirectory(workspaceRootPath, input.sourcePath)) {
+      throw new Error('sourcePath must be inside the workspace');
+    }
     if (!existsSync(input.sourcePath)) {
       throw new Error(`Source file does not exist: ${input.sourcePath}`);
     }

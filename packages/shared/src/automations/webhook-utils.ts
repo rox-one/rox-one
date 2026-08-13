@@ -10,6 +10,62 @@ import type { WebhookAction, WebhookActionResult } from './types.ts';
 import { expandEnvVars } from './utils.ts';
 import { DEFAULT_WEBHOOK_METHOD, HISTORY_FIELD_MAX_LENGTH } from './constants.ts';
 
+function isPrivateIPv4(host: string): boolean {
+  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host)
+  if (!match) return false
+  const a = Number(match[1])
+  const b = Number(match[2])
+  const c = Number(match[3])
+  const d = Number(match[4])
+  if ([a, b, c, d].some((n) => n > 255)) return false
+  if (a === 0 || a === 10 || a === 127) return true
+  if (a === 169 && b === 254) return true
+  if (a === 172 && b >= 16 && b <= 31) return true
+  if (a === 192 && b === 168) return true
+  if (a === 100 && b >= 64 && b <= 127) return true
+  return false
+}
+
+function normalizeWebhookHostname(hostname: string): string {
+  return hostname.toLowerCase().replace(/^\[|\]$/g, '').replace(/\.+$/, '')
+}
+
+/**
+ * Returns an error message when the webhook target is loopback, link-local,
+ * or RFC1918 — otherwise null. Used to close SSRF via automations:test.
+ */
+export function blockedWebhookDestination(parsed: URL): string | null {
+  const host = normalizeWebhookHostname(parsed.hostname)
+  if (
+    host === 'localhost' ||
+    host.endsWith('.localhost') ||
+    host === 'metadata.google.internal' ||
+    host.endsWith('.internal')
+  ) {
+    return `Webhook host "${host}" is not allowed`
+  }
+
+  const ipv4 = host.startsWith('::ffff:') ? host.slice('::ffff:'.length) : host
+  if (isPrivateIPv4(ipv4)) {
+    return `Webhook host "${host}" is not allowed`
+  }
+
+  // IPv6 literals only — prefix checks must not match hostnames like facebook.com / fdx.com.
+  if (host.includes(':')) {
+    if (
+      host === '::1' ||
+      host === '0:0:0:0:0:0:0:1' ||
+      host.startsWith('fe80:') ||
+      host.startsWith('fc') ||
+      host.startsWith('fd')
+    ) {
+      return `Webhook host "${host}" is not allowed`
+    }
+  }
+
+  return null
+}
+
 /**
  * Redact a URL for safe logging. Webhook URLs may contain secrets
  * (e.g., Slack webhook paths). Keep scheme + host, truncate long paths.
@@ -167,6 +223,14 @@ export async function executeWebhookRequest(
       return {
         type: 'webhook', url, statusCode: 0, success: false,
         error: `Invalid URL scheme "${parsed.protocol}" — only http and https are allowed`,
+        durationMs: 0,
+      };
+    }
+    const blocked = blockedWebhookDestination(parsed);
+    if (blocked) {
+      return {
+        type: 'webhook', url, statusCode: 0, success: false,
+        error: blocked,
         durationMs: 0,
       };
     }
