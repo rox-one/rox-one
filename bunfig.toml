@@ -10,5 +10,6 @@ preload = ["./packages/shared/src/unified-network-interceptor.ts"]
 linker = "hoisted"
 
 [test]
-# Keep test runs out of the real ~/.craft-agent (see the script header).
-preload = ["./scripts/test-config-isolation.ts"]
+# Config isolation must come first: it has to set CRAFT_CONFIG_DIR before
+# anything resolves a config path. See each script's header.
+preload = ["./scripts/test-config-isolation.ts", "./scripts/test-vite-url-shim.ts"]
