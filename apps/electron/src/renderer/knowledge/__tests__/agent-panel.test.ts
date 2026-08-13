@@ -12,7 +12,9 @@ import { describe, expect, it } from 'bun:test'
 import type { KnowledgeRef } from '../../../shared/types'
 import {
   buildAskAboutPrefill,
+  buildAskAboutSessionRoute,
   buildOpenSessionBrief,
+  buildOpenSessionRoute,
   knowledgeMentionToken,
 } from '../KnowledgeAgentPanel'
 
@@ -67,5 +69,34 @@ describe('buildOpenSessionBrief', () => {
     const brief = buildOpenSessionBrief(DOC_REF, null, t)
     expect(brief).toContain('[knowledge:siyuan/document/20260807142000-x1afz9]')
     expect(brief).toContain('knowledge_read')
+  })
+})
+
+function queryOf(route: string): URLSearchParams {
+  const q = route.indexOf('?')
+  return new URLSearchParams(q >= 0 ? route.slice(q + 1) : '')
+}
+
+describe('buildAskAboutSessionRoute', () => {
+  it('opens action/new-session with the mention token in the composer and does not send', () => {
+    const route = buildAskAboutSessionRoute(DOC_REF, 'Kernel Guide', t)
+    expect(route.startsWith('action/new-session?')).toBe(true)
+    const query = queryOf(route)
+    expect(query.get('input')).toContain('[knowledge:siyuan/document/20260807142000-x1afz9]')
+    expect(query.get('input')).toContain('Kernel Guide')
+    expect(query.get('send')).toBeNull()
+    expect(query.get('name')).toBe('Kernel Guide')
+  })
+})
+
+describe('buildOpenSessionRoute', () => {
+  it('creates a session and sends the brief (send=true) with the mention token', () => {
+    const route = buildOpenSessionRoute(DOC_REF, 'Kernel Guide', t)
+    expect(route.startsWith('action/new-session?')).toBe(true)
+    const query = queryOf(route)
+    expect(query.get('input')).toContain('[knowledge:siyuan/document/20260807142000-x1afz9]')
+    expect(query.get('input')).toContain('knowledge_read')
+    expect(query.get('send')).toBe('true')
+    expect(query.get('name')).toBe('Kernel Guide')
   })
 })
