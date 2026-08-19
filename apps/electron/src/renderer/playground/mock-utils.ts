@@ -205,6 +205,17 @@ export const playgroundAllowListHandle: PlaygroundAllowListHandle = {
 export const mockElectronAPI = {
   isDebugMode: async () => true,
 
+  // Labels IPC used by useLabels inside NavigationProvider; the playground has
+  // no label backend, so demos render with an empty label tree.
+  listLabels: async (_workspaceId: string) => {
+    void _workspaceId
+    return []
+  },
+  onLabelsChanged: (_callback: unknown) => {
+    void _callback
+    return () => {}
+  },
+
   // Called at module-load time by SessionFilesSection.tsx (and others) to
   // branch between Electron and web-UI rendering. Must be synchronous.
   getRuntimeEnvironment: (): 'electron' | 'web' => 'electron',

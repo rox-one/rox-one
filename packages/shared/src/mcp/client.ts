@@ -1,19 +1,34 @@
 /**
  * MCP client using official @modelcontextprotocol/sdk
- * Supports both HTTP and stdio transports for remote and local MCP servers
+ * Supports HTTP (Streamable HTTP), legacy SSE, and stdio transports for
+ * remote and local MCP servers
  */
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { isBlockedEnvVar } from '@craft-agent/core/env';
+import { createMcpGuardedFetch } from './guarded-fetch.ts';
 
 /**
  * HTTP transport config for remote MCP servers
  */
 export interface HttpMcpClientConfig {
   transport: 'http';
+  url: string;
+  headers?: Record<string, string>;
+}
+
+/**
+ * Legacy SSE transport config for remote MCP servers.
+ * SSE is deprecated upstream in favor of Streamable HTTP, but the SDK still
+ * ships the transport and pure-SSE servers remain in the wild.
+ */
+export interface SseMcpClientConfig {
+  transport: 'sse';
   url: string;
   headers?: Record<string, string>;
 }
@@ -29,35 +44,35 @@ export interface StdioMcpClientConfig {
 }
 
 /**
- * Unified config supporting both transport types
+ * Unified config supporting all transport types
  */
-export type McpClientConfig = HttpMcpClientConfig | StdioMcpClientConfig;
+export type McpClientConfig = HttpMcpClientConfig | SseMcpClientConfig | StdioMcpClientConfig;
 
 /**
- * Sensitive environment variables that should NOT be passed to MCP subprocesses.
- * These could contain API keys, tokens, or credentials that MCP servers don't need
- * and shouldn't have access to.
- * NOTE: This list is duplicated in packages/session-tools-core/src/handlers/transform-data.ts (BLOCKED_ENV_VARS).
- * If you add a new entry here, update it there too.
+ * Defensive userinfo strip for remote MCP endpoint URLs. Credentialed URLs
+ * (`http://user:pass@host`) are rejected at source-config validation, but a
+ * hand-edited config.json can still reach this constructor — never let
+ * credentials ride the wire or echo back through SDK error messages.
  */
-const BLOCKED_ENV_VARS = [
-  // Craft Agent auth (set by the app itself)
-  'ANTHROPIC_API_KEY',
-  'CLAUDE_CODE_OAUTH_TOKEN',
+function withoutUserinfo(rawUrl: string): URL {
+  const url = new URL(rawUrl);
+  url.username = '';
+  url.password = '';
+  return url;
+}
 
-  // AWS credentials
-  'AWS_ACCESS_KEY_ID',
-  'AWS_SECRET_ACCESS_KEY',
-  'AWS_SESSION_TOKEN',
-
-  // Common API keys/tokens
-  'GITHUB_TOKEN',
-  'GH_TOKEN',
-  'OPENAI_API_KEY',
-  'GOOGLE_API_KEY',
-  'STRIPE_SECRET_KEY',
-  'NPM_TOKEN',
-];
+/**
+ * Log-safe rendering of an MCP endpoint URL: origin + pathname only — never
+ * userinfo, query string, or hash (all of which may carry credentials).
+ */
+export function formatMcpUrlForLog(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    return `${url.origin}${url.pathname}`;
+  } catch {
+    return '<invalid-url>';
+  }
+}
 
 /**
  * Interface for clients managed by McpClientPool.
@@ -86,7 +101,7 @@ export class CraftMcpClient {
       // but filter out sensitive credentials to prevent leaking secrets to subprocesses
       const processEnv: Record<string, string> = {};
       for (const [key, value] of Object.entries(process.env)) {
-        if (value !== undefined && !BLOCKED_ENV_VARS.includes(key)) {
+        if (value !== undefined && !isBlockedEnvVar(key)) {
           processEnv[key] = value;
         }
       }
@@ -95,14 +110,32 @@ export class CraftMcpClient {
         args: config.args,
         env: { ...processEnv, ...config.env },
       });
-    } else {
-      // HTTP transport for remote MCP servers
-      this.transport = new StreamableHTTPClientTransport(
-        new URL(config.url),
+    } else if (config.transport === 'sse') {
+      // Legacy SSE transport for remote MCP servers. The SDK applies
+      // requestInit.headers to BOTH the SSE handshake GET and the message
+      // POSTs (see SSEClientTransport._commonHeaders), so auth/custom
+      // headers behave the same as on the HTTP transport. The guarded fetch
+      // covers both paths (handshake via the eventsource fetch passthrough,
+      // POSTs via transport fetch) — SSRF: no cross-origin redirect follows.
+      this.transport = new SSEClientTransport(
+        withoutUserinfo(config.url),
         {
           requestInit: {
             headers: config.headers,
           },
+          fetch: createMcpGuardedFetch(),
+        }
+      );
+    } else {
+      // Streamable HTTP transport for remote MCP servers. Guarded fetch:
+      // same-origin redirects only (SSRF protection, see guarded-fetch.ts).
+      this.transport = new StreamableHTTPClientTransport(
+        withoutUserinfo(config.url),
+        {
+          requestInit: {
+            headers: config.headers,
+          },
+          fetch: createMcpGuardedFetch(),
         }
       );
     }

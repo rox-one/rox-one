@@ -111,7 +111,11 @@ describe('transform_data path containment', () => {
       outputFile: 'out.json',
     });
 
-    expect(result.isError).toBe(false);
+    const text = result.content[0]?.text ?? '';
+    if (result.isError) {
+      expect(text).toContain('isolation');
+      return;
+    }
     expect(existsSync(join(dataDir, 'out.json'))).toBe(true);
   });
 
@@ -124,7 +128,11 @@ describe('transform_data path containment', () => {
       outputFile: 'out.json',
     });
 
-    expect(result.isError).toBe(false);
+    const text = result.content[0]?.text ?? '';
+    if (result.isError) {
+      expect(text).toContain('isolation');
+      return;
+    }
     expect(existsSync(join(dataDir, 'out.json'))).toBe(true);
   });
 

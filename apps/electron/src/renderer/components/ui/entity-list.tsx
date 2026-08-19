@@ -57,8 +57,8 @@ export interface EntityListProps<T> {
   footer?: React.ReactNode
   /** Ref for the inner list container (for keyboard navigation zones) */
   containerRef?: React.Ref<HTMLDivElement>
-  /** Props spread on the inner list container (role, aria-label, data-focus-zone) */
-  containerProps?: Record<string, string>
+  /** Props spread on the inner list container (role, aria-label, data-focus-zone, drag handlers) */
+  containerProps?: Record<string, unknown>
   /** Ref to the ScrollArea viewport element (for scroll-based pagination) */
   viewportRef?: React.RefObject<HTMLDivElement>
   /** Additional ScrollArea class */

@@ -336,6 +336,7 @@
       "dependencies": {
         "@craft-agent/cloud-runner": "workspace:*",
         "@craft-agent/core": "workspace:*",
+        "@craft-agent/session-tools-core": "workspace:*",
         "@craft-agent/shared": "workspace:*",
         "@earendil-works/pi-ai": "0.80.7",
         "@xenova/transformers": "2.17.2",
@@ -369,6 +370,7 @@
       "name": "@craft-agent/session-tools-core",
       "version": "0.11.5",
       "dependencies": {
+        "@craft-agent/core": "workspace:*",
         "beautiful-mermaid": "*",
         "gray-matter": "^4.0.3",
         "zod": "^3.23.0",

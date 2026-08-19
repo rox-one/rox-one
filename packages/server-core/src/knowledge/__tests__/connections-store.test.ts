@@ -7,7 +7,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
-import { KnowledgeConnectionsStore, parseConnectionFile, type KnowledgeConnectionRecord } from '../connections-store'
+import { CodedError } from '@craft-agent/shared/protocol'
+import { KnowledgeConnectionsStore, normalizeKnowledgeBaseUrl, parseConnectionFile, type KnowledgeConnectionRecord } from '../connections-store'
 
 let configDir: string
 const tmpDirs: string[] = []
@@ -176,3 +177,28 @@ describe('atomic writes', () => {
     expect(existsSync(orphan)).toBe(false)
   })
 })
+
+describe('normalizeKnowledgeBaseUrl', () => {
+  it('accepts absolute http(s) URLs and strips trailing slashes', () => {
+    expect(normalizeKnowledgeBaseUrl('http://localhost:6806')).toBe('http://localhost:6806')
+    expect(normalizeKnowledgeBaseUrl('http://127.0.0.1:6807/')).toBe('http://127.0.0.1:6807')
+    expect(normalizeKnowledgeBaseUrl('  https://siyuan.example.com/  ')).toBe('https://siyuan.example.com')
+  })
+
+  it('rejects non-URLs and non-http(s) protocols with typed INVALID_REF', () => {
+    for (const bad of ['', 'not a url', 'ftp://example.com', 'file:///etc/passwd', 'localhost:6806']) {
+      const error = catchNormalize(bad)
+      expect(error).toBeInstanceOf(CodedError)
+      expect((error as CodedError).code).toBe('INVALID_REF')
+    }
+  })
+})
+
+function catchNormalize(raw: string): unknown {
+  try {
+    normalizeKnowledgeBaseUrl(raw)
+    return null
+  } catch (error) {
+    return error
+  }
+}

@@ -18,6 +18,7 @@ import type {
 } from '@/components/onboarding'
 import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
+import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
@@ -62,6 +63,7 @@ interface UseOnboardingReturn {
 
   // Local model
   handleSubmitLocalModel: (data: LocalModelSubmitData) => void
+  handleSubmitOmpCredential: (data: OmpCredentialSubmitData) => void
   handleStartOAuth: (methodOverride?: ApiSetupMethod, connectionSlugOverride?: string) => void
 
   // Claude OAuth (two-step flow)
@@ -234,6 +236,13 @@ export function useOnboarding({
     }
   }, [initialSetupNeeds?.needsRoxCloud])
 
+  // Seeded OMP connection without ~/.omp models / Rox key — one credential step.
+  useEffect(() => {
+    if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
+      setState(s => (s.step === 'omp-credential' ? s : { ...s, step: 'omp-credential' }))
+    }
+  }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud])
+
   // Check Git Bash on Windows at mount. If missing, redirect to git-bash step
   // regardless of the initial step (provider-select skips the welcome gate).
   useEffect(() => {
@@ -393,6 +402,9 @@ export function useOnboarding({
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
       case 'local-model':
+        setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
+        break
+      case 'omp-credential':
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
     }
@@ -770,10 +782,19 @@ export function useOnboarding({
     }
 
     if (choice === 'omp') {
-      // OMP (oh-my-pi) backend runs via the local `omp` CLI and reads its own
-      // auth from ~/.omp/agent — no craft-side credentials needed. Create the
-      // connection directly and go straight to completion.
+      // OMP reads auth from ~/.omp/agent. If models/config are missing, stop
+      // on the single Rox credential step instead of marking setup complete.
       void (async () => {
+        const needs = await window.electronAPI.getSetupNeeds()
+        if (needs.needsOmpCredential) {
+          setState(s => ({
+            ...s,
+            step: 'omp-credential',
+            credentialStatus: 'idle',
+            errorMessage: undefined,
+          }))
+          return
+        }
         setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined, completionStatus: 'saving' }))
         let slug = 'omp'
         let n = 2
@@ -793,6 +814,7 @@ export function useOnboarding({
         } else {
           setState(s => ({
             ...s,
+            step: 'omp-credential',
             credentialStatus: 'error',
             errorMessage: testResult.error || 'OMP connection test failed — check `omp` CLI and its model config',
           }))
@@ -852,6 +874,29 @@ export function useOnboarding({
       }))
     }
   }, [saveAndValidateConnection, editingSlug, existingSlugs])
+
+  const handleSubmitOmpCredential = useCallback(async (data: OmpCredentialSubmitData) => {
+    setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
+    try {
+      const result = await window.electronAPI.saveOmpCredential(data.apiKey)
+      if (result.success) {
+        setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+        onConfigSaved?.()
+        return
+      }
+      setState(s => ({
+        ...s,
+        credentialStatus: 'error',
+        errorMessage: result.error || 'Failed to save Rox API key',
+      }))
+    } catch (error) {
+      setState(s => ({
+        ...s,
+        credentialStatus: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Failed to save Rox API key',
+      }))
+    }
+  }, [onConfigSaved])
 
   // Submit local model configuration (Ollama or any OpenAI-compatible local server)
   const handleSubmitLocalModel = useCallback(async (data: LocalModelSubmitData) => {
@@ -1001,6 +1046,7 @@ export function useOnboarding({
     handleSelectApiSetupMethod,
     handleSubmitCredential,
     handleSubmitLocalModel,
+    handleSubmitOmpCredential,
     handleStartOAuth,
     // Two-step OAuth flow
     isWaitingForCode,

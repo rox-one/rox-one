@@ -22,6 +22,7 @@ import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { isPathInsideBase } from '../../utils/path-validation'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.mindmap.ENRICH,
@@ -56,10 +57,9 @@ function resolveMindmapDir(workspaceId: string): string {
 }
 
 function assertSafePinPath(dir: string, entity: MindMapEntityRef): string {
-  const full = resolve(dir, pinFilename(entity))
   const dirResolved = resolve(dir)
-  const prefix = dirResolved.endsWith('/') || dirResolved.endsWith('\\') ? dirResolved : dirResolved + '/'
-  if (!full.startsWith(prefix) && full !== dirResolved) throw new Error('Invalid mindmap pin path')
+  const full = resolve(dirResolved, pinFilename(entity))
+  if (!isPathInsideBase(full, dirResolved)) throw new Error('Invalid mindmap pin path')
   return full
 }
 

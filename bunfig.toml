@@ -1,5 +1,13 @@
 preload = ["./packages/shared/src/unified-network-interceptor.ts"]
 
+# Vite `?url` is not a bun specifier. Renderer tests that pull MarkdownPdfBlock
+# need this mock or they fail at import time (inventory 8.7).
+[test]
+preload = [
+  "./packages/shared/src/unified-network-interceptor.ts",
+  "./packages/shared/src/test-preload-pdfjs-url.ts",
+]
+
 # Use the hoisted linker so transitive deps resolve at top-level node_modules.
 # Vite + esbuild bundling expects this layout; bun's default isolated linker
 # leaves only declared deps at the workspace root, which breaks renderer imports

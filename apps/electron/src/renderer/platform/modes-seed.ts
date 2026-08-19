@@ -5,6 +5,7 @@
 import type { ModeContribution } from '@craft-agent/core/platform'
 import { routes } from '../../shared/routes'
 import {
+  isHomeNavigation,
   isKnowledgeNavigation,
   isSessionsNavigation,
   type NavigationState,
@@ -21,12 +22,12 @@ export const CORE_MODES: readonly SeededMode[] = [
       id: 'home',
       titleKey: 'workbench.mode.home',
       icon: 'Home',
-      rootRoute: null,
+      rootRoute: routes.view.home(),
       order: 10,
       defaultPinned: true,
       layoutProfileId: 'agent',
     },
-    isActive: () => false,
+    isActive: isHomeNavigation,
   },
   {
     contribution: {

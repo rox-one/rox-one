@@ -119,6 +119,17 @@ describe('getMiniModel()', () => {
     expect(getMiniModel(conn)).toBe('claude-sonnet-4-6');
   });
 
+  it('prefers rox/fast for omp public catalog', () => {
+    const conn = makeConnection('omp', [
+      'rox/explore',
+      'rox/standard',
+      'rox/max',
+      'rox/vision',
+      'rox/fast',
+    ]);
+    expect(getMiniModel(conn)).toBe('rox/fast');
+  });
+
   it('fallback ignores denied alias and returns last allowed model', () => {
     const conn = makeConnection('pi', [
       'pi/codex-mini-latest',

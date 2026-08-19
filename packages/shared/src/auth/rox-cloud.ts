@@ -46,6 +46,17 @@ export function getRoxAuthBaseUrl(): string {
   return raw.replace(/\/$/, '')
 }
 
+/**
+ * Device-flow client identifier sent to {ROX_AUTH_BASE_URL}/api/auth/device/start.
+ * The accepting side lives in the private rox-one-website repo, so the value is
+ * contractual: default stays 'craft-agents-desktop' until the website accepts a
+ * Rox-branded id; override with ROX_CLIENT_ID when it does.
+ */
+export function getRoxClientId(): string {
+  const override = process.env.ROX_CLIENT_ID?.trim()
+  return override || 'craft-agents-desktop'
+}
+
 /** Rox product builds require cloud Connect by default. */
 export function isRoxCloudRequired(): boolean {
   const v = process.env.ROX_CLOUD_REQUIRED
@@ -56,7 +67,7 @@ export function isRoxCloudRequired(): boolean {
 }
 
 export async function startRoxDeviceFlow(
-  clientId = 'craft-agents-desktop',
+  clientId = getRoxClientId(),
 ): Promise<RoxDeviceStartResult> {
   const base = getRoxAuthBaseUrl()
   const res = await fetch(`${base}/api/auth/device/start`, {

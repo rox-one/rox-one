@@ -105,7 +105,7 @@ import { useSetAtom } from "jotai"
 import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSource, LoadedSkill, PermissionMode, SourceFilter, AutomationFilter } from "../../../shared/types"
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
-import { collectionFiltersAtom } from "@/atoms/collection-filters"
+import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
 import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
@@ -131,6 +131,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isHomeNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
@@ -511,6 +512,14 @@ function AppShellContent({
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
+  const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
+
+  // FR-11: the shared filters atom exposes chips for the active navigator
+  // filter key; keep the key in sync with navigation.
+  React.useEffect(() => {
+    setCollectionFilterKey(sessionFilterKey ?? 'allSessions')
+  }, [sessionFilterKey, setCollectionFilterKey])
+
   const { clearMultiSelect: clearSessionMultiSelect } = useSessionSelection()
   const sessionsViewMode = isSessionsNavigation(navState) ? navState.viewMode : null
   const collectionFiltersKey = JSON.stringify(collectionFilters)
@@ -1974,6 +1983,10 @@ function AppShellContent({
       return t("sidebar.memory")
     }
 
+    if (isHomeNavigation(navState)) {
+      return t("workbench.home.title")
+    }
+
     // Projects navigator
     if (isProjectsNavigation(navState)) {
       return t("sidebar.allProjects")
@@ -2633,7 +2646,7 @@ function AppShellContent({
             )}
             </div>
           )}
-          navigatorWidth={isNotesNavigation(navState) ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView ? 0 : sessionListWidth))}
+          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false}
           isCompact={isAutoCompact}

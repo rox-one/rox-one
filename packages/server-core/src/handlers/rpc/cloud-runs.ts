@@ -35,6 +35,7 @@ import {
 import { awardXpSafe } from '@craft-agent/shared/gamification';
 import type { RpcServer } from '@craft-agent/server-core/transport';
 import type { HandlerDeps } from '../handler-deps';
+import { resolveContainedRelativePath } from '../../utils/path-validation';
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.GET_CONFIG,
@@ -219,6 +220,23 @@ const INJECTION_PATTERNS = [
 
 function scanForInjection(content: string): string[] {
   return INJECTION_PATTERNS.filter((re) => re.test(content)).map((re) => re.source);
+}
+
+function containedArtifactTarget(root: string, artifactPath: string): string {
+  try {
+    return resolveContainedRelativePath(root, artifactPath);
+  } catch {
+    throw new CloudRunnerError(`unsafe artifact path: ${artifactPath}`, 'path_traversal');
+  }
+}
+
+function containedRunImportRoot(workspaceId: string, runId: string): string {
+  const runsRoot = join(getWorkspaceDataPath(workspaceId), 'runs');
+  try {
+    return resolveContainedRelativePath(runsRoot, runId);
+  } catch {
+    throw new CloudRunnerError(`unsafe run id: ${runId}`, 'path_traversal');
+  }
 }
 
 // ---------------------------------------------------------------
@@ -838,7 +856,7 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     if (status.state !== 'done') {
       throw new CloudRunnerError(`run ${args.runId} is ${status.state}, not done`, 'provider_error');
     }
-    const root = join(getWorkspaceDataPath(workspaceId), 'runs', args.runId);
+    const root = containedRunImportRoot(workspaceId, args.runId);
     await mkdir(root, { recursive: true });
     const artifacts = await provider.listArtifacts(args.runId);
     const written: string[] = [];
@@ -856,7 +874,7 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
         const hits = scanForInjection(new TextDecoder().decode(bytes));
         if (hits.length > 0) warnings.push(`${artifact.path}: ${hits.join(', ')}`);
       }
-      const target = join(root, artifact.path);
+      const target = containedArtifactTarget(root, artifact.path);
       await mkdir(dirname(target), { recursive: true });
       await writeFile(target, bytes);
       written.push(artifact.path);
@@ -875,13 +893,13 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
       if (status.state !== 'done') {
         throw new CloudRunnerError(`run ${args.runId} is ${status.state}, not done`, 'provider_error');
       }
-      const imported = join(getWorkspaceDataPath(workspaceId), 'runs', args.runId);
+      const imported = containedRunImportRoot(workspaceId, args.runId);
       await mkdir(imported, { recursive: true });
       const artifacts = await provider.listArtifacts(args.runId);
       for (const artifact of artifacts) {
         if (artifact.path.endsWith('done.marker') || artifact.path.startsWith('_usage/')) continue;
         const bytes = await provider.fetchArtifact(args.runId, artifact.path);
-        const target = join(imported, artifact.path);
+        const target = containedArtifactTarget(imported, artifact.path);
         await mkdir(dirname(target), { recursive: true });
         await writeFile(target, bytes);
       }

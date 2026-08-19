@@ -164,6 +164,10 @@ export const RPC_CHANNELS = {
     GET: 'knowledge:get',
     GET_CONTEXT: 'knowledge:getContext',
     GET_BACKLINKS: 'knowledge:getBacklinks',
+    /** Notebook listing for the navigator tree (read; kernel lsNotebooks). */
+    LIST_NOTEBOOKS: 'knowledge:listNotebooks',
+    /** Settings → Knowledge: edit connection baseUrl (+ token) for an existing record. */
+    UPDATE_CONNECTION: 'knowledge:updateConnection',
     /** P4.3 Craft chrome copy/export payload (read-only; REMOTE_ELIGIBLE). */
     GET_EXPORT_PAYLOAD: 'knowledge:getExportPayload',
     SNAPSHOT_CREATE: 'knowledge:snapshotCreate',
@@ -370,6 +374,7 @@ export const RPC_CHANNELS = {
     START_ROX_CONNECT: 'onboarding:startRoxConnect',
     GET_ROX_CLOUD_STATE: 'onboarding:getRoxCloudState',
     CLEAR_ROX_CLOUD: 'onboarding:clearRoxCloud',
+    SAVE_OMP_CREDENTIAL: 'onboarding:saveOmpCredential',
   },
   llmConnections: {
     LIST: 'LLM_Connection:list',
@@ -410,6 +415,8 @@ export const RPC_CHANNELS = {
     GET_SERVER_STATUS: 'settings:getServerStatus',
     GET_ENV_OVERRIDES: 'settings:getEnvOverrides',
     SET_ENV_OVERRIDES: 'settings:setEnvOverrides',
+    GET_SECRET_REFS: 'settings:getSecretRefs',
+    SET_SECRET_REFS: 'settings:setSecretRefs',
   },
   pi: {
     GET_API_KEY_PROVIDERS: 'pi:getApiKeyProviders',
@@ -665,6 +672,9 @@ export const RPC_CHANNELS = {
     GET_DISPLAY: 'collection:getDisplay',
     SET_DISPLAY: 'collection:setDisplay',
     CHANGED: 'collection:changed',
+    GET_FILTERS: 'collection:getFilters',
+    SET_FILTERS: 'collection:setFilters',
+    FILTERS_CHANGED: 'collection:filtersChanged',
   },
 
   mindmap: {

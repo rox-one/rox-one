@@ -30,6 +30,25 @@ describe('sandbox-env', () => {
     }
   });
 
+  it('strips secrets-runtime staging vars (INFISICAL_TOKEN + ROX_SECRET_ prefix)', () => {
+    const sanitized = createSanitizedEnv({
+      SAFE_VAR: 'ok',
+      INFISICAL_TOKEN: 'infisical-token-value',
+      ROX_SECRET_DB_URL: 'supersecret-db-url',
+      ROX_SECRET_OPENAI: 'sk-staged',
+      // Near-miss prefixes must survive: exact prefix is ROX_SECRET_.
+      ROX_SECRETS: 'not-a-staging-var',
+      MY_ROX_SECRET_X: 'not-prefixed',
+    });
+
+    expect(sanitized.SAFE_VAR).toBe('ok');
+    expect(sanitized.INFISICAL_TOKEN).toBeUndefined();
+    expect(sanitized.ROX_SECRET_DB_URL).toBeUndefined();
+    expect(sanitized.ROX_SECRET_OPENAI).toBeUndefined();
+    expect(sanitized.ROX_SECRETS).toBe('not-a-staging-var');
+    expect(sanitized.MY_ROX_SECRET_X).toBe('not-prefixed');
+  });
+
   it('sets python/uv cache and temp dirs inside data directory', () => {
     const dataDir = mkdtempSync(join(tmpdir(), 'sandbox-env-python-'));
     createdDirs.push(dataDir);
