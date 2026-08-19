@@ -624,4 +624,45 @@ describe('legacy Opus migration to default Opus (integration)', () => {
     expect(connection.defaultModel).toBe('pi/us.anthropic.claude-opus-4-6-v1')
     expect(modelIdsOf(connection)).toEqual(['pi/us.anthropic.claude-opus-4-6-v1', 'pi/us.anthropic.claude-sonnet-4-6'])
   })
+
+  it('migrates seeded rox-kimi kimi-K3 connections onto the public ROX plane', () => {
+    const { configDir, workspaceRoot, configPath } = setupWorkspaceConfigDir()
+
+    writeRootConfig(configPath, workspaceRoot, [
+      {
+        slug: 'rox-kimi',
+        name: 'Rox (Kimi K3) · OMP',
+        providerType: 'omp',
+        authType: 'none',
+        baseUrl: 'https://api.rox.one/v1',
+        modelSelectionMode: 'automaticallySyncedFromProvider',
+        createdAt: Date.now(),
+        models: [
+          {
+            id: 'kimi-K3',
+            name: 'Kimi K3',
+            shortName: 'Kimi K3',
+            provider: 'pi',
+            contextWindow: 262144,
+          },
+        ],
+        defaultModel: 'kimi-K3',
+      },
+    ])
+
+    runMigration(configDir)
+
+    const migrated = JSON.parse(readFileSync(configPath, 'utf-8'))
+    const connection = findConnection(configPath, 'rox-kimi')
+    expect(connection.name).toBe('ROX · OMP')
+    expect(connection.defaultModel).toBe('rox/standard')
+    expect(modelIdsOf(connection)).toEqual([
+      'rox/explore',
+      'rox/standard',
+      'rox/max',
+      'rox/vision',
+      'rox/fast',
+    ])
+    expect(migrated.migrationsApplied).toContain('rox-kimi-public-models-v1')
+  })
 })

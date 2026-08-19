@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import type { Stats } from 'fs'
@@ -7,6 +7,9 @@ import {
   validatePathFormat,
   isValidWorkingDirectory,
   isValidWorkspaceRootPath,
+  isValidNotesPath,
+  isPathInsideBase,
+  resolveContainedRelativePath,
 } from './path-validation'
 
 function directoryStats(): Stats {
@@ -140,5 +143,65 @@ describe('isValidWorkspaceRootPath', () => {
       valid: false,
       reason: 'Parent path is not a directory: C:\\workspaces',
     })
+  })
+})
+
+describe('isValidNotesPath', () => {
+  it('accepts a directory inside the workspace', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'craft-notes-path-'))
+    const notes = join(dir, 'notes')
+    mkdirSync(notes)
+    try {
+      expect(isValidNotesPath(notes, dir, [], 'linux')).toEqual({ valid: true })
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
+  it('rejects a directory outside the workspace', () => {
+    const workspace = mkdtempSync(join(tmpdir(), 'craft-notes-ws-'))
+    const outside = mkdtempSync(join(tmpdir(), 'craft-notes-out-'))
+    try {
+      expect(isValidNotesPath(outside, workspace, [], 'linux')).toEqual({
+        valid: false,
+        reason: 'Notes path must be inside the workspace.',
+      })
+    } finally {
+      rmSync(workspace, { recursive: true, force: true })
+      rmSync(outside, { recursive: true, force: true })
+    }
+  })
+
+  it('treats /home as outside a nested workspace', () => {
+    expect(isPathInsideBase('/home/user/.ssh', '/home/user/ws', 'linux')).toBe(false)
+    expect(isPathInsideBase('/home/user/ws/notes', '/home/user/ws', 'linux')).toBe(true)
+  })
+})
+
+describe('resolveContainedRelativePath', () => {
+  it('resolves a nested relative path inside the base', () => {
+    expect(resolveContainedRelativePath('/home/user/ws', './icon.png', 'linux')).toBe('/home/user/ws/icon.png')
+    expect(resolveContainedRelativePath('/home/user/ws', 'icons/status.png', 'linux')).toBe('/home/user/ws/icons/status.png')
+  })
+
+  it('rejects absolute inputs that would ignore the base', () => {
+    expect(() => resolveContainedRelativePath('/home/user/ws', '/home/user/ws2/icon.png', 'linux')).toThrow('absolute')
+    expect(() => resolveContainedRelativePath('/home/user/ws', '/etc/passwd.svg', 'linux')).toThrow('absolute')
+  })
+
+  it('rejects parent traversal and prefix-sibling escapes', () => {
+    expect(() => resolveContainedRelativePath('/home/user/ws', '../ws2/icon.png', 'linux')).toThrow('outside')
+    expect(() => resolveContainedRelativePath('/home/user/ws', 'subdir/../../ws2/icon.png', 'linux')).toThrow('outside')
+  })
+
+  it('rejects empty and NUL paths', () => {
+    expect(() => resolveContainedRelativePath('/home/user/ws', '  ', 'linux')).toThrow('required')
+    expect(() => resolveContainedRelativePath('/home/user/ws', 'icon\0.png', 'linux')).toThrow('traversal')
+  })
+
+  it('rejects Windows absolute and traversal on win32', () => {
+    expect(() => resolveContainedRelativePath('C:\\ws', 'C:\\ws2\\icon.png', 'win32')).toThrow('absolute')
+    expect(() => resolveContainedRelativePath('C:\\ws', '..\\ws2\\icon.png', 'win32')).toThrow('outside')
+    expect(resolveContainedRelativePath('C:\\ws', 'icon.png', 'win32').replace(/\//g, '\\')).toBe('C:\\ws\\icon.png')
   })
 })

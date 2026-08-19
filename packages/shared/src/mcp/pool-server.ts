@@ -28,6 +28,7 @@ import {
   ListToolsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import type { McpClientPool } from './mcp-pool.ts';
+import { restoreMcpProxyPrefix, stripMcpProxyPrefix } from './proxy-tool-name.ts';
 
 export class McpPoolServer {
   private pool: McpClientPool;
@@ -115,7 +116,7 @@ export class McpPoolServer {
       const proxyDefs = this.pool.getProxyToolDefs();
       return {
         tools: proxyDefs.map(def => ({
-          name: def.name.replace(/^mcp__/, ''),
+          name: stripMcpProxyPrefix(def.name),
           description: def.description,
           inputSchema: def.inputSchema as {
             type: 'object';
@@ -128,7 +129,7 @@ export class McpPoolServer {
     // Call tool — add `mcp__` prefix back before routing through pool
     server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      const internalName = `mcp__${name}`;
+      const internalName = restoreMcpProxyPrefix(name);
       this.debug(`Tool call: ${name} → ${internalName}`);
 
       const result = await this.pool.callTool(internalName, args || {});

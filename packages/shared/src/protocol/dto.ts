@@ -333,6 +333,11 @@ export interface TaskRunSnapshotDto {
   tokensUsed: number
 }
 
+/** Conductor run request (ADR-0001). Wire name `TaskRunRequest` is unchanged. */
+export type WorkflowRunRequest = TaskRunRequest
+/** Conductor run snapshot (ADR-0001). Wire name `TaskRunSnapshotDto` is unchanged. */
+export type WorkflowRunSnapshot = TaskRunSnapshotDto
+
 export interface TaskGetResult {
   slug: string
   validation: TaskValidationResultDto
@@ -949,6 +954,12 @@ export interface ShareResult {
   success: boolean
   url?: string
   error?: string
+  /**
+   * Machine-readable error code passed through from the share API, e.g.
+   * 'LEGACY_SHARE_IMMUTABLE' | 'SHARE_OWNER_KEY_REQUIRED' | 'SHARE_OWNER_KEY_INVALID'
+   * | 'SHARE_TOO_LARGE' | 'RATE_LIMITED'. Lets the UI render specific guidance.
+   */
+  errorCode?: string
 }
 
 export interface RefreshTitleResult {

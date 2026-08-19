@@ -252,6 +252,14 @@ export type TaskDefaults = z.infer<typeof TaskDefaultsSchema>;
 export type TaskNode = z.infer<typeof TaskNodeSchema>;
 export type TaskSpec = z.infer<typeof TaskSpecSchema>;
 
+/**
+ * Canonical Conductor DAG name (ADR-0001). `TaskSpec` remains the persisted
+ * on-disk / Zod name (`task.yaml`). Prefer `WorkflowSpec` in new code.
+ * User-facing tasks are WorkItems — do not overload this type.
+ */
+export type WorkflowSpec = TaskSpec;
+export const WorkflowSpecSchema = TaskSpecSchema;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -270,3 +278,6 @@ export function nodeTitle(node: TaskNode): string {
 export function parseTaskSpec(raw: unknown) {
   return TaskSpecSchema.safeParse(raw);
 }
+
+/** Alias of `parseTaskSpec` (ADR-0001). */
+export const parseWorkflowSpec = parseTaskSpec;

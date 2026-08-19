@@ -22,6 +22,7 @@
 |----------|---------|---------|
 | `ROX_AUTH_BASE_URL` | `https://rox.one` | Marketing auth origin |
 | `ROX_CLOUD_REQUIRED` | `true` | Gate agent UI until Connect |
+| `ROX_CLIENT_ID` | `craft-agents-desktop` | Device-flow client id sent to `device/start`. Contractual with the website repo — flip the default only once the website accepts a Rox-branded id. |
 
 ## Balance
 

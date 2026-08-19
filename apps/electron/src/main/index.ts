@@ -1211,9 +1211,9 @@ app.whenReady().then(async () => {
       mainLog.error('[auto-update] quitAndInstall failed after cleanup — relaunching')
       dialog.showMessageBoxSync({
         type: 'error',
-        title: 'Update failed',
-        message: 'The update could not be installed.',
-        detail: 'Craft Agents will restart now. The update will be retried on the next launch.',
+        title: i18n.t('dialog.updateFailed.title'),
+        message: i18n.t('dialog.updateFailed.message'),
+        detail: i18n.t('dialog.updateFailed.detail'),
       })
       app.relaunch()
       app.exit(0)

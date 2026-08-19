@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./types": "./src/types/index.ts",
+    "./env": "./src/env/blocked-subprocess-env.ts",
     "./utils": "./src/utils/index.ts",
     "./platform": "./src/platform/index.ts",
     "./platform/identity/store": "./src/platform/identity/store.ts",

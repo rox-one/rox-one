@@ -8,19 +8,21 @@
  * Wave-gated destinations (`route: null`) render disabled-with-tooltip;
  * Knowledge navigates since W2 (flag-off state lives in the surface).
  *
+ * When `workbench.top-chrome.v2` is on, destinations move to the Mode Bar and
+ * this rail becomes global actions (search / create / settings).
+ *
  * Collapse state persists via `activityRailCollapsedAtom` (KEYS.activityRailCollapsed).
  * Collapsed = destinations hidden, only the expand chevron stays (atom contract).
- *
- * Mounted by `UnifiedShellLayout` (platform/index.tsx) — rendered only when
- * `featureUnifiedShellAtom` is ON, so there is no flag check in here.
  */
-import { useAtom } from 'jotai'
-import { ChevronsLeft, ChevronsRight } from 'lucide-react'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
+import { ChevronsLeft, ChevronsRight, Search, Settings, SquarePen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
-import { activityRailCollapsedAtom } from '@/atoms/unified-shell'
+import { omniboxOpenAtom } from '@/atoms/omnibox'
+import { activityRailCollapsedAtom, featureWorkbenchTopChromeV2Atom } from '@/atoms/unified-shell'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
+import { routes } from '../../shared/routes'
 import {
   APP_NAV_DESTINATIONS,
   type AppNavDestination,
@@ -68,9 +70,71 @@ function RailItem({ dest }: { dest: AppNavDestination }) {
   )
 }
 
+function UtilityRailItems() {
+  const { t } = useTranslation()
+  const { navigate } = useNavigation()
+  const navState = useNavigationState()
+  const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
+  const settingsActive = APP_NAV_DESTINATIONS.find((dest) => dest.id === 'settings')?.isActive(navState) ?? false
+
+  const items = [
+    {
+      id: 'search',
+      label: t('workbench.rail.search'),
+      icon: Search,
+      active: false,
+      onClick: () => setOmniboxOpen(true),
+    },
+    {
+      id: 'create',
+      label: t('workbench.rail.create'),
+      icon: SquarePen,
+      active: false,
+      onClick: () => void navigate(routes.action.newSession()),
+    },
+    {
+      id: 'settings',
+      label: t('workbench.rail.settings'),
+      icon: Settings,
+      active: settingsActive,
+      onClick: () => void navigate(routes.view.settings()),
+    },
+  ] as const
+
+  return (
+    <>
+      {items.map((item) => {
+        const Icon = item.icon
+        return (
+          <Tooltip key={item.id}>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={item.label}
+                aria-current={item.active ? 'page' : undefined}
+                onClick={item.onClick}
+                className={cn(
+                  'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
+                  item.active
+                    ? 'bg-accent/10 text-accent'
+                    : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">{item.label}</TooltipContent>
+          </Tooltip>
+        )
+      })}
+    </>
+  )
+}
+
 export function ActivityRail() {
   const { t } = useTranslation()
   const [collapsed, setCollapsed] = useAtom(activityRailCollapsedAtom)
+  const utilityRail = useAtomValue(featureWorkbenchTopChromeV2Atom)
 
   if (collapsed) {
     return (
@@ -102,9 +166,11 @@ export function ActivityRail() {
       style={{ width: ACTIVITY_RAIL_WIDTH }}
     >
       <div className="flex flex-col items-center gap-0.5">
-        {APP_NAV_DESTINATIONS.map((dest) => (
-          <RailItem key={dest.id} dest={dest} />
-        ))}
+        {utilityRail
+          ? <UtilityRailItems />
+          : APP_NAV_DESTINATIONS.map((dest) => (
+              <RailItem key={dest.id} dest={dest} />
+            ))}
       </div>
       <div className="mt-auto">
         <Tooltip>

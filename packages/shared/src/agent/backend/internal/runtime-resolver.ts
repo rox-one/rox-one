@@ -26,7 +26,17 @@ export interface ResolvedBackendRuntimePaths {
    * doesn't accept `--preload`.
    */
   interceptorBundlePath?: string;
+  /**
+   * KEEP (compat, unused): former Codex session-mcp-server path.
+   * Not resolved — no registered driver reads this. Future external-subprocess
+   * backends should use McpPoolServer (`needsHttpPoolServer`) rather than
+   * reviving session-mcp-server staging. See docs/mcp-components.md.
+   */
   sessionServerPath?: string;
+  /**
+   * KEEP (compat, unused): former Codex/Copilot bridge-mcp-server path.
+   * Not resolved — no registered driver reads this. See McpPoolServer.
+   */
   bridgeServerPath?: string;
   piServerPath?: string;
   nodeRuntimePath?: string;
@@ -222,8 +232,6 @@ export function resolveBackendRuntimePaths(hostRuntime: BackendHostRuntimeContex
   return {
     claudeCliPath: resolveClaudeBinaryPath(hostRuntime),
     interceptorBundlePath: resolveInterceptorBundlePath(hostRuntime),
-    sessionServerPath: resolveServerPath(hostRuntime, 'session-mcp-server'),
-    bridgeServerPath: resolveServerPath(hostRuntime, 'bridge-mcp-server'),
     piServerPath: resolveServerPath(hostRuntime, 'pi-agent-server'),
     nodeRuntimePath: hostRuntime.nodeRuntimePath || bundledRuntimePath || process.execPath,
     bundledRuntimePath,

@@ -19,4 +19,5 @@ export {
   exportResources,
   importResources,
   validateResourceBundle,
+  isSafeResourceSlug,
 } from './resource-bundle.ts'

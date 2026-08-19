@@ -40,7 +40,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   // Model/Connection
   'model', 'llmConnection', 'connectionLocked', 'thinkingLevel',
   // Sharing
-  'sharedUrl', 'sharedId',
+  'sharedUrl', 'sharedId', 'sharedOwnerKey',
   // Plan execution
   'pendingPlanExecution',
   // Archive
@@ -158,6 +158,11 @@ export interface SessionConfig {
   sharedUrl?: string;
   /** Shared session ID in viewer (for revoke) */
   sharedId?: string;
+  /**
+   * Owner capability secret for mutating the shared copy (PUT/DELETE /s/api/:id).
+   * SERVER-SIDE ONLY: stripped from renderer DTOs and session-list metadata.
+   */
+  sharedOwnerKey?: string;
   /** Model to use for this session (overrides global config if set) */
   model?: string;
   /** LLM connection slug for this session (locked after first message) */
@@ -225,21 +230,21 @@ export interface SessionConfig {
   triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
-  /** Parent session id — when set, this session is a subtask of the parent (undefined = top-level task). */
+  /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
   parentSessionId?: string;
   /** Kanban board column id ('todo' | 'in-progress' | 'done'). Drag-to-move target; independent of sessionStatus. */
   kanbanColumn?: string;
   /** LexoRank string for stable manual ordering within a collection view */
   rank?: string;
-  /** Collection priority; default coerce to 'none' on read when absent */
+  /** Collection priority; default coerce to 'none' on read when absent. Frozen: do not extend Session as a task (ADR-0001). */
   priority?: SessionPriority;
-  /** Due date as epoch ms (UTC noon when set from date pickers); null clears */
+  /** Due date as epoch ms (UTC noon when set from date pickers); null clears. Frozen: migrate to WorkItem.dueAt. */
   dueDate?: number | null;
-  /** Tasks Conductor: slug of the task spec this session belongs to (orchestrator + child nodes). */
+  /** Conductor WorkflowRun linkage: slug of the WorkflowSpec this session belongs to (orchestrator + child nodes). */
   taskSlug?: string;
-  /** Tasks Conductor: id of the run that spawned this child session (child nodes only). */
+  /** Conductor WorkflowRun id that spawned this child session (child nodes only). */
   taskRunId?: string;
-  /** Tasks Conductor: id of the DAG node this child session executes (child nodes only). */
+  /** Conductor workflow node id this child session executes (child nodes only). */
   taskNodeId?: string;
   /** Tasks Conductor: total DAG node count (orchestrator only) — board progress denominator that stays stable while children spawn lazily. */
   taskNodeCount?: number;
@@ -303,6 +308,11 @@ export interface SessionHeader {
   sharedUrl?: string;
   /** Shared session ID in viewer (for revoke) */
   sharedId?: string;
+  /**
+   * Owner capability secret for mutating the shared copy (PUT/DELETE /s/api/:id).
+   * SERVER-SIDE ONLY: stripped from renderer DTOs and session-list metadata.
+   */
+  sharedOwnerKey?: string;
   /** Model to use for this session (overrides global config if set) */
   model?: string;
   /** LLM connection slug for this session (locked after first message) */
@@ -340,21 +350,21 @@ export interface SessionHeader {
   triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
-  /** Parent session id — when set, this session is a subtask of the parent (undefined = top-level task). */
+  /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
   parentSessionId?: string;
   /** Kanban board column id ('todo' | 'in-progress' | 'done'). Drag-to-move target; independent of sessionStatus. */
   kanbanColumn?: string;
   /** LexoRank string for stable manual ordering within a collection view */
   rank?: string;
-  /** Collection priority; default coerce to 'none' on read when absent */
+  /** Collection priority; default coerce to 'none' on read when absent. Frozen: do not extend Session as a task (ADR-0001). */
   priority?: SessionPriority;
-  /** Due date as epoch ms (UTC noon when set from date pickers); null clears */
+  /** Due date as epoch ms (UTC noon when set from date pickers); null clears. Frozen: migrate to WorkItem.dueAt. */
   dueDate?: number | null;
-  /** Tasks Conductor: slug of the task spec this session belongs to (orchestrator + child nodes). */
+  /** Conductor WorkflowRun linkage: slug of the WorkflowSpec this session belongs to (orchestrator + child nodes). */
   taskSlug?: string;
-  /** Tasks Conductor: id of the run that spawned this child session (child nodes only). */
+  /** Conductor WorkflowRun id that spawned this child session (child nodes only). */
   taskRunId?: string;
-  /** Tasks Conductor: id of the DAG node this child session executes (child nodes only). */
+  /** Conductor workflow node id this child session executes (child nodes only). */
   taskNodeId?: string;
   /** Tasks Conductor: total DAG node count (orchestrator only) — board progress denominator that stays stable while children spawn lazily. */
   taskNodeCount?: number;
@@ -444,21 +454,21 @@ export interface SessionMetadata {
   branchFromMessageId?: string;
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
-  /** Parent session id — when set, this session is a subtask of the parent (undefined = top-level task). */
+  /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
   parentSessionId?: string;
   /** Kanban board column id ('todo' | 'in-progress' | 'done'). Drag-to-move target; independent of sessionStatus. */
   kanbanColumn?: string;
   /** LexoRank string for stable manual ordering within a collection view */
   rank?: string;
-  /** Collection priority; default coerce to 'none' on read when absent */
+  /** Collection priority; default coerce to 'none' on read when absent. Frozen: do not extend Session as a task (ADR-0001). */
   priority?: SessionPriority;
-  /** Due date as epoch ms (UTC noon when set from date pickers); null clears */
+  /** Due date as epoch ms (UTC noon when set from date pickers); null clears. Frozen: migrate to WorkItem.dueAt. */
   dueDate?: number | null;
-  /** Tasks Conductor: slug of the task spec this session belongs to (orchestrator + child nodes). */
+  /** Conductor WorkflowRun linkage: slug of the WorkflowSpec this session belongs to (orchestrator + child nodes). */
   taskSlug?: string;
-  /** Tasks Conductor: id of the run that spawned this child session (child nodes only). */
+  /** Conductor WorkflowRun id that spawned this child session (child nodes only). */
   taskRunId?: string;
-  /** Tasks Conductor: id of the DAG node this child session executes (child nodes only). */
+  /** Conductor workflow node id this child session executes (child nodes only). */
   taskNodeId?: string;
   /** Tasks Conductor: total DAG node count (orchestrator only) — board progress denominator that stays stable while children spawn lazily. */
   taskNodeCount?: number;

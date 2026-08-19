@@ -1,15 +1,12 @@
 /**
- * KnowledgeSettingsPage — SiYuan knowledge engine connection (P1, read-only).
+ * KnowledgeSettingsPage — SiYuan knowledge engine connection.
  *
- * Settings → Knowledge contract (spec K-11 P1): baseUrl (default
- * http://localhost:6806), token, health status.
- *
- * The token never touches renderer-side storage: it goes through the
- * existing sources:saveCredentials RPC straight into CredentialManager under
- * 'source_bearer::{workspaceId}::{connectionId}'. No knowledge mutation
- * channels exist in P1 — listConnections/engineStatus are the only
- * knowledge RPC calls the page makes (read-only by contract), so the
- * baseUrl field is informational until a save-connection channel lands.
+ * Settings → Knowledge contract (spec K-11): editable baseUrl, token, health
+ * status. Saving goes through the knowledge:updateConnection RPC
+ * (baseUrl validated + normalized server-side; the token rides the same call
+ * straight into CredentialManager under the record's credentialRef key — it
+ * never touches renderer-side storage). A blank token field keeps the stored
+ * credential untouched. The auto-seeded `siyuan-local` row stays editable.
  */
 
 import * as React from 'react'
@@ -60,6 +57,7 @@ export default function KnowledgeSettingsPage() {
 
   const [connections, setConnections] = React.useState<KnowledgeConnection[] | null>(null)
   const [engineStatus, setEngineStatus] = React.useState<KnowledgeEngineStatus | null>(null)
+  const [baseUrl, setBaseUrl] = React.useState('')
   const [token, setToken] = React.useState('')
   const [saving, setSaving] = React.useState(false)
   const [testing, setTesting] = React.useState(false)
@@ -79,6 +77,10 @@ export default function KnowledgeSettingsPage() {
         setConnections(list)
         const first = list[0]
         if (first) {
+          // Initialize the editable baseUrl from the stored record (once per load —
+          // in-flight edits are not clobbered because this effect only re-runs on
+          // workspace change).
+          setBaseUrl(first.baseUrl ?? DEFAULT_BASE_URL)
           const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId: first.id })
           if (!cancelled) setEngineStatus(status)
         }
@@ -94,16 +96,29 @@ export default function KnowledgeSettingsPage() {
     }
   }, [t, workspaceId])
 
-  const handleSaveToken = async () => {
-    const trimmed = token.trim()
-    if (!workspaceId || !connection || !trimmed) return
+  const handleSaveConnection = async () => {
+    const trimmedUrl = baseUrl.trim()
+    const trimmedToken = token.trim()
+    if (!connection || !trimmedUrl) return
     setSaving(true)
     try {
-      await window.electronAPI.saveSourceCredentials(workspaceId, connection.id, trimmed)
+      const updated = await window.electronAPI.knowledge.updateConnection({
+        connectionId: connection.id,
+        baseUrl: trimmedUrl,
+        // Blank token field = keep the stored credential untouched.
+        ...(trimmedToken ? { token: trimmedToken } : {}),
+      })
       setToken('')
-      toast.success(t('settings.knowledge.tokenSaved'))
+      setBaseUrl(updated.baseUrl ?? trimmedUrl)
+      setConnections((prev) => prev?.map((c) => (c.id === updated.id ? updated : c)) ?? [updated])
+      toast.success(t('settings.knowledge.connectionSaved'))
+      // Refresh the health row against the (possibly new) endpoint.
+      if (workspaceId) {
+        const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId: updated.id })
+        setEngineStatus(status)
+      }
     } catch (error) {
-      toast.error(t('settings.knowledge.tokenSaveFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.knowledge.connectionSaveFailed', { message: errorMessage(error) }))
     } finally {
       setSaving(false)
     }
@@ -228,9 +243,12 @@ export default function KnowledgeSettingsPage() {
           >
             <Input
               className="w-80"
-              value={connection?.baseUrl ?? DEFAULT_BASE_URL}
-              disabled
-              readOnly
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              placeholder={DEFAULT_BASE_URL}
+              autoComplete="off"
+              spellCheck={false}
+              disabled={!connection}
             />
           </SettingsRow>
           <SettingsRow
@@ -251,10 +269,10 @@ export default function KnowledgeSettingsPage() {
             <div className="flex gap-2 pt-1">
               <Button
                 size="sm"
-                onClick={() => void handleSaveToken()}
-                disabled={!workspaceId || !connection || !token.trim() || saving}
+                onClick={() => void handleSaveConnection()}
+                disabled={!connection || !baseUrl.trim() || saving}
               >
-                {t('settings.knowledge.saveToken')}
+                {t('settings.knowledge.saveConnection')}
               </Button>
               <Button
                 size="sm"

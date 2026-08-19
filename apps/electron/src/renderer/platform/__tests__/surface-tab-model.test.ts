@@ -9,6 +9,7 @@ import type { PanelStackEntry } from '../../atoms/panel-stack'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
+  panelContextKeysFromRoute,
   type SurfaceTabLabels,
 } from '../surface-tab-model'
 
@@ -21,6 +22,7 @@ const LABELS: SurfaceTabLabels = {
   skills: 'Skills',
   knowledge: 'Knowledge',
   knowledgeDiff: 'Review changes',
+  home: 'Home',
 }
 
 function entry(route: ViewRoute, id = `p-${route}`): PanelStackEntry {
@@ -81,5 +83,31 @@ describe('buildSurfaceTabViews: knowledge panels', () => {
     const [tab] = build([entry(routes.view.knowledge())])
     expect(tab.kind).toBe('knowledge')
     expect(tab.title).toBe('Knowledge')
+  })
+})
+
+describe('buildSurfaceTabViews: home', () => {
+  it('names the home route from the home label, not "Panel"', () => {
+    const [tab] = build([
+      { id: 'p-home', route: routes.view.home(), proportion: 1, panelType: 'other', laneId: 'main' },
+    ])
+    expect(tab.kind).toBeNull()
+    expect(tab.title).toBe('Home')
+    expect(tab.title).not.toBe(LABELS.panel)
+  })
+})
+
+describe('panelContextKeysFromRoute', () => {
+  it('publishes activeSurface knowledge for a knowledge document route', () => {
+    expect(panelContextKeysFromRoute('knowledge/document/doc-1')).toEqual({ activeSurface: 'knowledge' })
+  })
+
+  it('publishes activeSurface session for a session route', () => {
+    expect(panelContextKeysFromRoute('allSessions/session/session-1')).toEqual({ activeSurface: 'session' })
+  })
+
+  it('returns empty context when the route is missing or not a surface', () => {
+    expect(panelContextKeysFromRoute(null)).toEqual({})
+    expect(panelContextKeysFromRoute('settings/shortcuts')).toEqual({})
   })
 })

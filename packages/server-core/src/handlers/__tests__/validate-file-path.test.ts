@@ -32,15 +32,31 @@ describe('validateFilePath', () => {
     expect(result).toContain('main.ts')
   })
 
-  it('still allows homedir paths when additionalAllowedDirs are provided', async () => {
+  it('does not imply homedir when an explicit allowlist is provided', async () => {
     const path = join(home, 'test.txt')
-    const result = await validateFilePath(path, ['/some/other/dir'])
+    await expect(validateFilePath(path, ['/some/other/dir'])).rejects.toThrow('Access denied')
+  })
+
+  it('allows homedir with an explicit allowlist only when includeHome is set', async () => {
+    const path = join(home, 'test.txt')
+    const result = await validateFilePath(path, ['/some/other/dir'], { includeHome: true })
     expect(result).toContain('test.txt')
+  })
+
+  it('does not treat a sibling of an allowed dir as inside it', async () => {
+    const projectDir = sep === '\\' ? 'D:\\Projects\\myapp' : '/home/user'
+    const sibling = sep === '\\' ? 'D:\\Projects\\myapp-evil\\x.ts' : '/home/user2/secret.txt'
+    await expect(validateFilePath(sibling, [projectDir])).rejects.toThrow('Access denied')
   })
 
   it('blocks sensitive files even inside allowed dirs', async () => {
     const path = join(home, '.ssh', 'id_rsa')
     await expect(validateFilePath(path)).rejects.toThrow('sensitive')
+  })
+
+  it('blocks the .ssh directory itself, not only files under it', async () => {
+    await expect(validateFilePath(join(home, '.ssh'))).rejects.toThrow('sensitive')
+    await expect(validateFilePath(join(home, '.gnupg'))).rejects.toThrow('sensitive')
   })
 
   it('sensitive patterns match Windows backslash separators', () => {
@@ -78,10 +94,19 @@ describe('validateFilePath', () => {
     await expect(validateFilePath('relative/path.txt')).rejects.toThrow('absolute')
   })
 
-  it('filters out falsy values in additionalAllowedDirs', async () => {
+  it('treats an explicit extra-dir list as the allowlist even if entries are empty', async () => {
     const path = join(home, 'test.txt')
-    // Should not throw even with undefined/empty values in the array
-    const result = await validateFilePath(path, ['', undefined as unknown as string])
-    expect(result).toContain('test.txt')
+    await expect(validateFilePath(path, ['', undefined as unknown as string])).rejects.toThrow('Access denied')
+  })
+
+  it('still allows tmpdir when an explicit allowlist is provided', async () => {
+    const path = join(tmp, 'craft-allowlist-test.txt')
+    const result = await validateFilePath(path, ['/some/other/dir'])
+    expect(result).toContain('craft-allowlist-test.txt')
+  })
+
+  it('can deny tmpdir when includeTmp is false', async () => {
+    const path = join(tmp, 'craft-allowlist-test.txt')
+    await expect(validateFilePath(path, ['/some/other/dir'], { includeTmp: false })).rejects.toThrow('Access denied')
   })
 })

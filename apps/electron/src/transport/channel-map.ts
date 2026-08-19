@@ -142,6 +142,10 @@ export const CHANNEL_MAP = {
   getEnvOverrides: invoke(RPC_CHANNELS.settings.GET_ENV_OVERRIDES),
   setEnvOverrides: invoke(RPC_CHANNELS.settings.SET_ENV_OVERRIDES),
 
+  // Secret refs (config runtime.secretRefs — refs only, never values)
+  getSecretRefs: invoke(RPC_CHANNELS.settings.GET_SECRET_REFS),
+  setSecretRefs: invoke(RPC_CHANNELS.settings.SET_SECRET_REFS),
+
   // Release notes
   getReleaseNotes: invoke(RPC_CHANNELS.releaseNotes.GET),
   getLatestReleaseVersion: invoke(RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION),
@@ -215,6 +219,7 @@ export const CHANNEL_MAP = {
   hasClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.HAS_CLAUDE_OAUTH_STATE),
   clearClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE),
   deferSetup: invoke(RPC_CHANNELS.onboarding.DEFER_SETUP),
+  saveOmpCredential: invoke(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL),
   startRoxConnect: invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT),
   getRoxCloudState: invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE),
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),
@@ -302,6 +307,8 @@ export const CHANNEL_MAP = {
   'knowledge.get': invoke(RPC_CHANNELS.knowledge.GET),
   'knowledge.getContext': invoke(RPC_CHANNELS.knowledge.GET_CONTEXT),
   'knowledge.getBacklinks': invoke(RPC_CHANNELS.knowledge.GET_BACKLINKS),
+  'knowledge.listNotebooks': invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS),
+  'knowledge.updateConnection': invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION),
   'knowledge.getExportPayload': invoke(RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD),
   'knowledge.createSnapshot': invoke(RPC_CHANNELS.knowledge.SNAPSHOT_CREATE),
   'knowledge.getSnapshot': invoke(RPC_CHANNELS.knowledge.SNAPSHOT_GET),
@@ -631,6 +638,11 @@ export const CHANNEL_MAP = {
   getCollectionDisplay: invoke(RPC_CHANNELS.collection.GET_DISPLAY),
   setCollectionDisplay: invoke(RPC_CHANNELS.collection.SET_DISPLAY),
   onCollectionDisplayChanged: listener(RPC_CHANNELS.collection.CHANGED),
+
+  // Sessions collection filters (per navigator filter key, FR-11)
+  getCollectionFilters: invoke(RPC_CHANNELS.collection.GET_FILTERS),
+  setCollectionFilters: invoke(RPC_CHANNELS.collection.SET_FILTERS),
+  onCollectionFiltersChanged: listener(RPC_CHANNELS.collection.FILTERS_CHANGED),
 
   // B4 bulk sessions
   bulkUpdateSessions: invoke(RPC_CHANNELS.sessions.BULK_UPDATE),
