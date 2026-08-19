@@ -4,6 +4,7 @@ import type { StoredSession, SessionHeader } from './types.js'
 import { getSessionFilePath, ensureSessionsDir, ensureSessionDir } from './storage.js'
 import { toPortablePath } from '../utils/paths.js'
 import { createSessionHeader, makeSessionPathPortable, readSessionHeader } from './jsonl.js'
+import { notifySessionJournalShadow } from './journal-shadow.js'
 import { debug } from '../utils/debug.js'
 
 interface PendingWrite {
@@ -159,6 +160,7 @@ class SessionPersistenceQueue {
       // On Windows, rename fails if target exists. Delete first for cross-platform compatibility.
       try { await unlink(filePath) } catch { /* ignore if doesn't exist */ }
       await rename(tmpFile, filePath)
+      notifySessionJournalShadow(sessionDir, lines)
       debug(`[PersistenceQueue] Wrote session ${sessionId}`)
     } catch (error) {
       console.error(`[PersistenceQueue] Failed to write session ${sessionId}:`, error)

@@ -1,17 +1,19 @@
 import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import {
   closeAllSourceIndexes,
   countIndexedFiles,
   indexSourceTree,
+  isSourceIndexFtsAvailable,
   reindexWorkspaceSources,
   retrieveSourcesForPrompt,
   searchSourceIndex,
   SOURCE_RETRIEVE_MAX_TOKENS,
   walkSourceTree,
-} from '../source-index'
+} from '../source-index-facade'
 
 function tmpRoot(prefix: string): string {
   const dir = join(tmpdir(), `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
@@ -21,6 +23,21 @@ function tmpRoot(prefix: string): string {
 
 afterEach(() => {
   closeAllSourceIndexes()
+})
+
+describe('bun:sqlite availability (Electron fail-soft characterization)', () => {
+  it('is available under bun test', () => {
+    expect(isSourceIndexFtsAvailable()).toBe(true)
+  })
+
+  it('node cannot load bun:sqlite — the Electron/Node fail-soft path', () => {
+    const result = spawnSync(
+      process.execPath.includes('bun') ? 'node' : process.execPath,
+      ['-e', "try { require('bun:sqlite'); process.exit(0) } catch { process.exit(2) }"],
+      { encoding: 'utf8' },
+    )
+    expect(result.status).toBe(2)
+  })
 })
 
 describe('walkSourceTree', () => {

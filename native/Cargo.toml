@@ -1,0 +1,27 @@
+[workspace]
+resolver = "2"
+members = [
+  "crates/craft-protocol",
+  "crates/craft-index",
+  "crates/craft-rund",
+  "crates/craft-journal",
+  "apps/craft-native",
+]
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.83"
+license = "Apache-2.0"
+version = "0.1.0"
+
+[workspace.dependencies]
+craft-protocol = { path = "crates/craft-protocol" }
+craft-index = { path = "crates/craft-index" }
+craft-rund = { path = "crates/craft-rund" }
+craft-journal = { path = "crates/craft-journal" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+sha2 = "0.10"
+tokio = { version = "=1.43.1", features = ["macros", "rt-multi-thread", "net", "io-util", "signal", "time"] }
+tempfile = "=3.14.0"

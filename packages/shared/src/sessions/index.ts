@@ -94,6 +94,12 @@ export {
   createSessionHeader,
 } from './jsonl.ts';
 
+export {
+  setSessionJournalShadow,
+  notifySessionJournalShadow,
+} from './journal-shadow.ts';
+export type { SessionJournalShadow, SessionJournalShadowArgs } from './journal-shadow.ts';
+
 // Field utilities
 export { pickSessionFields } from './utils.ts';
 

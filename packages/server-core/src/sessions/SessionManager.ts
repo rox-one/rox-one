@@ -111,7 +111,7 @@ import { messageToStored, storedToMessage, type Message, type StoredAttachment, 
 import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@craft-agent/shared/utils'
 import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, type LoadedSkill } from '@craft-agent/shared/skills'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@craft-agent/shared/prompts/system'
-import { retrieveSourcesForPrompt } from '../sources/source-index'
+import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
 import { getToolIconsDir, getMiniModel } from '@craft-agent/shared/config'
 import { getDefaultSummarizationModel } from '@craft-agent/shared/config/models'
 import type { SummarizeCallback } from '@craft-agent/shared/sources'

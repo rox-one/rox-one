@@ -72,6 +72,10 @@ export async function conformanceSuite(
     );
   });
 
+  // Path traversal belongs in the shared suite: every provider must reject
+  // `../` the same way. Crash-reconcile, process-tree kill, and wall-clock
+  // budget_exceeded are local-adapter tests in local-provider.test.ts —
+  // Cloudflare/Modal have no pid to SIGKILL, so those cases must not land here.
   await record('artifact path traversal is rejected', async () => {
     await expectThrow(() => provider.fetchArtifact(spec.id, '../spec.json'), 'path_traversal');
     await expectThrow(() => provider.fetchArtifact(spec.id, '/etc/passwd'), 'path_traversal');

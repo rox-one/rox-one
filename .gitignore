@@ -74,3 +74,7 @@ credentials.enc
 .actrc
 .superpowers/
 scripts/.marketplace-catalog-signing-key.b64
+
+# Native substrate (Rust workspace + local benches)
+native/target/
+bench-results/
