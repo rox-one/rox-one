@@ -17,6 +17,7 @@ export interface CollectionDisplayPopoverProps {
   display: CollectionDisplay
   onDisplayChange: (next: CollectionDisplay) => void
   className?: string
+  iconOnly?: boolean
 }
 
 const GROUP_I18N: Record<CollectionGroupBy, string> = {
@@ -53,6 +54,7 @@ export function CollectionDisplayPopover({
   display,
   onDisplayChange,
   className,
+  iconOnly = false,
 }: CollectionDisplayPopoverProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
@@ -86,12 +88,15 @@ export function CollectionDisplayPopover({
         <button
           type="button"
           className={cn(
-            'inline-flex h-7 items-center gap-1.5 rounded-md border border-border/60 bg-foreground/[0.02] px-2 text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.05] hover:text-foreground',
+            'inline-flex h-7 items-center gap-1.5 rounded-md border border-border/60 bg-foreground/[0.02] text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/[0.05] hover:text-foreground',
+            iconOnly ? 'w-7 justify-center px-0' : 'px-2',
             className,
           )}
+          aria-label={t('collection.display.trigger')}
+          title={t('collection.display.trigger')}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" strokeWidth={2} />
-          {t('collection.display.trigger')}
+          {!iconOnly && t('collection.display.trigger')}
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 space-y-4 p-3">

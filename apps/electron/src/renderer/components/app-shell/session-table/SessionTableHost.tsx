@@ -35,7 +35,8 @@ import {
 } from '@/atoms/collection-filters'
 import { sessionSelection } from '@/hooks/useEntitySelection'
 import type { SessionStatus } from '@/config/session-status-config'
-import { CollectionViewToggle } from '../kanban/BoardListToggle'
+import { CollectionViewCycleButton } from '../collection/CollectionViewCycleButton'
+import { collectionViewRoute } from '../collection/collection-view-cycle'
 import { CollectionOpsBar } from '../collection/CollectionOpsBar'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { SessionTableRow } from './SessionTableRow'
@@ -582,11 +583,10 @@ export function SessionTableHost() {
         projects={projectOptions}
         labels={labelOptions}
         trailing={
-          <CollectionViewToggle
+          <CollectionViewCycleButton
             value="table"
             onChange={(view) => {
-              if (view === 'list') navigate(routes.view.allSessions())
-              else if (view === 'board') navigate(routes.view.board())
+              navigate(collectionViewRoute(view))
             }}
           />
         }

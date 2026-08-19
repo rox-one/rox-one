@@ -14,9 +14,11 @@ import {
   loadCollectionFiltersAtom,
   replaceCollectionFiltersMapAtom,
 } from '@/atoms/collection-filters'
-import { CollectionViewToggle, type CollectionViewMode } from '../kanban/BoardListToggle'
+import { type CollectionViewMode } from '../kanban/BoardListToggle'
 import { CollectionDisplayPopover } from './CollectionDisplayPopover'
+import { CollectionFilterMenu } from './CollectionFilterMenu'
 import { CollectionOpsBar } from './CollectionOpsBar'
+import { CollectionViewCycleButton } from './CollectionViewCycleButton'
 import { cn } from '@/lib/utils'
 
 const DEFAULT_PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
@@ -25,7 +27,7 @@ export interface CollectionViewChromeProps {
   workspaceId: string | null | undefined
   viewMode: CollectionViewMode
   onViewModeChange: (mode: CollectionViewMode) => void
-  /** Compact header: toggle + Display only (list/board headers). */
+  /** Compact header: cycle + Display + filter menu (navigator / board). */
   compact?: boolean
   statuses?: SessionStatus[]
   priorities?: SessionPriority[]
@@ -36,8 +38,8 @@ export interface CollectionViewChromeProps {
 
 /**
  * Loads CollectionDisplay for workspace and renders either:
- * - compact: CollectionViewToggle + Display popover (list/board toolbars)
- * - full: CollectionOpsBar strip with filter chips (table host already uses its own)
+ * - compact: cycle button + Display + filter dropdown (narrow navigator / board)
+ * - full: CollectionOpsBar strip with filter chips (wide table host)
  */
 export function CollectionViewChrome({
   workspaceId,
@@ -94,15 +96,23 @@ export function CollectionViewChrome({
     [setDisplay, workspaceId],
   )
 
-  const toggle = (
-    <CollectionViewToggle value={viewMode} onChange={onViewModeChange} />
+  const cycle = (
+    <CollectionViewCycleButton value={viewMode} onChange={onViewModeChange} />
   )
 
   if (compact) {
     return (
-      <div className={cn('inline-flex items-center gap-2', className)}>
-        {toggle}
-        <CollectionDisplayPopover display={display} onDisplayChange={handleDisplayChange} />
+      <div className={cn('inline-flex items-center gap-1.5', className)}>
+        {cycle}
+        <CollectionDisplayPopover display={display} onDisplayChange={handleDisplayChange} iconOnly />
+        <CollectionFilterMenu
+          filters={filters}
+          onFiltersChange={setFilters}
+          statuses={statuses}
+          priorities={priorities}
+          projects={projects}
+          labels={labels}
+        />
       </div>
     )
   }
@@ -117,7 +127,7 @@ export function CollectionViewChrome({
       priorities={priorities}
       projects={projects}
       labels={labels}
-      trailing={toggle}
+      trailing={cycle}
       className={className}
     />
   )

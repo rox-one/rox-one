@@ -71,6 +71,7 @@ import {
 import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
+import { collectionViewRoute } from "./collection/collection-view-cycle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
@@ -2492,10 +2493,9 @@ function AppShellContent({
                       workspaceId={activeWorkspaceId}
                       viewMode="list"
                       onViewModeChange={view => {
-                        if (view === 'board') navigate(routes.view.board())
-                        else if (view === 'table') navigate(routes.view.table())
+                        navigate(collectionViewRoute(view))
                       }}
-                      compact={false}
+                      compact
                       statuses={effectiveSessionStatuses}
                       projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
                       labels={displayLabelConfigs.map(l => ({ id: l.id, name: l.name }))}

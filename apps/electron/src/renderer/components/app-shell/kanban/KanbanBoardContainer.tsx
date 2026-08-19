@@ -32,6 +32,7 @@ import { parsePriorityGroupId } from './priority-groups'
 import { KANBAN_COLUMNS, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
+import { collectionViewRoute } from '../collection/collection-view-cycle'
 import { KanbanProjectFilter, type KanbanProjectFilterOption } from './KanbanProjectFilter'
 import { TaskEditor } from './TaskEditor'
 import { mergeSubtaskRows, type SpecNodeSummary, type SubtaskChildRow } from './subtask-merge'
@@ -947,10 +948,11 @@ export function KanbanBoardContainer() {
             workspaceId={activeWorkspaceId}
             viewMode="board"
             onViewModeChange={view => {
-              if (view === 'list') navigate(routes.view.allSessions())
-              else if (view === 'table') navigate(routes.view.table())
+              navigate(collectionViewRoute(view))
             }}
             compact
+            statuses={sessionStatuses ?? []}
+            projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
           />
         </div>
       </div>
