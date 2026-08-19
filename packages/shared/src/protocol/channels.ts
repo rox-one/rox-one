@@ -453,6 +453,7 @@ export const RPC_CHANNELS = {
     GET_MCP_TOOLS: 'sources:getMcpTools',
     REINDEX: 'sources:reindex',
     SEARCH: 'sources:search',
+    STATUS: 'sources:status',
   },
   oauth: {
     START: 'oauth:start',

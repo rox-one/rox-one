@@ -10,7 +10,12 @@ import {
   resolveNativeBin,
   setNativeSidecarSupervisorForTests,
 } from '../../native/supervisor.ts'
-import { closeAllSourceIndexes, reindexWorkspaceSources, searchSourceIndex } from '../source-index-facade.ts'
+import {
+  closeAllSourceIndexes,
+  reindexWorkspaceSources,
+  searchSourceIndex,
+  statusWorkspaceSources,
+} from '../source-index-facade.ts'
 
 const repoRoot = join(dirname(fileURLToPath(import.meta.url)), '../../../../../')
 const bin = resolveNativeBin(repoRoot) ?? (existsSync(process.env.CRAFT_NATIVE_BIN ?? '')
@@ -80,6 +85,42 @@ describe('native source-index primary', () => {
     expect(re.indexed).toBe(2100)
     expect(re.truncated).toBe(false)
     expect(re.dbPath).toContain('source-index.native.sqlite')
+  })
+
+  it('status uses native index:status when primary is on', async () => {
+    process.env.CRAFT_FEATURE_NATIVE_SIDECAR = '1'
+    process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY = '1'
+    const workspace = mkdtempSync(join(tmpdir(), 'src-idx-status-'))
+    dirs.push(workspace)
+
+    installClient({
+      registeredChannels: ['index:status'],
+      close: async () => {},
+      invoke: async (channel: string) => {
+        if (channel === 'index:status') {
+          return { dbPath: '/tmp/source-index.native.sqlite', fts: true, indexed: 2100 }
+        }
+        throw new Error(`unexpected ${channel}`)
+      },
+    })
+
+    const st = await statusWorkspaceSources(workspace)
+    expect(st.primary).toBe('native')
+    expect(st.sidecarLive).toBe(true)
+    expect(st.indexed).toBe(2100)
+    expect(st.fts).toBe(true)
+    expect(st.dbPath).toContain('source-index.native.sqlite')
+  })
+
+  it('status reports TypeScript primary when flags are off', async () => {
+    delete process.env.CRAFT_FEATURE_NATIVE_SIDECAR
+    delete process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY
+    const workspace = mkdtempSync(join(tmpdir(), 'src-idx-status-ts-'))
+    dirs.push(workspace)
+    const st = await statusWorkspaceSources(workspace)
+    expect(st.primary).toBe('ts')
+    expect(st.sidecarLive).toBe(false)
+    expect(st.indexed).toBe(0)
   })
 
   it('falls back to TypeScript when the sidecar invoke fails', async () => {

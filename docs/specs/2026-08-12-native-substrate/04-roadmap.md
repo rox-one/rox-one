@@ -22,6 +22,7 @@
 - Index primary на Rust (N-03: снять 2000/32MB). **Landed behind `CRAFT_FEATURE_NATIVE_INDEX_PRIMARY=1`:** `craft-index` caps are 20k files / 256MB; facade uses `index:reindex/search/retrieve/count` first, TS fallback on sidecar failure. TS walk stays 2000/32MB.
 - Incremental reindex + metrics CLI. **Landed:** `craft-index` skips unread files when mtime matches (`written`/`unchanged` on reindex). `craft-native --index-status <workspace>` prints `{ dbPath, fts, indexed }` JSON. No RPC rewrite, no FS watcher.
 - Cautious exec cwd jail. **Landed:** `craft-exec` and host-tool Bash canonicalize cwd and reject paths outside `workspaceRoot`. Not a full sandbox (no Zig spawn, no network namespace).
+- Index status RPC/CLI. **Landed:** `sources:status` returns `{ primary, sidecarLive, indexed, fts, dbPath }`. Sources list loads it on workspace change. `craft-native --health` prints sidecar identity JSON.
 
 Local-only process-tree kill и `budget_exceeded` закрыты тестами в `local-provider.test.ts` и crate `craft-rund` (не в shared conformance — у Cloudflare нет pid).
 

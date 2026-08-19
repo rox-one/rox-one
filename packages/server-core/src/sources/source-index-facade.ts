@@ -1,7 +1,7 @@
 /**
  * Production seam for the workspace source index.
  *
- * Callers (RPC sources.REINDEX/SEARCH and SessionManager retrieve) MUST import
+ * Callers (RPC sources.REINDEX/SEARCH/STATUS and SessionManager retrieve) MUST import
  * from this module, not from source-index.ts directly.
  *
  * Default: TypeScript stays primary (2000/32MB). When
@@ -11,6 +11,7 @@
  * CRAFT_FEATURE_NATIVE_INDEX_PRIMARY=1 (requires sidecar): Rust is primary
  * (20k files / 256MB). TS is the fallback if the sidecar invoke fails.
  */
+import { join } from 'node:path'
 import { isNativeIndexPrimaryEnabled, isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
 import { getNativeSidecarClient } from '../native/supervisor.ts'
 import {
@@ -21,6 +22,7 @@ import {
   reindexWorkspaceSources as reindexWorkspaceSourcesTs,
   retrieveSourcesForPrompt as retrieveSourcesForPromptTs,
   searchSourceIndex as searchSourceIndexTs,
+  SOURCE_INDEX_REL,
   SOURCE_RETRIEVE_DEFAULT_LIMIT,
   SOURCE_RETRIEVE_MAX_TOKENS,
   walkSourceTree,
@@ -169,6 +171,40 @@ export async function retrieveSourcesForPrompt(
     }
   })
   return ts
+}
+
+export interface SourceIndexStatus {
+  primary: 'native' | 'ts'
+  sidecarLive: boolean
+  indexed: number
+  fts: boolean
+  dbPath: string
+}
+
+export async function statusWorkspaceSources(workspaceRoot: string): Promise<SourceIndexStatus> {
+  const sidecarLive = getNativeSidecarClient() !== null
+  const rust = await tryPrimary('status', () =>
+    getNativeSidecarClient()!.invoke<{ dbPath?: string; fts?: boolean; indexed?: number }>(
+      'index:status',
+      workspaceRoot,
+    ),
+  )
+  if (rust) {
+    return {
+      primary: 'native',
+      sidecarLive: true,
+      indexed: rust.indexed ?? 0,
+      fts: Boolean(rust.fts),
+      dbPath: rust.dbPath ?? '',
+    }
+  }
+  return {
+    primary: 'ts',
+    sidecarLive,
+    indexed: countIndexedFilesTs(workspaceRoot),
+    fts: isSourceIndexFtsAvailable(),
+    dbPath: join(workspaceRoot, SOURCE_INDEX_REL),
+  }
 }
 
 export async function countIndexedFiles(workspaceRoot: string): Promise<number> {
