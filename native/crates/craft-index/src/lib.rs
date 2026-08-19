@@ -1,11 +1,12 @@
 //! Source-index module. Walk/hash match TypeScript; file/byte caps are lifted
-//! (20k / 256MB vs TS 2000 / 32MB). Database:
+//! (20k / 256MB vs TS 2000 / 32MB). Reindex is incremental: unchanged mtimes
+//! skip read/upsert. Database:
 //! `{workspace}/.craft/source-index.native.sqlite` — never the bun:sqlite file.
 
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::UNIX_EPOCH;
@@ -52,6 +53,12 @@ pub struct ReindexResult {
     pub truncated: bool,
     pub db_path: String,
     pub fts: bool,
+    /// Files whose body was read and upserted this pass.
+    #[serde(default)]
+    pub written: usize,
+    /// Files skipped because on-disk mtime matched the stored row.
+    #[serde(default)]
+    pub unchanged: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -99,7 +106,8 @@ pub struct IndexStatus {
 struct WalkedFile {
     rel_path: String,
     mtime: i64,
-    body: String,
+    /// `None` means mtime matched the stored row; skip read/upsert.
+    body: Option<String>,
 }
 
 struct WalkOutcome {
@@ -149,7 +157,20 @@ fn is_probably_text(path: &Path, size: u64) -> bool {
     false
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
 fn walk_source_tree(root: &Path) -> WalkOutcome {
+    walk_source_tree_cached(root, &HashMap::new())
+}
+
+fn file_mtime_millis(meta: &fs::Metadata) -> i64 {
+    meta.modified()
+        .ok()
+        .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
+fn walk_source_tree_cached(root: &Path, existing: &HashMap<String, i64>) -> WalkOutcome {
     let mut files = Vec::new();
     let mut truncated = false;
     let mut skipped = 0usize;
@@ -222,6 +243,20 @@ fn walk_source_tree(root: &Path) -> WalkOutcome {
                     skipped,
                 };
             }
+            let rel = full
+                .strip_prefix(root)
+                .unwrap_or(&full)
+                .to_string_lossy()
+                .replace('\\', "/");
+            let mtime = file_mtime_millis(&meta);
+            if existing.get(&rel).copied() == Some(mtime) {
+                files.push(WalkedFile {
+                    rel_path: rel,
+                    mtime,
+                    body: None,
+                });
+                continue;
+            }
             let raw = match fs::read_to_string(&full) {
                 Ok(s) => s,
                 Err(_) => {
@@ -230,21 +265,10 @@ fn walk_source_tree(root: &Path) -> WalkOutcome {
                 }
             };
             let body: String = raw.chars().take(MAX_BODY_CHARS).collect();
-            let rel = full
-                .strip_prefix(root)
-                .unwrap_or(&full)
-                .to_string_lossy()
-                .replace('\\', "/");
-            let mtime = meta
-                .modified()
-                .ok()
-                .and_then(|t| t.duration_since(UNIX_EPOCH).ok())
-                .map(|d| d.as_millis() as i64)
-                .unwrap_or(0);
             files.push(WalkedFile {
                 rel_path: rel,
                 mtime,
-                body,
+                body: Some(body),
             });
         }
     }
@@ -297,25 +321,60 @@ fn open_db(workspace: &Path) -> Result<(Connection, PathBuf, bool), String> {
     Ok((conn, db_path, fts))
 }
 
+fn existing_rel_mtimes(all: &HashMap<String, i64>, slug: &str) -> HashMap<String, i64> {
+    if slug.is_empty() {
+        return all.clone();
+    }
+    let prefix = format!("{slug}/");
+    all.iter()
+        .filter_map(|(path, mtime)| {
+            path.strip_prefix(&prefix)
+                .map(|rel| (rel.to_string(), *mtime))
+        })
+        .collect()
+}
+
+fn load_existing_mtimes(conn: &Connection) -> Result<HashMap<String, i64>, String> {
+    let mut stmt = conn
+        .prepare("SELECT path, mtime FROM files")
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, i64>(1)?))
+        })
+        .map_err(|e| e.to_string())?;
+    let mut out = HashMap::new();
+    for row in rows {
+        let (path, mtime) = row.map_err(|e| e.to_string())?;
+        out.insert(path, mtime);
+    }
+    Ok(out)
+}
+
+struct IndexTreeOutcome {
+    indexed: usize,
+    skipped: usize,
+    truncated: bool,
+    written: usize,
+    unchanged: usize,
+    paths: HashSet<String>,
+}
+
 fn index_tree(
     conn: &Connection,
     root: &Path,
     slug: &str,
-    clear_source: bool,
-) -> Result<(usize, usize, bool), String> {
-    if clear_source {
-        conn.execute(
-            "DELETE FROM files WHERE path = ?1 OR path LIKE ?2",
-            params![slug, format!("{slug}/%")],
-        )
-        .map_err(|e| e.to_string())?;
-    }
-    let walked = walk_source_tree(root);
+    existing: &HashMap<String, i64>,
+) -> Result<IndexTreeOutcome, String> {
+    let walked = walk_source_tree_cached(root, existing);
     let prefix = if slug.is_empty() {
         String::new()
     } else {
         format!("{slug}/")
     };
+    let mut written = 0usize;
+    let mut unchanged = 0usize;
+    let mut paths = HashSet::new();
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
     {
         let mut stmt = tx
@@ -332,39 +391,69 @@ fn index_tree(
             .map_err(|e| e.to_string())?;
         for file in &walked.files {
             let path = format!("{}{}", prefix, file.rel_path);
-            let hash = hash_text(&file.body);
-            let chars = file.body.chars().count() as i64;
-            let tokens = estimate_tokens(&file.body) as i64;
-            stmt.execute(params![path, hash, chars, tokens, file.mtime, file.body])
+            paths.insert(path.clone());
+            let Some(body) = file.body.as_ref() else {
+                unchanged += 1;
+                continue;
+            };
+            let hash = hash_text(body);
+            let chars = body.chars().count() as i64;
+            let tokens = estimate_tokens(body) as i64;
+            stmt.execute(params![path, hash, chars, tokens, file.mtime, body])
                 .map_err(|e| e.to_string())?;
+            written += 1;
         }
     }
     tx.commit().map_err(|e| e.to_string())?;
-    Ok((walked.files.len(), walked.skipped, walked.truncated))
+    Ok(IndexTreeOutcome {
+        indexed: walked.files.len(),
+        skipped: walked.skipped,
+        truncated: walked.truncated,
+        written,
+        unchanged,
+        paths,
+    })
 }
 
 pub fn reindex_workspace(workspace: &Path, roots: &[SourceRoot]) -> Result<ReindexResult, String> {
     let (conn, db_path, fts) = open_db(workspace)?;
-    conn.execute("DELETE FROM files", [])
-        .map_err(|e| e.to_string())?;
-    if fts {
-        let _ = conn.execute_batch("INSERT INTO files_fts(files_fts) VALUES('rebuild')");
-    }
+    let existing_all = load_existing_mtimes(&conn)?;
     let mut indexed = 0usize;
     let mut skipped = 0usize;
     let mut truncated = false;
+    let mut written = 0usize;
+    let mut unchanged = 0usize;
+    let mut seen = HashSet::new();
     for root in roots {
-        let (i, s, t) = index_tree(&conn, Path::new(&root.path), &root.slug, false)?;
-        indexed += i;
-        skipped += s;
-        truncated = truncated || t;
+        let existing = existing_rel_mtimes(&existing_all, &root.slug);
+        let out = index_tree(&conn, Path::new(&root.path), &root.slug, &existing)?;
+        indexed += out.indexed;
+        skipped += out.skipped;
+        truncated = truncated || out.truncated;
+        written += out.written;
+        unchanged += out.unchanged;
+        seen.extend(out.paths);
     }
+    let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+    {
+        let mut stmt = tx
+            .prepare("DELETE FROM files WHERE path = ?1")
+            .map_err(|e| e.to_string())?;
+        for path in existing_all.keys() {
+            if !seen.contains(path) {
+                stmt.execute(params![path]).map_err(|e| e.to_string())?;
+            }
+        }
+    }
+    tx.commit().map_err(|e| e.to_string())?;
     Ok(ReindexResult {
         indexed,
         skipped,
         truncated,
         db_path: db_path.to_string_lossy().into_owned(),
         fts,
+        written,
+        unchanged,
     })
 }
 
@@ -757,6 +846,45 @@ mod tests {
         rels.sort();
         assert_eq!(rels, vec!["docs/guide.txt", "readme.md"]);
         assert!(!walked.truncated);
+    }
+
+    #[test]
+    fn reindex_skips_unchanged_files_on_second_pass() {
+        let workspace = tempfile::tempdir().unwrap();
+        let folder = workspace.path().join("docs");
+        fs::create_dir_all(&folder).unwrap();
+        fs::write(folder.join("a.md"), "alpha fox").unwrap();
+        fs::write(folder.join("b.md"), "beta fox").unwrap();
+        fs::write(folder.join("c.md"), "gamma fox").unwrap();
+        let roots = [SourceRoot {
+            slug: "docs".into(),
+            path: folder.to_string_lossy().into_owned(),
+        }];
+        let first = reindex_workspace(workspace.path(), &roots).unwrap();
+        assert_eq!(first.indexed, 3);
+        assert_eq!(first.written, 3);
+        assert_eq!(first.unchanged, 0);
+
+        let second = reindex_workspace(workspace.path(), &roots).unwrap();
+        assert_eq!(second.indexed, 3);
+        assert_eq!(second.written, 0);
+        assert_eq!(second.unchanged, 3);
+        assert_eq!(count_indexed(workspace.path()).unwrap(), 3);
+
+        fs::write(folder.join("b.md"), "beta fox UNIQUE_INCREMENTAL").unwrap();
+        let third = reindex_workspace(workspace.path(), &roots).unwrap();
+        assert_eq!(third.indexed, 3);
+        assert_eq!(third.written, 1);
+        assert_eq!(third.unchanged, 2);
+        let hit = search(workspace.path(), "UNIQUE_INCREMENTAL", Some(5)).unwrap();
+        assert!(hit.hits.iter().any(|h| h.path.contains("docs/b.md")));
+
+        fs::remove_file(folder.join("c.md")).unwrap();
+        let fourth = reindex_workspace(workspace.path(), &roots).unwrap();
+        assert_eq!(fourth.indexed, 2);
+        assert_eq!(count_indexed(workspace.path()).unwrap(), 2);
+        let gone = search(workspace.path(), "gamma", Some(5)).unwrap();
+        assert!(gone.hits.is_empty() || !gone.hits.iter().any(|h| h.path.contains("c.md")));
     }
 
     #[test]

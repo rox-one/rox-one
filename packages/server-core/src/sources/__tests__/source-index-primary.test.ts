@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
+import { spawnSync } from 'node:child_process'
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
@@ -146,8 +147,22 @@ describe.skipIf(!bin)('native source-index primary live', () => {
     const re = await reindexWorkspaceSources(workspace, [{ slug: 'docs', path: folder }])
     expect(re.indexed).toBe(2100)
     expect(re.truncated).toBe(false)
+    expect(re.written).toBe(2100)
+    expect(re.unchanged ?? 0).toBe(0)
+
+    const again = await reindexWorkspaceSources(workspace, [{ slug: 'docs', path: folder }])
+    expect(again.indexed).toBe(2100)
+    expect(again.written).toBe(0)
+    expect(again.unchanged).toBe(2100)
 
     const hit = await searchSourceIndex(workspace, 'UNIQUE_NEEDLE_PAST_CAP', { limit: 5 })
     expect(hit.hits.some((h) => h.path.includes('f2099.md'))).toBe(true)
+
+    const probe = spawnSync(bin!, ['--index-status', workspace], { encoding: 'utf8' })
+    expect(probe.status).toBe(0)
+    const status = JSON.parse(probe.stdout) as { indexed: number; fts: boolean; dbPath: string }
+    expect(status.indexed).toBe(2100)
+    expect(status.fts).toBe(true)
+    expect(status.dbPath).toContain('source-index.native.sqlite')
   })
 })

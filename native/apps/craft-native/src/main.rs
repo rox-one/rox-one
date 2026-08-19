@@ -16,6 +16,7 @@ use tokio::net::UnixListener;
 enum Mode {
     Sidecar(String),
     StubRun(PathBuf),
+    IndexStatus(PathBuf),
 }
 
 struct HandlerError {
@@ -81,6 +82,19 @@ async fn main() {
                 std::process::exit(1);
             }
         }
+        Ok(Mode::IndexStatus(workspace)) => match craft_index::status(&workspace) {
+            Ok(status) => match serde_json::to_string(&status) {
+                Ok(json) => println!("{json}"),
+                Err(error) => {
+                    eprintln!("craft-native: {error}");
+                    std::process::exit(1);
+                }
+            },
+            Err(error) => {
+                eprintln!("craft-native: {error}");
+                std::process::exit(1);
+            }
+        },
         Err(error) => {
             eprintln!("craft-native: {error}");
             std::process::exit(1);
@@ -103,13 +117,21 @@ fn parse_mode() -> Result<Mode, String> {
             Some(other) => Err(format!("expected --dir after --stub-run, got {other}")),
             None => Err("required: --stub-run --dir <runDir>".to_string()),
         },
+        Some("--index-status") => args
+            .next()
+            .ok_or_else(|| "missing value for --index-status".to_string())
+            .map(|dir| Mode::IndexStatus(PathBuf::from(dir))),
         Some("-h") | Some("--help") => {
             eprintln!("craft-native --socket <path>");
             eprintln!("craft-native --stub-run --dir <runDir>");
+            eprintln!("craft-native --index-status <workspace>");
             std::process::exit(0);
         }
         Some(other) => Err(format!("unknown argument: {other}")),
-        None => Err("required: --socket <path> | --stub-run --dir <runDir>".to_string()),
+        None => Err(
+            "required: --socket <path> | --stub-run --dir <runDir> | --index-status <workspace>"
+                .to_string(),
+        ),
     }
 }
 
