@@ -90,6 +90,29 @@ describe('CredentialRefRegistry', () => {
     expect(() => registry.register(nestedSecret)).toThrow();
   });
 
+  it('accepts P0 locators and still rejects unknown locator types', () => {
+    const registry = new CredentialRefRegistry(() => FIXED_REF);
+    const ref = registry.register({
+      kind: 'api_key',
+      providerId: 'dotenv',
+      locator: { type: 'dotenv', path: '/tmp/.env', key: 'GITHUB_TOKEN' },
+      now: 1,
+    });
+    expect(ref.locator).toEqual({ type: 'dotenv', path: '/tmp/.env', key: 'GITHUB_TOKEN' });
+
+    expect(() =>
+      registry.updateProvider(FIXED_REF, 'ssh-agent', {
+        type: 'ssh_agent',
+        fingerprint: 'SHA256:abcd',
+        privateKey: 'BEGIN',
+      } as never),
+    ).toThrow();
+
+    expect(() =>
+      registry.updateProvider(FIXED_REF, 'mystery', { type: 'vault', path: '/secret' } as never),
+    ).toThrow();
+  });
+
   it('rejects malformed ids, kinds, locators, and timestamps', () => {
     const registry = new CredentialRefRegistry();
 
@@ -116,6 +139,22 @@ describe('CredentialRefRegistry', () => {
         providerId: 'local',
         locator: { type: 'local', key: '' },
       }),
+    ).toThrow();
+
+    const dotenvRef = registry.register({
+      kind: 'api_key',
+      providerId: 'legacy-local',
+      locator: { type: 'dotenv', path: '.env', key: 'GH_TOKEN' },
+      now: 1,
+    });
+    expect(dotenvRef.locator).toEqual({ type: 'dotenv', path: '.env', key: 'GH_TOKEN' });
+
+    expect(() =>
+      registry.register({
+        kind: 'basic_auth',
+        providerId: 'git',
+        locator: { type: 'git_helper', host: 'github.com', password: 'secret' },
+      } as never),
     ).toThrow();
 
     expect(() =>

@@ -42,3 +42,59 @@ export {
   isCredentialRefId,
   isStorageMode,
 } from './credential-types.ts';
+
+export type {
+  AccountDiscoveryInput,
+  ConnectionFabricErrorCode,
+  CredentialImporter,
+  DeliveryMechanism,
+  ExternalAccount,
+  FabricExecutionContext,
+  HealthCheck,
+  ImportCandidate,
+  ImportCommitInput,
+  ImportCommitResult,
+  ImportDiscoveryInput,
+  ImportPreview,
+  ImportPreviewInput,
+  ImportRollbackInput,
+  ImportValidationInput,
+  ImportValidationResult,
+  IntegrationDefinition,
+  P0ImporterId,
+  ProviderCapabilities,
+  ProviderCredentialMetadata,
+  ProviderHealthInput,
+  ProviderLeaseInput,
+  ProviderMaterialization,
+  ProviderRevokeInput,
+  ProviderRotateInput,
+  ProviderWriteInput,
+  SealedSecret,
+  SecretProvider,
+} from './provider-contract.ts';
+export {
+  ConnectionFabricError,
+  P0_IMPORTER_IDS,
+  P0_PROVIDER_CAPABILITIES,
+} from './provider-contract.ts';
+
+export type { ImportConflict, ImportPhase } from './import-session.ts';
+export { ImportSession } from './import-session.ts';
+
+export type { CommittedImportRecord, ImportServiceOptions } from './import-service.ts';
+export { ImportService } from './import-service.ts';
+
+export type { DiscoveryHost, LegacyMetadataItem } from './p0-adapters.ts';
+export {
+  LocalMemorySecretProvider,
+  createP0Importers,
+  createP0ProviderStack,
+  createSealedSecret,
+  extractDotenvKeys,
+  metadataFingerprint,
+  parseAwsConfig,
+  parseDockerConfig,
+  parseGitCredentialConfig,
+  redactGcpAdcPreview,
+} from './p0-adapters.ts';
