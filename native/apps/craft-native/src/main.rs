@@ -322,6 +322,12 @@ fn handle_request(channel: &str, args: &[Value]) -> Result<Value, HandlerError> 
             let status = craft_journal::write_journal(&session_dir, &lines)?;
             serde_json::to_value(status).map_err(|e| e.to_string().into())
         }
+        "journal:writePrimary" => {
+            let session_dir = PathBuf::from(arg_str(args, 0)?);
+            let lines = parse_journal_lines(args.get(1))?;
+            let status = craft_journal::write_primary_journal(&session_dir, &lines)?;
+            serde_json::to_value(status).map_err(|e| e.to_string().into())
+        }
         "journal:read" => {
             let session_dir = arg_str(args, 0)?;
             let page = craft_journal::read_journal(Path::new(session_dir))?;

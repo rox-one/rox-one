@@ -29,13 +29,13 @@ import {
   DefaultResourceLoader,
   SettingsManager as PiSettingsManager,
   createReadToolDefinition,
-  createBashToolDefinition,
   createEditToolDefinition,
   createWriteToolDefinition,
   createGrepToolDefinition,
   createFindToolDefinition,
   createLsToolDefinition,
 } from '@earendil-works/pi-coding-agent';
+import { createCraftBashToolDefinition } from './craft-bash-tool.ts';
 import type {
   AgentSession,
   AgentSessionEvent,
@@ -591,7 +591,7 @@ async function ensureSession(): Promise<AgentSession> {
   //     then `.has(name)` returns false for every string lookup → zero tools active.
   const builtinDefs = [
     createReadToolDefinition(cwd),
-    createBashToolDefinition(cwd),
+    createCraftBashToolDefinition(cwd),
     createEditToolDefinition(cwd),
     createWriteToolDefinition(cwd),
     createGrepToolDefinition(cwd),

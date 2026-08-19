@@ -21,6 +21,7 @@ pub const NATIVE_CHANNELS: &[&str] = &[
     "run:fetchArtifact",
     "run:events",
     "journal:write",
+    "journal:writePrimary",
     "journal:read",
     "journal:status",
     "exec:run",

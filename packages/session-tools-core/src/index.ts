@@ -192,6 +192,7 @@ export {
   handleScriptSandbox,
   // Host-tool Bash
   handleHostBash,
+  runHostBash,
   // Render Template
   handleRenderTemplate,
   // Send Developer Feedback

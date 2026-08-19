@@ -56,7 +56,7 @@ export { handleScriptSandbox } from './script-sandbox.ts';
 export type { ScriptSandboxArgs } from './script-sandbox.ts';
 
 // Host-tool Bash
-export { handleHostBash } from './host-bash.ts';
+export { handleHostBash, runHostBash } from './host-bash.ts';
 export type { HostBashArgs } from './host-bash.ts';
 
 // Render Template
