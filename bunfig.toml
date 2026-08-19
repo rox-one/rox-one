@@ -1,13 +1,5 @@
 preload = ["./packages/shared/src/unified-network-interceptor.ts"]
 
-# Vite `?url` is not a bun specifier. Renderer tests that pull MarkdownPdfBlock
-# need this mock or they fail at import time (inventory 8.7).
-[test]
-preload = [
-  "./packages/shared/src/unified-network-interceptor.ts",
-  "./packages/shared/src/test-preload-pdfjs-url.ts",
-]
-
 # Use the hoisted linker so transitive deps resolve at top-level node_modules.
 # Vite + esbuild bundling expects this layout; bun's default isolated linker
 # leaves only declared deps at the workspace root, which breaks renderer imports
@@ -16,3 +8,13 @@ preload = [
 # `bun install --linker=hoisted` for the same reason.
 [install]
 linker = "hoisted"
+
+[test]
+# Isolation first: set ROX_CONFIG_DIR / CRAFT_CONFIG_DIR before any config import.
+# pdfjs ?url mock is required for MarkdownPdfBlock renderer tests (inventory 8.7).
+preload = [
+  "./scripts/test-config-isolation.ts",
+  "./packages/shared/src/unified-network-interceptor.ts",
+  "./packages/shared/src/test-preload-pdfjs-url.ts",
+  "./scripts/test-vite-url-shim.ts",
+]

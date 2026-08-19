@@ -62,6 +62,8 @@ function makeBlock(): KnowledgeNode {
   }
 }
 
+const PREVIOUS_CONFIG_DIR = process.env.CRAFT_CONFIG_DIR
+
 beforeEach(() => {
   configDir = mkdtempSync(join(tmpdir(), 'p7-prep-cfg-'))
   workspaceRoot = mkdtempSync(join(tmpdir(), 'p7-prep-ws-'))
@@ -72,7 +74,10 @@ beforeEach(() => {
 
 afterEach(() => {
   __resetMetricsStoreCacheForTests()
-  delete process.env.CRAFT_CONFIG_DIR
+  // Restore rather than delete: unsetting this sends every later test file
+  // back to the real ~/.craft-agent instead of the run's scratch root.
+  if (PREVIOUS_CONFIG_DIR === undefined) delete process.env.CRAFT_CONFIG_DIR
+  else process.env.CRAFT_CONFIG_DIR = PREVIOUS_CONFIG_DIR
   while (tmpDirs.length) rmSync(tmpDirs.pop()!, { recursive: true, force: true })
 })
 

@@ -13,10 +13,9 @@
  * one deprecation warning per process (ticket 07).
  */
 
+export { getEnv, resolveConfigDir } from './env.ts';
 import { resolveConfigDir } from './env.ts';
 
-export { getEnv, resolveConfigDir } from './env.ts';
-
-// Evaluated at import time so existing tests that set CRAFT_CONFIG_DIR /
-// ROX_CONFIG_DIR before importing this module keep working.
+// Import-time snapshot. Test preload must set ROX_CONFIG_DIR / CRAFT_CONFIG_DIR
+// before any config module loads (see scripts/test-config-isolation.ts).
 export const CONFIG_DIR = resolveConfigDir();

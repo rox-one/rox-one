@@ -16,6 +16,7 @@ import {
 import { KnowledgeConnectionsStore } from '../connections-store'
 
 let configDir: string
+const PREVIOUS_CONFIG_DIR = process.env.CRAFT_CONFIG_DIR
 
 beforeEach(() => {
   __resetSiyuanBootstrapForTests()
@@ -25,6 +26,10 @@ beforeEach(() => {
 
 afterEach(() => {
   __resetSiyuanBootstrapForTests()
+  // The directory below is about to be deleted; leaving the variable pointing
+  // at it would break every later test file that resolves a config path.
+  if (PREVIOUS_CONFIG_DIR === undefined) delete process.env.CRAFT_CONFIG_DIR
+  else process.env.CRAFT_CONFIG_DIR = PREVIOUS_CONFIG_DIR
   try {
     rmSync(configDir, { recursive: true, force: true })
   } catch {
