@@ -32,18 +32,53 @@ import {
   createHash,
 } from 'crypto';
 import { execSync } from 'child_process';
-import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
+import { copyFileSync, existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { hostname, userInfo, homedir } from 'os';
-import { join, dirname } from 'path';
+import { join } from 'path';
 
 import type { CredentialBackend } from './types.ts';
 import type { CredentialId, StoredCredential } from '../types.ts';
 import { credentialIdToAccount, accountToCredentialId } from '../types.ts';
 import { CONFIG_DIR } from '../../config/paths.ts';
 
-// File location
-const CREDENTIALS_DIR = CONFIG_DIR;
-const CREDENTIALS_FILE = join(CREDENTIALS_DIR, 'credentials.enc');
+const STORE_NAME = 'credentials.enc';
+const BACKUP_NAME = 'credentials.enc.bak';
+
+export type CredentialStoreErrorCode =
+  | 'WRITE_BLOCKED'
+  | 'REPAIR_REQUIRED'
+  | 'PROVIDER_UNAVAILABLE'
+  | 'BACKUP_MISSING';
+
+export class CredentialStoreError extends Error {
+  readonly code: CredentialStoreErrorCode;
+
+  constructor(code: CredentialStoreErrorCode, detail?: string) {
+    super(detail ? `${code}: ${detail}` : code);
+    this.name = 'CredentialStoreError';
+    this.code = code;
+  }
+}
+
+export type RepairState =
+  | { readonly status: 'ok' }
+  | {
+      readonly status: 'repair_required';
+      readonly code: 'malformed_header' | 'decrypt_failed';
+      readonly sourceDigest: string;
+      readonly quarantinePath: string;
+    };
+
+export interface LegacyMigrationManifest {
+  readonly entryCount: number;
+  readonly sourceDigest: string;
+  readonly codecStatus: 'legacy-to-v2';
+}
+
+export interface SecureStorageOptions {
+  readonly directory?: string;
+  readonly keyVersion?: 'v1' | 'v2';
+}
 
 // File format constants
 const MAGIC_BYTES = Buffer.from('CRAFT01\0');
@@ -113,9 +148,25 @@ export class SecureStorageBackend implements CredentialBackend {
   readonly name = 'secure-storage';
   readonly priority = 100;
 
+  private readonly directory: string;
+  private readonly file: string;
+  private readonly backupFile: string;
+  private readonly writeKeyVersion: 'v1' | 'v2';
   private cachedStore: CredentialStore | null = null;
   private encryptionKey: Buffer | null = null;
   private salt: Buffer | null = null;
+  private repairState: RepairState = { status: 'ok' };
+
+  constructor(options: SecureStorageOptions = {}) {
+    this.directory = options.directory ?? CONFIG_DIR;
+    this.file = join(this.directory, STORE_NAME);
+    this.backupFile = join(this.directory, BACKUP_NAME);
+    this.writeKeyVersion = options.keyVersion ?? 'v2';
+  }
+
+  getRepairState(): RepairState {
+    return this.repairState.status === 'ok' ? { status: 'ok' } : { ...this.repairState };
+  }
 
   async isAvailable(): Promise<boolean> {
     // File backend is always available - we can always write to filesystem
@@ -131,6 +182,7 @@ export class SecureStorageBackend implements CredentialBackend {
   }
 
   async set(id: CredentialId, credential: StoredCredential): Promise<void> {
+    this.assertWritable();
     let store = await this.loadStore();
 
     if (!store) {
@@ -157,6 +209,7 @@ export class SecureStorageBackend implements CredentialBackend {
   }
 
   deleteSync(id: CredentialId): boolean {
+    this.assertWritable();
     const store = this.loadStoreSync();
     if (!store) return false;
 
@@ -200,25 +253,22 @@ export class SecureStorageBackend implements CredentialBackend {
     // Return cached store if available
     if (this.cachedStore) return this.cachedStore;
 
-    if (!existsSync(CREDENTIALS_FILE)) return null;
+    if (!existsSync(this.file)) return null;
 
     let fileData: Buffer;
     try {
-      fileData = readFileSync(CREDENTIALS_FILE);
+      fileData = readFileSync(this.file);
     } catch {
       return null;
     }
 
-    // Validate minimum size
     if (fileData.length < HEADER_SIZE + IV_SIZE + AUTH_TAG_SIZE) {
-      // File is corrupted, delete and return null
-      this.handleCorruptedFile();
+      this.enterRepair(fileData, 'malformed_header');
       return null;
     }
 
-    // Validate magic bytes
     if (!fileData.subarray(0, MAGIC_SIZE).equals(MAGIC_BYTES)) {
-      this.handleCorruptedFile();
+      this.enterRepair(fileData, 'malformed_header');
       return null;
     }
 
@@ -245,14 +295,12 @@ export class SecureStorageBackend implements CredentialBackend {
     store = this.tryDecrypt(encryptedData, legacyKey);
 
     if (store) {
-      // Migration: re-save with new stable key so future loads use hardware UUID
+      // Dual-read: do not rewrite on get. Cutover is commitLegacyMigration().
       this.cachedStore = store;
-      this.saveStoreSync(store);
       return store;
     }
 
-    // Both keys failed - file is truly corrupted
-    this.handleCorruptedFile();
+    this.enterRepair(fileData, 'decrypt_failed');
     return null;
   }
 
@@ -280,17 +328,16 @@ export class SecureStorageBackend implements CredentialBackend {
   }
 
   private saveStoreSync(store: CredentialStore): void {
-    // Ensure directory exists
-    if (!existsSync(CREDENTIALS_DIR)) {
-      mkdirSync(CREDENTIALS_DIR, { recursive: true, mode: 0o700 });
+    this.assertWritable();
+    if (!existsSync(this.directory)) {
+      mkdirSync(this.directory, { recursive: true, mode: 0o700 });
     }
 
     // Use existing salt or generate new one
     const salt = this.salt || randomBytes(SALT_SIZE);
     this.salt = salt;
 
-    // Get encryption key
-    const key = this.getEncryptionKey(salt);
+    const key = this.getEncryptionKey(salt, this.writeKeyVersion);
 
     // Serialize payload
     const plaintext = Buffer.from(JSON.stringify(store), 'utf8');
@@ -312,24 +359,23 @@ export class SecureStorageBackend implements CredentialBackend {
     // Combine all parts
     const fileData = Buffer.concat([header, iv, authTag, ciphertext]);
 
-    // Write with restrictive permissions (owner read/write only)
-    writeFileSync(CREDENTIALS_FILE, fileData, { mode: 0o600 });
+    const tmp = `${this.file}.tmp`;
+    writeFileSync(tmp, fileData, { mode: 0o600 });
+    renameSync(tmp, this.file);
+    copyFileSync(this.file, this.backupFile);
     this.cachedStore = store;
   }
 
-  private getEncryptionKey(salt: Buffer): Buffer {
+  private getEncryptionKey(salt: Buffer, version: 'v1' | 'v2' = 'v2'): Buffer {
+    if (version === 'v1') return this.getLegacyEncryptionKey(salt);
     if (this.encryptionKey) return this.encryptionKey;
 
-    // New stable machine ID using hardware UUID (v2)
-    // This is far more stable than hostname which can change with network/DHCP
     const stableMachineId = createHash('sha256')
       .update(getStableMachineId())
-      .update('craft-agent-v2') // Bumped version for new key derivation
+      .update('craft-agent-v2')
       .digest();
 
-    // Derive key using PBKDF2
     this.encryptionKey = pbkdf2Sync(stableMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
-
     return this.encryptionKey;
   }
 
@@ -348,15 +394,59 @@ export class SecureStorageBackend implements CredentialBackend {
     return pbkdf2Sync(legacyMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
   }
 
-  private handleCorruptedFile(): void {
-    // Delete corrupted file - user will need to re-enter credentials
-    try {
-      if (existsSync(CREDENTIALS_FILE)) {
-        unlinkSync(CREDENTIALS_FILE);
-      }
-    } catch {
-      // Ignore deletion errors
+  async restoreFromBackup(): Promise<boolean> {
+    if (!existsSync(this.backupFile)) {
+      throw new CredentialStoreError('BACKUP_MISSING');
     }
+    const backup = readFileSync(this.backupFile);
+    const tmp = `${this.file}.tmp`;
+    writeFileSync(tmp, backup, { mode: 0o600 });
+    renameSync(tmp, this.file);
+    this.repairState = { status: 'ok' };
+    this.cachedStore = null;
+    this.encryptionKey = null;
+    this.salt = null;
+    return this.loadStoreSync() !== null;
+  }
+
+  async commitLegacyMigration(): Promise<LegacyMigrationManifest> {
+    this.assertWritable();
+    const source = existsSync(this.file) ? readFileSync(this.file) : Buffer.alloc(0);
+    const store = this.loadStoreSync();
+    if (!store) throw new CredentialStoreError('PROVIDER_UNAVAILABLE');
+    this.encryptionKey = null;
+    this.saveStoreSync(store);
+    return {
+      entryCount: Object.keys(store.credentials).length,
+      sourceDigest: sha256Hex(source),
+      codecStatus: 'legacy-to-v2',
+    };
+  }
+
+  private assertWritable(): void {
+    if (this.repairState.status === 'repair_required') {
+      throw new CredentialStoreError('WRITE_BLOCKED', this.repairState.code);
+    }
+  }
+
+  private enterRepair(source: Buffer, code: 'malformed_header' | 'decrypt_failed'): void {
+    const digest = sha256Hex(source);
+    const quarantinePath = join(
+      this.directory,
+      `${STORE_NAME}.quarantine.${Date.now()}.${digest.slice(0, 12)}`,
+    );
+    if (!existsSync(this.directory)) {
+      mkdirSync(this.directory, { recursive: true, mode: 0o700 });
+    }
+    writeFileSync(quarantinePath, source, { mode: 0o600 });
+    const copied = readFileSync(quarantinePath);
+    if (!copied.equals(source) || sha256Hex(copied) !== digest) {
+      this.repairState = { status: 'repair_required', code, sourceDigest: digest, quarantinePath };
+      this.cachedStore = null;
+      return;
+    }
+    if (existsSync(this.file)) unlinkSync(this.file);
+    this.repairState = { status: 'repair_required', code, sourceDigest: digest, quarantinePath };
     this.cachedStore = null;
     this.encryptionKey = null;
     this.salt = null;
@@ -368,4 +458,8 @@ export class SecureStorageBackend implements CredentialBackend {
     this.encryptionKey = null;
     this.salt = null;
   }
+}
+
+function sha256Hex(value: Buffer): string {
+  return createHash('sha256').update(value).digest('hex');
 }
