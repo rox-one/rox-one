@@ -24,6 +24,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.GET_MCP_TOOLS,
   RPC_CHANNELS.sources.REINDEX,
   RPC_CHANNELS.sources.SEARCH,
+  RPC_CHANNELS.sources.STATUS,
 ] as const
 
 const NOTES_SOURCE_SLUG = 'notes'
@@ -450,4 +451,11 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       })
     },
   )
+
+  server.handle(RPC_CHANNELS.sources.STATUS, async (_ctx, workspaceId: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
+    const { statusWorkspaceSources } = await import('../../sources/source-index-facade')
+    return await statusWorkspaceSources(workspace.rootPath)
+  })
 }

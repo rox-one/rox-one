@@ -1146,6 +1146,13 @@ export interface ElectronAPI {
     fileCount: number
     rootCount: number
   }>
+  getSourceIndexStatus(workspaceId: string): Promise<{
+    primary: 'native' | 'ts'
+    sidecarLive: boolean
+    indexed: number
+    fts: boolean
+    dbPath: string
+  }>
   searchSourcesIndex(
     workspaceId: string,
     query: string,

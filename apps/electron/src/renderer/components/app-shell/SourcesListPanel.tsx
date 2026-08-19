@@ -75,7 +75,29 @@ export function SourcesListPanel({
   const [sendResourceSlug, setSendResourceSlug] = React.useState<string | null>(null)
   const [sendResourceLabel, setSendResourceLabel] = React.useState('')
   const [indexFileCount, setIndexFileCount] = React.useState<number | null>(null)
+  const [indexPrimary, setIndexPrimary] = React.useState<'native' | 'ts' | null>(null)
   const [reindexing, setReindexing] = React.useState(false)
+
+  React.useEffect(() => {
+    if (!activeWorkspaceId) {
+      setIndexFileCount(null)
+      setIndexPrimary(null)
+      return
+    }
+    if (typeof window.electronAPI.getSourceIndexStatus !== 'function') return
+    let cancelled = false
+    void window.electronAPI
+      .getSourceIndexStatus(activeWorkspaceId)
+      .then((status) => {
+        if (cancelled) return
+        setIndexFileCount(status.indexed)
+        setIndexPrimary(status.primary)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [activeWorkspaceId])
 
   const filteredSources = React.useMemo(() => {
     if (!sourceFilter) return sources
@@ -119,8 +141,23 @@ export function SourcesListPanel({
     <>
     <div className="flex items-center justify-end gap-2 px-3 pt-2 pb-1">
       {indexFileCount != null && (
-        <span className="text-[11px] text-muted-foreground tabular-nums">
+        <span
+          className="text-[11px] text-muted-foreground tabular-nums"
+          title={
+            indexPrimary === 'native'
+              ? t('sourcesList.indexStatusHintNative')
+              : t('sourcesList.indexStatusHintTs')
+          }
+        >
           {t('sourcesList.indexHitCount', { count: indexFileCount })}
+          {indexPrimary != null && (
+            <>
+              {' · '}
+              {indexPrimary === 'native'
+                ? t('sourcesList.indexEngineNative')
+                : t('sourcesList.indexEngineTs')}
+            </>
+          )}
         </span>
       )}
       <button

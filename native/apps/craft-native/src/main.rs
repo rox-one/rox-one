@@ -17,6 +17,7 @@ enum Mode {
     Sidecar(String),
     StubRun(PathBuf),
     IndexStatus(PathBuf),
+    Health,
 }
 
 struct HandlerError {
@@ -82,6 +83,9 @@ async fn main() {
                 std::process::exit(1);
             }
         }
+        Ok(Mode::Health) => {
+            println!(r#"{{"ok":true,"version":"{}","protocolVersion":"{}"}}"#, env!("CARGO_PKG_VERSION"), PROTOCOL_VERSION);
+        }
         Ok(Mode::IndexStatus(workspace)) => match craft_index::status(&workspace) {
             Ok(status) => match serde_json::to_string(&status) {
                 Ok(json) => println!("{json}"),
@@ -121,15 +125,17 @@ fn parse_mode() -> Result<Mode, String> {
             .next()
             .ok_or_else(|| "missing value for --index-status".to_string())
             .map(|dir| Mode::IndexStatus(PathBuf::from(dir))),
+        Some("--health") => Ok(Mode::Health),
         Some("-h") | Some("--help") => {
             eprintln!("craft-native --socket <path>");
             eprintln!("craft-native --stub-run --dir <runDir>");
             eprintln!("craft-native --index-status <workspace>");
+            eprintln!("craft-native --health");
             std::process::exit(0);
         }
         Some(other) => Err(format!("unknown argument: {other}")),
         None => Err(
-            "required: --socket <path> | --stub-run --dir <runDir> | --index-status <workspace>"
+            "required: --socket <path> | --stub-run --dir <runDir> | --index-status <workspace> | --health"
                 .to_string(),
         ),
     }
