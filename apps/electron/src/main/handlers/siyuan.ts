@@ -193,6 +193,7 @@ export function registerSiyuanHandlers(server: RpcServer, deps: HandlerDeps): vo
     const instanceId = browserPaneManager.createEmbeddedInstance({
       url: input.url,
       workspaceId: input.workspaceId ?? null,
+      partition: 'persist:knowledge-engine',
     })
     const record: SiyuanSurfaceRecord = {
       instanceId,

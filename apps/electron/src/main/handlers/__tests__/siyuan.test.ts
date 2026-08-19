@@ -44,7 +44,7 @@ function makeServer(): Recorder {
 }
 
 interface EmbeddedCalls {
-  created: Array<{ url?: string; workspaceId?: string | null }>
+  created: Array<{ url?: string; workspaceId?: string | null; partition?: string }>
   destroyed: string[]
   focused: string[]
   navigated: Array<{ id: string; url: string }>
@@ -70,7 +70,7 @@ function makeDeps(calls: EmbeddedCalls): HandlerDeps {
     },
     windowManager: {} as HandlerDeps['windowManager'],
     browserPaneManager: {
-      createEmbeddedInstance: (input?: { url?: string; workspaceId?: string | null }) => {
+      createEmbeddedInstance: (input?: { url?: string; workspaceId?: string | null; partition?: string }) => {
         calls.created.push(input ?? {})
         return `browser-embedded-${++calls.nextInstanceId}`
       },
@@ -161,7 +161,11 @@ describe('siyuan surface handlers', () => {
 
     expect(instanceId).toBe('browser-embedded-1')
     expect(calls.created).toEqual([
-      { url: 'http://localhost:6806/stage/build/desktop/', workspaceId: 'ws-1' },
+      {
+        url: 'http://localhost:6806/stage/build/desktop/',
+        workspaceId: 'ws-1',
+        partition: 'persist:knowledge-engine',
+      },
     ])
 
     const pushes = recorder.pushes.filter((p) => p.channel === RPC_CHANNELS.siyuan.STATE_CHANGED)
