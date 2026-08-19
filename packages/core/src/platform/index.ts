@@ -52,3 +52,24 @@ export {
   isCredentialRefId,
   isStorageMode,
 } from './identity/credential-types.ts';
+export type {
+  CredentialImporter,
+  FabricExecutionContext,
+  ImportCandidate,
+  ImportPreview,
+  ProviderCapabilities,
+  SecretProvider,
+} from './identity/provider-contract.ts';
+export {
+  ConnectionFabricError,
+  P0_IMPORTER_IDS,
+  P0_PROVIDER_CAPABILITIES,
+} from './identity/provider-contract.ts';
+export { ImportSession } from './identity/import-session.ts';
+export { ImportService } from './identity/import-service.ts';
+export {
+  LocalMemorySecretProvider,
+  createP0ProviderStack,
+  createSealedSecret,
+  extractDotenvKeys,
+} from './identity/p0-adapters.ts';

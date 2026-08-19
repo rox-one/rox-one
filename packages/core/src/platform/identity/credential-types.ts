@@ -24,6 +24,12 @@ export type CredentialRefId = `cred_${string}`;
 export type ProviderLocator =
   | { type: 'local'; key: string }
   | { type: 'keychain'; service: string; account: string }
+  | { type: 'dotenv'; path: string; key: string }
+  | { type: 'git_helper'; host: string }
+  | { type: 'docker_helper'; registry: string }
+  | { type: 'aws_profile'; profile: string }
+  | { type: 'gcp_adc'; source: string }
+  | { type: 'ssh_agent'; fingerprint: string }
   | { type: 'infisical'; projectId: string; environment: string; secretPath: string; secretKey: string }
   | { type: 'opaque'; provider: string; locator: string };
 
@@ -225,6 +231,38 @@ function validateLocator(locator: ProviderLocator): ProviderLocator {
         type: 'keychain',
         service: nonEmptyString(record.service, 'locator.service'),
         account: nonEmptyString(record.account, 'locator.account'),
+      };
+    case 'dotenv':
+      assertExactKeys(record, new Set(['type', 'path', 'key']), 'Invalid credential locator field');
+      return {
+        type: 'dotenv',
+        path: nonEmptyString(record.path, 'locator.path'),
+        key: nonEmptyString(record.key, 'locator.key'),
+      };
+    case 'git_helper':
+      assertExactKeys(record, new Set(['type', 'host']), 'Invalid credential locator field');
+      return { type: 'git_helper', host: nonEmptyString(record.host, 'locator.host') };
+    case 'docker_helper':
+      assertExactKeys(record, new Set(['type', 'registry']), 'Invalid credential locator field');
+      return {
+        type: 'docker_helper',
+        registry: nonEmptyString(record.registry, 'locator.registry'),
+      };
+    case 'aws_profile':
+      assertExactKeys(record, new Set(['type', 'profile']), 'Invalid credential locator field');
+      return { type: 'aws_profile', profile: nonEmptyString(record.profile, 'locator.profile') };
+    case 'gcp_adc':
+      assertExactKeys(record, new Set(['type', 'source']), 'Invalid credential locator field');
+      return { type: 'gcp_adc', source: nonEmptyString(record.source, 'locator.source') };
+    case 'ssh_agent':
+      assertExactKeys(
+        record,
+        new Set(['type', 'fingerprint']),
+        'Invalid credential locator field',
+      );
+      return {
+        type: 'ssh_agent',
+        fingerprint: nonEmptyString(record.fingerprint, 'locator.fingerprint'),
       };
     case 'infisical':
       assertExactKeys(
