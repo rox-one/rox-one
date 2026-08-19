@@ -76,6 +76,11 @@ import { CHAT_LAYOUT } from "@/config/layout"
 import { collectFileChangesFromActivities, getFirstFileChangeIdForActivity } from "@/lib/file-changes"
 import { resolveBranchNewPanelOption } from "./branching"
 import { handleErrorMessageAction } from "./error-message-actions"
+import { OmpCredentialStep } from "@/components/onboarding/OmpCredentialStep"
+
+function isOmpCredentialChatError(code?: string): boolean {
+  return code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED'
+}
 import * as storage from "@/lib/local-storage"
 
 // ============================================================================
@@ -2423,6 +2428,23 @@ function MessageBubble({
 
   // === ERROR MESSAGE: Red bordered bubble with warning icon and collapsible details ===
   if (message.role === 'error') {
+    if (isOmpCredentialChatError(message.errorCode)) {
+      return (
+        <div className="mt-4 max-w-[80%]">
+          <OmpCredentialStep
+            compact
+            typedCode={message.errorCode}
+            status="idle"
+            onSubmit={async (data) => {
+              const result = await window.electronAPI.saveOmpCredential(data.apiKey)
+              if (result.success) {
+                onRetry?.()
+              }
+            }}
+          />
+        </div>
+      )
+    }
     return <ErrorMessage message={message} onOpenUrl={onOpenUrl} sessionId={sessionId} onRetry={onRetry} />
   }
 

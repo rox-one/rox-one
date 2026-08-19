@@ -44,6 +44,32 @@ export function credentialIdFromRef(credentialRef: string): CredentialId | null 
 export type KnowledgeConnectionStatus = 'unknown' | 'ok' | 'needs_auth' | 'failed'
 
 /**
+ * Validate + normalize a connection baseUrl for save (Settings → Knowledge edit
+ * flow). Accepts only absolute http(s) URLs; strips trailing slashes so the
+ * kernel client's endpoint joins stay clean. Throws a typed CodedError
+ * (INVALID_REF) on bad input — callers never see a raw TypeError from URL.
+ */
+export function normalizeKnowledgeBaseUrl(raw: string): string {
+  const trimmed = typeof raw === 'string' ? raw.trim() : ''
+  let url: URL
+  try {
+    url = new URL(trimmed)
+  } catch {
+    throw new CodedError(
+      'INVALID_REF',
+      `knowledge: invalid baseUrl ${JSON.stringify(raw)} — expected an absolute http(s) URL like http://localhost:6806`,
+    )
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new CodedError(
+      'INVALID_REF',
+      `knowledge: invalid baseUrl protocol '${url.protocol}' — only http(s) endpoints are supported`,
+    )
+  }
+  return trimmed.replace(/\/+$/, '')
+}
+
+/**
  * Storage record for one knowledge connection.
  * Production mode is external-local only. `managed` is accepted at the type
  * level for P7-prep fail-closed paths, but save() rejects it at runtime until

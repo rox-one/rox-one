@@ -105,6 +105,7 @@ export type ErrorCode =
   | 'CAPABILITY_DISABLED'
   | 'PROVIDER_ERROR'
   | 'LOCAL_ONLY_DENIED'
+  | 'SECRET_ENVVAR_DENIED'
 
 const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'HANDLER_ERROR',
@@ -138,6 +139,7 @@ const KNOWN_ERROR_CODES: ReadonlySet<string> = new Set<ErrorCode>([
   'CAPABILITY_DISABLED',
   'PROVIDER_ERROR',
   'LOCAL_ONLY_DENIED',
+  'SECRET_ENVVAR_DENIED',
 ])
 
 export function isErrorCode(value: unknown): value is ErrorCode {

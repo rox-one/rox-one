@@ -59,8 +59,8 @@ const providerDisplayNames: Record<string, string> = {
   ollama: 'Ollama',
   openrouter: 'OpenRouter',
   omp: 'Rox',
-  pi: 'Craft Agents Backend',
-  pi_compat: 'Craft Agents Backend',
+  pi: 'Rox Backend',
+  pi_compat: 'Rox Backend',
   rox: 'Rox',
   vercel: 'Vercel',
 }

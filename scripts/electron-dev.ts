@@ -4,10 +4,11 @@
  */
 
 import { spawn, type Subprocess } from "bun";
-import { existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
+import { existsSync, rmSync, readFileSync, statSync, mkdirSync } from "fs";
 import { join, basename } from "path";
 import * as esbuild from "esbuild";
 import { downloadUv, type Platform, type Arch } from "./build/common";
+import { copyElectronResourceTree } from "./build/staged-servers";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const ELECTRON_DIR = join(ROOT_DIR, "apps/electron");
@@ -24,9 +25,6 @@ const MAIN_PROCESS_ALIAS: Record<string, string> = {
   "abort-controller": join(ROOT_DIR, "apps/electron/src/main/shims/abort-controller.cjs"),
 };
 
-// MCP server paths
-const SESSION_SERVER_DIR = join(ROOT_DIR, "packages/session-mcp-server");
-const SESSION_SERVER_OUTPUT = join(SESSION_SERVER_DIR, "dist/index.js");
 // Pi agent server path (subprocess for Pi SDK sessions)
 const PI_AGENT_SERVER_DIR = join(ROOT_DIR, "packages/pi-agent-server");
 const PI_AGENT_SERVER_OUTPUT = join(PI_AGENT_SERVER_DIR, "dist/index.js");
@@ -192,8 +190,8 @@ function copyResources(): void {
   const srcDir = join(ELECTRON_DIR, "resources");
   const destDir = join(ELECTRON_DIR, "dist/resources");
   if (existsSync(srcDir)) {
-    cpSync(srcDir, destDir, { recursive: true, force: true });
-    console.log("📦 Copied resources to dist");
+    copyElectronResourceTree(srcDir, destDir);
+    console.log("📦 Copied resources to dist (skipped unread session/bridge MCP servers)");
   }
 }
 
@@ -231,29 +229,13 @@ async function buildDiscordWorker(): Promise<void> {
   }
 }
 
-// Build MCP servers for Codex sessions and Pi agent server (one-time, no watch needed)
+// Build Pi agent server (one-time, no watch needed). session-mcp-server is
+// unread by registered backends and is not built in the Electron dev path.
 async function buildMcpServers(): Promise<void> {
-  console.log("🌉 Building MCP servers and Pi agent server...");
+  console.log("🥧 Building Pi agent server...");
 
-  // Ensure dist directories exist
-  const sessionDistDir = join(SESSION_SERVER_DIR, "dist");
   const piDistDir = join(PI_AGENT_SERVER_DIR, "dist");
-  if (!existsSync(sessionDistDir)) mkdirSync(sessionDistDir, { recursive: true });
   if (!existsSync(piDistDir)) mkdirSync(piDistDir, { recursive: true });
-
-  // Build session MCP server (esbuild, packages external — deps resolve from root node_modules)
-  const sessionResult = await runEsbuild(
-    "packages/session-mcp-server/src/index.ts",
-    "packages/session-mcp-server/dist/index.js",
-    {},
-    { packagesExternal: true }
-  );
-
-  if (!sessionResult.success) {
-    console.error("❌ Session MCP server build failed:", sessionResult.error);
-    process.exit(1);
-  }
-  console.log("✅ Session MCP server built");
 
   // Build Pi agent server with bun (not esbuild) because its Pi SDK deps are ESM-only.
   // esbuild with packages:external leaves them as require() calls which fail at runtime.
@@ -447,7 +429,7 @@ async function main(): Promise<void> {
 
   copyResources();
 
-  // Build MCP servers for Codex sessions
+  // Build Pi agent server for Pi SDK sessions
   await buildMcpServers();
 
   // Build WhatsApp worker bundle so the adapter can spawn it on demand

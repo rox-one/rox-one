@@ -3,7 +3,7 @@
  *
  * Handles workspace setup and configuration persistence.
  */
-import { getAuthState, getSetupNeeds } from '@craft-agent/shared/auth'
+import { getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { setSetupDeferred } from '@craft-agent/shared/config'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
@@ -25,6 +25,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.HAS_CLAUDE_OAUTH_STATE,
   RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE,
   RPC_CHANNELS.onboarding.DEFER_SETUP,
+  RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
 ] as const
 
 export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -32,8 +33,7 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get current auth state
   server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {
-    const authState = await getAuthState()
-    const setupNeeds = getSetupNeeds(authState)
+    const { authState, setupNeeds } = await getOnboardingAuthPayload()
     // Redact raw credentials — renderer only needs boolean flags (hasCredentials, setupNeeds)
     return {
       authState: {
@@ -172,5 +172,9 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     setSetupDeferred(true)
     log?.info('[Onboarding] User deferred setup')
     return { success: true }
+  })
+
+  server.handle(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL, async (_ctx, apiKey: string) => {
+    return saveOmpRoxCredential(typeof apiKey === 'string' ? apiKey : '')
   })
 }

@@ -28,6 +28,7 @@ const BLOCKED_DEEPLINK_PROTOCOLS = new Set([
   'blob:',
 ])
 
+/** Custom-scheme deeplinks only. Blocks javascript:/data:/http(s):/file:. */
 export function isSafeDeeplinkUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
@@ -50,8 +51,10 @@ export function generateCallbackPage(options: {
   appType?: AppType;
   deeplinkUrl?: string;
 }): string {
-  const { title, isSuccess, errorDetail, deeplinkUrl } = options;
-  const safeDeeplink = deeplinkUrl && isSafeDeeplinkUrl(deeplinkUrl) ? deeplinkUrl : undefined
+  const { title, isSuccess, errorDetail } = options;
+  const safeDeeplink = options.deeplinkUrl && isSafeDeeplinkUrl(options.deeplinkUrl)
+    ? options.deeplinkUrl
+    : undefined
 
   // Status message based on success/error
   const statusMessage = isSuccess
@@ -75,7 +78,7 @@ export function generateCallbackPage(options: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Craft - ${escapeHtml(title)}</title>
+  <title>Rox - ${escapeHtml(title)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -207,7 +210,7 @@ export function generateCallbackPage(options: {
       <div class="status">${statusMessage}</div>
     </div>
     <div class="hint">${isSuccess ? 'You can now return to the application.' : 'Please close this window and try again.'}</div>
-    ${safeDeeplink ? `<a href="${escapeHtml(safeDeeplink)}" class="return-link">Craft Agents</a>` : ''}
+    ${safeDeeplink ? `<a href="${escapeHtml(safeDeeplink)}" class="return-link">Rox</a>` : ''}
   </div>
   <script>${autoCloseScript}</script>
 </body>

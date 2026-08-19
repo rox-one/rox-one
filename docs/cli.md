@@ -12,8 +12,8 @@ Terminal client for Craft Agent server. Connects over WebSocket (`ws://` or `wss
 
 ```bash
 # Clone the repository
-git clone https://github.com/anthropics/craft-agents.git
-cd craft-agents
+git clone https://github.com/rox-one/rox-one.git
+cd rox-one
 
 # Install dependencies
 bun install
@@ -39,8 +39,8 @@ ANTHROPIC_API_KEY=sk-... bun run apps/cli/src/index.ts run "Hello, world!"
 
 | Flag | Env var | Default | Description |
 |------|---------|---------|-------------|
-| `--url <ws[s]://...>` | `CRAFT_SERVER_URL` | — | Server WebSocket URL |
-| `--token <secret>` | `CRAFT_SERVER_TOKEN` | — | Authentication token |
+| `--url <ws[s]://...>` | `ROX_SERVER_URL` (`CRAFT_SERVER_URL`) | — | Server WebSocket URL |
+| `--token <secret>` | `ROX_SERVER_TOKEN` (`CRAFT_SERVER_TOKEN`) | — | Authentication token (**≥16 characters**; shorter tokens are fatal at server boot) |
 | `--workspace <id>` | — | auto-detect | Workspace ID |
 | `--timeout <ms>` | — | `10000` | Request timeout |
 | `--tls-ca <path>` | `CRAFT_TLS_CA` | — | Custom CA cert for self-signed TLS |
@@ -48,6 +48,13 @@ ANTHROPIC_API_KEY=sk-... bun run apps/cli/src/index.ts run "Hello, world!"
 | `--send-timeout <ms>` | — | `300000` | Timeout for `send` command (5 min) |
 
 Flags take precedence over environment variables. If `--workspace` is omitted, the CLI auto-detects the first available workspace.
+
+### Headless server constraints
+
+These apply to the server the CLI talks to, not to the CLI binary itself:
+
+- **`ROX_SERVER_TOKEN` ≥ 16 characters.** `CRAFT_SERVER_TOKEN` still works. Tokens shorter than 16 chars fail at boot (`Token too short`). Generate one with `bun run packages/server/src/index.ts --generate-token` or `openssl rand -hex 32`.
+- **Config-dir single-instance lock.** A second server process against the same `ROX_CONFIG_DIR` (or `CRAFT_CONFIG_DIR`; default `~/.craft-agent`) refuses to start (`Another server instance is already running (PID …)`). Stop the old process first, or set `ROX_CONFIG_DIR` to a different path for a parallel instance.
 
 ## Commands
 
@@ -167,7 +174,7 @@ craft-cli --validate-server
 
 When no `--url` is provided, `--validate-server` automatically spawns a local headless server (same as the `run` command), runs the validation, and shuts it down.
 
-Runs a 21-step integration test covering the full server lifecycle including source and skill creation:
+Runs a 40-step integration test (see `getValidateSteps()` in `apps/cli/src/index.ts`) covering the full server lifecycle including labels, branching, sources, MCP sources, skills, automations, and webhooks:
 
 1. Connect + handshake
 2. `credentials:healthCheck`
@@ -175,23 +182,42 @@ Runs a 21-step integration test covering the full server lifecycle including sou
 4. `system:homeDir`
 5. `workspaces:get`
 6. `sessions:get`
-7. `LLM_Connection:list`
+7. `LLM_Connection:list` (auto-creates a connection when `--api-key`/`$LLM_API_KEY` is provided)
 8. `sources:get`
 9. `sessions:create` (temporary `__cli-validate-*` session)
 10. `sessions:getMessages`
 11. Send message + stream (text response)
 12. Send message + tool use (Bash tool)
-13. `sources:create` (temporary Cat Facts API source)
-14. Send + source mention (uses the created source)
-15. Send + skill create (writes SKILL.md via Bash)
-16. `skills:get` (verify skill appears)
-17. Send + skill mention (invokes the created skill)
-18. `skills:delete` (cleanup)
-19. `sources:delete` (cleanup)
-20. `sessions:delete` (cleanup)
-21. Disconnect
+13. `labels:create` (temporary e2e-test label)
+14. `session-tools:set_session_labels`
+15. `session-tools:get_session_info`
+16. `session-tools:list_sessions`
+17. `sessions:branch`
+18. `sessions:branch verify`
+19. `sessions:branch send`
+20. `sources:create` (temporary Cat Facts API source)
+21. Send + source mention (uses the created source)
+22. `mcp:craft-public` (MCP source, auth:none)
+23. `mcp:stitch-mcp` (MCP source, header auth)
+24. Send + skill create (writes SKILL.md via Bash)
+25. `skills:get` (verify skill appears)
+26. Send + skill mention (invokes the created skill)
+27. `skills:delete` (cleanup)
+28. `automation:create`
+29. `automation:trigger` (status change)
+30. `automation:verify session`
+31. `automation:verify labels`
+32. `automations:getLastExecuted`
+33. `webhook:test` (RPC)
+34. `webhook:verify failure`
+35. `automation:cleanup`
+36. `sessions:branch delete`
+37. `sources:delete` (cleanup)
+38. `labels:delete` (cleanup)
+39. `sessions:delete` (cleanup)
+40. Disconnect
 
-**Note:** This test mutates workspace state — it creates and deletes a temporary session, source, and skill. All resources are cleaned up on completion. Continues on failure and reports a summary. Use `--json` for machine-readable output.
+**Note:** This test mutates workspace state — it creates and deletes a temporary session, label, sources, automations, and a skill. All resources are cleaned up on completion. Continues on failure and reports a summary. Steps 11+ require a working LLM connection (any provider key via `--api-key`/`$LLM_API_KEY`). Use `--json` for machine-readable output.
 
 ## Scripting Patterns
 
@@ -234,7 +260,9 @@ The `--tls-ca` flag sets `NODE_EXTRA_CA_CERTS` before connecting. You can also s
 | Symptom | Cause | Fix |
 |---------|-------|-----|
 | `Connection timeout` | Server not running or unreachable | Check server is started, verify URL |
-| `AUTH_FAILED` | Wrong token | Check `CRAFT_SERVER_TOKEN` matches server |
+| Server exits: `Token too short` | `ROX_SERVER_TOKEN` / `CRAFT_SERVER_TOKEN` has fewer than 16 characters | Use `openssl rand -hex 32` or `bun run packages/server/src/index.ts --generate-token` |
+| Server exits: `Another server instance is already running` | Config-dir single-instance lock | Stop the existing process, or set `ROX_CONFIG_DIR` to a different path |
+| `AUTH_FAILED` | Wrong token | Check `ROX_SERVER_TOKEN` matches server |
 | `PROTOCOL_VERSION_UNSUPPORTED` | Version mismatch | Update CLI and server to same version |
 | `WebSocket connection error` | Network issue or TLS problem | For self-signed certs, use `--tls-ca` |
 | `No workspace available` | Workspace not yet created | Create one via desktop app or API |
