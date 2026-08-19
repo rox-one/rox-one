@@ -9,6 +9,7 @@ import type { PanelStackEntry } from '../../atoms/panel-stack'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
+  panelContextKeysFromRoute,
   type SurfaceTabLabels,
 } from '../surface-tab-model'
 
@@ -93,5 +94,20 @@ describe('buildSurfaceTabViews: home', () => {
     expect(tab.kind).toBeNull()
     expect(tab.title).toBe('Home')
     expect(tab.title).not.toBe(LABELS.panel)
+  })
+})
+
+describe('panelContextKeysFromRoute', () => {
+  it('publishes activeSurface knowledge for a knowledge document route', () => {
+    expect(panelContextKeysFromRoute('knowledge/document/doc-1')).toEqual({ activeSurface: 'knowledge' })
+  })
+
+  it('publishes activeSurface session for a session route', () => {
+    expect(panelContextKeysFromRoute('allSessions/session/session-1')).toEqual({ activeSurface: 'session' })
+  })
+
+  it('returns empty context when the route is missing or not a surface', () => {
+    expect(panelContextKeysFromRoute(null)).toEqual({})
+    expect(panelContextKeysFromRoute('settings/shortcuts')).toEqual({})
   })
 })

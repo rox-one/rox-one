@@ -10,8 +10,9 @@ import type { ToolResult } from '../types.ts';
 import { successResponse, errorResponse } from '../response.ts';
 import { loadTemplate, validateTemplateData } from '../templates/loader.ts';
 import { renderMustache } from '../templates/mustache.ts';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { isPathWithinDirectory, isPathWithinDirectoryForCreation } from '../runtime/path-security.ts';
 
 export interface RenderTemplateArgs {
   source: string;
@@ -28,6 +29,8 @@ export interface RenderTemplateArgs {
  * 4. Writes output HTML to session data folder
  * 5. Returns absolute path for use in html-preview blocks
  */
+const SAFE_SOURCE_SEGMENT = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/;
+
 export async function handleRenderTemplate(
   ctx: SessionToolContext,
   args: RenderTemplateArgs
@@ -36,7 +39,16 @@ export async function handleRenderTemplate(
     return errorResponse('render_template requires dataPath in context.');
   }
 
-  const sourcePath = join(ctx.workspacePath, 'sources', args.source);
+  if (!SAFE_SOURCE_SEGMENT.test(args.source) || args.source.includes('..')) {
+    return errorResponse(`Invalid source identifier: ${args.source}`);
+  }
+
+  const sourcesRoot = resolve(ctx.workspacePath, 'sources');
+  const sourcePath = resolve(sourcesRoot, args.source);
+
+  if (!isPathWithinDirectory(sourcePath, sourcesRoot)) {
+    return errorResponse(`Source "${args.source}" is outside the workspace sources directory`);
+  }
 
   // Validate source exists
   if (!existsSync(sourcePath)) {
@@ -71,8 +83,11 @@ export async function handleRenderTemplate(
     mkdirSync(dataDir, { recursive: true });
   }
 
-  const outputFileName = `${args.source}-${args.template}-${Date.now()}.html`;
+  const outputFileName = `${args.source}-${args.template}-${Date.now()}.html`.replace(/[^a-zA-Z0-9._-]/g, '_');
   const outputPath = join(dataDir, outputFileName);
+  if (!isPathWithinDirectoryForCreation(outputPath, dataDir)) {
+    return errorResponse('Refusing to write template output outside the session data directory.');
+  }
   writeFileSync(outputPath, rendered, 'utf-8');
 
   // Build response

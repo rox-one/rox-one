@@ -87,6 +87,8 @@ export const KEYS = {
   featureWorkbenchBrowserSurfaceV2: 'feature-workbench-browser-surface-v2',
   featureWorkbenchStatusBarV1: 'feature-workbench-status-bar-v1',
   workbenchLayout: 'workbench-layout', // WorkbenchLayout v2 JSON, workspace-scoped
+  // Panel registry user overrides (S-03 §3.7), workspace-scoped via suffix
+  panelState: 'panel-registry-state',
 } as const
 
 export const EVENTS = {

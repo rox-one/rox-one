@@ -1,5 +1,5 @@
 import { statSync, type Stats } from 'fs'
-import { dirname, win32 as pathWin32 } from 'path'
+import { dirname, win32 as pathWin32, posix as pathPosix } from 'path'
 
 export interface PathValidationResult {
   valid: boolean
@@ -121,4 +121,81 @@ export function isValidWorkspaceRootPath(
       }
     }
   }
+}
+
+function resolveForPlatform(path: string, platform: NodeJS.Platform): string {
+  return platform === 'win32' ? pathWin32.resolve(path) : pathPosix.resolve(path)
+}
+
+export function isPathInsideBase(
+  candidate: string,
+  base: string,
+  platform: NodeJS.Platform = process.platform
+): boolean {
+  const resolvedBase = resolveForPlatform(base, platform)
+  const resolvedCandidate = resolveForPlatform(candidate, platform)
+  const rel = platform === 'win32'
+    ? pathWin32.relative(resolvedBase, resolvedCandidate)
+    : pathPosix.relative(resolvedBase, resolvedCandidate)
+  if (rel === '') return true
+  if (rel.startsWith('..')) return false
+  return platform === 'win32' ? !pathWin32.isAbsolute(rel) : !pathPosix.isAbsolute(rel)
+}
+
+/**
+ * Resolve `relativePath` against `base` and require the result to stay inside
+ * `base`. Rejects absolute inputs (POSIX `/…`, Windows drive/UNC) so
+ * `join(base, "/etc/passwd")` cannot ignore the base. Throws on escape.
+ */
+export function resolveContainedRelativePath(
+  base: string,
+  relativePath: string,
+  platform: NodeJS.Platform = process.platform,
+): string {
+  const trimmed = relativePath.trim()
+  if (!trimmed) {
+    throw new Error('Invalid path: path is required')
+  }
+  if (trimmed.includes('\0')) {
+    throw new Error('Invalid path: directory traversal not allowed')
+  }
+  if (isAbsolutePathForPlatform(trimmed, platform)) {
+    throw new Error('Invalid path: absolute paths are not allowed')
+  }
+
+  const resolvedBase = resolveForPlatform(base, platform)
+  const resolved = resolveForPlatform(
+    platform === 'win32'
+      ? pathWin32.join(resolvedBase, trimmed)
+      : pathPosix.join(resolvedBase, trimmed),
+    platform,
+  )
+
+  if (!isPathInsideBase(resolved, resolvedBase, platform)) {
+    throw new Error('Invalid path: outside workspace directory')
+  }
+  return resolved
+}
+
+/**
+ * Notes vault paths may be customized, but must stay inside the workspace
+ * (or an extra allowed root such as the default per-workspace notes dir).
+ * Otherwise notes:deleteFolder can recursively destroy arbitrary directories.
+ */
+export function isValidNotesPath(
+  notesPath: string,
+  workspaceRoot: string,
+  extraAllowedRoots: string[] = [],
+  platform: NodeJS.Platform = process.platform,
+  statFn: StatLike = statSync
+): PathValidationResult {
+  const working = isValidWorkingDirectory(notesPath, platform, statFn)
+  if (!working.valid) return working
+
+  const trimmed = notesPath.trim()
+  const allowed = [workspaceRoot, ...extraAllowedRoots]
+  if (!allowed.some((root) => isPathInsideBase(trimmed, root, platform))) {
+    return { valid: false, reason: 'Notes path must be inside the workspace.' }
+  }
+  return { valid: true }
 }

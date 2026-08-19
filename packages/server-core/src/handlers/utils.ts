@@ -1,9 +1,10 @@
-import { normalize, isAbsolute, sep } from 'path'
+import { normalize, isAbsolute } from 'path'
 import { homedir, tmpdir } from 'os'
 import { realpath } from 'fs/promises'
 import { getWorkspaceByNameOrId, type Workspace } from '@craft-agent/shared/config'
 import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import type { PlatformServices } from '../runtime/platform'
+import { isPathInsideBase } from '../utils/path-validation'
 
 /**
  * Get workspace by ID or name, throwing if not found.
@@ -65,14 +66,33 @@ export function getWorkspaceAllowedDirs(workspaceId?: string | null): string[] {
   return dirs
 }
 
+export interface ValidateFilePathOptions {
+  /**
+   * Also allow the user home directory.
+   * Defaults to true when `additionalAllowedDirs` is omitted (legacy paths with
+   * no caller allowlist). When the caller supplies an allowlist — even an empty
+   * one — defaults to false so RPC handlers cannot read arbitrary $HOME files.
+   */
+  includeHome?: boolean
+  /**
+   * Also allow `os.tmpdir()`. Defaults to true (temp attachments, converters).
+   */
+  includeTmp?: boolean
+}
+
 /**
  * Validates that a file path is within allowed directories to prevent path traversal attacks.
- * Allowed directories: user's home directory, /tmp, and any additional dirs passed by the caller
- * (e.g. workspace root, workspace working directory).
+ *
+ * When `additionalAllowedDirs` is omitted, the default roots are the user home
+ * directory and the temp directory. When the caller passes an allowlist, that
+ * list (plus tmp unless `includeTmp: false`) is the allowlist — home is not
+ * implied. Use `{ includeHome: true }` for user-picked local files (drafts,
+ * native file-dialog uploads).
  */
 export async function validateFilePath(
   filePath: string,
   additionalAllowedDirs?: string[],
+  options?: ValidateFilePathOptions,
 ): Promise<string> {
   // Normalize the path to resolve . and .. components
   let normalizedPath = normalize(filePath)
@@ -96,19 +116,26 @@ export async function validateFilePath(
     realFilePath = normalizedPath
   }
 
-  // Define allowed base directories
+  const extraDirs = (additionalAllowedDirs ?? []).filter(Boolean)
+  const includeHome = options?.includeHome ?? additionalAllowedDirs === undefined
+  const includeTmp = options?.includeTmp ?? true
   const allowedDirs = [
-    homedir(),
-    tmpdir(),
-    ...(additionalAllowedDirs ?? []),
-  ].filter(Boolean)
+    ...(includeHome ? [homedir()] : []),
+    ...(includeTmp ? [tmpdir()] : []),
+    ...extraDirs,
+  ]
 
-  // Check if the real path is within an allowed directory (cross-platform)
-  const isAllowed = allowedDirs.some(dir => {
-    const normalizedDir = normalize(dir)
-    const normalizedReal = normalize(realFilePath)
-    return normalizedReal.startsWith(normalizedDir + sep) || normalizedReal === normalizedDir
-  })
+  const resolvedAllowed = await Promise.all(
+    allowedDirs.map(async (dir) => {
+      try {
+        return await realpath(dir)
+      } catch {
+        return normalize(dir)
+      }
+    }),
+  )
+
+  const isAllowed = resolvedAllowed.some((dir) => isPathInsideBase(realFilePath, dir))
 
   if (!isAllowed) {
     throw new Error('Access denied: file path is outside allowed directories')
@@ -117,11 +144,11 @@ export async function validateFilePath(
   // Block sensitive files even within allowed directories.
   // Use [\\/] to match both Unix / and Windows \ separators.
   const sensitivePatterns = [
-    /\.ssh[\\/]/,
-    /\.gnupg[\\/]/,
-    /\.aws[\\/]credentials/,
-    /\.env$/,
-    /\.env\./,
+    /(^|[\\/])\.ssh([\\/]|$)/,
+    /(^|[\\/])\.gnupg([\\/]|$)/,
+    /(^|[\\/])\.aws[\\/]credentials/,
+    /(^|[\\/])\.env$/,
+    /(^|[\\/])\.env\./,
     /credentials\.json$/,
     /secrets?\./i,
     /\.pem$/,

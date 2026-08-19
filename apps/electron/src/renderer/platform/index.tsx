@@ -18,6 +18,7 @@ import {
 } from '@/atoms/unified-shell'
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
+import { PanelHost } from './PanelHost'
 import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 
@@ -26,6 +27,7 @@ export { SurfaceTabs } from './SurfaceTabs'
 export { InspectorHost } from './InspectorHost'
 export { ModeBar } from './ModeBar'
 export { StatusBarHost } from './StatusBarHost'
+export { PanelHost } from './PanelHost'
 export { Omnibox } from './Omnibox'
 export { OmniboxHost } from './OmniboxHost'
 export { parsePrefix, scoreMatch } from './omnibox-helpers'
@@ -51,8 +53,10 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {chrome.showSurfaceTabs && <SurfaceTabs />}
         {children}
+        <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
       {chrome.showInspector && <InspectorHost />}
+      <PanelHost slot="inspector" />
     </>
   )
 }

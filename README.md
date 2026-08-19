@@ -7,6 +7,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 
+> **Note — Rox fork:** this repository is the Rox fork of [craft-ai-agents/craft-agents-oss](https://github.com/craft-ai-agents/craft-agents-oss). It adds Rox-specific surfaces (Rox Cloud Connect, the `omp` agent backend, knowledge/collections/toolchain subsystems) on top of upstream Craft Agents. See [docs/ROX_CLOUD_CONNECT.md](docs/ROX_CLOUD_CONNECT.md) for the Rox cloud integration and [plans/integration-audit.md](plans/integration-audit.md) for a full inventory of Rox deltas vs upstream. Sections below describe the upstream Craft product; install links point at upstream craft.do infrastructure.
+
 ## How it Works (Video)
 To understand what Craft Agents does and how it works watch this video.
 
@@ -187,13 +189,16 @@ In thin-client mode, the desktop app renders the UI but all session logic, tool 
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `CRAFT_SERVER_TOKEN` | Yes | — | Bearer token for client authentication |
+| `CRAFT_SERVER_TOKEN` | Yes | — | Bearer token for client authentication. **Must be ≥16 characters** or startup is fatal (`Token too short`). Generate with `openssl rand -hex 32` or `bun run packages/server/src/index.ts --generate-token`. |
+| `CRAFT_CONFIG_DIR` | No | `~/.craft-agent` | Config + session store. A second process against the same dir is rejected (`Another server instance is already running`); stop the old PID or pick a different dir. |
 | `CRAFT_RPC_HOST` | No | `127.0.0.1` | Bind address (`0.0.0.0` for remote access) |
 | `CRAFT_RPC_PORT` | No | `9100` | Bind port |
 | `CRAFT_RPC_TLS_CERT` | No | — | Path to PEM certificate file (enables `wss://`) |
 | `CRAFT_RPC_TLS_KEY` | No | — | Path to PEM private key file (required with cert) |
 | `CRAFT_RPC_TLS_CA` | No | — | Path to PEM CA chain file (optional, for client cert verification) |
 | `CRAFT_DEBUG` | No | `false` | Enable debug logging |
+
+The web UI is served on the RPC port (`CRAFT_RPC_PORT`, default `9100`), not a separate `CRAFT_WEBUI_PORT`. Point `CRAFT_WEBUI_DIR` at `apps/webui/dist` when embedding the built UI.
 
 ### TLS (Recommended for Remote Access)
 
@@ -293,7 +298,7 @@ For TLS connections (`wss://`), use `--tls-ca <path>` for self-signed certificat
 | `invoke <channel> [args]` | Raw RPC call with JSON args |
 | `listen <channel>` | Subscribe to push events (Ctrl+C to stop) |
 | `run <prompt>` | Self-contained: spawn server, run prompt, stream response, exit |
-| `--validate-server` | 21-step integration test (auto-spawns server if no `--url`) |
+| `--validate-server` | 40-step integration test (auto-spawns server if no `--url`) |
 
 #### Run Command Flags
 

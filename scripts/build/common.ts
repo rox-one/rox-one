@@ -13,7 +13,7 @@ import {
   lstatSync,
   readdirSync,
 } from 'fs';
-import { join, dirname } from 'path';
+import { join } from 'path';
 import { createHash } from 'crypto';
 
 export type Platform = 'darwin' | 'win32' | 'linux';
@@ -483,23 +483,12 @@ export function copyInterceptorBundle(config: BuildConfig): void {
 }
 
 /**
- * Copy Session MCP Server to packaged app resources.
- * The session server provides session-scoped tools (SubmitPlan, config_validate, etc.) for agent sessions.
+ * Session MCP server is unread by every registered backend (ticket 10).
+ * Kept as a named no-op so old call sites fail closed instead of re-staging.
+ * Future external-subprocess backends: McpPoolServer / needsHttpPoolServer.
  */
-export function copySessionServer(config: BuildConfig): void {
-  const { rootDir, electronDir } = config;
-
-  const sessionSource = join(rootDir, 'packages', 'session-mcp-server', 'dist', 'index.js');
-  const sessionDest = join(electronDir, 'resources', 'session-mcp-server', 'index.js');
-
-  if (!existsSync(sessionSource)) {
-    console.warn(`Warning: Session server not found at ${sessionSource}. Session-scoped tools will not work.`);
-    return;
-  }
-
-  console.log('Copying Session MCP Server...');
-  mkdirSync(dirname(sessionDest), { recursive: true });
-  copyFileSync(sessionSource, sessionDest);
+export function copySessionServer(_config: BuildConfig): void {
+  console.log('Skipping session-mcp-server staging (unread; see docs/mcp-components.md)');
 }
 
 /**
@@ -589,29 +578,18 @@ export function copyCloudRunner(config: BuildConfig): void {
 }
 
 /**
- * Build MCP servers (session) and Pi agent server.
- * Shared across all platforms to avoid drift.
+ * Build Pi agent server (and cloud-runner stub).
+ *
+ * session-mcp-server is intentionally not built or staged: no registered
+ * driver reads sessionServerPath (ticket 10). KEEP pi-agent-server.
  */
 export function buildMcpServers(config: BuildConfig): void {
   const { rootDir } = config;
 
-  const sessionDir = join(rootDir, 'packages', 'session-mcp-server');
-  const sessionOut = join(sessionDir, 'dist', 'index.js');
   const piDir = join(rootDir, 'packages', 'pi-agent-server');
   const piOut = join(piDir, 'dist', 'index.js');
 
-  console.log('Building MCP servers...');
-
-  mkdirSync(join(sessionDir, 'dist'), { recursive: true });
-
-  execSync(
-    `bun build ${join(sessionDir, 'src', 'index.ts')} --outfile ${sessionOut} --target node --format cjs`,
-    { cwd: rootDir, stdio: 'inherit', shell: true }
-  );
-
-  if (!existsSync(sessionOut)) {
-    throw new Error(`Session MCP server output not found at ${sessionOut}`);
-  }
+  console.log('Building Pi agent server...');
 
     // Cloud-runner stub runner (Cloud Runs local provider). ESM — spawned by bundled bun.
   const cloudRunnerDir = join(rootDir, 'packages', 'cloud-runner');
@@ -677,17 +655,14 @@ export function buildDiscordWorker(config: BuildConfig): void {
 }
 
 /**
- * Verify MCP helper servers and Pi agent server are present in packaged resources.
+ * Verify Pi agent server is present in packaged resources.
+ * session-mcp-server / bridge-mcp-server are not staged (ticket 10).
  */
 export function verifyMcpServersExist(config: BuildConfig): void {
   const { electronDir } = config;
 
-  const sessionPath = join(electronDir, 'resources', 'session-mcp-server', 'index.js');
   const piPath = join(electronDir, 'resources', 'pi-agent-server', 'index.js');
 
-  if (!existsSync(sessionPath)) {
-    throw new Error(`Session MCP server not found at ${sessionPath}`);
-  }
   if (!existsSync(piPath)) {
     console.warn(`Warning: Pi agent server not found at ${piPath}. Pi SDK sessions will not work.`);
   }

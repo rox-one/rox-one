@@ -3,7 +3,10 @@ import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import {
   loadCollectionDisplay,
   saveCollectionDisplay,
+  loadCollectionFiltersMap,
+  saveCollectionFiltersMap,
   type CollectionDisplay,
+  type CollectionFilters,
 } from '@craft-agent/shared/sessions'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
@@ -11,6 +14,8 @@ import type { HandlerDeps } from '../handler-deps'
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.collection.GET_DISPLAY,
   RPC_CHANNELS.collection.SET_DISPLAY,
+  RPC_CHANNELS.collection.GET_FILTERS,
+  RPC_CHANNELS.collection.SET_FILTERS,
 ] as const
 
 export function registerCollectionHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -36,6 +41,30 @@ export function registerCollectionHandlers(server: RpcServer, deps: HandlerDeps)
         saved,
       )
       log.info(`Collection display saved for workspace ${workspaceId}`)
+      return saved
+    },
+  )
+
+  server.handle(RPC_CHANNELS.collection.GET_FILTERS, async (_ctx, workspaceId: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
+    return loadCollectionFiltersMap(workspace.rootPath)
+  })
+
+  server.handle(
+    RPC_CHANNELS.collection.SET_FILTERS,
+    async (_ctx, workspaceId: string, filtersByKey: Record<string, CollectionFilters>) => {
+      const workspace = getWorkspaceByNameOrId(workspaceId)
+      if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
+      const saved = saveCollectionFiltersMap(workspace.rootPath, filtersByKey)
+      pushTyped(
+        server,
+        RPC_CHANNELS.collection.FILTERS_CHANGED,
+        { to: 'workspace', workspaceId },
+        workspaceId,
+        saved,
+      )
+      log.info(`Collection filters saved for workspace ${workspaceId}`)
       return saved
     },
   )

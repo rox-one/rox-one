@@ -451,33 +451,54 @@ export interface RecoveryAction {
 }
 
 /**
- * Error codes for typed errors - must match AgentError.code in shared/agent/errors.ts
+ * Error codes for typed errors — must match AgentError.code /
+ * ERROR_DEFINITIONS in shared/agent/errors.ts.
+ *
+ * `AGENT_ERROR_CODES` is the source of truth; the `ErrorCode` union is
+ * derived from it so a new agent code cannot silently become a generic
+ * string on the `typed_error` wire (TypedError).
  */
-export type ErrorCode =
-  | 'invalid_api_key'
-  | 'invalid_credentials'
-  | 'response_too_large'
-  | 'expired_oauth_token'
-  | 'token_expired'
-  | 'rate_limited'
-  | 'service_error'
-  | 'service_unavailable'
-  | 'network_error'
-  | 'proxy_error'           // Proxy/firewall/captive portal intercepted the request
-  | 'mcp_auth_required'
-  | 'mcp_unreachable'
-  | 'billing_error'
-  | 'model_no_tool_support'  // Model doesn't support tool/function calling
-  | 'invalid_model'          // Model ID not found
-  | 'data_policy_error'      // OpenRouter data policy restriction
-  | 'invalid_request'        // API rejected the request (e.g., bad image, invalid content)
-  | 'image_too_large'        // Image exceeds API dimension/size limits
-  | 'provider_error'         // AI provider experiencing issues (overloaded, unavailable)
-  | 'queued_message_replay_failed'  // A message queued during an active turn could not be auto-replayed (#616)
-  | 'sdk_binary_missing'     // SDK subprocess binary not present on disk (incomplete bundle)
-  | 'sdk_cwd_missing'        // SDK subprocess cwd not present on disk (stale cross-machine import)
-  | 'context_overflow'       // Provider rejected request because input/context exceeded the model's window (#666)
-  | 'unknown_error';
+export const AGENT_ERROR_CODES = [
+  'invalid_api_key',
+  'invalid_credentials',
+  'response_too_large',
+  'expired_oauth_token',
+  'token_expired',
+  'rate_limited',
+  'service_error',
+  'service_unavailable',
+  'network_error',
+  'proxy_error', // Proxy/firewall/captive portal intercepted the request
+  'mcp_auth_required',
+  'mcp_unreachable',
+  'billing_error',
+  'model_no_tool_support', // Model doesn't support tool/function calling
+  'invalid_model', // Model ID not found
+  'data_policy_error', // OpenRouter data policy restriction
+  'invalid_request', // API rejected the request (e.g., bad image, invalid content)
+  'image_too_large', // Image exceeds API dimension/size limits
+  'provider_error', // AI provider experiencing issues (overloaded, unavailable)
+  'queued_message_replay_failed', // A message queued during an active turn could not be auto-replayed (#616)
+  'sdk_binary_missing', // SDK subprocess binary not present on disk (incomplete bundle)
+  'sdk_cwd_missing', // SDK subprocess cwd not present on disk (stale cross-machine import)
+  'context_overflow', // Provider rejected request because input/context exceeded the model's window (#666)
+  'OMP_NOT_CONFIGURED', // OMP binary/toolchain not resolvable
+  'OMP_NO_MODELS', // OMP has no models configured
+  'OMP_AUTH_REQUIRED', // OMP requires interactive login / credentials
+  'OMP_START_FAILED', // OMP subprocess exited or was killed before ready
+  'OMP_READY_TIMEOUT', // No ready frame within the bounded startup window
+  'OMP_PROTOCOL_ERROR', // Malformed ready frame, or clean exit without one
+  'unknown_error',
+] as const;
+
+export type ErrorCode = (typeof AGENT_ERROR_CODES)[number];
+
+const AGENT_ERROR_CODE_SET: ReadonlySet<string> = new Set(AGENT_ERROR_CODES);
+
+/** Runtime guard for TypedError.code / AgentError.code. */
+export function isAgentErrorCode(value: unknown): value is ErrorCode {
+  return typeof value === 'string' && AGENT_ERROR_CODE_SET.has(value);
+}
 
 /**
  * Typed error from agent
