@@ -69,7 +69,10 @@ and preview-tab replacement live in core and are unit-tested. Wiring
 “open in current group instead of replacing the panel” is ready in the
 reducer, not yet hooked into `NavigationContext` (avoids dual persistence).
 
-URL still wins over a v2 snapshot on conflict.
+URL still wins over a v2 snapshot on conflict. Persist of v2 snapshots
+goes through `parseWorkbenchLayout` (never throw; skip invalid). Dirty
+tabs cannot be closed without `{ force: true }`. `SurfaceInstance.pinned`
+is not a field — `preview: false` means pinned.
 
 ## Browser merge
 

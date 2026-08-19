@@ -38,6 +38,15 @@ export function countActiveRuns(
   return tasks.filter((task) => ACTIVE_RUN_STATUSES.has(task.status)).length
 }
 
+/** Permission chip is session-scoped — hide it off a focused session. */
+export function statusBarPermissionMode(
+  sessionId: string | null | undefined,
+  sessionMode: string | null | undefined,
+): string | null {
+  if (!sessionId) return null
+  return sessionMode ?? null
+}
+
 export function buildStatusBarModel(input: StatusBarInput): StatusBarModel {
   let workspaceMode: WorkspaceRuntimeMode = 'local'
   if (input.transportMode === 'remote') {

@@ -1,6 +1,7 @@
 import { surfaceTabDurableKey } from '../surfaces/descriptor.ts';
 import type { SurfaceTab } from '../surfaces/types.ts';
 import type {
+  LayoutMutation,
   LegacyPanelStackEntry,
   OpenSurfaceOptions,
   SurfaceInstance,
@@ -34,7 +35,6 @@ export function migrateLegacyLayout(input: {
       id: entry.id,
       tab: entry.tab,
       route: entry.route,
-      pinned: true,
       preview: false,
       dirty: false,
       openedAt: now,
@@ -86,8 +86,25 @@ export function activateTab(
   return { ...layout, groups, activeGroupId: groupId };
 }
 
-export function closeSurface(layout: WorkbenchLayout, surfaceInstanceId: SurfaceInstanceId): WorkbenchLayout {
+export function closeSurface(
+  layout: WorkbenchLayout,
+  surfaceInstanceId: SurfaceInstanceId,
+  options: { force?: boolean } = {},
+): LayoutMutation {
+  let found = false;
+  let dirty = false;
+  for (const group of layout.groups) {
+    const tab = group.tabs.find((item) => item.id === surfaceInstanceId);
+    if (!tab) continue;
+    found = true;
+    dirty = tab.dirty;
+    break;
+  }
+  if (!found) return { ok: false, code: 'NOT_FOUND', layout };
+  if (dirty && !options.force) return { ok: false, code: 'DIRTY_SURFACE', layout };
+
   const groups: TabGroup[] = [];
+  let vacatedGroupIndex = -1;
   for (const group of layout.groups) {
     const index = group.tabs.findIndex((tab) => tab.id === surfaceInstanceId);
     if (index < 0) {
@@ -95,7 +112,10 @@ export function closeSurface(layout: WorkbenchLayout, surfaceInstanceId: Surface
       continue;
     }
     const tabs = group.tabs.filter((tab) => tab.id !== surfaceInstanceId);
-    if (tabs.length === 0) continue;
+    if (tabs.length === 0) {
+      vacatedGroupIndex = groups.length;
+      continue;
+    }
     const fallback = tabs[Math.min(index, tabs.length - 1)];
     groups.push({
       ...group,
@@ -103,11 +123,15 @@ export function closeSurface(layout: WorkbenchLayout, surfaceInstanceId: Surface
       activeTabId: group.activeTabId === surfaceInstanceId ? (fallback?.id ?? null) : group.activeTabId,
     });
   }
+  const neighbor =
+    vacatedGroupIndex >= 0
+      ? groups[Math.min(vacatedGroupIndex, Math.max(groups.length - 1, 0))]
+      : undefined;
   const activeGroupId =
     groups.some((group) => group.id === layout.activeGroupId)
       ? layout.activeGroupId
-      : (groups[0]?.id ?? null);
-  return { ...layout, groups: renormalize(groups), activeGroupId };
+      : (neighbor?.id ?? groups[0]?.id ?? null);
+  return { ok: true, layout: { ...layout, groups: renormalize(groups), activeGroupId } };
 }
 
 export function splitGroup(
@@ -135,11 +159,9 @@ export function splitGroup(
     activeTabId: clone.id,
     proportion: source.proportion,
   };
-  const groups = [...layout.groups];
-  groups.splice(sourceIndex + 1, 0, newGroup);
   return {
     ...layout,
-    groups: renormalize(groups),
+    groups: insertGroup(layout.groups, newGroup, sourceIndex + 1),
     activeGroupId: newGroupId,
   };
 }
@@ -196,18 +218,20 @@ export function openSurface(
     // Renderer owns native windows; layout is unchanged.
     return layout;
   }
-  if (resolved.target === 'new-group-right' || resolved.target === 'new-group-bottom') {
+  if (resolved.target === 'new-group-right') {
     const groupId = newGroupId ?? instance.id;
+    const activeIndex = layout.groups.findIndex((group) => group.id === layout.activeGroupId);
+    const neighbor = activeIndex >= 0 ? layout.groups[activeIndex] : layout.groups[layout.groups.length - 1];
     const group: TabGroup = {
       id: groupId,
-      tabs: [{ ...instance, preview: resolved.mode === 'preview', pinned: resolved.mode === 'pinned' }],
+      tabs: [{ ...instance, preview: resolved.mode === 'preview' }],
       activeTabId: instance.id,
-      proportion: 1,
+      proportion: neighbor?.proportion ?? 1,
     };
-    const groups = [...layout.groups, group];
+    const insertAt = activeIndex >= 0 ? activeIndex + 1 : layout.groups.length;
     return {
       ...layout,
-      groups: renormalize(groups),
+      groups: insertGroup(layout.groups, group, insertAt),
       activeGroupId: resolved.focus ? groupId : layout.activeGroupId ?? groupId,
     };
   }
@@ -233,14 +257,14 @@ export function openSurface(
     if (resolved.mode === 'preview') {
       const previewIndex = tabs.findIndex((tab) => tab.preview && !tab.dirty);
       if (previewIndex >= 0) {
-        tabs = tabs.map((tab, index) => (index === previewIndex ? { ...instance, preview: true, pinned: false } : tab));
+        tabs = tabs.map((tab, index) => (index === previewIndex ? { ...instance, preview: true } : tab));
         return { ...group, tabs, activeTabId: resolved.focus ? instance.id : group.activeTabId };
       }
+      tabs = tabs.map((tab) => (tab.preview && tab.dirty ? { ...tab, preview: false } : tab));
     }
     const next: SurfaceInstance = {
       ...instance,
       preview: resolved.mode === 'preview',
-      pinned: resolved.mode === 'pinned',
     };
     return {
       ...group,
@@ -261,7 +285,7 @@ export function pinSurface(layout: WorkbenchLayout, surfaceInstanceId: SurfaceIn
     groups: layout.groups.map((group) => ({
       ...group,
       tabs: group.tabs.map((tab) =>
-        tab.id === surfaceInstanceId ? { ...tab, pinned: true, preview: false } : tab,
+        tab.id === surfaceInstanceId ? { ...tab, preview: false } : tab,
       ),
     })),
   };
@@ -278,6 +302,11 @@ export function workbenchLayoutToPanelEntries(
       proportion: group.proportion,
     };
   });
+}
+
+function insertGroup(groups: TabGroup[], group: TabGroup, insertIndex: number): TabGroup[] {
+  const at = Math.min(Math.max(insertIndex, 0), groups.length);
+  return renormalize([...groups.slice(0, at), group, ...groups.slice(at)]);
 }
 
 function renormalize(groups: TabGroup[]): TabGroup[] {

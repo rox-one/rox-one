@@ -16,12 +16,12 @@ import { backgroundTasksAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
-import { buildStatusBarModel, countActiveRuns, countPendingApprovals } from './status-model'
+import { buildStatusBarModel, countActiveRuns, countPendingApprovals, statusBarPermissionMode } from './status-model'
 
 const STATUS_BAR_HEIGHT = 28
 
 function permissionLabel(
-  mode: string | null,
+  mode: string,
   t: (key: string) => string,
 ): string {
   switch (mode) {
@@ -61,9 +61,10 @@ function StatusBarInner() {
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const tasks = useAtomValue(backgroundTasksAtomFamily(focusedSessionId ?? ''))
   const pendingPermissions = useOptionalAppShellContext()?.pendingPermissions
-  const permissionMode = focusedSessionId
-    ? sessionMetaMap.get(focusedSessionId)?.permissionMode ?? null
-    : null
+  const permissionMode = statusBarPermissionMode(
+    focusedSessionId,
+    focusedSessionId ? sessionMetaMap.get(focusedSessionId)?.permissionMode : null,
+  )
 
   const model = buildStatusBarModel({
     transportMode: transport?.mode,
@@ -90,7 +91,7 @@ function StatusBarInner() {
         <span>{t('workbench.status.approvals', { count: model.approvalCount })}</span>
       </div>
       <div className="flex min-w-0 items-center justify-end gap-2">
-        <span>{permissionLabel(model.permissionMode, t)}</span>
+        {model.permissionMode ? <span>{permissionLabel(model.permissionMode, t)}</span> : null}
         <span>{t('workbench.status.people', { count: model.peopleCount })}</span>
         <span>{t('workbench.status.agents', { count: model.agentCount })}</span>
         <span>{t('workbench.status.usagePlaceholder')}</span>
