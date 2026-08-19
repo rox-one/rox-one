@@ -78,3 +78,8 @@ export { handleCreateTask } from './create-task.ts';
 export type { CreateTaskArgs } from './create-task.ts';
 export { handleArchiveSession } from './archive-session.ts';
 export type { ArchiveSessionArgs } from './archive-session.ts';
+
+// Knowledge read tools (K-10 §3.1; args types derive from the zod schemas in tool-defs)
+export { handleKnowledgeSearch, KNOWLEDGE_SEARCH_MAX_LIMIT } from './knowledge-search.ts';
+export { handleKnowledgeRead, KNOWLEDGE_READ_MAX_MARKDOWN_CHARS } from './knowledge-read.ts';
+export { handleKnowledgeGetBacklinks, KNOWLEDGE_BACKLINKS_MAX_ITEMS } from './knowledge-backlinks.ts';

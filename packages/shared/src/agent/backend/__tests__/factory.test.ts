@@ -121,12 +121,19 @@ describe('createBackend / createAgent', () => {
 });
 
 describe('getAvailableProviders', () => {
-  it('should return anthropic and pi', () => {
+  it('should return anthropic, pi, and omp', () => {
     const providers = getAvailableProviders();
 
     expect(providers).toContain('anthropic');
     expect(providers).toContain('pi');
-    expect(providers).toHaveLength(2);
+    expect(providers).toContain('omp');
+    expect(providers).toHaveLength(3);
+  });
+
+  it('includes omp so the seeded default backend is visible to registry callers', () => {
+    const providers = getAvailableProviders();
+    expect(providers).toContain('omp');
+    expect(new Set(providers).size).toBe(providers.length);
   });
 });
 
@@ -137,6 +144,10 @@ describe('isProviderAvailable', () => {
 
   it('should return true for pi', () => {
     expect(isProviderAvailable('pi')).toBe(true);
+  });
+
+  it('should return true for omp', () => {
+    expect(isProviderAvailable('omp')).toBe(true);
   });
 
   it('should return false for unknown provider', () => {

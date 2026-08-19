@@ -11,17 +11,20 @@
  * our native OAuth flow. This is a one-time migration.
  */
 
+import { homedir } from 'node:os';
 import { getCredentialManager } from '../credentials/index.ts';
 import {
   loadStoredConfig,
   getActiveWorkspace,
   getDefaultLlmConnection,
   getLlmConnection,
+  ROX_DEFAULT_CONNECTION_SLUG,
   type AuthType,
   type Workspace,
 } from '../config/storage.ts';
 import { refreshClaudeToken, isTokenExpired } from './claude-token.ts';
 import { debug } from '../utils/debug.ts';
+import { ensureOmpRoxFirstRun, type OmpFirstRunReadiness } from '../agent/omp-first-run.ts';
 
 function toLegacyBillingType(
   authType: NonNullable<ReturnType<typeof getLlmConnection>>['authType'],
@@ -85,6 +88,10 @@ export interface SetupNeeds {
   needsCredentials: boolean;
   /** Rox cloud account (rox.one) not connected — product gate */
   needsRoxCloud?: boolean;
+  /** Default OMP connection is missing ~/.omp models / Rox API key */
+  needsOmpCredential?: boolean;
+  /** Typed OMP code for the credential step (same string CLI prints) */
+  ompCredentialCode?: string;
   /** Everything complete → go straight to App */
   isFullyConfigured: boolean;
   /** User has legacy tokens that need migration */
@@ -340,23 +347,106 @@ export async function getAuthState(): Promise<AuthState> {
   };
 }
 
+export interface OmpSetupGate {
+  ready: boolean;
+  code?: string;
+}
+
 /**
  * Derive what setup steps are needed based on current auth state
  */
-export function getSetupNeeds(state: AuthState, setupDeferred?: boolean): SetupNeeds {
+export function getSetupNeeds(
+  state: AuthState,
+  setupDeferred?: boolean,
+  omp?: OmpSetupGate,
+): SetupNeeds {
   // Need billing config if no billing type is set
   const needsBillingConfig = state.billing.type === null;
 
-  // Need credentials if billing type is set but credentials are missing
-  const needsCredentials = state.billing.type !== null && !state.billing.hasCredentials;
+  const ompBlocked = omp ? !omp.ready : false;
+
+  // Need credentials if billing type is set but credentials are missing,
+  // or the seeded OMP connection cannot start a first turn.
+  const needsCredentials =
+    (state.billing.type !== null && !state.billing.hasCredentials) || ompBlocked;
 
   return {
     needsBillingConfig,
     needsCredentials,
+    needsOmpCredential: ompBlocked || undefined,
+    ompCredentialCode: ompBlocked ? omp?.code : undefined,
     // Fully configured if setup is complete OR user chose "Setup later"
     isFullyConfigured: (!needsBillingConfig && !needsCredentials) || !!setupDeferred,
     needsMigration: state.billing.migrationRequired,
   };
+}
+
+/**
+ * Inspect (and auto-provision when a key is already present) the default
+ * OMP connection. Returns undefined when the default connection is not OMP.
+ */
+export async function resolveDefaultOmpReadiness(): Promise<OmpSetupGate | undefined> {
+  const slug = getDefaultLlmConnection();
+  const connection = slug ? getLlmConnection(slug) : null;
+  if (!connection || connection.providerType !== 'omp') return undefined;
+
+  const stored = slug ? await getCredentialManager().getLlmApiKey(slug) : null;
+  const readiness: OmpFirstRunReadiness = ensureOmpRoxFirstRun({
+    homeDir: homedir(),
+    env: process.env,
+    storedApiKey: stored,
+    baseUrl: connection.baseUrl,
+  });
+  return { ready: readiness.ready, code: readiness.code };
+}
+
+/**
+ * Auth + setup-needs payload used by both Electron and server-core
+ * onboarding:getAuthState handlers.
+ */
+export async function getOnboardingAuthPayload(setupDeferred?: boolean): Promise<{
+  authState: AuthState;
+  setupNeeds: SetupNeeds;
+}> {
+  const authState = await getAuthState();
+  const omp = await resolveDefaultOmpReadiness();
+  return {
+    authState,
+    setupNeeds: getSetupNeeds(authState, setupDeferred, omp),
+  };
+}
+
+/**
+ * Persist a Rox API key for the default OMP connection and provision
+ * missing ~/.omp/agent files. Never overwrites existing OMP files.
+ */
+export async function saveOmpRoxCredential(apiKey: string): Promise<{
+  success: boolean;
+  ready: boolean;
+  code?: string;
+  error?: string;
+}> {
+  const key = apiKey.trim();
+  if (!key) return { success: false, ready: false, error: 'API key is required' };
+
+  const slug = getDefaultLlmConnection() ?? ROX_DEFAULT_CONNECTION_SLUG;
+  try {
+    await getCredentialManager().setLlmApiKey(slug, key);
+    const connection = getLlmConnection(slug);
+    const readiness = ensureOmpRoxFirstRun({
+      homeDir: homedir(),
+      env: { ...process.env, ROX_API_KEY: key },
+      storedApiKey: key,
+      baseUrl: connection?.baseUrl,
+    });
+    return { success: true, ready: readiness.ready, code: readiness.code };
+  } catch (error) {
+    return {
+      success: false,
+      ready: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 // ============================================

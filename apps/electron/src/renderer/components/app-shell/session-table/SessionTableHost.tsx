@@ -28,7 +28,11 @@ import {
   replaceCollectionDisplayAtom,
   setCollectionDisplayAtom,
 } from '@/atoms/collection-display'
-import { collectionFiltersAtom } from '@/atoms/collection-filters'
+import {
+  collectionFiltersAtom,
+  loadCollectionFiltersAtom,
+  replaceCollectionFiltersMapAtom,
+} from '@/atoms/collection-filters'
 import { sessionSelection } from '@/hooks/useEntitySelection'
 import type { SessionStatus } from '@/config/session-status-config'
 import { CollectionViewToggle } from '../kanban/BoardListToggle'
@@ -193,6 +197,8 @@ export function SessionTableHost() {
   const loadDisplay = useSetAtom(loadCollectionDisplayAtom)
   const filters = useAtomValue(collectionFiltersAtom)
   const setFilters = useSetAtom(collectionFiltersAtom)
+  const loadFilters = useSetAtom(loadCollectionFiltersAtom)
+  const replaceFiltersMap = useSetAtom(replaceCollectionFiltersMapAtom)
   const { toggle, selectRange, selectAll, clearMultiSelect, isSelected } = sessionSelection.useSelection()
 
   const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set())
@@ -231,6 +237,10 @@ export function SessionTableHost() {
   }, [activeWorkspaceId, loadDisplay])
 
   React.useEffect(() => {
+    void loadFilters(activeWorkspaceId)
+  }, [activeWorkspaceId, loadFilters])
+
+  React.useEffect(() => {
     if (!activeWorkspaceId || typeof window === 'undefined') return
     const api = window.electronAPI
     if (!api?.onCollectionDisplayChanged) return
@@ -239,6 +249,16 @@ export function SessionTableHost() {
       replaceDisplay(next)
     })
   }, [activeWorkspaceId, replaceDisplay])
+
+  React.useEffect(() => {
+    if (!activeWorkspaceId || typeof window === 'undefined') return
+    const api = window.electronAPI
+    if (!api?.onCollectionFiltersChanged) return
+    return api.onCollectionFiltersChanged((workspaceId, next) => {
+      if (workspaceId !== activeWorkspaceId) return
+      replaceFiltersMap(next)
+    })
+  }, [activeWorkspaceId, replaceFiltersMap])
 
   const handleDisplayChange = React.useCallback(
     (next: CollectionDisplay) => {

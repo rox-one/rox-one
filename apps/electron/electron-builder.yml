@@ -16,11 +16,13 @@ files:
   - "!dist/renderer/src/**"
   - "!**/*.map"
   - package.json
-  # Include bundled MCP servers (bridge + session) for Codex sessions
-  - resources/bridge-mcp-server/**/*
-  - resources/session-mcp-server/**/*
-  # Include Pi agent server subprocess for Pi SDK sessions
+  # Include Pi agent server subprocess for Pi SDK sessions (KEEP)
   - resources/pi-agent-server/**/*
+  # Ticket 10: unread Codex/Copilot MCP servers are not packaged
+  - "!resources/bridge-mcp-server/**/*"
+  - "!resources/session-mcp-server/**/*"
+  - "!dist/resources/bridge-mcp-server/**/*"
+  - "!dist/resources/session-mcp-server/**/*"
   - resources/cloud-runner/**/*
   # Note: Bundled assets (docs, themes, permissions, tool-icons) are in resources/
   # and copied to dist/resources/ by build:copy. They're included via dist/**/* above.

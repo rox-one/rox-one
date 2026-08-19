@@ -84,6 +84,19 @@ const KERNEL_SEARCH_RESPONSE = {
   },
 }
 
+// Kernel-wire fixture for lsNotebooks (POST /api/notebook/lsNotebooks).
+const KERNEL_NOTEBOOKS_RESPONSE = {
+  code: 0,
+  msg: '',
+  data: {
+    notebooks: [
+      { id: 'nb-1', name: 'Research', icon: '1f4da', sort: 0, sortMode: 0, closed: false, subFileCount: 12 },
+      { id: 'nb-2', name: 'Inbox', icon: '', sort: 1, sortMode: 0, closed: true, subFileCount: 3 },
+    ],
+    boxDocEnabled: true,
+  },
+}
+
 const credentials = new Map<string, { value: string }>()
 const fetchCalls: Array<{ url: string; init: RequestInit }> = []
 let kernelProbeError: Error | null = null
@@ -109,6 +122,12 @@ function installFetchSeam() {
         headers: { 'Content-Type': 'application/json' },
       })
     }
+    if (u.endsWith('/api/notebook/lsNotebooks')) {
+      return new Response(JSON.stringify(KERNEL_NOTEBOOKS_RESPONSE), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
     throw new Error(`unmocked kernel endpoint: ${u}`)
   }) as unknown as typeof fetch
 }
@@ -129,6 +148,9 @@ mock.module('@craft-agent/shared/credentials', () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
     },
+    async set(id: CredentialId, credential: { value: string }) {
+      credentials.set(`${id.type}::${id.workspaceId}::${id.sourceId}`, credential)
+    },
   }),
 }))
 
@@ -142,6 +164,7 @@ mock.module('@craft-agent/shared/config', () => ({
 }))
 
 import { registerKnowledgeHandlers, HANDLED_CHANNELS, __setSkipKnowledgeWatchAutoStart } from '../knowledge'
+import { getKnowledgeToolRuntime, handleKnowledgeSearch } from '@craft-agent/session-tools-core'
 
 // ---------------------------------------------------------------------------
 // Harness
@@ -210,6 +233,8 @@ describe('registration', () => {
       RPC_CHANNELS.knowledge.GET_CONTEXT,
       RPC_CHANNELS.knowledge.GET_BACKLINKS,
       RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
+      RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+      RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
       RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
       RPC_CHANNELS.knowledge.SNAPSHOT_GET,
       RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -245,7 +270,7 @@ describe('registration', () => {
     expect(HANDLED_CHANNELS.some((ch) => /engineStop/i.test(ch))).toBe(false)
     // CHANGED is a server→client push event subscribed via knowledge.onChanged, not a handler.
     expect([...HANDLED_CHANNELS]).not.toContain(RPC_CHANNELS.knowledge.CHANGED)
-    expect(HANDLED_CHANNELS).toHaveLength(37) // + DETECT_ENGINE + METRICS_GET
+    expect(HANDLED_CHANNELS).toHaveLength(39) // + DETECT_ENGINE + METRICS_GET + LIST_NOTEBOOKS + UPDATE_CONNECTION
   })
 
   it('registers a handler for every declared channel and nothing else', () => {
@@ -294,6 +319,148 @@ describe('search', () => {
       invoke(RPC_CHANNELS.knowledge.SEARCH, { connectionId: 'conn-missing', input: { query: 'x' } }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' })
     expect(fetchCalls).toHaveLength(0)
+  })
+})
+
+// K-10 §3.1: registerKnowledgeHandlers publishes the KnowledgeToolRuntime consumed by
+// the knowledge_search / knowledge_read / knowledge_get_backlinks session tools.
+describe('knowledge session-tool runtime registration', () => {
+  it('registers a runtime whose search flows through the same provider resolution as the RPC read channels', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    createHarness()
+    const runtime = getKnowledgeToolRuntime()
+    expect(runtime).not.toBeNull()
+    const page = await runtime!.search({ input: { query: 'kernel' } })
+    expect(page.items).toHaveLength(1)
+    expect(page.items[0]!.ref).toEqual(DOC_REF)
+    const call = fetchCalls.find((c) => c.url.endsWith('/api/search/fullTextSearchBlock'))!
+    expect((call.init.headers as Record<string, string>)['Authorization']).toBe('Token secret-token-1')
+  })
+
+  it('resolves the default (first) connection when the tool call omits connectionId', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    createHarness()
+    const runtime = getKnowledgeToolRuntime()!
+    // No connectionId — the runtime must default to the only configured connection.
+    const page = await runtime.search({ input: { query: 'kernel' } })
+    expect(page.items).toHaveLength(1)
+  })
+
+  it('answers a typed CONNECTION_UNAVAILABLE when no connection is configured', async () => {
+    createHarness()
+    const runtime = getKnowledgeToolRuntime()!
+    await expect(runtime.search({ input: { query: 'x' } })).rejects.toMatchObject({
+      code: 'CONNECTION_UNAVAILABLE',
+    })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('end-to-end: the knowledge_search handler returns bounded provenance-rich text via the registered runtime', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    createHarness()
+    const result = await handleKnowledgeSearch({ sessionId: 'sess-1' } as never, { query: 'kernel' })
+    expect(result.isError).toBeFalsy()
+    const text = result.content.map((c) => c.text).join('\n')
+    expect(text).toContain('Kernel Guide')
+    expect(text).toContain('siyuan/document/doc-1')
+    expect(text).toContain('siyuan://blocks/doc-1')
+  })
+})
+
+describe('listNotebooks', () => {
+  it('serves the kernel notebook list for a configured connection (navigator tree)', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    const { invoke } = createHarness()
+    const notebooks = (await invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-1' })) as Array<Record<string, unknown>>
+    expect(notebooks).toEqual([
+      { id: 'nb-1', name: 'Research', icon: '1f4da', closed: false },
+      { id: 'nb-2', name: 'Inbox', icon: '', closed: true },
+    ])
+    const call = fetchCalls.find((c) => c.url.endsWith('/api/notebook/lsNotebooks'))!
+    expect((call.init.headers as Record<string, string>)['Authorization']).toBe('Token secret-token-1')
+  })
+
+  it('rejects an unknown connectionId with CodedError NOT_FOUND before touching the kernel', async () => {
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-missing' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('maps an unreachable kernel to a typed CONNECTION_UNAVAILABLE (never a raw throw)', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    kernelProbeError = new Error('connect ECONNREFUSED 127.0.0.1:6806')
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-1' }),
+    ).rejects.toMatchObject({ code: 'CONNECTION_UNAVAILABLE' })
+  })
+})
+
+describe('updateConnection', () => {
+  it('updates baseUrl on an existing record and returns the contract connection (no credentialRef leak)', async () => {
+    seedConnection('conn-1', { status: 'unknown' })
+    const { invoke } = createHarness()
+    const updated = (await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, {
+      connectionId: 'conn-1',
+      baseUrl: 'http://127.0.0.1:6807/',
+    })) as KnowledgeConnection
+    expect(updated.baseUrl).toBe('http://127.0.0.1:6807')
+    expect(updated.id).toBe('conn-1')
+    expect('credentialRef' in updated).toBe(false)
+    // The store persists the change.
+    expect(new KnowledgeConnectionsStore().get('conn-1')!.baseUrl).toBe('http://127.0.0.1:6807')
+    // A reachable kernel flips the cached probe status to ok → 'connected' on the wire.
+    expect(updated.status).toBe('connected')
+  })
+
+  it('rejects a malformed baseUrl with typed INVALID_REF and leaves the record untouched', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-1', baseUrl: 'not a url' }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-1', baseUrl: 'ftp://example.com' }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(new KnowledgeConnectionsStore().get('conn-1')!.baseUrl).toBe('http://127.0.0.1:6806')
+  })
+
+  it('rejects an unknown connectionId with CodedError NOT_FOUND', async () => {
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-missing', baseUrl: 'http://127.0.0.1:6806' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+
+  it('saves a provided token under the record credentialRef workspace (not the caller workspace)', async () => {
+    // The record's credentialRef pins ws1; a caller from another workspace context must
+    // still land the token where the read path resolves it (P2-12 semantics).
+    seedConnection('conn-1', { status: 'unknown' })
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, { connectionId: 'conn-1', token: 'fresh-token' })
+    expect(credentials.get('source_bearer::ws1::conn-1')?.value).toBe('fresh-token')
+  })
+
+  it('keeps the auto-seeded siyuan-local row updatable and survives an offline kernel (save still succeeds)', async () => {
+    const { invoke } = createHarness()
+    // Seed via the listConnections path (ensureDefaultLocalConnection).
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    kernelProbeError = new Error('connect ECONNREFUSED 127.0.0.1:6806')
+    const updated = (await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, {
+      connectionId: 'siyuan-local',
+      baseUrl: 'http://localhost:6807',
+    })) as KnowledgeConnection
+    expect(updated.id).toBe('siyuan-local')
+    expect(updated.baseUrl).toBe('http://localhost:6807')
+    // Probe failed → status 'failed' maps to 'offline' on the wire, but the save succeeded.
+    expect(updated.status).toBe('offline')
   })
 })
 

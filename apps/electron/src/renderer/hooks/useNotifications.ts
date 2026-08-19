@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { Session } from '../../shared/types'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 
@@ -138,6 +139,7 @@ export function useNotifications({
   onNavigateToSession,
   enabled = true,
 }: UseNotificationsOptions): UseNotificationsResult {
+  const { t } = useTranslation()
   const [isWindowFocused, setIsWindowFocused] = useState(true)
   const onNavigateToSessionRef = useRef(onNavigateToSession)
 
@@ -226,16 +228,16 @@ export function useNotifications({
     if (!hasGuiChannels) return
 
     // Get session title for notification
-    const title = session.name || 'New message'
+    const title = session.name || t('notifications.newMessageTitle')
 
     // Get message preview (truncate if needed)
-    let body = messagePreview || 'Craft Agent has a new message for you'
+    let body = messagePreview || t('notifications.newMessageBody')
     if (body.length > 100) {
       body = body.substring(0, 97) + '...'
     }
 
     window.electronAPI.showNotification(title, body, workspaceId, session.id)
-  }, [enabled, isWindowFocused, workspaceId, hasGuiChannels])
+  }, [enabled, isWindowFocused, workspaceId, hasGuiChannels, t])
 
   return {
     isWindowFocused,

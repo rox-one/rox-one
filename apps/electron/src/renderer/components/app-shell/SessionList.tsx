@@ -1,10 +1,11 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from "react"
 import { useTranslation } from "react-i18next"
-import { useSetAtom } from "jotai"
+import { useAtomValue, useSetAtom } from "jotai"
 import { isToday, isYesterday, format, startOfDay } from "date-fns"
 import { getDateLocale } from "@craft-agent/shared/i18n"
 import { useAction } from "@/actions"
-import { Inbox, Archive, ChevronRight } from "lucide-react"
+import { Inbox, Archive, ChevronRight, GripVertical } from "lucide-react"
+import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { getSessionStatus } from "@/utils/session"
@@ -28,7 +29,25 @@ import { useFocusZone } from "@/hooks/keyboard"
 import { useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useNavigation, useNavigationState, routes, isSessionsNavigation } from "@/contexts/NavigationContext"
 import { useFocusContext } from "@/context/FocusContext"
-import { sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
+import {
+  loadedSessionsAtom,
+  refreshSessionsMetadataAtom,
+  sendToWorkspaceAtom,
+  updateSessionMetaAtom,
+  type SessionMeta,
+} from "@/atoms/sessions"
+import { collectionDisplayAtom } from "@/atoms/collection-display"
+import { compareSessions, lexorankBetween } from "@craft-agent/shared/sessions/collection"
+import { isStaleRankNeighborsError, retryStaleRankReorder } from "@/lib/collection-reorder"
+import {
+  getListGroupKey,
+  listCrossGroupDropAction,
+  listRankReorderRequest,
+  resolveListGroupingMode,
+  LIST_DUE_ORDER,
+  LIST_PRIORITY_ORDER,
+  type ListGroupingMode,
+} from "./session-list/list-grouping"
 import type { ViewConfig } from "@craft-agent/shared/views"
 import type { SessionStatusId, SessionStatus } from "@/config/session-status-config"
 import { buildCollapsedGroupsScopeSuffix } from "@/utils/session-list-collapse"
@@ -66,8 +85,9 @@ function hydrateFamilyRows(units: FamilyUnit<SessionMeta>[]): SessionListRow[] {
   return rows
 }
 
-/** Grouping mode for chat list */
-export type ChatGroupingMode = 'date' | 'status' | 'unread' | 'project'
+/** Grouping mode for chat list (legacy per-view modes; see session-list/list-grouping) */
+export type { ChatGroupingMode } from "./session-list/list-grouping"
+import type { ChatGroupingMode } from "./session-list/list-grouping"
 
 interface SessionListProps {
   items: SessionMeta[]
@@ -180,6 +200,17 @@ export function SessionList({
 }: SessionListProps) {
   const { t, i18n } = useTranslation()
   const setSendToWorkspace = useSetAtom(sendToWorkspaceAtom)
+  const collectionDisplay = useAtomValue(collectionDisplayAtom)
+  const updateMeta = useSetAtom(updateSessionMetaAtom)
+  const refreshMetadata = useSetAtom(refreshSessionsMetadataAtom)
+  const loadedSessionIds = useAtomValue(loadedSessionsAtom)
+
+  // Display groupBy drives list grouping when set; legacy per-view grouping
+  // mode remains the fallback for groupBy === 'none'.
+  const effectiveGroupingMode: ListGroupingMode = resolveListGroupingMode(
+    collectionDisplay.groupBy,
+    groupingMode,
+  )
 
   // --- Selection (atom-backed, shared with ChatDisplay + BatchActionPanel) ---
   const {
@@ -212,11 +243,11 @@ export function SessionList({
     return buildCollapsedGroupsScopeSuffix({
       workspaceId,
       currentFilter,
-      groupingMode,
+      groupingMode: effectiveGroupingMode,
     })
   }, [
     workspaceId,
-    groupingMode,
+    effectiveGroupingMode,
     currentFilter?.kind,
     currentFilter && 'stateId' in currentFilter ? currentFilter.stateId : undefined,
     currentFilter && 'labelId' in currentFilter ? currentFilter.labelId : undefined,
@@ -321,12 +352,24 @@ export function SessionList({
     labelFilterMap,
     labelConfigs: labels,
     collapsedGroups,
-    groupingMode,
+    groupingMode: effectiveGroupingMode,
     bucketRepresentatives,
     scrollViewportRef,
   })
 
+  // FR-45: rank drag under the same rule as the table (orderBy === 'rank');
+  // disabled in search mode where relevance owns the order.
+  const rankDragEnabled = collectionDisplay.orderBy === 'rank' && !isSearchMode
+
   const rowData = useMemo(() => {
+    // Within-group order: latest activity first — except under rank ordering,
+    // where the incoming (rank-sorted) order must survive so drag targets
+    // match what the user sees.
+    const sortUnitsByActivity = (units: FamilyUnit<SessionMeta>[]) => {
+      if (rankDragEnabled) return
+      units.sort((a, b) => b.lastActivity - a.lastActivity)
+    }
+
     if (isSearchMode) {
       // Family grouping applies among matching rows only: non-matching members
       // are absent; when the root doesn't match, the first matching branch is
@@ -360,7 +403,7 @@ export function SessionList({
     // rows of collapsed families are dropped from the stream (root stays).
     const familyUnits = groupIntoFamilyUnits(flatItems, familyBySessionId, collapsedGroups)
 
-    if (groupingMode === 'unread') {
+    if (effectiveGroupingMode === 'unread') {
       // Two fixed buckets: unread on top, read below. Within each, items keep
       // the same `lastMessageAt`-descending order they already arrive in.
       // Both buckets always render — even when empty — so the user can see at
@@ -373,8 +416,8 @@ export function SessionList({
         if (unit.bucketItem.hasUnread) unreadUnits.push(unit)
         else readUnits.push(unit)
       }
-      unreadUnits.sort((a, b) => b.lastActivity - a.lastActivity)
-      readUnits.sort((a, b) => b.lastActivity - a.lastActivity)
+      sortUnitsByActivity(unreadUnits)
+      sortUnitsByActivity(readUnits)
       const unreadRows = hydrateFamilyRows(unreadUnits)
       const readRows = hydrateFamilyRows(readUnits)
 
@@ -410,7 +453,7 @@ export function SessionList({
       }
     }
 
-    if (groupingMode === 'status') {
+    if (effectiveGroupingMode === 'status') {
       const statusOrder = new Map<string, number>()
       sessionStatuses.forEach((state, index) => statusOrder.set(state.id, index))
 
@@ -436,7 +479,7 @@ export function SessionList({
       for (const [key, { units: groupUnits, statusId }] of groupsByKey) {
         const state = sessionStatuses.find(s => s.id === statusId)
         if (!state) continue
-        groupUnits.sort((a, b) => b.lastActivity - a.lastActivity)
+        sortUnitsByActivity(groupUnits)
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
@@ -463,7 +506,7 @@ export function SessionList({
       }
     }
 
-    if (groupingMode === 'project') {
+    if (effectiveGroupingMode === 'project') {
       // Build groups from visible items, bucketed by projectId.
       // Sessions without a projectId (or with an unknown projectId) go to the
       // "no-project" bucket so they're never silently dropped from the list.
@@ -493,7 +536,7 @@ export function SessionList({
 
       const orderedGroups: EntityListGroup<SessionListRow>[] = []
       for (const [key, { units: groupUnits, projectId }] of groupsByKey) {
-        groupUnits.sort((a, b) => b.lastActivity - a.lastActivity)
+        sortUnitsByActivity(groupUnits)
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         const label = projectId
           ? (projectNameById.get(projectId) ?? t('sidebar.unknownProject', { defaultValue: 'Unknown project' }))
@@ -513,6 +556,152 @@ export function SessionList({
         const aOrder = projectOrder.get(a.key.replace('project-', '')) ?? 999
         const bOrder = projectOrder.get(b.key.replace('project-', '')) ?? 999
         return aOrder - bOrder
+      })
+
+      if (orderedGroups.length === 1) {
+        orderedGroups[0].collapsible = false
+      }
+
+      return {
+        rows: orderedGroups.flatMap(g => g.items),
+        groups: orderedGroups,
+      }
+    }
+
+    if (effectiveGroupingMode === 'priority') {
+      // Display-driven (groupBy === 'priority'): fixed urgent → none order.
+      const priorityOrder = new Map<string, number>()
+      LIST_PRIORITY_ORDER.forEach((p, index) => priorityOrder.set(p, index))
+
+      const groupsByKey = new Map<string, { units: FamilyUnit<SessionMeta>[], priority: string }>()
+      for (const unit of familyUnits) {
+        const priority = unit.bucketItem.priority ?? 'none'
+        const key = `priority:${priority}`
+        if (!groupsByKey.has(key)) groupsByKey.set(key, { units: [], priority })
+        groupsByKey.get(key)!.units.push(unit)
+      }
+
+      for (const meta of collapsedGroupsMeta) {
+        if (!groupsByKey.has(meta.key)) {
+          groupsByKey.set(meta.key, { units: [], priority: meta.key.replace('priority:', '') })
+        }
+      }
+
+      const orderedGroups: EntityListGroup<SessionListRow>[] = []
+      for (const [key, { units: groupUnits, priority }] of groupsByKey) {
+        sortUnitsByActivity(groupUnits)
+        const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
+        orderedGroups.push({
+          key,
+          label: t(`priority.${priority}`, { defaultValue: priority }),
+          items: hydrateFamilyRows(groupUnits),
+          collapsible: true,
+          ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
+        })
+      }
+      orderedGroups.sort((a, b) => {
+        const aOrder = priorityOrder.get(a.key.replace('priority:', '')) ?? 999
+        const bOrder = priorityOrder.get(b.key.replace('priority:', '')) ?? 999
+        return aOrder - bOrder
+      })
+
+      if (orderedGroups.length === 1) {
+        orderedGroups[0].collapsible = false
+      }
+
+      return {
+        rows: orderedGroups.flatMap(g => g.items),
+        groups: orderedGroups,
+      }
+    }
+
+    if (effectiveGroupingMode === 'dueDate') {
+      // Display-driven (groupBy === 'dueDate'): fixed overdue → none order.
+      const dueOrder = new Map<string, number>()
+      LIST_DUE_ORDER.forEach((b, index) => dueOrder.set(b, index))
+      const now = Date.now()
+
+      const groupsByKey = new Map<string, { units: FamilyUnit<SessionMeta>[], bucket: string }>()
+      for (const unit of familyUnits) {
+        const key = getListGroupKey(unit.bucketItem, 'dueDate', now)
+        const bucket = key.replace('due:', '')
+        if (!groupsByKey.has(key)) groupsByKey.set(key, { units: [], bucket })
+        groupsByKey.get(key)!.units.push(unit)
+      }
+
+      for (const meta of collapsedGroupsMeta) {
+        if (!groupsByKey.has(meta.key)) {
+          groupsByKey.set(meta.key, { units: [], bucket: meta.key.replace('due:', '') })
+        }
+      }
+
+      const orderedGroups: EntityListGroup<SessionListRow>[] = []
+      for (const [key, { units: groupUnits, bucket }] of groupsByKey) {
+        sortUnitsByActivity(groupUnits)
+        const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
+        orderedGroups.push({
+          key,
+          label: t(`collection.display.dueBucket.${bucket}`, { defaultValue: bucket }),
+          items: hydrateFamilyRows(groupUnits),
+          collapsible: true,
+          ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
+        })
+      }
+      orderedGroups.sort((a, b) => {
+        const aOrder = dueOrder.get(a.key.replace('due:', '')) ?? 999
+        const bOrder = dueOrder.get(b.key.replace('due:', '')) ?? 999
+        return aOrder - bOrder
+      })
+
+      if (orderedGroups.length === 1) {
+        orderedGroups[0].collapsible = false
+      }
+
+      return {
+        rows: orderedGroups.flatMap(g => g.items),
+        groups: orderedGroups,
+      }
+    }
+
+    if (effectiveGroupingMode === 'label') {
+      // Display-driven (groupBy === 'label'): bucket = first sorted label id;
+      // sessions without labels land in label:none (never dropped).
+      const labelNameById = new Map<string, string>()
+      for (const label of flatLabels) labelNameById.set(label.id, label.name)
+
+      const groupsByKey = new Map<string, { units: FamilyUnit<SessionMeta>[], labelId: string | null }>()
+      for (const unit of familyUnits) {
+        const first = (unit.bucketItem.labels ?? []).slice().sort((a, b) => a.localeCompare(b))[0]
+        const key = first ? `label:${first}` : 'label:none'
+        if (!groupsByKey.has(key)) groupsByKey.set(key, { units: [], labelId: first ?? null })
+        groupsByKey.get(key)!.units.push(unit)
+      }
+
+      for (const meta of collapsedGroupsMeta) {
+        if (!groupsByKey.has(meta.key)) {
+          const idPart = meta.key.replace('label:', '')
+          groupsByKey.set(meta.key, { units: [], labelId: idPart === 'none' ? null : idPart })
+        }
+      }
+
+      const orderedGroups: EntityListGroup<SessionListRow>[] = []
+      for (const [key, { units: groupUnits, labelId }] of groupsByKey) {
+        sortUnitsByActivity(groupUnits)
+        const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
+        orderedGroups.push({
+          key,
+          label: labelId
+            ? (labelNameById.get(labelId) ?? labelId)
+            : t('collection.display.labelNone', { defaultValue: 'No label' }),
+          items: hydrateFamilyRows(groupUnits),
+          collapsible: true,
+          ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
+        })
+      }
+      orderedGroups.sort((a, b) => {
+        if (a.key === 'label:none') return 1
+        if (b.key === 'label:none') return -1
+        return a.label.localeCompare(b.label)
       })
 
       if (orderedGroups.length === 1) {
@@ -557,7 +746,7 @@ export function SessionList({
 
     const orderedGroups: EntityListGroup<SessionListRow>[] = orderedKeys.map(key => {
       const bucketUnits = unitsByKey.get(key)!
-      bucketUnits.sort((a, b) => b.lastActivity - a.lastActivity)
+      sortUnitsByActivity(bucketUnits)
       const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
       return {
         key,
@@ -578,30 +767,25 @@ export function SessionList({
       rows: orderedGroups.flatMap(g => g.items),
       groups: orderedGroups,
     }
-  }, [isSearchMode, matchingFilterItems, otherResultItems, flatItems, groupingMode, sessionStatuses, projects, collapsedGroupsMeta, collapsedGroups, familyBySessionId, t])
+  }, [isSearchMode, matchingFilterItems, otherResultItems, flatItems, effectiveGroupingMode, rankDragEnabled, sessionStatuses, projects, flatLabels, collapsedGroupsMeta, collapsedGroups, familyBySessionId, t])
 
   const flatRows = rowData.rows
 
   const collapseAllGroups = useCallback(() => {
     // Collapse All also collapses session families (family:<rootId> keys).
     const allKeys = new Set(familyCollapseKeys(familyBySessionId))
-    if (groupingMode === 'status') {
-      items.forEach(item => allKeys.add(`status-${getSessionStatus(item)}`))
-    } else if (groupingMode === 'unread') {
-      items.forEach(item => allKeys.add(item.hasUnread ? 'unread-yes' : 'unread-no'))
-    } else if (groupingMode === 'project') {
+    if (effectiveGroupingMode === 'project') {
       const knownProjectIds = new Set((projects ?? []).map(p => p.id))
       items.forEach(item => {
         const pid = item.projectId
         allKeys.add(pid && knownProjectIds.has(pid) ? `project-${pid}` : 'project-__none__')
       })
     } else {
-      items.forEach(item => allKeys.add(
-        startOfDay(new Date(item.lastMessageAt || 0)).toISOString()
-      ))
+      const now = Date.now()
+      items.forEach(item => allKeys.add(getListGroupKey(item, effectiveGroupingMode, now)))
     }
     setCollapsedGroups(allKeys)
-  }, [items, groupingMode, projects, familyBySessionId])
+  }, [items, effectiveGroupingMode, projects, familyBySessionId])
   const expandAllGroups = useCallback(() => {
     setCollapsedGroups(new Set())
   }, [])
@@ -613,6 +797,157 @@ export function SessionList({
     })
     return map
   }, [flatRows])
+
+  // --- FR-45: LexoRank drag reorder (HTML5 DnD, same model as the table) ---
+  const itemById = useMemo(() => new Map(items.map(i => [i.id, i])), [items])
+  const dragIdRef = useRef<string | null>(null)
+  const [dropTarget, setDropTarget] = useState<{ sessionId: string; before: boolean } | null>(null)
+
+  // Bucket keys follow the family representative so drag validation matches
+  // the rendered grouping (a whole family lives in ONE bucket).
+  const groupKeyOf = useCallback((id: string, now: number): string => {
+    const meta = itemById.get(id)
+    if (!meta) return ''
+    return getListGroupKey(bucketRepresentatives.get(id) ?? meta, effectiveGroupingMode, now)
+  }, [itemById, bucketRepresentatives, effectiveGroupingMode])
+
+  const handleRowDragStart = useCallback((id: string) => {
+    dragIdRef.current = id
+  }, [])
+
+  const handleRowDragOver = useCallback((id: string, e: React.DragEvent) => {
+    if (!rankDragEnabled) return
+    const dragId = dragIdRef.current
+    if (dragId && dragId !== id) {
+      const now = Date.now()
+      const dragKey = groupKeyOf(dragId, now)
+      const targetKey = groupKeyOf(id, now)
+      if (
+        dragKey !== targetKey &&
+        !listCrossGroupDropAction(effectiveGroupingMode, targetKey)
+      ) {
+        setDropTarget(null)
+        e.dataTransfer.dropEffect = 'none'
+        return
+      }
+    }
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    const before = e.clientY < rect.top + rect.height / 2
+    setDropTarget({ sessionId: id, before })
+  }, [rankDragEnabled, groupKeyOf, effectiveGroupingMode])
+
+  const finalizeReorder = useCallback(
+    async (targetId: string, before: boolean) => {
+      const dragId = dragIdRef.current
+      dragIdRef.current = null
+      setDropTarget(null)
+      if (!dragId || dragId === targetId || !rankDragEnabled) return
+
+      const dragMeta = itemById.get(dragId)
+      const targetMeta = itemById.get(targetId)
+      if (!dragMeta || !targetMeta) return
+
+      const now = Date.now()
+      const dragKey = groupKeyOf(dragId, now)
+      const targetKey = groupKeyOf(targetId, now)
+
+      if (dragKey !== targetKey) {
+        const action = listCrossGroupDropAction(effectiveGroupingMode, targetKey)
+        if (!action) return
+
+        const previousMetadataPatch =
+          action.command.type === 'setSessionStatus'
+            ? { sessionStatus: dragMeta.sessionStatus }
+            : action.command.type === 'setPriority'
+              ? { priority: dragMeta.priority }
+              : { projectId: dragMeta.projectId }
+
+        try {
+          updateMeta(dragId, action.metadataPatch)
+          await window.electronAPI.sessionCommand(dragId, action.command)
+        } catch (error) {
+          console.error('[SessionList] Failed to move session between groups:', error)
+          updateMeta(dragId, previousMetadataPatch)
+          toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+          return
+        }
+      }
+
+      // Peers = visible rows of the target bucket in visual order, minus the
+      // dragged session. After a cross-group move the drag row is not yet
+      // rendered inside the target bucket, so exclusion is by id either way.
+      const visiblePeers = flatRows
+        .map(row => row.item)
+        .filter(meta => meta.id !== dragId && groupKeyOf(meta.id, Date.now()) === targetKey)
+
+      const initial = listRankReorderRequest(dragId, targetId, before, visiblePeers)
+      if (!initial) return
+      const previousRank = dragMeta.rank
+      updateMeta(dragId, { rank: lexorankBetween(initial.previous?.rank, initial.next?.rank) })
+
+      let refreshedItems: SessionMeta[] = items
+      const refreshRankMetadata = async () => {
+        const sessions = await window.electronAPI.getSessions()
+        const refreshedMap = refreshMetadata({ sessions, loadedSessionIds, removeMissing: false })
+        refreshedItems = items.map(meta => refreshedMap.get(meta.id) ?? meta)
+      }
+
+      try {
+        await retryStaleRankReorder(
+          initial,
+          ({ sessionId, prevId, nextId }) => window.electronAPI.sessionCommand(sessionId, { type: 'reorderRank', prevId, nextId }),
+          refreshRankMetadata,
+          () => {
+            const reorderedPeers = refreshedItems
+              .filter(meta => meta.id !== dragId)
+              .sort((a, b) => compareSessions(a, b, 'rank', 'asc'))
+              .filter(meta => {
+                const representative = bucketRepresentatives.get(meta.id)
+                const keyMeta = representative
+                  ? (refreshedItems.find(m => m.id === representative.id) ?? representative)
+                  : meta
+                return getListGroupKey(keyMeta, effectiveGroupingMode, Date.now()) === targetKey
+              })
+            const retry = listRankReorderRequest(dragId, targetId, before, reorderedPeers)
+            if (retry) {
+              updateMeta(dragId, { rank: lexorankBetween(retry.previous?.rank, retry.next?.rank) })
+            }
+            return retry
+          },
+        )
+      } catch (error) {
+        if (isStaleRankNeighborsError(error)) {
+          await refreshRankMetadata().catch((refreshError) => {
+            console.error('[SessionList] Failed to reload ranks after stale retry:', refreshError)
+          })
+        }
+        console.error('[SessionList] Failed to reorder rank:', error)
+        updateMeta(dragId, { rank: previousRank })
+        toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+      }
+    },
+    [rankDragEnabled, itemById, groupKeyOf, effectiveGroupingMode, flatRows, items, updateMeta, refreshMetadata, loadedSessionIds, bucketRepresentatives, t],
+  )
+
+  const handleListDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      if (dropTarget) {
+        void finalizeReorder(dropTarget.sessionId, dropTarget.before)
+      } else {
+        dragIdRef.current = null
+        setDropTarget(null)
+      }
+    },
+    [dropTarget, finalizeReorder],
+  )
+
+  const handleListDragEnd = useCallback(() => {
+    dragIdRef.current = null
+    setDropTarget(null)
+  }, [])
 
   // --- Action handlers with toast feedback ---
   const {
@@ -884,9 +1219,10 @@ export function SessionList({
           // toggle in the left gutter; branch rows are indented with a subtle
           // guide line. Collapsing a family hides branch rows only — the root
           // row always stays visible.
+          let decorated = sessionItem
           if (row.familyHead) {
             const head = row.familyHead
-            return (
+            decorated = (
               <div className="relative pl-3">
                 <button
                   type="button"
@@ -911,15 +1247,38 @@ export function SessionList({
                 {sessionItem}
               </div>
             )
-          }
-          if (row.isFamilyBranch) {
-            return (
+          } else if (row.isFamilyBranch) {
+            decorated = (
               <div className="ml-[14px] border-l border-foreground/10">
                 {sessionItem}
               </div>
             )
           }
-          return sessionItem
+          if (!rankDragEnabled) return decorated
+          const indicator = dropTarget?.sessionId === row.item.id
+            ? (dropTarget.before ? 'before' : 'after')
+            : null
+          return (
+            <div
+              className={cn(
+                'group/rankdrag relative',
+                indicator === 'before' && 'border-t-2 border-t-foreground/40',
+                indicator === 'after' && 'border-b-2 border-b-foreground/40',
+              )}
+              draggable
+              onDragStart={() => handleRowDragStart(row.item.id)}
+              onDragOver={(e) => handleRowDragOver(row.item.id, e)}
+              onDragEnd={handleListDragEnd}
+            >
+              <span
+                aria-hidden
+                className="absolute right-1 top-1/2 z-10 -translate-y-1/2 cursor-grab text-muted-foreground/40 opacity-0 transition-opacity group-hover/rankdrag:opacity-100 active:cursor-grabbing"
+              >
+                <GripVertical className="h-3.5 w-3.5" />
+              </span>
+              {decorated}
+            </div>
+          )
         }}
         header={
           <>
@@ -976,6 +1335,10 @@ export function SessionList({
           'data-list-role': 'sessions',
           role: 'listbox',
           'aria-label': 'Sessions',
+          onDrop: handleListDrop,
+          onDragOver: (e: React.DragEvent) => {
+            if (rankDragEnabled) e.preventDefault()
+          },
         }}
         scrollAreaClassName="select-none mask-fade-top-short"
         collapsedGroups={collapsedGroups}

@@ -13,6 +13,7 @@ import {
   getProjectMemoryPath,
   loadProjectMemory,
   sanitizeAssetFilename,
+  uploadProjectAsset,
 } from '../storage.ts';
 
 let tempDir: string;
@@ -45,6 +46,20 @@ describe('sanitizeAssetFilename', () => {
 
   it('falls back to a generated name when the input reduces to empty', () => {
     expect(sanitizeAssetFilename('\x00\n\t')).toMatch(/^asset_[0-9a-f]{8}$/);
+  });
+});
+
+describe('uploadProjectAsset sourcePath', () => {
+  it('refuses to read a sourcePath outside the workspace', () => {
+    const slug = makeProjectSlug();
+    const outside = join(tempDir, 'secret.txt');
+    writeFileSync(outside, 'classified');
+    expect(() =>
+      uploadProjectAsset(workspaceRoot, slug, {
+        filename: 'copy.txt',
+        sourcePath: outside,
+      }),
+    ).toThrow(/inside the workspace/);
   });
 });
 

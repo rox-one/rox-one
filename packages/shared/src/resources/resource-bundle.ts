@@ -14,7 +14,7 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, renameSync, rmSync } from 'fs'
-import { join, basename } from 'path'
+import { join, basename, resolve, sep } from 'path'
 import { randomUUID } from 'crypto'
 import {
   type BundleFile,
@@ -47,6 +47,21 @@ import type {
   ImportBucketResult,
   ResourceImportDeps,
 } from './types.ts'
+
+const SAFE_RESOURCE_SLUG = /^[a-z0-9][a-z0-9-]{0,127}$/
+
+export function isSafeResourceSlug(slug: string): boolean {
+  return typeof slug === 'string' && SAFE_RESOURCE_SLUG.test(slug) && !slug.includes('..')
+}
+
+function resolveInsideDirectory(baseDir: string, name: string): string {
+  const resolvedBase = resolve(baseDir)
+  const resolved = resolve(resolvedBase, name)
+  if (resolved !== resolvedBase && !resolved.startsWith(resolvedBase + sep)) {
+    throw new Error(`Path escapes target directory: ${name}`)
+  }
+  return resolved
+}
 
 // ============================================================
 // Source Config Sanitization
@@ -457,6 +472,11 @@ export function validateResourceBundle(bundle: unknown): { valid: boolean; error
           continue
         }
 
+        if (!isSafeResourceSlug(e.slug)) {
+          errors.push(`${prefix}: slug '${e.slug}' is not a safe path segment`)
+          continue
+        }
+
         if (slugs.has(e.slug as string)) {
           errors.push(`${prefix}: duplicate slug '${e.slug}'`)
         }
@@ -504,6 +524,11 @@ export function validateResourceBundle(bundle: unknown): { valid: boolean; error
 
         if (typeof e.slug !== 'string' || !e.slug) {
           errors.push(`${prefix}: missing or invalid slug`)
+          continue
+        }
+
+        if (!isSafeResourceSlug(e.slug)) {
+          errors.push(`${prefix}: slug '${e.slug}' is not a safe path segment`)
           continue
         }
 
@@ -694,7 +719,12 @@ async function importSources(
         continue
       }
 
-      const targetDir = getSourcePath(workspaceRootPath, entry.slug)
+      if (!isSafeResourceSlug(entry.slug)) {
+        result.failed.push({ id: entry.slug, error: 'Invalid source slug' })
+        continue
+      }
+
+      const targetDir = resolveInsideDirectory(sourcesDir, entry.slug)
       const exists = existsSync(targetDir)
 
       if (exists && mode === 'skip') {
@@ -703,7 +733,7 @@ async function importSources(
       }
 
       // Stage: build in temp dir
-      const tmpDir = join(sourcesDir, `.tmp-${entry.slug}-${randomUUID().slice(0, 8)}`)
+      const tmpDir = resolveInsideDirectory(sourcesDir, `.tmp-${entry.slug}-${randomUUID().slice(0, 8)}`)
       mkdirSync(tmpDir, { recursive: true })
 
       try {
@@ -770,7 +800,12 @@ function importSkills(
 
   for (const entry of entries) {
     try {
-      const targetDir = join(skillsDir, entry.slug)
+      if (!isSafeResourceSlug(entry.slug)) {
+        result.failed.push({ id: entry.slug, error: 'Invalid skill slug' })
+        continue
+      }
+
+      const targetDir = resolveInsideDirectory(skillsDir, entry.slug)
       const exists = existsSync(targetDir)
 
       if (exists && mode === 'skip') {
@@ -779,7 +814,7 @@ function importSkills(
       }
 
       // Stage: build in temp dir
-      const tmpDir = join(skillsDir, `.tmp-${entry.slug}-${randomUUID().slice(0, 8)}`)
+      const tmpDir = resolveInsideDirectory(skillsDir, `.tmp-${entry.slug}-${randomUUID().slice(0, 8)}`)
       mkdirSync(tmpDir, { recursive: true })
 
       try {

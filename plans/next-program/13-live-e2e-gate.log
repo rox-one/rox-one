@@ -1,0 +1,15 @@
+status: READY
+claim: live-turn-verified
+missingSecret: none
+reason: Live first-turn E2E verified from log + browser trace.
+steps:
+  stream_answer: VERIFIED
+  host_tool: VERIFIED
+  mcp_tool: VERIFIED
+  permission_prompt: VERIFIED
+  restart_restore: VERIFIED
+logPath: plans/next-program/13-live-e2e-events.jsonl
+browserTracePath: /opt/cursor/artifacts/ticket-13-live-turn-webui.mp4
+sessionId: 260813-vivid-moon
+model: gpt-5.6-luna
+note: kimi-K3 is 403 for this key; live turn used gpt-5.6-luna. Secret not written to this file.

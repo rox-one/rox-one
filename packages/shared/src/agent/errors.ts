@@ -58,6 +58,77 @@ export interface AgentError {
 }
 
 /**
+ * Typed classification for OMP subprocess startup failures.
+ * These six codes are members of the core `ErrorCode` union so a new
+ * agent code cannot silently become a generic string on TypedError.
+ */
+export type OmpStartupErrorCode =
+  /** No omp binary resolvable, or OMP config/toolchain not in place. */
+  | 'OMP_NOT_CONFIGURED'
+  /** OMP exited because no models are configured ("No models available…"). */
+  | 'OMP_NO_MODELS'
+  /** OMP stderr indicates interactive login / credentials are required. */
+  | 'OMP_AUTH_REQUIRED'
+  /** Generic non-zero exit (or kill signal) before the ready frame. */
+  | 'OMP_START_FAILED'
+  /** No ready frame within the bounded startup window. */
+  | 'OMP_READY_TIMEOUT'
+  /** Malformed ready frame, or clean exit without any ready frame. */
+  | 'OMP_PROTOCOL_ERROR';
+
+const OMP_STARTUP_ERROR_TEXT: Record<OmpStartupErrorCode, { title: string; message: string; canRetry: boolean }> = {
+  OMP_NOT_CONFIGURED: {
+    title: 'OMP runtime not configured',
+    message: 'The omp CLI is missing or its toolchain is not ready.',
+    canRetry: true,
+  },
+  OMP_NO_MODELS: {
+    title: 'OMP has no models configured',
+    message: 'The OMP runtime has no model providers. A Rox API key (ROX_API_KEY) or ~/.omp/agent/models.yml is required before the first turn.',
+    canRetry: true,
+  },
+  OMP_AUTH_REQUIRED: {
+    title: 'OMP authentication required',
+    message: 'OMP rejected the current credentials. Supply a valid Rox API key and retry.',
+    canRetry: false,
+  },
+  OMP_START_FAILED: {
+    title: 'OMP failed to start',
+    message: 'The OMP subprocess exited before startup completed.',
+    canRetry: true,
+  },
+  OMP_READY_TIMEOUT: {
+    title: 'OMP startup timed out',
+    message: 'OMP did not send the ready frame within the startup window.',
+    canRetry: true,
+  },
+  OMP_PROTOCOL_ERROR: {
+    title: 'OMP protocol error',
+    message: 'OMP sent a malformed ready frame or exited without speaking the expected RPC protocol.',
+    canRetry: false,
+  },
+};
+
+const OMP_RETRY_ACTION: RecoveryAction = { key: 'r', label: 'Retry', action: 'retry' };
+const OMP_CREDENTIAL_ACTION: RecoveryAction = { key: 's', label: 'Add credential', action: 'settings' };
+
+function ompStartupDefinition(
+  code: OmpStartupErrorCode,
+): Omit<AgentError, 'code' | 'originalError' | 'details'> {
+  const text = OMP_STARTUP_ERROR_TEXT[code]!;
+  const actions: RecoveryAction[] = [OMP_RETRY_ACTION];
+  if (code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED') {
+    actions.push(OMP_CREDENTIAL_ACTION);
+  }
+  return {
+    title: text.title,
+    message: text.message,
+    actions,
+    canRetry: text.canRetry,
+  };
+}
+
+/**
  * Error definitions with user-friendly messages and recovery actions
  */
 const ERROR_DEFINITIONS: Record<ErrorCode, Omit<AgentError, 'code' | 'originalError' | 'details'>> = {
@@ -261,6 +332,12 @@ const ERROR_DEFINITIONS: Record<ErrorCode, Omit<AgentError, 'code' | 'originalEr
     ],
     canRetry: true,
   },
+  OMP_NOT_CONFIGURED: ompStartupDefinition('OMP_NOT_CONFIGURED'),
+  OMP_NO_MODELS: ompStartupDefinition('OMP_NO_MODELS'),
+  OMP_AUTH_REQUIRED: ompStartupDefinition('OMP_AUTH_REQUIRED'),
+  OMP_START_FAILED: ompStartupDefinition('OMP_START_FAILED'),
+  OMP_READY_TIMEOUT: ompStartupDefinition('OMP_READY_TIMEOUT'),
+  OMP_PROTOCOL_ERROR: ompStartupDefinition('OMP_PROTOCOL_ERROR'),
   unknown_error: {
     title: 'Error',
     message: 'Something went wrong. If this persists, check the provider status page or retry.',
@@ -585,4 +662,142 @@ export function parseSDKErrorText(text: string): AgentError | null {
  */
 export function isSDKErrorText(text: string): boolean {
   return parseSDKErrorText(text) !== null;
+}
+
+// ============================================================
+// OMP startup errors (OmpAgent first-run lifecycle)
+// ============================================================
+
+export interface OmpStartupErrorOptions {
+  code: OmpStartupErrorCode;
+  message: string;
+  /** Captured subprocess stderr (bounded upstream by a ring buffer). */
+  stderr?: string;
+  /** Actionable recovery guidance folded into the user-facing message. */
+  hint?: string;
+  cause?: unknown;
+}
+
+/**
+ * Typed OMP startup failure. chatImpl maps these to typed_error events via
+ * ompStartupErrorToAgentError; every instance must leave the session out of
+ * `processing` (error + complete events follow).
+ */
+export class OmpStartupError extends Error {
+  readonly ompCode: OmpStartupErrorCode;
+  readonly stderr?: string;
+  readonly hint?: string;
+
+  constructor(options: OmpStartupErrorOptions) {
+    super(options.message);
+    this.name = 'OmpStartupError';
+    this.ompCode = options.code;
+    if (options.stderr !== undefined) this.stderr = options.stderr;
+    if (options.hint !== undefined) this.hint = options.hint;
+    if (options.cause !== undefined) {
+      (this as { cause?: unknown }).cause = options.cause;
+    }
+  }
+}
+
+export function isOmpStartupError(error: unknown): error is OmpStartupError {
+  return error instanceof OmpStartupError;
+}
+
+/** stderr signature of a host with no OMP model configuration at all. */
+const OMP_NO_MODELS_PATTERN = /no models available/i;
+
+/**
+ * stderr signatures of missing/invalid OMP credentials. Checked AFTER
+ * no-models: OMP's credential-less first-run message ("No models available.
+ * Use /login or set an API key environment variable.") mentions /login too,
+ * and the actionable classification for it is the missing model config.
+ */
+const OMP_AUTH_PATTERN =
+  /(\/login\b|please log in|not logged in|authentication required|no credentials|unauthorized|invalid api key|api key (missing|required|invalid))/i;
+
+/**
+ * Scrub token-shaped strings from subprocess stderr before it is folded into
+ * typed errors (which reach the renderer and can be shared online). Matches
+ * common API-key shapes (sk-*, ghp_*, AKIA*, xox*…) and long hex/base64
+ * runs; classification patterns above match on the scrubbed text safely
+ * because none of them rely on token-shaped content.
+ */
+export function scrubOmpStderr(text: string): string {
+  return text
+    .replace(/\b(sk|pk|xox[baprs]|ghp|gho|ghu|ghs|ghr|github_pat|glpat|AKIA|ASIA|AIza|ya29|shpat)[-_A-Za-z0-9]{6,}/g, '$1…[redacted]')
+    .replace(/\b(eyJ[-_A-Za-z0-9]{10,})/g, '[redacted-jwt]')
+    .replace(/\b([0-9a-fA-F]{32,})\b/g, '[redacted-hex]')
+    .replace(/\b(Bearer\s+)\S+/gi, '$1[redacted]');
+}
+
+/**
+ * Classify a subprocess exit that happened BEFORE the RPC ready frame into a
+ * typed startup error, using captured stderr as evidence.
+ */
+export function classifyOmpStartupExit(input: {
+  exitCode: number | null;
+  signal: string | null;
+  stderr: string;
+}): OmpStartupError {
+  const { exitCode, signal } = input;
+  const tail = scrubOmpStderr(input.stderr.trim());
+  const evidence = tail ? ` OMP output: ${tail.slice(-500)}` : '';
+
+  if (OMP_NO_MODELS_PATTERN.test(tail)) {
+    return new OmpStartupError({
+      code: 'OMP_NO_MODELS',
+      message: `OMP exited before startup: no models are configured.${evidence}`,
+      stderr: tail,
+      hint: 'Create ~/.omp/agent/models.yml with at least one model, or set an API key environment variable, then retry.',
+    });
+  }
+  if (OMP_AUTH_PATTERN.test(tail)) {
+    return new OmpStartupError({
+      code: 'OMP_AUTH_REQUIRED',
+      message: `OMP exited before startup: authentication is required.${evidence}`,
+      stderr: tail,
+      hint: 'Run `omp /login` (or configure credentials under ~/.omp/agent) and retry.',
+    });
+  }
+  if (signal) {
+    return new OmpStartupError({
+      code: 'OMP_START_FAILED',
+      message: `OMP subprocess was killed by ${signal} before startup completed.${evidence}`,
+      stderr: tail,
+    });
+  }
+  if (exitCode === 0) {
+    // Clean exit without a ready frame: the peer never spoke the RPC protocol.
+    return new OmpStartupError({
+      code: 'OMP_PROTOCOL_ERROR',
+      message: `OMP exited cleanly without sending the RPC ready frame — the binary does not speak the expected protocol.${evidence}`,
+      stderr: tail,
+      hint: 'Check that OMP_CLI_PATH points at a compatible `omp` binary (omp --mode rpc).',
+    });
+  }
+  return new OmpStartupError({
+    code: 'OMP_START_FAILED',
+    message: `OMP subprocess exited with code ${exitCode ?? '?'} before startup completed.${evidence}`,
+    stderr: tail,
+  });
+}
+
+/**
+ * Map a typed OMP startup failure onto the shared typed-error wire shape.
+ * `ompCode` is an ErrorCode member (see core AGENT_ERROR_CODES).
+ */
+export function ompStartupErrorToAgentError(error: OmpStartupError): AgentError {
+  const definition = ERROR_DEFINITIONS[error.ompCode]!;
+  const details: string[] = [];
+  if (error.stderr) details.push(`stderr: ${error.stderr.slice(-500)}`);
+  return {
+    code: error.ompCode,
+    title: definition.title,
+    message: error.hint ? `${error.message} ${error.hint}` : error.message,
+    actions: definition.actions,
+    canRetry: definition.canRetry,
+    originalError: error.message,
+    details,
+  };
 }

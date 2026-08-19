@@ -10,7 +10,8 @@
  *    for separate-port deployments or development.
  */
 
-import { join, extname } from 'node:path'
+import { join, extname, resolve } from 'node:path'
+import { isPathInsideBase } from '../utils/path-validation'
 import {
   RateLimiter,
   initPasswordHash,
@@ -48,6 +49,26 @@ const MIME_TYPES: Record<string, string> = {
 
 function getMimeType(path: string): string {
   return MIME_TYPES[extname(path).toLowerCase()] ?? 'application/octet-stream'
+}
+
+/**
+ * Resolve a URL path to a file inside webuiDir. Rejects traversal, absolute
+ * segments, and NUL bytes so /login-assets/../… cannot read the host.
+ */
+export function resolveWebuiFile(webuiDir: string, urlPath: string): string | null {
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(urlPath)
+  } catch {
+    return null
+  }
+  const trimmed = decoded.split('?')[0]?.split('#')[0] ?? ''
+  if (!trimmed || trimmed.includes('\0')) return null
+  const relative = trimmed.replace(/^\/+/, '')
+  if (!relative) return null
+  const resolved = resolve(webuiDir, relative)
+  if (!isPathInsideBase(resolved, webuiDir)) return null
+  return resolved
 }
 
 function getForwardedValue(req: Request, key: 'proto' | 'host'): string | null {
@@ -121,7 +142,7 @@ export interface OAuthCallbackDeps {
 export interface WebuiHandlerOptions {
   /** Path to built web UI dist/ directory. */
   webuiDir: string
-  /** Secret used to sign JWTs — typically CRAFT_SERVER_TOKEN. */
+  /** Secret used to sign JWTs — typically ROX_SERVER_TOKEN (CRAFT_SERVER_TOKEN still works). */
   secret: string
   /** Optional separate web UI password. Falls back to `secret` for verification. */
   password?: string
@@ -140,11 +161,16 @@ export interface WebuiHandlerOptions {
   /** OAuth callback deps — when provided, enables /api/oauth/callback route. */
   oauthCallbackDeps?: OAuthCallbackDeps
   /**
-   * Trusted proxy IPs/CIDRs. When set, proxy headers (x-forwarded-for, x-forwarded-proto)
-   * are only trusted from these sources. When empty/unset, proxy headers are ignored
-   * and 'direct' is used as the rate-limit key.
+   * Trusted proxy IPs. When the socket IP is in this list, proxy headers
+   * (x-forwarded-for, x-real-ip) are used as the rate-limit key.
+   * When empty/unset, proxy headers are ignored.
    */
   trustedProxies?: string[]
+  /**
+   * Direct client IP from the socket. Used when proxy headers are untrusted.
+   * Standalone Bun.serve wires this to `server.requestIP(req)`.
+   */
+  resolveClientIp?: (req: Request) => string | null
 }
 
 // ---------------------------------------------------------------------------
@@ -178,6 +204,7 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     getHealthCheck,
     logger,
     trustedProxies,
+    resolveClientIp,
   } = options
 
   const rateLimiter = new RateLimiter(5, 60_000)
@@ -189,14 +216,15 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   // Hash the login password at startup (async, but resolves before first auth attempt in practice)
   const passwordReady = initPasswordHash(loginPassword)
 
-  /** Extract client IP — only trusts proxy headers when trustedProxies is configured. */
+  /** Extract client IP — only trusts proxy headers when the socket IP is a configured proxy. */
   function getClientIp(req: Request): string {
-    if (trustedProxySet.size > 0) {
+    const socketIp = resolveClientIp?.(req) ?? null
+    if (trustedProxySet.size > 0 && socketIp && trustedProxySet.has(socketIp)) {
       return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
         ?? req.headers.get('x-real-ip')
-        ?? 'direct'
+        ?? socketIp
     }
-    return 'direct'
+    return socketIp ?? 'direct'
   }
 
   async function fetch(req: Request): Promise<Response> {
@@ -225,7 +253,9 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
 
     // ── Static assets that login page needs (no auth) ──
     if (path === '/favicon.ico' || path.startsWith('/login-assets/')) {
-      const file = Bun.file(join(webuiDir, path))
+      const safePath = resolveWebuiFile(webuiDir, path)
+      if (!safePath) return new Response('Not Found', { status: 404 })
+      const file = Bun.file(safePath)
       if (await file.exists()) {
         return new Response(file, {
           headers: { 'Content-Type': getMimeType(path) },
@@ -383,11 +413,14 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
 
     // ── Serve SPA static files ──
     if (path !== '/') {
-      const file = Bun.file(join(webuiDir, path))
-      if (await file.exists()) {
-        return new Response(file, {
-          headers: { 'Content-Type': getMimeType(path) },
-        })
+      const safePath = resolveWebuiFile(webuiDir, path)
+      if (safePath) {
+        const file = Bun.file(safePath)
+        if (await file.exists()) {
+          return new Response(file, {
+            headers: { 'Content-Type': getMimeType(path) },
+          })
+        }
       }
     }
 
@@ -424,21 +457,26 @@ export async function startWebuiHttpServer(
   options: WebuiHttpServerOptions,
 ): Promise<{ port: number, stop: () => void }> {
   const { port, logger, ...handlerOpts } = options
-  const handler = createWebuiHandler({ ...handlerOpts, logger })
+  let bunServer: ReturnType<typeof Bun.serve> | undefined
+  const handler = createWebuiHandler({
+    ...handlerOpts,
+    logger,
+    resolveClientIp: handlerOpts.resolveClientIp ?? ((req) => bunServer?.requestIP(req)?.address ?? null),
+  })
 
-  const server = Bun.serve({
+  bunServer = Bun.serve({
     port,
     fetch: handler.fetch,
   })
 
-  const boundPort = server.port ?? port
+  const boundPort = bunServer.port ?? port
   logger.info(`[webui] Web UI server listening on http://0.0.0.0:${boundPort}`)
 
   return {
     port: boundPort,
     stop: () => {
       handler.dispose()
-      server.stop()
+      bunServer?.stop()
     },
   }
 }

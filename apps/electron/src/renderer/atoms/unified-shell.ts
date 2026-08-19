@@ -1,15 +1,12 @@
 /**
- * Unified Shell (W1) — feature flag + chrome state atoms.
+ * Unified Shell (W1) + Workbench v2 chrome flags.
  *
- * Single gate: `featureUnifiedShellAtom` (localStorage `craft-feature-unified-shell`,
- * default OFF). When OFF, AppShell renders zero unified-shell chrome — use this
- * atom as the runtime switch: writing it from any component/devtools flips the
- * chrome live (`atomWithStorage` persists + re-renders subscribers).
+ * W1 master: `featureUnifiedShellAtom` (localStorage `craft-feature-unified-shell`,
+ * default OFF) still gates ActivityRail + SurfaceTabs + InspectorHost together.
  *
- * Chrome state mirrors the sidebarVisible pattern (`AppShell.tsx`): rail collapse,
- * inspector visibility and the active inspector section persist to localStorage
- * and restore across restarts. All keys are contract fields in
- * `lib/local-storage.ts` (KEYS.*, W1 block).
+ * Workbench v2 splits further chrome behind granular `workbench.*` flags
+ * (ADR-0001) so Mode Bar, TabGroups, browser-as-surface and Status Bar can
+ * ship independently. All default OFF.
  */
 import { atomWithStorage } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
@@ -17,6 +14,41 @@ import { KEYS, getKeyString } from '@/lib/local-storage'
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureUnifiedShell),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchModeRegistryV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchModeRegistryV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchTopChromeV2Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchTopChromeV2),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchTabGroupsV2Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchTabGroupsV2),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchBrowserSurfaceV2Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchBrowserSurfaceV2),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchStatusBarV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchStatusBarV1),
   false,
   undefined,
   { getOnInit: true },

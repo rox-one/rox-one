@@ -3,7 +3,7 @@
  *
  * Handles workspace setup and configuration persistence.
  */
-import { getAuthState, getSetupNeeds } from '@craft-agent/shared/auth'
+import { getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
 import {
   getRoxAuthBaseUrl,
   isRoxCloudRequired,
@@ -34,6 +34,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.START_ROX_CONNECT,
   RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
   RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
+  RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
 ] as const
 
 export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -41,8 +42,7 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get current auth state
   server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {
-    const authState = await getAuthState()
-    const setupNeeds = getSetupNeeds(authState, isSetupDeferred())
+    const { authState, setupNeeds } = await getOnboardingAuthPayload(isSetupDeferred())
     const manager = getCredentialManager()
     const roxSession = await manager.getRoxCloudSession()
     const roxCloudRequired = isRoxCloudRequired()
@@ -60,7 +60,7 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
       setupNeeds: {
         ...setupNeeds,
         needsRoxCloud: roxCloudRequired && !hasRoxCloud,
-        isFullyConfigured: setupNeeds.isFullyConfigured && (!roxCloudRequired || hasRoxCloud),
+        isFullyConfigured: setupNeeds.isFullyConfigured && (!roxCloudRequired || hasRoxCloud) && !setupNeeds.needsOmpCredential,
       },
       roxCloud: {
         required: roxCloudRequired,
@@ -223,7 +223,7 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   server.handle(RPC_CHANNELS.onboarding.START_ROX_CONNECT, async () => {
     log.info('[Onboarding] Starting Rox cloud Connect device flow')
     try {
-      const started = await startRoxDeviceFlow('craft-agents-desktop')
+      const started = await startRoxDeviceFlow()
       const key = started.deviceCode
       if (!roxConnectInFlight.has(key)) {
         const p = waitForRoxDeviceApproval(started.deviceCode, {
@@ -265,5 +265,9 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
       log.error('[Onboarding] Rox Connect start failed:', message)
       return { success: false as const, error: message }
     }
+  })
+
+  server.handle(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL, async (_ctx, apiKey: string) => {
+    return saveOmpRoxCredential(typeof apiKey === 'string' ? apiKey : '')
   })
 }

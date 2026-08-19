@@ -223,6 +223,11 @@ export const routes = {
     // ----------------------------------------------------------------
 
     /**
+     * Workbench Home Front Page — `home`.
+     */
+    home: () => 'home' as const,
+
+    /**
      * Knowledge home (knowledge navigator root, no document focused) — `knowledge`.
      * Pairs with the bare-'knowledge' key in `parseNavigationState` (W1).
      */

@@ -19,6 +19,7 @@ import {
   EVENT_BUFFER_TTL_MS,
   DISCONNECTED_CLIENT_TTL_MS,
   isErrorCode,
+  isLocalOnly,
   type MessageEnvelope,
   type PushTarget,
   type ErrorCode,
@@ -26,6 +27,7 @@ import {
 import type { RpcServer, HandlerFn, RequestContext } from './types'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 import { createLogger } from '@craft-agent/shared/utils'
+import { CLIENT_OPEN_FILE_DIALOG } from './capabilities'
 
 // ---------------------------------------------------------------------------
 // Client connection state
@@ -639,6 +641,12 @@ export class WsRpcServer implements RpcServer {
   /** Server-side timeout for RPC handler execution (ms). */
   private static readonly HANDLER_TIMEOUT_MS = 60_000
 
+  private shouldEnforceLocalOnly(): boolean {
+    if (this.requireAuth) return true
+    const host = this.host
+    return host !== '127.0.0.1' && host !== 'localhost' && host !== '::1'
+  }
+
   private async onRequest(client: ClientConnection, envelope: MessageEnvelope): Promise<void> {
     const { channel, id, args } = envelope
 
@@ -650,6 +658,17 @@ export class WsRpcServer implements RpcServer {
     const handler = this.handlers.get(channel)
     if (!handler) {
       this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', `No handler for: ${channel}`)
+      return
+    }
+
+    if (isLocalOnly(channel) && this.shouldEnforceLocalOnly() && !client.capabilities.has(CLIENT_OPEN_FILE_DIALOG)) {
+      this.sendResponseError(
+        client.ws,
+        id,
+        channel,
+        'LOCAL_ONLY_DENIED',
+        'Channel is only available to the local desktop client',
+      )
       return
     }
 
