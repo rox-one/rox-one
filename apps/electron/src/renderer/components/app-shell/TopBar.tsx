@@ -25,12 +25,20 @@ import {
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { useEffect, useRef, useState } from "react"
+import { useAtomValue } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
 import { getDocUrl } from "@craft-agent/shared/docs/doc-links"
 import { AppMenu } from "../AppMenu"
 import type { ReactNode } from "react"
+import {
+  featureWorkbenchBrowserSurfaceV2Atom,
+  featureWorkbenchModeRegistryV1Atom,
+  featureWorkbenchTopChromeV2Atom,
+} from "@/atoms/unified-shell"
+import { ModeBar } from "@/platform/ModeBar"
+import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300
@@ -109,6 +117,14 @@ export function TopBar({
   const { t } = useTranslation()
   const [maxVisibleBrowserBadges, setMaxVisibleBrowserBadges] = useState(3)
   const rightSlotRef = useRef<HTMLDivElement | null>(null)
+  const chrome = resolveWorkbenchChrome({
+    unifiedShell: false,
+    modeRegistry: useAtomValue(featureWorkbenchModeRegistryV1Atom),
+    topChrome: useAtomValue(featureWorkbenchTopChromeV2Atom),
+    tabGroups: false,
+    browserSurface: useAtomValue(featureWorkbenchBrowserSurfaceV2Atom),
+    statusBar: false,
+  })
 
   const goBackHotkey = useActionLabel('nav.goBackAlt').hotkey
   const goForwardHotkey = useActionLabel('nav.goForwardAlt').hotkey
@@ -240,6 +256,12 @@ export function TopBar({
           )}
         </div>
 
+        {chrome.showModeBar && !isCompact && (
+          <div className="ml-2 min-w-0 flex-1">
+            <ModeBar />
+          </div>
+        )}
+
         {isCompact && compactHeaderRenderer && (
           <div className="ml-1 flex min-w-0 flex-1 items-center gap-1">
             {compactHeaderRenderer()}
@@ -251,9 +273,17 @@ export function TopBar({
       {/* === RIGHT: Browser strip + add + help === */}
       {!isCompact && (
       <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-1" style={{ paddingRight: 12 }}>
+        {chrome.utilityRail && (
+          <div className="mr-1 hidden items-center gap-2 text-[11px] text-muted-foreground/50 sm:flex">
+            <span>{t("workbench.presence.placeholder")}</span>
+            <span>{t("workbench.status.usagePlaceholder")}</span>
+          </div>
+        )}
+        {!chrome.hideBrowserTabStrip && (
         <div className="min-w-0">
           <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
         </div>
+        )}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-1 h-[26px] w-[26px] rounded-lg">

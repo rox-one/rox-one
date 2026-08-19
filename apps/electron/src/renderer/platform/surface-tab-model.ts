@@ -70,6 +70,7 @@ export interface SurfaceTabLabels {
   knowledge: string
   /** Write-back review (diff/{proposalId}) tab label. */
   knowledgeDiff: string
+  home: string
 }
 
 export interface BuildSurfaceTabViewsInput {
@@ -126,6 +127,8 @@ export function buildSurfaceTabViews(input: BuildSurfaceTabViewsInput): SurfaceT
         // Knowledge navigator root — no durable surface ref on the route.
         title = labels.knowledge
       }
+    } else if (entry.route.split('?')[0] === 'home') {
+      title = labels.home
     } else {
       title = legacyPanelTitle(panelType, labels)
     }
