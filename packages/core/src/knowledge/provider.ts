@@ -62,6 +62,23 @@ export interface SearchPage {
   totalEstimate?: number;
 }
 
+// notebook listing (provider.ts)
+
+/**
+ * Navigator-facing notebook descriptor (K-03 §3.5.1 table addition). The provider
+ * contract (K-03 §3.2) has no listNotebooks method — the RPC layer serves this DTO
+ * straight from the SiYuan kernel client's lsNotebooks wrapper. Kept minimal and
+ * wire-stable: the navigator tree renders it directly.
+ */
+export interface KnowledgeNotebookInfo {
+  id: string;
+  name: string;
+  /** SiYuan icon code (may be ''). Renderers fall back to a default icon. */
+  icon?: string;
+  /** Closed notebooks exist but are collapsed in the SiYuan UI. */
+  closed?: boolean;
+}
+
 // get (provider.ts)
 
 export interface KnowledgeAttribute { key: string; value: string; }

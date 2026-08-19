@@ -17,6 +17,7 @@
 import type { AgentEvent } from '@craft-agent/core/types';
 import { parseReadCommand, type ReadCommandInfo } from './read-patterns.ts';
 import { createLogger } from '../../utils/debug.ts';
+import { proxyToolName, restoreMcpProxyPrefix } from '../../mcp/proxy-tool-name.ts';
 /** MCP server name used by the pool server */
 const POOL_SERVER_MCP_NAME = 'sources';
 
@@ -166,9 +167,9 @@ export abstract class BaseEventAdapter {
    */
   protected buildMcpToolName(serverName: string, toolName: string): string {
     if (serverName === POOL_SERVER_MCP_NAME && toolName.includes('__')) {
-      return `mcp__${toolName}`;
+      return restoreMcpProxyPrefix(toolName);
     }
-    return `mcp__${serverName}__${toolName}`;
+    return proxyToolName(serverName, toolName);
   }
 
   // ============================================================

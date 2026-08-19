@@ -1,7 +1,7 @@
 # OMP ⇄ Craft Agents — gap analysis (v1 shipped → full integration)
 
-Статус на 2026-08-06, форк `agisota/craft-agents-oss`.
-OMP runtime: локальный CLI `omp` v17.2.9 (`@oh-my-pi/pi-coding-agent`), транспорт `--mode rpc` (NDJSON/stdio), контракт: [omp-rpc-notes.md](omp-rpc-notes.md).
+Статус на 2026-08-06, форк `agisota/craft-agents-oss`. **Обновлено 2026-08-12: v2 (G1–G4) смержен в `main` — см. «Закрыто в v2»; список «Остаток до „полного"» ниже закрыт пунктами 1–4 и оставлен как историческая запись.**
+OMP runtime: локальный CLI `omp` v17.2.9 (`@oh-my-pi/pi-coding-agent`; toolchain ставит 17.2.10 — контракт идентичен, см. [omp-rpc-notes.md](omp-rpc-notes.md)), транспорт `--mode rpc` (NDJSON/stdio), контракт: [omp-rpc-notes.md](omp-rpc-notes.md).
 
 ## Матрица возможностей
 
@@ -31,10 +31,12 @@ OMP runtime: локальный CLI `omp` v17.2.9 (`@oh-my-pi/pi-coding-agent`),
 - ✅ PRD §9 закрыт: thinking отдельной карточкой, skills export, прокси-неймспейс mcp__<source>__*.
 
 ## Остаток до «полного» (приоритет)
-1. **MCP source proxies в OMP**: defs из mcpPool дополнять в set_host_tools (сейчас только session tools).
-2. **AgentEvent.thinking_delta** — тип события + рендер в TurnCard.
-3. **Branching**: spawn OMP с `branch {entryId}` для sdk-fork.
-4. **OMP skills → craft skills UI синк** (список из logs: 40+ lark-*/браузерных).
+
+> **Закрыто в v2 — раздел оставлен как историческая запись.** Пункты 1–4 реализованы и смержены в `main` (см. «Закрыто в v2» выше; детали и file-refs — в `AGENTS.md` §OMP и `plans/integration-audit.md` §3.1/§4.2):
+1. ~~**MCP source proxies в OMP**~~ — закрыто в v2 (G1): `registerHostTools()` использует `buildSessionToolDefs({ includePoolProxyDefs: true })`, pool-dispatch идёт перед session-registry (`executeHostSessionTool`).
+2. ~~**AgentEvent.thinking_delta**~~ — закрыто в v2 (G2): `thinking_delta`/`thinking_complete` end-to-end, карточка «Рассуждение».
+3. ~~**Branching**~~ — закрыто в v2 (G3): `ensureBranchReady()` + `applyOmpBranchHandshake()` (`switch_session` + `branch {entryId}` / tail transcript-copy), sidecar `meta/omp-turn-anchors.json`.
+4. ~~**OMP skills → craft skills UI синк**~~ — закрыто в v2 (G4): `skills/omp-discovery.ts`, секция «НАВЫКИ OMP», RPC `skills:importOmp`.
 5. **Авто-тегирование OMP-сессий** — покрыто мостом и event-bus автоматизациями (set_session_labels tool); опционально: дефолт-лейбл для omp-провайдера.
 
 ## Архитектура v1 (что зашито)

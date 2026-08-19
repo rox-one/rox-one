@@ -15,11 +15,13 @@ import { useAtomValue } from 'jotai'
 import { featureUnifiedShellAtom } from '@/atoms/unified-shell'
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
+import { PanelHost } from './PanelHost'
 import { SurfaceTabs } from './SurfaceTabs'
 
 export { ActivityRail, ACTIVITY_RAIL_WIDTH, ACTIVITY_RAIL_COLLAPSED_WIDTH } from './ActivityRail'
 export { SurfaceTabs } from './SurfaceTabs'
 export { InspectorHost } from './InspectorHost'
+export { PanelHost } from './PanelHost'
 export { Omnibox } from './Omnibox'
 export { OmniboxHost } from './OmniboxHost'
 export { parsePrefix, scoreMatch } from './omnibox-helpers'
@@ -33,7 +35,9 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <SurfaceTabs />
         {children}
+        <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
+      <PanelHost slot="inspector" />
       <InspectorHost />
     </>
   )

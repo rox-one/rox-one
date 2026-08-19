@@ -5,6 +5,22 @@
  */
 
 import { CRAFT_LOGO_HTML } from '../branding.ts';
+import { classifyExternalUrl } from '../utils/url-safety.ts';
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Only the app's internal deeplink may be written into href / location. */
+function safeInternalDeeplink(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  return classifyExternalUrl(url).kind === 'internal-deeplink' ? url : undefined;
+}
 
 export type AppType = 'terminal' | 'electron';
 
@@ -19,20 +35,21 @@ export function generateCallbackPage(options: {
   appType?: AppType;
   deeplinkUrl?: string;
 }): string {
-  const { title, isSuccess, errorDetail, deeplinkUrl } = options;
+  const { title, isSuccess, errorDetail } = options;
+  const deeplinkUrl = safeInternalDeeplink(options.deeplinkUrl);
 
   // Status message based on success/error
   const statusMessage = isSuccess
     ? 'Authorization successful'
     : errorDetail
-      ? `Authorization failed: ${errorDetail}`
+      ? `Authorization failed: ${escapeHtml(errorDetail)}`
       : 'Authorization failed';
 
   // Generate deeplink redirect and auto-close for success
   const autoCloseScript = isSuccess
     ? `
     setTimeout(() => {
-      ${deeplinkUrl ? `window.location.href = '${deeplinkUrl}';` : ''}
+      ${deeplinkUrl ? `window.location.href = ${JSON.stringify(deeplinkUrl)};` : ''}
       window.close();
     }, 1500);`
     : '';
@@ -43,7 +60,7 @@ export function generateCallbackPage(options: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Craft - ${title}</title>
+  <title>Rox - ${escapeHtml(title)}</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -175,7 +192,7 @@ export function generateCallbackPage(options: {
       <div class="status">${statusMessage}</div>
     </div>
     <div class="hint">${isSuccess ? 'You can now return to the application.' : 'Please close this window and try again.'}</div>
-    ${deeplinkUrl ? `<a href="${deeplinkUrl}" class="return-link">Craft Agents</a>` : ''}
+    ${deeplinkUrl ? `<a href="${escapeHtml(deeplinkUrl)}" class="return-link">Rox</a>` : ''}
   </div>
   <script>${autoCloseScript}</script>
 </body>

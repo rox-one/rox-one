@@ -169,6 +169,8 @@ export type { ExportResourcesOptions, ExportResult, ResourceImportMode, Resource
 // LLM connection types
 import type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings } from '@craft-agent/shared/config';
 export type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings };
+import type { SecretRefEntry, SecretRefsSettingsPayload } from '@craft-agent/shared/secrets';
+export type { SecretRefEntry, SecretRefsSettingsPayload };
 // Knowledge provider contract types (P1 read-only — spec 2026-08-07-siyuan-integration/03;
 // mutation types are intentionally not surfaced: no mutation channels exist at P1)
 import type {
@@ -178,6 +180,7 @@ import type {
   KnowledgeCapabilities,
   KnowledgeConnection,
   KnowledgeNode,
+  KnowledgeNotebookInfo,
   KnowledgeRef,
   KnowledgeWorkEnvelope,
   SearchHit,
@@ -191,6 +194,7 @@ export type {
   KnowledgeCapabilities,
   KnowledgeConnection,
   KnowledgeNode,
+  KnowledgeNotebookInfo,
   KnowledgeRef,
   KnowledgeWorkEnvelope,
   SearchHit,
@@ -651,6 +655,10 @@ export interface ElectronAPI {
     get(args: { workspaceId: string; connectionId: string; ref: KnowledgeRef }): Promise<KnowledgeNode>
     getContext(args: { workspaceId: string; connectionId: string; ref: KnowledgeRef; mode: ContextMode }): Promise<ContextPayload>
     getBacklinks(args: { workspaceId: string; connectionId: string; ref: KnowledgeRef }): Promise<ContextPayload['backlinks']>
+    /** Notebook listing for the knowledge navigator tree (kernel lsNotebooks). */
+    listNotebooks(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
+    /** Settings → Knowledge: patch baseUrl and/or token on an existing connection. */
+    updateConnection(args: { connectionId: string; baseUrl?: string; token?: string }): Promise<KnowledgeConnection>
     getExportPayload(args: {
       connectionId: string
       ref: KnowledgeRef
@@ -822,6 +830,10 @@ export interface ElectronAPI {
   // Session env overrides (config runtime.envOverrides — applied to new agent subprocesses)
   getEnvOverrides(): Promise<Record<string, string>>
   setEnvOverrides(env: Record<string, string>): Promise<{ success: boolean; error?: string }>
+
+  // Secret refs (config runtime.secretRefs — refs only, never resolved values)
+  getSecretRefs(): Promise<SecretRefsSettingsPayload>
+  setSecretRefs(refs: SecretRefEntry[]): Promise<{ success: boolean; error?: string }>
 
   // Release notes
   getReleaseNotes(): Promise<string>
@@ -1010,6 +1022,12 @@ export interface ElectronAPI {
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
   deferSetup(): Promise<{ success: boolean }>
+  saveOmpCredential(apiKey: string): Promise<{
+    success: boolean
+    ready?: boolean
+    code?: string
+    error?: string
+  }>
 
   // ChatGPT OAuth (for Codex chatgptAuthTokens mode)
   startChatGptOAuth(connectionSlug: string): Promise<{ success: boolean; error?: string }>
@@ -1463,6 +1481,11 @@ export interface ElectronAPI {
   getCollectionDisplay(workspaceId: string): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   setCollectionDisplay(workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   onCollectionDisplayChanged(callback: (workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay) => void): () => void
+
+  // Sessions collection filters (workspace-scoped, per navigator filter key)
+  getCollectionFilters(workspaceId: string): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+  setCollectionFilters(workspaceId: string, filtersByKey: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+  onCollectionFiltersChanged(callback: (workspaceId: string, filtersByKey: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>) => void): () => void
 
 
   // Automations

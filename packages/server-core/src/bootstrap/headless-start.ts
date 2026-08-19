@@ -4,7 +4,7 @@ import { uptime as osUptime } from 'node:os'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
 import { OAuthFlowStore } from '@craft-agent/shared/auth'
-import { ensureConfigDir, loadStoredConfig, saveConfig } from '@craft-agent/shared/config'
+import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig } from '@craft-agent/shared/config'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { ensureContextDocs } from '@craft-agent/shared/context-docs'
 import { ensureBundledSkills } from '@craft-agent/shared/skills'
@@ -362,9 +362,9 @@ function ensureGlobalConfigExists(platform: PlatformServices): void {
 export async function bootstrapServer<TSessionManager, THandlerDeps>(
   options: ServerBootstrapOptions<TSessionManager, THandlerDeps>,
 ): Promise<ServerInstance<TSessionManager>> {
-  const serverToken = options.serverToken ?? process.env.CRAFT_SERVER_TOKEN
+  const serverToken = options.serverToken ?? getEnv('SERVER_TOKEN')
   if (!serverToken) {
-    throw new Error('Server token is required. Pass options.serverToken or set CRAFT_SERVER_TOKEN.')
+    throw new Error('Server token is required. Pass options.serverToken or set ROX_SERVER_TOKEN (CRAFT_SERVER_TOKEN still works).')
   }
 
   const entropy = validateTokenEntropy(serverToken)
@@ -452,7 +452,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
 
   modelRefreshService.startAll()
 
-  platform.logger.info(`Craft Agent server listening on ${wsServer.protocol}://${rpcHost}:${wsServer.port}`)
+  platform.logger.info(`Rox server listening on ${wsServer.protocol}://${rpcHost}:${wsServer.port}`)
 
   let stopped = false
   const stop = async (): Promise<void> => {

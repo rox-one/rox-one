@@ -2102,6 +2102,7 @@ export default function App() {
             onOpenRoxConnectBrowser={onboarding.handleOpenRoxConnectBrowser}
             onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
             onSubmitCredential={onboarding.handleSubmitCredential}
+            onSubmitOmpCredential={onboarding.handleSubmitOmpCredential}
             onSubmitLocalModel={onboarding.handleSubmitLocalModel}
             onStartOAuth={onboarding.handleStartOAuth}
             onFinish={onboarding.handleFinish}

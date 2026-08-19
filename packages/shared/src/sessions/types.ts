@@ -40,7 +40,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   // Model/Connection
   'model', 'llmConnection', 'connectionLocked', 'thinkingLevel',
   // Sharing
-  'sharedUrl', 'sharedId',
+  'sharedUrl', 'sharedId', 'sharedOwnerKey',
   // Plan execution
   'pendingPlanExecution',
   // Archive
@@ -158,6 +158,11 @@ export interface SessionConfig {
   sharedUrl?: string;
   /** Shared session ID in viewer (for revoke) */
   sharedId?: string;
+  /**
+   * Owner capability secret for mutating the shared copy (PUT/DELETE /s/api/:id).
+   * SERVER-SIDE ONLY: stripped from renderer DTOs and session-list metadata.
+   */
+  sharedOwnerKey?: string;
   /** Model to use for this session (overrides global config if set) */
   model?: string;
   /** LLM connection slug for this session (locked after first message) */
@@ -303,6 +308,11 @@ export interface SessionHeader {
   sharedUrl?: string;
   /** Shared session ID in viewer (for revoke) */
   sharedId?: string;
+  /**
+   * Owner capability secret for mutating the shared copy (PUT/DELETE /s/api/:id).
+   * SERVER-SIDE ONLY: stripped from renderer DTOs and session-list metadata.
+   */
+  sharedOwnerKey?: string;
   /** Model to use for this session (overrides global config if set) */
   model?: string;
   /** LLM connection slug for this session (locked after first message) */

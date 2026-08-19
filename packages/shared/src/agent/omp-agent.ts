@@ -38,7 +38,10 @@
  *   getSessionToolProxyDefs) via the `set_host_tools` RPC. When the OMP model
  *   invokes one, OMP emits `host_tool_call`; craft executes it with the same
  *   semantics as PiAgent.handleToolExecute and answers `host_tool_result`.
- *   MCP source-proxy tools from the pool are NOT bridged in v1.
+ *   MCP source-proxy tools from the pool ARE bridged (since v2):
+ *   registerHostTools builds the merged set via buildSessionToolDefs with
+ *   includePoolProxyDefs, and source-proxy calls execute through the same
+ *   mcpPool.callTool path as PiAgent (see executeHostSessionTool).
  */
 
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
@@ -71,8 +74,16 @@ import type { PermissionMode } from './mode-manager.ts';
 import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 
 import { BaseAgent } from './base-agent.ts';
-import { getRuntimeEnvOverrides, type Workspace } from '../config/storage.ts';
-import { parseError } from './errors.ts';
+import { getRuntimeEnvOverrides, ROX_DEFAULT_CONNECTION_SLUG, type Workspace } from '../config/storage.ts';
+import { getCredentialManager } from '../credentials/index.ts';
+import { buildOmpSpawnCredentialEnv, ensureOmpRoxFirstRun } from './omp-first-run.ts';
+import {
+  parseError,
+  classifyOmpStartupExit,
+  isOmpStartupError,
+  ompStartupErrorToAgentError,
+  OmpStartupError,
+} from './errors.ts';
 
 // Host-tool bridge: same defs/executor semantics as PiAgent (register_tools +
 // routeToolCall), exposed to OMP via the `set_host_tools` / `host_tool_call` RPC.
@@ -106,6 +117,25 @@ const OMP_COMMAND_TIMEOUT_MS = 15_000;
 
 /** Craft-side execution timeout for a single host tool call (OMP waits). */
 const OMP_HOST_TOOL_TIMEOUT_MS = 120_000;
+
+/** Timeout awaiting the RPC `ready` frame after spawn (notes §Lifecycle.2). */
+export const OMP_READY_TIMEOUT_MS = 20_000;
+
+/** Bounded ring buffer of recent subprocess stderr (classification evidence). */
+const OMP_STDERR_RING_LIMIT = 8 * 1024;
+
+/**
+ * Control-flow sentinel rejecting the startup wait when the turn is aborted
+ * (or the subprocess is deliberately killed) before the ready handshake
+ * completes. chatImpl ends the turn quietly for this one — an abort is not
+ * a startup failure and must not surface error UI.
+ */
+export class OmpStartupAbortedError extends Error {
+  constructor(message = 'OMP startup aborted') {
+    super(message);
+    this.name = 'OmpStartupAbortedError';
+  }
+}
 
 /**
  * Runtime context briefing appended to OMP's system prompt at spawn.
@@ -211,6 +241,13 @@ function mapThinkingLevel(level: ThinkingLevel): string {
 /** OMP extension_ui_request methods that are always safe to auto-answer. */
 const AUTO_ANSWER_METHODS: Record<string, true> = { setWidget: true, cancel: true };
 
+/** Detect OMP's rejection of a `--model <id>` one-shot (vs. a real failure). */
+function isOmpModelNotFoundError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /model not found|unknown model|no such model|invalid model/i.test(message);
+}
+
+
 /**
  * OMP session transcript entry (one JSONL line of the session file).
  * `id` is a short 8-hex entry id; `parentId` chains entries. Verified in
@@ -269,7 +306,25 @@ export class OmpAgent extends BaseAgent {
   private readline: ReadlineInterface | null = null;
   private subprocessReady: Promise<void> | null = null;
   private subprocessReadyResolve: (() => void) | null = null;
-  private spawnError: Error | null = null;
+  private subprocessReadyReject: ((error: Error) => void) | null = null;
+  /**
+   * In-flight spawn memo. Concurrent chat() calls during startup share ONE
+   * spawnSubprocess() handshake — without it a second entrant would spawn a
+   * second child and overwrite subprocessReadyResolve/Reject, leaving the
+   * first entrant's ready-wait unsettleable (hang) and the loser child
+   * orphaned. Cleared when the spawn attempt settles (ready or failed), so a
+   * retry after a failed startup spawns fresh.
+   */
+  private spawnPromise: Promise<void> | null = null;
+  /** True from spawn until the ready handshake settles (ready / typed failure). */
+  private startupInFlight = false;
+  /** True once the ready handshake succeeded; cleared again on exit/kill. */
+  private readyAccepted = false;
+  /** Bounded ring buffer of recent subprocess stderr — classification evidence. */
+  private recentStderr = '';
+  /** Monotonic spawn counter — stale exit/close events from a previous child
+   *  must never settle a newer child's startup handshake. */
+  private startupGeneration = 0;
 
   /** Permission policy captured at spawn — respawn required to change. */
   private autoApproveAtSpawn = false;
@@ -408,11 +463,21 @@ export class OmpAgent extends BaseAgent {
   }
 
   private async ensureSubprocess(): Promise<void> {
-    if (this.subprocess && this.subprocessReady) {
+    if (this.spawnPromise) {
+      // A spawn is already in flight (concurrent chat during startup) — share
+      // its handshake instead of double-spawning.
+      await this.spawnPromise;
+    } else if (this.subprocess && this.subprocessReady && this.readyAccepted) {
+      // Live child with a succeeded handshake. A child whose handshake FAILED
+      // (rejected subprocessReady) or never completed (wedged startup) is
+      // dead state — fall through to a fresh spawn instead of re-awaiting a
+      // known-dead promise.
       await this.subprocessReady;
-      if (this.spawnError) throw this.spawnError;
     } else {
-      await this.spawnSubprocess();
+      this.spawnPromise = this.spawnSubprocess().finally(() => {
+        this.spawnPromise = null;
+      });
+      await this.spawnPromise;
     }
     // Branch fork: after spawn, attach to the parent OMP transcript and cut
     // it at the persisted anchor. Runs exactly once per agent instance.
@@ -592,10 +657,39 @@ export class OmpAgent extends BaseAgent {
   // Subprocess spawn
   // ============================================================
 
+  /**
+   * Settle the startup ready-wait exactly once (success or typed failure).
+   * Callbacks are detached BEFORE settling so a late exit/timeout/abort
+   * against the same handshake is a no-op.
+   */
+  private settleReady(error?: Error): void {
+    const resolve = this.subprocessReadyResolve;
+    const reject = this.subprocessReadyReject;
+    this.subprocessReadyResolve = null;
+    this.subprocessReadyReject = null;
+    this.startupInFlight = false;
+    if (error) {
+      reject?.(error);
+    } else {
+      this.readyAccepted = true;
+      resolve?.();
+    }
+  }
+
   private async spawnSubprocess(): Promise<void> {
     // OMP_CLI_PATH env → toolchain/PATH lookup → friendly error while the
     // toolchain is still installing → last-resort 'omp' (ENOENT path preserved).
-    const bin = await resolveOmpExecutableOrExplain();
+    let bin: string;
+    try {
+      bin = await resolveOmpExecutableOrExplain();
+    } catch (error) {
+      throw new OmpStartupError({
+        code: 'OMP_NOT_CONFIGURED',
+        message: error instanceof Error ? error.message : String(error),
+        hint: 'Install the omp CLI or set OMP_CLI_PATH to a valid omp binary, then retry.',
+        cause: error,
+      });
+    }
     const cwd = this.resolvedCwd();
 
     this.autoApproveAtSpawn = this.permissionManager.getPermissionMode() === 'allow-all';
@@ -628,8 +722,34 @@ export class OmpAgent extends BaseAgent {
 
     this.debug(`Spawning OMP subprocess: ${bin} ${args.join(' ')} (cwd=${cwd})`);
 
-    this.subprocessReady = new Promise<void>((resolve) => {
+    const readyPromise = new Promise<void>((resolve, reject) => {
       this.subprocessReadyResolve = resolve;
+      this.subprocessReadyReject = reject;
+    });
+    this.subprocessReady = readyPromise;
+    this.startupInFlight = true;
+    this.readyAccepted = false;
+    this.recentStderr = '';
+    this.startupGeneration += 1;
+    // Startup failure reaches the ensureSubprocess() awaiter via rejection;
+    // attach a no-op handler so a rejection surfacing before that await never
+    // trips unhandledRejection.
+    readyPromise.catch(() => {});
+
+    let storedOmpKey: string | null = null;
+    try {
+      storedOmpKey = await getCredentialManager().getLlmApiKey(ROX_DEFAULT_CONNECTION_SLUG);
+    } catch {
+      storedOmpKey = null;
+    }
+    ensureOmpRoxFirstRun({
+      homeDir: homedir(),
+      env: process.env,
+      storedApiKey: storedOmpKey,
+    });
+    const credentialEnv = buildOmpSpawnCredentialEnv({
+      env: process.env,
+      storedApiKey: storedOmpKey,
     });
 
     const env: NodeJS.ProcessEnv = await withToolchainPathPrefix({
@@ -638,6 +758,7 @@ export class OmpAgent extends BaseAgent {
       // User-configured runtime env overrides (config runtime.envOverrides);
       // per-session envOverrides below always win.
       ...getRuntimeEnvOverrides(),
+      ...credentialEnv,
       ...(this.config.envOverrides ?? {}),
     });
 
@@ -649,39 +770,109 @@ export class OmpAgent extends BaseAgent {
 
     this.subprocess = child;
 
-    this.readline = createInterface({ input: child.stdout!, crlfDelay: Infinity });
-    this.readline.on('line', (line: string) => this.handleLine(line));
+    // Every child event handler is scoped to THIS child: events from a
+    // previously killed child can land during the next child's startup
+    // window (observed: a SIGTERMed predecessor's exit settling the new
+    // handshake) and must be ignored.
+    const isCurrentChild = () => this.subprocess === child;
+    // Per-child stderr ring buffer — kept appending until the stream closes
+    // so the exit-time classification sees the full evidence ('exit' can
+    // fire before the final stderr flush; 'close' trails it).
+    let childStderr = '';
+    // The ring keeps only the TAIL, so a stderr flood evicts an early
+    // classifying line ("No models available…") before the exit-time
+    // classification runs. Scan the evidence as it arrives and latch the
+    // first classified startup error — the latch survives ring eviction.
+    let latchedStartupError: OmpStartupError | null = null;
 
-    child.stderr?.on('data', (data: Buffer) => {
-      const trimmed = data.toString().trim();
-      if (trimmed) this.debug(`[omp stderr] ${trimmed}`);
+    this.readline = createInterface({ input: child.stdout!, crlfDelay: Infinity });
+    this.readline.on('line', (line: string) => {
+      if (isCurrentChild()) this.handleLine(line);
     });
 
-    child.on('exit', (code, signal) => this.handleSubprocessExit(code, signal));
+    child.stderr?.on('data', (data: Buffer) => {
+      const text = data.toString();
+      // Evidence BEFORE ring eviction — a single chunk can exceed the ring
+      // and wash away its own head (pipe reads are up to 64KB).
+      const evidence = childStderr + text;
+      childStderr = evidence.slice(-OMP_STDERR_RING_LIMIT);
+      if (isCurrentChild()) {
+        this.recentStderr = childStderr;
+        if (!latchedStartupError) {
+          // Probe the pre-eviction evidence (bounded by ring + chunk size).
+          // Only actionable signature-based codes are latched — generic
+          // codes depend on the exit reason, unknown until the exit lands.
+          const probe = classifyOmpStartupExit({ exitCode: null, signal: null, stderr: evidence });
+          if (probe.ompCode === 'OMP_NO_MODELS' || probe.ompCode === 'OMP_AUTH_REQUIRED') {
+            latchedStartupError = probe;
+          }
+        }
+        const trimmed = text.trim();
+        if (trimmed) this.debug(`[omp stderr] ${trimmed}`);
+      }
+    });
+
+    child.on('exit', (code, signal) => {
+      if (!isCurrentChild()) {
+        this.debug(`Ignoring exit from stale OMP subprocess (code=${code}, signal=${signal})`);
+        return;
+      }
+      this.handleSubprocessExit(child, code, signal, () => childStderr, () => latchedStartupError);
+    });
 
     child.on('error', (error) => {
-      this.spawnError = error;
+      if (!isCurrentChild()) return;
       this.debug(`OMP subprocess error: ${error.message}`);
-      this.subprocessReadyResolve?.();
-      if (this._isProcessing) {
+      if (this.startupInFlight) {
+        // Spawn-time failure — typed and actionable (ENOENT = binary missing).
+        const errno = (error as NodeJS.ErrnoException).code;
+        this.settleReady(errno === 'ENOENT'
+          ? new OmpStartupError({
+              code: 'OMP_NOT_CONFIGURED',
+              message: `OMP executable not found at "${bin}".`,
+              hint: 'Install the omp CLI, wait for the toolchain download to finish, or set OMP_CLI_PATH to a valid omp binary.',
+              stderr: this.recentStderr.trim(),
+              cause: error,
+            })
+          : new OmpStartupError({
+              code: 'OMP_START_FAILED',
+              message: `OMP subprocess failed to start: ${error.message}`,
+              stderr: this.recentStderr.trim(),
+              cause: error,
+            }));
+      } else if (this._isProcessing && !this.eventQueue.isComplete) {
+        // Mid-turn transport error — mirror handleAgentEnd's terminal
+        // behavior (error + complete); the exit handler may report the same
+        // crash, so skip when the queue is already closed.
         this.eventQueue.enqueue({ type: 'error', message: `OMP subprocess error: ${error.message}` });
+        this.eventQueue.enqueue({ type: 'complete' });
         this.eventQueue.complete();
       }
     });
 
     // Ready timeout — OMP prints the ready frame on startup (notes §Lifecycle.2).
+    // Bounded and typed; the wedged child is killed so a retry spawns fresh.
+    // The race settles via readyPromise (settleReady rejects it), so every
+    // startup outcome — ready / exit / spawn error / malformed frame /
+    // timeout — funnels through the same typed path.
     const childRef = child;
     await Promise.race([
-      this.subprocessReady.then(() => {
-        if (this.spawnError) throw this.spawnError;
-      }),
-      new Promise<void>((_, reject) => {
+      readyPromise,
+      new Promise<void>(() => {
         const timer = setTimeout(() => {
-          if (this.subprocess === childRef && this.subprocessReadyResolve) {
-            reject(new Error('OMP did not send ready frame within 20s'));
-          }
-        }, 20_000);
-        this.subprocessReady!.then(() => clearTimeout(timer));
+          // Late timer against an already-settled handshake (e.g. the ready
+          // frame landed in the same tick) must not kill a healthy child.
+          if (!this.startupInFlight || this.subprocess !== childRef) return;
+          this.settleReady(new OmpStartupError({
+            code: 'OMP_READY_TIMEOUT',
+            message: `OMP did not send the ready frame within ${Math.floor(OMP_READY_TIMEOUT_MS / 1000)}s.`,
+            hint: 'Check that the omp binary is healthy (omp --mode rpc) and that no wrapper swallows its stdout.',
+            stderr: this.recentStderr.trim(),
+          }));
+          this.teardownUnreadySubprocess(childRef);
+        }, OMP_READY_TIMEOUT_MS);
+        const clear = () => clearTimeout(timer);
+        readyPromise.then(clear, clear);
       }),
     ]);
 
@@ -706,10 +897,55 @@ export class OmpAgent extends BaseAgent {
   }
 
   /**
+   * Ready-timeout teardown for a child that never sent the ready frame.
+   * Detaches the spawn state SYNCHRONOUSLY (a retry must spawn fresh, not
+   * re-await the dead handshake or trip over the wedged child), then
+   * escalates SIGTERM → SIGKILL so a SIGTERM-immune child cannot leak.
+   * The child's late exit event is ignored as stale (no longer current).
+   */
+  private teardownUnreadySubprocess(child: ChildProcess): void {
+    if (this.subprocess === child) {
+      this.subprocess = null;
+      this.subprocessReady = null;
+      this.subprocessReadyResolve = null;
+      this.subprocessReadyReject = null;
+      this.readyAccepted = false;
+      if (this.readline) {
+        this.readline.close();
+        this.readline = null;
+      }
+    }
+    try {
+      child.stdin?.end();
+    } catch {
+      // stdin may already be closed
+    }
+    try {
+      child.kill('SIGTERM');
+    } catch {
+      // already gone
+    }
+    const killer = setTimeout(() => {
+      if (child.exitCode === null && !child.signalCode) {
+        this.debug('OMP subprocess ignored SIGTERM after ready timeout; SIGKILL');
+        try {
+          child.kill('SIGKILL');
+        } catch {
+          // already gone
+        }
+      }
+    }, 2_000);
+    killer.unref?.();
+  }
+
+  /**
    * Graceful shutdown: close stdin → SIGTERM → SIGKILL fallback.
    */
   private async killSubprocessGracefully(timeoutMs = 2_000): Promise<void> {
     const child = this.subprocess;
+    // Settle any pending startup wait — a killed subprocess never completes
+    // the ready handshake. No-op once the handshake has settled.
+    this.settleReady(new OmpStartupAbortedError('OMP subprocess terminated before startup completed'));
     if (!child) return;
 
     const waitForExit = new Promise<{ code: number | null; signal: string | null }>((resolve) => {
@@ -750,10 +986,15 @@ export class OmpAgent extends BaseAgent {
     }
     this.subprocessReady = null;
     this.subprocessReadyResolve = null;
+    this.subprocessReadyReject = null;
+    this.readyAccepted = false;
   }
 
   private killSubprocessSync(): void {
     const child = this.subprocess;
+    // Unblock any startup waiter — a killed subprocess never completes the
+    // ready handshake. No-op once the handshake has settled.
+    this.settleReady(new OmpStartupAbortedError('OMP subprocess terminated before startup completed'));
     if (!child) return;
     try {
       child.stdin?.end();
@@ -770,37 +1011,104 @@ export class OmpAgent extends BaseAgent {
     }
     this.subprocessReady = null;
     this.subprocessReadyResolve = null;
+    this.subprocessReadyReject = null;
+    this.readyAccepted = false;
+    this.registeredHostToolNames = null;
+    // The child's exit event arrives later and is ignored as stale (it is no
+    // longer the current child), so pending state must be failed HERE,
+    // deterministically.
+    this.failPendingRequests(new Error('OMP subprocess terminated'));
+    this.pendingPermissions.clear();
+    for (const [, resolve] of this.pendingHostToolPermissions) resolve(false);
+    this.pendingHostToolPermissions.clear();
+    this.pendingHostToolCalls.clear();
   }
 
-  private handleSubprocessExit(code: number | null, signal: string | null): void {
+  private handleSubprocessExit(
+    child: ChildProcess,
+    code: number | null,
+    signal: string | null,
+    stderrEvidence: () => string,
+    latchedStartupError: () => OmpStartupError | null,
+  ): void {
     this.debug(`OMP subprocess exited: code=${code}, signal=${signal}`);
+
+    const wasStartupPending = this.startupInFlight;
+    const wasReady = this.readyAccepted;
+    const generation = this.startupGeneration;
+    this.readyAccepted = false;
+
+    const exitReason = signal ? `signal ${signal}` : `code ${code}`;
+
+    if (wasStartupPending) {
+      // Exit before the ready frame: settle the startup wait with a typed,
+      // stderr-classified error instead of letting chatImpl hang forever
+      // (the old code nulled the wait state, so neither the ready promise
+      // nor the 20s timeout guard could ever settle). 'exit' can fire before
+      // the final stderr flush, so classification defers to 'close' (bounded
+      // by a fallback timer).
+      const rejectCaptured = this.subprocessReadyReject;
+      const wasAbort = this.abortReason !== undefined;
+      const settle = () => {
+        // A signature latched while stderr was streaming wins over tail-only
+        // classification — a flood may have evicted the evidence by now.
+        const error = wasAbort
+          ? new OmpStartupAbortedError(`OMP subprocess terminated during abort (${exitReason})`)
+          : (latchedStartupError() ?? classifyOmpStartupExit({ exitCode: code, signal, stderr: stderrEvidence() }));
+        if (this.startupGeneration === generation) {
+          this.settleReady(error);
+        } else {
+          // A newer child already owns the handshake — settle only THIS
+          // child's promise so its awaiter never hangs (idempotent).
+          rejectCaptured?.(error);
+        }
+      };
+      child.once('close', settle);
+      const fallback = setTimeout(settle, 250);
+      fallback.unref?.();
+      child.once('close', () => clearTimeout(fallback));
+    }
 
     this.subprocess = null;
     this.readline = null;
     this.subprocessReady = null;
-    this.subprocessReadyResolve = null;
+    if (!wasStartupPending) {
+      // Startup already settled — no deferred classification outstanding.
+      this.subprocessReadyResolve = null;
+      this.subprocessReadyReject = null;
+    }
     this.registeredHostToolNames = null;
 
-    const exitReason = signal ? `signal ${signal}` : `code ${code}`;
-    if (this._isProcessing) {
+    // Mid-turn crash after a successful startup: surface it. Exits after a
+    // FAILED startup (timeout kill, abort kill, spawn error) are already
+    // reported through the rejected ready wait — nothing more to add.
+    // Mirrors handleAgentEnd's terminal behavior: the stream must end with a
+    // `complete` event, and the report must not duplicate one already sent
+    // (the 'error' listener or a rejected prompt RPC can race this).
+    if (this._isProcessing && wasReady && !this.eventQueue.isComplete) {
       this.eventQueue.enqueue({
         type: 'error',
         message: `OMP subprocess exited unexpectedly (${exitReason})`,
       });
+      this.eventQueue.enqueue({ type: 'complete' });
       this.eventQueue.complete();
     }
 
-    for (const [, pending] of this.pendingRequests) {
-      clearTimeout(pending.timer);
-      pending.reject(new Error(`OMP subprocess exited (${exitReason})`));
-    }
-    this.pendingRequests.clear();
+    this.failPendingRequests(new Error(`OMP subprocess exited (${exitReason})`));
 
     // Deny pending permissions so the UI unblocks.
     this.pendingPermissions.clear();
     for (const [, resolve] of this.pendingHostToolPermissions) resolve(false);
     this.pendingHostToolPermissions.clear();
     this.pendingHostToolCalls.clear();
+  }
+
+  private failPendingRequests(reason: Error): void {
+    for (const [, pending] of this.pendingRequests) {
+      clearTimeout(pending.timer);
+      pending.reject(reason);
+    }
+    this.pendingRequests.clear();
   }
 
   // ============================================================
@@ -877,10 +1185,32 @@ export class OmpAgent extends BaseAgent {
     }
 
     switch (type) {
-      case 'ready':
+      case 'ready': {
+        // Validate the handshake frame — a malformed ready means the peer is
+        // not a compatible OMP RPC server (typed OMP_PROTOCOL_ERROR).
+        const protocolVersion = msg.protocolVersion;
+        const supported = msg.supportedProtocolVersions;
+        const validReadyFrame =
+          (protocolVersion === undefined || typeof protocolVersion === 'number') &&
+          (supported === undefined ||
+            (Array.isArray(supported) && supported.every((v) => typeof v === 'number')));
+        if (!validReadyFrame) {
+          this.debug(`OMP ready frame malformed: ${JSON.stringify(msg).slice(0, 200)}`);
+          if (this.startupInFlight) {
+            this.settleReady(new OmpStartupError({
+              code: 'OMP_PROTOCOL_ERROR',
+              message: 'OMP sent a malformed ready frame — protocol handshake failed.',
+              hint: 'Check that OMP_CLI_PATH points at a compatible `omp --mode rpc` binary.',
+              stderr: this.recentStderr.trim(),
+            }));
+            this.killSubprocessSync();
+          }
+          break;
+        }
         this.debug(`OMP ready (protocol v${msg.protocolVersion ?? '?'})`);
-        this.subprocessReadyResolve?.();
+        this.settleReady();
         break;
+      }
 
       case 'extension_ui_request':
         this.handleExtensionUiRequest(msg);
@@ -1159,7 +1489,7 @@ export class OmpAgent extends BaseAgent {
             requestId,
             toolName,
             description: `OMP agent wants to run craft tool '${toolName}'`,
-            type: 'admin_approval',
+            type: 'mcp_mutation',
           });
           // Fail-safe: never hang the turn if the dialog answer is lost.
           setTimeout(() => {
@@ -1541,6 +1871,18 @@ export class OmpAgent extends BaseAgent {
   ): AsyncGenerator<AgentEvent> {
     // Idle point between turns: pick up source-proxy changes since spawn.
     await this.refreshHostToolsFromPool();
+    // BaseAgent.chat does not serialize concurrent chat() calls, and two
+    // interleaved turns would corrupt each other on the shared event queue.
+    // The first entrant claims the turn; a concurrent entrant fails fast
+    // (bounded) instead of double-prompting the subprocess. The claim sits
+    // after the refresh await so microtask FIFO makes the winner the first
+    // chat() caller, and so an idle-point crash during the refresh can still
+    // take the transparent respawn path in ensureSubprocess.
+    if (this._isProcessing) {
+      yield { type: 'error', message: 'OMP session is already processing a turn — concurrent chat() is not supported.' };
+      yield { type: 'complete' };
+      return;
+    }
     this._isProcessing = true;
     this.abortReason = undefined;
     this.eventQueue.reset();
@@ -1568,13 +1910,24 @@ export class OmpAgent extends BaseAgent {
       await this.ensureSubprocess();
 
       this.sendCommand('prompt', { message: effectiveMessage }).catch((error) => {
-        // prompt is async — failure response = turn failed
+        // prompt is async — failure response = turn failed. When the failure
+        // is the subprocess crashing mid-turn, handleSubprocessExit already
+        // reported it and closed the queue — don't double-report.
+        if (this.eventQueue.isComplete) return;
         this.eventQueue.enqueue({ type: 'error', message: `OMP prompt failed: ${error.message}` });
         this.eventQueue.complete();
       });
     } catch (error) {
       const errorObj = error instanceof Error ? error : new Error(String(error));
-      const typed = parseError(errorObj);
+      if (errorObj instanceof OmpStartupAbortedError) {
+        // Aborted/killed mid-startup — end the turn quietly, no error UI.
+        yield { type: 'complete' };
+        this._isProcessing = false;
+        return;
+      }
+      const typed = isOmpStartupError(errorObj)
+        ? ompStartupErrorToAgentError(errorObj)
+        : parseError(errorObj);
       if (typed.code !== 'unknown_error') {
         yield { type: 'typed_error', error: typed };
       }
@@ -1611,10 +1964,21 @@ export class OmpAgent extends BaseAgent {
       this.pendingPermissions.delete(requestId);
     }
 
-    // RPC abort (notes §Commands.abort); don't hang if the subprocess is wedged.
-    await this.sendCommand('abort', {}, 5_000).catch((error) => {
-      this.debug(`OMP abort command failed: ${error.message}`);
-    });
+    // Abort during the startup handshake: the RPC abort can't reach a
+    // not-yet-ready process, so settle the ready wait (chatImpl ends the
+    // turn quietly) and kill the half-spawned child.
+    if (this.startupInFlight) {
+      this.settleReady(new OmpStartupAbortedError(`OMP startup aborted${reason ? `: ${reason}` : ''}`));
+      this.killSubprocessSync();
+    }
+
+    // RPC abort (notes §Commands.abort); skip when no process is live — a
+    // missing subprocess would otherwise wait out the full 5s timeout.
+    if (this.subprocess) {
+      await this.sendCommand('abort', {}, 5_000).catch((error) => {
+        this.debug(`OMP abort command failed: ${error.message}`);
+      });
+    }
 
     this.eventQueue.complete();
   }
@@ -1765,7 +2129,7 @@ export class OmpAgent extends BaseAgent {
   // One-shot LLM calls (`omp -p <prompt>`)
   // ============================================================
 
-  private async runOneShot(prompt: string): Promise<string> {
+  private async runOneShot(prompt: string, model?: string): Promise<string> {
     this.debug(`runOneShot: resolving bin (prompt ${prompt.length} chars)`);
     const bin = await resolveOmpExecutableOrExplain();
     this.debug(`runOneShot: bin=${bin}`);
@@ -1781,9 +2145,10 @@ export class OmpAgent extends BaseAgent {
     // default piped stdin makes omp read the prompt from stdin and wait for
     // EOF forever (title generation / one-shot completions hang to timeout).
     // We explicitly end stdin → omp treats the argv prompt as authoritative.
+    const args = model ? ['--model', model, '-p', prompt] : ['-p', prompt];
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
-      const child = spawn(bin, ['-p', prompt], { cwd, env });
+      const child = spawn(bin, args, { cwd, env });
       this.debug(`runOneShot: spawned pid=${child.pid}`);
       const timer = setTimeout(() => {
         child.kill('SIGKILL');
@@ -1823,8 +2188,32 @@ export class OmpAgent extends BaseAgent {
     const prompt = request.systemPrompt
       ? `${request.systemPrompt}\n\n${request.prompt}`
       : request.prompt;
+
+    // Honor request.model by passing it through to the one-shot
+    // (`omp --model <id> -p`). When OMP rejects the model, fall back to its
+    // configured default and say so — the effective model is always reported
+    // truthfully, never fabricated (packages/shared/CLAUDE.md §queryLlm
+    // backend contract).
+    const requestedModel = request.model?.trim() || undefined;
+    if (requestedModel) {
+      try {
+        const text = await this.runOneShot(prompt, requestedModel);
+        return { text, model: requestedModel };
+      } catch (error) {
+        if (!isOmpModelNotFoundError(error)) throw error;
+        this.debug(`queryLlm: OMP rejected model "${requestedModel}"; falling back to the OMP default model`);
+        const text = await this.runOneShot(prompt);
+        return {
+          text,
+          warning: `Requested model "${requestedModel}" is not available in OMP; used the OMP default model instead.`,
+        };
+      }
+    }
+
     const text = await this.runOneShot(prompt);
-    return { text, model: this._model };
+    // The one-shot ran on OMP's own configured default model, which this
+    // backend did not pin — the effective model is honestly unknown here.
+    return { text };
   }
 
   // ============================================================
@@ -1857,11 +2246,7 @@ export class OmpAgent extends BaseAgent {
   destroy(): void {
     this.stopConfigWatcher();
 
-    for (const [, pending] of this.pendingRequests) {
-      clearTimeout(pending.timer);
-      pending.reject(new Error('OmpAgent destroyed'));
-    }
-    this.pendingRequests.clear();
+    this.failPendingRequests(new Error('OmpAgent destroyed'));
     this.pendingPermissions.clear();
     for (const [, resolve] of this.pendingHostToolPermissions) resolve(false);
     this.pendingHostToolPermissions.clear();

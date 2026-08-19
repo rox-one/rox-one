@@ -13,16 +13,21 @@
 
 - Реализация: `packages/shared/src/agent/omp-agent.ts` (OmpAgent extends BaseAgent).
 - Протокол: `docs/omp-rpc-notes.md` (**обязательно к прочтению перед изменениями транспорта** — там критичный факт про обязательные `extension_ui_response` и shape `set_model`).
-- Интеграционный гэп/статус: `docs/omp-integration-gap.md`.
+- Интеграционный статус: `docs/omp-integration-gap.md` — **v2 закрыт** (G1–G4: source proxies, thinking stream, branching, skills sync); v1-ограничения ниже сняты.
 - Подключение дефолта: `storage.ts#seedDefaultLlmConnection` создаёт `rox-kimi` (providerType `'omp'`, authType `'none'`, defaultModel `rox/standard`, публичный каталог `rox/explore|standard|max|vision|fast`) — OMP берёт auth из `~/.omp/agent/config.yml`. `spawn_session` без `model` на ROX-родителе уходит в `rox/fast`.
 - Permission mapping: craft `allow-all` ⇄ `--approval-mode yolo` (spawn-time, флип режима = респавн); `ask/safe` — диалоги `extension_ui_request`-времени проксируются в craft-пермишны.
 
 ### Craft-инструменты внутри OMP (host tools)
 OmpAgent публикует craft-сессионные инструменты в OMP через `set_host_tools`:
-- что: registry `BASE_SESSION_TOOL_PROXY_DEFS` (spawn_session, call_llm, browser_tool, mcp__session__* и др.), loadMode `'essential'` — иначе инструменты «прячутся» от модели;
-- как: OMP шлёт `host_tool_call` → OmpAgent исполняет тем же кодом, что PiAgent (`preExecuteSpawnSession`, SESSION_TOOL_REGISTRY, browser pane fns) → `host_tool_result {content:[{type:'text',text}]}`;
+- что: общий билдер `buildSessionToolDefs({ includePoolProxyDefs: true })` (`packages/shared/src/agent/session-tool-defs.ts`) — session tools (spawn_session, call_llm, browser_tool, mcp__session__*) **плюс MCP source-proxy defs из mcpPool** (v2, G1); loadMode `'essential'` — иначе инструменты «прячутся» от модели; `refreshHostToolsFromPool()` догоняет изменения пула в idle-точках (между ходами / при `setSourceServers`);
+- как: OMP шлёт `host_tool_call` → OmpAgent исполняет тем же кодом, что PiAgent: source-proxy имена (`mcp__<slug>__*`) диспатчатся в `mcpPool.callTool` **до** session-registry (`executeHostSessionTool`) → `host_tool_result {content:[{type:'text',text}]}`;
 - в ask/safe — перед исполнением спрашиваем у пользователя через craft permission + `respondToPermission` (120с fail-safe deny);
-- **не** прокинуто (v1, осознанно): MCP source-proxy tools из mcpPool, resume из OMP-sessio store, branching.
+- **не** прокинуто (осознанно): resume из OMP session store — craft-транскрипт остаётся источником истины.
+
+### Thinking, branching, skills (v2)
+- **Thinking stream (G2):** OMP `thinking_delta`/`thinking_complete` мапятся в `AgentEvent` и рендерятся отдельной карточкой «Рассуждение» (свёртка по complete).
+- **Branching (G3):** `supportsBranching`; anchor-ивенты `omp_turn_anchor` пишутся в sidecar `meta/omp-turn-anchors.json`; `ensureBranchReady()` → `applyOmpBranchHandshake()`: mid-history fork через `switch_session` + `branch {entryId}`, tail-fork — копией транскрипта.
+- **Skills sync (G4):** `packages/shared/src/skills/omp-discovery.ts` (скан `~/.omp/agent/skills`, `~/.agents/skills`, `<ws>/.omp/skills`); секция «НАВЫКИ OMP» в панели + экспорт через RPC `skills:importOmp`; @-mention активация через `extractSkillPaths`.
 
 ### Зеркалирование сессий
 OMP запускается с `--session-dir <workspace>/sessions/<craftSessionId>/omp` (БЕЗ `--no-session`): транскрипт OMP лежит рядом с craft-транскриптом — история дублируется в обоих сторах, без конфликтов. Resume читается только из craft (источник истины).
