@@ -82,7 +82,7 @@ Wave-4 results so far:
 | onboarding → identity/provider | **VERIFIED (server-side)** — connection seeded, auth env initialized; desktop onboarding UI not exercisable headlessly |
 | runtime readiness | **VERIFIED** — toolchain install + `omp --mode rpc` handshake (probe-verified earlier) |
 | create session → send prompt | **VERIFIED** — session created; prompt fails bounded in ~0.8 s with typed `OMP_NO_MODELS` (no credentials on a fresh machine — the honest, actionable failure) |
-| stream answer / host tool / MCP tool / permission interaction | **BLOCKED** — requires a live LLM credential (none available in this environment); the tool plumbing itself is covered by the omp-source-proxy/session-flow regression suites |
+| stream answer / host tool / MCP tool / permission interaction | **VERIFIED** — live `ROX_API_KEY` turn 2026-08-13 (ticket 13 live-run). Session `260813-vivid-moon`, model `gpt-5.6-luna` (`kimi-K3` is 403 for this key). Event log + browser trace; `claim: live-turn-verified`. See `plans/next-program/13-live-e2e-evidence.md`. |
 | restart → restore | **VERIFIED** — server restarted; 2 sessions loaded from disk; web login (200) + `/api/config` intact |
 | web login → same workspace/session | **VERIFIED** — cookie auth, same workspace + sessions visible after restart |
 
@@ -98,6 +98,10 @@ Negative paths (each must end bounded + typed + idle):
 | SiYuan down | **VERIFIED** — `CONNECTION_UNAVAILABLE` typed tool error (smoke) |
 | expired/invalid auth | **VERIFIED** — `/api/auth` wrong password → 401 `Invalid credentials` |
 | unauthorized share mutation | **VERIFIED** — 24 share-auth tests green (401/403/legacy-immutable matrix) |
+
+### Ticket 13 re-check (2026-08-13)
+
+Earlier the same day the gate was **BLOCKED** (`ROX_API_KEY` unset). A later run with a real key claimed **VERIFIED**: session `260813-vivid-moon`, stream `PONG`, host tool `mcp__session__call_llm`, MCP `mcp__echo__echo` → `echo:live-e2e`, ask-mode `permission_request`, restart restored the same id, webui login + transcript. Seeded `kimi-K3` is 403 for this key — live model was `gpt-5.6-luna`. Ask-mode Allow was fail-closed by the privileged broker (host prompts typed `admin_approval` without a command hash); fixed on the live-run branch. Evidence: `plans/next-program/13-live-e2e-evidence.md`. Secret not committed.
 
 ## Review gate checklist (per returned branch)
 

@@ -1,5 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync } from 'fs';
 import { join, dirname, basename } from 'path';
+import { homedir } from 'os';
+import { ensureOmpRoxFirstRun } from '../agent/omp-first-run.ts';
 import { getCredentialManager } from '../credentials/index.ts';
 import { getOrCreateLatestSession, type SessionConfig } from '../sessions/index.ts';
 import {
@@ -26,7 +28,7 @@ import { type ConfigDefaults } from './config-defaults-schema.ts';
 import { isValidThemeFile } from './validators.ts';
 import { isToolName } from '../toolchain/types.ts';
 import type { ToolName } from '../toolchain/types.ts';
-import { SECRET_PROVIDER_IDS, type SecretRefEntry } from '../secrets/types.ts';
+import { SECRET_PROVIDER_IDS, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '../secrets/types.ts';
 
 // Re-export CONFIG_DIR for convenience (centralized in paths.ts)
 export { CONFIG_DIR } from './paths.ts';
@@ -187,8 +189,8 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   },
   workspaceDefaults: {
     thinkingLevel: 'medium',
-    permissionMode: 'ask',
-    cyclablePermissionModes: ['safe', 'ask', 'allow-all'],
+    permissionMode: 'allow-all',
+    cyclablePermissionModes: ['safe', 'allow-all'],
     localMcpServers: { enabled: true },
   },
 };
@@ -868,6 +870,7 @@ export const ENV_OVERRIDE_DENY: Record<string, true> = {
   RUBYLIB: true,
   CRAFT_WORKSPACE_PATH: true,
   CRAFT_CONFIG_DIR: true,
+  ROX_CONFIG_DIR: true,
   CRAFT_BUN_PATH: true,
   CRAFT_SESSION_DIR: true,
   CRAFT_STUB_RUNNER: true,
@@ -898,7 +901,7 @@ export function setRuntimeEnvOverrides(env: Record<string, string>): void {
  */
 export function getRuntimeSecretRefs(): SecretRefEntry[] {
   const config = loadStoredConfig();
-  return (config?.runtime?.secretRefs ?? []).map((entry) => ({ ...entry }));
+  return (config?.runtime?.secretRefs ?? []).map((entry) => toPublicSecretRef(entry));
 }
 
 /**
@@ -923,7 +926,11 @@ export function setRuntimeSecretRefs(refs: SecretRefEntry[]): void {
       throw new Error(`invalid secret ref envVar: ${envVar}`);
     }
     if (ENV_OVERRIDE_DENY[envVar]) {
-      throw new Error(`secret ref envVar not allowed: ${envVar}`);
+      throw new SecretConfigError(
+        'SECRET_ENVVAR_DENIED',
+        `secret ref envVar not allowed: ${envVar}`,
+        envVar,
+      );
     }
     if (entry.provider !== undefined && !(SECRET_PROVIDER_IDS as readonly string[]).includes(entry.provider)) {
       throw new Error(`unknown secret provider: ${entry.provider}`);
@@ -3031,6 +3038,19 @@ export async function seedDefaultLlmConnection(): Promise<void> {
     } catch (error) {
       console.error('[config] Failed to seed API key for default connection:', error);
     }
+  }
+
+  // Provision missing ~/.omp/agent files when a key is already present so
+  // the first turn can start. Existing user OMP files are never overwritten.
+  try {
+    ensureOmpRoxFirstRun({
+      homeDir: homedir(),
+      env: process.env,
+      storedApiKey: envApiKey,
+      baseUrl: connection.baseUrl,
+    });
+  } catch (error) {
+    console.error('[config] Failed to provision OMP first-run config:', error);
   }
 }
 

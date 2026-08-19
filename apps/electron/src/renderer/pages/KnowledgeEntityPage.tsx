@@ -4,6 +4,7 @@
  */
 
 import * as React from 'react'
+import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import type { KnowledgeRef } from '@craft-agent/core/knowledge'
 import { deriveKnowledgeMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
@@ -13,9 +14,12 @@ import {
   useEntityView,
   type EntityViewId,
 } from '@/components/app-shell/EntityViewTabs'
+import { featureUnifiedShellAtom } from '@/atoms/unified-shell'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
 import { MindMapHost } from '@/mindmap/MindMapHost'
+import { KnowledgeInspector } from '@/knowledge/KnowledgeInspector'
+import { knowledgeEntityCompanionRef } from '@/knowledge/knowledge-entity-ref'
 import KnowledgeSurfacePage from '@/pages/KnowledgeSurfacePage'
 import type { SiyuanSurfaceRef } from '@/knowledge/siyuan-url'
 
@@ -28,6 +32,7 @@ export interface KnowledgeEntityPageProps {
 export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEntityPageProps) {
   const { t } = useTranslation()
   const { activeWorkspaceId } = useAppShellContext()
+  const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const siyuanConnected = useSiyuanConnected()
   const capabilities = React.useMemo(
     () => defaultKnowledgeEntityCapabilities({ siyuanConnected: siyuanConnected ?? false }),
@@ -116,6 +121,8 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
     }
   }, [view, kind, id, activeWorkspaceId, t])
 
+  const companionRef = knowledgeEntityCompanionRef(kind, id)
+
   let body: React.ReactNode
   if (view === 'map' || view === 'outline') {
     body = (
@@ -141,7 +148,17 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
         onChange={setView as (id: EntityViewId) => void}
         capabilities={capabilities}
       />
-      <div className="flex-1 flex flex-col min-h-0">{body}</div>
+      <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">{body}</div>
+        {companionRef && !unifiedShellEnabled ? (
+          <aside
+            className="w-[320px] shrink-0 overflow-y-auto border-l border-border/60 bg-muted/[0.12]"
+            aria-label={t('knowledge.inspector.title')}
+          >
+            <KnowledgeInspector knowledgeRef={companionRef} />
+          </aside>
+        ) : null}
+      </div>
     </div>
   )
 }

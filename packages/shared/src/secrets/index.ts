@@ -7,6 +7,8 @@ export {
   SECRET_PROVIDER_IDS,
   SecretRefEntrySchema,
   SecretResolveError,
+  SecretConfigError,
+  toPublicSecretRef,
   type SecretProviderId,
   type SecretRefEntry,
   type SecretRef,
@@ -36,3 +38,9 @@ export {
 } from './chain.ts';
 
 export { refreshRuntimeSecretEnv, type RefreshRuntimeSecretEnvOptions } from './runtime.ts';
+
+export {
+  diagnoseInfisicalAvailability,
+  type InfisicalAvailability,
+  type SecretRefsSettingsPayload,
+} from './availability.ts';

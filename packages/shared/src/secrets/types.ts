@@ -53,7 +53,7 @@ export type SecretErrorCode =
   | 'INFISICAL_UNAVAILABLE' // not configured, network failure, or unexpected response
   | 'INFISICAL_AUTH_FAILED' // 401/403 from the Infisical API
   | 'SECRET_NOT_FOUND' // no provider in the chain produced a value
-  | 'SECRET_ENVVAR_DENIED'; // target envVar is on the injection denylist (checked at resolution time)
+  | 'SECRET_ENVVAR_DENIED'; // target envVar is on the injection denylist (setter + resolution)
 
 /** Operational resolution failure. "Not found" is NOT an error — resolve() returns null. */
 export class SecretResolveError extends Error {
@@ -66,6 +66,34 @@ export class SecretResolveError extends Error {
     this.code = code;
     this.provider = provider;
   }
+}
+
+/**
+ * Config/RPC validation failure (not a provider resolve). Used by
+ * setRuntimeSecretRefs for denylisted envVar names so settings SET can
+ * surface a typed `SECRET_ENVVAR_DENIED` instead of a generic Error string.
+ */
+export class SecretConfigError extends Error {
+  readonly code: SecretErrorCode;
+  readonly envVar?: string;
+
+  constructor(code: SecretErrorCode, message: string, envVar?: string) {
+    super(message);
+    this.name = 'SecretConfigError';
+    this.code = code;
+    this.envVar = envVar;
+  }
+}
+
+/** Refs only — never copies a `value` or other extra fields. */
+export function toPublicSecretRef(entry: SecretRefEntry): SecretRefEntry {
+  const out: SecretRefEntry = {
+    name: typeof entry?.name === 'string' ? entry.name : '',
+    envVar: typeof entry?.envVar === 'string' ? entry.envVar : '',
+  };
+  if (entry.provider !== undefined) out.provider = entry.provider;
+  if (entry.ref !== undefined) out.ref = entry.ref;
+  return out;
 }
 
 export interface SecretProvider {

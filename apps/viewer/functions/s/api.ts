@@ -1,8 +1,8 @@
 import {
   CORS,
-  MAX_SHARE_BYTES,
   OWNER_KEY_HASH_META,
   checkDeclaredSize,
+  checkSharePayloadSize,
   isSessionPayload,
   json,
   newId,
@@ -32,7 +32,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return shareError('INVALID_SESSION_PAYLOAD', 'Invalid session: must have id (string) and messages (array)', 400)
   }
   const raw = JSON.stringify(body)
-  if (raw.length > MAX_SHARE_BYTES) return shareError('SHARE_TOO_LARGE', 'Session file is too large to share', 413)
+  const tooBig = checkSharePayloadSize(raw)
+  if (tooBig) return tooBig
 
   const shareId = newId()
   // Owner mutation capability: returned once to the creator; only its SHA-256

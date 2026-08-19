@@ -25,6 +25,7 @@ import {
   detectExtensionFromMagic,
   sanitizeFilename,
 } from '../utils/binary-detection.ts';
+import { proxyToolName, proxyToolNamePrefix } from './proxy-tool-name.ts';
 
 /**
  * Configuration for an in-process API source server.
@@ -53,38 +54,6 @@ export interface McpToolResult {
   isError: boolean;
   /** Source slug for error attribution (set on failure) */
   sourceSlug?: string;
-}
-
-const LLM_TOOL_NAME_PATTERN = /^[A-Za-z0-9_-]{1,128}$/;
-const LLM_TOOL_NAME_MAX_LENGTH = 128;
-
-function sanitizeToolNamePart(value: string): string {
-  const sanitized = value.replace(/[^A-Za-z0-9_-]/g, '_');
-  return sanitized.length > 0 ? sanitized : 'tool';
-}
-
-function truncateWithSuffix(base: string, suffix: string): string {
-  return `${base.slice(0, LLM_TOOL_NAME_MAX_LENGTH - suffix.length)}${suffix}`;
-}
-
-function buildSafeProxyToolName(slug: string, originalName: string, usedNames: Set<string>): string {
-  const safeSlug = sanitizeToolNamePart(slug);
-  const safeTool = sanitizeToolNamePart(originalName);
-  let baseName = `mcp__${safeSlug}__${safeTool}`;
-
-  if (baseName.length > LLM_TOOL_NAME_MAX_LENGTH) {
-    baseName = baseName.slice(0, LLM_TOOL_NAME_MAX_LENGTH);
-  }
-
-  let candidate = baseName;
-  let counter = 2;
-  while (usedNames.has(candidate) || !LLM_TOOL_NAME_PATTERN.test(candidate)) {
-    const suffix = `_${counter}`;
-    candidate = truncateWithSuffix(baseName, suffix);
-    counter++;
-  }
-
-  return candidate;
 }
 
 /**
@@ -198,7 +167,7 @@ export class McpClientPool {
     const usedProxyNames = new Set(this.proxyTools.keys());
     const sourceProxyNames = new Map<string, string>();
     for (const tool of tools) {
-      const proxyName = buildSafeProxyToolName(slug, tool.name, usedProxyNames);
+      const proxyName = proxyToolName(slug, tool.name, usedProxyNames);
       usedProxyNames.add(proxyName);
       sourceProxyNames.set(tool.name, proxyName);
       this.proxyTools.set(proxyName, { slug, originalName: tool.name });
@@ -390,7 +359,7 @@ export class McpClientPool {
     const proxyName = this.getProxyToolName(slug, originalName);
     if (!proxyName) return null;
 
-    const prefix = `mcp__${sanitizeToolNamePart(slug)}__`;
+    const prefix = proxyToolNamePrefix(slug);
     return proxyName.startsWith(prefix) ? proxyName.slice(prefix.length) : proxyName;
   }
 

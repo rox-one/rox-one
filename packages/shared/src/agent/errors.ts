@@ -58,6 +58,77 @@ export interface AgentError {
 }
 
 /**
+ * Typed classification for OMP subprocess startup failures.
+ * These six codes are members of the core `ErrorCode` union so a new
+ * agent code cannot silently become a generic string on TypedError.
+ */
+export type OmpStartupErrorCode =
+  /** No omp binary resolvable, or OMP config/toolchain not in place. */
+  | 'OMP_NOT_CONFIGURED'
+  /** OMP exited because no models are configured ("No models available…"). */
+  | 'OMP_NO_MODELS'
+  /** OMP stderr indicates interactive login / credentials are required. */
+  | 'OMP_AUTH_REQUIRED'
+  /** Generic non-zero exit (or kill signal) before the ready frame. */
+  | 'OMP_START_FAILED'
+  /** No ready frame within the bounded startup window. */
+  | 'OMP_READY_TIMEOUT'
+  /** Malformed ready frame, or clean exit without any ready frame. */
+  | 'OMP_PROTOCOL_ERROR';
+
+const OMP_STARTUP_ERROR_TEXT: Record<OmpStartupErrorCode, { title: string; message: string; canRetry: boolean }> = {
+  OMP_NOT_CONFIGURED: {
+    title: 'OMP runtime not configured',
+    message: 'The omp CLI is missing or its toolchain is not ready.',
+    canRetry: true,
+  },
+  OMP_NO_MODELS: {
+    title: 'OMP has no models configured',
+    message: 'The OMP runtime has no model providers. A Rox API key (ROX_API_KEY) or ~/.omp/agent/models.yml is required before the first turn.',
+    canRetry: true,
+  },
+  OMP_AUTH_REQUIRED: {
+    title: 'OMP authentication required',
+    message: 'OMP rejected the current credentials. Supply a valid Rox API key and retry.',
+    canRetry: false,
+  },
+  OMP_START_FAILED: {
+    title: 'OMP failed to start',
+    message: 'The OMP subprocess exited before startup completed.',
+    canRetry: true,
+  },
+  OMP_READY_TIMEOUT: {
+    title: 'OMP startup timed out',
+    message: 'OMP did not send the ready frame within the startup window.',
+    canRetry: true,
+  },
+  OMP_PROTOCOL_ERROR: {
+    title: 'OMP protocol error',
+    message: 'OMP sent a malformed ready frame or exited without speaking the expected RPC protocol.',
+    canRetry: false,
+  },
+};
+
+const OMP_RETRY_ACTION: RecoveryAction = { key: 'r', label: 'Retry', action: 'retry' };
+const OMP_CREDENTIAL_ACTION: RecoveryAction = { key: 's', label: 'Add credential', action: 'settings' };
+
+function ompStartupDefinition(
+  code: OmpStartupErrorCode,
+): Omit<AgentError, 'code' | 'originalError' | 'details'> {
+  const text = OMP_STARTUP_ERROR_TEXT[code]!;
+  const actions: RecoveryAction[] = [OMP_RETRY_ACTION];
+  if (code === 'OMP_NO_MODELS' || code === 'OMP_AUTH_REQUIRED' || code === 'OMP_NOT_CONFIGURED') {
+    actions.push(OMP_CREDENTIAL_ACTION);
+  }
+  return {
+    title: text.title,
+    message: text.message,
+    actions,
+    canRetry: text.canRetry,
+  };
+}
+
+/**
  * Error definitions with user-friendly messages and recovery actions
  */
 const ERROR_DEFINITIONS: Record<ErrorCode, Omit<AgentError, 'code' | 'originalError' | 'details'>> = {
@@ -261,6 +332,12 @@ const ERROR_DEFINITIONS: Record<ErrorCode, Omit<AgentError, 'code' | 'originalEr
     ],
     canRetry: true,
   },
+  OMP_NOT_CONFIGURED: ompStartupDefinition('OMP_NOT_CONFIGURED'),
+  OMP_NO_MODELS: ompStartupDefinition('OMP_NO_MODELS'),
+  OMP_AUTH_REQUIRED: ompStartupDefinition('OMP_AUTH_REQUIRED'),
+  OMP_START_FAILED: ompStartupDefinition('OMP_START_FAILED'),
+  OMP_READY_TIMEOUT: ompStartupDefinition('OMP_READY_TIMEOUT'),
+  OMP_PROTOCOL_ERROR: ompStartupDefinition('OMP_PROTOCOL_ERROR'),
   unknown_error: {
     title: 'Error',
     message: 'Something went wrong. If this persists, check the provider status page or retry.',
@@ -591,29 +668,6 @@ export function isSDKErrorText(text: string): boolean {
 // OMP startup errors (OmpAgent first-run lifecycle)
 // ============================================================
 
-/**
- * Typed classification for OMP subprocess startup failures.
- *
- * These codes are backend-local: the shared ErrorCode union lives in
- * @craft-agent/core and is intentionally not extended here, so the OMP codes
- * travel on OmpStartupError.ompCode and are surfaced through AgentError.code
- * as wire strings (TypedError crosses the wire as JSON where the code is a
- * plain string; consumers render title/message/actions generically).
- */
-export type OmpStartupErrorCode =
-  /** No omp binary resolvable, or OMP config/toolchain not in place. */
-  | 'OMP_NOT_CONFIGURED'
-  /** OMP exited because no models are configured ("No models available…"). */
-  | 'OMP_NO_MODELS'
-  /** OMP stderr indicates interactive login / credentials are required. */
-  | 'OMP_AUTH_REQUIRED'
-  /** Generic non-zero exit (or kill signal) before the ready frame. */
-  | 'OMP_START_FAILED'
-  /** No ready frame within the bounded startup window. */
-  | 'OMP_READY_TIMEOUT'
-  /** Malformed ready frame, or clean exit without any ready frame. */
-  | 'OMP_PROTOCOL_ERROR';
-
 export interface OmpStartupErrorOptions {
   code: OmpStartupErrorCode;
   message: string;
@@ -729,29 +783,20 @@ export function classifyOmpStartupExit(input: {
   });
 }
 
-const OMP_STARTUP_ERROR_TEXT: Record<OmpStartupErrorCode, { title: string; canRetry: boolean }> = {
-  OMP_NOT_CONFIGURED: { title: 'OMP runtime not configured', canRetry: true },
-  OMP_NO_MODELS: { title: 'OMP has no models configured', canRetry: true },
-  OMP_AUTH_REQUIRED: { title: 'OMP authentication required', canRetry: false },
-  OMP_START_FAILED: { title: 'OMP failed to start', canRetry: true },
-  OMP_READY_TIMEOUT: { title: 'OMP startup timed out', canRetry: true },
-  OMP_PROTOCOL_ERROR: { title: 'OMP protocol error', canRetry: false },
-};
-
 /**
  * Map a typed OMP startup failure onto the shared typed-error wire shape.
- * The OMP-specific code is preserved as the wire code (see OmpStartupErrorCode).
+ * `ompCode` is an ErrorCode member (see core AGENT_ERROR_CODES).
  */
 export function ompStartupErrorToAgentError(error: OmpStartupError): AgentError {
-  const text = OMP_STARTUP_ERROR_TEXT[error.ompCode];
+  const definition = ERROR_DEFINITIONS[error.ompCode]!;
   const details: string[] = [];
   if (error.stderr) details.push(`stderr: ${error.stderr.slice(-500)}`);
   return {
-    code: error.ompCode as unknown as ErrorCode,
-    title: text.title,
+    code: error.ompCode,
+    title: definition.title,
     message: error.hint ? `${error.message} ${error.hint}` : error.message,
-    actions: [{ key: 'r', label: 'Retry', action: 'retry' }],
-    canRetry: text.canRetry,
+    actions: definition.actions,
+    canRetry: definition.canRetry,
     originalError: error.message,
     details,
   };

@@ -142,6 +142,10 @@ export const CHANNEL_MAP = {
   getEnvOverrides: invoke(RPC_CHANNELS.settings.GET_ENV_OVERRIDES),
   setEnvOverrides: invoke(RPC_CHANNELS.settings.SET_ENV_OVERRIDES),
 
+  // Secret refs (config runtime.secretRefs — refs only, never values)
+  getSecretRefs: invoke(RPC_CHANNELS.settings.GET_SECRET_REFS),
+  setSecretRefs: invoke(RPC_CHANNELS.settings.SET_SECRET_REFS),
+
   // Release notes
   getReleaseNotes: invoke(RPC_CHANNELS.releaseNotes.GET),
   getLatestReleaseVersion: invoke(RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION),
@@ -215,6 +219,7 @@ export const CHANNEL_MAP = {
   hasClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.HAS_CLAUDE_OAUTH_STATE),
   clearClaudeOAuthState: invoke(RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE),
   deferSetup: invoke(RPC_CHANNELS.onboarding.DEFER_SETUP),
+  saveOmpCredential: invoke(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL),
   startRoxConnect: invoke(RPC_CHANNELS.onboarding.START_ROX_CONNECT),
   getRoxCloudState: invoke(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE),
   clearRoxCloud: invoke(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD),

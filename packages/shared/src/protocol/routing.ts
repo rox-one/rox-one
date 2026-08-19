@@ -220,12 +220,16 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.onboarding.START_ROX_CONNECT,
   RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
   RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
+  RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
   RPC_CHANNELS.settings.GET_NETWORK_PROXY,
   RPC_CHANNELS.settings.SET_NETWORK_PROXY,
 
   // env overrides — local config.json runtime.envOverrides applied to spawned agents
   RPC_CHANNELS.settings.GET_ENV_OVERRIDES,
   RPC_CHANNELS.settings.SET_ENV_OVERRIDES,
+  // secret refs — local config.json runtime.secretRefs (refs only, never values)
+  RPC_CHANNELS.settings.GET_SECRET_REFS,
+  RPC_CHANNELS.settings.SET_SECRET_REFS,
 
   // server config — local embedded server settings
   RPC_CHANNELS.settings.GET_SERVER_CONFIG,

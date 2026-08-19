@@ -121,7 +121,7 @@ plan below) / **KEEP_INTERNAL** (not user-visible; leave) /
 
 | # | Identifier | Location | Action |
 |---|-----------|----------|--------|
-| O1 | Device-flow `clientId: 'craft-agents-desktop'` sent to `POST {rox}/api/auth/device/start` | `packages/shared/src/auth/rox-cloud.ts`, call site `apps/electron/src/main/onboarding.ts` | **RENAME_NOW as configurable** — the accepting side lives in the private `rox-one/rox-one-website` repo, so the value is contractual. This branch introduces `ROX_CLIENT_ID` env override (default `'craft-agents-desktop'`, unchanged behavior) and documents it; flipping the default is a one-line change once the website accepts a Rox value. Never strand: old default remains valid. |
+| O1 | Device-flow `clientId: 'craft-agents-desktop'` sent to `POST {rox}/api/auth/device/start` | `packages/shared/src/auth/rox-cloud.ts`, call site `apps/electron/src/main/onboarding.ts` | **RENAME_NOW as configurable** — the accepting side lives in the private `rox-one/rox-one-website` repo, so the value is contractual. This branch introduces `ROX_CLIENT_ID` env override (default `'craft-agents-desktop'`, unchanged behavior) and documents it; flipping the default is a one-line change once the website accepts a Rox value. Never strand: old default remains valid. Ticket 14: [next-program/decisions/005-website-client-id.md](./next-program/decisions/005-website-client-id.md) — default flip still OPEN, blocked on website repo access. |
 | O2 | Relay callback URLs at third parties (Google/Slack app consoles) | external + P1/P2 | **MIGRATE** with P1. |
 | O3 | Test fixtures (`gyula@craft.do`, relay URL fixtures) | `packages/server-core/src/webui/__tests__/oauth-callback.test.ts` | **KEEP_INTERNAL** — test data. |
 
@@ -199,6 +199,8 @@ plan below) / **KEEP_INTERNAL** (not user-visible; leave) /
   `@craft-agent/*` marked deprecated.
 
 ### M5. appId / productName / auto-update (`com.lukilabs.craft-agent`)
+
+Ticket 14 binding: [next-program/decisions/004-appid-auto-update.md](./next-program/decisions/004-appid-auto-update.md) — **no bridge date**. Do not flip `appId` / `productName` until a human dates this runbook.
 
 1. **appId is load-bearing for electron-updater**: a new appId means the
    updater sees a different app and existing installs stop receiving updates.

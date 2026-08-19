@@ -374,6 +374,7 @@ export const RPC_CHANNELS = {
     START_ROX_CONNECT: 'onboarding:startRoxConnect',
     GET_ROX_CLOUD_STATE: 'onboarding:getRoxCloudState',
     CLEAR_ROX_CLOUD: 'onboarding:clearRoxCloud',
+    SAVE_OMP_CREDENTIAL: 'onboarding:saveOmpCredential',
   },
   llmConnections: {
     LIST: 'LLM_Connection:list',
@@ -414,6 +415,8 @@ export const RPC_CHANNELS = {
     GET_SERVER_STATUS: 'settings:getServerStatus',
     GET_ENV_OVERRIDES: 'settings:getEnvOverrides',
     SET_ENV_OVERRIDES: 'settings:setEnvOverrides',
+    GET_SECRET_REFS: 'settings:getSecretRefs',
+    SET_SECRET_REFS: 'settings:setSecretRefs',
   },
   pi: {
     GET_API_KEY_PROVIDERS: 'pi:getApiKeyProviders',

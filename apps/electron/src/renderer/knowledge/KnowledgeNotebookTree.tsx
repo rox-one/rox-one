@@ -12,7 +12,8 @@
  * - Saved views: workspace views.json via `knowledge.viewsList` (knowledge
  *   domain only) — clicking a view deep-links to `knowledge/view/{id}`.
  * - Inbox / Daily / Databases / Tags: no provider surface exists (no contract
- *   endpoint); they keep the honest dynamic-empty row.
+ *   endpoint). Empty chrome is hidden (not a load-failure row) so the tree
+ *   does not look broken. See uncontractedNavSectionPresentation.
  *
  * Envelope rows resolve document titles best-effort through `knowledge.get`
  * (Promise.all in the loader, fail-soft per row to the short id).
@@ -25,13 +26,9 @@ import * as React from 'react'
 import type { LucideIcon } from 'lucide-react'
 import {
   Book,
-  CalendarDays,
   Clock,
-  Database,
-  FolderInput,
   LayoutGrid,
   Star,
-  Tag as TagIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
@@ -80,6 +77,21 @@ export interface KnowledgeNavigatorData {
 
 export const RECENT_SECTION_LIMIT = 10
 export const FAVORITES_SECTION_LIMIT = 10
+
+/** Sections with no provider/contract surface — hide when empty. */
+export const UNCONTRACTED_NAV_SECTION_IDS = ['inbox', 'daily', 'databases', 'tags'] as const
+
+export type UncontractedNavSectionId = (typeof UNCONTRACTED_NAV_SECTION_IDS)[number]
+
+export type UncontractedNavPresentation = 'hidden' | 'items'
+
+/**
+ * Inbox/Daily/Tags (and Databases) have no list endpoint. Empty chrome must
+ * disappear — never look like a load failure / unavailable kernel.
+ */
+export function uncontractedNavSectionPresentation(itemCount: number): UncontractedNavPresentation {
+  return itemCount > 0 ? 'items' : 'hidden'
+}
 
 /** Recently touched work items: non-archived envelopes, updatedAt desc, capped. */
 export function selectRecentEnvelopes(
@@ -192,20 +204,6 @@ export function navigatorRowLabel(row: NavigatorEnvelopeRow): string {
 // Presentation
 // ---------------------------------------------------------------------------
 
-interface StaticSection {
-  id: string
-  icon: LucideIcon
-  labelKey: string
-}
-
-/** Sections with no provider/contract surface yet — honest dynamic-empty rows. */
-const STATIC_SECTIONS: StaticSection[] = [
-  { id: 'inbox', icon: FolderInput, labelKey: 'knowledge.nav.inbox' },
-  { id: 'daily', icon: CalendarDays, labelKey: 'knowledge.nav.daily' },
-  { id: 'databases', icon: Database, labelKey: 'knowledge.nav.databases' },
-  { id: 'tags', icon: TagIcon, labelKey: 'knowledge.nav.tags' },
-]
-
 function SectionHeader({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
     <div className="flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-foreground/80">
@@ -291,13 +289,6 @@ export function KnowledgeNotebookTree() {
         </div>
       )}
 
-      {STATIC_SECTIONS.slice(0, 2).map((section) => (
-        <div key={section.id}>
-          <SectionHeader icon={section.icon} label={t(section.labelKey)} />
-          <EmptyRow>{t('knowledge.nav.sectionEmpty')}</EmptyRow>
-        </div>
-      ))}
-
       <SectionHeader icon={Clock} label={t('knowledge.nav.recent')} />
       {data === null ? (
         <EmptyRow>{t('knowledge.surface.loading')}</EmptyRow>
@@ -318,13 +309,6 @@ export function KnowledgeNotebookTree() {
           ))}
         </div>
       )}
-
-      {STATIC_SECTIONS.slice(2).map((section) => (
-        <div key={section.id}>
-          <SectionHeader icon={section.icon} label={t(section.labelKey)} />
-          <EmptyRow>{t('knowledge.nav.sectionEmpty')}</EmptyRow>
-        </div>
-      ))}
 
       <SectionHeader icon={Star} label={t('knowledge.nav.favorites')} />
       {data === null ? (
