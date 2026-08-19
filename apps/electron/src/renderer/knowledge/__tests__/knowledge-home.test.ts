@@ -17,6 +17,8 @@ import {
   resolveKnowledgeApi,
   resolveKnowledgeViewsApi,
   runKnowledgeView,
+  defaultKnowledgeEditorRoute,
+  pickDefaultKnowledgeDocument,
   searchHitRoute,
   searchKnowledge,
   selectKnowledgeView,
@@ -275,5 +277,29 @@ describe('knowledge saved views (P5)', () => {
         'status',
       ),
     ).toBe('needs-review')
+  })
+})
+
+describe('default knowledge editor', () => {
+  it('picks the most recently updated envelope document', () => {
+    const envelopes = [
+      {
+        knowledgeRef: { scheme: 'siyuan' as const, kind: 'document' as const, id: 'old' },
+        createdAt: 1,
+        updatedAt: 10,
+      },
+      {
+        knowledgeRef: { scheme: 'siyuan' as const, kind: 'document' as const, id: 'fresh' },
+        createdAt: 1,
+        updatedAt: 99,
+      },
+    ]
+    expect(pickDefaultKnowledgeDocument(envelopes)).toEqual({ kind: 'document', id: 'fresh' })
+    expect(defaultKnowledgeEditorRoute(envelopes)).toBe('knowledge/document/fresh')
+  })
+
+  it('falls back to the knowledge home route when there are no envelopes', () => {
+    expect(pickDefaultKnowledgeDocument([])).toBeNull()
+    expect(defaultKnowledgeEditorRoute([])).toBe('knowledge')
   })
 })

@@ -12,22 +12,22 @@ import {
 describe('buildSiyuanSurfaceUrl', () => {
   it('appends the desktop web build path to the base URL', () => {
     expect(buildSiyuanSurfaceUrl('http://localhost:6806')).toBe(
-      'http://localhost:6806/stage/build/desktop/',
+      'http://localhost:6806/stage/build/desktop/?craftIntegrated=1',
     )
   })
 
   it('strips trailing slashes from the base URL to avoid a double slash', () => {
     expect(buildSiyuanSurfaceUrl('http://localhost:6806/')).toBe(
-      'http://localhost:6806/stage/build/desktop/',
+      'http://localhost:6806/stage/build/desktop/?craftIntegrated=1',
     )
     expect(buildSiyuanSurfaceUrl('http://localhost:6806///')).toBe(
-      'http://localhost:6806/stage/build/desktop/',
+      'http://localhost:6806/stage/build/desktop/?craftIntegrated=1',
     )
   })
 
   it('supports remote base URLs', () => {
     expect(buildSiyuanSurfaceUrl('https://notes.example.com')).toBe(
-      'https://notes.example.com/stage/build/desktop/',
+      'https://notes.example.com/stage/build/desktop/?craftIntegrated=1',
     )
   })
 
@@ -36,7 +36,7 @@ describe('buildSiyuanSurfaceUrl', () => {
       kind: 'document',
       id: '20240101-abcdef',
     })
-    expect(withDoc).toBe('http://localhost:6806/stage/build/desktop/?id=20240101-abcdef')
+    expect(withDoc).toBe('http://localhost:6806/stage/build/desktop/?id=20240101-abcdef&craftIntegrated=1')
   })
 
   it('appends ?id= for block refs', () => {
@@ -44,7 +44,7 @@ describe('buildSiyuanSurfaceUrl', () => {
       kind: 'block',
       id: '20240101-block',
     })
-    expect(withBlock).toBe('http://localhost:6806/stage/build/desktop/?id=20240101-block')
+    expect(withBlock).toBe('http://localhost:6806/stage/build/desktop/?id=20240101-block&craftIntegrated=1')
   })
 
   it('does not append id for notebook/compat refs', () => {
@@ -52,7 +52,7 @@ describe('buildSiyuanSurfaceUrl', () => {
       kind: 'notebook',
       id: SIYUAN_FULL_SURFACE_ID,
     })
-    expect(compat).toBe('http://localhost:6806/stage/build/desktop/')
+    expect(compat).toBe('http://localhost:6806/stage/build/desktop/?craftIntegrated=1')
   })
 
   it('graph mode includes craftSurface=graph', () => {
@@ -69,7 +69,7 @@ describe('buildSiyuanSurfaceUrl', () => {
     const url = buildSiyuanSurfaceUrl('http://localhost:6806', undefined, {
       mode: 'global-graph',
     })
-    expect(url).toBe('http://localhost:6806/stage/build/desktop/?craftSurface=global-graph')
+    expect(url).toBe('http://localhost:6806/stage/build/desktop/?craftSurface=global-graph&craftIntegrated=1')
   })
 
   it('outline and backlinks modes set craftSurface marker', () => {
@@ -87,10 +87,16 @@ describe('buildSiyuanSurfaceUrl', () => {
     ).toContain('craftSurface=flashcard')
     expect(
       buildSiyuanSurfaceUrl('http://localhost:6806', undefined, { mode: 'plugins' }),
-    ).toBe('http://localhost:6806/stage/build/desktop/?craftSurface=plugins')
+    ).toBe('http://localhost:6806/stage/build/desktop/?craftSurface=plugins&craftIntegrated=1')
+  })
+
+  it('always appends craftIntegrated=1', () => {
+    const url = buildSiyuanSurfaceUrl('http://localhost:6806', { kind: 'document', id: 'd' })
+    expect(url).toContain('craftIntegrated=1')
   })
 
   it('editor mode omits craftSurface', () => {
+
     const url = buildSiyuanSurfaceUrl(
       'http://localhost:6806',
       { kind: 'document', id: 'd' },
@@ -104,7 +110,7 @@ describe('buildSiyuanSurfaceUrl', () => {
 describe('DEFAULT_BASE_URL', () => {
   it('resolves to the local SiYuan kernel desktop surface through the URL builder', () => {
     expect(buildSiyuanSurfaceUrl(DEFAULT_BASE_URL)).toBe(
-      'http://localhost:6806/stage/build/desktop/',
+      'http://localhost:6806/stage/build/desktop/?craftIntegrated=1',
     )
   })
 })

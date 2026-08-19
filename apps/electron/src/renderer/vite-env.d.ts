@@ -1,5 +1,9 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly CRAFT_DEBUG_KNOWLEDGE_FULL_UI?: string
+}
+
 // Image imports
 declare module "*.png" {
   const src: string

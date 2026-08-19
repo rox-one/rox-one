@@ -4,9 +4,8 @@
  * internally, so AppShell can mount it directly in the navigator slot
  * (W2-NAV wires it behind `isKnowledgeNavigation`).
  *
- * Contents: the section tree (notebooks + static S-01 sections) and a button
- * that opens the full SiYuan desktop interface rendered by the surface slice
- * (W2-SURF owns the embedded surface itself).
+ * Contents: the section tree (notebooks + static S-01 sections). Full-kernel
+ * chrome is debug-only (`import.meta.env.DEV` or CRAFT_DEBUG_KNOWLEDGE_FULL_UI).
  */
 import { useSetAtom } from 'jotai'
 import { FileDiff } from 'lucide-react'
@@ -18,10 +17,21 @@ import { knowledgeHomeViewAtom } from './KnowledgeHome'
 import { KnowledgeNotebookTree } from './KnowledgeNotebookTree'
 import { SIYUAN_FULL_SURFACE_ID } from './siyuan-url'
 
+export function shouldShowFullKnowledgeInterface(
+  env: { DEV?: boolean; CRAFT_DEBUG_KNOWLEDGE_FULL_UI?: string } = import.meta.env,
+): boolean {
+  return (
+    env.DEV === true ||
+    env.CRAFT_DEBUG_KNOWLEDGE_FULL_UI === '1' ||
+    env.CRAFT_DEBUG_KNOWLEDGE_FULL_UI === 'true'
+  )
+}
+
 export function KnowledgeNavigator() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const setHomeView = useSetAtom(knowledgeHomeViewAtom)
+  const showFullInterface = shouldShowFullKnowledgeInterface()
   return (
     <div className="flex h-full flex-col bg-background">
       <header className="border-b border-border px-3 py-2">
@@ -51,20 +61,23 @@ export function KnowledgeNavigator() {
           </span>
         </button>
       </div>
-      <footer className="border-t border-border px-3 py-2">
-        <button
-          type="button"
-          onClick={() => {
-            navigate(routes.view.siyuan({ kind: 'notebook', id: SIYUAN_FULL_SURFACE_ID }))
-          }}
-          className={cn(
-            'w-full rounded-md px-2 py-1.5 text-left text-[11px] leading-snug text-muted-foreground',
-            'hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-          )}
-        >
-          {t('knowledge.openFullInterface')}
-        </button>
-      </footer>
+      {showFullInterface ? (
+        <footer className="border-t border-border px-3 py-2">
+          <button
+            type="button"
+            data-testid="knowledge-open-full-interface"
+            onClick={() => {
+              navigate(routes.view.siyuan({ kind: 'notebook', id: SIYUAN_FULL_SURFACE_ID }))
+            }}
+            className={cn(
+              'w-full rounded-md px-2 py-1.5 text-left text-[11px] leading-snug text-muted-foreground',
+              'hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+            )}
+          >
+            {t('knowledge.openFullInterface')}
+          </button>
+        </footer>
+      ) : null}
     </div>
   )
 }

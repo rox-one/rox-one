@@ -29,7 +29,9 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views'
+import type { KnowledgeWorkEnvelope } from '../../shared/types'
 import { KnowledgeProposals } from './KnowledgeProposals'
+import { selectRecentEnvelopes } from './KnowledgeNotebookTree'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 
 /**
@@ -54,6 +56,7 @@ export interface KnowledgeSearchApi {
     connectionId: string
     input: { query: string }
   }): Promise<{ items: SearchHit[] }>
+  envelopeList?(args?: { connectionId?: string }): Promise<KnowledgeWorkEnvelope[]>
 }
 
 /** P5 views + set_attribute subset of ElectronAPI.knowledge. */
@@ -113,9 +116,30 @@ export async function searchKnowledge(
   return page.items
 }
 
-/** Route for a search hit — the in-app SiYuan surface for this document/block. */
+/** Route for a search hit — the in-app editor surface for this document/block. */
 export function searchHitRoute(hit: Pick<SearchHit, 'ref'>) {
   return routes.view.siyuan({ kind: hit.ref.kind, id: hit.ref.id })
+}
+
+/** Last envelope document, or null when the workspace has no notes yet. */
+export function pickDefaultKnowledgeDocument(
+  envelopes: KnowledgeWorkEnvelope[] | null | undefined,
+): { kind: 'document' | 'block'; id: string } | null {
+  const last = selectRecentEnvelopes(envelopes ?? [], 1)[0]
+  const ref = last?.knowledgeRef
+  if (!ref?.id) return null
+  if (ref.kind === 'document' || ref.kind === 'block') {
+    return { kind: ref.kind, id: ref.id }
+  }
+  return null
+}
+
+export function defaultKnowledgeEditorRoute(
+  envelopes: KnowledgeWorkEnvelope[] | null | undefined,
+): string {
+  const ref = pickDefaultKnowledgeDocument(envelopes)
+  if (ref) return routes.view.siyuan({ kind: ref.kind, id: ref.id })
+  return routes.view.knowledge()
 }
 
 /** Route for a saved knowledge view deep-link. */
@@ -348,6 +372,32 @@ export function KnowledgeHome() {
       cancelled = true
     }
   }, [workspaceId])
+
+  // Healthy kernel, no search: open last envelope document (or stay on empty editor).
+  useEffect(() => {
+    if (kernelOffline || noConnections || query.trim().length > 0) return
+    if (view !== 'search') return
+    if (typeof window === 'undefined') return
+    let cancelled = false
+    const openDefault = async () => {
+      const api = resolveKnowledgeApi()
+      if (!api?.envelopeList) return
+      try {
+        const connections = await api.listConnections()
+        const connectionId = connections[0]?.id
+        const envelopes = await api.envelopeList(connectionId ? { connectionId } : undefined)
+        if (cancelled) return
+        const ref = pickDefaultKnowledgeDocument(envelopes)
+        if (ref) navigate(routes.view.siyuan({ kind: ref.kind, id: ref.id }))
+      } catch {
+        /* stay on search empty editor */
+      }
+    }
+    void openDefault()
+    return () => {
+      cancelled = true
+    }
+  }, [kernelOffline, noConnections, query, view, navigate])
 
   const handleStartKernel = useCallback(async () => {
     const start = window.electronAPI?.knowledge?.engineStart

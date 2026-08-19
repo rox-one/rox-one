@@ -164,6 +164,8 @@ export function buildSiyuanSurfaceUrl(
     params.set('craftSurface', mode)
   }
 
+  params.set('craftIntegrated', '1')
+
   const qs = params.toString()
   return qs ? `${root}?${qs}` : root
 }
