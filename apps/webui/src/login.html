@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Craft Agents — Login</title>
+  <title>Rox — Вход</title>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   <link rel="icon" type="image/x-icon" href="./favicon.ico" />
   <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
@@ -225,36 +225,75 @@
 </head>
 <body>
   <div class="card">
-    <h1>Craft Agents</h1>
-    <p class="subtitle">Enter your server token to continue</p>
+    <h1 id="brand">Rox</h1>
+    <p class="subtitle" id="subtitle">Введите токен сервера, чтобы продолжить</p>
 
     <form id="login-form">
-      <label for="password">Server Token</label>
+      <label for="password" id="token-label">Токен сервера</label>
       <input
         id="password"
         name="password"
         type="password"
-        placeholder="Enter CRAFT_SERVER_TOKEN"
+        placeholder="CRAFT_SERVER_TOKEN"
         autocomplete="current-password"
         autofocus
         required
       >
-      <button type="submit" id="submit-btn">Sign In</button>
+      <button type="submit" id="submit-btn">Войти</button>
     </form>
 
     <div id="error" class="error"></div>
   </div>
 
   <script>
+    // Tiny inline i18n: this page is served statically and runs before the app
+    // bundle, so react-i18next is unavailable. Language resolution mirrors
+    // packages/shared/src/i18n/setupI18n.ts: explicit user choice persisted in
+    // localStorage['i18nextLng'] wins, otherwise the default UI language is
+    // Russian — the OS locale must not override it.
+    const STRINGS = {
+      ru: {
+        title: 'Rox — Вход',
+        subtitle: 'Введите токен сервера, чтобы продолжить',
+        tokenLabel: 'Токен сервера',
+        signIn: 'Войти',
+        signingIn: 'Входим…',
+        authFailed: 'Ошибка аутентификации',
+        networkError: 'Ошибка сети — сервер запущен?',
+      },
+      en: {
+        title: 'Rox — Login',
+        subtitle: 'Enter your server token to continue',
+        tokenLabel: 'Server Token',
+        signIn: 'Sign In',
+        signingIn: 'Signing in...',
+        authFailed: 'Authentication failed',
+        networkError: 'Network error — is the server running?',
+      },
+    };
+
+    let lang = 'ru';
+    try {
+      const stored = localStorage.getItem('i18nextLng');
+      if (stored && STRINGS[stored]) lang = stored;
+    } catch (_) { /* localStorage unavailable — keep default */ }
+    const s = STRINGS[lang];
+
+    document.documentElement.lang = lang;
+    document.title = s.title;
+    document.getElementById('subtitle').textContent = s.subtitle;
+    document.getElementById('token-label').textContent = s.tokenLabel;
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.textContent = s.signIn;
+
     const form = document.getElementById('login-form');
     const errorEl = document.getElementById('error');
-    const submitBtn = document.getElementById('submit-btn');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorEl.classList.remove('visible');
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Signing in...';
+      submitBtn.textContent = s.signingIn;
 
       try {
         const password = document.getElementById('password').value;
@@ -271,14 +310,14 @@
         }
 
         const data = await res.json().catch(() => ({}));
-        errorEl.textContent = data.error || 'Authentication failed';
+        errorEl.textContent = data.error || s.authFailed;
         errorEl.classList.add('visible');
       } catch (err) {
-        errorEl.textContent = 'Network error — is the server running?';
+        errorEl.textContent = s.networkError;
         errorEl.classList.add('visible');
       } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Sign In';
+        submitBtn.textContent = s.signIn;
       }
     });
   </script>

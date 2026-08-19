@@ -80,6 +80,15 @@ export const KEYS = {
   activityRailCollapsed: 'activity-rail-collapsed',
   inspectorVisible: 'inspector-visible',
   inspectorSection: 'inspector-section',
+  // Workbench v2 (ADR-0001) — granular chrome flags; all default OFF
+  featureWorkbenchModeRegistryV1: 'feature-workbench-mode-registry-v1',
+  featureWorkbenchTopChromeV2: 'feature-workbench-top-chrome-v2',
+  featureWorkbenchTabGroupsV2: 'feature-workbench-tab-groups-v2',
+  featureWorkbenchBrowserSurfaceV2: 'feature-workbench-browser-surface-v2',
+  featureWorkbenchStatusBarV1: 'feature-workbench-status-bar-v1',
+  workbenchLayout: 'workbench-layout', // WorkbenchLayout v2 JSON, workspace-scoped
+  // Panel registry user overrides (S-03 §3.7), workspace-scoped via suffix
+  panelState: 'panel-registry-state',
 } as const
 
 export const EVENTS = {

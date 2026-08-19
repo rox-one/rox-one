@@ -1,7 +1,8 @@
 /**
  * Cross-platform asset copy script.
  *
- * Copies the resources/ directory to dist/resources/.
+ * Copies the resources/ directory to dist/resources/, omitting unread
+ * session-mcp-server / bridge-mcp-server trees (ticket 10).
  * All bundled assets (docs, themes, permissions, tool-icons) now live in resources/
  * which electron-builder handles natively via directories.buildResources.
  *
@@ -11,13 +12,13 @@
  * Run: bun scripts/copy-assets.ts
  */
 
-import { cpSync, copyFileSync, mkdirSync } from 'fs';
+import { copyFileSync } from 'fs';
 import { join } from 'path';
+import { copyElectronResourceTree } from '../../../scripts/build/staged-servers.ts';
 
-// Copy all resources (icons, themes, docs, permissions, tool-icons, etc.)
-cpSync('resources', 'dist/resources', { recursive: true });
+copyElectronResourceTree('resources', 'dist/resources');
 
-console.log('✓ Copied resources/ → dist/resources/');
+console.log('✓ Copied resources/ → dist/resources/ (skipped unread session/bridge MCP servers)');
 
 // Copy PowerShell parser script (for Windows command validation in Explore mode)
 // Source: packages/shared/src/agent/powershell-parser.ps1

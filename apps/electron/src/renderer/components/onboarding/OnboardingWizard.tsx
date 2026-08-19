@@ -7,6 +7,7 @@ import { LocalModelStep, type LocalModelSubmitData } from "./LocalModelStep"
 import { CompletionStep } from "./CompletionStep"
 import { RoxConnectStep, type RoxConnectCodes } from "./RoxConnectStep"
 import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
+import { OmpCredentialStep, type OmpCredentialSubmitData } from "./OmpCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
 import type { CustomEndpointApi } from '@config/llm-connections'
 
@@ -17,6 +18,7 @@ export type OnboardingStep =
   | 'provider-select'
   | 'local-model'
   | 'credentials'
+  | 'omp-credential'
   | 'complete'
 
 export type LoginStatus = 'idle' | 'waiting' | 'success' | 'error'
@@ -43,6 +45,7 @@ interface OnboardingWizardProps {
   onBack: () => void
   onSelectApiSetupMethod: (method: ApiSetupMethod) => void
   onSubmitCredential: (data: ApiKeySubmitData) => void
+  onSubmitOmpCredential?: (data: OmpCredentialSubmitData) => void
   onStartOAuth?: (methodOverride?: ApiSetupMethod) => void
   onFinish: () => void
 
@@ -105,6 +108,7 @@ export function OnboardingWizard({
   onBack,
   onSelectApiSetupMethod,
   onSubmitCredential,
+  onSubmitOmpCredential,
   onStartOAuth,
   onFinish,
   // Two-step OAuth flow
@@ -204,6 +208,17 @@ export function OnboardingWizard({
             editInitialValues={editInitialValues}
             onCancelOAuth={onCancelOAuth}
             copilotDeviceCode={copilotDeviceCode}
+          />
+        )
+
+      case 'omp-credential':
+        return (
+          <OmpCredentialStep
+            onSubmit={onSubmitOmpCredential ?? (() => {})}
+            onBack={onBack}
+            status={state.credentialStatus === 'validating' ? 'validating' : state.credentialStatus === 'error' ? 'error' : 'idle'}
+            errorMessage={state.errorMessage}
+            typedCode="OMP_NO_MODELS"
           />
         )
 

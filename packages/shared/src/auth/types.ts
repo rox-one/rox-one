@@ -48,6 +48,10 @@ export interface SetupNeeds {
   needsCredentials: boolean;
   /** Rox cloud account (rox.one) not connected — product gate */
   needsRoxCloud?: boolean;
+  /** Default OMP connection is missing ~/.omp models / Rox API key */
+  needsOmpCredential?: boolean;
+  /** Typed OMP code for the credential step (same string CLI prints) */
+  ompCredentialCode?: string;
   /** Everything complete → go straight to App */
   isFullyConfigured: boolean;
   /** User has legacy tokens that need migration */

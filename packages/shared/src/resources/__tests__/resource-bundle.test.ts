@@ -489,6 +489,22 @@ describe('resource-bundle', () => {
       expect(errors.some(e => e.includes('missing SKILL.md'))).toBe(true)
     })
 
+    it('rejects skill slugs that escape the skills directory', () => {
+      const bundle = {
+        version: 1,
+        exportedAt: Date.now(),
+        resources: {
+          skills: [
+            { slug: '../../.ssh', files: [makeBundleFile('SKILL.md', '---\nname: x\ndescription: x\n---\n')] },
+          ],
+        },
+      }
+
+      const { valid, errors } = validateResourceBundle(bundle)
+      expect(valid).toBe(false)
+      expect(errors.some(e => e.includes('safe path segment'))).toBe(true)
+    })
+
     it('rejects path traversal in files', () => {
       const bundle = {
         version: 1,

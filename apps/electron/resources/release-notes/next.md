@@ -4,6 +4,8 @@ This file accumulates release notes for the next unreleased version. PRs that ad
 
 ## Features
 
+- **Public ROX model endpoints** — The default OMP connection now lists `rox/explore`, `rox/standard`, `rox/max`, `rox/vision`, and `rox/fast` instead of the internal Kimi id. New sessions default to `rox/standard`. Child sessions spawned without an explicit model use `rox/fast`.
+
 ## Improvements
 
 - **GitHub Copilot GPT-5.6 models** — GitHub Copilot connections now show GPT-5.6 Luna, Terra, and Sol when those models are available to the account.

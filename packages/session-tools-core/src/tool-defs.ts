@@ -43,6 +43,9 @@ import { handleCreateTask } from './handlers/create-task.ts';
 import { handleArchiveSession } from './handlers/archive-session.ts';
 import { handleSendAgentMessage } from './handlers/send-agent-message.ts';
 import { handleListMessagingChannels, handleUnbindMessagingChannel } from './handlers/messaging.ts';
+import { handleKnowledgeSearch } from './handlers/knowledge-search.ts';
+import { handleKnowledgeRead } from './handlers/knowledge-read.ts';
+import { handleKnowledgeGetBacklinks } from './handlers/knowledge-backlinks.ts';
 
 // ============================================================
 // Canonical Zod Schemas
@@ -168,7 +171,7 @@ export const SpawnSessionSchema = z.object({
   prompt: z.string().optional().describe('Instructions for the new session (required when not in help mode)'),
   name: z.string().optional().describe('Session name'),
   llmConnection: z.string().optional().describe('Connection slug (e.g., "anthropic-api", "codex")'),
-  model: z.string().optional().describe('Model ID override'),
+  model: z.string().optional().describe('Model ID override. On a public ROX parent, omit to use rox/fast.'),
   enabledSourceSlugs: z.array(z.string()).optional().describe('Source slugs to enable in the new session'),
   permissionMode: z.enum(['safe', 'ask', 'allow-all']).optional().describe('Permission mode for the new session'),
   thinkingLevel: z.enum(['off', 'low', 'medium', 'high', 'xhigh', 'max']).optional()
@@ -243,6 +246,47 @@ export const ListMessagingChannelsSchema = z.object({
 export const UnbindMessagingChannelSchema = z.object({
   platform: z.enum(['telegram', 'whatsapp']).optional().describe('Platform to unbind. If omitted, unbinds all.'),
 });
+
+// Knowledge read tools (K-10 §3.1). Wire names use underscores: Anthropic and
+// OpenAI-compatible APIs reject tool names containing dots (^[a-zA-Z0-9_-]{1,64}$),
+// so the knowledge.search / knowledge.read / knowledge.get_backlinks capability
+// names declared by skills map onto knowledge_search / knowledge_read /
+// knowledge_get_backlinks here.
+export const KnowledgeSearchSchema = z.object({
+  query: z.string().describe('Full-text search query'),
+  connectionId: z.string().optional()
+    .describe('Knowledge connection id (see Settings → Knowledge). Omit to use the default (first) connection.'),
+  kinds: z.array(z.enum(['notebook', 'document', 'block', 'database', 'asset'])).optional()
+    .describe('Restrict result kinds. Default: ["document", "block"]'),
+  notebookId: z.string().optional().describe('Restrict results to one notebook id'),
+  pathPrefix: z.string().optional().describe("Restrict results to a human path prefix, e.g. '/Research/Reports'"),
+  limit: z.number().optional().describe('Max results to return (default 20, hard cap 50)'),
+  cursor: z.string().optional().describe('Opaque pagination cursor from a previous response'),
+});
+
+export const KnowledgeReadSchema = z.object({
+  ref: z.string().describe(
+    'Knowledge ref in any of these forms: [knowledge:document/<id>] mention, siyuan://blocks/<id> deep link, ' +
+    "siyuan/<kind>/<id>, or compact <kind>/<id>. kind: 'notebook' | 'document' | 'block' | 'database' | 'asset'."
+  ),
+  connectionId: z.string().optional()
+    .describe('Knowledge connection id. Omit to use the default (first) connection.'),
+  contextMode: z.enum(['none', 'snapshot', 'live-reference']).optional()
+    .describe("When 'snapshot' or 'live-reference', also include bounded context (children + backlinks). Default 'none'."),
+});
+
+export const KnowledgeGetBacklinksSchema = z.object({
+  ref: z.string().describe(
+    'Knowledge ref in any of these forms: [knowledge:document/<id>] mention, siyuan://blocks/<id> deep link, ' +
+    "siyuan/<kind>/<id>, or compact <kind>/<id>."
+  ),
+  connectionId: z.string().optional()
+    .describe('Knowledge connection id. Omit to use the default (first) connection.'),
+});
+
+export type KnowledgeSearchArgs = z.infer<typeof KnowledgeSearchSchema>;
+export type KnowledgeReadArgs = z.infer<typeof KnowledgeReadSchema>;
+export type KnowledgeGetBacklinksArgs = z.infer<typeof KnowledgeGetBacklinksSchema>;
 
 // ============================================================
 // Canonical Tool Descriptions (base — no DOC_REFS)
@@ -463,7 +507,7 @@ Use this to delegate tasks to parallel sessions — research, analysis, drafts, 
 Call with help=true first to discover available connections, models, and sources.
 When spawning, the 'prompt' parameter is required.
 
-Optional overrides: \`model\`, \`llmConnection\`, \`permissionMode\`, \`thinkingLevel\`, \`enabledSourceSlugs\`, \`labels\`, \`workingDirectory\`. Omitted fields inherit from the spawning session or the workspace default.
+Optional overrides: \`model\`, \`llmConnection\`, \`permissionMode\`, \`thinkingLevel\`, \`enabledSourceSlugs\`, \`labels\`, \`workingDirectory\`. Omitted fields inherit from the spawning session or the workspace default, except \`model\` on a public ROX parent (\`rox/explore\`, \`rox/standard\`, \`rox/max\`, \`rox/vision\`, \`rox/fast\`): omitted model uses \`rox/fast\`. Pass \`model\` explicitly to keep another public endpoint.
 
 \`thinkingLevel\` is silently ignored on non-reasoning models (e.g. gpt-4o, gemini-2.5-flash) — the SDK drops the reasoning param rather than erroring. Use it when you want to force deeper reasoning on a supported model, or set it to \`off\` when spawning a session that doesn't need to think.
 
@@ -529,6 +573,49 @@ The target session receives your message with a sender envelope containing your 
 
   list_messaging_channels: `List messaging channels (Telegram, WhatsApp) bound to a session.
 Shows which external chat apps are connected and can send/receive messages.`,
+
+  knowledge_search: `Search the user's knowledge base (SiYuan) by full-text query. Read-only.
+
+This is the \`knowledge.search\` capability declared by knowledge skills. Use it to find
+documents/blocks before reading them, or to answer "do we have notes about X?" questions.
+
+Returns a bounded, ranked hit list (default 20, hard cap 50 per call). Every hit carries
+provenance: the \`provider/kind/id\` ref (pass it straight to knowledge_read), a
+\`siyuan://\` deep link, the notebook path, and the update time. When the response says more
+pages are available, pass the returned \`cursor\` to fetch the next page.
+
+Optional filters: \`kinds\` (default document+block), \`notebookId\`, \`pathPrefix\`.
+\`connectionId\` defaults to the first configured knowledge connection.
+
+Errors are typed: CONNECTION_UNAVAILABLE means the SiYuan kernel is offline or no connection
+is configured (suggest opening Settings → Knowledge); PROVIDER_ERROR means the kernel
+rejected the request. Report them to the user instead of retrying blindly.`,
+
+  knowledge_read: `Read the full content of a knowledge node (document, block, or notebook) from the user's knowledge base (SiYuan). Read-only.
+
+This is the \`knowledge.read\` capability declared by knowledge skills. Pass a \`ref\` in any
+form you have it: a [knowledge:document/<id>] mention, a siyuan://blocks/<id> deep link,
+a siyuan/<kind>/<id> ref, or a compact <kind>/<id> pair.
+
+Returns the title, human path, attributes, content hash (capture it if you will propose an
+update later), a \`siyuan://\` deep link, and the markdown body (truncated at 32k characters
+with a visible marker). Set \`contextMode: 'snapshot'\` to also fetch bounded context
+(children + backlinks) in the same call; 'live-reference' re-reads live content where the
+provider supports it. Default 'none' keeps the response small.
+
+Errors are typed: INVALID_REF (bad ref string — retry with an accepted form), NOT_FOUND
+(unknown id), CONNECTION_UNAVAILABLE (kernel offline / not configured), PROVIDER_ERROR
+(kernel rejected the request).`,
+
+  knowledge_get_backlinks: `List documents/blocks that link TO a knowledge node (backlinks / references) in the user's knowledge base (SiYuan). Read-only.
+
+This is the \`knowledge.get_backlinks\` capability declared by knowledge skills. Use it to
+build a map of adjacent documents before updating or distilling a node. Accepts the same
+ref forms as knowledge_read and returns up to 50 entries, each with title, ref (pass to
+knowledge_read) and \`siyuan://\` deep link. An honest "no backlinks" result means nothing
+references the node yet — do not invent links.
+
+Errors are typed: INVALID_REF, NOT_FOUND, CONNECTION_UNAVAILABLE, PROVIDER_ERROR.`,
 
   unbind_messaging_channel: `Disconnect a messaging channel from the current session.
 Messages will no longer be forwarded between the chat app and this session.`,
@@ -610,6 +697,11 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   // Messaging gateway tools
   { name: 'list_messaging_channels', description: TOOL_DESCRIPTIONS.list_messaging_channels, inputSchema: ListMessagingChannelsSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListMessagingChannels },
   { name: 'unbind_messaging_channel', description: TOOL_DESCRIPTIONS.unbind_messaging_channel, inputSchema: UnbindMessagingChannelSchema, executionMode: 'registry', safeMode: 'block', handler: handleUnbindMessagingChannel },
+  // Knowledge read tools (K-10 §3.1) — provider reads via the registered knowledge
+  // runtime; safe in Explore mode (read-only), typed unavailable error otherwise.
+  { name: 'knowledge_search', description: TOOL_DESCRIPTIONS.knowledge_search, inputSchema: KnowledgeSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeSearch },
+  { name: 'knowledge_read', description: TOOL_DESCRIPTIONS.knowledge_read, inputSchema: KnowledgeReadSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeRead },
+  { name: 'knowledge_get_backlinks', description: TOOL_DESCRIPTIONS.knowledge_get_backlinks, inputSchema: KnowledgeGetBacklinksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeGetBacklinks },
 ];
 
 export interface SessionToolFilterOptions {

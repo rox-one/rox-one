@@ -8,12 +8,14 @@
  * rendered as plain labelled tabs until wave M3.
  */
 import type { SurfaceTabKind } from '@craft-agent/core'
+import type { ContextKeys } from '@craft-agent/core/platform'
 import {
   getPanelTypeFromRoute,
   parseSessionIdFromRoute,
   type PanelStackEntry,
   type PanelType,
 } from '@/atoms/panel-stack'
+import type { ViewRoute } from '../../shared/routes'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
 
 /** PanelType (`panel-stack.ts:16`) → SurfaceTab kind; null = legacy degradation. */
@@ -29,6 +31,16 @@ export function panelTypeToSurfaceKind(panelType: PanelType): SurfaceTabKind | n
     default:
       return null
   }
+}
+
+/**
+ * PanelHost `when`-context from the focused panel route. Same derivation
+ * InspectorHost uses: panel type → surface kind → `{ activeSurface }`.
+ */
+export function panelContextKeysFromRoute(route: string | null): ContextKeys {
+  if (!route) return {}
+  const activeSurface = panelTypeToSurfaceKind(getPanelTypeFromRoute(route as ViewRoute))
+  return activeSurface ? { activeSurface } : {}
 }
 
 /** Map key for a knowledge ref — `@siyuan/{kind}/{id}` routes share one tab/title slot. */
@@ -58,6 +70,7 @@ export interface SurfaceTabLabels {
   knowledge: string
   /** Write-back review (diff/{proposalId}) tab label. */
   knowledgeDiff: string
+  home: string
 }
 
 export interface BuildSurfaceTabViewsInput {
@@ -114,6 +127,8 @@ export function buildSurfaceTabViews(input: BuildSurfaceTabViewsInput): SurfaceT
         // Knowledge navigator root — no durable surface ref on the route.
         title = labels.knowledge
       }
+    } else if (entry.route.split('?')[0] === 'home') {
+      title = labels.home
     } else {
       title = legacyPanelTitle(panelType, labels)
     }

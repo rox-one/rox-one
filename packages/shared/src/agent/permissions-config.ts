@@ -21,6 +21,7 @@ import { getBundledAssetsDir } from '../utils/paths.ts';
 import { getSourcePath } from '../sources/storage.ts';
 import { isValidPermissionsFile } from '../config/validators.ts';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
+import { proxyToolNamePrefix } from '../mcp/proxy-tool-name.ts';
 import {
   SAFE_MODE_CONFIG,
   PermissionsConfigSchema,
@@ -940,7 +941,7 @@ class PermissionsConfigCache {
     // User writes: "list" → becomes: "mcp__<sourceSlug>__.*list"
     // This ensures patterns only match tools from THIS source
     for (const pattern of custom.allowedMcpPatterns) {
-      const scopedPattern = `mcp__${sourceSlug}__.*${pattern}`;
+      const scopedPattern = `${proxyToolNamePrefix(sourceSlug)}.*${pattern}`;
       const regex = validateRegex(scopedPattern);
       if (regex) {
         merged.readOnlyMcpPatterns.push(regex);

@@ -85,6 +85,8 @@ export function getPanelTypeFromRoute(route: ViewRoute): PanelType {
     case 'knowledge':
     case 'diff':
       return 'knowledge'
+    case 'home':
+      return 'other'
     default:
       return 'other'
   }

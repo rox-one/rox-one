@@ -50,6 +50,7 @@ import { PROJECT_COLOR_PALETTE, type ProjectColorTreatment } from '@/utils/proje
 import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
 import type { PresetTheme } from '@config/theme'
+import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -630,6 +631,8 @@ export default function AppearanceSettingsPage() {
                   </SettingsRow>
                 </SettingsCard>
               </SettingsSection>
+
+              <WorkbenchChromeSettings />
 
               {/* Kanban board — column colors + live-pulse toggle */}
               <SettingsSection
