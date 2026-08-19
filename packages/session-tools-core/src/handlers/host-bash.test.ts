@@ -54,6 +54,22 @@ describe('host-tool bash', () => {
     };
   }
 
+  it('rejects a working directory outside the workspace', async () => {
+    const outside = join(rootDir, 'outside');
+    mkdirSync(outside);
+    const result = await handleHostBash(ctx({ workingDirectory: outside }), { command: 'echo no' });
+    expect(result.isError).toBe(true);
+    expect(result.content[0]?.text).toContain('outside the workspace');
+  });
+
+  it('allows a subdirectory of the workspace as cwd', async () => {
+    const inner = join(workspaceDir, 'src');
+    mkdirSync(inner);
+    const result = await handleHostBash(ctx({ workingDirectory: inner }), { command: 'pwd' });
+    expect(result.isError).toBe(false);
+    expect(result.content[0]?.text).toContain(inner);
+  });
+
   it('rejects a blank command', async () => {
     const result = await handleHostBash(ctx(), { command: '   ' });
     expect(result.isError).toBe(true);

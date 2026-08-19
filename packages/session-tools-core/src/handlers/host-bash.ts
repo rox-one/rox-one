@@ -1,9 +1,9 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
 import type { SessionToolContext } from '../context.ts';
 import { errorResponse, successResponse } from '../response.ts';
 import type { ToolResult } from '../types.ts';
 import { createSanitizedEnv } from '../runtime/sandbox-env.ts';
+import { resolveHostBashCwd } from '../runtime/host-bash-cwd.ts';
 import { getHostBashPort, type HostBashExecResult } from '../runtime/host-bash-port.ts';
 
 export interface HostBashArgs {
@@ -54,25 +54,24 @@ function resolveShell(): { command: string; argsPrefix: string[] } {
  * OMP (and any other `set_host_tools` backend) calls into craft instead of
  * spawning Bash inside the backend. When the native sidecar is up, execution
  * goes through `exec:run` (`craft-exec`); otherwise local spawn. Caps:
- * stdout size, wall-clock timeout, process-tree kill, credential env scrub.
- * Not a full sandbox.
+ * stdout size, wall-clock timeout, process-tree kill, credential env scrub,
+ * cwd jailed to the workspace root. Not a full sandbox.
  */
 export async function runHostBash(req: {
   command: string;
   cwd: string;
+  workspaceRoot?: string;
   timeoutMs?: number;
 }): Promise<ToolResult> {
   const command = typeof req.command === 'string' ? req.command.trim() : '';
   if (!command) {
     return errorResponse('bash requires a non-empty command.');
   }
-  const cwd = req.cwd;
-  if (!cwd) {
-    return errorResponse('bash requires a workspace working directory.');
+  const jailed = resolveHostBashCwd(req.cwd, req.workspaceRoot);
+  if ('error' in jailed) {
+    return errorResponse(jailed.error);
   }
-  if (!existsSync(cwd)) {
-    return errorResponse(`bash working directory does not exist: ${cwd}`);
-  }
+  const cwd = jailed.cwd;
 
   const timeoutMs = Math.min(
     Math.max(req.timeoutMs ?? HOST_BASH_DEFAULT_TIMEOUT_MS, 1),
@@ -82,7 +81,12 @@ export async function runHostBash(req: {
   const port = getHostBashPort();
   if (port) {
     try {
-      const remote = await port({ command, cwd, timeoutMs });
+      const remote = await port({
+        command,
+        cwd,
+        timeoutMs,
+        workspaceRoot: req.workspaceRoot,
+      });
       return formatHostBashResult(remote);
     } catch {
       // Sidecar down or invoke failed — local spawn stays the primary path.
@@ -158,6 +162,7 @@ export async function handleHostBash(
   return runHostBash({
     command: args.command,
     cwd,
+    workspaceRoot: ctx.workspacePath,
     timeoutMs: args.timeoutMs,
   });
 }
