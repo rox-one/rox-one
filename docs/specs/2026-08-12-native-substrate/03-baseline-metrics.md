@@ -47,3 +47,5 @@ JSON поля: `filesPerSec`, `searchMs`, `ftsAvailable`, `indexed`, `truncated`
 - ≥3× files/sec против bun full walk на 5k файлах **или** снятие truncate на 20k при том же качестве hits.
 - Нет sync walk на server event loop (sidecar process).
 - Shadow diffs по path-set = 0 на фикстурах `source-index.test.ts`.
+
+**Implemented (opt-in):** `craft-index` `MAX_FILES = 20_000`, `MAX_TOTAL_BYTES = 256MB`. Enable with `CRAFT_FEATURE_NATIVE_SIDECAR=1` + `CRAFT_FEATURE_NATIVE_INDEX_PRIMARY=1`. Facade awaits sidecar `index:*` and falls back to TS (still 2000/32MB) on failure. RPC transport unchanged (N-03: p50 0.020 ms).

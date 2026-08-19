@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { isDevRuntime, isDeveloperFeedbackEnabled, isCraftAgentsCliEnabled, isEmbeddedServerEnabled, isNativeSidecarEnabled } from '../feature-flags.ts';
+import { isDevRuntime, isDeveloperFeedbackEnabled, isCraftAgentsCliEnabled, isEmbeddedServerEnabled, isNativeSidecarEnabled, isNativeIndexPrimaryEnabled } from '../feature-flags.ts';
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
@@ -8,6 +8,7 @@ const ORIGINAL_ENV = {
   CRAFT_FEATURE_CRAFT_AGENTS_CLI: process.env.CRAFT_FEATURE_CRAFT_AGENTS_CLI,
   CRAFT_FEATURE_EMBEDDED_SERVER: process.env.CRAFT_FEATURE_EMBEDDED_SERVER,
   CRAFT_FEATURE_NATIVE_SIDECAR: process.env.CRAFT_FEATURE_NATIVE_SIDECAR,
+  CRAFT_FEATURE_NATIVE_INDEX_PRIMARY: process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY,
 };
 
 afterEach(() => {
@@ -28,6 +29,9 @@ afterEach(() => {
 
   if (ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_SIDECAR === undefined) delete process.env.CRAFT_FEATURE_NATIVE_SIDECAR;
   else process.env.CRAFT_FEATURE_NATIVE_SIDECAR = ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_SIDECAR;
+
+  if (ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY === undefined) delete process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY;
+  else process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY = ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY;
 });
 
 describe('feature-flags runtime helpers', () => {
@@ -120,5 +124,26 @@ describe('feature-flags runtime helpers', () => {
     process.env.CRAFT_FEATURE_NATIVE_SIDECAR = '0';
 
     expect(isNativeSidecarEnabled()).toBe(false);
+  });
+
+  it('isNativeIndexPrimaryEnabled defaults to false', () => {
+    process.env.CRAFT_FEATURE_NATIVE_SIDECAR = '1';
+    delete process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY;
+
+    expect(isNativeIndexPrimaryEnabled()).toBe(false);
+  });
+
+  it('isNativeIndexPrimaryEnabled requires the sidecar flag', () => {
+    delete process.env.CRAFT_FEATURE_NATIVE_SIDECAR;
+    process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY = '1';
+
+    expect(isNativeIndexPrimaryEnabled()).toBe(false);
+  });
+
+  it('isNativeIndexPrimaryEnabled honors sidecar + primary', () => {
+    process.env.CRAFT_FEATURE_NATIVE_SIDECAR = '1';
+    process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY = '1';
+
+    expect(isNativeIndexPrimaryEnabled()).toBe(true);
   });
 });

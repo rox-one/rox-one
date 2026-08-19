@@ -1,5 +1,6 @@
-//! Source-index module. Matches the TypeScript walk/hash/caps for shadow parity.
-//! Database: `{workspace}/.craft/source-index.native.sqlite` — never the bun:sqlite file.
+//! Source-index module. Walk/hash match TypeScript; file/byte caps are lifted
+//! (20k / 256MB vs TS 2000 / 32MB). Database:
+//! `{workspace}/.craft/source-index.native.sqlite` — never the bun:sqlite file.
 
 use rusqlite::{params, Connection, OptionalExtension};
 use serde::{Deserialize, Serialize};
@@ -28,9 +29,10 @@ const SKIP_DIRS: &[&str] = &[
     "__pycache__",
 ];
 
-const MAX_FILES: usize = 2000;
+/// N-03 gate: no truncate at 20k files. TS `source-index.ts` stays at 2000/32MB.
+const MAX_FILES: usize = 20_000;
 const MAX_FILE_BYTES: u64 = 512 * 1024;
-const MAX_TOTAL_BYTES: u64 = 32 * 1024 * 1024;
+const MAX_TOTAL_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_BODY_CHARS: usize = 200_000;
 const SOURCE_RETRIEVE_MAX_TOKENS: usize = 2000;
 const SOURCE_RETRIEVE_DEFAULT_LIMIT: usize = 5;
@@ -714,6 +716,32 @@ mod tests {
     #[test]
     fn hash_is_sha256_prefix_32_hex() {
         assert_eq!(hash_text("hello"), "2cf24dba5fb0a30e26e83b2ac5b9e29e");
+    }
+
+    fn write_md_tree(root: &Path, n: usize) {
+        for i in 0..n {
+            let bucket = root.join(format!("b{}", i / 100));
+            fs::create_dir_all(&bucket).unwrap();
+            fs::write(bucket.join(format!("f{i}.md")), format!("doc {i} fox")).unwrap();
+        }
+    }
+
+    #[test]
+    fn walk_does_not_truncate_at_2500_files() {
+        let dir = tempfile::tempdir().unwrap();
+        write_md_tree(dir.path(), 2500);
+        let walked = walk_source_tree(dir.path());
+        assert_eq!(walked.files.len(), 2500);
+        assert!(!walked.truncated);
+    }
+
+    #[test]
+    fn walk_does_not_truncate_at_20000_files() {
+        let dir = tempfile::tempdir().unwrap();
+        write_md_tree(dir.path(), 20_000);
+        let walked = walk_source_tree(dir.path());
+        assert_eq!(walked.files.len(), 20_000);
+        assert!(!walked.truncated);
     }
 
     #[test]

@@ -60,7 +60,7 @@ describe.skipIf(!bin)('craft-index path-set parity', () => {
       { slug: 'local-b', path: folderB },
     ]
 
-    const ts = reindexWorkspaceSources(workspace, roots)
+    const ts = await reindexWorkspaceSources(workspace, roots)
     expect(ts.indexed).toBe(2)
     const rust = await client!.invoke<{ indexed: number; truncated: boolean }>(
       'index:reindex',
@@ -69,7 +69,7 @@ describe.skipIf(!bin)('craft-index path-set parity', () => {
     )
     expect(rust.indexed).toBe(2)
 
-    const tsFox = searchSourceIndex(workspace, 'fox', { limit: 5 })
+    const tsFox = await searchSourceIndex(workspace, 'fox', { limit: 5 })
     const rustFox = await client!.invoke<{ hits: Array<{ path: string }> }>(
       'index:search',
       workspace,

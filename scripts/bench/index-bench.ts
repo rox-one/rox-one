@@ -45,10 +45,10 @@ async function main(): Promise<void> {
       const walked = walkSourceTree(folder)
       const walkMs = nowMs() - t0
       const t1 = nowMs()
-      const indexed = reindexWorkspaceSources(workspace, [{ slug: 'docs', path: folder }])
+      const indexed = await reindexWorkspaceSources(workspace, [{ slug: 'docs', path: folder }])
       const indexMs = nowMs() - t1
       const t2 = nowMs()
-      const search = searchSourceIndex(workspace, 'fox', { limit: 10 })
+      const search = await searchSourceIndex(workspace, 'fox', { limit: 10 })
       const searchMs = nowMs() - t2
       const filesPerSec = walkMs > 0 ? walked.files.length / (walkMs / 1000) : 0
       results.push({

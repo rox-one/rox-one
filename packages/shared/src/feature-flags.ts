@@ -89,6 +89,15 @@ export function isNativeJournalPrimaryEnabled(): boolean {
   return parseBooleanEnv(getEnv('CRAFT_FEATURE_NATIVE_JOURNAL_PRIMARY')) === true;
 }
 
+/**
+ * Rust source-index is primary (20k/256MB caps). Requires the sidecar flag.
+ * Override with CRAFT_FEATURE_NATIVE_INDEX_PRIMARY=1|0.
+ */
+export function isNativeIndexPrimaryEnabled(): boolean {
+  if (!isNativeSidecarEnabled()) return false;
+  return parseBooleanEnv(getEnv('CRAFT_FEATURE_NATIVE_INDEX_PRIMARY')) === true;
+}
+
 export const FEATURE_FLAGS = {
   /** Enable Opus 4.7 fast mode (speed:"fast" + beta header). 6x pricing. */
   fastMode: false,
@@ -126,7 +135,7 @@ export const FEATURE_FLAGS = {
     return isKnowledgeFeatureEnabled();
   },
   /**
-   * Enable the Rust craft-native sidecar (source-index shadow).
+   * Enable the Rust craft-native sidecar (index shadow, journal, exec, rund).
    *
    * Defaults to disabled. Override with CRAFT_FEATURE_NATIVE_SIDECAR=1|0.
    */
@@ -139,5 +148,12 @@ export const FEATURE_FLAGS = {
    */
   get nativeJournalPrimary(): boolean {
     return isNativeJournalPrimaryEnabled();
+  },
+  /**
+   * Enable Rust as the primary source index (lifted 20k/256MB caps).
+   * Requires CRAFT_FEATURE_NATIVE_SIDECAR=1.
+   */
+  get nativeIndexPrimary(): boolean {
+    return isNativeIndexPrimaryEnabled();
   },
 } as const;

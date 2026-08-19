@@ -2,11 +2,16 @@
  * Production seam for the workspace source index.
  *
  * Callers (RPC sources.REINDEX/SEARCH and SessionManager retrieve) MUST import
- * from this module, not from source-index.ts directly. The TS implementation
- * stays primary; when CRAFT_FEATURE_NATIVE_SIDECAR is on, search/reindex also
- * run against the Rust sidecar and diffs are logged (shadow mode).
+ * from this module, not from source-index.ts directly.
+ *
+ * Default: TypeScript stays primary (2000/32MB). When
+ * CRAFT_FEATURE_NATIVE_SIDECAR is on, search/reindex also run against the Rust
+ * sidecar and diffs are logged (shadow mode).
+ *
+ * CRAFT_FEATURE_NATIVE_INDEX_PRIMARY=1 (requires sidecar): Rust is primary
+ * (20k files / 256MB). TS is the fallback if the sidecar invoke fails.
  */
-import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
+import { isNativeIndexPrimaryEnabled, isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
 import { getNativeSidecarClient } from '../native/supervisor.ts'
 import {
   closeAllSourceIndexes,
@@ -51,7 +56,28 @@ function shadowWarn(message: string, extra?: unknown): void {
 }
 
 function shadowEnabled(): boolean {
-  return isNativeSidecarEnabled() && getNativeSidecarClient() !== null
+  return (
+    isNativeSidecarEnabled() &&
+    !isNativeIndexPrimaryEnabled() &&
+    getNativeSidecarClient() !== null
+  )
+}
+
+function primaryEnabled(): boolean {
+  return isNativeIndexPrimaryEnabled() && getNativeSidecarClient() !== null
+}
+
+async function tryPrimary<T>(op: string, work: () => Promise<T>): Promise<T | undefined> {
+  if (!primaryEnabled()) return undefined
+  try {
+    return await work()
+  } catch (error) {
+    console.warn(
+      `[source-index-primary] ${op} failed, falling back to TS`,
+      error instanceof Error ? error.message : error,
+    )
+    return undefined
+  }
 }
 
 function fireShadow(work: () => Promise<void>): void {
@@ -61,39 +87,52 @@ function fireShadow(work: () => Promise<void>): void {
   })
 }
 
-export function reindexWorkspaceSources(
+export async function reindexWorkspaceSources(
   workspaceRoot: string,
   roots: Array<{ slug: string; path: string }>,
-): SourceReindexResult {
+): Promise<SourceReindexResult> {
+  const rust = await tryPrimary('reindex', () =>
+    getNativeSidecarClient()!.invoke<SourceReindexResult>('index:reindex', workspaceRoot, roots),
+  )
+  if (rust) return rust
   const ts = reindexWorkspaceSourcesTs(workspaceRoot, roots)
   fireShadow(async () => {
-    const rust = await getNativeSidecarClient()!.invoke<SourceReindexResult>(
+    const shadow = await getNativeSidecarClient()!.invoke<SourceReindexResult>(
       'index:reindex',
       workspaceRoot,
       roots,
     )
-    if (rust.indexed !== ts.indexed || Boolean(rust.truncated) !== Boolean(ts.truncated)) {
-      shadowWarn('reindex diff', { ts: { indexed: ts.indexed, truncated: ts.truncated }, rust })
+    if (shadow.indexed !== ts.indexed || Boolean(shadow.truncated) !== Boolean(ts.truncated)) {
+      shadowWarn('reindex diff', { ts: { indexed: ts.indexed, truncated: ts.truncated }, rust: shadow })
     }
   })
   return ts
 }
 
-export function searchSourceIndex(
+export async function searchSourceIndex(
   workspaceRoot: string,
   query: string,
   options: { limit?: number } = {},
-): SourceSearchResult {
+): Promise<SourceSearchResult> {
+  const rust = await tryPrimary('search', () =>
+    getNativeSidecarClient()!.invoke<SourceSearchResult>(
+      'index:search',
+      workspaceRoot,
+      query,
+      options,
+    ),
+  )
+  if (rust) return rust
   const ts = searchSourceIndexTs(workspaceRoot, query, options)
   fireShadow(async () => {
-    const rust = await getNativeSidecarClient()!.invoke<SourceSearchResult>(
+    const shadow = await getNativeSidecarClient()!.invoke<SourceSearchResult>(
       'index:search',
       workspaceRoot,
       query,
       options,
     )
     const tsPaths = pathSet(ts.hits)
-    const rustPaths = pathSet(rust.hits ?? [])
+    const rustPaths = pathSet(shadow.hits ?? [])
     if (tsPaths !== rustPaths) {
       shadowWarn('search path-set diff', { query, ts: tsPaths, rust: rustPaths })
     }
@@ -101,21 +140,30 @@ export function searchSourceIndex(
   return ts
 }
 
-export function retrieveSourcesForPrompt(
+export async function retrieveSourcesForPrompt(
   workspaceRoot: string,
   query: string,
   options: { limit?: number; maxTokens?: number } = {},
-): SourceRetrieveResult {
+): Promise<SourceRetrieveResult> {
+  const rust = await tryPrimary('retrieve', () =>
+    getNativeSidecarClient()!.invoke<SourceRetrieveResult>(
+      'index:retrieve',
+      workspaceRoot,
+      query,
+      options,
+    ),
+  )
+  if (rust) return rust
   const ts = retrieveSourcesForPromptTs(workspaceRoot, query, options)
   fireShadow(async () => {
-    const rust = await getNativeSidecarClient()!.invoke<SourceRetrieveResult>(
+    const shadow = await getNativeSidecarClient()!.invoke<SourceRetrieveResult>(
       'index:retrieve',
       workspaceRoot,
       query,
       options,
     )
     const tsPaths = pathSet(ts.hits)
-    const rustPaths = pathSet(rust.hits ?? [])
+    const rustPaths = pathSet(shadow.hits ?? [])
     if (tsPaths !== rustPaths) {
       shadowWarn('retrieve path-set diff', { query, ts: tsPaths, rust: rustPaths })
     }
@@ -123,12 +171,16 @@ export function retrieveSourcesForPrompt(
   return ts
 }
 
-export function countIndexedFiles(workspaceRoot: string): number {
+export async function countIndexedFiles(workspaceRoot: string): Promise<number> {
+  const rust = await tryPrimary('count', () =>
+    getNativeSidecarClient()!.invoke<number>('index:count', workspaceRoot),
+  )
+  if (rust !== undefined) return rust
   const ts = countIndexedFilesTs(workspaceRoot)
   fireShadow(async () => {
-    const rust = await getNativeSidecarClient()!.invoke<number>('index:count', workspaceRoot)
-    if (rust !== ts) {
-      shadowWarn('count diff', { ts, rust })
+    const shadow = await getNativeSidecarClient()!.invoke<number>('index:count', workspaceRoot)
+    if (shadow !== ts) {
+      shadowWarn('count diff', { ts, rust: shadow })
     }
   })
   return ts
