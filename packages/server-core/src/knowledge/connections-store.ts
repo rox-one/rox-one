@@ -23,7 +23,9 @@ import { join } from 'path'
 import { randomUUID } from 'node:crypto'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import type { CredentialId } from '@craft-agent/shared/credentials'
-import { CodedError } from '@craft-agent/shared/protocol'
+import { CodedError, type KnowledgeConnectionMode } from '@craft-agent/shared/protocol'
+
+export type { KnowledgeConnectionMode }
 
 /**
  * Token key parser — the record's credentialRef IS a CredentialManager id
@@ -71,12 +73,10 @@ export function normalizeKnowledgeBaseUrl(raw: string): string {
 
 /**
  * Storage record for one knowledge connection.
- * Production mode is external-local only. `managed` is accepted at the type
- * level for P7-prep fail-closed paths, but save() rejects it at runtime until
- * G1 thresholds + G2 legal decision (spec K-08).
+ * Production mode is external-local or remote. `managed` is accepted at the
+ * type level for P7-prep fail-closed paths, but save() rejects it at runtime
+ * until G1 thresholds + G2 legal decision (spec K-08 / G2 variant C).
  */
-export type KnowledgeConnectionMode = 'external-local' | 'managed'
-
 export interface KnowledgeConnectionRecord {
   id: string
   provider: 'siyuan'
@@ -130,6 +130,31 @@ export function parseConnectionFile(content: string): KnowledgeConnectionRecord[
   }
 }
 
+
+function isLoopbackHostname(hostname: string): boolean {
+  const host = hostname.toLowerCase()
+  return host === '127.0.0.1' || host === 'localhost'
+}
+
+/** Remote mode requires https, or loopback http (127.0.0.1 / localhost). */
+function assertRemoteTls(baseUrl: string): void {
+  let url: URL
+  try {
+    url = new URL(typeof baseUrl === 'string' ? baseUrl.trim() : '')
+  } catch {
+    throw new CodedError(
+      'TLS_REQUIRED',
+      'knowledge: remote connection baseUrl must be https or loopback http (127.0.0.1 / localhost)',
+    )
+  }
+  if (url.protocol === 'https:') return
+  if (url.protocol === 'http:' && isLoopbackHostname(url.hostname)) return
+  throw new CodedError(
+    'TLS_REQUIRED',
+    'knowledge: remote connection baseUrl must be https or loopback http (127.0.0.1 / localhost)',
+  )
+}
+
 export class KnowledgeConnectionsStore {
   /** {configDir}/knowledge — global scope, connections are a property of the user's machine. */
   readonly knowledgeDir: string
@@ -165,6 +190,11 @@ export class KnowledgeConnectionsStore {
       )
     }
     const records = this.readRecords()
+    const existing = input.id ? records.find(r => r.id === input.id) : undefined
+    const nextMode: KnowledgeConnectionMode = input.mode ?? existing?.mode ?? 'external-local'
+    if (nextMode === 'remote') {
+      assertRemoteTls(input.baseUrl)
+    }
     const now = new Date().toISOString()
     const idx = input.id ? records.findIndex(r => r.id === input.id) : -1
     if (idx >= 0) {

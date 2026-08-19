@@ -202,3 +202,62 @@ function catchNormalize(raw: string): unknown {
     return error
   }
 }
+
+describe('remote connection TLS', () => {
+  it('saves remote https and loopback http', () => {
+    const store = new KnowledgeConnectionsStore(configDir)
+    const httpsSaved = store.save({
+      baseUrl: 'https://notes.example.com',
+      credentialRef: 'source_bearer::ws::r1',
+      mode: 'remote',
+    })
+    expect(httpsSaved.mode).toBe('remote')
+    const loopback = store.save({
+      baseUrl: 'http://127.0.0.1:6806',
+      credentialRef: 'source_bearer::ws::r2',
+      mode: 'remote',
+    })
+    expect(loopback.mode).toBe('remote')
+    const localhost = store.save({
+      baseUrl: 'http://localhost:6806',
+      credentialRef: 'source_bearer::ws::r3',
+      mode: 'remote',
+    })
+    expect(localhost.mode).toBe('remote')
+  })
+
+  it('rejects non-https non-loopback http with TLS_REQUIRED', () => {
+    const store = new KnowledgeConnectionsStore(configDir)
+    for (const baseUrl of ['http://notes.example.com', 'http://192.168.1.10:6806', 'http://10.0.0.2']) {
+      try {
+        store.save({
+          baseUrl,
+          credentialRef: 'source_bearer::ws::r-bad',
+          mode: 'remote',
+        })
+        throw new Error(`expected TLS_REQUIRED for ${baseUrl}`)
+      } catch (error) {
+        expect(error).toBeInstanceOf(CodedError)
+        expect((error as CodedError).code).toBe('TLS_REQUIRED')
+      }
+    }
+    expect(store.list()).toEqual([])
+  })
+
+  it('still rejects managed with CAPABILITY_DISABLED', () => {
+    const store = new KnowledgeConnectionsStore(configDir)
+    try {
+      store.save({
+        baseUrl: 'http://127.0.0.1:6806',
+        credentialRef: 'source_bearer::ws::m1',
+        mode: 'managed',
+      })
+      throw new Error('expected CAPABILITY_DISABLED')
+    } catch (error) {
+      expect(error).toBeInstanceOf(CodedError)
+      expect((error as CodedError).code).toBe('CAPABILITY_DISABLED')
+    }
+    expect(store.list()).toEqual([])
+  })
+})
+

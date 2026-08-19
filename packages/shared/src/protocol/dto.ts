@@ -722,10 +722,13 @@ export interface KnowledgeChangedPayload {
   change: 'created' | 'updated' | 'removed'
 }
 
+/** Connection modes. `managed` stays fail-closed until G2/C; `remote` is typable. */
+export type KnowledgeConnectionMode = 'external-local' | 'managed' | 'remote'
+
 /** Result of knowledge:engineStatus (spec 03 §3.5.1 + local bootstrap extras). */
 export interface KnowledgeEngineStatus {
-  /** Connection mode — P1 supports external-local only (managed lands with P7). */
-  mode: 'external-local' | 'managed'
+  /** Connection mode — P1 supports external-local; remote TLS is Task 10. */
+  mode: KnowledgeConnectionMode
   /** Whether the kernel answered a version probe. */
   running: boolean
   /** Kernel pid — managed mode only (P7). */
