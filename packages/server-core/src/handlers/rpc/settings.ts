@@ -1,8 +1,9 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
-import { dirname } from 'path'
+import { dirname, join } from 'path'
 import { RPC_CHANNELS, CodedError, isErrorCode } from '@craft-agent/shared/protocol'
 import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getPersistedRuntimeEnvOverrides, setRuntimeEnvOverrides, getRuntimeSecretRefs, setRuntimeSecretRefs } from '@craft-agent/shared/config'
 import { diagnoseInfisicalAvailability, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '@craft-agent/shared/secrets'
+import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
 import { isValidThinkingLevel, normalizeThinkingLevel, THINKING_LEVEL_IDS } from '@craft-agent/shared/agent/thinking-levels'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
@@ -10,7 +11,7 @@ import { getWorkspaceOrThrow } from '@craft-agent/server-core/handlers'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { requestClientOpenFileDialog } from '@craft-agent/server-core/transport'
-import { isValidWorkingDirectory } from '../../utils/path-validation'
+import { isValidWorkingDirectory, isValidNotesPath } from '../../utils/path-validation'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workspace.SETTINGS_GET,
@@ -227,7 +228,13 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
       if (normalizedValue == null || normalizedValue === '') {
         delete config.notesPath
       } else {
-        config.notesPath = String(normalizedValue).trim()
+        const notesPath = String(normalizedValue).trim()
+        const extraRoots = [join(getDefaultWorkspacesDir(), workspace.id)]
+        const validation = isValidNotesPath(notesPath, workspace.rootPath, extraRoots)
+        if (!validation.valid) {
+          throw new Error(validation.reason!)
+        }
+        config.notesPath = notesPath
       }
     } else {
       // Update the setting in defaults

@@ -6,6 +6,7 @@ import { loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGui
 import { safeJsonParse } from '@craft-agent/shared/utils/files'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { getDefaultWorkspacesDir, loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { isSafeResourceSlug } from '@craft-agent/shared/resources'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
@@ -253,6 +254,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
   server.handle(RPC_CHANNELS.sources.GET_PERMISSIONS, async (_ctx, workspaceId: string, sourceSlug: string) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
+    if (!isSafeResourceSlug(sourceSlug)) return null
 
     const { existsSync, readFileSync } = await import('fs')
     const { getSourcePermissionsPath } = await import('@craft-agent/shared/agent')

@@ -541,7 +541,11 @@ async function isOwnWrite(filePath: string): Promise<boolean> {
   return false
 }
 
-async function importAsset(notesRoot: string, attachment: FileAttachment): Promise<{ asset: { name: string; path: string; relativePath: string; size: number; mimeType: string }; markdown: string }> {
+async function importAsset(
+  notesRoot: string,
+  attachment: FileAttachment,
+  allowedRoots: string[],
+): Promise<{ asset: { name: string; path: string; relativePath: string; size: number; mimeType: string }; markdown: string }> {
   await ensureNotesDirs(notesRoot)
   const assetsRoot = join(notesRoot, ASSETS_DIR)
   await mkdir(assetsRoot, { recursive: true })
@@ -561,7 +565,12 @@ async function importAsset(notesRoot: string, attachment: FileAttachment): Promi
   } else if (attachment.text != null) {
     buffer = Buffer.from(attachment.text, 'utf-8')
   } else {
-    buffer = await readFile(attachment.path)
+    if (!attachment.path) throw new Error('Attachment is missing contents')
+    const resolved = resolve(attachment.path)
+    if (!allowedRoots.some(root => isInsidePath(root, resolved))) {
+      throw new Error('Attachment path is outside the workspace')
+    }
+    buffer = await readFile(resolved)
   }
 
   await writeFile(assetPath, buffer)
@@ -906,7 +915,10 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
   })
 
   server.handle(RPC_CHANNELS.notes.IMPORT_ASSET, async (_ctx, workspaceId: string, attachment: FileAttachment) => {
-    const result = await importAsset(getWorkspaceNotesRoot(workspaceId), attachment)
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    const result = await importAsset(notesRoot, attachment, [notesRoot, workspace.rootPath])
     changed({ workspaceId, reason: 'asset' })
     return result
   })

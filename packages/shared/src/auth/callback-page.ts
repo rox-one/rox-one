@@ -5,24 +5,40 @@
  */
 
 import { CRAFT_LOGO_HTML } from '../branding.ts';
-import { classifyExternalUrl } from '../utils/url-safety.ts';
 
-function escapeHtml(text: string): string {
-  return text
+export type AppType = 'terminal' | 'electron';
+
+export function escapeHtml(value: string): string {
+  return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+    .replace(/'/g, '&#39;')
 }
 
-/** Only the app's internal deeplink may be written into href / location. */
-function safeInternalDeeplink(url: string | undefined): string | undefined {
-  if (!url) return undefined;
-  return classifyExternalUrl(url).kind === 'internal-deeplink' ? url : undefined;
-}
+const BLOCKED_DEEPLINK_PROTOCOLS = new Set([
+  'http:',
+  'https:',
+  'javascript:',
+  'data:',
+  'file:',
+  'vbscript:',
+  'about:',
+  'blob:',
+])
 
-export type AppType = 'terminal' | 'electron';
+/** Custom-scheme deeplinks only. Blocks javascript:/data:/http(s):/file:. */
+export function isSafeDeeplinkUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    const protocol = parsed.protocol.toLowerCase()
+    if (BLOCKED_DEEPLINK_PROTOCOLS.has(protocol)) return false
+    return /^[a-z][a-z0-9+.-]*:$/.test(protocol)
+  } catch {
+    return false
+  }
+}
 
 /**
  * Generate a minimal, clean callback page matching the app's design system.
@@ -36,7 +52,9 @@ export function generateCallbackPage(options: {
   deeplinkUrl?: string;
 }): string {
   const { title, isSuccess, errorDetail } = options;
-  const deeplinkUrl = safeInternalDeeplink(options.deeplinkUrl);
+  const safeDeeplink = options.deeplinkUrl && isSafeDeeplinkUrl(options.deeplinkUrl)
+    ? options.deeplinkUrl
+    : undefined
 
   // Status message based on success/error
   const statusMessage = isSuccess
@@ -49,7 +67,7 @@ export function generateCallbackPage(options: {
   const autoCloseScript = isSuccess
     ? `
     setTimeout(() => {
-      ${deeplinkUrl ? `window.location.href = ${JSON.stringify(deeplinkUrl)};` : ''}
+      ${safeDeeplink ? `window.location.href = ${JSON.stringify(safeDeeplink)};` : ''}
       window.close();
     }, 1500);`
     : '';
@@ -192,7 +210,7 @@ export function generateCallbackPage(options: {
       <div class="status">${statusMessage}</div>
     </div>
     <div class="hint">${isSuccess ? 'You can now return to the application.' : 'Please close this window and try again.'}</div>
-    ${deeplinkUrl ? `<a href="${escapeHtml(deeplinkUrl)}" class="return-link">Rox</a>` : ''}
+    ${safeDeeplink ? `<a href="${escapeHtml(safeDeeplink)}" class="return-link">Rox</a>` : ''}
   </div>
   <script>${autoCloseScript}</script>
 </body>

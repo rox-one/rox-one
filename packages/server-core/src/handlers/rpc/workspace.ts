@@ -1,12 +1,12 @@
-import { existsSync } from 'node:fs'
-import { join } from 'path'
+import { existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from 'node:fs'
+import { join, basename } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, updateWorkspaceRemoteServer } from '@craft-agent/shared/config'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { perf } from '@craft-agent/shared/utils'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { isValidWorkspaceRootPath } from '../../utils/path-validation'
+import { isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
 
 export const CORE_HANDLED_CHANNELS = [
@@ -62,9 +62,12 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // Check if a workspace slug already exists (for validation before creation)
   server.handle(RPC_CHANNELS.workspaces.CHECK_SLUG, async (_ctx, slug: string) => {
     const defaultWorkspacesDir = join(CONFIG_DIR, 'workspaces')
-    const workspacePath = join(defaultWorkspacesDir, slug)
-    const exists = existsSync(workspacePath)
-    return { exists, path: workspacePath }
+    try {
+      const workspacePath = resolveContainedRelativePath(defaultWorkspacesDir, slug)
+      return { exists: existsSync(workspacePath), path: workspacePath }
+    } catch {
+      return { exists: false, path: '' }
+    }
   })
 
   // Update remote server config for an existing workspace (reconnect flow)
@@ -152,36 +155,19 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { readFileSync, existsSync } = await import('fs')
-    const { join, normalize } = await import('path')
-
-    // Security: validate path
-    // - Must not contain .. (path traversal)
-    // - Must be a valid image extension
     const ALLOWED_EXTENSIONS = ['.svg', '.png', '.jpg', '.jpeg', '.webp', '.ico', '.gif']
-
-    if (relativePath.includes('..')) {
-      throw new Error('Invalid path: directory traversal not allowed')
-    }
 
     const ext = relativePath.toLowerCase().slice(relativePath.lastIndexOf('.'))
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       throw new Error(`Invalid file type: ${ext}. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`)
     }
 
-    // Resolve path relative to workspace root
-    const absolutePath = normalize(join(workspace.rootPath, relativePath))
-
-    // Double-check the resolved path is still within workspace
-    if (!absolutePath.startsWith(workspace.rootPath)) {
-      throw new Error('Invalid path: outside workspace directory')
-    }
+    const absolutePath = resolveContainedRelativePath(workspace.rootPath, relativePath)
 
     if (!existsSync(absolutePath)) {
       return null  // Missing optional files - silent fallback to default icons
     }
 
-    // Read file as buffer
     const buffer = readFileSync(absolutePath)
 
     // If SVG, return as UTF-8 string (caller will use as innerHTML)
@@ -189,7 +175,6 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
       return buffer.toString('utf-8')
     }
 
-    // For binary images, return as data URL
     const mimeTypes: Record<string, string> = {
       '.png': 'image/png',
       '.jpg': 'image/jpeg',
@@ -208,28 +193,14 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
-    const { writeFileSync, existsSync, unlinkSync, readdirSync } = await import('fs')
-    const { join, normalize, basename } = await import('path')
-
-    // Security: validate path
     const ALLOWED_EXTENSIONS = ['.svg', '.png', '.jpg', '.jpeg', '.webp', '.gif']
-
-    if (relativePath.includes('..')) {
-      throw new Error('Invalid path: directory traversal not allowed')
-    }
 
     const ext = relativePath.toLowerCase().slice(relativePath.lastIndexOf('.'))
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
       throw new Error(`Invalid file type: ${ext}. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`)
     }
 
-    // Resolve path relative to workspace root
-    const absolutePath = normalize(join(workspace.rootPath, relativePath))
-
-    // Double-check the resolved path is still within workspace
-    if (!absolutePath.startsWith(workspace.rootPath)) {
-      throw new Error('Invalid path: outside workspace directory')
-    }
+    const absolutePath = resolveContainedRelativePath(workspace.rootPath, relativePath)
 
     // If this is an icon file (icon.*), delete any existing icon files with different extensions
     const fileName = basename(relativePath)
