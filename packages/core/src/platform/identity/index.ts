@@ -110,3 +110,12 @@ export type {
   InProcessCredentialBrokerOptions,
 } from './broker.ts';
 export { InProcessCredentialBroker } from './broker.ts';
+export type {
+  BindConsumerInput,
+  ConnectionAuditRecord,
+  ConnectionBindingRecord,
+  ConnectionRecord,
+  CreateConnectionInput,
+} from './workgraph.ts';
+export { ConnectionWorkGraph } from './workgraph.ts';
+export { revokeConnectionAndRevalidate } from './revalidation.ts';

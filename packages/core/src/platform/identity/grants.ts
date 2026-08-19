@@ -43,4 +43,14 @@ export class JsonAccessGrantStore {
       )
       .map((grant) => ({ ...grant, actions: [...grant.actions], resources: [...grant.resources] }));
   }
+
+  listForConsumer(consumer: { readonly id: string; readonly workspaceId: string }): AccessGrant[] {
+    return [...this.grants.values()]
+      .filter(
+        (grant) =>
+          grant.consumerId === consumer.id &&
+          grant.workspaceId === consumer.workspaceId,
+      )
+      .map((grant) => ({ ...grant, actions: [...grant.actions], resources: [...grant.resources] }));
+  }
 }

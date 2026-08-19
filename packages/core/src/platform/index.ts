@@ -75,3 +75,5 @@ export {
 } from './identity/p0-adapters.ts';
 export { JsonAccessGrantStore } from './identity/grants.ts';
 export { InProcessCredentialBroker } from './identity/broker.ts';
+export { ConnectionWorkGraph } from './identity/workgraph.ts';
+export { revokeConnectionAndRevalidate } from './identity/revalidation.ts';

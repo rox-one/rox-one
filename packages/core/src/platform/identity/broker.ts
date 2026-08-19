@@ -128,6 +128,41 @@ export class InProcessCredentialBroker {
     this.leases.set(leaseId, { ...current, status: 'revoked' });
   }
 
+  async revokeLeasesForRef(credentialRefId: CredentialRefId, _reason: string): Promise<readonly string[]> {
+    const revoked: string[] = [];
+    for (const [id, lease] of this.leases) {
+      if (lease.credentialRefId !== credentialRefId || lease.status !== 'active') continue;
+      this.leases.set(id, { ...lease, status: 'revoked' });
+      revoked.push(id);
+    }
+    return revoked;
+  }
+
+  async revalidateConsumer(
+    consumer: ConsumerIdentity,
+  ): Promise<{ status: 'ok' | 'denied' | 'repair_required' }> {
+    const granted = this.grants.listForConsumer(consumer).filter((grant) => grant.status === 'active');
+    for (const grant of granted) {
+      const ref = await this.resolveRef(grant.credentialRefId);
+      if (!ref) return { status: 'repair_required' };
+      const provider = this.providers[ref.providerId];
+      if (!provider) return { status: 'repair_required' };
+      try {
+        await provider.inspect(ref);
+      } catch {
+        return { status: 'repair_required' };
+      }
+    }
+    const active = [...this.leases.values()].some(
+      (lease) =>
+        lease.consumer.id === consumer.id &&
+        lease.consumer.workspaceId === consumer.workspaceId &&
+        lease.status === 'active' &&
+        lease.expiresAt > this.now(),
+    );
+    return { status: active ? 'ok' : 'denied' };
+  }
+
   async getLease(leaseId: string): Promise<CredentialLease | undefined> {
     const lease = this.leases.get(leaseId);
     return lease

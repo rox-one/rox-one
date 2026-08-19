@@ -306,6 +306,11 @@ export class LocalMemorySecretProvider implements SecretProvider {
 
   async revoke(input: ProviderRevokeInput): Promise<void> {
     this.store.delete(locatorKey(input.credentialRef.locator));
+    for (const [key, stored] of this.store) {
+      if (stored.version.credentialRefId === input.credentialRef.id) {
+        this.store.delete(key);
+      }
+    }
   }
 
   async rotate(_input: ProviderRotateInput): Promise<CredentialVersion> {
