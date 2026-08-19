@@ -100,6 +100,12 @@ export {
 } from './journal-shadow.ts';
 export type { SessionJournalShadow, SessionJournalShadowArgs } from './journal-shadow.ts';
 
+export {
+  setSessionJournalPrimary,
+  trySessionJournalPrimary,
+} from './journal-primary.ts';
+export type { SessionJournalPrimary, SessionJournalPrimaryArgs } from './journal-primary.ts';
+
 // Field utilities
 export { pickSessionFields } from './utils.ts';
 

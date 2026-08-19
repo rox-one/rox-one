@@ -57,16 +57,16 @@ function resolveShell(): { command: string; argsPrefix: string[] } {
  * stdout size, wall-clock timeout, process-tree kill, credential env scrub.
  * Not a full sandbox.
  */
-export async function handleHostBash(
-  ctx: SessionToolContext,
-  args: HostBashArgs,
-): Promise<ToolResult> {
-  const command = typeof args.command === 'string' ? args.command.trim() : '';
+export async function runHostBash(req: {
+  command: string;
+  cwd: string;
+  timeoutMs?: number;
+}): Promise<ToolResult> {
+  const command = typeof req.command === 'string' ? req.command.trim() : '';
   if (!command) {
     return errorResponse('bash requires a non-empty command.');
   }
-
-  const cwd = ctx.workingDirectory || ctx.workspacePath;
+  const cwd = req.cwd;
   if (!cwd) {
     return errorResponse('bash requires a workspace working directory.');
   }
@@ -75,7 +75,7 @@ export async function handleHostBash(
   }
 
   const timeoutMs = Math.min(
-    Math.max(args.timeoutMs ?? HOST_BASH_DEFAULT_TIMEOUT_MS, 1),
+    Math.max(req.timeoutMs ?? HOST_BASH_DEFAULT_TIMEOUT_MS, 1),
     HOST_BASH_MAX_TIMEOUT_MS,
   );
 
@@ -148,6 +148,18 @@ export async function handleHostBash(
     const msg = error instanceof Error ? error.message : String(error);
     return errorResponse(`Error running host-tool bash: ${msg}`);
   }
+}
+
+export async function handleHostBash(
+  ctx: SessionToolContext,
+  args: HostBashArgs,
+): Promise<ToolResult> {
+  const cwd = ctx.workingDirectory || ctx.workspacePath;
+  return runHostBash({
+    command: args.command,
+    cwd,
+    timeoutMs: args.timeoutMs,
+  });
 }
 
 function formatHostBashResult(result: HostBashExecResult): ToolResult {

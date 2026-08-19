@@ -5,6 +5,7 @@ import { getSessionFilePath, ensureSessionsDir, ensureSessionDir } from './stora
 import { toPortablePath } from '../utils/paths.js'
 import { createSessionHeader, makeSessionPathPortable, readSessionHeader } from './jsonl.js'
 import { notifySessionJournalShadow } from './journal-shadow.js'
+import { trySessionJournalPrimary } from './journal-primary.js'
 import { debug } from '../utils/debug.js'
 
 interface PendingWrite {
@@ -155,13 +156,16 @@ class SessionPersistenceQueue {
       const finalSignature = getHeaderMetadataSignature(header)
       this.lastWrittenHeaderSignature.set(sessionId, finalSignature)
 
-      const tmpFile = filePath + '.tmp'
-      await writeFile(tmpFile, lines.join('\n') + '\n', 'utf-8')
-      // On Windows, rename fails if target exists. Delete first for cross-platform compatibility.
-      try { await unlink(filePath) } catch { /* ignore if doesn't exist */ }
-      await rename(tmpFile, filePath)
+      const wrotePrimary = await trySessionJournalPrimary(sessionDir, lines)
+      if (!wrotePrimary) {
+        const tmpFile = filePath + '.tmp'
+        await writeFile(tmpFile, lines.join('\n') + '\n', 'utf-8')
+        // On Windows, rename fails if target exists. Delete first for cross-platform compatibility.
+        try { await unlink(filePath) } catch { /* ignore if doesn't exist */ }
+        await rename(tmpFile, filePath)
+      }
       notifySessionJournalShadow(sessionDir, lines)
-      debug(`[PersistenceQueue] Wrote session ${sessionId}`)
+      debug(`[PersistenceQueue] Wrote session ${sessionId}${wrotePrimary ? ' (native primary)' : ''}`)
     } catch (error) {
       console.error(`[PersistenceQueue] Failed to write session ${sessionId}:`, error)
     }

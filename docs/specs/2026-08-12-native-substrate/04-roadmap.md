@@ -16,9 +16,9 @@
 
 ## Следом
 
-- Host-tool Bash для Pi/OMP → затем `craft-exec`. **Landed:** OMP host-tool `bash`; `craft-exec` `exec:run` on the sidecar; TS `handleHostBash` uses the port when the sidecar is up and falls back to local spawn.
-- Production wiring `cloudRuns.provider = native` за флагом. **Landed:** `makeProvider` selects `NativeRunProvider` when `provider=native` and `CRAFT_FEATURE_NATIVE_SIDECAR=1` with a live sidecar.
-- Journal primary на Rust (после стабилизации shadow).
+- Host-tool Bash для Pi/OMP → затем `craft-exec`. **Landed:** OMP + Pi execute through craft; `exec:run` on the sidecar with local fallback.
+- Production wiring `cloudRuns.provider = native` за флагом. **Landed.**
+- Journal primary на Rust (после стабилизации shadow). **Landed behind `CRAFT_FEATURE_NATIVE_JOURNAL_PRIMARY=1`:** persistence queue writes `session.jsonl` via `journal:writePrimary`, falls back to TS on sidecar failure. Shadow `session.native.jsonl` stays.
 
 Local-only process-tree kill и `budget_exceeded` закрыты тестами в `local-provider.test.ts` и crate `craft-rund` (не в shared conformance — у Cloudflare нет pid).
 

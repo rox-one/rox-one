@@ -67,4 +67,37 @@ describe.skipIf(!bin)('craft-journal shadow file', () => {
     expect(read.skipped).toBe(1)
     expect(read.lines.map((l) => l.id)).toEqual(['s1', 'm1', 'm2'])
   })
+
+  it('writePrimary writes session.jsonl', async () => {
+    const sockDir = mkdtempSync(join(tmpdir(), 'craft-native-journal-p-'))
+    dirs.push(sockDir)
+    const sessionDir = mkdtempSync(join(tmpdir(), 'craft-journal-primary-'))
+    dirs.push(sessionDir)
+    supervisor = new NativeSupervisor({
+      enabled: true,
+      resolveBin: () => bin,
+      logger: silentLogger(),
+      connectTimeoutMs: 8_000,
+      cwd: repoRoot,
+      socketPath: join(sockDir, 'n.sock'),
+    })
+    await supervisor.start()
+    const client = supervisor.getClient()
+    expect(client).not.toBeNull()
+
+    const lines = [
+      JSON.stringify({ id: 's1', workspaceRootPath: '/tmp/ws' }),
+      JSON.stringify({ id: 'm1', type: 'user', content: 'primary' }),
+    ]
+    const written = await client!.invoke<{ valid: number; path: string }>(
+      'journal:writePrimary',
+      sessionDir,
+      lines,
+    )
+    expect(written.valid).toBe(2)
+    expect(written.path.endsWith('session.jsonl')).toBe(true)
+    expect(existsSync(join(sessionDir, 'session.jsonl'))).toBe(true)
+    expect(existsSync(join(sessionDir, 'session.native.jsonl'))).toBe(false)
+    expect(readFileSync(join(sessionDir, 'session.jsonl'), 'utf8')).toContain('primary')
+  })
 })

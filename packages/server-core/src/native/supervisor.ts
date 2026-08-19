@@ -3,8 +3,9 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
+import { isNativeJournalPrimaryEnabled, isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
 import { setSessionJournalShadow } from '@craft-agent/shared/sessions/journal-shadow.ts'
+import { setSessionJournalPrimary } from '@craft-agent/shared/sessions/journal-primary.ts'
 import { setHostBashPort } from '@craft-agent/session-tools-core'
 import type { Logger } from '../runtime/platform.ts'
 import { connectNativeSidecar, type NativeSidecarClient } from './client.ts'
@@ -225,12 +226,14 @@ export async function startNativeSidecar(logger?: Logger, cwd?: string): Promise
   if (!singleton) singleton = new NativeSupervisor({ logger, cwd })
   await singleton.start()
   installJournalShadow()
+  installJournalPrimary()
   installHostBashPort()
   return singleton
 }
 
 export async function stopNativeSidecar(): Promise<void> {
   setHostBashPort(null)
+  setSessionJournalPrimary(null)
   setSessionJournalShadow(null)
   if (!singleton) return
   await singleton.stop()
@@ -267,6 +270,23 @@ function installHostBashPort(): void {
       stdoutTruncated: remote.stdoutTruncated,
       stderrTruncated: remote.stderrTruncated,
     }
+  })
+}
+
+function installJournalPrimary(): void {
+  if (!isNativeJournalPrimaryEnabled()) {
+    setSessionJournalPrimary(null)
+    return
+  }
+  setSessionJournalPrimary(async ({ sessionDir, lines }) => {
+    const client = getNativeSidecarClient()
+    if (!client) return false
+    const written = await client.invoke<{ valid: number; path: string }>(
+      'journal:writePrimary',
+      sessionDir,
+      lines,
+    )
+    return typeof written.valid === 'number' && written.valid === lines.length
   })
 }
 

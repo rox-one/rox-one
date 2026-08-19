@@ -1,5 +1,8 @@
-//! Session JSONL shadow. Writes `{sessionDir}/session.native.jsonl` only —
-//! never `session.jsonl` (that file stays the TypeScript source of truth).
+//! Session JSONL journal.
+//!
+//! Shadow (`write_journal`) writes `{sessionDir}/session.native.jsonl` only.
+//! Primary (`write_primary_journal`) writes `{sessionDir}/session.jsonl`
+//! behind CRAFT_FEATURE_NATIVE_JOURNAL_PRIMARY. Same atomic tmp+rename.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -7,6 +10,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub const NATIVE_JOURNAL_FILE: &str = "session.native.jsonl";
+pub const PRIMARY_JOURNAL_FILE: &str = "session.jsonl";
 
 #[derive(Debug, Clone)]
 pub struct JournalError {
@@ -53,18 +57,40 @@ pub fn native_journal_path(session_dir: &Path) -> PathBuf {
     session_dir.join(NATIVE_JOURNAL_FILE)
 }
 
-pub fn write_journal(session_dir: &Path, lines: &[String]) -> JournalResult<JournalStatus> {
-    validate_session_dir(session_dir)?;
-    fs::create_dir_all(session_dir).map_err(|e| JournalError::io(e.to_string()))?;
-    let path = native_journal_path(session_dir);
+pub fn primary_journal_path(session_dir: &Path) -> PathBuf {
+    session_dir.join(PRIMARY_JOURNAL_FILE)
+}
+
+fn atomic_write_lines(path: &Path, lines: &[String]) -> JournalResult<()> {
     let mut body = lines.join("\n");
     if !body.ends_with('\n') {
         body.push('\n');
     }
-    let tmp = path.with_extension("jsonl.tmp");
+    let tmp = PathBuf::from(format!("{}.tmp", path.display()));
     fs::write(&tmp, body).map_err(|e| JournalError::io(e.to_string()))?;
-    fs::rename(&tmp, &path).map_err(|e| JournalError::io(e.to_string()))?;
+    fs::rename(&tmp, path).map_err(|e| JournalError::io(e.to_string()))?;
+    Ok(())
+}
+
+pub fn write_journal(session_dir: &Path, lines: &[String]) -> JournalResult<JournalStatus> {
+    validate_session_dir(session_dir)?;
+    fs::create_dir_all(session_dir).map_err(|e| JournalError::io(e.to_string()))?;
+    atomic_write_lines(&native_journal_path(session_dir), lines)?;
     read_status(session_dir)
+}
+
+pub fn write_primary_journal(session_dir: &Path, lines: &[String]) -> JournalResult<JournalStatus> {
+    validate_session_dir(session_dir)?;
+    fs::create_dir_all(session_dir).map_err(|e| JournalError::io(e.to_string()))?;
+    atomic_write_lines(&primary_journal_path(session_dir), lines)?;
+    let path = primary_journal_path(session_dir);
+    let parsed = parse_file(&path)?;
+    Ok(JournalStatus {
+        path: path.to_string_lossy().into_owned(),
+        exists: true,
+        valid: parsed.lines.len(),
+        skipped: parsed.skipped,
+    })
 }
 
 pub fn read_journal(session_dir: &Path) -> JournalResult<JournalRead> {
@@ -154,6 +180,18 @@ mod tests {
         (0..n)
             .map(|i| format!(r#"{{"id":"m{i}","type":"user","content":"c{i}"}}"#))
             .collect()
+    }
+
+    #[test]
+    fn write_primary_uses_session_jsonl() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        write_primary_journal(dir, &lines(2)).unwrap();
+        assert!(primary_journal_path(dir).exists());
+        assert!(!native_journal_path(dir).exists());
+        let status = write_primary_journal(dir, &lines(1)).unwrap();
+        assert!(status.path.ends_with(PRIMARY_JOURNAL_FILE));
+        assert_eq!(status.valid, 1);
     }
 
     #[test]

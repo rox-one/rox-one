@@ -80,6 +80,15 @@ export function isNativeSidecarEnabled(): boolean {
   return false;
 }
 
+/**
+ * Rust writes session.jsonl (journal primary). Requires the sidecar flag.
+ * Override with CRAFT_FEATURE_NATIVE_JOURNAL_PRIMARY=1|0.
+ */
+export function isNativeJournalPrimaryEnabled(): boolean {
+  if (!isNativeSidecarEnabled()) return false;
+  return parseBooleanEnv(getEnv('CRAFT_FEATURE_NATIVE_JOURNAL_PRIMARY')) === true;
+}
+
 export const FEATURE_FLAGS = {
   /** Enable Opus 4.7 fast mode (speed:"fast" + beta header). 6x pricing. */
   fastMode: false,
@@ -123,5 +132,12 @@ export const FEATURE_FLAGS = {
    */
   get nativeSidecar(): boolean {
     return isNativeSidecarEnabled();
+  },
+  /**
+   * Enable Rust as the primary session.jsonl writer.
+   * Requires CRAFT_FEATURE_NATIVE_SIDECAR=1.
+   */
+  get nativeJournalPrimary(): boolean {
+    return isNativeJournalPrimaryEnabled();
   },
 } as const;
