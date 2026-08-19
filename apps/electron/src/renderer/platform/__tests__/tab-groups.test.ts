@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test'
+import { parseWorkbenchLayout } from '@craft-agent/core/platform'
 import { routes, type ViewRoute } from '../../../shared/routes'
 import type { PanelStackEntry } from '../../atoms/panel-stack'
-import { groupTabsByLayout, panelEntryToLegacy, panelStackToWorkbenchLayout } from '../tab-groups'
+import { groupTabsByLayout, panelEntryToLegacy, panelStackToWorkbenchLayout, persistableWorkbenchLayout } from '../tab-groups'
 
 function entry(id: string, route: ViewRoute, proportion = 0.5): PanelStackEntry {
   return { id, route, proportion, panelType: 'session', laneId: 'main' }
@@ -31,6 +32,19 @@ describe('panelStackToWorkbenchLayout', () => {
     const route = routes.view.settings()
     const legacy = panelEntryToLegacy(entry('settings', route, 1))
     expect(legacy.tab).toEqual({ kind: 'legacy-route' })
+  })
+
+  it('round-trips a derived layout through JSON + parseWorkbenchLayout', () => {
+    const layout = panelStackToWorkbenchLayout({
+      workspaceId: 'ws-1',
+      focusedPanelId: 'panel-a',
+      now: 10,
+      entries: [entry('panel-a', routes.view.allSessions('sess-a'), 1)],
+    })
+    const persistable = persistableWorkbenchLayout(layout)
+    expect(persistable).not.toBeNull()
+    expect(parseWorkbenchLayout(JSON.parse(JSON.stringify(persistable)))).toEqual(persistable)
+    expect(parseWorkbenchLayout({ ...layout, version: 1 })).toBeNull()
   })
 })
 

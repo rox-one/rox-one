@@ -7,6 +7,7 @@
  */
 import {
   migrateLegacyLayout,
+  parseWorkbenchLayout,
   type LegacyPanelStackEntry,
   type WorkbenchLayout,
 } from '@craft-agent/core/platform'
@@ -35,6 +36,11 @@ export function panelStackToWorkbenchLayout(input: {
     focusedId: input.focusedPanelId,
     now: input.now,
   })
+}
+
+/** Persist only snapshots that round-trip through the typed parser. */
+export function persistableWorkbenchLayout(layout: WorkbenchLayout): WorkbenchLayout | null {
+  return parseWorkbenchLayout(layout)
 }
 
 export interface LayoutTabGroupView<T extends { panelId: string }> {

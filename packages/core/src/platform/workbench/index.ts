@@ -8,6 +8,8 @@ export {
   resolveEnabledFlags,
 } from './flags.ts';
 export type {
+  LayoutMutation,
+  LayoutMutationCode,
   LegacyPanelStackEntry,
   OpenSurfaceOptions,
   SurfaceInstance,
@@ -17,7 +19,7 @@ export type {
   WorkbenchLayout,
   WorkbenchTab,
 } from './types.ts';
-export { DEFAULT_OPEN_SURFACE_OPTIONS } from './types.ts';
+export { DEFAULT_OPEN_SURFACE_OPTIONS, isPinnedSurface } from './types.ts';
 export {
   activateTab,
   activeInstance,
@@ -31,3 +33,10 @@ export {
   workbenchLayoutToPanelEntries,
   workbenchTabKey,
 } from './layout.ts';
+export {
+  flattenWorkbenchLayoutToLegacyEntries,
+  parseWorkbenchLayout,
+  parseWorkbenchTab,
+} from './migrate.ts';
+export type { InMemoryWorkbenchLayoutHostOptions, WorkbenchLayoutHost } from './memory-host.ts';
+export { createInMemoryWorkbenchLayoutHost } from './memory-host.ts';

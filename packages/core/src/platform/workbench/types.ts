@@ -22,7 +22,7 @@ export interface SurfaceInstance {
   id: SurfaceInstanceId;
   tab: WorkbenchTab;
   route: string;
-  pinned: boolean;
+  /** `true` = preview tab; `false` = pinned. One bit so both cannot be set. */
   preview: boolean;
   dirty: boolean;
   openedAt: number;
@@ -53,7 +53,7 @@ export interface LegacyPanelStackEntry {
 }
 
 export interface OpenSurfaceOptions {
-  target: 'active-group' | 'new-group-right' | 'new-group-bottom' | 'new-window';
+  target: 'active-group' | 'new-group-right' | 'new-window';
   mode: 'preview' | 'pinned';
   focus: boolean;
 }
@@ -63,3 +63,13 @@ export const DEFAULT_OPEN_SURFACE_OPTIONS: OpenSurfaceOptions = {
   mode: 'preview',
   focus: true,
 };
+
+export type LayoutMutationCode = 'DIRTY_SURFACE' | 'NOT_FOUND';
+
+export type LayoutMutation =
+  | { ok: true; layout: WorkbenchLayout }
+  | { ok: false; code: LayoutMutationCode; layout: WorkbenchLayout };
+
+export function isPinnedSurface(instance: SurfaceInstance): boolean {
+  return !instance.preview;
+}
