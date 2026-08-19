@@ -103,6 +103,7 @@ import {
 } from './session-scoped-tools.ts';
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
+import { resolveOmpSetModelTarget } from '../config/rox-public-models.ts';
 
 // ============================================================
 // Constants
@@ -143,10 +144,14 @@ export class OmpStartupAbortedError extends Error {
  */
 const OMP_CRAFT_CONTEXT_PROMPT = [
   'You are running inside the Craft Agents desktop app as an embedded agent backend.',
+  'Public model IDs are rox/explore, rox/standard, rox/max, rox/vision, and rox/fast.',
+  'Do not request raw provider or internal model names.',
   'In addition to your built-in tools, Craft exposes host tools (mcp__session__*):',
   '- mcp__session__spawn_session — create independent child sessions that run in parallel,',
   '  optionally with their own model, connection, sources and an initial prompt.',
   '  Use it to delegate subtasks instead of doing everything yourself.',
+  '  If you omit model on a ROX parent, the child uses rox/fast (the cheap public',
+  '  subagent endpoint). Pass model explicitly to keep another public endpoint.',
   '- mcp__session__call_llm — one-shot call to a fast auxiliary LLM (a default mini',
   '  model is preconfigured; omit the model parameter to use it).',
   '- mcp__session__browser_tool — control browser panes of the desktop app',
@@ -236,16 +241,12 @@ function mapThinkingLevel(level: ThinkingLevel): string {
 /** OMP extension_ui_request methods that are always safe to auto-answer. */
 const AUTO_ANSWER_METHODS: Record<string, true> = { setWidget: true, cancel: true };
 
-/** Normalize a model id for fuzzy matching (case/separator-insensitive). */
-function normalizeModelId(id: string): string {
-  return id.toLowerCase().replace(/[^a-z0-9]+/g, '');
-}
-
 /** Detect OMP's rejection of a `--model <id>` one-shot (vs. a real failure). */
 function isOmpModelNotFoundError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return /model not found|unknown model|no such model|invalid model/i.test(message);
 }
+
 
 /**
  * OMP session transcript entry (one JSONL line of the session file).
@@ -2051,8 +2052,9 @@ export class OmpAgent extends BaseAgent {
 
   /**
    * Resolve a craft model id to an OMP {provider, modelId} via a fuzzy match
-   * against get_available_models, then send set_model. e.g. craft id
-   * "kimi-K3" matches OMP entry {provider: 'rox', id: 'kimi-k3'}.
+   * against get_available_models, then send set_model. Public `rox/standard`
+   * becomes `{provider:'rox', modelId:'standard'}`. Legacy craft id "kimi-K3"
+   * still matches OMP entry `{provider: 'rox', id: 'kimi-k3'}`.
    */
   private async applyOmpModel(model: string): Promise<void> {
     try {
@@ -2062,25 +2064,15 @@ export class OmpAgent extends BaseAgent {
         | null;
 
       const models = (Array.isArray(data) ? data : data?.models) ?? [];
-      const wanted = normalizeModelId(model);
+      const target = resolveOmpSetModelTarget(model, models);
 
-      const candidate = models.find((m) => {
-        const id = String(m.modelId ?? m.id ?? '');
-        return normalizeModelId(id) === wanted || normalizeModelId(`${m.provider ?? ''}/${id}`) === wanted;
-      }) ?? models.find((m) => {
-        const id = normalizeModelId(String(m.modelId ?? m.id ?? ''));
-        return id.endsWith(wanted) || wanted.endsWith(id);
-      });
-
-      if (!candidate) {
+      if (!target) {
         this.debug(`No OMP model match for craft model "${model}" — keeping OMP default`);
         return;
       }
 
-      const provider = String(candidate.provider ?? '');
-      const modelId = String(candidate.modelId ?? candidate.id ?? '');
-      await this.sendCommand('set_model', { provider, modelId });
-      this.debug(`OMP model set to ${provider}/${modelId}`);
+      await this.sendCommand('set_model', { provider: target.provider, modelId: target.modelId });
+      this.debug(`OMP model set to ${target.provider}/${target.modelId}`);
     } catch (error) {
       this.debug(`applyOmpModel(${model}) failed: ${error}`);
     }

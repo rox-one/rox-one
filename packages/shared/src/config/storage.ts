@@ -50,6 +50,15 @@ import type { LlmConnection } from './llm-connections.ts';
 import { DEFAULT_MEMORY_CONFIG, type MemoryConfig } from '../memory/types.ts';
 import { isValidProviderAuthCombination, getDefaultModelsForConnection, getDefaultModelForConnection, isPiProvider, toBedrockNativeId, type LlmProviderType } from './llm-connections.ts';
 import {
+  isRoxLegacyInternalModelId,
+  isRoxPublicModelId,
+  ROX_DEFAULT_CONNECTION_NAME,
+  ROX_DEFAULT_PARENT_MODEL,
+  ROX_GATEWAY_BASE_URL,
+  ROX_PUBLIC_MODEL_IDS,
+  toRoxPublicModelDefinitions,
+} from './rox-public-models.ts';
+import {
   getModelProvider,
   getModelById,
   getModelDisplayName,
@@ -2797,6 +2806,11 @@ export function migrateLegacyLlmConnectionsConfig(): void {
     if (restoreOpus46ToAnthropicConnections(config)) {
       needsSave = true;
     }
+    // Phase 1n: Seeded rox-kimi connections advertised the internal kimi-K3
+    // id. Replace with the public ROX plane (one-shot, marker-guarded).
+    if (migrateRoxKimiToPublicModels(config)) {
+      needsSave = true;
+    }
 
     if (needsSave) {
       saveConfig(config);
@@ -2967,15 +2981,74 @@ export function migrateOrphanedDefaultConnections(): void {
   }
 }
 
+const ROX_KIMI_PUBLIC_MODELS_MARKER = 'rox-kimi-public-models-v1';
+const LEGACY_ROX_KIMI_CONNECTION_NAME = 'Rox (Kimi K3) · OMP';
+
+function connectionModelIds(connection: LlmConnection): string[] {
+  return (connection.models ?? []).map((m) => (typeof m === 'string' ? m : m.id));
+}
+
+/**
+ * Replace the seeded internal kimi-K3 id on the default ROX connection with
+ * the public `rox/*` plane. One-shot via migrationsApplied; later runs only
+ * remap a leftover kimi-K3 defaultModel and the historical display name.
+ */
+function migrateRoxKimiToPublicModels(config: StoredConfig): boolean {
+  const alreadyRan = config.migrationsApplied?.includes(ROX_KIMI_PUBLIC_MODELS_MARKER) ?? false;
+  let changed = false;
+
+  for (const connection of config.llmConnections ?? []) {
+    if (connection.slug !== ROX_DEFAULT_CONNECTION_SLUG) continue;
+    if (connection.providerType !== 'omp') continue;
+
+    const userLocked = connection.modelSelectionMode === 'userDefined3Tier';
+    const ids = connectionModelIds(connection);
+    const hasAllPublic = ROX_PUBLIC_MODEL_IDS.every((id) => ids.includes(id));
+
+    if (!alreadyRan && !userLocked && !hasAllPublic) {
+      connection.models = toRoxPublicModelDefinitions();
+      changed = true;
+    }
+
+    const defaultId = connection.defaultModel?.trim() ?? '';
+    const modelsNow = connectionModelIds(connection);
+    if (
+      isRoxLegacyInternalModelId(defaultId)
+      && (modelsNow.includes(ROX_DEFAULT_PARENT_MODEL) || (!alreadyRan && !userLocked))
+    ) {
+      connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
+      changed = true;
+    } else if (!alreadyRan && !userLocked && defaultId && !isRoxPublicModelId(defaultId)) {
+      connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
+      changed = true;
+    } else if (!alreadyRan && !defaultId) {
+      connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
+      changed = true;
+    }
+
+    if (connection.name === LEGACY_ROX_KIMI_CONNECTION_NAME) {
+      connection.name = ROX_DEFAULT_CONNECTION_NAME;
+      changed = true;
+    }
+  }
+
+  if (!alreadyRan) {
+    config.migrationsApplied = [...(config.migrationsApplied ?? []), ROX_KIMI_PUBLIC_MODELS_MARKER];
+    return true;
+  }
+  return changed;
+}
+
 /**
  * Seed the default LLM connection on first run.
  *
  * When the config has no LLM connections at all (fresh install), a single
  * "rox-kimi" connection is created pointing at the Rox gateway
  * (https://api.rox.one/v1) and runs on the OMP backend (providerType 'omp')
- * with kimi-K3 as the default model. OMP reads the gateway credentials from
- * its own config (~/.omp/agent/config.yml); the ROX_API_KEY env var is still
- * mirrored into the craft credential store for potential pi_compat fallback.
+ * with the public `rox/*` catalog (`rox/standard` default). OMP reads the
+ * gateway credentials from its own config (~/.omp/agent/config.yml); the
+ * ROX_API_KEY env var is still mirrored into the craft credential store for
+ * potential pi_compat fallback.
  *
  * The API key is NOT baked into the repo. It is stored in the encrypted
  * credential store when available from the ROX_API_KEY environment variable
@@ -3000,22 +3073,12 @@ export async function seedDefaultLlmConnection(): Promise<void> {
 
   const connection: LlmConnection = {
     slug: ROX_DEFAULT_CONNECTION_SLUG,
-    name: 'Rox (Kimi K3) · OMP',
+    name: ROX_DEFAULT_CONNECTION_NAME,
     providerType: 'omp',
-    baseUrl: 'https://api.rox.one/v1',
+    baseUrl: ROX_GATEWAY_BASE_URL,
     authType: 'none',
-    models: [
-      {
-        id: 'kimi-K3',
-        name: 'Kimi K3',
-        shortName: 'Kimi K3',
-        description: 'Kimi K3 via api.rox.one gateway',
-        provider: 'pi',
-        contextWindow: 262144,
-        supportsThinking: false,
-      },
-    ],
-    defaultModel: 'kimi-K3',
+    models: toRoxPublicModelDefinitions(),
+    defaultModel: ROX_DEFAULT_PARENT_MODEL,
     modelSelectionMode: 'automaticallySyncedFromProvider',
     createdAt: Date.now(),
   };
