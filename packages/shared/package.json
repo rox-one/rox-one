@@ -82,6 +82,7 @@
     "./i18n": "./src/i18n/index.ts",
     "./os/user-display-name": "./src/os/user-display-name.ts",
     "./knowledge/siyuan-binary": "./src/knowledge/siyuan-binary.ts",
+    "./knowledge/oem-pin": "./src/knowledge/oem-pin.ts",
     "./knowledge/plugin-allowlist": "./src/knowledge/plugin-allowlist.ts",
     "./orgs": "./src/orgs/index.ts",
     "./gamification": "./src/gamification/index.ts",
