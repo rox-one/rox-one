@@ -19,6 +19,7 @@
 - Host-tool Bash для Pi/OMP → затем `craft-exec`. **Landed:** OMP + Pi execute through craft; `exec:run` on the sidecar with local fallback.
 - Production wiring `cloudRuns.provider = native` за флагом. **Landed.**
 - Journal primary на Rust (после стабилизации shadow). **Landed behind `CRAFT_FEATURE_NATIVE_JOURNAL_PRIMARY=1`:** persistence queue writes `session.jsonl` via `journal:writePrimary`, falls back to TS on sidecar failure. Shadow `session.native.jsonl` stays.
+- Index primary на Rust (N-03: снять 2000/32MB). **Landed behind `CRAFT_FEATURE_NATIVE_INDEX_PRIMARY=1`:** `craft-index` caps are 20k files / 256MB; facade uses `index:reindex/search/retrieve/count` first, TS fallback on sidecar failure. TS walk stays 2000/32MB.
 
 Local-only process-tree kill и `budget_exceeded` закрыты тестами в `local-provider.test.ts` и crate `craft-rund` (не в shared conformance — у Cloudflare нет pid).
 

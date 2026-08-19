@@ -430,10 +430,10 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     }
 
     const { reindexWorkspaceSources, countIndexedFiles } = await import('../../sources/source-index-facade')
-    const result = reindexWorkspaceSources(workspace.rootPath, roots)
+    const result = await reindexWorkspaceSources(workspace.rootPath, roots)
     return {
       ...result,
-      fileCount: countIndexedFiles(workspace.rootPath),
+      fileCount: await countIndexedFiles(workspace.rootPath),
       rootCount: roots.length,
     }
   })
@@ -445,7 +445,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
       const { searchSourceIndex } = await import('../../sources/source-index-facade')
-      return searchSourceIndex(workspace.rootPath, typeof query === 'string' ? query : '', {
+      return await searchSourceIndex(workspace.rootPath, typeof query === 'string' ? query : '', {
         limit: typeof limit === 'number' ? limit : 20,
       })
     },

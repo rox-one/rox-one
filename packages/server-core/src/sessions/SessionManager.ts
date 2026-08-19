@@ -4135,7 +4135,7 @@ export class SessionManager implements ISessionManager {
       // (sourcesBlock). Same memoryQuery as lessons; fail-soft on missing index.
       if (memoryQuery && managed.workspace?.rootPath) {
         try {
-          const retrieved = retrieveSourcesForPrompt(managed.workspace.rootPath, memoryQuery)
+          const retrieved = await retrieveSourcesForPrompt(managed.workspace.rootPath, memoryQuery)
           const sourcesBlock = formatSourceRetrieveForPrompt(retrieved.hits)
           if (sourcesBlock) {
             memoryBlocks = { ...(memoryBlocks ?? {}), sourcesBlock }
