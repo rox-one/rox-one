@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "Szolgáltató",
   "settings.cloudRuns.providerHint": "Hol futnak a futtatások",
   "settings.cloudRuns.providerLocal": "Helyi (ez a gép)",
+  "settings.cloudRuns.providerNative": "Native sidecar (ez a gép)",
   "settings.cloudRuns.scheduleHelp": "Az ismétlődő felhő futásokat a composer Cloud chip dialógusában (Ütemezés) kezelheted.",
   "settings.cloudRuns.sectionConnection": "Kapcsolat",
   "settings.cloudRuns.sectionLimits": "Korlátok",

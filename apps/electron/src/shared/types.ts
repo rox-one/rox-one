@@ -393,7 +393,7 @@ export interface ElectronAPI {
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
     enabled: boolean
-    provider: 'local' | 'cloudflare' | 'modal' | 'e2b'
+    provider: 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native'
     gatewayUrl?: string
     notifyWebhookUrl?: string
     cheapModelId?: string
@@ -404,7 +404,7 @@ export interface ElectronAPI {
   }>
   setCloudRunsConfig(patch: {
     enabled?: boolean
-    provider?: 'local' | 'cloudflare' | 'modal' | 'e2b'
+    provider?: 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native'
     gatewayUrl?: string
     defaultMaxWallClockSec?: number
     defaultMaxLlmTokens?: number

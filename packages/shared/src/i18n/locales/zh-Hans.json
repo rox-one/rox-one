@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "提供商",
   "settings.cloudRuns.providerHint": "运行位置",
   "settings.cloudRuns.providerLocal": "本地（本机）",
+  "settings.cloudRuns.providerNative": "Native sidecar（本机）",
   "settings.cloudRuns.scheduleHelp": "循环云运行在作曲器 Cloud 芯片对话框的「计划」区管理。",
   "settings.cloudRuns.sectionConnection": "连接",
   "settings.cloudRuns.sectionLimits": "限额",

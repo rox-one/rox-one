@@ -11,13 +11,13 @@
 3. `craft-native` health/version/capabilities.
 4. `craft-index` shadow за `CRAFT_FEATURE_NATIVE_SIDECAR` (default false).
 5. Local crash-reconcile / process-tree / `budget_exceeded` тесты для CloudRunProvider.
-6. `craft-rund` как adapter `CloudRunProvider` (`run:*` на том же sidecar, `NativeRunProvider`). `makeProvider` по-прежнему default `local`.
+6. `craft-rund` как adapter `CloudRunProvider` (`run:*` на том же sidecar, `NativeRunProvider`). `makeProvider` выбирает native при `cloudRuns.provider=native` + флаг sidecar.
 7. Session journal dual-write: TS пишет `session.jsonl`, sidecar — `{sessionDir}/session.native.jsonl` за тем же флагом. Characterization: оборванная последняя строка JSONL не роняет сессию.
 
 ## Следом
 
-- Host-tool Bash для Pi/OMP → затем `craft-exec`. **OMP slice landed:** session tool `bash` (`mcp__session__bash`) + unprefixed `bash` host-tool alias, craft spawn with env scrub / stdout cap / timeout / process-tree kill. Pi still uses SDK bash.
-- Production wiring `cloudRuns.provider = native` за флагом.
+- Host-tool Bash для Pi/OMP → затем `craft-exec`. **Landed:** OMP host-tool `bash`; `craft-exec` `exec:run` on the sidecar; TS `handleHostBash` uses the port when the sidecar is up and falls back to local spawn.
+- Production wiring `cloudRuns.provider = native` за флагом. **Landed:** `makeProvider` selects `NativeRunProvider` when `provider=native` and `CRAFT_FEATURE_NATIVE_SIDECAR=1` with a live sidecar.
 - Journal primary на Rust (после стабилизации shadow).
 
 Local-only process-tree kill и `budget_exceeded` закрыты тестами в `local-provider.test.ts` и crate `craft-rund` (не в shared conformance — у Cloudflare нет pid).

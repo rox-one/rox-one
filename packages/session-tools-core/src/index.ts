@@ -140,6 +140,16 @@ export type {
 
 export { createNodeFileSystem } from './context.ts';
 
+export {
+  setHostBashPort,
+  getHostBashPort,
+} from './runtime/host-bash-port.ts';
+export type {
+  HostBashPort,
+  HostBashExecRequest,
+  HostBashExecResult,
+} from './runtime/host-bash-port.ts';
+
 // Knowledge tool runtime (K-10 §3.1 read capabilities) — registered by the
 // server-core knowledge RPC layer; consumed by the knowledge_* handlers.
 export {

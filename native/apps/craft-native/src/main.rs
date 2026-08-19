@@ -4,6 +4,7 @@ use craft_protocol::{
     encode_frame, protocol_major_matches, FrameDecoder, MessageEnvelope, WireError,
     NATIVE_CHANNELS, PROTOCOL_VERSION,
 };
+use craft_exec::{self, ExecRequest};
 use craft_rund::{self, RunSpec};
 use serde_json::{json, Value};
 use std::env;
@@ -42,6 +43,15 @@ impl From<craft_rund::RundError> for HandlerError {
 
 impl From<JournalError> for HandlerError {
     fn from(error: JournalError) -> Self {
+        Self {
+            code: error.code.to_string(),
+            message: error.message,
+        }
+    }
+}
+
+impl From<craft_exec::ExecError> for HandlerError {
+    fn from(error: craft_exec::ExecError) -> Self {
         Self {
             code: error.code.to_string(),
             message: error.message,
@@ -321,6 +331,15 @@ fn handle_request(channel: &str, args: &[Value]) -> Result<Value, HandlerError> 
             let session_dir = arg_str(args, 0)?;
             let status = craft_journal::read_status(Path::new(session_dir))?;
             serde_json::to_value(status).map_err(|e| e.to_string().into())
+        }
+        "exec:run" => {
+            let req: ExecRequest = serde_json::from_value(args.first().cloned().unwrap_or(Value::Null))
+                .map_err(|e| HandlerError {
+                    code: "invalid_spec".into(),
+                    message: format!("invalid exec request: {e}"),
+                })?;
+            let result = craft_exec::run(req)?;
+            serde_json::to_value(result).map_err(|e| e.to_string().into())
         }
         _ => Err(format!("unknown channel: {channel}").into()),
     }

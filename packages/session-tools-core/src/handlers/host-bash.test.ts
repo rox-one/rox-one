@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { SessionToolContext } from '../context.ts';
 import { handleHostBash } from './host-bash.ts';
+import { setHostBashPort } from '../runtime/host-bash-port.ts';
 
 describe('host-tool bash', () => {
   let rootDir: string;
@@ -21,6 +22,7 @@ describe('host-tool bash', () => {
   });
 
   afterEach(() => {
+    setHostBashPort(null);
     rmSync(rootDir, { recursive: true, force: true });
   });
 
@@ -97,5 +99,28 @@ describe('host-tool bash', () => {
     const text = result.content[0]?.text ?? '';
     expect(text).toContain('truncated');
     expect(text.length).toBeLessThan(30_000);
+  });
+
+  it('uses the craft-exec port when installed', async () => {
+    setHostBashPort(async (req) => ({
+      stdout: `port:${req.command}`,
+      stderr: '',
+      exitCode: 0,
+      timedOut: false,
+      durationMs: 3,
+      cwd: req.cwd,
+    }));
+    const result = await handleHostBash(ctx(), { command: 'echo ignored' });
+    expect(result.isError).toBe(false);
+    expect(result.content[0]?.text).toContain('port:echo ignored');
+  });
+
+  it('falls back to local spawn when the port throws', async () => {
+    setHostBashPort(async () => {
+      throw new Error('sidecar down');
+    });
+    const result = await handleHostBash(ctx(), { command: 'echo local-fallback' });
+    expect(result.isError).toBe(false);
+    expect(result.content[0]?.text).toContain('local-fallback');
   });
 });

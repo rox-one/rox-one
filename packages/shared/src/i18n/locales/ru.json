@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "Провайдер",
   "settings.cloudRuns.providerHint": "Где выполняются раны",
   "settings.cloudRuns.providerLocal": "Локально (этот компьютер)",
+  "settings.cloudRuns.providerNative": "Native sidecar (этот компьютер)",
   "settings.cloudRuns.scheduleHelp": "Повторяющиеся облачные запуски настраиваются в диалоге чипа «Облако» в композере (секция «Расписания»).",
   "settings.cloudRuns.sectionConnection": "Подключение",
   "settings.cloudRuns.sectionLimits": "Лимиты",

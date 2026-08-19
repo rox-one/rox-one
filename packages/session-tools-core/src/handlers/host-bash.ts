@@ -4,6 +4,7 @@ import type { SessionToolContext } from '../context.ts';
 import { errorResponse, successResponse } from '../response.ts';
 import type { ToolResult } from '../types.ts';
 import { createSanitizedEnv } from '../runtime/sandbox-env.ts';
+import { getHostBashPort, type HostBashExecResult } from '../runtime/host-bash-port.ts';
 
 export interface HostBashArgs {
   command: string;
@@ -50,10 +51,11 @@ function resolveShell(): { command: string; argsPrefix: string[] } {
 /**
  * Craft-executed host-tool Bash.
  *
- * This is the TS precondition for later `craft-exec`: OMP (and any other
- * `set_host_tools` backend) must call into craft instead of spawning Bash
- * inside the backend. Caps here are stdout size, wall-clock timeout,
- * process-tree kill, and credential env scrubbing — not a full sandbox.
+ * OMP (and any other `set_host_tools` backend) calls into craft instead of
+ * spawning Bash inside the backend. When the native sidecar is up, execution
+ * goes through `exec:run` (`craft-exec`); otherwise local spawn. Caps:
+ * stdout size, wall-clock timeout, process-tree kill, credential env scrub.
+ * Not a full sandbox.
  */
 export async function handleHostBash(
   ctx: SessionToolContext,
@@ -76,6 +78,17 @@ export async function handleHostBash(
     Math.max(args.timeoutMs ?? HOST_BASH_DEFAULT_TIMEOUT_MS, 1),
     HOST_BASH_MAX_TIMEOUT_MS,
   );
+
+  const port = getHostBashPort();
+  if (port) {
+    try {
+      const remote = await port({ command, cwd, timeoutMs });
+      return formatHostBashResult(remote);
+    } catch {
+      // Sidecar down or invoke failed — local spawn stays the primary path.
+    }
+  }
+
   const env = createSanitizedEnv();
   const shell = resolveShell();
   const memoryCap = HOST_BASH_MAX_OUTPUT_CHARS * 2;
@@ -123,34 +136,49 @@ export async function handleHostBash(
     });
 
     const durationMs = Date.now() - startedAt;
-    const stdout = truncateOutput(result.stdout);
-    const stderr = truncateOutput(result.stderr);
-    const lines: string[] = [
-      `exitCode: ${result.code ?? 'null'}`,
-      `durationMs: ${durationMs}`,
-      `timedOut: ${result.timedOut}`,
-      `cwd: ${cwd}`,
-    ];
-
-    if (stdout.text.length > 0) {
-      lines.push('', 'stdout:', stdout.text);
-      if (stdout.truncated) {
-        lines.push(`\n[stdout truncated to ${HOST_BASH_MAX_OUTPUT_CHARS} characters]`);
-      }
-    }
-    if (stderr.text.length > 0) {
-      lines.push('', 'stderr:', stderr.text);
-      if (stderr.truncated) {
-        lines.push(`\n[stderr truncated to ${HOST_BASH_MAX_OUTPUT_CHARS} characters]`);
-      }
-    }
-
-    if (result.timedOut || result.code !== 0) {
-      return errorResponse(lines.join('\n'));
-    }
-    return successResponse(lines.join('\n'));
+    return formatHostBashResult({
+      stdout: result.stdout,
+      stderr: result.stderr,
+      exitCode: result.code,
+      timedOut: result.timedOut,
+      durationMs,
+      cwd,
+    });
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return errorResponse(`Error running host-tool bash: ${msg}`);
   }
+}
+
+function formatHostBashResult(result: HostBashExecResult): ToolResult {
+  const stdout = result.stdoutTruncated
+    ? { text: result.stdout, truncated: true }
+    : truncateOutput(result.stdout);
+  const stderr = result.stderrTruncated
+    ? { text: result.stderr, truncated: true }
+    : truncateOutput(result.stderr);
+  const lines: string[] = [
+    `exitCode: ${result.exitCode ?? 'null'}`,
+    `durationMs: ${result.durationMs}`,
+    `timedOut: ${result.timedOut}`,
+    `cwd: ${result.cwd}`,
+  ];
+
+  if (stdout.text.length > 0) {
+    lines.push('', 'stdout:', stdout.text);
+    if (stdout.truncated) {
+      lines.push(`\n[stdout truncated to ${HOST_BASH_MAX_OUTPUT_CHARS} characters]`);
+    }
+  }
+  if (stderr.text.length > 0) {
+    lines.push('', 'stderr:', stderr.text);
+    if (stderr.truncated) {
+      lines.push(`\n[stderr truncated to ${HOST_BASH_MAX_OUTPUT_CHARS} characters]`);
+    }
+  }
+
+  if (result.timedOut || result.exitCode !== 0) {
+    return errorResponse(lines.join('\n'));
+  }
+  return successResponse(lines.join('\n'));
 }

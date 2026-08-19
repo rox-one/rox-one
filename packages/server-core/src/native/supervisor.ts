@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
 import { setSessionJournalShadow } from '@craft-agent/shared/sessions/journal-shadow.ts'
+import { setHostBashPort } from '@craft-agent/session-tools-core'
 import type { Logger } from '../runtime/platform.ts'
 import { connectNativeSidecar, type NativeSidecarClient } from './client.ts'
 
@@ -224,10 +225,12 @@ export async function startNativeSidecar(logger?: Logger, cwd?: string): Promise
   if (!singleton) singleton = new NativeSupervisor({ logger, cwd })
   await singleton.start()
   installJournalShadow()
+  installHostBashPort()
   return singleton
 }
 
 export async function stopNativeSidecar(): Promise<void> {
+  setHostBashPort(null)
   setSessionJournalShadow(null)
   if (!singleton) return
   await singleton.stop()
@@ -236,6 +239,35 @@ export async function stopNativeSidecar(): Promise<void> {
 
 export function getNativeSidecarClient(): NativeSidecarClient | null {
   return singleton?.getClient() ?? null
+}
+
+function installHostBashPort(): void {
+  setHostBashPort(async (req) => {
+    const client = getNativeSidecarClient()
+    if (!client) {
+      throw new Error('native sidecar client is not connected')
+    }
+    const remote = await client.invoke<{
+      stdout: string
+      stderr: string
+      exitCode: number | null
+      timedOut: boolean
+      durationMs: number
+      cwd: string
+      stdoutTruncated?: boolean
+      stderrTruncated?: boolean
+    }>('exec:run', req)
+    return {
+      stdout: remote.stdout ?? '',
+      stderr: remote.stderr ?? '',
+      exitCode: remote.exitCode ?? null,
+      timedOut: Boolean(remote.timedOut),
+      durationMs: remote.durationMs ?? 0,
+      cwd: remote.cwd ?? req.cwd,
+      stdoutTruncated: remote.stdoutTruncated,
+      stderrTruncated: remote.stderrTruncated,
+    }
+  })
 }
 
 function installJournalShadow(): void {

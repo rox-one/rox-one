@@ -25,6 +25,7 @@ import {
   CloudRunnerError,
   LocalSubprocessProvider,
   ModalProvider,
+  NativeRunProvider,
   DEFAULT_PERSONAS,
   buildResearchSpec,
   type CloudRunProvider,
@@ -36,6 +37,8 @@ import { awardXpSafe } from '@craft-agent/shared/gamification';
 import type { RpcServer } from '@craft-agent/server-core/transport';
 import type { HandlerDeps } from '../handler-deps';
 import { resolveContainedRelativePath } from '../../utils/path-validation';
+import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags';
+import { getNativeSidecarClient } from '../../native/supervisor.ts';
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.GET_CONFIG,
@@ -64,7 +67,7 @@ export const HANDLED_CHANNELS = [
 
 export interface CloudRunsSettings {
   enabled: boolean;
-  provider: 'local' | 'cloudflare' | 'modal' | 'e2b';
+  provider: 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native';
   gatewayUrl?: string;
   defaults: { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number };
 }
@@ -171,6 +174,25 @@ function readSecretsEnv(): Record<string, string> {
 }
 
 function makeProvider(settings: CloudRunsSettings): CloudRunProvider {
+  if (settings.provider === 'native') {
+    if (!isNativeSidecarEnabled()) {
+      throw new CloudRunnerError(
+        'native provider requires CRAFT_FEATURE_NATIVE_SIDECAR=1',
+        'provider_error',
+      );
+    }
+    const client = getNativeSidecarClient();
+    if (!client) {
+      throw new CloudRunnerError(
+        'native sidecar is not running (craft-native). Set CRAFT_NATIVE_BIN or build native/target/debug/craft-native',
+        'provider_error',
+      );
+    }
+    return new NativeRunProvider({
+      baseDir: join(CONFIG_DIR, 'cloud-runs', 'native'),
+      rpc: client,
+    });
+  }
   if (settings.provider === 'cloudflare' || settings.provider === 'modal') {
     const secrets = readSecretsEnv();
     // Per-provider URL env beats the generic one, so flipping the
@@ -619,6 +641,12 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     ) => {
       const stored = loadStoredConfig();
       if (!stored) throw new CloudRunnerError('config.json not found', 'provider_error');
+      if (patch.provider === 'native' && !isNativeSidecarEnabled()) {
+        throw new CloudRunnerError(
+          'native provider requires CRAFT_FEATURE_NATIVE_SIDECAR=1',
+          'provider_error',
+        );
+      }
       saveConfig({ ...stored, cloudRuns: { ...stored.cloudRuns, ...patch } } as typeof stored);
       return { ok: true };
     },

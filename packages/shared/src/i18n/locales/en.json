@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "Provider",
   "settings.cloudRuns.providerHint": "Where runs execute",
   "settings.cloudRuns.providerLocal": "Local (this machine)",
+  "settings.cloudRuns.providerNative": "Native sidecar (this machine)",
   "settings.cloudRuns.scheduleHelp": "Recurring cloud runs are managed from the Cloud chip dialog in the composer (Schedules section).",
   "settings.cloudRuns.sectionConnection": "Connection",
   "settings.cloudRuns.sectionLimits": "Limits",

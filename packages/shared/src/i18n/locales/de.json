@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "Anbieter",
   "settings.cloudRuns.providerHint": "Wo Läufe ausgeführt werden",
   "settings.cloudRuns.providerLocal": "Lokal (dieser Rechner)",
+  "settings.cloudRuns.providerNative": "Native sidecar (dieser Rechner)",
   "settings.cloudRuns.scheduleHelp": "Wiederkehrende Cloud-Läufe verwalten Sie im Cloud-Chip-Dialog im Composer (Abschnitt Zeitpläne).",
   "settings.cloudRuns.sectionConnection": "Verbindung",
   "settings.cloudRuns.sectionLimits": "Limits",
