@@ -55,6 +55,10 @@ export type { TransformDataArgs } from './transform-data.ts';
 export { handleScriptSandbox } from './script-sandbox.ts';
 export type { ScriptSandboxArgs } from './script-sandbox.ts';
 
+// Host-tool Bash
+export { handleHostBash } from './host-bash.ts';
+export type { HostBashArgs } from './host-bash.ts';
+
 // Render Template
 export { handleRenderTemplate } from './render-template.ts';
 export type { RenderTemplateArgs } from './render-template.ts';

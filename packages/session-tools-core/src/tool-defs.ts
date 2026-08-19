@@ -32,6 +32,7 @@ import { handleCredentialPrompt } from './handlers/credential-prompt.ts';
 import { handleUpdatePreferences } from './handlers/update-preferences.ts';
 import { handleTransformData } from './handlers/transform-data.ts';
 import { handleScriptSandbox } from './handlers/script-sandbox.ts';
+import { handleHostBash } from './handlers/host-bash.ts';
 import { handleRenderTemplate } from './handlers/render-template.ts';
 import { handleSendDeveloperFeedback } from './handlers/send-developer-feedback.ts';
 import { handleSetSessionLabels } from './handlers/set-session-labels.ts';
@@ -146,6 +147,16 @@ export const ScriptSandboxSchema = z.object({
   inputFiles: z.array(z.string()).optional().describe('Optional input file paths relative to the session directory.'),
   stdin: z.string().optional().describe('Optional stdin payload passed to the script process.'),
   timeoutMs: z.number().min(1).max(15000).optional().describe('Optional timeout in milliseconds (default 5000, max 15000).'),
+});
+
+export const HostBashSchema = z.object({
+  command: z.string().describe('Shell command to run in the session working directory.'),
+  timeoutMs: z
+    .number()
+    .min(1)
+    .max(120000)
+    .optional()
+    .describe('Optional timeout in milliseconds (default 30000, max 120000).'),
 });
 
 export const RenderTemplateSchema = z.object({
@@ -415,6 +426,12 @@ Use this tool when you need to transform large datasets (20+ rows) into structur
 
 **Security:** Runs in an isolated subprocess with no access to API keys or credentials. 30-second timeout.`,
 
+  bash: `Run a shell command on the host via craft (not inside the agent backend).
+
+Craft spawns \`/bin/bash -lc\` in the session working directory, scrubs credential env vars, caps stdout/stderr, and kills the process tree on timeout. This is the host-tool Bash seam for OMP/Pi; it is not a full sandbox (see script_sandbox for isolated snippets).
+
+Explore/Safe mode uses the same read-only command classifier as Claude's Bash tool.`,
+
   script_sandbox: `Run quick inline diagnostics in a sandboxed subprocess with network isolation.
 
 Use this for short Python/Node/Bun snippets when strict Explore-mode Bash parsing blocks inline diagnostics.
@@ -677,6 +694,9 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'update_user_preferences', description: TOOL_DESCRIPTIONS.update_user_preferences, inputSchema: UpdatePreferencesSchema, executionMode: 'registry', safeMode: 'block', handler: handleUpdatePreferences },
   { name: 'transform_data', description: TOOL_DESCRIPTIONS.transform_data, inputSchema: TransformDataSchema, executionMode: 'registry', safeMode: 'allow', handler: handleTransformData },
   { name: 'script_sandbox', description: TOOL_DESCRIPTIONS.script_sandbox, inputSchema: ScriptSandboxSchema, executionMode: 'registry', safeMode: 'allow', handler: handleScriptSandbox },
+  // Host-tool Bash: craft-executed. safeMode block is metadata (not read-only);
+  // mode-manager special-cases bash / mcp__session__bash with the Claude Bash classifier.
+  { name: 'bash', description: TOOL_DESCRIPTIONS.bash, inputSchema: HostBashSchema, executionMode: 'registry', safeMode: 'block', handler: handleHostBash },
   { name: 'render_template', description: TOOL_DESCRIPTIONS.render_template, inputSchema: RenderTemplateSchema, executionMode: 'registry', safeMode: 'allow', handler: handleRenderTemplate },
   { name: 'send_developer_feedback', description: TOOL_DESCRIPTIONS.send_developer_feedback, inputSchema: SendDeveloperFeedbackSchema, executionMode: 'registry', safeMode: 'allow', handler: handleSendDeveloperFeedback },
   { name: 'call_llm', description: TOOL_DESCRIPTIONS.call_llm, inputSchema: CallLlmSchema, executionMode: 'backend', safeMode: 'allow', readOnly: true, handler: null },

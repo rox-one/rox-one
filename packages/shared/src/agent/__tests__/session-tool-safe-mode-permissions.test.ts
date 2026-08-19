@@ -38,4 +38,18 @@ describe('session tool safe-mode classification', () => {
       }
     }
   });
+
+  it('classifies host-tool bash with the same Explore command rules as Claude Bash', () => {
+    const read = { command: 'ls' };
+    const write = { command: 'echo x > /tmp/host-bash-write' };
+    const canonicalRead = shouldAllowToolInMode('Bash', read, 'safe');
+    const canonicalWrite = shouldAllowToolInMode('Bash', write, 'safe');
+
+    expect(canonicalWrite.allowed).toBe(false);
+
+    for (const toolName of ['bash', 'mcp__session__bash'] as const) {
+      expect(shouldAllowToolInMode(toolName, read, 'safe')).toEqual(canonicalRead);
+      expect(shouldAllowToolInMode(toolName, write, 'safe').allowed).toBe(false);
+    }
+  });
 });

@@ -19,7 +19,7 @@
 
 ### Craft-инструменты внутри OMP (host tools)
 OmpAgent публикует craft-сессионные инструменты в OMP через `set_host_tools`:
-- что: общий билдер `buildSessionToolDefs({ includePoolProxyDefs: true })` (`packages/shared/src/agent/session-tool-defs.ts`) — session tools (spawn_session, call_llm, browser_tool, mcp__session__*) **плюс MCP source-proxy defs из mcpPool** (v2, G1); loadMode `'essential'` — иначе инструменты «прячутся» от модели; `refreshHostToolsFromPool()` догоняет изменения пула в idle-точках (между ходами / при `setSourceServers`);
+- что: общий билдер `buildSessionToolDefs({ includePoolProxyDefs: true, includeHostBashAlias: true })` (`packages/shared/src/agent/session-tool-defs.ts`) — session tools (spawn_session, call_llm, browser_tool, mcp__session__*, **host-tool `bash`**) **плюс MCP source-proxy defs из mcpPool** (v2, G1); unprefixed `bash` shadows OMP's built-in Bash so craft spawns the process; loadMode `'essential'` — иначе инструменты «прячутся» от модели; `refreshHostToolsFromPool()` догоняет изменения пула в idle-точках (между ходами / при `setSourceServers`);
 - как: OMP шлёт `host_tool_call` → OmpAgent исполняет тем же кодом, что PiAgent: source-proxy имена (`mcp__<slug>__*`) диспатчатся в `mcpPool.callTool` **до** session-registry (`executeHostSessionTool`) → `host_tool_result {content:[{type:'text',text}]}`;
 - в ask/safe — перед исполнением спрашиваем у пользователя через craft permission + `respondToPermission` (120с fail-safe deny);
 - **не** прокинуто (осознанно): resume из OMP session store — craft-транскрипт остаётся источником истины.

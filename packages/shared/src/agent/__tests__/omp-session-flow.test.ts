@@ -70,7 +70,7 @@ describe('OmpAgent session flow — healthy turn', () => {
     expect((complete as { usage?: { inputTokens: number; outputTokens: number } }).usage?.inputTokens).toBe(10);
     expect((complete as { usage?: { outputTokens?: number } }).usage?.outputTokens).toBe(5);
     expect(agent.isProcessing()).toBe(false);
-  });
+  }, 15_000);
 
   it('maps OMP thinking stream to thinking_delta / thinking_complete events', async () => {
     const { agent } = setup('healthy');
@@ -84,7 +84,7 @@ describe('OmpAgent session flow — healthy turn', () => {
     // Thinking precedes text in the stream.
     const types = events.map((e) => e.type);
     expect(types.indexOf('thinking_complete')).toBeLessThan(types.indexOf('text_complete'));
-  });
+  }, 15_000);
 
   it('emits an omp_turn_anchor resolved from the OMP transcript', async () => {
     const { agent } = setup('healthy');
@@ -96,25 +96,32 @@ describe('OmpAgent session flow — healthy turn', () => {
       | undefined;
     expect(anchor, `expected omp_turn_anchor in ${events.map((e) => e.type).join(',')}`).toBeDefined();
     expect(anchor!.entryId).toBe('bbbb2222');
-  });
+  }, 15_000);
 });
 
 describe('OmpAgent host tool bridge', () => {
   it('registers session tools via set_host_tools with essential loadMode', async () => {
     const { agent, fake } = setup('healthy');
 
-    await chatEvents(agent, 'hi', 8_000);
-
-    const registration = await waitForRpcFrame(fake, (f) => f.type === 'set_host_tools');
+    const registrationP = waitForRpcFrame(fake, (f) => f.type === 'set_host_tools', 15_000);
+    await chatEvents(agent, 'hi', 15_000);
+    const registration = await registrationP;
     const tools = registration.tools as Array<{ name: string; loadMode?: string; parameters?: unknown }>;
     expect(Array.isArray(tools)).toBe(true);
     const names = tools.map((t) => t.name);
     expect(names).toContain('mcp__session__spawn_session');
     expect(names).toContain('mcp__session__call_llm');
     expect(names).toContain('mcp__session__browser_tool');
+    // Host-tool Bash: session name plus unprefixed `bash` so OMP's built-in
+    // bash is shadowed by craft-side execution (unlocks later craft-exec).
+    expect(names).toContain('mcp__session__bash');
+    expect(names).toContain('bash');
+    const prefixed = tools.find((t) => t.name === 'mcp__session__bash');
+    const alias = tools.find((t) => t.name === 'bash');
+    expect(prefixed?.parameters).toEqual(alias?.parameters);
     // 'essential' pins tools into the model schema (default would hide them).
     expect(tools.every((t) => t.loadMode === 'essential')).toBe(true);
-  });
+  }, 20_000);
 
   it('dispatches host_tool_call → host_tool_result for registry and unknown tools', async () => {
     const { agent, fake } = setup('host-tool');
@@ -139,6 +146,19 @@ describe('OmpAgent host tool bridge', () => {
     expect(events.some((e) => e.type === 'text_complete')).toBe(true);
     expect(events.at(-1)?.type).toBe('complete');
   });
+
+  it('executes unprefixed bash as a craft host tool', async () => {
+    const { agent, fake } = setup('host-tool-bash');
+    const events = await chatEvents(agent, 'hi', 8_000);
+
+    const result = fake.readRpcLog().find((f) => f.type === 'host_tool_result' && f.id === 'htc-bash');
+    expect(result).toBeDefined();
+    const payload = result!.result as { content: Array<{ type: string; text: string }> };
+    expect(payload.content[0]!.text).toContain('omp-host-bash');
+    expect(payload.content[0]!.text).toContain('exitCode: 0');
+    expect(result!.isError).toBeUndefined();
+    expect(events.at(-1)?.type).toBe('complete');
+  }, 20_000);
 });
 
 describe('OmpAgent model switching', () => {

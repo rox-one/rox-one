@@ -44,6 +44,12 @@ export interface SessionToolDefBuildOptions {
    * model hint (mirrors prior inline behavior of PiAgent/OmpAgent).
    */
   miniModel?: string;
+  /**
+   * Also advertise unprefixed `bash` (same schema as mcp__session__bash).
+   * OMP's built-in bash is shadowed by craft-side host-tool execution.
+   * Pi must leave this false — it already registers SDK bash.
+   */
+  includeHostBashAlias?: boolean;
 }
 
 export function buildSessionToolDefs(options: SessionToolDefBuildOptions = {}): SessionToolDef[] {
@@ -77,6 +83,13 @@ export function buildSessionToolDefs(options: SessionToolDefBuildOptions = {}): 
       if (seen.has(poolDef.name)) continue;
       seen.add(poolDef.name);
       unique.push(poolDef as SessionToolDef);
+    }
+  }
+
+  if (options.includeHostBashAlias) {
+    const prefixed = unique.find((d) => d.name === 'mcp__session__bash');
+    if (prefixed && !seen.has('bash')) {
+      unique.push({ ...prefixed, name: 'bash' });
     }
   }
 
