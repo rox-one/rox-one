@@ -209,7 +209,11 @@ describe('P0 importers', () => {
         },
         purpose: 'test',
       }),
-    ).rejects.toThrow(/PROVIDER_LEASE_RESERVED/);
+    ).resolves.toMatchObject({
+      _brand: 'ProviderMaterialization',
+      credentialRefId: commit.credentialRefId,
+      providerId: provider.id,
+    });
 
     await importers.dotenv!.rollback({ commit });
     await expect(

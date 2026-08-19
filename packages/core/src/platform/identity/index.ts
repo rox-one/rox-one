@@ -98,3 +98,15 @@ export {
   parseGitCredentialConfig,
   redactGcpAdcPreview,
 } from './p0-adapters.ts';
+
+export type { AccessGrant, AccessGrantStatus } from './grants.ts';
+export { JsonAccessGrantStore } from './grants.ts';
+export type {
+  AcquireLeaseInput,
+  ConsumerIdentity,
+  ConsumerKind,
+  CredentialLease,
+  DeliveryDescriptor,
+  InProcessCredentialBrokerOptions,
+} from './broker.ts';
+export { InProcessCredentialBroker } from './broker.ts';

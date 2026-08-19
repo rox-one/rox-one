@@ -1,0 +1,183 @@
+import type { CredentialRef, CredentialRefId } from './credential-types.ts';
+import { ConnectionFabricError, type DeliveryMechanism, type SecretProvider } from './provider-contract.ts';
+import type { AccessGrant, JsonAccessGrantStore } from './grants.ts';
+
+const MAX_TTL_MS = 15 * 60 * 1000;
+const DELIVERY_PREFERENCE: readonly DeliveryMechanism[] = [
+  'trusted-http-header',
+  'proxy',
+  'mcp-tool-host',
+  'git-credential-helper',
+  'docker-credential-helper',
+  'aws-credential-process',
+  'ssh-agent',
+  'stdin',
+  'fd',
+  'temporary-file',
+  'browser-partition',
+  'env-legacy',
+];
+
+export type ConsumerKind = 'agent' | 'workflow' | 'tool' | 'mcp' | 'plugin' | 'remote-client' | 'human';
+
+export interface ConsumerIdentity {
+  readonly kind: ConsumerKind;
+  readonly id: string;
+  readonly workspaceId: string;
+}
+
+export interface AcquireLeaseInput {
+  readonly credentialRef: CredentialRefId;
+  readonly consumer: ConsumerIdentity;
+  readonly purpose: string;
+  readonly action: string;
+  readonly resources: readonly string[];
+  readonly audience?: string;
+  readonly ttl: number;
+  readonly requestedMechanism?: DeliveryMechanism;
+  readonly allowEnvLegacy?: boolean;
+}
+
+export interface DeliveryDescriptor {
+  readonly mechanism: DeliveryMechanism;
+  readonly audience?: string;
+}
+
+export interface CredentialLease {
+  readonly id: string;
+  readonly credentialRefId: CredentialRefId;
+  readonly consumer: ConsumerIdentity;
+  readonly purpose: string;
+  readonly action: string;
+  readonly resources: readonly string[];
+  readonly audience?: string;
+  readonly issuedAt: number;
+  readonly expiresAt: number;
+  readonly delivery: DeliveryDescriptor;
+  readonly status: 'active' | 'revoked' | 'expired' | 'used' | 'denied';
+}
+
+export interface InProcessCredentialBrokerOptions {
+  readonly grants: JsonAccessGrantStore;
+  readonly providers: Readonly<Record<string, SecretProvider>>;
+  readonly resolveRef: (id: CredentialRefId) => Promise<CredentialRef | undefined>;
+  readonly now?: () => number;
+}
+
+export class InProcessCredentialBroker {
+  private readonly grants: JsonAccessGrantStore;
+  private readonly providers: Readonly<Record<string, SecretProvider>>;
+  private readonly resolveRef: (id: CredentialRefId) => Promise<CredentialRef | undefined>;
+  private readonly now: () => number;
+  private readonly leases = new Map<string, CredentialLease>();
+  private sequence = 0;
+
+  constructor(options: InProcessCredentialBrokerOptions) {
+    this.grants = options.grants;
+    this.providers = options.providers;
+    this.resolveRef = options.resolveRef;
+    this.now = options.now ?? Date.now;
+  }
+
+  async acquireLease(input: AcquireLeaseInput): Promise<CredentialLease> {
+    if (!Number.isFinite(input.ttl) || input.ttl <= 0 || input.ttl > MAX_TTL_MS) {
+      throw new ConnectionFabricError('LEASE_DENIED', 'ttl');
+    }
+    const ref = await this.resolveRef(input.credentialRef);
+    if (!ref) throw new ConnectionFabricError('PROVIDER_UNAVAILABLE', input.credentialRef);
+
+    const grant = this.matchGrant(input, ref.id);
+    if (!grant) throw new ConnectionFabricError('GRANT_MISSING');
+    this.assertGrantCovers(grant, input);
+
+    const provider = this.providers[ref.providerId];
+    if (!provider) throw new ConnectionFabricError('PROVIDER_UNAVAILABLE', ref.providerId);
+
+    const mechanism = this.selectDelivery(provider.definition.deliveryMechanisms, input);
+    await provider.resolveForLease({ credentialRef: ref, purpose: input.purpose });
+
+    const issuedAt = this.now();
+    const lease: CredentialLease = {
+      id: `lease_${++this.sequence}`,
+      credentialRefId: ref.id,
+      consumer: { ...input.consumer },
+      purpose: input.purpose,
+      action: input.action,
+      resources: [...input.resources],
+      issuedAt,
+      expiresAt: issuedAt + input.ttl,
+      delivery: {
+        mechanism,
+        ...(input.audience ? { audience: input.audience } : {}),
+      },
+      status: 'active',
+      ...(input.audience ? { audience: input.audience } : {}),
+    };
+    this.leases.set(lease.id, lease);
+    return {
+      ...lease,
+      consumer: { ...lease.consumer },
+      resources: [...lease.resources],
+      delivery: { ...lease.delivery },
+    };
+  }
+
+  async revokeLease(leaseId: string, _reason: string): Promise<void> {
+    const current = this.leases.get(leaseId);
+    if (!current) throw new ConnectionFabricError('LEASE_REVOKED', leaseId);
+    this.leases.set(leaseId, { ...current, status: 'revoked' });
+  }
+
+  async getLease(leaseId: string): Promise<CredentialLease | undefined> {
+    const lease = this.leases.get(leaseId);
+    return lease
+      ? {
+          ...lease,
+          consumer: { ...lease.consumer },
+          resources: [...lease.resources],
+          delivery: { ...lease.delivery },
+        }
+      : undefined;
+  }
+
+  private matchGrant(input: AcquireLeaseInput, credentialRefId: CredentialRefId): AccessGrant | undefined {
+    return this.grants.listActive({
+      consumerId: input.consumer.id,
+      credentialRefId,
+    })[0];
+  }
+
+  private assertGrantCovers(grant: AccessGrant, input: AcquireLeaseInput): void {
+    if (grant.workspaceId !== input.consumer.workspaceId) {
+      throw new ConnectionFabricError('LEASE_DENIED', 'workspace');
+    }
+    if (!grant.actions.includes(input.action)) {
+      throw new ConnectionFabricError('LEASE_DENIED', 'action');
+    }
+    const allowed = new Set(grant.resources);
+    if (!input.resources.every((resource) => allowed.has(resource))) {
+      throw new ConnectionFabricError('LEASE_DENIED', 'resource');
+    }
+  }
+
+  private selectDelivery(
+    supported: readonly DeliveryMechanism[],
+    input: AcquireLeaseInput,
+  ): DeliveryMechanism {
+    const requested = input.requestedMechanism;
+    const allowed = DELIVERY_PREFERENCE.filter((mechanism) => {
+      if (!supported.includes(mechanism)) return false;
+      if (mechanism === 'env-legacy' && !input.allowEnvLegacy) return false;
+      return true;
+    });
+    if (requested) {
+      if (!allowed.includes(requested)) {
+        throw new ConnectionFabricError('DELIVERY_UNSUPPORTED', requested);
+      }
+      return requested;
+    }
+    const selected = allowed[0];
+    if (!selected) throw new ConnectionFabricError('DELIVERY_UNSUPPORTED');
+    return selected;
+  }
+}
