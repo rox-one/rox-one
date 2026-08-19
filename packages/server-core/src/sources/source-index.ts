@@ -109,6 +109,10 @@ export interface SourceReindexResult {
   truncated: boolean
   dbPath: string
   fts: boolean
+  /** Native incremental: files upserted this pass. */
+  written?: number
+  /** Native incremental: files skipped because mtime matched. */
+  unchanged?: number
 }
 
 export interface SourceSearchResult {
