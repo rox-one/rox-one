@@ -180,6 +180,8 @@ export {
   handleTransformData,
   // Script Sandbox
   handleScriptSandbox,
+  // Host-tool Bash
+  handleHostBash,
   // Render Template
   handleRenderTemplate,
   // Send Developer Feedback
@@ -210,6 +212,7 @@ export type {
   UpdatePreferencesArgs,
   TransformDataArgs,
   ScriptSandboxArgs,
+  HostBashArgs,
   RenderTemplateArgs,
   SendDeveloperFeedbackArgs,
 } from './handlers/index.ts';
@@ -228,6 +231,7 @@ export {
   UpdatePreferencesSchema,
   TransformDataSchema,
   ScriptSandboxSchema,
+  HostBashSchema,
   RenderTemplateSchema,
   // Browser tool schema
   BrowserToolSchema,

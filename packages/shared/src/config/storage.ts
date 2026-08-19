@@ -638,8 +638,14 @@ export function getBrowserToolEnabled(): boolean {
   if (config?.browserToolEnabled !== undefined) {
     return config.browserToolEnabled;
   }
-  const defaults = loadConfigDefaults();
-  return defaults.defaults.browserToolEnabled;
+  try {
+    const defaults = loadConfigDefaults();
+    return defaults.defaults.browserToolEnabled;
+  } catch {
+    // Isolated tests and first-boot without a synced defaults file:
+    // documented default is enabled.
+    return true;
+  }
 }
 
 /**

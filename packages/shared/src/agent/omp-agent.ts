@@ -876,18 +876,21 @@ export class OmpAgent extends BaseAgent {
       }),
     ]);
 
-    // Capture the OMP session id for getSessionId(); best effort.
-    this.sendCommand('get_state', {})
-      .then((data) => {
-        const state = (data as { sessionId?: string; sessionFile?: string } | null);
-        const sid = state?.sessionId;
-        if (sid && sid !== this.ompSessionId) {
-          this.ompSessionId = sid;
-          this.config.onSdkSessionIdUpdate?.(sid);
-        }
-        if (state?.sessionFile) this.ompSessionFile = state.sessionFile;
-      })
-      .catch((err) => this.debug(`get_state after ready failed: ${err}`));
+    // Capture the OMP session id / transcript path before the first prompt
+    // so turn anchors can resolve (G3). Fire-and-forget raced set_host_tools
+    // and dropped get_state under isolated tests.
+    try {
+      const data = await this.sendCommand('get_state', {});
+      const state = (data as { sessionId?: string; sessionFile?: string } | null);
+      const sid = state?.sessionId;
+      if (sid && sid !== this.ompSessionId) {
+        this.ompSessionId = sid;
+        this.config.onSdkSessionIdUpdate?.(sid);
+      }
+      if (state?.sessionFile) this.ompSessionFile = state.sessionFile;
+    } catch (err) {
+      this.debug(`get_state after ready failed: ${err instanceof Error ? err.message : err}`);
+    }
 
     // Bridge craft session tools (spawn_session, call_llm, browser_tool, …)
     // into OMP via set_host_tools; best effort — the session still works
@@ -1385,6 +1388,7 @@ export class OmpAgent extends BaseAgent {
     const unique = buildSessionToolDefs({
       mcpPool: this.mcpPool,
       includePoolProxyDefs: true,
+      includeHostBashAlias: true,
       miniModel: this.config.miniModel,
     });
 
@@ -1418,6 +1422,7 @@ export class OmpAgent extends BaseAgent {
     const current = buildSessionToolDefs({
       mcpPool: this.mcpPool,
       includePoolProxyDefs: true,
+      includeHostBashAlias: true,
       miniModel: this.config.miniModel,
     });
     if (current.map((d) => d.name).join('') === this.registeredHostToolNames) return;

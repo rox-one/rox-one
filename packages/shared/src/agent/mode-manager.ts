@@ -1883,8 +1883,9 @@ export function shouldAllowToolInMode(
   }
 
   // Handle Bash - check if command is read-only
-  // Uses detailed rejection reasons to provide helpful error messages
-  if (toolName === 'Bash') {
+  // Uses detailed rejection reasons to provide helpful error messages.
+  // Host-tool aliases (OMP set_host_tools) share the same classifier.
+  if (toolName === 'Bash' || toolName === 'bash' || toolName === 'mcp__session__bash') {
     const input = toolInput as Record<string, unknown> | null;
     const command = input?.command;
     if (typeof command === 'string') {
@@ -2107,7 +2108,7 @@ function getBlockReasonWithConfig(toolName: string, config: ToolCheckConfig): st
   const displayName = config.displayName;
   const shortcut = config.shortcutHint;
 
-  if (toolName === 'Bash') {
+  if (toolName === 'Bash' || toolName === 'bash' || toolName === 'mcp__session__bash') {
     return `Bash commands are blocked in ${displayName}. Switch to Ask or Allow All mode (${shortcut}) to run commands.`;
   }
   if (toolName === 'Write' || toolName === 'Edit' || toolName === 'MultiEdit') {

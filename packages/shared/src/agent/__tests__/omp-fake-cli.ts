@@ -146,6 +146,10 @@ function rpcLoop() {
           send({ type: 'turn_start' });
           send({ type: 'host_tool_call', id: 'htc-1', toolName: 'mcp__session__mermaid_validate', arguments: { code: 'graph TD\n  A-->B' } });
           send({ type: 'host_tool_call', id: 'htc-2', toolName: 'mcp__session__no_such_tool', arguments: {} });
+        } else if (scenario === 'host-tool-bash') {
+          send({ type: 'agent_start' });
+          send({ type: 'turn_start' });
+          send({ type: 'host_tool_call', id: 'htc-bash', toolName: 'bash', arguments: { command: 'echo omp-host-bash' } });
         } else {
           emitTurnStream();
         }
@@ -153,6 +157,9 @@ function rpcLoop() {
       case 'host_tool_result':
         hostToolResultsReceived += 1;
         if (scenario === 'host-tool' && hostToolResultsReceived >= 2) {
+          emitTurnStream();
+        }
+        if (scenario === 'host-tool-bash' && hostToolResultsReceived >= 1) {
           emitTurnStream();
         }
         break;
@@ -217,6 +224,7 @@ switch (scenario) {
     break;
   case 'healthy':
   case 'host-tool':
+  case 'host-tool-bash':
   default:
     send(READY_FRAME);
     rpcLoop();

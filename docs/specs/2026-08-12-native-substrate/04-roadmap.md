@@ -16,7 +16,7 @@
 
 ## Следом
 
-- Host-tool Bash для Pi/OMP → затем `craft-exec`.
+- Host-tool Bash для Pi/OMP → затем `craft-exec`. **OMP slice landed:** session tool `bash` (`mcp__session__bash`) + unprefixed `bash` host-tool alias, craft spawn with env scrub / stdout cap / timeout / process-tree kill. Pi still uses SDK bash.
 - Production wiring `cloudRuns.provider = native` за флагом.
 - Journal primary на Rust (после стабилизации shadow).
 
