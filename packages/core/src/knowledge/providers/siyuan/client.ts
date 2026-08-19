@@ -23,6 +23,7 @@
  *   POST /api/ref/getBackmentionDoc          data: { backmentions, keywords }
  *   POST /api/filetree/getHPathByID          data: string human path
  *   POST /api/filetree/getPathByID           data: { path, notebook }
+ *   POST /api/filetree/listDocsByPath        data: { box, path, files } — listDocTree
  *   POST /api/export/exportMdContent         data: { hPath, content }  (admin role)
  *
  * Soft plugin/petal endpoints (plugin bridge feed — optional enrichment; callers soft-fail):
@@ -199,6 +200,34 @@ export interface SiyuanGetBacklinkResult {
 
 export interface SiyuanSqlRow {
   [column: string]: unknown;
+}
+
+export interface SiyuanDocTreeNode {
+  id: string;
+  name: string;
+  path: string;
+  kind: 'document' | 'folder' | 'database';
+  children?: SiyuanDocTreeNode[];
+}
+
+export interface ListDocTreeResult {
+  notebookId: string;
+  nodes: SiyuanDocTreeNode[];
+}
+
+interface SiyuanFiletreeDoc {
+  id?: string;
+  name?: string;
+  path?: string;
+  hPath?: string;
+  subFileCount?: number;
+  children?: SiyuanFiletreeDoc[];
+}
+
+interface SiyuanListDocsByPathData {
+  box?: string;
+  path?: string;
+  files?: SiyuanFiletreeDoc[];
 }
 
 // -- Write-endpoint response shapes (P3 §3.4.1; docs/API.zh-CN.md refs in the file header) ------
@@ -410,6 +439,14 @@ export class SiyuanKernelClient {
    * client-side by assertSelectOnly (§3.4.2: non-SELECT throws before any network I/O).
    */
   sql<T extends SiyuanSqlRow = SiyuanSqlRow>(stmt: string): Promise<T[]> {
+    return this.querySql(stmt);
+  }
+
+  /**
+   * SELECT-only SQL via /api/query/sql. assertSelectOnly runs before any network I/O.
+   * Do not wrap delete/remove through this method.
+   */
+  querySql<T extends SiyuanSqlRow = SiyuanSqlRow>(stmt: string): Promise<T[]> {
     assertSelectOnly(stmt);
     return this.post<T[]>('/api/query/sql', { stmt, mode: 'readonly' });
   }
@@ -467,6 +504,26 @@ export class SiyuanKernelClient {
 
   getPathByID(id: string): Promise<{ path: string; notebook: string }> {
     return this.post<{ path: string; notebook: string }>('/api/filetree/getPathByID', { id });
+  }
+
+  /**
+   * Notebook file tree (folders + documents) plus attribute-view databases merged as
+   * `kind: 'database'`. File listing is POST /api/filetree/listDocsByPath; av rows come
+   * from querySql SELECT-only (`type='av'`).
+   */
+  async listDocTree(notebookId: string, path: string = '/'): Promise<ListDocTreeResult> {
+    const data = await this.post<SiyuanListDocsByPathData | SiyuanFiletreeDoc[]>('/api/filetree/listDocsByPath', {
+      notebook: notebookId,
+      path,
+    });
+    const files = Array.isArray(data) ? data : (data?.files ?? []);
+    const nodes = files.map((file) => mapFiletreeNode(file));
+
+    const avStmt = `SELECT id, name, path, hpath, box FROM blocks WHERE type='av' AND box=${sqlString(notebookId)}`;
+    const avRows = await this.querySql<SiyuanSqlRow>(avStmt);
+    mergeAvNodes(nodes, avRows);
+
+    return { notebookId, nodes };
   }
 
   // -- Export (read-only markdown projection of a document) ------------------
@@ -658,4 +715,57 @@ function normalizePetalInfos(data: unknown): SiyuanPetalInfo[] {
     return out;
   }
   return [];
+}
+
+function sqlString(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
+function mapFiletreeNode(file: SiyuanFiletreeDoc): SiyuanDocTreeNode {
+  const id = typeof file.id === 'string' ? file.id : '';
+  const name = typeof file.name === 'string' ? file.name : id;
+  const path = typeof file.path === 'string' ? file.path : '';
+  const nested = Array.isArray(file.children) ? file.children.map(mapFiletreeNode) : undefined;
+  const kind: SiyuanDocTreeNode['kind'] =
+    (file.subFileCount ?? 0) > 0 || (nested && nested.length > 0) ? 'folder' : 'document';
+  const node: SiyuanDocTreeNode = { id, name, path, kind };
+  if (nested && nested.length > 0) node.children = nested;
+  else if (kind === 'folder') node.children = [];
+  return node;
+}
+
+function walkNodes(nodes: SiyuanDocTreeNode[], visit: (node: SiyuanDocTreeNode) => boolean | void): void {
+  for (const node of nodes) {
+    if (visit(node) === true) return;
+    if (node.children) walkNodes(node.children, visit);
+  }
+}
+
+function mergeAvNodes(nodes: SiyuanDocTreeNode[], avRows: SiyuanSqlRow[]): void {
+  for (const row of avRows) {
+    const id = typeof row.id === 'string' ? row.id : '';
+    if (!id) continue;
+    const name = typeof row.name === 'string' && row.name.length > 0 ? row.name : id;
+    const path = typeof row.hpath === 'string' && row.hpath.length > 0
+      ? row.hpath
+      : typeof row.path === 'string'
+        ? row.path
+        : '';
+    const dbNode: SiyuanDocTreeNode = { id, name, path, kind: 'database' };
+    const filePath = typeof row.path === 'string' ? row.path : '';
+    let attached = false;
+    walkNodes(nodes, (node) => {
+      if (node.kind === 'database') return;
+      if (filePath && (node.path === filePath || filePath.startsWith(node.path.replace(/\.sy$/, '')))) {
+        if (node.kind === 'document' || node.kind === 'folder') {
+          node.children = node.children ?? [];
+          node.children.push(dbNode);
+          attached = true;
+          return true;
+        }
+      }
+      return;
+    });
+    if (!attached) nodes.push(dbNode);
+  }
 }
