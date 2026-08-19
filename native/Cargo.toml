@@ -5,6 +5,7 @@ members = [
   "crates/craft-index",
   "crates/craft-rund",
   "crates/craft-journal",
+  "crates/craft-exec",
   "apps/craft-native",
 ]
 
@@ -19,6 +20,7 @@ craft-protocol = { path = "crates/craft-protocol" }
 craft-index = { path = "crates/craft-index" }
 craft-rund = { path = "crates/craft-rund" }
 craft-journal = { path = "crates/craft-journal" }
+craft-exec = { path = "crates/craft-exec" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 rusqlite = { version = "0.32", features = ["bundled"] }

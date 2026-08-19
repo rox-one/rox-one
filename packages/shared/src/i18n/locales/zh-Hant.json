@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "供應商",
   "settings.cloudRuns.providerHint": "執行位置",
   "settings.cloudRuns.providerLocal": "本機（這台機器）",
+  "settings.cloudRuns.providerNative": "Native sidecar（這台機器）",
   "settings.cloudRuns.scheduleHelp": "循環雲端執行在編輯器 Cloud 晶片對話框的「排程」區管理。",
   "settings.cloudRuns.sectionConnection": "連線",
   "settings.cloudRuns.sectionLimits": "限額",

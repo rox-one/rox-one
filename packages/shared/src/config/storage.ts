@@ -80,7 +80,7 @@ export interface StoredConfig {
   // Cloud Runs (PRD docs/cloud-runs-prd.md). Token lives in <configDir>/cloud-runs.env, not here.
   cloudRuns?: {
     enabled?: boolean;
-    provider?: 'local' | 'cloudflare' | 'modal' | 'e2b';
+    provider?: 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native';
     gatewayUrl?: string;
     defaultMaxWallClockSec?: number;
     defaultMaxLlmTokens?: number;

@@ -23,6 +23,7 @@ pub const NATIVE_CHANNELS: &[&str] = &[
     "journal:write",
     "journal:read",
     "journal:status",
+    "exec:run",
 ];
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

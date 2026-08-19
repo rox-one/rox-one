@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "Fournisseur",
   "settings.cloudRuns.providerHint": "Où s’exécutent les runs",
   "settings.cloudRuns.providerLocal": "Local (cette machine)",
+  "settings.cloudRuns.providerNative": "Native sidecar (cette machine)",
   "settings.cloudRuns.scheduleHelp": "Les runs cloud récurrents se gèrent depuis le dialogue de la puce Cloud du compositeur (section Planning).",
   "settings.cloudRuns.sectionConnection": "Connexion",
   "settings.cloudRuns.sectionLimits": "Limites",

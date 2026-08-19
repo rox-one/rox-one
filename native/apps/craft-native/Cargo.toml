@@ -11,6 +11,7 @@ craft-protocol.workspace = true
 craft-index.workspace = true
 craft-rund.workspace = true
 craft-journal.workspace = true
+craft-exec.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true

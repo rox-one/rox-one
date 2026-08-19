@@ -23,7 +23,7 @@ export const meta: DetailsPageMeta = {
   slug: 'cloudRuns',
 }
 
-type Provider = 'local' | 'cloudflare' | 'modal' | 'e2b'
+type Provider = 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native'
 interface Config {
   enabled: boolean
   provider: Provider
@@ -103,6 +103,7 @@ export default function CloudRunsSettingsPage() {
               onChange={(e) => patch({ provider: e.target.value as Provider })}
             >
               <option value="local">{t('settings.cloudRuns.providerLocal')}</option>
+              <option value="native">{t('settings.cloudRuns.providerNative')}</option>
               <option value="cloudflare">Cloudflare</option>
               <option value="modal">Modal</option>
             </select>

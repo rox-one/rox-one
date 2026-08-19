@@ -2,8 +2,9 @@
  * NativeRunProvider — CloudRunProvider adapter over craft-native `run:*` RPC.
  *
  * Same on-disk contract as LocalSubprocessProvider; process supervision lives
- * in the sidecar (`craft-rund`). Production makeProvider is unchanged (local
- * remains the default). This adapter is the test surface for craft-rund.
+ * in the sidecar (`craft-rund`). Production `makeProvider` selects this
+ * adapter when `cloudRuns.provider === 'native'` and
+ * `CRAFT_FEATURE_NATIVE_SIDECAR=1` with a live sidecar.
  */
 import type {
   ArtifactMeta,

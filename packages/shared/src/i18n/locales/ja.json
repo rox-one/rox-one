@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "プロバイダー",
   "settings.cloudRuns.providerHint": "実行場所",
   "settings.cloudRuns.providerLocal": "ローカル（このマシン）",
+  "settings.cloudRuns.providerNative": "Native sidecar（このマシン）",
   "settings.cloudRuns.scheduleHelp": "定期クラウド実行はコンポーザーの Cloud チップダイアログ（スケジュール）で管理します。",
   "settings.cloudRuns.sectionConnection": "接続",
   "settings.cloudRuns.sectionLimits": "上限",

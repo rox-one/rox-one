@@ -21,6 +21,12 @@ interface RunResult {
   stderr: string;
 }
 
+function isNoiseStderr(stderr: string): boolean {
+  return stderr
+    .split('\n')
+    .every((line) => !line.trim() || /CRAFT_CONFIG_DIR is deprecated/.test(line));
+}
+
 function runScript(configDir: string, script: string): RunResult {
   const result = Bun.spawnSync([process.execPath, '--eval', script], {
     env: { ...process.env, CRAFT_CONFIG_DIR: configDir, CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..') },
@@ -79,7 +85,7 @@ describe('cloud-runs rpc handlers (local provider)', () => {
         if (cfg.provider !== 'local') throw new Error('provider !== local: ' + JSON.stringify(cfg.provider));
         console.log('ok');
       `);
-      expect(r.stderr).toBe('');
+      expect(isNoiseStderr(r.stderr)).toBe(true);
       expect(r.exitCode).toBe(0);
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -107,7 +113,7 @@ describe('cloud-runs rpc handlers (local provider)', () => {
         if (stored.cloudRuns.provider !== 'cloudflare') throw new Error('persisted provider !== cloudflare');
         console.log('ok');
       `);
-      expect(seeded.stderr).toBe('');
+      expect(isNoiseStderr(seeded.stderr)).toBe(true);
       expect(seeded.exitCode).toBe(0);
 
       writeFileSync(
@@ -125,7 +131,7 @@ describe('cloud-runs rpc handlers (local provider)', () => {
         if (cfg.provider !== 'local') throw new Error('provider local not preserved: ' + JSON.stringify(cfg.provider));
         console.log('ok');
       `);
-      expect(preserved.stderr).toBe('');
+      expect(isNoiseStderr(preserved.stderr)).toBe(true);
       expect(preserved.exitCode).toBe(0);
     } finally {
       rmSync(dir, { recursive: true, force: true });
@@ -249,4 +255,51 @@ describe('cloud-runs rpc handlers (local provider)', () => {
       rmSync(dir, { recursive: true, force: true });
     }
   }, 60_000);
+
+  test('SET_CONFIG native is rejected without sidecar flag', () => {
+    const dir = freshConfigDir();
+    try {
+      const r = runScript(dir, SETUP + `
+        let threw = false;
+        try {
+          await invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG, { provider: 'native' });
+        } catch (e) {
+          threw = /NATIVE_SIDECAR|native provider/i.test(String(e?.message ?? e));
+        }
+        if (!threw) throw new Error('expected native SET_CONFIG to fail without flag');
+        console.log('ok');
+      `);
+      expect(isNoiseStderr(r.stderr)).toBe(true);
+      expect(r.exitCode).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('SET_CONFIG native persists when sidecar flag is on', () => {
+    const dir = freshConfigDir();
+    try {
+      const result = Bun.spawnSync([process.execPath, '--eval', SETUP + `
+        const cfg = await invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG, { provider: 'native' });
+        if (!cfg?.ok) throw new Error('SET_CONFIG native failed: ' + JSON.stringify(cfg));
+        const got = await invoke(RPC_CHANNELS.cloudRuns.GET_CONFIG);
+        if (got.provider !== 'native') throw new Error('provider not native: ' + JSON.stringify(got));
+        console.log('ok');
+      `], {
+        env: {
+          ...process.env,
+          CRAFT_CONFIG_DIR: dir,
+          CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..'),
+          CRAFT_FEATURE_NATIVE_SIDECAR: '1',
+        },
+        stdout: 'pipe',
+        stderr: 'pipe',
+        cwd: join(import.meta.dir, '..', '..', '..', '..', '..'),
+      });
+      expect(isNoiseStderr(result.stderr.toString())).toBe(true);
+      expect(result.exitCode ?? -1).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });

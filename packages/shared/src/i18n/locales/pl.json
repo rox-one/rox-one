@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "Dostawca",
   "settings.cloudRuns.providerHint": "Gdzie wykonują się uruchomienia",
   "settings.cloudRuns.providerLocal": "Lokalnie (ten komputer)",
+  "settings.cloudRuns.providerNative": "Native sidecar (ten komputer)",
   "settings.cloudRuns.scheduleHelp": "Cykliczne uruchomienia chmurowe zarządzasz w dialogu chipa Cloud w kompozytorze (sekcja Harmonogram).",
   "settings.cloudRuns.sectionConnection": "Połączenie",
   "settings.cloudRuns.sectionLimits": "Limity",

@@ -1924,6 +1924,7 @@
   "settings.cloudRuns.provider": "Proveedor",
   "settings.cloudRuns.providerHint": "Dónde se ejecutan",
   "settings.cloudRuns.providerLocal": "Local (este equipo)",
+  "settings.cloudRuns.providerNative": "Native sidecar (este equipo)",
   "settings.cloudRuns.scheduleHelp": "Las ejecuciones recurrentes se gestionan desde el diálogo del chip Cloud en el compositor (sección Programación).",
   "settings.cloudRuns.sectionConnection": "Conexión",
   "settings.cloudRuns.sectionLimits": "Límites",

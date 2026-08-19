@@ -3,7 +3,7 @@
  *
  * See docs/cloud-runs-prd.md. Providers: LocalSubprocessProvider
  * (reference + dev mode); CloudflareComputerProvider (PRD phase G2);
- * NativeRunProvider (craft-rund adapter, not the production default).
+ * NativeRunProvider (craft-rund adapter; selected when cloudRuns.provider=native).
  */
 export {
   CloudRunnerError,
@@ -23,6 +23,7 @@ export type {
   RunState,
   RunStatus,
 } from './types.ts';
+export { LocalSubprocessProvider } from './local-provider.ts';
 export { NativeRunProvider } from './native-provider.ts';
 export type { NativeRunProviderOptions, NativeRunRpc } from './native-provider.ts';
 export { CloudflareComputerProvider } from './cloudflare-provider.ts';
