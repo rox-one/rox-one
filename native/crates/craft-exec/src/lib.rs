@@ -1,7 +1,8 @@
-//! Host-tool Bash. Craft-native `exec:run` — not a sandbox.
+//! Host-tool Bash. Craft-native `exec:run` — not a full sandbox.
 //!
 //! Caps match the TypeScript `handleHostBash` path: credential env scrub,
-//! stdout/stderr size, wall-clock timeout, process-tree kill.
+//! stdout/stderr size, wall-clock timeout, process-tree kill, optional
+//! workspace-root cwd jail.
 
 use serde::{Deserialize, Serialize};
 use std::io::Read;
@@ -60,6 +61,9 @@ pub struct ExecRequest {
     pub command: String,
     pub cwd: String,
     pub timeout_ms: Option<u64>,
+    /// When set, `cwd` must resolve inside this directory.
+    #[serde(default)]
+    pub workspace_root: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -119,11 +123,7 @@ fn kill_tree(child: &mut Child) {
     let _ = child.kill();
 }
 
-pub fn run(req: ExecRequest) -> ExecResult<ExecResponse> {
-    let command = req.command.trim();
-    if command.is_empty() {
-        return Err(ExecError::invalid("bash requires a non-empty command."));
-    }
+fn resolve_cwd(req: &ExecRequest) -> ExecResult<std::path::PathBuf> {
     let cwd = Path::new(&req.cwd);
     if !cwd.is_dir() {
         return Err(ExecError::invalid(format!(
@@ -131,6 +131,36 @@ pub fn run(req: ExecRequest) -> ExecResult<ExecResponse> {
             req.cwd
         )));
     }
+    let cwd = cwd.canonicalize().map_err(|e| {
+        ExecError::invalid(format!("bash working directory is not accessible: {e}"))
+    })?;
+    let Some(root) = req.workspace_root.as_deref().filter(|s| !s.is_empty()) else {
+        return Ok(cwd);
+    };
+    let root = Path::new(root);
+    if !root.is_dir() {
+        return Err(ExecError::invalid(format!(
+            "bash workspace root does not exist: {}",
+            root.display()
+        )));
+    }
+    let root = root.canonicalize().map_err(|e| {
+        ExecError::invalid(format!("bash workspace root is not accessible: {e}"))
+    })?;
+    if cwd != root && !cwd.starts_with(&root) {
+        return Err(ExecError::invalid(
+            "bash working directory is outside the workspace.",
+        ));
+    }
+    Ok(cwd)
+}
+
+pub fn run(req: ExecRequest) -> ExecResult<ExecResponse> {
+    let command = req.command.trim();
+    if command.is_empty() {
+        return Err(ExecError::invalid("bash requires a non-empty command."));
+    }
+    let cwd = resolve_cwd(&req)?;
     let timeout_ms = req
         .timeout_ms
         .unwrap_or(DEFAULT_TIMEOUT_MS)
@@ -139,7 +169,7 @@ pub fn run(req: ExecRequest) -> ExecResult<ExecResponse> {
     let shell = if cfg!(windows) { "bash" } else { "/bin/bash" };
     let mut cmd = Command::new(shell);
     cmd.args(["-lc", command])
-        .current_dir(cwd)
+        .current_dir(&cwd)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .stdin(Stdio::null());
@@ -192,7 +222,7 @@ pub fn run(req: ExecRequest) -> ExecResult<ExecResponse> {
         },
         timed_out,
         duration_ms: started.elapsed().as_millis() as u64,
-        cwd: req.cwd,
+        cwd: cwd.to_string_lossy().into_owned(),
         stdout_truncated,
         stderr_truncated,
     })
@@ -210,6 +240,7 @@ mod tests {
             command: "  ".into(),
             cwd: dir.path().to_string_lossy().into_owned(),
             timeout_ms: None,
+            workspace_root: None,
         })
         .unwrap_err();
         assert_eq!(err.code, "invalid_spec");
@@ -222,6 +253,7 @@ mod tests {
             command: "pwd && echo craft-exec-ok".into(),
             cwd: dir.path().to_string_lossy().into_owned(),
             timeout_ms: Some(5_000),
+            workspace_root: None,
         })
         .unwrap();
         assert!(!result.timed_out);
@@ -237,9 +269,59 @@ mod tests {
             command: "sleep 8".into(),
             cwd: dir.path().to_string_lossy().into_owned(),
             timeout_ms: Some(250),
+            workspace_root: None,
         })
         .unwrap();
         assert!(result.timed_out);
+    }
+
+    #[test]
+    fn rejects_cwd_outside_workspace_root() {
+        let workspace = tempdir().unwrap();
+        let outside = tempdir().unwrap();
+        let err = run(ExecRequest {
+            command: "echo no".into(),
+            cwd: outside.path().to_string_lossy().into_owned(),
+            timeout_ms: None,
+            workspace_root: Some(workspace.path().to_string_lossy().into_owned()),
+        })
+        .unwrap_err();
+        assert_eq!(err.code, "invalid_spec");
+        assert!(err.message.contains("workspace"));
+    }
+
+    #[test]
+    fn rejects_parent_escape_from_workspace_root() {
+        let root = tempdir().unwrap();
+        let workspace = root.path().join("ws");
+        let outside = root.path().join("outside");
+        std::fs::create_dir(&workspace).unwrap();
+        std::fs::create_dir(&outside).unwrap();
+        let err = run(ExecRequest {
+            command: "echo no".into(),
+            cwd: workspace.join("..").join("outside").to_string_lossy().into_owned(),
+            timeout_ms: None,
+            workspace_root: Some(workspace.to_string_lossy().into_owned()),
+        })
+        .unwrap_err();
+        assert_eq!(err.code, "invalid_spec");
+        assert!(err.message.contains("outside the workspace"));
+    }
+
+    #[test]
+    fn allows_cwd_inside_workspace_root() {
+        let workspace = tempdir().unwrap();
+        let inner = workspace.path().join("src");
+        std::fs::create_dir(&inner).unwrap();
+        let result = run(ExecRequest {
+            command: "echo jailed-ok".into(),
+            cwd: inner.to_string_lossy().into_owned(),
+            timeout_ms: Some(5_000),
+            workspace_root: Some(workspace.path().to_string_lossy().into_owned()),
+        })
+        .unwrap();
+        assert_eq!(result.exit_code, Some(0));
+        assert!(result.stdout.contains("jailed-ok"));
     }
 
     #[test]
@@ -250,6 +332,7 @@ mod tests {
             command: "printenv AWS_SECRET_ACCESS_KEY || true".into(),
             cwd: dir.path().to_string_lossy().into_owned(),
             timeout_ms: Some(5_000),
+            workspace_root: None,
         })
         .unwrap();
         std::env::remove_var("AWS_SECRET_ACCESS_KEY");

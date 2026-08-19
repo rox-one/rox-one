@@ -18,6 +18,7 @@ export interface HostBashExecRequest {
   command: string;
   cwd: string;
   timeoutMs: number;
+  workspaceRoot?: string;
 }
 
 export type HostBashPort = (req: HostBashExecRequest) => Promise<HostBashExecResult>;

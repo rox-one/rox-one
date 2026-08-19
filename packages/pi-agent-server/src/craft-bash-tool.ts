@@ -14,7 +14,7 @@ export function createCraftBashToolDefinition(cwd: string): ToolDefinition<any, 
       const command = typeof (params as { command?: unknown }).command === 'string'
         ? (params as { command: string }).command
         : '';
-      const result = await runHostBash({ command, cwd });
+      const result = await runHostBash({ command, cwd, workspaceRoot: cwd });
       return {
         content: result.content,
         details: result.isError ? { isError: true } : {},

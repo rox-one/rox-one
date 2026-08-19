@@ -52,4 +52,31 @@ describe.skipIf(!bin)('craft-exec exec:run', () => {
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain('craft-exec-sidecar');
   }, 30_000);
+
+  test('rejects cwd outside workspaceRoot', async () => {
+    const sockDir = await mkdtemp(join(tmpdir(), 'craft-exec-jail-'));
+    dirs.push(sockDir);
+    const workspace = await mkdtemp(join(tmpdir(), 'craft-exec-ws-'));
+    const outside = await mkdtemp(join(tmpdir(), 'craft-exec-out-'));
+    dirs.push(workspace, outside);
+    supervisor = new NativeSupervisor({
+      enabled: true,
+      resolveBin: () => bin,
+      logger: silentLogger(),
+      connectTimeoutMs: 8_000,
+      cwd: repoRoot,
+      socketPath: join(sockDir, 'n.sock'),
+    });
+    await supervisor.start();
+    const client = supervisor.getClient();
+    expect(client).not.toBeNull();
+    await expect(
+      client!.invoke('exec:run', {
+        command: 'echo no',
+        cwd: outside,
+        workspaceRoot: workspace,
+        timeoutMs: 5000,
+      }),
+    ).rejects.toThrow(/workspace/i);
+  }, 30_000);
 });
