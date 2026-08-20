@@ -12,7 +12,12 @@ type CollectionProperty, } from '@craft-agent/shared/sessions/collection'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
-import { CollectionMenuRadioRow, CollectionMenuRow, CollectionMenuSection } from './collection-menu-row'
+import {
+  CollectionMenuDisclosure,
+  CollectionMenuRadioRow,
+  CollectionMenuRow,
+  CollectionMenuSection,
+} from './collection-menu-row'
 
 export interface CollectionDisplayPopoverProps {
   display: CollectionDisplay
@@ -105,9 +110,12 @@ export function CollectionDisplayPopover({
         align="end"
         role="dialog"
         aria-label={t('collection.display.trigger')}
-        className="w-64 p-1"
+        className="w-64 max-h-[70vh] overflow-y-auto p-1"
       >
-        <CollectionMenuSection label={t('collection.display.groupByLabel')}>
+        <CollectionMenuDisclosure
+          label={t('collection.display.groupByLabel')}
+          valueLabel={t(GROUP_I18N[display.groupBy])}
+        >
           {COLLECTION_GROUP_BY_VALUES.map((value) => (
             <CollectionMenuRadioRow
               key={value}
@@ -116,9 +124,12 @@ export function CollectionDisplayPopover({
               onClick={() => patch({ groupBy: value })}
             />
           ))}
-        </CollectionMenuSection>
+        </CollectionMenuDisclosure>
 
-        <CollectionMenuSection label={t('collection.display.orderByLabel')}>
+        <CollectionMenuDisclosure
+          label={t('collection.display.orderByLabel')}
+          valueLabel={t(ORDER_I18N[display.orderBy])}
+        >
           {COLLECTION_ORDER_BY_VALUES.map((value) => (
             <CollectionMenuRadioRow
               key={value}
@@ -147,7 +158,7 @@ export function CollectionDisplayPopover({
               )
             })}
           </div>
-        </CollectionMenuSection>
+        </CollectionMenuDisclosure>
 
         <div className="mx-1 my-1 h-px bg-foreground/8" />
 

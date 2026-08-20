@@ -207,13 +207,14 @@ export function CollectionFilterChips({
         )
       ))}
 
+      {active && stacked && <div className="mx-1 my-1 h-px bg-foreground/8" />}
       {active && (
         <button
           type="button"
           onClick={clearAll}
           className={cn(
             'inline-flex items-center gap-1 rounded-[4px] text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground',
-            stacked ? 'mx-2 mt-1 h-7 px-2' : 'h-6 px-1.5',
+            stacked ? 'mx-1 h-7 px-2' : 'h-6 px-1.5',
           )}
         >
           <X className="h-3 w-3" />

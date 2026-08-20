@@ -66,12 +66,12 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
   ].join(' · ')
 
   const buttonClass =
-    'inline-flex h-7 items-center justify-center text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground'
+    'inline-flex h-7 items-center justify-center text-muted-foreground transition-colors group-hover/cycle:bg-foreground/3 group-hover/cycle:text-foreground hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground'
 
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
       <div
-        className={cn('inline-flex items-stretch rounded-[4px]', className)}
+        className={cn('group/cycle inline-flex items-stretch rounded-[4px]', className)}
         onContextMenu={(event) => {
           event.preventDefault()
           setMenuOpen(true)
