@@ -1062,8 +1062,14 @@ export default function ConnectionsPage() {
                   onClick={() => setSelected(row)}
                 >
                   <div className="font-medium">{row.integrationId}</div>
-                  <div className="text-muted-foreground">{row.storageMode}</div>
-                  <div className="font-mono text-xs">{row.credentialRefId}</div>
+                  <div data-testid="connections-row-storage">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
+                    <div className="text-muted-foreground">{row.storageMode}</div>
+                  </div>
+                  <div data-testid="connections-row-credential-ref">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
+                    <div className="font-mono text-xs">{row.credentialRefId}</div>
+                  </div>
                   <div data-testid="connections-row-tenant">
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                     <div className="font-mono text-xs">{row.workspaceId}</div>
@@ -1150,8 +1156,14 @@ export default function ConnectionsPage() {
                   onClick={() => setSelected(row)}
                 >
                   <div className="font-medium">{row.integrationId}</div>
-                  <div className="font-mono text-xs">{row.credentialRefId}</div>
-                  <div className="text-muted-foreground">{row.storageMode}</div>
+                  <div data-testid="connections-credential-ref">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
+                    <div className="font-mono text-xs">{row.credentialRefId}</div>
+                  </div>
+                  <div data-testid="connections-credential-storage">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
+                    <div className="text-muted-foreground">{row.storageMode}</div>
+                  </div>
                   <div data-testid="connections-credential-tenant">
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                     <div className="font-mono text-xs">{row.workspaceId}</div>
