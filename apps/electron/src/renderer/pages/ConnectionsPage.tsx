@@ -368,7 +368,8 @@ export default function ConnectionsPage() {
       applyRevokedLeases(connectionId, result.leases)
       applyInspect(connectionId, result.inspect)
       setRotatingId(null)
-      await refreshRows(workspaceId)
+      const listed = await refreshRows(workspaceId)
+      applySelectedRow(listed, connectionId)
     } catch (err) {
       setListError(errorMessage(err))
     }
@@ -408,7 +409,8 @@ export default function ConnectionsPage() {
       applyInspect(connectionId, result.inspect)
       applyRevokedLeases(connectionId, result.leases)
       setReconnectingId(null)
-      await refreshRows(workspaceId)
+      const listed = await refreshRows(workspaceId)
+      applySelectedRow(listed, connectionId)
     } catch (err) {
       setListError(errorMessage(err))
     }
@@ -1039,6 +1041,7 @@ export default function ConnectionsPage() {
                   {inspectById[row.id] ? (
                     <>
                       <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
+                      <div className="font-mono text-xs" data-testid="connections-row-kind">{inspectById[row.id].kind}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-expiry">{inspectById[row.id].expiry}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-provenance">{inspectById[row.id].provenance}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-fingerprint">{inspectById[row.id].fingerprint}</div>

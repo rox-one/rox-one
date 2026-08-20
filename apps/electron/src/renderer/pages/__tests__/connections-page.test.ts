@@ -355,6 +355,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('shows inspect kind on service rows without secret fields', () => {
+    expect(page).toContain('inspectSummaryFromRaw')
+    expect(page).toContain('connections-row-kind')
+    expect(page).toContain('inspectById[row.id].kind')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows inspect expiry and provenance on credential rows without secret fields', () => {
     expect(page).toContain('inspectSummaryFromRaw')
     expect(page).toContain('connections-credential-expiry')
@@ -453,6 +461,19 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('confirmRevoke')
     expect(page).toContain('confirmConvert')
     expect(page).toContain('confirmMove')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('refreshes the selected row after convert, move, rotate, and reconnect', () => {
+    expect(page).toContain('applySelectedRow')
+    expect(page.split('applySelectedRow(listed, connectionId)').length - 1).toBe(4)
+    expect(page).toContain('importedConnectionFromList')
+    expect(page).toContain('confirmConvert')
+    expect(page).toContain('confirmMove')
+    expect(page).toContain('confirmRotate')
+    expect(page).toContain('confirmReconnect')
+    expect(page).toContain('selectedConnectionAtom')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
