@@ -55,6 +55,14 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('reloads inspector consumers when the selected row is refreshed after grant', () => {
+    expect(host).toContain('listConnectionBindings')
+    expect(page).toContain('confirmGrant')
+    expect(page).toContain('applySelectedRow(listed, connectionId)')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('moves the selected connection after naming affected consumers', () => {
     expect(host).toContain('moveConnection')
     expect(host).toContain('connections.moveConfirm')

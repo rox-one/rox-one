@@ -564,6 +564,8 @@ export default function ConnectionsPage() {
       if (typeof listConnectionBindings === 'function') {
         setBindingRows(sanitizeConnectionBindingRows(await listConnectionBindings({ workspaceId })))
       }
+      const listed = await refreshRows(workspaceId)
+      applySelectedRow(listed, connectionId)
     } catch (err) {
       setListError(errorMessage(err))
     }

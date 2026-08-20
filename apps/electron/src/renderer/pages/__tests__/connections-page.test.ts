@@ -122,10 +122,25 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections.unbind')
   })
 
+  it('shows grant resources on policy binding rows without secret fields', () => {
+    expect(page).toContain('connections-binding-resources')
+    expect(page).toContain('row.resources.join')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('refreshes the selected row after unbind so inspector consumers update', () => {
     expect(page).toContain('confirmUnbind')
     expect(page).toContain('applySelectedRow(listed, binding.connectionId)')
     expect(page).toContain('importedConnectionFromList')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('refreshes the selected row after grant so inspector consumers update', () => {
+    expect(page).toContain('confirmGrant')
+    expect(page).toContain('grantConnection')
+    expect(page).toContain('applySelectedRow(listed, connectionId)')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
@@ -494,7 +509,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('refreshes the selected row after convert, move, rotate, and reconnect', () => {
     expect(page).toContain('applySelectedRow')
-    expect(page.split('applySelectedRow(listed, connectionId)').length - 1).toBe(5)
+    expect(page.split('applySelectedRow(listed, connectionId)').length - 1).toBe(6)
     expect(page).toContain('importedConnectionFromList')
     expect(page).toContain('confirmConvert')
     expect(page).toContain('confirmMove')
