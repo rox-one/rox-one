@@ -577,6 +577,7 @@ describe('CF-6.2 ConnectionsPage', () => {
   it('shows invalidated leases after rotate, revoke, convert, and move without leaking secret fields', () => {
     expect(page).toContain('applyRevokedLeases')
     expect(page.split('applyRevokedLeases(connectionId, result.leases)').length - 1).toBe(5)
+    expect(page.split("next === '—' ? '' : next").length - 1).toBe(2)
     expect(page).toContain('confirmRotate')
     expect(page).toContain('confirmRevoke')
     expect(page).toContain('confirmConvert')

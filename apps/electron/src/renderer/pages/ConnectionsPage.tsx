@@ -324,9 +324,10 @@ export default function ConnectionsPage() {
   const visiblePreviews = matchesConnectSource(previews, activeSource)
 
   const applyRevokedLeases = (connectionId: string, leases: unknown) => {
+    const next = formatReconnectLeases(sanitizeReconnectLeases(leases))
     setLeasesById((current) => ({
       ...current,
-      [connectionId]: formatReconnectLeases(sanitizeReconnectLeases(leases)),
+      [connectionId]: next === '—' ? '' : next,
     }))
   }
 
