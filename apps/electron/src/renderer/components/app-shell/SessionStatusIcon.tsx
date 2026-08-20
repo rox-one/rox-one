@@ -8,7 +8,8 @@ import { getStateIcon, getStateIconStyle } from "@/config/session-status-config"
 import { useSessionListContext } from "@/context/SessionListContext"
 import { kanbanEditorTargetAtom } from "@/atoms/kanban"
 import type { SessionMeta } from "@/atoms/sessions"
-import { navigate, routes } from "@/lib/navigate"
+import { useNavigation } from "@/contexts/NavigationContext"
+import { routes } from "@/lib/navigate"
 import { getSessionTitle, getSessionStatus } from "@/utils/session"
 import { rememberCollectionView } from "./collection/collection-view-cycle"
 import { sessionRowClickTarget } from "./session-row-click"
@@ -25,6 +26,7 @@ function stopRowSelect(e: SyntheticEvent) {
 export function SessionStatusIcon({ item }: SessionStatusIconProps) {
   const { t } = useTranslation()
   const ctx = useSessionListContext()
+  const { navigate } = useNavigation()
   const [open, setOpen] = useState(false)
   const status = getSessionStatus(item)
   const setKanbanEditorTarget = useSetAtom(kanbanEditorTargetAtom)
@@ -44,7 +46,7 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
       taskSlug: item.taskSlug,
       initialTitle: getSessionTitle(item),
     })
-    navigate(routes.view.board(item.id))
+    void navigate(routes.view.board(item.id))
   }
 
   const label = t("collection.row.openBoardCard")
@@ -52,10 +54,11 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
       <PopoverAnchor asChild>
-        <button
-          type="button"
+        <span
+          role="button"
+          tabIndex={0}
           className={cn(
-            "!h-5 !w-5 flex items-center justify-center rounded-full transition-colors cursor-pointer",
+            "relative z-10 !h-5 !w-5 min-h-5 min-w-5 flex items-center justify-center rounded-full transition-colors cursor-pointer",
             "hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
             "[&>svg]:w-full [&>svg]:h-full [&>img]:w-full [&>img]:h-full [&>span]:text-base",
           )}
@@ -64,28 +67,28 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
           aria-expanded={open}
           aria-label={label}
           title={label}
-          onPointerDown={(e: MouseEvent<HTMLButtonElement>) => {
+          onPointerDownCapture={(e) => {
             e.stopPropagation()
           }}
-          onMouseDown={(e: MouseEvent<HTMLButtonElement>) => {
+          onMouseDownCapture={(e) => {
             e.stopPropagation()
           }}
-          onClick={(e: MouseEvent<HTMLButtonElement>) => {
+          onClick={(e: MouseEvent<HTMLSpanElement>) => {
             if (e.button !== 0 && e.button !== undefined) return
             openBoardCard(e)
           }}
-          onKeyDown={(e: KeyboardEvent<HTMLButtonElement>) => {
+          onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
             if (e.key === "Enter" || e.key === " ") {
               openBoardCard(e)
             }
           }}
-          onContextMenu={(e: MouseEvent<HTMLButtonElement>) => {
+          onContextMenu={(e: MouseEvent<HTMLSpanElement>) => {
             stopRowSelect(e)
             setOpen(true)
           }}
         >
           {getStateIcon(status, ctx.sessionStatuses)}
-        </button>
+        </span>
       </PopoverAnchor>
       <PopoverContent
         className="w-auto p-0 border-0 shadow-none bg-transparent"

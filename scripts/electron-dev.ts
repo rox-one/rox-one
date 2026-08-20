@@ -634,7 +634,12 @@ async function main(): Promise<void> {
 
   // 5. Start Electron only after Vite answers, otherwise restore retries
   // hit ERR_CONNECTION_REFUSED and fall back to a missing file:// renderer.
-  await waitForViteReady(vitePort);
+  await Promise.race([
+    waitForViteReady(vitePort),
+    viteProc.exited.then((code) => {
+      throw new Error(`Vite exited before ready (code ${code}) at http://127.0.0.1:${vitePort}/`);
+    }),
+  ]);
 
   console.log("🚀 Starting Electron...\n");
 
