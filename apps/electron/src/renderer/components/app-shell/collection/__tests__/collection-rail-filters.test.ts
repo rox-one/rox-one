@@ -113,4 +113,23 @@ describe('persistUserCollectionSlices', () => {
     expect(result).toBe('saved')
     expect(order).toEqual(['save', 'clear', 'refresh'])
   })
+
+  it('unions leftover localStorage slices with views.json slices', async () => {
+    const saved: { id: string }[][] = []
+    const result = await persistUserCollectionSlices({
+      workspaceId: 'ws',
+      viewsLoading: false,
+      viewConfigs: [{ id: 'view-new', name: 'New', domain: 'sessions', expression: 'true' }],
+      slices: [
+        { id: 'slice:existing', name: 'Existing', filters: { flagged: true } },
+        { id: 'legacy-local', name: 'Legacy', filters: { hasUnread: true } },
+      ],
+      saveViews: async (_ws, views) => { saved.push(views) },
+    })
+    expect(result).toBe('saved')
+    const ids = saved[0]!.map((v) => v.id)
+    expect(ids).toContain('view-new')
+    expect(ids).toContain('slice:existing')
+    expect(ids).toContain('slice:legacy-local')
+  })
 })

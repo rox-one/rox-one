@@ -14,10 +14,7 @@ import {
   CollectionMenuRow,
   CollectionMenuSection,
 } from './collection-menu-row'
-import {
-  mergeSliceViews,
-  userCollectionSlices,
-} from '@craft-agent/shared/views'
+import { userCollectionSlices } from '@craft-agent/shared/views'
 import { persistUserCollectionSlices, userSliceNavigation } from './collection-rail-filters'
 import { useViews } from '@/hooks/useViews'
 import {
@@ -85,13 +82,17 @@ export function CollectionFilterMenu({
     setRenamingId(null)
 
     const ws = workspaceId ?? undefined
-    if (!ws || viewsLoading || typeof window === 'undefined' || !window.electronAPI?.saveViews) return
+    if (!ws || viewsLoading || viewConfigs.length === 0) return
     const legacy = loadSavedSlices(ws).filter((slice) => !slice.builtin)
     if (legacy.length === 0) return
-    const merged = mergeSliceViews(viewConfigs, [...fromViews, ...legacy])
-    void window.electronAPI.saveViews(ws, merged).then(() => {
-      persistSavedSlices([], ws)
-      void refresh()
+    void persistUserCollectionSlices({
+      workspaceId: ws,
+      viewsLoading,
+      viewConfigs,
+      slices: [...fromViews, ...legacy],
+      saveViews: typeof window === 'undefined' ? undefined : window.electronAPI?.saveViews,
+      refresh,
+      clearLegacy: (id) => persistSavedSlices([], id),
     })
   }, [workspaceId, viewConfigs, refresh, viewsLoading])
 
