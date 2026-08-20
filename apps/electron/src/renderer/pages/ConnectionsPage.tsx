@@ -1278,6 +1278,9 @@ export default function ConnectionsPage() {
                       <div className="font-medium">{row.integrationId}</div>
                       <div className="font-mono text-xs" data-testid="connections-policy-tenant">{row.workspaceId}</div>
                       <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
+                      {inspectById[row.id] ? (
+                        <div className="font-mono text-xs" data-testid="connections-policy-health">{inspectById[row.id].health}</div>
+                      ) : null}
                     </button>
                   </li>
                 ))}
