@@ -16,6 +16,13 @@ import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'
 import type { ElectronAPI, TransportConnectionState } from '../../../electron/src/shared/types'
 
+/** Build the canonical renderer deep link used by "Open in new window". */
+export function buildSessionWindowUrl(origin: string, sessionId: string): string {
+  const url = new URL('/', origin)
+  url.searchParams.set('sessionId', sessionId)
+  return url.toString()
+}
+
 // ---------------------------------------------------------------------------
 // Web file picker (replaces native Electron dialog)
 // ---------------------------------------------------------------------------
@@ -150,7 +157,7 @@ export function createWebApi(options: WebApiOptions): {
     openWorkspace: async () => {},
     openSessionInNewWindow: async (_wsId: string, sessionId: string) => {
       // Open in new tab
-      window.open(`${window.location.origin}/?session=${sessionId}`, '_blank')
+      window.open(buildSessionWindowUrl(window.location.origin, sessionId), '_blank')
     },
 
     // Auto-update — not applicable to web (but expose server version for About page)

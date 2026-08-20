@@ -45,7 +45,6 @@ export {
   type MindMapSessionInput,
   type MindMapSessionMessage,
 } from './derive-session.ts';
-export type { MindMapGraph } from './types.ts';
 
 export {
   deriveNoteMindMap,

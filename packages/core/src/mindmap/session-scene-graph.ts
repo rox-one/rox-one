@@ -134,7 +134,7 @@ export function projectSessionScenes(
       continue;
     }
 
-    let target = open;
+    let target: SessionScene | null = open;
     if (msg.parentToolUseId) {
       target = sceneByToolUseId.get(msg.parentToolUseId) ?? target;
     }
