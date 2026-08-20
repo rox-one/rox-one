@@ -84,12 +84,18 @@ publish:
 # Disable ASAR to avoid decompression overhead and click delays
 asar: false
 
-# OEM pin metadata + G2 record only (never the kernel binary).
+# OEM pin metadata + G2 record. Kernel binary is staged into resources/oem-kernel
+# (gitignored except .gitkeep); filter allows an empty staging dir.
 extraResources:
   - from: resources/oem-kernel-pin.json
     to: oem-kernel-pin.json
   - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
     to: g2-decision-record.md
+  - from: resources/oem-kernel
+    to: oem-kernel
+    filter:
+      - "**/*"
+      - "!**/.gitkeep"
 
 mac:
   category: public.app-category.productivity
@@ -138,6 +144,11 @@ mac:
       to: oem-kernel-pin.json
     - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
       to: g2-decision-record.md
+    - from: resources/oem-kernel
+      to: oem-kernel
+      filter:
+        - "**/*"
+        - "!**/.gitkeep"
   # Exclude binaries for other platforms
   files:
     - "!**/resources/bin/win32-*/**"
@@ -210,6 +221,11 @@ win:
       to: oem-kernel-pin.json
     - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
       to: g2-decision-record.md
+    - from: resources/oem-kernel
+      to: oem-kernel
+      filter:
+        - "**/*"
+        - "!**/.gitkeep"
 
 nsis:
   oneClick: true
@@ -244,6 +260,11 @@ linux:
       to: oem-kernel-pin.json
     - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
       to: g2-decision-record.md
+    - from: resources/oem-kernel
+      to: oem-kernel
+      filter:
+        - "**/*"
+        - "!**/.gitkeep"
   # Exclude binaries for other platforms
   files:
     - "!**/resources/bin/darwin-*/**"

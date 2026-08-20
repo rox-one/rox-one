@@ -9,3 +9,8 @@ resources/bin/darwin-arm64/
 resources/bin/darwin-x64/
 resources/bin/win32-x64/
 resources/bin/linux-x64/
+
+# OEM kernel extraResources (binaries staged locally; never git-add)
+resources/oem-kernel/*
+!resources/oem-kernel/.gitkeep
+!resources/oem-kernel/README.md

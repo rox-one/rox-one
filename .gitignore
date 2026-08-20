@@ -10,6 +10,11 @@ apps/electron/release
 apps/electron/resources/session-mcp-server/
 apps/electron/resources/pi-agent-server/
 
+# OEM kernel binary payload (pin JSON is tracked; binaries are not)
+apps/electron/resources/oem-kernel/*
+!apps/electron/resources/oem-kernel/.gitkeep
+!apps/electron/resources/oem-kernel/README.md
+
 # code coverage
 coverage
 *.lcov
