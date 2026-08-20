@@ -920,6 +920,7 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs" data-testid="connections-credential-kind">{inspectById[row.id].kind}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-expiry">{inspectById[row.id].expiry}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-provenance">{inspectById[row.id].provenance}</div>
+                      <div className="font-mono text-xs" data-testid="connections-credential-fingerprint">{inspectById[row.id].fingerprint}</div>
                     </>
                   ) : null}
                 </div>

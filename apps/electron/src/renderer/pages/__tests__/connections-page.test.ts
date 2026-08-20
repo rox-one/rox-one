@@ -301,6 +301,7 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections-credential-expiry')
     expect(page).toContain('connections-credential-provenance')
     expect(page).toContain('connections-credential-kind')
+    expect(page).toContain('connections-credential-fingerprint')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
