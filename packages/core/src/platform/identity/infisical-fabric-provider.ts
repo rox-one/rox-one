@@ -64,9 +64,9 @@ function locatorKey(locator: ProviderLocator): string {
 }
 
 function requireInfisicalLocator(
-  locator: ProviderLocator,
+  locator: ProviderLocator | undefined,
 ): Extract<ProviderLocator, { type: 'infisical' }> {
-  if (locator.type !== 'infisical') {
+  if (!locator || locator.type !== 'infisical') {
     throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'locator.type');
   }
   return locator;
@@ -354,7 +354,12 @@ export interface InfisicalImporterEnv {
  */
 export function createInfisicalImporter(
   provider: InfisicalFabricProvider,
-  env: InfisicalImporterEnv = process.env,
+  env: InfisicalImporterEnv = {
+    INFISICAL_PROJECT_ID: process.env.INFISICAL_PROJECT_ID,
+    INFISICAL_ENVIRONMENT: process.env.INFISICAL_ENVIRONMENT,
+    INFISICAL_SECRET_PATH: process.env.INFISICAL_SECRET_PATH,
+    INFISICAL_SECRET_KEY: process.env.INFISICAL_SECRET_KEY,
+  },
 ): CredentialImporter {
   let last: ImportCandidate | undefined;
 
@@ -421,7 +426,7 @@ export function createInfisicalImporter(
       const version = await provider.write({
         kind: candidate.kind,
         mode,
-        locator: candidate.locator,
+        locator: requireInfisicalLocator(candidate.locator),
         workspaceId: input.workspaceId,
         requestedBy: input.requestedBy,
         credentialRefId: input.credentialRefId,
