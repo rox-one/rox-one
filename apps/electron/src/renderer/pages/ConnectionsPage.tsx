@@ -1418,6 +1418,8 @@ export default function ConnectionsPage() {
                       ) : null}
                     </button>
                     {renderReconnectControls(row)}
+                    {renderRevokeControls(row)}
+                    {renderRotateControls(row)}
                   </li>
                 ))}
               </ul>
