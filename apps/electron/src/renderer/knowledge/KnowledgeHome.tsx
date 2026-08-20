@@ -845,7 +845,7 @@ export function KnowledgeHome() {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground flex items-center justify-between gap-2">
-        <span>{t('knowledge.legacyNotes.banner', { defaultValue: 'Markdown notes vault is legacy — Knowledge (SiYuan) is primary.' })}</span>
+        <span>{t('knowledge.legacyNotes.banner', { defaultValue: 'Markdown notes are legacy — Knowledge is the primary workspace.' })}</span>
         <div className="flex shrink-0 items-center gap-3">
           <button
             type="button"
