@@ -281,6 +281,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('sanitizeConnectionRows([created])')
   })
 
+  it('selects the listed created row into the inspector after refresh', () => {
+    expect(page).toContain('confirmCreate')
+    expect(page).toContain('applySelectedRow(listed, row.id)')
+    expect(page).toContain('importedConnectionFromList')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('cycles tabs with Home and End', () => {
     expect(page).toContain('tabFromKey')
     expect(page).toContain("'Home'")

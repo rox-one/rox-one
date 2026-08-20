@@ -523,7 +523,8 @@ export default function ConnectionsPage() {
       setCreateCredentialRef('')
       const [row] = sanitizeConnectionRows([created])
       if (row) setSelected(row)
-      await refreshRows(workspaceId)
+      const listed = await refreshRows(workspaceId)
+      if (row) applySelectedRow(listed, row.id)
     } catch (err) {
       setListError(errorMessage(err))
     }
@@ -1255,6 +1256,7 @@ export default function ConnectionsPage() {
                       <div className="font-medium">{row.consumerId}</div>
                       <div className="text-muted-foreground">{row.purpose}</div>
                       <div className="font-mono text-xs">{row.actions.join(', ')}</div>
+                      <div className="font-mono text-xs" data-testid="connections-binding-resources">{row.resources.join(', ') || '—'}</div>
                     </div>
                     {unbindingId === row.id ? (
                       <div className="flex gap-1">
