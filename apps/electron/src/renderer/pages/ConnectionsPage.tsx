@@ -1282,6 +1282,7 @@ export default function ConnectionsPage() {
                         <>
                           <div className="font-mono text-xs" data-testid="connections-policy-health">{inspectById[row.id].health}</div>
                           <div className="font-mono text-xs" data-testid="connections-policy-expiry">{inspectById[row.id].expiry}</div>
+                          <div className="font-mono text-xs" data-testid="connections-policy-provenance">{inspectById[row.id].provenance}</div>
                         </>
                       ) : null}
                     </button>
