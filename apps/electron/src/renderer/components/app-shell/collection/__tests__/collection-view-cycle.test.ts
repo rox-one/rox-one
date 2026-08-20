@@ -43,18 +43,23 @@ describe('collection-view-cycle', () => {
 
   it('after list→board, prev returns list not table', () => {
     rememberCollectionView('list')
-    const next = resolveCycleTarget('list', 'next')
-    expect(next).toBe('board')
-    rememberCollectionView(next)
+    expect(resolveCycleTarget('list', 'next')).toBe('board')
     expect(resolveCycleTarget('board', 'prev')).toBe('list')
   })
 
   it('after board→table, prev returns board', () => {
     rememberCollectionView('board')
-    const next = resolveCycleTarget('board', 'next')
-    expect(next).toBe('table')
-    rememberCollectionView(next)
+    expect(resolveCycleTarget('board', 'next')).toBe('table')
     expect(resolveCycleTarget('table', 'prev')).toBe('board')
+  })
+
+  it('menu jump list→table: prev returns list, not board', () => {
+    rememberCollectionView('list')
+    expect(resolveCycleTarget('table', 'prev')).toBe('list')
+  })
+
+  it('with no history, list prev wraps to table', () => {
+    expect(resolveCycleTarget('list', 'prev')).toBe('table')
   })
 
   it('wraps table next to list', () => {

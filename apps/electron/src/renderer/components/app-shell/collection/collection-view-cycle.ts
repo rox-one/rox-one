@@ -3,18 +3,11 @@ import type { CollectionViewMode } from '../kanban/BoardListToggle'
 
 export const COLLECTION_VIEW_ORDER: readonly CollectionViewMode[] = ['list', 'board', 'table']
 
+/** Last origin mode the user left (not the destination). */
 let lastCollectionView: CollectionViewMode | null = null
 
 export function rememberCollectionView(mode: CollectionViewMode): void {
   lastCollectionView = mode
-}
-
-export function lastCollectionViewMode(): CollectionViewMode | null {
-  return lastCollectionView
-}
-
-export function getLastCollectionViewMode(): CollectionViewMode | null {
-  return lastCollectionViewMode()
 }
 
 export function resetLastCollectionViewForTests(): void {

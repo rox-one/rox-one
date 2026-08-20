@@ -87,11 +87,12 @@ Order: `list → board → table → list`.
 | Shift+click (and optional Alt+click) | Previous mode in that order |
 | Context: after `list → board`, Shift+click | `list` (previous in cycle **and** last-used) |
 
-Additionally persist `lastCollectionViewMode` in memory for the workspace window so:
+Persist last **origin** mode in memory for the window so:
 
 - Click from list always goes to **board** first (kanban is the sibling of list, table is third).
-- From board, click goes to table, then back to list.
-- Shift+click always walks the ring backward.
+- From board, click goes to table; from table, click returns to list.
+- Shift+click returns to the last origin (list → board → Shift = list). If there is no history, walk the ring backward.
+- Chevron / context menu lists List / Board / Table.
 
 Routes stay: `allSessions()` / `board()` / `table()`. Navigator still collapses on board/table; **the same cycle button is required** in `KanbanBoardContainer` and `SessionTableHost` headers (replace the 3-labeled `CollectionViewToggle` there too, or keep icon-only segmented as secondary — primary is the cycle button).
 

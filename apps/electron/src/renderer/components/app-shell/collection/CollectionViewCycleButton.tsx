@@ -41,7 +41,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
   const prev = resolveCycleTarget(value, 'prev')
 
   const applyMode = (mode: CollectionViewMode) => {
-    rememberCollectionView(mode)
+    if (mode !== value) rememberCollectionView(value)
     onChange(mode)
   }
 
