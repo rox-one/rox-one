@@ -549,6 +549,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('labels test outcome on listed rows through i18n without secret fields', () => {
+    expect(page.split("t('inspector.field.testLogin')").length - 1).toBe(3)
+    expect(page).toContain('connections-test-status')
+    expect(page).toContain('connections-credential-test-status')
+    expect(page).toContain('connections-policy-test-status')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('filters import previews from Connect source chips', () => {
     expect(page).toContain('activeSource')
     expect(page).toContain('matchesConnectSource')

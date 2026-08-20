@@ -1125,8 +1125,9 @@ export default function ConnectionsPage() {
                     </div>
                   ) : null}
                   {status && status.kind !== 'idle' ? (
-                    <div className="font-mono text-xs" data-testid="connections-test-status">
-                      {status.kind === 'ok' ? status.login : status.message}
+                    <div data-testid="connections-test-status">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
+                      <div className="font-mono text-xs">{status.kind === 'ok' ? status.login : status.message}</div>
                     </div>
                   ) : null}
                 </button>
@@ -1279,8 +1280,9 @@ export default function ConnectionsPage() {
                     </div>
                   ) : null}
                   {status && status.kind !== 'idle' ? (
-                    <div className="font-mono text-xs" data-testid="connections-credential-test-status">
-                      {status.kind === 'ok' ? status.login : status.message}
+                    <div data-testid="connections-credential-test-status">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
+                      <div className="font-mono text-xs">{status.kind === 'ok' ? status.login : status.message}</div>
                     </div>
                   ) : null}
                 </button>
@@ -1490,8 +1492,9 @@ export default function ConnectionsPage() {
                         </div>
                       ) : null}
                       {status && status.kind !== 'idle' ? (
-                        <div className="font-mono text-xs" data-testid="connections-policy-test-status">
-                          {status.kind === 'ok' ? status.login : status.message}
+                        <div data-testid="connections-policy-test-status">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
+                          <div className="font-mono text-xs">{status.kind === 'ok' ? status.login : status.message}</div>
                         </div>
                       ) : null}
                     </button>
