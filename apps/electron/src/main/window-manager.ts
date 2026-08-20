@@ -343,9 +343,13 @@ export class WindowManager {
           const devUrl = new URL(VITE_DEV_SERVER_URL)
           // Keep query params; never copy a packaged file:// pathname onto Vite.
           devUrl.search = savedUrl.search
+          const loopbackHosts = new Set(['localhost', '127.0.0.1', '[::1]', '::1'])
           const isViteOrigin =
             (savedUrl.protocol === 'http:' || savedUrl.protocol === 'https:') &&
-            savedUrl.origin === devUrl.origin
+            (savedUrl.origin === devUrl.origin ||
+              (savedUrl.port === devUrl.port &&
+                loopbackHosts.has(savedUrl.hostname) &&
+                loopbackHosts.has(devUrl.hostname)))
           const isFilesystemPath =
             savedUrl.protocol === 'file:' ||
             savedUrl.pathname.includes('dist/renderer') ||
