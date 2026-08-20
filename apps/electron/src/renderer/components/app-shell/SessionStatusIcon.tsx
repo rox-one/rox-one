@@ -2,7 +2,7 @@ import { useState, type KeyboardEvent, type MouseEvent, type SyntheticEvent } fr
 import { useSetAtom } from "jotai"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover"
 import { SessionStatusMenu } from "@/components/ui/session-status-menu"
 import { getStateIcon, getStateIconStyle } from "@/config/session-status-config"
 import { useSessionListContext } from "@/context/SessionListContext"
@@ -47,9 +47,11 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
     navigate(routes.view.board(item.id))
   }
 
+  const label = t("collection.row.openBoardCard")
+
   return (
     <Popover modal={true} open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+      <PopoverAnchor asChild>
         <button
           type="button"
           className={cn(
@@ -60,14 +62,14 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
           style={getStateIconStyle(status, ctx.sessionStatuses)}
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label={t("collection.row.openBoardCard")}
-          title={t("collection.row.openBoardCard")}
+          aria-label={label}
+          title={label}
           onPointerDown={(e: MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation()
-            // Left click must not open the status menu (Radix trigger default).
-            if (e.button === 0) e.preventDefault()
           }}
-          onMouseDown={stopRowSelect}
+          onMouseDown={(e: MouseEvent<HTMLButtonElement>) => {
+            e.stopPropagation()
+          }}
           onClick={(e: MouseEvent<HTMLButtonElement>) => {
             if (e.button !== 0 && e.button !== undefined) return
             openBoardCard(e)
@@ -84,13 +86,13 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
         >
           {getStateIcon(status, ctx.sessionStatuses)}
         </button>
-      </PopoverTrigger>
+      </PopoverAnchor>
       <PopoverContent
         className="w-auto p-0 border-0 shadow-none bg-transparent"
         align="start"
         side="bottom"
         sideOffset={4}
-        onContextMenu={(e: MouseEvent<HTMLButtonElement>) => {
+        onContextMenu={(e) => {
           e.preventDefault()
           e.stopPropagation()
         }}

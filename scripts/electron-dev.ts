@@ -145,6 +145,30 @@ async function assertPortAvailable(port: string): Promise<void> {
   });
 }
 
+async function waitForViteReady(port: string, timeoutMs = 60_000): Promise<void> {
+  const url = `http://127.0.0.1:${port}/`;
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(1500) });
+      if (res.ok) {
+        const html = await res.text();
+        // Understand Anything (and others) also bind 5173. Only proceed
+        // when this is the Craft renderer.
+        if (html.includes('<title>Rox</title>')) {
+          console.log(`✅ Vite ready at ${url}`);
+          return;
+        }
+        console.log(`⏳ ${url} responded but is not Rox (${html.slice(0, 80).replace(/\s+/g, ' ')})`);
+      }
+    } catch {
+      // not listening yet
+    }
+    await Bun.sleep(200);
+  }
+  throw new Error(`Vite did not become ready at ${url}`);
+}
+
 // Clean Vite cache directory
 function cleanViteCache(): void {
   const viteCacheDir = join(ELECTRON_DIR, "node_modules/.vite");
@@ -608,7 +632,10 @@ async function main(): Promise<void> {
   esbuildContexts.push(toolbarPreloadContext);
   console.log("👀 Watching browser toolbar preload...");
 
-  // 5. Start Electron (build already verified)
+  // 5. Start Electron only after Vite answers, otherwise restore retries
+  // hit ERR_CONNECTION_REFUSED and fall back to a missing file:// renderer.
+  await waitForViteReady(vitePort);
+
   console.log("🚀 Starting Electron...\n");
 
   const debugPort = process.env.CRAFT_REMOTE_DEBUGGING_PORT?.trim() ?? "";
