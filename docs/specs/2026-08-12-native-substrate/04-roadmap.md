@@ -1,8 +1,8 @@
 # N-04. Roadmap
 
 - **Doc ID**: N-04
-- **Статус**: draft
-- **Дата**: 2026-08-13
+- **Статус**: opt-in landed on `main` (flags default off)
+- **Дата**: 2026-08-20
 
 ## Сейчас (этот срез)
 

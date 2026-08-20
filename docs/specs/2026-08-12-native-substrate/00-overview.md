@@ -1,8 +1,8 @@
 # N-00. Native substrate — обзор
 
 - **Doc ID**: N-00
-- **Статус**: draft
-- **Дата**: 2026-08-13
+- **Статус**: opt-in landed on `main` (flags default off)
+- **Дата**: 2026-08-20
 - **Связанные документы**: [README](./README.md), [N-01](./01-adrs.md)
 
 ## Цель
@@ -31,10 +31,11 @@ Electron / headless server
         ├── native:health | version | capabilities
         ├── index:reindex | search | retrieve | count | status
         ├── run:create | status | cancel | listArtifacts | fetchArtifact | events
-        └── journal:write | read | status
+        ├── journal:write | writePrimary | read | status
+        └── exec:run
 ```
 
-Падение sidecar не роняет Electron: супервизор отключает native после N рестартов, TS-путь остаётся primary.
+Падение sidecar не роняет Electron: супервизор отключает native после N рестартов, TS-путь остаётся fallback. Primary (index/journal) только за `CRAFT_FEATURE_NATIVE_*_PRIMARY=1`.
 
 ## Канон контрактов
 
