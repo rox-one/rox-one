@@ -8,11 +8,12 @@ import {
   type SceneMessage,
 } from '@craft-agent/core/mindmap'
 
-export type RelatedBranch = { id: string; name: string }
+export type RelatedBranch = { id: string; name: string; fromMessageId?: string }
 
 export type SessionGitOutlineProps = {
   sessionId: string
   messages: SceneMessage[]
+  loading?: boolean
   relatedBranches?: RelatedBranch[]
   onCheckoutMessage?: (messageId: string) => void
   onFork?: (messageId: string) => void
@@ -23,6 +24,7 @@ export type SessionGitOutlineProps = {
 export function SessionGitOutline({
   sessionId,
   messages,
+  loading = false,
   relatedBranches = [],
   onCheckoutMessage,
   onFork,
@@ -54,6 +56,11 @@ export function SessionGitOutline({
       <div className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {t('entityView.outlineLog')}
       </div>
+      {graph.scenes.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {loading ? t('mindmap.loading') : t('entityView.workbenchNoScenes')}
+        </p>
+      ) : (
       <ul>
         {graph.scenes.map((scene) => {
           const isFork =
@@ -124,6 +131,7 @@ export function SessionGitOutline({
           )
         })}
       </ul>
+      )}
 
       <div className="mb-2 mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {t('entityView.outlineBranches')}
@@ -138,11 +146,12 @@ export function SessionGitOutline({
             <li key={branch.id}>
               <button
                 type="button"
-                className="flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-xs hover:bg-foreground/5"
+                className="flex w-full min-w-0 items-center gap-1.5 rounded px-2 py-1 text-left text-xs hover:bg-foreground/5"
+                title={branch.fromMessageId}
                 onClick={() => onOpenSession?.(branch.id)}
               >
                 <GitBranch className="h-3 w-3 shrink-0 text-muted-foreground" />
-                <span className="truncate">{branch.name}</span>
+                <span className="min-w-0 truncate">{branch.name}</span>
               </button>
             </li>
           ))}
