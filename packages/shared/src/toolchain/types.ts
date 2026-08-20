@@ -47,6 +47,9 @@ export type ToolName =
   // detect opt-in: только детект системного исполняемого, установки нет
   | 'docker'
   | 'brew'
+  // local opt-in: craft-native sidecar. GitHub artifacts are not published yet;
+  // seed from CRAFT_NATIVE_BIN / cargo into toolchain/<name>/current/bin.
+  | 'craft-native'
   // pip opt-in: uv pip install --require-hashes into toolchain layout
   | 'pip-packaging'
   | 'cli-anything';
@@ -85,6 +88,7 @@ export const ALL_TOOL_NAMES = [
   'mole',
   'docker',
   'brew',
+  'craft-native',
   'pip-packaging',
   'cli-anything',
 ] as const satisfies readonly ToolName[];
@@ -129,7 +133,7 @@ export interface ToolArtifact {
   /** Размер в байтах (для прогресс-баров и аннотирования UI). */
   size: number;
   /** Тип архива. 'raw' — голый бинарник. 'uv-python' — ставится командой `uv python install`. */
-  archive: 'tar.gz' | 'tar.xz' | 'zip' | 'raw' | 'uv-python';
+  archive: 'tar.gz' | 'tar.xz' | 'zip' | 'raw' | 'uv-python' | 'local';
   /**
    * Пути к исполняемым файлам внутри распакованного дерева инструмента,
    * относительно toolchain/<tool>/<version>/. Windows — .exe обязаны.

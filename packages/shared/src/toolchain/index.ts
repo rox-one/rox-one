@@ -14,5 +14,11 @@ export { downloadArtifact, ShaMismatchError, HttpError, NetworkError } from './d
 export type { DownloadOptions } from './downloader';
 export { extractArtifact, installTool } from './installer';
 export type { InstallResult } from './installer';
+export {
+  CRAFT_NATIVE_VERSION,
+  craftNativeBinName,
+  craftNativeToolchainBin,
+  seedCraftNativeFromPath,
+} from './craft-native';
 export { StatusEmitter } from './status';
 export type { StatusListener } from './status';

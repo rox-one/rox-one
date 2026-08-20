@@ -21,7 +21,7 @@ describe('manifest validation', () => {
         if (!artifact) continue;
         // uv-python артефакты ставятся вендорным `uv python install` — прямой
         // загрузки нет, url/sha256/size не применяются (контракт manifest-data).
-        if (artifact.archive === 'uv-python') {
+        if (artifact.archive === 'uv-python' || artifact.archive === 'local') {
           expect(artifact.binPaths.length).toBeGreaterThan(0);
           continue;
         }

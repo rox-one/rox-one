@@ -23,7 +23,7 @@ const run = (cmd: string[], opts?: { cwd?: string }): Promise<void> => runComman
  */
 export async function extractArtifact(
   archiveFile: string,
-  archive: Exclude<ToolArtifact['archive'], 'uv-python'>,
+  archive: Exclude<ToolArtifact['archive'], 'uv-python' | 'local'>,
   destDir: string,
 ): Promise<void> {
   await fs.promises.mkdir(destDir, { recursive: true });
@@ -396,6 +396,9 @@ export async function installTool(
 ): Promise<InstallResult> {
   if (artifact.archive === 'uv-python') {
     throw new Error('uv-python artifacts are installed by manager via bundled uv');
+  }
+  if (artifact.archive === 'local') {
+    throw new Error('local artifacts are seeded with seedCraftNativeFromPath, not installTool download');
   }
   const toolRoot = path.join(paths.toolchainDir, tool);
   const versionDir = path.join(toolRoot, version);

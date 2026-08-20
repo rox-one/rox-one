@@ -44,4 +44,4 @@ Electron / headless server
 
 ## Доставка бинарника
 
-Toolchain download manager (`~/.craft-agent/toolchain/...`), как omp/ffmpeg. Не `extraResources` (нотаризация). Пока артефакты не публикуются — `CRAFT_NATIVE_BIN` или `native/target/debug/craft-native`.
+Toolchain download manager (`~/.craft-agent/toolchain/...`), как omp/ffmpeg. Не `extraResources` (нотаризация). `craft-native` — opt-in `ToolName` (darwin/linux, без Windows). GitHub tarball ещё не публикуется: `seedCraftNativeFromPath` кладёт cargo/env бинарь в `toolchain/craft-native/current/bin`. Резолв sidecar: `CRAFT_NATIVE_BIN` → toolchain current → `native/target/debug|release/craft-native`.

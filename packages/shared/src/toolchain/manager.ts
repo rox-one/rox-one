@@ -538,7 +538,7 @@ export function createManager(
       if (kind === 'brew' || kind === 'detect' || kind === 'pip') continue;
       // git-npm не качает артефакт (bun install -g github:repo#commit) — планируем с sentinel'ом.
       const artifact = entry.artifacts[platform] ?? (kind === 'git-npm' ? GIT_NPM_ARTIFACT : undefined);
-      if (!artifact) continue;
+      if (!artifact || artifact.archive === 'local') continue;
       const item = await planItem(entry, artifact);
       if (item) plan.push(item);
     }
