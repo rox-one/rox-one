@@ -19,7 +19,7 @@ import {
 } from '@craft-agent/shared/knowledge/siyuan-binary'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from './connections-store'
 import { loadG2AcceptedVariantFromDisk } from './g2-status'
-import { SiyuanProcessManager } from './process-manager'
+import { SiyuanProcessManager, seedDefaultNotebook } from './process-manager'
 import { parseOemKernelPin, resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { readFileSync } from 'node:fs'
@@ -403,6 +403,15 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
             fetchImpl: deps.fetchImpl,
             readyTimeoutMs: deps.readyTimeoutMs,
           })
+          const healthAfterStart = await probeKernelHealth(inst.baseUrl, { fetchImpl: deps.fetchImpl })
+          if (healthAfterStart.running) {
+            await seedDefaultNotebook({
+              baseUrl: inst.baseUrl,
+              accessAuthCode: inst.accessAuthCode,
+              fetchImpl: deps.fetchImpl,
+              log: deps.log,
+            })
+          }
           lastStartAt = now()
           const existing = store.get(connectionId)
           const credentialRef =

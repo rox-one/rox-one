@@ -216,8 +216,7 @@ export class SiyuanProcessManager {
           headers: { 'Content-Type': 'application/json' },
           body: '{}',
         })
-        const envelope = (await response.json()) as { code?: number }
-        if (envelope?.code === 0) return
+        if (response.status === 200) return
       } catch {
         // kernel not listening yet — retry until timeout
       }
@@ -229,30 +228,45 @@ export class SiyuanProcessManager {
   }
 
   private async seedDefaultNotebook(instance: ManagedInstance, input: ManagedStartInput): Promise<void> {
-    const fetchImpl = input.fetchImpl ?? globalThis.fetch.bind(globalThis)
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Token ${instance.accessAuthCode}`,
+    await seedDefaultNotebook({
+      baseUrl: instance.baseUrl,
+      accessAuthCode: instance.accessAuthCode,
+      fetchImpl: input.fetchImpl,
+      log: input.log,
+    })
+  }
+}
+
+/** After kernel health 200: create Знания when lsNotebooks is empty. */
+export async function seedDefaultNotebook(args: {
+  baseUrl: string
+  accessAuthCode: string
+  fetchImpl?: typeof fetch
+  log?: { debug?(message: string, extra?: unknown): void }
+}): Promise<void> {
+  const fetchImpl = args.fetchImpl ?? globalThis.fetch.bind(globalThis)
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: `Token ${args.accessAuthCode}`,
+  }
+  try {
+    const listResponse = await fetchImpl(`${args.baseUrl}/api/notebook/lsNotebooks`, {
+      method: 'POST',
+      headers,
+      body: '{}',
+    })
+    const listEnvelope = (await listResponse.json()) as {
+      code?: number
+      data?: { notebooks?: unknown[] }
     }
-    try {
-      const listResponse = await fetchImpl(`${instance.baseUrl}/api/notebook/lsNotebooks`, {
-        method: 'POST',
-        headers,
-        body: '{}',
-      })
-      const listEnvelope = (await listResponse.json()) as {
-        code?: number
-        data?: { notebooks?: unknown[] }
-      }
-      const notebooks = listEnvelope?.data?.notebooks ?? []
-      if (notebooks.length > 0) return
-      await fetchImpl(`${instance.baseUrl}/api/notebook/createNotebook`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ name: 'Знания' }),
-      })
-    } catch (error) {
-      input.log?.debug?.('knowledge: seedDefaultNotebook failed', error)
-    }
+    const notebooks = listEnvelope?.data?.notebooks ?? []
+    if (notebooks.length > 0) return
+    await fetchImpl(`${args.baseUrl}/api/notebook/createNotebook`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ name: 'Знания' }),
+    })
+  } catch (error) {
+    args.log?.debug?.('knowledge: seedDefaultNotebook failed', error)
   }
 }

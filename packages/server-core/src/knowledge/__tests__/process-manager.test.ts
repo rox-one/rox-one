@@ -149,4 +149,41 @@ describe('SiyuanProcessManager', () => {
     expect(called.some((url) => url.includes('/api/notebook/createNotebook'))).toBe(true)
     await pm.stop({ graceMs: 0 })
   })
+
+  it('does not create notebook when lsNotebooks is non-empty', async () => {
+    const pm = new SiyuanProcessManager()
+    const called: string[] = []
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const url = String(input)
+      called.push(url)
+      if (url.endsWith('/api/system/version')) {
+        return new Response(JSON.stringify({ code: 0, data: '3.1.28' }), { status: 200 })
+      }
+      if (url.endsWith('/api/notebook/lsNotebooks')) {
+        expect(headerGet(init?.headers, 'Authorization')?.startsWith('Token ')).toBe(true)
+        return new Response(JSON.stringify({ code: 0, data: { notebooks: [{ id: 'n1' }] } }), { status: 200 })
+      }
+      throw new Error(`unexpected url ${url}`)
+    }
+    await pm.start({
+      configDir: '/tmp/cfg',
+      connectionId: 'c1',
+      g2AcceptedVariant: 'C',
+      pin,
+      resolveBinary: () => '/fake/kernel',
+      allocatePort: () => 19204,
+      readyTimeoutMs: 5000,
+      fetchImpl,
+      spawnFn: () => ({
+        pid: 9,
+        unref() {},
+        on() {},
+        kill() {},
+      }),
+    })
+    expect(called.some((url) => url.includes('/api/notebook/createNotebook'))).toBe(false)
+    expect(called.some((url) => url.includes('/api/notebook/lsNotebooks'))).toBe(true)
+    await pm.stop({ graceMs: 0 })
+  })
+
 })

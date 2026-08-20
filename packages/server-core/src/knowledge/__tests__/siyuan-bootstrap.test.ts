@@ -323,4 +323,65 @@ describe('ensureLocalKernel', () => {
     rmSync(repoRoot, { recursive: true, force: true })
   })
 
+
+  it('seeds Знания via createNotebook when managed kernel lsNotebooks is empty', async () => {
+    const called: string[] = []
+    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      called.push(url)
+      if (url.includes(':6806')) throw new Error('down')
+      if (url.includes('/api/system/version')) {
+        return new Response(JSON.stringify({ code: 0, msg: '', data: '3.1.0' }), { status: 200 })
+      }
+      if (url.includes('/api/notebook/lsNotebooks')) {
+        const auth = init?.headers && (init.headers as Record<string, string>).Authorization
+        expect(String(auth ?? '')).toMatch(/^Token /)
+        return new Response(JSON.stringify({ code: 0, data: { notebooks: [] } }), { status: 200 })
+      }
+      if (url.includes('/api/notebook/createNotebook')) {
+        const auth = init?.headers && (init.headers as Record<string, string>).Authorization
+        expect(String(auth ?? '')).toMatch(/^Token /)
+        expect(JSON.parse(String(init?.body))).toEqual({ name: 'Знания' })
+        return new Response(JSON.stringify({ code: 0, data: {} }), { status: 200 })
+      }
+      throw new Error(`unexpected ${url}`)
+    }) as unknown as typeof fetch
+    const g2Path = join(configDir, 'g2-decision-record.md')
+    writeFileSync(g2Path, '# G2\n\n> **Status: ACCEPTED**\n\nvariant C\n')
+    const pinPath = join(configDir, 'oem-pin.json')
+    writeFileSync(
+      pinPath,
+      JSON.stringify({
+        version: '3.1.28-rox.1',
+        sha256: {
+          'darwin-arm64': 'a'.repeat(64),
+          'darwin-x64': 'b'.repeat(64),
+          'linux-x64': 'c'.repeat(64),
+          'win32-x64': 'd'.repeat(64),
+        },
+        relativePayloadDir: 'resources/oem-kernel',
+        minApi: '3.0.0',
+        maxApiExclusive: '4.0.0',
+      }),
+    )
+    process.env.G2_RECORD_PATH = g2Path
+    process.env.OEM_PIN_PATH = pinPath
+    process.env.OEM_KERNEL_BINARY = '/fake/kernel'
+    const result = await ensureLocalKernel({
+      configDir,
+      fetchImpl,
+      existsSync: () => false,
+      pathEnv: '',
+      homeDir: '',
+      platform: 'linux',
+      readyTimeoutMs: 200,
+      spawnFn: ((cmd: string) => {
+        expect(cmd).toBe('/fake/kernel')
+        return { unref() {}, pid: 101, on() {}, kill() {} }
+      }) as unknown as typeof import('node:child_process').spawn,
+    })
+    expect(result.ok).toBe(true)
+    expect(called.some((u) => u.includes('/api/notebook/createNotebook'))).toBe(true)
+  })
+
 })
