@@ -54,6 +54,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('row.credentialRefId')
   })
 
+  it('shows scopes on policy connection rows without secret fields', () => {
+    expect(page).toContain('connections-policy-row')
+    expect(page).toContain('connections-policy-scopes')
+    expect(page).toContain('row.scopes.join')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('selects a service row for the inspector host', () => {
     expect(page).toContain('selectedConnectionAtom')
     expect(page).toContain('aria-selected')

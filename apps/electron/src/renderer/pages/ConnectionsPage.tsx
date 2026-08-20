@@ -1243,9 +1243,9 @@ export default function ConnectionsPage() {
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
                 {policyRows.map((row) => (
-                  <li key={row.id} className="rounded border px-3 py-2">
+                  <li key={row.id} className="rounded border px-3 py-2" data-testid="connections-policy-row">
                     <div className="font-medium">{row.integrationId}</div>
-                    <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+                    <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
                   </li>
                 ))}
               </ul>
