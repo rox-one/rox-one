@@ -1064,6 +1064,7 @@ export default function ConnectionsPage() {
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="text-muted-foreground">{row.storageMode}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
+                  <div className="font-mono text-xs" data-testid="connections-row-tenant">{row.workspaceId}</div>
                   <div className="font-mono text-xs" data-testid="connections-row-scopes">{row.scopes.join(', ') || '—'}</div>
                   {inspectById[row.id] ? (
                     <>
