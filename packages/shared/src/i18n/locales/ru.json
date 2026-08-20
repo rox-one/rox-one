@@ -717,6 +717,7 @@
   "editor.strikethrough": "Зачёркнутый",
   "entityList.collapse": "Свернуть",
   "entityList.collapseAll": "Свернуть все",
+  "entityList.emptyGroupDrop": "Перетащите сюда",
   "entityList.expand": "Развернуть",
   "entityList.expandAll": "Развернуть все",
   "entityList.selectGroup": "Выбрать группу",

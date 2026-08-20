@@ -717,6 +717,7 @@
   "editor.strikethrough": "取り消し線",
   "entityList.collapse": "折りたたむ",
   "entityList.collapseAll": "すべて折りたたむ",
+  "entityList.emptyGroupDrop": "ここにドロップ",
   "entityList.expand": "展開",
   "entityList.expandAll": "すべて展開",
   "entityList.selectGroup": "グループを選択",

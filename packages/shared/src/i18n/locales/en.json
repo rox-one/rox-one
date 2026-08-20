@@ -717,6 +717,7 @@
   "editor.strikethrough": "Strikethrough",
   "entityList.collapse": "Collapse",
   "entityList.collapseAll": "Collapse all",
+  "entityList.emptyGroupDrop": "Drop here",
   "entityList.expand": "Expand",
   "entityList.expandAll": "Expand all",
   "entityList.selectGroup": "Select group",

@@ -717,6 +717,7 @@
   "editor.strikethrough": "Áthúzott",
   "entityList.collapse": "Összecsukás",
   "entityList.collapseAll": "Összes összecsukása",
+  "entityList.emptyGroupDrop": "Húzza ide",
   "entityList.expand": "Kibontás",
   "entityList.expandAll": "Összes kibontása",
   "entityList.selectGroup": "Csoport kijelölése",
