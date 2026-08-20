@@ -1,6 +1,7 @@
 import { formatDistanceToNowStrict } from "date-fns"
 import type { Locale } from "date-fns"
 import { Check, Flag, ShieldAlert } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
 import { rendererPerf } from "@/lib/perf"
@@ -62,6 +63,7 @@ export function SessionItem({
   onRangeSelect,
 }: SessionItemProps) {
   const ctx = useSessionListContext()
+  const { t } = useTranslation()
   const { workspaces, isCompactMode } = useAppShellContext()
   const canSendToWorkspace = hasTransferTargets(workspaces)
   const { hotkey: nextHotkey } = useActionLabel('chat.nextSearchMatch')
@@ -275,6 +277,22 @@ export function SessionItem({
             })}
           </div>
         ) : undefined
+      }
+      hoverActions={
+        <button
+          type="button"
+          aria-pressed={item.isFlagged}
+          aria-label={item.isFlagged ? t("sessionMenu.unflag") : t("sessionMenu.flag")}
+          className="p-1 rounded-[6px] hover:bg-foreground/10"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (item.isFlagged) ctx.onUnflag?.(item.id)
+            else ctx.onFlag?.(item.id)
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <Flag className={cn("h-3.5 w-3.5", item.isFlagged ? "text-info" : "text-muted-foreground")} />
+        </button>
       }
       titleTrailing={hasMatch ? (
         <span

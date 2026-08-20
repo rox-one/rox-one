@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import { CollectionMenuCheck } from './collection-menu-row'
+import { COLLECTION_POPOVER_SURFACE } from './collection-menu-surface'
 
 const GROUP_I18N: Record<CollectionGroupBy, string> = {
   none: 'collection.display.groupBy.none',
@@ -55,7 +56,11 @@ export function CollectionGroupByMenu({
           <Layers className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
       </DropdownMenuTrigger>
-      <StyledDropdownMenuContent align="end" minWidth="min-w-40">
+      <StyledDropdownMenuContent
+        align="end"
+        minWidth="min-w-40"
+        className={COLLECTION_POPOVER_SURFACE}
+      >
         {COLLECTION_GROUP_BY_VALUES.map((value) => {
           const current = display.groupBy === value
           return (

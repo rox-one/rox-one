@@ -92,6 +92,8 @@ export interface EntityRowProps {
   menuContent?: React.ReactNode
   /** Context menu content when different from dropdown (e.g. batch menu in multi-select) */
   contextMenuContent?: React.ReactNode
+  /** Extra controls in the hover-more overlay, immediately before the MoreHorizontal button. */
+  hoverActions?: React.ReactNode
   /** Whether to hide the more button (e.g. when overlay is showing) */
   hideMoreButton?: boolean
   /** Whether to render the menu surface in compact (drawer) mode. Pass-through
@@ -138,6 +140,7 @@ export function EntityRow({
   showSeparator = false,
   menuContent,
   contextMenuContent,
+  hoverActions,
   hideMoreButton = false,
   isCompactMode = false,
   compactMenu,
@@ -319,7 +322,7 @@ export function EntityRow({
                   <div
                     data-touch-reveal="true"
                     className={cn(
-                      "absolute inset-0 flex items-center justify-end overflow-visible",
+                      "absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-end gap-0 overflow-visible",
                       menuOpen || contextMenuOpen || compactMenuOpen
                         ? "opacity-100"
                         : useCompactMenu
@@ -328,6 +331,7 @@ export function EntityRow({
                     )}
                     onMouseDown={(e) => e.stopPropagation()}
                   >
+                    {hoverActions}
                     {useCompactMenu ? (
                       <button
                         type="button"
@@ -435,6 +439,7 @@ export function EntityRow({
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
+            {hoverActions}
             {useCompactMenu ? (
               <button
                 type="button"

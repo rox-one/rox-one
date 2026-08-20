@@ -426,13 +426,10 @@ export function SessionList({
 
       // For collapsed groups prefer the persisted count (matches how the
       // date/status branches surface the size of a collapsed bucket).
-      const unreadCount = collapsedUnread ? collapsedUnread.count : unreadRows.length
-      const readCount = collapsedRead ? collapsedRead.count : readRows.length
-
       const orderedGroups: EntityListGroup<SessionListRow>[] = [
         {
           key: 'unread-yes',
-          label: t('session.unreadGroup', { count: unreadCount }),
+          label: t('session.unreadLabel'),
           items: unreadRows,
           // Empty groups have nothing to collapse into; suppress the caret.
           collapsible: unreadRows.length > 0 || !!collapsedUnread,
@@ -440,7 +437,7 @@ export function SessionList({
         },
         {
           key: 'unread-no',
-          label: t('session.readGroup', { count: readCount }),
+          label: t('session.readLabel'),
           items: readRows,
           collapsible: readRows.length > 0 || !!collapsedRead,
           ...(collapsedRead ? { collapsedCount: collapsedRead.count } : {}),

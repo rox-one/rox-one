@@ -88,7 +88,7 @@ function SectionHeader({ label }: { label: string }) {
   )
 }
 
-/** Collapsible group header with chevron toggle and item count when collapsed */
+/** Collapsible group header with chevron toggle and item count */
 function CollapsibleGroupHeader({
   label,
   isCollapsed,
@@ -119,7 +119,7 @@ function CollapsibleGroupHeader({
             )}
           />
           <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground relative">
-            {label}{isCollapsed && <> · <span className="text-muted-foreground/50">{itemCount}</span></>}
+            {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
           </span>
         </button>
       </ContextMenuTrigger>
