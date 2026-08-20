@@ -9,7 +9,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash } from 'lucide-react'
-import { ChatDisplay, type ChatDisplayHandle } from '@/components/app-shell/ChatDisplay'
+import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SessionMenu } from '@/components/app-shell/SessionMenu'
 import { CompactSessionMenu } from '@/components/app-shell/CompactSessionMenu'
@@ -44,7 +44,7 @@ import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
 import { SessionFlowCanvas } from '@/components/session-workbench/SessionFlowCanvas'
 import { SessionGitOutline } from '@/components/session-workbench/SessionGitOutline'
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
-import { deriveSessionMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
+import { deriveSessionMindMap, type MindMapGraph, type SceneMessage } from '@craft-agent/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
 
 function buildSessionEntityCapabilities(siyuanConnected: boolean): EntityViewCapability[] {
@@ -666,14 +666,16 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           />
         )
       }
-      const workbenchMessages = (session?.messages ?? []).map((m) => ({
+      const workbenchMessages: SceneMessage[] = (session?.messages ?? []).map((m) => ({
         id: m.id,
         type: m.role,
+        role: m.role,
         content: m.content ?? '',
         toolName: m.toolName,
         toolUseId: m.toolUseId,
         parentToolUseId: m.parentToolUseId,
-        turnId: m.turnId,
+        ...(m.toolStatus != null ? { toolStatus: m.toolStatus } : {}),
+        ...(m.statusType != null ? { status: m.statusType } : {}),
       }))
       if (sessionView === 'standard') {
         return chatDisplay

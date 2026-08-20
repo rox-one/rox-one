@@ -111,7 +111,6 @@ export function projectSessionScenes(
         id: `scn_${msg.id}`,
         triggerMessageId: msg.id,
         triggerPreview: preview(msg.content, 80),
-        triggerPreview: preview(msg.content, 80),
         outcomePreview: '',
         assistantMessageIds: [],
         tools: [],
@@ -143,7 +142,6 @@ export function projectSessionScenes(
       target = {
         id: `scn_orphan_${msg.id}`,
         triggerMessageId: msg.id,
-        triggerPreview: preview(msg.content || role, 80),
         triggerPreview: preview(msg.content || role, 80),
         outcomePreview: '',
         assistantMessageIds: [],

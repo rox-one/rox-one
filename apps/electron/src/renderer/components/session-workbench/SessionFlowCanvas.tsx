@@ -66,11 +66,11 @@ export function SessionFlowCanvas({
   const selected = graph.scenes.find((s) => s.id === selectedId) ?? null
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col bg-background">
-      <div className="flex shrink-0 items-center gap-2 border-b border-border/40 px-3 py-1.5 text-[11px]">
+    <div className="relative h-full min-h-0 min-w-0 flex-1 bg-background">
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2 px-3 py-1.5 text-[11px]">
         <span className="text-muted-foreground">{t('entityView.flowLive')}</span>
         <span className="text-muted-foreground">· {graph.scenes.length}</span>
-        <div className="ml-auto inline-flex rounded-md border border-border/60 p-0.5">
+        <div className="pointer-events-auto ml-auto inline-flex rounded-md border border-border/60 bg-background/80 p-0.5 backdrop-blur">
           <button
             type="button"
             className={cn('rounded px-2 py-0.5', camera === 'map' && 'bg-foreground/10')}
@@ -88,11 +88,11 @@ export function SessionFlowCanvas({
         </div>
       </div>
       {graph.scenes.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+        <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
           {t('entityView.workbenchNoScenes')}
         </div>
       ) : (
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div className="absolute inset-0 overflow-auto">
           <div className="relative" style={{ width, height }}>
             <svg className="absolute inset-0" width={width} height={height}>
               {graph.edges.map((e) => {
@@ -154,19 +154,19 @@ export function SessionFlowCanvas({
                 </button>
               )
             })}
-            {selected && onFork ? (
-              <button
-                type="button"
-                className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px]"
-                onClick={() => onFork(selected.triggerMessageId)}
-              >
-                <GitBranch className="h-3 w-3" />
-                {t('entityView.workbenchFork')}
-              </button>
-            ) : null}
           </div>
         </div>
       )}
+      {selected && onFork ? (
+        <button
+          type="button"
+          className="absolute right-3 top-10 z-10 inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1 text-[11px]"
+          onClick={() => onFork(selected.triggerMessageId)}
+        >
+          <GitBranch className="h-3 w-3" />
+          {t('entityView.workbenchFork')}
+        </button>
+      ) : null}
     </div>
   )
 }
