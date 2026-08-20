@@ -1012,6 +1012,28 @@ export interface ElectronAPI {
       keywords?: string[]
     }>
   >
+  /** Minted/revoked capability ledger — hashes only, never tokens or secrets. */
+  extensionHostListCapabilities(args?: { workspaceId?: string | null }): Promise<{
+    minted: Array<{
+      tokenHash: string
+      extensionId: string
+      permission: string
+      expiresAt: number
+      mintedAt: number
+      singleUse?: boolean
+      status: 'active' | 'revoked' | 'expired'
+    }>
+    revoked: Array<{
+      tokenHash: string
+      extensionId: string
+      permission: string
+      expiresAt: number
+      mintedAt: number
+      singleUse?: boolean
+      revokedAt?: number
+      status: 'active' | 'revoked' | 'expired'
+    }>
+  }>
   /** Mint scoped capability token — never returns raw secret. Grants from load only. */
   extensionHostMintCapability(args: {
     extensionId: string
@@ -1022,6 +1044,7 @@ export interface ElectronAPI {
   }): Promise<{ token: string; expiresAt: number; permission: string }>
   extensionHostRevokeCapability(args: {
     token?: string
+    tokenHash?: string
     extensionId?: string
     workspaceId?: string | null
   }): Promise<{ ok: true }>

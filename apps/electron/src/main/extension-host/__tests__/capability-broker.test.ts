@@ -1,13 +1,24 @@
 import { afterEach, describe, expect, it } from 'bun:test'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import type { CredentialId, StoredCredential } from '@craft-agent/shared/credentials'
 import { credentialIdToAccount } from '@craft-agent/shared/credentials'
 import {
   CapabilityBroker,
+  capabilityAuditPath,
+  capabilityRevokeStorePath,
   getCapabilityBroker,
   parseSecretsUseAccount,
   resetCapabilityBroker,
   SECRETS_USE_PREFIX,
+  urlMatchesAllowlistPrefix,
 } from '../capability-broker'
+
+function sha256(value: string): string {
+  return createHash('sha256').update(value).digest('hex')
+}
 
 afterEach(() => {
   resetCapabilityBroker()
@@ -85,7 +96,7 @@ describe('CapabilityBroker.mint', () => {
     expect('secret' in cap).toBe(false)
     expect('value' in cap).toBe(false)
     expect(Object.keys(cap).sort()).toEqual(
-      ['credentialAccount', 'expiresAt', 'extensionId', 'permission', 'token'].sort(),
+      ['credentialAccount', 'expiresAt', 'extensionId', 'mintedAt', 'permission', 'token'].sort(),
     )
     expect(cap.credentialAccount).not.toBe('super-secret-token')
   })
@@ -331,5 +342,260 @@ describe('getCapabilityBroker singleton', () => {
     resetCapabilityBroker()
     const c = getCapabilityBroker()
     expect(c).not.toBe(a)
+  })
+})
+
+describe('CapabilityBroker.proxyFetch wrong extensionId / required allowlist', () => {
+  it('rejects expectedExtensionId that does not match the minted extension', async () => {
+    const broker = new CapabilityBroker({ requireUrlAllowlist: false })
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    await expect(
+      broker.proxyFetch({
+        token: cap.token,
+        url: 'https://example.com/',
+        expectedExtensionId: 'ext-b',
+        getCredential: mockGetCredential({}),
+        fetchImpl: async () => new Response('x'),
+      }),
+    ).rejects.toThrow(/extensionId/i)
+  })
+
+  it('allows fetch when expectedExtensionId matches', async () => {
+    const broker = new CapabilityBroker({ requireUrlAllowlist: false })
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    const result = await broker.proxyFetch({
+      token: cap.token,
+      url: 'https://example.com/',
+      expectedExtensionId: 'ext-a',
+      getCredential: mockGetCredential({}),
+      fetchImpl: async () => new Response('ok', { status: 200 }),
+    })
+    expect(result.status).toBe(200)
+  })
+
+  it('requires a URL allowlist when requireUrlAllowlist is true', async () => {
+    const broker = new CapabilityBroker({ requireUrlAllowlist: true })
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    await expect(
+      broker.proxyFetch({
+        token: cap.token,
+        url: 'https://example.com/',
+        getCredential: mockGetCredential({}),
+        fetchImpl: async () => new Response('x'),
+      }),
+    ).rejects.toThrow(/allowlist required/i)
+  })
+
+  it('rejects URL outside required prefix', async () => {
+    const broker = new CapabilityBroker({ requireUrlAllowlist: true })
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    await expect(
+      broker.proxyFetch({
+        token: cap.token,
+        url: 'https://evil.example/steal',
+        allowedUrlPrefixes: ['https://api.good.test/'],
+        getCredential: mockGetCredential({}),
+        fetchImpl: async () => new Response('x'),
+      }),
+    ).rejects.toThrow(/allowlist/i)
+  })
+
+  it('rejects host-suffix allowlist bypass', async () => {
+    const broker = new CapabilityBroker({ requireUrlAllowlist: true })
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    await expect(
+      broker.proxyFetch({
+        token: cap.token,
+        url: 'https://api.good.test.evil.com/v1',
+        allowedUrlPrefixes: ['https://api.good.test/'],
+        getCredential: mockGetCredential({}),
+        fetchImpl: async () => new Response('x'),
+      }),
+    ).rejects.toThrow(/allowlist/i)
+  })
+})
+
+describe('urlMatchesAllowlistPrefix', () => {
+  it('matches origin+path prefix, not sibling hosts', () => {
+    expect(urlMatchesAllowlistPrefix('https://api.good.test/v1', 'https://api.good.test/')).toBe(
+      true,
+    )
+    expect(
+      urlMatchesAllowlistPrefix('https://api.good.test.evil.com/v1', 'https://api.good.test/'),
+    ).toBe(false)
+    expect(urlMatchesAllowlistPrefix('https://evil.example/', 'https://api.good.test/')).toBe(false)
+  })
+})
+
+describe('CapabilityBroker persist revoke + audit + listPublic', () => {
+  let tmp: string
+
+  afterEach(() => {
+    if (tmp) {
+      try {
+        rmSync(tmp, { recursive: true, force: true })
+      } catch {
+        // ignore
+      }
+    }
+  })
+
+  it('persists revoke records and reloads them without the token', () => {
+    tmp = mkdtempSync(join(tmpdir(), 'cap-broker-'))
+    const a = new CapabilityBroker({ persistDir: tmp, requireUrlAllowlist: false })
+    const cap = a.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    a.revoke(cap.token)
+
+    const storePath = capabilityRevokeStorePath(tmp)
+    expect(existsSync(storePath)).toBe(true)
+    const raw = readFileSync(storePath, 'utf8')
+    expect(raw).not.toContain(cap.token)
+    expect(raw).toContain(sha256(cap.token))
+
+    const b = new CapabilityBroker({ persistDir: tmp, requireUrlAllowlist: false })
+    const listed = b.listPublic()
+    expect(listed.revoked).toHaveLength(1)
+    expect(listed.revoked[0]?.extensionId).toBe('ext-a')
+    expect(listed.revoked[0]?.permission).toBe('network.request')
+    expect(listed.revoked[0]?.tokenHash).toBe(sha256(cap.token))
+    expect(listed.revoked[0]?.revokedAt).toBeGreaterThan(0)
+    expect(JSON.stringify(listed)).not.toContain(cap.token)
+    expect(listed.minted.some((row) => 'token' in row)).toBe(false)
+    expect(listed.revoked.some((row) => 'token' in row)).toBe(false)
+    expect(listed.revoked.some((row) => 'secret' in row || 'value' in row)).toBe(false)
+  })
+
+  it('revokeByTokenHash drops a live capability and persists', () => {
+    tmp = mkdtempSync(join(tmpdir(), 'cap-broker-'))
+    const broker = new CapabilityBroker({ persistDir: tmp, requireUrlAllowlist: false })
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    expect(broker.peek(cap.token)).not.toBeNull()
+    expect(broker.revokeByTokenHash(sha256(cap.token))).toBe(true)
+    expect(broker.peek(cap.token)).toBeNull()
+    const listed = broker.listPublic()
+    expect(listed.minted).toHaveLength(0)
+    expect(listed.revoked[0]?.tokenHash).toBe(sha256(cap.token))
+  })
+
+  it('listPublic minted rows never include token or secret', () => {
+    tmp = mkdtempSync(join(tmpdir(), 'cap-broker-'))
+    const broker = new CapabilityBroker({ persistDir: tmp, requireUrlAllowlist: false })
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: 'secrets.use:source_bearer::ws::src',
+      grantedPermissions: ['secrets.use:source_bearer::ws::src'],
+    })
+    const listed = broker.listPublic()
+    expect(listed.minted).toHaveLength(1)
+    expect(listed.minted[0]?.extensionId).toBe('ext-a')
+    expect(listed.minted[0]?.permission).toBe('secrets.use:source_bearer::ws::src')
+    expect(listed.minted[0]?.tokenHash).toBe(sha256(cap.token))
+    expect(JSON.stringify(listed)).not.toContain(cap.token)
+    expect(JSON.stringify(listed)).not.toContain('super-secret')
+    expect('token' in listed.minted[0]!).toBe(false)
+  })
+
+  it('persist namespaces do not clobber each other', () => {
+    tmp = mkdtempSync(join(tmpdir(), 'cap-broker-'))
+    const a = new CapabilityBroker({
+      persistDir: tmp,
+      persistNamespace: 'ws-a',
+      requireUrlAllowlist: false,
+    })
+    const b = new CapabilityBroker({
+      persistDir: tmp,
+      persistNamespace: 'ws-b',
+      requireUrlAllowlist: false,
+    })
+    const capA = a.mint({
+      extensionId: 'ext-a',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    const capB = b.mint({
+      extensionId: 'ext-b',
+      permission: 'network.request',
+      grantedPermissions: ['network.request'],
+    })
+    a.revoke(capA.token)
+    b.revoke(capB.token)
+
+    const a2 = new CapabilityBroker({
+      persistDir: tmp,
+      persistNamespace: 'ws-a',
+      requireUrlAllowlist: false,
+    })
+    const b2 = new CapabilityBroker({
+      persistDir: tmp,
+      persistNamespace: 'ws-b',
+      requireUrlAllowlist: false,
+    })
+    expect(a2.listPublic().revoked).toHaveLength(1)
+    expect(a2.listPublic().revoked[0]?.extensionId).toBe('ext-a')
+    expect(b2.listPublic().revoked).toHaveLength(1)
+    expect(b2.listPublic().revoked[0]?.extensionId).toBe('ext-b')
+    expect(JSON.stringify(a2.listPublic())).not.toContain(capA.token)
+    expect(JSON.stringify(b2.listPublic())).not.toContain(capB.token)
+  })
+
+  it('writes audit JSONL without tokens or secrets', async () => {
+    tmp = mkdtempSync(join(tmpdir(), 'cap-broker-'))
+    const broker = new CapabilityBroker({ persistDir: tmp, requireUrlAllowlist: true })
+    const account = 'source_bearer::ws::src'
+    const secret = 'super-secret-token'
+    const cap = broker.mint({
+      extensionId: 'ext-a',
+      permission: `secrets.use:${account}`,
+      grantedPermissions: [`secrets.use:${account}`],
+    })
+    await broker
+      .proxyFetch({
+        token: cap.token,
+        url: 'https://evil.example/',
+        expectedExtensionId: 'ext-b',
+        allowedUrlPrefixes: ['https://api.good.test/'],
+        getCredential: mockGetCredential({ [account]: secret }),
+        fetchImpl: async () => new Response('nope'),
+      })
+      .catch(() => undefined)
+    broker.revoke(cap.token)
+
+    const auditPath = capabilityAuditPath(tmp)
+    expect(existsSync(auditPath)).toBe(true)
+    const audit = readFileSync(auditPath, 'utf8')
+    expect(audit).toContain('"event":"minted"')
+    expect(audit).toContain('"event":"revoked"')
+    expect(audit).toContain('proxy_denied')
+    expect(audit).not.toContain(cap.token)
+    expect(audit).not.toContain(secret)
+    expect(audit).toContain(sha256(cap.token))
   })
 })

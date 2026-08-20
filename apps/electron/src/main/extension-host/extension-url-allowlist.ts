@@ -4,7 +4,8 @@
  * Path: `{configDir}/extensions/url-allowlist.json`
  * Shape: `{ version: 1, byExtension: { [extensionId]: string[] } }`
  *
- * Empty allowlist → allow all (dev default). Non-empty → enforce startsWith.
+ * Empty store for an extension means no prefixes. The capability broker
+ * requires a non-empty allowlist outside development; this file only stores.
  */
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'

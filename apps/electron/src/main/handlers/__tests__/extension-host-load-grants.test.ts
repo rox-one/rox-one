@@ -309,4 +309,56 @@ describe('extensionHost.LOAD ignores client grantedPermissions', () => {
       }),
     ).rejects.toThrow(/not granted/i)
   })
+
+  it('listCapabilities returns hashes only; revoke by tokenHash', async () => {
+    const load = handlers.get(RPC_CHANNELS.extensionHost.LOAD)!
+    const mint = handlers.get(RPC_CHANNELS.extensionHost.MINT_CAPABILITY)!
+    const list = handlers.get(RPC_CHANNELS.extensionHost.LIST_CAPABILITIES)!
+    const revoke = handlers.get(RPC_CHANNELS.extensionHost.REVOKE_CAPABILITY)!
+    const entryPath = join(tmp, 'extensions', 'sandbox', 'load-ext', 'index.mjs')
+
+    writeFileSync(
+      join(root, 'permissions.json'),
+      JSON.stringify({
+        version: "2026-08-08",
+        extensions: {
+          'load-ext': {
+            granted: ['network.request'],
+            grantedAt: new Date().toISOString(),
+          },
+        },
+      }) + '\n',
+    )
+    await load(CTX, {
+      extensionId: 'load-ext',
+      entryPath,
+      workspaceId: 'ws-load',
+    })
+    const minted = (await mint(CTX, {
+      extensionId: 'load-ext',
+      permission: 'network.request',
+      workspaceId: 'ws-load',
+    })) as { token: string; permission: string }
+
+    const ledger = (await list(CTX, { workspaceId: 'ws-load' })) as {
+      minted: Array<{ tokenHash: string; permission: string; token?: string }>
+      revoked: Array<{ tokenHash: string }>
+    }
+    expect(ledger.minted).toHaveLength(1)
+    expect(JSON.stringify(ledger)).not.toContain(minted.token)
+    expect(ledger.minted[0]?.token).toBeUndefined()
+    expect(ledger.minted[0]?.permission).toBe('network.request')
+
+    await revoke(CTX, {
+      tokenHash: ledger.minted[0]!.tokenHash,
+      workspaceId: 'ws-load',
+    })
+    const after = (await list(CTX, { workspaceId: 'ws-load' })) as {
+      minted: unknown[]
+      revoked: Array<{ tokenHash: string }>
+    }
+    expect(after.minted).toHaveLength(0)
+    expect(after.revoked).toHaveLength(1)
+    expect(JSON.stringify(after)).not.toContain(minted.token)
+  })
 })
