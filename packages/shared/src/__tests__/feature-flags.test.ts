@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { isDevRuntime, isDeveloperFeedbackEnabled, isCraftAgentsCliEnabled, isEmbeddedServerEnabled, isNativeSidecarEnabled, isNativeIndexPrimaryEnabled } from '../feature-flags.ts';
+import { isDevRuntime, isDeveloperFeedbackEnabled, isCraftAgentsCliEnabled, isEmbeddedServerEnabled, isNativeSidecarEnabled, isNativeIndexPrimaryEnabled, isNativeIndexWatchEnabled } from '../feature-flags.ts';
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
@@ -9,6 +9,7 @@ const ORIGINAL_ENV = {
   CRAFT_FEATURE_EMBEDDED_SERVER: process.env.CRAFT_FEATURE_EMBEDDED_SERVER,
   CRAFT_FEATURE_NATIVE_SIDECAR: process.env.CRAFT_FEATURE_NATIVE_SIDECAR,
   CRAFT_FEATURE_NATIVE_INDEX_PRIMARY: process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY,
+  CRAFT_FEATURE_NATIVE_INDEX_WATCH: process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH,
 };
 
 afterEach(() => {
@@ -32,6 +33,9 @@ afterEach(() => {
 
   if (ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY === undefined) delete process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY;
   else process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY = ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY;
+
+  if (ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_WATCH === undefined) delete process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH;
+  else process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH = ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_WATCH;
 });
 
 describe('feature-flags runtime helpers', () => {
@@ -145,5 +149,24 @@ describe('feature-flags runtime helpers', () => {
     process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY = '1';
 
     expect(isNativeIndexPrimaryEnabled()).toBe(true);
+  });
+
+  it('isNativeIndexWatchEnabled defaults to false', () => {
+    delete process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH;
+
+    expect(isNativeIndexWatchEnabled()).toBe(false);
+  });
+
+  it('isNativeIndexWatchEnabled honors explicit override true without sidecar', () => {
+    delete process.env.CRAFT_FEATURE_NATIVE_SIDECAR;
+    process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH = '1';
+
+    expect(isNativeIndexWatchEnabled()).toBe(true);
+  });
+
+  it('isNativeIndexWatchEnabled honors explicit override false', () => {
+    process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH = '0';
+
+    expect(isNativeIndexWatchEnabled()).toBe(false);
   });
 });

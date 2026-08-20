@@ -506,6 +506,7 @@ const EXPECTED_CHANNELS: string[] = [
   'sources:get',
   'sources:getMcpTools',
   'sources:getPermissions',
+  'sources:indexChanged',
   'sources:reindex',
   'sources:saveCredentials',
   'sources:search',
@@ -619,6 +620,12 @@ type AssertTuple<T extends readonly unknown[], N extends number> =
 describe('BroadcastEventMap payload shapes', () => {
   it('sources:changed carries (workspaceId, sources)', () => {
     type Payload = BroadcastEventMap[typeof RPC_CHANNELS.sources.CHANGED]
+    const _check: AssertTuple<Payload, 2> = true
+    expect(_check).toBe(true)
+  })
+
+  it('sources:indexChanged carries (workspaceId, payload)', () => {
+    type Payload = BroadcastEventMap[typeof RPC_CHANNELS.sources.INDEX_CHANGED]
     const _check: AssertTuple<Payload, 2> = true
     expect(_check).toBe(true)
   })

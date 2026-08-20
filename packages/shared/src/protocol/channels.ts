@@ -469,6 +469,7 @@ export const RPC_CHANNELS = {
     REINDEX: 'sources:reindex',
     SEARCH: 'sources:search',
     STATUS: 'sources:status',
+    INDEX_CHANGED: 'sources:indexChanged',
   },
   oauth: {
     START: 'oauth:start',

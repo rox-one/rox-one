@@ -422,6 +422,7 @@ export const CHANNEL_MAP = {
   reindexSources: invoke(RPC_CHANNELS.sources.REINDEX),
   searchSourcesIndex: invoke(RPC_CHANNELS.sources.SEARCH),
   getSourceIndexStatus: invoke(RPC_CHANNELS.sources.STATUS),
+  onSourceIndexChanged: listener(RPC_CHANNELS.sources.INDEX_CHANGED),
 
   // Session content search
   searchSessionContent: invoke(RPC_CHANNELS.sessions.SEARCH_CONTENT),

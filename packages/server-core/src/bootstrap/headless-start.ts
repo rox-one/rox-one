@@ -14,6 +14,7 @@ import type { EventSink, RpcServer } from '../transport/types'
 import { createHeadlessPlatform } from '../runtime/platform-headless'
 import type { PlatformServices } from '../runtime/platform'
 import { startNativeSidecar, stopNativeSidecar } from '../native/supervisor.ts'
+import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
 
 interface ModelRefreshServiceLike {
   startAll(): void
@@ -485,6 +486,12 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
       await stopNativeSidecar()
     } catch (error) {
       platform.logger.error('[bootstrap] Failed to stop native sidecar:', error)
+    }
+
+    try {
+      stopAllSourceIndexWatches()
+    } catch (error) {
+      platform.logger.error('[bootstrap] Failed to stop source index watches:', error)
     }
 
     try {

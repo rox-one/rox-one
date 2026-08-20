@@ -94,8 +94,16 @@ export function SourcesListPanel({
         setIndexPrimary(status.primary)
       })
       .catch(() => {})
+    const unsubscribe =
+      typeof window.electronAPI.onSourceIndexChanged === 'function'
+        ? window.electronAPI.onSourceIndexChanged((workspaceId, payload) => {
+            if (cancelled || workspaceId !== activeWorkspaceId) return
+            setIndexFileCount(payload.indexed)
+          })
+        : undefined
     return () => {
       cancelled = true
+      unsubscribe?.()
     }
   }, [activeWorkspaceId])
 

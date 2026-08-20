@@ -1186,6 +1186,12 @@ export interface ElectronAPI {
     fts: boolean
     dbPath: string
   }>
+  onSourceIndexChanged?(
+    callback: (
+      workspaceId: string,
+      payload: { indexed: number; written?: number; unchanged?: number; truncated: boolean },
+    ) => void,
+  ): () => void
   searchSourcesIndex(
     workspaceId: string,
     query: string,
