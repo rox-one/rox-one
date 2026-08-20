@@ -405,9 +405,24 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('converts and moves copy connections from the services list without secret fields', () => {
-    expect(page.split("row.storageMode === 'copy'").length - 1).toBe(2)
-    expect(page.split('confirmConvert(row.id)').length - 1).toBe(2)
-    expect(page.split('confirmMove(row.id)').length - 1).toBe(2)
+    expect(page.split("row.storageMode === 'copy'").length - 1).toBe(3)
+    expect(page.split('confirmConvert(row.id)').length - 1).toBe(3)
+    expect(page.split('confirmMove(row.id)').length - 1).toBe(3)
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('converts and moves copy connections from policy rows without stealing focus', () => {
+    expect(page).toContain('data-testid="connections-policy-row"')
+    expect(page.split("row.storageMode === 'copy'").length - 1).toBe(3)
+    expect(page.split('confirmConvert(row.id)').length - 1).toBe(3)
+    expect(page.split('confirmMove(row.id)').length - 1).toBe(3)
+    expect(page).toContain('connections.convert')
+    expect(page).toContain('connections.move')
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

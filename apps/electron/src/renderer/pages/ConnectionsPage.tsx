@@ -1507,6 +1507,61 @@ export default function ConnectionsPage() {
                     {renderReconnectControls(row)}
                     {renderRevokeControls(row)}
                     {renderRotateControls(row)}
+                    {row.storageMode === 'copy' ? (
+                      convertingId === row.id ? (
+                        <div className="flex flex-col items-end gap-1">
+                          <div className="font-mono text-[11px]" data-testid="connections-convert-confirm-target">
+                            {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
+                          </div>
+                          <div className="flex gap-1">
+                            <button type="button" className="rounded border px-2 py-1" onClick={() => confirmConvert(row.id)}>
+                              {t('connections.convertConfirm')}
+                            </button>
+                            <button type="button" className="rounded border px-2 py-1" onClick={() => setConvertingId(null)}>
+                              {t('connections.convertCancel')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button type="button" className="rounded border px-2 py-1" onClick={() => {
+                          setConvertingId(row.id)
+                          void previewActiveLeases(row.id)
+                        }}>
+                          {t('connections.convert')}
+                        </button>
+                      )
+                    ) : null}
+                    {movingId === row.id ? (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="font-mono text-[11px]" data-testid="connections-move-confirm-target">
+                          {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
+                        </div>
+                        <select
+                          className="rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                          value={moveTarget}
+                          onChange={(event) => setMoveTarget(event.target.value === 'local-alt' ? 'local-alt' : MOVE_BACKENDS[0])}
+                        >
+                          {MOVE_BACKENDS.map((backend) => (
+                            <option key={backend} value={backend}>{backend}</option>
+                          ))}
+                        </select>
+                        <div className="flex gap-1">
+                          <button type="button" className="rounded border px-2 py-1" onClick={() => confirmMove(row.id)}>
+                            {t('connections.moveConfirm')}
+                          </button>
+                          <button type="button" className="rounded border px-2 py-1" onClick={() => setMovingId(null)}>
+                            {t('connections.moveCancel')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button type="button" className="rounded border px-2 py-1" onClick={() => {
+                        setMovingId(row.id)
+                        void previewActiveLeases(row.id)
+                      }}>
+                        {t('connections.move')}
+                      </button>
+                    )}
                   </li>
                   )
                 })}
