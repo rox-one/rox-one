@@ -71,7 +71,8 @@ import {
 import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
-import { collectionViewRoute } from "./collection/collection-view-cycle"
+import { collectionViewRoute, rememberCollectionView, resolveCycleTarget } from "./collection/collection-view-cycle"
+import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
@@ -526,6 +527,17 @@ function AppShellContent({
 
   const { clearMultiSelect: clearSessionMultiSelect } = useSessionSelection()
   const sessionsViewMode = isSessionsNavigation(navState) ? navState.viewMode : null
+  const collectionViewMode: CollectionViewMode =
+    sessionsViewMode === 'board' || sessionsViewMode === 'table' ? sessionsViewMode : 'list'
+  const applyCollectionView = useCallback((mode: CollectionViewMode) => {
+    if (mode !== collectionViewMode) rememberCollectionView(collectionViewMode)
+    navigate(collectionViewRoute(mode))
+  }, [collectionViewMode, navigate])
+  useAction('collection.viewNext', () => applyCollectionView(resolveCycleTarget(collectionViewMode, 'next')), undefined, [applyCollectionView, collectionViewMode])
+  useAction('collection.viewPrev', () => applyCollectionView(resolveCycleTarget(collectionViewMode, 'prev')), undefined, [applyCollectionView, collectionViewMode])
+  useAction('collection.viewList', () => applyCollectionView('list'), undefined, [applyCollectionView])
+  useAction('collection.viewBoard', () => applyCollectionView('board'), undefined, [applyCollectionView])
+  useAction('collection.viewTable', () => applyCollectionView('table'), undefined, [applyCollectionView])
   const collectionFiltersKey = JSON.stringify(collectionFilters)
 
   React.useEffect(() => {

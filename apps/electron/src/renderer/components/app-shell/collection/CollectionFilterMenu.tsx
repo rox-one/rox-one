@@ -6,19 +6,7 @@ import type { SessionStatus } from '@/config/session-status-config'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { CollectionFilterChips } from './CollectionFilterChips'
-
-function activeFilterCount(filters: CollectionFilters): number {
-  let n = 0
-  if (filters.status && filters.status.length > 0) n += 1
-  if (filters.priority && filters.priority.length > 0) n += 1
-  if (filters.projectId && filters.projectId.length > 0) n += 1
-  if (filters.labels && filters.labels.length > 0) n += 1
-  if (filters.due) n += 1
-  if (typeof filters.flagged === 'boolean') n += 1
-  if (typeof filters.hasUnread === 'boolean') n += 1
-  if (filters.model && filters.model.length > 0) n += 1
-  return n
-}
+import { activeFilterCount } from './collection-filter-count'
 
 export interface CollectionFilterMenuProps {
   filters: CollectionFilters
@@ -50,9 +38,12 @@ export function CollectionFilterMenu({
           type="button"
           className={cn(
             'relative inline-flex h-7 w-7 items-center justify-center rounded-md border border-border/60 bg-foreground/[0.02] text-foreground/70 transition-colors hover:bg-foreground/[0.05] hover:text-foreground',
+            count > 0 && 'border-foreground/30 text-foreground',
             className,
           )}
-          aria-label={t('collection.filter.trigger')}
+          aria-label={count > 0 ? `${t('collection.filter.trigger')} (${count})` : t('collection.filter.trigger')}
+          aria-haspopup="dialog"
+          aria-expanded={open}
           title={t('collection.filter.trigger')}
         >
           <ListFilter className="h-3.5 w-3.5" strokeWidth={2} />
@@ -65,6 +56,8 @@ export function CollectionFilterMenu({
       </PopoverTrigger>
       <PopoverContent
         align="end"
+        role="dialog"
+        aria-label={t('collection.filter.trigger')}
         className="min-w-[18rem] max-h-[70vh] overflow-y-auto p-3"
       >
         <CollectionFilterChips

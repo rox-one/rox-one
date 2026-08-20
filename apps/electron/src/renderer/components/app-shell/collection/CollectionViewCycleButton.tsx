@@ -4,10 +4,10 @@ import { useTranslation } from 'react-i18next'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
+  DropdownMenuShortcut,
   StyledDropdownMenuContent,
   StyledDropdownMenuItem,
 } from '@/components/ui/styled-dropdown'
-import { useAction } from '@/actions/useAction'
 import { useHotkeyLabel } from '@/actions/useHotkeyLabel'
 import { cn } from '@/lib/utils'
 import type { CollectionViewMode } from '../kanban/BoardListToggle'
@@ -57,12 +57,6 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
     onChange(mode)
   }, [onChange, value])
 
-  useAction('collection.viewNext', () => applyMode(resolveCycleTarget(value, 'next')), undefined, [applyMode, value])
-  useAction('collection.viewPrev', () => applyMode(resolveCycleTarget(value, 'prev')), undefined, [applyMode, value])
-  useAction('collection.viewList', () => applyMode('list'), undefined, [applyMode])
-  useAction('collection.viewBoard', () => applyMode('board'), undefined, [applyMode])
-  useAction('collection.viewTable', () => applyMode('table'), undefined, [applyMode])
-
   const buttonClass = cn(
     'inline-flex h-7 items-center justify-center border border-border/60 bg-foreground/[0.02] text-foreground/70 transition-colors hover:bg-foreground/[0.05] hover:text-foreground',
   )
@@ -107,7 +101,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
           </button>
         </DropdownMenuTrigger>
       </div>
-      <StyledDropdownMenuContent align="end" minWidth="min-w-40">
+      <StyledDropdownMenuContent align="end" minWidth="min-w-44">
         {COLLECTION_VIEW_ORDER.map((mode) => {
           const ItemIcon = ICONS[mode]
           const current = mode === value
@@ -122,7 +116,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
             >
               <ItemIcon className="h-3.5 w-3.5" strokeWidth={2} />
               <span className="flex-1">{t(LABEL_KEY[mode])}</span>
-              {hotkey ? <span className="text-[10px] text-muted-foreground">{hotkey}</span> : null}
+              {hotkey ? <DropdownMenuShortcut className="pl-3">{hotkey}</DropdownMenuShortcut> : null}
               {current ? <Check className="h-3.5 w-3.5" strokeWidth={2} /> : <span className="h-3.5 w-3.5" />}
             </StyledDropdownMenuItem>
           )
