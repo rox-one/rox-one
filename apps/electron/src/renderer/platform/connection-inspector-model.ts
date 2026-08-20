@@ -2,6 +2,7 @@ import { sanitizeConnectionInspect, sanitizeConnectionRows } from '../pages/conn
 
 export const CONNECTION_INSPECTOR_FIELD_IDS = [
   'provider',
+  'tenant',
   'storageMode',
   'credentialRef',
   'scopes',
@@ -15,6 +16,7 @@ export const CONNECTION_INSPECTOR_FIELD_IDS = [
 
 export interface ConnectionInspectorFields {
   readonly provider: string
+  readonly tenant: string
   readonly storageMode: string
   readonly credentialRef: string
   readonly scopes: string
@@ -34,6 +36,7 @@ export function projectConnectionInspector(row: unknown): ConnectionInspectorFie
   if (!sanitized) throw new Error('Invalid connection metadata')
   return {
     provider: sanitized.integrationId,
+    tenant: sanitized.workspaceId,
     storageMode: sanitized.storageMode,
     credentialRef: sanitized.credentialRefId,
     scopes: sanitized.scopes.length > 0 ? sanitized.scopes.join(', ') : '—',

@@ -887,6 +887,7 @@
   "inspector.field.scopes": "范围",
   "inspector.field.session": "会话",
   "inspector.field.storageMode": "存储模式",
+  "inspector.field.tenant": "租户",
   "inspector.field.testLogin": "测试登录名",
   "inspector.field.title": "标题",
   "inspector.field.versionId": "版本",

@@ -20,12 +20,14 @@ describe('CF-6.4 connection inspector projection', () => {
     const fields = projectConnectionInspector(ROW)
     expect(fields).toEqual({
       provider: 'github',
+      tenant: 'workspace_a',
       storageMode: 'copy',
       credentialRef: ROW.credentialRefId,
       scopes: 'repo, read:org',
     })
     expect(CONNECTION_INSPECTOR_FIELD_IDS).toEqual([
       'provider',
+      'tenant',
       'storageMode',
       'credentialRef',
       'scopes',
@@ -37,6 +39,11 @@ describe('CF-6.4 connection inspector projection', () => {
       'versionId',
     ])
     expect(JSON.stringify(fields)).not.toMatch(/value|payload|secret|token|refreshToken/)
+  })
+
+  it('projects tenant from workspace id without secret fields', () => {
+    expect(projectConnectionInspector(ROW).tenant).toBe('workspace_a')
+    expect(JSON.stringify(projectConnectionInspector(ROW))).not.toMatch(/value|payload|secret|token|refreshToken/)
   })
 
   it('rejects secret fields and empty scopes stay a dash', () => {

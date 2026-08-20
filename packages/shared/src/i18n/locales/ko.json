@@ -887,6 +887,7 @@
   "inspector.field.scopes": "범위",
   "inspector.field.session": "세션",
   "inspector.field.storageMode": "저장 모드",
+  "inspector.field.tenant": "테넌트",
   "inspector.field.testLogin": "테스트 로그인",
   "inspector.field.title": "제목",
   "inspector.field.versionId": "버전",

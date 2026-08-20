@@ -887,6 +887,7 @@
   "inspector.field.scopes": "Alcances",
   "inspector.field.session": "Sesión",
   "inspector.field.storageMode": "Modo de almacenamiento",
+  "inspector.field.tenant": "Inquilino",
   "inspector.field.testLogin": "Login de prueba",
   "inspector.field.title": "Título",
   "inspector.field.versionId": "Versión",

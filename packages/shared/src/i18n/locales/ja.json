@@ -887,6 +887,7 @@
   "inspector.field.scopes": "スコープ",
   "inspector.field.session": "セッション",
   "inspector.field.storageMode": "保存モード",
+  "inspector.field.tenant": "テナント",
   "inspector.field.testLogin": "テストログイン",
   "inspector.field.title": "タイトル",
   "inspector.field.versionId": "バージョン",

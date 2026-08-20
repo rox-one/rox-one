@@ -238,4 +238,13 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('shows tenant metadata for the selected connection without secret fields', () => {
+    expect(host).toContain('inspector.field.tenant')
+    expect(host).toContain('connections-inspector-tenant')
+    expect(host).toContain('fields.tenant')
+    expect(host).not.toMatch(/\/token\//)
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })

@@ -887,6 +887,7 @@
   "inspector.field.scopes": "Области",
   "inspector.field.session": "Сессия",
   "inspector.field.storageMode": "Режим хранения",
+  "inspector.field.tenant": "Тенант",
   "inspector.field.testLogin": "Логин проверки",
   "inspector.field.title": "Заголовок",
   "inspector.field.versionId": "Версия",

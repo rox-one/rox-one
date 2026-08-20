@@ -887,6 +887,7 @@
   "inspector.field.scopes": "Scopes",
   "inspector.field.session": "Session",
   "inspector.field.storageMode": "Storage mode",
+  "inspector.field.tenant": "Tenant",
   "inspector.field.testLogin": "Test login",
   "inspector.field.title": "Title",
   "inspector.field.versionId": "Version",
