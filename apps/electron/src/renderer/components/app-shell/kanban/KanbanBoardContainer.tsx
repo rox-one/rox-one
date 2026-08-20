@@ -953,6 +953,7 @@ export function KanbanBoardContainer() {
             compact
             statuses={sessionStatuses ?? []}
             projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
+            labels={labelConfigs.map(l => ({ id: l.id, name: l.name }))}
           />
         </div>
       </div>

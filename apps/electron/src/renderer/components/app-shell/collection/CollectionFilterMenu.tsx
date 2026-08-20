@@ -63,7 +63,10 @@ export function CollectionFilterMenu({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-64 p-3">
+      <PopoverContent
+        align="end"
+        className="min-w-[18rem] max-h-[70vh] overflow-y-auto p-3"
+      >
         <CollectionFilterChips
           filters={filters}
           onFiltersChange={onFiltersChange}
@@ -71,6 +74,7 @@ export function CollectionFilterMenu({
           priorities={priorities}
           projects={projects}
           labels={labels}
+          layout="stacked"
         />
       </PopoverContent>
     </Popover>

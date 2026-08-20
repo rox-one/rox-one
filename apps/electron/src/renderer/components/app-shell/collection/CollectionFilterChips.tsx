@@ -19,6 +19,7 @@ export interface CollectionFilterChipsProps {
   projects?: Array<{ id: string; name: string }>
   labels?: Array<{ id: string; name: string }>
   className?: string
+  layout?: 'inline' | 'stacked'
 }
 
 function dueType(filters: CollectionFilters): SimpleDue | null {
@@ -50,8 +51,10 @@ export function CollectionFilterChips({
   projects = [],
   labels = [],
   className,
+  layout = 'inline',
 }: CollectionFilterChipsProps) {
   const { t } = useTranslation()
+  const stacked = layout === 'stacked'
 
   const toggleStatus = (id: string) => {
     const current = new Set(filters.status ?? [])
@@ -114,9 +117,15 @@ export function CollectionFilterChips({
   const active = hasActiveFilters(filters)
 
   return (
-    <div className={cn('flex min-w-0 flex-wrap items-center gap-1.5', className)}>
+    <div
+      className={cn(
+        'flex min-w-0',
+        stacked ? 'flex-col gap-2' : 'flex-wrap items-center gap-1.5',
+        className,
+      )}
+    >
       {statuses.length > 0 && (
-        <ChipGroup label={t('collection.filter.status')}>
+        <ChipGroup label={t('collection.filter.status')} stacked={stacked}>
           {statuses.map((state) => {
             const selected = (filters.status ?? []).includes(state.id)
             return (
@@ -131,7 +140,7 @@ export function CollectionFilterChips({
         </ChipGroup>
       )}
 
-      <ChipGroup label={t('collection.filter.priority')}>
+      <ChipGroup label={t('collection.filter.priority')} stacked={stacked}>
         {priorities.map((p) => {
           const selected = (filters.priority ?? []).includes(p)
           return (
@@ -146,7 +155,7 @@ export function CollectionFilterChips({
       </ChipGroup>
 
       {projects.length > 0 && (
-        <ChipGroup label={t('collection.filter.project', { defaultValue: 'Project' })}>
+        <ChipGroup label={t('collection.filter.project', { defaultValue: 'Project' })} stacked={stacked}>
           {projects.map((project) => (
             <FilterChip
               key={project.id}
@@ -159,7 +168,7 @@ export function CollectionFilterChips({
       )}
 
       {labels.length > 0 && (
-        <ChipGroup label={t('collection.filter.label', { defaultValue: 'Label' })}>
+        <ChipGroup label={t('collection.filter.label', { defaultValue: 'Label' })} stacked={stacked}>
           {labels.map((label) => (
             <FilterChip
               key={label.id}
@@ -171,7 +180,7 @@ export function CollectionFilterChips({
         </ChipGroup>
       )}
 
-      <ChipGroup label={t('collection.filter.due')}>
+      <ChipGroup label={t('collection.filter.due')} stacked={stacked}>
         {(['overdue', 'today', 'none'] as SimpleDue[]).map((type) => (
           <FilterChip
             key={type}
@@ -196,13 +205,30 @@ export function CollectionFilterChips({
   )
 }
 
-function ChipGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function ChipGroup({
+  label,
+  children,
+  stacked,
+}: {
+  label: string
+  children: React.ReactNode
+  stacked?: boolean
+}) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1">
+    <div
+      className={cn(
+        'flex min-w-0',
+        stacked ? 'flex-col gap-1' : 'flex-wrap items-center gap-1',
+      )}
+    >
       <span className="mr-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/80">
         {label}
       </span>
-      {children}
+      {stacked ? (
+        <div className="flex min-w-0 flex-wrap items-center gap-1">{children}</div>
+      ) : (
+        children
+      )}
     </div>
   )
 }

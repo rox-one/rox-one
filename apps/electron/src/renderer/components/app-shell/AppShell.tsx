@@ -105,7 +105,8 @@ import { getSessionTitle } from "@/utils/session"
 import { useSetAtom } from "jotai"
 import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSource, LoadedSkill, PermissionMode, SourceFilter, AutomationFilter } from "../../../shared/types"
 import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
-import { collectionDisplayAtom } from "@/atoms/collection-display"
+import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
+import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
 import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
@@ -448,7 +449,7 @@ function AppShellContent({
 
   // Board and table replace the session-list navigator with a full-width host,
   // so the navigator (and its resize handle) collapse to zero width while active.
-  // Each host renders its own CollectionViewToggle.
+  // Compact cycle chrome lives on the list navigator; not CollectionViewToggle / full OpsBar.
   const isBoardView =
     isSessionsNavigation(navState) &&
     (navState.viewMode === 'board' || navState.viewMode === 'table')
@@ -511,6 +512,7 @@ function AppShellContent({
   })
 
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
+  const setCollectionDisplay = useSetAtom(setCollectionDisplayAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
@@ -566,12 +568,17 @@ function AppShellContent({
   const [searchActive, setSearchActive] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
 
-  // Grouping mode for chat list: per-view (stored in viewFiltersMap), forced to 'date' for state sub-views
+  // Grouping mode for chat list: CollectionDisplay.groupBy is live; viewFiltersMap
+  // groupingMode is leftover compact cycle chrome when groupBy is none.
   const isStateSubView = sessionFilter?.kind === 'state'
 
   const chatGroupingMode: ChatGroupingMode = isStateSubView
     ? 'date'
-    : (viewFiltersMap[sessionFilterKey ?? '']?.groupingMode ?? 'date')
+    : collectionDisplay.groupBy === 'status'
+      ? 'status'
+      : collectionDisplay.groupBy === 'none'
+        ? (viewFiltersMap[sessionFilterKey ?? '']?.groupingMode ?? 'date')
+        : 'date'
 
   const setChatGroupingMode = useCallback((mode: ChatGroupingMode) => {
     setViewFiltersMap(prev => {
@@ -582,7 +589,92 @@ function AppShellContent({
         [sessionFilterKey]: { ...existing, groupingMode: mode }
       }
     })
-  }, [sessionFilterKey])
+    void setCollectionDisplay({
+      groupBy: mode === 'status' ? 'status' : 'none',
+    })
+  }, [sessionFilterKey, setCollectionDisplay])
+
+  const compactViewFilters = sessionFilterKey ? viewFiltersMap[sessionFilterKey] : undefined
+
+  const listFilter = useMemo(() => {
+    const next = new Map<SessionStatusId, FilterMode>()
+    const leftover = compactViewFilters?.statuses
+    if (leftover) {
+      for (const [id, mode] of Object.entries(leftover)) {
+        if (mode === 'exclude') next.set(id as SessionStatusId, 'exclude')
+      }
+    }
+    for (const id of collectionFilters.status ?? []) {
+      next.set(id as SessionStatusId, 'include')
+    }
+    return next
+  }, [collectionFilters.status, compactViewFilters?.statuses])
+
+  const labelFilter = useMemo(() => {
+    const next = new Map<string, FilterMode>()
+    const leftover = compactViewFilters?.labels
+    if (leftover) {
+      for (const [id, mode] of Object.entries(leftover)) {
+        if (mode === 'exclude') next.set(id, 'exclude')
+      }
+    }
+    for (const id of collectionFilters.labels ?? []) {
+      next.set(id, 'include')
+    }
+    return next
+  }, [collectionFilters.labels, compactViewFilters?.labels])
+
+  const setListFilter = useCallback((
+    updater:
+      | Map<SessionStatusId, FilterMode>
+      | ((prev: Map<SessionStatusId, FilterMode>) => Map<SessionStatusId, FilterMode>),
+  ) => {
+    const next = typeof updater === 'function' ? updater(listFilter) : updater
+    const includes: string[] = []
+    const excludeEntry: FilterEntry = {}
+    for (const [id, mode] of next) {
+      if (mode === 'include') includes.push(id)
+      else if (mode === 'exclude') excludeEntry[id] = 'exclude'
+    }
+    setCollectionFilters(prev => ({
+      ...prev,
+      status: includes.length > 0 ? includes : undefined,
+    }))
+    setViewFiltersMap(prev => {
+      if (!sessionFilterKey) return prev
+      const existing = prev[sessionFilterKey] ?? { statuses: {}, labels: {} }
+      return {
+        ...prev,
+        [sessionFilterKey]: { ...existing, statuses: excludeEntry },
+      }
+    })
+  }, [listFilter, sessionFilterKey, setCollectionFilters])
+
+  const setLabelFilter = useCallback((
+    updater:
+      | Map<string, FilterMode>
+      | ((prev: Map<string, FilterMode>) => Map<string, FilterMode>),
+  ) => {
+    const next = typeof updater === 'function' ? updater(labelFilter) : updater
+    const includes: string[] = []
+    const excludeEntry: FilterEntry = {}
+    for (const [id, mode] of next) {
+      if (mode === 'include') includes.push(id)
+      else if (mode === 'exclude') excludeEntry[id] = 'exclude'
+    }
+    setCollectionFilters(prev => ({
+      ...prev,
+      labels: includes.length > 0 ? includes : undefined,
+    }))
+    setViewFiltersMap(prev => {
+      if (!sessionFilterKey) return prev
+      const existing = prev[sessionFilterKey] ?? { statuses: {}, labels: {} }
+      return {
+        ...prev,
+        [sessionFilterKey]: { ...existing, labels: excludeEntry },
+      }
+    })
+  }, [labelFilter, sessionFilterKey, setCollectionFilters])
 
   // Ref for ChatDisplay navigation (exposed via forwardRef)
   const chatDisplayRef = React.useRef<ChatDisplayHandle>(null)
@@ -2486,20 +2578,42 @@ function AppShellContent({
               ) : undefined}
               actions={
                 <>
-                  {/* FR-26/FR-31: shared CollectionFilters + Display chrome for list mode.
-                      Board/table hosts own their OpsBar; list uses full (non-compact) chrome. */}
+                  {/* Compact cycle chrome for list mode — not CollectionViewToggle / full OpsBar.
+                      Board/table hosts own their OpsBar. */}
                   {isSessionsNavigation(navState) && navState.viewMode !== 'board' && navState.viewMode !== 'table' && (
-                    <CollectionViewChrome
-                      workspaceId={activeWorkspaceId}
-                      viewMode="list"
-                      onViewModeChange={view => {
-                        navigate(collectionViewRoute(view))
-                      }}
-                      compact
-                      statuses={effectiveSessionStatuses}
-                      projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
-                      labels={displayLabelConfigs.map(l => ({ id: l.id, name: l.name }))}
-                    />
+                    <>
+                      {isAutoCompact && (
+                        <CompactSessionListFilter
+                          listFilter={listFilter}
+                          setListFilter={setListFilter}
+                          labelFilter={labelFilter}
+                          setLabelFilter={setLabelFilter}
+                          pinnedFilters={{
+                            pinnedStatusId: sessionFilter?.kind === 'state' ? sessionFilter.stateId : null,
+                            pinnedLabelId: sessionFilter?.kind === 'label' ? sessionFilter.labelId : null,
+                            pinnedFlagged: sessionFilter?.kind === 'flagged',
+                          }}
+                          effectiveSessionStatuses={effectiveSessionStatuses}
+                          displayLabelConfigs={displayLabelConfigs}
+                          labelConfigs={labelConfigs}
+                          chatGroupingMode={chatGroupingMode}
+                          setChatGroupingMode={setChatGroupingMode}
+                          isStateSubView={isStateSubView}
+                          onOpenSearch={() => setSearchActive(true)}
+                        />
+                      )}
+                      <CollectionViewChrome
+                        workspaceId={activeWorkspaceId}
+                        viewMode="list"
+                        onViewModeChange={view => {
+                          navigate(collectionViewRoute(view))
+                        }}
+                        compact
+                        statuses={effectiveSessionStatuses}
+                        projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
+                        labels={displayLabelConfigs.map(l => ({ id: l.id, name: l.name }))}
+                      />
+                    </>
                   )}
                   {isProjectsNavigation(navState) && activeWorkspace && (
                     <HeaderIconButton
