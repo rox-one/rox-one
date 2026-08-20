@@ -134,6 +134,7 @@ export function CollectionFilterMenu({
           {BUILTIN_SLICES.map((slice) => (
             <CollectionMenuRadioRow
               key={slice.id}
+              role="dialog"
               selected={activeSlice === slice.id}
               label={t(slice.nameKey!)}
               onClick={() => changeFilters(applySlice(filters, slice))}
@@ -168,6 +169,7 @@ export function CollectionFilterMenu({
             ) : (
               <CollectionMenuRow
                 key={slice.id}
+                role="dialog"
                 selected={activeSlice === slice.id}
                 label={slice.name ?? slice.id}
                 onClick={() => changeFilters(applySlice(filters, slice))}

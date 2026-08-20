@@ -179,6 +179,7 @@ export function CollectionFilterChips({
               option.radio ? (
                 <CollectionMenuRadioRow
                   key={option.key}
+                  role="dialog"
                   selected={option.selected}
                   label={option.label}
                   onClick={option.onClick}
@@ -186,6 +187,7 @@ export function CollectionFilterChips({
               ) : (
                 <CollectionMenuRow
                   key={option.key}
+                  role="dialog"
                   selected={option.selected}
                   label={option.label}
                   onClick={option.onClick}

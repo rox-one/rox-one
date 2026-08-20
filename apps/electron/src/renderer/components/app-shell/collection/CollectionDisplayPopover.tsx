@@ -121,6 +121,7 @@ export function CollectionDisplayPopover({
           {COLLECTION_GROUP_BY_VALUES.map((value) => (
             <CollectionMenuRadioRow
               key={value}
+              role="dialog"
               selected={display.groupBy === value}
               label={t(GROUP_I18N[value])}
               onClick={() => patch({ groupBy: value })}
@@ -135,6 +136,7 @@ export function CollectionDisplayPopover({
           {COLLECTION_ORDER_BY_VALUES.map((value) => (
             <CollectionMenuRadioRow
               key={value}
+              role="dialog"
               selected={display.orderBy === value}
               label={t(ORDER_I18N[value])}
               onClick={() => patch({ orderBy: value })}
@@ -179,6 +181,7 @@ export function CollectionDisplayPopover({
           {COLLECTION_PROPERTY_VALUES.map((prop) => (
             <CollectionMenuRow
               key={prop}
+              role="dialog"
               selected={display.visibleProperties.includes(prop)}
               label={t(PROPERTY_I18N[prop])}
               onClick={() => toggleProperty(prop)}

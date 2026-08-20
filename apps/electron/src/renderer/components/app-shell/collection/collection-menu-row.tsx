@@ -42,17 +42,21 @@ export function CollectionMenuRow({
   onClick,
   trailing,
   className,
+  role = 'menu',
 }: {
   selected: boolean
   label: React.ReactNode
   onClick: () => void
   trailing?: React.ReactNode
   className?: string
+  /** `menu`: menuitemcheckbox (DropdownMenu). `dialog`: native button (popover dialogs). */
+  role?: 'menu' | 'dialog'
 }) {
+  const asMenuItem = role === 'menu'
   return (
     <button
       type="button"
-      role="menuitemcheckbox"
+      role={asMenuItem ? 'menuitemcheckbox' : undefined}
       aria-checked={selected}
       onClick={onClick}
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
@@ -69,16 +73,20 @@ export function CollectionMenuRadioRow({
   label,
   onClick,
   className,
+  role = 'menu',
 }: {
   selected: boolean
   label: React.ReactNode
   onClick: () => void
   className?: string
+  /** `menu`: menuitemradio (DropdownMenu). `dialog`: native button (popover dialogs). */
+  role?: 'menu' | 'dialog'
 }) {
+  const asMenuItem = role === 'menu'
   return (
     <button
       type="button"
-      role="menuitemradio"
+      role={asMenuItem ? 'menuitemradio' : undefined}
       aria-checked={selected}
       onClick={onClick}
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
