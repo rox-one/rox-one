@@ -1,10 +1,11 @@
-# NOTICE — SiYuan integration boundary
+# NOTICE — knowledge kernel boundary
 
-**Craft does not distribute SiYuan.**
+**The Apache Rox tree does not contain kernel sources.**
 
-- The Craft Agents product (Apache-2.0) does **not** ship SiYuan source code, binaries, UI assets, or modified forks in the monorepo, installer, or auto-update channel.
-- Integration with SiYuan is **HTTP API only** (loopback or user-configured base URL) plus an optional host surface that embeds the **user-running** SiYuan web UI.
-- **User-installed SiYuan is a separate program.** The user obtains, installs, updates, and licenses SiYuan under SiYuan’s own terms (AGPL-3.0 upstream). Craft’s “Detect SiYuan” assist only checks local install paths and whether something listens on the default kernel port; it never downloads SiYuan.
-- Managed kernel mode (Craft spawning/bundling a kernel) is **not enabled**. See [g2-decision-record.md](./g2-decision-record.md) and [08-licensing.md](./08-licensing.md).
+- `rox-one/rox-one` (Apache-2.0) does **not** vendor kernel source, unpacked UI, or a binary payload in git. Allowed: pin metadata (`oem-kernel-pin.json` version + sha256 + relative path).
+- **G2 is ACCEPTED, variant C (OEM).** A licensed installer may ship a pinned kernel binary next to Rox. That payload is not part of the Apache source tree. See [g2-decision-record.md](./g2-decision-record.md).
+- Host talks to the kernel over HTTP on loopback (managed) or a user-configured URL (external-local / remote). The renderer does not hold the access token.
+- External-local remains valid: a user-run kernel is a separate program. Detection assist never downloads a kernel.
+- White-label UI and locale live in the private OEM fork, not in this repository.
 
 This notice is an engineering boundary statement, not legal advice.

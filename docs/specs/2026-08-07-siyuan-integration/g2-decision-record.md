@@ -1,34 +1,48 @@
 # G2 — Licensing decision record (managed kernel)
 
-> **Status: OPEN — blocked on legal/commercial decision**  
-> **Date:** 2026-08-08  
+> **Status: ACCEPTED**  
+> **Chosen variant: C — OEM**  
+> **Date accepted:** 2026-08-20  
+> **Date opened:** 2026-08-08  
 > **Parent:** [08-licensing.md](./08-licensing.md) (K-08)  
-> **Ticket 14:** [plans/next-program/decisions/001-g2-managed-siyuan.md](../../../plans/next-program/decisions/001-g2-managed-siyuan.md) records the same binding. That ADR is **not** a flip to B or C.
+> **Ticket 14:** [plans/next-program/decisions/001-g2-managed-siyuan.md](../../../plans/next-program/decisions/001-g2-managed-siyuan.md)
 
-## Recommendation order
+## Decision
 
-1. **C (OEM)** — commercial/OEM permission from SiYuan rightsholder (preferred for managed).
-2. **B (AGPL-compatible open product)** — controlled fallback if product strategy accepts AGPL-compatible publication of the combined volume.
-3. **Stay on A (external-local)** — default and current production mode; no SiYuan distribution.
+**Variant C (OEM / commercial white-label).**
 
-## Hard rule until Status = ACCEPTED with variant B or C
+Rox may bundle, modify, white-label, and ship the knowledge kernel **inside Rox** as an OEM-managed payload. The product surface is Rox «Знания», not an upstream notes brand. The kernel chrome (shell, locale, catalog) may be rewritten under this grant.
 
-- **No** SiYuan source or binary in the monorepo or installer.
-- **No** managed spawn that ships or downloads a kernel.
-- Runtime `mode: 'managed'` is **fail-closed** (`CAPABILITY_DISABLED` / `engineStatus.running: false` + reason citing G2).
+This is an **extended OEM license**: any platform Rox ships is in scope. Named now: Windows, macOS, Linux (including Debian), Android, iOS. Desktop v1 still ships macOS / Windows / Linux; mobile follows the same grant when those clients exist.
 
-## Current production mode
+**Not chosen:** B (AGPL-compatible publication of the combined volume). **A (external-local)** remains a supported fallback for developers and BYO vaults, not the production default after the installer payload exists.
 
-**A (external-local) only.**
+## What C unlocks
 
-User installs SiYuan themselves; Craft talks HTTP API only. Detection assist (`knowledge:detectEngine`) probes install paths + `127.0.0.1:6806` and links to official install docs — never downloads.
+- Runtime `mode: 'managed'` is **allowed** when `G2_RECORD_PATH` points at this record and the installer provides `OEM_PIN_PATH` + `OEM_KERNEL_BINARY` with a matching pin checksum.
+- White-label fork lives in the private repo `rox-one/knowledge-engine`. Sources of that fork **must not** enter the Apache `rox-one/rox-one` git history.
+- Installer ships a pinned binary + sha256; the public repo holds only the pin manifest.
 
-## Acceptance criteria to flip Status → ACCEPTED
+## What C does not do by itself
 
-- [ ] Written legal/commercial decision choosing **B** or **C** (or explicit permanent stay on A).
-- [ ] If C: signed OEM/commercial terms covering versions/platforms needed for managed.
-- [ ] If B: source-offer + NOTICE process and channel compatibility (§3.7 in 08-licensing).
-- [ ] ADR update + this record `Status: ACCEPTED` with chosen variant.
-- [ ] G1 metrics thresholds filled and accepted ([g1-metrics.md](./g1-metrics.md)).
+- It does **not** add a kernel binary to this repository.
+- It does **not** skip checksum validation.
+- G1 usage metrics remain a *release-notes* gate for calling managed “the only supported mode”; they do not revert this legal choice.
 
-Until then, **P7 managed does not start.**
+## Platforms (grant)
+
+| Platform | In grant | v1 desktop installer |
+|---|---|---|
+| macOS (arm64, x64) | yes | yes |
+| Windows (x64) | yes | yes |
+| Linux / Debian (x64) | yes | yes |
+| Android | yes | later client |
+| iOS | yes | later client |
+| Any other platform Rox ships | yes | as shipped |
+
+## Shell / product
+
+- Host chrome: Rox. User copy: Знания / ядро знаний.
+- Kernel process: hidden, loopback, ephemeral port ≠ 6806.
+- Integrated editor honors `craftIntegrated=1`.
+- Plugin ABI preserved; catalog is OEM-only (`ROX_CATALOG_URL` / empty allowlist).

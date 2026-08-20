@@ -7,12 +7,12 @@
 
 ## Decision status
 
-> **Status:** draft / **OPEN** — blocked on legal/commercial decision.  
+> **Status:** **ACCEPTED** — **variant C** (OEM / white-label), 2026-08-20.  
 > **Record:** [g2-decision-record.md](./g2-decision-record.md)  
 > **Boundary notice:** [NOTICE-siyuan-boundary.md](./NOTICE-siyuan-boundary.md)  
 > **G1 metrics gate:** [g1-metrics.md](./g1-metrics.md)  
 >
-> Until G2 is `ACCEPTED` (variant B or C) **and** G1 thresholds are filled, production remains **variant A (external-local)** only. No SiYuan binary/source in monorepo or installer; no managed spawn.
+> Managed kernel may ship as a **pinned installer payload** (not in the Apache git tree). G1 still gates calling managed “the only supported mode” in release notes. External-local remains a fallback.
 
 ## 1. Цель
 

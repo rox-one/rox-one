@@ -77,10 +77,9 @@ Installer ships a **pinned binary + checksum**, not the Apache tree sources of t
 
 ### 5.2 G2 gate (engineering vs product)
 
-- **Product:** variant C is chosen.
-- **Engineering:** `g2-decision-record.md` stays OPEN until signed OEM terms exist covering: binary distribution, UI modification, white-label, plugin catalog, platforms (macOS/Windows/Linux as shipped).
-- Until `Status: ACCEPTED` + variant C: runtime `mode: managed` remains fail-closed (`CAPABILITY_DISABLED`). CI must not vendor AGPL sources into this monorepo.
-- After terms: update G2 record, NOTICE (Craft still does not *source-distribute* SiYuan in the Apache tree; OEM payload is a licensed binary), and enable managed as **default** for desktop Knowledge.
+- **Product and G2 record:** variant **C** is **ACCEPTED** (2026-08-20). Grant covers white-label, UI modification, plugin catalog, binary distribution, and **any platform Rox ships** (Windows, macOS, Linux/Debian, Android, iOS).
+- Apache tree still must not vendor kernel sources. Installer payload + checksum enable `mode: managed`. Missing binary → external-local fallback, no download.
+- Managed is the intended **default** for desktop Knowledge once the pin payload exists.
 
 G1 numeric thresholds remain a *usage* gate for treating managed as proven; they do not block writing process-manager code behind the G2 flag, but they **do** block advertising managed as the only supported mode in release notes until filled or explicitly waived by product.
 

@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Apache tree (`rox-one/rox-one`) must not contain SiYuan/OEM kernel source or unpacked UI assets. Pin metadata (version, sha256, relative payload path) is allowed.
-- Until `docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md` is `Status: ACCEPTED` with variant C, `mode: 'managed'` that ships/downloads a kernel stays fail-closed (`CAPABILITY_DISABLED` / `engineStatus.running: false` with reason citing G2). Process-manager unit tests may use a fake executable.
+- G2 is **ACCEPTED variant C**. `mode: 'managed'` may spawn a **pinned installer binary** after checksum. Apache git still must not contain kernel source. Missing `OEM_PIN_PATH` / `OEM_KERNEL_BINARY` falls back to external-local (no download). Process-manager unit tests may use a fake executable.
 - User-visible host copy: "Знания", "ядро знаний", product "Rox". No "SiYuan" in production UI strings (10-locale parity via `lint:i18n:parity`).
 - Human typing in the editor writes the kernel live. Agent mutations only via `proposeMutation` / existing P3 channels.
 - Renderer never HTTP-calls the kernel; tokens only in main / server-core via `CredentialManager`.
