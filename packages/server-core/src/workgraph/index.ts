@@ -554,7 +554,7 @@ export class WorkGraphKernel {
     action: string
     decision: 'allow' | 'deny'
     versionFingerprint?: string
-    eventType?: 'connection-audit' | 'connection-revoked' | 'connection-rotated' | 'connection-repaired' | 'connection-converted' | 'connection-binding-revoked' | 'connection-moved'
+    eventType?: 'connection-audit' | 'connection-revoked' | 'connection-rotated' | 'connection-repaired' | 'connection-converted' | 'connection-binding-revoked' | 'connection-moved' | 'connection-reconnected'
   }): Promise<void> {
     const database = await this.requireDatabase()
     assertOpaqueId(input.workspaceId, 'workspace ID')
@@ -610,7 +610,7 @@ export class WorkGraphKernel {
     const database = await this.requireDatabase()
     assertOpaqueId(workspaceId, 'workspace ID')
     if (connectionId) assertOpaqueId(connectionId, 'connection ID')
-    const eventTypes = `'connection-created', 'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-converted', 'connection-binding-revoked', 'connection-moved'`
+    const eventTypes = `'connection-created', 'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-converted', 'connection-binding-revoked', 'connection-moved', 'connection-reconnected'`
     const sql = connectionId
       ? `SELECT object_id, event_type, occurred_at, actor_id, outcome, payload_digest, action
          FROM workgraph_ledger
@@ -1108,6 +1108,7 @@ class WorkGraphIntegrityError extends Error {}
 export {
   convertCopyToReferenceAndRevalidate,
   moveConnectionBackendAndRevalidate,
+  reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -1116,6 +1117,7 @@ export {
 export type {
   ConvertConnectionInput,
   MoveConnectionInput,
+  ReconnectConnectionInput,
   RepairConnectionInput,
   RevokeBindingInput,
   RevokeConnectionInput,
@@ -1128,6 +1130,11 @@ export type { TestGithubConnectionInput } from './connection-test.ts'
 export { isGithubEnvCandidate, performGithubUser, runGithubVertical } from './github-vertical.ts'
 export type { GithubFetch, GithubVerticalInput, GithubVerticalResult } from './github-vertical.ts'
 export { previewGithubEnvImport, commitGithubEnvImport } from './github-import.ts'
+export {
+  commitGithubOAuthImport,
+  createGithubDeviceFlow,
+  previewGithubOAuthImport,
+} from './github-oauth-import.ts'
 export type { GithubImportPreview } from './github-import.ts'
 export { previewGitHelperImport, commitGitHelperImport } from './git-helper-import.ts'
 export type { GitHelperImportPreview } from './git-helper-import.ts'

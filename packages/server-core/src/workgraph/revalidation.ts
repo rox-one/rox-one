@@ -126,6 +126,25 @@ export async function repairConnectionAndRevalidate(
   return revalidateAffected(input)
 }
 
+export type ReconnectConnectionInput = RotateConnectionInput
+
+export async function reconnectConnectionAndRevalidate(
+  input: ReconnectConnectionInput,
+): Promise<{ readonly consumers: readonly RevalidatedConsumer[] }> {
+  const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
+  const credentialRefId = connection.credentialRefId as CredentialRefId
+  await input.broker.revokeLeasesForRef(credentialRefId, input.reason)
+  await input.kernel.appendConnectionAudit({
+    workspaceId: input.workspaceId,
+    connectionId: input.connectionId,
+    credentialRefId,
+    action: 'connection.reconnect',
+    decision: 'allow',
+    eventType: 'connection-reconnected',
+  })
+  return revalidateAffected(input)
+}
+
 export interface ConvertConnectionInput {
   readonly kernel: WorkGraphConvertSurface
   readonly broker: InProcessCredentialBroker

@@ -15,6 +15,7 @@ export const CONNECT_SOURCES = [
   'keychain',
   'adc',
   'ssh-agent',
+  'github-oauth',
 ] as const
 
 export const MOVE_BACKENDS = ['local-alt'] as const
@@ -148,4 +149,70 @@ export function grantDraftError(input: {
     return '—'
   }
   return null
+}
+
+const DEVICE_FORBIDDEN = new Set(['value', 'payload', 'secret', 'token', 'refreshToken', 'accessToken', 'deviceCode'])
+const DEVICE_POLL_STATUS = new Set(['pending', 'slow_down', 'denied', 'expired', 'imported'])
+
+export interface DeviceLoginView {
+  readonly flowId: string
+  readonly userCode: string
+  readonly verificationUri: string
+  readonly interval: number
+  readonly expiresIn?: number
+}
+
+export type DevicePollView =
+  | { readonly status: 'pending'; readonly interval?: number }
+  | { readonly status: 'slow_down'; readonly interval?: number }
+  | { readonly status: 'denied' }
+  | { readonly status: 'expired' }
+  | { readonly status: 'imported'; readonly connectionId: string }
+
+function assertNoDeviceSecrets(rec: Record<string, unknown>): void {
+  for (const key of Object.keys(rec)) {
+    if (DEVICE_FORBIDDEN.has(key)) throw new Error(`Invalid connection metadata field: ${key}`)
+  }
+}
+
+export function sanitizeDeviceLoginStart(raw: unknown): DeviceLoginView {
+  if (!raw || typeof raw !== 'object') throw new Error('Invalid device login metadata')
+  const rec = raw as Record<string, unknown>
+  assertNoDeviceSecrets(rec)
+  if (typeof rec.flowId !== 'string' || typeof rec.userCode !== 'string') {
+    throw new Error('Invalid device login metadata')
+  }
+  if (typeof rec.verificationUri !== 'string' || typeof rec.interval !== 'number') {
+    throw new Error('Invalid device login metadata')
+  }
+  if (rec.expiresIn != null && typeof rec.expiresIn !== 'number') {
+    throw new Error('Invalid device login metadata')
+  }
+  return {
+    flowId: rec.flowId,
+    userCode: rec.userCode,
+    verificationUri: rec.verificationUri,
+    interval: rec.interval,
+    ...(typeof rec.expiresIn === 'number' ? { expiresIn: rec.expiresIn } : {}),
+  }
+}
+
+export function sanitizeDevicePoll(raw: unknown): DevicePollView {
+  if (!raw || typeof raw !== 'object') throw new Error('Invalid device poll metadata')
+  const rec = raw as Record<string, unknown>
+  assertNoDeviceSecrets(rec)
+  if (typeof rec.status !== 'string' || !DEVICE_POLL_STATUS.has(rec.status)) {
+    throw new Error(`Invalid connection metadata field: ${typeof rec.status === 'string' ? rec.status : 'status'}`)
+  }
+  if (rec.status === 'imported') {
+    if (typeof rec.connectionId !== 'string') throw new Error('Invalid device poll metadata')
+    return { status: 'imported', connectionId: rec.connectionId }
+  }
+  if (rec.status === 'pending' || rec.status === 'slow_down') {
+    return {
+      status: rec.status,
+      ...(typeof rec.interval === 'number' ? { interval: rec.interval } : {}),
+    }
+  }
+  return { status: rec.status }
 }

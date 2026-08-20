@@ -262,6 +262,21 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain("'End'")
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
   })
+
+  it('starts GitHub device login on Imports without exposing a bearer', () => {
+    expect(page).toContain('github-oauth')
+    expect(page).toContain('startGithubDeviceLogin')
+    expect(page).toContain('pollGithubDeviceLogin')
+    expect(page).toContain('sanitizeDeviceLoginStart')
+    expect(page).toContain('sanitizeDevicePoll')
+    expect(page).toContain('connections-github-device')
+    expect(page).toContain('userCode')
+    expect(page).toContain('verificationUri')
+    expect(page).not.toContain('accessToken')
+    expect(page).not.toContain('deviceCode')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
 
 

@@ -15,6 +15,8 @@ import {
   parseCsvList,
   previewSourceForChip,
   removeCommittedPreview,
+  sanitizeDeviceLoginStart,
+  sanitizeDevicePoll,
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
@@ -161,5 +163,51 @@ describe('CF-6 Connections UI helpers', () => {
   it('lists only local move targets', () => {
     expect(MOVE_BACKENDS).toEqual(['local-alt'])
     expect(JSON.stringify(MOVE_BACKENDS)).not.toMatch(/vault|1password|infisical/i)
+  })
+
+  it('keeps GitHub device login metadata and rejects secret fields', () => {
+    const view = sanitizeDeviceLoginStart({
+      flowId: 'flow_1',
+      userCode: 'ABCD-1234',
+      verificationUri: 'https://github.com/login/device',
+      interval: 5,
+      expiresIn: 900,
+    })
+    expect(view).toEqual({
+      flowId: 'flow_1',
+      userCode: 'ABCD-1234',
+      verificationUri: 'https://github.com/login/device',
+      interval: 5,
+      expiresIn: 900,
+    })
+    expect(() => sanitizeDeviceLoginStart({
+      flowId: 'flow_1',
+      userCode: 'ABCD-1234',
+      verificationUri: 'https://github.com/login/device',
+      interval: 5,
+      accessToken: 'gho_super-secret',
+    })).toThrow(/accessToken/)
+    expect(() => sanitizeDeviceLoginStart({
+      flowId: 'flow_1',
+      userCode: 'ABCD-1234',
+      verificationUri: 'https://github.com/login/device',
+      interval: 5,
+      deviceCode: 'hidden-device-code',
+    })).toThrow(/deviceCode/)
+  })
+
+  it('keeps GitHub device poll status without a bearer', () => {
+    expect(sanitizeDevicePoll({ status: 'pending', interval: 5 })).toEqual({
+      status: 'pending',
+      interval: 5,
+    })
+    expect(sanitizeDevicePoll({ status: 'imported', connectionId: 'c1' })).toEqual({
+      status: 'imported',
+      connectionId: 'c1',
+    })
+    expect(() => sanitizeDevicePoll({
+      status: 'approved',
+      accessToken: 'gho_super-secret',
+    })).toThrow(/accessToken|approved/)
   })
 })

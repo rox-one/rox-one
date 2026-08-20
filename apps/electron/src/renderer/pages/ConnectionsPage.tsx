@@ -25,10 +25,14 @@ import {
   matchesConnectSource,
   parseCsvList,
   removeCommittedPreview,
+  sanitizeDeviceLoginStart,
+  sanitizeDevicePoll,
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
   type ConnectSource,
+  type DeviceLoginView,
+  type DevicePollView,
   type MoveBackend,
   type PreviewSource,
   type TestStatus,
@@ -95,6 +99,8 @@ export default function ConnectionsPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [movingId, setMovingId] = useState<string | null>(null)
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
+  const [deviceLogin, setDeviceLogin] = useState<DeviceLoginView | null>(null)
+  const [devicePoll, setDevicePoll] = useState<DevicePollView | null>(null)
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -654,6 +660,59 @@ export default function ConnectionsPage() {
               >
                 {t('connections.import.discoverSshAgent')}
               </button>
+            </ImportPanel>
+            <ImportPanel source="github-oauth" active={activeSource}>
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const startGithubDeviceLogin = window.electronAPI?.workgraph?.startGithubDeviceLogin
+                  if (typeof startGithubDeviceLogin !== 'function') return
+                  try {
+                    setImportError(null)
+                    setDevicePoll(null)
+                    setDeviceLogin(sanitizeDeviceLoginStart(await startGithubDeviceLogin()))
+                  } catch (err) {
+                    setImportError(errorMessage(err))
+                  }
+                }}
+              >
+                {t('connections.import.discoverGithubOAuth')}
+              </button>
+              {deviceLogin ? (
+                <div data-testid="connections-github-device" className="space-y-1 rounded border px-3 py-2">
+                  <div className="font-mono text-xs" data-testid="connections-github-user-code">{deviceLogin.userCode}</div>
+                  <div className="font-mono text-xs">{deviceLogin.verificationUri}</div>
+                  {devicePoll ? (
+                    <div className="text-xs text-muted-foreground">{devicePoll.status}</div>
+                  ) : null}
+                  <button
+                    type="button"
+                    className="rounded border px-3 py-1"
+                    onClick={async () => {
+                      const workspaceId = workspace?.id
+                      const pollGithubDeviceLogin = window.electronAPI?.workgraph?.pollGithubDeviceLogin
+                      if (!workspaceId || typeof pollGithubDeviceLogin !== 'function') return
+                      try {
+                        setImportError(null)
+                        const next = sanitizeDevicePoll(await pollGithubDeviceLogin({
+                          flowId: deviceLogin.flowId,
+                          workspaceId,
+                        }))
+                        setDevicePoll(next)
+                        if (next.status === 'imported') {
+                          setDeviceLogin(null)
+                          await refreshRows(workspaceId)
+                        }
+                      } catch (err) {
+                        setImportError(errorMessage(err))
+                      }
+                    }}
+                  >
+                    {t('connections.import.githubOAuthPoll')}
+                  </button>
+                </div>
+              ) : null}
             </ImportPanel>
             <ul className="space-y-2">
               {visiblePreviews.map((row) => (

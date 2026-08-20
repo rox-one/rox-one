@@ -9,15 +9,18 @@ import {
   NamedCredentialBackend,
   SecureStorageBackend,
   type CredentialBackend,
+  type GithubOAuthHttpClient,
 } from '@craft-agent/shared/credentials'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import {
   commitGitHelperImport,
   commitGithubEnvImport,
+  createGithubDeviceFlow,
   previewGitHelperImport,
   previewGithubEnvImport,
   convertCopyToReferenceAndRevalidate,
   moveConnectionBackendAndRevalidate,
+  reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -53,12 +56,15 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workgraph.CREATE_CONNECTION,
   RPC_CHANNELS.workgraph.GRANT_CONNECTION,
   RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+  RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
   RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV,
   RPC_CHANNELS.workgraph.IMPORT_GITHUB_ENV,
   RPC_CHANNELS.workgraph.PREVIEW_GIT_HELPER,
   RPC_CHANNELS.workgraph.IMPORT_GIT_HELPER,
   RPC_CHANNELS.workgraph.REVOKE_CONNECTION,
   RPC_CHANNELS.workgraph.REPAIR_CONNECTION,
+  RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
   RPC_CHANNELS.workgraph.ROTATE_CONNECTION,
   RPC_CHANNELS.workgraph.TEST_CONNECTION,
   RPC_CHANNELS.workgraph.PREVIEW_DOCKER_HELPER,
@@ -82,6 +88,7 @@ export interface FabricImportHost {
   readonly commitGitHelper: typeof commitGitHelperImport
   readonly revoke: typeof revokeConnectionAndRevalidate
   readonly repair: typeof repairConnectionAndRevalidate
+  readonly reconnect: typeof reconnectConnectionAndRevalidate
   readonly rotate: typeof rotateConnectionAndRevalidate
   readonly testGithub: typeof testGithubConnection
   readonly fetchImpl: GithubFetch
@@ -109,6 +116,7 @@ export function createGithubEnvImportHost(): FabricImportHost {
     commitGitHelper: commitGitHelperImport,
     revoke: revokeConnectionAndRevalidate,
     repair: repairConnectionAndRevalidate,
+    reconnect: reconnectConnectionAndRevalidate,
     rotate: rotateConnectionAndRevalidate,
     testGithub: testGithubConnection,
     fetchImpl: globalThis.fetch.bind(globalThis),
@@ -176,6 +184,33 @@ function assertMoveMetadata(input: unknown): void {
   }
 }
 
+const GITHUB_DEVICE_POLL_KEYS = new Set(['flowId', 'workspaceId'])
+
+function assertGithubDevicePollMetadata(input: unknown): { flowId: string; workspaceId: string } {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid device poll metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!GITHUB_DEVICE_POLL_KEYS.has(key)) {
+      throw new Error(`Invalid connection metadata field: ${key}`)
+    }
+  }
+  const rec = input as { flowId?: unknown; workspaceId?: unknown }
+  if (typeof rec.flowId !== 'string' || !rec.flowId || typeof rec.workspaceId !== 'string' || !rec.workspaceId) {
+    throw new Error('Invalid device poll metadata')
+  }
+  return { flowId: rec.flowId, workspaceId: rec.workspaceId }
+}
+
+const defaultGithubOAuthHttp: GithubOAuthHttpClient = async (request) => {
+  const response = await fetch(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+  })
+  return { status: response.status, body: await response.text() }
+}
+
 function assertLocalPath(value: unknown): string {
   if (typeof value !== 'string' || value.includes('\0')) throw new Error('Invalid path')
   return value
@@ -207,6 +242,15 @@ export function registerWorkGraphHandlers(
   workGraph: WorkGraphSurface,
   fabric?: FabricImportHost,
 ): void {
+  const githubDeviceFlow = fabric
+    ? createGithubDeviceFlow({
+        http: defaultGithubOAuthHttp,
+        clientId: process.env.GITHUB_OAUTH_CLIENT_ID ?? '',
+        provider: fabric.provider,
+        kernel: workGraph,
+        broker: fabric.broker,
+      })
+    : undefined
   server.handle(RPC_CHANNELS.workgraph.GET_HEALTH, () => workGraph.getHealth(), { access: 'localElectron' })
   server.handle(RPC_CHANNELS.workgraph.GET_VERSION, () => workGraph.getVersion(), { access: 'localElectron' })
   server.handle(
@@ -326,6 +370,23 @@ export function registerWorkGraphHandlers(
     { access: 'localElectron' },
   )
   server.handle(
+    RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+    async () => {
+      if (!githubDeviceFlow) throw new Error('github_device_unavailable')
+      return githubDeviceFlow.start()
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+    async (_ctx, input: unknown) => {
+      const pollInput = assertGithubDevicePollMetadata(input)
+      if (!githubDeviceFlow) throw new Error('github_device_unavailable')
+      return githubDeviceFlow.poll(pollInput)
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
     RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV,
     async (_ctx, envPath: string) => {
       if (!fabric) return []
@@ -398,6 +459,28 @@ export function registerWorkGraphHandlers(
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
       })
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
+    async (_ctx, input: { workspaceId: string; connectionId: string }) => {
+      if (!fabric) throw new Error('reconnect_unavailable')
+      const consumers = await fabric.reconnect({
+        kernel: workGraph,
+        broker: fabric.broker,
+        provider: fabric.provider,
+        workspaceId: input.workspaceId,
+        connectionId: input.connectionId,
+        reason: 'owner-reconnect',
+      })
+      const inspect = await inspectConnectionMetadata({
+        kernel: workGraph,
+        provider: fabric.provider,
+        workspaceId: input.workspaceId,
+        connectionId: input.connectionId,
+      })
+      return { ...consumers, inspect }
     },
     { access: 'localElectron' },
   )

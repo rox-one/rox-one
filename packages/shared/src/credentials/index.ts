@@ -107,6 +107,19 @@ export type {
 export { GoogleAdcImporter } from './fabric/adc-importer.ts';
 export type { GoogleAdcImporterOptions } from './fabric/adc-importer.ts';
 export { SshAgentImporter } from './fabric/ssh-agent-importer.ts';
+export {
+  GithubOAuthImporter,
+  pollDeviceLogin,
+  startDeviceLogin,
+} from './fabric/github-oauth-importer.ts';
+export type {
+  GithubDeviceLoginPollResult,
+  GithubDeviceLoginStart,
+  GithubOAuthHttpClient,
+  GithubOAuthHttpRequest,
+  GithubOAuthHttpResponse,
+  GithubOAuthImporterOptions,
+} from './fabric/github-oauth-importer.ts';
 export type {
   SshAgentIdentity,
   SshAgentImporterOptions,

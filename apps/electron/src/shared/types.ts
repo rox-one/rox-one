@@ -779,6 +779,23 @@ export interface ElectronAPI {
       to: string
       consumers: Array<{ consumerId: string; status: string }>
     }>
+    startGithubDeviceLogin(): Promise<{
+      flowId: string
+      userCode: string
+      verificationUri: string
+      interval: number
+      expiresIn?: number
+    }>
+    pollGithubDeviceLogin(input: {
+      flowId: string
+      workspaceId: string
+    }): Promise<
+      | { status: 'pending'; interval?: number }
+      | { status: 'slow_down'; interval?: number }
+      | { status: 'denied' }
+      | { status: 'expired' }
+      | { status: 'imported'; connectionId: string }
+    >
     previewGithubEnv(envPath: string): Promise<Array<{ candidateId: string; label: string; maskedSummary: string }>>
     importGithubEnv(input: {
       envPath: string
@@ -799,6 +816,22 @@ export interface ElectronAPI {
       workspaceId: string
       connectionId: string
     }): Promise<{ consumers: Array<{ consumerId: string; status: string }> }>
+    reconnectConnection(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<{
+      consumers: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
+    }>
     rotateConnection(input: {
       workspaceId: string
       connectionId: string

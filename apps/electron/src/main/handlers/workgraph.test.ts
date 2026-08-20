@@ -63,6 +63,27 @@ describe('WorkGraph handler profile', () => {
     expect(registrations.has(RPC_CHANNELS.workgraph.CREATE_CONNECTION)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.GRANT_CONNECTION)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.MOVE_CONNECTION)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN)).toBe(true)
+
+    const startGithub = handlers.get(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN)
+    await expect(startGithub?.({} as never)).rejects.toThrow(/github_device_unavailable|unavailable/)
+
+    const pollGithub = handlers.get(RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN)
+    await expect(pollGithub?.({} as never, {
+      flowId: 'flow_1',
+      workspaceId: 'workspace_a',
+      accessToken: 'gho_super-secret',
+    })).rejects.toThrow(/accessToken|field/)
+    await expect(pollGithub?.({} as never, {
+      flowId: 'flow_1',
+      workspaceId: 'workspace_a',
+      deviceCode: 'hidden-device-code',
+    })).rejects.toThrow(/deviceCode|field/)
+    await expect(pollGithub?.({} as never, {
+      flowId: 'flow_1',
+      workspaceId: 'workspace_a',
+    })).rejects.toThrow(/github_device_unavailable|unavailable/)
 
     const grant = handlers.get(RPC_CHANNELS.workgraph.GRANT_CONNECTION)
     await expect(grant?.({} as never, {

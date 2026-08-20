@@ -15,6 +15,7 @@ import { createWorkGraphKernel } from './index'
 import {
   convertCopyToReferenceAndRevalidate,
   moveConnectionBackendAndRevalidate,
+  reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -372,6 +373,68 @@ describe('CF-6.5 rotate and repair', () => {
     expect(after?.id).toBe(connection.id)
     const audit = await kernel.listConnectionAudit('workspace_a', connection.id)
     expect(audit.some((row) => row.eventType === 'connection-moved' && row.action === 'connection.move')).toBe(true)
+    await kernel.close()
+  })
+
+  nativeIt('reconnects a stale connection by invalidating leases without leaking the copy', async () => {
+    const root = createRoot()
+    const registry = new CredentialRefRegistry()
+    const provider = new LocalFileSecretProvider(new MemoryBackend(), registry)
+    const written = await provider.write({
+      kind: 'bearer_token',
+      locator: { type: 'local', key: 'github/default' },
+      payload: { value: 'super-secret' },
+      expiresAt: Date.UTC(2020, 0, 1),
+    })
+    const broker = new InProcessCredentialBroker(provider, (id) => registry.get(id))
+    const kernel = createWorkGraphKernel({
+      configDir: root,
+      platform: { platform: 'darwin', arch: 'arm64' },
+    })
+    await kernel.getHealth()
+    const connection = await kernel.createConnection({
+      workspaceId: 'workspace_a',
+      integrationId: 'github',
+      credentialRefId: written.ref.id,
+      storageMode: 'copy',
+    })
+    await kernel.bindConsumer({
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      allowedActions: ['github.api'],
+      resources: ['github:user'],
+    })
+    broker.grant({
+      workspaceId: 'workspace_a',
+      consumerId: 'agent-a',
+      credentialRefId: written.ref.id,
+      actions: ['github.api'],
+      resources: ['github:user'],
+    })
+    const lease = await broker.acquireLease({
+      credentialRef: written.ref.id,
+      consumer: { kind: 'agent', id: 'agent-a', workspaceId: 'workspace_a' },
+      purpose: 'github.user',
+      action: 'github.api',
+      resources: ['github:user'],
+      audience: 'local-broker',
+      ttl: 5_000,
+    })
+    const reconnected = await reconnectConnectionAndRevalidate({
+      kernel,
+      broker,
+      provider,
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      reason: 'owner-reconnect',
+    })
+    expect(reconnected.consumers[0]?.consumerId).toBe('agent-a')
+    expect(JSON.stringify(reconnected)).not.toContain('super-secret')
+    await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
+    const audit = await kernel.listConnectionAudit('workspace_a', connection.id)
+    expect(audit.some((row) => row.eventType === 'connection-reconnected' && row.action === 'connection.reconnect')).toBe(true)
     await kernel.close()
   })
 })

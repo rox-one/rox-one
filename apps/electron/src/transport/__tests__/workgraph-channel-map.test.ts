@@ -40,6 +40,14 @@ describe('CF-6.3 workgraph channel map', () => {
       type: 'invoke',
       channel: RPC_CHANNELS.workgraph.MOVE_CONNECTION,
     })
+    expect(CHANNEL_MAP['workgraph.startGithubDeviceLogin']).toEqual({
+      type: 'invoke',
+      channel: RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
+    })
+    expect(CHANNEL_MAP['workgraph.pollGithubDeviceLogin']).toEqual({
+      type: 'invoke',
+      channel: RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+    })
     expect(CHANNEL_MAP['workgraph.previewGithubEnv']).toEqual({
       type: 'invoke',
       channel: RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV,
@@ -63,6 +71,10 @@ describe('CF-6.3 workgraph channel map', () => {
     expect(CHANNEL_MAP['workgraph.repairConnection']).toEqual({
       type: 'invoke',
       channel: RPC_CHANNELS.workgraph.REPAIR_CONNECTION,
+    })
+    expect(CHANNEL_MAP['workgraph.reconnectConnection']).toEqual({
+      type: 'invoke',
+      channel: RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
     })
     expect(CHANNEL_MAP['workgraph.rotateConnection']).toEqual({
       type: 'invoke',
