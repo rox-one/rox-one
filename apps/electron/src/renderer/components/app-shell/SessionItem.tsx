@@ -218,6 +218,11 @@ export function SessionItem({
           onDelete={() => ctx.onDelete(item.id)}
         />
       )}
+      leading={
+        <div className={cn("flex items-center", !isComfortable ? "pt-1.5" : "pt-3")}>
+          <SessionStatusIcon item={item} />
+        </div>
+      }
       icon={
         <>
           <button
@@ -250,7 +255,6 @@ export function SessionItem({
               strokeWidth={2.25}
             />
           </button>
-          <SessionStatusIcon item={item} />
           <div className={cn(
             "flex items-center justify-center overflow-hidden gap-1",
             "transition-all duration-200 ease-out",

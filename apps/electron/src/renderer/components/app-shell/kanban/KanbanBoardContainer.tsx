@@ -163,6 +163,30 @@ function mergeBoardColumns(config: KanbanBoardConfig | null): KanbanColumnMeta[]
  * sessions become tiles; children become subtask rows. Board column layout,
  * rename/color/prompts, and group-by live in `{workspace}/kanban/config.json`.
  */
+
+class TaskEditorBoundary extends React.Component<
+  { onClose: () => void; children: React.ReactNode },
+  { err: Error | null }
+> {
+  state = { err: null as Error | null }
+  static getDerivedStateFromError(err: Error) {
+    return { err }
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
+          <p className="text-foreground/80">Task editor failed to open.</p>
+          <button type="button" className="rounded-md border px-3 py-1" onClick={this.props.onClose}>
+            Back to board
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export function KanbanBoardContainer() {
   const { activeWorkspaceId, workspaces, llmConnections, sessionStatuses, onCreateSession, onSendMessage, onJumpToTaskSessions } =
     useAppShellContext()
@@ -912,6 +936,7 @@ export function KanbanBoardContainer() {
 
   if (editorTarget && activeWorkspaceId) {
     return (
+      <TaskEditorBoundary onClose={closeTaskEditor}>
       <TaskEditor
         workspaceId={activeWorkspaceId}
         target={editorTarget}
@@ -940,6 +965,7 @@ export function KanbanBoardContainer() {
         modelToConnection={modelToConnection}
         defaultModel={defaultSubtaskModel ?? DEFAULT_MODEL}
       />
+      </TaskEditorBoundary>
     )
   }
 

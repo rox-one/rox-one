@@ -8,8 +8,7 @@ import { getStateIcon, getStateIconStyle } from "@/config/session-status-config"
 import { useSessionListContext } from "@/context/SessionListContext"
 import { kanbanEditorTargetAtom } from "@/atoms/kanban"
 import type { SessionMeta } from "@/atoms/sessions"
-import { useNavigation } from "@/contexts/NavigationContext"
-import { routes } from "@/lib/navigate"
+import { navigate, routes } from "@/lib/navigate"
 import { getSessionTitle, getSessionStatus } from "@/utils/session"
 import { rememberCollectionView } from "./collection/collection-view-cycle"
 import { sessionRowClickTarget } from "./session-row-click"
@@ -26,7 +25,6 @@ function stopRowSelect(e: SyntheticEvent) {
 export function SessionStatusIcon({ item }: SessionStatusIconProps) {
   const { t } = useTranslation()
   const ctx = useSessionListContext()
-  const { navigate } = useNavigation()
   const [open, setOpen] = useState(false)
   const status = getSessionStatus(item)
   const setKanbanEditorTarget = useSetAtom(kanbanEditorTargetAtom)
@@ -36,8 +34,7 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
     ctx.onSessionStatusChange(item.id, state)
   }
 
-  const openBoardCard = (e: MouseEvent | KeyboardEvent) => {
-    stopRowSelect(e)
+  const openBoardCard = () => {
     if (sessionRowClickTarget("status") !== "board") return
     rememberCollectionView("list")
     setKanbanEditorTarget({
@@ -46,7 +43,7 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
       taskSlug: item.taskSlug,
       initialTitle: getSessionTitle(item),
     })
-    void navigate(routes.view.board(item.id))
+    navigate(routes.view.board(item.id))
   }
 
   const label = t("collection.row.openBoardCard")
@@ -67,19 +64,22 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
           aria-expanded={open}
           aria-label={label}
           title={label}
-          onPointerDownCapture={(e) => {
-            e.stopPropagation()
+          onPointerDown={(e) => {
+            if (e.button !== 0) return
+            stopRowSelect(e)
+            openBoardCard()
           }}
-          onMouseDownCapture={(e) => {
-            e.stopPropagation()
+          onMouseDown={(e) => {
+            if (e.button !== 0) return
+            stopRowSelect(e)
           }}
           onClick={(e: MouseEvent<HTMLSpanElement>) => {
-            if (e.button !== 0 && e.button !== undefined) return
-            openBoardCard(e)
+            stopRowSelect(e)
           }}
           onKeyDown={(e: KeyboardEvent<HTMLSpanElement>) => {
             if (e.key === "Enter" || e.key === " ") {
-              openBoardCard(e)
+              stopRowSelect(e)
+              openBoardCard()
             }
           }}
           onContextMenu={(e: MouseEvent<HTMLSpanElement>) => {
