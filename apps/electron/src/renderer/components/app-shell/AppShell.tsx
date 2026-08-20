@@ -596,33 +596,39 @@ function AppShellContent({
 
   const compactViewFilters = sessionFilterKey ? viewFiltersMap[sessionFilterKey] : undefined
 
+  // Include chips come only from CollectionFilters. Exclude is compact-mobile
+  // tri-state and is not applied on the desktop navigator.
   const listFilter = useMemo(() => {
     const next = new Map<SessionStatusId, FilterMode>()
-    const leftover = compactViewFilters?.statuses
-    if (leftover) {
-      for (const [id, mode] of Object.entries(leftover)) {
-        if (mode === 'exclude') next.set(id as SessionStatusId, 'exclude')
+    if (isAutoCompact) {
+      const leftover = compactViewFilters?.statuses
+      if (leftover) {
+        for (const [id, mode] of Object.entries(leftover)) {
+          if (mode === 'exclude') next.set(id as SessionStatusId, 'exclude')
+        }
       }
     }
     for (const id of collectionFilters.status ?? []) {
       next.set(id as SessionStatusId, 'include')
     }
     return next
-  }, [collectionFilters.status, compactViewFilters?.statuses])
+  }, [collectionFilters.status, compactViewFilters?.statuses, isAutoCompact])
 
   const labelFilter = useMemo(() => {
     const next = new Map<string, FilterMode>()
-    const leftover = compactViewFilters?.labels
-    if (leftover) {
-      for (const [id, mode] of Object.entries(leftover)) {
-        if (mode === 'exclude') next.set(id, 'exclude')
+    if (isAutoCompact) {
+      const leftover = compactViewFilters?.labels
+      if (leftover) {
+        for (const [id, mode] of Object.entries(leftover)) {
+          if (mode === 'exclude') next.set(id, 'exclude')
+        }
       }
     }
     for (const id of collectionFilters.labels ?? []) {
       next.set(id, 'include')
     }
     return next
-  }, [collectionFilters.labels, compactViewFilters?.labels])
+  }, [collectionFilters.labels, compactViewFilters?.labels, isAutoCompact])
 
   const setListFilter = useCallback((
     updater:

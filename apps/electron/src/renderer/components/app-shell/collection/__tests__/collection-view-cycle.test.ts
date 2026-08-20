@@ -65,4 +65,9 @@ describe('collection-view-cycle', () => {
   it('wraps table next to list', () => {
     expect(resolveCycleTarget('table', 'next')).toBe('list')
   })
+
+  it('persists origin across remember and read', () => {
+    rememberCollectionView('list')
+    expect(resolveCycleTarget('table', 'prev')).toBe('list')
+  })
 })

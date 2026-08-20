@@ -129,8 +129,9 @@ export function CollectionFilterChips({
           {statuses.map((state) => {
             const selected = (filters.status ?? []).includes(state.id)
             return (
-              <FilterChip
+              <FilterOption
                 key={state.id}
+                stacked={stacked}
                 selected={selected}
                 label={resolveStatusDisplayLabel(state, t)}
                 onClick={() => toggleStatus(state.id)}
@@ -157,8 +158,9 @@ export function CollectionFilterChips({
       {projects.length > 0 && (
         <ChipGroup label={t('collection.filter.project', { defaultValue: 'Project' })} stacked={stacked}>
           {projects.map((project) => (
-            <FilterChip
+            <FilterOption
               key={project.id}
+              stacked={stacked}
               selected={(filters.projectId ?? []).includes(project.id)}
               label={project.name}
               onClick={() => toggleProject(project.id)}
@@ -170,8 +172,9 @@ export function CollectionFilterChips({
       {labels.length > 0 && (
         <ChipGroup label={t('collection.filter.label', { defaultValue: 'Label' })} stacked={stacked}>
           {labels.map((label) => (
-            <FilterChip
+            <FilterOption
               key={label.id}
+              stacked={stacked}
               selected={(filters.labels ?? []).includes(label.id)}
               label={label.name}
               onClick={() => toggleLabel(label.id)}
@@ -182,8 +185,9 @@ export function CollectionFilterChips({
 
       <ChipGroup label={t('collection.filter.due')} stacked={stacked}>
         {(['overdue', 'today', 'none'] as SimpleDue[]).map((type) => (
-          <FilterChip
+          <FilterOption
             key={type}
+            stacked={stacked}
             selected={activeDue === type}
             label={t(`collection.filter.due.${type}`)}
             onClick={() => toggleDue(type)}
@@ -225,7 +229,7 @@ function ChipGroup({
         {label}
       </span>
       {stacked ? (
-        <div className="flex min-w-0 flex-wrap items-center gap-1">{children}</div>
+        <div className="flex min-w-0 flex-col gap-0.5">{children}</div>
       ) : (
         children
       )}
@@ -233,15 +237,30 @@ function ChipGroup({
   )
 }
 
-function FilterChip({
+function FilterOption({
+  stacked,
   selected,
   label,
   onClick,
 }: {
+  stacked: boolean
   selected: boolean
   label: string
   onClick: () => void
 }) {
+  if (stacked) {
+    return (
+      <label className="flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-[12px] hover:bg-foreground/[0.04]">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={onClick}
+          className="h-3.5 w-3.5 shrink-0 accent-foreground"
+        />
+        <span className="min-w-0 truncate">{label}</span>
+      </label>
+    )
+  }
   return (
     <button
       type="button"
