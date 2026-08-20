@@ -90,3 +90,21 @@ export {
   MINDMAP_NOTES_FOLDER,
   type MaterializeMarkdownOptions,
 } from './materialize.ts';
+
+export {
+  projectSessionScenes,
+  planFanOutJobs,
+  initialFanOutStatuses,
+  FANOUT_MAX,
+  FANOUT_PARALLEL,
+  type SessionScene,
+  type SessionSceneGraph,
+  type SceneEdge,
+  type SceneToolPacket,
+} from './session-scene-graph.ts';
+
+export {
+  buildDigestItems,
+  type DigestItem,
+  type DigestShelf,
+} from './session-digest.ts';
