@@ -308,6 +308,7 @@ export const CHANNEL_MAP = {
   'workgraph.moveConnection': invoke(RPC_CHANNELS.workgraph.MOVE_CONNECTION),
   'workgraph.startGithubDeviceLogin': invoke(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN),
   'workgraph.pollGithubDeviceLogin': invoke(RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN),
+  'workgraph.cancelGithubDeviceLogin': invoke(RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN),
   'workgraph.previewGithubEnv': invoke(RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV),
   'workgraph.importGithubEnv': invoke(RPC_CHANNELS.workgraph.IMPORT_GITHUB_ENV),
   'workgraph.previewGitHelper': invoke(RPC_CHANNELS.workgraph.PREVIEW_GIT_HELPER),

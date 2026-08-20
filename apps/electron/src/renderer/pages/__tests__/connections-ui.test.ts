@@ -18,6 +18,7 @@ import {
   sanitizeDeviceLoginStart,
   sanitizeDevicePoll,
   devicePollDelayMs,
+  importedConnectionFromList,
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
@@ -221,5 +222,15 @@ describe('CF-6 Connections UI helpers', () => {
     expect(devicePollDelayMs({ status: 'denied' })).toBeNull()
     expect(devicePollDelayMs({ status: 'expired' })).toBeNull()
     expect(JSON.stringify({ interval: 5 })).not.toMatch(/accessToken|deviceCode/)
+  })
+
+  it('selects the imported GitHub connection from a metadata-only list', () => {
+    const rows = [
+      { id: 'c1', name: 'older' },
+      { id: 'c2', name: 'github' },
+    ]
+    expect(importedConnectionFromList(rows, 'c2')).toEqual({ id: 'c2', name: 'github' })
+    expect(importedConnectionFromList(rows, 'missing')).toBeUndefined()
+    expect(JSON.stringify(importedConnectionFromList(rows, 'c2'))).not.toMatch(/accessToken|deviceCode|payload|secret/)
   })
 })

@@ -58,6 +58,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workgraph.MOVE_CONNECTION,
   RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN,
   RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN,
+  RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN,
   RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV,
   RPC_CHANNELS.workgraph.IMPORT_GITHUB_ENV,
   RPC_CHANNELS.workgraph.PREVIEW_GIT_HELPER,
@@ -200,6 +201,24 @@ function assertGithubDevicePollMetadata(input: unknown): { flowId: string; works
     throw new Error('Invalid device poll metadata')
   }
   return { flowId: rec.flowId, workspaceId: rec.workspaceId }
+}
+
+const GITHUB_DEVICE_CANCEL_KEYS = new Set(['flowId'])
+
+function assertGithubDeviceCancelMetadata(input: unknown): { flowId: string } {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid device cancel metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!GITHUB_DEVICE_CANCEL_KEYS.has(key)) {
+      throw new Error(`Invalid connection metadata field: ${key}`)
+    }
+  }
+  const rec = input as { flowId?: unknown }
+  if (typeof rec.flowId !== 'string' || !rec.flowId) {
+    throw new Error('Invalid device cancel metadata')
+  }
+  return { flowId: rec.flowId }
 }
 
 const defaultGithubOAuthHttp: GithubOAuthHttpClient = async (request) => {
@@ -383,6 +402,15 @@ export function registerWorkGraphHandlers(
       const pollInput = assertGithubDevicePollMetadata(input)
       if (!githubDeviceFlow) throw new Error('github_device_unavailable')
       return githubDeviceFlow.poll(pollInput)
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN,
+    async (_ctx, input: unknown) => {
+      const rec = assertGithubDeviceCancelMetadata(input)
+      if (!githubDeviceFlow) throw new Error('github_device_unavailable')
+      return githubDeviceFlow.cancel(rec.flowId)
     },
     { access: 'localElectron' },
   )

@@ -228,3 +228,10 @@ export function devicePollDelayMs(input: {
   if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return 5_000
   return Math.min(60_000, Math.max(1_000, Math.round(seconds * 1000)))
 }
+
+export function importedConnectionFromList<T extends { readonly id: string }>(
+  rows: readonly T[],
+  connectionId: string,
+): T | undefined {
+  return rows.find((row) => row.id === connectionId)
+}

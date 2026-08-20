@@ -796,6 +796,7 @@ export interface ElectronAPI {
       | { status: 'expired' }
       | { status: 'imported'; connectionId: string }
     >
+    cancelGithubDeviceLogin(input: { flowId: string }): Promise<{ cancelled: true }>
     previewGithubEnv(envPath: string): Promise<Array<{ candidateId: string; label: string; maskedSummary: string }>>
     importGithubEnv(input: {
       envPath: string

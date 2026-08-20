@@ -567,6 +567,7 @@ const EXPECTED_CHANNELS: string[] = [
   'window:openWorkspace',
   'window:setTrafficLights',
   'window:switchWorkspace',
+  'workgraph:cancelGithubDeviceLogin',
   'workgraph:convertConnection',
   'workgraph:createConnection',
   'workgraph:getConnection',

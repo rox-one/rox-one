@@ -117,6 +117,7 @@ export const RPC_CHANNELS = {
     MOVE_CONNECTION: 'workgraph:moveConnection',
     START_GITHUB_DEVICE_LOGIN: 'workgraph:startGithubDeviceLogin',
     POLL_GITHUB_DEVICE_LOGIN: 'workgraph:pollGithubDeviceLogin',
+    CANCEL_GITHUB_DEVICE_LOGIN: 'workgraph:cancelGithubDeviceLogin',
     PREVIEW_GITHUB_ENV: 'workgraph:previewGithubEnv',
     IMPORT_GITHUB_ENV: 'workgraph:importGithubEnv',
     PREVIEW_GIT_HELPER: 'workgraph:previewGitHelper',

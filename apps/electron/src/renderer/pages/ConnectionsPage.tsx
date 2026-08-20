@@ -31,6 +31,7 @@ import {
   sanitizeDeviceLoginStart,
   sanitizeDevicePoll,
   devicePollDelayMs,
+  importedConnectionFromList,
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
@@ -191,12 +192,37 @@ export default function ConnectionsPage() {
 
   const refreshRows = async (workspaceId: string) => {
     const listConnections = window.electronAPI?.workgraph?.listConnections
-    if (typeof listConnections !== 'function') return
+    if (typeof listConnections !== 'function') return []
     try {
       setListError(null)
-      setRows(sanitizeConnectionRows(await listConnections(workspaceId)))
+      const listed = sanitizeConnectionRows(await listConnections(workspaceId))
+      setRows(listed)
+      return listed
     } catch (err) {
       setListError(errorMessage(err))
+      return []
+    }
+  }
+
+  const applyDevicePoll = async (workspaceId: string, next: DevicePollView) => {
+    setDevicePoll(next)
+    if (next.status !== 'imported') return
+    setDeviceLogin(null)
+    const listed = await refreshRows(workspaceId)
+    const created = importedConnectionFromList(listed, next.connectionId)
+    if (created) setSelected(created)
+  }
+
+  const cancelDeviceLogin = async () => {
+    const flowId = deviceLogin?.flowId
+    const cancelGithubDeviceLogin = window.electronAPI?.workgraph?.cancelGithubDeviceLogin
+    setDeviceLogin(null)
+    setDevicePoll(null)
+    if (!flowId || typeof cancelGithubDeviceLogin !== 'function') return
+    try {
+      await cancelGithubDeviceLogin({ flowId })
+    } catch (err) {
+      setImportError(errorMessage(err))
     }
   }
 
@@ -244,11 +270,7 @@ export default function ConnectionsPage() {
             flowId: deviceLogin.flowId,
             workspaceId,
           }))
-          setDevicePoll(next)
-          if (next.status === 'imported') {
-            setDeviceLogin(null)
-            await refreshRows(workspaceId)
-          }
+          await applyDevicePoll(workspaceId, next)
         } catch (err) {
           setImportError(errorMessage(err))
         }
@@ -793,8 +815,16 @@ export default function ConnectionsPage() {
                   <div className="font-mono text-xs" data-testid="connections-github-user-code">{deviceLogin.userCode}</div>
                   <div className="font-mono text-xs">{deviceLogin.verificationUri}</div>
                   {devicePoll ? (
-                    <div className="text-xs text-muted-foreground">{devicePoll.status}</div>
+                    <div className="text-xs text-muted-foreground">{t(`connections.import.githubOAuthStatus.${devicePoll.status}`)}</div>
                   ) : null}
+                  <button
+                    type="button"
+                    data-testid="connections-github-device-cancel"
+                    className="rounded border px-3 py-1"
+                    onClick={() => void cancelDeviceLogin()}
+                  >
+                    {t('connections.import.githubOAuthCancel')}
+                  </button>
                   <button
                     type="button"
                     className="rounded border px-3 py-1"
@@ -808,11 +838,7 @@ export default function ConnectionsPage() {
                           flowId: deviceLogin.flowId,
                           workspaceId,
                         }))
-                        setDevicePoll(next)
-                        if (next.status === 'imported') {
-                          setDeviceLogin(null)
-                          await refreshRows(workspaceId)
-                        }
+                        await applyDevicePoll(workspaceId, next)
                       } catch (err) {
                         setImportError(errorMessage(err))
                       }

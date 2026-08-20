@@ -161,5 +161,13 @@ export function createGithubDeviceFlow(deps: {
         ...(result.interval !== undefined ? { interval: result.interval } : {}),
       }
     },
+    async cancel(flowId: string): Promise<{ cancelled: true }> {
+      flows.delete(flowId)
+      const out = { cancelled: true as const }
+      if ('deviceCode' in out || 'accessToken' in out) {
+        throw new Error('Import candidate leaked a secret')
+      }
+      return out
+    },
   }
 }

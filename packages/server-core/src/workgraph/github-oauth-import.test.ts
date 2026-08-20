@@ -214,4 +214,45 @@ describe('CF GitHub OAuth import (workgraph)', () => {
     expect(polled).not.toHaveProperty('accessToken')
     expect(polled).not.toHaveProperty('deviceCode')
   })
+
+  it('cancels a device flow so later polls fail closed', async () => {
+    const provider = new LocalFileSecretProvider(new MemoryBackend(), new CredentialRefRegistry())
+    const flow = createGithubDeviceFlow({
+      http: async () => ({
+        status: 200,
+        body: JSON.stringify({
+          device_code: 'hidden-device-code',
+          user_code: 'ABCD-1234',
+          verification_uri: 'https://github.com/login/device',
+          interval: 5,
+        }),
+      }),
+      clientId: 'client',
+      provider,
+      kernel: { createConnection: async () => { throw new Error('unused') }, bindConsumer: async () => { throw new Error('unused') } },
+      newId: () => 'flow_1',
+    })
+    await flow.start()
+    const cancelled = await flow.cancel('flow_1')
+    expect(cancelled).toEqual({ cancelled: true })
+    expect(JSON.stringify(cancelled)).not.toContain('hidden-device-code')
+    expect(cancelled).not.toHaveProperty('deviceCode')
+    expect(cancelled).not.toHaveProperty('accessToken')
+    await expect(flow.poll({ flowId: 'flow_1', workspaceId: 'workspace_a' })).rejects.toThrow(/unknown_flow/)
+  })
+
+  it('cancels an unknown device flow without leaking a bearer', async () => {
+    const provider = new LocalFileSecretProvider(new MemoryBackend(), new CredentialRefRegistry())
+    const flow = createGithubDeviceFlow({
+      http: async () => ({ status: 500, body: '' }),
+      clientId: 'client',
+      provider,
+      kernel: { createConnection: async () => { throw new Error('unused') }, bindConsumer: async () => { throw new Error('unused') } },
+    })
+    const cancelled = await flow.cancel('missing')
+    expect(cancelled).toEqual({ cancelled: true })
+    expect(cancelled).not.toHaveProperty('deviceCode')
+    expect(cancelled).not.toHaveProperty('accessToken')
+    await expect(flow.poll({ flowId: 'missing', workspaceId: 'workspace_a' })).rejects.toThrow(/unknown_flow/)
+  })
 })

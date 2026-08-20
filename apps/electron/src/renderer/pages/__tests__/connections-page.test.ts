@@ -288,6 +288,26 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('cancels GitHub device login in place and selects the imported connection without opening a window', () => {
+    expect(page).toContain('cancelGithubDeviceLogin')
+    expect(page).toContain('cancelDeviceLogin')
+    expect(page).toContain('importedConnectionFromList')
+    expect(page).toContain('applyDevicePoll')
+    expect(page).toContain('connections-github-device-cancel')
+    expect(page).toContain('connections.import.githubOAuthCancel')
+    expect(page).toContain('connections.import.githubOAuthStatus.')
+    expect(page).toContain('setSelected(created)')
+    expect(page).not.toContain('window.open')
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
+    expect(page).not.toContain('accessToken')
+    expect(page).not.toContain('deviceCode')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows inspect health on service rows without secret fields', () => {
     expect(page).toContain('inspectConnection')
     expect(page).toContain('inspectSummaryFromRaw')
