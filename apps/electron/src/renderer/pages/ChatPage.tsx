@@ -41,8 +41,8 @@ import {
 } from '@/components/app-shell/EntityViewTabs'
 import KnowledgeSurfacePage from '@/pages/KnowledgeSurfacePage'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
-import { SessionFlowCanvas } from '@/components/session-workbench/SessionFlowCanvas'
 import { SessionGitOutline } from '@/components/session-workbench/SessionGitOutline'
+import { SessionWorkflowEditor } from '@/components/session-workbench/SessionWorkflowEditor'
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
 import { deriveSessionMindMap, type MindMapGraph, type SceneMessage } from '@craft-agent/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
@@ -683,11 +683,13 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (sessionView === 'map') {
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-            <SessionFlowCanvas
+            <SessionWorkflowEditor
               sessionId={sessionId}
               messages={workbenchMessages}
-              onSelectMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
               onFork={handleWorkbenchFork}
+              onRewrite={handleWorkbenchRewrite}
+              onCreateChildSessions={handleCreateChildSessions}
+              onOpenMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
             />
           </div>
         )

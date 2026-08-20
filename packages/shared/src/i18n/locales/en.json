@@ -724,6 +724,8 @@
   "entityView.flowLive": "Live",
   "entityView.graph": "Graph",
   "entityView.map": "Map",
+  "entityView.mapFit": "Fit",
+  "entityView.mapResetLayout": "Reset layout",
   "entityView.mindmapSiyuan": "SiYuan map",
   "entityView.outline": "Outline",
   "entityView.outlineBranches": "Branches",
