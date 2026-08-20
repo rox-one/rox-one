@@ -12,6 +12,7 @@ import { KnowledgeConnectionsStore, normalizeKnowledgeBaseUrl, parseConnectionFi
 
 let configDir: string
 const tmpDirs: string[] = []
+const PREVIOUS_G2 = process.env.G2_RECORD_PATH
 
 beforeEach(() => {
   configDir = mkdtempSync(join(tmpdir(), 'knowledge-config-'))
@@ -19,6 +20,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  if (PREVIOUS_G2 === undefined) delete process.env.G2_RECORD_PATH
+  else process.env.G2_RECORD_PATH = PREVIOUS_G2
   while (tmpDirs.length) rmSync(tmpDirs.pop()!, { recursive: true, force: true })
 })
 
@@ -258,6 +261,24 @@ describe('remote connection TLS', () => {
       expect((error as CodedError).code).toBe('CAPABILITY_DISABLED')
     }
     expect(store.list()).toEqual([])
+  })
+
+  it('saves managed when G2_RECORD_PATH is ACCEPTED variant C', () => {
+    const recordPath = join(configDir, 'g2-decision-record.md')
+    writeFileSync(
+      recordPath,
+      '# G2\n\n> **Status: ACCEPTED**\n\nChosen variant C — OEM.\n',
+    )
+    process.env.G2_RECORD_PATH = recordPath
+    const store = new KnowledgeConnectionsStore(configDir)
+    const saved = store.save({
+      baseUrl: 'http://127.0.0.1:19201',
+      credentialRef: 'source_bearer::default::siyuan-local',
+      mode: 'managed',
+    })
+    expect(saved.mode).toBe('managed')
+    expect(saved.baseUrl).toBe('http://127.0.0.1:19201')
+    expect(store.get(saved.id)?.mode).toBe('managed')
   })
 })
 

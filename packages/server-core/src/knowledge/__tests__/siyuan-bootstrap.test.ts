@@ -2,7 +2,7 @@
  * Local SiYuan bootstrap — pure-ish units with injected FS/fetch/spawn.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync } from 'fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import {
@@ -17,6 +17,9 @@ import { KnowledgeConnectionsStore } from '../connections-store'
 
 let configDir: string
 const PREVIOUS_CONFIG_DIR = process.env.CRAFT_CONFIG_DIR
+const PREVIOUS_G2 = process.env.G2_RECORD_PATH
+const PREVIOUS_PIN = process.env.OEM_PIN_PATH
+const PREVIOUS_BIN = process.env.OEM_KERNEL_BINARY
 
 beforeEach(() => {
   __resetSiyuanBootstrapForTests()
@@ -30,6 +33,12 @@ afterEach(() => {
   // at it would break every later test file that resolves a config path.
   if (PREVIOUS_CONFIG_DIR === undefined) delete process.env.CRAFT_CONFIG_DIR
   else process.env.CRAFT_CONFIG_DIR = PREVIOUS_CONFIG_DIR
+  if (PREVIOUS_G2 === undefined) delete process.env.G2_RECORD_PATH
+  else process.env.G2_RECORD_PATH = PREVIOUS_G2
+  if (PREVIOUS_PIN === undefined) delete process.env.OEM_PIN_PATH
+  else process.env.OEM_PIN_PATH = PREVIOUS_PIN
+  if (PREVIOUS_BIN === undefined) delete process.env.OEM_KERNEL_BINARY
+  else process.env.OEM_KERNEL_BINARY = PREVIOUS_BIN
   try {
     rmSync(configDir, { recursive: true, force: true })
   } catch {
@@ -153,6 +162,55 @@ describe('ensureLocalKernel', () => {
     expect(result.started).toBe(true)
     expect(result.method).toBe('open-app')
     expect(opened).toBe('SiYuan')
+  })
+
+  it('persists managed connection after SiyuanProcessManager.start when G2=C', async () => {
+    const fetchImpl = (async () => {
+      throw new Error('down')
+    }) as unknown as typeof fetch
+    const g2Path = join(configDir, 'g2-decision-record.md')
+    writeFileSync(g2Path, '# G2\n\n> **Status: ACCEPTED**\n\nvariant C\n')
+    const pinPath = join(configDir, 'oem-pin.json')
+    writeFileSync(
+      pinPath,
+      JSON.stringify({
+        version: '3.1.28-rox.1',
+        sha256: {
+          'darwin-arm64': 'a'.repeat(64),
+          'darwin-x64': 'b'.repeat(64),
+          'linux-x64': 'c'.repeat(64),
+          'win32-x64': 'd'.repeat(64),
+        },
+        relativePayloadDir: 'resources/oem-kernel',
+        minApi: '3.0.0',
+        maxApiExclusive: '4.0.0',
+      }),
+    )
+    process.env.G2_RECORD_PATH = g2Path
+    process.env.OEM_PIN_PATH = pinPath
+    process.env.OEM_KERNEL_BINARY = '/fake/kernel'
+    const result = await ensureLocalKernel({
+      configDir,
+      fetchImpl,
+      existsSync: () => false,
+      pathEnv: '',
+      homeDir: '',
+      platform: 'linux',
+      spawnFn: ((cmd: string, args: string[]) => {
+        expect(cmd).toBe('/fake/kernel')
+        expect(args.some((a) => a.startsWith('--accessAuthCode='))).toBe(true)
+        return { unref() {}, pid: 99, on() {}, kill() {} }
+      }) as unknown as typeof import('node:child_process').spawn,
+    })
+    expect(result.ok).toBe(true)
+    expect(result.started).toBe(true)
+    expect(result.method).toBe('kernel-serve')
+    expect(result.baseUrl).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/)
+    const store = new KnowledgeConnectionsStore(configDir)
+    const rec = store.get(result.connectionId)
+    expect(rec?.mode).toBe('managed')
+    expect(rec?.baseUrl).toBe(result.baseUrl)
+    expect(rec?.credentialRef).toBe(`source_bearer::default::${result.connectionId}`)
   })
 
 })

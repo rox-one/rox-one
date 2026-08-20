@@ -24,6 +24,7 @@ import { randomUUID } from 'node:crypto'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import type { CredentialId } from '@craft-agent/shared/credentials'
 import { CodedError, type KnowledgeConnectionMode } from '@craft-agent/shared/protocol'
+import { loadG2AcceptedVariantFromDisk } from './g2-status'
 
 export type { KnowledgeConnectionMode }
 
@@ -183,7 +184,7 @@ export class KnowledgeConnectionsStore {
    * generated uuid. Returns the stored record.
    */
   save(input: SaveConnectionInput): KnowledgeConnectionRecord {
-    if (input.mode === 'managed') {
+    if (input.mode === 'managed' && loadG2AcceptedVariantFromDisk() !== 'C') {
       throw new CodedError(
         'CAPABILITY_DISABLED',
         'knowledge: managed connection mode is disabled until G1 metrics thresholds are met and G2 licensing decision is ACCEPTED (spec K-08 / g2-decision-record). Production mode remains external-local only; Craft does not ship or spawn a SiYuan kernel.',

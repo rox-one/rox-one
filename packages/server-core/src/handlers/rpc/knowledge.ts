@@ -122,6 +122,7 @@ import {
   SIYUAN_INSTALL_URL,
   SIYUAN_LOCAL_CONNECTION_ID,
 } from '../../knowledge'
+import { loadG2AcceptedVariantFromDisk } from '../../knowledge/g2-status'
 import {
   KnowledgeBridgeService,
   type KnowledgeProposalFileRecord,
@@ -978,12 +979,18 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       ? new KnowledgeConnectionsStore().get(connectionId)
       : new KnowledgeConnectionsStore().list()[0] ?? null
 
+    const g2Blocked =
+      !bootstrap.running && loadG2AcceptedVariantFromDisk() !== 'C'
+        ? { reason: 'G2_BLOCKED' as const }
+        : {}
+
     if (!record) {
       return {
         mode: 'external-local',
         running: bootstrap.running,
         ...(bootstrap.version ? { version: bootstrap.version } : {}),
         ...extras,
+        ...g2Blocked,
       }
     }
 
@@ -1003,6 +1010,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         running: bootstrap.running,
         ...(bootstrap.version ? { version: bootstrap.version } : {}),
         ...extras,
+        ...g2Blocked,
       }
     }
   })

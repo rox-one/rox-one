@@ -743,6 +743,8 @@ export interface KnowledgeEngineStatus {
   installUrl?: string
   /** True while a start attempt is in flight. */
   starting?: boolean
+  /** Why the engine is not running, e.g. G2_BLOCKED. */
+  reason?: string
 }
 
 /** Result of knowledge:engineStart (local bootstrap). */

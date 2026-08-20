@@ -17,10 +17,11 @@ import {
   SIYUAN_INSTALL_URL,
   SIYUAN_LOCAL_BASE_URL,
 } from '@craft-agent/shared/knowledge/siyuan-binary'
-import { KnowledgeConnectionsStore } from './connections-store'
+import { KnowledgeConnectionsStore, credentialIdFromRef } from './connections-store'
 import { loadG2AcceptedVariantFromDisk } from './g2-status'
 import { SiyuanProcessManager } from './process-manager'
 import { parseOemKernelPin } from '@craft-agent/shared/knowledge/oem-pin'
+import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { readFileSync } from 'node:fs'
 
 /** Stable id for the auto-seeded local connection. */
@@ -351,6 +352,25 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
             allocatePort: () => 19200 + Math.floor(Math.random() * 1000),
           })
           lastStartAt = now()
+          const existing = store.get(connectionId)
+          const credentialRef =
+            existing?.credentialRef ?? `source_bearer::default::${connectionId}`
+          store.save({
+            id: connectionId,
+            baseUrl: inst.baseUrl,
+            credentialRef,
+            mode: 'managed',
+          })
+          const credId = credentialIdFromRef(credentialRef)
+          if (credId) {
+            try {
+              await getCredentialManager().set(credId, { value: inst.accessAuthCode })
+            } catch (credErr) {
+              deps.log?.debug?.(
+                `managed kernel credential persist skipped: ${credErr instanceof Error ? credErr.message : String(credErr)}`,
+              )
+            }
+          }
           return {
             ok: true,
             started: true,
