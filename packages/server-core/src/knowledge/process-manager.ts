@@ -35,10 +35,10 @@ export interface ManagedStartInput {
     args: string[],
     opts: { cwd?: string; env?: NodeJS.ProcessEnv },
   ) => {
-    pid: number
-    unref(): void
+    pid: number | undefined
+    unref(): unknown
     on(ev: 'exit', cb: (code: number | null) => void): void
-    kill(sig?: string): void
+    kill(sig?: string): unknown
   }
   allocatePort: () => number
   now?: () => number
@@ -53,10 +53,10 @@ export interface ManagedInstance {
 }
 
 interface ChildHandle {
-  pid: number
-  unref(): void
+  pid: number | undefined
+  unref(): unknown
   on(ev: 'exit', cb: (code: number | null) => void): void
-  kill(sig?: string): void
+  kill(sig?: string): unknown
 }
 
 const MAX_CRASHES = 5
@@ -154,6 +154,9 @@ export class SiyuanProcessManager {
       env.ROX_CATALOG_URL = process.env.ROX_CATALOG_URL
     }
     const child = input.spawnFn(binary, args, { cwd: binaryDir, env })
+    if (typeof child.pid !== 'number') {
+      throw new ManagedKernelCodedError('KERNEL_CRASHED', 'knowledge: spawn did not yield a pid')
+    }
     this.child = child
     this.instance = {
       pid: child.pid,

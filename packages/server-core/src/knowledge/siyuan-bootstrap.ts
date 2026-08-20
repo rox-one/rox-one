@@ -352,7 +352,16 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
                 env: opts?.env,
               })
               child.unref()
-              return child
+              return {
+                pid: child.pid,
+                unref: () => child.unref(),
+                on: (ev: 'exit', cb: (code: number | null) => void) => {
+                  child.on(ev, cb)
+                },
+                kill: () => {
+                  child.kill()
+                },
+              }
             },
             allocatePort: () => 19200 + Math.floor(Math.random() * 1000),
           })

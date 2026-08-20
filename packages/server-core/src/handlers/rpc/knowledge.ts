@@ -803,10 +803,10 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
           if (typeof args.notebookId !== 'string' || args.notebookId.length === 0) {
             throw new CodedError('INVALID_REF', 'knowledge.userCreate: notebookId is required for document')
           }
-          const title = typeof args.title === 'string' && args.title.length > 0 ? args.title : args.name
-          if (typeof title !== 'string' || title.length === 0) {
+          if (typeof args.title !== 'string' || args.title.length === 0) {
             throw new CodedError('INVALID_REF', 'knowledge.userCreate: title is required for document')
           }
+          const title = args.title
           const parent = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
           const path = joinSiyuanPath(parent, title)
           const id = await client.createDocWithMd({

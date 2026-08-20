@@ -202,6 +202,23 @@ export type {
   SearchPage,
 };
 
+/** Navigator tree node — ListDocTreeResult.nodes (SiYuan kernel listDocsByPath). */
+export interface KnowledgeDocTreeNode {
+  id: string
+  name: string
+  path: string
+  title?: string
+  notebookId?: string
+  kind: 'document' | 'folder' | 'database'
+  children?: KnowledgeDocTreeNode[]
+}
+
+/** RPC knowledge:listTree result (packages/core siyuan client ListDocTreeResult). */
+export interface KnowledgeListTreeResult {
+  notebookId: string
+  nodes: KnowledgeDocTreeNode[]
+}
+
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views';
 export type { KnowledgeViewConfig };
 
@@ -661,6 +678,15 @@ export interface ElectronAPI {
     getBacklinks(args: { workspaceId: string; connectionId: string; ref: KnowledgeRef }): Promise<ContextPayload['backlinks']>
     /** Notebook listing for the knowledge navigator tree (kernel lsNotebooks). */
     listNotebooks(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
+    /**
+     * Navigator recursive tree (kernel listDocsByPath / RPC knowledge:listTree).
+     * Result matches ListDocTreeResult: { notebookId, nodes } with id/name/path/kind.
+     */
+    listTree(args: {
+      connectionId: string
+      notebookId?: string
+      path?: string
+    }): Promise<KnowledgeListTreeResult>
     /** Navigator-only create (RPC knowledge:userCreate). Agents must use proposeMutation. */
     userCreate(args: {
       connectionId: string
