@@ -156,6 +156,7 @@ export function EntityViewTabs({ value, onChange, capabilities, className }: Ent
             type="button"
             role="tab"
             aria-selected={active}
+            aria-label={t(labelKey)}
             disabled={!available && !active}
             onClick={() => available && onChange(id)}
             className={cn(
