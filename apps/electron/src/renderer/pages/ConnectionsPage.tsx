@@ -1024,6 +1024,7 @@ export default function ConnectionsPage() {
                     <>
                       <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-expiry">{inspectById[row.id].expiry}</div>
+                      <div className="font-mono text-xs" data-testid="connections-row-provenance">{inspectById[row.id].provenance}</div>
                     </>
                   ) : null}
                   {leasesById[row.id] ? (
