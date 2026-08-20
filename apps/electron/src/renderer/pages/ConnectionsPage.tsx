@@ -1277,10 +1277,22 @@ export default function ConnectionsPage() {
                 {bindingRows.map((row) => (
                   <li key={row.id} className="flex items-center gap-2 rounded border px-3 py-2">
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium" data-testid="connections-binding-consumer">{row.consumerId}</div>
-                      <div className="text-muted-foreground" data-testid="connections-binding-purpose">{row.purpose}</div>
-                      <div className="font-mono text-xs" data-testid="connections-binding-actions">{row.actions.join(', ') || '—'}</div>
-                      <div className="font-mono text-xs" data-testid="connections-binding-resources">{row.resources.join(', ') || '—'}</div>
+                      <div data-testid="connections-binding-consumer">
+                        <div className="text-[11px] text-muted-foreground">{t('connections.grantConsumer')}</div>
+                        <div className="font-medium">{row.consumerId}</div>
+                      </div>
+                      <div data-testid="connections-binding-purpose">
+                        <div className="text-[11px] text-muted-foreground">{t('connections.grantPurpose')}</div>
+                        <div className="text-muted-foreground">{row.purpose}</div>
+                      </div>
+                      <div data-testid="connections-binding-actions">
+                        <div className="text-[11px] text-muted-foreground">{t('connections.grantActions')}</div>
+                        <div className="font-mono text-xs">{row.actions.join(', ') || '—'}</div>
+                      </div>
+                      <div data-testid="connections-binding-resources">
+                        <div className="text-[11px] text-muted-foreground">{t('connections.grantResources')}</div>
+                        <div className="font-mono text-xs">{row.resources.join(', ') || '—'}</div>
+                      </div>
                     </div>
                     {unbindingId === row.id ? (
                       <div className="flex gap-1">
@@ -1309,15 +1321,15 @@ export default function ConnectionsPage() {
                   <div className="text-[11px] text-muted-foreground">{t('connections.audit.action')}</div>
                   <div className="font-medium">{row.action ?? row.eventType}</div>
                 </div>
-                <div>
+                <div data-testid="connections-audit-outcome">
                   <div className="text-[11px] text-muted-foreground">{t('connections.audit.outcome')}</div>
                   <div className="text-muted-foreground">{row.outcome}</div>
                 </div>
-                <div>
+                <div data-testid="connections-audit-time">
                   <div className="text-[11px] text-muted-foreground">{t('connections.audit.time')}</div>
                   <div className="text-muted-foreground">{new Date(row.occurredAt).toISOString()}</div>
                 </div>
-                <div>
+                <div data-testid="connections-audit-actor">
                   <div className="text-[11px] text-muted-foreground">{t('connections.audit.actor')}</div>
                   <div className="font-mono text-xs">{row.actorId ?? '—'}</div>
                 </div>

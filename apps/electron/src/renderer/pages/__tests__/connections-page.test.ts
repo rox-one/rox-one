@@ -167,6 +167,20 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('labels policy binding grant fields through i18n without renaming tabs', () => {
+    expect(page.split("t('connections.grantConsumer')").length - 1).toBe(2)
+    expect(page.split("t('connections.grantPurpose')").length - 1).toBe(2)
+    expect(page.split("t('connections.grantActions')").length - 1).toBe(2)
+    expect(page.split("t('connections.grantResources')").length - 1).toBe(2)
+    expect(page).toContain('connections-binding-consumer')
+    expect(page).toContain('connections-binding-purpose')
+    expect(page).toContain('connections-binding-actions')
+    expect(page).toContain('connections-binding-resources')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('refreshes the selected row after unbind so inspector consumers update', () => {
     expect(page).toContain('confirmUnbind')
     expect(page).toContain('applySelectedRow(listed, binding.connectionId)')
@@ -321,6 +335,17 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections-audit-action')
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
     expect(page).toContain('t(`connections.tab.${id}`)')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('exposes audit outcome, time, and actor testids without secret fields', () => {
+    expect(page).toContain('connections-audit-outcome')
+    expect(page).toContain('connections-audit-time')
+    expect(page).toContain('connections-audit-actor')
+    expect(page).toContain('connections.audit.outcome')
+    expect(page).toContain('connections.audit.time')
+    expect(page).toContain('connections.audit.actor')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
