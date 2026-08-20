@@ -1061,7 +1061,10 @@ export default function ConnectionsPage() {
                   className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                   onClick={() => setSelected(row)}
                 >
-                  <div className="font-medium">{row.integrationId}</div>
+                  <div data-testid="connections-row-provider">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
+                    <div className="font-medium">{row.integrationId}</div>
+                  </div>
                   <div data-testid="connections-row-storage">
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
                     <div className="text-muted-foreground">{row.storageMode}</div>
@@ -1155,7 +1158,10 @@ export default function ConnectionsPage() {
                   className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                   onClick={() => setSelected(row)}
                 >
-                  <div className="font-medium">{row.integrationId}</div>
+                  <div data-testid="connections-credential-provider">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
+                    <div className="font-medium">{row.integrationId}</div>
+                  </div>
                   <div data-testid="connections-credential-ref">
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
                     <div className="font-mono text-xs">{row.credentialRefId}</div>
@@ -1347,7 +1353,10 @@ export default function ConnectionsPage() {
                       className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                       onClick={() => setSelected(row)}
                     >
-                      <div className="font-medium">{row.integrationId}</div>
+                      <div data-testid="connections-policy-provider">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
+                        <div className="font-medium">{row.integrationId}</div>
+                      </div>
                       <div data-testid="connections-policy-storage">
                         <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
                         <div className="text-muted-foreground">{row.storageMode}</div>

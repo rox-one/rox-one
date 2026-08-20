@@ -268,6 +268,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('labels provider on listed connection rows through i18n without secret fields', () => {
+    expect(page.split("t('inspector.field.provider')").length - 1).toBe(3)
+    expect(page).toContain('connections-row-provider')
+    expect(page).toContain('connections-credential-provider')
+    expect(page).toContain('connections-policy-provider')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows scopes on credential rows without secret fields', () => {
     expect(page).toContain('connections-credential-scopes')
     expect(page).toContain('row.scopes.join')
