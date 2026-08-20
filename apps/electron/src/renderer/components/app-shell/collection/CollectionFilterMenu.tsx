@@ -56,7 +56,7 @@ export function CollectionFilterMenu({
   onApplyUserSlice,
 }: CollectionFilterMenuProps) {
   const { t } = useTranslation()
-  const { viewConfigs, refresh } = useViews(workspaceId ?? null)
+  const { viewConfigs, refresh, isLoading: viewsLoading } = useViews(workspaceId ?? null)
   const [open, setOpen] = React.useState(false)
   const [saved, setSaved] = React.useState<CollectionSlice[]>([])
   const [saving, setSaving] = React.useState(false)
@@ -84,20 +84,21 @@ export function CollectionFilterMenu({
     setRenamingId(null)
 
     const ws = workspaceId ?? undefined
-    if (!ws || typeof window === 'undefined' || !window.electronAPI?.saveViews) return
-    const legacy = loadSavedSlices(ws)
+    if (!ws || viewsLoading || typeof window === 'undefined' || !window.electronAPI?.saveViews) return
+    const legacy = loadSavedSlices(ws).filter((slice) => !slice.builtin)
     if (legacy.length === 0) return
-    const merged = mergeSliceViews(viewConfigs, legacy)
+    const merged = mergeSliceViews(viewConfigs, [...fromViews, ...legacy])
     void window.electronAPI.saveViews(ws, merged).then(() => {
       persistSavedSlices([], ws)
       void refresh()
     })
-  }, [workspaceId, viewConfigs, refresh])
+  }, [workspaceId, viewConfigs, refresh, viewsLoading])
 
   const persist = (next: CollectionSlice[]) => {
     setSaved(next)
     const ws = workspaceId ?? undefined
-    if (!ws || typeof window === 'undefined' || !window.electronAPI?.saveViews) return
+    if (!ws || viewsLoading || viewConfigs.length === 0) return
+    if (typeof window === 'undefined' || !window.electronAPI?.saveViews) return
     const merged = mergeSliceViews(viewConfigs, next)
     void window.electronAPI.saveViews(ws, merged).then(() => {
       persistSavedSlices([], ws)
