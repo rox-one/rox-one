@@ -111,7 +111,7 @@ import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/ato
 import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
-import { chipsAfterRailChange, skipRailChipClearOnce } from "./collection/collection-rail-filters"
+import { chipsAfterRailChange, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
@@ -2743,10 +2743,11 @@ function AppShellContent({
                         projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
                         labels={displayLabelConfigs.map(l => ({ id: l.id, name: l.name }))}
                         onApplyUserSlice={(viewId, sliceFilters) => {
+                          const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
                           skipRailChipClearRef.current = true
-                          skipRailChipClearOnce.current = true
-                          setCollectionFilters({ ...sliceFilters })
-                          navigate(routes.view.view(viewId))
+                          skipRailChipClearOnce.current = nav.skipChipClear
+                          setCollectionFilters({ ...nav.filters })
+                          navigate(nav.route)
                         }}
                       />
                     </>
