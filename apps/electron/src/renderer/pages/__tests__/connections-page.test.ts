@@ -404,6 +404,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain("row.storageMode === 'copy'")
   })
 
+  it('converts and moves copy connections from the services list without secret fields', () => {
+    expect(page.split("row.storageMode === 'copy'").length - 1).toBe(2)
+    expect(page.split('confirmConvert(row.id)').length - 1).toBe(2)
+    expect(page.split('confirmMove(row.id)').length - 1).toBe(2)
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('moves a copy connection to another local backend with confirm', () => {
     expect(page).toContain('moveConnection')
     expect(page).toContain('connections.moveConfirm')
