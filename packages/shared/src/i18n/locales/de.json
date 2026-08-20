@@ -1730,6 +1730,8 @@
   "session.newSessionInPanel": "Neue Sitzung im Panel",
   "session.noArchivedSessions": "Keine archivierten Sitzungen",
   "session.noArchivedSessionsDesc": "Archivierte Sitzungen werden hier angezeigt. Archivieren Sie Sitzungen, um Ihre Liste übersichtlich zu halten und Unterhaltungen aufzubewahren.",
+  "session.noMatchingSessions": "Keine passenden Sessions",
+  "session.noMatchingSessionsDesc": "Anderen Slice wählen oder Filter löschen.",
   "session.noResultsInFilter": "Keine Ergebnisse im aktuellen Filter",
   "session.noSessionSelected": "Keine Sitzung ausgewählt",
   "session.noSessionsFound": "Keine Sitzungen gefunden",

@@ -314,7 +314,7 @@ export function EntityRow({
                 <span className={cn(
                   menuOpen || contextMenuOpen || compactMenuOpen
                     ? "invisible"
-                    : useCompactMenu ? undefined : "group-hover:invisible",
+                    : useCompactMenu ? undefined : "group-hover:invisible group-focus-within:invisible",
                 )}>
                   {titleTrailing}
                 </span>
@@ -327,7 +327,7 @@ export function EntityRow({
                         ? "opacity-100"
                         : useCompactMenu
                           ? "opacity-100"
-                          : "opacity-0 group-hover:opacity-100",
+                          : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
                     )}
                     onMouseDown={(e) => e.stopPropagation()}
                   >
@@ -434,7 +434,7 @@ export function EntityRow({
               ? "opacity-100"
               : useCompactMenu
                 ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100",
+                : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
           )}
           onMouseDown={(e) => e.stopPropagation()}
         >

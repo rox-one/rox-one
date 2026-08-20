@@ -1730,6 +1730,8 @@
   "session.newSessionInPanel": "Új munkamenet panelben",
   "session.noArchivedSessions": "Nincsenek archivált munkamenetek",
   "session.noArchivedSessionsDesc": "Az archivált munkamenetek itt jelennek meg. Archiváld a munkameneteket, hogy listád rendezett maradjon, miközben a beszélgetések megőrződnek.",
+  "session.noMatchingSessions": "Nincs illeszkedő munkamenet",
+  "session.noMatchingSessionsDesc": "Próbálj másik szeletet, vagy töröld a szűrőket.",
   "session.noResultsInFilter": "Nincs találat az aktuális szűrőben",
   "session.noSessionSelected": "Nincs kiválasztott munkamenet",
   "session.noSessionsFound": "Nem található munkamenet",

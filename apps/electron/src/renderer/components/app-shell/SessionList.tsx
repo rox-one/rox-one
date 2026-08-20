@@ -4,7 +4,7 @@ import { useAtomValue, useSetAtom } from "jotai"
 import { isToday, isYesterday, format, startOfDay } from "date-fns"
 import { getDateLocale } from "@craft-agent/shared/i18n"
 import { useAction } from "@/actions"
-import { Inbox, Archive, ChevronRight, GripVertical } from "lucide-react"
+import { Inbox, Archive, ChevronRight, GripVertical, ListFilter } from "lucide-react"
 import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
@@ -37,6 +37,8 @@ import {
   type SessionMeta,
 } from "@/atoms/sessions"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
+import { collectionFiltersAtom } from "@/atoms/collection-filters"
+import { activeFilterCount } from "./collection/collection-filter-count"
 import { compareSessions, lexorankBetween } from "@craft-agent/shared/sessions/collection"
 import { isStaleRankNeighborsError, retryStaleRankReorder } from "@/lib/collection-reorder"
 import {
@@ -201,6 +203,8 @@ export function SessionList({
   const { t, i18n } = useTranslation()
   const setSendToWorkspace = useSetAtom(sendToWorkspaceAtom)
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
+  const collectionFilters = useAtomValue(collectionFiltersAtom)
+  const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const updateMeta = useSetAtom(updateSessionMetaAtom)
   const refreshMetadata = useSetAtom(refreshSessionsMetadataAtom)
   const loadedSessionIds = useAtomValue(loadedSessionsAtom)
@@ -1139,6 +1143,7 @@ export function SessionList({
   // --- Empty state (non-search) — keep search bar pinned above empty UI ---
   // Don't show empty state when there are collapsed groups with content
   if (flatRows.length === 0 && rowData.groups.length === 0 && !searchActive) {
+    const filtersActive = activeFilterCount(collectionFilters) > 0
     const emptyBody = currentFilter?.kind === 'archived' ? (
       <EntityListEmptyScreen
         icon={<Archive />}
@@ -1146,6 +1151,21 @@ export function SessionList({
         description={t("session.noArchivedSessionsDesc")}
         className="h-full"
       />
+    ) : filtersActive ? (
+      <EntityListEmptyScreen
+        icon={<ListFilter />}
+        title={t("session.noMatchingSessions")}
+        description={t("session.noMatchingSessionsDesc")}
+        className="h-full"
+      >
+        <button
+          type="button"
+          onClick={() => { void setCollectionFilters({}) }}
+          className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors"
+        >
+          {t("collection.filter.clear")}
+        </button>
+      </EntityListEmptyScreen>
     ) : (
       <EntityListEmptyScreen
         icon={<Inbox />}

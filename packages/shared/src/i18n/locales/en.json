@@ -1742,6 +1742,8 @@
   "session.newSessionInPanel": "New Session in Panel",
   "session.noArchivedSessions": "No archived sessions",
   "session.noArchivedSessionsDesc": "Sessions you archive will appear here. Archive sessions to keep your list tidy while preserving conversations.",
+  "session.noMatchingSessions": "No matching sessions",
+  "session.noMatchingSessionsDesc": "Try a different slice or clear filters.",
   "session.noResultsInFilter": "No results in current filter",
   "session.noSessionSelected": "No session selected",
   "session.noSessionsFound": "No sessions found",

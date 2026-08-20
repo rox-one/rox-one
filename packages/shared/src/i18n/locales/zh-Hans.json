@@ -1730,6 +1730,8 @@
   "session.newSessionInPanel": "在面板中新建会话",
   "session.noArchivedSessions": "没有已归档的会话",
   "session.noArchivedSessionsDesc": "归档的会话将显示在这里。归档会话可以保持列表整洁，同时保留对话内容。",
+  "session.noMatchingSessions": "没有匹配的会话",
+  "session.noMatchingSessionsDesc": "换一个切片，或清除筛选。",
   "session.noResultsInFilter": "当前筛选无结果",
   "session.noSessionSelected": "未选择会话",
   "session.noSessionsFound": "未找到会话",

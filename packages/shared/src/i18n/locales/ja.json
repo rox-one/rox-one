@@ -1730,6 +1730,8 @@
   "session.newSessionInPanel": "パネルで新規セッション",
   "session.noArchivedSessions": "アーカイブ済みセッションなし",
   "session.noArchivedSessionsDesc": "アーカイブしたセッションがここに表示されます。会話を保持しながらリストを整理するためにセッションをアーカイブしてください。",
+  "session.noMatchingSessions": "一致するセッションはありません",
+  "session.noMatchingSessionsDesc": "別のスライスを選ぶか、フィルターをクリアしてください。",
   "session.noResultsInFilter": "現在のフィルターに一致する結果がありません",
   "session.noSessionSelected": "セッションが選択されていません",
   "session.noSessionsFound": "セッションが見つかりません",

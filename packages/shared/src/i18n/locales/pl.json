@@ -1730,6 +1730,8 @@
   "session.newSessionInPanel": "Nowa sesja w panelu",
   "session.noArchivedSessions": "Brak zarchiwizowanych sesji",
   "session.noArchivedSessionsDesc": "Zarchiwizowane sesje pojawią się tutaj. Archiwizuj sesje, aby zachować porządek na liście i nie tracić rozmów.",
+  "session.noMatchingSessions": "Brak pasujących sesji",
+  "session.noMatchingSessionsDesc": "Wybierz inny wycinek albo wyczyść filtry.",
   "session.noResultsInFilter": "Brak wyników dla bieżącego filtra",
   "session.noSessionSelected": "Nie wybrano sesji",
   "session.noSessionsFound": "Nie znaleziono sesji",

@@ -1730,6 +1730,8 @@
   "session.newSessionInPanel": "在面板中新建會話",
   "session.noArchivedSessions": "沒有已歸檔的會話",
   "session.noArchivedSessionsDesc": "歸檔的會話將顯示在這裡。歸檔會話可以保持列表整潔，同時保留對話內容。",
+  "session.noMatchingSessions": "沒有符合的工作階段",
+  "session.noMatchingSessionsDesc": "改選切片，或清除篩選。",
   "session.noResultsInFilter": "當前篩選無結果",
   "session.noSessionSelected": "未選擇會話",
   "session.noSessionsFound": "未找到會話",

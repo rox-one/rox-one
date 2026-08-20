@@ -50,6 +50,15 @@ export function CollectionFilterMenu({
   const count = activeFilterCount(filters)
   const activeSlice = matchingSliceId(filters, saved)
 
+  const changeFilters = (next: CollectionFilters) => {
+    onFiltersChange(next)
+    if (activeFilterCount(next) === 0) {
+      setSaving(false)
+      setName('')
+      setOpen(false)
+    }
+  }
+
   const commitSave = () => {
     const trimmed = name.trim()
     if (!trimmed || count === 0) return
@@ -101,7 +110,7 @@ export function CollectionFilterMenu({
               key={slice.id}
               selected={activeSlice === slice.id}
               label={t(slice.nameKey!)}
-              onClick={() => onFiltersChange(applySlice(filters, slice))}
+              onClick={() => changeFilters(applySlice(filters, slice))}
             />
           ))}
           {saved.map((slice) => (
@@ -109,7 +118,7 @@ export function CollectionFilterMenu({
               key={slice.id}
               selected={activeSlice === slice.id}
               label={slice.name ?? slice.id}
-              onClick={() => onFiltersChange(applySlice(filters, slice))}
+              onClick={() => changeFilters(applySlice(filters, slice))}
               trailing={
                 <span
                   role="button"
@@ -168,7 +177,7 @@ export function CollectionFilterMenu({
         <div className="mx-1 my-1 h-px bg-foreground/8" />
         <CollectionFilterChips
           filters={filters}
-          onFiltersChange={onFiltersChange}
+          onFiltersChange={changeFilters}
           statuses={statuses}
           priorities={priorities}
           projects={projects}

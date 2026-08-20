@@ -1742,6 +1742,8 @@
   "session.newSessionInPanel": "Новая сессия в панели",
   "session.noArchivedSessions": "Нет сессий в архиве",
   "session.noArchivedSessionsDesc": "Здесь появятся архивированные сессии. Архивируйте сессии, чтобы список оставался аккуратным, а переписки сохранялись.",
+  "session.noMatchingSessions": "Нет подходящих сессий",
+  "session.noMatchingSessionsDesc": "Выберите другой слайс или сбросьте фильтры.",
   "session.noResultsInFilter": "Нет результатов в текущем фильтре",
   "session.noSessionSelected": "Сессия не выбрана",
   "session.noSessionsFound": "Сессии не найдены",
