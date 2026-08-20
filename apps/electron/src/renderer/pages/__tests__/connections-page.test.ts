@@ -165,6 +165,18 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('offers test on policy connection rows without stealing focus', () => {
+    expect(page).toContain('data-testid="connections-policy-row"')
+    expect(page.split('runTest(row.id)').length - 1).toBe(2)
+    expect(page).toContain('connections.test')
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('selects a policy connection row into the inspector without renaming tabs', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
     expect(page.split('onClick={() => setSelected(row)}').length - 1).toBe(3)
