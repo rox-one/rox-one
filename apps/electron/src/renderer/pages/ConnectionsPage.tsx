@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import {
+  healthFromInspect,
   sanitizeConnectionAuditRows,
   sanitizeConnectionBindingRows,
   sanitizeConnectionRows,
@@ -102,6 +103,7 @@ export default function ConnectionsPage() {
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
   const [deviceLogin, setDeviceLogin] = useState<DeviceLoginView | null>(null)
   const [devicePoll, setDevicePoll] = useState<DevicePollView | null>(null)
+  const [healthById, setHealthById] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -193,6 +195,36 @@ export default function ConnectionsPage() {
       setListError(errorMessage(err))
     }
   }
+
+  useEffect(() => {
+    const workspaceId = workspace?.id
+    const inspectConnection = window.electronAPI?.workgraph?.inspectConnection
+    if (!workspaceId || typeof inspectConnection !== 'function' || !rows) {
+      if (rows && rows.length === 0) setHealthById({})
+      return
+    }
+    let stale = false
+    void Promise.all(rows.map(async (row) => {
+      try {
+        return [row.id, healthFromInspect(await inspectConnection({
+          workspaceId,
+          connectionId: row.id,
+        }))] as const
+      } catch {
+        return null
+      }
+    })).then((entries) => {
+      if (stale) return
+      const next: Record<string, string> = {}
+      for (const entry of entries) {
+        if (entry) next[entry[0]] = entry[1]
+      }
+      setHealthById(next)
+    })
+    return () => {
+      stale = true
+    }
+  }, [workspace?.id, rows])
 
   useEffect(() => {
     if (!deviceLogin || importError) return
@@ -849,6 +881,9 @@ export default function ConnectionsPage() {
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="text-muted-foreground">{row.storageMode}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
+                  {healthById[row.id] ? (
+                    <div className="font-mono text-xs" data-testid="connections-row-health">{healthById[row.id]}</div>
+                  ) : null}
                   {status && status.kind !== 'idle' ? (
                     <div className="font-mono text-xs" data-testid="connections-test-status">
                       {status.kind === 'ok' ? status.login : status.message}

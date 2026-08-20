@@ -135,6 +135,10 @@ export function sanitizeConnectionInspect(row: unknown): ConnectionInspectRow {
   return { connectionId, credentialRefId, health, expiry, provenance, fingerprint, kind, versionId }
 }
 
+export function healthFromInspect(raw: unknown): string {
+  return sanitizeConnectionInspect(raw).health
+}
+
 export function sanitizeConnectionRows(rows: readonly unknown[]): ConnectionListRow[] {
   return rows.map((row) => {
     if (!row || typeof row !== 'object') throw new Error('Invalid connection metadata')

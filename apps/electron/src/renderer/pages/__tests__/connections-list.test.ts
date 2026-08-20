@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { sanitizeConnectionAuditRows, sanitizeConnectionInspect, sanitizeConnectionRows } from '../connections-list'
+import { healthFromInspect, sanitizeConnectionAuditRows, sanitizeConnectionInspect, sanitizeConnectionRows } from '../connections-list'
 
 describe('CF-6.3 connection list sanitizer', () => {
   it('keeps metadata fields and rejects secret fields', () => {
@@ -114,5 +114,29 @@ describe('CF-6.3 connection list sanitizer', () => {
       versionId: 'ver_1',
       token: 'super-secret',
     })).toThrow(/token/)
+  })
+
+  it('projects inspect health without leaking secret fields', () => {
+    expect(healthFromInspect({
+      connectionId: 'c1',
+      credentialRefId: 'cred_123e4567-e89b-12d3-a456-426614174000',
+      health: 'expired',
+      expiry: '2020-01-01T00:00:00.000Z',
+      provenance: 'local-file/memory',
+      fingerprint: 'a'.repeat(64),
+      kind: 'bearer_token',
+      versionId: 'ver_1',
+    })).toBe('expired')
+    expect(() => healthFromInspect({
+      connectionId: 'c1',
+      credentialRefId: 'cred_123e4567-e89b-12d3-a456-426614174000',
+      health: 'healthy',
+      expiry: '—',
+      provenance: 'local-file/memory',
+      fingerprint: 'a'.repeat(64),
+      kind: 'bearer_token',
+      versionId: 'ver_1',
+      value: 'super-secret',
+    })).toThrow(/value/)
   })
 })
