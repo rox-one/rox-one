@@ -891,6 +891,35 @@ export interface ElectronAPI {
   identityRefreshStatus(args?: { workspaceId?: string }): Promise<IdentityState>
   onIdentityChanged(callback: () => void): () => void
 
+  fabricListConnections(workspaceId: string): Promise<Array<Record<string, unknown>>>
+  fabricCreateConnection(args: {
+    workspaceId: string
+    integrationId: string
+    credentialRefId: string
+    storageMode: 'reference' | 'copy' | 'mirror' | 'managed' | 'ephemeral'
+  }): Promise<Record<string, unknown>>
+  fabricListCredentials(workspaceId: string): Promise<Array<Record<string, unknown>>>
+  fabricDiscover(workspaceId: string, importerId: string): Promise<Array<Record<string, unknown>>>
+  fabricPreview(workspaceId: string, candidateId: string): Promise<Record<string, unknown>>
+  fabricCommitImport(workspaceId: string, candidateId: string): Promise<Record<string, unknown>>
+  fabricListGrants(workspaceId: string): Promise<Array<Record<string, unknown>>>
+  fabricPutGrant(
+    workspaceId: string,
+    grant: { consumerId: string; action: string; resource: string },
+  ): Promise<Record<string, unknown>>
+  fabricListAudit(workspaceId: string): Promise<Array<Record<string, unknown>>>
+  fabricAcquireLease(args: Record<string, unknown>): Promise<Record<string, unknown>>
+  fabricRevokeConnection(args: { workspaceId: string; connectionId: string }): Promise<Record<string, unknown>>
+  fabricGithubStatus(opts?: { probe?: boolean }): Promise<{
+    available: boolean
+    reason?: string
+    login?: string
+    connectionId?: string
+    leaseId?: string
+    credentialRefId?: string
+  }>
+  fabricInfisicalHealth(): Promise<{ available: boolean; reason?: string; providerId?: string }>
+
   // Extension Center (S-05)
   extensionsListCatalog(args?: { filter?: CatalogFilter }): Promise<ExtensionsListCatalogResult>
   extensionsListInstalled(args?: {
@@ -1810,6 +1839,15 @@ export interface HomeNavigationState {
 }
 
 /**
+ * Connection Fabric surface (CF-6) — Services / Credentials / Imports / Policies / Audit.
+ */
+export interface ConnectionsNavigationState {
+  navigator: 'connections'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Knowledge ref kinds, mirrored from the Knowledge Provider contract
  * (spec K-03 §3.1: `KnowledgeRef { scheme:'siyuan'; kind; id }`). Declared
  * locally because apps/electron does not import @craft-agent/core.
@@ -1872,6 +1910,7 @@ export type NavigationState =
   | BrowserNavigationState
   | MemoryNavigationState
   | HomeNavigationState
+  | ConnectionsNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
   | ExtensionNavigationState
@@ -1915,6 +1954,10 @@ export const isMemoryNavigation = (
 export const isHomeNavigation = (
   state: NavigationState
 ): state is HomeNavigationState => state.navigator === 'home'
+
+export const isConnectionsNavigation = (
+  state: NavigationState
+): state is ConnectionsNavigationState => state.navigator === 'connections'
 
 export const isKnowledgeNavigation = (
   state: NavigationState
@@ -1985,6 +2028,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'home') {
     return 'home'
+  }
+  if (state.navigator === 'connections') {
+    return 'connections'
   }
   // Unified-shell surfaces (W1) — key format mirrors the route format
   if (state.navigator === 'knowledge') {
@@ -2155,6 +2201,7 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
   }
 
   if (key === 'home') return { navigator: 'home', details: null }
+  if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'diff') return { navigator: 'diff', details: null }
   if (key.startsWith('diff/')) {
     const proposalId = key.slice(5)

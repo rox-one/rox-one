@@ -31,6 +31,7 @@ import {
   isSkillsNavigation,
   isMemoryNavigation,
   isHomeNavigation,
+  isConnectionsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
@@ -43,6 +44,7 @@ import { sourceSelection, skillSelection, automationSelection } from '@/hooks/us
 import { SourceInfoPage, ChatPage, BrowserPanelPage, KnowledgeSurfacePage, ExtensionSurfacePage } from '@/pages'
 import NotesPage from '@/pages/NotesPage'
 import KnowledgeEntityPage from '@/pages/KnowledgeEntityPage'
+import ConnectionsPage from '@/pages/ConnectionsPage'
 import SkillInfoPage from '@/pages/SkillInfoPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
@@ -295,6 +297,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <HomeFrontPage />
+      </Panel>
+    )
+  }
+
+  if (isConnectionsNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <ConnectionsPage />
       </Panel>
     )
   }

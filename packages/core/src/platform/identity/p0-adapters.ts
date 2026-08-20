@@ -207,8 +207,23 @@ function maskLabel(label: string): string {
   return `${label} ••••`;
 }
 
-export function createSealedSecret(kind: CredentialKind): SealedSecret {
-  return { _brand: 'SealedSecret', kind };
+const SEAL_PREFIX = 'seal1:';
+
+/** Wrap plaintext into an opaque sealed handle (never for inspect/preview). */
+export function createSealedSecret(kind: CredentialKind, plaintext: string): SealedSecret {
+  const ciphertext = `${SEAL_PREFIX}${Buffer.from(plaintext, 'utf8').toString('base64')}`;
+  return { _brand: 'SealedSecret', kind, ciphertext };
+}
+
+/** Provider/test-only unwrap. Must not feed inspect, preview, or import candidates. */
+export function unsealSecret(sealed: SealedSecret): string {
+  if (sealed._brand !== 'SealedSecret') {
+    throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'sealed brand');
+  }
+  if (!sealed.ciphertext.startsWith(SEAL_PREFIX)) {
+    throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', 'sealed codec');
+  }
+  return Buffer.from(sealed.ciphertext.slice(SEAL_PREFIX.length), 'base64').toString('utf8');
 }
 
 interface StoredMaterial {
@@ -306,6 +321,11 @@ export class LocalMemorySecretProvider implements SecretProvider {
 
   async revoke(input: ProviderRevokeInput): Promise<void> {
     this.store.delete(locatorKey(input.credentialRef.locator));
+    for (const [key, stored] of this.store) {
+      if (stored.version.credentialRefId === input.credentialRef.id) {
+        this.store.delete(key);
+      }
+    }
   }
 
   async rotate(_input: ProviderRotateInput): Promise<CredentialVersion> {
@@ -325,6 +345,13 @@ export class LocalMemorySecretProvider implements SecretProvider {
   /** Test helper: prove inspect never exposes the sealed brand payload. */
   peekHasSealed(locator: ProviderLocator): boolean {
     return this.store.get(locatorKey(locator))?.sealed?._brand === 'SealedSecret';
+  }
+
+  /** Test-only: unseal stored copy. Production inspect stays metadata-only. */
+  peekPlaintextForTest(locator: ProviderLocator): string | undefined {
+    const sealed = this.store.get(locatorKey(locator))?.sealed;
+    if (!sealed) return undefined;
+    return unsealSecret(sealed);
   }
 }
 

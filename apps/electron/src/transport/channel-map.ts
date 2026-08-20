@@ -180,6 +180,20 @@ export const CHANNEL_MAP = {
   identityRefreshStatus: invoke(RPC_CHANNELS.identity.REFRESH_STATUS),
   onIdentityChanged: listener(RPC_CHANNELS.identity.CHANGED),
 
+  fabricListConnections: invoke(RPC_CHANNELS.fabric.LIST_CONNECTIONS),
+  fabricCreateConnection: invoke(RPC_CHANNELS.fabric.CREATE_CONNECTION),
+  fabricListCredentials: invoke(RPC_CHANNELS.fabric.LIST_CREDENTIALS),
+  fabricDiscover: invoke(RPC_CHANNELS.fabric.DISCOVER),
+  fabricPreview: invoke(RPC_CHANNELS.fabric.PREVIEW),
+  fabricCommitImport: invoke(RPC_CHANNELS.fabric.COMMIT_IMPORT),
+  fabricListGrants: invoke(RPC_CHANNELS.fabric.LIST_GRANTS),
+  fabricPutGrant: invoke(RPC_CHANNELS.fabric.PUT_GRANT),
+  fabricListAudit: invoke(RPC_CHANNELS.fabric.LIST_AUDIT),
+  fabricAcquireLease: invoke(RPC_CHANNELS.fabric.ACQUIRE_LEASE),
+  fabricRevokeConnection: invoke(RPC_CHANNELS.fabric.REVOKE_CONNECTION),
+  fabricGithubStatus: invoke(RPC_CHANNELS.fabric.GITHUB_STATUS),
+  fabricInfisicalHealth: invoke(RPC_CHANNELS.fabric.INFISICAL_HEALTH),
+
   // Extension Center (S-05)
   extensionsListCatalog: invoke(RPC_CHANNELS.extensions.LIST_CATALOG),
   extensionsListInstalled: invoke(RPC_CHANNELS.extensions.LIST_INSTALLED),

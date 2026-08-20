@@ -5,6 +5,9 @@
  * to a provider envelope and is never accepted by the metadata registry.
  */
 
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 export type StorageMode = 'reference' | 'copy' | 'mirror' | 'managed' | 'ephemeral';
 
 export type CredentialKind =
@@ -76,6 +79,15 @@ export interface RegisterCredentialVersionInput {
 }
 
 export type CredentialRefIdFactory = () => CredentialRefId;
+
+export interface CredentialRefRegistryOptions {
+  readonly idFactory?: CredentialRefIdFactory;
+  readonly directory?: string;
+}
+
+const REFS_FILE = 'credential-refs.json';
+const VERSIONS_FILE = 'credential-versions.json';
+const SECRET_SHAPED_KEYS = new Set(['value', 'token', 'password', 'ciphertext']);
 
 /**
  * Lowercase-only: the `CredentialRefId` template type requires a lowercase
@@ -305,6 +317,36 @@ function cloneVersion(version: CredentialVersion): CredentialVersion {
   return { ...version };
 }
 
+function atomicWriteJson(filePath: string, value: unknown): void {
+  const tmp = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+  renameSync(tmp, filePath);
+}
+
+function readJsonArray(filePath: string): unknown[] {
+  if (!existsSync(filePath)) return [];
+  try {
+    const raw = JSON.parse(readFileSync(filePath, 'utf8')) as unknown;
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Drop secret-shaped keys anywhere in a metadata tree before writing disk. */
+function stripSecretShapedFields(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stripSecretShapedFields);
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, nested] of Object.entries(value as Record<string, unknown>)) {
+      if (SECRET_SHAPED_KEYS.has(key)) continue;
+      out[key] = stripSecretShapedFields(nested);
+    }
+    return out;
+  }
+  return value;
+}
+
 /**
  * Metadata-only registry.
  *
@@ -316,10 +358,20 @@ export class CredentialRefRegistry {
   private readonly refs = new Map<CredentialRefId, CredentialRef>();
   private readonly versions = new Map<string, CredentialVersion>();
   private readonly idFactory: CredentialRefIdFactory;
+  private readonly directory: string | undefined;
   private sequence = 0;
 
-  constructor(idFactory: CredentialRefIdFactory = createCredentialRefId) {
-    this.idFactory = idFactory;
+  constructor(
+    idFactoryOrOptions?: CredentialRefIdFactory | CredentialRefRegistryOptions,
+  ) {
+    if (typeof idFactoryOrOptions === 'function') {
+      this.idFactory = idFactoryOrOptions;
+      this.directory = undefined;
+    } else {
+      this.idFactory = idFactoryOrOptions?.idFactory ?? createCredentialRefId;
+      this.directory = idFactoryOrOptions?.directory;
+    }
+    if (this.directory) this.reloadFromDisk();
   }
 
   register(input: RegisterCredentialRefInput): CredentialRef {
@@ -347,6 +399,7 @@ export class CredentialRefRegistry {
     };
 
     this.refs.set(id, ref);
+    this.persist();
     return cloneRef(ref);
   }
 
@@ -377,6 +430,7 @@ export class CredentialRefRegistry {
     };
 
     this.refs.set(id, updated);
+    this.persist();
     return cloneRef(updated);
   }
 
@@ -457,6 +511,7 @@ export class CredentialRefRegistry {
       });
     }
 
+    this.persist();
     return cloneVersion(version);
   }
 
@@ -508,6 +563,7 @@ export class CredentialRefRegistry {
     this.versions.set(id, next);
     if (refUpdate) this.refs.set(refUpdate.id, refUpdate);
 
+    this.persist();
     return cloneVersion(next);
   }
 
@@ -515,5 +571,85 @@ export class CredentialRefRegistry {
     const ref = this.refs.get(id);
     if (!ref) throw new Error(`CredentialRef not found: ${errorLabel(id)}`);
     return ref;
+  }
+
+  private reloadFromDisk(): void {
+    if (!this.directory) return;
+    mkdirSync(this.directory, { recursive: true });
+    this.refs.clear();
+    this.versions.clear();
+    this.sequence = 0;
+
+    for (const raw of readJsonArray(join(this.directory, REFS_FILE))) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+      const record = raw as Record<string, unknown>;
+      try {
+        if (!isCredentialRefId(record.id)) continue;
+        if (!isCredentialKind(record.kind)) continue;
+        const locator = validateLocator(record.locator as ProviderLocator);
+        const createdAt = finiteTimestamp(record.createdAt, 'createdAt');
+        const updatedAt = finiteTimestamp(record.updatedAt, 'updatedAt');
+        const ref: CredentialRef = {
+          id: record.id,
+          kind: record.kind,
+          providerId: nonEmptyString(record.providerId, 'providerId'),
+          locator,
+          createdAt,
+          updatedAt,
+          ...(typeof record.currentVersionId === 'string' && record.currentVersionId.trim()
+            ? { currentVersionId: nonEmptyString(record.currentVersionId, 'currentVersionId') }
+            : {}),
+        };
+        this.refs.set(ref.id, ref);
+      } catch {
+        // Skip corrupt/secret-tainted rows; registry stays metadata-only.
+      }
+    }
+
+    for (const raw of readJsonArray(join(this.directory, VERSIONS_FILE))) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+      const record = raw as Record<string, unknown>;
+      try {
+        for (const key of Object.keys(record)) {
+          if (SECRET_SHAPED_KEYS.has(key)) {
+            throw new Error('secret-shaped version field');
+          }
+        }
+        if (!isCredentialRefId(record.credentialRefId)) continue;
+        if (!this.refs.has(record.credentialRefId)) continue;
+        if (!isVersionStatus(record.status)) continue;
+        const id = nonEmptyString(record.id, 'version.id');
+        const version: CredentialVersion = {
+          id,
+          credentialRefId: record.credentialRefId,
+          codec: nonEmptyString(record.codec, 'version.codec'),
+          fingerprint: versionFingerprint(record.fingerprint),
+          createdAt: finiteTimestamp(record.createdAt, 'version.createdAt'),
+          status: record.status,
+          ...(record.providerVersion !== undefined
+            ? {
+                providerVersion: nonEmptyString(record.providerVersion, 'version.providerVersion'),
+              }
+            : {}),
+          ...(record.expiresAt !== undefined
+            ? { expiresAt: finiteTimestamp(record.expiresAt, 'version.expiresAt') }
+            : {}),
+        };
+        this.versions.set(version.id, version);
+        const match = /^ver_(\d+)$/.exec(version.id);
+        if (match) this.sequence = Math.max(this.sequence, Number(match[1]));
+      } catch {
+        // Skip corrupt/secret-tainted rows.
+      }
+    }
+  }
+
+  private persist(): void {
+    if (!this.directory) return;
+    mkdirSync(this.directory, { recursive: true });
+    const refs = stripSecretShapedFields([...this.refs.values()].map(cloneRef));
+    const versions = stripSecretShapedFields([...this.versions.values()].map(cloneVersion));
+    atomicWriteJson(join(this.directory, REFS_FILE), refs);
+    atomicWriteJson(join(this.directory, VERSIONS_FILE), versions);
   }
 }

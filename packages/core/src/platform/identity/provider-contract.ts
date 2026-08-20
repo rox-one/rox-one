@@ -157,10 +157,12 @@ export interface HealthCheck {
 /**
  * Copy-mode payload that never appears on inspect/preview/import results.
  * Created only after OS/provider access is granted.
+ * `ciphertext` is opaque (`seal1:` + base64 utf8); never put on inspect/preview.
  */
 export interface SealedSecret {
   readonly _brand: 'SealedSecret';
   readonly kind: CredentialKind;
+  readonly ciphertext: string;
 }
 
 export interface SecretProvider {

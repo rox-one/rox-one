@@ -38,6 +38,7 @@ export type {
   CredentialRef,
   CredentialRefId,
   CredentialRefIdFactory,
+  CredentialRefRegistryOptions,
   CredentialVersion,
   CredentialVersionStatus,
   ProviderLocator,
@@ -69,9 +70,15 @@ export { ImportSession } from './identity/import-session.ts';
 export { ImportService } from './identity/import-service.ts';
 export {
   LocalMemorySecretProvider,
+  createP0Importers,
   createP0ProviderStack,
   createSealedSecret,
   extractDotenvKeys,
 } from './identity/p0-adapters.ts';
+export { createOsDiscoveryHost } from './identity/os-discovery-host.ts';
 export { JsonAccessGrantStore } from './identity/grants.ts';
 export { InProcessCredentialBroker } from './identity/broker.ts';
+export { ConnectionWorkGraph } from './identity/workgraph.ts';
+export { revokeConnectionAndRevalidate } from './identity/revalidation.ts';
+export { InfisicalFabricProvider, createInfisicalImporter } from './identity/infisical-fabric-provider.ts';
+export { importGithubFromEnv, runGithubVertical } from './identity/github-vertical.ts';
