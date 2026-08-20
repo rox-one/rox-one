@@ -466,6 +466,7 @@ export default function ConnectionsPage() {
     const workspaceId = workspace?.id
     const revokeConnectionBinding = window.electronAPI?.workgraph?.revokeConnectionBinding
     if (!workspaceId || typeof revokeConnectionBinding !== 'function') return
+    const binding = bindingRows.find((row) => row.id === bindingId)
     try {
       setListError(null)
       await revokeConnectionBinding({ workspaceId, bindingId })
@@ -473,6 +474,10 @@ export default function ConnectionsPage() {
       const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
       if (typeof listConnectionBindings === 'function') {
         setBindingRows(sanitizeConnectionBindingRows(await listConnectionBindings({ workspaceId })))
+      }
+      if (binding) {
+        const listed = await refreshRows(workspaceId)
+        applySelectedRow(listed, binding.connectionId)
       }
     } catch (err) {
       setListError(errorMessage(err))

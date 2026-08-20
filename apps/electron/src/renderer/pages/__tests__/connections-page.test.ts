@@ -122,6 +122,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections.unbind')
   })
 
+  it('refreshes the selected row after unbind so inspector consumers update', () => {
+    expect(page).toContain('confirmUnbind')
+    expect(page).toContain('applySelectedRow(listed, binding.connectionId)')
+    expect(page).toContain('importedConnectionFromList')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('exposes masked docker, aws, keychain, adc, and ssh-agent imports', () => {
     expect(page).toContain('previewDockerHelper')
     expect(page).toContain('importDockerHelper')
