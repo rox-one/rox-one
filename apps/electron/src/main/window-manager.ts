@@ -275,11 +275,12 @@ export class WindowManager {
         windowLog.warn('Failed to apply default zoom level:', error)
       })
 
-    // Show window when first paint is ready. If the GPU process crashes,
-    // ready-to-show may never fire — still reveal so the shell is usable.
-    const revealWindow = () => {
+    // Show on first compositor paint. GPU crash can skip ready-to-show and
+    // turn under-window vibrancy into a black capture — keep the opaque fill
+    // unless first paint actually arrived.
+    const revealWindow = (opts?: { vibrancy?: boolean }) => {
       if (window.isDestroyed() || window.isVisible()) return
-      if (isMac) {
+      if (isMac && opts?.vibrancy !== false) {
         try {
           window.setVibrancy('under-window')
           window.setVisualEffectState('active')
@@ -289,11 +290,16 @@ export class WindowManager {
       }
       window.show()
     }
-    window.once('ready-to-show', revealWindow)
+    window.once('ready-to-show', () => revealWindow({ vibrancy: true }))
+    window.webContents.once('did-finish-load', () => {
+      if (window.isDestroyed() || window.isVisible()) return
+      windowLog.info('did-finish-load before ready-to-show; showing opaque window')
+      revealWindow({ vibrancy: false })
+    })
     setTimeout(() => {
       if (window.isDestroyed() || window.isVisible()) return
-      windowLog.warn('ready-to-show timed out; showing window anyway')
-      revealWindow()
+      windowLog.warn('ready-to-show timed out; showing opaque window')
+      revealWindow({ vibrancy: false })
     }, 4000)
 
     // Open external links in default browser, but never hand known-dangerous
