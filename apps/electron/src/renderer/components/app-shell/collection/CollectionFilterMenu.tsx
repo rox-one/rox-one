@@ -18,7 +18,7 @@ import {
   mergeSliceViews,
   userCollectionSlices,
 } from '@craft-agent/shared/views'
-import { userSliceNavigation } from './collection-rail-filters'
+import { persistUserCollectionSlices, userSliceNavigation } from './collection-rail-filters'
 import { useViews } from '@/hooks/useViews'
 import {
   applySlice,
@@ -97,13 +97,14 @@ export function CollectionFilterMenu({
 
   const persist = (next: CollectionSlice[]) => {
     setSaved(next)
-    const ws = workspaceId ?? undefined
-    if (!ws || viewsLoading || viewConfigs.length === 0) return
-    if (typeof window === 'undefined' || !window.electronAPI?.saveViews) return
-    const merged = mergeSliceViews(viewConfigs, next)
-    void window.electronAPI.saveViews(ws, merged).then(() => {
-      persistSavedSlices([], ws)
-      void refresh()
+    return persistUserCollectionSlices({
+      workspaceId,
+      viewsLoading,
+      viewConfigs,
+      slices: next,
+      saveViews: typeof window === 'undefined' ? undefined : window.electronAPI?.saveViews,
+      refresh,
+      clearLegacy: (ws) => persistSavedSlices([], ws),
     })
   }
 
@@ -120,12 +121,14 @@ export function CollectionFilterMenu({
     const unique = assertUniqueSliceName(name, saved)
     if (!unique.ok || count === 0) return
     const created = createSavedSlice(unique.name, filters)
-    persist([...saved, created])
+    const next = [...saved, created]
     setName('')
     setSaving(false)
     setOpen(false)
     const nav = userSliceNavigation(created)
-    onApplyUserSlice?.(nav.viewId, nav.filters)
+    void persist(next).then(() => {
+      onApplyUserSlice?.(nav.viewId, nav.filters)
+    })
   }
 
   const commitRename = (id: string) => {
