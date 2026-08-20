@@ -166,6 +166,10 @@ export const RPC_CHANNELS = {
     GET_BACKLINKS: 'knowledge:getBacklinks',
     /** Notebook listing for the navigator tree (read; kernel lsNotebooks). */
     LIST_NOTEBOOKS: 'knowledge:listNotebooks',
+    /** Recursive notebook file tree (read; kernel listDocsByPath + av merge). REMOTE_ELIGIBLE. */
+    LIST_TREE: 'knowledge:listTree',
+    /** Navigator-only create (notebook/folder/document). Agents must use proposeMutation. */
+    USER_CREATE: 'knowledge:userCreate',
     /** Settings → Knowledge: edit connection baseUrl (+ token) for an existing record. */
     UPDATE_CONNECTION: 'knowledge:updateConnection',
     /** P4.3 Craft chrome copy/export payload (read-only; REMOTE_ELIGIBLE). */

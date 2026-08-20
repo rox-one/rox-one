@@ -94,6 +94,8 @@ describe('knowledge channel routing (P1+P3+P4+P5)', () => {
     RPC_CHANNELS.knowledge.GET_CONTEXT,
     RPC_CHANNELS.knowledge.GET_BACKLINKS,
     RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
+    RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+    RPC_CHANNELS.knowledge.LIST_TREE,
     RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
     RPC_CHANNELS.knowledge.SNAPSHOT_GET,
     RPC_CHANNELS.knowledge.CHANGED,
@@ -152,6 +154,14 @@ describe('knowledge channel routing (P1+P3+P4+P5)', () => {
     }
   })
 
+  test('knowledge LIST_TREE is REMOTE_ELIGIBLE like LIST_NOTEBOOKS', () => {
+    expect(REMOTE_ELIGIBLE_CHANNELS.has(RPC_CHANNELS.knowledge.LIST_TREE)).toBe(true)
+    expect(LOCAL_ONLY_CHANNELS.has(RPC_CHANNELS.knowledge.LIST_TREE)).toBe(false)
+    expect(REMOTE_ELIGIBLE_CHANNELS.has(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS)).toBe(true)
+    expect(REMOTE_ELIGIBLE_CHANNELS.has(RPC_CHANNELS.knowledge.USER_CREATE)).toBe(true)
+    expect(LOCAL_ONLY_CHANNELS.has(RPC_CHANNELS.knowledge.USER_CREATE)).toBe(false)
+  })
+
   test('knowledge ENGINE_STATUS, DETECT_ENGINE and ENGINE_START are LOCAL_ONLY', () => {
     expect(LOCAL_ONLY_CHANNELS.has(RPC_CHANNELS.knowledge.ENGINE_STATUS)).toBe(true)
     expect(REMOTE_ELIGIBLE_CHANNELS.has(RPC_CHANNELS.knowledge.ENGINE_STATUS)).toBe(false)
@@ -182,6 +192,7 @@ describe('knowledge channel routing (P1+P3+P4+P5)', () => {
       'LIST_LINKS',
       'LIST_NOTEBOOKS',
       'LIST_PROPOSALS',
+      'LIST_TREE',
       'METRICS_GET',
       'MIGRATE_NOTES',
       'PROPOSE_MUTATION',
@@ -199,6 +210,7 @@ describe('knowledge channel routing (P1+P3+P4+P5)', () => {
       'SNAPSHOT_GET',
       'UNWATCH',
       'UPDATE_CONNECTION',
+      'USER_CREATE',
       'VIEWS_LIST',
       'VIEW_RUN',
       'VIEW_SET_ATTRIBUTE',

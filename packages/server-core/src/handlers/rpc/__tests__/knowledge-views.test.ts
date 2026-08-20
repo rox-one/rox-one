@@ -246,7 +246,7 @@ describe('P5 HANDLED_CHANNELS', () => {
     expect(HANDLED_CHANNELS).toContain(RPC_CHANNELS.knowledge.VIEWS_LIST)
     expect(HANDLED_CHANNELS).toContain(RPC_CHANNELS.knowledge.VIEW_RUN)
     expect(HANDLED_CHANNELS).toContain(RPC_CHANNELS.knowledge.VIEW_SET_ATTRIBUTE)
-    expect(HANDLED_CHANNELS).toHaveLength(39) // 9 P1 + 7 P3 + 8 P4 + 6 P5 + 2 P6 + 3 P7-prep + 2 P7 + 2 navigator/settings (listNotebooks, updateConnection)
+    expect(HANDLED_CHANNELS).toHaveLength(41) // 9 P1 + 7 P3 + 8 P4 + 6 P5 + 2 P6 + 3 P7-prep + 2 P7 + 2 navigator/settings (listNotebooks, updateConnection)
   })
 
   it('registers handlers for every P5 channel', () => {

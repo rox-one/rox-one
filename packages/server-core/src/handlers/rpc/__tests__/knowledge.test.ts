@@ -128,6 +128,32 @@ function installFetchSeam() {
         headers: { 'Content-Type': 'application/json' },
       })
     }
+    if (u.endsWith('/api/filetree/listDocsByPath')) {
+      return new Response(JSON.stringify({
+        code: 0,
+        msg: '',
+        data: {
+          box: 'nb-1',
+          path: '/',
+          files: [
+            { id: 'folder-1', name: 'Research', path: '/20260807-folder', subFileCount: 2 },
+            { id: 'doc-1', name: 'Craft Spec', path: '/20260807-doc.sy', subFileCount: 0 },
+          ],
+        },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } })
+    }
+    if (u.endsWith('/api/query/sql')) {
+      return new Response(JSON.stringify({ code: 0, msg: '', data: [] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
+    if (u.endsWith('/api/filetree/createDocWithMd')) {
+      return new Response(JSON.stringify({ code: 0, msg: '', data: 'doc-created-1' }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    }
     throw new Error(`unmocked kernel endpoint: ${u}`)
   }) as unknown as typeof fetch
 }
@@ -234,6 +260,8 @@ describe('registration', () => {
       RPC_CHANNELS.knowledge.GET_BACKLINKS,
       RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
       RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+      RPC_CHANNELS.knowledge.LIST_TREE,
+      RPC_CHANNELS.knowledge.USER_CREATE,
       RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
       RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
       RPC_CHANNELS.knowledge.SNAPSHOT_GET,
@@ -270,7 +298,7 @@ describe('registration', () => {
     expect(HANDLED_CHANNELS.some((ch) => /engineStop/i.test(ch))).toBe(false)
     // CHANGED is a server→client push event subscribed via knowledge.onChanged, not a handler.
     expect([...HANDLED_CHANNELS]).not.toContain(RPC_CHANNELS.knowledge.CHANGED)
-    expect(HANDLED_CHANNELS).toHaveLength(39) // + DETECT_ENGINE + METRICS_GET + LIST_NOTEBOOKS + UPDATE_CONNECTION
+    expect(HANDLED_CHANNELS).toHaveLength(41) // + DETECT_ENGINE + METRICS_GET + LIST_NOTEBOOKS + UPDATE_CONNECTION
   })
 
   it('registers a handler for every declared channel and nothing else', () => {
@@ -400,6 +428,55 @@ describe('listNotebooks', () => {
     await expect(
       invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-1' }),
     ).rejects.toMatchObject({ code: 'CONNECTION_UNAVAILABLE' })
+  })
+})
+
+
+describe('listTree', () => {
+  it('returns kernel doc tree for a notebook', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    const { invoke } = createHarness()
+    const tree = await invoke(RPC_CHANNELS.knowledge.LIST_TREE, {
+      connectionId: 'conn-1',
+      notebookId: 'nb-1',
+    }) as { notebookId: string; nodes: Array<{ kind: string; id: string }> }
+    expect(tree.notebookId).toBe('nb-1')
+    expect(tree.nodes.map((n) => n.kind)).toEqual(['folder', 'document'])
+  })
+})
+
+describe('userCreate', () => {
+  it('rejects source agent with UNSUPPORTED_OPERATION', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+        connectionId: 'conn-1',
+        source: 'agent',
+        op: 'document',
+        notebookId: 'nb-1',
+        path: '/',
+        title: 'Note',
+      }),
+    ).rejects.toMatchObject({ code: 'UNSUPPORTED_OPERATION' })
+    expect(fetchCalls.filter((c) => c.url.endsWith('/api/filetree/createDocWithMd'))).toHaveLength(0)
+  })
+
+  it('creates a document from the navigator', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    const { invoke } = createHarness()
+    const result = await invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+      connectionId: 'conn-1',
+      source: 'navigator',
+      op: 'document',
+      notebookId: 'nb-1',
+      path: '/',
+      title: 'Note',
+    }) as { id: string }
+    expect(result.id).toBe('doc-created-1')
   })
 })
 
