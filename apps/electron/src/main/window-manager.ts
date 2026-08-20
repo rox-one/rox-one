@@ -231,6 +231,9 @@ export class WindowManager {
       minWidth: 800,
       minHeight: 600,
       show: false, // Don't show until ready-to-show event (faster perceived startup)
+      // Opaque fill so macOS vibrancy does not capture as a black frame if the
+      // GPU process dies before first paint (ready-to-show never fires).
+      backgroundColor: nativeTheme.shouldUseDarkColors ? '#0c0c0d' : '#f4f4f5',
       title: '',
       icon: iconExists ? iconPath : undefined,
       // macOS-specific: hidden title bar with inset traffic lights
@@ -273,10 +276,18 @@ export class WindowManager {
         windowLog.warn('Failed to apply default zoom level:', error)
       })
 
-    // Show window when first paint is ready (faster perceived startup)
-    window.once('ready-to-show', () => {
+    // Show window when first paint is ready. If the GPU process crashes,
+    // ready-to-show may never fire — still reveal so the shell is usable.
+    const revealWindow = () => {
+      if (window.isDestroyed() || window.isVisible()) return
       window.show()
-    })
+    }
+    window.once('ready-to-show', revealWindow)
+    setTimeout(() => {
+      if (window.isDestroyed() || window.isVisible()) return
+      windowLog.warn('ready-to-show timed out; showing window anyway')
+      revealWindow()
+    }, 4000)
 
     // Open external links in default browser, but never hand known-dangerous
     // schemes directly to shell.openExternal. Markdown normal-clicks go through
