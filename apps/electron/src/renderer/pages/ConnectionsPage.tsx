@@ -1068,7 +1068,10 @@ export default function ConnectionsPage() {
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                     <div className="font-mono text-xs">{row.workspaceId}</div>
                   </div>
-                  <div className="font-mono text-xs" data-testid="connections-row-scopes">{row.scopes.join(', ') || '—'}</div>
+                  <div data-testid="connections-row-scopes">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
+                    <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+                  </div>
                   {inspectById[row.id] ? (
                     <>
                       <div data-testid="connections-row-health">
@@ -1153,7 +1156,10 @@ export default function ConnectionsPage() {
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                     <div className="font-mono text-xs">{row.workspaceId}</div>
                   </div>
-                  <div className="font-mono text-xs" data-testid="connections-credential-scopes">{row.scopes.join(', ') || '—'}</div>
+                  <div data-testid="connections-credential-scopes">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
+                    <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+                  </div>
                   {inspectById[row.id] ? (
                     <>
                       <div data-testid="connections-credential-health">
@@ -1334,7 +1340,10 @@ export default function ConnectionsPage() {
                         <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                         <div className="font-mono text-xs">{row.workspaceId}</div>
                       </div>
-                      <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
+                      <div data-testid="connections-policy-scopes">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
+                        <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+                      </div>
                       {inspectById[row.id] ? (
                         <>
                           <div data-testid="connections-policy-health">
