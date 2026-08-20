@@ -62,6 +62,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('selects a policy connection row into the inspector without renaming tabs', () => {
+    expect(page).toContain('data-testid="connections-policy-row"')
+    expect(page.split('onClick={() => setSelected(row)}').length - 1).toBe(3)
+    expect(page).toContain('aria-selected={selected?.id === row.id}')
+    expect(page).toContain('selectedConnectionAtom')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('selects a service row for the inspector host', () => {
     expect(page).toContain('selectedConnectionAtom')
     expect(page).toContain('aria-selected')

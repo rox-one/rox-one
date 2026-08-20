@@ -1265,9 +1265,17 @@ export default function ConnectionsPage() {
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
                 {policyRows.map((row) => (
-                  <li key={row.id} className="rounded border px-3 py-2" data-testid="connections-policy-row">
-                    <div className="font-medium">{row.integrationId}</div>
-                    <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
+                  <li key={row.id}>
+                    <button
+                      type="button"
+                      data-testid="connections-policy-row"
+                      aria-selected={selected?.id === row.id}
+                      className={`w-full rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
+                      onClick={() => setSelected(row)}
+                    >
+                      <div className="font-medium">{row.integrationId}</div>
+                      <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
+                    </button>
                   </li>
                 ))}
               </ul>
