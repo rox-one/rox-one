@@ -216,6 +216,16 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('shows grant purpose for inspector consumers without secret fields', () => {
+    expect(host).toContain('connections-inspector-purpose')
+    expect(host).toContain('inspector.field.purpose')
+    expect(host).toContain('row.purpose')
+    expect(host).toContain('sanitizeConnectionBindingRows')
+    expect(host).not.toMatch(/\/token\//)
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('reloads inspector binding actions and resources after rotate, move, repair, and reconnect', () => {
     expect(host).toContain('applyConsumers')
     expect(host.split('void applyConsumers()').length - 1).toBe(4)

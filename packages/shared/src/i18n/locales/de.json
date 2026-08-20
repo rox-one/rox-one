@@ -881,6 +881,7 @@
   "inspector.field.panel": "Panel",
   "inspector.field.provenance": "Herkunft",
   "inspector.field.provider": "Anbieter",
+  "inspector.field.purpose": "Zweck",
   "inspector.field.resources": "Ressourcen",
   "inspector.field.revalidated": "Neu validiert",
   "inspector.field.route": "Route",
