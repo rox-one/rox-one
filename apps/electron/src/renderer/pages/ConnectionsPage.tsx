@@ -1276,6 +1276,7 @@ export default function ConnectionsPage() {
                       onClick={() => setSelected(row)}
                     >
                       <div className="font-medium">{row.integrationId}</div>
+                      <div className="font-mono text-xs" data-testid="connections-policy-tenant">{row.workspaceId}</div>
                       <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
                     </button>
                   </li>
