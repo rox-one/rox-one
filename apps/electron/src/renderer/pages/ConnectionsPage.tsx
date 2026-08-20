@@ -1253,8 +1253,8 @@ export default function ConnectionsPage() {
                 {bindingRows.map((row) => (
                   <li key={row.id} className="flex items-center gap-2 rounded border px-3 py-2">
                     <div className="min-w-0 flex-1">
-                      <div className="font-medium">{row.consumerId}</div>
-                      <div className="text-muted-foreground">{row.purpose}</div>
+                      <div className="font-medium" data-testid="connections-binding-consumer">{row.consumerId}</div>
+                      <div className="text-muted-foreground" data-testid="connections-binding-purpose">{row.purpose}</div>
                       <div className="font-mono text-xs" data-testid="connections-binding-actions">{row.actions.join(', ') || '—'}</div>
                       <div className="font-mono text-xs" data-testid="connections-binding-resources">{row.resources.join(', ') || '—'}</div>
                     </div>
@@ -1297,8 +1297,14 @@ export default function ConnectionsPage() {
                   <div className="text-[11px] text-muted-foreground">{t('connections.audit.actor')}</div>
                   <div className="font-mono text-xs">{row.actorId ?? '—'}</div>
                 </div>
-                <div className="font-mono text-xs">{row.connectionId}</div>
-                <div className="font-mono text-xs">{row.payloadDigest}</div>
+                <div data-testid="connections-audit-connection">
+                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.connection')}</div>
+                  <div className="font-mono text-xs">{row.connectionId}</div>
+                </div>
+                <div data-testid="connections-audit-digest">
+                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.digest')}</div>
+                  <div className="font-mono text-xs">{row.payloadDigest}</div>
+                </div>
               </li>
             ))}
           </ul>
