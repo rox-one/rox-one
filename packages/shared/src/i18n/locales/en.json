@@ -724,7 +724,7 @@
   "entityView.workbenchInspector": "Inspector",
   "entityView.workbenchMemo": "Memo",
   "entityView.workbenchModel": "Model",
-  "entityView.workbenchNoScenes": "No scenes",
+  "entityView.workbenchNoScenes": "No scenes yet",
   "entityView.workbenchPin": "Pin",
   "entityView.workbenchPrompt": "Prompt",
   "entityView.workbenchRewrite": "Rewrite",
@@ -3166,5 +3166,16 @@
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "Note id (optional)",
   "workspaceRail.removeLink": "Remove link",
-  "entityView.workbenchNoData": "No data"
+  "entityView.workbenchNoData": "No data",
+  "entityView.workbenchCameraMap": "Map",
+  "entityView.workbenchCameraFlow": "Flow",
+  "entityView.flowLive": "Live",
+  "entityView.outlineLog": "Log",
+  "entityView.outlineFork": "fork",
+  "entityView.outlineCheckout": "Checkout",
+  "entityView.outlineBranches": "Branches",
+  "entityView.outlineNoBranches": "No child branches",
+  "entityView.outlineVariables": "Variables",
+  "entityView.outlineNoVariables": "No variables detected",
+  "entityView.outlineInject": "Inject"
 }

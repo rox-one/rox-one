@@ -41,8 +41,8 @@ import {
 } from '@/components/app-shell/EntityViewTabs'
 import KnowledgeSurfacePage from '@/pages/KnowledgeSurfacePage'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
-import { MindMapHost } from '@/mindmap/MindMapHost'
-import { SessionWorkbench } from '@/components/session-workbench/SessionWorkbench'
+import { SessionFlowCanvas } from '@/components/session-workbench/SessionFlowCanvas'
+import { SessionGitOutline } from '@/components/session-workbench/SessionGitOutline'
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
 import { deriveSessionMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
@@ -675,37 +675,47 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         parentToolUseId: m.parentToolUseId,
         turnId: m.turnId,
       }))
-      const graphHost = (
-          <MindMapHost
-            entity={{ type: 'session', sessionId }}
-            graph={sessionMindMapGraph}
-            loading={sessionMindMapLoading}
-            error={messageLoadState.error}
-            mode={sessionView === 'outline' ? 'outline' : 'map'}
-            workspaceId={activeWorkspaceId || undefined}
-            sourceExcerpt={
-              session?.messages
-                ?.slice(-12)
-                .map((m) => `${m.role}: ${(m.content ?? '').slice(0, 240)}`)
-                .join('\n') || undefined
-            }
-            onNavigate={handleMindMapNavigate}
-          />
-      )
-      if (sessionView === 'map' || sessionView === 'outline' || sessionView === 'standard') {
+      if (sessionView === 'standard') {
+        return chatDisplay
+      }
+      if (sessionView === 'map') {
         return (
-          <SessionWorkbench
-            sessionId={sessionId}
-            messages={workbenchMessages}
-            stage={sessionView === 'standard' ? 'chat' : 'graph'}
-            graphStage={graphHost}
-            chatStage={chatDisplay}
-            model={effectiveModel || undefined}
-            onSelectMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
-            onFork={handleWorkbenchFork}
-            onRewrite={handleWorkbenchRewrite}
-            onCreateChildSessions={handleCreateChildSessions}
-          />
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+            <SessionFlowCanvas
+              sessionId={sessionId}
+              messages={workbenchMessages}
+              onSelectMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
+              onFork={handleWorkbenchFork}
+            />
+          </div>
+        )
+      }
+      if (sessionView === 'outline') {
+        const relatedBranches = [...sessionMetaMap.values()]
+          .filter((meta) => meta.id !== sessionId && (meta.branchFromSessionId === sessionId || meta.parentSessionId === sessionId))
+          .map((meta) => ({ id: meta.id, name: meta.name || meta.preview || meta.id }))
+        return (
+          <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+            <SessionGitOutline
+              sessionId={sessionId}
+              messages={workbenchMessages}
+              relatedBranches={relatedBranches}
+              onCheckoutMessage={(id) => {
+                setSessionView('standard')
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    chatDisplayRef?.current?.scrollToMessage?.(id)
+                  })
+                })
+              }}
+              onFork={handleWorkbenchFork}
+              onOpenSession={(id) => navigate(routes.view.allSessions(id))}
+              onInsertVariable={(name, value) => {
+                const token = value ? `${name}=${value}` : `{{${name}}}`
+                handleInputChange(`${inputValueRef.current} ${token}`.trim())
+              }}
+            />
+          </div>
         )
       }
       return <EntityViewPlaceholder view={sessionView as EntityViewId} />
@@ -720,9 +730,10 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       handleWorkbenchFork,
       handleWorkbenchRewrite,
       handleCreateChildSessions,
+      handleInputChange,
+      sessionMetaMap,
       activeWorkspaceId,
       session?.messages,
-      effectiveModel,
     ],
   )
 

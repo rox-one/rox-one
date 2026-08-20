@@ -724,7 +724,7 @@
   "entityView.workbenchInspector": "Инспектор",
   "entityView.workbenchMemo": "Памятка",
   "entityView.workbenchModel": "Модель",
-  "entityView.workbenchNoScenes": "Нет сцен",
+  "entityView.workbenchNoScenes": "Пока нет сцен",
   "entityView.workbenchPin": "Закрепить",
   "entityView.workbenchPrompt": "Промпт",
   "entityView.workbenchRewrite": "Переписать",
@@ -3166,5 +3166,16 @@
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "ID заметки (необяз.)",
   "workspaceRail.removeLink": "Удалить ссылку",
-  "entityView.workbenchNoData": "Нет данных"
+  "entityView.workbenchNoData": "Нет данных",
+  "entityView.workbenchCameraMap": "Карта",
+  "entityView.workbenchCameraFlow": "Поток",
+  "entityView.flowLive": "Live",
+  "entityView.outlineLog": "Журнал",
+  "entityView.outlineFork": "форк",
+  "entityView.outlineCheckout": "Checkout",
+  "entityView.outlineBranches": "Ветки",
+  "entityView.outlineNoBranches": "Нет дочерних веток",
+  "entityView.outlineVariables": "Переменные",
+  "entityView.outlineNoVariables": "Переменные не найдены",
+  "entityView.outlineInject": "Подставить"
 }

@@ -94,7 +94,7 @@ export function SessionWorkbench({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex h-full min-h-0 flex-1 overflow-hidden">
       <aside className="flex w-[240px] shrink-0 flex-col border-r border-border/50 bg-background/40">
         <div className="px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {t('entityView.workbenchMemo')}
@@ -139,8 +139,10 @@ export function SessionWorkbench({
           </ul>
         </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <div className="min-h-0 flex-1">{stage === 'chat' ? chatStage : graphStage}</div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          {stage === 'chat' ? chatStage : graphStage}
+        </div>
       </div>
       <aside className="flex w-[260px] shrink-0 flex-col border-l border-border/50 bg-background/40 p-3 text-xs">
         <div className="font-medium uppercase tracking-wide text-muted-foreground">

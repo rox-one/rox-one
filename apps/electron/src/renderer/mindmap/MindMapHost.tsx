@@ -71,6 +71,7 @@ export interface MindMapHostProps {
   error?: string | null
   /** External tab mode from EntityViewTabs */
   mode?: 'map' | 'outline'
+  camera?: 'map' | 'flow'
   selectedId?: MindMapNodeId | null
   onSelect?: (id: MindMapNodeId | null) => void
   onNavigate?: (source: { kind: string; id: string }) => void
@@ -97,6 +98,7 @@ export function MindMapHost({
   loading,
   error,
   mode = 'map',
+  camera = 'map',
   selectedId: selectedProp = null,
   onSelect,
   onNavigate,
@@ -450,6 +452,16 @@ export function MindMapHost({
           {' · '}
           {childCount} {t('mindmap.nodes')}
         </span>
+        {mode === 'map' ? (
+          <span className="inline-flex shrink-0 rounded-md border border-border/50 p-0.5">
+            <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-foreground/10 text-foreground">
+              {t('entityView.workbenchCameraMap')}
+            </span>
+            <span className="rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+              {t('entityView.workbenchCameraFlow')}
+            </span>
+          </span>
+        ) : null}
 
         <div className="ml-auto flex items-center gap-0.5">
           {showMapChrome ? (
@@ -649,7 +661,7 @@ export function MindMapHost({
       ) : split ? (
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
           <ResizablePanel defaultSize={62} minSize={30}>
-            <div className="flex h-full min-h-0 flex-col">{renderMap()}</div>
+            <div className="flex h-full min-h-0 flex-col"><div className="flex min-h-0 flex-1 flex-col">{renderMap()}</div></div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={38} minSize={20}>
@@ -688,5 +700,5 @@ export function MindMapHost({
     )
   }
 
-  return <div className={cn('flex-1 flex flex-col min-h-0', className)}>{body}</div>
+  return <div className={cn('flex h-full min-h-0 flex-1 flex-col', className)} data-camera={camera}>{body}</div>
 }
