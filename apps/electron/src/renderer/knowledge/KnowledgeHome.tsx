@@ -489,7 +489,10 @@ export function KnowledgeHome() {
       if (!connectionId) return
       const notebooks = await api.listNotebooks({ connectionId })
       const notebook = pickOpenNotebook(notebooks)
-      if (!notebook) return
+      if (!notebook) {
+        toast.error(t('knowledge.nav.notebooksEmpty'))
+        return
+      }
       const result = await api.userCreate(
         buildNewDocumentCreateArgs({
           connectionId,

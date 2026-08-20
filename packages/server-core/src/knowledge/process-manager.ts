@@ -42,6 +42,9 @@ export interface ManagedStartInput {
   }
   allocatePort: () => number
   now?: () => number
+  fetchImpl?: typeof fetch
+  readyTimeoutMs?: number
+  log?: { debug?(message: string, extra?: unknown): void }
 }
 
 export interface ManagedInstance {
@@ -60,6 +63,12 @@ interface ChildHandle {
 }
 
 const MAX_CRASHES = 5
+const DEFAULT_READY_TIMEOUT_MS = 20_000
+const READY_POLL_MS = 200
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
 
 export class SiyuanProcessManager {
   private child: ChildHandle | null = null
@@ -92,7 +101,14 @@ export class SiyuanProcessManager {
     this.stopping = false
     this.crashCount = 0
     this.lastError = undefined
-    return this.spawnOnce(input, binary, port)
+    const instance = this.spawnOnce(input, binary, port)
+    const readyTimeoutMs = input.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS
+    if (readyTimeoutMs === 0) {
+      return instance
+    }
+    await this.waitUntilReady(instance, input)
+    await this.seedDefaultNotebook(instance, input)
+    return instance
   }
 
   async stop(opts?: { graceMs?: number }): Promise<void> {
@@ -185,5 +201,58 @@ export class SiyuanProcessManager {
     }
     child.on('exit', (code) => this.exitHandler?.(code))
     return this.instance
+  }
+
+  private async waitUntilReady(instance: ManagedInstance, input: ManagedStartInput): Promise<void> {
+    const timeoutMs = input.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS
+    const fetchImpl = input.fetchImpl ?? globalThis.fetch.bind(globalThis)
+    const now = input.now ?? Date.now
+    const deadline = now() + timeoutMs
+    const url = `${instance.baseUrl}/api/system/version`
+    while (now() < deadline) {
+      try {
+        const response = await fetchImpl(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        })
+        const envelope = (await response.json()) as { code?: number }
+        if (envelope?.code === 0) return
+      } catch {
+        // kernel not listening yet — retry until timeout
+      }
+      if (now() >= deadline) break
+      await delay(READY_POLL_MS)
+    }
+    this.lastError = 'TIMEOUT'
+    throw new ManagedKernelCodedError('TIMEOUT', 'knowledge: kernel did not become ready in time')
+  }
+
+  private async seedDefaultNotebook(instance: ManagedInstance, input: ManagedStartInput): Promise<void> {
+    const fetchImpl = input.fetchImpl ?? globalThis.fetch.bind(globalThis)
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Token ${instance.accessAuthCode}`,
+    }
+    try {
+      const listResponse = await fetchImpl(`${instance.baseUrl}/api/notebook/lsNotebooks`, {
+        method: 'POST',
+        headers,
+        body: '{}',
+      })
+      const listEnvelope = (await listResponse.json()) as {
+        code?: number
+        data?: { notebooks?: unknown[] }
+      }
+      const notebooks = listEnvelope?.data?.notebooks ?? []
+      if (notebooks.length > 0) return
+      await fetchImpl(`${instance.baseUrl}/api/notebook/createNotebook`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name: 'Знания' }),
+      })
+    } catch (error) {
+      input.log?.debug?.('knowledge: seedDefaultNotebook failed', error)
+    }
   }
 }

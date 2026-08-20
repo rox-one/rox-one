@@ -36,6 +36,7 @@ import {
   Star,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { useAtomValue } from 'jotai'
 import { cn } from '@/lib/utils'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
@@ -383,7 +384,11 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
   const createInNavigator = async (op: 'document' | 'folder') => {
     const notebook = targetNotebook()
     const connectionId = await connectionIdOf()
-    if (!notebook || !connectionId || typeof api?.userCreate !== 'function') return
+    if (!notebook) {
+      toast.error(t('knowledge.nav.notebooksEmpty'))
+      return
+    }
+    if (!connectionId || typeof api?.userCreate !== 'function') return
     if (op === 'document') {
       const result = await api.userCreate(
         buildNewDocumentCreateArgs({

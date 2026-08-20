@@ -15,6 +15,18 @@ const pin = parseOemKernelPin({
   maxApiExclusive: '4.0.0',
 })
 
+function headerGet(headers: HeadersInit | undefined, name: string): string | null {
+  if (!headers) return null
+  if (headers instanceof Headers) return headers.get(name)
+  if (Array.isArray(headers)) {
+    const row = headers.find(([k]) => k.toLowerCase() === name.toLowerCase())
+    return row?.[1] ?? null
+  }
+  const rec = headers as Record<string, string>
+  const key = Object.keys(rec).find((k) => k.toLowerCase() === name.toLowerCase())
+  return key ? rec[key] : null
+}
+
 describe('SiyuanProcessManager', () => {
   it('fails closed when G2 is not C', async () => {
     const pm = new SiyuanProcessManager()
@@ -29,6 +41,7 @@ describe('SiyuanProcessManager', () => {
           throw new Error('should not spawn')
         },
         allocatePort: () => 19200,
+        readyTimeoutMs: 0,
       }),
     ).rejects.toMatchObject({ code: 'G2_BLOCKED' })
     expect(pm.status().running).toBe(false)
@@ -44,6 +57,7 @@ describe('SiyuanProcessManager', () => {
       pin,
       resolveBinary: () => '/fake/kernel',
       allocatePort: () => 19201,
+      readyTimeoutMs: 0,
       spawnFn: (cmd, args, opts) => {
         expect(cmd).toBe('/fake/kernel')
         expect(args.some((a) => a.startsWith('--wd=') && a.includes('/fake'))).toBe(true)
@@ -78,6 +92,7 @@ describe('SiyuanProcessManager', () => {
       pin,
       resolveBinary: () => '/fake/kernel',
       allocatePort: () => 19202,
+      readyTimeoutMs: 0,
       spawnFn: () => ({
         pid: 7,
         unref() {},
@@ -93,5 +108,45 @@ describe('SiyuanProcessManager', () => {
     }
     expect(pm.status().running).toBe(false)
     expect(pm.status().error).toBe('KERNEL_CRASHED')
+  })
+
+  it('seeds default notebook when kernel reports none', async () => {
+    const pm = new SiyuanProcessManager()
+    const called: string[] = []
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const url = String(input)
+      called.push(url)
+      if (url.endsWith('/api/system/version')) {
+        return new Response(JSON.stringify({ code: 0, data: '3.1.28' }), { status: 200 })
+      }
+      if (url.endsWith('/api/notebook/lsNotebooks')) {
+        expect(headerGet(init?.headers, 'Authorization')?.startsWith('Token ')).toBe(true)
+        return new Response(JSON.stringify({ code: 0, data: { notebooks: [] } }), { status: 200 })
+      }
+      if (url.endsWith('/api/notebook/createNotebook')) {
+        expect(headerGet(init?.headers, 'Authorization')?.startsWith('Token ')).toBe(true)
+        expect(JSON.parse(String(init?.body))).toEqual({ name: 'Знания' })
+        return new Response(JSON.stringify({ code: 0, data: {} }), { status: 200 })
+      }
+      throw new Error(`unexpected url ${url}`)
+    }
+    await pm.start({
+      configDir: '/tmp/cfg',
+      connectionId: 'c1',
+      g2AcceptedVariant: 'C',
+      pin,
+      resolveBinary: () => '/fake/kernel',
+      allocatePort: () => 19203,
+      readyTimeoutMs: 5000,
+      fetchImpl,
+      spawnFn: () => ({
+        pid: 9,
+        unref() {},
+        on() {},
+        kill() {},
+      }),
+    })
+    expect(called.some((url) => url.includes('/api/notebook/createNotebook'))).toBe(true)
+    await pm.stop({ graceMs: 0 })
   })
 })
