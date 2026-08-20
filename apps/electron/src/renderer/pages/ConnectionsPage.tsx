@@ -1099,12 +1099,18 @@ export default function ConnectionsPage() {
                   ) : null}
                   {leasesById[row.id] ? (
                     <>
-                      <div className="font-mono text-xs" data-testid="connections-row-leases">{leasesById[row.id]}</div>
+                      <div data-testid="connections-row-leases">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
+                        <div className="font-mono text-xs">{leasesById[row.id]}</div>
+                      </div>
                       <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
                     </>
                   ) : null}
                   {revalidatedById[row.id] ? (
-                    <div className="font-mono text-xs" data-testid="connections-row-revalidated">{revalidatedById[row.id]}</div>
+                    <div data-testid="connections-row-revalidated">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
+                      <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
+                    </div>
                   ) : null}
                   {status && status.kind !== 'idle' ? (
                     <div className="font-mono text-xs" data-testid="connections-test-status">
@@ -1178,12 +1184,18 @@ export default function ConnectionsPage() {
                   ) : null}
                   {leasesById[row.id] ? (
                     <>
-                      <div className="font-mono text-xs" data-testid="connections-row-leases">{leasesById[row.id]}</div>
+                      <div data-testid="connections-row-leases">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
+                        <div className="font-mono text-xs">{leasesById[row.id]}</div>
+                      </div>
                       <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
                     </>
                   ) : null}
                   {revalidatedById[row.id] ? (
-                    <div className="font-mono text-xs" data-testid="connections-row-revalidated">{revalidatedById[row.id]}</div>
+                    <div data-testid="connections-row-revalidated">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
+                      <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
+                    </div>
                   ) : null}
                 </button>
                 {renderReconnectControls(row)}
@@ -1353,12 +1365,18 @@ export default function ConnectionsPage() {
                       ) : null}
                       {leasesById[row.id] ? (
                         <>
-                          <div className="font-mono text-xs" data-testid="connections-policy-leases">{leasesById[row.id]}</div>
+                          <div data-testid="connections-policy-leases">
+                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
+                            <div className="font-mono text-xs">{leasesById[row.id]}</div>
+                          </div>
                           <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
                         </>
                       ) : null}
                       {revalidatedById[row.id] ? (
-                        <div className="font-mono text-xs" data-testid="connections-policy-revalidated">{revalidatedById[row.id]}</div>
+                        <div data-testid="connections-policy-revalidated">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
+                          <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
+                        </div>
                       ) : null}
                     </button>
                     {renderReconnectControls(row)}
