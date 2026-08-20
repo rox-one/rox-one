@@ -18,7 +18,7 @@ import {
   kanbanEditorTargetAtom,
   kanbanColumnColorsAtom,
 } from '@/atoms/kanban'
-import { useNavigation } from '@/contexts/NavigationContext'
+import { useNavigation, useNavigationState, isSessionsNavigation } from '@/contexts/NavigationContext'
 import { useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
 import { useLabels } from '@/hooks/useLabels'
 import { getSessionTitle } from '@/utils/session'
@@ -193,6 +193,31 @@ export function KanbanBoardContainer() {
 
   const [expandedTaskIds, setExpandedTaskIds] = React.useState<Set<string>>(() => new Set())
   const [editorTarget, setEditorTarget] = useAtom(kanbanEditorTargetAtom)
+  const navState = useNavigationState()
+  const boardSessionId =
+    isSessionsNavigation(navState) && navState.viewMode === 'board' && navState.details?.type === 'session'
+      ? navState.details.sessionId
+      : undefined
+
+  React.useEffect(() => {
+    if (!boardSessionId) return
+    setEditorTarget(prev => {
+      if (prev?.mode === 'edit' && prev.sessionId === boardSessionId) return prev
+      const meta = metaMap.get(boardSessionId)
+      return {
+        mode: 'edit',
+        sessionId: boardSessionId,
+        taskSlug: meta?.taskSlug,
+        initialTitle: meta ? getSessionTitle(meta) : undefined,
+      }
+    })
+  }, [boardSessionId, metaMap, setEditorTarget])
+
+  const closeTaskEditor = React.useCallback(() => {
+    setEditorTarget(null)
+    if (boardSessionId) navigate(routes.view.board())
+  }, [boardSessionId, navigate, setEditorTarget])
+
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
 
@@ -879,7 +904,7 @@ export function KanbanBoardContainer() {
       <TaskEditor
         workspaceId={activeWorkspaceId}
         target={editorTarget}
-        onClose={() => setEditorTarget(null)}
+        onClose={closeTaskEditor}
         onOpenSession={
           editorTarget.mode === 'edit'
             ? () => {

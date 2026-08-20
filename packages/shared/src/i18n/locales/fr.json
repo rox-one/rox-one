@@ -434,6 +434,7 @@
   "collection.filter.status": "Statut",
   "collection.filter.trigger": "Filtres",
   "collection.ops.count": "{{count}} sessions",
+  "collection.row.openBoardCard": "Ouvrir la carte du tableau",
   "collection.slice.duplicateName": "Ce nom est déjà utilisé",
   "collection.slice.flagged": "Marquées",
   "collection.slice.overdue": "En retard",
