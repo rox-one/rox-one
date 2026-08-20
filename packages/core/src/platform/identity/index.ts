@@ -111,7 +111,9 @@ export type {
   ConsumerKind,
   CredentialLease,
   DeliveryDescriptor,
+  ExecuteTrustedHttpInput,
   InProcessCredentialBrokerOptions,
+  TrustedHttpFetch,
 } from './broker.ts';
 export { InProcessCredentialBroker } from './broker.ts';
 export type {

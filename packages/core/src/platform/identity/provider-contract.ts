@@ -112,6 +112,12 @@ export interface ProviderLeaseInput {
   readonly purpose: string;
 }
 
+/** Broker-only header injection. Never serialized to renderer/WorkGraph. */
+export interface TrustedHeaderDelivery {
+  readonly header: string;
+  readonly value: string;
+}
+
 /**
  * Broker-only handle. Must not be JSON-serialized to renderer/WorkGraph.
  * The brand exists so a leaked object is still not a raw secret.
@@ -175,6 +181,8 @@ export interface SecretProvider {
   revoke(input: ProviderRevokeInput): Promise<void>;
   rotate(input: ProviderRotateInput): Promise<CredentialVersion>;
   health(input: ProviderHealthInput): Promise<HealthCheck>;
+  /** Broker-only; never called from renderer. */
+  deliverTrustedHeader?(input: ProviderLeaseInput): Promise<TrustedHeaderDelivery>;
 }
 
 export interface ImportCandidate {

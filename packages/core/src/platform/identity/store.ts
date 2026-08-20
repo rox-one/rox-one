@@ -209,9 +209,10 @@ export class IdentityStore {
   connect(input: ConnectServiceInput): ServiceConnection {
     const id = input.connectionId?.trim() || `svc-${input.provider}-${randomUUID().slice(0, 8)}`;
     const existingIdx = this.data.connections.findIndex((c) => c.id === id);
+    const linkedRef = input.credentialRef?.trim();
     const credentialRef =
-      input.credentialValue !== undefined && input.credentialValue.length > 0
-        ? id
+      linkedRef && linkedRef.length > 0
+        ? linkedRef
         : existingIdx >= 0
           ? this.data.connections[existingIdx]?.credentialRef
           : undefined;

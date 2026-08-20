@@ -180,12 +180,11 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
       workspaceId: args.workspaceId,
     }
     if (args.accountLabel !== undefined) input.accountLabel = args.accountLabel
-    if (credentialValue) input.credentialValue = credentialValue
     if (args.connectionId !== undefined) input.connectionId = args.connectionId
 
     const connection = store.connect(input)
 
-    // Persist service_oauth when a token is supplied (siyuan-cloud and peers).
+    // Persist service_oauth on the credential backend; identity.json stays metadata-only.
     if (credentialValue) {
       const manager = getCredentialManager()
       await manager.set(
@@ -199,10 +198,13 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
           tokenType: 'Bearer',
         },
       )
-      // Ensure credentialRef points at the connection id used as name.
-      if (connection.credentialRef !== connection.id) {
-        store.setConnectionStatus(connection.id, 'connected')
-      }
+      store.connect({
+        provider: args.provider,
+        workspaceId: args.workspaceId,
+        connectionId: connection.id,
+        credentialRef: connection.id,
+        ...(args.accountLabel !== undefined ? { accountLabel: args.accountLabel } : {}),
+      })
     }
 
     if (args.provider === 'siyuan-cloud') {
