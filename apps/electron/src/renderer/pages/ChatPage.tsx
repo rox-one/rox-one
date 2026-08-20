@@ -7,7 +7,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue, useSetAtom, useStore } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash } from 'lucide-react'
 import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -26,7 +26,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { coerceInputText } from '@/lib/input-text'
 import { lookupMigratedSiyuanId } from '@/lib/notes-migration-map'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
-import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
+import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
 import { getSessionTitle } from '@/utils/session'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
@@ -136,7 +136,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   // Track if messages are loaded for this session (for lazy loading)
   const loadedSessions = useAtomValue(loadedSessionsAtom)
-  const jotaiStore = useStore()
   const messagesLoaded = loadedSessions.has(sessionId)
 
   // Check if session exists in metadata (for loading state detection)
@@ -687,20 +686,17 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (sessionView === 'map') {
         const relatedBranches = [...sessionMetaMap.values()]
           .filter((meta) => meta.id !== sessionId && (meta.branchFromSessionId === sessionId || meta.parentSessionId === sessionId))
-          .map((meta) => {
-            const loaded = loadedSessions.has(meta.id) ? jotaiStore.get(sessionAtomFamily(meta.id)) : null
-            const fromMessageId = loaded?.branchFromMessageId
-            return {
-              id: meta.id,
-              name: meta.name || meta.preview || meta.id,
-              ...(fromMessageId ? { fromMessageId } : {}),
-            }
-          })
+          .map((meta) => ({
+            id: meta.id,
+            name: meta.name || meta.preview || meta.id,
+            ...(meta.branchFromMessageId ? { fromMessageId: meta.branchFromMessageId } : {}),
+          }))
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
             <SessionWorkflowEditor
               sessionId={sessionId}
               messages={workbenchMessages}
+              loading={sessionMindMapLoading}
               relatedBranches={relatedBranches}
               onFork={handleWorkbenchFork}
               onRewrite={handleWorkbenchRewrite}
@@ -753,8 +749,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       handleCreateChildSessions,
       handleInputChange,
       sessionMetaMap,
-      loadedSessions,
-      jotaiStore,
       activeWorkspaceId,
       session?.messages,
     ],

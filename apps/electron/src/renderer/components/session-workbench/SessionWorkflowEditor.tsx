@@ -44,6 +44,7 @@ export type RelatedBranch = {
 export type SessionWorkflowEditorProps = {
   sessionId: string
   messages: SceneMessage[]
+  loading?: boolean
   onFork?: (messageId: string) => void
   onRewrite?: (messageId: string, prompt: string) => void
   onCreateChildSessions?: (jobs: FanOutChildJob[]) => void | Promise<void>
@@ -84,6 +85,7 @@ function sceneOf(node: Node | undefined): FlowSceneNode['data']['scene'] | null 
 function EditorInner({
   sessionId,
   messages,
+  loading = false,
   onFork,
   onRewrite,
   onCreateChildSessions,
@@ -361,7 +363,11 @@ function EditorInner({
         </div>
       )}
 
-      {graph.scenes.length === 0 ? (
+      {loading && graph.scenes.length === 0 ? (
+        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+          {t('mindmap.loading')}
+        </div>
+      ) : graph.scenes.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-1 px-6 text-center text-sm text-muted-foreground">
           <p>{t('entityView.workbenchNoScenes')}</p>
           <p className="text-xs">{t('entityView.mapEmptyHint')}</p>
