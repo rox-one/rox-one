@@ -9,10 +9,12 @@ import { existsSync, mkdirSync } from 'fs'
 import { dirname, join } from 'path'
 import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts'
 import {
+  COLLECTION_DENSITY_VALUES,
   COLLECTION_GROUP_BY_VALUES,
   COLLECTION_ORDER_BY_VALUES,
   COLLECTION_PROPERTY_VALUES,
   DEFAULT_COLLECTION_DISPLAY,
+  type CollectionDensity,
   type CollectionDisplay,
   type CollectionGroupBy,
   type CollectionOrderBy,
@@ -21,6 +23,7 @@ import {
 } from './collection-types.ts'
 
 export type {
+  CollectionDensity,
   CollectionDisplay,
   CollectionGroupBy,
   CollectionOrderBy,
@@ -44,6 +47,10 @@ function isOrderDir(value: unknown): value is CollectionOrderDir {
 
 function isProperty(value: unknown): value is CollectionProperty {
   return typeof value === 'string' && (COLLECTION_PROPERTY_VALUES as readonly string[]).includes(value)
+}
+
+function isDensity(value: unknown): value is CollectionDensity {
+  return typeof value === 'string' && (COLLECTION_DENSITY_VALUES as readonly string[]).includes(value)
 }
 
 export function getDefaultCollectionDisplay(): CollectionDisplay {
@@ -90,6 +97,7 @@ export function normalizeCollectionDisplay(raw: unknown): CollectionDisplay {
       typeof obj.showEmptyGroups === 'boolean' ? obj.showEmptyGroups : defaults.showEmptyGroups,
     showCompleted:
       typeof obj.showCompleted === 'boolean' ? obj.showCompleted : defaults.showCompleted,
+    density: isDensity(obj.density) ? obj.density : defaults.density,
   }
 }
 

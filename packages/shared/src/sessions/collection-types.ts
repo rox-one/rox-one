@@ -42,6 +42,9 @@ export type CollectionProperty =
 
 export type CollectionOrderDir = 'asc' | 'desc'
 
+/** Row spacing for list/table collection surfaces. */
+export type CollectionDensity = 'compact' | 'comfortable'
+
 /**
  * Workspace-persisted collection display settings.
  * Stored at `{workspace}/collection/display.json`.
@@ -54,6 +57,7 @@ export interface CollectionDisplay {
   visibleProperties: CollectionProperty[]
   showEmptyGroups: boolean
   showCompleted: boolean
+  density: CollectionDensity
 }
 
 /** Due-date filter chip value. */
@@ -96,6 +100,7 @@ export const DEFAULT_COLLECTION_DISPLAY: CollectionDisplay = {
   ],
   showEmptyGroups: false,
   showCompleted: true,
+  density: 'compact',
 }
 
 /** Default empty filters (no chips active). */
@@ -118,6 +123,11 @@ export const COLLECTION_ORDER_BY_VALUES: readonly CollectionOrderBy[] = [
   'lastMessageAt',
   'createdAt',
   'name',
+] as const
+
+export const COLLECTION_DENSITY_VALUES: readonly CollectionDensity[] = [
+  'compact',
+  'comfortable',
 ] as const
 
 export const COLLECTION_PROPERTY_VALUES: readonly CollectionProperty[] = [

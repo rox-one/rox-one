@@ -45,6 +45,13 @@ const ORDER_I18N: Record<CollectionOrderBy, string> = {
   name: 'collection.display.orderBy.name',
 }
 
+const DENSITY_I18N: Record<CollectionDisplay['density'], string> = {
+  compact: 'collection.display.density.compact',
+  comfortable: 'collection.display.density.comfortable',
+}
+
+const DENSITY_VALUES: CollectionDisplay['density'][] = ['compact', 'comfortable']
+
 const PROPERTY_I18N: Record<CollectionProperty, string> = {
   status: 'collection.display.property.status',
   priority: 'collection.display.property.priority',
@@ -162,6 +169,21 @@ export function CollectionDisplayPopover({
               )
             })}
           </div>
+        </CollectionMenuDisclosure>
+
+        <CollectionMenuDisclosure
+          label={t('collection.display.densityLabel')}
+          valueLabel={t(DENSITY_I18N[display.density ?? 'compact'])}
+        >
+          {DENSITY_VALUES.map((value) => (
+            <CollectionMenuRadioRow
+              key={value}
+              role="dialog"
+              selected={(display.density ?? 'compact') === value}
+              label={t(DENSITY_I18N[value])}
+              onClick={() => patch({ density: value })}
+            />
+          ))}
         </CollectionMenuDisclosure>
 
         <div className="mx-1 my-1 h-px bg-foreground/8" />
