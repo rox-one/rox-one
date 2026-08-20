@@ -99,6 +99,8 @@ export interface SessionMeta {
   taskNodeCount?: number
   /** Parent session id this session was branched from — UI lineage; roots session families in the sidebar (undefined = not a branch or legacy branch) */
   branchFromSessionId?: string
+  /** Message id in the parent session this branch was cut from */
+  branchFromMessageId?: string
   /** Tasks Conductor: a generate-time draft orchestrator, hidden from the board until adopted by createTask. */
   taskDraft?: boolean
 }
