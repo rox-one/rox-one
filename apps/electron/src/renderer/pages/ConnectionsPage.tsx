@@ -1045,6 +1045,7 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs" data-testid="connections-row-expiry">{inspectById[row.id].expiry}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-provenance">{inspectById[row.id].provenance}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-fingerprint">{inspectById[row.id].fingerprint}</div>
+                      <div className="font-mono text-xs" data-testid="connections-row-version">{inspectById[row.id].versionId}</div>
                     </>
                   ) : null}
                   {leasesById[row.id] ? (
