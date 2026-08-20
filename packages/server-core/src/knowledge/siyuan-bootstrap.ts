@@ -23,6 +23,7 @@ import { SiyuanProcessManager } from './process-manager'
 import { parseOemKernelPin, resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { readFileSync } from 'node:fs'
+import { resolveKnowledgeHosting, type KnowledgeHostingMode } from './hosting-mode'
 
 /** Stable id for the auto-seeded local connection. */
 export const SIYUAN_LOCAL_CONNECTION_ID = 'siyuan-local'
@@ -44,6 +45,8 @@ export interface KernelBootstrapStatus {
   startMethod: KernelStartMethod
   dataDir: string
   baseUrl: string
+  /** Probe-only: h3 means flag + addon file exist; kernel is not loaded in-process. */
+  hostingMode: KnowledgeHostingMode
   error?: string
 }
 
@@ -80,6 +83,8 @@ export interface BootstrapDeps {
   now?: () => number
   /** Layout root for resolveOemManagedLayout (repo cwd or extraResources). */
   cwd?: string
+  /** Ready poll budget for SiyuanProcessManager.start (default 20s). */
+  readyTimeoutMs?: number
   log?: { debug?: (msg: string) => void; info?: (msg: string) => void; warn?: (msg: string) => void }
 }
 
@@ -294,6 +299,11 @@ export async function getKernelBootstrapStatus(deps: BootstrapDeps = {}): Promis
     startMethod: 'none',
     dataDir,
     baseUrl: probeUrl,
+    hostingMode: resolveKnowledgeHosting({
+          env: deps.env ?? process.env,
+          existsSync: deps.existsSync,
+          cwd: deps.cwd,
+        }),
   }
 }
 
@@ -390,6 +400,8 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
               }
             },
             allocatePort: () => 19200 + Math.floor(Math.random() * 1000),
+            fetchImpl: deps.fetchImpl,
+            readyTimeoutMs: deps.readyTimeoutMs,
           })
           lastStartAt = now()
           const existing = store.get(connectionId)

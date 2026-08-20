@@ -2,6 +2,7 @@ import type { ComponentEntry } from './types'
 import { AppMenuMobilePreview } from '../demos/mobile-webui/AppMenuMobilePreview'
 import { SessionListMobilePreview } from '../demos/mobile-webui/SessionListMobilePreview'
 import { ChatDisplayMobilePreview } from '../demos/mobile-webui/ChatDisplayMobilePreview'
+import { KnowledgeMobilePreview } from '../demos/mobile-webui/KnowledgeMobilePreview'
 
 const DEVICE_OPTIONS = [
   { label: 'iPhone 15 (390×844)', value: 'iphone-15' },
@@ -161,6 +162,35 @@ export const mobileWebUIComponents: ComponentEntry[] = [
       { name: 'Streaming reply', props: { messageCount: '5', streaming: true } },
       { name: 'Long thread (scroll)', props: { messageCount: '20', streaming: false } },
       { name: 'Explore mode', props: { messageCount: '5', permissionMode: 'safe' } },
+    ],
+    mockData: () => ({}),
+  },
+  {
+    id: 'mobile-webui-knowledge',
+    name: 'Knowledge (Mobile)',
+    category: 'Mobile WebUI',
+    description: 'Knowledge navigator stacked full-width in a 390px phone frame — larger tap targets, no debug full-interface chrome.',
+    component: KnowledgeMobilePreview,
+    layout: 'top',
+    previewOverflow: 'visible',
+    props: [
+      {
+        name: 'device',
+        description: 'Phone preset for the frame.',
+        control: { type: 'select', options: DEVICE_OPTIONS },
+        defaultValue: 'iphone-15',
+      },
+      {
+        name: 'showBezel',
+        description: 'Show the iPhone-style bezel + status bar.',
+        control: { type: 'boolean' },
+        defaultValue: true,
+      },
+    ],
+    variants: [
+      { name: 'iPhone 15 (390px)', props: { device: 'iphone-15', showBezel: true } },
+      { name: 'iPhone SE', props: { device: 'iphone-se', showBezel: true } },
+      { name: 'No bezel', props: { device: 'iphone-15', showBezel: false } },
     ],
     mockData: () => ({}),
   },

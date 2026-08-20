@@ -21,6 +21,7 @@ export * from './metrics-store'
 export * from './siyuan-detect'
 export * from './siyuan-plugins-fs'
 export * from './notes-migration'
+export * from './hosting-mode'
 // Named exports only — siyuan-bootstrap re-exports SIYUAN_DEFAULT_BASE_URL which
 // collides with siyuan-detect (TS2308).
 export {

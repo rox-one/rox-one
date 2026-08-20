@@ -165,8 +165,13 @@ describe('ensureLocalKernel', () => {
   })
 
   it('persists managed connection after SiyuanProcessManager.start when G2=C', async () => {
-    const fetchImpl = (async () => {
-      throw new Error('down')
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes(':6806')) throw new Error('down')
+      if (url.includes('/api/system/version')) {
+        return new Response(JSON.stringify({ code: 0, msg: '', data: '3.1.0' }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ code: 0, data: { notebooks: [{ id: 'n1' }] } }), { status: 200 })
     }) as unknown as typeof fetch
     const g2Path = join(configDir, 'g2-decision-record.md')
     writeFileSync(g2Path, '# G2\n\n> **Status: ACCEPTED**\n\nvariant C\n')
@@ -196,6 +201,7 @@ describe('ensureLocalKernel', () => {
       pathEnv: '',
       homeDir: '',
       platform: 'linux',
+      readyTimeoutMs: 200,
       spawnFn: ((cmd: string, args: string[]) => {
         expect(cmd).toBe('/fake/kernel')
         expect(args.some((a) => a.startsWith('--accessAuthCode='))).toBe(true)
@@ -282,17 +288,23 @@ describe('ensureLocalKernel', () => {
     mkdirSync(kernelDir, { recursive: true })
     const kernelPath = join(kernelDir, 'knowledge-engine')
     writeFileSync(kernelPath, 'fake-kernel')
-    const fetchImpl = (async () => {
-      throw new Error('down')
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.includes(':6806')) throw new Error('down')
+      if (url.includes('/api/system/version')) {
+        return new Response(JSON.stringify({ code: 0, msg: '', data: '3.1.0' }), { status: 200 })
+      }
+      return new Response(JSON.stringify({ code: 0, data: { notebooks: [{ id: 'n1' }] } }), { status: 200 })
     }) as unknown as typeof fetch
     const result = await ensureLocalKernel({
       configDir,
       fetchImpl,
       cwd: repoRoot,
-      existsSync,
+      existsSync: (p) => typeof p === 'string' && p.startsWith(repoRoot) && existsSync(p),
       pathEnv: '',
       homeDir: '',
       platform: 'linux',
+      readyTimeoutMs: 200,
       spawnFn: ((cmd: string, args: string[]) => {
         expect(cmd).toBe(kernelPath)
         expect(args.some((a) => a.startsWith('--accessAuthCode='))).toBe(true)

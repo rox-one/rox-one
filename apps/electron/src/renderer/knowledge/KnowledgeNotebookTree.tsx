@@ -240,11 +240,13 @@ function NavRow({
   label,
   title,
   onClick,
+  mobile,
 }: {
   icon: LucideIcon
   label: string
   title?: string
   onClick: () => void
+  mobile?: boolean
 }) {
   return (
     <button
@@ -252,7 +254,8 @@ function NavRow({
       onClick={onClick}
       title={title ?? label}
       className={cn(
-        'mx-3 flex w-[calc(100%-1.5rem)] items-center gap-2 rounded-md px-2.5 py-1.5 text-left',
+        'flex items-center gap-2 rounded-md px-2.5 text-left',
+        mobile ? 'mx-0 w-full py-2' : 'mx-3 w-[calc(100%-1.5rem)] py-1.5',
         'text-[12px] font-medium text-foreground/80',
         'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
       )}
@@ -263,7 +266,7 @@ function NavRow({
   )
 }
 
-export function KnowledgeNotebookTree() {
+export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
@@ -282,7 +285,7 @@ export function KnowledgeNotebookTree() {
   }, [workspaceId])
 
   return (
-    <nav aria-label={t('knowledge.nav.title')} className="flex flex-col gap-0.5 py-1">
+    <nav aria-label={t('knowledge.nav.title')} className={cn('flex flex-col gap-0.5 py-1', mobile && 'w-full')}>
       <SectionHeader icon={Book} label={t('knowledge.nav.notebooks')} />
       {data === null ? (
         <EmptyRow>{t('knowledge.surface.loading')}</EmptyRow>
@@ -291,7 +294,7 @@ export function KnowledgeNotebookTree() {
       ) : data.notebooks.status === 'empty' ? (
         <EmptyRow>{t('knowledge.nav.notebooksEmpty')}</EmptyRow>
       ) : (
-        <NotebookList notebooks={data.notebooks.items} />
+        <NotebookList notebooks={data.notebooks.items} mobile={mobile} />
       )}
 
       <SectionHeader icon={Clock} label={t('knowledge.nav.recent')} />
@@ -310,6 +313,8 @@ export function KnowledgeNotebookTree() {
               onClick={() =>
                 navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
               }
+
+              mobile={mobile}
             />
           ))}
         </div>
@@ -331,6 +336,8 @@ export function KnowledgeNotebookTree() {
               onClick={() =>
                 navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
               }
+
+              mobile={mobile}
             />
           ))}
         </div>
@@ -350,6 +357,8 @@ export function KnowledgeNotebookTree() {
               label={view.name}
               title={view.description || view.name}
               onClick={() => navigate(routes.view.knowledgeView(view.id))}
+
+              mobile={mobile}
             />
           ))}
         </div>
@@ -365,7 +374,7 @@ function nodeIcon(kind: SiyuanDocTreeNode['kind']): LucideIcon {
   return FileText
 }
 
-function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
+function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[]; mobile?: boolean }) {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const [filter, setFilter] = React.useState<NavFilter>('all')
@@ -463,6 +472,8 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
             else if (node.kind === 'document') navigate(routes.view.siyuan({ kind: 'document', id: node.id }))
             else if (node.kind === 'folder') void loadFolderChildren(notebookId, node)
           }}
+
+          mobile={mobile}
         />
         {node.children && node.children.length > 0 ? renderNodes(notebookId, node.children, depth + 1) : null}
       </div>
@@ -477,21 +488,21 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
 
   return (
     <div className="mb-2 flex flex-col gap-0.5">
-      <div className="mx-3 mb-1 flex gap-1 text-[11px] text-muted-foreground">
+      <div className={cn('mb-1 flex gap-1 text-[11px] text-muted-foreground', mobile ? 'mx-0 w-full px-2' : 'mx-3')}>
         {(['all', 'notes', 'databases'] as NavFilter[]).map((id) => (
           <button
             key={id}
             type="button"
-            className={cn('rounded px-1.5 py-0.5', filter === id && 'bg-accent text-foreground')}
+            className={cn('rounded px-1.5', mobile ? 'py-2' : 'py-0.5', filter === id && 'bg-accent text-foreground')}
             onClick={() => setFilter(id)}
           >
             {filterLabel(id)}
           </button>
         ))}
-        <button type="button" className="rounded px-1.5 py-0.5 hover:bg-accent" aria-label={t('knowledge.nav.newNote')} onClick={() => void createInNavigator('document')}>
+        <button type="button" className={cn('rounded px-1.5 hover:bg-accent', mobile ? 'py-2' : 'py-0.5')} aria-label={t('knowledge.nav.newNote')} onClick={() => void createInNavigator('document')}>
           <FilePlus className="size-3" aria-hidden />
         </button>
-        <button type="button" className="rounded px-1.5 py-0.5 hover:bg-accent" aria-label={t('knowledge.nav.newFolder')} onClick={() => void createInNavigator('folder')}>
+        <button type="button" className={cn('rounded px-1.5 hover:bg-accent', mobile ? 'py-2' : 'py-0.5')} aria-label={t('knowledge.nav.newFolder')} onClick={() => void createInNavigator('folder')}>
           <FolderPlus className="size-3" aria-hidden />
         </button>
       </div>
@@ -501,7 +512,9 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
             icon={Book}
             label={notebook.name || notebook.id}
             onClick={() => void toggle(notebook.id)}
-          />
+  
+          mobile={mobile}
+        />
           {expanded[notebook.id] === 'loading' ? (
             <EmptyRow>…</EmptyRow>
           ) : Array.isArray(expanded[notebook.id]) ? (

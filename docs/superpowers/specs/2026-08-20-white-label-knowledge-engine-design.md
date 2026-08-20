@@ -244,6 +244,8 @@ Renderer never talks to kernel HTTP. Tokens never in logs (CredentialId only).
 - [ ] Rebase cost of W2 fork is understood
 - [ ] Explicit supersede of ADR-001 (host window may share process) and ADR-003 (storage still must not casually join session JSONL with kernel SQLite without a new model)
 
+**Host scaffold (probe only, not H3):** `resolveKnowledgeHosting` may report `h1` or `h3` from env `ROX_KNOWLEDGE_H3` plus `existsSync` of `knowledge-engine.node`. It must never import/load that addon, never open kernel SQLite, and never use FFI. A `h3` probe result does not mean an in-process kernel works.
+
 Track this epic as this file §12 and `plans/next-program/decisions/002-h3-in-process-knowledge-kernel.md` pointing here. Do not delete this section when implementing H1.
 
 ## 13. Implementation slices (for the later plan, not this commit)

@@ -19,18 +19,21 @@
  */
 import { atom, useAtom, useAtomValue } from 'jotai'
 import { Bookmark, Check, ChevronLeft, FileDiff, FilePlus, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { KnowledgeRef, SearchHit } from '@craft-agent/core/knowledge'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { EntityList } from '@/components/ui/entity-list'
+import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
+import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views'
 import type { KnowledgeWorkEnvelope } from '../../shared/types'
 import { KnowledgeProposals } from './KnowledgeProposals'
+import { shouldUseKnowledgeMobileChrome } from './knowledge-mobile'
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 
@@ -287,6 +290,12 @@ export function KnowledgeHome() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  const homeRef = useRef<HTMLDivElement>(null)
+  const containerWidth = useContainerWidth(homeRef)
+  const compactShell = useOptionalAppShellContext()?.isCompactMode === true
+  const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
+  const width = containerWidth > 0 ? containerWidth : windowWidth
+  const compactEmpty = shouldUseKnowledgeMobileChrome({ width, compactShell })
   const [query, setQuery] = useState('')
   const [hits, setHits] = useState<SearchHit[]>([])
   const [status, setStatus] = useState<SearchStatus>('idle')
@@ -555,7 +564,12 @@ export function KnowledgeHome() {
 
   const emptyState =
     status === 'idle' ? (
-      <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
+      <div
+        className={cn(
+          'flex flex-col items-center text-center',
+          compactEmpty ? 'gap-2 px-3 py-4' : 'gap-3 px-4 py-8',
+        )}
+      >
         <p className="text-[13px] font-medium text-foreground">
           {t('knowledge.nav.newNote')}
         </p>
@@ -604,7 +618,7 @@ export function KnowledgeHome() {
 
   if (view === 'proposals') {
     return (
-      <div className="flex h-full flex-col">
+      <div ref={homeRef} className="flex h-full flex-col">
         <div className="border-b border-border pt-3">{proposalsEntry}</div>
         <KnowledgeProposals className="min-h-0 flex-1" />
       </div>
@@ -618,7 +632,7 @@ export function KnowledgeHome() {
       activeViewId
 
     return (
-      <div className="flex h-full flex-col">
+      <div ref={homeRef} className="flex h-full flex-col">
         <div className="sticky top-0 z-10 border-b border-border bg-background px-3 pb-2 pt-3">
           <button
             type="button"
@@ -731,7 +745,7 @@ export function KnowledgeHome() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div ref={homeRef} className="flex h-full flex-col">
       <EntityList<SearchHit>
         className="flex-1"
         header={
