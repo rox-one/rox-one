@@ -396,6 +396,7 @@
   "collection.display.groupBy.project": "项目",
   "collection.display.groupBy.status": "状态",
   "collection.display.groupByLabel": "分组",
+  "collection.display.hoverActions": "悬停操作",
   "collection.display.labelNone": "No label",
   "collection.display.orderBy": "Ordering",
   "collection.display.orderBy.createdAt": "创建时间",

@@ -98,6 +98,7 @@ export function normalizeCollectionDisplay(raw: unknown): CollectionDisplay {
     showCompleted:
       typeof obj.showCompleted === 'boolean' ? obj.showCompleted : defaults.showCompleted,
     density: isDensity(obj.density) ? obj.density : defaults.density,
+    hoverActions: typeof obj.hoverActions === 'boolean' ? obj.hoverActions : defaults.hoverActions,
   }
 }
 

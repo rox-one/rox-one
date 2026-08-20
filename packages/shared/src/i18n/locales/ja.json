@@ -396,6 +396,7 @@
   "collection.display.groupBy.project": "プロジェクト",
   "collection.display.groupBy.status": "ステータス",
   "collection.display.groupByLabel": "グループ",
+  "collection.display.hoverActions": "ホバー時の操作",
   "collection.display.labelNone": "No label",
   "collection.display.orderBy": "Ordering",
   "collection.display.orderBy.createdAt": "作成日",

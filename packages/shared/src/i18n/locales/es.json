@@ -396,6 +396,7 @@
   "collection.display.groupBy.project": "Proyecto",
   "collection.display.groupBy.status": "Estado",
   "collection.display.groupByLabel": "Agrupar por",
+  "collection.display.hoverActions": "Acciones al pasar el cursor",
   "collection.display.labelNone": "No label",
   "collection.display.orderBy": "Ordering",
   "collection.display.orderBy.createdAt": "Creado",

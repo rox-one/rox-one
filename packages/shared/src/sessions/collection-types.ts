@@ -58,6 +58,8 @@ export interface CollectionDisplay {
   showEmptyGroups: boolean
   showCompleted: boolean
   density: CollectionDensity
+  /** When false, session rows hide unread/flag/archive hover buttons (More remains). */
+  hoverActions: boolean
 }
 
 /** Due-date filter chip value. */
@@ -101,6 +103,7 @@ export const DEFAULT_COLLECTION_DISPLAY: CollectionDisplay = {
   showEmptyGroups: false,
   showCompleted: true,
   density: 'compact',
+  hoverActions: true,
 }
 
 /** Default empty filters (no chips active). */

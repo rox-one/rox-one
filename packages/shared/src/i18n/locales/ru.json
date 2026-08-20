@@ -396,6 +396,7 @@
   "collection.display.groupBy.project": "Проект",
   "collection.display.groupBy.status": "Статус",
   "collection.display.groupByLabel": "Группировка",
+  "collection.display.hoverActions": "Действия при наведении",
   "collection.display.labelNone": "Без метки",
   "collection.display.orderBy": "Сортировка",
   "collection.display.orderBy.createdAt": "Создано",
