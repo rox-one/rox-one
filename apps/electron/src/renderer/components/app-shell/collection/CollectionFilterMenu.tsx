@@ -16,6 +16,7 @@ import {
 } from './collection-menu-row'
 import {
   mergeSliceViews,
+  sliceToView,
   userCollectionSlices,
 } from '@craft-agent/shared/views'
 import { useViews } from '@/hooks/useViews'
@@ -118,9 +119,12 @@ export function CollectionFilterMenu({
   const commitSave = () => {
     const unique = assertUniqueSliceName(name, saved)
     if (!unique.ok || count === 0) return
-    persist([...saved, createSavedSlice(unique.name, filters)])
+    const created = createSavedSlice(unique.name, filters)
+    persist([...saved, created])
     setName('')
     setSaving(false)
+    setOpen(false)
+    onApplyUserSlice?.(sliceToView(created).id, { ...created.filters })
   }
 
   const commitRename = (id: string) => {

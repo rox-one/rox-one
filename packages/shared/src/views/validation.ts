@@ -57,6 +57,7 @@ export const AVAILABLE_FUNCTIONS: Array<{ name: string; signature: string; descr
   { name: 'length', signature: 'length(arr)', description: 'Array or string length', example: 'length(labels) > 3' },
   { name: 'startsWith', signature: 'startsWith(str, prefix)', description: 'String starts with prefix', example: 'startsWith(name, "feat")' },
   { name: 'lower', signature: 'lower(str)', description: 'Lowercase string', example: 'lower(model) == "opus"' },
+  { name: 'startOfToday', signature: 'startOfToday()', description: 'Local midnight of today (ms)', example: 'dueDate < startOfToday()' },
 ];
 
 /**

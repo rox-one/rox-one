@@ -7,6 +7,7 @@
  */
 
 import { extractLabelId } from '../labels/values';
+import { localDayBounds } from '../sessions/collection-query.ts';
 
 /**
  * Days elapsed since a timestamp (in ms).
@@ -75,6 +76,16 @@ function startsWith(str: unknown, prefix: unknown): boolean {
   return false;
 }
 
+
+/**
+ * Local midnight of the current calendar day (ms).
+ * Lets leftover expressions use `dueDate < startOfToday()`.
+ */
+function startOfToday(now?: unknown): number {
+  const ts = typeof now === 'number' && Number.isFinite(now) ? now : Date.now();
+  return localDayBounds(ts).start;
+}
+
 /**
  * Convert string to lowercase for case-insensitive comparison.
  * @example lower(model) == 'opus'
@@ -97,4 +108,5 @@ export const VIEW_FUNCTIONS: Record<string, Function> = {
   length,
   startsWith,
   lower,
+  startOfToday,
 };
