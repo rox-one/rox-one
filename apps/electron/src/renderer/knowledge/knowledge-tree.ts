@@ -51,3 +51,20 @@ export function collectDatabases(nodes: SiyuanDocTreeNode[]): SiyuanDocTreeNode[
   walk(nodes)
   return found
 }
+
+/** Replace children of the folder whose path matches; recurse into nested folders. */
+export function mergeFolderChildren(
+  nodes: SiyuanDocTreeNode[],
+  folderPath: string,
+  children: SiyuanDocTreeNode[],
+): SiyuanDocTreeNode[] {
+  return nodes.map((node) => {
+    if (node.path === folderPath) {
+      return cloneNode(node, children)
+    }
+    if (node.children) {
+      return cloneNode(node, mergeFolderChildren(node.children, folderPath, children))
+    }
+    return node
+  })
+}

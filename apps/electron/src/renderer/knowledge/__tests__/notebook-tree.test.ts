@@ -14,6 +14,7 @@ import {
   UNCONTRACTED_NAV_SECTION_IDS,
   type KnowledgeNavigatorApi,
 } from '../KnowledgeNotebookTree'
+import { mergeFolderChildren, type SiyuanDocTreeNode } from '../knowledge-tree'
 
 function envelope(id: string, overrides: Partial<KnowledgeWorkEnvelope> = {}): KnowledgeWorkEnvelope {
   return {
@@ -181,5 +182,51 @@ describe('uncontractedNavSectionPresentation', () => {
 
   it('lists items when a future provider actually returns some', () => {
     expect(uncontractedNavSectionPresentation(3)).toBe('items')
+  })
+})
+
+describe('mergeFolderChildren', () => {
+  it('replaces children of the folder matching path', () => {
+    const tree: SiyuanDocTreeNode[] = [
+      {
+        id: 'folder-1',
+        name: 'Projects',
+        path: '/projects',
+        kind: 'folder',
+        children: [{ id: 'old', name: 'Old', path: '/projects/old', kind: 'document' }],
+      },
+      { id: 'other', name: 'Other', path: '/other', kind: 'document' },
+    ]
+    const kids: SiyuanDocTreeNode[] = [
+      { id: 'new', name: 'New', path: '/projects/new', kind: 'document' },
+    ]
+    const merged = mergeFolderChildren(tree, '/projects', kids)
+    expect(merged[0]?.children?.map((c) => c.id)).toEqual(['new'])
+    expect(merged[1]?.id).toBe('other')
+  })
+
+  it('merges nested folders by path', () => {
+    const tree: SiyuanDocTreeNode[] = [
+      {
+        id: 'outer',
+        name: 'Outer',
+        path: '/outer',
+        kind: 'folder',
+        children: [
+          { id: 'inner', name: 'Inner', path: '/outer/inner', kind: 'folder' },
+        ],
+      },
+    ]
+    const kids: SiyuanDocTreeNode[] = [{ id: 'leaf', name: 'Leaf', path: '/outer/inner/leaf', kind: 'document' }]
+    const merged = mergeFolderChildren(tree, '/outer/inner', kids)
+    expect(merged[0]?.children?.[0]?.children?.map((c) => c.id)).toEqual(['leaf'])
+  })
+
+  it('assigns empty children on a matching folder', () => {
+    const tree: SiyuanDocTreeNode[] = [
+      { id: 'folder-1', name: 'Projects', path: '/projects', kind: 'folder' },
+    ]
+    const merged = mergeFolderChildren(tree, '/projects', [])
+    expect(merged[0]?.children).toEqual([])
   })
 })

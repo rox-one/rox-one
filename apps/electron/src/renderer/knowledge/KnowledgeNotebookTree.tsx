@@ -28,8 +28,10 @@ import {
   Book,
   Clock,
   Database,
+  FilePlus,
   FileText,
   Folder,
+  FolderPlus,
   LayoutGrid,
   Star,
 } from 'lucide-react'
@@ -46,7 +48,8 @@ import type {
   KnowledgeViewConfig,
   KnowledgeWorkEnvelope,
 } from '../../shared/types'
-import { filterTree, type NavFilter, type SiyuanDocTreeNode } from './knowledge-tree'
+import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
+import { filterTree, mergeFolderChildren, type NavFilter, type SiyuanDocTreeNode } from './knowledge-tree'
 
 // ---------------------------------------------------------------------------
 // Data plumbing (exported for logic-level tests — KnowledgeHome precedent)
@@ -362,10 +365,48 @@ function nodeIcon(kind: SiyuanDocTreeNode['kind']): LucideIcon {
 }
 
 function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
+  const { t } = useTranslation()
   const { navigate } = useNavigation()
   const [filter, setFilter] = React.useState<NavFilter>('all')
   const [expanded, setExpanded] = React.useState<Record<string, SiyuanDocTreeNode[] | 'loading' | 'error'>>({})
+  const [lastNotebookId, setLastNotebookId] = React.useState<string | null>(null)
   const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
+
+  const connectionIdOf = async (): Promise<string | undefined> => {
+    const connections = await api?.listConnections?.().catch(() => [])
+    return connections?.[0]?.id
+  }
+
+  const targetNotebook = () =>
+    notebooks.find((notebook) => notebook.id === lastNotebookId) ?? pickOpenNotebook(notebooks)
+
+  const createInNavigator = async (op: 'document' | 'folder') => {
+    const notebook = targetNotebook()
+    const connectionId = await connectionIdOf()
+    if (!notebook || !connectionId || typeof api?.userCreate !== 'function') return
+    if (op === 'document') {
+      const result = await api.userCreate(
+        buildNewDocumentCreateArgs({
+          connectionId,
+          notebookId: notebook.id,
+          title: t('knowledge.nav.newNote'),
+        }),
+      )
+      if (result?.id) navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+      return
+    }
+    await api.userCreate({
+      connectionId,
+      source: 'navigator',
+      op: 'folder',
+      notebookId: notebook.id,
+      name: t('knowledge.nav.newFolder'),
+    })
+    if (expanded[notebook.id] && typeof api.listTree === 'function') {
+      const tree = await api.listTree({ connectionId, notebookId: notebook.id }).catch(() => null)
+      if (tree) setExpanded((prev) => ({ ...prev, [notebook.id]: tree.nodes }))
+    }
+  }
 
   const toggle = async (notebookId: string) => {
     if (expanded[notebookId]) {
@@ -376,9 +417,9 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
       })
       return
     }
+    setLastNotebookId(notebookId)
     setExpanded((prev) => ({ ...prev, [notebookId]: 'loading' }))
-    const connections = await api?.listConnections?.().catch(() => [])
-    const connectionId = connections?.[0]?.id
+    const connectionId = await connectionIdOf()
     if (!connectionId || typeof api?.listTree !== 'function') {
       setExpanded((prev) => ({ ...prev, [notebookId]: 'error' }))
       return
@@ -391,7 +432,22 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
     }
   }
 
-  const renderNodes = (nodes: SiyuanDocTreeNode[], depth: number) =>
+  const loadFolderChildren = async (notebookId: string, folder: SiyuanDocTreeNode) => {
+    const connectionId = await connectionIdOf()
+    if (!connectionId || typeof api?.listTree !== 'function') return
+    try {
+      const tree = await api.listTree({ connectionId, notebookId, path: folder.path })
+      setExpanded((prev) => {
+        const current = prev[notebookId]
+        if (!Array.isArray(current)) return prev
+        return { ...prev, [notebookId]: mergeFolderChildren(current, folder.path, tree.nodes) }
+      })
+    } catch {
+      /* keep existing children */
+    }
+  }
+
+  const renderNodes = (notebookId: string, nodes: SiyuanDocTreeNode[], depth: number) =>
     filterTree(nodes, filter).map((node) => (
       <div key={node.id} style={{ paddingLeft: depth * 8 }} className="flex flex-col">
         <NavRow
@@ -400,11 +456,19 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
           onClick={() => {
             if (node.kind === 'database') navigate(routes.view.siyuan({ kind: 'database', id: node.id }))
             else if (node.kind === 'document') navigate(routes.view.siyuan({ kind: 'document', id: node.id }))
+            else if (node.kind === 'folder') void loadFolderChildren(notebookId, node)
           }}
         />
-        {node.children && node.children.length > 0 ? renderNodes(node.children, depth + 1) : null}
+        {node.children && node.children.length > 0 ? renderNodes(notebookId, node.children, depth + 1) : null}
       </div>
     ))
+
+  const filterLabel = (id: NavFilter) =>
+    id === 'all'
+      ? t('knowledge.nav.filterAll')
+      : id === 'notes'
+        ? t('knowledge.nav.filterNotes')
+        : t('knowledge.nav.filterDatabases')
 
   return (
     <div className="mb-2 flex flex-col gap-0.5">
@@ -416,9 +480,15 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
             className={cn('rounded px-1.5 py-0.5', filter === id && 'bg-accent text-foreground')}
             onClick={() => setFilter(id)}
           >
-            {id}
+            {filterLabel(id)}
           </button>
         ))}
+        <button type="button" className="rounded px-1.5 py-0.5 hover:bg-accent" aria-label={t('knowledge.nav.newNote')} onClick={() => void createInNavigator('document')}>
+          <FilePlus className="size-3" aria-hidden />
+        </button>
+        <button type="button" className="rounded px-1.5 py-0.5 hover:bg-accent" aria-label={t('knowledge.nav.newFolder')} onClick={() => void createInNavigator('folder')}>
+          <FolderPlus className="size-3" aria-hidden />
+        </button>
       </div>
       {notebooks.map((notebook) => (
         <div key={notebook.id}>
@@ -430,7 +500,7 @@ function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
           {expanded[notebook.id] === 'loading' ? (
             <EmptyRow>…</EmptyRow>
           ) : Array.isArray(expanded[notebook.id]) ? (
-            renderNodes(expanded[notebook.id] as SiyuanDocTreeNode[], 1)
+            renderNodes(notebook.id, expanded[notebook.id] as SiyuanDocTreeNode[], 1)
           ) : null}
         </div>
       ))}

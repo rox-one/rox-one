@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { collectDatabases, filterTree, type SiyuanDocTreeNode } from '../knowledge-tree'
+import { collectDatabases, filterTree, mergeFolderChildren, type SiyuanDocTreeNode } from '../knowledge-tree'
 
 const sample: SiyuanDocTreeNode[] = [
   {
@@ -36,5 +36,15 @@ describe('filterTree', () => {
 describe('collectDatabases', () => {
   it('walks nested databases', () => {
     expect(collectDatabases(sample).map((n) => n.id)).toEqual(['av-1', 'orphan-db'])
+  })
+})
+
+describe('mergeFolderChildren', () => {
+  it('replaces children of the matching folder path', () => {
+    const next = mergeFolderChildren(sample, '/projects', [
+      { id: 'doc-2', name: 'Nested', path: '/projects/nested', kind: 'document' },
+    ])
+    expect(next[0]?.children?.map((c) => c.id)).toEqual(['doc-2'])
+    expect(next[1]?.id).toBe('orphan-db')
   })
 })
