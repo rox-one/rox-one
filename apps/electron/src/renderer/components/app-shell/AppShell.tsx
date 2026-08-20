@@ -111,7 +111,7 @@ import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/ato
 import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
-import { chipsAfterRailChange, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
+import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
@@ -1618,13 +1618,12 @@ function AppShellContent({
   }, [navigate])
 
   const handleViewClick = useCallback((viewId: string) => {
-    skipRailChipClearRef.current = true
-    skipRailChipClearOnce.current = true
     const view = viewConfigs.find(v => v.id === viewId)
-    if (view?.collectionFilters) {
-      setCollectionFilters({ ...view.collectionFilters })
-    }
-    navigate(routes.view.view(viewId))
+    const nav = railViewNavigation({ id: viewId, collectionFilters: view?.collectionFilters })
+    skipRailChipClearRef.current = true
+    skipRailChipClearOnce.current = nav.skipChipClear
+    if (nav.filters) setCollectionFilters({ ...nav.filters })
+    navigate(nav.route)
   }, [navigate, viewConfigs, setCollectionFilters])
 
   const handleViewsAllClick = useCallback(() => {

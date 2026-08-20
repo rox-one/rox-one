@@ -24,6 +24,27 @@ export function userSliceNavigation(slice: CollectionSliceLike): {
   }
 }
 
+export function railViewNavigation(view: {
+  id: string
+  collectionFilters?: CollectionFilters
+}): {
+  viewId: string
+  filters: CollectionFilters | null
+  route: ReturnType<typeof routes.view.view>
+  skipChipClear: true
+} {
+  if (view.collectionFilters) {
+    const nav = userSliceNavigation({ id: view.id, filters: view.collectionFilters })
+    return { ...nav, filters: nav.filters }
+  }
+  return {
+    viewId: view.id,
+    filters: null,
+    route: routes.view.view(view.id),
+    skipChipClear: true,
+  }
+}
+
 export function chipsAfterRailChange(opts: {
   prevKey: string
   nextKey: string

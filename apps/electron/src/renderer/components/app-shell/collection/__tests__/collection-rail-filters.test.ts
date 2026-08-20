@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { DEFAULT_COLLECTION_FILTERS } from '@craft-agent/shared/sessions/collection'
 import { createSavedSlice } from '../collection-slices'
-import { chipsAfterRailChange, userSliceNavigation } from '../collection-rail-filters'
+import { chipsAfterRailChange, railViewNavigation, userSliceNavigation } from '../collection-rail-filters'
 
 describe('chipsAfterRailChange', () => {
   const chips = { projectId: ['p1'] }
@@ -42,5 +42,26 @@ describe('userSliceNavigation (Filter save → Views rail)', () => {
     })
     expect(nav.viewId).toBe('slice:slice-abc')
     expect(nav.route).toBe('view/slice%3Aslice-abc')
+  })
+})
+
+describe('railViewNavigation (Views rail click)', () => {
+  it('applies chips for Filter slices and keeps skipChipClear', () => {
+    const nav = railViewNavigation({
+      id: 'slice:slice-abc',
+      collectionFilters: { flagged: true },
+    })
+    expect(nav.viewId).toBe('slice:slice-abc')
+    expect(nav.filters).toEqual({ flagged: true })
+    expect(nav.route).toBe('view/slice%3Aslice-abc')
+    expect(nav.skipChipClear).toBe(true)
+  })
+
+  it('does not invent chips for default session views', () => {
+    const nav = railViewNavigation({ id: 'view-new' })
+    expect(nav.viewId).toBe('view-new')
+    expect(nav.filters).toBeNull()
+    expect(nav.route).toBe('view/view-new')
+    expect(nav.skipChipClear).toBe(true)
   })
 })
