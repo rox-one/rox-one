@@ -6,6 +6,7 @@ import type { CollectionFilters, DueRange } from '@craft-agent/shared/sessions/c
 import type { SessionStatus } from '@/config/session-status-config'
 import { resolveStatusDisplayLabel } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
+import { CollectionMenuRadioRow, CollectionMenuRow, CollectionMenuSection } from './collection-menu-row'
 
 const PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
 
@@ -116,91 +117,104 @@ export function CollectionFilterChips({
   const activeDue = dueType(filters)
   const active = hasActiveFilters(filters)
 
+  const statusOptions = statuses.map((state) => ({
+    key: state.id,
+    selected: (filters.status ?? []).includes(state.id),
+    label: resolveStatusDisplayLabel(state, t),
+    onClick: () => toggleStatus(state.id),
+    radio: false,
+  }))
+  const priorityOptions = priorities.map((p) => ({
+    key: p,
+    selected: (filters.priority ?? []).includes(p),
+    label: t(`priority.${p}`),
+    onClick: () => togglePriority(p),
+    radio: false,
+  }))
+  const projectOptions = projects.map((project) => ({
+    key: project.id,
+    selected: (filters.projectId ?? []).includes(project.id),
+    label: project.name,
+    onClick: () => toggleProject(project.id),
+    radio: false,
+  }))
+  const labelOptions = labels.map((label) => ({
+    key: label.id,
+    selected: (filters.labels ?? []).includes(label.id),
+    label: label.name,
+    onClick: () => toggleLabel(label.id),
+    radio: false,
+  }))
+  const dueOptions = (['overdue', 'today', 'none'] as SimpleDue[]).map((type) => ({
+    key: type,
+    selected: activeDue === type,
+    label: t(`collection.filter.due.${type}`),
+    onClick: () => toggleDue(type),
+    radio: true,
+  }))
+
+  const groups = [
+    statuses.length > 0 ? { label: t('collection.filter.status'), options: statusOptions } : null,
+    { label: t('collection.filter.priority'), options: priorityOptions },
+    projects.length > 0 ? { label: t('collection.filter.project', { defaultValue: 'Project' }), options: projectOptions } : null,
+    labels.length > 0 ? { label: t('collection.filter.label', { defaultValue: 'Label' }), options: labelOptions } : null,
+    { label: t('collection.filter.due'), options: dueOptions },
+  ].filter(Boolean) as Array<{
+    label: string
+    options: Array<{ key: string; selected: boolean; label: string; onClick: () => void; radio: boolean }>
+  }>
+
   return (
     <div
       className={cn(
         'flex min-w-0',
-        stacked ? 'flex-col gap-2' : 'flex-wrap items-center gap-1.5',
+        stacked ? 'flex-col gap-1' : 'flex-wrap items-center gap-1.5',
         className,
       )}
     >
-      {statuses.length > 0 && (
-        <ChipGroup label={t('collection.filter.status')} stacked={stacked}>
-          {statuses.map((state) => {
-            const selected = (filters.status ?? []).includes(state.id)
-            return (
-              <FilterOption
-                key={state.id}
-                stacked={stacked}
-                selected={selected}
-                label={resolveStatusDisplayLabel(state, t)}
-                onClick={() => toggleStatus(state.id)}
+      {groups.map((group) => (
+        stacked ? (
+          <CollectionMenuSection key={group.label} label={group.label}>
+            {group.options.map((option) =>
+              option.radio ? (
+                <CollectionMenuRadioRow
+                  key={option.key}
+                  selected={option.selected}
+                  label={option.label}
+                  onClick={option.onClick}
+                />
+              ) : (
+                <CollectionMenuRow
+                  key={option.key}
+                  selected={option.selected}
+                  label={option.label}
+                  onClick={option.onClick}
+                />
+              ),
+            )}
+          </CollectionMenuSection>
+        ) : (
+          <ChipGroup key={group.label} label={group.label}>
+            {group.options.map((option) => (
+              <FilterChip
+                key={option.key}
+                selected={option.selected}
+                label={option.label}
+                onClick={option.onClick}
               />
-            )
-          })}
-        </ChipGroup>
-      )}
-
-      <ChipGroup label={t('collection.filter.priority')} stacked={stacked}>
-        {priorities.map((p) => {
-          const selected = (filters.priority ?? []).includes(p)
-          return (
-            <FilterOption
-              key={p}
-              stacked={stacked}
-              selected={selected}
-              label={t(`priority.${p}`)}
-              onClick={() => togglePriority(p)}
-            />
-          )
-        })}
-      </ChipGroup>
-
-      {projects.length > 0 && (
-        <ChipGroup label={t('collection.filter.project', { defaultValue: 'Project' })} stacked={stacked}>
-          {projects.map((project) => (
-            <FilterOption
-              key={project.id}
-              stacked={stacked}
-              selected={(filters.projectId ?? []).includes(project.id)}
-              label={project.name}
-              onClick={() => toggleProject(project.id)}
-            />
-          ))}
-        </ChipGroup>
-      )}
-
-      {labels.length > 0 && (
-        <ChipGroup label={t('collection.filter.label', { defaultValue: 'Label' })} stacked={stacked}>
-          {labels.map((label) => (
-            <FilterOption
-              key={label.id}
-              stacked={stacked}
-              selected={(filters.labels ?? []).includes(label.id)}
-              label={label.name}
-              onClick={() => toggleLabel(label.id)}
-            />
-          ))}
-        </ChipGroup>
-      )}
-
-      <ChipGroup label={t('collection.filter.due')} stacked={stacked}>
-        {(['overdue', 'today', 'none'] as SimpleDue[]).map((type) => (
-          <FilterOption
-            key={type}
-            stacked={stacked}
-            selected={activeDue === type}
-            label={t(`collection.filter.due.${type}`)}
-            onClick={() => toggleDue(type)}
-          />
-        ))}
-      </ChipGroup>
+            ))}
+          </ChipGroup>
+        )
+      ))}
 
       {active && (
         <button
           type="button"
           onClick={clearAll}
-          className="inline-flex h-6 items-center gap-1 rounded-md px-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground"
+          className={cn(
+            'inline-flex items-center gap-1 rounded-[4px] text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.04] hover:text-foreground',
+            stacked ? 'mx-2 mt-1 h-7 px-2' : 'h-6 px-1.5',
+          )}
         >
           <X className="h-3 w-3" />
           {t('collection.filter.clear')}
@@ -213,55 +227,29 @@ export function CollectionFilterChips({
 function ChipGroup({
   label,
   children,
-  stacked,
 }: {
   label: string
   children: React.ReactNode
-  stacked?: boolean
 }) {
   return (
-    <div
-      className={cn(
-        'flex min-w-0',
-        stacked ? 'flex-col gap-1' : 'flex-wrap items-center gap-1',
-      )}
-    >
+    <div className="flex min-w-0 flex-wrap items-center gap-1">
       <span className="mr-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/80">
         {label}
       </span>
-      {stacked ? (
-        <div className="flex min-w-0 flex-col gap-0.5">{children}</div>
-      ) : (
-        children
-      )}
+      {children}
     </div>
   )
 }
 
-function FilterOption({
-  stacked,
+function FilterChip({
   selected,
   label,
   onClick,
 }: {
-  stacked: boolean
   selected: boolean
   label: string
   onClick: () => void
 }) {
-  if (stacked) {
-    return (
-      <label className="flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-1 py-0.5 text-[12px] hover:bg-foreground/[0.04]">
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={onClick}
-          className="h-3.5 w-3.5 shrink-0 accent-foreground"
-        />
-        <span className="min-w-0 truncate">{label}</span>
-      </label>
-    )
-  }
   return (
     <button
       type="button"
@@ -270,8 +258,8 @@ function FilterOption({
       className={cn(
         'inline-flex h-6 max-w-[10rem] items-center truncate rounded-full border px-2 text-[11px] transition-colors',
         selected
-          ? 'border-foreground/25 bg-foreground/[0.1] font-medium text-foreground'
-          : 'border-border/50 bg-transparent text-foreground/55 hover:border-border hover:bg-foreground/[0.04] hover:text-foreground/80',
+          ? 'border-foreground/20 bg-foreground/[0.08] font-medium text-foreground'
+          : 'border-transparent bg-foreground/[0.03] text-foreground/55 hover:bg-foreground/[0.06] hover:text-foreground/80',
       )}
     >
       {label}

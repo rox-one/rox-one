@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Check, ChevronDown, LayoutGrid, List, Table2 } from 'lucide-react'
+import { ChevronDown, LayoutGrid, List, Table2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   DropdownMenu,
@@ -16,6 +16,7 @@ import {
   rememberCollectionView,
   resolveCycleTarget,
 } from './collection-view-cycle'
+import { CollectionMenuCheck } from './collection-menu-row'
 
 const ICONS = {
   list: List,
@@ -57,10 +58,6 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
     onChange(mode)
   }, [onChange, value])
 
-  const buttonClass = cn(
-    'inline-flex h-7 items-center justify-center border border-border/60 bg-foreground/[0.02] text-foreground/70 transition-colors hover:bg-foreground/[0.05] hover:text-foreground',
-  )
-
   const nextLabel = t('collection.view.cycleNext', { mode: t(LABEL_KEY[next]) })
   const prevLabel = t('collection.view.cyclePrev', { mode: t(LABEL_KEY[prev]) })
   const title = [
@@ -68,10 +65,13 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
     prevHotkey ? `${prevLabel} (${prevHotkey})` : prevLabel,
   ].join(' · ')
 
+  const buttonClass =
+    'inline-flex h-7 items-center justify-center text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground'
+
   return (
     <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen} modal={false}>
       <div
-        className={cn('inline-flex items-stretch', className)}
+        className={cn('inline-flex items-stretch rounded-[4px]', className)}
         onContextMenu={(event) => {
           event.preventDefault()
           setMenuOpen(true)
@@ -79,7 +79,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
       >
         <button
           type="button"
-          className={cn(buttonClass, 'w-7 rounded-l-md border-r-0')}
+          className={cn(buttonClass, 'w-7 rounded-l-[4px]')}
           aria-label={nextLabel}
           aria-keyshortcuts="Alt+V Alt+Shift+V"
           title={title}
@@ -92,7 +92,7 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
         <DropdownMenuTrigger asChild>
           <button
             type="button"
-            className={cn(buttonClass, 'w-5 rounded-r-md')}
+            className={cn(buttonClass, 'w-4 rounded-r-[4px]')}
             aria-label={`${t('collection.view.list')} / ${t('collection.view.board')} / ${t('collection.view.table')}`}
             aria-haspopup="menu"
             aria-expanded={menuOpen}
@@ -114,10 +114,10 @@ export function CollectionViewCycleButton({ value, onChange, className }: Collec
                 applyMode(mode)
               }}
             >
+              <CollectionMenuCheck selected={current} />
               <ItemIcon className="h-3.5 w-3.5" strokeWidth={2} />
               <span className="flex-1">{t(LABEL_KEY[mode])}</span>
               {hotkey ? <DropdownMenuShortcut className="pl-3">{hotkey}</DropdownMenuShortcut> : null}
-              {current ? <Check className="h-3.5 w-3.5" strokeWidth={2} /> : <span className="h-3.5 w-3.5" />}
             </StyledDropdownMenuItem>
           )
         })}
