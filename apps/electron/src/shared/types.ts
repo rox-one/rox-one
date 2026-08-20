@@ -516,6 +516,10 @@ export interface ElectronAPI {
   getServerConfig(): Promise<import('@craft-agent/shared/config/server-config').ServerConfig>
   setServerConfig(config: import('@craft-agent/shared/config/server-config').ServerConfig): Promise<void>
   getServerStatus(): Promise<import('@craft-agent/shared/config/server-config').ServerStatus>
+  getServerHealth(): Promise<{
+    status: 'ok' | 'degraded' | 'unhealthy'
+    checks: Array<{ name: string; status: 'pass' | 'fail'; message?: string }>
+  }>
 
   // App lifecycle
   relaunchApp(): Promise<void>

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@craft-agent/ui'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ServerConfig, ServerStatus } from '@craft-agent/shared/config/server-config'
+import { nativeSidecarHealthView, type NativeSidecarHealthView } from './native-sidecar-health'
 
 import {
   SettingsSection,
@@ -70,6 +71,7 @@ export default function ServerSettingsPage() {
   })
   const [savedForm, setSavedForm] = useState<ServerFormState>(form)
   const [status, setStatus] = useState<ServerStatus | null>(null)
+  const [sidecar, setSidecar] = useState<NativeSidecarHealthView>({ tone: 'off', detail: 'disabled' })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [tokenVisible, setTokenVisible] = useState(false)
@@ -79,14 +81,18 @@ export default function ServerSettingsPage() {
 
   const loadSettings = useCallback(async () => {
     try {
-      const [config, serverStatus] = await Promise.all([
+      const [config, serverStatus, health] = await Promise.all([
         window.electronAPI.getServerConfig(),
         window.electronAPI.getServerStatus(),
+        typeof window.electronAPI.getServerHealth === 'function'
+          ? window.electronAPI.getServerHealth().catch(() => null)
+          : Promise.resolve(null),
       ])
       const formState = configToForm(config)
       setForm(formState)
       setSavedForm(formState)
       setStatus(serverStatus)
+      setSidecar(nativeSidecarHealthView(health?.checks))
     } catch (err) {
       console.error('Failed to load server settings:', err)
     } finally {
@@ -197,6 +203,25 @@ export default function ServerSettingsPage() {
                 </Button>
               </div>
             )}
+          </SettingsSection>
+
+          <SettingsSection title={t('settings.server.nativeSidecar')}>
+            <SettingsCard>
+              <SettingsRow
+                label={t(
+                  sidecar.tone === 'ok'
+                    ? 'settings.server.nativeSidecarLive'
+                    : sidecar.tone === 'fail'
+                      ? 'settings.server.nativeSidecarDown'
+                      : 'settings.server.nativeSidecarOff',
+                )}
+                description={t('settings.server.nativeSidecarHint')}
+              >
+                <span className="text-xs text-muted-foreground font-mono truncate max-w-[280px]" title={sidecar.detail}>
+                  {sidecar.detail}
+                </span>
+              </SettingsRow>
+            </SettingsCard>
           </SettingsSection>
 
           {/* Connection + TLS — only visible when server mode is relevant */}
