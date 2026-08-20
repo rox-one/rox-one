@@ -141,8 +141,22 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('offers revoke and rotate on policy connection rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
-    expect(page.split('{renderRevokeControls(row)}').length - 1).toBe(2)
-    expect(page.split('{renderRotateControls(row)}').length - 1).toBe(2)
+    expect(page.split('{renderRevokeControls(row)}').length - 1).toBe(3)
+    expect(page.split('{renderRotateControls(row)}').length - 1).toBe(3)
+    expect(page).toContain('connections.revoke')
+    expect(page).toContain('connections.rotate')
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('offers revoke and rotate on credential rows without stealing focus', () => {
+    expect(page).toContain('data-testid="connections-credential-row"')
+    expect(page.split('{renderRevokeControls(row)}').length - 1).toBe(3)
+    expect(page.split('{renderRotateControls(row)}').length - 1).toBe(3)
     expect(page).toContain('connections.revoke')
     expect(page).toContain('connections.rotate')
     expect(page).not.toContain('autoFocus')

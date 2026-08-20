@@ -1223,6 +1223,8 @@ export default function ConnectionsPage() {
                   ) : null}
                 </button>
                 {renderReconnectControls(row)}
+                {renderRevokeControls(row)}
+                {renderRotateControls(row)}
                 {row.storageMode === 'copy' ? (
                   convertingId === row.id ? (
                     <div className="flex flex-col items-end gap-1">
