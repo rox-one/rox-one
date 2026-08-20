@@ -145,6 +145,20 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('calls applySelectedRow after bindingRows refresh inside confirmGrant', () => {
+    const start = page.indexOf('const confirmGrant = async () => {')
+    const end = page.indexOf('const pathField =', start)
+    expect(start).toBeGreaterThan(-1)
+    expect(end).toBeGreaterThan(start)
+    const grant = page.slice(start, end)
+    expect(grant).toContain('setBindingRows')
+    expect(grant).toContain('listConnectionBindings')
+    expect(grant).toContain('applySelectedRow(listed, connectionId)')
+    expect(grant.indexOf('setBindingRows')).toBeLessThan(grant.indexOf('applySelectedRow(listed, connectionId)'))
+    expect(grant.toLowerCase()).not.toContain('infisical')
+    expect(grant).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('exposes masked docker, aws, keychain, adc, and ssh-agent imports', () => {
     expect(page).toContain('previewDockerHelper')
     expect(page).toContain('importDockerHelper')
