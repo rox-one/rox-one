@@ -861,6 +861,7 @@
   "inspector.empty.connections.title": "接続",
   "inspector.empty.outline.body": "ドキュメントとセッションの構造はナレッジワークスペース（ウェーブ W2）で提供予定です。",
   "inspector.empty.outline.title": "アウトライン",
+  "inspector.field.actions": "アクション",
   "inspector.field.audit": "最新の監査",
   "inspector.field.consumers": "影響を受けるコンシューマー",
   "inspector.field.credentialKind": "資格情報の種類",

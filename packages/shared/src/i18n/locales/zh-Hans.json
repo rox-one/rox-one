@@ -861,6 +861,7 @@
   "inspector.empty.connections.title": "连接",
   "inspector.empty.outline.body": "文档与会话结构将随知识工作区（W2 阶段）提供。",
   "inspector.empty.outline.title": "大纲",
+  "inspector.field.actions": "操作",
   "inspector.field.audit": "最近审计",
   "inspector.field.consumers": "受影响的消费者",
   "inspector.field.credentialKind": "凭据类型",

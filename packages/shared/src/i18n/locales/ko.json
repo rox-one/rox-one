@@ -861,6 +861,7 @@
   "inspector.empty.connections.title": "연결",
   "inspector.empty.outline.body": "문서 및 세션 구조는 Knowledge 워크스페이스(웨이브 W2)에서 제공됩니다.",
   "inspector.empty.outline.title": "개요",
+  "inspector.field.actions": "작업",
   "inspector.field.audit": "최근 감사",
   "inspector.field.consumers": "영향받는 소비자",
   "inspector.field.credentialKind": "자격 증명 종류",

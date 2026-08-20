@@ -96,7 +96,7 @@ function ConnectionInfoSection() {
   const [confirmMove, setConfirmMove] = useState(false)
   const [confirmReconnect, setConfirmReconnect] = useState(false)
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
-  const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string; resources: string }>>([])
+  const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string; actions: string; resources: string }>>([])
   const [testLogin, setTestLogin] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
   const [inspect, setInspect] = useState<ReturnType<typeof projectConnectionInspect> | null>(null)
@@ -127,6 +127,7 @@ function ConnectionInfoSection() {
         setConsumers(sanitizeConnectionBindingRows(raw).map((row) => ({
           consumerId: row.consumerId,
           status: row.purpose,
+          actions: row.actions.join(', ') || '—',
           resources: row.resources.join(', ') || '—',
         })))
       })
@@ -253,6 +254,13 @@ function ConnectionInfoSection() {
             label={t('inspector.field.consumers')}
             value={consumers.map((row) => `${row.consumerId}: ${row.status}`).join(', ')}
           />
+          <div data-testid="connections-inspector-actions">
+            <InfoRow
+              label={t('inspector.field.actions')}
+              value={consumers.map((row) => `${row.consumerId}: ${row.actions}`).join(', ')}
+              mono
+            />
+          </div>
           <div data-testid="connections-inspector-resources">
             <InfoRow
               label={t('inspector.field.resources')}

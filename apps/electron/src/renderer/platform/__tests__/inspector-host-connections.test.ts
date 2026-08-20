@@ -204,4 +204,14 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('shows grant actions for inspector consumers without secret fields', () => {
+    expect(host).toContain('connections-inspector-actions')
+    expect(host).toContain('inspector.field.actions')
+    expect(host).toContain('row.actions')
+    expect(host).toContain('sanitizeConnectionBindingRows')
+    expect(host).not.toMatch(/\/token\//)
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
