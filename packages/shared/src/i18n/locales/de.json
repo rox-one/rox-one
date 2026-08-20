@@ -536,6 +536,8 @@
   "common.yesterday": "Gestern",
   "connections.audit.action": "Aktion",
   "connections.audit.actor": "Akteur",
+  "connections.audit.connection": "Verbindung",
+  "connections.audit.digest": "Digest",
   "connections.audit.empty": "Noch keine Audit-Ereignisse",
   "connections.audit.outcome": "Ergebnis",
   "connections.audit.time": "Zeit",

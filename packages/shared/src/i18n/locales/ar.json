@@ -536,6 +536,8 @@
   "common.yesterday": "أمس",
   "connections.audit.action": "الإجراء",
   "connections.audit.actor": "المنفّذ",
+  "connections.audit.connection": "الاتصال",
+  "connections.audit.digest": "الملخص",
   "connections.audit.empty": "لا توجد أحداث تدقيق بعد",
   "connections.audit.outcome": "النتيجة",
   "connections.audit.time": "الوقت",

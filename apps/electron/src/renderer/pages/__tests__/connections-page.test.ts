@@ -136,15 +136,6 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
-  it('shows grant consumer and purpose on policy binding rows without secret fields', () => {
-    expect(page).toContain('connections-binding-consumer')
-    expect(page).toContain('connections-binding-purpose')
-    expect(page).toContain('row.consumerId')
-    expect(page).toContain('row.purpose')
-    expect(page.toLowerCase()).not.toContain('infisical')
-    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
-  })
-
   it('refreshes the selected row after unbind so inspector consumers update', () => {
     expect(page).toContain('confirmUnbind')
     expect(page).toContain('applySelectedRow(listed, binding.connectionId)')

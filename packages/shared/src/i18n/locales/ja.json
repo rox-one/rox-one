@@ -536,6 +536,8 @@
   "common.yesterday": "昨日",
   "connections.audit.action": "アクション",
   "connections.audit.actor": "実行者",
+  "connections.audit.connection": "接続",
+  "connections.audit.digest": "ダイジェスト",
   "connections.audit.empty": "監査イベントはまだありません",
   "connections.audit.outcome": "結果",
   "connections.audit.time": "時刻",

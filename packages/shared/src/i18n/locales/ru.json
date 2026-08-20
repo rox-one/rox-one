@@ -536,6 +536,8 @@
   "common.yesterday": "Вчера",
   "connections.audit.action": "Действие",
   "connections.audit.actor": "Актор",
+  "connections.audit.connection": "Соединение",
+  "connections.audit.digest": "Дайджест",
   "connections.audit.empty": "Событий аудита пока нет",
   "connections.audit.outcome": "Исход",
   "connections.audit.time": "Время",

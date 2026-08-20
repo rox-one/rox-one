@@ -536,6 +536,8 @@
   "common.yesterday": "昨天",
   "connections.audit.action": "操作",
   "connections.audit.actor": "执行者",
+  "connections.audit.connection": "连接",
+  "connections.audit.digest": "摘要",
   "connections.audit.empty": "暂无审计事件",
   "connections.audit.outcome": "结果",
   "connections.audit.time": "时间",
