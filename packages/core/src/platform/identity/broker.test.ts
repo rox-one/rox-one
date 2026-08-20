@@ -192,4 +192,80 @@ describe('InProcessCredentialBroker', () => {
     await broker.revokeLease(lease.id, 'rotated');
     expect((await broker.getLease(lease.id))?.status).toBe('revoked');
   });
+
+  it('executeTrustedHttp injects Authorization from sealed copy and never returns the secret', async () => {
+    const { broker, grants, ref } = await seeded();
+    grants.put({
+      id: 'grant_1',
+      workspaceId: 'ws_1',
+      consumerId: CONSUMER.id,
+      credentialRefId: ref.id,
+      actions: ['git:clone'],
+      resources: ['github.com/rox-one/rox-one'],
+      status: 'active',
+    });
+    const lease = await broker.acquireLease({
+      credentialRef: ref.id,
+      consumer: CONSUMER,
+      purpose: 'github.api',
+      action: 'git:clone',
+      resources: ['github.com/rox-one/rox-one'],
+      audience: 'api.github.com',
+      ttl: 30_000,
+      requestedMechanism: 'trusted-http-header',
+    });
+
+    const seen: string[] = [];
+    const fetchImpl = async (_url: string | URL, init?: RequestInit) => {
+      seen.push(new Headers(init?.headers).get('Authorization') ?? '');
+      return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    };
+
+    const response = await broker.executeTrustedHttp({
+      leaseId: lease.id,
+      url: 'https://api.github.com/user',
+      fetch: fetchImpl,
+    });
+    expect(response.ok).toBe(true);
+    expect(seen).toEqual(['Bearer dummy']);
+    const after = await broker.getLease(lease.id);
+    expect(after?.status).toBe('used');
+    expect(JSON.stringify(after)).not.toContain('dummy');
+    expect(JSON.stringify(after)).not.toMatch(/Bearer /);
+  });
+
+  it('executeTrustedHttp denies a revoked lease before fetch', async () => {
+    const { broker, grants, ref } = await seeded();
+    grants.put({
+      id: 'grant_1',
+      workspaceId: 'ws_1',
+      consumerId: CONSUMER.id,
+      credentialRefId: ref.id,
+      actions: ['git:clone'],
+      resources: ['github.com/rox-one/rox-one'],
+      status: 'active',
+    });
+    const lease = await broker.acquireLease({
+      credentialRef: ref.id,
+      consumer: CONSUMER,
+      purpose: 'github.api',
+      action: 'git:clone',
+      resources: ['github.com/rox-one/rox-one'],
+      ttl: 30_000,
+    });
+    await broker.revokeLease(lease.id, 'rotated');
+
+    let called = false;
+    await expect(
+      broker.executeTrustedHttp({
+        leaseId: lease.id,
+        url: 'https://api.github.com/user',
+        fetch: async () => {
+          called = true;
+          return new Response('no', { status: 500 });
+        },
+      }),
+    ).rejects.toMatchObject({ code: 'LEASE_REVOKED' });
+    expect(called).toBe(false);
+  });
 });

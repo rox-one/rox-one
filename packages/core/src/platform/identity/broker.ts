@@ -64,6 +64,16 @@ export interface InProcessCredentialBrokerOptions {
   readonly now?: () => number;
 }
 
+export type TrustedHttpFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
+
+export interface ExecuteTrustedHttpInput {
+  readonly leaseId: string;
+  readonly url: string;
+  readonly method?: string;
+  readonly headers?: HeadersInit;
+  readonly fetch: TrustedHttpFetch;
+}
+
 export class InProcessCredentialBroker {
   private readonly grants: JsonAccessGrantStore;
   private readonly providers: Readonly<Record<string, SecretProvider>>;
@@ -161,6 +171,41 @@ export class InProcessCredentialBroker {
         lease.expiresAt > this.now(),
     );
     return { status: active ? 'ok' : 'denied' };
+  }
+
+  async executeTrustedHttp(input: ExecuteTrustedHttpInput): Promise<Response> {
+    const lease = this.leases.get(input.leaseId);
+    if (!lease || lease.status !== 'active' || lease.expiresAt <= this.now()) {
+      throw new ConnectionFabricError('LEASE_REVOKED', input.leaseId);
+    }
+    if (lease.delivery.mechanism !== 'trusted-http-header') {
+      throw new ConnectionFabricError('DELIVERY_UNSUPPORTED', lease.delivery.mechanism);
+    }
+
+    const ref = await this.resolveRef(lease.credentialRefId);
+    if (!ref) throw new ConnectionFabricError('PROVIDER_UNAVAILABLE', lease.credentialRefId);
+    const provider = this.providers[ref.providerId];
+    if (!provider?.deliverTrustedHeader) {
+      throw new ConnectionFabricError('DELIVERY_UNSUPPORTED', ref.providerId);
+    }
+
+    const delivery = await provider.deliverTrustedHeader({
+      credentialRef: ref,
+      purpose: lease.purpose,
+    });
+    const headers = new Headers(input.headers);
+    headers.set(delivery.header, delivery.value);
+
+    let response: Response;
+    try {
+      response = await input.fetch(input.url, {
+        method: input.method ?? 'GET',
+        headers,
+      });
+    } finally {
+      this.leases.set(lease.id, { ...lease, status: 'used' });
+    }
+    return response;
   }
 
   async getLease(leaseId: string): Promise<CredentialLease | undefined> {

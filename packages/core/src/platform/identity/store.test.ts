@@ -60,7 +60,7 @@ describe('IdentityStore', () => {
       provider: 'siyuan-cloud',
       workspaceId: 'ws-1',
       accountLabel: 'user@example.com',
-      credentialValue: 'secret-token-should-not-land-in-json',
+      credentialRef: 'svc-siyuan-cloud',
       connectionId: 'svc-siyuan-cloud',
     });
     expect(conn.id).toBe('svc-siyuan-cloud');
@@ -72,6 +72,7 @@ describe('IdentityStore', () => {
     expect(raw).not.toContain('secret-token-should-not-land-in-json');
     expect(raw).toContain('svc-siyuan-cloud');
     expect(raw).toContain('user@example.com');
+    expect(JSON.parse(raw).connections[0].credentialValue).toBeUndefined();
 
     // Default trial entitlement for siyuan-cloud
     const ents = store.listEntitlements();
@@ -83,14 +84,14 @@ describe('IdentityStore', () => {
     store.connect({
       provider: 'siyuan-cloud',
       workspaceId: 'ws-1',
-      credentialValue: 'tok-a',
+      credentialRef: 'svc-a',
       connectionId: 'svc-a',
       accountLabel: 'a@x.com',
     });
     store.connect({
       provider: 'github',
       workspaceId: 'ws-1',
-      credentialValue: 'tok-b',
+      credentialRef: 'svc-b',
       connectionId: 'svc-b',
       accountLabel: 'b',
     });
@@ -113,7 +114,7 @@ describe('IdentityStore', () => {
       provider: 'github',
       workspaceId: 'ws-1',
       connectionId: 'svc-gh',
-      credentialValue: 't',
+      credentialRef: 'svc-gh',
     });
     // Manually inject a read-only row via saveOwnedConnections + replace
     store.replaceDerivedConnections(store.listConnections(), [
@@ -153,7 +154,7 @@ describe('IdentityStore', () => {
       provider: 'siyuan-cloud',
       workspaceId: 'ws-1',
       connectionId: 'svc-siyuan-cloud',
-      credentialValue: 'tok',
+      credentialRef: 'svc-siyuan-cloud',
     });
     expect(store.listConnections()).toHaveLength(1);
     expect(store.listEntitlements().length).toBeGreaterThan(0);

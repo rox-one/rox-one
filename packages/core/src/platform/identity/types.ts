@@ -87,8 +87,8 @@ export interface ConnectServiceInput {
   provider: ServiceProvider;
   workspaceId: string;
   accountLabel?: string;
-  /** When set for oauth-style providers, stored as service_oauth secret. */
-  credentialValue?: string;
+  /** Metadata-only pointer; never a secret payload. */
+  credentialRef?: string;
   /** Optional stable id; otherwise generated. */
   connectionId?: string;
 }

@@ -292,15 +292,18 @@ export async function runGithubVertical(input: RunGithubVerticalInput): Promise<
 
   let response: Response;
   try {
-    response = await input.fetch(GITHUB_USER_URL, {
+    response = await broker.executeTrustedHttp({
+      leaseId: lease.id,
+      url: GITHUB_USER_URL,
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
         'User-Agent': 'rox-connection-fabric',
       },
+      fetch: input.fetch,
     });
   } catch (error) {
+    if (error instanceof ConnectionFabricError) throw error;
     throw new ConnectionFabricError(
       'PROVIDER_UNAVAILABLE',
       error instanceof Error ? error.message : 'github fetch',

@@ -97,6 +97,24 @@ describe('identity RPC handlers', () => {
     expect(b?.status).toBe('connected')
   })
 
+  it('connect does not echo credentialValue in identity state', async () => {
+    const server = createMockServer()
+    registerIdentityHandlers(server as never, {
+      platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } },
+    } as never)
+    const connect = server.handlers.get(RPC_CHANNELS.identity.CONNECT)!
+    const token = 'siyuan-secret-token-do-not-echo'
+    const state = (await connect({}, {
+      provider: 'siyuan-cloud',
+      workspaceId: 'ws-1',
+      credentialValue: token,
+      connectionId: 'svc-siyuan-cloud',
+    })) as { connections: Array<Record<string, unknown>> }
+    const serialized = JSON.stringify(state)
+    expect(serialized).not.toContain(token)
+    expect(state.connections.some((row) => 'credentialValue' in row)).toBe(false)
+  })
+
   it('rejects siyuan-cloud connect without credentialValue', async () => {
     const server = createMockServer()
     registerIdentityHandlers(server as never, {

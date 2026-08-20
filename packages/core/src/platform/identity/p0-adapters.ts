@@ -285,6 +285,15 @@ export class LocalMemorySecretProvider implements SecretProvider {
     };
   }
 
+  async deliverTrustedHeader(input: ProviderLeaseInput): Promise<{ header: string; value: string }> {
+    const stored = this.store.get(locatorKey(input.credentialRef.locator));
+    if (!stored?.sealed) throw new ConnectionFabricError('PROVIDER_UNAVAILABLE', input.credentialRef.id);
+    return {
+      header: 'Authorization',
+      value: `Bearer ${unsealSecret(stored.sealed)}`,
+    };
+  }
+
   async write(input: ProviderWriteInput): Promise<CredentialVersion> {
     if (!this.definition.capabilities.modes.includes(input.mode)) {
       throw new ConnectionFabricError('IMPORT_MODE_UNSUPPORTED', input.mode);
