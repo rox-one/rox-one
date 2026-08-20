@@ -113,6 +113,7 @@ export default function ConnectionsPage() {
   const [devicePoll, setDevicePoll] = useState<DevicePollView | null>(null)
   const [inspectById, setInspectById] = useState<Record<string, ConnectionInspectSummary>>({})
   const [leasesById, setLeasesById] = useState<Record<string, string>>({})
+  const [revalidatedById, setRevalidatedById] = useState<Record<string, string>>({})
   const [leasePreviewById, setLeasePreviewById] = useState<Record<string, ActiveLeaseView[]>>({})
 
   useEffect(() => {
@@ -146,6 +147,7 @@ export default function ConnectionsPage() {
       setUnbindingId(null)
       setReconnectingId(null)
       setLeasesById({})
+      setRevalidatedById({})
       setLeasePreviewById({})
     }
   }, [workspace?.id, setSelected])
@@ -328,6 +330,14 @@ export default function ConnectionsPage() {
     }))
   }
 
+  const applyRevalidated = (connectionId: string, consumers: unknown) => {
+    const next = formatReconnectLeases(sanitizeReconnectLeases(consumers))
+    setRevalidatedById((current) => ({
+      ...current,
+      [connectionId]: next === '—' ? '' : next,
+    }))
+  }
+
   const applyInspect = (connectionId: string, inspect: unknown) => {
     setInspectById((current) => ({
       ...current,
@@ -366,6 +376,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await rotateConnection({ workspaceId, connectionId })
       applyRevokedLeases(connectionId, result.leases)
+      applyRevalidated(connectionId, result.consumers)
       applyInspect(connectionId, result.inspect)
       setRotatingId(null)
       const listed = await refreshRows(workspaceId)
@@ -408,6 +419,7 @@ export default function ConnectionsPage() {
       const result = await reconnectConnection({ workspaceId, connectionId })
       applyInspect(connectionId, result.inspect)
       applyRevokedLeases(connectionId, result.leases)
+      applyRevalidated(connectionId, result.consumers)
       setReconnectingId(null)
       const listed = await refreshRows(workspaceId)
       applySelectedRow(listed, connectionId)
@@ -453,6 +465,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await moveConnection({ workspaceId, connectionId, targetBackend: moveTarget })
       applyRevokedLeases(connectionId, result.leases)
+      applyRevalidated(connectionId, result.consumers)
       applyInspect(connectionId, result.inspect)
       setMovingId(null)
       const listed = await refreshRows(workspaceId)
@@ -492,6 +505,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await repairConnection({ workspaceId, connectionId })
       applyInspect(connectionId, result.inspect)
+      applyRevalidated(connectionId, result.consumers)
       const listed = await refreshRows(workspaceId)
       applySelectedRow(listed, connectionId)
     } catch (err) {
@@ -1065,6 +1079,9 @@ export default function ConnectionsPage() {
                       <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
                     </>
                   ) : null}
+                  {revalidatedById[row.id] ? (
+                    <div className="font-mono text-xs" data-testid="connections-row-revalidated">{revalidatedById[row.id]}</div>
+                  ) : null}
                   {status && status.kind !== 'idle' ? (
                     <div className="font-mono text-xs" data-testid="connections-test-status">
                       {status.kind === 'ok' ? status.login : status.message}
@@ -1118,6 +1135,9 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs" data-testid="connections-row-leases">{leasesById[row.id]}</div>
                       <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
                     </>
+                  ) : null}
+                  {revalidatedById[row.id] ? (
+                    <div className="font-mono text-xs" data-testid="connections-row-revalidated">{revalidatedById[row.id]}</div>
                   ) : null}
                 </button>
                 {renderReconnectControls(row)}
