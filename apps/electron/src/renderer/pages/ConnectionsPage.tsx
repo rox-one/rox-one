@@ -321,13 +321,21 @@ export default function ConnectionsPage() {
   const policyRows = tab === 'policies' ? listed : []
   const visiblePreviews = matchesConnectSource(previews, activeSource)
 
+  const applyRevokedLeases = (connectionId: string, leases: unknown) => {
+    setLeasesById((current) => ({
+      ...current,
+      [connectionId]: formatReconnectLeases(sanitizeReconnectLeases(leases)),
+    }))
+  }
+
   const confirmRevoke = async (connectionId: string) => {
     const workspaceId = workspace?.id
     const revokeConnection = window.electronAPI?.workgraph?.revokeConnection
     if (!workspaceId || typeof revokeConnection !== 'function') return
     try {
       setListError(null)
-      await revokeConnection({ workspaceId, connectionId })
+      const result = await revokeConnection({ workspaceId, connectionId })
+      applyRevokedLeases(connectionId, result.leases)
       if (selected?.id === connectionId) setSelected(null)
       setConfirmingId(null)
       await refreshRows(workspaceId)
@@ -342,7 +350,8 @@ export default function ConnectionsPage() {
     if (!workspaceId || typeof rotateConnection !== 'function') return
     try {
       setListError(null)
-      await rotateConnection({ workspaceId, connectionId })
+      const result = await rotateConnection({ workspaceId, connectionId })
+      applyRevokedLeases(connectionId, result.leases)
       setRotatingId(null)
       await refreshRows(workspaceId)
     } catch (err) {
@@ -385,10 +394,7 @@ export default function ConnectionsPage() {
         ...current,
         [connectionId]: inspectSummaryFromRaw(result.inspect),
       }))
-      setLeasesById((current) => ({
-        ...current,
-        [connectionId]: formatReconnectLeases(sanitizeReconnectLeases(result.leases)),
-      }))
+      applyRevokedLeases(connectionId, result.leases)
       setReconnectingId(null)
       await refreshRows(workspaceId)
     } catch (err) {
@@ -414,7 +420,8 @@ export default function ConnectionsPage() {
     if (!workspaceId || typeof convertConnection !== 'function') return
     try {
       setListError(null)
-      await convertConnection({ workspaceId, connectionId })
+      const result = await convertConnection({ workspaceId, connectionId })
+      applyRevokedLeases(connectionId, result.leases)
       setConvertingId(null)
       await refreshRows(workspaceId)
     } catch (err) {
@@ -428,7 +435,8 @@ export default function ConnectionsPage() {
     if (!workspaceId || typeof moveConnection !== 'function') return
     try {
       setListError(null)
-      await moveConnection({ workspaceId, connectionId, targetBackend: moveTarget })
+      const result = await moveConnection({ workspaceId, connectionId, targetBackend: moveTarget })
+      applyRevokedLeases(connectionId, result.leases)
       setMovingId(null)
       await refreshRows(workspaceId)
     } catch (err) {
@@ -1013,7 +1021,10 @@ export default function ConnectionsPage() {
                   <div className="text-muted-foreground">{row.storageMode}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
                   {inspectById[row.id] ? (
-                    <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
+                    <>
+                      <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
+                      <div className="font-mono text-xs" data-testid="connections-row-expiry">{inspectById[row.id].expiry}</div>
+                    </>
                   ) : null}
                   {leasesById[row.id] ? (
                     <>
