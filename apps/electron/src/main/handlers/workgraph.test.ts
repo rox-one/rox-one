@@ -62,6 +62,7 @@ describe('WorkGraph handler profile', () => {
     expect(registrations.has(RPC_CHANNELS.workgraph.GET_CONNECTION)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.CREATE_CONNECTION)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.GRANT_CONNECTION)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.MOVE_CONNECTION)).toBe(true)
 
     const grant = handlers.get(RPC_CHANNELS.workgraph.GRANT_CONNECTION)
     await expect(grant?.({} as never, {
@@ -71,6 +72,14 @@ describe('WorkGraph handler profile', () => {
       purpose: 'github.user',
       actions: ['github.api'],
       resources: ['github:user'],
+      value: 'super-secret',
+    })).rejects.toThrow(/value|payload|secret|field/i)
+
+    const move = handlers.get(RPC_CHANNELS.workgraph.MOVE_CONNECTION)
+    await expect(move?.({} as never, {
+      workspaceId: 'workspace_a',
+      connectionId: created.id,
+      targetBackend: 'local-alt',
       value: 'super-secret',
     })).rejects.toThrow(/value|payload|secret|field/i)
 
