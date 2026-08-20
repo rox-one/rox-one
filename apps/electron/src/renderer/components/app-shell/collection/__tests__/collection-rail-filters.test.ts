@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { DEFAULT_COLLECTION_FILTERS } from '@craft-agent/shared/sessions/collection'
 import { createSavedSlice } from '../collection-slices'
-import { chipsAfterRailChange, railViewNavigation, userSliceNavigation } from '../collection-rail-filters'
+import { chipsAfterRailChange, persistUserCollectionSlices, railViewNavigation, userSliceNavigation } from '../collection-rail-filters'
 
 describe('chipsAfterRailChange', () => {
   const chips = { projectId: ['p1'] }
@@ -71,5 +71,46 @@ describe('railViewNavigation (Views rail click)', () => {
     expect(nav.filters).toBeNull()
     expect(nav.route).toBe('view/__all__')
     expect(nav.skipChipClear).toBe(true)
+  })
+})
+
+describe('persistUserCollectionSlices', () => {
+  it('skips save while views are loading or empty', async () => {
+    const saveViews = async () => { throw new Error('should not save') }
+    expect(await persistUserCollectionSlices({
+      workspaceId: 'ws',
+      viewsLoading: true,
+      viewConfigs: [{ id: 'view-new', name: 'New', domain: 'sessions', expression: 'true' }],
+      slices: [{ id: 'slice-a', name: 'A', filters: { flagged: true } }],
+      saveViews,
+    })).toBe('skipped')
+    expect(await persistUserCollectionSlices({
+      workspaceId: 'ws',
+      viewsLoading: false,
+      viewConfigs: [],
+      slices: [{ id: 'slice-a', name: 'A', filters: { flagged: true } }],
+      saveViews,
+    })).toBe('skipped')
+  })
+
+  it('saves merged views then refreshes before Filter navigation', async () => {
+    const order: string[] = []
+    const saveViews = async (_ws: string, views: { id: string }[]) => {
+      order.push('save')
+      expect(views.some((v) => v.id === 'slice:slice-a')).toBe(true)
+      expect(views.some((v) => v.id === 'view-new')).toBe(true)
+    }
+    const refresh = async () => { order.push('refresh') }
+    const result = await persistUserCollectionSlices({
+      workspaceId: 'ws',
+      viewsLoading: false,
+      viewConfigs: [{ id: 'view-new', name: 'New', domain: 'sessions', expression: 'true' }],
+      slices: [{ id: 'slice-a', name: 'A', filters: { flagged: true } }],
+      saveViews,
+      refresh,
+      clearLegacy: () => { order.push('clear') },
+    })
+    expect(result).toBe('saved')
+    expect(order).toEqual(['save', 'clear', 'refresh'])
   })
 })

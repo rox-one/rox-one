@@ -1,6 +1,27 @@
 import { DEFAULT_COLLECTION_FILTERS, type CollectionFilters } from '@craft-agent/shared/sessions/collection'
-import { sliceToView, type CollectionSliceLike } from '@craft-agent/shared/views'
+import { mergeSliceViews, sliceToView, type CollectionSliceLike } from '@craft-agent/shared/views'
+import type { ViewConfig } from '@craft-agent/shared/views'
 import { routes } from '../../../../shared/routes'
+
+
+export async function persistUserCollectionSlices(opts: {
+  workspaceId?: string | null
+  viewsLoading: boolean
+  viewConfigs: readonly ViewConfig[]
+  slices: readonly CollectionSliceLike[]
+  saveViews?: (workspaceId: string, views: ViewConfig[]) => Promise<unknown>
+  refresh?: () => unknown
+  clearLegacy?: (workspaceId: string) => void
+}): Promise<'saved' | 'skipped'> {
+  const ws = opts.workspaceId ?? undefined
+  if (!ws || opts.viewsLoading || opts.viewConfigs.length === 0) return 'skipped'
+  if (!opts.saveViews) return 'skipped'
+  const merged = mergeSliceViews(opts.viewConfigs, opts.slices)
+  await opts.saveViews(ws, merged)
+  opts.clearLegacy?.(ws)
+  await opts.refresh?.()
+  return 'saved'
+}
 
 /** Set before navigating to a view so AppShell keeps destination chips. */
 export const skipRailChipClearOnce = { current: false }
