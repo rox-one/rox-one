@@ -126,6 +126,8 @@ export function viewToCollectionSlice(view: ViewConfig): CollectionSliceLike | n
 export function userCollectionSlices(views: readonly ViewConfig[]): CollectionSliceLike[] {
   const out: CollectionSliceLike[] = [];
   for (const view of views) {
+    if (DEFAULT_SESSION_VIEW_IDS.has(view.id)) continue;
+    if ((view.domain ?? 'sessions') !== 'sessions') continue;
     const slice = viewToCollectionSlice(view);
     if (slice) out.push(slice);
   }

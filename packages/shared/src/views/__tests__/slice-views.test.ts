@@ -92,3 +92,55 @@ describe('buildViewContext extras', () => {
     expect(ctx.dueBucket).toBe('none')
   })
 })
+
+describe('due expressions', () => {
+  it('compiles empty filters as true', () => {
+    expect(filtersToExpression({})).toBe('true')
+    expect(compileView(sliceToView({ id: 'empty', name: 'Empty', filters: {} }))).not.toBeNull()
+  })
+
+  it('compiles next_n_days and range as dueDate bounds', () => {
+    const now = Date.UTC(2026, 7, 20, 15, 0, 0)
+    const nDays = filtersToExpression({ due: { type: 'next_n_days', days: 3 } }, now)
+    expect(nDays.startsWith('dueDate >= ')).toBe(true)
+    expect(nDays.includes(' and dueDate <= ')).toBe(true)
+    const range = filtersToExpression({ due: { type: 'range', start: 1, end: 9 } }, now)
+    expect(range).toBe('dueDate >= 1 and dueDate <= 9')
+    expect(compileView(sliceToView({ id: 'r', name: 'R', filters: { due: { type: 'range', start: 1, end: 9 } } }))).not.toBeNull()
+  })
+
+  it('evaluates leftover startOfToday expressions', () => {
+    const compiled = compileView({
+      id: 'legacy-overdue',
+      name: 'Legacy overdue',
+      domain: 'sessions',
+      expression: 'dueDate > 0 and dueDate < startOfToday()',
+    })
+    expect(compiled).not.toBeNull()
+    const overdue = Date.now() - 48 * 60 * 60 * 1000
+    expect(evaluateView(buildViewContext({ dueDate: overdue }), compiled!)).toBe(true)
+    expect(evaluateView(buildViewContext({ dueDate: Date.now() + 60_000 }), compiled!)).toBe(false)
+  })
+})
+
+describe('userCollectionSlices', () => {
+  it('skips default session views even if collectionFilters is present', () => {
+    const views = [
+      { ...getDefaultViews()[0]!, collectionFilters: { hasUnread: true } },
+      sliceToView({ id: 'slice-abc', name: 'Mine', filters: { flagged: true } }),
+    ]
+    expect(userCollectionSlices(views).map((s) => s.name)).toEqual(['Mine'])
+  })
+
+  it('treats slice- ids as managed replacements', () => {
+    const existing = [
+      ...getDefaultViews(),
+      { id: 'slice-old', name: 'Old', domain: 'sessions' as const, expression: 'true', collectionFilters: { flagged: true } },
+    ]
+    const merged = mergeSliceViews(existing, [{ id: 'slice-new', name: 'New', filters: { hasUnread: true } }])
+    const ids = merged.map((v) => v.id)
+    expect(ids).toContain('view-new')
+    expect(ids.some((id) => id.includes('old'))).toBe(false)
+    expect(ids).toContain('slice:slice-new')
+  })
+})
