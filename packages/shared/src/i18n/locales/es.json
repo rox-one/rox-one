@@ -860,6 +860,7 @@
   "inspector.empty.connections.title": "Conexión",
   "inspector.empty.outline.body": "La estructura de documentos y sesiones llega con el espacio de trabajo Knowledge (ola W2).",
   "inspector.empty.outline.title": "Esquema",
+  "inspector.field.audit": "Última auditoría",
   "inspector.field.consumers": "Consumidores afectados",
   "inspector.field.credentialKind": "Tipo de credencial",
   "inspector.field.credentialRef": "Ref. de credencial",

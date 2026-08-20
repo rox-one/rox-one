@@ -860,6 +860,7 @@
   "inspector.empty.connections.title": "Verbindung",
   "inspector.empty.outline.body": "Dokument- und Sitzungsstruktur kommt mit dem Knowledge-Arbeitsbereich (Welle W2).",
   "inspector.empty.outline.title": "Gliederung",
+  "inspector.field.audit": "Letztes Audit",
   "inspector.field.consumers": "Betroffene Verbraucher",
   "inspector.field.credentialKind": "Art der Anmeldedaten",
   "inspector.field.credentialRef": "Credential-Ref",

@@ -50,6 +50,22 @@ export function sanitizeConnectionAuditRows(rows: readonly unknown[]): Connectio
   })
 }
 
+export function latestConnectionAudit(
+  rows: readonly ConnectionAuditRow[],
+): ConnectionAuditRow | undefined {
+  let latest: ConnectionAuditRow | undefined
+  for (const row of rows) {
+    if (!latest || row.occurredAt > latest.occurredAt) latest = row
+  }
+  return latest
+}
+
+export function formatConnectionAudit(row: ConnectionAuditRow): string {
+  const action = row.action ?? row.eventType
+  const actor = row.actorId ?? '—'
+  return `${action} · ${row.outcome} · ${new Date(row.occurredAt).toISOString()} · ${actor}`
+}
+
 export interface ConnectionBindingRow {
   readonly id: string
   readonly connectionId: string

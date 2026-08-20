@@ -860,6 +860,7 @@
   "inspector.empty.connections.title": "Подключение",
   "inspector.empty.outline.body": "Структура документа и сессии появится с рабочей областью Knowledge (волна W2).",
   "inspector.empty.outline.title": "Структура",
+  "inspector.field.audit": "Последний аудит",
   "inspector.field.consumers": "Затронутые потребители",
   "inspector.field.credentialKind": "Тип учётных данных",
   "inspector.field.credentialRef": "Ссылка на учётные данные",

@@ -33,7 +33,12 @@ import {
   type InspectorSectionId,
 } from '@/atoms/unified-shell'
 import { selectedConnectionAtom } from '@/atoms/connections'
-import { sanitizeConnectionBindingRows } from '@/pages/connections-list'
+import {
+  formatConnectionAudit,
+  latestConnectionAudit,
+  sanitizeConnectionAuditRows,
+  sanitizeConnectionBindingRows,
+} from '@/pages/connections-list'
 import {
   MOVE_BACKENDS,
   errorMessage,
@@ -97,6 +102,7 @@ function ConnectionInfoSection() {
   const [inspect, setInspect] = useState<ReturnType<typeof projectConnectionInspect> | null>(null)
   const [leases, setLeases] = useState('')
   const [activeLeases, setActiveLeases] = useState<ActiveLeaseView[]>([])
+  const [auditSummary, setAuditSummary] = useState('')
   useEffect(() => {
     if (!selected) {
       setConsumers([])
@@ -106,6 +112,7 @@ function ConnectionInfoSection() {
       setConfirmReconnect(false)
       setLeases('')
       setActiveLeases([])
+      setAuditSummary('')
       return
     }
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
@@ -145,6 +152,31 @@ function ConnectionInfoSection() {
       .catch((err) => {
         if (!stale) {
           setInspect(null)
+          setActionError(errorMessage(err))
+        }
+      })
+    return () => {
+      stale = true
+    }
+  }, [selected])
+
+  useEffect(() => {
+    if (!selected) return
+    const listConnectionAudit = window.electronAPI?.workgraph?.listConnectionAudit
+    if (typeof listConnectionAudit !== 'function') {
+      setAuditSummary('')
+      return
+    }
+    let stale = false
+    listConnectionAudit({ workspaceId: selected.workspaceId, connectionId: selected.id })
+      .then((raw) => {
+        if (stale) return
+        const latest = latestConnectionAudit(sanitizeConnectionAuditRows(raw))
+        setAuditSummary(latest ? formatConnectionAudit(latest) : '')
+      })
+      .catch((err) => {
+        if (!stale) {
+          setAuditSummary('')
           setActionError(errorMessage(err))
         }
       })
@@ -219,6 +251,11 @@ function ConnectionInfoSection() {
           label={t('inspector.field.consumers')}
           value={consumers.map((row) => `${row.consumerId}: ${row.status}`).join(', ')}
         />
+      ) : null}
+      {auditSummary ? (
+        <div data-testid="connections-inspector-audit">
+          <InfoRow label={t('inspector.field.audit')} value={auditSummary} mono />
+        </div>
       ) : null}
       {leases ? (
         <div data-testid="connections-inspector-leases">

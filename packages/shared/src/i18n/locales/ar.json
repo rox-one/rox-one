@@ -860,6 +860,7 @@
   "inspector.empty.connections.title": "اتصال",
   "inspector.empty.outline.body": "يتوفر هيكل المستند والجلسة مع مساحة عمل Knowledge (الموجة W2).",
   "inspector.empty.outline.title": "المخطط التفصيلي",
+  "inspector.field.audit": "آخر تدقيق",
   "inspector.field.consumers": "المستهلكون المتأثرون",
   "inspector.field.credentialKind": "نوع الاعتماد",
   "inspector.field.credentialRef": "مرجع الاعتماد",

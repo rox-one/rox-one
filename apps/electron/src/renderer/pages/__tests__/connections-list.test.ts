@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { healthFromInspect, inspectSummaryFromRaw, isStaleInspectSummary, sanitizeConnectionAuditRows, sanitizeConnectionInspect, sanitizeConnectionRows } from '../connections-list'
+import { formatConnectionAudit, healthFromInspect, inspectSummaryFromRaw, isStaleInspectSummary, latestConnectionAudit, sanitizeConnectionAuditRows, sanitizeConnectionInspect, sanitizeConnectionRows } from '../connections-list'
 
 describe('CF-6.3 connection list sanitizer', () => {
   it('keeps metadata fields and rejects secret fields', () => {
@@ -87,6 +87,34 @@ describe('CF-6.3 connection list sanitizer', () => {
       payloadDigest: 'abc',
       payload: 'super-secret',
     }])).toThrow(/payload/)
+  })
+
+  it('picks the latest audit row and formats metadata without secret fields', () => {
+    const older = {
+      connectionId: 'c1',
+      eventType: 'connection-created',
+      occurredAt: 1,
+      actorId: 'owner',
+      outcome: 'committed',
+      payloadDigest: 'aaa',
+      action: 'connection.create',
+    }
+    const newer = {
+      connectionId: 'c1',
+      eventType: 'connection-revoked',
+      occurredAt: 9,
+      actorId: null,
+      outcome: 'committed',
+      payloadDigest: 'digest-secret-ish',
+      action: 'connection.revoke',
+    }
+    const rows = sanitizeConnectionAuditRows([older, newer])
+    expect(latestConnectionAudit([])).toBeUndefined()
+    expect(latestConnectionAudit(rows)).toEqual(newer)
+    expect(formatConnectionAudit(newer)).toBe('connection.revoke · committed · 1970-01-01T00:00:00.009Z · —')
+    expect(formatConnectionAudit(newer)).not.toContain('digest-secret-ish')
+    expect(formatConnectionAudit(newer)).not.toMatch(/accessToken|deviceCode|secret|token/)
+    expect(JSON.stringify(latestConnectionAudit(rows))).not.toContain('super-secret')
   })
 
   it('keeps inspect metadata and rejects secret fields', () => {

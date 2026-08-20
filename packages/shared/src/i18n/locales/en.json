@@ -860,6 +860,7 @@
   "inspector.empty.connections.title": "Connection",
   "inspector.empty.outline.body": "Document and session structure comes with the Knowledge workspace (wave W2).",
   "inspector.empty.outline.title": "Outline",
+  "inspector.field.audit": "Latest audit",
   "inspector.field.consumers": "Affected consumers",
   "inspector.field.credentialKind": "Credential kind",
   "inspector.field.credentialRef": "Credential ref",
