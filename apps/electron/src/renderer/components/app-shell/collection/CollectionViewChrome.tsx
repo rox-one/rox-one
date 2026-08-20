@@ -141,6 +141,8 @@ export function CollectionViewChrome({
       labels={labels}
       trailing={cycle}
       className={className}
+      workspaceId={workspaceId}
+      onApplyUserSlice={applyUserSlice}
     />
   )
 }

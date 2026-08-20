@@ -6,6 +6,7 @@ import type { SessionStatus } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
 import { CollectionDisplayPopover } from './CollectionDisplayPopover'
 import { CollectionFilterChips } from './CollectionFilterChips'
+import { CollectionFilterMenu } from './CollectionFilterMenu'
 
 export interface CollectionOpsBarProps {
   display: CollectionDisplay
@@ -19,6 +20,8 @@ export interface CollectionOpsBarProps {
   /** Optional trailing slot (e.g. view toggle already in host header). */
   trailing?: React.ReactNode
   className?: string
+  workspaceId?: string | null
+  onApplyUserSlice?: (viewId: string, filters: CollectionFilters) => void
 }
 
 /**
@@ -36,6 +39,8 @@ export function CollectionOpsBar({
   labels,
   trailing,
   className,
+  workspaceId,
+  onApplyUserSlice,
 }: CollectionOpsBarProps) {
   return (
     <div
@@ -54,6 +59,16 @@ export function CollectionOpsBar({
         className="min-w-0 flex-1"
       />
       <div className="flex shrink-0 items-center gap-2">
+        <CollectionFilterMenu
+          filters={filters}
+          onFiltersChange={onFiltersChange}
+          workspaceId={workspaceId}
+          statuses={statuses}
+          priorities={priorities}
+          projects={projects}
+          labels={labels}
+          onApplyUserSlice={onApplyUserSlice}
+        />
         <CollectionDisplayPopover display={display} onDisplayChange={onDisplayChange} />
         {trailing}
       </div>
