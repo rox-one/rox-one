@@ -335,6 +335,12 @@ export default function ConnectionsPage() {
     }))
   }
 
+  const applySelectedRow = (listed: ConnectionListRow[], connectionId: string) => {
+    if (selected?.id !== connectionId) return
+    const next = importedConnectionFromList(listed, connectionId)
+    if (next) setSelected(next)
+  }
+
   const confirmRevoke = async (connectionId: string) => {
     const workspaceId = workspace?.id
     const revokeConnection = window.electronAPI?.workgraph?.revokeConnection
@@ -430,7 +436,8 @@ export default function ConnectionsPage() {
       applyRevokedLeases(connectionId, result.leases)
       applyInspect(connectionId, result.inspect)
       setConvertingId(null)
-      await refreshRows(workspaceId)
+      const listed = await refreshRows(workspaceId)
+      applySelectedRow(listed, connectionId)
     } catch (err) {
       setListError(errorMessage(err))
     }
@@ -446,7 +453,8 @@ export default function ConnectionsPage() {
       applyRevokedLeases(connectionId, result.leases)
       applyInspect(connectionId, result.inspect)
       setMovingId(null)
-      await refreshRows(workspaceId)
+      const listed = await refreshRows(workspaceId)
+      applySelectedRow(listed, connectionId)
     } catch (err) {
       setListError(errorMessage(err))
     }
@@ -1033,6 +1041,7 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-expiry">{inspectById[row.id].expiry}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-provenance">{inspectById[row.id].provenance}</div>
+                      <div className="font-mono text-xs" data-testid="connections-row-fingerprint">{inspectById[row.id].fingerprint}</div>
                     </>
                   ) : null}
                   {leasesById[row.id] ? (

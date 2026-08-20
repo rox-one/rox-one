@@ -347,6 +347,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('shows inspect fingerprint on service rows without secret fields', () => {
+    expect(page).toContain('inspectSummaryFromRaw')
+    expect(page).toContain('connections-row-fingerprint')
+    expect(page).toContain('inspectById[row.id].fingerprint')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows inspect expiry and provenance on credential rows without secret fields', () => {
     expect(page).toContain('inspectSummaryFromRaw')
     expect(page).toContain('connections-credential-expiry')

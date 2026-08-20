@@ -145,4 +145,13 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('reads storageMode from the selected connection atom, not a stale copy', () => {
+    expect(host).toContain('selectedConnectionAtom')
+    expect(host).toContain('projectConnectionInspector')
+    expect(host).toContain('inspector.field.storageMode')
+    expect(page).toContain('applySelectedRow')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
