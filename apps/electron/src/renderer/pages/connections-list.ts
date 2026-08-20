@@ -135,8 +135,27 @@ export function sanitizeConnectionInspect(row: unknown): ConnectionInspectRow {
   return { connectionId, credentialRefId, health, expiry, provenance, fingerprint, kind, versionId }
 }
 
+export interface ConnectionInspectSummary {
+  readonly health: string
+  readonly expiry: string
+  readonly provenance: string
+  readonly fingerprint: string
+  readonly kind: string
+}
+
+export function inspectSummaryFromRaw(raw: unknown): ConnectionInspectSummary {
+  const row = sanitizeConnectionInspect(raw)
+  return {
+    health: row.health,
+    expiry: row.expiry,
+    provenance: row.provenance,
+    fingerprint: row.fingerprint,
+    kind: row.kind,
+  }
+}
+
 export function healthFromInspect(raw: unknown): string {
-  return sanitizeConnectionInspect(raw).health
+  return inspectSummaryFromRaw(raw).health
 }
 
 export function sanitizeConnectionRows(rows: readonly unknown[]): ConnectionListRow[] {

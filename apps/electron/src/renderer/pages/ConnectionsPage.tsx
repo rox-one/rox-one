@@ -4,12 +4,13 @@ import { useTranslation } from 'react-i18next'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import {
-  healthFromInspect,
+  inspectSummaryFromRaw,
   sanitizeConnectionAuditRows,
   sanitizeConnectionBindingRows,
   sanitizeConnectionRows,
   type ConnectionAuditRow,
   type ConnectionBindingRow,
+  type ConnectionInspectSummary,
   type ConnectionListRow,
 } from './connections-list'
 import {
@@ -103,7 +104,7 @@ export default function ConnectionsPage() {
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
   const [deviceLogin, setDeviceLogin] = useState<DeviceLoginView | null>(null)
   const [devicePoll, setDevicePoll] = useState<DevicePollView | null>(null)
-  const [healthById, setHealthById] = useState<Record<string, string>>({})
+  const [inspectById, setInspectById] = useState<Record<string, ConnectionInspectSummary>>({})
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -200,13 +201,13 @@ export default function ConnectionsPage() {
     const workspaceId = workspace?.id
     const inspectConnection = window.electronAPI?.workgraph?.inspectConnection
     if (!workspaceId || typeof inspectConnection !== 'function' || !rows) {
-      if (rows && rows.length === 0) setHealthById({})
+      if (rows && rows.length === 0) setInspectById({})
       return
     }
     let stale = false
     void Promise.all(rows.map(async (row) => {
       try {
-        return [row.id, healthFromInspect(await inspectConnection({
+        return [row.id, inspectSummaryFromRaw(await inspectConnection({
           workspaceId,
           connectionId: row.id,
         }))] as const
@@ -215,11 +216,11 @@ export default function ConnectionsPage() {
       }
     })).then((entries) => {
       if (stale) return
-      const next: Record<string, string> = {}
+      const next: Record<string, ConnectionInspectSummary> = {}
       for (const entry of entries) {
         if (entry) next[entry[0]] = entry[1]
       }
-      setHealthById(next)
+      setInspectById(next)
     })
     return () => {
       stale = true
@@ -881,8 +882,8 @@ export default function ConnectionsPage() {
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="text-muted-foreground">{row.storageMode}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
-                  {healthById[row.id] ? (
-                    <div className="font-mono text-xs" data-testid="connections-row-health">{healthById[row.id]}</div>
+                  {inspectById[row.id] ? (
+                    <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
                   ) : null}
                   {status && status.kind !== 'idle' ? (
                     <div className="font-mono text-xs" data-testid="connections-test-status">
@@ -914,6 +915,13 @@ export default function ConnectionsPage() {
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
                   <div className="text-muted-foreground">{row.storageMode}</div>
+                  {inspectById[row.id] ? (
+                    <>
+                      <div className="font-mono text-xs" data-testid="connections-credential-kind">{inspectById[row.id].kind}</div>
+                      <div className="font-mono text-xs" data-testid="connections-credential-expiry">{inspectById[row.id].expiry}</div>
+                      <div className="font-mono text-xs" data-testid="connections-credential-provenance">{inspectById[row.id].provenance}</div>
+                    </>
+                  ) : null}
                 </div>
                 {row.storageMode === 'copy' ? (
                   convertingId === row.id ? (

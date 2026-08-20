@@ -290,8 +290,17 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('shows inspect health on service rows without secret fields', () => {
     expect(page).toContain('inspectConnection')
-    expect(page).toContain('healthFromInspect')
+    expect(page).toContain('inspectSummaryFromRaw')
     expect(page).toContain('connections-row-health')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('shows inspect expiry and provenance on credential rows without secret fields', () => {
+    expect(page).toContain('inspectSummaryFromRaw')
+    expect(page).toContain('connections-credential-expiry')
+    expect(page).toContain('connections-credential-provenance')
+    expect(page).toContain('connections-credential-kind')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
