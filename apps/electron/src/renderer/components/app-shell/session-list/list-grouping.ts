@@ -148,3 +148,90 @@ export function listRankReorderRequest(
   const next = insertAt < peers.length ? peers[insertAt] : undefined
   return { sessionId: dragId, prevId: previous?.id, nextId: next?.id, previous, next }
 }
+
+export interface EmptyListGroupBucket {
+  key: string
+  label: string
+}
+
+export interface EmptyListGroupOptions {
+  mode: ListGroupingMode
+  statuses: readonly { id: string; label: string }[]
+  projects: readonly { id: string; name: string }[]
+  labels: readonly { id: string; name: string }[]
+  t: (key: string, options?: Record<string, unknown>) => string
+}
+
+/** Configured buckets for Display "Show empty groups". Date has no finite set. */
+export function emptyListGroupBuckets({
+  mode,
+  statuses,
+  projects,
+  labels,
+  t,
+}: EmptyListGroupOptions): EmptyListGroupBucket[] {
+  switch (mode) {
+    case 'status':
+      return statuses.map((status) => ({
+        key: `status-${status.id}`,
+        label: t(`status.${status.id}`, { defaultValue: status.label }),
+      }))
+    case 'unread':
+      return [
+        { key: 'unread-yes', label: t('session.unreadLabel') },
+        { key: 'unread-no', label: t('session.readLabel') },
+      ]
+    case 'project':
+      return [
+        ...projects.map((project) => ({ key: `project-${project.id}`, label: project.name })),
+        { key: 'project-__none__', label: t('sidebar.noProject', { defaultValue: 'No project' }) },
+      ]
+    case 'priority':
+      return LIST_PRIORITY_ORDER.map((priority) => ({
+        key: `priority:${priority}`,
+        label: t(`priority.${priority}`, { defaultValue: priority }),
+      }))
+    case 'dueDate':
+      return LIST_DUE_ORDER.map((bucket) => ({
+        key: `due:${bucket}`,
+        label: t(`collection.display.dueBucket.${bucket}`, { defaultValue: bucket }),
+      }))
+    case 'label':
+      return [
+        ...labels.map((label) => ({ key: `label:${label.id}`, label: label.name })),
+        { key: 'label:none', label: t('collection.display.labelNone', { defaultValue: 'No label' }) },
+      ]
+    default:
+      return []
+  }
+}
+
+export interface ListGroupLike<T> {
+  key: string
+  label: string
+  items: T[]
+  collapsible?: boolean
+  collapsedCount?: number
+}
+
+/** Inserts missing configured buckets; existing groups keep their items and order among themselves. */
+export function withEmptyListGroups<T>(
+  groups: readonly ListGroupLike<T>[],
+  showEmptyGroups: boolean,
+  emptyBuckets: readonly EmptyListGroupBucket[],
+): ListGroupLike<T>[] {
+  if (!showEmptyGroups || emptyBuckets.length === 0) return [...groups]
+  const byKey = new Map(groups.map((group) => [group.key, group]))
+  const result: ListGroupLike<T>[] = []
+  const seen = new Set<string>()
+  for (const bucket of emptyBuckets) {
+    const existing = byKey.get(bucket.key)
+    result.push(existing ?? { key: bucket.key, label: bucket.label, items: [], collapsible: true })
+    seen.add(bucket.key)
+  }
+  for (const group of groups) {
+    if (!seen.has(group.key)) result.push(group)
+  }
+  return result
+}
+

@@ -87,6 +87,10 @@ export interface EntityListProps<T> {
   onExpandAll?: () => void
   /** Select every currently loaded item in this group */
   onSelectGroup?: (groupKey: string) => void
+  /** Highlighted empty-group drop lane */
+  dropGroupKey?: string | null
+  /** Drag over an empty expanded group (drop lane) */
+  onEmptyGroupDragOver?: (groupKey: string, event: React.DragEvent) => void
 }
 
 // ============================================================================
@@ -204,7 +208,10 @@ export function EntityList<T>({
   onCollapseAll,
   onExpandAll,
   onSelectGroup,
+  dropGroupKey,
+  onEmptyGroupDragOver,
 }: EntityListProps<T>) {
+  const { t } = useTranslation()
   // Determine if we have content
   const hasGroups = groups && groups.length > 0
   const hasItems = items && items.length > 0
@@ -253,6 +260,20 @@ export function EntityList<T>({
                           onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
                         />
                       )}
+                      {!isCollapsed && group.items.length === 0 ? (
+                        <div
+                          data-empty-group={group.key}
+                          className={cn(
+                            'mx-3 mb-2 rounded-[6px] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
+                            dropGroupKey === group.key
+                              ? 'border-foreground/40 bg-foreground/5 text-foreground/80'
+                              : 'border-foreground/15',
+                          )}
+                          onDragOver={(event) => onEmptyGroupDragOver?.(group.key, event)}
+                        >
+                          {t('entityList.emptyGroupDrop')}
+                        </div>
+                      ) : null}
                       {group.items.map((item, indexInGroup) =>
                         <React.Fragment key={getKey(item)}>
                           {renderItem(item, indexInGroup, indexInGroup === 0)}

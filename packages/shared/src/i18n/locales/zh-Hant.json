@@ -721,6 +721,7 @@
   "editor.strikethrough": "刪除線",
   "entityList.collapse": "摺疊",
   "entityList.collapseAll": "全部摺疊",
+  "entityList.emptyGroupDrop": "拖到此處",
   "entityList.expand": "展開",
   "entityList.expandAll": "全部展開",
   "entityList.selectGroup": "選取群組",

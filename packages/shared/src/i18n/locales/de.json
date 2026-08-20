@@ -721,6 +721,7 @@
   "editor.strikethrough": "Durchgestrichen",
   "entityList.collapse": "Einklappen",
   "entityList.collapseAll": "Alle einklappen",
+  "entityList.emptyGroupDrop": "Hier ablegen",
   "entityList.expand": "Ausklappen",
   "entityList.expandAll": "Alle ausklappen",
   "entityList.selectGroup": "Gruppe auswählen",

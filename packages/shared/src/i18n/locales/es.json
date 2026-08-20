@@ -721,6 +721,7 @@
   "editor.strikethrough": "Tachado",
   "entityList.collapse": "Contraer",
   "entityList.collapseAll": "Contraer todo",
+  "entityList.emptyGroupDrop": "Suelta aquí",
   "entityList.expand": "Expandir",
   "entityList.expandAll": "Expandir todo",
   "entityList.selectGroup": "Seleccionar grupo",

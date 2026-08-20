@@ -721,6 +721,7 @@
   "editor.strikethrough": "Barré",
   "entityList.collapse": "Réduire",
   "entityList.collapseAll": "Tout réduire",
+  "entityList.emptyGroupDrop": "Déposer ici",
   "entityList.expand": "Développer",
   "entityList.expandAll": "Tout développer",
   "entityList.selectGroup": "Sélectionner le groupe",
