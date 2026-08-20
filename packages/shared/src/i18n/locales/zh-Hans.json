@@ -534,6 +534,7 @@
   "common.validating": "验证中...",
   "common.viewFullscreen": "全屏查看",
   "common.yesterday": "昨天",
+  "connections.audit.empty": "暂无审计事件",
   "connections.connect": "连接",
   "connections.convert": "转为引用",
   "connections.convertCancel": "取消",

@@ -685,7 +685,7 @@ export default function ConnectionsPage() {
       ) : listError ? (
         <p className="text-sm" data-testid="connections-list-error">{listError}</p>
       ) : (
-        <p className="text-sm">{t('connections.empty')}</p>
+        <p className="text-sm">{t(tab === 'audit' ? 'connections.audit.empty' : 'connections.empty')}</p>
       )}
     </div>
   )

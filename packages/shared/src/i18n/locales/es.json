@@ -534,6 +534,7 @@
   "common.validating": "Validando...",
   "common.viewFullscreen": "Ver pantalla completa",
   "common.yesterday": "Ayer",
+  "connections.audit.empty": "Aún no hay eventos de auditoría",
   "connections.connect": "Conectar",
   "connections.convert": "Convertir a referencia",
   "connections.convertCancel": "Cancelar",

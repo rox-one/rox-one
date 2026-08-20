@@ -534,6 +534,7 @@
   "common.validating": "Validating...",
   "common.viewFullscreen": "View Fullscreen",
   "common.yesterday": "Yesterday",
+  "connections.audit.empty": "No audit events yet",
   "connections.connect": "Connect",
   "connections.convert": "Convert to reference",
   "connections.convertCancel": "Cancel",

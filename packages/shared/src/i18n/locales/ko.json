@@ -534,6 +534,7 @@
   "common.validating": "검증 중...",
   "common.viewFullscreen": "전체 화면으로 보기",
   "common.yesterday": "어제",
+  "connections.audit.empty": "감사 이벤트가 아직 없습니다",
   "connections.connect": "연결",
   "connections.convert": "참조로 변환",
   "connections.convertCancel": "취소",

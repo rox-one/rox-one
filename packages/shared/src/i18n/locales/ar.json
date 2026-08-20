@@ -534,6 +534,7 @@
   "common.validating": "جارٍ التحقق...",
   "common.viewFullscreen": "عرض بملء الشاشة",
   "common.yesterday": "أمس",
+  "connections.audit.empty": "لا توجد أحداث تدقيق بعد",
   "connections.connect": "اتصال",
   "connections.convert": "تحويل إلى مرجع",
   "connections.convertCancel": "إلغاء",

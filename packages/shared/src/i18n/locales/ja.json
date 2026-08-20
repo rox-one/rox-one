@@ -534,6 +534,7 @@
   "common.validating": "検証中...",
   "common.viewFullscreen": "全画面表示",
   "common.yesterday": "昨日",
+  "connections.audit.empty": "監査イベントはまだありません",
   "connections.connect": "接続",
   "connections.convert": "参照に変換",
   "connections.convertCancel": "キャンセル",

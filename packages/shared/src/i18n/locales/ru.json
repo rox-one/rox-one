@@ -534,6 +534,7 @@
   "common.validating": "Проверка...",
   "common.viewFullscreen": "На весь экран",
   "common.yesterday": "Вчера",
+  "connections.audit.empty": "Событий аудита пока нет",
   "connections.connect": "Подключить",
   "connections.convert": "Сделать ссылкой",
   "connections.convertCancel": "Отмена",

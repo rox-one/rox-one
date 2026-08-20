@@ -176,6 +176,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('keeps the five tab ids unchanged', () => {
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page).toContain('t(`connections.tab.${id}`)')
   })
 
   it('surfaces import and list errors without secret fields', () => {
@@ -243,6 +244,15 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('auditError')
     expect(page).toContain('connections-audit-error')
     expect(page).toContain('setAuditError')
+  })
+
+  it('names the Audit empty state separately from the services empty copy', () => {
+    expect(page).toContain("tab === 'audit'")
+    expect(page).toContain('connections.audit.empty')
+    expect(page).toContain('t(`connections.tab.${id}`)')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
   it('marks tab panels and cycles tabs with arrows', () => {
