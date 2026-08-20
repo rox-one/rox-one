@@ -146,6 +146,7 @@ describe('CF-6.4 InspectorHost connections', () => {
   it('names invalidated leases after rotate and move without leaking secret fields', () => {
     expect(host).toContain('applyRevokedLeases')
     expect(host.split('applyRevokedLeases(result.leases)').length - 1).toBe(3)
+    expect(host.split("next === '—' ? '' : next").length - 1).toBe(2)
     expect(host).toContain('rotateConnection')
     expect(host).toContain('moveConnection')
     expect(host).toContain('connections-inspector-leases')

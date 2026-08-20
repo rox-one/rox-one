@@ -231,7 +231,8 @@ function ConnectionInfoSection() {
     await previewActiveLeases()
   }
   const applyRevokedLeases = (leases: unknown) => {
-    setLeases(formatReconnectLeases(sanitizeReconnectLeases(leases)))
+    const next = formatReconnectLeases(sanitizeReconnectLeases(leases))
+    setLeases(next === '—' ? '' : next)
   }
   const applyInspect = (inspect: unknown) => {
     setInspect(projectConnectionInspect(inspect))
