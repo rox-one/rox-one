@@ -167,9 +167,23 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('offers test and repair on credential rows without stealing focus', () => {
+    expect(page).toContain('data-testid="connections-credential-row"')
+    expect(page.split('runTest(row.id)').length - 1).toBe(3)
+    expect(page.split('runRepair(row.id)').length - 1).toBe(3)
+    expect(page).toContain('connections.test')
+    expect(page).toContain('connections.repair')
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('offers repair on policy connection rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
-    expect(page.split('runRepair(row.id)').length - 1).toBe(2)
+    expect(page.split('runRepair(row.id)').length - 1).toBe(3)
     expect(page).toContain('connections.repair')
     expect(page).not.toContain('autoFocus')
     expect(page).not.toContain('bringToFront')
@@ -181,7 +195,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('offers test on policy connection rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
-    expect(page.split('runTest(row.id)').length - 1).toBe(2)
+    expect(page.split('runTest(row.id)').length - 1).toBe(3)
     expect(page).toContain('connections.test')
     expect(page).not.toContain('autoFocus')
     expect(page).not.toContain('bringToFront')

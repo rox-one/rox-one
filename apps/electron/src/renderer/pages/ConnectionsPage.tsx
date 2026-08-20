@@ -1222,6 +1222,12 @@ export default function ConnectionsPage() {
                     </div>
                   ) : null}
                 </button>
+                <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
+                  {t('connections.test')}
+                </button>
+                <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
+                  {t('connections.repair')}
+                </button>
                 {renderReconnectControls(row)}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row)}
