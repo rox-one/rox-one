@@ -34,7 +34,14 @@ import {
 } from '@/atoms/unified-shell'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { sanitizeConnectionBindingRows } from '@/pages/connections-list'
-import { MOVE_BACKENDS, errorMessage, formatConfirmTargets, type MoveBackend } from '@/pages/connections-ui'
+import {
+  MOVE_BACKENDS,
+  errorMessage,
+  formatConfirmTargets,
+  formatReconnectLeases,
+  sanitizeReconnectLeases,
+  type MoveBackend,
+} from '@/pages/connections-ui'
 import { isConnectionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
@@ -86,6 +93,7 @@ function ConnectionInfoSection() {
   const [testLogin, setTestLogin] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
   const [inspect, setInspect] = useState<ReturnType<typeof projectConnectionInspect> | null>(null)
+  const [leases, setLeases] = useState('')
   useEffect(() => {
     if (!selected) {
       setConsumers([])
@@ -93,6 +101,7 @@ function ConnectionInfoSection() {
       setActionError(null)
       setInspect(null)
       setConfirmReconnect(false)
+      setLeases('')
       return
     }
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
@@ -179,6 +188,12 @@ function ConnectionInfoSection() {
           value={consumers.map((row) => `${row.consumerId}: ${row.status}`).join(', ')}
         />
       ) : null}
+      {leases ? (
+        <div data-testid="connections-inspector-leases">
+          <InfoRow label={t('inspector.field.leases')} value={leases} mono />
+          <p className="px-3 pb-1 text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</p>
+        </div>
+      ) : null}
       {actionError ? (
         <p className="px-3 py-2 text-[12px]" data-testid="connections-inspector-error">{actionError}</p>
       ) : null}
@@ -203,6 +218,7 @@ function ConnectionInfoSection() {
                       const result = await reconnectConnection({ workspaceId, connectionId: selected.id })
                       setConsumers(result.consumers)
                       setInspect(projectConnectionInspect(result.inspect))
+                      setLeases(formatReconnectLeases(sanitizeReconnectLeases(result.leases)))
                       setConfirmReconnect(false)
                     } catch (err) {
                       setActionError(errorMessage(err))

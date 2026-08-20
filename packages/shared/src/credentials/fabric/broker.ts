@@ -187,12 +187,15 @@ export class InProcessCredentialBroker {
     this.leases.set(leaseId, { ...current, status: 'revoked' });
   }
 
-  async revokeLeasesForRef(credentialRefId: CredentialRefId, _reason: string): Promise<readonly string[]> {
-    const revoked: string[] = [];
+  async revokeLeasesForRef(
+    credentialRefId: CredentialRefId,
+    _reason: string,
+  ): Promise<readonly { readonly id: string; readonly consumerId: string }[]> {
+    const revoked: Array<{ readonly id: string; readonly consumerId: string }> = [];
     for (const [id, lease] of this.leases) {
       if (lease.credentialRefId !== credentialRefId || lease.status !== 'active') continue;
       this.leases.set(id, { ...lease, status: 'revoked' });
-      revoked.push(id);
+      revoked.push({ id, consumerId: lease.consumer.id });
     }
     return revoked;
   }

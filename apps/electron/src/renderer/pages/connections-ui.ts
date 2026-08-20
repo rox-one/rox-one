@@ -60,6 +60,37 @@ export function formatConfirmTargets(
   return `${row.id} ${row.credentialRefId} ${consumers.join(', ')}`
 }
 
+export function sanitizeReconnectLeases(raw: unknown): Array<{ consumerId: string; status: string }> {
+  if (!Array.isArray(raw)) throw new Error('Invalid reconnect lease metadata')
+  return raw.map((row) => {
+    if (!row || typeof row !== 'object') throw new Error('Invalid reconnect lease metadata')
+    const rec = row as Record<string, unknown>
+    for (const key of Object.keys(rec)) {
+      if (key !== 'consumerId' && key !== 'status') {
+        throw new Error(`Invalid connection metadata field: ${key}`)
+      }
+    }
+    if (typeof rec.consumerId !== 'string' || typeof rec.status !== 'string') {
+      throw new Error('Invalid reconnect lease metadata')
+    }
+    return { consumerId: rec.consumerId, status: rec.status }
+  })
+}
+
+export function formatReconnectLeases(
+  leases: readonly { readonly consumerId: string; readonly status: string }[],
+): string {
+  const seen = new Set<string>()
+  const parts: string[] = []
+  for (const row of leases) {
+    const part = `${row.consumerId}: ${row.status}`
+    if (seen.has(part)) continue
+    seen.add(part)
+    parts.push(part)
+  }
+  return parts.length === 0 ? '—' : parts.join(', ')
+}
+
 export function previewSourceForChip(chip: ConnectSource): PreviewSource {
   return chip === 'github-env' ? 'env' : chip
 }

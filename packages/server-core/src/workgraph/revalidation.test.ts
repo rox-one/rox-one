@@ -431,7 +431,10 @@ describe('CF-6.5 rotate and repair', () => {
       reason: 'owner-reconnect',
     })
     expect(reconnected.consumers[0]?.consumerId).toBe('agent-a')
+    expect(reconnected.leases).toEqual([{ consumerId: 'agent-a', status: 'revoked' }])
     expect(JSON.stringify(reconnected)).not.toContain('super-secret')
+    expect(JSON.stringify(reconnected)).not.toContain(lease.id)
+    expect(reconnected).not.toHaveProperty('leaseId')
     await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
     const audit = await kernel.listConnectionAudit('workspace_a', connection.id)
     expect(audit.some((row) => row.eventType === 'connection-reconnected' && row.action === 'connection.reconnect')).toBe(true)

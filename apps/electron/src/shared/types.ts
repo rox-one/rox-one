@@ -822,6 +822,7 @@ export interface ElectronAPI {
       connectionId: string
     }): Promise<{
       consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
       inspect: {
         connectionId: string
         credentialRefId: string

@@ -494,7 +494,7 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('reconnect_unavailable')
-      const consumers = await fabric.reconnect({
+      const result = await fabric.reconnect({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
@@ -508,7 +508,7 @@ export function registerWorkGraphHandlers(
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
       })
-      return { ...consumers, inspect }
+      return { ...result, inspect }
     },
     { access: 'localElectron' },
   )

@@ -41,6 +41,11 @@ export interface RevalidatedConsumer {
   readonly status: 'ok' | 'denied' | 'repair_required'
 }
 
+export interface RevokedLeaseView {
+  readonly consumerId: string
+  readonly status: 'revoked'
+}
+
 async function revalidateAffected(
   input: RepairConnectionInput,
 ): Promise<{ readonly consumers: readonly RevalidatedConsumer[] }> {
@@ -130,10 +135,13 @@ export type ReconnectConnectionInput = RotateConnectionInput
 
 export async function reconnectConnectionAndRevalidate(
   input: ReconnectConnectionInput,
-): Promise<{ readonly consumers: readonly RevalidatedConsumer[] }> {
+): Promise<{
+  readonly consumers: readonly RevalidatedConsumer[]
+  readonly leases: readonly RevokedLeaseView[]
+}> {
   const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
   const credentialRefId = connection.credentialRefId as CredentialRefId
-  await input.broker.revokeLeasesForRef(credentialRefId, input.reason)
+  const revoked = await input.broker.revokeLeasesForRef(credentialRefId, input.reason)
   await input.kernel.appendConnectionAudit({
     workspaceId: input.workspaceId,
     connectionId: input.connectionId,
@@ -142,7 +150,13 @@ export async function reconnectConnectionAndRevalidate(
     decision: 'allow',
     eventType: 'connection-reconnected',
   })
-  return revalidateAffected(input)
+  const { consumers } = await revalidateAffected(input)
+  const leases = revoked.map((row) => ({ consumerId: row.consumerId, status: 'revoked' as const }))
+  const out = { consumers, leases }
+  if (JSON.stringify(out).match(/"token"|"secret"|"payload"|"value"/i)) {
+    throw new Error('Reconnect leaked a forbidden field')
+  }
+  return out
 }
 
 export interface ConvertConnectionInput {

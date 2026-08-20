@@ -83,4 +83,15 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('names invalidated leases after reconnect without leaking secret fields', () => {
+    expect(host).toContain('sanitizeReconnectLeases')
+    expect(host).toContain('formatReconnectLeases')
+    expect(host).toContain('connections-inspector-leases')
+    expect(host).toContain('inspector.field.leases')
+    expect(host).toContain('connections.reconnectDone')
+    expect(host).toContain('result.leases')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })

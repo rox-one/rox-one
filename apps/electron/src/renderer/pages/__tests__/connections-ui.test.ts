@@ -8,6 +8,7 @@ import {
   errorMessage,
   firstPickedPath,
   formatConfirmTargets,
+  formatReconnectLeases,
   grantDraftError,
   isImportPanelVisible,
   isUiCredentialRefId,
@@ -17,6 +18,7 @@ import {
   removeCommittedPreview,
   sanitizeDeviceLoginStart,
   sanitizeDevicePoll,
+  sanitizeReconnectLeases,
   devicePollDelayMs,
   importedConnectionFromList,
   tabFromKey,
@@ -47,6 +49,28 @@ describe('CF-6 Connections UI helpers', () => {
       { connectionId: 'c1', consumerId: 'workflow.deploy' },
       { connectionId: 'c1', consumerId: 'agent.github_user' },
     ], 'c1')).toEqual(['agent.github_user', 'workflow.deploy'])
+  })
+
+  it('keeps reconnect lease metadata and rejects secret fields', () => {
+    expect(sanitizeReconnectLeases([
+      { consumerId: 'agent-a', status: 'revoked' },
+      { consumerId: 'agent-a', status: 'revoked' },
+    ])).toEqual([
+      { consumerId: 'agent-a', status: 'revoked' },
+      { consumerId: 'agent-a', status: 'revoked' },
+    ])
+    expect(formatReconnectLeases([
+      { consumerId: 'agent-a', status: 'revoked' },
+      { consumerId: 'agent-a', status: 'revoked' },
+      { consumerId: 'workflow.deploy', status: 'revoked' },
+    ])).toBe('agent-a: revoked, workflow.deploy: revoked')
+    expect(formatReconnectLeases([])).toBe('—')
+    expect(() => sanitizeReconnectLeases([
+      { consumerId: 'agent-a', status: 'revoked', accessToken: 'gho_super-secret' },
+    ])).toThrow(/accessToken|field/)
+    expect(JSON.stringify(sanitizeReconnectLeases([{ consumerId: 'agent-a', status: 'revoked' }]))).not.toMatch(
+      /accessToken|deviceCode|payload|secret/,
+    )
   })
 
   it('maps Connect chips onto preview sources and filters the candidate list', () => {

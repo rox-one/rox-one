@@ -122,4 +122,20 @@ describe('InProcessCredentialBroker', () => {
     expect(allow?.credentialRefId).toBe(ref.id);
     expect(JSON.stringify(broker.listAudit())).not.toContain('super-secret');
   });
+
+  it('revokes active leases for a credential ref without leaking the copy', async () => {
+    const { broker, ref, consumer } = await setup();
+    const lease = await broker.acquireLease({
+      credentialRef: ref.id,
+      consumer,
+      purpose: 'x',
+      action: 'github.request',
+      resources: ['repo:demo'],
+      ttl: 1000,
+    });
+    const revoked = await broker.revokeLeasesForRef(ref.id, 'reconnect');
+    expect(revoked).toEqual([{ id: lease.id, consumerId: consumer.id }]);
+    expect(JSON.stringify(revoked)).not.toContain('super-secret');
+    await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' });
+  });
 });

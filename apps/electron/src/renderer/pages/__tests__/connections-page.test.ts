@@ -360,6 +360,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('shows invalidated leases after reconnect without leaking secret fields', () => {
+    expect(page).toContain('sanitizeReconnectLeases')
+    expect(page).toContain('formatReconnectLeases')
+    expect(page).toContain('connections-row-leases')
+    expect(page).toContain('connections.reconnectDone')
+    expect(page).toContain('result.leases')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
 
 

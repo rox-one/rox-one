@@ -23,6 +23,7 @@ import {
   errorMessage,
   firstPickedPath,
   formatConfirmTargets,
+  formatReconnectLeases,
   grantDraftError,
   isImportPanelVisible,
   matchesConnectSource,
@@ -30,6 +31,7 @@ import {
   removeCommittedPreview,
   sanitizeDeviceLoginStart,
   sanitizeDevicePoll,
+  sanitizeReconnectLeases,
   devicePollDelayMs,
   importedConnectionFromList,
   tabFromKey,
@@ -108,6 +110,7 @@ export default function ConnectionsPage() {
   const [deviceLogin, setDeviceLogin] = useState<DeviceLoginView | null>(null)
   const [devicePoll, setDevicePoll] = useState<DevicePollView | null>(null)
   const [inspectById, setInspectById] = useState<Record<string, ConnectionInspectSummary>>({})
+  const [leasesById, setLeasesById] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -139,6 +142,7 @@ export default function ConnectionsPage() {
       setConvertingId(null)
       setUnbindingId(null)
       setReconnectingId(null)
+      setLeasesById({})
     }
   }, [workspace?.id, setSelected])
 
@@ -352,6 +356,10 @@ export default function ConnectionsPage() {
       setInspectById((current) => ({
         ...current,
         [connectionId]: inspectSummaryFromRaw(result.inspect),
+      }))
+      setLeasesById((current) => ({
+        ...current,
+        [connectionId]: formatReconnectLeases(sanitizeReconnectLeases(result.leases)),
       }))
       setReconnectingId(null)
       await refreshRows(workspaceId)
@@ -959,6 +967,12 @@ export default function ConnectionsPage() {
                   {inspectById[row.id] ? (
                     <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
                   ) : null}
+                  {leasesById[row.id] ? (
+                    <>
+                      <div className="font-mono text-xs" data-testid="connections-row-leases">{leasesById[row.id]}</div>
+                      <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
+                    </>
+                  ) : null}
                   {status && status.kind !== 'idle' ? (
                     <div className="font-mono text-xs" data-testid="connections-test-status">
                       {status.kind === 'ok' ? status.login : status.message}
@@ -1004,6 +1018,12 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs" data-testid="connections-credential-provenance">{inspectById[row.id].provenance}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-fingerprint">{inspectById[row.id].fingerprint}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-version">{inspectById[row.id].versionId}</div>
+                    </>
+                  ) : null}
+                  {leasesById[row.id] ? (
+                    <>
+                      <div className="font-mono text-xs" data-testid="connections-row-leases">{leasesById[row.id]}</div>
+                      <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
                     </>
                   ) : null}
                 </button>
