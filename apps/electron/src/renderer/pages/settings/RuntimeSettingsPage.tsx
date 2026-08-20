@@ -79,6 +79,7 @@ const TOOL_ORDER: readonly ToolchainToolName[] = [
   'mole',
   'docker',
   'brew',
+  'craft-native',
   'pip-packaging',
   'cli-anything',
 ]
@@ -115,6 +116,7 @@ const TOOL_LABELS: Partial<Record<ToolchainToolName, string>> = {
   mole: 'Mole',
   docker: 'Docker',
   brew: 'Homebrew',
+  'craft-native': 'craft-native sidecar',
   'pip-packaging': 'packaging (pip)',
   'cli-anything': 'CLI-Anything',
 }
@@ -129,10 +131,13 @@ const INSTALL_GUIDES: Partial<Record<ToolchainToolName, { command: string; url?:
     command: '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
     url: 'https://brew.sh',
   },
+  'craft-native': {
+    command: 'cargo build --manifest-path native/Cargo.toml -p craft-native && export CRAFT_NATIVE_BIN=./native/target/debug/craft-native',
+  },
 }
 
 /** Detect-only tools stay guide/copy UX — never call update() to "install". */
-const DETECT_ONLY_TOOLS: Record<string, true> = { docker: true, brew: true }
+const DETECT_ONLY_TOOLS: Record<string, true> = { docker: true, brew: true, 'craft-native': true }
 
 /** Extract a displayable message from an unknown caught value. */
 function errorMessage(error: unknown): string {

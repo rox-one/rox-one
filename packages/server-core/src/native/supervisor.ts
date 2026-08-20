@@ -38,12 +38,35 @@ export interface NativeSupervisorOptions {
   cwd?: string
 }
 
-export function resolveNativeBin(cwd = process.cwd()): string | null {
-  const fromEnv = process.env.CRAFT_NATIVE_BIN
+export interface ResolveNativeBinOptions {
+  env?: NodeJS.ProcessEnv
+  configDir?: string
+}
+
+function nativeExeName(platform = process.platform): string {
+  return platform === 'win32' ? 'craft-native.exe' : 'craft-native'
+}
+
+/**
+ * Locate craft-native: CRAFT_NATIVE_BIN → toolchain current → cargo debug/release.
+ * Never extraResources. Windows native is not shipped.
+ */
+export function resolveNativeBin(
+  cwd = process.cwd(),
+  opts: ResolveNativeBinOptions = {},
+): string | null {
+  const env = opts.env ?? process.env
+  const fromEnv = env.CRAFT_NATIVE_BIN
   if (fromEnv && existsSync(fromEnv)) return fromEnv
-  const debug = join(cwd, 'native', 'target', 'debug', 'craft-native')
+  const exe = nativeExeName()
+  const configDir = opts.configDir ?? env.ROX_CONFIG_DIR ?? env.CRAFT_CONFIG_DIR
+  if (configDir) {
+    const seeded = join(configDir, 'toolchain', 'craft-native', 'current', 'bin', exe)
+    if (existsSync(seeded)) return seeded
+  }
+  const debug = join(cwd, 'native', 'target', 'debug', exe)
   if (existsSync(debug)) return debug
-  const release = join(cwd, 'native', 'target', 'release', 'craft-native')
+  const release = join(cwd, 'native', 'target', 'release', exe)
   if (existsSync(release)) return release
   return null
 }

@@ -76,6 +76,8 @@ export const TOOL_PLATFORM_MATRIX: Record<ToolName, ToolchainPlatform[]> = {
   // detect opt-in: системные исполняемые (brew под win не существует)
   docker: ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
   brew: ['darwin-arm64', 'darwin-x64', 'linux-x64'],
+  // craft-native: unix sidecar only. No win32 (Unix socket). No extraResources.
+  'craft-native': ['darwin-arm64', 'darwin-x64', 'linux-x64'],
 
   // pip opt-in: uv pip install --require-hashes (embedded lock in pip-locks.ts)
   'pip-packaging': ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
@@ -89,6 +91,16 @@ function uvPython(binPaths: string[]): ToolArtifact {
     size: 0,
     archive: 'uv-python',
     binPaths,
+  };
+}
+
+function localNativeBin(): ToolArtifact {
+  return {
+    url: '',
+    sha256: 'local',
+    size: 0,
+    archive: 'local',
+    binPaths: ['bin/craft-native'],
   };
 }
 
@@ -532,6 +544,21 @@ export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
     displayName: 'Homebrew',
     systemBinary: 'brew',
     artifacts: {},
+  },
+
+  // craft-native 0.1.0 — opt-in detect. GitHub release tarballs are not published
+  // yet; seed a cargo/env binary into toolchain/<name>/current/bin. Unix only.
+  'craft-native': {
+    version: '0.1.0',
+    kind: 'detect',
+    tier: 'opt-in',
+    displayName: 'craft-native sidecar',
+    systemBinary: 'craft-native',
+    artifacts: {
+      'darwin-arm64': localNativeBin(),
+      'darwin-x64': localNativeBin(),
+      'linux-x64': localNativeBin(),
+    },
   },
 
   // pip-packaging 24.2 — proof opt-in pip tool (PyPI packaging library).
