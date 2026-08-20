@@ -97,6 +97,20 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty inspect fields in the inspector without secret fields', () => {
+    expect(host).toContain('visibleInspectValue')
+    expect(host).toContain('visibleInspectValue(inspect.health)')
+    expect(host).toContain('visibleInspectValue(inspect.expiry)')
+    expect(host).toContain('visibleInspectValue(inspect.provenance)')
+    expect(host).toContain('visibleInspectValue(inspect.fingerprint)')
+    expect(host).toContain('visibleInspectValue(inspect.credentialKind)')
+    expect(host).toContain('visibleInspectValue(inspect.versionId)')
+    expect(host.split("value !== '—'").length - 1).toBe(1)
+    expect(host).toContain('connections-inspector-health')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('offers an in-place reconnect CTA for stale inspect without stealing focus', () => {
     expect(host).toContain('isStaleInspect')
     expect(host).toContain('reconnectConnection')

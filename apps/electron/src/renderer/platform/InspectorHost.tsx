@@ -86,6 +86,10 @@ function projectInspectorConsumers(raw: unknown) {
   }))
 }
 
+function visibleInspectValue(value: string) {
+  return value && value !== '—' ? value : ''
+}
+
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5 px-3 py-1.5">
@@ -268,14 +272,26 @@ function ConnectionInfoSection() {
       <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
       {inspect ? (
         <>
-          <div data-testid="connections-inspector-health">
-            <InfoRow label={t('inspector.field.health')} value={inspect.health} />
-          </div>
-          <InfoRow label={t('inspector.field.expiry')} value={inspect.expiry} mono />
-          <InfoRow label={t('inspector.field.provenance')} value={inspect.provenance} mono />
-          <InfoRow label={t('inspector.field.fingerprint')} value={inspect.fingerprint} mono />
-          <InfoRow label={t('inspector.field.credentialKind')} value={inspect.credentialKind} mono />
-          <InfoRow label={t('inspector.field.versionId')} value={inspect.versionId} mono />
+          {visibleInspectValue(inspect.health) ? (
+            <div data-testid="connections-inspector-health">
+              <InfoRow label={t('inspector.field.health')} value={inspect.health} />
+            </div>
+          ) : null}
+          {visibleInspectValue(inspect.expiry) ? (
+            <InfoRow label={t('inspector.field.expiry')} value={inspect.expiry} mono />
+          ) : null}
+          {visibleInspectValue(inspect.provenance) ? (
+            <InfoRow label={t('inspector.field.provenance')} value={inspect.provenance} mono />
+          ) : null}
+          {visibleInspectValue(inspect.fingerprint) ? (
+            <InfoRow label={t('inspector.field.fingerprint')} value={inspect.fingerprint} mono />
+          ) : null}
+          {visibleInspectValue(inspect.credentialKind) ? (
+            <InfoRow label={t('inspector.field.credentialKind')} value={inspect.credentialKind} mono />
+          ) : null}
+          {visibleInspectValue(inspect.versionId) ? (
+            <InfoRow label={t('inspector.field.versionId')} value={inspect.versionId} mono />
+          ) : null}
         </>
       ) : null}
       {testLogin ? <InfoRow label={t('inspector.field.testLogin')} value={testLogin} mono /> : null}
