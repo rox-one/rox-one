@@ -73,3 +73,5 @@ export {
   createSealedSecret,
   extractDotenvKeys,
 } from './identity/p0-adapters.ts';
+export { JsonAccessGrantStore } from './identity/grants.ts';
+export { InProcessCredentialBroker } from './identity/broker.ts';

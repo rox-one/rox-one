@@ -233,7 +233,7 @@ export class LocalMemorySecretProvider implements SecretProvider {
       providerKind: 'local',
       displayName: 'Legacy local credentials',
       supportedKinds: capabilities.kinds,
-      deliveryMechanisms: ['env-legacy', 'stdin'],
+      deliveryMechanisms: ['trusted-http-header', 'stdin', 'env-legacy'],
       capabilities,
     };
   }
@@ -259,8 +259,15 @@ export class LocalMemorySecretProvider implements SecretProvider {
     };
   }
 
-  async resolveForLease(_input: ProviderLeaseInput): Promise<ProviderMaterialization> {
-    throw new ConnectionFabricError('PROVIDER_LEASE_RESERVED');
+  async resolveForLease(input: ProviderLeaseInput): Promise<ProviderMaterialization> {
+    const stored = this.store.get(locatorKey(input.credentialRef.locator));
+    if (!stored) throw new ConnectionFabricError('PROVIDER_UNAVAILABLE', input.credentialRef.id);
+    return {
+      _brand: 'ProviderMaterialization',
+      credentialRefId: input.credentialRef.id,
+      providerId: this.id,
+      versionId: stored.version.id,
+    };
   }
 
   async write(input: ProviderWriteInput): Promise<CredentialVersion> {
