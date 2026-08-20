@@ -885,13 +885,13 @@ export default function ConnectionsPage() {
                   {devicePoll ? (
                     <div className="text-xs text-muted-foreground">{t(`connections.import.githubOAuthStatus.${devicePoll.status}`)}</div>
                   ) : null}
-                  {githubDeviceVerificationHref(deviceLogin.verificationUri) ? (
+                  {githubDeviceVerificationHref(deviceLogin.verificationUri, deviceLogin.userCode) ? (
                     <button
                       type="button"
                       data-testid="connections-github-device-open"
                       className="rounded border px-3 py-1"
                       onClick={() => {
-                        const href = githubDeviceVerificationHref(deviceLogin.verificationUri)
+                        const href = githubDeviceVerificationHref(deviceLogin.verificationUri, deviceLogin.userCode)
                         if (!href) return
                         void window.electronAPI?.openUrl?.(href)
                       }}

@@ -307,6 +307,23 @@ describe('CF-6 Connections UI helpers', () => {
     expect(JSON.stringify({ href: 'https://github.com/login/device' })).not.toMatch(/accessToken|deviceCode/)
   })
 
+  it('attaches a GitHub user code onto an allowlisted device URI', () => {
+    expect(githubDeviceVerificationHref('https://github.com/login/device', 'ABCD-1234')).toBe(
+      'https://github.com/login/device?user_code=ABCD-1234',
+    )
+    expect(githubDeviceVerificationHref('https://github.com/login/device/', 'ABCD-1234')).toBe(
+      'https://github.com/login/device/?user_code=ABCD-1234',
+    )
+    expect(githubDeviceVerificationHref('https://github.com/login/device?user_code=WXYZ-9999', 'ABCD-1234')).toBe(
+      'https://github.com/login/device?user_code=WXYZ-9999',
+    )
+    expect(githubDeviceVerificationHref('https://github.com/login/device', '<script>')).toBe(
+      'https://github.com/login/device',
+    )
+    expect(githubDeviceVerificationHref('https://evil.com/login/device', 'ABCD-1234')).toBeNull()
+    expect(JSON.stringify({ userCode: 'ABCD-1234' })).not.toMatch(/accessToken|deviceCode/)
+  })
+
   it('selects the imported GitHub connection from a metadata-only list', () => {
     const rows = [
       { id: 'c1', name: 'older' },

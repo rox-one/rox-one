@@ -303,6 +303,17 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('opens GitHub device verification with the user code and without a window', () => {
+    expect(page).toContain('githubDeviceVerificationHref(deviceLogin.verificationUri, deviceLogin.userCode)')
+    expect(page).toContain('connections-github-device-open')
+    expect(page).toContain('openUrl')
+    expect(page).not.toContain('window.open')
+    expect(page).not.toContain('accessToken')
+    expect(page).not.toContain('deviceCode')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('cancels GitHub device login in place and selects the imported connection without opening a window', () => {
     expect(page).toContain('cancelGithubDeviceLogin')
     expect(page).toContain('cancelDeviceLogin')
