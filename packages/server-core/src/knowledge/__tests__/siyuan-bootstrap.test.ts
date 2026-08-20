@@ -2,7 +2,7 @@
  * Local SiYuan bootstrap — pure-ish units with injected FS/fetch/spawn.
  */
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import {
@@ -211,6 +211,104 @@ describe('ensureLocalKernel', () => {
     expect(rec?.mode).toBe('managed')
     expect(rec?.baseUrl).toBe(result.baseUrl)
     expect(rec?.credentialRef).toBe(`source_bearer::default::${result.connectionId}`)
+  })
+
+  it('reports already running on stored non-6806 URL', async () => {
+    const store = new KnowledgeConnectionsStore(configDir)
+    store.save({
+      id: 'siyuan-local',
+      baseUrl: 'http://127.0.0.1:19201',
+      credentialRef: 'source_bearer::default::siyuan-local',
+      provider: 'siyuan',
+      mode: 'external-local',
+    })
+    const seen: string[] = []
+    const fetchImpl = (async (input: RequestInfo | URL) => {
+      const url = String(input)
+      seen.push(url)
+      if (url.includes('19201')) {
+        return new Response(JSON.stringify({ code: 0, msg: '', data: '3.1.0' }), { status: 200 })
+      }
+      throw new Error(`unexpected probe ${url}`)
+    }) as unknown as typeof fetch
+    let spawned = 0
+    const result = await ensureLocalKernel({
+      configDir,
+      fetchImpl,
+      existsSync: () => false,
+      pathEnv: '',
+      homeDir: '',
+      platform: 'linux',
+      spawnFn: (() => {
+        spawned += 1
+        return { unref() {}, pid: 1 }
+      }) as unknown as typeof import('node:child_process').spawn,
+    })
+    expect(result.ok).toBe(true)
+    expect(result.alreadyRunning).toBe(true)
+    expect(result.started).toBe(false)
+    expect(result.baseUrl).toBe('http://127.0.0.1:19201')
+    expect(spawned).toBe(0)
+    expect(seen.some((u) => u.includes('19201'))).toBe(true)
+    expect(seen.some((u) => u.includes('6806'))).toBe(false)
+  })
+
+  it('managed spawn without env when files exist on disk via resolver', async () => {
+    delete process.env.G2_RECORD_PATH
+    delete process.env.OEM_PIN_PATH
+    delete process.env.OEM_KERNEL_BINARY
+    const repoRoot = mkdtempSync(join(tmpdir(), 'oem-layout-'))
+    const g2Dir = join(repoRoot, 'docs', 'specs', '2026-08-07-siyuan-integration')
+    mkdirSync(g2Dir, { recursive: true })
+    writeFileSync(join(g2Dir, 'g2-decision-record.md'), '# G2\n\n> **Status: ACCEPTED**\n\nvariant C\n')
+    const pinDir = join(repoRoot, 'apps', 'electron', 'resources')
+    mkdirSync(pinDir, { recursive: true })
+    writeFileSync(
+      join(pinDir, 'oem-kernel-pin.json'),
+      JSON.stringify({
+        version: '3.1.28-rox.1',
+        sha256: {
+          'darwin-arm64': 'a'.repeat(64),
+          'darwin-x64': 'b'.repeat(64),
+          'linux-x64': 'c'.repeat(64),
+          'win32-x64': 'd'.repeat(64),
+        },
+        relativePayloadDir: 'resources/oem-kernel',
+        minApi: '3.0.0',
+        maxApiExclusive: '4.0.0',
+      }),
+    )
+    const kernelDir = join(repoRoot, 'resources', 'oem-kernel')
+    mkdirSync(kernelDir, { recursive: true })
+    const kernelPath = join(kernelDir, 'knowledge-engine')
+    writeFileSync(kernelPath, 'fake-kernel')
+    const fetchImpl = (async () => {
+      throw new Error('down')
+    }) as unknown as typeof fetch
+    const result = await ensureLocalKernel({
+      configDir,
+      fetchImpl,
+      cwd: repoRoot,
+      existsSync,
+      pathEnv: '',
+      homeDir: '',
+      platform: 'linux',
+      spawnFn: ((cmd: string, args: string[]) => {
+        expect(cmd).toBe(kernelPath)
+        expect(args.some((a) => a.startsWith('--accessAuthCode='))).toBe(true)
+        expect(args.some((a) => a.includes('6806'))).toBe(false)
+        return { unref() {}, pid: 77, on() {}, kill() {} }
+      }) as unknown as typeof import('node:child_process').spawn,
+    })
+    expect(result.ok).toBe(true)
+    expect(result.started).toBe(true)
+    expect(result.method).toBe('kernel-serve')
+    expect(result.baseUrl).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/)
+    expect(result.baseUrl).not.toBe('http://127.0.0.1:6806')
+    const rec = new KnowledgeConnectionsStore(configDir).get(result.connectionId)
+    expect(rec?.mode).toBe('managed')
+    expect(rec?.baseUrl).toBe(result.baseUrl)
+    rmSync(repoRoot, { recursive: true, force: true })
   })
 
 })

@@ -31,6 +31,7 @@ export {
   getKernelBootstrapStatus,
   maybeAutoStartLocalKernel,
   probeKernelHealth,
+  resolveOemManagedLayout,
   siyuanDataDir,
   spawnLocalSiyuan,
   type EnsureLocalKernelResult,

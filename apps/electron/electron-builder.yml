@@ -84,6 +84,13 @@ publish:
 # Disable ASAR to avoid decompression overhead and click delays
 asar: false
 
+# OEM pin metadata + G2 record only (never the kernel binary).
+extraResources:
+  - from: resources/oem-kernel-pin.json
+    to: oem-kernel-pin.json
+  - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
+    to: g2-decision-record.md
+
 mac:
   category: public.app-category.productivity
   icon: resources/icon.icns
@@ -127,6 +134,10 @@ mac:
     # Discord worker subprocess (self-contained; discord.js bundled in).
     - from: ../../packages/messaging-discord-worker/dist/worker.cjs
       to: messaging-discord-worker/worker.cjs
+    - from: resources/oem-kernel-pin.json
+      to: oem-kernel-pin.json
+    - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
+      to: g2-decision-record.md
   # Exclude binaries for other platforms
   files:
     - "!**/resources/bin/win32-*/**"
@@ -195,6 +206,10 @@ win:
     # Discord worker subprocess (self-contained; discord.js bundled in).
     - from: ../../packages/messaging-discord-worker/dist/worker.cjs
       to: messaging-discord-worker/worker.cjs
+    - from: resources/oem-kernel-pin.json
+      to: oem-kernel-pin.json
+    - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
+      to: g2-decision-record.md
 
 nsis:
   oneClick: true
@@ -225,6 +240,10 @@ linux:
     # Discord worker subprocess (self-contained; discord.js bundled in).
     - from: ../../packages/messaging-discord-worker/dist/worker.cjs
       to: messaging-discord-worker/worker.cjs
+    - from: resources/oem-kernel-pin.json
+      to: oem-kernel-pin.json
+    - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
+      to: g2-decision-record.md
   # Exclude binaries for other platforms
   files:
     - "!**/resources/bin/darwin-*/**"

@@ -83,7 +83,19 @@ Sentry.setUser({ id: machineId })
 
 import { join, delimiter } from 'path'
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
+import { resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+
+{
+  const oemRoot = app.isPackaged ? process.resourcesPath : process.cwd()
+  const layout = resolveOemManagedLayout({ cwd: oemRoot, existsSync })
+  if (layout.kernelBinary) {
+    if (!process.env.G2_RECORD_PATH && layout.g2RecordPath) process.env.G2_RECORD_PATH = layout.g2RecordPath
+    if (!process.env.OEM_PIN_PATH && layout.pinPath) process.env.OEM_PIN_PATH = layout.pinPath
+    if (!process.env.OEM_KERNEL_BINARY) process.env.OEM_KERNEL_BINARY = layout.kernelBinary
+  }
+}
+
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@craft-agent/server-core/sessions'
 import { registerAllRpcHandlers } from './handlers/index'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@craft-agent/server-core/handlers/rpc'

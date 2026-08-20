@@ -20,7 +20,7 @@ import {
 import { KnowledgeConnectionsStore, credentialIdFromRef } from './connections-store'
 import { loadG2AcceptedVariantFromDisk } from './g2-status'
 import { SiyuanProcessManager } from './process-manager'
-import { parseOemKernelPin } from '@craft-agent/shared/knowledge/oem-pin'
+import { parseOemKernelPin, resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { readFileSync } from 'node:fs'
 
@@ -30,6 +30,7 @@ export const SIYUAN_LOCAL_CONNECTION_ID = 'siyuan-local'
 export const SIYUAN_DEFAULT_BASE_URL = SIYUAN_LOCAL_BASE_URL
 
 export { SIYUAN_INSTALL_URL, detectSiyuanBinary, shouldAutoStartSiyuan }
+export { resolveOemManagedLayout }
 
 export type KernelStartMethod = 'kernel-serve' | 'open-app' | 'none'
 
@@ -77,7 +78,24 @@ export interface BootstrapDeps {
   openAppFn?: (appName: string) => Promise<void>
   /** Clock for cooldown. */
   now?: () => number
+  /** Layout root for resolveOemManagedLayout (repo cwd or extraResources). */
+  cwd?: string
   log?: { debug?: (msg: string) => void; info?: (msg: string) => void; warn?: (msg: string) => void }
+}
+
+
+function probeBaseUrlFromStore(store: KnowledgeConnectionsStore, connectionId: string): string {
+  const existing = store.get(connectionId)
+  const url = existing?.baseUrl?.trim()
+  return url || SIYUAN_LOCAL_BASE_URL
+}
+
+function managedLayoutFromDeps(deps: BootstrapDeps) {
+  return resolveOemManagedLayout({
+    cwd: deps.cwd,
+    existsSync: deps.existsSync,
+    platform: deps.platform,
+  })
 }
 
 function resolveConfigDir(deps: BootstrapDeps): string {
@@ -262,7 +280,10 @@ export async function getKernelBootstrapStatus(deps: BootstrapDeps = {}): Promis
     homeDir: deps.homeDir ?? homedir(),
     existsSync: deps.existsSync,
   })
-  const health = await probeKernelHealth(SIYUAN_LOCAL_BASE_URL, { fetchImpl: deps.fetchImpl })
+  const store = new KnowledgeConnectionsStore(configDir)
+  const { connectionId } = ensureDefaultLocalConnection(store)
+  const probeUrl = probeBaseUrlFromStore(store, connectionId)
+  const health = await probeKernelHealth(probeUrl, { fetchImpl: deps.fetchImpl })
   return {
     running: health.running,
     ...(health.version ? { version: health.version } : {}),
@@ -272,7 +293,7 @@ export async function getKernelBootstrapStatus(deps: BootstrapDeps = {}): Promis
     starting: startInFlight != null,
     startMethod: 'none',
     dataDir,
-    baseUrl: SIYUAN_LOCAL_BASE_URL,
+    baseUrl: probeUrl,
   }
 }
 
@@ -285,10 +306,10 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
 
   const now = deps.now ?? Date.now
   if (now() - lastStartAt < START_COOLDOWN_MS) {
-    const health = await probeKernelHealth(SIYUAN_LOCAL_BASE_URL, { fetchImpl: deps.fetchImpl })
-    const { connectionId } = ensureDefaultLocalConnection(
-      new KnowledgeConnectionsStore(resolveConfigDir(deps)),
-    )
+    const store = new KnowledgeConnectionsStore(resolveConfigDir(deps))
+    const { connectionId } = ensureDefaultLocalConnection(store)
+    const probeUrl = probeBaseUrlFromStore(store, connectionId)
+    const health = await probeKernelHealth(probeUrl, { fetchImpl: deps.fetchImpl })
     return {
       ok: health.running,
       started: false,
@@ -300,7 +321,7 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
         homeDir: deps.homeDir,
         existsSync: deps.existsSync,
       }),
-      baseUrl: SIYUAN_LOCAL_BASE_URL,
+      baseUrl: probeUrl,
       connectionId,
       ...(health.version ? { version: health.version } : {}),
     }
@@ -310,7 +331,8 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
     const configDir = resolveConfigDir(deps)
     const store = new KnowledgeConnectionsStore(configDir)
     const { connectionId } = ensureDefaultLocalConnection(store)
-    const health = await probeKernelHealth(SIYUAN_LOCAL_BASE_URL, { fetchImpl: deps.fetchImpl })
+    const probeUrl = probeBaseUrlFromStore(store, connectionId)
+    const health = await probeKernelHealth(probeUrl, { fetchImpl: deps.fetchImpl })
     if (health.running) {
       return {
         ok: true,
@@ -323,17 +345,21 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
           homeDir: deps.homeDir,
           existsSync: deps.existsSync,
         }),
-        baseUrl: SIYUAN_LOCAL_BASE_URL,
+        baseUrl: probeUrl,
         connectionId,
         ...(health.version ? { version: health.version } : {}),
       }
     }
 
-
-    const g2 = loadG2AcceptedVariantFromDisk()
+    const layout = managedLayoutFromDeps(deps)
+    const g2Path = process.env.G2_RECORD_PATH || layout.g2RecordPath || undefined
+    const g2 = loadG2AcceptedVariantFromDisk(g2Path)
     if (g2 === 'C') {
-      const pinPath = process.env.OEM_PIN_PATH
-      const binaryPath = process.env.OEM_KERNEL_BINARY
+      const pinPath = process.env.OEM_PIN_PATH || layout.pinPath || undefined
+      const binaryPath = process.env.OEM_KERNEL_BINARY || layout.kernelBinary || undefined
+      if (!process.env.G2_RECORD_PATH && layout.g2RecordPath) {
+        process.env.G2_RECORD_PATH = layout.g2RecordPath
+      }
       if (pinPath && binaryPath) {
         try {
           const pin = parseOemKernelPin(JSON.parse(readFileSync(pinPath, 'utf8')))
@@ -470,10 +496,11 @@ export function maybeAutoStartLocalKernel(deps: BootstrapDeps = {}): void {
 
   void (async () => {
     try {
-      const health = await probeKernelHealth(SIYUAN_LOCAL_BASE_URL, { fetchImpl: deps.fetchImpl })
+      const store = new KnowledgeConnectionsStore(resolveConfigDir(deps))
+      const { connectionId } = ensureDefaultLocalConnection(store)
+      const probeUrl = probeBaseUrlFromStore(store, connectionId)
+      const health = await probeKernelHealth(probeUrl, { fetchImpl: deps.fetchImpl })
       if (health.running) {
-        // Still seed connection so UI has a row
-        ensureDefaultLocalConnection(new KnowledgeConnectionsStore(resolveConfigDir(deps)))
         return
       }
       const binary = detectSiyuanBinary({
