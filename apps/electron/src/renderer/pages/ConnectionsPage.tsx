@@ -1273,12 +1273,12 @@ export default function ConnectionsPage() {
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
                 {policyRows.map((row) => (
-                  <li key={row.id}>
+                  <li key={row.id} className="flex items-center gap-2">
                     <button
                       type="button"
                       data-testid="connections-policy-row"
                       aria-selected={selected?.id === row.id}
-                      className={`w-full rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
+                      className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                       onClick={() => setSelected(row)}
                     >
                       <div className="font-medium">{row.integrationId}</div>
@@ -1307,6 +1307,7 @@ export default function ConnectionsPage() {
                         <div className="font-mono text-xs" data-testid="connections-policy-revalidated">{revalidatedById[row.id]}</div>
                       ) : null}
                     </button>
+                    {renderReconnectControls(row)}
                   </li>
                 ))}
               </ul>
