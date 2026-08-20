@@ -624,7 +624,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('shows revalidation status after rotate, move, repair, and reconnect without leaking secret fields', () => {
     expect(page).toContain('applyRevalidated')
-    expect(page.split('applyRevalidated(connectionId, result.consumers)').length - 1).toBe(4)
+    expect(page.split('applyRevalidated(connectionId, result.consumers)').length - 1).toBe(5)
     expect(page).toContain('connections-row-revalidated')
     expect(page).toContain('sanitizeReconnectLeases')
     expect(page).toContain("next === '—' ? '' : next")
@@ -632,6 +632,7 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('confirmMove')
     expect(page).toContain('runRepair')
     expect(page).toContain('confirmReconnect')
+    expect(page).toContain('confirmConvert')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

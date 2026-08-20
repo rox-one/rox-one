@@ -448,6 +448,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await convertConnection({ workspaceId, connectionId })
       applyRevokedLeases(connectionId, result.leases)
+      applyRevalidated(connectionId, result.consumers)
       applyInspect(connectionId, result.inspect)
       setConvertingId(null)
       const listed = await refreshRows(workspaceId)
