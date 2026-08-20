@@ -400,6 +400,7 @@
   "collection.display.groupBy.project": "專案",
   "collection.display.groupBy.status": "狀態",
   "collection.display.groupByLabel": "分組",
+  "collection.display.hoverActions": "懸停操作",
   "collection.display.labelNone": "No label",
   "collection.display.orderBy": "Ordering",
   "collection.display.orderBy.createdAt": "建立時間",

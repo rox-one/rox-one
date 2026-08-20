@@ -1,16 +1,18 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal } from 'lucide-react'
-import { COLLECTION_DENSITY_VALUES,
-COLLECTION_GROUP_BY_VALUES,
-COLLECTION_ORDER_BY_VALUES,
-COLLECTION_PROPERTY_VALUES,
-type CollectionDensity,
-type CollectionDisplay,
-type CollectionGroupBy,
-type CollectionOrderBy,
-type CollectionOrderDir,
-type CollectionProperty, } from '@craft-agent/shared/sessions/collection'
+import {
+  COLLECTION_DENSITY_VALUES,
+  COLLECTION_GROUP_BY_VALUES,
+  COLLECTION_ORDER_BY_VALUES,
+  COLLECTION_PROPERTY_VALUES,
+  type CollectionDensity,
+  type CollectionDisplay,
+  type CollectionGroupBy,
+  type CollectionOrderBy,
+  type CollectionOrderDir,
+  type CollectionProperty,
+} from '@craft-agent/shared/sessions/collection'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
@@ -197,6 +199,11 @@ export function CollectionDisplayPopover({
           label={t('collection.display.showEmptyGroups')}
           checked={display.showEmptyGroups}
           onCheckedChange={(checked) => patch({ showEmptyGroups: checked })}
+        />
+        <ToggleRow
+          label={t('collection.display.hoverActions')}
+          checked={display.hoverActions !== false}
+          onCheckedChange={(checked) => patch({ hoverActions: checked })}
         />
 
         <CollectionMenuSection label={t('collection.display.propertiesLabel')}>

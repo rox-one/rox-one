@@ -80,8 +80,9 @@ export function SessionItem({
   const ctx = useSessionListContext()
   const { t } = useTranslation()
   const { workspaces, isCompactMode } = useAppShellContext()
-  const { density } = useAtomValue(collectionDisplayAtom)
+  const { density, hoverActions: hoverActionsEnabled } = useAtomValue(collectionDisplayAtom)
   const isComfortable = density === "comfortable"
+  const showRowHoverActions = hoverActionsEnabled !== false
   const canSendToWorkspace = hasTransferTargets(workspaces)
   const { hotkey: nextHotkey } = useActionLabel('chat.nextSearchMatch')
   const { hotkey: prevHotkey } = useActionLabel('chat.prevSearchMatch')
@@ -307,7 +308,7 @@ export function SessionItem({
         ) : undefined
       }
       hoverActions={
-        <>
+        showRowHoverActions ? <>
           {!unread && (
             <button
               type="button"
@@ -353,7 +354,7 @@ export function SessionItem({
               <Archive className="h-3.5 w-3.5 text-muted-foreground" />
             )}
           </button>
-        </>
+        </> : undefined
       }
       titleTrailing={hasMatch ? (
         <span

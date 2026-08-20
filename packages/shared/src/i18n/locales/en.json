@@ -400,6 +400,7 @@
   "collection.display.groupBy.project": "Project",
   "collection.display.groupBy.status": "Status",
   "collection.display.groupByLabel": "Group by",
+  "collection.display.hoverActions": "Hover actions",
   "collection.display.labelNone": "No label",
   "collection.display.orderBy": "Ordering",
   "collection.display.orderBy.createdAt": "Created",
