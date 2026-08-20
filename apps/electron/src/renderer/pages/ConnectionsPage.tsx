@@ -1281,10 +1281,22 @@ export default function ConnectionsPage() {
           <ul className="space-y-2 text-sm text-foreground">
             {auditRows.map((row) => (
               <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded border px-3 py-2">
-                <div className="font-medium">{row.action ?? row.eventType}</div>
-                <div className="text-muted-foreground">{row.outcome}</div>
-                <div className="text-muted-foreground">{new Date(row.occurredAt).toISOString()}</div>
-                <div className="font-mono text-xs">{row.actorId ?? '—'}</div>
+                <div data-testid="connections-audit-action">
+                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.action')}</div>
+                  <div className="font-medium">{row.action ?? row.eventType}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.outcome')}</div>
+                  <div className="text-muted-foreground">{row.outcome}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.time')}</div>
+                  <div className="text-muted-foreground">{new Date(row.occurredAt).toISOString()}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.actor')}</div>
+                  <div className="font-mono text-xs">{row.actorId ?? '—'}</div>
+                </div>
                 <div className="font-mono text-xs">{row.connectionId}</div>
                 <div className="font-mono text-xs">{row.payloadDigest}</div>
               </li>

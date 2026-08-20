@@ -282,6 +282,18 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('row.action')
   })
 
+  it('labels audit fields through i18n without renaming tabs', () => {
+    expect(page).toContain('connections.audit.action')
+    expect(page).toContain('connections.audit.outcome')
+    expect(page).toContain('connections.audit.time')
+    expect(page).toContain('connections.audit.actor')
+    expect(page).toContain('connections-audit-action')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page).toContain('t(`connections.tab.${id}`)')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('creates a metadata-only connection from the Services tab', () => {
     expect(page).toContain('createConnection')
     expect(page).toContain('connections.create')
