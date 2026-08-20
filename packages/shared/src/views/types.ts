@@ -144,12 +144,6 @@ export interface ViewEvaluationContext {
   /** Whether there's a pending plan to accept (lastMessageRole == 'plan') */
   hasPendingPlan: boolean;
 
-  /** Collection priority */
-  priority: string;
-  /** Bound project id */
-  projectId: string;
-  /** Due date epoch ms; 0 when unset */
-  dueDate: number;
   /** Derived due bucket */
   dueBucket: string;
 

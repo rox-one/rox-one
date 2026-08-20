@@ -4,6 +4,8 @@
  */
 
 import type { CollectionFilters, DueRange } from '../sessions/collection-types.ts';
+import { localDayBounds } from '../sessions/collection-query.ts';
+import { getDefaultViews } from './defaults.ts';
 import type { ViewConfig } from './types.ts';
 
 export const SLICE_VIEW_ID_PREFIX = 'slice:';
@@ -17,6 +19,8 @@ export interface CollectionSliceLike {
 }
 
 export type SliceLike = CollectionSliceLike;
+
+const DEFAULT_SESSION_VIEW_IDS = new Set(getDefaultViews().map((view) => view.id));
 
 /** Same signature as renderer collection-slices: sorted array JSON. */
 export function filtersSignature(filters: CollectionFilters): string {
@@ -42,7 +46,7 @@ function orEquals(field: string, values: string[]): string | null {
   return `(${values.map((v) => `${field} == ${quote(v)}`).join(' or ')})`;
 }
 
-function dueClause(due: DueRange): string {
+function dueClause(due: DueRange, now: number = Date.now()): string {
   switch (due.type) {
     case 'none':
       return 'dueBucket == "none"';
@@ -50,15 +54,18 @@ function dueClause(due: DueRange): string {
       return 'dueBucket == "overdue"';
     case 'today':
       return 'dueBucket == "today"';
-    case 'next_n_days':
-      return `dueDate >= startOfToday() and dueDate <= startOfToday() + ${due.days} * 86400000 - 1`;
+    case 'next_n_days': {
+      const { start } = localDayBounds(now);
+      const end = start + due.days * 24 * 60 * 60 * 1000 - 1;
+      return `dueDate >= ${start} and dueDate <= ${end}`;
+    }
     case 'range':
       return `dueDate >= ${due.start} and dueDate <= ${due.end}`;
   }
 }
 
 /** Compile CollectionFilters into a Filtrex expression. Empty → "true". */
-export function filtersToExpression(filters: CollectionFilters): string {
+export function filtersToExpression(filters: CollectionFilters, now: number = Date.now()): string {
   const parts: string[] = [];
   const status = orEquals('sessionStatus', filters.status ?? []);
   if (status) parts.push(status);
@@ -73,7 +80,7 @@ export function filtersToExpression(filters: CollectionFilters): string {
       parts.push(`(${filters.labels.map((l) => `contains(labels, ${quote(l)})`).join(' or ')})`);
     }
   }
-  if (filters.due) parts.push(dueClause(filters.due));
+  if (filters.due) parts.push(dueClause(filters.due, now));
   if (typeof filters.flagged === 'boolean') {
     parts.push(`isFlagged == ${filters.flagged}`);
   }
@@ -125,28 +132,23 @@ export function userCollectionSlices(views: readonly ViewConfig[]): CollectionSl
   return out;
 }
 
+function isManagedSliceView(view: ViewConfig): boolean {
+  if ((view.domain ?? 'sessions') !== 'sessions') return false;
+  if (DEFAULT_SESSION_VIEW_IDS.has(view.id)) return false;
+  if (view.id.startsWith(SLICE_VIEW_ID_PREFIX) || view.id.startsWith('slice-')) return true;
+  return Boolean(view.collectionFilters);
+}
+
 /**
- * Append slice-derived views that are not already present (by id or
- * collectionFilters signature). Existing views are never rewritten.
+ * Replace managed Filter-menu slice views. Knowledge views and default
+ * session views (New/Plan/Explore/Processing) are kept. Built-in Filter
+ * shortcuts are never written to views.json.
  */
 export function mergeSliceViews(
   existing: readonly ViewConfig[],
   slices: readonly CollectionSliceLike[],
 ): ViewConfig[] {
-  const ids = new Set(existing.map((v) => v.id));
-  const signatures = new Set(
-    existing
-      .map((v) => (v.collectionFilters ? filtersSignature(v.collectionFilters) : null))
-      .filter((s): s is string => s != null),
-  );
-  const next = [...existing];
-  for (const slice of slices) {
-    const view = sliceToView(slice);
-    const sig = filtersSignature(slice.filters);
-    if (ids.has(view.id) || signatures.has(sig)) continue;
-    ids.add(view.id);
-    signatures.add(sig);
-    next.push(view);
-  }
-  return next;
+  const kept = existing.filter((view) => !isManagedSliceView(view));
+  const sliceViews = slices.filter((slice) => !slice.builtin).map(sliceToView);
+  return [...kept, ...sliceViews];
 }
