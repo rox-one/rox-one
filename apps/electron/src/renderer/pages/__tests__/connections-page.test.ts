@@ -246,13 +246,24 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('labels storage mode and credential ref on listed rows through i18n without secret fields', () => {
-    expect(page.split("t('inspector.field.storageMode')").length - 1).toBe(2)
-    expect(page.split("t('inspector.field.credentialRef')").length - 1).toBe(2)
+    expect(page.split("t('inspector.field.storageMode')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.credentialRef')").length - 1).toBe(3)
     expect(page).toContain('connections-row-storage')
     expect(page).toContain('connections-credential-storage')
+    expect(page).toContain('connections-policy-storage')
     expect(page).toContain('connections-row-credential-ref')
     expect(page).toContain('connections-credential-ref')
+    expect(page).toContain('connections-policy-credential-ref')
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('shows storage mode and credential ref on policy connection rows without secret fields', () => {
+    expect(page).toContain('connections-policy-storage')
+    expect(page).toContain('connections-policy-credential-ref')
+    expect(page).toContain('row.storageMode')
+    expect(page).toContain('row.credentialRefId')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
