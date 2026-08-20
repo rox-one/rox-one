@@ -10,6 +10,10 @@ import { isSafeResourceSlug } from '@craft-agent/shared/resources'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
+import {
+  syncWorkspaceSourceWatch,
+  type SourceIndexChangedPayload,
+} from '../../sources/source-index-watch'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.GET,
@@ -88,6 +92,27 @@ function ensureNotesSource(workspaceRoot: string, workspaceId: string): void {
   saveSourceGuide(workspaceRoot, NOTES_SOURCE_SLUG, { raw: buildNotesSourceGuide(notesPath) })
 }
 
+function localIndexRoots(
+  sources: ReturnType<typeof loadWorkspaceSources>,
+): Array<{ slug: string; path: string }> {
+  const roots: Array<{ slug: string; path: string }> = []
+  for (const src of sources) {
+    if (src.config.type !== 'local') continue
+    const p = src.config.local?.path
+    if (!p) continue
+    roots.push({ slug: src.config.slug, path: p })
+  }
+  return roots
+}
+
+function syncIndexWatch(server: RpcServer, workspaceId: string, workspaceRoot: string): void {
+  syncWorkspaceSourceWatch(workspaceRoot, localIndexRoots(loadWorkspaceSources(workspaceRoot)), {
+    push: (payload: SourceIndexChangedPayload) => {
+      pushTyped(server, RPC_CHANNELS.sources.INDEX_CHANGED, { to: 'workspace', workspaceId }, workspaceId, payload)
+    },
+  })
+}
+
 export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
 
@@ -99,7 +124,9 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       return []
     }
     ensureNotesSource(workspace.rootPath, workspaceId)
-    return loadWorkspaceSources(workspace.rootPath)
+    const sources = loadWorkspaceSources(workspace.rootPath)
+    syncIndexWatch(server, workspaceId, workspace.rootPath)
+    return sources
   })
 
   // Create a new source
@@ -107,7 +134,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { createSource } = await import('@craft-agent/shared/sources')
-    return createSource(workspace.rootPath, {
+    const created = createSource(workspace.rootPath, {
       name: config.name || 'New Source',
       provider: config.provider || 'custom',
       type: config.type || 'mcp',
@@ -116,6 +143,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       api: config.api,
       local: config.local,
     })
+    syncIndexWatch(server, workspaceId, workspace.rootPath)
+    return created
   })
 
   // Update an existing source's editable fields (name, enabled, url/path, tagline, guide)
@@ -185,6 +214,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     // Notify subscribers (same shape as watcher broadcasts)
     const sources = loadWorkspaceSources(workspace.rootPath)
     pushTyped(server, RPC_CHANNELS.sources.CHANGED, { to: 'workspace', workspaceId }, workspaceId, sources)
+    syncIndexWatch(server, workspaceId, workspace.rootPath)
 
     return loaded
   })
@@ -203,6 +233,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       config.defaults.enabledSourceSlugs = config.defaults.enabledSourceSlugs.filter(s => s !== sourceSlug)
       saveWorkspaceConfig(workspace.rootPath, config)
     }
+    syncIndexWatch(server, workspaceId, workspace.rootPath)
   })
 
   // Start OAuth flow for a source (DEPRECATED — use oauth:start + performOAuth client-side)
@@ -432,6 +463,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
 
     const { reindexWorkspaceSources, countIndexedFiles } = await import('../../sources/source-index-facade')
     const result = await reindexWorkspaceSources(workspace.rootPath, roots)
+    syncIndexWatch(server, workspaceId, workspace.rootPath)
     return {
       ...result,
       fileCount: await countIndexedFiles(workspace.rootPath),

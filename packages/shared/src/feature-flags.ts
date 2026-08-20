@@ -98,6 +98,15 @@ export function isNativeIndexPrimaryEnabled(): boolean {
   return parseBooleanEnv(getEnv('CRAFT_FEATURE_NATIVE_INDEX_PRIMARY')) === true;
 }
 
+/**
+ * Watch local source folders and debounce-reindex.
+ * Independent of the sidecar (TS facade still works). Default off.
+ * Override with CRAFT_FEATURE_NATIVE_INDEX_WATCH=1|0.
+ */
+export function isNativeIndexWatchEnabled(): boolean {
+  return parseBooleanEnv(getEnv('CRAFT_FEATURE_NATIVE_INDEX_WATCH')) === true;
+}
+
 export const FEATURE_FLAGS = {
   /** Enable Opus 4.7 fast mode (speed:"fast" + beta header). 6x pricing. */
   fastMode: false,
@@ -155,5 +164,12 @@ export const FEATURE_FLAGS = {
    */
   get nativeIndexPrimary(): boolean {
     return isNativeIndexPrimaryEnabled();
+  },
+  /**
+   * Watch local source folders and debounce-reindex.
+   * Defaults to disabled. Override with CRAFT_FEATURE_NATIVE_INDEX_WATCH=1|0.
+   */
+  get nativeIndexWatch(): boolean {
+    return isNativeIndexWatchEnabled();
   },
 } as const;
