@@ -165,8 +165,9 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('names affected consumers on revoke confirm', () => {
-    expect(page).toContain('consumersForConnection')
-    expect(page).toContain('formatConfirmTargets')
+    expect(page).toContain('connections-confirm-target')
+    expect(page).toContain('formatConfirmLeases')
+    expect(page).toContain('previewActiveLeases')
   })
 
   it('fills import path placeholders', () => {
@@ -180,7 +181,8 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('names affected consumers on rotate confirm', () => {
     expect(page).toContain('connections-rotate-confirm-target')
-    expect(page).toContain('formatConfirmTargets')
+    expect(page).toContain('formatConfirmLeases')
+    expect(page).toContain('previewActiveLeases')
   })
 
   it('scopes import forms to the active Connect chip', () => {
@@ -350,7 +352,7 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections.reconnectLeases')
     expect(page).toContain('connections-row-reconnect')
     expect(page).toContain('connections-row-reconnect-confirm-target')
-    expect(page).toContain('formatConfirmTargets')
+    expect(page).toContain('formatConfirmLeases')
     expect(page).toContain('inspectSummaryFromRaw')
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
     expect(page).not.toContain('autoFocus')
@@ -368,6 +370,17 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('previewReconnect')
     expect(page).toContain('connections-row-reconnect-confirm-target')
     expect(page).toContain('connections.reconnectLeases')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('pre-lists active leases on revoke, rotate, convert, and move confirm', () => {
+    expect(page).toContain('previewActiveLeases')
+    expect(page).toContain('formatConfirmLeases')
+    expect(page).toContain('connections-confirm-target')
+    expect(page).toContain('connections-rotate-confirm-target')
+    expect(page).toContain('connections-convert-confirm-target')
+    expect(page).toContain('connections-move-confirm-target')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

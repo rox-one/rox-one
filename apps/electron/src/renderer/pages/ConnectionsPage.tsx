@@ -18,12 +18,10 @@ import {
   CONNECT_SOURCES,
   IMPORT_PLACEHOLDERS,
   MOVE_BACKENDS,
-  consumersForConnection,
   createDraftError,
   errorMessage,
   firstPickedPath,
   formatConfirmLeases,
-  formatConfirmTargets,
   formatReconnectLeases,
   grantDraftError,
   isImportPanelVisible,
@@ -351,10 +349,9 @@ export default function ConnectionsPage() {
     }
   }
 
-  const previewReconnect = async (connectionId: string) => {
+  const previewActiveLeases = async (connectionId: string) => {
     const workspaceId = workspace?.id
     const listConnectionLeases = window.electronAPI?.workgraph?.listConnectionLeases
-    setReconnectingId(connectionId)
     if (!workspaceId || typeof listConnectionLeases !== 'function') {
       setLeasePreviewById((current) => ({ ...current, [connectionId]: [] }))
       return
@@ -369,6 +366,11 @@ export default function ConnectionsPage() {
       setListError(errorMessage(err))
       setLeasePreviewById((current) => ({ ...current, [connectionId]: [] }))
     }
+  }
+
+  const previewReconnect = async (connectionId: string) => {
+    setReconnectingId(connectionId)
+    await previewActiveLeases(connectionId)
   }
 
   const confirmReconnect = async (connectionId: string) => {
@@ -566,7 +568,7 @@ export default function ConnectionsPage() {
     confirmingId === row.id ? (
       <div className="flex flex-col items-end gap-1">
         <div className="font-mono text-[11px]" data-testid="connections-confirm-target">
-          {formatConfirmTargets(row, consumersForConnection(bindingRows, row.id))}
+          {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
         </div>
         <div className="flex gap-1">
         <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRevoke(row.id)}>
@@ -578,7 +580,10 @@ export default function ConnectionsPage() {
         </div>
       </div>
     ) : (
-      <button type="button" className="rounded border px-2 py-1" onClick={() => setConfirmingId(row.id)}>
+      <button type="button" className="rounded border px-2 py-1" onClick={() => {
+        setConfirmingId(row.id)
+        void previewActiveLeases(row.id)
+      }}>
         {t('connections.revoke')}
       </button>
     )
@@ -615,7 +620,7 @@ export default function ConnectionsPage() {
     rotatingId === row.id ? (
       <div className="flex flex-col items-end gap-1">
         <div className="font-mono text-[11px]" data-testid="connections-rotate-confirm-target">
-          {formatConfirmTargets(row, consumersForConnection(bindingRows, row.id))}
+          {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
         </div>
         <div className="flex gap-1">
         <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRotate(row.id)}>
@@ -627,7 +632,10 @@ export default function ConnectionsPage() {
         </div>
       </div>
     ) : (
-      <button type="button" className="rounded border px-2 py-1" onClick={() => setRotatingId(row.id)}>
+      <button type="button" className="rounded border px-2 py-1" onClick={() => {
+        setRotatingId(row.id)
+        void previewActiveLeases(row.id)
+      }}>
         {t('connections.rotate')}
       </button>
     )
@@ -1056,8 +1064,8 @@ export default function ConnectionsPage() {
                 {row.storageMode === 'copy' ? (
                   convertingId === row.id ? (
                     <div className="flex flex-col items-end gap-1">
-                      <div className="font-mono text-[11px]">
-                        {formatConfirmTargets(row, consumersForConnection(bindingRows, row.id))}
+                      <div className="font-mono text-[11px]" data-testid="connections-convert-confirm-target">
+                        {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
                       </div>
                       <div className="flex gap-1">
                         <button type="button" className="rounded border px-2 py-1" onClick={() => confirmConvert(row.id)}>
@@ -1069,7 +1077,10 @@ export default function ConnectionsPage() {
                       </div>
                     </div>
                   ) : (
-                    <button type="button" className="rounded border px-2 py-1" onClick={() => setConvertingId(row.id)}>
+                    <button type="button" className="rounded border px-2 py-1" onClick={() => {
+                      setConvertingId(row.id)
+                      void previewActiveLeases(row.id)
+                    }}>
                       {t('connections.convert')}
                     </button>
                   )
@@ -1077,7 +1088,7 @@ export default function ConnectionsPage() {
                 {movingId === row.id ? (
                   <div className="flex flex-col items-end gap-1">
                     <div className="font-mono text-[11px]" data-testid="connections-move-confirm-target">
-                      {formatConfirmTargets(row, consumersForConnection(bindingRows, row.id))}
+                      {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
                     </div>
                     <select
                       className="rounded border bg-transparent px-2 py-1 font-mono text-xs"
@@ -1098,7 +1109,10 @@ export default function ConnectionsPage() {
                     </div>
                   </div>
                 ) : (
-                  <button type="button" className="rounded border px-2 py-1" onClick={() => setMovingId(row.id)}>
+                  <button type="button" className="rounded border px-2 py-1" onClick={() => {
+                    setMovingId(row.id)
+                    void previewActiveLeases(row.id)
+                  }}>
                     {t('connections.move')}
                   </button>
                 )}

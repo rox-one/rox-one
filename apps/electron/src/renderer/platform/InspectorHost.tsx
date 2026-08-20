@@ -167,9 +167,8 @@ function ConnectionInfoSection() {
   }
   const fields = projectConnectionInspector(selected)
   const workspaceId = selected.workspaceId
-  const previewReconnect = async () => {
+  const previewActiveLeases = async () => {
     const listConnectionLeases = window.electronAPI?.workgraph?.listConnectionLeases
-    setConfirmReconnect(true)
     if (!workspaceId || typeof listConnectionLeases !== 'function') {
       setActiveLeases([])
       return
@@ -184,6 +183,11 @@ function ConnectionInfoSection() {
       setActionError(errorMessage(err))
       setActiveLeases([])
     }
+  }
+
+  const previewReconnect = async () => {
+    setConfirmReconnect(true)
+    await previewActiveLeases()
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
@@ -306,6 +310,9 @@ function ConnectionInfoSection() {
         </button>
         {confirmRotate ? (
           <>
+            <div className="font-mono text-[11px]" data-testid="connections-inspector-rotate-confirm-target">
+              {formatConfirmLeases(selected, activeLeases)}
+            </div>
             <button
               type="button"
               className="rounded border px-2 py-1 text-[12px]"
@@ -336,14 +343,20 @@ function ConnectionInfoSection() {
           <button
             type="button"
             className="rounded border px-2 py-1 text-[12px]"
-            onClick={() => setConfirmRotate(true)}
+            onClick={() => {
+              setConfirmRotate(true)
+              void previewActiveLeases()
+            }}
           >
             {t('connections.rotate')}
           </button>
         )}
         {confirmMove ? (
           <>
-            <select
+            <div className="font-mono text-[11px]" data-testid="connections-inspector-move-confirm-target">
+              {formatConfirmLeases(selected, activeLeases)}
+            </div>
+            <select>
               className="rounded border bg-transparent px-2 py-1 font-mono text-[12px]"
               value={moveTarget}
               onChange={(event) => setMoveTarget(event.target.value === 'local-alt' ? 'local-alt' : MOVE_BACKENDS[0])}
@@ -386,7 +399,10 @@ function ConnectionInfoSection() {
           <button
             type="button"
             className="rounded border px-2 py-1 text-[12px]"
-            onClick={() => setConfirmMove(true)}
+            onClick={() => {
+              setConfirmMove(true)
+              void previewActiveLeases()
+            }}
           >
             {t('connections.move')}
           </button>
