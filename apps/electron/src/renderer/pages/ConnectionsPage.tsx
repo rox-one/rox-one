@@ -1064,7 +1064,10 @@ export default function ConnectionsPage() {
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="text-muted-foreground">{row.storageMode}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
-                  <div className="font-mono text-xs" data-testid="connections-row-tenant">{row.workspaceId}</div>
+                  <div data-testid="connections-row-tenant">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
+                    <div className="font-mono text-xs">{row.workspaceId}</div>
+                  </div>
                   <div className="font-mono text-xs" data-testid="connections-row-scopes">{row.scopes.join(', ') || '—'}</div>
                   {inspectById[row.id] ? (
                     <>
@@ -1122,7 +1125,10 @@ export default function ConnectionsPage() {
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
                   <div className="text-muted-foreground">{row.storageMode}</div>
-                  <div className="font-mono text-xs" data-testid="connections-credential-tenant">{row.workspaceId}</div>
+                  <div data-testid="connections-credential-tenant">
+                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
+                    <div className="font-mono text-xs">{row.workspaceId}</div>
+                  </div>
                   <div className="font-mono text-xs" data-testid="connections-credential-scopes">{row.scopes.join(', ') || '—'}</div>
                   {inspectById[row.id] ? (
                     <>
@@ -1276,7 +1282,10 @@ export default function ConnectionsPage() {
                       onClick={() => setSelected(row)}
                     >
                       <div className="font-medium">{row.integrationId}</div>
-                      <div className="font-mono text-xs" data-testid="connections-policy-tenant">{row.workspaceId}</div>
+                      <div data-testid="connections-policy-tenant">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
+                        <div className="font-mono text-xs">{row.workspaceId}</div>
+                      </div>
                       <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
                       {inspectById[row.id] ? (
                         <>
