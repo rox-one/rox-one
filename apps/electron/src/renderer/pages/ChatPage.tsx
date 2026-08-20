@@ -28,6 +28,7 @@ import { lookupImportedNote } from '@/lib/notes-migration-map'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
 import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
+import { rememberCollectionView } from '@/components/app-shell/collection/collection-view-cycle'
 import { getSessionTitle } from '@/utils/session'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
 import { resolveEffectiveConnectionSlug, isSessionConnectionUnavailable } from '@config/llm-connections'
@@ -821,7 +822,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       taskSlug,
       initialTitle: sessionMeta ? getSessionTitle(sessionMeta) : undefined,
     })
-    navigate(routes.view.board())
+    rememberCollectionView('list')
+    navigate(routes.view.board(sessionId))
   }, [taskSlug, sessionId, sessionMeta, setKanbanEditorTarget])
 
   const handleDelete = React.useCallback(async () => {
