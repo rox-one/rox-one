@@ -33,7 +33,7 @@ import { KANBAN_COLUMNS, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
-import { skipRailChipClearOnce } from '../collection/collection-rail-filters'
+import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import { KanbanProjectFilter, type KanbanProjectFilterOption } from './KanbanProjectFilter'
 import { TaskEditor } from './TaskEditor'
 import { mergeSubtaskRows, type SpecNodeSummary, type SubtaskChildRow } from './subtask-merge'
@@ -1051,9 +1051,10 @@ function KanbanBoardContainerInner() {
             projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
             labels={labelConfigs.map(l => ({ id: l.id, name: l.name }))}
             onApplyUserSlice={(viewId, sliceFilters) => {
-              skipRailChipClearOnce.current = true
-              void setCollectionFilters({ ...sliceFilters })
-              navigate(routes.view.view(viewId))
+              const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
+              skipRailChipClearOnce.current = nav.skipChipClear
+              void setCollectionFilters({ ...nav.filters })
+              navigate(nav.route)
             }}
           />
         </div>

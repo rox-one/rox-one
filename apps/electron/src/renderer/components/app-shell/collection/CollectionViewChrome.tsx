@@ -21,7 +21,7 @@ import { CollectionOpsBar } from './CollectionOpsBar'
 import { CollectionViewCycleButton } from './CollectionViewCycleButton'
 import { cn } from '@/lib/utils'
 import { navigate, routes } from '@/lib/navigate'
-import { skipRailChipClearOnce } from './collection-rail-filters'
+import { skipRailChipClearOnce, userSliceNavigation } from './collection-rail-filters'
 
 const DEFAULT_PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
 
@@ -63,9 +63,10 @@ export function CollectionViewChrome({
   const filters = useAtomValue(collectionFiltersAtom)
   const setFilters = useSetAtom(collectionFiltersAtom)
   const applyUserSlice = onApplyUserSlice ?? ((viewId: string, sliceFilters: CollectionFilters) => {
-    skipRailChipClearOnce.current = true
-    void setFilters({ ...sliceFilters })
-    navigate(routes.view.view(viewId))
+    const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
+    skipRailChipClearOnce.current = nav.skipChipClear
+    void setFilters({ ...nav.filters })
+    navigate(nav.route)
   })
   const loadFilters = useSetAtom(loadCollectionFiltersAtom)
   const replaceFiltersMap = useSetAtom(replaceCollectionFiltersMapAtom)
