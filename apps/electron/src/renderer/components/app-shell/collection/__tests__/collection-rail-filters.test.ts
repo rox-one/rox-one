@@ -64,4 +64,12 @@ describe('railViewNavigation (Views rail click)', () => {
     expect(nav.route).toBe('view/view-new')
     expect(nav.skipChipClear).toBe(true)
   })
+
+  it('routes Views All without inventing chips', () => {
+    const nav = railViewNavigation({ id: '__all__' })
+    expect(nav.viewId).toBe('__all__')
+    expect(nav.filters).toBeNull()
+    expect(nav.route).toBe('view/__all__')
+    expect(nav.skipChipClear).toBe(true)
+  })
 })

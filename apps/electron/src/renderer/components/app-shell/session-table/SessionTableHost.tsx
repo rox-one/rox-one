@@ -38,6 +38,7 @@ import type { SessionStatus } from '@/config/session-status-config'
 import { CollectionViewCycleButton } from '../collection/CollectionViewCycleButton'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
 import { CollectionOpsBar } from '../collection/CollectionOpsBar'
+import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { SessionTableRow } from './SessionTableRow'
 import { SessionTableGroupHeader } from './SessionTableGroupHeader'
@@ -582,6 +583,13 @@ export function SessionTableHost() {
         priorities={PRIORITIES}
         projects={projectOptions}
         labels={labelOptions}
+        workspaceId={activeWorkspaceId}
+        onApplyUserSlice={(viewId, sliceFilters) => {
+          const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
+          skipRailChipClearOnce.current = nav.skipChipClear
+          void setFilters({ ...nav.filters })
+          navigate(nav.route)
+        }}
         trailing={
           <CollectionViewCycleButton
             value="table"
