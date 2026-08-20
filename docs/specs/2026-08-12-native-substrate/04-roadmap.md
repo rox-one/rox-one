@@ -23,6 +23,7 @@
 - Incremental reindex + metrics CLI. **Landed:** `craft-index` skips unread files when mtime matches (`written`/`unchanged` on reindex). `craft-native --index-status <workspace>` prints `{ dbPath, fts, indexed }` JSON. No RPC rewrite, no FS watcher.
 - Cautious exec cwd jail. **Landed:** `craft-exec` and host-tool Bash canonicalize cwd and reject paths outside `workspaceRoot`. Not a full sandbox (no Zig spawn, no network namespace).
 - Index status RPC/CLI. **Landed:** `sources:status` returns `{ primary, sidecarLive, indexed, fts, dbPath }`. Sources list loads it on workspace change. `craft-native --health` prints sidecar identity JSON.
+- Server health includes native sidecar. **Landed:** `server:getHealth` / HTTP `/health` check `native_sidecar` (disabled = pass; enabled+down = fail). CLI: `craft-cli server-health`.
 
 Local-only process-tree kill и `budget_exceeded` закрыты тестами в `local-provider.test.ts` и crate `craft-rund` (не в shared conformance — у Cloudflare нет pid).
 

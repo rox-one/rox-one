@@ -3,7 +3,11 @@ import { randomUUID } from 'node:crypto'
 import { existsSync, unlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { isNativeJournalPrimaryEnabled, isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags'
+import {
+  isNativeIndexPrimaryEnabled,
+  isNativeJournalPrimaryEnabled,
+  isNativeSidecarEnabled,
+} from '@craft-agent/shared/feature-flags'
 import { setSessionJournalShadow } from '@craft-agent/shared/sessions/journal-shadow.ts'
 import { setSessionJournalPrimary } from '@craft-agent/shared/sessions/journal-primary.ts'
 import { setHostBashPort } from '@craft-agent/session-tools-core'
@@ -242,6 +246,31 @@ export async function stopNativeSidecar(): Promise<void> {
 
 export function getNativeSidecarClient(): NativeSidecarClient | null {
   return singleton?.getClient() ?? null
+}
+
+/** Sync health probe for `server:getHealth` / HTTP /health. */
+export function nativeSidecarHealthCheck(): {
+  name: 'native_sidecar'
+  status: 'pass' | 'fail'
+  message: string
+} {
+  if (!isNativeSidecarEnabled()) {
+    return { name: 'native_sidecar', status: 'pass', message: 'disabled' }
+  }
+  const client = getNativeSidecarClient()
+  if (!client) {
+    return {
+      name: 'native_sidecar',
+      status: 'fail',
+      message: 'enabled but not connected',
+    }
+  }
+  const channels = client.registeredChannels?.length ?? 0
+  return {
+    name: 'native_sidecar',
+    status: 'pass',
+    message: `live channels=${channels} indexPrimary=${isNativeIndexPrimaryEnabled()} journalPrimary=${isNativeJournalPrimaryEnabled()}`,
+  }
 }
 
 function installHostBashPort(): void {
