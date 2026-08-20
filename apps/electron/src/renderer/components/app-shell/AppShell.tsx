@@ -1628,9 +1628,10 @@ function AppShellContent({
   }, [navigate, viewConfigs, setCollectionFilters])
 
   const handleViewsAllClick = useCallback(() => {
+    const nav = railViewNavigation({ id: '__all__' })
     skipRailChipClearRef.current = true
-    skipRailChipClearOnce.current = true
-    navigate(routes.view.view('__all__'))
+    skipRailChipClearOnce.current = nav.skipChipClear
+    navigate(nav.route)
   }, [navigate])
 
   const sessionViewConfigs = useMemo(
