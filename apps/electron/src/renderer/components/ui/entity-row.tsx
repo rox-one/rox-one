@@ -69,6 +69,8 @@ export interface EntityRowProps {
   children?: React.ReactNode
   /** Absolutely-positioned overlay (e.g. match count badge) */
   overlay?: React.ReactNode
+  /** Rendered beside the row button (not inside it). Use for nested controls like status. */
+  leading?: React.ReactNode
 
   // --- Interaction ---
   /** Selection state */
@@ -132,6 +134,7 @@ export function EntityRow({
   trailing,
   children,
   overlay,
+  leading,
   isSelected = false,
   isInMultiSelect = false,
   suppressSelectionBar = false,
@@ -276,11 +279,18 @@ export function EntityRow({
         <div className="absolute left-0 inset-y-0 w-[2px] bg-accent" />
       )}
 
+      <div className="flex w-full items-start">
+      {leading ? (
+        <div className="relative z-10 shrink-0 flex items-center self-start" data-entity-row-leading="">
+          {leading}
+        </div>
+      ) : null}
       {/* Main content button */}
       <button
         {...(buttonProps as React.ButtonHTMLAttributes<HTMLButtonElement>)}
         className={cn(
-          "entity-row-btn flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[8px] focus-visible:ring-1 focus-visible:ring-ring/60",
+          "entity-row-btn flex items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[8px] focus-visible:ring-1 focus-visible:ring-ring/60",
+          leading ? "min-w-0 flex-1" : "w-full",
           "transition-[background-color] duration-75 motion-reduce:transition-none",
           (isSelected || isInMultiSelect)
             ? "bg-foreground/3"
@@ -417,6 +427,7 @@ export function EntityRow({
           )}
         </div>
       </button>
+      </div>
 
       {/* Children rendered below the button */}
       {children}
