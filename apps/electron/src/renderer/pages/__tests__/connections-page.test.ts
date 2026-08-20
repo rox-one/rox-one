@@ -474,7 +474,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('refreshes inspect after rotate, revoke, convert, and move without leaking secret fields', () => {
     expect(page).toContain('applyInspect')
-    expect(page.split('applyInspect(connectionId, result.inspect)').length - 1).toBe(5)
+    expect(page.split('applyInspect(connectionId, result.inspect)').length - 1).toBe(6)
     expect(page).toContain('inspectSummaryFromRaw')
     expect(page).toContain('confirmRotate')
     expect(page).toContain('confirmRevoke')
@@ -486,13 +486,23 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('refreshes the selected row after convert, move, rotate, and reconnect', () => {
     expect(page).toContain('applySelectedRow')
-    expect(page.split('applySelectedRow(listed, connectionId)').length - 1).toBe(4)
+    expect(page.split('applySelectedRow(listed, connectionId)').length - 1).toBe(5)
     expect(page).toContain('importedConnectionFromList')
     expect(page).toContain('confirmConvert')
     expect(page).toContain('confirmMove')
     expect(page).toContain('confirmRotate')
     expect(page).toContain('confirmReconnect')
+    expect(page).toContain('runRepair')
     expect(page).toContain('selectedConnectionAtom')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('refreshes inspect and selected row after repair without leaking secret fields', () => {
+    expect(page).toContain('runRepair')
+    expect(page).toContain('repairConnection')
+    expect(page).toContain('applyInspect(connectionId, result.inspect)')
+    expect(page).toContain('applySelectedRow(listed, connectionId)')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

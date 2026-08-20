@@ -137,7 +137,7 @@ describe('CF-6.4 InspectorHost connections', () => {
 
   it('refreshes inspect after rotate and move without leaking secret fields', () => {
     expect(host).toContain('applyInspect')
-    expect(host.split('applyInspect(result.inspect)').length - 1).toBe(3)
+    expect(host.split('applyInspect(result.inspect)').length - 1).toBe(4)
     expect(host).toContain('projectConnectionInspect')
     expect(host).toContain('rotateConnection')
     expect(host).toContain('moveConnection')
@@ -151,6 +151,27 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).toContain('projectConnectionInspector')
     expect(host).toContain('inspector.field.storageMode')
     expect(page).toContain('applySelectedRow')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('refreshes inspect after repair without leaking secret fields', () => {
+    expect(host).toContain('repairConnection')
+    expect(host).toContain('applyInspect(result.inspect)')
+    expect(host).toContain('connections-inspector-health')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('loads latest audit metadata for the selected connection without secret fields', () => {
+    expect(host).toContain('listConnectionAudit')
+    expect(host).toContain('sanitizeConnectionAuditRows')
+    expect(host).toContain('latestConnectionAudit')
+    expect(host).toContain('formatConnectionAudit')
+    expect(host).toContain('connections-inspector-audit')
+    expect(host).toContain('inspector.field.audit')
+    expect(host).toContain('connectionId: selected.id')
+    expect(host).not.toMatch(/\/token\//)
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

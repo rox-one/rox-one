@@ -485,8 +485,10 @@ export default function ConnectionsPage() {
     if (!workspaceId || typeof repairConnection !== 'function') return
     try {
       setListError(null)
-      await repairConnection({ workspaceId, connectionId })
-      await refreshRows(workspaceId)
+      const result = await repairConnection({ workspaceId, connectionId })
+      applyInspect(connectionId, result.inspect)
+      const listed = await refreshRows(workspaceId)
+      applySelectedRow(listed, connectionId)
     } catch (err) {
       setListError(errorMessage(err))
     }

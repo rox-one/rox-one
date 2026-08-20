@@ -864,7 +864,19 @@ export interface ElectronAPI {
     repairConnection(input: {
       workspaceId: string
       connectionId: string
-    }): Promise<{ consumers: Array<{ consumerId: string; status: string }> }>
+    }): Promise<{
+      consumers: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
+    }>
     reconnectConnection(input: {
       workspaceId: string
       connectionId: string

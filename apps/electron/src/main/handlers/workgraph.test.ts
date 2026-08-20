@@ -148,11 +148,12 @@ describe('WorkGraph handler profile', () => {
 })
 
 describe('WorkGraph mutate inspect', () => {
-  it('attaches inspect after rotate, revoke, convert, move, and reconnect', () => {
+  it('attaches inspect after rotate, revoke, convert, move, reconnect, and repair', () => {
     const source = readFileSync(join(__dirname, './workgraph.ts'), 'utf8')
     expect(source).toContain('withConnectionInspect')
-    expect(source.split('withConnectionInspect').length - 1).toBe(6)
+    expect(source.split('withConnectionInspect').length - 1).toBe(7)
     expect(source).toContain('inspectConnectionMetadata')
+    expect(source).toContain('fabric.repair')
     expect(source).not.toMatch(/\brefreshToken\b/)
   })
 })

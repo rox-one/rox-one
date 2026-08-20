@@ -307,6 +307,7 @@ function ConnectionInfoSection() {
               setActionError(null)
               const result = await repairConnection({ workspaceId, connectionId: selected.id })
               setConsumers(result.consumers)
+              applyInspect(result.inspect)
             } catch (err) {
               setActionError(errorMessage(err))
             }

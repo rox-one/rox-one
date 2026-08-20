@@ -530,12 +530,12 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.REPAIR_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('repair_unavailable')
-      return fabric.repair({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.repair({
         kernel: workGraph,
         broker: fabric.broker,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
-      })
+      }))
     },
     { access: 'localElectron' },
   )
