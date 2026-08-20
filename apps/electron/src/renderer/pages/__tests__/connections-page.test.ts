@@ -436,6 +436,18 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('refreshes inspect after rotate, revoke, convert, and move without leaking secret fields', () => {
+    expect(page).toContain('applyInspect')
+    expect(page.split('applyInspect(connectionId, result.inspect)').length - 1).toBe(5)
+    expect(page).toContain('inspectSummaryFromRaw')
+    expect(page).toContain('confirmRotate')
+    expect(page).toContain('confirmRevoke')
+    expect(page).toContain('confirmConvert')
+    expect(page).toContain('confirmMove')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
 
 

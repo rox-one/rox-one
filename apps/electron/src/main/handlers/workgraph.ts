@@ -276,6 +276,21 @@ type WorkGraphSurface = Pick<
  * localElectron access class additionally requires the renderer's trusted,
  * main-issued window/workspace binding before these channels are advertised.
  */
+async function withConnectionInspect<T extends object>(
+  workGraph: WorkGraphSurface,
+  fabric: FabricImportHost,
+  input: { workspaceId: string; connectionId: string },
+  result: T,
+) {
+  const inspect = await inspectConnectionMetadata({
+    kernel: workGraph,
+    provider: fabric.provider,
+    workspaceId: input.workspaceId,
+    connectionId: input.connectionId,
+  })
+  return { ...result, inspect }
+}
+
 export function registerWorkGraphHandlers(
   server: RpcServer,
   workGraph: WorkGraphSurface,
@@ -329,14 +344,14 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.CONVERT_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('convert_unavailable')
-      return fabric.convert({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.convert({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-convert',
-      })
+      }))
     },
     { access: 'localElectron' },
   )
@@ -410,7 +425,7 @@ export function registerWorkGraphHandlers(
       if (!fabric) throw new Error('move_unavailable')
       const target = fabric.backends[input.targetBackend]
       if (!target) throw new Error('unknown_backend')
-      return fabric.move({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.move({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
@@ -418,7 +433,7 @@ export function registerWorkGraphHandlers(
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-move',
-      })
+      }))
     },
     { access: 'localElectron' },
   )
@@ -500,14 +515,14 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.REVOKE_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('revoke_unavailable')
-      return fabric.revoke({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.revoke({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-revoke',
-      })
+      }))
     },
     { access: 'localElectron' },
   )
@@ -528,21 +543,14 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.RECONNECT_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('reconnect_unavailable')
-      const result = await fabric.reconnect({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.reconnect({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-reconnect',
-      })
-      const inspect = await inspectConnectionMetadata({
-        kernel: workGraph,
-        provider: fabric.provider,
-        workspaceId: input.workspaceId,
-        connectionId: input.connectionId,
-      })
-      return { ...result, inspect }
+      }))
     },
     { access: 'localElectron' },
   )
@@ -550,14 +558,14 @@ export function registerWorkGraphHandlers(
     RPC_CHANNELS.workgraph.ROTATE_CONNECTION,
     async (_ctx, input: { workspaceId: string; connectionId: string }) => {
       if (!fabric) throw new Error('rotate_unavailable')
-      return fabric.rotate({
+      return withConnectionInspect(workGraph, fabric, input, await fabric.rotate({
         kernel: workGraph,
         broker: fabric.broker,
         provider: fabric.provider,
         workspaceId: input.workspaceId,
         connectionId: input.connectionId,
         reason: 'owner-rotate',
-      })
+      }))
     },
     { access: 'localElectron' },
   )

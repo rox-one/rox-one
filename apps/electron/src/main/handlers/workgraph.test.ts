@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
 import { describe, expect, it } from 'bun:test'
 
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
@@ -141,5 +144,15 @@ describe('WorkGraph handler profile', () => {
       storageMode: 'copy',
       value: 'super-secret',
     })).toThrow(/value|payload|secret|field/i)
+  })
+})
+
+describe('WorkGraph mutate inspect', () => {
+  it('attaches inspect after rotate, revoke, convert, move, and reconnect', () => {
+    const source = readFileSync(join(__dirname, './workgraph.ts'), 'utf8')
+    expect(source).toContain('withConnectionInspect')
+    expect(source.split('withConnectionInspect').length - 1).toBe(6)
+    expect(source).toContain('inspectConnectionMetadata')
+    expect(source).not.toMatch(/\brefreshToken\b/)
   })
 })

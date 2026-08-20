@@ -748,6 +748,16 @@ export interface ElectronAPI {
       storageMode: 'reference'
       consumers: Array<{ consumerId: string; status: string }>
       leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
     }>
     revokeConnectionBinding(input: {
       workspaceId: string
@@ -793,6 +803,16 @@ export interface ElectronAPI {
       to: string
       consumers: Array<{ consumerId: string; status: string }>
       leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
     }>
     startGithubDeviceLogin(): Promise<{
       flowId: string
@@ -830,6 +850,16 @@ export interface ElectronAPI {
     }): Promise<{
       consumers: Array<{ consumerId: string; status: string }>
       leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
     }>
     repairConnection(input: {
       workspaceId: string
@@ -858,6 +888,16 @@ export interface ElectronAPI {
     }): Promise<{
       consumers: Array<{ consumerId: string; status: string }>
       leases: Array<{ consumerId: string; status: string }>
+      inspect: {
+        connectionId: string
+        credentialRefId: string
+        health: string
+        expiry: string
+        provenance: string
+        fingerprint: string
+        kind: string
+        versionId: string
+      }
     }>
     testConnection(input: {
       workspaceId: string

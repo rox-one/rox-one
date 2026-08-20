@@ -328,6 +328,13 @@ export default function ConnectionsPage() {
     }))
   }
 
+  const applyInspect = (connectionId: string, inspect: unknown) => {
+    setInspectById((current) => ({
+      ...current,
+      [connectionId]: inspectSummaryFromRaw(inspect),
+    }))
+  }
+
   const confirmRevoke = async (connectionId: string) => {
     const workspaceId = workspace?.id
     const revokeConnection = window.electronAPI?.workgraph?.revokeConnection
@@ -336,6 +343,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await revokeConnection({ workspaceId, connectionId })
       applyRevokedLeases(connectionId, result.leases)
+      applyInspect(connectionId, result.inspect)
       if (selected?.id === connectionId) setSelected(null)
       setConfirmingId(null)
       await refreshRows(workspaceId)
@@ -352,6 +360,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await rotateConnection({ workspaceId, connectionId })
       applyRevokedLeases(connectionId, result.leases)
+      applyInspect(connectionId, result.inspect)
       setRotatingId(null)
       await refreshRows(workspaceId)
     } catch (err) {
@@ -390,10 +399,7 @@ export default function ConnectionsPage() {
     try {
       setListError(null)
       const result = await reconnectConnection({ workspaceId, connectionId })
-      setInspectById((current) => ({
-        ...current,
-        [connectionId]: inspectSummaryFromRaw(result.inspect),
-      }))
+      applyInspect(connectionId, result.inspect)
       applyRevokedLeases(connectionId, result.leases)
       setReconnectingId(null)
       await refreshRows(workspaceId)
@@ -422,6 +428,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await convertConnection({ workspaceId, connectionId })
       applyRevokedLeases(connectionId, result.leases)
+      applyInspect(connectionId, result.inspect)
       setConvertingId(null)
       await refreshRows(workspaceId)
     } catch (err) {
@@ -437,6 +444,7 @@ export default function ConnectionsPage() {
       setListError(null)
       const result = await moveConnection({ workspaceId, connectionId, targetBackend: moveTarget })
       applyRevokedLeases(connectionId, result.leases)
+      applyInspect(connectionId, result.inspect)
       setMovingId(null)
       await refreshRows(workspaceId)
     } catch (err) {

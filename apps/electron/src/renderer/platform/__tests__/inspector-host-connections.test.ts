@@ -134,4 +134,15 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('refreshes inspect after rotate and move without leaking secret fields', () => {
+    expect(host).toContain('applyInspect')
+    expect(host.split('applyInspect(result.inspect)').length - 1).toBe(3)
+    expect(host).toContain('projectConnectionInspect')
+    expect(host).toContain('rotateConnection')
+    expect(host).toContain('moveConnection')
+    expect(host).toContain('connections-inspector-health')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
