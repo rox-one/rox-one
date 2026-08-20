@@ -175,6 +175,7 @@ import { clearSourceIconCaches } from "@/lib/icon-cache"
 import { dispatchFocusInputEvent } from "./input/focus-input-events"
 import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
+import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -1854,9 +1855,38 @@ function AppShellContent({
     const projectMap = new Map((collectionFilters.projectId ?? []).map(id => [id, 'include' as const]))
     return resolveInheritedFilterParams(statusMap, labelMap, projectMap)
   }, [collectionFilters])
+  const handleNewKnowledgeNote = useCallback(async () => {
+    const api = window.electronAPI?.knowledge
+    if (!api?.userCreate || !api.listConnections || !api.listNotebooks) return
+    try {
+      const connections = await api.listConnections()
+      const connectionId = connections[0]?.id
+      if (!connectionId) return
+      const notebooks = await api.listNotebooks({ connectionId })
+      const notebook = pickOpenNotebook(notebooks)
+      if (!notebook) return
+      const result = await api.userCreate(
+        buildNewDocumentCreateArgs({
+          connectionId,
+          notebookId: notebook.id,
+          title: t('knowledge.nav.newNote'),
+        }),
+      )
+      if (result?.id) {
+        navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+      }
+    } catch (error) {
+      console.error('[AppShell] Failed to create knowledge note:', error)
+    }
+  }, [navigate, t])
+
   // Create a new chat and select it
   const handleNewChat = useCallback((newPanel: boolean = false) => {
     if (!activeWorkspace) return
+    if (isKnowledgeNavigation(navState)) {
+      void handleNewKnowledgeNote()
+      return
+    }
 
     // Exit search mode and switch to All Sessions
     setSearchActive(false)
@@ -1873,7 +1903,7 @@ function AppShellContent({
 
     // Focus the chat input after navigation completes
     setTimeout(() => focusZone('chat', { intent: 'programmatic' }), 50)
-  }, [activeWorkspace, focusZone, navigate, resolveInheritedNewSessionParams])
+  }, [activeWorkspace, focusZone, handleNewKnowledgeNote, navigate, navState, resolveInheritedNewSessionParams])
 
   // Create a brand new embedded browser panel and focus it.
   // Intentionally unbound: this action should always create a NEW panel.
