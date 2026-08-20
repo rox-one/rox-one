@@ -5,6 +5,7 @@ import { selectedConnectionAtom } from '@/atoms/connections'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import {
   inspectSummaryFromRaw,
+  isStaleInspectSummary,
   sanitizeConnectionAuditRows,
   sanitizeConnectionBindingRows,
   sanitizeConnectionRows,
@@ -77,6 +78,7 @@ export default function ConnectionsPage() {
   const [rotatingId, setRotatingId] = useState<string | null>(null)
   const [convertingId, setConvertingId] = useState<string | null>(null)
   const [unbindingId, setUnbindingId] = useState<string | null>(null)
+  const [reconnectingId, setReconnectingId] = useState<string | null>(null)
   const [envPath, setEnvPath] = useState('')
   const [gitConfigPath, setGitConfigPath] = useState('')
   const [dockerConfigPath, setDockerConfigPath] = useState('')
@@ -135,6 +137,7 @@ export default function ConnectionsPage() {
       setRotatingId(null)
       setConvertingId(null)
       setUnbindingId(null)
+      setReconnectingId(null)
     }
   }, [workspace?.id, setSelected])
 
@@ -311,6 +314,24 @@ export default function ConnectionsPage() {
       setListError(null)
       await rotateConnection({ workspaceId, connectionId })
       setRotatingId(null)
+      await refreshRows(workspaceId)
+    } catch (err) {
+      setListError(errorMessage(err))
+    }
+  }
+
+  const confirmReconnect = async (connectionId: string) => {
+    const workspaceId = workspace?.id
+    const reconnectConnection = window.electronAPI?.workgraph?.reconnectConnection
+    if (!workspaceId || typeof reconnectConnection !== 'function') return
+    try {
+      setListError(null)
+      const result = await reconnectConnection({ workspaceId, connectionId })
+      setInspectById((current) => ({
+        ...current,
+        [connectionId]: inspectSummaryFromRaw(result.inspect),
+      }))
+      setReconnectingId(null)
       await refreshRows(workspaceId)
     } catch (err) {
       setListError(errorMessage(err))
@@ -507,6 +528,33 @@ export default function ConnectionsPage() {
       </button>
     )
   )
+
+  const renderReconnectControls = (row: ConnectionListRow) => {
+    const inspect = inspectById[row.id]
+    if (!inspect || !isStaleInspectSummary(inspect)) return null
+    return reconnectingId === row.id ? (
+      <div className="flex flex-col items-end gap-1" data-testid="connections-row-reconnect">
+        <div className="font-mono text-[11px]" data-testid="connections-row-reconnect-confirm-target">
+          {formatConfirmTargets(row, consumersForConnection(bindingRows, row.id))}
+        </div>
+        <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
+        <div className="flex gap-1">
+          <button type="button" className="rounded border px-2 py-1" onClick={() => confirmReconnect(row.id)}>
+            {t('connections.reconnectConfirm')}
+          </button>
+          <button type="button" className="rounded border px-2 py-1" onClick={() => setReconnectingId(null)}>
+            {t('connections.reconnectCancel')}
+          </button>
+        </div>
+      </div>
+    ) : (
+      <div data-testid="connections-row-reconnect">
+        <button type="button" className="rounded border px-2 py-1" onClick={() => setReconnectingId(row.id)}>
+          {t('connections.reconnect')}
+        </button>
+      </div>
+    )
+  }
 
   const renderRotateControls = (row: ConnectionListRow) => (
     rotatingId === row.id ? (
@@ -897,6 +945,7 @@ export default function ConnectionsPage() {
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
                   {t('connections.repair')}
                 </button>
+                {renderReconnectControls(row)}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row)}
               </li>

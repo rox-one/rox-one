@@ -305,6 +305,25 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('offers a reconnect CTA on stale service rows without stealing focus', () => {
+    expect(page).toContain('isStaleInspectSummary')
+    expect(page).toContain('reconnectConnection')
+    expect(page).toContain('connections.reconnect')
+    expect(page).toContain('connections.reconnectConfirm')
+    expect(page).toContain('connections.reconnectLeases')
+    expect(page).toContain('connections-row-reconnect')
+    expect(page).toContain('connections-row-reconnect-confirm-target')
+    expect(page).toContain('formatConfirmTargets')
+    expect(page).toContain('inspectSummaryFromRaw')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
 
 

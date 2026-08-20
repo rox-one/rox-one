@@ -158,6 +158,25 @@ export function healthFromInspect(raw: unknown): string {
   return inspectSummaryFromRaw(raw).health
 }
 
+const STALE_HEALTH = new Set([
+  'expired',
+  'missing',
+  'revoked',
+  'unavailable',
+  'repair_required',
+  'denied',
+])
+
+export function isStaleInspectSummary(
+  fields: { readonly health: string; readonly expiry: string },
+  now = Date.now(),
+): boolean {
+  if (STALE_HEALTH.has(fields.health)) return true
+  if (fields.expiry === '—') return false
+  const expiresAt = Date.parse(fields.expiry)
+  return Number.isFinite(expiresAt) && expiresAt < now
+}
+
 export function sanitizeConnectionRows(rows: readonly unknown[]): ConnectionListRow[] {
   return rows.map((row) => {
     if (!row || typeof row !== 'object') throw new Error('Invalid connection metadata')

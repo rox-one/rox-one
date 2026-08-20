@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { healthFromInspect, inspectSummaryFromRaw, sanitizeConnectionAuditRows, sanitizeConnectionInspect, sanitizeConnectionRows } from '../connections-list'
+import { healthFromInspect, inspectSummaryFromRaw, isStaleInspectSummary, sanitizeConnectionAuditRows, sanitizeConnectionInspect, sanitizeConnectionRows } from '../connections-list'
 
 describe('CF-6.3 connection list sanitizer', () => {
   it('keeps metadata fields and rejects secret fields', () => {
@@ -161,5 +161,26 @@ describe('CF-6.3 connection list sanitizer', () => {
     expect(JSON.stringify(summary)).not.toContain('super-secret')
     expect(summary).not.toHaveProperty('value')
     expect(summary).not.toHaveProperty('payload')
+  })
+
+  it('treats expired, missing, revoked, and unavailable inspect summaries as stale', () => {
+    const healthy = inspectSummaryFromRaw({
+      connectionId: 'c1',
+      credentialRefId: 'cred_123e4567-e89b-12d3-a456-426614174000',
+      health: 'healthy',
+      expiry: '2099-01-01T00:00:00.000Z',
+      provenance: 'local-file/memory',
+      fingerprint: 'a'.repeat(64),
+      kind: 'bearer_token',
+      versionId: 'ver_1',
+    })
+    expect(isStaleInspectSummary(healthy)).toBe(false)
+    expect(isStaleInspectSummary({ ...healthy, health: 'expired' })).toBe(true)
+    expect(isStaleInspectSummary({ ...healthy, health: 'missing' })).toBe(true)
+    expect(isStaleInspectSummary({ ...healthy, health: 'revoked' })).toBe(true)
+    expect(isStaleInspectSummary({ ...healthy, health: 'unavailable' })).toBe(true)
+    expect(isStaleInspectSummary({ ...healthy, health: 'repair_required' })).toBe(true)
+    expect(isStaleInspectSummary({ ...healthy, expiry: '2000-01-01T00:00:00.000Z' })).toBe(true)
+    expect(JSON.stringify(healthy)).not.toMatch(/"token"|"secret"|"payload"|"value"|refreshToken/i)
   })
 })
