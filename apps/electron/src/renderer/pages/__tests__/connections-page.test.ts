@@ -204,6 +204,24 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('labels inspect provenance, fingerprint, and version on listed rows through i18n without secret fields', () => {
+    expect(page.split("t('inspector.field.provenance')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.fingerprint')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.versionId')").length - 1).toBe(3)
+    expect(page).toContain('connections-row-provenance')
+    expect(page).toContain('connections-credential-provenance')
+    expect(page).toContain('connections-policy-provenance')
+    expect(page).toContain('connections-row-fingerprint')
+    expect(page).toContain('connections-credential-fingerprint')
+    expect(page).toContain('connections-policy-fingerprint')
+    expect(page).toContain('connections-row-version')
+    expect(page).toContain('connections-credential-version')
+    expect(page).toContain('connections-policy-version')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows scopes on credential rows without secret fields', () => {
     expect(page).toContain('connections-credential-scopes')
     expect(page).toContain('row.scopes.join')

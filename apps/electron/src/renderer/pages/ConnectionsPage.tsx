@@ -1083,9 +1083,18 @@ export default function ConnectionsPage() {
                         <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
                         <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
                       </div>
-                      <div className="font-mono text-xs" data-testid="connections-row-provenance">{inspectById[row.id].provenance}</div>
-                      <div className="font-mono text-xs" data-testid="connections-row-fingerprint">{inspectById[row.id].fingerprint}</div>
-                      <div className="font-mono text-xs" data-testid="connections-row-version">{inspectById[row.id].versionId}</div>
+                      <div data-testid="connections-row-provenance">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
+                      </div>
+                      <div data-testid="connections-row-fingerprint">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
+                      </div>
+                      <div data-testid="connections-row-version">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
+                      </div>
                     </>
                   ) : null}
                   {leasesById[row.id] ? (
@@ -1153,9 +1162,18 @@ export default function ConnectionsPage() {
                         <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
                         <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
                       </div>
-                      <div className="font-mono text-xs" data-testid="connections-credential-provenance">{inspectById[row.id].provenance}</div>
-                      <div className="font-mono text-xs" data-testid="connections-credential-fingerprint">{inspectById[row.id].fingerprint}</div>
-                      <div className="font-mono text-xs" data-testid="connections-credential-version">{inspectById[row.id].versionId}</div>
+                      <div data-testid="connections-credential-provenance">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
+                      </div>
+                      <div data-testid="connections-credential-fingerprint">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
+                      </div>
+                      <div data-testid="connections-credential-version">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
+                      </div>
                     </>
                   ) : null}
                   {leasesById[row.id] ? (
@@ -1319,9 +1337,18 @@ export default function ConnectionsPage() {
                             <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
                             <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
                           </div>
-                          <div className="font-mono text-xs" data-testid="connections-policy-provenance">{inspectById[row.id].provenance}</div>
-                          <div className="font-mono text-xs" data-testid="connections-policy-fingerprint">{inspectById[row.id].fingerprint}</div>
-                          <div className="font-mono text-xs" data-testid="connections-policy-version">{inspectById[row.id].versionId}</div>
+                          <div data-testid="connections-policy-provenance">
+                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
+                            <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
+                          </div>
+                          <div data-testid="connections-policy-fingerprint">
+                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
+                            <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
+                          </div>
+                          <div data-testid="connections-policy-version">
+                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
+                            <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
+                          </div>
                         </>
                       ) : null}
                       {leasesById[row.id] ? (
