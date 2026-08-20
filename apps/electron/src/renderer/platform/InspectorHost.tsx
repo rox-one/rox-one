@@ -237,7 +237,8 @@ function ConnectionInfoSection() {
     setInspect(projectConnectionInspect(inspect))
   }
   const applyRevalidated = (consumers: unknown) => {
-    setRevalidated(formatReconnectLeases(sanitizeReconnectLeases(consumers)))
+    const next = formatReconnectLeases(sanitizeReconnectLeases(consumers))
+    setRevalidated(next === '—' ? '' : next)
   }
   const applyConsumers = async () => {
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings

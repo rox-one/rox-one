@@ -233,6 +233,7 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).toContain('inspector.field.revalidated')
     expect(host).toContain('sanitizeReconnectLeases')
     expect(host).not.toContain('setConsumers(result.consumers)')
+    expect(host).toContain("next === '—' ? '' : next")
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
