@@ -1293,6 +1293,7 @@ export default function ConnectionsPage() {
                           <div className="font-mono text-xs" data-testid="connections-policy-kind">{inspectById[row.id].kind}</div>
                           <div className="font-mono text-xs" data-testid="connections-policy-expiry">{inspectById[row.id].expiry}</div>
                           <div className="font-mono text-xs" data-testid="connections-policy-provenance">{inspectById[row.id].provenance}</div>
+                          <div className="font-mono text-xs" data-testid="connections-policy-fingerprint">{inspectById[row.id].fingerprint}</div>
                         </>
                       ) : null}
                     </button>
