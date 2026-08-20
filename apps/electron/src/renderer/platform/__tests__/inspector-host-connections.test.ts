@@ -240,6 +240,16 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('lists inspector consumers by id without duplicating purpose', () => {
+    expect(host).toContain('inspector.field.consumers')
+    expect(host).toContain('consumers.map((row) => row.consumerId).join')
+    expect(host).not.toContain('row.status')
+    expect(host).toContain('inspector.field.purpose')
+    expect(host).toContain('row.purpose')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('reloads inspector binding actions and resources after rotate, move, repair, and reconnect', () => {
     expect(host).toContain('applyConsumers')
     expect(host.split('void applyConsumers()').length - 1).toBe(4)

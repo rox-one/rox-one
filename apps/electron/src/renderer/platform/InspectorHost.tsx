@@ -79,7 +79,6 @@ const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
 function projectInspectorConsumers(raw: unknown) {
   return sanitizeConnectionBindingRows(raw).map((row) => ({
     consumerId: row.consumerId,
-    status: row.purpose,
     purpose: row.purpose,
     actions: row.actions.join(', ') || '—',
     resources: row.resources.join(', ') || '—',
@@ -110,7 +109,7 @@ function ConnectionInfoSection() {
   const [confirmMove, setConfirmMove] = useState(false)
   const [confirmReconnect, setConfirmReconnect] = useState(false)
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
-  const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string; purpose: string; actions: string; resources: string }>>([])
+  const [consumers, setConsumers] = useState<Array<{ consumerId: string; purpose: string; actions: string; resources: string }>>([])
   const [testLogin, setTestLogin] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
   const [inspect, setInspect] = useState<ReturnType<typeof projectConnectionInspect> | null>(null)
@@ -278,19 +277,29 @@ function ConnectionInfoSection() {
             </div>
           ) : null}
           {visibleInspectValue(inspect.expiry) ? (
-            <InfoRow label={t('inspector.field.expiry')} value={inspect.expiry} mono />
+            <div data-testid="connections-inspector-expiry">
+              <InfoRow label={t('inspector.field.expiry')} value={inspect.expiry} mono />
+            </div>
           ) : null}
           {visibleInspectValue(inspect.provenance) ? (
-            <InfoRow label={t('inspector.field.provenance')} value={inspect.provenance} mono />
+            <div data-testid="connections-inspector-provenance">
+              <InfoRow label={t('inspector.field.provenance')} value={inspect.provenance} mono />
+            </div>
           ) : null}
           {visibleInspectValue(inspect.fingerprint) ? (
-            <InfoRow label={t('inspector.field.fingerprint')} value={inspect.fingerprint} mono />
+            <div data-testid="connections-inspector-fingerprint">
+              <InfoRow label={t('inspector.field.fingerprint')} value={inspect.fingerprint} mono />
+            </div>
           ) : null}
           {visibleInspectValue(inspect.credentialKind) ? (
-            <InfoRow label={t('inspector.field.credentialKind')} value={inspect.credentialKind} mono />
+            <div data-testid="connections-inspector-kind">
+              <InfoRow label={t('inspector.field.credentialKind')} value={inspect.credentialKind} mono />
+            </div>
           ) : null}
           {visibleInspectValue(inspect.versionId) ? (
-            <InfoRow label={t('inspector.field.versionId')} value={inspect.versionId} mono />
+            <div data-testid="connections-inspector-version">
+              <InfoRow label={t('inspector.field.versionId')} value={inspect.versionId} mono />
+            </div>
           ) : null}
         </>
       ) : null}
@@ -299,7 +308,7 @@ function ConnectionInfoSection() {
         <>
           <InfoRow
             label={t('inspector.field.consumers')}
-            value={consumers.map((row) => `${row.consumerId}: ${row.status}`).join(', ')}
+            value={consumers.map((row) => row.consumerId).join(', ')}
           />
           <div data-testid="connections-inspector-purpose">
             <InfoRow
