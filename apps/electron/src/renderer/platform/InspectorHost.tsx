@@ -112,6 +112,7 @@ function ConnectionInfoSection() {
   const [leases, setLeases] = useState('')
   const [activeLeases, setActiveLeases] = useState<ActiveLeaseView[]>([])
   const [auditSummary, setAuditSummary] = useState('')
+  const [revalidated, setRevalidated] = useState('')
   useEffect(() => {
     if (!selected) {
       setConsumers([])
@@ -122,8 +123,10 @@ function ConnectionInfoSection() {
       setLeases('')
       setActiveLeases([])
       setAuditSummary('')
+      setRevalidated('')
       return
     }
+    setRevalidated('')
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
     if (typeof listConnectionBindings !== 'function') {
       setConsumers([])
@@ -233,6 +236,9 @@ function ConnectionInfoSection() {
   const applyInspect = (inspect: unknown) => {
     setInspect(projectConnectionInspect(inspect))
   }
+  const applyRevalidated = (consumers: unknown) => {
+    setRevalidated(formatReconnectLeases(sanitizeReconnectLeases(consumers)))
+  }
   const applyConsumers = async () => {
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
     if (!workspaceId || typeof listConnectionBindings !== 'function') {
@@ -289,6 +295,11 @@ function ConnectionInfoSection() {
           </div>
         </>
       ) : null}
+      {revalidated ? (
+        <div data-testid="connections-inspector-revalidated">
+          <InfoRow label={t('inspector.field.revalidated')} value={revalidated} mono />
+        </div>
+      ) : null}
       {auditSummary ? (
         <div data-testid="connections-inspector-audit">
           <InfoRow label={t('inspector.field.audit')} value={auditSummary} mono />
@@ -323,6 +334,7 @@ function ConnectionInfoSection() {
                       setActionError(null)
                       const result = await reconnectConnection({ workspaceId, connectionId: selected.id })
                       void applyConsumers()
+                      applyRevalidated(result.consumers)
                       applyInspect(result.inspect)
                       applyRevokedLeases(result.leases)
                       setConfirmReconnect(false)
@@ -381,6 +393,7 @@ function ConnectionInfoSection() {
               setActionError(null)
               const result = await repairConnection({ workspaceId, connectionId: selected.id })
               void applyConsumers()
+              applyRevalidated(result.consumers)
               applyInspect(result.inspect)
             } catch (err) {
               setActionError(errorMessage(err))
@@ -404,6 +417,7 @@ function ConnectionInfoSection() {
                   setActionError(null)
                   const result = await rotateConnection({ workspaceId, connectionId: selected.id })
                   void applyConsumers()
+                  applyRevalidated(result.consumers)
                   applyInspect(result.inspect)
                   applyRevokedLeases(result.leases)
                   setConfirmRotate(false)
@@ -462,6 +476,7 @@ function ConnectionInfoSection() {
                     targetBackend: moveTarget,
                   })
                   void applyConsumers()
+                  applyRevalidated(result.consumers)
                   applyInspect(result.inspect)
                   applyRevokedLeases(result.leases)
                   setConfirmMove(false)

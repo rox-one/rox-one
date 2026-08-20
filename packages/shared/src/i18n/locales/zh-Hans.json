@@ -876,6 +876,7 @@
   "inspector.field.provenance": "来源",
   "inspector.field.provider": "提供商",
   "inspector.field.resources": "资源",
+  "inspector.field.revalidated": "重新验证",
   "inspector.field.route": "路由",
   "inspector.field.scopes": "范围",
   "inspector.field.session": "会话",

@@ -876,6 +876,7 @@
   "inspector.field.provenance": "출처",
   "inspector.field.provider": "공급자",
   "inspector.field.resources": "리소스",
+  "inspector.field.revalidated": "재검증",
   "inspector.field.route": "경로",
   "inspector.field.scopes": "범위",
   "inspector.field.session": "세션",

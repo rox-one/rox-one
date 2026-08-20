@@ -224,4 +224,16 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('shows revalidation status after rotate, move, repair, and reconnect without leaking secret fields', () => {
+    expect(host).toContain('applyRevalidated')
+    expect(host.split('applyRevalidated(result.consumers)').length - 1).toBe(4)
+    expect(host).toContain("setRevalidated('')")
+    expect(host).toContain('connections-inspector-revalidated')
+    expect(host).toContain('inspector.field.revalidated')
+    expect(host).toContain('sanitizeReconnectLeases')
+    expect(host).not.toContain('setConsumers(result.consumers)')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })

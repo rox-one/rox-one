@@ -876,6 +876,7 @@
   "inspector.field.provenance": "Herkunft",
   "inspector.field.provider": "Anbieter",
   "inspector.field.resources": "Ressourcen",
+  "inspector.field.revalidated": "Neu validiert",
   "inspector.field.route": "Route",
   "inspector.field.scopes": "Scopes",
   "inspector.field.session": "Sitzung",
