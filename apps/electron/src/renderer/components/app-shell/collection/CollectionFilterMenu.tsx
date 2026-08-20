@@ -16,9 +16,9 @@ import {
 } from './collection-menu-row'
 import {
   mergeSliceViews,
-  sliceToView,
   userCollectionSlices,
 } from '@craft-agent/shared/views'
+import { userSliceNavigation } from './collection-rail-filters'
 import { useViews } from '@/hooks/useViews'
 import {
   applySlice,
@@ -124,7 +124,8 @@ export function CollectionFilterMenu({
     setName('')
     setSaving(false)
     setOpen(false)
-    onApplyUserSlice?.(sliceToView(created).id, { ...created.filters })
+    const nav = userSliceNavigation(created)
+    onApplyUserSlice?.(nav.viewId, nav.filters)
   }
 
   const commitRename = (id: string) => {
@@ -213,7 +214,10 @@ export function CollectionFilterMenu({
                 onClick={() => {
                 const next = applySlice(filters, slice)
                 changeFilters(next)
-                if (Object.keys(next).length > 0) onApplyUserSlice?.(slice.id, next)
+                if (Object.keys(next).length > 0) {
+                  const nav = userSliceNavigation({ ...slice, filters: next })
+                  onApplyUserSlice?.(nav.viewId, nav.filters)
+                }
               }}
                 trailing={
                   <span className="flex shrink-0 items-center gap-1">

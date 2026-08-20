@@ -1,11 +1,15 @@
 import { describe, expect, it } from 'bun:test'
 import { compileView, buildViewContext, evaluateView } from '../evaluator.ts'
 import { getDefaultKnowledgeViews, getDefaultViews } from '../defaults.ts'
+import { VIEW_FUNCTIONS } from '../functions.ts'
+import { localDayBounds } from '../../sessions/collection-query.ts'
+import { validateViewExpression } from '../validation.ts'
 import {
   filtersToExpression,
   mergeSliceViews,
   sliceToView,
   userCollectionSlices,
+  viewToCollectionSlice,
   type CollectionSliceLike,
 } from '../slice-views.ts'
 
@@ -142,5 +146,26 @@ describe('userCollectionSlices', () => {
     expect(ids).toContain('view-new')
     expect(ids.some((id) => id.includes('old'))).toBe(false)
     expect(ids).toContain('slice:slice-new')
+  })
+
+  it('does not treat knowledge views as Filter slices', () => {
+    const knowledge = {
+      ...getDefaultKnowledgeViews()[0]!,
+      collectionFilters: { flagged: true },
+    }
+    expect(viewToCollectionSlice(knowledge)).toBeNull()
+    expect(userCollectionSlices([knowledge])).toEqual([])
+    const merged = mergeSliceViews([knowledge, ...getDefaultViews()], [{ id: 'slice-x', name: 'X', filters: { flagged: true } }])
+    expect(merged.some((v) => v.id === knowledge.id)).toBe(true)
+    expect(merged.some((v) => v.id === 'slice:slice-x')).toBe(true)
+  })
+})
+
+describe('startOfToday leftover', () => {
+  it('validates and evaluates startOfToday()', () => {
+    expect(validateViewExpression('dueDate < startOfToday()').valid).toBe(true)
+    const now = Date.now()
+    expect(VIEW_FUNCTIONS.startOfToday()).toBe(localDayBounds(now).start)
+    expect(VIEW_FUNCTIONS.startOfToday(now)).toBe(localDayBounds(now).start)
   })
 })
