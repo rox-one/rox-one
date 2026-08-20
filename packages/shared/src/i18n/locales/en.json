@@ -979,6 +979,7 @@
   "knowledge.home.noResults": "No results for this search.",
   "knowledge.home.title": "Knowledge",
   "knowledge.inspector.backlinks": "Backlinks",
+  "knowledge.inspector.empty": "Select a note",
   "knowledge.inspector.noConnection": "No knowledge connection configured",
   "knowledge.inspector.outline": "Outline",
   "knowledge.inspector.properties": "Properties",

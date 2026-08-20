@@ -979,6 +979,7 @@
   "knowledge.home.noResults": "По этому запросу ничего не найдено.",
   "knowledge.home.title": "База знаний",
   "knowledge.inspector.backlinks": "Обратные ссылки",
+  "knowledge.inspector.empty": "Выберите заметку",
   "knowledge.inspector.noConnection": "Подключение к базе знаний не настроено",
   "knowledge.inspector.outline": "Структура",
   "knowledge.inspector.properties": "Свойства",

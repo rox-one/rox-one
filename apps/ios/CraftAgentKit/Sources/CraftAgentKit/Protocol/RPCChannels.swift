@@ -58,4 +58,12 @@ public enum RPCChannels {
     public enum LlmConnections {
         public static let list = "LLM_Connection:list"
     }
+
+    /// Read-only Знания (knowledge) channels. No notebook create/write RPCs.
+    public enum Knowledge {
+        public static let listConnections = "knowledge:listConnections"
+        public static let listTree = "knowledge:listTree"
+        public static let engineStatus = "knowledge:engineStatus"
+        public static let search = "knowledge:search"
+    }
 }

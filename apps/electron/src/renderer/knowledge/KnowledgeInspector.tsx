@@ -51,7 +51,7 @@ export function KnowledgeInspector({ knowledgeRef }: KnowledgeInspectorProps) {
   if (!knowledgeRef) {
     return (
       <InspectorShell title={t('knowledge.inspector.title')}>
-        <p className="text-xs text-muted-foreground">{t('knowledge.openFullInterface')}</p>
+        <p className="text-xs text-muted-foreground">{t('knowledge.inspector.empty')}</p>
       </InspectorShell>
     )
   }
