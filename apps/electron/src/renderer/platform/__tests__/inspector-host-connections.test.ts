@@ -214,4 +214,14 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('reloads inspector binding actions and resources after rotate, move, repair, and reconnect', () => {
+    expect(host).toContain('applyConsumers')
+    expect(host.split('void applyConsumers()').length - 1).toBe(4)
+    expect(host).not.toContain('setConsumers(result.consumers)')
+    expect(host).toContain('connections-inspector-actions')
+    expect(host).toContain('connections-inspector-resources')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })

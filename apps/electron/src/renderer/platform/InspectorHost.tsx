@@ -76,6 +76,15 @@ const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
 // Info section (live in W1) — properties of the focused panel's surface.
 // -----------------------------------------------------------------------------
 
+function projectInspectorConsumers(raw: unknown) {
+  return sanitizeConnectionBindingRows(raw).map((row) => ({
+    consumerId: row.consumerId,
+    status: row.purpose,
+    actions: row.actions.join(', ') || '—',
+    resources: row.resources.join(', ') || '—',
+  }))
+}
+
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="flex min-w-0 flex-col gap-0.5 px-3 py-1.5">
@@ -124,12 +133,7 @@ function ConnectionInfoSection() {
     listConnectionBindings({ workspaceId: selected.workspaceId, connectionId: selected.id })
       .then((raw) => {
         if (stale) return
-        setConsumers(sanitizeConnectionBindingRows(raw).map((row) => ({
-          consumerId: row.consumerId,
-          status: row.purpose,
-          actions: row.actions.join(', ') || '—',
-          resources: row.resources.join(', ') || '—',
-        })))
+        setConsumers(projectInspectorConsumers(raw))
       })
       .catch((err) => {
         if (!stale) setActionError(errorMessage(err))
@@ -229,6 +233,21 @@ function ConnectionInfoSection() {
   const applyInspect = (inspect: unknown) => {
     setInspect(projectConnectionInspect(inspect))
   }
+  const applyConsumers = async () => {
+    const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
+    if (!workspaceId || typeof listConnectionBindings !== 'function') {
+      setConsumers([])
+      return
+    }
+    try {
+      setConsumers(projectInspectorConsumers(await listConnectionBindings({
+        workspaceId,
+        connectionId: selected.id,
+      })))
+    } catch (err) {
+      setActionError(errorMessage(err))
+    }
+  }
   return (
     <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
       <InfoRow label={t('inspector.field.provider')} value={fields.provider} />
@@ -303,7 +322,7 @@ function ConnectionInfoSection() {
                     try {
                       setActionError(null)
                       const result = await reconnectConnection({ workspaceId, connectionId: selected.id })
-                      setConsumers(result.consumers)
+                      void applyConsumers()
                       applyInspect(result.inspect)
                       applyRevokedLeases(result.leases)
                       setConfirmReconnect(false)
@@ -361,7 +380,7 @@ function ConnectionInfoSection() {
             try {
               setActionError(null)
               const result = await repairConnection({ workspaceId, connectionId: selected.id })
-              setConsumers(result.consumers)
+              void applyConsumers()
               applyInspect(result.inspect)
             } catch (err) {
               setActionError(errorMessage(err))
@@ -384,7 +403,7 @@ function ConnectionInfoSection() {
                 try {
                   setActionError(null)
                   const result = await rotateConnection({ workspaceId, connectionId: selected.id })
-                  setConsumers(result.consumers)
+                  void applyConsumers()
                   applyInspect(result.inspect)
                   applyRevokedLeases(result.leases)
                   setConfirmRotate(false)
@@ -442,7 +461,7 @@ function ConnectionInfoSection() {
                     connectionId: selected.id,
                     targetBackend: moveTarget,
                   })
-                  setConsumers(result.consumers)
+                  void applyConsumers()
                   applyInspect(result.inspect)
                   applyRevokedLeases(result.leases)
                   setConfirmMove(false)
