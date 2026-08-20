@@ -110,7 +110,7 @@ function SectionHeader({
       </ContextMenuTrigger>
       {onSelectGroup ? (
         <StyledContextMenuContent>
-          <StyledContextMenuItem onClick={onSelectGroup}>
+          <StyledContextMenuItem disabled={itemCount === 0} onClick={onSelectGroup}>
             {t('entityList.selectGroup')}
           </StyledContextMenuItem>
         </StyledContextMenuContent>
@@ -162,7 +162,7 @@ function CollapsibleGroupHeader({
           {isCollapsed ? t('entityList.expand') : t('entityList.collapse')}
         </StyledContextMenuItem>
         {onSelectGroup ? (
-          <StyledContextMenuItem onClick={onSelectGroup}>
+          <StyledContextMenuItem disabled={itemCount === 0} onClick={onSelectGroup}>
             {t('entityList.selectGroup')}
           </StyledContextMenuItem>
         ) : null}

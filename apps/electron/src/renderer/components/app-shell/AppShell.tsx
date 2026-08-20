@@ -109,6 +109,7 @@ import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/ato
 import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
+import { chipsAfterRailChange } from "./collection/collection-rail-filters"
 import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
@@ -519,12 +520,26 @@ function AppShellContent({
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
+  const prevKeyRef = React.useRef(sessionFilterKey ?? 'allSessions')
+  const skipRailChipClearRef = React.useRef(false)
 
   // FR-11: the shared filters atom exposes chips for the active navigator
   // filter key; keep the key in sync with navigation.
   React.useEffect(() => {
-    setCollectionFilterKey(sessionFilterKey ?? 'allSessions')
-  }, [sessionFilterKey, setCollectionFilterKey])
+    const nextKey = sessionFilterKey ?? 'allSessions'
+    const prevKey = prevKeyRef.current
+    setCollectionFilterKey(nextKey)
+    if (skipRailChipClearRef.current) {
+      skipRailChipClearRef.current = false
+    } else if (prevKey !== nextKey) {
+      setCollectionFilters(chipsAfterRailChange({
+        prevKey,
+        nextKey,
+        prevChips: collectionFilters,
+      }))
+    }
+    prevKeyRef.current = nextKey
+  }, [sessionFilterKey, setCollectionFilterKey, setCollectionFilters])
 
   const { clearMultiSelect: clearSessionMultiSelect } = useSessionSelection()
   const sessionsViewMode = isSessionsNavigation(navState) ? navState.viewMode : null
@@ -554,12 +569,15 @@ function AppShellContent({
   // other filters), then navigates.
   const handleJumpToProjectSessions = useCallback((projectId: string) => {
     // FR-31: jump writes the shared CollectionFilters atom (not viewFiltersMap).
+    skipRailChipClearRef.current = true
+    setCollectionFilterKey('allSessions')
     setCollectionFilters(prev => ({
       ...prev,
       projectId: [projectId],
     }))
     navigate(routes.view.allSessions())
-  }, [setCollectionFilters, navigate])
+    if (prevKeyRef.current === 'allSessions') skipRailChipClearRef.current = false
+  }, [setCollectionFilters, setCollectionFilterKey, navigate])
 
   // Jump to All Sessions scoped to a task: replace the allSessions view's label filter
   // (and project filter, when the task is bound to one) with the task's scope, then open
@@ -568,14 +586,17 @@ function AppShellContent({
   // handleJumpToProjectSessions; used by kanban tile/subtask clicks and post-create.
   const handleJumpToTaskSessions = useCallback(
     (sessionId: string, scope: { labelId: string; projectId?: string }) => {
+      skipRailChipClearRef.current = true
+      setCollectionFilterKey('allSessions')
       setCollectionFilters(prev => ({
         ...prev,
         labels: [scope.labelId],
         projectId: scope.projectId ? [scope.projectId] : undefined,
       }))
       navigate(routes.view.allSessions(sessionId))
+      if (prevKeyRef.current === 'allSessions') skipRailChipClearRef.current = false
     },
-    [setCollectionFilters, navigate],
+    [setCollectionFilters, setCollectionFilterKey, navigate],
   )
 
   // Search state for session list
@@ -1571,37 +1592,31 @@ function AppShellContent({
   }, [collapsedItems, activeWorkspaceId])
 
   const handleAllSessionsClick = useCallback(() => {
-    void setCollectionFilters({})
     navigate(routes.view.allSessions())
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   const handleFlaggedClick = useCallback(() => {
-    void setCollectionFilters({})
     navigate(routes.view.flagged())
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   const handleArchivedClick = useCallback(() => {
-    void setCollectionFilters({})
     navigate(routes.view.archived())
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   // Handler for individual todo state views
   const handleSessionStatusClick = useCallback((stateId: SessionStatusId) => {
     if (activeWorkspaceId) clearStatusUnseen(activeWorkspaceId, stateId)
-    void setCollectionFilters({})
     navigate(routes.view.state(stateId))
-  }, [activeWorkspaceId, setCollectionFilters, navigate])
+  }, [activeWorkspaceId, navigate])
 
   // Handler for label filter views (hierarchical — includes descendant labels)
   const handleLabelClick = useCallback((labelId: string) => {
-    void setCollectionFilters({})
     navigate(routes.view.label(labelId))
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   const handleViewClick = useCallback((viewId: string) => {
-    void setCollectionFilters({})
     navigate(routes.view.view(viewId))
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   // DnD handler: reorder statuses (flat list drag-and-drop)
   // Sets optimistic order immediately for instant UI feedback, then fires IPC.
