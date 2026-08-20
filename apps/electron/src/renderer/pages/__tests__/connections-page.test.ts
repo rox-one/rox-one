@@ -377,6 +377,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('selects the audited connection from an audit row into the inspector', () => {
+    expect(page).toContain('connections-audit-row')
+    expect(page).toContain('importedConnectionFromList(listed, row.connectionId)')
+    expect(page).toContain('aria-selected={selected?.id === row.connectionId}')
+    expect(page).toContain('selectedConnectionAtom')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('labels audit connection and digest fields through i18n without secret fields', () => {
     expect(page).toContain('connections.audit.connection')
     expect(page).toContain('connections.audit.digest')

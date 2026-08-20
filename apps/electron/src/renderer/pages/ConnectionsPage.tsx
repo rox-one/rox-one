@@ -1334,31 +1334,42 @@ export default function ConnectionsPage() {
         ) : tab === 'audit' && auditRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {auditRows.map((row) => (
-              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded border px-3 py-2">
-                <div data-testid="connections-audit-action">
-                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.action')}</div>
-                  <div className="font-medium">{row.action ?? row.eventType}</div>
-                </div>
-                <div data-testid="connections-audit-outcome">
-                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.outcome')}</div>
-                  <div className="text-muted-foreground">{row.outcome}</div>
-                </div>
-                <div data-testid="connections-audit-time">
-                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.time')}</div>
-                  <div className="text-muted-foreground">{new Date(row.occurredAt).toISOString()}</div>
-                </div>
-                <div data-testid="connections-audit-actor">
-                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.actor')}</div>
-                  <div className="font-mono text-xs">{row.actorId ?? '—'}</div>
-                </div>
-                <div data-testid="connections-audit-connection">
-                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.connection')}</div>
-                  <div className="font-mono text-xs">{row.connectionId}</div>
-                </div>
-                <div data-testid="connections-audit-digest">
-                  <div className="text-[11px] text-muted-foreground">{t('connections.audit.digest')}</div>
-                  <div className="font-mono text-xs">{row.payloadDigest}</div>
-                </div>
+              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`}>
+                <button
+                  type="button"
+                  data-testid="connections-audit-row"
+                  aria-selected={selected?.id === row.connectionId}
+                  className={`w-full rounded border px-3 py-2 text-left ${selected?.id === row.connectionId ? 'bg-accent/10' : ''}`}
+                  onClick={() => {
+                    const next = importedConnectionFromList(listed, row.connectionId)
+                    if (next) setSelected(next)
+                  }}
+                >
+                  <div data-testid="connections-audit-action">
+                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.action')}</div>
+                    <div className="font-medium">{row.action ?? row.eventType}</div>
+                  </div>
+                  <div data-testid="connections-audit-outcome">
+                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.outcome')}</div>
+                    <div className="text-muted-foreground">{row.outcome}</div>
+                  </div>
+                  <div data-testid="connections-audit-time">
+                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.time')}</div>
+                    <div className="text-muted-foreground">{new Date(row.occurredAt).toISOString()}</div>
+                  </div>
+                  <div data-testid="connections-audit-actor">
+                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.actor')}</div>
+                    <div className="font-mono text-xs">{row.actorId ?? '—'}</div>
+                  </div>
+                  <div data-testid="connections-audit-connection">
+                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.connection')}</div>
+                    <div className="font-mono text-xs">{row.connectionId}</div>
+                  </div>
+                  <div data-testid="connections-audit-digest">
+                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.digest')}</div>
+                    <div className="font-mono text-xs">{row.payloadDigest}</div>
+                  </div>
+                </button>
               </li>
             ))}
           </ul>
