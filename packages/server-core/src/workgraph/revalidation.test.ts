@@ -131,7 +131,12 @@ describe('CF-5.2 revoke, closure, revalidate', () => {
     expect(result.consumers).toEqual([
       { consumerId: 'agent-a', status: 'repair_required' },
     ])
+    expect(result.leases).toEqual([{ consumerId: 'agent-a', status: 'revoked' }])
     expect(JSON.stringify(result)).not.toContain('super-secret')
+    expect(JSON.stringify(result)).not.toContain(lease.id)
+    expect(result).not.toHaveProperty('leaseId')
+    expect(result.leases[0]).not.toHaveProperty('payload')
+    expect(result.leases[0]).not.toHaveProperty('value')
     await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
 
     await kernel.close()
@@ -229,7 +234,12 @@ describe('CF-6.5 rotate and repair', () => {
     })
 
     expect(result.consumers).toEqual([{ consumerId: 'agent-a', status: 'denied' }])
+    expect(result.leases).toEqual([{ consumerId: 'agent-a', status: 'revoked' }])
     expect(JSON.stringify(result)).not.toContain('super-secret')
+    expect(JSON.stringify(result)).not.toContain(lease.id)
+    expect(result).not.toHaveProperty('leaseId')
+    expect(result.leases[0]).not.toHaveProperty('payload')
+    expect(result.leases[0]).not.toHaveProperty('value')
     await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
     expect((await provider.inspect(written.ref)).status).toBe('active')
     const repaired = await repairConnectionAndRevalidate({
@@ -293,6 +303,15 @@ describe('CF-6.5 rotate and repair', () => {
       actions: ['github.api'],
       resources: ['github:user'],
     })
+    const lease = await broker.acquireLease({
+      credentialRef: written.ref.id,
+      consumer: { kind: 'agent', id: 'agent-a', workspaceId: 'workspace_a' },
+      purpose: 'github.user',
+      action: 'github.api',
+      resources: ['github:user'],
+      audience: 'local-broker',
+      ttl: 5_000,
+    })
     const converted = await convertCopyToReferenceAndRevalidate({
       kernel,
       broker,
@@ -302,7 +321,15 @@ describe('CF-6.5 rotate and repair', () => {
       reason: 'owner-convert',
     })
     expect(converted.storageMode).toBe('reference')
+    expect(Array.isArray(converted.consumers)).toBe(true)
+    expect(converted.consumers[0]?.consumerId).toBe('agent-a')
+    expect(converted.leases).toEqual([{ consumerId: 'agent-a', status: 'revoked' }])
     expect(JSON.stringify(converted)).not.toContain('super-secret')
+    expect(JSON.stringify(converted)).not.toContain(lease.id)
+    expect(converted).not.toHaveProperty('leaseId')
+    expect(converted.leases[0]).not.toHaveProperty('payload')
+    expect(converted.leases[0]).not.toHaveProperty('value')
+    await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
     const inspected = await provider.inspect(written.ref)
     expect(inspected.status).toBe('missing')
     const [binding] = await kernel.listConnectionBindings('workspace_a', connection.id)
@@ -356,6 +383,15 @@ describe('CF-6.5 rotate and repair', () => {
       actions: ['github.api'],
       resources: ['github:user'],
     })
+    const lease = await broker.acquireLease({
+      credentialRef: written.ref.id,
+      consumer: { kind: 'agent', id: 'agent-a', workspaceId: 'workspace_a' },
+      purpose: 'github.user',
+      action: 'github.api',
+      resources: ['github:user'],
+      audience: 'local-broker',
+      ttl: 5_000,
+    })
     const moved = await moveConnectionBackendAndRevalidate({
       kernel,
       broker,
@@ -369,7 +405,13 @@ describe('CF-6.5 rotate and repair', () => {
     expect(moved.credentialRefId).toBe(written.ref.id)
     expect(moved.from).toBe('memory')
     expect(moved.to).toBe('local-alt')
+    expect(moved.leases).toEqual([{ consumerId: 'agent-a', status: 'revoked' }])
     expect(JSON.stringify(moved)).not.toContain('super-secret')
+    expect(JSON.stringify(moved)).not.toContain(lease.id)
+    expect(moved).not.toHaveProperty('leaseId')
+    expect(moved.leases[0]).not.toHaveProperty('payload')
+    expect(moved.leases[0]).not.toHaveProperty('value')
+    await expect(broker.perform(lease.id, () => 'x')).rejects.toMatchObject({ code: 'lease_revoked' })
     const after = await kernel.getConnection('workspace_a', connection.id)
     expect(after?.id).toBe(connection.id)
     const audit = await kernel.listConnectionAudit('workspace_a', connection.id)

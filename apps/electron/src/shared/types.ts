@@ -744,7 +744,11 @@ export interface ElectronAPI {
     convertConnection(input: {
       workspaceId: string
       connectionId: string
-    }): Promise<{ storageMode: 'reference'; consumers: Array<{ consumerId: string; status: string }> }>
+    }): Promise<{
+      storageMode: 'reference'
+      consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
+    }>
     revokeConnectionBinding(input: {
       workspaceId: string
       bindingId: string
@@ -788,6 +792,7 @@ export interface ElectronAPI {
       from: string
       to: string
       consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
     }>
     startGithubDeviceLogin(): Promise<{
       flowId: string
@@ -822,7 +827,10 @@ export interface ElectronAPI {
     revokeConnection(input: {
       workspaceId: string
       connectionId: string
-    }): Promise<{ consumers: Array<{ consumerId: string; status: string }> }>
+    }): Promise<{
+      consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
+    }>
     repairConnection(input: {
       workspaceId: string
       connectionId: string
@@ -847,7 +855,10 @@ export interface ElectronAPI {
     rotateConnection(input: {
       workspaceId: string
       connectionId: string
-    }): Promise<{ consumers: Array<{ consumerId: string; status: string }> }>
+    }): Promise<{
+      consumers: Array<{ consumerId: string; status: string }>
+      leases: Array<{ consumerId: string; status: string }>
+    }>
     testConnection(input: {
       workspaceId: string
       connectionId: string

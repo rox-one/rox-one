@@ -189,6 +189,9 @@ function ConnectionInfoSection() {
     setConfirmReconnect(true)
     await previewActiveLeases()
   }
+  const applyRevokedLeases = (leases: unknown) => {
+    setLeases(formatReconnectLeases(sanitizeReconnectLeases(leases)))
+  }
   return (
     <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
       <InfoRow label={t('inspector.field.provider')} value={fields.provider} />
@@ -244,7 +247,7 @@ function ConnectionInfoSection() {
                       const result = await reconnectConnection({ workspaceId, connectionId: selected.id })
                       setConsumers(result.consumers)
                       setInspect(projectConnectionInspect(result.inspect))
-                      setLeases(formatReconnectLeases(sanitizeReconnectLeases(result.leases)))
+                      applyRevokedLeases(result.leases)
                       setConfirmReconnect(false)
                     } catch (err) {
                       setActionError(errorMessage(err))
@@ -323,6 +326,7 @@ function ConnectionInfoSection() {
                   setActionError(null)
                   const result = await rotateConnection({ workspaceId, connectionId: selected.id })
                   setConsumers(result.consumers)
+                  applyRevokedLeases(result.leases)
                   setConfirmRotate(false)
                 } catch (err) {
                   setActionError(errorMessage(err))
@@ -379,6 +383,7 @@ function ConnectionInfoSection() {
                     targetBackend: moveTarget,
                   })
                   setConsumers(result.consumers)
+                  applyRevokedLeases(result.leases)
                   setConfirmMove(false)
                 } catch (err) {
                   setActionError(errorMessage(err))

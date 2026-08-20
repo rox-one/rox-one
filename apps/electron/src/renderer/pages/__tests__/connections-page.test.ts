@@ -415,6 +415,19 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('shows invalidated leases after rotate, revoke, convert, and move without leaking secret fields', () => {
+    expect(page).toContain('applyRevokedLeases')
+    expect(page.split('applyRevokedLeases(connectionId, result.leases)').length - 1).toBe(5)
+    expect(page).toContain('confirmRotate')
+    expect(page).toContain('confirmRevoke')
+    expect(page).toContain('confirmConvert')
+    expect(page).toContain('confirmMove')
+    expect(page).toContain('connections-row-leases')
+    expect(page).toContain('connections.reconnectDone')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
 
 
