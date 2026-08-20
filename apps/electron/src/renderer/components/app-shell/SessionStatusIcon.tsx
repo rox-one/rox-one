@@ -61,6 +61,7 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
           aria-haspopup="menu"
           aria-expanded={open}
           aria-label={t("collection.row.openBoardCard")}
+          title={t("collection.row.openBoardCard")}
           onPointerDown={(e: MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation()
             // Left click must not open the status menu (Radix trigger default).
