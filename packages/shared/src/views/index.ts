@@ -31,3 +31,15 @@ export type {
 export { validateViewExpression, AVAILABLE_FIELDS, AVAILABLE_FUNCTIONS } from './validation.ts';
 export { getDefaultViews, getDefaultKnowledgeViews } from './defaults.ts';
 export { VIEW_FUNCTIONS } from './functions.ts';
+export {
+  SLICE_VIEW_ID_PREFIX,
+  filtersSignature,
+  filtersToExpression,
+  collectionFiltersToExpression,
+  sliceToView,
+  sliceToViewConfig,
+  viewToCollectionSlice,
+  userCollectionSlices,
+  mergeSliceViews,
+} from './slice-views.ts';
+export type { CollectionSliceLike, SliceLike } from './slice-views.ts';

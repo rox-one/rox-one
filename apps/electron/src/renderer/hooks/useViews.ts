@@ -104,6 +104,9 @@ export function useViews(workspaceId: string | null): UseViewsResult {
       isProcessing: meta.isProcessing,
       labels: meta.labels,
       tokenUsage: meta.tokenUsage,
+      priority: meta.priority,
+      projectId: meta.projectId,
+      dueDate: meta.dueDate ?? undefined,
     })
 
     return evaluateViews(context, compiled)

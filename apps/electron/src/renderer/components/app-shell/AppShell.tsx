@@ -109,7 +109,7 @@ import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/ato
 import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
-import { chipsAfterRailChange } from "./collection/collection-rail-filters"
+import { chipsAfterRailChange, skipRailChipClearOnce } from "./collection/collection-rail-filters"
 import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
@@ -529,8 +529,9 @@ function AppShellContent({
     const nextKey = sessionFilterKey ?? 'allSessions'
     const prevKey = prevKeyRef.current
     setCollectionFilterKey(nextKey)
-    if (skipRailChipClearRef.current) {
+    if (skipRailChipClearRef.current || skipRailChipClearOnce.current) {
       skipRailChipClearRef.current = false
+      skipRailChipClearOnce.current = false
     } else if (prevKey !== nextKey) {
       setCollectionFilters(chipsAfterRailChange({
         prevKey,
@@ -1615,8 +1616,14 @@ function AppShellContent({
   }, [navigate])
 
   const handleViewClick = useCallback((viewId: string) => {
+    skipRailChipClearRef.current = true
+    skipRailChipClearOnce.current = true
+    const view = viewConfigs.find(v => v.id === viewId)
+    if (view?.collectionFilters) {
+      setCollectionFilters({ ...view.collectionFilters })
+    }
     navigate(routes.view.view(viewId))
-  }, [navigate])
+  }, [navigate, viewConfigs, setCollectionFilters])
 
   // DnD handler: reorder statuses (flat list drag-and-drop)
   // Sets optimistic order immediately for instant UI feedback, then fires IPC.
@@ -2689,6 +2696,12 @@ function AppShellContent({
                         statuses={effectiveSessionStatuses}
                         projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
                         labels={displayLabelConfigs.map(l => ({ id: l.id, name: l.name }))}
+                        onApplyUserSlice={(viewId, sliceFilters) => {
+                          skipRailChipClearRef.current = true
+                          skipRailChipClearOnce.current = true
+                          setCollectionFilters({ ...sliceFilters })
+                          navigate(routes.view.view(viewId))
+                        }}
                       />
                     </>
                   )}

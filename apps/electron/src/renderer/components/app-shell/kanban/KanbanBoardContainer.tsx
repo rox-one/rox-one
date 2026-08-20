@@ -33,6 +33,7 @@ import { KANBAN_COLUMNS, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
+import { skipRailChipClearOnce } from '../collection/collection-rail-filters'
 import { KanbanProjectFilter, type KanbanProjectFilterOption } from './KanbanProjectFilter'
 import { TaskEditor } from './TaskEditor'
 import { mergeSubtaskRows, type SpecNodeSummary, type SubtaskChildRow } from './subtask-merge'
@@ -268,6 +269,7 @@ function KanbanBoardContainerInner() {
 
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
+  const setCollectionFilters = useSetAtom(collectionFiltersAtom)
 
   // Workspace board config (columns + groupBy).
   const [boardConfig, setBoardConfig] = React.useState<KanbanBoardConfig | null>(null)
@@ -1034,6 +1036,11 @@ function KanbanBoardContainerInner() {
             statuses={sessionStatuses ?? []}
             projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
             labels={labelConfigs.map(l => ({ id: l.id, name: l.name }))}
+            onApplyUserSlice={(viewId, sliceFilters) => {
+              skipRailChipClearOnce.current = true
+              void setCollectionFilters({ ...sliceFilters })
+              navigate(routes.view.view(viewId))
+            }}
           />
         </div>
       </div>

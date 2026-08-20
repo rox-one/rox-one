@@ -15,6 +15,11 @@ import {
   CollectionMenuSection,
 } from './collection-menu-row'
 import {
+  mergeSliceViews,
+  userCollectionSlices,
+} from '@craft-agent/shared/views'
+import { useViews } from '@/hooks/useViews'
+import {
   applySlice,
   assertUniqueSliceName,
   BUILTIN_SLICES,
@@ -35,6 +40,8 @@ export interface CollectionFilterMenuProps {
   projects?: Array<{ id: string; name: string }>
   labels?: Array<{ id: string; name: string }>
   className?: string
+  /** Apply a user slice: write chips and navigate to the session view. */
+  onApplyUserSlice?: (viewId: string, filters: CollectionFilters) => void
 }
 
 export function CollectionFilterMenu({
@@ -46,8 +53,10 @@ export function CollectionFilterMenu({
   projects,
   labels,
   className,
+  onApplyUserSlice,
 }: CollectionFilterMenuProps) {
   const { t } = useTranslation()
+  const { viewConfigs, refresh } = useViews(workspaceId ?? null)
   const [open, setOpen] = React.useState(false)
   const [saved, setSaved] = React.useState<CollectionSlice[]>([])
   const [saving, setSaving] = React.useState(false)
@@ -65,13 +74,35 @@ export function CollectionFilterMenu({
     : t('collection.filter.trigger')
 
   React.useEffect(() => {
-    setSaved(loadSavedSlices(workspaceId ?? undefined))
+    const fromViews = userCollectionSlices(viewConfigs).map((slice) => ({
+      id: slice.id,
+      name: slice.name,
+      filters: slice.filters,
+      builtin: false,
+    })) as CollectionSlice[]
+    setSaved(fromViews)
     setRenamingId(null)
-  }, [workspaceId])
+
+    const ws = workspaceId ?? undefined
+    if (!ws || typeof window === 'undefined' || !window.electronAPI?.saveViews) return
+    const legacy = loadSavedSlices(ws)
+    if (legacy.length === 0) return
+    const merged = mergeSliceViews(viewConfigs, legacy)
+    void window.electronAPI.saveViews(ws, merged).then(() => {
+      persistSavedSlices([], ws)
+      void refresh()
+    })
+  }, [workspaceId, viewConfigs, refresh])
 
   const persist = (next: CollectionSlice[]) => {
-    persistSavedSlices(next, workspaceId ?? undefined)
     setSaved(next)
+    const ws = workspaceId ?? undefined
+    if (!ws || typeof window === 'undefined' || !window.electronAPI?.saveViews) return
+    const merged = mergeSliceViews(viewConfigs, next)
+    void window.electronAPI.saveViews(ws, merged).then(() => {
+      persistSavedSlices([], ws)
+      void refresh()
+    })
   }
 
   const changeFilters = (next: CollectionFilters) => {
@@ -174,7 +205,11 @@ export function CollectionFilterMenu({
                 role="dialog"
                 selected={activeSlice === slice.id}
                 label={slice.name ?? slice.id}
-                onClick={() => changeFilters(applySlice(filters, slice))}
+                onClick={() => {
+                const next = applySlice(filters, slice)
+                changeFilters(next)
+                if (Object.keys(next).length > 0) onApplyUserSlice?.(slice.id, next)
+              }}
                 trailing={
                   <span className="flex shrink-0 items-center gap-1">
                     <span

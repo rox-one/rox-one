@@ -41,6 +41,10 @@ export const AVAILABLE_FIELDS: Array<{ name: string; type: string; description: 
 
   // Arrays
   { name: 'labels', type: 'array', description: 'Labels array (for contains() checks)' },
+  { name: 'priority', type: 'string', description: 'Collection priority' },
+  { name: 'projectId', type: 'string', description: 'Bound project id' },
+  { name: 'dueDate', type: 'number', description: 'Due date epoch ms (0 if unset)' },
+  { name: 'dueBucket', type: 'string', description: 'Derived due bucket' },
 ];
 
 /**
