@@ -1571,31 +1571,37 @@ function AppShellContent({
   }, [collapsedItems, activeWorkspaceId])
 
   const handleAllSessionsClick = useCallback(() => {
+    void setCollectionFilters({})
     navigate(routes.view.allSessions())
-  }, [])
+  }, [setCollectionFilters, navigate])
 
   const handleFlaggedClick = useCallback(() => {
+    void setCollectionFilters({})
     navigate(routes.view.flagged())
-  }, [])
+  }, [setCollectionFilters, navigate])
 
   const handleArchivedClick = useCallback(() => {
+    void setCollectionFilters({})
     navigate(routes.view.archived())
-  }, [])
+  }, [setCollectionFilters, navigate])
 
   // Handler for individual todo state views
   const handleSessionStatusClick = useCallback((stateId: SessionStatusId) => {
     if (activeWorkspaceId) clearStatusUnseen(activeWorkspaceId, stateId)
+    void setCollectionFilters({})
     navigate(routes.view.state(stateId))
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, setCollectionFilters, navigate])
 
   // Handler for label filter views (hierarchical — includes descendant labels)
   const handleLabelClick = useCallback((labelId: string) => {
+    void setCollectionFilters({})
     navigate(routes.view.label(labelId))
-  }, [])
+  }, [setCollectionFilters, navigate])
 
   const handleViewClick = useCallback((viewId: string) => {
+    void setCollectionFilters({})
     navigate(routes.view.view(viewId))
-  }, [])
+  }, [setCollectionFilters, navigate])
 
   // DnD handler: reorder statuses (flat list drag-and-drop)
   // Sets optimistic order immediately for instant UI feedback, then fires IPC.

@@ -1,6 +1,6 @@
 import { formatDistanceToNowStrict } from "date-fns"
 import type { Locale } from "date-fns"
-import { Check, Flag, Mail, ShieldAlert } from "lucide-react"
+import { Archive, ArchiveRestore, Check, Flag, Mail, ShieldAlert } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useActionLabel } from "@/actions"
 import { cn } from "@/lib/utils"
@@ -308,6 +308,23 @@ export function SessionItem({
             onMouseDown={(e) => e.stopPropagation()}
           >
             <Flag className={cn("h-3.5 w-3.5", item.isFlagged ? "text-info" : "text-muted-foreground")} />
+          </button>
+          <button
+            type="button"
+            aria-label={item.isArchived ? t("sessionMenu.unarchive") : t("sessionMenu.archive")}
+            className="p-1 rounded-[6px] hover:bg-foreground/10"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (item.isArchived) ctx.onUnarchive?.(item.id)
+              else ctx.onArchive?.(item.id)
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            {item.isArchived ? (
+              <ArchiveRestore className="h-3.5 w-3.5 text-muted-foreground" />
+            ) : (
+              <Archive className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
           </button>
         </>
       }

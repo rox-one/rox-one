@@ -221,6 +221,7 @@ export function SessionList({
     select: selectSession,
     toggle: toggleSession,
     selectRange,
+    addToSelection,
     isMultiSelectActive,
   } = useSessionSelection()
   const selectionStore = useSessionSelectionStore()
@@ -1037,6 +1038,12 @@ export function SessionList({
     navigateToSession(sessionId)
   }, [rowIndexMap, selectSession, navigateToSession])
 
+  const handleSelectGroup = useCallback((groupKey: string) => {
+    const group = rowData.groups?.find((g) => g.key === groupKey)
+    if (!group) return
+    addToSelection(group.items.map((row) => row.item.id))
+  }, [addToSelection, rowData.groups])
+
   const handleToggleSelect = useCallback((row: SessionListRow, index: number) => {
     focusZone('navigator', { intent: 'click', moveFocus: false })
     toggleSession(row.item.id, index)
@@ -1362,6 +1369,7 @@ export function SessionList({
         onToggleCollapse={toggleGroupCollapse}
         onCollapseAll={collapseAllGroups}
         onExpandAll={expandAllGroups}
+        onSelectGroup={handleSelectGroup}
       />
       </SessionListProvider>
 

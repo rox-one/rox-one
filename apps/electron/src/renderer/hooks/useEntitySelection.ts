@@ -21,6 +21,7 @@ import {
   toggleSelect,
   rangeSelect,
   selectAll,
+  addToSelection,
   clearMultiSelect,
   removeFromSelection,
   isMultiSelectActive,
@@ -46,6 +47,9 @@ export function createEntitySelection() {
       },
       selectAll: (items: string[]) => {
         setState(selectAll(items))
+      },
+      addToSelection: (ids: string[]) => {
+        setState(prev => addToSelection(prev, ids))
       },
       clearMultiSelect: () => {
         setState(prev => clearMultiSelect(prev))

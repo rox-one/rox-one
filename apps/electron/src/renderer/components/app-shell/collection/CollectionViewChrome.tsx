@@ -110,6 +110,7 @@ export function CollectionViewChrome({
         <CollectionFilterMenu
           filters={filters}
           onFiltersChange={setFilters}
+          workspaceId={workspaceId}
           statuses={statuses}
           priorities={priorities}
           projects={projects}

@@ -24,6 +24,14 @@ import {
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
+export function groupHeaderCount(
+  isCollapsed: boolean,
+  itemsLength: number,
+  collapsedCount?: number,
+): number {
+  return isCollapsed ? (collapsedCount ?? 0) : itemsLength
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -73,19 +81,41 @@ export interface EntityListProps<T> {
   onCollapseAll?: () => void
   /** Expand all collapsible groups */
   onExpandAll?: () => void
+  /** Select every currently loaded item in this group */
+  onSelectGroup?: (groupKey: string) => void
 }
 
 // ============================================================================
 // Section Header
 // ============================================================================
 
-function SectionHeader({ label }: { label: string }) {
+function SectionHeader({
+  label,
+  itemCount,
+  onSelectGroup,
+}: {
+  label: string
+  itemCount: number
+  onSelectGroup?: () => void
+}) {
+  const { t } = useTranslation()
   return (
-    <div className="px-4 py-2">
-      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-        {label}
-      </span>
-    </div>
+    <ContextMenu modal>
+      <ContextMenuTrigger asChild>
+        <div className="sticky top-0 z-10 bg-background px-4 py-2">
+          <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
+          </span>
+        </div>
+      </ContextMenuTrigger>
+      {onSelectGroup ? (
+        <StyledContextMenuContent>
+          <StyledContextMenuItem onClick={onSelectGroup}>
+            {t('entityList.selectGroup')}
+          </StyledContextMenuItem>
+        </StyledContextMenuContent>
+      ) : null}
+    </ContextMenu>
   )
 }
 
@@ -97,6 +127,7 @@ function CollapsibleGroupHeader({
   onToggle,
   onCollapseAll,
   onExpandAll,
+  onSelectGroup,
 }: {
   label: string
   isCollapsed: boolean
@@ -104,6 +135,7 @@ function CollapsibleGroupHeader({
   onToggle: () => void
   onCollapseAll?: () => void
   onExpandAll?: () => void
+  onSelectGroup?: () => void
 }) {
   const { t } = useTranslation()
   return (
@@ -111,7 +143,7 @@ function CollapsibleGroupHeader({
       <ContextMenuTrigger asChild>
         <button
           onClick={onToggle}
-          className="w-full py-2 px-4 flex items-center gap-1.5 cursor-pointer group/header relative"
+          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-4 py-2 group/header relative"
         >
           <div className="absolute inset-y-0.5 left-2 right-2 rounded-[6px] group-hover/header:bg-foreground/2 transition-colors pointer-events-none" />
           <ChevronRight
@@ -129,6 +161,11 @@ function CollapsibleGroupHeader({
         <StyledContextMenuItem onClick={onToggle}>
           {isCollapsed ? t('entityList.expand') : t('entityList.collapse')}
         </StyledContextMenuItem>
+        {onSelectGroup ? (
+          <StyledContextMenuItem onClick={onSelectGroup}>
+            {t('entityList.selectGroup')}
+          </StyledContextMenuItem>
+        ) : null}
         <StyledContextMenuSeparator />
         <StyledContextMenuItem onClick={onCollapseAll}>
           {t('entityList.collapseAll')}
@@ -162,6 +199,7 @@ export function EntityList<T>({
   onToggleCollapse,
   onCollapseAll,
   onExpandAll,
+  onSelectGroup,
 }: EntityListProps<T>) {
   // Determine if we have content
   const hasGroups = groups && groups.length > 0
@@ -198,13 +236,18 @@ export function EntityList<T>({
                         <CollapsibleGroupHeader
                           label={group.label}
                           isCollapsed={!!isCollapsed}
-                          itemCount={isCollapsed ? (group.collapsedCount ?? 0) : group.items.length}
+                          itemCount={groupHeaderCount(!!isCollapsed, group.items.length, group.collapsedCount)}
                           onToggle={() => onToggleCollapse(group.key)}
                           onCollapseAll={onCollapseAll}
                           onExpandAll={onExpandAll}
+                          onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
                         />
                       ) : (
-                        <SectionHeader label={group.label} />
+                        <SectionHeader
+                          label={group.label}
+                          itemCount={group.items.length}
+                          onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
+                        />
                       )}
                       {group.items.map((item, indexInGroup) =>
                         <React.Fragment key={getKey(item)}>

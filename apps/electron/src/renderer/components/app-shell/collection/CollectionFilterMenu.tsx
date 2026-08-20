@@ -15,18 +15,20 @@ import {
 } from './collection-menu-row'
 import {
   applySlice,
+  assertUniqueSliceName,
   BUILTIN_SLICES,
   createSavedSlice,
   loadSavedSlices,
   matchingSlice,
-  matchingSliceId,
   persistSavedSlices,
+  renameSavedSlice,
   type CollectionSlice,
 } from './collection-slices'
 
 export interface CollectionFilterMenuProps {
   filters: CollectionFilters
   onFiltersChange: (next: CollectionFilters) => void
+  workspaceId?: string | null
   statuses?: SessionStatus[]
   priorities?: SessionPriority[]
   projects?: Array<{ id: string; name: string }>
@@ -37,6 +39,7 @@ export interface CollectionFilterMenuProps {
 export function CollectionFilterMenu({
   filters,
   onFiltersChange,
+  workspaceId,
   statuses,
   priorities,
   projects,
@@ -45,9 +48,11 @@ export function CollectionFilterMenu({
 }: CollectionFilterMenuProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
-  const [saved, setSaved] = React.useState<CollectionSlice[]>(() => loadSavedSlices())
+  const [saved, setSaved] = React.useState<CollectionSlice[]>([])
   const [saving, setSaving] = React.useState(false)
   const [name, setName] = React.useState('')
+  const [renamingId, setRenamingId] = React.useState<string | null>(null)
+  const [renameValue, setRenameValue] = React.useState('')
   const count = activeFilterCount(filters)
   const matchedSlice = matchingSlice(filters, saved)
   const activeSlice = matchedSlice?.id ?? null
@@ -57,6 +62,16 @@ export function CollectionFilterMenu({
   const filterTitle = sliceTitle
     ? `${t('collection.filter.trigger')} · ${sliceTitle}`
     : t('collection.filter.trigger')
+
+  React.useEffect(() => {
+    setSaved(loadSavedSlices(workspaceId ?? undefined))
+    setRenamingId(null)
+  }, [workspaceId])
+
+  const persist = (next: CollectionSlice[]) => {
+    persistSavedSlices(next, workspaceId ?? undefined)
+    setSaved(next)
+  }
 
   const changeFilters = (next: CollectionFilters) => {
     onFiltersChange(next)
@@ -68,19 +83,22 @@ export function CollectionFilterMenu({
   }
 
   const commitSave = () => {
-    const trimmed = name.trim()
-    if (!trimmed || count === 0) return
-    const next = [...saved, createSavedSlice(trimmed, filters)]
-    persistSavedSlices(next)
-    setSaved(next)
+    const unique = assertUniqueSliceName(name, saved)
+    if (!unique.ok || count === 0) return
+    persist([...saved, createSavedSlice(unique.name, filters)])
     setName('')
     setSaving(false)
   }
 
+  const commitRename = (id: string) => {
+    const unique = assertUniqueSliceName(renameValue, saved, id)
+    if (!unique.ok) return
+    persist(renameSavedSlice(saved, id, unique.name))
+    setRenamingId(null)
+  }
+
   const removeSaved = (id: string) => {
-    const next = saved.filter((slice) => slice.id !== id)
-    persistSavedSlices(next)
-    setSaved(next)
+    persist(saved.filter((slice) => slice.id !== id))
   }
 
   return (
@@ -121,34 +139,83 @@ export function CollectionFilterMenu({
               onClick={() => changeFilters(applySlice(filters, slice))}
             />
           ))}
-          {saved.map((slice) => (
-            <CollectionMenuRow
-              key={slice.id}
-              selected={activeSlice === slice.id}
-              label={slice.name ?? slice.id}
-              onClick={() => changeFilters(applySlice(filters, slice))}
-              trailing={
-                <span
-                  role="button"
-                  tabIndex={0}
-                  className="text-[10px] text-muted-foreground hover:text-foreground"
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    removeSaved(slice.id)
-                  }}
+          {saved.map((slice) =>
+            renamingId === slice.id ? (
+              <form
+                key={slice.id}
+                className="mx-1 flex gap-1"
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  commitRename(slice.id)
+                }}
+              >
+                <input
+                  autoFocus
+                  value={renameValue}
+                  onChange={(event) => setRenameValue(event.target.value)}
                   onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
+                    if (event.key === 'Escape') {
                       event.preventDefault()
-                      event.stopPropagation()
-                      removeSaved(slice.id)
+                      setRenamingId(null)
                     }
                   }}
-                >
-                  {t('collection.filter.clear')}
-                </span>
-              }
-            />
-          ))}
+                  className="h-7 min-w-0 flex-1 rounded-[5px] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none"
+                />
+                <button type="submit" className="h-7 rounded-[5px] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]">
+                  {t('collection.slice.rename')}
+                </button>
+              </form>
+            ) : (
+              <CollectionMenuRow
+                key={slice.id}
+                selected={activeSlice === slice.id}
+                label={slice.name ?? slice.id}
+                onClick={() => changeFilters(applySlice(filters, slice))}
+                trailing={
+                  <span className="flex shrink-0 items-center gap-1">
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setRenamingId(slice.id)
+                        setRenameValue(slice.name ?? '')
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          setRenamingId(slice.id)
+                          setRenameValue(slice.name ?? '')
+                        }
+                      }}
+                    >
+                      {t('collection.slice.rename')}
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      className="text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        removeSaved(slice.id)
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          event.stopPropagation()
+                          removeSaved(slice.id)
+                        }
+                      }}
+                    >
+                      {t('collection.filter.clear')}
+                    </span>
+                  </span>
+                }
+              />
+            ),
+          )}
           {count > 0 && !saving && (
             <button
               type="button"

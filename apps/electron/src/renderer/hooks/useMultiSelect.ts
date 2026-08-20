@@ -147,6 +147,18 @@ export function extendSelection(
  * Select all - selects all provided items.
  * Sets the first item as the anchor.
  */
+export function addToSelection(state: MultiSelectState, ids: string[]): MultiSelectState {
+  if (ids.length === 0) return state
+  const selectedIds = new Set(state.selectedIds)
+  for (const id of ids) selectedIds.add(id)
+  return {
+    selected: state.selected ?? ids[0],
+    selectedIds,
+    anchorId: state.anchorId ?? ids[0],
+    anchorIndex: state.anchorIndex,
+  }
+}
+
 export function selectAll(items: string[]): MultiSelectState {
   if (items.length === 0) {
     return createInitialState()
