@@ -1303,6 +1303,9 @@ export default function ConnectionsPage() {
                           <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
                         </>
                       ) : null}
+                      {revalidatedById[row.id] ? (
+                        <div className="font-mono text-xs" data-testid="connections-policy-revalidated">{revalidatedById[row.id]}</div>
+                      ) : null}
                     </button>
                   </li>
                 ))}
