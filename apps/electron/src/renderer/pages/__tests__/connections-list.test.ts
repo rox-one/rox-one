@@ -157,6 +157,7 @@ describe('CF-6.3 connection list sanitizer', () => {
       provenance: 'local-file/memory',
       fingerprint: 'a'.repeat(64),
       kind: 'bearer_token',
+      versionId: 'ver_1',
     })
     expect(JSON.stringify(summary)).not.toContain('super-secret')
     expect(summary).not.toHaveProperty('value')

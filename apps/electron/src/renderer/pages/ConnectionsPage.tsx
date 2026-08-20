@@ -985,20 +985,29 @@ export default function ConnectionsPage() {
         ) : tab === 'credentials' && credentialRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {credentialRows.map((row) => (
-              <li key={row.id} className="flex items-center gap-2 rounded border px-3 py-2">
-                <div className="min-w-0 flex-1">
+              <li key={row.id} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="connections-credential-row"
+                  aria-selected={selected?.id === row.id}
+                  className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
+                  onClick={() => setSelected(row)}
+                >
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
                   <div className="text-muted-foreground">{row.storageMode}</div>
                   {inspectById[row.id] ? (
                     <>
+                      <div className="font-mono text-xs" data-testid="connections-credential-health">{inspectById[row.id].health}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-kind">{inspectById[row.id].kind}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-expiry">{inspectById[row.id].expiry}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-provenance">{inspectById[row.id].provenance}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-fingerprint">{inspectById[row.id].fingerprint}</div>
+                      <div className="font-mono text-xs" data-testid="connections-credential-version">{inspectById[row.id].versionId}</div>
                     </>
                   ) : null}
-                </div>
+                </button>
+                {renderReconnectControls(row)}
                 {row.storageMode === 'copy' ? (
                   convertingId === row.id ? (
                     <div className="flex flex-col items-end gap-1">

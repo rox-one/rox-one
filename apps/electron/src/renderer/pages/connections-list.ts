@@ -141,6 +141,7 @@ export interface ConnectionInspectSummary {
   readonly provenance: string
   readonly fingerprint: string
   readonly kind: string
+  readonly versionId: string
 }
 
 export function inspectSummaryFromRaw(raw: unknown): ConnectionInspectSummary {
@@ -151,6 +152,7 @@ export function inspectSummaryFromRaw(raw: unknown): ConnectionInspectSummary {
     provenance: row.provenance,
     fingerprint: row.fingerprint,
     kind: row.kind,
+    versionId: row.versionId,
   }
 }
 

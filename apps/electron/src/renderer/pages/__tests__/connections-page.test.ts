@@ -326,6 +326,22 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('selects credential rows and reconnects stale credentials without stealing focus', () => {
+    expect(page).toContain('data-testid="connections-credential-row"')
+    expect(page).toContain('connections-credential-health')
+    expect(page).toContain('connections-credential-version')
+    expect(page).toContain('renderReconnectControls')
+    expect(page).toContain('setSelected(row)')
+    expect(page).toContain('aria-selected')
+    expect(page).toContain('connections.reconnect')
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('offers a reconnect CTA on stale service rows without stealing focus', () => {
     expect(page).toContain('isStaleInspectSummary')
     expect(page).toContain('reconnectConnection')
