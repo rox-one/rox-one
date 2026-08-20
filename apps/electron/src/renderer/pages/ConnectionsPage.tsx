@@ -1149,7 +1149,9 @@ export default function ConnectionsPage() {
           <div data-testid="connections-loading" aria-busy="true" className="flex flex-1" />
         ) : tab === 'credentials' && credentialRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
-            {credentialRows.map((row) => (
+            {credentialRows.map((row) => {
+              const status = testById[row.id]
+              return (
               <li key={row.id} className="flex items-center gap-2">
                 <button
                   type="button"
@@ -1221,6 +1223,11 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
                     </div>
                   ) : null}
+                  {status && status.kind !== 'idle' ? (
+                    <div className="font-mono text-xs" data-testid="connections-credential-test-status">
+                      {status.kind === 'ok' ? status.login : status.message}
+                    </div>
+                  ) : null}
                 </button>
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
                   {t('connections.test')}
@@ -1287,7 +1294,8 @@ export default function ConnectionsPage() {
                   </button>
                 )}
               </li>
-            ))}
+              )
+            })}
           </ul>
         ) : tab === 'policies' && rows === null ? (
           <div data-testid="connections-loading" aria-busy="true" className="flex flex-1" />
@@ -1352,7 +1360,9 @@ export default function ConnectionsPage() {
             </div>
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
-                {policyRows.map((row) => (
+                {policyRows.map((row) => {
+                  const status = testById[row.id]
+                  return (
                   <li key={row.id} className="flex items-center gap-2">
                     <button
                       type="button"
@@ -1424,6 +1434,11 @@ export default function ConnectionsPage() {
                           <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
                         </div>
                       ) : null}
+                      {status && status.kind !== 'idle' ? (
+                        <div className="font-mono text-xs" data-testid="connections-policy-test-status">
+                          {status.kind === 'ok' ? status.login : status.message}
+                        </div>
+                      ) : null}
                     </button>
                     <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
                       {t('connections.test')}
@@ -1435,7 +1450,8 @@ export default function ConnectionsPage() {
                     {renderRevokeControls(row)}
                     {renderRotateControls(row)}
                   </li>
-                ))}
+                  )
+                })}
               </ul>
             ) : null}
             {bindingRows.length > 0 ? (

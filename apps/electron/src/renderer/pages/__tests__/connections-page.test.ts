@@ -205,6 +205,13 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('shows test outcome on policy connection rows without secret fields', () => {
+    expect(page).toContain('connections-policy-test-status')
+    expect(page).toContain('testById[row.id]')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('selects a policy connection row into the inspector without renaming tabs', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
     expect(page.split('onClick={() => setSelected(row)}').length - 1).toBe(3)
@@ -524,6 +531,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('testStatusFromResult')
     expect(page).toContain('testStatusFromError')
     expect(page).toContain('connections-test-status')
+  })
+
+  it('shows test outcome on credential and policy rows without secret fields', () => {
+    expect(page).toContain('connections-credential-test-status')
+    expect(page).toContain('connections-policy-test-status')
+    expect(page.split('testById[row.id]').length - 1).toBe(3)
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
   it('filters import previews from Connect source chips', () => {
