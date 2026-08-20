@@ -346,6 +346,8 @@ export default function ConnectionsPage() {
     }))
   }
 
+  const visibleInspectValue = (value: string) => (value && value !== '—' ? value : '')
+
   const applySelectedRow = (listed: ConnectionListRow[], connectionId: string) => {
     if (selected?.id !== connectionId) return
     const next = importedConnectionFromList(listed, connectionId)
@@ -1143,30 +1145,42 @@ export default function ConnectionsPage() {
                   </div>
                   {inspectById[row.id] ? (
                     <>
-                      <div data-testid="connections-row-health">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].health}</div>
-                      </div>
-                      <div data-testid="connections-row-kind">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
-                      </div>
-                      <div data-testid="connections-row-expiry">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
-                      </div>
-                      <div data-testid="connections-row-provenance">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
-                      </div>
-                      <div data-testid="connections-row-fingerprint">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
-                      </div>
-                      <div data-testid="connections-row-version">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
-                      </div>
+                      {visibleInspectValue(inspectById[row.id].health) ? (
+                        <div data-testid="connections-row-health">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].health}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].kind) ? (
+                        <div data-testid="connections-row-kind">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].expiry) ? (
+                        <div data-testid="connections-row-expiry">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].provenance) ? (
+                        <div data-testid="connections-row-provenance">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].fingerprint) ? (
+                        <div data-testid="connections-row-fingerprint">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].versionId) ? (
+                        <div data-testid="connections-row-version">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
+                        </div>
+                      ) : null}
                     </>
                   ) : null}
                   {leasesById[row.id] ? (
@@ -1244,30 +1258,42 @@ export default function ConnectionsPage() {
                   </div>
                   {inspectById[row.id] ? (
                     <>
-                      <div data-testid="connections-credential-health">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].health}</div>
-                      </div>
-                      <div data-testid="connections-credential-kind">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
-                      </div>
-                      <div data-testid="connections-credential-expiry">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
-                      </div>
-                      <div data-testid="connections-credential-provenance">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
-                      </div>
-                      <div data-testid="connections-credential-fingerprint">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
-                      </div>
-                      <div data-testid="connections-credential-version">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
-                        <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
-                      </div>
+                      {visibleInspectValue(inspectById[row.id].health) ? (
+                        <div data-testid="connections-credential-health">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].health}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].kind) ? (
+                        <div data-testid="connections-credential-kind">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].expiry) ? (
+                        <div data-testid="connections-credential-expiry">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].provenance) ? (
+                        <div data-testid="connections-credential-provenance">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].fingerprint) ? (
+                        <div data-testid="connections-credential-fingerprint">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(inspectById[row.id].versionId) ? (
+                        <div data-testid="connections-credential-version">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
+                          <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
+                        </div>
+                      ) : null}
                     </>
                   ) : null}
                   {leasesById[row.id] ? (
@@ -1402,30 +1428,42 @@ export default function ConnectionsPage() {
                       </div>
                       {inspectById[row.id] ? (
                         <>
-                          <div data-testid="connections-policy-health">
-                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
-                            <div className="font-mono text-xs">{inspectById[row.id].health}</div>
-                          </div>
-                          <div data-testid="connections-policy-kind">
-                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
-                            <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
-                          </div>
-                          <div data-testid="connections-policy-expiry">
-                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
-                            <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
-                          </div>
-                          <div data-testid="connections-policy-provenance">
-                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
-                            <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
-                          </div>
-                          <div data-testid="connections-policy-fingerprint">
-                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
-                            <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
-                          </div>
-                          <div data-testid="connections-policy-version">
-                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
-                            <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
-                          </div>
+                          {visibleInspectValue(inspectById[row.id].health) ? (
+                            <div data-testid="connections-policy-health">
+                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
+                              <div className="font-mono text-xs">{inspectById[row.id].health}</div>
+                            </div>
+                          ) : null}
+                          {visibleInspectValue(inspectById[row.id].kind) ? (
+                            <div data-testid="connections-policy-kind">
+                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
+                              <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
+                            </div>
+                          ) : null}
+                          {visibleInspectValue(inspectById[row.id].expiry) ? (
+                            <div data-testid="connections-policy-expiry">
+                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
+                              <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
+                            </div>
+                          ) : null}
+                          {visibleInspectValue(inspectById[row.id].provenance) ? (
+                            <div data-testid="connections-policy-provenance">
+                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
+                              <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
+                            </div>
+                          ) : null}
+                          {visibleInspectValue(inspectById[row.id].fingerprint) ? (
+                            <div data-testid="connections-policy-fingerprint">
+                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
+                              <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
+                            </div>
+                          ) : null}
+                          {visibleInspectValue(inspectById[row.id].versionId) ? (
+                            <div data-testid="connections-policy-version">
+                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
+                              <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
+                            </div>
+                          ) : null}
                         </>
                       ) : null}
                       {leasesById[row.id] ? (

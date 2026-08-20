@@ -126,6 +126,18 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty inspect fields on listed rows without secret fields', () => {
+    expect(page).toContain('visibleInspectValue')
+    expect(page.split('visibleInspectValue(inspectById[row.id].health)').length - 1).toBe(3)
+    expect(page.split("value !== '—'").length - 1).toBe(1)
+    expect(page).toContain('connections-row-health')
+    expect(page).toContain('connections-credential-health')
+    expect(page).toContain('connections-policy-health')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('offers a reconnect CTA on stale policy connection rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
     expect(page.split('{renderReconnectControls(row)}').length - 1).toBe(3)
