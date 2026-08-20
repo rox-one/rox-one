@@ -554,7 +554,7 @@ export class WorkGraphKernel {
     action: string
     decision: 'allow' | 'deny'
     versionFingerprint?: string
-    eventType?: 'connection-audit' | 'connection-revoked' | 'connection-rotated' | 'connection-repaired' | 'connection-converted' | 'connection-binding-revoked'
+    eventType?: 'connection-audit' | 'connection-revoked' | 'connection-rotated' | 'connection-repaired' | 'connection-converted' | 'connection-binding-revoked' | 'connection-moved'
   }): Promise<void> {
     const database = await this.requireDatabase()
     assertOpaqueId(input.workspaceId, 'workspace ID')
@@ -610,7 +610,7 @@ export class WorkGraphKernel {
     const database = await this.requireDatabase()
     assertOpaqueId(workspaceId, 'workspace ID')
     if (connectionId) assertOpaqueId(connectionId, 'connection ID')
-    const eventTypes = `'connection-created', 'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-converted', 'connection-binding-revoked'`
+    const eventTypes = `'connection-created', 'connection-audit', 'connection-revoked', 'connection-rotated', 'connection-repaired', 'connection-converted', 'connection-binding-revoked', 'connection-moved'`
     const sql = connectionId
       ? `SELECT object_id, event_type, occurred_at, actor_id, outcome, payload_digest, action
          FROM workgraph_ledger
@@ -1107,6 +1107,7 @@ class WorkGraphIntegrityError extends Error {}
 
 export {
   convertCopyToReferenceAndRevalidate,
+  moveConnectionBackendAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -1114,6 +1115,7 @@ export {
 } from './revalidation.ts'
 export type {
   ConvertConnectionInput,
+  MoveConnectionInput,
   RepairConnectionInput,
   RevokeBindingInput,
   RevokeConnectionInput,

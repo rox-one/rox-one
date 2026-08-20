@@ -50,6 +50,7 @@ export type {
   CredentialMigrationRecord,
   CredentialMigrationSnapshot,
 } from './backends/types.ts';
+export { NamedCredentialBackend } from './backends/types.ts';
 export { SecureStorageBackend } from './backends/secure-storage.ts';
 export {
   CREDENTIAL_ENVELOPE_CODEC,

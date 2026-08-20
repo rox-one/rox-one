@@ -1,9 +1,14 @@
+import { homedir } from 'node:os'
+import { join } from 'node:path'
+
 import { CredentialRefRegistry } from '@craft-agent/core/platform'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import {
   InProcessCredentialBroker,
   LocalFileSecretProvider,
+  NamedCredentialBackend,
   SecureStorageBackend,
+  type CredentialBackend,
 } from '@craft-agent/shared/credentials'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import {
@@ -12,6 +17,7 @@ import {
   previewGitHelperImport,
   previewGithubEnvImport,
   convertCopyToReferenceAndRevalidate,
+  moveConnectionBackendAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -44,6 +50,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workgraph.GET_CONNECTION,
   RPC_CHANNELS.workgraph.CREATE_CONNECTION,
   RPC_CHANNELS.workgraph.GRANT_CONNECTION,
+  RPC_CHANNELS.workgraph.MOVE_CONNECTION,
   RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV,
   RPC_CHANNELS.workgraph.IMPORT_GITHUB_ENV,
   RPC_CHANNELS.workgraph.PREVIEW_GIT_HELPER,
@@ -78,6 +85,8 @@ export interface FabricImportHost {
   readonly fetchImpl: GithubFetch
   readonly convert: typeof convertCopyToReferenceAndRevalidate
   readonly unbind: typeof revokeConnectionBindingAndRevalidate
+  readonly move: typeof moveConnectionBackendAndRevalidate
+  readonly backends: Readonly<Record<string, CredentialBackend>>
 }
 
 export type GithubEnvImportHost = FabricImportHost
@@ -85,6 +94,10 @@ export type GithubEnvImportHost = FabricImportHost
 export function createGithubEnvImportHost(): FabricImportHost {
   const registry = new CredentialRefRegistry()
   const provider = new LocalFileSecretProvider(new SecureStorageBackend(), registry)
+  const localAlt = new NamedCredentialBackend(
+    'local-alt',
+    new SecureStorageBackend(join(homedir(), '.craft-agent', 'credentials-alt')),
+  )
   return {
     provider,
     broker: new InProcessCredentialBroker(provider, (id) => registry.get(id)),
@@ -99,6 +112,8 @@ export function createGithubEnvImportHost(): FabricImportHost {
     fetchImpl: globalThis.fetch.bind(globalThis),
     convert: convertCopyToReferenceAndRevalidate,
     unbind: revokeConnectionBindingAndRevalidate,
+    move: moveConnectionBackendAndRevalidate,
+    backends: { 'local-alt': localAlt },
   }
 }
 
@@ -138,6 +153,23 @@ function assertGrantMetadata(input: unknown): void {
   for (const key of Object.keys(input)) {
     if (!GRANT_INPUT_KEYS.has(key)) {
       throw new Error(`Invalid grant metadata field: ${key}`)
+    }
+  }
+}
+
+const MOVE_INPUT_KEYS = new Set([
+  'workspaceId',
+  'connectionId',
+  'targetBackend',
+])
+
+function assertMoveMetadata(input: unknown): void {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid move metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!MOVE_INPUT_KEYS.has(key)) {
+      throw new Error(`Invalid move metadata field: ${key}`)
     }
   }
 }
@@ -255,6 +287,25 @@ export function registerWorkGraphHandlers(
         purpose: input.purpose,
         actions: input.actions,
         resources: input.resources,
+      })
+    },
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.MOVE_CONNECTION,
+    async (_ctx, input: { workspaceId: string; connectionId: string; targetBackend: string }) => {
+      assertMoveMetadata(input)
+      if (!fabric) throw new Error('move_unavailable')
+      const target = fabric.backends[input.targetBackend]
+      if (!target) throw new Error('unknown_backend')
+      return fabric.move({
+        kernel: workGraph,
+        broker: fabric.broker,
+        provider: fabric.provider,
+        target,
+        workspaceId: input.workspaceId,
+        connectionId: input.connectionId,
+        reason: 'owner-move',
       })
     },
     { access: 'localElectron' },

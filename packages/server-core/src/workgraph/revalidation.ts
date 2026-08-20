@@ -1,5 +1,5 @@
-import type { CredentialRefId } from '@craft-agent/core/platform'
-import type { InProcessCredentialBroker, SecretProvider } from '@craft-agent/shared/credentials'
+import type { CredentialRef, CredentialRefId } from '@craft-agent/core/platform'
+import type { CredentialBackend, InProcessCredentialBroker, SecretProvider } from '@craft-agent/shared/credentials'
 
 import type { WorkGraphKernel } from './index'
 
@@ -154,6 +154,57 @@ export async function convertCopyToReferenceAndRevalidate(
   }
   const consumers = await revalidateAffected(input)
   return { storageMode: 'reference', consumers }
+}
+
+export interface MoveConnectionInput {
+  readonly kernel: WorkGraphRevokeSurface
+  readonly broker: InProcessCredentialBroker
+  readonly provider: SecretProvider & {
+    moveCopy?(ref: CredentialRef, target: CredentialBackend): Promise<{ from: string; to: string }>
+  }
+  readonly target: CredentialBackend
+  readonly workspaceId: string
+  readonly connectionId: string
+  readonly reason: string
+}
+
+export async function moveConnectionBackendAndRevalidate(
+  input: MoveConnectionInput,
+): Promise<{
+  readonly connectionId: string
+  readonly credentialRefId: string
+  readonly from: string
+  readonly to: string
+  readonly consumers: readonly RevalidatedConsumer[]
+}> {
+  const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
+  if (typeof input.provider.moveCopy !== 'function') throw new Error('move_unavailable')
+  const credentialRefId = connection.credentialRefId as CredentialRefId
+  const moved = await input.provider.moveCopy({
+    id: credentialRefId,
+    kind: 'bearer_token',
+    providerId: input.provider.id,
+    locator: { type: 'local', key: credentialRefId },
+    createdAt: 0,
+    updatedAt: 0,
+  }, input.target)
+  await input.broker.revokeLeasesForRef(credentialRefId, input.reason)
+  await input.kernel.appendConnectionAudit({
+    workspaceId: input.workspaceId,
+    connectionId: input.connectionId,
+    credentialRefId,
+    action: 'connection.move',
+    decision: 'allow',
+    eventType: 'connection-moved',
+  })
+  const consumers = await revalidateAffected(input)
+  return {
+    connectionId: connection.id,
+    credentialRefId,
+    from: moved.from,
+    to: moved.to,
+    consumers,
+  }
 }
 
 export interface RevokeBindingInput {

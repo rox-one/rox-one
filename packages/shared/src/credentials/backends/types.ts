@@ -53,6 +53,37 @@ export interface CredentialMigrationBackend extends CredentialBackend {
   rollbackMigration(snapshot: CredentialMigrationSnapshot): Promise<void>;
 }
 
+export class NamedCredentialBackend implements CredentialBackend {
+  constructor(
+    readonly name: string,
+    private readonly inner: CredentialBackend,
+  ) {}
+
+  get priority(): number {
+    return this.inner.priority
+  }
+
+  isAvailable(): Promise<boolean> {
+    return this.inner.isAvailable()
+  }
+
+  get(id: CredentialId): Promise<StoredCredential | null> {
+    return this.inner.get(id)
+  }
+
+  set(id: CredentialId, credential: StoredCredential): Promise<void> {
+    return this.inner.set(id, credential)
+  }
+
+  delete(id: CredentialId): Promise<boolean> {
+    return this.inner.delete(id)
+  }
+
+  list(filter?: Partial<CredentialId>): Promise<CredentialId[]> {
+    return this.inner.list(filter)
+  }
+}
+
 export function isCredentialMigrationBackend(value: CredentialBackend): value is CredentialMigrationBackend {
   return (
     'createMigrationSnapshot' in value &&

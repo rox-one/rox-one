@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'bun:test'
 import {
   IMPORT_PLACEHOLDERS,
+  MOVE_BACKENDS,
   consumersForConnection,
+  createDraftError,
   cycleTab,
   errorMessage,
   firstPickedPath,
   formatConfirmTargets,
+  grantDraftError,
   isImportPanelVisible,
+  isUiCredentialRefId,
   matchesConnectSource,
+  parseCsvList,
   previewSourceForChip,
   removeCommittedPreview,
+  tabFromKey,
   testStatusFromError,
   testStatusFromResult,
 } from '../connections-ui'
@@ -105,5 +111,55 @@ describe('CF-6 Connections UI helpers', () => {
     expect(cycleTab(tabs, 'audit', 1)).toBe('services')
     expect(cycleTab(tabs, 'services', -1)).toBe('audit')
     expect(cycleTab(tabs, 'imports', 0)).toBe('imports')
+  })
+
+  it('rejects create drafts without a stable credential ref id', () => {
+    expect(isUiCredentialRefId('cred_123e4567-e89b-12d3-a456-426614174000')).toBe(true)
+    expect(isUiCredentialRefId('gho_not-a-ref')).toBe(false)
+    expect(createDraftError({
+      integrationId: 'github',
+      credentialRefId: 'cred_123e4567-e89b-12d3-a456-426614174000',
+    })).toBeNull()
+    expect(createDraftError({ integrationId: '', credentialRefId: 'cred_123e4567-e89b-12d3-a456-426614174000' })).toBe('—')
+    expect(createDraftError({ integrationId: 'github', credentialRefId: 'secret-token' })).toBe('—')
+  })
+
+  it('rejects grant drafts missing consumer, purpose, actions, resources, or target', () => {
+    expect(parseCsvList(' github.api , repo ')).toEqual(['github.api', 'repo'])
+    expect(grantDraftError({
+      connectionId: 'c1',
+      consumerId: 'agent.github_user',
+      purpose: 'read-user',
+      actions: 'github.api',
+      resources: 'github:user',
+    })).toBeNull()
+    expect(grantDraftError({
+      connectionId: '',
+      consumerId: 'agent.github_user',
+      purpose: 'read-user',
+      actions: 'github.api',
+      resources: 'github:user',
+    })).toBe('—')
+    expect(grantDraftError({
+      connectionId: 'c1',
+      consumerId: 'agent.github_user',
+      purpose: 'read-user',
+      actions: '  ',
+      resources: 'github:user',
+    })).toBe('—')
+  })
+
+  it('maps Home and End onto the first and last connection tabs', () => {
+    const tabs = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
+    expect(tabFromKey(tabs, 'imports', 'Home')).toBe('services')
+    expect(tabFromKey(tabs, 'imports', 'End')).toBe('audit')
+    expect(tabFromKey(tabs, 'services', 'ArrowRight')).toBe('credentials')
+    expect(tabFromKey(tabs, 'services', 'ArrowLeft')).toBe('audit')
+    expect(tabFromKey(tabs, 'services', 'Enter')).toBeNull()
+  })
+
+  it('lists only local move targets', () => {
+    expect(MOVE_BACKENDS).toEqual(['local-alt'])
+    expect(JSON.stringify(MOVE_BACKENDS)).not.toMatch(/vault|1password|infisical/i)
   })
 })

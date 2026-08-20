@@ -113,6 +113,7 @@ export const RPC_CHANNELS = {
     GET_CONNECTION: 'workgraph:getConnection',
     CREATE_CONNECTION: 'workgraph:createConnection',
     GRANT_CONNECTION: 'workgraph:grantConnection',
+    MOVE_CONNECTION: 'workgraph:moveConnection',
     PREVIEW_GITHUB_ENV: 'workgraph:previewGithubEnv',
     IMPORT_GITHUB_ENV: 'workgraph:importGithubEnv',
     PREVIEW_GIT_HELPER: 'workgraph:previewGitHelper',

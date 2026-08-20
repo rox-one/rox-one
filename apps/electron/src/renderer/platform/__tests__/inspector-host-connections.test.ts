@@ -47,4 +47,12 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('moves the selected connection after naming affected consumers', () => {
+    expect(host).toContain('moveConnection')
+    expect(host).toContain('connections.moveConfirm')
+    expect(host).toContain('MOVE_BACKENDS')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })

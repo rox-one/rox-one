@@ -14,17 +14,22 @@ import {
 import {
   CONNECT_SOURCES,
   IMPORT_PLACEHOLDERS,
+  MOVE_BACKENDS,
   consumersForConnection,
-  cycleTab,
+  createDraftError,
   errorMessage,
   firstPickedPath,
   formatConfirmTargets,
+  grantDraftError,
   isImportPanelVisible,
   matchesConnectSource,
+  parseCsvList,
   removeCommittedPreview,
+  tabFromKey,
   testStatusFromError,
   testStatusFromResult,
   type ConnectSource,
+  type MoveBackend,
   type PreviewSource,
   type TestStatus,
 } from './connections-ui'
@@ -87,6 +92,9 @@ export default function ConnectionsPage() {
   const [grantActions, setGrantActions] = useState('github.api')
   const [grantResources, setGrantResources] = useState('github:user')
   const [grantTargetId, setGrantTargetId] = useState('')
+  const [formError, setFormError] = useState<string | null>(null)
+  const [movingId, setMovingId] = useState<string | null>(null)
+  const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -268,6 +276,20 @@ export default function ConnectionsPage() {
     }
   }
 
+  const confirmMove = async (connectionId: string) => {
+    const workspaceId = workspace?.id
+    const moveConnection = window.electronAPI?.workgraph?.moveConnection
+    if (!workspaceId || typeof moveConnection !== 'function') return
+    try {
+      setListError(null)
+      await moveConnection({ workspaceId, connectionId, targetBackend: moveTarget })
+      setMovingId(null)
+      await refreshRows(workspaceId)
+    } catch (err) {
+      setListError(errorMessage(err))
+    }
+  }
+
   const confirmUnbind = async (bindingId: string) => {
     const workspaceId = workspace?.id
     const revokeConnectionBinding = window.electronAPI?.workgraph?.revokeConnectionBinding
@@ -302,15 +324,26 @@ export default function ConnectionsPage() {
     const workspaceId = workspace?.id
     const createConnection = window.electronAPI?.workgraph?.createConnection
     if (!workspaceId || typeof createConnection !== 'function') return
+    const draftError = createDraftError({
+      integrationId: createIntegration,
+      credentialRefId: createCredentialRef,
+    })
+    if (draftError) {
+      setFormError(draftError)
+      return
+    }
     try {
       setListError(null)
-      await createConnection({
+      setFormError(null)
+      const created = await createConnection({
         workspaceId,
         integrationId: createIntegration.trim(),
-        credentialRefId: createCredentialRef.trim(),
+        credentialRefId: createCredentialRef.trim() as `cred_${string}`,
         storageMode: createStorageMode,
       })
       setCreateCredentialRef('')
+      const [row] = sanitizeConnectionRows([created])
+      if (row) setSelected(row)
       await refreshRows(workspaceId)
     } catch (err) {
       setListError(errorMessage(err))
@@ -322,11 +355,22 @@ export default function ConnectionsPage() {
     const grantConnection = window.electronAPI?.workgraph?.grantConnection
     if (!workspaceId || typeof grantConnection !== 'function') return
     const connectionId = grantTargetId.trim() || selected?.id || ''
-    const actions = grantActions.split(',').map((item) => item.trim()).filter(Boolean)
-    const resources = grantResources.split(',').map((item) => item.trim()).filter(Boolean)
-    if (!connectionId) return
+    const draftError = grantDraftError({
+      connectionId,
+      consumerId: grantConsumer,
+      purpose: grantPurpose,
+      actions: grantActions,
+      resources: grantResources,
+    })
+    if (draftError) {
+      setFormError(draftError)
+      return
+    }
+    const actions = parseCsvList(grantActions)
+    const resources = parseCsvList(grantResources)
     try {
       setListError(null)
+      setFormError(null)
       await grantConnection({
         workspaceId,
         connectionId,
@@ -438,13 +482,10 @@ export default function ConnectionsPage() {
         aria-label={t('sidebar.connections')}
         className="flex gap-2 border-b px-4 pt-3"
         onKeyDown={(event) => {
-          if (event.key === 'ArrowRight') {
-            event.preventDefault()
-            setTab(cycleTab(TABS, tab, 1))
-          } else if (event.key === 'ArrowLeft') {
-            event.preventDefault()
-            setTab(cycleTab(TABS, tab, -1))
-          }
+          const next = tabFromKey(TABS, tab, event.key)
+          if (!next || (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End')) return
+          event.preventDefault()
+          setTab(next)
         }}
       >
         {TABS.map((id) => (
@@ -693,6 +734,9 @@ export default function ConnectionsPage() {
                   <option value="reference">reference</option>
                 </select>
               </label>
+              {formError ? (
+                <p className="text-sm" data-testid="connections-form-error">{formError}</p>
+              ) : null}
               <button type="button" className="rounded border px-3 py-1" onClick={() => void confirmCreate()}>
                 {t('connections.create')}
               </button>
@@ -770,6 +814,34 @@ export default function ConnectionsPage() {
                     </button>
                   )
                 ) : null}
+                {movingId === row.id ? (
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="font-mono text-[11px]" data-testid="connections-move-confirm-target">
+                      {formatConfirmTargets(row, consumersForConnection(bindingRows, row.id))}
+                    </div>
+                    <select
+                      className="rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                      value={moveTarget}
+                      onChange={(event) => setMoveTarget(event.target.value === 'local-alt' ? 'local-alt' : MOVE_BACKENDS[0])}
+                    >
+                      {MOVE_BACKENDS.map((backend) => (
+                        <option key={backend} value={backend}>{backend}</option>
+                      ))}
+                    </select>
+                    <div className="flex gap-1">
+                      <button type="button" className="rounded border px-2 py-1" onClick={() => confirmMove(row.id)}>
+                        {t('connections.moveConfirm')}
+                      </button>
+                      <button type="button" className="rounded border px-2 py-1" onClick={() => setMovingId(null)}>
+                        {t('connections.moveCancel')}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button type="button" className="rounded border px-2 py-1" onClick={() => setMovingId(row.id)}>
+                    {t('connections.move')}
+                  </button>
+                )}
               </li>
             ))}
           </ul>
@@ -827,6 +899,9 @@ export default function ConnectionsPage() {
                   ))}
                 </select>
               </label>
+              {formError ? (
+                <p className="text-sm" data-testid="connections-form-error">{formError}</p>
+              ) : null}
               <button type="button" className="rounded border px-3 py-1" onClick={() => void confirmGrant()}>
                 {t('connections.grant')}
               </button>

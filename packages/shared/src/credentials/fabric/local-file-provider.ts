@@ -13,7 +13,12 @@ import type { ProviderCredentialMetadata, ProviderMaterialization, SecretProvide
 
 export class LocalFileSecretProvider implements SecretProvider {
   readonly id = 'local-file';
-  private readonly copies = new Map<string, { id: CredentialId; payload: StoredCredential; kind: CredentialKind }>();
+  private readonly copies = new Map<string, {
+    id: CredentialId
+    payload: StoredCredential
+    kind: CredentialKind
+    backend: CredentialBackend
+  }>();
   private readonly byConflict = new Map<string, CredentialRef>();
 
   constructor(
@@ -56,7 +61,7 @@ export class LocalFileSecretProvider implements SecretProvider {
     if (input.copyPayload !== false) {
       const id: CredentialId = { type: 'source_apikey', workspaceId: 'fabric', sourceId: ref.id };
       await this.backend.set(id, input.payload);
-      this.copies.set(ref.id, { id, payload: input.payload, kind: input.kind });
+      this.copies.set(ref.id, { id, payload: input.payload, kind: input.kind, backend: this.backend });
     }
     this.byConflict.set(`${conflictKey}:${fingerprint}`, ref);
     return { ref, version };
@@ -84,14 +89,27 @@ export class LocalFileSecretProvider implements SecretProvider {
   async dropCopy(ref: CredentialRef): Promise<void> {
     const copy = this.copies.get(ref.id);
     if (!copy) return;
-    await this.backend.delete(copy.id);
+    await copy.backend.delete(copy.id);
     this.copies.delete(ref.id);
+  }
+
+  async moveCopy(
+    ref: CredentialRef,
+    target: CredentialBackend,
+  ): Promise<{ from: string; to: string }> {
+    const copy = this.copies.get(ref.id);
+    if (!copy) throw new Error('move_unavailable');
+    if (copy.backend.name === target.name) throw new Error('same_backend');
+    await target.set(copy.id, copy.payload);
+    await copy.backend.delete(copy.id);
+    this.copies.set(ref.id, { ...copy, backend: target });
+    return { from: copy.backend.name, to: target.name };
   }
 
   async revoke(input: { credentialRef: CredentialRef }): Promise<void> {
     const copy = this.copies.get(input.credentialRef.id);
     if (!copy) return;
-    await this.backend.delete(copy.id);
+    await copy.backend.delete(copy.id);
     this.copies.delete(input.credentialRef.id);
     if (input.credentialRef.currentVersionId) {
       this.registry.setVersionStatus(input.credentialRef.currentVersionId, 'revoked');

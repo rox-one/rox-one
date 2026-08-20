@@ -14,6 +14,7 @@ import { InProcessCredentialBroker } from '@craft-agent/shared/credentials'
 import { createWorkGraphKernel } from './index'
 import {
   convertCopyToReferenceAndRevalidate,
+  moveConnectionBackendAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
   revokeConnectionBindingAndRevalidate,
@@ -24,7 +25,7 @@ const roots: string[] = []
 const nativeIt = process.platform === 'darwin' && process.arch === 'arm64' ? it : it.skip
 
 class MemoryBackend implements CredentialBackend {
-  readonly name = 'memory'
+  constructor(readonly name = 'memory') {}
   readonly priority = 1
   readonly store = new Map<string, StoredCredential>()
   async isAvailable(): Promise<boolean> { return true }
@@ -312,6 +313,65 @@ describe('CF-6.5 rotate and repair', () => {
     })
     expect(unbound.consumers[0]?.consumerId).toBe('agent-a')
     expect(await kernel.listConnectionBindings('workspace_a', connection.id)).toEqual([])
+    await kernel.close()
+  })
+
+  nativeIt('moves a copy to another backend, audits, and keeps the Connection id', async () => {
+    const root = createRoot()
+    const registry = new CredentialRefRegistry()
+    const source = new MemoryBackend()
+    const target = new MemoryBackend('local-alt')
+    const provider = new LocalFileSecretProvider(source, registry)
+    const written = await provider.write({
+      kind: 'bearer_token',
+      locator: { type: 'local', key: 'github/default' },
+      payload: { value: 'super-secret' },
+    })
+    const broker = new InProcessCredentialBroker(provider, (id) => registry.get(id))
+    const kernel = createWorkGraphKernel({
+      configDir: root,
+      platform: { platform: 'darwin', arch: 'arm64' },
+    })
+    await kernel.getHealth()
+    const connection = await kernel.createConnection({
+      workspaceId: 'workspace_a',
+      integrationId: 'github',
+      credentialRefId: written.ref.id,
+      storageMode: 'copy',
+    })
+    await kernel.bindConsumer({
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      allowedActions: ['github.api'],
+      resources: ['github:user'],
+    })
+    broker.grant({
+      workspaceId: 'workspace_a',
+      consumerId: 'agent-a',
+      credentialRefId: written.ref.id,
+      actions: ['github.api'],
+      resources: ['github:user'],
+    })
+    const moved = await moveConnectionBackendAndRevalidate({
+      kernel,
+      broker,
+      provider,
+      target,
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+      reason: 'owner-move',
+    })
+    expect(moved.connectionId).toBe(connection.id)
+    expect(moved.credentialRefId).toBe(written.ref.id)
+    expect(moved.from).toBe('memory')
+    expect(moved.to).toBe('local-alt')
+    expect(JSON.stringify(moved)).not.toContain('super-secret')
+    const after = await kernel.getConnection('workspace_a', connection.id)
+    expect(after?.id).toBe(connection.id)
+    const audit = await kernel.listConnectionAudit('workspace_a', connection.id)
+    expect(audit.some((row) => row.eventType === 'connection-moved' && row.action === 'connection.move')).toBe(true)
     await kernel.close()
   })
 })

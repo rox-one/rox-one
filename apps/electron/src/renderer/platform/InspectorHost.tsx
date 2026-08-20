@@ -34,7 +34,7 @@ import {
 } from '@/atoms/unified-shell'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { sanitizeConnectionBindingRows } from '@/pages/connections-list'
-import { errorMessage } from '@/pages/connections-ui'
+import { MOVE_BACKENDS, errorMessage, type MoveBackend } from '@/pages/connections-ui'
 import { isConnectionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
@@ -79,6 +79,8 @@ function ConnectionInfoSection() {
   const { t } = useTranslation()
   const selected = useAtomValue(selectedConnectionAtom)
   const [confirmRotate, setConfirmRotate] = useState(false)
+  const [confirmMove, setConfirmMove] = useState(false)
+  const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
   const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string }>>([])
   const [testLogin, setTestLogin] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
@@ -211,6 +213,56 @@ function ConnectionInfoSection() {
             onClick={() => setConfirmRotate(true)}
           >
             {t('connections.rotate')}
+          </button>
+        )}
+        {confirmMove ? (
+          <>
+            <select
+              className="rounded border bg-transparent px-2 py-1 font-mono text-[12px]"
+              value={moveTarget}
+              onChange={(event) => setMoveTarget(event.target.value === 'local-alt' ? 'local-alt' : MOVE_BACKENDS[0])}
+            >
+              {MOVE_BACKENDS.map((backend) => (
+                <option key={backend} value={backend}>{backend}</option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-[12px]"
+              onClick={async () => {
+                const moveConnection = window.electronAPI?.workgraph?.moveConnection
+                if (!workspaceId || typeof moveConnection !== 'function') return
+                try {
+                  setActionError(null)
+                  const result = await moveConnection({
+                    workspaceId,
+                    connectionId: selected.id,
+                    targetBackend: moveTarget,
+                  })
+                  setConsumers(result.consumers)
+                  setConfirmMove(false)
+                } catch (err) {
+                  setActionError(errorMessage(err))
+                }
+              }}
+            >
+              {t('connections.moveConfirm')}
+            </button>
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-[12px]"
+              onClick={() => setConfirmMove(false)}
+            >
+              {t('connections.moveCancel')}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="rounded border px-2 py-1 text-[12px]"
+            onClick={() => setConfirmMove(true)}
+          >
+            {t('connections.move')}
           </button>
         )}
       </div>

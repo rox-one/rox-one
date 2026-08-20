@@ -583,6 +583,7 @@ const EXPECTED_CHANNELS: string[] = [
   'workgraph:listConnectionAudit',
   'workgraph:listConnectionBindings',
   'workgraph:listConnections',
+  'workgraph:moveConnection',
   'workgraph:previewAdc',
   'workgraph:previewAwsProfiles',
   'workgraph:previewDockerHelper',

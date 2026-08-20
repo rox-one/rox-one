@@ -17,6 +17,9 @@ export const CONNECT_SOURCES = [
   'ssh-agent',
 ] as const
 
+export const MOVE_BACKENDS = ['local-alt'] as const
+export type MoveBackend = (typeof MOVE_BACKENDS)[number]
+
 export type ConnectSource = (typeof CONNECT_SOURCES)[number]
 export type PreviewSource = Exclude<ConnectSource, 'github-env'> | 'env'
 
@@ -100,4 +103,49 @@ export function cycleTab<T>(tabs: readonly T[], current: T, delta: number): T {
   if (i < 0 || tabs.length === 0) return current
   const n = tabs.length
   return tabs[(((i + delta) % n) + n) % n]
+}
+
+export function tabFromKey<T>(tabs: readonly T[], current: T, key: string): T | null {
+  if (key === 'Home') return tabs[0] ?? current
+  if (key === 'End') return tabs[tabs.length - 1] ?? current
+  if (key === 'ArrowRight') return cycleTab(tabs, current, 1)
+  if (key === 'ArrowLeft') return cycleTab(tabs, current, -1)
+  return null
+}
+
+const CRED_REF_ID = /^cred_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export function isUiCredentialRefId(value: string): boolean {
+  return CRED_REF_ID.test(value.trim())
+}
+
+export function createDraftError(input: {
+  readonly integrationId: string
+  readonly credentialRefId: string
+}): string | null {
+  if (!input.integrationId.trim() || !isUiCredentialRefId(input.credentialRefId)) return '—'
+  return null
+}
+
+export function parseCsvList(value: string): string[] {
+  return value.split(',').map((item) => item.trim()).filter(Boolean)
+}
+
+export function grantDraftError(input: {
+  readonly connectionId: string
+  readonly consumerId: string
+  readonly purpose: string
+  readonly actions: string
+  readonly resources: string
+}): string | null {
+  if (
+    !input.connectionId.trim()
+    || !input.consumerId.trim()
+    || !input.purpose.trim()
+    || parseCsvList(input.actions).length === 0
+    || parseCsvList(input.resources).length === 0
+  ) {
+    return '—'
+  }
+  return null
 }

@@ -755,6 +755,17 @@ export interface ElectronAPI {
       actions: readonly string[]
       resources: readonly string[]
     }): Promise<{ bindingId: string; grantId: string }>
+    moveConnection(input: {
+      workspaceId: string
+      connectionId: string
+      targetBackend: string
+    }): Promise<{
+      connectionId: string
+      credentialRefId: string
+      from: string
+      to: string
+      consumers: Array<{ consumerId: string; status: string }>
+    }>
     previewGithubEnv(envPath: string): Promise<Array<{ candidateId: string; label: string; maskedSummary: string }>>
     importGithubEnv(input: {
       envPath: string

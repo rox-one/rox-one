@@ -106,6 +106,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain("row.storageMode === 'copy'")
   })
 
+  it('moves a copy connection to another local backend with confirm', () => {
+    expect(page).toContain('moveConnection')
+    expect(page).toContain('connections.moveConfirm')
+    expect(page).toContain('MOVE_BACKENDS')
+    expect(page).toContain('connections-move-confirm-target')
+    expect(page).toContain('local-alt')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('lists and unbinds connection grants on the Policies tab', () => {
     expect(page).toContain('listConnectionBindings')
     expect(page).toContain('revokeConnectionBinding')
@@ -199,7 +209,7 @@ describe('CF-6.2 ConnectionsPage', () => {
   it('marks tab panels and cycles tabs with arrows', () => {
     expect(page).toContain('role="tabpanel"')
     expect(page).toContain('aria-controls')
-    expect(page).toContain('cycleTab')
+    expect(page).toContain('tabFromKey')
     expect(page).toContain('ArrowRight')
     expect(page).toContain('ArrowLeft')
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
@@ -232,6 +242,25 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('grantConsumer')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('blocks invalid create and grant drafts before RPC', () => {
+    expect(page).toContain('createDraftError')
+    expect(page).toContain('grantDraftError')
+    expect(page).toContain('connections-form-error')
+    expect(page).toContain('parseCsvList')
+    expect(page.toLowerCase()).not.toContain('infisical')
+  })
+
+  it('selects a created connection into the inspector', () => {
+    expect(page).toContain('sanitizeConnectionRows([created])')
+  })
+
+  it('cycles tabs with Home and End', () => {
+    expect(page).toContain('tabFromKey')
+    expect(page).toContain("'Home'")
+    expect(page).toContain("'End'")
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
   })
 })
 
