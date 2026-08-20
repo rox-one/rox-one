@@ -32,6 +32,10 @@ export function groupHeaderCount(
   return isCollapsed ? (collapsedCount ?? 0) : itemsLength
 }
 
+export function selectGroupDisabled(itemCount: number): boolean {
+  return itemCount === 0
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -110,7 +114,7 @@ function SectionHeader({
       </ContextMenuTrigger>
       {onSelectGroup ? (
         <StyledContextMenuContent>
-          <StyledContextMenuItem disabled={itemCount === 0} onClick={onSelectGroup}>
+          <StyledContextMenuItem disabled={selectGroupDisabled(itemCount)} onClick={onSelectGroup}>
             {t('entityList.selectGroup')}
           </StyledContextMenuItem>
         </StyledContextMenuContent>
@@ -162,7 +166,7 @@ function CollapsibleGroupHeader({
           {isCollapsed ? t('entityList.expand') : t('entityList.collapse')}
         </StyledContextMenuItem>
         {onSelectGroup ? (
-          <StyledContextMenuItem disabled={itemCount === 0} onClick={onSelectGroup}>
+          <StyledContextMenuItem disabled={selectGroupDisabled(itemCount)} onClick={onSelectGroup}>
             {t('entityList.selectGroup')}
           </StyledContextMenuItem>
         ) : null}
