@@ -361,6 +361,17 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('pre-lists active leases on reconnect confirm instead of only binding consumers', () => {
+    expect(page).toContain('listConnectionLeases')
+    expect(page).toContain('sanitizeActiveLeases')
+    expect(page).toContain('formatConfirmLeases')
+    expect(page).toContain('previewReconnect')
+    expect(page).toContain('connections-row-reconnect-confirm-target')
+    expect(page).toContain('connections.reconnectLeases')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows invalidated leases after reconnect without leaking secret fields', () => {
     expect(page).toContain('sanitizeReconnectLeases')
     expect(page).toContain('formatReconnectLeases')

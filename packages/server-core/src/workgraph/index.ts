@@ -1107,6 +1107,7 @@ class WorkGraphIntegrityError extends Error {}
 
 export {
   convertCopyToReferenceAndRevalidate,
+  listConnectionLeases,
   moveConnectionBackendAndRevalidate,
   reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
@@ -1115,6 +1116,7 @@ export {
   rotateConnectionAndRevalidate,
 } from './revalidation.ts'
 export type {
+  ActiveLeaseView,
   ConvertConnectionInput,
   MoveConnectionInput,
   ReconnectConnectionInput,

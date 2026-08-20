@@ -731,6 +731,16 @@ export interface ElectronAPI {
       actions: readonly string[]
       resources: readonly string[]
     }>>
+    listConnectionLeases(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<Array<{
+      id: string
+      consumerId: string
+      purpose: string
+      action: string
+      status: string
+    }>>
     convertConnection(input: {
       workspaceId: string
       connectionId: string

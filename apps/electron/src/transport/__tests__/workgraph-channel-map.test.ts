@@ -12,6 +12,10 @@ describe('CF-6.3 workgraph channel map', () => {
       type: 'invoke',
       channel: RPC_CHANNELS.workgraph.LIST_CONNECTION_AUDIT,
     })
+    expect(CHANNEL_MAP['workgraph.listConnectionLeases']).toEqual({
+      type: 'invoke',
+      channel: RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
+    })
     expect(CHANNEL_MAP['workgraph.convertConnection']).toEqual({
       type: 'invoke',
       channel: RPC_CHANNELS.workgraph.CONVERT_CONNECTION,

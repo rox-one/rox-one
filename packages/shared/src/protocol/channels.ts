@@ -108,6 +108,7 @@ export const RPC_CHANNELS = {
     LIST_CONNECTIONS: 'workgraph:listConnections',
     LIST_CONNECTION_AUDIT: 'workgraph:listConnectionAudit',
     LIST_CONNECTION_BINDINGS: 'workgraph:listConnectionBindings',
+    LIST_CONNECTION_LEASES: 'workgraph:listConnectionLeases',
     CONVERT_CONNECTION: 'workgraph:convertConnection',
     REVOKE_CONNECTION_BINDING: 'workgraph:revokeConnectionBinding',
     GET_CONNECTION: 'workgraph:getConnection',

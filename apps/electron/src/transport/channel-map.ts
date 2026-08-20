@@ -299,6 +299,7 @@ export const CHANNEL_MAP = {
   'workgraph.listConnections': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTIONS),
   'workgraph.listConnectionAudit': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTION_AUDIT),
   'workgraph.listConnectionBindings': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTION_BINDINGS),
+  'workgraph.listConnectionLeases': invoke(RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES),
   'workgraph.convertConnection': invoke(RPC_CHANNELS.workgraph.CONVERT_CONNECTION),
   'workgraph.revokeConnectionBinding': invoke(RPC_CHANNELS.workgraph.REVOKE_CONNECTION_BINDING),
   'workgraph.getConnection': invoke(RPC_CHANNELS.workgraph.GET_CONNECTION),

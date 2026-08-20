@@ -7,6 +7,7 @@ import {
   cycleTab,
   errorMessage,
   firstPickedPath,
+  formatConfirmLeases,
   formatConfirmTargets,
   formatReconnectLeases,
   grantDraftError,
@@ -17,6 +18,7 @@ import {
   previewSourceForChip,
   removeCommittedPreview,
   sanitizeDeviceLoginStart,
+  sanitizeActiveLeases,
   sanitizeDevicePoll,
   sanitizeReconnectLeases,
   devicePollDelayMs,
@@ -49,6 +51,36 @@ describe('CF-6 Connections UI helpers', () => {
       { connectionId: 'c1', consumerId: 'workflow.deploy' },
       { connectionId: 'c1', consumerId: 'agent.github_user' },
     ], 'c1')).toEqual(['agent.github_user', 'workflow.deploy'])
+  })
+
+  it('pre-lists active lease ids and metadata on reconnect confirm', () => {
+    const row = { id: 'c1', credentialRefId: 'cred_abc' }
+    const leases = sanitizeActiveLeases([{
+      id: 'lease_1',
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      action: 'github.api',
+      status: 'active',
+    }])
+    expect(formatConfirmLeases(row, leases)).toBe('c1 cred_abc lease_1 agent-a github.user github.api')
+    expect(formatConfirmLeases(row, [])).toBe('c1 cred_abc')
+    expect(() => sanitizeActiveLeases([{
+      id: 'lease_1',
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      action: 'github.api',
+      status: 'active',
+      accessToken: 'gho_super-secret',
+    }])).toThrow(/accessToken|field/)
+    expect(() => sanitizeActiveLeases([{
+      id: 'lease_1',
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      action: 'github.api',
+      status: 'active',
+      payload: 'super-secret',
+    }])).toThrow(/payload|field/)
+    expect(JSON.stringify(leases)).not.toMatch(/accessToken|deviceCode|"payload"|"secret"/)
   })
 
   it('keeps reconnect lease metadata and rejects secret fields', () => {

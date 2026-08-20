@@ -66,6 +66,18 @@ describe('WorkGraph handler profile', () => {
     expect(registrations.has(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.POLL_GITHUB_DEVICE_LOGIN)).toBe(true)
     expect(registrations.has(RPC_CHANNELS.workgraph.CANCEL_GITHUB_DEVICE_LOGIN)).toBe(true)
+    expect(registrations.has(RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES)).toBe(true)
+
+    const listLeases = handlers.get(RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES)
+    await expect(listLeases?.({} as never, {
+      workspaceId: 'workspace_a',
+      connectionId: created.id,
+      accessToken: 'gho_super-secret',
+    })).rejects.toThrow(/accessToken|field/)
+    await expect(listLeases?.({} as never, {
+      workspaceId: 'workspace_a',
+      connectionId: created.id,
+    })).rejects.toThrow(/leases_unavailable|unavailable/)
 
     const startGithub = handlers.get(RPC_CHANNELS.workgraph.START_GITHUB_DEVICE_LOGIN)
     await expect(startGithub?.({} as never)).rejects.toThrow(/github_device_unavailable|unavailable/)

@@ -15,6 +15,7 @@ import { createWorkGraphKernel } from './index'
 import {
   convertCopyToReferenceAndRevalidate,
   moveConnectionBackendAndRevalidate,
+  listConnectionLeases,
   reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
   revokeConnectionAndRevalidate,
@@ -422,6 +423,22 @@ describe('CF-6.5 rotate and repair', () => {
       audience: 'local-broker',
       ttl: 5_000,
     })
+    const preview = await listConnectionLeases({
+      kernel,
+      broker,
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+    })
+    expect(preview).toEqual([{
+      id: lease.id,
+      consumerId: 'agent-a',
+      purpose: 'github.user',
+      action: 'github.api',
+      status: 'active',
+    }])
+    expect(JSON.stringify(preview)).not.toContain('super-secret')
+    expect(preview[0]).not.toHaveProperty('payload')
+    expect(preview[0]).not.toHaveProperty('value')
     const reconnected = await reconnectConnectionAndRevalidate({
       kernel,
       broker,

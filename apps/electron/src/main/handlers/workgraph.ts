@@ -19,6 +19,7 @@ import {
   previewGitHelperImport,
   previewGithubEnvImport,
   convertCopyToReferenceAndRevalidate,
+  listConnectionLeases,
   moveConnectionBackendAndRevalidate,
   reconnectConnectionAndRevalidate,
   repairConnectionAndRevalidate,
@@ -49,6 +50,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workgraph.LIST_CONNECTIONS,
   RPC_CHANNELS.workgraph.LIST_CONNECTION_AUDIT,
   RPC_CHANNELS.workgraph.LIST_CONNECTION_BINDINGS,
+  RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
   RPC_CHANNELS.workgraph.CONVERT_CONNECTION,
   RPC_CHANNELS.workgraph.REVOKE_CONNECTION_BINDING,
   RPC_CHANNELS.workgraph.GET_CONNECTION,
@@ -205,6 +207,24 @@ function assertGithubDevicePollMetadata(input: unknown): { flowId: string; works
 
 const GITHUB_DEVICE_CANCEL_KEYS = new Set(['flowId'])
 
+const CONNECTION_LEASE_LIST_KEYS = new Set(['workspaceId', 'connectionId'])
+
+function assertConnectionLeaseListMetadata(input: unknown): { workspaceId: string; connectionId: string } {
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid lease list metadata')
+  }
+  for (const key of Object.keys(input)) {
+    if (!CONNECTION_LEASE_LIST_KEYS.has(key)) {
+      throw new Error(`Invalid connection metadata field: ${key}`)
+    }
+  }
+  const rec = input as { workspaceId?: unknown; connectionId?: unknown }
+  if (typeof rec.workspaceId !== 'string' || !rec.workspaceId || typeof rec.connectionId !== 'string' || !rec.connectionId) {
+    throw new Error('Invalid lease list metadata')
+  }
+  return { workspaceId: rec.workspaceId, connectionId: rec.connectionId }
+}
+
 function assertGithubDeviceCancelMetadata(input: unknown): { flowId: string } {
   if (!input || typeof input !== 'object') {
     throw new Error('Invalid device cancel metadata')
@@ -289,6 +309,20 @@ export function registerWorkGraphHandlers(
     (_ctx, input: { workspaceId: string; connectionId?: string }) => (
       workGraph.listConnectionBindings(input.workspaceId, input.connectionId)
     ),
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.LIST_CONNECTION_LEASES,
+    async (_ctx, input: unknown) => {
+      const rec = assertConnectionLeaseListMetadata(input)
+      if (!fabric) throw new Error('leases_unavailable')
+      return listConnectionLeases({
+        kernel: workGraph,
+        broker: fabric.broker,
+        workspaceId: rec.workspaceId,
+        connectionId: rec.connectionId,
+      })
+    },
     { access: 'localElectron' },
   )
   server.handle(

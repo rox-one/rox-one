@@ -60,6 +60,54 @@ export function formatConfirmTargets(
   return `${row.id} ${row.credentialRefId} ${consumers.join(', ')}`
 }
 
+export interface ActiveLeaseView {
+  readonly id: string
+  readonly consumerId: string
+  readonly purpose: string
+  readonly action: string
+  readonly status: string
+}
+
+const ACTIVE_LEASE_KEYS = new Set(['id', 'consumerId', 'purpose', 'action', 'status'])
+
+export function sanitizeActiveLeases(raw: unknown): ActiveLeaseView[] {
+  if (!Array.isArray(raw)) throw new Error('Invalid active lease metadata')
+  return raw.map((row) => {
+    if (!row || typeof row !== 'object') throw new Error('Invalid active lease metadata')
+    const rec = row as Record<string, unknown>
+    for (const key of Object.keys(rec)) {
+      if (!ACTIVE_LEASE_KEYS.has(key)) {
+        throw new Error(`Invalid connection metadata field: ${key}`)
+      }
+    }
+    if (
+      typeof rec.id !== 'string'
+      || typeof rec.consumerId !== 'string'
+      || typeof rec.purpose !== 'string'
+      || typeof rec.action !== 'string'
+      || typeof rec.status !== 'string'
+    ) {
+      throw new Error('Invalid active lease metadata')
+    }
+    return {
+      id: rec.id,
+      consumerId: rec.consumerId,
+      purpose: rec.purpose,
+      action: rec.action,
+      status: rec.status,
+    }
+  })
+}
+
+export function formatConfirmLeases(
+  row: { readonly id: string; readonly credentialRefId: string },
+  leases: readonly ActiveLeaseView[],
+): string {
+  if (leases.length === 0) return `${row.id} ${row.credentialRefId}`
+  const named = leases.map((lease) => `${lease.id} ${lease.consumerId} ${lease.purpose} ${lease.action}`)
+  return `${row.id} ${row.credentialRefId} ${named.join(', ')}`
+}
+
 export function sanitizeReconnectLeases(raw: unknown): Array<{ consumerId: string; status: string }> {
   if (!Array.isArray(raw)) throw new Error('Invalid reconnect lease metadata')
   return raw.map((row) => {

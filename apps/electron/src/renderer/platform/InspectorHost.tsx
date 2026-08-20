@@ -37,9 +37,11 @@ import { sanitizeConnectionBindingRows } from '@/pages/connections-list'
 import {
   MOVE_BACKENDS,
   errorMessage,
-  formatConfirmTargets,
+  formatConfirmLeases,
   formatReconnectLeases,
+  sanitizeActiveLeases,
   sanitizeReconnectLeases,
+  type ActiveLeaseView,
   type MoveBackend,
 } from '@/pages/connections-ui'
 import { isConnectionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
@@ -94,6 +96,7 @@ function ConnectionInfoSection() {
   const [actionError, setActionError] = useState<string | null>(null)
   const [inspect, setInspect] = useState<ReturnType<typeof projectConnectionInspect> | null>(null)
   const [leases, setLeases] = useState('')
+  const [activeLeases, setActiveLeases] = useState<ActiveLeaseView[]>([])
   useEffect(() => {
     if (!selected) {
       setConsumers([])
@@ -102,6 +105,7 @@ function ConnectionInfoSection() {
       setInspect(null)
       setConfirmReconnect(false)
       setLeases('')
+      setActiveLeases([])
       return
     }
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
@@ -163,6 +167,24 @@ function ConnectionInfoSection() {
   }
   const fields = projectConnectionInspector(selected)
   const workspaceId = selected.workspaceId
+  const previewReconnect = async () => {
+    const listConnectionLeases = window.electronAPI?.workgraph?.listConnectionLeases
+    setConfirmReconnect(true)
+    if (!workspaceId || typeof listConnectionLeases !== 'function') {
+      setActiveLeases([])
+      return
+    }
+    try {
+      setActionError(null)
+      setActiveLeases(sanitizeActiveLeases(await listConnectionLeases({
+        workspaceId,
+        connectionId: selected.id,
+      })))
+    } catch (err) {
+      setActionError(errorMessage(err))
+      setActiveLeases([])
+    }
+  }
   return (
     <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
       <InfoRow label={t('inspector.field.provider')} value={fields.provider} />
@@ -203,7 +225,7 @@ function ConnectionInfoSection() {
           {confirmReconnect ? (
             <>
               <div className="font-mono text-[11px]" data-testid="connections-reconnect-confirm-target">
-                {formatConfirmTargets(selected, consumers.map((row) => row.consumerId))}
+                {formatConfirmLeases(selected, activeLeases)}
               </div>
               <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
               <div className="flex flex-wrap gap-1">
@@ -240,7 +262,7 @@ function ConnectionInfoSection() {
             <button
               type="button"
               className="rounded border px-2 py-1 text-[12px]"
-              onClick={() => setConfirmReconnect(true)}
+              onClick={() => void previewReconnect()}
             >
               {t('connections.reconnect')}
             </button>

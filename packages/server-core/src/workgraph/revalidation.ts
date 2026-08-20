@@ -46,6 +46,14 @@ export interface RevokedLeaseView {
   readonly status: 'revoked'
 }
 
+export interface ActiveLeaseView {
+  readonly id: string
+  readonly consumerId: string
+  readonly purpose: string
+  readonly action: string
+  readonly status: 'active'
+}
+
 async function revalidateAffected(
   input: RepairConnectionInput,
 ): Promise<{ readonly consumers: readonly RevalidatedConsumer[] }> {
@@ -63,13 +71,34 @@ async function revalidateAffected(
 }
 
 async function requireConnection(
-  kernel: WorkGraphRevokeSurface,
+  kernel: Pick<WorkGraphKernel, 'getConnection'>,
   workspaceId: string,
   connectionId: string,
 ) {
   const connection = await kernel.getConnection(workspaceId, connectionId)
   if (!connection) throw new Error('Connection not found')
   return connection
+}
+
+export async function listConnectionLeases(input: {
+  readonly kernel: Pick<WorkGraphKernel, 'getConnection'>
+  readonly broker: InProcessCredentialBroker
+  readonly workspaceId: string
+  readonly connectionId: string
+}): Promise<readonly ActiveLeaseView[]> {
+  const connection = await requireConnection(input.kernel, input.workspaceId, input.connectionId)
+  const listed = await input.broker.listActiveLeasesForRef(connection.credentialRefId as CredentialRefId)
+  const leases = listed.map((row) => ({
+    id: row.id,
+    consumerId: row.consumerId,
+    purpose: row.purpose,
+    action: row.action,
+    status: 'active' as const,
+  }))
+  if (JSON.stringify(leases).match(/"token"|"secret"|"payload"|"value"/i)) {
+    throw new Error('Lease list leaked a forbidden field')
+  }
+  return leases
 }
 
 export async function revokeConnectionAndRevalidate(

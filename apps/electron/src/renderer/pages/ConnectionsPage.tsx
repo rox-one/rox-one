@@ -22,6 +22,7 @@ import {
   createDraftError,
   errorMessage,
   firstPickedPath,
+  formatConfirmLeases,
   formatConfirmTargets,
   formatReconnectLeases,
   grantDraftError,
@@ -29,6 +30,7 @@ import {
   matchesConnectSource,
   parseCsvList,
   removeCommittedPreview,
+  sanitizeActiveLeases,
   sanitizeDeviceLoginStart,
   sanitizeDevicePoll,
   sanitizeReconnectLeases,
@@ -37,6 +39,7 @@ import {
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
+  type ActiveLeaseView,
   type ConnectSource,
   type DeviceLoginView,
   type DevicePollView,
@@ -111,6 +114,7 @@ export default function ConnectionsPage() {
   const [devicePoll, setDevicePoll] = useState<DevicePollView | null>(null)
   const [inspectById, setInspectById] = useState<Record<string, ConnectionInspectSummary>>({})
   const [leasesById, setLeasesById] = useState<Record<string, string>>({})
+  const [leasePreviewById, setLeasePreviewById] = useState<Record<string, ActiveLeaseView[]>>({})
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -143,6 +147,7 @@ export default function ConnectionsPage() {
       setUnbindingId(null)
       setReconnectingId(null)
       setLeasesById({})
+      setLeasePreviewById({})
     }
   }, [workspace?.id, setSelected])
 
@@ -343,6 +348,26 @@ export default function ConnectionsPage() {
       await refreshRows(workspaceId)
     } catch (err) {
       setListError(errorMessage(err))
+    }
+  }
+
+  const previewReconnect = async (connectionId: string) => {
+    const workspaceId = workspace?.id
+    const listConnectionLeases = window.electronAPI?.workgraph?.listConnectionLeases
+    setReconnectingId(connectionId)
+    if (!workspaceId || typeof listConnectionLeases !== 'function') {
+      setLeasePreviewById((current) => ({ ...current, [connectionId]: [] }))
+      return
+    }
+    try {
+      setListError(null)
+      setLeasePreviewById((current) => ({
+        ...current,
+        [connectionId]: sanitizeActiveLeases(await listConnectionLeases({ workspaceId, connectionId })),
+      }))
+    } catch (err) {
+      setListError(errorMessage(err))
+      setLeasePreviewById((current) => ({ ...current, [connectionId]: [] }))
     }
   }
 
@@ -565,7 +590,7 @@ export default function ConnectionsPage() {
     return reconnectingId === row.id ? (
       <div className="flex flex-col items-end gap-1" data-testid="connections-row-reconnect">
         <div className="font-mono text-[11px]" data-testid="connections-row-reconnect-confirm-target">
-          {formatConfirmTargets(row, consumersForConnection(bindingRows, row.id))}
+          {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
         </div>
         <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
         <div className="flex gap-1">
@@ -579,7 +604,7 @@ export default function ConnectionsPage() {
       </div>
     ) : (
       <div data-testid="connections-row-reconnect">
-        <button type="button" className="rounded border px-2 py-1" onClick={() => setReconnectingId(row.id)}>
+        <button type="button" className="rounded border px-2 py-1" onClick={() => void previewReconnect(row.id)}>
           {t('connections.reconnect')}
         </button>
       </div>

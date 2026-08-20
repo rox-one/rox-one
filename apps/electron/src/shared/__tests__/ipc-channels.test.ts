@@ -584,6 +584,7 @@ const EXPECTED_CHANNELS: string[] = [
   'workgraph:inspectConnection',
   'workgraph:listConnectionAudit',
   'workgraph:listConnectionBindings',
+  'workgraph:listConnectionLeases',
   'workgraph:listConnections',
   'workgraph:moveConnection',
   'workgraph:pollGithubDeviceLogin',
