@@ -236,12 +236,11 @@ export class WindowManager {
       backgroundColor: nativeTheme.shouldUseDarkColors ? '#0c0c0d' : '#f4f4f5',
       title: '',
       icon: iconExists ? iconPath : undefined,
-      // macOS-specific: hidden title bar with inset traffic lights
+      // macOS-specific: hidden title bar with inset traffic lights.
+      // Vibrancy waits until first paint — under-window + GPU crash paints black.
       ...(isMac && {
         titleBarStyle: 'hiddenInset',
         trafficLightPosition: { x: 18, y: 16 },
-        vibrancy: 'under-window',
-        visualEffectState: 'active',
       }),
       // Windows: use native frame with Mica/Acrylic transparency (Windows 10/11)
       ...(isWindows && {
@@ -280,6 +279,14 @@ export class WindowManager {
     // ready-to-show may never fire — still reveal so the shell is usable.
     const revealWindow = () => {
       if (window.isDestroyed() || window.isVisible()) return
+      if (isMac) {
+        try {
+          window.setVibrancy('under-window')
+          window.setVisualEffectState('active')
+        } catch (error) {
+          windowLog.warn('Failed to apply macOS vibrancy after paint:', error)
+        }
+      }
       window.show()
     }
     window.once('ready-to-show', revealWindow)
