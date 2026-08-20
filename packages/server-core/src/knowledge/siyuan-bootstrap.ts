@@ -18,6 +18,10 @@ import {
   SIYUAN_LOCAL_BASE_URL,
 } from '@craft-agent/shared/knowledge/siyuan-binary'
 import { KnowledgeConnectionsStore } from './connections-store'
+import { loadG2AcceptedVariantFromDisk } from './g2-status'
+import { SiyuanProcessManager } from './process-manager'
+import { parseOemKernelPin } from '@craft-agent/shared/knowledge/oem-pin'
+import { readFileSync } from 'node:fs'
 
 /** Stable id for the auto-seeded local connection. */
 export const SIYUAN_LOCAL_CONNECTION_ID = 'siyuan-local'
@@ -321,6 +325,44 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
         baseUrl: SIYUAN_LOCAL_BASE_URL,
         connectionId,
         ...(health.version ? { version: health.version } : {}),
+      }
+    }
+
+
+    const g2 = loadG2AcceptedVariantFromDisk()
+    if (g2 === 'C') {
+      const pinPath = process.env.OEM_PIN_PATH
+      const binaryPath = process.env.OEM_KERNEL_BINARY
+      if (pinPath && binaryPath) {
+        try {
+          const pin = parseOemKernelPin(JSON.parse(readFileSync(pinPath, 'utf8')))
+          const pm = new SiyuanProcessManager()
+          const inst = await pm.start({
+            configDir,
+            connectionId,
+            g2AcceptedVariant: 'C',
+            pin,
+            resolveBinary: () => binaryPath,
+            spawnFn: (cmd, args) => {
+              const child = (deps.spawnFn ?? spawn)(cmd, args, { detached: true, stdio: 'ignore' })
+              child.unref()
+              return child
+            },
+            allocatePort: () => 19200 + Math.floor(Math.random() * 1000),
+          })
+          lastStartAt = now()
+          return {
+            ok: true,
+            started: true,
+            alreadyRunning: false,
+            method: 'kernel-serve',
+            binaryPath,
+            baseUrl: inst.baseUrl,
+            connectionId,
+          }
+        } catch (err) {
+          deps.log?.debug?.(`managed kernel start skipped: ${err instanceof Error ? err.message : String(err)}`)
+        }
       }
     }
 

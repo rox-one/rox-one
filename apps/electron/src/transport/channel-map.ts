@@ -323,6 +323,8 @@ export const CHANNEL_MAP = {
   'knowledge.getContext': invoke(RPC_CHANNELS.knowledge.GET_CONTEXT),
   'knowledge.getBacklinks': invoke(RPC_CHANNELS.knowledge.GET_BACKLINKS),
   'knowledge.listNotebooks': invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS),
+  'knowledge.listTree': invoke(RPC_CHANNELS.knowledge.LIST_TREE),
+  'knowledge.userCreate': invoke(RPC_CHANNELS.knowledge.USER_CREATE),
   'knowledge.updateConnection': invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION),
   'knowledge.getExportPayload': invoke(RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD),
   'knowledge.createSnapshot': invoke(RPC_CHANNELS.knowledge.SNAPSHOT_CREATE),

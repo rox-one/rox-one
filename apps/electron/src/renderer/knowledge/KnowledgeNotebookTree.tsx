@@ -27,6 +27,9 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Book,
   Clock,
+  Database,
+  FileText,
+  Folder,
   LayoutGrid,
   Star,
 } from 'lucide-react'
@@ -43,6 +46,7 @@ import type {
   KnowledgeViewConfig,
   KnowledgeWorkEnvelope,
 } from '../../shared/types'
+import { filterTree, type NavFilter, type SiyuanDocTreeNode } from './knowledge-tree'
 
 // ---------------------------------------------------------------------------
 // Data plumbing (exported for logic-level tests — KnowledgeHome precedent)
@@ -52,6 +56,12 @@ import type {
 export interface KnowledgeNavigatorApi {
   listConnections(): Promise<Array<{ id: string }>>
   listNotebooks?(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
+  listTree?(args: {
+    connectionId: string
+    notebookId: string
+    path?: string
+  }): Promise<{ notebookId: string; nodes: SiyuanDocTreeNode[] }>
+  userCreate?(args: Record<string, unknown>): Promise<{ id?: string; path?: string }>
   viewsList?(args?: { connectionId?: string }): Promise<KnowledgeViewConfig[]>
   envelopeList?(args?: { connectionId?: string }): Promise<KnowledgeWorkEnvelope[]>
   get?(args: { workspaceId?: string; connectionId: string; ref: KnowledgeRef }): Promise<KnowledgeNode>
@@ -277,16 +287,7 @@ export function KnowledgeNotebookTree() {
       ) : data.notebooks.status === 'empty' ? (
         <EmptyRow>{t('knowledge.nav.notebooksEmpty')}</EmptyRow>
       ) : (
-        <div className="mb-2 flex flex-col gap-0.5">
-          {data.notebooks.items.map((notebook) => (
-            <NavRow
-              key={notebook.id}
-              icon={Book}
-              label={notebook.name || notebook.id}
-              onClick={() => navigate(routes.view.siyuan({ kind: 'notebook', id: notebook.id }))}
-            />
-          ))}
-        </div>
+        <NotebookList notebooks={data.notebooks.items} />
       )}
 
       <SectionHeader icon={Clock} label={t('knowledge.nav.recent')} />
@@ -350,5 +351,89 @@ export function KnowledgeNotebookTree() {
         </div>
       )}
     </nav>
+  )
+}
+
+
+function nodeIcon(kind: SiyuanDocTreeNode['kind']): LucideIcon {
+  if (kind === 'database') return Database
+  if (kind === 'folder') return Folder
+  return FileText
+}
+
+function NotebookList({ notebooks }: { notebooks: KnowledgeNotebookInfo[] }) {
+  const { navigate } = useNavigation()
+  const [filter, setFilter] = React.useState<NavFilter>('all')
+  const [expanded, setExpanded] = React.useState<Record<string, SiyuanDocTreeNode[] | 'loading' | 'error'>>({})
+  const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
+
+  const toggle = async (notebookId: string) => {
+    if (expanded[notebookId]) {
+      setExpanded((prev) => {
+        const next = { ...prev }
+        delete next[notebookId]
+        return next
+      })
+      return
+    }
+    setExpanded((prev) => ({ ...prev, [notebookId]: 'loading' }))
+    const connections = await api?.listConnections?.().catch(() => [])
+    const connectionId = connections?.[0]?.id
+    if (!connectionId || typeof api?.listTree !== 'function') {
+      setExpanded((prev) => ({ ...prev, [notebookId]: 'error' }))
+      return
+    }
+    try {
+      const tree = await api.listTree({ connectionId, notebookId })
+      setExpanded((prev) => ({ ...prev, [notebookId]: tree.nodes }))
+    } catch {
+      setExpanded((prev) => ({ ...prev, [notebookId]: 'error' }))
+    }
+  }
+
+  const renderNodes = (nodes: SiyuanDocTreeNode[], depth: number) =>
+    filterTree(nodes, filter).map((node) => (
+      <div key={node.id} style={{ paddingLeft: depth * 8 }} className="flex flex-col">
+        <NavRow
+          icon={nodeIcon(node.kind)}
+          label={node.name || node.id}
+          onClick={() => {
+            if (node.kind === 'database') navigate(routes.view.siyuan({ kind: 'database', id: node.id }))
+            else if (node.kind === 'document') navigate(routes.view.siyuan({ kind: 'document', id: node.id }))
+          }}
+        />
+        {node.children && node.children.length > 0 ? renderNodes(node.children, depth + 1) : null}
+      </div>
+    ))
+
+  return (
+    <div className="mb-2 flex flex-col gap-0.5">
+      <div className="mx-3 mb-1 flex gap-1 text-[11px] text-muted-foreground">
+        {(['all', 'notes', 'databases'] as NavFilter[]).map((id) => (
+          <button
+            key={id}
+            type="button"
+            className={cn('rounded px-1.5 py-0.5', filter === id && 'bg-accent text-foreground')}
+            onClick={() => setFilter(id)}
+          >
+            {id}
+          </button>
+        ))}
+      </div>
+      {notebooks.map((notebook) => (
+        <div key={notebook.id}>
+          <NavRow
+            icon={Book}
+            label={notebook.name || notebook.id}
+            onClick={() => void toggle(notebook.id)}
+          />
+          {expanded[notebook.id] === 'loading' ? (
+            <EmptyRow>…</EmptyRow>
+          ) : Array.isArray(expanded[notebook.id]) ? (
+            renderNodes(expanded[notebook.id] as SiyuanDocTreeNode[], 1)
+          ) : null}
+        </div>
+      ))}
+    </div>
   )
 }
