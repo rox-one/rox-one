@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
+import { filterBazaarPackages } from '@craft-agent/shared/knowledge/plugin-allowlist'
 import {
   detectCompatLevel,
   getExtensionStateStore,
@@ -446,7 +447,7 @@ export async function loadBazaarRemoteCatalogEntries(
   try {
     const client = await resolveKernelClient()
     if (!client) return []
-    const packages = await client.getBazaarPlugin('desktop', keyword)
+    const packages = filterBazaarPackages(await client.getBazaarPlugin('desktop', keyword))
     const out: CatalogEntry[] = []
     for (const pkg of packages) {
       const m = bazaarPackageToManifest(pkg)
@@ -472,7 +473,7 @@ export async function loadBazaarRemoteManifests(
   try {
     const client = await resolveKernelClient()
     if (!client) return []
-    const packages = await client.getBazaarPlugin('desktop', keyword)
+    const packages = filterBazaarPackages(await client.getBazaarPlugin('desktop', keyword))
     const out: SiYuanBridgeManifest[] = []
     for (const pkg of packages) {
       const m = bazaarPackageToManifest(pkg)
@@ -730,6 +731,13 @@ export function registerPluginBridgeHandlers(
       }
       const packageName = barePluginId(packageNameRaw)
       const id = extensionIdFor(packageName)
+
+      if (filterBazaarPackages([{ name: packageName }]).length === 0) {
+        throw new CodedError(
+          'CAPABILITY_DISABLED',
+          'pluginBridge.installBazaar: OEM allowlist is empty or package is not allowed',
+        )
+      }
 
       const client = await resolveKernelClient()
       if (!client) {

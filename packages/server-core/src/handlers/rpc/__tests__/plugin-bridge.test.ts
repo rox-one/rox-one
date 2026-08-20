@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { OEM_PLUGIN_ALLOWLIST } from '@craft-agent/shared/knowledge/plugin-allowlist'
 import { getExtensionStateStore, resetExtensionStateStoreCache } from '@craft-agent/shared/extensions'
 import { SiyuanKernelClient } from '@craft-agent/core/knowledge/providers/siyuan'
 import {
@@ -448,6 +449,7 @@ describe('resolveKernelClient conf fallback + bazaar catalog merge', () => {
       rmSync(dataDir, { recursive: true, force: true })
       dataDir = undefined
     }
+    OEM_PLUGIN_ALLOWLIST.length = 0
   })
 
   it('resolveKernelClient returns null without connections/conf/override', async () => {
@@ -542,6 +544,7 @@ describe('resolveKernelClient conf fallback + bazaar catalog merge', () => {
       }),
     })
     __setPluginBridgeKernelClientForTests(remoteClient)
+    OEM_PLUGIN_ALLOWLIST.push('shared-plugin', 'remote-only')
 
     const installed = pluginBridgeBazaarListFn()
     expect(installed.map((m) => m.name).sort()).toEqual(['local-only', 'shared-plugin'])
@@ -566,7 +569,43 @@ describe('resolveKernelClient conf fallback + bazaar catalog merge', () => {
     })
   })
 
+  it('INSTALL_BAZAAR rejects when OEM allowlist is empty without hitting install endpoint', async () => {
+    const calls: Array<{ endpoint: string }> = []
+    const client = makeKernelClient({
+      '/api/bazaar/installBazaarPlugin': () => {
+        calls.push({ endpoint: '/api/bazaar/installBazaarPlugin' })
+        return { data: null }
+      },
+      '/api/petal/setPetalEnabled': () => {
+        calls.push({ endpoint: '/api/petal/setPetalEnabled' })
+        return { data: null }
+      },
+    })
+    __setPluginBridgeKernelClientForTests(client)
+
+    const server = createMockServer()
+    registerPluginBridgeHandlers(server as never, {
+      platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } },
+    } as never)
+    const install = server.handlers.get(RPC_CHANNELS.pluginBridge.INSTALL_BAZAAR)!
+    await expect(
+      install(
+        {},
+        {
+          packageName: 'remote-only',
+          repoURL: 'https://github.com/ex/remote',
+          repoHash: 'hash-remote',
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'CAPABILITY_DISABLED',
+      message: expect.stringMatching(/OEM allowlist is empty|not allowed/i),
+    })
+    expect(calls).toEqual([])
+  })
+
   it('INSTALL_BAZAAR calls kernel install + setPetalEnabled; fails without kernel', async () => {
+    OEM_PLUGIN_ALLOWLIST.push('p', 'remote-only')
     __setPluginBridgeKernelClientForTests(null)
     {
       const server = createMockServer()
@@ -628,6 +667,7 @@ describe('resolveKernelClient conf fallback + bazaar catalog merge', () => {
   })
 
   it('INSTALL_BAZAAR strips siyuan-plugin: prefix before kernel + store id', async () => {
+    OEM_PLUGIN_ALLOWLIST.push('foo')
     const store = getExtensionStateStore(configDir)
     const calls: Array<{ endpoint: string; body: Record<string, unknown> }> = []
     const client = makeKernelClient({
@@ -669,6 +709,7 @@ describe('resolveKernelClient conf fallback + bazaar catalog merge', () => {
   })
 
   it('after INSTALL_BAZAAR, catalog listFn shows package as installed (kernel feed wins over remote)', async () => {
+    OEM_PLUGIN_ALLOWLIST.push('fresh-plugin')
     const installedPkgs: Array<Record<string, unknown>> = []
     const client = makeKernelClient({
       '/api/bazaar/installBazaarPlugin': (body) => {
