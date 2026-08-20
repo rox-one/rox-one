@@ -332,6 +332,14 @@ try {
     Pop-Location
 }
 
+# 6c. Stage OEM kernel extraResources (optional; missing payload does not fail dist).
+Write-Host "Staging OEM kernel extraResources..."
+$env:PLAT = "win32-x64"
+& bash "$ScriptDir/stage-oem-kernel.sh"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "WARNING: stage-oem-kernel.sh exited $LASTEXITCODE; dist continues." -ForegroundColor Yellow
+}
+
 # 7. Package with electron-builder
 Write-Host "Packaging app with electron-builder..."
 

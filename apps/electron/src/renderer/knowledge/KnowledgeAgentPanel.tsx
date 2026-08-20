@@ -110,7 +110,7 @@ export function KnowledgeAgentPanel({ knowledgeRef }: KnowledgeAgentPanelProps) 
     return (
       <div className="flex flex-col gap-2 p-4">
         <h2 className="text-sm font-medium">{t('knowledge.inspector.title')}</h2>
-        <p className="text-xs text-muted-foreground">{t('knowledge.openFullInterface')}</p>
+        <p className="text-xs text-muted-foreground">{t('knowledge.inspector.empty')}</p>
       </div>
     )
   }
