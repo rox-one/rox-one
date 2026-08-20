@@ -145,8 +145,9 @@ export function CollectionFilterChips({
         {priorities.map((p) => {
           const selected = (filters.priority ?? []).includes(p)
           return (
-            <FilterChip
+            <FilterOption
               key={p}
+              stacked={stacked}
               selected={selected}
               label={t(`priority.${p}`)}
               onClick={() => togglePriority(p)}
