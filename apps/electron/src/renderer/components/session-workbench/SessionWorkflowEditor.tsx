@@ -56,9 +56,12 @@ type BranchNodeData = { id: string; name: string; fromMessageId?: string }
 
 function BranchNode({ data }: NodeProps<Node<BranchNodeData, 'branch'>>) {
   return (
-    <div className="w-[160px] rounded-[12px] border border-border bg-card px-2 py-1.5 text-left shadow-sm">
+    <div
+      className="w-[160px] min-w-0 rounded-[12px] border border-border bg-card px-2 py-1.5 text-left shadow-sm"
+      title={data.name}
+    >
       <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-border !bg-muted-foreground/50" />
-      <div className="truncate text-xs font-medium">{data.name}</div>
+      <div className="min-w-0 truncate text-xs font-medium">{data.name}</div>
     </div>
   )
 }
@@ -105,6 +108,12 @@ function EditorInner({
     viewportRef.current = next?.viewport
     setSelectedId(null)
   }, [sessionId])
+
+  React.useEffect(() => {
+    return () => {
+      clearTimeout(persistTimer.current)
+    }
+  }, [])
 
   const graph = React.useMemo(
     () => projectSessionScenes(sessionId, messages),
@@ -183,7 +192,7 @@ function EditorInner({
   const persistPin = React.useCallback(
     (next: SessionMapPin) => {
       setPin(next)
-      if (persistTimer.current) clearTimeout(persistTimer.current)
+      clearTimeout(persistTimer.current)
       persistTimer.current = setTimeout(() => {
         try {
           localStorage.setItem(sessionMapPinStorageKey(sessionId), serializeSessionMapPin(next))
@@ -244,25 +253,35 @@ function EditorInner({
 
   return (
     <div className="session-workflow-editor relative flex h-full min-h-0 flex-1 flex-col bg-background">
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center gap-2 px-3 py-1.5 text-[11px]">
+      <div
+        role="toolbar"
+        aria-label={t('entityView.map')}
+        className="pointer-events-none absolute inset-x-0 top-0 z-10 flex min-w-0 items-center gap-2 px-3 py-1.5 text-[11px]"
+      >
         <span className="text-muted-foreground">{t('entityView.flowLive')}</span>
         <span className="text-muted-foreground">· {graph.scenes.length}</span>
-        <div className="pointer-events-auto ml-auto inline-flex items-center gap-1">
-          <div className="inline-flex rounded-md border border-border/60 bg-background/80 p-0.5 backdrop-blur">
-            <button
+        <div className="pointer-events-auto ml-auto inline-flex min-w-0 flex-wrap items-center justify-end gap-1">
+          <div className="inline-flex rounded-md border border-border bg-background p-0.5">
+            <Button
               type="button"
-              className={cn('rounded px-2 py-0.5', camera === 'map' && 'bg-foreground/10')}
+              size="sm"
+              variant="ghost"
+              aria-pressed={camera === 'map'}
+              className={cn('h-7 px-2 text-[11px]', camera === 'map' && 'bg-foreground/10')}
               onClick={() => persistCamera('map')}
             >
               {t('entityView.workbenchCameraMap')}
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className={cn('rounded px-2 py-0.5', camera === 'flow' && 'bg-foreground/10')}
+              size="sm"
+              variant="ghost"
+              aria-pressed={camera === 'flow'}
+              className={cn('h-7 px-2 text-[11px]', camera === 'flow' && 'bg-foreground/10')}
               onClick={() => persistCamera('flow')}
             >
               {t('entityView.workbenchCameraFlow')}
-            </button>
+            </Button>
           </div>
           <Button
             type="button"
@@ -270,8 +289,7 @@ function EditorInner({
             variant="outline"
             className="h-7 px-2 text-[11px]"
             onClick={() => {
-              const inst = flowRef.current
-              inst?.fitView({ padding: 0.2 })
+              flowRef.current?.fitView({ padding: 0.2 })
             }}
           >
             {t('entityView.mapFit')}
@@ -289,14 +307,25 @@ function EditorInner({
       </div>
 
       {selected && (
-        <div className="pointer-events-auto absolute right-3 top-10 z-10 flex w-64 flex-col gap-1">
+        <div className="pointer-events-auto absolute right-3 top-10 z-10 flex w-64 min-w-0 max-w-[min(16rem,calc(100%-1.5rem))] flex-col gap-1">
+          <label className="sr-only" htmlFor="session-map-compose">
+            {t('entityView.mapComposeLabel')}
+          </label>
           <textarea
-            className="min-h-[72px] w-full rounded-md border border-border bg-background/90 px-2 py-1 text-xs"
+            id="session-map-compose"
+            className="min-h-[72px] w-full resize-y rounded-md border border-border bg-background px-2 py-1 text-xs"
             placeholder={t('entityView.mapComposePlaceholder')}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+                e.preventDefault()
+                const prompt = draft.trim()
+                if (prompt) onRewrite?.(selected.triggerMessageId, prompt)
+              }
+            }}
           />
-          <div className="inline-flex items-center gap-1">
+          <div className="inline-flex min-w-0 flex-wrap items-center gap-1">
             <Button
               type="button"
               size="sm"
@@ -313,14 +342,18 @@ function EditorInner({
               className="h-7 px-2 text-[11px]"
               onClick={() => setFanOutOpen(true)}
             >
-              {t('entityView.fanOutTitle')}
+              {t('entityView.fanOutShort')}
             </Button>
             <Button
               type="button"
               size="sm"
               variant="outline"
               className="h-7 px-2 text-[11px]"
-              onClick={() => onRewrite?.(selected.triggerMessageId, draft)}
+              disabled={!draft.trim()}
+              onClick={() => {
+                const prompt = draft.trim()
+                if (prompt) onRewrite?.(selected.triggerMessageId, prompt)
+              }}
             >
               {t('entityView.workbenchRewrite')}
             </Button>
@@ -329,8 +362,9 @@ function EditorInner({
       )}
 
       {graph.scenes.length === 0 ? (
-        <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-          {t('entityView.workbenchNoScenes')}
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 px-6 text-center text-sm text-muted-foreground">
+          <p>{t('entityView.workbenchNoScenes')}</p>
+          <p className="text-xs">{t('entityView.mapEmptyHint')}</p>
         </div>
       ) : (
         <ReactFlow
@@ -383,6 +417,7 @@ function EditorInner({
           }}
           defaultEdgeOptions={{ type: 'default' }}
           proOptions={{ hideAttribution: true }}
+          deleteKeyCode={null}
           minZoom={0.15}
           maxZoom={2}
           panOnScroll

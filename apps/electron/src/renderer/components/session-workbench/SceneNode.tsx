@@ -17,14 +17,16 @@ export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
   return (
     <div
       className={cn(
-        'w-[180px] rounded-[12px] border bg-card px-2 py-1.5 text-left shadow-sm',
+        'w-[180px] min-w-0 rounded-[12px] border bg-card px-2 py-1.5 text-left shadow-sm',
         scene.orphaned ? 'border-amber-400' : 'border-border',
         selected && 'ring-1 ring-violet-400/40 border-violet-400',
       )}
+      title={scene.triggerPreview || scene.id}
     >
       <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-border !bg-muted-foreground/50" />
-      <div className="flex items-start gap-1.5">
+      <div className="flex min-w-0 items-start gap-1.5">
         <span
+          aria-hidden
           className={cn(
             'mt-1 h-1.5 w-1.5 shrink-0 rounded-full',
             status === 'error' && 'bg-destructive',
