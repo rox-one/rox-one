@@ -187,7 +187,31 @@ class TaskEditorBoundary extends React.Component<
   }
 }
 
-export function KanbanBoardContainer() {
+class BoardSurfaceBoundary extends React.Component<{ children: React.ReactNode }, { err: Error | null }> {
+  state = { err: null as Error | null }
+  static getDerivedStateFromError(err: Error) {
+    return { err }
+  }
+  componentDidCatch(err: Error) {
+    console.error('[kanban] board surface crashed', err)
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
+          <p className="text-foreground/80">Board failed to open.</p>
+          <p className="max-w-md text-xs text-muted-foreground">{this.state.err.message}</p>
+          <button type="button" className="rounded-md border px-3 py-1" onClick={() => this.setState({ err: null })}>
+            Retry
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+function KanbanBoardContainerInner() {
   const { activeWorkspaceId, workspaces, llmConnections, sessionStatuses, onCreateSession, onSendMessage, onJumpToTaskSessions } =
     useAppShellContext()
   const { t } = useTranslation()
@@ -503,7 +527,7 @@ export function KanbanBoardContainer() {
   // remain drop targets.
   const visibleColumns = React.useMemo(() => {
     const groupBy = collectionDisplay.groupBy
-    const hideEmptyNested = __omp_shell("collectionDisplay.showEmptyGroups && groupBy !== 'none' && groupBy !== 'status'")
+    const hideEmptyNested = !collectionDisplay.showEmptyGroups && groupBy !== 'none' && groupBy !== 'status' 
     if (!hideEmptyNested) return activeColumns
     return activeColumns.filter(column => visibleTasks.some(task => task.column === column.id))
   }, [activeColumns, collectionDisplay.groupBy, collectionDisplay.showEmptyGroups, visibleTasks])
@@ -1051,5 +1075,13 @@ export function KanbanBoardContainer() {
         />
       </div>
     </div>
+  )
+}
+
+export function KanbanBoardContainer() {
+  return (
+    <BoardSurfaceBoundary>
+      <KanbanBoardContainerInner />
+    </BoardSurfaceBoundary>
   )
 }
