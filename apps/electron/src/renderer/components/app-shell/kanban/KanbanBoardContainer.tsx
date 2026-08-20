@@ -449,10 +449,15 @@ export function KanbanBoardContainer() {
     return tasks.filter(task => task.projectId !== undefined && allow.has(task.projectId))
   }, [tasks, projectFilter])
 
+  // Status columns *are* the board. Hide empties only when grouping is nested
+  // (project/priority/etc.); workflow lanes stay visible so empty statuses
+  // remain drop targets.
   const visibleColumns = React.useMemo(() => {
-    if (collectionDisplay.showEmptyGroups) return activeColumns
+    const groupBy = collectionDisplay.groupBy
+    const hideEmptyNested = __omp_shell("collectionDisplay.showEmptyGroups && groupBy !== 'none' && groupBy !== 'status'")
+    if (!hideEmptyNested) return activeColumns
     return activeColumns.filter(column => visibleTasks.some(task => task.column === column.id))
-  }, [activeColumns, collectionDisplay.showEmptyGroups, visibleTasks])
+  }, [activeColumns, collectionDisplay.groupBy, collectionDisplay.showEmptyGroups, visibleTasks])
 
   // B6: honor Display.orderBy when ranking cards within each column.
   const displayDrivenSort = React.useCallback(

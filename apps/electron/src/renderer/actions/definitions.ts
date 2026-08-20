@@ -144,6 +144,44 @@ export const actions = {
     category: 'View',
   },
 
+  'collection.viewNext': {
+    id: 'collection.viewNext',
+    label: 'Next collection view',
+    description: 'Cycle sessions layout: list → board → table',
+    defaultHotkey: 'alt+v',
+    category: 'View',
+    when: '!inputFocus',
+  },
+  'collection.viewPrev': {
+    id: 'collection.viewPrev',
+    label: 'Previous collection view',
+    description: 'Return to the last sessions layout',
+    defaultHotkey: 'alt+shift+v',
+    category: 'View',
+    when: '!inputFocus',
+  },
+  'collection.viewList': {
+    id: 'collection.viewList',
+    label: 'Sessions list',
+    defaultHotkey: 'mod+shift+1',
+    category: 'View',
+    when: '!inputFocus',
+  },
+  'collection.viewBoard': {
+    id: 'collection.viewBoard',
+    label: 'Sessions board',
+    defaultHotkey: 'mod+shift+2',
+    category: 'View',
+    when: '!inputFocus',
+  },
+  'collection.viewTable': {
+    id: 'collection.viewTable',
+    label: 'Sessions table',
+    defaultHotkey: 'mod+shift+3',
+    category: 'View',
+    when: '!inputFocus',
+  },
+
   // ═══════════════════════════════════════════
   // Navigator (scoped — active entity list in middle panel)
   // ═══════════════════════════════════════════
