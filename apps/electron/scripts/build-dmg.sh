@@ -220,6 +220,10 @@ bun run electron:build
 echo "Staging Pi agent server into resources..."
 bun run scripts/build/stage-servers.ts darwin "$ARCH"
 
+# 6c. Stage OEM kernel extraResources (optional; missing payload does not fail dist).
+echo "Staging OEM kernel extraResources..."
+PLAT="darwin-${ARCH}" "$SCRIPT_DIR/stage-oem-kernel.sh"
+
 # 7. Package with electron-builder
 echo "Packaging app with electron-builder..."
 cd "$ELECTRON_DIR"

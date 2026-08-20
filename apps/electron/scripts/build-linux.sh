@@ -185,6 +185,10 @@ echo "Building Electron app..."
 cd "$ROOT_DIR"
 bun run electron:build
 
+# 6c. Stage OEM kernel extraResources (optional; missing payload does not fail dist).
+echo "Staging OEM kernel extraResources..."
+PLAT="linux-${ARCH}" "$SCRIPT_DIR/stage-oem-kernel.sh"
+
 # 7. Package with electron-builder
 echo "Packaging app with electron-builder..."
 cd "$ELECTRON_DIR"

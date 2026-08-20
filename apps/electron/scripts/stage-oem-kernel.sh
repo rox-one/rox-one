@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Copy packed knowledge-engine binary from OEM payload dir into gitignored extraResources.
+# Rsync the unpacked OEM kernel platform dir into gitignored extraResources.
+# Copies knowledge-engine, stage/, appearance/, and any other payload files.
 # Does not git-add resources/oem-kernel/ (binaries stay out of Apache git).
+# Missing payload is a warning only — dist packaging must still succeed.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -36,32 +38,30 @@ pin_plat() {
   esac
 }
 
-PLAT="${1:-$(pin_plat)}"
+PLAT="${PLAT:-${1:-$(pin_plat)}}"
 SRC_DIR="${PAYLOAD_ROOT}/${PLAT}"
 
 if [[ ! -d "$SRC_DIR" ]]; then
-  echo "Missing payload dir: $SRC_DIR (set OEM_KERNEL_PAYLOAD_DIR or pack first)" >&2
-  exit 1
+  echo "WARNING: Missing OEM kernel payload dir: $SRC_DIR (set OEM_KERNEL_PAYLOAD_DIR or pack first). Skipping OEM kernel extraResources; dist continues." >&2
+  exit 0
 fi
 
 mkdir -p "$DEST"
-shopt -s nullglob
-copied=0
-for f in "${SRC_DIR}"/knowledge-engine "${SRC_DIR}"/knowledge-engine.exe; do
-  if [[ -f "$f" ]]; then
-    cp "$f" "$DEST/"
-    if [[ "$(basename "$f")" == knowledge-engine ]]; then
-      chmod +x "${DEST}/knowledge-engine"
-    fi
-    echo "Staged $f -> $DEST/"
-    copied=1
-  fi
-done
-shopt -u nullglob
 
-if [[ "$copied" -eq 0 ]]; then
-  echo "No knowledge-engine* binary in $SRC_DIR" >&2
-  exit 1
+# Preserve tracked README.md / .gitkeep; sync the rest of the unpacked platform dir.
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --delete --exclude README.md --exclude .gitkeep "${SRC_DIR}/" "${DEST}/"
+else
+  echo "WARNING: rsync not found; copying payload with cp -a" >&2
+  # Drop previous staged artifacts except tracked keepers.
+  find "$DEST" -mindepth 1 ! -name README.md ! -name .gitkeep -exec rm -rf {} +
+  cp -a "${SRC_DIR}/." "${DEST}/"
+  rm -f "${DEST}/README.md" "${DEST}/.gitkeep" 2>/dev/null || true
 fi
 
-echo "Staged OEM kernel for ${PLAT}. Do not git-add ${DEST} (gitignored except .gitkeep)."
+if [[ -f "${DEST}/knowledge-engine" ]]; then
+  chmod +x "${DEST}/knowledge-engine"
+fi
+
+echo "Staged OEM kernel tree for ${PLAT} from ${SRC_DIR} -> ${DEST}."
+echo "Do not git-add ${DEST} (gitignored except README.md / .gitkeep)."

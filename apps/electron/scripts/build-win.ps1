@@ -384,6 +384,14 @@ if ($relevantProcesses) {
 }
 Write-Host ""
 
+# Stage OEM kernel extraResources (optional; missing payload does not fail dist).
+Write-Host "Staging OEM kernel extraResources..."
+$env:PLAT = "win32-x64"
+& bash "$ScriptDir\stage-oem-kernel.sh"
+if ($LASTEXITCODE -ne 0) {
+    throw "stage-oem-kernel.sh failed with exit code $LASTEXITCODE"
+}
+
 # NOTE: bun.exe is now copied via extraResources in electron-builder.yml
 # This avoids EBUSY errors from the npm node module collector.
 # See electron-builder.yml for details.
