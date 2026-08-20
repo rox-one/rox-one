@@ -1487,3 +1487,14 @@ html.dark[data-scenic] .fullscreen-overlay-background {
   min-height: 31px;
   padding: 6px 8px;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-dialog-surface,
+  .collection-dialog-surface *,
+  .entity-row-btn,
+  .session-item {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

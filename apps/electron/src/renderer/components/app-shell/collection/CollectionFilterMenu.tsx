@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { CollectionFilterChips } from './CollectionFilterChips'
 import { activeFilterCount } from './collection-filter-count'
 import { COLLECTION_POPOVER_SURFACE } from './collection-menu-surface'
+import { handleCollectionDialogKeyDown } from './collection-dialog-keyboard'
 import {
   CollectionMenuRadioRow,
   CollectionMenuRow,
@@ -129,6 +130,7 @@ export function CollectionFilterMenu({
         role="dialog"
         aria-label={t('collection.filter.trigger')}
         className={COLLECTION_POPOVER_SURFACE}
+        onKeyDown={(event) => handleCollectionDialogKeyDown(event.nativeEvent, event.currentTarget)}
       >
         <CollectionMenuSection label={t('collection.slice.saved')}>
           {BUILTIN_SLICES.map((slice) => (
