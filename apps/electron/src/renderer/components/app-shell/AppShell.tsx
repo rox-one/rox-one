@@ -28,6 +28,7 @@ import {
   Info,
   MailOpen,
   FolderKanban,
+  Eye,
 } from "lucide-react"
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
@@ -71,6 +72,7 @@ import {
 import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
+import { getDefaultViews } from "@craft-agent/shared/views"
 import { collectionViewRoute, rememberCollectionView, resolveCycleTarget } from "./collection/collection-view-cycle"
 import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
@@ -1625,6 +1627,18 @@ function AppShellContent({
     navigate(routes.view.view(viewId))
   }, [navigate, viewConfigs, setCollectionFilters])
 
+  const handleViewsAllClick = useCallback(() => {
+    skipRailChipClearRef.current = true
+    skipRailChipClearOnce.current = true
+    navigate(routes.view.view('__all__'))
+  }, [navigate])
+
+  const sessionViewConfigs = useMemo(
+    () => viewConfigs.filter(v => (v.domain ?? 'sessions') === 'sessions'),
+    [viewConfigs],
+  )
+  const defaultSessionViewIds = useMemo(() => new Set(getDefaultViews().map(v => v.id)), [])
+
   // DnD handler: reorder statuses (flat list drag-and-drop)
   // Sets optimistic order immediately for instant UI feedback, then fires IPC.
   const handleStatusReorder = useCallback((orderedIds: string[]) => {
@@ -2016,6 +2030,11 @@ function AppShellContent({
     }
     flattenTree(labelTree)
 
+    result.push({ id: 'nav:views', type: 'nav', action: handleViewsAllClick })
+    for (const view of sessionViewConfigs) {
+      result.push({ id: `nav:view:${view.id}`, type: 'nav', action: () => handleViewClick(view.id) })
+    }
+
     // 3. Destinations (matches APP_NAV_DESTINATIONS / sidebar order)
     result.push({ id: 'nav:projects', type: 'nav', action: handleProjectsClick })
     result.push({ id: 'nav:memory', type: 'nav', action: handleMemoryClick })
@@ -2027,7 +2046,7 @@ function AppShellContent({
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
 
     return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, viewConfigs, handleViewClick, handleKnowledgeClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handleAutomationsClick, handleSettingsClick])
+  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleKnowledgeClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handleAutomationsClick, handleSettingsClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -2455,6 +2474,33 @@ function AppShellContent({
                         onAddLabel: handleAddLabel,
                       },
                       items: buildLabelSidebarItems(labelTree),
+                    },
+                    {
+                      id: "nav:views",
+                      title: t("sidebar.views"),
+                      icon: Eye,
+                      variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === '__all__') ? "default" as const : "ghost" as const,
+                      onClick: handleViewsAllClick,
+                      expandable: sessionViewConfigs.length > 0,
+                      expanded: isExpanded('nav:views'),
+                      onToggle: () => toggleExpanded('nav:views'),
+                      contextMenu: {
+                        type: 'views' as const,
+                        onConfigureViews: openConfigureViews,
+                      },
+                      items: sessionViewConfigs.map(view => ({
+                        id: `nav:view:${view.id}`,
+                        title: view.name,
+                        icon: Eye,
+                        variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === view.id) ? "default" as const : "ghost" as const,
+                        onClick: () => handleViewClick(view.id),
+                        contextMenu: {
+                          type: 'views' as const,
+                          viewId: defaultSessionViewIds.has(view.id) ? undefined : view.id,
+                          onConfigureViews: openConfigureViews,
+                          onDeleteView: defaultSessionViewIds.has(view.id) ? undefined : handleDeleteView,
+                        },
+                      })),
                     },
                     // --- Projects (after session chrome) ---
                     {
