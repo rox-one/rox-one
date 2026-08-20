@@ -89,7 +89,7 @@ export function persistSavedSlices(slices: CollectionSlice[], workspaceId?: stri
 
 export function createSavedSlice(name: string, filters: CollectionFilters): CollectionSlice {
   return {
-    id: `saved-${Date.now().toString(36)}`,
+    id: `slice-${Date.now().toString(36)}`,
     name: name.trim(),
     filters: { ...filters },
     builtin: false,
