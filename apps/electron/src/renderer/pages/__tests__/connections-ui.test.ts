@@ -22,6 +22,7 @@ import {
   sanitizeDevicePoll,
   sanitizeReconnectLeases,
   devicePollDelayMs,
+  githubDeviceVerificationHref,
   importedConnectionFromList,
   tabFromKey,
   testStatusFromError,
@@ -278,6 +279,32 @@ describe('CF-6 Connections UI helpers', () => {
     expect(devicePollDelayMs({ status: 'denied' })).toBeNull()
     expect(devicePollDelayMs({ status: 'expired' })).toBeNull()
     expect(JSON.stringify({ interval: 5 })).not.toMatch(/accessToken|deviceCode/)
+  })
+
+  it('allows only GitHub device verification URIs', () => {
+    expect(githubDeviceVerificationHref('https://github.com/login/device')).toBe(
+      'https://github.com/login/device',
+    )
+    expect(githubDeviceVerificationHref('https://github.com/login/device/')).toBe(
+      'https://github.com/login/device/',
+    )
+    expect(githubDeviceVerificationHref('https://github.com/login/device?user_code=ABCD-1234')).toBe(
+      'https://github.com/login/device?user_code=ABCD-1234',
+    )
+    expect(githubDeviceVerificationHref('http://github.com/login/device')).toBeNull()
+    expect(githubDeviceVerificationHref('javascript:alert(1)')).toBeNull()
+    expect(githubDeviceVerificationHref('https://github.com/login/oauth')).toBeNull()
+    expect(githubDeviceVerificationHref('https://evil.com/login/device')).toBeNull()
+    expect(githubDeviceVerificationHref('https://github.com.evil.com/login/device')).toBeNull()
+    expect(githubDeviceVerificationHref('https://www.github.com/login/device')).toBeNull()
+    expect(githubDeviceVerificationHref('https://github.com/login/device#next')).toBeNull()
+    expect(githubDeviceVerificationHref('https://user:pass@github.com/login/device')).toBeNull()
+    expect(githubDeviceVerificationHref('https://github.com:444/login/device')).toBeNull()
+    expect(githubDeviceVerificationHref('https://github.com/login/device?redirect=https://evil.com')).toBeNull()
+    expect(githubDeviceVerificationHref('https://github.com/login/device?user_code=ABCD-1234&redirect=x')).toBeNull()
+    expect(githubDeviceVerificationHref('https://github.com/login/device?user_code=<script>')).toBeNull()
+    expect(githubDeviceVerificationHref('')).toBeNull()
+    expect(JSON.stringify({ href: 'https://github.com/login/device' })).not.toMatch(/accessToken|deviceCode/)
   })
 
   it('selects the imported GitHub connection from a metadata-only list', () => {

@@ -565,6 +565,7 @@
   "connections.import.envPath": "مسار ملف .env",
   "connections.import.gitConfigPath": "مسار git config",
   "connections.import.githubOAuthCancel": "إلغاء دخول GitHub",
+  "connections.import.githubOAuthOpen": "فتح دخول GitHub",
   "connections.import.githubOAuthPoll": "التحقق من تسجيل دخول GitHub",
   "connections.import.githubOAuthStatus.denied": "رُفض دخول GitHub",
   "connections.import.githubOAuthStatus.expired": "انتهت صلاحية دخول GitHub",

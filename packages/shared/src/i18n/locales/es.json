@@ -565,6 +565,7 @@
   "connections.import.envPath": "Ruta al .env",
   "connections.import.gitConfigPath": "Ruta al git config",
   "connections.import.githubOAuthCancel": "Cancelar inicio de GitHub",
+  "connections.import.githubOAuthOpen": "Abrir inicio de GitHub",
   "connections.import.githubOAuthPoll": "Comprobar inicio de sesión de GitHub",
   "connections.import.githubOAuthStatus.denied": "Inicio de GitHub denegado",
   "connections.import.githubOAuthStatus.expired": "Inicio de GitHub caducado",

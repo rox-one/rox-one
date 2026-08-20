@@ -314,3 +314,31 @@ export function importedConnectionFromList<T extends { readonly id: string }>(
 ): T | undefined {
   return rows.find((row) => row.id === connectionId)
 }
+
+const GITHUB_DEVICE_PATH = new Set(['/login/device', '/login/device/'])
+const GITHUB_USER_CODE = /^[A-Za-z0-9][A-Za-z0-9-]{0,31}$/
+
+export function githubDeviceVerificationHref(raw: string): string | null {
+  if (typeof raw !== 'string' || raw !== raw.trim() || raw.length === 0) return null
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    return null
+  }
+  if (url.protocol !== 'https:') return null
+  if (url.username !== '' || url.password !== '') return null
+  if (url.hostname !== 'github.com') return null
+  if (url.port !== '') return null
+  if (url.hash !== '') return null
+  if (!GITHUB_DEVICE_PATH.has(url.pathname)) return null
+  const keys = [...url.searchParams.keys()]
+  if (keys.length > 1) return null
+  if (keys.length === 1) {
+    if (keys[0] !== 'user_code') return null
+    const code = url.searchParams.get('user_code') ?? ''
+    if (!GITHUB_USER_CODE.test(code)) return null
+    return `https://github.com${url.pathname}?user_code=${encodeURIComponent(code)}`
+  }
+  return `https://github.com${url.pathname}`
+}

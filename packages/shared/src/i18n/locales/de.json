@@ -565,6 +565,7 @@
   "connections.import.envPath": "Pfad zur .env",
   "connections.import.gitConfigPath": "Pfad zur Git-Config",
   "connections.import.githubOAuthCancel": "GitHub-Login abbrechen",
+  "connections.import.githubOAuthOpen": "GitHub-Login öffnen",
   "connections.import.githubOAuthPoll": "GitHub-Anmeldung prüfen",
   "connections.import.githubOAuthStatus.denied": "GitHub-Login abgelehnt",
   "connections.import.githubOAuthStatus.expired": "GitHub-Login abgelaufen",

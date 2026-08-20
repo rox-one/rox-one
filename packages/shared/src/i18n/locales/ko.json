@@ -565,6 +565,7 @@
   "connections.import.envPath": ".env 경로",
   "connections.import.gitConfigPath": "git config 경로",
   "connections.import.githubOAuthCancel": "GitHub 로그인 취소",
+  "connections.import.githubOAuthOpen": "GitHub 로그인 열기",
   "connections.import.githubOAuthPoll": "GitHub 로그인 확인",
   "connections.import.githubOAuthStatus.denied": "GitHub 로그인이 거부됨",
   "connections.import.githubOAuthStatus.expired": "GitHub 로그인 만료",

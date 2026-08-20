@@ -33,6 +33,7 @@ import {
   sanitizeDevicePoll,
   sanitizeReconnectLeases,
   devicePollDelayMs,
+  githubDeviceVerificationHref,
   importedConnectionFromList,
   tabFromKey,
   testStatusFromError,
@@ -857,6 +858,20 @@ export default function ConnectionsPage() {
                   <div className="font-mono text-xs">{deviceLogin.verificationUri}</div>
                   {devicePoll ? (
                     <div className="text-xs text-muted-foreground">{t(`connections.import.githubOAuthStatus.${devicePoll.status}`)}</div>
+                  ) : null}
+                  {githubDeviceVerificationHref(deviceLogin.verificationUri) ? (
+                    <button
+                      type="button"
+                      data-testid="connections-github-device-open"
+                      className="rounded border px-3 py-1"
+                      onClick={() => {
+                        const href = githubDeviceVerificationHref(deviceLogin.verificationUri)
+                        if (!href) return
+                        void window.electronAPI?.openUrl?.(href)
+                      }}
+                    >
+                      {t('connections.import.githubOAuthOpen')}
+                    </button>
                   ) : null}
                   <button
                     type="button"

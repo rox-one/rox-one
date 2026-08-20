@@ -290,6 +290,19 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('opens GitHub device verification via openUrl without a window or iframe', () => {
+    expect(page).toContain('githubDeviceVerificationHref')
+    expect(page).toContain('connections-github-device-open')
+    expect(page).toContain('connections.import.githubOAuthOpen')
+    expect(page).toContain('openUrl')
+    expect(page).not.toContain('window.open')
+    expect(page.toLowerCase()).not.toContain('<iframe')
+    expect(page).not.toContain('accessToken')
+    expect(page).not.toContain('deviceCode')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('cancels GitHub device login in place and selects the imported connection without opening a window', () => {
     expect(page).toContain('cancelGithubDeviceLogin')
     expect(page).toContain('cancelDeviceLogin')
@@ -391,6 +404,19 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections-row-leases')
     expect(page).toContain('connections.reconnectDone')
     expect(page).toContain('result.leases')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('shows invalidated leases after rotate, revoke, convert, and move without leaking secret fields', () => {
+    expect(page).toContain('applyRevokedLeases')
+    expect(page.split('applyRevokedLeases(connectionId, result.leases)').length - 1).toBe(5)
+    expect(page).toContain('confirmRotate')
+    expect(page).toContain('confirmRevoke')
+    expect(page).toContain('confirmConvert')
+    expect(page).toContain('confirmMove')
+    expect(page).toContain('connections-row-leases')
+    expect(page).toContain('connections.reconnectDone')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

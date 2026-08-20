@@ -565,6 +565,7 @@
   "connections.import.envPath": "Путь к .env",
   "connections.import.gitConfigPath": "Путь к git config",
   "connections.import.githubOAuthCancel": "Отменить вход GitHub",
+  "connections.import.githubOAuthOpen": "Открыть вход GitHub",
   "connections.import.githubOAuthPoll": "Проверить вход GitHub",
   "connections.import.githubOAuthStatus.denied": "Вход GitHub отклонён",
   "connections.import.githubOAuthStatus.expired": "Вход GitHub истёк",

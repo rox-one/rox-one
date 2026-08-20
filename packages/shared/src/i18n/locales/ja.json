@@ -565,6 +565,7 @@
   "connections.import.envPath": ".env のパス",
   "connections.import.gitConfigPath": "git config のパス",
   "connections.import.githubOAuthCancel": "GitHub ログインをキャンセル",
+  "connections.import.githubOAuthOpen": "GitHub ログインを開く",
   "connections.import.githubOAuthPoll": "GitHub ログインを確認",
   "connections.import.githubOAuthStatus.denied": "GitHub ログインが拒否されました",
   "connections.import.githubOAuthStatus.expired": "GitHub ログインの期限切れ",
