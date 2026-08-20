@@ -126,6 +126,21 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty invalidated leases on credential connection rows without secret fields', () => {
+    expect(page).toContain('connections-credential-leases')
+    expect(page).toContain('leasesById[row.id]')
+    expect(page).toContain('connections.reconnectDone')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('hides empty revalidation on credential connection rows without secret fields', () => {
+    expect(page).toContain('connections-credential-revalidated')
+    expect(page).toContain('revalidatedById[row.id]')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('hides empty inspect fields on listed rows without secret fields', () => {
     expect(page).toContain('visibleInspectValue')
     expect(page.split('visibleInspectValue(inspectById[row.id].health)').length - 1).toBe(3)
@@ -311,8 +326,10 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page.split("t('inspector.field.leases')").length - 1).toBe(3)
     expect(page.split("t('inspector.field.revalidated')").length - 1).toBe(3)
     expect(page).toContain('connections-row-leases')
+    expect(page).toContain('connections-credential-leases')
     expect(page).toContain('connections-policy-leases')
     expect(page).toContain('connections-row-revalidated')
+    expect(page).toContain('connections-credential-revalidated')
     expect(page).toContain('connections-policy-revalidated')
     expect(page).toContain('connections.reconnectDone')
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")

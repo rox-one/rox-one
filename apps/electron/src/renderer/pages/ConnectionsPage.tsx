@@ -1298,7 +1298,7 @@ export default function ConnectionsPage() {
                   ) : null}
                   {leasesById[row.id] ? (
                     <>
-                      <div data-testid="connections-row-leases">
+                      <div data-testid="connections-credential-leases">
                         <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
                         <div className="font-mono text-xs">{leasesById[row.id]}</div>
                       </div>
@@ -1306,7 +1306,7 @@ export default function ConnectionsPage() {
                     </>
                   ) : null}
                   {revalidatedById[row.id] ? (
-                    <div data-testid="connections-row-revalidated">
+                    <div data-testid="connections-credential-revalidated">
                       <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
                       <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
                     </div>
