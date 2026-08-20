@@ -710,12 +710,17 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (sessionView === 'outline') {
         const relatedBranches = [...sessionMetaMap.values()]
           .filter((meta) => meta.id !== sessionId && (meta.branchFromSessionId === sessionId || meta.parentSessionId === sessionId))
-          .map((meta) => ({ id: meta.id, name: meta.name || meta.preview || meta.id }))
+          .map((meta) => ({
+            id: meta.id,
+            name: meta.name || meta.preview || meta.id,
+            ...(meta.branchFromMessageId ? { fromMessageId: meta.branchFromMessageId } : {}),
+          }))
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
             <SessionGitOutline
               sessionId={sessionId}
               messages={workbenchMessages}
+              loading={sessionMindMapLoading}
               relatedBranches={relatedBranches}
               onCheckoutMessage={(id) => {
                 setSessionView('standard')
