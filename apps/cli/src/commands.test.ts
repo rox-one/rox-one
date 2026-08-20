@@ -128,6 +128,11 @@ describe('parseArgs', () => {
     expect(args.command).toBe('validate')
   })
 
+  it('parses server-health as command', () => {
+    const args = parseArgs(['bun', 'index.ts', 'server-health'])
+    expect(args.command).toBe('server-health')
+  })
+
   it('parses session subcommand with args', () => {
     const args = parseArgs([
       'bun', 'index.ts',
@@ -315,6 +320,11 @@ describe('getValidateSteps', () => {
   it('has no duplicate step names', () => {
     const names = getValidateSteps().map((s) => s.name)
     expect(new Set(names).size).toBe(names.length)
+  })
+
+  it('includes server:getHealth with native sidecar check', () => {
+    const names = getValidateSteps().map((s) => s.name)
+    expect(names).toContain('server:getHealth')
   })
 
   it('includes session lifecycle steps (create, read, delete)', () => {

@@ -274,6 +274,12 @@ async function cmdHealth(client: CliRpcClient, args: CliArgs): Promise<void> {
   out(result, args.json)
 }
 
+async function cmdServerHealth(client: CliRpcClient, args: CliArgs): Promise<void> {
+  await client.connect()
+  const result = await client.invoke('server:getHealth')
+  out(result, args.json)
+}
+
 async function cmdVersions(client: CliRpcClient, args: CliArgs): Promise<void> {
   await client.connect()
   const result = await client.invoke('system:versions')
@@ -1028,6 +1034,17 @@ export function getValidateSteps(): ValidateStep[] {
       fn: async (client) => {
         const r = (await client.invoke('credentials:healthCheck')) as any
         return JSON.stringify(r)
+      },
+    },
+    {
+      name: 'server:getHealth',
+      fn: async (client) => {
+        const r = (await client.invoke('server:getHealth')) as {
+          status?: string
+          checks?: Array<{ name: string; status: string }>
+        }
+        const native = r.checks?.find((c) => c.name === 'native_sidecar')
+        return `status=${r.status ?? 'unknown'} native_sidecar=${native?.status ?? 'missing'}`
       },
     },
     {
@@ -1938,6 +1955,7 @@ Commands:
                          --server-entry      Path to server/index.ts
   ping                   Verify connectivity (clientId + latency)
   health                 Check credential store health
+  server-health          Server health checks (includes native sidecar)
   versions               Show server runtime versions
   workspaces             List workspaces
   sessions               List sessions in workspace
@@ -2027,6 +2045,9 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         break
       case 'health':
         await cmdHealth(client, args)
+        break
+      case 'server-health':
+        await cmdServerHealth(client, args)
         break
       case 'versions':
         await cmdVersions(client, args)

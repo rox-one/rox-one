@@ -5,6 +5,7 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { addWorkspace, setActiveWorkspace } from '@craft-agent/shared/config'
 import { getDefaultWorkspacesDir, ensureDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
 import type { ServerStatus, ServerHealth } from '@craft-agent/core/types'
+import { nativeSidecarHealthCheck } from '../../native/supervisor.ts'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { ServerHandlerContext } from '../../bootstrap/headless-start'
@@ -154,6 +155,8 @@ export function getHealthCheck(deps: Pick<HandlerDeps, 'sessionManager'>): Serve
     status: heapGB < 1.5 ? 'pass' : 'fail',
     message: `Heap: ${Math.round(heapGB * 100) / 100} GB`,
   })
+
+  checks.push(nativeSidecarHealthCheck())
 
   // Aggregate status
   const allPass = checks.every(c => c.status === 'pass')
