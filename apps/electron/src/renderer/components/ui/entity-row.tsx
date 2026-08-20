@@ -280,8 +280,8 @@ export function EntityRow({
       <button
         {...(buttonProps as React.ButtonHTMLAttributes<HTMLButtonElement>)}
         className={cn(
-          "entity-row-btn flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[8px]",
-          "transition-[background-color] duration-75",
+          "entity-row-btn flex w-full items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[8px] focus-visible:ring-1 focus-visible:ring-ring/60",
+          "transition-[background-color] duration-75 motion-reduce:transition-none",
           (isSelected || isInMultiSelect)
             ? "bg-foreground/3"
             : "hover:bg-foreground/2",

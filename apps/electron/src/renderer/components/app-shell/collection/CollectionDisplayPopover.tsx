@@ -23,6 +23,7 @@ import {
   CollectionMenuSection,
 } from './collection-menu-row'
 import { COLLECTION_POPOVER_SURFACE } from './collection-menu-surface'
+import { handleCollectionDialogKeyDown } from './collection-dialog-keyboard'
 
 export interface CollectionDisplayPopoverProps {
   display: CollectionDisplay
@@ -121,6 +122,7 @@ export function CollectionDisplayPopover({
         role="dialog"
         aria-label={t('collection.display.trigger')}
         className={COLLECTION_POPOVER_SURFACE}
+        onKeyDown={(event) => handleCollectionDialogKeyDown(event.nativeEvent, event.currentTarget)}
       >
         <CollectionMenuDisclosure
           label={t('collection.display.groupByLabel')}
@@ -236,7 +238,11 @@ function ToggleRow({
   onCheckedChange: (checked: boolean) => void
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[12.5px] text-foreground/80 transition-colors hover:bg-foreground/[0.04] hover:text-foreground">
+    <label
+      data-collection-dialog-item
+      tabIndex={0}
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[12.5px] text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 outline-none motion-reduce:transition-none"
+    >
       <span>{label}</span>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </label>

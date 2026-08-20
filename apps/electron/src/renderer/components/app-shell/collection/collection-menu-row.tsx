@@ -3,7 +3,7 @@ import { Check, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export const COLLECTION_MENU_ROW =
-  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-left text-[12.5px] text-foreground/78 outline-none transition-[background-color,color,opacity] duration-150 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:bg-foreground/[0.055]'
+  'group/row flex w-full cursor-pointer items-center gap-2 rounded-[5px] px-2 py-1.5 text-left text-[12.5px] text-foreground/90 outline-none transition-[background-color,color,opacity] duration-150 hover:bg-foreground/[0.055] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 motion-reduce:transition-none'
 
 export function CollectionMenuCheck({
   selected,
@@ -58,6 +58,7 @@ export function CollectionMenuRow({
       type="button"
       role={asMenuItem ? 'menuitemcheckbox' : undefined}
       aria-checked={selected}
+      data-collection-dialog-item={!asMenuItem ? true : undefined}
       onClick={onClick}
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
     >
@@ -88,6 +89,7 @@ export function CollectionMenuRadioRow({
       type="button"
       role={asMenuItem ? 'menuitemradio' : undefined}
       aria-checked={selected}
+      data-collection-dialog-item={!asMenuItem ? true : undefined}
       onClick={onClick}
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-foreground/[0.035] text-foreground', className)}
     >
@@ -131,6 +133,7 @@ export function CollectionMenuDisclosure({
       <button
         type="button"
         aria-expanded={open}
+        data-collection-dialog-item
         onClick={() => setOpen((v) => !v)}
         className={cn(COLLECTION_MENU_ROW, 'text-foreground')}
       >
@@ -144,7 +147,7 @@ export function CollectionMenuDisclosure({
           strokeWidth={2}
         />
       </button>
-      {open ? <div className="animate-in fade-in-0 slide-in-from-top-1 pb-0.5 duration-150">{children}</div> : null}
+      {open ? <div className="animate-in fade-in-0 slide-in-from-top-1 pb-0.5 duration-150 motion-reduce:animate-none">{children}</div> : null}
     </div>
   )
 }
