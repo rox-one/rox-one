@@ -1071,9 +1071,18 @@ export default function ConnectionsPage() {
                   <div className="font-mono text-xs" data-testid="connections-row-scopes">{row.scopes.join(', ') || '—'}</div>
                   {inspectById[row.id] ? (
                     <>
-                      <div className="font-mono text-xs" data-testid="connections-row-health">{inspectById[row.id].health}</div>
-                      <div className="font-mono text-xs" data-testid="connections-row-kind">{inspectById[row.id].kind}</div>
-                      <div className="font-mono text-xs" data-testid="connections-row-expiry">{inspectById[row.id].expiry}</div>
+                      <div data-testid="connections-row-health">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].health}</div>
+                      </div>
+                      <div data-testid="connections-row-kind">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
+                      </div>
+                      <div data-testid="connections-row-expiry">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
+                      </div>
                       <div className="font-mono text-xs" data-testid="connections-row-provenance">{inspectById[row.id].provenance}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-fingerprint">{inspectById[row.id].fingerprint}</div>
                       <div className="font-mono text-xs" data-testid="connections-row-version">{inspectById[row.id].versionId}</div>
@@ -1132,9 +1141,18 @@ export default function ConnectionsPage() {
                   <div className="font-mono text-xs" data-testid="connections-credential-scopes">{row.scopes.join(', ') || '—'}</div>
                   {inspectById[row.id] ? (
                     <>
-                      <div className="font-mono text-xs" data-testid="connections-credential-health">{inspectById[row.id].health}</div>
-                      <div className="font-mono text-xs" data-testid="connections-credential-kind">{inspectById[row.id].kind}</div>
-                      <div className="font-mono text-xs" data-testid="connections-credential-expiry">{inspectById[row.id].expiry}</div>
+                      <div data-testid="connections-credential-health">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].health}</div>
+                      </div>
+                      <div data-testid="connections-credential-kind">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
+                      </div>
+                      <div data-testid="connections-credential-expiry">
+                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
+                        <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
+                      </div>
                       <div className="font-mono text-xs" data-testid="connections-credential-provenance">{inspectById[row.id].provenance}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-fingerprint">{inspectById[row.id].fingerprint}</div>
                       <div className="font-mono text-xs" data-testid="connections-credential-version">{inspectById[row.id].versionId}</div>
@@ -1289,9 +1307,18 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs" data-testid="connections-policy-scopes">{row.scopes.join(', ') || '—'}</div>
                       {inspectById[row.id] ? (
                         <>
-                          <div className="font-mono text-xs" data-testid="connections-policy-health">{inspectById[row.id].health}</div>
-                          <div className="font-mono text-xs" data-testid="connections-policy-kind">{inspectById[row.id].kind}</div>
-                          <div className="font-mono text-xs" data-testid="connections-policy-expiry">{inspectById[row.id].expiry}</div>
+                          <div data-testid="connections-policy-health">
+                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
+                            <div className="font-mono text-xs">{inspectById[row.id].health}</div>
+                          </div>
+                          <div data-testid="connections-policy-kind">
+                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
+                            <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
+                          </div>
+                          <div data-testid="connections-policy-expiry">
+                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
+                            <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
+                          </div>
                           <div className="font-mono text-xs" data-testid="connections-policy-provenance">{inspectById[row.id].provenance}</div>
                           <div className="font-mono text-xs" data-testid="connections-policy-fingerprint">{inspectById[row.id].fingerprint}</div>
                           <div className="font-mono text-xs" data-testid="connections-policy-version">{inspectById[row.id].versionId}</div>

@@ -186,6 +186,24 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('labels inspect health, kind, and expiry on listed rows through i18n without secret fields', () => {
+    expect(page.split("t('inspector.field.health')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.credentialKind')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.expiry')").length - 1).toBe(3)
+    expect(page).toContain('connections-row-health')
+    expect(page).toContain('connections-credential-health')
+    expect(page).toContain('connections-policy-health')
+    expect(page).toContain('connections-row-kind')
+    expect(page).toContain('connections-credential-kind')
+    expect(page).toContain('connections-policy-kind')
+    expect(page).toContain('connections-row-expiry')
+    expect(page).toContain('connections-credential-expiry')
+    expect(page).toContain('connections-policy-expiry')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows scopes on credential rows without secret fields', () => {
     expect(page).toContain('connections-credential-scopes')
     expect(page).toContain('row.scopes.join')
