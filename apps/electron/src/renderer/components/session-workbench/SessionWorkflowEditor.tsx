@@ -6,11 +6,14 @@ import {
   ReactFlowProvider,
   MiniMap,
   Background,
+  Handle,
+  Position,
   applyNodeChanges,
   type Connection,
   type Edge,
   type Node,
   type NodeChange,
+  type NodeProps,
   type OnConnectEnd,
   type ReactFlowInstance,
   type Viewport,
@@ -19,7 +22,6 @@ import '@xyflow/react/dist/style.css'
 import {
   parseSessionMapPin,
   projectSessionScenes,
-  pruneSessionMapPin,
   serializeSessionMapPin,
   sessionMapPinStorageKey,
   type SceneMessage,
@@ -31,6 +33,13 @@ import { cn } from '@/lib/utils'
 import { SessionFanOutSheet, type FanOutChildJob } from './SessionFanOutSheet'
 import { SceneNode } from './SceneNode'
 import { toFlowElements, type FlowSceneNode } from './to-flow-elements'
+import { holesFromScene } from './holes-from-scene'
+
+export type RelatedBranch = {
+  id: string
+  name: string
+  fromMessageId?: string
+}
 
 export type SessionWorkflowEditorProps = {
   sessionId: string
@@ -39,9 +48,22 @@ export type SessionWorkflowEditorProps = {
   onRewrite?: (messageId: string, prompt: string) => void
   onCreateChildSessions?: (jobs: FanOutChildJob[]) => void | Promise<void>
   onOpenMessage?: (messageId: string) => void
+  relatedBranches?: RelatedBranch[]
+  onOpenSession?: (sessionId: string) => void
 }
 
-const nodeTypes = { scene: SceneNode }
+type BranchNodeData = { id: string; name: string; fromMessageId?: string }
+
+function BranchNode({ data }: NodeProps<Node<BranchNodeData, 'branch'>>) {
+  return (
+    <div className="w-[160px] rounded-[12px] border border-border bg-card px-2 py-1.5 text-left shadow-sm">
+      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-border !bg-muted-foreground/50" />
+      <div className="truncate text-xs font-medium">{data.name}</div>
+    </div>
+  )
+}
+
+const nodeTypes = { scene: SceneNode, branch: BranchNode }
 
 function loadPin(sessionId: string): SessionMapPin | null {
   try {
@@ -63,11 +85,14 @@ function EditorInner({
   onRewrite,
   onCreateChildSessions,
   onOpenMessage,
+  relatedBranches = [],
+  onOpenSession,
 }: SessionWorkflowEditorProps) {
   const { t } = useTranslation()
   const [pin, setPin] = React.useState<SessionMapPin | null>(() => loadPin(sessionId))
   const [camera, setCamera] = React.useState<SessionMapCamera>(() => loadPin(sessionId)?.camera ?? 'map')
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
+  const [draft, setDraft] = React.useState('')
   const [fanOutOpen, setFanOutOpen] = React.useState(false)
   const viewportRef = React.useRef<Viewport | undefined>(loadPin(sessionId)?.viewport)
   const persistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -86,12 +111,34 @@ function EditorInner({
     [sessionId, messages],
   )
 
-  const { nodes: projected, edges: projectedEdges } = React.useMemo(
-    () => toFlowElements(graph, pin, camera),
-    [graph, pin, camera],
-  )
+  const { nodes: projected, edges: projectedEdges } = React.useMemo(() => {
+    const el = toFlowElements(graph, pin, camera)
+    const maxX = el.nodes.reduce((m, n) => Math.max(m, n.position.x), 0)
+    const branchNodes: Node<BranchNodeData, 'branch'>[] = relatedBranches.map((b, i) => ({
+      id: `br_${b.id}`,
+      type: 'branch',
+      position: { x: maxX + 280, y: 24 + i * 108 },
+      data: { id: b.id, name: b.name, fromMessageId: b.fromMessageId },
+    }))
+    const branchEdges: typeof el.edges = []
+    for (const b of relatedBranches) {
+      if (!b.fromMessageId) continue
+      const scene = graph.scenes.find((s) => s.triggerMessageId === b.fromMessageId)
+      if (!scene) continue
+      branchEdges.push({
+        id: `e-br-${scene.id}-${b.id}`,
+        source: scene.id,
+        target: `br_${b.id}`,
+        data: { kind: 'fork' },
+      })
+    }
+    return {
+      nodes: [...(el.nodes as Node[]), ...branchNodes],
+      edges: [...el.edges, ...branchEdges],
+    }
+  }, [graph, pin, camera, relatedBranches])
 
-  const [nodes, setNodes] = React.useState<Node[]>(projected as Node[])
+  const [nodes, setNodes] = React.useState<Node[]>(projected)
   const projectedKey = React.useMemo(
     () => projected.map((n) => n.id).join('|') + ':' + camera + ':' + sessionId,
     [projected, camera, sessionId],
@@ -102,7 +149,7 @@ function EditorInner({
       projected.map((n) => ({
         ...n,
         selected: n.id === selectedId,
-      })) as Node[],
+      })),
     )
     // Keep pin positions; toFlowElements already applied pin.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- selection applied via selectedId separately
@@ -110,6 +157,12 @@ function EditorInner({
 
   React.useEffect(() => {
     setNodes((prev) => prev.map((n) => ({ ...n, selected: n.id === selectedId })))
+  }, [selectedId])
+
+  React.useEffect(() => {
+    const scene = graph.scenes.find((s) => s.id === selectedId)
+    setDraft(scene?.triggerPreview ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- re-init draft only when selection changes
   }, [selectedId])
 
   const edges: Edge[] = React.useMemo(
@@ -142,21 +195,16 @@ function EditorInner({
     [sessionId],
   )
 
-  const capturePositions = React.useCallback(
-    (list: Node[], viewport?: Viewport): SessionMapPin => {
-      const nodesMap: Record<string, { x: number; y: number }> = {}
-      for (const n of list) nodesMap[n.id] = { x: n.position.x, y: n.position.y }
-      const vp = viewport ?? viewportRef.current
-      return pruneSessionMapPin({
-        v: 1,
-        sessionId,
-        camera,
-        ...(vp ? { viewport: vp } : {}),
-        nodes: nodesMap,
-      }, new Set(list.map((n) => n.id)))
-    },
-    [camera, sessionId],
-  )
+  const persistCamera = (nextCamera: SessionMapCamera) => {
+    setCamera(nextCamera)
+    persistPin({
+      v: 1,
+      sessionId,
+      camera: nextCamera,
+      ...(viewportRef.current ? { viewport: viewportRef.current } : {}),
+      nodes: pin?.nodes ?? {},
+    })
+  }
 
   const onNodesChange = React.useCallback((changes: NodeChange[]) => {
     setNodes((prev) => applyNodeChanges(changes, prev))
@@ -172,6 +220,7 @@ function EditorInner({
   const onConnectEnd = React.useCallback<OnConnectEnd>(
     (_event, state) => {
       if (state.toNode) return
+      if (!state.fromNode) return
       const from = sceneOf(state.fromNode as Node | undefined)
       if (from) onFork?.(from.triggerMessageId)
     },
@@ -203,32 +252,14 @@ function EditorInner({
             <button
               type="button"
               className={cn('rounded px-2 py-0.5', camera === 'map' && 'bg-foreground/10')}
-              onClick={() => {
-                setCamera('map')
-                persistPin({
-                  v: 1,
-                  sessionId,
-                  camera: 'map',
-                  ...(viewportRef.current ? { viewport: viewportRef.current } : {}),
-                  nodes: pin?.nodes ?? {},
-                })
-              }}
+              onClick={() => persistCamera('map')}
             >
               {t('entityView.workbenchCameraMap')}
             </button>
             <button
               type="button"
               className={cn('rounded px-2 py-0.5', camera === 'flow' && 'bg-foreground/10')}
-              onClick={() => {
-                setCamera('flow')
-                persistPin({
-                  v: 1,
-                  sessionId,
-                  camera: 'flow',
-                  ...(viewportRef.current ? { viewport: viewportRef.current } : {}),
-                  nodes: pin?.nodes ?? {},
-                })
-              }}
+              onClick={() => persistCamera('flow')}
             >
               {t('entityView.workbenchCameraFlow')}
             </button>
@@ -258,34 +289,42 @@ function EditorInner({
       </div>
 
       {selected && (
-        <div className="pointer-events-auto absolute right-3 top-10 z-10 inline-flex items-center gap-1">
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            onClick={() => onFork?.(selected.triggerMessageId)}
-          >
-            {t('entityView.workbenchFork')}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            onClick={() => setFanOutOpen(true)}
-          >
-            {t('entityView.fanOutTitle')}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-[11px]"
-            onClick={() => onRewrite?.(selected.triggerMessageId, selected.triggerPreview)}
-          >
-            {t('entityView.workbenchRewrite')}
-          </Button>
+        <div className="pointer-events-auto absolute right-3 top-10 z-10 flex w-64 flex-col gap-1">
+          <textarea
+            className="min-h-[72px] w-full rounded-md border border-border bg-background/90 px-2 py-1 text-xs"
+            placeholder={t('entityView.mapComposePlaceholder')}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          <div className="inline-flex items-center gap-1">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => onFork?.(selected.triggerMessageId)}
+            >
+              {t('entityView.workbenchFork')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setFanOutOpen(true)}
+            >
+              {t('entityView.fanOutTitle')}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-[11px]"
+              onClick={() => onRewrite?.(selected.triggerMessageId, draft)}
+            >
+              {t('entityView.workbenchRewrite')}
+            </Button>
+          </div>
         </div>
       )}
 
@@ -295,7 +334,7 @@ function EditorInner({
         </div>
       ) : (
         <ReactFlow
-          className="h-full min-h-0 flex-1"
+          className="h-full min-h-0 flex-1 w-full"
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
@@ -304,6 +343,11 @@ function EditorInner({
           onConnectEnd={onConnectEnd}
           onPaneClick={() => setSelectedId(null)}
           onNodeClick={(_e, node) => {
+            if (node.type === 'branch') {
+              const id = (node.data as BranchNodeData).id
+              onOpenSession?.(id)
+              return
+            }
             setSelectedId(node.id)
           }}
           onNodeDoubleClick={(_e, node) => {
@@ -312,10 +356,25 @@ function EditorInner({
           }}
           onMoveEnd={(_e, vp) => {
             viewportRef.current = vp
-            persistPin(capturePositions(nodes, vp))
+            persistPin({
+              v: 1,
+              sessionId,
+              camera,
+              viewport: vp,
+              nodes: pin?.nodes ?? {},
+            })
           }}
-          onNodeDragStop={() => {
-            persistPin(capturePositions(nodes, viewportRef.current))
+          onNodeDragStop={(_e, node) => {
+            persistPin({
+              v: 1,
+              sessionId,
+              camera,
+              ...(viewportRef.current ? { viewport: viewportRef.current } : {}),
+              nodes: {
+                ...(pin?.nodes ?? {}),
+                [node.id]: { x: node.position.x, y: node.position.y },
+              },
+            })
           }}
           onInit={(inst) => {
             flowRef.current = inst
@@ -329,6 +388,8 @@ function EditorInner({
           panOnScroll
           colorMode="system"
           style={{
+            width: '100%',
+            height: '100%',
             background: 'hsl(var(--background))',
           }}
         >
@@ -348,7 +409,7 @@ function EditorInner({
         open={fanOutOpen}
         onOpenChange={setFanOutOpen}
         originScene={selected}
-        playbookHoles={[]}
+        playbookHoles={selected ? holesFromScene(selected) : []}
         onCreateChildSessions={onCreateChildSessions}
       />
     </div>

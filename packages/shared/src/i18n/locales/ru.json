@@ -724,6 +724,7 @@
   "entityView.flowLive": "Live",
   "entityView.graph": "Граф",
   "entityView.map": "Карта",
+  "entityView.mapComposePlaceholder": "Продолжить с этой сцены…",
   "entityView.mapFit": "Вписать",
   "entityView.mapResetLayout": "Сброс раскладки",
   "entityView.mindmapSiyuan": "Карта SiYuan",

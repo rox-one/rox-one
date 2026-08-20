@@ -724,6 +724,7 @@
   "entityView.flowLive": "Live",
   "entityView.graph": "Graph",
   "entityView.map": "Map",
+  "entityView.mapComposePlaceholder": "Continue from this scene…",
   "entityView.mapFit": "Fit",
   "entityView.mapResetLayout": "Reset layout",
   "entityView.mindmapSiyuan": "SiYuan map",

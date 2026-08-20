@@ -7,7 +7,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue, useSetAtom } from 'jotai'
+import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash } from 'lucide-react'
 import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -26,7 +26,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { coerceInputText } from '@/lib/input-text'
 import { lookupMigratedSiyuanId } from '@/lib/notes-migration-map'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
-import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
+import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
 import { getSessionTitle } from '@/utils/session'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
@@ -136,6 +136,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   // Track if messages are loaded for this session (for lazy loading)
   const loadedSessions = useAtomValue(loadedSessionsAtom)
+  const jotaiStore = useStore()
   const messagesLoaded = loadedSessions.has(sessionId)
 
   // Check if session exists in metadata (for loading state detection)
@@ -626,7 +627,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (!session) return
       try {
         for (const job of jobs) {
-          await onCreateSession(session.workspaceId, {
+          const child = await onCreateSession(session.workspaceId, {
             branchFromMessageId: job.branchFromMessageId,
             branchFromSessionId: session.id,
             name: job.title.slice(0, 80),
@@ -636,13 +637,16 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             workingDirectory: session.workingDirectory,
             enabledSourceSlugs: session.enabledSourceSlugs,
           })
+          if (job.prompt) {
+            onInputChange(child.id, job.prompt)
+          }
         }
       } catch (error) {
         const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
         toast.error(t('toast.couldNotCreateBranch'), { description: rawMessage })
       }
     },
-    [session, onCreateSession, t],
+    [session, onCreateSession, onInputChange, t],
   )
 
   const renderSessionViewBody = React.useCallback(
@@ -681,15 +685,28 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         return chatDisplay
       }
       if (sessionView === 'map') {
+        const relatedBranches = [...sessionMetaMap.values()]
+          .filter((meta) => meta.id !== sessionId && (meta.branchFromSessionId === sessionId || meta.parentSessionId === sessionId))
+          .map((meta) => {
+            const loaded = loadedSessions.has(meta.id) ? jotaiStore.get(sessionAtomFamily(meta.id)) : null
+            const fromMessageId = loaded?.branchFromMessageId
+            return {
+              id: meta.id,
+              name: meta.name || meta.preview || meta.id,
+              ...(fromMessageId ? { fromMessageId } : {}),
+            }
+          })
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
             <SessionWorkflowEditor
               sessionId={sessionId}
               messages={workbenchMessages}
+              relatedBranches={relatedBranches}
               onFork={handleWorkbenchFork}
               onRewrite={handleWorkbenchRewrite}
               onCreateChildSessions={handleCreateChildSessions}
               onOpenMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
+              onOpenSession={(id) => navigate(routes.view.allSessions(id))}
             />
           </div>
         )
@@ -736,6 +753,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       handleCreateChildSessions,
       handleInputChange,
       sessionMetaMap,
+      loadedSessions,
+      jotaiStore,
       activeWorkspaceId,
       session?.messages,
     ],

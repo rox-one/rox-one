@@ -28,7 +28,7 @@ export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
           className={cn(
             'mt-1 h-1.5 w-1.5 shrink-0 rounded-full',
             status === 'error' && 'bg-destructive',
-            status === 'pending' && 'bg-amber-400',
+            status === 'pending' && 'animate-pulse bg-amber-400',
             status === 'ok' && 'bg-emerald-500',
           )}
         />
