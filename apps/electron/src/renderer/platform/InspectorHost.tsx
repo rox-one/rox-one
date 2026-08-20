@@ -360,7 +360,7 @@ function ConnectionInfoSection() {
             <div className="font-mono text-[11px]" data-testid="connections-inspector-move-confirm-target">
               {formatConfirmLeases(selected, activeLeases)}
             </div>
-            <select>
+            <select
               className="rounded border bg-transparent px-2 py-1 font-mono text-[12px]"
               value={moveTarget}
               onChange={(event) => setMoveTarget(event.target.value === 'local-alt' ? 'local-alt' : MOVE_BACKENDS[0])}

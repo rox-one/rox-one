@@ -58,6 +58,14 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('binds inspector move backend picker props on the select, not as text children', () => {
+    expect(host).toMatch(/<select\s+className="rounded border bg-transparent px-2 py-1 font-mono text-\[12px\]"/)
+    expect(host).not.toMatch(/<select>\s+className=/)
+    expect(host).toContain('value={moveTarget}')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('loads metadata-only health, expiry, and provenance for the selected connection', () => {
     expect(host).toContain('inspectConnection')
     expect(host).toContain('projectConnectionInspect')
