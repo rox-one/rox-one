@@ -281,7 +281,7 @@ function getElectronEnv(): Record<string, string> {
 
   return {
     ...process.env as Record<string, string>,
-    VITE_DEV_SERVER_URL: `http://localhost:${vitePort}`,
+    VITE_DEV_SERVER_URL: `http://127.0.0.1:${vitePort}`,
     CRAFT_CONFIG_DIR: process.env.CRAFT_CONFIG_DIR || "",
     CRAFT_APP_NAME: process.env.CRAFT_APP_NAME || "Craft Agents",
     CRAFT_DEEPLINK_SCHEME: process.env.CRAFT_DEEPLINK_SCHEME || "craftagents",
