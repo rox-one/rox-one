@@ -1297,6 +1297,12 @@ export default function ConnectionsPage() {
                           <div className="font-mono text-xs" data-testid="connections-policy-version">{inspectById[row.id].versionId}</div>
                         </>
                       ) : null}
+                      {leasesById[row.id] ? (
+                        <>
+                          <div className="font-mono text-xs" data-testid="connections-policy-leases">{leasesById[row.id]}</div>
+                          <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
+                        </>
+                      ) : null}
                     </button>
                   </li>
                 ))}

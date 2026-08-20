@@ -111,6 +111,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty invalidated leases on policy connection rows without secret fields', () => {
+    expect(page).toContain('connections-policy-leases')
+    expect(page).toContain('leasesById[row.id]')
+    expect(page).toContain('connections.reconnectDone')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('selects a policy connection row into the inspector without renaming tabs', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
     expect(page.split('onClick={() => setSelected(row)}').length - 1).toBe(3)
