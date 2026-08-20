@@ -34,6 +34,7 @@ import {
   previewSshAgentImport,
   commitSshAgentImport,
   createConnectionGrant,
+  inspectConnectionMetadata,
   type CreateConnectionInput,
   type GithubFetch,
   type WorkGraphKernel,
@@ -48,6 +49,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workgraph.CONVERT_CONNECTION,
   RPC_CHANNELS.workgraph.REVOKE_CONNECTION_BINDING,
   RPC_CHANNELS.workgraph.GET_CONNECTION,
+  RPC_CHANNELS.workgraph.INSPECT_CONNECTION,
   RPC_CHANNELS.workgraph.CREATE_CONNECTION,
   RPC_CHANNELS.workgraph.GRANT_CONNECTION,
   RPC_CHANNELS.workgraph.MOVE_CONNECTION,
@@ -259,6 +261,19 @@ export function registerWorkGraphHandlers(
     (_ctx, input: { workspaceId: string; connectionId: string }) => (
       workGraph.getConnection(input.workspaceId, input.connectionId)
     ),
+    { access: 'localElectron' },
+  )
+  server.handle(
+    RPC_CHANNELS.workgraph.INSPECT_CONNECTION,
+    async (_ctx, input: { workspaceId: string; connectionId: string }) => {
+      if (!fabric) throw new Error('inspect_unavailable')
+      return inspectConnectionMetadata({
+        kernel: workGraph,
+        provider: fabric.provider,
+        workspaceId: input.workspaceId,
+        connectionId: input.connectionId,
+      })
+    },
     { access: 'localElectron' },
   )
   server.handle(

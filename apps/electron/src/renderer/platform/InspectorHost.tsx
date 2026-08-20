@@ -39,7 +39,7 @@ import { isConnectionsNavigation, useNavigationState } from '@/contexts/Navigati
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
-import { projectConnectionInspector } from './connection-inspector-model'
+import { projectConnectionInspect, projectConnectionInspector } from './connection-inspector-model'
 import {
   INSPECTOR_LIVE_SECTIONS,
   INSPECTOR_SECTION_IDS,
@@ -84,11 +84,13 @@ function ConnectionInfoSection() {
   const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string }>>([])
   const [testLogin, setTestLogin] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
+  const [inspect, setInspect] = useState<ReturnType<typeof projectConnectionInspect> | null>(null)
   useEffect(() => {
     if (!selected) {
       setConsumers([])
       setTestLogin('')
       setActionError(null)
+      setInspect(null)
       return
     }
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
@@ -107,6 +109,29 @@ function ConnectionInfoSection() {
       })
       .catch((err) => {
         if (!stale) setActionError(errorMessage(err))
+      })
+    return () => {
+      stale = true
+    }
+  }, [selected])
+
+  useEffect(() => {
+    if (!selected) return
+    const inspectConnection = window.electronAPI?.workgraph?.inspectConnection
+    if (typeof inspectConnection !== 'function') {
+      setInspect(null)
+      return
+    }
+    let stale = false
+    inspectConnection({ workspaceId: selected.workspaceId, connectionId: selected.id })
+      .then((raw) => {
+        if (!stale) setInspect(projectConnectionInspect(raw))
+      })
+      .catch((err) => {
+        if (!stale) {
+          setInspect(null)
+          setActionError(errorMessage(err))
+        }
       })
     return () => {
       stale = true
@@ -133,6 +158,18 @@ function ConnectionInfoSection() {
       <InfoRow label={t('inspector.field.storageMode')} value={fields.storageMode} mono />
       <InfoRow label={t('inspector.field.credentialRef')} value={fields.credentialRef} mono />
       <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
+      {inspect ? (
+        <>
+          <div data-testid="connections-inspector-health">
+            <InfoRow label={t('inspector.field.health')} value={inspect.health} />
+          </div>
+          <InfoRow label={t('inspector.field.expiry')} value={inspect.expiry} mono />
+          <InfoRow label={t('inspector.field.provenance')} value={inspect.provenance} mono />
+          <InfoRow label={t('inspector.field.fingerprint')} value={inspect.fingerprint} mono />
+          <InfoRow label={t('inspector.field.credentialKind')} value={inspect.credentialKind} mono />
+          <InfoRow label={t('inspector.field.versionId')} value={inspect.versionId} mono />
+        </>
+      ) : null}
       {testLogin ? <InfoRow label={t('inspector.field.testLogin')} value={testLogin} mono /> : null}
       {consumers.length > 0 ? (
         <InfoRow

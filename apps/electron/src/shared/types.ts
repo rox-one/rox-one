@@ -740,6 +740,19 @@ export interface ElectronAPI {
       bindingId: string
     }): Promise<{ consumers: Array<{ consumerId: string; status: string }> }>
     getConnection(args: { workspaceId: string; connectionId: string }): Promise<WorkGraphConnectionRecord | null>
+    inspectConnection(input: {
+      workspaceId: string
+      connectionId: string
+    }): Promise<{
+      connectionId: string
+      credentialRefId: string
+      health: string
+      expiry: string
+      provenance: string
+      fingerprint: string
+      kind: string
+      versionId: string
+    }>
     createConnection(input: {
       workspaceId: string
       integrationId: string

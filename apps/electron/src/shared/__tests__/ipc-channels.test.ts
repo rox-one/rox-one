@@ -580,6 +580,7 @@ const EXPECTED_CHANNELS: string[] = [
   'workgraph:importGithubEnv',
   'workgraph:importKeychain',
   'workgraph:importSshAgent',
+  'workgraph:inspectConnection',
   'workgraph:listConnectionAudit',
   'workgraph:listConnectionBindings',
   'workgraph:listConnections',

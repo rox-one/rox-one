@@ -1,10 +1,16 @@
-import { sanitizeConnectionRows } from '../pages/connections-list'
+import { sanitizeConnectionInspect, sanitizeConnectionRows } from '../pages/connections-list'
 
 export const CONNECTION_INSPECTOR_FIELD_IDS = [
   'provider',
   'storageMode',
   'credentialRef',
   'scopes',
+  'health',
+  'expiry',
+  'provenance',
+  'fingerprint',
+  'credentialKind',
+  'versionId',
 ] as const
 
 export interface ConnectionInspectorFields {
@@ -12,6 +18,15 @@ export interface ConnectionInspectorFields {
   readonly storageMode: string
   readonly credentialRef: string
   readonly scopes: string
+}
+
+export interface ConnectionInspectFields {
+  readonly health: string
+  readonly expiry: string
+  readonly provenance: string
+  readonly fingerprint: string
+  readonly credentialKind: string
+  readonly versionId: string
 }
 
 export function projectConnectionInspector(row: unknown): ConnectionInspectorFields {
@@ -22,5 +37,17 @@ export function projectConnectionInspector(row: unknown): ConnectionInspectorFie
     storageMode: sanitized.storageMode,
     credentialRef: sanitized.credentialRefId,
     scopes: sanitized.scopes.length > 0 ? sanitized.scopes.join(', ') : '—',
+  }
+}
+
+export function projectConnectionInspect(row: unknown): ConnectionInspectFields {
+  const sanitized = sanitizeConnectionInspect(row)
+  return {
+    health: sanitized.health,
+    expiry: sanitized.expiry,
+    provenance: sanitized.provenance,
+    fingerprint: sanitized.fingerprint,
+    credentialKind: sanitized.kind,
+    versionId: sanitized.versionId,
   }
 }

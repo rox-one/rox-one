@@ -55,4 +55,16 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('loads metadata-only health, expiry, and provenance for the selected connection', () => {
+    expect(host).toContain('inspectConnection')
+    expect(host).toContain('projectConnectionInspect')
+    expect(host).toContain('inspector.field.health')
+    expect(host).toContain('inspector.field.expiry')
+    expect(host).toContain('inspector.field.provenance')
+    expect(host).toContain('inspector.field.fingerprint')
+    expect(host).toContain('connections-inspector-health')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })

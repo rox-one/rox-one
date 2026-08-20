@@ -83,6 +83,58 @@ export function sanitizeConnectionBindingRows(rows: readonly unknown[]): Connect
   })
 }
 
+export interface ConnectionInspectRow {
+  readonly connectionId: string
+  readonly credentialRefId: string
+  readonly health: string
+  readonly expiry: string
+  readonly provenance: string
+  readonly fingerprint: string
+  readonly kind: string
+  readonly versionId: string
+}
+
+const INSPECT_KEYS = new Set([
+  'connectionId',
+  'credentialRefId',
+  'health',
+  'expiry',
+  'provenance',
+  'fingerprint',
+  'kind',
+  'versionId',
+])
+
+export function sanitizeConnectionInspect(row: unknown): ConnectionInspectRow {
+  if (!row || typeof row !== 'object') throw new Error('Invalid connection inspect metadata')
+  const rec = row as Record<string, unknown>
+  for (const key of Object.keys(rec)) {
+    if (FORBIDDEN.has(key)) throw new Error(`Invalid connection metadata field: ${key}`)
+    if (!INSPECT_KEYS.has(key)) throw new Error(`Invalid connection metadata field: ${key}`)
+  }
+  const connectionId = rec.connectionId
+  const credentialRefId = rec.credentialRefId
+  const health = rec.health
+  const expiry = rec.expiry
+  const provenance = rec.provenance
+  const fingerprint = rec.fingerprint
+  const kind = rec.kind
+  const versionId = rec.versionId
+  if (
+    typeof connectionId !== 'string'
+    || typeof credentialRefId !== 'string'
+    || typeof health !== 'string'
+    || typeof expiry !== 'string'
+    || typeof provenance !== 'string'
+    || typeof fingerprint !== 'string'
+    || typeof kind !== 'string'
+    || typeof versionId !== 'string'
+  ) {
+    throw new Error('Invalid connection inspect metadata')
+  }
+  return { connectionId, credentialRefId, health, expiry, provenance, fingerprint, kind, versionId }
+}
+
 export function sanitizeConnectionRows(rows: readonly unknown[]): ConnectionListRow[] {
   return rows.map((row) => {
     if (!row || typeof row !== 'object') throw new Error('Invalid connection metadata')

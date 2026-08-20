@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { sanitizeConnectionAuditRows, sanitizeConnectionRows } from '../connections-list'
+import { sanitizeConnectionAuditRows, sanitizeConnectionInspect, sanitizeConnectionRows } from '../connections-list'
 
 describe('CF-6.3 connection list sanitizer', () => {
   it('keeps metadata fields and rejects secret fields', () => {
@@ -87,5 +87,32 @@ describe('CF-6.3 connection list sanitizer', () => {
       payloadDigest: 'abc',
       payload: 'super-secret',
     }])).toThrow(/payload/)
+  })
+
+  it('keeps inspect metadata and rejects secret fields', () => {
+    const row = sanitizeConnectionInspect({
+      connectionId: 'c1',
+      credentialRefId: 'cred_123e4567-e89b-12d3-a456-426614174000',
+      health: 'healthy',
+      expiry: '2027-01-15T00:00:00.000Z',
+      provenance: 'local-file/memory',
+      fingerprint: 'a'.repeat(64),
+      kind: 'bearer_token',
+      versionId: 'ver_1',
+    })
+    expect(row.health).toBe('healthy')
+    expect(row.provenance).toBe('local-file/memory')
+    expect(JSON.stringify(row)).not.toContain('super-secret')
+    expect(() => sanitizeConnectionInspect({
+      connectionId: 'c1',
+      credentialRefId: 'cred_123e4567-e89b-12d3-a456-426614174000',
+      health: 'healthy',
+      expiry: '—',
+      provenance: 'local-file/memory',
+      fingerprint: 'a'.repeat(64),
+      kind: 'bearer_token',
+      versionId: 'ver_1',
+      token: 'super-secret',
+    })).toThrow(/token/)
   })
 })

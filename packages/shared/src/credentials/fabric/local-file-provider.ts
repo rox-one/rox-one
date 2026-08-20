@@ -40,6 +40,7 @@ export class LocalFileSecretProvider implements SecretProvider {
     locator: ProviderLocator;
     payload: StoredCredential;
     copyPayload?: boolean;
+    expiresAt?: number;
   }): Promise<{ ref: CredentialRef; version: import('@craft-agent/core/platform').CredentialVersion }> {
     const conflictKey = input.locator.type === 'local' ? input.locator.key : JSON.stringify(input.locator);
     const fingerprint = credentialPayloadFingerprint(input.kind, input.payload);
@@ -57,6 +58,7 @@ export class LocalFileSecretProvider implements SecretProvider {
       credentialRefId: ref.id,
       codec: 'stored-credential/v1',
       fingerprint,
+      ...(input.expiresAt !== undefined ? { expiresAt: input.expiresAt } : {}),
     });
     if (input.copyPayload !== false) {
       const id: CredentialId = { type: 'source_apikey', workspaceId: 'fabric', sourceId: ref.id };
@@ -69,14 +71,27 @@ export class LocalFileSecretProvider implements SecretProvider {
 
   async inspect(ref: CredentialRef): Promise<ProviderCredentialMetadata> {
     const copy = this.copies.get(ref.id);
+    const versions = this.registry.listVersions(ref.id)
+    const current = versions.find((version) => version.status === 'active') ?? versions[0]
     if (!copy) {
-      return { credentialRefId: ref.id, kind: ref.kind, fingerprint: '', status: 'missing' };
+      return {
+        credentialRefId: ref.id,
+        kind: ref.kind,
+        fingerprint: current?.fingerprint ?? '',
+        status: 'missing',
+        backend: undefined,
+        expiresAt: current?.expiresAt ?? null,
+        versionId: current?.id,
+      };
     }
     return {
       credentialRefId: ref.id,
       kind: copy.kind,
       fingerprint: credentialPayloadFingerprint(copy.kind, copy.payload),
       status: 'active',
+      backend: copy.backend.name,
+      expiresAt: current?.expiresAt ?? null,
+      versionId: current?.id,
     };
   }
 

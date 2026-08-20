@@ -45,6 +45,9 @@ export interface ProviderCredentialMetadata {
   readonly kind: CredentialKind;
   readonly fingerprint: string;
   readonly status: 'active' | 'revoked' | 'missing';
+  readonly backend?: string;
+  readonly expiresAt?: number | null;
+  readonly versionId?: string;
 }
 
 export interface ProviderMaterialization {

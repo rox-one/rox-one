@@ -1145,3 +1145,5 @@ export {
 } from './local-imports.ts'
 export type { LocalImportPreview } from './local-imports.ts'
 export { createConnectionGrant } from './create-grant.ts'
+export { inspectConnectionMetadata } from './inspect-connection.ts'
+export type { ConnectionInspectRecord } from './inspect-connection.ts'
