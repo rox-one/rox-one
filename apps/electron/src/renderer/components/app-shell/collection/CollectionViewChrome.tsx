@@ -17,6 +17,7 @@ import {
 import { type CollectionViewMode } from '../kanban/BoardListToggle'
 import { CollectionDisplayPopover } from './CollectionDisplayPopover'
 import { CollectionFilterMenu } from './CollectionFilterMenu'
+import { CollectionGroupByMenu } from './CollectionGroupByMenu'
 import { CollectionOpsBar } from './CollectionOpsBar'
 import { CollectionViewCycleButton } from './CollectionViewCycleButton'
 import { cn } from '@/lib/utils'
@@ -104,6 +105,7 @@ export function CollectionViewChrome({
     return (
       <div className={cn('inline-flex items-center gap-1.5', className)}>
         {cycle}
+        <CollectionGroupByMenu display={display} onDisplayChange={handleDisplayChange} />
         <CollectionDisplayPopover display={display} onDisplayChange={handleDisplayChange} iconOnly />
         <CollectionFilterMenu
           filters={filters}

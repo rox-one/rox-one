@@ -18,6 +18,7 @@ import {
   CollectionMenuRow,
   CollectionMenuSection,
 } from './collection-menu-row'
+import { COLLECTION_POPOVER_SURFACE } from './collection-menu-surface'
 
 export interface CollectionDisplayPopoverProps {
   display: CollectionDisplay
@@ -110,11 +111,12 @@ export function CollectionDisplayPopover({
         align="end"
         role="dialog"
         aria-label={t('collection.display.trigger')}
-        className="w-64 max-h-[70vh] overflow-y-auto p-1"
+        className={COLLECTION_POPOVER_SURFACE}
       >
         <CollectionMenuDisclosure
           label={t('collection.display.groupByLabel')}
           valueLabel={t(GROUP_I18N[display.groupBy])}
+          defaultOpen
         >
           {COLLECTION_GROUP_BY_VALUES.map((value) => (
             <CollectionMenuRadioRow

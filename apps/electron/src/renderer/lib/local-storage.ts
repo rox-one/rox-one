@@ -89,6 +89,7 @@ export const KEYS = {
   workbenchLayout: 'workbench-layout', // WorkbenchLayout v2 JSON, workspace-scoped
   // Last collection layout origin (list/board/table) for Shift+click back
   collectionLastView: 'collection-last-view',
+  collectionSlices: 'collection-slices',
   // Panel registry user overrides (S-03 §3.7), workspace-scoped via suffix
   panelState: 'panel-registry-state',
 } as const

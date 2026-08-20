@@ -7,6 +7,21 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils'
 import { CollectionFilterChips } from './CollectionFilterChips'
 import { activeFilterCount } from './collection-filter-count'
+import { COLLECTION_POPOVER_SURFACE } from './collection-menu-surface'
+import {
+  CollectionMenuRadioRow,
+  CollectionMenuRow,
+  CollectionMenuSection,
+} from './collection-menu-row'
+import {
+  applySlice,
+  BUILTIN_SLICES,
+  createSavedSlice,
+  loadSavedSlices,
+  matchingSliceId,
+  persistSavedSlices,
+  type CollectionSlice,
+} from './collection-slices'
 
 export interface CollectionFilterMenuProps {
   filters: CollectionFilters
@@ -29,7 +44,27 @@ export function CollectionFilterMenu({
 }: CollectionFilterMenuProps) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
+  const [saved, setSaved] = React.useState<CollectionSlice[]>(() => loadSavedSlices())
+  const [saving, setSaving] = React.useState(false)
+  const [name, setName] = React.useState('')
   const count = activeFilterCount(filters)
+  const activeSlice = matchingSliceId(filters, saved)
+
+  const commitSave = () => {
+    const trimmed = name.trim()
+    if (!trimmed || count === 0) return
+    const next = [...saved, createSavedSlice(trimmed, filters)]
+    persistSavedSlices(next)
+    setSaved(next)
+    setName('')
+    setSaving(false)
+  }
+
+  const removeSaved = (id: string) => {
+    const next = saved.filter((slice) => slice.id !== id)
+    persistSavedSlices(next)
+    setSaved(next)
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,8 +93,79 @@ export function CollectionFilterMenu({
         align="end"
         role="dialog"
         aria-label={t('collection.filter.trigger')}
-        className="w-64 max-h-[70vh] overflow-y-auto p-1"
+        className={COLLECTION_POPOVER_SURFACE}
       >
+        <CollectionMenuSection label={t('collection.slice.saved')}>
+          {BUILTIN_SLICES.map((slice) => (
+            <CollectionMenuRadioRow
+              key={slice.id}
+              selected={activeSlice === slice.id}
+              label={t(slice.nameKey!)}
+              onClick={() => onFiltersChange(applySlice(filters, slice))}
+            />
+          ))}
+          {saved.map((slice) => (
+            <CollectionMenuRow
+              key={slice.id}
+              selected={activeSlice === slice.id}
+              label={slice.name ?? slice.id}
+              onClick={() => onFiltersChange(applySlice(filters, slice))}
+              trailing={
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className="text-[10px] text-muted-foreground hover:text-foreground"
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    removeSaved(slice.id)
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault()
+                      event.stopPropagation()
+                      removeSaved(slice.id)
+                    }
+                  }}
+                >
+                  {t('collection.filter.clear')}
+                </span>
+              }
+            />
+          ))}
+          {count > 0 && !saving && (
+            <button
+              type="button"
+              className="mx-1 mt-0.5 h-7 rounded-[5px] px-2 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.055] hover:text-foreground"
+              onClick={() => setSaving(true)}
+            >
+              {t('collection.slice.save')}
+            </button>
+          )}
+          {saving && (
+            <form
+              className="mx-1 mt-0.5 flex gap-1"
+              onSubmit={(event) => {
+                event.preventDefault()
+                commitSave()
+              }}
+            >
+              <input
+                autoFocus
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder={t('collection.slice.savePlaceholder')}
+                className="h-7 min-w-0 flex-1 rounded-[5px] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none placeholder:text-muted-foreground/70 focus:border-foreground/25"
+              />
+              <button
+                type="submit"
+                className="h-7 rounded-[5px] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]"
+              >
+                {t('collection.slice.save')}
+              </button>
+            </form>
+          )}
+        </CollectionMenuSection>
+        <div className="mx-1 my-1 h-px bg-foreground/8" />
         <CollectionFilterChips
           filters={filters}
           onFiltersChange={onFiltersChange}
