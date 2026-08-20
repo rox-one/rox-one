@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { groupHeaderCount } from '../entity-list'
+import { groupHeaderCount, selectGroupDisabled } from '../entity-list'
 
 describe('groupHeaderCount', () => {
   it('uses live item length when expanded', () => {
@@ -12,5 +12,15 @@ describe('groupHeaderCount', () => {
 
   it('falls back to zero when collapsed without a count', () => {
     expect(groupHeaderCount(true, 0)).toBe(0)
+  })
+})
+
+describe('selectGroupDisabled', () => {
+  it('disables empty groups', () => {
+    expect(selectGroupDisabled(0)).toBe(true)
+  })
+
+  it('enables groups with loaded items', () => {
+    expect(selectGroupDisabled(3)).toBe(false)
   })
 })

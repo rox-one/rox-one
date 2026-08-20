@@ -1040,7 +1040,7 @@ export function SessionList({
 
   const handleSelectGroup = useCallback((groupKey: string) => {
     const group = rowData.groups?.find((g) => g.key === groupKey)
-    if (!group) return
+    if (!group || group.items.length === 0) return
     addToSelection(group.items.map((row) => row.item.id))
   }, [addToSelection, rowData.groups])
 
