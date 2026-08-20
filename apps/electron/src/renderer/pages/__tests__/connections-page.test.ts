@@ -60,6 +60,13 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('data-testid="connections-row"')
   })
 
+  it('shows scopes on service rows without secret fields', () => {
+    expect(page).toContain('connections-row-scopes')
+    expect(page).toContain('row.scopes.join')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('tests a listed GitHub connection without exposing secret fields', () => {
     expect(page).toContain('testConnection')
     expect(page).toContain('connections.test')
@@ -132,6 +139,15 @@ describe('CF-6.2 ConnectionsPage', () => {
   it('shows grant actions on policy binding rows without secret fields', () => {
     expect(page).toContain('connections-binding-actions')
     expect(page).toContain('row.actions.join')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('shows grant consumer and purpose on policy binding rows without secret fields', () => {
+    expect(page).toContain('connections-binding-consumer')
+    expect(page).toContain('connections-binding-purpose')
+    expect(page).toContain('row.consumerId')
+    expect(page).toContain('row.purpose')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
