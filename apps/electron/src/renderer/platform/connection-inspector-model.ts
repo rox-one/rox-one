@@ -51,3 +51,19 @@ export function projectConnectionInspect(row: unknown): ConnectionInspectFields 
     versionId: sanitized.versionId,
   }
 }
+
+const STALE_HEALTH = new Set([
+  'expired',
+  'missing',
+  'revoked',
+  'unavailable',
+  'repair_required',
+  'denied',
+])
+
+export function isStaleInspect(fields: ConnectionInspectFields, now = Date.now()): boolean {
+  if (STALE_HEALTH.has(fields.health)) return true
+  if (fields.expiry === '—') return false
+  const expiresAt = Date.parse(fields.expiry)
+  return Number.isFinite(expiresAt) && expiresAt < now
+}

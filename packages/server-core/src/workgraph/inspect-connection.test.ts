@@ -120,6 +120,38 @@ describe('inspectConnectionMetadata', () => {
     await kernel.close()
   })
 
+  nativeIt('marks a past expiry as expired health', async () => {
+    const registry = new CredentialRefRegistry()
+    const provider = new LocalFileSecretProvider(new MemoryBackend(), registry)
+    const written = await provider.write({
+      kind: 'bearer_token',
+      locator: { type: 'local', key: 'github/default' },
+      payload: { value: 'super-secret' },
+      expiresAt: Date.UTC(2020, 0, 1),
+    })
+    const kernel = createWorkGraphKernel({
+      configDir: createRoot(),
+      platform: { platform: 'darwin', arch: 'arm64' },
+    })
+    await kernel.getHealth()
+    const connection = await kernel.createConnection({
+      workspaceId: 'workspace_a',
+      integrationId: 'github',
+      credentialRefId: written.ref.id,
+      storageMode: 'copy',
+    })
+    const inspected = await inspectConnectionMetadata({
+      kernel,
+      provider,
+      workspaceId: 'workspace_a',
+      connectionId: connection.id,
+    })
+    expect(inspected.health).toBe('expired')
+    expect(inspected.expiry).toBe(new Date(Date.UTC(2020, 0, 1)).toISOString())
+    expect(JSON.stringify(inspected)).not.toContain('super-secret')
+    await kernel.close()
+  })
+
   nativeIt('rejects an unknown connection', async () => {
     const registry = new CredentialRefRegistry()
     const provider = new LocalFileSecretProvider(new MemoryBackend(), registry)

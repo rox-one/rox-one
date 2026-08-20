@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import {
   CONNECTION_INSPECTOR_FIELD_IDS,
+  isStaleInspect,
   projectConnectionInspect,
   projectConnectionInspector,
 } from '../connection-inspector-model'
@@ -77,5 +78,26 @@ describe('CF-6.4 connection inspector projection', () => {
       versionId: 'ver_1',
       value: 'super-secret',
     })).toThrow(/value/)
+  })
+
+  it('treats expired, missing, revoked, and unavailable inspect as stale', () => {
+    const healthy = projectConnectionInspect({
+      connectionId: 'c1',
+      credentialRefId: ROW.credentialRefId,
+      health: 'healthy',
+      expiry: '2099-01-01T00:00:00.000Z',
+      provenance: 'local-file/memory',
+      fingerprint: 'a'.repeat(64),
+      kind: 'bearer_token',
+      versionId: 'ver_1',
+    })
+    expect(isStaleInspect(healthy)).toBe(false)
+    expect(isStaleInspect({ ...healthy, health: 'expired' })).toBe(true)
+    expect(isStaleInspect({ ...healthy, health: 'missing' })).toBe(true)
+    expect(isStaleInspect({ ...healthy, health: 'revoked' })).toBe(true)
+    expect(isStaleInspect({ ...healthy, health: 'unavailable' })).toBe(true)
+    expect(isStaleInspect({ ...healthy, health: 'repair_required' })).toBe(true)
+    expect(isStaleInspect({ ...healthy, expiry: '2000-01-01T00:00:00.000Z' })).toBe(true)
+    expect(JSON.stringify(healthy)).not.toMatch(/"token"|"secret"|"payload"|"value"|refreshToken/i)
   })
 })

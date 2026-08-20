@@ -46,9 +46,12 @@ export async function inspectConnectionMetadata(input: {
     versionId?: string
   }
   const providerHealth = await input.provider.health()
+  const expired = typeof inspected.expiresAt === 'number' && inspected.expiresAt < Date.now()
   const health = inspected.status === 'missing' || inspected.status === 'revoked'
     ? inspected.status
-    : providerHealth.status
+    : expired
+      ? 'expired'
+      : providerHealth.status
   const expiry = typeof inspected.expiresAt === 'number'
     ? new Date(inspected.expiresAt).toISOString()
     : '—'

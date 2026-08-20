@@ -34,12 +34,12 @@ import {
 } from '@/atoms/unified-shell'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { sanitizeConnectionBindingRows } from '@/pages/connections-list'
-import { MOVE_BACKENDS, errorMessage, type MoveBackend } from '@/pages/connections-ui'
+import { MOVE_BACKENDS, errorMessage, formatConfirmTargets, type MoveBackend } from '@/pages/connections-ui'
 import { isConnectionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
-import { projectConnectionInspect, projectConnectionInspector } from './connection-inspector-model'
+import { isStaleInspect, projectConnectionInspect, projectConnectionInspector } from './connection-inspector-model'
 import {
   INSPECTOR_LIVE_SECTIONS,
   INSPECTOR_SECTION_IDS,
@@ -80,6 +80,7 @@ function ConnectionInfoSection() {
   const selected = useAtomValue(selectedConnectionAtom)
   const [confirmRotate, setConfirmRotate] = useState(false)
   const [confirmMove, setConfirmMove] = useState(false)
+  const [confirmReconnect, setConfirmReconnect] = useState(false)
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
   const [consumers, setConsumers] = useState<Array<{ consumerId: string; status: string }>>([])
   const [testLogin, setTestLogin] = useState('')
@@ -91,6 +92,7 @@ function ConnectionInfoSection() {
       setTestLogin('')
       setActionError(null)
       setInspect(null)
+      setConfirmReconnect(false)
       return
     }
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
@@ -179,6 +181,55 @@ function ConnectionInfoSection() {
       ) : null}
       {actionError ? (
         <p className="px-3 py-2 text-[12px]" data-testid="connections-inspector-error">{actionError}</p>
+      ) : null}
+      {inspect && isStaleInspect(inspect) ? (
+        <div className="flex flex-col gap-1 px-3 py-2" data-testid="connections-inspector-reconnect">
+          <p className="text-[12px] text-muted-foreground">{t('connections.reconnectHint')}</p>
+          {confirmReconnect ? (
+            <>
+              <div className="font-mono text-[11px]" data-testid="connections-reconnect-confirm-target">
+                {formatConfirmTargets(selected, consumers.map((row) => row.consumerId))}
+              </div>
+              <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
+              <div className="flex flex-wrap gap-1">
+                <button
+                  type="button"
+                  className="rounded border px-2 py-1 text-[12px]"
+                  onClick={async () => {
+                    const reconnectConnection = window.electronAPI?.workgraph?.reconnectConnection
+                    if (!workspaceId || typeof reconnectConnection !== 'function') return
+                    try {
+                      setActionError(null)
+                      const result = await reconnectConnection({ workspaceId, connectionId: selected.id })
+                      setConsumers(result.consumers)
+                      setInspect(projectConnectionInspect(result.inspect))
+                      setConfirmReconnect(false)
+                    } catch (err) {
+                      setActionError(errorMessage(err))
+                    }
+                  }}
+                >
+                  {t('connections.reconnectConfirm')}
+                </button>
+                <button
+                  type="button"
+                  className="rounded border px-2 py-1 text-[12px]"
+                  onClick={() => setConfirmReconnect(false)}
+                >
+                  {t('connections.reconnectCancel')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-[12px]"
+              onClick={() => setConfirmReconnect(true)}
+            >
+              {t('connections.reconnect')}
+            </button>
+          )}
+        </div>
       ) : null}
       <div className="flex flex-wrap gap-1 px-3 py-2">
         <button
