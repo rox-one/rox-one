@@ -177,6 +177,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('selects the granted connection from a policy binding row into the inspector', () => {
+    expect(page).toContain('connections-binding-row')
+    expect(page).toContain('importedConnectionFromList(listed, row.connectionId)')
+    expect(page).toContain('aria-selected={selected?.id === row.connectionId}')
+    expect(page).toContain('selectedConnectionAtom')
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('labels policy binding grant fields through i18n without renaming tabs', () => {
     expect(page.split("t('connections.grantConsumer')").length - 1).toBe(2)
     expect(page.split("t('connections.grantPurpose')").length - 1).toBe(2)

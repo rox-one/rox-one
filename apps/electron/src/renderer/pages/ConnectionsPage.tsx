@@ -1284,7 +1284,16 @@ export default function ConnectionsPage() {
               <ul className="space-y-2">
                 {bindingRows.map((row) => (
                   <li key={row.id} className="flex items-center gap-2 rounded border px-3 py-2">
-                    <div className="min-w-0 flex-1">
+                    <button
+                      type="button"
+                      data-testid="connections-binding-row"
+                      aria-selected={selected?.id === row.connectionId}
+                      className={`min-w-0 flex-1 rounded px-1 py-1 text-left ${selected?.id === row.connectionId ? 'bg-accent/10' : ''}`}
+                      onClick={() => {
+                        const next = importedConnectionFromList(listed, row.connectionId)
+                        if (next) setSelected(next)
+                      }}
+                    >
                       <div data-testid="connections-binding-consumer">
                         <div className="text-[11px] text-muted-foreground">{t('connections.grantConsumer')}</div>
                         <div className="font-medium">{row.consumerId}</div>
@@ -1301,7 +1310,7 @@ export default function ConnectionsPage() {
                         <div className="text-[11px] text-muted-foreground">{t('connections.grantResources')}</div>
                         <div className="font-mono text-xs">{row.resources.join(', ') || '—'}</div>
                       </div>
-                    </div>
+                    </button>
                     {unbindingId === row.id ? (
                       <div className="flex gap-1">
                         <button type="button" className="rounded border px-2 py-1" onClick={() => confirmUnbind(row.id)}>
