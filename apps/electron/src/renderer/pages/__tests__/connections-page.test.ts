@@ -277,6 +277,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('auto-polls GitHub device login on the start interval without a bearer', () => {
+    expect(page).toContain('devicePollDelayMs')
+    expect(page).toContain('setTimeout')
+    expect(page).toContain('clearTimeout')
+    expect(page).not.toContain('accessToken')
+    expect(page).not.toContain('deviceCode')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
 
 

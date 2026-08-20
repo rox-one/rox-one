@@ -27,6 +27,7 @@ import {
   removeCommittedPreview,
   sanitizeDeviceLoginStart,
   sanitizeDevicePoll,
+  devicePollDelayMs,
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
@@ -192,6 +193,33 @@ export default function ConnectionsPage() {
       setListError(errorMessage(err))
     }
   }
+
+  useEffect(() => {
+    if (!deviceLogin || importError) return
+    const delay = devicePollDelayMs(devicePoll ?? { interval: deviceLogin.interval, status: 'pending' })
+    if (delay == null) return
+    const workspaceId = workspace?.id
+    const pollGithubDeviceLogin = window.electronAPI?.workgraph?.pollGithubDeviceLogin
+    if (!workspaceId || typeof pollGithubDeviceLogin !== 'function') return
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          const next = sanitizeDevicePoll(await pollGithubDeviceLogin({
+            flowId: deviceLogin.flowId,
+            workspaceId,
+          }))
+          setDevicePoll(next)
+          if (next.status === 'imported') {
+            setDeviceLogin(null)
+            await refreshRows(workspaceId)
+          }
+        } catch (err) {
+          setImportError(errorMessage(err))
+        }
+      })()
+    }, delay)
+    return () => window.clearTimeout(timer)
+  }, [deviceLogin, devicePoll, importError, workspace?.id])
 
   const runPreview = async (
     source: PreviewSource,

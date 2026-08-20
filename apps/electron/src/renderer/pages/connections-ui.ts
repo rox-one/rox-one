@@ -216,3 +216,15 @@ export function sanitizeDevicePoll(raw: unknown): DevicePollView {
   }
   return { status: rec.status }
 }
+
+const TERMINAL_DEVICE_POLL = new Set(['denied', 'expired', 'imported'])
+
+export function devicePollDelayMs(input: {
+  readonly status?: string
+  readonly interval?: number
+}): number | null {
+  if (input.status && TERMINAL_DEVICE_POLL.has(input.status)) return null
+  const seconds = input.interval
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds) || seconds <= 0) return 5_000
+  return Math.min(60_000, Math.max(1_000, Math.round(seconds * 1000)))
+}

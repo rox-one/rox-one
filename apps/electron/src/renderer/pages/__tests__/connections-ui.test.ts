@@ -17,6 +17,7 @@ import {
   removeCommittedPreview,
   sanitizeDeviceLoginStart,
   sanitizeDevicePoll,
+  devicePollDelayMs,
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
@@ -209,5 +210,16 @@ describe('CF-6 Connections UI helpers', () => {
       status: 'approved',
       accessToken: 'gho_super-secret',
     })).toThrow(/accessToken|approved/)
+  })
+
+  it('schedules GitHub device poll delays and stops on a terminal status', () => {
+    expect(devicePollDelayMs({ interval: 5 })).toBe(5_000)
+    expect(devicePollDelayMs({ status: 'pending', interval: 5 })).toBe(5_000)
+    expect(devicePollDelayMs({ status: 'slow_down', interval: 8 })).toBe(8_000)
+    expect(devicePollDelayMs({ status: 'pending' })).toBe(5_000)
+    expect(devicePollDelayMs({ status: 'imported', connectionId: 'c1' })).toBeNull()
+    expect(devicePollDelayMs({ status: 'denied' })).toBeNull()
+    expect(devicePollDelayMs({ status: 'expired' })).toBeNull()
+    expect(JSON.stringify({ interval: 5 })).not.toMatch(/accessToken|deviceCode/)
   })
 })
