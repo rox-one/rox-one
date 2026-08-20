@@ -218,6 +218,7 @@ export const CHANNEL_MAP = {
   extensionHostLoad: invoke(RPC_CHANNELS.extensionHost.LOAD),
   extensionHostCall: invoke(RPC_CHANNELS.extensionHost.CALL),
   extensionHostListCommands: invoke(RPC_CHANNELS.extensionHost.LIST_COMMANDS),
+  extensionHostListCapabilities: invoke(RPC_CHANNELS.extensionHost.LIST_CAPABILITIES),
   extensionHostMintCapability: invoke(RPC_CHANNELS.extensionHost.MINT_CAPABILITY),
   extensionHostRevokeCapability: invoke(RPC_CHANNELS.extensionHost.REVOKE_CAPABILITY),
   extensionHostProxyFetch: invoke(RPC_CHANNELS.extensionHost.PROXY_FETCH),

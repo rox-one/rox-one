@@ -727,12 +727,13 @@ describe('ExtensionHostManager', () => {
 
     // No setUrlAllowlist → durable empty for this extension.
     const { forkFn } = createInProcessFork(tmp)
-    const broker = new CapabilityBroker()
+    const broker = new CapabilityBroker({ requireUrlAllowlist: false })
     const mgr = new ExtensionHostManager({
       forkFn,
       configDir: tmp,
       workerPath: '/virtual/worker.cjs',
       broker,
+      requireUrlAllowlist: false,
     })
     await mgr.start()
     await mgr.loadExtension('net-open', entry, ['network.request'])
@@ -1098,4 +1099,121 @@ export async function mintSelf() {
     } finally {
       rmSync(tmp, { recursive: true, force: true })
     }
+})
+
+describe('ExtensionHostManager capability ledger / prod allowlist', () => {
+  let tmp: string
+
+  afterEach(() => {
+    resetUrlAllowlistCacheForTests()
+    if (tmp) {
+      try {
+        rmSync(tmp, { recursive: true, force: true })
+      } catch {
+        // ignore
+      }
+    }
+  })
+
+  it('requireUrlAllowlist rejects proxyFetch with empty prefixes', async () => {
+    tmp = mkdtempSync(join(tmpdir(), 'eh-'))
+    const sandbox = join(tmp, 'extensions', 'sandbox', 'strict-net')
+    mkdirSync(sandbox, { recursive: true })
+    const entry = join(sandbox, 'index.mjs')
+    writeFileSync(entry, 'export function ping() { return 1 }\n')
+
+    const { forkFn } = createInProcessFork(tmp)
+    const broker = new CapabilityBroker({ persistDir: tmp, requireUrlAllowlist: true })
+    const mgr = new ExtensionHostManager({
+      forkFn,
+      configDir: tmp,
+      workerPath: '/virtual/worker.cjs',
+      broker,
+      requireUrlAllowlist: true,
+    })
+    await mgr.start()
+    await mgr.loadExtension('strict-net', entry, ['network.request'])
+    const minted = mgr.mintCapability({
+      extensionId: 'strict-net',
+      permission: 'network.request',
+    })
+    await expect(
+      mgr.proxyFetch({
+        token: minted.token,
+        url: 'https://anywhere.example/',
+        fetchImpl: async () => new Response('nope', { status: 200 }),
+      }),
+    ).rejects.toThrow(/allowlist required/i)
+  })
+
+  it('listCapabilities never includes token or secret; revokeByTokenHash works', async () => {
+    tmp = mkdtempSync(join(tmpdir(), 'eh-'))
+    const sandbox = join(tmp, 'extensions', 'sandbox', 'ledger')
+    mkdirSync(sandbox, { recursive: true })
+    const entry = join(sandbox, 'index.mjs')
+    writeFileSync(entry, 'export function ping() { return 1 }\n')
+
+    const { forkFn } = createInProcessFork(tmp)
+    const broker = new CapabilityBroker({ persistDir: tmp, requireUrlAllowlist: false })
+    const mgr = new ExtensionHostManager({
+      forkFn,
+      configDir: tmp,
+      workerPath: '/virtual/worker.cjs',
+      broker,
+      requireUrlAllowlist: false,
+    })
+    await mgr.start()
+    await mgr.loadExtension('ledger', entry, ['network.request'])
+    const minted = mgr.mintCapability({
+      extensionId: 'ledger',
+      permission: 'network.request',
+    })
+    const listed = mgr.listCapabilities()
+    expect(listed.minted).toHaveLength(1)
+    expect(JSON.stringify(listed)).not.toContain(minted.token)
+    expect(listed.minted[0] && 'token' in listed.minted[0]).toBe(false)
+    expect(mgr.revokeCapabilityByTokenHash(listed.minted[0]!.tokenHash)).toBe(true)
+    expect(broker.peek(minted.token)).toBeNull()
+    expect(mgr.listCapabilities().revoked).toHaveLength(1)
+    expect(JSON.stringify(mgr.listCapabilities())).not.toContain(minted.token)
+  })
+
+  it('worker fetch with another extensionId is rejected', async () => {
+    tmp = mkdtempSync(join(tmpdir(), 'eh-'))
+    const sandboxA = join(tmp, 'extensions', 'sandbox', 'thief')
+    const sandboxB = join(tmp, 'extensions', 'sandbox', 'victim')
+    mkdirSync(sandboxA, { recursive: true })
+    mkdirSync(sandboxB, { recursive: true })
+    writeFileSync(
+      join(sandboxA, 'index.mjs'),
+      `
+export async function steal(token) {
+  const cap = globalThis.__craftCapability
+  return cap.fetch(token, 'https://example.com/')
+}
+`,
+    )
+    writeFileSync(join(sandboxB, 'index.mjs'), 'export function ping() { return 1 }\n')
+
+    const { forkFn } = createInProcessFork(tmp)
+    const broker = new CapabilityBroker({ requireUrlAllowlist: false })
+    const mgr = new ExtensionHostManager({
+      forkFn,
+      configDir: tmp,
+      workerPath: '/virtual/worker.cjs',
+      broker,
+      requireUrlAllowlist: false,
+      messageTimeoutMs: 3000,
+    })
+    await mgr.start()
+    await mgr.loadExtension('thief', join(sandboxA, 'index.mjs'), ['network.request'])
+    await mgr.loadExtension('victim', join(sandboxB, 'index.mjs'), ['network.request'])
+    const victimTok = mgr.mintCapability({
+      extensionId: 'victim',
+      permission: 'network.request',
+    })
+    await expect(
+      mgr.callExtension('thief', 'steal', [victimTok.token]),
+    ).rejects.toThrow(/extensionId/i)
+  })
 })

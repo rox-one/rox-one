@@ -354,6 +354,20 @@ export default function ExtensionsSettingsPage() {
   const [allowlistExtId, setAllowlistExtId] = useState('')
   const [allowlistPrefixes, setAllowlistPrefixes] = useState<string[]>([])
   const [newPrefix, setNewPrefix] = useState('')
+  type CapabilityLedgerRow = {
+    tokenHash: string
+    extensionId: string
+    permission: string
+    expiresAt: number
+    mintedAt: number
+    singleUse?: boolean
+    revokedAt?: number
+    status: 'active' | 'revoked' | 'expired'
+  }
+  const [capabilityLedger, setCapabilityLedger] = useState<{
+    minted: CapabilityLedgerRow[]
+    revoked: CapabilityLedgerRow[]
+  }>({ minted: [], revoked: [] })
 
   type ExtensionHostDevApi = typeof window.electronAPI & {
     extensionHostStatus?: (args?: { workspaceId?: string | null }) => Promise<ExtensionHostStatus>
@@ -368,6 +382,14 @@ export default function ExtensionsSettingsPage() {
       extensionId: string
       prefixes: string[]
     }) => Promise<{ prefixes: string[] }>
+    extensionHostListCapabilities?: (args?: {
+      workspaceId?: string | null
+    }) => Promise<{ minted: CapabilityLedgerRow[]; revoked: CapabilityLedgerRow[] }>
+    extensionHostRevokeCapability?: (args: {
+      tokenHash?: string
+      extensionId?: string
+      workspaceId?: string | null
+    }) => Promise<{ ok: true }>
   }
 
   const prefixesFrom = (value: { prefixes: string[] } | string[] | null | undefined): string[] | null => {
@@ -398,8 +420,13 @@ export default function ExtensionsSettingsPage() {
               .extensionHostGetUrlAllowlist({ extensionId: allowlistExtId.trim() })
               .catch(() => null as { prefixes: string[] } | null)
           : Promise.resolve(null as { prefixes: string[] } | null)
+      const ledgerCall = api.extensionHostListCapabilities
+        ? api
+            .extensionHostListCapabilities({ workspaceId: workspaceId ?? undefined })
+            .catch(() => ({ minted: [], revoked: [] }))
+        : Promise.resolve({ minted: [], revoked: [] })
 
-      const [cat, inst, host, hosts, prefixes] = await Promise.all([
+      const [cat, inst, host, hosts, prefixes, ledger] = await Promise.all([
         window.electronAPI.extensionsListCatalog({ filter }),
         window.electronAPI.extensionsListInstalled({
           workspaceId: workspaceId ?? undefined,
@@ -407,6 +434,7 @@ export default function ExtensionsSettingsPage() {
         statusCall,
         statusAllCall,
         allowlistCall,
+        ledgerCall,
       ])
       setCatalog(cat)
       setInstalled(inst)
@@ -416,6 +444,10 @@ export default function ExtensionsSettingsPage() {
         const list = prefixesFrom(prefixes)
         if (list) setAllowlistPrefixes(list)
       }
+      setCapabilityLedger({
+        minted: Array.isArray(ledger?.minted) ? ledger.minted : [],
+        revoked: Array.isArray(ledger?.revoked) ? ledger.revoked : [],
+      })
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
@@ -565,6 +597,23 @@ export default function ExtensionsSettingsPage() {
   const removeAllowlistPrefix = useCallback((prefix: string) => {
     setAllowlistPrefixes((prev) => prev.filter((p) => p !== prefix))
   }, [])
+
+  const revokeCapabilityHash = useCallback(
+    async (tokenHash: string) => {
+      const api = window.electronAPI as ExtensionHostDevApi
+      if (!api.extensionHostRevokeCapability) {
+        setError('extensionHostRevokeCapability unavailable')
+        return
+      }
+      await runBusy(`cap-revoke-${tokenHash.slice(0, 8)}`, async () => {
+        await api.extensionHostRevokeCapability!({
+          tokenHash,
+          workspaceId: workspaceId ?? undefined,
+        })
+      })
+    },
+    [runBusy, workspaceId],
+  )
 
 
   const openSiyuanCompat = useCallback(() => {
@@ -1010,7 +1059,7 @@ export default function ExtensionsSettingsPage() {
                 <p className="text-xs opacity-60 leading-relaxed">
                   {t('extensions.developer.urlAllowlistHint', {
                     defaultValue:
-                      'Allowed URL prefixes for network.request / proxyFetch. Empty allowlist allows all URLs (dev default).',
+                      'Allowed URL prefixes for network.request / proxyFetch. Required outside development — empty allowlist denies all URLs.',
                   })}
                 </p>
                 <div className="flex flex-wrap gap-2 items-center">
@@ -1040,7 +1089,8 @@ export default function ExtensionsSettingsPage() {
                     <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <span>
                       {t('extensions.developer.urlAllowlistEmpty', {
-                        defaultValue: 'Warning: no URL allowlist — all URLs allowed',
+                        defaultValue:
+                          'Warning: no URL allowlist — production proxyFetch will deny all URLs',
                       })}
                     </span>
                   </div>
@@ -1098,6 +1148,68 @@ export default function ExtensionsSettingsPage() {
                     })}
                   </button>
                 </div>
+              </div>
+
+              <div className="space-y-2 border-t pt-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-xs font-medium opacity-80">
+                    {t('extensions.developer.capabilitiesTitle', {
+                      defaultValue: 'Capability tokens',
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    className="text-xs px-2 py-1 rounded border hover:bg-muted/50"
+                    onClick={() => void load()}
+                  >
+                    {t('extensions.developer.capabilitiesRefresh', { defaultValue: 'Refresh' })}
+                  </button>
+                </div>
+                <p className="text-xs opacity-60 leading-relaxed">
+                  {t('extensions.developer.capabilitiesHint', {
+                    defaultValue:
+                      'Minted and revoked capabilities. Tokens and secrets are never shown.',
+                  })}
+                </p>
+                {capabilityLedger.minted.length === 0 && capabilityLedger.revoked.length === 0 ? (
+                  <p className="text-xs opacity-60">
+                    {t('extensions.developer.capabilitiesEmpty', {
+                      defaultValue: 'No minted or revoked capabilities',
+                    })}
+                  </p>
+                ) : (
+                  <ul className="rounded-md border divide-y text-xs font-mono">
+                    {capabilityLedger.minted.map((row) => (
+                      <li
+                        key={`m-${row.tokenHash}`}
+                        className="px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-1"
+                      >
+                        <span className="font-semibold">active</span>
+                        <span>{row.extensionId}</span>
+                        <span className="opacity-80">{row.permission}</span>
+                        <span className="opacity-50">{row.tokenHash.slice(0, 12)}</span>
+                        <button
+                          type="button"
+                          className="ml-auto text-xs px-1.5 py-0.5 rounded border hover:bg-muted/50"
+                          onClick={() => void revokeCapabilityHash(row.tokenHash)}
+                        >
+                          {t('extensions.developer.capabilitiesRevoke', { defaultValue: 'Revoke' })}
+                        </button>
+                      </li>
+                    ))}
+                    {capabilityLedger.revoked.map((row) => (
+                      <li
+                        key={`r-${row.tokenHash}`}
+                        className="px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-1 opacity-70"
+                      >
+                        <span className="font-semibold">revoked</span>
+                        <span>{row.extensionId}</span>
+                        <span className="opacity-80">{row.permission}</span>
+                        <span className="opacity-50">{row.tokenHash.slice(0, 12)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
 
               <div className="text-xs font-mono opacity-60 break-all">

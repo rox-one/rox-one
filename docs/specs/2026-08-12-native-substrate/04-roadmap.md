@@ -27,13 +27,13 @@
 - Index status RPC/CLI. **Landed:** `sources:status` returns `{ primary, sidecarLive, indexed, fts, dbPath }`. Sources list loads it on workspace change. `craft-native --health` prints sidecar identity JSON.
 - Server health includes native sidecar. **Landed:** `server:getHealth` / HTTP `/health` check `native_sidecar` (disabled = pass; enabled+down = fail). CLI: `craft-cli server-health`.
 - Server settings show sidecar status. **Landed:** Settings → Server reads `server:getHealth` and shows Native sidecar off / connected / down.
+- Extension broker. **Landed in TypeScript (not Rust):** `secrets.use:<account>` + `network.request` TTL tokens. Production requires a URL prefix allowlist. Revoke persists under `extensions/capability-revoked.json`; audit is JSONL without tokens or secrets. Settings → Extensions developer ledger shows minted/revoked hashes only.
 
 Local-only process-tree kill и `budget_exceeded` закрыты тестами в `local-provider.test.ts` и crate `craft-rund` (не в shared conformance — у Cloudflare нет pid).
 
 ## По метрикам
 
 - RPC transport rewrite (LLM latency >> RPC).
-- Extension broker.
 - Rust CLI.
 - ICN + hwprobe.
 

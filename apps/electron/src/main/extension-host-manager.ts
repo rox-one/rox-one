@@ -21,6 +21,7 @@ import {
   getCredentialManager,
   type CredentialId,
 } from '@craft-agent/shared/credentials'
+import { isDevRuntime } from '@craft-agent/shared/feature-flags'
 
 import {
   assertPathAllowlisted,
@@ -28,7 +29,7 @@ import {
 } from './extension-host/path-allowlist'
 import {
   CapabilityBroker,
-  getCapabilityBroker,
+  type CapabilityPublicList,
   type GetCredentialFn,
 } from './extension-host/capability-broker'
 import { getUrlAllowlist } from './extension-host/extension-url-allowlist'
@@ -77,10 +78,17 @@ export interface ExtensionHostManagerOptions {
   crashBackoffMs?: number
   /** Skip waiting for worker `ready` (tests that drive messages manually). */
   skipReadyWait?: boolean
-  /** Injectable capability broker (tests). Defaults to singleton. */
+  /** Injectable capability broker (tests). Defaults to a persistDir-backed broker. */
   broker?: CapabilityBroker
   /** Injectable credential resolver (tests). Defaults to CredentialManager.get. */
   getCredential?: GetCredentialFn
+  /**
+   * When true, proxyFetch requires a non-empty URL prefix allowlist.
+   * Defaults to on outside development runtimes.
+   */
+  requireUrlAllowlist?: boolean
+  /** Isolate persisted revoke/audit files per workspace. */
+  persistNamespace?: string
 }
 
 interface PendingRequest {
@@ -158,6 +166,7 @@ export class ExtensionHostManager {
   private readonly skipReadyWait: boolean
   private readonly broker: CapabilityBroker
   private readonly getCredential: GetCredentialFn
+  private readonly requireUrlAllowlist: boolean
   private onChildMessage: ((msg: unknown) => void) | null = null
   private onChildExit: ((code: number | null) => void) | null = null
   private onChildError: (() => void) | null = null
@@ -188,7 +197,14 @@ export class ExtensionHostManager {
     this.crashBackoffMs =
       options.crashBackoffMs ??
       (Number(process.env.CRAFT_EXTENSION_HOST_CRASH_BACKOFF_MS) || 0)
-    this.broker = options.broker ?? getCapabilityBroker()
+    this.requireUrlAllowlist = options.requireUrlAllowlist ?? false
+    this.broker =
+      options.broker ??
+      new CapabilityBroker({
+        persistDir: this.configDir,
+        persistNamespace: options.persistNamespace,
+        requireUrlAllowlist: this.requireUrlAllowlist,
+      })
     this.getCredential =
       options.getCredential ??
       ((id: CredentialId) => getCredentialManager().get(id))
@@ -408,14 +424,24 @@ export class ExtensionHostManager {
     this.broker.revoke(token)
   }
 
+  revokeCapabilityByTokenHash(tokenHash: string): boolean {
+    return this.broker.revokeByTokenHash(tokenHash)
+  }
+
   revokeExtensionCapabilities(extensionId: string): void {
     this.broker.revokeExtension(extensionId)
+  }
+
+  /** Minted + revoked rows for UI — hashes only, never tokens or secrets. */
+  listCapabilities(): CapabilityPublicList {
+    return this.broker.listPublic()
   }
 
   /**
    * Resolve effective URL allowlist for proxyFetch.
    * Non-empty durable store is authoritative — caller/renderer prefixes must not widen it.
-   * Empty durable → caller prefixes only; empty caller too → undefined (broker allow-all / dev default).
+   * Empty durable → caller prefixes only.
+   * Empty both: undefined in dev (broker allow-all); [] when allowlist is required.
    */
   private mergeUrlAllowlist(
     token: string,
@@ -425,7 +451,8 @@ export class ExtensionHostManager {
     const durable = cap ? getUrlAllowlist(cap.extensionId, this.configDir) : []
     const effective =
       durable.length > 0 ? durable : (callerPrefixes ?? [])
-    return effective.length > 0 ? effective : undefined
+    if (effective.length > 0) return effective
+    return this.requireUrlAllowlist ? [] : undefined
   }
 
   /** Main-side authenticated fetch via capability token (no worker hop). */
@@ -436,6 +463,7 @@ export class ExtensionHostManager {
     headers?: Record<string, string>
     body?: string
     allowedUrlPrefixes?: string[]
+    expectedExtensionId?: string
     fetchImpl?: (
       input: string | URL | Request,
       init?: RequestInit,
@@ -452,6 +480,8 @@ export class ExtensionHostManager {
       headers: input.headers,
       body: input.body,
       allowedUrlPrefixes,
+      expectedExtensionId: input.expectedExtensionId,
+      requireUrlAllowlist: this.requireUrlAllowlist,
       fetchImpl: input.fetchImpl,
       getCredential: this.getCredential,
     })
@@ -723,6 +753,8 @@ export class ExtensionHostManager {
           headers: msg.headers,
           body: msg.body,
           allowedUrlPrefixes,
+          expectedExtensionId: msg.extensionId,
+          requireUrlAllowlist: this.requireUrlAllowlist,
           getCredential: this.getCredential,
         })
         const response: MainToWorkerMessage = {
@@ -881,7 +913,13 @@ export function getExtensionHostManager(workspaceId?: string | null): ExtensionH
   if (!mgr) {
     // Isolated broker per workspace so stop/revoke in A cannot clear B's tokens.
     mgr = new ExtensionHostManager({
-      broker: new CapabilityBroker(),
+      broker: new CapabilityBroker({
+        persistDir: CONFIG_DIR,
+        persistNamespace: key,
+        requireUrlAllowlist: !isDevRuntime(),
+      }),
+      requireUrlAllowlist: !isDevRuntime(),
+      persistNamespace: key,
     })
     hosts.set(key, mgr)
   }

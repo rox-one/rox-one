@@ -36,6 +36,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.extensionHost.LOAD,
   RPC_CHANNELS.extensionHost.CALL,
   RPC_CHANNELS.extensionHost.LIST_COMMANDS,
+  RPC_CHANNELS.extensionHost.LIST_CAPABILITIES,
   RPC_CHANNELS.extensionHost.MINT_CAPABILITY,
   RPC_CHANNELS.extensionHost.REVOKE_CAPABILITY,
   RPC_CHANNELS.extensionHost.PROXY_FETCH,
@@ -212,18 +213,36 @@ export function registerExtensionHostHandlers(
   )
 
   server.handle(
+    RPC_CHANNELS.extensionHost.LIST_CAPABILITIES,
+    async (_ctx, args?: WorkspaceArgs) => {
+      return getExtensionHostManager(args?.workspaceId).listCapabilities()
+    },
+  )
+
+  server.handle(
     RPC_CHANNELS.extensionHost.REVOKE_CAPABILITY,
     async (
       _ctx,
-      args: { token?: string; extensionId?: string; workspaceId?: string | null },
+      args: {
+        token?: string
+        tokenHash?: string
+        extensionId?: string
+        workspaceId?: string | null
+      },
     ): Promise<{ ok: true }> => {
-      if (!args || (typeof args.token !== 'string' && typeof args.extensionId !== 'string')) {
+      if (
+        !args ||
+        (typeof args.token !== 'string' &&
+          typeof args.tokenHash !== 'string' &&
+          typeof args.extensionId !== 'string')
+      ) {
         throw new Error(
-          'extensionHost.revokeCapability requires { token } or { extensionId }',
+          'extensionHost.revokeCapability requires { token }, { tokenHash }, or { extensionId }',
         )
       }
       const mgr = getExtensionHostManager(args.workspaceId)
       if (typeof args.token === 'string') mgr.revokeCapability(args.token)
+      if (typeof args.tokenHash === 'string') mgr.revokeCapabilityByTokenHash(args.tokenHash)
       if (typeof args.extensionId === 'string') {
         mgr.revokeExtensionCapabilities(args.extensionId)
       }
