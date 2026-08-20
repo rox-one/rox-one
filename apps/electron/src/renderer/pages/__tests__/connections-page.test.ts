@@ -129,6 +129,13 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('shows grant actions on policy binding rows without secret fields', () => {
+    expect(page).toContain('connections-binding-actions')
+    expect(page).toContain('row.actions.join')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('refreshes the selected row after unbind so inspector consumers update', () => {
     expect(page).toContain('confirmUnbind')
     expect(page).toContain('applySelectedRow(listed, binding.connectionId)')

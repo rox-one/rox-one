@@ -1255,7 +1255,7 @@ export default function ConnectionsPage() {
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{row.consumerId}</div>
                       <div className="text-muted-foreground">{row.purpose}</div>
-                      <div className="font-mono text-xs">{row.actions.join(', ')}</div>
+                      <div className="font-mono text-xs" data-testid="connections-binding-actions">{row.actions.join(', ') || '—'}</div>
                       <div className="font-mono text-xs" data-testid="connections-binding-resources">{row.resources.join(', ') || '—'}</div>
                     </div>
                     {unbindingId === row.id ? (
