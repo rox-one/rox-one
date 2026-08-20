@@ -10,7 +10,7 @@ describe('CF-5 revoke, closure, revalidate', () => {
   it('invalidates leases, audits, and revalidates only the same workspace', async () => {
     const stack = createP0ProviderStack({
       listEnvFiles: async () => [{ path: '/repo/.env', keys: ['GH_TOKEN'] }],
-      approveCopy: async () => createSealedSecret('api_key'),
+      approveCopy: async () => createSealedSecret('api_key', 'dummy'),
     });
     const candidates = await stack.importers.dotenv.discover({ sourceId: 'dotenv', workspaceId: 'ws_a' });
     const candidate = candidates[0]!;

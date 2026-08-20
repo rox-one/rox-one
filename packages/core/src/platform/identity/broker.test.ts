@@ -14,7 +14,7 @@ const CONSUMER: ConsumerIdentity = {
 async function seeded() {
   const stack = createP0ProviderStack({
     listEnvFiles: async () => [{ path: '/repo/.env', keys: ['GH_TOKEN'] }],
-    approveCopy: async () => createSealedSecret('api_key'),
+    approveCopy: async () => createSealedSecret('api_key', 'dummy'),
   });
   const dotenv = stack.importers.dotenv;
   const candidates = await dotenv.discover({ sourceId: 'dotenv', workspaceId: 'ws_1' });

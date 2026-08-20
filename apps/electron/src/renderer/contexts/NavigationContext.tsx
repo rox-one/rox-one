@@ -75,6 +75,7 @@ import {
   isBrowserNavigation,
   isMemoryNavigation,
   isHomeNavigation,
+  isConnectionsNavigation,
   isKnowledgeNavigation,
   isDiffNavigation,
   isCloudRunNavigation,
@@ -101,7 +102,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isBrowserNavigation, isMemoryNavigation, isHomeNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isExtensionNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isNotesNavigation, isAutomationsNavigation, isProjectsNavigation, isBrowserNavigation, isMemoryNavigation, isHomeNavigation, isConnectionsNavigation, isKnowledgeNavigation, isDiffNavigation, isCloudRunNavigation, isExtensionNavigation }
 
 // =============================================================================
 // Context

@@ -1,4 +1,7 @@
-import { describe, expect, it } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   CredentialRefRegistry,
   createCredentialRefId,
@@ -460,5 +463,105 @@ describe('CredentialRefRegistry', () => {
       'ver_a',
       'ver_b',
     ]);
+  });
+});
+
+describe('CredentialRefRegistry persistence', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'craft-cred-refs-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('persists refs and versions then reloads metadata only', () => {
+    const registry = new CredentialRefRegistry({
+      idFactory: () => FIXED_REF,
+      directory: dir,
+    });
+    const ref = registry.register({
+      kind: 'api_key',
+      providerId: 'infisical',
+      locator: {
+        type: 'infisical',
+        projectId: 'project',
+        environment: 'prod',
+        secretPath: '/github',
+        secretKey: 'token',
+      },
+      now: 100,
+    });
+    const version = registry.registerVersion({
+      credentialRefId: ref.id,
+      codec: 'stored-credential/v1',
+      fingerprint: 'a'.repeat(64),
+      createdAt: 110,
+    });
+
+    expect(existsSync(join(dir, 'credential-refs.json'))).toBe(true);
+    expect(existsSync(join(dir, 'credential-versions.json'))).toBe(true);
+
+    const refsRaw = readFileSync(join(dir, 'credential-refs.json'), 'utf8');
+    const versionsRaw = readFileSync(join(dir, 'credential-versions.json'), 'utf8');
+    expect(refsRaw).not.toMatch(/"(value|token|password|ciphertext)"\s*:/);
+    expect(versionsRaw).not.toMatch(/"(value|token|password|ciphertext)"\s*:/);
+    expect(refsRaw).toContain('"secretPath": "/github"');
+    expect(refsRaw).toContain('"secretKey": "token"');
+
+    const reloaded = new CredentialRefRegistry({ directory: dir });
+    expect(reloaded.get(FIXED_REF)).toMatchObject({
+      id: FIXED_REF,
+      kind: 'api_key',
+      providerId: 'infisical',
+      currentVersionId: version.id,
+      locator: {
+        type: 'infisical',
+        projectId: 'project',
+        environment: 'prod',
+        secretPath: '/github',
+        secretKey: 'token',
+      },
+    });
+    expect(reloaded.getVersion(version.id)).toMatchObject({
+      id: version.id,
+      credentialRefId: FIXED_REF,
+      fingerprint: 'a'.repeat(64),
+      status: 'active',
+    });
+    expect(reloaded.listVersions(FIXED_REF)).toHaveLength(1);
+  });
+
+  it('still rejects secret-shaped fields when directory persistence is enabled', () => {
+    const registry = new CredentialRefRegistry({
+      idFactory: () => FIXED_REF,
+      directory: dir,
+    });
+
+    expect(() =>
+      registry.register({
+        kind: 'api_key',
+        providerId: 'local',
+        locator: { type: 'local', key: 'ok' },
+        value: 'secret',
+      } as never),
+    ).toThrow();
+    expect(existsSync(join(dir, 'credential-refs.json'))).toBe(false);
+  });
+
+  it('keeps RAM-only behavior when constructed without a directory', () => {
+    const registry = new CredentialRefRegistry(() => FIXED_REF);
+    registry.register({
+      kind: 'api_key',
+      providerId: 'local',
+      locator: { type: 'local', key: 'github/default' },
+      now: 100,
+    });
+
+    expect(existsSync(join(dir, 'credential-refs.json'))).toBe(false);
+    expect(existsSync(join(dir, 'credential-versions.json'))).toBe(false);
+    expect(registry.get(FIXED_REF)?.providerId).toBe('local');
   });
 });

@@ -16,6 +16,7 @@
  */
 import {
   Brain,
+  Cable,
   DatabaseZap,
   FolderKanban,
   Inbox,
@@ -28,6 +29,7 @@ import {
 import { routes, type ViewRoute } from '../../../shared/routes'
 import {
   isAutomationsNavigation,
+  isConnectionsNavigation,
   isKnowledgeNavigation,
   isMemoryNavigation,
   isProjectsNavigation,
@@ -46,6 +48,7 @@ export type AppNavDestinationId =
   | 'memory'
   | 'projects'
   | 'automations'
+  | 'connections'
   | 'settings'
 
 export interface AppNavDestination {
@@ -127,6 +130,14 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     labelKey: 'sidebar.automations',
     route: () => routes.view.automations(),
     isActive: isAutomationsNavigation,
+  },
+  {
+    id: 'connections',
+    linkId: 'nav:connections',
+    icon: Cable,
+    labelKey: 'sidebar.connections',
+    route: () => routes.view.connections(),
+    isActive: isConnectionsNavigation,
   },
   {
     id: 'settings',

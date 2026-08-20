@@ -228,6 +228,12 @@ export const routes = {
     home: () => 'home' as const,
 
     /**
+     * Connection Fabric surface (CF-6) — `connections`.
+     * Native Workbench page: Services / Credentials / Imports / Policies / Audit.
+     */
+    connections: () => 'connections' as const,
+
+    /**
      * Knowledge home (knowledge navigator root, no document focused) — `knowledge`.
      * Pairs with the bare-'knowledge' key in `parseNavigationState` (W1).
      */

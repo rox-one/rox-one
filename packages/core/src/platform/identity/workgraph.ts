@@ -1,4 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { isCredentialRefId, isStorageMode, type CredentialRefId, type StorageMode } from './credential-types.ts';
 import { ConnectionFabricError } from './provider-contract.ts';
 
@@ -10,6 +12,10 @@ const CONNECTION_KEYS = new Set([
   'scopes',
   'externalAccountId',
 ]);
+
+const CONNECTIONS_FILE = 'connections.json';
+const BINDINGS_FILE = 'bindings.json';
+const AUDIT_FILE = 'audit.json';
 
 export interface CreateConnectionInput {
   readonly workspaceId: string;
@@ -52,7 +58,9 @@ export interface AppendConnectionAuditInput {
   readonly consumer?: string;
   readonly action: string;
   readonly decision: 'allow' | 'deny';
+  readonly target?: string;
   readonly versionFingerprint?: string;
+  readonly repairState?: string;
   readonly eventType?: string;
 }
 
@@ -63,7 +71,17 @@ export interface ConnectionAuditRecord {
   readonly eventType: string;
   readonly occurredAt: number;
   readonly outcome: 'committed';
+  readonly consumer?: string;
+  readonly action: string;
+  readonly decision: 'allow' | 'deny';
+  readonly target?: string;
+  readonly versionFingerprint?: string;
+  readonly repairState?: string;
   readonly payloadDigest: string;
+}
+
+export interface ConnectionWorkGraphOptions {
+  readonly directory?: string;
 }
 
 interface GraphState {
@@ -72,9 +90,54 @@ interface GraphState {
   audit: ConnectionAuditRecord[];
 }
 
+function digestAuditPayload(fields: {
+  consumer?: string;
+  action: string;
+  decision: string;
+  target?: string;
+  versionFingerprint?: string;
+  repairState?: string;
+}): string {
+  return createHash('sha256')
+    .update(fields.consumer ?? '')
+    .update('\0')
+    .update(fields.action)
+    .update('\0')
+    .update(fields.decision)
+    .update('\0')
+    .update(fields.target ?? '')
+    .update('\0')
+    .update(fields.versionFingerprint ?? '')
+    .update('\0')
+    .update(fields.repairState ?? '')
+    .digest('hex');
+}
+
+function atomicWriteJson(filePath: string, value: unknown): void {
+  const tmp = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  writeFileSync(tmp, `${JSON.stringify(value, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+  renameSync(tmp, filePath);
+}
+
+function readJsonArray(filePath: string): unknown[] {
+  if (!existsSync(filePath)) return [];
+  try {
+    const raw = JSON.parse(readFileSync(filePath, 'utf8')) as unknown;
+    return Array.isArray(raw) ? raw : [];
+  } catch {
+    return [];
+  }
+}
+
 export class ConnectionWorkGraph {
+  private readonly directory: string | undefined;
   private state: GraphState = { connections: [], bindings: [], audit: [] };
   private snapshot: GraphState | undefined;
+
+  constructor(options: ConnectionWorkGraphOptions = {}) {
+    this.directory = options.directory;
+    if (this.directory) this.reloadFromDisk();
+  }
 
   async createConnection(input: CreateConnectionInput): Promise<ConnectionRecord> {
     this.assertConnectionKeys(input);
@@ -97,6 +160,7 @@ export class ConnectionWorkGraph {
       ...(input.externalAccountId ? { externalAccountId: input.externalAccountId } : {}),
     };
     this.state.connections.push(record);
+    this.persist();
     return this.cloneConnection(record);
   }
 
@@ -126,6 +190,7 @@ export class ConnectionWorkGraph {
       resources: [...input.resources],
     };
     this.state.bindings.push(record);
+    this.persist();
     return { ...record, allowedActions: [...record.allowedActions], resources: [...record.resources] };
   }
 
@@ -139,15 +204,14 @@ export class ConnectionWorkGraph {
   async appendConnectionAudit(input: AppendConnectionAuditInput): Promise<ConnectionAuditRecord> {
     const connection = await this.getConnection(input.workspaceId, input.connectionId);
     if (!connection) throw new ConnectionFabricError('IMPORT_CANDIDATE_UNKNOWN', 'connection not found');
-    const digest = createHash('sha256')
-      .update(input.connectionId)
-      .update('\0')
-      .update(input.action)
-      .update('\0')
-      .update(input.decision)
-      .update('\0')
-      .update(input.versionFingerprint ?? '')
-      .digest('hex');
+    const digest = digestAuditPayload({
+      consumer: input.consumer,
+      action: input.action,
+      decision: input.decision,
+      target: input.target,
+      versionFingerprint: input.versionFingerprint,
+      repairState: input.repairState,
+    });
     const record: ConnectionAuditRecord = {
       id: `audit_${randomUUID()}`,
       connectionId: input.connectionId,
@@ -155,9 +219,18 @@ export class ConnectionWorkGraph {
       eventType: input.eventType ?? 'connection-audit',
       occurredAt: Date.now(),
       outcome: 'committed',
+      action: input.action,
+      decision: input.decision,
       payloadDigest: digest,
+      ...(input.consumer !== undefined ? { consumer: input.consumer } : {}),
+      ...(input.target !== undefined ? { target: input.target } : {}),
+      ...(input.versionFingerprint !== undefined
+        ? { versionFingerprint: input.versionFingerprint }
+        : {}),
+      ...(input.repairState !== undefined ? { repairState: input.repairState } : {}),
     };
     this.state.audit.push(record);
+    this.persist();
     return { ...record };
   }
 
@@ -178,7 +251,10 @@ export class ConnectionWorkGraph {
       this.snapshot = undefined;
       return result;
     } catch (error) {
-      if (this.snapshot) this.state = this.snapshot;
+      if (this.snapshot) {
+        this.state = this.snapshot;
+        this.persist();
+      }
       this.snapshot = undefined;
       throw error;
     }
@@ -206,5 +282,23 @@ export class ConnectionWorkGraph {
       })),
       audit: this.state.audit.map((item) => ({ ...item })),
     };
+  }
+
+  private reloadFromDisk(): void {
+    if (!this.directory) return;
+    mkdirSync(this.directory, { recursive: true });
+    this.state = {
+      connections: readJsonArray(join(this.directory, CONNECTIONS_FILE)) as ConnectionRecord[],
+      bindings: readJsonArray(join(this.directory, BINDINGS_FILE)) as ConnectionBindingRecord[],
+      audit: readJsonArray(join(this.directory, AUDIT_FILE)) as ConnectionAuditRecord[],
+    };
+  }
+
+  private persist(): void {
+    if (!this.directory) return;
+    mkdirSync(this.directory, { recursive: true });
+    atomicWriteJson(join(this.directory, CONNECTIONS_FILE), this.state.connections);
+    atomicWriteJson(join(this.directory, BINDINGS_FILE), this.state.bindings);
+    atomicWriteJson(join(this.directory, AUDIT_FILE), this.state.audit);
   }
 }

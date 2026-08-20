@@ -28,6 +28,7 @@ export type {
   CredentialRef,
   CredentialRefId,
   CredentialRefIdFactory,
+  CredentialRefRegistryOptions,
   CredentialVersion,
   CredentialVersionStatus,
   ProviderLocator,
@@ -97,7 +98,10 @@ export {
   parseDockerConfig,
   parseGitCredentialConfig,
   redactGcpAdcPreview,
+  unsealSecret,
 } from './p0-adapters.ts';
+export type { OsDiscoveryHostOptions } from './os-discovery-host.ts';
+export { createOsDiscoveryHost } from './os-discovery-host.ts';
 
 export type { AccessGrant, AccessGrantStatus } from './grants.ts';
 export { JsonAccessGrantStore } from './grants.ts';
@@ -119,3 +123,19 @@ export type {
 } from './workgraph.ts';
 export { ConnectionWorkGraph } from './workgraph.ts';
 export { revokeConnectionAndRevalidate } from './revalidation.ts';
+
+export type {
+  FetchLike as GithubFetchLike,
+  GithubImportResult,
+  GithubProviderStack,
+  GithubVerticalResult,
+  ImportGithubFromEnvOptions,
+  RunGithubVerticalInput,
+} from './github-vertical.ts';
+export { importGithubFromEnv, runGithubVertical } from './github-vertical.ts';
+
+export type {
+  FetchLike as InfisicalFetchLike,
+  InfisicalFabricProviderOptions,
+} from './infisical-fabric-provider.ts';
+export { InfisicalFabricProvider, createInfisicalImporter } from './infisical-fabric-provider.ts';

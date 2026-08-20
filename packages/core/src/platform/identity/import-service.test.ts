@@ -5,7 +5,7 @@ import { ConnectionFabricError } from './provider-contract.ts';
 
 const HOST: DiscoveryHost = {
   listEnvFiles: async () => [{ path: '/repo/.env', keys: ['GH_TOKEN'] }],
-  approveCopy: async () => createSealedSecret('api_key'),
+  approveCopy: async () => createSealedSecret('api_key', 'dummy'),
 };
 
 function createMainService(host: DiscoveryHost = HOST) {

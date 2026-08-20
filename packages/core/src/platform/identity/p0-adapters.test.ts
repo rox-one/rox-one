@@ -8,6 +8,7 @@ import {
   parseDockerConfig,
   parseGitCredentialConfig,
   redactGcpAdcPreview,
+  unsealSecret,
   type DiscoveryHost,
 } from './p0-adapters.ts';
 import { ConnectionFabricError, P0_IMPORTER_IDS } from './provider-contract.ts';
@@ -38,7 +39,7 @@ const HOST: DiscoveryHost = {
     },
   ],
   listSshIdentities: async () => [{ fingerprint: 'SHA256:abcd', comment: 'laptop' }],
-  approveCopy: async () => createSealedSecret('api_key'),
+  approveCopy: async () => createSealedSecret('api_key', 'dummy-secret'),
 };
 
 describe('P0 discovery parsers', () => {
@@ -184,6 +185,7 @@ describe('P0 importers', () => {
     });
     expect(commit.mode).toBe('copy');
     expect(provider.peekHasSealed(candidate.locator!)).toBe(true);
+    expect(provider.peekPlaintextForTest(candidate.locator!)).toBe('dummy-secret');
 
     const inspect = await provider.inspect({
       id: commit.credentialRefId,
@@ -196,6 +198,8 @@ describe('P0 importers', () => {
     expect(inspect.hasMaterial).toBe(true);
     expect(JSON.stringify(inspect)).not.toContain('SealedSecret');
     expect(JSON.stringify(inspect)).not.toContain('ghp_');
+    expect(JSON.stringify(inspect)).not.toContain('dummy-secret');
+    expect(JSON.stringify(inspect)).not.toContain('seal1:');
 
     await expect(
       provider.resolveForLease({
@@ -226,5 +230,12 @@ describe('P0 importers', () => {
         updatedAt: 0,
       }),
     ).rejects.toThrow(ConnectionFabricError);
+  });
+
+  it('round-trips sealed secrets without exposing plaintext on the handle brand alone', () => {
+    const sealed = createSealedSecret('api_key', 'dummy-secret');
+    expect(sealed.ciphertext.startsWith('seal1:')).toBe(true);
+    expect(sealed.ciphertext).not.toContain('dummy-secret');
+    expect(unsealSecret(sealed)).toBe('dummy-secret');
   });
 });
