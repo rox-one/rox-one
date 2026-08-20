@@ -67,6 +67,13 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('shows scopes on credential rows without secret fields', () => {
+    expect(page).toContain('connections-credential-scopes')
+    expect(page).toContain('row.scopes.join')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('tests a listed GitHub connection without exposing secret fields', () => {
     expect(page).toContain('testConnection')
     expect(page).toContain('connections.test')
