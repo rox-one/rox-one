@@ -18,6 +18,7 @@ import {
   BUILTIN_SLICES,
   createSavedSlice,
   loadSavedSlices,
+  matchingSlice,
   matchingSliceId,
   persistSavedSlices,
   type CollectionSlice,
@@ -48,7 +49,14 @@ export function CollectionFilterMenu({
   const [saving, setSaving] = React.useState(false)
   const [name, setName] = React.useState('')
   const count = activeFilterCount(filters)
-  const activeSlice = matchingSliceId(filters, saved)
+  const matchedSlice = matchingSlice(filters, saved)
+  const activeSlice = matchedSlice?.id ?? null
+  const sliceTitle = matchedSlice
+    ? (matchedSlice.nameKey ? t(matchedSlice.nameKey) : (matchedSlice.name ?? matchedSlice.id))
+    : null
+  const filterTitle = sliceTitle
+    ? `${t('collection.filter.trigger')} · ${sliceTitle}`
+    : t('collection.filter.trigger')
 
   const changeFilters = (next: CollectionFilters) => {
     onFiltersChange(next)
@@ -85,10 +93,10 @@ export function CollectionFilterMenu({
             count > 0 && 'text-foreground',
             className,
           )}
-          aria-label={count > 0 ? `${t('collection.filter.trigger')} (${count})` : t('collection.filter.trigger')}
+          aria-label={count > 0 ? `${filterTitle} (${count})` : filterTitle}
           aria-haspopup="dialog"
           aria-expanded={open}
-          title={t('collection.filter.trigger')}
+          title={filterTitle}
         >
           <ListFilter className="h-3.5 w-3.5" strokeWidth={2} />
           {count > 0 && (

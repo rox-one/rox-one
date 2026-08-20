@@ -21,6 +21,7 @@ import {
   StyledContextMenuItem,
   StyledContextMenuSeparator,
 } from '@/components/ui/styled-context-menu'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 // ============================================================================
@@ -104,6 +105,7 @@ function CollapsibleGroupHeader({
   onCollapseAll?: () => void
   onExpandAll?: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
@@ -125,14 +127,14 @@ function CollapsibleGroupHeader({
       </ContextMenuTrigger>
       <StyledContextMenuContent>
         <StyledContextMenuItem onClick={onToggle}>
-          {isCollapsed ? 'Expand' : 'Collapse'}
+          {isCollapsed ? t('entityList.expand') : t('entityList.collapse')}
         </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem onClick={onCollapseAll}>
-          Collapse All
+          {t('entityList.collapseAll')}
         </StyledContextMenuItem>
         <StyledContextMenuItem onClick={onExpandAll}>
-          Expand All
+          {t('entityList.expandAll')}
         </StyledContextMenuItem>
       </StyledContextMenuContent>
     </ContextMenu>

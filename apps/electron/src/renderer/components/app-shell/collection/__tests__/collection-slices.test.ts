@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { applySlice, BUILTIN_SLICES, filtersSignature, matchingSliceId, sliceMatches } from '../collection-slices'
+import { applySlice, BUILTIN_SLICES, filtersSignature, matchingSlice, matchingSliceId, sliceMatches } from '../collection-slices'
 
 describe('collection-slices', () => {
   it('matches unread and toggles off', () => {
@@ -19,3 +19,9 @@ describe('collection-slices', () => {
     expect(filtersSignature({ status: ['b', 'a'] })).toBe(filtersSignature({ status: ['a', 'b'] }))
   })
 })
+
+  it('returns the matching slice object', () => {
+    const slice = matchingSlice({ flagged: true })
+    expect(slice?.id).toBe('flagged')
+    expect(slice?.nameKey).toBe('collection.slice.flagged')
+  })

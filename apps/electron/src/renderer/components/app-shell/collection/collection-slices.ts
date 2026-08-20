@@ -35,14 +35,21 @@ export function sliceMatches(filters: CollectionFilters, slice: CollectionSlice)
   return filtersSignature(filters) === filtersSignature(slice.filters)
 }
 
+export function matchingSlice(
+  filters: CollectionFilters,
+  extras: readonly CollectionSlice[] = [],
+): CollectionSlice | null {
+  for (const slice of [...BUILTIN_SLICES, ...extras]) {
+    if (sliceMatches(filters, slice)) return slice
+  }
+  return null
+}
+
 export function matchingSliceId(
   filters: CollectionFilters,
   extras: readonly CollectionSlice[] = [],
 ): string | null {
-  for (const slice of [...BUILTIN_SLICES, ...extras]) {
-    if (sliceMatches(filters, slice)) return slice.id
-  }
-  return null
+  return matchingSlice(filters, extras)?.id ?? null
 }
 
 export function applySlice(filters: CollectionFilters, slice: CollectionSlice): CollectionFilters {

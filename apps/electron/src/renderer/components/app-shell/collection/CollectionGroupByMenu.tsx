@@ -37,6 +37,7 @@ export function CollectionGroupByMenu({
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
   const grouped = display.groupBy !== 'none'
+  const groupTitle = `${t('collection.display.groupByLabel')}: ${t(GROUP_I18N[display.groupBy])}`
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
@@ -48,10 +49,10 @@ export function CollectionGroupByMenu({
             grouped && 'text-foreground',
             className,
           )}
-          aria-label={t('collection.display.groupByLabel')}
+          aria-label={groupTitle}
           aria-haspopup="menu"
           aria-expanded={open}
-          title={t('collection.display.groupByLabel')}
+          title={groupTitle}
         >
           <Layers className="h-3.5 w-3.5" strokeWidth={2} />
         </button>
