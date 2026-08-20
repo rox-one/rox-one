@@ -18,7 +18,7 @@
  * selectKnowledgeView) keep logic-level bun:test coverage without a DOM harness.
  */
 import { atom, useAtom, useAtomValue } from 'jotai'
-import { Bookmark, Check, ChevronLeft, FileDiff, Search } from 'lucide-react'
+import { Bookmark, Check, ChevronLeft, FileDiff, FilePlus, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -31,7 +31,7 @@ import { cn } from '@/lib/utils'
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views'
 import type { KnowledgeWorkEnvelope } from '../../shared/types'
 import { KnowledgeProposals } from './KnowledgeProposals'
-import { selectRecentEnvelopes } from './KnowledgeNotebookTree'
+import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 
 /**
@@ -119,6 +119,16 @@ export async function searchKnowledge(
 /** Route for a search hit — the in-app editor surface for this document/block. */
 export function searchHitRoute(hit: Pick<SearchHit, 'ref'>) {
   return routes.view.siyuan({ kind: hit.ref.kind, id: hit.ref.id })
+}
+
+/** Sort envelopes by updated/created desc and take the first `n`. */
+export function selectRecentEnvelopes(
+  envelopes: KnowledgeWorkEnvelope[],
+  n: number,
+): KnowledgeWorkEnvelope[] {
+  return [...envelopes]
+    .sort((a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt))
+    .slice(0, n)
 }
 
 /** Last envelope document, or null when the workspace has no notes yet. */
@@ -281,14 +291,9 @@ export function KnowledgeHome() {
   const [hits, setHits] = useState<SearchHit[]>([])
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [noConnections, setNoConnections] = useState(false)
-  const [kernelOffline, setKernelOffline] = useState(false)
-  const [kernelBinaryFound, setKernelBinaryFound] = useState<boolean | null>(null)
-  const [kernelInstallUrl, setKernelInstallUrl] = useState<string | null>(null)
-  const [startingKernel, setStartingKernel] = useState(false)
   const [view, setView] = useAtom(knowledgeHomeViewAtom)
   const [activeViewId, setActiveViewId] = useAtom(knowledgeActiveViewIdAtom)
   const [actionableProposalCount, setActionableProposalCount] = useState(0)
-  const [migrating, setMigrating] = useState(false)
   // Saved views list
   const [savedViews, setSavedViews] = useState<KnowledgeViewConfig[]>([])
   const [viewsLoaded, setViewsLoaded] = useState(false)
@@ -344,38 +349,9 @@ export function KnowledgeHome() {
     }
   }, [workspaceId])
 
-  // Probe kernel health for empty-state CTA (binary / install / start).
+  // No search: open last envelope document (or stay on empty editor).
   useEffect(() => {
-    if (typeof window === 'undefined') return
-    let cancelled = false
-    const probe = async () => {
-      const api = window.electronAPI?.knowledge
-      if (!api?.engineStatus) return
-      try {
-        const connections = api.listConnections ? await api.listConnections() : []
-        const connectionId = connections[0]?.id
-        const status = await api.engineStatus({
-          ...(workspaceId ? { workspaceId } : {}),
-          ...(connectionId ? { connectionId } : {}),
-        })
-        if (cancelled) return
-        setKernelOffline(!status.running)
-        setKernelBinaryFound(status.binaryFound ?? null)
-        setKernelInstallUrl(status.installUrl ?? null)
-        if (connections.length === 0) setNoConnections(true)
-      } catch {
-        if (!cancelled) setKernelOffline(true)
-      }
-    }
-    void probe()
-    return () => {
-      cancelled = true
-    }
-  }, [workspaceId])
-
-  // Healthy kernel, no search: open last envelope document (or stay on empty editor).
-  useEffect(() => {
-    if (kernelOffline || noConnections || query.trim().length > 0) return
+    if (noConnections || query.trim().length > 0) return
     if (view !== 'search') return
     if (typeof window === 'undefined') return
     let cancelled = false
@@ -397,49 +373,7 @@ export function KnowledgeHome() {
     return () => {
       cancelled = true
     }
-  }, [kernelOffline, noConnections, query, view, navigate])
-
-  const handleStartKernel = useCallback(async () => {
-    const start = window.electronAPI?.knowledge?.engineStart
-    if (typeof start !== 'function') {
-      toast.error(t('knowledge.kernel.startFailed', { message: 'unavailable' }))
-      return
-    }
-    setStartingKernel(true)
-    try {
-      const result = await start(workspaceId ? { workspaceId } : undefined)
-      if (!result.ok && result.error === 'siyuan-not-installed') {
-        setKernelBinaryFound(false)
-        toast.error(t('knowledge.kernel.binaryMissing'))
-        return
-      }
-      if (!result.ok) {
-        toast.error(t('knowledge.kernel.startFailed', { message: result.error ?? 'unknown' }))
-        return
-      }
-      toast.success(t('knowledge.kernel.startOk'))
-      setNoConnections(false)
-      // Re-probe after a short delay (kernel boot is async)
-      window.setTimeout(() => {
-        void window.electronAPI?.knowledge
-          ?.engineStatus?.({
-            ...(workspaceId ? { workspaceId } : {}),
-            ...(result.connectionId ? { connectionId: result.connectionId } : {}),
-          })
-          .then((status) => {
-            setKernelOffline(!status.running)
-            setKernelBinaryFound(status.binaryFound ?? null)
-          })
-          .catch(() => {})
-      }, 1500)
-    } catch (error) {
-      toast.error(t('knowledge.kernel.startFailed', {
-        message: error instanceof Error ? error.message : String(error),
-      }))
-    } finally {
-      setStartingKernel(false)
-    }
-  }, [workspaceId, t])
+  }, [noConnections, query, view, navigate])
 
   // Deep-link / atom-driven view selection → run viewRun.
   useEffect(() => {
@@ -543,62 +477,33 @@ export function KnowledgeHome() {
     navigate(routes.view.knowledge())
   }, [navigate, setActiveViewId, setView])
 
-  const handleMigrateNotes = useCallback(async () => {
-    if (migrating) return
-    if (!workspaceId) {
-      toast.error(t('knowledge.migrate.noWorkspace'))
-      return
-    }
+  const handleCreateNote = useCallback(async () => {
     const api = window.electronAPI?.knowledge
-    if (!api?.migrateNotes || !api.listConnections) {
-      toast.error(t('knowledge.migrate.failed'))
+    if (!api?.userCreate || !api.listConnections || !api.listNotebooks) {
+      toast.error(t('knowledge.surface.error'))
       return
     }
-    setMigrating(true)
-    const progressToast = toast.loading(t('knowledge.migrate.progress'))
     try {
       const connections = await api.listConnections()
       const connectionId = connections[0]?.id
-      if (!connectionId) {
-        toast.error(t('knowledge.migrate.noConnection'), { id: progressToast })
-        return
-      }
-      const result = await api.migrateNotes({ workspaceId, connectionId })
-      const failedCount = result.failed?.length ?? 0
-      if (failedCount > 0 && result.migrated === 0) {
-        toast.error(t('knowledge.migrate.failed'), {
-          id: progressToast,
-          description: result.failed[0]?.error,
-        })
-        return
-      }
-      const message =
-        failedCount > 0
-          ? t('knowledge.migrate.partial', {
-              migrated: result.migrated,
-              failed: failedCount,
-            })
-          : t('knowledge.migrate.success', {
-              migrated: result.migrated,
-              skipped: result.skipped,
-            })
-      toast.success(message, {
-        id: progressToast,
-        action: {
-          label: t('knowledge.migrate.openKnowledge'),
-          onClick: () => navigate(routes.view.knowledge()),
-        },
-      })
+      if (!connectionId) return
+      const notebooks = await api.listNotebooks({ connectionId })
+      const notebook = pickOpenNotebook(notebooks)
+      if (!notebook) return
+      const result = await api.userCreate(
+        buildNewDocumentCreateArgs({
+          connectionId,
+          notebookId: notebook.id,
+          title: t('knowledge.nav.newNote'),
+        }),
+      )
+      if (result?.id) navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
     } catch (error) {
-      toast.error(t('knowledge.migrate.failed'), {
-        id: progressToast,
+      toast.error(t('knowledge.surface.error'), {
         description: error instanceof Error ? error.message : String(error),
       })
-    } finally {
-      setMigrating(false)
     }
-  }, [migrating, workspaceId, t, navigate])
-
+  }, [t, navigate])
 
   const handleSetAttribute = useCallback(
     async (hit: SearchHit) => {
@@ -646,43 +551,23 @@ export function KnowledgeHome() {
   )
 
   const emptyState =
-    status === 'idle' && (noConnections || kernelOffline) ? (
+    status === 'idle' ? (
       <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
         <p className="text-[13px] font-medium text-foreground">
-          {t('knowledge.kernel.offlineTitle')}
+          {t('knowledge.nav.newNote')}
         </p>
         <p className="max-w-sm text-[12px] leading-snug text-muted-foreground">
-          {kernelBinaryFound === false
-            ? t('knowledge.kernel.installHint')
-            : t('knowledge.kernel.offlineBody')}
+          {t('knowledge.nav.notebooksEmpty')}
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {kernelBinaryFound === false ? (
-            <button
-              type="button"
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
-              onClick={() =>
-                void window.electronAPI?.openUrl?.(
-                  kernelInstallUrl ?? 'https://b3log.org/siyuan/',
-                )
-              }
-            >
-              {t('knowledge.kernel.installCta')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={startingKernel}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted disabled:opacity-50"
-              onClick={() => void handleStartKernel()}
-            >
-              {startingKernel ? t('knowledge.kernel.starting') : t('knowledge.kernel.startCta')}
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
+          onClick={() => void handleCreateNote()}
+        >
+          <FilePlus className="size-3.5" aria-hidden />
+          {t('knowledge.nav.create')}
+        </button>
       </div>
-    ) : status === 'idle' ? (
-      <HomeHint text={t('knowledge.search.placeholder')} />
     ) : noConnections ? (
       <HomeHint text={t('knowledge.home.noConnections')} />
     ) : (
@@ -844,27 +729,6 @@ export function KnowledgeHome() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground flex items-center justify-between gap-2">
-        <span>{t('knowledge.legacyNotes.banner', { defaultValue: 'Markdown notes are legacy — Knowledge is the primary workspace.' })}</span>
-        <div className="flex shrink-0 items-center gap-3">
-          <button
-            type="button"
-            className="underline underline-offset-2 hover:text-foreground disabled:opacity-50"
-            disabled={migrating}
-            onClick={() => void handleMigrateNotes()}
-          >
-            {migrating ? t('knowledge.migrate.progress') : t('knowledge.migrate.button')}
-          </button>
-          <button
-            type="button"
-            className="underline underline-offset-2 hover:text-foreground"
-            onClick={() => navigate(routes.view.notesLegacy())}
-          >
-            {t('knowledge.legacyNotes.open', { defaultValue: 'Open legacy notes' })}
-          </button>
-        </div>
-      </div>
-
       <EntityList<SearchHit>
         className="flex-1"
         header={

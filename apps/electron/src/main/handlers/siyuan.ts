@@ -25,6 +25,7 @@ import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { bumpKnowledgeMetric } from '@craft-agent/server-core/knowledge'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import type { HandlerDeps } from './handler-deps'
+import { ensureKnowledgeEngineAuthCookie, KNOWLEDGE_ENGINE_PARTITION } from '../knowledge-engine-session'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.siyuan.CREATE_EMBEDDED,
@@ -190,10 +191,13 @@ export function registerSiyuanHandlers(server: RpcServer, deps: HandlerDeps): vo
       return existing.instanceId
     }
 
+    // Kernel UI needs Cookie siyuan=<AccessAuthCode> on this partition.
+    // Best-effort, main-process only — never throw if session/cookies are missing.
+    ensureKnowledgeEngineAuthCookie(input.url)
     const instanceId = browserPaneManager.createEmbeddedInstance({
       url: input.url,
       workspaceId: input.workspaceId ?? null,
-      partition: 'persist:knowledge-engine',
+      partition: KNOWLEDGE_ENGINE_PARTITION,
     })
     const record: SiyuanSurfaceRecord = {
       instanceId,

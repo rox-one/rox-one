@@ -13,8 +13,20 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import { RPC_CHANNELS, type SiyuanSurfaceState } from '@craft-agent/shared/protocol'
 import type { HandlerDeps } from '../handler-deps'
 
+const cookieSetCalls: Array<{ partition: string; cookie: Record<string, unknown> }> = []
+
 mock.module('electron', () => ({
   ipcMain: { handle: () => {}, on: () => {} },
+  session: {
+    fromPartition: (partition: string) => ({
+      cookies: {
+        set: (cookie: Record<string, unknown>) => {
+          cookieSetCalls.push({ partition, cookie })
+          return Promise.resolve()
+        },
+      },
+    }),
+  },
 }))
 
 type HandlerFn = (...args: unknown[]) => unknown
@@ -114,6 +126,7 @@ describe('siyuan surface handlers', () => {
   beforeEach(async () => {
     recorder = makeServer()
     calls = makeCalls()
+    cookieSetCalls.length = 0
     // Dynamic import: electron must be mocked before the handler module graph
     // resolves (repo-wide convention across main/handlers tests).
     const mod = await import('../siyuan')
@@ -177,6 +190,36 @@ describe('siyuan surface handlers', () => {
       url: 'http://localhost:6806/stage/build/desktop/',
       workspaceId: 'ws-1',
     } satisfies SiyuanSurfaceState)
+  })
+
+  it('createEmbedded stamps siyuan cookie on persist:knowledge-engine when OEM_KERNEL_AUTH_CODE is set', () => {
+    const prev = process.env.OEM_KERNEL_AUTH_CODE
+    process.env.OEM_KERNEL_AUTH_CODE = 'test-access-auth'
+    try {
+      register(recorder.server, makeDeps(calls))
+      const handler = recorder.handlers.get(RPC_CHANNELS.siyuan.CREATE_EMBEDDED)!
+      const instanceId = handler(CTX, {
+        durableKey: 'siyuan:doc:cookie',
+        url: 'http://127.0.0.1:6806/stage/build/desktop/',
+        workspaceId: 'ws-1',
+      })
+      expect(instanceId).toBe('browser-embedded-1')
+      expect(calls.created[0]?.partition).toBe('persist:knowledge-engine')
+      expect(cookieSetCalls).toEqual([
+        {
+          partition: 'persist:knowledge-engine',
+          cookie: {
+            url: 'http://127.0.0.1:6806',
+            name: 'siyuan',
+            value: 'test-access-auth',
+            httpOnly: true,
+          },
+        },
+      ])
+    } finally {
+      if (prev === undefined) delete process.env.OEM_KERNEL_AUTH_CODE
+      else process.env.OEM_KERNEL_AUTH_CODE = prev
+    }
   })
 
   it('createEmbedded dedups on durableKey: reuses the surface, focuses it, re-broadcasts state', () => {

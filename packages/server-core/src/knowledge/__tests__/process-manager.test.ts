@@ -44,10 +44,13 @@ describe('SiyuanProcessManager', () => {
       pin,
       resolveBinary: () => '/fake/kernel',
       allocatePort: () => 19201,
-      spawnFn: (cmd, args) => {
+      spawnFn: (cmd, args, opts) => {
         expect(cmd).toBe('/fake/kernel')
+        expect(args.some((a) => a.startsWith('--wd=') && a.includes('/fake'))).toBe(true)
         expect(args.some((a) => a.includes('19201'))).toBe(true)
         expect(args.some((a) => a.includes('6806'))).toBe(false)
+        expect(opts.cwd).toBe('/fake')
+        expect(opts.cwd).not.toContain('knowledge-workspaces')
         return {
           pid: 4242,
           unref() {},

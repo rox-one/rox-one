@@ -344,8 +344,13 @@ export async function ensureLocalKernel(deps: BootstrapDeps = {}): Promise<Ensur
             g2AcceptedVariant: 'C',
             pin,
             resolveBinary: () => binaryPath,
-            spawnFn: (cmd, args) => {
-              const child = (deps.spawnFn ?? spawn)(cmd, args, { detached: true, stdio: 'ignore' })
+            spawnFn: (cmd, args, opts) => {
+              const child = (deps.spawnFn ?? spawn)(cmd, args, {
+                detached: true,
+                stdio: 'ignore',
+                cwd: opts?.cwd,
+                env: opts?.env,
+              })
               child.unref()
               return child
             },

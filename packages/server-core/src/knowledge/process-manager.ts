@@ -2,7 +2,8 @@
  * Supervise a pinned OEM knowledge kernel (H1). Fail-closed unless G2 variant C.
  */
 import { randomBytes } from 'node:crypto'
-import { join } from 'node:path'
+import { mkdirSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import type { OemKernelPin } from '@craft-agent/shared/knowledge/oem-pin'
 
 export type ManagedKernelError =
@@ -32,7 +33,7 @@ export interface ManagedStartInput {
   spawnFn: (
     cmd: string,
     args: string[],
-    opts: { cwd?: string },
+    opts: { cwd?: string; env?: NodeJS.ProcessEnv },
   ) => {
     pid: number
     unref(): void
@@ -134,14 +135,25 @@ export class SiyuanProcessManager {
 
   private spawnOnce(input: ManagedStartInput, binary: string, port: number): ManagedInstance {
     const workspacePath = join(input.configDir, 'knowledge-workspaces', input.connectionId)
+    mkdirSync(workspacePath, { recursive: true })
     const accessAuthCode = randomBytes(16).toString('hex')
+    const binaryDir = dirname(binary)
     const args = [
+      `--wd=${binaryDir}`,
       `--workspace=${workspacePath}`,
       `--port=${port}`,
       `--accessAuthCode=${accessAuthCode}`,
       '--lang=ru',
     ]
-    const child = input.spawnFn(binary, args, { cwd: workspacePath })
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      ROX_DISABLE_KERNEL_AI: '1',
+      ROX_DISABLE_FIXED_PORT: '1',
+    }
+    if (process.env.ROX_CATALOG_URL) {
+      env.ROX_CATALOG_URL = process.env.ROX_CATALOG_URL
+    }
+    const child = input.spawnFn(binary, args, { cwd: binaryDir, env })
     this.child = child
     this.instance = {
       pid: child.pid,
