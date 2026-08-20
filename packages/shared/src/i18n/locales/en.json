@@ -873,6 +873,7 @@
   "inspector.field.panel": "Panel",
   "inspector.field.provenance": "Provenance",
   "inspector.field.provider": "Provider",
+  "inspector.field.resources": "Resources",
   "inspector.field.route": "Route",
   "inspector.field.scopes": "Scopes",
   "inspector.field.session": "Session",

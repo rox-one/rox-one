@@ -194,4 +194,14 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('shows grant resources for inspector consumers without secret fields', () => {
+    expect(host).toContain('connections-inspector-resources')
+    expect(host).toContain('inspector.field.resources')
+    expect(host).toContain('row.resources')
+    expect(host).toContain('sanitizeConnectionBindingRows')
+    expect(host).not.toMatch(/\/token\//)
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
