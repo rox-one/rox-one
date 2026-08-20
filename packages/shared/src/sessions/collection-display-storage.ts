@@ -23,6 +23,7 @@ import {
 } from './collection-types.ts'
 
 export type {
+  CollectionDensity,
   CollectionDisplay,
   CollectionGroupBy,
   CollectionOrderBy,
