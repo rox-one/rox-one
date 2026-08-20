@@ -341,9 +341,22 @@ export class WindowManager {
         try {
           const savedUrl = new URL(restoreUrl)
           const devUrl = new URL(VITE_DEV_SERVER_URL)
-          // Preserve pathname and search from saved URL, use dev server host
-          devUrl.pathname = savedUrl.pathname
+          // Keep query params; never copy a packaged file:// pathname onto Vite.
           devUrl.search = savedUrl.search
+          const isViteOrigin =
+            (savedUrl.protocol === 'http:' || savedUrl.protocol === 'https:') &&
+            savedUrl.origin === devUrl.origin
+          const isFilesystemPath =
+            savedUrl.protocol === 'file:' ||
+            savedUrl.pathname.includes('dist/renderer') ||
+            /(?:^|\/)index\.html$/i.test(savedUrl.pathname)
+          if (isViteOrigin) {
+            devUrl.pathname = savedUrl.pathname || '/'
+          } else if (isFilesystemPath) {
+            devUrl.pathname = '/'
+          } else {
+            devUrl.pathname = savedUrl.pathname || '/'
+          }
           window.loadURL(devUrl.toString())
         } catch {
           // Fallback if URL parsing fails
