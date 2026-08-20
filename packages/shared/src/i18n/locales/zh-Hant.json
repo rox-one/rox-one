@@ -438,6 +438,7 @@
   "collection.filter.status": "狀態",
   "collection.filter.trigger": "篩選",
   "collection.ops.count": "{{count}} sessions",
+  "collection.row.openBoardCard": "開啟看板卡片",
   "collection.slice.duplicateName": "此名稱已被使用",
   "collection.slice.flagged": "已標記",
   "collection.slice.overdue": "已逾期",

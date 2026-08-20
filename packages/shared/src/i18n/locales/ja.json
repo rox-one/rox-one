@@ -438,6 +438,7 @@
   "collection.filter.status": "ステータス",
   "collection.filter.trigger": "フィルター",
   "collection.ops.count": "{{count}} sessions",
+  "collection.row.openBoardCard": "ボードカードを開く",
   "collection.slice.duplicateName": "この名前は既に使われています",
   "collection.slice.flagged": "フラグ付き",
   "collection.slice.overdue": "期限超過",

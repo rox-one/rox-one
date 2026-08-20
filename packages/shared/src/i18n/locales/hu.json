@@ -438,6 +438,7 @@
   "collection.filter.status": "Állapot",
   "collection.filter.trigger": "Szűrők",
   "collection.ops.count": "{{count}} sessions",
+  "collection.row.openBoardCard": "Táblakártya megnyitása",
   "collection.slice.duplicateName": "Ez a név már foglalt",
   "collection.slice.flagged": "Megjelölt",
   "collection.slice.overdue": "Lejárt",

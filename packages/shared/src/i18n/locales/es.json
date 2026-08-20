@@ -438,6 +438,7 @@
   "collection.filter.status": "Estado",
   "collection.filter.trigger": "Filtros",
   "collection.ops.count": "{{count}} sessions",
+  "collection.row.openBoardCard": "Abrir tarjeta del tablero",
   "collection.slice.duplicateName": "Ese nombre ya se usa",
   "collection.slice.flagged": "Marcadas",
   "collection.slice.overdue": "Vencidas",

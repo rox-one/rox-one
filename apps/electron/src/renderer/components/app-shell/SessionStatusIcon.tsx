@@ -1,15 +1,25 @@
-import { useState } from "react"
+import { useState, type KeyboardEvent, type MouseEvent, type SyntheticEvent } from "react"
+import { useSetAtom } from "jotai"
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { SessionStatusMenu } from "@/components/ui/session-status-menu"
 import { getStateIcon, getStateIconStyle } from "@/config/session-status-config"
 import { useSessionListContext } from "@/context/SessionListContext"
+import { kanbanEditorTargetAtom } from "@/atoms/kanban"
 import type { SessionMeta } from "@/atoms/sessions"
-import { getSessionStatus } from "@/utils/session"
+import { navigate, routes } from "@/lib/navigate"
+import { getSessionTitle, getSessionStatus } from "@/utils/session"
+import { rememberCollectionView } from "./collection/collection-view-cycle"
+import { sessionRowClickTarget } from "./session-row-click"
 
 interface SessionStatusIconProps {
   item: SessionMeta
+}
+
+function stopRowSelect(e: SyntheticEvent) {
+  e.preventDefault()
+  e.stopPropagation()
 }
 
 export function SessionStatusIcon({ item }: SessionStatusIconProps) {
@@ -17,10 +27,24 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
   const ctx = useSessionListContext()
   const [open, setOpen] = useState(false)
   const status = getSessionStatus(item)
+  const setKanbanEditorTarget = useSetAtom(kanbanEditorTargetAtom)
 
   const handleSelect = (state: import("@/config/session-status-config").SessionStatusId) => {
     setOpen(false)
     ctx.onSessionStatusChange(item.id, state)
+  }
+
+  const openBoardCard = (e: MouseEvent | KeyboardEvent) => {
+    stopRowSelect(e)
+    if (sessionRowClickTarget("status") !== "board") return
+    rememberCollectionView("list")
+    setKanbanEditorTarget({
+      mode: "edit",
+      sessionId: item.id,
+      taskSlug: item.taskSlug,
+      initialTitle: getSessionTitle(item),
+    })
+    navigate(routes.view.board(item.id))
   }
 
   return (
@@ -36,10 +60,25 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
           style={getStateIconStyle(status, ctx.sessionStatuses)}
           aria-haspopup="menu"
           aria-expanded={open}
-          aria-label={t("status.change")}
-          onContextMenu={(e) => {
-            e.preventDefault()
+          aria-label={t("collection.row.openBoardCard")}
+          onPointerDown={(e: MouseEvent<HTMLButtonElement>) => {
             e.stopPropagation()
+            // Left click must not open the status menu (Radix trigger default).
+            if (e.button === 0) e.preventDefault()
+          }}
+          onMouseDown={stopRowSelect}
+          onClick={(e: MouseEvent<HTMLButtonElement>) => {
+            if (e.button !== 0 && e.button !== undefined) return
+            openBoardCard(e)
+          }}
+          onKeyDown={(e: KeyboardEvent<HTMLButtonElement>) => {
+            if (e.key === "Enter" || e.key === " ") {
+              openBoardCard(e)
+            }
+          }}
+          onContextMenu={(e: MouseEvent<HTMLButtonElement>) => {
+            stopRowSelect(e)
+            setOpen(true)
           }}
         >
           {getStateIcon(status, ctx.sessionStatuses)}
@@ -50,7 +89,7 @@ export function SessionStatusIcon({ item }: SessionStatusIconProps) {
         align="start"
         side="bottom"
         sideOffset={4}
-        onContextMenu={(e) => {
+        onContextMenu={(e: MouseEvent<HTMLButtonElement>) => {
           e.preventDefault()
           e.stopPropagation()
         }}

@@ -438,6 +438,7 @@
   "collection.filter.status": "Статус",
   "collection.filter.trigger": "Фильтры",
   "collection.ops.count": "{{count}} сессий",
+  "collection.row.openBoardCard": "Открыть карточку доски",
   "collection.slice.duplicateName": "Такое имя уже есть",
   "collection.slice.flagged": "С флажком",
   "collection.slice.overdue": "Просрочено",
