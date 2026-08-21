@@ -677,10 +677,16 @@ export default function ConnectionsPage() {
     )
   }
 
-  const renderRotateControls = (row: ConnectionListRow) => (
+  const renderRotateControls = (
+    row: ConnectionListRow,
+    confirmTargetTestId:
+      | 'connections-row-rotate-confirm-target'
+      | 'connections-credential-rotate-confirm-target'
+      | 'connections-policy-rotate-confirm-target',
+  ) => (
     rotatingId === row.id ? (
       <div className="flex flex-col items-end gap-1">
-        <div className="font-mono text-[11px]" data-testid="connections-rotate-confirm-target">
+        <div className="font-mono text-[11px]" data-testid={confirmTargetTestId}>
           {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
         </div>
         <div className="flex gap-1">
@@ -1289,7 +1295,7 @@ export default function ConnectionsPage() {
                 </button>
                 {renderReconnectControls(row, 'connections-row-reconnect', 'connections-row-reconnect-confirm-target')}
                 {renderRevokeControls(row)}
-                {renderRotateControls(row)}
+                {renderRotateControls(row, 'connections-row-rotate-confirm-target')}
                 {renderConvertMoveControls(row)}
               </li>
               )
@@ -1338,7 +1344,7 @@ export default function ConnectionsPage() {
                 </button>
                 {renderReconnectControls(row, 'connections-credential-reconnect', 'connections-credential-reconnect-confirm-target')}
                 {renderRevokeControls(row)}
-                {renderRotateControls(row)}
+                {renderRotateControls(row, 'connections-credential-rotate-confirm-target')}
                 {renderConvertMoveControls(row)}
               </li>
               )
@@ -1444,7 +1450,7 @@ export default function ConnectionsPage() {
                     </button>
                     {renderReconnectControls(row, 'connections-policy-reconnect', 'connections-policy-reconnect-confirm-target')}
                     {renderRevokeControls(row)}
-                    {renderRotateControls(row)}
+                    {renderRotateControls(row, 'connections-policy-rotate-confirm-target')}
                     {renderConvertMoveControls(row)}
                   </li>
                   )
