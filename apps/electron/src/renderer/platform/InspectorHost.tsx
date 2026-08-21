@@ -81,8 +81,8 @@ function projectInspectorConsumers(raw: unknown) {
   return sanitizeConnectionBindingRows(raw).map((row) => ({
     consumerId: row.consumerId,
     purpose: row.purpose,
-    actions: row.actions.join(', ') || '—',
-    resources: row.resources.join(', ') || '—',
+    actions: row.actions.join(', '),
+    resources: row.resources.join(', '),
   }))
 }
 
