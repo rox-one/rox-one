@@ -294,6 +294,33 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('keeps listed reconnect in the action row after repair without stealing focus', () => {
+    expect(page.indexOf('data-testid={testId}')).toBeGreaterThan(-1)
+    expect(page.indexOf('data-testid={repairId}')).toBeGreaterThan(page.indexOf('data-testid={testId}'))
+    for (const prefix of ['connections-row', 'connections-credential', 'connections-policy'] as const) {
+      const testCall = `{renderTestRepairControls(row, '${prefix}-test'`
+      const reconnectCall = `{renderReconnectControls(row, '${prefix}-reconnect'`
+      const revokeCall = `{renderRevokeControls(row, '${prefix}-revoke-confirm-target'`
+      const rotateCall = `{renderRotateControls(row, '${prefix}-rotate-confirm-target'`
+      const convertCall = `{renderConvertMoveControls(row, '${prefix}-convert-confirm-target'`
+      const moveCall = `'${prefix}-move-confirm-target')}`
+      const start = page.indexOf(testCall)
+      const end = page.indexOf(moveCall, start)
+      expect(start).toBeGreaterThan(-1)
+      expect(end).toBeGreaterThan(start)
+      const actions = page.slice(start, end + moveCall.length)
+      expect(actions.indexOf(testCall)).toBeGreaterThan(-1)
+      expect(actions.indexOf(reconnectCall)).toBeGreaterThan(actions.indexOf(testCall))
+      expect(actions.indexOf(revokeCall)).toBeGreaterThan(actions.indexOf(reconnectCall))
+      expect(actions.indexOf(rotateCall)).toBeGreaterThan(actions.indexOf(revokeCall))
+      expect(actions.indexOf(convertCall)).toBeGreaterThan(actions.indexOf(rotateCall))
+      expect(actions.indexOf(moveCall)).toBeGreaterThan(actions.indexOf(convertCall))
+    }
+    expect(page).not.toContain('autoFocus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('offers repair on policy connection rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
     expect(page.split('{renderTestRepairControls(row,').length - 1).toBe(3)
@@ -938,6 +965,19 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain("visibleInspectValue(row.actorId ?? '')")
     expect(page).toContain('connections-audit-actor')
     expect(page).not.toContain("row.actorId ?? '—'")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('hides empty audit action, outcome, connection, and digest on audit rows without secret fields', () => {
+    expect(page).toContain('visibleInspectValue(row.action ?? row.eventType)')
+    expect(page).toContain('visibleInspectValue(row.outcome)')
+    expect(page).toContain('visibleInspectValue(row.connectionId)')
+    expect(page).toContain('visibleInspectValue(row.payloadDigest)')
+    expect(page).toContain('connections-audit-action')
+    expect(page).toContain('connections-audit-outcome')
+    expect(page).toContain('connections-audit-connection')
+    expect(page).toContain('connections-audit-digest')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

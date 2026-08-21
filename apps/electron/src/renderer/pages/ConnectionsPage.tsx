@@ -1543,14 +1543,18 @@ export default function ConnectionsPage() {
                     if (next) setSelected(next)
                   }}
                 >
-                  <div data-testid="connections-audit-action">
-                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.action')}</div>
-                    <div className="font-medium">{row.action ?? row.eventType}</div>
-                  </div>
-                  <div data-testid="connections-audit-outcome">
-                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.outcome')}</div>
-                    <div className="text-muted-foreground">{row.outcome}</div>
-                  </div>
+                  {visibleInspectValue(row.action ?? row.eventType) ? (
+                    <div data-testid="connections-audit-action">
+                      <div className="text-[11px] text-muted-foreground">{t('connections.audit.action')}</div>
+                      <div className="font-medium">{row.action ?? row.eventType}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.outcome) ? (
+                    <div data-testid="connections-audit-outcome">
+                      <div className="text-[11px] text-muted-foreground">{t('connections.audit.outcome')}</div>
+                      <div className="text-muted-foreground">{row.outcome}</div>
+                    </div>
+                  ) : null}
                   <div data-testid="connections-audit-time">
                     <div className="text-[11px] text-muted-foreground">{t('connections.audit.time')}</div>
                     <div className="text-muted-foreground">{new Date(row.occurredAt).toISOString()}</div>
@@ -1561,14 +1565,18 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs">{row.actorId}</div>
                     </div>
                   ) : null}
-                  <div data-testid="connections-audit-connection">
-                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.connection')}</div>
-                    <div className="font-mono text-xs">{row.connectionId}</div>
-                  </div>
-                  <div data-testid="connections-audit-digest">
-                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.digest')}</div>
-                    <div className="font-mono text-xs">{row.payloadDigest}</div>
-                  </div>
+                  {visibleInspectValue(row.connectionId) ? (
+                    <div data-testid="connections-audit-connection">
+                      <div className="text-[11px] text-muted-foreground">{t('connections.audit.connection')}</div>
+                      <div className="font-mono text-xs">{row.connectionId}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.payloadDigest) ? (
+                    <div data-testid="connections-audit-digest">
+                      <div className="text-[11px] text-muted-foreground">{t('connections.audit.digest')}</div>
+                      <div className="font-mono text-xs">{row.payloadDigest}</div>
+                    </div>
+                  ) : null}
                 </button>
               </li>
             ))}
