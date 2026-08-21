@@ -1303,10 +1303,10 @@ export default function ConnectionsPage() {
                   {renderLeaseRevalidated(row, 'connections-row-leases', 'connections-row-revalidated')}
                   {renderTestStatus(status, 'connections-test-status')}
                 </button>
-                <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
+                <button type="button" className="rounded border px-2 py-1" data-testid="connections-row-test" onClick={() => runTest(row.id)}>
                   {t('connections.test')}
                 </button>
-                <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
+                <button type="button" className="rounded border px-2 py-1" data-testid="connections-row-repair" onClick={() => runRepair(row.id)}>
                   {t('connections.repair')}
                 </button>
                 {renderReconnectControls(row, 'connections-row-reconnect', 'connections-row-reconnect-confirm-target')}
@@ -1352,10 +1352,10 @@ export default function ConnectionsPage() {
                   {renderLeaseRevalidated(row, 'connections-credential-leases', 'connections-credential-revalidated')}
                   {renderTestStatus(status, 'connections-credential-test-status')}
                 </button>
-                <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
+                <button type="button" className="rounded border px-2 py-1" data-testid="connections-credential-test" onClick={() => runTest(row.id)}>
                   {t('connections.test')}
                 </button>
-                <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
+                <button type="button" className="rounded border px-2 py-1" data-testid="connections-credential-repair" onClick={() => runRepair(row.id)}>
                   {t('connections.repair')}
                 </button>
                 {renderReconnectControls(row, 'connections-credential-reconnect', 'connections-credential-reconnect-confirm-target')}
@@ -1458,10 +1458,10 @@ export default function ConnectionsPage() {
                       {renderLeaseRevalidated(row, 'connections-policy-leases', 'connections-policy-revalidated')}
                       {renderTestStatus(status, 'connections-policy-test-status')}
                     </button>
-                    <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
+                    <button type="button" className="rounded border px-2 py-1" data-testid="connections-policy-test" onClick={() => runTest(row.id)}>
                       {t('connections.test')}
                     </button>
-                    <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
+                    <button type="button" className="rounded border px-2 py-1" data-testid="connections-policy-repair" onClick={() => runRepair(row.id)}>
                       {t('connections.repair')}
                     </button>
                     {renderReconnectControls(row, 'connections-policy-reconnect', 'connections-policy-reconnect-confirm-target')}
