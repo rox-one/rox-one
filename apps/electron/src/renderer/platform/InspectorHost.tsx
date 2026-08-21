@@ -106,6 +106,7 @@ function ConnectionInfoSection() {
   const [confirmMove, setConfirmMove] = useState(false)
   const [confirmReconnect, setConfirmReconnect] = useState(false)
   const [confirmRevoke, setConfirmRevoke] = useState(false)
+  const [confirmConvert, setConfirmConvert] = useState(false)
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
   const [consumers, setConsumers] = useState<Array<{ consumerId: string; purpose: string; actions: string; resources: string }>>([])
   const [testLogin, setTestLogin] = useState('')
@@ -123,6 +124,7 @@ function ConnectionInfoSection() {
       setInspect(null)
       setConfirmReconnect(false)
       setConfirmRevoke(false)
+      setConfirmConvert(false)
       setLeases('')
       setActiveLeases([])
       setAuditSummary('')
@@ -131,6 +133,7 @@ function ConnectionInfoSection() {
     }
     setRevalidated('')
     setConfirmRevoke(false)
+    setConfirmConvert(false)
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
     if (typeof listConnectionBindings !== 'function') {
       setConsumers([])
@@ -559,6 +562,55 @@ function ConnectionInfoSection() {
             {t('connections.rotate')}
           </button>
         )}
+        {selected.storageMode === 'copy' ? (
+          confirmConvert ? (
+            <>
+              <div className="font-mono text-[11px]" data-testid="connections-inspector-convert-confirm-target">
+                {formatConfirmLeases(selected, activeLeases)}
+              </div>
+              <button
+                type="button"
+                className="rounded border px-2 py-1 text-[12px]"
+                onClick={async () => {
+                  const convertConnection = window.electronAPI?.workgraph?.convertConnection
+                  if (!workspaceId || typeof convertConnection !== 'function') return
+                  try {
+                    setActionError(null)
+                    const result = await convertConnection({ workspaceId, connectionId: selected.id })
+                    void applyConsumers()
+                    applyRevalidated(result.consumers)
+                    applyInspect(result.inspect)
+                    applyRevokedLeases(result.leases)
+                    setSelected({ ...selected, storageMode: result.storageMode })
+                    setConfirmConvert(false)
+                  } catch (err) {
+                    setActionError(errorMessage(err))
+                  }
+                }}
+              >
+                {t('connections.convertConfirm')}
+              </button>
+              <button
+                type="button"
+                className="rounded border px-2 py-1 text-[12px]"
+                onClick={() => setConfirmConvert(false)}
+              >
+                {t('connections.convertCancel')}
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-[12px]"
+              onClick={() => {
+                setConfirmConvert(true)
+                void previewActiveLeases()
+              }}
+            >
+              {t('connections.convert')}
+            </button>
+          )
+        ) : null}
         {confirmMove ? (
           <>
             <div className="font-mono text-[11px]" data-testid="connections-inspector-move-confirm-target">

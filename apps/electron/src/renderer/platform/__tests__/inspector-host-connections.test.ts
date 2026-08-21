@@ -39,6 +39,25 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('exposes confirmed revoke without secret fields', () => {
+    expect(host).toContain('revokeConnection')
+    expect(host).toContain('connections.revoke')
+    expect(host).toContain('connections.revokeConfirm')
+    expect(host).toContain('connections.revokeCancel')
+    expect(host).toContain('connections-inspector-revoke-confirm-target')
+    expect(host).toContain('formatConfirmLeases')
+    expect(host).toContain('previewActiveLeases')
+    expect(host).toContain('applyRevokedLeases')
+    expect(host).toContain('applyInspect')
+    expect(host).toContain('setSelected(null)')
+    expect(host).not.toContain('autoFocus')
+    expect(host).not.toContain('bringToFront')
+    expect(host).not.toContain('bring_to_front')
+    expect(host).not.toContain('window.focus')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('surfaces inspector action errors and lists consumers before mutate', () => {
     expect(host).toContain('errorMessage')
     expect(host).toContain('connections-inspector-error')
@@ -155,6 +174,24 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('converts a copy connection from the inspector after naming affected leases without secret fields', () => {
+    expect(host).toContain('convertConnection')
+    expect(host).toContain("selected.storageMode === 'copy'")
+    expect(host).toContain('connections.convert')
+    expect(host).toContain('connections.convertConfirm')
+    expect(host).toContain('connections.convertCancel')
+    expect(host).toContain('connections-inspector-convert-confirm-target')
+    expect(host).toContain('formatConfirmLeases')
+    expect(host).toContain('previewActiveLeases')
+    expect(host).toContain('storageMode: result.storageMode')
+    expect(host).not.toContain('autoFocus')
+    expect(host).not.toContain('bringToFront')
+    expect(host).not.toContain('bring_to_front')
+    expect(host).not.toContain('window.focus')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('revokes the selected connection after naming affected leases without secret fields', () => {
     expect(host).toContain('revokeConnection')
     expect(host).toContain('connections.revoke')
@@ -196,7 +233,7 @@ describe('CF-6.4 InspectorHost connections', () => {
 
   it('names invalidated leases after rotate and move without leaking secret fields', () => {
     expect(host).toContain('applyRevokedLeases')
-    expect(host.split('applyRevokedLeases(result.leases)').length - 1).toBe(3)
+    expect(host.split('applyRevokedLeases(result.leases)').length - 1).toBe(4)
     expect(host.split("next === '—' ? '' : next").length - 1).toBe(2)
     expect(host).toContain('rotateConnection')
     expect(host).toContain('moveConnection')
@@ -208,7 +245,7 @@ describe('CF-6.4 InspectorHost connections', () => {
 
   it('refreshes inspect after rotate and move without leaking secret fields', () => {
     expect(host).toContain('applyInspect')
-    expect(host.split('applyInspect(result.inspect)').length - 1).toBe(4)
+    expect(host.split('applyInspect(result.inspect)').length - 1).toBe(5)
     expect(host).toContain('projectConnectionInspect')
     expect(host).toContain('rotateConnection')
     expect(host).toContain('moveConnection')
@@ -300,7 +337,7 @@ describe('CF-6.4 InspectorHost connections', () => {
 
   it('reloads inspector binding actions and resources after rotate, move, repair, and reconnect', () => {
     expect(host).toContain('applyConsumers')
-    expect(host.split('void applyConsumers()').length - 1).toBe(4)
+    expect(host.split('void applyConsumers()').length - 1).toBe(5)
     expect(host).not.toContain('setConsumers(result.consumers)')
     expect(host).toContain('connections-inspector-actions')
     expect(host).toContain('connections-inspector-resources')
@@ -310,7 +347,7 @@ describe('CF-6.4 InspectorHost connections', () => {
 
   it('shows revalidation status after rotate, move, repair, and reconnect without leaking secret fields', () => {
     expect(host).toContain('applyRevalidated')
-    expect(host.split('applyRevalidated(result.consumers)').length - 1).toBe(4)
+    expect(host.split('applyRevalidated(result.consumers)').length - 1).toBe(5)
     expect(host).toContain("setRevalidated('')")
     expect(host).toContain('connections-inspector-revalidated')
     expect(host).toContain('inspector.field.revalidated')
