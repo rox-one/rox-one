@@ -686,6 +686,19 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty grant purpose, actions, and resources on policy binding rows without secret fields', () => {
+    expect(page).toContain('visibleInspectValue(row.purpose)')
+    expect(page).toContain("visibleInspectValue(row.actions.join(', '))")
+    expect(page).toContain("visibleInspectValue(row.resources.join(', '))")
+    expect(page).toContain('connections-binding-purpose')
+    expect(page).toContain('connections-binding-actions')
+    expect(page).toContain('connections-binding-resources')
+    expect(page).not.toContain("row.actions.join(', ') || '—'")
+    expect(page).not.toContain("row.resources.join(', ') || '—'")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('selects the granted connection from a policy binding row into the inspector', () => {
     expect(page).toContain('connections-binding-row')
     expect(page).toContain('importedConnectionFromList(listed, row.connectionId)')

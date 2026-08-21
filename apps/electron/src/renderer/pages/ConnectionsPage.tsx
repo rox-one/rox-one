@@ -1491,18 +1491,24 @@ export default function ConnectionsPage() {
                         <div className="text-[11px] text-muted-foreground">{t('connections.grantConsumer')}</div>
                         <div className="font-medium">{row.consumerId}</div>
                       </div>
-                      <div data-testid="connections-binding-purpose">
-                        <div className="text-[11px] text-muted-foreground">{t('connections.grantPurpose')}</div>
-                        <div className="text-muted-foreground">{row.purpose}</div>
-                      </div>
-                      <div data-testid="connections-binding-actions">
-                        <div className="text-[11px] text-muted-foreground">{t('connections.grantActions')}</div>
-                        <div className="font-mono text-xs">{row.actions.join(', ') || '—'}</div>
-                      </div>
-                      <div data-testid="connections-binding-resources">
-                        <div className="text-[11px] text-muted-foreground">{t('connections.grantResources')}</div>
-                        <div className="font-mono text-xs">{row.resources.join(', ') || '—'}</div>
-                      </div>
+                      {visibleInspectValue(row.purpose) ? (
+                        <div data-testid="connections-binding-purpose">
+                          <div className="text-[11px] text-muted-foreground">{t('connections.grantPurpose')}</div>
+                          <div className="text-muted-foreground">{row.purpose}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(row.actions.join(', ')) ? (
+                        <div data-testid="connections-binding-actions">
+                          <div className="text-[11px] text-muted-foreground">{t('connections.grantActions')}</div>
+                          <div className="font-mono text-xs">{row.actions.join(', ')}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(row.resources.join(', ')) ? (
+                        <div data-testid="connections-binding-resources">
+                          <div className="text-[11px] text-muted-foreground">{t('connections.grantResources')}</div>
+                          <div className="font-mono text-xs">{row.resources.join(', ')}</div>
+                        </div>
+                      ) : null}
                     </button>
                     {unbindingId === row.id ? (
                       <div className="flex gap-1">
