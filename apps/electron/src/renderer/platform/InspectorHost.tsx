@@ -311,13 +311,19 @@ function ConnectionInfoSection() {
           ) : null}
         </>
       ) : null}
-      {testLogin ? <InfoRow label={t('inspector.field.testLogin')} value={testLogin} mono /> : null}
+      {testLogin ? (
+        <div data-testid="connections-inspector-test-status">
+          <InfoRow label={t('inspector.field.testLogin')} value={testLogin} mono />
+        </div>
+      ) : null}
       {consumers.length > 0 ? (
         <>
-          <InfoRow
-            label={t('inspector.field.consumers')}
-            value={consumers.map((row) => row.consumerId).join(', ')}
-          />
+          <div data-testid="connections-inspector-consumers">
+            <InfoRow
+              label={t('inspector.field.consumers')}
+              value={consumers.map((row) => row.consumerId).join(', ')}
+            />
+          </div>
           {consumers.some((row) => visibleInspectValue(row.purpose)) ? (
             <div data-testid="connections-inspector-purpose">
               <InfoRow

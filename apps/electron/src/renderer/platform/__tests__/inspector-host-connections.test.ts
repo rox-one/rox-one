@@ -326,4 +326,15 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host.toLowerCase()).not.toContain('infisical')
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
+
+  it('exposes inspector consumers and test outcome testids without secret fields', () => {
+    expect(host).toContain('connections-inspector-consumers')
+    expect(host).toContain('connections-inspector-test-status')
+    expect(host).toContain('inspector.field.consumers')
+    expect(host).toContain('inspector.field.testLogin')
+    expect(host).toContain('{testLogin ?')
+    expect(host).not.toMatch(/\/token\//)
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
