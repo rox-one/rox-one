@@ -385,57 +385,6 @@ function ConnectionInfoSection() {
       {actionError ? (
         <p className="px-3 py-2 text-[12px]" data-testid="connections-inspector-error">{actionError}</p>
       ) : null}
-      {inspect && isStaleInspect(inspect) ? (
-        <div className="flex flex-col gap-1 px-3 py-2" data-testid="connections-inspector-reconnect">
-          <p className="text-[12px] text-muted-foreground">{t('connections.reconnectHint')}</p>
-          {confirmReconnect ? (
-            <>
-              <div className="font-mono text-[11px]" data-testid="connections-inspector-reconnect-confirm-target">
-                {formatConfirmLeases(selected, activeLeases)}
-              </div>
-              <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
-              <div className="flex flex-wrap gap-1">
-                <button
-                  type="button"
-                  className="rounded border px-2 py-1 text-[12px]"
-                  onClick={async () => {
-                    const reconnectConnection = window.electronAPI?.workgraph?.reconnectConnection
-                    if (!workspaceId || typeof reconnectConnection !== 'function') return
-                    try {
-                      setActionError(null)
-                      const result = await reconnectConnection({ workspaceId, connectionId: selected.id })
-                      void applyConsumers()
-                      applyRevalidated(result.consumers)
-                      applyInspect(result.inspect)
-                      applyRevokedLeases(result.leases)
-                      setConfirmReconnect(false)
-                    } catch (err) {
-                      setActionError(errorMessage(err))
-                    }
-                  }}
-                >
-                  {t('connections.reconnectConfirm')}
-                </button>
-                <button
-                  type="button"
-                  className="rounded border px-2 py-1 text-[12px]"
-                  onClick={() => setConfirmReconnect(false)}
-                >
-                  {t('connections.reconnectCancel')}
-                </button>
-              </div>
-            </>
-          ) : (
-            <button
-              type="button"
-              className="rounded border px-2 py-1 text-[12px]"
-              onClick={() => void previewReconnect()}
-            >
-              {t('connections.reconnect')}
-            </button>
-          )}
-        </div>
-      ) : null}
       <div className="flex flex-wrap gap-1 px-3 py-2">
         <button
           type="button"
@@ -473,6 +422,57 @@ function ConnectionInfoSection() {
         >
           {t('connections.repair')}
         </button>
+        {inspect && isStaleInspect(inspect) ? (
+          <div className="flex flex-col gap-1" data-testid="connections-inspector-reconnect">
+            <p className="text-[12px] text-muted-foreground">{t('connections.reconnectHint')}</p>
+            {confirmReconnect ? (
+              <>
+                <div className="font-mono text-[11px]" data-testid="connections-inspector-reconnect-confirm-target">
+                  {formatConfirmLeases(selected, activeLeases)}
+                </div>
+                <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    className="rounded border px-2 py-1 text-[12px]"
+                    onClick={async () => {
+                      const reconnectConnection = window.electronAPI?.workgraph?.reconnectConnection
+                      if (!workspaceId || typeof reconnectConnection !== 'function') return
+                      try {
+                        setActionError(null)
+                        const result = await reconnectConnection({ workspaceId, connectionId: selected.id })
+                        void applyConsumers()
+                        applyRevalidated(result.consumers)
+                        applyInspect(result.inspect)
+                        applyRevokedLeases(result.leases)
+                        setConfirmReconnect(false)
+                      } catch (err) {
+                        setActionError(errorMessage(err))
+                      }
+                    }}
+                  >
+                    {t('connections.reconnectConfirm')}
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded border px-2 py-1 text-[12px]"
+                    onClick={() => setConfirmReconnect(false)}
+                  >
+                    {t('connections.reconnectCancel')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="rounded border px-2 py-1 text-[12px]"
+                onClick={() => void previewReconnect()}
+              >
+                {t('connections.reconnect')}
+              </button>
+            )}
+          </div>
+        ) : null}
         {confirmRevoke ? (
           <>
             <div className="font-mono text-[11px]" data-testid="connections-inspector-revoke-confirm-target">

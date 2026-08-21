@@ -148,6 +148,19 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('keeps inspector reconnect in the action row after repair without stealing focus', () => {
+    expect(host.indexOf("t('connections.test')")).toBeGreaterThan(-1)
+    expect(host.indexOf("t('connections.repair')")).toBeGreaterThan(host.indexOf("t('connections.test')"))
+    expect(host.indexOf('connections-inspector-reconnect')).toBeGreaterThan(host.indexOf("t('connections.repair')"))
+    expect(host.indexOf('connections-inspector-revoke-confirm-target')).toBeGreaterThan(host.indexOf('connections-inspector-reconnect'))
+    expect(host.indexOf('connections-inspector-rotate-confirm-target')).toBeGreaterThan(host.indexOf('connections-inspector-revoke-confirm-target'))
+    expect(host.indexOf('connections-inspector-convert-confirm-target')).toBeGreaterThan(host.indexOf('connections-inspector-rotate-confirm-target'))
+    expect(host.indexOf('connections-inspector-move-confirm-target')).toBeGreaterThan(host.indexOf('connections-inspector-convert-confirm-target'))
+    expect(host).not.toContain('autoFocus')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('offers an in-place reconnect CTA for stale inspect without stealing focus', () => {
     expect(host).toContain('isStaleInspect')
     expect(host).toContain('reconnectConnection')
