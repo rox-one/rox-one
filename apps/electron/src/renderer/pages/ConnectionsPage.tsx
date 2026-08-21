@@ -841,6 +841,18 @@ export default function ConnectionsPage() {
     )
   }
 
+  const renderTestStatus = (
+    status: TestStatus | undefined,
+    testId: 'connections-test-status' | 'connections-credential-test-status' | 'connections-policy-test-status',
+  ) => (
+    status && status.kind !== 'idle' ? (
+      <div data-testid={testId}>
+        <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
+        <div className="font-mono text-xs">{status.kind === 'ok' ? status.login : status.message}</div>
+      </div>
+    ) : null
+  )
+
   const empty = (
     <div className="flex flex-1 items-center justify-center">
       {tab === 'audit' && auditError ? (
@@ -1247,12 +1259,7 @@ export default function ConnectionsPage() {
                     version: 'connections-row-version',
                   })}
                   {renderLeaseRevalidated(row, 'connections-row-leases', 'connections-row-revalidated')}
-                  {status && status.kind !== 'idle' ? (
-                    <div data-testid="connections-test-status">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
-                      <div className="font-mono text-xs">{status.kind === 'ok' ? status.login : status.message}</div>
-                    </div>
-                  ) : null}
+                  {renderTestStatus(status, 'connections-test-status')}
                 </button>
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
                   {t('connections.test')}
@@ -1324,12 +1331,7 @@ export default function ConnectionsPage() {
                     version: 'connections-credential-version',
                   })}
                   {renderLeaseRevalidated(row, 'connections-credential-leases', 'connections-credential-revalidated')}
-                  {status && status.kind !== 'idle' ? (
-                    <div data-testid="connections-credential-test-status">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
-                      <div className="font-mono text-xs">{status.kind === 'ok' ? status.login : status.message}</div>
-                    </div>
-                  ) : null}
+                  {renderTestStatus(status, 'connections-credential-test-status')}
                 </button>
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
                   {t('connections.test')}
@@ -1458,12 +1460,7 @@ export default function ConnectionsPage() {
                         version: 'connections-policy-version',
                       })}
                       {renderLeaseRevalidated(row, 'connections-policy-leases', 'connections-policy-revalidated')}
-                      {status && status.kind !== 'idle' ? (
-                        <div data-testid="connections-policy-test-status">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
-                          <div className="font-mono text-xs">{status.kind === 'ok' ? status.login : status.message}</div>
-                        </div>
-                      ) : null}
+                      {renderTestStatus(status, 'connections-policy-test-status')}
                     </button>
                     <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
                       {t('connections.test')}
