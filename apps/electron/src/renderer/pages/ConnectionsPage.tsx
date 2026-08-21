@@ -1555,10 +1555,12 @@ export default function ConnectionsPage() {
                     <div className="text-[11px] text-muted-foreground">{t('connections.audit.time')}</div>
                     <div className="text-muted-foreground">{new Date(row.occurredAt).toISOString()}</div>
                   </div>
-                  <div data-testid="connections-audit-actor">
-                    <div className="text-[11px] text-muted-foreground">{t('connections.audit.actor')}</div>
-                    <div className="font-mono text-xs">{row.actorId ?? '—'}</div>
-                  </div>
+                  {visibleInspectValue(row.actorId ?? '') ? (
+                    <div data-testid="connections-audit-actor">
+                      <div className="text-[11px] text-muted-foreground">{t('connections.audit.actor')}</div>
+                      <div className="font-mono text-xs">{row.actorId}</div>
+                    </div>
+                  ) : null}
                   <div data-testid="connections-audit-connection">
                     <div className="text-[11px] text-muted-foreground">{t('connections.audit.connection')}</div>
                     <div className="font-mono text-xs">{row.connectionId}</div>

@@ -925,6 +925,14 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty audit actor on audit rows without secret fields', () => {
+    expect(page).toContain("visibleInspectValue(row.actorId ?? '')")
+    expect(page).toContain('connections-audit-actor')
+    expect(page).not.toContain("row.actorId ?? '—'")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('selects the audited connection from an audit row into the inspector', () => {
     expect(page).toContain('connections-audit-row')
     expect(page).toContain('importedConnectionFromList(listed, row.connectionId)')
