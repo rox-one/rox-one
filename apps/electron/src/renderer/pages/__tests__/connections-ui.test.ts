@@ -118,7 +118,8 @@ describe('CF-6 Connections UI helpers', () => {
       { consumerId: 'agent-a', status: 'revoked' },
       { consumerId: 'workflow.deploy', status: 'revoked' },
     ])).toBe('agent-a: revoked, workflow.deploy: revoked')
-    expect(formatReconnectLeases([])).toBe('—')
+    expect(formatReconnectLeases([])).toBe('')
+    expect(formatReconnectLeases([])).not.toContain('—')
     expect(() => sanitizeReconnectLeases([
       { consumerId: 'agent-a', status: 'revoked', accessToken: 'gho_super-secret' },
     ])).toThrow(/accessToken|field/)

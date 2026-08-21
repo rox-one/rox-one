@@ -140,7 +140,7 @@ export function formatReconnectLeases(
     seen.add(part)
     parts.push(part)
   }
-  return parts.length === 0 ? '—' : parts.join(', ')
+  return parts.length === 0 ? '' : parts.join(', ')
 }
 
 export function previewSourceForChip(chip: ConnectSource): PreviewSource {
