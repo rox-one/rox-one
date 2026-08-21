@@ -618,10 +618,16 @@ export default function ConnectionsPage() {
     </label>
   )
 
-  const renderRevokeControls = (row: ConnectionListRow) => (
+  const renderRevokeControls = (
+    row: ConnectionListRow,
+    confirmTargetTestId:
+      | 'connections-row-revoke-confirm-target'
+      | 'connections-credential-revoke-confirm-target'
+      | 'connections-policy-revoke-confirm-target',
+  ) => (
     confirmingId === row.id ? (
       <div className="flex flex-col items-end gap-1">
-        <div className="font-mono text-[11px]" data-testid="connections-confirm-target">
+        <div className="font-mono text-[11px]" data-testid={confirmTargetTestId}>
           {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
         </div>
         <div className="flex gap-1">
@@ -1304,7 +1310,7 @@ export default function ConnectionsPage() {
                   {t('connections.repair')}
                 </button>
                 {renderReconnectControls(row, 'connections-row-reconnect', 'connections-row-reconnect-confirm-target')}
-                {renderRevokeControls(row)}
+                {renderRevokeControls(row, 'connections-row-revoke-confirm-target')}
                 {renderRotateControls(row, 'connections-row-rotate-confirm-target')}
                 {renderConvertMoveControls(row, 'connections-row-convert-confirm-target', 'connections-row-move-confirm-target')}
               </li>
@@ -1353,7 +1359,7 @@ export default function ConnectionsPage() {
                   {t('connections.repair')}
                 </button>
                 {renderReconnectControls(row, 'connections-credential-reconnect', 'connections-credential-reconnect-confirm-target')}
-                {renderRevokeControls(row)}
+                {renderRevokeControls(row, 'connections-credential-revoke-confirm-target')}
                 {renderRotateControls(row, 'connections-credential-rotate-confirm-target')}
                 {renderConvertMoveControls(row, 'connections-credential-convert-confirm-target', 'connections-credential-move-confirm-target')}
               </li>
@@ -1459,7 +1465,7 @@ export default function ConnectionsPage() {
                       {t('connections.repair')}
                     </button>
                     {renderReconnectControls(row, 'connections-policy-reconnect', 'connections-policy-reconnect-confirm-target')}
-                    {renderRevokeControls(row)}
+                    {renderRevokeControls(row, 'connections-policy-revoke-confirm-target')}
                     {renderRotateControls(row, 'connections-policy-rotate-confirm-target')}
                     {renderConvertMoveControls(row, 'connections-policy-convert-confirm-target', 'connections-policy-move-confirm-target')}
                   </li>

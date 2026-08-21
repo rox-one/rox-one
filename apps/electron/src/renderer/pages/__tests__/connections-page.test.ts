@@ -195,7 +195,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('offers revoke and rotate on policy connection rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
-    expect(page.split('{renderRevokeControls(row)}').length - 1).toBe(3)
+    expect(page.split('{renderRevokeControls(row,').length - 1).toBe(3)
     expect(page.split('{renderRotateControls(row,').length - 1).toBe(3)
     expect(page).toContain('connections.revoke')
     expect(page).toContain('connections.rotate')
@@ -203,6 +203,16 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toContain('bringToFront')
     expect(page).not.toContain('bring_to_front')
     expect(page).not.toContain('window.focus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('uses dedicated revoke confirm-target testids on credential and policy rows without secret fields', () => {
+    expect(page.split('{renderRevokeControls(row,').length - 1).toBe(3)
+    expect(page).toContain("'connections-row-revoke-confirm-target'")
+    expect(page).toContain("'connections-credential-revoke-confirm-target'")
+    expect(page).toContain("'connections-policy-revoke-confirm-target'")
+    expect(page).not.toContain('data-testid="connections-confirm-target"')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
@@ -219,7 +229,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('offers revoke and rotate on credential rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-credential-row"')
-    expect(page.split('{renderRevokeControls(row)}').length - 1).toBe(3)
+    expect(page.split('{renderRevokeControls(row,').length - 1).toBe(3)
     expect(page.split('{renderRotateControls(row,').length - 1).toBe(3)
     expect(page).toContain('connections.revoke')
     expect(page).toContain('connections.rotate')
@@ -536,7 +546,9 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('names Connection and CredentialRef on revoke confirm', () => {
-    expect(page).toContain('connections-confirm-target')
+    expect(page).toContain('connections-row-revoke-confirm-target')
+    expect(page).toContain('connections-credential-revoke-confirm-target')
+    expect(page).toContain('connections-policy-revoke-confirm-target')
     expect(page).toContain('row.credentialRefId')
   })
 
@@ -760,7 +772,9 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('names affected consumers on revoke confirm', () => {
-    expect(page).toContain('connections-confirm-target')
+    expect(page).toContain('connections-row-revoke-confirm-target')
+    expect(page).toContain('connections-credential-revoke-confirm-target')
+    expect(page).toContain('connections-policy-revoke-confirm-target')
     expect(page).toContain('formatConfirmLeases')
     expect(page).toContain('previewActiveLeases')
   })
@@ -1098,7 +1112,9 @@ describe('CF-6.2 ConnectionsPage', () => {
   it('pre-lists active leases on revoke, rotate, convert, and move confirm', () => {
     expect(page).toContain('previewActiveLeases')
     expect(page).toContain('formatConfirmLeases')
-    expect(page).toContain('connections-confirm-target')
+    expect(page).toContain('connections-row-revoke-confirm-target')
+    expect(page).toContain('connections-credential-revoke-confirm-target')
+    expect(page).toContain('connections-policy-revoke-confirm-target')
     expect(page).toContain('connections-row-rotate-confirm-target')
     expect(page).toContain('connections-credential-rotate-confirm-target')
     expect(page).toContain('connections-policy-rotate-confirm-target')
