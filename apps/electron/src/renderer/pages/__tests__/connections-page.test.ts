@@ -144,11 +144,21 @@ describe('CF-6.2 ConnectionsPage', () => {
   it('hides empty inspect fields on listed rows without secret fields', () => {
     expect(page).toContain('visibleInspectValue')
     expect(page.split('visibleInspectValue(inspectById[row.id].health)').length - 1).toBe(1)
-    expect(page.split("value !== '—'").length - 1).toBe(1)
+    expect(page.split("value !== '—'").length - 1).toBe(0)
+    expect(page).not.toContain('const visibleInspectValue')
     expect(page).toContain('connections-row-health')
     expect(page).toContain('connections-credential-health')
     expect(page).toContain('connections-policy-health')
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('shares visibleInspectValue with the inspector without secret fields', () => {
+    expect(page).toContain('visibleInspectValue,')
+    expect(page).not.toContain('const visibleInspectValue')
+    expect(page.split("value !== '—'").length - 1).toBe(0)
+    expect(page.split('visibleInspectValue(inspectById[row.id].health)').length - 1).toBe(1)
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

@@ -46,6 +46,7 @@ import {
   formatReconnectLeases,
   sanitizeActiveLeases,
   sanitizeReconnectLeases,
+  visibleInspectValue,
   type ActiveLeaseView,
   type MoveBackend,
 } from '@/pages/connections-ui'
@@ -83,10 +84,6 @@ function projectInspectorConsumers(raw: unknown) {
     actions: row.actions.join(', ') || '—',
     resources: row.resources.join(', ') || '—',
   }))
-}
-
-function visibleInspectValue(value: string) {
-  return value && value !== '—' ? value : ''
 }
 
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {

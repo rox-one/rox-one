@@ -38,6 +38,7 @@ import {
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
+  visibleInspectValue,
   type ActiveLeaseView,
   type ConnectSource,
   type DeviceLoginView,
@@ -345,8 +346,6 @@ export default function ConnectionsPage() {
       [connectionId]: inspectSummaryFromRaw(inspect),
     }))
   }
-
-  const visibleInspectValue = (value: string) => (value && value !== '—' ? value : '')
 
   const applySelectedRow = (listed: ConnectionListRow[], connectionId: string) => {
     if (selected?.id !== connectionId) return

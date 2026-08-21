@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
   IMPORT_PLACEHOLDERS,
   MOVE_BACKENDS,
@@ -27,7 +29,10 @@ import {
   tabFromKey,
   testStatusFromError,
   testStatusFromResult,
+  visibleInspectValue,
 } from '../connections-ui'
+
+const ui = readFileSync(join(__dirname, '../connections-ui.ts'), 'utf8')
 
 describe('CF-6 Connections UI helpers', () => {
   it('reads a cloned IPC error message without leaking extra fields', () => {
@@ -38,6 +43,22 @@ describe('CF-6 Connections UI helpers', () => {
     expect(errorMessage(new Error('  path not found  '))).toBe('path not found')
     expect(errorMessage('  discover failed  ')).toBe('discover failed')
     expect(errorMessage(null)).toBe('—')
+  })
+
+  it('hides empty inspect placeholders without leaking secret fields', () => {
+    expect(visibleInspectValue('healthy')).toBe('healthy')
+    expect(visibleInspectValue('oauth')).toBe('oauth')
+    expect(visibleInspectValue('—')).toBe('')
+    expect(visibleInspectValue('')).toBe('')
+    expect(ui).toContain('export function visibleInspectValue')
+    expect(ui.split("value !== '—'").length - 1).toBe(1)
+    const helper = ui.slice(
+      ui.indexOf('export function visibleInspectValue'),
+      ui.indexOf('export function consumersForConnection'),
+    )
+    expect(helper.toLowerCase()).not.toContain('infisical')
+    expect(helper).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+    expect(JSON.stringify({ health: visibleInspectValue('healthy') })).not.toMatch(/payload|secret|refreshToken/)
   })
 
   it('names Connection, CredentialRef, and affected consumers on confirm', () => {

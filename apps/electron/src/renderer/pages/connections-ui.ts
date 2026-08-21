@@ -38,6 +38,10 @@ export function errorMessage(err: unknown): string {
   return '—'
 }
 
+export function visibleInspectValue(value: string) {
+  return value && value !== '—' ? value : ''
+}
+
 export function consumersForConnection(
   bindings: readonly { readonly connectionId: string; readonly consumerId: string }[],
   connectionId: string,
