@@ -46,12 +46,12 @@ describe('CF-6.4 connection inspector projection', () => {
     expect(JSON.stringify(projectConnectionInspector(ROW))).not.toMatch(/value|payload|secret|token|refreshToken/)
   })
 
-  it('rejects secret fields and empty scopes stay a dash', () => {
+  it('rejects secret fields and empty scopes stay hidden', () => {
     expect(() => projectConnectionInspector({
       ...ROW,
       token: 'gho_super-secret',
     })).toThrow(/token/)
-    expect(projectConnectionInspector({ ...ROW, scopes: [] }).scopes).toBe('—')
+    expect(projectConnectionInspector({ ...ROW, scopes: [] }).scopes).toBe('')
   })
 
   it('projects health, expiry, provenance, and fingerprint without payload fields', () => {

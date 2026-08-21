@@ -39,7 +39,7 @@ export function projectConnectionInspector(row: unknown): ConnectionInspectorFie
     tenant: sanitized.workspaceId,
     storageMode: sanitized.storageMode,
     credentialRef: sanitized.credentialRefId,
-    scopes: sanitized.scopes.length > 0 ? sanitized.scopes.join(', ') : '—',
+    scopes: sanitized.scopes.join(', '),
   }
 }
 
