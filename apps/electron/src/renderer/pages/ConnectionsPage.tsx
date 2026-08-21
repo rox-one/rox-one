@@ -1139,10 +1139,12 @@ export default function ConnectionsPage() {
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                     <div className="font-mono text-xs">{row.workspaceId}</div>
                   </div>
-                  <div data-testid="connections-row-scopes">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
-                    <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
-                  </div>
+                  {visibleInspectValue(row.scopes.join(', ')) ? (
+                    <div data-testid="connections-row-scopes">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
+                      <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+                    </div>
+                  ) : null}
                   {inspectById[row.id] ? (
                     <>
                       {visibleInspectValue(inspectById[row.id].health) ? (
@@ -1252,10 +1254,12 @@ export default function ConnectionsPage() {
                     <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                     <div className="font-mono text-xs">{row.workspaceId}</div>
                   </div>
-                  <div data-testid="connections-credential-scopes">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
-                    <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
-                  </div>
+                  {visibleInspectValue(row.scopes.join(', ')) ? (
+                    <div data-testid="connections-credential-scopes">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
+                      <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+                    </div>
+                  ) : null}
                   {inspectById[row.id] ? (
                     <>
                       {visibleInspectValue(inspectById[row.id].health) ? (
@@ -1422,10 +1426,12 @@ export default function ConnectionsPage() {
                         <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
                         <div className="font-mono text-xs">{row.workspaceId}</div>
                       </div>
-                      <div data-testid="connections-policy-scopes">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
-                        <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
-                      </div>
+                      {visibleInspectValue(row.scopes.join(', ')) ? (
+                        <div data-testid="connections-policy-scopes">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
+                          <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+                        </div>
+                      ) : null}
                       {inspectById[row.id] ? (
                         <>
                           {visibleInspectValue(inspectById[row.id].health) ? (

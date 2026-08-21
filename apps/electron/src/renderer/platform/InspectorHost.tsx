@@ -274,9 +274,11 @@ function ConnectionInfoSection() {
       <div data-testid="connections-inspector-credential-ref">
         <InfoRow label={t('inspector.field.credentialRef')} value={fields.credentialRef} mono />
       </div>
-      <div data-testid="connections-inspector-scopes">
-        <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
-      </div>
+      {visibleInspectValue(fields.scopes) ? (
+        <div data-testid="connections-inspector-scopes">
+          <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
+        </div>
+      ) : null}
       {inspect ? (
         <>
           {visibleInspectValue(inspect.health) ? (
