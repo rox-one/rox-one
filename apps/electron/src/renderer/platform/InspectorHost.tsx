@@ -262,13 +262,21 @@ function ConnectionInfoSection() {
   }
   return (
     <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
-      <InfoRow label={t('inspector.field.provider')} value={fields.provider} />
+      <div data-testid="connections-inspector-provider">
+        <InfoRow label={t('inspector.field.provider')} value={fields.provider} />
+      </div>
       <div data-testid="connections-inspector-tenant">
         <InfoRow label={t('inspector.field.tenant')} value={fields.tenant} mono />
       </div>
-      <InfoRow label={t('inspector.field.storageMode')} value={fields.storageMode} mono />
-      <InfoRow label={t('inspector.field.credentialRef')} value={fields.credentialRef} mono />
-      <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
+      <div data-testid="connections-inspector-storage">
+        <InfoRow label={t('inspector.field.storageMode')} value={fields.storageMode} mono />
+      </div>
+      <div data-testid="connections-inspector-credential-ref">
+        <InfoRow label={t('inspector.field.credentialRef')} value={fields.credentialRef} mono />
+      </div>
+      <div data-testid="connections-inspector-scopes">
+        <InfoRow label={t('inspector.field.scopes')} value={fields.scopes} mono />
+      </div>
       {inspect ? (
         <>
           {visibleInspectValue(inspect.health) ? (
