@@ -295,6 +295,10 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('keeps listed reconnect in the action row after repair without stealing focus', () => {
+    expect(page.indexOf('const renderReconnectControls')).toBeGreaterThan(page.indexOf('const renderTestRepairControls'))
+    expect(page.indexOf('const renderRevokeControls')).toBeGreaterThan(page.indexOf('const renderReconnectControls'))
+    expect(page.indexOf('const renderRotateControls')).toBeGreaterThan(page.indexOf('const renderRevokeControls'))
+    expect(page.indexOf('const renderConvertMoveControls')).toBeGreaterThan(page.indexOf('const renderRotateControls'))
     expect(page.indexOf('data-testid={testId}')).toBeGreaterThan(-1)
     expect(page.indexOf('data-testid={repairId}')).toBeGreaterThan(page.indexOf('data-testid={testId}'))
     for (const prefix of ['connections-row', 'connections-credential', 'connections-policy'] as const) {
@@ -695,6 +699,18 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections.unbind')
     expect(page).toContain('revokeConnectionBinding')
     expect(page).not.toContain('autoFocus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('names the granted consumer on unbind confirm without secret fields', () => {
+    expect(page).toContain('connections-binding-unbind-confirm-target')
+    expect(page).toContain('`${row.connectionId} ${row.consumerId}`')
+    expect(page).toContain('connections.unbindConfirm')
+    expect(page).not.toContain('autoFocus')
+    expect(page).not.toContain('bringToFront')
+    expect(page).not.toContain('bring_to_front')
+    expect(page).not.toContain('window.focus')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

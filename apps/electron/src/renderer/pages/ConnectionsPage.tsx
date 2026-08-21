@@ -633,37 +633,6 @@ export default function ConnectionsPage() {
     </>
   )
 
-  const renderRevokeControls = (
-    row: ConnectionListRow,
-    confirmTargetTestId:
-      | 'connections-row-revoke-confirm-target'
-      | 'connections-credential-revoke-confirm-target'
-      | 'connections-policy-revoke-confirm-target',
-  ) => (
-    confirmingId === row.id ? (
-      <div className="flex flex-col items-end gap-1">
-        <div className="font-mono text-[11px]" data-testid={confirmTargetTestId}>
-          {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
-        </div>
-        <div className="flex gap-1">
-        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRevoke(row.id)}>
-          {t('connections.revokeConfirm')}
-        </button>
-        <button type="button" className="rounded border px-2 py-1" onClick={() => setConfirmingId(null)}>
-          {t('connections.revokeCancel')}
-        </button>
-        </div>
-      </div>
-    ) : (
-      <button type="button" className="rounded border px-2 py-1" onClick={() => {
-        setConfirmingId(row.id)
-        void previewActiveLeases(row.id)
-      }}>
-        {t('connections.revoke')}
-      </button>
-    )
-  )
-
   const renderReconnectControls = (
     row: ConnectionListRow,
     reconnectTestId: 'connections-row-reconnect' | 'connections-credential-reconnect' | 'connections-policy-reconnect',
@@ -697,6 +666,37 @@ export default function ConnectionsPage() {
       </div>
     )
   }
+
+  const renderRevokeControls = (
+    row: ConnectionListRow,
+    confirmTargetTestId:
+      | 'connections-row-revoke-confirm-target'
+      | 'connections-credential-revoke-confirm-target'
+      | 'connections-policy-revoke-confirm-target',
+  ) => (
+    confirmingId === row.id ? (
+      <div className="flex flex-col items-end gap-1">
+        <div className="font-mono text-[11px]" data-testid={confirmTargetTestId}>
+          {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
+        </div>
+        <div className="flex gap-1">
+        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRevoke(row.id)}>
+          {t('connections.revokeConfirm')}
+        </button>
+        <button type="button" className="rounded border px-2 py-1" onClick={() => setConfirmingId(null)}>
+          {t('connections.revokeCancel')}
+        </button>
+        </div>
+      </div>
+    ) : (
+      <button type="button" className="rounded border px-2 py-1" onClick={() => {
+        setConfirmingId(row.id)
+        void previewActiveLeases(row.id)
+      }}>
+        {t('connections.revoke')}
+      </button>
+    )
+  )
 
   const renderRotateControls = (
     row: ConnectionListRow,
@@ -1511,13 +1511,18 @@ export default function ConnectionsPage() {
                       ) : null}
                     </button>
                     {unbindingId === row.id ? (
-                      <div className="flex gap-1" data-testid="connections-binding-unbind">
-                        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmUnbind(row.id)}>
-                          {t('connections.unbindConfirm')}
-                        </button>
-                        <button type="button" className="rounded border px-2 py-1" onClick={() => setUnbindingId(null)}>
-                          {t('connections.unbindCancel')}
-                        </button>
+                      <div className="flex flex-col items-end gap-1" data-testid="connections-binding-unbind">
+                        <div className="font-mono text-[11px]" data-testid="connections-binding-unbind-confirm-target">
+                          {`${row.connectionId} ${row.consumerId}`}
+                        </div>
+                        <div className="flex gap-1">
+                          <button type="button" className="rounded border px-2 py-1" onClick={() => confirmUnbind(row.id)}>
+                            {t('connections.unbindConfirm')}
+                          </button>
+                          <button type="button" className="rounded border px-2 py-1" onClick={() => setUnbindingId(null)}>
+                            {t('connections.unbindCancel')}
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <button type="button" className="rounded border px-2 py-1" data-testid="connections-binding-unbind" onClick={() => setUnbindingId(row.id)}>
