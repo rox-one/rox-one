@@ -1511,7 +1511,7 @@ export default function ConnectionsPage() {
                       ) : null}
                     </button>
                     {unbindingId === row.id ? (
-                      <div className="flex gap-1">
+                      <div className="flex gap-1" data-testid="connections-binding-unbind">
                         <button type="button" className="rounded border px-2 py-1" onClick={() => confirmUnbind(row.id)}>
                           {t('connections.unbindConfirm')}
                         </button>
@@ -1520,7 +1520,7 @@ export default function ConnectionsPage() {
                         </button>
                       </div>
                     ) : (
-                      <button type="button" className="rounded border px-2 py-1" onClick={() => setUnbindingId(row.id)}>
+                      <button type="button" className="rounded border px-2 py-1" data-testid="connections-binding-unbind" onClick={() => setUnbindingId(row.id)}>
                         {t('connections.unbind')}
                       </button>
                     )}

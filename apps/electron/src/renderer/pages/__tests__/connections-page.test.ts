@@ -663,6 +663,15 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections.unbind')
   })
 
+  it('uses a dedicated unbind testid on policy binding rows without secret fields', () => {
+    expect(page).toContain('data-testid="connections-binding-unbind"')
+    expect(page).toContain('connections.unbind')
+    expect(page).toContain('revokeConnectionBinding')
+    expect(page).not.toContain('autoFocus')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shows grant resources on policy binding rows without secret fields', () => {
     expect(page).toContain('connections-binding-resources')
     expect(page).toContain('row.resources.join')
