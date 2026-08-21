@@ -155,6 +155,23 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('revokes the selected connection after naming affected leases without secret fields', () => {
+    expect(host).toContain('revokeConnection')
+    expect(host).toContain('connections.revoke')
+    expect(host).toContain('connections.revokeConfirm')
+    expect(host).toContain('connections.revokeCancel')
+    expect(host).toContain('connections-inspector-revoke-confirm-target')
+    expect(host).toContain('formatConfirmLeases')
+    expect(host).toContain('previewActiveLeases')
+    expect(host).toContain('setSelected(null)')
+    expect(host).not.toContain('autoFocus')
+    expect(host).not.toContain('bringToFront')
+    expect(host).not.toContain('bring_to_front')
+    expect(host).not.toContain('window.focus')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('pre-lists active leases on inspector reconnect confirm', () => {
     expect(host).toContain('listConnectionLeases')
     expect(host).toContain('sanitizeActiveLeases')

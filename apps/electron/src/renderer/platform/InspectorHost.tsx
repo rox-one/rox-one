@@ -101,10 +101,11 @@ function InfoRow({ label, value, mono }: { label: string; value: string; mono?: 
 
 function ConnectionInfoSection() {
   const { t } = useTranslation()
-  const selected = useAtomValue(selectedConnectionAtom)
+  const [selected, setSelected] = useAtom(selectedConnectionAtom)
   const [confirmRotate, setConfirmRotate] = useState(false)
   const [confirmMove, setConfirmMove] = useState(false)
   const [confirmReconnect, setConfirmReconnect] = useState(false)
+  const [confirmRevoke, setConfirmRevoke] = useState(false)
   const [moveTarget, setMoveTarget] = useState<MoveBackend>(MOVE_BACKENDS[0])
   const [consumers, setConsumers] = useState<Array<{ consumerId: string; purpose: string; actions: string; resources: string }>>([])
   const [testLogin, setTestLogin] = useState('')
@@ -121,6 +122,7 @@ function ConnectionInfoSection() {
       setActionError(null)
       setInspect(null)
       setConfirmReconnect(false)
+      setConfirmRevoke(false)
       setLeases('')
       setActiveLeases([])
       setAuditSummary('')
@@ -128,6 +130,7 @@ function ConnectionInfoSection() {
       return
     }
     setRevalidated('')
+    setConfirmRevoke(false)
     const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
     if (typeof listConnectionBindings !== 'function') {
       setConsumers([])
@@ -467,6 +470,49 @@ function ConnectionInfoSection() {
         >
           {t('connections.repair')}
         </button>
+        {confirmRevoke ? (
+          <>
+            <div className="font-mono text-[11px]" data-testid="connections-inspector-revoke-confirm-target">
+              {formatConfirmLeases(selected, activeLeases)}
+            </div>
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-[12px]"
+              onClick={async () => {
+                const revokeConnection = window.electronAPI?.workgraph?.revokeConnection
+                if (!workspaceId || typeof revokeConnection !== 'function') return
+                try {
+                  setActionError(null)
+                  await revokeConnection({ workspaceId, connectionId: selected.id })
+                  setConfirmRevoke(false)
+                  setSelected(null)
+                } catch (err) {
+                  setActionError(errorMessage(err))
+                }
+              }}
+            >
+              {t('connections.revokeConfirm')}
+            </button>
+            <button
+              type="button"
+              className="rounded border px-2 py-1 text-[12px]"
+              onClick={() => setConfirmRevoke(false)}
+            >
+              {t('connections.revokeCancel')}
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="rounded border px-2 py-1 text-[12px]"
+            onClick={() => {
+              setConfirmRevoke(true)
+              void previewActiveLeases()
+            }}
+          >
+            {t('connections.revoke')}
+          </button>
+        )}
         {confirmRotate ? (
           <>
             <div className="font-mono text-[11px]" data-testid="connections-inspector-rotate-confirm-target">
