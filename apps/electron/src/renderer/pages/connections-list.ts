@@ -1,3 +1,5 @@
+import { visibleInspectValue } from './connections-ui'
+
 const FORBIDDEN = new Set(['value', 'payload', 'secret', 'token', 'refreshToken'])
 
 export interface ConnectionListRow {
@@ -62,8 +64,9 @@ export function latestConnectionAudit(
 
 export function formatConnectionAudit(row: ConnectionAuditRow): string {
   const action = row.action ?? row.eventType
-  const actor = row.actorId ?? '—'
-  return `${action} · ${row.outcome} · ${new Date(row.occurredAt).toISOString()} · ${actor}`
+  return [action, row.outcome, new Date(row.occurredAt).toISOString(), row.actorId ?? '']
+    .filter((part) => visibleInspectValue(part))
+    .join(' · ')
 }
 
 export interface ConnectionBindingRow {
