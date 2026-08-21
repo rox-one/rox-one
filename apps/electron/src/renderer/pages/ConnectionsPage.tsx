@@ -915,7 +915,7 @@ export default function ConnectionsPage() {
       {visibleInspectValue(row.scopes.join(', ')) ? (
         <div data-testid={testIds.scopes}>
           <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
-          <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+          <div className="font-mono text-xs">{row.scopes.join(', ')}</div>
         </div>
       ) : null}
     </>
