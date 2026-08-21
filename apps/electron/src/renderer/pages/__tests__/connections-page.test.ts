@@ -1036,6 +1036,15 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('labels the empty grant target option through i18n without renaming tabs', () => {
+    expect(page).toContain("t('connections.grantTargetEmpty')")
+    expect(page).not.toContain('<option value="">—</option>')
+    expect(page).toContain("t('connections.grantTarget')")
+    expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('grants a named consumer on the Policies tab', () => {
     expect(page).toContain('grantConnection')
     expect(page).toContain('connections.grant')

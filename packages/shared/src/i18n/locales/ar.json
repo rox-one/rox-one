@@ -556,6 +556,7 @@
   "connections.grantPurpose": "الغرض",
   "connections.grantResources": "الموارد",
   "connections.grantTarget": "الاتصال",
+  "connections.grantTargetEmpty": "لا شيء",
   "connections.import.adcPath": "مسار ADC JSON",
   "connections.import.awsConfigPath": "مسار AWS config",
   "connections.import.awsCredentialsPath": "مسار AWS credentials",

@@ -556,6 +556,7 @@
   "connections.grantPurpose": "目的",
   "connections.grantResources": "リソース",
   "connections.grantTarget": "接続",
+  "connections.grantTargetEmpty": "なし",
   "connections.import.adcPath": "ADC JSON のパス",
   "connections.import.awsConfigPath": "AWS config のパス",
   "connections.import.awsCredentialsPath": "AWS credentials のパス",

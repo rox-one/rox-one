@@ -556,6 +556,7 @@
   "connections.grantPurpose": "用途",
   "connections.grantResources": "资源",
   "connections.grantTarget": "连接",
+  "connections.grantTargetEmpty": "无",
   "connections.import.adcPath": "ADC JSON 路径",
   "connections.import.awsConfigPath": "AWS config 路径",
   "connections.import.awsCredentialsPath": "AWS credentials 路径",

@@ -1419,7 +1419,7 @@ export default function ConnectionsPage() {
                   value={grantTargetId || selected?.id || ''}
                   onChange={(event) => setGrantTargetId(event.target.value)}
                 >
-                  <option value="">—</option>
+                  <option value="">{t('connections.grantTargetEmpty')}</option>
                   {listed.map((row) => (
                     <option key={row.id} value={row.id}>{row.id}</option>
                   ))}

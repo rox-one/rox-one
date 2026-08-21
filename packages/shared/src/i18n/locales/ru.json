@@ -556,6 +556,7 @@
   "connections.grantPurpose": "Назначение",
   "connections.grantResources": "Ресурсы",
   "connections.grantTarget": "Подключение",
+  "connections.grantTargetEmpty": "Нет",
   "connections.import.adcPath": "Путь к ADC JSON",
   "connections.import.awsConfigPath": "Путь к AWS config",
   "connections.import.awsCredentialsPath": "Путь к AWS credentials",

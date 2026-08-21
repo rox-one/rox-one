@@ -556,6 +556,7 @@
   "connections.grantPurpose": "Propósito",
   "connections.grantResources": "Recursos",
   "connections.grantTarget": "Conexión",
+  "connections.grantTargetEmpty": "Ninguna",
   "connections.import.adcPath": "Ruta al JSON ADC",
   "connections.import.awsConfigPath": "Ruta a AWS config",
   "connections.import.awsCredentialsPath": "Ruta a AWS credentials",
