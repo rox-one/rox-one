@@ -31,6 +31,8 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).toContain('rotateConnection')
     expect(host).toContain('connections.test')
     expect(host).toContain('connections.repair')
+    expect(host).toContain('data-testid="connections-inspector-test"')
+    expect(host).toContain('data-testid="connections-inspector-repair"')
     expect(host).toContain('connections.rotate')
     expect(host).toContain('connections.rotateConfirm')
     expect(host).toContain('workspaceId')
@@ -149,9 +151,9 @@ describe('CF-6.4 InspectorHost connections', () => {
   })
 
   it('keeps inspector reconnect in the action row after repair without stealing focus', () => {
-    expect(host.indexOf("t('connections.test')")).toBeGreaterThan(-1)
-    expect(host.indexOf("t('connections.repair')")).toBeGreaterThan(host.indexOf("t('connections.test')"))
-    expect(host.indexOf('connections-inspector-reconnect')).toBeGreaterThan(host.indexOf("t('connections.repair')"))
+    expect(host.indexOf('data-testid="connections-inspector-test"')).toBeGreaterThan(-1)
+    expect(host.indexOf('data-testid="connections-inspector-repair"')).toBeGreaterThan(host.indexOf('data-testid="connections-inspector-test"'))
+    expect(host.indexOf('connections-inspector-reconnect')).toBeGreaterThan(host.indexOf('data-testid="connections-inspector-repair"'))
     expect(host.indexOf('connections-inspector-revoke-confirm-target')).toBeGreaterThan(host.indexOf('connections-inspector-reconnect'))
     expect(host.indexOf('connections-inspector-rotate-confirm-target')).toBeGreaterThan(host.indexOf('connections-inspector-revoke-confirm-target'))
     expect(host.indexOf('connections-inspector-convert-confirm-target')).toBeGreaterThan(host.indexOf('connections-inspector-rotate-confirm-target'))

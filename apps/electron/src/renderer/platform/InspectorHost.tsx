@@ -389,6 +389,7 @@ function ConnectionInfoSection() {
         <button
           type="button"
           className="rounded border px-2 py-1 text-[12px]"
+          data-testid="connections-inspector-test"
           onClick={async () => {
             const testConnection = window.electronAPI?.workgraph?.testConnection
             if (!workspaceId || typeof testConnection !== 'function') return
@@ -406,6 +407,7 @@ function ConnectionInfoSection() {
         <button
           type="button"
           className="rounded border px-2 py-1 text-[12px]"
+          data-testid="connections-inspector-repair"
           onClick={async () => {
             const repairConnection = window.electronAPI?.workgraph?.repairConnection
             if (!workspaceId || typeof repairConnection !== 'function') return
