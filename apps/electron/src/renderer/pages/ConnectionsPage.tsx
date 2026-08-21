@@ -618,6 +618,21 @@ export default function ConnectionsPage() {
     </label>
   )
 
+  const renderTestRepairControls = (
+    row: ConnectionListRow,
+    testId: 'connections-row-test' | 'connections-credential-test' | 'connections-policy-test',
+    repairId: 'connections-row-repair' | 'connections-credential-repair' | 'connections-policy-repair',
+  ) => (
+    <>
+      <button type="button" className="rounded border px-2 py-1" data-testid={testId} onClick={() => runTest(row.id)}>
+        {t('connections.test')}
+      </button>
+      <button type="button" className="rounded border px-2 py-1" data-testid={repairId} onClick={() => runRepair(row.id)}>
+        {t('connections.repair')}
+      </button>
+    </>
+  )
+
   const renderRevokeControls = (
     row: ConnectionListRow,
     confirmTargetTestId:
@@ -1303,12 +1318,7 @@ export default function ConnectionsPage() {
                   {renderLeaseRevalidated(row, 'connections-row-leases', 'connections-row-revalidated')}
                   {renderTestStatus(status, 'connections-test-status')}
                 </button>
-                <button type="button" className="rounded border px-2 py-1" data-testid="connections-row-test" onClick={() => runTest(row.id)}>
-                  {t('connections.test')}
-                </button>
-                <button type="button" className="rounded border px-2 py-1" data-testid="connections-row-repair" onClick={() => runRepair(row.id)}>
-                  {t('connections.repair')}
-                </button>
+                {renderTestRepairControls(row, 'connections-row-test', 'connections-row-repair')}
                 {renderReconnectControls(row, 'connections-row-reconnect', 'connections-row-reconnect-confirm-target')}
                 {renderRevokeControls(row, 'connections-row-revoke-confirm-target')}
                 {renderRotateControls(row, 'connections-row-rotate-confirm-target')}
@@ -1352,12 +1362,7 @@ export default function ConnectionsPage() {
                   {renderLeaseRevalidated(row, 'connections-credential-leases', 'connections-credential-revalidated')}
                   {renderTestStatus(status, 'connections-credential-test-status')}
                 </button>
-                <button type="button" className="rounded border px-2 py-1" data-testid="connections-credential-test" onClick={() => runTest(row.id)}>
-                  {t('connections.test')}
-                </button>
-                <button type="button" className="rounded border px-2 py-1" data-testid="connections-credential-repair" onClick={() => runRepair(row.id)}>
-                  {t('connections.repair')}
-                </button>
+                {renderTestRepairControls(row, 'connections-credential-test', 'connections-credential-repair')}
                 {renderReconnectControls(row, 'connections-credential-reconnect', 'connections-credential-reconnect-confirm-target')}
                 {renderRevokeControls(row, 'connections-credential-revoke-confirm-target')}
                 {renderRotateControls(row, 'connections-credential-rotate-confirm-target')}
@@ -1458,12 +1463,7 @@ export default function ConnectionsPage() {
                       {renderLeaseRevalidated(row, 'connections-policy-leases', 'connections-policy-revalidated')}
                       {renderTestStatus(status, 'connections-policy-test-status')}
                     </button>
-                    <button type="button" className="rounded border px-2 py-1" data-testid="connections-policy-test" onClick={() => runTest(row.id)}>
-                      {t('connections.test')}
-                    </button>
-                    <button type="button" className="rounded border px-2 py-1" data-testid="connections-policy-repair" onClick={() => runRepair(row.id)}>
-                      {t('connections.repair')}
-                    </button>
+                    {renderTestRepairControls(row, 'connections-policy-test', 'connections-policy-repair')}
                     {renderReconnectControls(row, 'connections-policy-reconnect', 'connections-policy-reconnect-confirm-target')}
                     {renderRevokeControls(row, 'connections-policy-revoke-confirm-target')}
                     {renderRotateControls(row, 'connections-policy-rotate-confirm-target')}
