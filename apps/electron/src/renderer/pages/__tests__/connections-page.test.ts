@@ -526,6 +526,15 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty listed scopes without an em-dash placeholder without secret fields', () => {
+    expect(page).toContain("visibleInspectValue(row.scopes.join(', '))")
+    expect(page).not.toContain("row.scopes.join(', ') || '—'")
+    expect(page).toContain("{row.scopes.join(', ')}")
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('hides empty provider, tenant, storage, and credential ref on listed rows without secret fields', () => {
     expect(page.split('visibleInspectValue(row.integrationId)').length - 1).toBe(1)
     expect(page.split('visibleInspectValue(row.workspaceId)').length - 1).toBe(1)
