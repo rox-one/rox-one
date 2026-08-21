@@ -310,27 +310,33 @@ function ConnectionInfoSection() {
             label={t('inspector.field.consumers')}
             value={consumers.map((row) => row.consumerId).join(', ')}
           />
-          <div data-testid="connections-inspector-purpose">
-            <InfoRow
-              label={t('inspector.field.purpose')}
-              value={consumers.map((row) => `${row.consumerId}: ${row.purpose}`).join(', ')}
-              mono
-            />
-          </div>
-          <div data-testid="connections-inspector-actions">
-            <InfoRow
-              label={t('inspector.field.actions')}
-              value={consumers.map((row) => `${row.consumerId}: ${row.actions}`).join(', ')}
-              mono
-            />
-          </div>
-          <div data-testid="connections-inspector-resources">
-            <InfoRow
-              label={t('inspector.field.resources')}
-              value={consumers.map((row) => `${row.consumerId}: ${row.resources}`).join(', ')}
-              mono
-            />
-          </div>
+          {consumers.some((row) => visibleInspectValue(row.purpose)) ? (
+            <div data-testid="connections-inspector-purpose">
+              <InfoRow
+                label={t('inspector.field.purpose')}
+                value={consumers.map((row) => `${row.consumerId}: ${row.purpose}`).join(', ')}
+                mono
+              />
+            </div>
+          ) : null}
+          {consumers.some((row) => visibleInspectValue(row.actions)) ? (
+            <div data-testid="connections-inspector-actions">
+              <InfoRow
+                label={t('inspector.field.actions')}
+                value={consumers.map((row) => `${row.consumerId}: ${row.actions}`).join(', ')}
+                mono
+              />
+            </div>
+          ) : null}
+          {consumers.some((row) => visibleInspectValue(row.resources)) ? (
+            <div data-testid="connections-inspector-resources">
+              <InfoRow
+                label={t('inspector.field.resources')}
+                value={consumers.map((row) => `${row.consumerId}: ${row.resources}`).join(', ')}
+                mono
+              />
+            </div>
+          ) : null}
         </>
       ) : null}
       {revalidated ? (

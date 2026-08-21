@@ -256,6 +256,17 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty inspector grant purpose, actions, and resources without secret fields', () => {
+    expect(host).toContain('visibleInspectValue(row.purpose)')
+    expect(host).toContain('visibleInspectValue(row.actions)')
+    expect(host).toContain('visibleInspectValue(row.resources)')
+    expect(host).toContain('connections-inspector-purpose')
+    expect(host).toContain('connections-inspector-actions')
+    expect(host).toContain('connections-inspector-resources')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('lists inspector consumers by id without duplicating purpose', () => {
     expect(host).toContain('inspector.field.consumers')
     expect(host).toContain('consumers.map((row) => row.consumerId).join')
