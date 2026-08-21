@@ -708,12 +708,22 @@ export default function ConnectionsPage() {
     )
   )
 
-  const renderConvertMoveControls = (row: ConnectionListRow) => (
+  const renderConvertMoveControls = (
+    row: ConnectionListRow,
+    convertConfirmTestId:
+      | 'connections-row-convert-confirm-target'
+      | 'connections-credential-convert-confirm-target'
+      | 'connections-policy-convert-confirm-target',
+    moveConfirmTestId:
+      | 'connections-row-move-confirm-target'
+      | 'connections-credential-move-confirm-target'
+      | 'connections-policy-move-confirm-target',
+  ) => (
     <>
       {row.storageMode === 'copy' ? (
         convertingId === row.id ? (
           <div className="flex flex-col items-end gap-1">
-            <div className="font-mono text-[11px]" data-testid="connections-convert-confirm-target">
+            <div className="font-mono text-[11px]" data-testid={convertConfirmTestId}>
               {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
             </div>
             <div className="flex gap-1">
@@ -736,7 +746,7 @@ export default function ConnectionsPage() {
       ) : null}
       {movingId === row.id ? (
         <div className="flex flex-col items-end gap-1">
-          <div className="font-mono text-[11px]" data-testid="connections-move-confirm-target">
+          <div className="font-mono text-[11px]" data-testid={moveConfirmTestId}>
             {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
           </div>
           <select
@@ -1296,7 +1306,7 @@ export default function ConnectionsPage() {
                 {renderReconnectControls(row, 'connections-row-reconnect', 'connections-row-reconnect-confirm-target')}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row, 'connections-row-rotate-confirm-target')}
-                {renderConvertMoveControls(row)}
+                {renderConvertMoveControls(row, 'connections-row-convert-confirm-target', 'connections-row-move-confirm-target')}
               </li>
               )
             })}
@@ -1345,7 +1355,7 @@ export default function ConnectionsPage() {
                 {renderReconnectControls(row, 'connections-credential-reconnect', 'connections-credential-reconnect-confirm-target')}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row, 'connections-credential-rotate-confirm-target')}
-                {renderConvertMoveControls(row)}
+                {renderConvertMoveControls(row, 'connections-credential-convert-confirm-target', 'connections-credential-move-confirm-target')}
               </li>
               )
             })}
@@ -1451,7 +1461,7 @@ export default function ConnectionsPage() {
                     {renderReconnectControls(row, 'connections-policy-reconnect', 'connections-policy-reconnect-confirm-target')}
                     {renderRevokeControls(row)}
                     {renderRotateControls(row, 'connections-policy-rotate-confirm-target')}
-                    {renderConvertMoveControls(row)}
+                    {renderConvertMoveControls(row, 'connections-policy-convert-confirm-target', 'connections-policy-move-confirm-target')}
                   </li>
                   )
                 })}

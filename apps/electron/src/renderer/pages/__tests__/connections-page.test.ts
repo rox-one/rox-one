@@ -547,7 +547,7 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('converts and moves copy connections from the services list without secret fields', () => {
-    expect(page.split('{renderConvertMoveControls(row)}').length - 1).toBe(3)
+    expect(page.split('{renderConvertMoveControls(row,').length - 1).toBe(3)
     expect(page).toContain('confirmConvert(row.id)')
     expect(page).toContain('confirmMove(row.id)')
     expect(page.toLowerCase()).not.toContain('infisical')
@@ -556,7 +556,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('converts and moves copy connections from policy rows without stealing focus', () => {
     expect(page).toContain('data-testid="connections-policy-row"')
-    expect(page.split('{renderConvertMoveControls(row)}').length - 1).toBe(3)
+    expect(page.split('{renderConvertMoveControls(row,').length - 1).toBe(3)
     expect(page).toContain('connections.convert')
     expect(page).toContain('connections.move')
     expect(page).not.toContain('autoFocus')
@@ -567,9 +567,23 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('uses dedicated convert and move confirm-target testids on listed rows without secret fields', () => {
+    expect(page.split('{renderConvertMoveControls(row,').length - 1).toBe(3)
+    expect(page).toContain("'connections-row-convert-confirm-target'")
+    expect(page).toContain("'connections-credential-convert-confirm-target'")
+    expect(page).toContain("'connections-policy-convert-confirm-target'")
+    expect(page).toContain("'connections-row-move-confirm-target'")
+    expect(page).toContain("'connections-credential-move-confirm-target'")
+    expect(page).toContain("'connections-policy-move-confirm-target'")
+    expect(page).not.toContain('data-testid="connections-convert-confirm-target"')
+    expect(page).not.toContain('data-testid="connections-move-confirm-target"')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shares convert and move controls through one helper without secret fields', () => {
     expect(page).toContain('const renderConvertMoveControls')
-    expect(page.split('{renderConvertMoveControls(row)}').length - 1).toBe(3)
+    expect(page.split('{renderConvertMoveControls(row,').length - 1).toBe(3)
     expect(page.split("row.storageMode === 'copy'").length - 1).toBe(1)
     expect(page).toContain('confirmConvert(row.id)')
     expect(page).toContain('confirmMove(row.id)')
@@ -582,7 +596,9 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('moveConnection')
     expect(page).toContain('connections.moveConfirm')
     expect(page).toContain('MOVE_BACKENDS')
-    expect(page).toContain('connections-move-confirm-target')
+    expect(page).toContain("'connections-row-move-confirm-target'")
+    expect(page).toContain("'connections-credential-move-confirm-target'")
+    expect(page).toContain("'connections-policy-move-confirm-target'")
     expect(page).toContain('local-alt')
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
@@ -1086,8 +1102,12 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections-row-rotate-confirm-target')
     expect(page).toContain('connections-credential-rotate-confirm-target')
     expect(page).toContain('connections-policy-rotate-confirm-target')
-    expect(page).toContain('connections-convert-confirm-target')
-    expect(page).toContain('connections-move-confirm-target')
+    expect(page).toContain("'connections-row-convert-confirm-target'")
+    expect(page).toContain("'connections-credential-convert-confirm-target'")
+    expect(page).toContain("'connections-policy-convert-confirm-target'")
+    expect(page).toContain("'connections-row-move-confirm-target'")
+    expect(page).toContain("'connections-credential-move-confirm-target'")
+    expect(page).toContain("'connections-policy-move-confirm-target'")
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
