@@ -143,7 +143,7 @@ describe('CF-6.2 ConnectionsPage', () => {
 
   it('hides empty inspect fields on listed rows without secret fields', () => {
     expect(page).toContain('visibleInspectValue')
-    expect(page.split('visibleInspectValue(inspectById[row.id].health)').length - 1).toBe(3)
+    expect(page.split('visibleInspectValue(inspectById[row.id].health)').length - 1).toBe(1)
     expect(page.split("value !== '—'").length - 1).toBe(1)
     expect(page).toContain('connections-row-health')
     expect(page).toContain('connections-credential-health')
@@ -172,7 +172,9 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain("'connections-row-reconnect'")
     expect(page).toContain("'connections-credential-reconnect'")
     expect(page).toContain("'connections-policy-reconnect'")
-    expect(page).toContain('connections-row-reconnect-confirm-target')
+    expect(page).toContain("'connections-row-reconnect-confirm-target'")
+    expect(page).toContain("'connections-credential-reconnect-confirm-target'")
+    expect(page).toContain("'connections-policy-reconnect-confirm-target'")
     expect(page).not.toContain('autoFocus')
     expect(page).not.toContain('bringToFront')
     expect(page).not.toContain('bring_to_front')
@@ -302,9 +304,9 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('labels inspect health, kind, and expiry on listed rows through i18n without secret fields', () => {
-    expect(page.split("t('inspector.field.health')").length - 1).toBe(3)
-    expect(page.split("t('inspector.field.credentialKind')").length - 1).toBe(3)
-    expect(page.split("t('inspector.field.expiry')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.health')").length - 1).toBe(1)
+    expect(page.split("t('inspector.field.credentialKind')").length - 1).toBe(1)
+    expect(page.split("t('inspector.field.expiry')").length - 1).toBe(1)
     expect(page).toContain('connections-row-health')
     expect(page).toContain('connections-credential-health')
     expect(page).toContain('connections-policy-health')
@@ -320,9 +322,9 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('labels inspect provenance, fingerprint, and version on listed rows through i18n without secret fields', () => {
-    expect(page.split("t('inspector.field.provenance')").length - 1).toBe(3)
-    expect(page.split("t('inspector.field.fingerprint')").length - 1).toBe(3)
-    expect(page.split("t('inspector.field.versionId')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.provenance')").length - 1).toBe(1)
+    expect(page.split("t('inspector.field.fingerprint')").length - 1).toBe(1)
+    expect(page.split("t('inspector.field.versionId')").length - 1).toBe(1)
     expect(page).toContain('connections-row-provenance')
     expect(page).toContain('connections-credential-provenance')
     expect(page).toContain('connections-policy-provenance')
@@ -349,6 +351,20 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('connections-policy-revalidated')
     expect(page).toContain('connections.reconnectDone')
     expect(page).toContain("const TABS = ['services', 'credentials', 'imports', 'policies', 'audit']")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('shares inspect field display through one helper without secret fields', () => {
+    expect(page).toContain('const renderInspectFields')
+    expect(page.split('{renderInspectFields(row,').length - 1).toBe(3)
+    expect(page.split("t('inspector.field.health')").length - 1).toBe(1)
+    expect(page).toContain("'connections-row-health'")
+    expect(page).toContain("'connections-credential-health'")
+    expect(page).toContain("'connections-policy-health'")
+    expect(page).toContain("'connections-row-version'")
+    expect(page).toContain("'connections-credential-version'")
+    expect(page).toContain("'connections-policy-version'")
     expect(page.toLowerCase()).not.toContain('infisical')
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })

@@ -647,12 +647,16 @@ export default function ConnectionsPage() {
   const renderReconnectControls = (
     row: ConnectionListRow,
     reconnectTestId: 'connections-row-reconnect' | 'connections-credential-reconnect' | 'connections-policy-reconnect',
+    confirmTargetTestId:
+      | 'connections-row-reconnect-confirm-target'
+      | 'connections-credential-reconnect-confirm-target'
+      | 'connections-policy-reconnect-confirm-target',
   ) => {
     const inspect = inspectById[row.id]
     if (!inspect || !isStaleInspectSummary(inspect)) return null
     return reconnectingId === row.id ? (
       <div className="flex flex-col items-end gap-1" data-testid={reconnectTestId}>
-        <div className="font-mono text-[11px]" data-testid="connections-row-reconnect-confirm-target">
+        <div className="font-mono text-[11px]" data-testid={confirmTargetTestId}>
           {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
         </div>
         <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
@@ -782,6 +786,60 @@ export default function ConnectionsPage() {
       ) : null}
     </>
   )
+
+  const renderInspectFields = (
+    row: ConnectionListRow,
+    testIds: {
+      health: 'connections-row-health' | 'connections-credential-health' | 'connections-policy-health'
+      kind: 'connections-row-kind' | 'connections-credential-kind' | 'connections-policy-kind'
+      expiry: 'connections-row-expiry' | 'connections-credential-expiry' | 'connections-policy-expiry'
+      provenance: 'connections-row-provenance' | 'connections-credential-provenance' | 'connections-policy-provenance'
+      fingerprint: 'connections-row-fingerprint' | 'connections-credential-fingerprint' | 'connections-policy-fingerprint'
+      version: 'connections-row-version' | 'connections-credential-version' | 'connections-policy-version'
+    },
+  ) => {
+    if (!inspectById[row.id]) return null
+    return (
+      <>
+        {visibleInspectValue(inspectById[row.id].health) ? (
+          <div data-testid={testIds.health}>
+            <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
+            <div className="font-mono text-xs">{inspectById[row.id].health}</div>
+          </div>
+        ) : null}
+        {visibleInspectValue(inspectById[row.id].kind) ? (
+          <div data-testid={testIds.kind}>
+            <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
+            <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
+          </div>
+        ) : null}
+        {visibleInspectValue(inspectById[row.id].expiry) ? (
+          <div data-testid={testIds.expiry}>
+            <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
+            <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
+          </div>
+        ) : null}
+        {visibleInspectValue(inspectById[row.id].provenance) ? (
+          <div data-testid={testIds.provenance}>
+            <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
+            <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
+          </div>
+        ) : null}
+        {visibleInspectValue(inspectById[row.id].fingerprint) ? (
+          <div data-testid={testIds.fingerprint}>
+            <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
+            <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
+          </div>
+        ) : null}
+        {visibleInspectValue(inspectById[row.id].versionId) ? (
+          <div data-testid={testIds.version}>
+            <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
+            <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
+          </div>
+        ) : null}
+      </>
+    )
+  }
 
   const empty = (
     <div className="flex flex-1 items-center justify-center">
@@ -1180,46 +1238,14 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
                     </div>
                   ) : null}
-                  {inspectById[row.id] ? (
-                    <>
-                      {visibleInspectValue(inspectById[row.id].health) ? (
-                        <div data-testid="connections-row-health">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].health}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].kind) ? (
-                        <div data-testid="connections-row-kind">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].expiry) ? (
-                        <div data-testid="connections-row-expiry">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].provenance) ? (
-                        <div data-testid="connections-row-provenance">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].fingerprint) ? (
-                        <div data-testid="connections-row-fingerprint">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].versionId) ? (
-                        <div data-testid="connections-row-version">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : null}
+                  {renderInspectFields(row, {
+                    health: 'connections-row-health',
+                    kind: 'connections-row-kind',
+                    expiry: 'connections-row-expiry',
+                    provenance: 'connections-row-provenance',
+                    fingerprint: 'connections-row-fingerprint',
+                    version: 'connections-row-version',
+                  })}
                   {renderLeaseRevalidated(row, 'connections-row-leases', 'connections-row-revalidated')}
                   {status && status.kind !== 'idle' ? (
                     <div data-testid="connections-test-status">
@@ -1234,7 +1260,7 @@ export default function ConnectionsPage() {
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
                   {t('connections.repair')}
                 </button>
-                {renderReconnectControls(row, 'connections-row-reconnect')}
+                {renderReconnectControls(row, 'connections-row-reconnect', 'connections-row-reconnect-confirm-target')}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row)}
                 {renderConvertMoveControls(row)}
@@ -1289,46 +1315,14 @@ export default function ConnectionsPage() {
                       <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
                     </div>
                   ) : null}
-                  {inspectById[row.id] ? (
-                    <>
-                      {visibleInspectValue(inspectById[row.id].health) ? (
-                        <div data-testid="connections-credential-health">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].health}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].kind) ? (
-                        <div data-testid="connections-credential-kind">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].expiry) ? (
-                        <div data-testid="connections-credential-expiry">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].provenance) ? (
-                        <div data-testid="connections-credential-provenance">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].fingerprint) ? (
-                        <div data-testid="connections-credential-fingerprint">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(inspectById[row.id].versionId) ? (
-                        <div data-testid="connections-credential-version">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
-                          <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
-                        </div>
-                      ) : null}
-                    </>
-                  ) : null}
+                  {renderInspectFields(row, {
+                    health: 'connections-credential-health',
+                    kind: 'connections-credential-kind',
+                    expiry: 'connections-credential-expiry',
+                    provenance: 'connections-credential-provenance',
+                    fingerprint: 'connections-credential-fingerprint',
+                    version: 'connections-credential-version',
+                  })}
                   {renderLeaseRevalidated(row, 'connections-credential-leases', 'connections-credential-revalidated')}
                   {status && status.kind !== 'idle' ? (
                     <div data-testid="connections-credential-test-status">
@@ -1343,7 +1337,7 @@ export default function ConnectionsPage() {
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
                   {t('connections.repair')}
                 </button>
-                {renderReconnectControls(row, 'connections-credential-reconnect')}
+                {renderReconnectControls(row, 'connections-credential-reconnect', 'connections-credential-reconnect-confirm-target')}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row)}
                 {renderConvertMoveControls(row)}
@@ -1455,46 +1449,14 @@ export default function ConnectionsPage() {
                           <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
                         </div>
                       ) : null}
-                      {inspectById[row.id] ? (
-                        <>
-                          {visibleInspectValue(inspectById[row.id].health) ? (
-                            <div data-testid="connections-policy-health">
-                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.health')}</div>
-                              <div className="font-mono text-xs">{inspectById[row.id].health}</div>
-                            </div>
-                          ) : null}
-                          {visibleInspectValue(inspectById[row.id].kind) ? (
-                            <div data-testid="connections-policy-kind">
-                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialKind')}</div>
-                              <div className="font-mono text-xs">{inspectById[row.id].kind}</div>
-                            </div>
-                          ) : null}
-                          {visibleInspectValue(inspectById[row.id].expiry) ? (
-                            <div data-testid="connections-policy-expiry">
-                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.expiry')}</div>
-                              <div className="font-mono text-xs">{inspectById[row.id].expiry}</div>
-                            </div>
-                          ) : null}
-                          {visibleInspectValue(inspectById[row.id].provenance) ? (
-                            <div data-testid="connections-policy-provenance">
-                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.provenance')}</div>
-                              <div className="font-mono text-xs">{inspectById[row.id].provenance}</div>
-                            </div>
-                          ) : null}
-                          {visibleInspectValue(inspectById[row.id].fingerprint) ? (
-                            <div data-testid="connections-policy-fingerprint">
-                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.fingerprint')}</div>
-                              <div className="font-mono text-xs">{inspectById[row.id].fingerprint}</div>
-                            </div>
-                          ) : null}
-                          {visibleInspectValue(inspectById[row.id].versionId) ? (
-                            <div data-testid="connections-policy-version">
-                              <div className="text-[11px] text-muted-foreground">{t('inspector.field.versionId')}</div>
-                              <div className="font-mono text-xs">{inspectById[row.id].versionId}</div>
-                            </div>
-                          ) : null}
-                        </>
-                      ) : null}
+                      {renderInspectFields(row, {
+                        health: 'connections-policy-health',
+                        kind: 'connections-policy-kind',
+                        expiry: 'connections-policy-expiry',
+                        provenance: 'connections-policy-provenance',
+                        fingerprint: 'connections-policy-fingerprint',
+                        version: 'connections-policy-version',
+                      })}
                       {renderLeaseRevalidated(row, 'connections-policy-leases', 'connections-policy-revalidated')}
                       {status && status.kind !== 'idle' ? (
                         <div data-testid="connections-policy-test-status">
@@ -1509,7 +1471,7 @@ export default function ConnectionsPage() {
                     <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
                       {t('connections.repair')}
                     </button>
-                    {renderReconnectControls(row, 'connections-policy-reconnect')}
+                    {renderReconnectControls(row, 'connections-policy-reconnect', 'connections-policy-reconnect-confirm-target')}
                     {renderRevokeControls(row)}
                     {renderRotateControls(row)}
                     {renderConvertMoveControls(row)}
