@@ -644,11 +644,14 @@ export default function ConnectionsPage() {
     )
   )
 
-  const renderReconnectControls = (row: ConnectionListRow) => {
+  const renderReconnectControls = (
+    row: ConnectionListRow,
+    reconnectTestId: 'connections-row-reconnect' | 'connections-credential-reconnect' | 'connections-policy-reconnect',
+  ) => {
     const inspect = inspectById[row.id]
     if (!inspect || !isStaleInspectSummary(inspect)) return null
     return reconnectingId === row.id ? (
-      <div className="flex flex-col items-end gap-1" data-testid="connections-row-reconnect">
+      <div className="flex flex-col items-end gap-1" data-testid={reconnectTestId}>
         <div className="font-mono text-[11px]" data-testid="connections-row-reconnect-confirm-target">
           {formatConfirmLeases(row, leasePreviewById[row.id] ?? [])}
         </div>
@@ -663,7 +666,7 @@ export default function ConnectionsPage() {
         </div>
       </div>
     ) : (
-      <div data-testid="connections-row-reconnect">
+      <div data-testid={reconnectTestId}>
         <button type="button" className="rounded border px-2 py-1" onClick={() => void previewReconnect(row.id)}>
           {t('connections.reconnect')}
         </button>
@@ -1147,22 +1150,30 @@ export default function ConnectionsPage() {
                   className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                   onClick={() => setSelected(row)}
                 >
-                  <div data-testid="connections-row-provider">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
-                    <div className="font-medium">{row.integrationId}</div>
-                  </div>
-                  <div data-testid="connections-row-storage">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
-                    <div className="text-muted-foreground">{row.storageMode}</div>
-                  </div>
-                  <div data-testid="connections-row-credential-ref">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
-                    <div className="font-mono text-xs">{row.credentialRefId}</div>
-                  </div>
-                  <div data-testid="connections-row-tenant">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
-                    <div className="font-mono text-xs">{row.workspaceId}</div>
-                  </div>
+                  {visibleInspectValue(row.integrationId) ? (
+                    <div data-testid="connections-row-provider">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
+                      <div className="font-medium">{row.integrationId}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.storageMode) ? (
+                    <div data-testid="connections-row-storage">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
+                      <div className="text-muted-foreground">{row.storageMode}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.credentialRefId) ? (
+                    <div data-testid="connections-row-credential-ref">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
+                      <div className="font-mono text-xs">{row.credentialRefId}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.workspaceId) ? (
+                    <div data-testid="connections-row-tenant">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
+                      <div className="font-mono text-xs">{row.workspaceId}</div>
+                    </div>
+                  ) : null}
                   {visibleInspectValue(row.scopes.join(', ')) ? (
                     <div data-testid="connections-row-scopes">
                       <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
@@ -1223,7 +1234,7 @@ export default function ConnectionsPage() {
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
                   {t('connections.repair')}
                 </button>
-                {renderReconnectControls(row)}
+                {renderReconnectControls(row, 'connections-row-reconnect')}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row)}
                 {renderConvertMoveControls(row)}
@@ -1248,22 +1259,30 @@ export default function ConnectionsPage() {
                   className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                   onClick={() => setSelected(row)}
                 >
-                  <div data-testid="connections-credential-provider">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
-                    <div className="font-medium">{row.integrationId}</div>
-                  </div>
-                  <div data-testid="connections-credential-ref">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
-                    <div className="font-mono text-xs">{row.credentialRefId}</div>
-                  </div>
-                  <div data-testid="connections-credential-storage">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
-                    <div className="text-muted-foreground">{row.storageMode}</div>
-                  </div>
-                  <div data-testid="connections-credential-tenant">
-                    <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
-                    <div className="font-mono text-xs">{row.workspaceId}</div>
-                  </div>
+                  {visibleInspectValue(row.integrationId) ? (
+                    <div data-testid="connections-credential-provider">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
+                      <div className="font-medium">{row.integrationId}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.credentialRefId) ? (
+                    <div data-testid="connections-credential-ref">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
+                      <div className="font-mono text-xs">{row.credentialRefId}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.storageMode) ? (
+                    <div data-testid="connections-credential-storage">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
+                      <div className="text-muted-foreground">{row.storageMode}</div>
+                    </div>
+                  ) : null}
+                  {visibleInspectValue(row.workspaceId) ? (
+                    <div data-testid="connections-credential-tenant">
+                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
+                      <div className="font-mono text-xs">{row.workspaceId}</div>
+                    </div>
+                  ) : null}
                   {visibleInspectValue(row.scopes.join(', ')) ? (
                     <div data-testid="connections-credential-scopes">
                       <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
@@ -1324,7 +1343,7 @@ export default function ConnectionsPage() {
                 <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
                   {t('connections.repair')}
                 </button>
-                {renderReconnectControls(row)}
+                {renderReconnectControls(row, 'connections-credential-reconnect')}
                 {renderRevokeControls(row)}
                 {renderRotateControls(row)}
                 {renderConvertMoveControls(row)}
@@ -1406,22 +1425,30 @@ export default function ConnectionsPage() {
                       className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                       onClick={() => setSelected(row)}
                     >
-                      <div data-testid="connections-policy-provider">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
-                        <div className="font-medium">{row.integrationId}</div>
-                      </div>
-                      <div data-testid="connections-policy-storage">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
-                        <div className="text-muted-foreground">{row.storageMode}</div>
-                      </div>
-                      <div data-testid="connections-policy-credential-ref">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
-                        <div className="font-mono text-xs">{row.credentialRefId}</div>
-                      </div>
-                      <div data-testid="connections-policy-tenant">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
-                        <div className="font-mono text-xs">{row.workspaceId}</div>
-                      </div>
+                      {visibleInspectValue(row.integrationId) ? (
+                        <div data-testid="connections-policy-provider">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
+                          <div className="font-medium">{row.integrationId}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(row.storageMode) ? (
+                        <div data-testid="connections-policy-storage">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
+                          <div className="text-muted-foreground">{row.storageMode}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(row.credentialRefId) ? (
+                        <div data-testid="connections-policy-credential-ref">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
+                          <div className="font-mono text-xs">{row.credentialRefId}</div>
+                        </div>
+                      ) : null}
+                      {visibleInspectValue(row.workspaceId) ? (
+                        <div data-testid="connections-policy-tenant">
+                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
+                          <div className="font-mono text-xs">{row.workspaceId}</div>
+                        </div>
+                      ) : null}
                       {visibleInspectValue(row.scopes.join(', ')) ? (
                         <div data-testid="connections-policy-scopes">
                           <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
@@ -1482,7 +1509,7 @@ export default function ConnectionsPage() {
                     <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
                       {t('connections.repair')}
                     </button>
-                    {renderReconnectControls(row)}
+                    {renderReconnectControls(row, 'connections-policy-reconnect')}
                     {renderRevokeControls(row)}
                     {renderRotateControls(row)}
                     {renderConvertMoveControls(row)}
