@@ -294,7 +294,8 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('labels tenant on listed connection rows through i18n without secret fields', () => {
-    expect(page.split("t('inspector.field.tenant')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.tenant')").length - 1).toBe(1)
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
     expect(page).toContain('connections-row-tenant')
     expect(page).toContain('connections-credential-tenant')
     expect(page).toContain('connections-policy-tenant')
@@ -355,6 +356,22 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('shares identity field display through one helper without secret fields', () => {
+    expect(page).toContain('const renderIdentityFields')
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
+    expect(page.split("t('inspector.field.provider')").length - 1).toBe(1)
+    expect(page.split("t('inspector.field.tenant')").length - 1).toBe(1)
+    expect(page.split("t('inspector.field.scopes')").length - 1).toBe(1)
+    expect(page).toContain("'connections-row-provider'")
+    expect(page).toContain("'connections-credential-provider'")
+    expect(page).toContain("'connections-policy-provider'")
+    expect(page).toContain("'connections-row-scopes'")
+    expect(page).toContain("'connections-credential-scopes'")
+    expect(page).toContain("'connections-policy-scopes'")
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('shares inspect field display through one helper without secret fields', () => {
     expect(page).toContain('const renderInspectFields')
     expect(page.split('{renderInspectFields(row,').length - 1).toBe(3)
@@ -386,7 +403,8 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('labels scopes on listed connection rows through i18n without secret fields', () => {
-    expect(page.split("t('inspector.field.scopes')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.scopes')").length - 1).toBe(1)
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
     expect(page).toContain('connections-row-scopes')
     expect(page).toContain('connections-credential-scopes')
     expect(page).toContain('connections-policy-scopes')
@@ -396,7 +414,8 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('hides empty scopes on listed connection rows without secret fields', () => {
-    expect(page.split("visibleInspectValue(row.scopes.join(', '))").length - 1).toBe(3)
+    expect(page.split("visibleInspectValue(row.scopes.join(', '))").length - 1).toBe(1)
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
     expect(page).toContain('connections-row-scopes')
     expect(page).toContain('connections-credential-scopes')
     expect(page).toContain('connections-policy-scopes')
@@ -406,10 +425,11 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('hides empty provider, tenant, storage, and credential ref on listed rows without secret fields', () => {
-    expect(page.split('visibleInspectValue(row.integrationId)').length - 1).toBe(3)
-    expect(page.split('visibleInspectValue(row.workspaceId)').length - 1).toBe(3)
-    expect(page.split('visibleInspectValue(row.storageMode)').length - 1).toBe(3)
-    expect(page.split('visibleInspectValue(row.credentialRefId)').length - 1).toBe(3)
+    expect(page.split('visibleInspectValue(row.integrationId)').length - 1).toBe(1)
+    expect(page.split('visibleInspectValue(row.workspaceId)').length - 1).toBe(1)
+    expect(page.split('visibleInspectValue(row.storageMode)').length - 1).toBe(1)
+    expect(page.split('visibleInspectValue(row.credentialRefId)').length - 1).toBe(1)
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
     expect(page).toContain('connections-row-provider')
     expect(page).toContain('connections-credential-provider')
     expect(page).toContain('connections-policy-provider')
@@ -419,8 +439,9 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('labels storage mode and credential ref on listed rows through i18n without secret fields', () => {
-    expect(page.split("t('inspector.field.storageMode')").length - 1).toBe(3)
-    expect(page.split("t('inspector.field.credentialRef')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.storageMode')").length - 1).toBe(1)
+    expect(page.split("t('inspector.field.credentialRef')").length - 1).toBe(1)
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
     expect(page).toContain('connections-row-storage')
     expect(page).toContain('connections-credential-storage')
     expect(page).toContain('connections-policy-storage')
@@ -442,7 +463,8 @@ describe('CF-6.2 ConnectionsPage', () => {
   })
 
   it('labels provider on listed connection rows through i18n without secret fields', () => {
-    expect(page.split("t('inspector.field.provider')").length - 1).toBe(3)
+    expect(page.split("t('inspector.field.provider')").length - 1).toBe(1)
+    expect(page.split('{renderIdentityFields(row,').length - 1).toBe(3)
     expect(page).toContain('connections-row-provider')
     expect(page).toContain('connections-credential-provider')
     expect(page).toContain('connections-policy-provider')

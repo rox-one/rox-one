@@ -841,6 +841,50 @@ export default function ConnectionsPage() {
     )
   }
 
+  const renderIdentityFields = (
+    row: ConnectionListRow,
+    testIds: {
+      provider: 'connections-row-provider' | 'connections-credential-provider' | 'connections-policy-provider'
+      storage: 'connections-row-storage' | 'connections-credential-storage' | 'connections-policy-storage'
+      credentialRef: 'connections-row-credential-ref' | 'connections-credential-ref' | 'connections-policy-credential-ref'
+      tenant: 'connections-row-tenant' | 'connections-credential-tenant' | 'connections-policy-tenant'
+      scopes: 'connections-row-scopes' | 'connections-credential-scopes' | 'connections-policy-scopes'
+    },
+  ) => (
+    <>
+      {visibleInspectValue(row.integrationId) ? (
+        <div data-testid={testIds.provider}>
+          <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
+          <div className="font-medium">{row.integrationId}</div>
+        </div>
+      ) : null}
+      {visibleInspectValue(row.storageMode) ? (
+        <div data-testid={testIds.storage}>
+          <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
+          <div className="text-muted-foreground">{row.storageMode}</div>
+        </div>
+      ) : null}
+      {visibleInspectValue(row.credentialRefId) ? (
+        <div data-testid={testIds.credentialRef}>
+          <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
+          <div className="font-mono text-xs">{row.credentialRefId}</div>
+        </div>
+      ) : null}
+      {visibleInspectValue(row.workspaceId) ? (
+        <div data-testid={testIds.tenant}>
+          <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
+          <div className="font-mono text-xs">{row.workspaceId}</div>
+        </div>
+      ) : null}
+      {visibleInspectValue(row.scopes.join(', ')) ? (
+        <div data-testid={testIds.scopes}>
+          <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
+          <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+        </div>
+      ) : null}
+    </>
+  )
+
   const renderTestStatus = (
     status: TestStatus | undefined,
     testId: 'connections-test-status' | 'connections-credential-test-status' | 'connections-policy-test-status',
@@ -1220,36 +1264,13 @@ export default function ConnectionsPage() {
                   className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                   onClick={() => setSelected(row)}
                 >
-                  {visibleInspectValue(row.integrationId) ? (
-                    <div data-testid="connections-row-provider">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
-                      <div className="font-medium">{row.integrationId}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.storageMode) ? (
-                    <div data-testid="connections-row-storage">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
-                      <div className="text-muted-foreground">{row.storageMode}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.credentialRefId) ? (
-                    <div data-testid="connections-row-credential-ref">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
-                      <div className="font-mono text-xs">{row.credentialRefId}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.workspaceId) ? (
-                    <div data-testid="connections-row-tenant">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
-                      <div className="font-mono text-xs">{row.workspaceId}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.scopes.join(', ')) ? (
-                    <div data-testid="connections-row-scopes">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
-                      <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
-                    </div>
-                  ) : null}
+                  {renderIdentityFields(row, {
+                    provider: 'connections-row-provider',
+                    storage: 'connections-row-storage',
+                    credentialRef: 'connections-row-credential-ref',
+                    tenant: 'connections-row-tenant',
+                    scopes: 'connections-row-scopes',
+                  })}
                   {renderInspectFields(row, {
                     health: 'connections-row-health',
                     kind: 'connections-row-kind',
@@ -1292,36 +1313,13 @@ export default function ConnectionsPage() {
                   className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                   onClick={() => setSelected(row)}
                 >
-                  {visibleInspectValue(row.integrationId) ? (
-                    <div data-testid="connections-credential-provider">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
-                      <div className="font-medium">{row.integrationId}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.credentialRefId) ? (
-                    <div data-testid="connections-credential-ref">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
-                      <div className="font-mono text-xs">{row.credentialRefId}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.storageMode) ? (
-                    <div data-testid="connections-credential-storage">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
-                      <div className="text-muted-foreground">{row.storageMode}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.workspaceId) ? (
-                    <div data-testid="connections-credential-tenant">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
-                      <div className="font-mono text-xs">{row.workspaceId}</div>
-                    </div>
-                  ) : null}
-                  {visibleInspectValue(row.scopes.join(', ')) ? (
-                    <div data-testid="connections-credential-scopes">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
-                      <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
-                    </div>
-                  ) : null}
+                  {renderIdentityFields(row, {
+                    provider: 'connections-credential-provider',
+                    storage: 'connections-credential-storage',
+                    credentialRef: 'connections-credential-ref',
+                    tenant: 'connections-credential-tenant',
+                    scopes: 'connections-credential-scopes',
+                  })}
                   {renderInspectFields(row, {
                     health: 'connections-credential-health',
                     kind: 'connections-credential-kind',
@@ -1421,36 +1419,13 @@ export default function ConnectionsPage() {
                       className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
                       onClick={() => setSelected(row)}
                     >
-                      {visibleInspectValue(row.integrationId) ? (
-                        <div data-testid="connections-policy-provider">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.provider')}</div>
-                          <div className="font-medium">{row.integrationId}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(row.storageMode) ? (
-                        <div data-testid="connections-policy-storage">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.storageMode')}</div>
-                          <div className="text-muted-foreground">{row.storageMode}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(row.credentialRefId) ? (
-                        <div data-testid="connections-policy-credential-ref">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.credentialRef')}</div>
-                          <div className="font-mono text-xs">{row.credentialRefId}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(row.workspaceId) ? (
-                        <div data-testid="connections-policy-tenant">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.tenant')}</div>
-                          <div className="font-mono text-xs">{row.workspaceId}</div>
-                        </div>
-                      ) : null}
-                      {visibleInspectValue(row.scopes.join(', ')) ? (
-                        <div data-testid="connections-policy-scopes">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.scopes')}</div>
-                          <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
-                        </div>
-                      ) : null}
+                      {renderIdentityFields(row, {
+                        provider: 'connections-policy-provider',
+                        storage: 'connections-policy-storage',
+                        credentialRef: 'connections-policy-credential-ref',
+                        tenant: 'connections-policy-tenant',
+                        scopes: 'connections-policy-scopes',
+                      })}
                       {renderInspectFields(row, {
                         health: 'connections-policy-health',
                         kind: 'connections-policy-kind',
