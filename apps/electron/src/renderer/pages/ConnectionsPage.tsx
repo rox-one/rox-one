@@ -756,6 +756,30 @@ export default function ConnectionsPage() {
     </>
   )
 
+  const renderLeaseRevalidated = (
+    row: ConnectionListRow,
+    leaseTestId: 'connections-row-leases' | 'connections-credential-leases' | 'connections-policy-leases',
+    revalidatedTestId: 'connections-row-revalidated' | 'connections-credential-revalidated' | 'connections-policy-revalidated',
+  ) => (
+    <>
+      {leasesById[row.id] ? (
+        <>
+          <div data-testid={leaseTestId}>
+            <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
+            <div className="font-mono text-xs">{leasesById[row.id]}</div>
+          </div>
+          <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
+        </>
+      ) : null}
+      {revalidatedById[row.id] ? (
+        <div data-testid={revalidatedTestId}>
+          <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
+          <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
+        </div>
+      ) : null}
+    </>
+  )
+
   const empty = (
     <div className="flex flex-1 items-center justify-center">
       {tab === 'audit' && auditError ? (
@@ -1185,21 +1209,7 @@ export default function ConnectionsPage() {
                       ) : null}
                     </>
                   ) : null}
-                  {leasesById[row.id] ? (
-                    <>
-                      <div data-testid="connections-row-leases">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
-                        <div className="font-mono text-xs">{leasesById[row.id]}</div>
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
-                    </>
-                  ) : null}
-                  {revalidatedById[row.id] ? (
-                    <div data-testid="connections-row-revalidated">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
-                      <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
-                    </div>
-                  ) : null}
+                  {renderLeaseRevalidated(row, 'connections-row-leases', 'connections-row-revalidated')}
                   {status && status.kind !== 'idle' ? (
                     <div data-testid="connections-test-status">
                       <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
@@ -1300,21 +1310,7 @@ export default function ConnectionsPage() {
                       ) : null}
                     </>
                   ) : null}
-                  {leasesById[row.id] ? (
-                    <>
-                      <div data-testid="connections-credential-leases">
-                        <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
-                        <div className="font-mono text-xs">{leasesById[row.id]}</div>
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
-                    </>
-                  ) : null}
-                  {revalidatedById[row.id] ? (
-                    <div data-testid="connections-credential-revalidated">
-                      <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
-                      <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
-                    </div>
-                  ) : null}
+                  {renderLeaseRevalidated(row, 'connections-credential-leases', 'connections-credential-revalidated')}
                   {status && status.kind !== 'idle' ? (
                     <div data-testid="connections-credential-test-status">
                       <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
@@ -1472,21 +1468,7 @@ export default function ConnectionsPage() {
                           ) : null}
                         </>
                       ) : null}
-                      {leasesById[row.id] ? (
-                        <>
-                          <div data-testid="connections-policy-leases">
-                            <div className="text-[11px] text-muted-foreground">{t('inspector.field.leases')}</div>
-                            <div className="font-mono text-xs">{leasesById[row.id]}</div>
-                          </div>
-                          <div className="text-[11px] text-muted-foreground">{t('connections.reconnectDone')}</div>
-                        </>
-                      ) : null}
-                      {revalidatedById[row.id] ? (
-                        <div data-testid="connections-policy-revalidated">
-                          <div className="text-[11px] text-muted-foreground">{t('inspector.field.revalidated')}</div>
-                          <div className="font-mono text-xs">{revalidatedById[row.id]}</div>
-                        </div>
-                      ) : null}
+                      {renderLeaseRevalidated(row, 'connections-policy-leases', 'connections-policy-revalidated')}
                       {status && status.kind !== 'idle' ? (
                         <div data-testid="connections-policy-test-status">
                           <div className="text-[11px] text-muted-foreground">{t('inspector.field.testLogin')}</div>
