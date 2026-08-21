@@ -384,7 +384,7 @@ function ConnectionInfoSection() {
           <p className="text-[12px] text-muted-foreground">{t('connections.reconnectHint')}</p>
           {confirmReconnect ? (
             <>
-              <div className="font-mono text-[11px]" data-testid="connections-reconnect-confirm-target">
+              <div className="font-mono text-[11px]" data-testid="connections-inspector-reconnect-confirm-target">
                 {formatConfirmLeases(selected, activeLeases)}
               </div>
               <p className="text-[11px] text-muted-foreground">{t('connections.reconnectLeases')}</p>
