@@ -335,6 +335,19 @@ describe('CF-6.4 InspectorHost connections', () => {
     expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
   })
 
+  it('hides empty inspector provider, tenant, storage, and credential ref without secret fields', () => {
+    expect(host).toContain('visibleInspectValue(fields.provider)')
+    expect(host).toContain('visibleInspectValue(fields.tenant)')
+    expect(host).toContain('visibleInspectValue(fields.storageMode)')
+    expect(host).toContain('visibleInspectValue(fields.credentialRef)')
+    expect(host).toContain('connections-inspector-provider')
+    expect(host).toContain('connections-inspector-tenant')
+    expect(host).toContain('connections-inspector-storage')
+    expect(host).toContain('connections-inspector-credential-ref')
+    expect(host.toLowerCase()).not.toContain('infisical')
+    expect(host).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
   it('exposes inspector consumers and test outcome testids without secret fields', () => {
     expect(host).toContain('connections-inspector-consumers')
     expect(host).toContain('connections-inspector-test-status')
