@@ -13,9 +13,9 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
-import { CONFIG_DIR } from '../config/paths.ts'
 import { getBundledAssetsDir } from '../utils/paths.ts'
 import { verifyCatalogEd25519Signature } from './catalog-signing.ts'
+import { resolveConfigDir } from "../config/paths.ts"
 
 // ---------------------------------------------------------------------------
 // Schema (PRD §8.1 + descriptionRu)
@@ -34,7 +34,7 @@ export interface MarketplaceSource {
 export interface MarketplaceDocument {
   /** Path inside the source repo, e.g. 'AGENTS.md'. */
   repoPath: string
-  /** Target file name inside <CONFIG_DIR>/context/ (must end with .md). */
+  /** Target file name inside <resolveConfigDir()>/context/ (must end with .md). */
   targetName: string
 }
 
@@ -61,7 +61,7 @@ export interface MarketplaceEntry {
    *    (clone-only; upstream install.sh is NEVER executed).
    */
   installMode?: 'skills' | 'directory'
-  /** context-doc: repo files → <CONFIG_DIR>/context/<targetName>. */
+  /** context-doc: repo files → <resolveConfigDir()>/context/<targetName>. */
   documents?: MarketplaceDocument[]
   /** tool: tool name in the toolchain manifest (deferred install via toolchain:update). */
   toolName?: string
@@ -386,7 +386,7 @@ export interface MarketplacePaths {
   tmpDir: string
 }
 
-export function marketplacePaths(configDir: string = CONFIG_DIR): MarketplacePaths {
+export function marketplacePaths(configDir: string = resolveConfigDir()): MarketplacePaths {
   const dir = join(configDir, 'marketplace')
   return {
     dir,

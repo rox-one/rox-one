@@ -9,6 +9,7 @@
  */
 
 import { RPC_CHANNELS } from './channels'
+import { resolveConfigDir } from "../config/paths.ts"
 
 // ---------------------------------------------------------------------------
 // LOCAL_ONLY — fundamentally requires local OS / Electron

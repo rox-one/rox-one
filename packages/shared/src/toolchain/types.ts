@@ -1,3 +1,4 @@
+import { resolveConfigDir } from "../config/paths.ts"
 /**
  * Toolchain Download Manager — контракты.
  * Spec: docs/superpowers/specs/2026-08-06-toolchain-download-manager-design.md
@@ -228,7 +229,7 @@ export interface ToolchainResolver {
   findExecutable(name: string): Promise<string | null>;
   /** Префикс PATH, который должен получить каждый сабпроцесс агента (bin-диры toolchain + bundled). */
   toolchainPathPrefix(): Promise<string>;
-  /** Директория toolchain: <CONFIG_DIR>/toolchain. */
+  /** Директория toolchain: <resolveConfigDir()>/toolchain. */
   toolchainDir(): string;
 }
 
@@ -248,7 +249,7 @@ export interface ToolchainManager {
 }
 
 export interface ToolchainPaths {
-  toolchainDir: string; // <CONFIG_DIR>/toolchain
-  downloadsDir: string; // <CONFIG_DIR>/downloads
-  stateFile: string; // <CONFIG_DIR>/toolchain/state.json
+  toolchainDir: string; // <resolveConfigDir()>/toolchain
+  downloadsDir: string; // <resolveConfigDir()>/downloads
+  stateFile: string; // <resolveConfigDir()>/toolchain/state.json
 }

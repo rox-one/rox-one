@@ -6,7 +6,6 @@
  */
 
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { getLlmConnections } from '@craft-agent/shared/config'
 import { getIdentityStore } from '@craft-agent/core/platform/identity/store'
@@ -21,6 +20,7 @@ import type {
 import { KnowledgeConnectionsStore } from '../../knowledge/connections-store'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.identity.GET_STATE,
@@ -73,7 +73,7 @@ function mapLlmProvider(providerType: string, piAuthProvider?: string): ServiceP
  * 3. Optional LLM reflections (read-only openai/anthropic/google)
  */
 export function buildAggregatedState(workspaceId?: string): IdentityState {
-  const store = getIdentityStore(process.env.CRAFT_CONFIG_DIR || CONFIG_DIR)
+  const store = getIdentityStore(process.env.CRAFT_CONFIG_DIR || resolveConfigDir())
   const base = store.getState()
 
   const owned = base.connections.filter((c) => !c.readOnly)
@@ -83,7 +83,7 @@ export function buildAggregatedState(workspaceId?: string): IdentityState {
 
   // Knowledge connections (siyuan-local)
   try {
-    const knowledge = new KnowledgeConnectionsStore(process.env.CRAFT_CONFIG_DIR || CONFIG_DIR).list()
+    const knowledge = new KnowledgeConnectionsStore(process.env.CRAFT_CONFIG_DIR || resolveConfigDir()).list()
     for (const record of knowledge) {
       // credentialRef embeds workspaceId as source_bearer::{ws}::{id}
       const parts = record.credentialRef.split('::')
@@ -148,7 +148,7 @@ function broadcastChanged(server: RpcServer): void {
 }
 
 export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): void {
-  const configDir = () => process.env.CRAFT_CONFIG_DIR || CONFIG_DIR
+  const configDir = () => process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
 
   server.handle(RPC_CHANNELS.identity.GET_STATE, async (_ctx, args?: IdentityGetStateArgs) => {
     return buildAggregatedState(args?.workspaceId)

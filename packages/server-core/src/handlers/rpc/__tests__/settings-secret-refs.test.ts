@@ -8,6 +8,7 @@ import { describe, expect, test } from 'bun:test'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 const REPO_ROOT = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 const PLANTED = 'sk-planted-must-not-reach-renderer'

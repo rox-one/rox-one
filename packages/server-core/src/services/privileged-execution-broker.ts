@@ -1,12 +1,12 @@
 import { appendFile, mkdir } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import type { Logger } from '../runtime/platform'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import {
   hashPrivilegedCommand,
   isPrivilegedCommandAllowed,
   PRIVILEGED_POLICY_REASON,
 } from '@craft-agent/shared/agent/core/privileged-policy'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export interface PrivilegedExecutionRequest {
   requestId: string
@@ -28,7 +28,7 @@ interface PendingPrivilegedRequest extends PrivilegedExecutionRequest {
 const DEFAULT_APPROVAL_TTL_SECONDS = 120
 
 function auditLogPath(): string {
-  const dir = process.env.CRAFT_CONFIG_DIR || CONFIG_DIR
+  const dir = process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
   return join(dir, 'logs', 'privileged-actions.jsonl')
 }
 

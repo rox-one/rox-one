@@ -8,8 +8,8 @@
 import { existsSync, mkdirSync } from 'fs'
 import { dirname, join } from 'path'
 import { randomBytes, randomUUID } from 'crypto'
-import { CONFIG_DIR } from '../config/paths.ts'
 import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts'
+import { resolveConfigDir } from "../config/paths.ts"
 import {
   ensureLocalUserIdentity,
   loadPreferences,
@@ -28,7 +28,7 @@ import type {
   OrgsStoreFile,
 } from './types.ts'
 
-const ORGS_FILE = join(CONFIG_DIR, 'orgs.json')
+const ORGS_FILE = join(resolveConfigDir(), 'orgs.json')
 const STORE_VERSION = 1 as const
 
 const EMPTY_STORE: OrgsStoreFile = {

@@ -48,6 +48,7 @@ function runInjectionScenario(configDir: string): { stdout: string; stderr: stri
   const code = `
     import { refreshRuntimeSecretEnv } from '${RUNTIME_MODULE_PATH}';
     import { getRuntimeEnvOverrides, getPersistedRuntimeEnvOverrides, getRuntimeSecretRefs, setRuntimeSecretRefs } from '${STORAGE_MODULE_PATH}';
+import { resolveConfigDir } from "../../../config/paths.ts"
     const envProvider = (values) => ({
       id: 'environment',
       async isAvailable() { return true },

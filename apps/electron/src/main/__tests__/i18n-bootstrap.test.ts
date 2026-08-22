@@ -100,6 +100,7 @@ describe('main-process i18n bootstrap', () => {
         configDir,
         `
           import { getPersistedUiLanguage } from '@craft-agent/shared/config';
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
           console.log(JSON.stringify({ value: getPersistedUiLanguage() ?? null }));
         `,
       )

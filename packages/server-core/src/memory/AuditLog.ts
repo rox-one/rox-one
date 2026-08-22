@@ -17,8 +17,8 @@
  */
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import type { AuditEntry, LessonScope } from '@craft-agent/shared/memory/types'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 /** Rotation thresholds: rotate once past maxLines, keep the tail. */
 export const AUDIT_LIMITS = {
@@ -68,7 +68,7 @@ export class AuditLog {
   constructor(
     scope: LessonScope,
     workspaceRoot?: string,
-    configDir: string = process.env.CRAFT_CONFIG_DIR || CONFIG_DIR,
+    configDir: string = process.env.CRAFT_CONFIG_DIR || resolveConfigDir(),
     memoryDir?: string,
   ) {
     if (memoryDir) {

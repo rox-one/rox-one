@@ -14,7 +14,6 @@
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import {
   automationsToExtensionRecords,
@@ -50,6 +49,7 @@ import {
   loadPluginBridgeManifests,
   pluginBridgeBazaarCatalogListFn,
 } from './plugin-bridge'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.extensions.LIST_CATALOG,
@@ -73,7 +73,7 @@ export interface ExtensionsSetEnabledArgs {
 }
 
 function configDir(): string {
-  return process.env.CRAFT_CONFIG_DIR || CONFIG_DIR
+  return process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
 }
 
 async function loadMarketplaceCatalog(): Promise<MarketplaceCatalog> {

@@ -6,7 +6,6 @@ import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
 import { OAuthFlowStore } from '@craft-agent/shared/auth'
 import { ensureConfigDir, getEnv, loadStoredConfig, saveConfig } from '@craft-agent/shared/config'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { ensureContextDocs } from '@craft-agent/shared/context-docs'
 import { ensureBundledSkills } from '@craft-agent/shared/skills'
 import { setBundledAssetsRoot } from '@craft-agent/shared/utils'
@@ -16,6 +15,7 @@ import { createHeadlessPlatform } from '../runtime/platform-headless'
 import type { PlatformServices } from '../runtime/platform'
 import { startNativeSidecar, stopNativeSidecar } from '../native/supervisor.ts'
 import { stopAllSourceIndexWatches } from '../sources/source-index-watch.ts'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 interface ModelRefreshServiceLike {
   startAll(): void
@@ -146,7 +146,7 @@ export function maskTokenForDisplay(token: string): string {
 // Startup lock file
 // ---------------------------------------------------------------------------
 
-const LOCK_FILE = join(CONFIG_DIR, '.server.lock')
+const LOCK_FILE = join(resolveConfigDir(), '.server.lock')
 
 type LockPayload = LockIdentity
 

@@ -53,6 +53,7 @@ import { KnowledgeAuditLog } from '../knowledge-audit'
 import { KnowledgeMutationProposalsStore } from '../proposals-store'
 import { KnowledgeBridgeService } from '../bridge-service'
 import type { KnowledgeBridgeProposeArgs, KnowledgeProposalFileRecord } from '../bridge-service'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 process.env.CRAFT_CONFIG_DIR ??= mkdtempSync(join(tmpdir(), 'craft-config-bridge-'))
 
@@ -1114,4 +1115,3 @@ describe('safe mode gate (§3.6 service-level, TC-2)', () => {
     expect(auditEntries(audit).length).toBe(auditsBefore)
   })
 })
-

@@ -14,6 +14,7 @@ import { globSync } from 'glob';
 import os from 'os';
 import type { ProjectPromptContext } from '../projects/types.ts';
 import type { Lesson, WorkspaceMemory, MemoryPromptBlocks } from '../memory/types.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
 /** Maximum size of CLAUDE.md file to include (10KB) */
 const MAX_CONTEXT_FILE_SIZE = 10 * 1024;

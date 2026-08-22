@@ -2,10 +2,10 @@ import { existsSync, writeFileSync } from 'fs';
 import { randomUUID } from 'crypto';
 import { join } from 'path';
 import { ensureConfigDir } from './storage.ts';
-import { CONFIG_DIR } from './paths.ts';
 import { readJsonFileSync } from '../utils/files.ts';
 import { i18n, SUPPORTED_LANGUAGE_CODES } from '../i18n/index.ts';
 import { LOCALE_REGISTRY, type LanguageCode } from '../i18n/registry.ts';
+import { resolveConfigDir } from "./paths.ts"
 
 export interface UserLocation {
   city?: string;
@@ -58,7 +58,7 @@ export interface LocalUserIdentity {
   name?: string;
 }
 
-const PREFERENCES_FILE = join(CONFIG_DIR, 'preferences.json');
+const PREFERENCES_FILE = join(resolveConfigDir(), 'preferences.json');
 
 export function loadPreferences(): UserPreferences {
   try {

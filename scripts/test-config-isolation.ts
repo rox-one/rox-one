@@ -19,6 +19,7 @@
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 if (!process.env.CRAFT_CONFIG_DIR) {
   process.env.CRAFT_CONFIG_DIR = mkdtempSync(join(tmpdir(), 'craft-agent-test-'));

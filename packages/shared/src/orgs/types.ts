@@ -1,3 +1,4 @@
+import { resolveConfigDir } from "../config/paths.ts"
 /**
  * Organization / team workspace types (P3.1).
  *

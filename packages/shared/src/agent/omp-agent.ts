@@ -104,6 +104,7 @@ import {
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
 import { resolveOmpSetModelTarget } from '../config/rox-public-models.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
 // Constants

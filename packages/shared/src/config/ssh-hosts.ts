@@ -1,11 +1,11 @@
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { ensureConfigDir } from './storage.ts';
-import { CONFIG_DIR } from './paths.ts';
 import { readJsonFileSync, atomicWriteFileSync } from '../utils/files.ts';
 import { generateSlug } from '../utils/slug.ts';
 import { getCredentialManager } from '../credentials/manager.ts';
 import { DEFAULT_SERVER_CONFIG } from './server-config.ts';
+import { resolveConfigDir } from "./paths.ts"
 
 /** Default SSH port. */
 export const DEFAULT_SSH_PORT = 22;
@@ -44,7 +44,7 @@ export interface SshConfigImportSuggestion {
   identityFile?: string;
 }
 
-const SSH_HOSTS_FILE = join(CONFIG_DIR, 'ssh-hosts.json');
+const SSH_HOSTS_FILE = join(resolveConfigDir(), 'ssh-hosts.json');
 
 /** On-disk record. `managedToken` is a legacy field migrated to the credential store lazily on first read. */
 type StoredSshHost = SshHostConfig & { managedToken?: string };

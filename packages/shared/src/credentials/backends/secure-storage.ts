@@ -41,7 +41,7 @@ import { join } from 'path';
 import type { CredentialBackend } from './types.ts';
 import type { CredentialId, StoredCredential } from '../types.ts';
 import { credentialIdToAccount, accountToCredentialId } from '../types.ts';
-import { CONFIG_DIR } from '../../config/paths.ts';
+import { resolveConfigDir } from "../../config/paths.ts"
 
 const STORE_NAME = 'credentials.enc';
 const BACKUP_NAME = 'credentials.enc.bak';
@@ -289,7 +289,7 @@ export class SecureStorageBackend implements CredentialBackend {
   private repairState: RepairState = { status: 'ok' };
 
   constructor(options: SecureStorageOptions = {}) {
-    this.directory = options.directory ?? CONFIG_DIR;
+    this.directory = options.directory ?? resolveConfigDir();
     this.file = join(this.directory, STORE_NAME);
     this.backupFile = join(this.directory, BACKUP_NAME);
     this.writeKeyVersion = options.keyVersion ?? 'v3';

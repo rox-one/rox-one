@@ -10,7 +10,6 @@ import { spawn, execFile } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, dirname, join } from 'node:path'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import {
   detectSiyuanBinary,
   shouldAutoStartSiyuan,
@@ -24,6 +23,7 @@ import { parseOemKernelPin, resolveOemManagedLayout } from '@craft-agent/shared/
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { readFileSync } from 'node:fs'
 import { resolveKnowledgeHosting, type KnowledgeHostingMode } from './hosting-mode'
+import { CONFIG_DIR } from "@craft-agent/shared/config/paths"
 
 /** Stable id for the auto-seeded local connection. */
 export const SIYUAN_LOCAL_CONNECTION_ID = 'siyuan-local'
@@ -107,7 +107,7 @@ function resolveConfigDir(deps: BootstrapDeps): string {
   return deps.configDir ?? (process.env.CRAFT_CONFIG_DIR || CONFIG_DIR)
 }
 
-/** Workspace data dir for managed kernel serve: {CONFIG_DIR}/siyuan-workspace */
+/** Workspace data dir for managed kernel serve: {resolveConfigDir()}/siyuan-workspace */
 export function siyuanDataDir(configDir?: string): string {
   return join(configDir ?? (process.env.CRAFT_CONFIG_DIR || CONFIG_DIR), 'siyuan-workspace')
 }

@@ -21,10 +21,10 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { randomUUID } from 'node:crypto'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import type { CredentialId } from '@craft-agent/shared/credentials'
 import { CodedError, type KnowledgeConnectionMode } from '@craft-agent/shared/protocol'
 import { loadG2AcceptedVariantFromDisk } from './g2-status'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export type { KnowledgeConnectionMode }
 
@@ -160,7 +160,7 @@ export class KnowledgeConnectionsStore {
   /** {configDir}/knowledge — global scope, connections are a property of the user's machine. */
   readonly knowledgeDir: string
 
-  constructor(configDir: string = process.env.CRAFT_CONFIG_DIR || CONFIG_DIR) {
+  constructor(configDir: string = process.env.CRAFT_CONFIG_DIR || resolveConfigDir()) {
     this.knowledgeDir = join(configDir, 'knowledge')
     this.cleanupOrphanTmp()
   }

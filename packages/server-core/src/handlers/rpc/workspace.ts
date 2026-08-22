@@ -2,12 +2,12 @@ import { existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from
 import { join, basename } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, updateWorkspaceRemoteServer } from '@craft-agent/shared/config'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { perf } from '@craft-agent/shared/utils'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.workspaces.GET,
@@ -61,7 +61,7 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Check if a workspace slug already exists (for validation before creation)
   server.handle(RPC_CHANNELS.workspaces.CHECK_SLUG, async (_ctx, slug: string) => {
-    const defaultWorkspacesDir = join(CONFIG_DIR, 'workspaces')
+    const defaultWorkspacesDir = join(resolveConfigDir(), 'workspaces')
     try {
       const workspacePath = resolveContainedRelativePath(defaultWorkspacesDir, slug)
       return { exists: existsSync(workspacePath), path: workspacePath }

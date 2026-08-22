@@ -23,6 +23,7 @@ import { SettingsSection, SettingsCard, SettingsRow } from '@/components/setting
 import { PreferencesForm } from './PreferencesPage'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ContextDocContent, ContextDocInfo, Lesson } from '../../../shared/types'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 const BUILTIN_CONTEXT_DOCS = new Set(['soul.md', 'rules.md'])
 

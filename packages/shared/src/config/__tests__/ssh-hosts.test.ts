@@ -5,6 +5,7 @@ import { tmpdir } from 'os'
 import { CredentialManager } from '../../credentials/manager.ts'
 import { credentialIdToAccount, type CredentialId } from '../../credentials/types.ts'
 import type { StoredCredential } from '../../credentials/types.ts'
+import { resolveConfigDir } from "../paths.ts"
 
 // paths.ts reads CRAFT_CONFIG_DIR at first import, so set it before importing
 // the store and use one config dir for the whole suite (cleared between tests).

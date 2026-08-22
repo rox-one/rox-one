@@ -4,6 +4,7 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { pathToFileURL } from 'url'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
+import { resolveConfigDir } from "../paths.ts"
 
 /** SSH-backed workspaces record sshHostId durably (not the ephemeral port);
  * plain-ws workspaces round-trip unchanged (backward compat). */

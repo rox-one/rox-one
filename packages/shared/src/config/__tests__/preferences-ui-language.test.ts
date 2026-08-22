@@ -262,6 +262,7 @@ describe('preferences.uiLanguage', () => {
         writeRawPrefs(prefsFile, { name: 'Alice', language: 'Hungarian' });
         const r = runScript(configDir, `
           import { setPersistedUiLanguage } from '${PREFS_MODULE}';
+import { resolveConfigDir } from "./paths.ts"
           setPersistedUiLanguage('hu');
         `);
         expect(r.exitCode).toBe(0);
