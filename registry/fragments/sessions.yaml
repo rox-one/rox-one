@@ -289,12 +289,14 @@
   title: Origin-scoped remote TLS
   kind: task
   path: apps/electron/src/main/handlers/workspace.ts
-  status: planned
+  status: done
   origin: session-recovery-20260821-security-external-access-20260811
   refs: [RX-SES-0009, RX-DOC-0006]
   note: |
     Снять tlsRejectUnauthorized: false в workspace.ts и preload/bootstrap.ts.
     До токена — проверка публичного CA либо сохранённого SPKI pin по origin.
+    Исполнено 2026-08-22: remote-tls-trust + enrollment + peer-trust перенесены;
+    WsRpcClient получил peerTrustVerifier-гейт до отправки токена.
 
 - id: RX-TSK-0416
   title: Default-deny для публичного messaging

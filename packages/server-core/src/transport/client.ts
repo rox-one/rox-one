@@ -18,6 +18,7 @@ import {
   type MessageEnvelope,
 } from '@craft-agent/shared/protocol'
 import type { RpcClient } from './types'
+import type { PeerTrustVerifier } from './peer-trust.ts'
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 
 // ---------------------------------------------------------------------------
@@ -50,6 +51,7 @@ export type TransportConnectionErrorKind =
   | 'timeout'
   | 'network'
   | 'server'
+  | 'tls'
   | 'unknown'
 
 export interface TransportConnectionError {
@@ -100,6 +102,9 @@ export interface WsRpcClientOptions {
   mode?: TransportMode
   /** Accept self-signed TLS certificates for wss:// connections. Default: false. Only works in Node.js (main process). */
   tlsRejectUnauthorized?: boolean
+  /** RX-TSK-0415: origin-scoped SPKI-проверка ДО отправки токен-хендшейка.
+   *  Бросок ошибки — соединение обрывается, креды не уходят. */
+  peerTrustVerifier?: PeerTrustVerifier
   /** Async hook to (re)resolve the live target before each connect — SSH-backed
    * clients re-establish the tunnel and dial a fresh port. Omit for plain ws. */
   resolveTarget?: () => Promise<{ url: string; token?: string }>
@@ -156,6 +161,7 @@ export class WsRpcClient implements RpcClient {
   private readonly connectTimeout: number
   private readonly mode: TransportMode
   private readonly tlsRejectUnauthorized: boolean
+  private readonly peerTrustVerifier?: PeerTrustVerifier
 
   constructor(url: string, opts?: WsRpcClientOptions) {
     this.url = url
@@ -169,6 +175,7 @@ export class WsRpcClient implements RpcClient {
     this.connectTimeout = opts?.connectTimeout ?? 10_000
     this.mode = opts?.mode ?? this.inferMode(url)
     this.tlsRejectUnauthorized = opts?.tlsRejectUnauthorized ?? true
+    this.peerTrustVerifier = opts?.peerTrustVerifier
     this.resolveTarget = opts?.resolveTarget
 
     this.connectionState = {
@@ -460,22 +467,50 @@ export class WsRpcClient implements RpcClient {
 
     ws.onopen = () => {
       if (this.ws !== ws) return // stale socket — ignore
-      const reconnectSnapshot = this.pendingReconnect
-      this.currentHandshakeWasReconnect = reconnectSnapshot !== null
 
-      // Send handshake (includes reconnection info if available)
-      const handshake: MessageEnvelope = {
-        id: crypto.randomUUID(),
-        type: 'handshake',
-        protocolVersion: PROTOCOL_VERSION,
-        workspaceId: this.workspaceId,
-        webContentsId: this.webContentsId,
-        token: this.token,
-        clientCapabilities: this.clientCapabilities.length > 0 ? this.clientCapabilities : undefined,
-        reconnectClientId: reconnectSnapshot?.clientId,
-        lastSeq: reconnectSnapshot?.lastSeq,
+      const sendHandshake = (reconnectSnapshot: { clientId: string; lastSeq?: number } | null) => {
+        this.currentHandshakeWasReconnect = reconnectSnapshot !== null
+        const handshake: MessageEnvelope = {
+          id: crypto.randomUUID(),
+          type: 'handshake',
+          protocolVersion: PROTOCOL_VERSION,
+          workspaceId: this.workspaceId,
+          webContentsId: this.webContentsId,
+          token: this.token,
+          clientCapabilities: this.clientCapabilities.length > 0 ? this.clientCapabilities : undefined,
+          reconnectClientId: reconnectSnapshot?.clientId,
+          lastSeq: reconnectSnapshot?.lastSeq,
+        }
+        this.trySendEnvelope(ws, handshake)
       }
-      this.trySendEnvelope(ws, handshake)
+
+      if (this.peerTrustVerifier) {
+        // RX-TSK-0415: сначала peer-trust; токен не покидает процесс при отказе.
+        void Promise.resolve()
+          .then(() => this.peerTrustVerifier!({ url: this.url, socket: ws }))
+          .then(() => {
+            if (this.ws !== ws) return
+            sendHandshake(this.pendingReconnect)
+          })
+          .catch((cause) => {
+            if (this.ws !== ws) return
+            const err = this.createConnectionError(
+              'tls',
+              `Peer trust rejected for ${this.url}: ${(cause as Error)?.message ?? cause}`,
+              'TLS_TRUST_REJECTED',
+            )
+            this.setConnectionState({
+              status: 'failed',
+              lastError: this.toErrorState(err),
+              attempt: this.reconnectAttempt,
+            })
+            this.failReady(err)
+            try { ws.close(4000, 'peer-trust-rejected') } catch { /* already closing */ }
+          })
+        return
+      }
+
+      sendHandshake(this.pendingReconnect)
     }
 
     ws.onmessage = (event) => {

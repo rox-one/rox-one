@@ -20,3 +20,4 @@ export {
   createConfigWatcher,
   type ConfigWatcherCallbacks,
 } from './watcher.ts';
+export * from './remote-tls-trust.ts';

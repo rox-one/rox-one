@@ -9,6 +9,19 @@
 export type McpAuthType = 'workspace_oauth' | 'workspace_bearer' | 'public';
 
 /**
+ * Политика доверия TLS для исходящих wss-соединений к remote-серверу
+ * (origin-scoped SPKI pin; RX-TSK-0415).
+ */
+export type RemoteTlsTrust =
+  | { mode: 'public-ca' }
+  | {
+      mode: 'spki-pin';
+      origin: string;
+      spkiSha256: string;
+      enrolledAt: number;
+    };
+
+/**
  * Configuration for a remote Craft Agent Server.
  * When set on a workspace, handler calls are proxied over WebSocket.
  */
@@ -19,6 +32,9 @@ export interface RemoteServerConfig {
   /** When set, reached over an SSH tunnel: sshHostId + the host store are the durable
    * identity, so url/token are ephemeral and re-resolved before every dial. */
   sshHostId?: string;
+  /** Origin-scoped trust: public CA по умолчанию, либо зафиксированный SPKI-pin
+   *  для self-hosted серверов (заполняется enrollment'ом при первом соединении). */
+  tlsTrust?: RemoteTlsTrust;
 }
 
 /**

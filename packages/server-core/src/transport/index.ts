@@ -5,3 +5,5 @@ export * from './capabilities.ts'
 export * from './browser-capability.ts'
 export * from './push.ts'
 export type * from './types.ts'
+
+export { createPeerTrustVerifier } from "./peer-trust.ts";
