@@ -8,6 +8,8 @@ function readToken(materialization: ProviderMaterialization): string {
   if (typeof token !== 'string' || token.length === 0) {
     throw new Error('missing_token');
   }
+    const hasControlChar = token.split('').some((c) => c.charCodeAt(0) < 32);
+    if (hasControlChar) throw new Error('invalid_token');
   return token;
 }
 
