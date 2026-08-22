@@ -167,7 +167,8 @@
     Прогресс 2026-08-22 (Фаза А): backend перенесён — shared/openclaw,
     server-core/openclaw (audit-service, collectors, persistence, runtime-manager),
     RPC-хендлер зарегистрирован, toolchain-пробник подключён; тесты 19/19.
-    Осталось (Фаза Б): мост electron main+preload; UI-панель — RX-TSK-0112.
+    Фаза Б завершена 2026-08-22: electron main (композиция, IPC, deps-спред,
+    shutdown) и preload-мост подключены. UI-панель — RX-TSK-0112.
 
 - id: RX-TSK-0405
   title: Решить судьбу и перенести rox-sidecar

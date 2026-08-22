@@ -3,7 +3,7 @@
 import { loadShellEnv } from './shell-env'
 loadShellEnv()
 
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, nativeTheme, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, nativeTheme, session, shell } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 import { hostname, homedir } from 'os'
 import * as Sentry from '@sentry/electron/main'
@@ -68,6 +68,9 @@ Sentry.init({
 // the main process silently stayed at English — breaking session title language,
 // the system prompt's "Preferred language" line, and the native menu.
 import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@craft-agent/shared/i18n'
+import { createOpenClawSecurityComposition } from './openclaw-security'
+import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc } from './openclaw-host-control'
+import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@craft-agent/server-core/openclaw'
 import { getPersistedUiLanguage, setPersistedUiLanguage } from '@craft-agent/shared/config'
 setupI18n()
 const persistedUiLanguage = getPersistedUiLanguage()
@@ -236,6 +239,8 @@ let moduleClientResolver: ((webContentsId: number) => string | undefined) | null
 // through createMessagingBootstrap — do not construct MessagingGatewayRegistry
 // directly.
 let messagingHandle: MessagingBootstrapHandle | null = null
+let openClawRuntimeManager: OpenClawRuntimeManager | null = null
+let openClawSecurityAuditService: OpenClawSecurityAuditService | null = null
 
 // Store pending deep link if app not ready yet (cold start)
 let pendingDeepLink: string | null = null
@@ -668,6 +673,38 @@ app.whenReady().then(async () => {
       const clientMap = new Map<number, string>()
       const resolveClientId = (wcId: number) => clientMap.get(wcId)
 
+      // Native Electron — единственный хост управляемого OpenClaw-рантайма.
+      // Headless/thin-client сознательно оставляют сервис отсутствующим.
+      const openClawSecurity = isHeadless ? null : createOpenClawSecurityComposition()
+      if (openClawSecurity) {
+        openClawSecurityAuditService = openClawSecurity.auditService
+        openClawRuntimeManager = openClawSecurity.runtimeManager
+        if (windowManager) {
+          const confirmOpenClawHostControl = createOpenClawHostControlConfirmation({
+            translate: (key, interpolation) => i18n.t(key, interpolation),
+            showMessageBox: (owner, options) => dialog.showMessageBox(owner as BrowserWindow, options),
+          })
+          registerOpenClawHostControlIpc({
+            ipcMain,
+            windowManager,
+            runtimeManager: openClawSecurity.runtimeManager,
+            clipboard,
+            createEphemeralSession: partition => session.fromPartition(partition),
+            createControlUiWindow: options => {
+              // Объект строится только внутри host-control модуля; richer
+              // тип Electron нужен лишь на этой границе main-процесса.
+              const browserWindowOptions = options as unknown as BrowserWindowConstructorOptions
+              return new BrowserWindow(browserWindowOptions)
+            },
+            confirm: async ({ action, workspaceId, owner }) => {
+              const ownerWindow = windowManager?.getWindowByWebContentsId(owner.webContents.id)
+              if (!ownerWindow) return false
+              return confirmOpenClawHostControl({ action, workspaceId, owner: ownerWindow })
+            },
+          })
+        }
+      }
+
       // Read embedded server config (Server settings page)
       const { getServerConfig } = await import('@craft-agent/shared/config')
       const embeddedServerConfig = getServerConfig()
@@ -779,6 +816,7 @@ app.whenReady().then(async () => {
             browserPaneManager: browserPaneManager ?? undefined,
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
+            ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)
@@ -1362,6 +1400,24 @@ async function performQuitCleanup(): Promise<void> {
       await messagingHandle.dispose()
     } catch (err) {
       mainLog.error('[messaging] dispose failed:', err)
+    }
+  }
+
+  // Дождаться идущих аудитов до исчезновения их рантайма.
+  if (openClawSecurityAuditService) {
+    try {
+      await openClawSecurityAuditService.dispose()
+    } catch {
+      mainLog.warn('[openclaw] security audit disposal failed')
+    }
+  }
+
+  // Остановить только managed-потомки; пользовательский OpenClaw не трогаем.
+  if (openClawRuntimeManager) {
+    try {
+      await openClawRuntimeManager.shutdown()
+    } catch {
+      mainLog.warn('[openclaw] managed runtime shutdown failed')
     }
   }
 

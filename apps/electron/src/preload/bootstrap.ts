@@ -43,6 +43,7 @@ import type { RpcClient } from '@craft-agent/server-core/transport'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
 import { isSshBacked } from '../shared/ssh'
+import { createOpenClawHostControlBridge } from './openclaw-host-control'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -61,6 +62,10 @@ interface TransportClient extends RpcClient {
 
 const webContentsId: number = ipcRenderer.sendSync('__get-web-contents-id')
 const isClientOnly = !!process.env.CRAFT_SERVER_URL
+const openClawHostControl = createOpenClawHostControlBridge({
+  isClientOnly,
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+})
 
 let client: TransportClient
 
@@ -531,3 +536,6 @@ client.onConnectionStateChanged((state) => {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
+if (openClawHostControl) {
+  contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
+}

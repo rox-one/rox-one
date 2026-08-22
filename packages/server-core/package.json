@@ -19,7 +19,8 @@
     "./handlers/rpc/*": "./src/handlers/rpc/*.ts",
     "./sessions": "./src/sessions/index.ts",
     "./tasks": "./src/tasks/index.ts",
-    "./knowledge": "./src/knowledge/index.ts"
+    "./knowledge": "./src/knowledge/index.ts",
+    "./openclaw": "./src/openclaw/index.ts"
   },
   "scripts": {},
   "dependencies": {

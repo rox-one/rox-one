@@ -37,7 +37,8 @@ export type CredentialType =
   // SSH host credentials (keyed by host id)
   | 'ssh_managed_token' // Auth token for the app-managed remote craft-agent server
   // Identity Center service OAuth (SiYuan Cloud, etc.) — key service_oauth::{workspaceId}::{name}
-  | 'service_oauth';
+  | 'service_oauth'
+  | 'openclaw_gateway_token' // Managed OpenClaw Gateway runtime token (RX-TSK-0404)
 
 /** Valid credential types for validation */
 const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
@@ -55,6 +56,7 @@ const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
   'messaging_bearer',
   'ssh_managed_token',
   'service_oauth',
+  'openclaw_gateway_token',
 ] as const;
 
 /** Check if a string is a valid CredentialType */
@@ -65,6 +67,10 @@ function isValidCredentialType(type: string): type is CredentialType {
 /** Credential identifier - determines credential store entry key */
 export interface CredentialId {
   type: CredentialType;
+
+  // Managed OpenClaw runtime-scoped format
+  /** Opaque runtime identifier for openclaw_gateway_token */
+  runtimeId?: string;
 
   // LLM connection-scoped format
   /** LLM connection slug for llm_api_key/llm_oauth credentials */
@@ -196,6 +202,13 @@ export function credentialIdToAccount(id: CredentialId): string {
     return parts.join(CREDENTIAL_DELIMITER);
   }
 
+  // Managed OpenClaw runtime-scoped format:
+  // openclaw_gateway_token::{opaqueRuntimeId}
+  if (id.type === 'openclaw_gateway_token' && id.runtimeId) {
+    parts.push(id.runtimeId);
+    return parts.join(CREDENTIAL_DELIMITER);
+  }
+
   // Workspace-scoped format (no source):
   // workspace_oauth::{workspaceId}
   if (id.type === 'workspace_oauth' && id.workspaceId) {
@@ -283,6 +296,12 @@ export function accountToCredentialId(account: string): CredentialId | null {
     return { type, hostId: parts[1] };
   }
 
+  // Managed OpenClaw runtime-scoped format:
+  // openclaw_gateway_token::{opaqueRuntimeId}
+  if (type === 'openclaw_gateway_token' && parts.length === 2) {
+    return { type, runtimeId: parts[1] };
+  }
+
   // Workspace-scoped format (no source):
   // workspace_oauth::{workspaceId}
   if (type === 'workspace_oauth' && parts.length === 2) {
@@ -313,4 +332,12 @@ export function accountToCredentialId(account: string): CredentialId | null {
 
   // Unknown format
   return null;
+}
+
+/** Construct the only credential identity accepted for a managed OpenClaw Gateway token. */
+export function openClawGatewayCredentialId(runtimeId: string): CredentialId {
+  if (!/^[A-Za-z0-9_-]{16,128}$/.test(runtimeId)) {
+    throw new Error('Invalid managed OpenClaw runtime identifier');
+  }
+  return { type: 'openclaw_gateway_token', runtimeId };
 }
