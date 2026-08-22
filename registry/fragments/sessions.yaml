@@ -220,12 +220,13 @@
   title: Убрать credentialValue из identity.connect
   kind: task
   path: packages/server-core/src/handlers/rpc/identity.ts
-  status: planned
+  status: blocked
   origin: session-recovery-20260821-do-it-all-security-slices
   refs: [RX-SES-0008, RX-DOC-0006]
   note: |
     Спека CF-4: RPC не принимает сырой секрет. В текущем identity.ts
     credentialValue всё ещё обязателен для siyuan-cloud.
+    Blocker: нужен main-process-only канал для секрета вместо общего RPC; решение D11.
 
 - id: RX-TSK-0411
   title: Сделать UI импорта Notes
@@ -253,13 +254,14 @@
   title: Исправить clone URL в README
   kind: task
   path: README.md
-  status: planned
+  status: done
   origin: session-recovery-20260821-do-it-all-security-slices
   refs: [RX-SES-0008, RX-DOC-0006]
   note: |
     Подписанный план менял lukilabs/craft-agents-oss → agisota/craft-agents-oss,
     README не правился. Сейчас канон — github.com/rox-one/rox-one; H1 Craft Agents
     оставлять, пока нет отдельного rename PR.
+    Исполнено 2026-08-22: clone URL в README -> rox-one/rox-one.
 
 - id: RX-TSK-0414
   title: Перенести корпус docs/security

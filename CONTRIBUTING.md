@@ -14,7 +14,7 @@ Thank you for your interest in contributing to Craft Agents! This document provi
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/lukilabs/craft-agents-oss.git
+   git clone https://github.com/rox-one/rox-one.git
    cd craft-agents-oss
    ```
 
