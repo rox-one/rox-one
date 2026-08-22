@@ -4,13 +4,15 @@
  * Stores credentials in an encrypted file at ~/.craft-agent/credentials.enc
  * Uses AES-256-GCM for authenticated encryption.
  *
- * Encryption key is derived from OS-native hardware UUID using PBKDF2:
- * - macOS: IOPlatformUUID (tied to logic board, never changes)
- * - Windows: MachineGuid from registry (set at OS install)
- * - Linux: /var/lib/dbus/machine-id (set at OS install)
+ * Encryption key (v3) is derived from a random 32-byte master key using PBKDF2.
+ * The master key is generated once and persisted in the OS keychain via
+ * non-interactive CLI (`security` on macOS, `secret-tool` on Linux), with a
+ * credentials.key fallback file at mode 0600 next to the store.
  *
- * This is more stable than the previous hostname-based derivation, which could
- * change with network/DHCP. Legacy credentials are auto-migrated on first load.
+ * Legacy derivations remain read-only for migration: v2 = OS hardware UUID
+ * (macOS IOPlatformUUID, Windows MachineGuid, Linux machine-id), v1 =
+ * hostname-based. Cutover to the master key happens only through an explicit
+ * commitLegacyMigration() call.
  *
  * File format:
  *   [Header - 64 bytes]
@@ -31,8 +33,8 @@ import {
   pbkdf2Sync,
   createHash,
 } from 'crypto';
-import { execSync } from 'child_process';
-import { copyFileSync, existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
+import { execSync, spawnSync } from 'child_process';
+import { chmodSync, copyFileSync, existsSync, readFileSync, renameSync, writeFileSync, mkdirSync, unlinkSync } from 'fs';
 import { hostname, userInfo, homedir } from 'os';
 import { join } from 'path';
 
@@ -43,6 +45,10 @@ import { CONFIG_DIR } from '../../config/paths.ts';
 
 const STORE_NAME = 'credentials.enc';
 const BACKUP_NAME = 'credentials.enc.bak';
+const KEY_FILE_NAME = 'credentials.key';
+const KEYCHAIN_SERVICE = 'craft-agent.credentials';
+const KEYCHAIN_ACCOUNT = 'master';
+const MASTER_KEY_HEX = /^[0-9a-f]{64}$/i;
 
 export type CredentialStoreErrorCode =
   | 'WRITE_BLOCKED'
@@ -77,7 +83,7 @@ export interface LegacyMigrationManifest {
 
 export interface SecureStorageOptions {
   readonly directory?: string;
-  readonly keyVersion?: 'v1' | 'v2';
+  readonly keyVersion?: 'v1' | 'v2' | 'v3';
 }
 
 // File format constants
@@ -92,6 +98,131 @@ const KEY_SIZE = 32;
 
 // PBKDF2 iterations (balance security vs startup time)
 const PBKDF2_ITERATIONS = 100000;
+
+/**
+ * Мастер-ключ шифрования (RX-TSK-0300 / RX-SEC-0001).
+ *
+ * Случайные 32 байта генерируются один раз и хранятся:
+ *   1. В OS-keychain через CLI без интерактивных промптов
+ *      (macOS: `security`, Linux: `secret-tool`/libsecret).
+ *   2. Фолбэк: файл credentials.key рядом с credentials.enc, режим 0600.
+ *
+ * Вывод из machine-id/hostname (v2/v1) остаётся ТОЛЬКО для чтения старых
+ * хранилищ; перевод на мастер-ключ — явный commitLegacyMigration().
+ */
+const masterKeyMemo = new Map<string, Buffer>();
+
+function keychainReadHex(): string | null {
+  try {
+    if (process.platform === 'darwin') {
+      const res = spawnSync(
+        'security',
+        ['find-generic-password', '-s', KEYCHAIN_SERVICE, '-a', KEYCHAIN_ACCOUNT, '-w'],
+        { encoding: 'utf8' },
+      );
+      const value = res.status === 0 ? (res.stdout ?? '').trim() : '';
+      return MASTER_KEY_HEX.test(value) ? value.toLowerCase() : null;
+    }
+    if (process.platform === 'linux') {
+      const res = spawnSync(
+        'secret-tool',
+        ['lookup', 'service', KEYCHAIN_SERVICE, 'account', KEYCHAIN_ACCOUNT],
+        { encoding: 'utf8' },
+      );
+      const value = res.status === 0 ? (res.stdout ?? '').trim() : '';
+      return MASTER_KEY_HEX.test(value) ? value.toLowerCase() : null;
+    }
+  } catch {
+    // Ключница недоступна — переходим к файловому фолбэку.
+  }
+  return null;
+}
+
+function keychainWriteHex(hex: string): boolean {
+  try {
+    if (process.platform === 'darwin') {
+      const res = spawnSync(
+        'security',
+        ['add-generic-password', '-U', '-s', KEYCHAIN_SERVICE, '-a', KEYCHAIN_ACCOUNT, '-w', hex],
+        { encoding: 'utf8' },
+      );
+      return res.status === 0;
+    }
+    if (process.platform === 'linux') {
+      const res = spawnSync(
+        'secret-tool',
+        ['store', 'service', KEYCHAIN_SERVICE, 'account', KEYCHAIN_ACCOUNT],
+        { input: hex },
+      );
+      return res.status === 0;
+    }
+  } catch {
+    // Запись в ключницу недоступна — используем файловый фолбэк.
+  }
+  return false;
+}
+
+function readMasterKeyFile(directory: string): Buffer | null {
+  const path = join(directory, KEY_FILE_NAME);
+  if (!existsSync(path)) return null;
+  try {
+    const value = readFileSync(path, 'utf8').trim();
+    if (!MASTER_KEY_HEX.test(value)) return null;
+    try {
+      chmodSync(path, 0o600);
+    } catch {
+      // На экзотических ФС chmod может не поддерживаться — ключ уже прочитан.
+    }
+    return Buffer.from(value.toLowerCase(), 'hex');
+  } catch {
+    return null;
+  }
+}
+
+function writeMasterKeyFile(directory: string, key: Buffer): boolean {
+  try {
+    if (!existsSync(directory)) {
+      mkdirSync(directory, { recursive: true, mode: 0o700 });
+    }
+    const path = join(directory, KEY_FILE_NAME);
+    writeFileSync(path, key.toString('hex'), { mode: 0o600, flag: 'wx' });
+    chmodSync(path, 0o600);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function getOrCreateMasterKey(directory: string): Buffer {
+  const memo = masterKeyMemo.get(directory);
+  if (memo) return memo;
+
+  const keychainHex = keychainReadHex();
+  if (keychainHex) {
+    const key = Buffer.from(keychainHex, 'hex');
+    masterKeyMemo.set(directory, key);
+    return key;
+  }
+
+  const fromFile = readMasterKeyFile(directory);
+  if (fromFile) {
+    // Подтягиваем файловый ключ в ключницу, если она стала доступна.
+    keychainWriteHex(fromFile.toString('hex'));
+    masterKeyMemo.set(directory, fromFile);
+    return fromFile;
+  }
+
+  const fresh = randomBytes(KEY_SIZE);
+  if (keychainWriteHex(fresh.toString('hex')) || writeMasterKeyFile(directory, fresh)) {
+    masterKeyMemo.set(directory, fresh);
+    return fresh;
+  }
+
+  throw new CredentialStoreError(
+    'PROVIDER_UNAVAILABLE',
+    'cannot persist credential master key (keychain and file both unavailable)',
+  );
+}
 
 /**
  * Get stable machine identifier using OS-native hardware UUID.
@@ -151,7 +282,7 @@ export class SecureStorageBackend implements CredentialBackend {
   private readonly directory: string;
   private readonly file: string;
   private readonly backupFile: string;
-  private readonly writeKeyVersion: 'v1' | 'v2';
+  private readonly writeKeyVersion: 'v1' | 'v2' | 'v3';
   private cachedStore: CredentialStore | null = null;
   private encryptionKey: Buffer | null = null;
   private salt: Buffer | null = null;
@@ -161,7 +292,7 @@ export class SecureStorageBackend implements CredentialBackend {
     this.directory = options.directory ?? CONFIG_DIR;
     this.file = join(this.directory, STORE_NAME);
     this.backupFile = join(this.directory, BACKUP_NAME);
-    this.writeKeyVersion = options.keyVersion ?? 'v2';
+    this.writeKeyVersion = options.keyVersion ?? 'v3';
   }
 
   getRepairState(): RepairState {
@@ -280,19 +411,25 @@ export class SecureStorageBackend implements CredentialBackend {
     // Extract encrypted data
     const encryptedData = fileData.subarray(HEADER_SIZE);
 
-    // Try new stable key first (v2 - hardware UUID based)
-    const newKey = this.getEncryptionKey(salt);
-    let store = this.tryDecrypt(encryptedData, newKey);
+    // Текущий ключ: случайный мастер-ключ (v3, RX-TSK-0300).
+    let store = this.tryDecrypt(encryptedData, this.getEncryptionKey(salt, 'v3'));
 
     if (store) {
       this.cachedStore = store;
       return store;
     }
 
-    // Try legacy key for migration (v1 - included hostname)
-    // This handles credentials encrypted with old key derivation
-    const legacyKey = this.getLegacyEncryptionKey(salt);
-    store = this.tryDecrypt(encryptedData, legacyKey);
+    // Легаси v2: вывод из machine-id (публично читаемые идентификаторы).
+    store = this.tryDecrypt(encryptedData, this.getEncryptionKey(salt, 'v2'));
+
+    if (store) {
+      // Dual-read: do not rewrite on get. Cutover is commitLegacyMigration().
+      this.cachedStore = store;
+      return store;
+    }
+
+    // Легаси v1: вывод из hostname+username+homedir.
+    store = this.tryDecrypt(encryptedData, this.getLegacyEncryptionKey(salt));
 
     if (store) {
       // Dual-read: do not rewrite on get. Cutover is commitLegacyMigration().
@@ -363,20 +500,39 @@ export class SecureStorageBackend implements CredentialBackend {
     writeFileSync(tmp, fileData, { mode: 0o600 });
     renameSync(tmp, this.file);
     copyFileSync(this.file, this.backupFile);
+    // Бэкап содержит те же секреты, что и основной файл — режим обязателен (RX-TSK-0301).
+    try {
+      chmodSync(this.backupFile, 0o600);
+    } catch {
+      // Экзотическая ФС без поддержки chmod: каталог уже 0700.
+    }
     this.cachedStore = store;
   }
 
-  private getEncryptionKey(salt: Buffer, version: 'v1' | 'v2' = 'v2'): Buffer {
-    if (version === 'v1') return this.getLegacyEncryptionKey(salt);
-    if (this.encryptionKey) return this.encryptionKey;
+  private getEncryptionKey(salt: Buffer, version: 'v1' | 'v2' | 'v3' = 'v3'): Buffer {
+    if (version === 'v3') {
+      if (!this.encryptionKey) {
+        this.encryptionKey = pbkdf2Sync(
+          getOrCreateMasterKey(this.directory),
+          salt,
+          PBKDF2_ITERATIONS,
+          KEY_SIZE,
+          'sha256',
+        );
+      }
+      return this.encryptionKey;
+    }
 
-    const stableMachineId = createHash('sha256')
-      .update(getStableMachineId())
-      .update('craft-agent-v2')
-      .digest();
+    if (version === 'v2') {
+      // Легаси-чтение: machine-id публично читаем, для записи не используется.
+      const stableMachineId = createHash('sha256')
+        .update(getStableMachineId())
+        .update('craft-agent-v2')
+        .digest();
+      return pbkdf2Sync(stableMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
+    }
 
-    this.encryptionKey = pbkdf2Sync(stableMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
-    return this.encryptionKey;
+    return this.getLegacyEncryptionKey(salt);
   }
 
   /**
