@@ -42,6 +42,7 @@ import {
   openSync,
   readFileSync,
   renameSync,
+  unlinkSync,
   writeFileSync,
 } from 'fs';
 import { hostname, userInfo, homedir } from 'os';
@@ -146,6 +147,44 @@ function isCredentialMigrationManifest(value: unknown): value is CredentialMigra
 }
 
 
+const REPAIR_RECORD_FILE = 'repair.json';
+const HEX_DIGEST_PATTERN = /^[0-9a-f]{64}$/;
+
+export type CredentialRepairCode =
+  | 'undersized'
+  | 'bad_magic'
+  | 'decrypt_failed'
+  | 'checksum_mismatch';
+
+export interface CredentialRepairRecord {
+  readonly digest: string;
+  readonly code: CredentialRepairCode;
+  readonly quarantinedAt: number;
+  readonly quarantineDir: string;
+}
+
+function isCredentialRepairCode(value: unknown): value is CredentialRepairCode {
+  return (
+    value === 'undersized' ||
+    value === 'bad_magic' ||
+    value === 'decrypt_failed' ||
+    value === 'checksum_mismatch'
+  );
+}
+
+function isCredentialRepairRecord(value: unknown): value is CredentialRepairRecord {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.digest === 'string' &&
+    HEX_DIGEST_PATTERN.test(record.digest) &&
+    isCredentialRepairCode(record.code) &&
+    typeof record.quarantinedAt === 'number' &&
+    Number.isFinite(record.quarantinedAt) &&
+    typeof record.quarantineDir === 'string' &&
+    record.quarantineDir.length > 0
+  );
+}
 export class SecureStorageBackend implements CredentialMigrationBackend {
   readonly name = 'secure-storage';
   readonly priority = 100;
@@ -157,12 +196,14 @@ export class SecureStorageBackend implements CredentialMigrationBackend {
   private cachedStore: CredentialStore | null = null;
   private encryptionKey: Buffer | null = null;
   private salt: Buffer | null = null;
+  private repairRecord: CredentialRepairRecord | null = null;
 
   constructor(configDir = CONFIG_DIR) {
     this.credentialsDir = configDir;
     this.credentialsFile = join(configDir, CREDENTIALS_FILE_NAME);
     this.migrationsDir = join(configDir, 'credential-migrations');
     this.quarantineDir = join(configDir, 'credential-quarantine');
+    this.repairRecord = this.readRepairRecord();
   }
 
   async isAvailable(): Promise<boolean> {
@@ -179,7 +220,9 @@ export class SecureStorageBackend implements CredentialMigrationBackend {
   }
 
   async set(id: CredentialId, credential: StoredCredential): Promise<void> {
+    this.assertWritable();
     let store = await this.loadStore();
+    this.assertWritable();
 
     if (!store) {
       // Initialize new store
@@ -201,10 +244,12 @@ export class SecureStorageBackend implements CredentialMigrationBackend {
   }
 
   async delete(id: CredentialId): Promise<boolean> {
+    this.assertWritable();
     return this.deleteSync(id);
   }
 
   deleteSync(id: CredentialId): boolean {
+    this.assertWritable();
     const store = this.loadStoreSync();
     if (!store) return false;
 
@@ -316,6 +361,7 @@ export class SecureStorageBackend implements CredentialMigrationBackend {
   }
 
   private loadStoreSync(): CredentialStore | null {
+    if (this.repairRecord) return null;
     // Return cached store if available
     if (this.cachedStore) return this.cachedStore;
 
@@ -329,13 +375,13 @@ export class SecureStorageBackend implements CredentialMigrationBackend {
     }
 
     if (fileData.length < HEADER_SIZE + IV_SIZE + AUTH_TAG_SIZE) {
-      this.handleCorruptedFile();
+      this.quarantineCorruptedFile(fileData, 'undersized');
       return null;
     }
 
     // Validate magic bytes
     if (!fileData.subarray(0, MAGIC_SIZE).equals(MAGIC_BYTES)) {
-      this.handleCorruptedFile();
+      this.quarantineCorruptedFile(fileData, 'bad_magic');
       return null;
     }
 
@@ -362,14 +408,13 @@ export class SecureStorageBackend implements CredentialMigrationBackend {
     store = this.tryDecrypt(encryptedData, legacyKey);
 
     if (store) {
-      // Migration: re-save with new stable key so future loads use hardware UUID
+      // Dual-read: serve the v1 store in memory; the file is rewritten only by an explicit later set.
       this.cachedStore = store;
-      this.saveStoreSync(store);
       return store;
     }
 
     // Both keys failed - file is truly corrupted
-    this.handleCorruptedFile();
+    this.quarantineCorruptedFile(fileData, 'decrypt_failed');
     return null;
   }
 
@@ -547,23 +592,99 @@ export class SecureStorageBackend implements CredentialMigrationBackend {
 
     return pbkdf2Sync(legacyMachineId, salt, PBKDF2_ITERATIONS, KEY_SIZE, 'sha256');
   }
+  /** Active quarantine fence, if any. */
+  getRepairRecord(): CredentialRepairRecord | null {
+    return this.repairRecord;
+  }
 
-  private handleCorruptedFile(): void {
+  private readRepairRecord(): CredentialRepairRecord | null {
+    const recordPath = join(this.quarantineDir, REPAIR_RECORD_FILE);
+    if (!existsSync(recordPath)) return null;
     try {
-      if (existsSync(this.credentialsFile)) {
-        mkdirSync(this.quarantineDir, { recursive: true, mode: 0o700 });
-        chmodSync(this.quarantineDir, 0o700);
-        renameSync(
-          this.credentialsFile,
-          join(this.quarantineDir, `credentials-${Date.now()}-${randomUUID()}.enc`),
-        );
-      }
+      const parsed: unknown = JSON.parse(readFileSync(recordPath, 'utf8'));
+      if (isCredentialRepairRecord(parsed)) return parsed;
     } catch {
-      // Preserve the original file when quarantine cannot be completed.
+      // Fall through to fail-closed handling below.
     }
+    // A present but unreadable record still fences the store (fail closed).
+    try {
+      return {
+        digest: this.checksum(readFileSync(recordPath)),
+        code: 'checksum_mismatch',
+        quarantinedAt: Date.now(),
+        quarantineDir: this.quarantineDir,
+      };
+    } catch {
+      return {
+        digest: '0'.repeat(64),
+        code: 'checksum_mismatch',
+        quarantinedAt: Date.now(),
+        quarantineDir: this.quarantineDir,
+      };
+    }
+  }
+
+  private persistRepairRecord(record: CredentialRepairRecord): void {
+    this.writePrivateFile(join(this.quarantineDir, REPAIR_RECORD_FILE), Buffer.from(JSON.stringify(record), 'utf8'));
+    this.repairRecord = record;
+  }
+
+  private assertWritable(): void {
+    if (this.repairRecord) {
+      throw new Error(`Credential store is quarantined (${this.repairRecord.code}); repair required before writing`);
+    }
+  }
+
+  private quarantineCorruptedFile(source: Buffer, code: CredentialRepairCode): void {
     this.cachedStore = null;
     this.encryptionKey = null;
     this.salt = null;
+    const digestHex = this.checksum(source);
+    try {
+      mkdirSync(this.quarantineDir, { recursive: true, mode: 0o700 });
+      chmodSync(this.quarantineDir, 0o700);
+      const target = join(this.quarantineDir, `credentials-${Date.now()}-${randomUUID()}.enc`);
+      const temporary = join(this.quarantineDir, `.${randomUUID()}.tmp`);
+      const fd = openSync(temporary, 'wx', 0o600);
+      try {
+        writeFileSync(fd, source);
+        fsyncSync(fd);
+      } finally {
+        closeSync(fd);
+      }
+      if (this.checksum(readFileSync(temporary)) !== digestHex) {
+        unlinkSync(temporary);
+        this.persistRepairRecord({
+          digest: digestHex,
+          code: 'checksum_mismatch',
+          quarantinedAt: Date.now(),
+          quarantineDir: this.quarantineDir,
+        });
+        return; // Keep the original in place when the verified copy cannot be produced.
+      }
+      renameSync(temporary, target);
+      const directoryFd = openSync(this.quarantineDir, 'r');
+      try {
+        fsyncSync(directoryFd);
+      } finally {
+        closeSync(directoryFd);
+      }
+      if (existsSync(this.credentialsFile)) unlinkSync(this.credentialsFile);
+      this.persistRepairRecord({
+        digest: digestHex,
+        code,
+        quarantinedAt: Date.now(),
+        quarantineDir: this.quarantineDir,
+      });
+    } catch {
+      // I/O failed: fence this instance in memory so a later set cannot overwrite the intact-but-unreadable file.
+      this.repairRecord = {
+        digest: digestHex,
+        code,
+        quarantinedAt: Date.now(),
+        quarantineDir: this.quarantineDir,
+      };
+    }
   }
 
   /** Clear cached data (for testing or forced refresh) */

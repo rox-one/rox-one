@@ -77,7 +77,7 @@ describe('SecureStorageBackend controlled migrations', () => {
     backend.clearCache();
 
     expect(await backend.list()).toEqual([]);
-    expect(readdirSync(join(directory, 'credential-quarantine'))).toHaveLength(1);
+    expect(readdirSync(join(directory, 'credential-quarantine')).filter((entry) => entry.endsWith('.enc'))).toHaveLength(1);
   });
 
   it('stores only migration metadata in a private snapshot manifest', async () => {
