@@ -1,25 +1,25 @@
-# Architecture evidence — four deepening candidates + Gate 0
+# Архитектурные свидетельства — четыре кандидата на углубление + Gate 0
 
-**Date:** 2026-08-13  
-**Mode:** read-only evidence collection (no implementation)  
-**Vocabulary:** module, interface, seam, depth, adapter, leverage, locality  
-**Status files:** G2 OPEN → `docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md`; G1 TBD → `docs/specs/2026-08-07-siyuan-integration/g1-metrics.md`  
-**Gate 0 target (MISSING):** `docs/security/external-access-deployment-contract.md` (planned; directory created only by this memo)
-
----
-
-## Candidate one-liners
-
-1. **Root policy module-eval:** `CONFIG_DIR` is a single module-load const (`paths.ts:19`); workspace notes locality defaults under `CONFIG_DIR/workspaces/{id}/notes` via `storage.ts` + optional `WorkspaceConfig.notesPath` seam — no path-policy module evaluates caller intent before disk use.
-2. **knowledge:migrateNotes remote-eligible local path:** `MIGRATE_NOTES` is REMOTE_ELIGIBLE (`routing.ts:500`) while the handler takes absolute `sourceRoot` and writes local notes (`knowledge.ts:1620–1643`, `notes-migration.ts:505–511,1207–1212`) — remote depth over a local-filesystem import adapter.
-3. **Generic Sources index as agent-context ingress:** local path text is stored full-body in SQLite FTS (`source-index.ts:body_text`) and injected into agent system prompt at session start (`SessionManager.ts:4158–4166` → `retrieveSourcesForPrompt` / `formatSourceRetrieveForPrompt`).
-4. **Credential/path policy:** secrets live only in `StoredCredential.value` (`types.ts:110–112`); identity keeps opaque `credentialRef` (`identity/types.ts:50–51`) while RPC accepts raw `credentialValue` and immediately `manager.set` (`identity.ts:37–42,171–200`).
+**Дата:** 2026-08-13  
+**Режим:** сбор свидетельств в режиме «только чтение» (без реализации)  
+**Словарь:** модуль, интерфейс, шов, глубина, адаптер, рычаг, локальность  
+**Файлы статусов:** G2 OPEN → `docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md`; G1 TBD → `docs/specs/2026-08-07-siyuan-integration/g1-metrics.md`  
+**Цель Gate 0 (ОТСУТСТВУЕТ):** `docs/security/external-access-deployment-contract.md` (запланирован; каталог создан только этой запиской)
 
 ---
 
-## 1) Root policy module-eval
+## Краткие формулировки кандидатов
 
-### Module: `packages/shared/src/config/paths.ts` (entire module = 20 lines)
+1. **Корневая политика — вычисление при загрузке модуля:** `CONFIG_DIR` — единственная константа, вычисляемая при загрузке модуля (`paths.ts:19`); локальность заметок воркспейса по умолчанию — `CONFIG_DIR/workspaces/{id}/notes` через `storage.ts` + опциональный шов `WorkspaceConfig.notesPath` — ни один модуль политики путей не оценивает намерения вызывающего до обращения к диску.
+2. **knowledge:migrateNotes — удалённо допустимый локальный путь:** `MIGRATE_NOTES` имеет статус REMOTE_ELIGIBLE (`routing.ts:500`), при этом обработчик принимает абсолютный `sourceRoot` и пишет локальные заметки (`knowledge.ts:1620–1643`, `notes-migration.ts:505–511,1207–1212`) — удалённая глубина поверх адаптера импорта локальной файловой системы.
+3. **Универсальный индекс Sources как точка входа контекста агента:** текст из локальных путей сохраняется целиком в SQLite FTS (`source-index.ts:body_text`) и внедряется в системный промпт агента при старте сессии (`SessionManager.ts:4158–4166` → `retrieveSourcesForPrompt` / `formatSourceRetrieveForPrompt`).
+4. **Политика учётных данных/путей:** секреты живут только в `StoredCredential.value` (`types.ts:110–112`); identity хранит непрозрачный `credentialRef` (`identity/types.ts:50–51`), тогда как RPC принимает сырой `credentialValue` и немедленно вызывает `manager.set` (`identity.ts:37–42,171–200`).
+
+---
+
+## 1) Корневая политика — вычисление при загрузке модуля
+
+### Модуль: `packages/shared/src/config/paths.ts` (весь модуль = 20 строк)
 
 ```1:19:packages/shared/src/config/paths.ts
 /**
@@ -35,25 +35,25 @@ import { join } from 'path';
 export const CONFIG_DIR = process.env.CRAFT_CONFIG_DIR || join(homedir(), '.craft-agent');
 ```
 
-**Depth note:** single export const evaluated at module load. No interface for path allowlists, no adapter for multi-tenant locality. `CRAFT_CONFIG_DIR` is the only override seam.
+**Примечание о глубине:** единственная экспортируемая константа, вычисляемая при загрузке модуля. Нет интерфейса для списков разрешённых путей, нет адаптера для мультитенантной локальности. `CRAFT_CONFIG_DIR` — единственный шов переопределения.
 
-### Who imports `CONFIG_DIR` (packages — non-exhaustive, high leverage)
+### Кто импортирует `CONFIG_DIR` (пакеты — список не исчерпывающий, высокий рычаг)
 
-| Importer | Use |
+| Импортёр | Использование |
 |---|---|
 | `packages/shared/src/workspaces/storage.ts:31,42` | `DEFAULT_WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces')` |
-| `packages/shared/src/interceptor-common.ts:14,30,39` | `config.json`, logs under CONFIG_DIR |
+| `packages/shared/src/interceptor-common.ts:14,30,39` | `config.json`, логи под CONFIG_DIR |
 | `packages/shared/src/release-notes/index.ts:14,16` | `join(CONFIG_DIR, 'release-notes')` |
 | `packages/shared/src/docs/index.ts:15,17` | `join(CONFIG_DIR, 'docs')` |
-| `packages/server/src/index.ts:41,224` | messaging paths under CONFIG_DIR |
-| `packages/server-core/src/handlers/rpc/identity.ts:9` | Identity store + knowledge connections under CONFIG_DIR |
-| `apps/electron/src/main/index.ts` | WorkGraph kernel `configDir: CONFIG_DIR` |
-| `apps/electron/src/main/window-state.ts` | `window-state.json` under CONFIG_DIR |
-| `apps/electron/src/main/handlers/extension-host.ts` | URL allowlist locality under CONFIG_DIR |
+| `packages/server/src/index.ts:41,224` | пути обмена сообщениями под CONFIG_DIR |
+| `packages/server-core/src/handlers/rpc/identity.ts:9` | хранилище Identity + подключения knowledge под CONFIG_DIR |
+| `apps/electron/src/main/index.ts` | ядро WorkGraph `configDir: CONFIG_DIR` |
+| `apps/electron/src/main/window-state.ts` | `window-state.json` под CONFIG_DIR |
+| `apps/electron/src/main/handlers/extension-host.ts` | локальность списка разрешённых URL под CONFIG_DIR |
 
-Scripts (`runtime-context-smoke.ts`, `marketplace-smoke.ts`, `toolchain-*-smoke.ts`) require external `CRAFT_CONFIG_DIR` under `/tmp` before dynamic import — documents that CONFIG_DIR is frozen at module evaluation.
+Скрипты (`runtime-context-smoke.ts`, `marketplace-smoke.ts`, `toolchain-*-smoke.ts`) требуют внешнего `CRAFT_CONFIG_DIR` под `/tmp` до динамического импорта — это подтверждает, что CONFIG_DIR фиксируется при вычислении модуля.
 
-### Notes path seam — first 40 lines of `storage.ts` + notes seed
+### Шов пути заметок — первые 40 строк `storage.ts` + инициализация заметок
 
 ```1:42:packages/shared/src/workspaces/storage.ts
 /**
@@ -75,7 +75,7 @@ const DEFAULT_WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces');
   ensureLocalNotesSource(rootPath, join(DEFAULT_WORKSPACES_DIR, config.id, 'notes'));
 ```
 
-### `WorkspaceConfig.notesPath` interface
+### Интерфейс `WorkspaceConfig.notesPath`
 
 ```68:72:packages/shared/src/workspaces/types.ts
   /**
@@ -86,7 +86,7 @@ const DEFAULT_WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces');
   notesPath?: string;
 ```
 
-### Local Notes source adapter writes path into source config
+### Адаптер локального источника Notes записывает путь в конфиг источника
 
 ```194:210:packages/shared/src/sources/builtin-sources.ts
 export function ensureLocalNotesSource(workspaceRootPath: string, notesPath: string): void {
@@ -97,22 +97,22 @@ export function ensureLocalNotesSource(workspaceRootPath: string, notesPath: str
   },
 ```
 
-### Resolution locality (server-core, not shared)
+### Локальность разрешения (server-core, не shared)
 
-| Module | Lines | Behavior |
+| Модуль | Строки | Поведение |
 |---|---|---|
-| `handlers/rpc/notes.ts` | 81–88 | `config?.notesPath` else `join(getDefaultWorkspacesDir(), workspaceId, NOTES_DIR)` |
-| `handlers/rpc/sources.ts` | 29–30 | same default; calls `ensureLocalNotesSource` |
-| `handlers/rpc/settings.ts` | 144,159,192–197 | `notesPath` is a writable workspace setting key |
-| `knowledge/notes-migration.ts` | 505–511 | `resolveWorkspaceNotesRoot` duplicates notes.ts priority |
+| `handlers/rpc/notes.ts` | 81–88 | `config?.notesPath`, иначе `join(getDefaultWorkspacesDir(), workspaceId, NOTES_DIR)` |
+| `handlers/rpc/sources.ts` | 29–30 | тот же дефолт; вызывает `ensureLocalNotesSource` |
+| `handlers/rpc/settings.ts` | 144,159,192–197 | `notesPath` — ключ настройки воркспейса, доступный для записи |
+| `knowledge/notes-migration.ts` | 505–511 | `resolveWorkspaceNotesRoot` дублирует приоритет из notes.ts |
 
-**Leverage gap:** path policy is spread across config const + workspace config field + multiple resolve helpers; no single root policy module evaluates absolute paths before import/index/credential disk use.
+**Разрыв рычага:** политика путей размазана между константой конфигурации + полем конфигурации воркспейса + несколькими хелперами разрешения; нет единого модуля корневой политики, который оценивал бы абсолютные пути до обращения к диску со стороны импорта/индексации/учётных данных.
 
 ---
 
-## 2) `knowledge:migrateNotes` — remote-eligible local path
+## 2) `knowledge:migrateNotes` — удалённо допустимый локальный путь
 
-### Routing seam — REMOTE_ELIGIBLE
+### Шов маршрутизации — REMOTE_ELIGIBLE
 
 ```490:501:packages/shared/src/protocol/routing.ts
   // knowledge — P5 saved views + work envelopes ...
@@ -122,9 +122,9 @@ export function ensureLocalNotesSource(workspaceRootPath: string, notesPath: str
   RPC_CHANNELS.knowledge.METRICS_GET,
 ```
 
-Channel id: `packages/shared/src/protocol/channels.ts:183` → `'knowledge:migrateNotes'`.
+Идентификатор канала: `packages/shared/src/protocol/channels.ts:183` → `'knowledge:migrateNotes'`.
 
-Test assertion:
+Ассерт в тесте:
 
 ```133:137:packages/shared/src/protocol/__tests__/routing.test.ts
   test('knowledge P4.4 migrateNotes is REMOTE_ELIGIBLE', () => {
@@ -135,9 +135,9 @@ Test assertion:
   })
 ```
 
-Contrast: `ENGINE_STATUS` / `DETECT_ENGINE` / `ENGINE_START` are LOCAL_ONLY (same test file:140–147).
+Для сравнения: `ENGINE_STATUS` / `DETECT_ENGINE` / `ENGINE_START` — LOCAL_ONLY (тот же тестовый файл:140–147).
 
-### Handler — accepts absolute `sourceRoot`, local destination
+### Обработчик — принимает абсолютный `sourceRoot`, локальное назначение
 
 ```1620:1643:packages/server-core/src/handlers/rpc/knowledge.ts
   // ——— MIGRATE_NOTES({workspaceId, sourceRoot, format?}) → MigrateNotesResult ———
@@ -158,11 +158,11 @@ Contrast: `ENGINE_STATUS` / `DETECT_ENGINE` / `ENGINE_START` are LOCAL_ONLY (sam
         })
 ```
 
-Handler comment claims local-only semantics; routing classifies channel as workspace-owner remote depth.
+Комментарий обработчика заявляет семантику «только локально»; маршрутизация классифицирует канал как удалённую глубину уровня владельца воркспейса.
 
-### Entry module — `notes-migration.ts`
+### Входной модуль — `notes-migration.ts`
 
-Header + map locality:
+Заголовок + локальность карты:
 
 ```1:19:packages/server-core/src/knowledge/notes-migration.ts
 /**
@@ -176,7 +176,7 @@ export const NOTES_MIGRATION_MAP_RELATIVE = join('.craft', 'notes-migration-map.
 export const CRAFT_MARKDOWN_IMPORT_FORMAT = 'craft-markdown' as const
 ```
 
-Args interface (absolute path required at resolve):
+Интерфейс аргументов (на этапе разрешения требуется абсолютный путь):
 
 ```115:121:packages/server-core/src/knowledge/notes-migration.ts
 export interface MigrateNotesArgs {
@@ -188,7 +188,7 @@ export interface MigrateNotesArgs {
 }
 ```
 
-Destination resolve (notesPath override seam):
+Разрешение назначения (шов переопределения notesPath):
 
 ```505:511:packages/server-core/src/knowledge/notes-migration.ts
 export function resolveWorkspaceNotesRoot(workspaceId: string): string {
@@ -200,7 +200,7 @@ export function resolveWorkspaceNotesRoot(workspaceId: string): string {
 }
 ```
 
-Absolute-path check on import root:
+Проверка абсолютного пути у корня импорта:
 
 ```513:527:packages/server-core/src/knowledge/notes-migration.ts
 async function resolveSelectedImportRoot(sourceRoot: string): Promise<string> {
@@ -211,7 +211,7 @@ async function resolveSelectedImportRoot(sourceRoot: string): Promise<string> {
 }
 ```
 
-Public entry:
+Публичная точка входа:
 
 ```1203:1212:packages/server-core/src/knowledge/notes-migration.ts
 /**
@@ -227,15 +227,15 @@ export async function importNotes(options: ImportNotesOptions): Promise<MigrateN
 }
 ```
 
-Limits (depth bound on traversal, not remote policy): `NOTES_IMPORT_LIMITS` at lines 37–45 (`maxTraversalEntries: 10_000`, `maxDepth: 64`, etc.).
+Ограничения (граница глубины обхода, а не удалённая политика): `NOTES_IMPORT_LIMITS` на строках 37–45 (`maxTraversalEntries: 10_000`, `maxDepth: 64` и т.д.).
 
-**Deepening risk:** REMOTE_ELIGIBLE + absolute `sourceRoot` means the workspace-owning host's local filesystem is the adapter; a remote client can drive import against host paths if transport auth only checks workspace ownership.
+**Риск углубления:** REMOTE_ELIGIBLE + абсолютный `sourceRoot` означают, что адаптером выступает локальная файловая система хоста-владельца воркспейса; удалённый клиент может запустить импорт по путям хоста, если транспортная аутентификация проверяет только владение воркспейсом.
 
 ---
 
-## 3) Generic Sources index as agent-context ingress
+## 3) Универсальный индекс Sources как точка входа контекста агента
 
-### Storage module — full body text in SQLite
+### Модуль хранения — полный текст в SQLite
 
 ```1:8:packages/server-core/src/sources/source-index.ts
 /**
@@ -247,7 +247,7 @@ Limits (depth bound on traversal, not remote policy): `NOTES_IMPORT_LIMITS` at l
  */
 ```
 
-Schema + upsert of full body:
+Схема + upsert полного текста:
 
 ```172:180:packages/server-core/src/sources/source-index.ts
       CREATE TABLE IF NOT EXISTS files (
@@ -273,9 +273,9 @@ export function indexSourceTree(...) {
 }
 ```
 
-Caps: `MAX_FILES=2000`, `MAX_FILE_BYTES=512KiB`, `MAX_TOTAL_BYTES=32MiB`, `MAX_BODY_CHARS=200_000` (lines 77–80). Text extensions include source + config-like files (`.env.example` exception for hidden; lines 32–62, 244–246).
+Лимиты: `MAX_FILES=2000`, `MAX_FILE_BYTES=512KiB`, `MAX_TOTAL_BYTES=32MiB`, `MAX_BODY_CHARS=200_000` (строки 77–80). Текстовые расширения включают исходники и конфигоподобные файлы (исключение среди скрытых — `.env.example`; строки 32–62, 244–246).
 
-### Retrieve interface for prompt injection
+### Интерфейс извлечения для внедрения в промпт
 
 ```116:134:packages/server-core/src/sources/source-index.ts
 /** Retrieved hit with a budgeted excerpt for system-prompt injection. */
@@ -302,7 +302,7 @@ export function retrieveSourcesForPrompt(
 ): SourceRetrieveResult {
 ```
 
-### SessionManager seam (~4161 still present)
+### Шов SessionManager (~4161 всё ещё на месте)
 
 ```4155:4169:packages/server-core/src/sessions/SessionManager.ts
       let memoryBlocks = managed.memoryMode === 'temporary'
@@ -323,7 +323,7 @@ export function retrieveSourcesForPrompt(
       }
 ```
 
-Formatter adapter:
+Адаптер форматирования:
 
 ```566:583:packages/shared/src/prompts/system.ts
 /**
@@ -334,15 +334,15 @@ export function formatSourceRetrieveForPrompt(hits: SourceRetrieveHit[]): string
 }
 ```
 
-`memoryBlocks` (including `sourcesBlock`) is passed into `createBackendFromResolvedContext` at `SessionManager.ts:4189–4194`.
+`memoryBlocks` (включая `sourcesBlock`) передаётся в `createBackendFromResolvedContext` на `SessionManager.ts:4189–4194`.
 
-**Leverage:** one index module + one session-start seam; any local path that gets indexed becomes agent-visible context without a separate consent interface.
+**Рычаг:** один модуль индекса + один шов старта сессии; любой проиндексированный локальный путь становится видимым агенту контекстом без отдельного интерфейса согласия.
 
 ---
 
-## 4) Credential / path policy
+## 4) Политика учётных данных / путей
 
-### Manager get/set interface
+### Интерфейс get/set менеджера
 
 ```108:142:packages/shared/src/credentials/manager.ts
   /**
@@ -368,9 +368,9 @@ export function formatSourceRetrieveForPrompt(hits: SourceRetrieveHit[]): string
   }
 ```
 
-Backend: `SecureStorageBackend` only (manager.ts:55–60, 68–70) — encrypted file locality under craft config, not OS keychain.
+Бэкенд: только `SecureStorageBackend` (manager.ts:55–60, 68–70) — зашифрованный файл в локальности craft-конфига, а не связка ключей ОС.
 
-### Secret field — `StoredCredential.value`
+### Поле секрета — `StoredCredential.value`
 
 ```110:112:packages/shared/src/credentials/types.ts
 export interface StoredCredential {
@@ -378,9 +378,9 @@ export interface StoredCredential {
   value: string;
 ```
 
-Credential types include `source_*`, `service_oauth`, `ssh_managed_token`, `openclaw_gateway_token` (types.ts:19–42). Key format comment: `"{type}::{scope...}"` (types.ts:7–14). Source credential path comment: `~/.craft-agent/workspaces/{ws}/sources/{slug}/` (types.ts:30).
+Типы учётных данных включают `source_*`, `service_oauth`, `ssh_managed_token`, `openclaw_gateway_token` (types.ts:19–42). Комментарий о формате ключа: `"{type}::{scope...}"` (types.ts:7–14). Комментарий о пути source-учётных данных: `~/.craft-agent/workspaces/{ws}/sources/{slug}/` (types.ts:30).
 
-### Identity RPC — raw `credentialValue` ingress
+### Identity RPC — вход сырого `credentialValue`
 
 ```37:42:packages/server-core/src/handlers/rpc/identity.ts
 export interface IdentityConnectArgs {
@@ -414,9 +414,9 @@ export interface IdentityConnectArgs {
       )
 ```
 
-Uses `CONFIG_DIR` for identity store locality (`identity.ts:9,86`).
+Использует `CONFIG_DIR` для локальности хранилища identity (`identity.ts:9,86`).
 
-### Domain interface — opaque `credentialRef` (no secret)
+### Доменный интерфейс — непрозрачный `credentialRef` (без секрета)
 
 ```1:6:packages/core/src/platform/identity/types.ts
 /**
@@ -436,43 +436,43 @@ export interface ServiceConnection {
   credentialRef?: string;
 ```
 
-Store adapter sets `credentialRef = connection id` when `credentialValue` present (`store.ts:212–230`); never persists the secret in identity JSON.
+Адаптер хранилища выставляет `credentialRef = connection id`, когда присутствует `credentialValue` (`store.ts:212–230`); секрет никогда не сохраняется в identity JSON.
 
-**Seam summary:** RPC wire may carry secret once (`credentialValue`); durable identity holds only `credentialRef`; secret depth is CredentialManager encrypted store. No path-policy coupling beyond CONFIG_DIR locality for the identity file.
+**Итог по швам:** секрет может единожды пройти по проводу RPC (`credentialValue`); персистентный identity хранит только `credentialRef`; глубина секрета — зашифрованное хранилище CredentialManager. Связи с политикой путей нет, кроме локальности CONFIG_DIR для файла identity.
 
 ---
 
-## Gate 0 — Security / External Access (EXISTS vs MISSING)
+## Gate 0 — Безопасность / внешний доступ (ЕСТЬ vs ОТСУТСТВУЕТ)
 
-**Planned contract path (MISSING on disk):**  
+**Запланированный путь контракта (ОТСУТСТВУЕТ на диске):**  
 `docs/security/external-access-deployment-contract.md`  
-Cited as create-target in `docs/superpowers/plans/2026-08-11-security-external-access-implementation-plan.md:36–45` and Task B0 in `docs/superpowers/plans/2026-08-13-post-research-program-plan.md:74–76`.
+Указан как цель создания в `docs/superpowers/plans/2026-08-11-security-external-access-implementation-plan.md:36–45` и как задача B0 в `docs/superpowers/plans/2026-08-13-post-research-program-plan.md:74–76`.
 
-**Design / plan docs (EXIST — not deploy facts):**
+**Документы дизайна/планов (ЕСТЬ — но не факты развёртывания):**
 
-| Artifact | Path | Role |
+| Артефакт | Путь | Роль |
 |---|---|---|
-| Design | `docs/superpowers/specs/2026-08-11-security-external-access-design.md` | Logical origins, microVM, WebAuthn, DeviceRecord sketch |
-| Implementation plan | `docs/superpowers/plans/2026-08-11-security-external-access-implementation-plan.md` | Gate 0 steps unchecked |
-| Program | `docs/superpowers/specs/2026-08-13-post-research-program.md:15,51` | Gate 0 listed as ask-first |
+| Дизайн | `docs/superpowers/specs/2026-08-11-security-external-access-design.md` | логические истоки, microVM, WebAuthn, набросок DeviceRecord |
+| План реализации | `docs/superpowers/plans/2026-08-11-security-external-access-implementation-plan.md` | шаги Gate 0 не отмечены выполненными |
+| Программа | `docs/superpowers/specs/2026-08-13-post-research-program.md:15,51` | Gate 0 указан как «сначала спросить» |
 
-### Fact hunt
+### Поиск фактов
 
-| Term | EXISTS (code) | EXISTS (docs only) | MISSING (code + contract) |
+| Термин | ЕСТЬ (код) | ЕСТЬ (только в доках) | ОТСУТСТВУЕТ (код + контракт) |
 |---|---|---|---|
-| `APP_ORIGIN` | — | design:24; plan:14 | No `.ts`/`.tsx`/config match |
-| `SHARE_ORIGIN` | — | design:25; plan:14 | No code match |
-| `app.rox.one` | — | design:24 (v1 target table) | No code match |
-| `share.rox.one` | — | design:25 | No code match |
-| microVM | — | design:98–117; plan:7,17,31,85–87,398–404 | No `SandboxExecutionRunner` / `microvm-runner` module under packages |
-| Firecracker | — | (not named in design; plan stack is Docker/VF) | No code match |
-| WebAuthn | — | design:155–163; plan:9,511–540 | No WebAuthn module in packages |
-| DeviceRecord / device store | — | design:160; plan:52–63,470–485 | `packages/server-core/src/webui/` has password JWT auth only (`auth.ts:1–8,18–22`); no `device-store.ts` |
-| SPKI pin | **YES** — `packages/shared/src/config/remote-tls-trust.ts:41–83`; type `RemoteTlsTrust` in `packages/core/src/types/workspace.ts:18–35`; tests + storage normalize | design §3 remote trust | App-local enrollment UI/handshake depth may be partial; pin **policy module exists** for remote workspace TLS |
-| sandbox image digest | — | plan Gate 0 step 3 (image digest/signer) | No image digest constant or verifier module |
-| Catalog SPKI (unrelated) | **YES** — marketplace catalog signing SPKI (`catalog-signing.ts:14–21`) | — | Not Gate 0 device/TLS pin |
+| `APP_ORIGIN` | — | design:24; plan:14 | Совпадений в `.ts`/`.tsx`/конфигах нет |
+| `SHARE_ORIGIN` | — | design:25; plan:14 | Совпадений в коде нет |
+| `app.rox.one` | — | design:24 (таблица целей v1) | Совпадений в коде нет |
+| `share.rox.one` | — | design:25 | Совпадений в коде нет |
+| microVM | — | design:98–117; plan:7,17,31,85–87,398–404 | Нет модуля `SandboxExecutionRunner` / `microvm-runner` в packages |
+| Firecracker | — | (в дизайне не назван; стек плана — Docker/VF) | Совпадений в коде нет |
+| WebAuthn | — | design:155–163; plan:9,511–540 | Нет модуля WebAuthn в packages |
+| DeviceRecord / device store | — | design:160; plan:52–63,470–485 | `packages/server-core/src/webui/` содержит только парольную JWT-аутентификацию (`auth.ts:1–8,18–22`); нет `device-store.ts` |
+| SPKI pin | **ДА** — `packages/shared/src/config/remote-tls-trust.ts:41–83`; тип `RemoteTlsTrust` в `packages/core/src/types/workspace.ts:18–35`; тесты + нормализация в storage | дизайн §3 remote trust | Глубина UI регистрации/handshake на стороне приложения может быть частичной; **модуль политики пина существует** для TLS удалённого воркспейса |
+| дайджест sandbox-образа | — | план, шаг 3 Gate 0 (image digest/signer) | Нет константы дайджеста образа или модуля верификации |
+| Catalog SPKI (не относится) | **ДА** — SPKI подписи каталога маркетплейса (`catalog-signing.ts:14–21`) | — | Не device/TLS-пин для Gate 0 |
 
-### Existing webui auth depth (not DeviceRecord)
+### Существующая глубина аутентификации webui (не DeviceRecord)
 
 ```1:8:packages/server-core/src/webui/auth.ts
 /**
@@ -482,45 +482,45 @@ Cited as create-target in `docs/superpowers/plans/2026-08-11-security-external-a
  */
 ```
 
-JWT claims: `sub`, `iat`, `exp` only (`auth.ts:18–22`) — no `deviceId` / `sessionVersion` from Gate 0 design.
+Клеймы JWT: только `sub`, `iat`, `exp` (`auth.ts:18–22`) — нет `deviceId` / `sessionVersion` из дизайна Gate 0.
 
-### Sandbox runtime today
+### Рантайм песочницы сегодня
 
-`packages/session-tools-core/src/runtime/` contains `filesystem-isolation`, `network-isolation`, `path-security`, `sandbox-env`, `resolve-script-runtime` — **no** `sandbox-execution.ts` / `microvm-runner.ts` (those are plan create-targets at plan:346–403).
+`packages/session-tools-core/src/runtime/` содержит `filesystem-isolation`, `network-isolation`, `path-security`, `sandbox-env`, `resolve-script-runtime` — **нет** `sandbox-execution.ts` / `microvm-runner.ts` (это цели создания по плану: plan:346–403).
 
 ---
 
-## G2 / G1 status (binding product blocks)
+## Статусы G2 / G1 (обязывающие продуктовые блокировки)
 
-| Gate | Path | Status quote |
+| Гейт | Путь | Цитата статуса |
 |---|---|---|
-| **G2** | `/Users/marklindgreen/Projects/craft-agents/docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md` | L3: `Status: OPEN — blocked on legal/commercial decision`; L33: `Until then, **P7 managed does not start.**` |
-| **G1** | `/Users/marklindgreen/Projects/craft-agents/docs/specs/2026-08-07-siyuan-integration/g1-metrics.md` | L66–73: all thresholds **TBD**; L75: `P7 managed is blocked` until thresholds filled **and** G2 ACCEPTED |
+| **G2** | `/Users/marklindgreen/Projects/craft-agents/docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md` | L3: `Статус: OPEN — заблокировано ожиданием юридического/коммерческого решения`; L33: `До тех пор **P7 managed не стартует.**` |
+| **G1** | `/Users/marklindgreen/Projects/craft-agents/docs/specs/2026-08-07-siyuan-integration/g1-metrics.md` | L66–73: все пороги **TBD**; L75: `P7 managed заблокирован`, пока пороги не заполнены **и** G2 не получит ACCEPTED |
 
-Cross-ref: `docs/specs/2026-08-10-rox-notes-root-imports-design.md:20` — G2 OPEN + G1 TBD block engine distribution.
-
----
-
-## Gate 0 missing list (compact)
-
-1. `docs/security/external-access-deployment-contract.md` — not filled (Gate 0 deliverable absent).  
-2. Named durable **device-record datastore** owner + transaction model — not in repo.  
-3. **APP_ORIGIN / SHARE_ORIGIN** ownership + live hostname binding — design only; zero code.  
-4. **app.rox.one / share.rox.one** — design targets only; zero code.  
-5. **WebAuthn** / passkey pairing modules — design/plan only.  
-6. **DeviceRecord** interface implementation + `device-store` adapter — plan paths not present under `webui/`.  
-7. **microVM** / **Firecracker** / Virtualization.framework runner + **sandbox image digest/signer** — plan only; runtime has env/path isolation, not microVM.  
-8. **SandboxExecutionRunner** interface module — plan create-target missing.  
-9. Share-management capability issuer / public verification material — Gate 0 step 2 unchecked.  
-10. Reverse-proxy / secret-authority ownership records — Gate 0 step 1–4 unchecked.
-
-**EXISTS partial (do not invent completeness):** remote workspace **SPKI pin** normalize/persist policy (`remote-tls-trust.ts`); marketplace catalog SPKI (orthogonal); password JWT webui (`webui/auth.ts`).
+Кросс-ссылка: `docs/specs/2026-08-10-rox-notes-root-imports-design.md:20` — G2 OPEN + G1 TBD блокируют дистрибуцию движка.
 
 ---
 
-## Return summary
+## Список отсутствующего для Gate 0 (компактно)
 
-**4 candidate one-liners:** see top of memo.  
-**Gate 0 missing list:** items 1–10 above.  
-**G2 path:** `docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md` (OPEN).  
-**G1 path:** `docs/specs/2026-08-07-siyuan-integration/g1-metrics.md` (thresholds TBD).
+1. `docs/security/external-access-deployment-contract.md` — не заполнен (артефакт Gate 0 отсутствует).  
+2. Именованный владелец персистентного **хранилища device-record** + модель транзакций — отсутствуют в репозитории.  
+3. Владение **APP_ORIGIN / SHARE_ORIGIN** + привязка к живым hostname — только дизайн; ноль кода.  
+4. **app.rox.one / share.rox.one** — только целевые значения дизайна; ноль кода.  
+5. Модули **WebAuthn** / сопряжения passkey — только дизайн/план.  
+6. Реализация интерфейса **DeviceRecord** + адаптер `device-store` — путей из плана нет под `webui/`.  
+7. Раннер **microVM** / **Firecracker** / Virtualization.framework + **дайджест/подписант sandbox-образа** — только план; в рантайме есть изоляция env/путей, а не microVM.  
+8. Модуль интерфейса **SandboxExecutionRunner** — цель создания из плана отсутствует.  
+9. Эмитент capability управления share / публичные материалы верификации — шаг 2 Gate 0 не отмечен выполненным.  
+10. Записи о владении reverse-proxy / службой выдачи секретов — шаги 1–4 Gate 0 не отмечены выполненными.
+
+**Частично ЕСТЬ (не выдавать за полноту):** политика нормализации/сохранения **SPKI pin** удалённого воркспейса (`remote-tls-trust.ts`); SPKI каталога маркетплейса (ортогонально); парольная JWT webui (`webui/auth.ts`).
+
+---
+
+## Итоговое резюме
+
+**4 краткие формулировки кандидатов:** см. начало записки.  
+**Список отсутствующего для Gate 0:** пункты 1–10 выше.  
+**Путь G2:** `docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md` (OPEN).  
+**Путь G1:** `docs/specs/2026-08-07-siyuan-integration/g1-metrics.md` (пороги TBD).

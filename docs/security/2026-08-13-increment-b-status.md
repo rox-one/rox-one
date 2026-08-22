@@ -1,24 +1,24 @@
-# Increment B status — public messaging authority
+# Статус Increment B — полномочия публичного обмена сообщениями
 
-- **Date:** 2026-08-13
-- **Verdict:** Task 4 + Task 5 + Task 6 landed. Increment B complete on this tree.
+- **Дата:** 2026-08-13
+- **Вердикт:** Задача 4 + Задача 5 + Задача 6 влиты. Increment B завершён на этом дереве.
 
-## Task 4 — explicit access modes
+## Задача 4 — явные режимы доступа
 
-Legacy `open` / `inherit` / missing fields normalize to `public-inbox`. Fresh binds persist `owner-control`. Unknown senders cannot become tool-capable through migration.
+Устаревшие значения `open` / `inherit` / отсутствующие поля нормализуются в `public-inbox`. Новые привязки сохраняют `owner-control`. Неизвестные отправители не могут получить доступ к инструментам в результате миграции.
 
-| Surface | Path |
+| Поверхность | Путь |
 |---|---|
-| Mode codec | `packages/messaging-gateway/src/types.ts` |
-| Evaluator | `packages/messaging-gateway/src/access-control.ts` |
-| Persist rewrite | `packages/messaging-gateway/src/binding-store.ts` |
-| RPC types | `packages/server-core/src/handlers/messaging-registry-interface.ts` |
+| Кодек режима | `packages/messaging-gateway/src/types.ts` |
+| Оценщик | `packages/messaging-gateway/src/access-control.ts` |
+| Перезапись хранилища | `packages/messaging-gateway/src/binding-store.ts` |
+| Типы RPC | `packages/server-core/src/handlers/messaging-registry-interface.ts` |
 
-## Task 5 — public-inbox before sessions/tools
+## Задача 5 — public-inbox до сессий/инструментов
 
-`Router.route()` and `Commands` send a static pairing reply and a pending-sender row. They do not call `sessionManager.sendMessage` or execute `/new`/`/bind`.
+`Router.route()` и `Commands` отправляют статический ответ сопряжения и строку ожидающего отправителя. Они не вызывают `sessionManager.sendMessage` и не выполняют `/new`/`/bind`.
 
-## Verification (this session)
+## Проверка (текущая сессия)
 
 ```text
 bun test packages/messaging-gateway/src/__tests__/
@@ -30,9 +30,9 @@ bun test packages/messaging-gateway/src/__tests__/access-control.test.ts
          packages/messaging-gateway/src/__tests__/pairing.test.ts
 ```
 
-## Task 6 — settings UI
+## Задача 6 — интерфейс настроек
 
-Controls are labelled Public inbox / Owner control / Disabled. Unlock-all is gone. Owner-control cannot save with an empty allow-list. Pending Allow is one exact sender.
+Элементы управления подписаны как Public inbox / Owner control / Disabled. Функция unlock-all удалена. Owner-control нельзя сохранить с пустым списком разрешений. Pending Allow применяется ровно к одному конкретному отправителю.
 
 ```text
 bun test apps/electron/src/renderer/pages/settings/__tests__/MessagingSettingsPage.test.ts
@@ -41,7 +41,7 @@ bun test apps/electron/src/renderer/pages/settings/__tests__/MessagingSettingsPa
 # 57 pass / 0 fail
 ```
 
-## Still blocked
+## Остаётся заблокировано
 
-- Increment C–F: Gate 0 facts missing
-- Hermes A1–A3: no `АПPLY HMA-20260809-A1`
+- Increment C–F: отсутствуют факты по Gate 0
+- Hermes A1–A3: нет `АПPLY HMA-20260809-A1`

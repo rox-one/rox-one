@@ -1,32 +1,32 @@
-# A0 Live Preflight (R-026) — 2026-08-13
+# Предполётная проверка A0 Live (R-026) — 2026-08-13
 
-READ-ONLY probe. No Hermes/OMP/Tailscale mutations. No secret values recorded.
+Проба READ-ONLY. Никаких мутаций Hermes/OMP/Tailscale. Секретные значения не записывались.
 
-## Timestamp
+## Метка времени
 
-| Field | Value |
+| Поле | Значение |
 |-------|-------|
-| UTC | `2026-08-13T08:13:05Z` (probe start) |
-| UTC (close) | `2026-08-13T08:16:03Z` |
-| Hermes | `v0.20.0 (2026.8.3)` · upstream `c0106e50` · install method `git` |
-| Hermes version exit | `0` |
-| Note | 1 commit behind upstream (update available) |
+| UTC | `2026-08-13T08:13:05Z` (начало пробы) |
+| UTC (завершение) | `2026-08-13T08:16:03Z` |
+| Hermes | `v0.20.0 (2026.8.3)` · upstream `c0106e50` · способ установки `git` |
+| Код выхода `hermes version` | `0` |
+| Примечание | отстаёт от upstream на 1 коммит (доступно обновление) |
 
 ## Doctor
 
-| Metric | Count |
+| Метрика | Количество |
 |--------|------:|
-| OK (✓ lines) | 72 |
-| Warnings (⚠ lines) | 17 |
-| Fails (✗/FAIL lines) | 0 |
-| Output lines | 143 |
-| Exit code | `0` |
+| OK (строки ✓) | 72 |
+| Предупреждения (строки ⚠) | 17 |
+| Сбои (строки ✗/FAIL) | 0 |
+| Строк вывода | 143 |
+| Код выхода | `0` |
 
-Notable warning classes (names only, no secrets): optional package missing (`discord.py`); config version outdated (v33→v34); auth not logged in (Nous Portal, MiniMax OAuth); connectivity HTTP 403 (gemini, xai endpoints in connectivity batch); system dependency not met for several optional tool plugins (bfl, browser, browser-cdp, google_meet, hermes-yuanbao, homeassistant, image_gen, spotify).
+Заметные классы предупреждений (только названия, без секретов): отсутствует опциональный пакет (`discord.py`); версия конфига устарела (v33→v34); auth: не выполнен вход (Nous Portal, MiniMax OAuth); связность: HTTP 403 (эндпоинты gemini, xai в пакете проверок connectivity); системная зависимость не удовлетворена для нескольких опциональных плагинов-инструментов (bfl, browser, browser-cdp, google_meet, hermes-yuanbao, homeassistant, image_gen, spotify).
 
 ## Config getback
 
-| Key | Value | Exit |
+| Ключ | Значение | Код выхода |
 |-----|-------|-----:|
 | `approvals.mode` | `off` | 0 |
 | `security.redact_secrets` | `true` | 0 |
@@ -36,80 +36,80 @@ Notable warning classes (names only, no secrets): optional package missing (`dis
 | `skills.write_approval` | `false` | 0 |
 | `memory.write_approval` | `false` | 0 |
 
-## Gateway
+## Шлюз
 
-| Field | Value |
+| Поле | Значение |
 |-------|-------|
-| Supervised by launchd | yes (PID present) |
-| Service definition | stale relative to current Hermes install (status warns to run `hermes gateway start`) |
+| Под наблюдением launchd | да (PID присутствует) |
+| Определение службы | устарело относительно текущей установки Hermes (status предупреждает выполнить `hermes gateway start`) |
 | `gateway_state` | `running` |
-| Platform count | 3 |
-| Connected (state file) | 3 |
-| Disconnected (state file) | 0 |
-| Exit code (`hermes gateway status`) | `0` |
+| Количество платформ | 3 |
+| Подключено (файл состояния) | 3 |
+| Отключено (файл состояния) | 0 |
+| Код выхода (`hermes gateway status`) | `0` |
 
-### Connected / disconnected by channel name (state file)
+### Подключённые / отключённые по имени канала (файл состояния)
 
-| Channel | State | error_code |
+| Канал | Состояние | error_code |
 |---------|-------|------------|
 | Telegram | connected | none |
 | Feishu | connected | none |
 | Buzz | connected | none |
 
-### Directory entry counts (names only; no IDs)
+### Количество записей каталога (только имена; без ID)
 
-| Channel | Entries |
+| Канал | Записи |
 |---------|--------:|
 | Telegram | 3 |
 | Feishu | 5 |
 | Buzz | 1 |
 
-### Deep status note (non-secret)
+### Примечание по глубокому статусу (несекретное)
 
-`--deep` log sample showed Telegram network timeouts / reconnect attempts and Buzz WebSocket disconnect retries around probe time, while `gateway_state.json` still reported all three platforms `connected`. Counts above use the state-file snapshot, not log heuristics.
+Образец лога с `--deep` показывал сетевые таймауты Telegram / попытки переподключения и повторные попытки после разрывов WebSocket Buzz примерно в момент пробы, тогда как `gateway_state.json` всё ещё сообщал все три платформы как `connected`. Приведённые выше количества взяты из снимка файла состояния, а не из эвристики логов.
 
 ## Syncthing
 
-| Check | Result |
+| Проверка | Результат |
 |-------|--------|
-| `which syncthing` | not found (exit 1) |
-| `command -v syncthing` | not found (exit 1) |
-| `brew list syncthing` | cask metadata present for `syncthing-app` 2.0.14-1 (app bundle path under Caskroom); CLI binary not on PATH |
-| Started | **no** (hard stop honored) |
+| `which syncthing` | не найден (код выхода 1) |
+| `command -v syncthing` | не найден (код выхода 1) |
+| `brew list syncthing` | метаданные cask присутствуют для `syncthing-app` 2.0.14-1 (путь к бандлу приложения под Caskroom); бинарник CLI отсутствует в PATH |
+| Запущен | **нет** (жёсткий запрет соблюдён) |
 
-## Tailscale (counts)
+## Tailscale (количество)
 
-| Field | Value |
+| Поле | Значение |
 |-------|-------|
 | BackendState | `Running` |
 | Self.HostName | `tb` |
 | Self.Online | `true` |
-| Peer count | `600` |
-| IPs / keys / peer name list | **not recorded** |
+| Число пиров | `600` |
+| IP-адреса / ключи / список имён пиров | **не записаны** |
 
-## File modes
+## Права доступа к файлам
 
-| Path (basename only where sensitive) | Exists | Mode (`%Lp`) |
+| Путь (только basename для чувствительных) | Существует | Режим (`%Lp`) |
 |--------------------------------------|--------|--------------|
-| `~/.hermes/state/tskey-api.secret` | yes | `600` |
-| `~/.hermes/.env.backup.telegram_home.20260708_103002` | yes | `644` |
-| `~/.hermes/.env.backup.20260708_100905` | yes | `644` |
+| `~/.hermes/state/tskey-api.secret` | да | `600` |
+| `~/.hermes/.env.backup.telegram_home.20260708_103002` | да | `644` |
+| `~/.hermes/.env.backup.20260708_100905` | да | `644` |
 
-Contents not read. Modes only.
+Содержимое не читалось. Только режимы доступа.
 
-## Cron error counts
+## Количество ошибок cron
 
-| Metric | Count |
+| Метрика | Количество |
 |--------|------:|
-| Jobs listed | 18 |
-| Last status `ok` | 16 |
-| Last status `error` | 2 |
-| Last status unknown | 0 |
-| `hermes cron list` exit | `0` |
+| Задач в списке | 18 |
+| Последний статус `ok` | 16 |
+| Последний статус `error` | 2 |
+| Последний статус неизвестен | 0 |
+| Код выхода `hermes cron list` | `0` |
 
-### Jobs with last status (name + status only)
+### Задачи с последним статусом (только имя + статус)
 
-| Last status | Job name |
+| Последний статус | Имя задачи |
 |-------------|----------|
 | ok | Hermes doctor watchdog → Telegram |
 | ok | Hermes disk watchdog → Telegram |
@@ -130,74 +130,74 @@ Contents not read. Modes only.
 | ok | ROX surfaces health → Telegram |
 | error | omniroute-gcs-snapshot-3h |
 
-Error class summary (no secrets): one billing/credits RuntimeError (HTTP 403 personal-team spending limit); one script exit code 1 (GCS snapshot PERMISSION_DENIED / billing).
+Сводка классов ошибок (без секретов): одна RuntimeError биллинга/кредитов (HTTP 403 — лимит расходов personal-team); один скрипт с кодом выхода 1 (снимок GCS — PERMISSION_DENIED / биллинг).
 
-## Surface counts if any
+## Количество surface (если есть)
 
-| Field | Value |
+| Поле | Значение |
 |-------|-------|
-| `discover_surface.py` path present | yes |
-| Invoked | yes (read-only intent: `--home`, `--audit-root`, `--output /tmp/hma-a0-preflight-surface`) |
-| Exit | `1` |
-| Project count | **unavailable** |
-| Classification A/B/C/D counts | **unavailable** |
-| Failure | First run: `NameError: name 're' is not defined`. `import re` added to the audit helper. Full `$HOME` walk **not** re-run in this session (too broad; would write path lists). Counts still unavailable. |
+| Путь `discover_surface.py` присутствует | да |
+| Вызван | да (режим read-only: `--home`, `--audit-root`, `--output /tmp/hma-a0-preflight-surface`) |
+| Код выхода | `1` |
+| Количество проектов | **недоступно** |
+| Количества по классификации A/B/C/D | **недоступно** |
+| Сбой | Первый запуск: `NameError: name 're' is not defined`. В хелпер аудита добавлен `import re`. Полный обход `$HOME` в этой сессии **не** выполнялся повторно (слишком широк; привёл бы к записи списков путей). Количества по-прежнему недоступны. |
 
-No secret paths copied. Surface counts not obtained.
+Секретных путей не копировалось. Количество surface не получено.
 
-## Target identity verdict (FAIL CLOSED)
+## Вердикт по идентичности цели (FAIL CLOSED)
 
-| Field | Verdict |
+| Поле | Вердикт |
 |-------|---------|
-| Exact source node | **unresolved** |
-| Exact target node | **unresolved** |
-| ACL / source-target diff | **not computed** |
-| APPLY token | **not issued** |
-| Verdict | **FAIL CLOSED** — do not invent a node; migration apply blocked until target identity is explicitly resolved and APPLY is issued |
+| Точный исходный узел | **не определён** |
+| Точный целевой узел | **не определён** |
+| ACL / diff источник–цель | **не вычислялся** |
+| Токен APPLY | **не выдан** |
+| Вердикт | **FAIL CLOSED** — не изобретать узел; применение миграции заблокировано, пока идентичность цели явно не установлена и APPLY не выдан |
 
-## Mutations performed
+## Выполненные мутации
 
-**none**
+**нет**
 
-- No `hermes config set`
-- No `hermes pause` / gateway stop
-- No chmod on secrets
-- No age encrypt
-- No `~/.hermes-migration-apply`
-- Syncthing not started
-- Only write: this report file under `Projects/craft-agents/docs/security/`
-- Optional `/tmp/hma-a0-preflight-surface` not produced (script failed before write)
+- Нет `hermes config set`
+- Нет `hermes pause` / остановки шлюза
+- Нет chmod для секретов
+- Нет шифрования age
+- Нет `~/.hermes-migration-apply`
+- Syncthing не запускался
+- Единственная запись: файл этого отчёта в `Projects/craft-agents/docs/security/`
+- Опциональный `/tmp/hma-a0-preflight-surface` не создан (скрипт упал до записи)
 
-## Exit code rollup
+## Сводка кодов выхода
 
-| Command | Exit |
+| Команда | Код выхода |
 |---------|-----:|
 | `date -u` | 0 |
 | `hermes version` | 0 |
 | `hermes doctor` | 0 |
-| `hermes config get` (×7) | 0 each |
+| `hermes config get` (×7) | 0 каждый |
 | `hermes gateway status` | 0 |
 | `hermes cron list` | 0 |
 | `which syncthing` | 1 |
 | `command -v syncthing` | 1 |
-| `brew list syncthing` | 0 (cask listing) |
-| `tailscale status --json` parse | 0 |
+| `brew list syncthing` | 0 (листинг cask) |
+| разбор `tailscale status --json` | 0 |
 | `discover_surface.py` | 1 |
 
-## Live reconfirm (goal verification)
+## Повторное подтверждение на живой системе (проверка цели)
 
-| Field | Value |
+| Поле | Значение |
 |---|---|
 | UTC | `2026-08-13T08:51:30Z` |
-| `approvals.mode` | `off` — matches table above; APPLY + `APPROVE A2 HERMES SMART` did not occur |
+| `approvals.mode` | `off` — совпадает с таблицей выше; APPLY + `APPROVE A2 HERMES SMART` не выполнялись |
 | `security.redact_secrets` | `true` |
 | `security.tirith_enabled` | `true` |
 | `security.tirith_fail_open` | `true` |
 | `security.allow_private_urls` | `true` |
 | `skills.write_approval` | `false` |
 | `memory.write_approval` | `false` |
-| `~/.hermes-migration-apply/HMA-20260809-A1/apply.log` | **ABSENT** |
-| Syncthing CLI | ABSENT |
-| env-backup modes | both `644` |
+| `~/.hermes-migration-apply/HMA-20260809-A1/apply.log` | **ОТСУТСТВУЕТ** |
+| Syncthing CLI | ОТСУТСТВУЕТ |
+| Режимы env-backup | оба `644` |
 | Tailscale | Running / `tb` / PeerCount `600` |
-| Target | still **FAIL CLOSED** |
+| Цель | по-прежнему **FAIL CLOSED** |

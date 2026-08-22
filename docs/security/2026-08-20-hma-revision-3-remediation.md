@@ -1,87 +1,87 @@
-# HMA-20260809-A1-R3 — fail-closed remediation specification
+# HMA-20260809-A1-R3 — спецификация fail-closed-исправления
 
-- **Date:** 2026-08-20
-- **Status:** Approved on 2026-08-20 by exact owner message `APPROVE HMA-20260809-A1-R3 REMEDIATION`.
-- **Parent plan:** `/Users/marklindgreen/hermes-migration-audit-20260809-121222/11-apply-plan.md` revision 2
-- **Failed evidence root:** `/Users/marklindgreen/.hermes-migration-apply/HMA-20260809-A1`
-- **New plan ID after remediation:** `HMA-20260809-A1-R3`
-- **Scope:** offline audit documents, apply tools, tests, and immutable manifest only; no live Hermes/OMP/Buzz/Tailscale/Syncthing mutation
+- **Дата:** 2026-08-20
+- **Статус:** Утверждено 2026-08-20 точным сообщением владельца `APPROVE HMA-20260809-A1-R3 REMEDIATION`.
+- **Родительский план:** `/Users/marklindgreen/hermes-migration-audit-20260809-121222/11-apply-plan.md`, ревизия 2
+- **Корень доказательств неудачи:** `/Users/marklindgreen/.hermes-migration-apply/HMA-20260809-A1`
+- **Новый ID плана после исправления:** `HMA-20260809-A1-R3`
+- **Область действия:** только офлайн-документы аудита, инструменты применения, тесты и неизменяемый манифест; никакой мутации живых Hermes/OMP/Buzz/Tailscale/Syncthing
 
-## Verification evidence — 2026-08-20
+## Доказательства верификации — 2026-08-20
 
-- Historical immutable-bundle commit: `78df77a`; no push.
-- `173` focused R3 tests passed before the historical checksum generation.
-- Historical 35-path manifest SHA-256: `e9db5372da46fe146815150aca9b9d4e77b32fb8495a35b30d55013228359e35`.
-- Offline contract-repair commits: `feaced2`, `4dc9b1dc`, `e505d80f`, `cb36c864`, `b16cc69f`, `98f2f2c2`, and `a840f27b`; no push. All change covered bytes, so the historical manifest is stale.
-- Full evidence, cache cleanup, and required deferred verification are recorded in `docs/security/2026-08-20-hma-r3-verification-evidence.md`. No R3 start token or A0 action is authorized.
+- Исторический коммит неизменяемого бандла: `78df77a`; без push.
+- `173` сфокусированных тестов R3 прошли до генерации исторической контрольной суммы.
+- Исторический SHA-256 манифеста из 35 путей: `e9db5372da46fe146815150aca9b9d4e77b32fb8495a35b30d55013228359e35`.
+- Коммиты офлайн-исправления контрактов: `feaced2`, `4dc9b1dc`, `e505d80f`, `cb36c864`, `b16cc69f`, `98f2f2c2` и `a840f27b`; без push. Все изменения затрагивают покрытые байты, поэтому исторический манифест устарел.
+- Полные доказательства, очистка кэша и требуемые отложенные верификации записаны в `docs/security/2026-08-20-hma-r3-verification-evidence.md`. Ни стартовый токен R3, ни действие A0 не авторизованы.
 
-## 1. Failure that triggers revision 3
+## 1. Отказ, который вызвал ревизию 3
 
-The owner sent exact `АПPLY HMA-20260809-A1`. Initialization correctly created an owner-only evidence root, but `shasum -a 256 -c checksums.sha256` failed before tool copy or A0 commands:
+Владелец отправил точную команду `АПPLY HMA-20260809-A1`. Инициализация корректно создала owner-only корень доказательств, но `shasum -a 256 -c checksums.sha256` завершился с ошибкой до копирования инструментов или команд A0:
 
-- checksum manifest mtime `2026-08-09T13:41:49Z`;
-- 22 listed regular files, 0 symlinks;
-- 7 matches, 15 mismatches;
-- apply root `0700`, `apply.log` `0600`, empty tools directory `0700`;
-- one evidence row: `INIT audit-checksums FAIL`;
-- no `hermes`, Tailscale API/status, gateway, backup, chmod, ACL, Syncthing, messaging, or credential command ran.
+- mtime манифеста контрольных сумм — `2026-08-09T13:41:49Z`;
+- 22 перечисленных обычных файла, 0 симлинков;
+- 7 совпадений, 15 расхождений;
+- корень применения `0700`, `apply.log` `0600`, пустой каталог инструментов `0700`;
+- одна строка доказательств: `INIT audit-checksums FAIL`;
+- не была выполнена ни одна команда `hermes`, Tailscale API/статуса, шлюза, бэкапа, chmod, ACL, Syncthing, обмена сообщениями или работы с учётными данными.
 
-Later mtimes explain why rev2 cannot verify but do not prove safe provenance. Two independent read-only reviews reject a blind checksum rebase:
+Более поздние mtime объясняют, почему rev2 не может пройти верификацию, но не доказывают безопасное происхождение. Два независимых read-only-обзора отвергают слепой rebase контрольных сумм:
 
-- plan review: revision-blind token, unhashed executable tools, unresolved target depicted as active, conflicting channel/secret classes, incorrect Buzz quiescence, incomplete approval/rollback gates, stale live assumptions, and incomplete Lark exclusion;
-- tool review: 5 high + 6 medium findings across discovery, Secure State, sync policy, SharedMemory, canary, mode rollback, and bundle verification.
+- обзор плана: токен без учёта ревизии, исполняемые инструменты без хешей, неразрешённая цель, изображённая как активная, конфликтующие классы каналов/секретов, некорректная quiescence Buzz, неполные ворота утверждения/отката, устаревшие предположения о живой системе и неполное исключение Lark;
+- обзор инструментов: 5 высоких + 6 средних находок в областях discovery, Secure State, политики синхронизации, SharedMemory, canary, отката режимов и верификации бандла.
 
-Decision: preserve the failed evidence root; repair and re-verify a revision-3 bundle before asking for a new Stage C start token.
+Решение: сохранить корень доказательств неудачи; исправить и повторно верифицировать бандл ревизии 3 до запроса нового стартового токена Stage C.
 
-## 2. Safety boundary and authorization split
+## 2. Граница безопасности и разделение авторизации
 
-Revision-3 remediation is offline authoring only. Its process may read only the current audit root, the failed rev2 apply log metadata, its own owner-only snapshot, and harness-created fixtures. It MUST NOT probe current Hermes/OMP/Buzz/Tailscale/Syncthing/config/credential state; stale-fact corrections use captured audit artifacts only and are explicitly labeled stale until a later separately approved R3 A0.
+Исправление ревизии 3 — только офлайн-авторинг. Его процесс может читать только текущий корень аудита, метаданные журнала неудачного применения rev2, собственный owner-only снимок и фикстуры, созданные harness. Он НЕ ДОЛЖЕН проверять текущее состояние Hermes/OMP/Buzz/Tailscale/Syncthing/конфигурации/учётных данных; исправления устаревших фактов используют только захваченные артефакты аудита и явно помечаются как устаревшие до последующего отдельно утверждённого R3 A0.
 
-It MAY:
+Он МОЖЕТ:
 
-- before the first edit, create an owner-only no-follow content snapshot at `~/.hermes-migration-remediation-backups/HMA-20260809-A1-R3-pre-edit/` containing only the audit-root regular files, modes, relative paths, sizes, and digests;
-- edit the explicit audit-root allowlist in §3;
-- add deterministic local tests/fixtures under `apply-tools/tests/`;
-- remove generated `apply-tools/__pycache__/` bytecode;
-- generate a new `checksums.sha256` only after every test/review gate passes.
+- до первой правки создать owner-only no-follow снимок содержимого в `~/.hermes-migration-remediation-backups/HMA-20260809-A1-R3-pre-edit/`, содержащий только обычные файлы корня аудита, их режимы, относительные пути, размеры и дайджесты;
+- редактировать явный allowlist корня аудита в §3;
+- добавлять детерминированные локальные тесты/фикстуры в `apply-tools/tests/`;
+- удалять сгенерированный байткод `apply-tools/__pycache__/`;
+- генерировать новый `checksums.sha256` только после прохождения всех ворот тестирования/обзора.
 
-The snapshot writer rejects symlinks/special files, opens source components no-follow, uses `0600` files/`0700` directories, writes a checksummed manifest, restores only into a disposable drill copy during remediation tests, and is retained until a separate deletion approval. Remediation approval authorizes this snapshot only; it does not authorize any live-state backup.
+Писатель снимков отклоняет симлинки/специальные файлы, открывает компоненты источника no-follow, использует файлы `0600`/каталоги `0700`, записывает манифест с контрольными суммами, восстанавливает только в одноразовую drill-копию во время тестов исправления и хранится до отдельного утверждения на удаление. Утверждение исправления авторизует только этот снимок; оно не авторизует никакой бэкап живого состояния.
 
-It MUST NOT:
+Он НЕ ДОЛЖЕН:
 
-- change `~/.hermes`, `~/.omp/agent`, Buzz data, Tailscale, Syncthing, launchd, cron, gateways, permissions, credentials, messages, or remote systems;
-- read or print secret values;
-- overwrite/delete `/Users/marklindgreen/.hermes-migration-apply/HMA-20260809-A1`;
-- treat remediation approval as Stage C approval.
+- изменять `~/.hermes`, `~/.omp/agent`, данные Buzz, Tailscale, Syncthing, launchd, cron, шлюзы, права, учётные данные, сообщения или удалённые системы;
+- читать или выводить секретные значения;
+- перезаписывать/удалять `/Users/marklindgreen/.hermes-migration-apply/HMA-20260809-A1`;
+- считать утверждение исправления утверждением Stage C.
 
-After a verified bundle exists, Stage C still requires a separate exact start token:
+После того как существует верифицированный бандл, Stage C по-прежнему требует отдельный точный стартовый токен:
 
 `АПPLY HMA-20260809-A1-R3`
 
-A1/A2/A3 and every later consequential gate remain separately confirmed.
+A1/A2/A3 и каждые последующие значимые ворота остаются отдельно подтверждаемыми.
 
-## 3. Exact remediation allowlist
+## 3. Точный allowlist исправления
 
-Audit root: `/Users/marklindgreen/hermes-migration-audit-20260809-121222`.
+Корень аудита: `/Users/marklindgreen/hermes-migration-audit-20260809-121222`.
 
-### Documents and manifests
+### Документы и манифесты
 
 1. `00-executive-summary.md`
 2. `01-environment-inventory.md`
-3. `02-hermes-inventory.md` — captured-snapshot stale annotations only; no current probe
+3. `02-hermes-inventory.md` — только аннотации устаревания захваченного снимка; без текущего опроса
 4. `05-channel-and-gateway-inventory.md`
-5. `06-memory-inventory.md` — writer/quiescence and archive roots only
-6. `07-tailscale-inventory.md` — target remains unresolved; no invented identity
+5. `06-memory-inventory.md` — только writer/quiescence и корни архива
+6. `07-tailscale-inventory.md` — цель остаётся неразрешённой; без выдуманной идентичности
 7. `08-permissions-and-secrets-classification.md`
 8. `09-risk-register.md`
 9. `10-proposed-architecture.md`
 10. `11-apply-plan.md`
 11. `secrets-manifest.template.json`
-12. `checksums.sha256` — generated last
+12. `checksums.sha256` — генерируется последним
 
-`03-skills-inventory.json` and `04-plugins-inventory.json` remain byte-unchanged unless verification finds structural invalidity; they are still included in the final manifest.
+`03-skills-inventory.json` и `04-plugins-inventory.json` остаются побайтово неизменными, если верификация не обнаружит структурной недействительности; они всё равно включаются в финальный манифест.
 
-### Apply tools
+### Инструменты применения
 
 13. `apply-tools/build_secure_state.py`
 14. `apply-tools/discover_surface.py`
@@ -94,12 +94,12 @@ Audit root: `/Users/marklindgreen/hermes-migration-audit-20260809-121222`.
 21. `apply-tools/verify_bundle.py`
 22. `apply-tools/safe_restore.py`
 23. `apply-tools/syncthing_guard.py`
-24. `apply-tools/quiesce_writers.py` — new
-25. `apply-tools/snapshot_audit_bundle.py` — new; pre-edit snapshot + disposable drill restore only
-26. `apply-tools/approval_tokens.py` — new; strict R3 token parser/artifact binding
-27. `apply-tools/memory_bridge.py` — retained, hashed, explicitly non-executable/not copied until a later approved use; do not delete evidence
+24. `apply-tools/quiesce_writers.py` — новый
+25. `apply-tools/snapshot_audit_bundle.py` — новый; только снимок до правки + восстановление в одноразовую drill-копию
+26. `apply-tools/approval_tokens.py` — новый; строгий парсер токенов R3/привязка к артефакту
+27. `apply-tools/memory_bridge.py` — сохранён, хеширован, явно неисполняемый/не копируется до последующего утверждённого использования; не удалять доказательства
 
-### Tests
+### Тесты
 
 28. `apply-tools/tests/__init__.py`
 29. `apply-tools/tests/test_secure_state.py`
@@ -109,37 +109,37 @@ Audit root: `/Users/marklindgreen/hermes-migration-audit-20260809-121222`.
 33. `apply-tools/tests/test_quiesce_and_plan_contract.py`
 34. `apply-tools/tests/test_approval_and_snapshot.py`
 
-No fixture subtree is stored in the immutable bundle. Tests generate a fixed schema-declared fixture set only inside registered harness temp roots and assert that exact runtime fixture manifest before use.
+Ни одно поддерево фикстур не хранится в неизменяемом бандле. Тесты генерируют фиксированный, объявленный схемой набор фикстур только внутри зарегистрированных временных корней harness и перед использованием проверяют точный runtime-манифест фикстур.
 
-Worktree evidence docs permitted after verification, anchored under `/Users/marklindgreen/Projects/_craft_worktrees/do-it-all-security-slices`:
+Документы-доказательства worktree разрешены после верификации, привязаны к `/Users/marklindgreen/Projects/_craft_worktrees/do-it-all-security-slices`:
 
 - `docs/security/2026-08-19-a-ops-runbook.md`
 - `docs/security/2026-08-13-do-it-all-inventory.md`
-- `docs/security/2026-08-20-hma-revision-3-remediation.md` status/evidence block
+- `docs/security/2026-08-20-hma-revision-3-remediation.md` — блок статуса/доказательств
 
-These three worktree files are outside the immutable audit bundle/checksum set and may be updated only after bundle bytes freeze. Any additional path requires a reviewed amendment and new owner approval.
+Эти три файла worktree находятся вне неизменяемого бандла аудита/набора контрольных сумм и могут обновляться только после заморозки байтов бандла. Любой дополнительный путь требует рассмотренной поправки и нового утверждения владельца.
 
-## 4. Revision-3 plan corrections
+## 4. Исправления плана ревизии 3
 
-### Identity and immutable bundle
+### Идентичность и неизменяемый бандл
 
-- Rename plan to `HMA-20260809-A1-R3`, revision 3.
-- New start token includes revision: `АПPLY HMA-20260809-A1-R3`.
-- New apply root: `~/.hermes-migration-apply/HMA-20260809-A1-R3`; never reuse rev2 failed root.
-- `checksums.sha256` covers every allowed regular document, JSON artifact, Python source, and test file except itself. It MUST include `safe_restore.py`, `syncthing_guard.py`, and retained `memory_bridge.py`.
-- Initialization verifies: manifest hash shown at point-of-risk approval; `shasum -c`; exact expected path-set equality; no symlinks, bytecode, sockets, devices, or extra executable files; source files copied from verified open descriptors.
+- Переименовать план в `HMA-20260809-A1-R3`, ревизия 3.
+- Новый стартовый токен включает ревизию: `АПPLY HMA-20260809-A1-R3`.
+- Новый корень применения: `~/.hermes-migration-apply/HMA-20260809-A1-R3`; никогда не переиспользовать неудачный корень rev2.
+- `checksums.sha256` покрывает каждый разрешённый обычный документ, JSON-артефакт, исходник Python и тестовый файл, кроме самого себя. Он ОБЯЗАН включать `safe_restore.py`, `syncthing_guard.py` и сохранённый `memory_bridge.py`.
+- Инициализация проверяет: хеш манифеста, показанный при утверждении в точке риска; `shasum -c`; точное равенство ожидаемого набора путей; отсутствие симлинков, байткода, сокетов, устройств или лишних исполняемых файлов; копирование исходных файлов из верифицированных открытых дескрипторов.
 
-### Target and channel model
+### Модель цели и каналов
 
-- A0 may discover candidates but MUST stop with target unresolved until exact `APPROVE D0 TARGET <device> <node-id>`.
-- Architecture diagrams show source active executor and target stopped standby, never simultaneous consumers.
-- Telegram and Buzz credentials are encrypted class C retention; only source executor is active before promotion.
-- Feishu/Lark credentials are encrypted class C retention but never provisioned to target. Lark LaunchAgent, MCP adapter, and Lark-directed cron jobs are excluded/disabled at cutover, not deleted.
-- Tailscale node enrollment is provider/device class D. Existing local Tailscale API secret stays source-local class C reference; rev3 cannot create, replace, rotate, print, or transfer it.
+- A0 может находить кандидатов, но ОБЯЗАН остановиться с неразрешённой целью до точного `APPROVE D0 TARGET <device> <node-id>`.
+- Диаграммы архитектуры показывают активного исполнителя на источнике и остановленный резерв на цели, никогда — одновременных потребителей.
+- Учётные данные Telegram и Buzz — зашифрованное хранение класса C; до повышения активен только исполнитель источника.
+- Учётные данные Feishu/Lark — зашифрованное хранение класса C, но никогда не разворачиваются на цели. Lark LaunchAgent, MCP-адаптер и cron-задания, направленные на Lark, при cutover исключаются/отключаются, а не удаляются.
+- Регистрация узла Tailscale — класс D provider/device. Существующий локальный секрет Tailscale API остаётся локальной для источника ссылкой класса C; rev3 не может создать, заменить, ротировать, вывести или передать его.
 
-### Complete approval gates
+### Полные ворота утверждения
 
-`approval_tokens.py` accepts one plan ID, one gate, and the exact fixed-width lowercase SHA-256/artifact/identity fields below; it rejects extra/missing tokens, wrong revision, stale artifact digests, replay after a completed gate, control characters, and secret/account/chat identifiers. Canonical templates:
+`approval_tokens.py` принимает один ID плана, одни ворота и точные поля фиксированной ширины — строчный SHA-256/артефакт/идентичность — указанные ниже; он отклоняет лишние/отсутствующие токены, неверную ревизию, устаревшие дайджесты артефактов, повтор после завершённых ворот, управляющие символы и идентификаторы секретов/аккаунтов/чатов. Канонические шаблоны:
 
 - `APPROVE HMA-20260809-A1-R3 A1 BACKUP <preflight-sha256>`
 - `APPROVE HMA-20260809-A1-R3 A2 HERMES SMART <config-diff-sha256>`
@@ -150,132 +150,132 @@ These three worktree files are outside the immutable audit bundle/checksum set a
 - `APPROVE HMA-20260809-A1-R3 D0 TARGET <device-name> <node-id> <target-proposal-sha256>`
 - `APPROVE HMA-20260809-A1-R3 D1 SYNCTHING PAIR <source-device-id> <target-device-id> <policy-sha256>`
 - `APPROVE HMA-20260809-A1-R3 E0 SHARED MEMORY <memory-plan-sha256>`
-- `APPROVE HMA-20260809-A1-R3 F0 REAUTH <provider-plan-sha256>` — only if required
+- `APPROVE HMA-20260809-A1-R3 F0 REAUTH <provider-plan-sha256>` — только если требуется
 - `APPROVE HMA-20260809-A1-R3 F1 CHANNEL CANARIES <canary-plan-sha256>`
 - `APPROVE HMA-20260809-A1-R3 G0 SCHEDULER STANDBY <schedule-manifest-sha256>`
 
-D0/D1 reviewed proposals use closed typed schemas. `target_alias` is ASCII `[A-Za-z0-9._-]{1,64}`; canonical Tailscale `node_id` is `[A-Za-z0-9_-]{1,128}`; Syncthing device IDs are uppercase `[A-Z0-9-]{7,128}` with canonical hyphen placement. Token fields are byte-for-byte equal to those exact fields in the artifact whose digest appears in the token; no normalization, alternate spelling, Unicode/confusable, delimiter, or free-form identity is accepted. Other gate tokens contain only fixed words plus a digest. Thus the parser never guesses whether an arbitrary string is a secret/account/chat ID: it accepts only typed artifact members already proven secret-free.
+Рассмотренные предложения D0/D1 используют закрытые типизированные схемы. `target_alias` — это ASCII `[A-Za-z0-9._-]{1,64}`; канонический `node_id` Tailscale — `[A-Za-z0-9_-]{1,128}`; ID устройств Syncthing — верхний регистр `[A-Z0-9-]{7,128}` с каноническим размещением дефисов. Поля токена побайтово равны этим точным полям в артефакте, чей дайджест присутствует в токене; нормализация, альтернативное написание, Unicode/конфузные символы, разделители или свободная форма идентичности не принимаются. Прочие токены ворот содержат только фиксированные слова плюс дайджест. Таким образом, парсер никогда не угадывает, является ли произвольная строка ID секрета/аккаунта/чата: он принимает только типизированных членов артефакта, уже доказанно свободных от секретов.
 
-Device/node IDs are public administrative identities, not credentials; account/chat IDs are never in tokens. Each digest binds a secret-free reviewed proposal. The apply log records plan/gate/PASS-FAIL and proposal digest only, not device/node/account/chat identifiers. No gate executes until its token parser verifies the current artifact digest, typed identity equality, and apply-state prerequisites.
+ID устройств/узлов — публичные административные идентичности, а не учётные данные; ID аккаунтов/чатов никогда не входят в токены. Каждый дайджест привязывает рассмотренное предложение, свободное от секретов. Журнал применения записывает только план/ворота/PASS-FAIL и дайджест предложения, но не идентификаторы устройств/узлов/аккаунтов/чатов. Никакие ворота не выполняются, пока их парсер токенов не проверит дайджест текущего артефакта, побайтовое равенство типизированной идентичности и предпосылки в apply-state.
 
-### Gate state and rollback
+### Состояние ворот и откат
 
-- Every gate is a fresh process; no reliance on exported shell variables from an earlier gate.
-- Owner-only `apply-state.json` records plan ID, completed gates, canonical artifact paths, checksums, writer state, and rollback pointers; never secrets.
-- A1 PASS is impossible until the newly created encrypted backup is decrypted and fully restored inside a network-denied owner-only drill root, every manifest entry/digest/mode is verified, every SQLite database passes `quick_check`, and a secret-free drill report digest is committed to `apply-state.json`. Corrupt/incomplete backup makes every later gate unreachable.
-- A1 always resumes/restarts the unchanged source before returning, whether PASS or FAIL. It never leaves Hermes paused while waiting for A2. C1 remains a later target-side/full-system drill, not the first proof that rollback works.
-- C1 writes a checksummed secret-free drill report before cleanup. Encrypted rollback artifacts remain indefinitely.
-- A3 is reachable only after apply-state proves A2 committed `approvals.mode=smart` and Tirith fail-closed. A3 snapshot/rollback scope is file/directory modes only and is exact for those modes; it never reads or writes Hermes security config. A2 config rollback is a separate safe-override rollback that explicitly refuses `approvals.mode=off` or Tirith fail-open and records any deviation from pre-A2 unsafe values.
-- D0/D1 rollback language distinguishes revoke-new-grant from preserve-enrollment and cannot contradict itself.
+- Каждые ворота — свежий процесс; никакой опоры на экспортированные shell-переменные от предыдущих ворот.
+- Owner-only `apply-state.json` записывает ID плана, завершённые ворота, канонические пути артефактов, контрольные суммы, состояние writer и указатели отката; никогда секреты.
+- PASS ворот A1 невозможен, пока вновь созданный зашифрованный бэкап не расшифрован и полностью не восстановлен внутри owner-only drill-корня с запрещённой сетью, каждая запись/дайджест/режим манифеста не верифицированы, каждая база данных SQLite не прошла `quick_check`, и дайджест отчёта drill, свободного от секретов, не закоммичен в `apply-state.json`. Повреждённый/неполный бэкап делает все последующие ворота недостижимыми.
+- A1 всегда возобновляет/перезапускает неизменённый источник перед возвратом, PASS или FAIL. Он никогда не оставляет Hermes на паузе в ожидании A2. C1 остаётся последующим drill'ом на стороне цели/всей системы, а не первым доказательством работоспособности отката.
+- C1 записывает отчёт drill с контрольной суммой, свободный от секретов, перед очисткой. Зашифрованные артефакты отката остаются бессрочно.
+- Ворота A3 достижимы только после того, как apply-state докажет, что A2 закоммитил `approvals.mode=smart` и Tirith fail-closed. Область снимка/отката A3 — только режимы файлов/каталогов, и она точна для этих режимов; она никогда не читает и не пишет конфигурацию безопасности Hermes. Откат конфигурации A2 — отдельный safe-override откат, который явно отказывает в `approvals.mode=off` или Tirith fail-open и записывает любое отклонение от небезопасных значений, бывших до A2.
+- Язык отката D0/D1 различает revoke-new-grant и preserve-enrollment и не может противоречить сам себе.
 
-### Writer/quiescence contract
+### Контракт writer/quiescence
 
-- A0 discovers continuous writers by PID, executable path, owner, bundle/launchd identity, and restart policy; do not hardcode `Buzz` from a stale display name.
-- `quiesce_writers.py` implements a persisted transaction (`begin`, `verify-fenced`, `resume`, `recover`) bound to the verified A0 writer manifest. It verifies PID start time/ancestry/executable/owner, inhibits the recorded supervisor/restart mechanism, performs graceful stop, detects auto-restart/new writers, holds the fence through capture and post-capture checks, and restores exactly the prior supervisor/running state on success, error, signal, or next-run recovery. Unknown/reused PIDs, partial stop, restart, or restore mismatch fail closed without proceeding.
-- Both A1 and C0 use the transaction and guarantee `resume/recover` on every exit; the apply-state journal makes an interrupted fence recoverable before any later gate.
-- A1/C0 include both Buzz application support and `~/.buzz/archive` when discovered.
-- SQLite stores use backup APIs while fenced; OMP live databases require SQLite backup + WAL-aware integrity, not raw copy.
+- A0 обнаруживает непрерывных writer'ов по PID, пути исполняемого файла, владельцу, идентичности bundle/launchd и политике перезапуска; не хардкодить `Buzz` по устаревшему отображаемому имени.
+- `quiesce_writers.py` реализует персистентную транзакцию (`begin`, `verify-fenced`, `resume`, `recover`), привязанную к верифицированному манифесту writer'ов A0. Она проверяет время старта PID/родословную/исполняемый файл/владельца, блокирует записанный механизм supervisor/перезапуска, выполняет graceful-остановку, обнаруживает авто-перезапуск/новых writer'ов, удерживает fence во время захвата и пост-захватных проверок и точно восстанавливает предыдущее состояние supervisor/работы при успехе, ошибке, сигнале или восстановлении при следующем запуске. Неизвестные/переиспользованные PID, частичная остановка, перезапуск или несоответствие восстановления завершаются fail-closed без продолжения.
+- И A1, и C0 используют транзакцию и гарантируют `resume/recover` при каждом выходе; журнал apply-state делает прерванный fence восстановимым до любых последующих ворот.
+- A1/C0 включают и application support Buzz, и `~/.buzz/archive`, когда они обнаружены.
+- Хранилища SQLite используют backup API под действующим fence; живые базы OMP требуют SQLite backup + WAL-aware проверку целостности, а не сырую копию.
 
-## 5. Apply-tool requirements
+## 5. Требования к инструментам применения
 
 ### `discover_surface.py`
 
-- No ambient repository command may execute hooks, fsmonitor, pager, credential helpers, filters, or optional locks. Git probes use fixed executable/argv, `GIT_OPTIONAL_LOCKS=0`, `core.hooksPath=/dev/null`, `core.fsmonitor=false`, no shell, bounded timeout, and captured metadata only.
-- Completeness is measured against an independent root ledger: captured registry/inventory/context roots plus explicit scan roots are input before traversal. Every expected root and subtree has a terminal `scanned`, `unreadable`, or `missing` row; unreadable/missing is FAIL unless an exact later owner disposition exists. Empty/partial discovery, duplicate IDs, omitted roots, traversal errors, or rows without terminal disposition are FAIL.
-- Every discovered item has exactly one terminal A/B/C/D disposition; every class D row has a named provider/device reprovision/omit disposition. Secure State requires one-to-one class C coverage and provisioning manifest requires one-to-one D coverage.
-- Classification is conservative: credential/session/key/cookie/env/database/WAL/SHM/provider-state material is class C or D; uncertain/high-entropy/binary content cannot become class A by default.
-- Output records path/type/mode/size/digest/class/reason only; never file contents.
+- Ни одна ambient-команда репозитория не может исполнять hooks, fsmonitor, pager, credential helpers, фильтры или опциональные блокировки. Git-пробы используют фиксированный исполняемый файл/argv, `GIT_OPTIONAL_LOCKS=0`, `core.hooksPath=/dev/null`, `core.fsmonitor=false`, без shell, ограниченный таймаут и только захваченные метаданные.
+- Полнота измеряется против независимого реестра корней: захваченные корни registry/inventory/context плюс явно заданные корни сканирования подаются на вход до обхода. Каждый ожидаемый корень и поддерево имеют терминальную строку `scanned`, `unreadable` или `missing`; unreadable/missing — это FAIL, если не существует точного последующего решения владельца. Пустое/частичное обнаружение, дубликаты ID, пропущенные корни, ошибки обхода или строки без терминального решения — FAIL.
+- Каждый обнаруженный элемент имеет ровно одно терминальное решение A/B/C/D; каждая строка класса D имеет именованное решение provider/device reprovision/omit. Secure State требует покрытия класса C один-к-одному, а манифест provisioning — покрытия D один-к-одному.
+- Классификация консервативна: материал credential/session/key/cookie/env/database/WAL/SHM/provider-state — класс C или D; неопределённый/высокоэнтропийный/бинарный контент не может по умолчанию стать классом A.
+- Вывод записывает только path/type/mode/size/digest/class/reason; никогда — содержимое файлов.
 
 ### `build_secure_state.py`
 
-- Detect SQLite by header and validated sidecar relationships, not filename suffix alone; use SQLite backup API and `quick_check` for every detected DB.
-- Require all expected class-C rows and discovered state roots; empty coverage is FAIL.
-- Open every component no-follow, reject special files/symlink escapes, and verify stable size/digest around non-SQLite copy.
-- No named plaintext archive or SQLite backup is written to disk. Non-SQLite files stream from verified descriptors into a streaming tar writer whose output pipes directly to `age`. SQLite backup uses an in-memory SQLite destination plus `serialize()` under an explicit memory/size ceiling; exceeding the ceiling fails before capture rather than falling back to disk. The embedded manifest is written last in the stream. Partial encrypted output is uniquely named and removed on producer/encryptor error, SIGINT, SIGTERM, parent death detection, or next-run stale-output recovery; SIGKILL/power loss can leave only ciphertext, never plaintext.
-- Ciphertext publication is a crash-consistent state machine: (1) write unique encrypted temp; (2) wait producer/encryptor, fsync temp and parent, compute ciphertext digest; (3) atomically fsync an `apply-state.json` `ciphertext_pending` row containing temp/final relative paths and digest; (4) no-replace rename temp to final and fsync parent; (5) atomically update state to `ciphertext_committed`. Recovery verifies digest/identity: pending+temp completes publish, pending+final marks committed, both present or neither present fails closed. Later gates require `ciphertext_committed`; no overwrite or indeterminate state advances.
-- The embedded manifest contains schema/version, every source projection, backup method, integrity result, and no secret values. Its non-circular `content_set_digest` is SHA-256 of canonical UTF-8 JSON (sorted keys, no insignificant whitespace) over the lexically archive-path-sorted array `{archive_path, source_digest, byte_size, mode, backup_method, sqlite_quick_check}`; the manifest entry itself is excluded. Duplicate archive paths are forbidden. Restore independently recomputes this digest from restored entries and rejects substitution, omission, duplication, or corruption. The encrypted ciphertext SHA-256 is separate and follows the pending/committed apply-state protocol above.
+- Обнаруживать SQLite по заголовку и валидированным связям sidecar, а не только по суффиксу имени файла; использовать SQLite backup API и `quick_check` для каждой обнаруженной БД.
+- Требовать все ожидаемые строки класса C и обнаруженные корни состояния; пустое покрытие — FAIL.
+- Открывать каждый компонент no-follow, отклонять специальные файлы/побеги через симлинки и проверять стабильность размера/дайджеста вокруг копирования не-SQLite файлов.
+- Ни один именованный plaintext-архив или SQLite-бэкап не записывается на диск. Не-SQLite файлы стримятся из верифицированных дескрипторов в streaming tar writer, чей вывод напрямую передаётся по пайпу в `age`. SQLite backup использует in-memory-назначение SQLite плюс `serialize()` под явным потолком памяти/размера; превышение потолка приводит к отказу до захвата, а не к откату на диск. Встроенный манифест записывается последним в потоке. Частичный зашифрованный вывод получает уникальное имя и удаляется при ошибке producer/encryptor, SIGINT, SIGTERM, обнаружении смерти родителя или восстановлении от устаревшего вывода при следующем запуске; SIGKILL/потеря питания может оставить только шифртекст, никогда plaintext.
+- Публикация шифртекста — crash-consistent машина состояний: (1) записать уникальный зашифрованный temp; (2) дождаться producer/encryptor, fsync temp и родителя, вычислить дайджест шифртекста; (3) атомарно fsync строку `ciphertext_pending` в `apply-state.json`, содержащую относительные пути temp/final и дайджест; (4) переименовать temp в final с no-replace и fsync родителя; (5) атомарно обновить состояние до `ciphertext_committed`. Восстановление проверяет дайджест/идентичность: pending+temp завершает публикацию, pending+final помечает как committed, наличие обоих или отсутствие обоих — fail-closed. Последующие ворота требуют `ciphertext_committed`; никакая перезапись или неопределённое состояние не продвигаются вперёд.
+- Встроенный манифест содержит schema/version, каждую проекцию источника, метод бэкапа, результат проверки целостности и никаких секретных значений. Его некруговой `content_set_digest` — это SHA-256 канонического UTF-8 JSON (отсортированные ключи, без незначащих пробелов) по лексически отсортированному по archive-path массиву `{archive_path, source_digest, byte_size, mode, backup_method, sqlite_quick_check}`; сама запись манифеста исключена. Дубликаты archive-путей запрещены. Restore независимо перевычисляет этот дайджест по восстановленным записям и отклоняет подмену, пропуск, дублирование или повреждение. SHA-256 зашифрованного шифртекста отдельный и следует описанному выше протоколу pending/committed для apply-state.
 
-### Projection and Syncthing policy
+### Проекция и политика Syncthing
 
-- `build_project_projection.py` and `generate_syncthing_policy.py` independently validate the discovery schema, non-empty complete root/file coverage, unique IDs, and class counts.
-- Only verified class A enters continuous sync; B uses SharedMemory; C stays encrypted; D is reprovisioned/omitted. Any unknown class or missing row fails.
-- Projection scans its output and rejects secret-like names/content before PASS.
-- Plan contains exact `syncthing_guard.py` invocations with `--policy`, `--api-key-file`, `--role`, and target `--target-root`. API key contents never enter argv/logs.
-- Guard validates all managed folders before enabling/scanning any: exact folder ID/path/device set, source `sendonly`, target `receiveonly`, paused/disabled state during configuration, no unexpected peers/folders, canonical target root, and policy digest. Any wrong role/device/state or partial API write restores every captured prior field except `paused`, which is forced `true` as a fail-closed override and recorded in the secret-free report; scanning starts only after a second all-folder preflight passes.
+- `build_project_projection.py` и `generate_syncthing_policy.py` независимо валидируют схему discovery, непустое полное покрытие корней/файлов, уникальные ID и счётчики классов.
+- Только верифицированный класс A входит в непрерывную синхронизацию; B использует SharedMemory; C остаётся зашифрованным; D перепровизионируется/опускается. Любой неизвестный класс или отсутствующая строка — отказ.
+- Проекция сканирует свой вывод и отклоняет похожие на секреты имена/содержимое до PASS.
+- План содержит точные вызовы `syncthing_guard.py` с `--policy`, `--api-key-file`, `--role` и целевым `--target-root`. Содержимое API-ключа никогда не попадает в argv/логи.
+- Guard валидирует все управляемые папки до включения/сканирования какой-либо: точный набор folder ID/путь/устройство, `sendonly` на источнике, `receiveonly` на цели, состояние paused/disabled во время конфигурации, отсутствие неожиданных peer/папок, канонический целевой корень и дайджест политики. При любом неверном role/устройстве/состоянии или частичной записи через API восстанавливаются все захваченные прежние поля, кроме `paused`, который принудительно устанавливается в `true` как fail-closed-переопределение и фиксируется в отчёте без секретов; сканирование начинается только после успешного повторного preflight всех папок.
 
-### SharedMemory tools
+### Инструменты SharedMemory
 
-- `shared_memory.py` treats every on-disk record/attachment as untrusted, including Syncthing-created peer files. Before indexing/rebuild it validates component-wise no-follow path/filename, regular-file type, version, closed payload schema, size, digest, device ID, and secret policy. On malformed/secret-bearing peer material it pauses the already-approved sync folder, accepts no derived state, and uses the E0-approved `--quarantine-recipient-file` (public age recipient only) to stream-encrypt the verified descriptor into `~/.hermes/shared-memory-quarantine/` outside every synchronized root (`0700` dir, `0600` ciphertext). Only after ciphertext digest/age decrypt drill succeeds may it remove the original under the E0 gate. If recipient/encryption/removal verification fails, it leaves sync paused and fails closed without indexing. Quarantine ciphertext is retained until separate deletion approval; metadata contains path hash/reason/digest only, never content.
-- Local writes enforce the same versioned schemas/bounds and reject secret-like keys/values, credential/session/token/cookie material, and unsafe/high-entropy blobs.
-- Record is source of truth. Under an owner-only lock, write record atomically then rebuild idempotency index/events deterministically; startup recovery repairs derived state only from fully validated records. No silent split-brain across record/index/event.
-- `init_memory_schema.py` emits the exact executable schema enforced by the library.
-- `memory_canary.py --two-device-conflict-test` is an E0 acceptance workflow after D1 pairing, not a one-root boolean. It takes exact source/target roots and expected device IDs, writes stable-ID divergent branches while disconnected, records branch digests, reconnects through the already approved pair, requires the same deterministic conflict record/digest on both peers, and cleans only its canary records. A local two-root simulation is unit coverage, never E0 evidence.
+- `shared_memory.py` считает каждую запись/вложение на диске недоверенной, включая созданные Syncthing peer-файлы. Перед индексацией/rebuild он валидирует покомпонентно no-follow путь/имя файла, тип regular-file, версию, закрытую схему payload, размер, дайджест, device ID и политику секретов. При искажённом/содержащем секреты peer-материале он приостанавливает уже утверждённую папку синхронизации, не принимает никакого производного состояния и использует утверждённый E0 `--quarantine-recipient-file` (только публичный age-получатель), чтобы потоково зашифровать верифицированный дескриптор в `~/.hermes/shared-memory-quarantine/` вне всех синхронизируемых корней (`0700` каталог, `0600` шифртекст). Только после успешного drill'а проверки дайджеста шифртекста/расшифровки age он может удалить оригинал под воротами E0. Если верификация получателя/шифрования/удаления не проходит, он оставляет синхронизацию на паузе и завершается fail-closed без индексации. Шифртекст карантина хранится до отдельного утверждения на удаление; метаданные содержат только хеш пути/причину/дайджест, никогда содержимое.
+- Локальные записи соблюдают те же версионируемые схемы/границы и отклоняют похожие на секреты ключи/значения, материал credential/session/token/cookie и небезопасные/высокоэнтропийные блобы.
+- Record — источник истины. Под owner-only-блокировкой записывать record атомарно, затем детерминированно перестраивать индекс идемпотентности/события; восстановление при старте исправляет производное состояние только по полностью валидированным record. Никакого тихого split-brain между record/index/event.
+- `init_memory_schema.py` выдаёт точную исполняемую схему, которую соблюдает библиотека.
+- `memory_canary.py --two-device-conflict-test` — это workflow приёмки E0 после сопряжения D1, а не булево значение для одного корня. Он принимает точные корни источника/цели и ожидаемые device ID, пишет расходящиеся ветки со стабильными ID в разъединённом состоянии, записывает дайджесты веток, переподключается через уже утверждённую пару, требует одинаковой детерминированной conflict record/дайджеста на обоих peer и очищает только свои canary-записи. Локальная симуляция с двумя корнями — юнит-покрытие, никогда доказательство E0.
 
-### Mode and bundle tools
+### Инструменты режимов и бандла
 
-- `mode_manifest.py` snapshot, forward A3 chmod, and restore all use component-wise fd-relative no-follow walks plus `fchmod`; record and recheck device/inode/type/uid/gid before mutation. Snapshot/restore requires complete entries and rejects missing/extra roots, symlinks, hardlink/inode substitution, ownership mismatch, or pathname re-open.
-- `verify_bundle.py` rejects zero/partial coverage, validates schema/path set/digests, opens source and destination parents component-wise no-follow, copies from the same verified source descriptor to a unique owner-only destination temp, rechecks source/destination identity, then atomically publishes; no second unpinned path read or raceable destination.
-- `safe_restore.py` receives full security review and tests for archive traversal, link/device rejection, destination no-follow, manifest completeness, SQLite integrity, and plaintext cleanup.
-- `syncthing_guard.py` receives full CLI/role/root/policy tests; source and target invocations in the plan must be executable as written.
+- Снимок `mode_manifest.py`, прямой A3 chmod и восстановление используют покомпонентные fd-относительные no-follow обходы плюс `fchmod`; записывают и перепроверяют device/inode/тип/uid/gid перед мутацией. Снимок/восстановление требует полных записей и отклоняет отсутствующие/лишние корни, симлинки, подмену hardlink/inode, несовпадение владельца или повторное открытие по pathname.
+- `verify_bundle.py` отклоняет нулевое/частичное покрытие, валидирует схему/набор путей/дайджесты, открывает родителей источника и назначения покомпонентно no-follow, копирует из того же верифицированного дескриптора источника в уникальный owner-only temp назначения, перепроверяет идентичность источника/назначения, затем атомарно публикует; никакого второго чтения по незакреплённому пути или назначения, подверженного гонкам.
+- `safe_restore.py` проходит полный security-обзор и тесты на archive traversal, отклонение ссылок/устройств, destination no-follow, полноту манифеста, целостность SQLite и очистку plaintext.
+- `syncthing_guard.py` проходит полные тесты CLI/role/корня/политики; вызовы для источника и цели в плане должны быть исполнимы в том виде, как записаны.
 
-## 6. Test and review gate
+## 6. Ворота тестирования и обзора
 
-Before generating checksums:
+До генерации контрольных сумм:
 
 1. `python3 -m unittest discover -s apply-tools/tests -p 'test_*.py'`
-2. `python3 -m compileall -q apply-tools`, then remove/reject generated bytecode from bundle
-3. CLI `--help` and exact plan-invocation contract checks for every copied/executed tool
-4. shell syntax extraction/check for every fenced shell block in `11-apply-plan.md`
-5. JSON parse/schema checks for all JSON files; Markdown cross-reference/gate-token checks
-6. deterministic fixture runs: discovery, projection, Secure State + offline restore, sync policy/guard dry run, memory conflict canary, mode snapshot/restore, bundle verification, writer quiescence simulation
-7. independent `security-reviewer` on exact tool bytes
-8. independent `reviewer` on exact plan/docs
-9. independent Secure State digest recomputation rejects manifest substitution, omitted/duplicate entries, and corrupted payload bytes
-10. quarantine fixture proves rejected peer material is encrypted directly outside synchronized roots, never indexed/re-synchronized, original removal occurs only after decrypt verification, and failure leaves sync paused
-11. deny-open integration asserts the exact runtime/data/network/process exception manifests and fails on every outside-path/non-loopback/unregistered-PID attempt
-12. snapshot/rollback fixtures cover completeness, no-follow symlink/special-file rejection, rename/hardlink races, modes, corrupt manifest, atomic allowlisted restore, deletion of every newly added R3 path, refusal of non-allowlisted changes, and byte-identical disposable-copy reproduction before real restore eligibility
-13. approval parser/plan-contract tests accept only canonical R3 forms, verify current artifact digests/prerequisites and exact D0/D1 typed identity equality; reject valid-digest/wrong-identity, stale/replayed/wrong-plan, normalization/delimiter/confusable/overlength/injection cases; prove no canary send or consequential callback without approval
-14. ciphertext crash-point tests cover every pending/publish/commit transition, published-but-uncommitted and temp-but-pending recovery, overwrite refusal, no plaintext, and no later-gate reachability from indeterminate state
-15. A3 prerequisite tests reject unsafe/uncommitted A2 state; mode rollback is exact while A2 safe-override evidence never restores `off`/fail-open
-16. source-preserving benchmark is not required; these are safety tools, not a performance migration
+2. `python3 -m compileall -q apply-tools`, затем удалить/отклонить сгенерированный байткод из бандла
+3. CLI `--help` и проверки контракта точного вызова из плана для каждого копируемого/исполняемого инструмента
+4. извлечение/проверка shell-синтаксиса для каждого fenced shell-блока в `11-apply-plan.md`
+5. проверки parse/схемы JSON для всех JSON-файлов; проверки перекрёстных ссылок и токенов ворот Markdown
+6. детерминированные прогоны фикстур: discovery, проекция, Secure State + офлайн-восстановление, dry run политики синхронизации/guard, canary конфликта памяти, снимок/восстановление режимов, верификация бандла, симуляция quiescence writer'ов
+7. независимый `security-reviewer` по точным байтам инструментов
+8. независимый `reviewer` по точным плану/документам
+9. независимое перевычисление дайджеста Secure State отклоняет подмену манифеста, пропущенные/дублированные записи и повреждённые байты payload
+10. фикстура карантина доказывает, что отклонённый peer-материал шифруется напрямую вне синхронизируемых корней, никогда не индексируется/повторно не синхронизируется, удаление оригинала происходит только после верификации расшифровки, а отказ оставляет синхронизацию на паузе
+11. интеграция deny-open проверяет точные манифесты исключений runtime/данных/сети/процессов и падает при каждой попытке по внешнему пути/не-loopback/незарегистрированному PID
+12. фикстуры снимка/отката покрывают полноту, отклонение симлинков/специальных файлов через no-follow, гонки rename/hardlink, режимы, повреждённый манифест, атомарное восстановление только по allowlist, удаление каждого вновь добавленного пути R3, отказ в изменениях вне allowlist и побайтово идентичное воспроизведение в одноразовой копии до допуска к реальному восстановлению
+13. тесты парсера утверждений/контракта плана принимают только канонические формы R3, проверяют текущие дайджесты артефактов/предпосылки и точное побайтовое равенство типизированной идентичности D0/D1; отклоняют случаи валидный-дайджест/неверная-идентичность, устаревшие/повторно использованные/чужой план, нормализацию/разделители/конфузные символы/превышение длины/инъекции; доказывают, что без утверждения нет ни отправки canary, ни значимого callback
+14. crash-point тесты шифртекста покрывают каждый переход pending/publish/commit, восстановление published-but-uncommitted и temp-but-pending, отказ в перезаписи, отсутствие plaintext и недостижимость последующих ворот из неопределённого состояния
+15. тесты предпосылок A3 отклоняют небезопасное/незакоммиченное состояние A2; откат режимов точен, при этом доказательство safe-override A2 никогда не восстанавливает `off`/fail-open
+16. source-preserving бенчмарк не требуется; это инструменты безопасности, а не миграция производительности
 
-Tests may create only harness-owned temporary Git repositories, short-lived child writer processes, and an in-process loopback fake Syncthing HTTP server inside an egress-denied sandbox. They MUST NOT access existing processes, launchd, non-loopback network, live Hermes/OMP/Buzz/Tailscale/Syncthing data, home configs, or credentials. Every child/server/temp root is registered before creation and removed after the test; leaked resources fail the suite.
+Тесты могут создавать только принадлежащие harness временные Git-репозитории, короткоживущие дочерние процессы writer и in-process loopback фейковый HTTP-сервер Syncthing внутри песочницы с запретом egress. Они НЕ ДОЛЖНЫ обращаться к существующим процессам, launchd, не-loopback сети, живым данным Hermes/OMP/Buzz/Tailscale/Syncthing, домашним конфигурациям или учётным данным. Каждый дочерний процесс/сервер/временный корень регистрируется до создания и удаляется после теста; утечка ресурсов проваливает набор тестов.
 
-Additional mandatory cases: omitted/unreadable root and orphan D disposition; corrupt/incomplete A1 backup blocks later gates; abrupt producer/encryptor/parent death leaves no plaintext; writer auto-restart and mid-stop recovery; wrong Syncthing role/device/state plus partial-write rollback; malformed/secret-bearing peer records; real two-root canary simulation (unit only); symlink/rename/hardlink races for forward chmod, restore, source and destination.
+Дополнительные обязательные случаи: пропущенный/нечитаемый корень и сиротское решение D; повреждённый/неполный бэкап A1 блокирует последующие ворота; внезапная смерть producer/encryptor/родителя не оставляет plaintext; авто-перезапуск writer и восстановление посреди остановки; неверные role/устройство/состояние Syncthing плюс откат частичной записи; искажённые/содержащие секреты peer-записи; реальная симуляция canary на двух корнях (только юнит); гонки symlink/rename/hardlink для прямого chmod, восстановления, источника и назначения.
 
-A deny-open integration policy governs data-file and network access, not normal language-runtime loading. Read/execute exceptions are an explicit manifest of the resolved Python/Git/age binaries, their immutable system libraries/stdlib, `/dev/null`, `/dev/urandom`, and required OS locale/timezone metadata; their paths/digests are captured before the test. Data read/write exceptions are only the audit root, owner-only remediation snapshot root, registered harness temp roots, and three anchored worktree evidence files. Network exceptions are only the registered in-process loopback fake-server socket. Process inspection/signals are allowed only for child PIDs spawned and registered by the harness. Every other home/live path, process interface, credential location, local IPC endpoint, and non-loopback address is denied; attempted violations are path/category only and fail the suite.
+Политика deny-open для интеграции управляет доступом к файлам данных и сети, а не обычной загрузкой language-runtime. Исключения read/execute — это явный манифест разрешённых бинарников Python/Git/age, их неизменяемых системных библиотек/stdlib, `/dev/null`, `/dev/urandom` и требуемых метаданных локали/часового пояса ОС; их пути/дайджесты захватываются до теста. Исключения на чтение/запись данных — только корень аудита, owner-only корень снимка исправления, зарегистрированные временные корни harness и три привязанных файла доказательств worktree. Сетевые исключения — только зарегистрированный in-process loopback сокет фейкового сервера. Инспекция процессов/сигналы разрешены только для дочерних PID, порождённых и зарегистрированных harness. Все прочие домашние/живые пути, интерфейсы процессов, расположения учётных данных, локальные IPC-эндпоинты и не-loopback адреса запрещены; попытанные нарушения фиксируются только как путь/категория и проваливают набор тестов.
 
-## 7. Immutable checksum gate
+## 7. Неизменяемые ворота контрольных сумм
 
-After all tests/reviews pass:
+После прохождения всех тестов/обзоров:
 
-- remove `apply-tools/__pycache__` and any test caches;
-- enumerate the exact allowed bundle path set, rejecting extras;
-- generate `checksums.sha256` deterministically in lexical path order;
-- run `shasum -a 256 -c checksums.sha256` twice from clean processes;
-- record the checksum-manifest SHA-256, path count, test counts, and review verdicts in this spec/runbook/inventory;
-- recompute without changes and require byte-identical manifest;
-- do not modify any covered file after generation.
+- удалить `apply-tools/__pycache__` и любые тестовые кэши;
+- перечислить точный разрешённый набор путей бандла, отклоняя лишнее;
+- сгенерировать `checksums.sha256` детерминированно в лексическом порядке путей;
+- запустить `shasum -a 256 -c checksums.sha256` дважды из чистых процессов;
+- записать SHA-256 манифеста контрольных сумм, количество путей, количество тестов и вердикты обзоров в эту спецификацию/runbook/инвентарь;
+- перевычислить без изменений и потребовать побайтово идентичный манифест;
+- не изменять ни один покрытый файл после генерации.
 
-Any edit after checksum generation invalidates the bundle and restarts §6–§7.
+Любая правка после генерации контрольных сумм инвалидирует бандл и перезапускает §6–§7.
 
-## 8. Definition of done and rollback
+## 8. Определение готовности и откат
 
-Remediation is complete only when:
+Исправление завершено только когда:
 
-- every finding in §4–§5 has a production fix and observable regression test;
-- all docs/tools/tests agree on R3 plan ID, gate tokens, state contract, target ambiguity, channel classes, and exact CLIs;
-- independent reviewers return no material findings;
-- final manifest passes and covered bytes remain unchanged;
-- failed rev2 apply evidence remains untouched;
-- no live system was mutated.
+- каждая находка в §4–§5 имеет production-исправление и наблюдаемый регрессионный тест;
+- все документы/инструменты/тесты согласованы по ID плана R3, токенам ворот, контракту состояния, неоднозначности цели, классам каналов и точным CLI;
+- независимые рецензенты не возвращают существенных находок;
+- финальный манифест проходит, а покрытые байты остаются неизменными;
+- доказательства неудачного применения rev2 остаются нетронутыми;
+- ни одна живая система не была изменена.
 
-Rollback before R3 start uses the authorized owner-only pre-edit content snapshot—not the digest-only manifest—to restore every original regular file/mode into a disposable audit-root copy first. The drill must reproduce the pre-edit manifest byte-for-byte before real restore is allowed. Real restore opens destination parents no-follow, atomically replaces only allowlisted audit files, deletes only newly added R3 tests/tool source and generated caches/checksum changes, verifies the exact pre-edit path set/digests/modes, and leaves both the snapshot and rev2 failed apply evidence intact. Snapshot deletion requires a later exact owner approval. Never use global clean/reset or touch credentials/live state.
+Откат до старта R3 использует авторизованный owner-only снимок содержимого, сделанный до правки, — а не манифест только с дайджестами, — чтобы сначала восстановить каждый оригинальный обычный файл/режим в одноразовую копию корня аудита. Drill должен побайтово воспроизвести манифест до правки, прежде чем будет разрешено реальное восстановление. Реальное восстановление открывает родителей назначения no-follow, атомарно заменяет только файлы аудита из allowlist, удаляет только вновь добавленные тесты R3/исходники инструментов и сгенерированные изменения кэшей/контрольных сумм, верифицирует точный набор путей/дайджестов/режимов до правки и оставляет нетронутыми и снимок, и доказательства неудачного применения rev2. Удаление снимка требует последующего точного утверждения владельца. Никогда не использовать глобальный clean/reset и не трогать учётные данные/живое состояние.
 
-## 9. Owner gate
+## 9. Ворота владельца
 
-Offline remediation is blocked until the owner sends exactly:
+Офлайн-исправление заблокировано, пока владелец не отправит в точности:
 
 `APPROVE HMA-20260809-A1-R3 REMEDIATION`
 
-This authorizes only §3 offline audit-bundle edits/tests and generated checksums. It does **not** authorize `АПPLY HMA-20260809-A1-R3`, A1 backup, Hermes config changes, chmod, process stop, ACL, Syncthing, messaging, target enrollment, secret handling, or any live mutation.
+Это авторизует только правки/тесты офлайн-бандла аудита из §3 и сгенерированные контрольные суммы. Оно **не** авторизует `АПPLY HMA-20260809-A1-R3`, бэкап A1, изменения конфигурации Hermes, chmod, остановку процессов, ACL, Syncthing, обмен сообщениями, регистрацию цели, обработку секретов или любую мутацию живой системы.

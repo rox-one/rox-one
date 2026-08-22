@@ -1,44 +1,44 @@
-# External Access — Gate 0 deployment contract
+# Внешний доступ — контракт развёртывания Gate 0
 
-- **Status:** BLOCKED — facts missing. This file is the required worksheet, not a substitute store.
-- **Date:** 2026-08-13
-- **Source design:** `docs/superpowers/specs/2026-08-11-security-external-access-design.md`
-- **Source plan:** `docs/superpowers/plans/2026-08-11-security-external-access-implementation-plan.md`
+- **Статус:** BLOCKED — факты отсутствуют. Этот файл является обязательным рабочим листом, а не заменой хранилища.
+- **Дата:** 2026-08-13
+- **Исходный дизайн:** `docs/superpowers/specs/2026-08-11-security-external-access-design.md`
+- **Исходный план:** `docs/superpowers/plans/2026-08-11-security-external-access-implementation-plan.md`
 
-Logical origins (design only; not proven deployed):
+Логические источники (только дизайн; развёртывание не подтверждено):
 
-| Symbol | Design value | Proven production owner |
+| Символ | Значение в дизайне | Подтверждённый владелец в продакшене |
 |---|---|---|
 | `APP_ORIGIN` | `app.rox.one` | **MISSING** |
 | `SHARE_ORIGIN` | `share.rox.one` | **MISSING** |
 
-Rejected as DeviceRecord stores (plan Gate 0): in-memory map, browser storage, R2 metadata, shared password.
+Отклонены как хранилища DeviceRecord (план Gate 0): map в памяти, хранилище браузера, метаданные R2, общий пароль.
 
-## Gate 0 checklist
+## Чек-лист Gate 0
 
-| Fact | Status | Evidence |
+| Факт | Статус | Свидетельство |
 |---|---|---|
-| Durable device-record datastore with atomic conditional update | **MISSING** | No `DeviceRecord` production adapter in tree; type exists only in the plan |
-| Share-management capability issuer (aud=`share-management`) | **MISSING** | Spec/plan only |
-| Local microVM image signer + digest | **MISSING** | Design requires Firecracker-class isolation; `sandbox-exec` is explicitly not enough |
-| Secret authority for signing/notarization | **MISSING** | Plan forbids self-hosted `macos-toolchain` as signing boundary |
-| Reverse-proxy ownership + TLS terminator | **MISSING** | Not recorded |
-| App-local SPKI pin enrollment store | Partial design | Increment A can start on local Electron only; no enrolled production pins recorded here |
+| Долговременное хранилище device-record с атомарным условным обновлением | **MISSING** | В дереве нет продакшен-адаптера `DeviceRecord`; тип существует только в плане |
+| Эмитент capability share-management (aud=`share-management`) | **MISSING** | Только спецификация/план |
+| Локальный подписант образов microVM + digest | **MISSING** | Дизайн требует изоляции класса Firecracker; `sandbox-exec` явно недостаточен |
+| Центр секретов для подписания/нотаризации | **MISSING** | План запрещает самостоятельно размещённый `macos-toolchain` как границу подписания |
+| Владение reverse-proxy + TLS-терминатор | **MISSING** | Не зафиксировано |
+| Локальное для приложения хранилище enrollment SPKI pin | Partial design | Increment A может стартовать только на локальном Electron; записанные продакшен pin здесь не зафиксированы |
 
-## Allowed next increments without this contract
+## Разрешённые следующие инкременты без этого контракта
 
-- Increment A (strict remote TLS + SPKI enrollment) against **local** Electron/runtime only.
-- Increment B (public messaging authority) already landed locally.
-- Connection Fabric CF-1 (already landed; metadata-only). See verification below.
+- Increment A (строгий удалённый TLS + SPKI enrollment) — только против **локального** Electron/runtime.
+- Increment B (публичный messaging authority) уже реализован локально.
+- Connection Fabric CF-1 (уже реализован; только метаданные). См. верификацию ниже.
 
-## Forbidden until this contract is filled
+## Запрещено до заполнения этого контракта
 
-- Increment C microVM enforcement
-- Increment D WebUI device authority
-- Increment E public share create/revoke
-- Increment F protected release signing
-- Any claim that Safe/Explore `transform_data` is isolated
+- Increment C принудительное применение microVM
+- Increment D device authority в WebUI
+- Increment E публичное создание/отзыв share
+- Increment F подписание защищённых релизов
+- Любое утверждение, что Safe/Explore `transform_data` изолирован
 
-## Owner action required
+## Требуемые действия владельца
 
-Name: (1) device-record store product, (2) microVM image builder/signer, (3) who owns `APP_ORIGIN` / `SHARE_ORIGIN` DNS and the reverse proxy.
+Указать: (1) продукт хранилища device-record, (2) сборщик/подписант образов microVM, (3) кто владеет DNS для `APP_ORIGIN` / `SHARE_ORIGIN` и reverse proxy.
