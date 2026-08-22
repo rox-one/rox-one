@@ -16,18 +16,18 @@
   title: Ключ шифрования хранилища учётных данных выводится из публично читаемых идентификаторов машины
   kind: security
   path: packages/shared/src/credentials/backends/secure-storage.ts
-  status: active
+  status: done
   refs: [RX-TSK-0300]
   note: |
     Мастер-ключ AES-256-GCM = PBKDF2(sha256(IOPlatformUUID/MachineGuid/machine-id), salt из заголовка файла).
     IOPlatformUUID и machine-id читаются любым локальным пользователем; парольной фразы нет.
     Шифрование не защищает от кода под тем же пользователем. Severity: Высокая.
-
+    Исправлено 2026-08-22: v3 мастер-ключ из OS-keychain/файла 0600 (коммит 3ea87e8).
 - id: RX-TSK-0300
   title: Перевести credentials.enc на мастер-ключ из OS-keychain
   kind: task
   path: packages/shared/src/credentials/backends/secure-storage.ts
-  status: planned
+  status: done
   refs: [RX-SEC-0001]
   note: |
     Генерировать randomBytes(32) при первой установке, хранить в Keychain/DPAPI/libsecret,
@@ -37,18 +37,18 @@
   title: Бэкап credentials.enc.bak создаётся без режима 0600
   kind: security
   path: packages/shared/src/credentials/backends/secure-storage.ts
-  status: active
+  status: done
   refs: [RX-TSK-0301, RX-SEC-0001]
   note: |
     copyFileSync (строка 365) создаёт отсутствующий .bak с 0666&~umask (типично 0644) вместо 0600.
     В связке с RX-SEC-0001 даёт межпользовательское восстановление ключей. Требует проверки umask/прав каталога.
     Severity: Средняя.
-
+    Исправлено 2026-08-22: chmod 0600 после copyFileSync (коммит 3ea87e8).
 - id: RX-TSK-0301
   title: Выставлять chmod 0600 для credentials.enc.bak
   kind: task
   path: packages/shared/src/credentials/backends/secure-storage.ts
-  status: planned
+  status: done
   refs: [RX-SEC-0002]
   note: |
     Однострочный фикс после copyFileSync + тест на права бэкап-файла.
