@@ -1,0 +1,170 @@
+# Фрагмент реестра: security-волна. Владелец файла — только автор волны.
+# Идентификаторы по RX-LEGEND.md: SEC 0001-0099, TSK 0300-0399.
+
+- id: RX-DOC-0004
+  title: Аудит безопасности
+  kind: doc
+  path: docs/ru/RX-DOC-0004-security.md
+  status: active
+  refs: [RX-SEC-0001, RX-SEC-0002, RX-SEC-0003, RX-SEC-0004, RX-SEC-0005, RX-SEC-0006, RX-SEC-0007, RX-SEC-0008]
+  note: |
+    Статический security-аудит рабочего дерева и истории git: 8 находок
+    (Критично 0, Высокая 1, Средняя 4, Низкая 3), парные задачи RX-TSK-0300..0307,
+    план усиления тремя очередями. Действующих секретов в рабочем дереве не найдено.
+
+- id: RX-SEC-0001
+  title: Ключ шифрования хранилища учётных данных выводится из публично читаемых идентификаторов машины
+  kind: security
+  path: packages/shared/src/credentials/backends/secure-storage.ts
+  status: active
+  refs: [RX-TSK-0300]
+  note: |
+    Мастер-ключ AES-256-GCM = PBKDF2(sha256(IOPlatformUUID/MachineGuid/machine-id), salt из заголовка файла).
+    IOPlatformUUID и machine-id читаются любым локальным пользователем; парольной фразы нет.
+    Шифрование не защищает от кода под тем же пользователем. Severity: Высокая.
+
+- id: RX-TSK-0300
+  title: Перевести credentials.enc на мастер-ключ из OS-keychain
+  kind: task
+  path: packages/shared/src/credentials/backends/secure-storage.ts
+  status: planned
+  refs: [RX-SEC-0001]
+  note: |
+    Генерировать randomBytes(32) при первой установке, хранить в Keychain/DPAPI/libsecret,
+    файловый формат оставить как резерв. Вывод из machine-id удалить или сделать last-resort с предупреждением.
+
+- id: RX-SEC-0002
+  title: Бэкап credentials.enc.bak создаётся без режима 0600
+  kind: security
+  path: packages/shared/src/credentials/backends/secure-storage.ts
+  status: active
+  refs: [RX-TSK-0301, RX-SEC-0001]
+  note: |
+    copyFileSync (строка 365) создаёт отсутствующий .bak с 0666&~umask (типично 0644) вместо 0600.
+    В связке с RX-SEC-0001 даёт межпользовательское восстановление ключей. Требует проверки umask/прав каталога.
+    Severity: Средняя.
+
+- id: RX-TSK-0301
+  title: Выставлять chmod 0600 для credentials.enc.bak
+  kind: task
+  path: packages/shared/src/credentials/backends/secure-storage.ts
+  status: planned
+  refs: [RX-SEC-0002]
+  note: |
+    Однострочный фикс после copyFileSync + тест на права бэкап-файла.
+
+- id: RX-SEC-0003
+  title: Серверный токен печатается в stdout при старте сервера
+  kind: security
+  path: packages/server/src/index.ts
+  status: active
+  refs: [RX-TSK-0302]
+  note: |
+    console.log CRAFT_SERVER_TOKEN (строки 329-330): токен является bearer WS-RPC и secret подписи JWT webui;
+    при headless/docker/systemd запуске попадает в журналы. Severity: Средняя.
+
+- id: RX-TSK-0302
+  title: Убрать печать CRAFT_SERVER_TOKEN в stdout по умолчанию
+  kind: task
+  path: packages/server/src/index.ts
+  status: planned
+  refs: [RX-SEC-0003]
+  note: |
+    Полный токен только по флагу --print-token; по умолчанию маскировать первые 4 символа.
+
+- id: RX-SEC-0004
+  title: SDK-сессии всегда запускаются в bypassPermissions; контроль инструментов в одном PreToolUse-hook
+  kind: security
+  path: packages/shared/src/agent/claude-agent.ts
+  status: active
+  refs: [RX-TSK-0303, RX-SEC-0005]
+  note: |
+    permissionMode bypassPermissions + allowDangerouslySkipPermissions (1264-1267); canUseTool отключён (1594-1598).
+    Отказ регистрации hook = исполнение без разрешений; fail-open/fail-closed при исключении в hook требует проверки.
+    Severity: Средняя.
+
+- id: RX-TSK-0303
+  title: Fail-closed контракт PreToolUse-hook и canary-проверка при старте сессии
+  kind: task
+  path: packages/shared/src/agent/claude-agent.ts
+  status: planned
+  refs: [RX-SEC-0004]
+  note: |
+    Блокировать tool-call, если hook-цепочка не подтвердила готовность; canary tool-call при старте сессии.
+
+- id: RX-SEC-0005
+  title: Автономные задачи и восстановленные сессии молча получают allow-all по умолчанию
+  kind: security
+  path: packages/server-core/src/tasks/TaskRunner.ts
+  status: active
+  refs: [RX-TSK-0304]
+  note: |
+    AUTONOMOUS_DEFAULT_MODE=allow-all (116, 371-372); restore default allow-all (SessionManager 2146, 2373-2380).
+    Задача по расписанию без явного permissionMode исполняет команды без подтверждений. Severity: Средняя.
+
+- id: RX-TSK-0304
+  title: Сделать defaults.permissionMode обязательным в task-spec
+  kind: task
+  path: packages/server-core/src/tasks/TaskRunner.ts
+  status: planned
+  refs: [RX-SEC-0005]
+  note: |
+    Валидация при saveTaskSpec: отсутствие mode — ошибка создания; индикатор активного режима при restore.
+
+- id: RX-SEC-0006
+  title: Renderer управляет исходящими соединениями main-процесса через invokeOnServer
+  kind: security
+  path: apps/electron/src/main/index.ts
+  status: active
+  refs: [RX-TSK-0305]
+  note: |
+    ipcMain.handle server:invokeOnServer (864-868) + preload bootstrap.ts (463-464): renderer задаёт url/token/channel.
+    SSRF во внутреннюю сеть при компрометации рендерера. Severity: Низкая.
+
+- id: RX-TSK-0305
+  title: Egress-политика для канала server:invokeOnServer
+  kind: task
+  path: apps/electron/src/main/index.ts
+  status: planned
+  refs: [RX-SEC-0006]
+  note: |
+    Whitelist схем ws/wss, запрет loopback/link-local кроме разрешённых, подтверждение нового host пользователем.
+
+- id: RX-SEC-0007
+  title: Токен RPC-сервера сравнивается не за константное время
+  kind: security
+  path: packages/server-core/src/bootstrap/headless-start.ts
+  status: active
+  refs: [RX-TSK-0306]
+  note: |
+    validateToken t === serverToken (407-408). Timing side-channel против токена высокой энтропии нереалистичен,
+    но фикс дешёвый. Severity: Низкая.
+
+- id: RX-TSK-0306
+  title: Перевести validateToken на timingSafeEqual
+  kind: task
+  path: packages/server-core/src/bootstrap/headless-start.ts
+  status: planned
+  refs: [RX-SEC-0007]
+  note: |
+    timingSafeEqual(sha256(t), sha256(serverToken)) устраняет и зависимость от длины строк.
+
+- id: RX-SEC-0008
+  title: Bash-инструмент запускает login-shell, sanitized env может быть дополнен профилями
+  kind: security
+  path: packages/session-tools-core/src/handlers/host-bash.ts
+  status: active
+  refs: [RX-TSK-0307]
+  note: |
+    bash -lc (44-49) читает /etc/profile и ~/.bash_profile после createSanitizedEnv();
+    профиль может переопределить PATH или вернуть секреты в env. Спавн аргументным массивом — инъекции нет.
+    Требует проверки состава профилей. Severity: Низкая.
+
+- id: RX-TSK-0307
+  title: Заменить bash -lc на bash -c с фиксированным PATH в host-bash
+  kind: task
+  path: packages/session-tools-core/src/handlers/host-bash.ts
+  status: planned
+  refs: [RX-SEC-0008]
+  note: |
+    Либо повторная санитизация env после загрузки профиля; PATH зафиксировать константой.

@@ -1,0 +1,344 @@
+- id: RX-DOC-0006
+  title: Незакрытая работа из бэкапов сессий
+  kind: doc
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: active
+  refs: [RX-SES-0001, RX-SES-0002, RX-SES-0003, RX-SES-0004, RX-SES-0005, RX-SES-0006, RX-SES-0007, RX-SES-0008, RX-SES-0009, RX-SES-0010]
+  note: |
+    Каталог десяти recovery-репозиториев agisota от 2026-08-21.
+    Задачи только для периметра rox-one: RX-TSK-0400…RX-TSK-0420.
+
+- id: RX-SES-0001
+  title: Чекпоинт craft-agents — инспектор Connections
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006, RX-TSK-0400, RX-TSK-0401]
+  note: |
+    Полный снимок Craft Agents. Доводка инспектора и опциональный лейбл OMP
+    не перенесены в main. Increment B messaging закрыт задачей RX-TSK-0416.
+
+- id: RX-SES-0002
+  title: Чекпоинт craft-agents-cf2-restored — платформа команд OMP
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006, RX-TSK-0402, RX-TSK-0403, RX-TSK-0404]
+  note: |
+    Ветка cf2-credential-migration плюс фазы 0–7 OMP Command Gateway,
+    UI миграции CF-2 и черновик OpenClaw dashboard. В текущем дереве нет.
+
+- id: RX-SES-0003
+  title: Чекпоинт repo — патч react-best-practices
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006]
+  note: |
+    Вне периметра. git-format-patch к agent-skills-installer; шесть правил
+    уже есть в vendor-копии скилла внутри rox-one.
+
+- id: RX-SES-0004
+  title: Чекпоинт macro — yolo-garden
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006]
+  note: |
+    Вне периметра. Патч 4.8 МБ к /Users/marklindgreen/Projects/yolo-garden/macro.
+
+- id: RX-SES-0005
+  title: Чекпоинт marklindgreen — закрытый цикл rox-one
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006, RX-TSK-0405, RX-TSK-0406, RX-TSK-0407]
+  note: |
+    Sparse home. В периметре только вложенный rox-one/: rox-sidecar, WP-UI
+    и command.approve/deny. Остальное (HMA, fleet, DSH) вне периметра.
+
+- id: RX-SES-0006
+  title: Чекпоинт rox-system-diagrams
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006]
+  note: |
+    Вне периметра. Пакет системных диаграмм Rox System.
+
+- id: RX-SES-0007
+  title: Чекпоинт rox-font-reference-family
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006]
+  note: |
+    Вне периметра. Семейство и пайплайн сравнения ROX Mono.
+
+- id: RX-SES-0008
+  title: Чекпоинт do-it-all-security-slices
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006, RX-TSK-0408, RX-TSK-0409, RX-TSK-0410, RX-TSK-0411, RX-TSK-0412, RX-TSK-0413, RX-TSK-0414, RX-TSK-0420]
+  note: |
+    Worktree product-security: SI W1–W5, CF-2 quarantine, OwnedRootPolicy.
+    Не перенесено. HMA live APPLY — хост Hermes, в задачи монорепо не входит.
+
+- id: RX-SES-0009
+  title: Чекпоинт security-external-access-20260811
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006, RX-TSK-0415, RX-TSK-0416, RX-TSK-0417, RX-TSK-0418, RX-TSK-0419]
+  note: |
+    TLS pin, default-deny messaging, контракт microVM. В текущем дереве
+    tlsRejectUnauthorized: false и accessMode inherit/open всё ещё на месте.
+
+- id: RX-SES-0010
+  title: Чекпоинт home-rox-api-network-diagnosis-20260820
+  kind: session
+  path: docs/ru/RX-DOC-0006-sessions.md
+  status: done
+  refs: [RX-DOC-0006]
+  note: |
+    Вне периметра. Инцидент OmniRoute / api.rox.one (Cloudflare 502/1033).
+
+- id: RX-TSK-0400
+  title: Перенести доводку инспектора Connection Fabric
+  kind: task
+  path: apps/electron/src/renderer/pages/ConnectionsPage.tsx
+  status: planned
+  origin: session-recovery-20260821-craft-agents
+  refs: [RX-SES-0001, RX-DOC-0006]
+  note: |
+    Коммиты 2026-08-21 feat(connections): скрытие пустых полей, i18n меток,
+    testid, in-place test/repair/revoke/convert/move. Базовый CF-6 в main есть,
+    эта доводка — нет.
+
+- id: RX-TSK-0401
+  title: Дефолт-лейбл для сессий OMP-провайдера
+  kind: task
+  path: docs/omp-integration-gap.md
+  status: planned
+  origin: session-recovery-20260821-craft-agents
+  refs: [RX-SES-0001, RX-DOC-0006]
+  note: |
+    Единственный незакрытый пункт матрицы OMP v2: опциональный default label
+    для omp-провайдера. Мост set_session_labels уже есть.
+
+- id: RX-TSK-0402
+  title: Перенести платформу команд OMP фазы 0–7
+  kind: task
+  path: docs/omp-v2-prd.md
+  status: planned
+  origin: session-recovery-20260821-craft-agents-cf2-restored
+  refs: [RX-SES-0002, RX-DOC-0006]
+  note: |
+    ADR D1–D8, инвентарь omp 17.2.10, Command Gateway, AdvancedConsole,
+    ExtensionUiDialogHost, export/dump, share/copy, typed fallback.
+    В текущем дереве этих файлов нет. v2 G1–G4 уже в main.
+
+- id: RX-TSK-0403
+  title: UI контролируемой миграции credentials CF-2
+  kind: task
+  path: packages/shared/src/credentials
+  status: planned
+  origin: session-recovery-20260821-craft-agents-cf2-restored
+  refs: [RX-SES-0002, RX-DOC-0006]
+  note: |
+    Дизайн утверждён 2026-08-19, реализация не начата. Карточка в
+    AccountsSettingsPage: preview/apply/rollback без секретов в renderer.
+
+- id: RX-TSK-0404
+  title: Панель аудита OpenClaw
+  kind: task
+  path: apps/electron/src/renderer/pages
+  status: planned
+  origin: session-recovery-20260821-craft-agents-cf2-restored
+  refs: [RX-SES-0002, RX-DOC-0006]
+  note: |
+    Черновик 2026-08-09: Craft хостит изолированный OpenClaw runtime,
+    единый audit JSON без сырых секретов в renderer. Не реализовывался.
+
+- id: RX-TSK-0405
+  title: Решить судьбу и перенести rox-sidecar
+  kind: task
+  path: packages
+  status: planned
+  origin: session-recovery-20260821-marklindgreen
+  refs: [RX-SES-0005, RX-DOC-0006, RX-TSK-0406]
+  note: |
+    Параллельный закрытый цикл: Cargo workspace rox-api/graph/policy/projectors.
+    В craft-agents монорепо никогда не вливался. Сначала выбор владельца.
+
+- id: RX-TSK-0406
+  title: Перенести WP-UI поверхности закрытого цикла
+  kind: task
+  path: apps/electron
+  status: planned
+  origin: session-recovery-20260821-marklindgreen
+  refs: [RX-SES-0005, RX-DOC-0006, RX-TSK-0405]
+  note: |
+    Спеки docs/wp-ui: shell, inbox, tasks, CRM, chat, docs, canvas, mail, calls.
+    Запись только через command.propose. Каркас Electron с ROX_UI_MOCK.
+
+- id: RX-TSK-0407
+  title: Перенести command.approve и command.deny
+  kind: task
+  path: packages
+  status: planned
+  origin: session-recovery-20260821-marklindgreen
+  refs: [RX-SES-0005, RX-DOC-0006, RX-TSK-0405]
+  note: |
+    Коммит d48efe66: approval flow end-to-end с restart-safe action store.
+    В текущем дереве символов command.approve нет.
+
+- id: RX-TSK-0408
+  title: Перенести session intelligence W1–W5
+  kind: task
+  path: apps/electron/src/renderer
+  status: planned
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0409]
+  note: |
+    Локальный каталог, review inbox, 280-символьный потолок, audit без текста
+    кандидата. SessionIntelligencePanel в текущем дереве отсутствует.
+
+- id: RX-TSK-0409
+  title: Удержать PSI W6–W8 за гейтом
+  kind: task
+  path: apps/electron/src/renderer
+  status: planned
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0408]
+  note: |
+    W6 prompt inject и W8 sync сознательно не включать. Кандидатов не
+    продвигать в промпт агента.
+
+- id: RX-TSK-0410
+  title: Убрать credentialValue из identity.connect
+  kind: task
+  path: packages/server-core/src/handlers/rpc/identity.ts
+  status: planned
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-DOC-0006]
+  note: |
+    Спека CF-4: RPC не принимает сырой секрет. В текущем identity.ts
+    credentialValue всё ещё обязателен для siyuan-cloud.
+
+- id: RX-TSK-0411
+  title: Сделать UI импорта Notes
+  kind: task
+  path: apps/electron/src/renderer/pages/NotesPage.tsx
+  status: planned
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0412]
+  note: |
+    Канал MIGRATE_NOTES остаётся LOCAL_ONLY. UI импорта и managed SiYuan
+    в сессии сознательно не делались.
+
+- id: RX-TSK-0412
+  title: Довести OwnedRootPolicy
+  kind: task
+  path: packages/shared/src/config/paths.ts
+  status: planned
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-SES-0002, RX-DOC-0006]
+  note: |
+    Частично: getConfigDir и абсолютные import paths. Дефолт остаётся
+    ~/.craft-agent, не ~/ROX. CONFIG_DIR в текущем дереве всё ещё eager.
+
+- id: RX-TSK-0413
+  title: Исправить clone URL в README
+  kind: task
+  path: README.md
+  status: planned
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-DOC-0006]
+  note: |
+    Подписанный план менял lukilabs/craft-agents-oss → agisota/craft-agents-oss,
+    README не правился. Сейчас канон — github.com/rox-one/rox-one; H1 Craft Agents
+    оставлять, пока нет отдельного rename PR.
+
+- id: RX-TSK-0414
+  title: Перенести корпус docs/security
+  kind: task
+  path: docs
+  status: planned
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-DOC-0006]
+  note: |
+    В текущем дереве каталога docs/security нет. Перенести инвентарь,
+    runbook A-ops, HMA R3 spec и CF-status как исторические документы,
+    без live APPLY.
+
+- id: RX-TSK-0415
+  title: Origin-scoped remote TLS
+  kind: task
+  path: apps/electron/src/main/handlers/workspace.ts
+  status: planned
+  origin: session-recovery-20260821-security-external-access-20260811
+  refs: [RX-SES-0009, RX-DOC-0006]
+  note: |
+    Снять tlsRejectUnauthorized: false в workspace.ts и preload/bootstrap.ts.
+    До токена — проверка публичного CA либо сохранённого SPKI pin по origin.
+
+- id: RX-TSK-0416
+  title: Default-deny для публичного messaging
+  kind: task
+  path: packages/messaging-gateway/src/types.ts
+  status: planned
+  origin: session-recovery-20260821-security-external-access-20260811
+  refs: [RX-SES-0009, RX-SES-0001, RX-DOC-0006]
+  note: |
+    Заменить inherit/allow-list/open на public-inbox/owner-control/disabled.
+    Незнакомый отправитель не создаёт сессию и не вызывает инструменты.
+    Increment B на чекпоинте SES-0001, в main не влит.
+
+- id: RX-TSK-0417
+  title: Подтверждение владельца перед transform_data
+  kind: task
+  path: packages
+  status: planned
+  origin: session-recovery-20260821-security-external-access-20260811
+  refs: [RX-SES-0009, RX-DOC-0006, RX-TSK-0418]
+  note: |
+    В safe/explore до запуска сценария показать язык, входы, выход и
+    краткое описание. Публичный чат на этот путь не попадает.
+    Временный файл и процесс — только после подтверждения.
+
+- id: RX-TSK-0418
+  title: Изоляция исполнения в microVM
+  kind: task
+  path: packages
+  status: blocked
+  origin: session-recovery-20260821-security-external-access-20260811
+  refs: [RX-SES-0009, RX-DOC-0006, RX-TSK-0417]
+  note: |
+    Blocker: нет утверждённого образа гостя, подписи, hash, лимитов и
+    договора Virtualization.framework. Обычный процесс macOS не объявлять
+    заменой изоляции. Коммит 72086646 задал только контракт.
+
+- id: RX-TSK-0419
+  title: Pairing устройств, SHARE_ORIGIN и подписанные релизы
+  kind: task
+  path: docs
+  status: planned
+  origin: session-recovery-20260821-security-external-access-20260811
+  refs: [RX-SES-0009, RX-DOC-0006]
+  note: |
+    Не начато: WebAuthn/passkeys pairing, неизменяемые публичные ссылки,
+    раздельные APP_ORIGIN и SHARE_ORIGIN, защищённая поставка релизов.
+    После TLS и messaging authority, отдельным соглашением.
+
+- id: RX-TSK-0420
+  title: Собрать факты Gate 0 у владельца
+  kind: task
+  path: docs
+  status: blocked
+  origin: session-recovery-20260821-do-it-all-security-slices
+  refs: [RX-SES-0008, RX-SES-0001, RX-DOC-0006]
+  note: |
+    Blocker: владелец не назвал datastore и microVM owner. Без имён
+    Gate 0 остаётся BLOCK. Не путать с live APPLY HMA.

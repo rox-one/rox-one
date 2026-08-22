@@ -77,6 +77,80 @@ jobs:
   #     xcode: "16.2.0"
   #   resource_class: macos.m1.medium.gen2
 
+  # RX-PIP-0102: сборка Dockerfile.build на удалённом Docker.
+  # BuildKit + docker_layer_caching. Секреты — Infisical через scripts/rx-build.sh,
+  # не через ARG/ENV и не через echo в лог.
+  rx-build-image:
+    docker:
+      - image: oven/bun:1.3.14-debian
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Установить Docker CLI, Buildx, Infisical CLI и Python
+          command: |
+            set -euo pipefail
+            apt-get update
+            apt-get install -y --no-install-recommends \
+              ca-certificates curl gnupg python3 git
+            install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg \
+              | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            chmod a+r /etc/apt/keyrings/docker.gpg
+            . /etc/os-release
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian ${VERSION_CODENAME} stable" \
+              > /etc/apt/sources.list.d/docker.list
+            apt-get update
+            apt-get install -y --no-install-recommends docker-ce-cli docker-buildx-plugin
+            # Infisical CLI — тот же канал, что локальная разработка.
+            curl -1sLf 'https://dl.cloudsmith.io/public/infisical/infisical-cli/setup.deb.sh' \
+              | distro=debian bash
+            apt-get update
+            apt-get install -y infisical
+      - run:
+          name: Собрать образ Dockerfile.build через BuildKit
+          environment:
+            DOCKER_BUILDKIT: "1"
+            BUILDKIT_PROGRESS: plain
+          command: |
+            set -euo pipefail
+            if [ -z "${INFISICAL_TOKEN:-}" ]; then
+              echo "в проекте CircleCI нужен INFISICAL_TOKEN (machine identity)" >&2
+              exit 1
+            fi
+            if [ -z "${INFISICAL_DOMAIN:-}" ]; then
+              echo "в проекте CircleCI нужен INFISICAL_DOMAIN (достижимый URL Infisical, не 127.0.0.1)" >&2
+              exit 1
+            fi
+            export RX_IMAGE_TAG="rox-one:${CIRCLE_SHA1}"
+            bash scripts/rx-build.sh
+            docker image inspect "rox-one:${CIRCLE_SHA1}" >/dev/null
+          no_output_timeout: 30m
+
+  # RX-PIP-0103: реестр идентификаторов + validate:ci.
+  # Скрипт `rx:validate` добавляет другой агент — здесь только вызов.
+  rx-validate:
+    docker:
+      - image: oven/bun:1.3.14-debian
+    steps:
+      - checkout
+      - run:
+          name: Установить системные зависимости для validate:ci
+          command: |
+            apt-get update && apt-get install -y --no-install-recommends \
+              python3 git unzip xz-utils ca-certificates
+      - run:
+          name: Установить зависимости workspace
+          command: bun install --frozen-lockfile
+      - run:
+          name: Проверить реестр RX
+          command: bun run rx:validate
+      - run:
+          name: validate:ci
+          command: bun run validate:ci
+          no_output_timeout: 30m
+
 workflows:
   toolchain-smoke:
     jobs:
@@ -90,3 +164,10 @@ workflows:
               only: main
     jobs:
       - craft-gateway-deploy
+  # RX-PIP-0104: автобилд и валидация на main и на GitHub PR.
+  # Без фильтров веток: CircleCI запускает пайплайн и на push в main,
+  # и на head-ветку открытого PR.
+  rx-main:
+    jobs:
+      - rx-validate
+      - rx-build-image

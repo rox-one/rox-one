@@ -1,0 +1,85 @@
+# Фрагмент реестра RX — автобилд (BuildKit + CircleCI + Infisical).
+# Блоки номеров: PIP 0100-0199, TSK 0600-0699. Документ: RX-DOC-0005.
+
+- id: RX-PIP-0100
+  title: Сборка образа через BuildKit
+  kind: pipeline
+  path: Dockerfile.build
+  status: active
+  refs: [RX-PIP-0101, RX-DOC-0005, RX-TSK-0600]
+  note: |
+    Многостадийный Dockerfile: кэш bun через RUN --mount=type=cache,
+    секреты только через RUN --mount=type=secret (github_token, gh_token).
+    База oven/bun:1.3.14-debian. Финальная стадия — runtime с dist/server.
+
+- id: RX-PIP-0101
+  title: Локальный вход сборки rx-build.sh
+  kind: pipeline
+  path: scripts/rx-build.sh
+  status: active
+  refs: [RX-PIP-0100, RX-DOC-0005]
+  note: |
+    Забирает GITHUB_TOKEN и GH_TOKEN из Infisical (prod) во временные файлы
+    chmod 600, вызывает docker buildx build --secret, чистит каталог trap EXIT.
+    Значения секретов в stdout не печатает.
+
+- id: RX-PIP-0102
+  title: CircleCI job rx-build-image
+  kind: pipeline
+  path: .circleci/config.yml
+  status: active
+  refs: [RX-PIP-0100, RX-PIP-0101, RX-PIP-0104]
+  note: |
+    setup_remote_docker с docker_layer_caching true, включённый BuildKit,
+    сборка Dockerfile.build через scripts/rx-build.sh и секреты Infisical.
+
+- id: RX-PIP-0103
+  title: CircleCI job rx-validate
+  kind: pipeline
+  path: .circleci/config.yml
+  status: active
+  refs: [RX-PIP-0003, RX-PIP-0104]
+  note: |
+    bun install --frozen-lockfile, bun run rx:validate (скрипт валидатора
+    добавляет другой агент), затем bun run validate:ci.
+
+- id: RX-PIP-0104
+  title: CircleCI workflow rx-main
+  kind: pipeline
+  path: .circleci/config.yml
+  status: active
+  refs: [RX-PIP-0102, RX-PIP-0103]
+  note: |
+    Гоняет rx-validate и rx-build-image на каждом пайплайне: ветка main
+    и GitHub PR (head-ветка). Существующие toolchain-smoke и gateway-deploy
+    не трогает.
+
+- id: RX-DOC-0005
+  title: Сборка образа и секреты BuildKit
+  kind: doc
+  path: docs/ru/RX-DOC-0005-build.md
+  status: active
+  refs: [RX-PIP-0100, RX-PIP-0101, RX-TSK-0600]
+  note: |
+    Как собирать локально, таблица секретов Infisical, три шага добавления
+    нового секрета, отличие BuildKit-secret от build-arg.
+
+- id: RX-TSK-0600
+  title: Настроить автобилд репозитория
+  kind: task
+  path: Dockerfile.build
+  status: active
+  refs: [RX-PIP-0100, RX-PIP-0101, RX-PIP-0102, RX-PIP-0103, RX-PIP-0104, RX-DOC-0005]
+  note: |
+    Воспроизводимая сборка образа BuildKit плюс пайплайн CircleCI, который
+    берёт сборочные секреты из Infisical, а не из ARG/ENV.
+
+- id: RX-TSK-0601
+  title: Зафиксировать контракт сборочных секретов
+  kind: task
+  path: docs/ru/RX-DOC-0005-build.md
+  status: active
+  refs: [RX-DOC-0005, RX-PIP-0101]
+  note: |
+    Описать GITHUB_TOKEN и GH_TOKEN как BuildKit-secret, INFISICAL_TOKEN как
+    загрузчик, и запрет класть рантайм-секреты prod в слои образа.
