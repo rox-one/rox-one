@@ -31,3 +31,12 @@
   note: |
     Бронь номера: проверка заявленных функций README и docs против кода,
     вердикты works/partial/broken/idea_only и задачи устранения.
+
+- id: RX-DOC-0028
+  title: Корпус документации безопасности
+  kind: doc
+  path: docs/ru/RX-DOC-0028-security-corpus.md
+  status: active
+  refs: [RX-TSK-0414]
+  note: |
+    Инвентарь перенесённого корпуса docs/security из бэкапов session-recovery.

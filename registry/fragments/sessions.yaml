@@ -269,13 +269,14 @@
   title: Перенести корпус docs/security
   kind: task
   path: docs
-  status: planned
+  status: done
   origin: session-recovery-20260821-do-it-all-security-slices
   refs: [RX-SES-0008, RX-DOC-0006]
   note: |
     В текущем дереве каталога docs/security нет. Перенести инвентарь,
     runbook A-ops, HMA R3 spec и CF-status как исторические документы,
     без live APPLY.
+    Исполнено 2026-08-22: 17 файлов в docs/security/, индекс RX-DOC-0028.
 
 - id: RX-TSK-0415
   title: Origin-scoped remote TLS
