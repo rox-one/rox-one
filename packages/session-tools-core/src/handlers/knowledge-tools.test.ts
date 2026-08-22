@@ -224,6 +224,9 @@ describe('knowledge_search', () => {
           items: Array.from({ length: 2000 }, (_, i) => ({
             ref: { scheme: 'siyuan' as const, kind: 'block' as const, id: `blk-${i}` },
             title: `Hit ${i}`,
+            snippet: `snippet ${i}`,
+            notebookPath: 'Знания/Kernel',
+            updatedAt: 0,
           })),
         };
       },

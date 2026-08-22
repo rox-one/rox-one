@@ -8,12 +8,15 @@ import { runHostBash } from '@craft-agent/session-tools-core';
  */
 export function createCraftBashToolDefinition(cwd: string): ToolDefinition<any, any> {
   const base = createBashToolDefinition(cwd);
-  return {
+  // Дженерики ToolDefinition<any, any> стирают связь параметров execute с
+  // базовым инструментом — приводим собранный объект явно.
+  const definition = {
     ...base,
-    execute: async (_toolCallId, params) => {
-      const command = typeof (params as { command?: unknown }).command === 'string'
-        ? (params as { command: string }).command
-        : '';
+    execute: async (_toolCallId: string, params: unknown) => {
+      const command =
+        typeof params === 'object' && params !== null && 'command' in params && typeof params.command === 'string'
+          ? params.command
+          : '';
       const result = await runHostBash({ command, cwd, workspaceRoot: cwd });
       return {
         content: result.content,
@@ -21,4 +24,5 @@ export function createCraftBashToolDefinition(cwd: string): ToolDefinition<any, 
       };
     },
   };
+  return definition as unknown as ToolDefinition<any, any>;
 }
