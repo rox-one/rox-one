@@ -44,7 +44,7 @@ status: active
 | `RX-FEA-0028` | CLI-клиент (self-contained, JSON, pipe) | README CLI Client | работает | да |
 | `RX-FEA-0029` | WebUI как самостоятельная поверхность (отличная от viewer/share) | apps/webui | частично | — |
 | `RX-FEA-0030` | Native substrate на Rust | docs/specs/2026-08-12-native-substrate/ | частично | — |
-| `RX-FEA-0031` | Мёртвые ручки корневого package.json (задокументировано) | docs/repo-known-issues.md §Root dead knobs | **не работает** | — |
+| `RX-FEA-0031` | Мёртвые ручки корневого package.json | docs/repo-known-issues.md §Root dead knobs | работает (устранено, tickets 08/16) | — |
 | `RX-FEA-0032` | ACP/OMP v2 мост агентов | docs/omp-v2-prd.md | замысел | — |
 
 ## Что нужно, чтобы заработало
