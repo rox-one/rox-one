@@ -354,7 +354,7 @@ export interface InfisicalImporterEnv {
  */
 export function createInfisicalImporter(
   provider: InfisicalFabricProvider,
-  env: InfisicalImporterEnv = process.env,
+  env: InfisicalImporterEnv = process.env as unknown as InfisicalImporterEnv,
 ): CredentialImporter {
   let last: ImportCandidate | undefined;
 
@@ -421,7 +421,10 @@ export function createInfisicalImporter(
       const version = await provider.write({
         kind: candidate.kind,
         mode,
-        locator: candidate.locator,
+        locator: candidate.locator ?? (() => {
+          // managed/reference требуют локатор; его отсутствие — битый кандидат.
+          throw new ConnectionFabricError('IMPORT_CANDIDATE_UNKNOWN', `${input.candidateId}: locator отсутствует`);
+        })(),
         workspaceId: input.workspaceId,
         requestedBy: input.requestedBy,
         credentialRefId: input.credentialRefId,

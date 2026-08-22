@@ -283,7 +283,10 @@ export class WindowManager {
       if (isMac && opts?.vibrancy !== false) {
         try {
           window.setVibrancy('under-window')
-          window.setVisualEffectState('active')
+          // setVisualEffectState появился в новых типах Electron; на старых
+          // типизация не знает метода — вызываем опционально через сужение.
+          ;(window as unknown as { setVisualEffectState?: (state: string) => void })
+            .setVisualEffectState?.('active')
         } catch (error) {
           windowLog.warn('Failed to apply macOS vibrancy after paint:', error)
         }

@@ -65,18 +65,17 @@ describe('native source-index primary', () => {
     installClient({
       registeredChannels: ['index:reindex'],
       close: async () => {},
-      invoke: async (channel: string) => {
+      invoke: async <T,>(channel: string): Promise<T> => {
         invoked.push(channel)
-        if (channel === 'index:reindex') {
-          return {
-            indexed: 2100,
-            skipped: 0,
-            truncated: false,
-            dbPath: '/tmp/source-index.native.sqlite',
-            fts: true,
-          }
-        }
-        throw new Error(`unexpected ${channel}`)
+        if (channel !== 'index:reindex') throw new Error(`unexpected ${channel}`)
+        // Фейк отвечает реальной формой ответа; дженерик сужает вызывающий код.
+        return {
+          indexed: 2100,
+          skipped: 0,
+          truncated: false,
+          dbPath: '/tmp/source-index.native.sqlite',
+          fts: true,
+        } as T
       },
     })
 
@@ -96,11 +95,9 @@ describe('native source-index primary', () => {
     installClient({
       registeredChannels: ['index:status'],
       close: async () => {},
-      invoke: async (channel: string) => {
-        if (channel === 'index:status') {
-          return { dbPath: '/tmp/source-index.native.sqlite', fts: true, indexed: 2100 }
-        }
-        throw new Error(`unexpected ${channel}`)
+      invoke: async <T,>(channel: string): Promise<T> => {
+        if (channel !== 'index:status') throw new Error(`unexpected ${channel}`)
+        return { dbPath: '/tmp/source-index.native.sqlite', fts: true, indexed: 2100 } as T
       },
     })
 

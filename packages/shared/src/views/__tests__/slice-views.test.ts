@@ -165,7 +165,9 @@ describe('startOfToday leftover', () => {
   it('validates and evaluates startOfToday()', () => {
     expect(validateViewExpression('dueDate < startOfToday()').valid).toBe(true)
     const now = Date.now()
-    expect(VIEW_FUNCTIONS.startOfToday()).toBe(localDayBounds(now).start)
-    expect(VIEW_FUNCTIONS.startOfToday(now)).toBe(localDayBounds(now).start)
+    const startOfToday = VIEW_FUNCTIONS.startOfToday
+    if (!startOfToday) throw new Error('VIEW_FUNCTIONS.startOfToday должен существовать')
+    expect(startOfToday()).toBe(localDayBounds(now).start)
+    expect(startOfToday(now)).toBe(localDayBounds(now).start)
   })
 })

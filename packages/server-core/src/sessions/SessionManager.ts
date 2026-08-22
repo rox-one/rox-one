@@ -7717,7 +7717,7 @@ export class SessionManager implements ISessionManager {
       const requestMeta = this.pendingPermissionRequests.get(requestId)
       this.pendingPermissionRequests.delete(requestId)
 
-      if (shouldBrokerGatePermission(requestMeta)) {
+      if (requestMeta && shouldBrokerGatePermission(requestMeta)) {
         const brokerResult = this.privilegedExecutionBroker.resolveApproval(requestId, allowed, {
           expectedCommandHash: requestMeta.commandHash,
         })

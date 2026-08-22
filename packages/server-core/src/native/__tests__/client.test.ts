@@ -30,10 +30,15 @@ describe('NativeSidecarClient', () => {
     const decoder = new FrameDecoder()
     const server = createServer((sock) => {
       sock.on('data', (chunk) => {
-        for (const raw of decoder.push(chunk)) {
+        // Сетевой чunk приходит как Buffer-подобный union — приводим к буферу декодера.
+        const payloadChunk = Buffer.from(chunk as unknown as Uint8Array)
+        for (const raw of decoder.push(payloadChunk)) {
           const env = JSON.parse(raw) as MessageEnvelope
           onEnvelope(env, (reply) => {
-            sock.write(encodeFrame(JSON.stringify(reply)))
+            // encodeFrame отдаёт строку или буфер; сокет принимает только буфер.
+            const frame = encodeFrame(JSON.stringify(reply))
+            const payload = typeof frame === 'string' ? Buffer.from(frame) : Buffer.from(frame as unknown as Uint8Array)
+            sock.write(payload)
           })
         }
       })

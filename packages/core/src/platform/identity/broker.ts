@@ -70,7 +70,7 @@ export interface ExecuteTrustedHttpInput {
   readonly leaseId: string;
   readonly url: string;
   readonly method?: string;
-  readonly headers?: HeadersInit;
+  readonly headers?: RequestInit['headers'];
   readonly fetch: TrustedHttpFetch;
 }
 

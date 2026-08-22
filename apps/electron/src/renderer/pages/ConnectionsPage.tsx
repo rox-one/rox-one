@@ -115,7 +115,9 @@ type FabricApi = {
 }
 
 function fabricApi(): FabricApi {
-  return (window.electronAPI ?? {}) as FabricApi
+  // electronAPI — надмножество во время исполнения; здесь нужен только
+  // опциональный fabric-срез (см. комментарий к FabricApi).
+  return (window.electronAPI ?? {}) as unknown as FabricApi
 }
 
 function asMetaString(value: unknown): string {
