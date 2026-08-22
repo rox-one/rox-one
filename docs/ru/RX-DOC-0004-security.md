@@ -14,8 +14,8 @@ status: active
 
 | Код | Находка | Severity | Файл | Статус |
 |-----|---------|----------|------|--------|
-| RX-SEC-0001 | Ключ шифрования хранилища учётных данных выводится из публично читаемых идентификаторов машины | Высокая | packages/shared/src/credentials/backends/secure-storage.ts | active |
-| RX-SEC-0002 | Бэкап credentials.enc.bak создаётся без режима 0600 | Средняя | packages/shared/src/credentials/backends/secure-storage.ts | active |
+| RX-SEC-0001 | Ключ шифрования хранилища учётных данных выводится из публично читаемых идентификаторов машины | Высокая | packages/shared/src/credentials/backends/secure-storage.ts | **done** |
+| RX-SEC-0002 | Бэкап credentials.enc.bak создаётся без режима 0600 | Средняя | packages/shared/src/credentials/backends/secure-storage.ts | **done** |
 | RX-SEC-0003 | Серверный токен печатается в stdout при старте сервера | Средняя | packages/server/src/index.ts | active |
 | RX-SEC-0004 | SDK-сессии всегда запускаются в bypassPermissions; весь контроль инструментов — один PreToolUse-hook | Средняя | packages/shared/src/agent/claude-agent.ts | active |
 | RX-SEC-0005 | Автономные задачи и восстановленные сессии молча получают allow-all по умолчанию | Средняя | packages/server-core/src/tasks/TaskRunner.ts | active |
@@ -24,6 +24,8 @@ status: active
 | RX-SEC-0008 | Bash-инструмент запускает login-shell (-lc): sanitized env может быть дополнен профилями пользователя | Низкая | packages/session-tools-core/src/handlers/host-bash.ts | active |
 
 Итого: **8 находок — Критично: 0, Высокая: 1, Средняя: 4, Низкая: 3.**
+
+> Исправлено 2026-08-22 (коммит `3ea87e8`, ветка `rox/ru-codex-navigation`): RX-SEC-0001 — v3 мастер-ключ из OS-keychain с файловым фолбэком 0600, machine-id понижен до read-only легаси; RX-SEC-0002 — принудительный chmod 0600 на .bak. Тесты: secure-storage-master-key.test.ts.
 
 ## Секреты, найденные ПРЯМО в рабочем дереве
 
