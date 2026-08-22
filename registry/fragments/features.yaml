@@ -219,11 +219,11 @@
     Чтобы заработать: Разобрать 15 веток rox/native-* по методике plans/branch-disposition.md
 
 - id: RX-FEA-0031
-  title: "Мёртвые ручки корневого package.json (задокументировано)"
+  title: "Мёртвые ручки корневого package.json"
   kind: feature
-  status: active
+  status: done
   note: |
-    Заявлено: docs/repo-known-issues.md §Root dead knobs. Вердикт: не работает (broken). Доказательства: package.json.
+    Заявлено: docs/repo-known-issues.md §Root dead knobs. Вердикт: работает (works) — устранено ранее, tickets 08 и 16 зафиксированы в самом разделе. Доказательства: package.json.
     Чтобы заработать: Удалить неработающие скрипты-ручки из корневого package.json
 
 - id: RX-FEA-0032
@@ -268,7 +268,7 @@
 - id: RX-TSK-0104
   title: "Удалить мёртвые ручки корневого package.json"
   kind: task
-  status: planned
+  status: dropped
   refs: [RX-FEA-0031]
   note: |
     Из аудита функций RX-DOC-0025.
