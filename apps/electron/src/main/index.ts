@@ -105,6 +105,7 @@ import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
 import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@craft-agent/server-core/bootstrap'
+import { isAllowedServerEndpoint } from './server-endpoint-policy'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } from '@craft-agent/server-core/model-fetchers'
@@ -911,8 +912,13 @@ app.whenReady().then(async () => {
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')
       registerSshTunnelIpc()
 
-      // Cross-server RPC — invoke a channel on an arbitrary remote server
+      // Cross-server RPC — invoke a channel on an arbitrary remote server.
+      // RX-SEC-0006: URL рендерера проходит политику транспорта — открытый
+      // текст только на loopback, иначе TLS. Без этого компрометированный
+      // рендерер получает SSRF во внутреннюю сеть с нашим токеном.
       ipcMain.handle('server:invokeOnServer', async (_event, url: string, token: string, channel: string, ...args: unknown[]) => {
+        const policy = isAllowedServerEndpoint(url)
+        if (!policy.ok) throw new Error(`Blocked by server endpoint policy: ${policy.reason}`)
         const { connectToRemote } = await import('./handlers/workspace')
         const { client, error } = await connectToRemote(url, token)
         if (!client) throw new Error(error ?? 'Connection failed')
