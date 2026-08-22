@@ -1,0 +1,10 @@
+[submodule "vendor/rox-one-assets"]
+	path = vendor/rox-one-assets
+	url = https://github.com/rox-one/rox-one-assets.git
+	update = none
+	shallow = true
+[submodule "vendor/rox-one-website"]
+	path = vendor/rox-one-website
+	url = https://github.com/rox-one/rox-one-website.git
+	update = none
+	shallow = true
