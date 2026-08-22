@@ -81,8 +81,8 @@ irm https://agents.craft.do/install-app.ps1 | iex
 ### Build from Source
 
 ```bash
-git clone https://github.com/lukilabs/craft-agents-oss.git
-cd craft-agents-oss
+git clone https://github.com/rox-one/rox-one.git
+cd rox-one
 bun install
 bun run electron:start
 ```
