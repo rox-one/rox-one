@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **43**. Заблокировано: **3**, Готово: **10**, Отменено: **2**, Запланировано: **28**.
+Всего задач: **43**. Заблокировано: **3**, Готово: **11**, Отменено: **2**, Запланировано: **27**.
 
 Номерные блоки волн: 0100–0299 аудит функций · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
 
@@ -34,7 +34,7 @@ status: active
 | `RX-TSK-0302` | Убрать печать CRAFT_SERVER_TOKEN в stdout по умолчанию | Готово | Средняя | `packages/server/src/index.ts` |
 | `RX-TSK-0303` | Fail-closed контракт PreToolUse-hook и canary-проверка при старте сессии | Запланировано | Средняя | `packages/shared/src/agent/claude-agent.ts` |
 | `RX-TSK-0304` | Сделать defaults.permissionMode обязательным в task-spec | Запланировано | Средняя | `packages/server-core/src/tasks/TaskRunner.ts` |
-| `RX-TSK-0305` | Egress-политика для канала server:invokeOnServer | Запланировано | Низкая | `apps/electron/src/main/index.ts` |
+| `RX-TSK-0305` | Egress-политика для канала server:invokeOnServer | Готово | Низкая | `apps/electron/src/main/index.ts` |
 | `RX-TSK-0306` | Перевести validateToken на timingSafeEqual | Готово | Низкая | `packages/server-core/src/bootstrap/headless-start.ts` |
 | `RX-TSK-0307` | Заменить bash -lc на bash -c с фиксированным PATH в host-bash | Запланировано | Низкая | `packages/session-tools-core/src/handlers/host-bash.ts` |
 
