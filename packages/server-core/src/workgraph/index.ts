@@ -90,11 +90,20 @@ export interface CreateConnectionInput {
   readonly scopes?: readonly string[]
 }
 
+type CredentialRefId = `cred_${string}`
+
+function assertCredentialRefId(value: string): CredentialRefId {
+  if (!/^cred_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+    throw new Error('Invalid credentialRefId')
+  }
+  return value as `cred_${string}`
+}
+
 export interface ConnectionRecord {
   readonly id: string
   readonly workspaceId: string
   readonly integrationId: string
-  readonly credentialRefId: string
+  readonly credentialRefId: `cred_${string}`
   readonly storageMode: ConnectionStorageMode
   readonly scopes: readonly string[]
   readonly createdAt: number
@@ -1079,7 +1088,7 @@ function rowToConnection(row: Record<string, unknown>): ConnectionRecord {
     id: requiredString('id'),
     workspaceId: requiredString('workspace_id'),
     integrationId: requiredString('integration_id'),
-    credentialRefId: requiredString('credential_ref_id'),
+    credentialRefId: assertCredentialRefId(requiredString('credential_ref_id')),
     storageMode: requiredString('storage_mode') as ConnectionStorageMode,
     scopes,
     createdAt: requiredInteger('created_at'),

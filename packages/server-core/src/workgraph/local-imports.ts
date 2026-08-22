@@ -47,7 +47,7 @@ async function commitConnection(input: {
   kernel: Pick<WorkGraphKernel, 'createConnection'>
   workspaceId: string
   integrationId: string
-  credentialRefId: string
+  credentialRefId: `cred_${string}`
   storageMode: ConnectionRecord['storageMode']
   scopes: readonly string[]
 }): Promise<ConnectionRecord> {
