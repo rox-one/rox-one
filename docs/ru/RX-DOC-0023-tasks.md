@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **43**. В работе: **4**, Заблокировано: **2**, Готово: **1**, Отменено: **2**, Запланировано: **34**.
+Всего задач: **43**. В работе: **4**, Заблокировано: **2**, Готово: **3**, Отменено: **2**, Запланировано: **32**.
 
 Номерные блоки волн: 0100–0299 аудит функций · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
 
@@ -29,8 +29,8 @@ status: active
 
 | Код | Задача | Статус | Severity | Файл |
 |-----|--------|--------|----------|------|
-| `RX-TSK-0300` | Перевести credentials.enc на мастер-ключ из OS-keychain | Запланировано | Высокая | `packages/shared/src/credentials/backends/secure-storage.ts` |
-| `RX-TSK-0301` | Выставлять chmod 0600 для credentials.enc.bak | Запланировано | Средняя | `packages/shared/src/credentials/backends/secure-storage.ts` |
+| `RX-TSK-0300` | Перевести credentials.enc на мастер-ключ из OS-keychain | Готово | Высокая | `packages/shared/src/credentials/backends/secure-storage.ts` |
+| `RX-TSK-0301` | Выставлять chmod 0600 для credentials.enc.bak | Готово | Средняя | `packages/shared/src/credentials/backends/secure-storage.ts` |
 | `RX-TSK-0302` | Убрать печать CRAFT_SERVER_TOKEN в stdout по умолчанию | Запланировано | Средняя | `packages/server/src/index.ts` |
 | `RX-TSK-0303` | Fail-closed контракт PreToolUse-hook и canary-проверка при старте сессии | Запланировано | Средняя | `packages/shared/src/agent/claude-agent.ts` |
 | `RX-TSK-0304` | Сделать defaults.permissionMode обязательным в task-spec | Запланировано | Средняя | `packages/server-core/src/tasks/TaskRunner.ts` |
