@@ -1,4 +1,6 @@
 import { resolveConfigDir } from "../config/paths.ts"
+/** Written only after an installation is complete; resolvers reject partial versions. */
+export const TOOLCHAIN_INSTALL_COMPLETE_MARKER = '.craft-toolchain-install-complete';
 /**
  * Toolchain Download Manager — контракты.
  * Spec: docs/superpowers/specs/2026-08-06-toolchain-download-manager-design.md
@@ -51,6 +53,7 @@ export type ToolName =
   // local opt-in: craft-native sidecar. GitHub artifacts are not published yet;
   // seed from CRAFT_NATIVE_BIN / cargo into toolchain/<name>/current/bin.
   | 'craft-native'
+  | 'openclaw'
   // pip opt-in: uv pip install --require-hashes into toolchain layout
   | 'pip-packaging'
   | 'cli-anything';
@@ -90,6 +93,7 @@ export const ALL_TOOL_NAMES = [
   'docker',
   'brew',
   'craft-native',
+  'openclaw',
   'pip-packaging',
   'cli-anything',
 ] as const satisfies readonly ToolName[];
@@ -231,6 +235,9 @@ export interface ToolchainResolver {
   toolchainPathPrefix(): Promise<string>;
   /** Директория toolchain: <resolveConfigDir()>/toolchain. */
   toolchainDir(): string;
+  /** Точный управляемый лаунчер OpenClaw (npm-pin); null если не установлено. */
+  resolveOpenClawLauncher(): Promise<ManagedOpenClawLauncher | null>;
+
 }
 
 export interface ToolchainManager {
@@ -252,4 +259,14 @@ export interface ToolchainPaths {
   toolchainDir: string; // <resolveConfigDir()>/toolchain
   downloadsDir: string; // <resolveConfigDir()>/downloads
   stateFile: string; // <resolveConfigDir()>/toolchain/state.json
+}
+
+/**
+ * Exact managed OpenClaw launcher. `executablePath` is the toolchain-owned
+ * Node binary and `argsPrefix[0]` is the verified package entrypoint.
+ */
+export interface ManagedOpenClawLauncher {
+  executablePath: string;
+  argsPrefix: readonly [string];
+  version: '2026.7.1-2';
 }

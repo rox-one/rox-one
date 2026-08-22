@@ -4,6 +4,7 @@
  */
 
 export * from './types';
+export { OPENCLAW_CAPABILITIES, probeOpenClawCapabilities } from './openclaw';
 export { currentPlatform, toolchainPaths, loadManifest, TOOLCHAIN_MANIFEST } from './manifest';
 export type { ManifestToolData } from './manifest-data';
 export { createResolver } from './resolver';
@@ -22,3 +23,4 @@ export {
 } from './craft-native';
 export { StatusEmitter } from './status';
 export type { StatusListener } from './status';
+export type { OpenClawCapability, OpenClawCapabilityProbeOptions, OpenClawCapabilityProbeRequest, OpenClawCapabilityProbeResult, OpenClawCapabilityProbeRunner } from './openclaw';
