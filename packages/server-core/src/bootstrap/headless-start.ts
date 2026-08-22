@@ -1,5 +1,6 @@
 import { writeFileSync, readFileSync, unlinkSync, existsSync, readlinkSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
+import { createHash, timingSafeEqual } from 'node:crypto'
 import { uptime as osUptime } from 'node:os'
 import { join, basename } from 'node:path'
 import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity.ts'
@@ -119,6 +120,26 @@ export function generateServerToken(): string {
   const bytes = new Uint8Array(24)
   crypto.getRandomValues(bytes)
   return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Constant-time token comparison (RX-SEC-0007).
+ * Обе стороны хешируются до фиксированной длины перед timingSafeEqual,
+ * поэтому ни содержимое, ни длина секрета не утекают через тайминги.
+ */
+export function secureTokenCompare(provided: string, expected: string): boolean {
+  const digestA = createHash('sha256').update(provided).digest()
+  const digestB = createHash('sha256').update(expected).digest()
+  return timingSafeEqual(digestA, digestB)
+}
+
+/**
+ * Безопасная для логов форма серверного токена (RX-SEC-0003).
+ * Никогда не возвращает полный секрет; короткие токены маскируются целиком.
+ */
+export function maskTokenForDisplay(token: string): string {
+  if (token.length < 12) return '***'
+  return `${token.slice(0, 4)}…${token.slice(-4)}`
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +426,7 @@ export async function bootstrapServer<TSessionManager, THandlerDeps>(
     host: rpcHost,
     port: rpcPort,
     requireAuth: true,
-    validateToken: async (t) => t === serverToken,
+    validateToken: async (t) => secureTokenCompare(t, serverToken),
     validateSessionCookie: options.validateSessionCookie,
     serverId: options.serverId ?? 'headless',
     serverVersion: options.serverVersion,
