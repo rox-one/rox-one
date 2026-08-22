@@ -81,7 +81,7 @@ afterEach(async () => {
 });
 
 describe('ensureContextDocs seeding', () => {
-  it('seeds both templates exactly once on a clean CONFIG_DIR', () => {
+  it('seeds both templates exactly once on a clean resolveConfigDir()', () => {
     const dirs = setupDirs();
     try {
       ensureContextDocs();

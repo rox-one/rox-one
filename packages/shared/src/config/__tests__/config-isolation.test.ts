@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { homedir } from 'os'
 import { join } from 'path'
-import { CONFIG_DIR } from '../paths.ts'
+import { resolveConfigDir } from "../paths.ts"
 
 /**
  * Guards the invariant that a test run never touches the developer's real
@@ -23,7 +23,7 @@ describe('test config isolation', () => {
   it('resolves the config root outside the real ~/.craft-agent', () => {
     const realConfigDir = join(homedir(), '.craft-agent')
 
-    expect(CONFIG_DIR).not.toBe(realConfigDir)
-    expect(CONFIG_DIR.startsWith(`${realConfigDir}/`)).toBe(false)
+    expect(resolveConfigDir()).not.toBe(realConfigDir)
+    expect(resolveConfigDir().startsWith(`${realConfigDir}/`)).toBe(false)
   })
 })

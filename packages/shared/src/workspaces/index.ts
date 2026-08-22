@@ -37,6 +37,5 @@ export {
   // Auto-discovery
   discoverWorkspacesInDefaultLocation,
   // Constants
-  CONFIG_DIR,
   DEFAULT_WORKSPACES_DIR,
 } from './storage.ts';

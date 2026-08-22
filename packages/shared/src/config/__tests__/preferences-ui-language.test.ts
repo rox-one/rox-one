@@ -262,7 +262,14 @@ describe('preferences.uiLanguage', () => {
         writeRawPrefs(prefsFile, { name: 'Alice', language: 'Hungarian' });
         const r = runScript(configDir, `
           import { setPersistedUiLanguage } from '${PREFS_MODULE}';
+<<<<<<< HEAD
           setPersistedUiLanguage('ko');
+||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
+          setPersistedUiLanguage('hu');
+=======
+import { resolveConfigDir } from "./paths.ts"
+          setPersistedUiLanguage('hu');
+>>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
         `);
         expect(r.exitCode).toBe(0);
         const raw = JSON.parse(readFileSync(prefsFile, 'utf-8'));

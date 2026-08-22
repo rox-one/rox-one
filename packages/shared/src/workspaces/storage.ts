@@ -28,10 +28,10 @@ import {
   ensureLocalNotesSource,
 } from '../sources/builtin-sources.ts';
 import { loadConfigDefaults } from '../config/storage.ts';
-import { CONFIG_DIR } from '../config/paths.ts';
 import { generateSlug } from '../utils/slug.ts';
 import { parsePermissionMode, PERMISSION_MODE_ORDER } from '../agent/mode-types.ts';
 import { normalizeThinkingLevel } from '../agent/thinking-levels.ts';
+import { resolveConfigDir } from "../config/paths.ts";
 import type {
   WorkspaceConfig,
   LoadedWorkspace,
@@ -39,7 +39,7 @@ import type {
   WorkspaceKind,
 } from './types.ts';
 
-const DEFAULT_WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces');
+const DEFAULT_WORKSPACES_DIR = join(resolveConfigDir(), 'workspaces');
 
 /**
  * Canonical identity supplied by the global registry when it creates or
@@ -587,4 +587,4 @@ export function ensurePluginManifest(rootPath: string, workspaceName: string): v
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 }
 
-export { CONFIG_DIR, DEFAULT_WORKSPACES_DIR };
+export { DEFAULT_WORKSPACES_DIR };

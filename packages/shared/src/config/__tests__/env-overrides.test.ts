@@ -7,6 +7,7 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { pathToFileURL } from 'url'
+import { resolveConfigDir } from "../paths.ts"
 
 const STORAGE_MODULE_PATH = pathToFileURL(join(import.meta.dir, '..', 'storage.ts')).href
 

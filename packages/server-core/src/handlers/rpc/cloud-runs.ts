@@ -18,7 +18,6 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol';
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths';
 import { getWorkspaceDataPath, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage';
 import {
   CloudflareComputerProvider,
@@ -39,6 +38,7 @@ import type { HandlerDeps } from '../handler-deps';
 import { resolveContainedRelativePath } from '../../utils/path-validation';
 import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags';
 import { getNativeSidecarClient } from '../../native/supervisor.ts';
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.GET_CONFIG,
@@ -122,7 +122,7 @@ function readSettings(): CloudRunsSettings {
  * Never commits secrets; ops place the token via package resource or env.
  */
 function ensureSecretsEnvFile(): void {
-  const dest = join(CONFIG_DIR, 'cloud-runs.env');
+  const dest = join(resolveConfigDir(), 'cloud-runs.env');
   if (existsSync(dest)) return;
 
   const candidates: string[] = [];
@@ -163,7 +163,7 @@ function ensureSecretsEnvFile(): void {
 /** cloud-runs.env: user-managed secrets for cloud providers (0600). */
 function readSecretsEnv(): Record<string, string> {
   ensureSecretsEnvFile();
-  const path = join(CONFIG_DIR, 'cloud-runs.env');
+  const path = join(resolveConfigDir(), 'cloud-runs.env');
   if (!existsSync(path)) return {};
   const out: Record<string, string> = {};
   for (const line of readFileSync(path, 'utf8').split('\n')) {
@@ -189,7 +189,7 @@ function makeProvider(settings: CloudRunsSettings): CloudRunProvider {
       );
     }
     return new NativeRunProvider({
-      baseDir: join(CONFIG_DIR, 'cloud-runs', 'native'),
+      baseDir: join(resolveConfigDir(), 'cloud-runs', 'native'),
       rpc: client,
     });
   }
@@ -210,7 +210,7 @@ function makeProvider(settings: CloudRunsSettings): CloudRunProvider {
       ? new ModalProvider({ baseUrl, token })
       : new CloudflareComputerProvider({ baseUrl, token });
   }
-  return new LocalSubprocessProvider({ baseDir: join(CONFIG_DIR, 'cloud-runs', 'local') });
+  return new LocalSubprocessProvider({ baseDir: join(resolveConfigDir(), 'cloud-runs', 'local') });
 }
 
 /** Fallback candidate for auto-create-flip: cloudflare ↔ modal, never local. */
@@ -291,8 +291,8 @@ interface RunRegistryEntry {
   lastUsage?: { promptTokens: number; completionTokens: number; cpuMs?: number };
 }
 
-const REGISTRY_PATH = join(CONFIG_DIR, 'cloud-runs-registry.json');
-const SCHEDULES_PATH = join(CONFIG_DIR, 'cloud-runs-schedules.json');
+const REGISTRY_PATH = join(resolveConfigDir(), 'cloud-runs-registry.json');
+const SCHEDULES_PATH = join(resolveConfigDir(), 'cloud-runs-schedules.json');
 
 // F8 scheduled runs: self-contained interval config (independent of the
 // automations DAG — those run prompts into sessions; here we need a full

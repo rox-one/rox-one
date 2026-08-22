@@ -4,8 +4,8 @@
 
 import { existsSync, mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { CONFIG_DIR } from '../config/paths.ts'
 import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts'
+import { resolveConfigDir } from "../config/paths.ts"
 import {
   getLevelForXp,
   getLevelProgress,
@@ -51,7 +51,7 @@ export function setGamificationAwardListener(listener: AwardListener | null): vo
   awardListener = listener
 }
 
-export function getGamificationPath(configDir: string = CONFIG_DIR): string {
+export function getGamificationPath(configDir: string = resolveConfigDir()): string {
   return join(configDir, GAMIFICATION_FILE)
 }
 
@@ -110,7 +110,7 @@ function normalizeState(raw: unknown): GamificationState {
 }
 
 export function loadGamificationState(
-  configDir: string = CONFIG_DIR,
+  configDir: string = resolveConfigDir(),
 ): GamificationState {
   try {
     const path = getGamificationPath(configDir)
@@ -123,7 +123,7 @@ export function loadGamificationState(
 
 export function saveGamificationState(
   state: GamificationState,
-  configDir: string = CONFIG_DIR,
+  configDir: string = resolveConfigDir(),
 ): void {
   const path = getGamificationPath(configDir)
   mkdirSync(dirname(path), { recursive: true })
@@ -142,7 +142,7 @@ export function saveGamificationState(
  */
 export function awardXp(
   event: XpEventType,
-  configDir: string = CONFIG_DIR,
+  configDir: string = resolveConfigDir(),
 ): AwardXpResult {
   const current = loadGamificationState(configDir)
   const previousLevel = getLevelForXp(current.xp)
@@ -180,7 +180,7 @@ export function awardXp(
 /** Best-effort award — swallows all errors (hooks must never break product paths). */
 export function awardXpSafe(
   event: XpEventType,
-  configDir: string = CONFIG_DIR,
+  configDir: string = resolveConfigDir(),
 ): AwardXpResult | null {
   try {
     return awardXp(event, configDir)
@@ -189,7 +189,7 @@ export function awardXpSafe(
   }
 }
 
-export function getGamificationProgress(configDir: string = CONFIG_DIR) {
+export function getGamificationProgress(configDir: string = resolveConfigDir()) {
   const state = loadGamificationState(configDir)
   return {
     state,

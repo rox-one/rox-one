@@ -10,6 +10,7 @@
 import { existsSync, readFileSync } from 'node:fs'
 
 import { atomicWriteFileSync, type MarketplaceEntry } from './catalog.ts'
+import { resolveConfigDir } from "../config/paths.ts"
 
 export const MARKETPLACE_STATS_TTL_MS = 6 * 60 * 60 * 1000
 

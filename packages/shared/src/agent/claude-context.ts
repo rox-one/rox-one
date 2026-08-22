@@ -10,7 +10,6 @@
 
 import { existsSync, readFileSync, writeFileSync, readdirSync, statSync, mkdirSync } from 'fs';
 import { join, basename } from 'path';
-import { CONFIG_DIR } from '../config/paths.ts';
 import type {
   SessionToolContext,
   SessionToolCallbacks,
@@ -63,6 +62,7 @@ import { isGoogleOAuthConfigured as isGoogleOAuthConfiguredImpl } from '../auth/
 import { debug } from '../utils/debug.ts';
 import { getSessionPlansPath, getSessionPath, getSessionDataPath } from '../sessions/storage.ts';
 import { updatePreferences as updatePreferencesImpl } from '../config/preferences.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
 // Re-export types that may be needed by consumers
 export type { SessionToolContext, SessionToolCallbacks } from '@craft-agent/session-tools-core';
@@ -228,7 +228,7 @@ export function createClaudeContext(options: ClaudeContextOptions): SessionToolC
       updatePreferencesImpl(updates as any);
     },
     submitFeedback: (feedback: DeveloperFeedback) => {
-      const feedbackDir = join(CONFIG_DIR, 'feedback');
+      const feedbackDir = join(resolveConfigDir(), 'feedback');
       mkdirSync(feedbackDir, { recursive: true });
       const filePath = join(feedbackDir, `${feedback.id}.json`);
       writeFileSync(filePath, JSON.stringify(feedback, null, 2), 'utf-8');

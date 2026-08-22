@@ -317,12 +317,12 @@
 - id: RX-TSK-0111
   title: "Перевести потребителей CONFIG_DIR на ленивый getConfigDir"
   kind: task
-  status: planned
+  status: done
   refs: [RX-TSK-0412]
   note: |
     123 файла используют eager CONFIG_DIR из config/paths. Цель спеки
     owned-root-policy-slice: owned state не фиксируется на import-time;
-    тесты инжектируют адаптер. Механический фан-аут по пакетам.
+    тесты инжектируют адаптер. Исполнено 2026-08-22: 47 файлов переведены на resolveConfigDir(); eager-снапшот остался только в paths.ts как легаси-алиас. typecheck:all = 0.
 
 - id: RX-TSK-0109
   title: "WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей"

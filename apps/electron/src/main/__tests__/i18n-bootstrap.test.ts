@@ -95,7 +95,14 @@ describe('main-process i18n bootstrap', () => {
         configDir,
         `
           import { getPersistedUiLanguage } from '@craft-agent/shared/config';
+<<<<<<< HEAD
           console.log(JSON.stringify({ value: getPersistedUiLanguage() }));
+||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
+          console.log(JSON.stringify({ value: getPersistedUiLanguage() ?? null }));
+=======
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+          console.log(JSON.stringify({ value: getPersistedUiLanguage() ?? null }));
+>>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
         `,
       )
       expect(r.exitCode).toBe(0)

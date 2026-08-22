@@ -38,7 +38,6 @@ import { validateSession, createWebuiHandler, nodeHttpAdapter } from '@craft-age
 import type { WebuiHandler } from '@craft-agent/server-core/webui'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { getWorkspaces } from '@craft-agent/shared/config'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
 import { VpsBrowserPaneManager } from './vps-browser-pane-manager'
 
@@ -53,6 +52,7 @@ import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@cra
 import { initModelRefreshService, setFetcherPlatform } from '@craft-agent/server-core/model-fetchers'
 import { setSearchPlatform, setImageProcessor } from '@craft-agent/server-core/services'
 import type { HandlerDeps } from '@craft-agent/server-core/handlers'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 process.env.CRAFT_IS_PACKAGED ??= 'false'
 
@@ -221,7 +221,7 @@ const instance = await (async () => {
           sessionManager,
           credentialManager: getCredentialManager(),
           getMessagingDir: (wsId: string) =>
-            join(CONFIG_DIR, 'workspaces', wsId, 'messaging'),
+            join(resolveConfigDir(), 'workspaces', wsId, 'messaging'),
           // Headless has no legacy messaging dir — workspaces start clean.
           whatsapp: {
             workerEntry: waWorkerEntry,

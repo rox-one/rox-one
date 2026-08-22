@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+<<<<<<< HEAD
 import {
   addWorkspace,
   createAndActivateLocalWorkspace,
@@ -10,11 +11,26 @@ import {
   updateWorkspaceRemoteServer,
 } from '@craft-agent/shared/config'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
+||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
+import { getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, updateWorkspaceRemoteServer } from '@craft-agent/shared/config'
+import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
+=======
+import { getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace, updateWorkspaceRemoteServer } from '@craft-agent/shared/config'
+>>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
 import { perf } from '@craft-agent/shared/utils'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+<<<<<<< HEAD
 import { isValidWorkspaceRootPath } from '../../utils/path-validation'
 import type { RemoteServerConfig, Workspace } from '@craft-agent/core/types'
+||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
+import { isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
+import type { RemoteServerConfig } from '@craft-agent/core/types'
+=======
+import { isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
+import type { RemoteServerConfig } from '@craft-agent/core/types'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+>>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
 
 export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.workspaces.GET,
@@ -150,10 +166,28 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Check if a workspace slug already exists (for validation before creation)
   server.handle(RPC_CHANNELS.workspaces.CHECK_SLUG, async (_ctx, slug: string) => {
+<<<<<<< HEAD
     const defaultWorkspacesDir = join(CONFIG_DIR, 'workspaces')
     const workspacePath = join(defaultWorkspacesDir, slug)
     const exists = existsSync(workspacePath)
     return { exists, path: workspacePath }
+||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
+    const defaultWorkspacesDir = join(CONFIG_DIR, 'workspaces')
+    try {
+      const workspacePath = resolveContainedRelativePath(defaultWorkspacesDir, slug)
+      return { exists: existsSync(workspacePath), path: workspacePath }
+    } catch {
+      return { exists: false, path: '' }
+    }
+=======
+    const defaultWorkspacesDir = join(resolveConfigDir(), 'workspaces')
+    try {
+      const workspacePath = resolveContainedRelativePath(defaultWorkspacesDir, slug)
+      return { exists: existsSync(workspacePath), path: workspacePath }
+    } catch {
+      return { exists: false, path: '' }
+    }
+>>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
   })
 
   // Update remote server config for an existing workspace (reconnect flow)

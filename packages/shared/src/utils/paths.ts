@@ -9,7 +9,7 @@
 import { homedir } from 'os';
 import { resolve, join, normalize, isAbsolute } from 'path';
 import { existsSync } from 'fs';
-import { CONFIG_DIR } from '../config/paths';
+import { resolveConfigDir } from "../config/paths.ts"
 
 /**
  * Extra path variables that callers can provide for context-aware expansion.
@@ -58,7 +58,7 @@ export function expandVars(input: string, extraVars?: PathVars): string {
   result = result.replace(/\$HOME(?=\/|$)/g, home);
 
   // Handle ${CRAFT_CONFIG_DIR} — centralized config directory
-  result = result.replace(/\$\{CRAFT_CONFIG_DIR\}/g, CONFIG_DIR);
+  result = result.replace(/\$\{CRAFT_CONFIG_DIR\}/g, resolveConfigDir());
 
   // Handle caller-provided extra variables
   if (extraVars) {

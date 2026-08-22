@@ -10,7 +10,6 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { CONFIG_DIR } from '@craft-agent/shared/config'
 
 const FILE_VERSION = 1 as const
 const REL_PATH = join('extensions', 'url-allowlist.json')
@@ -64,7 +63,7 @@ function atomicWrite(path: string, content: string): void {
 }
 
 function resolveConfigDir(configDir?: string): string {
-  return typeof configDir === 'string' && configDir.trim() ? configDir.trim() : CONFIG_DIR
+  return typeof configDir === 'string' && configDir.trim() ? configDir.trim() : resolveConfigDir()
 }
 
 function filePath(configDir: string): string {

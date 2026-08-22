@@ -20,7 +20,6 @@ import { homedir } from 'node:os'
 import { basename, dirname, join, relative, sep } from 'node:path'
 import { promisify } from 'node:util'
 
-import { CONFIG_DIR } from '../config/paths.ts'
 import { CodedError } from '../protocol/types.ts'
 import { loadManifest } from '../toolchain/manifest.ts'
 import { atomicWriteFileSync, marketplacePaths, type MarketplaceDocument, type MarketplaceEntry, type MarketplaceFetch } from './catalog.ts'
@@ -34,6 +33,7 @@ import {
   writeInstallMarker,
   type MarketplaceLockRecord,
 } from './lock.ts'
+import { resolveConfigDir } from "../config/paths.ts"
 
 const execFileAsync = promisify(execFile)
 
@@ -295,7 +295,7 @@ async function installEntryUnlocked(entry: MarketplaceEntry, options: InstallOpt
 }
 
 async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions): Promise<MarketplaceInstallResult> {
-  const configDir = options.configDir ?? CONFIG_DIR
+  const configDir = options.configDir ?? resolveConfigDir()
   const paths = marketplacePaths(configDir)
   const skillsDir = options.skillsDir ?? join(homedir(), '.agents', 'skills')
   const execFileFn = options.execFileFn ?? defaultExecFile
@@ -465,7 +465,7 @@ async function installSkillpack(entry: MarketplaceEntry, options: InstallOptions
 }
 
 async function installContextDoc(entry: MarketplaceEntry, options: InstallOptions): Promise<MarketplaceInstallResult> {
-  const configDir = options.configDir ?? CONFIG_DIR
+  const configDir = options.configDir ?? resolveConfigDir()
   const paths = marketplacePaths(configDir)
   const contextDir = options.contextDir ?? join(configDir, 'context')
   const fetchFn: MarketplaceFetch | undefined = options.fetchFn ?? (globalThis.fetch as unknown as MarketplaceFetch | undefined)

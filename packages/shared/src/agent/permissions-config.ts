@@ -16,7 +16,6 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync, safeJsonParse } from '../utils/files.ts';
-import { CONFIG_DIR } from '../config/paths.ts';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { getSourcePath } from '../sources/storage.ts';
 import { isValidPermissionsFile } from '../config/validators.ts';
@@ -33,6 +32,7 @@ import {
   type BlockedCommandHintRule,
   type PermissionPaths,
 } from './mode-types.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
 // App-level Permissions Directory
@@ -742,7 +742,7 @@ class PermissionsConfigCache {
       permissionPaths: {
         workspacePath: getWorkspacePermissionsPath(context.workspaceRootPath),
         appDefaultPath: join(getAppPermissionsDir(), 'default.json'),
-        docsPath: join(CONFIG_DIR, 'docs', 'permissions.md'),
+        docsPath: join(resolveConfigDir(), 'docs', 'permissions.md'),
       },
     };
 

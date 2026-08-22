@@ -11,6 +11,7 @@ import {
   readContextDocTemplate,
   writeContextDoc,
 } from '@craft-agent/shared/context-docs'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.contextDocs.LIST,

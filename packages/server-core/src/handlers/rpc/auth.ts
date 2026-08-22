@@ -1,6 +1,7 @@
 import { unlink } from 'fs/promises'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+<<<<<<< HEAD
 import type {
   CredentialMigrationApplyDto,
   CredentialMigrationErrorCode,
@@ -17,10 +18,17 @@ import {
   rollbackCredentialMigration,
 } from '@craft-agent/shared/credentials'
 import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
+||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
+import { getCredentialManager } from '@craft-agent/shared/credentials'
+import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
+=======
+import { getCredentialManager } from '@craft-agent/shared/credentials'
+>>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
 import { getIdentityStore, resetIdentityStoreCache } from '@craft-agent/core/platform/identity/store'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { requestClientConfirmDialog } from '@craft-agent/server-core/transport'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.auth.LOGOUT,
@@ -154,7 +162,7 @@ export function registerAuthHandlers(server: RpcServer, deps: HandlerDeps): void
 
       // Clear Identity Center state (connections/entitlements + local profile shell)
       try {
-        const identityDir = process.env.CRAFT_CONFIG_DIR || CONFIG_DIR
+        const identityDir = process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
         getIdentityStore(identityDir).clear()
         resetIdentityStoreCache()
       } catch (identityError) {
@@ -162,7 +170,7 @@ export function registerAuthHandlers(server: RpcServer, deps: HandlerDeps): void
       }
 
       // Delete the config file
-      const configPath = join(CONFIG_DIR, 'config.json')
+      const configPath = join(resolveConfigDir(), 'config.json')
       await unlink(configPath).catch(() => {
         // Ignore if file doesn't exist
       })

@@ -166,8 +166,8 @@ export interface StoredConfig {
   migrationsApplied?: string[];
 }
 
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
-const CONFIG_DEFAULTS_FILE = join(CONFIG_DIR, 'config-defaults.json');
+const CONFIG_FILE = join(resolveConfigDir(), 'config.json');
+const CONFIG_DEFAULTS_FILE = join(resolveConfigDir(), 'config-defaults.json');
 
 const WORKSPACE_LIFECYCLE_FILE = join(CONFIG_DIR, 'workspace-lifecycle.json');
 const WORKSPACE_LIFECYCLE_VERSION = 1 as const;
@@ -778,7 +778,7 @@ export function backupConfigFile(): void {
 
     const now = new Date();
     const stamp = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const dated = join(CONFIG_DIR, `config.json.bak-${stamp}`);
+    const dated = join(resolveConfigDir(), `config.json.bak-${stamp}`);
     // One backup per day, never overwritten: the first snapshot of the day is taken
     // before any mutation, so it holds the good pre-reset state. A second startup that
     // day (e.g. after a reset already nuked the registry) must NOT clobber it.
@@ -786,9 +786,9 @@ export function backupConfigFile(): void {
     writeFileSync(dated, readFileSync(CONFIG_FILE, 'utf-8'), 'utf-8');
 
     // ISO date in the name → lexical sort is chronological; drop all but the newest few.
-    const backups = readdirSync(CONFIG_DIR).filter(f => CONFIG_BACKUP_DATE_RE.test(f)).sort();
+    const backups = readdirSync(resolveConfigDir()).filter(f => CONFIG_BACKUP_DATE_RE.test(f)).sort();
     for (const stale of backups.slice(0, Math.max(0, backups.length - MAX_CONFIG_BACKUPS))) {
-      try { rmSync(join(CONFIG_DIR, stale)); } catch { /* ignore individual cleanup errors */ }
+      try { rmSync(join(resolveConfigDir(), stale)); } catch { /* ignore individual cleanup errors */ }
     }
   } catch (error) {
     debug('[config] backupConfigFile failed:', error instanceof Error ? error.message : error);
@@ -798,8 +798,8 @@ export function backupConfigFile(): void {
 export function ensureConfigDir(): void {
   if (configDirInitialized) return;
 
-  if (!existsSync(CONFIG_DIR)) {
-    mkdirSync(CONFIG_DIR, { recursive: true });
+  if (!existsSync(resolveConfigDir())) {
+    mkdirSync(resolveConfigDir(), { recursive: true });
   }
 
   // Snapshot an existing config.json (dated, keep last 3) before anything can
@@ -1508,13 +1508,13 @@ export async function clearAllConfig(): Promise<void> {
   }
 
   // Delete credentials file
-  const credentialsFile = join(CONFIG_DIR, 'credentials.enc');
+  const credentialsFile = join(resolveConfigDir(), 'credentials.enc');
   if (existsSync(credentialsFile)) {
     rmSync(credentialsFile);
   }
 
   // Optionally: Delete workspace data (conversations)
-  const workspacesDir = join(CONFIG_DIR, 'workspaces');
+  const workspacesDir = join(resolveConfigDir(), 'workspaces');
   if (existsSync(workspacesDir)) {
     rmSync(workspacesDir, { recursive: true });
   }
@@ -1819,7 +1819,7 @@ export async function removeWorkspace(workspaceId: string): Promise<boolean> {
 // Workspace Conversation Persistence
 // ============================================
 
-const WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces');
+const WORKSPACES_DIR = join(resolveConfigDir(), 'workspaces');
 
 function ensureWorkspaceDir(workspaceId: string): string {
   const dir = join(WORKSPACES_DIR, workspaceId);
@@ -1979,7 +1979,7 @@ export function clearWorkspacePlan(workspaceId: string): void {
 //    that never existed on disk. Hydrate reconstructs directly from the stored bytes.
 // ============================================
 
-const DRAFTS_FILE = join(CONFIG_DIR, 'drafts.json');
+const DRAFTS_FILE = join(resolveConfigDir(), 'drafts.json');
 
 export interface DraftAttachmentContent {
   type: 'image' | 'pdf' | 'text' | 'office' | 'audio' | 'unknown';
@@ -2147,8 +2147,8 @@ export function getAllSessionDrafts(): Record<string, SessionDraft> {
 
 import type { ThemeOverrides, ThemeFile, PresetTheme } from './theme.ts';
 
-const APP_THEME_FILE = join(CONFIG_DIR, 'theme.json');
-const APP_THEMES_DIR = join(CONFIG_DIR, 'themes');
+const APP_THEME_FILE = join(resolveConfigDir(), 'theme.json');
+const APP_THEMES_DIR = join(resolveConfigDir(), 'themes');
 
 /**
  * Get the path to the app-level theme override file (~/.craft-agent/theme.json).
@@ -4038,7 +4038,7 @@ const TOOL_ICONS_DIR_NAME = 'tool-icons';
  * Returns the path to the tool-icons directory: ~/.craft-agent/tool-icons/
  */
 export function getToolIconsDir(): string {
-  return join(CONFIG_DIR, TOOL_ICONS_DIR_NAME);
+  return join(resolveConfigDir(), TOOL_ICONS_DIR_NAME);
 }
 
 /**

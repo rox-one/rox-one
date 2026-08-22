@@ -11,9 +11,9 @@ import { join } from 'path';
 import { existsSync, mkdirSync, writeFileSync, readdirSync, readFileSync } from 'fs';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
-import { CONFIG_DIR } from '../config/paths.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
-const RELEASE_NOTES_DIR = join(CONFIG_DIR, 'release-notes');
+const RELEASE_NOTES_DIR = join(resolveConfigDir(), 'release-notes');
 
 let releaseNotesInitialized = false;
 

@@ -12,7 +12,6 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { filterBazaarPackages } from '@craft-agent/shared/knowledge/plugin-allowlist'
 import {
@@ -53,6 +52,7 @@ import {
   readFirstSiyuanApiTokenFromConf,
   type InstalledPluginFeedItem,
 } from '../../knowledge/siyuan-plugins-fs'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.pluginBridge.LIST_PLUGINS,
@@ -95,7 +95,7 @@ export function __setPluginBridgeKernelClientForTests(
 }
 
 function configDir(): string {
-  return process.env.CRAFT_CONFIG_DIR || CONFIG_DIR
+  return process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
 }
 
 function extensionIdFor(name: string): string {

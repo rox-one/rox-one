@@ -248,7 +248,7 @@
   title: Довести OwnedRootPolicy
   kind: task
   path: packages/shared/src/config/paths.ts
-  status: active
+  status: done
   origin: session-recovery-20260821-do-it-all-security-slices
   refs: [RX-SES-0008, RX-SES-0002, RX-DOC-0006]
   note: |
@@ -257,6 +257,7 @@
     Прогресс 2026-08-22: модуль owned-root-policy.ts + тесты перенесены и зелёные.
     Остаток: перевести 123 файла с eager CONFIG_DIR на ленивый getConfigDir
     (подзадача RX-TSK-0111); дефолт ~/ROX по-прежнему у владельца.
+    Завершено 2026-08-22: lazy-миграция выполнена (RX-TSK-0111); дефолт ~/ROX — отдельное решение владельца.
 
 - id: RX-TSK-0413
   title: Исправить clone URL в README

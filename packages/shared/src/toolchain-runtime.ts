@@ -10,10 +10,10 @@
 
 import { delimiter } from 'node:path';
 
-import { CONFIG_DIR } from './config/paths.ts';
 import { getToolchainDisabled, setToolchainDisabled } from './config/storage.ts';
 import { createManager, createResolver, toolchainPaths } from './toolchain/index.ts';
 import type { ToolName, ToolchainManager, ToolchainResolver } from './toolchain/index.ts';
+import { resolveConfigDir } from "./config/paths.ts"
 
 export interface ToolchainRuntime {
   resolver: ToolchainResolver;
@@ -25,7 +25,7 @@ let cached: ToolchainRuntime | null = null;
 /** Ленивый синглтон: manager/resolver сеет state только при первом обращении. */
 export function getToolchain(): ToolchainRuntime {
   if (!cached) {
-    const paths = toolchainPaths(CONFIG_DIR);
+    const paths = toolchainPaths(resolveConfigDir());
     cached = {
       resolver: createResolver(paths),
       // Стартовый disabled-список — из config.toolchain.disabled (storage).
