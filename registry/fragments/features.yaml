@@ -261,7 +261,7 @@
 - id: RX-TSK-0103
   title: "Disposition 15 локальных веток rox/* (native-серия): классифицировать и смержить/удалить"
   kind: task
-  status: planned
+  status: done
   note: |
     Из аудита функций RX-DOC-0025.
 
