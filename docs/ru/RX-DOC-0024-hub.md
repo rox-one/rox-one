@@ -24,13 +24,13 @@ ROX One — монорепозиторий десктопного AI-агент�
 
 ## Реестр
 
-Записей суммарно: **423**. Источник: [`registry/rx-registry.yaml`](../registry/rx-registry.yaml) + [`registry/fragments/`](../registry/fragments/).
+Записей суммарно: **424**. Источник: [`registry/rx-registry.yaml`](../registry/rx-registry.yaml) + [`registry/fragments/`](../registry/fragments/).
 
 | Домен | Значение | Записей | Примеры |
 |-------|----------|---------|---------|
 | `CMP` | Компоненты | 68 | `RX-CMP-0001`, `RX-CMP-0002`, `RX-CMP-0003` |
 | `SRF` | Поверхности | 48 | `RX-SRF-0001`, `RX-SRF-0002`, `RX-SRF-0003` |
-| `TSK` | Задачи | 43 | `RX-TSK-0300`, `RX-TSK-0301`, `RX-TSK-0302` |
+| `TSK` | Задачи | 44 | `RX-TSK-0300`, `RX-TSK-0301`, `RX-TSK-0302` |
 | `INT` | Интеграции | 35 | `RX-INT-0001`, `RX-INT-0002`, `RX-INT-0003` |
 | `FEA` | Функции | 32 | `RX-FEA-0001`, `RX-FEA-0002`, `RX-FEA-0003` |
 | `AUT` | Автоматизации | 30 | `RX-AUT-0001`, `RX-AUT-0002`, `RX-AUT-0003` |
@@ -49,7 +49,7 @@ ROX One — монорепозиторий десктопного AI-агент�
 ## Операции
 
 - Сборка образа: `Dockerfile.build` (BuildKit), вход `scripts/rx-build.sh`; подробности — [RX-DOC-0005](RX-DOC-0005-build.md).
-- CI CircleCI: workflow `rx-main` (`rx-validate` + `rx-build-image`), расписание `gateway-deploy` ежедневно 06:00 UTC.
+- CI CircleCI: workflow `rx-main` (`rx-validate` с зелёным `validate:ci` + `rx-build-image`), расписание `gateway-deploy` ежедневно 06:00 UTC.
 - Гейт кодов: `bun run rx:validate`. Полный локальный контроль: `bun run validate:ci`.
 
 ## Безопасность
