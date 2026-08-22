@@ -104,7 +104,7 @@ import { createWorkGraphKernel, type WorkGraphKernel } from '@craft-agent/server
 import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
-import { bootstrapServer, releaseServerLock } from '@craft-agent/server-core/bootstrap'
+import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@craft-agent/server-core/bootstrap'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } from '@craft-agent/server-core/model-fetchers'
@@ -1224,7 +1224,7 @@ app.whenReady().then(async () => {
       // Headless: print connection details
       if (isHeadless) {
         console.log(`CRAFT_SERVER_URL=${instance.protocol}://${instance.host}:${instance.port}`)
-        console.log(`CRAFT_SERVER_TOKEN=${instance.token}`)
+        console.log(`CRAFT_SERVER_TOKEN=${maskTokenForDisplay(instance.token)}`)
       }
     }
 
