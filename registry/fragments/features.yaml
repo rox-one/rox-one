@@ -314,6 +314,16 @@
     requestMeta-guard, и 9 тестовых файлов server-core + electron/pi-agent-server.
     Гейт: bun run typecheck:all = 0 ошибок.
 
+- id: RX-TSK-0111
+  title: "Перевести потребителей CONFIG_DIR на ленивый getConfigDir"
+  kind: task
+  status: planned
+  refs: [RX-TSK-0412]
+  note: |
+    123 файла используют eager CONFIG_DIR из config/paths. Цель спеки
+    owned-root-policy-slice: owned state не фиксируется на import-time;
+    тесты инжектируют адаптер. Механический фан-аут по пакетам.
+
 - id: RX-TSK-0109
   title: "WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей"
   kind: task

@@ -248,12 +248,15 @@
   title: Довести OwnedRootPolicy
   kind: task
   path: packages/shared/src/config/paths.ts
-  status: planned
+  status: active
   origin: session-recovery-20260821-do-it-all-security-slices
   refs: [RX-SES-0008, RX-SES-0002, RX-DOC-0006]
   note: |
     Частично: getConfigDir и абсолютные import paths. Дефолт остаётся
     ~/.craft-agent, не ~/ROX. CONFIG_DIR в текущем дереве всё ещё eager.
+    Прогресс 2026-08-22: модуль owned-root-policy.ts + тесты перенесены и зелёные.
+    Остаток: перевести 123 файла с eager CONFIG_DIR на ленивый getConfigDir
+    (подзадача RX-TSK-0111); дефолт ~/ROX по-прежнему у владельца.
 
 - id: RX-TSK-0413
   title: Исправить clone URL в README
