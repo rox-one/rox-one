@@ -26,6 +26,12 @@ import { getWorkspaceSourcesPath } from '../workspaces/storage.ts';
 // getSourceCredentialManager is only referenced lazily inside saveSourceConfig,
 // not at module-eval time.
 import { getSourceCredentialManager } from './credential-manager.ts';
+
+import {
+  getBuiltinSources,
+  getDocsSource,
+  isBuiltinSource,
+} from './builtin-sources.ts';
 import {
   validateIconValue,
   findIconFile,
@@ -418,6 +424,7 @@ export function isSourceUsable(source: LoadedSource): boolean {
  */
 export function getSourcesBySlugs(workspaceRootPath: string, slugs: string[]): LoadedSource[] {
   const sources: LoadedSource[] = [];
+  const workspaceId = basename(workspaceRootPath);
   for (const slug of slugs) {
     // craft-agents-docs is MCP-only (no folder). Exa/Firecrawl live on disk.
     if (slug === 'craft-agents-docs') {

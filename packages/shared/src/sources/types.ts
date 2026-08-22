@@ -563,6 +563,9 @@ export interface LoadedSource {
    */
   workspaceId: string;
 
+  /** True for bundled in-memory sources mirrored by ensureBuiltinSources / getDocsSource. */
+  isBuiltin?: boolean;
+
   /**
    * Pre-computed path to local icon file (icon.svg, icon.png, etc.) if it exists.
    * Computed during source loading so renderer doesn't need filesystem access.
