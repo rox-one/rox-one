@@ -304,6 +304,16 @@
   note: |
     Из аудита функций RX-DOC-0025.
 
+- id: RX-TSK-0110
+  title: "Свести typecheck:all к зелёному — устранить довесок до включения rx-main"
+  kind: task
+  status: done
+  note: |
+    Исполнено 2026-08-22: корни в core (HeadersInit через RequestInit['headers'],
+    InfisicalImporterEnv-адаптация process.env, guard locator), SessionManager
+    requestMeta-guard, и 9 тестовых файлов server-core + electron/pi-agent-server.
+    Гейт: bun run typecheck:all = 0 ошибок.
+
 - id: RX-TSK-0109
   title: "WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей"
   kind: task
