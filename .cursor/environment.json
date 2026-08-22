@@ -1,0 +1,12 @@
+{
+  "name": "Craft Agents (headless server)",
+  "install": "bash .cursor/install.sh",
+  "ports": [{ "name": "craft-rpc", "port": 9100 }],
+  "terminals": [
+    {
+      "name": "craft-server",
+      "description": "Headless Craft Agents server (RPC over WebSocket on 127.0.0.1:9100). A fresh dev bearer token is generated on each boot and printed as CRAFT_SERVER_TOKEN; use it with the CLI: `bun run apps/cli/src/index.ts --url ws://127.0.0.1:9100 --token <token> ping`.",
+      "command": "export PATH=\"$HOME/.bun/bin:$PATH\"; export CRAFT_BUNDLED_ASSETS_ROOT=\"$PWD/apps/electron\"; export CRAFT_RPC_HOST=127.0.0.1; export CRAFT_RPC_PORT=9100; export CRAFT_SERVER_TOKEN=\"dev-$(openssl rand -hex 24)\"; echo \"CRAFT_SERVER_TOKEN=$CRAFT_SERVER_TOKEN\"; exec bun run packages/server/src/index.ts"
+    }
+  ]
+}
