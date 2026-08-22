@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **44**. Заблокировано: **5**, Готово: **15**, Отменено: **2**, Запланировано: **22**.
+Всего задач: **45**. В работе: **1**, Заблокировано: **5**, Готово: **15**, Отменено: **2**, Запланировано: **22**.
 
 Номерные блоки волн: 0100–0110 аудит функций · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
 
@@ -25,6 +25,7 @@ status: active
 | `RX-TSK-0108` | iOS: сборка и smoke на симуляторе, фиксация статуса | Запланировано | — |
 | `RX-TSK-0109` | WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей | Готово | — |
 | `RX-TSK-0110` | Свести typecheck:all к зелёному — устранить довесок до включения rx-main | Готово | — |
+| `RX-TSK-0111` | Перевести потребителей CONFIG_DIR на ленивый getConfigDir | Запланировано | — |
 
 ## Безопасность
 
@@ -55,7 +56,7 @@ status: active
 | `RX-TSK-0409` | Удержать PSI W6–W8 за гейтом | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `apps/electron/src/renderer` |
 | `RX-TSK-0410` | Убрать credentialValue из identity.connect | Заблокировано | `session-recovery-20260821-do-it-all-security-slices` | `packages/server-core/src/handlers/rpc/identity.ts` |
 | `RX-TSK-0411` | Сделать UI импорта Notes | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `apps/electron/src/renderer/pages/NotesPage.tsx` |
-| `RX-TSK-0412` | Довести OwnedRootPolicy | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `packages/shared/src/config/paths.ts` |
+| `RX-TSK-0412` | Довести OwnedRootPolicy | В работе | `session-recovery-20260821-do-it-all-security-slices` | `packages/shared/src/config/paths.ts` |
 | `RX-TSK-0413` | Исправить clone URL в README | Готово | `session-recovery-20260821-do-it-all-security-slices` | `README.md` |
 | `RX-TSK-0414` | Перенести корпус docs/security | Готово | `session-recovery-20260821-do-it-all-security-slices` | `docs` |
 | `RX-TSK-0415` | Origin-scoped remote TLS | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `apps/electron/src/main/handlers/workspace.ts` |
