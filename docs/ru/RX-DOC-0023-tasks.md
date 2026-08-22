@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **43**. В работе: **4**, Заблокировано: **2**, Готово: **3**, Отменено: **2**, Запланировано: **32**.
+Всего задач: **43**. Заблокировано: **3**, Готово: **10**, Отменено: **2**, Запланировано: **28**.
 
 Номерные блоки волн: 0100–0299 аудит функций · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
 
@@ -20,10 +20,10 @@ status: active
 | `RX-TSK-0103` | Disposition 15 локальных веток rox/* (native-серия): классифицировать и смержить/удалить | Готово | — |
 | `RX-TSK-0104` | Удалить мёртвые ручки корневого package.json | Отменено | — |
 | `RX-TSK-0105` | Обновить устаревший комментарий кодовой базы (repo-known-issues §2) | Отменено | — |
-| `RX-TSK-0106` | Оформить операционные ограничения headless-сервера R1 в тикеты и документацию | Запланировано | — |
+| `RX-TSK-0106` | Оформить операционные ограничения headless-сервера R1 в тикеты и документацию | Заблокировано | — |
 | `RX-TSK-0107` | ACP/OMP v2: принять решение ADR и портировать клиент либо закрыть PRD | Запланировано | — |
 | `RX-TSK-0108` | iOS: сборка и smoke на симуляторе, фиксация статуса | Запланировано | — |
-| `RX-TSK-0109` | WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей | Запланировано | — |
+| `RX-TSK-0109` | WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей | Готово | — |
 
 ## Безопасность
 
@@ -31,11 +31,11 @@ status: active
 |-----|--------|--------|----------|------|
 | `RX-TSK-0300` | Перевести credentials.enc на мастер-ключ из OS-keychain | Готово | Высокая | `packages/shared/src/credentials/backends/secure-storage.ts` |
 | `RX-TSK-0301` | Выставлять chmod 0600 для credentials.enc.bak | Готово | Средняя | `packages/shared/src/credentials/backends/secure-storage.ts` |
-| `RX-TSK-0302` | Убрать печать CRAFT_SERVER_TOKEN в stdout по умолчанию | Запланировано | Средняя | `packages/server/src/index.ts` |
+| `RX-TSK-0302` | Убрать печать CRAFT_SERVER_TOKEN в stdout по умолчанию | Готово | Средняя | `packages/server/src/index.ts` |
 | `RX-TSK-0303` | Fail-closed контракт PreToolUse-hook и canary-проверка при старте сессии | Запланировано | Средняя | `packages/shared/src/agent/claude-agent.ts` |
 | `RX-TSK-0304` | Сделать defaults.permissionMode обязательным в task-spec | Запланировано | Средняя | `packages/server-core/src/tasks/TaskRunner.ts` |
 | `RX-TSK-0305` | Egress-политика для канала server:invokeOnServer | Запланировано | Низкая | `apps/electron/src/main/index.ts` |
-| `RX-TSK-0306` | Перевести validateToken на timingSafeEqual | Запланировано | Низкая | `packages/server-core/src/bootstrap/headless-start.ts` |
+| `RX-TSK-0306` | Перевести validateToken на timingSafeEqual | Готово | Низкая | `packages/server-core/src/bootstrap/headless-start.ts` |
 | `RX-TSK-0307` | Заменить bash -lc на bash -c с фиксированным PATH в host-bash | Запланировано | Низкая | `packages/session-tools-core/src/handlers/host-bash.ts` |
 
 ## Из бэкапов сессий
@@ -68,13 +68,13 @@ status: active
 
 | Код | Задача | Статус | Файл |
 |-----|--------|--------|------|
-| `RX-TSK-0600` | Настроить автобилд репозитория | В работе | `Dockerfile.build` |
-| `RX-TSK-0601` | Зафиксировать контракт сборочных секретов | В работе | `docs/ru/RX-DOC-0005-build.md` |
+| `RX-TSK-0600` | Настроить автобилд репозитория | Готово | `Dockerfile.build` |
+| `RX-TSK-0601` | Зафиксировать контракт сборочных секретов | Готово | `docs/ru/RX-DOC-0005-build.md` |
 
 ## Связи репозиториев
 
 | Код | Задача | Статус | Файл |
 |-----|--------|--------|------|
-| `RX-TSK-0700` | Слинковать приватные смежные репозитории как сабмодули | В работе | `.gitmodules` |
-| `RX-TSK-0701` | Написать валидатор системы кодов RX-* | В работе | `scripts/rx-validate.ts` |
+| `RX-TSK-0700` | Слинковать приватные смежные репозитории как сабмодули | Готово | `.gitmodules` |
+| `RX-TSK-0701` | Написать валидатор системы кодов RX-* | Готово | `scripts/rx-validate.ts` |
 

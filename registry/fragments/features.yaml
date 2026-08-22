@@ -283,9 +283,10 @@
 - id: RX-TSK-0106
   title: "Оформить операционные ограничения headless-сервера R1 в тикеты и документацию"
   kind: task
-  status: planned
+  status: blocked
   note: |
     Отменено: комментарий уже исправлен ранее (fcf4da70), подтверждено в omp-agent.ts 2026-08-22.
+    Blocker: создание GitHub-issue — внешняя публикация, ждёт решения (D-страница). Доки уже есть: repo-known-issues §3.
 
 - id: RX-TSK-0107
   title: "ACP/OMP v2: принять решение ADR и портировать клиент либо закрыть PRD"
@@ -306,8 +307,8 @@
 - id: RX-TSK-0109
   title: "WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей"
   kind: task
-  status: planned
+  status: done
   refs: [RX-FEA-0029]
   note: |
     Из аудита функций RX-DOC-0025.
-
+    Вердикт 2026-08-22: webui — интерактивный клиент с login поверх WS-RPC; viewer — read-only share-страницы прогонов. Не дубли; оба остаются в реестре поверхностей.

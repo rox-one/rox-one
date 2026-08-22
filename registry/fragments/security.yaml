@@ -57,20 +57,22 @@
   title: Серверный токен печатается в stdout при старте сервера
   kind: security
   path: packages/server/src/index.ts
-  status: active
+  status: done
   refs: [RX-TSK-0302]
   note: |
     console.log CRAFT_SERVER_TOKEN (строки 329-330): токен является bearer WS-RPC и secret подписи JWT webui;
     при headless/docker/systemd запуске попадает в журналы. Severity: Средняя.
+    Исправлено 2026-08-22: maskTokenForDisplay в server/index.ts и electron headless; полное значение только при CRAFT_PRINT_TOKEN=1.
 
 - id: RX-TSK-0302
   title: Убрать печать CRAFT_SERVER_TOKEN в stdout по умолчанию
   kind: task
   path: packages/server/src/index.ts
-  status: planned
+  status: done
   refs: [RX-SEC-0003]
   note: |
     Полный токен только по флагу --print-token; по умолчанию маскировать первые 4 символа.
+    Исполнено вместе с RX-SEC-0003.
 
 - id: RX-SEC-0004
   title: SDK-сессии всегда запускаются в bypassPermissions; контроль инструментов в одном PreToolUse-hook
@@ -134,20 +136,22 @@
   title: Токен RPC-сервера сравнивается не за константное время
   kind: security
   path: packages/server-core/src/bootstrap/headless-start.ts
-  status: active
+  status: done
   refs: [RX-TSK-0306]
   note: |
     validateToken t === serverToken (407-408). Timing side-channel против токена высокой энтропии нереалистичен,
     но фикс дешёвый. Severity: Низкая.
+    Исправлено 2026-08-22: secureTokenCompare (sha256+timingSafeEqual) в validateToken.
 
 - id: RX-TSK-0306
   title: Перевести validateToken на timingSafeEqual
   kind: task
   path: packages/server-core/src/bootstrap/headless-start.ts
-  status: planned
+  status: done
   refs: [RX-SEC-0007]
   note: |
     timingSafeEqual(sha256(t), sha256(serverToken)) устраняет и зависимость от длины строк.
+    Исполнено вместе с RX-SEC-0007.
 
 - id: RX-SEC-0008
   title: Bash-инструмент запускает login-shell, sanitized env может быть дополнен профилями

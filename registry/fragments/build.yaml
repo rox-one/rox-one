@@ -68,18 +68,20 @@
   title: Настроить автобилд репозитория
   kind: task
   path: Dockerfile.build
-  status: active
+  status: done
   refs: [RX-PIP-0100, RX-PIP-0101, RX-PIP-0102, RX-PIP-0103, RX-PIP-0104, RX-DOC-0005]
   note: |
     Воспроизводимая сборка образа BuildKit плюс пайплайн CircleCI, который
     берёт сборочные секреты из Infisical, а не из ARG/ENV.
+    Поставлено: Dockerfile.build + rx-build.sh + workflow rx-main.
 
 - id: RX-TSK-0601
   title: Зафиксировать контракт сборочных секретов
   kind: task
   path: docs/ru/RX-DOC-0005-build.md
-  status: active
+  status: done
   refs: [RX-DOC-0005, RX-PIP-0101]
   note: |
     Описать GITHUB_TOKEN и GH_TOKEN как BuildKit-secret, INFISICAL_TOKEN как
     загрузчик, и запрет класть рантайм-секреты prod в слои образа.
+    Поставлено: контракт описан в RX-DOC-0005.
