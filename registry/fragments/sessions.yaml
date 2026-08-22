@@ -93,7 +93,6 @@
   refs: [RX-DOC-0006, RX-TSK-0415, RX-TSK-0416, RX-TSK-0417, RX-TSK-0418, RX-TSK-0419]
   note: |
     TLS pin, default-deny messaging, контракт microVM. В текущем дереве
-    tlsRejectUnauthorized: false и accessMode inherit/open всё ещё на месте.
 
 - id: RX-SES-0010
   title: Чекпоинт home-rox-api-network-diagnosis-20260820
@@ -159,12 +158,16 @@
   title: Панель аудита OpenClaw
   kind: task
   path: apps/electron/src/renderer/pages
-  status: planned
+  status: active
   origin: session-recovery-20260821-craft-agents-cf2-restored
   refs: [RX-SES-0002, RX-DOC-0006]
   note: |
     Черновик 2026-08-09: Craft хостит изолированный OpenClaw runtime,
     единый audit JSON без сырых секретов в renderer. Не реализовывался.
+    Прогресс 2026-08-22 (Фаза А): backend перенесён — shared/openclaw,
+    server-core/openclaw (audit-service, collectors, persistence, runtime-manager),
+    RPC-хендлер зарегистрирован, toolchain-пробник подключён; тесты 19/19.
+    Осталось (Фаза Б): мост electron main+preload; UI-панель — RX-TSK-0112.
 
 - id: RX-TSK-0405
   title: Решить судьбу и перенести rox-sidecar
@@ -284,6 +287,15 @@
     runbook A-ops, HMA R3 spec и CF-status как исторические документы,
     без live APPLY.
     Исполнено 2026-08-22: 17 файлов в docs/security/, индекс RX-DOC-0028.
+
+- id: RX-TSK-0112
+  title: "UI-панель аудита OpenClaw (renderer)"
+  kind: task
+  status: planned
+  refs: [RX-TSK-0404]
+  note: |
+    Renderer-часть отсутствовала в бэкапе полностью. Бэкенд, RPC и
+    host-control мост перенесены в рамках RX-TSK-0404 (Фаза А).
 
 - id: RX-TSK-0415
   title: Origin-scoped remote TLS
