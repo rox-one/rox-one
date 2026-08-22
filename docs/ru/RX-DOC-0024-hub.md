@@ -58,6 +58,6 @@ ROX One — монорепозиторий десктопного AI-агент�
 
 ## Сессии
 
-[RX-DOC-0006](RX-DOC-0006-sessions.md): сессий разобрано **10**; извлечённые задачи — блок 0400–0599 в [списке](RX-DOC-0023-tasks.md).
+[RX-DOC-0006](RX-DOC-0006-sessions.md): извлечённые задачи — блок 0400–0599 в [списке](RX-DOC-0023-tasks.md).
 Сабмодули: `vendor/rox-one-assets`, `vendor/rox-one-website` (update=none) — [RX-DOC-0007](RX-DOC-0007-links.md).
 

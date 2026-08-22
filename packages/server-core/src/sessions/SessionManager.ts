@@ -3249,7 +3249,22 @@ export class SessionManager implements ISessionManager {
     const targetProviderType = targetBackendContext.connection?.providerType
       ?? (targetBackendContext.provider === 'pi' ? 'pi' : 'anthropic')
     const targetPiAuthProvider = targetBackendContext.connection?.piAuthProvider
-
+    // RX-TSK-0401: опциональный дефолт-лейбл omp-подключения навешивается на
+    // новую сессию через существующий label-CRUD; остальные провайдеры не трогаем.
+    const ompDefaultLabel = targetBackendContext.connection?.providerType === 'omp'
+      ? targetBackendContext.connection.defaultSessionLabel?.trim()
+      : undefined
+    if (ompDefaultLabel) {
+      try {
+        await ensureLabelsExist(workspaceRootPath, [ompDefaultLabel])
+      } catch (error) {
+        sessionLog.warn(`Failed to ensure default omp label "${ompDefaultLabel}":`, error)
+      }
+      options = {
+        ...options,
+        labels: [...new Set([...(options?.labels ?? []), ompDefaultLabel])],
+      }
+    }
     // Resolve working directory from options:
     // - 'user_default' or undefined: Use workspace's configured default
     // - 'none': No working directory (empty string means session folder only)
