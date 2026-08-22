@@ -1,19 +1,19 @@
-# A0 live reprobe — DO IT ALL (2026-08-13)
+# Повторная live-проверка A0 — DO IT ALL (2026-08-13)
 
-READ-ONLY. No Hermes/OMP/Tailscale mutations. No APPLY. No apply.log.
+ТОЛЬКО ЧТЕНИЕ. Никаких мутаций Hermes/OMP/Tailscale. Никакого APPLY. Никакого apply.log.
 
-| Field | Value |
+| Поле | Значение |
 |---|---|
 | UTC | `2026-08-19T09:48:50Z` |
-| Owner instruction | `DO IT ALL` — **not** `АПPLY HMA-20260809-A1` |
-| Official apply.log | **not created** |
+| Инструкция владельца | `DO IT ALL` — **не** `АПPLY HMA-20260809-A1` |
+| Официальный apply.log | **не создан** |
 
-## Live getback
+## Полученные live-данные
 
-| Key | Value |
+| Параметр | Значение |
 |---|---|
 | `hermes version` | v0.20.0 (2026.8.3), upstream `c0106e50` |
-| `approvals.mode` | **`off`** (P0 still live) |
+| `approvals.mode` | **`off`** (P0 всё ещё активен) |
 | `security.tirith_enabled` | `true` |
 | `security.tirith_fail_open` | **`true`** |
 | `security.allow_private_urls` | `true` |
@@ -21,37 +21,37 @@ READ-ONLY. No Hermes/OMP/Tailscale mutations. No APPLY. No apply.log.
 | `memory.write_approval` | `false` |
 | OMP `modelRoles.default` | `cursor/cursor-grok-4.6-xhigh` |
 
-## File modes (modes only)
+## Режимы файлов (только режимы)
 
-| Path basename | Mode |
+| Имя файла (basename) | Режим |
 |---|---|
 | `.env.backup.telegram_home.20260708_103002` | **644** |
 | `.env.backup.20260708_100905` | **644** |
-| `tskey-api.secret` | **MISSING** (was mode 600 at 13:33:22Z; value not read) |
+| `tskey-api.secret` | **ОТСУТСТВУЕТ** (был с режимом 600 на 13:33:22Z; значение не считывалось) |
 
 ## Cron
 
-`hermes cron list --json` is not a valid CLI invocation (exit 2, usage). No job names or secrets recorded this probe.
+`hermes cron list --json` не является корректным вызовом CLI (код выхода 2, usage). Имена задач или секреты в ходе этой проверки не зафиксированы.
 
 ## Syncthing / Tailscale
 
-| Check | Result |
+| Проверка | Результат |
 |---|---|
-| `syncthing` CLI | not on PATH |
+| `syncthing` CLI | отсутствует в PATH |
 | BackendState | Running |
 | Self.HostName | `tb` |
 | Self.Online | true |
-| Peer count | 600 |
-| Source/target node | **unresolved** |
+| Количество пиров | 600 |
+| Исходный/целевой узел | **не определён** |
 
-## Drift vs 13:33:22Z
+## Дрейф относительно 13:33:22Z
 
-P0 unchanged: approvals still `off`, Tirith still fail-open, env backups still 644, Tailscale still 600 peers, Syncthing still absent, apply.log still absent. `tskey-api.secret` is now missing from `~/.hermes` (mode-only observation; no content read).
+P0 без изменений: approvals по-прежнему `off`, Tirith по-прежнему fail-open, env-бэкапы по-прежнему 644, у Tailscale по-прежнему 600 пиров, Syncthing по-прежнему отсутствует, apply.log по-прежнему отсутствует. `tskey-api.secret` теперь отсутствует в `~/.hermes` (наблюдение только по режимам; содержимое не считывалось).
 
-## Verdict
+## Вердикт
 
-**FAIL CLOSED for A1–A3.** `DO IT ALL` authorizes the program of work; Stage C still requires the exact string `АПPLY HMA-20260809-A1` and a named target node. Rollback must never restore `approvals.mode=off`.
+**FAIL CLOSED для A1–A3.** `DO IT ALL` санкционирует программу работ; для Stage C по-прежнему требуется точная строка `АПPLY HMA-20260809-A1` и указанный по имени целевой узел. Откат никогда не должен восстанавливать `approvals.mode=off`.
 
-## Mutations
+## Мутации
 
-**none**
+**отсутствуют**

@@ -1,53 +1,53 @@
-# HMA R3 verification evidence
+# Подтверждающие материалы верификации HMA R3
 
-- **Date:** 2026-08-20
-- **Bundle:** `/Users/marklindgreen/hermes-migration-audit-20260809-121222`
-- **Local commit:** `78df77a` (`fix(hma): harden revision-three remediation bundle`); no push.
-- **Immutable manifest SHA-256:** `e9db5372da46fe146815150aca9b9d4e77b32fb8495a35b30d55013228359e35`.
-- **Covered paths:** 35 exact regular files, matching `R3_ALLOWED_PATHS`.
+- **Дата:** 2026-08-20
+- **Бандл:** `/Users/marklindgreen/hermes-migration-audit-20260809-121222`
+- **Локальный коммит:** `78df77a` (`fix(hma): harden revision-three remediation bundle`); без push.
+- **Неизменяемый манифест SHA-256:** `e9db5372da46fe146815150aca9b9d4e77b32fb8495a35b30d55013228359e35`.
+- **Покрываемые пути:** 35 точных обычных файлов, соответствующих `R3_ALLOWED_PATHS`.
 
-## Offline contract-repair update — 2026-08-20
+## Автономное обновление исправления контрактов — 2026-08-20
 
-- Local source commit `feaced2` repaired newly audited offline R3 defects: non-config secret-text projection, typed A0 writer ledger/parse-plan isolation, D1 policy digest binding, C0 artifact binding, mandatory F0 consistency, receiveonly transport, and Lark class/exclusion agreement.
-- That source commit intentionally changes covered bytes. The manifest above is historical evidence for `78df77a`; it is now stale and MUST NOT authorize R3 start.
-- The new deterministic regression cases were added but not run because the owner explicitly prohibited retrying blocked test/checksum gates in this turn.
+- Локальный исходный коммит `feaced2` устранил недавно выявленные при аудите автономные дефекты R3: проекцию секретного текста вне конфигурации, изоляцию типизированных writer ledger и parse-plan для A0, привязку дайджеста политики D1, привязку артефакта C0, обязательную согласованность F0, транспорт receiveonly и согласование класса/исключения Lark.
+- Этот исходный коммит намеренно изменяет покрываемые байты. Приведённый выше манифест является историческим подтверждением для `78df77a`; он устарел и НЕ ДОЛЖЕН служить основанием для запуска R3.
+- Новые детерминированные регрессионные случаи были добавлены, но не запущены, поскольку владелец явно запретил повторять заблокированные тестовые/checksum-шлюзы на этом ходе.
 
-## Second offline security-repair update — 2026-08-20
+## Второе автономное обновление исправления безопасности — 2026-08-20
 
-- Local source commit `4dc9b1dc` adds component-wise peer-file pin/unlink, bounded secret-safe SharedMemory records, exact malformed-byte quarantine, and descriptor-backed Secure State capture streaming.
-- It changes additional covered bytes. Neither historical manifest nor the `feaced2` source state is a current immutable verification artifact.
-- Static source parsing completed; new regression tests are intentionally deferred with the same owner prohibition on test/checksum/verifier retries.
+- Локальный исходный коммит `4dc9b1dc` добавляет покомпонентный pin/unlink peer-файлов, ограниченные по объёму записи SharedMemory, безопасные для секретов, точный карантин некорректных байтов и потоковый захват Secure State на основе дескрипторов.
+- Он изменяет дополнительные покрываемые байты. Ни исторический манифест, ни состояние исходников `feaced2` не являются актуальным неизменяемым артефактом верификации.
+- Статический разбор исходников завершён; новые регрессионные тесты намеренно отложены с тем же запретом владельца на повторные запуски тестов/checksum/верификатора.
 
-## Final offline recovery-hardening update — 2026-08-20
+## Финальное автономное обновление укрепления восстановления — 2026-08-20
 
-- Local source commits `e505d80f`, `cb36c864`, `b16cc69f`, `98f2f2c2`, and `a840f27b` close recovery trust/filename/pending/quarantine controls, identity binding, D1/E0 proof, and restore/sync/mode boundaries identified by static audits.
-- The current covered source sequence is `feaced2` → `4dc9b1dc` → `e505d80f` → `cb36c864` → `b16cc69f` → `98f2f2c2` → `a840f27b`; every historical checksum artifact predates it and is stale.
-- Static parsing was repeated for the modified Python source/test files. Behavioral tests, manifest generation, and verifier remain deferred by owner instruction.
+- Локальные исходные коммиты `e505d80f`, `cb36c864`, `b16cc69f`, `98f2f2c2` и `a840f27b` закрывают контуры контроля восстановления (доверие/имена файлов/отложенные элементы/карантин), привязку идентичности, доказательство D1/E0 и границы restore/sync/mode, выявленные статическими аудитами.
+- Текущая последовательность покрываемых исходных состояний: `feaced2` → `4dc9b1dc` → `e505d80f` → `cb36c864` → `b16cc69f` → `98f2f2c2` → `a840f27b`; все исторические checksum-артефакты предшествуют ей и устарели.
+- Статический разбор был повторён для изменённых файлов исходного кода и тестов Python. Поведенческие тесты, генерация манифеста и верификатор остаются отложенными по указанию владельца.
 
-- The prior targeted static audit result applies only to its named contracts. The newest restore/sync/mode repairs have source-parse evidence only; behavioral tests, manifest generation, and verifier remain deferred by owner instruction.
+- Предыдущий результат целевого статического аудита применим только к названным в нём контрактам. Новейшие исправления restore/sync/mode имеют только свидетельство разбора исходников; поведенческие тесты, генерация манифеста и верификатор остаются отложенными по указанию владельца.
 
-## Completed evidence
+## Завершённые проверки
 
-- `python3 -m unittest discover -s apply-tools/tests -p 'test_*.py'` completed with **173 tests passed**.
-- All 13 copied/executed tool `--help` contracts returned exit 0.
-- JSON parse checks passed for the three bundle JSON artifacts.
-- All 14 fenced shell blocks in `11-apply-plan.md` passed `bash -n` extraction checks.
-- `quiesce_writers.py parse-plan` accepted the R3 plan without executing a live command.
-- A clean bundle check previously completed: all 35 checksums passed and `snapshot_audit_bundle.py verify-bundle` reported `ok: true`.
+- `python3 -m unittest discover -s apply-tools/tests -p 'test_*.py'` завершено с результатом **успешно пройдено 173 теста**.
+- Все 13 скопированных/выполненных контрактов инструментов `--help` вернули код выхода 0.
+- Проверки разбора JSON успешно пройдены для трёх JSON-артефактов бандла.
+- Все 14 ограждённых shell-блоков в `11-apply-plan.md` прошли проверки извлечения `bash -n`.
+- `quiesce_writers.py parse-plan` принял план R3 без выполнения живой команды.
+- Ранее была завершена чистая проверка бандла: все 35 контрольных сумм пройдены, а `snapshot_audit_bundle.py verify-bundle` сообщил `ok: true`.
 
-## Immutable verifier blocker recorded
+## Зафиксированный блокер неизменяемого верификатора
 
-A later post-commit verification attempt exited nonzero after generated metadata reappeared under the audit root:
+Более поздняя попытка верификации после коммита завершилась с ненулевым кодом возврата после того, как сгенерированные метаданные вновь появились под корнем аудита:
 
 - `__pycache__/approval_tokens.cpython-311.pyc`
-- root and `apply-tools` `.DS_Store` files
+- файлы `.DS_Store` в корне и в `apply-tools`
 
-These paths are intentionally outside `R3_ALLOWED_PATHS`; the verifier correctly rejects them. They were removed without changing any covered bundle bytes. Per the current owner instruction, the same checksum/verifier gate was not retried in this turn.
+Эти пути намеренно находятся вне `R3_ALLOWED_PATHS`; верификатор корректно их отклоняет. Они были удалены без изменения каких-либо покрываемых байтов бандла. Согласно текущему указанию владельца, тот же шлюз checksum/верификатора не перезапускался на этом ходе.
 
-Post-cleanup structural scan found no `__pycache__`, `.pyc`, or `.DS_Store` path below the audit root. This is cleanup evidence only, not a substitute for the required clean-process verifier.
+Структурное сканирование после очистки не выявило ни одного пути `__pycache__`, `.pyc` или `.DS_Store` под корнем аудита. Это лишь свидетельство очистки, а не замена требуемому верификатору в чистом процессе.
 
-**Required next verification action:** from a clean process and the audit-root working directory, run the immutable checksum and `verify-bundle` commands once after confirming no cache artifacts exist. Do not start A0 from this evidence record.
+**Требуемое следующее действие по верификации:** из чистого процесса и рабочего каталога в корне аудита однократно выполнить команды неизменяемой контрольной суммы и `verify-bundle`, предварительно убедившись в отсутствии кэш-артефактов. Не запускать A0 на основании этой записи.
 
-## Authorization boundary
+## Граница авторизации
 
-This is offline evidence only. It does not authorize `АПPLY HMA-20260809-A1-R3`, A1 backup, process control, Hermes configuration, permissions, pairing, messaging, target enrollment, or any remote action.
+Это исключительно автономное подтверждение. Оно не даёт права на выполнение `АПPLY HMA-20260809-A1-R3`, резервного копирования A1, управления процессами, конфигурации Hermes, разрешений, сопряжения, обмена сообщениями, регистрации цели или любых удалённых действий.
