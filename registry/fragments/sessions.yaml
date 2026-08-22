@@ -108,13 +108,16 @@
   title: Перенести доводку инспектора Connection Fabric
   kind: task
   path: apps/electron/src/renderer/pages/ConnectionsPage.tsx
-  status: planned
+  status: blocked
   origin: session-recovery-20260821-craft-agents
   refs: [RX-SES-0001, RX-DOC-0006]
   note: |
     Коммиты 2026-08-21 feat(connections): скрытие пустых полей, i18n меток,
     testid, in-place test/repair/revoke/convert/move. Базовый CF-6 в main есть,
     эта доводка — нет.
+    Blocker: серия из 95 feat(connections)-коммитов (checkpoint/session-audit-20260821-craft-agents)
+    не ложится на переписанный ConnectionsPage текущего main (проба 0/3).
+    Интеграция возможна только в рамках D9 — вместе с родственными ветками.
 
 - id: RX-TSK-0401
   title: Дефолт-лейбл для сессий OMP-провайдера

@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **44**. Заблокировано: **4**, Готово: **15**, Отменено: **2**, Запланировано: **23**.
+Всего задач: **44**. Заблокировано: **5**, Готово: **15**, Отменено: **2**, Запланировано: **22**.
 
 Номерные блоки волн: 0100–0110 аудит функций · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
 
@@ -43,7 +43,7 @@ status: active
 
 | Код | Задача | Статус | Происхождение | Файл |
 |-----|--------|--------|---------------|------|
-| `RX-TSK-0400` | Перенести доводку инспектора Connection Fabric | Запланировано | `session-recovery-20260821-craft-agents` | `apps/electron/src/renderer/pages/ConnectionsPage.tsx` |
+| `RX-TSK-0400` | Перенести доводку инспектора Connection Fabric | Заблокировано | `session-recovery-20260821-craft-agents` | `apps/electron/src/renderer/pages/ConnectionsPage.tsx` |
 | `RX-TSK-0401` | Дефолт-лейбл для сессий OMP-провайдера | Готово | `session-recovery-20260821-craft-agents` | `docs/omp-integration-gap.md` |
 | `RX-TSK-0402` | Перенести платформу команд OMP фазы 0–7 | Запланировано | `session-recovery-20260821-craft-agents-cf2-restored` | `docs/omp-v2-prd.md` |
 | `RX-TSK-0403` | UI контролируемой миграции credentials CF-2 | Запланировано | `session-recovery-20260821-craft-agents-cf2-restored` | `packages/shared/src/credentials` |
