@@ -21,10 +21,11 @@ ROX One — монорепозиторий десктопного AI-агент�
 | `RX-DOC-0023` | [Консолидированные задачи](RX-DOC-0023-tasks.md) | В работе | `RX-DOC-0023-tasks.md` |
 | `RX-DOC-0024` | [Главная навигация](RX-DOC-0024-hub.md) | В работе | `RX-DOC-0024-hub.md` |
 | `RX-DOC-0025` | [Аудит заявленных функций](RX-DOC-0025-audit.md) | В работе | `RX-DOC-0025-audit.md` |
+| `RX-DOC-0028` | [Корпус документации безопасности](RX-DOC-0028-security-corpus.md) | В работе | `RX-DOC-0028-security-corpus.md` |
 
 ## Реестр
 
-Записей суммарно: **424**. Источник: [`registry/rx-registry.yaml`](../registry/rx-registry.yaml) + [`registry/fragments/`](../registry/fragments/).
+Записей суммарно: **425**. Источник: [`registry/rx-registry.yaml`](../registry/rx-registry.yaml) + [`registry/fragments/`](../registry/fragments/).
 
 | Домен | Значение | Записей | Примеры |
 |-------|----------|---------|---------|
@@ -34,7 +35,7 @@ ROX One — монорепозиторий десктопного AI-агент�
 | `INT` | Интеграции | 35 | `RX-INT-0001`, `RX-INT-0002`, `RX-INT-0003` |
 | `FEA` | Функции | 32 | `RX-FEA-0001`, `RX-FEA-0002`, `RX-FEA-0003` |
 | `AUT` | Автоматизации | 30 | `RX-AUT-0001`, `RX-AUT-0002`, `RX-AUT-0003` |
-| `DOC` | Документы | 25 | `RX-DOC-0001`, `RX-DOC-0002`, `RX-DOC-0003` |
+| `DOC` | Документы | 26 | `RX-DOC-0001`, `RX-DOC-0002`, `RX-DOC-0003` |
 | `SPC` | Спецификации | 20 | `RX-SPC-0001`, `RX-SPC-0002`, `RX-SPC-0003` |
 | `PKG` | Пакеты | 19 | `RX-PKG-0001`, `RX-PKG-0002`, `RX-PKG-0003` |
 | `ADR` | Решения | 18 | `RX-ADR-0001`, `RX-ADR-0002`, `RX-ADR-0003` |
@@ -49,12 +50,13 @@ ROX One — монорепозиторий десктопного AI-агент�
 ## Операции
 
 - Сборка образа: `Dockerfile.build` (BuildKit), вход `scripts/rx-build.sh`; подробности — [RX-DOC-0005](RX-DOC-0005-build.md).
-- CI CircleCI: workflow `rx-main` (`rx-validate` с зелёным `validate:ci` + `rx-build-image`), расписание `gateway-deploy` ежедневно 06:00 UTC.
+- CI CircleCI: workflow `rx-main` (`rx-validate` + `rx-build-image`), расписание `gateway-deploy` ежедневно 06:00 UTC.
 - Гейт кодов: `bun run rx:validate`. Полный локальный контроль: `bun run validate:ci`.
 
 ## Безопасность
 
-[RX-DOC-0004](RX-DOC-0004-security.md): находок **8** — Высокая: 1, Средняя: 4, Низкая: 3. Закрыто кодом: `RX-SEC-0001`, `RX-SEC-0002`, `RX-SEC-0003`, `RX-SEC-0006`, `RX-SEC-0007`; RX-SEC-0008 — решение D10.
+[RX-DOC-0004](RX-DOC-0004-security.md): находок **8** — Высокая: 1, Средняя: 4, Низкая: 3. Закрыто кодом: `RX-SEC-0001`, `RX-SEC-0002`, `RX-SEC-0003`, `RX-SEC-0006`, `RX-SEC-0007`.
+Исторический корпус: [RX-DOC-0028](RX-DOC-0028-security-corpus.md) (17 док.).
 
 ## Сессии
 

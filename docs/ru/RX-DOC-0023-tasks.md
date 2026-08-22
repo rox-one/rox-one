@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **44**. Заблокировано: **4**, Готово: **14**, Отменено: **2**, Запланировано: **24**.
+Всего задач: **44**. Заблокировано: **4**, Готово: **15**, Отменено: **2**, Запланировано: **23**.
 
 Номерные блоки волн: 0100–0110 аудит функций · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
 
@@ -57,7 +57,7 @@ status: active
 | `RX-TSK-0411` | Сделать UI импорта Notes | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `apps/electron/src/renderer/pages/NotesPage.tsx` |
 | `RX-TSK-0412` | Довести OwnedRootPolicy | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `packages/shared/src/config/paths.ts` |
 | `RX-TSK-0413` | Исправить clone URL в README | Готово | `session-recovery-20260821-do-it-all-security-slices` | `README.md` |
-| `RX-TSK-0414` | Перенести корпус docs/security | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `docs` |
+| `RX-TSK-0414` | Перенести корпус docs/security | Готово | `session-recovery-20260821-do-it-all-security-slices` | `docs` |
 | `RX-TSK-0415` | Origin-scoped remote TLS | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `apps/electron/src/main/handlers/workspace.ts` |
 | `RX-TSK-0416` | Default-deny для публичного messaging | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `packages/messaging-gateway/src/types.ts` |
 | `RX-TSK-0417` | Подтверждение владельца перед transform_data | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `packages` |
