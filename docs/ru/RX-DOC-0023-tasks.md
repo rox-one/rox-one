@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **44**. Заблокировано: **3**, Готово: **12**, Отменено: **2**, Запланировано: **27**.
+Всего задач: **44**. Заблокировано: **4**, Готово: **14**, Отменено: **2**, Запланировано: **24**.
 
 Номерные блоки волн: 0100–0110 аудит функций · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
 
@@ -44,7 +44,7 @@ status: active
 | Код | Задача | Статус | Происхождение | Файл |
 |-----|--------|--------|---------------|------|
 | `RX-TSK-0400` | Перенести доводку инспектора Connection Fabric | Запланировано | `session-recovery-20260821-craft-agents` | `apps/electron/src/renderer/pages/ConnectionsPage.tsx` |
-| `RX-TSK-0401` | Дефолт-лейбл для сессий OMP-провайдера | Запланировано | `session-recovery-20260821-craft-agents` | `docs/omp-integration-gap.md` |
+| `RX-TSK-0401` | Дефолт-лейбл для сессий OMP-провайдера | Готово | `session-recovery-20260821-craft-agents` | `docs/omp-integration-gap.md` |
 | `RX-TSK-0402` | Перенести платформу команд OMP фазы 0–7 | Запланировано | `session-recovery-20260821-craft-agents-cf2-restored` | `docs/omp-v2-prd.md` |
 | `RX-TSK-0403` | UI контролируемой миграции credentials CF-2 | Запланировано | `session-recovery-20260821-craft-agents-cf2-restored` | `packages/shared/src/credentials` |
 | `RX-TSK-0404` | Панель аудита OpenClaw | Запланировано | `session-recovery-20260821-craft-agents-cf2-restored` | `apps/electron/src/renderer/pages` |
@@ -53,10 +53,10 @@ status: active
 | `RX-TSK-0407` | Перенести command.approve и command.deny | Запланировано | `session-recovery-20260821-marklindgreen` | `packages` |
 | `RX-TSK-0408` | Перенести session intelligence W1–W5 | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `apps/electron/src/renderer` |
 | `RX-TSK-0409` | Удержать PSI W6–W8 за гейтом | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `apps/electron/src/renderer` |
-| `RX-TSK-0410` | Убрать credentialValue из identity.connect | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `packages/server-core/src/handlers/rpc/identity.ts` |
+| `RX-TSK-0410` | Убрать credentialValue из identity.connect | Заблокировано | `session-recovery-20260821-do-it-all-security-slices` | `packages/server-core/src/handlers/rpc/identity.ts` |
 | `RX-TSK-0411` | Сделать UI импорта Notes | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `apps/electron/src/renderer/pages/NotesPage.tsx` |
 | `RX-TSK-0412` | Довести OwnedRootPolicy | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `packages/shared/src/config/paths.ts` |
-| `RX-TSK-0413` | Исправить clone URL в README | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `README.md` |
+| `RX-TSK-0413` | Исправить clone URL в README | Готово | `session-recovery-20260821-do-it-all-security-slices` | `README.md` |
 | `RX-TSK-0414` | Перенести корпус docs/security | Запланировано | `session-recovery-20260821-do-it-all-security-slices` | `docs` |
 | `RX-TSK-0415` | Origin-scoped remote TLS | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `apps/electron/src/main/handlers/workspace.ts` |
 | `RX-TSK-0416` | Default-deny для публичного messaging | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `packages/messaging-gateway/src/types.ts` |

@@ -120,12 +120,14 @@
   title: Дефолт-лейбл для сессий OMP-провайдера
   kind: task
   path: docs/omp-integration-gap.md
-  status: planned
+  status: done
   origin: session-recovery-20260821-craft-agents
   refs: [RX-SES-0001, RX-DOC-0006]
   note: |
     Единственный незакрытый пункт матрицы OMP v2: опциональный default label
     для omp-провайдера. Мост set_session_labels уже есть.
+    Исполнено 2026-08-22: LlmConnection.defaultSessionLabel (только providerType 'omp');
+    применяется в SessionManager.createSession через существующий label-CRUD.
 
 - id: RX-TSK-0402
   title: Перенести платформу команд OMP фазы 0–7

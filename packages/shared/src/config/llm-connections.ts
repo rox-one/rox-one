@@ -168,6 +168,9 @@ export interface LlmConnection {
   /** Default model for this connection */
   defaultModel?: string;
 
+  /** Опциональный лейбл, навешиваемый на новые сессии этого подключения
+   *  (применяется только для providerType 'omp'; RX-TSK-0401). */
+  defaultSessionLabel?: string;
   /**
    * Ownership mode for the model list.
    * - automaticallySyncedFromProvider: provider defaults are kept in sync.
