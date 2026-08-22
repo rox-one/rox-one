@@ -3,14 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { pathToFileURL } from 'url'
-<<<<<<< HEAD
 import type { RemoteServerConfig, Workspace } from '@craft-agent/core/types'
-||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
-import type { RemoteServerConfig } from '@craft-agent/core/types'
-=======
-import type { RemoteServerConfig } from '@craft-agent/core/types'
-import { resolveConfigDir } from "../paths.ts"
->>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
 
 /** SSH-backed workspaces record sshHostId durably (not the ephemeral port);
  * plain-ws workspaces round-trip unchanged (backward compat). */
@@ -85,7 +78,6 @@ describe('RemoteServerConfig SSH persistence', () => {
     const found = (storage.getWorkspaces() as any[]).find((w) => w.id === ws.id)
     expect(found.remoteServer.sshHostId).toBe('host-42')
   })
-<<<<<<< HEAD
 
   it('persists a canonical matching SPKI pin across save and reload', async () => {
     const storage = await freshStorage()
@@ -172,8 +164,3 @@ describe('RemoteServerConfig SSH persistence', () => {
     ).toBeFalse()
   })
 })
-||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
-})
-=======
-})
->>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))

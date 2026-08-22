@@ -310,7 +310,6 @@ describe('extensionHost.LOAD ignores client grantedPermissions', () => {
       }),
     ).rejects.toThrow(/not granted/i)
   })
-<<<<<<< HEAD
 
   it('listCapabilities returns hashes only; revoke by tokenHash', async () => {
     const load = handlers.get(RPC_CHANNELS.extensionHost.LOAD)!
@@ -364,8 +363,3 @@ describe('extensionHost.LOAD ignores client grantedPermissions', () => {
     expect(JSON.stringify(after)).not.toContain(minted.token)
   })
 })
-||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
-})
-=======
-})
->>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))

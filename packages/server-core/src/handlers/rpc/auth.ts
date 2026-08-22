@@ -1,7 +1,6 @@
 import { unlink } from 'fs/promises'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-<<<<<<< HEAD
 import type {
   CredentialMigrationApplyDto,
   CredentialMigrationErrorCode,
@@ -17,18 +16,11 @@ import {
   previewCredentialMigration,
   rollbackCredentialMigration,
 } from '@craft-agent/shared/credentials'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
-||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
-import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
-=======
-import { getCredentialManager } from '@craft-agent/shared/credentials'
->>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
 import { getIdentityStore, resetIdentityStoreCache } from '@craft-agent/core/platform/identity/store'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { requestClientConfirmDialog } from '@craft-agent/server-core/transport'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.auth.LOGOUT,

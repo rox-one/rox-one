@@ -355,17 +355,9 @@ export class SecureStorageBackend implements CredentialBackend, CredentialMigrat
   private salt: Buffer | null = null;
   private repairState: RepairState = { status: 'ok' };
 
-<<<<<<< HEAD
   constructor(options: string | SecureStorageOptions = {}) {
     const opts: SecureStorageOptions = typeof options === 'string' ? { directory: options } : options;
-    this.directory = opts.directory ?? CONFIG_DIR;
-||||||| parent of 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
-  constructor(options: SecureStorageOptions = {}) {
-    this.directory = options.directory ?? CONFIG_DIR;
-=======
-  constructor(options: SecureStorageOptions = {}) {
-    this.directory = options.directory ?? resolveConfigDir();
->>>>>>> 2c8cd711 (refactor(config): ленивый resolveConfigDir вместо eager CONFIG_DIR по всему монорепо (RX-TSK-0111, этап RX-TSK-0412))
+    this.directory = opts.directory ?? resolveConfigDir();
     this.file = join(this.directory, STORE_NAME);
     this.backupFile = join(this.directory, BACKUP_NAME);
     this.migrationsDir = join(this.directory, 'credential-migrations');
