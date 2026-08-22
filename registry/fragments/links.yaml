@@ -12,21 +12,23 @@
   title: Слинковать приватные смежные репозитории как сабмодули
   kind: task
   path: .gitmodules
-  status: active
+  status: done
   refs: [RX-DOC-0007, RX-PIP-0201]
   note: |
     Сабмодули vendor/rox-one-assets и vendor/rox-one-website с update = none
     и shallow = true, чтобы внешний clone публичного репозитория не падал.
+    Поставлено: vendor/* инициализированы.
 
 - id: RX-TSK-0701
   title: Написать валидатор системы кодов RX-*
   kind: task
   path: scripts/rx-validate.ts
-  status: active
+  status: done
   refs: [RX-DOC-0007, RX-PIP-0200]
   note: |
     Скрипт bun run scripts/rx-validate.ts: грамматика, уникальность, status,
     висячие refs, front matter документов, предупреждения по path.
+    Поставлено: bun run rx:validate зелёный.
 
 - id: RX-PIP-0200
   title: Проверка реестра и документов RX-*
