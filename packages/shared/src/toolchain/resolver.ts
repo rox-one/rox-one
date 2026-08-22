@@ -55,29 +55,6 @@ async function isExecutable(file: string, win = isWindows): Promise<boolean> {
   }
 }
 
-/** Regular file contained in the real toolchain root; rejects symlink escapes. */
-async function isManagedFile(
-  toolchainDir: string,
-  file: string,
-  executable: boolean,
-  win: boolean,
-): Promise<boolean> {
-  try {
-    const [realToolchainDir, realFile] = await Promise.all([
-      fs.promises.realpath(toolchainDir),
-      fs.promises.realpath(file),
-    ]);
-    const relative = path.relative(realToolchainDir, realFile);
-    if (!relative || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) return false;
-    const stat = await fs.promises.stat(realFile);
-    if (!stat.isFile()) return false;
-    if (executable && !win) await fs.promises.access(realFile, fs.constants.X_OK);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export interface ResolverOptions {
   manifest?: typeof TOOLCHAIN_MANIFEST;
   /** DI вместо process.env.PATH (тесты). */
