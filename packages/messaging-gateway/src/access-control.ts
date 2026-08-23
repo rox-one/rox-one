@@ -29,6 +29,9 @@ import type {
  */
 export const REJECT_REPLY_COOLDOWN_MS = 60 * 60 * 1000
 
+/** Upper bound on tracked (platform, sender) rejection-cooldown entries. */
+export const REJECT_REPLY_MAP_MAX = 1000
+
 export type AccessDecision =
   | { allow: true }
   | { allow: false; reason: AccessRejectReason }
@@ -56,10 +59,12 @@ export interface PreBindingAccessInput {
  * Decide whether `msg` may run a pre-binding command (`/new`, `/bind`, etc.)
  * — i.e. one that operates on the workspace before any binding exists.
  *
- * Rules:
+ * Rules (RX-TSK-0416 / DOC-0033):
  *  - Bot senders are always rejected (silent-drop expected upstream).
- *  - When the platform's `accessMode` is missing or `'open'`, allow.
- *  - When `'owner-only'`, allow iff the sender is on `owners`.
+ *  - Platform mode `disabled` → reject everything (kill switch).
+ *  - `owner-control` → allow iff sender is on `owners`.
+ *  - `public-inbox` (migrated default incl. legacy `open`) → queue the
+ *    sender for owner review; nothing routes without an owner decision.
  */
 export function evaluatePreBindingAccess(
   input: PreBindingAccessInput,
@@ -101,17 +106,14 @@ export interface BindingAccessInput {
 /**
  * Decide whether `msg` may route to an existing binding.
  *
- * Resolution order:
+ * Resolution order (RX-TSK-0416 / DOC-0033):
  *  1. Bot sender → reject.
- *  2. Binding `accessMode === 'open'` → allow.
- *  3. Binding `accessMode === 'allow-list'` → allow iff sender is in
- *     `allowedSenderIds`.
- *  4. Binding `accessMode === 'inherit'` → defer to workspace policy:
- *     `'open'` allows; `'owner-only'` requires sender on `owners`.
- *
- * Note: a `'open'` workspace + `'inherit'` binding is the legacy/migration
- * path. It deliberately allows traffic so existing prod workspaces don't
- * silently break the day this code ships.
+ *  2. Platform mode `disabled` → reject (kill switch beats binding modes).
+ *  3. Binding mode migrated via migrateBindingAccessMode; unknown/legacy
+ *     values (`open`, `inherit`) land on `public-inbox`.
+ *  4. `owner-control` → owner or binding allow-list only.
+ *  5. `public-inbox` → owner/allow-list pass; everyone else is queued for
+ *     owner review (default-deny).
  */
 export function evaluateBindingAccess(input: BindingAccessInput): AccessDecision {
   const { msg, workspaceConfig, binding } = input
@@ -123,10 +125,6 @@ export function evaluateBindingAccess(input: BindingAccessInput): AccessDecision
   }
 
   const mode = migrateBindingAccessMode(binding.config.accessMode)
-
-  if (readPlatformAccessMode(workspaceConfig, msg.platform) === 'disabled') {
-    return { allow: false, reason: 'mode-disabled' }
-  }
 
   const owners = readPlatformOwners(workspaceConfig, msg.platform)
   const isOwner = owners.some((o) => o.userId === msg.senderId)
@@ -238,6 +236,11 @@ export async function executeRejection(
   const key = `${sender.platform}:${sender.senderId}`
   const last = ctx.recentRejectReplies.get(key) ?? 0
   if (Date.now() - last < REJECT_REPLY_COOLDOWN_MS) return
+  // Bound the map: distinct public senders must not grow it without limit.
+  if (!ctx.recentRejectReplies.has(key) && ctx.recentRejectReplies.size >= REJECT_REPLY_MAP_MAX) {
+    const oldest = ctx.recentRejectReplies.keys().next().value
+    if (oldest !== undefined) ctx.recentRejectReplies.delete(oldest)
+  }
   ctx.recentRejectReplies.set(key, Date.now())
 
   try {
