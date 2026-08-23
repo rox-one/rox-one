@@ -14,6 +14,9 @@ import { mkdtempSync, rmSync, writeFileSync, readFileSync, existsSync } from 'no
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+const SUBPROCESS_TIMEOUT_MS = 15_000 // Дефолтные 5s флейкуют под нагрузкой машины (2026-08-23)
+
+
 const REPO_ROOT = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 const ELECTRON_ROOT = join(REPO_ROOT, 'apps', 'electron')
 
@@ -129,7 +132,7 @@ describe('runtime-context rpc handlers (subprocess)', () => {
     } finally {
       rmSync(r.configDir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 
   test('contextDocs WRITE → LIST/READ sees marker and pushes CHANGED', () => {
     const marker = 'rpc-sub-marker-' + Date.now() + '-' + Math.random().toString(36).slice(2)
@@ -179,7 +182,7 @@ describe('runtime-context rpc handlers (subprocess)', () => {
     } finally {
       rmSync(r.configDir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 
   test('marketplace CATALOG returns bundled entries', () => {
     const bundledCatalog = join(ELECTRON_ROOT, 'resources', 'marketplace', 'catalog.json')
@@ -227,5 +230,5 @@ describe('runtime-context rpc handlers (subprocess)', () => {
     } finally {
       rmSync(r.configDir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 })
