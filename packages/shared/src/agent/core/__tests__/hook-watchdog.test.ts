@@ -15,7 +15,7 @@ describe('hook-chain watchdog', () => {
   it('ok below divergence threshold (cold start)', () => {
     for (let n = 0; n < HOOK_WATCHDOG_THRESHOLD; n++) {
       expect(
-        evaluateHookWatchdog({ preToolUseCount: 0, postToolUseCount: n }).action,
+        evaluateHookWatchdog({ preToolUseCount: 0, postToolUseCount: n }, 'kill').action,
       ).toBe('ok')
     }
   })
@@ -24,26 +24,26 @@ describe('hook-chain watchdog', () => {
     const v = evaluateHookWatchdog({
       preToolUseCount: 0,
       postToolUseCount: HOOK_WATCHDOG_THRESHOLD,
-    })
+    }, 'kill')
     expect(v.action).toBe('kill-session')
     if (v.action === 'kill-session') expect(v.reason).toContain('diverged')
   })
 
   it('kills on mid-session chain breakage (the blind spot of a set-once latch)', () => {
     const before = { preToolUseCount: 50, postToolUseCount: 50 }
-    expect(evaluateHookWatchdog(before).action).toBe('ok')
+    expect(evaluateHookWatchdog(before, 'kill').action).toBe('ok')
 
     // Цепочка умерла после 50 проверенных вызовов: дивергенция растёт.
     const drifting = evaluateHookWatchdog({
       preToolUseCount: 50,
       postToolUseCount: 50 + HOOK_WATCHDOG_THRESHOLD - 1,
-    })
+    }, 'kill')
     expect(drifting.action).toBe('ok')
 
     const broken = evaluateHookWatchdog({
       preToolUseCount: 50,
       postToolUseCount: 50 + HOOK_WATCHDOG_THRESHOLD,
-    })
+    }, 'kill')
     expect(broken.action).toBe('kill-session')
   })
 })

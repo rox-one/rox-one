@@ -31,11 +31,14 @@ function parseWorkspaceInput(value: unknown): { workspaceId: string } {
 
 function authorizeWorkspace<T extends { workspaceId: string }>(
   context: RequestContext,
+  deps: HandlerDeps,
   input: T,
 ): T {
   const callerWorkspaceId =
     context.workspaceId ??
-    (context.webContentsId === null ? undefined : undefined)
+    (context.webContentsId === null
+      ? undefined
+      : deps.windowManager?.getWorkspaceForWindow(context.webContentsId) ?? undefined)
   if (
     typeof callerWorkspaceId !== 'string' ||
     !WORKSPACE_ID_PATTERN.test(callerWorkspaceId) ||
@@ -59,12 +62,12 @@ function requireStore(deps: HandlerDeps): NonNullable<HandlerDeps['commandGatewa
 
 export function registerCommandGatewayHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.commandGateway.LIST, async (context, rawInput: unknown) => {
-    const input = authorizeWorkspace(context, parseWorkspaceInput(rawInput))
+    const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
     return requireStore(deps).listPending(input.workspaceId)
   })
 
   server.handle(RPC_CHANNELS.commandGateway.APPROVE, async (context, rawInput: unknown) => {
-    const input = parseAndAuthorizeDecision(context, rawInput)
+    const input = parseAndAuthorizeDecision(context, deps, rawInput)
     const cmd = requireStore(deps).decide(
       input.id,
       input.workspaceId,
@@ -76,7 +79,7 @@ export function registerCommandGatewayHandlers(server: RpcServer, deps: HandlerD
   })
 
   server.handle(RPC_CHANNELS.commandGateway.DENY, async (context, rawInput: unknown) => {
-    const input = parseAndAuthorizeDecision(context, rawInput)
+    const input = parseAndAuthorizeDecision(context, deps, rawInput)
     const cmd = requireStore(deps).decide(input.id, input.workspaceId, 'denied', 'owner')
     if (!cmd) invalidRequest()
     return { ok: true as const }
@@ -85,6 +88,7 @@ export function registerCommandGatewayHandlers(server: RpcServer, deps: HandlerD
 
 function parseAndAuthorizeDecision(
   context: RequestContext,
+  deps: HandlerDeps,
   rawInput: unknown,
 ): { workspaceId: string; id: string } {
   if (
@@ -96,5 +100,5 @@ function parseAndAuthorizeDecision(
   ) {
     invalidRequest()
   }
-  return authorizeWorkspace(context, rawInput as { workspaceId: string; id: string })
+  return authorizeWorkspace(context, deps, rawInput as { workspaceId: string; id: string })
 }
