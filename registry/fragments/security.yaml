@@ -92,6 +92,8 @@
   status: planned
   refs: [RX-SEC-0004]
   note: |
+    Дизайн готов 2026-08-23: RX-DOC-0031 — факты bypass, варианты
+    A/B/C, рекомендация. Реализация — следующий срез по плану.
     Блокировать tool-call, если hook-цепочка не подтвердила готовность; canary tool-call при старте сессии.
 
 - id: RX-SEC-0005
@@ -109,7 +111,7 @@
   kind: task
   path: packages/server-core/src/tasks/TaskRunner.ts
   status: done
-  refs: [RX-SEC-0005]
+  refs: [RX-SEC-0005, RX-DOC-0031]
   note: |
     Валидация при saveTaskSpec: отсутствие mode — ошибка создания; индикатор активного режима при restore.
     Исполнено 2026-08-23: saveTaskSpec отказ без явного mode; console.info режима в run();
