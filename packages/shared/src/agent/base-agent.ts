@@ -66,6 +66,7 @@ import { buildTitlePrompt, buildRegenerateTitlePrompt, validateTitle } from '../
 // Skill extraction for Codex/Copilot backends (Claude uses native SDK Skill tool)
 import { parseMentions, resolveSkillMentions, resolveSourceMentions, resolveFileMentions } from '../mentions/index.ts';
 import { loadAllSkills } from '../skills/storage.ts';
+import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 
 // ============================================================
 // Mini Agent Configuration
@@ -929,6 +930,15 @@ ${formattedMessages}
    *   - cleanMessage: Message with mentions stripped, or default directive
    *   - missingSkills: Array of skill slugs that were mentioned but not found
    */
+  /**
+   * Skill-loading options for extractSkillPaths. Default: craft-only.
+   * OMP-backed agents override to merge the OMP registry (craft wins on
+   * slug conflicts — enforced inside loadAllSkills).
+   */
+  protected getSkillLoadOptions(): LoadAllSkillsOptions {
+    return {};
+  }
+
   protected extractSkillPaths(message: string): {
     skillPaths: Map<string, string>;
     cleanMessage: string;
@@ -936,7 +946,7 @@ ${formattedMessages}
   } {
     const workspaceRoot = this.config.workspace?.rootPath ?? this.workingDirectory;
     const projectRoot = this.config.session?.workingDirectory;
-    const skills = loadAllSkills(workspaceRoot, projectRoot);
+    const skills = loadAllSkills(workspaceRoot, projectRoot, this.getSkillLoadOptions());
     const skillSlugs = skills.map(s => s.slug);
 
     this.debug(`[extractSkillPaths] Available skills: ${skillSlugs.join(', ')}`);

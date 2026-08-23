@@ -661,3 +661,47 @@ describe('deleteSkill', () => {
     expect(result).toBe(false);
   });
 });
+
+describe('RX-TSK-0402 Phase 1: includeOmp merge (craft wins)', () => {
+  it('workspace .omp/skills appear only with includeOmp, craft shadows on slug conflict', async () => {
+    const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('os' === 'x' ? 'x' : 'fs');
+    const { join } = await import('path');
+    const ws = mkdtempSync(join(tmpdir(), 'ws-omp-'));
+
+    // OMP skill in workspace-level dir
+    const ompDir = join(ws, '.omp', 'skills', 'my-omp-skill');
+    mkdirSync(ompDir, { recursive: true });
+    writeFileSync(join(ompDir, 'SKILL.md'), '---\nname: My OMP Skill\ndescription: from omp\n---\nbody');
+
+    // Craft workspace skill with the SAME slug → craft must win
+    // (craft workspace skills live in {ws}/skills, see getWorkspaceSkillsPath)
+    const craftDir = join(ws, 'skills', 'my-omp-skill');
+    mkdirSync(craftDir, { recursive: true });
+    writeFileSync(join(craftDir, 'SKILL.md'), '---\nname: Craft Variant\ndescription: craft wins\n---\ncraft body');
+
+    // Distinct craft skill
+    const craftOnly = join(ws, 'skills', 'only-craft');
+    mkdirSync(craftOnly, { recursive: true });
+    writeFileSync(join(craftOnly, 'SKILL.md'), '---\nname: Only Craft\ndescription: x\n---\nbody');
+
+    const { loadAllSkills } = await import('../storage.ts');
+
+    // Default: no OMP skills leak into agent context
+    const plain = loadAllSkills(ws);
+    expect(plain.find(s => s.slug === 'my-omp-skill')?.source).not.toBe('omp');
+
+    // includeOmp: merged; craft wins on conflict
+    const merged = loadAllSkills(ws, undefined, { includeOmp: true });
+    const conflicted = merged.find(s => s.slug === 'my-omp-skill');
+    expect(conflicted?.source).toBe('workspace');
+    expect(conflicted?.metadata.name).toBe('Craft Variant');
+    expect(merged.some(s => s.slug === 'my-omp-skill' && s.source === 'omp')).toBe(false);
+
+    // includeShadowedOmp surfaces the losing OMP variant for UI
+    const withShadow = loadAllSkills(ws, undefined, { includeOmp: true, includeShadowedOmp: true });
+    const shadowed = withShadow.filter(s => s.slug === 'my-omp-skill');
+    expect(shadowed.some(s => s.source === 'omp' && s.shadowedByCraft)).toBe(true);
+
+    rmSync(ws, { recursive: true, force: true });
+  });
+})
