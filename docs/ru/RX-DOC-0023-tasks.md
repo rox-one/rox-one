@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **46**. В работе: **1**, Заблокировано: **5**, Готово: **21**, Отменено: **2**, Запланировано: **17**.
+Всего задач: **46**. В работе: **1**, Заблокировано: **6**, Готово: **23**, Отменено: **2**, Запланировано: **14**.
 
 Блоки волн: 0100–0111 · 0300–0399 безопасность · 0400–0599 бэкапы · 0600–0699 сборка · 0700–0799 связи.
 
@@ -26,7 +26,7 @@ status: active
 | `RX-TSK-0109` | WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей | Готово |
 | `RX-TSK-0110` | Свести typecheck:all к зелёному — устранить довесок до включения rx-main | Готово |
 | `RX-TSK-0111` | Перевести потребителей CONFIG_DIR на ленивый getConfigDir | Готово |
-| `RX-TSK-0112` | UI-панель аудита OpenClaw (renderer) | Запланировано |
+| `RX-TSK-0112` | UI-панель аудита OpenClaw (renderer) | Готово |
 
 ## Безопасность
 
@@ -50,11 +50,11 @@ status: active
 | `RX-TSK-0402` | Перенести платформу команд OMP фазы 0–7 | Запланировано | `session-recovery-20260821-craft-agents-cf2-restored` |
 | `RX-TSK-0403` | UI контролируемой миграции credentials CF-2 | Запланировано | `session-recovery-20260821-craft-agents-cf2-restored` |
 | `RX-TSK-0404` | Панель аудита OpenClaw | В работе | `session-recovery-20260821-craft-agents-cf2-restored` |
-| `RX-TSK-0405` | Решить судьбу и перенести rox-sidecar | Запланировано | `session-recovery-20260821-marklindgreen` |
+| `RX-TSK-0405` | Решить судьбу и перенести rox-sidecar | Заблокировано | `session-recovery-20260821-marklindgreen` |
 | `RX-TSK-0406` | Перенести WP-UI поверхности закрытого цикла | Запланировано | `session-recovery-20260821-marklindgreen` |
 | `RX-TSK-0407` | Перенести command.approve и command.deny | Запланировано | `session-recovery-20260821-marklindgreen` |
 | `RX-TSK-0408` | Перенести session intelligence W1–W5 | Запланировано | `session-recovery-20260821-do-it-all-security-slices` |
-| `RX-TSK-0409` | Удержать PSI W6–W8 за гейтом | Запланировано | `session-recovery-20260821-do-it-all-security-slices` |
+| `RX-TSK-0409` | Удержать PSI W6–W8 за гейтом | Готово | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0410` | Убрать credentialValue из identity.connect | Заблокировано | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0411` | Сделать UI импорта Notes | Запланировано | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0412` | Довести OwnedRootPolicy | Готово | `session-recovery-20260821-do-it-all-security-slices` |

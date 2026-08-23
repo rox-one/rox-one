@@ -177,12 +177,14 @@
   title: Решить судьбу и перенести rox-sidecar
   kind: task
   path: packages
-  status: planned
+  status: blocked
   origin: session-recovery-20260821-marklindgreen
   refs: [RX-SES-0005, RX-DOC-0006, RX-TSK-0406]
   note: |
     Параллельный закрытый цикл: Cargo workspace rox-api/graph/policy/projectors.
     В craft-agents монорепо никогда не вливался. Сначала выбор владельца.
+    Свип 2026-08-23: sidecar отсутствует в recovery и в дереве.
+    Заблокировано до решения владельца о судьбе закрытого цикла.
 
 - id: RX-TSK-0406
   title: Перенести WP-UI поверхности закрытого цикла
@@ -225,12 +227,14 @@
   title: Удержать PSI W6–W8 за гейтом
   kind: task
   path: apps/electron/src/renderer
-  status: planned
+  status: done
   origin: session-recovery-20260821-do-it-all-security-slices
   refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0408]
   note: |
     W6 prompt inject и W8 sync сознательно не включать. Кандидатов не
     продвигать в промпт агента.
+    Исполнено по определению задачи 2026-08-23: свип подтвердил — PSI-кода
+    в дереве нет, гейт удержан. Задача активируется появлением кода W6/W8.
 
 - id: RX-TSK-0410
   title: Убрать credentialValue из identity.connect
