@@ -12,7 +12,7 @@
  * explicitly consented step downstream (FR-7).
  */
 
-import { existsSync, lstatSync, mkdirSync, readdirSync, writeFileSync, openSync, closeSync, readFileSync, fstatSync, constants as fsConstants } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, readdirSync, writeFileSync, renameSync, openSync, closeSync, readFileSync, fstatSync, constants as fsConstants } from 'node:fs'
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 
 export const IMPORT_LIMITS = {
@@ -202,7 +202,9 @@ export function materializeImport(
   folderName: string,
   scan: ScanResult,
 ): MaterializeResult {
-  const safeFolder = basename(folderName).replace(/[^\w.-]+/g, '_') || 'import'
+  const sanitized = basename(folderName).replace(/[^\w.-]+/g, '_')
+  // Dot-only names ('.', '..') survive the regex and would escape imports/.
+  const safeFolder = !sanitized || sanitized === '.' || sanitized === '..' ? 'import' : sanitized
   const destinationDir = join(resolve(dataRoot), 'imports', safeFolder)
   mkdirSync(destinationDir, { recursive: true })
 
@@ -211,7 +213,10 @@ export function materializeImport(
   let skippedCount = 0
   const origins: Array<{ from: string; to: string }> = []
 
-  for (const note of scan.notes) {
+  // Forged/oversized ScanResult defense-in-depth: never materialize more
+  // than the consent-preview limit.
+  const boundedNotes = scan.notes.slice(0, IMPORT_LIMITS.MAX_FILES)
+  for (const note of boundedNotes) {
     // Destination containment: resolve + relative rejects siblings sharing a
     // prefix ('../foobar/pwn.md' vs dest '.../foo') that startsWith misses.
     const target = resolve(destinationDir, note.relativePath)
@@ -256,12 +261,16 @@ export function materializeImport(
     }
   }
 
+  // Manifest via temp+rename: rename replaces a pre-planted symlink entry at
+  // manifestPath instead of following it (plain 'w' would overwrite the target).
   const manifestPath = join(destinationDir, '_provenance.json')
+  const manifestTmp = join(destinationDir, `._provenance.${process.pid}.${Date.now()}.tmp`)
   writeFileSync(
-    manifestPath,
+    manifestTmp,
     JSON.stringify({ importedAt: now, sourceRoot: scan.root, files: origins }, null, 2),
     'utf8',
   )
+  renameSync(manifestTmp, manifestPath)
   return { destinationDir, manifestPath, copiedCount, skippedCount }
 }
 
