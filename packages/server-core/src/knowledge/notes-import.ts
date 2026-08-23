@@ -12,7 +12,7 @@
  * explicitly consented step downstream (FR-7).
  */
 
-import { existsSync, lstatSync, mkdirSync, readdirSync, copyFileSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, readdirSync, writeFileSync, openSync, closeSync, readFileSync, fstatSync, constants as fsConstants } from 'node:fs'
 import { basename, join, relative, resolve } from 'node:path'
 
 export const IMPORT_LIMITS = {
@@ -140,12 +140,24 @@ export function materializeImport(
       target = candidate
     }
     mkdirSync(dirname(target), { recursive: true })
+    // RX-TSK-0411 TOCTOU fix (code review): open with O_NOFOLLOW so a symlink
+    // swapped in after scan fails here instead of leaking arbitrary content.
+    let fd: number | null = null
     try {
-      copyFileSync(note.absolutePath, target)
+      fd = openSync(note.absolutePath, fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW)
+      const st = fstatSync(fd)
+      if (!st.isFile() || st.size > IMPORT_LIMITS.MAX_FILE_BYTES) {
+        skippedCount += 1
+        continue
+      }
+      const content = readFileSync(fd)
+      writeFileSync(target, content)
       origins.push({ from: note.absolutePath, to: target })
       copiedCount += 1
     } catch {
       skippedCount += 1
+    } finally {
+      if (fd !== null) { try { closeSync(fd) } catch { /* already closed */ } }
     }
   }
 
