@@ -4,6 +4,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import type { TokenUsage } from '@craft-agent/core/types';
 import type { CreateSessionOptions } from '@craft-agent/shared/protocol';
+import { mkdirSync, writeFileSync } from 'node:fs'
 import { parseTaskSpec, saveTaskSpec, readRunLog, readNodeOutput, type TaskSpec } from '@craft-agent/shared/tasks';
 import type { SessionCompletionEvent } from '../sessions/SessionManager';
 import { TaskRunner, type ConductorSessionHost } from './TaskRunner';
@@ -16,7 +17,13 @@ function tu(inputTokens: number, outputTokens: number): TokenUsage {
 }
 
 function specOf(raw: unknown): TaskSpec {
-  const r = parseTaskSpec(raw);
+  // RX-TSK-0304: saveTaskSpec требует явный defaults.permissionMode —
+  // фиксируем 'allow-all' в фикстурах, кроме тестов, задающих его сами.
+  const withDefaults = {
+    ...(raw as Record<string, unknown>),
+    defaults: { ...((raw as Record<string, unknown>).defaults as object | undefined), permissionMode: ((raw as Record<string, unknown>).defaults as { permissionMode?: string } | undefined)?.permissionMode ?? 'allow-all' },
+  };
+  const r = parseTaskSpec(withDefaults);
   if (!r.success) throw new Error('bad fixture: ' + JSON.stringify(r.error.issues));
   return r.data;
 }
@@ -212,10 +219,13 @@ describe('TaskRunner (Conductor)', () => {
   it('defaults an omitted permission mode to allow-all (unattended-safe), not undefined/ask', async () => {
     // A hand-authored spec that sets no permission mode must NOT fall through to the workspace default
     // (which could be `ask` → the unattended child would hang). The runner supplies an explicit default.
-    saveTaskSpec(
-      root,
-      specOf({ id: 'perm2', title: 'Perm2', goal: 'g', nodes: [{ id: 'c', prompt: 'c' }] }),
-    )
+    // Legacy-спека без defaults: пишем yaml напрямую, минуя валидацию saveTaskSpec,
+    // чтобы проверить именно рантайм-фолбэк на 'allow-all'.
+    mkdirSync(join(root, 'tasks', 'perm2'), { recursive: true });
+    writeFileSync(
+      join(root, 'tasks', 'perm2', 'task.yaml'),
+      ['id: perm2', 'title: Perm2', 'goal: g', 'nodes:', '  - id: c', '    prompt: c', ''].join('\n'),
+    );
     const runner = makeRunner()
     runner.run('perm2', { runId: 'r1' })
     await tick()
