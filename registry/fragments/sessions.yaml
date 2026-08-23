@@ -146,6 +146,14 @@
     ExtensionUiDialogHost, export/dump, share/copy, typed fallback.
     В текущем дереве этих файлов нет. v2 G1–G4 уже в main.
 
+    Фаза 0 спроектирована 2026-08-23: RX-DOC-0032; реализация — следующий срез.
+
+    База знаний перенесена 2026-08-23: docs/upstream/omp/ (PRD v2
+    ЗАВЕРШЕНО 142 стр. + rpc-notes 77 + integration-gap 49, RU).
+    Фазы 0–7 платформы Command Gateway — разработка с нуля поверх неё.
+    ADR D1–D8, инвентарь omp 17.2.10, Command Gateway, AdvancedConsole,
+    ExtensionUiDialogHost, export/dump, share/copy, typed fallback.
+    В текущем дереве этих файлов нет. v2 G1–G4 уже в main.
 - id: RX-TSK-0403
   title: UI контролируемой миграции credentials CF-2
   kind: task
@@ -212,6 +220,14 @@
     Коммит d48efe66: approval flow end-to-end с restart-safe action store.
     В текущем дереве символов command.approve нет.
 
+    Дизайн фазы 0 готов 2026-08-23: RX-DOC-0032 (store + approve/deny RPC).
+
+    Свип 2026-08-23: коммит d48efe66 недоступен (нет ни локально, ни в
+    FETCH_HEAD recovery); найден только UI AdminApprovalRequest.tsx
+    (презентационная карточка, без action-store/RPC). Бэкенд строится
+    с нуля вместе с фазой 0 платформы RX-TSK-0402.
+    Коммит d48efe66: approval flow end-to-end с restart-safe action store.
+    В текущем дереве символов command.approve нет.
 - id: RX-TSK-0408
   title: Перенести session intelligence W1–W5
   kind: task
