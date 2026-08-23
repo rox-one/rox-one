@@ -7,3 +7,4 @@ export * from './push.ts'
 export type * from './types.ts'
 
 export { createPeerTrustVerifier } from "./peer-trust.ts";
+export type { PeerTrustVerifier } from "./peer-trust.ts";

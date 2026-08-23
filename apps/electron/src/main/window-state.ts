@@ -1,3 +1,4 @@
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import { writeFileSync, existsSync, mkdirSync } from 'fs'
 import { readJsonFileSync } from '@craft-agent/shared/utils/files'
 import { mainLog } from './logger'

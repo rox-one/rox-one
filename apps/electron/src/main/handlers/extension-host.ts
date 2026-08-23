@@ -12,6 +12,7 @@
  * cannot self-supply grantedPermissions.
  */
 
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import { RPC_CHANNELS } from '../../shared/types'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from './handler-deps'

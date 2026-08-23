@@ -10,6 +10,7 @@
  * - Injectable forkFn / workerPath for tests (never requires real Electron)
  */
 
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
