@@ -327,7 +327,7 @@
   title: Подтверждение владельца перед transform_data
   kind: task
   path: packages
-  status: planned
+  status: done
   origin: session-recovery-20260821-security-external-access-20260811
   refs: [RX-SES-0009, RX-DOC-0006, RX-TSK-0418]
   note: |
@@ -336,6 +336,9 @@
     Временный файл и процесс — только после подтверждения.
     Готов к исполнению: handler 198 строк в session-tools-core/handlers/transform-data.ts;
     подтверждение через существующий respondToPermission; тесты рядом.
+    Исполнено 2026-08-22: onTransformDataConfirm в SessionToolContext;
+    гейт в handleTransformData перед spawn; 2 новых теста.
+    2 pre-existing EPERM fail (macOS sandbox-exec) не связаны с гейтом.
 
 - id: RX-TSK-0418
   title: Изоляция исполнения в microVM

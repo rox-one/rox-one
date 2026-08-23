@@ -56,6 +56,7 @@ describe('transform_data path containment', () => {
       loadSourceConfig: () => null,
       sessionPath: sessionDir,
       dataPath: dataDir,
+      onTransformDataConfirm: () => true,
     };
   }
 
@@ -182,5 +183,34 @@ describe('transform_data path containment', () => {
 
     expect(result.isError).toBe(true);
     expect(result.content[0]?.text).toContain('inputFile must be within the session or skills directory');
+  });
+  it('calls confirmation and proceeds when approved', async () => {
+    const calls: unknown[] = [];
+    const c = ctx();
+    (c as any).onTransformDataConfirm = (d: unknown) => { calls.push(d); return true; };
+    const result = await handleTransformData(c, {
+      language: 'node',
+      script: "require('node:fs').writeFileSync(process.argv.at(-1), 'ok')",
+      inputFiles: [],
+      outputFile: 'out.json',
+    });
+    // Подтверждение вызвано; спавн может зафейлиться на EPERM в CI/macOS —
+    // это отдельный вопрос изоляции, не гейта подтверждения.
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toHaveProperty('language', 'node');
+    expect(calls[0]).toHaveProperty('outputFile', 'out.json');
+  });
+
+  it('cancels when owner rejects', async () => {
+    const c = ctx();
+    (c as any).onTransformDataConfirm = () => false;
+    const result = await handleTransformData(c, {
+      language: 'node',
+      script: "require('node:fs').writeFileSync(process.argv.at(-1), 'nope')",
+      inputFiles: [],
+      outputFile: 'out.json',
+    });
+    expect(result.isError).toBe(true);
+    expect((result as any).content?.[0]?.text).toContain('cancelled by owner');
   });
 });
