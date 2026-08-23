@@ -588,6 +588,11 @@ export const RPC_CHANNELS = {
     ACCEPT_RISK: 'securityAudit:acceptRisk',
     REVOKE_RISK_ACCEPTANCE: 'securityAudit:revokeRiskAcceptance',
   },
+  commandGateway: {
+    LIST: 'command:list',
+    APPROVE: 'command:approve',
+    DENY: 'command:deny',
+  },
   labels: {
     LIST: 'labels:list',
     CREATE: 'labels:create',
