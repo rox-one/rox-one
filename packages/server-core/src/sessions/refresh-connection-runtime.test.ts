@@ -1,8 +1,10 @@
+import './__test-config-isolation.ts'
 import { afterEach, beforeEach, describe, expect, it, jest } from 'bun:test'
 import { mkdtempSync, rmSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { resolveBackendContext } from '@craft-agent/shared/agent/backend'
+import { addLlmConnection, deleteLlmConnection, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage'
 import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import { SessionManager, createManagedSession } from './SessionManager.ts'
 import { buildRestartRequiredSignature } from './runtime-config.ts'
@@ -98,10 +100,24 @@ describe('refreshConnectionRuntime', () => {
 
   beforeEach(() => {
     tmpRoot = mkdtempSync(join(tmpdir(), 'sm-refresh-'))
+    // Явный сид: shape-check требует непустого connection при резолве 'slug-A'.
+    // Без сида тест молча зависел от defaultLlmConnection реального
+    // пользователя (~/.craft-agent), когда preload-изоляция не активна.
+    if (!loadStoredConfig()) {
+      saveConfig({ workspaces: [], migrationsApplied: [] } as never)
+    }
+    addLlmConnection({
+      slug: 'slug-A',
+      name: 'Test Connection A',
+      providerType: 'anthropic',
+      authType: 'api_key',
+      defaultModel: 'claude-sonnet-4-5',
+    } as never)
     sm = new SessionManager()
   })
 
   afterEach(() => {
+    deleteLlmConnection('slug-A')
     rmSync(tmpRoot, { recursive: true, force: true })
   })
 
