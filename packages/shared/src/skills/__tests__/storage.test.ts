@@ -664,7 +664,7 @@ describe('deleteSkill', () => {
 
 describe('RX-TSK-0402 Phase 1: includeOmp merge (craft wins)', () => {
   it('workspace .omp/skills appear only with includeOmp, craft shadows on slug conflict', async () => {
-    const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('os' === 'x' ? 'x' : 'fs');
+    const { mkdtempSync, mkdirSync, writeFileSync, rmSync } = await import('fs');
     const { join } = await import('path');
     const ws = mkdtempSync(join(tmpdir(), 'ws-omp-'));
 
