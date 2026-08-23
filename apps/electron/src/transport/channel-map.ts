@@ -132,6 +132,13 @@ export const CHANNEL_MAP = {
   onUpdateDownloadProgress: listener(RPC_CHANNELS.update.DOWNLOAD_PROGRESS),
 
   // Toolchain manager
+  // OpenClaw security audit (RX-TSK-0112)
+  getOpenClawRuntimeStatus: invoke(RPC_CHANNELS.openclawRuntime.GET_STATUS),
+  runSecurityAudit: invoke(RPC_CHANNELS.securityAudit.RUN),
+  getLatestSecurityAudit: invoke(RPC_CHANNELS.securityAudit.GET_LATEST),
+  acceptSecurityRisk: invoke(RPC_CHANNELS.securityAudit.ACCEPT_RISK),
+  revokeSecurityRiskAcceptance: invoke(RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE),
+
   getToolchainStatus: invoke(RPC_CHANNELS.toolchain.STATUS),
   onToolchainStatusChanged: listener(RPC_CHANNELS.toolchain.STATUS_CHANGED),
   updateToolchainTool: invoke(RPC_CHANNELS.toolchain.UPDATE),
