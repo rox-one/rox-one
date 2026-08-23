@@ -87,3 +87,35 @@ describe('notes import core', () => {
     expect(res.destinationDir.startsWith(resolve(data))).toBe(true)
   })
 })
+
+describe('notes import TOCTOU regression (code review)', () => {
+  let src: string
+  let data: string
+  beforeEach(() => {
+    src = mkdtempSync(join(tmpdir(), 'notes-toc-'))
+    data = mkdtempSync(join(tmpdir(), 'notes-dat-'))
+  })
+  afterEach(() => {
+    rmSync(src, { recursive: true, force: true })
+    rmSync(data, { recursive: true, force: true })
+  })
+
+  it('symlink swapped after scan is rejected at copy time', () => {
+    writeFileSync(join(src, 'safe.md'), 'safe content')
+    const scan = scanSourceFolder(src)
+    // Simulate TOCTOU: replace scanned file with symlink to sensitive target
+    const secretPath = join(src, 'secret.txt')
+    writeFileSync(secretPath, 'TOP_SECRET')
+    rmSync(join(src, 'safe.md'))
+    symlinkSync(secretPath, join(src, 'safe.md'))
+
+    const res = materializeImport(data, 'toc-test', scan)
+    // Symlink was NOT followed — no file with TOP_SECRET content in destination
+    const destFile = join(res.destinationDir, 'safe.md')
+    if (existsSync(destFile)) {
+      expect(readFileSync(destFile, 'utf8')).not.toContain('TOP_SECRET')
+    }
+    // Or the file was skipped entirely
+    expect(res.copiedCount + res.skippedCount).toBe(scan.notes.length)
+  })
+})
