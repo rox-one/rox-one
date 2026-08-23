@@ -69,6 +69,7 @@ import {
 // Centralized PreToolUse pipeline
 import {
   runPreToolUseChecks,
+  evaluateHookWatchdog,
   type PreToolUseCheckResult,
   BUILT_IN_TOOLS,
 } from './core/pre-tool-use.ts';
@@ -1274,6 +1275,9 @@ export class ClaudeAgent extends BaseAgent {
           }
 
           // Internal hooks for permission handling and logging
+          // RX-TSK-0303 fail-closed watchdog state (DOC-0031, вариант B).
+          let hookPreToolUseSeen = false;
+          let hookPostToolUseCount = 0;
           const internalHooks: Record<string, SdkAutomationCallbackMatcher[]> = {
           PreToolUse: [{
             hooks: [async (_hookInput) => {
@@ -1281,6 +1285,8 @@ export class ClaudeAgent extends BaseAgent {
               if (_hookInput.hook_event_name !== 'PreToolUse') {
                 return { continue: true };
               }
+              // RX-TSK-0303: first live firing proves the permission chain is wired.
+              hookPreToolUseSeen = true;
               // Validate the fields we depend on are actually present
               if (!_hookInput.tool_name || !_hookInput.tool_use_id) {
                 return { continue: true };
@@ -1524,6 +1530,21 @@ export class ClaudeAgent extends BaseAgent {
               }
             }],
           }],
+          // RX-TSK-0303 echo-watchdog: если PreToolUse молчит, пока тулы
+          // реально исполняются, гасим сессию (fail-closed, DOC-0031 вариант B).
+          PostToolUse: [{
+            hooks: [async (postInput) => {
+              if (postInput.hook_event_name !== 'PostToolUse') return { continue: true };
+              hookPostToolUseCount += 1;
+              const verdict = evaluateHookWatchdog({ preToolUseSeen: hookPreToolUseSeen, postToolUseCount: hookPostToolUseCount });
+              if (verdict.action === 'kill-session') {
+                debug(`[security] ${verdict.reason} Aborting session.`);
+                this.forceAbort(AbortReason.SecurityWatchdog);
+              }
+              return { continue: true };
+            }],
+          }],
+
           // NOTE: PostToolUse hook was removed because updatedMCPToolOutput is not a valid SDK output field.
           // For API tools (api_*), summarization happens in api-tools.ts.
           // For external MCP servers (stdio/HTTP), we cannot modify their output - they're responsible

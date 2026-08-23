@@ -89,11 +89,15 @@
   title: Fail-closed контракт PreToolUse-hook и canary-проверка при старте сессии
   kind: task
   path: packages/shared/src/agent/claude-agent.ts
-  status: planned
+  status: active
   refs: [RX-SEC-0004]
   note: |
     Дизайн готов 2026-08-23: RX-DOC-0031 — факты bypass, варианты
     A/B/C, рекомендация. Реализация — следующий срез по плану.
+    Прогресс 2026-08-23 (вариант B): evaluateHookWatchdog + PostToolUse
+    echo-watchdog в claude-agent (порог 5, forceAbort SecurityWatchdog);
+    тесты сторожа 4/4. Остаток: вариант A (исследование SDK смены режима)
+    и покрытие pi-бэкенда тем же контрактом.
     Блокировать tool-call, если hook-цепочка не подтвердила готовность; canary tool-call при старте сессии.
 
 - id: RX-SEC-0005
