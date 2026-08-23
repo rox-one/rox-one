@@ -157,6 +157,10 @@ export const RPC_CHANNELS = {
   // mutation-proposal channels (spec 05) plus P4 Session→Knowledge publication
   // pipeline (spec 06). ENGINE_START is local bootstrap (detect/open/spawn);
   // full managed lifecycle (stop/pin) remains out of scope.
+  notesImport: {
+    PREVIEW: 'notesImport:preview',
+    EXECUTE: 'notesImport:execute',
+  },
   knowledge: {
     LIST_CONNECTIONS: 'knowledge:listConnections',
     CAPABILITIES: 'knowledge:capabilities',

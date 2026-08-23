@@ -6,7 +6,7 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **46**. В работе: **1**, Заблокировано: **6**, Готово: **23**, Отменено: **2**, Запланировано: **14**.
+Всего задач: **46**. В работе: **2**, Заблокировано: **6**, Готово: **25**, Отменено: **2**, Запланировано: **11**.
 
 Блоки волн: 0100–0111 · 0300–0399 безопасность · 0400–0599 бэкапы · 0600–0699 сборка · 0700–0799 связи.
 
@@ -35,7 +35,7 @@ status: active
 | `RX-TSK-0300` | Перевести credentials.enc на мастер-ключ из OS-keychain | Готово |
 | `RX-TSK-0301` | Выставлять chmod 0600 для credentials.enc.bak | Готово |
 | `RX-TSK-0302` | Убрать печать CRAFT_SERVER_TOKEN в stdout по умолчанию | Готово |
-| `RX-TSK-0303` | Fail-closed контракт PreToolUse-hook и canary-проверка при старте сессии | Запланировано |
+| `RX-TSK-0303` | Fail-closed контракт PreToolUse-hook и canary-проверка при старте сессии | В работе |
 | `RX-TSK-0304` | Сделать defaults.permissionMode обязательным в task-spec | Готово |
 | `RX-TSK-0305` | Egress-политика для канала server:invokeOnServer | Готово |
 | `RX-TSK-0306` | Перевести validateToken на timingSafeEqual | Готово |
@@ -52,11 +52,11 @@ status: active
 | `RX-TSK-0404` | Панель аудита OpenClaw | В работе | `session-recovery-20260821-craft-agents-cf2-restored` |
 | `RX-TSK-0405` | Решить судьбу и перенести rox-sidecar | Заблокировано | `session-recovery-20260821-marklindgreen` |
 | `RX-TSK-0406` | Перенести WP-UI поверхности закрытого цикла | Запланировано | `session-recovery-20260821-marklindgreen` |
-| `RX-TSK-0407` | Перенести command.approve и command.deny | Запланировано | `session-recovery-20260821-marklindgreen` |
+| `RX-TSK-0407` | Перенести command.approve и command.deny | Готово | `session-recovery-20260821-marklindgreen` |
 | `RX-TSK-0408` | Перенести session intelligence W1–W5 | Запланировано | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0409` | Удержать PSI W6–W8 за гейтом | Готово | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0410` | Убрать credentialValue из identity.connect | Заблокировано | `session-recovery-20260821-do-it-all-security-slices` |
-| `RX-TSK-0411` | Сделать UI импорта Notes | Запланировано | `session-recovery-20260821-do-it-all-security-slices` |
+| `RX-TSK-0411` | Сделать UI импорта Notes | Готово | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0412` | Довести OwnedRootPolicy | Готово | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0413` | Исправить clone URL в README | Готово | `session-recovery-20260821-do-it-all-security-slices` |
 | `RX-TSK-0414` | Перенести корпус docs/security | Готово | `session-recovery-20260821-do-it-all-security-slices` |

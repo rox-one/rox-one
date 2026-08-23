@@ -273,7 +273,7 @@
   title: Сделать UI импорта Notes
   kind: task
   path: apps/electron/src/renderer/pages/NotesPage.tsx
-  status: planned
+  status: done
   origin: session-recovery-20260821-do-it-all-security-slices
   refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0412]
   note: |
@@ -281,6 +281,11 @@
     в сессии сознательно не делались.
     Спека перенесена 2026-08-23: RU-конспект RX-DOC-0029 + оригиналы в
     docs/upstream/notes-import/. UI строится поверх FR-4 (consent) и
+    Реализовано 2026-08-23 (FR-4+FR-6): notes-import core (bounded scan,
+    symlink-skip, materialize + provenance, 5/5 тестов), RPC PREVIEW/EXECUTE
+    LOCAL_ONLY, NotesImportButton в NotesPage (picker → preview → consent →
+    execute → provenance manifest). Managed SiYuan и индексация (FR-7) — вне.
+    Runtime-прогон UI — при запуске приложения.
     FR-6 (материализация), без доступа к произвольным путям.
   refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0412]
 
