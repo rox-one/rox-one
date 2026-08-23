@@ -39,6 +39,8 @@ export type AccessRejectReason =
   | 'not-owner'
   /** Binding mode is `'allow-list'` and sender is not on `allowedSenderIds`. */
   | 'not-on-binding-allowlist'
+  /** RX-TSK-0416: workspace platform mode is `'disabled'` — nothing routes. */
+  | 'mode-disabled'
 
 export interface PreBindingAccessInput {
   /** The inbound message about to be handled by Commands. */
@@ -59,6 +61,10 @@ export interface PreBindingAccessInput {
 export function evaluatePreBindingAccess(
   input: PreBindingAccessInput,
 ): AccessDecision {
+
+  // RX-TSK-0416: workspace-level kill switch beats every other rule.
+  const wsModePre = readPlatformAccessMode(input.workspaceConfig, input.msg.platform)
+  if (wsModePre === 'disabled') return { allow: false, reason: 'mode-disabled' }
   const { msg, workspaceConfig } = input
   if (msg.senderIsBot) return { allow: false, reason: 'bot-sender' }
 
@@ -94,6 +100,11 @@ export interface BindingAccessInput {
 export function evaluateBindingAccess(input: BindingAccessInput): AccessDecision {
   const { msg, workspaceConfig, binding } = input
   if (msg.senderIsBot) return { allow: false, reason: 'bot-sender' }
+
+  // RX-TSK-0416: workspace-level kill switch beats binding-level modes.
+  if (readPlatformAccessMode(workspaceConfig, msg.platform) === 'disabled') {
+    return { allow: false, reason: 'mode-disabled' }
+  }
 
   const mode = binding.config.accessMode
   if (mode === 'open') return { allow: true }
@@ -235,5 +246,7 @@ export function buildRejectionReply(reason: AccessRejectReason): string | null {
       return 'This bot is private. Ask the owner to invite you in the Craft Agent app.'
     case 'not-on-binding-allowlist':
       return "You're not on the allow-list for this conversation. Ask the owner to add you."
+    case 'mode-disabled':
+      return 'This bot is temporarily disabled by its owner.'
   }
 }

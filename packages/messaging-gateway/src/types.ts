@@ -410,7 +410,7 @@ export interface TelegramSupergroupConfig {
  *  - Existing workspaces that predate access control → `'open'` so the
  *    Settings UI can show a "Lock down" banner without breaking traffic.
  */
-export type PlatformAccessMode = 'open' | 'owner-only'
+export type PlatformAccessMode = 'open' | 'owner-only' | 'disabled'
 
 /**
  * A user authorised to interact with the workspace's bot. Platform-native
