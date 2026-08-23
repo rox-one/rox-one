@@ -69,7 +69,7 @@ function makeAdapter(platform: 'telegram' | 'whatsapp', inlineButtons: boolean):
 
 function makeMessage(text: string): IncomingMessage {
   return {
-    platform: 'whatsapp',
+    platform: 'telegram',
     channelId: 'chan-1',
     messageId: 'm1',
     senderId: 'u1',
@@ -99,12 +99,18 @@ describe('Commands', () => {
       makeSession('sess-2', 'Newest', 200),
     ]
     const store = makeStore()
-    const commands = new Commands(makeSessionManager(sessions), store, 'ws1')
-    const adapter = makeAdapter('whatsapp', false)
+    const commands = new Commands(makeSessionManager(sessions), store, 'ws1', undefined, undefined, {
+      getWorkspaceConfig: () => ({
+        enabled: true,
+        platforms: { telegram: { enabled: true, accessMode: 'owner-control', owners: [{ userId: 'u1', addedAt: 0 }] } },
+      }),
+      seedOwnerOnFirstPair: async () => [],
+    })
+    const adapter = makeAdapter('telegram', false)
 
     await commands.handleCommand(adapter, makeMessage('/bind 1'))
 
-    expect(store.findByChannel('whatsapp', 'chan-1')?.sessionId).toBe('sess-2')
+    expect(store.findByChannel('telegram', 'chan-1')?.sessionId).toBe('sess-2')
     expect(adapter.sent.at(-1)).toContain('Newest')
   })
 
@@ -114,8 +120,14 @@ describe('Commands', () => {
       makeSession('sess-2', 'Beta', 200),
     ]
     const store = makeStore()
-    const commands = new Commands(makeSessionManager(sessions), store, 'ws1')
-    const adapter = makeAdapter('whatsapp', false)
+    const commands = new Commands(makeSessionManager(sessions), store, 'ws1', undefined, undefined, {
+      getWorkspaceConfig: () => ({
+        enabled: true,
+        platforms: { telegram: { enabled: true, accessMode: 'owner-control', owners: [{ userId: 'u1', addedAt: 0 }] } },
+      }),
+      seedOwnerOnFirstPair: async () => [],
+    })
+    const adapter = makeAdapter('telegram', false)
 
     await commands.handleCommand(adapter, makeMessage('/bind'))
 

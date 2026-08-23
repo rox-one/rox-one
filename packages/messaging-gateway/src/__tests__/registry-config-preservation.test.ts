@@ -122,10 +122,10 @@ describe('MessagingGatewayRegistry — config preservation across writes', () =>
     registry.setPlatformOwners(workspaceId, 'telegram', [
       { userId: 'owner-1', addedAt: Date.now() },
     ])
-    registry.setPlatformAccessMode(workspaceId, 'telegram', 'owner-only')
+    registry.setPlatformAccessMode(workspaceId, 'telegram', 'owner-control')
     const owners = registry.getPlatformOwners(workspaceId, 'telegram')
     expect(owners).toHaveLength(1)
-    expect(registry.getPlatformAccessMode(workspaceId, 'telegram')).toBe('owner-only')
+    expect(registry.getPlatformAccessMode(workspaceId, 'telegram')).toBe('owner-control')
   })
 
   it('seedFirstOwner is no-op when owners already exist', async () => {
@@ -156,14 +156,14 @@ describe('MessagingGatewayRegistry — lock-down migrates open bindings', () => 
     const store = state.gateway.getBindingStore()
     // Persist a binding in legacy 'open' mode (mimics migration).
     const b = store.bind('ws-test', 'sess-A', 'telegram', 'chat-1', undefined, {
-      accessMode: 'open',
+      accessMode: 'public-inbox',
     })
-    expect(b.config.accessMode).toBe('open')
+    expect(b.config.accessMode).toBe('public-inbox')
 
-    registry.setPlatformAccessMode(workspaceId, 'telegram', 'owner-only')
+    registry.setPlatformAccessMode(workspaceId, 'telegram', 'owner-control')
 
     const reloaded = store.getAll().find((x: { id: string }) => x.id === b.id)
-    expect(reloaded.config.accessMode).toBe('inherit')
+    expect(reloaded.config.accessMode).toBe('owner-control')
     // Binding ID and createdAt must have survived the migration (no rotation).
     expect(reloaded.id).toBe(b.id)
     expect(reloaded.createdAt).toBe(b.createdAt)
@@ -177,12 +177,12 @@ describe('MessagingGatewayRegistry — lock-down migrates open bindings', () => 
       (registry as any).bootstrapWorkspace(workspaceId)
     const store = state.gateway.getBindingStore()
     const wa = store.bind('ws-test', 'sess-A', 'whatsapp', 'chan-A', undefined, {
-      accessMode: 'open',
+      accessMode: 'public-inbox',
     })
 
-    registry.setPlatformAccessMode(workspaceId, 'telegram', 'owner-only')
+    registry.setPlatformAccessMode(workspaceId, 'telegram', 'owner-control')
 
     const reloaded = store.getAll().find((x: { id: string }) => x.id === wa.id)
-    expect(reloaded.config.accessMode).toBe('open')
+    expect(reloaded.config.accessMode).toBe('public-inbox')
   })
 })

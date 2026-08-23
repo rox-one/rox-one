@@ -8,6 +8,7 @@
  * uses to decide between routing, replying, and recording a pending sender.
  */
 
+import { migrateBindingAccessMode } from './types'
 import type { PendingSendersStore } from './pending-senders'
 import type {
   BindingConfig,
@@ -41,6 +42,8 @@ export type AccessRejectReason =
   | 'not-on-binding-allowlist'
   /** RX-TSK-0416: workspace platform mode is `'disabled'` — nothing routes. */
   | 'mode-disabled'
+  /** DOC-0033 public-inbox: записан в очередь на решение владельца. */
+  | 'queued-for-owner-review'
 
 export interface PreBindingAccessInput {
   /** The inbound message about to be handled by Commands. */
@@ -61,19 +64,32 @@ export interface PreBindingAccessInput {
 export function evaluatePreBindingAccess(
   input: PreBindingAccessInput,
 ): AccessDecision {
-
-  // RX-TSK-0416: workspace-level kill switch beats every other rule.
-  const wsModePre = readPlatformAccessMode(input.workspaceConfig, input.msg.platform)
-  if (wsModePre === 'disabled') return { allow: false, reason: 'mode-disabled' }
   const { msg, workspaceConfig } = input
   if (msg.senderIsBot) return { allow: false, reason: 'bot-sender' }
 
-  const mode = readPlatformAccessMode(workspaceConfig, msg.platform)
-  if (mode === 'open') return { allow: true }
+  // RX-TSK-0416: workspace-level kill switch beats every other rule.
+  if (readPlatformAccessMode(workspaceConfig, input.msg.platform) === 'disabled') {
+    return { allow: false, reason: 'mode-disabled' }
+  }
 
-  const owners = readPlatformOwners(workspaceConfig, msg.platform)
-  if (owners.some((o) => o.userId === msg.senderId)) return { allow: true }
-  return { allow: false, reason: 'not-owner' }
+  const mode = migrateBindingAccessMode(
+    (workspaceConfig.platforms as Record<string, { accessMode?: string }> | undefined)?.[
+      input.msg.platform as keyof typeof workspaceConfig.platforms & string
+    ]?.accessMode,
+  )
+  const owners = readPlatformOwners(workspaceConfig, input.msg.platform)
+
+  if (mode === 'owner-control') {
+    return owners.some((o) => o.userId === msg.senderId)
+      ? { allow: true }
+      : { allow: false, reason: 'not-owner' }
+  }
+  if (mode === 'disabled') return { allow: false, reason: 'mode-disabled' }
+
+  // public-inbox: публичный отправитель уходит владельцу на решение.
+  return msg.senderId.length > 0
+    ? { allow: false, reason: 'queued-for-owner-review' }
+    : { allow: false, reason: 'bot-sender' }
 }
 
 export interface BindingAccessInput {
@@ -106,22 +122,26 @@ export function evaluateBindingAccess(input: BindingAccessInput): AccessDecision
     return { allow: false, reason: 'mode-disabled' }
   }
 
-  const mode = binding.config.accessMode
-  if (mode === 'open') return { allow: true }
+  const mode = migrateBindingAccessMode(binding.config.accessMode)
 
-  if (mode === 'allow-list') {
-    return binding.config.allowedSenderIds.includes(msg.senderId)
-      ? { allow: true }
-      : { allow: false, reason: 'not-on-binding-allowlist' }
+  if (readPlatformAccessMode(workspaceConfig, msg.platform) === 'disabled') {
+    return { allow: false, reason: 'mode-disabled' }
   }
 
-  // mode === 'inherit'
-  const wsMode = readPlatformAccessMode(workspaceConfig, msg.platform)
-  if (wsMode === 'open') return { allow: true }
   const owners = readPlatformOwners(workspaceConfig, msg.platform)
-  return owners.some((o) => o.userId === msg.senderId)
-    ? { allow: true }
-    : { allow: false, reason: 'not-owner' }
+  const isOwner = owners.some((o) => o.userId === msg.senderId)
+  const onAllowList = binding.config.allowedSenderIds.includes(msg.senderId)
+
+  if (mode === 'owner-control') {
+    return isOwner || onAllowList
+      ? { allow: true }
+      : { allow: false, reason: 'not-owner' }
+  }
+  if (mode === 'disabled') return { allow: false, reason: 'mode-disabled' }
+
+  // public-inbox: владелец/лист проходят, остальные — в очередь на решение.
+  if (isOwner || onAllowList) return { allow: true }
+  return { allow: false, reason: 'queued-for-owner-review' }
 }
 
 /**
@@ -132,8 +152,8 @@ export function readPlatformAccessMode(
   config: MessagingConfig,
   platform: PlatformType,
 ): PlatformAccessMode {
-  if (platform !== 'telegram') return 'open'
-  return config.platforms.telegram?.accessMode ?? 'open'
+  if (platform !== 'telegram') return 'public-inbox'
+  return migrateBindingAccessMode(config.platforms.telegram?.accessMode ?? 'open')
 }
 
 /** Read the platform's owners list (empty when not configured). */
@@ -248,5 +268,7 @@ export function buildRejectionReply(reason: AccessRejectReason): string | null {
       return "You're not on the allow-list for this conversation. Ask the owner to add you."
     case 'mode-disabled':
       return 'This bot is temporarily disabled by its owner.'
+    case 'queued-for-owner-review':
+      return 'Got it — your request was forwarded to the bot owner for approval.'
   }
 }

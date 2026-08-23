@@ -440,7 +440,7 @@ export class Commands {
     const wsMode = readPlatformAccessMode(wsConfig, adapter.platform)
     const owners = readPlatformOwners(wsConfig, adapter.platform)
     if (
-      wsMode === 'owner-only' &&
+      wsMode === 'owner-control' &&
       owners.length > 0 &&
       !owners.some((o) => o.userId === msg.senderId)
     ) {

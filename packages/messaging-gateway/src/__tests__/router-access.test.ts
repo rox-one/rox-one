@@ -89,7 +89,7 @@ interface Harness {
 
 function makeHarness(args: {
   workspaceConfig: MessagingConfig
-  bindingConfig?: Partial<{ accessMode: 'inherit' | 'allow-list' | 'open'; allowedSenderIds: string[] }>
+  bindingConfig?: Partial<{ accessMode: 'public-inbox' | 'owner-control' | 'disabled'; allowedSenderIds: string[] }>
 }): Harness {
   const store = new BindingStore(storeDir)
   store.bind(
@@ -121,18 +121,18 @@ function makeHarness(args: {
 }
 
 describe('Router access control', () => {
-  it('routes when binding is open', async () => {
+  it('public-inbox queues strangers instead of routing', async () => {
     const harness = makeHarness({
       workspaceConfig: {
         enabled: true,
-        platforms: { telegram: { enabled: true, accessMode: 'open' } },
+        platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
       },
-      bindingConfig: { accessMode: 'open' },
+      bindingConfig: { accessMode: 'public-inbox' },
     })
     const adapter = makeFakeAdapter()
     await harness.router.route(adapter, baseMsg({ senderId: 'anyone' }))
-    expect(harness.sessionManager.sendMessage).toHaveBeenCalledTimes(1)
-    expect(adapter.sent.length).toBe(0)
+    expect(harness.sessionManager.sendMessage).not.toHaveBeenCalled()
+    expect(adapter.sent.some((s) => s.includes('forwarded'))).toBe(true)
   })
 
   it('rejects on inherited owner-only when sender is not an owner', async () => {
@@ -142,17 +142,17 @@ describe('Router access control', () => {
         platforms: {
           telegram: {
             enabled: true,
-            accessMode: 'owner-only',
+            accessMode: 'owner-control',
             owners: [{ userId: 'owner-1', addedAt: 0 }],
           },
         },
       },
-      bindingConfig: { accessMode: 'inherit' },
+      bindingConfig: { accessMode: 'public-inbox' },
     })
     const adapter = makeFakeAdapter()
     await harness.router.route(adapter, baseMsg({ senderId: 'stranger' }))
     expect(harness.sessionManager.sendMessage).not.toHaveBeenCalled()
-    expect(adapter.sent.some((s) => s.includes('private'))).toBe(true)
+    expect(adapter.sent.some((s) => s.includes('forwarded'))).toBe(true)
     // Recorded in pending store.
     const pending = harness.pendingStore.list('telegram')
     expect(pending.length).toBe(1)
@@ -163,14 +163,14 @@ describe('Router access control', () => {
     const harness = makeHarness({
       workspaceConfig: {
         enabled: true,
-        platforms: { telegram: { enabled: true, accessMode: 'open' } },
+        platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
       },
-      bindingConfig: { accessMode: 'allow-list', allowedSenderIds: ['allowed-1'] },
+      bindingConfig: { accessMode: 'owner-control', allowedSenderIds: ['allowed-1'] },
     })
     const adapter = makeFakeAdapter()
     await harness.router.route(adapter, baseMsg({ senderId: 'stranger' }))
     expect(harness.sessionManager.sendMessage).not.toHaveBeenCalled()
-    expect(adapter.sent.some((s) => s.includes('allow-list'))).toBe(true)
+    expect(adapter.sent.some((s) => s.includes('owner'))).toBe(true)
     const pending = harness.pendingStore.list('telegram')
     expect(pending.length).toBe(1)
   })
@@ -179,9 +179,9 @@ describe('Router access control', () => {
     const harness = makeHarness({
       workspaceConfig: {
         enabled: true,
-        platforms: { telegram: { enabled: true, accessMode: 'open' } },
+        platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
       },
-      bindingConfig: { accessMode: 'allow-list', allowedSenderIds: ['allowed-1'] },
+      bindingConfig: { accessMode: 'owner-control', allowedSenderIds: ['allowed-1'] },
     })
     const adapter = makeFakeAdapter()
     await harness.router.route(adapter, baseMsg({ senderId: 'allowed-1' }))
@@ -193,9 +193,9 @@ describe('Router access control', () => {
     const harness = makeHarness({
       workspaceConfig: {
         enabled: true,
-        platforms: { telegram: { enabled: true, accessMode: 'open' } },
+        platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
       },
-      bindingConfig: { accessMode: 'open' },
+      bindingConfig: { accessMode: 'public-inbox' },
     })
     const adapter = makeFakeAdapter()
     await harness.router.route(
@@ -214,12 +214,12 @@ describe('Router access control', () => {
         platforms: {
           telegram: {
             enabled: true,
-            accessMode: 'owner-only',
+            accessMode: 'owner-control',
             owners: [{ userId: 'owner-1', addedAt: 0 }],
           },
         },
       },
-      bindingConfig: { accessMode: 'inherit' },
+      bindingConfig: { accessMode: 'public-inbox' },
     })
     const adapter = makeFakeAdapter()
     await harness.router.route(adapter, baseMsg({ senderId: 'stranger' }))

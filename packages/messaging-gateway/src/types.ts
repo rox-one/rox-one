@@ -267,7 +267,26 @@ export type ResponseMode = 'streaming' | 'progress' | 'final_only'
  *                   default for bindings created before access control existed,
  *                   and for explicitly-public bindings (e.g. support bots).
  */
-export type BindingAccessMode = 'inherit' | 'allow-list' | 'open'
+export type BindingAccessMode = 'public-inbox' | 'owner-control' | 'disabled'
+
+/**
+ * RX-TSK-0416 / RX-DOC-0033: миграция legacy-режимов при загрузке конфига.
+ *   owner-only | allow-list → owner-control (+ перенос списка в owners на UI)
+ *   open | inherit | отсутствует → public-inbox (default-deny за гейтом)
+ */
+export function migrateBindingAccessMode(legacy: string | undefined): BindingAccessMode {
+  switch (legacy) {
+    case 'owner-control':
+      return 'owner-control'
+    case 'disabled':
+      return 'disabled'
+    case 'allow-list':
+    case 'owner-only':
+      return 'owner-control'
+    default:
+      return 'public-inbox'
+  }
+}
 
 export interface BindingConfig {
   /** How outbound agent output is rendered. Default: 'progress' */
@@ -314,7 +333,7 @@ export const DEFAULT_BINDING_CONFIG: BindingConfig = {
   showToolActivity: false,
   approvalChannel: 'chat',
   editIntervalMs: 3500,
-  accessMode: 'inherit',
+  accessMode: 'public-inbox',
   allowedSenderIds: [],
   discordGuildTrigger: 'mention',
 }
@@ -338,8 +357,9 @@ export function normalizeBindingConfig(
   // Migration rule: if a persisted config predates access control (no
   // `accessMode` field), treat the binding as `'open'` so prod behaviour
   // doesn't change silently. Owners explicitly lock down via Settings.
-  const accessMode: BindingAccessMode =
-    config?.accessMode ?? (config !== undefined ? 'open' : base.accessMode)
+  const accessMode = migrateBindingAccessMode(
+    config?.accessMode ?? (config !== undefined ? 'open' : base.accessMode),
+  )
 
   const allowedSenderIds = Array.isArray(config?.allowedSenderIds)
     ? [...config!.allowedSenderIds]
@@ -410,7 +430,10 @@ export interface TelegramSupergroupConfig {
  *  - Existing workspaces that predate access control → `'open'` so the
  *    Settings UI can show a "Lock down" banner without breaking traffic.
  */
-export type PlatformAccessMode = 'open' | 'owner-only' | 'disabled'
+export type PlatformAccessMode =
+  | 'public-inbox'
+  | 'owner-control'
+  | 'disabled'
 
 /**
  * A user authorised to interact with the workspace's bot. Platform-native

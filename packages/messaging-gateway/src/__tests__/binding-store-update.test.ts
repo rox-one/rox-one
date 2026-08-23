@@ -25,20 +25,20 @@ describe('BindingStore.updateBindingConfig', () => {
     const store = new BindingStore(dir)
     const original = store.bind('ws1', 'sess-A', 'telegram', 'chat-1')
     const next = store.updateBindingConfig(original.id, {
-      accessMode: 'allow-list',
+      accessMode: 'owner-control',
       allowedSenderIds: ['42'],
     })
     expect(next).not.toBeNull()
     expect(next!.id).toBe(original.id)
     expect(next!.createdAt).toBe(original.createdAt)
-    expect(next!.config.accessMode).toBe('allow-list')
+    expect(next!.config.accessMode).toBe('owner-control')
     expect(next!.config.allowedSenderIds).toEqual(['42'])
   })
 
   it('returns null when binding id does not exist', () => {
     const store = new BindingStore(dir)
     const result = store.updateBindingConfig('does-not-exist', {
-      accessMode: 'open',
+      accessMode: 'public-inbox',
     })
     expect(result).toBeNull()
   })
@@ -46,12 +46,12 @@ describe('BindingStore.updateBindingConfig', () => {
   it('persists across a fresh BindingStore instance', () => {
     const a = new BindingStore(dir)
     const original = a.bind('ws1', 'sess-A', 'telegram', 'chat-1')
-    a.updateBindingConfig(original.id, { accessMode: 'allow-list', allowedSenderIds: ['7'] })
+    a.updateBindingConfig(original.id, { accessMode: 'owner-control', allowedSenderIds: ['7'] })
 
     const b = new BindingStore(dir)
     const reloaded = b.getAll().find((x) => x.id === original.id)
     expect(reloaded).toBeDefined()
-    expect(reloaded!.config.accessMode).toBe('allow-list')
+    expect(reloaded!.config.accessMode).toBe('owner-control')
     expect(reloaded!.config.allowedSenderIds).toEqual(['7'])
     expect(reloaded!.createdAt).toBe(original.createdAt)
   })
@@ -63,7 +63,7 @@ describe('BindingStore.updateBindingConfig', () => {
     store.onChange(() => {
       calls++
     })
-    store.updateBindingConfig(original.id, { accessMode: 'open' })
+    store.updateBindingConfig(original.id, { accessMode: 'public-inbox' })
     expect(calls).toBeGreaterThanOrEqual(1)
   })
 
@@ -71,12 +71,12 @@ describe('BindingStore.updateBindingConfig', () => {
     const store = new BindingStore(dir)
     const a = store.bind('ws1', 'sess-A', 'telegram', 'chat-A')
     const b = store.bind('ws1', 'sess-B', 'telegram', 'chat-B')
-    store.updateBindingConfig(a.id, { accessMode: 'open' })
+    store.updateBindingConfig(a.id, { accessMode: 'public-inbox' })
     const all = store.getAll()
     expect(all).toHaveLength(2)
     const aReloaded = all.find((x) => x.id === a.id)!
     const bReloaded = all.find((x) => x.id === b.id)!
-    expect(aReloaded.config.accessMode).toBe('open')
-    expect(bReloaded.config.accessMode).toBe('inherit')
+    expect(aReloaded.config.accessMode).toBe('public-inbox')
+    expect(bReloaded.config.accessMode).toBe('public-inbox')
   })
 })
