@@ -84,7 +84,7 @@ export interface MessagingPendingSenderInfo {
   threadId?: number
 }
 
-export type MessagingPlatformAccessMode = 'open' | 'owner-only'
+export type MessagingPlatformAccessMode = 'open' | 'owner-only' | 'disabled'
 
 export type MessagingBindingAccessMode = 'inherit' | 'allow-list' | 'open'
 
