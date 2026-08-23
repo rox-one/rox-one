@@ -396,11 +396,66 @@ const printReport = (fileCount: number, entryCount: number, docCount: number): v
   }
 }
 
+/**
+ * Дрифт-гард: пер-пакетные bunfig.toml обязаны зеркалировать корневой.
+ * Bun грузит bunfig только из cwd, поэтому расхождение секций между корнем
+ * и пакетами молча меняет поведение локальных прогонов (класс утечки
+ * 2026-08-23: тесты из директории пакета писали в живой ~/.craft-agent).
+ */
+const parseBunfigPreloads = (text: string): { topLevel: string[]; test: string[] } => {
+  const src = text
+    .split('\n')
+    .map((l) => l.replace(/#.*$/, ''))
+    .join('\n')
+  const grabAfter = (anchor: RegExp, haystack: string): string[] => {
+    const m = haystack.match(anchor)
+    if (!m || m.index === undefined) return []
+    const start = haystack.indexOf('[', m.index)
+    const end = haystack.indexOf(']', start)
+    if (start < 0 || end < 0) return []
+    return [...haystack.slice(start + 1, end).matchAll(/"([^"]+)"/g)].map((x) => x[1])
+  }
+  const topLevel = grabAfter(/^preload\s*=\s*\[/m, src)
+  const testSection = src.match(/^\[test\]\s*$/m)
+  const test =
+    testSection && testSection.index !== undefined
+      ? grabAfter(/^preload\s*=\s*\[/m, src.slice(testSection.index))
+      : []
+  return { topLevel, test }
+}
+
+const checkBunfigParity = (): void => {
+  const rootBunfig = join(ROOT, 'bunfig.toml')
+  if (!existsSync(rootBunfig)) return
+  const rootCfg = parseBunfigPreloads(readText(rootBunfig))
+  // Нормализация путей: у корня ведущий "./", у пакетов префикс "../../".
+  const norm = (p: string): string => p.replace(/^(\.\.\/)+/, '').replace(/^\.\//, '')
+  const rootTestKey = rootCfg.test.map(norm).join('|')
+  const rootTopKey = rootCfg.topLevel.map(norm).join('|')
+  for (const dirName of ['packages', 'apps']) {
+    const base = join(ROOT, dirName)
+    if (!existsSync(base)) continue
+    for (const name of readdirSync(base)) {
+      const bf = join(base, name, 'bunfig.toml')
+      if (!existsSync(bf)) continue
+      const cfg = parseBunfigPreloads(readText(bf))
+      if (cfg.test.map(norm).join('|') !== rootTestKey) {
+        error(`${rel(bf)}: [test].preload расходится с корневым bunfig`)
+      }
+      if (cfg.topLevel.map(norm).join('|') !== rootTopKey) {
+        error(`${rel(bf)}: верхнеуровневый preload расходится с корневым bunfig`)
+      }
+    }
+  }
+}
+
+
 const main = (): number => {
   const files = collectYamlSources()
   const entries = loadEntries(files)
   checkRefsAndPaths(entries)
   const docCount = checkDocuments()
+  checkBunfigParity()
   printReport(files.length, entries.length, docCount)
   return errors.length > 0 ? 1 : 0
 }
