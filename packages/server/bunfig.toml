@@ -1,8 +1,18 @@
-# Per-package mirror of the root bunfig [test] preloads.
-# Bun loads bunfig.toml ONLY from cwd, so `bun test` inside this directory
-# otherwise skips isolation and silently reads/writes the live ~/.craft-agent
-# (leak class proven 2026-08-23). Paths here are relative to this directory.
+# Per-package full mirror of the root bunfig (Bun loads bunfig.toml ONLY from
+# cwd, so a directory-local file REPLACES the root config for local runs —
+# every root section must be replicated or it silently vanishes).
+# Leak-class fix 2026-08-23: without this, `bun test` inside the package
+# skipped isolation and silently read/wrote the live ~/.craft-agent.
+preload = ["../../packages/shared/src/unified-network-interceptor.ts"]
+
+# Use the hoisted linker so transitive deps resolve at top-level node_modules
+# (see root bunfig comment: Vite/esbuild bundling expects this layout).
+[install]
+linker = "hoisted"
+
 [test]
+# Isolation first: set ROX_CONFIG_DIR / CRAFT_CONFIG_DIR before any config import.
+# pdfjs ?url mock is required for MarkdownPdfBlock renderer tests (inventory 8.7).
 preload = [
   "../../scripts/test-config-isolation.ts",
   "../../packages/shared/src/unified-network-interceptor.ts",
