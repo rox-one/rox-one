@@ -1276,7 +1276,7 @@ export class ClaudeAgent extends BaseAgent {
 
           // Internal hooks for permission handling and logging
           // RX-TSK-0303 fail-closed watchdog state (DOC-0031, вариант B).
-          let hookPreToolUseSeen = false;
+          let hookPreToolUseCount = 0;
           let hookPostToolUseCount = 0;
           const internalHooks: Record<string, SdkAutomationCallbackMatcher[]> = {
           PreToolUse: [{
@@ -1286,7 +1286,7 @@ export class ClaudeAgent extends BaseAgent {
                 return { continue: true };
               }
               // RX-TSK-0303: first live firing proves the permission chain is wired.
-              hookPreToolUseSeen = true;
+              hookPreToolUseCount += 1;
               // Validate the fields we depend on are actually present
               if (!_hookInput.tool_name || !_hookInput.tool_use_id) {
                 return { continue: true };
@@ -1536,7 +1536,7 @@ export class ClaudeAgent extends BaseAgent {
             hooks: [async (postInput) => {
               if (postInput.hook_event_name !== 'PostToolUse') return { continue: true };
               hookPostToolUseCount += 1;
-              const verdict = evaluateHookWatchdog({ preToolUseSeen: hookPreToolUseSeen, postToolUseCount: hookPostToolUseCount });
+              const verdict = evaluateHookWatchdog({ preToolUseCount: hookPreToolUseCount, postToolUseCount: hookPostToolUseCount });
               if (verdict.action === 'kill-session') {
                 debug(`[security] ${verdict.reason} Aborting session.`);
                 this.forceAbort(AbortReason.SecurityWatchdog);

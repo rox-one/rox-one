@@ -1163,9 +1163,9 @@ export function shouldPromptInAskMode(
 export const HOOK_WATCHDOG_THRESHOLD = 5
 
 export interface HookWatchdogState {
-  /** Наш PreToolUse-колбэк видел хотя бы одно событие? */
-  preToolUseSeen: boolean
-  /** Сколько реальных тулов исполнилось (PostToolUse). */
+  /** Сколько событий прошёл наш PreToolUse-колбэк. */
+  preToolUseCount: number
+  /** Сколько тулов реально исполнилось (PostToolUse). */
   postToolUseCount: number
 }
 
@@ -1175,18 +1175,18 @@ export type HookWatchdogVerdict =
 
 /**
  * Решение сторожа цепочки хуков. При `bypassPermissions` PreToolUse-колбэк —
- * единственный исполнитель проверок прав; если он молчит, пока тулы реально
- * исполняются, сессию необходимо погасить (fail-closed).
+ * единственный исполнитель проверок прав. Дивергенция счётчиков ловит ОБА
+ * режима отказа: холодный старт без единого события и тихий обрыв цепочки
+ * посреди сессии. Живая цепочка держит дивергенцию ≤1 (Post стреляет после Pre).
  */
 export function evaluateHookWatchdog(state: HookWatchdogState): HookWatchdogVerdict {
-  if (state.preToolUseSeen) return { action: 'ok' }
-  if (state.postToolUseCount >= HOOK_WATCHDOG_THRESHOLD) {
-    return {
-      action: 'kill-session',
-      reason:
-        `PreToolUse permission chain is silent across ${state.postToolUseCount} tool `
-        + 'executions; refusing to continue without permission checks (RX-TSK-0303).',
-    }
+  const divergence = state.postToolUseCount - state.preToolUseCount
+  if (divergence < HOOK_WATCHDOG_THRESHOLD) return { action: 'ok' }
+  return {
+    action: 'kill-session',
+    reason:
+      `PreToolUse permission chain diverged: ${state.postToolUseCount} tools executed `
+      + `vs ${state.preToolUseCount} checked; refusing to continue without `
+      + 'permission checks (RX-TSK-0303).',
   }
-  return { action: 'ok' }
 }

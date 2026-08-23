@@ -6,41 +6,44 @@ import {
 
 /** RX-TSK-0303: fail-closed watchdog over the PreToolUse hook chain. */
 describe('hook-chain watchdog', () => {
-  it('ok while PreToolUse has fired at least once', () => {
-    expect(evaluateHookWatchdog({ preToolUseSeen: true, postToolUseCount: 999 }).action).toBe('ok')
-    expect(evaluateHookWatchdog({ preToolUseSeen: true, postToolUseCount: 0 }).action).toBe('ok')
+  it('ok on a healthy chain (divergence ≤1)', () => {
+    expect(evaluateHookWatchdog({ preToolUseCount: 10, postToolUseCount: 10 }).action).toBe('ok')
+    expect(evaluateHookWatchdog({ preToolUseCount: 10, postToolUseCount: 11 }).action).toBe('ok')
+    expect(evaluateHookWatchdog({ preToolUseCount: 0, postToolUseCount: 0 }).action).toBe('ok')
   })
 
-  it('ok below threshold when chain is silent', () => {
+  it('ok below divergence threshold (cold start)', () => {
     for (let n = 0; n < HOOK_WATCHDOG_THRESHOLD; n++) {
       expect(
-        evaluateHookWatchdog({ preToolUseSeen: false, postToolUseCount: n }).action,
+        evaluateHookWatchdog({ preToolUseCount: 0, postToolUseCount: n }).action,
       ).toBe('ok')
     }
   })
 
-  it('kills the session at threshold with an explanatory reason', () => {
-    const verdict = evaluateHookWatchdog({
-      preToolUseSeen: false,
+  it('kills on cold-start silence at threshold', () => {
+    const v = evaluateHookWatchdog({
+      preToolUseCount: 0,
       postToolUseCount: HOOK_WATCHDOG_THRESHOLD,
     })
-    expect(verdict.action).toBe('kill-session')
-    if (verdict.action === 'kill-session') {
-      expect(verdict.reason).toContain('PreToolUse permission chain is silent')
-      expect(verdict.reason).toContain(String(HOOK_WATCHDOG_THRESHOLD))
-    }
+    expect(v.action).toBe('kill-session')
+    if (v.action === 'kill-session') expect(v.reason).toContain('diverged')
   })
 
-  it('stays silent strictly below threshold (boundary)', () => {
-    const below = evaluateHookWatchdog({
-      preToolUseSeen: false,
-      postToolUseCount: HOOK_WATCHDOG_THRESHOLD - 1,
+  it('kills on mid-session chain breakage (the blind spot of a set-once latch)', () => {
+    const before = { preToolUseCount: 50, postToolUseCount: 50 }
+    expect(evaluateHookWatchdog(before).action).toBe('ok')
+
+    // Цепочка умерла после 50 проверенных вызовов: дивергенция растёт.
+    const drifting = evaluateHookWatchdog({
+      preToolUseCount: 50,
+      postToolUseCount: 50 + HOOK_WATCHDOG_THRESHOLD - 1,
     })
-    const at = evaluateHookWatchdog({
-      preToolUseSeen: false,
-      postToolUseCount: HOOK_WATCHDOG_THRESHOLD,
+    expect(drifting.action).toBe('ok')
+
+    const broken = evaluateHookWatchdog({
+      preToolUseCount: 50,
+      postToolUseCount: 50 + HOOK_WATCHDOG_THRESHOLD,
     })
-    expect(below.action).toBe('ok')
-    expect(at.action).toBe('kill-session')
+    expect(broken.action).toBe('kill-session')
   })
 })
