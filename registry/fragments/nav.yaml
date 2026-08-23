@@ -50,3 +50,13 @@
   note: |
     RU-конспект апстрим-дизайна Notes import (оригиналы 1550 строк в
     docs/upstream/notes-import/). Основа для реализации RX-TSK-0411.
+
+- id: RX-DOC-0031
+  title: Fail-closed контракт PreToolUse-цепочки (дизайн)
+  kind: doc
+  path: docs/ru/RX-DOC-0031-pretooluse-failclosed.md
+  status: active
+  refs: [RX-TSK-0303, RX-SEC-0004]
+  note: |
+    Установленные факты bypassPermissions + три варианта контракта
+    (отложенный bypass / эхо-сторож / canary), рекомендация A→B.
