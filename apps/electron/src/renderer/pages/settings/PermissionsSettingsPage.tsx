@@ -19,6 +19,7 @@ import { Loader2 } from 'lucide-react'
 import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
 import { type PermissionsConfigFile } from '@craft-agent/shared/agent/modes'
 import { OpenClawAuditSection } from '@/components/settings/OpenClawAuditSection'
+import { CommandGatewaySection } from '@/components/settings/CommandGatewaySection'
 import {
   PermissionsDataTable,
   type PermissionRow,
@@ -322,6 +323,7 @@ export default function PermissionsSettingsPage() {
 
                   {/* OpenClaw security audit (RX-TSK-0112) */}
                   <OpenClawAuditSection workspaceId={activeWorkspace?.id} />
+                  <CommandGatewaySection workspaceId={activeWorkspace?.id} />
                 </>
               )}
             </div>

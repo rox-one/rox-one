@@ -209,7 +209,7 @@
   title: Перенести command.approve и command.deny
   kind: task
   path: packages
-  status: planned
+  status: done
   origin: session-recovery-20260821-marklindgreen
   refs: [RX-SES-0005, RX-DOC-0006, RX-TSK-0405]
   note: |
@@ -219,7 +219,8 @@
     Фаза 0 реализована 2026-08-23 по RX-DOC-0032: PendingCommandsStore
     (атомарный файл, TTL-свип, переживает рестарт; 5/5 тестов), RPC
     command:list/approve/deny с авторизацией воркспейса; deps.commandGateway
-    в electron main. Остаток: UI-подписка AdminApprovalRequest на list.
+    Консоль владельца 2026-08-23: useCommandGateway (poll 10 c) +
+    CommandGatewaySection в PermissionsSettingsPage; approve/deny по RPC.
     с нуля вместе с фазой 0 платформы RX-TSK-0402.
     Коммит d48efe66: approval flow end-to-end с restart-safe action store.
     В текущем дереве символов command.approve нет.
