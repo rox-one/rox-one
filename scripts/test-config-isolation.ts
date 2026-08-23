@@ -3,24 +3,21 @@
  *
  * `CONFIG_DIR` (config/paths.ts) is resolved once, when that module is first
  * loaded, and the very first thing a `bun test` process loads is the preload
- * list. Without this file `CRAFT_CONFIG_DIR` is still unset at that moment, so
- * `CONFIG_DIR` freezes to the real `~/.craft-agent` and every test that writes
- * config lands in the developer's actual Craft Agents installation — creating
- * workspaces, rotating config backups and clobbering whatever was there.
+ * list. Without this file neither config-dir variable is set at that moment, so
+ * `CONFIG_DIR` freezes to the real `~/.craft-agent` and tests can write into
+ * the developer's actual installation.
  *
- * Setting the variable here, before anything reads it, keeps the whole run
- * inside one disposable directory. Tests that need their own config root still
- * override `CRAFT_CONFIG_DIR` themselves and re-import the storage module.
+ * Setting the preferred variable here before any config import keeps the run in
+ * one disposable directory. Tests can still override `ROX_CONFIG_DIR` or the
+ * legacy `CRAFT_CONFIG_DIR` before the preload runs.
  *
  * Wired through `[test].preload` in `bunfig.toml`. An externally supplied
- * `CRAFT_CONFIG_DIR` wins, so a caller can still aim a run at a specific
- * directory.
+ * config directory always wins.
  */
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
-if (!process.env.CRAFT_CONFIG_DIR) {
-  process.env.CRAFT_CONFIG_DIR = mkdtempSync(join(tmpdir(), 'craft-agent-test-'));
+if (!process.env.ROX_CONFIG_DIR && !process.env.CRAFT_CONFIG_DIR) {
+  process.env.ROX_CONFIG_DIR = mkdtempSync(join(tmpdir(), 'rox-agent-test-'));
 }
