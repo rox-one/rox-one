@@ -146,7 +146,14 @@
     ExtensionUiDialogHost, export/dump, share/copy, typed fallback.
     В текущем дереве этих файлов нет. v2 G1–G4 уже в main.
 
-    Фаза 0 спроектирована 2026-08-23: RX-DOC-0032; реализация — следующий срез.
+    Фаза 0 спроектирована 2026-08-23: RX-DOC-0032; реализована (RX-TSK-0407,
+    done) + adversarial-фиксы 2026-08-23 (store 0600, prune terminal).
+    Верификация 2026-08-23: G1–G4 подтверждены в коде (thinking dto+маппинг,
+    buildSessionToolDefs, omp-turn-anchor branching, skills discovery+панель);
+    срез 3 фазы 1 добит — extractSkillPaths OmpAgent резолвит упоминания по
+    объединённому реестру craft+OMP через getSkillLoadOptions (craft-wins).
+    Остаток (AdvancedConsole, ExtensionUiDialogHost, export/dump, share/copy,
+    typed fallback) требует инвентаря omp 17.2.10 — спека в репо отсутствует.
 
     База знаний перенесена 2026-08-23: docs/upstream/omp/ (PRD v2
     ЗАВЕРШЕНО 142 стр. + rpc-notes 77 + integration-gap 49, RU).
@@ -169,7 +176,7 @@
   title: Панель аудита OpenClaw
   kind: task
   path: apps/electron/src/renderer/pages
-  status: active
+  status: done
   origin: session-recovery-20260821-craft-agents-cf2-restored
   refs: [RX-SES-0002, RX-DOC-0006]
   note: |
@@ -179,7 +186,7 @@
     server-core/openclaw (audit-service, collectors, persistence, runtime-manager),
     RPC-хендлер зарегистрирован, toolchain-пробник подключён; тесты 19/19.
     Фаза Б завершена 2026-08-22: electron main (композиция, IPC, deps-спред,
-    shutdown) и preload-мост подключены. UI-панель — RX-TSK-0112.
+    shutdown) и preload-мост подключены. UI-панель — RX-TSK-0112. Завершено 2026-08-23: все фазы закрыты, UI в TSK-0112 (done).
 
 - id: RX-TSK-0405
   title: Решить судьбу и перенести rox-sidecar
