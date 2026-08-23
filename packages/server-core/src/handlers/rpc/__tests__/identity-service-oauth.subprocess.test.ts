@@ -130,7 +130,8 @@ describe('identity service_oauth connect/disconnect (subprocess sandbox)', () =>
         console.log('ok-connect-disconnect');
       `,
       )
-      expect(r.stderr).toBe('')
+      // Допускаем deprecation-нотис CRAFT_CONFIG_DIR (см. cloud-runs.test.ts).
+      expect(r.stderr.split('\n').every((l) => !l.trim() || /CRAFT_CONFIG_DIR is deprecated/.test(l))).toBe(true)
       expect(r.exitCode).toBe(0)
       expect(r.stdout).toContain('ok-connect-disconnect')
     } finally {
@@ -184,7 +185,8 @@ describe('identity service_oauth connect/disconnect (subprocess sandbox)', () =>
         console.log('ok-logout-clears-identity');
       `,
       )
-      expect(r.stderr).toBe('')
+      // Допускаем deprecation-нотис CRAFT_CONFIG_DIR (см. cloud-runs.test.ts).
+      expect(r.stderr.split('\n').every((l) => !l.trim() || /CRAFT_CONFIG_DIR is deprecated/.test(l))).toBe(true)
       expect(r.exitCode).toBe(0)
       expect(r.stdout).toContain('ok-logout-clears-identity')
     } finally {
