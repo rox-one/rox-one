@@ -10,6 +10,9 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+const SUBPROCESS_TIMEOUT_MS = 15_000 // Дефолтные 5s флейкуют под нагрузкой машины (2026-08-23)
+
+
 const REPO_ROOT = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 
 interface RunResult {
@@ -137,7 +140,7 @@ describe('identity service_oauth connect/disconnect (subprocess sandbox)', () =>
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 
   test('auth.LOGOUT clears identity connections via IdentityStore.clear', () => {
     const dir = mkdtempSync(join(tmpdir(), 'craft-identity-logout-'))
@@ -192,5 +195,5 @@ describe('identity service_oauth connect/disconnect (subprocess sandbox)', () =>
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 })
