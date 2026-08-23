@@ -2,8 +2,8 @@ import log from 'electron-log/main'
 import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { homedir } from 'node:os'
-import type {
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import type {
   MessagingLogContext,
   MessagingLogMeta,
   MessagingLogger,
