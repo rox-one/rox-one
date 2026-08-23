@@ -6,7 +6,7 @@
  * access controls inside the Telegram tile in `MessagingSettingsPage`.
  *
  * Three visible parts:
- *  1. AccessModeBanner — only when `accessMode === 'open'`
+ *  1. AccessModeBanner — only when `accessMode === 'public-inbox'`
  *  2. Collapsible "Allowed users" row (icon + chevron, mirrors PairedSupergroupSection)
  *     — expands to show OwnersListEditor with topic-row-style indent
  *  3. PendingSendersList + heading (rendered only when there are pending senders)
@@ -62,15 +62,15 @@ export function TelegramAccessSection({ workspaceId, accessMode, onAccessModeCha
   const [pending, setPending] = React.useState<PendingSender[]>([])
 
   // The banner stays visible whenever the bot is publicly addressable —
-  // either at the workspace level (`accessMode === 'open'`) OR via any
-  // legacy binding still in `'open'` mode. Without the second check, the
+  // either at the workspace level (`accessMode === 'public-inbox'`) OR via any
+  // legacy binding still in `'public-inbox'` mode. Without the second check, the
   // operator would see the banner disappear after clicking "Lock down"
   // even though concrete bindings are still letting strangers in.
   const hasOpenBinding = React.useMemo(
-    () => allBindings.some((b) => b.platform === 'telegram' && b.accessMode === 'open'),
+    () => allBindings.some((b) => b.platform === 'telegram' && b.accessMode === 'public-inbox'),
     [allBindings],
   )
-  const showBanner = accessMode === 'open' || hasOpenBinding
+  const showBanner = accessMode === 'public-inbox' || hasOpenBinding
 
   const loadAll = React.useCallback(async () => {
     const [o, p] = await Promise.all([
@@ -97,9 +97,9 @@ export function TelegramAccessSection({ workspaceId, accessMode, onAccessModeCha
 
   const handleLockDown = async () => {
     try {
-      await window.electronAPI.setMessagingPlatformAccessMode('telegram', 'owner-only')
+      await window.electronAPI.setMessagingPlatformAccessMode('telegram', 'owner-control')
       toast.success(t('toast.messagingTelegramLockedDown'))
-      onAccessModeChange('owner-only')
+      onAccessModeChange('owner-control')
       await loadAll()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.error'))
@@ -162,9 +162,9 @@ export function TelegramAccessSection({ workspaceId, accessMode, onAccessModeCha
         <AccessModeBanner
           onLockDown={handleLockDown}
           // When the workspace is already locked but a binding is still
-          // in 'open' mode, swap the copy so the operator knows what to
+          // in 'public-inbox' mode, swap the copy so the operator knows what to
           // act on (the binding row, not the workspace toggle).
-          {...(accessMode === 'owner-only' && hasOpenBinding
+          {...(accessMode === 'owner-control' && hasOpenBinding
             ? {
                 description: t(
                   'settings.messaging.telegram.access.banner.descriptionLegacyBinding',
@@ -222,7 +222,7 @@ function AllowedUsersCollapsible({
   const [isExpanded, setIsExpanded] = React.useState(owners.length > 0)
 
   const subtitle =
-    accessMode === 'open'
+    accessMode === 'public-inbox'
       ? t('settings.messaging.telegram.access.allowedUsersSubtitleOpen')
       : owners.length === 0
         ? t('settings.messaging.telegram.access.allowedUsersSubtitleEmpty')
@@ -261,7 +261,7 @@ function AllowedUsersCollapsible({
             <div className="border-t border-border/50">
               <OwnersListEditor
                 owners={owners}
-                enforced={accessMode === 'owner-only'}
+                enforced={accessMode === 'owner-control'}
                 onRemove={onRemove}
               />
             </div>

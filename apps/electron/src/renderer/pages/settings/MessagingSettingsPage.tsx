@@ -219,7 +219,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   // dropdown can decide whether to show "Unlock", and TelegramAccessSection
   // receives it as a controlled prop. Symmetric with `supergroup` state.
   const [telegramAccessMode, setTelegramAccessMode] =
-    React.useState<PlatformAccessMode>('open')
+    React.useState<PlatformAccessMode>('public-inbox')
 
   const refreshSupergroup = React.useCallback(async () => {
     if (platform !== 'telegram') return
@@ -237,7 +237,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
       const mode = await window.electronAPI.getMessagingPlatformAccessMode('telegram')
       setTelegramAccessMode(mode as PlatformAccessMode)
     } catch {
-      // silent — default 'open' covers fresh / disconnected state
+      // silent — default 'public-inbox' covers fresh / disconnected state
     }
   }, [platform])
 
@@ -290,7 +290,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
       try {
         await window.electronAPI.setMessagingBindingAccess(bindingId, {
           mode: next.mode as BindingAccessMode,
-          ...(next.mode === 'allow-list' ? { allowedSenderIds: next.allowedSenderIds } : {}),
+          ...(next.mode === 'owner-control' ? { allowedSenderIds: next.allowedSenderIds } : {}),
         })
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Failed to update access')
@@ -335,9 +335,9 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
 
   const handleUnlock = async () => {
     try {
-      await window.electronAPI.setMessagingPlatformAccessMode('telegram', 'open')
+      await window.electronAPI.setMessagingPlatformAccessMode('telegram', 'public-inbox')
       toast.success(t('toast.messagingTelegramUnlocked'))
-      setTelegramAccessMode('open')
+      setTelegramAccessMode('public-inbox')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.error'))
     }
@@ -397,7 +397,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
               <DropdownMenuTrigger asChild>
                 <button
                   className="rounded-md p-1.5 transition-colors hover:bg-foreground/[0.05] data-[state=open]:bg-foreground/[0.05]"
-                  data-state={menuOpen ? 'open' : 'closed'}
+                  data-state={menuOpen ? 'public-inbox' : 'closed'}
                   aria-label={t('common.more')}
                 >
                   <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
@@ -410,7 +410,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
                       <Settings2 className="h-3.5 w-3.5" />
                       <span>{t('common.reconfigure')}</span>
                     </StyledDropdownMenuItem>
-                    {telegramAccessMode === 'owner-only' && (
+                    {telegramAccessMode === 'owner-control' && (
                       <StyledDropdownMenuItem onClick={() => runAfterMenuClose(handleUnlock)}>
                         <LockOpen className="h-3.5 w-3.5" />
                         <span>{t('settings.messaging.telegram.unlock')}</span>
@@ -565,7 +565,7 @@ interface TelegramBindingsBodyProps {
 
 function bindingToAccess(binding: MessagingBinding): BindingAccess {
   return {
-    mode: binding.accessMode ?? 'open',
+    mode: binding.accessMode ?? 'public-inbox',
     allowedSenderIds: binding.allowedSenderIds ?? [],
   }
 }
@@ -603,7 +603,7 @@ function TelegramBindingsBody({
       try {
         await window.electronAPI.setMessagingBindingAccess(bindingId, {
           mode: next.mode as BindingAccessMode,
-          ...(next.mode === 'allow-list' ? { allowedSenderIds: next.allowedSenderIds } : {}),
+          ...(next.mode === 'owner-control' ? { allowedSenderIds: next.allowedSenderIds } : {}),
         })
       } catch (err) {
         toast.error(err instanceof Error ? err.message : 'Failed to update access')

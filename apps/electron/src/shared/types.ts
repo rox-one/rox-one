@@ -1703,10 +1703,16 @@ export interface MessagingPlatformRuntimeInfo {
  * Workspace-level access policy for a messaging platform.
  * Mirrors the canonical type in `@craft-agent/messaging-gateway`.
  */
-export type MessagingPlatformAccessMode = 'open' | 'owner-only'
+export type MessagingPlatformAccessMode =
+  | 'public-inbox'
+  | 'owner-control'
+  | 'disabled'
 
 /** Per-binding access policy. */
-export type MessagingBindingAccessMode = 'inherit' | 'allow-list' | 'open'
+export type MessagingBindingAccessMode =
+  | 'public-inbox'
+  | 'owner-control'
+  | 'disabled'
 
 export interface MessagingPlatformOwnerInfo {
   userId: string

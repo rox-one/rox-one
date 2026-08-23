@@ -68,7 +68,7 @@ function defaultRuntime(platform: 'telegram' | 'whatsapp'): MessagingPlatformRun
 }
 
 function defaultAllowList(): AllowListState {
-  return { accessMode: 'open', owners: [], pending: [], bindings: {} }
+  return { accessMode: 'public-inbox', owners: [], pending: [], bindings: {} }
 }
 
 const messagingMockState: MessagingMockState = {
@@ -605,11 +605,11 @@ export const mockElectronAPI = {
     if (reason === 'not-on-binding-allowlist' && match.bindingId) {
       // Binding-scoped allow — don't promote to workspace owner.
       const access = state.bindings[match.bindingId] ?? {
-        mode: 'allow-list' as const,
+        mode: 'owner-control' as const,
         allowedSenderIds: [],
       }
       const next = {
-        mode: 'allow-list' as const,
+        mode: 'owner-control' as const,
         allowedSenderIds: Array.from(new Set([...access.allowedSenderIds, userId])),
       }
       playgroundAllowListHandle.setBindingAccess(platform, match.bindingId, next)
