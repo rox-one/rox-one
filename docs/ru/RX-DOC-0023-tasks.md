@@ -6,9 +6,9 @@ status: active
 
 # Консолидированные задачи (RX-DOC-0023)
 
-Всего задач: **46**. В работе: **1**, Заблокировано: **5**, Готово: **18**, Отменено: **2**, Запланировано: **20**.
+Всего задач: **46**. В работе: **1**, Заблокировано: **5**, Готово: **19**, Отменено: **2**, Запланировано: **19**.
 
-Номерные блоки волн: 0100–0111 аудит функций и гейты · 0300–0399 безопасность · 0400–0599 бэкапы сессий · 0600–0699 сборка · 0700–0799 связи.
+Блоки волн: 0100–0111 · 0300–0399 безопасность · 0400–0599 бэкапы · 0600–0699 сборка · 0700–0799 связи.
 
 ## Из аудита функций
 
@@ -62,7 +62,7 @@ status: active
 | `RX-TSK-0414` | Перенести корпус docs/security | Готово | `session-recovery-20260821-do-it-all-security-slices` | `docs` |
 | `RX-TSK-0415` | Origin-scoped remote TLS | Готово | `session-recovery-20260821-security-external-access-20260811` | `apps/electron/src/main/handlers/workspace.ts` |
 | `RX-TSK-0416` | Default-deny для публичного messaging | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `packages/messaging-gateway/src/types.ts` |
-| `RX-TSK-0417` | Подтверждение владельца перед transform_data | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `packages` |
+| `RX-TSK-0417` | Подтверждение владельца перед transform_data | Готово | `session-recovery-20260821-security-external-access-20260811` | `packages` |
 | `RX-TSK-0418` | Изоляция исполнения в microVM | Заблокировано | `session-recovery-20260821-security-external-access-20260811` | `packages` |
 | `RX-TSK-0419` | Pairing устройств, SHARE_ORIGIN и подписанные релизы | Запланировано | `session-recovery-20260821-security-external-access-20260811` | `docs` |
 | `RX-TSK-0420` | Собрать факты Gate 0 у владельца | Заблокировано | `session-recovery-20260821-do-it-all-security-slices` | `docs` |

@@ -313,6 +313,16 @@ export interface SessionToolContext {
   /** Set labels on a session. Defaults to current session if no ID given. Injected by backend. */
   setSessionLabels?(sessionId: string | undefined, labels: string[]): void | Promise<void>;
 
+  /** RX-TSK-0417: подтвердить запуск transform_data перед созданием
+   *  временного файла/процесса. Возвращает true если владелец одобрил.
+   *  Отсутствует → поведение как раньше (без подтверждения). */
+  onTransformDataConfirm?(details: {
+    language: string;
+    scriptPreview: string;
+    inputFiles: string[];
+    outputFile: string;
+  }): Promise<boolean> | boolean;
+
   /** Set status on a session. Defaults to current session if no ID given. Injected by backend. */
   setSessionStatus?(sessionId: string | undefined, status: string): void | Promise<void>;
 
