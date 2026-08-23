@@ -60,3 +60,14 @@
   note: |
     Установленные факты bypassPermissions + три варианта контракта
     (отложенный bypass / эхо-сторож / canary), рекомендация A→B.
+
+- id: RX-DOC-0032
+  title: Command Gateway фаза 0 (дизайн)
+  kind: doc
+  path: docs/ru/RX-DOC-0032-command-gateway-phase0.md
+  status: active
+  refs: [RX-TSK-0402, RX-TSK-0407]
+  note: |
+    Модель PendingCommand, restart-safe store, state machine,
+    RPC command:list/approve/deny с авторизацией воркспейса,
+    совместимость с AdminApprovalRequest из recovery.
