@@ -220,12 +220,12 @@ describe('platform accessMode disabled (RX-TSK-0416)', () => {
     const nonOwner = evaluateBindingAccess({
       msg: msg('u1'),
       workspaceConfig: ws('disabled'),
-      binding: { config: { accessMode: 'open' } },
+      binding: { config: { accessMode: 'open' } as never },
     })
     const owner = evaluateBindingAccess({
       msg: msg('owner-1'),
       workspaceConfig: ws('disabled'),
-      binding: { config: { accessMode: 'allow-list', allowedSenderIds: [] } },
+      binding: { config: { accessMode: 'allow-list', allowedSenderIds: [] } as never },
     })
     expect(nonOwner).toEqual({ allow: false, reason: 'mode-disabled' })
     expect(owner).toEqual({ allow: false, reason: 'mode-disabled' })
