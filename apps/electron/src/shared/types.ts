@@ -857,6 +857,16 @@ export interface ElectronAPI {
 
   // Toolchain manager (first-run download manager)
   /** Current per-tool status snapshot. */
+  /** RX-TSK-0112: OpenClaw runtime status for the audit panel. */
+  getOpenClawRuntimeStatus(input: { workspaceId: string }): Promise<import('@craft-agent/shared/openclaw').OpenClawRuntimeStatus>
+  /** Run a security audit ('standard' | 'deep') and return the snapshot. */
+  runSecurityAudit(input: { workspaceId: string; mode: import('@craft-agent/shared/openclaw').AuditMode }): Promise<import('@craft-agent/shared/openclaw').SecurityAuditSnapshot>
+  /** Latest stored snapshot or null. */
+  getLatestSecurityAudit(input: { workspaceId: string }): Promise<import('@craft-agent/shared/openclaw').SecurityAuditSnapshot | null>
+  /** Owner accepts a finding as a known risk. */
+  acceptSecurityRisk(input: import('@craft-agent/shared/openclaw').AcceptSecurityRiskRequest): Promise<void>
+  /** Revoke a previously accepted risk by fingerprint. */
+  revokeSecurityRiskAcceptance(input: { workspaceId: string; fingerprint: string }): Promise<void>
   getToolchainStatus(): Promise<ToolchainToolStatus[]>
   /** Push stream of per-tool status updates (download progress, phase changes). */
   onToolchainStatusChanged(callback: (status: ToolchainToolStatus) => void): () => void

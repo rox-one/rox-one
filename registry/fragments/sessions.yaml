@@ -296,9 +296,12 @@
 - id: RX-TSK-0112
   title: "UI-панель аудита OpenClaw (renderer)"
   kind: task
-  status: planned
+  status: done
   refs: [RX-TSK-0404]
   note: |
+    Исполнено 2026-08-23 (RX-TSK-0112): useOpenClawAudit hook +
+    OpenClawAuditSection в PermissionsSettingsPage; channel-map ×5;
+    i18n ×10 локалей. Runtime-проверка панели — при запуске приложения.
     Renderer-часть отсутствовала в бэкапе полностью. Бэкенд, RPC и
     host-control мост перенесены в рамках RX-TSK-0404 (Фаза А).
 
