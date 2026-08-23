@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
-import { mkdtempSync, rmSync, mkdirSync, writeFileSync, symlinkSync, existsSync, readFileSync } from 'node:fs'
+import { lstatSync, mkdtempSync, rmSync, mkdirSync, writeFileSync, symlinkSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import {
@@ -216,5 +216,56 @@ describe('notes import parent-dir symlink regression', () => {
     }
     const res = materializeImport(join(base, 'data2'), 'esc-test', forged)
     expect(res.copiedCount).toBe(0)
+  })
+})
+
+describe('notes import adversarial round 2 (inline review)', () => {
+  let base: string
+  beforeEach(() => { base = mkdtempSync(join(tmpdir(), 'notes-adv-')) })
+  afterEach(() => { rmSync(base, { recursive: true, force: true }) })
+
+  it("folderName '..' stays inside imports/ and does not escape", async () => {
+    const { scanSourceFolder, materializeImport } = await import('../notes-import.ts')
+    const src = join(base, 'src3')
+    mkdirSync(src, { recursive: true })
+    writeFileSync(join(src, 'a.md'), 'A')
+    const scan = scanSourceFolder(src)
+    const res = materializeImport(join(base, 'data3'), '..', scan)
+    expect(res.destinationDir.startsWith(join(resolve(join(base, 'data3')), 'imports'))).toBe(true)
+  })
+
+  it('pre-planted manifest symlink is replaced, target untouched', async () => {
+    const { scanSourceFolder, materializeImport } = await import('../notes-import.ts')
+    const src = join(base, 'src4')
+    mkdirSync(src, { recursive: true })
+    writeFileSync(join(src, 'b.md'), 'B')
+    const scan = scanSourceFolder(src)
+    const victim = join(base, 'victim.txt')
+    writeFileSync(victim, 'VICTIM_ORIGINAL')
+
+    // First import creates destination dir; plant symlink at manifest path
+    const res1 = materializeImport(join(base, 'data4'), 'mtest', scan)
+    rmSync(res1.manifestPath)
+    symlinkSync(victim, res1.manifestPath)
+
+    const res2 = materializeImport(join(base, 'data4'), 'mtest', scan)
+    // Symlink replaced by regular file; victim content unchanged
+    const lst = lstatSync(res2.manifestPath)
+    expect(lst.isSymbolicLink()).toBe(false)
+    expect(readFileSync(victim, 'utf8')).toBe('VICTIM_ORIGINAL')
+  })
+
+  it('forged ScanResult with > MAX_FILES notes is capped', async () => {
+    const { materializeImport, IMPORT_LIMITS } = await import('../notes-import.ts')
+    const src = join(base, 'src5')
+    mkdirSync(src, { recursive: true })
+    writeFileSync(join(src, 'c.md'), 'C')
+    const forgedNotes = Array.from({ length: IMPORT_LIMITS.MAX_FILES + 50 }, (_, i) => ({
+      absolutePath: join(src, 'c.md'),
+      relativePath: `f${i}.md`,
+      sizeBytes: 1,
+    }))
+    const res = materializeImport(join(base, 'data5'), 'cap', { root: src, notes: forgedNotes, skippedSymlinks: 0, truncated: false })
+    expect(res.copiedCount).toBeLessThanOrEqual(IMPORT_LIMITS.MAX_FILES)
   })
 })
