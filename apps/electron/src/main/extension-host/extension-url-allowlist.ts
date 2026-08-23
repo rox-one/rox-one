@@ -10,6 +10,7 @@
 
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 
 const FILE_VERSION = 1 as const
 const REL_PATH = join('extensions', 'url-allowlist.json')
@@ -62,7 +63,7 @@ function atomicWrite(path: string, content: string): void {
   renameSync(tmp, path)
 }
 
-function resolveConfigDir(configDir?: string): string {
+function effectiveConfigDir(configDir?: string): string {
   return typeof configDir === 'string' && configDir.trim() ? configDir.trim() : resolveConfigDir()
 }
 
@@ -107,7 +108,7 @@ function save(configDir: string, file: UrlAllowlistFile): UrlAllowlistFile {
 /** Read URL prefixes for an extension. Missing → []. */
 export function getUrlAllowlist(extensionId: string, configDir?: string): string[] {
   if (typeof extensionId !== 'string' || !extensionId.trim()) return []
-  const dir = resolveConfigDir(configDir)
+  const dir = effectiveConfigDir(configDir)
   const file = load(dir)
   const list = file.byExtension[extensionId.trim()]
   return list ? [...list] : []
@@ -127,7 +128,7 @@ export function setUrlAllowlist(
     throw new Error('setUrlAllowlist requires a non-empty extensionId')
   }
   const id = extensionId.trim()
-  const dir = resolveConfigDir(configDir)
+  const dir = effectiveConfigDir(configDir)
   const file = load(dir)
   const normalized = normalizeUrlPrefixes(prefixes)
   const byExtension = { ...file.byExtension }
@@ -142,7 +143,7 @@ export function setUrlAllowlist(
 
 /** Absolute path helper (tests / diagnostics). */
 export function urlAllowlistPath(configDir?: string): string {
-  return filePath(resolveConfigDir(configDir))
+  return filePath(effectiveConfigDir(configDir))
 }
 
 /** Test helper — drop in-memory cache. */
