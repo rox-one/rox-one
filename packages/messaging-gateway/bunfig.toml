@@ -1,0 +1,11 @@
+# Per-package mirror of the root bunfig [test] preloads.
+# Bun loads bunfig.toml ONLY from cwd, so `bun test` inside this directory
+# otherwise skips isolation and silently reads/writes the live ~/.craft-agent
+# (leak class proven 2026-08-23). Paths here are relative to this directory.
+[test]
+preload = [
+  "../../scripts/test-config-isolation.ts",
+  "../../packages/shared/src/unified-network-interceptor.ts",
+  "../../packages/shared/src/test-preload-pdfjs-url.ts",
+  "../../scripts/test-vite-url-shim.ts",
+]
