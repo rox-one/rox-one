@@ -200,6 +200,10 @@
   origin: session-recovery-20260821-marklindgreen
   refs: [RX-SES-0005, RX-DOC-0006, RX-TSK-0405]
   note: |
+    Свип 2026-08-23: коммит d48efe66 недоступен (нет ни локально, ни в
+    FETCH_HEAD recovery); найден только UI AdminApprovalRequest.tsx
+    (презентационная карточка, без action-store/RPC). Бэкенд строится
+    с нуля вместе с фазой 0 платформы RX-TSK-0402.
     Коммит d48efe66: approval flow end-to-end с restart-safe action store.
     В текущем дереве символов command.approve нет.
 
