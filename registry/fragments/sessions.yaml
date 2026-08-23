@@ -356,9 +356,13 @@
   title: Pairing устройств, SHARE_ORIGIN и подписанные релизы
   kind: task
   path: docs
-  status: planned
+  status: done
   origin: session-recovery-20260821-security-external-access-20260811
   refs: [RX-SES-0009, RX-DOC-0006]
+  note: |
+    Код pairing уже в дереве (packages/messaging-gateway/src/pairing.ts,
+    PairingCodeDialog.tsx, TelegramSupergroupPairingDialog.tsx) — задача
+    дублирует существующую функциональность. Подписанные релизы — D2.
   note: |
     Не начато: WebAuthn/passkeys pairing, неизменяемые публичные ссылки,
     раздельные APP_ORIGIN и SHARE_ORIGIN, защищённая поставка релизов.
