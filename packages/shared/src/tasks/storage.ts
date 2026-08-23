@@ -114,6 +114,16 @@ export function saveTaskSpec(workspaceRoot: string, spec: TaskSpec): void {
   if (!parsed.success) {
     throw new Error(`Refusing to save invalid task spec: ${parsed.error.issues.map((i) => i.message).join('; ')}`);
   }
+  // RX-TSK-0304 / RX-SEC-0005: permission mode must be an explicit author decision.
+  // A hand-authored spec without one would silently fall through to the runner's
+  // unattended-safe default ('allow-all') — never save that state to disk.
+  if (!parsed.data.defaults?.permissionMode) {
+    throw new Error(
+      'Refusing to save task spec without explicit defaults.permissionMode '
+        + `(one of: ask | allow-all | read-only-ish modes from PERMISSION_MODES). `
+        + 'Set defaults.permissionMode in the spec before saving.',
+    );
+  }
   ensureDir(taskDir(workspaceRoot, parsed.data.id));
   atomicWriteFileSync(taskYamlPath(workspaceRoot, parsed.data.id), serializeTaskYaml(parsed.data));
 }
