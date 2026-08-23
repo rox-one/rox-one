@@ -133,6 +133,10 @@ export const CHANNEL_MAP = {
 
   // Toolchain manager
   // OpenClaw security audit (RX-TSK-0112)
+  listPendingCommands: invoke(RPC_CHANNELS.commandGateway.LIST),
+  approveCommand: invoke(RPC_CHANNELS.commandGateway.APPROVE),
+  denyCommand: invoke(RPC_CHANNELS.commandGateway.DENY),
+
   getOpenClawRuntimeStatus: invoke(RPC_CHANNELS.openclawRuntime.GET_STATUS),
   runSecurityAudit: invoke(RPC_CHANNELS.securityAudit.RUN),
   getLatestSecurityAudit: invoke(RPC_CHANNELS.securityAudit.GET_LATEST),

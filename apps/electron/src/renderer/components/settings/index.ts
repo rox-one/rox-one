@@ -94,3 +94,4 @@ export {
 } from './SettingsTextarea'
 
 export { OpenClawAuditSection } from './OpenClawAuditSection'
+export { CommandGatewaySection } from './CommandGatewaySection'

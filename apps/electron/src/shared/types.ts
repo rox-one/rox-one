@@ -980,6 +980,10 @@ export interface ElectronAPI {
 
   // Toolchain manager (first-run download manager)
   /** Current per-tool status snapshot. */
+  /** RX-DOC-0032: pending commands awaiting an owner decision. */
+  listPendingCommands(input: { workspaceId: string }): Promise<import('@craft-agent/server-core/command-gateway').PendingCommand[]>
+  approveCommand(input: { workspaceId: string; id: string }): Promise<{ ok: true }>
+  denyCommand(input: { workspaceId: string; id: string }): Promise<{ ok: true }>
   /** RX-TSK-0112: OpenClaw runtime status for the audit panel. */
   getOpenClawRuntimeStatus(input: { workspaceId: string }): Promise<import('@craft-agent/shared/openclaw').OpenClawRuntimeStatus>
   /** Run a security audit ('standard' | 'deep') and return the snapshot. */
