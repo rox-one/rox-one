@@ -64,6 +64,23 @@ export function sweepExpired(
   return { kept, expiredCount }
 }
 
+/** Terminal entries (approved/denied/expired) older than this are pruned. */
+export const COMMAND_RETENTION_MS = 24 * 60 * 60 * 1000
+
+/** Pure prune helper: drops terminal decisions past the retention window. */
+export function pruneTerminal(
+  commands: PendingCommand[],
+  now: number,
+  retentionMs: number = COMMAND_RETENTION_MS,
+): { kept: PendingCommand[]; prunedCount: number } {
+  const kept = commands.filter((c) => {
+    if (c.status === 'pending') return true
+    const decidedAt = c.decidedAt ?? c.createdAt
+    return now - decidedAt < retentionMs
+  })
+  return { kept, prunedCount: commands.length - kept.length }
+}
+
 export class PendingCommandsStore {
   private readonly file: string
 
@@ -86,9 +103,10 @@ export class PendingCommandsStore {
   }
 
   private save(file: StoreFile): void {
-    mkdirSync(dirname(this.file), { recursive: true })
+    // Command payloads can embed sensitive context: owner-only permissions.
+    mkdirSync(dirname(this.file), { recursive: true, mode: 0o700 })
     const tmp = `${this.file}.tmp`
-    writeFileSync(tmp, JSON.stringify(file, null, 2), 'utf8')
+    writeFileSync(tmp, JSON.stringify(file, null, 2), { encoding: 'utf8', mode: 0o600 })
     renameSync(tmp, this.file)
   }
 
@@ -96,8 +114,11 @@ export class PendingCommandsStore {
   private loadSwept(): StoreFile {
     const file = this.load()
     const now = Date.now()
-    const { kept } = sweepExpired(file.commands, now)
-    const changed = kept.some((c, i) => c !== file.commands[i])
+    const swept = sweepExpired(file.commands, now)
+    const pruned = pruneTerminal(swept.kept, now)
+    const kept = pruned.kept
+    const changed = kept.length !== file.commands.length ||
+      kept.some((c, i) => c !== file.commands[i])
     if (changed) {
       file.commands = kept
       this.save(file)

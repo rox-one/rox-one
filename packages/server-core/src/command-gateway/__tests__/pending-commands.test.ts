@@ -81,3 +81,30 @@ describe('PendingCommandsStore', () => {
     expect(broken.listPending('ws-1')).toEqual([])
   })
 })
+
+describe('pending commands adversarial round (inline review)', () => {
+  it('store file is created 0600', async () => {
+    const { PendingCommandsStore } = await import('../pending-commands.ts')
+    const { mkdtempSync, statSync, rmSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const dir = mkdtempSync(join(tmpdir(), 'gw-mode-'))
+    const store = new PendingCommandsStore(dir)
+    store.create({ workspaceId: 'w', source: 'session', appName: 'app', command: 'ls', reason: 'r' })
+    const st = statSync(join(dir, 'command-gateway', 'pending.json'))
+    expect(st.mode & 0o777).toBe(0o600)
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('terminal entries older than retention are pruned on next load', async () => {
+    const { sweepExpired, pruneTerminal } = await import('../pending-commands.ts')
+    const now = Date.now()
+    const cmds = [
+      { id: 'a', workspaceId: 'w', source: 'session' as const, appName: 'x', command: 'c', reason: 'r', createdAt: now - 1000, expiresAt: now + 100000, status: 'approved' as const, decidedBy: 'o', decidedAt: now - 25 * 3600 * 1000 },
+      { id: 'b', workspaceId: 'w', source: 'session' as const, appName: 'x', command: 'c', reason: 'r', createdAt: now - 1000, expiresAt: now + 100000, status: 'pending' as const },
+    ]
+    const pruned = pruneTerminal(cmds, now)
+    expect(pruned.prunedCount).toBe(1)
+    expect(pruned.kept.length).toBe(1)
+    expect(pruned.kept[0].id).toBe('b')
+  })
+})
