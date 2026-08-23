@@ -1153,3 +1153,40 @@ export function shouldPromptInAskMode(
 
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// RX-TSK-0303: hook-chain watchdog (fail-closed contract, вариант B из
+// docs/ru/RX-DOC-0031-pretooluse-failclosed.md)
+// ---------------------------------------------------------------------------
+
+/** Сколько PostToolUse-исполнений допускается при молчащем PreToolUse. */
+export const HOOK_WATCHDOG_THRESHOLD = 5
+
+export interface HookWatchdogState {
+  /** Наш PreToolUse-колбэк видел хотя бы одно событие? */
+  preToolUseSeen: boolean
+  /** Сколько реальных тулов исполнилось (PostToolUse). */
+  postToolUseCount: number
+}
+
+export type HookWatchdogVerdict =
+  | { action: 'ok' }
+  | { action: 'kill-session'; reason: string }
+
+/**
+ * Решение сторожа цепочки хуков. При `bypassPermissions` PreToolUse-колбэк —
+ * единственный исполнитель проверок прав; если он молчит, пока тулы реально
+ * исполняются, сессию необходимо погасить (fail-closed).
+ */
+export function evaluateHookWatchdog(state: HookWatchdogState): HookWatchdogVerdict {
+  if (state.preToolUseSeen) return { action: 'ok' }
+  if (state.postToolUseCount >= HOOK_WATCHDOG_THRESHOLD) {
+    return {
+      action: 'kill-session',
+      reason:
+        `PreToolUse permission chain is silent across ${state.postToolUseCount} tool `
+        + 'executions; refusing to continue without permission checks (RX-TSK-0303).',
+    }
+  }
+  return { action: 'ok' }
+}

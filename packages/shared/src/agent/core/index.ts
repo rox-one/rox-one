@@ -134,6 +134,11 @@ export {
   // Centralized pipeline
   runPreToolUseChecks,
   shouldPromptInAskMode,
+  // RX-TSK-0303: hook-chain watchdog
+  evaluateHookWatchdog,
+  HOOK_WATCHDOG_THRESHOLD,
+  type HookWatchdogState,
+  type HookWatchdogVerdict,
 } from './pre-tool-use.ts';
 
 // Prerequisite Manager
