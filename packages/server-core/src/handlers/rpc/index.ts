@@ -4,6 +4,7 @@ import type { HandlerDeps } from '../handler-deps'
 import { registerAuthHandlers } from './auth'
 import { registerCloudRunsHandlers } from './cloud-runs'
 import { registerOpenClawHandlers } from './openclaw'
+import { registerCommandGatewayHandlers } from './command-gateway'
 import { registerIdentityHandlers } from './identity'
 import { registerFabricHandlers } from './fabric'
 import { registerExtensionsHandlers } from './extensions'
@@ -75,6 +76,7 @@ export function registerCoreRpcHandlers(
   registerCloudRunsHandlers(server, deps)
   registerIdentityHandlers(server, deps)
   registerOpenClawHandlers(server, deps)
+  registerCommandGatewayHandlers(server, deps)
   registerFabricHandlers(server, deps)
   registerExtensionsHandlers(server, deps)
   registerPluginBridgeHandlers(server, deps)

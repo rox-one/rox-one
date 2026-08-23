@@ -216,6 +216,10 @@
     Свип 2026-08-23: коммит d48efe66 недоступен (нет ни локально, ни в
     FETCH_HEAD recovery); найден только UI AdminApprovalRequest.tsx
     (презентационная карточка, без action-store/RPC). Бэкенд строится
+    Фаза 0 реализована 2026-08-23 по RX-DOC-0032: PendingCommandsStore
+    (атомарный файл, TTL-свип, переживает рестарт; 5/5 тестов), RPC
+    command:list/approve/deny с авторизацией воркспейса; deps.commandGateway
+    в electron main. Остаток: UI-подписка AdminApprovalRequest на list.
     с нуля вместе с фазой 0 платформы RX-TSK-0402.
     Коммит d48efe66: approval flow end-to-end с restart-safe action store.
     В текущем дереве символов command.approve нет.

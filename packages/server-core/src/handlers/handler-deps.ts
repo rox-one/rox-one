@@ -29,6 +29,8 @@ export interface HandlerDeps<
   oauthFlowStore: TOAuthFlowStore
   messagingRegistry?: IMessagingGatewayRegistry
   openClawSecurity?: OpenClawSecurityService
+  /** RX-DOC-0032 phase 0: restart-safe pending-command store. */
+  commandGateway?: import('../command-gateway').PendingCommandsStore
 }
 
 /** Workspace-scoped RPC input shared by every OpenClaw/security-audit channel. */

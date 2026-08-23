@@ -6,6 +6,7 @@ loadShellEnv()
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, session, shell } from 'electron'
 import type { BrowserWindowConstructorOptions } from 'electron'
 import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { PendingCommandsStore } from '@craft-agent/server-core/command-gateway'
 import { createHash, randomUUID } from 'crypto'
 import { hostname, homedir } from 'os'
 import * as Sentry from '@sentry/electron/main'
@@ -819,6 +820,7 @@ app.whenReady().then(async () => {
             oauthFlowStore: ofs,
             messagingRegistry: messagingHandle.registry,
             ...(openClawSecurity ? { openClawSecurity: openClawSecurity.service } : {}),
+            commandGateway: new PendingCommandsStore(resolveConfigDir()),
           }
         },
         // Headless: register only core handlers (no GUI handlers for browser, settings, etc.)
