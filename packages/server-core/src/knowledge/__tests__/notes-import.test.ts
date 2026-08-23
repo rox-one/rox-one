@@ -119,3 +119,20 @@ describe('notes import TOCTOU regression (code review)', () => {
     expect(res.copiedCount + res.skippedCount).toBe(scan.notes.length)
   })
 })
+
+
+describe('openWithNoFollow error paths', () => {
+  it('returns error for non-existent file', async () => {
+    const { openWithNoFollow } = await import('../notes-import.ts')
+    const r = openWithNoFollow('/tmp/definitely-does-not-exist-xyz.md')
+    expect('error' in r).toBe(true)
+  })
+
+  it('returns error for directory', async () => {
+    const { openWithNoFollow } = await import('../notes-import.ts')
+    const dir = mkdtempSync(join(tmpdir(), 'onf-dir-'))
+    const r = openWithNoFollow(dir)
+    expect('error' in r).toBe(true)
+    rmSync(dir, { recursive: true, force: true })
+  })
+})
