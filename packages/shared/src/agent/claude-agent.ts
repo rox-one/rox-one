@@ -1540,6 +1540,8 @@ export class ClaudeAgent extends BaseAgent {
               if (verdict.action === 'kill-session') {
                 debug(`[security] ${verdict.reason} Aborting session.`);
                 this.forceAbort(AbortReason.SecurityWatchdog);
+              } else if (verdict.note) {
+                debug(`[security] ${verdict.note}`);
               }
               return { continue: true };
             }],

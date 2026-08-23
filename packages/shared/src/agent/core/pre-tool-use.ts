@@ -1170,7 +1170,7 @@ export interface HookWatchdogState {
 }
 
 export type HookWatchdogVerdict =
-  | { action: 'ok' }
+  | { action: 'ok'; note?: string }
   | { action: 'kill-session'; reason: string }
 
 /**
@@ -1179,9 +1179,33 @@ export type HookWatchdogVerdict =
  * режима отказа: холодный старт без единого события и тихий обрыв цепочки
  * посреди сессии. Живая цепочка держит дивергенцию ≤1 (Post стреляет после Pre).
  */
-export function evaluateHookWatchdog(state: HookWatchdogState): HookWatchdogVerdict {
+/**
+ * Режим сторожа: `observe` (по умолчанию) только логирует дивергенцию —
+ * kill-path включается `CRAFT_HOOK_WATCHDOG=kill` после runtime-верификации
+ * допущения «каждый PostToolUsepreceded нашим PreToolUse» на реальных
+ * сессиях (параллельные вызовы, denied-пути).
+ */
+export type HookWatchdogMode = 'observe' | 'kill'
+
+export function getHookWatchdogMode(): HookWatchdogMode {
+  return process.env.CRAFT_HOOK_WATCHDOG === 'kill' ? 'kill' : 'observe'
+}
+
+export function evaluateHookWatchdog(
+  state: HookWatchdogState,
+  mode: HookWatchdogMode = getHookWatchdogMode(),
+): HookWatchdogVerdict {
   const divergence = state.postToolUseCount - state.preToolUseCount
   if (divergence < HOOK_WATCHDOG_THRESHOLD) return { action: 'ok' }
+  if (mode === 'observe') {
+    return {
+      action: 'ok',
+      note:
+        `[watchdog:observe] PreToolUse chain diverged (${state.postToolUseCount} `
+        + `executed vs ${state.preToolUseCount} checked); set CRAFT_HOOK_WATCHDOG=kill `
+        + 'to enforce fail-closed abort.',
+    }
+  }
   return {
     action: 'kill-session',
     reason:
