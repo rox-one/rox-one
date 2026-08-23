@@ -13,7 +13,7 @@
  */
 
 import { existsSync, lstatSync, mkdirSync, readdirSync, writeFileSync, openSync, closeSync, readFileSync, fstatSync, constants as fsConstants } from 'node:fs'
-import { basename, join, relative, resolve } from 'node:path'
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 
 export const IMPORT_LIMITS = {
   /** Max directory depth scanned below the source root. */
@@ -110,9 +110,60 @@ export interface MaterializeResult {
  * never silently overwritten — collisions rename with a `-N` suffix.
  */
 
-/** Portable no-follow open: O_NOFOLLOW when available + identity check fallback. */
-export function openWithNoFollow(path: string): { fd: number; dev: number; ino: number } | { error: string } {
+/**
+ * Guarantees (RX-TSK-0411): rejects STATIC symlinks in any intermediate
+ * directory component between the scan root and the leaf, plus leaf-level
+ * symlink/identity checks. Scope note: Node lacks openat(dirfd)-style atomic
+ * traversal, so a racing parent-directory swap between these lstat/open calls
+ * is OUT OF SCOPE here; the double component pass only narrows that window.
+ */
+function assertNoSymlinkComponents(root: string, filePath: string): void {
+  const resolvedRoot = resolve(root)
+  const rel = relative(resolvedRoot, resolve(filePath))
+  if (!rel || rel.startsWith('..')) {
+    const err = new Error('outside-root') as NodeJS.ErrnoException
+    err.code = 'ERANGEX'
+    throw err
+  }
+  const parts = rel.split(/[\\/]/)
+  let cur = resolvedRoot
+  for (let i = 0; i < parts.length - 1; i++) {
+    cur = join(cur, parts[i])
+    const st = lstatSync(cur)
+    if (st.isSymbolicLink()) {
+      const err = new Error(`symlinked directory component: ${cur}`) as NodeJS.ErrnoException
+      err.code = 'ESYMDIR'
+      throw err
+    }
+    if (!st.isDirectory()) {
+      const err = new Error(`non-directory component: ${cur}`) as NodeJS.ErrnoException
+      err.code = 'ENOTDIRX'
+      throw err
+    }
+  }
+}
+
+/**
+ * Source paths are ALWAYS derived from (root, relativePath) — never trusted
+ * from ScannedNote.absolutePath — so a forged ScanResult cannot read outside
+ * the scanned root.
+ */
+function deriveSourcePath(root: string, relativePath: string): string {
+  const resolvedRoot = resolve(root)
+  const rel = relative(resolvedRoot, resolve(resolvedRoot, relativePath))
+  if (!rel || rel.startsWith('..')) {
+    const err = new Error(`path escapes scan root: ${relativePath}`) as NodeJS.ErrnoException
+    err.code = 'ERANGEX'
+    throw err
+  }
+  return join(resolvedRoot, rel)
+}
+
+/** Portable no-follow open: component check + O_NOFOLLOW + identity fallback. */
+export function openWithNoFollow(root: string, relativePath: string): { fd: number; dev: number; ino: number } | { error: string } {
   try {
+    const path = deriveSourcePath(root, relativePath)
+    assertNoSymlinkComponents(root, path)
     const pre = lstatSync(path)
     if (pre.isSymbolicLink()) return { error: 'symlink' }
     if (!pre.isFile()) return { error: 'not-file' }
@@ -134,6 +185,8 @@ export function openWithNoFollow(path: string): { fd: number; dev: number; ino: 
         closeSync(fd)
         return { error: 'identity-mismatch' }
       }
+      // Second component pass: narrows (does not close) the parent-swap race.
+      assertNoSymlinkComponents(root, path)
       return { fd, dev: post.dev, ino: post.ino }
     } catch (err) {
       closeSync(fd)
@@ -159,25 +212,18 @@ export function materializeImport(
   const origins: Array<{ from: string; to: string }> = []
 
   for (const note of scan.notes) {
-    let target = join(destinationDir, note.relativePath)
-    if (!target.startsWith(destinationDir)) {
+    // Destination containment: resolve + relative rejects siblings sharing a
+    // prefix ('../foobar/pwn.md' vs dest '.../foo') that startsWith misses.
+    const target = resolve(destinationDir, note.relativePath)
+    const relFromDest = relative(destinationDir, target)
+    if (!relFromDest || relFromDest === '..' || relFromDest.startsWith('..' + sep) || isAbsolute(relFromDest)) {
       skippedCount += 1
       continue
     }
-    if (existsSync(target)) {
-      const extIdx = target.toLowerCase().endsWith('.md') ? target.length - 3 : target.length
-      let n = 1
-      let candidate = `${target.slice(0, extIdx)}-${n}${target.slice(extIdx)}`
-      while (existsSync(candidate)) {
-        n += 1
-        candidate = `${target.slice(0, extIdx)}-${n}${target.slice(extIdx)}`
-      }
-      target = candidate
-    }
-    mkdirSync(dirname(target), { recursive: true })
-    // RX-TSK-0411 TOCTOU fix (code review): open with O_NOFOLLOW so a symlink
-    // swapped in after scan fails here instead of leaking arbitrary content.
-    const opened = openWithNoFollow(note.absolutePath)
+    const relTarget = note.relativePath
+
+    const srcAbs = resolve(scan.root, note.relativePath)
+    const opened = openWithNoFollow(scan.root, note.relativePath)
     if ('error' in opened) { skippedCount += 1; continue }
     try {
       const st = fstatSync(opened.fd)
@@ -186,9 +232,23 @@ export function materializeImport(
         continue
       }
       const content = readFileSync(opened.fd)
-      writeFileSync(target, content)
-      origins.push({ from: note.absolutePath, to: target })
-      copiedCount += 1
+
+      mkdirSync(dirname(target), { recursive: true })
+      let written = false
+      for (let n = 0; n <= 50; n++) {
+        const extIdx = target.toLowerCase().endsWith('.md') ? target.length - 3 : target.length
+        const candidate = n === 0 ? target : target.slice(0, extIdx) + `-${n}` + target.slice(extIdx)
+        try {
+          writeFileSync(candidate, content, { flag: 'wx' })
+          origins.push({ from: srcAbs, to: candidate })
+          copiedCount += 1
+          written = true
+          break
+        } catch (err) {
+          if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err
+        }
+      }
+      if (!written) skippedCount += 1
     } catch {
       skippedCount += 1
     } finally {
@@ -205,8 +265,3 @@ export function materializeImport(
   return { destinationDir, manifestPath, copiedCount, skippedCount }
 }
 
-function dirname(p: string): string {
-  const idx = p.lastIndexOf('/')
-  const idx2 = p.lastIndexOf('\\')
-  return p.slice(0, Math.max(idx, idx2))
-}

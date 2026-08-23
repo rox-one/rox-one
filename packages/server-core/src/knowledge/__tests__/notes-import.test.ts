@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach } from 'bun:test'
 import { mkdtempSync, rmSync, mkdirSync, writeFileSync, symlinkSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import {
   scanSourceFolder,
   materializeImport,
@@ -124,15 +124,97 @@ describe('notes import TOCTOU regression (code review)', () => {
 describe('openWithNoFollow error paths', () => {
   it('returns error for non-existent file', async () => {
     const { openWithNoFollow } = await import('../notes-import.ts')
-    const r = openWithNoFollow('/tmp/definitely-does-not-exist-xyz.md')
+    const r = openWithNoFollow(tmpdir(), 'definitely-does-not-exist-xyz.md')
     expect('error' in r).toBe(true)
   })
 
   it('returns error for directory', async () => {
     const { openWithNoFollow } = await import('../notes-import.ts')
     const dir = mkdtempSync(join(tmpdir(), 'onf-dir-'))
-    const r = openWithNoFollow(dir)
+    const r = openWithNoFollow(dirname(dir), basename(dir))
     expect('error' in r).toBe(true)
     rmSync(dir, { recursive: true, force: true })
+  })
+})
+
+describe('notes import destination TOCTOU (wx flag)', () => {
+  let src: string
+  let data: string
+  beforeEach(() => {
+    src = mkdtempSync(join(tmpdir(), 'notes-wx-src-'))
+    data = mkdtempSync(join(tmpdir(), 'notes-wx-dat-'))
+  })
+  afterEach(() => {
+    rmSync(src, { recursive: true, force: true })
+    rmSync(data, { recursive: true, force: true })
+  })
+
+  it('pre-existing destination symlink is not followed (wx rejects EEXIST)', () => {
+    writeFileSync(join(src, 'note.md'), 'safe content')
+    const scan = scanSourceFolder(src)
+    const res = materializeImport(data, 'wx-test', scan)
+
+    // Create a symlink at the expected destination path for a second import
+    const secretTarget = join(src, 'secret.txt')
+    writeFileSync(secretTarget, 'SECRET_DATA')
+    const secondDest = join(res.destinationDir, 'link-target.md')
+    symlinkSync(secretTarget, secondDest)
+
+    // Second import with same file name → wx should NOT follow the symlink
+    writeFileSync(join(src, 'note.md'), 'updated content')
+    const scan2 = scanSourceFolder(src)
+    const res2 = materializeImport(data, 'wx-test', scan2)
+
+    // The symlink target must remain unchanged
+    expect(readFileSync(secondDest, 'utf8')).toBe('SECRET_DATA')
+  })
+})
+
+
+describe('notes import parent-dir symlink regression', () => {
+  let base: string
+  beforeEach(() => { base = mkdtempSync(join(tmpdir(), 'notes-pd-')) })
+  afterEach(() => { rmSync(base, { recursive: true, force: true }) })
+
+  it('static symlink replacing intermediate dir is rejected', async () => {
+    const { scanSourceFolder, materializeImport } = await import('../notes-import.ts')
+    const src = join(base, 'src')
+    const sub = join(src, 'sub')
+    mkdirSync(sub, { recursive: true })
+    writeFileSync(join(sub, 'safe.md'), 'SUB_CONTENT')
+    const scan = scanSourceFolder(src)
+    expect(scan.notes.length).toBe(1)
+
+    // Attacker swaps intermediate dir for symlink to evil dir pre-materialize
+    const evil = join(base, 'evil')
+    mkdirSync(evil, { recursive: true })
+    writeFileSync(join(evil, 'safe.md'), 'TOP_SECRET')
+    rmSync(sub, { recursive: true })
+    symlinkSync(evil, sub)
+
+    const res = materializeImport(join(base, 'data'), 'pd-test', scan)
+    expect(res.copiedCount).toBe(0)
+    const destFile = join(res.destinationDir, 'sub', 'safe.md')
+    if (existsSync(destFile)) {
+      expect(readFileSync(destFile, 'utf8')).not.toContain('TOP_SECRET')
+    }
+  })
+
+  it('path escaping scan root via forged relativePath is rejected', async () => {
+    const { scanSourceFolder, materializeImport } = await import('../notes-import.ts')
+    const src = join(base, 'src2')
+    mkdirSync(src, { recursive: true })
+    writeFileSync(join(src, 'ok.md'), 'OK')
+    const outsideDir = join(base, 'outside')
+    mkdirSync(outsideDir, { recursive: true })
+    writeFileSync(join(outsideDir, 'secret.txt'), 'OUT_SECRET')
+
+    const scan = scanSourceFolder(src)
+    const forged = {
+      ...scan,
+      notes: [{ absolutePath: join(outsideDir, 'secret.txt'), relativePath: '../outside/secret.txt', sizeBytes: 10 }],
+    }
+    const res = materializeImport(join(base, 'data2'), 'esc-test', forged)
+    expect(res.copiedCount).toBe(0)
   })
 })
