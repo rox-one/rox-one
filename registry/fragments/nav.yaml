@@ -71,3 +71,13 @@
     Модель PendingCommand, restart-safe store, state machine,
     RPC command:list/approve/deny с авторизацией воркспейса,
     совместимость с AdminApprovalRequest из recovery.
+
+- id: RX-DOC-0033
+  title: Default-deny messaging — редизайн режимов (дизайн)
+  kind: doc
+  path: docs/ru/RX-DOC-0033-messaging-default-deny.md
+  status: active
+  refs: [RX-TSK-0416, RX-SES-0009]
+  note: |
+    Маппинг legacy→новые режимы, миграция конфигов при загрузке,
+    evaluator-матрица с public-inbox через pending, UI/i18n-влияние.

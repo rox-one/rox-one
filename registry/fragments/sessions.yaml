@@ -363,6 +363,9 @@
   origin: session-recovery-20260821-security-external-access-20260811
   refs: [RX-SES-0009, RX-SES-0001, RX-DOC-0006]
   note: |
+    Дизайн готов 2026-08-23: RX-DOC-0033 — маппинг 5 legacy-состояний,
+    evaluator-матрица (public-inbox через pending), UI/i18n-влияние.
+    Реализация — следующий срез по плану.
     Заменить inherit/allow-list/open на public-inbox/owner-control/disabled.
     Незнакомый отправитель не создаёт сессию и не вызывает инструменты.
     Increment B на чекпоинте SES-0001, в main не влит.
