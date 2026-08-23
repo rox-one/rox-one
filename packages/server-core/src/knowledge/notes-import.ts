@@ -109,6 +109,41 @@ export interface MaterializeResult {
  * (source root, per-file origin, timestamp). Existing destination files are
  * never silently overwritten — collisions rename with a `-N` suffix.
  */
+
+/** Portable no-follow open: O_NOFOLLOW when available + identity check fallback. */
+export function openWithNoFollow(path: string): { fd: number; dev: number; ino: number } | { error: string } {
+  try {
+    const pre = lstatSync(path)
+    if (pre.isSymbolicLink()) return { error: 'symlink' }
+    if (!pre.isFile()) return { error: 'not-file' }
+
+    const flags = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0)
+    let fd: number
+    try {
+      fd = openSync(path, flags)
+    } catch (err) {
+      // ELOOP on O_NOFOLLOW platforms, ENOENT if deleted between lstat and open.
+      const code = (err as NodeJS.ErrnoException).code
+      if (code === 'ELOOP' || code === 'ENOENT') return { error: 'swap-detected' }
+      throw err
+    }
+    try {
+      const post = fstatSync(fd)
+      // Identity check: catches symlink swap even without O_NOFOLLOW (Windows).
+      if (post.dev !== pre.dev || post.ino !== pre.ino) {
+        closeSync(fd)
+        return { error: 'identity-mismatch' }
+      }
+      return { fd, dev: post.dev, ino: post.ino }
+    } catch (err) {
+      closeSync(fd)
+      throw err
+    }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) }
+  }
+}
+
 export function materializeImport(
   dataRoot: string,
   folderName: string,
@@ -142,22 +177,22 @@ export function materializeImport(
     mkdirSync(dirname(target), { recursive: true })
     // RX-TSK-0411 TOCTOU fix (code review): open with O_NOFOLLOW so a symlink
     // swapped in after scan fails here instead of leaking arbitrary content.
-    let fd: number | null = null
+    const opened = openWithNoFollow(note.absolutePath)
+    if ('error' in opened) { skippedCount += 1; continue }
     try {
-      fd = openSync(note.absolutePath, fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW)
-      const st = fstatSync(fd)
+      const st = fstatSync(opened.fd)
       if (!st.isFile() || st.size > IMPORT_LIMITS.MAX_FILE_BYTES) {
         skippedCount += 1
         continue
       }
-      const content = readFileSync(fd)
+      const content = readFileSync(opened.fd)
       writeFileSync(target, content)
       origins.push({ from: note.absolutePath, to: target })
       copiedCount += 1
     } catch {
       skippedCount += 1
     } finally {
-      if (fd !== null) { try { closeSync(fd) } catch { /* already closed */ } }
+      try { closeSync(opened.fd) } catch { /* already closed */ }
     }
   }
 
