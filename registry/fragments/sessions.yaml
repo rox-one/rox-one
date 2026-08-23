@@ -139,6 +139,9 @@
   origin: session-recovery-20260821-craft-agents-cf2-restored
   refs: [RX-SES-0002, RX-DOC-0006]
   note: |
+    База знаний перенесена 2026-08-23: docs/upstream/omp/ (PRD v2
+    ЗАВЕРШЕНО 142 стр. + rpc-notes 77 + integration-gap 49, RU).
+    Фазы 0–7 платформы Command Gateway — разработка с нуля поверх неё.
     ADR D1–D8, инвентарь omp 17.2.10, Command Gateway, AdvancedConsole,
     ExtensionUiDialogHost, export/dump, share/copy, typed fallback.
     В текущем дереве этих файлов нет. v2 G1–G4 уже в main.
