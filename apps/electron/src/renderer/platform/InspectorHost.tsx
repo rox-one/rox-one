@@ -78,7 +78,8 @@ const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
 // -----------------------------------------------------------------------------
 
 function projectInspectorConsumers(raw: unknown) {
-  return sanitizeConnectionBindingRows(raw).map((row) => ({
+  const bindingRows = sanitizeConnectionBindingRows(Array.isArray(raw) ? raw : [])
+  return bindingRows.map((row) => ({
     consumerId: row.consumerId,
     purpose: row.purpose,
     actions: row.actions.join(', '),

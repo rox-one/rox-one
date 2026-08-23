@@ -117,7 +117,7 @@ describe('inspectRemoteTlsPeer', () => {
     let appData = Buffer.alloc(0)
     const server = tls.createServer({ key, cert }, (socket) => {
       socket.on('data', (chunk) => {
-        appData = Buffer.concat([appData, chunk])
+        appData = Buffer.concat([appData, Buffer.from(chunk)])
       })
     })
     servers.push(server)

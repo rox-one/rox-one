@@ -297,7 +297,10 @@ export function sanitizeDevicePoll(raw: unknown): DevicePollView {
       ...(typeof rec.interval === 'number' ? { interval: rec.interval } : {}),
     }
   }
-  return { status: rec.status }
+  if (rec.status === 'denied' || rec.status === 'expired') {
+    return { status: rec.status }
+  }
+  throw new Error('Invalid device poll metadata')
 }
 
 const TERMINAL_DEVICE_POLL = new Set(['denied', 'expired', 'imported'])

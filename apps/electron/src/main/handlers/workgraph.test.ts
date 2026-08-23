@@ -4,19 +4,19 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'bun:test'
 
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcHandlerOptions, RpcServer } from '@craft-agent/server-core/transport'
-import type { WorkGraphHealth, WorkGraphKernel } from '@craft-agent/server-core/workgraph'
+import type { HandlerFn, RpcHandlerOptions, RpcServer } from '@craft-agent/server-core/transport'
+import type { ConnectionRecord, WorkGraphHealth, WorkGraphKernel } from '@craft-agent/server-core/workgraph'
 
 import { HANDLED_CHANNELS, registerWorkGraphHandlers } from './workgraph'
 
 describe('WorkGraph handler profile', () => {
   it('registers health and connection channels with the trusted local-Electron fence', async () => {
     const registrations = new Map<string, RpcHandlerOptions | undefined>()
-    const handlers = new Map<string, (...args: never[]) => unknown>()
+    const handlers = new Map<string, HandlerFn>()
     const server: RpcServer = {
       handle(channel, handler, options) {
         registrations.set(channel, options)
-        handlers.set(channel, handler as (...args: never[]) => unknown)
+      handlers.set(channel, handler as HandlerFn)
       },
       push() {},
       async invokeClient() { return undefined },
@@ -28,7 +28,7 @@ describe('WorkGraph handler profile', () => {
       platform: 'darwin/arm64',
       reason: 'unsupported-platform',
     }
-    const created = {
+    const created: ConnectionRecord = {
       id: 'conn-1',
       workspaceId: 'workspace_a',
       integrationId: 'github',

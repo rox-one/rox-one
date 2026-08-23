@@ -608,7 +608,7 @@ export const mockElectronAPI = {
         platform,
         state.pending.filter(
           (p) =>
-            __omp_shell("(")
+              (
               p.userId === userId &&
               p.bindingId === match.bindingId &&
               (p.reason ?? 'not-owner') === reason

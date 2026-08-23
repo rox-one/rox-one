@@ -397,9 +397,10 @@ export default function ConnectionsPage() {
     }
     try {
       setListError(null)
+      const leases = sanitizeActiveLeases(await listConnectionLeases({ workspaceId, connectionId }))
       setLeasePreviewById((current) => ({
         ...current,
-        [connectionId]: sanitizeActiveLeases(await listConnectionLeases({ workspaceId, connectionId })),
+        [connectionId]: leases,
       }))
     } catch (err) {
       setListError(errorMessage(err))
@@ -1586,7 +1587,7 @@ export default function ConnectionsPage() {
               </li>
             ))}
           </ul>
-        ) : rows === null && (tab === 'services' || tab === 'credentials' || tab === 'policies') ? (
+        ) : rows === null ? (
           <div data-testid="connections-loading" aria-busy="true" className="flex flex-1" />
         ) : (
           empty
