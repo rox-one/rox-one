@@ -108,10 +108,12 @@
   title: Сделать defaults.permissionMode обязательным в task-spec
   kind: task
   path: packages/server-core/src/tasks/TaskRunner.ts
-  status: planned
+  status: done
   refs: [RX-SEC-0005]
   note: |
     Валидация при saveTaskSpec: отсутствие mode — ошибка создания; индикатор активного режима при restore.
+    Исполнено 2026-08-23: saveTaskSpec отказ без явного mode; console.info режима в run();
+    тесты: инъекция в хелперы, негативный тест отказа, legacy-фолбэк напрямую.
 
 - id: RX-SEC-0006
   title: Renderer управляет исходящими соединениями main-процесса через invokeOnServer
