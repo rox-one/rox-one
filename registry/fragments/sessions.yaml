@@ -247,6 +247,10 @@
   note: |
     Канал MIGRATE_NOTES остаётся LOCAL_ONLY. UI импорта и managed SiYuan
     в сессии сознательно не делались.
+    Спека перенесена 2026-08-23: RU-конспект RX-DOC-0029 + оригиналы в
+    docs/upstream/notes-import/. UI строится поверх FR-4 (consent) и
+    FR-6 (материализация), без доступа к произвольным путям.
+  refs: [RX-SES-0008, RX-DOC-0006, RX-TSK-0412]
 
 - id: RX-TSK-0412
   title: Довести OwnedRootPolicy

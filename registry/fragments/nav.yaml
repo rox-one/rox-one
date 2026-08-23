@@ -40,3 +40,13 @@
   refs: [RX-TSK-0414]
   note: |
     Инвентарь перенесённого корпуса docs/security из бэкапов session-recovery.
+
+- id: RX-DOC-0029
+  title: ROX Notes — канонический корень и импорты (конспект)
+  kind: doc
+  path: docs/ru/RX-DOC-0029-notes-import.md
+  status: active
+  refs: [RX-TSK-0411]
+  note: |
+    RU-конспект апстрим-дизайна Notes import (оригиналы 1550 строк в
+    docs/upstream/notes-import/). Основа для реализации RX-TSK-0411.
