@@ -1712,10 +1712,10 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
 
     const nextOwners: PlatformOwner[] = [candidate]
     // Workspaces that haven't picked an explicit access mode default
-    // to `owner-only` once an owner exists. Existing 'open' workspaces
+    // to `owner-control` once an owner exists. Legacy modes migrate at load.
     // are respected (the operator chose to stay public).
     this.patchTelegramConfig(workspaceId, {
-      accessMode: cfg.platforms.telegram?.accessMode ?? 'owner-only',
+      accessMode: cfg.platforms.telegram?.accessMode ?? 'owner-control',
       owners: nextOwners,
     })
     this.log.info('seeded first owner', {
@@ -1748,9 +1748,9 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
   }
 
   getPlatformAccessMode(workspaceId: string, platform: PlatformType): PlatformAccessMode {
-    if (platform !== 'telegram') return 'open'
+    if (platform !== 'telegram') return 'public-inbox'
     const state = this.workspaces.get(workspaceId) ?? this.bootstrapWorkspace(workspaceId)
-    return state.configStore.get().platforms.telegram?.accessMode ?? 'open'
+    return state.configStore.get().platforms.telegram?.accessMode ?? 'public-inbox'
   }
 
   setPlatformAccessMode(
@@ -1768,8 +1768,8 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
     // operator clicks "Lock down", the banner disappears, but legacy
     // bindings remain public — exactly the false-sense-of-security UX
     // the feature is supposed to prevent.
-    if (mode === 'owner-only') {
-      this.migrateOpenBindingsToInherit(workspaceId)
+    if (mode === 'owner-control') {
+      this.closePublicBindings(workspaceId)
     }
 
     this.emitBindingChanged(workspaceId)
@@ -1780,14 +1780,14 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
    * to `inherit` (the safe default). Used when locking down the workspace.
    * Telegram-only — other platforms don't yet have per-binding access.
    */
-  private migrateOpenBindingsToInherit(workspaceId: string): void {
+  private closePublicBindings(workspaceId: string): void {
     const state = this.workspaces.get(workspaceId)
     if (!state) return
     const store = state.gateway.getBindingStore()
     for (const b of store.getAll()) {
       if (b.platform !== 'telegram') continue
-      if (b.config.accessMode !== 'open') continue
-      store.updateBindingConfig(b.id, { accessMode: 'inherit', allowedSenderIds: [] })
+      if (b.config.accessMode !== 'public-inbox') continue
+      store.updateBindingConfig(b.id, { accessMode: 'owner-control', allowedSenderIds: [] })
     }
   }
 
@@ -1873,7 +1873,7 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
         // Defensive: ensure the binding is in allow-list mode after
         // promotion. Otherwise a binding that was 'inherit' would still
         // ignore the new allowedSenderIds entry.
-        accessMode: binding.config.accessMode === 'allow-list' ? 'allow-list' : 'allow-list',
+        accessMode: 'owner-control',
       })
       state.gateway.getPendingStore().dismiss(platform, userId, {
         reason: 'not-on-binding-allowlist',
@@ -1903,7 +1903,7 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
     const tg = cfg.platforms.telegram
     this.patchTelegramConfig(workspaceId, {
       owners: nextOwners,
-      accessMode: tg?.accessMode ?? 'owner-only',
+      accessMode: tg?.accessMode ?? 'owner-control',
     })
     // Dismiss every pending row for this sender — they're now an owner,
     // so any binding-allow-list rejects pending against them have been
@@ -1930,7 +1930,7 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
     const next = store.updateBindingConfig(bindingId, {
       accessMode: access.mode,
       allowedSenderIds:
-        access.mode === 'allow-list' ? [...(access.allowedSenderIds ?? [])] : [],
+        access.mode === 'owner-control' ? [...(access.allowedSenderIds ?? [])] : [],
     })
     if (!next) throw new Error('Binding not found')
     this.emitBindingChanged(workspaceId)

@@ -66,18 +66,19 @@ const OWNER: PlatformOwner = { userId: OWNER_ID, addedAt: 0 }
 // ---------------------------------------------------------------------------
 
 describe('evaluatePreBindingAccess', () => {
-  it('open mode allows any non-bot sender', () => {
+  it('public-inbox mode queues any non-owner stranger', () => {
     const verdict = evaluatePreBindingAccess({
       msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'open' }),
+      workspaceConfig: buildConfig({ accessMode: 'public-inbox' }),
     })
-    expect(verdict.allow).toBe(true)
+    expect(verdict.allow).toBe(false)
+    if (!verdict.allow) expect(verdict.reason).toBe('queued-for-owner-review')
   })
 
-  it('owner-only mode allows owners', () => {
+  it('owner-control mode allows owners', () => {
     const verdict = evaluatePreBindingAccess({
       msg: buildMsg({ senderId: OWNER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [OWNER] }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [OWNER] }),
     })
     expect(verdict.allow).toBe(true)
   })
@@ -85,7 +86,7 @@ describe('evaluatePreBindingAccess', () => {
   it('owner-only mode rejects non-owners with reason "not-owner"', () => {
     const verdict = evaluatePreBindingAccess({
       msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [OWNER] }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [OWNER] }),
     })
     expect(verdict.allow).toBe(false)
     if (!verdict.allow) expect(verdict.reason).toBe('not-owner')
@@ -94,7 +95,7 @@ describe('evaluatePreBindingAccess', () => {
   it('rejects bot senders with reason "bot-sender" regardless of mode', () => {
     const verdict = evaluatePreBindingAccess({
       msg: buildMsg({ senderId: OWNER_ID, senderIsBot: true }),
-      workspaceConfig: buildConfig({ accessMode: 'open' }),
+      workspaceConfig: buildConfig({ accessMode: 'public-inbox' }),
     })
     expect(verdict.allow).toBe(false)
     if (!verdict.allow) expect(verdict.reason).toBe('bot-sender')
@@ -106,17 +107,18 @@ describe('evaluatePreBindingAccess', () => {
     // strict — bootstrap concerns live in handlePair, not here.
     const verdict = evaluatePreBindingAccess({
       msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [] }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [] }),
     })
     expect(verdict.allow).toBe(false)
   })
 
-  it('missing accessMode defaults to "open"', () => {
+  it('missing accessMode defaults to public-inbox queue', () => {
     const verdict = evaluatePreBindingAccess({
       msg: buildMsg({ senderId: STRANGER_ID }),
       workspaceConfig: buildConfig({}),
     })
-    expect(verdict.allow).toBe(true)
+    expect(verdict.allow).toBe(false)
+    if (!verdict.allow) expect(verdict.reason).toBe('queued-for-owner-review')
   })
 })
 
@@ -125,21 +127,22 @@ describe('evaluatePreBindingAccess', () => {
 // ---------------------------------------------------------------------------
 
 describe('evaluateBindingAccess', () => {
-  it('binding accessMode "open" allows any non-bot sender', () => {
+  it('binding public-inbox queues strangers even with workspace owners set', () => {
     const verdict = evaluateBindingAccess({
       msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [OWNER] }),
-      binding: bindingWith({ accessMode: 'open' }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [OWNER] }),
+      binding: bindingWith({ accessMode: 'public-inbox' }),
     })
-    expect(verdict.allow).toBe(true)
+    expect(verdict.allow).toBe(false)
+    if (!verdict.allow) expect(verdict.reason).toBe('queued-for-owner-review')
   })
 
   it('binding "allow-list" accepts ids in allowedSenderIds', () => {
     const verdict = evaluateBindingAccess({
       msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [OWNER] }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [OWNER] }),
       binding: bindingWith({
-        accessMode: 'allow-list',
+        accessMode: 'owner-control',
         allowedSenderIds: [STRANGER_ID],
       }),
     })
@@ -149,49 +152,50 @@ describe('evaluateBindingAccess', () => {
   it('binding "allow-list" rejects ids outside the list', () => {
     const verdict = evaluateBindingAccess({
       msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [OWNER] }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [OWNER] }),
       binding: bindingWith({
-        accessMode: 'allow-list',
+        accessMode: 'owner-control',
         allowedSenderIds: [OWNER_ID],
       }),
-    })
-    expect(verdict.allow).toBe(false)
-    if (!verdict.allow) expect(verdict.reason).toBe('not-on-binding-allowlist')
-  })
-
-  it('binding "inherit" defers to workspace owners (allow path)', () => {
-    const verdict = evaluateBindingAccess({
-      msg: buildMsg({ senderId: OWNER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [OWNER] }),
-      binding: bindingWith({ accessMode: 'inherit' }),
-    })
-    expect(verdict.allow).toBe(true)
-  })
-
-  it('binding "inherit" defers to workspace owners (reject path)', () => {
-    const verdict = evaluateBindingAccess({
-      msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'owner-only', owners: [OWNER] }),
-      binding: bindingWith({ accessMode: 'inherit' }),
     })
     expect(verdict.allow).toBe(false)
     if (!verdict.allow) expect(verdict.reason).toBe('not-owner')
   })
 
-  it('binding "inherit" with workspace "open" allows everyone (legacy behaviour)', () => {
+  it('binding "inherit" defers to workspace owners (allow path)', () => {
     const verdict = evaluateBindingAccess({
-      msg: buildMsg({ senderId: STRANGER_ID }),
-      workspaceConfig: buildConfig({ accessMode: 'open' }),
-      binding: bindingWith({ accessMode: 'inherit' }),
+      msg: buildMsg({ senderId: OWNER_ID }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [OWNER] }),
+      binding: bindingWith({ accessMode: 'public-inbox' }),
     })
     expect(verdict.allow).toBe(true)
+  })
+
+  it('binding public-inbox defers strangers to the owner queue', () => {
+    const verdict = evaluateBindingAccess({
+      msg: buildMsg({ senderId: STRANGER_ID }),
+      workspaceConfig: buildConfig({ accessMode: 'owner-control', owners: [OWNER] }),
+      binding: bindingWith({ accessMode: 'public-inbox' }),
+    })
+    expect(verdict.allow).toBe(false)
+    if (!verdict.allow) expect(verdict.reason).toBe('queued-for-owner-review')
+  })
+
+  it('public-inbox + public workspace still queues strangers (default-deny)', () => {
+    const verdict = evaluateBindingAccess({
+      msg: buildMsg({ senderId: STRANGER_ID }),
+      workspaceConfig: buildConfig({ accessMode: 'public-inbox' }),
+      binding: bindingWith({ accessMode: 'public-inbox' }),
+    })
+    expect(verdict.allow).toBe(false)
+    if (!verdict.allow) expect(verdict.reason).toBe('queued-for-owner-review')
   })
 
   it('rejects bot senders before any access mode logic runs', () => {
     const verdict = evaluateBindingAccess({
       msg: buildMsg({ senderId: OWNER_ID, senderIsBot: true }),
-      workspaceConfig: buildConfig({ accessMode: 'open' }),
-      binding: bindingWith({ accessMode: 'open' }),
+      workspaceConfig: buildConfig({ accessMode: 'public-inbox' }),
+      binding: bindingWith({ accessMode: 'public-inbox' }),
     })
     expect(verdict.allow).toBe(false)
     if (!verdict.allow) expect(verdict.reason).toBe('bot-sender')
@@ -203,24 +207,24 @@ describe('evaluateBindingAccess', () => {
 // ---------------------------------------------------------------------------
 
 describe('normalizeBindingConfig migration', () => {
-  it('persisted config without accessMode defaults to "open"', () => {
+  it('persisted config without accessMode migrates to public-inbox', () => {
     const raw = { responseMode: 'progress', streamResponses: true } as Partial<BindingConfig>
     const normalized = normalizeBindingConfig('telegram', raw)
-    expect(normalized.accessMode).toBe('open')
+    expect(normalized.accessMode).toBe('public-inbox')
     expect(normalized.allowedSenderIds).toEqual([])
   })
 
-  it('fresh BindingConfig (undefined) defaults to "inherit"', () => {
+  it('fresh BindingConfig defaults to public-inbox', () => {
     const normalized = normalizeBindingConfig('telegram')
-    expect(normalized.accessMode).toBe('inherit')
+    expect(normalized.accessMode).toBe('public-inbox')
   })
 
   it('explicit accessMode is preserved across normalisation', () => {
     const normalized = normalizeBindingConfig('telegram', {
-      accessMode: 'allow-list',
+      accessMode: 'owner-control',
       allowedSenderIds: ['42'],
     })
-    expect(normalized.accessMode).toBe('allow-list')
+    expect(normalized.accessMode).toBe('owner-control')
     expect(normalized.allowedSenderIds).toEqual(['42'])
   })
 })
@@ -266,12 +270,12 @@ describe('platform accessMode disabled (RX-TSK-0416)', () => {
     const nonOwner = evaluateBindingAccess({
       msg: msg('u1'),
       workspaceConfig: ws('disabled'),
-      binding: { config: { accessMode: 'open' } as never },
+      binding: { config: { accessMode: 'public-inbox' } as never },
     })
     const owner = evaluateBindingAccess({
       msg: msg('owner-1'),
       workspaceConfig: ws('disabled'),
-      binding: { config: { accessMode: 'allow-list', allowedSenderIds: [] } as never },
+      binding: { config: { accessMode: 'owner-control', allowedSenderIds: [] } as never },
     })
     expect(nonOwner).toEqual({ allow: false, reason: 'mode-disabled' })
     expect(owner).toEqual({ allow: false, reason: 'mode-disabled' })

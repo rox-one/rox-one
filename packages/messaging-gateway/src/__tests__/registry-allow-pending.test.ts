@@ -89,7 +89,7 @@ describe('MessagingGatewayRegistry.allowPendingSender — reason branching', () 
     const state = getInternalState(registry, workspaceId)!
     const store = state.gateway.getBindingStore()
     const binding = store.bind('ws-test', 'sess-A', 'telegram', 'chat-A', undefined, {
-      accessMode: 'allow-list',
+      accessMode: 'owner-control',
       allowedSenderIds: ['alice'],
     })
     state.gateway.getPendingStore().recordRejection({
@@ -111,7 +111,7 @@ describe('MessagingGatewayRegistry.allowPendingSender — reason branching', () 
     expect(registry.getPlatformOwners(workspaceId, 'telegram')).toHaveLength(0)
     // Binding's allow-list now includes bob.
     const reloaded = store.getAll().find((x: { id: string }) => x.id === binding.id)!
-    expect(reloaded.config.accessMode).toBe('allow-list')
+    expect(reloaded.config.accessMode).toBe('owner-control')
     expect(reloaded.config.allowedSenderIds).toContain('bob')
     expect(reloaded.config.allowedSenderIds).toContain('alice')
     expect(result.bindingId).toBe(binding.id)
@@ -144,7 +144,7 @@ describe('MessagingGatewayRegistry.allowPendingSender — reason branching', () 
     const state = getInternalState(registry, workspaceId)!
     const store = state.gateway.getBindingStore()
     const binding = store.bind('ws-test', 'sess-A', 'telegram', 'chat-A', undefined, {
-      accessMode: 'allow-list',
+      accessMode: 'owner-control',
       allowedSenderIds: ['alice'],
     })
     // Bob has TWO pending rows: one workspace-level, one binding-level.

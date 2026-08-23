@@ -142,7 +142,7 @@ function buildAccessDeps(harness: AccessHarness): AccessControlDeps {
           telegram: {
             ...harness.config.platforms.telegram,
             enabled: true,
-            accessMode: harness.config.platforms.telegram?.accessMode ?? 'owner-only',
+            accessMode: harness.config.platforms.telegram?.accessMode ?? 'owner-control',
             owners: next,
           },
         },
@@ -166,7 +166,7 @@ function buildCommands(args: {
       platforms: {
         telegram: {
           enabled: true,
-          ...(args.ownerOnly ? { accessMode: 'owner-only' as const } : {}),
+          ...(args.ownerOnly ? { accessMode: 'owner-control' as const } : {}),
           ...(args.owners ? { owners: args.owners } : {}),
         },
       },
@@ -381,10 +381,10 @@ describe('Commands.handle (unbound text path) — free-form gate', () => {
     expect(adapter.sent.length).toBe(0)
   })
 
-  it('open workspace lets free-form non-owner text through (legacy / migration)', async () => {
+  it('public-inbox forwards stranger free-form text to the owner queue', async () => {
     const { commands } = buildCommands({ ownerOnly: false, owners: [] })
     const adapter = makeAdapter()
     await commands.handle(adapter, buildMsg({ text: 'hi', senderId: 'stranger' }))
-    expect(adapter.sent.some((s) => s.includes('No session bound'))).toBe(true)
+    expect(adapter.sent.some((s) => s.includes('forwarded to the bot owner'))).toBe(true)
   })
 })

@@ -141,7 +141,7 @@ interface Harness {
 
 const OPEN_TELEGRAM_CONFIG: MessagingConfig = {
   enabled: true,
-  platforms: { telegram: { enabled: true, accessMode: 'open' } },
+  platforms: { telegram: { enabled: true, accessMode: 'owner-control', owners: [{ userId: 'sender-A', addedAt: 0 }] } },
 }
 
 async function makeHarness(opts: StubSessionManagerOpts = {}): Promise<Harness> {

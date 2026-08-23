@@ -160,7 +160,7 @@ describe('MessagingGateway button-press access gate', () => {
         platforms: {
           telegram: {
             enabled: true,
-            accessMode: 'owner-only',
+            accessMode: 'owner-control',
             owners: [{ userId: 'owner-1', addedAt: 0 }],
           },
         },
@@ -181,7 +181,7 @@ describe('MessagingGateway button-press access gate', () => {
         platforms: {
           telegram: {
             enabled: true,
-            accessMode: 'owner-only',
+            accessMode: 'owner-control',
             owners: [{ userId: 'owner-1', addedAt: 0 }],
           },
         },
@@ -195,7 +195,7 @@ describe('MessagingGateway button-press access gate', () => {
     const h = await makeHarness({
       workspaceConfig: {
         enabled: true,
-        platforms: { telegram: { enabled: true, accessMode: 'open' } },
+        platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
       },
     })
     // Bind a session in allow-list mode that excludes Bob.
@@ -205,7 +205,7 @@ describe('MessagingGateway button-press access gate', () => {
       'telegram',
       'chat-1',
       undefined,
-      { accessMode: 'allow-list', allowedSenderIds: ['alice'] },
+      { accessMode: 'owner-control', allowedSenderIds: ['alice'] },
     )
     await registerPermissionPrompt(h.gateway, {
       sessionId: 'sess-A',
@@ -223,14 +223,14 @@ describe('MessagingGateway button-press access gate', () => {
 
     // respondToPermission must NOT have been called.
     expect(h.sessionManager.respondToPermission).not.toHaveBeenCalled()
-    expect(h.adapter.sent.some((s) => s.includes('allow-list'))).toBe(true)
+    expect(h.adapter.sent.some((s) => s.includes('owner'))).toBe(true)
   })
 
   it('allows perm: button press from binding-allow-list sender', async () => {
     const h = await makeHarness({
       workspaceConfig: {
         enabled: true,
-        platforms: { telegram: { enabled: true, accessMode: 'open' } },
+        platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
       },
     })
     h.gateway.getBindingStore().bind(
@@ -239,7 +239,7 @@ describe('MessagingGateway button-press access gate', () => {
       'telegram',
       'chat-1',
       undefined,
-      { accessMode: 'allow-list', allowedSenderIds: ['alice'] },
+      { accessMode: 'owner-control', allowedSenderIds: ['alice'] },
     )
     await registerPermissionPrompt(h.gateway, {
       sessionId: 'sess-A',
@@ -263,7 +263,7 @@ describe('MessagingGateway button-press access gate', () => {
         platforms: {
           telegram: {
             enabled: true,
-            accessMode: 'owner-only',
+            accessMode: 'owner-control',
             owners: [{ userId: 'owner-1', addedAt: 0 }],
           },
         },
@@ -279,7 +279,7 @@ describe('MessagingGateway button-press access gate', () => {
     const h = await makeHarness({
       workspaceConfig: {
         enabled: true,
-        platforms: { telegram: { enabled: true, accessMode: 'open' } },
+        platforms: { telegram: { enabled: true, accessMode: 'public-inbox' } },
       },
     })
     const binding = h.gateway.getBindingStore().bind(
@@ -288,7 +288,7 @@ describe('MessagingGateway button-press access gate', () => {
       'telegram',
       'chat-1',
       undefined,
-      { accessMode: 'allow-list', allowedSenderIds: ['alice'] },
+      { accessMode: 'owner-control', allowedSenderIds: ['alice'] },
     )
     await h.adapter.fireButton(
       buildPress({
@@ -300,7 +300,7 @@ describe('MessagingGateway button-press access gate', () => {
     const pending = h.gateway.getPendingStore().list('telegram')
     expect(pending).toHaveLength(1)
     expect(pending[0]!.userId).toBe('bob')
-    expect(pending[0]!.reason).toBe('not-on-binding-allowlist')
+    expect(pending[0]!.reason).toBe('not-owner')
     expect(pending[0]!.bindingId).toBe(binding.id)
   })
 })

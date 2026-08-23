@@ -110,7 +110,10 @@ function makeFakeCommands(): { handle: ReturnType<typeof mock> } {
 
 function makeRouter() {
   const store = new BindingStore(storeDir)
-  store.bind('ws1', 'sess-A', 'telegram', 'chat-1')
+  store.bind('ws1', 'sess-A', 'telegram', 'chat-1', undefined, {
+      accessMode: 'owner-control',
+      allowedSenderIds: ['user-1'],
+    })
   const sessionManager = makeFakeSessionManager()
   const commands = makeFakeCommands()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -313,8 +316,9 @@ describe('Router', () => {
   it('routes the same chatId + different threadIds to the per-topic session', async () => {
     // Two topics in the same supergroup → two distinct sessions
     const store = new BindingStore(storeDir)
-    store.bind('ws1', 'sess-Topic5', 'telegram', '-1001', undefined, undefined, 5)
-    store.bind('ws1', 'sess-Topic7', 'telegram', '-1001', undefined, undefined, 7)
+    const topicCfg = { accessMode: 'owner-control' as const, allowedSenderIds: ['user-1'] }
+    store.bind('ws1', 'sess-Topic5', 'telegram', '-1001', undefined, topicCfg, 5)
+    store.bind('ws1', 'sess-Topic7', 'telegram', '-1001', undefined, topicCfg, 7)
 
     const sessionManager = makeFakeSessionManager()
     const commands = makeFakeCommands()
@@ -351,7 +355,8 @@ describe('Router', () => {
   function makeDiscordRouter(trigger: 'mention' | 'all') {
     const store = new BindingStore(storeDir)
     store.bind('ws1', 'sess-D', 'discord', 'dchan', undefined, {
-      accessMode: 'open',
+      accessMode: 'owner-control',
+      allowedSenderIds: ['user-1'],
       discordGuildTrigger: trigger,
     })
     const sessionManager = makeFakeSessionManager()
