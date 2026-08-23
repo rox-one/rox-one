@@ -11,6 +11,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { NotesImportButton } from '@/components/notes/NotesImportButton'
 import { ContextMenu, ContextMenuTrigger, StyledContextMenuContent, StyledContextMenuItem, StyledContextMenuSeparator } from '@/components/ui/styled-context-menu'
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
@@ -1749,6 +1750,7 @@ h1,h2,h3{margin-top:1.5em}
                       <CalendarDays className="h-3.5 w-3.5" />
                       Daily
                     </Button>
+                    <NotesImportButton workspaceId={activeWorkspaceId || undefined} onImported={() => void refreshNotes()} />
                     <Button size="sm" onClick={() => openCreateNoteDialog()}>
                       <FilePlus2 className="h-3.5 w-3.5" />
                       New note

@@ -980,6 +980,10 @@ export interface ElectronAPI {
 
   // Toolchain manager (first-run download manager)
   /** Current per-tool status snapshot. */
+  /** RX-TSK-0411: bounded scan of a local folder for the import consent dialog. */
+  previewNotesImport(input: { workspaceId: string; sourcePath: string }): Promise<unknown>
+  /** Materialize consented copies into the workspace imports folder. */
+  executeNotesImport(input: { workspaceId: string; sourcePath: string }): Promise<unknown>
   /** RX-DOC-0032: pending commands awaiting an owner decision. */
   listPendingCommands(input: { workspaceId: string }): Promise<import('@craft-agent/server-core/command-gateway').PendingCommand[]>
   approveCommand(input: { workspaceId: string; id: string }): Promise<{ ok: true }>
