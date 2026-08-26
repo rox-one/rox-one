@@ -6,12 +6,12 @@
 | --- | --- |
 | Author | Operator session 2026-08-26 (path D / slice B) |
 | Date | 2026-08-26 |
-| Status | **In Review** |
+| Status | **Approved** (2026-08-26) |
 | Reviewers | Product owner (Mark) |
 | Parent | [architecture.md](./architecture.md) (Accepted, M0) |
 | Graph | [m3-surface-graph.md](./m3-surface-graph.md) (merged PR #56) |
 | Ground | `rox-one/rox-one` `main` @ `b57d32e` |
-| Reviewers note | Implementation MUST NOT start until Status is **Approved** |
+| Reviewers note | Product code MUST NOT start until path D slice C is reviewed and writing-plans is invoked |
 
 ## 2. Context
 
