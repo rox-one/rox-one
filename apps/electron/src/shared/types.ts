@@ -1961,6 +1961,12 @@ export interface DiffNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface TerminalNavigationState {
+  navigator: 'terminal'
+  details: { type: 'terminal'; id: string; sessionId?: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 /**
  * Unified navigation state
  */
@@ -1980,6 +1986,7 @@ export type NavigationState =
   | CloudRunNavigationState
   | ExtensionNavigationState
   | DiffNavigationState
+  | TerminalNavigationState
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2039,6 +2046,10 @@ export const isExtensionNavigation = (
 export const isDiffNavigation = (
   state: NavigationState
 ): state is DiffNavigationState => state.navigator === 'diff'
+
+export const isTerminalNavigation = (
+  state: NavigationState
+): state is TerminalNavigationState => state.navigator === 'terminal'
 
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
   navigator: 'sessions',

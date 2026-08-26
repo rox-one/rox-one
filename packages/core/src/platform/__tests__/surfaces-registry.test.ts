@@ -31,7 +31,7 @@ function contribution(
 }
 
 describe('surfaceTabToDescriptor (S-02 §3.2 downgrade rules)', () => {
-  it('maps all seven tab kinds', () => {
+  it('maps all eight tab kinds', () => {
     expect(surfaceTabToDescriptor({ kind: 'session', sessionId: 's1' })).toEqual({
       kind: 'chat',
       sessionId: 's1',
@@ -52,6 +52,12 @@ describe('surfaceTabToDescriptor (S-02 §3.2 downgrade rules)', () => {
       kind: 'diff',
       proposalId: 'p1',
     })
+    expect(surfaceTabToDescriptor({ kind: 'terminal', terminalId: 't1' })).toBeNull()
+  })
+
+  it('maps terminal tabs to a null descriptor (FR-3)', () => {
+    expect(surfaceTabDurableKey({ kind: 'terminal', terminalId: 't1' })).toBe('terminal:t1')
+    expect(surfaceTabToDescriptor({ kind: 'terminal', terminalId: 't1' })).toBeNull()
   })
 
   it('downgrades database tabs to knowledge descriptors with ref.kind database', () => {
@@ -86,8 +92,9 @@ describe('surfaceTabDurableKey (S-02 §3.7 durable refs)', () => {
       surfaceTabDurableKey({ kind: 'cloud-run', runId: 'id' }),
       surfaceTabDurableKey({ kind: 'extension', extensionId: 'id', viewId: 'view' }),
       surfaceTabDurableKey({ kind: 'diff', proposalId: 'id' }),
+      surfaceTabDurableKey({ kind: 'terminal', terminalId: 'id' }),
     ])
-    expect(keys.size).toBe(7)
+    expect(keys.size).toBe(8)
   })
 })
 

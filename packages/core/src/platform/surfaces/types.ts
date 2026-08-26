@@ -31,7 +31,7 @@ export type PanelLaneId = 'main' | (string & {});
  */
 export type RenderNode = unknown;
 
-/** Normative 7-variant tab union — verbatim S-02 §3.1. */
+/** Normative 8-variant tab union — S-02 §3.1 plus M3 terminal twin. */
 export type SurfaceTab =
   | { kind: 'session'; sessionId: string }
   | { kind: 'knowledge'; ref: KnowledgeRef }
@@ -39,7 +39,8 @@ export type SurfaceTab =
   | { kind: 'database'; ref: KnowledgeRef }
   | { kind: 'cloud-run'; runId: string }
   | { kind: 'extension'; extensionId: string; viewId: string }
-  | { kind: 'diff'; proposalId: string };
+  | { kind: 'diff'; proposalId: string }
+  | { kind: 'terminal'; terminalId: string; sessionId?: string };
 
 export type SurfaceTabKind = SurfaceTab['kind'];
 

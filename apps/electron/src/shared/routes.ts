@@ -264,6 +264,10 @@ export const routes = {
     /** Write-proposal diff surface — `diff/{proposalId}` (spec K-05 contour) */
     proposal: (proposalId: string) =>
       `diff/${encodeURIComponent(proposalId)}` as const,
+
+    /** Local terminal surface — `terminal/{terminalId}` */
+    terminal: (terminalId: string) =>
+      `terminal/${encodeURIComponent(terminalId)}` as const,
   },
 } as const
 

@@ -45,6 +45,7 @@ const databaseTab: SurfaceTabLike = { kind: 'database', ref: { scheme: 'siyuan',
 const cloudRunTab: SurfaceTabLike = { kind: 'cloud-run', runId: 'run-42' }
 const extensionTab: SurfaceTabLike = { kind: 'extension', extensionId: 'ext-1', viewId: 'mainview' }
 const diffTab: SurfaceTabLike = { kind: 'diff', proposalId: 'prop-2' }
+const terminalTab: SurfaceTabLike = { kind: 'terminal', terminalId: 't9' }
 
 describe('layout-snapshot: tab ↔ route', () => {
   it('maps every SurfaceTab kind to its canonical route and back', () => {
@@ -56,11 +57,32 @@ describe('layout-snapshot: tab ↔ route', () => {
       [cloudRunTab, 'cloud-run/run-42'],
       [extensionTab, 'extension/ext-1/mainview'],
       [diffTab, 'diff/prop-2'],
+      [terminalTab, 'terminal/t9'],
     ]
     for (const [tab, route] of cases) {
       expect(surfaceTabToRoute(tab)).toBe(route)
       expect(surfaceTabFromRoute(route)).toEqual(tab)
     }
+  })
+
+  it('round-trips terminal via URL snapshot', () => {
+    const tab = { kind: 'terminal', terminalId: 't9' } as const
+    const route = surfaceTabToRoute(tab)
+    expect(route).toBe('terminal/t9')
+    expect(surfaceTabFromRoute(route)).toEqual(tab)
+    const snap = snapshotFromUrlSearch(
+      snapshotToUrlSearch({
+        version: 1,
+        workspaceId: 'w1',
+        lanes: [{ laneId: 'main', locked: false }],
+        tabs: [{ panelId: 'panel-0', laneId: 'main', tab, proportion: 1 }],
+        focusedIndex: 0,
+        savedAt: 1,
+      }),
+      'w1',
+      1,
+    )
+    expect(snap.tabs[0].tab).toEqual(tab)
   })
 
   it('returns null for non-surface routes and surfaces without a durable ref', () => {
@@ -93,9 +115,9 @@ describe('layout-snapshot: snapshot ↔ URL encoding', () => {
     expect(restored).toEqual(snapshot)
   })
 
-  it('round-trips a layout covering all 7 surface kinds', () => {
-    const all = [sessionTab, browserTab, knowledgeTab, databaseTab, cloudRunTab, extensionTab, diffTab]
-    const snapshot = makeSnapshot(all, 6)
+  it('round-trips a layout covering all 8 surface kinds', () => {
+    const all = [sessionTab, browserTab, knowledgeTab, databaseTab, cloudRunTab, extensionTab, diffTab, terminalTab]
+    const snapshot = makeSnapshot(all, 7)
     expect(snapshotFromUrlSearch(snapshotToUrlSearch(snapshot), WS, SAVED_AT)).toEqual(snapshot)
   })
 
