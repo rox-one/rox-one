@@ -1,0 +1,129 @@
+{
+  "name": "uew-m3",
+  "pattern": "orchestrator",
+  "workflow_id": "uew-m3-d-c",
+  "spec": "docs/specs/2026-08-25-unified-execution-workbench/m3-first-slice.md",
+  "graph": "docs/specs/2026-08-25-unified-execution-workbench/m3-surface-graph.md",
+  "orchestrator": {
+    "agent": "orchestrator",
+    "planning": "static-dag",
+    "assigns_files": true,
+    "may_not": ["edit product code", "merge parent 81", "put PTY bytes on WsRpcServer"]
+  },
+  "specialists": [
+    "g1-spike",
+    "types-union",
+    "coordinator",
+    "data-plane",
+    "electron-surface",
+    "evaluator",
+    "critic"
+  ],
+  "execution": {
+    "dependency_mode": "dag",
+    "max_parallel": 2,
+    "completion_policy": "all_required",
+    "retry": { "max": 1, "on": ["test-fail"] },
+    "timeout_seconds_default": 1800,
+    "budget_tokens_default": 80000
+  },
+  "steps": [
+    {
+      "step_id": "g1-spike",
+      "agent": "g1-spike",
+      "depends_on": [],
+      "task": "Throwaway PTY spike comparing craft-exec vs native crate vs node-pty vs multiplexer. Write G1 decision note. No SurfaceTab change.",
+      "owns": ["docs/specs/2026-08-25-unified-execution-workbench/g1-decision.md", "spikes/pty-g1/"],
+      "forbidden": ["packages/server-core/src/transport/server.ts", "apps/electron"],
+      "acs": ["AC-14"],
+      "timeout_seconds": 3600
+    },
+    {
+      "step_id": "types-union",
+      "agent": "types-union",
+      "depends_on": [],
+      "task": "Widen SurfaceTab and SurfaceTabLike together; durable key; parse; URL round-trip; flags default false.",
+      "owns": [
+        "packages/core/src/platform/surfaces/types.ts",
+        "packages/core/src/platform/surfaces/descriptor.ts",
+        "packages/core/src/platform/workbench/migrate.ts",
+        "packages/core/src/platform/workbench/layout.ts",
+        "apps/electron/src/renderer/platform/layout-snapshot.ts",
+        "apps/electron/src/shared/routes.ts",
+        "apps/electron/src/shared/route-parser.ts"
+      ],
+      "forbidden": ["packages/server-core/src/transport/server.ts", "packages/server-core/src/sessions/SessionManager.ts"],
+      "acs": ["AC-1", "AC-2", "AC-3", "AC-11", "EC-8"]
+    },
+    {
+      "step_id": "coordinator",
+      "agent": "coordinator",
+      "depends_on": ["types-union"],
+      "task": "ExecutionCoordinator local-electron only; ExecutionRun naming; pause honesty; no Session task fields.",
+      "owns": ["packages/server-core/src/execution/"],
+      "forbidden": ["packages/server-core/src/transport/server.ts", "packages/core/src/platform/identity/workgraph.ts"],
+      "acs": ["AC-4", "AC-12", "AC-13"]
+    },
+    {
+      "step_id": "data-plane",
+      "agent": "data-plane",
+      "depends_on": ["g1-spike", "coordinator"],
+      "task": "Binary frames, credits, snapshot barrier, fence epoch. Control RPC only for TerminalControl.",
+      "owns": ["packages/server-core/src/execution/terminal/", "packages/shared/src/execution/"],
+      "forbidden": ["packages/server-core/src/transport/server.ts"],
+      "acs": ["AC-5", "AC-6", "AC-7", "AC-8"]
+    },
+    {
+      "step_id": "electron-surface",
+      "agent": "electron-surface",
+      "depends_on": ["types-union", "data-plane"],
+      "task": "Terminal contribution, detach D0, D1 reattach, D2 honesty. Flags default off.",
+      "owns": [
+        "apps/electron/src/renderer/platform/",
+        "apps/electron/src/main/"
+      ],
+      "forbidden": ["packages/server-core/src/transport/server.ts", "packages/core/src/platform/surfaces/types.ts"],
+      "acs": ["AC-9", "AC-10", "AC-11"]
+    },
+    {
+      "step_id": "evaluator",
+      "agent": "evaluator",
+      "depends_on": ["electron-surface"],
+      "pattern": "evaluator",
+      "max_iterations": 2,
+      "task": "Run AC tests. Fail closed if any AC missing a test or WsRpcServer gained byte payloads.",
+      "owns": [],
+      "forbidden": ["any product edit except test gaps listed by critic"],
+      "acs": ["AC-1", "AC-2", "AC-3", "AC-4", "AC-5", "AC-6", "AC-7", "AC-8", "AC-9", "AC-10", "AC-11", "AC-12", "AC-13", "AC-14"]
+    },
+    {
+      "step_id": "critic",
+      "agent": "critic",
+      "depends_on": ["evaluator"],
+      "task": "Adversarial check vs architecture.md rejected designs and import policy.",
+      "owns": [],
+      "acs": []
+    }
+  ],
+  "handoff_contract": {
+    "required_fields": [
+      "workflow_id",
+      "step_id",
+      "task",
+      "constraints",
+      "upstream_artifacts",
+      "acs",
+      "owns",
+      "forbidden",
+      "budget_tokens",
+      "timeout_seconds"
+    ],
+    "constraints_always": [
+      "No WorkItem",
+      "No parent 81 merge",
+      "No PTY bytes on WsRpcServer",
+      "No new Session taskSlug/taskRunId fields",
+      "Flags default false"
+    ]
+  }
+}
