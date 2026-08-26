@@ -21,6 +21,8 @@ export const WORKBENCH_FLAG = {
   browserSurfaceV2: 'workbench.browser-surface.v2',
   statusBarV1: 'workbench.status-bar.v1',
   panelRegistryV2: 'workbench.panel-registry.v2',
+  terminalV1: 'workbench.terminal.v1',
+  coordinatorV1: 'execution.coordinator.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -57,6 +59,18 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   },
   {
     id: WORKBENCH_FLAG.panelRegistryV2,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.terminalV1,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.coordinatorV1,
     defaultValue: false,
     dependencies: [],
     rollbackSafe: true,

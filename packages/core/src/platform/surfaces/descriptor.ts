@@ -11,6 +11,7 @@ import type { SurfaceDescriptor, SurfaceTab } from './types.ts';
  * - 'database' → 'knowledge' with ref.kind 'database';
  * - 'extension' → null: extension views render through the plugin-bridge
  *   sandbox; they are not part of the host descriptor union.
+ * - 'terminal' → null: terminal is not a host descriptor (FR-3).
  */
 export function surfaceTabToDescriptor(tab: SurfaceTab): SurfaceDescriptor | null {
   switch (tab.kind) {
@@ -27,6 +28,8 @@ export function surfaceTabToDescriptor(tab: SurfaceTab): SurfaceDescriptor | nul
     case 'diff':
       return { kind: 'diff', proposalId: tab.proposalId };
     case 'extension':
+      return null;
+    case 'terminal':
       return null;
   }
 }
@@ -52,5 +55,7 @@ export function surfaceTabDurableKey(tab: SurfaceTab): string {
       return `extension:${tab.extensionId}/${tab.viewId}`;
     case 'diff':
       return `diff:${tab.proposalId}`;
+    case 'terminal':
+      return `terminal:${tab.terminalId}`;
   }
 }

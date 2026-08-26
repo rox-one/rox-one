@@ -56,7 +56,7 @@ export interface ParsedRoute {
 
 export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'settings' | 'browser' | 'memory' | 'home' | 'connections'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
-  | 'knowledge' | 'cloud-run' | 'extension' | 'diff'
+  | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -93,7 +93,7 @@ export interface ParsedCompoundRoute {
 const COMPOUND_ROUTE_PREFIXES = [
   'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'sources', 'skills', 'notes', 'notes-legacy', 'automations', 'projects', 'settings', 'browser', 'memory', 'home', 'connections',
   // Unified-shell surfaces (W1)
-  'knowledge', 'cloud-run', 'extension', 'diff',
+  'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
 ]
 
 /**
@@ -394,6 +394,11 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return { navigator: 'diff', details: { type: 'diff', id: proposalId } }
   }
 
+  // Local terminal surface — terminal/{terminalId}
+  if (first === 'terminal') {
+    return { navigator: 'terminal', details: { type: 'terminal', id: decodeURIComponent(segments[1] || '') } }
+  }
+
   // Sessions navigator (allSessions, flagged, state)
   let sessionFilter: SessionFilter
   let detailsStartIndex: number
@@ -539,8 +544,12 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return `diff/${encodeURIComponent(parsed.details.id)}`
   }
 
+  if (parsed.navigator === 'terminal') {
+    if (!parsed.details) return 'terminal'
+    return `terminal/${encodeURIComponent(parsed.details.id)}`
+  }
+
   // Sessions navigator
-  // Board/table are standalone views of all sessions; emit their own prefixes.
   if (parsed.viewMode === 'board') return 'board'
   if (parsed.viewMode === 'table') return 'table'
 
@@ -938,8 +947,17 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     }
   }
 
+  if (compound.navigator === 'terminal') {
+    if (!compound.details) {
+      return { navigator: 'terminal', details: null }
+    }
+    return {
+      navigator: 'terminal',
+      details: { type: 'terminal', id: compound.details.id },
+    }
+  }
+
   // Sessions
-  const filter = compound.sessionFilter || { kind: 'allSessions' as const }
   if (compound.details) {
     return {
       navigator: 'sessions',

@@ -340,6 +340,8 @@ export function describeWorkbenchTab(tab: WorkbenchTab): string {
       return `extension:${tab.extensionId}`;
     case 'diff':
       return `diff:${tab.proposalId}`;
+    case 'terminal':
+      return `terminal:${tab.terminalId}`;
     default: {
       const _exhaustive: never = tab;
       return assertNever(_exhaustive);

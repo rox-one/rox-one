@@ -45,6 +45,13 @@ export function parseWorkbenchTab(raw: unknown): WorkbenchTab | null {
   if (tab.kind === 'diff' && isNonEmptyString(tab.proposalId)) {
     return { kind: 'diff', proposalId: tab.proposalId };
   }
+  if (tab.kind === 'terminal' && isNonEmptyString(tab.terminalId)) {
+    return {
+      kind: 'terminal',
+      terminalId: tab.terminalId,
+      ...(isNonEmptyString(tab.sessionId) ? { sessionId: tab.sessionId } : {}),
+    };
+  }
   if (tab.kind === 'extension' && isNonEmptyString(tab.extensionId) && isNonEmptyString(tab.viewId)) {
     return { kind: 'extension', extensionId: tab.extensionId, viewId: tab.viewId };
   }

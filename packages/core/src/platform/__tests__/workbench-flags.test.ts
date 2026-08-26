@@ -42,4 +42,23 @@ describe('resolveEnabledFlags', () => {
     expect(enabled.has('workbench.demo')).toBe(false)
     expect(enabled.has(WORKBENCH_FLAG.statusBarV1)).toBe(true)
   })
+
+  it('terminal flags default off', () => {
+    expect(WORKBENCH_FLAG.terminalV1).toBe('workbench.terminal.v1')
+    expect(WORKBENCH_FLAG.coordinatorV1).toBe('execution.coordinator.v1')
+    expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.terminalV1, new Set())).toBe(false)
+    expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.coordinatorV1, new Set())).toBe(false)
+    expect(WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === WORKBENCH_FLAG.terminalV1)).toEqual({
+      id: 'workbench.terminal.v1',
+      defaultValue: false,
+      dependencies: [],
+      rollbackSafe: true,
+    })
+    expect(WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === WORKBENCH_FLAG.coordinatorV1)).toEqual({
+      id: 'execution.coordinator.v1',
+      defaultValue: false,
+      dependencies: [],
+      rollbackSafe: true,
+    })
+  })
 })

@@ -59,6 +59,7 @@ export type SurfaceTabLike =
   | { kind: 'cloud-run'; runId: string }
   | { kind: 'extension'; extensionId: string; viewId: string }
   | { kind: 'diff'; proposalId: string }
+  | { kind: 'terminal'; terminalId: string; sessionId?: string }
 
 // =============================================================================
 // Snapshot model (S-02 §3.10)
@@ -115,6 +116,8 @@ export function surfaceTabToRoute(tab: SurfaceTabLike): string {
       return routes.view.extension(tab.extensionId, tab.viewId)
     case 'diff':
       return routes.view.proposal(tab.proposalId)
+    case 'terminal':
+      return routes.view.terminal(tab.terminalId)
   }
 }
 
@@ -156,6 +159,10 @@ export function surfaceTabFromRoute(route: string): SurfaceTabLike | null {
     case 'diff':
       return state.details?.type === 'diff'
         ? { kind: 'diff', proposalId: state.details.proposalId }
+        : null
+    case 'terminal':
+      return state.details?.type === 'terminal'
+        ? { kind: 'terminal', terminalId: state.details.id, ...(state.details.sessionId ? { sessionId: state.details.sessionId } : {}) }
         : null
     default:
       return null
