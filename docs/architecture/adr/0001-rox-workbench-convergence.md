@@ -130,3 +130,18 @@ legacy panel so no surface is lost. Grouping is not preserved. Live
 
 WorkGraph kernel, WorkItems UI, Meetings, Feed, Mail, CRDT, hosted email,
 Home Front Page content, Agent Pulse, and renaming `tasks:*` RPC.
+
+## Addendum (2026-08-26) — execution program
+
+The Unified Execution Workbench lives at
+`docs/specs/2026-08-25-unified-execution-workbench/architecture.md`.
+
+That document does **not** replace this ADR. Layout SoT, WorkItem ≠ Run,
+Session as conversation, and the parallel `WorkbenchLayoutHost` seam stay.
+
+It **does** replace parent `WB-ADR-000`'s first vertical
+(`WorkItem ↔ Session ↔ AgentRun`) for this repository. The first
+implementation slice is local Electron terminals, binary streaming,
+Resource Surfaces, detach, and renderer-reload reattach. WorkItem remains
+optional and unimplemented until that spec's M8.
+
