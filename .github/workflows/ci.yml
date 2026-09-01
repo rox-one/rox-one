@@ -17,3 +17,8 @@ jobs:
       - run: bun install --frozen-lockfile
         env: { GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
       - run: bun run validate:ci
+      - name: Install Playwright Chromium
+        run: bunx playwright install chromium
+      - name: Run visual regression matrix
+        run: bun run test:visual
+        timeout-minutes: 10

@@ -105,6 +105,21 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
   const previewOverflowClass = component.previewOverflow
     ? (component.previewOverflow === 'visible' ? 'overflow-visible' : component.previewOverflow === 'hidden' ? 'overflow-hidden' : 'overflow-auto')
     : (component.layout === 'full' ? 'overflow-hidden' : 'overflow-auto')
+  const storyViewport = component.viewport
+
+  // A story viewport is part of its rendering contract, not merely a hint in
+  // the toolbar. Apply it whenever a different story is selected.
+  React.useEffect(() => {
+    if (storyViewport) {
+      setSize({ width: storyViewport.width, height: storyViewport.height })
+    }
+  }, [component.id, storyViewport])
+
+  const applyStoryViewport = () => {
+    if (component.viewport) {
+      setSize({ width: component.viewport.width, height: component.viewport.height })
+    }
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -115,6 +130,15 @@ export function ComponentPreview({ component, props }: ComponentPreviewProps) {
         </h2>
         <div className="mt-1 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
           <p>{component.description}</p>
+          {component.viewport && (
+            <button
+              onClick={applyStoryViewport}
+              className="rounded px-2 py-1 text-xs font-mono text-muted-foreground hover:bg-foreground/5 hover:text-foreground transition-colors"
+              title={component.viewport.name}
+            >
+              {component.viewport.name}: {component.viewport.width} × {component.viewport.height}
+            </button>
+          )}
           <div className="flex items-center gap-2">
             <span className="text-xs font-mono">
               {Math.round(size.width)} × {Math.round(size.height)}

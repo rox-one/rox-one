@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
-import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
 import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
 import type { SessionDraft, DraftAttachmentRef } from '@craft-agent/shared/config'
@@ -396,8 +395,6 @@ export default function App() {
   // Unified session options for all session-scoped settings
   const [sessionOptions, setSessionOptions] = useState<Map<string, SessionOptions>>(new Map())
 
-  // Theme state (app-level only)
-  const [appTheme, setAppTheme] = useState<ThemeOverrides | null>(null)
   // Reset confirmation dialog
   const [showResetDialog, setShowResetDialog] = useState(false)
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -436,7 +433,7 @@ export default function App() {
   // Apply theme via hook (injects CSS variables)
   // shikiTheme is passed to ShikiThemeProvider to ensure correct syntax highlighting
   // theme for dark-only themes in light system mode
-  const { shikiTheme, isDark } = useTheme({ appTheme })
+  const { shikiTheme, isDark } = useTheme()
 
   // Ref for sessionOptions to access current value in event handlers without re-registering
   const sessionOptionsRef = useRef(sessionOptions)
@@ -819,19 +816,7 @@ export default function App() {
         sessionDraftsRef.current = new Map(Object.entries(drafts))
       }
     })
-    // Load app-level theme
-    window.electronAPI.getAppTheme().then(setAppTheme)
   }, [appState, loadSessionsFromServer, resolveDefaultConnectionSlug])
-
-  // Subscribe to theme change events (live updates when theme.json changes)
-  useEffect(() => {
-    const cleanupApp = window.electronAPI.onAppThemeChange((theme) => {
-      setAppTheme(theme)
-    })
-    return () => {
-      cleanupApp()
-    }
-  }, [])
 
   // Subscribe to LLM connections change events (live updates when models are fetched)
   useEffect(() => {

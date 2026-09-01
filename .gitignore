@@ -19,6 +19,10 @@ apps/electron/resources/oem-kernel/*
 coverage
 *.lcov
 
+# Playwright runtime output; committed visual baselines live under tests/.
+test-results/
+playwright-report/
+
 # logs
 logs
 _.log

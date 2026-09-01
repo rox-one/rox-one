@@ -6,6 +6,7 @@ import { captureConsoleIntegration } from '@sentry/react'
 import { Provider as JotaiProvider, useAtomValue } from 'jotai'
 import App from './App'
 import { ThemeProvider } from './context/ThemeContext'
+import { useAppTheme } from './hooks/useTheme'
 import { windowWorkspaceIdAtom } from './atoms/sessions'
 import { Toaster } from '@/components/ui/sonner'
 import { setupI18n } from '@craft-agent/shared/i18n'
@@ -126,9 +127,12 @@ function CrashFallback() {
 function Root() {
   // Shared atom — written by App on init & workspace switch, read here for ThemeProvider
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  // The provider owns the effective theme, so live app-theme updates must enter
+  // the tree above it rather than being consumed by App alone.
+  const appTheme = useAppTheme()
 
   return (
-    <ThemeProvider activeWorkspaceId={workspaceId}>
+    <ThemeProvider appTheme={appTheme} activeWorkspaceId={workspaceId}>
       <App />
       <Toaster />
     </ThemeProvider>

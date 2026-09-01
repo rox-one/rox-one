@@ -1,6 +1,5 @@
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import {
-  resolveTheme,
   DEFAULT_THEME,
   type ThemeOverrides,
   type ThemeFile,
@@ -8,12 +7,35 @@ import {
 } from '@config/theme'
 import { useTheme as useThemeContext } from '@/context/ThemeContext'
 
-interface UseThemeOptions {
-  /**
-   * App-level theme override (from ~/.craft-agent/theme.json)
-   * When provided, merges with the preset theme from context.
-   */
-  appTheme?: ThemeOverrides | null
+/**
+ * Loads app-wide token overrides and keeps them current across Electron
+ * windows. A live IPC event is newer than the asynchronous bootstrap read.
+ */
+export function useAppTheme(): ThemeOverrides | null {
+  const [appTheme, setAppTheme] = useState<ThemeOverrides | null>(null)
+
+  useEffect(() => {
+    let active = true
+    let receivedAppThemeChange = false
+
+    const cleanup = window.electronAPI.onAppThemeChange((theme) => {
+      receivedAppThemeChange = true
+      setAppTheme(theme)
+    })
+
+    void window.electronAPI.getAppTheme().then((theme) => {
+      if (active && !receivedAppThemeChange) setAppTheme(theme)
+    }).catch(() => {
+      // Keep the provider's default theme when the optional override is unavailable.
+    })
+
+    return () => {
+      active = false
+      cleanup()
+    }
+  }, [])
+
+  return appTheme
 }
 
 interface UseThemeResult {
@@ -34,38 +56,16 @@ interface UseThemeResult {
  * This hook just reads the already-resolved values - no async loading,
  * no per-component effects.
  *
- * Optionally accepts appTheme to merge with preset (for app-level overrides).
- *
  * @example
  * ```tsx
- * // Simple usage - just read theme state
  * const { isDark, shikiTheme } = useTheme()
- *
- * // With app-level override
- * const [appTheme] = useAtom(appThemeAtom)
- * const { theme } = useTheme({ appTheme })
  * ```
  */
-export function useTheme({ appTheme }: UseThemeOptions = {}): UseThemeResult {
+export function useTheme(): UseThemeResult {
   const context = useThemeContext()
 
-  // If appTheme provided, merge with preset for app-level overrides
-  // Otherwise just use the resolved theme from context
-  const theme = useMemo(() => {
-    if (appTheme && context.presetTheme) {
-      // Merge: preset + appTheme
-      return resolveTheme({ ...context.presetTheme, ...appTheme })
-    }
-    if (appTheme) {
-      // No preset, just appTheme
-      return resolveTheme(appTheme)
-    }
-    // Use context's resolved theme directly
-    return context.resolvedTheme
-  }, [context.presetTheme, context.resolvedTheme, appTheme])
-
   return {
-    theme,
+    theme: context.resolvedTheme,
     defaultTheme: DEFAULT_THEME,
     shikiTheme: context.shikiTheme,
     shikiConfig: context.shikiConfig,

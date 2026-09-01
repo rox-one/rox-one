@@ -1,10 +1,10 @@
 import * as React from 'react'
 import { ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { CategoryGroup } from './registry'
+import type { LevelGroup } from './registry'
 
 interface SidebarProps {
-  categories: CategoryGroup[]
+  categories: LevelGroup[]
   selectedId: string | null
   onSelect: (id: string) => void
 }
@@ -50,45 +50,70 @@ export function Sidebar({ categories, selectedId, onSelect }: SidebarProps) {
   return (
     <nav className="w-56 shrink-0 border-r border-border bg-background overflow-y-auto">
       <div className="p-3 space-y-1">
-        {categories.map(category => {
-          const isExpanded = expandedCategories.has(category.name)
+        {categories.map(level => {
+          const levelKey = `level:${level.name}`
+          const isLevelExpanded = expandedCategories.has(levelKey)
+          const componentCount = level.categories.reduce((total, category) => total + category.components.length, 0)
 
           return (
-            <div key={category.name}>
-              {/* Category header */}
+            <div key={level.name}>
               <button
-                onClick={() => toggleCategory(category.name)}
+                onClick={() => toggleCategory(levelKey)}
                 className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground transition-colors"
               >
                 <ChevronRight
                   className={cn(
                     'h-3.5 w-3.5 transition-transform',
-                    isExpanded && 'rotate-90'
+                    isLevelExpanded && 'rotate-90'
                   )}
                 />
-                {category.name}
+                {level.name}
                 <span className="ml-auto text-[10px] font-normal opacity-60">
-                  {category.components.length}
+                  {componentCount}
                 </span>
               </button>
 
-              {/* Component list */}
-              {isExpanded && (
-                <div className="ml-2 space-y-0.5">
-                  {category.components.map(component => (
-                    <button
-                      key={component.id}
-                      onClick={() => onSelect(component.id)}
-                      className={cn(
-                        'w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors',
-                        selectedId === component.id
-                          ? 'bg-foreground/10 text-foreground font-medium'
-                          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
-                      )}
-                    >
-                      {component.name}
-                    </button>
-                  ))}
+              {isLevelExpanded && (
+                <div className="ml-2 space-y-1">
+                  {level.categories.map(category => {
+                    const categoryKey = `category:${level.name}/${category.name}`
+                    const isCategoryExpanded = expandedCategories.has(categoryKey)
+
+                    return (
+                      <div key={categoryKey}>
+                        <button
+                          onClick={() => toggleCategory(categoryKey)}
+                          className="w-full flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          <ChevronRight
+                            className={cn('h-3 w-3 transition-transform', isCategoryExpanded && 'rotate-90')}
+                          />
+                          {category.name}
+                          <span className="ml-auto text-[10px] font-normal opacity-60">
+                            {category.components.length}
+                          </span>
+                        </button>
+                        {isCategoryExpanded && (
+                          <div className="ml-2 space-y-0.5">
+                            {category.components.map(component => (
+                              <button
+                                key={component.id}
+                                onClick={() => onSelect(component.id)}
+                                className={cn(
+                                  'w-full text-left px-3 py-1.5 rounded-md text-sm transition-colors',
+                                  selectedId === component.id
+                                    ? 'bg-foreground/10 text-foreground font-medium'
+                                    : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'
+                                )}
+                              >
+                                {component.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </div>

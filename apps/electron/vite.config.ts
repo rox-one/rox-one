@@ -45,6 +45,13 @@ function nodeBuiltinStubPlugin() {
 }
 
 export default defineConfig({
+  // Some shared configuration helpers are intentionally renderer-safe when
+  // their environment is absent. Vite does not provide Node's `process`, so
+  // replace only `process.env` with an empty object instead of leaking the
+  // development shell environment into the renderer bundle.
+  define: {
+    'process.env': '{}',
+  },
   plugins: [
     react({
       babel: {

@@ -4,11 +4,31 @@
  */
 
 import { spawn, type Subprocess } from "bun";
-import { existsSync, rmSync, readFileSync, statSync, mkdirSync } from "fs";
-import { join, basename } from "path";
+import {
+  existsSync,
+  rmSync,
+  readFileSync,
+  readdirSync,
+  statSync,
+  mkdirSync,
+  writeFileSync,
+} from "fs";
+import { join } from "path";
 import * as esbuild from "esbuild";
 import { downloadUv, type Platform, type Arch } from "./build/common";
-import { copyElectronResourceTree } from "./build/staged-servers";
+import {
+  copyElectronResourceTree,
+  UNSTAGED_LEGACY_MCP_SERVERS,
+} from "./build/staged-servers";
+import {
+  createSuccessfulRebuildGuard,
+  detectInstanceNumber,
+  parseElectronDevOptions,
+  removeInvalidRuntimeArtifactOutput,
+  resolveVitePort,
+  shouldBuildRuntimeArtifact,
+  shouldStageElectronResources,
+} from "./electron-dev-helpers";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const ELECTRON_DIR = join(ROOT_DIR, "apps/electron");
@@ -28,12 +48,21 @@ const MAIN_PROCESS_ALIAS: Record<string, string> = {
 // Pi agent server path (subprocess for Pi SDK sessions)
 const PI_AGENT_SERVER_DIR = join(ROOT_DIR, "packages/pi-agent-server");
 const PI_AGENT_SERVER_OUTPUT = join(PI_AGENT_SERVER_DIR, "dist/index.js");
+const PI_AGENT_SERVER_SOURCE = join(PI_AGENT_SERVER_DIR, "src");
+const SHARED_SOURCE = join(ROOT_DIR, "packages/shared/src");
+const WA_WORKER_DIR = join(ROOT_DIR, "packages/messaging-whatsapp-worker");
+const WA_WORKER_SOURCE = join(WA_WORKER_DIR, "src");
+const WA_WORKER_OUTPUT = join(WA_WORKER_DIR, "dist/worker.cjs");
+const DISCORD_WORKER_DIR = join(ROOT_DIR, "packages/messaging-discord-worker");
+const DISCORD_WORKER_SOURCE = join(DISCORD_WORKER_DIR, "src");
+const DISCORD_WORKER_OUTPUT = join(DISCORD_WORKER_DIR, "dist/worker.cjs");
 
 // Platform-specific binary paths (bun creates .exe on Windows, no extension on Unix)
 const IS_WINDOWS = process.platform === "win32";
 const BIN_EXT = IS_WINDOWS ? ".exe" : "";
 const VITE_BIN = join(ROOT_DIR, `node_modules/.bin/vite${BIN_EXT}`);
 const ELECTRON_BIN = join(ROOT_DIR, `node_modules/.bin/electron${BIN_EXT}`);
+const ELECTRON_RESTART_DEBOUNCE_MS = 150;
 
 function resolveBuildPlatform(): Platform {
   if (process.platform === "darwin") return "darwin";
@@ -75,14 +104,15 @@ async function ensureBundledUvForCurrentPlatform(): Promise<void> {
 // Multi-instance detection (matches detect-instance.sh logic)
 // Detects instance number from folder name suffix (e.g., craft-agents-1 → instance 1)
 function detectInstance(): void {
-  // Don't override if already set (e.g., by sourcing detect-instance.sh first)
-  if (process.env.CRAFT_VITE_PORT) return;
+  // Explicit ports always win. ROX_VITE_PORT is the current name; retain the
+  // Craft and generic Vite names for existing worktree launchers.
+  if (process.env.ROX_VITE_PORT || process.env.CRAFT_VITE_PORT || process.env.VITE_PORT) {
+    process.env.CRAFT_VITE_PORT = resolveVitePort(process.env, ROOT_DIR);
+    return;
+  }
 
-  const folderName = basename(ROOT_DIR);
-  const match = folderName.match(/-(\d+)$/);
-
-  if (match) {
-    const instanceNum = match[1];
+  const instanceNum = detectInstanceNumber(ROOT_DIR);
+  if (instanceNum) {
     process.env.CRAFT_INSTANCE_NUMBER = instanceNum;
     process.env.CRAFT_VITE_PORT = `${instanceNum}173`;
     process.env.CRAFT_APP_NAME = `Craft Agents [${instanceNum}]`;
@@ -109,7 +139,9 @@ function loadEnvFile(): void {
               (value.startsWith("'") && value.endsWith("'"))) {
             value = value.slice(1, -1);
           }
-          process.env[key] = value;
+          // Inherited environment is the explicit operator choice. Keep it
+          // ahead of repository-local defaults so Vite and Electron agree.
+          if (process.env[key] === undefined) process.env[key] = value;
         }
       }
     }
@@ -185,14 +217,70 @@ function cleanViteCache(): void {
   }
 }
 
-// Copy resources to dist
-function copyResources(): void {
+const RESOURCE_STAGE_STAMP_FILENAME = ".craft-resource-stage.json";
+
+interface ResourceStageStamp {
+  sourceLatestMtimeMs: number;
+}
+
+function getLatestMtimeMs(path: string, ignoredEntries = new Set<string>()): number {
+  let latestMtimeMs = statSync(path).mtimeMs;
+  for (const entry of readdirSync(path, { withFileTypes: true })) {
+    if (ignoredEntries.has(entry.name)) continue;
+    const entryPath = join(path, entry.name);
+    const entryMtimeMs = entry.isDirectory()
+      ? getLatestMtimeMs(entryPath)
+      : statSync(entryPath).mtimeMs;
+    latestMtimeMs = Math.max(latestMtimeMs, entryMtimeMs);
+  }
+  return latestMtimeMs;
+}
+
+function readResourceStageStamp(stampPath: string): ResourceStageStamp | undefined {
+  try {
+    const parsed = JSON.parse(readFileSync(stampPath, "utf-8")) as Partial<ResourceStageStamp>;
+    return Number.isFinite(parsed.sourceLatestMtimeMs)
+      ? { sourceLatestMtimeMs: parsed.sourceLatestMtimeMs! }
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+// Copy resources to dist without bypassing copyElectronResourceTree's policy.
+// `--clean` and `--full-runtime` force a restage for resource deletions or
+// filesystem timestamp edge cases that cannot be proven from the prior stamp.
+function copyResources(force = false): void {
   const srcDir = join(ELECTRON_DIR, "resources");
   const destDir = join(ELECTRON_DIR, "dist/resources");
-  if (existsSync(srcDir)) {
-    copyElectronResourceTree(srcDir, destDir);
-    console.log("📦 Copied resources to dist (skipped unread session/bridge MCP servers)");
+  if (!existsSync(srcDir)) return;
+
+  const stampPath = join(destDir, RESOURCE_STAGE_STAMP_FILENAME);
+  const sourceLatestMtimeMs = getLatestMtimeMs(
+    srcDir,
+    new Set(UNSTAGED_LEGACY_MCP_SERVERS),
+  );
+  const stamp = readResourceStageStamp(stampPath);
+  const shouldStage = shouldStageElectronResources({
+    force,
+    sourceExists: true,
+    outputExists: existsSync(destDir),
+    sourceLatestMtimeMs,
+    stagedSourceLatestMtimeMs: stamp?.sourceLatestMtimeMs,
+  });
+
+  if (!shouldStage) {
+    console.log("📦 Reusing staged resources (use --clean or --full-runtime after deletions)");
+    return;
   }
+
+  // cpSync updates/adds files but does not mirror removals. This directory is
+  // generated output, so clear it only after the stage decision and then reuse
+  // the canonical copier (including its MCP-server exclusions).
+  if (existsSync(destDir)) rmSync(destDir, { recursive: true, force: true });
+  copyElectronResourceTree(srcDir, destDir);
+  writeFileSync(stampPath, `${JSON.stringify({ sourceLatestMtimeMs })}\n`);
+  console.log("📦 Copied resources to dist (skipped unread session/bridge MCP servers)");
 }
 
 // Build the WhatsApp worker bundle (dist/worker.cjs). Runs the canonical
@@ -252,6 +340,88 @@ async function buildMcpServers(): Promise<void> {
   }
 }
 
+interface RuntimeArtifact {
+  label: string;
+  inputPaths: string[];
+  outputPath: string;
+  build: () => Promise<void>;
+}
+
+function getLatestInputMtimeMs(inputPaths: readonly string[]): number {
+  return Math.max(...inputPaths.map((inputPath) => {
+    const stats = statSync(inputPath);
+    return stats.isDirectory() ? getLatestMtimeMs(inputPath) : stats.mtimeMs;
+  }));
+}
+
+async function ensureRuntimeArtifact(artifact: RuntimeArtifact, force: boolean): Promise<void> {
+  const sourceExists = artifact.inputPaths.every(existsSync);
+  if (!sourceExists) {
+    console.log(`⏭️  ${artifact.label} skipped (source not present)`);
+    return;
+  }
+
+  const outputPathExists = existsSync(artifact.outputPath);
+  const outputStats = outputPathExists ? statSync(artifact.outputPath) : undefined;
+  const outputExists = outputStats?.isFile() ?? false;
+  const outputVerification = outputExists ? await verifyJsFile(artifact.outputPath) : undefined;
+  const sourceLatestMtimeMs = getLatestInputMtimeMs(artifact.inputPaths);
+  const outputMtimeMs = outputStats?.mtimeMs;
+  const shouldBuild = shouldBuildRuntimeArtifact({
+    force,
+    sourceExists,
+    outputExists,
+    outputIsUsable: outputVerification?.valid ?? false,
+    sourceLatestMtimeMs,
+    outputMtimeMs,
+  });
+
+  if (!shouldBuild) {
+    console.log(`📦 Reusing ${artifact.label}: ${artifact.outputPath}`);
+    return;
+  }
+
+  // Builders cannot replace a directory with their expected output file, and
+  // must not reuse a corrupt bundle. Remove only this generated artifact,
+  // never its containing dist directory or sibling outputs.
+  if (removeInvalidRuntimeArtifactOutput(artifact.outputPath, {
+    outputPathExists,
+    outputIsUsable: outputVerification?.valid ?? false,
+  })) {
+    console.log(`🧹 Removed invalid ${artifact.label} output before rebuilding`);
+  }
+
+  await artifact.build();
+  const verification = await verifyJsFile(artifact.outputPath);
+  if (!verification.valid) {
+    throw new Error(`${artifact.label} output is invalid: ${verification.error}`);
+  }
+  console.log(`✅ ${artifact.label} ready: ${artifact.outputPath}`);
+}
+
+async function ensureRuntimeArtifacts(force: boolean): Promise<void> {
+  await ensureRuntimeArtifact({
+    label: "Pi agent server",
+    // Pi's Bun bundle imports shared sources directly, so edits under this
+    // root must invalidate its dev artifact just like its own sources do.
+    inputPaths: [PI_AGENT_SERVER_SOURCE, SHARED_SOURCE, join(PI_AGENT_SERVER_DIR, "package.json")],
+    outputPath: PI_AGENT_SERVER_OUTPUT,
+    build: buildMcpServers,
+  }, force);
+  await ensureRuntimeArtifact({
+    label: "WhatsApp worker",
+    inputPaths: [WA_WORKER_SOURCE, join(ROOT_DIR, "scripts/build-wa-worker.ts")],
+    outputPath: WA_WORKER_OUTPUT,
+    build: buildWaWorker,
+  }, force);
+  await ensureRuntimeArtifact({
+    label: "Discord worker",
+    inputPaths: [DISCORD_WORKER_SOURCE, join(ROOT_DIR, "scripts/build-discord-worker.ts")],
+    outputPath: DISCORD_WORKER_OUTPUT,
+    build: buildDiscordWorker,
+  }, force);
+}
+
 // Get OAuth defines for esbuild API
 function getOAuthDefines(): Record<string, string> {
   const oauthVars = [
@@ -273,7 +443,7 @@ function getOAuthDefines(): Record<string, string> {
 
 // Get environment variables for electron process
 function getElectronEnv(): Record<string, string> {
-  const vitePort = process.env.CRAFT_VITE_PORT || "5173";
+  const vitePort = resolveVitePort(process.env, ROOT_DIR);
 
   // Codex binary path is resolved at runtime by the binary-resolver module.
   // It checks: CODEX_PATH env var > bundled binary > local dev fork > system PATH.
@@ -313,7 +483,11 @@ async function runEsbuild(
   entryPoint: string,
   outfile: string,
   defines: Record<string, string> = {},
-  options: { packagesExternal?: boolean; alias?: Record<string, string> } = {}
+  options: {
+    packagesExternal?: boolean;
+    alias?: Record<string, string>;
+    external?: string[];
+  } = {}
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await esbuild.build({
@@ -322,7 +496,7 @@ async function runEsbuild(
       platform: "node",
       format: "cjs",
       outfile: join(ROOT_DIR, outfile),
-      external: MAIN_BUNDLE_EXTERNALS,
+      external: options.external ?? MAIN_BUNDLE_EXTERNALS,
       ...(options.packagesExternal ? { packages: "external" as const } : {}),
       ...(options.alias ? { alias: options.alias } : {}),
       define: defines,
@@ -332,6 +506,25 @@ async function runEsbuild(
   } catch (err) {
     return { success: false, error: String(err) };
   }
+}
+
+function createRestartPlugin(
+  label: string,
+  scheduleRestart: (reason: string) => void,
+): esbuild.Plugin {
+  const shouldRestart = createSuccessfulRebuildGuard();
+
+  return {
+    name: `restart-electron-after-${label}-build`,
+    setup(build) {
+      build.onEnd((result) => {
+        if (!shouldRestart(result.errors.length)) return;
+
+        console.log(`🔄 ${label} rebuilt; scheduling Electron restart...`);
+        scheduleRestart(label);
+      });
+    },
+  };
 }
 
 // Build Pi agent server using bun instead of esbuild.
@@ -422,34 +615,38 @@ async function waitForFileStable(filePath: string, timeoutMs = 10000): Promise<b
 async function main(): Promise<void> {
   console.log("🚀 Starting Electron dev environment...\n");
 
-  // Setup
-  detectInstance();
+  const options = parseElectronDevOptions(process.argv.slice(2));
+
+  // Load first so a port in .env wins over the numbered-worktree fallback,
+  // while an inherited shell value still wins over .env.
   loadEnvFile();
-  cleanViteCache();
+  detectInstance();
+  if (options.clean) cleanViteCache();
 
   // Ensure dist directory exists
   if (!existsSync(DIST_DIR)) {
     mkdirSync(DIST_DIR, { recursive: true });
   }
 
-  await ensureBundledUvForCurrentPlatform();
+  // Resources are required by a normal Electron startup. Runtime bundles are
+  // prepared lazily when their output is missing/stale, while --full-runtime
+  // deliberately rebuilds every optional artifact.
+  copyResources(options.clean || options.fullRuntime);
+  if (options.fullRuntime) {
+    console.log("🏗️  Preparing optional full runtime...");
+    await ensureBundledUvForCurrentPlatform();
+  }
+  await ensureRuntimeArtifacts(options.fullRuntime);
 
-  copyResources();
-
-  // Build Pi agent server for Pi SDK sessions
-  await buildMcpServers();
-
-  // Build WhatsApp worker bundle so the adapter can spawn it on demand
-  await buildWaWorker();
-
-  // Build Discord worker bundle so the adapter can spawn it on demand
-  await buildDiscordWorker();
-
-  const vitePort = process.env.CRAFT_VITE_PORT || "5173";
+  const vitePort = resolveVitePort(process.env, ROOT_DIR);
   const oauthDefines = getOAuthDefines();
 
-  // Kill any existing process on the Vite port
-  await killProcessOnPort(vitePort);
+  // Do not disturb a sibling worktree by default. Vite's --strictPort below
+  // reports a collision; an operator can explicitly replace a stale server.
+  if (options.replaceVite) {
+    console.log(`🔪 Replacing the process currently using Vite port ${vitePort}...`);
+    await killProcessOnPort(vitePort);
+  }
 
   // =========================================================
   // PHASE 1: Initial build (one-shot, wait for completion)
@@ -459,14 +656,16 @@ async function main(): Promise<void> {
   const mainCjsPath = join(DIST_DIR, "main.cjs");
   const preloadCjsPath = join(DIST_DIR, "bootstrap-preload.cjs");
   const toolbarPreloadCjsPath = join(DIST_DIR, "browser-toolbar-preload.cjs");
+  const extensionHostWorkerCjsPath = join(DIST_DIR, "extension-host-worker.cjs");
 
   // Remove old build files to ensure fresh build
   if (existsSync(mainCjsPath)) rmSync(mainCjsPath);
   if (existsSync(preloadCjsPath)) rmSync(preloadCjsPath);
   if (existsSync(toolbarPreloadCjsPath)) rmSync(toolbarPreloadCjsPath);
+  if (existsSync(extensionHostWorkerCjsPath)) rmSync(extensionHostWorkerCjsPath);
 
-  // Build main and preload entries in parallel
-  const [mainResult, preloadResult, toolbarPreloadResult] = await Promise.all([
+  // Build every Electron-loaded CJS entry before starting the first child.
+  const [mainResult, preloadResult, toolbarPreloadResult, extensionHostWorkerResult] = await Promise.all([
     runEsbuild(
       "apps/electron/src/main/index.ts",
       "apps/electron/dist/main.cjs",
@@ -480,6 +679,12 @@ async function main(): Promise<void> {
     runEsbuild(
       "apps/electron/src/preload/browser-toolbar.ts",
       "apps/electron/dist/browser-toolbar-preload.cjs"
+    ),
+    runEsbuild(
+      "apps/electron/src/main/extension-host/worker.ts",
+      "apps/electron/dist/extension-host-worker.cjs",
+      {},
+      { external: ["electron"] }
     ),
   ]);
 
@@ -498,25 +703,32 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  if (!extensionHostWorkerResult.success) {
+    console.error("❌ Extension-host worker build failed:", extensionHostWorkerResult.error);
+    process.exit(1);
+  }
+
   // Wait for files to stabilize (filesystem flush)
   console.log("⏳ Waiting for build files to stabilize...");
-  const [mainStable, preloadStable, toolbarPreloadStable] = await Promise.all([
+  const [mainStable, preloadStable, toolbarPreloadStable, extensionHostWorkerStable] = await Promise.all([
     waitForFileStable(mainCjsPath),
     waitForFileStable(preloadCjsPath),
     waitForFileStable(toolbarPreloadCjsPath),
+    waitForFileStable(extensionHostWorkerCjsPath),
   ]);
 
-  if (!mainStable || !preloadStable || !toolbarPreloadStable) {
+  if (!mainStable || !preloadStable || !toolbarPreloadStable || !extensionHostWorkerStable) {
     console.error("❌ Build files did not stabilize");
     process.exit(1);
   }
 
   // Verify the built files are valid JavaScript
   console.log("🔍 Verifying build output...");
-  const [mainValid, preloadValid, toolbarPreloadValid] = await Promise.all([
+  const [mainValid, preloadValid, toolbarPreloadValid, extensionHostWorkerValid] = await Promise.all([
     verifyJsFile(mainCjsPath),
     verifyJsFile(preloadCjsPath),
     verifyJsFile(toolbarPreloadCjsPath),
+    verifyJsFile(extensionHostWorkerCjsPath),
   ]);
 
   if (!mainValid.valid) {
@@ -534,6 +746,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  if (!extensionHostWorkerValid.valid) {
+    console.error("❌ extension-host-worker.cjs is invalid:", extensionHostWorkerValid.error);
+    process.exit(1);
+  }
+
   console.log("✅ Initial build complete and verified\n");
 
   // =========================================================
@@ -543,6 +760,11 @@ async function main(): Promise<void> {
 
   const processes: Subprocess[] = [];
   const esbuildContexts: esbuild.BuildContext[] = [];
+  let electronProc: Subprocess | undefined;
+  let restartTimer: ReturnType<typeof setTimeout> | undefined;
+  let restartQueue = Promise.resolve();
+  let isRestartingElectron = false;
+  let isShuttingDown = false;
 
   // 1. Vite dev server (strictPort ensures we don't silently switch ports)
   const viteProc = spawn({
@@ -555,6 +777,61 @@ async function main(): Promise<void> {
   });
   processes.push(viteProc);
 
+  const startElectron = (): void => {
+    console.log("🚀 Starting Electron...\n");
+    const proc = spawn({
+      cmd: [ELECTRON_BIN, "apps/electron"],
+      cwd: ROOT_DIR,
+      stdin: "ignore",
+      stdout: "inherit",
+      stderr: "inherit",
+      env: getElectronEnv(),
+    });
+    electronProc = proc;
+
+    void proc.exited.then((exitCode) => {
+      if (electronProc !== proc) return;
+      electronProc = undefined;
+      if (!isShuttingDown && !isRestartingElectron) {
+        console.log(`⚠️  Electron exited (${exitCode}); dev supervisor remains active.`);
+      }
+    });
+  };
+
+  const restartElectron = async (reason: string): Promise<void> => {
+    if (isShuttingDown) return;
+
+    isRestartingElectron = true;
+    try {
+      const activeElectron = electronProc;
+      if (activeElectron) {
+        console.log(`♻️  Restarting Electron after ${reason} build...`);
+        try {
+          activeElectron.kill();
+          await activeElectron.exited;
+        } catch {
+          // The child may have already exited; launching the replacement is safe.
+        }
+        if (electronProc === activeElectron) electronProc = undefined;
+      }
+
+      if (!isShuttingDown) startElectron();
+    } finally {
+      isRestartingElectron = false;
+    }
+  };
+
+  const scheduleElectronRestart = (reason: string): void => {
+    if (isShuttingDown) return;
+    if (restartTimer) clearTimeout(restartTimer);
+    restartTimer = setTimeout(() => {
+      restartTimer = undefined;
+      restartQueue = restartQueue
+        .then(() => restartElectron(reason))
+        .catch((error) => console.error("❌ Electron restart failed:", error));
+    }, ELECTRON_RESTART_DEBOUNCE_MS);
+  };
+
   // 2. Main process watcher (using esbuild watch API)
   const mainContext = await esbuild.context({
     entryPoints: [join(ROOT_DIR, "apps/electron/src/main/index.ts")],
@@ -565,6 +842,7 @@ async function main(): Promise<void> {
     external: MAIN_BUNDLE_EXTERNALS,
     alias: MAIN_PROCESS_ALIAS,
     define: oauthDefines,
+    plugins: [createRestartPlugin("main process", scheduleElectronRestart)],
     logLevel: "info",
   });
   await mainContext.watch();
@@ -579,6 +857,7 @@ async function main(): Promise<void> {
     format: "cjs",
     outfile: join(ROOT_DIR, "apps/electron/dist/extension-host-worker.cjs"),
     external: ["electron"],
+    plugins: [createRestartPlugin("extension-host worker", scheduleElectronRestart)],
     logLevel: "info",
   });
   await extensionHostWorkerContext.watch();
@@ -593,6 +872,7 @@ async function main(): Promise<void> {
     format: "cjs",
     outfile: join(ROOT_DIR, "apps/electron/dist/bootstrap-preload.cjs"),
     external: ["electron"],
+    plugins: [createRestartPlugin("bootstrap preload", scheduleElectronRestart)],
     logLevel: "info",
   });
   await preloadContext.watch();
@@ -607,28 +887,24 @@ async function main(): Promise<void> {
     format: "cjs",
     outfile: join(ROOT_DIR, "apps/electron/dist/browser-toolbar-preload.cjs"),
     external: ["electron"],
+    plugins: [createRestartPlugin("browser toolbar preload", scheduleElectronRestart)],
     logLevel: "info",
   });
   await toolbarPreloadContext.watch();
   esbuildContexts.push(toolbarPreloadContext);
   console.log("👀 Watching browser toolbar preload...");
 
-  // 5. Start Electron (build already verified)
-  console.log("🚀 Starting Electron...\n");
+  // 5. Start Electron after all initial outputs are verified. Its lifecycle is
+  // intentionally separate from Vite and esbuild so a child restart never
+  // tears down the supervisor.
+  startElectron();
 
-  const electronProc = spawn({
-    cmd: [ELECTRON_BIN, "apps/electron"],
-    cwd: ROOT_DIR,
-    stdin: "ignore",
-    stdout: "inherit",
-    stderr: "inherit",
-    env: getElectronEnv(),
-  });
-  processes.push(electronProc);
-
-  // Handle cleanup on exit
   const cleanup = async () => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
     console.log("\n🛑 Shutting down...");
+    if (restartTimer) clearTimeout(restartTimer);
+    await restartQueue;
     // Dispose esbuild contexts
     for (const ctx of esbuildContexts) {
       try {
@@ -645,20 +921,26 @@ async function main(): Promise<void> {
         // Process may already be dead
       }
     }
-    process.exit(0);
+    try {
+      electronProc?.kill();
+    } catch {
+      // Electron may already be gone.
+    }
   };
 
-  process.on("SIGINT", () => cleanup());
-  process.on("SIGTERM", () => cleanup());
+  const shutdownFromSignal = () => {
+    void cleanup().finally(() => process.exit(0));
+  };
+  process.on("SIGINT", shutdownFromSignal);
+  process.on("SIGTERM", shutdownFromSignal);
 
   // Windows doesn't have SIGINT/SIGTERM in the same way
   if (process.platform === "win32") {
-    process.on("SIGHUP", () => cleanup());
+    process.on("SIGHUP", shutdownFromSignal);
   }
 
-  // Wait for electron to exit (main process)
-  await electronProc.exited;
-  await cleanup();
+  // Keep the supervisor alive after ordinary or intentional Electron exits.
+  await new Promise<void>(() => {});
 }
 
 main().catch((err) => {

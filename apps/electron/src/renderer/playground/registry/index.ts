@@ -1,4 +1,5 @@
-import type { ComponentEntry, CategoryGroup, Category } from './types'
+import { PLAYGROUND_LEVELS, type ComponentEntry, type CategoryGroup, type Category, type LevelGroup, type PlaygroundLevel } from './types'
+import { normalizeDiscoveredPlaygroundStories, normalizePlaygroundStories } from './story-loader'
 import { onboardingComponents } from './onboarding'
 import { chatComponents } from './chat'
 import { turnCardComponents, fullscreenOverlayComponents } from './turn-card'
@@ -29,8 +30,15 @@ import { taskEditorComponents } from './task-editor'
 import { unifiedShellComponents } from './unified-shell'
 
 export * from './types'
+export * from './story-loader'
 
-export const componentRegistry: ComponentEntry[] = [
+// Vite resolves this at build time. Stories may live beside their production
+// components anywhere under the renderer, so they do not need registry imports.
+const discoveredStoryModules = import.meta.glob('../../**/*.playground.tsx', {
+  eager: true,
+})
+
+const legacyComponentRegistry: ComponentEntry[] = [
   ...mobileWebUIComponents,
   ...apiKeyInputComponents,
   ...onboardingComponents,
@@ -62,11 +70,17 @@ export const componentRegistry: ComponentEntry[] = [
   ...unifiedShellComponents,
 ]
 
-export function getCategories(): CategoryGroup[] {
-  const categoryOrder: Category[] = ['Mobile WebUI', 'Automations', 'Onboarding', 'Agent Setup', 'Chat', 'Island', 'Browser', 'Planner', 'Custom Shadows', 'Session List', 'Kanban', 'Entity Lists', 'Edit Popover', 'Turn Cards', 'TurnCard Modes', 'Fullscreen', 'Chat Messages', 'Chat Inputs', 'Toast Messages', 'Markdown', 'Icons', 'OAuth', 'Messaging', 'Unified Shell']
+export const componentRegistry: ComponentEntry[] = normalizePlaygroundStories([
+  ...legacyComponentRegistry,
+  ...normalizeDiscoveredPlaygroundStories(discoveredStoryModules),
+])
+
+function getCategoriesForLevel(level: PlaygroundLevel): CategoryGroup[] {
+  const categoryOrder: Category[] = ['Sources', 'Automations', 'Mobile WebUI', 'Onboarding', 'Agent Setup', 'Chat', 'Island', 'Browser', 'Planner', 'Custom Shadows', 'Session List', 'Kanban', 'Entity Lists', 'Edit Popover', 'Turn Cards', 'TurnCard Modes', 'Fullscreen', 'Chat Messages', 'Chat Inputs', 'Toast Messages', 'Markdown', 'Icons', 'Settings', 'Messaging', 'Feedback', 'OAuth', 'Unified Shell']
   const categoryMap = new Map<Category, ComponentEntry[]>()
 
   for (const entry of componentRegistry) {
+    if (entry.level !== level) continue
     const existing = categoryMap.get(entry.category) ?? []
     categoryMap.set(entry.category, [...existing, entry])
   }
@@ -77,6 +91,14 @@ export function getCategories(): CategoryGroup[] {
       name,
       components: categoryMap.get(name)!,
     }))
+}
+
+/** Groups current and file-discovered stories by their design-system layer. */
+export function getCategories(): LevelGroup[] {
+  // Keep all five levels present from day one. Empty layers are intentional:
+  // they make the migration target visible while existing registry entries
+  // continue to normalize to `Patterns`.
+  return PLAYGROUND_LEVELS.map(name => ({ name, categories: getCategoriesForLevel(name) }))
 }
 
 export function getComponentById(id: string): ComponentEntry | undefined {

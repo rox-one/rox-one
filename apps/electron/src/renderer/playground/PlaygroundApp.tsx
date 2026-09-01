@@ -15,7 +15,12 @@ import { ThemeToggle } from './ThemeToggle'
 import { Sidebar } from './Sidebar'
 import { ComponentPreview } from './ComponentPreview'
 import { VariantsSidebar } from './VariantsSidebar'
-import { getCategories, getComponentById, type ComponentVariant } from './registry'
+import {
+  getCategories,
+  getComponentById,
+  resolvePlaygroundAppearance,
+  type ComponentVariant,
+} from './registry'
 
 const SELECTED_STORAGE_KEY = 'playground-selected-component'
 const VARIANTS_SIDEBAR_KEY = 'playground-variants-sidebar-open'
@@ -46,6 +51,7 @@ export function PlaygroundApp() {
     setColorTheme,
     setWorkspaceColorTheme,
     setPreviewColorTheme,
+    setPreviewMode,
     activeWorkspaceId,
   } = useTheme()
   const [presetThemes, setPresetThemes] = React.useState<PresetTheme[]>([])
@@ -118,8 +124,9 @@ export function PlaygroundApp() {
   React.useEffect(() => {
     return () => {
       setPreviewColorTheme(null)
+      setPreviewMode(null)
     }
-  }, [setPreviewColorTheme])
+  }, [setPreviewColorTheme, setPreviewMode])
 
   // Persist selected component to localStorage
   React.useEffect(() => {
@@ -144,6 +151,14 @@ export function PlaygroundApp() {
   }, [variantsSidebarOpen])
 
   const selectedComponent = selectedId ? (getComponentById(selectedId) ?? null) : null
+  const storyAppearance = resolvePlaygroundAppearance(selectedComponent?.appearance)
+
+  // Stories may make appearance part of their review contract. Both values
+  // stay in the preview layer, leaving persisted user preferences untouched.
+  React.useEffect(() => {
+    setPreviewColorTheme(storyAppearance.theme)
+    setPreviewMode(storyAppearance.mode)
+  }, [setPreviewColorTheme, setPreviewMode, storyAppearance.mode, storyAppearance.theme])
 
   // Reset props when component changes
   React.useEffect(() => {

@@ -42,6 +42,10 @@ interface ThemeContextType {
   previewColorTheme: string | null
   /** Set temporary preview theme for hover preview. Pass null to clear. */
   setPreviewColorTheme: (theme: string | null) => void
+  /** Temporary mode override for previews - never persisted or broadcast. */
+  previewMode: ThemeMode | null
+  /** Set a temporary mode override for previews. Pass null to clear. */
+  setPreviewMode: (mode: ThemeMode | null) => void
   /** Where effectiveColorTheme came from for current render cycle */
   effectiveColorThemeSource: 'preview' | 'workspace' | 'app'
   /** How the preset theme was resolved */
@@ -92,6 +96,8 @@ interface ThemeProviderProps {
   defaultMode?: ThemeMode
   defaultColorTheme?: string
   defaultFont?: FontFamily
+  /** App-level color overrides from ~/.craft-agent/theme.json */
+  appTheme?: ThemeOverrides | null
   /** Active workspace ID for workspace-level theme overrides */
   activeWorkspaceId?: string | null
 }
@@ -117,6 +123,7 @@ export function ThemeProvider({
   defaultMode = 'system',
   defaultColorTheme = 'default',
   defaultFont = 'system',
+  appTheme = null,
   activeWorkspaceId = null
 }: ThemeProviderProps) {
   const stored = loadStoredTheme()
@@ -133,6 +140,7 @@ export function ThemeProvider({
   const [font, setFontState] = useState<FontFamily>(stored?.font ?? defaultFont)
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
   const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
+  const [previewMode, setPreviewMode] = useState<ThemeMode | null>(null)
 
   // === Workspace-level theme override ===
   const [workspaceColorTheme, setWorkspaceColorThemeState] = useState<string | null>(null)
@@ -161,7 +169,10 @@ export function ThemeProvider({
   const [themeLoadError, setThemeLoadError] = useState<string | null>(null)
 
   // === Derived values ===
-  const resolvedMode = mode === 'system' ? systemPreference : mode
+  // Preview constraints sit above persisted preferences, just like preview
+  // color themes. They intentionally only affect rendering and DOM state.
+  const effectiveMode = previewMode ?? mode
+  const resolvedMode = effectiveMode === 'system' ? systemPreference : effectiveMode
   // Effective theme: preview > workspace override > app default
   const effectiveColorTheme = previewColorTheme ?? workspaceColorTheme ?? colorTheme
   const effectiveColorThemeSource: 'preview' | 'workspace' | 'app' =
@@ -245,10 +256,22 @@ export function ThemeProvider({
     }
   }, [effectiveColorTheme])
 
-  // Resolve theme (preset → final)
+  // Resolve theme once for the whole application: preset → app overrides.
+  // Keep dark overrides nested so an app override can change one dark token
+  // without discarding the rest of the preset's dark palette.
   const resolvedTheme = useMemo(() => {
-    return resolveTheme(presetTheme ?? undefined)
-  }, [presetTheme])
+    if (!appTheme) {
+      return resolveTheme(presetTheme ?? undefined)
+    }
+
+    return resolveTheme({
+      ...presetTheme,
+      ...appTheme,
+      dark: presetTheme?.dark || appTheme.dark
+        ? { ...presetTheme?.dark, ...appTheme.dark }
+        : undefined,
+    })
+  }, [presetTheme, appTheme])
 
   // Determine scenic mode (background image with glass panels)
   const isScenic = useMemo(() => {
@@ -357,14 +380,17 @@ export function ThemeProvider({
       document.head.appendChild(styleEl)
     }
 
-    // When using default theme, clear custom CSS
-    if (!effectiveColorTheme || effectiveColorTheme === 'default') {
+    // `default` means no preset is selected, not that app-level overrides are absent.
+    // Keep applying ~/.craft-agent/theme.json when it is the only theme source.
+    if (!appTheme && (!effectiveColorTheme || effectiveColorTheme === 'default')) {
       styleEl.textContent = ''
       return
     }
 
-    // Only inject CSS when preset is loaded (prevents flash with empty/wrong values)
-    if (!presetTheme) {
+    // A selected preset must finish loading before its CSS is applied. App-only
+    // overrides have no preset to wait for and can be injected immediately.
+    const hasSelectedPreset = effectiveColorTheme && effectiveColorTheme !== 'default'
+    if (hasSelectedPreset && !presetTheme) {
       // Keep existing CSS while loading
       return
     }
@@ -377,7 +403,7 @@ export function ThemeProvider({
     } else {
       styleEl.textContent = ''
     }
-  }, [effectiveColorTheme, presetTheme, resolvedTheme, isDark])
+  }, [appTheme, effectiveColorTheme, presetTheme, resolvedTheme, isDark])
 
   // === System preference listener ===
   useEffect(() => {
@@ -508,6 +534,8 @@ export function ThemeProvider({
         effectiveColorTheme,
         previewColorTheme,
         setPreviewColorTheme,
+        previewMode,
+        setPreviewMode,
         effectiveColorThemeSource,
         themeResolvedFrom,
         themeLoadError,

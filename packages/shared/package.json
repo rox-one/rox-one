@@ -22,6 +22,7 @@
     "./auth/callback-page": "./src/auth/callback-page.ts",
     "./auth/types": "./src/auth/types.ts",
     "./config": "./src/config/index.ts",
+    "./design-manifest": "./src/design-manifest/index.ts",
     "./docs": "./src/docs/index.ts",
     "./toolchain-runtime": "./src/toolchain-runtime.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
