@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
+import { Buffer } from 'node:buffer'
 import { createServer, type Server } from 'node:net'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -30,7 +31,8 @@ describe('NativeSidecarClient', () => {
     const decoder = new FrameDecoder()
     const server = createServer((sock) => {
       sock.on('data', (chunk) => {
-        for (const raw of decoder.push(chunk)) {
+        const data = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)
+        for (const raw of decoder.push(data)) {
           const env = JSON.parse(raw) as MessageEnvelope
           onEnvelope(env, (reply) => {
             sock.write(encodeFrame(JSON.stringify(reply)))

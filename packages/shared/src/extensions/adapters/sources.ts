@@ -3,6 +3,7 @@
  */
 
 import type { LoadedSource } from '../../sources/types.ts'
+import { isSourceUsable } from '../../sources/storage.ts'
 import type { ExtensionPermission, ExtensionRecord, ExtensionStatus } from '../types.ts'
 import { parseExtensionManifest } from '../manifest.ts'
 
@@ -17,7 +18,7 @@ function sourcePermissions(source: LoadedSource): ExtensionPermission[] {
   }
   // Credential presence → secrets.use bookkeeping (scoped id, not secret value).
   const credKey = `${source.config.type}::${source.workspaceId}::${source.config.slug}`
-  if (source.config.isAuthenticated || source.config.connectionStatus === 'connected') {
+  if (isSourceUsable(source) || source.config.connectionStatus === 'connected') {
     perms.add(`secrets.use:${credKey}`)
   }
   return [...perms]

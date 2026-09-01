@@ -75,9 +75,10 @@ describe('source-index folder watch', () => {
         debounceMs: 20,
         watch: ((_path, _opts, listener) => {
           const w = new FakeWatcher()
+          const emitChange = listener as ((eventType: string, filename: string) => void) | undefined
           watchers.push(w)
           w.on('fire', (filename: string) => {
-            listener('change', filename)
+            emitChange?.('change', filename)
           })
           return w as unknown as FSWatcher
         }) as typeof import('node:fs').watch,
@@ -126,8 +127,9 @@ describe('source-index folder watch', () => {
         debounceMs: 15,
         watch: ((_path, _opts, listener) => {
           const w = new FakeWatcher()
+          const emitChange = listener as ((eventType: string, filename: string) => void) | undefined
           watchers.push(w)
-          w.on('fire', (filename: string) => listener('change', filename))
+          w.on('fire', (filename: string) => emitChange?.('change', filename))
           return w as unknown as FSWatcher
         }) as typeof import('node:fs').watch,
         reindex: async () => {

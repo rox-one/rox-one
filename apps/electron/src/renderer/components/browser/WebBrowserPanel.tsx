@@ -114,7 +114,7 @@ export function WebBrowserPanel({ open, onClose }: WebBrowserPanelProps) {
   if (!open) return null
 
   return (
-    <section className="fixed inset-x-0 bottom-0 top-[var(--topbar-height)] z-40 flex flex-col bg-[#f4f5f7] shadow-2xl">
+    <section className="fixed inset-x-0 bottom-0 top-[var(--topbar-height)] z-40 flex flex-col bg-[#f4f5f7] shadow-strong">
       <header className="flex min-h-14 shrink-0 items-center gap-1 border-b border-black/[0.08] bg-background/95 px-2 backdrop-blur sm:px-3">
         <Button
           variant="ghost"
@@ -182,7 +182,7 @@ export function WebBrowserPanel({ open, onClose }: WebBrowserPanelProps) {
       </header>
 
       <div className="min-h-0 flex-1 overflow-auto px-3 py-3 sm:px-5 sm:py-5">
-        <div className="mx-auto flex min-h-full w-full max-w-[430px] items-start justify-center overflow-hidden rounded-[26px] border border-black/[0.12] bg-black shadow-[0_12px_40px_rgba(0,0,0,0.16)]">
+        <div className="mx-auto flex min-h-full w-full max-w-[430px] items-start justify-center overflow-hidden rounded-[26px] border border-black/[0.12] bg-black shadow-middle">
           <div className="relative w-full overflow-hidden bg-black">
             {image ? (
               <img

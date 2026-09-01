@@ -43,6 +43,7 @@ import type { RpcClient } from '@craft-agent/server-core/transport'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
 import { isSshBacked } from '../shared/ssh'
+import { OPEN_DESIGN_IPC_CHANNELS } from '../shared/open-design'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -205,6 +206,11 @@ let cancelPendingChatGptOAuth: (() => void) | null = null
 let pendingChatGptOAuthState: string | undefined
 
 ;(api as any).getRuntimeEnvironment = (): 'electron' | 'web' => 'electron'
+;(api as ElectronAPI).openDesign = {
+  open: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.OPEN),
+  status: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.STATUS),
+  stop: () => ipcRenderer.invoke(OPEN_DESIGN_IPC_CHANNELS.STOP),
+}
 
 // ---------------------------------------------------------------------------
 // Transport connection state logging (for remote connections)

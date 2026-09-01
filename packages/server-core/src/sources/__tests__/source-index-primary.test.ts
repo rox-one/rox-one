@@ -65,7 +65,7 @@ describe('native source-index primary', () => {
     installClient({
       registeredChannels: ['index:reindex'],
       close: async () => {},
-      invoke: async (channel: string) => {
+      invoke: async <T,>(channel: string) => {
         invoked.push(channel)
         if (channel === 'index:reindex') {
           return {
@@ -74,7 +74,7 @@ describe('native source-index primary', () => {
             truncated: false,
             dbPath: '/tmp/source-index.native.sqlite',
             fts: true,
-          }
+          } as T
         }
         throw new Error(`unexpected ${channel}`)
       },
@@ -96,9 +96,9 @@ describe('native source-index primary', () => {
     installClient({
       registeredChannels: ['index:status'],
       close: async () => {},
-      invoke: async (channel: string) => {
+      invoke: async <T,>(channel: string) => {
         if (channel === 'index:status') {
-          return { dbPath: '/tmp/source-index.native.sqlite', fts: true, indexed: 2100 }
+          return { dbPath: '/tmp/source-index.native.sqlite', fts: true, indexed: 2100 } as T
         }
         throw new Error(`unexpected ${channel}`)
       },

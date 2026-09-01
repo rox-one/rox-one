@@ -348,17 +348,29 @@ export interface InfisicalImporterEnv {
   readonly INFISICAL_SECRET_KEY?: string;
 }
 
+function readInfisicalImporterEnv(): InfisicalImporterEnv {
+  return {
+    INFISICAL_PROJECT_ID: process.env.INFISICAL_PROJECT_ID,
+    INFISICAL_ENVIRONMENT: process.env.INFISICAL_ENVIRONMENT,
+    INFISICAL_SECRET_PATH: process.env.INFISICAL_SECRET_PATH,
+    INFISICAL_SECRET_KEY: process.env.INFISICAL_SECRET_KEY,
+  };
+}
+
 /**
  * Metadata-only Infisical importer. Locators come from env; tokens never
  * appear on discover/preview/commit results.
  */
 export function createInfisicalImporter(
   provider: InfisicalFabricProvider,
-  env: InfisicalImporterEnv = process.env,
+  env: InfisicalImporterEnv = readInfisicalImporterEnv(),
 ): CredentialImporter {
-  let last: ImportCandidate | undefined;
+  type InfisicalImportCandidate = ImportCandidate & {
+    readonly locator: Extract<ProviderLocator, { type: 'infisical' }>;
+  };
+  let last: InfisicalImportCandidate | undefined;
 
-  const fromEnv = (): ImportCandidate[] => {
+  const fromEnv = (): InfisicalImportCandidate[] => {
     const projectId = env.INFISICAL_PROJECT_ID;
     const environment = env.INFISICAL_ENVIRONMENT;
     const secretPath = env.INFISICAL_SECRET_PATH ?? '/';

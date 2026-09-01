@@ -69,7 +69,8 @@ describe('NativeSupervisor', () => {
 
   it('exposes a connected client after a successful handshake', async () => {
     const fake: NativeSidecarClient = {
-      invoke: async () => ({ ok: true }),
+      registeredChannels: ['native:health'],
+      invoke: async <T,>() => ({ ok: true }) as T,
       close: async () => {},
     }
     const child = new EventEmitter() as EventEmitter & {

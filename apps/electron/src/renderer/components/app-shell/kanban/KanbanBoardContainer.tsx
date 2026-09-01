@@ -28,6 +28,7 @@ import { DEFAULT_MODEL, getModelShortName } from '@config/models'
 import { getDefaultModelsForConnection, type LlmConnectionWithStatus } from '@config/llm-connections'
 import type { SessionStatus } from '@/config/session-status-config'
 import { KanbanBoard, type KanbanMoveTarget } from './KanbanBoard'
+import { shouldHideEmptyNestedKanbanColumns } from './kanban-column-visibility'
 import { parsePriorityGroupId } from './priority-groups'
 import { KANBAN_COLUMNS, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
@@ -454,7 +455,7 @@ export function KanbanBoardContainer() {
   // remain drop targets.
   const visibleColumns = React.useMemo(() => {
     const groupBy = collectionDisplay.groupBy
-    const hideEmptyNested = __omp_shell("collectionDisplay.showEmptyGroups && groupBy !== 'none' && groupBy !== 'status'")
+    const hideEmptyNested = shouldHideEmptyNestedKanbanColumns(groupBy, collectionDisplay.showEmptyGroups)
     if (!hideEmptyNested) return activeColumns
     return activeColumns.filter(column => visibleTasks.some(task => task.column === column.id))
   }, [activeColumns, collectionDisplay.groupBy, collectionDisplay.showEmptyGroups, visibleTasks])

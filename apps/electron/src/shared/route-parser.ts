@@ -958,6 +958,7 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
   }
 
   // Sessions
+  const filter = compound.sessionFilter ?? { kind: 'allSessions' }
   if (compound.details) {
     return {
       navigator: 'sessions',
@@ -1260,6 +1261,15 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
       navigator: 'diff',
       details: state.details?.type === 'diff'
         ? { type: 'diff', id: state.details.proposalId }
+        : null,
+    }
+  }
+
+  if (state.navigator === 'terminal') {
+    return {
+      navigator: 'terminal',
+      details: state.details?.type === 'terminal'
+        ? { type: 'terminal', id: state.details.id }
         : null,
     }
   }

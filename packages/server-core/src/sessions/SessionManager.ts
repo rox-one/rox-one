@@ -7717,9 +7717,10 @@ export class SessionManager implements ISessionManager {
       const requestMeta = this.pendingPermissionRequests.get(requestId)
       this.pendingPermissionRequests.delete(requestId)
 
-      if (shouldBrokerGatePermission(requestMeta)) {
+      const requestCommandHash = requestMeta?.commandHash
+      if (shouldBrokerGatePermission(requestMeta) && requestCommandHash) {
         const brokerResult = this.privilegedExecutionBroker.resolveApproval(requestId, allowed, {
-          expectedCommandHash: requestMeta.commandHash,
+          expectedCommandHash: requestCommandHash,
         })
         if (!brokerResult.ok) {
           sessionLog.warn(`Admin approval rejected by broker for ${requestId}: ${brokerResult.reason}`)
@@ -7728,8 +7729,8 @@ export class SessionManager implements ISessionManager {
           return false
         }
 
-        if (allowed && requestMeta.commandHash && options?.rememberForMinutes) {
-          this.storeAdminRememberApproval(sessionId, requestMeta.commandHash, requestId, options.rememberForMinutes)
+        if (allowed && options?.rememberForMinutes) {
+          this.storeAdminRememberApproval(sessionId, requestCommandHash, requestId, options.rememberForMinutes)
         }
       }
 

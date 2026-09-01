@@ -7,7 +7,7 @@ import { runHostBash } from '@craft-agent/session-tools-core';
  * allowlist and permission hooks stay unchanged.
  */
 export function createCraftBashToolDefinition(cwd: string): ToolDefinition<any, any> {
-  const base = createBashToolDefinition(cwd);
+  const base = createBashToolDefinition(cwd) as unknown as ToolDefinition<any, any>;
   return {
     ...base,
     execute: async (_toolCallId, params) => {

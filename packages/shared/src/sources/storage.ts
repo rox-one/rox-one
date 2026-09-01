@@ -114,6 +114,16 @@ export function markSourceAuthenticated(
 }
 
 /**
+ * Update the in-memory auth flag on a loaded source.
+ *
+ * Disk-backed source auth transitions should still use the markSource* helpers.
+ */
+export function setSourceAuthenticated(source: LoadedSource, isAuthenticated: boolean): void {
+  const config = source.config;
+  config.isAuthenticated = isAuthenticated;
+}
+
+/**
  * Save source config.json
  * @throws Error if config is invalid
  */
@@ -636,4 +646,3 @@ export function sourceExists(workspaceRootPath: string, sourceSlug: string): boo
 // ============================================================
 
 export { parseGuideMarkdown };
-

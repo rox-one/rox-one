@@ -115,7 +115,7 @@ type FabricApi = {
 }
 
 function fabricApi(): FabricApi {
-  return (window.electronAPI ?? {}) as FabricApi
+  return (window.electronAPI ?? {}) as unknown as FabricApi
 }
 
 function asMetaString(value: unknown): string {

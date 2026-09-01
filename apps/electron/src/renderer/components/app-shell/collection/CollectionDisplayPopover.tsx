@@ -153,7 +153,7 @@ export function CollectionDisplayPopover({
                   className={cn(
                     'h-6 flex-1 rounded-[4px] text-[11px] font-medium transition-colors',
                     active
-                      ? 'bg-background text-foreground shadow-sm'
+                        ? 'bg-background text-foreground shadow-minimal'
                       : 'text-foreground/55 hover:text-foreground',
                   )}
                 >

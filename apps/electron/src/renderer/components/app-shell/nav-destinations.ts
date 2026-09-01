@@ -21,12 +21,13 @@ import {
   FolderKanban,
   Inbox,
   ListTodo,
+  MonitorCog,
   NotebookPen,
   Settings,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
-import { routes, type ViewRoute } from '../../../shared/routes'
+import { routes, type Route } from '../../../shared/routes'
 import {
   isAutomationsNavigation,
   isConnectionsNavigation,
@@ -47,6 +48,7 @@ export type AppNavDestinationId =
   | 'skills'
   | 'memory'
   | 'projects'
+  | 'openDesign'
   | 'automations'
   | 'connections'
   | 'settings'
@@ -63,7 +65,7 @@ export interface AppNavDestination {
    * View route for rail navigation; `null` for wave-gated destinations that
    * cannot be navigated to yet (rendered disabled).
    */
-  route: (() => ViewRoute) | null
+  route: (() => Route) | null
   /** Active-state predicate over the focused panel's navigation state. */
   isActive: (navState: NavigationState) => boolean
   /**
@@ -138,6 +140,14 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     labelKey: 'sidebar.connections',
     route: () => routes.view.connections(),
     isActive: isConnectionsNavigation,
+  },
+  {
+    id: 'openDesign',
+    linkId: 'nav:openDesign',
+    icon: MonitorCog,
+    labelKey: 'sidebar.openDesign',
+    route: () => routes.action.openDesign(),
+    isActive: () => false,
   },
   {
     id: 'settings',

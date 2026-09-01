@@ -65,12 +65,13 @@ export interface InProcessCredentialBrokerOptions {
 }
 
 export type TrustedHttpFetch = (input: string | URL, init?: RequestInit) => Promise<Response>;
+export type TrustedHttpHeadersInit = Record<string, string> | [string, string][] | Headers;
 
 export interface ExecuteTrustedHttpInput {
   readonly leaseId: string;
   readonly url: string;
   readonly method?: string;
-  readonly headers?: HeadersInit;
+  readonly headers?: TrustedHttpHeadersInit;
   readonly fetch: TrustedHttpFetch;
 }
 

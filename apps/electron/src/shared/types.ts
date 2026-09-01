@@ -329,6 +329,7 @@ export interface TransportConnectionState {
 
 // Re-import types for ElectronAPI
 import type { WorkspaceInfo, Workspace, SessionMetadata, StoredAttachment as StoredAttachmentType } from '@craft-agent/core/types';
+import type { OpenDesignApi } from './open-design'
 
 // Import protocol types used by ElectronAPI (they come through the `export *` above,
 // but we need them in scope for the interface definition)
@@ -407,6 +408,8 @@ import type {
 } from '@craft-agent/shared/protocol'
 
 export interface ElectronAPI {
+  openDesign: OpenDesignApi
+
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
     enabled: boolean
@@ -2136,6 +2139,12 @@ export const getNavigationStateKey = (state: NavigationState): string => {
       return `diff/${encodeURIComponent(state.details.proposalId)}`
     }
     return 'diff'
+  }
+  if (state.navigator === 'terminal') {
+    if (state.details?.type === 'terminal') {
+      return `terminal/${encodeURIComponent(state.details.id)}`
+    }
+    return 'terminal'
   }
   // Chats
   const f = state.filter

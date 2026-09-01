@@ -57,7 +57,7 @@ type BranchNodeData = { id: string; name: string; fromMessageId?: string }
 function BranchNode({ data }: NodeProps<Node<BranchNodeData, 'branch'>>) {
   return (
     <div
-      className="w-[160px] min-w-0 rounded-[12px] border border-border bg-card px-2 py-1.5 text-left shadow-sm"
+      className="w-[160px] min-w-0 rounded-[12px] border border-border bg-card px-2 py-1.5 text-left shadow-minimal"
       title={data.name}
     >
       <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-border !bg-muted-foreground/50" />
@@ -111,7 +111,7 @@ function EditorInner({
 
   React.useEffect(() => {
     return () => {
-      clearTimeout(persistTimer.current)
+      if (persistTimer.current) clearTimeout(persistTimer.current)
     }
   }, [])
 
@@ -192,7 +192,7 @@ function EditorInner({
   const persistPin = React.useCallback(
     (next: SessionMapPin) => {
       setPin(next)
-      clearTimeout(persistTimer.current)
+      if (persistTimer.current) clearTimeout(persistTimer.current)
       persistTimer.current = setTimeout(() => {
         try {
           localStorage.setItem(sessionMapPinStorageKey(sessionId), serializeSessionMapPin(next))

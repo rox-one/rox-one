@@ -468,7 +468,7 @@ export default function MarketplaceSettingsPage() {
                 return (
                   <div
                     key={e.id}
-                    className="border border-border/70 rounded-lg p-4 flex items-start gap-4 bg-card/30 shadow-sm"
+                    className="border border-border/70 rounded-lg p-4 flex items-start gap-4 bg-card/30 shadow-minimal"
                   >
                     <div className="p-2 rounded-lg bg-primary/10 text-primary mt-1">
                       <Icon className="w-5 h-5" />
@@ -548,7 +548,7 @@ export default function MarketplaceSettingsPage() {
                             className="group relative text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground cursor-help inline-flex items-center gap-1"
                           >
                             {e.source.repo}@{e.source.ref.slice(0, 8)}
-                            <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-max max-w-xs rounded-md border border-border bg-popover px-2 py-1.5 text-[10px] text-popover-foreground shadow-md group-hover:block">
+                            <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-max max-w-xs rounded-md border border-border bg-popover px-2 py-1.5 text-[10px] text-popover-foreground shadow-modal-small group-hover:block">
                               <span className="font-mono break-all">{e.source.ref}</span>
                               {ghUrl ? (
                                 <a

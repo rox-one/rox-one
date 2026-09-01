@@ -15,7 +15,9 @@ const pin = parseOemKernelPin({
   maxApiExclusive: '4.0.0',
 })
 
-function headerGet(headers: HeadersInit | undefined, name: string): string | null {
+type TestHeadersInit = ConstructorParameters<typeof Headers>[0]
+
+function headerGet(headers: TestHeadersInit | undefined, name: string): string | null {
   if (!headers) return null
   if (headers instanceof Headers) return headers.get(name)
   if (Array.isArray(headers)) {
@@ -113,7 +115,7 @@ describe('SiyuanProcessManager', () => {
   it('seeds default notebook when kernel reports none', async () => {
     const pm = new SiyuanProcessManager()
     const called: string[] = []
-    const fetchImpl: typeof fetch = async (input, init) => {
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input)
       called.push(url)
       if (url.endsWith('/api/system/version')) {
@@ -129,7 +131,7 @@ describe('SiyuanProcessManager', () => {
         return new Response(JSON.stringify({ code: 0, data: {} }), { status: 200 })
       }
       throw new Error(`unexpected url ${url}`)
-    }
+    }) as unknown as typeof fetch
     await pm.start({
       configDir: '/tmp/cfg',
       connectionId: 'c1',
@@ -153,7 +155,7 @@ describe('SiyuanProcessManager', () => {
   it('does not create notebook when lsNotebooks is non-empty', async () => {
     const pm = new SiyuanProcessManager()
     const called: string[] = []
-    const fetchImpl: typeof fetch = async (input, init) => {
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input)
       called.push(url)
       if (url.endsWith('/api/system/version')) {
@@ -164,7 +166,7 @@ describe('SiyuanProcessManager', () => {
         return new Response(JSON.stringify({ code: 0, data: { notebooks: [{ id: 'n1' }] } }), { status: 200 })
       }
       throw new Error(`unexpected url ${url}`)
-    }
+    }) as unknown as typeof fetch
     await pm.start({
       configDir: '/tmp/cfg',
       connectionId: 'c1',

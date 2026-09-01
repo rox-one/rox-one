@@ -95,7 +95,7 @@ export function MindMapMinimap({
   return (
     <div
       className={cn(
-        'pointer-events-auto absolute bottom-3 right-3 z-10 overflow-hidden rounded-md border border-border/50 bg-background/85 shadow-sm backdrop-blur-sm',
+        'pointer-events-auto absolute bottom-3 right-3 z-10 overflow-hidden rounded-md border border-border/50 bg-background/85 shadow-minimal backdrop-blur-sm',
         className,
       )}
     >

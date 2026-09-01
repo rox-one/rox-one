@@ -201,7 +201,7 @@ describe('fabric RPC handlers', () => {
       new Response(JSON.stringify({ login: 'rox-bot', id: 1 }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
-      })) as typeof fetch
+      })) as unknown as typeof fetch
 
     try {
       const server = register()
@@ -237,7 +237,7 @@ describe('fabric RPC handlers', () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async () => {
       throw new Error(`upstream failed for ${token}`)
-    }) as typeof fetch
+    }) as unknown as typeof fetch
 
     try {
       const server = register()

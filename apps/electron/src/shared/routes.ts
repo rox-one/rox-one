@@ -88,6 +88,9 @@ export const routes = {
     /** Copy text to clipboard */
     copyToClipboard: (text: string) =>
       `action/copy?text=${encodeURIComponent(text)}` as const,
+
+    /** Open the local Open Design runtime inside an embedded browser panel. */
+    openDesign: () => 'action/open-design' as const,
   },
 
   // ============================================

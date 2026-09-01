@@ -856,11 +856,24 @@ export function NavigationProvider({
           }
           break
 
+        case 'open-design': {
+          try {
+            const status = await window.electronAPI.openDesign.open()
+            if (status.state === 'disabled' || status.state === 'error') {
+              toast.error(status.message ?? t('toast.failedToCreateBrowser'))
+            }
+          } catch (error) {
+            console.error('[Navigation] Failed to open Open Design runtime:', error)
+            toast.error(t('toast.failedToCreateBrowser'))
+          }
+          break
+        }
+
         default:
           console.warn('[Navigation] Unknown action:', parsed.name)
       }
     },
-    [workspaceId, onCreateSession, onInputChange, pushPanel, store, updateSessionMeta]
+    [workspaceId, onCreateSession, onInputChange, pushPanel, store, t, updateSessionMeta]
   )
 
   // =========================================================================

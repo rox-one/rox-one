@@ -17,7 +17,7 @@ export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
   return (
     <div
       className={cn(
-        'w-[180px] min-w-0 rounded-[12px] border bg-card px-2 py-1.5 text-left shadow-sm',
+        'w-[180px] min-w-0 rounded-[12px] border bg-card px-2 py-1.5 text-left shadow-minimal',
         scene.orphaned ? 'border-amber-400' : 'border-border',
         selected && 'ring-1 ring-violet-400/40 border-violet-400',
       )}

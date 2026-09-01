@@ -165,7 +165,7 @@ describe('ensureLocalKernel', () => {
   })
 
   it('persists managed connection after SiyuanProcessManager.start when G2=C', async () => {
-    const fetchImpl = (async (input: RequestInfo | URL) => {
+    const fetchImpl = (async (input: string | URL | Request) => {
       const url = String(input)
       if (url.includes(':6806')) throw new Error('down')
       if (url.includes('/api/system/version')) {
@@ -229,7 +229,7 @@ describe('ensureLocalKernel', () => {
       mode: 'external-local',
     })
     const seen: string[] = []
-    const fetchImpl = (async (input: RequestInfo | URL) => {
+    const fetchImpl = (async (input: string | URL | Request) => {
       const url = String(input)
       seen.push(url)
       if (url.includes('19201')) {
@@ -288,7 +288,7 @@ describe('ensureLocalKernel', () => {
     mkdirSync(kernelDir, { recursive: true })
     const kernelPath = join(kernelDir, 'knowledge-engine')
     writeFileSync(kernelPath, 'fake-kernel')
-    const fetchImpl = (async (input: RequestInfo | URL) => {
+    const fetchImpl = (async (input: string | URL | Request) => {
       const url = String(input)
       if (url.includes(':6806')) throw new Error('down')
       if (url.includes('/api/system/version')) {
@@ -326,7 +326,7 @@ describe('ensureLocalKernel', () => {
 
   it('seeds Знания via createNotebook when managed kernel lsNotebooks is empty', async () => {
     const called: string[] = []
-    const fetchImpl = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const fetchImpl = (async (input: string | URL | Request, init?: RequestInit) => {
       const url = String(input)
       called.push(url)
       if (url.includes(':6806')) throw new Error('down')

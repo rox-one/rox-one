@@ -6,8 +6,9 @@ This audit compares the supplied ROX UI development-loop architecture brief
 with the live `origin/main` baseline at `d6f343c`.
 
 The implementation in this branch deliberately changes only behaviour that has
-a concrete target in the checkout. It does not claim that an absent visual
-authoring runtime, its IPC bridge, or a sidecar protocol exists.
+a concrete target in the checkout. Open Design remains an external, separately
+configured runtime rather than a vendored renderer dependency; its optional
+Electron bridge is implemented at the main-process boundary.
 
 ## Audit result
 
@@ -22,7 +23,7 @@ authoring runtime, its IPC bridge, or a sidecar protocol exists.
 | Theme live updates | `App` observed app overrides separately from the provider that owns DOM CSS variables. | `ThemeProvider` now owns app override resolution and live updates, including default-preset CSS injection. |
 | Visual regression | No deterministic browser baseline existed. | Playwright config and a light/dark × desktop/tablet/mobile production-screen screenshot matrix are provided and run in CI after Playwright Chromium installation. |
 | Design Manifest Compiler | No Rox Design runtime or manifest contract existed in the checkout. | A pure shared v1 compiler validates JSON-only grid manifests against a caller-owned component allowlist. |
-| Rox Design embedding and bridge | No `rox-design` payload, HostBridge, EmbedReceiver, or Open Design runtime is vendored by this checkout. | Not implemented here: the separately hosted Open Design service is not an Electron runtime dependency. The manifest compiler is the bounded prerequisite for a later, explicitly integrated bridge. |
+| Open Design runtime bridge | No `rox-design` payload, HostBridge, or EmbedReceiver is vendored by this checkout. | Optional external runtime bridge: `ROX_OPEN_DESIGN_ROOT` selects a trusted local checkout; Rox bootstraps its project-pinned toolchain, starts namespaced daemon/web sidecars, and opens only the returned loopback web origin in a dedicated hardened Electron window. No Open Design API is proxied through Rox RPC. |
 | Sidecar reconnect protocol | No concrete sidecar client/server protocol exposes reconnect, version, or snapshot operations. | Not implemented: adding one would invent a transport contract outside the live codebase; current dev work only rebuilds/restarts concrete Electron bundles. |
 
 ## Development modes
@@ -36,6 +37,22 @@ dev:full → dev:app plus optional Pi and messaging runtime preparation
 Renderer edits use Vite HMR. Changes to Electron main, either preload bundle,
 or the extension-host worker coalesce into one restart after a successful
 rebuild. The Vite process and esbuild watch contexts outlive that child restart.
+
+## Optional Open Design runtime
+
+Set `ROX_OPEN_DESIGN_ROOT` to the absolute path of a trusted local Open Design
+checkout. On first open, Rox uses that checkout's `mise.toml` and frozen lockfile
+to prepare its `tools-dev` entrypoint, then starts only a fresh random namespace.
+The bridge uses a Rox-owned data root, sidecar root, IPC root, and empty npmrc;
+it does not inherit Rox credentials, user npm configuration, or Open Design
+environment files.
+
+The renderer can request only `open`, `status`, and `stop`. The main process
+accepts those calls only from a registered Rox main frame. The dedicated Open
+Design window has no preload bridge, runs in its own in-memory partition, denies
+permissions and downloads, and permits navigation only within its exact
+loopback origin. Shutdown is web then daemon over sidecar IPC; Rox never kills
+processes by name or attaches to a prior namespace.
 
 ## Playground story contract
 
@@ -80,7 +97,8 @@ bun test scripts/electron-dev-helpers.test.ts
 bun test apps/electron/src/renderer/context/__tests__/theme-app-overrides-wiring.test.ts
 bun test apps/electron/src/renderer/playground/__tests__/story-loader.test.ts
 bun test packages/shared/src/design-manifest/compiler.test.ts
-bun run typecheck:electron
+bun run typecheck:all
+bun run lint
 bun run test:visual
 ```
 
