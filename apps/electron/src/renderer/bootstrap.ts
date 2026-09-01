@@ -11,4 +11,10 @@ rendererGlobals.Buffer ??= Buffer
 rendererGlobals.global ??= globalThis
 rendererGlobals.process ??= process
 
-void import('./main')
+if (typeof window !== 'undefined' && window.electronAPI) {
+  void import('./main')
+} else {
+  void import('./browser-preview/BrowserPreview').then(({ renderBrowserPreview }) => {
+    renderBrowserPreview()
+  })
+}

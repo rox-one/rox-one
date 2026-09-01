@@ -5,8 +5,9 @@ import {
   type SessionScene,
   type SessionSceneGraph,
 } from '@craft-agent/core/mindmap'
+import { deriveSessionNodeKind, type SessionNodeKind } from './node-kinds'
 
-export type SceneNodeData = { scene: SessionScene }
+export type SceneNodeData = { scene: SessionScene; kind: SessionNodeKind; kindLabel?: string }
 
 export type FlowSceneNode = {
   id: string
@@ -75,7 +76,7 @@ export function toFlowElements(
       id: scene.id,
       type: 'scene',
       position: pinned ?? autoScenePosition(d, row, camera),
-      data: { scene },
+      data: { scene, kind: deriveSessionNodeKind(scene) },
     })
   }
   const edges: FlowSceneEdge[] = graph.edges.map((e) => ({
