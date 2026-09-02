@@ -6,6 +6,7 @@ import {
   formatKnowledgeMention,
   KNOWLEDGE_KINDS,
   KNOWLEDGE_MENTION_PATTERN,
+  LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER,
   parseCraftRef,
   parseKnowledgeMentions,
   parseKnowledgeRef,
@@ -35,6 +36,13 @@ describe('serialize/parse KnowledgeRef round-trip', () => {
     const ref: KnowledgeRef = { scheme: 'siyuan', kind: 'document', id: 'd1', provider: 'memory' };
     expect(serializeKnowledgeRef(ref)).toBe('memory/document/d1');
     expect(parseKnowledgeRef('memory/document/d1')).toEqual(ref);
+  });
+
+  test('local Markdown refs round-trip through provider-aware local-note scheme', () => {
+    const ref: KnowledgeRef = { scheme: 'local-note', kind: 'document', id: 'daily/today' };
+    expect(serializeKnowledgeRef(ref)).toBe('local-markdown/document/daily/today');
+    expect(parseKnowledgeRef('local-markdown/document/daily/today')).toEqual(ref);
+    expect(parseKnowledgeRef('local-note/document/daily/today')).toEqual(ref);
   });
 
   test('compact form resolves to the default provider siyuan', () => {
@@ -80,12 +88,13 @@ describe('KNOWLEDGE_MENTION_PATTERN and mention helpers', () => {
 
   test('parseKnowledgeMentions extracts refs in order', () => {
     const refs = parseKnowledgeMentions(
-      'read [knowledge:siyuan/block/b1] then [knowledge:document/d1] and [knowledge:memory/database/db1]',
+      'read [knowledge:siyuan/block/b1] then [knowledge:document/d1] and [knowledge:memory/database/db1] plus [knowledge:local-markdown/document/daily/today]',
     );
     expect(refs).toEqual([
       { scheme: 'siyuan', kind: 'block', id: 'b1' },
       { scheme: 'siyuan', kind: 'document', id: 'd1' },
       { scheme: 'siyuan', kind: 'database', id: 'db1', provider: 'memory' },
+      { scheme: 'local-note', kind: 'document', id: 'daily/today' },
     ]);
   });
 
@@ -165,6 +174,14 @@ describe('canonicalKnowledgeRef / toProviderForm', () => {
     });
   });
 
+  test('provider form with local-markdown maps to local-note scheme', () => {
+    expect(canonicalKnowledgeRef({ provider: 'local-markdown', kind: 'document', id: 'daily/today' })).toEqual({
+      scheme: 'local-note',
+      kind: 'document',
+      id: 'daily/today',
+    });
+  });
+
   test('canonical input passes through', () => {
     const ref: KnowledgeRef = { scheme: 'siyuan', kind: 'block', id: 'b1', connectionId: 'c1' };
     expect(canonicalKnowledgeRef(ref)).toBe(ref);
@@ -180,6 +197,11 @@ describe('canonicalKnowledgeRef / toProviderForm', () => {
       provider: 'memory',
       kind: 'block',
       id: 'b1',
+    });
+    expect(toProviderForm({ scheme: 'local-note', kind: 'document', id: 'd1' })).toEqual({
+      provider: LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER,
+      kind: 'document',
+      id: 'd1',
     });
   });
 

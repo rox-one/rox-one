@@ -98,6 +98,25 @@ describe('searchKnowledge', () => {
     expect(search).not.toHaveBeenCalled()
   })
 
+  it('prefers local Markdown over a legacy connection returned first', async () => {
+    const searchCalls: unknown[] = []
+    const api: KnowledgeSearchApi = {
+      listConnections: async () => [
+        { id: 'siyuan-legacy', provider: 'siyuan' },
+        { id: 'local-markdown:ws-42', provider: 'local-markdown' },
+      ],
+      search: async (args) => {
+        searchCalls.push(args)
+        return { items: [] }
+      },
+    }
+
+    await searchKnowledge(api, 'ws-42', 'local only')
+    expect(searchCalls).toEqual([
+      { workspaceId: 'ws-42', connectionId: 'local-markdown:ws-42', input: { query: 'local only' } },
+    ])
+  })
+
   it('returns null when the preload knowledge surface is absent', async () => {
     globalThis.window = { electronAPI: {} } as unknown as Window & typeof globalThis
     expect(resolveKnowledgeApi()).toBeNull()
@@ -108,6 +127,13 @@ describe('searchKnowledge', () => {
     expect(searchHitRoute(makeHit('document', '20200812/abc def'))).toBe(
       'knowledge/document/20200812%2Fabc%20def',
     )
+  })
+
+  it('opens a local Markdown search hit in the local Notes page', () => {
+    const localHit = makeHit('document', 'projects/Plan', {
+      ref: { scheme: 'local-note', kind: 'document', id: 'projects/Plan' },
+    })
+    expect(searchHitRoute(localHit)).toBe('notes-legacy/note/projects%2FPlan')
   })
 })
 
@@ -301,5 +327,15 @@ describe('default knowledge editor', () => {
   it('falls back to the knowledge home route when there are no envelopes', () => {
     expect(pickDefaultKnowledgeDocument([])).toBeNull()
     expect(defaultKnowledgeEditorRoute([])).toBe('knowledge')
+  })
+
+  it('opens a locally stored recent envelope in the Notes page', () => {
+    expect(defaultKnowledgeEditorRoute([
+      {
+        knowledgeRef: { scheme: 'local-note', kind: 'document', id: 'daily/2026-09-02' },
+        createdAt: 1,
+        updatedAt: 2,
+      },
+    ])).toBe('notes-legacy/note/daily%2F2026-09-02')
   })
 })

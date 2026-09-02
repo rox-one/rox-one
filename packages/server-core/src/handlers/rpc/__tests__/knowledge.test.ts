@@ -14,11 +14,12 @@
  */
 import '../memory-test-setup' // must run before any module reading CRAFT_CONFIG_DIR
 import { afterAll, beforeEach, describe, expect, it, mock } from 'bun:test'
-import { mkdtempSync, rmSync } from 'fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { CredentialId } from '@craft-agent/shared/credentials'
+import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
 import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import type {
@@ -31,7 +32,16 @@ import type {
   SearchInput,
   SearchPage,
 } from '@craft-agent/core/knowledge'
-import { KnowledgeConnectionsStore, KnowledgeMutationProposalsStore } from '../../../knowledge'
+import {
+  KnowledgeConnectionsStore,
+  KnowledgeContextSnapshotsStore,
+  KnowledgeMutationProposalsStore,
+  LOCAL_MARKDOWN_BASE_URL,
+  LOCAL_MARKDOWN_CONNECTION_ID,
+  LOCAL_MARKDOWN_LABEL,
+  LOCAL_MARKDOWN_NOTEBOOK_ID,
+  localMarkdownConnectionId,
+} from '../../../knowledge'
 import type { KnowledgeProposalFileRecord } from '../../../knowledge/bridge-service'
 import type { SaveConnectionInput } from '../../../knowledge'
 
@@ -40,6 +50,7 @@ import type { SaveConnectionInput } from '../../../knowledge'
 // ---------------------------------------------------------------------------
 
 const DOC_REF: KnowledgeRef = { scheme: 'siyuan', kind: 'document', id: 'doc-1' }
+const LOCAL_WS1_CONNECTION_ID = localMarkdownConnectionId('ws1')
 
 // Kernel-wire fixture for the REAL SiyuanKnowledgeProvider search mapping (fullTextSearchBlock).
 const KERNEL_SEARCH_RESPONSE = {
@@ -100,6 +111,7 @@ const KERNEL_NOTEBOOKS_RESPONSE = {
 const credentials = new Map<string, { value: string }>()
 const fetchCalls: Array<{ url: string; init: RequestInit }> = []
 let kernelProbeError: Error | null = null
+const PREVIOUS_SIYUAN_FLAG = process.env.ROX_ENABLE_SIYUAN_KNOWLEDGE
 
 // globalThis.fetch seam: bun's mock.module registry is process-global and leaks into OTHER
 // test files in combined runs (the adapter's own suite observed this fake module and failed
@@ -161,6 +173,8 @@ installFetchSeam()
 
 afterAll(() => {
   globalThis.fetch = originalFetch
+  if (PREVIOUS_SIYUAN_FLAG === undefined) delete process.env.ROX_ENABLE_SIYUAN_KNOWLEDGE
+  else process.env.ROX_ENABLE_SIYUAN_KNOWLEDGE = PREVIOUS_SIYUAN_FLAG
 })
 
 // ---------------------------------------------------------------------------
@@ -181,12 +195,18 @@ mock.module('@craft-agent/shared/credentials', () => ({
 }))
 
 let workspaceRoot: string
+const extraWorkspaceRoots = new Map<string, string>()
 
 mock.module('@craft-agent/shared/config', () => ({
-  getWorkspaceByNameOrId: (id: string) =>
-    id === 'ws1' ? { id: 'ws1', name: 'ws1', rootPath: workspaceRoot } : null,
-  getWorkspaces: () =>
-    workspaceRoot ? [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }] : [],
+  getWorkspaceByNameOrId: (id: string) => {
+    if (id === 'ws1') return { id: 'ws1', name: 'ws1', rootPath: workspaceRoot }
+    const rootPath = extraWorkspaceRoots.get(id)
+    return rootPath ? { id, name: id, rootPath } : null
+  },
+  getWorkspaces: () => [
+    ...(workspaceRoot ? [{ id: 'ws1', name: 'ws1', rootPath: workspaceRoot }] : []),
+    ...[...extraWorkspaceRoots.entries()].map(([id, rootPath]) => ({ id, name: id, rootPath })),
+  ],
 }))
 
 import { registerKnowledgeHandlers, HANDLED_CHANNELS, __setSkipKnowledgeWatchAutoStart } from '../knowledge'
@@ -196,7 +216,7 @@ import { getKnowledgeToolRuntime, handleKnowledgeSearch } from '@craft-agent/ses
 // Harness
 // ---------------------------------------------------------------------------
 
-function createHarness() {
+function createHarness(options: { workspaceId?: string | null; sessionManager?: HandlerDeps['sessionManager'] } = {}) {
   const handlers = new Map<string, HandlerFn>()
   const server: RpcServer = {
     handle(channel, handler) { handlers.set(channel, handler) },
@@ -206,7 +226,7 @@ function createHarness() {
     findClientsWithCapability() { return [] },
   }
   const deps: HandlerDeps = {
-    sessionManager: {} as HandlerDeps['sessionManager'],
+    sessionManager: options.sessionManager ?? ({} as HandlerDeps['sessionManager']),
     oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
     platform: {
       appRootPath: '/',
@@ -222,7 +242,7 @@ function createHarness() {
   const invoke = (channel: string, args: unknown) => {
     const handler = handlers.get(channel)
     if (!handler) throw new Error(`No handler for ${channel}`)
-    return handler({ clientId: 'c1', workspaceId: null } as unknown as RequestContext, args)
+    return handler({ clientId: 'c1', workspaceId: options.workspaceId ?? null } as unknown as RequestContext, args)
   }
   return { handlers, invoke }
 }
@@ -240,9 +260,12 @@ beforeEach(() => {
   __setSkipKnowledgeWatchAutoStart(true)
   workspaceRoot = mkdtempSync(join(tmpdir(), 'knowledge-test-ws-'))
   rmSync(join(process.env.CRAFT_CONFIG_DIR!, 'knowledge'), { recursive: true, force: true })
+  rmSync(getDefaultWorkspacesDir(), { recursive: true, force: true })
   credentials.clear()
   fetchCalls.length = 0
   kernelProbeError = null
+  extraWorkspaceRoots.clear()
+  process.env.ROX_ENABLE_SIYUAN_KNOWLEDGE = '1'
 })
 
 // ---------------------------------------------------------------------------
@@ -315,10 +338,119 @@ describe('listConnections', () => {
     const { invoke } = createHarness()
     const list = await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {}) as KnowledgeConnection[]
     expect(list).toEqual([
+      {
+        id: LOCAL_WS1_CONNECTION_ID,
+        provider: 'local-markdown',
+        label: LOCAL_MARKDOWN_LABEL,
+        baseUrl: LOCAL_MARKDOWN_BASE_URL,
+        status: 'connected',
+      },
       { id: 'conn-1', provider: 'siyuan', label: 'http://127.0.0.1:6806', baseUrl: 'http://127.0.0.1:6806', status: 'connected' },
       { id: 'conn-2', provider: 'siyuan', label: 'http://127.0.0.1:6807', baseUrl: 'http://127.0.0.1:6807', status: 'needs_auth' },
     ])
     for (const conn of list) expect('credentialRef' in conn).toBe(false)
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('scopes local Markdown defaults per workspace and isolates ws1 from ws2 data', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    const connA = localMarkdownConnectionId('ws1')
+    const connB = localMarkdownConnectionId('ws2')
+    const harnessA = createHarness({ workspaceId: 'ws1' })
+    const harnessB = createHarness({ workspaceId: 'ws2' })
+
+    const listA = await harnessA.invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {}) as KnowledgeConnection[]
+    expect(listA[0]?.id).toBe(connA)
+    const listB = await harnessB.invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {}) as KnowledgeConnection[]
+    expect(listB[0]?.id).toBe(connB)
+    expect(connA).not.toBe(connB)
+    const listAAfterBSeed = await harnessA.invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {}) as KnowledgeConnection[]
+    expect(listAAfterBSeed.some((connection) => connection.id === connB)).toBe(false)
+    expect(listB.some((connection) => connection.id === connA)).toBe(false)
+
+    await harnessB.invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+      connectionId: connB,
+      source: 'navigator',
+      op: 'document',
+      notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+      path: '/',
+      title: 'Only In Workspace B',
+    })
+    const pageB = await harnessB.invoke(RPC_CHANNELS.knowledge.SEARCH, {
+      connectionId: connB,
+      input: { query: 'Only In Workspace B' },
+    }) as SearchPage
+    const pageA = await harnessA.invoke(RPC_CHANNELS.knowledge.SEARCH, {
+      connectionId: connA,
+      input: { query: 'Only In Workspace B' },
+    }) as SearchPage
+    expect(pageB.items).toHaveLength(1)
+    expect(pageA.items).toHaveLength(0)
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.SEARCH, {
+        connectionId: connA,
+        input: { query: 'Only In Workspace B' },
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: connA }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+        connectionId: connA,
+        source: 'navigator',
+        op: 'document',
+        notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+        path: '/',
+        title: 'Should Not Land In Workspace A',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(existsSync(join(getDefaultWorkspacesDir(), 'ws1', 'notes', 'Should Not Land In Workspace A.md'))).toBe(false)
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('fails closed for unscoped local Markdown calls when multiple workspaces exist', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    const connA = localMarkdownConnectionId('ws1')
+    const harnessA = createHarness({ workspaceId: 'ws1' })
+    await harnessA.invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    const unscoped = createHarness()
+    await expect(
+      unscoped.invoke(RPC_CHANNELS.knowledge.SEARCH, {
+        connectionId: connA,
+        input: { query: 'x' },
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('keeps an old singleton local-markdown connection readable while seeding the scoped default', async () => {
+    new KnowledgeConnectionsStore().save({
+      id: LOCAL_MARKDOWN_CONNECTION_ID,
+      provider: 'local-markdown',
+      mode: 'external-local',
+      baseUrl: LOCAL_MARKDOWN_BASE_URL,
+      credentialRef: `source_bearer::ws1::${LOCAL_MARKDOWN_CONNECTION_ID}`,
+      status: 'ok',
+    })
+    const { invoke } = createHarness()
+    const list = await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {}) as KnowledgeConnection[]
+    expect(list[0]?.id).toBe(LOCAL_WS1_CONNECTION_ID)
+    expect(list.some((connection) => connection.id === LOCAL_MARKDOWN_CONNECTION_ID)).toBe(true)
+
+    const result = await invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+      connectionId: LOCAL_MARKDOWN_CONNECTION_ID,
+      source: 'navigator',
+      op: 'document',
+      notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+      path: '/',
+      title: 'Legacy Singleton Note',
+    }) as { id: string }
+    expect(result.id).toBe('Legacy Singleton Note')
+    expect(existsSync(join(getDefaultWorkspacesDir(), 'ws1', 'notes', 'Legacy Singleton Note.md'))).toBe(true)
+    expect(fetchCalls).toHaveLength(0)
   })
 })
 
@@ -346,6 +478,81 @@ describe('search', () => {
     await expect(
       invoke(RPC_CHANNELS.knowledge.SEARCH, { connectionId: 'conn-missing', input: { query: 'x' } }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('keeps SiYuan disabled by default: no bootstrap/client/fetch before CAPABILITY_DISABLED', async () => {
+    delete process.env.ROX_ENABLE_SIYUAN_KNOWLEDGE
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    const { invoke } = createHarness()
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.SEARCH, { connectionId: 'conn-1', input: { query: 'kernel' } }),
+    ).rejects.toMatchObject({ code: 'CAPABILITY_DISABLED' })
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-1' }),
+    ).rejects.toMatchObject({ code: 'CAPABILITY_DISABLED' })
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+        connectionId: 'conn-1',
+        source: 'navigator',
+        op: 'document',
+        notebookId: 'nb-1',
+        path: '/',
+        title: 'Should Not Reach Kernel',
+      }),
+    ).rejects.toMatchObject({ code: 'CAPABILITY_DISABLED' })
+    const status = await invoke(RPC_CHANNELS.knowledge.ENGINE_STATUS, { connectionId: 'conn-1' }) as Record<string, unknown>
+    expect(status).toMatchObject({ running: false, reason: 'CAPABILITY_DISABLED' })
+    await expect(invoke(RPC_CHANNELS.knowledge.ENGINE_START, { connectionId: 'conn-1' })).rejects.toMatchObject({
+      code: 'CAPABILITY_DISABLED',
+    })
+    await expect(invoke(RPC_CHANNELS.knowledge.DETECT_ENGINE, {})).rejects.toMatchObject({
+      code: 'CAPABILITY_DISABLED',
+    })
+    expect(fetchCalls).toHaveLength(0)
+  })
+})
+
+describe('migrateNotes guards', () => {
+  it('keeps SiYuan migration disabled by default before token/client/fetch work', async () => {
+    delete process.env.ROX_ENABLE_SIYUAN_KNOWLEDGE
+    seedConnection('conn-1', { status: 'ok' })
+    credentials.set('source_bearer::ws1::conn-1', { value: 'secret-token-1' })
+    const { invoke } = createHarness({ workspaceId: 'ws1' })
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.MIGRATE_NOTES, {
+        workspaceId: 'ws1',
+        connectionId: 'conn-1',
+      }),
+    ).rejects.toMatchObject({ code: 'CAPABILITY_DISABLED' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('rejects local-markdown migration before any SiYuan client call', async () => {
+    const { invoke } = createHarness({ workspaceId: 'ws1' })
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    fetchCalls.length = 0
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.MIGRATE_NOTES, {
+        workspaceId: 'ws1',
+        connectionId: LOCAL_WS1_CONNECTION_ID,
+      }),
+    ).rejects.toMatchObject({ code: 'UNSUPPORTED_OPERATION' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('rejects workspace mismatch before token/client/fetch work', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    seedConnection('conn-1', { status: 'ok' })
+    const { invoke } = createHarness({ workspaceId: 'ws2' })
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.MIGRATE_NOTES, {
+        workspaceId: 'ws2',
+        connectionId: 'conn-1',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
     expect(fetchCalls).toHaveLength(0)
   })
 })
@@ -412,6 +619,19 @@ describe('listNotebooks', () => {
     expect((call.init.headers as Record<string, string>)['Authorization']).toBe('Token secret-token-1')
   })
 
+  it('serves the workspace local Markdown notebook list without touching the SiYuan kernel', async () => {
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    fetchCalls.length = 0
+    const notebooks = (await invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, {
+      connectionId: LOCAL_WS1_CONNECTION_ID,
+    })) as Array<Record<string, unknown>>
+    expect(notebooks).toEqual([
+      { id: LOCAL_MARKDOWN_NOTEBOOK_ID, name: 'Local Markdown', icon: '1f4dd', closed: false },
+    ])
+    expect(fetchCalls).toHaveLength(0)
+  })
+
   it('rejects an unknown connectionId with CodedError NOT_FOUND before touching the kernel', async () => {
     const { invoke } = createHarness()
     await expect(
@@ -443,6 +663,271 @@ describe('listTree', () => {
     }) as { notebookId: string; nodes: Array<{ kind: string; id: string }> }
     expect(tree.notebookId).toBe('nb-1')
     expect(tree.nodes.map((n) => n.kind)).toEqual(['folder', 'document'])
+  })
+
+  it('returns local Markdown tree without touching the SiYuan kernel', async () => {
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    await invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+      connectionId: LOCAL_WS1_CONNECTION_ID,
+      source: 'navigator',
+      op: 'document',
+      notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+      path: '/',
+      title: 'Local Tree Note',
+    })
+    fetchCalls.length = 0
+    const tree = await invoke(RPC_CHANNELS.knowledge.LIST_TREE, {
+      connectionId: LOCAL_WS1_CONNECTION_ID,
+      notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+    }) as { notebookId: string; nodes: Array<{ kind: string; id: string }> }
+    expect(tree.notebookId).toBe(LOCAL_MARKDOWN_NOTEBOOK_ID)
+    expect(tree.nodes.filter((n) => n.kind === 'document').map((n) => ({ kind: n.kind, id: n.id }))).toEqual([
+      { kind: 'document', id: 'Local Tree Note' },
+    ])
+    expect(fetchCalls).toHaveLength(0)
+  })
+})
+
+describe('localMarkdown safety', () => {
+  it('rejects symlink escapes before reading a local Markdown note', async () => {
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    const notesRoot = join(getDefaultWorkspacesDir(), 'ws1', 'notes')
+    mkdirSync(notesRoot, { recursive: true })
+    const outside = join(workspaceRoot, 'outside.md')
+    writeFileSync(outside, '# outside secret\n', 'utf-8')
+    symlinkSync(outside, join(notesRoot, 'Escape.md'))
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.GET, {
+        connectionId: LOCAL_WS1_CONNECTION_ID,
+        ref: { scheme: 'local-note', kind: 'document', id: 'Escape' },
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('rejects symlinked directory ancestors in tree and create paths', async () => {
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    const notesRoot = join(getDefaultWorkspacesDir(), 'ws1', 'notes')
+    mkdirSync(notesRoot, { recursive: true })
+    const outsideDir = mkdtempSync(join(tmpdir(), 'knowledge-test-outside-'))
+    writeFileSync(join(outsideDir, 'Outside.md'), '# outside secret\n', 'utf-8')
+    symlinkSync(outsideDir, join(notesRoot, 'Linked'))
+
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.LIST_TREE, {
+        connectionId: LOCAL_WS1_CONNECTION_ID,
+        notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+        path: '/Linked',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+        connectionId: LOCAL_WS1_CONNECTION_ID,
+        source: 'navigator',
+        op: 'document',
+        notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+        path: '/Linked',
+        title: 'Escaped Create',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(existsSync(join(outsideDir, 'Escaped Create.md'))).toBe(false)
+    expect(fetchCalls).toHaveLength(0)
+  })
+})
+
+describe('workspace read/watch guards', () => {
+  it('does not expose or use another workspace SiYuan connection', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    seedConnection('conn-ws1', { status: 'ok' })
+    seedConnection('conn-ws2', {
+      status: 'ok',
+      credentialRef: 'source_bearer::ws2::conn-ws2',
+    })
+    credentials.set('source_bearer::ws1::conn-ws1', { value: 'token-before' })
+    credentials.set('source_bearer::ws2::conn-ws2', { value: 'token-ws2' })
+    const harnessB = createHarness({ workspaceId: 'ws2' })
+
+    const connections = await harnessB.invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {}) as KnowledgeConnection[]
+    expect(connections.some((connection) => connection.id === 'conn-ws1')).toBe(false)
+    expect(connections.some((connection) => connection.id === 'conn-ws2')).toBe(true)
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.SEARCH, {
+        connectionId: 'conn-ws1',
+        input: { query: 'kernel' },
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.LIST_NOTEBOOKS, { connectionId: 'conn-ws1' }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, {
+        connectionId: 'conn-ws1',
+        baseUrl: 'http://127.0.0.1:6807',
+        token: 'token-after',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(new KnowledgeConnectionsStore().get('conn-ws1')!.baseUrl).toBe('http://127.0.0.1:6806')
+    expect(credentials.get('source_bearer::ws1::conn-ws1')?.value).toBe('token-before')
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('does not expose another workspace proposal lifecycle', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    const createdAt = new Date().toISOString()
+    const proposal: KnowledgeProposalFileRecord = {
+      id: 'p_ws1',
+      connectionId: 'conn-ws1',
+      targetRef: { scheme: 'siyuan', kind: 'block', id: 'blk-ws1' },
+      ops: [{ op: 'updateBlock', blockId: 'blk-ws1', markdown: 'patched' }],
+      selectionProofs: [],
+      baseHash: 'base-ws1',
+      baseReadAt: createdAt,
+      preState: 'original',
+      hashAlgorithm: 'sha256-canonical-v1',
+      status: 'pending_review',
+      statusHistory: [],
+      createdAt,
+      updatedAt: createdAt,
+      actor: 'user',
+    }
+    new KnowledgeMutationProposalsStore(workspaceRoot).save(proposal)
+    const harnessB = createHarness({ workspaceId: 'ws2' })
+
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.LIST_PROPOSALS, { workspaceId: 'ws1' }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    const visible = await harnessB.invoke(RPC_CHANNELS.knowledge.LIST_PROPOSALS, {}) as KnowledgeProposalFileRecord[]
+    expect(visible).toEqual([])
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.GET_PROPOSAL, { proposalId: 'p_ws1' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.APPROVE_PROPOSAL, { proposalId: 'p_ws1' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.REJECT_PROPOSAL, { proposalId: 'p_ws1' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.APPLY_PROPOSAL, {
+        proposalId: 'p_ws1',
+        workspaceId: 'ws1',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.ROLLBACK_PROPOSAL, { proposalId: 'p_ws1' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+    expect(new KnowledgeMutationProposalsStore(workspaceRoot).get('p_ws1')?.status).toBe('pending_review')
+  })
+
+  it('rejects publication distill when the loaded session belongs to another workspace', async () => {
+    seedConnection('conn-ws1', { status: 'ok' })
+    const sessionManager = {
+      async getSession() {
+        return {
+          id: 'sess-ws2',
+          workspaceId: 'ws2',
+          messages: [{ id: 'm1', role: 'user', content: 'foreign workspace content' }],
+        }
+      },
+    } as unknown as HandlerDeps['sessionManager']
+    const harnessA = createHarness({ workspaceId: 'ws1', sessionManager })
+
+    await expect(
+      harnessA.invoke(RPC_CHANNELS.knowledge.PUBLISH_DISTILL, {
+        connectionId: 'conn-ws1',
+        sessionId: 'sess-ws2',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+  })
+
+  it('rejects metrics and publication finalize for another workspace', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    seedConnection('conn-ws1', { status: 'ok' })
+    const harnessB = createHarness({ workspaceId: 'ws2' })
+
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.METRICS_GET, { workspaceId: 'ws1' }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.PUBLISH_FINALIZE, {
+        connectionId: 'conn-ws1',
+        draftId: 'draft-ws1',
+        proposalId: 'proposal-ws1',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+  })
+
+  it('rejects snapshotGet when caller workspace does not match the requested workspace', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    const ref: KnowledgeRef = { scheme: 'local-note', kind: 'document', id: 'Workspace A Note' }
+    const snapshot = new KnowledgeContextSnapshotsStore(workspaceRoot).create({
+      sessionId: 'sess-a',
+      provider: 'local-markdown',
+      ref,
+      contentHash: 'hash-a',
+      snapshot: {
+        ref,
+        mode: 'snapshot' as ContextMode,
+        blockId: ref.id,
+        content: 'workspace A content',
+        children: [],
+        backlinks: [],
+        attributes: [],
+        capturedAt: Date.now(),
+        contentHash: 'hash-a',
+      } satisfies ContextPayload,
+    })
+
+    const harnessB = createHarness({ workspaceId: 'ws2' })
+    let error: unknown = null
+    try {
+      harnessB.invoke(RPC_CHANNELS.knowledge.SNAPSHOT_GET, {
+        workspaceId: 'ws1',
+        snapshotId: snapshot.id,
+      })
+    } catch (caught) {
+      error = caught
+    }
+    expect(error).toBeInstanceOf(CodedError)
+    expect(error).toMatchObject({ code: 'INVALID_REF' })
+
+    const harnessA = createHarness({ workspaceId: 'ws1' })
+    const ownSnapshot = await harnessA.invoke(RPC_CHANNELS.knowledge.SNAPSHOT_GET, {
+      workspaceId: 'ws1',
+      snapshotId: snapshot.id,
+    }) as { id: string }
+    expect(ownSnapshot.id).toBe(snapshot.id)
+    expect(fetchCalls).toHaveLength(0)
+  })
+
+  it('rejects unwatch when caller workspace does not match the connection/request workspace', async () => {
+    const workspaceRootB = mkdtempSync(join(tmpdir(), 'knowledge-test-ws2-'))
+    extraWorkspaceRoots.set('ws2', workspaceRootB)
+    const harnessA = createHarness({ workspaceId: 'ws1' })
+    await harnessA.invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    const harnessB = createHarness({ workspaceId: 'ws2' })
+
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.UNWATCH, {
+        connectionId: LOCAL_WS1_CONNECTION_ID,
+        workspaceId: 'ws1',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      harnessB.invoke(RPC_CHANNELS.knowledge.UNWATCH, {
+        connectionId: LOCAL_WS1_CONNECTION_ID,
+        workspaceId: 'ws2',
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(fetchCalls).toHaveLength(0)
   })
 })
 
@@ -477,6 +962,25 @@ describe('userCreate', () => {
       title: 'Note',
     }) as { id: string }
     expect(result.id).toBe('doc-created-1')
+  })
+
+  it('creates a local Markdown document through the safe notes path and never calls port 6806', async () => {
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    fetchCalls.length = 0
+    const result = await invoke(RPC_CHANNELS.knowledge.USER_CREATE, {
+      connectionId: LOCAL_WS1_CONNECTION_ID,
+      source: 'navigator',
+      op: 'document',
+      notebookId: LOCAL_MARKDOWN_NOTEBOOK_ID,
+      path: '/',
+      title: 'Local Note',
+    }) as { id: string }
+    const notePath = join(getDefaultWorkspacesDir(), 'ws1', 'notes', 'Local Note.md')
+    expect(result.id).toBe('Local Note')
+    expect(existsSync(notePath)).toBe(true)
+    expect(readFileSync(notePath, 'utf-8')).toContain('title: Local Note')
+    expect(fetchCalls).toHaveLength(0)
   })
 })
 
@@ -525,10 +1029,9 @@ describe('updateConnection', () => {
     expect(credentials.get('source_bearer::ws1::conn-1')?.value).toBe('fresh-token')
   })
 
-  it('keeps the auto-seeded siyuan-local row updatable and survives an offline kernel (save still succeeds)', async () => {
+  it('keeps a legacy siyuan-local row updatable and survives an offline kernel (save still succeeds)', async () => {
+    seedConnection('siyuan-local', { status: 'unknown' })
     const { invoke } = createHarness()
-    // Seed via the listConnections path (ensureDefaultLocalConnection).
-    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
     kernelProbeError = new Error('connect ECONNREFUSED 127.0.0.1:6806')
     const updated = (await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, {
       connectionId: 'siyuan-local',
@@ -564,8 +1067,12 @@ describe('engineStatus', () => {
     const { invoke } = createHarness()
     const list = await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {}) as KnowledgeConnection[]
     expect(list.length).toBeGreaterThanOrEqual(1)
-    expect(list[0]!.baseUrl).toMatch(/127\.0\.0\.1:6806|localhost:6806/)
-    expect(list[0]!.provider).toBe('siyuan')
+    expect(list[0]).toMatchObject({
+      id: LOCAL_WS1_CONNECTION_ID,
+      provider: 'local-markdown',
+      baseUrl: LOCAL_MARKDOWN_BASE_URL,
+      status: 'connected',
+    })
   })
 })
 
@@ -670,6 +1177,28 @@ describe('applyProposal guard mapping (§3.2 wire contract, P2-14)', () => {
 })
 
 describe('getExportPayload', () => {
+  it('rejects connection/ref provider mismatches before touching any provider', async () => {
+    seedConnection('conn-1', { status: 'ok' })
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
+    fetchCalls.length = 0
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD, {
+        connectionId: LOCAL_WS1_CONNECTION_ID,
+        ref: DOC_REF,
+        formats: ['deepLink', 'id'],
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    await expect(
+      invoke(RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD, {
+        connectionId: 'conn-1',
+        ref: { scheme: 'local-note', kind: 'document', id: 'Local Note' },
+        formats: ['deepLink', 'id'],
+      }),
+    ).rejects.toMatchObject({ code: 'INVALID_REF' })
+    expect(fetchCalls).toHaveLength(0)
+  })
+
   it('returns deepLink + id without kernel content when only those formats are requested', async () => {
     seedConnection('conn-1', { status: 'ok' })
     credentials.set('source_bearer::ws1::conn-1', { value: 'tok' })

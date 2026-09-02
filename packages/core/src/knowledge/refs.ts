@@ -15,21 +15,33 @@ export interface CraftRef {
 }
 
 export type KnowledgeKind = 'notebook' | 'document' | 'block' | 'database' | 'asset';
+export type KnowledgeScheme = 'siyuan' | 'local-note';
 
-export interface KnowledgeRef {
-  /** att1 §3.3: всегда 'siyuan' для первой реализации; будущие провайдеры — свои scheme */
-  scheme: 'siyuan';
+export const SIYUAN_KNOWLEDGE_PROVIDER = 'siyuan';
+export const LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER = 'local-markdown';
+
+interface BaseKnowledgeRef {
   kind: KnowledgeKind;
-  /** Стабильный id ядра SiYuan (document id / block id / notebook id) */
+  /** Stable provider-local id (SiYuan block/doc/notebook id or local Markdown note id). */
   id: string;
   /**
    * att1 §9 wire-форма. Присутствует в RPC-DTO; отсутствие == 'siyuan'.
-   * Зарезервированные значения: 'siyuan' | 'obsidian' | 'notion' | 'memory' (InMemory).
+   * Reserved/current values include 'siyuan', 'local-markdown', 'obsidian', 'notion', 'memory' (InMemory).
    */
   provider?: string;
   /** Какое подключение (knowledge_connections.id, K-04) обслуживает ref; single-connection MVP */
   connectionId?: string;
 }
+
+export interface SiyuanKnowledgeRef extends BaseKnowledgeRef {
+  scheme: 'siyuan';
+}
+
+export interface LocalNoteKnowledgeRef extends BaseKnowledgeRef {
+  scheme: 'local-note';
+}
+
+export type KnowledgeRef = SiyuanKnowledgeRef | LocalNoteKnowledgeRef;
 
 /** Wire/provider form of the same ref (att1 §9: `provider` instead of `scheme`). */
 export interface KnowledgeRefProviderForm {
@@ -42,8 +54,8 @@ export const CRAFT_REF_KINDS: readonly CraftRefKind[] = ['session', 'run', 'skil
 
 export const KNOWLEDGE_KINDS: readonly KnowledgeKind[] = ['notebook', 'document', 'block', 'database', 'asset'];
 
-/** Default provider for compact mentions `[knowledge:block/<id>]` — spec open-question decision (MVP). */
-export const DEFAULT_KNOWLEDGE_PROVIDER = 'siyuan';
+/** Default provider for compact mentions `[knowledge:block/<id>]` — legacy compact form remains SiYuan. */
+export const DEFAULT_KNOWLEDGE_PROVIDER = SIYUAN_KNOWLEDGE_PROVIDER;
 
 const PROVIDER_SEGMENT_PATTERN = /^[a-z][a-z0-9-]*$/;
 
@@ -57,9 +69,19 @@ const isKnowledgeKind = (value: string): value is KnowledgeKind =>
 const isCraftRefKind = (value: string): value is CraftRefKind =>
   (CRAFT_REF_KINDS as readonly string[]).includes(value);
 
+export function providerFromKnowledgeRef(ref: KnowledgeRef): string {
+  return ref.provider ?? (ref.scheme === 'local-note' ? LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER : ref.scheme);
+}
+
+export function schemeForKnowledgeProvider(provider: string): KnowledgeScheme {
+  return provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER || provider === 'local-note'
+    ? 'local-note'
+    : 'siyuan';
+}
+
 /** 'siyuan/block/<id>' */
 export function serializeKnowledgeRef(ref: KnowledgeRef): string {
-  return `${ref.provider ?? ref.scheme}/${ref.kind}/${ref.id}`;
+  return `${providerFromKnowledgeRef(ref)}/${ref.kind}/${ref.id}`;
 }
 
 /**
@@ -80,9 +102,11 @@ export function parseKnowledgeRef(text: string): KnowledgeRef | null {
   if (PROVIDER_SEGMENT_PATTERN.test(first) && isKnowledgeKind(second)) {
     const id = rest.join('/');
     if (!id) return null;
-    return first === DEFAULT_KNOWLEDGE_PROVIDER
-      ? { scheme: 'siyuan', kind: second, id }
-      : { scheme: 'siyuan', kind: second, id, provider: first };
+    const scheme = schemeForKnowledgeProvider(first);
+    if (first === DEFAULT_KNOWLEDGE_PROVIDER) return { scheme, kind: second, id };
+    return first === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER || first === 'local-note'
+      ? { scheme, kind: second, id }
+      : { scheme, kind: second, id, provider: first };
   }
   return null;
 }
@@ -101,7 +125,7 @@ export function parseCraftRef(text: string): CraftRef | null {
 
 /** '[knowledge:siyuan/block/<id>]' (or compact '[knowledge:block/<id>]' for the default provider). */
 export function formatKnowledgeMention(ref: KnowledgeRef, options?: { compact?: boolean }): string {
-  const provider = ref.provider ?? ref.scheme;
+  const provider = providerFromKnowledgeRef(ref);
   const prefix = options?.compact && provider === DEFAULT_KNOWLEDGE_PROVIDER ? '' : `${provider}/`;
   return `[knowledge:${prefix}${ref.kind}/${ref.id}]`;
 }
@@ -115,7 +139,12 @@ export function parseKnowledgeMentions(text: string): KnowledgeRef[] {
     const id = match[3];
     if (!kind || !id || !isKnowledgeKind(kind)) continue;
     if (provider && provider !== DEFAULT_KNOWLEDGE_PROVIDER) {
-      refs.push({ scheme: 'siyuan', kind, id, provider });
+      const scheme = schemeForKnowledgeProvider(provider);
+      refs.push(
+        provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER || provider === 'local-note'
+          ? { scheme, kind, id }
+          : { scheme, kind, id, provider },
+      );
     } else {
       refs.push({ scheme: 'siyuan', kind, id });
     }
@@ -168,6 +197,9 @@ export function canonicalKnowledgeRef(input: KnowledgeRef | KnowledgeRefProvider
   if ('scheme' in input) {
     return validateKnowledgeRef(input);
   }
+  if (input.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER || input.provider === 'local-note') {
+    return validateKnowledgeRef({ scheme: 'local-note', kind: input.kind, id: input.id });
+  }
   return validateKnowledgeRef(
     input.provider === DEFAULT_KNOWLEDGE_PROVIDER
       ? { scheme: 'siyuan', kind: input.kind, id: input.id }
@@ -177,7 +209,7 @@ export function canonicalKnowledgeRef(input: KnowledgeRef | KnowledgeRefProvider
 
 /** Canonical → provider (wire) form. */
 export function toProviderForm(ref: KnowledgeRef): KnowledgeRefProviderForm {
-  return { provider: ref.provider ?? ref.scheme, kind: ref.kind, id: ref.id };
+  return { provider: providerFromKnowledgeRef(ref), kind: ref.kind, id: ref.id };
 }
 
 /** Structural validation; throws a typed KnowledgeError (INVALID_REF) instead of returning null. */
@@ -186,7 +218,7 @@ export function validateKnowledgeRef(ref: unknown): KnowledgeRef {
     throw new KnowledgeError('INVALID_REF', 'Knowledge ref must be an object', ref);
   }
   const candidate = ref as Record<string, unknown>;
-  if (candidate['scheme'] !== 'siyuan') {
+  if (candidate['scheme'] !== 'siyuan' && candidate['scheme'] !== 'local-note') {
     throw new KnowledgeError('INVALID_REF', `Unsupported knowledge scheme: ${String(candidate['scheme'])}`, ref);
   }
   if (typeof candidate['kind'] !== 'string' || !isKnowledgeKind(candidate['kind'])) {

@@ -9,6 +9,7 @@ import type { ContextMode, ContextPayload } from './context.ts';
 import { KnowledgeError } from './errors.ts';
 import type { ApplyResult, MutationInput, MutationProposal } from './mutations.ts';
 import type { KnowledgeKind, KnowledgeRef } from './refs.ts';
+import { providerFromKnowledgeRef } from './refs.ts';
 
 // Mutation types moved to ./mutations.ts at P3 (K-05 §3.1/§3.4.1, pure engine); provider.ts re-exports
 // them so existing imports from './provider.ts' (inmemory provider, siyuan adapter) keep working.
@@ -132,7 +133,7 @@ export type KnowledgeProviderFactory = (connection: KnowledgeConnection) => Know
 
 export interface KnowledgeConnection {
   id: string;                     // knowledge_connections.id (K-04)
-  provider: string;               // 'siyuan'
+  provider: string;               // 'siyuan' | 'local-markdown' | future providers
   label: string;
   baseUrl?: string;               // external-local/remote режимы (K-07)
   status: 'connected' | 'degraded' | 'offline' | 'needs_auth';
@@ -181,7 +182,7 @@ export function createKnowledgeRegistry(): KnowledgeRegistry {
         const byConnection = providers.get(ref.connectionId);
         if (byConnection) return byConnection;
       }
-      const scheme = ref.provider ?? ref.scheme;
+      const scheme = providerFromKnowledgeRef(ref);
       for (const [id, connection] of connections) {
         if (connection.provider === scheme) {
           const provider = providers.get(id);

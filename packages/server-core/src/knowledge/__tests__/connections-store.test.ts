@@ -102,6 +102,42 @@ describe('save / list / get', () => {
     expect(store.get('conn-explicit')).toEqual(saved)
   })
 
+  it('persists local-markdown connections without treating them as SiYuan endpoints', () => {
+    const store = new KnowledgeConnectionsStore(configDir)
+    const saved = store.save({
+      id: 'local-markdown',
+      provider: 'local-markdown',
+      mode: 'external-local',
+      baseUrl: 'local-markdown://workspace-notes',
+      credentialRef: 'source_bearer::ws-1::local-markdown',
+      status: 'ok',
+    })
+    expect(saved.provider).toBe('local-markdown')
+    expect(saved.baseUrl).toBe('local-markdown://workspace-notes')
+    expect(store.get('local-markdown')).toEqual(saved)
+  })
+
+  it('rejects unknown provider writes at runtime', () => {
+    const store = new KnowledgeConnectionsStore(configDir)
+    const error = (() => {
+      try {
+        store.save({
+          id: 'notion',
+          provider: 'notion',
+          mode: 'external-local',
+          baseUrl: 'https://notes.example.com',
+          credentialRef: 'ref',
+        } as unknown as Parameters<KnowledgeConnectionsStore['save']>[0])
+        return null
+      } catch (caught) {
+        return caught
+      }
+    })()
+    expect(error).toBeInstanceOf(CodedError)
+    expect((error as CodedError).code).toBe('INVALID_REF')
+    expect(store.list()).toEqual([])
+  })
+
   it('returns null for unknown ids', () => {
     const store = new KnowledgeConnectionsStore(configDir)
     expect(store.get('nope')).toBeNull()
@@ -155,6 +191,33 @@ describe('fail-soft parsing', () => {
     expect(parsed).toEqual([good])
     expect(parseConnectionFile('{{{ corrupt')).toEqual([])
     expect(parseConnectionFile('')).toEqual([])
+  })
+
+  it('keeps legacy records readable by defaulting a missing provider to siyuan', () => {
+    const legacy = {
+      id: 'legacy-siyuan',
+      mode: 'external-local' as const,
+      baseUrl: 'http://localhost:6806',
+      credentialRef: 'ref',
+      status: 'ok' as const,
+      createdAt: '2026-08-07T00:00:00.000Z',
+      updatedAt: '2026-08-07T00:00:00.000Z',
+    }
+    expect(parseConnectionFile(JSON.stringify([legacy]))).toEqual([{ ...legacy, provider: 'siyuan' }])
+  })
+
+  it('rejects unknown provider records instead of coercing them to siyuan', () => {
+    const unknown = {
+      id: 'unknown-provider',
+      provider: 'notion',
+      mode: 'external-local',
+      baseUrl: 'https://notes.example.com',
+      credentialRef: 'ref',
+      status: 'ok',
+      createdAt: '2026-08-07T00:00:00.000Z',
+      updatedAt: '2026-08-07T00:00:00.000Z',
+    }
+    expect(parseConnectionFile(JSON.stringify([unknown]))).toEqual([])
   })
 })
 
@@ -281,4 +344,3 @@ describe('remote connection TLS', () => {
     expect(store.get(saved.id)?.mode).toBe('managed')
   })
 })
-

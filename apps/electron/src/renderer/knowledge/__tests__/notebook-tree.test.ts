@@ -137,6 +137,28 @@ describe('loadKnowledgeNavigatorData', () => {
     expect(data.notebooks.status).toBe('unavailable')
   })
 
+  it('uses the synthetic local notebook without calling the legacy notebook RPC', async () => {
+    let listNotebooksCalls = 0
+    const data = await loadKnowledgeNavigatorData(apiDouble({
+      async listConnections() {
+        return [
+          { id: 'siyuan-legacy', provider: 'siyuan' },
+          { id: 'local-markdown:ws-1', provider: 'local-markdown' },
+        ]
+      },
+      async listNotebooks() {
+        listNotebooksCalls += 1
+        throw new Error('SiYuan kernel must not be contacted for local Markdown')
+      },
+    }))
+
+    expect(listNotebooksCalls).toBe(0)
+    expect(data.notebooks).toEqual({
+      status: 'ok',
+      items: [{ id: 'local-notes', name: 'Local Markdown', icon: '1f4dd', closed: false }],
+    })
+  })
+
   it('fails soft to empty views/envelopes when those channels error', async () => {
     const api = apiDouble({
       async viewsList() {

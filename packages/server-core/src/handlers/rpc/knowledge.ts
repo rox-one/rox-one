@@ -69,10 +69,13 @@ import type { HandlerDeps } from '../handler-deps'
 import {
   createKnowledgeRegistry,
   KnowledgeError,
+  LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER,
   MutationValidationError,
   ProposalTransitionError,
   isAllowedAttributeName,
+  providerFromKnowledgeRef,
   siyuanDeepLink,
+  validateKnowledgeRef,
 } from '@craft-agent/core/knowledge'
 import type {
   ContextMode,
@@ -115,7 +118,14 @@ import {
   ensureDefaultLocalConnection,
   ensureLocalKernel,
   getKernelBootstrapStatus,
+  createLocalMarkdownUserItem,
+  ensureDefaultLocalMarkdownConnection,
   KnowledgeMetricsStore,
+  listLocalMarkdownNotebooks,
+  listLocalMarkdownTree,
+  LocalMarkdownKnowledgeProvider,
+  LOCAL_MARKDOWN_LABEL,
+  LOCAL_MARKDOWN_NOTEBOOK_ID,
   maybeAutoStartLocalKernel,
   normalizeKnowledgeBaseUrl,
   probeKernelHealth,
@@ -170,6 +180,22 @@ export function __setKnowledgeTestConstructors(ctor: SiyuanKnowledgeProviderCtor
 let skipKnowledgeWatchAutoStart = false
 export function __setSkipKnowledgeWatchAutoStart(skip: boolean): void {
   skipKnowledgeWatchAutoStart = skip
+}
+
+export const SIYUAN_KNOWLEDGE_FEATURE_ENV = 'ROX_ENABLE_SIYUAN_KNOWLEDGE'
+
+function isSiyuanKnowledgeEnabled(): boolean {
+  const raw = process.env[SIYUAN_KNOWLEDGE_FEATURE_ENV]?.trim().toLowerCase()
+  return raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on'
+}
+
+function assertSiyuanKnowledgeEnabled(operation: string): void {
+  if (!isSiyuanKnowledgeEnabled()) {
+    throw new CodedError(
+      'CAPABILITY_DISABLED',
+      `knowledge.${operation}: SiYuan integration is disabled; set ${SIYUAN_KNOWLEDGE_FEATURE_ENV}=1 to enable legacy SiYuan calls`,
+    )
+  }
 }
 
 /** The complete knowledge channel set — 9 P1 read + getExportPayload + ENGINE_STATUS/DETECT/START + METRICS_GET + listTree/userCreate + 7 P3 write-back + 8 P4 publication + 6 P5 views/envelopes + 2 P6 watch + migrateNotes; asserted by knowledge.test.ts. */
@@ -435,10 +461,11 @@ const CONNECTION_STATUS_MAP: Record<KnowledgeConnectionStatus, KnowledgeConnecti
 
 /** Storage record → contract KnowledgeConnection; credentialRef never crosses the wire. */
 function toContractConnection(record: KnowledgeConnectionRecord): KnowledgeConnection {
+  const isLocalMarkdown = record.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER
   return {
     id: record.id,
     provider: record.provider,
-    label: record.baseUrl,
+    label: isLocalMarkdown ? LOCAL_MARKDOWN_LABEL : record.baseUrl,
     baseUrl: record.baseUrl,
     status: CONNECTION_STATUS_MAP[record.status],
   }
@@ -463,28 +490,25 @@ function assertContextMode(mode: unknown): asserts mode is ContextMode {
   }
 }
 
-const KNOWLEDGE_KINDS: Record<string, true> = {
-  notebook: true,
-  document: true,
-  block: true,
-  database: true,
-  asset: true,
-}
-
 function assertKnowledgeRef(ref: unknown): asserts ref is KnowledgeRef {
-  const r = ref as KnowledgeRef | null
-  if (
-    !r ||
-    typeof r !== 'object' ||
-    r.scheme !== 'siyuan' ||
-    typeof r.id !== 'string' ||
-    r.id.length === 0 ||
-    typeof r.kind !== 'string' ||
-    KNOWLEDGE_KINDS[r.kind] !== true
-  ) {
+  try {
+    validateKnowledgeRef(ref)
+  } catch {
     throw new CodedError('INVALID_REF', `knowledge: invalid KnowledgeRef: ${JSON.stringify(ref)}`)
   }
 }
+
+function assertRefMatchesConnection(record: KnowledgeConnectionRecord, ref: KnowledgeRef, operation: string): void {
+  const provider = providerFromKnowledgeRef(ref)
+  if (provider !== record.provider) {
+    throw new CodedError(
+      'INVALID_REF',
+      `knowledge.${operation}: ref provider '${provider}' does not match connection provider '${record.provider}'`,
+    )
+  }
+}
+
+type KnowledgeRequestContext = { workspaceId?: string | null } | null | undefined
 
 export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
@@ -492,17 +516,28 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // Non-blocking local kernel bootstrap (detect binary → open/spawn if down).
   // Never awaits readiness; UI polls ENGINE_STATUS / uses ENGINE_START CTA.
   // Skipped under the same test seam as watch auto-start.
-  if (!skipKnowledgeWatchAutoStart) {
+  if (!skipKnowledgeWatchAutoStart && isSiyuanKnowledgeEnabled()) {
     maybeAutoStartLocalKernel({ log: log ?? undefined })
   }
 
   // Per-registration registry: factory re-runs on every connect(), picking up
   // the current token from tokensByConnection (set just before connect()).
   const tokensByConnection = new Map<string, string>()
+  const localProviderContexts = new Map<string, { workspaceId: string; notesRoot: string }>()
   const registry = createKnowledgeRegistry()
   registry.registerProvider('siyuan', (connection) =>
     new knowledgeProviderCtor({ connection, token: tokensByConnection.get(connection.id) ?? '' }),
   )
+  registry.registerProvider(LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER, (connection) => {
+    const local = localProviderContexts.get(connection.id)
+    if (!local) {
+      throw new KnowledgeError(
+        'CONNECTION_UNAVAILABLE',
+        `No local Markdown workspace context registered for connection '${connection.id}'`,
+      )
+    }
+    return new LocalMarkdownKnowledgeProvider({ connection, workspaceId: local.workspaceId, notesRoot: local.notesRoot })
+  })
 
   function joinSiyuanPath(parent: string, name: string): string {
     const leaf = name.replace(/^\/+/, '')
@@ -535,9 +570,169 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     return credential?.value ?? ''
   }
 
-  async function resolveProvider(connectionId: string): Promise<KnowledgeProvider> {
+  function normalizeWorkspaceId(workspaceId: string, operation: string): string {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) throw new CodedError('NOT_FOUND', `Workspace not found: ${workspaceId}`)
+    return workspace.id
+  }
+
+  function callerWorkspaceId(ctx: KnowledgeRequestContext, operation: string): string | null {
+    const raw = typeof ctx?.workspaceId === 'string' && ctx.workspaceId.length > 0 ? ctx.workspaceId : null
+    return raw ? normalizeWorkspaceId(raw, operation) : null
+  }
+
+  function explicitWorkspaceId(workspaceId: string | null | undefined, operation: string): string | null {
+    if (typeof workspaceId !== 'string' || workspaceId.length === 0) return null
+    return normalizeWorkspaceId(workspaceId, operation)
+  }
+
+  function resolveListWorkspaceId(ctx: KnowledgeRequestContext): string | null {
+    const raw = typeof ctx?.workspaceId === 'string' && ctx.workspaceId.length > 0 ? ctx.workspaceId : null
+    if (raw) return normalizeWorkspaceId(raw, 'listConnections')
+    const workspaces = getWorkspaces()
+    if (workspaces.length === 1 && workspaces[0]) return workspaces[0].id
+    return null
+  }
+
+  function strictConnectionWorkspaceRoot(
+    record: KnowledgeConnectionRecord,
+    operation: string,
+  ): { rootPath: string; workspaceId: string } {
+    const credentialId = credentialIdFromRef(record.credentialRef)
+    if (!credentialId?.workspaceId) {
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: connection '${record.id}' has no workspace-scoped credential reference`,
+      )
+    }
+    const workspace = getWorkspaceByNameOrId(credentialId.workspaceId)
+    if (!workspace) {
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: connection '${record.id}' points to unknown workspace '${credentialId.workspaceId}'`,
+      )
+    }
+    return { rootPath: workspace.rootPath, workspaceId: workspace.id }
+  }
+
+  function assertConnectionWorkspaceScope(
+    ctx: KnowledgeRequestContext,
+    record: KnowledgeConnectionRecord,
+    operation: string,
+    workspaceIdHint?: string | null,
+  ): { rootPath: string; workspaceId: string } {
+    const connectionWorkspace = strictConnectionWorkspaceRoot(record, operation)
+    const callerWorkspace = callerWorkspaceId(ctx, operation)
+    const hintedWorkspace = explicitWorkspaceId(workspaceIdHint, operation)
+    if (callerWorkspace && hintedWorkspace && callerWorkspace !== hintedWorkspace) {
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: caller workspace '${callerWorkspace}' does not match requested workspace '${hintedWorkspace}'`,
+      )
+    }
+    const requestedWorkspace = hintedWorkspace ?? callerWorkspace
+    if (!requestedWorkspace) {
+      const workspaces = getWorkspaces()
+      if (workspaces.length === 1 && workspaces[0]?.id === connectionWorkspace.workspaceId) {
+        return connectionWorkspace
+      }
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: workspace context is required for connection '${record.id}'`,
+      )
+    }
+    if (requestedWorkspace !== connectionWorkspace.workspaceId) {
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: connection '${record.id}' belongs to workspace '${connectionWorkspace.workspaceId}', not '${requestedWorkspace}'`,
+      )
+    }
+    return connectionWorkspace
+  }
+
+  function assertLocalConnectionWorkspaceScope(
+    ctx: KnowledgeRequestContext,
+    record: KnowledgeConnectionRecord,
+    operation: string,
+    workspaceIdHint?: string | null,
+  ): { rootPath: string; workspaceId: string } {
+    return assertConnectionWorkspaceScope(ctx, record, operation, workspaceIdHint)
+  }
+
+  /**
+   * Resolve a workspace exclusively from the caller context (or the single
+   * installed workspace for legacy local-only deployments). External RPCs must
+   * never turn an arbitrary workspaceId into authority over another vault.
+   */
+  function requireCallerOrSingleWorkspace(
+    ctx: KnowledgeRequestContext,
+    workspaceIdHint: string | null | undefined,
+    operation: string,
+  ): { rootPath: string; workspaceId: string } {
+    const callerWorkspace = callerWorkspaceId(ctx, operation)
+    const hintedWorkspace = explicitWorkspaceId(workspaceIdHint, operation)
+    if (callerWorkspace && hintedWorkspace && callerWorkspace !== hintedWorkspace) {
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: caller workspace '${callerWorkspace}' does not match requested workspace '${hintedWorkspace}'`,
+      )
+    }
+    const workspaceId = hintedWorkspace ?? callerWorkspace
+    if (workspaceId) return { rootPath: requireWorkspaceRoot(workspaceId), workspaceId }
+
+    const workspaces = getWorkspaces()
+    if (workspaces.length === 1 && workspaces[0]) {
+      return { rootPath: workspaces[0].rootPath, workspaceId: workspaces[0].id }
+    }
+    throw new CodedError('INVALID_REF', `knowledge.${operation}: caller workspace context is required`)
+  }
+
+  function requireCallerWorkspaceRoot(
+    ctx: KnowledgeRequestContext,
+    workspaceId: string | null | undefined,
+    operation: string,
+  ): { rootPath: string; workspaceId: string } {
+    const requestedWorkspace = explicitWorkspaceId(workspaceId, operation)
+    if (!requestedWorkspace) {
+      throw new CodedError('INVALID_REF', `knowledge.${operation}: workspaceId is required`)
+    }
+    const callerWorkspace = callerWorkspaceId(ctx, operation)
+    if (!callerWorkspace) {
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: caller workspace context is required for workspace '${requestedWorkspace}'`,
+      )
+    }
+    if (callerWorkspace !== requestedWorkspace) {
+      throw new CodedError(
+        'INVALID_REF',
+        `knowledge.${operation}: caller workspace '${callerWorkspace}' does not match requested workspace '${requestedWorkspace}'`,
+      )
+    }
+    return { rootPath: requireWorkspaceRoot(requestedWorkspace), workspaceId: requestedWorkspace }
+  }
+
+  function connectionVisibleToWorkspace(record: KnowledgeConnectionRecord, workspaceId: string | null): boolean {
+    if (!workspaceId) return false
+    try {
+      return strictConnectionWorkspaceRoot(record, 'listConnections').workspaceId === workspaceId
+    } catch {
+      return false
+    }
+  }
+
+  async function resolveProvider(connectionId: string, ctx?: KnowledgeRequestContext): Promise<KnowledgeProvider> {
     const record = requireConnection(connectionId)
-    tokensByConnection.set(record.id, await readToken(record))
+    const scope = assertConnectionWorkspaceScope(ctx, record, 'resolveProvider')
+    if (record.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER) {
+      localProviderContexts.set(record.id, {
+        workspaceId: scope.workspaceId,
+        notesRoot: resolveWorkspaceNotesRoot(scope.workspaceId),
+      })
+    } else {
+      assertSiyuanKnowledgeEnabled('resolveProvider')
+      tokensByConnection.set(record.id, await readToken(record))
+    }
     try {
       return await registry.connect(toContractConnection(record))
     } catch (error) {
@@ -545,9 +740,13 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     }
   }
 
-  async function callProvider<T>(connectionId: string, fn: (provider: KnowledgeProvider) => Promise<T>): Promise<T> {
+  async function callProvider<T>(
+    ctx: KnowledgeRequestContext,
+    connectionId: string,
+    fn: (provider: KnowledgeProvider) => Promise<T>,
+  ): Promise<T> {
     try {
-      return await fn(await resolveProvider(connectionId))
+      return await fn(await resolveProvider(connectionId, ctx))
     } catch (error) {
       throw toTransportError(error)
     }
@@ -557,7 +756,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // knowledge_read / knowledge_get_backlinks session tools (Claude, Pi and OMP all
   // execute registry session tools in this process). The runtime reuses the exact
   // provider resolution above, so token rotation semantics match the read channels.
-  registerKnowledgeToolRuntime(createKnowledgeToolRuntime({ resolveProvider }))
+  registerKnowledgeToolRuntime(createKnowledgeToolRuntime({ resolveProvider: (connectionId) => resolveProvider(connectionId, null) }))
 
   function requireWorkspaceRoot(workspaceId: string): string {
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -580,8 +779,9 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     }
     let bridge = bridges.get(rootPath)
     if (!bridge) {
+      const scopedResolveProvider = (connectionId: string) => resolveProvider(connectionId, { workspaceId })
       bridge = new KnowledgeBridgeService({
-        providerResolver: resolveProvider,
+        providerResolver: scopedResolveProvider,
         proposalsStore: new KnowledgeMutationProposalsStore(rootPath),
         audit: new KnowledgeAuditLog(rootPath),
         assertAllowed: assertKnowledgeActionAllowed,
@@ -591,40 +791,32 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         workspaceId,
       })
       bridges.set(rootPath, bridge)
-      registerKnowledgeBridge(rootPath, bridge, resolveProvider)
-      registerKnowledgeProviderResolver(rootPath, resolveProvider)
+      registerKnowledgeBridge(rootPath, bridge, scopedResolveProvider)
+      registerKnowledgeProviderResolver(rootPath, scopedResolveProvider)
     }
     return bridge
   }
 
-  /** proposeMutations carry no workspaceId: resolve it from the connection's credentialRef. */
-  function requireConnectionWorkspaceRoot(record: KnowledgeConnectionRecord): { rootPath: string; workspaceId: string } {
-    const credentialId = credentialIdFromRef(record.credentialRef)
-    if (credentialId?.workspaceId) {
-      const workspace = getWorkspaceByNameOrId(credentialId.workspaceId)
-      if (workspace) return { rootPath: workspace.rootPath, workspaceId: workspace.id }
-    }
-    // Unscoped/malformed credentialRef — single-workspace installs resolve unambiguously.
-    const workspaces = getWorkspaces()
-    const only = workspaces[0]
-    if (workspaces.length === 1 && only) return { rootPath: only.rootPath, workspaceId: only.id }
-    throw new CodedError('INVALID_REF', `knowledge: cannot resolve workspace for connection '${record.id}'`)
-  }
-  /** Proposal-id-only channels: locate the owning workspace by scanning getWorkspaces(). */
-  async function locateProposalBridge(proposalId: string): Promise<{
+  /**
+   * Proposal-id-only channels are scoped to the caller's workspace. Proposal
+   * identifiers are opaque implementation details, not cross-vault capability
+   * tokens, so never scan every workspace root for an externally supplied id.
+   */
+  async function locateProposalBridgeInWorkspace(
+    ctx: KnowledgeRequestContext,
+    proposalId: string,
+    workspaceIdHint?: string | null,
+  ): Promise<{
     bridge: KnowledgeBridgeService
     record: KnowledgeProposalFileRecord
     rootPath: string
     workspaceId: string
   }> {
-    for (const workspace of getWorkspaces()) {
-      const bridge = bridgeFor(workspace.rootPath, workspace.id)
-      await bridge.sweepExpired()
-      const record = bridge.get(proposalId)
-      if (record) {
-        return { bridge, record, rootPath: workspace.rootPath, workspaceId: workspace.id }
-      }
-    }
+    const { rootPath, workspaceId } = requireCallerOrSingleWorkspace(ctx, workspaceIdHint, 'proposal')
+    const bridge = bridgeFor(rootPath, workspaceId)
+    await bridge.sweepExpired()
+    const record = bridge.get(proposalId)
+    if (record) return { bridge, record, rootPath, workspaceId }
     throw new CodedError('NOT_FOUND', `Knowledge mutation proposal not found: ${proposalId}`)
   }
 
@@ -662,44 +854,53 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   }
 
   // ——— LIST_CONNECTIONS({}) → KnowledgeConnection[] ———
-  // Seeds a default local connection row when the registry is empty so Settings
-  // / Home always have something to show (token still user-supplied).
-  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, () => {
+  // Seeds/promotes the workspace-scoped local Markdown connection first. SiYuan
+  // rows remain readable legacy records, but they are no longer the default when
+  // the kernel is offline or absent.
+  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, (ctx) => {
     const store = new KnowledgeConnectionsStore()
-    ensureDefaultLocalConnection(store)
-    return store.list().map(toContractConnection)
+    const workspaceId = resolveListWorkspaceId(ctx)
+    if (workspaceId) {
+      ensureDefaultLocalMarkdownConnection(store, { workspaceId })
+    }
+    return store.list()
+      .filter((record) => connectionVisibleToWorkspace(record, workspaceId))
+      .map(toContractConnection)
   })
 
   // ——— CAPABILITIES({connectionId}) → KnowledgeCapabilities ———
-  server.handle(RPC_CHANNELS.knowledge.CAPABILITIES, (_ctx, args: KnowledgeConnectionArgs) =>
-    callProvider(args.connectionId, (provider) => provider.capabilities()),
+  server.handle(RPC_CHANNELS.knowledge.CAPABILITIES, (ctx, args: KnowledgeConnectionArgs) =>
+    callProvider(ctx, args.connectionId, (provider) => provider.capabilities()),
   )
 
   // ——— SEARCH({connectionId, input}) → SearchPage ———
-  server.handle(RPC_CHANNELS.knowledge.SEARCH, (_ctx, args: KnowledgeSearchArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.SEARCH, (ctx, args: KnowledgeSearchArgs) => {
     if (!args?.input || typeof args.input.query !== 'string') {
       throw new Error('knowledge.search: input.query must be a string')
     }
-    return callProvider(args.connectionId, (provider) => provider.search(args.input))
+    return callProvider(ctx, args.connectionId, (provider) => provider.search(args.input))
   })
 
   // ——— GET({connectionId, ref}) → KnowledgeNode ———
-  server.handle(RPC_CHANNELS.knowledge.GET, (_ctx, args: KnowledgeRefArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.GET, (ctx, args: KnowledgeRefArgs) => {
     assertKnowledgeRef(args?.ref)
-    return callProvider(args.connectionId, (provider) => provider.get(args.ref))
+    assertRefMatchesConnection(requireConnection(args.connectionId), args.ref, 'get')
+    return callProvider(ctx, args.connectionId, (provider) => provider.get(args.ref))
   })
 
   // ——— GET_CONTEXT({connectionId, ref, mode}) → ContextPayload ———
-  server.handle(RPC_CHANNELS.knowledge.GET_CONTEXT, (_ctx, args: KnowledgeGetContextArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.GET_CONTEXT, (ctx, args: KnowledgeGetContextArgs) => {
     assertKnowledgeRef(args?.ref)
+    assertRefMatchesConnection(requireConnection(args.connectionId), args.ref, 'getContext')
     assertContextMode(args.mode)
-    return callProvider(args.connectionId, (provider) => provider.getContext(args.ref, args.mode))
+    return callProvider(ctx, args.connectionId, (provider) => provider.getContext(args.ref, args.mode))
   })
 
   // ——— GET_BACKLINKS({connectionId, ref}) → ContextPayload['backlinks'] ———
-  server.handle(RPC_CHANNELS.knowledge.GET_BACKLINKS, async (_ctx, args: KnowledgeRefArgs) => {
+  server.handle(RPC_CHANNELS.knowledge.GET_BACKLINKS, async (ctx, args: KnowledgeRefArgs) => {
     assertKnowledgeRef(args?.ref)
-    const payload = await callProvider(args.connectionId, (provider) =>
+    assertRefMatchesConnection(requireConnection(args.connectionId), args.ref, 'getBacklinks')
+    const payload = await callProvider(ctx, args.connectionId, (provider) =>
       provider.getContext(args.ref, 'snapshot'),
     )
     return payload.backlinks
@@ -712,13 +913,18 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // (NOT_FOUND / CONNECTION_UNAVAILABLE via toTransportError).
   server.handle(
     RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
-    async (_ctx, args: KnowledgeConnectionArgs): Promise<KnowledgeNotebookInfo[]> => {
+    async (ctx, args: KnowledgeConnectionArgs): Promise<KnowledgeNotebookInfo[]> => {
       if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
         throw new CodedError('INVALID_REF', 'knowledge.listNotebooks: connectionId is required')
       }
       const record = requireConnection(args.connectionId)
-      const token = await readToken(record)
+      const scope = assertConnectionWorkspaceScope(ctx, record, 'listNotebooks')
       try {
+        if (record.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER) {
+          return await listLocalMarkdownNotebooks(resolveWorkspaceNotesRoot(scope.workspaceId))
+        }
+        assertSiyuanKnowledgeEnabled('listNotebooks')
+        const token = await readToken(record)
         const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
         const notebooks = await client.listNotebooks()
         return notebooks.map((notebook) => ({
@@ -739,7 +945,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // via requireConnection + readToken). REMOTE_ELIGIBLE workspace data.
   server.handle(
     RPC_CHANNELS.knowledge.LIST_TREE,
-    async (_ctx, args: KnowledgeListTreeArgs): Promise<ListDocTreeResult> => {
+    async (ctx, args: KnowledgeListTreeArgs): Promise<ListDocTreeResult> => {
       if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
         throw new CodedError('INVALID_REF', 'knowledge.listTree: connectionId is required')
       }
@@ -747,9 +953,14 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         throw new CodedError('INVALID_REF', 'knowledge.listTree: notebookId is required')
       }
       const record = requireConnection(args.connectionId)
-      const token = await readToken(record)
+      const scope = assertConnectionWorkspaceScope(ctx, record, 'listTree')
       const path = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
       try {
+        if (record.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER) {
+          return await listLocalMarkdownTree(resolveWorkspaceNotesRoot(scope.workspaceId), args.notebookId, path)
+        }
+        assertSiyuanKnowledgeEnabled('listTree')
+        const token = await readToken(record)
         const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
         return await client.listDocTree(args.notebookId, path)
       } catch (error) {
@@ -766,7 +977,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // path + name/title). No fake kind:'database' until an av-create API exists.
   server.handle(
     RPC_CHANNELS.knowledge.USER_CREATE,
-    async (_ctx, args: KnowledgeUserCreateArgs): Promise<KnowledgeUserCreateResult> => {
+    async (ctx, args: KnowledgeUserCreateArgs): Promise<KnowledgeUserCreateResult> => {
       if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
         throw new CodedError('INVALID_REF', 'knowledge.userCreate: connectionId is required')
       }
@@ -777,8 +988,16 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         )
       }
       const record = requireConnection(args.connectionId)
-      const token = await readToken(record)
+      const scope = assertConnectionWorkspaceScope(ctx, record, 'userCreate')
       try {
+        if (record.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER) {
+          if ('notebookId' in args && args.notebookId !== LOCAL_MARKDOWN_NOTEBOOK_ID) {
+            throw new KnowledgeError('NOT_FOUND', `Local Markdown notebook not found: ${args.notebookId}`)
+          }
+          return await createLocalMarkdownUserItem(resolveWorkspaceNotesRoot(scope.workspaceId), args)
+        }
+        assertSiyuanKnowledgeEnabled('userCreate')
+        const token = await readToken(record)
         const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
         if (args.op === 'notebook') {
           // No createNotebook on SiyuanKernelClient; do not add an ad-hoc POST.
@@ -828,12 +1047,15 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // (document/block markdown + path). Does not expand the write whitelist.
   server.handle(
     RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
-    async (_ctx, args: KnowledgeGetExportPayloadArgs): Promise<KnowledgeExportPayload> => {
+    async (ctx, args: KnowledgeGetExportPayloadArgs): Promise<KnowledgeExportPayload> => {
       if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
         throw new Error('knowledge.getExportPayload: connectionId is required')
       }
       assertKnowledgeRef(args?.ref)
       const ref = args.ref
+      const record = requireConnection(args.connectionId)
+      assertRefMatchesConnection(record, ref, 'getExportPayload')
+      assertConnectionWorkspaceScope(ctx, record, 'getExportPayload')
       const requested = Array.isArray(args.formats) && args.formats.length > 0
         ? args.formats
         : (['markdown', 'deepLink', 'id', 'hPath', 'blockKramdown'] as KnowledgeExportFormat[])
@@ -852,11 +1074,13 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
 
       if (want.id) payload.id = ref.id
       if (want.deepLink) {
-        payload.deepLink = siyuanDeepLink({
-          scheme: 'siyuan',
-          kind: ref.kind,
-          id: ref.id,
-        })
+        payload.deepLink = record.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER
+          ? `local-note://${ref.kind}/${encodeURIComponent(ref.id)}`
+          : siyuanDeepLink({
+              scheme: 'siyuan',
+              kind: ref.kind,
+              id: ref.id,
+            })
       }
 
       const needsContent = want.markdown || want.hPath || want.blockKramdown
@@ -865,7 +1089,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       const isFullSurface = ref.id === '__full__'
 
       if (needsContent && isContentKind && !isFullSurface) {
-        const node = await callProvider(args.connectionId, (provider) => provider.get(ref))
+        const node = await callProvider(ctx, args.connectionId, (provider) => provider.get(ref))
         if (want.markdown && typeof node.markdown === 'string') {
           payload.markdown = node.markdown
         }
@@ -893,7 +1117,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // siyuan-local row is updatable like any other.
   server.handle(
     RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
-    async (_ctx, args: KnowledgeUpdateConnectionArgs): Promise<KnowledgeConnection> => {
+    async (ctx, args: KnowledgeUpdateConnectionArgs): Promise<KnowledgeConnection> => {
       if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
         throw new CodedError('INVALID_REF', 'knowledge.updateConnection: connectionId is required')
       }
@@ -902,7 +1126,17 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       if (!record) {
         throw new CodedError('NOT_FOUND', `Knowledge connection not found: ${args.connectionId}`)
       }
+      assertConnectionWorkspaceScope(ctx, record, 'updateConnection')
 
+      if (record.provider === LOCAL_MARKDOWN_KNOWLEDGE_PROVIDER) {
+        if (args.baseUrl !== undefined && args.baseUrl !== record.baseUrl) {
+          throw new CodedError('UNSUPPORTED_OPERATION', 'knowledge.updateConnection: local-markdown baseUrl is internal')
+        }
+        const updated = store.setStatus(record.id, 'ok') ?? record
+        return toContractConnection(updated)
+      }
+
+      assertSiyuanKnowledgeEnabled('updateConnection')
       const nextBaseUrl = args.baseUrl !== undefined ? normalizeKnowledgeBaseUrl(args.baseUrl) : record.baseUrl
 
       const token = typeof args.token === 'string' && args.token.trim() ? args.token.trim() : undefined
@@ -927,16 +1161,17 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   )
 
   // ——— SNAPSHOT_CREATE({workspaceId, connectionId, ref, mode?, sessionId, provenance?}) → ContextSnapshot ———
-  server.handle(RPC_CHANNELS.knowledge.SNAPSHOT_CREATE, async (_ctx, args: KnowledgeSnapshotCreateArgs): Promise<ContextSnapshot> => {
-    const rootPath = requireWorkspaceRoot(args.workspaceId)
+  server.handle(RPC_CHANNELS.knowledge.SNAPSHOT_CREATE, async (ctx, args: KnowledgeSnapshotCreateArgs): Promise<ContextSnapshot> => {
+    const record = requireConnection(args.connectionId)
+    const { rootPath } = assertConnectionWorkspaceScope(ctx, record, 'snapshotCreate', args.workspaceId)
     assertKnowledgeRef(args?.ref)
+    assertRefMatchesConnection(record, args.ref, 'snapshotCreate')
     const mode = args.mode ?? 'snapshot'
     assertContextMode(mode)
     if (typeof args.sessionId !== 'string' || args.sessionId.length === 0) {
       throw new Error('knowledge.snapshotCreate: sessionId is required')
     }
-    const record = requireConnection(args.connectionId)
-    const payload = await callProvider(args.connectionId, (provider) =>
+    const payload = await callProvider(ctx, args.connectionId, (provider) =>
       provider.getContext(args.ref, mode),
     )
     if (args.provenance) payload.provenance = args.provenance
@@ -951,8 +1186,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— SNAPSHOT_GET({workspaceId, snapshotId}) → ContextSnapshot ———
-  server.handle(RPC_CHANNELS.knowledge.SNAPSHOT_GET, (_ctx, args: KnowledgeSnapshotGetArgs): ContextSnapshot => {
-    const rootPath = requireWorkspaceRoot(args.workspaceId)
+  server.handle(RPC_CHANNELS.knowledge.SNAPSHOT_GET, (ctx, args: KnowledgeSnapshotGetArgs): ContextSnapshot => {
+    const { rootPath } = requireCallerWorkspaceRoot(ctx, args.workspaceId, 'snapshotGet')
     const record = new KnowledgeContextSnapshotsStore(rootPath).get(args.snapshotId)
     if (!record) throw new CodedError('NOT_FOUND', `Knowledge context snapshot not found: ${args.snapshotId}`)
     return toContextSnapshot(record)
@@ -963,7 +1198,16 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // running:false (the channel's answer), never a thrown provider error.
   // connectionId is optional: when omitted (or unknown), still report binary
   // detection + health against the default local base URL.
-  server.handle(RPC_CHANNELS.knowledge.ENGINE_STATUS, async (_ctx, args?: Partial<KnowledgeConnectionArgs>): Promise<KnowledgeEngineStatus> => {
+  server.handle(RPC_CHANNELS.knowledge.ENGINE_STATUS, async (ctx, args?: Partial<KnowledgeConnectionArgs>): Promise<KnowledgeEngineStatus> => {
+    if (!isSiyuanKnowledgeEnabled()) {
+      return {
+        mode: 'external-local',
+        running: false,
+        installUrl: SIYUAN_INSTALL_URL,
+        starting: false,
+        reason: 'CAPABILITY_DISABLED',
+      }
+    }
     const bootstrap = await getKernelBootstrapStatus({ log: log ?? undefined })
     const extras = {
       binaryFound: bootstrap.binaryFound,
@@ -975,9 +1219,11 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     const connectionId = typeof args?.connectionId === 'string' && args.connectionId.length > 0
       ? args.connectionId
       : null
+    const store = new KnowledgeConnectionsStore()
+    const workspaceId = resolveListWorkspaceId(ctx)
     const record = connectionId
-      ? new KnowledgeConnectionsStore().get(connectionId)
-      : new KnowledgeConnectionsStore().list()[0] ?? null
+      ? store.get(connectionId)
+      : store.list().find((candidate) => connectionVisibleToWorkspace(candidate, workspaceId)) ?? null
 
     const g2Blocked =
       !bootstrap.running && loadG2AcceptedVariantFromDisk() !== 'C'
@@ -993,6 +1239,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         ...g2Blocked,
       }
     }
+
+    assertConnectionWorkspaceScope(ctx, record, 'engineStatus')
 
     try {
       // Construction itself may fail (missing token / bad baseUrl) — probe semantics
@@ -1019,16 +1267,19 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // User CTA / explicit start: seed default connection, spawn or open SiYuan if installed.
   server.handle(
     RPC_CHANNELS.knowledge.ENGINE_START,
-    async (_ctx, args?: { connectionId?: string; workspaceId?: string }): Promise<KnowledgeEngineStartResult> => {
-      const workspaceId =
-        typeof args?.workspaceId === 'string' && args.workspaceId.length > 0
-          ? args.workspaceId
-          : undefined
+    async (ctx, args?: { connectionId?: string; workspaceId?: string }): Promise<KnowledgeEngineStartResult> => {
+      assertSiyuanKnowledgeEnabled('engineStart')
+      const { workspaceId } = requireCallerOrSingleWorkspace(ctx, args?.workspaceId, 'engineStart')
+      if (typeof args?.connectionId === 'string' && args.connectionId.length > 0) {
+        assertConnectionWorkspaceScope(ctx, requireConnection(args.connectionId), 'engineStart', workspaceId)
+      }
       // Prefer binding the default connection credential to the active workspace when provided.
-      if (workspaceId) {
+      {
         const store = new KnowledgeConnectionsStore()
         const existing = store.get(SIYUAN_LOCAL_CONNECTION_ID)
-        if (!existing) {
+        if (existing) {
+          assertConnectionWorkspaceScope(ctx, existing, 'engineStart', workspaceId)
+        } else {
           ensureDefaultLocalConnection(store, { workspaceId })
         }
       }
@@ -1051,6 +1302,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— DETECT_ENGINE() → KnowledgeDetectEngineResult (LOCAL_ONLY) ———
   // Install-path + default-port probe only. Never downloads or spawns.
   server.handle(RPC_CHANNELS.knowledge.DETECT_ENGINE, async (): Promise<KnowledgeDetectEngineResult> => {
+    assertSiyuanKnowledgeEnabled('detectEngine')
     const result = await detectSiyuanEngine()
     return {
       installed: result.installed,
@@ -1066,36 +1318,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— METRICS_GET({workspaceId?}) → KnowledgeMetricsSnapshot (REMOTE_ELIGIBLE) ———
   server.handle(
     RPC_CHANNELS.knowledge.METRICS_GET,
-    async (_ctx, args?: { workspaceId?: string }): Promise<KnowledgeMetricsSnapshot> => {
-      const workspaceId =
-        typeof args?.workspaceId === 'string' && args.workspaceId.length > 0
-          ? args.workspaceId
-          : undefined
-      let rootPath: string | null = null
-      if (workspaceId) {
-        rootPath = requireWorkspaceRoot(workspaceId)
-      } else {
-        const workspaces = getWorkspaces()
-        if (workspaces.length === 1 && workspaces[0]) rootPath = workspaces[0].rootPath
-      }
-      if (!rootPath) {
-        // Fail-soft empty snapshot when no workspace context (matches store read semantics).
-        return {
-          version: 1,
-          updatedAt: new Date().toISOString(),
-          counters: {
-            connectionsActive: 0,
-            publicationsTotal: 0,
-            publicationsLast7d: 0,
-            automationProposalsTotal: 0,
-            automationRunsTriggered: 0,
-            knowledgeSurfaceOpens: 0,
-            viewRunsTotal: 0,
-            watchTicksTotal: 0,
-          },
-          daily: {},
-        }
-      }
+    async (ctx, args?: { workspaceId?: string }): Promise<KnowledgeMetricsSnapshot> => {
+      const { rootPath } = requireCallerOrSingleWorkspace(ctx, args?.workspaceId, 'metricsGet')
       return new KnowledgeMetricsStore(rootPath).snapshot()
     },
   )
@@ -1107,14 +1331,15 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // -------------------------------------------------------------------------
 
   // ——— PROPOSE_MUTATION({connectionId, input}) → MutationProposal ———
-  server.handle(RPC_CHANNELS.knowledge.PROPOSE_MUTATION, async (_ctx, args: KnowledgeProposeMutationArgs): Promise<MutationProposal> => {
+  server.handle(RPC_CHANNELS.knowledge.PROPOSE_MUTATION, async (ctx, args: KnowledgeProposeMutationArgs): Promise<MutationProposal> => {
     const record = requireConnection(args.connectionId)
     const input = args?.input
     if (!input || typeof input !== 'object') {
       throw new CodedError('INVALID_REF', 'knowledge.proposeMutation: input with targetRef and ops is required')
     }
     assertKnowledgeRef(input.targetRef)
-    const { rootPath, workspaceId } = requireConnectionWorkspaceRoot(record)
+    assertRefMatchesConnection(record, input.targetRef, 'proposeMutation')
+    const { rootPath, workspaceId } = assertLocalConnectionWorkspaceScope(ctx, record, 'proposeMutation')
     try {
       return await bridgeFor(rootPath, workspaceId).propose({ connectionId: args.connectionId, input })
     } catch (error) {
@@ -1129,41 +1354,29 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— APPROVE_PROPOSAL({proposalId}) → MutationProposal ———
-  server.handle(RPC_CHANNELS.knowledge.APPROVE_PROPOSAL, async (_ctx, args: KnowledgeProposalArgs): Promise<MutationProposal> => {
+  server.handle(RPC_CHANNELS.knowledge.APPROVE_PROPOSAL, async (ctx, args: KnowledgeProposalArgs): Promise<MutationProposal> => {
     const proposalId = requireProposalId(args)
-    const { bridge } = await locateProposalBridge(proposalId)
+    const { bridge } = await locateProposalBridgeInWorkspace(ctx, proposalId)
     return withProposalTransitions(() => bridge.approve(proposalId))
   })
 
   // ——— REJECT_PROPOSAL({proposalId}) → { ok: true } ———
-  server.handle(RPC_CHANNELS.knowledge.REJECT_PROPOSAL, async (_ctx, args: KnowledgeProposalArgs): Promise<{ ok: true }> => {
+  server.handle(RPC_CHANNELS.knowledge.REJECT_PROPOSAL, async (ctx, args: KnowledgeProposalArgs): Promise<{ ok: true }> => {
     const proposalId = requireProposalId(args)
-    const { bridge } = await locateProposalBridge(proposalId)
+    const { bridge } = await locateProposalBridgeInWorkspace(ctx, proposalId)
     return withProposalTransitions(() => bridge.reject(proposalId))
   })
 
   // ——— APPLY_PROPOSAL({proposalId, workspaceId?}) → ApplyResult ———
   // After a successful apply, fail-soft auto-finalize any matching publish draft that is
   // still 'publishing' for this proposalId (so UI chip works without a separate finalize hop).
-  server.handle(RPC_CHANNELS.knowledge.APPLY_PROPOSAL, async (_ctx, args: KnowledgeApplyProposalArgs): Promise<ApplyResult> => {
+  server.handle(RPC_CHANNELS.knowledge.APPLY_PROPOSAL, async (ctx, args: KnowledgeApplyProposalArgs): Promise<ApplyResult> => {
     const proposalId = requireProposalId(args)
-    let rootPath: string
-    let workspaceId: string | undefined
-    let bridge: KnowledgeBridgeService
-    if (args?.workspaceId) {
-      workspaceId = args.workspaceId
-      rootPath = requireWorkspaceRoot(workspaceId)
-      bridge = bridgeFor(rootPath, workspaceId)
-      await bridge.sweepExpired()
-      if (!bridge.get(proposalId)) {
-        throw new CodedError('NOT_FOUND', `Knowledge mutation proposal not found: ${proposalId}`)
-      }
-    } else {
-      const located = await locateProposalBridge(proposalId)
-      bridge = located.bridge
-      rootPath = located.rootPath
-      workspaceId = located.workspaceId
-    }
+    const { bridge, rootPath, workspaceId } = await locateProposalBridgeInWorkspace(
+      ctx,
+      proposalId,
+      args?.workspaceId,
+    )
     const result = await withProposalTransitions(() => bridge.apply(proposalId))
     if ((result.status === 'applied' || result.applied) && rootPath) {
       await tryAutoFinalizePublication({
@@ -1177,30 +1390,24 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— ROLLBACK_PROPOSAL({proposalId}) → ApplyResult ———
-  server.handle(RPC_CHANNELS.knowledge.ROLLBACK_PROPOSAL, async (_ctx, args: KnowledgeProposalArgs): Promise<ApplyResult> => {
+  server.handle(RPC_CHANNELS.knowledge.ROLLBACK_PROPOSAL, async (ctx, args: KnowledgeProposalArgs): Promise<ApplyResult> => {
     const proposalId = requireProposalId(args)
-    const { bridge } = await locateProposalBridge(proposalId)
+    const { bridge } = await locateProposalBridgeInWorkspace(ctx, proposalId)
     return withProposalTransitions(() => bridge.rollback(proposalId))
   })
 
   // ——— GET_PROPOSAL({proposalId}) → MutationProposal ———
-  server.handle(RPC_CHANNELS.knowledge.GET_PROPOSAL, async (_ctx, args: KnowledgeProposalArgs): Promise<MutationProposal> => {
-    const { record } = await locateProposalBridge(requireProposalId(args))
+  server.handle(RPC_CHANNELS.knowledge.GET_PROPOSAL, async (ctx, args: KnowledgeProposalArgs): Promise<MutationProposal> => {
+    const { record } = await locateProposalBridgeInWorkspace(ctx, requireProposalId(args))
     return record
   })
 
   // ——— LIST_PROPOSALS({workspaceId?, connectionId?, status?}) → MutationProposal[] ———
-  server.handle(RPC_CHANNELS.knowledge.LIST_PROPOSALS, async (_ctx, args: KnowledgeListProposalsArgs = {}): Promise<MutationProposal[]> => {
-    const roots = args.workspaceId
-      ? [{ workspaceId: args.workspaceId, rootPath: requireWorkspaceRoot(args.workspaceId) }]
-      : getWorkspaces().map((workspace) => ({ workspaceId: workspace.id, rootPath: workspace.rootPath }))
-    const proposals: MutationProposal[] = []
-    for (const { workspaceId, rootPath } of roots) {
-      const bridge = bridgeFor(rootPath, workspaceId)
-      await bridge.sweepExpired()
-      proposals.push(...bridge.list({ status: args.status, connectionId: args.connectionId }))
-    }
-    return proposals
+  server.handle(RPC_CHANNELS.knowledge.LIST_PROPOSALS, async (ctx, args: KnowledgeListProposalsArgs = {}): Promise<MutationProposal[]> => {
+    const { rootPath, workspaceId } = requireCallerOrSingleWorkspace(ctx, args.workspaceId, 'listProposals')
+    const bridge = bridgeFor(rootPath, workspaceId)
+    await bridge.sweepExpired()
+    return bridge.list({ status: args.status, connectionId: args.connectionId })
   })
 
   // -------------------------------------------------------------------------
@@ -1261,10 +1468,18 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
 
   async function loadSessionMessages(
     sessionId: string | undefined,
+    expectedWorkspaceId: string,
   ): Promise<Array<{ id: string; role: string; content: string }> | undefined> {
     if (!sessionId) return undefined
     try {
       const session = await deps.sessionManager.getSession?.(sessionId)
+      const actualWorkspaceId = (session as { workspaceId?: unknown } | null)?.workspaceId
+      if (typeof actualWorkspaceId !== 'string' || actualWorkspaceId !== expectedWorkspaceId) {
+        throw new CodedError(
+          'INVALID_REF',
+          `knowledge.publishDistill: session '${sessionId}' does not belong to workspace '${expectedWorkspaceId}'`,
+        )
+      }
       const raw = (session as { messages?: Array<Record<string, unknown>> } | null)?.messages
       if (!Array.isArray(raw)) return undefined
       return raw.map((m, index) => {
@@ -1274,19 +1489,24 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         const content = typeof m.content === 'string' ? m.content : ''
         return { id, role, content }
       })
-    } catch {
+    } catch (error) {
+      if (error instanceof CodedError) throw error
       return undefined
     }
   }
 
-  function resolvePublishWorkspace(connectionId: string | undefined): {
+  function resolvePublishWorkspace(
+    connectionId: string | undefined,
+    ctx?: KnowledgeRequestContext,
+    workspaceIdHint?: string | null,
+  ): {
     rootPath: string
     workspaceId: string
     record?: KnowledgeConnectionRecord
   } {
     if (connectionId) {
       const record = requireConnection(connectionId)
-      const ws = requireConnectionWorkspaceRoot(record)
+      const ws = assertLocalConnectionWorkspaceScope(ctx, record, 'publish', workspaceIdHint)
       return { ...ws, record }
     }
     const workspaces = getWorkspaces()
@@ -1296,15 +1516,15 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   }
 
   // ——— PUBLISH_DISTILL({connectionId, sessionId?, runIds?, messages?, model?}) → PublishDraft ———
-  server.handle(RPC_CHANNELS.knowledge.PUBLISH_DISTILL, async (_ctx, args: KnowledgePublishDistillArgs): Promise<PublishDraft> => {
+  server.handle(RPC_CHANNELS.knowledge.PUBLISH_DISTILL, async (ctx, args: KnowledgePublishDistillArgs): Promise<PublishDraft> => {
     if (!args?.connectionId || typeof args.connectionId !== 'string') {
       throw new CodedError('INVALID_REF', 'knowledge.publishDistill: connectionId is required')
     }
     const record = requireConnection(args.connectionId)
-    const { rootPath } = requireConnectionWorkspaceRoot(record)
+    const { rootPath, workspaceId } = assertLocalConnectionWorkspaceScope(ctx, record, 'publishDistill')
     let messages = args.messages
     if (!messages?.length && args.sessionId) {
-      messages = await loadSessionMessages(args.sessionId)
+      messages = await loadSessionMessages(args.sessionId, workspaceId)
     }
     try {
       return await publications.distill({
@@ -1322,20 +1542,20 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— PUBLISH_GET_DRAFT({draftId, connectionId?}) → PublishDraft | null ———
-  server.handle(RPC_CHANNELS.knowledge.PUBLISH_GET_DRAFT, (_ctx, args: KnowledgePublishDraftArgs): PublishDraft | null => {
+  server.handle(RPC_CHANNELS.knowledge.PUBLISH_GET_DRAFT, (ctx, args: KnowledgePublishDraftArgs): PublishDraft | null => {
     if (typeof args?.draftId !== 'string' || args.draftId.length === 0) {
       throw new CodedError('INVALID_REF', 'knowledge.publishGetDraft: draftId is required')
     }
-    const { rootPath } = resolvePublishWorkspace(args.connectionId)
+    const { rootPath } = resolvePublishWorkspace(args.connectionId, ctx)
     return publications.getDraft(rootPath, args.draftId)
   })
 
   // ——— PUBLISH_UPDATE_DRAFT({draftId, title?, markdown?, connectionId?}) → PublishDraft ———
-  server.handle(RPC_CHANNELS.knowledge.PUBLISH_UPDATE_DRAFT, (_ctx, args: KnowledgePublishUpdateDraftArgs): PublishDraft => {
+  server.handle(RPC_CHANNELS.knowledge.PUBLISH_UPDATE_DRAFT, (ctx, args: KnowledgePublishUpdateDraftArgs): PublishDraft => {
     if (typeof args?.draftId !== 'string' || args.draftId.length === 0) {
       throw new CodedError('INVALID_REF', 'knowledge.publishUpdateDraft: draftId is required')
     }
-    const { rootPath } = resolvePublishWorkspace(args.connectionId)
+    const { rootPath } = resolvePublishWorkspace(args.connectionId, ctx)
     try {
       return publications.updateDraft(rootPath, args.draftId, {
         title: args.title,
@@ -1347,7 +1567,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— PUBLISH_PREPARE({draftId, connectionId, notebookId, path, adoptExisting?}) → PublishPrepareResult ———
-  server.handle(RPC_CHANNELS.knowledge.PUBLISH_PREPARE, async (_ctx, args: KnowledgePublishPrepareArgs): Promise<PublishPrepareResult> => {
+  server.handle(RPC_CHANNELS.knowledge.PUBLISH_PREPARE, async (ctx, args: KnowledgePublishPrepareArgs): Promise<PublishPrepareResult> => {
     if (!args?.connectionId || typeof args.draftId !== 'string') {
       throw new CodedError('INVALID_REF', 'knowledge.publishPrepare: connectionId and draftId are required')
     }
@@ -1355,8 +1575,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       throw new CodedError('INVALID_REF', 'knowledge.publishPrepare: notebookId and path are required')
     }
     const record = requireConnection(args.connectionId)
-    const { rootPath } = requireConnectionWorkspaceRoot(record)
-    const provider = await resolveProvider(args.connectionId)
+    const { rootPath } = assertLocalConnectionWorkspaceScope(ctx, record, 'publishPrepare')
+    const provider = await resolveProvider(args.connectionId, ctx)
     try {
       return await publications.prepare({
         workspaceRoot: rootPath,
@@ -1372,13 +1592,13 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— PUBLISH_APPLY({draftId, connectionId}) → PublishApplyResult ———
-  server.handle(RPC_CHANNELS.knowledge.PUBLISH_APPLY, async (_ctx, args: KnowledgePublishApplyArgs): Promise<PublishApplyResult> => {
+  server.handle(RPC_CHANNELS.knowledge.PUBLISH_APPLY, async (ctx, args: KnowledgePublishApplyArgs): Promise<PublishApplyResult> => {
     if (!args?.connectionId || typeof args.draftId !== 'string') {
       throw new CodedError('INVALID_REF', 'knowledge.publishApply: connectionId and draftId are required')
     }
     const record = requireConnection(args.connectionId)
-    const { rootPath, workspaceId } = requireConnectionWorkspaceRoot(record)
-    const provider = await resolveProvider(args.connectionId)
+    const { rootPath, workspaceId } = assertLocalConnectionWorkspaceScope(ctx, record, 'publishApply')
+    const provider = await resolveProvider(args.connectionId, ctx)
     const bridge = bridgeFor(rootPath, workspaceId)
     try {
       return await publications.apply({
@@ -1394,7 +1614,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— PUBLISH_FINALIZE({draftId, proposalId, connectionId?, appliedDocRef?}) → PublishApplyResult ———
-  server.handle(RPC_CHANNELS.knowledge.PUBLISH_FINALIZE, async (_ctx, args: KnowledgePublishFinalizeArgs): Promise<PublishApplyResult> => {
+  server.handle(RPC_CHANNELS.knowledge.PUBLISH_FINALIZE, async (ctx, args: KnowledgePublishFinalizeArgs): Promise<PublishApplyResult> => {
     if (typeof args?.draftId !== 'string' || typeof args?.proposalId !== 'string') {
       throw new CodedError('INVALID_REF', 'knowledge.publishFinalize: draftId and proposalId are required')
     }
@@ -1402,26 +1622,9 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     let workspaceId: string | undefined
     if (args.connectionId) {
       const record = requireConnection(args.connectionId)
-      ;({ rootPath, workspaceId } = requireConnectionWorkspaceRoot(record))
+      ;({ rootPath, workspaceId } = assertLocalConnectionWorkspaceScope(ctx, record, 'publishFinalize'))
     } else {
-      // Prefer single-workspace install; otherwise require connectionId.
-      const workspaces = getWorkspaces()
-      const only = workspaces[0]
-      if (workspaces.length === 1 && only) {
-        rootPath = only.rootPath
-        workspaceId = only.id
-      } else {
-        // Best-effort: scan workspaces for a draft file via publication service.
-        const hit = workspaces.find((ws) => publications.getDraft(ws.rootPath, args.draftId) != null)
-        if (!hit) {
-          throw new CodedError(
-            'INVALID_REF',
-            'knowledge.publishFinalize: connectionId is required when multiple workspaces are present',
-          )
-        }
-        rootPath = hit.rootPath
-        workspaceId = hit.id
-      }
+      ;({ rootPath, workspaceId } = requireCallerOrSingleWorkspace(ctx, undefined, 'publishFinalize'))
     }
 
     // Contract: finalize only after P3 apply — proposal must be 'applied'.
@@ -1462,8 +1665,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— PUBLISH_LIST({connectionId?, sessionId?, runId?}) → PublicationRecord[] ———
-  server.handle(RPC_CHANNELS.knowledge.PUBLISH_LIST, (_ctx, args: KnowledgePublishListArgs = {}): PublicationRecord[] => {
-    const { rootPath } = resolvePublishWorkspace(args.connectionId)
+  server.handle(RPC_CHANNELS.knowledge.PUBLISH_LIST, (ctx, args: KnowledgePublishListArgs = {}): PublicationRecord[] => {
+    const { rootPath } = resolvePublishWorkspace(args.connectionId, ctx)
     return publications.listPublications(rootPath, {
       sessionId: args.sessionId,
       runId: args.runId,
@@ -1471,8 +1674,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   // ——— LIST_LINKS({connectionId?, craftId?, knowledgeId?}) → KnowledgeLinkRecord[] ———
-  server.handle(RPC_CHANNELS.knowledge.LIST_LINKS, (_ctx, args: KnowledgeListLinksArgs = {}): KnowledgeLinkRecord[] => {
-    const { rootPath } = resolvePublishWorkspace(args.connectionId)
+  server.handle(RPC_CHANNELS.knowledge.LIST_LINKS, (ctx, args: KnowledgeListLinksArgs = {}): KnowledgeLinkRecord[] => {
+    const { rootPath } = resolvePublishWorkspace(args.connectionId, ctx)
     return publications.listLinks(rootPath, {
       craftId: args.craftId,
       knowledgeId: args.knowledgeId,
@@ -1483,23 +1686,27 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // P5 saved knowledge views + work envelopes (K-09 §3.5 / S-08)
   // -------------------------------------------------------------------------
 
-  function envelopesStoreFor(connectionId?: string): KnowledgeWorkEnvelopesStore {
-    const { rootPath } = resolvePublishWorkspace(connectionId)
+  function envelopesStoreFor(connectionId?: string, ctx?: KnowledgeRequestContext): KnowledgeWorkEnvelopesStore {
+    const { rootPath } = resolvePublishWorkspace(connectionId, ctx)
     return new KnowledgeWorkEnvelopesStore(rootPath)
   }
 
   function resolveViewsWorkspace(args: {
     connectionId?: string
     workspaceId?: string
-  }): { rootPath: string; workspaceId: string } {
+  }, ctx?: KnowledgeRequestContext): { rootPath: string; workspaceId: string } {
     if (args.workspaceId) {
-      return { rootPath: requireWorkspaceRoot(args.workspaceId), workspaceId: args.workspaceId }
+      if (args.connectionId) {
+        const record = requireConnection(args.connectionId)
+        return assertLocalConnectionWorkspaceScope(ctx, record, 'views', args.workspaceId)
+      }
+      return requireCallerOrSingleWorkspace(ctx, args.workspaceId, 'views')
     }
     if (args.connectionId) {
       const record = requireConnection(args.connectionId)
-      return requireConnectionWorkspaceRoot(record)
+      return assertLocalConnectionWorkspaceScope(ctx, record, 'views')
     }
-    return resolvePublishWorkspace(undefined)
+    return resolvePublishWorkspace(undefined, ctx)
   }
 
   /**
@@ -1576,23 +1783,23 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— ENVELOPE_GET({connectionId?, ref}) → envelope | null ———
   server.handle(
     RPC_CHANNELS.knowledge.ENVELOPE_GET,
-    (_ctx, args: KnowledgeEnvelopeGetArgs): KnowledgeWorkEnvelope | null => {
+    (ctx, args: KnowledgeEnvelopeGetArgs): KnowledgeWorkEnvelope | null => {
       assertKnowledgeRef(args?.ref)
-      return envelopesStoreFor(args.connectionId).get(args.ref)
+      return envelopesStoreFor(args.connectionId, ctx).get(args.ref)
     },
   )
 
   // ——— ENVELOPE_UPSERT({connectionId?, envelope}) → envelope ———
   server.handle(
     RPC_CHANNELS.knowledge.ENVELOPE_UPSERT,
-    (_ctx, args: KnowledgeEnvelopeUpsertArgs): KnowledgeWorkEnvelope => {
+    (ctx, args: KnowledgeEnvelopeUpsertArgs): KnowledgeWorkEnvelope => {
       const envelope = args?.envelope
       if (!envelope || typeof envelope !== 'object') {
         throw new CodedError('INVALID_REF', 'knowledge.envelopeUpsert: envelope is required')
       }
       assertKnowledgeRef(envelope.knowledgeRef)
       const now = Date.now()
-      const store = envelopesStoreFor(args.connectionId)
+      const store = envelopesStoreFor(args.connectionId, ctx)
       return store.upsert({
         knowledgeRef: envelope.knowledgeRef,
         status: envelope.status,
@@ -1609,16 +1816,16 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— ENVELOPE_LIST({connectionId?}) → envelope[] ———
   server.handle(
     RPC_CHANNELS.knowledge.ENVELOPE_LIST,
-    (_ctx, args: KnowledgeEnvelopeListArgs = {}): KnowledgeWorkEnvelope[] => {
-      return envelopesStoreFor(args.connectionId).list()
+    (ctx, args: KnowledgeEnvelopeListArgs = {}): KnowledgeWorkEnvelope[] => {
+      return envelopesStoreFor(args.connectionId, ctx).list()
     },
   )
 
   // ——— VIEWS_LIST({connectionId?}) → ViewConfig[] (domain knowledge only) ———
   server.handle(
     RPC_CHANNELS.knowledge.VIEWS_LIST,
-    (_ctx, args: KnowledgeViewsListArgs = {}): ViewConfig[] => {
-      const { rootPath } = resolveViewsWorkspace({ connectionId: args.connectionId })
+    (ctx, args: KnowledgeViewsListArgs = {}): ViewConfig[] => {
+      const { rootPath } = resolveViewsWorkspace({ connectionId: args.connectionId }, ctx)
       return listViewsFromStorage(rootPath, 'knowledge')
     },
   )
@@ -1626,7 +1833,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— VIEW_RUN({connectionId, viewId, workspaceId?}) → { items, view } ———
   server.handle(
     RPC_CHANNELS.knowledge.VIEW_RUN,
-    async (_ctx, args: KnowledgeViewRunArgs): Promise<KnowledgeViewRunResult> => {
+    async (ctx, args: KnowledgeViewRunArgs): Promise<KnowledgeViewRunResult> => {
       if (!args?.connectionId || typeof args.connectionId !== 'string') {
         throw new CodedError('INVALID_REF', 'knowledge.viewRun: connectionId is required')
       }
@@ -1636,7 +1843,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       const { rootPath } = resolveViewsWorkspace({
         connectionId: args.connectionId,
         workspaceId: args.workspaceId,
-      })
+      }, ctx)
       const views = listViewsFromStorage(rootPath, 'knowledge')
       const view = views.find((v) => v.id === args.viewId)
       if (!view) {
@@ -1644,7 +1851,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       }
 
       const searchInput = searchInputFromKnowledgeFilter(view.knowledgeFilter)
-      const page = await callProvider(args.connectionId, (provider) => provider.search(searchInput))
+      const page = await callProvider(ctx, args.connectionId, (provider) => provider.search(searchInput))
       let items = page.items ?? []
 
       // Optional expression post-filter when expression is not the trivial `true`.
@@ -1653,7 +1860,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         const compiled = compileView(view)
         if (compiled) {
           const envelopes = new KnowledgeWorkEnvelopesStore(rootPath)
-          const provider = await resolveProvider(args.connectionId)
+          const provider = await resolveProvider(args.connectionId, ctx)
           const filtered: SearchHit[] = []
           for (const hit of items) {
             let node = null
@@ -1687,7 +1894,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       // Enrich attributes for non-notebook groupBy (topic/status/…) so UI can bucket.
       const groupBy = (view.groupBy ?? '').trim()
       if (groupBy && groupBy !== 'notebook' && items.length > 0) {
-        const provider = await resolveProvider(args.connectionId)
+        const provider = await resolveProvider(args.connectionId, ctx)
         const enrichLimit = Math.min(items.length, 100)
         const enriched: KnowledgeViewHit[] = []
         for (let i = 0; i < items.length; i++) {
@@ -1723,7 +1930,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ALWAYS proposeMutation via bridge — never apply automatically.
   server.handle(
     RPC_CHANNELS.knowledge.VIEW_SET_ATTRIBUTE,
-    async (_ctx, args: KnowledgeViewSetAttributeArgs): Promise<{ proposalId: string }> => {
+    async (ctx, args: KnowledgeViewSetAttributeArgs): Promise<{ proposalId: string }> => {
       if (!args?.connectionId || typeof args.connectionId !== 'string') {
         throw new CodedError('INVALID_REF', 'knowledge.viewSetAttribute: connectionId is required')
       }
@@ -1735,7 +1942,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         throw new CodedError('INVALID_REF', 'knowledge.viewSetAttribute: value must be a string')
       }
       const record = requireConnection(args.connectionId)
-      const { rootPath, workspaceId } = requireConnectionWorkspaceRoot(record)
+      assertRefMatchesConnection(record, args.ref, 'viewSetAttribute')
+      const { rootPath, workspaceId } = assertLocalConnectionWorkspaceScope(ctx, record, 'viewSetAttribute')
       // Mutation allowlist requires ^(craft-|knowledge-). View presets may use bare
       // domain names (workflow_status) — prefix knowledge- when needed.
       const attrName = isAllowedAttributeName(args.name) ? args.name : `knowledge-${args.name}`
@@ -1784,10 +1992,10 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         throw new CodedError('INVALID_REF', 'knowledge.watch: workspaceId is required')
       }
       const record = requireConnection(args.connectionId)
-      const rootPath = requireWorkspaceRoot(args.workspaceId)
+      const { rootPath, workspaceId } = assertConnectionWorkspaceScope(ctx, record, 'watch', args.workspaceId)
       // Ensure bridge+provider resolver are registered for automation executor path.
-      bridgeFor(rootPath, args.workspaceId)
-      registerKnowledgeProviderResolver(rootPath, resolveProvider)
+      bridgeFor(rootPath, workspaceId)
+      registerKnowledgeProviderResolver(rootPath, (connectionId) => resolveProvider(connectionId, { workspaceId }))
 
       const intervalMs =
         typeof args.intervalMs === 'number' && args.intervalMs >= 5_000 ? args.intervalMs : 60_000
@@ -1796,18 +2004,18 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
 
       startKnowledgeWatch({
         connectionId: args.connectionId,
-        workspaceId: args.workspaceId,
+        workspaceId,
         workspaceRoot: rootPath,
         intervalMs,
         clientId: ctx.clientId,
-        getProvider: () => resolveProvider(args.connectionId!),
+        getProvider: () => resolveProvider(args.connectionId!, { workspaceId }),
         onEvent: async (event, payload) => {
           // Fan-out to renderer (existing knowledge:changed) for UI freshness
           if (payload.ref) {
             pushTyped(
               server,
               RPC_CHANNELS.knowledge.CHANGED,
-              { to: 'workspace', workspaceId: args.workspaceId! },
+              { to: 'workspace', workspaceId },
               {
                 ref: payload.ref,
                 change: event === 'KnowledgeDocumentCreated' ? 'created' : 'updated',
@@ -1816,7 +2024,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
           }
           // Emit into AutomationSystem
           if (emit) {
-            await emit(args.workspaceId!, event, {
+            await emit(workspaceId, event, {
               ...payload,
               connectionId: args.connectionId,
             })
@@ -1830,14 +2038,15 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— UNWATCH({connectionId, workspaceId}) → { ok: true } ———
   server.handle(
     RPC_CHANNELS.knowledge.UNWATCH,
-    async (_ctx, args: { connectionId?: string; workspaceId?: string }) => {
+    async (ctx, args: { connectionId?: string; workspaceId?: string }) => {
       if (!args?.connectionId || typeof args.connectionId !== 'string') {
         throw new CodedError('INVALID_REF', 'knowledge.unwatch: connectionId is required')
       }
       if (!args?.workspaceId || typeof args.workspaceId !== 'string') {
         throw new CodedError('INVALID_REF', 'knowledge.unwatch: workspaceId is required')
       }
-      const rootPath = requireWorkspaceRoot(args.workspaceId)
+      const record = requireConnection(args.connectionId)
+      const { rootPath } = assertConnectionWorkspaceScope(ctx, record, 'unwatch', args.workspaceId)
       const stopped = stopKnowledgeWatch(rootPath, args.connectionId)
       return { ok: true as const, stopped }
     },
@@ -1849,15 +2058,22 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // prefix in the named notebook when present, else the first open notebook.
   server.handle(
     RPC_CHANNELS.knowledge.MIGRATE_NOTES,
-    async (_ctx, args: MigrateNotesArgs): Promise<MigrateNotesResult> => {
+    async (ctx, args: MigrateNotesArgs): Promise<MigrateNotesResult> => {
       if (!args?.workspaceId || typeof args.workspaceId !== 'string') {
         throw new Error('knowledge.migrateNotes: workspaceId is required')
       }
       if (!args?.connectionId || typeof args.connectionId !== 'string') {
         throw new Error('knowledge.migrateNotes: connectionId is required')
       }
-      const rootPath = requireWorkspaceRoot(args.workspaceId)
       const record = requireConnection(args.connectionId)
+      assertSiyuanKnowledgeEnabled('migrateNotes')
+      if (record.provider !== 'siyuan') {
+        throw new CodedError(
+          'UNSUPPORTED_OPERATION',
+          `knowledge.migrateNotes: connection '${record.id}' provider '${record.provider}' is not supported for SiYuan migration`,
+        )
+      }
+      const { rootPath, workspaceId } = assertConnectionWorkspaceScope(ctx, record, 'migrateNotes', args.workspaceId)
       const token = await readToken(record)
       if (!token) {
         throw new CodedError(
@@ -1874,7 +2090,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
           error instanceof Error ? error.message : String(error),
         )
       }
-      const notesRoot = resolveWorkspaceNotesRoot(args.workspaceId)
+      const notesRoot = resolveWorkspaceNotesRoot(workspaceId)
       try {
         return await migrateCraftNotesToSiyuan({
           workspaceRoot: rootPath,
@@ -1898,6 +2114,7 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         const connections = new KnowledgeConnectionsStore().list()
         const emit = deps.sessionManager.emitWorkspaceEvent?.bind(deps.sessionManager)
         for (const record of connections) {
+          if (record.provider === 'siyuan' && !isSiyuanKnowledgeEnabled()) continue
           const cred = credentialIdFromRef(record.credentialRef)
           const workspaceId = cred?.workspaceId
           if (!workspaceId) continue
@@ -1909,13 +2126,13 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
           }
           try {
             bridgeFor(rootPath, workspaceId)
-            registerKnowledgeProviderResolver(rootPath, resolveProvider)
+            registerKnowledgeProviderResolver(rootPath, (connectionId) => resolveProvider(connectionId, { workspaceId }))
             startKnowledgeWatch({
               connectionId: record.id,
               workspaceId,
               workspaceRoot: rootPath,
               intervalMs: 60_000,
-              getProvider: () => resolveProvider(record.id),
+              getProvider: () => resolveProvider(record.id, { workspaceId }),
               onEvent: async (event, payload) => {
                 if (payload.ref) {
                   pushTyped(

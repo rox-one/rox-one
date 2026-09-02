@@ -6,7 +6,7 @@
  * - Search box (`knowledge.search.placeholder`); typing ≥2 chars searches
  *   after a short debounce, Enter searches immediately. Queries the FIRST
  *   connection from `knowledge.listConnections()`.
- * - Result click → `navigate(routes.view.siyuan({ kind, id }))`.
+ * - Result click opens the provider-appropriate editor (local Markdown → Notes).
  * - Saved views: `knowledge.viewsList` → click runs `knowledge.viewRun` and
  *   renders hits in EntityList (optional groupBy headers). Preset
  *   `set_attribute` actions go through `knowledge.viewSetAttribute`
@@ -34,7 +34,14 @@ import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/view
 import type { KnowledgeWorkEnvelope } from '../../shared/types'
 import { KnowledgeProposals } from './KnowledgeProposals'
 import { shouldUseKnowledgeMobileChrome } from './knowledge-mobile'
-import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
+import {
+  buildNewDocumentCreateArgs,
+  documentRouteForConnection,
+  isLocalMarkdownConnection,
+  knowledgeRefRoute,
+  notebookIdForNewDocument,
+  selectPreferredKnowledgeConnection,
+} from './knowledge-new-note'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 
 /**
@@ -53,7 +60,7 @@ export const knowledgeActiveViewIdAtom = atom<string | null>(null)
 // ---------------------------------------------------------------------------
 
 export interface KnowledgeSearchApi {
-  listConnections(): Promise<Array<{ id: string }>>
+  listConnections(): Promise<Array<{ id: string; provider?: string }>>
   search(args: {
     workspaceId: string
     connectionId: string
@@ -69,7 +76,7 @@ export interface KnowledgeViewHit extends SearchHit {
 }
 
 export interface KnowledgeViewsApi {
-  listConnections(): Promise<Array<{ id: string }>>
+  listConnections(): Promise<Array<{ id: string; provider?: string }>>
   viewsList(args?: { connectionId?: string }): Promise<KnowledgeViewConfig[]>
   viewRun(args: {
     connectionId: string
@@ -109,7 +116,7 @@ export async function searchKnowledge(
 ): Promise<SearchHit[] | null> {
   if (!api) return null
   const connections = await api.listConnections()
-  const primary = connections[0]
+  const primary = selectPreferredKnowledgeConnection(connections)
   if (!primary) return null
   const page = await api.search({
     workspaceId,
@@ -121,7 +128,7 @@ export async function searchKnowledge(
 
 /** Route for a search hit — the in-app editor surface for this document/block. */
 export function searchHitRoute(hit: Pick<SearchHit, 'ref'>) {
-  return routes.view.siyuan({ kind: hit.ref.kind, id: hit.ref.id })
+  return knowledgeRefRoute(hit.ref)
 }
 
 /** Sort envelopes by updated/created desc and take the first `n`. */
@@ -150,8 +157,8 @@ export function pickDefaultKnowledgeDocument(
 export function defaultKnowledgeEditorRoute(
   envelopes: KnowledgeWorkEnvelope[] | null | undefined,
 ): string {
-  const ref = pickDefaultKnowledgeDocument(envelopes)
-  if (ref) return routes.view.siyuan({ kind: ref.kind, id: ref.id })
+  const ref = selectRecentEnvelopes(envelopes ?? [], 1)[0]?.knowledgeRef
+  if (ref?.id) return knowledgeRefRoute(ref)
   return routes.view.knowledge()
 }
 
@@ -181,7 +188,7 @@ export async function runKnowledgeView(
 ): Promise<{ items: KnowledgeViewHit[]; view: KnowledgeViewConfig; connectionId: string } | null> {
   if (!api) return null
   const connections = await api.listConnections()
-  const primary = connections[0]
+  const primary = selectPreferredKnowledgeConnection(connections)
   if (!primary) return null
   const result = await api.viewRun({
     connectionId: primary.id,
@@ -365,15 +372,15 @@ export function KnowledgeHome() {
     if (typeof window === 'undefined') return
     let cancelled = false
     const openDefault = async () => {
-      const api = resolveKnowledgeApi()
-      if (!api?.envelopeList) return
+        const api = resolveKnowledgeApi()
+        if (!api?.envelopeList) return
       try {
         const connections = await api.listConnections()
-        const connectionId = connections[0]?.id
+        const connectionId = selectPreferredKnowledgeConnection(connections)?.id
         const envelopes = await api.envelopeList(connectionId ? { connectionId } : undefined)
         if (cancelled) return
-        const ref = pickDefaultKnowledgeDocument(envelopes)
-        if (ref) navigate(routes.view.siyuan({ kind: ref.kind, id: ref.id }))
+        const ref = selectRecentEnvelopes(envelopes, 1)[0]?.knowledgeRef
+        if (ref?.id) navigate(knowledgeRefRoute(ref))
       } catch {
         /* stay on search empty editor */
       }
@@ -488,28 +495,30 @@ export function KnowledgeHome() {
 
   const handleCreateNote = useCallback(async () => {
     const api = window.electronAPI?.knowledge
-    if (!api?.userCreate || !api.listConnections || !api.listNotebooks) {
+    if (!api?.userCreate || !api.listConnections) {
       toast.error(t('knowledge.surface.error'))
       return
     }
     try {
       const connections = await api.listConnections()
-      const connectionId = connections[0]?.id
-      if (!connectionId) return
-      const notebooks = await api.listNotebooks({ connectionId })
-      const notebook = pickOpenNotebook(notebooks)
-      if (!notebook) {
+      const connection = selectPreferredKnowledgeConnection(connections)
+      if (!connection) return
+      const notebooks = isLocalMarkdownConnection(connection)
+        ? []
+        : await api.listNotebooks?.({ connectionId: connection.id })
+      const notebookId = notebookIdForNewDocument(connection, notebooks ?? [])
+      if (!notebookId) {
         toast.error(t('knowledge.nav.notebooksEmpty'))
         return
       }
       const result = await api.userCreate(
         buildNewDocumentCreateArgs({
-          connectionId,
-          notebookId: notebook.id,
+          connectionId: connection.id,
+          notebookId,
           title: t('knowledge.nav.newNote'),
         }),
       )
-      if (result?.id) navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+      if (result?.id) navigate(documentRouteForConnection(connection, result.id))
     } catch (error) {
       toast.error(t('knowledge.surface.error'), {
         description: error instanceof Error ? error.message : String(error),

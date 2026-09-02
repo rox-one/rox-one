@@ -175,7 +175,12 @@ import { clearSourceIconCaches } from "@/lib/icon-cache"
 import { dispatchFocusInputEvent } from "./input/focus-input-events"
 import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
-import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
+import {
+  buildNewDocumentCreateArgs,
+  documentRouteForConnection,
+  isLocalMarkdownConnection,
+  notebookIdForNewDocument,
+} from "../../knowledge/knowledge-new-note"
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -1863,26 +1868,30 @@ function AppShellContent({
   }, [collectionFilters])
   const handleNewKnowledgeNote = useCallback(async () => {
     const api = window.electronAPI?.knowledge
-    if (!api?.userCreate || !api.listConnections || !api.listNotebooks) return
+    if (!api?.userCreate || !api.listConnections) return
     try {
       const connections = await api.listConnections()
-      const connectionId = connections[0]?.id
-      if (!connectionId) return
-      const notebooks = await api.listNotebooks({ connectionId })
-      const notebook = pickOpenNotebook(notebooks)
-      if (!notebook) {
+      // The local vault is the default experience. Select it even when legacy
+      // connections were persisted earlier, and do not probe SiYuan notebooks.
+      const connection = connections.find(isLocalMarkdownConnection) ?? connections[0]
+      if (!connection) return
+      const notebooks = isLocalMarkdownConnection(connection)
+        ? []
+        : await api.listNotebooks?.({ connectionId: connection.id })
+      const notebookId = notebookIdForNewDocument(connection, notebooks ?? [])
+      if (!notebookId) {
         toast.error(t('knowledge.nav.notebooksEmpty'))
         return
       }
       const result = await api.userCreate(
         buildNewDocumentCreateArgs({
-          connectionId,
-          notebookId: notebook.id,
+          connectionId: connection.id,
+          notebookId,
           title: t('knowledge.nav.newNote'),
         }),
       )
       if (result?.id) {
-        navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+        navigate(documentRouteForConnection(connection, result.id))
       }
     } catch (error) {
       console.error('[AppShell] Failed to create knowledge note:', error)

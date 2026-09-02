@@ -4,7 +4,8 @@
  *
  * Data-mode (this slice wires the supported concepts; the rest stay honest
  * dynamic-empty rows):
- * - Notebooks: live via `knowledge.listNotebooks` RPC (kernel lsNotebooks).
+ * - Notebooks: a local Markdown synthetic root by default; explicit legacy
+ *   SiYuan connections use `knowledge.listNotebooks`.
  *   States: loading / ok / empty / unavailable (offline kernel, missing
  *   connection, or a preload that predates the channel — never a raw throw).
  * - Recent: work envelopes (S-08) sorted by updatedAt desc (top 10).
@@ -49,7 +50,17 @@ import type {
   KnowledgeViewConfig,
   KnowledgeWorkEnvelope,
 } from '../../shared/types'
-import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
+import {
+  buildNewDocumentCreateArgs,
+  documentRouteForConnection,
+  isLocalMarkdownConnection,
+  knowledgeRefRoute,
+  knowledgeRouteForConnection,
+  notebookIdForNewDocument,
+  pickOpenNotebook,
+  selectPreferredKnowledgeConnection,
+  type KnowledgeConnectionPick,
+} from './knowledge-new-note'
 import { filterTree, mergeFolderChildren, type NavFilter, type SiyuanDocTreeNode } from './knowledge-tree'
 
 // ---------------------------------------------------------------------------
@@ -58,7 +69,7 @@ import { filterTree, mergeFolderChildren, type NavFilter, type SiyuanDocTreeNode
 
 /** Subset of ElectronAPI.knowledge the navigator consumes (structural for tests). */
 export interface KnowledgeNavigatorApi {
-  listConnections(): Promise<Array<{ id: string }>>
+  listConnections(): Promise<KnowledgeConnectionPick[]>
   listNotebooks?(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
   listTree?(args: {
     connectionId: string
@@ -87,6 +98,13 @@ export interface KnowledgeNavigatorData {
   views: KnowledgeViewConfig[]
   recent: NavigatorEnvelopeRow[]
   favorites: NavigatorEnvelopeRow[]
+}
+
+const LOCAL_MARKDOWN_NOTEBOOK: KnowledgeNotebookInfo = {
+  id: 'local-notes',
+  name: 'Local Markdown',
+  icon: '1f4dd',
+  closed: false,
 }
 
 export const RECENT_SECTION_LIMIT = 10
@@ -137,10 +155,14 @@ export function selectFavoriteEnvelopes(
 export async function loadKnowledgeNavigatorData(
   api: KnowledgeNavigatorApi,
 ): Promise<KnowledgeNavigatorData> {
-  const connections = await api.listConnections().catch(() => [] as Array<{ id: string }>)
-  const connectionId = connections[0]?.id
+  const connections = await api.listConnections().catch(() => [] as KnowledgeConnectionPick[])
+  const connection = selectPreferredKnowledgeConnection(connections)
+  const connectionId = connection?.id
 
   const notebooksPromise = (async (): Promise<NotebookSectionState> => {
+    if (isLocalMarkdownConnection(connection)) {
+      return { status: 'ok', items: [LOCAL_MARKDOWN_NOTEBOOK] }
+    }
     if (!connectionId || typeof api.listNotebooks !== 'function') {
       return { status: 'unavailable', items: [] }
     }
@@ -311,7 +333,7 @@ export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) 
               label={navigatorRowLabel(row)}
               title={row.envelope.knowledgeRef.id}
               onClick={() =>
-                navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
+                navigate(knowledgeRefRoute(row.envelope.knowledgeRef))
               }
 
               mobile={mobile}
@@ -334,7 +356,7 @@ export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) 
               label={navigatorRowLabel(row)}
               title={row.envelope.knowledgeRef.id}
               onClick={() =>
-                navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
+                navigate(knowledgeRefRoute(row.envelope.knowledgeRef))
               }
 
               mobile={mobile}
@@ -382,9 +404,9 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
   const [lastNotebookId, setLastNotebookId] = React.useState<string | null>(null)
   const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
 
-  const connectionIdOf = async (): Promise<string | undefined> => {
+  const connectionOf = async (): Promise<KnowledgeConnectionPick | undefined> => {
     const connections = await api?.listConnections?.().catch(() => [])
-    return connections?.[0]?.id
+    return connections ? selectPreferredKnowledgeConnection(connections) : undefined
   }
 
   const targetNotebook = () =>
@@ -392,32 +414,37 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
 
   const createInNavigator = async (op: 'document' | 'folder') => {
     const notebook = targetNotebook()
-    const connectionId = await connectionIdOf()
+    const connection = await connectionOf()
     if (!notebook) {
       toast.error(t('knowledge.nav.notebooksEmpty'))
       return
     }
-    if (!connectionId || typeof api?.userCreate !== 'function') return
+    if (!connection || typeof api?.userCreate !== 'function') return
     if (op === 'document') {
+      const notebookId = notebookIdForNewDocument(connection, notebooks)
+      if (!notebookId) {
+        toast.error(t('knowledge.nav.notebooksEmpty'))
+        return
+      }
       const result = await api.userCreate(
         buildNewDocumentCreateArgs({
-          connectionId,
-          notebookId: notebook.id,
+          connectionId: connection.id,
+          notebookId,
           title: t('knowledge.nav.newNote'),
         }),
       )
-      if (result?.id) navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+      if (result?.id) navigate(documentRouteForConnection(connection, result.id))
       return
     }
     await api.userCreate({
-      connectionId,
+      connectionId: connection.id,
       source: 'navigator',
       op: 'folder',
       notebookId: notebook.id,
       name: t('knowledge.nav.newFolder'),
     })
     if (expanded[notebook.id] && typeof api.listTree === 'function') {
-      const tree = await api.listTree({ connectionId, notebookId: notebook.id }).catch(() => null)
+      const tree = await api.listTree({ connectionId: connection.id, notebookId: notebook.id }).catch(() => null)
       if (tree) setExpanded((prev) => ({ ...prev, [notebook.id]: tree.nodes }))
     }
   }
@@ -433,13 +460,13 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
     }
     setLastNotebookId(notebookId)
     setExpanded((prev) => ({ ...prev, [notebookId]: 'loading' }))
-    const connectionId = await connectionIdOf()
-    if (!connectionId || typeof api?.listTree !== 'function') {
+    const connection = await connectionOf()
+    if (!connection || typeof api?.listTree !== 'function') {
       setExpanded((prev) => ({ ...prev, [notebookId]: 'error' }))
       return
     }
     try {
-      const tree = await api.listTree({ connectionId, notebookId })
+      const tree = await api.listTree({ connectionId: connection.id, notebookId })
       setExpanded((prev) => ({ ...prev, [notebookId]: tree.nodes }))
     } catch {
       setExpanded((prev) => ({ ...prev, [notebookId]: 'error' }))
@@ -447,10 +474,10 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
   }
 
   const loadFolderChildren = async (notebookId: string, folder: SiyuanDocTreeNode) => {
-    const connectionId = await connectionIdOf()
-    if (!connectionId || typeof api?.listTree !== 'function') return
+    const connection = await connectionOf()
+    if (!connection || typeof api?.listTree !== 'function') return
     try {
-      const tree = await api.listTree({ connectionId, notebookId, path: folder.path })
+      const tree = await api.listTree({ connectionId: connection.id, notebookId, path: folder.path })
       setExpanded((prev) => {
         const current = prev[notebookId]
         if (!Array.isArray(current)) return prev
@@ -468,9 +495,12 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
           icon={nodeIcon(node.kind)}
           label={node.name || node.id}
           onClick={() => {
-            if (node.kind === 'database') navigate(routes.view.siyuan({ kind: 'database', id: node.id }))
-            else if (node.kind === 'document') navigate(routes.view.siyuan({ kind: 'document', id: node.id }))
-            else if (node.kind === 'folder') void loadFolderChildren(notebookId, node)
+            if (node.kind === 'database' || node.kind === 'document') {
+              const ref: Pick<KnowledgeRef, 'kind' | 'id'> = { kind: node.kind, id: node.id }
+              void connectionOf().then((connection) => {
+                if (connection) navigate(knowledgeRouteForConnection(connection, ref))
+              })
+            } else if (node.kind === 'folder') void loadFolderChildren(notebookId, node)
           }}
 
           mobile={mobile}

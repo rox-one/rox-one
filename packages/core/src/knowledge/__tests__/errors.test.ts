@@ -64,7 +64,9 @@ describe('validateKnowledgeRef', () => {
   test('accepts canonical refs and returns them unchanged', () => {
     const minimal: KnowledgeRef = { scheme: 'siyuan', kind: 'block', id: 'b1' };
     const full: KnowledgeRef = { scheme: 'siyuan', kind: 'document', id: 'd1', provider: 'memory', connectionId: 'c1' };
+    const local: KnowledgeRef = { scheme: 'local-note', kind: 'document', id: 'daily/today' };
     expect(validateKnowledgeRef(minimal)).toBe(minimal);
     expect(validateKnowledgeRef(full)).toBe(full);
+    expect(validateKnowledgeRef(local)).toBe(local);
   });
 });
