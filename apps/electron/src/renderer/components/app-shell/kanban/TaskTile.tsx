@@ -334,7 +334,7 @@ export function TaskTile({
             </div>
           )}
           {/* Model chip stays far right of the footer. */}
-          <ModelChip model={task.model} className="ml-auto shrink-0" />
+          <ModelChip model={task.model} connection={task.modelConnection} className="ml-auto shrink-0" />
         </div>
       </div>
     </div>

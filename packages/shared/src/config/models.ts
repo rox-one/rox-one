@@ -9,6 +9,8 @@
  * 2. The convenience exports (ANTHROPIC_MODELS, OPENAI_MODELS) auto-update
  * 3. Update llm-connections.ts if adding a new built-in connection
  */
+import { ROX_PUBLIC_MODEL_CATALOG, isRoxPublicModelId } from './rox-public-models';
+
 // Bedrock-native → bare Anthropic ID reverse mapping.
 // Duplicated from llm-connections.ts to avoid circular imports (llm-connections imports models).
 // Must stay in sync with BEDROCK_MODEL_MAP in llm-connections.ts.
@@ -114,6 +116,18 @@ export interface ModelDefinition {
   supportsThinking?: boolean;
   /** Explicit per-model image input capability hint, primarily for custom endpoints. */
   supportsImages?: boolean;
+}
+
+/**
+ * UI-facing model metadata. `provider` is deliberately optional: an arbitrary
+ * model string must not be attributed to Anthropic merely because the legacy
+ * catalog is Anthropic-first.
+ */
+export interface ModelDisplayMetadata {
+  id: string;
+  name: string;
+  shortName: string;
+  provider?: ModelProvider | 'rox';
 }
 
 // ============================================
@@ -283,6 +297,38 @@ export function getModelById(modelId: string): ModelDefinition | undefined {
   const normalized = normalizeDeprecatedModelId(modelId);
   return MODEL_REGISTRY.find(m => m.id === normalized)
     ?? MODEL_REGISTRY.find(m => m.id === bedrockToBareId(normalized));
+}
+
+/**
+ * Resolve display metadata for built-in and public ROX models.
+ *
+ * This is intentionally separate from `getModelDisplayName`: callers that
+ * render provider marks need to distinguish an unknown model from a known
+ * Anthropic model. In particular, a missing model must never inherit the
+ * Anthropic/Claude identity through a UI fallback.
+ */
+export function getModelDisplayMetadata(modelId: string | null | undefined): ModelDisplayMetadata | undefined {
+  const id = modelId?.trim();
+  if (!id) return undefined;
+
+  if (isRoxPublicModelId(id)) {
+    const model = ROX_PUBLIC_MODEL_CATALOG.find(entry => entry.id === id)!;
+    return {
+      id,
+      name: model.name,
+      shortName: model.shortName,
+      provider: 'rox',
+    };
+  }
+
+  const model = getModelById(id);
+  if (!model) return undefined;
+  return {
+    id,
+    name: model.name,
+    shortName: model.shortName,
+    provider: model.provider,
+  };
 }
 
 /**

@@ -43,6 +43,7 @@ import type {
   BuiltInKanbanColumnId,
   KanbanColumnId,
   KanbanColumnMeta,
+  KanbanModelConnection,
   KanbanModelProviderGroup,
   KanbanProject,
   KanbanTask,
@@ -96,6 +97,16 @@ function buildModelCatalog(connections: LlmConnectionWithStatus[]): {
   }
 
   return { groups, modelToConnection }
+}
+
+function toKanbanModelConnection(connection: LlmConnectionWithStatus | undefined): KanbanModelConnection | undefined {
+  if (!connection) return undefined
+  return {
+    name: connection.name,
+    providerType: connection.providerType,
+    baseUrl: connection.baseUrl,
+    piAuthProvider: connection.piAuthProvider,
+  }
 }
 
 function groupCollapseStorageKey(workspaceId: string): string {
@@ -341,6 +352,10 @@ export function KanbanBoardContainer() {
     () => buildModelCatalog(llmConnections),
     [llmConnections],
   )
+  const connectionsBySlug = React.useMemo(
+    () => new Map(llmConnections.map(connection => [connection.slug, connection])),
+    [llmConnections],
+  )
 
   const activeColumns = React.useMemo(
     () => mergeBoardColumns(boardConfig),
@@ -376,11 +391,24 @@ export function KanbanBoardContainer() {
       slugs.map(async (slug): Promise<readonly [string, SpecNodeSummary[]]> => {
         try {
           const res = await window.electronAPI.getTask(activeWorkspaceId, slug)
-          const spec = res.spec as { defaults?: { model?: string }; nodes?: SpecNode[] } | undefined
+          const spec = res.spec as {
+            defaults?: { model?: string; llmConnection?: string }
+            nodes?: SpecNode[]
+          } | undefined
           const defaultModel = spec?.defaults?.model
+          const defaultConnection = toKanbanModelConnection(
+            spec?.defaults?.llmConnection ? connectionsBySlug.get(spec.defaults.llmConnection) : undefined,
+          )
           return [
             slug,
-            (spec?.nodes ?? []).map(n => ({ id: n.id, title: n.title || n.id, model: n.model ?? defaultModel })),
+            (spec?.nodes ?? []).map(n => ({
+              id: n.id,
+              title: n.title || n.id,
+              model: n.model ?? defaultModel,
+              modelConnection: n.llmConnection
+                ? toKanbanModelConnection(connectionsBySlug.get(n.llmConnection))
+                : defaultConnection,
+            })),
           ]
         } catch {
           return [slug, []]
@@ -392,7 +420,7 @@ export function KanbanBoardContainer() {
     return () => {
       cancelled = true
     }
-  }, [activeWorkspaceId, specSlugsKey, editorOpen])
+  }, [activeWorkspaceId, specSlugsKey, editorOpen, connectionsBySlug])
 
   const tasks = React.useMemo(() => {
     const childrenByParent = new Map<string, SessionMeta[]>()
@@ -416,18 +444,24 @@ export function KanbanBoardContainer() {
         id: child.id,
         title: getSessionTitle(child),
         runState: deriveRunState(child, statusesById),
-        model: child.model ?? DEFAULT_MODEL,
+        model: child.model,
+        modelConnection: toKanbanModelConnection(
+          child.llmConnection ? connectionsBySlug.get(child.llmConnection) : undefined,
+        ),
         taskNodeId: child.taskNodeId,
         createdAt: child.createdAt,
       }))
       const specNodes = meta.taskSlug ? specNodesBySlug.get(meta.taskSlug) : undefined
-      const subtasks = mergeSubtaskRows(specNodes, children, DEFAULT_MODEL)
+      const subtasks = mergeSubtaskRows(specNodes, children)
       result.push({
         id: meta.id,
         title: getSessionTitle(meta),
         column,
         statusId,
-        model: meta.model ?? DEFAULT_MODEL,
+        model: meta.model,
+        modelConnection: toKanbanModelConnection(
+          meta.llmConnection ? connectionsBySlug.get(meta.llmConnection) : undefined,
+        ),
         projectId: meta.projectId,
         priority: meta.priority ?? 'none',
         taskSlug: meta.taskSlug,
@@ -442,7 +476,7 @@ export function KanbanBoardContainer() {
       })
     }
     return result
-  }, [metaMap, statusesById, specNodesBySlug, collectionFilters, collectionDisplay])
+  }, [metaMap, statusesById, specNodesBySlug, collectionFilters, collectionDisplay, connectionsBySlug])
 
   const visibleTasks = React.useMemo(() => {
     if (projectFilter.length === 0) return tasks

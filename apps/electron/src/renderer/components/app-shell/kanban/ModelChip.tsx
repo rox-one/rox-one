@@ -1,10 +1,23 @@
-import { getModelDisplayName, getModelShortName, getModelProvider } from '@config/models'
+import { getModelDisplayMetadata, getModelDisplayName, getModelShortName } from '@config/models'
 import { getProviderIcon } from '@/lib/provider-icons'
 import { cn } from '@/lib/utils'
 
+/** The display-safe part of an LLM connection used by a Kanban model badge. */
+export interface ModelChipConnection {
+  name: string
+  providerType: string
+  baseUrl?: string
+  piAuthProvider?: string
+}
+
 interface ModelChipProps {
-  /** Model id, e.g. 'claude-opus-4-7'. */
-  model: string
+  /** Explicit model id, e.g. 'claude-opus-4-7'. Undefined means inherit. */
+  model?: string | null
+  /**
+   * The session's actual resolved connection. It takes precedence for the
+   * provider mark, so a model routed through Pi/OpenAI is not drawn as Claude.
+   */
+  connection?: ModelChipConnection
   /** Show the short name ("Haiku") instead of the full display name ("Haiku 4.5"). */
   short?: boolean
   className?: string
@@ -15,10 +28,19 @@ interface ModelChipProps {
  * model registry (`@config/models`) and provider icon map so it can't drift
  * from the real model metadata.
  */
-export function ModelChip({ model, short = false, className }: ModelChipProps) {
-  const provider = getModelProvider(model) ?? 'anthropic'
-  const iconUrl = getProviderIcon(provider)
-  const label = short ? getModelShortName(model) : getModelDisplayName(model)
+export function ModelChip({ model, connection, short = false, className }: ModelChipProps) {
+  const modelId = model?.trim()
+  const metadata = getModelDisplayMetadata(modelId)
+  // Public ROX endpoints are always branded Rox. For all other models, the
+  // configured session connection is the source of truth for the provider
+  // icon; fall back only to known catalog metadata.
+  const provider = metadata?.provider === 'rox'
+    ? 'rox'
+    : connection?.providerType ?? metadata?.provider ?? 'rox'
+  const iconUrl = getProviderIcon(provider, connection?.baseUrl, connection?.piAuthProvider)
+  const label = modelId
+    ? (metadata ? (short ? metadata.shortName : metadata.name) : (short ? getModelShortName(modelId) : getModelDisplayName(modelId)))
+    : connection?.name || 'Rox agent'
 
   return (
     <span

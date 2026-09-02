@@ -27,6 +27,18 @@ export type BuiltInKanbanColumnId =
 export type SubtaskRunState = 'done' | 'running' | 'pending' | 'failed'
 
 /**
+ * Non-secret connection data required to draw a model badge faithfully.
+ * The model id alone is insufficient for Pi/custom routes, where the session's
+ * selected connection determines the real provider.
+ */
+export interface KanbanModelConnection {
+  name: string
+  providerType: string
+  baseUrl?: string
+  piAuthProvider?: string
+}
+
+/**
  * What the Task editor points at. `create` authors a brand-new task; `edit` opens an
  * existing tile — either spec-backed (`taskSlug` present → prefill from its task.yaml)
  * or a plain quick-add tile (`taskSlug` absent → start from the title, bind the spec
@@ -47,8 +59,10 @@ export interface KanbanSubtask {
   sessionId?: string
   title: string
   runState: SubtaskRunState
-  /** Model id the orchestrator routed this subtask to (e.g. 'claude-haiku-4-5-20251001'). */
-  model: string
+  /** Explicit model id the orchestrator routed this subtask to, when selected. */
+  model?: string
+  /** Actual connection selected for this subtask, when one exists. */
+  modelConnection?: KanbanModelConnection
 }
 
 export interface KanbanTask {
@@ -58,8 +72,10 @@ export interface KanbanTask {
   column: KanbanColumnId
   /** Workspace status id shown on the badge. Independent from `column`. */
   statusId: string
-  /** Orchestrator model id for the parent task. */
-  model: string
+  /** Explicit orchestrator model id for the parent task, when selected. */
+  model?: string
+  /** Actual connection selected for the parent task, when one exists. */
+  modelConnection?: KanbanModelConnection
   /** Optional project binding; colors the tile. */
   projectId?: string
   /**

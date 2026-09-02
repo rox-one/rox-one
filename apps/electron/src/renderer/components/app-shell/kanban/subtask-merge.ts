@@ -16,7 +16,7 @@
  * children of a merged node are superseded — collapsed into the node row instead of
  * duplicating it. Without a spec the rows are simply the children (legacy tiles).
  */
-import type { KanbanSubtask, SubtaskRunState } from './types'
+import type { KanbanModelConnection, KanbanSubtask, SubtaskRunState } from './types'
 import { quickAddSessionId } from './task-spec-form'
 
 /** A spec node reduced to what a tile row needs (model pre-defaulted from the spec). */
@@ -24,6 +24,7 @@ export interface SpecNodeSummary {
   id: string
   title: string
   model?: string
+  modelConnection?: KanbanModelConnection
 }
 
 /** A child session reduced to what the merge needs (run state pre-derived by the caller). */
@@ -31,7 +32,8 @@ export interface SubtaskChildRow {
   id: string
   title: string
   runState: SubtaskRunState
-  model: string
+  model?: string
+  modelConnection?: KanbanModelConnection
   taskNodeId?: string
   createdAt?: number
 }
@@ -41,13 +43,13 @@ const toRow = (child: SubtaskChildRow): KanbanSubtask => ({
   sessionId: child.id,
   title: child.title,
   runState: child.runState,
-  model: child.model,
+  ...(child.model ? { model: child.model } : {}),
+  ...(child.modelConnection ? { modelConnection: child.modelConnection } : {}),
 })
 
 export function mergeSubtaskRows(
   specNodes: readonly SpecNodeSummary[] | undefined,
   children: readonly SubtaskChildRow[],
-  fallbackModel: string
 ): KanbanSubtask[] {
   const ordered = [...children].sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
   if (!specNodes?.length) return ordered.map(toRow)
@@ -73,7 +75,13 @@ export function mergeSubtaskRows(
       consumed.add(child.id)
       rows.push(toRow(child))
     } else {
-      rows.push({ id: `node:${node.id}`, title: node.title, runState: 'pending', model: node.model ?? fallbackModel })
+      rows.push({
+        id: `node:${node.id}`,
+        title: node.title,
+        runState: 'pending',
+        ...(node.model ? { model: node.model } : {}),
+        ...(node.modelConnection ? { modelConnection: node.modelConnection } : {}),
+      })
     }
   }
   for (const child of ordered) {

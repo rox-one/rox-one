@@ -14,21 +14,20 @@ describe('mergeSubtaskRows', () => {
     const rows = mergeSubtaskRows(
       undefined,
       [child({ id: 'c', createdAt: 3 }), child({ id: 'a', createdAt: 1 }), child({ id: 'b', createdAt: 2 })],
-      'm-fallback'
     )
     expect(rows.map(r => r.id)).toEqual(['a', 'b', 'c'])
     expect(rows.every(r => r.sessionId === r.id)).toBe(true)
   })
 
-  it('authored-but-never-run nodes render as synthetic pending rows (no session)', () => {
+  it('authored-but-never-run nodes render as synthetic pending rows without inventing a model', () => {
     const nodes: SpecNodeSummary[] = [
       { id: 'generate', title: 'Generate marker', model: 'm-node' },
       { id: 'verify', title: 'Verify marker received' },
     ]
-    const rows = mergeSubtaskRows(nodes, [], 'm-fallback')
+    const rows = mergeSubtaskRows(nodes, [])
     expect(rows).toEqual([
       { id: 'node:generate', title: 'Generate marker', runState: 'pending', model: 'm-node' },
-      { id: 'node:verify', title: 'Verify marker received', runState: 'pending', model: 'm-fallback' },
+      { id: 'node:verify', title: 'Verify marker received', runState: 'pending' },
     ])
   })
 
@@ -40,7 +39,6 @@ describe('mergeSubtaskRows', () => {
         child({ id: 'old-run', taskNodeId: 'generate', runState: 'failed', createdAt: 1 }),
         child({ id: 'new-run', taskNodeId: 'generate', runState: 'done', createdAt: 2 }),
       ],
-      'm'
     )
     expect(rows).toHaveLength(1)
     expect(rows[0]).toMatchObject({ sessionId: 'new-run', runState: 'done' })
@@ -49,7 +47,7 @@ describe('mergeSubtaskRows', () => {
   it('an adopted quick-add node binds back to its original session via the qa- id', () => {
     const sessionId = '260703-agile-moor'
     const nodes: SpecNodeSummary[] = [{ id: quickAddNodeId(sessionId), title: 'Task 2' }]
-    const rows = mergeSubtaskRows(nodes, [child({ id: sessionId, title: 'Task 2', runState: 'done' })], 'm')
+    const rows = mergeSubtaskRows(nodes, [child({ id: sessionId, title: 'Task 2', runState: 'done' })])
     expect(rows).toEqual([{ id: sessionId, sessionId, title: 'Task 2', runState: 'done', model: 'm-child' }])
   })
 
@@ -62,7 +60,6 @@ describe('mergeSubtaskRows', () => {
         child({ id: sessionId, title: 'Task 2', runState: 'done', createdAt: 1 }),
         child({ id: 'run-child', taskNodeId: qaNode, runState: 'running', createdAt: 2 }),
       ],
-      'm'
     )
     // One row for the node: the run child. The pre-run quick-add session collapses into it
     // (it is that node's earlier execution), never a duplicate "Task 2" row.
@@ -78,7 +75,6 @@ describe('mergeSubtaskRows', () => {
         child({ id: 'quick-add', title: 'Task 3', createdAt: 2 }),
         child({ id: 'orphan', taskNodeId: 'removed-node', runState: 'done', createdAt: 1 }),
       ],
-      'm'
     )
     expect(rows.map(r => r.id)).toEqual(['node:generate', 'orphan', 'quick-add'])
   })
