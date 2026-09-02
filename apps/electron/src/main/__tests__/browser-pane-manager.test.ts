@@ -23,6 +23,9 @@ function createMockWebContents() {
       if (!listeners[event]) listeners[event] = []
       listeners[event].push(cb)
     },
+    removeListener: (event: string, cb: Function) => {
+      listeners[event] = (listeners[event] || []).filter(fn => fn !== cb)
+    },
     loadURL: mock(async (url: string) => {
       currentUrl = url
       const isToolbarUrl = typeof url === 'string' && url.includes('browser-toolbar.html')
@@ -105,6 +108,9 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
       if (!listeners[event]) listeners[event] = []
       listeners[event].push(cb)
     },
+    removeListener: (event: string, cb: Function) => {
+      listeners[event] = (listeners[event] || []).filter(fn => fn !== cb)
+    },
     once: (event: string, cb: Function) => {
       const wrapped = (...args: any[]) => {
         listeners[event] = (listeners[event] || []).filter(fn => fn !== wrapped)
@@ -131,6 +137,7 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
     }),
     setBrowserView: mock((_view: any) => {}),
     addBrowserView: mock((_view: any) => {}),
+    removeBrowserView: mock((_view: any) => {}),
     setTopBrowserView: mock((_view: any) => {}),
     getContentSize: mock(() => [contentWidth, contentHeight]),
     setContentSize: mock((width: number, height: number) => {
@@ -675,6 +682,99 @@ describe('BrowserPaneManager', () => {
 
     expect(removed).toEqual(['r1'])
     expect(manager.listInstances()).toHaveLength(0)
+  })
+
+  it('hides embedded instances by detaching views without removing the registry entry', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    ;(manager as any).setWindowManager({
+      getLastActiveWindow: () => host,
+      getFocusedWindow: () => null,
+      getAllWindows: () => [{ window: host, workspaceId: 'ws-a' }],
+      getWorkspaceForWindow: () => 'ws-a',
+    })
+
+    const stateEvents: any[] = []
+    manager.onStateChange((info) => stateEvents.push(info))
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 })
+
+    expect(host.addBrowserView).toHaveBeenCalledTimes(3)
+    expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
+      embedded: true,
+      isVisible: true,
+      workspaceId: 'ws-a',
+    })
+
+    manager.hide(id)
+
+    expect(host.removeBrowserView).toHaveBeenCalledTimes(3)
+    expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
+      embedded: true,
+      isVisible: false,
+      workspaceId: 'ws-a',
+    })
+    expect(stateEvents.some((event) => event.id === id && event.isVisible === false)).toBe(true)
+  })
+
+  it('reopens a hidden embedded instance when bounds are synced again', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    ;(manager as any).setWindowManager({
+      getLastActiveWindow: () => host,
+      getFocusedWindow: () => null,
+      getAllWindows: () => [{ window: host, workspaceId: 'ws-a' }],
+      getWorkspaceForWindow: () => 'ws-a',
+    })
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 })
+    manager.hide(id)
+    manager.syncEmbeddedBounds(id, { x: 20, y: 30, width: 640, height: 360 })
+
+    expect(host.addBrowserView).toHaveBeenCalledTimes(6)
+    expect(manager.listInstances().find((item) => item.id === id)).toMatchObject({
+      embedded: true,
+      isVisible: true,
+      workspaceId: 'ws-a',
+    })
+  })
+
+  it('destroys a hidden embedded instance when close is explicit', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    ;(manager as any).setWindowManager({
+      getLastActiveWindow: () => host,
+      getFocusedWindow: () => null,
+      getAllWindows: () => [{ window: host, workspaceId: 'ws-a' }],
+      getWorkspaceForWindow: () => 'ws-a',
+    })
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 })
+    manager.hide(id)
+    manager.destroyInstance(id)
+
+    expect(manager.listInstances().some((item) => item.id === id)).toBe(false)
+  })
+
+  it('closes child popups when an embedded instance is hidden', () => {
+    const host = createMockWindow({ width: 900, height: 700 })
+    ;(manager as any).setWindowManager({
+      getLastActiveWindow: () => host,
+      getFocusedWindow: () => null,
+      getAllWindows: () => [{ window: host, workspaceId: 'ws-a' }],
+      getWorkspaceForWindow: () => 'ws-a',
+    })
+
+    const id = manager.createEmbeddedInstance({ workspaceId: 'ws-a' })
+    const instance = manager.getInstance(id)
+    expect(instance).toBeDefined()
+    const popupWindow = createMockWindow({ width: 520, height: 720 })
+    ;(manager as any).registerPopupWindow(instance, popupWindow, 'https://auth.example.test/login')
+
+    manager.syncEmbeddedBounds(id, { x: 10, y: 20, width: 500, height: 300 })
+    manager.hide(id)
+
+    expect(popupWindow.destroy).toHaveBeenCalledTimes(1)
   })
 
   it('retries toolbar load and recovers', async () => {

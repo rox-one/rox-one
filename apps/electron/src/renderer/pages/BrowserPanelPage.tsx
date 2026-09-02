@@ -89,19 +89,15 @@ export default function BrowserPanelPage({ instanceId, panelId }: BrowserPanelPa
     }
   }, [instanceId])
 
-  // Unmount: hide the composited views, then destroy the embedded instance
+  // Unmount: hide/detach the composited views. The browser instance remains
+  // alive; only an explicit browser close/destroy action owns teardown.
   useEffect(() => {
     return () => {
       void (async () => {
         try {
           await window.electronAPI.browserPane.syncBounds(instanceId, null)
         } catch {
-          // Best-effort hide; instance cleanup continues regardless
-        }
-        try {
-          await window.electronAPI.browserPane.destroy(instanceId)
-        } catch {
-          // Instance may already be gone (window teardown)
+          // Best-effort hide. Explicit close/destroy handles teardown.
         }
       })()
     }

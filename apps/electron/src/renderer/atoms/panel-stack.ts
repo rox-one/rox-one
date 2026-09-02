@@ -6,7 +6,7 @@
 
 import { atom } from 'jotai'
 import { parseRouteToNavigationState } from '../../shared/route-parser'
-import type { ViewRoute } from '../../shared/routes'
+import { routes, type ViewRoute } from '../../shared/routes'
 
 let nextPanelId = 0
 function generatePanelId(): string {
@@ -173,6 +173,75 @@ export const pushPanelAtom = atom(
     set(panelStackAtom, normalized)
     set(focusedPanelIdAtom, newEntry.id)
   }
+)
+
+export interface OpenOrFocusPanelRouteInput {
+  route: ViewRoute
+  afterIndex?: number
+  targetLaneId?: PanelLaneId
+  intent?: OpenIntent
+}
+
+export interface OpenOrFocusPanelRouteResult {
+  status: 'focused' | 'opened'
+  panelId: string
+}
+
+/**
+ * Input for atomically resuming an embedded browser panel.
+ *
+ * Browser panes can be offered by multiple surfaces at once (the workbench tab
+ * strip and the browser strip). Keep their de-duplication in the store rather
+ * than relying on a component's rendered panel-stack snapshot.
+ */
+export interface OpenOrFocusBrowserPanelInput {
+  instanceId: string
+  afterIndex?: number
+}
+
+export const openOrFocusPanelRouteAtom = atom(
+  null,
+  (get, set, { route, afterIndex }: OpenOrFocusPanelRouteInput): OpenOrFocusPanelRouteResult => {
+    const stack = get(panelStackAtom)
+    const existing = stack.find((entry) => entry.route === route)
+
+    if (existing) {
+      set(focusedPanelIdAtom, existing.id)
+      return { status: 'focused', panelId: existing.id }
+    }
+
+    let insertAt = stack.length
+    if (afterIndex !== undefined && afterIndex >= 0 && afterIndex < stack.length) {
+      insertAt = afterIndex + 1
+    }
+
+    const newEntry = createEntry(route, 0)
+    const newStack = [
+      ...stack.slice(0, insertAt),
+      newEntry,
+      ...stack.slice(insertAt),
+    ]
+
+    set(panelStackAtom, normalizeProportions(newStack))
+    set(focusedPanelIdAtom, newEntry.id)
+    return { status: 'opened', panelId: newEntry.id }
+  }
+)
+
+/**
+ * Atomically focus the panel for an embedded browser instance, or create it
+ * once when it is not yet present. The `get` and `set` calls occur inside the
+ * same Jotai write transaction, so two immediate resume actions cannot append
+ * duplicate `routes.view.browser(instanceId)` panels.
+ */
+export const openOrFocusBrowserPanelAtom = atom(
+  null,
+  (_get, set, { instanceId, afterIndex }: OpenOrFocusBrowserPanelInput): OpenOrFocusPanelRouteResult =>
+    set(openOrFocusPanelRouteAtom, {
+      route: routes.view.browser(instanceId),
+      afterIndex,
+      targetLaneId: 'main',
+    }),
 )
 
 export const closePanelAtom = atom(

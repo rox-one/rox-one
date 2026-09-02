@@ -7,8 +7,10 @@
 
 import { useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import * as Icons from 'lucide-react'
 import { Spinner } from '@craft-agent/ui'
+import { panelStackAtom } from '@/atoms/panel-stack'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -21,6 +23,7 @@ import {
 } from '@/components/ui/styled-dropdown'
 import { BrowserTabBadge } from './BrowserTabBadge'
 import type { BrowserInstanceInfo } from '../../../shared/types'
+import { surfaceTabFromRoute } from '@/platform/layout-snapshot'
 import { getHostname } from './utils'
 import { useWorkspaceBrowserWindows } from './use-workspace-browser-windows'
 
@@ -38,8 +41,10 @@ export function BrowserTabStrip({
   maxVisibleBadges = DEFAULT_MAX_VISIBLE_BADGES,
 }: BrowserTabStripProps) {
   const { t } = useTranslation()
+  const panelStack = useAtomValue(panelStackAtom)
   const {
     orderedInstances,
+    embeddedInstances,
     activeInstanceId,
     focusBrowserWindow,
     openSessionUsingWindow,
@@ -87,16 +92,34 @@ export function BrowserTabStrip({
   }, [t, liveWindowActions, focusBrowserWindow, openSessionUsingWindow, terminateBrowserWindow])
 
   const visibleBadgeCount = Math.max(1, maxVisibleBadges)
+  const openBrowserInstanceIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const entry of panelStack) {
+      const surface = surfaceTabFromRoute(entry.route)
+      if (surface?.kind === 'browser') {
+        ids.add(surface.tabId)
+      }
+    }
+    return ids
+  }, [panelStack])
+  const retainedEmbeddedInstances = useMemo(
+    () => embeddedInstances.filter((instance) => !openBrowserInstanceIds.has(instance.id)),
+    [embeddedInstances, openBrowserInstanceIds],
+  )
+  const badgeInstances = useMemo(
+    () => [...orderedInstances, ...retainedEmbeddedInstances],
+    [orderedInstances, retainedEmbeddedInstances],
+  )
   const visible = useMemo(
-    () => orderedInstances.slice(0, visibleBadgeCount),
-    [orderedInstances, visibleBadgeCount],
+    () => badgeInstances.slice(0, visibleBadgeCount),
+    [badgeInstances, visibleBadgeCount],
   )
   const overflow = useMemo(
-    () => orderedInstances.slice(visibleBadgeCount),
-    [orderedInstances, visibleBadgeCount],
+    () => badgeInstances.slice(visibleBadgeCount),
+    [badgeInstances, visibleBadgeCount],
   )
 
-  if (orderedInstances.length === 0) return null
+  if (badgeInstances.length === 0) return null
 
   return (
     <div className="flex items-center gap-1.5">

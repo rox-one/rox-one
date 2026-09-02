@@ -11,6 +11,20 @@ import type { BrowserInstanceInfo } from '../../shared/types'
 /** Map of all browser instances by ID */
 export const browserInstancesMapAtom = atom<Map<string, BrowserInstanceInfo>>(new Map())
 
+export type BrowserPaneRegistryStatusKind = 'fresh' | 'stale' | 'unavailable'
+
+export interface BrowserPaneRegistryStatus {
+  state: BrowserPaneRegistryStatusKind
+  lastError: string | null
+  updatedAt: number | null
+}
+
+export const browserPaneRegistryStatusAtom = atom<BrowserPaneRegistryStatus>({
+  state: 'fresh',
+  lastError: null,
+  updatedAt: null,
+})
+
 /** Derived: array of all browser instances (for iteration) */
 export const browserInstancesAtom = atom<BrowserInstanceInfo[]>(
   (get) => Array.from(get(browserInstancesMapAtom).values())
@@ -60,6 +74,12 @@ export const activeBrowserInstanceIdAtom = atom<string | null>(null)
 /** Tombstones for instances removed from renderer state (guards against late out-of-order updates) */
 export const removedBrowserInstanceIdsAtom = atom<Set<string>>(new Set<string>())
 
+function browserPaneRegistryErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) return error.message
+  if (typeof error === 'string' && error.trim().length > 0) return error
+  return 'Browser pane registry unavailable'
+}
+
 /** Derived: currently active browser instance info */
 export const activeBrowserInstanceAtom = atom<BrowserInstanceInfo | null>((get) => {
   const activeId = get(activeBrowserInstanceIdAtom)
@@ -79,6 +99,11 @@ export const updateBrowserInstanceAtom = atom(
     const map = new Map(get(browserInstancesMapAtom))
     map.set(info.id, info)
     set(browserInstancesMapAtom, map)
+    set(browserPaneRegistryStatusAtom, {
+      state: 'fresh',
+      lastError: null,
+      updatedAt: Date.now(),
+    })
   }
 )
 
@@ -111,5 +136,22 @@ export const setBrowserInstancesAtom = atom(
       removedIds.delete(info.id)
     }
     set(removedBrowserInstanceIdsAtom, removedIds)
+    set(browserPaneRegistryStatusAtom, {
+      state: 'fresh',
+      lastError: null,
+      updatedAt: Date.now(),
+    })
+  }
+)
+
+/** Mark a transient list/channel failure without clearing the last-known registry. */
+export const markBrowserPaneRegistryFailedAtom = atom(
+  null,
+  (get, set, error: unknown) => {
+    set(browserPaneRegistryStatusAtom, {
+      state: get(browserInstancesMapAtom).size > 0 ? 'stale' : 'unavailable',
+      lastError: browserPaneRegistryErrorMessage(error),
+      updatedAt: Date.now(),
+    })
   }
 )

@@ -3,6 +3,7 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { useModalRegistry } from '@/context/ModalContext'
 import { useDismissibleLayerRegistry } from '@/context/DismissibleLayerContext'
 import { panelStackAtom, closePanelAtom, focusedPanelIdAtom } from '@/atoms/panel-stack'
+import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecycle'
 import type { WindowCloseRequest } from '../../shared/types'
 
 /**
@@ -53,6 +54,7 @@ export function useWindowCloseHandler() {
         ? panelStack.find(p => p.id === focusedPanelId)
         : panelStack[panelStack.length - 1]
       if (target) {
+        destroyBrowserInstanceForRoute(target.route)
         closePanel(target.id)
         window.electronAPI.cancelCloseWindow()
       } else {

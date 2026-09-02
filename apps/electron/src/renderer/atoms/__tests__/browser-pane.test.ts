@@ -3,7 +3,9 @@ import { createStore } from 'jotai'
 import type { BrowserInstanceInfo } from '../../../shared/types'
 import {
   browserInstancesAtom,
+  browserPaneRegistryStatusAtom,
   filterInstancesForWorkspace,
+  markBrowserPaneRegistryFailedAtom,
   removeBrowserInstanceAtom,
   setBrowserInstancesAtom,
   updateBrowserInstanceAtom,
@@ -55,6 +57,45 @@ describe('browser pane atoms', () => {
     store.set(setBrowserInstancesAtom, [makeInstance('browser-2')])
 
     expect(store.get(browserInstancesAtom).map((i) => i.id)).toEqual(['browser-2'])
+  })
+
+  it('retains last-known instances when a list refresh fails', () => {
+    const store = createStore()
+
+    store.set(setBrowserInstancesAtom, [makeInstance('browser-stale')])
+    store.set(markBrowserPaneRegistryFailedAtom, new Error('temporary channel failure'))
+
+    expect(store.get(browserInstancesAtom).map((i) => i.id)).toEqual(['browser-stale'])
+    expect(store.get(browserPaneRegistryStatusAtom)).toMatchObject({
+      state: 'stale',
+      lastError: 'temporary channel failure',
+    })
+  })
+
+  it('marks the browser registry unavailable on list failure with no known instances', () => {
+    const store = createStore()
+
+    store.set(markBrowserPaneRegistryFailedAtom, 'browser-pane:list missing')
+
+    expect(store.get(browserInstancesAtom)).toHaveLength(0)
+    expect(store.get(browserPaneRegistryStatusAtom)).toMatchObject({
+      state: 'unavailable',
+      lastError: 'browser-pane:list missing',
+    })
+  })
+
+  it('clears stale registry status on a live state update', () => {
+    const store = createStore()
+
+    store.set(setBrowserInstancesAtom, [makeInstance('browser-live')])
+    store.set(markBrowserPaneRegistryFailedAtom, new Error('temporary channel failure'))
+    store.set(updateBrowserInstanceAtom, makeInstance('browser-live', { title: 'Recovered' }))
+
+    expect(store.get(browserPaneRegistryStatusAtom)).toMatchObject({
+      state: 'fresh',
+      lastError: null,
+    })
+    expect(store.get(browserInstancesAtom).find((item) => item.id === 'browser-live')?.title).toBe('Recovered')
   })
 
   describe('filterInstancesForWorkspace', () => {

@@ -1,5 +1,5 @@
 /**
- * Workspace-scoped OS browser windows (shared by BrowserTabStrip and SurfaceTabs).
+ * Workspace-scoped browser instances (shared by BrowserTabStrip and SurfaceTabs).
  *
  * Listing and IPC subscribe live here so hiding the TopBar strip under
  * `workbench.browser-surface.v2` does not drop the instance registry.
@@ -9,13 +9,17 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import {
   activeBrowserInstanceIdAtom,
   browserInstancesAtom,
+  browserPaneRegistryStatusAtom,
   filterInstancesForWorkspace,
+  markBrowserPaneRegistryFailedAtom,
   removeBrowserInstanceAtom,
   setBrowserInstancesAtom,
   updateBrowserInstanceAtom,
 } from '@/atoms/browser-pane'
+import { openOrFocusBrowserPanelAtom } from '@/atoms/panel-stack'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
+import { openOrFocusEmbeddedBrowserPanel } from '@/platform/browser-panel-lifecycle'
 import type { BrowserInstanceInfo } from '../../../shared/types'
 
 export interface UseWorkspaceBrowserWindowsOptions {
@@ -34,19 +38,30 @@ export function useWorkspaceBrowserWindows({
   const activeWorkspace = workspaces.find((workspace) => workspace.id === activeWorkspaceId)
   const remoteWorkspaceId = activeWorkspace?.remoteServer?.remoteWorkspaceId ?? null
   const allInstances = useAtomValue(browserInstancesAtom)
+  const registryStatus = useAtomValue(browserPaneRegistryStatusAtom)
   const instances = useMemo(
     () => filterInstancesForWorkspace(allInstances, activeWorkspaceId, remoteWorkspaceId),
     [allInstances, activeWorkspaceId, remoteWorkspaceId],
   )
   const setInstances = useSetAtom(setBrowserInstancesAtom)
+  const markRegistryFailed = useSetAtom(markBrowserPaneRegistryFailedAtom)
   const updateInstance = useSetAtom(updateBrowserInstanceAtom)
   const removeInstance = useSetAtom(removeBrowserInstanceAtom)
   const [activeInstanceId, setActiveInstanceId] = useAtom(activeBrowserInstanceIdAtom)
+  const openOrFocusBrowserPanel = useSetAtom(openOrFocusBrowserPanelAtom)
   const effectiveInstances = useMemo(
     () => (instancesOverride ?? instances).filter((instance) => !instance.embedded),
     [instancesOverride, instances],
   )
-  const instancesRef = useRef(effectiveInstances)
+  const embeddedInstances = useMemo(
+    () => (instancesOverride ?? instances).filter((instance) => instance.embedded),
+    [instancesOverride, instances],
+  )
+  const activeSelectableInstances = useMemo(
+    () => [...effectiveInstances, ...embeddedInstances],
+    [effectiveInstances, embeddedInstances],
+  )
+  const instancesRef = useRef(activeSelectableInstances)
   const removeReconcileTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const orderedInstances = useMemo(() => {
@@ -65,16 +80,15 @@ export function useWorkspaceBrowserWindows({
   }, [effectiveInstances, activeSessionId])
 
   useEffect(() => {
-    instancesRef.current = effectiveInstances
-  }, [effectiveInstances])
+    instancesRef.current = activeSelectableInstances
+  }, [activeSelectableInstances])
 
   useEffect(() => {
     if (!enabled || instancesOverride) return
 
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) {
-      setInstances([])
-      setActiveInstanceId(null)
+      markRegistryFailed(new Error('browser-pane:list channel unavailable'))
       return
     }
 
@@ -89,10 +103,9 @@ export function useWorkspaceBrowserWindows({
       })
       .catch((error) => {
         console.warn('[BrowserTabStrip] Failed to list browser panes:', error)
-        setInstances([])
-        setActiveInstanceId(null)
+        markRegistryFailed(error)
       })
-  }, [enabled, instancesOverride, setInstances, setActiveInstanceId])
+  }, [enabled, instancesOverride, setInstances, setActiveInstanceId, markRegistryFailed])
 
   useEffect(() => {
     if (!enabled || instancesOverride) return
@@ -128,6 +141,7 @@ export function useWorkspaceBrowserWindows({
           })
           .catch((error) => {
             console.warn('[BrowserTabStrip] Reconcile list failed after remove:', error)
+            markRegistryFailed(error)
           })
       }, 75)
     })
@@ -145,21 +159,28 @@ export function useWorkspaceBrowserWindows({
         removeReconcileTimerRef.current = null
       }
     }
-  }, [enabled, instancesOverride, updateInstance, removeInstance, setActiveInstanceId, setInstances])
+  }, [enabled, instancesOverride, updateInstance, removeInstance, setActiveInstanceId, setInstances, markRegistryFailed])
 
   useEffect(() => {
     if (!enabled) return
-    if (orderedInstances.length === 0) {
+    if (activeSelectableInstances.length === 0) {
       setActiveInstanceId(null)
       return
     }
-    if (!activeInstanceId || !orderedInstances.some((item) => item.id === activeInstanceId)) {
-      setActiveInstanceId(orderedInstances[0]?.id ?? null)
+    if (!activeInstanceId || !activeSelectableInstances.some((item) => item.id === activeInstanceId)) {
+      setActiveInstanceId(activeSelectableInstances[0]?.id ?? null)
     }
-  }, [enabled, orderedInstances, activeInstanceId, setActiveInstanceId])
+  }, [enabled, activeSelectableInstances, activeInstanceId, setActiveInstanceId])
 
   const focusBrowserWindow = useCallback((instance: BrowserInstanceInfo) => {
     setActiveInstanceId(instance.id)
+    if (instance.embedded) {
+      openOrFocusEmbeddedBrowserPanel({
+        instanceId: instance.id,
+        openOrFocusBrowserPanel,
+      })
+      return
+    }
     if (instancesOverride) return
 
     const browserPaneApi = window.electronAPI?.browserPane
@@ -171,7 +192,7 @@ export function useWorkspaceBrowserWindows({
     void browserPaneApi.focus(instance.id).catch((error) => {
       console.warn(`[BrowserTabStrip] Failed to focus browser window ${instance.id}:`, error)
     })
-  }, [instancesOverride, setActiveInstanceId])
+  }, [instancesOverride, openOrFocusBrowserPanel, setActiveInstanceId])
 
   const openSessionUsingWindow = useCallback((instance: BrowserInstanceInfo) => {
     const sessionId = instance.boundSessionId ?? instance.ownerSessionId
@@ -201,7 +222,9 @@ export function useWorkspaceBrowserWindows({
 
   return {
     orderedInstances,
+    embeddedInstances,
     activeInstanceId,
+    registryStatus,
     focusBrowserWindow,
     openSessionUsingWindow,
     terminateBrowserWindow,

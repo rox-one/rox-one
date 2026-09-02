@@ -21,6 +21,7 @@ import {
   closePanelAtom,
   focusedPanelIdAtom,
   focusedSessionIdAtom,
+  openOrFocusBrowserPanelAtom,
   panelStackAtom,
   type PanelType,
 } from '@/atoms/panel-stack'
@@ -42,8 +43,17 @@ import * as storage from '@/lib/local-storage'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import type { BrowserInstanceInfo } from '../../shared/types'
+import {
+  destroyBrowserInstanceForRoute,
+  openOrFocusEmbeddedBrowserPanel,
+} from './browser-panel-lifecycle'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
-import { osBrowserSurfaceTabs, type OsBrowserSurfaceTab } from './os-browser-tabs'
+import {
+  osBrowserSurfaceTabs,
+  retainedEmbeddedBrowserSurfaceTabs,
+  type OsBrowserSurfaceTab,
+  type RetainedEmbeddedBrowserSurfaceTab,
+} from './os-browser-tabs'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
@@ -71,10 +81,15 @@ function tabIcon(tab: SurfaceTabView): LucideIcon {
   }
 }
 
-function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
+function SurfaceTabItem({
+  tab,
+  onClose,
+}: {
+  tab: SurfaceTabView
+  onClose: (tab: SurfaceTabView) => void
+}) {
   const { t } = useTranslation()
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
-  const closePanel = useSetAtom(closePanelAtom)
   const Icon = tabIcon(tab)
 
   return (
@@ -94,7 +109,7 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
         // Middle-click closes, matching browser tab conventions.
         if (e.button === 1) {
           e.preventDefault()
-          closePanel(tab.panelId)
+          onClose(tab)
         }
       }}
       className={cn(
@@ -111,11 +126,71 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
         aria-label={t('surfaceTabs.closeTab')}
         onClick={(e) => {
           e.stopPropagation()
-          closePanel(tab.panelId)
+          onClose(tab)
         }}
         className={cn(
           'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] transition-all hover:bg-foreground/10',
           tab.focused ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60',
+        )}
+      >
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  )
+}
+
+function RetainedEmbeddedBrowserTabItem({
+  tab,
+  instance,
+  liveWindowActions,
+  onResume,
+  onTerminate,
+}: {
+  tab: RetainedEmbeddedBrowserSurfaceTab
+  instance: BrowserInstanceInfo
+  liveWindowActions: boolean
+  onResume: (instanceId: string) => void
+  onTerminate: (instance: BrowserInstanceInfo) => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div
+      role="tab"
+      aria-selected={false}
+      tabIndex={0}
+      title={tab.title}
+      onClick={() => onResume(tab.instanceId)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onResume(tab.instanceId)
+        }
+      }}
+      onAuxClick={(e) => {
+        if (e.button === 1 && liveWindowActions) {
+          e.preventDefault()
+          onTerminate(instance)
+        }
+      }}
+      className={cn(
+        'group flex h-7 max-w-[220px] min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] transition-colors',
+        'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+      )}
+    >
+      <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" />
+      <span className="min-w-0 flex-1 truncate">{tab.title}</span>
+      <button
+        type="button"
+        aria-label={t('workbench.browser.terminate')}
+        disabled={!liveWindowActions}
+        onClick={(e) => {
+          e.stopPropagation()
+          onTerminate(instance)
+        }}
+        className={cn(
+          'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] transition-all hover:bg-foreground/10',
+          'opacity-0 group-hover:opacity-60 hover:opacity-100',
         )}
       >
         <X className="h-3 w-3" />
@@ -222,6 +297,8 @@ export function SurfaceTabs() {
     enabled: browserSurfaceEnabled,
     activeSessionId: focusedSessionId,
   })
+  const closePanel = useSetAtom(closePanelAtom)
+  const openOrFocusBrowserPanel = useSetAtom(openOrFocusBrowserPanelAtom)
 
   const resolveSessionTitle = useCallback(
     (sessionId: string) => {
@@ -337,12 +414,50 @@ export function SurfaceTabs() {
         t('surfaceTabs.browser'),
       )
     : []
+  const openBrowserInstanceIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const entry of entries) {
+      const surface = surfaceTabFromRoute(entry.route)
+      if (surface?.kind === 'browser') {
+        ids.add(surface.tabId)
+      }
+    }
+    return ids
+  }, [entries])
+  const retainedEmbeddedTabs = browserSurfaceEnabled
+    ? retainedEmbeddedBrowserSurfaceTabs(
+        browserWindows.embeddedInstances,
+        openBrowserInstanceIds,
+        t('surfaceTabs.browser'),
+      )
+    : []
   const osById = useMemo(
     () => new Map(browserWindows.orderedInstances.map((instance) => [instance.id, instance])),
     [browserWindows.orderedInstances],
   )
+  const embeddedById = useMemo(
+    () => new Map(browserWindows.embeddedInstances.map((instance) => [instance.id, instance])),
+    [browserWindows.embeddedInstances],
+  )
 
-  const empty = grouped.every((group) => group.tabs.length === 0) && osTabs.length === 0
+  const closeSurfaceTab = useCallback((tab: SurfaceTabView) => {
+    const entry = entries.find((item) => item.id === tab.panelId)
+    if (entry) {
+      destroyBrowserInstanceForRoute(entry.route)
+    }
+    closePanel(tab.panelId)
+  }, [closePanel, entries])
+
+  const resumeRetainedEmbeddedBrowser = useCallback((instanceId: string) => {
+    openOrFocusEmbeddedBrowserPanel({
+      instanceId,
+      openOrFocusBrowserPanel,
+    })
+  }, [openOrFocusBrowserPanel])
+
+  const empty = grouped.every((group) => group.tabs.length === 0)
+    && osTabs.length === 0
+    && retainedEmbeddedTabs.length === 0
 
   return (
     <div
@@ -360,11 +475,28 @@ export function SurfaceTabs() {
                 <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-border/80" />
               )}
               {group.tabs.map((tab) => (
-                <SurfaceTabItem key={tab.panelId} tab={tab} />
+                <SurfaceTabItem key={tab.panelId} tab={tab} onClose={closeSurfaceTab} />
               ))}
             </div>
           ))}
-          {osTabs.length > 0 && (grouped.some((group) => group.tabs.length > 0)) && (
+          {(osTabs.length > 0 || retainedEmbeddedTabs.length > 0) && (grouped.some((group) => group.tabs.length > 0)) && (
+            <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-border/80" />
+          )}
+          {retainedEmbeddedTabs.map((tab) => {
+            const instance = embeddedById.get(tab.instanceId)
+            if (!instance) return null
+            return (
+              <RetainedEmbeddedBrowserTabItem
+                key={tab.instanceId}
+                tab={tab}
+                instance={instance}
+                liveWindowActions={browserWindows.liveWindowActions}
+                onResume={resumeRetainedEmbeddedBrowser}
+                onTerminate={browserWindows.terminateBrowserWindow}
+              />
+            )
+          })}
+          {retainedEmbeddedTabs.length > 0 && osTabs.length > 0 && (
             <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-border/80" />
           )}
           {osTabs.map((tab) => {

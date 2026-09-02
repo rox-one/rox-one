@@ -24,6 +24,7 @@ import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { MainContentPanel } from './MainContentPanel'
 import { PANEL_MIN_WIDTH, RADIUS_EDGE, RADIUS_INNER } from './panel-constants'
+import { destroyBrowserInstanceForRoute } from '@/platform/browser-panel-lifecycle'
 
 interface PanelSlotProps {
   entry: PanelStackEntry
@@ -61,8 +62,9 @@ export function PanelSlot({
   const navState = parseRouteToNavigationState(entry.route)
 
   const handleClose = useCallback(() => {
+    destroyBrowserInstanceForRoute(entry.route)
     closePanel(entry.id)
-  }, [closePanel, entry.id])
+  }, [closePanel, entry.id, entry.route])
 
   // Build close button for PanelHeader (via context override)
   const closeButton = useMemo(() => {
@@ -73,7 +75,7 @@ export function PanelSlot({
         tooltip={t("common.close")}
       />
     )
-  }, [handleClose])
+  }, [handleClose, t])
 
   // Build back button for compact mode — closes the panel to reveal the session list.
   // Same PanelHeaderCenterButton style as X and share, just on the left side.
@@ -86,7 +88,7 @@ export function PanelSlot({
         tooltip={t("common.backToList")}
       />
     )
-  }, [isCompact, handleClose])
+  }, [isCompact, handleClose, t])
 
   // Override AppShellContext so ChatPage/PanelHeader gets our per-panel close button,
   // back button (compact mode), and isFocusedPanel for input field appearance

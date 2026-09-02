@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'bun:test'
-import { osBrowserSurfaceTabs, type OsBrowserInstanceLike } from '../os-browser-tabs'
+import {
+  osBrowserSurfaceTabs,
+  retainedEmbeddedBrowserSurfaceTabs,
+  type OsBrowserInstanceLike,
+} from '../os-browser-tabs'
 
 function instance(partial: Partial<OsBrowserInstanceLike> & { id: string }): OsBrowserInstanceLike {
   return {
@@ -50,5 +54,25 @@ describe('osBrowserSurfaceTabs', () => {
     expect(tab?.boundSessionId).toBe('sess-bound')
     expect(tab?.focused).toBe(false)
     expect(tab?.agentControlActive).toBe(true)
+  })
+})
+
+describe('retainedEmbeddedBrowserSurfaceTabs', () => {
+  it('exposes only embedded browsers that no open panel route already owns', () => {
+    const tabs = retainedEmbeddedBrowserSurfaceTabs(
+      [
+        instance({ id: 'os-1', title: 'OS window', embedded: false }),
+        instance({ id: 'embedded-open', title: 'Already open', embedded: true }),
+        instance({ id: 'embedded-retained', title: 'Retained', embedded: true }),
+        instance({ id: 'embedded-untitled', title: '   ', embedded: true }),
+      ],
+      new Set(['embedded-open']),
+      'Browser',
+    )
+
+    expect(tabs).toEqual([
+      { instanceId: 'embedded-retained', title: 'Retained' },
+      { instanceId: 'embedded-untitled', title: 'Browser' },
+    ])
   })
 })
