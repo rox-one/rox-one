@@ -38,7 +38,7 @@ function sampleFromPending(
     for (const channel of new Set([...Object.keys(ipcBefore), ...Object.keys(after)])) {
       const count = (after[channel]?.count ?? 0) - (ipcBefore[channel]?.count ?? 0)
       const totalResultBytes = (after[channel]?.totalResultBytes ?? 0) - (ipcBefore[channel]?.totalResultBytes ?? 0)
-      if (count || totalResultBytes) delta[channel] = { count, totalResultBytes }
+      if (count || totalResultBytes) delta[channel] = { channel, count, totalResultBytes }
     }
     return delta
   })()

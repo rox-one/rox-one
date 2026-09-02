@@ -24,7 +24,7 @@ describe('perf budgets', () => {
 
   it('fails cached switch when a collection reload occurs', () => {
     const violations = evaluateSamples([
-      sample({ collectionReload: true, ipc: { 'sessions:get': { count: 1, totalResultBytes: 8 } } }),
+      sample({ collectionReload: true, ipc: { 'sessions:get': { channel: 'sessions:get', count: 1, totalResultBytes: 8 } } }),
     ])
     expect(violations.some((v) => v.rule.includes('collectionReload') || v.rule.includes('sessions:get'))).toBe(true)
   })

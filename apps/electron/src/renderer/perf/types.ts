@@ -17,7 +17,7 @@ export interface InteractionSample {
   durationMs: number
   marks: Array<{ name: string; elapsedMs: number }>
   collectionReload: boolean
-  ipc: Record<string, { count: number; totalResultBytes: number }>
+  ipc: Record<string, { channel: string; count: number; totalResultBytes: number }>
   nPlusOne: Array<{
     kind: 'permission-mode' | 'session-messages' | 'collection-reload'
     channel: string
