@@ -50,6 +50,7 @@ export const win32 = posix
 // child_process
 export const execSync = () => { throw new Error('execSync not available in browser') }
 export const exec = () => { throw new Error('exec not available in browser') }
+export const execFile = () => { throw new Error('execFile not available in browser') }
 export const spawn = () => { throw new Error('spawn not available in browser') }
 
 // os

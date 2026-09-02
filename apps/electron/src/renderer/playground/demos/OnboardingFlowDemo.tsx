@@ -19,9 +19,10 @@ import type { CredentialStatus } from '@/components/onboarding/CredentialsStep'
 type DemoStep = 'welcome' | 'provider-select' | 'credentials' | 'local-model' | 'complete'
 
 /** Map ProviderChoice → ApiSetupMethod for the credentials step */
-const CHOICE_TO_METHOD: Record<Exclude<ProviderChoice, 'local' | 'omp'>, ApiSetupMethod> = {
+const CHOICE_TO_METHOD: Record<Exclude<ProviderChoice, 'local' | 'rox'>, ApiSetupMethod> = {
   claude: 'claude_oauth',
   chatgpt: 'pi_chatgpt_oauth',
+  grok: 'pi_api_key',
   copilot: 'pi_copilot_oauth',
   api_key: 'pi_api_key',
 }
@@ -47,7 +48,7 @@ export function OnboardingFlowDemo() {
     if (choice === 'local') {
       setMethod(null)
       setStep('local-model')
-    } else if (choice === 'omp') {
+    } else if (choice === 'rox') {
       setMethod(null)
       setStep('complete')
     } else {

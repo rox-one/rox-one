@@ -2739,7 +2739,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Browser Toolbar Error</title>
     <style>
-      html, body { margin: 0; padding: 0; height: 100%; font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafb; color: #1f2937; }
+      html, body { margin: 0; padding: 0; height: 100%; font-family: Geist, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fafafb; color: #1f2937; }
       @media (prefers-color-scheme: dark) { html, body { background: #2b292e; color: #e5e7eb; } }
       .wrap { height: 100%; display: flex; align-items: center; justify-content: center; }
       .card { max-width: 640px; margin: 0 20px; padding: 14px 16px; border-radius: 10px; background: rgba(127,127,127,0.12); font-size: 12px; line-height: 1.45; }

@@ -91,7 +91,7 @@ export function TerminalOutput({
   return (
     <div
       className={cn('h-full w-full overflow-auto px-5 py-4 font-mono text-sm', className)}
-      style={{ fontFamily: '"JetBrains Mono", monospace' }}
+      style={{ fontFamily: 'var(--font-mono)' }}
     >
       {/* Command section */}
       <div className="mb-4">

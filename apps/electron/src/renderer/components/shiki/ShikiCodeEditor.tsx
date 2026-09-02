@@ -179,7 +179,7 @@ export function ShikiCodeEditor({
         padding={24}
         placeholder={placeholder}
         style={{
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 14,
           lineHeight: 1.6,
           minHeight: '100%',

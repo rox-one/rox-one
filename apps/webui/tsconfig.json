@@ -16,6 +16,8 @@
     "paths": {
       "@/*": ["../electron/src/renderer/*"],
       "@webui/*": ["./src/*"],
+      "@craft-agent/ui": ["../../packages/ui/src/index.ts"],
+      "@craft-agent/ui/*": ["../../packages/ui/src/*"],
       "@config/*": ["../../packages/shared/src/config/*"],
       "@craft-agent/shared": ["../../packages/shared/src/index.ts"],
       "@craft-agent/shared/*": ["../../packages/shared/src/*"]

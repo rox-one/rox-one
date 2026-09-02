@@ -26,6 +26,28 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+@font-face {
+  font-family: "Geist";
+  src:
+    local("Geist"),
+    local("Geist Regular"),
+    local("Geist-Regular");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  src:
+    local("Geist Mono"),
+    local("GeistMono"),
+    local("GeistMono-Regular");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* =============================================================================
    LIGHT MODE (default)
 ============================================================================= */
@@ -131,9 +153,9 @@
   --md-bullets: var(--foreground-50);
   --md-counters: var(--foreground-50);
 
-  /* Rox default — Geist for interface and documents; Geist Mono for code. */
+  /* Rox default: Geist for interface/documents and Geist Mono for technical text. */
   --font-sans: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: "Geist", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-default: var(--font-sans);
 
@@ -207,13 +229,14 @@
   --md-counters: var(--foreground-50);
 }
 
-/* Inter font option (requires loading Inter from Google Fonts or locally)
-   For best results, load Inter with optical sizing: family=Inter:opsz,wght@14..32,400;... */
+/* Legacy persisted font flags resolve to the Rox default stack. */
 html[data-font="inter"] {
-  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Geist", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Geist", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-default: var(--font-sans);
   font-optical-sizing: auto;
-  font-feature-settings: "cv01", "cv02", "cv03", "cv04", "case";
+  font-feature-settings: normal;
 }
 
 /* =============================================================================

@@ -176,7 +176,7 @@ export function ShikiCodeViewer({
                 '[&_pre]:!bg-transparent [&_pre]:!m-0 [&_pre]:!p-0 [&_pre]:whitespace-pre',
                 '[&_code]:!bg-transparent'
               )}
-              style={{ fontFamily: '"JetBrains Mono", monospace' }}
+              style={{ fontFamily: 'var(--font-mono)' }}
               dangerouslySetInnerHTML={{ __html: highlighted }}
             />
           )}
