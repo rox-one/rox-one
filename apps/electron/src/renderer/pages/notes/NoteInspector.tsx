@@ -1,8 +1,9 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Check, CheckSquare2, ChevronLeft, ChevronRight, FileText, Link2, ListChecks, Paperclip, Plus, Tag, X } from 'lucide-react'
+import { AlertTriangle, Check, CheckCircle2, CheckSquare2, ChevronLeft, ChevronRight, CornerDownRight, FileText, Link2, ListChecks, MessageSquareText, Paperclip, Plus, RotateCcw, SlidersHorizontal, Tag, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { NoteAsset, NoteDocument, NoteSummary } from '../../../shared/types'
+import type { NoteAsset, NoteCommentAnchor, NoteCommentThread, NoteDocument, NoteSummary } from '../../../shared/types'
+import type { ResolvedNoteCommentAnchor } from './note-comments'
 
 // ---------------------------------------------------------------------------
 // Types shared between inspector and dialogs
@@ -15,6 +16,8 @@ export type NoteTask = {
   text: string
   checked: boolean
 }
+
+type InspectorPanel = 'properties' | 'links' | 'comments'
 
 export function noteRelativeLabel(note: Pick<NoteSummary, 'relativePath'>): string {
   return note.relativePath.replace(/\.md$/i, '')
@@ -80,6 +83,12 @@ export interface NoteInspectorProps {
   uncreatedLinks: string[]
   activeNoteTasks: NoteTask[]
   openTasks: NoteTask[]
+  comments: NoteCommentThread[]
+  pendingCommentAnchor: NoteCommentAnchor | null
+  commentDraft: string
+  activeCommentId: string | null
+  commentAnchorStates: Record<string, ResolvedNoteCommentAnchor>
+  commentPanelSignal: number
   presetTags?: string[]
   onTagDraftChange(v: string): void
   onApplyTags(): void
@@ -94,6 +103,13 @@ export interface NoteInspectorProps {
   onToggleTask(task: NoteTask): void
   onOpenNote(noteId: string): void
   onMissingLink(target: string): void
+  onCommentDraftChange(v: string): void
+  onCreateComment(): void
+  onSelectComment(comment: NoteCommentThread, resolved?: ResolvedNoteCommentAnchor): void
+  onUpdateCommentBody(commentId: string, body: string): void
+  onResolveComment(commentId: string): void
+  onReopenComment(commentId: string): void
+  onDeleteComment(commentId: string): void
   collapsed?: boolean
   onToggleCollapsed?(): void
 }
@@ -124,6 +140,12 @@ export function NoteInspector({
   uncreatedLinks,
   activeNoteTasks,
   openTasks,
+  comments,
+  pendingCommentAnchor,
+  commentDraft,
+  activeCommentId,
+  commentAnchorStates,
+  commentPanelSignal,
   presetTags = [],
   onTagDraftChange,
   onAddTag,
@@ -138,11 +160,46 @@ export function NoteInspector({
   onToggleTask,
   onOpenNote,
   onMissingLink,
+  onCommentDraftChange,
+  onCreateComment,
+  onSelectComment,
+  onUpdateCommentBody,
+  onResolveComment,
+  onReopenComment,
+  onDeleteComment,
   collapsed = false,
   onToggleCollapsed,
 }: NoteInspectorProps) {
   const { t } = useTranslation()
+  const [panel, setPanel] = React.useState<InspectorPanel>('properties')
+  const [editingCommentId, setEditingCommentId] = React.useState<string | null>(null)
+  const [editingCommentBody, setEditingCommentBody] = React.useState('')
+  const inspectorPanels = [
+    { id: 'properties' as const, label: t('notes.inspector.panelProperties'), icon: SlidersHorizontal },
+    { id: 'links' as const, label: t('notes.inspector.panelLinks'), icon: Link2 },
+    { id: 'comments' as const, label: t('notes.inspector.panelComments'), icon: MessageSquareText },
+  ]
   void _allAssets
+
+  React.useEffect(() => {
+    if (commentPanelSignal > 0) setPanel('comments')
+  }, [commentPanelSignal])
+
+  const unresolvedComments = comments.filter(comment => !comment.resolvedAt)
+  const resolvedComments = comments.filter(comment => comment.resolvedAt)
+  const orderedComments = [...unresolvedComments, ...resolvedComments]
+
+  const beginEditComment = (comment: NoteCommentThread) => {
+    setEditingCommentId(comment.id)
+    setEditingCommentBody(comment.body)
+  }
+
+  const commitEditComment = () => {
+    if (!editingCommentId || !editingCommentBody.trim()) return
+    onUpdateCommentBody(editingCommentId, editingCommentBody)
+    setEditingCommentId(null)
+    setEditingCommentBody('')
+  }
 
   if (collapsed) {
     return (
@@ -183,7 +240,7 @@ export function NoteInspector({
   ).slice(0, 12)
 
   return (
-    <aside className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
+    <aside className="w-[320px] shrink-0 overflow-y-auto border-l border-border/70 bg-background/95 p-3">
       <div className="mb-3 flex items-center justify-end">
         <button
           className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
@@ -193,6 +250,30 @@ export function NoteInspector({
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
+      <div
+        className="mb-4 grid grid-cols-3 gap-1 rounded-[8px] border border-border/65 bg-muted/[0.14] p-0.5"
+        role="tablist"
+        aria-label={t('notes.inspector.panelLabel')}
+      >
+        {inspectorPanels.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={panel === id}
+            className={cn(
+              'inline-flex h-7 items-center justify-center gap-1 rounded-[6px] px-1.5 text-[11px] font-medium text-muted-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              panel === id ? 'bg-background text-foreground shadow-minimal' : 'hover:bg-foreground/[0.06] hover:text-foreground',
+            )}
+            onClick={() => setPanel(id)}
+          >
+            <Icon className="h-3.5 w-3.5" strokeWidth={1.75} />
+            <span className="truncate">{label}</span>
+          </button>
+        ))}
+      </div>
+      {panel === 'properties' && (
+        <>
       {/* Tags */}
       <section className="mb-5">
         <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -375,7 +456,11 @@ export function NoteInspector({
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noAssets')}</span>}
         </div>
       </section>
+        </>
+      )}
 
+      {panel === 'links' && (
+        <>
       {/* Uncreated links */}
       <section className="mb-5">
         <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
@@ -437,6 +522,198 @@ export function NoteInspector({
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noOutgoingLinks')}</span>}
         </div>
       </section>
+        </>
+      )}
+
+      {panel === 'comments' && (
+        <section className="space-y-3">
+          {pendingCommentAnchor && (
+            <div className="rounded-[9px] border border-primary/30 bg-primary/[0.06] p-2.5 shadow-minimal">
+              <div className="mb-2 flex items-start gap-2">
+                <CornerDownRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" strokeWidth={1.8} />
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-medium text-foreground">{t('notes.comments.selectionTitle')}</div>
+                  <div className="mt-0.5 line-clamp-2 text-[11px] leading-snug text-muted-foreground">
+                    “{pendingCommentAnchor.selectedText}”
+                  </div>
+                </div>
+              </div>
+              <textarea
+                value={commentDraft}
+                onChange={(event) => onCommentDraftChange(event.target.value)}
+                placeholder={t('notes.comments.draftPlaceholder')}
+                className="min-h-[72px] w-full resize-none rounded-[7px] border border-border/60 bg-background/95 px-2.5 py-2 text-xs leading-relaxed outline-none focus:border-primary/50"
+              />
+              <div className="mt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  className="h-7 rounded-[6px] px-2 text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground"
+                  onClick={() => onCommentDraftChange('')}
+                >
+                  {t('notes.comments.clear')}
+                </button>
+                <button
+                  type="button"
+                  className="h-7 rounded-[6px] bg-primary px-3 text-xs font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-45"
+                  onClick={onCreateComment}
+                  disabled={!commentDraft.trim()}
+                >
+                  {t('notes.comments.add')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <MessageSquareText className="h-3.5 w-3.5" strokeWidth={1.75} />
+              {t('notes.comments.title')}
+            </div>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground">
+              {t('notes.comments.openCount', { count: unresolvedComments.length })}
+            </span>
+          </div>
+
+          {orderedComments.length > 0 ? (
+            <div className="space-y-2">
+              {orderedComments.map(comment => {
+                const resolved = commentAnchorStates[comment.id]
+                const isActive = activeCommentId === comment.id
+                const isResolved = Boolean(comment.resolvedAt)
+                const isEditing = editingCommentId === comment.id
+                return (
+                  <article
+                    key={comment.id}
+                    className={cn(
+                      'rounded-[9px] border bg-background/85 p-2.5 shadow-minimal transition-colors',
+                      isActive ? 'border-primary/45 ring-1 ring-primary/20' : 'border-border/65',
+                      isResolved && 'opacity-70',
+                    )}
+                  >
+                    <button
+                      type="button"
+                      className="mb-2 w-full rounded-[6px] bg-muted/[0.22] px-2 py-1.5 text-left hover:bg-foreground/[0.06]"
+                      onClick={() => onSelectComment(comment, resolved)}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {resolved?.stale ? (
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" strokeWidth={1.8} />
+                        ) : (
+                          <MessageSquareText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.8} />
+                        )}
+                        <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
+                          “{comment.anchor.selectedText}”
+                        </span>
+                      </div>
+                      {resolved?.stale && (
+                        <div className="mt-1 text-[10px] text-amber-500">{t('notes.comments.staleAnchor')}</div>
+                      )}
+                    </button>
+
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className="grid h-5 w-5 place-items-center rounded-full bg-primary/12 text-[10px] font-semibold text-primary">
+                        {comment.author.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
+                        {comment.author}
+                      </div>
+                      {isResolved && (
+                        <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[10px] text-emerald-500">
+                          {t('notes.comments.resolved')}
+                        </span>
+                      )}
+                    </div>
+
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <textarea
+                          value={editingCommentBody}
+                          onChange={(event) => setEditingCommentBody(event.target.value)}
+                          className="min-h-[76px] w-full resize-none rounded-[7px] border border-border/60 bg-background px-2.5 py-2 text-xs leading-relaxed outline-none focus:border-primary/50"
+                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            className="h-7 rounded-[6px] px-2 text-xs text-muted-foreground hover:bg-foreground/[0.06]"
+                            onClick={() => {
+                              setEditingCommentId(null)
+                              setEditingCommentBody('')
+                            }}
+                          >
+                            {t('notes.comments.cancel')}
+                          </button>
+                          <button
+                            type="button"
+                            className="h-7 rounded-[6px] bg-primary px-3 text-xs font-medium text-primary-foreground disabled:opacity-45"
+                            onClick={commitEditComment}
+                            disabled={!editingCommentBody.trim()}
+                          >
+                            {t('notes.comments.save')}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">{comment.body}</div>
+                    )}
+
+                    <div className="mt-2 flex items-center justify-between gap-2 border-t border-border/50 pt-2">
+                      <button
+                        type="button"
+                        className="h-6 rounded-[5px] px-2 text-[11px] text-muted-foreground hover:bg-foreground/[0.06]"
+                        onClick={() => onSelectComment(comment, resolved)}
+                      >
+                        {t('notes.comments.goToText')}
+                      </button>
+                      <div className="flex items-center gap-1">
+                        {!isEditing && (
+                          <button
+                            type="button"
+                            className="h-6 rounded-[5px] px-2 text-[11px] text-muted-foreground hover:bg-foreground/[0.06]"
+                            onClick={() => beginEditComment(comment)}
+                          >
+                            {t('notes.comments.edit')}
+                          </button>
+                        )}
+                        {isResolved ? (
+                          <button
+                            type="button"
+                            className="grid h-6 w-6 place-items-center rounded-[5px] text-muted-foreground hover:bg-foreground/[0.06]"
+                            onClick={() => onReopenComment(comment.id)}
+                            title={t('notes.comments.reopen')}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="grid h-6 w-6 place-items-center rounded-[5px] text-muted-foreground hover:bg-emerald-500/10 hover:text-emerald-500"
+                            onClick={() => onResolveComment(comment.id)}
+                            title={t('notes.comments.resolve')}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="grid h-6 w-6 place-items-center rounded-[5px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => onDeleteComment(comment.id)}
+                          title={t('notes.comments.delete')}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          ) : (
+            <div className="rounded-[9px] border border-dashed border-border/70 bg-muted/[0.12] p-3 text-xs leading-relaxed text-muted-foreground">
+              {t('notes.comments.emptyHint')}
+            </div>
+          )}
+        </section>
+      )}
     </aside>
   )
 }

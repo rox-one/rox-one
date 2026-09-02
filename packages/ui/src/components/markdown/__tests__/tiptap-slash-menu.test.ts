@@ -100,6 +100,7 @@ describe('tiptap slash menu', () => {
     expect(filterSlashCommandItems(items, 'divider').some((item) => item.id === 'horizontal-rule')).toBe(true)
     expect(filterSlashCommandItems(items, 'flow').some((item) => item.id === 'mermaid-code-block')).toBe(true)
     expect(filterSlashCommandItems(items, 'checklist').some((item) => item.id === 'task-list')).toBe(true)
+    expect(filterSlashCommandItems(items, 'split').some((item) => item.id === 'two-column-block')).toBe(true)
   })
 
   it('returns all items for empty query and includes icons', () => {
@@ -133,6 +134,18 @@ describe('tiptap slash menu', () => {
     quote?.run(editor, 5)
     expect(calls.slice(-4)).toEqual(['focus', 'setTextSelection:5', 'setBlockquote', 'run'])
     expect(calls).not.toContain('toggleBlockquote')
+
+    const spoiler = items.find((item) => item.id === 'spoiler-block')
+    spoiler?.run(editor, 5)
+    expect(calls).toContain('insertContentAt:5:{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"[!spoiler]- Спойлер"}]},{"type":"paragraph"}]}')
+
+    const twoColumns = items.find((item) => item.id === 'two-column-block')
+    twoColumns?.run(editor, 5)
+    expect(calls).toContain('insertContentAt:5:{"type":"roxColumns","attrs":{"widths":"50% 50%"},"content":[{"type":"roxColumn","content":[{"type":"paragraph"}]},{"type":"roxColumn","content":[{"type":"paragraph"}]}]}')
+
+    const threeColumns = items.find((item) => item.id === 'three-column-block')
+    threeColumns?.run(editor, 5)
+    expect(calls).toContain('insertContentAt:5:{"type":"roxColumns","attrs":{"widths":"33.33% 33.33% 33.34%"},"content":[{"type":"roxColumn","content":[{"type":"paragraph"}]},{"type":"roxColumn","content":[{"type":"paragraph"}]},{"type":"roxColumn","content":[{"type":"paragraph"}]}]}')
 
     const mermaid = items.find((item) => item.id === 'mermaid-code-block')
     mermaid?.run(editor, 5)

@@ -383,10 +383,13 @@ import type {
   NoteAssetImportResult,
   NoteAssetRenameResult,
   NoteBacklink,
+  CreateNoteCommentInput,
+  NoteCommentThread,
   NoteDocument,
   NoteRenameImpact,
   NoteRenameResult,
   NoteSummary,
+  UpdateNoteCommentInput,
   RemoteSessionTransferPayload,
   ImportRemoteSessionTransferResult,
   KnowledgeChangedPayload,
@@ -657,6 +660,10 @@ export interface ElectronAPI {
   deleteFolderNote(workspaceId: string, folder: string): Promise<{ deletedNotes: string[] }>
   searchNotes(workspaceId: string, query: string): Promise<NoteSummary[]>
   getNoteBacklinks(workspaceId: string, noteId: string): Promise<NoteBacklink[]>
+  listNoteComments(workspaceId: string, noteId: string): Promise<NoteCommentThread[]>
+  createNoteComment(workspaceId: string, input: CreateNoteCommentInput): Promise<NoteCommentThread>
+  updateNoteComment(workspaceId: string, input: UpdateNoteCommentInput): Promise<NoteCommentThread>
+  deleteNoteComment(workspaceId: string, noteId: string, commentId: string): Promise<boolean>
   getNoteRenameImpact(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameImpact>
   getDailyNote(workspaceId: string, date?: string): Promise<NoteDocument>
   importNoteAsset(workspaceId: string, attachment: FileAttachment): Promise<NoteAssetImportResult>

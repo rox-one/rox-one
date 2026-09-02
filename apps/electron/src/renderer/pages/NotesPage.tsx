@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, ListTree, MessageSquarePlus, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Paperclip, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { DndContext, useDraggable, useDroppable, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@craft-agent/ui'
-import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteRenameImpact, NoteSummary } from '../../shared/types'
+import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteCommentAnchor, NoteCommentThread, NoteDocument, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import {
@@ -21,13 +21,16 @@ import type { NoteTask } from './notes/NoteInspector'
 import { NotesAIMenu } from './notes/NotesAIMenu'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
+import { pathStartsWith } from '@craft-agent/core/utils'
 import {
-  defaultNoteEntityCapabilities,
-  EntityViewTabs,
-  useEntityView,
-} from '@/components/app-shell/EntityViewTabs'
-import { MindMapHost } from '@/mindmap/MindMapHost'
-import { deriveNoteMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
+  getNoteRailWidth,
+  parseDocumentOutline,
+  parseStoredRailCollapsed,
+  parseStoredRailWidth,
+  type DocumentOutlineItem,
+  type NoteRailKind,
+} from './notes/document-outline'
+import { createNoteCommentAnchor, resolveNoteCommentAnchor, resolveNoteCommentAnchors, type ResolvedNoteCommentAnchor } from './notes/note-comments'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -171,11 +174,44 @@ async function fileToAttachment(file: File): Promise<FileAttachment> {
   return {
     type: classifyAttachment(file),
     path: window.electronAPI.getFilePath(file) ?? '',
-    name: file.name || 'attachment',
+    name: file.name || 'вложение',
     mimeType: file.type || 'application/octet-stream',
     base64: btoa(binary),
     size: file.size,
   }
+}
+
+function getEditorPlainText(editor: TiptapEditorHandle): string {
+  return editor.state.doc.textBetween(0, editor.state.doc.content.size, '\n', '\n')
+}
+
+function readEditorCommentAnchor(editor: TiptapEditorHandle): NoteCommentAnchor | null {
+  const selection = editor.state.selection
+  if (selection.empty) return null
+  const from = Math.min(selection.from, selection.to)
+  const to = Math.max(selection.from, selection.to)
+  const fullText = getEditorPlainText(editor)
+  const selectedText = editor.state.doc.textBetween(from, to, '\n', '\n')
+  const before = editor.state.doc.textBetween(0, from, '\n', '\n')
+  return createNoteCommentAnchor({
+    fullText,
+    start: before.length,
+    end: before.length + selectedText.length,
+    selectedText,
+  })
+}
+
+function findDocPositionForQuote(editor: TiptapEditorHandle, quote: string): number | null {
+  if (!quote.trim()) return null
+  let result: number | null = null
+  editor.state.doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) return true
+    const index = node.text.indexOf(quote)
+    if (index === -1) return true
+    result = pos + index
+    return false
+  })
+  return result
 }
 
 function noteFolder(note: NoteSummary): string {
@@ -345,6 +381,7 @@ function FolderTreeItem({
   onCopyNotePath,
   onRevealNote,
 }: FolderTreeItemProps) {
+  const { t } = useTranslation()
   const isCollapsed = collapsedFolders.has(node.fullPath)
   const indent = depth * 12
 
@@ -379,16 +416,16 @@ function FolderTreeItem({
             <StyledContextMenuContent>
               <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(node.fullPath)}>
                 <FilePlus2 className="h-3.5 w-3.5" />
-                New note in folder
+                {t('notes.document.newNoteInFolder')}
               </StyledContextMenuItem>
               <StyledContextMenuItem onClick={() => onOpenRenameFolder(node.fullPath)}>
                 <Pencil className="h-3.5 w-3.5" />
-                Rename folder
+                {t('notes.document.renameFolder')}
               </StyledContextMenuItem>
               <StyledContextMenuSeparator />
               <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteFolder(node.fullPath)}>
                 <Trash2 className="h-3.5 w-3.5" />
-                Delete folder
+                {t('notes.dialog.deleteFolder')}
               </StyledContextMenuItem>
             </StyledContextMenuContent>
           </ContextMenu>
@@ -456,41 +493,41 @@ function FolderTreeItem({
                   <StyledContextMenuContent>
                     <StyledContextMenuItem onClick={() => onOpenNote(note.id)}>
                       <FileText className="h-3.5 w-3.5" />
-                      Open
+                      {t('common.open')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenRenameDialogForNote(note)}>
                       <Pencil className="h-3.5 w-3.5" />
-                      Rename
+                      {t('common.rename')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(noteFolder(note) || undefined)}>
                       <FilePlus2 className="h-3.5 w-3.5" />
-                      New note here
+                      {t('notes.document.newNoteHere')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onDuplicateNote(note)}>
                       <Copy className="h-3.5 w-3.5" />
-                      Duplicate
+                      {t('notes.document.duplicate')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenMoveDialog(note)}>
                       <FolderInput className="h-3.5 w-3.5" />
-                      Move to folder
+                      {t('notes.dialog.move')}
                     </StyledContextMenuItem>
                     <StyledContextMenuSeparator />
                     <StyledContextMenuItem onClick={() => onCopyNoteLink(note)}>
                       <Link2 className="h-3.5 w-3.5" />
-                      Copy note link
+                      {t('notes.document.copyWikiLink')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onCopyNotePath(note)}>
                       <FileText className="h-3.5 w-3.5" />
-                      Copy markdown path
+                      {t('notes.document.copyMarkdownPath')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onRevealNote(note)}>
                       <ExternalLink className="h-3.5 w-3.5" />
-                      Reveal in Finder
+                      {t('notes.document.revealFinder')}
                     </StyledContextMenuItem>
                     <StyledContextMenuSeparator />
                     <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteDialogForNote(note)}>
                       <Trash2 className="h-3.5 w-3.5" />
-                      Delete
+                      {t('common.delete')}
                     </StyledContextMenuItem>
                   </StyledContextMenuContent>
                 </ContextMenu>
@@ -505,6 +542,121 @@ function FolderTreeItem({
 
 function countFolderNotes(node: FolderTreeNode): number {
   return node.notes.length + node.children.reduce((sum, c) => sum + countFolderNotes(c), 0)
+}
+
+const NOTES_LAYOUT_PREFERENCE_KEY = 'notesDocumentLayout'
+
+type NotesDocumentLayoutPreference = {
+  collapsedFolders?: unknown
+  inspectorCollapsed?: unknown
+  vaultCollapsed?: unknown
+  outlineCollapsed?: unknown
+  vaultWidth?: unknown
+  outlineWidth?: unknown
+}
+
+function parseNotesLayoutPreference(content: string): NotesDocumentLayoutPreference {
+  try {
+    const parsed: unknown = JSON.parse(content)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+    const layout = (parsed as Record<string, unknown>)[NOTES_LAYOUT_PREFERENCE_KEY]
+    if (!layout || typeof layout !== 'object' || Array.isArray(layout)) return {}
+    return layout as NotesDocumentLayoutPreference
+  } catch {
+    return {}
+  }
+}
+
+function parseNotesLayoutPreferences(content: string): Record<string, unknown> {
+  try {
+    const parsed: unknown = JSON.parse(content)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {}
+  } catch {
+    return {}
+  }
+}
+
+function readLayoutBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') return parseStoredRailCollapsed(value, fallback)
+  return fallback
+}
+
+function readLayoutWidth(kind: NoteRailKind, value: unknown): number {
+  if (typeof value === 'number' || typeof value === 'string') {
+    return parseStoredRailWidth(kind, String(value))
+  }
+  return getNoteRailWidth(kind, false)
+}
+
+function readCollapsedFolders(value: unknown): Set<string> {
+  return new Set(Array.isArray(value) ? value.filter((folder): folder is string => typeof folder === 'string') : [])
+}
+
+async function readNotesLayoutPreference(): Promise<NotesDocumentLayoutPreference> {
+  const { content } = await window.electronAPI.readPreferences()
+  return parseNotesLayoutPreference(content)
+}
+
+async function persistNotesLayoutPreference(patch: NotesDocumentLayoutPreference): Promise<void> {
+  const { content } = await window.electronAPI.readPreferences()
+  const preferences = parseNotesLayoutPreferences(content)
+  const current = preferences[NOTES_LAYOUT_PREFERENCE_KEY]
+  const currentLayout = current && typeof current === 'object' && !Array.isArray(current)
+    ? current as Record<string, unknown>
+    : {}
+  const result = await window.electronAPI.writePreferences(
+    JSON.stringify({
+      ...preferences,
+      [NOTES_LAYOUT_PREFERENCE_KEY]: { ...currentLayout, ...patch },
+      updatedAt: Date.now(),
+    }, null, 2),
+  )
+  if (!result.success) throw new Error(result.error ?? 'Unable to save notes layout preferences')
+}
+
+function noteCrumbs(note: NoteDocument | null, vaultLabel: string): string[] {
+  if (!note) return [vaultLabel]
+  const folderParts = note.id.split('/').slice(0, -1).filter(Boolean)
+  return [vaultLabel, ...folderParts, note.title]
+}
+
+function focusEditorHeading(
+  editor: TiptapEditorHandle | null,
+  item: DocumentOutlineItem,
+): void {
+  if (!editor) return
+  let seen = -1
+  let targetPos: number | null = null
+
+  editor.state.doc.descendants((node, pos) => {
+    if (node.type.name !== 'heading') return true
+    seen += 1
+    if (seen !== item.ordinal) return true
+    targetPos = Math.max(1, pos + 1)
+    return false
+  })
+
+  if (targetPos == null) return
+
+  try {
+    editor.chain().focus().setTextSelection(targetPos).run()
+    window.requestAnimationFrame(() => {
+      const dom = editor.view.domAtPos(targetPos!)
+      const sourceNode = dom.node
+      const element = sourceNode instanceof Element
+        ? sourceNode.closest('h1,h2,h3,h4,h5,h6') ?? sourceNode
+        : sourceNode.parentElement?.closest('h1,h2,h3,h4,h5,h6')
+      element?.scrollIntoView({
+        block: 'center',
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      })
+    })
+  } catch {
+    editor.commands.focus()
+  }
 }
 
 export default function NotesPage({ selectedNoteId }: NotesPageProps) {
@@ -544,10 +696,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string | null>(null)
-  const [collapsedFolders, setCollapsedFolders] = React.useState<Set<string>>(() => {
-    try { return new Set(JSON.parse(localStorage.getItem('notes:collapsed-folders') ?? '[]')) }
-    catch { return new Set() }
-  })
+  const [collapsedFolders, setCollapsedFolders] = React.useState<Set<string>>(() => new Set())
   const [wikiQuery, setWikiQuery] = React.useState<string | null>(null)
   const [wikiIndex, setWikiIndex] = React.useState(0)
   const [wikiAnchor, setWikiAnchor] = React.useState<{ x: number; y: number } | null>(null)
@@ -580,47 +729,56 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [assetRenameTarget, setAssetRenameTarget] = React.useState<NoteAsset | null>(null)
   const [assetRenameName, setAssetRenameName] = React.useState('')
   const [assetBusy, setAssetBusy] = React.useState(false)
-  const [inspectorCollapsed, setInspectorCollapsed] = React.useState<boolean>(() => {
-    try { return JSON.parse(localStorage.getItem('notes:inspector-collapsed') ?? 'true') }
-    catch { return true }
-  })
+  const [inspectorCollapsed, setInspectorCollapsed] = React.useState<boolean>(true)
+  const [vaultCollapsed, setVaultCollapsed] = React.useState<boolean>(false)
+  const [outlineCollapsed, setOutlineCollapsed] = React.useState<boolean>(false)
+  const [vaultWidth, setVaultWidth] = React.useState<number>(() => getNoteRailWidth('vault', false))
+  const [outlineWidth, setOutlineWidth] = React.useState<number>(() => getNoteRailWidth('outline', false))
   const saveTimerRef = React.useRef<number | null>(null)
   const saveQueueRef = React.useRef<Promise<boolean>>(Promise.resolve(true))
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
   const dirtyRef = React.useRef(dirty)
   const contentRef = React.useRef(content)
-  const noteViewCapabilities = React.useMemo(() => defaultNoteEntityCapabilities(), [])
-  const [noteView, setNoteView] = useEntityView(
-    activeNote ? `note:${activeNote.id}` : 'note:none',
-    noteViewCapabilities,
-    'standard',
-  )
-  const noteMindMapGraph = React.useMemo((): MindMapGraph | null => {
-    if (!activeNote) return null
-    if (noteView !== 'map' && noteView !== 'outline') return null
-    return deriveNoteMindMap({
-      noteId: activeNote.id,
-      title: activeNote.title,
-      markdown: content,
-      backlinks: (activeNote.backlinks ?? []).map((b) => ({
-        id: b.noteId,
-        title: b.title || b.noteId,
-      })),
-    })
-  }, [activeNote, content, noteView])
   const activeNoteIdRef = React.useRef<string | null>(null)
   const richEditorRef = React.useRef<TiptapEditorHandle | null>(null)
+  const commentSelectionCleanupRef = React.useRef<(() => void) | null>(null)
+  const commentDraftLockedRef = React.useRef(false)
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
+  const [noteComments, setNoteComments] = React.useState<NoteCommentThread[]>([])
+  const [commentDraft, setCommentDraft] = React.useState('')
+  const [pendingCommentAnchor, setPendingCommentAnchor] = React.useState<NoteCommentAnchor | null>(null)
+  const [commentMenuPosition, setCommentMenuPosition] = React.useState<{ x: number; y: number } | null>(null)
+  const [activeCommentId, setActiveCommentId] = React.useState<string | null>(null)
+  const [commentPanelSignal, setCommentPanelSignal] = React.useState(0)
+  const [commentSourceText, setCommentSourceText] = React.useState('')
 
   React.useEffect(() => { dirtyRef.current = dirty }, [dirty])
   React.useEffect(() => { contentRef.current = content }, [content])
   React.useEffect(() => { activeNoteIdRef.current = activeNote?.id ?? null }, [activeNote?.id])
 
+  React.useEffect(() => {
+    let cancelled = false
+    void readNotesLayoutPreference()
+      .then((layout) => {
+        if (cancelled) return
+        setCollapsedFolders(readCollapsedFolders(layout.collapsedFolders))
+        setInspectorCollapsed(readLayoutBoolean(layout.inspectorCollapsed, true))
+        setVaultCollapsed(readLayoutBoolean(layout.vaultCollapsed, false))
+        setOutlineCollapsed(readLayoutBoolean(layout.outlineCollapsed, false))
+        setVaultWidth(readLayoutWidth('vault', layout.vaultWidth))
+        setOutlineWidth(readLayoutWidth('outline', layout.outlineWidth))
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const toggleFolder = React.useCallback((folder: string) => {
     setCollapsedFolders(prev => {
       const next = new Set(prev)
       next.has(folder) ? next.delete(folder) : next.add(folder)
-      localStorage.setItem('notes:collapsed-folders', JSON.stringify([...next]))
+      void persistNotesLayoutPreference({ collapsedFolders: [...next] }).catch(() => undefined)
       return next
     })
   }, [])
@@ -638,6 +796,16 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     }
     const next = await window.electronAPI.listNoteAssets(activeWorkspaceId)
     setAllAssets(next)
+  }, [activeWorkspaceId])
+
+  const refreshNoteComments = React.useCallback(async (noteId: string) => {
+    if (!activeWorkspaceId) {
+      setNoteComments([])
+      return []
+    }
+    const next = await window.electronAPI.listNoteComments(activeWorkspaceId, noteId)
+    setNoteComments(next)
+    return next
   }, [activeWorkspaceId])
 
   const refreshTasks = React.useCallback(async (sourceNotes?: NoteSummary[]) => {
@@ -667,17 +835,33 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!activeWorkspaceId) return
     setLoading(true)
     try {
-      const note = await window.electronAPI.readNote(activeWorkspaceId, noteId)
+      const [note, comments] = await Promise.all([
+        window.electronAPI.readNote(activeWorkspaceId, noteId),
+        window.electronAPI.listNoteComments(activeWorkspaceId, noteId).catch(() => [] as NoteCommentThread[]),
+      ])
       setActiveNote(note)
+      setNoteComments(comments)
+      setActiveCommentId(null)
+      commentDraftLockedRef.current = false
+      setPendingCommentAnchor(null)
+      setCommentDraft('')
+      setCommentMenuPosition(null)
       setContent(note.content)
+      setCommentSourceText(note.content)
       setDirty(false)
       setSaveError(null)
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to open note')
+      toast.error(error instanceof Error ? error.message : 'Не удалось открыть заметку')
       setActiveNote(null)
+      setNoteComments([])
       setContent('')
+      setCommentSourceText('')
+      commentDraftLockedRef.current = false
+      setPendingCommentAnchor(null)
+      setCommentDraft('')
+      setCommentMenuPosition(null)
       setDirty(false)
     } finally {
       setLoading(false)
@@ -687,11 +871,11 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   React.useEffect(() => {
     if (!externalChange) return
     const noteId = externalChange.noteId
-    externalChangeToastIdRef.current = toast('Note changed on disk', {
-      description: dirtyRef.current ? 'Another process updated this note. Reload to see changes?' : undefined,
+    externalChangeToastIdRef.current = toast('Заметка изменилась на диске', {
+      description: dirtyRef.current ? 'Другой процесс обновил эту заметку. Перезагрузить её?' : undefined,
       duration: 8000,
       action: {
-        label: 'Reload',
+        label: 'Перезагрузить',
         onClick: () => { setExternalChange(null); if (noteId) void openNote(noteId) },
       },
       onDismiss: () => { setExternalChange(null) },
@@ -709,11 +893,23 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     refreshAssets()
     if (!activeWorkspaceId) return
     window.electronAPI.watchNotes(activeWorkspaceId).catch(error => {
-      toast.error(error instanceof Error ? error.message : 'Failed to watch notes')
+        toast.error(error instanceof Error ? error.message : 'Не удалось следить за заметками')
     })
     const unsubscribe = window.electronAPI.onNotesChanged((rawPayload) => {
       const payload = normalizeChangedPayload(rawPayload)
       if (payload.workspaceId !== activeWorkspaceId) return
+
+      if (payload.reason === 'create') {
+        void refreshNotes()
+        return
+      }
+
+      if (payload.reason === 'comments') {
+        if (payload.noteId && payload.noteId === activeNoteIdRef.current) {
+          void refreshNoteComments(payload.noteId).catch(() => undefined)
+        }
+        return
+      }
 
       // Internal saves are handled optimistically — only react to external changes
       // (e.g. another process edited the file, or the user ran a script)
@@ -735,7 +931,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       unsubscribe()
       window.electronAPI.unwatchNotes(activeWorkspaceId).catch(() => {})
     }
-  }, [activeWorkspaceId, openNote, refreshAssets, refreshNotes])
+  }, [activeWorkspaceId, openNote, refreshAssets, refreshNoteComments, refreshNotes])
 
   React.useEffect(() => {
     if (selectedNoteId) {
@@ -743,7 +939,14 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       return
     }
     setActiveNote(null)
+    setNoteComments([])
     setContent('')
+    setCommentSourceText('')
+    commentDraftLockedRef.current = false
+    setPendingCommentAnchor(null)
+    setCommentDraft('')
+    setCommentMenuPosition(null)
+    setActiveCommentId(null)
     setDirty(false)
     setSaveError(null)
   }, [selectedNoteId, openNote])
@@ -773,13 +976,17 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
           setDirty(false)
           setTagDraft(saved.tags.join(', '))
         }
-        // Optimistically update sidebar — no refreshNotes() round-trip needed
-        setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
+        if ((saved.autoCreatedNoteIds?.length ?? 0) > 0) {
+          await refreshNotes()
+        } else {
+          // Optimistically update sidebar when no wikilink targets were auto-created.
+          setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
+        }
         taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
         setAllTasks([...taskCacheRef.current.values()].flat())
         return true
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to save note'
+        const message = error instanceof Error ? error.message : 'Не удалось сохранить заметку'
         setSaveError(message)
         toast.error(message)
         return false
@@ -790,7 +997,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     saveQueueRef.current = queued
     return queued
   // contentRef is a ref — intentionally excluded; activeNote.id and activeWorkspaceId are the real deps
-  }, [activeWorkspaceId, activeNote])
+  }, [activeWorkspaceId, activeNote, refreshNotes])
 
   const flushBeforeAction = React.useCallback(async (): Promise<boolean> => {
     if (!dirtyRef.current) return true
@@ -821,7 +1028,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
         const results = await window.electronAPI.searchNotes(activeWorkspaceId, q)
         setSearchResults(results)
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to search notes')
+        toast.error(error instanceof Error ? error.message : 'Не удалось найти заметки')
       }
     }, 180)
 
@@ -863,6 +1070,17 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     [currentProperties]
   )
   const richParts = React.useMemo(() => splitFrontmatter(content), [content])
+  const documentOutline = React.useMemo(
+    () => parseDocumentOutline(richParts.body, activeNote?.title ?? t('notes.document.untitled')),
+    [richParts.body, activeNote?.title, t],
+  )
+  const foldingLabels = React.useMemo(() => ({
+    collapseSection: t('notes.folding.collapseSection'),
+    collapseTaskList: t('notes.folding.collapseTaskList'),
+    expandSection: t('notes.folding.expandSection'),
+    expandTaskList: t('notes.folding.expandTaskList'),
+  }), [t])
+  const crumbs = React.useMemo(() => noteCrumbs(activeNote, t('notes.document.vault')), [activeNote, t])
   const dailyDate = parseDailyNoteDate(activeNote?.id)
   const currentNoteAssets = React.useMemo(() => {
     const refs = new Set(activeNote?.assetRefs.map(ref => ref.replace(/^\.\//, '')) ?? [])
@@ -882,13 +1100,17 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     [allAssets]
   )
   const activeNoteStats = activeNote
-    ? `${activeNote.links.length}↗ · ${activeNote.backlinks.length}↙ · ${content.length} chars`
+    ? `${activeNote.links.length}↗ · ${activeNote.backlinks.length}↙ · ${content.length} зн.`
     : ''
   const activeNoteTasks = React.useMemo(
     () => activeNote ? extractTasks(activeNote, content) : [],
     [activeNote, content]
   )
   const openTasks = React.useMemo(() => allTasks.filter(task => !task.checked), [allTasks])
+  const commentAnchorStates = React.useMemo(
+    () => resolveNoteCommentAnchors(commentSourceText, noteComments),
+    [commentSourceText, noteComments],
+  )
 
   const wikiMatches = React.useMemo(() => {
     if (wikiQuery == null) return []
@@ -982,7 +1204,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!activeWorkspaceId) return
     if (!await flushBeforeAction()) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
-    const title = `${document.title} copy`
+    const title = `${document.title} копия`
     const created = await window.electronAPI.createNote(activeWorkspaceId, title, noteFolder(note) || undefined)
     const saved = await window.electronAPI.saveNote(activeWorkspaceId, created.id, updateMarkdownTitle(document.content, title))
     await refreshNotes()
@@ -1020,7 +1242,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       if (created) {
         await window.electronAPI.deleteNote(activeWorkspaceId, created.id).catch(() => {})
       }
-      toast.error(error instanceof Error ? error.message : 'Failed to move note')
+      toast.error(error instanceof Error ? error.message : 'Не удалось переместить заметку')
     }
   }
 
@@ -1038,7 +1260,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       toast.success(t('notes.toast.moved'))
     } catch (error) {
       if (created) await window.electronAPI.deleteNote(activeWorkspaceId, created.id).catch(() => {})
-      toast.error(error instanceof Error ? error.message : 'Failed to move note')
+      toast.error(error instanceof Error ? error.message : 'Не удалось переместить заметку')
     }
   }
 
@@ -1072,7 +1294,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       await refreshNotes()
       toast.success(t('notes.toast.folderRenamed'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to rename folder')
+      toast.error(error instanceof Error ? error.message : 'Не удалось переименовать папку')
     }
   }
 
@@ -1096,7 +1318,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       await refreshNotes()
       toast.success(t('notes.toast.deletedFolder', { count: result.deletedNotes.length }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete folder')
+      toast.error(error instanceof Error ? error.message : 'Не удалось удалить папку')
     }
   }
 
@@ -1166,7 +1388,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setTagDraft(updated.tags.join(', '))
       await refreshNotes()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update note properties')
+      toast.error(error instanceof Error ? error.message : 'Не удалось обновить свойства заметки')
     }
   }, [activeWorkspaceId, activeNote, flushBeforeAction, refreshNotes])
 
@@ -1178,7 +1400,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const addProperty = React.useCallback(() => {
     const key = newPropertyKey.trim()
     if (!/^[A-Za-z0-9_-]+$/.test(key)) {
-      toast.error('Property keys can use letters, numbers, underscore, and dash')
+      toast.error('Ключ свойства может содержать буквы, цифры, подчёркивание и дефис')
       return
     }
     void updateProperty(key, inputToProperty(newPropertyValue))
@@ -1209,9 +1431,9 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       }
       insertAtCursor(snippets.join('\n'))
       await refreshAssets()
-      toast.success(`Imported ${list.length} asset${list.length === 1 ? '' : 's'}`)
+      toast.success(`Импортировано вложений: ${list.length}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to import asset')
+      toast.error(error instanceof Error ? error.message : 'Не удалось импортировать вложение')
     }
   }, [activeWorkspaceId, activeNote, refreshAssets])
 
@@ -1222,7 +1444,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!path) return
     const attachment = await window.electronAPI.readUserAttachment(path)
     if (!attachment) {
-      toast.error('Could not read selected file')
+      toast.error('Не удалось прочитать выбранный файл')
       return
     }
     const result = await window.electronAPI.importNoteAsset(activeWorkspaceId, attachment)
@@ -1240,11 +1462,13 @@ code{font-family:monospace;font-size:.9em}img{max-width:100%}
 h1,h2,h3{margin-top:1.5em}
 </style></head><body><h1>${activeNote.title.replace(/</g,'&lt;')}</h1>${editorDom.innerHTML}</body></html>`
     const result = await window.electronAPI.exportNotePdf({ html, defaultPath: `${activeNote.title}.pdf` })
-    if (!result.canceled) toast.success('Exported to PDF')
+    if (!result.canceled) toast.success('PDF экспортирован')
   }
 
   const handleRichBodyChange = (nextBody: string) => {
     setContent(mergeFrontmatter(richParts.frontmatter, nextBody))
+    const editor = richEditorRef.current
+    setCommentSourceText(editor ? getEditorPlainText(editor) : nextBody)
     setDirty(true)
     setSaveError(null)
     updateWikiQueryAndAnchor()
@@ -1435,7 +1659,7 @@ h1,h2,h3{margin-top:1.5em}
       if (activeNote) await openNote(activeNote.id)
       toast.success(`Updated ${result.updatedNotes.length} note${result.updatedNotes.length === 1 ? '' : 's'}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to rename asset')
+      toast.error(error instanceof Error ? error.message : 'Не удалось переименовать вложение')
     } finally {
       setAssetBusy(false)
     }
@@ -1448,9 +1672,9 @@ h1,h2,h3{margin-top:1.5em}
       await window.electronAPI.deleteNoteAsset(activeWorkspaceId, asset.relativePath)
       await refreshAssets()
       await refreshNotes()
-      toast.success('Asset deleted')
+      toast.success('Вложение удалено')
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete asset')
+      toast.error(error instanceof Error ? error.message : 'Не удалось удалить вложение')
     } finally {
       setAssetBusy(false)
     }
@@ -1464,9 +1688,9 @@ h1,h2,h3{margin-top:1.5em}
         await window.electronAPI.deleteNoteAsset(activeWorkspaceId, asset.relativePath)
       }
       await refreshAssets()
-      toast.success(`Deleted ${orphanAssets.length} unused asset${orphanAssets.length === 1 ? '' : 's'}`)
+      toast.success(`Удалено неиспользуемых вложений: ${orphanAssets.length}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to clean assets')
+      toast.error(error instanceof Error ? error.message : 'Не удалось очистить вложения')
     } finally {
       setAssetBusy(false)
     }
@@ -1498,13 +1722,222 @@ h1,h2,h3{margin-top:1.5em}
   const toggleInspector = React.useCallback(() => {
     setInspectorCollapsed(prev => {
       const next = !prev
-      localStorage.setItem('notes:inspector-collapsed', JSON.stringify(next))
+      void persistNotesLayoutPreference({ inspectorCollapsed: next }).catch(() => undefined)
       return next
     })
   }, [])
 
+  const toggleVaultRail = React.useCallback(() => {
+    setVaultCollapsed(prev => {
+      const next = !prev
+      void persistNotesLayoutPreference({ vaultCollapsed: next }).catch(() => undefined)
+      return next
+    })
+  }, [])
+
+  const toggleOutlineRail = React.useCallback(() => {
+    setOutlineCollapsed(prev => {
+      const next = !prev
+      void persistNotesLayoutPreference({ outlineCollapsed: next }).catch(() => undefined)
+      return next
+    })
+  }, [])
+
+  const startRailResize = React.useCallback((rail: 'vault' | 'outline', event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault()
+    const startX = event.clientX
+    const startWidth = rail === 'vault' ? vaultWidth : outlineWidth
+    let latestWidth = startWidth
+    const onMove = (moveEvent: PointerEvent) => {
+      const nextWidth = getNoteRailWidth(rail, false, startWidth + moveEvent.clientX - startX)
+      latestWidth = nextWidth
+      if (rail === 'vault') {
+        setVaultWidth(nextWidth)
+      } else {
+        setOutlineWidth(nextWidth)
+      }
+    }
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      void persistNotesLayoutPreference(
+        rail === 'vault' ? { vaultWidth: latestWidth } : { outlineWidth: latestWidth },
+      ).catch(() => undefined)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+  }, [outlineWidth, vaultWidth])
+
+  const handleOutlineSelect = React.useCallback((item: DocumentOutlineItem) => {
+    window.requestAnimationFrame(() => focusEditorHeading(richEditorRef.current, item))
+  }, [])
+
+  const syncCommentSelection = React.useCallback((editor = richEditorRef.current) => {
+    if (!editor) return
+    setCommentSourceText(getEditorPlainText(editor))
+    const anchor = readEditorCommentAnchor(editor)
+    if (!anchor) {
+      setCommentMenuPosition(null)
+      if (!commentDraftLockedRef.current) setPendingCommentAnchor(null)
+      return
+    }
+
+    try {
+      const coords = editor.view.coordsAtPos(editor.state.selection.to)
+      setPendingCommentAnchor(anchor)
+      setCommentMenuPosition({
+        x: Math.min(window.innerWidth - 220, Math.max(16, coords.left)),
+        y: Math.max(72, coords.top - 44),
+      })
+    } catch {
+      setPendingCommentAnchor(anchor)
+      setCommentMenuPosition({ x: 24, y: 96 })
+    }
+  }, [])
+
   const handleRichEditorReady = React.useCallback((editor: TiptapEditorHandle | null) => {
+    commentSelectionCleanupRef.current?.()
+    commentSelectionCleanupRef.current = null
     richEditorRef.current = editor
+    if (!editor) return
+
+    const sync = () => syncCommentSelection(editor)
+    editor.on('selectionUpdate', sync)
+    editor.on('transaction', sync)
+    setCommentSourceText(getEditorPlainText(editor))
+    commentSelectionCleanupRef.current = () => {
+      editor.off('selectionUpdate', sync)
+      editor.off('transaction', sync)
+    }
+  }, [syncCommentSelection])
+
+  React.useEffect(() => () => {
+    commentSelectionCleanupRef.current?.()
+    commentSelectionCleanupRef.current = null
+  }, [])
+
+  const openCommentDraft = React.useCallback(() => {
+    const editor = richEditorRef.current
+    const anchor = editor ? readEditorCommentAnchor(editor) ?? pendingCommentAnchor : pendingCommentAnchor
+    if (!anchor) return
+    commentDraftLockedRef.current = true
+    setPendingCommentAnchor(anchor)
+    setInspectorCollapsed(false)
+    setCommentPanelSignal(signal => signal + 1)
+    setCommentMenuPosition(null)
+  }, [pendingCommentAnchor])
+
+  const createComment = React.useCallback(async () => {
+    if (!activeWorkspaceId || !activeNote || !pendingCommentAnchor || !commentDraft.trim()) return
+    const currentText = richEditorRef.current ? getEditorPlainText(richEditorRef.current) : commentSourceText
+    const resolvedAnchor = resolveNoteCommentAnchor(currentText, pendingCommentAnchor)
+    const resolvedStart = resolvedAnchor.start
+    const resolvedEnd = resolvedAnchor.end
+    const resolvedText = resolvedStart == null || resolvedEnd == null
+      ? ''
+      : currentText.slice(resolvedStart, resolvedEnd)
+    if (resolvedAnchor.stale || resolvedStart == null || resolvedEnd == null || !resolvedText || resolvedText !== pendingCommentAnchor.selectedText) {
+      commentDraftLockedRef.current = false
+      setPendingCommentAnchor(null)
+      setCommentMenuPosition(null)
+      toast.error(t('notes.comments.errorChangedSelection'))
+      return
+    }
+    const refreshedAnchor = createNoteCommentAnchor({
+      fullText: currentText,
+      start: resolvedStart,
+      end: resolvedEnd,
+      selectedText: resolvedText,
+    })
+    if (!refreshedAnchor) {
+      commentDraftLockedRef.current = false
+      setPendingCommentAnchor(null)
+      setCommentMenuPosition(null)
+      toast.error(t('notes.comments.errorAttachSelection'))
+      return
+    }
+    const saved = await flushBeforeAction()
+    if (!saved) return
+
+    try {
+      const comment = await window.electronAPI.createNoteComment(activeWorkspaceId, {
+        noteId: activeNote.id,
+        body: commentDraft,
+        anchor: refreshedAnchor,
+      })
+      setNoteComments(prev => [...prev.filter(item => item.id !== comment.id), comment])
+      setActiveCommentId(comment.id)
+      setCommentDraft('')
+      commentDraftLockedRef.current = false
+      setPendingCommentAnchor(null)
+      setCommentPanelSignal(signal => signal + 1)
+      toast.success(t('notes.comments.created'))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.comments.errorCreate'))
+    }
+  }, [activeNote, activeWorkspaceId, commentDraft, commentSourceText, flushBeforeAction, pendingCommentAnchor])
+
+  const updateCommentBody = React.useCallback(async (commentId: string, body: string) => {
+    if (!activeWorkspaceId || !activeNote || !body.trim()) return
+    try {
+      const updated = await window.electronAPI.updateNoteComment(activeWorkspaceId, {
+        noteId: activeNote.id,
+        commentId,
+        body,
+      })
+      setNoteComments(prev => prev.map(comment => comment.id === updated.id ? updated : comment))
+      setActiveCommentId(updated.id)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.comments.errorUpdate'))
+    }
+  }, [activeNote, activeWorkspaceId])
+
+  const setCommentResolved = React.useCallback(async (commentId: string, resolved: boolean) => {
+    if (!activeWorkspaceId || !activeNote) return
+    try {
+      const updated = await window.electronAPI.updateNoteComment(activeWorkspaceId, {
+        noteId: activeNote.id,
+        commentId,
+        resolved,
+      })
+      setNoteComments(prev => prev.map(comment => comment.id === updated.id ? updated : comment))
+      setActiveCommentId(updated.id)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.comments.errorStatus'))
+    }
+  }, [activeNote, activeWorkspaceId])
+
+  const deleteComment = React.useCallback(async (commentId: string) => {
+    if (!activeWorkspaceId || !activeNote) return
+    try {
+      await window.electronAPI.deleteNoteComment(activeWorkspaceId, activeNote.id, commentId)
+      setNoteComments(prev => prev.filter(comment => comment.id !== commentId))
+      if (activeCommentId === commentId) setActiveCommentId(null)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.comments.errorDelete'))
+    }
+  }, [activeCommentId, activeNote, activeWorkspaceId])
+
+  const jumpToComment = React.useCallback((comment: NoteCommentThread, resolved?: ResolvedNoteCommentAnchor) => {
+    const editor = richEditorRef.current
+    if (!editor) return
+    const exact = comment.anchor.selectedText
+      || comment.anchor.selectors.find(selector => selector.type === 'text-quote')?.exact
+      || ''
+    const from = findDocPositionForQuote(editor, exact)
+    if (from != null) {
+      try {
+        editor.chain().focus().setTextSelection({ from, to: from + exact.length }).run()
+      } catch {
+        editor.commands.focus()
+      }
+    } else {
+      editor.commands.focus()
+    }
+    setActiveCommentId(comment.id)
+    setInspectorCollapsed(false)
+    setCommentPanelSignal(signal => signal + 1)
+    if (resolved?.stale) toast.message(t('notes.comments.staleToast'))
   }, [])
 
   const wikiMenu = showWikiMenu ? (
@@ -1534,41 +1967,92 @@ h1,h2,h3{margin-top:1.5em}
           className="mt-1 flex w-full items-center gap-2 rounded-[5px] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]"
         >
           <Plus className="h-3.5 w-3.5" />
-          Link to new note "{wikiCreateLabel}"
+          Ссылка на новую заметку «{wikiCreateLabel}»
         </button>
       )}
       <div className="border-t border-border/50 px-2 py-1 text-[10px] text-muted-foreground">
-        Up/Down select · Enter insert · Esc close
+        ↑/↓ выбрать · Enter вставить · Esc закрыть
       </div>
     </div>
   ) : null
 
+  const shellFontStyle: React.CSSProperties = {
+    fontFamily: 'var(--font-default)',
+  }
+
   if (!activeWorkspaceId) {
-    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Select a workspace to use notes.</div>
+    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Выберите рабочее пространство, чтобы открыть заметки.</div>
   }
 
   return (
     <>
-    <div className="flex h-full min-w-0 bg-background">
-      <aside className="w-[300px] shrink-0 border-r border-border/60 flex flex-col min-h-0 bg-muted/[0.16]">
+    <div className="flex h-full min-w-0 overflow-hidden bg-background text-foreground" style={shellFontStyle}>
+      <aside
+        style={{ width: getNoteRailWidth('vault', vaultCollapsed, vaultWidth) }}
+        className={cn(
+          'relative shrink-0 border-r border-border/70 bg-muted/[0.18] shadow-minimal transition-[width] duration-200 ease-out motion-reduce:transition-none',
+          vaultCollapsed ? 'flex flex-col items-center py-2' : 'flex min-h-0 flex-col',
+        )}
+      >
+        {vaultCollapsed ? (
+          <div className="flex flex-col items-center gap-1">
+            <button
+              type="button"
+              className="grid h-8 w-8 place-items-center rounded-[6px] text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={toggleVaultRail}
+              aria-label={t('notes.document.expandVault')}
+              title={t('notes.document.expandVault')}
+            >
+              <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              className="grid h-8 w-8 place-items-center rounded-[6px] text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => openCreateNoteDialog()}
+              aria-label={t('notes.dialog.newNote')}
+              title={t('notes.dialog.newNote')}
+            >
+              <FilePlus2 className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+            <button
+              type="button"
+              className="grid h-8 w-8 place-items-center rounded-[6px] text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={() => handleDaily()}
+              aria-label={t('notes.document.dailyNote')}
+              title={t('notes.document.dailyNote')}
+            >
+              <CalendarDays className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+          </div>
+        ) : (
+          <>
         <div className="shrink-0 px-3 py-2 border-b border-border/60">
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-[5px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onClick={toggleVaultRail}
+              aria-label={t('notes.document.collapseVault')}
+              title={t('notes.document.collapseVault')}
+            >
+              <PanelLeftClose className="h-4 w-4" strokeWidth={1.75} />
+            </button>
             <div className="relative flex-1">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search notes"
+                placeholder={t('common.search')}
                 className="h-7 w-full rounded-[6px] border border-border/60 bg-background pl-7 pr-2 text-xs outline-none focus:border-foreground/30"
               />
             </div>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title="Daily note">
+            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.document.dailyNote')}>
               <CalendarDays className="h-4 w-4" />
             </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title="New folder">
+            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.dialog.newFolder')}>
               <FolderPlus className="h-4 w-4" />
             </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title="New note">
+            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.dialog.newNote')}>
               <FilePlus2 className="h-4 w-4" />
             </button>
           </div>
@@ -1581,7 +2065,7 @@ h1,h2,h3{margin-top:1.5em}
                 )}
                 onClick={() => setSelectedTag(null)}
               >
-                All
+                Все
               </button>
               {allTags.map(tag => (
                 <button
@@ -1634,36 +2118,36 @@ h1,h2,h3{margin-top:1.5em}
                       <StyledContextMenuContent>
                         <StyledContextMenuItem onClick={() => handleOpenNote(note.id)}>
                           <FileText className="h-3.5 w-3.5" />
-                          Open
+                          Открыть
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openRenameDialogForNote(note)}>
                           <Pencil className="h-3.5 w-3.5" />
-                          Rename
+                          Переименовать
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openCreateNoteDialog()}>
                           <FilePlus2 className="h-3.5 w-3.5" />
-                          New note here
+                          Новая заметка здесь
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => duplicateNote(note)}>
                           <Copy className="h-3.5 w-3.5" />
-                          Duplicate
+                          Дублировать
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openMoveDialog(note)}>
                           <FolderInput className="h-3.5 w-3.5" />
-                          Move to folder
+                          Переместить в папку
                         </StyledContextMenuItem>
                         <StyledContextMenuSeparator />
                         <StyledContextMenuItem onClick={() => copyNoteLink(note)}>
                           <Link2 className="h-3.5 w-3.5" />
-                          Copy note link
+                          Скопировать wiki-link
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => copyNotePath(note)}>
                           <FileText className="h-3.5 w-3.5" />
-                          Copy markdown path
+                          Скопировать путь Markdown
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => revealNote(note)}>
                           <ExternalLink className="h-3.5 w-3.5" />
-                          Reveal in Finder
+                          Показать в Finder
                         </StyledContextMenuItem>
                         <StyledContextMenuSeparator />
                         <StyledContextMenuItem variant="destructive" onClick={() => openDeleteDialogForNote(note)}>
@@ -1701,92 +2185,230 @@ h1,h2,h3{margin-top:1.5em}
             </>
           ) : (
             <div className="px-3 py-10 text-center text-xs text-muted-foreground">
-              {query || selectedTag ? 'No matching notes' : 'No notes yet'}
+              {query || selectedTag ? t('notes.document.noMatchingNotes') : t('notes.document.noNotes')}
             </div>
           )}
         </div>
         </DndContext>
         <div className="shrink-0 border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
-          {notes.length} note{notes.length === 1 ? '' : 's'} · {allAssets.length} asset{allAssets.length === 1 ? '' : 's'}
+          {t('notes.document.notesAssetsCount', { notes: notes.length, assets: allAssets.length })}
         </div>
+          </>
+        )}
       </aside>
 
-      <main className="flex-1 min-w-0 flex flex-col">
-        <div className="h-[42px] shrink-0 border-b border-border/60 px-3 flex items-center gap-2">
-          <div className="min-w-0 flex-1 flex items-center gap-2">
-            <div className="truncate text-sm font-medium">{activeNote?.title ?? 'Notes'}</div>
-            {activeNote && <div className="shrink-0 text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
-          </div>
-          {dailyDate && (
-            <div className="mr-1 flex items-center gap-1">
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title="Previous daily note">
-                <ChevronLeft className="h-4 w-4" />
+      {!vaultCollapsed && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t('notes.document.resizeVault')}
+          className="group relative z-10 w-1 shrink-0 cursor-col-resize bg-transparent"
+          onPointerDown={(event) => startRailResize('vault', event)}
+        >
+          <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border/50 group-hover:bg-primary/60" />
+        </div>
+      )}
+
+      {activeNote && (
+        <>
+          <aside
+            style={{ width: getNoteRailWidth('outline', outlineCollapsed, outlineWidth) }}
+            className={cn(
+              'relative shrink-0 border-r border-border/70 bg-background/95 transition-[width] duration-200 ease-out motion-reduce:transition-none',
+              outlineCollapsed ? 'flex flex-col items-center py-2' : 'flex min-h-0 flex-col',
+            )}
+          >
+            {outlineCollapsed ? (
+              <button
+                type="button"
+                className="grid h-8 w-8 place-items-center rounded-[6px] text-muted-foreground hover:bg-foreground/[0.08] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={toggleOutlineRail}
+                aria-label={t('notes.document.expandOutline')}
+                title={t('notes.document.expandOutline')}
+              >
+                <PanelRightOpen className="h-4 w-4" strokeWidth={1.75} />
               </button>
-              <span className="text-xs text-muted-foreground">{dailyDate}</span>
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title="Next daily note">
-                <ChevronRight className="h-4 w-4" />
-              </button>
+            ) : (
+              <>
+                <div className="flex h-[42px] shrink-0 items-center gap-2 border-b border-border/60 px-3">
+                  <ListTree className="h-4 w-4 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+                  <div className="min-w-0 flex-1 truncate text-xs font-medium text-muted-foreground">
+                    {t('notes.document.outline')}
+                  </div>
+                  <button
+                    type="button"
+                    className="grid h-7 w-7 place-items-center rounded-[5px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={toggleOutlineRail}
+                    aria-label={t('notes.document.collapseOutline')}
+                    title={t('notes.document.collapseOutline')}
+                  >
+                    <PanelRightClose className="h-4 w-4" strokeWidth={1.75} />
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-2">
+                  <button
+                    type="button"
+                    className="mb-2 flex w-full items-start gap-2 rounded-[6px] border border-border/55 bg-muted/[0.22] px-2 py-2 text-left hover:bg-foreground/[0.05] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    onClick={() => richEditorRef.current?.commands.focus('start')}
+                  >
+                    <FileText className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" strokeWidth={1.75} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-medium">{documentOutline.title}</span>
+                      <span className="block truncate text-[10px] text-muted-foreground">{activeNote.relativePath}</span>
+                    </span>
+                  </button>
+
+                  {documentOutline.items.length > 0 ? (
+                    <div className="space-y-0.5" role="navigation" aria-label={t('notes.document.outlineNavigation')}>
+                      {documentOutline.items.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="flex w-full items-center gap-1.5 rounded-[5px] px-2 py-1.5 text-left text-xs text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          style={{ paddingLeft: `${8 + Math.min(item.level - 1, 4) * 10}px` }}
+                          onClick={() => handleOutlineSelect(item)}
+                        >
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/35" />
+                          <span className="min-w-0 flex-1 truncate">{item.title}</span>
+                          <span className="shrink-0 text-[10px] text-muted-foreground/60">{item.line}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="rounded-[8px] border border-dashed border-border/70 bg-muted/[0.14] px-3 py-4 text-xs text-muted-foreground">
+                      {documentOutline.isBodyEmpty
+                        ? t('notes.document.outlineEmpty')
+                        : t('notes.document.outlineNoHeadings')}
+                    </div>
+                  )}
+
+                  <div className="mt-3 rounded-[8px] border border-border/55 bg-muted/[0.14] p-2">
+                    <div className="mb-1.5 text-[10px] uppercase text-muted-foreground/70">{t('notes.document.links')}</div>
+                    <div className="grid grid-cols-3 gap-1 text-center text-[10px] text-muted-foreground">
+                      <div className="rounded-[5px] bg-background/70 px-1 py-1">
+                        <div className="text-xs font-medium text-foreground">{activeNote.links.length}</div>
+                        {t('notes.document.outgoingShort')}
+                      </div>
+                      <div className="rounded-[5px] bg-background/70 px-1 py-1">
+                        <div className="text-xs font-medium text-foreground">{activeNote.backlinks.length}</div>
+                        {t('notes.document.incomingShort')}
+                      </div>
+                      <div className="rounded-[5px] bg-background/70 px-1 py-1">
+                        <div className="text-xs font-medium text-foreground">{activeNoteTasks.length}</div>
+                        {t('notes.inspector.tasks')}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </aside>
+          {!outlineCollapsed && (
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-label={t('notes.document.resizeOutline')}
+              className="group relative z-10 w-1 shrink-0 cursor-col-resize bg-transparent"
+              onPointerDown={(event) => startRailResize('outline', event)}
+            >
+              <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-border/50 group-hover:bg-primary/60" />
             </div>
           )}
-          <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title="Attach asset">
-            <Paperclip className="h-4 w-4" />
-          </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title="Export as PDF">
-            <FileDown className="h-4 w-4" />
-          </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title="Rename note">
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title="Delete note">
-            <Trash2 className="h-4 w-4" />
-          </button>
-          <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title="Notes autosave as you type">
-            {saveError ? 'Save failed' : saving ? 'Saving' : dirty ? 'Autosaving' : activeNote ? 'Saved' : ''}
-          </span>
+        </>
+      )}
+
+      <main className="flex min-w-0 flex-1 flex-col bg-background">
+        <div className="min-h-[54px] shrink-0 border-b border-border/70 bg-background/95 px-4 py-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <nav className="mb-0.5 flex min-w-0 items-center gap-1 text-[11px] text-muted-foreground" aria-label={t('notes.document.breadcrumb')}>
+                {crumbs.map((crumb, index) => (
+                  <React.Fragment key={`${crumb}:${index}`}>
+                    {index > 0 && <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/45" strokeWidth={1.7} />}
+                    <span className={cn('truncate', index === crumbs.length - 1 && 'text-foreground/80')}>
+                      {crumb}
+                    </span>
+                  </React.Fragment>
+                ))}
+              </nav>
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="truncate text-sm font-semibold tracking-normal">{activeNote?.title ?? t('notes.document.vault')}</div>
+                {activeNote && <div className="shrink-0 text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
+              </div>
+            </div>
+            {activeNote && (
+              <button
+                type="button"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-[6px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                onClick={toggleInspector}
+                aria-label={inspectorCollapsed ? t('notes.inspector.expand') : t('notes.inspector.collapse')}
+                title={inspectorCollapsed ? t('notes.inspector.expand') : t('notes.inspector.collapse')}
+              >
+                {inspectorCollapsed
+                  ? <PanelLeftOpen className="h-4 w-4" strokeWidth={1.75} />
+                  : <PanelLeftClose className="h-4 w-4" strokeWidth={1.75} />}
+              </button>
+            )}
+          </div>
+          <div className="mt-2 flex min-w-0 items-center gap-2">
+            <div className="mr-auto min-w-0 flex-1 truncate text-[11px] text-muted-foreground">
+              {activeNote ? activeNote.relativePath : t('notes.document.localNotePlaceholder')}
+            </div>
+            {dailyDate && (
+              <div className="mr-1 flex shrink-0 items-center gap-1">
+                <button className="grid h-7 w-7 place-items-center rounded-[5px] hover:bg-foreground/[0.06]" onClick={() => handleDailyShift(-1)} title={t('notes.document.previousDaily')} aria-label={t('notes.document.previousDaily')}>
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <span className="text-xs text-muted-foreground">{dailyDate}</span>
+                <button className="grid h-7 w-7 place-items-center rounded-[5px] hover:bg-foreground/[0.06]" onClick={() => handleDailyShift(1)} title={t('notes.document.nextDaily')} aria-label={t('notes.document.nextDaily')}>
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
+            <button className="grid h-7 w-7 place-items-center rounded-[5px] hover:bg-foreground/[0.06] disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title={t('notes.document.addAttachment')} aria-label={t('notes.document.addAttachment')}>
+              <Paperclip className="h-4 w-4" />
+            </button>
+            <button className="grid h-7 w-7 place-items-center rounded-[5px] hover:bg-foreground/[0.06] disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.document.exportPdf')} aria-label={t('notes.document.exportPdf')}>
+              <FileDown className="h-4 w-4" />
+            </button>
+            <button className="grid h-7 w-7 place-items-center rounded-[5px] hover:bg-foreground/[0.06] disabled:opacity-40" onClick={openRenameDialog} disabled={!activeNote} title={t('common.rename')} aria-label={t('common.rename')}>
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button className="grid h-7 w-7 place-items-center rounded-[5px] text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('common.delete')} aria-label={t('common.delete')}>
+              <Trash2 className="h-4 w-4" />
+            </button>
+            <span className={cn('w-20 shrink-0 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.document.autosaveTitle')}>
+              {saveError ? t('notes.document.saveError') : saving ? t('notes.document.saving') : dirty ? t('notes.document.autosave') : activeNote ? t('notes.document.saved') : ''}
+            </span>
+          </div>
         </div>
 
-        {activeNote ? (
-          <EntityViewTabs
-            value={noteView}
-            onChange={setNoteView}
-            capabilities={noteViewCapabilities}
-          />
-        ) : null}
-
-        <div className="relative flex-1 min-h-0">
+        <div className="relative min-h-0 flex-1 bg-muted/[0.06]">
           {!activeNote ? (
-            <div className="h-full grid place-items-center">
+            <div className="grid h-full place-items-center">
               {loading ? (
-                <div className="text-sm text-muted-foreground">Loading note...</div>
+                <div className="text-sm text-muted-foreground">{t('common.loading')}</div>
               ) : (
-                <div className="w-[360px] max-w-[calc(100%-48px)] rounded-[8px] border border-border/60 bg-muted/[0.16] p-4 text-center">
-                  <div className="text-sm font-medium">No note selected</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Open a note, create one, or start today's daily note.</div>
+                <div className="w-[360px] max-w-[calc(100%-48px)] rounded-[10px] border border-border/70 bg-background/85 p-4 text-center shadow-modal-small">
+                  <div className="text-sm font-medium">{t('notes.document.noNoteSelected')}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{t('notes.document.noNoteSelectedHint')}</div>
                   <div className="mt-3 flex justify-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleDaily()}>
                       <CalendarDays className="h-3.5 w-3.5" />
-                      Daily
+                      {t('common.today')}
                     </Button>
                     <Button size="sm" onClick={() => openCreateNoteDialog()}>
                       <FilePlus2 className="h-3.5 w-3.5" />
-                      New note
+                      {t('notes.dialog.newNote')}
                     </Button>
                   </div>
                 </div>
               )}
             </div>
-          ) : noteView === 'map' || noteView === 'outline' ? (
-            <MindMapHost
-              entity={{ type: 'note', noteId: activeNote.id }}
-              graph={noteMindMapGraph}
-              mode={noteView}
-              workspaceId={activeWorkspaceId || undefined}
-              sourceExcerpt={content || undefined}
-            />
           ) : (
             <div
-              className="h-full overflow-y-auto px-6 py-6"
+              className="h-full overflow-y-auto px-4 py-5 sm:px-6 lg:px-8"
               onKeyDownCapture={(event) => {
                 if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
                   event.preventDefault()
@@ -1833,27 +2455,47 @@ h1,h2,h3{margin-top:1.5em}
                 }
               }}
             >
-              <TiptapMarkdownEditor
-                key={activeNote.id}
-                content={richParts.body}
-                onEditorReady={handleRichEditorReady}
-                onUpdate={handleRichBodyChange}
-                onWikiLinkClick={(target) => {
-                  const note = findNoteByTarget(notes, target)
-                  if (note) { void handleOpenNote(note.id) }
-                  else { setMissingLinkTarget(target) }
-                }}
-                onTagClick={(tag) => setSelectedTag(selectedTag === tag ? null : tag)}
-                placeholder={t('notes.editor.placeholder')}
-                markdownEngine="legacy"
-                className="mx-auto w-full max-w-[720px] min-h-full"
-              />
-              {richParts.frontmatter && (
-                <div className="mt-4 rounded-[6px] border border-border/60 bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
-                  Frontmatter is preserved. Edit tags and properties in the right panel.
+              <div className="mx-auto min-h-full w-full max-w-[900px] rounded-[12px] border border-border/65 bg-background/92 px-5 py-6 shadow-panel-focused sm:px-8 lg:px-10">
+                <TiptapMarkdownEditor
+                  key={activeNote.id}
+                  content={richParts.body}
+                  onEditorReady={handleRichEditorReady}
+                  onUpdate={handleRichBodyChange}
+                  onWikiLinkClick={(target) => {
+                    const note = findNoteByTarget(notes, target)
+                    if (note) { void handleOpenNote(note.id) }
+                    else { setMissingLinkTarget(target) }
+                  }}
+                  onTagClick={(tag) => setSelectedTag(selectedTag === tag ? null : tag)}
+                  placeholder={t('notes.editor.placeholder')}
+                  markdownEngine="official"
+                  foldingStorageKey={`rox:notes:folding:${activeWorkspaceId}:${activeNote.id}`}
+                  foldingLabels={foldingLabels}
+                  className="min-h-[calc(100vh-220px)] w-full"
+                />
+                {richParts.frontmatter && (
+                  <div className="mx-auto mt-4 max-w-[760px] rounded-[7px] border border-border/60 bg-muted/[0.22] px-3 py-2 text-[11px] text-muted-foreground">
+                    {t('notes.document.metadataSaved')}
+                  </div>
+                )}
+                <div className="mx-auto mt-4 max-w-[760px] rounded-[7px] border border-dashed border-border/50 bg-muted/[0.10] px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+                  {t('notes.document.wikilinkHint')}
                 </div>
-              )}
+              </div>
               {wikiMenu}
+              {commentMenuPosition && pendingCommentAnchor && (
+                <button
+                  type="button"
+                  className="fixed z-40 inline-flex h-9 items-center gap-2 rounded-full border border-border/70 bg-popover px-3 text-xs font-medium text-foreground shadow-strong hover:bg-foreground/[0.06] focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  style={{ left: commentMenuPosition.x, top: commentMenuPosition.y }}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={openCommentDraft}
+                  title={t('notes.comments.addSelection')}
+                >
+                  <MessageSquarePlus className="h-4 w-4 text-primary" strokeWidth={1.8} />
+                  {t('notes.comments.button')}
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -1919,6 +2561,12 @@ h1,h2,h3{margin-top:1.5em}
         uncreatedLinks={uncreatedLinks}
         activeNoteTasks={activeNoteTasks}
         openTasks={openTasks}
+        comments={noteComments}
+        pendingCommentAnchor={pendingCommentAnchor}
+        commentDraft={commentDraft}
+        activeCommentId={activeCommentId}
+        commentAnchorStates={commentAnchorStates}
+        commentPanelSignal={commentPanelSignal}
         presetTags={presetTagVocabulary}
         onTagDraftChange={setTagDraft}
         onApplyTags={applyTags}
@@ -1942,6 +2590,13 @@ h1,h2,h3{margin-top:1.5em}
           if (note) void handleOpenNote(note.id)
           else setMissingLinkTarget(target)
         }}
+        onCommentDraftChange={setCommentDraft}
+        onCreateComment={createComment}
+        onSelectComment={(comment, resolved) => jumpToComment(comment, resolved)}
+        onUpdateCommentBody={updateCommentBody}
+        onResolveComment={(commentId) => setCommentResolved(commentId, true)}
+        onReopenComment={(commentId) => setCommentResolved(commentId, false)}
+        onDeleteComment={deleteComment}
         collapsed={inspectorCollapsed}
         onToggleCollapsed={toggleInspector}
       />
@@ -2003,7 +2658,7 @@ h1,h2,h3{margin-top:1.5em}
       onRenameFolder={handleRenameFolder}
       deleteFolderDialogOpen={deleteFolderDialogOpen}
       deleteFolderTarget={deleteFolderTarget}
-      deleteFolderNoteCount={notes.filter(n => noteFolder(n) === deleteFolderTarget || noteFolder(n).startsWith(deleteFolderTarget + '/')).length}
+      deleteFolderNoteCount={notes.filter(n => pathStartsWith(noteFolder(n), deleteFolderTarget)).length}
       onDeleteFolderDialogOpenChange={setDeleteFolderDialogOpen}
       onDeleteFolder={handleDeleteFolder}
     />

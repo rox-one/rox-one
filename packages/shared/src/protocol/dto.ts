@@ -657,6 +657,36 @@ export interface NoteBacklink {
   preview: string
 }
 
+export type NoteCommentAnchor = {
+  selectors: AnnotationV1['target']['selectors']
+  selectedText: string
+}
+
+export interface NoteCommentThread {
+  id: string
+  noteId: string
+  author: string
+  body: string
+  anchor: NoteCommentAnchor
+  createdAt: number
+  updatedAt: number
+  resolvedAt?: number
+}
+
+export interface CreateNoteCommentInput {
+  noteId: string
+  author?: string
+  body: string
+  anchor: NoteCommentAnchor
+}
+
+export interface UpdateNoteCommentInput {
+  noteId: string
+  commentId: string
+  body?: string
+  resolved?: boolean
+}
+
 export interface NoteAsset {
   name: string
   path: string
@@ -683,6 +713,7 @@ export interface NoteSummary {
 export interface NoteDocument extends NoteSummary {
   content: string
   backlinks: NoteBacklink[]
+  autoCreatedNoteIds?: string[]
 }
 
 export interface NoteRenameImpact {
@@ -710,7 +741,7 @@ export interface NoteAssetRenameResult {
 
 export interface NoteChangedPayload {
   workspaceId: string
-  reason?: 'external' | 'save' | 'create' | 'rename' | 'delete' | 'asset' | 'properties'
+  reason?: 'external' | 'save' | 'create' | 'rename' | 'delete' | 'asset' | 'properties' | 'comments'
   noteId?: string
 }
 

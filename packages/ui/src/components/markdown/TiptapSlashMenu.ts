@@ -4,6 +4,8 @@ import { NodeSelection, PluginKey } from '@tiptap/pm/state'
 import type { Editor } from '@tiptap/core'
 import { InlineMenuSurface } from '../ui/InlineMenuSurface'
 import { RICH_BLOCK_EDIT_EVENT } from './rich-block-events'
+import { createRoxBlockContent, type RoxBlockKind } from './extensions/rox-block-syntax'
+import { insertRoxColumnsContent } from './extensions/ColumnsBlock'
 
 export interface SlashCommandItem {
   id: string
@@ -32,6 +34,9 @@ type SlashIconName =
   | 'square-code'
   | 'workflow'
   | 'sigma'
+  | 'chevrons-up-down'
+  | 'columns-2'
+  | 'columns-3'
 
 const LUCIDE_ICON_NODES: Record<SlashIconName, Array<[string, Record<string, string>]>> = {
   pilcrow: [
@@ -109,6 +114,19 @@ const LUCIDE_ICON_NODES: Record<SlashIconName, Array<[string, Record<string, str
   ],
   sigma: [
     ['path', { d: 'M18 7V5a1 1 0 0 0-1-1H6.5a.5.5 0 0 0-.4.8l4.5 6a2 2 0 0 1 0 2.4l-4.5 6a.5.5 0 0 0 .4.8H17a1 1 0 0 0 1-1v-2' }],
+  ],
+  'chevrons-up-down': [
+    ['path', { d: 'm7 15 5 5 5-5' }],
+    ['path', { d: 'm7 9 5-5 5 5' }],
+  ],
+  'columns-2': [
+    ['rect', { x: '3', y: '4', width: '7', height: '16', rx: '2' }],
+    ['rect', { x: '14', y: '4', width: '7', height: '16', rx: '2' }],
+  ],
+  'columns-3': [
+    ['rect', { x: '3', y: '4', width: '5', height: '16', rx: '2' }],
+    ['rect', { x: '10', y: '4', width: '4', height: '16', rx: '2' }],
+    ['rect', { x: '16', y: '4', width: '5', height: '16', rx: '2' }],
   ],
 }
 
@@ -213,6 +231,18 @@ function insertCodeBlockWithPlaceholder(editor: Editor, insertPos?: number) {
   rememberCodeLanguage(editor, language)
 }
 
+function insertRoxBlock(editor: Editor, kind: RoxBlockKind, insertPos?: number) {
+  const targetPos = insertPos ?? editor.state.selection.from
+  const title = kind === 'spoiler' ? 'Спойлер' : 'Подробности'
+
+  editor.chain().focus().insertContentAt(targetPos, createRoxBlockContent(kind, title)).run()
+
+  // The first body paragraph starts after the blockquote opening, marker
+  // paragraph, and its closing token. Keeping focus there makes /spoiler a
+  // direct writing action rather than a decorative insertion.
+  editor.chain().focus().setTextSelection(targetPos + `[!${kind}]- ${title}`.length + 4).run()
+}
+
 export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
   return [
     {
@@ -314,6 +344,39 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       aliases: ['hr', 'divider', 'line'],
       run: (e) => {
         e.chain().focus().setHorizontalRule().run()
+      },
+    },
+    {
+      id: 'spoiler-block',
+      title: 'Spoiler',
+      description: 'Insert a collapsible spoiler block',
+      icon: 'chevrons-up-down',
+      group: 'Blocks',
+      aliases: ['spoiler', 'details', 'спойлер', 'подробности'],
+      run: (e, insertPos) => {
+        insertRoxBlock(e, 'spoiler', insertPos)
+      },
+    },
+    {
+      id: 'two-column-block',
+      title: '2 Columns',
+      description: 'Insert a balanced two-column layout',
+      icon: 'columns-2',
+      group: 'Blocks',
+      aliases: ['columns', 'two columns', 'split', 'layout'],
+      run: (e, insertPos) => {
+        insertRoxColumnsContent(e, 2, insertPos)
+      },
+    },
+    {
+      id: 'three-column-block',
+      title: '3 Columns',
+      description: 'Insert a balanced three-column layout',
+      icon: 'columns-3',
+      group: 'Blocks',
+      aliases: ['columns', 'three columns', 'grid', 'layout'],
+      run: (e, insertPos) => {
+        insertRoxColumnsContent(e, 3, insertPos)
       },
     },
     {

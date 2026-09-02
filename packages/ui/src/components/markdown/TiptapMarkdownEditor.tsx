@@ -18,6 +18,9 @@ import { LatexBlock } from './extensions/LatexBlock'
 import { RichBlockInteractions } from './extensions/RichBlockInteractions'
 import { WikiLink } from './extensions/WikiLink'
 import { HashTag } from './extensions/HashTag'
+import { DocumentFolding, type DocumentFoldingJSON, type DocumentFoldingLabels } from './extensions/DocumentFolding'
+import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
+import { RoxBlockCallout } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import 'katex/dist/katex.min.css'
 import './tiptap-editor.css'
@@ -26,6 +29,26 @@ import './extensions/animated-task-item.css'
 export type MarkdownEngine = 'legacy' | 'official'
 export type TiptapEditorHandle = NonNullable<ReturnType<typeof useEditor>>
 
+function readDocumentFoldingStorage(storageKey?: string): DocumentFoldingJSON | null {
+  if (!storageKey || typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(storageKey)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as DocumentFoldingJSON
+    return parsed?.version === 1 && Array.isArray(parsed.foldedIds) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function writeDocumentFoldingStorage(storageKey: string | undefined, state: DocumentFoldingJSON): void {
+  if (!storageKey || typeof window === 'undefined') return
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(state))
+  } catch {
+    // Local UI preference only; ignore storage failures.
+  }
+}
 
 function getLegacyMarkdown(editor: { storage: { markdown?: { getMarkdown?: () => string } } }): string {
   return editor.storage.markdown?.getMarkdown?.() ?? ''
@@ -212,6 +235,9 @@ export interface TiptapMarkdownEditorProps {
   onWikiLinkClick?: (target: string) => void
   /** Called when the user clicks a #tag in the editor. */
   onTagClick?: (tag: string) => void
+  /** Optional per-document localStorage key for collapsible headings/task lists. */
+  foldingStorageKey?: string
+  foldingLabels?: Partial<DocumentFoldingLabels>
   /**
    * Migration flag for markdown engine foundations.
    * - `legacy`: tiptap-markdown (default for safe rollout)
@@ -229,6 +255,8 @@ export function TiptapMarkdownEditor({
   onEditorReady,
   onWikiLinkClick,
   onTagClick,
+  foldingStorageKey,
+  foldingLabels,
   markdownEngine = 'legacy',
 }: TiptapMarkdownEditorProps) {
   const onUpdateRef = React.useRef(onUpdate)
@@ -277,12 +305,26 @@ export function TiptapMarkdownEditor({
         },
       }),
       RichBlockInteractions,
+      RoxColumnsBlock,
+      RoxColumnBlock,
       WikiLink.configure({
         onWikiLinkClick: (target) => onWikiLinkClickRef.current?.(target),
       }),
       HashTag.configure({
         onTagClick: (tag) => onTagClickRef.current?.(tag),
       }),
+      DocumentFolding.configure({
+        initialState: readDocumentFoldingStorage(foldingStorageKey),
+        labels: {
+          collapseSection: 'Collapse section',
+          collapseTaskList: 'Collapse task list',
+          expandSection: 'Expand section',
+          expandTaskList: 'Expand task list',
+          ...foldingLabels,
+        },
+        onChange: (state) => writeDocumentFoldingStorage(foldingStorageKey, state),
+      }),
+      RoxBlockCallout,
       ...(editable ? [TiptapSlashMenu] : []),
     ]
 
@@ -320,7 +362,7 @@ export function TiptapMarkdownEditor({
         transformCopiedText: true,
       }),
     ]
-  }, [placeholder, useOfficialMarkdown])
+  }, [editable, foldingLabels, foldingStorageKey, placeholder, useOfficialMarkdown])
 
   const initialContent = useOfficialMarkdown
     ? preprocessMarkdownForOfficial(content)
