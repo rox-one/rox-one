@@ -19,8 +19,6 @@ import { evaluateBundle, evaluateSamples } from './budgets'
 import { formatBenchmarkReport } from './report'
 import type { BenchmarkReport, BenchmarkRun, InteractionKind, InteractionSample } from './types'
 import { simulatePremiumMenuOpen } from '@craft-agent/ui/premium-menu'
-import { formatBenchmarkReport } from './report'
-import type { BenchmarkReport, BenchmarkRun, InteractionKind, InteractionSample } from './types'
 
 export interface HarnessOptions {
   iterations?: number
