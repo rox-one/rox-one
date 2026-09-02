@@ -19,7 +19,7 @@ import { RichBlockInteractions } from './extensions/RichBlockInteractions'
 import { WikiLink } from './extensions/WikiLink'
 import { HashTag } from './extensions/HashTag'
 import { DocumentFolding, type DocumentFoldingJSON, type DocumentFoldingLabels } from './extensions/DocumentFolding'
-import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
+import { RoxColumnsBlock, RoxColumnBlock, type RoxColumnsLabels } from './extensions/ColumnsBlock'
 import { RoxBlockCallout, type RoxBlockLabels } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import 'katex/dist/katex.min.css'
@@ -242,6 +242,8 @@ export interface TiptapMarkdownEditorProps {
   roxBlockLabels?: Partial<RoxBlockLabels>
   /** Optional labels for the editor's slash-command menu. */
   slashCommandLabels?: Partial<SlashCommandLabels>
+  /** Localized labels for interactive column controls. */
+  columnsLabels?: Partial<RoxColumnsLabels>
   /**
    * Migration flag for markdown engine foundations.
    * - `legacy`: tiptap-markdown (default for safe rollout)
@@ -263,6 +265,7 @@ export function TiptapMarkdownEditor({
   foldingLabels,
   roxBlockLabels,
   slashCommandLabels,
+  columnsLabels,
   markdownEngine = 'legacy',
 }: TiptapMarkdownEditorProps) {
   const onUpdateRef = React.useRef(onUpdate)
@@ -311,7 +314,12 @@ export function TiptapMarkdownEditor({
         },
       }),
       RichBlockInteractions,
-      RoxColumnsBlock,
+      RoxColumnsBlock.configure({
+        labels: {
+          resizeColumn: 'Resize column',
+          ...columnsLabels,
+        },
+      }),
       RoxColumnBlock,
       WikiLink.configure({
         onWikiLinkClick: (target) => onWikiLinkClickRef.current?.(target),
@@ -374,7 +382,7 @@ export function TiptapMarkdownEditor({
         transformCopiedText: true,
       }),
     ]
-  }, [editable, foldingLabels, foldingStorageKey, placeholder, roxBlockLabels, slashCommandLabels, useOfficialMarkdown])
+  }, [columnsLabels, editable, foldingLabels, foldingStorageKey, placeholder, roxBlockLabels, slashCommandLabels, useOfficialMarkdown])
 
   const initialContent = useOfficialMarkdown
     ? preprocessMarkdownForOfficial(content)

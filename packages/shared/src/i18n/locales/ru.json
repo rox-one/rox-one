@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "Краткое резюме с ключевыми выводами",
   "notes.blocks.collapse": "Свернуть блок",
   "notes.blocks.expand": "Развернуть блок",
+  "notes.columns.resize": "Изменить ширину колонки",
   "notes.comments.add": "Добавить",
   "notes.comments.addSelection": "Добавить комментарий к выделенному фрагменту",
   "notes.comments.button": "Комментарий",

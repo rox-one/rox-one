@@ -1130,6 +1130,9 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     collapse: t('notes.blocks.collapse'),
     expand: t('notes.blocks.expand'),
   }), [t])
+  const columnsLabels = React.useMemo(() => ({
+    resizeColumn: t('notes.columns.resize'),
+  }), [t])
   const slashCommandLabels = React.useMemo(() => ({
     empty: t('notes.slash.empty'),
     groupFormat: t('notes.slash.groupFormat'),
@@ -2552,6 +2555,7 @@ h1,h2,h3{margin-top:1.5em}
                   foldingLabels={foldingLabels}
                   roxBlockLabels={roxBlockLabels}
                   slashCommandLabels={slashCommandLabels}
+                  columnsLabels={columnsLabels}
                   className="min-h-[calc(100vh-220px)] w-full"
                 />
                 {richParts.frontmatter && (

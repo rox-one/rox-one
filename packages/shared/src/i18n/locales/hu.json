@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "Rövid összefoglaló kulcspontokkal",
   "notes.blocks.collapse": "Blokk összecsukása",
   "notes.blocks.expand": "Blokk kibontása",
+  "notes.columns.resize": "Resize column",
   "notes.comments.add": "Hozzáadás",
   "notes.comments.addSelection": "Megjegyzés hozzáadása a kijelölt szöveghez",
   "notes.comments.button": "Megjegyzés",

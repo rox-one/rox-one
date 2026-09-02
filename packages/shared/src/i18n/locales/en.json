@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "Write a concise summary with key takeaways",
   "notes.blocks.collapse": "Collapse block",
   "notes.blocks.expand": "Expand block",
+  "notes.columns.resize": "Resize column",
   "notes.comments.add": "Add",
   "notes.comments.addSelection": "Add a comment to the selected text",
   "notes.comments.button": "Comment",

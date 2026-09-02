@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "写出简洁摘要与要点",
   "notes.blocks.collapse": "折叠区块",
   "notes.blocks.expand": "展开区块",
+  "notes.columns.resize": "调整列宽",
   "notes.comments.add": "添加",
   "notes.comments.addSelection": "为所选文本添加评论",
   "notes.comments.button": "评论",

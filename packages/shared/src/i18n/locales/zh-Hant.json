@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "寫出簡潔摘要與要點",
   "notes.blocks.collapse": "摺疊區塊",
   "notes.blocks.expand": "展開區塊",
+  "notes.columns.resize": "調整欄寬",
   "notes.comments.add": "新增",
   "notes.comments.addSelection": "為選取的文字新增留言",
   "notes.comments.button": "留言",

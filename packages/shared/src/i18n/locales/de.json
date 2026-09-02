@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "Kurze Zusammenfassung mit Kernpunkten",
   "notes.blocks.collapse": "Block einklappen",
   "notes.blocks.expand": "Block ausklappen",
+  "notes.columns.resize": "Resize column",
   "notes.comments.add": "Hinzufügen",
   "notes.comments.addSelection": "Kommentar zum ausgewählten Text hinzufügen",
   "notes.comments.button": "Kommentar",

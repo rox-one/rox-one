@@ -8,10 +8,22 @@ export interface RoxColumnsAttrs {
   widths: string
 }
 
+export interface RoxColumnsLabels {
+  resizeColumn: string
+}
+
+export interface RoxColumnsOptions {
+  labels: RoxColumnsLabels
+}
+
 const MIN_COLUMN_PERCENT = 18
 const DEFAULT_WIDTHS: Record<RoxColumnsCount, number[]> = {
   2: [50, 50],
   3: [33.33, 33.33, 33.34],
+}
+
+const DEFAULT_ROX_COLUMNS_LABELS: RoxColumnsLabels = {
+  resizeColumn: 'Resize column',
 }
 
 function formatPercent(value: number): string {
@@ -157,9 +169,11 @@ export function buildKeyboardResizeWidths(current: number[], index: number, dire
 function ColumnsNodeView({
   node,
   updateAttributes,
+  labels,
 }: {
   node: { attrs: { widths?: string }; childCount: number }
   updateAttributes: (attrs: Record<string, unknown>) => void
+  labels: RoxColumnsLabels
 }) {
   const containerRef = React.useRef<HTMLDivElement | null>(null)
   const rafIdRef = React.useRef<number | null>(null)
@@ -269,8 +283,8 @@ function ColumnsNodeView({
           type="button"
           className="tiptap-rox-columns-resize-handle"
           style={{ left: `calc(${cumulative[index + 1]}% - 7px)` }}
-          aria-label={`Resize column ${index + 1}`}
-          title="Resize column"
+          aria-label={`${labels.resizeColumn} ${index + 1}`}
+          title={labels.resizeColumn}
           onPointerDown={(event) => beginResize(index, event)}
           onKeyDown={(event) => resizeFromKeyboard(index, event)}
         >
@@ -289,7 +303,7 @@ function ColumnNodeView() {
   )
 }
 
-export const RoxColumnsBlock = Node.create({
+export const RoxColumnsBlock = Node.create<RoxColumnsOptions>({
   name: 'roxColumns',
 
   group: 'block',
@@ -304,6 +318,10 @@ export const RoxColumnsBlock = Node.create({
         default: serializeWidths(equalWidths(2)),
       },
     }
+  },
+
+  addOptions() {
+    return { labels: DEFAULT_ROX_COLUMNS_LABELS }
   },
 
   parseHTML() {
@@ -328,7 +346,8 @@ export const RoxColumnsBlock = Node.create({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer((props: any) => <ColumnsNodeView {...props} />)
+    const labels = { ...DEFAULT_ROX_COLUMNS_LABELS, ...this.options.labels }
+    return ReactNodeViewRenderer((props: any) => <ColumnsNodeView {...props} labels={labels} />)
   },
 })
 

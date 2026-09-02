@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "Résumé concis avec points clés",
   "notes.blocks.collapse": "Réduire le bloc",
   "notes.blocks.expand": "Développer le bloc",
+  "notes.columns.resize": "Resize column",
   "notes.comments.add": "Ajouter",
   "notes.comments.addSelection": "Ajouter un commentaire au texte sélectionné",
   "notes.comments.button": "Commentaire",

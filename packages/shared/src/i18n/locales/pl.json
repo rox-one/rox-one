@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "Zwięzłe podsumowanie z wnioskami",
   "notes.blocks.collapse": "Zwiń blok",
   "notes.blocks.expand": "Rozwiń blok",
+  "notes.columns.resize": "Resize column",
   "notes.comments.add": "Dodaj",
   "notes.comments.addSelection": "Dodaj komentarz do zaznaczonego tekstu",
   "notes.comments.button": "Komentarz",

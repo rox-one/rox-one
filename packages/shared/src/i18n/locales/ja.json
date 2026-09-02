@@ -1429,6 +1429,7 @@
   "notes.ai.summarizeDesc": "要点付きの簡潔な要約",
   "notes.blocks.collapse": "ブロックを折りたたむ",
   "notes.blocks.expand": "ブロックを展開",
+  "notes.columns.resize": "Resize column",
   "notes.comments.add": "追加",
   "notes.comments.addSelection": "選択したテキストにコメントを追加",
   "notes.comments.button": "コメント",
