@@ -106,7 +106,7 @@ import { isParentTaskTool } from '@craft-agent/shared/utils/toolNames'
 import { restoreFiles } from '@craft-agent/shared/utils/bundle-files'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { CraftMcpClient, McpClientPool, McpPoolServer } from '@craft-agent/shared/mcp'
-import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, RPC_CHANNELS, generateMessageId } from '@craft-agent/shared/protocol'
+import { type Session, type SessionEvent, type FileAttachment, type SendMessageOptions, type UnreadSummary, type RemoteSessionTransferPayload, type ImportRemoteSessionTransferResult, type PermissionModeState, RPC_CHANNELS, generateMessageId } from '@craft-agent/shared/protocol'
 import { messageToStored, storedToMessage, type Message, type StoredAttachment, type ToolDisplayMeta, type TokenUsage, type SessionMemoryMode } from '@craft-agent/core/types'
 import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlAsync, getEmojiIcon, resetSummarizationClient, resolveToolIcon, readFileAttachment, selectSpreadMessages, normalizePath } from '@craft-agent/shared/utils'
 import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, type LoadedSkill } from '@craft-agent/shared/skills'
@@ -1258,6 +1258,7 @@ const DEFAULT_TOKEN_USAGE = {
 export function managedToSession(m: ManagedSession, overrides?: Partial<Session>): Session {
   const picked = pickSessionFields(m)
   stripSharedOwnerKey(picked)
+  const permissionModeState = resolveManagedPermissionModeState(m)
   return {
     ...picked,
     // Pre-computed fields from header (not in SESSION_PERSISTENT_FIELDS)
@@ -1273,11 +1274,51 @@ export function managedToSession(m: ManagedSession, overrides?: Partial<Session>
     isProcessing: m.isProcessing,
     sessionFolderPath: getSessionStoragePath(m.workspace.rootPath, m.id),
     supportsBranching: resolveSupportsBranching(m),
+    permissionMode: permissionModeState.permissionMode,
+    permissionModeVersion: permissionModeState.modeVersion,
     // Collection fields: coerce defaults on read (FR-14)
     priority: m.priority ?? 'none',
     dueDate: m.dueDate ?? null,
     ...overrides,
   } as Session
+}
+
+function resolveManagedPermissionModeState(managed: ManagedSession): PermissionModeState {
+  let diagnostics = getPermissionModeDiagnostics(managed.id)
+
+  // Hydrate persisted transition context when mode-manager has been reset (e.g. app restart).
+  if (managed.previousPermissionMode && !diagnostics.previousPermissionMode) {
+    hydratePreviousPermissionMode(managed.id, managed.previousPermissionMode)
+    diagnostics = getPermissionModeDiagnostics(managed.id)
+  }
+
+  // Heal restore races where mode-manager still has default state while
+  // session metadata already has a persisted non-default mode.
+  if (managed.permissionMode && diagnostics.permissionMode !== managed.permissionMode) {
+    sessionLog.warn('Permission mode diagnostics mismatch, reconciling to managed session mode', {
+      sessionId: managed.id,
+      managedMode: managed.permissionMode,
+      diagnosticsMode: diagnostics.permissionMode,
+      modeVersion: diagnostics.modeVersion,
+      changedBy: diagnostics.lastChangedBy,
+    })
+    setPermissionMode(managed.id, managed.permissionMode, { changedBy: 'restore' })
+    if (managed.previousPermissionMode) {
+      hydratePreviousPermissionMode(managed.id, managed.previousPermissionMode)
+    }
+    diagnostics = getPermissionModeDiagnostics(managed.id)
+  }
+
+  managed.previousPermissionMode = diagnostics.previousPermissionMode
+
+  return {
+    permissionMode: diagnostics.permissionMode,
+    previousPermissionMode: diagnostics.previousPermissionMode,
+    transitionDisplay: diagnostics.transitionDisplay,
+    modeVersion: diagnostics.modeVersion,
+    changedAt: diagnostics.lastChangedAt,
+    changedBy: diagnostics.lastChangedBy,
+  }
 }
 
 // Performance: Batch IPC delta events to reduce renderer load
@@ -7854,41 +7895,7 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed) return null
 
-    let diagnostics = getPermissionModeDiagnostics(sessionId)
-
-    // Hydrate persisted transition context when mode-manager has been reset (e.g. app restart).
-    if (managed.previousPermissionMode && !diagnostics.previousPermissionMode) {
-      hydratePreviousPermissionMode(sessionId, managed.previousPermissionMode)
-      diagnostics = getPermissionModeDiagnostics(sessionId)
-    }
-
-    // Heal restore races where mode-manager still has default state while
-    // session metadata already has a persisted non-default mode.
-    if (managed.permissionMode && diagnostics.permissionMode !== managed.permissionMode) {
-      sessionLog.warn('Permission mode diagnostics mismatch, reconciling to managed session mode', {
-        sessionId,
-        managedMode: managed.permissionMode,
-        diagnosticsMode: diagnostics.permissionMode,
-        modeVersion: diagnostics.modeVersion,
-        changedBy: diagnostics.lastChangedBy,
-      })
-      setPermissionMode(sessionId, managed.permissionMode, { changedBy: 'restore' })
-      if (managed.previousPermissionMode) {
-        hydratePreviousPermissionMode(sessionId, managed.previousPermissionMode)
-      }
-      diagnostics = getPermissionModeDiagnostics(sessionId)
-    }
-
-    managed.previousPermissionMode = diagnostics.previousPermissionMode
-
-    return {
-      permissionMode: diagnostics.permissionMode,
-      previousPermissionMode: diagnostics.previousPermissionMode,
-      transitionDisplay: diagnostics.transitionDisplay,
-      modeVersion: diagnostics.modeVersion,
-      changedAt: diagnostics.lastChangedAt,
-      changedBy: diagnostics.lastChangedBy,
-    }
+    return resolveManagedPermissionModeState(managed)
   }
 
   /**

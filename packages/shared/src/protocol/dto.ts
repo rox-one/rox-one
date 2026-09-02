@@ -65,6 +65,8 @@ export interface Session {
   isFlagged?: boolean
   /** Permission mode for this session ('safe', 'ask', 'allow-all') */
   permissionMode?: PermissionMode
+  /** Monotonic backend version for permissionMode; absent means legacy payload requiring reconcile. */
+  permissionModeVersion?: number
   /** Self-learning memory mode for this session (default 'persistent' when absent) */
   memoryMode?: SessionMemoryMode
   sessionStatus?: SessionStatus

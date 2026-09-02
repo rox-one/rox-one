@@ -35,6 +35,7 @@ import { attachmentFromContentRef, toDraftRef } from './lib/drafts'
 import { stripMarkdown } from './utils/text'
 import { coerceInputText } from './lib/input-text'
 import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recovery'
+import { getSessionsRequiringPermissionModeReconcile } from './lib/permission-mode-reconcile'
 import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
 import { extractWorkspaceSlugFromPath } from '@craft-agent/shared/utils/workspace-slug'
 import { DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
@@ -505,6 +506,7 @@ export default function App() {
         ...defaultSessionOptions,
         ...current,
         permissionMode: session.permissionMode ?? defaultSessionOptions.permissionMode,
+        permissionModeVersion: session.permissionModeVersion ?? current?.permissionModeVersion,
         thinkingLevel: session.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
       }
 
@@ -558,9 +560,11 @@ export default function App() {
       for (const s of loadedSessions) {
         const hasNonDefaultMode = s.permissionMode && s.permissionMode !== 'ask'
         const hasNonDefaultThinking = s.thinkingLevel && s.thinkingLevel !== DEFAULT_THINKING_LEVEL
-        if (hasNonDefaultMode || hasNonDefaultThinking) {
+        const hasPermissionModeVersion = typeof s.permissionModeVersion === 'number'
+        if (hasNonDefaultMode || hasNonDefaultThinking || hasPermissionModeVersion) {
           optionsMap.set(s.id, {
             permissionMode: s.permissionMode ?? 'ask',
+            permissionModeVersion: s.permissionModeVersion,
             thinkingLevel: s.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
           })
         }
@@ -568,7 +572,8 @@ export default function App() {
       setSessionOptions(optionsMap)
 
       await Promise.allSettled(
-        loadedSessions.map((s) => reconcilePermissionModeState(s.id))
+        getSessionsRequiringPermissionModeReconcile(loadedSessions)
+          .map((sessionId) => reconcilePermissionModeState(sessionId))
       )
 
       setSessionsLoaded(true)
@@ -643,7 +648,10 @@ export default function App() {
       for (const session of sessions) {
         syncSessionOptionsFromSession(session)
       }
-      await Promise.allSettled(sessions.map(s => reconcilePermissionModeState(s.id)))
+      await Promise.allSettled(
+        getSessionsRequiringPermissionModeReconcile(sessions)
+          .map((sessionId) => reconcilePermissionModeState(sessionId))
+      )
 
       return nextMetaMap
     } catch (err) {
