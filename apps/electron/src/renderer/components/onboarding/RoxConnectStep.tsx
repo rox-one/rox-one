@@ -18,7 +18,6 @@ interface RoxConnectStepProps {
   errorMessage?: string
   onStart: () => void
   onOpenBrowser: () => void
-  authBaseUrl: string
 }
 
 /**
@@ -31,7 +30,6 @@ export function RoxConnectStep({
   errorMessage,
   onStart,
   onOpenBrowser,
-  authBaseUrl,
 }: RoxConnectStepProps) {
   const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
@@ -53,15 +51,7 @@ export function RoxConnectStep({
         </div>
       }
       title={t('onboarding.roxConnect.title')}
-      description={
-        <>
-          {t('onboarding.roxConnect.description')}
-          <br />
-          <span className="text-muted-foreground/70 text-xs mt-2 block">
-            {t('onboarding.roxConnect.authHost', { host: authBaseUrl })}
-          </span>
-        </>
-      }
+      description={t('onboarding.roxConnect.description')}
       actions={
         <div className="flex flex-col gap-3 w-full max-w-[360px]">
           {status === 'idle' || status === 'error' || status === 'starting' ? (

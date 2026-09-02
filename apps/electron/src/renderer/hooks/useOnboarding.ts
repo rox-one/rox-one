@@ -3,10 +3,10 @@
  *
  * Manages the state machine for the onboarding wizard.
  * Flow:
- * 1. Welcome
- * 2. Git Bash (Windows only, if not found)
- * 3. API Setup (API Key / Claude OAuth)
- * 4. Credentials (API Key or Claude OAuth)
+ * 1. Local profile
+ * 2. Rox cloud / Git Bash prerequisite gates when required
+ * 3. Provider selection
+ * 4. Credentials, local model, or Rox CLI default
  * 5. Complete
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
@@ -24,12 +24,16 @@ import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
 import { cancelOnboardingOAuth, isProviderManagedOAuthMethod } from './oauth-cancel'
 
+type LocalProfileSubmitData = {
+  displayName: string
+}
+
 interface UseOnboardingOptions {
   /** Called when onboarding is complete */
   onComplete: () => void
   /** Initial setup needs from auth state check */
   initialSetupNeeds?: SetupNeeds
-  /** Start the wizard at a specific step (default: 'welcome') */
+  /** Start the wizard at a specific step (default: 'provider-select') */
   initialStep?: OnboardingStep
   /** Pre-select an API setup method (useful when editing an existing connection) */
   initialApiSetupMethod?: ApiSetupMethod
@@ -54,6 +58,7 @@ interface UseOnboardingReturn {
 
   // Provider select (new flow)
   handleSelectProvider: (choice: ProviderChoice) => void
+  handleSubmitLocalProfile: (data: LocalProfileSubmitData) => void
 
   // API Setup (legacy — kept for direct edit)
   handleSelectApiSetupMethod: (method: ApiSetupMethod) => void
@@ -91,6 +96,7 @@ interface UseOnboardingReturn {
 
   // Skip setup ("Setup later")
   handleSkipSetup: () => void
+  handleConnectCloudFromProfile: () => void
 
   // Completion
   handleFinish: () => void
@@ -110,6 +116,12 @@ export const BASE_SLUG_FOR_METHOD: Record<ApiSetupMethod, string> = {
   pi_chatgpt_oauth: 'chatgpt-plus',
   pi_copilot_oauth: 'github-copilot',
   pi_api_key: 'pi-api-key',
+}
+
+export const ROX_DEFAULT_PROVIDER_SLUG = 'rox-kimi'
+
+export function shouldCreateRoxDefaultConnection(existingSlugs: Set<string>): boolean {
+  return !existingSlugs.has(ROX_DEFAULT_PROVIDER_SLUG)
 }
 
 /**
@@ -216,13 +228,16 @@ export function useOnboarding({
   editingSlug = null,
   existingSlugs = new Set(),
 }: UseOnboardingOptions): UseOnboardingReturn {
+  const startingStep = initialSetupNeeds?.needsRoxCloud ? 'rox-connect' : initialStep
+
   // Main wizard state
   const [state, setState] = useState<OnboardingState>({
-    step: initialStep,
+    step: startingStep,
     loginStatus: 'idle',
     credentialStatus: 'idle',
     completionStatus: 'saving',
     apiSetupMethod: initialApiSetupMethod ?? null,
+    apiCredentialPreset: undefined,
     isExistingUser: initialSetupNeeds?.needsBillingConfig ?? false,
     gitBashStatus: undefined,
     isRecheckingGitBash: false,
@@ -232,11 +247,13 @@ export function useOnboarding({
   // Rox cloud gate: if product requires Connect and not connected, force step.
   useEffect(() => {
     if (initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'rox-connect' ? s : { ...s, step: 'rox-connect' }))
+      setState(s => {
+        return s.step === 'rox-connect' ? s : { ...s, step: 'rox-connect' }
+      })
     }
   }, [initialSetupNeeds?.needsRoxCloud])
 
-  // Seeded OMP connection without ~/.omp models / Rox key — one credential step.
+  // Seeded Rox CLI connection without local models / Rox key — one credential step.
   useEffect(() => {
     if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
       setState(s => (s.step === 'omp-credential' ? s : { ...s, step: 'omp-credential' }))
@@ -376,7 +393,7 @@ export function useOnboarding({
         onComplete()
         break
     }
-  }, [state.step, state.gitBashStatus, state.apiSetupMethod, onComplete])
+  }, [state.step, state.gitBashStatus, onComplete, initialSetupNeeds?.needsRoxCloud])
 
   // Go back to previous step. If at the initial step, call onDismiss instead.
   const handleBack = useCallback(() => {
@@ -386,9 +403,7 @@ export function useOnboarding({
     }
     switch (state.step) {
       case 'git-bash':
-        if (onDismiss) {
-          onDismiss()
-        }
+        setState(s => ({ ...s, step: initialSetupNeeds?.needsRoxCloud ? 'rox-connect' : 'provider-select' }))
         break
       case 'provider-select':
         // If on Windows and Git Bash was needed, go back to git-bash step
@@ -408,11 +423,54 @@ export function useOnboarding({
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
     }
-  }, [state.step, state.gitBashStatus, initialStep, onDismiss])
+  }, [state.step, state.gitBashStatus, initialStep, initialSetupNeeds?.needsRoxCloud, onDismiss])
+
+  const handleSubmitLocalProfile = useCallback(async (data: LocalProfileSubmitData) => {
+    const displayName = data.displayName.trim()
+    if (!displayName) {
+      setState(s => ({
+        ...s,
+        loginStatus: 'error',
+        errorMessage: 'Введите имя профиля',
+      }))
+      return
+    }
+
+    setState(s => ({ ...s, loginStatus: 'waiting', errorMessage: undefined }))
+    try {
+      const identity = await window.electronAPI.identityUpdateProfile({
+        displayName,
+        mode: 'local',
+      })
+      setState(s => ({
+        ...s,
+        loginStatus: 'success',
+        localProfileName: identity.profile.displayName,
+        errorMessage: undefined,
+        step: initialSetupNeeds?.needsRoxCloud
+          ? 'rox-connect'
+          : (s.gitBashStatus?.platform === 'win32' && s.gitBashStatus.found === false ? 'git-bash' : 'provider-select'),
+      }))
+    } catch (error) {
+      setState(s => ({
+        ...s,
+        loginStatus: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Не удалось сохранить локальный профиль',
+      }))
+    }
+  }, [initialSetupNeeds?.needsRoxCloud])
+
+  const handleConnectCloudFromProfile = useCallback(() => {
+    setState(s => ({
+      ...s,
+      errorMessage: undefined,
+      step: 'rox-connect',
+    }))
+  }, [])
 
   // Select API setup method (legacy — kept for direct edit flows)
   const handleSelectApiSetupMethod = useCallback((method: ApiSetupMethod) => {
-    setState(s => ({ ...s, apiSetupMethod: method }))
+    setState(s => ({ ...s, apiSetupMethod: method, apiCredentialPreset: undefined }))
   }, [])
 
   // Submit credential (API key + optional endpoint config)
@@ -653,6 +711,7 @@ export function useOnboarding({
       setState(s => ({
         ...s,
         apiSetupMethod: methodOverride,
+        apiCredentialPreset: undefined,
         step: 'credentials',
         credentialStatus: 'validating',
         errorMessage: undefined,
@@ -768,22 +827,23 @@ export function useOnboarding({
 
   // Map ProviderChoice → ApiSetupMethod and navigate to the right step
   const handleSelectProvider = useCallback((choice: ProviderChoice) => {
-    const CHOICE_TO_METHOD: Record<Exclude<ProviderChoice, 'local' | 'omp'>, ApiSetupMethod> = {
+    const CHOICE_TO_METHOD: Record<Exclude<ProviderChoice, 'rox' | 'local'>, ApiSetupMethod> = {
       claude: 'claude_oauth',
       chatgpt: 'pi_chatgpt_oauth',
+      grok: 'pi_api_key',
       copilot: 'pi_copilot_oauth',
       api_key: 'pi_api_key',
     }
 
     if (choice === 'local') {
       // Local uses anthropic_api_key with custom endpoint (Ollama doesn't need an API key)
-      setState(s => ({ ...s, step: 'local-model', apiSetupMethod: 'anthropic_api_key', credentialStatus: 'idle', errorMessage: undefined }))
+      setState(s => ({ ...s, step: 'local-model', apiSetupMethod: 'anthropic_api_key', apiCredentialPreset: undefined, credentialStatus: 'idle', errorMessage: undefined }))
       return
     }
 
-    if (choice === 'omp') {
-      // OMP reads auth from ~/.omp/agent. If models/config are missing, stop
-      // on the single Rox credential step instead of marking setup complete.
+    if (choice === 'rox') {
+      // Rox uses the seeded Rox CLI connection. If local models/config are missing,
+      // stop on the single Rox credential step instead of marking setup complete.
       void (async () => {
         const needs = await window.electronAPI.getSetupNeeds()
         if (needs.needsOmpCredential) {
@@ -796,19 +856,18 @@ export function useOnboarding({
           return
         }
         setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined, completionStatus: 'saving' }))
-        let slug = 'omp'
-        let n = 2
-        while (existingSlugs.has(slug)) slug = `omp-${n++}`
-        const result = await window.electronAPI.setupLlmConnection({
-          slug,
-          name: 'OMP (oh-my-pi)',
-          providerType: 'omp',
-        })
-        if (!result.success) {
-          setState(s => ({ ...s, credentialStatus: 'error', errorMessage: result.error || 'Failed to create OMP connection' }))
-          return
+        if (shouldCreateRoxDefaultConnection(existingSlugs)) {
+          const result = await window.electronAPI.setupLlmConnection({
+            slug: ROX_DEFAULT_PROVIDER_SLUG,
+            name: 'Rox CLI',
+            providerType: 'omp',
+          })
+          if (!result.success) {
+            setState(s => ({ ...s, credentialStatus: 'error', errorMessage: result.error || 'Failed to create Rox CLI connection' }))
+            return
+          }
         }
-        const testResult = await window.electronAPI.testLlmConnection(slug)
+        const testResult = await window.electronAPI.testLlmConnection(ROX_DEFAULT_PROVIDER_SLUG)
         if (testResult.success) {
           setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
         } else {
@@ -816,7 +875,7 @@ export function useOnboarding({
             ...s,
             step: 'omp-credential',
             credentialStatus: 'error',
-            errorMessage: testResult.error || 'OMP connection test failed — check `omp` CLI and its model config',
+            errorMessage: testResult.error || 'Rox CLI connection test failed — check Rox API key or local model config',
           }))
         }
       })()
@@ -827,6 +886,7 @@ export function useOnboarding({
     setState(s => ({
       ...s,
       apiSetupMethod: method,
+      apiCredentialPreset: choice === 'grok' ? 'xai' : undefined,
       step: 'credentials',
       credentialStatus: 'idle',
       errorMessage: undefined,
@@ -837,7 +897,7 @@ export function useOnboarding({
       // Defer to next tick so state is updated before handleStartOAuth reads it
       setTimeout(() => handleStartOAuth(method), 0)
     }
-  }, [handleStartOAuth])
+  }, [existingSlugs, handleStartOAuth])
 
   // Submit authorization code (second step of OAuth flow)
   const handleSubmitAuthCode = useCallback(async (code: string) => {
@@ -1000,8 +1060,8 @@ export function useOnboarding({
     setActiveProviderOAuthMethod(null)
     setIsWaitingForCode(false)
     setCopilotDeviceCode(undefined)
-    setState(s => ({ ...s, step: 'welcome' }))
-  }, [])
+    setState(s => ({ ...s, step: initialSetupNeeds?.needsRoxCloud ? 'rox-connect' : initialStep }))
+  }, [initialSetupNeeds?.needsRoxCloud, initialStep])
 
   // Jump directly to credentials step with a pre-set method (for editing existing connections)
   const jumpToCredentials = useCallback((method: ApiSetupMethod) => {
@@ -1009,6 +1069,7 @@ export function useOnboarding({
       ...s,
       step: 'credentials' as const,
       apiSetupMethod: method,
+      apiCredentialPreset: undefined,
       credentialStatus: 'idle' as const,
       errorMessage: undefined,
     }))
@@ -1021,11 +1082,12 @@ export function useOnboarding({
       // Ignore cleanup errors during reset.
     })
     setState({
-      step: initialStep,
+      step: initialSetupNeeds?.needsRoxCloud ? 'rox-connect' : initialStep,
       loginStatus: 'idle',
       credentialStatus: 'idle',
       completionStatus: 'saving',
       apiSetupMethod: initialApiSetupMethod ?? null,
+      apiCredentialPreset: undefined,
       isExistingUser: false,
       errorMessage: undefined,
     })
@@ -1036,13 +1098,14 @@ export function useOnboarding({
     window.electronAPI.clearClaudeOAuthState().catch(() => {
       // Ignore errors - state may not exist
     })
-  }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, isWaitingForCode])
+  }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, initialSetupNeeds?.needsRoxCloud, isWaitingForCode])
 
   return {
     state,
     handleContinue,
     handleBack,
     handleSelectProvider,
+    handleSubmitLocalProfile,
     handleSelectApiSetupMethod,
     handleSubmitCredential,
     handleSubmitLocalModel,
@@ -1067,6 +1130,7 @@ export function useOnboarding({
     handleRecheckGitBash,
     handleClearError,
     handleSkipSetup,
+    handleConnectCloudFromProfile,
     handleFinish,
     handleCancel,
     jumpToCredentials,

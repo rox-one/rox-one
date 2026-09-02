@@ -36,6 +36,14 @@ const roxConnectCodes: RoxConnectCodes = {
   verificationUriComplete: 'https://rox.one/connect?code=ABCD-1234',
 }
 
+const baseWizardHandlers = {
+  onContinue: () => {},
+  onBack: () => {},
+  onSelectApiSetupMethod: () => {},
+  onSubmitCredential: () => {},
+  onFinish: () => {},
+}
+
 function renderRoxConnect({
   codes = null,
   status = 'idle',
@@ -48,11 +56,7 @@ function renderRoxConnect({
   return renderToStaticMarkup(
     <OnboardingWizard
       state={roxConnectState}
-      onContinue={() => {}}
-      onBack={() => {}}
-      onSelectApiSetupMethod={() => {}}
-      onSubmitCredential={() => {}}
-      onFinish={() => {}}
+      {...baseWizardHandlers}
       roxConnectCodes={codes}
       roxConnectStatus={status}
       roxConnectError={error}
@@ -95,25 +99,40 @@ describe('OnboardingWizard', () => {
     expect(html).toContain('onboarding.roxConnect.connect')
   })
 
-  test('renders the OMP first-run credential step with the typed code', () => {
+  test('renders the Rox CLI credential step without exposing internal runtime codes', () => {
     const html = renderToStaticMarkup(
       <OnboardingWizard
         state={{
           ...roxConnectState,
           step: 'omp-credential',
         }}
-        onContinue={() => {}}
-        onBack={() => {}}
-        onSelectApiSetupMethod={() => {}}
-        onSubmitCredential={() => {}}
+        {...baseWizardHandlers}
         onSubmitOmpCredential={() => {}}
-        onFinish={() => {}}
       />,
     )
 
     expect(html).toContain('errors.omp.noModels.title')
     expect(html).toContain('errors.omp.noModels.message')
-    expect(html).toContain('OMP_NO_MODELS')
+    expect(html).not.toContain('OMP_NO_MODELS')
+  })
+
+  test('renders Rox as the default provider without a visible standalone OMP choice', () => {
+    const html = renderToStaticMarkup(
+      <OnboardingWizard
+        state={{
+          ...roxConnectState,
+          step: 'provider-select',
+        }}
+        {...baseWizardHandlers}
+        onSelectProvider={() => {}}
+      />,
+    )
+
+    expect(html).toContain('onboarding.providerSelect.rox')
+    expect(html).toContain('onboarding.providerSelect.recommended')
+    expect(html).toContain('onboarding.providerSelect.grok')
+    expect(html).not.toContain('OMP (oh-my-pi)')
+    expect(html).not.toContain('onboarding.providerSelect.ompDesc')
   })
 
   test('in-chat OMP_AUTH_REQUIRED uses error-code i18n copy', async () => {
