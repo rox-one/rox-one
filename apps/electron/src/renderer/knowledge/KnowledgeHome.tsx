@@ -4,8 +4,8 @@
  *
  * Behavior:
  * - Search box (`knowledge.search.placeholder`); typing ≥2 chars searches
- *   after a short debounce, Enter searches immediately. Queries the FIRST
- *   connection from `knowledge.listConnections()`.
+ *   after a short debounce, Enter searches immediately. Queries the local
+ *   Markdown connection from `knowledge.listConnections()`.
  * - Result click opens the provider-appropriate editor (local Markdown → Notes).
  * - Saved views: `knowledge.viewsList` → click runs `knowledge.viewRun` and
  *   renders hits in EntityList (optional groupBy headers). Preset
@@ -37,7 +37,6 @@ import { shouldUseKnowledgeMobileChrome } from './knowledge-mobile'
 import {
   buildNewDocumentCreateArgs,
   documentRouteForConnection,
-  isLocalMarkdownConnection,
   knowledgeRefRoute,
   notebookIdForNewDocument,
   selectPreferredKnowledgeConnection,
@@ -377,7 +376,8 @@ export function KnowledgeHome() {
       try {
         const connections = await api.listConnections()
         const connectionId = selectPreferredKnowledgeConnection(connections)?.id
-        const envelopes = await api.envelopeList(connectionId ? { connectionId } : undefined)
+        if (!connectionId) return
+        const envelopes = await api.envelopeList({ connectionId })
         if (cancelled) return
         const ref = selectRecentEnvelopes(envelopes, 1)[0]?.knowledgeRef
         if (ref?.id) navigate(knowledgeRefRoute(ref))
@@ -503,10 +503,7 @@ export function KnowledgeHome() {
       const connections = await api.listConnections()
       const connection = selectPreferredKnowledgeConnection(connections)
       if (!connection) return
-      const notebooks = isLocalMarkdownConnection(connection)
-        ? []
-        : await api.listNotebooks?.({ connectionId: connection.id })
-      const notebookId = notebookIdForNewDocument(connection, notebooks ?? [])
+      const notebookId = notebookIdForNewDocument(connection, [])
       if (!notebookId) {
         toast.error(t('knowledge.nav.notebooksEmpty'))
         return

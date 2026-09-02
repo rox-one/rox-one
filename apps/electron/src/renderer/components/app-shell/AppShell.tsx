@@ -178,8 +178,8 @@ import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import {
   buildNewDocumentCreateArgs,
   documentRouteForConnection,
-  isLocalMarkdownConnection,
   notebookIdForNewDocument,
+  selectPreferredKnowledgeConnection,
 } from "../../knowledge/knowledge-new-note"
 
 /**
@@ -1871,14 +1871,11 @@ function AppShellContent({
     if (!api?.userCreate || !api.listConnections) return
     try {
       const connections = await api.listConnections()
-      // The local vault is the default experience. Select it even when legacy
-      // connections were persisted earlier, and do not probe SiYuan notebooks.
-      const connection = connections.find(isLocalMarkdownConnection) ?? connections[0]
+      // Normal note creation is local-only. A legacy connection must never be
+      // selected merely because it happened to be first in persisted state.
+      const connection = selectPreferredKnowledgeConnection(connections)
       if (!connection) return
-      const notebooks = isLocalMarkdownConnection(connection)
-        ? []
-        : await api.listNotebooks?.({ connectionId: connection.id })
-      const notebookId = notebookIdForNewDocument(connection, notebooks ?? [])
+      const notebookId = notebookIdForNewDocument(connection, [])
       if (!notebookId) {
         toast.error(t('knowledge.nav.notebooksEmpty'))
         return

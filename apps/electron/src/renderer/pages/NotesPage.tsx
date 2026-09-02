@@ -8,9 +8,6 @@ import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@craft-agent/ui'
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteCommentAnchor, NoteCommentThread, NoteDocument, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
-import {
-  lookupMigratedSiyuanId,
-} from '@/lib/notes-migration-map'
 
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -201,17 +198,71 @@ function readEditorCommentAnchor(editor: TiptapEditorHandle): NoteCommentAnchor 
   })
 }
 
-function findDocPositionForQuote(editor: TiptapEditorHandle, quote: string): number | null {
-  if (!quote.trim()) return null
-  let result: number | null = null
-  editor.state.doc.descendants((node, pos) => {
-    if (!node.isText || !node.text) return true
-    const index = node.text.indexOf(quote)
-    if (index === -1) return true
-    result = pos + index
-    return false
-  })
-  return result
+/**
+ * Converts an offset in the document-wide text representation used by comment
+ * anchors back to a ProseMirror selection position. `textBetween` deliberately
+ * uses the same block separators as `getEditorPlainText`, so marks and paragraph
+ * boundaries do not need bespoke position arithmetic.
+ */
+export function findDocPositionForPlainTextOffset(editor: TiptapEditorHandle, offset: number): number | null {
+  const doc = editor.state.doc
+  if (!Number.isFinite(offset) || offset < 0) return null
+
+  const fullText = doc.textBetween(0, doc.content.size, '\n', '\n')
+  if (offset > fullText.length) return null
+
+  // Position 0 is outside the first textblock. For a selection beginning at
+  // the first character, prefer the first valid text position instead.
+  if (offset === 0) {
+    return doc.content.size > 0 ? 1 : null
+  }
+
+  // `textBetween` gives us the canonical projection shared with the anchor
+  // store. Its prefix length is monotonic as a ProseMirror position advances,
+  // so a binary search avoids one full projection per character in long notes.
+  let lower = 1
+  let upper = doc.content.size
+  while (lower < upper) {
+    const position = Math.floor((lower + upper) / 2)
+    const prefixLength = doc.textBetween(0, position, '\n', '\n').length
+    if (prefixLength < offset) {
+      lower = position + 1
+    } else {
+      upper = position
+    }
+  }
+
+  return doc.textBetween(0, lower, '\n', '\n').length >= offset ? lower : null
+}
+
+export function findDocRangeForComment(
+  editor: TiptapEditorHandle,
+  quote: string,
+  resolved?: Pick<ResolvedNoteCommentAnchor, 'start' | 'end'>,
+): { from: number; to: number } | null {
+  const fullText = getEditorPlainText(editor)
+  let start: number
+  let end: number
+  if (
+    resolved
+    && resolved.start != null
+    && resolved.end != null
+    && resolved.end > resolved.start
+    && fullText.slice(resolved.start, resolved.end) === quote
+  ) {
+    start = resolved.start
+    end = resolved.end
+  } else {
+    start = fullText.indexOf(quote)
+    end = start + quote.length
+  }
+  if (!quote.trim() || start < 0 || end <= start) return null
+
+  const from = findDocPositionForPlainTextOffset(editor, start)
+  const to = findDocPositionForPlainTextOffset(editor, end)
+  if (from == null || to == null || to <= from) return null
+
+  return { from, to }
 }
 
 function noteFolder(note: NoteSummary): string {
@@ -663,7 +714,6 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const { t } = useTranslation()
   const {
     activeWorkspaceId,
-    workspaces,
     onCreateSession,
     onOpenFile,
     onSendMessage,
@@ -673,10 +723,6 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     sessionStatuses = [],
     projects = [],
   } = useAppShellContext()
-  const activeWorkspaceRoot = React.useMemo(
-    () => workspaces.find((w) => w.id === activeWorkspaceId)?.rootPath ?? null,
-    [workspaces, activeWorkspaceId],
-  )
   const activeSessionId = useAtomValue(activeSessionIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const activeProjectId = activeSessionId ? sessionMetaMap.get(activeSessionId)?.projectId : undefined
@@ -1079,6 +1125,48 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     collapseTaskList: t('notes.folding.collapseTaskList'),
     expandSection: t('notes.folding.expandSection'),
     expandTaskList: t('notes.folding.expandTaskList'),
+  }), [t])
+  const roxBlockLabels = React.useMemo(() => ({
+    collapse: t('notes.blocks.collapse'),
+    expand: t('notes.blocks.expand'),
+  }), [t])
+  const slashCommandLabels = React.useMemo(() => ({
+    empty: t('notes.slash.empty'),
+    groupFormat: t('notes.slash.groupFormat'),
+    groupLists: t('notes.slash.groupLists'),
+    groupBlocks: t('notes.slash.groupBlocks'),
+    paragraphTitle: t('notes.slash.paragraphTitle'),
+    paragraphDescription: t('notes.slash.paragraphDescription'),
+    heading1Title: t('notes.slash.heading1Title'),
+    heading1Description: t('notes.slash.heading1Description'),
+    heading2Title: t('notes.slash.heading2Title'),
+    heading2Description: t('notes.slash.heading2Description'),
+    heading3Title: t('notes.slash.heading3Title'),
+    heading3Description: t('notes.slash.heading3Description'),
+    bulletListTitle: t('notes.slash.bulletListTitle'),
+    bulletListDescription: t('notes.slash.bulletListDescription'),
+    orderedListTitle: t('notes.slash.orderedListTitle'),
+    orderedListDescription: t('notes.slash.orderedListDescription'),
+    taskListTitle: t('notes.slash.taskListTitle'),
+    taskListDescription: t('notes.slash.taskListDescription'),
+    quoteTitle: t('notes.slash.quoteTitle'),
+    quoteDescription: t('notes.slash.quoteDescription'),
+    dividerTitle: t('notes.slash.dividerTitle'),
+    dividerDescription: t('notes.slash.dividerDescription'),
+    spoilerTitle: t('notes.slash.spoilerTitle'),
+    spoilerDescription: t('notes.slash.spoilerDescription'),
+    columns2Title: t('notes.slash.columns2Title'),
+    columns2Description: t('notes.slash.columns2Description'),
+    columns3Title: t('notes.slash.columns3Title'),
+    columns3Description: t('notes.slash.columns3Description'),
+    codeTitle: t('notes.slash.codeTitle'),
+    codeDescription: t('notes.slash.codeDescription'),
+    mermaidTitle: t('notes.slash.mermaidTitle'),
+    mermaidDescription: t('notes.slash.mermaidDescription'),
+    latexTitle: t('notes.slash.latexTitle'),
+    latexDescription: t('notes.slash.latexDescription'),
+    spoilerInsertTitle: t('notes.slash.spoilerInsertTitle'),
+    detailsInsertTitle: t('notes.slash.detailsInsertTitle'),
   }), [t])
   const crumbs = React.useMemo(() => noteCrumbs(activeNote, t('notes.document.vault')), [activeNote, t])
   const dailyDate = parseDailyNoteDate(activeNote?.id)
@@ -1582,19 +1670,10 @@ h1,h2,h3{margin-top:1.5em}
     const instruction = t(instructionKey)
     const session = await onCreateSession(activeWorkspaceId, { name: sessionName })
 
-    // Prefer SiYuan document ref when this note was migrated (P4.4 map).
     const legacyPath = `notes/${activeNote.relativePath}`
-    const migrated = await lookupMigratedSiyuanId(
-      activeWorkspaceRoot,
-      activeNote.id,
-    ).catch(() => null)
-    const attachPath = migrated
-      ? `siyuan/document/${migrated.siyuanId}`
-      : legacyPath
-    const attachTitle = migrated?.title?.trim() || activeNote.title
-    const pathLine = migrated
-      ? `${t('notes.ai.contextPath', { path: attachPath })} ${`[knowledge:siyuan/document/${migrated.siyuanId}]`}`
-      : t('notes.ai.contextPath', { path: legacyPath })
+    const attachPath = legacyPath
+    const attachTitle = activeNote.title
+    const pathLine = t('notes.ai.contextPath', { path: attachPath })
 
     const prompt = [
       t('notes.ai.contextHeader', { title: attachTitle }),
@@ -1924,10 +2003,10 @@ h1,h2,h3{margin-top:1.5em}
     const exact = comment.anchor.selectedText
       || comment.anchor.selectors.find(selector => selector.type === 'text-quote')?.exact
       || ''
-    const from = findDocPositionForQuote(editor, exact)
-    if (from != null) {
+    const range = findDocRangeForComment(editor, exact, resolved)
+    if (range) {
       try {
-        editor.chain().focus().setTextSelection({ from, to: from + exact.length }).run()
+        editor.chain().focus().setTextSelection(range).run()
       } catch {
         editor.commands.focus()
       }
@@ -2471,6 +2550,8 @@ h1,h2,h3{margin-top:1.5em}
                   markdownEngine="official"
                   foldingStorageKey={`rox:notes:folding:${activeWorkspaceId}:${activeNote.id}`}
                   foldingLabels={foldingLabels}
+                  roxBlockLabels={roxBlockLabels}
+                  slashCommandLabels={slashCommandLabels}
                   className="min-h-[calc(100vh-220px)] w-full"
                 />
                 {richParts.frontmatter && (

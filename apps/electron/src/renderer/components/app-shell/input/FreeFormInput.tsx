@@ -278,7 +278,7 @@ export interface FreeFormInputProps {
  * section hidden — until that surface is available and a connection is configured.
  */
 interface KnowledgeElectronApi {
-  listConnections?: () => Promise<Array<{ id: string }>>
+  listConnections?: () => Promise<Array<{ id: string; provider?: string }>>
   search?: (payload: {
     workspaceId?: string
     connectionId: string
@@ -1053,9 +1053,9 @@ export function FreeFormInput({
   // Knowledge @mention search (P1 read-only): debounced knowledge:search RPC.
   // Inert by default — without a configured connection listConnections returns
   // empty (or errors) and the Knowledge section simply stays hidden.
-  // The first configured connection is used (MVP: at most one) and cached:
-  // a real record id is required — the server resolves connectionId via
-  // KnowledgeConnectionsStore.get and answers NOT_FOUND for anything unknown.
+  // The local Markdown connection is cached. A real record id is required —
+  // the server resolves connectionId via KnowledgeConnectionsStore.get and
+  // answers NOT_FOUND for anything unknown.
   const knowledgeQuery = inlineMention.isOpen ? inlineMention.filter.trim() : ''
   const knowledgeConnectionRef = React.useRef<string | null | undefined>(undefined)
   React.useEffect(() => {
@@ -1071,7 +1071,8 @@ export function FreeFormInput({
         try {
           if (knowledgeConnectionRef.current === undefined) {
             const connections = await listConnections()
-            knowledgeConnectionRef.current = connections?.[0]?.id ?? null
+            knowledgeConnectionRef.current =
+              connections?.find((connection) => connection.provider === 'local-markdown')?.id ?? null
           }
           const connectionId = knowledgeConnectionRef.current
           if (!connectionId) {

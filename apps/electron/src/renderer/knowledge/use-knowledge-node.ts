@@ -5,6 +5,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 import type { ContextPayload, KnowledgeNode, KnowledgeRef } from '../../shared/types'
 
 export interface KnowledgeNodeState {
@@ -42,7 +43,12 @@ export function useKnowledgeNode(knowledgeRef: KnowledgeRef | null): KnowledgeNo
     void (async () => {
       try {
         const connections = await window.electronAPI.knowledge.listConnections()
-        const connectionId = connections[0]?.id
+        const connectionId =
+          ref.scheme === 'local-note'
+            ? connections.find((connection) => connection.provider === 'local-markdown')?.id
+            : isSiyuanIntegrationEnabled()
+              ? connections.find((connection) => connection.provider === 'siyuan')?.id
+              : undefined
         if (!connectionId) throw new Error(t('knowledge.inspector.noConnection'))
         const args = { workspaceId, connectionId, ref }
         const [node, backlinks] = await Promise.all([

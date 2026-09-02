@@ -46,9 +46,12 @@ import { SessionWorkflowEditor } from '@/components/session-workbench/SessionWor
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
 import { deriveSessionMindMap, type MindMapGraph, type SceneMessage } from '@craft-agent/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 
 function buildSessionEntityCapabilities(siyuanConnected: boolean): EntityViewCapability[] {
-  return defaultSessionEntityCapabilities({ siyuanConnected }).map((cap) => {
+  return defaultSessionEntityCapabilities({
+    siyuanConnected: siyuanConnected && isSiyuanIntegrationEnabled(),
+  }).map((cap) => {
     // teamchat remains placeholder; legacy SiYuan mindmap stays available with distinct label.
     if (cap.id === 'teamchat') {
       return { ...cap, available: false }
@@ -375,6 +378,10 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   const resolveNoteNavigation = React.useCallback(
     async (noteId: string) => {
+      if (!isSiyuanIntegrationEnabled()) {
+        navigate(routes.view.notesLegacy(noteId))
+        return
+      }
       const migrated = await lookupMigratedSiyuanId(
         activeWorkspace?.rootPath,
         noteId,

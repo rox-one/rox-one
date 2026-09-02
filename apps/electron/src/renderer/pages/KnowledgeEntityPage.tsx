@@ -22,6 +22,8 @@ import { KnowledgeInspector } from '@/knowledge/KnowledgeInspector'
 import { knowledgeEntityCompanionRef } from '@/knowledge/knowledge-entity-ref'
 import KnowledgeSurfacePage from '@/pages/KnowledgeSurfacePage'
 import type { SiyuanSurfaceRef } from '@/knowledge/siyuan-url'
+import { navigate, routes } from '@/lib/navigate'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 
 export interface KnowledgeEntityPageProps {
   kind: SiyuanSurfaceRef['kind']
@@ -34,6 +36,7 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
   const { activeWorkspaceId } = useAppShellContext()
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const siyuanConnected = useSiyuanConnected()
+  const siyuanEnabled = isSiyuanIntegrationEnabled()
   const capabilities = React.useMemo(
     () => defaultKnowledgeEntityCapabilities({ siyuanConnected: siyuanConnected ?? false }),
     [siyuanConnected],
@@ -45,7 +48,11 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
   const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
-    if (view !== 'map' && view !== 'outline') {
+    if (!siyuanEnabled) navigate(routes.view.notesLegacy())
+  }, [siyuanEnabled])
+
+  React.useEffect(() => {
+    if (!siyuanEnabled || (view !== 'map' && view !== 'outline')) {
       setGraph(null)
       setError(null)
       setLoading(false)
@@ -119,9 +126,11 @@ export default function KnowledgeEntityPage({ kind, id, panelId }: KnowledgeEnti
     return () => {
       cancelled = true
     }
-  }, [view, kind, id, activeWorkspaceId, t])
+  }, [view, kind, id, activeWorkspaceId, siyuanEnabled, t])
 
   const companionRef = knowledgeEntityCompanionRef(kind, id)
+
+  if (!siyuanEnabled) return null
 
   let body: React.ReactNode
   if (view === 'map' || view === 'outline') {

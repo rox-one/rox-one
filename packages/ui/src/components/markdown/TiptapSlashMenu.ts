@@ -12,9 +12,96 @@ export interface SlashCommandItem {
   title: string
   description?: string
   icon: SlashIconName
-  group: 'Format' | 'Lists' | 'Blocks'
+  group: string
   aliases?: string[]
   run: (editor: Editor, insertPos?: number) => void
+}
+
+/**
+ * Labels are owned by the embedding screen rather than the extension. This
+ * keeps the ProseMirror extension usable in non-React renderers while Notes
+ * can pass the active locale through its normal `t()` contract.
+ */
+export interface SlashCommandLabels {
+  empty: string
+  groupFormat: string
+  groupLists: string
+  groupBlocks: string
+  paragraphTitle: string
+  paragraphDescription: string
+  heading1Title: string
+  heading1Description: string
+  heading2Title: string
+  heading2Description: string
+  heading3Title: string
+  heading3Description: string
+  bulletListTitle: string
+  bulletListDescription: string
+  orderedListTitle: string
+  orderedListDescription: string
+  taskListTitle: string
+  taskListDescription: string
+  quoteTitle: string
+  quoteDescription: string
+  dividerTitle: string
+  dividerDescription: string
+  spoilerTitle: string
+  spoilerDescription: string
+  columns2Title: string
+  columns2Description: string
+  columns3Title: string
+  columns3Description: string
+  codeTitle: string
+  codeDescription: string
+  mermaidTitle: string
+  mermaidDescription: string
+  latexTitle: string
+  latexDescription: string
+  spoilerInsertTitle: string
+  detailsInsertTitle: string
+}
+
+export interface TiptapSlashMenuOptions {
+  labels: Partial<SlashCommandLabels>
+}
+
+export const DEFAULT_SLASH_COMMAND_LABELS: SlashCommandLabels = {
+  empty: 'No commands found',
+  groupFormat: 'Format',
+  groupLists: 'Lists',
+  groupBlocks: 'Blocks',
+  paragraphTitle: 'Text',
+  paragraphDescription: 'Turn into a normal paragraph',
+  heading1Title: 'Heading 1',
+  heading1Description: 'Large section heading',
+  heading2Title: 'Heading 2',
+  heading2Description: 'Medium section heading',
+  heading3Title: 'Heading 3',
+  heading3Description: 'Small section heading',
+  bulletListTitle: 'Bullet List',
+  bulletListDescription: 'Create a bulleted list',
+  orderedListTitle: 'Numbered List',
+  orderedListDescription: 'Create an ordered list',
+  taskListTitle: 'Todo List',
+  taskListDescription: 'Create a checkbox task list',
+  quoteTitle: 'Quote',
+  quoteDescription: 'Insert a block quote',
+  dividerTitle: 'Horizontal Rule',
+  dividerDescription: 'Insert a divider line',
+  spoilerTitle: 'Spoiler',
+  spoilerDescription: 'Insert a collapsible spoiler block',
+  columns2Title: '2 Columns',
+  columns2Description: 'Insert a balanced two-column layout',
+  columns3Title: '3 Columns',
+  columns3Description: 'Insert a balanced three-column layout',
+  codeTitle: 'Code Block',
+  codeDescription: 'Insert a fenced code block',
+  mermaidTitle: 'Mermaid Diagram',
+  mermaidDescription: 'Insert a mermaid diagram block',
+  latexTitle: 'LaTeX Block',
+  latexDescription: 'Insert a LaTeX math block',
+  spoilerInsertTitle: 'Spoiler',
+  detailsInsertTitle: 'Details',
 }
 
 export const SlashCommandPluginKey = new PluginKey('tiptapSlashMenu')
@@ -231,9 +318,9 @@ function insertCodeBlockWithPlaceholder(editor: Editor, insertPos?: number) {
   rememberCodeLanguage(editor, language)
 }
 
-function insertRoxBlock(editor: Editor, kind: RoxBlockKind, insertPos?: number) {
+function insertRoxBlock(editor: Editor, kind: RoxBlockKind, labels: SlashCommandLabels, insertPos?: number) {
   const targetPos = insertPos ?? editor.state.selection.from
-  const title = kind === 'spoiler' ? 'Спойлер' : 'Подробности'
+  const title = kind === 'spoiler' ? labels.spoilerInsertTitle : labels.detailsInsertTitle
 
   editor.chain().focus().insertContentAt(targetPos, createRoxBlockContent(kind, title)).run()
 
@@ -243,14 +330,18 @@ function insertRoxBlock(editor: Editor, kind: RoxBlockKind, insertPos?: number) 
   editor.chain().focus().setTextSelection(targetPos + `[!${kind}]- ${title}`.length + 4).run()
 }
 
-export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
+export function createSlashCommandItems(
+  _editor: Editor,
+  partialLabels: Partial<SlashCommandLabels> = {},
+): SlashCommandItem[] {
+  const labels = { ...DEFAULT_SLASH_COMMAND_LABELS, ...partialLabels }
   return [
     {
       id: 'paragraph',
-      title: 'Text',
-      description: 'Turn into a normal paragraph',
+      title: labels.paragraphTitle,
+      description: labels.paragraphDescription,
       icon: 'pilcrow',
-      group: 'Format',
+      group: labels.groupFormat,
       aliases: ['paragraph', 'text', 'p'],
       run: (e) => {
         e.chain().focus().setParagraph().run()
@@ -258,10 +349,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'heading-1',
-      title: 'Heading 1',
-      description: 'Large section heading',
+      title: labels.heading1Title,
+      description: labels.heading1Description,
       icon: 'heading-1',
-      group: 'Format',
+      group: labels.groupFormat,
       aliases: ['h1', 'title', 'heading'],
       run: (e) => {
         e.chain().focus().toggleHeading({ level: 1 }).run()
@@ -269,10 +360,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'heading-2',
-      title: 'Heading 2',
-      description: 'Medium section heading',
+      title: labels.heading2Title,
+      description: labels.heading2Description,
       icon: 'heading-2',
-      group: 'Format',
+      group: labels.groupFormat,
       aliases: ['h2', 'subtitle', 'heading'],
       run: (e) => {
         e.chain().focus().toggleHeading({ level: 2 }).run()
@@ -280,10 +371,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'heading-3',
-      title: 'Heading 3',
-      description: 'Small section heading',
+      title: labels.heading3Title,
+      description: labels.heading3Description,
       icon: 'heading-3',
-      group: 'Format',
+      group: labels.groupFormat,
       aliases: ['h3', 'subheading', 'heading'],
       run: (e) => {
         e.chain().focus().toggleHeading({ level: 3 }).run()
@@ -291,10 +382,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'bullet-list',
-      title: 'Bullet List',
-      description: 'Create a bulleted list',
+      title: labels.bulletListTitle,
+      description: labels.bulletListDescription,
       icon: 'list',
-      group: 'Lists',
+      group: labels.groupLists,
       aliases: ['ul', 'list', 'bullets'],
       run: (e) => {
         e.chain().focus().toggleBulletList().run()
@@ -302,10 +393,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'ordered-list',
-      title: 'Numbered List',
-      description: 'Create an ordered list',
+      title: labels.orderedListTitle,
+      description: labels.orderedListDescription,
       icon: 'list-ordered',
-      group: 'Lists',
+      group: labels.groupLists,
       aliases: ['ol', 'list', 'numbers'],
       run: (e) => {
         e.chain().focus().toggleOrderedList().run()
@@ -313,10 +404,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'task-list',
-      title: 'Todo List',
-      description: 'Create a checkbox task list',
+      title: labels.taskListTitle,
+      description: labels.taskListDescription,
       icon: 'list-checks',
-      group: 'Lists',
+      group: labels.groupLists,
       aliases: ['todo', 'task', 'checklist', 'checkbox'],
       run: (e) => {
         e.chain().focus().toggleTaskList().run()
@@ -324,10 +415,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'blockquote',
-      title: 'Quote',
-      description: 'Insert a block quote',
+      title: labels.quoteTitle,
+      description: labels.quoteDescription,
       icon: 'text-quote',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['blockquote', 'quote', 'callout'],
       run: (e, insertPos) => {
         const chain = e.chain().focus()
@@ -337,10 +428,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'horizontal-rule',
-      title: 'Horizontal Rule',
-      description: 'Insert a divider line',
+      title: labels.dividerTitle,
+      description: labels.dividerDescription,
       icon: 'minus',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['hr', 'divider', 'line'],
       run: (e) => {
         e.chain().focus().setHorizontalRule().run()
@@ -348,21 +439,21 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'spoiler-block',
-      title: 'Spoiler',
-      description: 'Insert a collapsible spoiler block',
+      title: labels.spoilerTitle,
+      description: labels.spoilerDescription,
       icon: 'chevrons-up-down',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['spoiler', 'details', 'спойлер', 'подробности'],
       run: (e, insertPos) => {
-        insertRoxBlock(e, 'spoiler', insertPos)
+        insertRoxBlock(e, 'spoiler', labels, insertPos)
       },
     },
     {
       id: 'two-column-block',
-      title: '2 Columns',
-      description: 'Insert a balanced two-column layout',
+      title: labels.columns2Title,
+      description: labels.columns2Description,
       icon: 'columns-2',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['columns', 'two columns', 'split', 'layout'],
       run: (e, insertPos) => {
         insertRoxColumnsContent(e, 2, insertPos)
@@ -370,10 +461,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'three-column-block',
-      title: '3 Columns',
-      description: 'Insert a balanced three-column layout',
+      title: labels.columns3Title,
+      description: labels.columns3Description,
       icon: 'columns-3',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['columns', 'three columns', 'grid', 'layout'],
       run: (e, insertPos) => {
         insertRoxColumnsContent(e, 3, insertPos)
@@ -381,10 +472,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'code-block',
-      title: 'Code Block',
-      description: 'Insert a fenced code block',
+      title: labels.codeTitle,
+      description: labels.codeDescription,
       icon: 'square-code',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['code', 'fence', 'snippet'],
       run: (e, insertPos) => {
         insertCodeBlockWithPlaceholder(e, insertPos)
@@ -392,10 +483,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'mermaid-code-block',
-      title: 'Mermaid Diagram',
-      description: 'Insert a mermaid diagram block',
+      title: labels.mermaidTitle,
+      description: labels.mermaidDescription,
       icon: 'workflow',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['mermaid', 'diagram', 'flowchart'],
       run: (e, insertPos) => {
         insertRichBlockAndOpenEditor(e, 'mermaidBlock', 'graph TD\n  A[Start] --> B[End]', insertPos)
@@ -403,10 +494,10 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'latex-code-block',
-      title: 'LaTeX Block',
-      description: 'Insert a latex math block',
+      title: labels.latexTitle,
+      description: labels.latexDescription,
       icon: 'sigma',
-      group: 'Blocks',
+      group: labels.groupBlocks,
       aliases: ['latex', 'math', 'tex', 'katex'],
       run: (e, insertPos) => {
         insertRichBlockAndOpenEditor(e, 'latexBlock', 'E = mc^2', insertPos)
@@ -431,7 +522,12 @@ function getRectFromClientRect(clientRect?: (() => DOMRect | null) | null): DOMR
   return clientRect()
 }
 
-function renderMenuItems(container: HTMLElement, items: SlashCommandItem[], selectedIndex: number) {
+function renderMenuItems(
+  container: HTMLElement,
+  items: SlashCommandItem[],
+  selectedIndex: number,
+  labels: SlashCommandLabels,
+) {
   const grouped = new Map<string, SlashCommandItem[]>()
   for (const item of items) {
     const existing = grouped.get(item.group)
@@ -447,7 +543,7 @@ function renderMenuItems(container: HTMLElement, items: SlashCommandItem[], sele
   if (items.length === 0) {
     const empty = document.createElement('div')
     empty.className = 'tiptap-slash-empty'
-    empty.textContent = 'No commands found'
+    empty.textContent = labels.empty
     container.appendChild(empty)
     return
   }
@@ -491,7 +587,7 @@ class SlashMenuView {
 
   private surface: InlineMenuSurface<SlashCommandItem>
 
-  constructor(props: SuggestionProps<SlashCommandItem>) {
+  constructor(props: SuggestionProps<SlashCommandItem>, labels: SlashCommandLabels) {
     this.props = props
 
     this.surface = new InlineMenuSurface<SlashCommandItem>({
@@ -500,7 +596,7 @@ class SlashMenuView {
         this.props.command(item)
       },
       render: (container, items, selectedIndex) => {
-        renderMenuItems(container, items, selectedIndex)
+        renderMenuItems(container, items, selectedIndex, labels)
       },
     })
 
@@ -553,10 +649,15 @@ class SlashMenuView {
   }
 }
 
-export const TiptapSlashMenu = Extension.create({
+export const TiptapSlashMenu = Extension.create<TiptapSlashMenuOptions>({
   name: 'tiptapSlashMenu',
 
+  addOptions() {
+    return { labels: {} }
+  },
+
   addProseMirrorPlugins() {
+    const labels = { ...DEFAULT_SLASH_COMMAND_LABELS, ...this.options.labels }
     return [
       Suggestion<SlashCommandItem>({
         editor: this.editor,
@@ -566,7 +667,7 @@ export const TiptapSlashMenu = Extension.create({
         allowedPrefixes: null,
         allowSpaces: true,
         items: ({ editor, query }) => {
-          const items = createSlashCommandItems(editor)
+          const items = createSlashCommandItems(editor, labels)
           return filterSlashCommandItems(items, query)
         },
         allow: ({ editor, state }) => {
@@ -588,7 +689,7 @@ export const TiptapSlashMenu = Extension.create({
 
           return {
             onStart: (props) => {
-              menu = new SlashMenuView(props)
+              menu = new SlashMenuView(props, labels)
             },
             onUpdate: (props) => {
               menu?.update(props)

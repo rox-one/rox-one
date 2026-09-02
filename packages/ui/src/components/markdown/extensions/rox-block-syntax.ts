@@ -37,10 +37,29 @@ export interface RoxBlockTarget {
   markerTextTo: number
   bodyFrom: number
   bodyTo: number
-  bodyChildren: Array<{ from: number; to: number }>
+  /**
+   * `@tiptap/markdown` can represent an ordinary Obsidian callout as one
+   * paragraph with a newline in its text node. In that case the body is an
+   * inline range; the legacy parser keeps it as following paragraph nodes.
+   */
+  bodyRanges: Array<{ from: number; to: number; inline: boolean }>
+}
+
+export interface RoxBlockLabels {
+  collapse: string
+  expand: string
+}
+
+export interface RoxBlockCalloutOptions {
+  labels: RoxBlockLabels
 }
 
 const ROX_BLOCK_MARKER = /^\[!(spoiler|details)\]([+-])(?:[ \t]+(.*))?$/i
+
+const DEFAULT_ROX_BLOCK_LABELS: RoxBlockLabels = {
+  collapse: 'Collapse block',
+  expand: 'Expand block',
+}
 
 function normalizeTitle(title: string | undefined): string | undefined {
   const normalized = title?.trim()
@@ -132,8 +151,9 @@ export function createRoxBlockContent(
 
 /**
  * Finds Obsidian-compatible spoiler/details callouts inside a normal document.
- * A valid callout must start with a plain paragraph containing only its marker;
- * this conservative rule prevents arbitrary quotes from receiving controls.
+ * A valid callout must start with a plain paragraph whose first line is a
+ * marker. The official parser may retain quoted body text in that same
+ * paragraph; styled or compound marker lines are still rejected.
  */
 export function collectRoxBlockTargets(doc: ProseMirrorNode): RoxBlockTarget[] {
   const targets: RoxBlockTarget[] = []
@@ -144,21 +164,33 @@ export function collectRoxBlockTargets(doc: ProseMirrorNode): RoxBlockTarget[] {
     const markerNode = node.firstChild
     if (!markerNode || markerNode.type.name !== 'paragraph') return
 
-    const markerText = markerNode.textContent
-    // `content.size` equals the text length only for an unmarked, text-only
-    // paragraph. Do not rewrite a styled/compound marker silently.
-    if (markerNode.content.size !== markerText.length) return
-
+    const paragraphText = markerNode.textContent
+    // `content.size` equals text length only for an unmarked, text-only
+    // paragraph. Do not rewrite a styled/compound marker silently. The
+    // official Markdown parser stores a normal quoted body as `marker\nbody`
+    // in this same text node, so parse the first line but keep the remaining
+    // range as a collapsible inline body.
+    if (markerNode.content.size !== paragraphText.length) return
+    const lineBreak = paragraphText.indexOf('\n')
+    const markerText = lineBreak === -1 ? paragraphText : paragraphText.slice(0, lineBreak)
     const marker = parseRoxBlockMarker(markerText)
     if (!marker) return
 
     const markerFrom = quoteFrom + 1
     const markerTo = markerFrom + markerNode.nodeSize
-    const bodyChildren: Array<{ from: number; to: number }> = []
+    const markerTextFrom = markerFrom + 1
+    const markerTextTo = markerTextFrom + markerText.length
+    const bodyRanges: Array<{ from: number; to: number; inline: boolean }> = []
+    if (lineBreak !== -1) {
+      // Include the newline in the hidden range so no blank row remains when
+      // the callout is collapsed. `markerTextTo` is a document position, not
+      // a string offset, because the first paragraph begins at +1.
+      bodyRanges.push({ from: markerTextTo, to: markerTo - 1, inline: true })
+    }
     let childFrom = markerTo
     for (let index = 1; index < node.childCount; index += 1) {
       const child = node.child(index)
-      bodyChildren.push({ from: childFrom, to: childFrom + child.nodeSize })
+      bodyRanges.push({ from: childFrom, to: childFrom + child.nodeSize, inline: false })
       childFrom += child.nodeSize
     }
 
@@ -168,11 +200,11 @@ export function collectRoxBlockTargets(doc: ProseMirrorNode): RoxBlockTarget[] {
       quoteTo: quoteFrom + node.nodeSize,
       markerFrom,
       markerTo,
-      markerTextFrom: markerFrom + 1,
-      markerTextTo: markerTo - 1,
-      bodyFrom: markerTo,
+      markerTextFrom,
+      markerTextTo,
+      bodyFrom: bodyRanges.at(0)?.from ?? markerTo,
       bodyTo: quoteFrom + node.nodeSize - 1,
-      bodyChildren,
+      bodyRanges,
     })
   })
 
@@ -186,7 +218,7 @@ export function toggleRoxBlockAt(view: EditorView, target: RoxBlockTarget): void
 
 export const RoxBlockCalloutPluginKey = new PluginKey<DecorationSet>('roxBlockCallout')
 
-function createRoxBlockToggle(view: EditorView, target: RoxBlockTarget): HTMLElement {
+function createRoxBlockToggle(view: EditorView, target: RoxBlockTarget, labels: RoxBlockLabels): HTMLElement {
   const collapsed = isRoxBlockCollapsed(target.marker)
   const button = document.createElement('button')
   button.type = 'button'
@@ -195,8 +227,8 @@ function createRoxBlockToggle(view: EditorView, target: RoxBlockTarget): HTMLEle
   button.dataset.roxBlockKind = target.marker.kind
   button.dataset.collapsed = String(collapsed)
   button.setAttribute('aria-expanded', String(!collapsed))
-  button.setAttribute('aria-label', collapsed ? 'Развернуть блок' : 'Свернуть блок')
-  button.title = collapsed ? 'Развернуть' : 'Свернуть'
+  button.setAttribute('aria-label', collapsed ? labels.expand : labels.collapse)
+  button.title = collapsed ? labels.expand : labels.collapse
   button.textContent = collapsed ? '›' : '⌄'
 
   const toggle = (event: Event) => {
@@ -215,7 +247,10 @@ function createRoxBlockToggle(view: EditorView, target: RoxBlockTarget): HTMLEle
   return button
 }
 
-export function buildRoxBlockDecorations(state: EditorState): DecorationSet {
+export function buildRoxBlockDecorations(
+  state: EditorState,
+  labels: RoxBlockLabels = DEFAULT_ROX_BLOCK_LABELS,
+): DecorationSet {
   const decorations: Decoration[] = []
 
   for (const target of collectRoxBlockTargets(state.doc)) {
@@ -228,7 +263,7 @@ export function buildRoxBlockDecorations(state: EditorState): DecorationSet {
       }),
       Decoration.widget(
         target.markerTextFrom,
-        widgetView => createRoxBlockToggle(widgetView, target),
+        widgetView => createRoxBlockToggle(widgetView, target, labels),
         {
           key: `rox-block-toggle:${target.quoteFrom}:${target.marker.toggle}`,
           side: -1,
@@ -237,9 +272,9 @@ export function buildRoxBlockDecorations(state: EditorState): DecorationSet {
     )
 
     if (!collapsed) continue
-    for (const child of target.bodyChildren) {
+    for (const bodyRange of target.bodyRanges) {
       decorations.push(
-        Decoration.node(child.from, child.to, {
+        (bodyRange.inline ? Decoration.inline : Decoration.node)(bodyRange.from, bodyRange.to, {
           class: 'tiptap-rox-block-content-hidden',
           'aria-hidden': 'true',
         }),
@@ -256,18 +291,23 @@ export function buildRoxBlockDecorations(state: EditorState): DecorationSet {
  * canonical serializer, so collapse state is durable Markdown rather than
  * hidden editor-only state.
  */
-export const RoxBlockCallout = Extension.create({
+export const RoxBlockCallout = Extension.create<RoxBlockCalloutOptions>({
   name: 'roxBlockCallout',
 
+  addOptions() {
+    return { labels: DEFAULT_ROX_BLOCK_LABELS }
+  },
+
   addProseMirrorPlugins() {
+    const labels = { ...DEFAULT_ROX_BLOCK_LABELS, ...this.options.labels }
     return [
       new Plugin({
         key: RoxBlockCalloutPluginKey,
         state: {
-          init: (_config, state) => buildRoxBlockDecorations(state),
+          init: (_config, state) => buildRoxBlockDecorations(state, labels),
           apply: (transaction, previous, _oldState, nextState) => {
             if (!transaction.docChanged) return previous
-            return buildRoxBlockDecorations(nextState)
+            return buildRoxBlockDecorations(nextState, labels)
           },
         },
         props: {

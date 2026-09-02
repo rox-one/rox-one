@@ -33,6 +33,7 @@ import { toast } from 'sonner'
 import { focusedPanelIdAtom } from '@/atoms/panel-stack'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { isKnowledgeFeatureEnabled } from '@/lib/feature-flags'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -116,7 +117,9 @@ export default function KnowledgeSurfacePage({
   // Evaluated once at hook scope (P1-9): when the feature is off, effects
   // early-return — no listConnections, no createEmbedded, no registry entries
   // — and the render below shows the disabled copy instead of the surface.
-  const [knowledgeEnabled] = useState(() => isKnowledgeFeatureEnabled())
+  const [knowledgeEnabled] = useState(
+    () => isKnowledgeFeatureEnabled() && isSiyuanIntegrationEnabled(),
+  )
   // Without a panelId (rendered outside the panel stack) assume focused.
   const isFocused = panelId === undefined || focusedPanelId === panelId
 

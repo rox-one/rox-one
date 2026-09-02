@@ -62,13 +62,21 @@ afterEach(() => {
 })
 
 describe('searchKnowledge', () => {
-  it('searches the first connection and maps hits to siYuan routes (happy path)', async () => {
+  it('searches the local Markdown connection and maps its hits to local note routes', async () => {
     const searchCalls: unknown[] = []
     const api: KnowledgeSearchApi = {
-      listConnections: async () => [{ id: 'conn-1' }, { id: 'conn-2' }],
+      listConnections: async () => [
+        { id: 'siyuan-legacy', provider: 'siyuan' },
+        { id: 'local-markdown:ws-42', provider: 'local-markdown' },
+      ],
       search: async (args) => {
         searchCalls.push(args)
-        return { items: [makeHit('document', 'doc-1'), makeHit('block', 'blk-2')] }
+        return {
+          items: [
+            makeHit('document', 'doc-1', { ref: { scheme: 'local-note', kind: 'document', id: 'doc-1' } }),
+            makeHit('block', 'blk-2', { ref: { scheme: 'local-note', kind: 'block', id: 'blk-2' } }),
+          ],
+        }
       },
     }
     installKnowledgeApi(api)
@@ -78,11 +86,11 @@ describe('searchKnowledge', () => {
 
     const items = await searchKnowledge(resolved, 'ws-42', 'craft agents')
     expect(searchCalls).toEqual([
-      { workspaceId: 'ws-42', connectionId: 'conn-1', input: { query: 'craft agents' } },
+      { workspaceId: 'ws-42', connectionId: 'local-markdown:ws-42', input: { query: 'craft agents' } },
     ])
     expect(items).toHaveLength(2)
-    expect(searchHitRoute(items![0])).toBe('knowledge/document/doc-1')
-    expect(searchHitRoute(items![1])).toBe('knowledge/block/blk-2')
+    expect(searchHitRoute(items![0])).toBe('notes-legacy/note/doc-1')
+    expect(searchHitRoute(items![1])).toBe('notes-legacy/note/blk-2')
   })
 
   it('returns null and never searches when no connections exist (empty state)', async () => {
@@ -124,8 +132,10 @@ describe('searchKnowledge', () => {
   })
 
   it('URI-encodes ids so deep-link ids with separators stay a single route segment', () => {
-    expect(searchHitRoute(makeHit('document', '20200812/abc def'))).toBe(
-      'knowledge/document/20200812%2Fabc%20def',
+    expect(searchHitRoute(makeHit('document', '20200812/abc def', {
+      ref: { scheme: 'local-note', kind: 'document', id: '20200812/abc def' },
+    }))).toBe(
+      'notes-legacy/note/20200812%2Fabc%20def',
     )
   })
 
@@ -196,10 +206,13 @@ describe('knowledge saved views (P5)', () => {
     expect(resolveKnowledgeViewsApi()).toBeNull()
   })
 
-  it('runKnowledgeView uses the first connection and returns items+view', async () => {
+  it('runKnowledgeView uses the local Markdown connection and returns items+view', async () => {
     const runCalls: unknown[] = []
     const api: KnowledgeViewsApi = {
-      listConnections: async () => [{ id: 'conn-a' }, { id: 'conn-b' }],
+      listConnections: async () => [
+        { id: 'siyuan-legacy', provider: 'siyuan' },
+        { id: 'local-markdown:ws-1', provider: 'local-markdown' },
+      ],
       viewsList: async () => [researchView],
       viewRun: async (args) => {
         runCalls.push(args)
@@ -213,9 +226,9 @@ describe('knowledge saved views (P5)', () => {
     installKnowledgeApi(api)
     const result = await runKnowledgeView(resolveKnowledgeViewsApi(), 'research-needs-review', 'ws-1')
     expect(runCalls).toEqual([
-      { connectionId: 'conn-a', viewId: 'research-needs-review', workspaceId: 'ws-1' },
+      { connectionId: 'local-markdown:ws-1', viewId: 'research-needs-review', workspaceId: 'ws-1' },
     ])
-    expect(result?.connectionId).toBe('conn-a')
+    expect(result?.connectionId).toBe('local-markdown:ws-1')
     expect(result?.items).toHaveLength(1)
     expect(result?.view.id).toBe('research-needs-review')
   })
@@ -321,7 +334,7 @@ describe('default knowledge editor', () => {
       },
     ]
     expect(pickDefaultKnowledgeDocument(envelopes)).toEqual({ kind: 'document', id: 'fresh' })
-    expect(defaultKnowledgeEditorRoute(envelopes)).toBe('knowledge/document/fresh')
+    expect(defaultKnowledgeEditorRoute(envelopes)).toBe('notes-legacy')
   })
 
   it('falls back to the knowledge home route when there are no envelopes', () => {

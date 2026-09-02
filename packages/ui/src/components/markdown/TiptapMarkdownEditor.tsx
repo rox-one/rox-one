@@ -11,7 +11,7 @@ import { Markdown as OfficialMarkdown } from '@tiptap/markdown'
 import { Markdown as LegacyMarkdown } from 'tiptap-markdown'
 import { tiptapCodeBlock } from './TiptapCodeBlockView'
 import { TiptapBubbleMenus, INLINE_MATH_EDIT_EVENT } from './TiptapBubbleMenus'
-import { TiptapSlashMenu } from './TiptapSlashMenu'
+import { TiptapSlashMenu, type SlashCommandLabels } from './TiptapSlashMenu'
 import { MermaidBlock } from './extensions/MermaidBlock'
 import { looksLikeMermaidSource } from './mermaid-source'
 import { LatexBlock } from './extensions/LatexBlock'
@@ -20,7 +20,7 @@ import { WikiLink } from './extensions/WikiLink'
 import { HashTag } from './extensions/HashTag'
 import { DocumentFolding, type DocumentFoldingJSON, type DocumentFoldingLabels } from './extensions/DocumentFolding'
 import { RoxColumnsBlock, RoxColumnBlock } from './extensions/ColumnsBlock'
-import { RoxBlockCallout } from './extensions/rox-block-syntax'
+import { RoxBlockCallout, type RoxBlockLabels } from './extensions/rox-block-syntax'
 import { cn } from '../../lib/utils'
 import 'katex/dist/katex.min.css'
 import './tiptap-editor.css'
@@ -238,6 +238,10 @@ export interface TiptapMarkdownEditorProps {
   /** Optional per-document localStorage key for collapsible headings/task lists. */
   foldingStorageKey?: string
   foldingLabels?: Partial<DocumentFoldingLabels>
+  /** Localized labels for portable spoiler/details callout controls. */
+  roxBlockLabels?: Partial<RoxBlockLabels>
+  /** Optional labels for the editor's slash-command menu. */
+  slashCommandLabels?: Partial<SlashCommandLabels>
   /**
    * Migration flag for markdown engine foundations.
    * - `legacy`: tiptap-markdown (default for safe rollout)
@@ -257,6 +261,8 @@ export function TiptapMarkdownEditor({
   onTagClick,
   foldingStorageKey,
   foldingLabels,
+  roxBlockLabels,
+  slashCommandLabels,
   markdownEngine = 'legacy',
 }: TiptapMarkdownEditorProps) {
   const onUpdateRef = React.useRef(onUpdate)
@@ -324,8 +330,14 @@ export function TiptapMarkdownEditor({
         },
         onChange: (state) => writeDocumentFoldingStorage(foldingStorageKey, state),
       }),
-      RoxBlockCallout,
-      ...(editable ? [TiptapSlashMenu] : []),
+      RoxBlockCallout.configure({
+        labels: {
+          collapse: 'Collapse block',
+          expand: 'Expand block',
+          ...roxBlockLabels,
+        },
+      }),
+      ...(editable ? [TiptapSlashMenu.configure({ labels: slashCommandLabels ?? {} })] : []),
     ]
 
     if (useOfficialMarkdown) {
@@ -362,7 +374,7 @@ export function TiptapMarkdownEditor({
         transformCopiedText: true,
       }),
     ]
-  }, [editable, foldingLabels, foldingStorageKey, placeholder, useOfficialMarkdown])
+  }, [editable, foldingLabels, foldingStorageKey, placeholder, roxBlockLabels, slashCommandLabels, useOfficialMarkdown])
 
   const initialContent = useOfficialMarkdown
     ? preprocessMarkdownForOfficial(content)

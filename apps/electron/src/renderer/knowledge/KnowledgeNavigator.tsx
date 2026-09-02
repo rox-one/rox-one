@@ -19,6 +19,7 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 import { knowledgeHomeViewAtom } from './KnowledgeHome'
 import { KnowledgeNotebookTree } from './KnowledgeNotebookTree'
 import { shouldUseKnowledgeMobileChrome } from './knowledge-mobile'
@@ -51,7 +52,7 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
   const mobile =
     layout === 'mobile' ||
     (layout !== 'desktop' && shouldUseKnowledgeMobileChrome({ width, compactShell }))
-  const showFullInterface = !mobile && shouldShowFullKnowledgeInterface()
+  const showFullInterface = !mobile && isSiyuanIntegrationEnabled() && shouldShowFullKnowledgeInterface()
   return (
     <div
       ref={rootRef}

@@ -33,7 +33,7 @@ const NOTEBOOKS: KnowledgeNotebookInfo[] = [
 function apiDouble(overrides: Partial<KnowledgeNavigatorApi> = {}): KnowledgeNavigatorApi {
   return {
     async listConnections() {
-      return [{ id: 'conn-1' }]
+      return [{ id: 'local-markdown:workspace', provider: 'local-markdown' }]
     },
     async listNotebooks() {
       return NOTEBOOKS
@@ -102,31 +102,46 @@ describe('loadKnowledgeNavigatorData', () => {
       },
     })
     const data = await loadKnowledgeNavigatorData(api)
-    expect(data.notebooks).toEqual({ status: 'ok', items: NOTEBOOKS })
+    expect(data.notebooks).toEqual({
+      status: 'ok',
+      items: [{ id: 'local-notes', name: 'Local Markdown', icon: '1f4dd', closed: false }],
+    })
     expect(data.views.map((v) => v.id)).toEqual(['v-1'])
     expect(data.favorites.map((r) => r.envelope.knowledgeRef.id)).toEqual(['doc-fav'])
     expect(data.favorites[0]!.title).toBe('Title of doc-fav')
     expect(data.recent.map((r) => r.envelope.knowledgeRef.id)).toEqual(['doc-recent', 'doc-fav'])
   })
 
-  it('marks notebooks empty when the kernel has none', async () => {
-    const data = await loadKnowledgeNavigatorData(apiDouble({ async listNotebooks() { return [] } }))
-    expect(data.notebooks).toEqual({ status: 'empty', items: [] })
+  it('does not query legacy notebook lists for the local provider', async () => {
+    let calls = 0
+    const data = await loadKnowledgeNavigatorData(apiDouble({
+      async listNotebooks() {
+        calls += 1
+        return []
+      },
+    }))
+    expect(calls).toBe(0)
+    expect(data.notebooks.status).toBe('ok')
   })
 
-  it('marks notebooks unavailable (typed, never thrown) when the RPC fails', async () => {
+  it('does not contact a legacy notebook RPC when the local provider is selected', async () => {
     const api = apiDouble({
       async listNotebooks() {
         throw new Error('CONNECTION_UNAVAILABLE: kernel offline')
       },
     })
     const data = await loadKnowledgeNavigatorData(api)
-    expect(data.notebooks.status).toBe('unavailable')
-    expect(data.notebooks.items).toEqual([])
+    expect(data.notebooks.status).toBe('ok')
+    expect(data.notebooks.items).toHaveLength(1)
   })
 
   it('marks notebooks unavailable when the preload predates the channel', async () => {
-    const api = apiDouble({ listNotebooks: undefined })
+    const api = apiDouble({
+      async listConnections() {
+        return []
+      },
+      listNotebooks: undefined,
+    })
     const data = await loadKnowledgeNavigatorData(api)
     expect(data.notebooks.status).toBe('unavailable')
   })

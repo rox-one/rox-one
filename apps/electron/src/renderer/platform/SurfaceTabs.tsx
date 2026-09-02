@@ -39,6 +39,7 @@ import {
   StyledContextMenuSeparator,
 } from '@/components/ui/styled-context-menu'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 import * as storage from '@/lib/local-storage'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
@@ -326,6 +327,10 @@ export function SurfaceTabs() {
   const requestedRefKeys = useRef(new Set<string>())
   useEffect(() => {
     if (knowledgeRefs.length === 0 || !workspaceId) return
+    // SurfaceKnowledgeRef is always a legacy SiYuan ref. Retained historical
+    // tabs keep their fallback title while the integration is disabled; do not
+    // contact an arbitrary knowledge provider to resolve them.
+    if (!isSiyuanIntegrationEnabled()) return
     const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
     if (!api?.get || !api?.listConnections) return
     let cancelled = false
@@ -337,7 +342,8 @@ export function SurfaceTabs() {
         if (requestedRefKeys.current.has(key)) continue
         requestedRefKeys.current.add(key)
         if (connectionId === null) {
-          connectionId = (await api.listConnections().catch(() => []))[0]?.id ?? ''
+          const connections = await api.listConnections().catch(() => [])
+          connectionId = connections.find((connection) => connection.provider === 'siyuan')?.id ?? ''
           if (!connectionId) return
         }
         try {

@@ -8,6 +8,7 @@
  */
 
 import type { KnowledgeRef } from '@craft-agent/core/knowledge'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 import { routes, type Route } from '@/lib/navigate'
 
 export const LOCAL_MARKDOWN_PROVIDER = 'local-markdown'
@@ -39,7 +40,9 @@ export function isLocalMarkdownConnection(
 export function selectPreferredKnowledgeConnection<T extends KnowledgeConnectionPick>(
   connections: T[],
 ): T | undefined {
-  return connections.find(isLocalMarkdownConnection) ?? connections[0]
+  // A missing local provider is an unavailable local vault, not permission to
+  // create a document in whichever legacy provider happened to be first.
+  return connections.find(isLocalMarkdownConnection)
 }
 
 /**
@@ -51,7 +54,7 @@ export function notebookIdForNewDocument(
   notebooks: NotebookPickInput[],
 ): string | undefined {
   if (isLocalMarkdownConnection(connection)) return LOCAL_MARKDOWN_NOTEBOOK_ID
-  return pickOpenNotebook(notebooks)?.id
+  return undefined
 }
 
 /** Provider-aware open route for a newly created document. */
@@ -67,9 +70,10 @@ export function knowledgeRouteForConnection(
   connection: Pick<KnowledgeConnectionPick, 'provider'> | null | undefined,
   ref: Pick<KnowledgeRef, 'kind' | 'id'>,
 ): Route {
-  return isLocalMarkdownConnection(connection)
-    ? routes.view.notesLegacy(ref.id)
-    : routes.view.siyuan({ kind: ref.kind, id: ref.id })
+  if (isLocalMarkdownConnection(connection)) return routes.view.notesLegacy(ref.id)
+  return isSiyuanIntegrationEnabled()
+    ? routes.view.siyuan({ kind: ref.kind, id: ref.id })
+    : routes.view.notesLegacy()
 }
 
 /** Provider-aware route for a stored knowledge ref. */

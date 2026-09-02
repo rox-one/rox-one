@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useAppShellContext } from '@/context/AppShellContext'
+import { isSiyuanIntegrationEnabled } from '@craft-agent/shared/feature-flags'
 
 /**
  * Live probe of the knowledge engine (SiYuan kernel) for the active workspace.
@@ -15,6 +16,12 @@ export function useSiyuanConnected(): boolean | null {
   React.useEffect(() => {
     let cancelled = false
     const probe = async () => {
+      // Local Markdown Notes is the normal path. Do not even probe a legacy
+      // kernel unless an operator explicitly enables the integration.
+      if (!isSiyuanIntegrationEnabled()) {
+        if (!cancelled) setConnected(false)
+        return
+      }
       const api = window.electronAPI?.knowledge
       if (!api?.engineStatus || !api?.listConnections) {
         if (!cancelled) setConnected(false)
@@ -24,8 +31,7 @@ export function useSiyuanConnected(): boolean | null {
         const connections = await api.listConnections()
         const connectionId =
           connections.find((c) => c.id === 'siyuan-local')?.id ??
-          connections.find((c) => (c.label ?? '').toLowerCase().includes('local'))?.id ??
-          connections[0]?.id
+          connections.find((c) => c.provider === 'siyuan')?.id
         if (!connectionId) {
           if (!cancelled) setConnected(false)
           return

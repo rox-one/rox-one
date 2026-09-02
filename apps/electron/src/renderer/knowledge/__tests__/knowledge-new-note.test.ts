@@ -70,15 +70,34 @@ describe('local Markdown creation and open routing', () => {
     ])).toEqual(localConnection)
   })
 
-  it('keeps legacy notebook selection for explicitly non-local connections', () => {
-    expect(notebookIdForNewDocument({ id: 'siyuan-local', provider: 'siyuan' }, [
-      { id: 'legacy-notebook', closed: false },
-    ])).toBe('legacy-notebook')
+  it('does not choose an arbitrary legacy connection when local Markdown is absent', () => {
+    expect(selectPreferredKnowledgeConnection([
+      { id: 'siyuan-first', provider: 'siyuan' },
+      { id: 'other-second', provider: 'other' },
+    ])).toBeUndefined()
   })
 
-  it('opens local documents in the Notes page and legacy documents in the SiYuan route', () => {
+  it('does not create navigator documents in a non-local connection', () => {
+    expect(notebookIdForNewDocument({ id: 'siyuan-local', provider: 'siyuan' }, [
+      { id: 'legacy-notebook', closed: false },
+    ])).toBeUndefined()
+  })
+
+  it('opens local documents in the Notes page and never routes normal navigation to disabled SiYuan', () => {
     expect(documentRouteForConnection(localConnection, 'daily/Untitled')).toBe('notes-legacy/note/daily%2FUntitled')
-    expect(documentRouteForConnection({ provider: 'siyuan' }, 'doc-1')).toBe('knowledge/document/doc-1')
+    expect(documentRouteForConnection({ provider: 'siyuan' }, 'doc-1')).toBe('notes-legacy')
     expect(knowledgeRefRoute({ scheme: 'local-note', kind: 'document', id: 'project/Plan' })).toBe('notes-legacy/note/project%2FPlan')
+  })
+
+  it('retains an explicitly enabled legacy route without making it a creation fallback', () => {
+    const previous = process.env.CRAFT_FEATURE_SIYUAN
+    try {
+      process.env.CRAFT_FEATURE_SIYUAN = '1'
+      expect(documentRouteForConnection({ provider: 'siyuan' }, 'doc-1')).toBe('knowledge/document/doc-1')
+      expect(selectPreferredKnowledgeConnection([{ id: 'siyuan-only', provider: 'siyuan' }])).toBeUndefined()
+    } finally {
+      if (previous === undefined) delete process.env.CRAFT_FEATURE_SIYUAN
+      else process.env.CRAFT_FEATURE_SIYUAN = previous
+    }
   })
 })

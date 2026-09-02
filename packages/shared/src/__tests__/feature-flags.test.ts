@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'bun:test';
-import { isDevRuntime, isDeveloperFeedbackEnabled, isCraftAgentsCliEnabled, isEmbeddedServerEnabled, isNativeSidecarEnabled, isNativeIndexPrimaryEnabled, isNativeIndexWatchEnabled } from '../feature-flags.ts';
+import { isDevRuntime, isDeveloperFeedbackEnabled, isCraftAgentsCliEnabled, isEmbeddedServerEnabled, isNativeSidecarEnabled, isNativeIndexPrimaryEnabled, isNativeIndexWatchEnabled, isSiyuanIntegrationEnabled } from '../feature-flags.ts';
 
 const ORIGINAL_ENV = {
   NODE_ENV: process.env.NODE_ENV,
@@ -10,6 +10,7 @@ const ORIGINAL_ENV = {
   CRAFT_FEATURE_NATIVE_SIDECAR: process.env.CRAFT_FEATURE_NATIVE_SIDECAR,
   CRAFT_FEATURE_NATIVE_INDEX_PRIMARY: process.env.CRAFT_FEATURE_NATIVE_INDEX_PRIMARY,
   CRAFT_FEATURE_NATIVE_INDEX_WATCH: process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH,
+  CRAFT_FEATURE_SIYUAN: process.env.CRAFT_FEATURE_SIYUAN,
 };
 
 afterEach(() => {
@@ -36,6 +37,9 @@ afterEach(() => {
 
   if (ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_WATCH === undefined) delete process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH;
   else process.env.CRAFT_FEATURE_NATIVE_INDEX_WATCH = ORIGINAL_ENV.CRAFT_FEATURE_NATIVE_INDEX_WATCH;
+
+  if (ORIGINAL_ENV.CRAFT_FEATURE_SIYUAN === undefined) delete process.env.CRAFT_FEATURE_SIYUAN;
+  else process.env.CRAFT_FEATURE_SIYUAN = ORIGINAL_ENV.CRAFT_FEATURE_SIYUAN;
 });
 
 describe('feature-flags runtime helpers', () => {
@@ -110,6 +114,17 @@ describe('feature-flags runtime helpers', () => {
     process.env.CRAFT_FEATURE_EMBEDDED_SERVER = '0';
 
     expect(isEmbeddedServerEnabled()).toBe(false);
+  });
+
+  it('keeps the legacy SiYuan integration opt-in', () => {
+    delete process.env.CRAFT_FEATURE_SIYUAN;
+    expect(isSiyuanIntegrationEnabled()).toBe(false);
+
+    process.env.CRAFT_FEATURE_SIYUAN = '1';
+    expect(isSiyuanIntegrationEnabled()).toBe(true);
+
+    process.env.CRAFT_FEATURE_SIYUAN = '0';
+    expect(isSiyuanIntegrationEnabled()).toBe(false);
   });
 
   it('isNativeSidecarEnabled defaults to false', () => {

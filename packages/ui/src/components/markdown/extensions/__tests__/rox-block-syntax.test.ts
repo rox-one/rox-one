@@ -1,4 +1,7 @@
 import { describe, expect, it } from 'bun:test'
+import { Editor } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+import { Markdown } from '@tiptap/markdown'
 import { Schema } from '@tiptap/pm/model'
 import { EditorState } from '@tiptap/pm/state'
 import {
@@ -91,7 +94,9 @@ describe('ROX block syntax', () => {
     const target = collectRoxBlockTargets(state.doc)[0]
 
     expect(target?.marker).toEqual({ kind: 'spoiler', toggle: '-', title: 'Reveal later' })
-    expect(target?.bodyChildren).toHaveLength(1)
+    expect(target?.bodyRanges).toEqual([
+      expect.objectContaining({ inline: false }),
+    ])
     // The editable presentation consists of a toggle widget plus a body-hide
     // decoration while the marker is collapsed. `toDOM` stays lazy, so this is
     // deterministic in Bun without a browser DOM.
@@ -109,5 +114,25 @@ describe('ROX block syntax', () => {
 
     expect(state.doc.textContent).toContain('[!spoiler]+ Reveal later')
     expect(state.doc.textContent).toContain('Hidden body')
+  })
+
+  it('recognizes a normal external Obsidian callout in the official Markdown parser', () => {
+    const source = '> [!spoiler]- Reveal later\n> Hidden body'
+    const editor = new Editor({
+      extensions: [StarterKit, Markdown],
+      content: source,
+      contentType: 'markdown',
+    })
+
+    const target = collectRoxBlockTargets(editor.state.doc)[0]
+    expect(target?.marker).toEqual({ kind: 'spoiler', toggle: '-', title: 'Reveal later' })
+    expect(target?.bodyRanges).toEqual([
+      expect.objectContaining({ inline: true }),
+    ])
+    expect(buildRoxBlockDecorations(editor.state).find()).toHaveLength(3)
+    expect(editor.getMarkdown()).toContain('[!spoiler]- Reveal later')
+    expect(editor.getMarkdown()).toContain('Hidden body')
+
+    editor.destroy()
   })
 })

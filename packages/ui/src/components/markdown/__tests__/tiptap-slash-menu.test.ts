@@ -137,7 +137,7 @@ describe('tiptap slash menu', () => {
 
     const spoiler = items.find((item) => item.id === 'spoiler-block')
     spoiler?.run(editor, 5)
-    expect(calls).toContain('insertContentAt:5:{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"[!spoiler]- Спойлер"}]},{"type":"paragraph"}]}')
+    expect(calls).toContain('insertContentAt:5:{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"[!spoiler]- Spoiler"}]},{"type":"paragraph"}]}')
 
     const twoColumns = items.find((item) => item.id === 'two-column-block')
     twoColumns?.run(editor, 5)
@@ -160,5 +160,27 @@ describe('tiptap slash menu', () => {
     await Promise.resolve()
 
     expect(calls).toContain('insertContentAt:5:{"type":"latexBlock","attrs":{"code":"E = mc^2"}}')
+  })
+
+  it('accepts screen-owned localized labels without changing command ids or aliases', () => {
+    const { editor, calls } = createMockEditor()
+    const items = createSlashCommandItems(editor, {
+      groupBlocks: 'Блоки',
+      spoilerTitle: 'Спойлер',
+      spoilerDescription: 'Добавить сворачиваемый блок',
+      spoilerInsertTitle: 'Спойлер',
+    })
+
+    const spoiler = items.find((item) => item.id === 'spoiler-block')
+    expect(spoiler).toMatchObject({
+      id: 'spoiler-block',
+      group: 'Блоки',
+      title: 'Спойлер',
+      description: 'Добавить сворачиваемый блок',
+      aliases: expect.arrayContaining(['spoiler', 'спойлер']),
+    })
+
+    spoiler?.run(editor, 5)
+    expect(calls).toContain('insertContentAt:5:{"type":"blockquote","content":[{"type":"paragraph","content":[{"type":"text","text":"[!spoiler]- Спойлер"}]},{"type":"paragraph"}]}')
   })
 })
