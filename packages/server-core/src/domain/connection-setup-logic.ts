@@ -159,6 +159,11 @@ export const BUILT_IN_CONNECTION_TEMPLATES: Record<string, {
     authType: 'oauth',
     piAuthProvider: 'github-copilot',
   },
+  'rox-kimi': {
+    name: 'Rox CLI',
+    providerType: 'omp',
+    authType: 'none',
+  },
   'pi-api-key': {
     name: 'Rox Backend (API Key)',
     providerType: 'pi',

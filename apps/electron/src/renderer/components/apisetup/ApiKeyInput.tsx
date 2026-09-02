@@ -420,7 +420,7 @@ export function ApiKeyInput({
     // Pi API key flow with tier dropdowns — submit selected models
     if (hasPiModels) {
       if (!bestModel || !defaultModel || !cheapModel) {
-        setModelError('Please select a model for each tier.')
+        setModelError(t('apiSetup.selectModelForEachTier'))
         return
       }
       const models: string[] = [bestModel, defaultModel, cheapModel]
@@ -521,7 +521,7 @@ export function ApiKeyInput({
     <form id={formId} onSubmit={handleSubmit} className="space-y-6">
       {/* API Key — hidden for Bedrock (uses IAM/Environment auth) */}
       {!isBedrock && (<div className="space-y-2">
-        <Label htmlFor="api-key">API Key</Label>
+        <Label htmlFor="api-key">{t('apiSetup.apiKeyLabel')}</Label>
         <div className={cn(
           "relative rounded-md shadow-minimal transition-colors",
           "bg-foreground-2 focus-within:bg-background"
@@ -558,7 +558,7 @@ export function ApiKeyInput({
       {presets.length > 1 && (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="base-url">Endpoint</Label>
+          <Label htmlFor="base-url">{t('apiSetup.endpointLabel')}</Label>
           <DropdownMenu>
             <DropdownMenuTrigger
               disabled={isDisabled}
@@ -592,7 +592,7 @@ export function ApiKeyInput({
               type="text"
               value={baseUrl}
               onChange={(e) => handleBaseUrlChange(e.target.value)}
-              placeholder="https://your-api-endpoint.com"
+              placeholder={t('apiSetup.endpointPlaceholder')}
               className="border-0 bg-transparent shadow-none"
               disabled={isDisabled}
             />
@@ -604,7 +604,7 @@ export function ApiKeyInput({
       {/* Protocol Toggle — visible as soon as Custom preset is selected */}
       {activePreset === 'custom' && !isDefaultProviderPreset && (
         <div className="space-y-2">
-          <Label>Protocol</Label>
+          <Label>{t('apiSetup.protocol')}</Label>
           <div className={cn(
             "flex rounded-md shadow-minimal overflow-hidden",
             "bg-foreground-2",
@@ -716,7 +716,7 @@ export function ApiKeyInput({
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="aws-session-token" className="text-muted-foreground font-normal text-xs">
-                  Session Token <span className="text-foreground/30">· {t('apiSetup.optionalField')}</span>
+                  {t('apiSetup.sessionTokenOptional')}
                 </Label>
                 <div className={cn("rounded-md shadow-minimal transition-colors", "bg-foreground-2 focus-within:bg-background")}>
                   <Input
@@ -737,7 +737,7 @@ export function ApiKeyInput({
           {bedrockAuthMethod === 'environment' && (
             <div className="rounded-md bg-foreground-2 p-3">
               <p className="text-xs text-foreground/50">
-                Uses your existing AWS credential chain — <code className="text-foreground/70">~/.aws/credentials</code>, <code className="text-foreground/70">AWS_PROFILE</code>, IAM roles, SSO sessions, and environment variables.
+                {t('apiSetup.awsCredentialChainIntro')} <code className="text-foreground/70">~/.aws/credentials</code>, <code className="text-foreground/70">AWS_PROFILE</code>, {t('apiSetup.awsCredentialChainOutro')}
               </p>
             </div>
           )}
@@ -745,7 +745,7 @@ export function ApiKeyInput({
           {/* AWS Region */}
           <div className="space-y-1.5">
             <Label htmlFor="aws-region" className="text-muted-foreground font-normal text-xs">
-              AWS Region
+              {t('apiSetup.awsRegion')}
             </Label>
             <div className={cn("rounded-md shadow-minimal transition-colors", "bg-foreground-2 focus-within:bg-background")}>
               <Input
@@ -855,7 +855,7 @@ export function ApiKeyInput({
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="truncate">{model.name}</span>
                                 {model.reasoning && (
-                                  <span className="text-[10px] text-foreground/30 shrink-0">reasoning</span>
+                                  <span className="text-[10px] text-foreground/30 shrink-0">{t('apiSetup.reasoning')}</span>
                                 )}
                               </div>
                               <Check className={cn("size-3 shrink-0", activeTierConfig.value === model.id ? "opacity-100" : "opacity-0")} />
@@ -893,7 +893,7 @@ export function ApiKeyInput({
                 setConnectionDefaultModel(e.target.value)
                 setModelError(null)
               }}
-              placeholder="e.g. claude-opus-4-8, claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5"
+              placeholder={t('apiSetup.defaultModelPlaceholder')}
               className="border-0 bg-transparent shadow-none"
               disabled={isDisabled}
             />
@@ -902,17 +902,17 @@ export function ApiKeyInput({
             <p className="text-xs text-destructive">{modelError}</p>
           )}
           <p className="text-xs text-foreground/30">
-            Comma-separated list. The first model is the default. The last is used for summarization.
+            {t('apiSetup.modelListHint')}
           </p>
           {(activePreset === 'custom' || !activePreset) && (
             <p className="text-xs text-foreground/30">
-              Required for custom endpoints. Use the provider-specific model ID.
+              {t('apiSetup.customEndpointModelRequired')}
             </p>
           )}
           {activePreset === 'custom' && (
             <div className="space-y-1.5 pt-2">
               <Label htmlFor="custom-model-metadata" className="text-muted-foreground font-normal text-xs">
-                Advanced model metadata <span className="text-foreground/30">· optional JSON</span>
+                {t('apiSetup.advancedModelMetadata')} <span className="text-foreground/30">· {t('apiSetup.optionalJson')}</span>
               </Label>
               <textarea
                 id="custom-model-metadata"
@@ -931,7 +931,7 @@ export function ApiKeyInput({
                 disabled={isDisabled}
               />
               <p className="text-xs text-foreground/30">
-                Add objects here to set friendly names or capabilities. Entries are matched by id and merged with the model list above.
+                {t('apiSetup.modelMetadataHint')}
               </p>
             </div>
           )}

@@ -139,6 +139,14 @@ describe('createBuiltInConnection seeds midStreamBehavior', () => {
     expect(conn.midStreamBehavior).toBe('steer')
   })
 
+  it("Rox default → seeded Rox CLI connection backed by OMP runtime", () => {
+    const conn = createBuiltInConnection('rox-kimi')
+    expect(conn.slug).toBe('rox-kimi')
+    expect(conn.name).toBe('Rox CLI')
+    expect(conn.providerType).toBe('omp')
+    expect(conn.authType).toBe('none')
+  })
+
   it("anthropic-api with custom endpoint becomes anthropic_compat and uses Claude-style 'queue'", () => {
     const conn = createBuiltInConnection('anthropic-api', 'http://localhost:11434/v1')
     expect(conn.providerType).toBe('anthropic_compat')

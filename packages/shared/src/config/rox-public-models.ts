@@ -20,7 +20,7 @@ export type RoxPublicModelId = (typeof ROX_PUBLIC_MODEL_IDS)[number];
 
 export const ROX_DEFAULT_PARENT_MODEL: RoxPublicModelId = 'rox/standard';
 export const ROX_DEFAULT_SUBAGENT_MODEL: RoxPublicModelId = 'rox/fast';
-export const ROX_DEFAULT_CONNECTION_NAME = 'ROX · OMP';
+export const ROX_DEFAULT_CONNECTION_NAME = 'Rox CLI';
 export const ROX_GATEWAY_BASE_URL = 'https://api.rox.one/v1';
 export const ROX_LEGACY_INTERNAL_MODEL_IDS = ['kimi-K3', 'kimi-k3'] as const;
 

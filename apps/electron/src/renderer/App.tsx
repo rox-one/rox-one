@@ -373,6 +373,10 @@ export default function App() {
 
   // LLM connections with authentication status (for provider selection)
   const [llmConnections, setLlmConnections] = useState<LlmConnectionWithStatus[]>([])
+  const existingConnectionSlugs = useMemo(
+    () => new Set(llmConnections.map((connection) => connection.slug)),
+    [llmConnections],
+  )
   // Workspace default LLM connection (for new sessions)
   const [workspaceDefaultLlmConnection, setWorkspaceDefaultLlmConnection] = useState<string | undefined>()
   // Global default LLM connection slug (from app config)
@@ -721,6 +725,7 @@ export default function App() {
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
     initialSetupNeeds: setupNeeds || undefined,
+    existingSlugs: existingConnectionSlugs,
   })
 
   // Reauth login handler - placeholder (reauth is not currently used)

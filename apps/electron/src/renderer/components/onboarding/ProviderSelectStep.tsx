@@ -93,7 +93,7 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
     <StepFormLayout
       className="max-w-[31rem]"
       iconElement={
-        <div className="relative flex size-16 items-center justify-center rounded-[22px] border border-accent/35 bg-accent/10 shadow-[0_0_40px_rgba(139,92,246,0.26)]">
+        <div className="relative flex size-16 items-center justify-center rounded-[22px] border border-accent/35 bg-accent/10 shadow-tinted">
           <CraftAgentsSymbol className="size-10 text-accent" />
           <Sparkles className="absolute -right-1 -top-1 size-4 text-accent" />
         </div>
@@ -101,21 +101,21 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
       title={t("onboarding.providerSelect.title")}
       description={t("onboarding.providerSelect.description")}
     >
-      <div className="space-y-5">
+      <div className="space-y-3.5">
         <button
           type="button"
           onClick={() => onSelect('rox')}
           aria-label={t("onboarding.providerSelect.continueWithRox")}
           className={cn(
-            "group relative flex w-full items-center gap-4 overflow-hidden rounded-2xl border p-4 text-left transition-all",
+            "group relative flex w-full items-center gap-3.5 overflow-hidden rounded-2xl border px-4 py-3.5 text-left transition-all",
             "border-accent/45 bg-gradient-to-br from-accent/20 via-background/95 to-foreground-2",
-            "shadow-[0_18px_52px_rgba(0,0,0,0.26),0_0_38px_rgba(139,92,246,0.18)]",
+            "shadow-panel-focused",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            "hover:-translate-y-0.5 hover:border-accent/70 hover:shadow-[0_22px_62px_rgba(0,0,0,0.32),0_0_46px_rgba(139,92,246,0.26)]"
+            "hover:-translate-y-0.5 hover:border-accent/70 hover:shadow-strong"
           )}
         >
           <span className="pointer-events-none absolute inset-x-10 -top-20 h-28 rounded-full bg-accent/20 blur-3xl transition-opacity group-hover:opacity-90" />
-          <div className="relative flex size-12 shrink-0 items-center justify-center rounded-xl bg-accent text-background shadow-[0_0_24px_rgba(139,92,246,0.36)]">
+          <div className="relative flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent text-background shadow-tinted">
             {PROVIDER_ICONS.rox}
           </div>
           <div className="relative min-w-0 flex-1">
@@ -127,18 +127,18 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
                 {t("onboarding.providerSelect.recommended")}
               </span>
             </div>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
               {t("onboarding.providerSelect.roxDesc")}
             </p>
           </div>
           <ArrowRight className="relative size-5 shrink-0 text-accent transition-transform group-hover:translate-x-0.5" />
         </button>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <p className="px-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
             {t("onboarding.providerSelect.existingSubscriptions")}
           </p>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {subscriptionOptions.map((option) => (
               <ProviderRowButton
                 key={option.id}
@@ -149,17 +149,16 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
           </div>
         </div>
 
-        <div className="space-y-2 pt-1">
+        <div className="space-y-1.5 pt-0.5">
           <p className="px-1 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
             {t("onboarding.providerSelect.secondaryActions")}
           </p>
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             {advancedOptions.map((option) => (
               <ProviderRowButton
                 key={option.id}
                 option={option}
                 onSelect={onSelect}
-                compact={false}
               />
             ))}
           </div>
@@ -196,19 +195,19 @@ function ProviderRowButton({
       onClick={() => onSelect(option.id)}
       className={cn(
         "group flex w-full items-center gap-3 rounded-xl border border-foreground/10 bg-background/50 text-left shadow-minimal transition-all",
-        compact ? "px-3 py-2.5" : "px-3.5 py-3",
+        compact ? "px-3 py-2" : "px-3.5 py-3",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         "hover:border-foreground/15 hover:bg-foreground/[0.035]"
       )}
     >
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+      <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
         {option.icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-foreground">
+        <span className="block truncate text-[13px] font-medium text-foreground">
           {option.name}
         </span>
-        <span className={cn("block text-xs text-muted-foreground", compact ? "truncate" : "leading-snug")}>
+        <span className={cn("block text-[11px] leading-snug text-muted-foreground", compact ? "truncate" : "leading-snug")}>
           {option.description}
         </span>
       </span>

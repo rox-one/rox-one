@@ -4,7 +4,7 @@
  * Manages its own state so you can click through the entire sequence
  * in the playground without needing real IPC or OAuth.
  *
- * Flow: WelcomeStep → ProviderSelectStep → CredentialsStep / LocalModelStep → CompletionStep
+ * Flow: ProviderSelectStep → CredentialsStep / LocalModelStep → CompletionStep
  */
 import { useState, useCallback, useEffect } from 'react'
 import { ensureMockElectronAPI } from '../mock-utils'
@@ -30,7 +30,7 @@ const CHOICE_TO_METHOD: Record<Exclude<ProviderChoice, 'local' | 'rox'>, ApiSetu
 export function OnboardingFlowDemo() {
   useEffect(() => { ensureMockElectronAPI() }, [])
 
-  const [step, setStep] = useState<DemoStep>('welcome')
+  const [step, setStep] = useState<DemoStep>('provider-select')
   const [method, setMethod] = useState<ApiSetupMethod | null>(null)
   const [credStatus, setCredStatus] = useState<CredentialStatus>('idle')
   const [localStatus, setLocalStatus] = useState<'idle' | 'validating' | 'success' | 'error'>('idle')
@@ -97,7 +97,7 @@ export function OnboardingFlowDemo() {
   }, [])
 
   const handleRestart = useCallback(() => {
-    setStep('welcome')
+    setStep('provider-select')
     setMethod(null)
     setProviderChoice(null)
     setCredStatus('idle')
@@ -115,7 +115,6 @@ export function OnboardingFlowDemo() {
   // Step labels for the breadcrumb
   const activeStepLabel = step === 'local-model' ? 'Local Model' : 'Credentials'
   const STEP_ORDER: { key: DemoStep; label: string }[] = [
-    { key: 'welcome', label: 'Welcome' },
     { key: 'provider-select', label: 'Provider' },
     { key: step === 'local-model' ? 'local-model' : 'credentials', label: activeStepLabel },
     { key: 'complete', label: 'Done' },
@@ -177,6 +176,7 @@ export function OnboardingFlowDemo() {
             isWaitingForCode={false}
             onSubmitAuthCode={() => simulateOAuthSuccess()}
             onCancelOAuth={handleBack}
+            editInitialValues={providerChoice === 'grok' ? { activePreset: 'xai' } : undefined}
             copilotDeviceCode={
               method === 'pi_copilot_oauth' && credStatus === 'validating'
                 ? { userCode: 'DEMO-1234', verificationUri: 'https://github.com/login/device' }

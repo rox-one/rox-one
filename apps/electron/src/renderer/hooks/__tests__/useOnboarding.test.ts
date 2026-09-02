@@ -3,6 +3,10 @@ import {
   resolveSlugForMethod,
   apiSetupMethodToConnectionSetup,
   BASE_SLUG_FOR_METHOD,
+  ROX_DEFAULT_PROVIDER_SLUG,
+  resolveOnboardingStartStep,
+  shouldCreateRoxDefaultConnection,
+  shouldPromoteFirstRunConnection,
 } from '../useOnboarding'
 import type { ApiSetupMethod } from '@/components/onboarding'
 
@@ -11,6 +15,35 @@ import type { ApiSetupMethod } from '@/components/onboarding'
 // ============================================================
 
 describe('resolveSlugForMethod', () => {
+  it('keeps provider choice available when only Rox CLI credentials are missing', () => {
+    expect(resolveOnboardingStartStep('provider-select', {
+      needsRoxCloud: false,
+      needsOmpCredential: true,
+    })).toBe('provider-select')
+  })
+
+  it('opens real Rox Connect before provider choice when the account is missing', () => {
+    expect(resolveOnboardingStartStep('provider-select', {
+      needsRoxCloud: true,
+      needsOmpCredential: true,
+    })).toBe('rox-connect')
+  })
+
+  it('keeps the Rox default provider on the seeded connection slug', () => {
+    expect(ROX_DEFAULT_PROVIDER_SLUG).toBe('rox-kimi')
+  })
+
+  it('reuses the seeded Rox connection instead of creating a duplicate', () => {
+    expect(shouldCreateRoxDefaultConnection(new Set(['rox-kimi']))).toBe(false)
+    expect(shouldCreateRoxDefaultConnection(new Set(['chatgpt-plus']))).toBe(true)
+  })
+
+  it('only promotes a connection from the main first-run wizard', () => {
+    expect(shouldPromoteFirstRunConnection({} as never, null)).toBe(true)
+    expect(shouldPromoteFirstRunConnection({} as never, 'existing-connection')).toBe(false)
+    expect(shouldPromoteFirstRunConnection(undefined, null)).toBe(false)
+  })
+
   it('returns the base slug when it is available', () => {
     const slug = resolveSlugForMethod('anthropic_api_key', null, new Set())
     expect(slug).toBe('anthropic-api')

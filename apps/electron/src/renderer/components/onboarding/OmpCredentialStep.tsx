@@ -80,9 +80,11 @@ export function OmpCredentialStep({
       }
     >
       <form id="omp-credential-form" onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-xs font-mono text-muted-foreground" data-testid="omp-credential-code">
-          {typedCode}
-        </p>
+        {compact ? (
+          <p className="text-xs font-mono text-muted-foreground" data-testid="omp-credential-code">
+            {typedCode}
+          </p>
+        ) : null}
         <p className="text-sm text-muted-foreground">
           {t('onboarding.ompCredential.howToSupply')}
         </p>

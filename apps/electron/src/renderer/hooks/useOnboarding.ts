@@ -125,6 +125,29 @@ export function shouldCreateRoxDefaultConnection(existingSlugs: Set<string>): bo
 }
 
 /**
+ * The first-run wizard owns the initial default connection. Direct connection
+ * edits in Settings must preserve the user's current default instead.
+ */
+export function shouldPromoteFirstRunConnection(
+  initialSetupNeeds: SetupNeeds | undefined,
+  editingSlug: string | null | undefined,
+): boolean {
+  return initialSetupNeeds !== undefined && editingSlug == null
+}
+
+/**
+ * Only an unmet Rox account connection changes the first onboarding screen.
+ * A missing Rox CLI credential is resolved after the user explicitly chooses
+ * Rox, so it never hides the alternative provider paths.
+ */
+export function resolveOnboardingStartStep(
+  initialStep: OnboardingStep,
+  setupNeeds?: Pick<SetupNeeds, 'needsRoxCloud' | 'needsOmpCredential'>,
+): OnboardingStep {
+  return setupNeeds?.needsRoxCloud ? 'rox-connect' : initialStep
+}
+
+/**
  * Generate a unique slug for a new connection.
  * If the base slug is taken, appends -2, -3, etc.
  * When editingSlug is provided, reuses that slug (editing existing connection).
@@ -228,7 +251,7 @@ export function useOnboarding({
   editingSlug = null,
   existingSlugs = new Set(),
 }: UseOnboardingOptions): UseOnboardingReturn {
-  const startingStep = initialSetupNeeds?.needsRoxCloud ? 'rox-connect' : initialStep
+  const startingStep = resolveOnboardingStartStep(initialStep, initialSetupNeeds)
 
   // Main wizard state
   const [state, setState] = useState<OnboardingState>({
@@ -252,13 +275,6 @@ export function useOnboarding({
       })
     }
   }, [initialSetupNeeds?.needsRoxCloud])
-
-  // Seeded Rox CLI connection without local models / Rox key — one credential step.
-  useEffect(() => {
-    if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'omp-credential' ? s : { ...s, step: 'omp-credential' }))
-    }
-  }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud])
 
   // Check Git Bash on Windows at mount. If missing, redirect to git-bash step
   // regardless of the initial step (provider-select skips the welcome gate).
@@ -354,6 +370,31 @@ export function useOnboarding({
       return false
     }
   }, [state.apiSetupMethod, onConfigSaved, editingSlug, existingSlugs])
+
+  const promoteFirstRunConnection = useCallback(async (slug: string): Promise<boolean> => {
+    if (!shouldPromoteFirstRunConnection(initialSetupNeeds, editingSlug)) {
+      return true
+    }
+
+    try {
+      const result = await window.electronAPI.setDefaultLlmConnection(slug)
+      if (result.success) return true
+
+      setState(s => ({
+        ...s,
+        credentialStatus: 'error',
+        errorMessage: result.error || 'Не удалось сделать это подключение основным',
+      }))
+    } catch (error) {
+      setState(s => ({
+        ...s,
+        credentialStatus: 'error',
+        errorMessage: error instanceof Error ? error.message : 'Не удалось сделать это подключение основным',
+      }))
+    }
+
+    return false
+  }, [editingSlug, initialSetupNeeds])
 
   // Continue to next step
   const handleContinue = useCallback(async () => {
@@ -493,10 +534,13 @@ export function useOnboarding({
           awsRegion: data.awsRegion,
           bedrockAuthMethod: data.bedrockAuthMethod,
         })
-        if (saved) {
-          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
-        } else {
+        const slug = state.apiSetupMethod
+          ? resolveSlugForMethod(state.apiSetupMethod, editingSlug, existingSlugs)
+          : undefined
+        if (!saved) {
           setState(s => ({ ...s, credentialStatus: 'error' }))
+        } else if (!slug || await promoteFirstRunConnection(slug)) {
+          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
         }
         return
       }
@@ -511,10 +555,13 @@ export function useOnboarding({
           modelSelectionMode: data.modelSelectionMode,
           customEndpoint: data.customEndpoint,
         })
-        if (saved) {
-          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
-        } else {
+        const slug = state.apiSetupMethod
+          ? resolveSlugForMethod(state.apiSetupMethod, editingSlug, existingSlugs)
+          : undefined
+        if (!saved) {
           setState(s => ({ ...s, credentialStatus: 'error' }))
+        } else if (!slug || await promoteFirstRunConnection(slug)) {
+          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
         }
         return
       }
@@ -573,15 +620,18 @@ export function useOnboarding({
         customEndpoint: data.customEndpoint,
       })
 
-      if (saved) {
+      const slug = state.apiSetupMethod
+        ? resolveSlugForMethod(state.apiSetupMethod, editingSlug, existingSlugs)
+        : undefined
+      if (!saved) {
+        // Save failed — error is already set by handleSaveConfig, stay on credentials step
+        setState(s => ({ ...s, credentialStatus: 'error' }))
+      } else if (!slug || await promoteFirstRunConnection(slug)) {
         setState(s => ({
           ...s,
           credentialStatus: 'success',
           step: 'complete',
         }))
-      } else {
-        // Save failed — error is already set by handleSaveConfig, stay on credentials step
-        setState(s => ({ ...s, credentialStatus: 'error' }))
       }
     } catch (error) {
       setState(s => ({
@@ -590,7 +640,7 @@ export function useOnboarding({
         errorMessage: error instanceof Error ? error.message : 'Validation failed',
       }))
     }
-  }, [handleSaveConfig, state.apiSetupMethod])
+  }, [editingSlug, existingSlugs, handleSaveConfig, promoteFirstRunConnection, state.apiSetupMethod])
 
   // Save config, validate the connection, and update state accordingly.
   // Shared by all OAuth flows after tokens are captured.
@@ -605,13 +655,16 @@ export function useOnboarding({
     }
     const testResult = await window.electronAPI.testLlmConnection(connectionSlug)
     if (testResult.success) {
-      setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
-      return true
+      if (await promoteFirstRunConnection(connectionSlug)) {
+        setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+        return true
+      }
+      return false
     } else {
       setState(s => ({ ...s, credentialStatus: 'error', errorMessage: testResult.error || 'Connection test failed' }))
       return false
     }
-  }, [handleSaveConfig])
+  }, [handleSaveConfig, promoteFirstRunConnection])
 
   // Two-step OAuth flow state
   const [isWaitingForCode, setIsWaitingForCode] = useState(false)
@@ -869,7 +922,9 @@ export function useOnboarding({
         }
         const testResult = await window.electronAPI.testLlmConnection(ROX_DEFAULT_PROVIDER_SLUG)
         if (testResult.success) {
-          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+          if (await promoteFirstRunConnection(ROX_DEFAULT_PROVIDER_SLUG)) {
+            setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+          }
         } else {
           setState(s => ({
             ...s,
@@ -897,7 +952,7 @@ export function useOnboarding({
       // Defer to next tick so state is updated before handleStartOAuth reads it
       setTimeout(() => handleStartOAuth(method), 0)
     }
-  }, [existingSlugs, handleStartOAuth])
+  }, [existingSlugs, handleStartOAuth, promoteFirstRunConnection])
 
   // Submit authorization code (second step of OAuth flow)
   const handleSubmitAuthCode = useCallback(async (code: string) => {
@@ -939,16 +994,17 @@ export function useOnboarding({
     setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
     try {
       const result = await window.electronAPI.saveOmpCredential(data.apiKey)
-      if (result.success) {
+      if (!result.success) {
+        setState(s => ({
+          ...s,
+          credentialStatus: 'error',
+          errorMessage: result.error || 'Failed to save Rox API key',
+        }))
+      } else if (await promoteFirstRunConnection(ROX_DEFAULT_PROVIDER_SLUG)) {
         setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
         onConfigSaved?.()
         return
       }
-      setState(s => ({
-        ...s,
-        credentialStatus: 'error',
-        errorMessage: result.error || 'Failed to save Rox API key',
-      }))
     } catch (error) {
       setState(s => ({
         ...s,
@@ -956,7 +1012,7 @@ export function useOnboarding({
         errorMessage: error instanceof Error ? error.message : 'Failed to save Rox API key',
       }))
     }
-  }, [onConfigSaved])
+  }, [onConfigSaved, promoteFirstRunConnection])
 
   // Submit local model configuration (Ollama or any OpenAI-compatible local server)
   const handleSubmitLocalModel = useCallback(async (data: LocalModelSubmitData) => {
@@ -971,10 +1027,11 @@ export function useOnboarding({
         customEndpoint: { api: 'openai-completions' },
       })
 
-      if (saved) {
-        setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
-      } else {
+      const slug = resolveSlugForMethod('anthropic_api_key', editingSlug, existingSlugs)
+      if (!saved) {
         setState(s => ({ ...s, credentialStatus: 'error' }))
+      } else if (await promoteFirstRunConnection(slug)) {
+        setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
       }
     } catch (error) {
       setState(s => ({
@@ -983,7 +1040,7 @@ export function useOnboarding({
         errorMessage: error instanceof Error ? error.message : 'Failed to save configuration',
       }))
     }
-  }, [handleSaveConfig])
+  }, [editingSlug, existingSlugs, handleSaveConfig, promoteFirstRunConnection])
 
   // Cancel OAuth flow
   const handleCancelOAuth = useCallback(async () => {
@@ -1060,8 +1117,8 @@ export function useOnboarding({
     setActiveProviderOAuthMethod(null)
     setIsWaitingForCode(false)
     setCopilotDeviceCode(undefined)
-    setState(s => ({ ...s, step: initialSetupNeeds?.needsRoxCloud ? 'rox-connect' : initialStep }))
-  }, [initialSetupNeeds?.needsRoxCloud, initialStep])
+    setState(s => ({ ...s, step: resolveOnboardingStartStep(initialStep, initialSetupNeeds) }))
+  }, [initialSetupNeeds, initialStep])
 
   // Jump directly to credentials step with a pre-set method (for editing existing connections)
   const jumpToCredentials = useCallback((method: ApiSetupMethod) => {
@@ -1082,7 +1139,7 @@ export function useOnboarding({
       // Ignore cleanup errors during reset.
     })
     setState({
-      step: initialSetupNeeds?.needsRoxCloud ? 'rox-connect' : initialStep,
+      step: resolveOnboardingStartStep(initialStep, initialSetupNeeds),
       loginStatus: 'idle',
       credentialStatus: 'idle',
       completionStatus: 'saving',
@@ -1098,7 +1155,7 @@ export function useOnboarding({
     window.electronAPI.clearClaudeOAuthState().catch(() => {
       // Ignore errors - state may not exist
     })
-  }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, initialSetupNeeds?.needsRoxCloud, isWaitingForCode])
+  }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, initialSetupNeeds, isWaitingForCode])
 
   return {
     state,
