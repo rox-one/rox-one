@@ -34,4 +34,15 @@ describe('Issue 03 benchmark harness', () => {
     const bundleRun = report.runs.find((run) => run.fixture === 'sessions-2000')
     expect(bundleRun?.bundle.hung).toBe(false)
   })
+
+  it('opens a 1,000-item premium menu within the dropdown-open budget', async () => {
+    const report = await runBenchmark({ iterations: 12, includeBundle: false })
+    const samples = report.runs
+      .find((run) => run.fixture === 'sessions-2000')
+      ?.samples.filter((s) => s.kind === 'dropdown-open') ?? []
+
+    expect(samples).toHaveLength(1)
+    expect(samples[0]!.durationMs).toBeLessThan(80)
+    expect(report.violations.filter((v) => v.rule.startsWith('dropdown-open'))).toEqual([])
+  })
 })

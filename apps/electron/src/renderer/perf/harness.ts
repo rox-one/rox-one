@@ -18,6 +18,9 @@ import { createSyntheticBundleSteps, profileBundleSteps } from './bundle-profile
 import { evaluateBundle, evaluateSamples } from './budgets'
 import { formatBenchmarkReport } from './report'
 import type { BenchmarkReport, BenchmarkRun, InteractionKind, InteractionSample } from './types'
+import { simulatePremiumMenuOpen } from '@craft-agent/ui/premium-menu'
+import { formatBenchmarkReport } from './report'
+import type { BenchmarkReport, BenchmarkRun, InteractionKind, InteractionSample } from './types'
 
 export interface HarnessOptions {
   iterations?: number
@@ -90,7 +93,15 @@ function runColdReady(sessions: FixtureSessionMeta[]): InteractionSample {
   return sampleFromPending('cold-ready', durationMs, sessions.length, ipcBefore, false, true)
 }
 
-function runCheap(kind: Exclude<InteractionKind, 'cached-session-switch' | 'cold-ready'>, sessionCount: number): InteractionSample {
+function runDropdownOpen(sessionCount: number): InteractionSample {
+  const ipcBefore = snapshotIpcCalls()
+  startInteraction('dropdown-open')
+  simulatePremiumMenuOpen(1000, 42)
+  const durationMs = endInteraction('dropdown-open') ?? 0
+  return sampleFromPending('dropdown-open', durationMs, sessionCount, ipcBefore, true, false)
+}
+
+function runCheap(kind: Exclude<InteractionKind, 'cached-session-switch' | 'cold-ready' | 'dropdown-open'>, sessionCount: number): InteractionSample {
   const ipcBefore = snapshotIpcCalls()
   startInteraction(kind)
   const durationMs = endInteraction(kind) ?? 0
@@ -127,9 +138,10 @@ export async function runBenchmark(opts: HarnessOptions = {}): Promise<Benchmark
     const to = large.sessions[(i + 17) % large.sessions.length]!
     largeSamples.push(runCachedSwitch(cache, from.id, to.id, large.sessions.length))
   }
-  for (const kind of ['view-switch', 'browser-chrome', 'dropdown-open', 'canvas-layout'] as const) {
+  for (const kind of ['view-switch', 'browser-chrome', 'canvas-layout'] as const) {
     largeSamples.push(runCheap(kind, large.sessions.length))
   }
+  largeSamples.push(runDropdownOpen(large.sessions.length))
 
   const vaultSamples: InteractionSample[] = [runNotesOpen(vault.notes.length, large.sessions.length)]
 

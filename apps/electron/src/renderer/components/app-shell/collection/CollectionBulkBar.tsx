@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Archive, Flag, X } from 'lucide-react'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import type { BulkUpdateSessionsPatch, SessionPriority } from '@craft-agent/shared/protocol/dto'
 import { sessionSelection } from '@/hooks/useEntitySelection'
 import { useIsMultiSelectActive, useSelectedIds, useSelectionCount } from '@/hooks/useSession'
@@ -92,113 +93,76 @@ export function CollectionBulkBar({
           {t('collection.bulk.selected', { count })}
         </span>
 
-        <select
-          className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-          defaultValue=""
+        <PremiumMenuSelect
+          variant="compact"
+          searchable={false}
           disabled={busy}
-          onChange={(e) => {
-            const v = e.target.value as SessionStatusId
-            e.target.value = ''
-            if (v) void apply({ sessionStatus: v })
+          placeholder={t('collection.bulk.setStatus')}
+          items={statusOptions.map((status) => ({
+            id: status,
+            label: t(`kanban.column.${status}`, { defaultValue: status }),
+          }))}
+          onSelect={(item) => {
+            void apply({ sessionStatus: item.id as SessionStatusId })
           }}
-        >
-          <option value="" disabled>
-            {t('collection.bulk.setStatus')}
-          </option>
-          {statusOptions.map((s) => (
-            <option key={s} value={s}>
-              {t(`kanban.column.${s}`, { defaultValue: s })}
-            </option>
-          ))}
-        </select>
+        />
 
-        <select
-          className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-          defaultValue=""
+        <PremiumMenuSelect
+          variant="compact"
+          searchable={false}
           disabled={busy}
-          onChange={(e) => {
-            const v = e.target.value as SessionPriority
-            e.target.value = ''
-            if (!v) return
-            void apply({ priority: v })
+          placeholder={t('collection.bulk.setPriority')}
+          items={PRIORITIES.map((priority) => ({
+            id: priority,
+            label: t(`priority.${priority}`),
+          }))}
+          onSelect={(item) => {
+            void apply({ priority: item.id as SessionPriority })
           }}
-        >
-          <option value="" disabled>
-            {t('collection.bulk.setPriority')}
-          </option>
-          {PRIORITIES.map((p) => (
-            <option key={p} value={p}>
-              {t(`priority.${p}`)}
-            </option>
-          ))}
-        </select>
+        />
 
         {projects.length > 0 && (
-          <select
-            className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            defaultValue=""
+          <PremiumMenuSelect
+            variant="compact"
+            searchable={projects.length > 12}
             disabled={busy}
-            onChange={(e) => {
-              const patch = projectPatchForBulkValue(e.target.value)
-              e.target.value = ''
+            placeholder={t('collection.bulk.setProject')}
+            items={[
+              { id: NO_PROJECT_VALUE, label: t('collection.bulk.noProject') },
+              ...projects.map((project) => ({ id: project.id, label: project.name })),
+            ]}
+            onSelect={(item) => {
+              const patch = projectPatchForBulkValue(item.id)
               if (patch) void apply(patch)
             }}
-          >
-            <option value="" disabled>
-              {t('collection.bulk.setProject')}
-            </option>
-            <option value={NO_PROJECT_VALUE}>{t('collection.bulk.noProject')}</option>
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
+          />
         )}
         {labels.length > 0 && (
-          <select
-            aria-label={t('collection.bulk.addLabel')}
-            className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            defaultValue=""
+          <PremiumMenuSelect
+            variant="compact"
+            searchable={labels.length > 12}
             disabled={busy}
-            onChange={(e) => {
-              const labelId = e.target.value
-              e.target.value = ''
-              if (labelId) void apply({ addLabels: [labelId] })
+            aria-label={t('collection.bulk.addLabel')}
+            placeholder={t('collection.bulk.addLabel')}
+            items={labels.map((label) => ({ id: label.id, label: label.name }))}
+            onSelect={(item) => {
+              void apply({ addLabels: [item.id] })
             }}
-          >
-            <option value="" disabled>
-              {t('collection.bulk.addLabel')}
-            </option>
-            {labels.map((label) => (
-              <option key={label.id} value={label.id}>
-                {label.name}
-              </option>
-            ))}
-          </select>
+          />
         )}
 
         {labels.length > 0 && (
-          <select
-            aria-label={t('collection.bulk.removeLabel')}
-            className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            defaultValue=""
+          <PremiumMenuSelect
+            variant="compact"
+            searchable={labels.length > 12}
             disabled={busy}
-            onChange={(e) => {
-              const labelId = e.target.value
-              e.target.value = ''
-              if (labelId) void apply({ removeLabels: [labelId] })
+            aria-label={t('collection.bulk.removeLabel')}
+            placeholder={t('collection.bulk.removeLabel')}
+            items={labels.map((label) => ({ id: label.id, label: label.name }))}
+            onSelect={(item) => {
+              void apply({ removeLabels: [item.id] })
             }}
-          >
-            <option value="" disabled>
-              {t('collection.bulk.removeLabel')}
-            </option>
-            {labels.map((label) => (
-              <option key={label.id} value={label.id}>
-                {label.name}
-              </option>
-            ))}
-          </select>
+          />
         )}
 
         <input

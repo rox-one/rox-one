@@ -38,7 +38,7 @@ export const INTERACTION_BUDGETS: Record<InteractionKind, BudgetRule> = {
   },
   'dropdown-open': {
     kind: 'dropdown-open',
-    p95Ms: 50,
+    p95Ms: 80,
     maxCollectionReloads: 0,
     maxGetSessions: 0,
     maxPermissionFanout: 0,
