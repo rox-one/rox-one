@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { markInteraction } from '@/perf/marks'
 import * as storage from '@/lib/local-storage'
 
 export type EntityViewId =
@@ -157,7 +158,11 @@ export function EntityViewTabs({ value, onChange, capabilities, className }: Ent
             role="tab"
             aria-selected={active}
             disabled={!available && !active}
-            onClick={() => available && onChange(id)}
+            onClick={() => {
+              if (!available) return
+              markInteraction('view-switch')
+              onChange(id)
+            }}
             className={cn(
               'inline-flex items-center gap-1.5 h-7 px-2.5 rounded-[8px] text-xs font-medium transition-colors',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',

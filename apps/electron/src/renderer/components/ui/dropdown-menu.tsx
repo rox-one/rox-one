@@ -3,6 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { markInteraction } from "@/perf/marks"
 
 const SUPPORTED_HOVER_PREFIXES = ["bg-", "text-", "border-", "ring-", "opacity-"]
 
@@ -28,9 +29,19 @@ function mirrorHoverToOpenStateClasses(className?: string): string | undefined {
 }
 
 function DropdownMenu({
+  onOpenChange,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+  return (
+    <DropdownMenuPrimitive.Root
+      data-slot="dropdown-menu"
+      onOpenChange={(open) => {
+        if (open) markInteraction('dropdown-open')
+        onOpenChange?.(open)
+      }}
+      {...props}
+    />
+  )
 }
 
 function DropdownMenuPortal({

@@ -40,6 +40,7 @@ import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallb
 import { extractWorkspaceSlugFromPath } from '@craft-agent/shared/utils/workspace-slug'
 import { DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
 import { initRendererPerf } from './lib/perf'
+import { endInteraction, startInteraction } from './perf/marks'
 import {
   initializeSessionsAtom,
   addSessionAtom,
@@ -548,6 +549,7 @@ export default function App() {
 
   const loadSessionsFromServer = useCallback(async () => {
     setSessionLoadError(null)
+    startInteraction('cold-ready')
 
     try {
       const loadedSessions = await window.electronAPI.getSessions()
@@ -575,6 +577,7 @@ export default function App() {
       )
 
       setSessionsLoaded(true)
+      endInteraction('cold-ready')
 
       if (initialSessionId && windowWorkspaceId) {
         const session = loadedSessions.find(s => s.id === initialSessionId)
@@ -589,12 +592,14 @@ export default function App() {
       if (shouldTreatSessionLoadFailureAsTransportFallback(transportState)) {
         console.error('[App] Treating session load failure as transport fallback:', transportState)
         setSessionsLoaded(true)
+        endInteraction('cold-ready')
         setSessionLoadError(null)
         return
       }
 
       setSessionLoadError(formatSessionLoadFailure(err))
       setSessionsLoaded(true)
+      endInteraction('cold-ready')
     }
   }, [initializeSessions, initialSessionId, reconcilePermissionModeState, windowWorkspaceId])
 

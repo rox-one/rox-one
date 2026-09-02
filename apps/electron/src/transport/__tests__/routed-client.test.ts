@@ -5,6 +5,7 @@
 import { describe, it, expect, mock } from 'bun:test'
 import { RoutedClient } from '../routed-client'
 import type { WsRpcClient, TransportConnectionState } from '../client'
+import { clearIpcCalls, getIpcCallCount } from '../../shared/ipc-call-counter'
 
 // ---------------------------------------------------------------------------
 // Minimal WsRpcClient stub
@@ -321,6 +322,16 @@ describe('RoutedClient', () => {
       // After cleanup, switching workspace should not attempt to re-subscribe this listener
       // (no error thrown = success)
     })
+  })
+})
+
+describe('IPC call counters', () => {
+  it('records watched session invokes to prevent N+1 regressions', async () => {
+    clearIpcCalls()
+    const workspace = stubClient({ invoke: mock(async () => [{ id: 'sess-0001', messages: [] }]) })
+    const routed = new RoutedClient(stubClient(), workspace)
+    await routed.invoke(REMOTE_CHANNEL)
+    expect(getIpcCallCount('sessions:get')).toBe(1)
   })
 })
 

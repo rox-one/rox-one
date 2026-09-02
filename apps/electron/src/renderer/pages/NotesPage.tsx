@@ -28,6 +28,7 @@ import {
 } from '@/components/app-shell/EntityViewTabs'
 import { MindMapHost } from '@/mindmap/MindMapHost'
 import { deriveNoteMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
+import { markInteraction } from '@/perf/marks'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -509,6 +510,9 @@ function countFolderNotes(node: FolderTreeNode): number {
 
 export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const { t } = useTranslation()
+  React.useEffect(() => {
+    markInteraction('notes-open')
+  }, [])
   const {
     activeWorkspaceId,
     workspaces,
