@@ -153,6 +153,15 @@ client version, time, revocation time and deletion-request status. Revocation mu
 stop future replication immediately, retain the local canonical data, and surface a
 server-deletion receipt/status for the remote replica.
 
+#### Cloud tenancy boundary
+
+The local desktop transport may use the active workspace as a convenience context,
+but a cloud-connected Rox account must not treat a client-supplied `workspaceId` as
+authorization. Before real-time sync, collaboration links or shared cloud replicas
+ship, the server binds every workspace to the authenticated account/session and
+checks membership server-side for every RPC, sync record and background job. The
+client can request a workspace; it cannot self-assert access to one.
+
 ### 3.4 Internal browser
 
 The Electron `BrowserPaneManager` is the canonical retained browser host.
