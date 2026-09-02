@@ -44,7 +44,7 @@
 ## Visual language
 
 - Color: graphite/dark neutral base, clearly separated elevated panels, one restrained Rox accent for active/primary state; errors are red but not glassy or noisy.
-- Typography: prefer `Daytona W04 Condensed` when its licensed webfont asset is supplied; current system fallback chain is `TT Norms Pro Condensed`, `SF Pro Text`, `PingFang SC`, sans-serif. Do not pretend the requested condensed Daytona face is installed when it is not.
+- Typography: use the locally installed `Daytona W04 Condensed` as the default Electron face; the portable fallback chain is `TT Norms Pro Condensed`, `SF Pro Text`, `PingFang SC`, system sans-serif. Do not bundle or distribute the licensed font asset without a separate license decision.
 - Spacing/layout rhythm: 4/8px grid, document columns separated by subtle borders and deliberate gutters; no visually merged panes.
 - Shape/radius/elevation: 6–8px controls, 10–12px floating surfaces, thin high-contrast border plus restrained shadow.
 - Motion: 160–220ms ease-out for side rail collapse/expand; respect reduced motion.
@@ -96,6 +96,6 @@
 
 ## Open questions
 
-- [ ] License/asset source for `Daytona W04 Condensed`; current machine exposes only a Daytona W04 Fat Italic face, so the requested condensed face cannot yet be bundled honestly.
+- [ ] License/asset source for distributing `Daytona W04 Condensed` outside the local Electron environment; it is installed on the operator workstation but is not bundled in Git.
 - [ ] Comment transport: local-first per-note comments versus cloud collaboration thread model; needs sync/collaboration wave contract.
 - [ ] Multi-column Markdown serialization: decide portable fenced block syntax versus editor-only layout metadata before writes ship.

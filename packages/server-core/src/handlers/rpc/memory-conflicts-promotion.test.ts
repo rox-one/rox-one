@@ -89,6 +89,7 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  delete process.env.CRAFT_MEMORY_CONFLICT_CHECK_TIMEOUT_MS
   for (const root of workspaceRoots) rmSync(root, { recursive: true, force: true })
 })
 
@@ -134,6 +135,21 @@ describe('ADD_LESSON → {lesson, conflicts} (spec L2)', () => {
     const result = await invoke(ADD, null, { rule: 'Skip all checks', category: 'workflow', scope: 'global' })
     expect(result).toMatchObject({ lesson: { rule: 'Skip all checks' }, conflicts: [] })
     expect((await invoke(RPC_CHANNELS.memory.LIST_LESSONS, 'global'))).toHaveLength(2)
+  })
+
+  it('bounds slow conflict checks so addLesson does not wait for the renderer timeout', async () => {
+    process.env.CRAFT_MEMORY_CONFLICT_CHECK_TIMEOUT_MS = '10'
+    const { invoke, distillCalls } = createHarness(async () => new Promise<string>(() => {}))
+    await invoke(ADD, null, { rule: 'Always run typecheck', category: 'workflow', scope: 'global' })
+
+    const startedAt = Date.now()
+    const result = await invoke(ADD, null, { rule: 'Skip all checks', category: 'workflow', scope: 'global' })
+
+    expect(Date.now() - startedAt).toBeLessThan(500)
+    expect(result).toMatchObject({ lesson: { rule: 'Skip all checks' }, conflicts: [] })
+    expect(distillCalls).toHaveLength(1)
+    expect((await invoke(RPC_CHANNELS.memory.LIST_LESSONS, 'global')).map((l: { rule: string }) => l.rule))
+      .toEqual(['Always run typecheck', 'Skip all checks'])
   })
 
   it('returns [] when no distiller is wired at all', async () => {

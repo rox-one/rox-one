@@ -57,6 +57,30 @@ export interface MemoryHistoryDto {
   content: string
 }
 
+export const DEFAULT_MEMORY_CONFLICT_CHECK_TIMEOUT_MS = 1_500
+
+export function getMemoryConflictCheckTimeoutMs(): number {
+  const raw = process.env.CRAFT_MEMORY_CONFLICT_CHECK_TIMEOUT_MS
+  if (!raw) return DEFAULT_MEMORY_CONFLICT_CHECK_TIMEOUT_MS
+  const parsed = Number(raw)
+  if (!Number.isFinite(parsed) || parsed < 0) return DEFAULT_MEMORY_CONFLICT_CHECK_TIMEOUT_MS
+  return parsed
+}
+
+async function withTimeout<T>(operation: Promise<T>, timeoutMs: number, onTimeout: () => T): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(onTimeout()), timeoutMs)
+      }),
+    ])
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
 function lessonStoreFor(scope: LessonScope, workspaceId?: string): LessonStore | null {
   if (scope === 'global') {
     return new LessonStore(new MemoryFileStore('global').lessonsPath, 'global')
@@ -94,7 +118,17 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
       const llmWorkspaceId = workspaceId ?? getWorkspaces()[0]?.id
       if (!llmWorkspaceId) return []
       const rules = existing.map(l => l.rule)
-      const text = await run.call(deps.sessionManager, llmWorkspaceId, buildConflictPrompt(newLesson.rule, rules))
+      const timeoutMs = getMemoryConflictCheckTimeoutMs()
+      if (timeoutMs === 0) return []
+      const text = await withTimeout(
+        Promise.resolve(run.call(deps.sessionManager, llmWorkspaceId, buildConflictPrompt(newLesson.rule, rules))),
+        timeoutMs,
+        () => {
+          deps.platform.logger?.warn('MEMORY_ADD_LESSON: conflict check timed out, skipping', { timeoutMs })
+          return null
+        },
+      )
+      if (!text) return []
       return parseConflicts(text, rules)
     } catch (err) {
       deps.platform.logger?.warn('MEMORY_ADD_LESSON: conflict check failed, skipping', err)
@@ -124,9 +158,11 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
     const scope: LessonScope = input.scope ?? 'global'
     const store = lessonStoreFor(scope, workspaceId ?? undefined)
     if (!store) throw new Error('Workspace not found')
+    const rule = input.rule.trim()
+    if (!rule) throw new Error('Memory rule is empty')
     const lesson = store.add({
       ts: new Date().toISOString(),
-      rule: input.rule,
+      rule,
       category: input.category,
       scope,
       ...(input.negative ? { negative: true } : {}),

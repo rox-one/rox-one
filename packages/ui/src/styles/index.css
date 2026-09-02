@@ -131,8 +131,8 @@
   --md-bullets: var(--foreground-50);
   --md-counters: var(--foreground-50);
 
-  /* Fonts - System fonts for UI, JetBrains Mono for code */
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Rox default — native macOS face when available, portable fallbacks elsewhere. */
+  --font-sans: "Daytona W04 Condensed", "TT Norms Pro Condensed", "SF Pro Text", "PingFang SC", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-serif: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-default: var(--font-sans);
