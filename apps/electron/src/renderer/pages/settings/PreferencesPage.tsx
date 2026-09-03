@@ -18,6 +18,7 @@ import {
 } from '@/components/settings'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
 import { Spinner } from '@craft-agent/ui'
+import { persistAgentIdentity, resolveAgentIdentity } from '@craft-agent/shared/identity'
 
 interface PreferencesFormState {
   name: string
@@ -25,6 +26,8 @@ interface PreferencesFormState {
   city: string
   country: string
   notes: string
+  agentName: string
+  agentPersona: string
 }
 
 const emptyFormState: PreferencesFormState = {
@@ -33,17 +36,22 @@ const emptyFormState: PreferencesFormState = {
   city: '',
   country: '',
   notes: '',
+  agentName: '',
+  agentPersona: '',
 }
 
 function parsePreferences(json: string): PreferencesFormState {
   try {
     const prefs = JSON.parse(json)
+    const identity = resolveAgentIdentity(prefs.agentIdentity)
     return {
       name: prefs.name || '',
       timezone: prefs.timezone || '',
       city: prefs.location?.city || '',
       country: prefs.location?.country || '',
       notes: prefs.notes || '',
+      agentName: identity.source === 'user' ? identity.name : '',
+      agentPersona: identity.persona || '',
     }
   } catch {
     return emptyFormState
@@ -57,6 +65,8 @@ function formSignature(state: PreferencesFormState): string {
     city: state.city,
     country: state.country,
     notes: state.notes,
+    agentName: state.agentName,
+    agentPersona: state.agentPersona,
   })
 }
 
@@ -88,6 +98,16 @@ function mergeFormIntoPrefs(
 
   if (state.notes) next.notes = state.notes
   else delete next.notes
+
+  const identity = persistAgentIdentity({
+    name: state.agentName,
+    persona: state.agentPersona,
+  })
+  next.agentIdentity = {
+    name: identity.name,
+    persona: identity.persona,
+    source: identity.source,
+  }
 
   next.updatedAt = Date.now()
   return next
@@ -270,6 +290,30 @@ export function PreferencesForm() {
             value={formState.timezone}
             onChange={(v) => updateField('timezone', v)}
             placeholder={t('settings.preferences.timezonePlaceholder')}
+            inCard
+          />
+        </SettingsCard>
+      </SettingsSection>
+
+      <SettingsSection
+        title={t('settings.identity.title')}
+        description={t('settings.identity.description')}
+      >
+        <SettingsCard divided>
+          <SettingsInput
+            label={t('settings.identity.name')}
+            description={t('settings.identity.nameDesc')}
+            value={formState.agentName}
+            onChange={(v) => updateField('agentName', v)}
+            placeholder={t('settings.identity.namePlaceholder')}
+            inCard
+          />
+          <SettingsInput
+            label={t('settings.identity.persona')}
+            description={t('settings.identity.personaDesc')}
+            value={formState.agentPersona}
+            onChange={(v) => updateField('agentPersona', v)}
+            placeholder={t('settings.identity.personaPlaceholder')}
             inCard
           />
         </SettingsCard>
