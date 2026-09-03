@@ -149,6 +149,11 @@ export const UserPreferencesSchema = z.object({
   timezone: z.string().optional(),  // TODO: Could validate against IANA timezone list
   location: LocationSchema.optional(),
   notes: z.string().optional(),
+  agentIdentity: z.object({
+    name: z.string().optional(),
+    persona: z.string().optional(),
+    source: z.enum(['generated', 'user']).optional(),
+  }).optional(),
   // Internal: mirrors Appearance → Language. Not user-editable.
   // Validated against the registry-derived supported set.
   uiLanguage: z.enum([...SUPPORTED_LANGUAGE_CODES] as [LanguageCode, ...LanguageCode[]]).optional(),

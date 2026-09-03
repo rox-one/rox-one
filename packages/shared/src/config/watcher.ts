@@ -102,6 +102,11 @@ export interface UserPreferences {
     country?: string;
   };
   notes?: string;
+  agentIdentity?: {
+    name?: string;
+    persona?: string;
+    source?: 'generated' | 'user';
+  };
   /** Internal: mirrors Appearance → Language. Maintained by the main-process i18n IPC handler. */
   uiLanguage?: string;
   updatedAt?: number;
