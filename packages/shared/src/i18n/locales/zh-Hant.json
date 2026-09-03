@@ -1618,6 +1618,8 @@
   "plan.executeImmediately": "立即執行計畫",
   "plan.worksForComplex": "適用於複雜或較長的計畫",
   "preferences.placeholderLanguage": "例如：中文",
+  "premiumMenu.empty": "沒有項目",
+  "premiumMenu.noResults": "沒有符合的項目",
   "preview.expandPreview": "展開預覽",
   "preview.failedToRenderPdf": "PDF 渲染失敗",
   "preview.htmlPreview": "HTML 預覽",

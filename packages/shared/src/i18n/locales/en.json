@@ -1637,6 +1637,8 @@
   "plan.executeImmediately": "Execute the plan immediately",
   "plan.worksForComplex": "Works best for complex, longer plans",
   "preferences.placeholderLanguage": "e.g., English",
+  "premiumMenu.empty": "No items",
+  "premiumMenu.noResults": "No matching items",
   "preview.expandPreview": "Expand Preview",
   "preview.failedToRenderPdf": "Failed to render PDF",
   "preview.htmlPreview": "HTML Preview",
