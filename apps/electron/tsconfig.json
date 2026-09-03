@@ -24,7 +24,9 @@
       "@/*": ["src/renderer/*"],
       "@config/*": ["../../packages/shared/src/config/*"],
       "@craft-agent/shared": ["../../packages/shared/src/index.ts"],
-      "@craft-agent/shared/*": ["../../packages/shared/src/*"]
+      "@craft-agent/shared/*": ["../../packages/shared/src/*"],
+      "@craft-agent/ui": ["../../packages/ui/src/index.ts"],
+      "@craft-agent/ui/premium-menu": ["../../packages/ui/src/components/ui/premium-menu-model.ts"]
     }
   },
   "include": ["src/**/*", "../../packages/shared/src/**/*.d.ts"],

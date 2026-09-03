@@ -41,6 +41,30 @@ export {
   type FilterableSelectRenderState,
 } from './FilterableSelectPopover'
 export {
+  PremiumMenu,
+  type PremiumMenuProps,
+  type PremiumMenuItemState,
+} from './PremiumMenu'
+export {
+  PremiumMenuSelect,
+  type PremiumMenuSelectProps,
+  type PremiumMenuSelectOption,
+} from './PremiumMenuSelect'
+export {
+  PREMIUM_MENU_OPEN_BUDGET_MS,
+  PREMIUM_MENU_VARIANTS,
+  PREMIUM_MENU_VIRTUALIZE_AFTER,
+  filterMenuItems,
+  getVirtualWindow,
+  matchTypeahead,
+  placeAnchoredMenu,
+  reduceMenuKey,
+  simulatePremiumMenuOpen,
+  type PremiumMenuVariant,
+  type PremiumMenuSide,
+  type VirtualWindow,
+} from './premium-menu-model'
+export {
   Island,
   IslandContentView,
   type IslandProps,
