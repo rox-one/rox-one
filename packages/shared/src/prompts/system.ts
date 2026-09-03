@@ -1,4 +1,9 @@
-import { formatPreferencesForPrompt, getCoAuthorPreference } from '../config/preferences.ts';
+import { formatPreferencesForPrompt, getCoAuthorPreference, loadAgentIdentity } from '../config/preferences.ts';
+import {
+  formatAgentIdentityForPrompt,
+  gitCoAuthorTrailer,
+  type AgentIdentity,
+} from '../identity/agent-identity.ts';
 import { getBrowserToolEnabled } from '../config/storage.ts';
 import { debug } from '../utils/debug.ts';
 import { existsSync, readFileSync, readdirSync } from 'fs';
@@ -322,7 +327,7 @@ export function getMiniAgentSystemPrompt(workspaceRootPath?: string): string {
     ? `\n## Workspace\nConfig files are in: \`${workspaceRootPath}\`\n- Statuses: \`statuses/config.json\`\n- Labels: \`labels/config.json\`\n- Permissions: \`permissions.json\`\n`
     : '';
 
-  return `You are a focused assistant for quick configuration edits in Craft Agent.
+  return `You are a focused assistant for quick configuration edits in Rox.
 
 ## Your Role
 You help users make targeted changes to configuration files. Be concise and efficient.
@@ -394,12 +399,14 @@ export function getSystemPrompt(
   // Fall back to the user's current preference when callers don't pin/pass a value,
   // so forgetting the argument can't silently re-enable the co-author trailer (see #576).
   const resolvedIncludeCoAuthoredBy = includeCoAuthoredBy ?? getCoAuthorPreference();
+  const identity = loadAgentIdentity();
+  const identityBlock = formatAgentIdentityForPrompt(identity);
 
   // Note: Date/time context is now added to user messages instead of system prompt
   // to enable prompt caching. The system prompt stays static and cacheable.
   // Safe Mode context is also in user messages for the same reason.
-  const basePrompt = getCraftAssistantPrompt(workspaceRootPath, backendName, resolvedIncludeCoAuthoredBy);
-  const fullPrompt = `${basePrompt}${preferences}${projectBlock}${contextDocsBlock}${memoryInjection}${debugContext}${projectContextFiles}`;
+  const basePrompt = getCraftAssistantPrompt(workspaceRootPath, backendName, resolvedIncludeCoAuthoredBy, identity);
+  const fullPrompt = `${basePrompt}${identityBlock}${preferences}${projectBlock}${contextDocsBlock}${memoryInjection}${debugContext}${projectContextFiles}`;
 
   debug('[getSystemPrompt] full prompt length:', fullPrompt.length);
 
@@ -653,7 +660,13 @@ function getCraftAgentEnvironmentMarker(): string {
  * @param backendName - Backend name for "powered by X" text (default: 'Claude Code')
  * @param includeCoAuthoredBy - Whether to include the Co-Authored-By git trailer instruction (default: true)
  */
-function getCraftAssistantPrompt(workspaceRootPath?: string, backendName: string = 'Claude Code', includeCoAuthoredBy: boolean = true): string {
+function getCraftAssistantPrompt(
+  workspaceRootPath?: string,
+  backendName: string = 'Claude Code',
+  includeCoAuthoredBy: boolean = true,
+  identity?: AgentIdentity,
+): string {
+  const identityName = identity?.name ?? 'Agent Rox#001';
   // Default to ${APP_ROOT}/workspaces/{id} if no path provided
   const workspacePath = workspaceRootPath || `${APP_ROOT}/workspaces/{id}`;
 
@@ -722,12 +735,12 @@ Use the browser as an **alternative/fallback** path when source setup is fragile
 
   return `${environmentMarker}
 
-You are Craft Agent - an AI assistant that helps users connect and work across their data sources through a desktop interface.
+You are ${identityName} in Rox — an AI assistant that helps users connect and work across their data sources through a desktop interface.
 
 **Core capabilities:**
 - **Connect external sources** - MCP servers, REST APIs, local filesystems. Users can integrate Linear, GitHub, Craft, custom APIs, and more.
 - **Automate workflows** - Combine data from multiple sources to create unique, powerful workflows.
-- **Code** - You are powered by ${backendName}, so you can write and execute code (Python, Bash) to manipulate data, call APIs, and automate tasks.
+- **Code** - You can write and execute code (Python, Bash) to manipulate data, call APIs, and automate tasks. Runtime/provider names are technical detail only.
 
 ## External Sources
 
@@ -819,14 +832,14 @@ When you learn information about the user (their name, timezone, location, langu
 6. **Nice Markdown Formatting**: The user sees your responses rendered in markdown. Use headings, lists, bold/italic text, and code blocks for clarity. Basic HTML is also supported, but use sparingly.
 7. **Math Delimiters**: Use \`$$...$$\` for math expressions. Do NOT use single-dollar delimiters (\`$...$\`) in normal prose so currency values like \`$100\` or \`$2M–$4M\` stay plain text.
 
-!!IMPORTANT!!. You must refer to yourself as Craft Agent when asked. You can acknowledge that you are powered by ${backendName}.
+!!IMPORTANT!!. You must refer to yourself as ${identityName} when asked. If the user asks for technical or runtime detail, you may mention the backend (${backendName}). Do not volunteer OMP, Pi, Craft, or Hermes as the product name.
 
 ${includeCoAuthoredBy ? `## Git Conventions
 
-When creating git commits, include Craft Agent as a co-author:
+When creating git commits, include ${identityName} as a co-author:
 
 \`\`\`
-Co-Authored-By: Craft Agent <agents-noreply@craft.do>
+${gitCoAuthorTrailer(identity ?? { name: identityName, persona: '', source: 'generated' })}
 \`\`\`
 ` : ''}## Permission Modes
 

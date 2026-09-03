@@ -10,6 +10,7 @@ let mockIncludeCoAuthoredBy = true
 mock.module('../../config/preferences.ts', () => ({
   getCoAuthorPreference: () => mockIncludeCoAuthoredBy,
   formatPreferencesForPrompt: () => '',
+  loadAgentIdentity: () => ({ name: 'Agent Rox#001', persona: '', source: 'generated' as const }),
 }))
 
 import {
@@ -21,7 +22,7 @@ import {
 import type { ProjectPromptContext } from '../../projects/types.ts'
 
 const GIT_CONVENTIONS_HEADING = '## Git Conventions'
-const CO_AUTHOR_TRAILER = 'Co-Authored-By: Craft Agent <agents-noreply@craft.do>'
+const CO_AUTHOR_TRAILER = 'Co-Authored-By: Agent Rox#001 <agents-noreply@craft.do>'
 
 describe('system prompt guidance', () => {
   it('uses backend-neutral debug log querying guidance (rg/grep via Bash)', () => {
@@ -114,6 +115,28 @@ describe('includeCoAuthoredBy handling', () => {
 
     expect(prompt).toContain(GIT_CONVENTIONS_HEADING)
     expect(prompt).toContain(CO_AUTHOR_TRAILER)
+  })
+})
+
+describe('Rox agent identity in the system prompt', () => {
+  it('presents Agent Rox#001 on new sessions and keeps runtime names for technical detail', () => {
+    const prompt = getSystemPrompt(
+      undefined,
+      undefined,
+      '/tmp/workspace',
+      '/tmp/workspace',
+      undefined,
+      'OMP',
+      false,
+    )
+
+    expect(prompt).toContain('You are Agent Rox#001 in Rox')
+    expect(prompt).toContain('## Agent identity')
+    expect(prompt).toContain('- Name: Agent Rox#001')
+    expect(prompt).toContain('compatibility implementation metadata')
+    expect(prompt).toContain('If the user asks for technical or runtime detail, you may mention the backend (OMP)')
+    expect(prompt).not.toContain('You are Craft Agent')
+    expect(prompt).not.toContain('You must refer to yourself as Craft Agent')
   })
 })
 
