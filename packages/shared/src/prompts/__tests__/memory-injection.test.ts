@@ -6,6 +6,7 @@ let mockIncludeCoAuthoredBy = true
 mock.module('../../config/preferences.ts', () => ({
   getCoAuthorPreference: () => mockIncludeCoAuthoredBy,
   formatPreferencesForPrompt: () => '',
+  loadAgentIdentity: () => ({ name: 'Agent Rox#001', persona: '', source: 'generated' as const }),
 }))
 
 import {

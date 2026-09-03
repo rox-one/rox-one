@@ -801,7 +801,7 @@ export function useOnboarding({
         while (existingSlugs.has(slug)) slug = `omp-${n++}`
         const result = await window.electronAPI.setupLlmConnection({
           slug,
-          name: 'OMP (oh-my-pi)',
+          name: 'Rox',
           providerType: 'omp',
         })
         if (!result.success) {

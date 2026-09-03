@@ -2,6 +2,7 @@ import {
   isLocalConnection,
   type LlmConnection,
 } from '@config/llm-connections'
+import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
 
 /**
  * Format token count for display (e.g., 1500 -> "1.5k", 200000 -> "200k").
@@ -39,7 +40,7 @@ export function getConnectionPickerMeta(connection: LlmConnection): string | nul
 /**
  * Group connections by provider type for hierarchical picker rendering.
  * Each provider section can contain multiple connections (API Key, OAuth, …).
- * Order is significant for UI: Anthropic, Local, Rox Backend.
+ * Order is significant for UI: Anthropic, Rox, Local, Rox Backend.
  * Empty groups are dropped.
  */
 export function groupConnectionsByProvider<T extends LlmConnection>(
@@ -47,7 +48,7 @@ export function groupConnectionsByProvider<T extends LlmConnection>(
 ): Array<[string, T[]]> {
   const groups: Record<string, T[]> = {
     'Anthropic': [],
-    'OMP': [],
+    [ROX_VISIBLE_TERMS.product]: [],
     'Local': [],
     'Rox Backend': [],
   }
@@ -56,7 +57,7 @@ export function groupConnectionsByProvider<T extends LlmConnection>(
     if (provider === 'anthropic') {
       groups['Anthropic'].push(conn)
     } else if (provider === 'omp') {
-      groups['OMP'].push(conn)
+      groups[ROX_VISIBLE_TERMS.product].push(conn)
     } else if (provider === 'pi_compat' && isLocalConnection(conn)) {
       groups['Local'].push(conn)
     } else if (provider === 'pi' || provider === 'pi_compat') {

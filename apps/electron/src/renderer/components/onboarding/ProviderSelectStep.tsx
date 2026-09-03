@@ -79,7 +79,7 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
     },
     {
       id: 'omp',
-      name: 'OMP (oh-my-pi)',
+      name: t("onboarding.providerSelect.omp"),
       description: t("onboarding.providerSelect.ompDesc"),
       icon: PROVIDER_ICONS.omp,
     },
