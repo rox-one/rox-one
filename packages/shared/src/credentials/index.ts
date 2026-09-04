@@ -26,6 +26,7 @@ export { CredentialManager, getCredentialManager } from './manager.ts';
 export type { CredentialId, CredentialType, StoredCredential } from './types.ts';
 export { credentialIdToAccount, accountToCredentialId, openClawGatewayCredentialId, SOURCE_CREDENTIAL_TYPES } from './types.ts';
 export type { CredentialBackend } from './backends/types.ts';
+export { SecureStorageBackend } from './backends/secure-storage.ts';
 
 export {
   CREDENTIAL_ENVELOPE_CODEC,
