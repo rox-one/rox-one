@@ -14,6 +14,7 @@
  */
 
 export { getEnv, resolveConfigDir } from './env.ts';
+export { getConfigDir, setOwnedRootAdapter } from './owned-root-policy.ts';
 import { resolveConfigDir } from './env.ts';
 
 // Import-time snapshot. Test preload must set ROX_CONFIG_DIR / CRAFT_CONFIG_DIR

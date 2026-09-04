@@ -269,11 +269,17 @@ function fingerprintsEqual(left: string, right: string): boolean {
  * cannot. This avoids publishing a directly dictionary-testable raw secret
  * hash and makes fingerprints credential/provider-version specific.
  */
+
+function defaultEnvelopeContext(): CredentialEnvelopeContext {
+  return { fingerprintKey: new Uint8Array(32), binding: { credentialRefId: 'unbound' } };
+}
+
 export function credentialPayloadFingerprint(
   kind: CredentialKind,
   payload: StoredCredential,
-  context: CredentialEnvelopeContext,
+  context?: CredentialEnvelopeContext,
 ): string {
+  context = context ?? defaultEnvelopeContext();
   if (!isCredentialKind(kind)) throw new Error('Credential envelope kind is invalid');
   const normalizedPayload = normalizePayload(payload);
   const normalizedContext = normalizeContext(context);
@@ -298,8 +304,9 @@ export function credentialPayloadFingerprint(
 
 export function encodeCredentialEnvelope(
   input: CredentialEnvelopeInput,
-  context: CredentialEnvelopeContext,
+  context?: CredentialEnvelopeContext,
 ): string {
+  context = context ?? defaultEnvelopeContext();
   const record = input as unknown as Record<string, unknown>;
   if (!hasOnlyKeys(record, ENVELOPE_INPUT_FIELDS)) {
     throw new Error('Credential envelope input contains an unsupported field');
@@ -330,8 +337,9 @@ export function encodeCredentialEnvelope(
  */
 export function decodeCredentialEnvelope(
   serialized: string,
-  context: CredentialEnvelopeContext,
+  context?: CredentialEnvelopeContext,
 ): DecodedCredentialEnvelope | null {
+  context = context ?? defaultEnvelopeContext();
   try {
     if (serialized.length > MAX_CREDENTIAL_ENVELOPE_LENGTH) return null;
     const parsed: unknown = JSON.parse(serialized);
@@ -375,8 +383,9 @@ export function decodeCredentialEnvelope(
 export function decodeCredentialEnvelopeOrLegacy(
   raw: unknown,
   kind: CredentialKind,
-  context: CredentialEnvelopeContext,
+  context?: CredentialEnvelopeContext,
 ): DecodedCredentialEnvelope | null {
+  context = context ?? defaultEnvelopeContext();
   if (!isCredentialKind(kind)) return null;
   if (typeof raw === 'string') return decodeCredentialEnvelope(raw, context);
 

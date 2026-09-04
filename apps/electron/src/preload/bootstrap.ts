@@ -43,6 +43,8 @@ import type { RpcClient } from '@craft-agent/server-core/transport'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
 import { isSshBacked } from '../shared/ssh'
+import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
+import { createOpenClawHostControlBridge } from './openclaw-host-control'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -61,6 +63,10 @@ interface TransportClient extends RpcClient {
 
 const webContentsId: number = ipcRenderer.sendSync('__get-web-contents-id')
 const isClientOnly = !!process.env.CRAFT_SERVER_URL
+const openClawHostControl = createOpenClawHostControlBridge({
+  isClientOnly,
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+})
 
 let client: TransportClient
 
@@ -93,6 +99,13 @@ if (isClientOnly) {
     autoReconnect: true,
     mode: 'remote',
     clientCapabilities: [...LOCAL_CLIENT_CAPABILITIES],
+    // Thin-client CRAFT_SERVER_URL is public-CA only (no enrolled SPKI pin).
+    ...peerTrustOptionsForRemote({
+      url: wsUrl,
+      token: wsToken,
+      remoteWorkspaceId: workspaceId ?? '',
+      tlsTrust: { mode: 'public-ca' },
+    }),
   })
   wsClient.connect()
   client = wsClient
@@ -105,11 +118,13 @@ if (isClientOnly) {
   const wsPort: number = ipcRenderer.sendSync('__get-ws-port')
   const wsToken: string = ipcRenderer.sendSync('__get-ws-token')
   const workspaceId: string = ipcRenderer.sendSync('__get-workspace-id')
+  const localClientProof: string = ipcRenderer.sendSync('__get-local-client-proof')
 
   const localClient = new WsRpcClient(`ws://127.0.0.1:${wsPort}`, {
     token: wsToken,
     workspaceId,
     webContentsId,
+    localClientProof,
     autoReconnect: true,
     mode: 'local',
     clientCapabilities: [...LOCAL_CLIENT_CAPABILITIES],
@@ -125,7 +140,7 @@ if (isClientOnly) {
       autoReconnect: true,
       mode: 'remote',
       clientCapabilities: [...LOCAL_CLIENT_CAPABILITIES],
-      tlsRejectUnauthorized: false,
+      ...peerTrustOptionsForRemote(rc),
       ...(isSshBacked(rc)
         ? {
             resolveTarget: async () => {
@@ -510,6 +525,11 @@ client.onConnectionStateChanged((state) => {
 // i18n: sync language changes to main process (for native menus/dialogs)
 ;(api as ElectronAPI).changeLanguage = (lang: string) => ipcRenderer.invoke('i18n:changeLanguage', lang)
 
+;(api as ElectronAPI).remoteTlsInspect = (url: string) =>
+  ipcRenderer.invoke('remoteTls:inspect', url)
+;(api as ElectronAPI).remoteTlsDecide = (payload) =>
+  ipcRenderer.invoke('remoteTls:decide', payload)
+
 // Notes PDF export — direct ipcMain.handle (needs BrowserWindow.printToPDF, not WS RPC)
 ;(api as ElectronAPI).exportNotePdf = (opts: { html: string; defaultPath: string }) =>
   ipcRenderer.invoke('notes:exportPdf', opts)
@@ -531,3 +551,6 @@ client.onConnectionStateChanged((state) => {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
+if (openClawHostControl) {
+  contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
+}

@@ -3,7 +3,7 @@ import { dirname } from 'path'
 import type { StoredSession, SessionHeader } from './types.js'
 import { getSessionFilePath, ensureSessionsDir, ensureSessionDir } from './storage.js'
 import { toPortablePath } from '../utils/paths.js'
-import { createSessionHeader, makeSessionPathPortable, readSessionHeader } from './jsonl.js'
+import { createSessionHeader, makeSessionPathPortable, readSessionHeader, rewriteSessionJsonlHeader } from './jsonl.js'
 import { notifySessionJournalShadow } from './journal-shadow.js'
 import { trySessionJournalPrimary } from './journal-primary.js'
 import { debug } from '../utils/debug.js'
@@ -62,6 +62,7 @@ class SessionPersistenceQueue {
   private pending = new Map<string, PendingWrite>()
   private writeInProgress = new Map<string, Promise<void>>()
   private lastWrittenHeaderSignature = new Map<string, string>()
+  private writeFailures = new Map<string, unknown>()
   private debounceMs: number
 
   constructor(debounceMs = 500) {
@@ -165,8 +166,10 @@ class SessionPersistenceQueue {
         await rename(tmpFile, filePath)
       }
       notifySessionJournalShadow(sessionDir, lines)
+      this.writeFailures.delete(sessionId)
       debug(`[PersistenceQueue] Wrote session ${sessionId}${wrotePrimary ? ' (native primary)' : ''}`)
     } catch (error) {
+      this.writeFailures.set(sessionId, error)
       console.error(`[PersistenceQueue] Failed to write session ${sessionId}:`, error)
     }
   }
@@ -241,6 +244,71 @@ class SessionPersistenceQueue {
   get pendingCount(): number {
     return this.pending.size
   }
+  private throwIfWriteFailed(sessionId: string): void {
+    const failure = this.writeFailures.get(sessionId)
+    if (failure !== undefined) throw failure
+  }
+
+  private serialize(sessionId: string, operation: () => Promise<void>): Promise<void> {
+    const previous = this.writeInProgress.get(sessionId)
+    const next = (previous ? previous.catch(() => undefined) : Promise.resolve()).then(operation)
+    this.writeInProgress.set(sessionId, next)
+    void next.then(
+      () => {
+        if (this.writeInProgress.get(sessionId) === next) {
+          this.writeInProgress.delete(sessionId)
+        }
+      },
+      () => {
+        if (this.writeInProgress.get(sessionId) === next) {
+          this.writeInProgress.delete(sessionId)
+        }
+      },
+    )
+    return next
+  }
+
+  async updateSessionHeader(
+    sessionId: string,
+    workspaceRootPath: string,
+    patch: Partial<SessionHeader>,
+  ): Promise<void> {
+    await this.flush(sessionId)
+    this.throwIfWriteFailed(sessionId)
+
+    await this.serialize(sessionId, async () => {
+      // A full snapshot may have been queued while this update waited.
+      const pending = this.pending.get(sessionId)
+      if (pending) {
+        clearTimeout(pending.timer)
+        await this.write(sessionId)
+        this.throwIfWriteFailed(sessionId)
+      }
+
+      ensureSessionsDir(workspaceRootPath)
+      ensureSessionDir(workspaceRootPath, sessionId)
+      const filePath = getSessionFilePath(workspaceRootPath, sessionId)
+      const previousSignature = this.lastWrittenHeaderSignature.get(sessionId)
+      try {
+        await rewriteSessionJsonlHeader(
+          filePath,
+          header => ({ ...header, ...patch }),
+          header => {
+            this.lastWrittenHeaderSignature.set(sessionId, getHeaderMetadataSignature(header))
+          },
+        )
+      } catch (error) {
+        if (previousSignature === undefined) {
+          this.lastWrittenHeaderSignature.delete(sessionId)
+        } else {
+          this.lastWrittenHeaderSignature.set(sessionId, previousSignature)
+        }
+        throw error
+      }
+      debug(`[PersistenceQueue] Updated session ${sessionId} header`)
+    })
+  }
+
 }
 
 // Singleton instance

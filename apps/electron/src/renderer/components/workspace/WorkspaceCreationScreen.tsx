@@ -13,19 +13,27 @@ import { AddWorkspaceStep_ConnectRemote } from "./AddWorkspaceStep_ConnectRemote
 import { AddWorkspaceStep_Ssh } from "./AddWorkspaceStep_Ssh"
 import type { Workspace } from "../../../shared/types"
 import { toast } from "sonner"
+import {
+  buildTeamSpaceCreateArguments,
+  resolveWorkspaceCreation,
+  type WorkspaceCreationSuccess,
+} from "./workspace-creation-contract"
+
+export type { WorkspaceCreationSuccess } from "./workspace-creation-contract"
+
 
 type CreationStep = 'choice' | 'create' | 'open' | 'remote' | 'ssh'
 
 interface WorkspaceCreationScreenProps {
   /** Callback when a workspace is created successfully */
-  onWorkspaceCreated: (workspace: Workspace) => void
+  onWorkspaceCreated: (result: WorkspaceCreationSuccess) => void
   /** Callback when the screen is dismissed */
   onClose: () => void
   className?: string
   /** When set, skip choice step and open ConnectRemote in reconnect mode */
   reconnectWorkspace?: Workspace
   /** Reconnect an existing remote workspace and resolve only on real success. */
-  onReconnectWorkspace?: (workspaceId: string, remoteServer: { url: string; token: string; remoteWorkspaceId: string }) => Promise<void>
+  onReconnectWorkspace?: (workspaceId: string, remoteServer: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust }) => Promise<void>
 }
 
 /**
@@ -67,11 +75,11 @@ export function WorkspaceCreationScreen({
     }
   }, [isCreating, onClose])
 
-  const handleCreateWorkspace = useCallback(async (folderPath: string, name: string, remoteServer?: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string }) => {
+  const handleCreateWorkspace = useCallback(async (folderPath: string, name: string, remoteServer?: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust }) => {
     setIsCreating(true)
     try {
-      const workspace = await window.electronAPI.createWorkspace(folderPath, name, remoteServer)
-      onWorkspaceCreated(workspace)
+      const result = await window.electronAPI.createWorkspace(folderPath, name, remoteServer)
+      onWorkspaceCreated(resolveWorkspaceCreation(result, !remoteServer))
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       toast.error(t('toast.failedToCreateWorkspace'), {
@@ -80,9 +88,35 @@ export function WorkspaceCreationScreen({
     } finally {
       setIsCreating(false)
     }
-  }, [onWorkspaceCreated])
+  }, [onWorkspaceCreated, t])
 
-  const handleReconnectWorkspace = useCallback(async (workspaceId: string, remoteServer: { url: string; token: string; remoteWorkspaceId: string }) => {
+  const handleCreateTeamSpace = useCallback(async (
+    folderPath: string,
+    name: string,
+    orgId: string,
+  ) => {
+    setIsCreating(true)
+    try {
+      const [teamFolderPath, teamName, remoteServer, authority] =
+        buildTeamSpaceCreateArguments(folderPath, name, orgId)
+      const result = await window.electronAPI.createWorkspace(
+        teamFolderPath,
+        teamName,
+        remoteServer,
+        authority,
+      )
+      onWorkspaceCreated(resolveWorkspaceCreation(result, true))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      toast.error(t('toast.failedToCreateWorkspace'), {
+        description: message,
+      })
+    } finally {
+      setIsCreating(false)
+    }
+  }, [onWorkspaceCreated, t])
+
+  const handleReconnectWorkspace = useCallback(async (workspaceId: string, remoteServer: { url: string; token: string; remoteWorkspaceId: string; sshHostId?: string; tlsTrust?: import('../../../shared/types').RemoteTlsTrust }) => {
     if (!onReconnectWorkspace) {
       throw new Error('Reconnect handler not configured')
     }
@@ -111,7 +145,7 @@ export function WorkspaceCreationScreen({
         return (
           <AddWorkspaceStep_CreateNew
             onBack={() => setStep('choice')}
-            onCreate={handleCreateWorkspace}
+            onCreate={handleCreateTeamSpace}
             isCreating={isCreating}
           />
         )

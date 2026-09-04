@@ -1,3 +1,4 @@
+type HeadersInit = Record<string, string> | [string, string][] | Headers;
 import type { CredentialRef, CredentialRefId } from './credential-types.ts';
 import { ConnectionFabricError, type DeliveryMechanism, type SecretProvider } from './provider-contract.ts';
 import type { AccessGrant, JsonAccessGrantStore } from './grants.ts';

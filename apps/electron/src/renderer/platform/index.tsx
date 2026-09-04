@@ -31,6 +31,12 @@ export { PanelHost } from './PanelHost'
 export { Omnibox } from './Omnibox'
 export { OmniboxHost } from './OmniboxHost'
 export { parsePrefix, scoreMatch } from './omnibox-helpers'
+export {
+  readWorkbenchPreference,
+  resolveWorkbenchAvailability,
+  type PreferenceStorage,
+  type WorkbenchAvailability,
+} from './workbench-rollout'
 export { resolveWorkbenchChrome, shouldShowStatusBar } from './workbench-chrome'
 
 export function UnifiedShellLayout({ children }: { children: ReactNode }) {
@@ -60,3 +66,5 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
     </>
   )
 }
+
+export { WorkspaceSurfaceHost, type WorkspaceSurfaceHostProps } from './WorkspaceSurfaceHost'

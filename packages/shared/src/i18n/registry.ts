@@ -13,28 +13,32 @@
 import type { Locale } from "date-fns";
 
 // ─── Translation resources ───────────────────────────────────────────────────
+import arMessages from "./locales/ar.json";
+import deMessages from "./locales/de.json";
 import enMessages from "./locales/en.json";
 import esMessages from "./locales/es.json";
-import zhHansMessages from "./locales/zh-Hans.json";
-import zhHantMessages from "./locales/zh-Hant.json";
-import jaMessages from "./locales/ja.json";
+import frMessages from "./locales/fr.json";
 import huMessages from "./locales/hu.json";
-import deMessages from "./locales/de.json";
+import jaMessages from "./locales/ja.json";
+import koMessages from "./locales/ko.json";
 import plMessages from "./locales/pl.json";
 import ruMessages from "./locales/ru.json";
-import frMessages from "./locales/fr.json";
+import zhHansMessages from "./locales/zh-Hans.json";
+import zhHantMessages from "./locales/zh-Hant.json";
 
 // ─── date-fns locales ────────────────────────────────────────────────────────
+import { ar as arDateLocale } from "date-fns/locale/ar";
+import { de as deDateLocale } from "date-fns/locale/de";
 import { enUS } from "date-fns/locale/en-US";
 import { es as esDateLocale } from "date-fns/locale/es";
-import { zhCN } from "date-fns/locale/zh-CN";
-import { zhTW } from "date-fns/locale/zh-TW";
-import { ja as jaDateLocale } from "date-fns/locale/ja";
+import { fr as frDateLocale } from "date-fns/locale/fr";
 import { hu as huDateLocale } from "date-fns/locale/hu";
-import { de as deDateLocale } from "date-fns/locale/de";
+import { ja as jaDateLocale } from "date-fns/locale/ja";
+import { ko as koDateLocale } from "date-fns/locale/ko";
 import { pl as plDateLocale } from "date-fns/locale/pl";
 import { ru as ruDateLocale } from "date-fns/locale/ru";
-import { fr as frDateLocale } from "date-fns/locale/fr";
+import { zhCN } from "date-fns/locale/zh-CN";
+import { zhTW } from "date-fns/locale/zh-TW";
 
 // ─── Registry ────────────────────────────────────────────────────────────────
 
@@ -46,6 +50,7 @@ interface LocaleEntry {
 
 export const LOCALE_REGISTRY = {
   en: { nativeName: "English", messages: enMessages, dateLocale: enUS },
+  ru: { nativeName: "Русский", messages: ruMessages, dateLocale: ruDateLocale },
   es: { nativeName: "Español", messages: esMessages, dateLocale: esDateLocale },
   "zh-Hans": {
     nativeName: "简体中文",
@@ -58,15 +63,16 @@ export const LOCALE_REGISTRY = {
     dateLocale: zhTW,
   },
   ja: { nativeName: "日本語", messages: jaMessages, dateLocale: jaDateLocale },
-  hu: { nativeName: "Magyar", messages: huMessages, dateLocale: huDateLocale },
   de: {
     nativeName: "Deutsch",
     messages: deMessages,
     dateLocale: deDateLocale,
   },
+  hu: { nativeName: "Magyar", messages: huMessages, dateLocale: huDateLocale },
   pl: { nativeName: "Polski", messages: plMessages, dateLocale: plDateLocale },
-  ru: { nativeName: "Русский", messages: ruMessages, dateLocale: ruDateLocale },
   fr: { nativeName: "Français", messages: frMessages, dateLocale: frDateLocale },
+  ko: { nativeName: "한국어", messages: koMessages, dateLocale: koDateLocale },
+  ar: { nativeName: "العربية", messages: arMessages, dateLocale: arDateLocale },
 } satisfies Record<string, LocaleEntry>;
 
 export type LanguageCode = keyof typeof LOCALE_REGISTRY;

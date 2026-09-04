@@ -24,6 +24,31 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.workspaces.CHECK_SLUG,
   RPC_CHANNELS.workspaces.UPDATE_REMOTE,
 
+  // workgraph — app-owned local database, never remote/headless.
+  RPC_CHANNELS.workgraph.GET_HEALTH,
+  RPC_CHANNELS.workgraph.GET_VERSION,
+  RPC_CHANNELS.workgraph.LIST_CONNECTIONS,
+  RPC_CHANNELS.workgraph.GET_CONNECTION,
+  RPC_CHANNELS.workgraph.CREATE_CONNECTION,
+  RPC_CHANNELS.workgraph.PREVIEW_GITHUB_ENV,
+  RPC_CHANNELS.workgraph.IMPORT_GITHUB_ENV,
+  RPC_CHANNELS.workgraph.PREVIEW_GIT_HELPER,
+  RPC_CHANNELS.workgraph.IMPORT_GIT_HELPER,
+  RPC_CHANNELS.workgraph.REVOKE_CONNECTION,
+  RPC_CHANNELS.workgraph.REPAIR_CONNECTION,
+  RPC_CHANNELS.workgraph.ROTATE_CONNECTION,
+  RPC_CHANNELS.workgraph.TEST_CONNECTION,
+  RPC_CHANNELS.workgraph.PREVIEW_DOCKER_HELPER,
+  RPC_CHANNELS.workgraph.IMPORT_DOCKER_HELPER,
+  RPC_CHANNELS.workgraph.PREVIEW_AWS_PROFILES,
+  RPC_CHANNELS.workgraph.IMPORT_AWS_PROFILE,
+  RPC_CHANNELS.workgraph.PREVIEW_KEYCHAIN,
+  RPC_CHANNELS.workgraph.IMPORT_KEYCHAIN,
+  RPC_CHANNELS.workgraph.PREVIEW_ADC,
+  RPC_CHANNELS.workgraph.IMPORT_ADC,
+  RPC_CHANNELS.workgraph.PREVIEW_SSH_AGENT,
+  RPC_CHANNELS.workgraph.IMPORT_SSH_AGENT,
+
   // window — Electron window management
   RPC_CHANNELS.window.GET_WORKSPACE,
   RPC_CHANNELS.window.GET_MODE,
@@ -54,6 +79,12 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.auth.SHOW_LOGOUT_CONFIRMATION,
   RPC_CHANNELS.auth.SHOW_DELETE_SESSION_CONFIRMATION,
   RPC_CHANNELS.auth.SHOW_DELETE_WORKSPACE_CONFIRMATION,
+
+  // credentials — local encrypted vault (desktop-only controlled migration)
+  RPC_CHANNELS.credentials.PREVIEW_MIGRATION,
+  RPC_CHANNELS.credentials.APPLY_MIGRATION,
+  RPC_CHANNELS.credentials.GET_MIGRATION_STATUS,
+  RPC_CHANNELS.credentials.ROLLBACK_MIGRATION,
 
   // shell — local OS shell (openFile/showInFolder guarded for remote)
   RPC_CHANNELS.shell.OPEN_URL,
@@ -307,6 +338,8 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.knowledge.ENGINE_STATUS,
   RPC_CHANNELS.knowledge.DETECT_ENGINE,
   RPC_CHANNELS.knowledge.ENGINE_START,
+  // Local vault/kernel import: remote clients must not drive host filesystem paths.
+  RPC_CHANNELS.knowledge.MIGRATE_NOTES,
   RPC_CHANNELS.mindmap.ENRICH,
   RPC_CHANNELS.mindmap.PIN_LOAD,
   RPC_CHANNELS.mindmap.PIN_SAVE,
@@ -504,7 +537,6 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.knowledge.VIEW_SET_ATTRIBUTE,
   RPC_CHANNELS.knowledge.WATCH,
   RPC_CHANNELS.knowledge.UNWATCH,
-  RPC_CHANNELS.knowledge.MIGRATE_NOTES,
   RPC_CHANNELS.knowledge.METRICS_GET,
 
   // memory — lesson/context data served by workspace host
@@ -638,6 +670,18 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.statuses.REORDER,
   RPC_CHANNELS.statuses.CHANGED,
 
+  // OpenClaw — safe runtime/audit data for the workspace owner. Host control
+  // remains direct Electron IPC and is intentionally absent from this table.
+  RPC_CHANNELS.openclawRuntime.GET_STATUS,
+  RPC_CHANNELS.openclawRuntime.INSTALL,
+  RPC_CHANNELS.openclawRuntime.PROVISION,
+  RPC_CHANNELS.openclawRuntime.START,
+  RPC_CHANNELS.openclawRuntime.STOP,
+  RPC_CHANNELS.securityAudit.RUN,
+  RPC_CHANNELS.securityAudit.GET_LATEST,
+  RPC_CHANNELS.securityAudit.ACCEPT_RISK,
+  RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE,
+
   // labels — workspace metadata
   RPC_CHANNELS.labels.LIST,
   RPC_CHANNELS.labels.CREATE,
@@ -657,6 +701,8 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
 
   // automations — workspace automations
   RPC_CHANNELS.automations.GET,
+  RPC_CHANNELS.automations.GET_GRAPH,
+  RPC_CHANNELS.automations.SAVE_GRAPH,
   RPC_CHANNELS.automations.TEST,
   RPC_CHANNELS.automations.SET_ENABLED,
   RPC_CHANNELS.automations.DUPLICATE,

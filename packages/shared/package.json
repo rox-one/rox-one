@@ -86,6 +86,8 @@
     "./knowledge/plugin-allowlist": "./src/knowledge/plugin-allowlist.ts",
     "./orgs": "./src/orgs/index.ts",
     "./gamification": "./src/gamification/index.ts",
+    "./openclaw": "./src/openclaw/index.ts",
+    "./openclaw/types": "./src/openclaw/types.ts",
     "./resources": "./src/resources/index.ts"
   },
   "dependencies": {

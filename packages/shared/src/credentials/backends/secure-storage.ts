@@ -36,7 +36,13 @@ import { copyFileSync, existsSync, readFileSync, renameSync, writeFileSync, mkdi
 import { hostname, userInfo, homedir } from 'os';
 import { join } from 'path';
 
-import type { CredentialBackend } from './types.ts';
+import type {
+  CredentialBackend,
+  CredentialMigrationCounts,
+  CredentialMigrationRecord,
+  CredentialMigrationSnapshot,
+  CredentialMigrationStatus,
+} from './types.ts';
 import type { CredentialId, StoredCredential } from '../types.ts';
 import { credentialIdToAccount, accountToCredentialId } from '../types.ts';
 import { CONFIG_DIR } from '../../config/paths.ts';
@@ -157,11 +163,12 @@ export class SecureStorageBackend implements CredentialBackend {
   private salt: Buffer | null = null;
   private repairState: RepairState = { status: 'ok' };
 
-  constructor(options: SecureStorageOptions = {}) {
-    this.directory = options.directory ?? CONFIG_DIR;
+  constructor(options: string | SecureStorageOptions = {}) {
+    const opts: SecureStorageOptions = typeof options === 'string' ? { directory: options } : options;
+    this.directory = opts.directory ?? CONFIG_DIR;
     this.file = join(this.directory, STORE_NAME);
     this.backupFile = join(this.directory, BACKUP_NAME);
-    this.writeKeyVersion = options.keyVersion ?? 'v2';
+    this.writeKeyVersion = opts.keyVersion ?? 'v2';
   }
 
   getRepairState(): RepairState {
@@ -458,6 +465,23 @@ export class SecureStorageBackend implements CredentialBackend {
     this.encryptionKey = null;
     this.salt = null;
   }
+  async createMigrationSnapshot(): Promise<CredentialMigrationSnapshot> {
+    throw new Error('Credential migration snapshots require the upstream SecureStorage backend');
+  }
+  async applyMigration(
+    _snapshot: CredentialMigrationSnapshot,
+    _replacements: readonly CredentialMigrationRecord[],
+    _counts: CredentialMigrationCounts,
+  ): Promise<void> {
+    throw new Error('Credential migration apply requires the upstream SecureStorage backend');
+  }
+  async rollbackMigration(_migrationId: string): Promise<void> {
+    throw new Error('Credential migration rollback requires the upstream SecureStorage backend');
+  }
+  async getLatestMigrationStatus(): Promise<CredentialMigrationStatus | null> {
+    return null;
+  }
+
 }
 
 function sha256Hex(value: Buffer): string {

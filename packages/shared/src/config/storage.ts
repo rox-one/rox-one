@@ -1,23 +1,33 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync, rmSync, statSync, readdirSync, unlinkSync } from 'fs';
 import { join, dirname, basename } from 'path';
-import { homedir } from 'os';
-import { ensureOmpRoxFirstRun } from '../agent/omp-first-run.ts';
 import { getCredentialManager } from '../credentials/index.ts';
-import { getOrCreateLatestSession, type SessionConfig } from '../sessions/index.ts';
+import {
+  deleteSession,
+  generateSessionId,
+  getOrCreateLatestSession,
+  getOrCreateSessionById,
+  listActiveSessions,
+  type SessionConfig,
+} from '../sessions/index.ts';
 import {
   discoverWorkspacesInDefaultLocation,
   loadWorkspaceConfig,
   saveWorkspaceConfig,
   createWorkspaceAtPath,
-  isValidWorkspace,
+  normalizeWorkspaceAuthority,
+  type WorkspaceCreationIdentity,
 } from '../workspaces/storage.ts';
+import {
+  isCurrentLocalOrganizationMember,
+  requireCurrentLocalOrganizationMembership,
+} from '../orgs/storage.ts';
 import { findIconFile } from '../utils/icon.ts';
 import { extractWorkspaceSlugFromPath } from '../utils/workspace-slug.ts';
 import { initializeDocs } from '../docs/index.ts';
 import { expandPath, toPortablePath, getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
-import { readJsonFileSync } from '../utils/files.ts';
-import { resolveConfigDir } from './paths.ts';
+import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts';
+import { CONFIG_DIR } from './paths.ts';
 import type { StoredAttachment, StoredMessage } from '@craft-agent/core/types';
 import type { Plan } from '../agent/plan-types.ts';
 import type { PermissionMode } from '../agent/mode-manager.ts';
@@ -28,19 +38,10 @@ import { type ConfigDefaults } from './config-defaults-schema.ts';
 import { isValidThemeFile } from './validators.ts';
 import { isToolName } from '../toolchain/types.ts';
 import type { ToolName } from '../toolchain/types.ts';
-import { SECRET_PROVIDER_IDS, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '../secrets/types.ts';
+import type { WorkspaceConfig } from '../workspaces/types.ts';
 
-/**
- * Resolved when this module is evaluated rather than re-exported from
- * `paths.ts`, so it reflects `CRAFT_CONFIG_DIR` as of this module's own load
- * rather than whenever `paths.ts` happened to load first.
- *
- * Note this is still a snapshot: the derived paths below capture it, and
- * re-importing this module does not re-run it — Bun keys the module cache on
- * the resolved path and ignores a `?query` suffix. Making the config root
- * switchable at runtime means turning these constants into accessors.
- */
-export const CONFIG_DIR = resolveConfigDir();
+// Re-export CONFIG_DIR for convenience (centralized in paths.ts)
+export { CONFIG_DIR } from './paths.ts';
 
 // Re-export base types from core (single source of truth)
 export type {
@@ -53,20 +54,13 @@ export type {
 
 // Import for local use
 import type { Workspace, AuthType, RemoteServerConfig } from '@craft-agent/core/types';
+import { normalizeRemoteTlsTrust } from './remote-tls-trust.ts';
+import { SECRET_PROVIDER_IDS, SecretConfigError, toPublicSecretRef, type SecretRefEntry } from '../secrets/types.ts';
 
 // Import LLM connection types and constants
 import type { LlmConnection } from './llm-connections.ts';
 import { DEFAULT_MEMORY_CONFIG, type MemoryConfig } from '../memory/types.ts';
 import { isValidProviderAuthCombination, getDefaultModelsForConnection, getDefaultModelForConnection, isPiProvider, toBedrockNativeId, type LlmProviderType } from './llm-connections.ts';
-import {
-  isRoxLegacyInternalModelId,
-  isRoxPublicModelId,
-  ROX_DEFAULT_CONNECTION_NAME,
-  ROX_DEFAULT_PARENT_MODEL,
-  ROX_GATEWAY_BASE_URL,
-  ROX_PUBLIC_MODEL_IDS,
-  toRoxPublicModelDefinitions,
-} from './rox-public-models.ts';
 import {
   getModelProvider,
   getModelById,
@@ -101,7 +95,7 @@ export interface StoredConfig {
   notificationsEnabled?: boolean;  // Desktop notifications for task completion (default: true)
   // Appearance
   colorTheme?: string;  // ID of selected preset theme (e.g., 'dracula', 'nord'). Default: 'default'
-  defaultZoomLevel?: number;  // Default app zoom percentage (50-150, default: 100)
+  defaultZoomLevel?: number;  // Default app zoom percentage (50-150, default: 90)
   // Auto-update
   dismissedUpdateVersion?: string;  // Version that user dismissed (skip notifications for this version)
   // Input settings
@@ -149,10 +143,7 @@ export interface StoredConfig {
   // overrides (CRAFT_WORKSPACE_PATH, mini-model) — session-specific values win.
   runtime?: {
     envOverrides?: Record<string, string>;
-    // Scoped secret injections (docs/secrets-providers.md). Refs only — never
-    // values. Resolved at spawn time via the secrets provider chain; the
-    // resolved env fragment lives in memory (setRuntimeSecretEnvFragment) and
-    // merges into getRuntimeEnvOverrides() output.
+    // Scoped secret injections. Refs only — never values.
     secretRefs?: SecretRefEntry[];
   };
   // Marketplace catalog meta (ETag + last fetch). Persisted by createConfigMetaStore
@@ -178,6 +169,487 @@ export interface StoredConfig {
 const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
 const CONFIG_DEFAULTS_FILE = join(CONFIG_DIR, 'config-defaults.json');
 
+const WORKSPACE_LIFECYCLE_FILE = join(CONFIG_DIR, 'workspace-lifecycle.json');
+const WORKSPACE_LIFECYCLE_VERSION = 1 as const;
+
+type WorkspaceKind = NonNullable<Workspace['kind']>;
+type CanonicalWorkspace = Workspace & { kind: WorkspaceKind };
+
+interface WorkspaceMutationInput
+  extends Omit<Workspace, 'id' | 'createdAt' | 'slug' | 'name' | 'rootPath'> {
+  name: string;
+  rootPath: string;
+  defaults?: WorkspaceConfig['defaults'];
+}
+
+/**
+ * A complete local activation state captured only after the folder is bound,
+ * an initial session exists, and the registry points at this workspace.
+ */
+export interface WorkspaceActivationSnapshot {
+  workspace: CanonicalWorkspace;
+  session: SessionConfig;
+  activeWorkspaceId: string;
+}
+
+/**
+ * Internal lifecycle seam. It is deliberately not reachable through RPC;
+ * focused tests use it to prove that a post-folder failure rolls back rather
+ * than publishing a partial workspace.
+ */
+export interface WorkspaceLifecycleHooks {
+  afterFolderBound?: (workspace: CanonicalWorkspace) => void;
+  beforeRegistryCommit?: (workspace: CanonicalWorkspace) => void;
+}
+
+interface PendingWorkspaceLifecycle {
+  version: typeof WORKSPACE_LIFECYCLE_VERSION;
+  phase: 'prepared' | 'folder-bound' | 'session-prepared' | 'session-created';
+  workspace: CanonicalWorkspace;
+  resultingActiveWorkspaceId: string | null;
+  rootCreated: boolean;
+  previousFolderConfig: string | null;
+  createdSessionId?: string;
+}
+
+interface StagedWorkspaceMutation {
+  journal: PendingWorkspaceLifecycle;
+  nextConfig: StoredConfig;
+  workspace: CanonicalWorkspace;
+  hooks?: WorkspaceLifecycleHooks;
+}
+
+function normalizeWorkspaceRecord(workspace: Workspace): CanonicalWorkspace {
+  const normalized = { ...workspace };
+  normalizeWorkspaceAuthority(normalized);
+
+  if (normalized.remoteServer) {
+    normalized.remoteServer = {
+      ...normalized.remoteServer,
+      tlsTrust: normalizeRemoteTlsTrust(normalized.remoteServer),
+    };
+  }
+
+  if (typeof normalized.name !== 'string' || !normalized.name.trim()) {
+    normalized.name =
+      typeof normalized.rootPath === 'string' && normalized.rootPath
+        ? basename(normalized.rootPath)
+        : 'Untitled';
+  } else {
+    normalized.name = normalized.name.trim();
+  }
+
+  if (typeof normalized.slug !== 'string' || !normalized.slug.trim()) {
+    normalized.slug = extractWorkspaceSlugFromPath(normalized.rootPath, normalized.id);
+  }
+
+  return normalized as CanonicalWorkspace;
+}
+
+function workspaceRecordsMatch(
+  candidate: Workspace | undefined,
+  expected: CanonicalWorkspace,
+): boolean {
+  if (!candidate) return false;
+  const normalizedCandidate = normalizeWorkspaceRecord({
+    ...candidate,
+    rootPath: expandPath(candidate.rootPath),
+  });
+  return (
+    normalizedCandidate.id === expected.id &&
+    normalizedCandidate.name === expected.name &&
+    normalizedCandidate.rootPath === expected.rootPath &&
+    normalizedCandidate.kind === expected.kind &&
+    normalizedCandidate.orgId === expected.orgId
+  );
+}
+
+function assertWorkspaceAuthority(workspace: CanonicalWorkspace): void {
+  if (workspace.kind !== 'team') return;
+  if (!workspace.orgId) throw new Error('Team workspace requires a non-empty orgId');
+  if (workspace.remoteServer) {
+    throw new Error(
+      'Remote TeamSpace creation requires a remote prepare/commit/abort endpoint',
+    );
+  }
+  requireCurrentLocalOrganizationMembership(workspace.orgId);
+}
+
+function isWorkspaceAccessibleToCurrentIdentity(workspace: CanonicalWorkspace): boolean {
+  if (workspace.kind !== 'team') return true;
+  return Boolean(
+    !workspace.remoteServer &&
+      workspace.orgId &&
+      isCurrentLocalOrganizationMember(workspace.orgId),
+  );
+}
+
+function readPendingWorkspaceLifecycle(): PendingWorkspaceLifecycle | null {
+  if (!existsSync(WORKSPACE_LIFECYCLE_FILE)) return null;
+
+  const raw = readJsonFileSync<Partial<PendingWorkspaceLifecycle>>(
+    WORKSPACE_LIFECYCLE_FILE,
+  );
+  const workspace = raw.workspace;
+  if (
+    raw.version !== WORKSPACE_LIFECYCLE_VERSION ||
+    !workspace ||
+    typeof workspace.id !== 'string' ||
+    !workspace.id ||
+    typeof workspace.name !== 'string' ||
+    !workspace.name ||
+    typeof workspace.rootPath !== 'string' ||
+    !workspace.rootPath ||
+    (raw.phase !== 'prepared' &&
+      raw.phase !== 'folder-bound' &&
+      raw.phase !== 'session-prepared' &&
+      raw.phase !== 'session-created') ||
+    (raw.previousFolderConfig !== null &&
+      typeof raw.previousFolderConfig !== 'string') ||
+    (raw.createdSessionId !== undefined && typeof raw.createdSessionId !== 'string')
+  ) {
+    throw new Error('Invalid workspace lifecycle journal');
+  }
+
+  return {
+    version: WORKSPACE_LIFECYCLE_VERSION,
+    phase: raw.phase,
+    workspace: normalizeWorkspaceRecord(workspace),
+    resultingActiveWorkspaceId:
+      typeof raw.resultingActiveWorkspaceId === 'string'
+        ? raw.resultingActiveWorkspaceId
+        : null,
+    rootCreated: raw.rootCreated === true,
+    previousFolderConfig: raw.previousFolderConfig,
+    ...(raw.createdSessionId ? { createdSessionId: raw.createdSessionId } : {}),
+  };
+}
+
+function writePendingWorkspaceLifecycle(journal: PendingWorkspaceLifecycle): void {
+  atomicWriteFileSync(
+    WORKSPACE_LIFECYCLE_FILE,
+    JSON.stringify(journal, null, 2) + '\n',
+  );
+}
+
+function clearPendingWorkspaceLifecycle(): void {
+  try {
+    if (existsSync(WORKSPACE_LIFECYCLE_FILE)) {
+      unlinkSync(WORKSPACE_LIFECYCLE_FILE);
+    }
+  } catch (error) {
+    // A committed registry remains authoritative; startup recovery will retry.
+    debug(
+      '[config] Failed to clear workspace lifecycle journal:',
+      error instanceof Error ? error.message : error,
+    );
+  }
+}
+
+function isWorkspaceLifecycleCommitted(
+  journal: PendingWorkspaceLifecycle,
+): boolean {
+  if (!existsSync(CONFIG_FILE)) return false;
+  const config = readJsonFileSync<StoredConfig>(CONFIG_FILE);
+  const candidate = config.workspaces?.find(
+    (workspace) => workspace.id === journal.workspace.id,
+  );
+  return (
+    workspaceRecordsMatch(candidate, journal.workspace) &&
+    config.activeWorkspaceId === journal.resultingActiveWorkspaceId
+  );
+}
+
+function rollbackWorkspaceLifecycle(journal: PendingWorkspaceLifecycle): void {
+  if (isWorkspaceLifecycleCommitted(journal)) return;
+
+  if (journal.createdSessionId && !journal.rootCreated) {
+    deleteSession(journal.workspace.rootPath, journal.createdSessionId);
+  }
+
+  if (journal.rootCreated) {
+    // The journal is written before this root is ever created, so only this
+    // lifecycle can mark it owned. Never remove a pre-existing user folder.
+    rmSync(journal.workspace.rootPath, { recursive: true, force: true });
+  } else {
+    const folderConfigPath = join(journal.workspace.rootPath, 'config.json');
+    if (journal.previousFolderConfig !== null) {
+      atomicWriteFileSync(folderConfigPath, journal.previousFolderConfig);
+    } else {
+      const current = loadWorkspaceConfig(journal.workspace.rootPath);
+      if (current?.id === journal.workspace.id && existsSync(folderConfigPath)) {
+        unlinkSync(folderConfigPath);
+      }
+    }
+  }
+
+  clearPendingWorkspaceLifecycle();
+}
+
+/**
+ * Recover a lifecycle that stopped after folder binding but before the atomic
+ * registry commit. A committed registry wins; otherwise the durable journal
+ * restores the old folder config or removes the root created by this attempt.
+ */
+export function recoverPendingWorkspaceLifecycle(): void {
+  const journal = readPendingWorkspaceLifecycle();
+  if (!journal) return;
+  if (isWorkspaceLifecycleCommitted(journal)) {
+    clearPendingWorkspaceLifecycle();
+    return;
+  }
+  rollbackWorkspaceLifecycle(journal);
+}
+
+function canonicalFolderIdentity(
+  workspace: CanonicalWorkspace,
+): WorkspaceCreationIdentity {
+  return {
+    id: workspace.id,
+    slug: workspace.slug,
+    kind: workspace.kind,
+    ...(workspace.kind === 'team' ? { orgId: workspace.orgId } : {}),
+  };
+}
+
+function bindCanonicalWorkspaceFolder(
+  workspace: CanonicalWorkspace,
+  defaults?: WorkspaceConfig['defaults'],
+): void {
+  const folderConfigPath = join(workspace.rootPath, 'config.json');
+  const existing = loadWorkspaceConfig(workspace.rootPath);
+  if (!existing) {
+    if (existsSync(folderConfigPath)) {
+      throw new Error(
+        `Cannot bind workspace with unreadable config: ${folderConfigPath}`,
+      );
+    }
+    createWorkspaceAtPath(
+      workspace.rootPath,
+      workspace.name,
+      defaults,
+      canonicalFolderIdentity(workspace),
+    );
+    return;
+  }
+
+  const folderConfig: WorkspaceConfig = {
+    ...existing,
+    id: workspace.id,
+    name: workspace.name,
+    slug: workspace.slug,
+    kind: workspace.kind,
+    ...(workspace.kind === 'team' ? { orgId: workspace.orgId } : {}),
+  };
+  if (workspace.kind !== 'team') delete folderConfig.orgId;
+  saveWorkspaceConfig(workspace.rootPath, folderConfig);
+}
+
+function configWithWorkspace(
+  config: StoredConfig,
+  workspace: CanonicalWorkspace,
+  activate: boolean,
+): StoredConfig {
+  const index = config.workspaces.findIndex(
+    (candidate) => candidate.id === workspace.id,
+  );
+  const workspaces =
+    index === -1
+      ? [...config.workspaces, workspace]
+      : config.workspaces.map((candidate, candidateIndex) =>
+          candidateIndex === index ? workspace : candidate,
+        );
+
+  return {
+    ...config,
+    workspaces,
+    activeWorkspaceId: activate ? workspace.id : config.activeWorkspaceId,
+  };
+}
+
+function stageWorkspaceMutation(
+  config: StoredConfig,
+  workspace: CanonicalWorkspace,
+  activate: boolean,
+  defaults?: WorkspaceConfig['defaults'],
+  hooks?: WorkspaceLifecycleHooks,
+): StagedWorkspaceMutation {
+  const folderConfigPath = join(workspace.rootPath, 'config.json');
+  const rootCreated = !existsSync(workspace.rootPath);
+  const previousFolderConfig = existsSync(folderConfigPath)
+    ? readFileSync(folderConfigPath, 'utf-8')
+    : null;
+  const journal: PendingWorkspaceLifecycle = {
+    version: WORKSPACE_LIFECYCLE_VERSION,
+    phase: 'prepared',
+    workspace,
+    resultingActiveWorkspaceId: activate
+      ? workspace.id
+      : config.activeWorkspaceId,
+    rootCreated,
+    previousFolderConfig,
+  };
+
+  writePendingWorkspaceLifecycle(journal);
+  try {
+    bindCanonicalWorkspaceFolder(workspace, defaults);
+    journal.phase = 'folder-bound';
+    writePendingWorkspaceLifecycle(journal);
+    hooks?.afterFolderBound?.(workspace);
+    return {
+      journal,
+      nextConfig: configWithWorkspace(config, workspace, activate),
+      workspace,
+      hooks,
+    };
+  } catch (error) {
+    try {
+      rollbackWorkspaceLifecycle(journal);
+    } catch (rollbackError) {
+      debug(
+        '[config] Workspace lifecycle rollback failed:',
+        rollbackError instanceof Error ? rollbackError.message : rollbackError,
+      );
+    }
+    throw error;
+  }
+}
+
+function commitWorkspaceMutation(staged: StagedWorkspaceMutation): CanonicalWorkspace {
+  try {
+    staged.hooks?.beforeRegistryCommit?.(staged.workspace);
+    saveConfig(staged.nextConfig);
+  } catch (error) {
+    try {
+      if (!isWorkspaceLifecycleCommitted(staged.journal)) {
+        rollbackWorkspaceLifecycle(staged.journal);
+      }
+    } catch (rollbackError) {
+      debug(
+        '[config] Workspace lifecycle rollback after registry failure failed:',
+        rollbackError instanceof Error ? rollbackError.message : rollbackError,
+      );
+    }
+    throw error;
+  }
+
+  clearPendingWorkspaceLifecycle();
+  return staged.workspace;
+}
+
+function configForWorkspaceMutation(): StoredConfig {
+  const config = loadStoredConfig();
+  if (config) return config;
+  if (existsSync(CONFIG_FILE)) {
+    throw new Error('Unable to load existing workspace registry');
+  }
+  ensureConfigDir();
+  return { workspaces: [], activeWorkspaceId: null, activeSessionId: null };
+}
+
+function buildCanonicalWorkspace(
+  input: WorkspaceMutationInput,
+  existing?: Workspace,
+): CanonicalWorkspace {
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  const rootPath = typeof input.rootPath === 'string' ? input.rootPath.trim() : '';
+  if (!name) throw new Error('Workspace name is required');
+  if (!rootPath) throw new Error('Workspace rootPath is required');
+
+  const { defaults: _defaults, ...workspaceFields } = input;
+  if (workspaceFields.kind === undefined) delete workspaceFields.kind;
+  if (workspaceFields.orgId === undefined) delete workspaceFields.orgId;
+  const requestedKind = workspaceFields.kind;
+  const requestedOrgId =
+    typeof workspaceFields.orgId === 'string' ? workspaceFields.orgId.trim() : '';
+  const existingTeamOrgId =
+    existing?.kind === 'team' && typeof existing.orgId === 'string'
+      ? existing.orgId.trim()
+      : '';
+  if (requestedKind === 'team' && !(requestedOrgId || existingTeamOrgId)) {
+    throw new Error('Team workspace requires a non-empty orgId');
+  }
+  if (requestedKind !== 'team' && requestedOrgId) {
+    throw new Error('orgId is only valid for a team workspace');
+  }
+  const workspace = normalizeWorkspaceRecord({
+    ...existing,
+    ...workspaceFields,
+    id: existing?.id ?? generateWorkspaceId(),
+    name,
+    slug: extractWorkspaceSlugFromPath(rootPath, existing?.id ?? ''),
+    rootPath,
+    createdAt: existing?.createdAt ?? Date.now(),
+  });
+  assertWorkspaceAuthority(workspace);
+  return workspace;
+}
+
+/**
+ * Creates, canonically binds, and activates a local workspace as one durable
+ * lifecycle. The registry is published only after the folder and activation
+ * session exist; a crash before commit is recovered from the journal.
+ */
+export async function createAndActivateLocalWorkspace(
+  input: WorkspaceMutationInput,
+  hooks?: WorkspaceLifecycleHooks,
+): Promise<WorkspaceActivationSnapshot> {
+  const config = configForWorkspaceMutation();
+  const requestedRootPath =
+    typeof input.rootPath === 'string' ? input.rootPath.trim() : '';
+  const existing = config.workspaces.find(
+    (workspace) => workspace.rootPath === requestedRootPath,
+  );
+  const workspace = buildCanonicalWorkspace(input, existing);
+  if (workspace.remoteServer) {
+    throw new Error('Local workspace lifecycle does not support remote workspaces');
+  }
+
+  const staged = stageWorkspaceMutation(
+    config,
+    workspace,
+    true,
+    input.defaults,
+    hooks,
+  );
+  try {
+    const existingSessions = listActiveSessions(workspace.rootPath);
+    let session: SessionConfig;
+    if (existingSessions.length > 0) {
+      session = await getOrCreateLatestSession(workspace.rootPath);
+    } else {
+      const sessionId = generateSessionId(workspace.rootPath);
+      // Persist the generated ID before creating it so crash recovery can
+      // remove it from a pre-existing user folder as well as a new root.
+      staged.journal.createdSessionId = sessionId;
+      staged.journal.phase = 'session-prepared';
+      writePendingWorkspaceLifecycle(staged.journal);
+      session = await getOrCreateSessionById(workspace.rootPath, sessionId);
+      staged.journal.phase = 'session-created';
+      writePendingWorkspaceLifecycle(staged.journal);
+    }
+
+    const committedWorkspace = commitWorkspaceMutation(staged);
+    return {
+      workspace: committedWorkspace,
+      session,
+      activeWorkspaceId: committedWorkspace.id,
+    };
+  } catch (error) {
+    try {
+      if (existsSync(WORKSPACE_LIFECYCLE_FILE)) {
+        rollbackWorkspaceLifecycle(staged.journal);
+      }
+    } catch (rollbackError) {
+      debug(
+        '[config] Workspace activation rollback failed:',
+        rollbackError instanceof Error ? rollbackError.message : rollbackError,
+      );
+    }
+    throw error;
+  }
+}
+
 // Track if config-defaults have been synced this session (prevents re-sync on hot reload)
 let configDefaultsSynced = false;
 
@@ -188,19 +660,21 @@ let configDefaultsSynced = false;
  *
  * Source of truth: apps/electron/resources/config-defaults.json
  */
+const DEFAULT_ZOOM_LEVEL = 90;
+
 /** Minimal config-defaults used when bundled assets aren't available (CI, standalone server). */
 const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
   version: '1.0',
   description: 'Default configuration values for Craft Agents',
   defaults: {
     notificationsEnabled: true,
-    colorTheme: 'default',
+    colorTheme: 'pierre',
     autoCapitalisation: true,
     sendMessageKey: 'enter',
     spellCheck: false,
     keepAwakeWhileRunning: false,
     richToolDescriptions: true,
-    defaultZoomLevel: 100,
+    defaultZoomLevel: DEFAULT_ZOOM_LEVEL,
     extendedPromptCache: false,
     browserToolEnabled: true,
     allowRemoteEvaluate: true,
@@ -345,6 +819,11 @@ export function ensureConfigDir(): void {
 
 export function loadStoredConfig(): StoredConfig | null {
   try {
+    // A journal always predates a folder mutation. Recover it before exposing
+    // the registry so interrupted local creation never becomes a half-visible
+    // workspace on the next start.
+    recoverPendingWorkspaceLifecycle();
+
     if (!existsSync(CONFIG_FILE)) {
       return null;
     }
@@ -355,27 +834,53 @@ export function loadStoredConfig(): StoredConfig | null {
       return null;
     }
 
-    // Expand path variables (~ and ${HOME}) for portability
-    for (const workspace of config.workspaces) {
-      workspace.rootPath = expandPath(workspace.rootPath);
-    }
+    let needsSave = false;
+
+    // Expand paths and make the global registry the canonical identity source
+    // for every tracked folder. Legacy no-kind records normalize to personal
+    // and lose any previously unverified org marker.
+    config.workspaces = config.workspaces.map((workspace) => {
+      const expanded = {
+        ...workspace,
+        rootPath: expandPath(workspace.rootPath),
+      };
+      const normalized = normalizeWorkspaceRecord(expanded);
+      if (
+        normalized.rootPath !== workspace.rootPath ||
+        normalized.name !== workspace.name ||
+        normalized.slug !== workspace.slug ||
+        normalized.kind !== workspace.kind ||
+        normalized.orgId !== workspace.orgId ||
+        JSON.stringify(normalized.remoteServer?.tlsTrust) !==
+          JSON.stringify(workspace.remoteServer?.tlsTrust)
+      ) {
+        needsSave = true;
+      }
+      return normalized;
+    });
 
     // Validate active workspace exists
-    const activeWorkspace = config.workspaces.find(w => w.id === config.activeWorkspaceId);
+    const activeWorkspace = config.workspaces.find(
+      (workspace) => workspace.id === config.activeWorkspaceId,
+    );
     if (!activeWorkspace) {
       // Default to first workspace
       config.activeWorkspaceId = config.workspaces[0]?.id || null;
+      needsSave = true;
     }
 
-    // Ensure workspace folder structure exists for all workspaces.
-    // Failures here are non-fatal — the workspace will be re-created on next access.
+    // Repair/initialize local folders with the canonical registry identity.
+    // Folder failures are non-fatal and never replace the registry identity.
     for (const workspace of config.workspaces) {
-      if (!isValidWorkspace(workspace.rootPath)) {
-        try {
-          createWorkspaceAtPath(workspace.rootPath, workspace.name);
-        } catch (wsError) {
-          debug('[config] Failed to create workspace at', workspace.rootPath, ':', wsError instanceof Error ? wsError.message : wsError);
-        }
+      try {
+        bindCanonicalWorkspaceFolder(normalizeWorkspaceRecord(workspace));
+      } catch (wsError) {
+        debug(
+          '[config] Failed to bind workspace at',
+          workspace.rootPath,
+          ':',
+          wsError instanceof Error ? wsError.message : wsError,
+        );
       }
     }
 
@@ -392,14 +897,17 @@ export function loadStoredConfig(): StoredConfig | null {
         defaultMaxLlmTokens: 2_000_000,
         defaultMaxArtifactsBytes: 25 * 1024 * 1024,
       };
+      needsSave = true;
+    }
+
+    if (needsSave) {
       try {
-        // Persist seed so subsequent reads and other processes see defaults.
-        // saveConfig re-portable-izes workspace paths; in-memory config keeps expanded paths.
+        // saveConfig re-portable-izes paths; in-memory config stays expanded.
         saveConfig(config);
-      } catch (seedError) {
+      } catch (saveError) {
         debug(
-          '[config] Failed to seed cloudRuns defaults:',
-          seedError instanceof Error ? seedError.message : seedError,
+          '[config] Failed to persist workspace/config migration:',
+          saveError instanceof Error ? saveError.message : saveError,
         );
       }
     }
@@ -418,16 +926,23 @@ export function loadStoredConfig(): StoredConfig | null {
 export function saveConfig(config: StoredConfig): void {
   ensureConfigDir();
 
-  // Convert paths to portable form (~ prefix) for cross-machine compatibility
+  // Convert paths to portable form for cross-machine compatibility and persist
+  // the explicit authority discriminator on every registry write.
   const storageConfig: StoredConfig = {
     ...config,
-    workspaces: config.workspaces.map(ws => ({
-      ...ws,
-      rootPath: toPortablePath(ws.rootPath),
-    })),
+    workspaces: config.workspaces.map((workspace) => {
+      const normalized = normalizeWorkspaceRecord(workspace);
+      return {
+        ...normalized,
+        rootPath: toPortablePath(normalized.rootPath),
+      };
+    }),
   };
 
-  writeFileSync(CONFIG_FILE, JSON.stringify(storageConfig, null, 2), 'utf-8');
+  atomicWriteFileSync(
+    CONFIG_FILE,
+    JSON.stringify(storageConfig, null, 2) + '\n',
+  );
 }
 
 // Legacy updateApiKey() removed - use setupLlmConnection IPC handler instead.
@@ -580,14 +1095,14 @@ const MAX_DEFAULT_ZOOM_LEVEL = 150;
 const DEFAULT_ZOOM_STEP = 10;
 
 function normalizeDefaultZoomLevel(level: number): number {
-  if (!Number.isFinite(level)) return 100;
+  if (!Number.isFinite(level)) return DEFAULT_ZOOM_LEVEL;
   const stepped = Math.round(level / DEFAULT_ZOOM_STEP) * DEFAULT_ZOOM_STEP;
   return Math.min(MAX_DEFAULT_ZOOM_LEVEL, Math.max(MIN_DEFAULT_ZOOM_LEVEL, stepped));
 }
 
 /**
  * Get the default app zoom level as a percentage.
- * Defaults to 100 if not set.
+ * Defaults to 90 if not set.
  */
 export function getDefaultZoomLevel(): number {
   const config = loadStoredConfig();
@@ -638,14 +1153,8 @@ export function getBrowserToolEnabled(): boolean {
   if (config?.browserToolEnabled !== undefined) {
     return config.browserToolEnabled;
   }
-  try {
-    const defaults = loadConfigDefaults();
-    return defaults.defaults.browserToolEnabled;
-  } catch {
-    // Isolated tests and first-boot without a synced defaults file:
-    // documented default is enabled.
-    return true;
-  }
+  const defaults = loadConfigDefaults();
+  return defaults.defaults.browserToolEnabled;
 }
 
 /**
@@ -816,43 +1325,29 @@ export function setBundledSkillsDisabled(slugs: string[]): void {
 }
 
 /**
- * Resolved secret env fragment (from runtime.secretRefs via the secrets
- * provider chain). In-memory ONLY — never persisted, never returned to the
- * renderer (settings RPC uses getPersistedRuntimeEnvOverrides).
+ * Runtime: пользовательские переменные окружения для всех агент-сессий
+ * (config runtime.envOverrides). Сливаются в env подпроцесса ПОСЛЕ process.env
+ * и proxy, но ДО per-session envOverrides (CRAFT_WORKSPACE_PATH и пр. побеждают).
  */
 let runtimeSecretEnvFragment: Record<string, string> = {};
 
-/** Store the resolved secret env fragment. Called by the secrets runtime after a refresh. */
 export function setRuntimeSecretEnvFragment(fragment: Record<string, string>): void {
   runtimeSecretEnvFragment = { ...fragment };
 }
 
-/** Current resolved secret env fragment (empty until the first refresh). */
 export function getRuntimeSecretEnvFragment(): Record<string, string> {
   return { ...runtimeSecretEnvFragment };
 }
 
 /**
- * Runtime: пользовательские переменные окружения для всех агент-сессий
- * (config runtime.envOverrides). Сливаются в env подпроцесса ПОСЛЕ process.env
- * и proxy, но ДО per-session envOverrides (CRAFT_WORKSPACE_PATH и пр. побеждают).
- *
- * Resolved secrets (runtime.secretRefs) merge ON TOP of plain envOverrides —
- * on key collision the secret wins (it is the more deliberate mechanism).
- * Per-session structural keys applied by callers after this still win.
- *
- * NOTE: the merged result contains resolved secret values. UI/RPC surfaces
- * must use getPersistedRuntimeEnvOverrides() instead.
+ * Merged persisted envOverrides + in-memory resolved secret fragment.
+ * UI/RPC must use getPersistedRuntimeEnvOverrides() instead.
  */
 export function getRuntimeEnvOverrides(): Record<string, string> {
   const config = loadStoredConfig();
   return { ...(config?.runtime?.envOverrides ?? {}), ...runtimeSecretEnvFragment };
 }
 
-/**
- * Only the persisted config runtime.envOverrides — no resolved secrets.
- * Safe to return to the renderer / settings UI.
- */
 export function getPersistedRuntimeEnvOverrides(): Record<string, string> {
   const config = loadStoredConfig();
   return { ...(config?.runtime?.envOverrides ?? {}) };
@@ -869,11 +1364,6 @@ export function getPersistedRuntimeEnvOverrides(): Record<string, string> {
  * тоже запрещены — они выставляются кодом, не пользователем.
  */
 const ENV_OVERRIDE_KEY_RE = /^[A-Za-z_][A-Za-z0-9_]*$/
-/**
- * Env var names that must never be injected via runtime overrides/secret refs.
- * Exported for the secrets chain, which enforces the same denylist at
- * RESOLUTION time (config.json can be edited directly, bypassing setters).
- */
 export const ENV_OVERRIDE_DENY: Record<string, true> = {
   PATH: true,
   Path: true, // win32 casing
@@ -919,20 +1409,11 @@ export function setRuntimeEnvOverrides(env: Record<string, string>): void {
   saveConfig(config);
 }
 
-/**
- * Configured secret refs (config runtime.secretRefs). Refs only — resolution
- * happens at spawn time via refreshRuntimeSecretEnv() (secrets/runtime.ts).
- */
 export function getRuntimeSecretRefs(): SecretRefEntry[] {
   const config = loadStoredConfig();
   return (config?.runtime?.secretRefs ?? []).map((entry) => toPublicSecretRef(entry));
 }
 
-/**
- * Persist runtime.secretRefs. Same envVar rules as env overrides (POSIX name,
- * denylist) — a secret must not be injectable as PATH/NODE_OPTIONS/etc.
- * Values are never stored here, only references.
- */
 export function setRuntimeSecretRefs(refs: SecretRefEntry[]): void {
   const config = loadStoredConfig();
   if (!config) return;
@@ -1063,24 +1544,27 @@ export function findWorkspaceIcon(rootPath: string): string | null {
   return findIconFile(rootPath) ?? null;
 }
 
+/**
+ * Lists only workspaces this local server identity may access. Team workspace
+ * membership is checked here as a defense in depth; mutation paths also check
+ * it before touching disk.
+ */
 export function getWorkspaces(): Workspace[] {
   const config = loadStoredConfig();
-  const workspaces = config?.workspaces || [];
+  const workspaces = (config?.workspaces ?? [])
+    .map((workspace) => normalizeWorkspaceRecord(workspace))
+    .filter(isWorkspaceAccessibleToCurrentIdentity);
 
-  // Resolve workspace names from folder config and local icons
-  return workspaces.map(w => {
-    // Read name from workspace folder config (single source of truth)
-    const wsConfig = loadWorkspaceConfig(w.rootPath);
-    const name = wsConfig?.name || basename(w.rootPath) || 'Untitled';
-
-    // If workspace has a stored iconUrl that's a remote URL, use it
-    // Otherwise check for local icon file
-    let iconUrl = w.iconUrl;
-    if (!iconUrl || (!iconUrl.startsWith('http://') && !iconUrl.startsWith('https://'))) {
-      const localIcon = findWorkspaceIcon(w.rootPath);
+  return workspaces.map((workspace) => {
+    // A remote URL remains authoritative; local icon files are a convenience
+    // for local workspaces only.
+    let iconUrl = workspace.iconUrl;
+    if (
+      !iconUrl ||
+      (!iconUrl.startsWith('http://') && !iconUrl.startsWith('https://'))
+    ) {
+      const localIcon = findWorkspaceIcon(workspace.rootPath);
       if (localIcon) {
-        // Convert absolute path to file:// URL for Electron renderer
-        // Append mtime as cache-buster so UI refreshes when icon changes
         try {
           const mtime = statSync(localIcon).mtimeMs;
           iconUrl = `file://${localIcon}?t=${mtime}`;
@@ -1090,17 +1574,18 @@ export function getWorkspaces(): Workspace[] {
       }
     }
 
-    const slug = extractWorkspaceSlugFromPath(w.rootPath, w.id);
-    return { ...w, name, slug, iconUrl };
+    return { ...workspace, iconUrl };
   });
 }
 
 export function getActiveWorkspace(): Workspace | null {
-  const config = loadStoredConfig();
-  if (!config || !config.activeWorkspaceId) {
-    return config?.workspaces[0] || null;
-  }
-  return config.workspaces.find(w => w.id === config.activeWorkspaceId) || config.workspaces[0] || null;
+  const activeWorkspaceId = loadStoredConfig()?.activeWorkspaceId;
+  const workspaces = getWorkspaces();
+  return (
+    workspaces.find((workspace) => workspace.id === activeWorkspaceId) ??
+    workspaces[0] ??
+    null
+  );
 }
 
 /**
@@ -1108,11 +1593,15 @@ export function getActiveWorkspace(): Workspace | null {
  * Useful for CLI -w flag to specify workspace.
  */
 export function getWorkspaceByNameOrId(nameOrId: string): Workspace | null {
-  const workspaces = getWorkspaces();
-  return workspaces.find(w =>
-    w.id === nameOrId ||
-    w.name.toLowerCase() === nameOrId.toLowerCase()
-  ) || null;
+  if (typeof nameOrId !== 'string' || !nameOrId.trim()) return null;
+  const requested = nameOrId.trim();
+  return (
+    getWorkspaces().find(
+      (workspace) =>
+        workspace.id === requested ||
+        workspace.name.toLowerCase() === requested.toLowerCase(),
+    ) ?? null
+  );
 }
 
 export function updateWorkspaceRemoteServer(
@@ -1121,11 +1610,23 @@ export function updateWorkspaceRemoteServer(
 ): void {
   const config = loadStoredConfig();
   if (!config) return;
-  const ws = config.workspaces.find(w => w.id === workspaceId);
-  if (!ws) throw new Error('Workspace not found');
-  // Merge over existing config so durable fields the caller omits (notably
-  // `sshHostId`) survive a reconnect; pass a field as undefined to clear it.
-  ws.remoteServer = ws.remoteServer ? { ...ws.remoteServer, ...remoteServer } : remoteServer;
+  const index = config.workspaces.findIndex(
+    (workspace) => workspace.id === workspaceId,
+  );
+  if (index === -1) throw new Error('Workspace not found');
+
+  const workspace = normalizeWorkspaceRecord(config.workspaces[index]!);
+  if (workspace.kind === 'team') {
+    throw new Error(
+      'Remote TeamSpace updates require a remote prepare/commit/abort endpoint',
+    );
+  }
+  config.workspaces[index] = {
+    ...workspace,
+    remoteServer: workspace.remoteServer
+      ? { ...workspace.remoteServer, ...remoteServer }
+      : remoteServer,
+  };
   saveConfig(config);
 }
 
@@ -1133,128 +1634,142 @@ export function setActiveWorkspace(workspaceId: string): void {
   const config = loadStoredConfig();
   if (!config) return;
 
-  const workspace = config.workspaces.find(w => w.id === workspaceId);
+  const workspace = config.workspaces.find(
+    (candidate) => candidate.id === workspaceId,
+  );
   if (!workspace) return;
+  const normalized = normalizeWorkspaceRecord(workspace);
+  if (!isWorkspaceAccessibleToCurrentIdentity(normalized)) {
+    throw new Error('Not authorized to activate this team workspace');
+  }
 
-  config.activeWorkspaceId = workspaceId;
+  config.activeWorkspaceId = normalized.id;
   saveConfig(config);
+}
+
+/**
+ * Bind or unbind a local workspace to an organization without allowing the
+ * folder and registry identities to drift. A team binding is authorized by
+ * the server-local identity before the journal is written.
+ */
+export function setWorkspaceOrganization(
+  workspaceId: string,
+  orgId: string | null,
+): Workspace {
+  const config = configForWorkspaceMutation();
+  const existing = config.workspaces.find(
+    (workspace) => workspace.id === workspaceId,
+  );
+  if (!existing) throw new Error(`Workspace not found: ${workspaceId}`);
+  const current = normalizeWorkspaceRecord(existing);
+  if (!isWorkspaceAccessibleToCurrentIdentity(current)) {
+    throw new Error('Not authorized to modify this team workspace');
+  }
+
+  const normalizedOrgId = typeof orgId === 'string' ? orgId.trim() : '';
+  const workspace = normalizeWorkspaceRecord({
+    ...existing,
+    kind: normalizedOrgId ? 'team' : 'personal',
+    ...(normalizedOrgId ? { orgId: normalizedOrgId } : {}),
+  });
+  if (!normalizedOrgId) delete workspace.orgId;
+  assertWorkspaceAuthority(workspace);
+
+  const staged = stageWorkspaceMutation(config, workspace, false);
+  return commitWorkspaceMutation(staged);
 }
 
 /**
  * Atomically switch to a workspace and load/create a session.
- * This prevents race conditions by doing both operations together.
- *
- * @param workspaceId The ID of the workspace to switch to
- * @returns The workspace and session, or null if workspace not found
+ * This preserves the legacy return shape while refusing unauthorized team
+ * spaces before a session or active-workspace persistence is changed.
  */
-export async function switchWorkspaceAtomic(workspaceId: string): Promise<{ workspace: Workspace; session: SessionConfig } | null> {
+export async function switchWorkspaceAtomic(
+  workspaceId: string,
+): Promise<{ workspace: Workspace; session: SessionConfig } | null> {
   const config = loadStoredConfig();
   if (!config) return null;
 
-  const workspace = config.workspaces.find(w => w.id === workspaceId);
-  if (!workspace) return null;
+  const existing = config.workspaces.find(
+    (workspace) => workspace.id === workspaceId,
+  );
+  if (!existing) return null;
+  const workspace = normalizeWorkspaceRecord(existing);
+  if (!isWorkspaceAccessibleToCurrentIdentity(workspace)) return null;
 
-  // Get or create the latest session for this workspace
+  // Get or create the latest session before mutating the active registry.
   const session = await getOrCreateLatestSession(workspace.rootPath);
-
-  // Update active workspace in config
-  config.activeWorkspaceId = workspaceId;
-  workspace.lastAccessedAt = Date.now();
-  saveConfig(config);
-
-  return { workspace, session };
-}
-
-/**
- * Add a workspace to the global config.
- * @param workspace - Workspace data (must include rootPath)
- */
-export function addWorkspace(workspace: Omit<Workspace, 'id' | 'createdAt' | 'slug'>): Workspace {
-  const config = loadStoredConfig();
-  if (!config) {
-    throw new Error('No config found');
-  }
-
-  const slug = extractWorkspaceSlugFromPath(workspace.rootPath, '');
-
-  // Check if workspace with same rootPath already exists
-  const existing = config.workspaces.find(w => w.rootPath === workspace.rootPath);
-  if (existing) {
-    // Update existing workspace with new settings
-    const updated: Workspace = {
-      ...existing,
-      ...workspace,
-      slug,
-      id: existing.id,
-      createdAt: existing.createdAt,
-    };
-    const existingIndex = config.workspaces.indexOf(existing);
-    config.workspaces[existingIndex] = updated;
-    saveConfig(config);
-    return updated;
-  }
-
-  const newWorkspace: Workspace = {
+  const index = config.workspaces.findIndex(
+    (candidate) => candidate.id === workspace.id,
+  );
+  config.workspaces[index] = {
     ...workspace,
-    slug,
-    id: generateWorkspaceId(),
-    createdAt: Date.now(),
+    lastAccessedAt: Date.now(),
   };
-
-  // Create workspace folder structure if it doesn't exist
-  if (!isValidWorkspace(newWorkspace.rootPath)) {
-    createWorkspaceAtPath(newWorkspace.rootPath, newWorkspace.name);
-  }
-
-  config.workspaces.push(newWorkspace);
-
-  // If this is the only workspace, make it active
-  if (config.workspaces.length === 1) {
-    config.activeWorkspaceId = newWorkspace.id;
-  }
-
+  config.activeWorkspaceId = workspace.id;
   saveConfig(config);
-  return newWorkspace;
+
+  return { workspace: config.workspaces[index]!, session };
 }
 
 /**
- * Sync workspaces by discovering workspaces in the default location
- * that aren't already tracked in the global config.
- * Call this on app startup.
+ * Add a workspace to the global config while giving its folder the same
+ * canonical id/name/kind/orgId. Kept synchronous for source compatibility;
+ * callers that need an initial activation session use
+ * `createAndActivateLocalWorkspace`.
+ */
+export function addWorkspace(
+  workspace: Omit<Workspace, 'id' | 'createdAt' | 'slug'>,
+): Workspace {
+  const config = configForWorkspaceMutation();
+  const existing = config.workspaces.find(
+    (candidate) => candidate.rootPath === workspace.rootPath.trim(),
+  );
+  const canonical = buildCanonicalWorkspace(
+    workspace as WorkspaceMutationInput,
+    existing,
+  );
+  const staged = stageWorkspaceMutation(
+    config,
+    canonical,
+    config.workspaces.length === 0,
+  );
+  return commitWorkspaceMutation(staged);
+}
+
+/**
+ * Sync workspaces discovered in the default location that are not already
+ * tracked. A discovered TeamSpace is ignored unless the current server
+ * identity is a durable member; discovery must not manufacture authority.
  */
 export function syncWorkspaces(): void {
-  const config = loadStoredConfig();
-  if (!config) return;
+  let config = configForWorkspaceMutation();
+  const trackedPaths = new Set(config.workspaces.map((workspace) => workspace.rootPath));
 
-  const discoveredPaths = discoverWorkspacesInDefaultLocation();
-  const trackedPaths = new Set(config.workspaces.map(w => w.rootPath));
-
-  let added = false;
-  for (const rootPath of discoveredPaths) {
+  for (const rootPath of discoverWorkspacesInDefaultLocation()) {
     if (trackedPaths.has(rootPath)) continue;
 
-    // Load the workspace config to get name
-    const wsConfig = loadWorkspaceConfig(rootPath);
-    if (!wsConfig) continue;
-
-    const newWorkspace: Workspace = {
-      id: wsConfig.id || generateWorkspaceId(),
-      name: wsConfig.name,
-      slug: extractWorkspaceSlugFromPath(rootPath, ''),
+    const folderConfig = loadWorkspaceConfig(rootPath);
+    if (!folderConfig) continue;
+    const workspace = normalizeWorkspaceRecord({
+      id: folderConfig.id || generateWorkspaceId(),
+      name: folderConfig.name,
+      slug: folderConfig.slug || extractWorkspaceSlugFromPath(rootPath, ''),
       rootPath,
-      createdAt: wsConfig.createdAt || Date.now(),
-    };
+      kind: folderConfig.kind,
+      orgId: folderConfig.orgId,
+      createdAt: folderConfig.createdAt || Date.now(),
+    });
+    if (!isWorkspaceAccessibleToCurrentIdentity(workspace)) continue;
 
-    config.workspaces.push(newWorkspace);
-    added = true;
-  }
-
-  if (added) {
-    // If no active workspace, set to first
-    if (!config.activeWorkspaceId && config.workspaces.length > 0) {
-      config.activeWorkspaceId = config.workspaces[0]!.id;
-    }
-    saveConfig(config);
+    const staged = stageWorkspaceMutation(
+      config,
+      workspace,
+      !config.activeWorkspaceId,
+    );
+    commitWorkspaceMutation(staged);
+    config = staged.nextConfig;
+    trackedPaths.add(rootPath);
   }
 }
 
@@ -1264,12 +1779,18 @@ export async function removeWorkspace(workspaceId: string): Promise<boolean> {
 
   const index = config.workspaces.findIndex(w => w.id === workspaceId);
   if (index === -1) return false;
+  if (!isWorkspaceAccessibleToCurrentIdentity(normalizeWorkspaceRecord(config.workspaces[index]!))) {
+    return false;
+  }
 
   config.workspaces.splice(index, 1);
 
-  // If we removed the active workspace, switch to first available
+  // If we removed the active workspace, switch to the first accessible one.
   if (config.activeWorkspaceId === workspaceId) {
-    config.activeWorkspaceId = config.workspaces[0]?.id || null;
+    config.activeWorkspaceId =
+      config.workspaces
+        .map((workspace) => normalizeWorkspaceRecord(workspace))
+        .find(isWorkspaceAccessibleToCurrentIdentity)?.id ?? null;
   }
 
   saveConfig(config);
@@ -2821,11 +3342,6 @@ export function migrateLegacyLlmConnectionsConfig(): void {
     if (restoreOpus46ToAnthropicConnections(config)) {
       needsSave = true;
     }
-    // Phase 1n: Seeded rox-kimi connections advertised the internal kimi-K3
-    // id. Replace with the public ROX plane (one-shot, marker-guarded).
-    if (migrateRoxKimiToPublicModels(config)) {
-      needsSave = true;
-    }
 
     if (needsSave) {
       saveConfig(config);
@@ -2996,74 +3512,15 @@ export function migrateOrphanedDefaultConnections(): void {
   }
 }
 
-const ROX_KIMI_PUBLIC_MODELS_MARKER = 'rox-kimi-public-models-v1';
-const LEGACY_ROX_KIMI_CONNECTION_NAME = 'Rox (Kimi K3) · OMP';
-
-function connectionModelIds(connection: LlmConnection): string[] {
-  return (connection.models ?? []).map((m) => (typeof m === 'string' ? m : m.id));
-}
-
-/**
- * Replace the seeded internal kimi-K3 id on the default ROX connection with
- * the public `rox/*` plane. One-shot via migrationsApplied; later runs only
- * remap a leftover kimi-K3 defaultModel and the historical display name.
- */
-function migrateRoxKimiToPublicModels(config: StoredConfig): boolean {
-  const alreadyRan = config.migrationsApplied?.includes(ROX_KIMI_PUBLIC_MODELS_MARKER) ?? false;
-  let changed = false;
-
-  for (const connection of config.llmConnections ?? []) {
-    if (connection.slug !== ROX_DEFAULT_CONNECTION_SLUG) continue;
-    if (connection.providerType !== 'omp') continue;
-
-    const userLocked = connection.modelSelectionMode === 'userDefined3Tier';
-    const ids = connectionModelIds(connection);
-    const hasAllPublic = ROX_PUBLIC_MODEL_IDS.every((id) => ids.includes(id));
-
-    if (!alreadyRan && !userLocked && !hasAllPublic) {
-      connection.models = toRoxPublicModelDefinitions();
-      changed = true;
-    }
-
-    const defaultId = connection.defaultModel?.trim() ?? '';
-    const modelsNow = connectionModelIds(connection);
-    if (
-      isRoxLegacyInternalModelId(defaultId)
-      && (modelsNow.includes(ROX_DEFAULT_PARENT_MODEL) || (!alreadyRan && !userLocked))
-    ) {
-      connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
-      changed = true;
-    } else if (!alreadyRan && !userLocked && defaultId && !isRoxPublicModelId(defaultId)) {
-      connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
-      changed = true;
-    } else if (!alreadyRan && !defaultId) {
-      connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
-      changed = true;
-    }
-
-    if (connection.name === LEGACY_ROX_KIMI_CONNECTION_NAME) {
-      connection.name = ROX_DEFAULT_CONNECTION_NAME;
-      changed = true;
-    }
-  }
-
-  if (!alreadyRan) {
-    config.migrationsApplied = [...(config.migrationsApplied ?? []), ROX_KIMI_PUBLIC_MODELS_MARKER];
-    return true;
-  }
-  return changed;
-}
-
 /**
  * Seed the default LLM connection on first run.
  *
  * When the config has no LLM connections at all (fresh install), a single
  * "rox-kimi" connection is created pointing at the Rox gateway
  * (https://api.rox.one/v1) and runs on the OMP backend (providerType 'omp')
- * with the public `rox/*` catalog (`rox/standard` default). OMP reads the
- * gateway credentials from its own config (~/.omp/agent/config.yml); the
- * ROX_API_KEY env var is still mirrored into the craft credential store for
- * potential pi_compat fallback.
+ * with kimi-K3 as the default model. OMP reads the gateway credentials from
+ * its own config (~/.omp/agent/config.yml); the ROX_API_KEY env var is still
+ * mirrored into the craft credential store for potential pi_compat fallback.
  *
  * The API key is NOT baked into the repo. It is stored in the encrypted
  * credential store when available from the ROX_API_KEY environment variable
@@ -3088,12 +3545,22 @@ export async function seedDefaultLlmConnection(): Promise<void> {
 
   const connection: LlmConnection = {
     slug: ROX_DEFAULT_CONNECTION_SLUG,
-    name: ROX_DEFAULT_CONNECTION_NAME,
+    name: 'Rox (Kimi K3) · OMP',
     providerType: 'omp',
-    baseUrl: ROX_GATEWAY_BASE_URL,
+    baseUrl: 'https://api.rox.one/v1',
     authType: 'none',
-    models: toRoxPublicModelDefinitions(),
-    defaultModel: ROX_DEFAULT_PARENT_MODEL,
+    models: [
+      {
+        id: 'kimi-K3',
+        name: 'Kimi K3',
+        shortName: 'Kimi K3',
+        description: 'Kimi K3 via api.rox.one gateway',
+        provider: 'pi',
+        contextWindow: 262144,
+        supportsThinking: false,
+      },
+    ],
+    defaultModel: 'kimi-K3',
     modelSelectionMode: 'automaticallySyncedFromProvider',
     createdAt: Date.now(),
   };
@@ -3116,19 +3583,6 @@ export async function seedDefaultLlmConnection(): Promise<void> {
     } catch (error) {
       console.error('[config] Failed to seed API key for default connection:', error);
     }
-  }
-
-  // Provision missing ~/.omp/agent files when a key is already present so
-  // the first turn can start. Existing user OMP files are never overwritten.
-  try {
-    ensureOmpRoxFirstRun({
-      homeDir: homedir(),
-      env: process.env,
-      storedApiKey: envApiKey,
-      baseUrl: connection.baseUrl,
-    });
-  } catch (error) {
-    console.error('[config] Failed to provision OMP first-run config:', error);
   }
 }
 

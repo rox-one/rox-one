@@ -35,6 +35,7 @@ export interface SettingsPageDefinition {
  * time via t(). Do NOT call i18n.t() here — this module loads before i18n init.
  */
 export const SETTINGS_PAGES = [
+  { id: 'account' as const, labelKey: 'settings.account.title', descriptionKey: 'settings.account.description' },
   { id: 'runtime' as const, labelKey: 'settings.runtime.title', descriptionKey: 'settings.runtime.description' },
   { id: 'context' as const, labelKey: 'settings.context.title', descriptionKey: 'settings.context.description' },
   { id: 'marketplace' as const, labelKey: 'settings.marketplace.title', descriptionKey: 'settings.marketplace.description' },
@@ -47,6 +48,7 @@ export const SETTINGS_PAGES = [
   { id: 'workspace' as const, labelKey: 'settings.workspace.title', descriptionKey: 'settings.workspace.description' },
   { id: 'accounts' as const, labelKey: 'settings.accounts.title', descriptionKey: 'settings.accounts.description' },
   { id: 'permissions' as const, labelKey: 'settings.permissions.title', descriptionKey: 'settings.permissions.description' },
+  { id: 'security' as const, labelKey: 'settings.security.title', descriptionKey: 'settings.security.description' },
   { id: 'labels' as const, labelKey: 'settings.labels.title', descriptionKey: 'settings.labels.description' },
   { id: 'organizations' as const, labelKey: 'settings.orgs.title', descriptionKey: 'settings.orgs.description' },
   { id: 'messaging' as const, labelKey: 'settings.messaging.title', descriptionKey: 'settings.messaging.description' },

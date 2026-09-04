@@ -6,6 +6,11 @@ import type {
   WhatsAppUiEvent,
 } from '../../shared/types'
 import type { MessagingBinding } from '../atoms/messaging'
+import {
+  applyDisplayedSenderApproval,
+  canCommitOwnerControl,
+  normalizeUiAccessMode,
+} from '../components/messaging/access/access-mode'
 import type {
   BindingAccess,
   PendingSender,
@@ -68,7 +73,7 @@ function defaultRuntime(platform: 'telegram' | 'whatsapp'): MessagingPlatformRun
 }
 
 function defaultAllowList(): AllowListState {
-  return { accessMode: 'open', owners: [], pending: [], bindings: {} }
+  return { accessMode: 'public-inbox', owners: [], pending: [], bindings: {} }
 }
 
 const messagingMockState: MessagingMockState = {
@@ -180,7 +185,7 @@ export const playgroundMessagingHandle: PlaygroundMessagingHandle = {
 
 export const playgroundAllowListHandle: PlaygroundAllowListHandle = {
   setAccessMode(platform, mode) {
-    messagingMockState.allowList[platform].accessMode = mode
+    messagingMockState.allowList[platform].accessMode = normalizeUiAccessMode(mode)
   },
   setOwners(platform, owners) {
     messagingMockState.allowList[platform].owners = owners
@@ -318,6 +323,7 @@ export const mockElectronAPI = {
     xpForNext: 100,
     nextThreshold: 100,
     currentThreshold: 0,
+    recentEvents: [],
   }),
   awardGamificationXp: async (event: string) => {
     console.log('[Playground] awardGamificationXp', event)
@@ -330,6 +336,7 @@ export const mockElectronAPI = {
       xpForNext: 75,
       nextThreshold: 100,
       currentThreshold: 0,
+      recentEvents: [],
       awarded: 25,
       event,
       leveledUp: false,
@@ -547,7 +554,7 @@ export const mockElectronAPI = {
 
   getMessagingPlatformAccessMode: async (platform: AllowListPlatform): Promise<PlatformAccessMode> => {
     console.log('[Playground] getMessagingPlatformAccessMode called:', platform)
-    return messagingMockState.allowList[platform].accessMode
+    return normalizeUiAccessMode(messagingMockState.allowList[platform].accessMode)
   },
 
   setMessagingPlatformAccessMode: async (
@@ -555,7 +562,7 @@ export const mockElectronAPI = {
     mode: PlatformAccessMode,
   ) => {
     console.log('[Playground] setMessagingPlatformAccessMode called:', platform, mode)
-    playgroundAllowListHandle.setAccessMode(platform, mode)
+    playgroundAllowListHandle.setAccessMode(platform, normalizeUiAccessMode(mode))
     return { success: true }
   },
 
@@ -603,20 +610,20 @@ export const mockElectronAPI = {
 
     const reason = match.reason ?? 'not-owner'
     if (reason === 'not-on-binding-allowlist' && match.bindingId) {
-      // Binding-scoped allow — don't promote to workspace owner.
-      const access = state.bindings[match.bindingId] ?? {
-        mode: 'allow-list' as const,
-        allowedSenderIds: [],
-      }
-      const next = {
-        mode: 'allow-list' as const,
-        allowedSenderIds: Array.from(new Set([...access.allowedSenderIds, userId])),
-      }
-      playgroundAllowListHandle.setBindingAccess(platform, match.bindingId, next)
+      // Binding-scoped allow — mutate only this sender on this binding.
+      const applied = applyDisplayedSenderApproval(state.bindings, {
+        userId: match.userId,
+        bindingId: match.bindingId,
+        reason,
+      })
+      state.bindings = applied.records
       playgroundAllowListHandle.setPending(
         platform,
         state.pending.filter(
-          (p) => !(p.userId === userId && p.bindingId === match.bindingId),
+          (p) =>
+            p.userId === userId &&
+            p.bindingId === match.bindingId &&
+            (p.reason ?? 'not-owner') === reason,
         ),
       )
       return { owners: [...state.owners], bindingId: match.bindingId }
@@ -643,10 +650,14 @@ export const mockElectronAPI = {
     access: BindingAccess,
   ) => {
     console.log('[Playground] setMessagingBindingAccess called:', bindingId)
-    // Playground stores binding access keyed under telegram by default —
-    // production records the binding's platform server-side, so the mock
-    // doesn't need to be platform-aware to exercise the UI.
-    playgroundAllowListHandle.setBindingAccess('telegram', bindingId, access)
+    const mode = normalizeUiAccessMode(access.mode)
+    if (mode === 'owner-control' && !canCommitOwnerControl(access.allowedSenderIds)) {
+      throw new Error('owner-control requires an exact selected sender')
+    }
+    playgroundAllowListHandle.setBindingAccess('telegram', bindingId, {
+      mode,
+      allowedSenderIds: mode === 'owner-control' ? [...access.allowedSenderIds] : [],
+    })
     return { success: true }
   },
 

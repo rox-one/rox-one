@@ -379,6 +379,7 @@ export interface SettingsMenuItem {
  * Only icons need to be defined here - page data comes from settings-registry
  */
 const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
+  account: 'CircleUser',
   runtime: 'Settings',
   context: 'FileText',
   knowledge: 'BookOpen',
@@ -391,6 +392,7 @@ const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
   workspace: 'Building2',
   accounts: 'Users',
   permissions: 'ShieldCheck',
+  security: 'ShieldAlert',
   labels: 'Tag',
   messaging: 'MessageSquare',
   server: 'Server',

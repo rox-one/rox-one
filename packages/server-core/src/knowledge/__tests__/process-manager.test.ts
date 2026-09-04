@@ -1,3 +1,4 @@
+type HeadersInit = Record<string, string> | string[][];
 import { describe, expect, it } from 'bun:test'
 import { parseOemKernelPin } from '@craft-agent/shared/knowledge/oem-pin'
 import { SiyuanProcessManager } from '../process-manager'

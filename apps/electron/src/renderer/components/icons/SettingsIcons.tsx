@@ -7,6 +7,8 @@
  */
 
 import {
+  Blocks,
+  CircleUser,
   BookOpen,
   Building2,
   Cloud,
@@ -16,6 +18,7 @@ import {
   Palette,
   Server,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
@@ -33,12 +36,15 @@ export const CloudRunsIcon = ({ className }: IconProps) => <Cloud className={cla
 export const AppearanceIcon = ({ className }: IconProps) => <Palette className={className} />
 export const InputIcon = ({ className }: IconProps) => <Keyboard className={className} />
 export const WorkspaceIcon = ({ className }: IconProps) => <Building2 className={className} />
+export const AccountIcon = ({ className }: IconProps) => <CircleUser className={className} />
+export const ExtensionsIcon = ({ className }: IconProps) => <Blocks className={className} />
 export const AccountsIcon = ({ className }: IconProps) => <Users className={className} />
 export const PermissionsIcon = ({ className }: IconProps) => <ShieldCheck className={className} />
 export const LabelsIcon = ({ className }: IconProps) => <Tag className={className} />
 export const OrganizationsIcon = ({ className }: IconProps) => <Users className={className} />
 export const MessagingSettingsIcon = ({ className }: IconProps) => <MessageSquare className={className} />
 export const ServerSettingsIcon = ({ className }: IconProps) => <Server className={className} />
+export const SecuritySettingsIcon = ({ className }: IconProps) => <ShieldAlert className={className} />
 export const ShortcutsIcon = ({ className }: IconProps) => <Keyboard className={className} />
 export const RuntimeIcon = ({ className }: IconProps) => <Settings className={className} />
 export const ContextIcon = ({ className }: IconProps) => <FileText className={className} />
@@ -50,11 +56,12 @@ export const MarketplaceIcon = ({ className }: IconProps) => <ShoppingBag classN
  * Used by both AppMenu and SettingsNavigator for consistent icons.
  */
 export const SETTINGS_ICONS: Record<SettingsSubpage, React.ComponentType<IconProps>> = {
+  account: AccountIcon,
   runtime: RuntimeIcon,
   context: ContextIcon,
   knowledge: KnowledgeIcon,
   marketplace: MarketplaceIcon,
-  extensions: MarketplaceIcon,
+  extensions: ExtensionsIcon,
   app: AppSettingsIcon,
   ai: AiSettingsIcon,
   appearance: AppearanceIcon,
@@ -66,6 +73,7 @@ export const SETTINGS_ICONS: Record<SettingsSubpage, React.ComponentType<IconPro
   organizations: OrganizationsIcon,
   messaging: MessagingSettingsIcon,
   server: ServerSettingsIcon,
+  security: SecuritySettingsIcon,
   cloudRuns: CloudRunsIcon,
   shortcuts: ShortcutsIcon,
 }

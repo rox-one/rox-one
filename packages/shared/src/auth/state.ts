@@ -94,6 +94,8 @@ export interface SetupNeeds {
   ompCredentialCode?: string;
   /** Everything complete → go straight to App */
   isFullyConfigured: boolean;
+  isSetupDeferred?: boolean;
+  shouldShowOnboardingOnLaunch?: boolean;
   /** User has legacy tokens that need migration */
   needsMigration?: MigrationInfo;
 }

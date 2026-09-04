@@ -5,6 +5,7 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Spinner } from '@craft-agent/ui'
+import { SettingsCard, SettingsCardContent } from '@/components/settings'
 import {
   ShoppingBag,
   Star,
@@ -28,6 +29,10 @@ import type {
   MarketplaceEntryStats,
   MarketplaceLockRecord,
 } from '@craft-agent/shared/marketplace'
+import {
+  isHighRiskMarketplacePermission,
+  permissionsForMarketplaceKind,
+} from '@craft-agent/shared/extensions/browser'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -466,10 +471,8 @@ export default function MarketplaceSettingsPage() {
                 const Icon = KIND_ICONS[e.kind]
                 const ghUrl = githubTreeUrl(e.source.repo, e.source.ref)
                 return (
-                  <div
-                    key={e.id}
-                    className="border border-border/70 rounded-lg p-4 flex items-start gap-4 bg-card/30 shadow-sm"
-                  >
+                  <SettingsCard key={e.id} divided={false}>
+                    <SettingsCardContent className="flex items-start gap-4">
                     <div className="p-2 rounded-lg bg-primary/10 text-primary mt-1">
                       <Icon className="w-5 h-5" />
                     </div>
@@ -565,6 +568,19 @@ export default function MarketplaceSettingsPage() {
                               ) : null}
                             </span>
                           </span>
+                          {permissionsForMarketplaceKind(e.kind).map((permission) => (
+                            <span
+                              key={permission}
+                              data-marketplace-permission={permission}
+                              className={`text-[10px] px-2 py-0.5 rounded-full font-mono border ${
+                                isHighRiskMarketplacePermission(permission)
+                                  ? 'border-amber-500/60 text-amber-700 dark:text-amber-300 bg-amber-500/10'
+                                  : 'bg-muted text-muted-foreground'
+                              }`}
+                            >
+                              {permission}
+                            </span>
+                          ))}
                           {e.tags?.slice(0, 3).map((tag) => (
                             <span key={tag} className="text-[10px] opacity-60">
                               #{tag}
@@ -655,7 +671,8 @@ export default function MarketplaceSettingsPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                    </SettingsCardContent>
+                  </SettingsCard>
                 )
               })
             )}

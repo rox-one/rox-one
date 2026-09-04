@@ -1,6 +1,7 @@
 export type {
   Profile,
   ProfileMode,
+  ProfilePlan,
   WorkspaceMembership,
   WorkspaceRole,
   ServiceConnection,
@@ -14,6 +15,14 @@ export type {
   ConnectServiceInput,
   DisconnectServiceInput,
 } from './types.ts';
+export {
+  PROFILE_PLANS,
+  isProfilePlan,
+  normalizeProfileEmail,
+  normalizeProfileAvatar,
+} from './types.ts';
+export { attachCredentialRef } from './attach-credential-ref.ts';
+export type { AttachCredentialRefInput } from './attach-credential-ref.ts';
 
 export {
   IdentityStore,
@@ -41,6 +50,7 @@ export {
   createCredentialRefId,
   isCredentialKind,
   isCredentialRefId,
+  isCredentialRefRegistry,
   isStorageMode,
 } from './credential-types.ts';
 

@@ -354,7 +354,7 @@ export interface InfisicalImporterEnv {
  */
 export function createInfisicalImporter(
   provider: InfisicalFabricProvider,
-  env: InfisicalImporterEnv = process.env,
+  env: InfisicalImporterEnv = process.env as InfisicalImporterEnv,
 ): CredentialImporter {
   let last: ImportCandidate | undefined;
 
@@ -418,6 +418,9 @@ export function createInfisicalImporter(
       const candidate = last && last.id === input.candidateId ? last : fromEnv().find((item) => item.id === input.candidateId);
       if (!candidate) throw new ConnectionFabricError('IMPORT_CANDIDATE_UNKNOWN', input.candidateId);
       const mode = input.mode === 'managed' ? 'managed' : 'reference';
+      if (!candidate.locator) {
+        throw new ConnectionFabricError('IMPORT_VALIDATION_FAILED', input.candidateId);
+      }
       const version = await provider.write({
         kind: candidate.kind,
         mode,

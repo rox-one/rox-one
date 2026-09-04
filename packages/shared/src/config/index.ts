@@ -9,6 +9,14 @@ export * from './kimi-coding.ts';
 export * from './model-fetcher.ts';
 export * from './preferences.ts';
 export * from './storage.ts';
+export { normalizeRemoteTlsTrust } from './remote-tls-trust.ts';
+export {
+  assertNotesImportPaths,
+  getConfigDir,
+  isImportProvenancedRelativePath,
+  setOwnedRootAdapter,
+  type OwnedRootAdapter,
+} from './owned-root-policy.ts';
 export * from './theme.ts';
 export * from './validators.ts';
 export * from './cli-domains.ts';

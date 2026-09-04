@@ -97,6 +97,8 @@ const SECRET_SHAPED_KEYS = new Set(['value', 'token', 'password', 'ciphertext'])
 const CREDENTIAL_REF_ID_PATTERN =
   /^cred_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
+const CREDENTIAL_REF_REGISTRIES = new WeakSet<object>();
+
 const CREDENTIAL_KINDS: readonly CredentialKind[] = [
   'api_key',
   'oauth2_token_set',
@@ -372,6 +374,7 @@ export class CredentialRefRegistry {
       this.directory = idFactoryOrOptions?.directory;
     }
     if (this.directory) this.reloadFromDisk();
+    CREDENTIAL_REF_REGISTRIES.add(this);
   }
 
   register(input: RegisterCredentialRefInput): CredentialRef {
@@ -652,4 +655,8 @@ export class CredentialRefRegistry {
     atomicWriteJson(join(this.directory, REFS_FILE), refs);
     atomicWriteJson(join(this.directory, VERSIONS_FILE), versions);
   }
+}
+
+export function isCredentialRefRegistry(value: unknown): value is CredentialRefRegistry {
+  return typeof value === 'object' && value !== null && CREDENTIAL_REF_REGISTRIES.has(value);
 }
