@@ -11,6 +11,8 @@
 export type { Disposable } from './types.ts';
 export * from './context-keys/index.ts';
 export * from './panels/index.ts';
+export * from './modes/index.ts';
+export * from './workbench/index.ts';
 export * from './commands/index.ts';
 export * from './resources/index.ts';
 export * from './surfaces/index.ts';
@@ -30,11 +32,13 @@ export type {
   ConnectServiceInput,
   DisconnectServiceInput,
 } from './identity/types.ts';
+
 export type {
   CredentialKind,
   CredentialRef,
   CredentialRefId,
   CredentialRefIdFactory,
+  CredentialRefRegistryOptions,
   CredentialVersion,
   CredentialVersionStatus,
   ProviderLocator,
@@ -49,3 +53,32 @@ export {
   isCredentialRefId,
   isStorageMode,
 } from './identity/credential-types.ts';
+export type {
+  CredentialImporter,
+  FabricExecutionContext,
+  ImportCandidate,
+  ImportPreview,
+  ProviderCapabilities,
+  SecretProvider,
+} from './identity/provider-contract.ts';
+export {
+  ConnectionFabricError,
+  P0_IMPORTER_IDS,
+  P0_PROVIDER_CAPABILITIES,
+} from './identity/provider-contract.ts';
+export { ImportSession } from './identity/import-session.ts';
+export { ImportService } from './identity/import-service.ts';
+export {
+  LocalMemorySecretProvider,
+  createP0Importers,
+  createP0ProviderStack,
+  createSealedSecret,
+  extractDotenvKeys,
+} from './identity/p0-adapters.ts';
+export { createOsDiscoveryHost } from './identity/os-discovery-host.ts';
+export { JsonAccessGrantStore } from './identity/grants.ts';
+export { InProcessCredentialBroker } from './identity/broker.ts';
+export { ConnectionWorkGraph } from './identity/workgraph.ts';
+export { revokeConnectionAndRevalidate } from './identity/revalidation.ts';
+export { InfisicalFabricProvider, createInfisicalImporter } from './identity/infisical-fabric-provider.ts';
+export { importGithubFromEnv, runGithubVertical } from './identity/github-vertical.ts';
