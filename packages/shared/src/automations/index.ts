@@ -95,10 +95,10 @@ export {
   ActionDefinitionSchema,
   PromptActionSchema,
   WebhookActionSchema,
+  ScriptActionSchema,
   zodErrorToIssues,
   VALID_EVENTS,
 } from './schemas.ts';
-export { AutomationsConfigSchema, AutomationConditionSchema, TimeConditionSchema, StateConditionSchema, ScriptActionSchema, zodErrorToIssues, VALID_EVENTS } from './schemas.ts';
 
 // Condition evaluator
 export { evaluateConditions, type ConditionContext } from './conditions.ts';

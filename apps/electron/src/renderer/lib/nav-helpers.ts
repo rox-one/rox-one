@@ -46,6 +46,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'cloud-run':
     case 'extension':
     case 'diff':
+    case 'terminal':
       return navState.details !== null
     case 'pages':
       return true

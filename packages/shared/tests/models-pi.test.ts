@@ -50,6 +50,8 @@ describe('models-pi filtering', () => {
     expect(k3?.contextWindow).toBe(1_048_576);
     expect(k3?.supportsThinking).toBe(true);
     expect(k3?.supportsImages).toBe(true);
+  });
+
   it('includes Moonshot AI in the Pi API key provider list with human-readable labels', () => {
     const providers = getPiApiKeyProviders();
     expect(providers.some(provider => provider.key === 'moonshotai' && provider.label === 'Moonshot AI')).toBe(true);

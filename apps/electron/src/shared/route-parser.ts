@@ -561,6 +561,8 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   if (parsed.navigator === 'terminal') {
     if (!parsed.details) return 'terminal'
     return `terminal/${encodeURIComponent(parsed.details.id)}`
+  }
+
   if (parsed.navigator === 'pages') {
     if (!parsed.details) return 'pages'
     return `pages/page/${parsed.details.id}`
@@ -727,6 +729,8 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
       return { type: 'view', name: 'browser', params: {} }
     }
     return { type: 'view', name: 'browser', id: compound.details.id, params: {} }
+  }
+
   // Pages
   if (compound.navigator === 'pages') {
     if (!compound.details) {
@@ -977,6 +981,9 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return {
       navigator: 'terminal',
       details: { type: 'terminal', id: compound.details.id },
+    }
+  }
+
   // Pages
   if (compound.navigator === 'pages') {
     if (!compound.details) {
@@ -1302,6 +1309,9 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
       details: state.details?.type === 'diff'
         ? { type: 'diff', id: state.details.proposalId }
         : null,
+    }
+  }
+
   if (state.navigator === 'pages') {
     return {
       navigator: 'pages',

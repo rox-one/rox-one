@@ -80,6 +80,8 @@ describe('buildCustomEndpointModelDef', () => {
     const model = buildCustomEndpointModelDef('gpt-5.5', { reasoning: true })
     expect(model.reasoning).toBe(true)
     expect(model.thinkingLevelMap).toEqual({ off: null, xhigh: 'xhigh' })
+  })
+
   // Regression: craft-agents-oss#1022 — strict OpenAI-compatible gateways 400 on the
   // `store` param. supportsStore:false makes the pi-ai driver omit it entirely.
   it('disables the store param for openai-completions endpoints', () => {

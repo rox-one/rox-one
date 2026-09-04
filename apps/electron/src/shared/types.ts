@@ -1992,6 +1992,10 @@ export interface DiffNavigationState {
 export interface TerminalNavigationState {
   navigator: 'terminal'
   details: { type: 'terminal'; id: string; sessionId?: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Pages navigation state
  *
  * Bare `pages` (details: null) shows the full-width library grid — it never
