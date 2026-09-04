@@ -29,12 +29,15 @@ export type {
   CraftActionRef,
   KnowledgeAutomationAction,
   CloudRunSubmitAction,
+  ScriptAction,
+  ScriptActionRuntime,
   AutomationAction,
   AutomationMatcher,
   AutomationsConfig,
   PromptReferences,
   PromptActionResult,
   WebhookActionResult,
+  ScriptActionResult,
   ActionExecutionResult,
   PendingPrompt,
   AutomationResult,
@@ -71,7 +74,7 @@ export { buildEnvFromSdkInput } from './sdk-bridge.ts';
 // Utilities
 // ============================================================================
 
-export { parsePromptReferences } from './utils.ts';
+export { parsePromptReferences, buildScriptEnv, buildBaseScriptEnv, type ScriptEnvOptions } from './utils.ts';
 
 // ============================================================================
 // Re-exports from sub-modules
@@ -92,6 +95,7 @@ export {
   ActionDefinitionSchema,
   PromptActionSchema,
   WebhookActionSchema,
+  ScriptActionSchema,
   zodErrorToIssues,
   VALID_EVENTS,
 } from './schemas.ts';
@@ -104,6 +108,16 @@ export { sanitizeForShell } from './security.ts';
 
 // Webhook execution utilities
 export { executeWebhookRequest, executeWithRetry, createWebhookHistoryEntry, createPromptHistoryEntry, type ExecuteWebhookOptions, type RetryConfig } from './webhook-utils.ts';
+
+// Script execution utilities
+export {
+  executeScriptAction,
+  createScriptHistoryEntry,
+  clampScriptTimeout,
+  DEFAULT_SCRIPT_TIMEOUT_MS,
+  MAX_SCRIPT_TIMEOUT_MS,
+  type ScriptExecutionContext,
+} from './script-executor.ts';
 
 // Retry scheduler
 export { RetryScheduler, type RetryQueueEntry, type RetrySchedulerOptions } from './retry-scheduler.ts';
@@ -163,6 +177,7 @@ export {
   EventLogHandler,
   WebhookHandler,
   KnowledgeHandler,
+  ScriptHandler,
   type AutomationHandler,
   type PromptHandlerOptions,
   type EventLogHandlerOptions,
@@ -174,5 +189,6 @@ export {
   type CloudRunSubmitExecutor,
   type CloudRunSubmitExecutorContext,
   type CloudRunSubmitExecutorResult,
+  type ScriptHandlerOptions,
   type AutomationsConfigProvider,
 } from './handlers/index.ts';

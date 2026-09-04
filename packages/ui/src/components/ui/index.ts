@@ -61,3 +61,14 @@ export {
   useIslandNavigation,
   type IslandNavigation,
 } from './useIslandNavigation'
+export { PremiumMenu, type PremiumMenuProps } from './PremiumMenu'
+export {
+  filterPremiumMenuItems,
+  measureMenuOpen,
+  placeAnchoredMenu,
+  PREMIUM_MENU_TOKENS,
+  typeaheadIndex,
+  virtualizeWindow,
+  type PremiumMenuItem,
+  type PremiumMenuVariant,
+} from './premium-menu-model'

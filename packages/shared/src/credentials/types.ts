@@ -37,7 +37,9 @@ export type CredentialType =
   // SSH host credentials (keyed by host id)
   | 'ssh_managed_token' // Auth token for the app-managed remote craft-agent server
   // Identity Center service OAuth (SiYuan Cloud, etc.) — key service_oauth::{workspaceId}::{name}
-  | 'service_oauth';
+  | 'service_oauth'
+  // Page publication admin token (keyed by workspaceId + pageId)
+  | 'page_publish_token'; // Secret capability that authorizes publication update/unpublish
 
 /** Valid credential types for validation */
 const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
@@ -55,6 +57,7 @@ const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
   'messaging_bearer',
   'ssh_managed_token',
   'service_oauth',
+  'page_publish_token',
 ] as const;
 
 /** Check if a string is a valid CredentialType */
@@ -159,6 +162,11 @@ function isMessagingCredential(type: CredentialType): boolean {
   return (MESSAGING_CREDENTIAL_TYPES as readonly string[]).includes(type);
 }
 
+/** Check if type is a page publication credential (workspaceId + pageId via `name`) */
+function isPageCredential(type: CredentialType): boolean {
+  return type === 'page_publish_token';
+}
+
 /** LLM connection credential types */
 const LLM_CREDENTIAL_TYPES = [
   'llm_api_key',
@@ -222,6 +230,14 @@ export function credentialIdToAccount(id: CredentialId): string {
   // Identity Center service OAuth:
   // service_oauth::{workspaceId}::{name}
   if (id.type === 'service_oauth' && id.workspaceId && id.name) {
+    parts.push(id.workspaceId);
+    parts.push(id.name);
+    return parts.join(CREDENTIAL_DELIMITER);
+  }
+
+  // Page-scoped format:
+  // page_publish_token::{workspaceId}::{pageId}
+  if (isPageCredential(id.type) && id.workspaceId && id.name) {
     parts.push(id.workspaceId);
     parts.push(id.name);
     return parts.join(CREDENTIAL_DELIMITER);
@@ -304,6 +320,12 @@ export function accountToCredentialId(account: string): CredentialId | null {
   // Identity Center service OAuth:
   // service_oauth::{workspaceId}::{name}
   if (type === 'service_oauth' && parts.length === 3) {
+    return { type, workspaceId: parts[1], name: parts[2] };
+  }
+
+  // Page-scoped format:
+  // page_publish_token::{workspaceId}::{pageId}
+  if (isPageCredential(type) && parts.length === 3) {
     return { type, workspaceId: parts[1], name: parts[2] };
   }
 

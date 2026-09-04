@@ -482,11 +482,6 @@ export function validateResourceBundle(bundle: unknown): { valid: boolean; error
         }
         slugs.add(e.slug as string)
 
-        // Check for builtin/reserved slugs
-        if (isBuiltinSource(e.slug as string)) {
-          errors.push(`${prefix}: '${e.slug}' is a reserved builtin source slug`)
-        }
-
         if (!e.config || typeof e.config !== 'object') {
           errors.push(`${prefix}: missing or invalid config`)
         } else {
@@ -724,7 +719,7 @@ async function importSources(
         continue
       }
 
-      const targetDir = resolveInsideDirectory(sourcesDir, entry.slug)
+      const targetDir = getSourcePath(workspaceRootPath, entry.slug)
       const exists = existsSync(targetDir)
 
       if (exists && mode === 'skip') {

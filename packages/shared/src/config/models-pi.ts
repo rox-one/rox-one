@@ -181,6 +181,8 @@ const PI_PROVIDER_DISPLAY: Partial<Record<string, { label: string; placeholder: 
   'huggingface':            { label: 'Hugging Face',       placeholder: 'hf_...' },
   'minimax':                { label: 'Minimax',            placeholder: 'Paste your key here...' },
   'kimi-coding':            { label: 'Kimi (Coding)',      placeholder: 'sk-kimi-...' },
+  'moonshotai':             { label: 'Moonshot AI',        placeholder: 'sk-...' },
+  'moonshotai-cn':          { label: 'Moonshot AI (CN)',   placeholder: 'sk-...' },
   'zai':                    { label: 'z.ai (GLM)',         placeholder: 'Paste your key here...' },
 };
 
