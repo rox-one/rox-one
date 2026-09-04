@@ -400,6 +400,7 @@ const EXPECTED_CHANNELS: string[] = [
   'pages:getData',
   'pages:getOne',
   'pages:getShareCapabilities',
+  'pages:getShareDataScan',
   'pages:getThumbnail',
   'pages:issueGrant',
   'pages:listGrants',

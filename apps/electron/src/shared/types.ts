@@ -2264,6 +2264,8 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
       return { navigator: 'browser', details: { type: 'browser', id } }
     }
     return { navigator: 'browser', details: null }
+  }
+
   // Handle pages
   if (key === 'pages') return { navigator: 'pages', details: null }
   if (key.startsWith('pages/page/')) {

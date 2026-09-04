@@ -130,6 +130,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     gamification,
     messaging,
     pages,
+    fabric,
   ] = await Promise.all([
     import('@craft-agent/server-core/handlers/rpc/auth'),
     import('@craft-agent/server-core/handlers/rpc/automations'),
@@ -170,6 +171,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@craft-agent/server-core/handlers/rpc/gamification'),
     import('@craft-agent/server-core/handlers/rpc/messaging'),
     import('@craft-agent/server-core/handlers/rpc/pages'),
+    import('@craft-agent/server-core/handlers/rpc/fabric'),
   ])
 
   const [browser, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface] = await Promise.all([
@@ -222,6 +224,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...gamification.HANDLED_CHANNELS,
     ...messaging.HANDLED_CHANNELS,
     ...pages.HANDLED_CHANNELS,
+    ...fabric.HANDLED_CHANNELS,
     ...browser.HANDLED_CHANNELS,
     ...guiSystem.GUI_HANDLED_CHANNELS,
     ...guiWorkspace.GUI_HANDLED_CHANNELS,
