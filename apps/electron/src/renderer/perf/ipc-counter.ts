@@ -1,0 +1,15 @@
+export {
+  WATCHED_SESSION_CHANNELS,
+  clearIpcCalls,
+  deltaIpcCalls,
+  detectSessionIpcNPlusOne,
+  estimateJsonBytes,
+  getIpcCallCount,
+  getIpcResultBytes,
+  isWatchedSessionChannel,
+  recordIpcInvoke,
+  snapshotIpcCalls,
+  type IpcCallRecord,
+  type NPlusOneFinding,
+  type WatchedSessionChannel,
+} from '../../shared/ipc-call-counter'

@@ -16,6 +16,7 @@
  */
 
 import log from 'electron-log/renderer'
+import { checkpointInteraction, endInteraction, startInteraction } from '../perf/marks'
 
 const perfLog = log.scope('perf')
 
@@ -61,6 +62,7 @@ export function isRendererPerfEnabled(): boolean {
  * Clears any other pending switches (user navigated away before completion).
  */
 export function startSessionSwitch(sessionId: string): void {
+  startInteraction('cached-session-switch')
   if (!debugMode) return
 
   // Clear any other pending switches - user navigated away before they completed
@@ -82,6 +84,7 @@ export function startSessionSwitch(sessionId: string): void {
  * Use for intermediate steps like 'session.loaded', 'agent.status', etc.
  */
 export function markSessionSwitch(sessionId: string, markName: string): void {
+  checkpointInteraction('cached-session-switch', markName)
   if (!debugMode) return
 
   const metric = pendingSwitches.get(sessionId)
@@ -98,7 +101,8 @@ export function markSessionSwitch(sessionId: string, markName: string): void {
  * Call this when the chat display has fully rendered.
  */
 export function endSessionSwitch(sessionId: string): number | null {
-  if (!debugMode) return null
+  const harnessMs = endInteraction('cached-session-switch')
+  if (!debugMode) return harnessMs
 
   const metric = pendingSwitches.get(sessionId)
   if (!metric) return null

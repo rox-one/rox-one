@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { focusedPanelIdAtom } from '@/atoms/panel-stack'
+import { markInteraction } from '@/perf/marks'
 
 export interface BrowserPanelPageProps {
   /** Embedded browser instance id (from browserPane.createEmbedded) */
@@ -22,6 +23,9 @@ export interface BrowserPanelPageProps {
 
 export default function BrowserPanelPage({ instanceId, panelId }: BrowserPanelPageProps) {
   const { t } = useTranslation()
+  useEffect(() => {
+    markInteraction('browser-chrome')
+  }, [])
   const containerRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef(0)
   const [removed, setRemoved] = useState(false)

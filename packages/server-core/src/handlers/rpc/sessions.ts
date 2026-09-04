@@ -152,12 +152,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     } catch (error) {
       log.error('GET_SESSIONS continuing after initialization failure:', error)
     }
-    const end = perf.start('rpc.getSessions')
+    const perfMeta: Record<string, unknown> = {}
+    const end = perf.start('rpc.getSessions', perfMeta)
     const windowWorkspaceId = ctx.webContentsId != null
       ? deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId)
       : undefined
     const workspaceId = ctx.workspaceId ?? windowWorkspaceId
     const sessions = sessionManager.getSessions(workspaceId ?? undefined)
+    perfMeta.returnedCount = sessions.length
+    perfMeta.payloadBytes = sessions.reduce((n, s) => n + s.id.length + (s.name?.length ?? 0) + 48, 0)
     end()
 
     log.info('[sessions:get] result', {

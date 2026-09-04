@@ -14,6 +14,7 @@ import type { WsRpcClient, TransportConnectionState } from './client'
 import type { RpcClient } from '@craft-agent/server-core/transport'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
 import { isLocalOnly, RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { estimateJsonBytes, isWatchedSessionChannel, recordIpcInvoke } from '../shared/ipc-call-counter'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -113,6 +114,7 @@ export class RoutedClient implements RpcClient {
       : args
 
     const result = await target.invoke(channel, ...translatedArgs)
+    recordIpcInvoke(channel, isWatchedSessionChannel(channel) ? estimateJsonBytes(result) : 0)
 
     // Intercept SWITCH_WORKSPACE response to swap workspace client
     if (channel === RPC_CHANNELS.window.SWITCH_WORKSPACE) {

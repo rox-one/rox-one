@@ -34,6 +34,7 @@ import { SessionFanOutSheet, type FanOutChildJob } from './SessionFanOutSheet'
 import { SceneNode } from './SceneNode'
 import { toFlowElements, type FlowSceneNode } from './to-flow-elements'
 import { holesFromScene } from './holes-from-scene'
+import { markInteraction } from '@/perf/marks'
 
 export type RelatedBranch = {
   id: string
@@ -412,6 +413,7 @@ function EditorInner({
           }}
           onInit={(inst) => {
             flowRef.current = inst
+            markInteraction('canvas-layout')
             if (pin?.viewport) inst.setViewport(pin.viewport)
             else inst.fitView({ padding: 0.2 })
           }}
