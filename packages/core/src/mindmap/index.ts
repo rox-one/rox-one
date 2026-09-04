@@ -114,17 +114,3 @@ export {
   type DigestItem,
   type DigestShelf,
 } from './session-digest.ts';
-
-export {
-  extractSessionVariables,
-  type SessionVariable,
-} from './session-variables.ts';
-
-export {
-  sessionMapPinStorageKey,
-  parseSessionMapPin,
-  serializeSessionMapPin,
-  pruneSessionMapPin,
-  type SessionMapPin,
-  type SessionMapCamera,
-} from './session-map-pin.ts';

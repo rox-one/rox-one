@@ -1,12 +1,15 @@
 /**
- * KnowledgeSettingsPage — SiYuan knowledge engine connection.
+ * KnowledgeSettingsPage — SiYuan knowledge engine connection (P1, read-only).
  *
- * Settings → Knowledge contract (spec K-11): editable baseUrl, token, health
- * status. Saving goes through the knowledge:updateConnection RPC
- * (baseUrl validated + normalized server-side; the token rides the same call
- * straight into CredentialManager under the record's credentialRef key — it
- * never touches renderer-side storage). A blank token field keeps the stored
- * credential untouched. The auto-seeded `siyuan-local` row stays editable.
+ * Settings → Knowledge contract (spec K-11 P1): baseUrl (default
+ * http://localhost:6806), token, health status.
+ *
+ * The token never touches renderer-side storage: it goes through the
+ * existing sources:saveCredentials RPC straight into CredentialManager under
+ * 'source_bearer::{workspaceId}::{connectionId}'. No knowledge mutation
+ * channels exist in P1 — listConnections/engineStatus are the only
+ * knowledge RPC calls the page makes (read-only by contract), so the
+ * baseUrl field is informational until a save-connection channel lands.
  */
 
 import * as React from 'react'
@@ -17,7 +20,11 @@ import { SettingsCard, SettingsRow, SettingsSection } from '@/components/setting
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useActiveWorkspace } from '@/context/AppShellContext'
-import type { KnowledgeConnection, KnowledgeEngineStatus } from '../../../shared/types'
+import type {
+  KnowledgeConnection,
+  KnowledgeDetectEngineResult,
+  KnowledgeEngineStatus,
+} from '../../../shared/types'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -57,7 +64,7 @@ export default function KnowledgeSettingsPage() {
 
   const [connections, setConnections] = React.useState<KnowledgeConnection[] | null>(null)
   const [engineStatus, setEngineStatus] = React.useState<KnowledgeEngineStatus | null>(null)
-  const [baseUrl, setBaseUrl] = React.useState('')
+  const [detectResult, setDetectResult] = React.useState<KnowledgeDetectEngineResult | null>(null)
   const [token, setToken] = React.useState('')
   const [saving, setSaving] = React.useState(false)
   const [testing, setTesting] = React.useState(false)
@@ -68,19 +75,23 @@ export default function KnowledgeSettingsPage() {
   const connection = connections?.[0] ?? null
 
   React.useEffect(() => {
-    if (!workspaceId) return
     let cancelled = false
     const load = async () => {
+      try {
+        const detected = await window.electronAPI.knowledge.detectEngine()
+        if (!cancelled) setDetectResult(detected)
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(t('settings.knowledge.detectFailed', { message: errorMessage(error) }))
+        }
+      }
+      if (!workspaceId) return
       try {
         const list = await window.electronAPI.knowledge.listConnections()
         if (cancelled) return
         setConnections(list)
         const first = list[0]
         if (first) {
-          // Initialize the editable baseUrl from the stored record (once per load —
-          // in-flight edits are not clobbered because this effect only re-runs on
-          // workspace change).
-          setBaseUrl(first.baseUrl ?? DEFAULT_BASE_URL)
           const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId: first.id })
           if (!cancelled) setEngineStatus(status)
         }
@@ -96,29 +107,16 @@ export default function KnowledgeSettingsPage() {
     }
   }, [t, workspaceId])
 
-  const handleSaveConnection = async () => {
-    const trimmedUrl = baseUrl.trim()
-    const trimmedToken = token.trim()
-    if (!connection || !trimmedUrl) return
+  const handleSaveToken = async () => {
+    const trimmed = token.trim()
+    if (!workspaceId || !connection || !trimmed) return
     setSaving(true)
     try {
-      const updated = await window.electronAPI.knowledge.updateConnection({
-        connectionId: connection.id,
-        baseUrl: trimmedUrl,
-        // Blank token field = keep the stored credential untouched.
-        ...(trimmedToken ? { token: trimmedToken } : {}),
-      })
+      await window.electronAPI.saveSourceCredentials(workspaceId, connection.id, trimmed)
       setToken('')
-      setBaseUrl(updated.baseUrl ?? trimmedUrl)
-      setConnections((prev) => prev?.map((c) => (c.id === updated.id ? updated : c)) ?? [updated])
-      toast.success(t('settings.knowledge.connectionSaved'))
-      // Refresh the health row against the (possibly new) endpoint.
-      if (workspaceId) {
-        const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId: updated.id })
-        setEngineStatus(status)
-      }
+      toast.success(t('settings.knowledge.tokenSaved'))
     } catch (error) {
-      toast.error(t('settings.knowledge.connectionSaveFailed', { message: errorMessage(error) }))
+      toast.error(t('settings.knowledge.tokenSaveFailed', { message: errorMessage(error) }))
     } finally {
       setSaving(false)
     }
@@ -133,7 +131,7 @@ export default function KnowledgeSettingsPage() {
         ...(connection ? { connectionId: connection.id } : {}),
       })
       setEngineStatus(status)
-      // Refresh connections in case ENGINE_START / list seed created one.
+      // Refresh connections in case an explicit ENGINE_START created one.
       const list = await window.electronAPI.knowledge.listConnections()
       setConnections(list)
       toast.success(t('settings.knowledge.testOk'))
@@ -177,21 +175,47 @@ export default function KnowledgeSettingsPage() {
   }
 
   const openInstallPage = () => {
-    const url = engineStatus?.installUrl ?? 'https://b3log.org/siyuan/'
+    const url =
+      detectResult?.installDocsUrl ?? engineStatus?.installUrl ?? 'https://b3log.org/siyuan/'
     void window.electronAPI?.openUrl?.(url)
   }
 
+  const openDetectDocs = () => {
+    const url = detectResult?.installDocsUrl
+    if (!url) return
+    void window.electronAPI?.openUrl?.(url)
+  }
+
+  const yesNoUnknown = (value: boolean | undefined) => {
+    if (detectResult == null || value === undefined) return t('settings.knowledge.status.unknown')
+    return value ? t('settings.knowledge.detectResult.yes') : t('settings.knowledge.detectResult.no')
+  }
+
   const handleMigrateNotes = async () => {
-    if (!workspaceId || !connection || migrating) return
+    if (!workspaceId || migrating) return
     const migrate = window.electronAPI.knowledge.migrateNotes
-    if (typeof migrate !== 'function') {
+    if (typeof migrate !== 'function' || !window.electronAPI?.openFolderDialog) {
       toast.error(t('knowledge.migrate.failed'))
       return
     }
+
+    let sourceRoot: string | null
+    try {
+      sourceRoot = await window.electronAPI.openFolderDialog()
+    } catch {
+      toast.error(t('knowledge.migrate.failed'))
+      return
+    }
+    if (!sourceRoot) return
+
     setMigrating(true)
     const progressToast = toast.loading(t('knowledge.migrate.progress'))
     try {
-      const result = await migrate({ workspaceId, connectionId: connection.id })
+      const result = await migrate({
+        workspaceId,
+        sourceRoot,
+        format: 'craft-markdown',
+      })
       const failedCount = result.failed?.length ?? 0
       if (failedCount > 0 && result.migrated === 0) {
         toast.error(t('knowledge.migrate.failed'), {
@@ -235,6 +259,41 @@ export default function KnowledgeSettingsPage() {
         <p className="text-sm text-muted-foreground">{t('settings.knowledge.description')}</p>
       </div>
 
+      <SettingsSection title={t('settings.knowledge.detect')}>
+        <SettingsCard>
+          <SettingsRow
+            label={t('settings.knowledge.detectResult.installed')}
+            description={t('settings.knowledge.detectNeverDownload')}
+          >
+            <span className="text-sm text-muted-foreground">{yesNoUnknown(detectResult?.installed)}</span>
+          </SettingsRow>
+          <SettingsRow label={t('settings.knowledge.detectResult.running')}>
+            <span className="text-sm text-muted-foreground">
+              {yesNoUnknown(detectResult?.runningOnDefaultPort)}
+            </span>
+          </SettingsRow>
+          <SettingsRow label={t('settings.knowledge.detectResult.paths')}>
+            <span className="text-sm text-muted-foreground whitespace-pre-line">
+              {detectResult == null
+                ? t('settings.knowledge.status.unknown')
+                : detectResult.installPathsFound.length > 0
+                  ? detectResult.installPathsFound.join('\n')
+                  : t('settings.knowledge.detectNone')}
+            </span>
+          </SettingsRow>
+          <SettingsRow label="">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={openDetectDocs}
+              disabled={!detectResult?.installDocsUrl}
+            >
+              {t('settings.knowledge.installDocs')}
+            </Button>
+          </SettingsRow>
+        </SettingsCard>
+      </SettingsSection>
+
       <SettingsSection title={t('settings.knowledge.sectionConnection')}>
         <SettingsCard>
           <SettingsRow
@@ -243,12 +302,9 @@ export default function KnowledgeSettingsPage() {
           >
             <Input
               className="w-80"
-              value={baseUrl}
-              onChange={(e) => setBaseUrl(e.target.value)}
-              placeholder={DEFAULT_BASE_URL}
-              autoComplete="off"
-              spellCheck={false}
-              disabled={!connection}
+              value={connection?.baseUrl ?? DEFAULT_BASE_URL}
+              disabled
+              readOnly
             />
           </SettingsRow>
           <SettingsRow
@@ -269,10 +325,10 @@ export default function KnowledgeSettingsPage() {
             <div className="flex gap-2 pt-1">
               <Button
                 size="sm"
-                onClick={() => void handleSaveConnection()}
-                disabled={!connection || !baseUrl.trim() || saving}
+                onClick={() => void handleSaveToken()}
+                disabled={!workspaceId || !connection || !token.trim() || saving}
               >
-                {t('settings.knowledge.saveConnection')}
+                {t('settings.knowledge.saveToken')}
               </Button>
               <Button
                 size="sm"
@@ -338,15 +394,12 @@ export default function KnowledgeSettingsPage() {
 
       <SettingsSection title={t('knowledge.migrate.button')}>
         <SettingsCard>
-          <SettingsRow
-            label={t('knowledge.legacyNotes.banner')}
-            description={t('knowledge.migrate.noConnection')}
-          >
+          <SettingsRow label={t('knowledge.migrate.button')}>
             <Button
               size="sm"
               variant="outline"
               onClick={() => void handleMigrateNotes()}
-              disabled={!workspaceId || !connection || migrating}
+              disabled={!workspaceId || migrating}
             >
               {migrating ? t('knowledge.migrate.progress') : t('knowledge.migrate.button')}
             </Button>

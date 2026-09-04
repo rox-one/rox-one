@@ -12,7 +12,7 @@ import {
   notesMigrationMapPath,
   readNotesMigrationMap,
   writeNotesMigrationMap,
-} from '../notes-import'
+} from '../notes-migration'
 
 function toSlashPath(path: string): string {
   return path.split(sep).join('/')

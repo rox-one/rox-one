@@ -64,6 +64,7 @@ export interface RegisterCredentialRefInput {
   readonly kind: CredentialKind;
   readonly providerId: string;
   readonly locator: ProviderLocator;
+  readonly currentVersionId?: string;
   readonly now?: number;
 }
 
@@ -132,6 +133,7 @@ const REGISTER_REF_FIELDS = new Set([
   'kind',
   'providerId',
   'locator',
+  'currentVersionId',
   'now',
 ]);
 
@@ -148,7 +150,7 @@ const REGISTER_VERSION_FIELDS = new Set([
 
 const VERSION_TRANSITIONS: Record<CredentialVersionStatus, readonly CredentialVersionStatus[]> = {
   active: ['active', 'superseded', 'revoked', 'invalid'],
-  superseded: ['superseded', 'revoked', 'invalid'],
+  superseded: ['superseded', 'active', 'revoked', 'invalid'],
   revoked: ['revoked'],
   invalid: ['invalid'],
 };
@@ -220,7 +222,7 @@ function assertExactKeys(
   allowed: ReadonlySet<string>,
   errorPrefix: string,
 ): void {
-  for (const key of Object.keys(value)) {
+  for (const key of Object.getOwnPropertyNames(value)) {
     if (!allowed.has(key)) throw new Error(`${errorPrefix}: ${errorLabel(key)}`);
   }
 }
@@ -389,6 +391,13 @@ export class CredentialRefRegistry {
     if (this.refs.has(id)) throw new Error(`CredentialRef already exists: ${errorLabel(id)}`);
     if (!isCredentialKind(input.kind)) throw new Error('Invalid credential metadata: kind');
 
+    if (input.currentVersionId) {
+      const pointed = this.versions.get(input.currentVersionId);
+      if (!pointed || pointed.credentialRefId !== id) {
+        throw new Error('Invalid credential metadata: currentVersionId');
+      }
+    }
+
     const providerId = nonEmptyString(input.providerId, 'providerId');
     const locator = validateLocator(input.locator);
     const createdAt = finiteTimestamp(input.now ?? Date.now(), 'createdAt');
@@ -397,6 +406,9 @@ export class CredentialRefRegistry {
       kind: input.kind,
       providerId,
       locator,
+      ...(input.currentVersionId
+        ? { currentVersionId: nonEmptyString(input.currentVersionId, 'currentVersionId') }
+        : {}),
       createdAt,
       updatedAt: createdAt,
     };
@@ -547,7 +559,19 @@ export class CredentialRefRegistry {
 
     const ref = this.refs.get(current.credentialRefId);
     let refUpdate: CredentialRef | undefined;
-    if (
+    if (status === 'active' && ref) {
+      if (ref.currentVersionId && ref.currentVersionId !== id) {
+        const previous = this.versions.get(ref.currentVersionId);
+        if (previous?.status === 'active') {
+          this.versions.set(previous.id, { ...previous, status: 'superseded' });
+        }
+      }
+      refUpdate = {
+        ...ref,
+        currentVersionId: id,
+        updatedAt: Math.max(ref.updatedAt, finiteTimestamp(now, 'updatedAt')),
+      };
+    } else if (
       (status === 'revoked' || status === 'invalid' || status === 'superseded') &&
       ref?.currentVersionId === id
     ) {

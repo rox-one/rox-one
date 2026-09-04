@@ -4,19 +4,17 @@
  * 7 write-back mutation-proposal channels (P3, spec 05 05-mutation-safety.md)
  * plus 8 Session→Knowledge publication channels (P4, spec 06) plus 6 P5
  * saved-views / work-envelope channels (K-09 §3.5 / S-08) plus P4.3
- * getExportPayload (Craft chrome copy/export, read-only) plus P4.4
- * migrateNotes (Craft notes vault → SiYuan).
+ * getExportPayload (Craft chrome copy/export, read-only) plus local Notes
+ * import.
  *
  * WRITE-BACK BOUNDARY: HANDLED_CHANNELS below is exactly the 9 spec-03 read
  * channels + getExportPayload + the 7 spec-05 proposal channels + the 8
  * spec-06 publication channels + the 6 P5 view/envelope channels + 2 P6
  * watch channels + migrateNotes. Every mutation channel routes through
  * KnowledgeBridgeService (the spec-05 pipeline: validate → base-hash →
- * draft → diff → review → apply, with inverse-ops rollback) — no direct
- * provider write path is registered from this file except migrateNotes,
- * which uses SiyuanKernelClient.createDocWithMd (whitelist) for bulk vault
- * import. ENGINE_STATUS/START/DETECT are LOCAL_ONLY bootstrap assist;
- * full managed lifecycle (stop/pin) remains P7.
+ * draft → diff → review → apply, with inverse-ops rollback) except the
+ * user-initiated local Notes import. It writes only to the Markdown Notes
+ * store; no knowledge provider, credential, or network access is involved.
  * Publication APPLY only creates a proposal; FINALIZE commits
  * publications/links after the proposal reaches 'applied' via P3 UI.
  * VIEW_SET_ATTRIBUTE also only proposes (never applies).
@@ -79,7 +77,6 @@ import type {
   ContextPayload,
   ContextSnapshot,
   KnowledgeConnection,
-  KnowledgeNotebookInfo,
   KnowledgeProvider,
   KnowledgeRef,
   KnowledgeWorkEnvelope,
@@ -95,7 +92,6 @@ import {
 import { listViews as listViewsFromStorage } from '@craft-agent/shared/views/storage'
 import {
   SiyuanKernelClient,
-  type ListDocTreeResult,
   SiyuanKnowledgeProvider,
 } from '@craft-agent/core/knowledge/providers/siyuan'
 import {
@@ -107,7 +103,7 @@ import {
   KnowledgePublishDraftsStore,
   KnowledgeWorkEnvelopesStore,
   credentialIdFromRef,
-  migrateCraftNotesToSiyuan,
+  importNotes,
   resolveWorkspaceNotesRoot,
   type MigrateNotesArgs,
   type MigrateNotesResult,
@@ -116,19 +112,13 @@ import {
   ensureLocalKernel,
   getKernelBootstrapStatus,
   KnowledgeMetricsStore,
-  maybeAutoStartLocalKernel,
-  normalizeKnowledgeBaseUrl,
-  probeKernelHealth,
   SIYUAN_INSTALL_URL,
   SIYUAN_LOCAL_CONNECTION_ID,
 } from '../../knowledge'
-import { loadG2AcceptedVariantFromDisk } from '../../knowledge/g2-status'
 import {
   KnowledgeBridgeService,
   type KnowledgeProposalFileRecord,
 } from '../../knowledge/bridge-service'
-import { registerKnowledgeToolRuntime } from '@craft-agent/session-tools-core'
-import { createKnowledgeToolRuntime } from '../../knowledge/tool-runtime'
 import {
   startKnowledgeWatch,
   stopKnowledgeWatch,
@@ -155,7 +145,7 @@ import type {
 type SiyuanKnowledgeProviderCtor = new (options: { connection: KnowledgeConnection; token: string }) => KnowledgeProvider
 type SiyuanKernelClientCtor = new (options: { baseUrl: string; token: string }) => Pick<
   SiyuanKernelClient,
-  'getVersion' | 'listNotebooks' | 'listDocTree' | 'createDocWithMd' | 'checkBlockExist'
+  'getVersion' | 'listNotebooks' | 'createDocWithMd' | 'checkBlockExist'
 >
 let knowledgeProviderCtor: SiyuanKnowledgeProviderCtor = SiyuanKnowledgeProvider as unknown as SiyuanKnowledgeProviderCtor
 let siyuanKernelClientCtor: SiyuanKernelClientCtor = SiyuanKernelClient
@@ -172,7 +162,7 @@ export function __setSkipKnowledgeWatchAutoStart(skip: boolean): void {
   skipKnowledgeWatchAutoStart = skip
 }
 
-/** The complete knowledge channel set — 9 P1 read + getExportPayload + ENGINE_STATUS/DETECT/START + METRICS_GET + listTree/userCreate + 7 P3 write-back + 8 P4 publication + 6 P5 views/envelopes + 2 P6 watch + migrateNotes; asserted by knowledge.test.ts. */
+/** The complete knowledge channel set — 9 P1 read + getExportPayload + ENGINE_STATUS/DETECT/START + METRICS_GET + 7 P3 write-back + 8 P4 publication + 6 P5 views/envelopes + 2 P6 watch + migrateNotes; asserted by knowledge.test.ts. */
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.knowledge.LIST_CONNECTIONS,
   RPC_CHANNELS.knowledge.CAPABILITIES,
@@ -181,10 +171,6 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.knowledge.GET_CONTEXT,
   RPC_CHANNELS.knowledge.GET_BACKLINKS,
   RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
-  RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
-  RPC_CHANNELS.knowledge.LIST_TREE,
-  RPC_CHANNELS.knowledge.USER_CREATE,
-  RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
   RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
   RPC_CHANNELS.knowledge.SNAPSHOT_GET,
   RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -229,23 +215,6 @@ export interface KnowledgeConnectionArgs {
   connectionId: string
 }
 
-export interface KnowledgeListTreeArgs extends KnowledgeConnectionArgs {
-  notebookId: string
-  path?: string
-}
-
-export type KnowledgeUserCreateSource = 'navigator' | 'agent'
-
-export type KnowledgeUserCreateArgs = KnowledgeConnectionArgs & {
-  source: KnowledgeUserCreateSource
-} & (
-  | { op: 'notebook'; name: string }
-  | { op: 'folder'; notebookId: string; path: string; name: string }
-  | { op: 'document'; notebookId: string; path: string; title: string }
-)
-
-export type KnowledgeUserCreateResult = { id: string } | { path: string }
-
 export interface KnowledgeSearchArgs extends KnowledgeConnectionArgs {
   input: SearchInput
 }
@@ -287,14 +256,6 @@ export interface KnowledgeSnapshotCreateArgs extends KnowledgeConnectionArgs {
 export interface KnowledgeSnapshotGetArgs {
   workspaceId: string
   snapshotId: string
-}
-
-/** Settings → Knowledge edit flow: patch baseUrl and/or token on an existing connection. */
-export interface KnowledgeUpdateConnectionArgs {
-  connectionId: string
-  baseUrl?: string
-  /** Plain token; empty/undefined leaves the stored credential untouched. */
-  token?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -489,12 +450,6 @@ function assertKnowledgeRef(ref: unknown): asserts ref is KnowledgeRef {
 export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
 
-  // Non-blocking local kernel bootstrap (detect binary → open/spawn if down).
-  // Never awaits readiness; UI polls ENGINE_STATUS / uses ENGINE_START CTA.
-  // Skipped under the same test seam as watch auto-start.
-  if (!skipKnowledgeWatchAutoStart) {
-    maybeAutoStartLocalKernel({ log: log ?? undefined })
-  }
 
   // Per-registration registry: factory re-runs on every connect(), picking up
   // the current token from tokensByConnection (set just before connect()).
@@ -503,12 +458,6 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   registry.registerProvider('siyuan', (connection) =>
     new knowledgeProviderCtor({ connection, token: tokensByConnection.get(connection.id) ?? '' }),
   )
-
-  function joinSiyuanPath(parent: string, name: string): string {
-    const leaf = name.replace(/^\/+/, '')
-    if (!parent || parent === '/') return `/${leaf}`
-    return `${parent.replace(/\/+$/, '')}/${leaf}`
-  }
 
   /** Domain KnowledgeError code → transport CodedError with the identical code string. */
   function toTransportError(error: unknown): unknown {
@@ -552,12 +501,6 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       throw toTransportError(error)
     }
   }
-
-  // K-10 §3.1: publish the knowledge read runtime for the knowledge_search /
-  // knowledge_read / knowledge_get_backlinks session tools (Claude, Pi and OMP all
-  // execute registry session tools in this process). The runtime reuses the exact
-  // provider resolution above, so token rotation semantics match the read channels.
-  registerKnowledgeToolRuntime(createKnowledgeToolRuntime({ resolveProvider }))
 
   function requireWorkspaceRoot(workspaceId: string): string {
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -662,13 +605,11 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   }
 
   // ——— LIST_CONNECTIONS({}) → KnowledgeConnection[] ———
-  // Seeds a default local connection row when the registry is empty so Settings
-  // / Home always have something to show (token still user-supplied).
-  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, () => {
-    const store = new KnowledgeConnectionsStore()
-    ensureDefaultLocalConnection(store)
-    return store.list().map(toContractConnection)
-  })
+  // Pure read: local Notes must work before any optional knowledge engine is
+  // configured. ENGINE_START is the explicit opt-in that can seed a connection.
+  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, () =>
+    new KnowledgeConnectionsStore().list().map(toContractConnection),
+  )
 
   // ——— CAPABILITIES({connectionId}) → KnowledgeCapabilities ———
   server.handle(RPC_CHANNELS.knowledge.CAPABILITIES, (_ctx, args: KnowledgeConnectionArgs) =>
@@ -704,124 +645,6 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     )
     return payload.backlinks
   })
-
-  // ——— LIST_NOTEBOOKS({connectionId}) → KnowledgeNotebookInfo[] ———
-  // Navigator tree data. The KnowledgeProvider contract has no listNotebooks method
-  // (K-03 §3.2), so this reads the kernel client's lsNotebooks wrapper directly —
-  // same token/baseUrl resolution as MIGRATE_NOTES. Typed errors only
-  // (NOT_FOUND / CONNECTION_UNAVAILABLE via toTransportError).
-  server.handle(
-    RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
-    async (_ctx, args: KnowledgeConnectionArgs): Promise<KnowledgeNotebookInfo[]> => {
-      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
-        throw new CodedError('INVALID_REF', 'knowledge.listNotebooks: connectionId is required')
-      }
-      const record = requireConnection(args.connectionId)
-      const token = await readToken(record)
-      try {
-        const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
-        const notebooks = await client.listNotebooks()
-        return notebooks.map((notebook) => ({
-          id: notebook.id,
-          name: notebook.name,
-          icon: notebook.icon,
-          closed: notebook.closed === true,
-        }))
-      } catch (error) {
-        throw toTransportError(error)
-      }
-    },
-  )
-
-
-  // ——— LIST_TREE({connectionId, notebookId, path?}) → ListDocTreeResult ———
-  // Navigator recursive tree. Same kernel-client seam as LIST_NOTEBOOKS (token/baseUrl
-  // via requireConnection + readToken). REMOTE_ELIGIBLE workspace data.
-  server.handle(
-    RPC_CHANNELS.knowledge.LIST_TREE,
-    async (_ctx, args: KnowledgeListTreeArgs): Promise<ListDocTreeResult> => {
-      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
-        throw new CodedError('INVALID_REF', 'knowledge.listTree: connectionId is required')
-      }
-      if (typeof args?.notebookId !== 'string' || args.notebookId.length === 0) {
-        throw new CodedError('INVALID_REF', 'knowledge.listTree: notebookId is required')
-      }
-      const record = requireConnection(args.connectionId)
-      const token = await readToken(record)
-      const path = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
-      try {
-        const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
-        return await client.listDocTree(args.notebookId, path)
-      } catch (error) {
-        throw toTransportError(error)
-      }
-    },
-  )
-
-  // ——— USER_CREATE({connectionId, source, op, ...}) ———
-  // Navigator-direct creates only. Agents must go through proposeMutation (P3).
-  // Kernel client has no createNotebook wrapper (deliberate P3 write whitelist —
-  // no /api/notebook/createNotebook). Notebook op is therefore skipped with
-  // UNSUPPORTED_OPERATION. Folder and document use createDocWithMd (path = parent
-  // path + name/title). No fake kind:'database' until an av-create API exists.
-  server.handle(
-    RPC_CHANNELS.knowledge.USER_CREATE,
-    async (_ctx, args: KnowledgeUserCreateArgs): Promise<KnowledgeUserCreateResult> => {
-      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
-        throw new CodedError('INVALID_REF', 'knowledge.userCreate: connectionId is required')
-      }
-      if (args?.source !== 'navigator') {
-        throw new CodedError(
-          'UNSUPPORTED_OPERATION',
-          'knowledge.userCreate: only source navigator is allowed; agents must use proposeMutation',
-        )
-      }
-      const record = requireConnection(args.connectionId)
-      const token = await readToken(record)
-      try {
-        const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
-        if (args.op === 'notebook') {
-          // No createNotebook on SiyuanKernelClient; do not add an ad-hoc POST.
-          throw new CodedError(
-            'UNSUPPORTED_OPERATION',
-            'knowledge.userCreate: notebook create is not exposed on the kernel client; create a document instead',
-          )
-        }
-        if (args.op === 'folder') {
-          if (typeof args.notebookId !== 'string' || args.notebookId.length === 0) {
-            throw new CodedError('INVALID_REF', 'knowledge.userCreate: notebookId is required for folder')
-          }
-          if (typeof args.name !== 'string' || args.name.length === 0) {
-            throw new CodedError('INVALID_REF', 'knowledge.userCreate: name is required for folder')
-          }
-          const parent = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
-          const path = joinSiyuanPath(parent, args.name)
-          await client.createDocWithMd({ notebook: args.notebookId, path, markdown: '' })
-          return { path }
-        }
-        if (args.op === 'document') {
-          if (typeof args.notebookId !== 'string' || args.notebookId.length === 0) {
-            throw new CodedError('INVALID_REF', 'knowledge.userCreate: notebookId is required for document')
-          }
-          if (typeof args.title !== 'string' || args.title.length === 0) {
-            throw new CodedError('INVALID_REF', 'knowledge.userCreate: title is required for document')
-          }
-          const title = args.title
-          const parent = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
-          const path = joinSiyuanPath(parent, title)
-          const id = await client.createDocWithMd({
-            notebook: args.notebookId,
-            path,
-            markdown: `# ${title}\n`,
-          })
-          return { id }
-        }
-        throw new CodedError('INVALID_REF', `knowledge.userCreate: unknown op ${String((args as { op?: string }).op)}`)
-      } catch (error) {
-        throw toTransportError(error)
-      }
-    },
-  )
 
   // ——— GET_EXPORT_PAYLOAD({connectionId, ref, formats?}) → KnowledgeExportPayload ———
   // P4.3 Craft chrome copy/export. Read-only: deep link always; content via provider.get
@@ -884,48 +707,6 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     },
   )
 
-  // ——— UPDATE_CONNECTION({connectionId, baseUrl?, token?}) → KnowledgeConnection ———
-  // Settings → Knowledge edit flow. baseUrl is validated (absolute http(s), trailing
-  // slashes stripped); the token lands in CredentialManager under the workspace pinned
-  // by the record's credentialRef (same key contract as the sources:saveCredentials
-  // knowledge fallback — P2-12: never the caller's workspace). A best-effort health
-  // probe refreshes the cached status but never fails the save; the auto-seeded
-  // siyuan-local row is updatable like any other.
-  server.handle(
-    RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
-    async (_ctx, args: KnowledgeUpdateConnectionArgs): Promise<KnowledgeConnection> => {
-      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
-        throw new CodedError('INVALID_REF', 'knowledge.updateConnection: connectionId is required')
-      }
-      const store = new KnowledgeConnectionsStore()
-      const record = store.get(args.connectionId)
-      if (!record) {
-        throw new CodedError('NOT_FOUND', `Knowledge connection not found: ${args.connectionId}`)
-      }
-
-      const nextBaseUrl = args.baseUrl !== undefined ? normalizeKnowledgeBaseUrl(args.baseUrl) : record.baseUrl
-
-      const token = typeof args.token === 'string' && args.token.trim() ? args.token.trim() : undefined
-      if (token !== undefined) {
-        const credentialId = credentialIdFromRef(record.credentialRef)
-        if (!credentialId) {
-          throw new CodedError(
-            'CONNECTION_UNAVAILABLE',
-            `Knowledge connection '${record.id}' has a malformed credential reference`,
-          )
-        }
-        await getCredentialManager().set(credentialId, { value: token })
-      }
-
-      store.save({ id: record.id, baseUrl: nextBaseUrl, credentialRef: record.credentialRef })
-
-      // Best-effort probe (token-free health endpoint): refresh the cached status only.
-      const health = await probeKernelHealth(nextBaseUrl)
-      const updated = store.setStatus(record.id, health.running ? 'ok' : 'failed') ?? store.get(record.id)
-      return toContractConnection(updated!)
-    },
-  )
-
   // ——— SNAPSHOT_CREATE({workspaceId, connectionId, ref, mode?, sessionId, provenance?}) → ContextSnapshot ———
   server.handle(RPC_CHANNELS.knowledge.SNAPSHOT_CREATE, async (_ctx, args: KnowledgeSnapshotCreateArgs): Promise<ContextSnapshot> => {
     const rootPath = requireWorkspaceRoot(args.workspaceId)
@@ -979,18 +760,12 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       ? new KnowledgeConnectionsStore().get(connectionId)
       : new KnowledgeConnectionsStore().list()[0] ?? null
 
-    const g2Blocked =
-      !bootstrap.running && loadG2AcceptedVariantFromDisk() !== 'C'
-        ? { reason: 'G2_BLOCKED' as const }
-        : {}
-
     if (!record) {
       return {
         mode: 'external-local',
         running: bootstrap.running,
         ...(bootstrap.version ? { version: bootstrap.version } : {}),
         ...extras,
-        ...g2Blocked,
       }
     }
 
@@ -1010,7 +785,6 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
         running: bootstrap.running,
         ...(bootstrap.version ? { version: bootstrap.version } : {}),
         ...extras,
-        ...g2Blocked,
       }
     }
   })
@@ -1843,45 +1617,39 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     },
   )
 
-  // ——— MIGRATE_NOTES({workspaceId, connectionId, notebookName?}) → MigrateNotesResult ———
-  // P4.4 user-initiated Craft notes vault → SiYuan. Soft-fail per note; never deletes vault.
-  // createNotebook is not on the kernel whitelist — docs land under /Craft Notes/... path
-  // prefix in the named notebook when present, else the first open notebook.
+  // ——— MIGRATE_NOTES({workspaceId, sourceRoot, format?}) → MigrateNotesResult ———
+  // User-initiated local import into the Markdown Notes store. It has no
+  // knowledge-provider, credential, or network dependency.
   server.handle(
     RPC_CHANNELS.knowledge.MIGRATE_NOTES,
     async (_ctx, args: MigrateNotesArgs): Promise<MigrateNotesResult> => {
       if (!args?.workspaceId || typeof args.workspaceId !== 'string') {
         throw new Error('knowledge.migrateNotes: workspaceId is required')
       }
-      if (!args?.connectionId || typeof args.connectionId !== 'string') {
-        throw new Error('knowledge.migrateNotes: connectionId is required')
+      if (!args.sourceRoot || typeof args.sourceRoot !== 'string') {
+        throw new Error('knowledge.migrateNotes: sourceRoot is required')
+      }
+      if (args.format !== undefined && typeof args.format !== 'string') {
+        throw new Error('knowledge.migrateNotes: format must be a string')
       }
       const rootPath = requireWorkspaceRoot(args.workspaceId)
-      const record = requireConnection(args.connectionId)
-      const token = await readToken(record)
-      if (!token) {
-        throw new CodedError(
-          'CONNECTION_UNAVAILABLE',
-          `Knowledge connection '${record.id}' has no token — save a SiYuan API token first`,
-        )
-      }
-      let client: InstanceType<SiyuanKernelClientCtor>
-      try {
-        client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
-      } catch (error) {
-        throw new CodedError(
-          'CONNECTION_UNAVAILABLE',
-          error instanceof Error ? error.message : String(error),
-        )
-      }
       const notesRoot = resolveWorkspaceNotesRoot(args.workspaceId)
       try {
-        return await migrateCraftNotesToSiyuan({
+        const result = await importNotes({
           workspaceRoot: rootPath,
-          notesRoot,
-          client,
-          notebookName: args.notebookName,
+          sourceRoot: args.sourceRoot,
+          destinationRoot: notesRoot,
+          format: args.format,
         })
+        if (result.migrated > 0) {
+          pushTyped(
+            server,
+            RPC_CHANNELS.notes.CHANGED,
+            { to: 'workspace', workspaceId: args.workspaceId },
+            { workspaceId: args.workspaceId },
+          )
+        }
+        return result
       } catch (error) {
         throw toTransportError(error)
       }

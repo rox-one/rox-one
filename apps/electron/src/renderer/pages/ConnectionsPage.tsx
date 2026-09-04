@@ -1,831 +1,504 @@
-/**
- * ConnectionsPage (CF-6) — native Connection Fabric surface.
- *
- * Tabs: Services / Credentials / Imports / Policies / Audit.
- * RPC methods are optional; missing handlers render empty/disabled states.
- * Never renders secret payload fields (value / token / password / ciphertext).
- */
-
-import * as React from 'react'
+import { useAtom } from 'jotai'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { SettingsCard, SettingsSection } from '@/components/settings'
+import { selectedConnectionAtom } from '@/atoms/connections'
 import { useActiveWorkspace } from '@/context/AppShellContext'
-import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { routes } from '@/lib/navigate'
+import { sanitizeConnectionRows, type ConnectionListRow } from './connections-list'
 
-type ConnectionsTab = 'services' | 'credentials' | 'imports' | 'policies' | 'audit'
-
-const TABS: readonly ConnectionsTab[] = [
-  'services',
-  'credentials',
-  'imports',
-  'policies',
-  'audit',
-] as const
-
-const IMPORTER_IDS = [
-  'dotenv',
-  'git-credential',
-  'macos-keychain',
-  'docker-credential',
-  'legacy-local',
-  'aws-profile',
-  'gcp-adc',
-  'ssh-agent',
-  'infisical',
-] as const
-
-type ConnectionRow = {
-  id: string
-  integrationId?: string
-  providerId?: string
-  storageMode?: string
-  health?: string
-  externalAccountId?: string
-  scopes?: readonly string[]
+const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
+const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent'] as const
+type ConnectionsTab = (typeof TABS)[number]
+type PreviewSource = 'env' | 'git-helper' | 'docker' | 'aws' | 'keychain' | 'adc' | 'ssh-agent'
+type PreviewRow = {
+  candidateId: string
+  label: string
+  maskedSummary: string
+  source: PreviewSource
 }
+type SurfaceState = 'ready' | 'unavailable' | 'error'
 
-type CredentialMeta = {
-  id: string
-  kind: string
-  provider: string
-  mode: string
-}
-
-type ImportCandidate = {
-  id: string
-  sourceId?: string
-  label?: string
-  kind?: string
-  conflictKey?: string
-  fingerprint?: string
-}
-
-type GrantRow = {
-  id: string
-  consumerId: string
-  actions?: readonly string[]
-  resources?: readonly string[]
-  status?: string
-}
-
-type AuditRow = {
-  time?: string | number
-  timestamp?: number
-  event?: string
-  action?: string
-  consumer?: string
-  decision?: string
-  digest?: string
-  versionFingerprint?: string
-}
-
-/** Optional CF RPC surface — present only after main/preload wiring. */
-type FabricApi = {
-  fabricListConnections?: (workspaceId: string) => Promise<ConnectionRow[]>
-  fabricListCredentials?: (workspaceId: string) => Promise<CredentialMeta[]>
-  fabricDiscover?: (workspaceId: string, importerId: string) => Promise<ImportCandidate[]>
-  fabricPreview?: (workspaceId: string, candidateId: string) => Promise<ImportCandidate | Record<string, unknown>>
-  fabricCommitImport?: (workspaceId: string, candidateId: string) => Promise<unknown>
-  fabricListGrants?: (workspaceId: string) => Promise<GrantRow[]>
-  fabricPutGrant?: (
-    workspaceId: string,
-    grant: { consumerId: string; action: string; resource: string },
-  ) => Promise<unknown>
-  fabricListAudit?: (workspaceId: string) => Promise<AuditRow[]>
-  fabricRevokeConnection?: (args: { workspaceId: string; connectionId: string }) => Promise<unknown>
-  fabricGithubStatus?: (opts?: { probe?: boolean }) => Promise<{
-    available: boolean
-    reason?: string
-    login?: string
-  }>
-  fabricInfisicalHealth?: () => Promise<{ available: boolean; reason?: string }>
-}
-
-function fabricApi(): FabricApi {
-  return (window.electronAPI ?? {}) as FabricApi
-}
-
-function asMetaString(value: unknown): string {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return String(value)
-  }
-  return ''
-}
-
-/** Strip any accidental secret-shaped keys before rendering preview metadata. */
-function sanitizePreviewMeta(input: unknown): Record<string, string> {
-  if (!input || typeof input !== 'object') return {}
-  const blocked = new Set(['value', 'token', 'password', 'ciphertext', 'secret', 'raw'])
-  const out: Record<string, string> = {}
-  for (const [key, val] of Object.entries(input as Record<string, unknown>)) {
-    if (blocked.has(key.toLowerCase())) continue
-    if (val == null) continue
-    if (typeof val === 'object') continue
-    out[key] = String(val)
-  }
-  return out
-}
-
-function RuntimeNotWired({ label }: { label: string }) {
-  return (
-    <p className="text-sm text-muted-foreground py-6 text-center" role="status">
-      {label}
-    </p>
-  )
-}
-
-type ProviderChip = {
-  title: string
-  available: boolean
-  missing: string
-  availableLabel: string
-  detail?: string
-}
-
-function ProviderStatusStrip() {
-  const { t } = useTranslation()
-  const api = fabricApi()
-  const [github, setGithub] = React.useState<{ available: boolean; login?: string } | null>(null)
-  const [infisical, setInfisical] = React.useState<{ available: boolean } | null>(null)
-  const [probing, setProbing] = React.useState(false)
-
-  React.useEffect(() => {
-    let cancelled = false
-    if (api.fabricGithubStatus) {
-      void api
-        .fabricGithubStatus()
-        .then((next) => {
-          if (!cancelled) {
-            setGithub({
-              available: Boolean(next?.available),
-              login: typeof next?.login === 'string' ? next.login : undefined,
-            })
-          }
-        })
-        .catch(() => {
-          if (!cancelled) setGithub({ available: false })
-        })
-    }
-    if (api.fabricInfisicalHealth) {
-      void api
-        .fabricInfisicalHealth()
-        .then((next) => {
-          if (!cancelled) setInfisical({ available: Boolean(next?.available) })
-        })
-        .catch(() => {
-          if (!cancelled) setInfisical({ available: false })
-        })
-    }
-    return () => {
-      cancelled = true
-    }
-  }, [api.fabricGithubStatus, api.fabricInfisicalHealth])
-
-  const onProbeGithub = async () => {
-    if (!api.fabricGithubStatus) return
-    setProbing(true)
-    try {
-      const next = await api.fabricGithubStatus({ probe: true })
-      setGithub({
-        available: Boolean(next?.available),
-        login: typeof next?.login === 'string' ? next.login : undefined,
-      })
-    } catch {
-      setGithub({ available: false })
-    } finally {
-      setProbing(false)
-    }
-  }
-
-  if (!api.fabricGithubStatus && !api.fabricInfisicalHealth) return null
-
-  const chips: ProviderChip[] = []
-  if (api.fabricGithubStatus && github) {
-    chips.push({
-      title: t('connections.github.title'),
-      available: github.available,
-      missing: t('connections.github.missing'),
-      availableLabel: t('connections.github.available'),
-      detail: github.login,
-    })
-  }
-  if (api.fabricInfisicalHealth && infisical) {
-    chips.push({
-      title: t('connections.infisical.title'),
-      available: infisical.available,
-      missing: t('connections.infisical.missing'),
-      availableLabel: t('connections.infisical.available'),
-    })
-  }
-  if (chips.length === 0 && !api.fabricGithubStatus) return null
-
-  return (
-    <div className="flex flex-wrap gap-2 items-center" role="status">
-      {chips.map((chip) => (
-        <div
-          key={chip.title}
-          className="inline-flex items-center gap-2 rounded-md border border-border/60 px-3 py-1.5 text-sm"
-        >
-          <span className="font-medium">{chip.title}</span>
-          <span className={chip.available ? 'text-primary' : 'text-muted-foreground'}>
-            {chip.available ? chip.availableLabel : chip.missing}
-          </span>
-          {chip.detail ? <span className="font-mono text-xs">{chip.detail}</span> : null}
-        </div>
-      ))}
-      {api.fabricGithubStatus ? (
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={probing || github?.available === false}
-          onClick={() => void onProbeGithub()}
-        >
-          {t('connections.github.login')}
-        </Button>
-      ) : null}
-    </div>
-  )
-}
-
-function ServicesTab({ workspaceId }: { workspaceId: string | undefined }) {
-  const { t } = useTranslation()
-  const api = fabricApi()
-  const [rows, setRows] = React.useState<ConnectionRow[] | null>(null)
-  const [wired, setWired] = React.useState(true)
-  const [busyId, setBusyId] = React.useState<string | null>(null)
-
-  const reload = React.useCallback(async () => {
-    const list = fabricApi().fabricListConnections
-    if (!list || !workspaceId) {
-      setWired(Boolean(list))
-      setRows([])
-      return
-    }
-    setWired(true)
-    try {
-      const next = await list(workspaceId)
-      setRows(Array.isArray(next) ? next : [])
-    } catch {
-      setRows([])
-    }
-  }, [workspaceId])
-
-  React.useEffect(() => {
-    void reload()
-  }, [reload])
-
-  const onRevoke = async (connectionId: string) => {
-    if (!workspaceId || !api.fabricRevokeConnection) return
-    setBusyId(connectionId)
-    try {
-      await api.fabricRevokeConnection({ workspaceId, connectionId })
-      await reload()
-    } catch {
-      // keep current rows
-    } finally {
-      setBusyId(null)
-    }
-  }
-
-  return (
-    <div className="space-y-4">
-      <ProviderStatusStrip />
-      {!wired ? (
-        <RuntimeNotWired label={t('connections.services.runtimeNotWired')} />
-      ) : !rows || rows.length === 0 ? (
-        <RuntimeNotWired label={t('connections.services.empty')} />
-      ) : (
-        <SettingsCard className="p-0 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Integration</TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Mode</TableHead>
-                <TableHead>Health</TableHead>
-                {api.fabricRevokeConnection ? <TableHead /> : null}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.id}>
-                  <TableCell className="font-mono text-xs">{row.id}</TableCell>
-                  <TableCell>{asMetaString(row.integrationId)}</TableCell>
-                  <TableCell>{asMetaString(row.providerId)}</TableCell>
-                  <TableCell>{asMetaString(row.storageMode)}</TableCell>
-                  <TableCell>{asMetaString(row.health)}</TableCell>
-                  {api.fabricRevokeConnection ? (
-                    <TableCell className="text-right">
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={busyId === row.id || !workspaceId}
-                        onClick={() => void onRevoke(row.id)}
-                      >
-                        Revoke
-                      </Button>
-                    </TableCell>
-                  ) : null}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </SettingsCard>
-      )}
-    </div>
-  )
-}
-
-function CredentialsTab({ workspaceId }: { workspaceId: string | undefined }) {
-  const { t } = useTranslation()
-  const [rows, setRows] = React.useState<CredentialMeta[] | null>(null)
-  const [wired, setWired] = React.useState(true)
-
-  React.useEffect(() => {
-    let cancelled = false
-    const list = fabricApi().fabricListCredentials
-    if (!list || !workspaceId) {
-      setWired(Boolean(list))
-      setRows([])
-      return
-    }
-    setWired(true)
-    void list(workspaceId)
-      .then((next) => {
-        if (!cancelled) {
-          const safe = (Array.isArray(next) ? next : []).map((item) => ({
-            id: asMetaString(item?.id),
-            kind: asMetaString(item?.kind),
-            provider: asMetaString(item?.provider),
-            mode: asMetaString(item?.mode),
-          }))
-          setRows(safe)
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setRows([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [workspaceId])
-
-  if (!wired) {
-    return <RuntimeNotWired label={t('connections.credentials.runtimeNotWired')} />
-  }
-
-  if (!rows || rows.length === 0) {
-    return <RuntimeNotWired label={t('connections.credentials.empty')} />
-  }
-
-  return (
-    <SettingsCard className="p-0 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('connections.credentials.columns.id')}</TableHead>
-            <TableHead>{t('connections.credentials.columns.kind')}</TableHead>
-            <TableHead>{t('connections.credentials.columns.provider')}</TableHead>
-            <TableHead>{t('connections.credentials.columns.mode')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="font-mono text-xs">{row.id}</TableCell>
-              <TableCell>{row.kind}</TableCell>
-              <TableCell>{row.provider}</TableCell>
-              <TableCell>{row.mode}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </SettingsCard>
-  )
-}
-
-function ImportsTab({ workspaceId }: { workspaceId: string | undefined }) {
-  const { t } = useTranslation()
-  const api = fabricApi()
-  const wired = Boolean(api.fabricDiscover)
-  const [importerId, setImporterId] = React.useState<string>(IMPORTER_IDS[0])
-  const [candidates, setCandidates] = React.useState<ImportCandidate[]>([])
-  const [selectedId, setSelectedId] = React.useState<string | null>(null)
-  const [preview, setPreview] = React.useState<Record<string, string> | null>(null)
-  const [busy, setBusy] = React.useState(false)
-
-  const onDiscover = async () => {
-    if (!workspaceId || !api.fabricDiscover) return
-    setBusy(true)
-    setPreview(null)
-    try {
-      const next = await api.fabricDiscover(workspaceId, importerId)
-      setCandidates(Array.isArray(next) ? next : [])
-      setSelectedId(null)
-    } catch {
-      setCandidates([])
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const onPreview = async () => {
-    if (!workspaceId || !selectedId || !api.fabricPreview) return
-    setBusy(true)
-    try {
-      const next = await api.fabricPreview(workspaceId, selectedId)
-      setPreview(sanitizePreviewMeta(next))
-    } catch {
-      setPreview(null)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const onCommit = async () => {
-    if (!workspaceId || !selectedId || !api.fabricCommitImport) return
-    setBusy(true)
-    try {
-      await api.fabricCommitImport(workspaceId, selectedId)
-      setPreview(null)
-      setSelectedId(null)
-      if (api.fabricDiscover) {
-        const next = await api.fabricDiscover(workspaceId, importerId)
-        setCandidates(Array.isArray(next) ? next : [])
-      }
-    } catch {
-      // keep selection; UI stays metadata-only
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  if (!wired) {
-    return <RuntimeNotWired label={t('connections.imports.runtimeNotWired')} />
-  }
-
-  return (
-    <div className="space-y-4">
-      <SettingsCard className="px-4 py-3.5">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm min-w-[12rem]">
-            <span className="text-muted-foreground">{t('connections.imports.importer')}</span>
-            <select
-              className="border border-border/60 rounded-md px-2 py-1.5 bg-background"
-              value={importerId}
-              onChange={(ev) => setImporterId(ev.target.value)}
-              disabled={busy}
-            >
-              {IMPORTER_IDS.map((id) => (
-                <option key={id} value={id}>
-                  {id}
-                </option>
-              ))}
-            </select>
-          </label>
-          <Button type="button" onClick={() => void onDiscover()} disabled={busy || !workspaceId}>
-            {t('connections.imports.discover')}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => void onPreview()}
-            disabled={busy || !selectedId || !api.fabricPreview}
-          >
-            {t('connections.imports.preview')}
-          </Button>
-          <Button
-            type="button"
-            onClick={() => void onCommit()}
-            disabled={busy || !selectedId || !api.fabricCommitImport}
-          >
-            {t('connections.imports.commit')}
-          </Button>
-        </div>
-      </SettingsCard>
-
-      {candidates.length === 0 ? (
-        <RuntimeNotWired label={t('connections.imports.empty')} />
-      ) : (
-        <SettingsCard className="p-0 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Source</TableHead>
-                <TableHead>Kind</TableHead>
-                <TableHead>Fingerprint</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {candidates.map((c) => (
-                <TableRow
-                  key={c.id}
-                  data-state={selectedId === c.id ? 'selected' : undefined}
-                  className="cursor-pointer"
-                  onClick={() => setSelectedId(c.id)}
-                >
-                  <TableCell className="font-mono text-xs">{c.id}</TableCell>
-                  <TableCell>{asMetaString(c.sourceId ?? c.label)}</TableCell>
-                  <TableCell>{asMetaString(c.kind)}</TableCell>
-                  <TableCell className="font-mono text-xs">{asMetaString(c.fingerprint)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </SettingsCard>
-      )}
-
-      {preview && Object.keys(preview).length > 0 ? (
-        <SettingsCard className="px-4 py-3.5">
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-            {Object.entries(preview).map(([k, v]) => (
-              <React.Fragment key={k}>
-                <dt className="text-muted-foreground">{k}</dt>
-                <dd className="font-mono text-xs break-all">{v}</dd>
-              </React.Fragment>
-            ))}
-          </dl>
-        </SettingsCard>
-      ) : null}
-    </div>
-  )
-}
-
-function PoliciesTab({ workspaceId }: { workspaceId: string | undefined }) {
-  const { t } = useTranslation()
-  const api = fabricApi()
-  const [grants, setGrants] = React.useState<GrantRow[]>([])
-  const [wired, setWired] = React.useState(true)
-  const [consumerId, setConsumerId] = React.useState('')
-  const [action, setAction] = React.useState('')
-  const [resource, setResource] = React.useState('')
-  const [busy, setBusy] = React.useState(false)
-
-  const reload = React.useCallback(async () => {
-    const list = fabricApi().fabricListGrants
-    if (!list || !workspaceId) {
-      setWired(Boolean(list))
-      setGrants([])
-      return
-    }
-    setWired(true)
-    try {
-      const next = await list(workspaceId)
-      setGrants(Array.isArray(next) ? next : [])
-    } catch {
-      setGrants([])
-    }
-  }, [workspaceId])
-
-  React.useEffect(() => {
-    void reload()
-  }, [reload])
-
-  const onAdd = async () => {
-    if (!workspaceId || !api.fabricPutGrant) return
-    const trimmedConsumer = consumerId.trim()
-    const trimmedAction = action.trim()
-    const trimmedResource = resource.trim()
-    if (!trimmedConsumer || !trimmedAction || !trimmedResource) return
-    setBusy(true)
-    try {
-      await api.fabricPutGrant(workspaceId, {
-        consumerId: trimmedConsumer,
-        action: trimmedAction,
-        resource: trimmedResource,
-      })
-      setConsumerId('')
-      setAction('')
-      setResource('')
-      await reload()
-    } catch {
-      // leave form filled
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  if (!wired && !api.fabricPutGrant) {
-    return <RuntimeNotWired label={t('connections.policies.runtimeNotWired')} />
-  }
-
-  return (
-    <div className="space-y-4">
-      <SettingsCard className="px-4 py-3.5">
-        <div className="flex flex-wrap gap-3 items-end">
-          <label className="flex flex-col gap-1 text-sm min-w-[10rem] flex-1">
-            <span className="text-muted-foreground">{t('connections.policies.consumerId')}</span>
-            <Input
-              value={consumerId}
-              onChange={(ev) => setConsumerId(ev.target.value)}
-              disabled={busy || !api.fabricPutGrant}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm min-w-[8rem] flex-1">
-            <span className="text-muted-foreground">{t('connections.policies.action')}</span>
-            <Input
-              value={action}
-              onChange={(ev) => setAction(ev.target.value)}
-              disabled={busy || !api.fabricPutGrant}
-            />
-          </label>
-          <label className="flex flex-col gap-1 text-sm min-w-[8rem] flex-1">
-            <span className="text-muted-foreground">{t('connections.policies.resource')}</span>
-            <Input
-              value={resource}
-              onChange={(ev) => setResource(ev.target.value)}
-              disabled={busy || !api.fabricPutGrant}
-            />
-          </label>
-          <Button
-            type="button"
-            onClick={() => void onAdd()}
-            disabled={busy || !api.fabricPutGrant || !workspaceId}
-          >
-            {t('connections.policies.add')}
-          </Button>
-        </div>
-      </SettingsCard>
-
-      {!wired ? (
-        <RuntimeNotWired label={t('connections.policies.runtimeNotWired')} />
-      ) : grants.length === 0 ? (
-        <RuntimeNotWired label={t('connections.policies.empty')} />
-      ) : (
-        <SettingsCard className="p-0 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>{t('connections.policies.consumerId')}</TableHead>
-                <TableHead>{t('connections.policies.action')}</TableHead>
-                <TableHead>{t('connections.policies.resource')}</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {grants.map((g) => (
-                <TableRow key={g.id}>
-                  <TableCell className="font-mono text-xs">{g.id}</TableCell>
-                  <TableCell>{g.consumerId}</TableCell>
-                  <TableCell>{(g.actions ?? []).join(', ')}</TableCell>
-                  <TableCell>{(g.resources ?? []).join(', ')}</TableCell>
-                  <TableCell>{asMetaString(g.status)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </SettingsCard>
-      )}
-    </div>
-  )
-}
-
-function AuditTab({ workspaceId }: { workspaceId: string | undefined }) {
-  const { t } = useTranslation()
-  const [rows, setRows] = React.useState<AuditRow[] | null>(null)
-  const [wired, setWired] = React.useState(true)
-
-  React.useEffect(() => {
-    let cancelled = false
-    const list = fabricApi().fabricListAudit
-    if (!list || !workspaceId) {
-      setWired(Boolean(list))
-      setRows([])
-      return
-    }
-    setWired(true)
-    void list(workspaceId)
-      .then((next) => {
-        if (!cancelled) setRows(Array.isArray(next) ? next : [])
-      })
-      .catch(() => {
-        if (!cancelled) setRows([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [workspaceId])
-
-  if (!wired) {
-    return <RuntimeNotWired label={t('connections.audit.runtimeNotWired')} />
-  }
-
-  if (!rows || rows.length === 0) {
-    return <RuntimeNotWired label={t('connections.audit.empty')} />
-  }
-
-  return (
-    <SettingsCard className="p-0 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('connections.audit.columns.time')}</TableHead>
-            <TableHead>{t('connections.audit.columns.event')}</TableHead>
-            <TableHead>{t('connections.audit.columns.consumer')}</TableHead>
-            <TableHead>{t('connections.audit.columns.action')}</TableHead>
-            <TableHead>{t('connections.audit.columns.decision')}</TableHead>
-            <TableHead>{t('connections.audit.columns.digest')}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row, idx) => {
-            const time =
-              row.time ??
-              (typeof row.timestamp === 'number' ? new Date(row.timestamp).toISOString() : '')
-            return (
-              <TableRow key={`${asMetaString(row.digest)}-${idx}`}>
-                <TableCell className="whitespace-nowrap text-xs">{asMetaString(time)}</TableCell>
-                <TableCell>{asMetaString(row.event ?? row.action)}</TableCell>
-                <TableCell>{asMetaString(row.consumer)}</TableCell>
-                <TableCell>{asMetaString(row.action)}</TableCell>
-                <TableCell>{asMetaString(row.decision)}</TableCell>
-                <TableCell className="font-mono text-xs">
-                  {asMetaString(row.digest ?? row.versionFingerprint)}
-                </TableCell>
-              </TableRow>
-            )
-          })}
-        </TableBody>
-      </Table>
-    </SettingsCard>
-  )
+function classifyFailClosed(error: unknown): SurfaceState {
+  const message = error instanceof Error ? error.message : String(error ?? '')
+  if (/unsupported_test|_unavailable|unavailable/i.test(message)) return 'unavailable'
+  if (/not found/i.test(message)) return 'error'
+  return 'error'
 }
 
 export default function ConnectionsPage() {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
-  const workspaceId = workspace?.id
-  const [tab, setTab] = React.useState<ConnectionsTab>('services')
+  const [tab, setTab] = useState<ConnectionsTab>('services')
+  const [selected, setSelected] = useAtom(selectedConnectionAtom)
+  const [rows, setRows] = useState<ConnectionListRow[] | null>(null)
+  const [surface, setSurface] = useState<SurfaceState>('ready')
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [rotatingId, setRotatingId] = useState<string | null>(null)
+  const [envPath, setEnvPath] = useState('')
+  const [gitConfigPath, setGitConfigPath] = useState('')
+  const [dockerConfigPath, setDockerConfigPath] = useState('')
+  const [awsCredentialsPath, setAwsCredentialsPath] = useState('')
+  const [awsConfigPath, setAwsConfigPath] = useState('')
+  const [adcPath, setAdcPath] = useState('')
+  const [previews, setPreviews] = useState<PreviewRow[]>([])
+
+  useEffect(() => {
+    const workspaceId = workspace?.id
+    const listConnections = window.electronAPI?.workgraph?.listConnections
+    if (!workspaceId || typeof listConnections !== 'function') {
+      setRows([])
+      setSurface('unavailable')
+      return
+    }
+    let stale = false
+    listConnections(workspaceId)
+      .then((raw) => {
+        if (stale) return
+        setRows(sanitizeConnectionRows(raw))
+        setSurface('ready')
+      })
+      .catch((error) => {
+        if (stale) return
+        setRows([])
+        setSurface(classifyFailClosed(error))
+      })
+    return () => {
+      stale = true
+      setSelected(null)
+      setConfirmingId(null)
+      setRotatingId(null)
+    }
+  }, [workspace?.id, setSelected])
+
+  const refreshRows = async (workspaceId: string) => {
+    const listConnections = window.electronAPI?.workgraph?.listConnections
+    if (typeof listConnections !== 'function') {
+      setSurface('unavailable')
+      return
+    }
+    try {
+      setRows(sanitizeConnectionRows(await listConnections(workspaceId)))
+      setSurface('ready')
+    } catch (error) {
+      setRows([])
+      setSurface(classifyFailClosed(error))
+    }
+  }
+
+  const listed = rows ?? []
+  const services = tab === 'services' ? listed : []
+  const credentialRows = tab === 'credentials' ? listed : []
+  const policyRows = tab === 'policies' ? listed : []
+  const failClosed = tab === 'services' && surface !== 'ready'
+
+  const confirmRevoke = async (connectionId: string) => {
+    const workspaceId = workspace?.id
+    const revokeConnection = window.electronAPI?.workgraph?.revokeConnection
+    if (!workspaceId || typeof revokeConnection !== 'function') {
+      setSurface('unavailable')
+      return
+    }
+    try {
+      await revokeConnection({ workspaceId, connectionId })
+      if (selected?.id === connectionId) setSelected(null)
+      setConfirmingId(null)
+      await refreshRows(workspaceId)
+    } catch (error) {
+      setSurface(classifyFailClosed(error))
+    }
+  }
+
+  const confirmRotate = async (connectionId: string) => {
+    const workspaceId = workspace?.id
+    const rotateConnection = window.electronAPI?.workgraph?.rotateConnection
+    if (!workspaceId || typeof rotateConnection !== 'function') {
+      setSurface('unavailable')
+      return
+    }
+    try {
+      await rotateConnection({ workspaceId, connectionId })
+      setRotatingId(null)
+      await refreshRows(workspaceId)
+    } catch (error) {
+      setSurface(classifyFailClosed(error))
+    }
+  }
+
+  const runTest = async (connectionId: string) => {
+    const workspaceId = workspace?.id
+    const testConnection = window.electronAPI?.workgraph?.testConnection
+    if (!workspaceId || typeof testConnection !== 'function') {
+      setSurface('unavailable')
+      return
+    }
+    try {
+      await testConnection({ workspaceId, connectionId })
+    } catch (error) {
+      setSurface(classifyFailClosed(error))
+    }
+  }
+
+  const runRepair = async (connectionId: string) => {
+    const workspaceId = workspace?.id
+    const repairConnection = window.electronAPI?.workgraph?.repairConnection
+    if (!workspaceId || typeof repairConnection !== 'function') {
+      setSurface('unavailable')
+      return
+    }
+    try {
+      await repairConnection({ workspaceId, connectionId })
+      await refreshRows(workspaceId)
+    } catch (error) {
+      setSurface(classifyFailClosed(error))
+    }
+  }
+
+  const renderRevokeControls = (row: ConnectionListRow) => (
+    confirmingId === row.id ? (
+      <div className="flex gap-1">
+        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRevoke(row.id)}>
+          {t('connections.revokeConfirm')}
+        </button>
+        <button type="button" className="rounded border px-2 py-1" onClick={() => setConfirmingId(null)}>
+          {t('connections.revokeCancel')}
+        </button>
+      </div>
+    ) : (
+      <button type="button" className="rounded border px-2 py-1" onClick={() => setConfirmingId(row.id)}>
+        {t('connections.revoke')}
+      </button>
+    )
+  )
+
+  const renderRotateControls = (row: ConnectionListRow) => (
+    rotatingId === row.id ? (
+      <div className="flex gap-1">
+        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRotate(row.id)}>
+          {t('connections.rotateConfirm')}
+        </button>
+        <button type="button" className="rounded border px-2 py-1" onClick={() => setRotatingId(null)}>
+          {t('connections.rotateCancel')}
+        </button>
+      </div>
+    ) : (
+      <button type="button" className="rounded border px-2 py-1" onClick={() => setRotatingId(row.id)}>
+        {t('connections.rotate')}
+      </button>
+    )
+  )
+
+  const empty = (
+    <div className="flex flex-1 items-center justify-center">
+      <p className="text-sm">{t('connections.empty')}</p>
+    </div>
+  )
 
   return (
-    <div className="h-full flex flex-col">
-      <PanelHeader
-        title={t('connections.title')}
-        actions={<HeaderMenu route={routes.view.connections()} />}
-      />
-      <div className="flex-1 min-h-0 mask-fade-y">
-        <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-4xl mx-auto space-y-6">
-            <div
-              role="tablist"
-              aria-label={t('connections.title')}
-              className="flex flex-wrap gap-1 border-b border-border/50 pb-2"
+    <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
+      <div role="tablist" aria-label={t('sidebar.connections')} className="flex gap-2 border-b px-4 pt-3">
+        {TABS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            className={`rounded-t px-3 py-2 text-sm ${tab === id ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}
+            onClick={() => setTab(id)}
+          >
+            {t(`connections.tab.${id}`)}
+          </button>
+        ))}
+        <button
+          type="button"
+          className="ml-auto rounded border px-3 py-1 text-sm text-foreground"
+          onClick={() => setTab('imports')}
+        >
+          {t('connections.connect')}
+        </button>
+      </div>
+      <div className="flex flex-1 min-h-0 flex-col p-6 text-muted-foreground">
+        {tab === 'imports' ? (
+          <div className="space-y-3 text-sm text-foreground">
+            <ul className="flex flex-wrap gap-2 text-xs">
+              {CONNECT_SOURCES.map((source) => (
+                <li key={source} className="rounded border px-2 py-1">{source}</li>
+              ))}
+            </ul>
+            <label className="block">
+              <span className="text-muted-foreground">{t('connections.import.envPath')}</span>
+              <input
+                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                value={envPath}
+                onChange={(event) => setEnvPath(event.target.value)}
+                spellCheck={false}
+              />
+            </label>
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              onClick={async () => {
+                const previewGithubEnv = window.electronAPI?.workgraph?.previewGithubEnv
+                if (typeof previewGithubEnv !== 'function' || !envPath) {
+                  setPreviews((current) => current.filter((row) => row.source !== 'env'))
+                  return
+                }
+                const next = await previewGithubEnv(envPath)
+                setPreviews((current) => [
+                  ...current.filter((row) => row.source !== 'env'),
+                  ...next.map((row) => ({ ...row, source: 'env' as const })),
+                ])
+              }}
             >
-              {TABS.map((id) => {
-                const active = tab === id
-                return (
+              {t('connections.import.discover')}
+            </button>
+            <label className="block">
+              <span className="text-muted-foreground">{t('connections.import.gitConfigPath')}</span>
+              <input
+                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                value={gitConfigPath}
+                onChange={(event) => setGitConfigPath(event.target.value)}
+                spellCheck={false}
+              />
+            </label>
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              onClick={async () => {
+                const previewGitHelper = window.electronAPI?.workgraph?.previewGitHelper
+                if (typeof previewGitHelper !== 'function' || !gitConfigPath) {
+                  setPreviews((current) => current.filter((row) => row.source !== 'git-helper'))
+                  return
+                }
+                const next = await previewGitHelper(gitConfigPath)
+                setPreviews((current) => [
+                  ...current.filter((row) => row.source !== 'git-helper'),
+                  ...next.map((row) => ({ ...row, source: 'git-helper' as const })),
+                ])
+              }}
+            >
+              {t('connections.import.discoverGitHelper')}
+            </button>
+            <label className="block">
+              <span className="text-muted-foreground">{t('connections.import.dockerConfigPath')}</span>
+              <input
+                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                value={dockerConfigPath}
+                onChange={(event) => setDockerConfigPath(event.target.value)}
+                spellCheck={false}
+              />
+            </label>
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              onClick={async () => {
+                const previewDockerHelper = window.electronAPI?.workgraph?.previewDockerHelper
+                if (typeof previewDockerHelper !== 'function' || !dockerConfigPath) {
+                  setPreviews((current) => current.filter((row) => row.source !== 'docker'))
+                  return
+                }
+                const next = await previewDockerHelper(dockerConfigPath)
+                setPreviews((current) => [
+                  ...current.filter((row) => row.source !== 'docker'),
+                  ...next.map((row) => ({ ...row, source: 'docker' as const })),
+                ])
+              }}
+            >
+              {t('connections.import.discoverDocker')}
+            </button>
+            <label className="block">
+              <span className="text-muted-foreground">{t('connections.import.awsCredentialsPath')}</span>
+              <input
+                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                value={awsCredentialsPath}
+                onChange={(event) => setAwsCredentialsPath(event.target.value)}
+                spellCheck={false}
+              />
+            </label>
+            <label className="block">
+              <span className="text-muted-foreground">{t('connections.import.awsConfigPath')}</span>
+              <input
+                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                value={awsConfigPath}
+                onChange={(event) => setAwsConfigPath(event.target.value)}
+                spellCheck={false}
+              />
+            </label>
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              onClick={async () => {
+                const previewAwsProfiles = window.electronAPI?.workgraph?.previewAwsProfiles
+                if (typeof previewAwsProfiles !== 'function') {
+                  setPreviews((current) => current.filter((row) => row.source !== 'aws'))
+                  return
+                }
+                const next = await previewAwsProfiles({ credentialsPath: awsCredentialsPath, configPath: awsConfigPath })
+                setPreviews((current) => [
+                  ...current.filter((row) => row.source !== 'aws'),
+                  ...next.map((row) => ({ ...row, source: 'aws' as const })),
+                ])
+              }}
+            >
+              {t('connections.import.discoverAws')}
+            </button>
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              onClick={async () => {
+                const previewKeychain = window.electronAPI?.workgraph?.previewKeychain
+                if (typeof previewKeychain !== 'function') {
+                  setPreviews((current) => current.filter((row) => row.source !== 'keychain'))
+                  return
+                }
+                const next = await previewKeychain()
+                setPreviews((current) => [
+                  ...current.filter((row) => row.source !== 'keychain'),
+                  ...next.map((row) => ({ ...row, source: 'keychain' as const })),
+                ])
+              }}
+            >
+              {t('connections.import.discoverKeychain')}
+            </button>
+            <label className="block">
+              <span className="text-muted-foreground">{t('connections.import.adcPath')}</span>
+              <input
+                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                value={adcPath}
+                onChange={(event) => setAdcPath(event.target.value)}
+                spellCheck={false}
+              />
+            </label>
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              onClick={async () => {
+                const previewAdc = window.electronAPI?.workgraph?.previewAdc
+                if (typeof previewAdc !== 'function' || !adcPath) {
+                  setPreviews((current) => current.filter((row) => row.source !== 'adc'))
+                  return
+                }
+                const next = await previewAdc(adcPath)
+                setPreviews((current) => [
+                  ...current.filter((row) => row.source !== 'adc'),
+                  ...next.map((row) => ({ ...row, source: 'adc' as const })),
+                ])
+              }}
+            >
+              {t('connections.import.discoverAdc')}
+            </button>
+            <button
+              type="button"
+              className="rounded border px-3 py-1"
+              onClick={async () => {
+                const previewSshAgent = window.electronAPI?.workgraph?.previewSshAgent
+                if (typeof previewSshAgent !== 'function') {
+                  setPreviews((current) => current.filter((row) => row.source !== 'ssh-agent'))
+                  return
+                }
+                const next = await previewSshAgent()
+                setPreviews((current) => [
+                  ...current.filter((row) => row.source !== 'ssh-agent'),
+                  ...next.map((row) => ({ ...row, source: 'ssh-agent' as const })),
+                ])
+              }}
+            >
+              {t('connections.import.discoverSshAgent')}
+            </button>
+            <ul className="space-y-2">
+              {previews.map((row) => (
+                <li key={`${row.source}:${row.candidateId}`} className="flex items-center justify-between rounded border px-3 py-2">
+                  <div>
+                    <div className="font-medium">{row.label}</div>
+                    <div className="font-mono text-xs text-muted-foreground">{row.maskedSummary}</div>
+                  </div>
                   <button
-                    key={id}
                     type="button"
-                    role="tab"
-                    id={`connections-tab-${id}`}
-                    aria-selected={active}
-                    aria-controls={`connections-panel-${id}`}
-                    tabIndex={active ? 0 : -1}
-                    onClick={() => setTab(id)}
-                    className={
-                      active
-                        ? 'inline-flex items-center px-3 py-1.5 text-sm rounded-md bg-primary/10 text-primary font-medium'
-                        : 'inline-flex items-center px-3 py-1.5 text-sm rounded-md text-muted-foreground hover:bg-muted/60'
-                    }
+                    className="rounded border px-2 py-1"
+                    onClick={async () => {
+                      const workspaceId = workspace?.id
+                      const api = window.electronAPI?.workgraph
+                      if (!workspaceId || !api) return
+                      if (row.source === 'env' && api.importGithubEnv) {
+                        await api.importGithubEnv({ envPath, candidateId: row.candidateId, workspaceId })
+                      } else if (row.source === 'git-helper' && api.importGitHelper) {
+                        await api.importGitHelper({ configPath: gitConfigPath, candidateId: row.candidateId, workspaceId })
+                      } else if (row.source === 'docker' && api.importDockerHelper) {
+                        await api.importDockerHelper({ configPath: dockerConfigPath, candidateId: row.candidateId, workspaceId })
+                      } else if (row.source === 'aws' && api.importAwsProfile) {
+                        await api.importAwsProfile({ credentialsPath: awsCredentialsPath, configPath: awsConfigPath, candidateId: row.candidateId, workspaceId })
+                      } else if (row.source === 'keychain' && api.importKeychain) {
+                        await api.importKeychain({ candidateId: row.candidateId, workspaceId })
+                      } else if (row.source === 'adc' && api.importAdc) {
+                        await api.importAdc({ credentialsPath: adcPath, candidateId: row.candidateId, workspaceId })
+                      } else if (row.source === 'ssh-agent' && api.importSshAgent) {
+                        await api.importSshAgent({ candidateId: row.candidateId, workspaceId })
+                      }
+                      await refreshRows(workspaceId)
+                    }}
                   >
-                    {t(`connections.tabs.${id}`)}
+                    {t('connections.import.commit')}
                   </button>
-                )
-              })}
-            </div>
-
-            <div
-              role="tabpanel"
-              id={`connections-panel-${tab}`}
-              aria-labelledby={`connections-tab-${tab}`}
-            >
-              <SettingsSection title={t(`connections.tabs.${tab}`)}>
-                {tab === 'services' ? <ServicesTab workspaceId={workspaceId} /> : null}
-                {tab === 'credentials' ? <CredentialsTab workspaceId={workspaceId} /> : null}
-                {tab === 'imports' ? <ImportsTab workspaceId={workspaceId} /> : null}
-                {tab === 'policies' ? <PoliciesTab workspaceId={workspaceId} /> : null}
-                {tab === 'audit' ? <AuditTab workspaceId={workspaceId} /> : null}
-              </SettingsSection>
-            </div>
+                </li>
+              ))}
+            </ul>
           </div>
-        </ScrollArea>
+        ) : failClosed ? (
+          <div
+            className="flex flex-1 items-center justify-center"
+            data-testid="connections-services-unavailable"
+            role="alert"
+          >
+            <p className="text-sm">
+              {t(surface === 'unavailable' ? 'sidebar.connectionsUnavailable' : 'chat.connectionUnavailable')}
+            </p>
+          </div>
+        ) : tab === 'services' && services.length > 0 ? (
+          <ul className="space-y-2 text-sm text-foreground">
+            {services.map((row) => (
+              <li key={row.id} className="flex items-center gap-2">
+                <button
+                  type="button"
+                  data-testid="connections-row"
+                  aria-selected={selected?.id === row.id}
+                  className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
+                  onClick={() => setSelected(row)}
+                >
+                  <div className="font-medium">{row.integrationId}</div>
+                  <div className="text-muted-foreground">{row.storageMode}</div>
+                  <div className="font-mono text-xs">{row.credentialRefId}</div>
+                </button>
+                <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
+                  {t('connections.test')}
+                </button>
+                <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
+                  {t('connections.repair')}
+                </button>
+                {renderRevokeControls(row)}
+                {renderRotateControls(row)}
+              </li>
+            ))}
+          </ul>
+        ) : tab === 'credentials' && credentialRows.length > 0 ? (
+          <ul className="space-y-2 text-sm text-foreground">
+            {credentialRows.map((row) => (
+              <li key={row.id} className="rounded border px-3 py-2">
+                <div className="font-medium">{row.integrationId}</div>
+                <div className="font-mono text-xs">{row.credentialRefId}</div>
+                <div className="text-muted-foreground">{row.storageMode}</div>
+              </li>
+            ))}
+          </ul>
+        ) : tab === 'policies' && policyRows.length > 0 ? (
+          <ul className="space-y-2 text-sm text-foreground">
+            {policyRows.map((row) => (
+              <li key={row.id} className="rounded border px-3 py-2">
+                <div className="font-medium">{row.integrationId}</div>
+                <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          empty
+        )}
       </div>
     </div>
   )

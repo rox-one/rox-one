@@ -23,7 +23,7 @@ import { useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
 import { useLabels } from '@/hooks/useLabels'
 import { getSessionTitle } from '@/utils/session'
 import { routes } from '@/lib/navigate'
-import { resolveTaskScopeLabelId } from '@craft-agent/shared/labels'
+import { flattenLabels, resolveTaskScopeLabelId } from '@craft-agent/shared/labels'
 import { DEFAULT_MODEL, getModelShortName } from '@config/models'
 import { getDefaultModelsForConnection, type LlmConnectionWithStatus } from '@config/llm-connections'
 import type { SessionStatus } from '@/config/session-status-config'
@@ -32,7 +32,7 @@ import { parsePriorityGroupId } from './priority-groups'
 import { KANBAN_COLUMNS, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
-import { collectionViewRoute } from '../collection/collection-view-cycle'
+import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { KanbanProjectFilter, type KanbanProjectFilterOption } from './KanbanProjectFilter'
 import { TaskEditor } from './TaskEditor'
 import { mergeSubtaskRows, type SpecNodeSummary, type SubtaskChildRow } from './subtask-merge'
@@ -335,6 +335,22 @@ export function KanbanBoardContainer() {
     () => projects.map(p => ({ id: p.config.id, name: p.config.name, color: p.config.color })),
     [projects],
   )
+  const labelOptions = React.useMemo(
+    () => flattenLabels(labelConfigs).map(label => ({ id: label.id, name: label.name })),
+    [labelConfigs],
+  )
+  const renderBulkActions = React.useCallback(
+    (visibleTaskIds: readonly string[]) => (
+      <CollectionBulkBar
+        workspaceId={activeWorkspaceId}
+        visibleSessionIds={visibleTaskIds}
+        statuses={sessionStatuses}
+        projects={projectOptions}
+        labels={labelOptions}
+      />
+    ),
+    [activeWorkspaceId, labelOptions, projectOptions, sessionStatuses],
+  )
 
   const { groups: subtaskModelGroups, modelToConnection } = React.useMemo(
     () => buildModelCatalog(llmConnections),
@@ -449,15 +465,10 @@ export function KanbanBoardContainer() {
     return tasks.filter(task => task.projectId !== undefined && allow.has(task.projectId))
   }, [tasks, projectFilter])
 
-  // Status columns *are* the board. Hide empties only when grouping is nested
-  // (project/priority/etc.); workflow lanes stay visible so empty statuses
-  // remain drop targets.
   const visibleColumns = React.useMemo(() => {
-    const groupBy = collectionDisplay.groupBy
-    const hideEmptyNested = __omp_shell("collectionDisplay.showEmptyGroups && groupBy !== 'none' && groupBy !== 'status'")
-    if (!hideEmptyNested) return activeColumns
+    if (collectionDisplay.showEmptyGroups) return activeColumns
     return activeColumns.filter(column => visibleTasks.some(task => task.column === column.id))
-  }, [activeColumns, collectionDisplay.groupBy, collectionDisplay.showEmptyGroups, visibleTasks])
+  }, [activeColumns, collectionDisplay.showEmptyGroups, visibleTasks])
 
   // B6: honor Display.orderBy when ranking cards within each column.
   const displayDrivenSort = React.useCallback(
@@ -953,12 +964,10 @@ export function KanbanBoardContainer() {
             workspaceId={activeWorkspaceId}
             viewMode="board"
             onViewModeChange={view => {
-              navigate(collectionViewRoute(view))
+              if (view === 'list') navigate(routes.view.allSessions())
+              else if (view === 'table') navigate(routes.view.table())
             }}
             compact
-            statuses={sessionStatuses ?? []}
-            projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
-            labels={labelConfigs.map(l => ({ id: l.id, name: l.name }))}
           />
         </div>
       </div>
@@ -967,6 +976,7 @@ export function KanbanBoardContainer() {
           columns={visibleColumns}
           tasks={visibleTasks}
           sortTasks={displayDrivenSort}
+          renderBulkActions={renderBulkActions}
           projectsById={projectsById}
           statusesById={statusesById}
           statuses={sessionStatuses ?? []}

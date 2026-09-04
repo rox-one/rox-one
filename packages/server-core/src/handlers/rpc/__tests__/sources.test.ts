@@ -17,44 +17,17 @@
  */
 import '../memory-test-setup' // must run before any module reading CRAFT_CONFIG_DIR
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
-import { mkdtempSync, rmSync } from 'fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'fs'
 import { tmpdir } from 'os'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { CredentialId } from '@craft-agent/shared/credentials'
+import { loadSourceConfig, saveSourceConfig, type FolderSourceConfig } from '@craft-agent/shared/sources'
+import { createWorkspaceAtPath, getDefaultWorkspacesDir, loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import { KnowledgeConnectionsStore } from '../../../knowledge'
 import { registerSourcesHandlers } from '../sources'
-import {
-  loadSource,
-  saveSourceConfig,
-  getSourceServerBuilder,
-  type FolderSourceConfig,
-} from '@craft-agent/shared/sources'
-import { resolveStdioConfig } from '@craft-agent/shared/utils'
-
-// Real log-scrub helper, imported by relative path so the barrel mock below
-// doesn't shadow it — the handler must log THIS function's output.
-import { formatMcpUrlForLog } from '../../../../../shared/src/mcp/client.ts'
-
-// Captured constructor configs of CraftMcpClient (module seam below) — lets
-// the GET_MCP_TOOLS tests assert exactly which client config the handler built
-// without spawning real MCP servers.
-const mcpClientConfigs: unknown[] = []
-
-mock.module('@craft-agent/shared/mcp', () => ({
-  CraftMcpClient: class MockCraftMcpClient {
-    constructor(config: unknown) {
-      mcpClientConfigs.push(config)
-    }
-    async listTools() {
-      return []
-    }
-    async close() {}
-  },
-  formatMcpUrlForLog,
-}))
 
 // Credential id string ↔ in-memory store key (`type::workspaceId::sourceId`).
 const credentials = new Map<string, { value: string }>()
@@ -84,7 +57,18 @@ mock.module('@craft-agent/shared/config', () => ({
   getWorkspaces: () => [...mockWorkspaces],
 }))
 
-function createHarness(infoLog?: string[]) {
+function writeConfigDefaults(): void {
+  writeFileSync(join(process.env.CRAFT_CONFIG_DIR!, 'config-defaults.json'), JSON.stringify({
+    version: 'test',
+    workspaceDefaults: {
+      permissionMode: 'ask',
+      cyclablePermissionModes: ['safe', 'ask'],
+      localMcpServers: { enabled: true },
+    },
+  }), 'utf-8')
+}
+
+function createHarness() {
   const handlers = new Map<string, HandlerFn>()
   const server: RpcServer = {
     handle(channel, handler) { handlers.set(channel, handler) },
@@ -102,12 +86,7 @@ function createHarness(infoLog?: string[]) {
       isPackaged: false,
       appVersion: '0.0.0-test',
       isDebugMode: true,
-      logger: {
-        info: (msg: unknown) => { infoLog?.push(String(msg)) },
-        warn: () => {},
-        error: () => {},
-        debug: () => {},
-      },
+      logger: { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} },
       imageProcessor: { getMetadata: async () => null, process: async () => Buffer.from('') },
     },
   }
@@ -123,6 +102,8 @@ function createHarness(infoLog?: string[]) {
 beforeEach(() => {
   rmSync(join(process.env.CRAFT_CONFIG_DIR!, 'knowledge'), { recursive: true, force: true })
   credentials.clear()
+  mockWorkspaces[0]!.name = 'ws-owner'
+  mockWorkspaces[1]!.name = 'ws-active'
   mockWorkspaces[0]!.rootPath = mkdtempSync(join(tmpdir(), 'sources-ws-owner-'))
   mockWorkspaces[1]!.rootPath = mkdtempSync(join(tmpdir(), 'sources-ws-active-'))
 })
@@ -170,191 +151,78 @@ describe('sources:saveCredentials — knowledge-connection fallback (P2-12)', ()
   })
 })
 
-describe('sources:getMcpTools — stdio config normalization', () => {
-  // Regression: the discovery path used to pass the raw source config to
-  // CraftMcpClient, skipping resolveStdioConfig — so ${WORKSPACE}/${SOURCE_DIR}
-  // expansion and platform.{win32,darwin,linux} overrides applied on the real
-  // session path (server-builder buildMcpServer) were silently dropped here.
-
-  const SLUG = 'stdio-vars'
-
-  function writeStdioSource(rootPath: string): FolderSourceConfig {
-    const config: FolderSourceConfig = {
-      id: 'src-stdio-vars',
-      name: 'Stdio Vars',
-      slug: SLUG,
-      enabled: true,
-      provider: 'test',
-      type: 'mcp',
-      connectionStatus: 'connected',
-      mcp: {
-        transport: 'stdio',
-        command: '${SOURCE_DIR}/bin/default-server',
-        args: ['--root', '${WORKSPACE}', '--src', '${SOURCE_DIR}'],
-        env: { DATA_DIR: '${WORKSPACE}/data', STATIC: 'keepme' },
-        platform: {
-          // Keyed by the test runner's platform so the override always applies.
-          [process.platform]: {
-            command: '${SOURCE_DIR}/bin/platform-server',
-            env: { PLATFORM_OVERRIDE: 'yes' },
-          },
-        },
-      },
-    }
-    saveSourceConfig(rootPath, config)
-    return config
-  }
-
-  beforeEach(() => {
-    mcpClientConfigs.length = 0
-  })
-
-  it('passes the resolved stdio config (variables + platform overrides) to CraftMcpClient', async () => {
-    const rootPath = mockWorkspaces[1]!.rootPath // ws-active
-    writeStdioSource(rootPath)
-    const { invoke } = createHarness()
-
-    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', SLUG)) as {
-      success: boolean
-      error?: string
-    }
-
-    expect(result.success).toBe(true)
-    expect(mcpClientConfigs).toHaveLength(1)
-
-    const expected = resolveStdioConfig(
-      {
-        command: '${SOURCE_DIR}/bin/default-server',
-        args: ['--root', '${WORKSPACE}', '--src', '${SOURCE_DIR}'],
-        env: { DATA_DIR: '${WORKSPACE}/data', STATIC: 'keepme' },
-        platform: {
-          [process.platform]: {
-            command: '${SOURCE_DIR}/bin/platform-server',
-            env: { PLATFORM_OVERRIDE: 'yes' },
-          },
-        },
-      },
-      rootPath,
-      join(rootPath, 'sources', SLUG),
-    )!
-
-    if (!expected.env) throw new Error('test setup: expected resolved env to be defined')
-    const expectedEnv: Record<string, string> = expected.env
-
-    const captured = mcpClientConfigs[0] as {
-      transport: string
-      command: string
-      args: string[]
-      env: Record<string, string>
-    }
-    expect(captured.transport).toBe('stdio')
-    expect(captured.command).toBe(expected.command)
-    expect(captured.args).toEqual(expected.args)
-    expect(captured.env).toEqual(expectedEnv)
-    // No unexpanded variables may survive into the client config.
-    expect(captured.command).not.toContain('${')
-    expect(captured.args.join(' ')).not.toContain('${')
-  })
-
-  it('matches the config the real session path builds (buildMcpServer parity)', async () => {
-    const rootPath = mockWorkspaces[1]!.rootPath
-    writeStdioSource(rootPath)
-    const { invoke } = createHarness()
-
-    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', SLUG)) as {
-      success: boolean
-    }
-    expect(result.success).toBe(true)
-
-    const loaded = loadSource(rootPath, SLUG)!
-    const built = getSourceServerBuilder().buildMcpServer(loaded, null)
-    expect(built).not.toBeNull()
-    if (built?.type !== 'stdio') throw new Error('expected stdio server config')
-
-    const captured = mcpClientConfigs[0] as {
-      command: string
-      args: string[]
-      env: Record<string, string> | undefined
-    }
-    expect({ command: captured.command, args: captured.args, env: captured.env }).toEqual({
-      command: built.command,
-      args: built.args ?? [],
-      env: built.env,
+describe('sources:get — local default source seeding', () => {
+  it('creates offline-safe defaults with a local Craft Markdown Notes source', async () => {
+    writeConfigDefaults()
+    const rootPath = mockWorkspaces[0]!.rootPath
+    const created = createWorkspaceAtPath(rootPath, 'Fresh workspace', undefined, {
+      id: 'ws-owner',
+      slug: 'fresh-workspace',
     })
-  })
 
-  it('returns the typed missing-command error when stdio config has no command', async () => {
-    const rootPath = mockWorkspaces[1]!.rootPath
-    // saveSourceConfig's zod schema refuses command-less stdio configs, so
-    // write config.json directly — this simulates a hand-edited file.
-    const { mkdirSync, writeFileSync } = await import('fs')
-    const dir = join(rootPath, 'sources', 'no-cmd')
-    mkdirSync(dir, { recursive: true })
-    writeFileSync(
-      join(dir, 'config.json'),
-      JSON.stringify({
-        id: 'src-no-cmd',
-        name: 'No Command',
-        slug: 'no-cmd',
-        enabled: true,
-        provider: 'test',
-        type: 'mcp',
-        connectionStatus: 'connected',
-        mcp: { transport: 'stdio' },
-      }),
-    )
+    expect(created.defaults?.enabledSourceSlugs).toEqual(['notes'])
+    expect(loadSourceConfig(rootPath, 'exa')?.enabled).toBe(false)
+    expect(loadSourceConfig(rootPath, 'firecrawl')?.enabled).toBe(false)
+
+    const notesConfigPath = join(rootPath, 'sources', 'notes', 'config.json')
+    const before = readFileSync(notesConfigPath, 'utf-8')
+    mockWorkspaces[0]!.name = 'Fresh workspace by name'
+
     const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.sources.GET, 'Fresh workspace by name')
 
-    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', 'no-cmd')) as {
-      success: boolean
-      error?: string
-    }
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('command')
-    expect(mcpClientConfigs).toHaveLength(0)
+    const notes = loadSourceConfig(rootPath, 'notes')
+    expect(notes).toMatchObject({
+      slug: 'notes',
+      enabled: true,
+      provider: 'craft-notes',
+      type: 'local',
+      local: { format: 'craft-markdown' },
+      isAuthenticated: true,
+      connectionStatus: 'connected',
+    })
+    expect(notes?.local?.path).toBe(join(getDefaultWorkspacesDir(), 'ws-owner', 'notes'))
+    expect(existsSync(notes?.local?.path ?? '')).toBe(true)
+    expect(readFileSync(notesConfigPath, 'utf-8')).toBe(before)
   })
-})
 
-describe('sources:getMcpTools — MCP URL log scrubbing', () => {
-  it('logs only origin + pathname for a credentialed URL (no userinfo, no query)', async () => {
-    const rootPath = mockWorkspaces[1]!.rootPath
-    // Credentialed URLs are rejected by saveSourceConfig validation, so write
-    // config.json directly — simulates a hand-edited or legacy file.
-    const { mkdirSync, writeFileSync } = await import('fs')
-    const dir = join(rootPath, 'sources', 'cred-url')
-    mkdirSync(dir, { recursive: true })
-    writeFileSync(
-      join(dir, 'config.json'),
-      JSON.stringify({
-        id: 'src-cred-url',
-        name: 'Credentialed URL',
-        slug: 'cred-url',
-        enabled: true,
-        provider: 'test',
-        type: 'mcp',
-        connectionStatus: 'connected',
-        mcp: {
-          transport: 'http',
-          url: 'http://user:pass@example.com:8080/mcp?apikey=secret123',
-          authType: 'none',
-        },
-      }),
-    )
-    const infoLog: string[] = []
-    const { invoke } = createHarness(infoLog)
+  it('preserves an existing disabled Notes source and empty source defaults', async () => {
+    writeConfigDefaults()
+    const rootPath = mockWorkspaces[0]!.rootPath
+    createWorkspaceAtPath(rootPath, 'Existing workspace', undefined, {
+      id: 'ws-owner',
+      slug: 'existing-workspace',
+    })
 
-    const result = (await invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS, 'ws-active', 'cred-url')) as {
-      success: boolean
-      error?: string
+    const workspaceConfig = loadWorkspaceConfig(rootPath)!
+    workspaceConfig.defaults = { ...workspaceConfig.defaults, enabledSourceSlugs: [] }
+    saveWorkspaceConfig(rootPath, workspaceConfig)
+
+    const disabledNotes: FolderSourceConfig = {
+      id: 'notes-vault',
+      name: 'Notes vault',
+      slug: 'notes',
+      enabled: false,
+      provider: 'craft-notes',
+      type: 'local',
+      local: { path: join(rootPath, 'chosen-notes'), format: 'obsidian' },
+      isAuthenticated: true,
+      connectionStatus: 'connected',
+      createdAt: 1,
+      updatedAt: 1,
     }
-    expect(result.success).toBe(true)
+    saveSourceConfig(rootPath, disabledNotes)
+    const notesConfigPath = join(rootPath, 'sources', 'notes', 'config.json')
+    const before = readFileSync(notesConfigPath, 'utf-8')
 
-    const fetchLines = infoLog.filter((l) => l.includes('Fetching MCP tools from'))
-    expect(fetchLines).toHaveLength(1)
-    expect(fetchLines[0]).toContain('http://example.com:8080/mcp')
-    const allLogs = infoLog.join('\n')
-    expect(allLogs).not.toContain('user:pass')
-    expect(allLogs).not.toContain('apikey')
-    expect(allLogs).not.toContain('secret123')
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.sources.GET, 'ws-owner')
+
+    expect(readFileSync(notesConfigPath, 'utf-8')).toBe(before)
+    expect(loadWorkspaceConfig(rootPath)?.defaults?.enabledSourceSlugs).toEqual([])
+    expect(loadSourceConfig(rootPath, 'notes')).toMatchObject({
+      enabled: false,
+      local: { format: 'obsidian' },
+    })
   })
 })

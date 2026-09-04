@@ -54,6 +54,14 @@ export interface SetupNeeds {
   ompCredentialCode?: string;
   /** Everything complete → go straight to App */
   isFullyConfigured: boolean;
+  /** A persisted, explicit "Setup later" choice; diagnostic only. */
+  isSetupDeferred?: boolean;
+  /**
+   * Whether automatic app launch should open the setup wizard.
+   * OMP-blocked installs still launch into onboarding; other unfinished
+   * provider setup stays an explicit action.
+   */
+  shouldShowOnboardingOnLaunch?: boolean;
   /** User has legacy tokens that need migration */
   needsMigration?: MigrationInfo;
 }

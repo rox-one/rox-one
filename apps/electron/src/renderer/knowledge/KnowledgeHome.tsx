@@ -18,23 +18,18 @@
  * selectKnowledgeView) keep logic-level bun:test coverage without a DOM harness.
  */
 import { atom, useAtom, useAtomValue } from 'jotai'
-import { Bookmark, Check, ChevronLeft, FileDiff, FilePlus, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Bookmark, Check, ChevronLeft, FileDiff, Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { KnowledgeRef, SearchHit } from '@craft-agent/core/knowledge'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { EntityList } from '@/components/ui/entity-list'
-import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
-import { useContainerWidth } from '@/hooks/useContainerWidth'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views'
-import type { KnowledgeWorkEnvelope } from '../../shared/types'
 import { KnowledgeProposals } from './KnowledgeProposals'
-import { shouldUseKnowledgeMobileChrome } from './knowledge-mobile'
-import { buildNewDocumentCreateArgs, pickOpenNotebook } from './knowledge-new-note'
 import { countActionableProposals, resolveKnowledgeMutationsApi } from './proposal-actions'
 
 /**
@@ -59,7 +54,6 @@ export interface KnowledgeSearchApi {
     connectionId: string
     input: { query: string }
   }): Promise<{ items: SearchHit[] }>
-  envelopeList?(args?: { connectionId?: string }): Promise<KnowledgeWorkEnvelope[]>
 }
 
 /** P5 views + set_attribute subset of ElectronAPI.knowledge. */
@@ -119,40 +113,9 @@ export async function searchKnowledge(
   return page.items
 }
 
-/** Route for a search hit — the in-app editor surface for this document/block. */
+/** Route for a search hit — the in-app SiYuan surface for this document/block. */
 export function searchHitRoute(hit: Pick<SearchHit, 'ref'>) {
   return routes.view.siyuan({ kind: hit.ref.kind, id: hit.ref.id })
-}
-
-/** Sort envelopes by updated/created desc and take the first `n`. */
-export function selectRecentEnvelopes(
-  envelopes: KnowledgeWorkEnvelope[],
-  n: number,
-): KnowledgeWorkEnvelope[] {
-  return [...envelopes]
-    .sort((a, b) => (b.updatedAt ?? b.createdAt) - (a.updatedAt ?? a.createdAt))
-    .slice(0, n)
-}
-
-/** Last envelope document, or null when the workspace has no notes yet. */
-export function pickDefaultKnowledgeDocument(
-  envelopes: KnowledgeWorkEnvelope[] | null | undefined,
-): { kind: 'document' | 'block'; id: string } | null {
-  const last = selectRecentEnvelopes(envelopes ?? [], 1)[0]
-  const ref = last?.knowledgeRef
-  if (!ref?.id) return null
-  if (ref.kind === 'document' || ref.kind === 'block') {
-    return { kind: ref.kind, id: ref.id }
-  }
-  return null
-}
-
-export function defaultKnowledgeEditorRoute(
-  envelopes: KnowledgeWorkEnvelope[] | null | undefined,
-): string {
-  const ref = pickDefaultKnowledgeDocument(envelopes)
-  if (ref) return routes.view.siyuan({ kind: ref.kind, id: ref.id })
-  return routes.view.knowledge()
 }
 
 /** Route for a saved knowledge view deep-link. */
@@ -290,19 +253,18 @@ export function KnowledgeHome() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
-  const homeRef = useRef<HTMLDivElement>(null)
-  const containerWidth = useContainerWidth(homeRef)
-  const compactShell = useOptionalAppShellContext()?.isCompactMode === true
-  const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1024
-  const width = containerWidth > 0 ? containerWidth : windowWidth
-  const compactEmpty = shouldUseKnowledgeMobileChrome({ width, compactShell })
   const [query, setQuery] = useState('')
   const [hits, setHits] = useState<SearchHit[]>([])
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [noConnections, setNoConnections] = useState(false)
+  const [kernelOffline, setKernelOffline] = useState(false)
+  const [kernelBinaryFound, setKernelBinaryFound] = useState<boolean | null>(null)
+  const [kernelInstallUrl, setKernelInstallUrl] = useState<string | null>(null)
+  const [startingKernel, setStartingKernel] = useState(false)
   const [view, setView] = useAtom(knowledgeHomeViewAtom)
   const [activeViewId, setActiveViewId] = useAtom(knowledgeActiveViewIdAtom)
   const [actionableProposalCount, setActionableProposalCount] = useState(0)
+  const [migrating, setMigrating] = useState(false)
   // Saved views list
   const [savedViews, setSavedViews] = useState<KnowledgeViewConfig[]>([])
   const [viewsLoaded, setViewsLoaded] = useState(false)
@@ -358,31 +320,76 @@ export function KnowledgeHome() {
     }
   }, [workspaceId])
 
-  // No search: open last envelope document (or stay on empty editor).
+  // Probe kernel health for empty-state CTA (binary / install / start).
   useEffect(() => {
-    if (noConnections || query.trim().length > 0) return
-    if (view !== 'search') return
     if (typeof window === 'undefined') return
     let cancelled = false
-    const openDefault = async () => {
-      const api = resolveKnowledgeApi()
-      if (!api?.envelopeList) return
+    const probe = async () => {
+      const api = window.electronAPI?.knowledge
+      if (!api?.engineStatus) return
       try {
-        const connections = await api.listConnections()
+        const connections = api.listConnections ? await api.listConnections() : []
         const connectionId = connections[0]?.id
-        const envelopes = await api.envelopeList(connectionId ? { connectionId } : undefined)
+        const status = await api.engineStatus({
+          ...(workspaceId ? { workspaceId } : {}),
+          ...(connectionId ? { connectionId } : {}),
+        })
         if (cancelled) return
-        const ref = pickDefaultKnowledgeDocument(envelopes)
-        if (ref) navigate(routes.view.siyuan({ kind: ref.kind, id: ref.id }))
+        setKernelOffline(!status.running)
+        setKernelBinaryFound(status.binaryFound ?? null)
+        setKernelInstallUrl(status.installUrl ?? null)
+        if (connections.length === 0) setNoConnections(true)
       } catch {
-        /* stay on search empty editor */
+        if (!cancelled) setKernelOffline(true)
       }
     }
-    void openDefault()
+    void probe()
     return () => {
       cancelled = true
     }
-  }, [noConnections, query, view, navigate])
+  }, [workspaceId])
+
+  const handleStartKernel = useCallback(async () => {
+    const start = window.electronAPI?.knowledge?.engineStart
+    if (typeof start !== 'function') {
+      toast.error(t('knowledge.kernel.startFailed', { message: 'unavailable' }))
+      return
+    }
+    setStartingKernel(true)
+    try {
+      const result = await start(workspaceId ? { workspaceId } : undefined)
+      if (!result.ok && result.error === 'siyuan-not-installed') {
+        setKernelBinaryFound(false)
+        toast.error(t('knowledge.kernel.binaryMissing'))
+        return
+      }
+      if (!result.ok) {
+        toast.error(t('knowledge.kernel.startFailed', { message: result.error ?? 'unknown' }))
+        return
+      }
+      toast.success(t('knowledge.kernel.startOk'))
+      setNoConnections(false)
+      // Re-probe after a short delay (kernel boot is async)
+      window.setTimeout(() => {
+        void window.electronAPI?.knowledge
+          ?.engineStatus?.({
+            ...(workspaceId ? { workspaceId } : {}),
+            ...(result.connectionId ? { connectionId: result.connectionId } : {}),
+          })
+          .then((status) => {
+            setKernelOffline(!status.running)
+            setKernelBinaryFound(status.binaryFound ?? null)
+          })
+          .catch(() => {})
+      }, 1500)
+    } catch (error) {
+      toast.error(t('knowledge.kernel.startFailed', {
+        message: error instanceof Error ? error.message : String(error),
+      }))
+    } finally {
+      setStartingKernel(false)
+    }
+  }, [workspaceId, t])
 
   // Deep-link / atom-driven view selection → run viewRun.
   useEffect(() => {
@@ -486,36 +493,64 @@ export function KnowledgeHome() {
     navigate(routes.view.knowledge())
   }, [navigate, setActiveViewId, setView])
 
-  const handleCreateNote = useCallback(async () => {
-    const api = window.electronAPI?.knowledge
-    if (!api?.userCreate || !api.listConnections || !api.listNotebooks) {
-      toast.error(t('knowledge.surface.error'))
+  const handleMigrateNotes = useCallback(async () => {
+    if (migrating) return
+    if (!workspaceId) {
+      toast.error(t('knowledge.migrate.noWorkspace'))
       return
     }
+    const api = window.electronAPI?.knowledge
+    if (!api?.migrateNotes || !window.electronAPI?.openFolderDialog) {
+      toast.error(t('knowledge.migrate.failed'))
+      return
+    }
+
+    let sourceRoot: string | null
     try {
-      const connections = await api.listConnections()
-      const connectionId = connections[0]?.id
-      if (!connectionId) return
-      const notebooks = await api.listNotebooks({ connectionId })
-      const notebook = pickOpenNotebook(notebooks)
-      if (!notebook) {
-        toast.error(t('knowledge.nav.notebooksEmpty'))
+      sourceRoot = await window.electronAPI.openFolderDialog()
+    } catch {
+      toast.error(t('knowledge.migrate.failed'))
+      return
+    }
+    if (!sourceRoot) return
+
+    setMigrating(true)
+    const progressToast = toast.loading(t('knowledge.migrate.progress'))
+    try {
+      const result = await api.migrateNotes({
+        workspaceId,
+        sourceRoot,
+        format: 'craft-markdown',
+      })
+      const failedCount = result.failed?.length ?? 0
+      if (failedCount > 0 && result.migrated === 0) {
+        toast.error(t('knowledge.migrate.failed'), {
+          id: progressToast,
+          description: result.failed[0]?.error,
+        })
         return
       }
-      const result = await api.userCreate(
-        buildNewDocumentCreateArgs({
-          connectionId,
-          notebookId: notebook.id,
-          title: t('knowledge.nav.newNote'),
-        }),
-      )
-      if (result?.id) navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+      const message =
+        failedCount > 0
+          ? t('knowledge.migrate.partial', {
+              migrated: result.migrated,
+              failed: failedCount,
+            })
+          : t('knowledge.migrate.success', {
+              migrated: result.migrated,
+              skipped: result.skipped,
+            })
+      toast.success(message, { id: progressToast })
     } catch (error) {
-      toast.error(t('knowledge.surface.error'), {
+      toast.error(t('knowledge.migrate.failed'), {
+        id: progressToast,
         description: error instanceof Error ? error.message : String(error),
       })
+    } finally {
+      setMigrating(false)
     }
-  }, [t, navigate])
+  }, [migrating, workspaceId, t])
+
 
   const handleSetAttribute = useCallback(
     async (hit: SearchHit) => {
@@ -563,28 +598,43 @@ export function KnowledgeHome() {
   )
 
   const emptyState =
-    status === 'idle' ? (
-      <div
-        className={cn(
-          'flex flex-col items-center text-center',
-          compactEmpty ? 'gap-2 px-3 py-4' : 'gap-3 px-4 py-8',
-        )}
-      >
+    status === 'idle' && (noConnections || kernelOffline) ? (
+      <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
         <p className="text-[13px] font-medium text-foreground">
-          {t('knowledge.nav.newNote')}
+          {t('knowledge.kernel.offlineTitle')}
         </p>
         <p className="max-w-sm text-[12px] leading-snug text-muted-foreground">
-          {t('knowledge.nav.notebooksEmpty')}
+          {kernelBinaryFound === false
+            ? t('knowledge.kernel.installHint')
+            : t('knowledge.kernel.offlineBody')}
         </p>
-        <button
-          type="button"
-          className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
-          onClick={() => void handleCreateNote()}
-        >
-          <FilePlus className="size-3.5" aria-hidden />
-          {t('knowledge.nav.create')}
-        </button>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {kernelBinaryFound === false ? (
+            <button
+              type="button"
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
+              onClick={() =>
+                void window.electronAPI?.openUrl?.(
+                  kernelInstallUrl ?? 'https://b3log.org/siyuan/',
+                )
+              }
+            >
+              {t('knowledge.kernel.installCta')}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={startingKernel}
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted disabled:opacity-50"
+              onClick={() => void handleStartKernel()}
+            >
+              {startingKernel ? t('knowledge.kernel.starting') : t('knowledge.kernel.startCta')}
+            </button>
+          )}
+        </div>
       </div>
+    ) : status === 'idle' ? (
+      <HomeHint text={t('knowledge.search.placeholder')} />
     ) : noConnections ? (
       <HomeHint text={t('knowledge.home.noConnections')} />
     ) : (
@@ -618,7 +668,7 @@ export function KnowledgeHome() {
 
   if (view === 'proposals') {
     return (
-      <div ref={homeRef} className="flex h-full flex-col">
+      <div className="flex h-full flex-col">
         <div className="border-b border-border pt-3">{proposalsEntry}</div>
         <KnowledgeProposals className="min-h-0 flex-1" />
       </div>
@@ -632,7 +682,7 @@ export function KnowledgeHome() {
       activeViewId
 
     return (
-      <div ref={homeRef} className="flex h-full flex-col">
+      <div className="flex h-full flex-col">
         <div className="sticky top-0 z-10 border-b border-border bg-background px-3 pb-2 pt-3">
           <button
             type="button"
@@ -745,7 +795,27 @@ export function KnowledgeHome() {
   }
 
   return (
-    <div ref={homeRef} className="flex h-full flex-col">
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground flex items-center justify-between gap-2">
+        <div className="flex shrink-0 items-center gap-3">
+          <button
+            type="button"
+            className="underline underline-offset-2 hover:text-foreground disabled:opacity-50"
+            disabled={migrating}
+            onClick={() => void handleMigrateNotes()}
+          >
+            {migrating ? t('knowledge.migrate.progress') : t('knowledge.migrate.button')}
+          </button>
+          <button
+            type="button"
+            className="underline underline-offset-2 hover:text-foreground"
+            onClick={() => navigate(routes.view.notes())}
+          >
+            {t('sidebar.notes')}
+          </button>
+        </div>
+      </div>
+
       <EntityList<SearchHit>
         className="flex-1"
         header={

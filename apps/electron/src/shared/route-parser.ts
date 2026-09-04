@@ -54,9 +54,9 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'settings' | 'browser' | 'memory' | 'home' | 'connections'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'settings' | 'browser' | 'memory' | 'connections'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
-  | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
+  | 'knowledge' | 'cloud-run' | 'extension' | 'diff'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -91,9 +91,9 @@ export interface ParsedCompoundRoute {
  * Known prefixes that indicate a compound route
  */
 const COMPOUND_ROUTE_PREFIXES = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'sources', 'skills', 'notes', 'notes-legacy', 'automations', 'projects', 'settings', 'browser', 'memory', 'home', 'connections',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'sources', 'skills', 'notes', 'automations', 'projects', 'settings', 'browser', 'memory', 'connections',
   // Unified-shell surfaces (W1)
-  'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
+  'knowledge', 'cloud-run', 'extension', 'diff',
 ]
 
 /**
@@ -162,11 +162,9 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     }
     // Legacy subpages.
     // toolchain → runtime (PRD runtime-context-marketplace §5.1)
-    // marketplace → extensions (S-05 / W5 Extension Center)
     // preferences → context (P2.1 Context ↔ Preferences merge)
     const LEGACY_SETTINGS_REDIRECT: Record<string, SettingsSubpage> = {
       toolchain: 'runtime',
-      marketplace: 'extensions',
       preferences: 'context',
     }
     const redirected = LEGACY_SETTINGS_REDIRECT[subpage] ?? subpage
@@ -235,10 +233,6 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return { navigator: 'memory', details: null }
   }
 
-  if (first === 'home') {
-    return { navigator: 'home', details: null }
-  }
-
   if (first === 'connections') {
     return { navigator: 'connections', details: null }
   }
@@ -269,8 +263,8 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return null
   }
 
-  // Notes navigator (notes-legacy is the P4 vault surface; same navigator/details)
-  if (first === 'notes' || first === 'notes-legacy') {
+  // Notes navigator.
+  if (first === 'notes') {
     if (segments.length === 1) {
       return { navigator: 'notes' as NavigatorType, details: null }
     }
@@ -394,11 +388,6 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return { navigator: 'diff', details: { type: 'diff', id: proposalId } }
   }
 
-  // Local terminal surface — terminal/{terminalId}
-  if (first === 'terminal') {
-    return { navigator: 'terminal', details: { type: 'terminal', id: decodeURIComponent(segments[1] || '') } }
-  }
-
   // Sessions navigator (allSessions, flagged, state)
   let sessionFilter: SessionFilter
   let detailsStartIndex: number
@@ -500,10 +489,6 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'memory'
   }
 
-  if (parsed.navigator === 'home') {
-    return 'home'
-  }
-
   if (parsed.navigator === 'connections') {
     return 'connections'
   }
@@ -544,12 +529,8 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return `diff/${encodeURIComponent(parsed.details.id)}`
   }
 
-  if (parsed.navigator === 'terminal') {
-    if (!parsed.details) return 'terminal'
-    return `terminal/${encodeURIComponent(parsed.details.id)}`
-  }
-
   // Sessions navigator
+  // Board/table are standalone views of all sessions; emit their own prefixes.
   if (parsed.viewMode === 'board') return 'board'
   if (parsed.viewMode === 'table') return 'table'
 
@@ -670,10 +651,6 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
   // Memory
   if (compound.navigator === 'memory') {
     return { type: 'view', name: 'memory', params: {} }
-  }
-
-  if (compound.navigator === 'home') {
-    return { type: 'view', name: 'home', params: {} }
   }
 
   if (compound.navigator === 'connections') {
@@ -836,10 +813,6 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return { navigator: 'memory', details: null }
   }
 
-  if (compound.navigator === 'home') {
-    return { navigator: 'home', details: null }
-  }
-
   if (compound.navigator === 'connections') {
     return { navigator: 'connections', details: null }
   }
@@ -947,17 +920,8 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     }
   }
 
-  if (compound.navigator === 'terminal') {
-    if (!compound.details) {
-      return { navigator: 'terminal', details: null }
-    }
-    return {
-      navigator: 'terminal',
-      details: { type: 'terminal', id: compound.details.id },
-    }
-  }
-
   // Sessions
+  const filter = compound.sessionFilter || { kind: 'allSessions' as const }
   if (compound.details) {
     return {
       navigator: 'sessions',
@@ -1012,8 +976,6 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'skills', details: null }
     case 'memory':
       return { navigator: 'memory', details: null }
-    case 'home':
-      return { navigator: 'home', details: null }
     case 'connections':
       return { navigator: 'connections', details: null }
     case 'skill-info':
@@ -1196,13 +1158,6 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
   if (state.navigator === 'memory') {
     return {
       navigator: 'memory',
-      details: null,
-    }
-  }
-
-  if (state.navigator === 'home') {
-    return {
-      navigator: 'home',
       details: null,
     }
   }

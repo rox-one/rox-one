@@ -377,8 +377,12 @@ export function getSetupNeeds(
     needsCredentials,
     needsOmpCredential: ompBlocked || undefined,
     ompCredentialCode: ompBlocked ? omp?.code : undefined,
-    // Fully configured if setup is complete OR user chose "Setup later"
-    isFullyConfigured: (!needsBillingConfig && !needsCredentials) || !!setupDeferred,
+    // Local-first: missing billing/provider creds are recommendations.
+    // Only a blocked default OMP connection (or no deferral) keeps the app
+    // out of the local workspace at launch.
+    isFullyConfigured: !ompBlocked || !!setupDeferred,
+    isSetupDeferred: setupDeferred === true,
+    shouldShowOnboardingOnLaunch: ompBlocked && !setupDeferred,
     needsMigration: state.billing.migrationRequired,
   };
 }

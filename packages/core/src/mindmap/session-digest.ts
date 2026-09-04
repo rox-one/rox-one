@@ -11,6 +11,7 @@ export type DigestItem = {
   reason: string;
 };
 
+/** Overlay key prefix; pins live in localStorage, not the transcript. */
 export const DIGEST_PIN_STORAGE_KEY = 'rox.sessionDigest.pins';
 
 export function digestPinStorageKey(sessionId: string): string {
@@ -34,6 +35,12 @@ export function serializePinnedSceneIds(ids: readonly string[]): string {
 
 const DECISION_RE = /переделай|иначе|fork|restart|instead/i;
 const ARTIFACT_RE = /write|edit|bash|read|apply_patch/i;
+const SHELF_ORDER: Record<DigestShelf, number> = {
+  decisions: 0,
+  artifacts: 1,
+  open: 2,
+  pinned: 3,
+};
 
 function titleOf(scene: SessionScene): string {
   return scene.triggerPreview.slice(0, 80) || scene.id;
@@ -44,7 +51,7 @@ export function buildDigestItems(
   pinnedSceneIds: string[] = [],
 ): DigestItem[] {
   const items: DigestItem[] = [];
-  const pinned = new Set(pinnedSceneIds);
+  const byId = new Map(graph.scenes.map((s) => [s.id, s]));
 
   for (const scene of graph.scenes) {
     const isFork = scene.childSceneIds.length > 1;
@@ -55,7 +62,7 @@ export function buildDigestItems(
         sceneId: scene.id,
         messageId: scene.triggerMessageId,
         title: titleOf(scene),
-        reason: 'форк',
+        reason: isFork ? 'форк' : 'форк',
       });
     }
     const artifact = scene.tools.find((t) => t.status !== 'error' && ARTIFACT_RE.test(t.name));
@@ -77,27 +84,28 @@ export function buildDigestItems(
         sceneId: scene.id,
         messageId: scene.triggerMessageId,
         title: titleOf(scene),
-        reason: blocked ? 'ошибка' : 'ожидает ответа',
-      });
-    }
-    if (pinned.has(scene.id)) {
-      items.push({
-        id: `pin_${scene.id}`,
-        shelf: 'pinned',
-        sceneId: scene.id,
-        messageId: scene.triggerMessageId,
-        title: titleOf(scene),
-        reason: 'закреплено',
+        reason: scene.assistantMessageIds.length === 0 ? 'нет ответа' : 'ошибка инструмента',
       });
     }
   }
 
-  const order: Record<DigestShelf, number> = {
-    decisions: 0,
-    artifacts: 1,
-    open: 2,
-    pinned: 3,
-  };
-  items.sort((a, b) => order[a.shelf] - order[b.shelf] || a.id.localeCompare(b.id));
+  for (const id of pinnedSceneIds) {
+    const scene = byId.get(id);
+    if (!scene) continue;
+    items.push({
+      id: `pin_${scene.id}`,
+      shelf: 'pinned',
+      sceneId: scene.id,
+      messageId: scene.triggerMessageId,
+      title: titleOf(scene),
+      reason: 'закреплено',
+    });
+  }
+
+  items.sort((a, b) => {
+    const shelf = SHELF_ORDER[a.shelf] - SHELF_ORDER[b.shelf];
+    if (shelf !== 0) return shelf;
+    return a.id.localeCompare(b.id);
+  });
   return items;
 }

@@ -1,19 +1,13 @@
-import { mkdirSync } from 'fs'
 import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGuide, type FolderSourceConfig } from '@craft-agent/shared/sources'
+import { ensureLocalNotesSource, loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGuide, type FolderSourceConfig } from '@craft-agent/shared/sources'
 import { safeJsonParse } from '@craft-agent/shared/utils/files'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { getDefaultWorkspacesDir, loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
-import { isSafeResourceSlug } from '@craft-agent/shared/resources'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
-import {
-  syncWorkspaceSourceWatch,
-  type SourceIndexChangedPayload,
-} from '../../sources/source-index-watch'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.GET,
@@ -28,89 +22,12 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.GET_MCP_TOOLS,
   RPC_CHANNELS.sources.REINDEX,
   RPC_CHANNELS.sources.SEARCH,
-  RPC_CHANNELS.sources.STATUS,
 ] as const
-
-const NOTES_SOURCE_SLUG = 'notes'
-const NOTES_SOURCE_PROVIDER = 'craft-notes'
-
-function buildNotesSourceGuide(notesPath: string): string {
-  return `# Notes vault
-
-Workspace markdown notes live at:
-
-${notesPath}
-
-## Scope
-
-Use this source when the user asks you to use their notes as context, search personal/work knowledge, update markdown notes, or create new notes.
-
-## Guidelines
-
-- Notes are plain markdown files under the path above.
-- Use file tools to read, search, create, rename, and update notes in that folder.
-- Preserve wiki links such as [[Note name]], markdown links, tags, YAML frontmatter, and asset references.
-- Assets are stored under ${join(notesPath, 'assets')}.
-- Daily notes are stored under ${join(notesPath, 'daily')}.
-- When you mention a note in chat, prefer [[Note name]] or notes/path/to/note.md so the UI can open it directly.
-
-## Context
-
-This source is maintained automatically from the built-in Notes feature. It has no external API or authentication.
-`
-}
 
 function ensureNotesSource(workspaceRoot: string, workspaceId: string): void {
   const wsConfig = loadWorkspaceConfig(workspaceRoot)
   const notesPath = wsConfig?.notesPath ?? join(getDefaultWorkspacesDir(), workspaceId, 'notes')
-  mkdirSync(notesPath, { recursive: true })
-
-  const existing = loadSourceConfig(workspaceRoot, NOTES_SOURCE_SLUG)
-  if (existing && existing.provider !== NOTES_SOURCE_PROVIDER) return
-
-  const now = Date.now()
-  const sourceConfig: FolderSourceConfig = {
-    id: existing?.id ?? 'notes-vault',
-    name: 'Notes vault',
-    slug: NOTES_SOURCE_SLUG,
-    enabled: true,
-    provider: NOTES_SOURCE_PROVIDER,
-    type: 'local',
-    local: {
-      path: notesPath,
-      format: 'obsidian',
-    },
-    icon: '📓',
-    tagline: 'Markdown notes, backlinks, tags, properties, daily notes, and assets',
-    isAuthenticated: true,
-    connectionStatus: 'connected',
-    createdAt: existing?.createdAt ?? now,
-    updatedAt: now,
-  }
-
-  saveSourceConfig(workspaceRoot, sourceConfig)
-  saveSourceGuide(workspaceRoot, NOTES_SOURCE_SLUG, { raw: buildNotesSourceGuide(notesPath) })
-}
-
-function localIndexRoots(
-  sources: ReturnType<typeof loadWorkspaceSources>,
-): Array<{ slug: string; path: string }> {
-  const roots: Array<{ slug: string; path: string }> = []
-  for (const src of sources) {
-    if (src.config.type !== 'local') continue
-    const p = src.config.local?.path
-    if (!p) continue
-    roots.push({ slug: src.config.slug, path: p })
-  }
-  return roots
-}
-
-function syncIndexWatch(server: RpcServer, workspaceId: string, workspaceRoot: string): void {
-  syncWorkspaceSourceWatch(workspaceRoot, localIndexRoots(loadWorkspaceSources(workspaceRoot)), {
-    push: (payload: SourceIndexChangedPayload) => {
-      pushTyped(server, RPC_CHANNELS.sources.INDEX_CHANGED, { to: 'workspace', workspaceId }, workspaceId, payload)
-    },
-  })
+  ensureLocalNotesSource(workspaceRoot, notesPath)
 }
 
 export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -123,10 +40,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       log.error(`SOURCES_GET: Workspace not found: ${workspaceId}`)
       return []
     }
-    ensureNotesSource(workspace.rootPath, workspaceId)
-    const sources = loadWorkspaceSources(workspace.rootPath)
-    syncIndexWatch(server, workspaceId, workspace.rootPath)
-    return sources
+    ensureNotesSource(workspace.rootPath, workspace.id)
+    return loadWorkspaceSources(workspace.rootPath)
   })
 
   // Create a new source
@@ -134,7 +49,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { createSource } = await import('@craft-agent/shared/sources')
-    const created = createSource(workspace.rootPath, {
+    return createSource(workspace.rootPath, {
       name: config.name || 'New Source',
       provider: config.provider || 'custom',
       type: config.type || 'mcp',
@@ -143,8 +58,6 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       api: config.api,
       local: config.local,
     })
-    syncIndexWatch(server, workspaceId, workspace.rootPath)
-    return created
   })
 
   // Update an existing source's editable fields (name, enabled, url/path, tagline, guide)
@@ -214,7 +127,6 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     // Notify subscribers (same shape as watcher broadcasts)
     const sources = loadWorkspaceSources(workspace.rootPath)
     pushTyped(server, RPC_CHANNELS.sources.CHANGED, { to: 'workspace', workspaceId }, workspaceId, sources)
-    syncIndexWatch(server, workspaceId, workspace.rootPath)
 
     return loaded
   })
@@ -233,7 +145,6 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       config.defaults.enabledSourceSlugs = config.defaults.enabledSourceSlugs.filter(s => s !== sourceSlug)
       saveWorkspaceConfig(workspace.rootPath, config)
     }
-    syncIndexWatch(server, workspaceId, workspace.rootPath)
   })
 
   // Start OAuth flow for a source (DEPRECATED — use oauth:start + performOAuth client-side)
@@ -286,7 +197,6 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
   server.handle(RPC_CHANNELS.sources.GET_PERMISSIONS, async (_ctx, workspaceId: string, sourceSlug: string) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
-    if (!isSafeResourceSlug(sourceSlug)) return null
 
     const { existsSync, readFileSync } = await import('fs')
     const { getSourcePermissionsPath } = await import('@craft-agent/shared/agent')
@@ -363,24 +273,19 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
         return { success: false, error: 'Source has not been tested yet' }
       }
 
-      const { CraftMcpClient, formatMcpUrlForLog } = await import('@craft-agent/shared/mcp')
+      const { CraftMcpClient } = await import('@craft-agent/shared/mcp')
       let client: InstanceType<typeof CraftMcpClient>
 
       if (source.config.mcp.transport === 'stdio') {
-        // Resolve platform overrides + expand ${WORKSPACE}/${SOURCE_DIR} exactly
-        // like the real session path (server-builder buildMcpServer) so tool
-        // discovery and the actual connection use the same command/args/env.
-        const { resolveStdioConfig } = await import('@craft-agent/shared/utils')
-        const resolved = resolveStdioConfig(source.config.mcp, workspace.rootPath, source.folderPath)
-        if (!resolved) {
+        if (!source.config.mcp.command) {
           return { success: false, error: 'Stdio MCP source is missing required "command" field' }
         }
-        log.info(`Fetching MCP tools via stdio: ${resolved.command}`)
+        log.info(`Fetching MCP tools via stdio: ${source.config.mcp.command}`)
         client = new CraftMcpClient({
           transport: 'stdio',
-          command: resolved.command,
-          args: resolved.args,
-          env: resolved.env,
+          command: source.config.mcp.command,
+          args: source.config.mcp.args,
+          env: source.config.mcp.env,
         })
       } else {
         if (!source.config.mcp.url) {
@@ -397,17 +302,13 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
           accessToken = credential?.value
         }
 
-        // Log only origin + pathname — the configured URL may carry userinfo
-        // or query-string credentials (hand-edited config.json bypasses
-        // save-time validation).
-        log.info(`Fetching MCP tools from ${formatMcpUrlForLog(source.config.mcp.url)}`)
+        log.info(`Fetching MCP tools from ${source.config.mcp.url}`)
         const headers: Record<string, string> = {
           ...(source.config.mcp.headers || {}),
           ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         }
         client = new CraftMcpClient({
-          // Honor the declared transport — CraftMcpClient supports legacy SSE.
-          transport: source.config.mcp.transport === 'sse' ? 'sse' : 'http',
+          transport: 'http',
           url: source.config.mcp.url,
           headers: Object.keys(headers).length > 0 ? headers : undefined,
         })
@@ -461,12 +362,11 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       roots.push({ slug: src.config.slug, path: p })
     }
 
-    const { reindexWorkspaceSources, countIndexedFiles } = await import('../../sources/source-index-facade')
-    const result = await reindexWorkspaceSources(workspace.rootPath, roots)
-    syncIndexWatch(server, workspaceId, workspace.rootPath)
+    const { reindexWorkspaceSources, countIndexedFiles } = await import('../../sources/source-index')
+    const result = reindexWorkspaceSources(workspace.rootPath, roots)
     return {
       ...result,
-      fileCount: await countIndexedFiles(workspace.rootPath),
+      fileCount: countIndexedFiles(workspace.rootPath),
       rootCount: roots.length,
     }
   })
@@ -477,17 +377,10 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     async (_ctx, workspaceId: string, query: string, limit?: number) => {
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-      const { searchSourceIndex } = await import('../../sources/source-index-facade')
-      return await searchSourceIndex(workspace.rootPath, typeof query === 'string' ? query : '', {
+      const { searchSourceIndex } = await import('../../sources/source-index')
+      return searchSourceIndex(workspace.rootPath, typeof query === 'string' ? query : '', {
         limit: typeof limit === 'number' ? limit : 20,
       })
     },
   )
-
-  server.handle(RPC_CHANNELS.sources.STATUS, async (_ctx, workspaceId: string) => {
-    const workspace = getWorkspaceByNameOrId(workspaceId)
-    if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
-    const { statusWorkspaceSources } = await import('../../sources/source-index-facade')
-    return await statusWorkspaceSources(workspace.rootPath)
-  })
 }

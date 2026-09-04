@@ -10,6 +10,7 @@
  */
 import { atomWithStorage } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
+import { readWorkbenchPreference } from '@/platform/workbench-rollout'
 
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
@@ -18,6 +19,16 @@ export const featureUnifiedShellAtom = atomWithStorage<boolean>(
   undefined,
   { getOnInit: true },
 )
+
+
+/** Explicit Workbench user preference; operator policy is evaluated elsewhere. */
+export const featureWorkbenchAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.workbenchEnabled),
+  readWorkbenchPreference(),
+  undefined,
+  { getOnInit: true },
+)
+
 
 export const featureWorkbenchModeRegistryV1Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchModeRegistryV1),

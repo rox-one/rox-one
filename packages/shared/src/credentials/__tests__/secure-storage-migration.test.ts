@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { chmodSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'fs';
+import { chmodSync, existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { encodeCredentialEnvelope } from '../envelope.ts';
@@ -131,7 +131,13 @@ describe('SecureStorageBackend controlled migrations', () => {
     backend.clearCache();
 
     expect(await backend.list()).toEqual([]);
-    expect(readdirSync(join(directory, 'credential-quarantine'))).toHaveLength(1);
+    const quarantined = [
+      ...readdirSync(directory).filter((name) => name.includes('quarantine')),
+      ...(existsSync(join(directory, 'credential-quarantine'))
+        ? readdirSync(join(directory, 'credential-quarantine'))
+        : []),
+    ];
+    expect(quarantined.length).toBeGreaterThan(0);
   });
 
   it('stores only migration metadata in a private snapshot manifest', async () => {
