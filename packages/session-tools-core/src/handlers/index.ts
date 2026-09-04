@@ -87,3 +87,20 @@ export type { ArchiveSessionArgs } from './archive-session.ts';
 export { handleKnowledgeSearch, KNOWLEDGE_SEARCH_MAX_LIMIT } from './knowledge-search.ts';
 export { handleKnowledgeRead, KNOWLEDGE_READ_MAX_MARKDOWN_CHARS } from './knowledge-read.ts';
 export { handleKnowledgeGetBacklinks, KNOWLEDGE_BACKLINKS_MAX_ITEMS } from './knowledge-backlinks.ts';
+// Pages
+export {
+  handleListPages,
+  handleGetPage,
+  handleCreatePage,
+  handleUpdatePage,
+  handleWritePageData,
+  handleDeletePage,
+} from './pages.ts';
+export type {
+  ListPagesArgs,
+  GetPageArgs,
+  CreatePageArgs,
+  UpdatePageArgs,
+  WritePageDataArgs,
+  DeletePageArgs,
+} from './pages.ts';

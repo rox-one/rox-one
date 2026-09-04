@@ -1592,6 +1592,34 @@ export interface ElectronAPI {
   setCollectionFilters(workspaceId: string, filtersByKey: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
   onCollectionFiltersChanged(callback: (workspaceId: string, filtersByKey: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>) => void): () => void
 
+  // Pages (workspace-scoped mini dashboards)
+  getPages(workspaceId: string): Promise<import('@craft-agent/shared/pages/types').LoadedPage[]>
+  getPage(workspaceId: string, pageIdOrSlug: string): Promise<import('@craft-agent/shared/pages/types').LoadedPage | null>
+  createPage(workspaceId: string, input: import('@craft-agent/shared/pages/types').CreatePageInput): Promise<import('@craft-agent/shared/pages/types').PageConfig>
+  /** Optional fields (projectId, description, refresh) accept explicit null = clear (undefined is dropped by the JSON transport). */
+  updatePage(workspaceId: string, pageSlug: string, patch: Partial<Omit<import('@craft-agent/shared/pages/types').PageConfig, 'id' | 'slug' | 'createdAt' | 'contentDigest' | 'lastRefresh' | 'grants' | 'share' | 'projectId' | 'description' | 'refresh'>> & { projectId?: string | null; description?: string | null; refresh?: import('@craft-agent/shared/pages/types').PageRefreshSpec | null }): Promise<import('@craft-agent/shared/pages/types').PageConfig>
+  deletePage(workspaceId: string, pageSlug: string): Promise<{ publicCopyMayRemain: boolean }>
+  getPageContent(workspaceId: string, pageSlug: string): Promise<{ content: string | null; contentDigest?: string }>
+  setPageContent(workspaceId: string, pageSlug: string, content: string): Promise<import('@craft-agent/shared/pages/types').PageConfig>
+  getPageData(workspaceId: string, pageSlug: string): Promise<import('@craft-agent/shared/pages/types').PageDataSnapshot | null>
+  listPageGrants(workspaceId: string, pageSlug: string): Promise<import('@craft-agent/shared/pages/types').PageActionGrant[]>
+  issuePageGrant(workspaceId: string, pageSlug: string, input: { action: import('@craft-agent/shared/pages/types').PageActionDescriptor; description?: string; ttlMs?: number }): Promise<import('@craft-agent/shared/pages/types').PageActionGrant>
+  revokePageGrant(workspaceId: string, pageSlug: string, grantId: string): Promise<boolean>
+  createPageLease(workspaceId: string, pageSlug: string): Promise<{ lease: import('@craft-agent/shared/pages/types').PageRenderLease; content: string }>
+  releasePageLease(workspaceId: string, leaseId: string): Promise<void>
+  executePageAction(workspaceId: string, request: import('@craft-agent/shared/pages/types').PageActionRequest): Promise<import('@craft-agent/shared/pages/types').PageActionResult>
+  cancelPageAction(workspaceId: string, requestId: string): Promise<boolean>
+  getPageShareCapabilities(): Promise<{ sharingEnabled: boolean }>
+  /** What `includeData` would publish + key paths that look credential-bearing (warn-only). */
+  getPageShareDataScan(workspaceId: string, pageSlug: string): Promise<{ snapshotBytes: number | null; secretCandidates: string[] }>
+  publishPage(workspaceId: string, pageSlug: string, options: { includeData: boolean; password?: string; viewOnlyAcknowledged?: boolean }): Promise<import('@craft-agent/shared/pages/types').PageConfig>
+  setPagePublicationPassword(workspaceId: string, pageSlug: string, password: string | null): Promise<import('@craft-agent/shared/pages/types').PageConfig>
+  unpublishPage(workspaceId: string, pageSlug: string): Promise<{ config: import('@craft-agent/shared/pages/types').PageConfig; warning?: 'remote-copy-may-remain' }>
+  /** Read a page's cached poster as a data URL — only returns when fresh (digest matches current content). */
+  getPageThumbnail(workspaceId: string, pageSlug: string): Promise<{ dataUrl: string; digest: string } | null>
+  /** Request a (re)capture of a page's poster (no-op on hosts without a capturer). */
+  regeneratePageThumbnail(workspaceId: string, pageSlug: string): Promise<boolean>
+  onPagesChanged(callback: (workspaceId: string, pages: import('@craft-agent/shared/pages/types').LoadedPage[]) => void): () => void
 
   // Automations
   getAutomations(workspaceId: string): Promise<unknown>
@@ -1964,6 +1992,15 @@ export interface DiffNavigationState {
 export interface TerminalNavigationState {
   navigator: 'terminal'
   details: { type: 'terminal'; id: string; sessionId?: string } | null
+ * Pages navigation state
+ *
+ * Bare `pages` (details: null) shows the full-width library grid — it never
+ * auto-selects a page. Like board mode, the middle navigator collapses to
+ * zero width while a pages route is active.
+ */
+export interface PagesNavigationState {
+  navigator: 'pages'
+  details: { type: 'page'; pageSlug: string } | null
   rightSidebar?: RightSidebarPanel
 }
 
@@ -1987,6 +2024,7 @@ export type NavigationState =
   | ExtensionNavigationState
   | DiffNavigationState
   | TerminalNavigationState
+  | PagesNavigationState
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2050,6 +2088,9 @@ export const isDiffNavigation = (
 export const isTerminalNavigation = (
   state: NavigationState
 ): state is TerminalNavigationState => state.navigator === 'terminal'
+export const isPagesNavigation = (
+  state: NavigationState
+): state is PagesNavigationState => state.navigator === 'pages'
 
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
   navigator: 'sessions',
@@ -2088,6 +2129,12 @@ export const getNavigationStateKey = (state: NavigationState): string => {
       return `projects/project/${state.details.projectSlug}`
     }
     return 'projects'
+  }
+  if (state.navigator === 'pages') {
+    if (state.details?.type === 'page') {
+      return `pages/page/${state.details.pageSlug}`
+    }
+    return 'pages'
   }
   if (state.navigator === 'settings') {
     if (state.subpage === null) return 'settings'
@@ -2188,7 +2235,7 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
   // Handle automations
   if (key === 'automations') return { navigator: 'automations', details: null }
   if (key.startsWith('automations/automation/')) {
-    const automationId = key.slice(22)
+    const automationId = key.slice(23)
     if (automationId) {
       return { navigator: 'automations', details: { type: 'automation', automationId } }
     }
@@ -2213,6 +2260,14 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
       return { navigator: 'browser', details: { type: 'browser', id } }
     }
     return { navigator: 'browser', details: null }
+  // Handle pages
+  if (key === 'pages') return { navigator: 'pages', details: null }
+  if (key.startsWith('pages/page/')) {
+    const pageSlug = key.slice(11)
+    if (pageSlug) {
+      return { navigator: 'pages', details: { type: 'page', pageSlug } }
+    }
+    return { navigator: 'pages', details: null }
   }
 
   // Handle settings

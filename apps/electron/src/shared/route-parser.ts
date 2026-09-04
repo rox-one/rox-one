@@ -54,7 +54,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'settings' | 'browser' | 'memory' | 'home' | 'connections'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'home' | 'connections'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
 
@@ -91,7 +91,7 @@ export interface ParsedCompoundRoute {
  * Known prefixes that indicate a compound route
  */
 const COMPOUND_ROUTE_PREFIXES = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'sources', 'skills', 'notes', 'notes-legacy', 'automations', 'projects', 'settings', 'browser', 'memory', 'home', 'connections',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'sources', 'skills', 'notes', 'notes-legacy', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'home', 'connections',
   // Unified-shell surfaces (W1)
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
 ]
@@ -282,6 +282,20 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       }
     }
 
+    return null
+  }
+
+  // Pages navigator
+  if (first === 'pages') {
+    if (segments.length === 1) {
+      return { navigator: 'pages', details: null }
+    }
+    if (segments[1] === 'page' && segments[2]) {
+      return {
+        navigator: 'pages',
+        details: { type: 'page', id: segments[2] },
+      }
+    }
     return null
   }
 
@@ -547,6 +561,9 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   if (parsed.navigator === 'terminal') {
     if (!parsed.details) return 'terminal'
     return `terminal/${encodeURIComponent(parsed.details.id)}`
+  if (parsed.navigator === 'pages') {
+    if (!parsed.details) return 'pages'
+    return `pages/page/${parsed.details.id}`
   }
 
   // Sessions navigator
@@ -710,6 +727,12 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
       return { type: 'view', name: 'browser', params: {} }
     }
     return { type: 'view', name: 'browser', id: compound.details.id, params: {} }
+  // Pages
+  if (compound.navigator === 'pages') {
+    if (!compound.details) {
+      return { type: 'view', name: 'pages', params: {} }
+    }
+    return { type: 'view', name: 'page-info', id: compound.details.id, params: {} }
   }
 
   // Sessions
@@ -954,6 +977,14 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return {
       navigator: 'terminal',
       details: { type: 'terminal', id: compound.details.id },
+  // Pages
+  if (compound.navigator === 'pages') {
+    if (!compound.details) {
+      return { navigator: 'pages', details: null }
+    }
+    return {
+      navigator: 'pages',
+      details: { type: 'page', pageSlug: compound.details.id },
     }
   }
 
@@ -1071,6 +1102,16 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'projects', details: null }
+    case 'pages':
+      return { navigator: 'pages', details: null }
+    case 'page-info':
+      if (parsed.id) {
+        return {
+          navigator: 'pages',
+          details: { type: 'page', pageSlug: parsed.id },
+        }
+      }
+      return { navigator: 'pages', details: null }
     case 'session':
       if (parsed.id) {
         // Reconstruct filter from params
@@ -1261,6 +1302,10 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
       details: state.details?.type === 'diff'
         ? { type: 'diff', id: state.details.proposalId }
         : null,
+  if (state.navigator === 'pages') {
+    return {
+      navigator: 'pages',
+      details: state.details ? { type: 'page', id: state.details.pageSlug } : null,
     }
   }
 

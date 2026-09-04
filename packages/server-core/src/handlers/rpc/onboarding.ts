@@ -5,7 +5,7 @@
  */
 import { getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { setSetupDeferred } from '@craft-agent/shared/config'
+import { isSetupDeferred, setSetupDeferred } from '@craft-agent/shared/config'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
 import { validateMcpConnection } from '@craft-agent/shared/mcp'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
@@ -33,7 +33,8 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get current auth state
   server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {
-    const { authState, setupNeeds } = await getOnboardingAuthPayload()
+    // Honor "Setup later" (upstream headless/WebUI fix) via Rox payload helper.
+    const { authState, setupNeeds } = await getOnboardingAuthPayload(isSetupDeferred())
     // Redact raw credentials — renderer only needs boolean flags (hasCredentials, setupNeeds)
     return {
       authState: {

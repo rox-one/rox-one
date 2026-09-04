@@ -422,8 +422,6 @@ export function isSourceUsable(source: LoadedSource): boolean {
 
 /**
  * Get sources by slugs for a workspace.
- * Includes both user-configured sources from disk and builtin sources
- * (like craft-agents-docs) that don't have filesystem folders.
  */
 export function getSourcesBySlugs(workspaceRootPath: string, slugs: string[]): LoadedSource[] {
   const workspaceId = basename(workspaceRootPath);
@@ -449,12 +447,9 @@ export function getSourcesBySlugs(workspaceRootPath: string, slugs: string[]): L
 }
 
 /**
- * Load all sources for a workspace INCLUDING built-in sources.
- * Built-in sources (like craft-agents-docs) are always available and merged
- * with user-configured sources from the workspace.
+ * Load all sources for a workspace.
  *
- * Use this when the agent needs visibility into all available sources,
- * including system-provided ones that don't live on disk.
+ * Use this when the agent needs visibility into all available sources.
  */
 export function loadAllSources(workspaceRootPath: string): LoadedSource[] {
   const workspaceId = basename(workspaceRootPath);
@@ -591,7 +586,7 @@ export async function createSource(
   }
 
   // Create guide.md with skeleton template
-  // (bundled guides removed - agent should search craft-agents-docs MCP for service-specific guidance)
+  // (bundled guides removed - service-specific guidance lives in the product docs at https://thecraftagents.com/docs)
   const guideContent = `# ${input.name}
 
 ## Guidelines

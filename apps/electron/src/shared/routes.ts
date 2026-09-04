@@ -209,6 +209,11 @@ export const routes = {
     /** Embedded browser instance view (browser navigator) */
     browser: (instanceId: string) =>
       `browser/instance/${encodeURIComponent(instanceId)}` as const,
+    /** Pages view (full-width library grid, or one page's embedded render) */
+    pages: (pageSlug?: string) =>
+      pageSlug
+        ? `pages/page/${pageSlug}` as const
+        : 'pages' as const,
 
     /** Kanban board view (sessions navigator, board view mode, all sessions) */
     board: () => 'board' as const,

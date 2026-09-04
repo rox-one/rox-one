@@ -28,6 +28,7 @@ import {
   Info,
   MailOpen,
   FolderKanban,
+  PanelsTopLeft,
 } from "lucide-react"
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
@@ -139,6 +140,7 @@ import {
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
+  isPagesNavigation,
   type NavigationState,
 } from "@/contexts/NavigationContext"
 import type { SettingsSubpage } from "../../../shared/types"
@@ -150,6 +152,7 @@ import { ProjectsListPanel } from "./ProjectsListPanel"
 import { APP_EVENTS, AGENT_EVENTS, type AutomationFilterKind, AUTOMATION_TYPE_TO_FILTER_KIND } from "../automations/types"
 import { useAutomations } from "@/hooks/useAutomations"
 import { useProjects } from "@/hooks/useProjects"
+import { usePages } from "@/hooks/usePages"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { PanelHeader } from "./PanelHeader"
 import { OnboardingDialog } from "./OnboardingDialog"
@@ -456,6 +459,10 @@ function AppShellContent({
   const isBoardView =
     isSessionsNavigation(navState) &&
     (navState.viewMode === 'board' || navState.viewMode === 'table')
+
+  // Pages behaves the same way: both the library grid and an open page render
+  // full-width in the content area — there is no pages navigator list.
+  const isPagesView = isPagesNavigation(navState)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -793,6 +800,7 @@ function AppShellContent({
   } = useAutomations(activeWorkspaceId)
 
   const { projects } = useProjects(activeWorkspaceId)
+  const { pages } = usePages(activeWorkspaceId)
   const projectMenuOptions = useMemo(
     () => projects.map(p => ({ id: p.config.id, slug: p.config.slug, name: p.config.name, color: p.config.color })),
     [projects],
@@ -1659,6 +1667,11 @@ function AppShellContent({
     navigate(routes.view.projects())
   }, [])
 
+  // Handler for pages view
+  const handlePagesClick = useCallback(() => {
+    navigate(routes.view.pages())
+  }, [])
+
   const handleAutomationsScheduledClick = useCallback(() => {
     navigate(routes.view.automationsScheduled())
   }, [])
@@ -1994,18 +2007,18 @@ function AppShellContent({
     }
     flattenTree(labelTree)
 
-    // 3. Destinations (matches APP_NAV_DESTINATIONS / sidebar order)
+    // 3. Destinations (Rox surfaces + upstream Pages)
     result.push({ id: 'nav:projects', type: 'nav', action: handleProjectsClick })
     result.push({ id: 'nav:memory', type: 'nav', action: handleMemoryClick })
     result.push({ id: 'nav:sources', type: 'nav', action: handleSourcesClick })
     result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
-    // notes nav removed P4.2 — knowledge is primary PKM
     result.push({ id: 'nav:knowledge', type: 'nav', action: handleKnowledgeClick })
+    result.push({ id: 'nav:pages', type: 'nav', action: handlePagesClick })
     result.push({ id: 'nav:automations', type: 'nav', action: handleAutomationsClick })
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
 
     return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, viewConfigs, handleViewClick, handleKnowledgeClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handleAutomationsClick, handleSettingsClick])
+  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, viewConfigs, handleViewClick, handleKnowledgeClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick, handleWhatsNewClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -2150,6 +2163,11 @@ function AppShellContent({
     // Notes navigator
     if (isNotesNavigation(navState)) {
       return "Notes"
+    }
+
+    // Pages navigator
+    if (isPagesNavigation(navState)) {
+      return t("sidebar.allPages")
     }
 
     // Automations navigator
@@ -2549,6 +2567,25 @@ function AppShellContent({
                     // --- Separator before footer ---
                     { id: "separator:knowledge-automations", type: "separator" },
                     {
+                      id: "nav:pages",
+                      title: t("sidebar.pages"),
+                      label: String(pages.length),
+                      icon: PanelsTopLeft,
+                      // Highlight on the library grid only, not when a page is open (mirrors Projects)
+                      variant: (isPagesNavigation(navState) && !navState.details) ? "default" : "ghost",
+                      onClick: handlePagesClick,
+                      expandable: pages.length > 0,
+                      expanded: isExpanded('nav:pages'),
+                      onToggle: () => toggleExpanded('nav:pages'),
+                      items: pages.map(p => ({
+                        id: `nav:pages:${p.config.id}`,
+                        title: p.config.name,
+                        icon: PanelsTopLeft,
+                        variant: (isPagesNavigation(navState) && navState.details?.pageSlug === p.config.slug) ? "default" as const : "ghost" as const,
+                        onClick: () => navigate(routes.view.pages(p.config.slug)),
+                      })),
+                    },
+                    {
                       id: "nav:automations",
                       title: t(APP_NAV_DESTINATIONS_BY_ID.automations.labelKey),
                       label: String(automations.length),
@@ -2822,7 +2859,7 @@ function AppShellContent({
             )}
             </div>
           )}
-          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView ? 0 : sessionListWidth))}
+          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false}
           isCompact={isAutoCompact}
@@ -2863,8 +2900,8 @@ function AppShellContent({
         </div>
         )}
 
-        {/* Session List Resize Handle (absolute, hidden in focused mode and board view) */}
-        {!effectiveSidebarAndNavigatorHidden && !isBoardView && (
+        {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
+        {!effectiveSidebarAndNavigatorHidden && !isBoardView && !isPagesView && (
         <div
           ref={sessionListHandleRef}
           onMouseDown={(e) => { e.preventDefault(); setIsResizing('session-list') }}

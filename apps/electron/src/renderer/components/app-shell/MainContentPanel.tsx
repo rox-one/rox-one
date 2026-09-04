@@ -39,6 +39,7 @@ import {
   isKnowledgeNavigation,
   isDiffNavigation,
   isExtensionNavigation,
+  isPagesNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
 import { SourceInfoPage, ChatPage, BrowserPanelPage, KnowledgeSurfacePage, ExtensionSurfacePage } from '@/pages'
@@ -53,6 +54,8 @@ import ProjectInfoPage from '@/pages/ProjectInfoPage'
 import { KanbanBoardContainer } from './kanban/KanbanBoardContainer'
 import { SessionTableHost } from './session-table/SessionTableHost'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
+import { PagesHome } from '../pages/PagesHome'
+import { PageView } from '../pages/PageView'
 import type { ExecutionEntry } from '../automations/types'
 import { automationsAtom } from '@/atoms/automations'
 import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
@@ -347,6 +350,19 @@ export function MainContentPanel({
         <div className="flex items-center justify-center h-full text-muted-foreground">
           <p className="text-sm">{t("automations.noAutomationsConfigured")}</p>
         </div>
+      </Panel>
+    )
+  }
+
+  // Pages navigator - full-width library grid, or one page's embedded render
+  if (isPagesNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        {navState.details ? (
+          <PageView key={navState.details.pageSlug} pageSlug={navState.details.pageSlug} />
+        ) : (
+          <PagesHome />
+        )}
       </Panel>
     )
   }
