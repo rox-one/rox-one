@@ -22,6 +22,7 @@ ROX One — монорепозиторий десктопного AI-агент�
 | `RX-DOC-0024` | [Главная навигация](RX-DOC-0024-hub.md) | В работе | `RX-DOC-0024-hub.md` |
 | `RX-DOC-0025` | [Аудит заявленных функций](RX-DOC-0025-audit.md) | В работе | `RX-DOC-0025-audit.md` |
 | `RX-DOC-0028` | [Корпус документации безопасности](RX-DOC-0028-security-corpus.md) | В работе | `RX-DOC-0028-security-corpus.md` |
+| `RX-DOC-0034` | [Порт возможностей DSH-harness](RX-DOC-0034-session-harness-port.md) | В работе | `RX-DOC-0034-session-harness-port.md` |
 
 ## Реестр
 

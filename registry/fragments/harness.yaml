@@ -1,0 +1,86 @@
+# Фрагмент реестра RX — порт возможностей DSH-harness в Rox One.
+# Блок TSK 0800–0899. Спека RX-SPC-0021, ADR RX-ADR-0019, DOC RX-DOC-0034.
+
+- id: RX-EPC-0001
+  title: Порт возможностей DSH-harness в оболочку Rox
+  kind: epic
+  path: docs/specs/2026-09-10-session-harness-port
+  status: active
+  refs: [RX-ADR-0019, RX-SPC-0021, RX-DOC-0034, RX-TSK-0800, RX-TSK-0801, RX-TSK-0802, RX-TSK-0803, RX-TSK-0804, RX-TSK-0805, RX-TSK-0806]
+  note: |
+    Возможности community DSH Desktop вливаем в наш UI. Пакеты dsh-* и
+    Cordis в runtime не входят. Волны H0–H6 на ветке rox/session-harness-port.
+
+- id: RX-FEA-0033
+  title: "Инспектор сессии и хром harness (порт DSH-возможностей)"
+  kind: feature
+  status: planned
+  refs: [RX-EPC-0001, RX-SPC-0021]
+  note: |
+    Заявлено: docs/specs/2026-09-10-session-harness-port/. Вердикт: замысел
+    (idea_only) до H1. Доказательства появятся с флагом
+    workbench.harness.inspector.v1.
+
+- id: RX-TSK-0800
+  title: H0 — ADR, спека, реестр и ветка порта harness
+  kind: task
+  path: docs/specs/2026-09-10-session-harness-port
+  status: active
+  refs: [RX-EPC-0001, RX-ADR-0019, RX-SPC-0021, RX-DOC-0034]
+  note: |
+    Документы посажены на rox/session-harness-port. Остаток H0: флаги
+    workbench.harness.* и влив UEW-спеки с origin/main.
+
+- id: RX-TSK-0801
+  title: H1 — инспектор сессии (files/git/browser/terminal-заглушка)
+  kind: task
+  path: apps/electron/src/renderer/components/right-sidebar
+  status: planned
+  refs: [RX-EPC-0001, RX-TSK-0800, RX-ADR-0001]
+  note: |
+    Расширить RightSidebarPanel. Живой PTY не в этом PR — только слот под UEW.
+
+- id: RX-TSK-0802
+  title: H2 — хром чата (история ввода, прогресс, cost, notify, open-in-editor)
+  kind: task
+  path: apps/electron/src/renderer/components/app-shell/input
+  status: planned
+  refs: [RX-EPC-0001, RX-TSK-0800]
+  note: |
+    First-party. Без dsh-paste-input / dsh-input-history / dsh-ui-progress npm.
+
+- id: RX-TSK-0803
+  title: H3 — интеллект агента (context dashboard, MCP lens, fallbacks, auto-review)
+  kind: task
+  path: packages/shared/src/agent
+  status: planned
+  refs: [RX-EPC-0001, RX-TSK-0801]
+  note: |
+    Зависит от слота inspector. Без network MITM-прокси DSH permission-rules.
+
+- id: RX-TSK-0804
+  title: H4 — единый Extension Center для skills/MCP/automations
+  kind: task
+  path: packages/shared/src/extensions
+  status: planned
+  refs: [RX-EPC-0001, RX-PLG-0001]
+  note: |
+    Довести S-05 UI. Не добавлять runtime dsh-cordis.
+
+- id: RX-TSK-0805
+  title: H5 — импорт чатов, advisor, simplify, workflow
+  kind: task
+  path: packages/shared/src/sessions
+  status: planned
+  refs: [RX-EPC-0001, RX-TSK-0804]
+  note: |
+    Парсеры импорта first-party. Advisor = bundled skill, не второй hidden loop.
+
+- id: RX-TSK-0806
+  title: H6 — freeze skip-list и closeout порта
+  kind: task
+  path: docs/specs/2026-09-10-session-harness-port/03-anti-goals.md
+  status: planned
+  refs: [RX-EPC-0001, RX-TSK-0801, RX-TSK-0802, RX-TSK-0803, RX-TSK-0804, RX-TSK-0805]
+  note: |
+    Явный отказ от session-buddy, mnemon, cordis-HMR, agent-teams как runtime.

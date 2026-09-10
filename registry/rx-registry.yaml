@@ -2506,6 +2506,16 @@
   note: |
     Next-program 006: агенты не удаляют remote branches.
 
+- id: RX-ADR-0019
+  title: Порт возможностей DSH-harness без второго рантайма
+  kind: adr
+  path: docs/architecture/adr/0019-session-harness-capability-port.md
+  status: active
+  refs: [RX-ADR-0001, RX-SPC-0002, RX-SPC-0021]
+  note: |
+    Возможности community DSH вливаем в слоты Rox. Пакеты dsh-*, Cordis и
+    процесс DSH Desktop в runtime MUST NOT. Ветка rox/session-harness-port.
+
 - id: RX-SPC-0001
   title: Интеграция SiYuan
   kind: spec
@@ -2685,6 +2695,16 @@
   refs: [RX-ADR-0007, RX-INT-0030]
   note: |
     Дизайн white-label ядра «Знания» под OEM-грант.
+
+- id: RX-SPC-0021
+  title: Порт возможностей DSH-harness в Rox One
+  kind: spec
+  path: docs/specs/2026-09-10-session-harness-port
+  status: active
+  refs: [RX-ADR-0019, RX-SPC-0002, RX-EPC-0001]
+  note: |
+    Карта 29 DSH-плагинов → reuse/extend/port/skip и волны H0–H6.
+    Не заменяет Suite S и UEW.
 
 - id: RX-DOC-0001
   title: Легенда идентификаторов RX
