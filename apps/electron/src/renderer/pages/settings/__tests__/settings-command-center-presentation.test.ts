@@ -30,6 +30,7 @@ describe('settings command center presentation', () => {
     expect(overviewSrc).toContain("'appearance'")
     expect(overviewSrc).toContain("'shortcuts'")
     expect(overviewSrc).toContain('data-testid="settings-overview"')
+    expect(overviewSrc).toContain('data-testid={`settings-quick-${id}`}')
   })
 
   it('groups and searches navigator rows without changing the selection contract', () => {
@@ -39,5 +40,8 @@ describe('settings command center presentation', () => {
     expect(navigatorSrc).toContain("t('settings.navigator.clearSearch')")
     expect(navigatorSrc).toContain("t('settings.navigator.noResults', { query })")
     expect(navigatorSrc).toContain('onSelectSubpage(item.id)')
+    expect(navigatorSrc).toContain('data-testid="settings-navigator-search"')
+    expect(navigatorSrc).toContain('data-testid="settings-navigator-clear"')
+    expect(navigatorSrc).toContain('data-testid="settings-navigator-empty"')
   })
 })

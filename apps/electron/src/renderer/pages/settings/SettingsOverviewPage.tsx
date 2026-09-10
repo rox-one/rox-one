@@ -156,6 +156,7 @@ export function SettingsOverviewPage() {
                           className="justify-start"
                           onClick={() => goTo(id)}
                           aria-label={label}
+                          data-testid={`settings-quick-${id}`}
                         >
                           <Icon className="text-muted-foreground" />
                           <span className="flex-1 text-left">{label}</span>
