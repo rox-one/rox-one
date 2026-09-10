@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { ShieldAlert, Check, X, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { reviewPermissionShadow } from '@craft-agent/shared/agent'
+import { featureWorkbenchHarnessAgentIntelV1Atom } from '@/atoms/unified-shell'
 import type { PermissionRequest as PermissionRequestType } from '../../../../../shared/types'
 import type { PermissionResponse } from './types'
 
@@ -24,6 +27,10 @@ interface PermissionRequestProps {
  */
 export function PermissionRequest({ request, onResponse, unstyled = false }: PermissionRequestProps) {
   const { t } = useTranslation()
+  const agentIntel = useAtomValue(featureWorkbenchHarnessAgentIntelV1Atom)
+  const shadow = agentIntel
+    ? reviewPermissionShadow({ toolName: request.toolName, command: request.command })
+    : null
 
   const handleAllow = () => {
     onResponse({ type: 'permission', allowed: true, alwaysAllow: false })
@@ -65,6 +72,14 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
         {request.command && (
           <div className="bg-foreground/5 rounded-md p-3 font-mono text-xs text-foreground/90 whitespace-pre-wrap break-all max-h-24 overflow-y-auto">
             {request.command}
+          </div>
+        )}
+
+        {shadow && (
+          <div className="text-[11px] text-muted-foreground" data-testid="permission-shadow-review">
+            {t(`chat.permissionShadow.${shadow.verdict}`)}
+            {' · '}
+            {t('chat.permissionShadow.hint')}
           </div>
         )}
       </div>

@@ -22,6 +22,7 @@
 import { getSessionToolProxyDefs } from './backend/pi/session-tool-defs.ts';
 import { getBrowserToolEnabled } from '../config/storage.ts';
 import type { McpClientPool } from '../mcp/mcp-pool.ts';
+import { applyMcpLens } from '@craft-agent/session-tools-core';
 
 /** Minimal structural shape every backend registration frame accepts. */
 export interface SessionToolDef {
@@ -50,6 +51,11 @@ export interface SessionToolDefBuildOptions {
    * Pi must leave this false — it already registers SDK bash.
    */
   includeHostBashAlias?: boolean;
+  /**
+   * MCP lens: omit non-essential source-proxy tools from the advertised set.
+   * Default false so OMP keeps every host tool `essential` (v1 bridge).
+   */
+  mcpLens?: boolean;
 }
 
 export function buildSessionToolDefs(options: SessionToolDefBuildOptions = {}): SessionToolDef[] {
@@ -91,6 +97,10 @@ export function buildSessionToolDefs(options: SessionToolDefBuildOptions = {}): 
     if (prefixed && !seen.has('bash')) {
       unique.push({ ...prefixed, name: 'bash' });
     }
+  }
+
+  if (options.mcpLens) {
+    return applyMcpLens(unique, true).visible
   }
 
   return unique;

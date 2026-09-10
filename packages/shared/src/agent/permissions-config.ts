@@ -32,6 +32,7 @@ import {
   type BlockedCommandHintRule,
   type PermissionPaths,
 } from './mode-types.ts';
+import { DEFAULT_PERMISSION_SHADOW_RULES, type PermissionShadowRules } from './permission-shadow-review.ts';
 import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
@@ -282,6 +283,8 @@ export interface PermissionsCustomConfig {
   blockedTools: string[];
   /** Command-specific hints for blocked Bash commands */
   blockedCommandHints: BlockedCommandHintRule[];
+  /** Shadow reviewer rules (UI still owns Allow/Deny). */
+  autoReview: PermissionShadowRules;
 }
 
 /**
@@ -334,6 +337,7 @@ export function parsePermissionsJson(content: string): PermissionsCustomConfig {
     allowedWritePaths: [],
     blockedTools: [],
     blockedCommandHints: [],
+    autoReview: { ...DEFAULT_PERMISSION_SHADOW_RULES },
   };
 
   try {
@@ -377,6 +381,12 @@ export function parsePermissionsJson(content: string): PermissionsCustomConfig {
       // Exact tool names (not regex) — keep verbatim for Set-exact matching
       blockedTools: normalizePatterns(data.blockedTools),
       blockedCommandHints: data.blockedCommandHints ?? [],
+      autoReview: {
+        enabled: data.autoReview?.enabled ?? false,
+        timeoutMs: data.autoReview?.timeoutMs ?? DEFAULT_PERMISSION_SHADOW_RULES.timeoutMs,
+        denyPatterns: data.autoReview?.denyPatterns ?? [],
+        allowPatterns: data.autoReview?.allowPatterns ?? [],
+      },
     };
   } catch (error) {
     debug('[SafeMode] JSON parse error:', error);

@@ -10,7 +10,8 @@
  */
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
+import { featureWorkbenchHarnessAgentIntelV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
+import { resolveModelFallbackStatus } from '@craft-agent/shared/agent'
 import { formatCostUsd } from '@/components/app-shell/input/turn-progress'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { backgroundTasksAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
@@ -68,7 +69,9 @@ function StatusBarInner() {
     focusedMeta?.permissionMode,
   )
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  const agentIntelEnabled = useAtomValue(featureWorkbenchHarnessAgentIntelV1Atom)
   const costLabel = chatChromeEnabled ? formatCostUsd(focusedMeta?.tokenUsage?.costUsd) : null
+  const fallback = agentIntelEnabled ? resolveModelFallbackStatus(null) : null
 
   const model = buildStatusBarModel({
     transportMode: transport?.mode,
@@ -99,6 +102,13 @@ function StatusBarInner() {
         {model.permissionMode ? <span>{permissionLabel(model.permissionMode, t)}</span> : null}
         <span>{t('workbench.status.people', { count: model.peopleCount })}</span>
         <span>{t('workbench.status.agents', { count: model.agentCount })}</span>
+        {fallback && (
+          <span data-testid="status-bar-fallback">
+            {fallback.kind === 'switched'
+              ? t('workbench.status.fallbackSwitched', { model: fallback.model })
+              : t('workbench.status.fallbackUnverified')}
+          </span>
+        )}
         <span data-testid="status-bar-cost">
           {costLabel
             ? t('workbench.status.cost', { amount: costLabel })

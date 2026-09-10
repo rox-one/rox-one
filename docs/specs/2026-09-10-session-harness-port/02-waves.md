@@ -104,6 +104,8 @@ Paste и notify — reuse, не в этом PR.
 
 **DoD:** дашборд совпадает с фактическим prompt assembly (тест на фикстуре транскрипта). Auto-review не может сам нажать Allow.
 
+Реализовано за `workbench.harness.agent-intel.v1` (нужен inspector): read-only context shares; MCP lens; fallback «live не проверено», пока runtime не записал switch; shadow review без авто-Allow.
+
 ## H4 — Extension Center (`RX-TSK-0804`)
 
 Флаг: `workbench.harness.ext-center.v1`

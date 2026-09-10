@@ -1398,6 +1398,7 @@ export class OmpAgent extends BaseAgent {
       includePoolProxyDefs: true,
       includeHostBashAlias: true,
       miniModel: this.config.miniModel,
+      mcpLens: false,
     });
 
     const tools = unique.map((d: SessionToolDef) => ({

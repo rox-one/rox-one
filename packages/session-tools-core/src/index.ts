@@ -303,6 +303,12 @@ export {
   // JSON Schema converter
   getToolDefsAsJsonSchema,
 } from './tool-defs.ts';
+export {
+  applyMcpLens,
+  hostToolLoadMode,
+  isEssentialHostTool,
+  type HostToolLoadMode,
+} from './tool-defs-filtering.ts';
 
 export type {
   SessionToolExecutionMode,
