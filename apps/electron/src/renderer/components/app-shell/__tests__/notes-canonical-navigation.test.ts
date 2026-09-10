@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const appShellPath = join(__dirname, '../AppShell.tsx')
+const chatPageSource = readFileSync(join(__dirname, '../../../pages/ChatPage.tsx'), 'utf8')
 
 describe('Notes shell navigation', () => {
   const source = readFileSync(appShellPath, 'utf8')
@@ -15,5 +16,13 @@ describe('Notes shell navigation', () => {
 
     expect(handler).toContain('navigate(routes.view.notes())')
     expect(handler).not.toContain('navigate(routes.view.knowledge())')
+  })
+
+  it('resolves imported chat notes to local Notes, not SiYuan', () => {
+    expect(chatPageSource).toContain('lookupImportedNote')
+    expect(chatPageSource).toContain('routes.view.notes(migrated.destinationNoteId)')
+    expect(chatPageSource).not.toContain('lookupMigratedSiyuanId')
+    expect(chatPageSource).not.toContain('notesLegacy')
+    expect(chatPageSource).not.toContain('migrated?.siyuanId')
   })
 })
