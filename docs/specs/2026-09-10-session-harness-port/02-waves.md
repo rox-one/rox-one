@@ -71,6 +71,8 @@ export type RightSidebarPanel =
 
 **DoD:** в сессии переключаются вкладки Files / Git / Browser без регрессии files-watch. Кнопка терминала не создаёт PTY при флаге UEW off.
 
+Реализовано за `workbench.harness.inspector.v1`: InspectorHost в session-режиме, URL `?sidebar=git|browser|context|files`, git через `git:getStatus`, терминал disabled.
+
 ## H2 — хром чата (`RX-TSK-0802`)
 
 Флаг: `workbench.harness.chat-chrome.v1`

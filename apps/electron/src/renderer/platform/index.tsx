@@ -15,6 +15,7 @@ import {
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
+  featureWorkbenchHarnessInspectorV1Atom,
 } from '@/atoms/unified-shell'
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
@@ -47,6 +48,7 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
     tabGroups: useAtomValue(featureWorkbenchTabGroupsV2Atom),
     browserSurface: useAtomValue(featureWorkbenchBrowserSurfaceV2Atom),
     statusBar: false,
+    harnessInspector: useAtomValue(featureWorkbenchHarnessInspectorV1Atom),
   })
 
   if (!chrome.showRail && !chrome.showSurfaceTabs && !chrome.showInspector) {

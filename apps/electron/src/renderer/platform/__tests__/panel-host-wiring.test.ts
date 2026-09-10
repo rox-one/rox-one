@@ -49,6 +49,10 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
     )
   })
 
+  it('passes harnessInspector into resolveWorkbenchChrome so the dock works without unified-shell', () => {
+    expect(src).toContain('harnessInspector: useAtomValue(featureWorkbenchHarnessInspectorV1Atom)')
+  })
+
   it('keeps harness chrome atoms defaulted to false', () => {
     const src = readFileSync(atomPath, 'utf8')
     for (const key of [

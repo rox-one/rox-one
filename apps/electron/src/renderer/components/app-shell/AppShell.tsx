@@ -2906,7 +2906,7 @@ function AppShellContent({
           )}
           navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
-          isRightSidebarVisible={inspectorVisible}
+          isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}
           isResizing={!!isResizing}
         />

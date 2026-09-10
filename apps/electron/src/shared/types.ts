@@ -1552,6 +1552,13 @@ export interface ElectronAPI {
 
   // Git operations
   getGitBranch(dirPath: string): Promise<string | null>
+  getGitStatus(dirPath: string): Promise<{
+    isRepo: boolean
+    branch: string | null
+    ahead: number
+    behind: number
+    entries: Array<{ path: string; index: string; worktree: string }>
+  }>
 
   // Git Bash (Windows)
   checkGitBash(): Promise<GitBashStatus>
@@ -1860,6 +1867,9 @@ export type WeChatUiEvent =
 export type RightSidebarPanel =
   | { type: 'files'; path?: string }
   | { type: 'history' }
+  | { type: 'git' }
+  | { type: 'browser' }
+  | { type: 'context' }
   | { type: 'none' }
 
 /**

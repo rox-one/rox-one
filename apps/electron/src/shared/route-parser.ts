@@ -1357,6 +1357,7 @@ export function degradeSurfaceNavigationState(state: NavigationState): Navigatio
  *   'history' -> { type: 'history' }
  *   'files' -> { type: 'files' }
  *   'files/src/main.ts' -> { type: 'files', path: 'src/main.ts' }
+ *   'git' | 'browser' | 'context' -> { type }
  *   'none' -> { type: 'none' }
  */
 export function parseRightSidebarParam(sidebarStr?: string): RightSidebarPanel | undefined {
@@ -1364,6 +1365,15 @@ export function parseRightSidebarParam(sidebarStr?: string): RightSidebarPanel |
 
   if (sidebarStr === 'history') {
     return { type: 'history' }
+  }
+  if (sidebarStr === 'git') {
+    return { type: 'git' }
+  }
+  if (sidebarStr === 'browser') {
+    return { type: 'browser' }
+  }
+  if (sidebarStr === 'context') {
+    return { type: 'context' }
   }
   if (sidebarStr.startsWith('files')) {
     const path = sidebarStr.substring(6) // Remove 'files/' prefix
@@ -1387,6 +1397,12 @@ export function buildRightSidebarParam(panel?: RightSidebarPanel): string | unde
   switch (panel.type) {
     case 'history':
       return 'history'
+    case 'git':
+      return 'git'
+    case 'browser':
+      return 'browser'
+    case 'context':
+      return 'context'
     case 'files':
       return panel.path ? `files/${panel.path}` : 'files'
     default:

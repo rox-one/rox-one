@@ -12,12 +12,12 @@
  * W1 scope: the `info` section is live (focused-surface properties derived
  * from panel-stack + NavigationContext); `agent`/`outline`/`backlinks` render
  * i18n empty states — their content lands with the Knowledge workspace (W2).
- * Mounted by `WorkspaceSurfaceHost` (platform/index.tsx) — rendered only when
- * the two-key Workbench rollout is enabled.
+ * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
+ * workbench rollout or harness inspector flag is enabled.
  */
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { Bot, Info, Link2, ListTree, X, type LucideIcon } from 'lucide-react'
+import { Bot, Folder, GitBranch, Globe, Info, Link2, ListTree, SquareTerminal, X, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import {
@@ -28,19 +28,23 @@ import {
 } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import {
+  featureWorkbenchHarnessInspectorV1Atom,
   inspectorSectionAtom,
   inspectorVisibleAtom,
   type InspectorSectionId,
 } from '@/atoms/unified-shell'
 import { selectedConnectionAtom } from '@/atoms/connections'
-import { isConnectionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
+import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
 import { projectConnectionInspector } from './connection-inspector-model'
+import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
+import { WORKBENCH_FLAG } from '@craft-agent/core/platform'
 import {
   INSPECTOR_LIVE_SECTIONS,
-  INSPECTOR_SECTION_IDS,
+  inspectorSectionsForMode,
+  isSessionInspectorSection,
   normalizeInspectorSection,
   resolveInspectorToggle,
 } from './inspector-model'
@@ -54,6 +58,10 @@ const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
   agent: Bot,
   outline: ListTree,
   backlinks: Link2,
+  files: Folder,
+  git: GitBranch,
+  browser: Globe,
+  context: ListTree,
 }
 
 // -----------------------------------------------------------------------------
@@ -232,24 +240,50 @@ export function InspectorHost() {
   const { t } = useTranslation()
   const [visible, setVisible] = useAtom(inspectorVisibleAtom)
   const [sectionRaw, setSection] = useAtom(inspectorSectionAtom)
-  // Persisted values can be arbitrary (older builds); validated on read.
+  const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const route = useAtomValue(focusedPanelRouteAtom)
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const { updateRightSidebar, navigationState } = useNavigation()
+  const panelType = route ? getPanelTypeFromRoute(route) : null
+  const sessionMode = harnessInspector && panelType === 'session'
+  const sectionIds = inspectorSectionsForMode(sessionMode ? 'session' : 'knowledge')
   const section = normalizeInspectorSection(sectionRaw)
+  const activeSection = sectionIds.includes(section) ? section : sectionIds[0]!
+  const sessionId = route ? parseSessionIdFromRoute(route) : null
+  const sessionMeta = sessionId ? sessionMetaMap.get(sessionId) : undefined
+  const terminalEnabled = false
+
+  useEffect(() => {
+    const sidebar = navigationState.rightSidebar
+    if (!sessionMode || !sidebar) return
+    if (sidebar.type === 'files' || sidebar.type === 'git' || sidebar.type === 'browser' || sidebar.type === 'context') {
+      setSection(sidebar.type)
+      setVisible(true)
+    }
+  }, [sessionMode, navigationState.rightSidebar, setSection, setVisible])
 
   const handleSectionClick = (clicked: InspectorSectionId) => {
-    const next = resolveInspectorToggle({ visible, section }, clicked)
+    const next = resolveInspectorToggle({ visible, section: activeSection }, clicked)
     setVisible(next.visible)
     setSection(next.section)
+    if (sessionMode && isSessionInspectorSection(clicked) && next.visible) {
+      updateRightSidebar({ type: clicked })
+    }
   }
 
+  const titleKey = sessionMode && isSessionInspectorSection(activeSection)
+    ? `inspector.tab.${activeSection}`
+    : `inspector.${activeSection}`
+
   return (
-    <div className="flex h-full shrink-0 items-stretch">
+    <div className="flex h-full shrink-0 items-stretch" data-session-inspector={sessionMode ? 'true' : 'false'}>
       {visible && (
         <div
           className="flex h-full flex-col overflow-hidden bg-background shadow-middle"
           style={{ width: INSPECTOR_PANEL_WIDTH, borderRadius: RADIUS_INNER }}
         >
           <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-foreground/5 pl-3 pr-2">
-            <span className="truncate text-[13px] font-medium">{t(`inspector.${section}`)}</span>
+            <span className="truncate text-[13px] font-medium">{t(titleKey)}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -264,10 +298,16 @@ export function InspectorHost() {
               <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
             </Tooltip>
           </div>
-          {INSPECTOR_LIVE_SECTIONS.includes(section) ? (
+          {sessionMode ? (
+            <SessionInspectorBody
+              section={activeSection}
+              sessionId={sessionId}
+              cwd={sessionMeta?.workingDirectory}
+            />
+          ) : INSPECTOR_LIVE_SECTIONS.includes(activeSection) ? (
             <InfoSection />
           ) : (
-            <EmptySection section={section} />
+            <EmptySection section={activeSection} />
           )}
         </div>
       )}
@@ -275,15 +315,16 @@ export function InspectorHost() {
         className="flex h-full shrink-0 flex-col items-center gap-0.5 py-2"
         style={{ width: INSPECTOR_RAIL_WIDTH }}
       >
-        {INSPECTOR_SECTION_IDS.map((sectionId) => {
+        {sectionIds.map((sectionId) => {
           const Icon = SECTION_ICONS[sectionId]
-          const active = visible && section === sectionId
+          const active = visible && activeSection === sectionId
+          const labelKey = sessionMode ? `inspector.tab.${sectionId}` : `inspector.${sectionId}`
           return (
             <Tooltip key={sectionId}>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  aria-label={t(`inspector.${sectionId}`)}
+                  aria-label={t(labelKey)}
                   aria-pressed={active}
                   onClick={() => handleSectionClick(sectionId)}
                   className={cn(
@@ -296,10 +337,26 @@ export function InspectorHost() {
                   <Icon className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="left">{t(`inspector.${sectionId}`)}</TooltipContent>
+              <TooltipContent side="left">{t(labelKey)}</TooltipContent>
             </Tooltip>
           )
         })}
+        {sessionMode && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('inspector.terminal')}
+                disabled={!terminalEnabled}
+                data-terminal-flag={WORKBENCH_FLAG.terminalV1}
+                className="mt-auto flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground/40"
+              >
+                <SquareTerminal className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">{t('inspector.terminalDisabled')}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
     </div>
   )

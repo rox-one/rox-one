@@ -35,13 +35,13 @@
 - id: RX-TSK-0801
   title: H1 — инспектор сессии (files/git/browser); терминал = SurfaceTab UEW
   kind: task
-  path: apps/electron/src/renderer/components/right-sidebar
-  status: planned
+  path: apps/electron/src/renderer/platform/InspectorHost.tsx
+  status: done
   refs: [RX-EPC-0001, RX-TSK-0800, RX-ADR-0001]
   note: |
-    Живой InspectorHost + PanelRegistry (док сейчас hard-off).
-    Files из SessionFilesSection. Git — новый panel, не SessionGitOutline.
-    Терминал — SurfaceTab UEW. Живой PTY не в этом PR.
+    InspectorHost session-режим за workbench.harness.inspector.v1 (и без unified-shell).
+    Files = SessionFilesSection. Git = git:getStatus, не SessionGitOutline.
+    Browser = WebBrowserPanel embedded. Терминал disabled, без node-pty.
 
 - id: RX-TSK-0802
   title: H2 — хром чата (история ввода, прогресс, cost, notify, open-in-editor)

@@ -53,6 +53,13 @@ describe('resolveWorkbenchChrome', () => {
     })
   })
 
+  it('shows the inspector when harness inspector is on without unified-shell', () => {
+    const chrome = resolveWorkbenchChrome({ ...OFF, harnessInspector: true })
+    expect(chrome.showInspector).toBe(true)
+    expect(chrome.showRail).toBe(false)
+    expect(chrome.showSurfaceTabs).toBe(false)
+  })
+
   it('hides the status bar in compact layout even when the flag is on', () => {
     expect(resolveWorkbenchChrome({ ...OFF, statusBar: true }).showStatusBar).toBe(true)
     expect(shouldShowStatusBar(true, false)).toBe(true)

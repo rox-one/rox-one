@@ -187,6 +187,7 @@ const EXPECTED_CHANNELS: string[] = [
   'gamification:changed',
   'gamification:get',
   'git:getBranch',
+  'git:getStatus',
   'gitbash:browse',
   'gitbash:check',
   'gitbash:setPath',

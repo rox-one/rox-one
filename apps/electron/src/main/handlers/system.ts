@@ -3,6 +3,7 @@ import { join } from 'path'
 import { homedir } from 'os'
 import { execSync } from 'child_process'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { emptyGitWorkingTreeStatus, parseGitPorcelainV1 } from '@craft-agent/shared/git/status'
 import { getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
 import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
@@ -28,6 +29,7 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.releaseNotes.GET,
   RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION,
   RPC_CHANNELS.git.GET_BRANCH,
+  RPC_CHANNELS.git.GET_STATUS,
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,
   RPC_CHANNELS.gitbash.SET_PATH,
@@ -116,6 +118,21 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       return branch || null
     } catch {
       return null
+    }
+  })
+
+  server.handle(RPC_CHANNELS.git.GET_STATUS, async (_ctx, dirPath: string) => {
+    if (typeof dirPath !== 'string' || dirPath.length === 0) return emptyGitWorkingTreeStatus()
+    try {
+      const raw = execSync('git status --porcelain=v1 -b', {
+        cwd: dirPath,
+        encoding: 'utf-8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+        timeout: 5000,
+      })
+      return parseGitPorcelainV1(raw)
+    } catch {
+      return emptyGitWorkingTreeStatus()
     }
   })
 

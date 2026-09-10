@@ -110,8 +110,16 @@ export const inspectorVisibleAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
-/** Inspector sections shipped in W1; `info` is live, the rest are stub sections. */
-export type InspectorSectionId = 'info' | 'agent' | 'outline' | 'backlinks'
+/** Inspector sections: W1 knowledge + H1 session harness tabs. */
+export type InspectorSectionId =
+  | 'info'
+  | 'agent'
+  | 'outline'
+  | 'backlinks'
+  | 'files'
+  | 'git'
+  | 'browser'
+  | 'context'
 
 /** Active inspector section (persisted; validated on read by `inspector-model.ts`). */
 export const inspectorSectionAtom = atomWithStorage<InspectorSectionId>(

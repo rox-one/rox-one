@@ -8,6 +8,8 @@ type BrowserSnapshot = { url: string; title: string }
 interface WebBrowserPanelProps {
   open: boolean
   onClose: () => void
+  /** Inspector embed: fill the host instead of covering the window. */
+  embedded?: boolean
 }
 
 // Keep the remote browser itself at a mobile viewport size, not just a mobile
@@ -15,7 +17,7 @@ interface WebBrowserPanelProps {
 const MOBILE_VIEWPORT = { width: 390, height: 720 }
 
 /** A mobile-style viewport for the persistent VPS agent-browser session. */
-export function WebBrowserPanel({ open, onClose }: WebBrowserPanelProps) {
+export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserPanelProps) {
   const [instanceId, setInstanceId] = useState<string | null>(null)
   const [snapshot, setSnapshot] = useState<BrowserSnapshot | null>(null)
   const [image, setImage] = useState<string | null>(null)
@@ -114,7 +116,10 @@ export function WebBrowserPanel({ open, onClose }: WebBrowserPanelProps) {
   if (!open) return null
 
   return (
-    <section className="fixed inset-x-0 bottom-0 top-[var(--topbar-height)] z-40 flex flex-col bg-[#f4f5f7] shadow-2xl">
+    <section className={embedded
+      ? 'flex h-full min-h-0 w-full flex-col bg-background'
+      : 'fixed inset-x-0 bottom-0 top-[var(--topbar-height)] z-40 flex flex-col bg-[#f4f5f7] shadow-2xl'
+    }>
       <header className="flex min-h-14 shrink-0 items-center gap-1 border-b border-black/[0.08] bg-background/95 px-2 backdrop-blur sm:px-3">
         <Button
           variant="ghost"
