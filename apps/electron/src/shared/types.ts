@@ -1952,6 +1952,15 @@ export interface ConnectionsNavigationState {
 }
 
 /**
+ * Workbench Home Front Page (mode `home`). Dashboard with no navigator column.
+ */
+export interface HomeNavigationState {
+  navigator: 'home'
+  details: null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Knowledge ref kinds, mirrored from the Knowledge Provider contract
  * (spec K-03 §3.1: `KnowledgeRef { scheme:'siyuan'; kind; id }`). Declared
  * locally because apps/electron does not import @craft-agent/core.
@@ -2018,6 +2027,7 @@ export type NavigationState =
   | ExtensionNavigationState
   | DiffNavigationState
   | ConnectionsNavigationState
+  | HomeNavigationState
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2057,6 +2067,10 @@ export const isMemoryNavigation = (
 export const isConnectionsNavigation = (
   state: NavigationState
 ): state is ConnectionsNavigationState => state.navigator === 'connections'
+
+export const isHomeNavigation = (
+  state: NavigationState
+): state is HomeNavigationState => state.navigator === 'home'
 
 export const isKnowledgeNavigation = (
   state: NavigationState
@@ -2126,6 +2140,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'connections') {
     return 'connections'
+  }
+  if (state.navigator === 'home') {
+    return 'home'
   }
   // Unified-shell surfaces (W1) — key format mirrors the route format
   if (state.navigator === 'knowledge') {
@@ -2302,6 +2319,7 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
   }
 
   if (key === 'connections') return { navigator: 'connections', details: null }
+  if (key === 'home') return { navigator: 'home', details: null }
 
   // Handle sessions
   const parseSessionsKey = (filterKey: string, sessionId?: string): NavigationState | null => {

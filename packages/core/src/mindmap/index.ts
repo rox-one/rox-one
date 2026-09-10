@@ -19,6 +19,7 @@ export {
   addChild,
   addEdge,
   createEmptyGraph,
+  createMindMapStarterGraph,
   entityKey,
   finalizeGraph,
   truncateLabel,
@@ -104,6 +105,30 @@ export {
   type SceneMessage,
   type SceneToolStatus,
 } from './session-scene-graph.ts';
+
+export {
+  extractSessionVariables,
+  type SessionVariable,
+} from './session-variables.ts';
+
+export {
+  parseSessionMapPin,
+  pruneSessionMapPin,
+  serializeSessionMapPin,
+  sessionMapPinStorageKey,
+  type SessionMapCamera,
+  type SessionMapPin,
+} from './session-map-pin.ts';
+
+export {
+  addPinnedCustomNode,
+  deletePinnedCustomNode,
+  reparentPinnedCustomNode,
+  renamePinnedCustomNode,
+  MAX_CUSTOM_MIND_MAP_LABEL_LENGTH,
+  PinnedMindMapEditError,
+  type PinnedMindMapEditErrorCode,
+} from './pinned-edit.ts';
 
 export {
   buildDigestItems,

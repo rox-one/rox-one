@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { extractSessionVariables as extractFromBarrel } from '../index.ts';
 import { extractSessionVariables } from '../session-variables.ts';
 
 describe('extractSessionVariables', () => {
@@ -9,5 +10,6 @@ describe('extractSessionVariables', () => {
     ]);
     expect(vars.map((v) => v.name).sort()).toEqual(['FOO', 'TOKEN', 'city', 'user'].sort());
     expect(vars.find((v) => v.name === 'FOO')?.value).toBe('bar');
+    expect(extractFromBarrel).toBe(extractSessionVariables);
   });
 });

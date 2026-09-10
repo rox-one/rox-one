@@ -7,7 +7,8 @@
  * BLOCKED (named). A READY inspect is not a live run.
  *
  * Do not fake green. claimLiveTurnVerified refuses BLOCKED gates,
- * missing evidence files, empty files, and directories.
+ * missing evidence files, empty files, directories, and caller
+ * `{ verified: true }` flags without matching log/trace records.
  */
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -174,6 +175,16 @@ function assertLiveTurnEvidenceFile(path: string, label: string): void {
   }
 }
 
+function assertStepRecords(logText: string, traceText: string): void {
+  for (const step of LIVE_TURN_STEPS) {
+    if (!logText.includes(step) || !traceText.includes(step)) {
+      throw new Error(
+        `Live-turn step ${step} has no matching log/trace record (caller verified flag is not enough).`,
+      );
+    }
+  }
+}
+
 export function claimLiveTurnVerified(input: LiveTurnVerifiedInput): LiveTurnGate {
   if (input.gate.status === 'BLOCKED' || input.gate.missingSecret) {
     throw new Error(
@@ -182,6 +193,9 @@ export function claimLiveTurnVerified(input: LiveTurnVerifiedInput): LiveTurnGat
   }
   assertLiveTurnEvidenceFile(input.logPath, 'log');
   assertLiveTurnEvidenceFile(input.browserTracePath, 'browser trace');
+  const logText = readFileSync(input.logPath, 'utf8');
+  const traceText = readFileSync(input.browserTracePath, 'utf8');
+  assertStepRecords(logText, traceText);
   for (const step of LIVE_TURN_STEPS) {
     if (!input.stepEvidence[step]?.verified) {
       throw new Error(`Live-turn step ${step} has no verified evidence.`);

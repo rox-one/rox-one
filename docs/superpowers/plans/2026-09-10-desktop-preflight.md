@@ -4,7 +4,8 @@ Read-only live state for `docs/superpowers/plans/2026-09-01-rox-desktop-finaliza
 
 ## Origin main
 
-- `origin/main`: `9acb4cce2383eb6b604a46d6c86bc6a71c31612c`
+- `origin/main`: `373ea9e0fcc13d6140c29aad5b201194357223f1` (PR #69 merge; 28a certified SHA)
+- Previous preflight snapshot: `9acb4cce2383eb6b604a46d6c86bc6a71c31612c`
 - Dated SHA `5797f431` and 2026-08-12 board numbers are evidence only.
 
 ## PR #1–#5 (`rox-one/rox-one`)
@@ -19,9 +20,9 @@ Read-only live state for `docs/superpowers/plans/2026-09-01-rox-desktop-finaliza
 
 ## Named current ship ref
 
-- **Branch / SHA:** `feat/settings-command-center-finish` (this PR) off `origin/main` `9acb4cce`
+- **Branch / SHA:** `feat/desktop-closeout-remainder` off `origin/main` `373ea9e0`
 - **Reviewable path:** successor PR from this branch into `main`
-- PR #5 is merged; remaining required code lands here, not in #5.
+- PR #69 is merged; remaining required code (live-turn log/trace records + home navigator so `build:renderer` can succeed) lands here.
 
 ## Ticket-13 on ship ref
 

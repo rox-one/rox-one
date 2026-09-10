@@ -39,6 +39,7 @@ import {
   isDiffNavigation,
   isExtensionNavigation,
   isConnectionsNavigation,
+  isHomeNavigation,
 } from '@/contexts/NavigationContext'
 import { useSessionSelection, useIsMultiSelectActive, useSelectedIds, useSelectionCount } from '@/hooks/useSession'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
@@ -47,6 +48,7 @@ import type { SessionStatusId } from '@/config/session-status-config'
 import { SourceInfoPage, ChatPage, BrowserPanelPage, KnowledgeSurfacePage, ExtensionSurfacePage } from '@/pages'
 import NotesPage from '@/pages/NotesPage'
 import ConnectionsPage from '@/pages/ConnectionsPage'
+import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import KnowledgeEntityPage from '@/pages/KnowledgeEntityPage'
 import SkillInfoPage from '@/pages/SkillInfoPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
@@ -516,6 +518,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         {proposalId ? <KnowledgeDiff proposalId={proposalId} /> : <KnowledgeProposals className="h-full" />}
+      </Panel>
+    )
+  }
+
+  if (isHomeNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <HomeFrontPage />
       </Panel>
     )
   }

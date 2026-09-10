@@ -219,12 +219,49 @@ describe('claimLiveTurnVerified', () => {
     ).toThrow(/directory/i);
   });
 
-  it('marks VERIFIED only when READY and both evidence files exist', () => {
+  it('refuses caller verified flags without matching log/trace records', () => {
     const homeDir = tempHome();
     const logPath = join(homeDir, 'turn.log');
     const browserTracePath = join(homeDir, 'trace.json');
     writeFileSync(logPath, 'text_delta + host_tool + mcp + permission');
     writeFileSync(browserTracePath, '{"trace":true}');
+    const gate = evaluateLiveTurnGate(
+      inspectLiveTurnCredential({
+        homeDir,
+        env: { ROX_API_KEY: 'rox-live-test-key' },
+      }),
+    );
+
+    expect(() =>
+      claimLiveTurnVerified({
+        gate,
+        logPath,
+        browserTracePath,
+        stepEvidence: Object.fromEntries(
+          LIVE_TURN_STEPS.map((step) => [step, { verified: true, note: 'boolean-only' }]),
+        ) as Record<LiveTurnStepId, { verified: true; note: string }>,
+      }),
+    ).toThrow(/matching log\/trace record/i);
+  });
+
+  it('marks VERIFIED only when READY and both evidence files contain step records', () => {
+    const homeDir = tempHome();
+    const logPath = join(homeDir, 'turn.log');
+    const browserTracePath = join(homeDir, 'trace.json');
+    writeFileSync(
+      logPath,
+      'stream_answer host_tool mcp_tool permission_prompt restart_restore',
+    );
+    writeFileSync(
+      browserTracePath,
+      JSON.stringify({
+        stream_answer: 'ok',
+        host_tool: 'ok',
+        mcp_tool: 'ok',
+        permission_prompt: 'ok',
+        restart_restore: 'ok',
+      }),
+    );
 
     const gate = evaluateLiveTurnGate(
       inspectLiveTurnCredential({
