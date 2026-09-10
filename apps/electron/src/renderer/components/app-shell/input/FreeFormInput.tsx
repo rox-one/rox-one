@@ -2021,22 +2021,24 @@ export function FreeFormInput({
             />
           )}
           {enableCompactModelPicker && (
-            <CompactModelSelector
-              currentModel={currentModel}
-              currentConnection={currentConnection}
-              onModelChange={onModelChange}
-              onConnectionChange={onConnectionChange}
-              thinkingLevel={thinkingLevel}
-              onThinkingLevelChange={onThinkingLevelChange}
-              isEmptySession={isEmptySession}
-              connectionUnavailable={connectionUnavailable}
-              contextStatus={contextStatus}
-            />
-            {chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
-              <span className="text-[11px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
-                {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
-              </span>
-            )}
+            <>
+              <CompactModelSelector
+                currentModel={currentModel}
+                currentConnection={currentConnection}
+                onModelChange={onModelChange}
+                onConnectionChange={onConnectionChange}
+                thinkingLevel={thinkingLevel}
+                onThinkingLevelChange={onThinkingLevelChange}
+                isEmptySession={isEmptySession}
+                connectionUnavailable={connectionUnavailable}
+                contextStatus={contextStatus}
+              />
+              {chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
+                <span className="text-[11px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
+                  {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
+                </span>
+              )}
+            </>
           )}
           <FreeFormInputContextBadge
             icon={<Paperclip className="h-4 w-4" />}

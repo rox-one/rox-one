@@ -259,6 +259,8 @@ const userDataOverride = process.env.CRAFT_USER_DATA_DIR?.trim()
 if (userDataOverride) {
   mkdirSync(userDataOverride, { recursive: true })
   app.setPath('userData', userDataOverride)
+} else if (process.env.CRAFT_INSTANCE_NUMBER) {
+  app.setPath('userData', join(app.getPath('appData'), `craft-agent-${process.env.CRAFT_INSTANCE_NUMBER}`))
 }
 
 // Register as default protocol client for craftagents:// URLs
@@ -302,6 +304,10 @@ app.on('open-url', (event, url) => {
 const allowMultiInstance = Boolean(process.env.CRAFT_INSTANCE_NUMBER)
 const gotTheLock = allowMultiInstance || app.requestSingleInstanceLock()
 if (!gotTheLock) {
+  mainLog.warn('Single-instance lock not acquired; quitting', {
+    userData: app.getPath('userData'),
+    instance: process.env.CRAFT_INSTANCE_NUMBER ?? null,
+  })
   app.quit()
 } else if (!allowMultiInstance) {
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {

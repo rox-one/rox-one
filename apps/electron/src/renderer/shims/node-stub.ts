@@ -80,6 +80,8 @@ export const arch = () => 'arm64'
 export const argv = fn as never
 export const basename = pathLike
 export const chdir = fn
+export const chmod = fn
+export const chmodSync = binaryOrEmpty
 export const closeSync = binaryOrEmpty
 export const connect = (..._args: unknown[]) => obj()
 export const constants = dynamic
@@ -92,6 +94,7 @@ export const createConnection = (..._args: unknown[]) => obj()
 export const createDecipheriv = (..._args: unknown[]) => hash()
 export const createHash = (..._args: unknown[]) => hash()
 export const createHmac = (..._args: unknown[]) => hash()
+export const createInterface = (..._args: unknown[]) => obj()
 export const createPrivateKey = binaryOrEmpty
 export const createPublicKey = binaryOrEmpty
 export const createReadStream = (..._args: unknown[]) => obj()
@@ -114,6 +117,7 @@ export const extname = fn
 export const fileURLToPath = fn
 export const fork = (..._args: unknown[]) => obj()
 export const format = fn
+export const fstatSync = binaryOrEmpty
 export const freemem = fn
 export const generateKeyPairSync = binaryOrEmpty
 export const get = (..._args: unknown[]) => obj()
@@ -124,6 +128,7 @@ export const inherits = fn
 export const inspect = fn
 export const isAbsolute = fn
 export const join = pathLike
+export const lookup = fn
 export const lstat = fn
 export const lstatSync = binaryOrEmpty
 export const mkdir = fn
@@ -139,6 +144,7 @@ export const parse = fn
 export const pathToFileURL = fn
 export const pbkdf2Sync = binaryOrEmpty
 export const pid = fn as never
+export const pipeline = fn
 export const platform = () => 'darwin'
 export const posix = dynamic
 export const ppid = fn as never
@@ -179,8 +185,11 @@ export const tmpdir = () => '/'
 export const totalmem = fn
 export const type = fn
 export const types = dynamic
+export const symlink = fn
+export const timingSafeEqual = binaryOrEmpty
 export const unlink = fn
 export const unlinkSync = binaryOrEmpty
+export const watch = fn
 export const uptime = fn
 export const userInfo = () => ({ username: 'renderer', uid: 0, gid: 0, shell: '', homedir: '/' })
 export const verify = binaryOrEmpty

@@ -100,7 +100,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jotai', 'pdfjs-dist'],
-    exclude: ['@craft-agent/ui', '@anthropic-ai/claude-agent-sdk'],
+    exclude: ['@craft-agent/ui', '@anthropic-ai/claude-agent-sdk', 'bash-parser'],
     esbuildOptions: {
       supported: { 'top-level-await': true },
       target: 'esnext'
