@@ -12,7 +12,7 @@ import type {
 } from './import-types.ts'
 
 const SECRET_RE =
-  /(sk-[A-Za-z0-9_-]{16,}|Bearer\s+[A-Za-z0-9._\-]{20,}|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9._-]+\.[A-Za-z0-9._-]+|(?:api[_-]?key|token|cookie)\s*[:=]\s*['"]?[A-Za-z0-9._\-]{16,})/gi
+  /(sk-[A-Za-z0-9_-]{16,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|Bearer\s+[A-Za-z0-9._\-]{20,}|eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9._-]+\.[A-Za-z0-9._-]+|(?:api[_-]?key|token|cookie)\s*[:=]\s*['"]?[A-Za-z0-9._\-]{16,})/gi
 
 export function redactSecrets(text: string): { text: string; hit: boolean } {
   const next = text.replace(SECRET_RE, '[redacted]')
@@ -197,9 +197,20 @@ export function convertForeignSource(sourcePath: string, kind: ForeignSessionKin
     const dir = sourcePath.endsWith('summary.json') ? dirname(sourcePath) : sourcePath
     return convertGrokCatalog(dir)
   }
-  if (statSync(sourcePath).isDirectory()) {
-    const history = join(sourcePath, 'chat_history.jsonl')
-    if (existsSync(history)) return convertGrokCatalog(sourcePath)
+  try {
+    if (statSync(sourcePath).isDirectory()) {
+      const history = join(sourcePath, 'chat_history.jsonl')
+      if (existsSync(history)) return convertGrokCatalog(sourcePath)
+    }
+  } catch {
+    return {
+      sourcePath,
+      kind,
+      title: basename(sourcePath),
+      messages: [],
+      userTurns: 0,
+      anomalies: ['source-unreadable'],
+    }
   }
   return convertJsonlFile(sourcePath, kind)
 }

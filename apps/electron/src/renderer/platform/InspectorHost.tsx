@@ -35,6 +35,7 @@ import {
 } from '@/atoms/unified-shell'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
+import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
@@ -251,6 +252,12 @@ export function InspectorHost() {
   const activeSection = sectionIds.includes(section) ? section : sectionIds[0]!
   const sessionId = route ? parseSessionIdFromRoute(route) : null
   const sessionMeta = sessionId ? sessionMetaMap.get(sessionId) : undefined
+  const shell = useOptionalAppShellContext()
+  const workspace = shell?.workspaces.find((item) => item.id === (sessionMeta?.workspaceId ?? shell.activeWorkspaceId))
+  const sessionFolderPath =
+    sessionId && workspace?.rootPath
+      ? `${workspace.rootPath.replace(/[\\/]+$/, '')}/sessions/${sessionId}`
+      : undefined
   const terminalEnabled = false
 
   useEffect(() => {
@@ -302,6 +309,7 @@ export function InspectorHost() {
             <SessionInspectorBody
               section={activeSection}
               sessionId={sessionId}
+              sessionFolderPath={sessionFolderPath}
               cwd={sessionMeta?.workingDirectory}
             />
           ) : INSPECTOR_LIVE_SECTIONS.includes(activeSection) ? (

@@ -4,12 +4,13 @@
  * do not pull node-only workspace deps (zod).
  */
 
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { isHomePath } from './import-home.ts'
 import { convertForeignSource } from './import-convert.ts'
 import { lookupImportedSession, recordImportedSession } from './import-registry.ts'
 import { generateUniqueSessionId } from './slug-generator.ts'
+import { sanitizeSessionId } from './validation.ts'
 import type { ForeignImportMode, ForeignPersistResult, ForeignSessionKind } from './import-types.ts'
 import type { ConvertedForeignMessage } from './import-types.ts'
 
@@ -33,7 +34,17 @@ function sessionsDir(workspaceRoot: string): string {
 }
 
 function sessionFile(workspaceRoot: string, sessionId: string): string {
-  return join(sessionsDir(workspaceRoot), sessionId, 'session.jsonl')
+  return join(sessionsDir(workspaceRoot), sanitizeSessionId(sessionId), 'session.jsonl')
+}
+
+function resolveAttachCwd(cwd: string | undefined, workspaceRoot: string, homeDir?: string): string {
+  if (!cwd || isHomePath(cwd, homeDir)) return workspaceRoot
+  try {
+    if (!existsSync(cwd)) return workspaceRoot
+  } catch {
+    return workspaceRoot
+  }
+  return cwd
 }
 
 function existingIds(workspaceRoot: string): string[] {
@@ -60,14 +71,15 @@ function hashCode(value: string): number {
 }
 
 function writeRoxSession(workspaceRoot: string, session: RoxSessionFile): void {
-  const dir = join(sessionsDir(workspaceRoot), session.id)
+  const id = sanitizeSessionId(session.id)
+  const dir = join(sessionsDir(workspaceRoot), id)
   mkdirSync(join(dir, 'plans'), { recursive: true })
   mkdirSync(join(dir, 'attachments'), { recursive: true })
   const now = Date.now()
   const last = session.messages[session.messages.length - 1]
   const preview = session.messages.find((m) => m.type === 'user')?.content?.slice(0, 180)
   const header = {
-    id: session.id,
+    id,
     workspaceRootPath: workspaceRoot,
     name: session.name,
     createdAt: now,
@@ -79,8 +91,16 @@ function writeRoxSession(workspaceRoot: string, session: RoxSessionFile): void {
     preview,
     tokenUsage: { inputTokens: 0, outputTokens: 0, totalTokens: 0, contextTokens: 0, costUsd: 0 },
   }
+  const file = sessionFile(workspaceRoot, id)
   const lines = [JSON.stringify(header), ...session.messages.map((m) => JSON.stringify(m))]
-  writeFileSync(sessionFile(workspaceRoot, session.id), `${lines.join('\n')}\n`)
+  const tmp = `${file}.${process.pid}.${now}.tmp`
+  writeFileSync(tmp, `${lines.join('\n')}\n`)
+  try {
+    unlinkSync(file)
+  } catch {
+    /* first write */
+  }
+  renameSync(tmp, file)
 }
 
 function readRoxSession(workspaceRoot: string, sessionId: string): RoxSessionFile | null {
@@ -116,9 +136,7 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
     }
   }
 
-  const attachCwd = isHomePath(converted.cwd, options.homeDir)
-    ? options.workspaceRoot
-    : (converted.cwd ?? options.workspaceRoot)
+  const attachCwd = resolveAttachCwd(converted.cwd, options.workspaceRoot, options.homeDir)
   const storedMessages = toMessages(options.sourcePath, converted.messages)
 
   if (existing && (mode === 'append' || mode === 'force')) {

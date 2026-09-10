@@ -136,7 +136,20 @@ describe('H5 foreign import', () => {
     expect(session?.messages.some((m) => m.content.includes('sk-ant-'))).toBe(false)
     expect(session?.messages.some((m) => m.content.includes('[redacted]'))).toBe(true)
     expect(redactSecrets('plain').hit).toBe(false)
+    expect(redactSecrets('ghp_abcdefghijklmnopqrstuvwx').hit).toBe(true)
     expect(convertClaudeJsonl(writeClaude(home, 'secret', 'hello', 'ok')).userTurns).toBe(1)
+  })
+
+  it('skips missing sources without throwing', async () => {
+    const workspace = tmp('h5-ws-')
+    const missing = join(workspace, 'no-such-source')
+    const result = await persistForeignSession({
+      workspaceRoot: workspace,
+      sourcePath: missing,
+      kind: 'claude',
+    })
+    expect(result.action).toBe('skipped')
+    expect(result.reason).toBe('empty')
   })
 
   it('does not mention ~/.dsh or zstd in the import pipeline', () => {

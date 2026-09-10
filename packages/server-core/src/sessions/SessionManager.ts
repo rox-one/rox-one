@@ -2961,6 +2961,22 @@ export class SessionManager implements ISessionManager {
     this.loadSessionsFromDisk()
   }
 
+  ingestImportedSession(workspaceId: string, sessionId: string): void {
+    if (this.sessions.has(sessionId)) return
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return
+    const meta = listStoredSessions(workspace.rootPath).find((session) => session.id === sessionId)
+    if (!meta) return
+    const wsConfig = loadWorkspaceConfig(workspace.rootPath)
+    this.sessions.set(
+      sessionId,
+      createManagedSession(meta, workspace, {
+        enabledSourceSlugs: meta.enabledSourceSlugs,
+        workingDirectory: meta.workingDirectory ?? wsConfig?.defaults?.workingDirectory,
+      }),
+    )
+  }
+
   getSessions(workspaceId?: string): Session[] {
     // Returns session metadata only - messages are NOT included to save memory
     // Use getSession(id) to load messages for a specific session

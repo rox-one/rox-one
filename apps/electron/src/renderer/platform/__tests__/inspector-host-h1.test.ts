@@ -19,5 +19,6 @@ describe('InspectorHost H1 session inspector', () => {
     expect(src).toContain('featureWorkbenchHarnessInspectorV1Atom')
     expect(src).toContain('SessionInspectorBody')
     expect(src).toContain("inspectorSectionsForMode(sessionMode ? 'session' : 'knowledge')")
+    expect(src).toContain('sessionFolderPath={sessionFolderPath}')
   })
 })
