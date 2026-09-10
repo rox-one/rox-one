@@ -95,12 +95,15 @@ export default defineConfig({
       'react-dom': resolve(__dirname, '../../node_modules/react-dom'),
       // The real SDK has a Node shebang and belongs exclusively to main/server.
       '@anthropic-ai/claude-agent-sdk': resolve(__dirname, 'src/renderer/shims/claude-agent-sdk-stub.ts'),
+      'bash-parser': resolve(__dirname, 'src/renderer/shims/bash-parser-stub.ts'),
+      tar: resolve(__dirname, 'src/renderer/shims/tar-stub.ts'),
+      glob: resolve(__dirname, 'src/renderer/shims/glob-stub.ts'),
     },
     dedupe: ['react', 'react-dom']
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jotai', 'pdfjs-dist'],
-    exclude: ['@craft-agent/ui', '@anthropic-ai/claude-agent-sdk', 'bash-parser'],
+    exclude: ['@craft-agent/ui', '@anthropic-ai/claude-agent-sdk', 'tar', 'glob'],
     esbuildOptions: {
       supported: { 'top-level-await': true },
       target: 'esnext'

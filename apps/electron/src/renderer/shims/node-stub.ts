@@ -60,18 +60,36 @@ const binaryOrEmpty = (...args: unknown[]) => (
 
 export const Buffer = BrowserBuffer
 export const EOL = '/'
-export const EventEmitter = fn as never
-export const PassThrough = fn as never
-export const Readable = fn as never
+
+export class EventEmitter {
+  on(..._args: unknown[]) { return this }
+  once(..._args: unknown[]) { return this }
+  off(..._args: unknown[]) { return this }
+  addListener(..._args: unknown[]) { return this }
+  removeListener(..._args: unknown[]) { return this }
+  removeAllListeners(..._args: unknown[]) { return this }
+  emit(..._args: unknown[]) { return false }
+  listeners(..._args: unknown[]) { return [] }
+  setMaxListeners(..._args: unknown[]) { return this }
+}
+
+export class Stream extends EventEmitter {
+  pipe(..._args: unknown[]) { return this }
+  write(..._args: unknown[]) { return true }
+  end(..._args: unknown[]) { return this }
+}
+
+export class Readable extends Stream {}
+export class Writable extends Stream {}
+export class Transform extends Stream {}
+export class PassThrough extends Transform {}
+
 export const Server = (..._args: unknown[]) => obj()
 export const Socket = (..._args: unknown[]) => obj()
-export const Stream = fn as never
 export const TextDecoder = fn as never
 export const TextEncoder = fn as never
-export const Transform = fn as never
 export const URL = fn as never
 export const URLSearchParams = fn as never
-export const Writable = fn as never
 export const access = fn
 export const accessSync = binaryOrEmpty
 export const appendFile = fn
