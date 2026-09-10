@@ -609,8 +609,20 @@ async function main(): Promise<void> {
   // 5. Start Electron (build already verified)
   console.log("🚀 Starting Electron...\n");
 
+  const debugPort = process.env.CRAFT_REMOTE_DEBUGGING_PORT?.trim() ?? "";
+  if (debugPort && !/^\d{2,5}$/.test(debugPort)) {
+    console.error(
+      `CRAFT_REMOTE_DEBUGGING_PORT must be a 2-5 digit port, got ${JSON.stringify(debugPort)}`,
+    );
+    process.exit(1);
+  }
+  const electronArgs = [
+    ...(debugPort ? [`--remote-debugging-port=${debugPort}`] : []),
+    "apps/electron",
+  ];
+
   const electronProc = spawn({
-    cmd: [ELECTRON_BIN, "apps/electron"],
+    cmd: [ELECTRON_BIN, ...electronArgs],
     cwd: ROOT_DIR,
     stdin: "ignore",
     stdout: "inherit",

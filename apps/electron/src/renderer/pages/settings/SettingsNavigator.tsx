@@ -190,12 +190,14 @@ export default function SettingsNavigator({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t('settings.navigator.search')}
             aria-label={t('settings.navigator.search')}
+            data-testid="settings-navigator-search"
             className="h-9 pl-9 pr-9"
           />
           {query.length > 0 && (
             <button
               type="button"
               onClick={handleClearSearch}
+              data-testid="settings-navigator-clear"
               className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               aria-label={t('settings.navigator.clearSearch')}
             >
@@ -225,7 +227,11 @@ export default function SettingsNavigator({
             ))}
           </div>
         ) : (
-          <div className="px-5 py-10 text-center text-sm text-muted-foreground" role="status">
+          <div
+            className="px-5 py-10 text-center text-sm text-muted-foreground"
+            role="status"
+            data-testid="settings-navigator-empty"
+          >
             {t('settings.navigator.noResults', { query })}
           </div>
         )}
