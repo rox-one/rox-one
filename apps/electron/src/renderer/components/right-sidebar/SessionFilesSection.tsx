@@ -151,7 +151,7 @@ const WEB_PREVIEWABLE_EXTENSIONS = new Set([
 ])
 
 /** True when running in web UI (browser) rather than Electron. */
-const isWebMode = window.electronAPI.getRuntimeEnvironment() === 'web'
+const isWebMode = window.electronAPI?.getRuntimeEnvironment?.() === 'web'
 
 /**
  * Constructs a thumbnail:// protocol URL for a given file path.
