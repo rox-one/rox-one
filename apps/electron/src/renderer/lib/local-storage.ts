@@ -87,6 +87,10 @@ export const KEYS = {
   featureWorkbenchTabGroupsV2: 'feature-workbench-tab-groups-v2',
   featureWorkbenchBrowserSurfaceV2: 'feature-workbench-browser-surface-v2',
   featureWorkbenchStatusBarV1: 'feature-workbench-status-bar-v1',
+  featureWorkbenchHarnessInspectorV1: 'feature-workbench-harness-inspector-v1',
+  featureWorkbenchHarnessChatChromeV1: 'feature-workbench-harness-chat-chrome-v1',
+  featureWorkbenchHarnessAgentIntelV1: 'feature-workbench-harness-agent-intel-v1',
+  featureWorkbenchHarnessExtCenterV1: 'feature-workbench-harness-ext-center-v1',
   workbenchLayout: 'workbench-layout', // WorkbenchLayout v2 JSON, workspace-scoped
   // Last collection layout origin (list/board/table) for Shift+click back
   collectionLastView: 'collection-last-view',

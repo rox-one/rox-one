@@ -65,6 +65,35 @@ export const featureWorkbenchStatusBarV1Atom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
+/** Session inspector tabs (files / git / browser). Independent of unified-shell master. */
+export const featureWorkbenchHarnessInspectorV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchHarnessInspectorV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchHarnessChatChromeV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchHarnessChatChromeV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchHarnessAgentIntelV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchHarnessAgentIntelV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchHarnessExtCenterV1Atom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchHarnessExtCenterV1),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
 /** Activity rail collapsed (destinations hidden, expand chevron stays). */
 export const activityRailCollapsedAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.activityRailCollapsed),

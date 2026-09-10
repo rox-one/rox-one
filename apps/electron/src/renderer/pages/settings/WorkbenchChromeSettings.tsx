@@ -7,6 +7,10 @@ import { useTranslation } from 'react-i18next'
 import {
   featureUnifiedShellAtom,
   featureWorkbenchBrowserSurfaceV2Atom,
+  featureWorkbenchHarnessAgentIntelV1Atom,
+  featureWorkbenchHarnessChatChromeV1Atom,
+  featureWorkbenchHarnessExtCenterV1Atom,
+  featureWorkbenchHarnessInspectorV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchStatusBarV1Atom,
   featureWorkbenchTabGroupsV2Atom,
@@ -22,6 +26,10 @@ export function WorkbenchChromeSettings() {
   const [tabGroups, setTabGroups] = useAtom(featureWorkbenchTabGroupsV2Atom)
   const [browserSurface, setBrowserSurface] = useAtom(featureWorkbenchBrowserSurfaceV2Atom)
   const [statusBar, setStatusBar] = useAtom(featureWorkbenchStatusBarV1Atom)
+  const [harnessInspector, setHarnessInspector] = useAtom(featureWorkbenchHarnessInspectorV1Atom)
+  const [harnessChatChrome, setHarnessChatChrome] = useAtom(featureWorkbenchHarnessChatChromeV1Atom)
+  const [harnessAgentIntel, setHarnessAgentIntel] = useAtom(featureWorkbenchHarnessAgentIntelV1Atom)
+  const [harnessExtCenter, setHarnessExtCenter] = useAtom(featureWorkbenchHarnessExtCenterV1Atom)
 
   return (
     <SettingsSection
@@ -64,6 +72,36 @@ export function WorkbenchChromeSettings() {
           description={t('settings.appearance.workbenchStatusBarDesc')}
           checked={statusBar}
           onCheckedChange={setStatusBar}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessInspector')}
+          description={t('settings.appearance.workbenchHarnessInspectorDesc')}
+          checked={harnessInspector}
+          onCheckedChange={(checked) => {
+            setHarnessInspector(checked)
+            if (!checked) setHarnessAgentIntel(false)
+          }}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessChatChrome')}
+          description={t('settings.appearance.workbenchHarnessChatChromeDesc')}
+          checked={harnessChatChrome}
+          onCheckedChange={setHarnessChatChrome}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessAgentIntel')}
+          description={t('settings.appearance.workbenchHarnessAgentIntelDesc')}
+          checked={harnessAgentIntel}
+          onCheckedChange={(checked) => {
+            setHarnessAgentIntel(checked)
+            if (checked) setHarnessInspector(true)
+          }}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessExtCenter')}
+          description={t('settings.appearance.workbenchHarnessExtCenterDesc')}
+          checked={harnessExtCenter}
+          onCheckedChange={setHarnessExtCenter}
         />
       </SettingsCard>
     </SettingsSection>

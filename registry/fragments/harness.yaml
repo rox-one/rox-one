@@ -17,19 +17,20 @@
   status: planned
   refs: [RX-EPC-0001, RX-SPC-0021]
   note: |
-    Заявлено: docs/specs/2026-09-10-session-harness-port/. Вердикт: замысел
-    (idea_only) до H1. Доказательства появятся с флагом
-    workbench.harness.inspector.v1.
+    Заявлено: docs/specs/2026-09-10-session-harness-port/. H0: флаги
+    workbench.harness.* default false + UEW-доки с origin/main. Вердикт H1
+    остаётся замыслом, пока инспектор не живой.
 
 - id: RX-TSK-0800
-  title: H0 — ADR, спека, реестр и ветка порта harness
+  title: H0 — ADR, спека, флаги harness.*, UEW-доки с main
   kind: task
   path: docs/specs/2026-09-10-session-harness-port
-  status: active
+  status: done
   refs: [RX-EPC-0001, RX-ADR-0019, RX-SPC-0021, RX-DOC-0034]
   note: |
-    Документы посажены на rox/session-harness-port. Остаток H0: флаги
-    workbench.harness.* и влив UEW-спеки с origin/main.
+    Документы, флаги workbench.harness.* (Appearance, default false) и
+    docs/specs/2026-08-25-unified-execution-workbench с origin/main.
+    PTY/координатор не в этом таске.
 
 - id: RX-TSK-0801
   title: H1 — инспектор сессии (files/git/browser); терминал = SurfaceTab UEW

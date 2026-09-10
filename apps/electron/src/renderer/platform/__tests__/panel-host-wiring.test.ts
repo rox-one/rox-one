@@ -48,4 +48,18 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
       /atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.featureUnifiedShell\),\s*false/,
     )
   })
+
+  it('keeps harness chrome atoms defaulted to false', () => {
+    const src = readFileSync(atomPath, 'utf8')
+    for (const key of [
+      'featureWorkbenchHarnessInspectorV1',
+      'featureWorkbenchHarnessChatChromeV1',
+      'featureWorkbenchHarnessAgentIntelV1',
+      'featureWorkbenchHarnessExtCenterV1',
+    ]) {
+      expect(src).toMatch(
+        new RegExp(`atomWithStorage<boolean>\\(\\s*getKeyString\\(KEYS\\.${key}\\),\\s*false`),
+      )
+    }
+  })
 })

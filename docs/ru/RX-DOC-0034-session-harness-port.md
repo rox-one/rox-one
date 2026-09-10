@@ -6,7 +6,7 @@ status: active
 
 # Порт возможностей DSH-harness в Rox One (RX-DOC-0034)
 
-- **Статус:** Конспект плана. Код волн не начат.
+- **Статус:** H0 закрыт (флаги + UEW-доки). Код H1–H6 не начат.
 - **Дата:** 2026-09-10
 - **Ветка:** `rox/session-harness-port`
 - **Норматив:** [ADR-0019](../architecture/adr/0019-session-harness-capability-port.md), [спека RX-SPC-0021](../specs/2026-09-10-session-harness-port/README.md), [спокойная миграция H-04](../specs/2026-09-10-session-harness-port/04-calm-migration.md)

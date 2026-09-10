@@ -30,8 +30,8 @@ H2 и H4 независимы после H0. H3 зависит от слота �
 **Задачи:** `RX-TSK-0800`
 
 - [x] ADR-0019, спека RX-SPC-0021, DOC-0034, H-04 спокойная миграция, реестр, ветка.
-- [ ] Флаги `workbench.harness.*` в `packages/core/src/platform/workbench/flags.ts` + Appearance toggle (можно в том же PR, что H1, если H0 остаётся docs-only).
-- [ ] Влить каталог `docs/specs/2026-08-25-unified-execution-workbench/` с `origin/main` (документы, без кода PTY).
+- [x] Флаги `workbench.harness.*` в `packages/core/src/platform/workbench/flags.ts` + Appearance toggle (default false). `workbench.terminal.v1` / `execution.coordinator.v1` тоже в реестре, без PTY.
+- [x] Влить каталог `docs/specs/2026-08-25-unified-execution-workbench/` с `origin/main` (документы, без кода PTY).
 
 **DoD:** `bun run rx:validate` зелёный; спека читается без DSH-жаргона в пользовательских строках.
 
