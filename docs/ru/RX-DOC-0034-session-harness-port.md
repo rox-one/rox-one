@@ -28,7 +28,7 @@ DSH plugin  →  capability  →  Panel / Surface / Skill / Source / Automation
 
 | Волна | Что появится в UI | Опора |
 |---|---|---|
-| H1 | Вкладки справа: файлы, git, браузер, (терминал-заглушка) | `RightSidebarPanel` |
+| H1 | Вкладки справа: файлы, git, браузер; терминал — вкладка основной поверхности UEW, не пункт сайдбара | `RightSidebarPanel` + `SurfaceTab.terminal` |
 | H2 | История ввода ↑↓, прогресс хода, cost в статус-баре, notify, «открыть в редакторе» | input + notifications |
 | H3 | Дашборд контекста, нарезка MCP, честный fallback, review на permission | inspector + omp-agent |
 | H4 | Один экран расширений вместо трёх списков | Extension Center |

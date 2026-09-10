@@ -10,7 +10,7 @@
 
 | DSH-пакет | Ver | Возможность | Вердикт | Куда в Rox | Волна |
 |---|---|---|---|---|---|
-| `dsh-better-sidebar` | 0.17.1 | Правая панель: files / editor / terminal / git / browser на сессию | **extend** | Расширить `RightSidebarPanel` + Inspector tabs; editor = существующие overlays/`FileViewer`; terminal = UEW `kind:'terminal'`; browser = существующий `BrowserPane` | H1 |
+| `dsh-better-sidebar` | 0.17.1 | Правая панель: files / editor / terminal / git / browser на сессию | **extend** | Inspector: files / git / browser / context. Editor = overlays/`FileViewer`. Terminal **не** вкладка сайдбара — UEW `SurfaceTab.kind:'terminal'` (основная поверхность). Browser pane уже есть | H1 |
 | `dsh-web-plugin-manager` | 0.6.0 | Список / вкл / выкл расширений | **extend** | Extension Center `packages/shared/src/extensions` + settings | H4 |
 | `@dsh-community/dsh-paste-input` | 0.1.25 | Ctrl+V / drag-drop файлов в чат | **extend** | `ChatInputZone` / attachments уже есть; добить paste-into-workspace + first-run notice | H2 |
 | `@dsh-external/dsh-input-history` | 0.1.13 | Ctrl+↑/↓ по отправленным сообщениям | **port** | `FreeFormInput.tsx` + `actions/` (история cwd уже есть, истории промптов — нет) | H2 |

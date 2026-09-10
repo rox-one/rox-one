@@ -37,6 +37,8 @@ H2 и H4 независимы после H0. H3 зависит от слота �
 
 ## H1 — инспектор сессии (`RX-TSK-0801`)
 
+Инспектор = правый док. Терминал = вкладка MAIN (UEW), не четвёртая иконка дока.
+
 Флаг: `workbench.harness.inspector.v1`
 
 **Зачем:** это та фича, из-за которой DSH «нравится» — VS Code-подобная правая колонка.
@@ -48,26 +50,26 @@ H2 и H4 независимы после H0. H3 зависит от слота �
 - Modify: `apps/electron/src/renderer/contexts/NavigationContext.tsx`
 - Modify: `apps/electron/src/renderer/components/right-sidebar/*`
 - Reuse: `SessionFilesSection.tsx`, `FileViewer.tsx`, `WebBrowserPanel.tsx`, `SessionGitOutline.tsx`
-- Terminal tab: если UEW `workbench.terminal.v1` off — вкладка показывает empty + «терминал включится с UEW»; **MUST NOT** тащить `node-pty` в renderer в этом PR.
+- Terminal: **не** член `RightSidebarPanel`. Команда инспектора «Открыть терминал» открывает `SurfaceTab { kind: 'terminal' }` (контракт UEW M3). Если `workbench.terminal.v1` off — команда disabled + tooltip. **MUST NOT** тащить `node-pty` в renderer: G1 = native-crate.
+- Скелет `ExecutionCoordinator` не писать заново, если можно перенести из worktree `_worktrees/rox-one-uew-m7-plan` (`packages/server-core/src/execution/`).
 
-Расширение типа (черновик контракта):
+Расширение типа инспектора (черновик контракта):
 
 ```ts
 export type RightSidebarPanel =
   | { type: 'files'; path?: string }
   | { type: 'history' }
   | { type: 'git' }
-  | { type: 'terminal' }
   | { type: 'browser' }
   | { type: 'context' }
   | { type: 'none' }
 ```
 
-`context` можно завести типом в H1 и наполнить в H3.
+`context` заводим типом в H1, наполняем в H3.
 
-**Тесты:** round-trip URL `?sidebar=`; toggle не ломает `files`/`history`; i18n keys `inspector.tab.*`.
+**Тесты:** round-trip URL `?sidebar=`; toggle не ломает `files`/`history`; i18n keys `inspector.tab.*`; в union нет `'terminal'`.
 
-**DoD:** в сессии переключаются вкладки Files / Git / Browser без регрессии текущего files-watch. Terminal не падает при флаге UEW off.
+**DoD:** в сессии переключаются вкладки Files / Git / Browser без регрессии files-watch. Кнопка терминала не создаёт PTY при флаге UEW off.
 
 ## H2 — хром чата (`RX-TSK-0802`)
 

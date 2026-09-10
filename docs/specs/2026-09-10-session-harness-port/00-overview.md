@@ -37,10 +37,10 @@
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ TopBar / Mode Bar                                        ⌘K   settings   │
 ├────────┬──────────────────────────────┬──────────────────────────────────┤
-│ RAIL   │  MAIN = сессия / чат         │  INSPECTOR                       │
+│ RAIL   │  MAIN = сессия / чат / term  │  INSPECTOR                       │
 │        │  ChatDisplay + ChatInput     │  сегодня: files | history | none │
-│        │                              │  цель H1: files · git · term ·   │
-│        │                              │  browser · context · cost        │
+│        │  UEW terminal = surface tab  │  цель H1: files · git · browser  │
+│        │  (не пункт правого дока)     │  · context · cost                │
 ├────────┴──────────────────────────────┴──────────────────────────────────┤
 │ Status: модель · токены · стоимость · ход агента · фоновые задачи        │
 └──────────────────────────────────────────────────────────────────────────┘
@@ -56,7 +56,9 @@ export type RightSidebarPanel =
   | { type: 'none' }
 ```
 
-H1 расширяет этот union **вкладами Inspector**, а не новым окном. Terminal-вкладка, если нужна PTY, — `SurfaceTab { kind: 'terminal' }` из UEW, не третий xterm в чате.
+H1 расширяет этот union **вкладами Inspector**, а не новым окном.
+
+Терминал **MUST NOT** стать ещё одним `RightSidebarPanel`. UEW фиксирует его как `SurfaceTab { kind: 'terminal' }` — вкладка основной поверхности (как редактор), не пункт правого дока. G1 уже выбран: native-crate PTY, не `node-pty` в renderer. Код скелета координатора живёт в worktree `rox-one-uew-m7-plan`, в этой линии его ещё нет.
 
 ## 5. Рекомендуемый путь (один)
 

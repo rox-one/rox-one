@@ -26,7 +26,7 @@ DSH-плагины — npm-пакеты под Cordis. Этот Desktop-хост
 1. **Портируем возможности, не пакеты.** Ни один `dsh-*` npm-пакет, Cordis loader, `~/.dsh` и DSH Desktop **MUST NOT** попасть в runtime Rox.
 2. **Один агентный контур.** Исполнитель остаётся OMP / существующий `AgentBackend`. DSH loop **MUST NOT** встраиваться рядом с чатом Rox.
 3. **Один chrome.** Новые панели регистрируются в `PanelRegistry` / `SurfaceRegistry` / Extension Center как `craft-native` или `skill-pack` / `mcp-source` / `automation-pack`. Второй rail, вторая палитра, второй AI-чат **MUST NOT**.
-4. **UEW владеет терминалом.** Вкладка Terminal сайдбара DSH отображается на UEW `SurfaceTab.kind = 'terminal'`, а не на отдельном xterm внутри чата.
+4. **UEW владеет терминалом.** Вкладка Terminal из DSH-сайдбара отображается на UEW `SurfaceTab.kind = 'terminal'` (основная поверхность), **не** как `RightSidebarPanel` и не как xterm внутри пузыря чата. PTY — native-crate (UEW G1), не `node-pty` в renderer.
 5. **Реализация — волнами H0–H6** на ветке `rox/session-harness-port`, каждая волна — отдельный PR за флагами `workbench.harness.*` (default **false**).
 6. **Доменное состояние не в Jotai.** Следуем ADR-0001 §9: UI читает RPC/проекции.
 

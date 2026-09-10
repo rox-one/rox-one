@@ -72,7 +72,7 @@ status: active
 | Код | Задача | Статус |
 |-----|--------|--------|
 | `RX-TSK-0800` | H0 — ADR, спека, реестр и ветка | В работе |
-| `RX-TSK-0801` | H1 — инспектор сессии (files/git/browser/terminal-заглушка) | Запланировано |
+| `RX-TSK-0801` | H1 — инспектор сессии (files/git/browser); терминал = SurfaceTab UEW | Запланировано |
 | `RX-TSK-0802` | H2 — хром чата (история ввода, прогресс, cost, notify, editor) | Запланировано |
 | `RX-TSK-0803` | H3 — интеллект агента (context, MCP lens, fallbacks, auto-review) | Запланировано |
 | `RX-TSK-0804` | H4 — единый Extension Center | Запланировано |
