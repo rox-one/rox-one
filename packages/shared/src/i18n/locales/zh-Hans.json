@@ -2437,6 +2437,7 @@
   "settings.import.scan": "扫描",
   "settings.import.scanHint": "扫描不是导入。Persist 会把 Rox 对话写入当前工作区。",
   "settings.import.title": "导入对话",
+  "settings.import.truncated": "已列出 {{count}} 个可导入对话（扫描上限）。Persist 仍只写入所选行。",
   "settings.input.autoCapitalisation": "自动大写",
   "settings.input.autoCapitalisationDesc": "输入消息时自动大写首字母。",
   "settings.input.cmdEnterKey": "⌘ Enter",

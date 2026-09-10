@@ -632,6 +632,7 @@ export interface ElectronAPI {
     }>
     scannedAt: number
     cachePath: string
+    truncated?: boolean
   }>
   foreignPersistSessions(args: {
     workspaceId: string

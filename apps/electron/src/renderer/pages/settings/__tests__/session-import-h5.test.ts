@@ -29,6 +29,7 @@ describe('H5 import and advisor wiring', () => {
     expect(page).toContain('foreignDiscoverSessions')
     expect(page).toContain('foreignPersistSessions')
     expect(page).toContain('data-testid="session-import"')
+    expect(page).toContain("t('settings.import.truncated'")
     expect(page).not.toContain('spawn_session')
   })
 

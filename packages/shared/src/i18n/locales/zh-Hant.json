@@ -2437,6 +2437,7 @@
   "settings.import.scan": "掃描",
   "settings.import.scanHint": "掃描不是匯入。Persist 會把 Rox 對話寫入目前工作區。",
   "settings.import.title": "匯入對話",
+  "settings.import.truncated": "已列出 {{count}} 個可匯入對話（掃描上限）。Persist 仍只寫入所選列。",
   "settings.input.autoCapitalisation": "自動大寫",
   "settings.input.autoCapitalisationDesc": "輸入訊息時自動大寫首字母。",
   "settings.input.cmdEnterKey": "⌘ Enter",

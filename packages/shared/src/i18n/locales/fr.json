@@ -2437,6 +2437,7 @@
   "settings.import.scan": "Scanner",
   "settings.import.scanHint": "Scanner n’est pas importer. Persist écrit des chats Rox dans ce workspace.",
   "settings.import.title": "Importer des chats",
+  "settings.import.truncated": "{{count}} chats importables affichés (plafond du scan). Persist n’écrit que les lignes sélectionnées.",
   "settings.input.autoCapitalisation": "Majuscule automatique",
   "settings.input.autoCapitalisationDesc": "Mettre automatiquement en majuscule la première lettre lors de la saisie d'un message.",
   "settings.input.cmdEnterKey": "⌘ Enter",

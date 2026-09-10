@@ -2437,6 +2437,7 @@
   "settings.import.scan": "Escanear",
   "settings.import.scanHint": "Escanear no es importar. Persist escribe chats Rox en este workspace.",
   "settings.import.title": "Importar chats",
+  "settings.import.truncated": "Se muestran {{count}} chats importables (límite de escaneo). Persist solo escribe las filas seleccionadas.",
   "settings.input.autoCapitalisation": "Mayúsculas automáticas",
   "settings.input.autoCapitalisationDesc": "Poner en mayúscula automáticamente la primera letra al escribir un mensaje.",
   "settings.input.cmdEnterKey": "⌘ Enter",

@@ -11,12 +11,15 @@ import { foreignImportScanCachePath } from './import-registry.ts'
 import type { ForeignDiscoverResult, ForeignIndexEntry, ForeignSessionKind } from './import-types.ts'
 
 export const MAX_SCAN_ENTRIES = 200
+export const MAX_SCAN_PER_KIND = 80
 
 export interface DiscoverForeignOptions {
   workspaceRoot: string
   homeDir?: string
   writeCache?: boolean
   now?: number
+  maxEntries?: number
+  maxPerKind?: number
 }
 
 function listDirs(path: string): string[] {
@@ -88,10 +91,34 @@ function toEntry(
 export function discoverForeignSessions(options: DiscoverForeignOptions): ForeignDiscoverResult {
   const home = options.homeDir ?? homedir()
   const entries: ForeignIndexEntry[] = []
+  const counts: Partial<Record<ForeignSessionKind, number>> = {}
+  const maxEntries = options.maxEntries ?? MAX_SCAN_ENTRIES
+  const maxPerKind = options.maxPerKind ?? MAX_SCAN_PER_KIND
+  let truncated = false
+  let halt = false
 
-  const add = (entry: ForeignIndexEntry): boolean => {
-    if (entries.length >= MAX_SCAN_ENTRIES) return false
+  const add = (entry: ForeignIndexEntry): 'ok' | 'skip' | 'kind-full' | 'full' => {
+    if (entry.userTurns === 0) return 'skip'
+    if (entries.length >= maxEntries) return 'full'
+    const n = counts[entry.kind] ?? 0
+    if (n >= maxPerKind) return 'kind-full'
     entries.push(entry)
+    counts[entry.kind] = n + 1
+    return 'ok'
+  }
+
+  const consider = (entry: ForeignIndexEntry): boolean => {
+    if (halt) return false
+    const result = add(entry)
+    if (result === 'full') {
+      truncated = true
+      halt = true
+      return false
+    }
+    if (result === 'kind-full') {
+      truncated = true
+      return false
+    }
     return true
   }
 
@@ -101,50 +128,57 @@ export function discoverForeignSessions(options: DiscoverForeignOptions): Foreig
       if (!existsSync(join(sessionDir, 'summary.json')) && !existsSync(join(sessionDir, 'chat_history.jsonl'))) {
         continue
       }
-      if (!add(toEntry('grok', sessionDir, convertForeignSource(sessionDir, 'grok')))) break grok
+      if (!consider(toEntry('grok', sessionDir, convertForeignSource(sessionDir, 'grok')))) break grok
     }
   }
 
   const claudeRoot = join(home, '.claude', 'projects')
   claude: for (const projectDir of listDirs(claudeRoot)) {
+    if (halt) break
     for (const jsonl of listFiles(projectDir, '.jsonl')) {
-      if (!add(toEntry('claude', jsonl, convertForeignSource(jsonl, 'claude')))) break claude
+      if (!consider(toEntry('claude', jsonl, convertForeignSource(jsonl, 'claude')))) break claude
     }
   }
 
   const codexRoot = join(home, '.codex', 'sessions')
-  for (const jsonl of walkFiles(codexRoot, '.jsonl', 4)) {
-    if (!add(toEntry('codex', jsonl, convertForeignSource(jsonl, 'codex')))) break
+  if (!halt) {
+    for (const jsonl of walkFiles(codexRoot, '.jsonl', 4)) {
+      if (!consider(toEntry('codex', jsonl, convertForeignSource(jsonl, 'codex')))) break
+    }
   }
 
-  opencode: for (const root of [join(home, '.local', 'share', 'opencode'), join(home, '.opencode')]) {
-    for (const db of [...walkFiles(root, '.db', 3), ...walkFiles(root, '.sqlite', 3)]) {
-      if (
-        !add({
-          id: `opencode:${db}`,
-          kind: 'opencode',
-          sourcePath: db,
-          title: redactSecrets(db).text,
-          userTurns: 0,
-          skipReason: 'empty',
-        })
-      ) {
-        break opencode
+  if (!halt) {
+    opencode: for (const root of [join(home, '.local', 'share', 'opencode'), join(home, '.opencode')]) {
+      for (const db of [...walkFiles(root, '.db', 3), ...walkFiles(root, '.sqlite', 3)]) {
+        if (
+          !consider({
+            id: `opencode:${db}`,
+            kind: 'opencode',
+            sourcePath: db,
+            title: redactSecrets(db).text,
+            userTurns: 0,
+            skipReason: 'empty',
+          })
+        ) {
+          break opencode
+        }
       }
     }
   }
 
   const hermesRoot = join(home, '.hermes', 'sessions')
-  for (const jsonl of walkFiles(hermesRoot, '.jsonl', 3)) {
-    if (!add(toEntry('hermes', jsonl, convertForeignSource(jsonl, 'hermes')))) break
+  if (!halt) {
+    for (const jsonl of walkFiles(hermesRoot, '.jsonl', 3)) {
+      if (!consider(toEntry('hermes', jsonl, convertForeignSource(jsonl, 'hermes')))) break
+    }
   }
 
   const scannedAt = options.now ?? Date.now()
   const cachePath = foreignImportScanCachePath(options.workspaceRoot)
   if (options.writeCache !== false) {
     mkdirSync(dirname(cachePath), { recursive: true })
-    writeFileSync(cachePath, `${JSON.stringify({ scannedAt, entries }, null, 2)}\n`)
+    writeFileSync(cachePath, `${JSON.stringify({ scannedAt, entries, truncated }, null, 2)}\n`)
   }
 
-  return { entries, scannedAt, cachePath }
+  return { entries, scannedAt, cachePath, truncated }
 }

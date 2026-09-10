@@ -2437,6 +2437,7 @@
   "settings.import.scan": "Skanuj",
   "settings.import.scanHint": "Skan to nie import. Persist zapisuje czaty Rox w tym workspace.",
   "settings.import.title": "Import czatów",
+  "settings.import.truncated": "Pokazano {{count}} czatów do importu (limit skanu). Persist zapisuje tylko wybrane wiersze.",
   "settings.input.autoCapitalisation": "Automatyczna wielka litera",
   "settings.input.autoCapitalisationDesc": "Automatycznie pisz pierwszą literę wielką podczas wpisywania wiadomości.",
   "settings.input.cmdEnterKey": "⌘ Enter",

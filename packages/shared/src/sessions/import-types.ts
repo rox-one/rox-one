@@ -55,4 +55,5 @@ export interface ForeignDiscoverResult {
   entries: ForeignIndexEntry[]
   scannedAt: number
   cachePath: string
+  truncated?: boolean
 }

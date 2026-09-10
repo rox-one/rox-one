@@ -2437,6 +2437,7 @@
   "settings.import.scan": "Сканировать",
   "settings.import.scanHint": "Скан ≠ импорт. Persist пишет чаты Rox в этот workspace.",
   "settings.import.title": "Импорт чатов",
+  "settings.import.truncated": "Показано {{count}} чатов (лимит скана). Persist пишет только выбранные.",
   "settings.input.autoCapitalisation": "Автозаглавные буквы",
   "settings.input.autoCapitalisationDesc": "Автоматически делать первую букву сообщения заглавной при вводе.",
   "settings.input.cmdEnterKey": "⌘ Enter",

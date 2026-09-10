@@ -2437,6 +2437,7 @@
   "settings.import.scan": "Scannen",
   "settings.import.scanHint": "Scan ist kein Import. Persist schreibt Rox-Chats in diesen Workspace.",
   "settings.import.title": "Chats importieren",
+  "settings.import.truncated": "{{count}} importierbare Chats angezeigt (Scan-Limit). Persist schreibt nur die Auswahl.",
   "settings.input.autoCapitalisation": "Automatische Großschreibung",
   "settings.input.autoCapitalisationDesc": "Den ersten Buchstaben beim Tippen einer Nachricht automatisch großschreiben.",
   "settings.input.cmdEnterKey": "⌘ Enter",

@@ -123,7 +123,7 @@ describe('H5 foreign import', () => {
     discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
     const empty = await persistForeignSession({ workspaceRoot: workspace, sourcePath: emptyDir, kind: 'grok', homeDir: home })
     expect(empty.action).toBe('skipped')
-    expect(empty.reason).toBe('empty')
+    expect(empty.reason).toBe('not-in-scan-cache')
     expect(convertGrokCatalog(emptyDir).userTurns).toBe(0)
   })
 
@@ -241,5 +241,25 @@ describe('H5 foreign import', () => {
     expect(inferForeignKind(grokDir, home)).toBe('grok')
     expect(grok?.title).not.toContain('xai-')
     expect(grok?.title).toContain('[redacted]')
+  })
+
+  it('does not let empty grok rows consume the scan cap before claude', async () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    writeGrok(home, 'g-empty-a', join(home, 'proj'), '', '')
+    writeGrok(home, 'g-empty-b', join(home, 'proj'), '', '')
+    writeGrok(home, 'g-ok', join(home, 'proj'), 'hello grok', 'ok')
+    writeClaude(home, 'c-ok', 'hello claude', 'ok')
+    writeGrok(home, 'g-ok-2', join(home, 'proj'), 'second grok', 'ok')
+    const discovered = discoverForeignSessions({
+      workspaceRoot: workspace,
+      homeDir: home,
+      maxEntries: 2,
+      maxPerKind: 1,
+    })
+    expect(discovered.entries.some((entry) => entry.kind === 'claude')).toBe(true)
+    expect(discovered.entries.filter((entry) => entry.kind === 'grok')).toHaveLength(1)
+    expect(discovered.entries.every((entry) => entry.userTurns > 0)).toBe(true)
+    expect(discovered.truncated).toBe(true)
   })
 })

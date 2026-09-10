@@ -2437,6 +2437,7 @@
   "settings.import.scan": "スキャン",
   "settings.import.scanHint": "スキャンはインポートではありません。Persist はこのワークスペースに Rox チャットを書きます。",
   "settings.import.title": "チャットをインポート",
+  "settings.import.truncated": "インポート可能なチャット {{count}} 件を表示しています（スキャン上限）。Persist は選択行だけを書き込みます。",
   "settings.input.autoCapitalisation": "自動大文字化",
   "settings.input.autoCapitalisationDesc": "メッセージを入力するとき、最初の文字を自動的に大文字にします。",
   "settings.input.cmdEnterKey": "⌘ Enter",

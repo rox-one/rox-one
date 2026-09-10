@@ -35,6 +35,7 @@ export default function ImportSettingsPage() {
   const [entries, setEntries] = useState<ScanEntry[]>([])
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [results, setResults] = useState<string[]>([])
+  const [truncated, setTruncated] = useState(false)
 
   const scan = useCallback(async () => {
     if (!workspace?.id) return
@@ -43,6 +44,7 @@ export default function ImportSettingsPage() {
     try {
       const discovered = await window.electronAPI.foreignDiscoverSessions({ workspaceId: workspace.id })
       setEntries(discovered.entries)
+      setTruncated(Boolean(discovered.truncated))
       setSelected({})
       setResults([])
     } catch (err) {
@@ -85,6 +87,11 @@ export default function ImportSettingsPage() {
       <ScrollArea className="flex-1">
         <div className="px-5 pt-6 pb-10 max-w-3xl mx-auto w-full space-y-4" data-testid="session-import">
           <p className="text-sm opacity-70">{t('settings.import.scanHint')}</p>
+          {truncated ? (
+            <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-truncated">
+              {t('settings.import.truncated', { count: entries.length })}
+            </p>
+          ) : null}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
