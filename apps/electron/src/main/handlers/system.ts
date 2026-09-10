@@ -8,6 +8,8 @@ import { getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/s
 import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
 import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
+import { isSensitiveAgentCwd } from '@craft-agent/shared/sessions'
+import { existsSync, statSync } from 'fs'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
 import {
@@ -123,6 +125,16 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
   server.handle(RPC_CHANNELS.git.GET_STATUS, async (_ctx, dirPath: string) => {
     if (typeof dirPath !== 'string' || dirPath.length === 0) return emptyGitWorkingTreeStatus()
+    const usable = (() => {
+      try {
+        return existsSync(dirPath) && statSync(dirPath).isDirectory()
+      } catch {
+        return false
+      }
+    })()
+    if (!usable || isSensitiveAgentCwd(dirPath)) {
+      return emptyGitWorkingTreeStatus()
+    }
     try {
       const raw = execSync('git status --porcelain=v1 -b', {
         cwd: dirPath,

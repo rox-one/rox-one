@@ -1559,7 +1559,7 @@ export function FreeFormInput({
         isComposing: e.nativeEvent.isComposing,
         isProcessing,
         selectionStart: richInputRef.current?.selectionStart ?? (input.length === 0 ? 0 : -1),
-        selectionEnd: richInputRef.current?.selectionStart ?? (input.length === 0 ? 0 : -1),
+        selectionEnd: richInputRef.current?.selectionEnd ?? (input.length === 0 ? 0 : -1),
         browsing: isBrowsingPromptHistory(promptHistoryRef.current),
         inlineMenuOpen: inlineMention.isOpen || inlineSlash.isOpen || inlineLabel.isOpen,
         disabled,

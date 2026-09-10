@@ -936,6 +936,7 @@
   "hints.transcribeVoiceMemo": "Transcribe un {file:voice memo} y conviértelo en tareas de {source:Notion}",
   "inspector.agent": "Agente",
   "inspector.backlinks": "Backlinks",
+  "inspector.browserDisabled": "El navegador se queda en el dock. No se abren ventanas nativas desde aquí.",
   "inspector.context.attachments": "Adjuntos",
   "inspector.context.hiddenTools": "{{count}} herramientas ocultas",
   "inspector.context.mcp": "MCP",

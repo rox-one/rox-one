@@ -936,6 +936,7 @@
   "hints.transcribeVoiceMemo": "Расшифруй {file:голосовую заметку} и преврати её в задачи {source:Notion}",
   "inspector.agent": "Агент",
   "inspector.backlinks": "Обратные ссылки",
+  "inspector.browserDisabled": "Браузер остаётся в доке. Нативное окно отсюда не открывается.",
   "inspector.context.attachments": "Вложения",
   "inspector.context.hiddenTools": "Скрыто инструментов: {{count}}",
   "inspector.context.mcp": "MCP",

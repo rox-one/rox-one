@@ -936,6 +936,7 @@
   "hints.transcribeVoiceMemo": "Transkrybuj {file:voice memo} i zamień w zadania {source:Notion}",
   "inspector.agent": "Agent",
   "inspector.backlinks": "Linki zwrotne",
+  "inspector.browserDisabled": "Przeglądarka zostaje w doku. Stąd nie otwieramy natywnych okien.",
   "inspector.context.attachments": "Załączniki",
   "inspector.context.hiddenTools": "Ukryto narzędzi: {{count}}",
   "inspector.context.mcp": "MCP",

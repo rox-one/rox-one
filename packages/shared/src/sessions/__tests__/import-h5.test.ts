@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { discoverForeignSessions } from '../import-discover.ts'
 import { convertClaudeJsonl, convertGrokCatalog, redactSecrets } from '../import-convert.ts'
-import { isHomePath } from '../import-home.ts'
+import { isAllowedForeignSourcePath, isHomePath, isSensitiveAgentCwd } from '../import-home.ts'
 import { listImportedSessionFiles, persistForeignSession, readImportedSession } from '../import-persist.ts'
 import { loadForeignImportRegistry } from '../import-registry.ts'
 
@@ -127,6 +127,8 @@ describe('H5 foreign import', () => {
   it('attaches $HOME cwd to the current workspace and redacts secrets', async () => {
     expect(isHomePath('/tmp/not-home', '/Users/mark')).toBe(false)
     expect(isHomePath('/Users/mark', '/Users/mark')).toBe(true)
+    expect(isSensitiveAgentCwd('/etc', '/Users/mark')).toBe(true)
+    expect(isAllowedForeignSourcePath('/etc/passwd', '/Users/mark')).toBe(false)
     const home = tmp('h5-home-')
     const workspace = tmp('h5-ws-')
     const grokDir = writeGrok(home, 'g-home', home, 'token sk-ant-abcdefghijklmnopqrstuvwxyz123456', 'ok')
@@ -149,7 +151,7 @@ describe('H5 foreign import', () => {
       kind: 'claude',
     })
     expect(result.action).toBe('skipped')
-    expect(result.reason).toBe('empty')
+    expect(result.reason).toBe('outside-p0-root')
   })
 
   it('does not mention ~/.dsh or zstd in the import pipeline', () => {

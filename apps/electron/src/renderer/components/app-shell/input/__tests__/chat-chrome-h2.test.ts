@@ -25,6 +25,7 @@ describe('H2 chat chrome wiring', () => {
     expect(guards).toContain('if (isProcessing) return false')
     expect(freeForm).toContain('handleStop()')
     expect(freeForm).toContain('featureWorkbenchHarnessChatChromeV1Atom')
+    expect(freeForm).toContain('selectionEnd: richInputRef.current?.selectionEnd')
   })
 
   it('shows session costUsd in the popover behind the chat-chrome flag', () => {

@@ -936,6 +936,7 @@
   "hints.transcribeVoiceMemo": "Eine {file:Sprachnotiz} transkribieren und in {source:Notion}-Aufgaben umwandeln",
   "inspector.agent": "Agent",
   "inspector.backlinks": "Backlinks",
+  "inspector.browserDisabled": "Der Browser bleibt im Dock. Native Fenster werden hier nicht geöffnet.",
   "inspector.context.attachments": "Anhänge",
   "inspector.context.hiddenTools": "{{count}} Tools ausgeblendet",
   "inspector.context.mcp": "MCP",

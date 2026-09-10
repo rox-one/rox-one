@@ -6,7 +6,7 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isHomePath } from './import-home.ts'
+import { isAllowedForeignSourcePath, isSensitiveAgentCwd } from './import-home.ts'
 import { convertForeignSource } from './import-convert.ts'
 import { lookupImportedSession, recordImportedSession } from './import-registry.ts'
 import { generateUniqueSessionId } from './slug-generator.ts'
@@ -38,7 +38,7 @@ function sessionFile(workspaceRoot: string, sessionId: string): string {
 }
 
 function resolveAttachCwd(cwd: string | undefined, workspaceRoot: string, homeDir?: string): string {
-  if (!cwd || isHomePath(cwd, homeDir)) return workspaceRoot
+  if (!cwd || isSensitiveAgentCwd(cwd, homeDir)) return workspaceRoot
   try {
     if (!existsSync(cwd)) return workspaceRoot
   } catch {
@@ -120,6 +120,9 @@ function readRoxSession(workspaceRoot: string, sessionId: string): RoxSessionFil
 
 export async function persistForeignSession(options: PersistForeignOptions): Promise<ForeignPersistResult> {
   const mode = options.mode ?? 'skip'
+  if (!isAllowedForeignSourcePath(options.sourcePath, options.homeDir)) {
+    return { sourcePath: options.sourcePath, action: 'skipped', reason: 'outside-p0-root' }
+  }
   const converted = convertForeignSource(options.sourcePath, options.kind)
   if (converted.userTurns === 0) {
     return { sourcePath: options.sourcePath, action: 'skipped', reason: 'empty', anomalies: converted.anomalies }

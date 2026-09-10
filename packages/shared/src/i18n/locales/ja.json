@@ -936,6 +936,7 @@
   "hints.transcribeVoiceMemo": "{file:voice memo}を書き起こし、{source:Notion}のタスクに変換する",
   "inspector.agent": "エージェント",
   "inspector.backlinks": "バックリンク",
+  "inspector.browserDisabled": "ブラウザはドック内に留まります。ここからネイティブウィンドウは開きません。",
   "inspector.context.attachments": "添付",
   "inspector.context.hiddenTools": "{{count}} 個のツールを非表示",
   "inspector.context.mcp": "MCP",

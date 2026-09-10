@@ -936,6 +936,7 @@
   "hints.transcribeVoiceMemo": "Írd át a {file:hangfeljegyzést}, és alakítsd {source:Notion} feladatokká",
   "inspector.agent": "Ügynök",
   "inspector.backlinks": "Visszahivatkozások",
+  "inspector.browserDisabled": "A böngésző a dokkban marad. Innen nem nyitunk natív ablakot.",
   "inspector.context.attachments": "Mellékletek",
   "inspector.context.hiddenTools": "{{count}} rejtett eszköz",
   "inspector.context.mcp": "MCP",

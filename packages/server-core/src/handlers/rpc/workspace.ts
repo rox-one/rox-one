@@ -22,7 +22,8 @@ import {
 import { perf } from '@craft-agent/shared/utils'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { isValidWorkspaceRootPath } from '../../utils/path-validation'
+import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
+import { isSensitiveAgentCwd } from '@craft-agent/shared/sessions'
 import type { RemoteServerConfig, Workspace } from '@craft-agent/core/types'
 
 export const CORE_HANDLED_CHANNELS = [
@@ -392,28 +393,35 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   })
 
   server.handle(RPC_CHANNELS.workspace.OPEN_IN_EDITOR, async (_ctx, dirPath: string) => {
+    if (typeof dirPath !== 'string' || !isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) {
+      return { opened: false, reason: 'forbidden' }
+    }
     const extraDirs = [
       ...DEFAULT_EDITOR_EXTRA_DIRS,
       join(homedir(), '.local', 'bin'),
     ]
-    return launchWorkspaceInEditor(typeof dirPath === 'string' ? dirPath : '', {
-      lookup: (bin: EditorBinary) => lookupBinaryOnPath(bin, {
-        pathEnv: process.env.PATH ?? '',
-        extraDirs,
-        exists: existsSync,
-        pathSep: process.platform === 'win32' ? '\\' : '/',
-        delimiter: process.platform === 'win32' ? ';' : ':',
-      }),
-      spawn: (command, args, cwd) => {
-        const child = spawn(command, args, {
-          cwd,
-          detached: true,
-          stdio: 'ignore',
-          env: process.env,
-        })
-        child.unref()
-      },
-    })
+    try {
+      return launchWorkspaceInEditor(dirPath, {
+        lookup: (bin: EditorBinary) => lookupBinaryOnPath(bin, {
+          pathEnv: process.env.PATH ?? '',
+          extraDirs,
+          exists: existsSync,
+          pathSep: process.platform === 'win32' ? '\\' : '/',
+          delimiter: process.platform === 'win32' ? ';' : ':',
+        }),
+        spawn: (command, args, cwd) => {
+          const child = spawn(command, args, {
+            cwd,
+            detached: true,
+            stdio: 'ignore',
+            env: process.env,
+          })
+          child.unref()
+        },
+      })
+    } catch {
+      return { opened: false, reason: 'no-editor' }
+    }
   })
 
   // ============================================================

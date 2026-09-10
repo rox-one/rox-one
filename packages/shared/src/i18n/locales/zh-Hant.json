@@ -936,6 +936,7 @@
   "hints.transcribeVoiceMemo": "轉錄 {file:voice memo} 並轉為 {source:Notion} 任務",
   "inspector.agent": "代理",
   "inspector.backlinks": "反向連結",
+  "inspector.browserDisabled": "瀏覽器留在停駐列內。不會從這裡開啟系統視窗。",
   "inspector.context.attachments": "附件",
   "inspector.context.hiddenTools": "已隱藏 {{count}} 個工具",
   "inspector.context.mcp": "MCP",

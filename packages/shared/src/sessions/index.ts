@@ -140,7 +140,7 @@ export {
   MAX_BUNDLE_SIZE_BYTES,
 } from './bundle.ts'
 
-export { isHomePath } from './import-home.ts'
+export { isAllowedForeignSourcePath, isHomePath, isSensitiveAgentCwd } from './import-home.ts'
 export type {
   ConvertedForeignSession,
   ForeignDiscoverResult,

@@ -22,3 +22,12 @@ describe('InspectorHost H1 session inspector', () => {
     expect(src).toContain('sessionFolderPath={sessionFolderPath}')
   })
 })
+
+describe('SessionInspectorBody H1 browser', () => {
+  const body = readFileSync(join(__dirname, '..', '..', 'components', 'session-inspector', 'SessionInspectorBody.tsx'), 'utf8')
+
+  it('does not open a native BrowserWindow from the inspector dock', () => {
+    expect(body).not.toContain('WebBrowserPanel')
+    expect(body).toContain('inspector.browserDisabled')
+  })
+})
