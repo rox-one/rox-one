@@ -10,18 +10,18 @@
 
 | DSH-пакет | Ver | Возможность | Вердикт | Куда в Rox | Волна |
 |---|---|---|---|---|---|
-| `dsh-better-sidebar` | 0.17.1 | Правая панель: files / editor / terminal / git / browser на сессию | **extend** | Inspector: files / git / browser / context. Editor = overlays/`FileViewer`. Terminal **не** вкладка сайдбара — UEW `SurfaceTab.kind:'terminal'` (основная поверхность). Browser pane уже есть | H1 |
-| `dsh-web-plugin-manager` | 0.6.0 | Список / вкл / выкл расширений | **extend** | Extension Center `packages/shared/src/extensions` + settings | H4 |
-| `@dsh-community/dsh-paste-input` | 0.1.25 | Ctrl+V / drag-drop файлов в чат | **extend** | `ChatInputZone` / attachments уже есть; добить paste-into-workspace + first-run notice | H2 |
-| `@dsh-external/dsh-input-history` | 0.1.13 | Ctrl+↑/↓ по отправленным сообщениям | **port** | `FreeFormInput.tsx` + `actions/` (история cwd уже есть, истории промптов — нет) | H2 |
+| `dsh-better-sidebar` | 0.17.1 | Правая панель: files / editor / terminal / git / browser на сессию | **extend+port** | Files: поднять `SessionFilesSection` в `InspectorHost` (док сейчас выключен). Git: **новый** panel workspace git — `SessionGitOutline` это outline веток *чата*, не git. Browser: reuse `WebBrowserPanel`. Editor: overlays/`FileViewer`. Terminal: UEW `SurfaceTab`, не сайдбар | H1 |
+| `dsh-web-plugin-manager` | 0.6.0 | Список / вкл / выкл расширений | **extend** | `ExtensionsSettingsPage.tsx` живой; хоста `ExtensionCenter.tsx` нет — это H4 | H4 |
+| `@dsh-community/dsh-paste-input` | 0.1.25 | Ctrl+V / drag-drop файлов в чат | **reuse** | `FreeFormInput` уже: `craft:paste-files`, drag-drop, `AttachmentPreview` | — |
+| `@dsh-external/dsh-input-history` | 0.1.13 | Ctrl+↑/↓ по отправленным сообщениям | **port** | Сейчас ArrowUp **во время хода** отменяет ход и возвращает этот промпт (`input-event-guards.ts`). Стек истории — только когда агент idle и caret в начале/пусто. Cancel-while-processing **MUST** сохранить | H2 |
 | `@dsh-external/dsh-ui-progress` | 0.9.17 | Полоса прогресса todos / interrupt / tok/s | **extend** | `ToolbarStatusSlot` + `ActiveTasksBar` + todo events сессии | H2 |
 | `dsh-open-in-vscode` | 0.1.6 | Открыть cwd в редакторе | **port** | Команда `workspace.openInEditor`; детект VS Code / Cursor / Zed / cmux. Не хардкодить только VS Code | H2 |
 | `@changfenhuang/dsh-genui` | 0.9.9 | Интерактивные блоки в ответе | **extend** | Rich blocks / mermaid / html overlay в `packages/ui`; не тащить GenUI runtime | H5 |
 | `@changfenhuang/dsh-annotation` | 1.4.9 | Выделить текст ответа и пометить | **reuse** | `packages/ui/src/components/annotations/` | — |
 | `@michengai/dsh-btw` | 0.1.4 | Одноразовый боковой вопрос | **extend** | Annotation island follow-up + `spawn_session` fork. Не новый тип агента | H5 |
 | `dsh-md-notes` | 0.12.0 | Markdown-заметки внутри harness | **reuse** | Notes + RX-DOC-0029 / RX-TSK-0411 | — |
-| `dsh-notification` | 0.1.1 | OS-notify по концу хода | **extend** | `apps/electron/src/main/notifications.ts` — привязать к turn-complete сессии, не только tasks | H2 |
-| `dsh-cost-meter` | 1.7.17 | Стоимость сессии / дня / каталог цен | **extend** | `tokenUsage.costUsd` уже есть; status bar + settings ledger. Каталог цен — server-authoritative, не хардкод 90 моделей в renderer | H2 |
+| `dsh-notification` | 0.1.1 | OS-notify по концу хода | **reuse** | `main/notifications.ts` + `hooks/useNotifications.ts` (unfocused + badge). Не второй buddy | — |
+| `dsh-cost-meter` | 1.7.17 | Стоимость сессии / дня / каталог цен | **extend** | В UI сейчас **% контекста / токены**, не $. `tokenUsage.costUsd` уже в атомах сессии (канбан). Status bar + popover сессии. Каталог цен — server-authoritative | H2 |
 | `dsh-chat-import` | 0.11.0 | Импорт Claude/Codex/ChatGPT/Cursor | **port** | Settings → Import; парсеры в `packages/shared/src/sessions/`; без записи в `~/.dsh` | H5 |
 | `dsh-skill-mcp-panel` | 2.0.3 | Скиллы + MCP в одном settings UI | **extend** | Склеить `SkillsListPanel` + `SourcesListPanel` во вкладке Extension Center, не третий список | H4 |
 
@@ -60,9 +60,11 @@
 
 | Вердикт | Кол-во | Смысл для плана |
 |---|---|---|
-| reuse | 4 | Не трогаем, кроме документации «уже есть» |
-| extend | 14 | Дописываем существующие файлы |
-| port | 6 | Новые вкладки/команды/парсеры, first-party |
+| reuse | 6 | Paste, notify, annotations, notes, superpowers, skills manager |
+| extend | 12 | Inspector files, cost $, progress, Extension Center, permissions, workflow, … |
+| port | 7 | История промптов, git-док, context dashboard, chat import, MCP lens, open-in-editor, auto-review |
 | skip / skip→source | 11 | Явный отказ или MCP source без кода плагина |
+
+(Git-док считается port, не reuse `SessionGitOutline`.)
 
 Итого новых поверхностей, которые пользователь *увидит*: inspector tabs (H1), chat chrome (H2), context/cost/review (H3), единый Extension Center (H4), import + advisor (H5). Не 29 плагинов в marketplace.

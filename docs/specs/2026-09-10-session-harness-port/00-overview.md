@@ -46,7 +46,7 @@
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-Правый слот уже типизирован:
+Правый слот **типизирован, но мёртв** (`verified` на `rox/ru-codex-navigation`):
 
 ```ts
 // apps/electron/src/shared/types.ts
@@ -56,7 +56,11 @@ export type RightSidebarPanel =
   | { type: 'none' }
 ```
 
-H1 расширяет этот union **вкладами Inspector**, а не новым окном.
+`AppShell` ставит `isRightSidebarVisible={false}` и `rightSidebarButton: null`. Файлы сессии сейчас в `SessionInfoPopover` (`SessionFilesSection.tsx`), не в доке.
+
+H1 **MUST** сажать вкладки в живой `InspectorHost` + `PanelRegistry` (`apps/electron/src/renderer/platform/InspectorHost.tsx`, сегодня только `knowledge.inspector`; `agent`/`outline`/`backlinks` — stubs). Расширение `RightSidebarPanel` без включения Inspector = работа в мёртвый слот.
+
+Классический shell (флаг unified-shell OFF) остаётся рабочим UI. Волны harness **SHOULD** работать и при OFF: инспектор как колонка сессии, не только за `featureUnifiedShellAtom`.
 
 Терминал **MUST NOT** стать ещё одним `RightSidebarPanel`. UEW фиксирует его как `SurfaceTab { kind: 'terminal' }` — вкладка основной поверхности (как редактор), не пункт правого дока. G1 уже выбран: native-crate PTY, не `node-pty` в renderer. Код скелета координатора живёт в worktree `rox-one-uew-m7-plan`, в этой линии его ещё нет.
 

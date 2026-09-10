@@ -38,8 +38,9 @@
   status: planned
   refs: [RX-EPC-0001, RX-TSK-0800, RX-ADR-0001]
   note: |
-    Расширить RightSidebarPanel (files/git/browser/context). Терминал —
-    SurfaceTab UEW, не тип сайдбара. Живой PTY не в этом PR.
+    Живой InspectorHost + PanelRegistry (док сейчас hard-off).
+    Files из SessionFilesSection. Git — новый panel, не SessionGitOutline.
+    Терминал — SurfaceTab UEW. Живой PTY не в этом PR.
 
 - id: RX-TSK-0802
   title: H2 — хром чата (история ввода, прогресс, cost, notify, open-in-editor)

@@ -45,11 +45,11 @@ H2 и H4 независимы после H0. H3 зависит от слота �
 
 **Файлы:**
 
-- Modify: `apps/electron/src/shared/types.ts` (`RightSidebarPanel`)
-- Modify: `apps/electron/src/shared/route-parser.ts` (`parseRightSidebarParam` / `buildRightSidebarParam`)
-- Modify: `apps/electron/src/renderer/contexts/NavigationContext.tsx`
-- Modify: `apps/electron/src/renderer/components/right-sidebar/*`
-- Reuse: `SessionFilesSection.tsx`, `FileViewer.tsx`, `WebBrowserPanel.tsx`, `SessionGitOutline.tsx`
+- Modify: `apps/electron/src/renderer/platform/InspectorHost.tsx`, `platform/core-panels.ts` (`PanelRegistry`)
+- Modify: `apps/electron/src/renderer/components/app-shell/AppShell.tsx` — сейчас `isRightSidebarVisible={false}`; колонка инспектора сессии **MUST** работать и при unified-shell OFF
+- Modify: `apps/electron/src/shared/types.ts` (`RightSidebarPanel`) + `route-parser.ts` + `NavigationContext.tsx` только если URL остаётся SoT для вкладки инспектора
+- Reuse: `SessionFilesSection.tsx` (переезд из popover в инспектор), `FileViewer.tsx`, `WebBrowserPanel.tsx`
+- **Не** reuse `SessionGitOutline.tsx` как git: это outline веток чата. Git-вкладка — новый panel (`git status`/`diff` workspace cwd)
 - Terminal: **не** член `RightSidebarPanel`. Команда инспектора «Открыть терминал» открывает `SurfaceTab { kind: 'terminal' }` (контракт UEW M3). Если `workbench.terminal.v1` off — команда disabled + tooltip. **MUST NOT** тащить `node-pty` в renderer: G1 = native-crate.
 - Скелет `ExecutionCoordinator` не писать заново, если можно перенести из worktree `_worktrees/rox-one-uew-m7-plan` (`packages/server-core/src/execution/`).
 
@@ -77,14 +77,14 @@ export type RightSidebarPanel =
 
 | Кусок | Файлы | Поведение |
 |---|---|---|
-| История промптов | `FreeFormInput.tsx`, новый `prompt-history.ts` рядом с `working-directory-history.ts` | ArrowUp/Down только когда caret в начале/пустой строке; не перехватывать редактирование середины |
-| Прогресс хода | `ToolbarStatusSlot.tsx`, `ActiveTasksBar.tsx` | todos + interrupt + tok/s из существующих agent events |
-| Cost | status bar + `SessionInfoPopover` | session / today; цифры только из `tokenUsage` |
-| Notify on turn | `notifications.ts` + session event sink | уже есть API; довязать turn-complete |
+| История промптов | `FreeFormInput.tsx`, `input-event-guards.ts`, новый `prompt-history.ts` | Idle + caret в начале/пусто → стек. **Во время хода ArrowUp по-прежнему cancel+recall текущего промпта.** Не перехватывать середину строки |
+| Прогресс хода | `ToolbarStatusSlot.tsx`, `ActiveTasksBar.tsx`, `TurnCard` todos | todos уже есть; добавить tok/s / фазу хода |
+| Cost $ | `SessionInfoPopover` + `StatusBarHost` / compact input | Сейчас % контекста; показать `tokenUsage.costUsd` |
 | Open in editor | `actions/definitions.ts` | `workspace.openInEditor`; cmux/VS Code/Cursor/Zed по PATH; никогда `open -a Terminal` |
-| Paste files | `ChatInputZone` attachments | paste image/file → workspace attachment, как существующий drag-drop |
 
-**DoD:** пустой чат, длинный промпт, стрелки не уничтожают черновик; уведомление на macOS при конце хода с выключенным окном.
+Paste и notify — reuse, не в этом PR.
+
+**DoD:** idle ↑↓ ходит по истории; mid-turn ArrowUp всё ещё отменяет ход; длинный черновик не стирается; в popover сессии виден costUsd.
 
 ## H3 — интеллект агента (`RX-TSK-0803`)
 
@@ -104,7 +104,7 @@ export type RightSidebarPanel =
 
 Флаг: `workbench.harness.ext-center.v1`
 
-Довести S-05 UI: один экран Skills + Sources + Automations + Marketplace. Адаптеры уже есть в `packages/shared/src/extensions/adapters/`.
+Довести S-05 UI: один экран Skills + Sources + Automations + Marketplace. Адаптеры уже есть в `packages/shared/src/extensions/adapters/`. Живая страница — `ExtensionsSettingsPage.tsx`; файла `platform/ExtensionCenter.tsx` из спеки S-05 **нет** — H4 либо создаёт host, либо честно доводит settings page, без второго каталога.
 
 **MUST NOT** добавить runtime `dsh-cordis`.
 

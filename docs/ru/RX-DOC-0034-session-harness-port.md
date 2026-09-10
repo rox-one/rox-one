@@ -35,7 +35,9 @@ DSH plugin  →  capability  →  Panel / Surface / Skill / Source / Automation
 | H5 | Импорт чужих чатов, advisor-скилл, simplify диффа | sessions + skills |
 | H6 | Явный отказ от session-buddy / mnemon / cordis-HMR | анти-цели |
 
-Уже есть и **не копируем**: annotations, notes, superpowers, skills manager, automations, memory.
+Уже есть и **не копируем**: annotations, notes, superpowers, skills manager, automations, memory, paste/drag-drop, OS-notify конца хода.
+
+Правый док в текущем UI **выключен** (`isRightSidebarVisible={false}`). H1 включает инспектор сессии через `InspectorHost`, а не воскрешает мёртвую кнопку. `SessionGitOutline` — дерево веток чата, не git: git-вкладка пишется отдельно.
 
 ## Чего не будет
 
