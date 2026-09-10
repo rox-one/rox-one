@@ -5,7 +5,8 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import type { ForeignRegistryRecord } from './import-types.ts'
+import { sameRealPath } from './import-home.ts'
+import type { ForeignIndexEntry, ForeignRegistryRecord } from './import-types.ts'
 
 export function foreignImportRegistryPath(workspaceRoot: string): string {
   return join(workspaceRoot, '.rox', 'foreign-import-registry.json')
@@ -50,4 +51,24 @@ export function recordImportedSession(workspaceRoot: string, record: ForeignRegi
   const entries = loadForeignImportRegistry(workspaceRoot)
   entries[record.sourcePath] = record
   saveForeignImportRegistry(workspaceRoot, entries)
+}
+
+export function loadForeignImportScanCache(workspaceRoot: string): ForeignIndexEntry[] {
+  const path = foreignImportScanCachePath(workspaceRoot)
+  if (!existsSync(path)) return []
+  try {
+    const raw = JSON.parse(readFileSync(path, 'utf8')) as { entries?: ForeignIndexEntry[] }
+    return Array.isArray(raw.entries) ? raw.entries : []
+  } catch {
+    return []
+  }
+}
+
+export function findScannedForeignSource(
+  workspaceRoot: string,
+  sourcePath: string,
+): ForeignIndexEntry | undefined {
+  return loadForeignImportScanCache(workspaceRoot).find(
+    (entry) => entry.sourcePath === sourcePath || sameRealPath(entry.sourcePath, sourcePath),
+  )
 }

@@ -2,14 +2,57 @@
  * MCP lens: classify host tools as essential vs non-essential.
  *
  * Session-scoped craft tools stay in the primary schema. MCP source-proxy
- * tools (`mcp__{slug}__*`, not `mcp__session__*`) are non-essential and can
- * be hidden from the advertised set when the lens is on.
+ * tools (`mcp__{slug}__*`) are non-essential. A third-party MCP whose slug
+ * is `session` does not inherit host-tool privilege — only catalog names
+ * under `mcp__session__` stay essential.
+ *
+ * Keep this suffix set aligned with SESSION_TOOL_DEFS names in tool-defs.ts
+ * (verified by mcp-lens.test.ts) so this module stays zod-free for isolated tests.
  */
 
 export type HostToolLoadMode = 'essential' | 'discoverable'
 
+const SESSION_MCP_PREFIX = 'mcp__session__'
+
+export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
+  'SubmitPlan',
+  'config_validate',
+  'skill_validate',
+  'mermaid_validate',
+  'source_test',
+  'source_oauth_trigger',
+  'source_google_oauth_trigger',
+  'source_slack_oauth_trigger',
+  'source_microsoft_oauth_trigger',
+  'source_credential_prompt',
+  'update_user_preferences',
+  'transform_data',
+  'script_sandbox',
+  'bash',
+  'render_template',
+  'send_developer_feedback',
+  'call_llm',
+  'spawn_session',
+  'browser_tool',
+  'set_session_labels',
+  'set_session_status',
+  'archive_session',
+  'create_task',
+  'get_session_info',
+  'list_sessions',
+  'list_background_tasks',
+  'send_agent_message',
+  'list_messaging_channels',
+  'unbind_messaging_channel',
+  'knowledge_search',
+  'knowledge_read',
+  'knowledge_get_backlinks',
+])
+
 export function isEssentialHostTool(name: string): boolean {
-  if (name.startsWith('mcp__session__')) return true
+  if (name.startsWith(SESSION_MCP_PREFIX)) {
+    return SESSION_MCP_ESSENTIAL_SUFFIXES.has(name.slice(SESSION_MCP_PREFIX.length))
+  }
   if (name.startsWith('mcp__')) return false
   return true
 }

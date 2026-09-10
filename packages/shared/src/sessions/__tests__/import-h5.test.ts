@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { discoverForeignSessions } from '../import-discover.ts'
-import { convertClaudeJsonl, convertGrokCatalog, redactSecrets } from '../import-convert.ts'
+import { convertClaudeJsonl, convertGrokCatalog, inferForeignKind, redactSecrets } from '../import-convert.ts'
 import { isAllowedForeignSourcePath, isHomePath, isSensitiveAgentCwd } from '../import-home.ts'
 import { listImportedSessionFiles, persistForeignSession, readImportedSession } from '../import-persist.ts'
 import { loadForeignImportRegistry } from '../import-registry.ts'
@@ -82,6 +82,7 @@ describe('H5 foreign import', () => {
     const workspace = tmp('h5-ws-')
     const grokDir = writeGrok(home, 'g1', join(home, 'proj'), 'hello grok', 'hi from grok')
     const claudePath = writeClaude(home, 'c1', 'hello claude', 'hi from claude', join(home, 'proj'))
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
     const grok = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
     const claude = await persistForeignSession({
       workspaceRoot: workspace,
@@ -106,6 +107,7 @@ describe('H5 foreign import', () => {
     const home = tmp('h5-home-')
     const workspace = tmp('h5-ws-')
     const grokDir = writeGrok(home, 'g1', join(home, 'proj'), 'hello', 'hi')
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
     const first = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
     const second = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
     expect(first.action).toBe('created')
@@ -118,6 +120,7 @@ describe('H5 foreign import', () => {
     mkdirSync(emptyDir, { recursive: true })
     writeFileSync(join(emptyDir, 'summary.json'), JSON.stringify({ info: { cwd: join(home, 'proj') }, generated_title: 'empty' }))
     writeFileSync(join(emptyDir, 'chat_history.jsonl'), '')
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
     const empty = await persistForeignSession({ workspaceRoot: workspace, sourcePath: emptyDir, kind: 'grok', homeDir: home })
     expect(empty.action).toBe('skipped')
     expect(empty.reason).toBe('empty')
@@ -132,6 +135,7 @@ describe('H5 foreign import', () => {
     const home = tmp('h5-home-')
     const workspace = tmp('h5-ws-')
     const grokDir = writeGrok(home, 'g-home', home, 'token sk-ant-abcdefghijklmnopqrstuvwxyz123456', 'ok')
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
     const result = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
     const session = readImportedSession(workspace, result.sessionId!)
     expect(session?.workingDirectory).toBe(workspace)
@@ -139,6 +143,9 @@ describe('H5 foreign import', () => {
     expect(session?.messages.some((m) => m.content.includes('[redacted]'))).toBe(true)
     expect(redactSecrets('plain').hit).toBe(false)
     expect(redactSecrets('ghp_abcdefghijklmnopqrstuvwx').hit).toBe(true)
+    expect(redactSecrets('xai-abcdefghijklmnopqrstuvwxyz123456').hit).toBe(true)
+    expect(redactSecrets(`sk_live_${'abcdefghijklmnopqrstuvwxyz'}`).hit).toBe(true)
+    expect(redactSecrets('-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----').hit).toBe(true)
     expect(convertClaudeJsonl(writeClaude(home, 'secret', 'hello', 'ok')).userTurns).toBe(1)
   })
 
@@ -170,5 +177,69 @@ describe('H5 foreign import', () => {
       expect(src).not.toContain('dsh-cordis')
       expect(src).not.toContain('127.0.0.1:43120')
     }
+  })
+
+  it('refuses persist unless the source was scanned', async () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    const grokDir = writeGrok(home, 'g1', join(home, 'proj'), 'hello', 'hi')
+    const result = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
+    expect(result.action).toBe('skipped')
+    expect(result.reason).toBe('not-in-scan-cache')
+    expect(listImportedSessionFiles(workspace)).toEqual([])
+  })
+
+  it('does not attach a foreign project cwd and ignores a symlink swapped in after scan', async () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    const project = join(home, 'proj')
+    mkdirSync(project, { recursive: true })
+    const grokDir = writeGrok(home, 'g-cwd', project, 'hello cwd', 'ok')
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const created = await persistForeignSession({ workspaceRoot: workspace, sourcePath: grokDir, kind: 'grok', homeDir: home })
+    expect(created.action).toBe('created')
+    expect(readImportedSession(workspace, created.sessionId!)?.workingDirectory).toBe(workspace)
+
+    const history = join(grokDir, 'chat_history.jsonl')
+    const leaked = join(home, 'leaked.txt')
+    writeFileSync(leaked, 'xai-abcdefghijklmnopqrstuvwxyz123456')
+    rmSync(history)
+    symlinkSync(leaked, history)
+    const swapped = await persistForeignSession({
+      workspaceRoot: workspace,
+      sourcePath: grokDir,
+      kind: 'grok',
+      homeDir: home,
+      mode: 'force',
+    })
+    expect(swapped.action).toBe('skipped')
+    const file = listImportedSessionFiles(workspace)[0]!
+    expect(readFileSync(file, 'utf8')).not.toContain('xai-')
+  })
+
+  it('infers kind from P0 roots only and redacts titles', async () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    expect(inferForeignKind(join(home, 'Documents', 'opencode-notes.jsonl'), home)).toBeUndefined()
+    const grokDir = writeGrok(
+      home,
+      'g-title',
+      join(home, 'proj'),
+      'hello',
+      'ok',
+    )
+    writeFileSync(
+      join(grokDir, 'summary.json'),
+      JSON.stringify({
+        info: { id: 'g-title', cwd: join(home, 'proj') },
+        generated_title: 'token xai-abcdefghijklmnopqrstuvwxyz123456',
+        session_summary: 'Grok fixture',
+      }),
+    )
+    const discovered = discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const grok = discovered.entries.find((entry) => entry.sourcePath === grokDir)
+    expect(inferForeignKind(grokDir, home)).toBe('grok')
+    expect(grok?.title).not.toContain('xai-')
+    expect(grok?.title).toContain('[redacted]')
   })
 })

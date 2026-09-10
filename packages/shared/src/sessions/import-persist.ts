@@ -6,18 +6,18 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isAllowedForeignSourcePath, isSensitiveAgentCwd } from './import-home.ts'
-import { convertForeignSource } from './import-convert.ts'
-import { lookupImportedSession, recordImportedSession } from './import-registry.ts'
+import { isAllowedForeignSourcePath } from './import-home.ts'
+import { convertForeignSource, inspectForeignSource } from './import-convert.ts'
+import { findScannedForeignSource, lookupImportedSession, recordImportedSession } from './import-registry.ts'
 import { generateUniqueSessionId } from './slug-generator.ts'
-import { sanitizeSessionId } from './validation.ts'
+import { isValidSessionId, sanitizeSessionId } from './validation.ts'
 import type { ForeignImportMode, ForeignPersistResult, ForeignSessionKind } from './import-types.ts'
 import type { ConvertedForeignMessage } from './import-types.ts'
 
 export interface PersistForeignOptions {
   workspaceRoot: string
   sourcePath: string
-  kind: ForeignSessionKind
+  kind?: ForeignSessionKind
   mode?: ForeignImportMode
   homeDir?: string
 }
@@ -35,16 +35,6 @@ function sessionsDir(workspaceRoot: string): string {
 
 function sessionFile(workspaceRoot: string, sessionId: string): string {
   return join(sessionsDir(workspaceRoot), sanitizeSessionId(sessionId), 'session.jsonl')
-}
-
-function resolveAttachCwd(cwd: string | undefined, workspaceRoot: string, homeDir?: string): string {
-  if (!cwd || isSensitiveAgentCwd(cwd, homeDir)) return workspaceRoot
-  try {
-    if (!existsSync(cwd)) return workspaceRoot
-  } catch {
-    return workspaceRoot
-  }
-  return cwd
 }
 
 function existingIds(workspaceRoot: string): string[] {
@@ -70,8 +60,9 @@ function hashCode(value: string): number {
   return hash
 }
 
-function writeRoxSession(workspaceRoot: string, session: RoxSessionFile): void {
+function writeRoxSession(workspaceRoot: string, session: RoxSessionFile): boolean {
   const id = sanitizeSessionId(session.id)
+  if (!id || !isValidSessionId(id)) return false
   const dir = join(sessionsDir(workspaceRoot), id)
   mkdirSync(join(dir, 'plans'), { recursive: true })
   mkdirSync(join(dir, 'attachments'), { recursive: true })
@@ -84,7 +75,7 @@ function writeRoxSession(workspaceRoot: string, session: RoxSessionFile): void {
     name: session.name,
     createdAt: now,
     lastUsedAt: now,
-    workingDirectory: session.workingDirectory,
+    workingDirectory: workspaceRoot,
     sdkCwd: dir,
     messageCount: session.messages.length,
     lastMessageRole: last?.type,
@@ -101,10 +92,13 @@ function writeRoxSession(workspaceRoot: string, session: RoxSessionFile): void {
     /* first write */
   }
   renameSync(tmp, file)
+  return true
 }
 
 function readRoxSession(workspaceRoot: string, sessionId: string): RoxSessionFile | null {
-  const file = sessionFile(workspaceRoot, sessionId)
+  const id = sanitizeSessionId(sessionId)
+  if (!id || !isValidSessionId(id)) return null
+  const file = sessionFile(workspaceRoot, id)
   if (!existsSync(file)) return null
   const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean)
   if (lines.length === 0) return null
@@ -123,12 +117,23 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
   if (!isAllowedForeignSourcePath(options.sourcePath, options.homeDir)) {
     return { sourcePath: options.sourcePath, action: 'skipped', reason: 'outside-p0-root' }
   }
-  const converted = convertForeignSource(options.sourcePath, options.kind)
+  const sourceGuard = inspectForeignSource(options.sourcePath)
+  if (sourceGuard.status === 'symlink') {
+    return { sourcePath: options.sourcePath, action: 'skipped', reason: 'source-symlink' }
+  }
+  const scanned = findScannedForeignSource(options.workspaceRoot, options.sourcePath)
+  if (!scanned) {
+    return { sourcePath: options.sourcePath, action: 'skipped', reason: 'not-in-scan-cache' }
+  }
+  const kind = scanned.kind
+  const converted = convertForeignSource(options.sourcePath, kind)
   if (converted.userTurns === 0) {
     return { sourcePath: options.sourcePath, action: 'skipped', reason: 'empty', anomalies: converted.anomalies }
   }
 
-  const existing = lookupImportedSession(options.workspaceRoot, options.sourcePath)
+  const existingRaw = lookupImportedSession(options.workspaceRoot, options.sourcePath)
+  const existingId = existingRaw ? sanitizeSessionId(existingRaw.sessionId) : ''
+  const existing = existingRaw && existingId && isValidSessionId(existingId) ? { ...existingRaw, sessionId: existingId } : undefined
   if (existing && mode === 'skip') {
     return {
       sourcePath: options.sourcePath,
@@ -139,7 +144,6 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
     }
   }
 
-  const attachCwd = resolveAttachCwd(converted.cwd, options.workspaceRoot, options.homeDir)
   const storedMessages = toMessages(options.sourcePath, converted.messages)
 
   if (existing && (mode === 'append' || mode === 'force')) {
@@ -147,11 +151,13 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
     if (session) {
       session.messages = mode === 'append' ? [...session.messages, ...storedMessages] : storedMessages
       session.name = converted.title
-      session.workingDirectory = attachCwd
-      writeRoxSession(options.workspaceRoot, session)
+      session.workingDirectory = options.workspaceRoot
+      if (!writeRoxSession(options.workspaceRoot, session)) {
+        return { sourcePath: options.sourcePath, action: 'skipped', reason: 'invalid-session-id' }
+      }
       recordImportedSession(options.workspaceRoot, {
         sessionId: session.id,
-        kind: options.kind,
+        kind,
         importedAt: Date.now(),
         sourcePath: options.sourcePath,
       })
@@ -165,15 +171,18 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
   }
 
   const id = generateUniqueSessionId(existingIds(options.workspaceRoot))
-  writeRoxSession(options.workspaceRoot, {
+  const written = writeRoxSession(options.workspaceRoot, {
     id,
     name: converted.title,
-    workingDirectory: attachCwd,
+    workingDirectory: options.workspaceRoot,
     messages: storedMessages,
   })
+  if (!written) {
+    return { sourcePath: options.sourcePath, action: 'skipped', reason: 'invalid-session-id' }
+  }
   recordImportedSession(options.workspaceRoot, {
     sessionId: id,
-    kind: options.kind,
+    kind,
     importedAt: Date.now(),
     sourcePath: options.sourcePath,
   })
@@ -187,7 +196,7 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
 
 export async function persistForeignSessions(
   workspaceRoot: string,
-  items: Array<{ sourcePath: string; kind: ForeignSessionKind }>,
+  items: Array<{ sourcePath: string; kind?: ForeignSessionKind }>,
   mode: ForeignImportMode = 'skip',
   homeDir?: string,
 ): Promise<ForeignPersistResult[]> {

@@ -7,7 +7,6 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import {
   discoverForeignSessions,
-  inferForeignKind,
   persistForeignSession,
   type ForeignImportMode,
 } from '@craft-agent/shared/sessions'
@@ -52,7 +51,6 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
           await persistForeignSession({
             workspaceRoot: workspace.rootPath,
             sourcePath,
-            kind: inferForeignKind(sourcePath),
             mode: args?.mode,
           }),
         )

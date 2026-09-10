@@ -3,7 +3,8 @@ import { join } from 'path'
 import { homedir } from 'os'
 import { execSync } from 'child_process'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import { emptyGitWorkingTreeStatus, parseGitPorcelainV1 } from '@craft-agent/shared/git/status'
+import { emptyGitWorkingTreeStatus } from '@craft-agent/shared/git/status'
+import { readGitBranchName, readGitWorkingTreeStatus } from '@craft-agent/shared/git/exec'
 import { getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
 import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
@@ -110,17 +111,16 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get git branch for a directory (returns null if not a git repo or git unavailable)
   server.handle(RPC_CHANNELS.git.GET_BRANCH, async (_ctx, dirPath: string) => {
-    try {
-      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
-        cwd: dirPath,
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 5000,
-      }).trim()
-      return branch || null
-    } catch {
-      return null
-    }
+    if (typeof dirPath !== 'string' || dirPath.length === 0) return null
+    const usable = (() => {
+      try {
+        return existsSync(dirPath) && statSync(dirPath).isDirectory()
+      } catch {
+        return false
+      }
+    })()
+    if (!usable || isSensitiveAgentCwd(dirPath)) return null
+    return readGitBranchName(dirPath)
   })
 
   server.handle(RPC_CHANNELS.git.GET_STATUS, async (_ctx, dirPath: string) => {
@@ -135,17 +135,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
     if (!usable || isSensitiveAgentCwd(dirPath)) {
       return emptyGitWorkingTreeStatus()
     }
-    try {
-      const raw = execSync('git status --porcelain=v1 -b', {
-        cwd: dirPath,
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 5000,
-      })
-      return parseGitPorcelainV1(raw)
-    } catch {
-      return emptyGitWorkingTreeStatus()
-    }
+    return readGitWorkingTreeStatus(dirPath)
   })
 
   // Git Bash detection and configuration (Windows only)

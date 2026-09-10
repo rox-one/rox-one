@@ -70,6 +70,7 @@
     "./branding": "./src/branding.ts",
     "./feature-flags": "./src/feature-flags.ts",
     "./git/status": "./src/git/status.ts",
+    "./git/exec": "./src/git/exec.ts",
     "./workspace/open-in-editor": "./src/workspace/open-in-editor.ts",
     "./interceptor": "./src/interceptor-common.ts",
     "./search": "./src/search/index.ts",

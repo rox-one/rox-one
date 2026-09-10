@@ -31,11 +31,19 @@ export function isSensitiveAgentCwd(cwd: string | undefined, home = homedir()): 
   return SENSITIVE_SEGMENTS.some((segment) => posix.includes(segment))
 }
 
-function realOrResolve(path: string): string {
+export function realOrResolve(path: string): string {
   try {
     return existsSync(path) ? realpathSync(path) : resolve(path)
   } catch {
     return resolve(path)
+  }
+}
+
+export function sameRealPath(left: string, right: string): boolean {
+  try {
+    return realOrResolve(left) === realOrResolve(right)
+  } catch {
+    return false
   }
 }
 
