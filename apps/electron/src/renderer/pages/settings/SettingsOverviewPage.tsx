@@ -40,7 +40,12 @@ export function SettingsOverviewPage() {
     let cancelled = false
     void readRecentSettings(activeWorkspaceId).then((ids) => {
       if (cancelled) return
-      setRecentPages(ids.map((id) => ({ id, page: getSettingsPage(id) })))
+      setRecentPages(
+        ids.flatMap((id) => {
+          const page = getSettingsPage(id)
+          return page ? [{ id, page }] : []
+        }),
+      )
     })
     return () => {
       cancelled = true
@@ -169,13 +174,14 @@ export function SettingsOverviewPage() {
               </SettingsSection>
 
               {recentPages.length > 0 && (
-                <SettingsSection title={t('settings.overview.recent')}>
+                <SettingsSection title={t('settings.overview.recent')} data-testid="settings-recent">
                   <SettingsCard>
                     {recentPages.map(({ id, page }) => {
                       const Icon = SETTINGS_ICONS[id]
                       return (
                         <SettingsRow
                           key={id}
+                          data-testid={`settings-recent-${id}`}
                           label={
                             <span className="flex items-center gap-2">
                               <Icon className="h-4 w-4 text-muted-foreground" />

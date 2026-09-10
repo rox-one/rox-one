@@ -24,6 +24,8 @@ export interface SettingsRowProps {
   className?: string
   /** Whether the row is inside a card (affects padding) */
   inCard?: boolean
+  /** Optional test id for automated UI drivers */
+  'data-testid'?: string
 }
 
 /**
@@ -44,6 +46,7 @@ export function SettingsRow({
   action,
   className,
   inCard = true,
+  'data-testid': testId,
 }: SettingsRowProps) {
   const Component = onClick ? 'button' : 'div'
 
@@ -51,6 +54,7 @@ export function SettingsRow({
     <Component
       type={onClick ? 'button' : undefined}
       onClick={onClick}
+      data-testid={testId}
       data-layout="settings-row"
       className={cn(
         'w-full flex items-center justify-between text-left',

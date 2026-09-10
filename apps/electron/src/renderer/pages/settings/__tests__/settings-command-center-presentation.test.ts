@@ -31,6 +31,8 @@ describe('settings command center presentation', () => {
     expect(overviewSrc).toContain("'shortcuts'")
     expect(overviewSrc).toContain('data-testid="settings-overview"')
     expect(overviewSrc).toContain('data-testid={`settings-quick-${id}`}')
+    expect(overviewSrc).toContain('data-testid="settings-recent"')
+    expect(overviewSrc).toContain('data-testid={`settings-recent-${id}`}')
   })
 
   it('groups and searches navigator rows without changing the selection contract', () => {
