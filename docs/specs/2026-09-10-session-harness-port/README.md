@@ -1,7 +1,7 @@
 # RX-SPC-0021. Порт возможностей DSH-harness в Rox One
 
 - **Doc ID:** RX-SPC-0021
-- **Статус:** In Review (планирование; код не начат)
+- **Статус:** Implemented on `rox/session-harness-port` (H0–H6; флаги default false; не в `main`)
 - **Дата:** 2026-09-10
 - **Ветка:** `rox/session-harness-port`
 - **ADR:** [RX-ADR-0019](../../architecture/adr/0019-session-harness-capability-port.md)

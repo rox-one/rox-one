@@ -52,3 +52,20 @@
 ## ✗ 8. Смена default permission на более слабый ради паритета с DSH
 
 Desktop DSH у оператора стоит `danger-full-access`. Rox уже `allow-all` для новых сессий. Новые пути UEW **MUST** нести явный `ExecutionPolicy` (UEW §2.12). Не размазывать YOLO на terminal/PTY «потому что в DSH так».
+
+## ✗ 9. H6 freeze — не устанавливаем
+
+Эти runtime **MUST NOT** появиться в Rox. Список заморожен: нет «потом возьмём». Appearance → Workbench показывает ту же таблицу как «не устанавливаем».
+
+| id | Пакет-референс | Почему skip | Что уже есть в Rox |
+|---|---|---|---|
+| `sessionBuddy` | `dsh-session-buddy` | Ломал клиент | OS-notify H2 |
+| `mnemon` | `dsh-mnemon` | Требовал `webServer` | `packages/server-core/src/memory/` |
+| `pluginHotReload` | `dsh-hot-reload` | Cordis HMR; Desktop всё равно рестартил | флаги + RPC refresh |
+| `agentTeamsRuntime` | `@nanmicoder/dsh-agent-teams` | Чужой host | `SessionFanOutSheet` + `spawn_session` |
+| `visionCliPlugin` | `@liustack/modlens` | Отдельный CLI | vision-модели + `browser_tool` |
+| `searchCliPlugin` | `@liustack/modsearch` | Ключи в плагине | MCP/API sources |
+| `extraAutomationRuntime` | `@michengai/dsh-automation` | Тот же `webServer` | first-party automations |
+| `remoteControlCompat` | Desktop remote control | Нет цели | — |
+
+Канон в коде: `packages/core/src/platform/workbench/harness-skip-list.ts`.

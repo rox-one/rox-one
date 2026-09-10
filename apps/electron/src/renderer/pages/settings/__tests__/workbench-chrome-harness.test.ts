@@ -26,4 +26,14 @@ describe('WorkbenchChromeSettings harness flags', () => {
     expect(src).toContain('if (checked) setHarnessInspector(true)')
     expect(src).toContain('if (!checked) setHarnessAgentIntel(false)')
   })
+
+  it('shows the frozen skip-list as not-installed', () => {
+    expect(src).toContain('HARNESS_SKIP_LIST')
+    expect(src).toContain('data-testid="harness-skip-list"')
+    expect(src).toContain("t('settings.appearance.harnessSkipTitle')")
+    expect(src).toContain("t('settings.appearance.harnessSkipNotInstalled')")
+    const skipBlock = src.slice(src.indexOf('harnessSkipTitle'))
+    expect(skipBlock).not.toContain('SettingsToggle')
+    expect(src).not.toMatch(/потом возьмём session-buddy/)
+  })
 })

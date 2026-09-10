@@ -16,7 +16,8 @@ import {
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
 } from '@/atoms/unified-shell'
-import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
+import { HARNESS_SKIP_LIST } from '@craft-agent/core/platform'
+import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 
 export function WorkbenchChromeSettings() {
   const { t } = useTranslation()
@@ -32,6 +33,7 @@ export function WorkbenchChromeSettings() {
   const [harnessExtCenter, setHarnessExtCenter] = useAtom(featureWorkbenchHarnessExtCenterV1Atom)
 
   return (
+    <>
     <SettingsSection
       title={t('settings.appearance.workbench')}
       description={t('settings.appearance.workbenchDesc')}
@@ -105,5 +107,24 @@ export function WorkbenchChromeSettings() {
         />
       </SettingsCard>
     </SettingsSection>
+    <SettingsSection
+      title={t('settings.appearance.harnessSkipTitle')}
+      description={t('settings.appearance.harnessSkipDesc')}
+    >
+      <div data-testid="harness-skip-list">
+        <SettingsCard>
+          {HARNESS_SKIP_LIST.map((item) => (
+            <SettingsRow
+              key={item.id}
+              label={t(`settings.appearance.harnessSkip.${item.id}`)}
+              description={t(`settings.appearance.harnessSkip.${item.id}Desc`)}
+            >
+              <span className="text-xs opacity-60">{t('settings.appearance.harnessSkipNotInstalled')}</span>
+            </SettingsRow>
+          ))}
+        </SettingsCard>
+      </div>
+    </SettingsSection>
+    </>
   )
 }

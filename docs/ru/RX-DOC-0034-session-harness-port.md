@@ -33,7 +33,7 @@ DSH plugin  →  capability  →  Panel / Surface / Skill / Source / Automation
 | H3 | Дашборд контекста, нарезка MCP, честный fallback, review на permission | inspector + omp-agent |
 | H4 | Один экран расширений вместо трёх списков | Extension Center |
 | H5 | Импорт P0 (Grok/Claude/Codex/OpenCode/Hermes) в **Rox-сессии**, advisor, simplify | sessions + skills; scan ≠ persist |
-| H6 | Явный отказ от session-buddy / mnemon / cordis-HMR | анти-цели |
+| H6 | Явный отказ от session-buddy / mnemon / cordis-HMR — freeze в Appearance | анти-цели H-03 §9 |
 
 Уже есть и **не копируем**: annotations, notes, superpowers, skills manager, automations, memory, paste/drag-drop, OS-notify конца хода.
 

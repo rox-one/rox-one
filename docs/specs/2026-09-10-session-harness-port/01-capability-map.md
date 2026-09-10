@@ -39,9 +39,9 @@
 | `dsh-mcp-lens` | 0.1.0-rc.9 | Режет MCP-контекст | **port** | `mcpPool` loadMode + tool-defs filtering (`session-tools-core`). Inspector показывает «скрыто N tools» | H3 |
 | `dsh-permission-rules` | 0.6.16 | Декларативные правила + сетевой прокси | **extend** | `permissions-config.ts` + RX-DOC-0031 fail-closed. **Не** копировать whitelist-прокси DSH (он ломал github.com на Desktop) | H3 |
 | `@dsh-external/workflow` | 0.1.2 | Dynamic workflows | **extend** | `WorkflowSpec` / `tasks:*` + `SessionWorkflowEditor`. Не KodaX-harness внутри Cordis | H5 |
-| `@liustack/modlens` | 3.26.1 | Vision через Antigravity CLI | **skip→source** | Уже есть vision-модели Rox и `browser_tool`. Отдельный CLI-плагин не тащить. При необходимости — MCP source | H6 |
-| `@liustack/modsearch` | 5.10.2 | Веб/X поиск | **skip→source** | MCP/API source (Exa/Tavily/Firecrawl уже в операторском контуре). Не вшивать ключи | H6 |
-| `dsh-hot-reload` | 0.2.4 | Live reload плагинов | **skip** | В Desktop всё равно требовал рестарт; у Rox hot path — флаги и RPC refresh, не Cordis HMR | H6 |
+| `@liustack/modlens` | 3.26.1 | Vision через Antigravity CLI | **skip→source** | Уже есть vision-модели Rox и `browser_tool`. Отдельный CLI-плагин не тащить. При необходимости — MCP source | H6 freeze |
+| `@liustack/modsearch` | 5.10.2 | Веб/X поиск | **skip→source** | MCP/API source (Exa/Tavily/Firecrawl уже в операторском контуре). Не вшивать ключи | H6 freeze |
+| `dsh-hot-reload` | 0.2.4 | Live reload плагинов | **skip** | В Desktop всё равно требовал рестарт; у Rox hot path — флаги и RPC refresh, не Cordis HMR | H6 freeze |
 
 ## 3. Выключено в DSH и здесь тоже skip
 
@@ -64,7 +64,7 @@
 |---|---|---|---|
 | Список сессий / workspace folders | **reuse** | Craft sessions + workspace | — |
 | `session.jsonl.zstd` (кадр 1 = header) | **skip** | Транскрипт Rox; импорт конвертирует, не пишет zstd | H5 читает чужое, пишет своё |
-| Compatibility mode / Remote control | **skip** | Нет цели | H6 |
+| Compatibility mode / Remote control | **skip** | Нет цели | H6 freeze |
 | Slash `/import` | **extend** | Command palette / `actions/` | H5 |
 | Cordis plugin marketplace | **skip** | Extension Center + curated marketplace | H4 |
 | Loopback `:43120` + cookie-auth | **skip** | Rox RPC | — |

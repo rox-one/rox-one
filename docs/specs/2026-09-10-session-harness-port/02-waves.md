@@ -154,7 +154,11 @@ P1/P2 форматы импорта — follow-up PR после зелёного
 
 ## H6 — closeout (`RX-TSK-0806`)
 
-Зафиксировать skip-list в этом файле и в Appearance → «не устанавливаем». Удалить из плана любые «потом возьмём session-buddy». Прогнать `bun run rx:validate`, i18n parity, typecheck затронутых пакетов.
+Skip-list заморожен в этом файле и в Appearance → «не устанавливаем». В плане нет отложенного session-buddy. Прогнать `bun run rx:validate`, i18n parity, typecheck затронутых пакетов.
+
+**Freeze (не устанавливаем):** session-buddy, mnemon, plugin hot-reload, agent-teams runtime, vision CLI plugin, search CLI plugin, extra automation runtime, remote-control compat. Канон: `HARNESS_SKIP_LIST`. Appearance показывает тот же список без тумблеров. Отложенного session-buddy в плане нет.
+
+Реализовано: Appearance → Workbench → «не устанавливаем»; анти-цели H-03 §9.
 
 ## Порядок веток и merge
 

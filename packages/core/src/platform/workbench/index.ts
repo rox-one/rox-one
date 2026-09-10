@@ -7,6 +7,11 @@ export {
   isWorkbenchFlagEnabled,
   resolveEnabledFlags,
 } from './flags.ts';
+export {
+  HARNESS_SKIP_IDS,
+  HARNESS_SKIP_LIST,
+  type HarnessSkipId,
+} from './harness-skip-list.ts';
 export type {
   LayoutMutation,
   LayoutMutationCode,

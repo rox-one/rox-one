@@ -77,5 +77,5 @@ status: active
 | `RX-TSK-0803` | H3 — интеллект агента (context, MCP lens, fallbacks, auto-review) | Сделано |
 | `RX-TSK-0804` | H4 — единый Extension Center | Сделано |
 | `RX-TSK-0805` | H5a импорт P0 в Rox-сессии; H5b advisor/simplify/workflow | Сделано |
-| `RX-TSK-0806` | H6 — freeze skip-list и closeout | Запланировано |
+| `RX-TSK-0806` | H6 — freeze skip-list и closeout | Сделано |
 
