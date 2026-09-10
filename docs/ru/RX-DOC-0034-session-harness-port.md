@@ -9,7 +9,7 @@ status: active
 - **Статус:** Конспект плана. Код волн не начат.
 - **Дата:** 2026-09-10
 - **Ветка:** `rox/session-harness-port`
-- **Норматив:** [ADR-0019](../architecture/adr/0019-session-harness-capability-port.md), [спека RX-SPC-0021](../specs/2026-09-10-session-harness-port/README.md)
+- **Норматив:** [ADR-0019](../architecture/adr/0019-session-harness-capability-port.md), [спека RX-SPC-0021](../specs/2026-09-10-session-harness-port/README.md), [спокойная миграция H-04](../specs/2026-09-10-session-harness-port/04-calm-migration.md)
 - **Эпик:** `RX-EPC-0001` · задачи `RX-TSK-0800`…`RX-TSK-0806`
 
 ## Зачем
@@ -32,12 +32,14 @@ DSH plugin  →  capability  →  Panel / Surface / Skill / Source / Automation
 | H2 | История ввода ↑↓, прогресс хода, cost в статус-баре, notify, «открыть в редакторе» | input + notifications |
 | H3 | Дашборд контекста, нарезка MCP, честный fallback, review на permission | inspector + omp-agent |
 | H4 | Один экран расширений вместо трёх списков | Extension Center |
-| H5 | Импорт чужих чатов, advisor-скилл, simplify диффа | sessions + skills |
+| H5 | Импорт P0 (Grok/Claude/Codex/OpenCode/Hermes) в **Rox-сессии**, advisor, simplify | sessions + skills; scan ≠ persist |
 | H6 | Явный отказ от session-buddy / mnemon / cordis-HMR | анти-цели |
 
 Уже есть и **не копируем**: annotations, notes, superpowers, skills manager, automations, memory, paste/drag-drop, OS-notify конца хода.
 
-Правый док в текущем UI **выключен** (`isRightSidebarVisible={false}`). H1 включает инспектор сессии через `InspectorHost`, а не воскрешает мёртвую кнопку. `SessionGitOutline` — дерево веток чата, не git: git-вкладка пишется отдельно.
+Правый док в текущем UI **выключен** (`isRightSidebarVisible={false}`). `InspectorHost` живёт только при unified-shell ON. H1 включает инспектор сессии и при OFF. `SessionGitOutline` — дерево веток чата, не git: git-вкладка пишется отдельно.
+
+Спокойный порядок, пререквизиты G0–G6 и контракт импорта (cwd `$HOME` запрещён как workspace, не писать `~/.dsh`) — в [H-04](../specs/2026-09-10-session-harness-port/04-calm-migration.md). DSH Desktop не удаляем, пока волна не зелёная.
 
 ## Чего не будет
 

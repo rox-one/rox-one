@@ -76,8 +76,10 @@ H1 **MUST** сажать вкладки в живой `InspectorHost` + `PanelRe
 4. H2 — хром чата (история ввода, прогресс, cost в status, open-in-editor).
 5. H3 — интеллект агента (context dashboard, MCP lens, fallbacks, auto-review).
 6. H4 — довести Extension Center (skills + MCP уже почти есть).
-7. H5 — advisor / simplify / workflow как skill-pack + Automation, не как Cordis.
+7. H5 — импорт P0 (Grok/Claude/Codex/…) в Rox-сессии + advisor / simplify / workflow как skill-pack, не Cordis.
 8. H6 — явный skip списка (см. карту).
+
+Операционный слой — [04-calm-migration.md](./04-calm-migration.md): флаги, откат, импорт как отдельный контур, DSH Desktop не удаляем до паритета волны.
 
 Два отвергнутых пути — в ADR-0019.
 

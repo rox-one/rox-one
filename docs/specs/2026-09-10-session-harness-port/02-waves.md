@@ -29,7 +29,7 @@ H2 и H4 независимы после H0. H3 зависит от слота �
 
 **Задачи:** `RX-TSK-0800`
 
-- [x] ADR-0019, спека RX-SPC-0021, DOC-0034, реестр, ветка.
+- [x] ADR-0019, спека RX-SPC-0021, DOC-0034, H-04 спокойная миграция, реестр, ветка.
 - [ ] Флаги `workbench.harness.*` в `packages/core/src/platform/workbench/flags.ts` + Appearance toggle (можно в том же PR, что H1, если H0 остаётся docs-only).
 - [ ] Влить каталог `docs/specs/2026-08-25-unified-execution-workbench/` с `origin/main` (документы, без кода PTY).
 
@@ -112,16 +112,35 @@ Paste и notify — reuse, не в этом PR.
 
 ## H5 — импорт, advisor, simplify, workflow (`RX-TSK-0805`)
 
-Без нового флага оболочки; фичи как команды/скиллы.
+Без нового флага оболочки; фичи как команды/скиллы. Импорт — отдельный контур (H-04 §4), не «ещё одна кнопка в settings».
 
-- Chat import: `packages/shared/src/sessions/import-*.ts` + settings page.
+### H5a — импорт (P0)
+
+**Файлы:** `packages/shared/src/sessions/import-{discover,convert,persist,registry}.ts` + settings page + команда `sessions.import`.
+
+Пайплайн first-party (не Cordis, не HTTP `:43120`):
+
+1. `discover` — индекс чужих корней (P0: `~/.grok/sessions`, `~/.claude/projects`, `~/.codex/sessions`, opencode db, hermes db). Кэш в workspace Rox.
+2. `convert` — чистые парсеры. Grok = `summary.json` + `chat_history.jsonl`.
+3. `persist` — новая Rox-сессия (craft transcript). **MUST NOT** писать `session.jsonl.zstd` / `~/.dsh`.
+4. `attach` — текущий workspace. cwd `$HOME` не создавать как workspace.
+5. `refresh` — явная перезагрузка списка сессий.
+
+Идемпотентность: тот же `sourcePath` → skip / append / force. Пустые источники (0 user turns) → skip с причиной.
+
+**DoD:** один Claude JSONL **и** один Grok-каталог → две Rox-сессии в текущем workspace; `rg '~/.dsh' ` по коду импорта пуст.
+
+### H5b — advisor / simplify / workflow / btw
+
 - Advisor: включить bundled reviewer skill; не второй hidden session без ведома.
 - Simplify: skill над git diff (superpowers/simplify-code уже рядом).
 - Workflow: существующий `SessionWorkflowEditor` + `tasks:*`.
 - BTW: follow-up island, reuse annotations.
 - GenUI: не портировать; rich blocks уже покрывают mermaid/html/pdf.
 
-**DoD:** импорт одного Claude Code JSONL в новую Rox-сессию без обращения к `~/.dsh`.
+P1/P2 форматы импорта — follow-up PR после зелёного H5a, те же интерфейсы.
+
+**DoD волны:** DoD H5a + advisor/simplify не создают второй агентный loop.
 
 ## H6 — closeout (`RX-TSK-0806`)
 

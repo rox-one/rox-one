@@ -20,8 +20,9 @@
 | [01-capability-map.md](./01-capability-map.md) | Все 29 установленных DSH-плагинов → `reuse` / `extend` / `port` / `skip` |
 | [02-waves.md](./02-waves.md) | Волны H0–H6, файлы, флаги, DoD |
 | [03-anti-goals.md](./03-anti-goals.md) | Что запрещено копировать из DSH |
+| [04-calm-migration.md](./04-calm-migration.md) | Пререквизиты, хост Desktop ≠ плагины, контракт импорта, порядок включения |
 
-Нормативны ADR-0019 и 01/02/03. README не дублирует таблицы.
+Нормативны ADR-0019 и 01/02/03/04. README не дублирует таблицы.
 
 ## Одна формула
 

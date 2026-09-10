@@ -40,7 +40,7 @@ DSH-плагины — npm-пакеты под Cordis. Этот Desktop-хост
 
 ## Consequences
 
-- Каждая DSH-фича получает строку в карте [01-capability-map.md](../../specs/2026-09-10-session-harness-port/01-capability-map.md): `reuse` / `extend` / `port` / `skip`.
+- Каждая DSH-фича получает строку в карте [01-capability-map.md](../../specs/2026-09-10-session-harness-port/01-capability-map.md): `reuse` / `extend` / `port` / `skip`. Хост Desktop и импорт — [04-calm-migration.md](../../specs/2026-09-10-session-harness-port/04-calm-migration.md).
 - Новые строки UI — i18n × 10 локалей (`packages/shared/src/i18n`).
 - H1 (инспектор сессии) **MUST** сначала влить UEW-спеку с `origin/main`, иначе появится третий workbench.
 - Rollback волны: флаг off. Обратной миграции схемы в H1–H3 нет.

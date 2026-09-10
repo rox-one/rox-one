@@ -71,11 +71,11 @@ status: active
 
 | Код | Задача | Статус |
 |-----|--------|--------|
-| `RX-TSK-0800` | H0 — ADR, спека, реестр и ветка | В работе |
+| `RX-TSK-0800` | H0 — ADR, спека, реестр, H-04 спокойная миграция | В работе |
 | `RX-TSK-0801` | H1 — инспектор сессии (files/git/browser); терминал = SurfaceTab UEW | Запланировано |
 | `RX-TSK-0802` | H2 — хром чата (история ввода, прогресс, cost, notify, editor) | Запланировано |
 | `RX-TSK-0803` | H3 — интеллект агента (context, MCP lens, fallbacks, auto-review) | Запланировано |
 | `RX-TSK-0804` | H4 — единый Extension Center | Запланировано |
-| `RX-TSK-0805` | H5 — импорт чатов, advisor, simplify, workflow | Запланировано |
+| `RX-TSK-0805` | H5a импорт P0 в Rox-сессии; H5b advisor/simplify/workflow | Запланировано |
 | `RX-TSK-0806` | H6 — freeze skip-list и closeout | Запланировано |
 

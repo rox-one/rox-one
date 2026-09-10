@@ -22,7 +22,7 @@
 | `dsh-md-notes` | 0.12.0 | Markdown-заметки внутри harness | **reuse** | Notes + RX-DOC-0029 / RX-TSK-0411 | — |
 | `dsh-notification` | 0.1.1 | OS-notify по концу хода | **reuse** | `main/notifications.ts` + `hooks/useNotifications.ts` (unfocused + badge). Не второй buddy | — |
 | `dsh-cost-meter` | 1.7.17 | Стоимость сессии / дня / каталог цен | **extend** | В UI сейчас **% контекста / токены**, не $. `tokenUsage.costUsd` уже в атомах сессии (канбан). Status bar + popover сессии. Каталог цен — server-authoritative | H2 |
-| `dsh-chat-import` | 0.11.0 | Импорт Claude/Codex/ChatGPT/Cursor | **port** | Settings → Import; парсеры в `packages/shared/src/sessions/`; без записи в `~/.dsh` | H5 |
+| `dsh-chat-import` | 0.11.0 | Импорт 20 форматов (Claude/Codex/Grok/…) | **port** | Settings → Import; парсеры в `packages/shared/src/sessions/`; persist = Rox transcript, не `~/.dsh`; scan ≠ import; cwd `$HOME` → текущий workspace. Контракт: [H-04 §4](./04-calm-migration.md) | H5 |
 | `dsh-skill-mcp-panel` | 2.0.3 | Скиллы + MCP в одном settings UI | **extend** | Склеить `SkillsListPanel` + `SourcesListPanel` во вкладке Extension Center, не третий список | H4 |
 
 ## 2. Мозг агента
@@ -56,7 +56,23 @@
 | `dsh-sandbox-escalation-fix` | Патч чужого sandbox. У Rox — `craft-exec` / host-bash jail / UEW ExecutionPolicy |
 | `@nanmicoder/dsh-agent-teams` | Несовместимый host. Fan-out = `SessionFanOutSheet` + `spawn_session` |
 
-## 4. Сводка счёта
+## 4. Хост DSH Desktop (не community-плагины)
+
+Эти поверхности даёт сам Desktop 2.0.9 / `@deepseek-ai/dsh-base` + `dsh-web-app`. В H-01 их не было — из-за этого «перенести DSH» легко путают с переносом Electron-хоста. Норматив: [H-04 §3](./04-calm-migration.md).
+
+| Фича хоста | Вердикт | Куда в Rox | Волна |
+|---|---|---|---|
+| Список сессий / workspace folders | **reuse** | Craft sessions + workspace | — |
+| `session.jsonl.zstd` (кадр 1 = header) | **skip** | Транскрипт Rox; импорт конвертирует, не пишет zstd | H5 читает чужое, пишет своё |
+| Compatibility mode / Remote control | **skip** | Нет цели | H6 |
+| Slash `/import` | **extend** | Command palette / `actions/` | H5 |
+| Cordis plugin marketplace | **skip** | Extension Center + curated marketplace | H4 |
+| Loopback `:43120` + cookie-auth | **skip** | Rox RPC | — |
+| Preset `danger-full-access` | **reuse осторожно** | `allow-all` уже есть; UEW PTY — свой `ExecutionPolicy` | H1/UEW |
+
+`dsh-base` / `dsh-web-app` **MUST NOT** попасть в `package.json`.
+
+## 5. Сводка счёта
 
 | Вердикт | Кол-во | Смысл для плана |
 |---|---|---|
@@ -64,7 +80,8 @@
 | extend | 12 | Inspector files, cost $, progress, Extension Center, permissions, workflow, … |
 | port | 7 | История промптов, git-док, context dashboard, chat import, MCP lens, open-in-editor, auto-review |
 | skip / skip→source | 11 | Явный отказ или MCP source без кода плагина |
+| host reuse/skip | 7 | Desktop-хром не портируем пакетом |
 
 (Git-док считается port, не reuse `SessionGitOutline`.)
 
-Итого новых поверхностей, которые пользователь *увидит*: inspector tabs (H1), chat chrome (H2), context/cost/review (H3), единый Extension Center (H4), import + advisor (H5). Не 29 плагинов в marketplace.
+Итого новых поверхностей, которые пользователь *увидит*: inspector tabs (H1), chat chrome (H2), context/cost/review (H3), единый Extension Center (H4), import + advisor (H5). Не 29 плагинов в marketplace и не второй Electron-хост.
