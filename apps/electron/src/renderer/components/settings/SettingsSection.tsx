@@ -24,6 +24,8 @@ export interface SettingsSectionProps {
   variant?: 'default' | 'danger'
   /** Optional action element (e.g., Edit button) shown at the right of the header */
   action?: React.ReactNode
+  /** Optional test id for automated UI drivers */
+  'data-testid'?: string
 }
 
 /**
@@ -41,9 +43,10 @@ export function SettingsSection({
   className,
   variant = 'default',
   action,
+  'data-testid': testId,
 }: SettingsSectionProps) {
   return (
-    <section className={cn('space-y-3', className)}>
+    <section className={cn('space-y-3', className)} data-testid={testId}>
       <div className="flex items-start justify-between gap-4 pl-1">
         <div className="space-y-0.5">
           <h3
