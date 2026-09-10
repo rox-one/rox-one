@@ -150,6 +150,8 @@ P1/P2 форматы импорта — follow-up PR после зелёного
 
 **DoD волны:** DoD H5a + advisor/simplify не создают второй агентный loop.
 
+Реализовано first-party: `import-{discover,convert,persist,registry}.ts`, команда `sessions.import` → Settings → Import, persist пишет `sessions/<id>/session.jsonl`. Advisor/simplify — bundled skills в текущем чате (`@advisor` / `@simplify`), без `spawn_session`. Workflow открывает существующий `SessionWorkflowEditor` (map). P1/P2 форматы — follow-up.
+
 ## H6 — closeout (`RX-TSK-0806`)
 
 Зафиксировать skip-list в этом файле и в Appearance → «не устанавливаем». Удалить из плана любые «потом возьмём session-buddy». Прогнать `bun run rx:validate`, i18n parity, typecheck затронутых пакетов.

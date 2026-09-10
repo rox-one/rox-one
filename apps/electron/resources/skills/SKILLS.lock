@@ -119,6 +119,18 @@
         "knowledge-distill",
         "research-and-publish"
       ]
+    },
+    {
+      "slug": "rox-harness",
+      "origin": "bundled",
+      "commit": "local",
+      "license": "MIT",
+      "licenseFile": null,
+      "note": "H5 advisor/simplify skills. Current-session only; they must not spawn a hidden loop.",
+      "skills": [
+        "advisor",
+        "simplify"
+      ]
     }
   ]
 }

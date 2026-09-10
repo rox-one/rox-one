@@ -80,10 +80,11 @@
   title: H5 — импорт чатов, advisor, simplify, workflow
   kind: task
   path: packages/shared/src/sessions
-  status: planned
+  status: done
   refs: [RX-EPC-0001, RX-TSK-0804]
   note: |
-    Парсеры импорта first-party. Advisor = bundled skill, не второй hidden loop.
+    First-party discover/convert/persist. Scan ≠ persist. Advisor/simplify =
+    bundled skills in the current session, не второй hidden loop.
 
 - id: RX-TSK-0806
   title: H6 — freeze skip-list и closeout порта

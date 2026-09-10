@@ -620,6 +620,31 @@ export interface ElectronAPI {
   // Session export/import (cross-workspace transfer)
   exportSession(sessionId: string): Promise<unknown>
   importSession(targetWorkspaceId: string, bundle: unknown, mode: 'move' | 'fork'): Promise<{ sessionId: string; warnings?: string[] }>
+  foreignDiscoverSessions(args: { workspaceId: string }): Promise<{
+    entries: Array<{
+      id: string
+      kind: string
+      sourcePath: string
+      title?: string
+      cwd?: string
+      userTurns: number
+      skipReason?: string
+    }>
+    scannedAt: number
+    cachePath: string
+  }>
+  foreignPersistSessions(args: {
+    workspaceId: string
+    sourcePaths: string[]
+    mode?: 'skip' | 'append' | 'force'
+  }): Promise<{
+    results: Array<{
+      sourcePath: string
+      action: 'created' | 'skipped' | 'appended' | 'replaced'
+      sessionId?: string
+      reason?: string
+    }>
+  }>
   exportRemoteSessionTransfer(sessionId: string): Promise<RemoteSessionTransferPayload>
   importRemoteSessionTransfer(targetWorkspaceId: string, payload: RemoteSessionTransferPayload): Promise<ImportRemoteSessionTransferResult>
 

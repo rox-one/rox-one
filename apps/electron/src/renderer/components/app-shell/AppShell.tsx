@@ -1263,6 +1263,40 @@ function AppShellContent({
     ),
   }, [chatChromeEnabled, focusedSessionId, sessionMetaMap, activeWorkspace, t])
 
+  useAction('sessions.import', () => {
+    navigate(routes.view.settings('import'))
+  })
+  useAction('session.advisor', () => {
+    const id = focusedSessionId ?? session.selected
+    if (!id) {
+      toast.error(t('session.advisorNeedChat'))
+      return
+    }
+    window.dispatchEvent(new CustomEvent('craft:restore-input', {
+      detail: { sessionId: id, text: t('session.advisorPrompt') },
+    }))
+  })
+  useAction('session.simplify', () => {
+    const id = focusedSessionId ?? session.selected
+    if (!id) {
+      toast.error(t('session.advisorNeedChat'))
+      return
+    }
+    window.dispatchEvent(new CustomEvent('craft:restore-input', {
+      detail: { sessionId: id, text: t('session.simplifyPrompt') },
+    }))
+  })
+  useAction('session.workflow', () => {
+    const id = focusedSessionId ?? session.selected
+    if (!id) {
+      toast.error(t('session.advisorNeedChat'))
+      return
+    }
+    window.dispatchEvent(new CustomEvent('craft:session-view', {
+      detail: { sessionId: id, view: 'map' },
+    }))
+  })
+
   const hasPendingPrompt = React.useCallback((sessionId: string) => {
     return (pendingPermissions.get(sessionId)?.length ?? 0) > 0
   }, [pendingPermissions])

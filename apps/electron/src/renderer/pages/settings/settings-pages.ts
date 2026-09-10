@@ -20,6 +20,7 @@ import ContextSettingsPage from './ContextSettingsPage'
 import KnowledgeSettingsPage from './KnowledgeSettingsPage'
 import MarketplaceSettingsPage from './MarketplaceSettingsPage'
 import ExtensionsSettingsPage from './ExtensionsSettingsPage'
+import ImportSettingsPage from './ImportSettingsPage'
 import AppSettingsPage from './AppSettingsPage'
 import AiSettingsPage from './AiSettingsPage'
 import AppearanceSettingsPage from './AppearanceSettingsPage'
@@ -47,6 +48,7 @@ export const SETTINGS_PAGE_COMPONENTS: Record<SettingsSubpage, ComponentType> = 
   knowledge: KnowledgeSettingsPage,
   marketplace: MarketplaceSettingsPage,
   extensions: ExtensionsSettingsPage,
+  import: ImportSettingsPage,
   app: AppSettingsPage,
   ai: AiSettingsPage,
   appearance: AppearanceSettingsPage,

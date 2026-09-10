@@ -138,7 +138,26 @@ export {
   serializeSession,
   validateBundle,
   MAX_BUNDLE_SIZE_BYTES,
-} from './bundle.ts';
+} from './bundle.ts'
+
+export { isHomePath } from './import-home.ts'
+export type {
+  ConvertedForeignSession,
+  ForeignDiscoverResult,
+  ForeignImportMode,
+  ForeignIndexEntry,
+  ForeignPersistResult,
+  ForeignSessionKind,
+} from './import-types.ts'
+export { FOREIGN_SESSION_KINDS } from './import-types.ts'
+export { discoverForeignSessions } from './import-discover.ts'
+export { convertForeignSource, convertClaudeJsonl, convertGrokCatalog, inferForeignKind, redactSecrets } from './import-convert.ts'
+export { persistForeignSession, persistForeignSessions } from './import-persist.ts'
+export {
+  foreignImportRegistryPath,
+  foreignImportScanCachePath,
+  loadForeignImportRegistry,
+} from './import-registry.ts';
 
 // LexoRank helpers (manual session ordering)
 export {

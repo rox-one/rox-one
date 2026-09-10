@@ -292,11 +292,23 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         const nextText = coerceInputText(text)
         setInputValue(nextText)
         inputValueRef.current = nextText
+        onInputChange(sessionId, nextText)
       }
     }
     window.addEventListener('craft:restore-input', handler)
     return () => window.removeEventListener('craft:restore-input', handler)
-  }, [sessionId])
+  }, [sessionId, onInputChange])
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const { sessionId: targetId, view } = (e as CustomEvent).detail ?? {}
+      if (targetId === sessionId && (view === 'map' || view === 'outline' || view === 'standard')) {
+        setSessionView(view)
+      }
+    }
+    window.addEventListener('craft:session-view', handler)
+    return () => window.removeEventListener('craft:session-view', handler)
+  }, [sessionId, setSessionView])
 
   const handleInputChange = React.useCallback((value: string) => {
     const nextText = coerceInputText(value)

@@ -262,6 +262,34 @@ export const actions = {
     defaultHotkey: null,
     category: 'View',
   },
+  'sessions.import': {
+    id: 'sessions.import',
+    label: 'Import chats',
+    description: 'Scan local Grok/Claude sessions and persist them as Rox chats',
+    defaultHotkey: null,
+    category: 'General',
+  },
+  'session.advisor': {
+    id: 'session.advisor',
+    label: 'Advisor review',
+    description: 'Prefill @advisor in this chat — does not spawn a hidden session',
+    defaultHotkey: null,
+    category: 'Chat',
+  },
+  'session.simplify': {
+    id: 'session.simplify',
+    label: 'Simplify diff',
+    description: 'Prefill @simplify in this chat — does not spawn a hidden session',
+    defaultHotkey: null,
+    category: 'Chat',
+  },
+  'session.workflow': {
+    id: 'session.workflow',
+    label: 'Session workflow',
+    description: 'Open the existing session workflow map',
+    defaultHotkey: null,
+    category: 'Chat',
+  },
 
 } as const satisfies Record<string, ActionDefinition>
 

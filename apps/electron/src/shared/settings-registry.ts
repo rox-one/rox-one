@@ -41,6 +41,7 @@ export const SETTINGS_PAGES = [
   { id: 'marketplace' as const, labelKey: 'settings.marketplace.title', descriptionKey: 'settings.marketplace.description' },
   { id: 'knowledge' as const, labelKey: 'settings.knowledge.title', descriptionKey: 'settings.knowledge.description' },
   { id: 'extensions' as const, labelKey: 'settings.extensions.title', descriptionKey: 'settings.extensions.description' },
+  { id: 'import' as const, labelKey: 'settings.import.title', descriptionKey: 'settings.import.description' },
   { id: 'app' as const, labelKey: 'settings.app.title', descriptionKey: 'settings.app.description' },
   { id: 'ai' as const, labelKey: 'settings.ai.title', descriptionKey: 'settings.ai.description' },
   { id: 'appearance' as const, labelKey: 'settings.appearance.title', descriptionKey: 'settings.appearance.description' },

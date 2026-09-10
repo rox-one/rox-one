@@ -71,6 +71,8 @@ export const RPC_CHANNELS = {
     IMPORT: 'sessions:import',
     EXPORT_REMOTE_TRANSFER: 'sessions:exportRemoteTransfer',
     IMPORT_REMOTE_TRANSFER: 'sessions:importRemoteTransfer',
+    FOREIGN_DISCOVER: 'sessions:foreignDiscover',
+    FOREIGN_PERSIST: 'sessions:foreignPersist',
   },
   transfer: {
     START: 'transfer:start',
