@@ -186,7 +186,7 @@ export async function buildElectronAppWindows(config: BuildConfig): Promise<void
   // Build preload - invoke esbuild directly via node
   console.log('  Building preload...');
   run(
-    'node ./node_modules/esbuild/bin/esbuild apps/electron/src/preload/bootstrap.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/bootstrap-preload.cjs --external:electron',
+    'node ./node_modules/esbuild/bin/esbuild apps/electron/src/preload/bootstrap.ts --bundle --platform=node --format=cjs --outfile=apps/electron/dist/bootstrap-preload.cjs --external:electron --alias:@anthropic-ai/claude-agent-sdk=apps/electron/src/renderer/shims/claude-agent-sdk-stub.ts',
     rootDir
   );
 

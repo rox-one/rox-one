@@ -7,8 +7,10 @@
  */
 
 import { spawn } from "bun";
+import * as esbuild from "esbuild";
 import { existsSync, statSync, mkdirSync } from "fs";
 import { join } from "path";
+import { PRELOAD_BUNDLE_ALIAS, PRELOAD_BUNDLE_EXTERNALS } from "./electron-preload-bundle";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const DIST_DIR = join(ROOT_DIR, "apps/electron/dist");
@@ -83,22 +85,23 @@ async function verifyJsFile(filePath: string): Promise<{ valid: boolean; error?:
 }
 
 async function buildEntry(entry: string, outfile: string): Promise<number> {
-  const proc = spawn({
-    cmd: [
-      "bun", "run", "esbuild",
-      entry,
-      "--bundle",
-      "--platform=node",
-      "--format=cjs",
-      `--outfile=${outfile}`,
-      "--external:electron",
-    ],
-    cwd: ROOT_DIR,
-    stdout: "inherit",
-    stderr: "inherit",
-  });
-
-  return proc.exited;
+  try {
+    await esbuild.build({
+      absWorkingDir: ROOT_DIR,
+      entryPoints: [entry],
+      bundle: true,
+      platform: "node",
+      format: "cjs",
+      outfile,
+      external: [...PRELOAD_BUNDLE_EXTERNALS],
+      alias: PRELOAD_BUNDLE_ALIAS,
+      logLevel: "warning",
+    });
+    return 0;
+  } catch (err) {
+    console.error(err);
+    return 1;
+  }
 }
 
 async function main(): Promise<void> {

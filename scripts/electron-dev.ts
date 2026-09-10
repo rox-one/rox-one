@@ -4,6 +4,7 @@
  */
 
 import { spawn, type Subprocess } from "bun";
+import { PRELOAD_BUNDLE_ALIAS, PRELOAD_BUNDLE_EXTERNALS } from "./electron-preload-bundle";
 import { existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
 import { createServer } from "net";
 import { join, basename } from "path";
@@ -297,7 +298,11 @@ async function runEsbuild(
   entryPoint: string,
   outfile: string,
   defines: Record<string, string> = {},
-  options: { packagesExternal?: boolean; alias?: Record<string, string> } = {}
+  options: {
+    packagesExternal?: boolean;
+    alias?: Record<string, string>;
+    external?: readonly string[];
+  } = {}
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await esbuild.build({
@@ -306,7 +311,7 @@ async function runEsbuild(
       platform: "node",
       format: "cjs",
       outfile: join(ROOT_DIR, outfile),
-      external: MAIN_BUNDLE_EXTERNALS,
+      external: [...(options.external ?? MAIN_BUNDLE_EXTERNALS)],
       ...(options.packagesExternal ? { packages: "external" as const } : {}),
       ...(options.alias ? { alias: options.alias } : {}),
       define: defines,
@@ -456,11 +461,15 @@ async function main(): Promise<void> {
     ),
     runEsbuild(
       "apps/electron/src/preload/bootstrap.ts",
-      "apps/electron/dist/bootstrap-preload.cjs"
+      "apps/electron/dist/bootstrap-preload.cjs",
+      {},
+      { external: PRELOAD_BUNDLE_EXTERNALS, alias: PRELOAD_BUNDLE_ALIAS }
     ),
     runEsbuild(
       "apps/electron/src/preload/browser-toolbar.ts",
-      "apps/electron/dist/browser-toolbar-preload.cjs"
+      "apps/electron/dist/browser-toolbar-preload.cjs",
+      {},
+      { external: PRELOAD_BUNDLE_EXTERNALS, alias: PRELOAD_BUNDLE_ALIAS }
     ),
   ]);
 
@@ -574,7 +583,8 @@ async function main(): Promise<void> {
     platform: "node",
     format: "cjs",
     outfile: join(ROOT_DIR, "apps/electron/dist/bootstrap-preload.cjs"),
-    external: ["electron"],
+    external: [...PRELOAD_BUNDLE_EXTERNALS],
+    alias: PRELOAD_BUNDLE_ALIAS,
     logLevel: "info",
   });
   await preloadContext.watch();
@@ -588,7 +598,8 @@ async function main(): Promise<void> {
     platform: "node",
     format: "cjs",
     outfile: join(ROOT_DIR, "apps/electron/dist/browser-toolbar-preload.cjs"),
-    external: ["electron"],
+    external: [...PRELOAD_BUNDLE_EXTERNALS],
+    alias: PRELOAD_BUNDLE_ALIAS,
     logLevel: "info",
   });
   await toolbarPreloadContext.watch();
