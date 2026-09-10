@@ -10,7 +10,8 @@
  */
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
-import { featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
+import { featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchStatusBarV1Atom } from '@/atoms/unified-shell'
+import { formatCostUsd } from '@/components/app-shell/input/turn-progress'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { backgroundTasksAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
@@ -61,10 +62,13 @@ function StatusBarInner() {
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const tasks = useAtomValue(backgroundTasksAtomFamily(focusedSessionId ?? ''))
   const pendingPermissions = useOptionalAppShellContext()?.pendingPermissions
+  const focusedMeta = focusedSessionId ? sessionMetaMap.get(focusedSessionId) : undefined
   const permissionMode = statusBarPermissionMode(
     focusedSessionId,
-    focusedSessionId ? sessionMetaMap.get(focusedSessionId)?.permissionMode : null,
+    focusedMeta?.permissionMode,
   )
+  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  const costLabel = chatChromeEnabled ? formatCostUsd(focusedMeta?.tokenUsage?.costUsd) : null
 
   const model = buildStatusBarModel({
     transportMode: transport?.mode,
@@ -72,6 +76,7 @@ function StatusBarInner() {
     permissionMode,
     runCount: countActiveRuns(tasks),
     approvalCount: countPendingApprovals(pendingPermissions),
+    costUsd: focusedMeta?.tokenUsage?.costUsd ?? null,
   })
 
   return (
@@ -94,7 +99,11 @@ function StatusBarInner() {
         {model.permissionMode ? <span>{permissionLabel(model.permissionMode, t)}</span> : null}
         <span>{t('workbench.status.people', { count: model.peopleCount })}</span>
         <span>{t('workbench.status.agents', { count: model.agentCount })}</span>
-        <span>{t('workbench.status.usagePlaceholder')}</span>
+        <span data-testid="status-bar-cost">
+          {costLabel
+            ? t('workbench.status.cost', { amount: costLabel })
+            : t('workbench.status.usagePlaceholder')}
+        </span>
       </div>
     </div>
   )

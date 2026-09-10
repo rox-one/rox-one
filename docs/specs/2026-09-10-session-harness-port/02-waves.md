@@ -88,6 +88,8 @@ Paste и notify — reuse, не в этом PR.
 
 **DoD:** idle ↑↓ ходит по истории; mid-turn ArrowUp всё ещё отменяет ход; длинный черновик не стирается; в popover сессии виден costUsd.
 
+Реализовано за `workbench.harness.chat-chrome.v1`: prompt-history + idle caret-start ↑↓; processing ArrowUp без изменений; tok/s/фаза в ToolbarStatusSlot; `tokenUsage.costUsd` в SessionInfoPopover и StatusBarHost; `workspace.openInEditor` через PATH.
+
 ## H3 — интеллект агента (`RX-TSK-0803`)
 
 Флаг: `workbench.harness.agent-intel.v1`

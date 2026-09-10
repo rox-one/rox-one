@@ -645,6 +645,7 @@ const EXPECTED_CHANNELS: string[] = [
   'workgraph:rotateConnection',
   'workgraph:testConnection',
   'workspace:getPermissions',
+  'workspace:openInEditor',
   'workspace:readImage',
   'workspace:writeImage',
   'workspaceSettings:get',

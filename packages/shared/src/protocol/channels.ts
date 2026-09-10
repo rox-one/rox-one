@@ -517,6 +517,7 @@ export const RPC_CHANNELS = {
   },
   workspace: {
     GET_PERMISSIONS: 'workspace:getPermissions',
+    OPEN_IN_EDITOR: 'workspace:openInEditor',
     READ_IMAGE: 'workspace:readImage',
     WRITE_IMAGE: 'workspace:writeImage',
     SETTINGS_GET: 'workspaceSettings:get',

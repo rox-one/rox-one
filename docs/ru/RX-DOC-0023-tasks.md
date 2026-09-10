@@ -73,7 +73,7 @@ status: active
 |-----|--------|--------|
 | `RX-TSK-0800` | H0 — ADR, спека, флаги harness.*, UEW-доки с main | Сделано |
 | `RX-TSK-0801` | H1 — инспектор сессии (files/git/browser); терминал = SurfaceTab UEW | Сделано |
-| `RX-TSK-0802` | H2 — хром чата (история ввода, прогресс, cost, notify, editor) | Запланировано |
+| `RX-TSK-0802` | H2 — хром чата (история ввода, прогресс, cost, notify, editor) | Сделано |
 | `RX-TSK-0803` | H3 — интеллект агента (context, MCP lens, fallbacks, auto-review) | Запланировано |
 | `RX-TSK-0804` | H4 — единый Extension Center | Запланировано |
 | `RX-TSK-0805` | H5a импорт P0 в Rox-сессии; H5b advisor/simplify/workflow | Запланировано |

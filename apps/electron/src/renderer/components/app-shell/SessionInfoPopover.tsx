@@ -7,6 +7,9 @@ import { useAppShellContext, useSession } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { SessionFilesSection } from '../right-sidebar/SessionFilesSection'
 import { SessionPublishedChip } from '@/components/knowledge/SessionPublishedChip'
+import { useAtomValue } from 'jotai'
+import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
+import { formatCostUsd } from './input/turn-progress'
 
 interface SessionInfoPopoverProps {
   sessionId: string
@@ -102,6 +105,8 @@ export function SessionInfoPopover({
 function SessionInfoPopoverContent({ sessionId, sessionFolderPath }: { sessionId: string; sessionFolderPath?: string }) {
   const { t } = useTranslation()
   const session = useSession(sessionId)
+  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  const costLabel = chatChromeEnabled ? formatCostUsd(session?.tokenUsage?.costUsd) : null
   const { onRenameSession } = useAppShellContext()
   const [name, setName] = React.useState('')
   const renameTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -149,6 +154,11 @@ function SessionInfoPopoverContent({ sessionId, sessionFolderPath }: { sessionId
           />
         </div>
         <SessionPublishedChip sessionId={sessionId} />
+        {costLabel && (
+          <div className="text-xs text-muted-foreground tabular-nums" data-testid="session-cost-usd">
+            {t('chat.sessionCost', { amount: costLabel })}
+          </div>
+        )}
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">
         <SessionFilesSection

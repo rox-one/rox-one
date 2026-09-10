@@ -252,6 +252,17 @@ export const actions = {
     category: 'Chat',
   },
 
+  // ═══════════════════════════════════════════
+  // Workspace
+  // ═══════════════════════════════════════════
+  'workspace.openInEditor': {
+    id: 'workspace.openInEditor',
+    label: 'Open in Editor',
+    description: 'Open the current workspace in cmux, Cursor, VS Code, or Zed',
+    defaultHotkey: null,
+    category: 'View',
+  },
+
 } as const satisfies Record<string, ActionDefinition>
 
 // Type-safe action IDs

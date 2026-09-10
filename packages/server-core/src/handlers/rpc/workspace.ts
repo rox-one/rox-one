@@ -1,6 +1,9 @@
-import { existsSync } from 'node:fs'
-import { join } from 'path'
+import { existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from 'node:fs'
+import { spawn } from 'node:child_process'
+import { homedir } from 'node:os'
+import { join, basename } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import {
 import {
   addWorkspace,
   createAndActivateLocalWorkspace,
@@ -10,6 +13,12 @@ import {
   updateWorkspaceRemoteServer,
 } from '@craft-agent/shared/config'
 import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import {
+  DEFAULT_EDITOR_EXTRA_DIRS,
+  launchWorkspaceInEditor,
+  lookupBinaryOnPath,
+  type EditorBinary,
+} from '@craft-agent/shared/workspace/open-in-editor'
 import { perf } from '@craft-agent/shared/utils'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
@@ -24,6 +33,7 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.window.GET_WORKSPACE,
   RPC_CHANNELS.window.GET_MODE,
   RPC_CHANNELS.window.SWITCH_WORKSPACE,
+  RPC_CHANNELS.workspace.OPEN_IN_EDITOR,
   RPC_CHANNELS.workspace.READ_IMAGE,
   RPC_CHANNELS.workspace.WRITE_IMAGE,
   RPC_CHANNELS.theme.GET_APP,
@@ -379,6 +389,31 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
       // Small enough, write as-is
       writeFileSync(absolutePath, buffer)
     }
+  })
+
+  server.handle(RPC_CHANNELS.workspace.OPEN_IN_EDITOR, async (_ctx, dirPath: string) => {
+    const extraDirs = [
+      ...DEFAULT_EDITOR_EXTRA_DIRS,
+      join(homedir(), '.local', 'bin'),
+    ]
+    return launchWorkspaceInEditor(typeof dirPath === 'string' ? dirPath : '', {
+      lookup: (bin: EditorBinary) => lookupBinaryOnPath(bin, {
+        pathEnv: process.env.PATH ?? '',
+        extraDirs,
+        exists: existsSync,
+        pathSep: process.platform === 'win32' ? '\\' : '/',
+        delimiter: process.platform === 'win32' ? ';' : ':',
+      }),
+      spawn: (command, args, cwd) => {
+        const child = spawn(command, args, {
+          cwd,
+          detached: true,
+          stdio: 'ignore',
+          env: process.env,
+        })
+        child.unref()
+      },
+    })
   })
 
   // ============================================================

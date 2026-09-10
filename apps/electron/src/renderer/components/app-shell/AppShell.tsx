@@ -95,7 +95,7 @@ import {
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -1237,6 +1237,31 @@ function AppShellContent({
   // This prevents closures from retaining full message arrays
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const setSessionMetaMap = useSetAtom(sessionMetaMapAtom)
+  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  useAction('workspace.openInEditor', () => {
+    const cwd = (focusedSessionId && sessionMetaMap.get(focusedSessionId)?.workingDirectory)
+      || activeWorkspace?.rootPath
+      || ''
+    if (!cwd) {
+      toast.error(t('workspace.openInEditorFailed'))
+      return
+    }
+    const openInEditor = window.electronAPI.openInEditor
+    if (!openInEditor) {
+      toast.error(t('workspace.openInEditorFailed'))
+      return
+    }
+    void openInEditor(cwd).then((result) => {
+      if (!result?.opened) toast.error(t('workspace.openInEditorFailed'))
+    }).catch(() => {
+      toast.error(t('workspace.openInEditorFailed'))
+    })
+  }, {
+    enabled: () => chatChromeEnabled && Boolean(
+      (focusedSessionId && sessionMetaMap.get(focusedSessionId)?.workingDirectory)
+      || activeWorkspace?.rootPath,
+    ),
+  }, [chatChromeEnabled, focusedSessionId, sessionMetaMap, activeWorkspace, t])
 
   const hasPendingPrompt = React.useCallback((sessionId: string) => {
     return (pendingPermissions.get(sessionId)?.length ?? 0) > 0

@@ -46,6 +46,9 @@ import {
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
 import { useModelVisionToggle } from './useModelVisionToggle'
+import { useAtomValue } from 'jotai'
+import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
+import { formatCostUsd } from './turn-progress'
 
 interface CompactModelSelectorProps {
   currentModel: string
@@ -60,6 +63,10 @@ interface CompactModelSelectorProps {
     isCompacting?: boolean
     inputTokens?: number
     contextWindow?: number
+    outputTokens?: number
+    costUsd?: number
+    statusType?: string
+    startedAt?: number
   }
 }
 
@@ -75,6 +82,7 @@ export function CompactModelSelector({
   contextStatus,
 }: CompactModelSelectorProps) {
   const { t } = useTranslation()
+  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const [open, setOpen] = React.useState(false)
   const [expandedConnection, setExpandedConnection] = React.useState<string | null>(null)
 
@@ -462,6 +470,11 @@ export function CompactModelSelector({
                   {t('chat.tokensUsed', {
                     displayCount: formatTokenCount(contextStatus.inputTokens),
                   })}
+                  {chatChromeEnabled && formatCostUsd(contextStatus.costUsd) && (
+                    <span data-testid="chat-session-cost">
+                      {t('workbench.status.cost', { amount: formatCostUsd(contextStatus.costUsd) })}
+                    </span>
+                  )}
                 </span>
               </div>
             </>

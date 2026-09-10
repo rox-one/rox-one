@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'bun:test'
 import {
   shouldHandleScopedInputEvent,
+  shouldNavigatePromptHistory,
   shouldRecallPromptOnArrowUp,
+  type PromptHistoryArrowState,
   type RecallPromptArrowUpState,
 } from '../input-event-guards'
 
@@ -82,5 +84,48 @@ describe('shouldRecallPromptOnArrowUp', () => {
     expect(canRecall({ altKey: true })).toBe(false)
     expect(canRecall({ disabled: true })).toBe(false)
     expect(canRecall({ disableSend: true })).toBe(false)
+  })
+})
+
+const IDLE_HISTORY_STATE: PromptHistoryArrowState = {
+  key: 'ArrowUp',
+  shiftKey: false,
+  metaKey: false,
+  ctrlKey: false,
+  altKey: false,
+  isComposing: false,
+  isProcessing: false,
+  selectionStart: 0,
+  selectionEnd: 0,
+  browsing: false,
+  inlineMenuOpen: false,
+  disabled: false,
+}
+
+function historyNav(overrides: Partial<PromptHistoryArrowState> = {}) {
+  return shouldNavigatePromptHistory({ ...IDLE_HISTORY_STATE, ...overrides })
+}
+
+describe('shouldNavigatePromptHistory', () => {
+  it('walks idle history from caret-start and never fires mid-turn', () => {
+    expect(historyNav()).toBe('up')
+    expect(historyNav({ isProcessing: true })).toBe(false)
+    expect(shouldRecallPromptOnArrowUp({ ...EMPTY_RECALL_STATE, isProcessing: true })).toBe(true)
+    expect(historyNav({
+      isProcessing: true,
+      key: 'ArrowUp',
+      selectionStart: 0,
+      selectionEnd: 0,
+    })).toBe(false)
+  })
+
+  it('does not steal the caret from the middle of a long draft', () => {
+    expect(historyNav({ selectionStart: 12, selectionEnd: 12 })).toBe(false)
+    expect(historyNav({ selectionStart: 0, selectionEnd: 4 })).toBe(false)
+  })
+
+  it('allows ArrowDown only while already browsing history', () => {
+    expect(historyNav({ key: 'ArrowDown' })).toBe(false)
+    expect(historyNav({ key: 'ArrowDown', browsing: true, selectionStart: 20, selectionEnd: 20 })).toBe('down')
   })
 })

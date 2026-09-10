@@ -1559,6 +1559,7 @@ export interface ElectronAPI {
     behind: number
     entries: Array<{ path: string; index: string; worktree: string }>
   }>
+  openInEditor(dirPath: string): Promise<{ opened: boolean; editor?: string; reason?: string }>
 
   // Git Bash (Windows)
   checkGitBash(): Promise<GitBashStatus>
