@@ -3,6 +3,14 @@
  * Persistent extension state and provider adapters are node-only.
  */
 export * from './types.ts'
+export {
+  EXTENSION_CENTER_GROUPS,
+  canToggleSkillOrSource,
+  extensionCenterGroupFor,
+  groupExtensionCenterRecords,
+  type ExtensionCenterGroupId,
+  type ExtensionCenterItem,
+} from './center-groups.ts'
 export type { ExtensionHostStatus } from './siyuan-bridge/types.ts'
 export {
   EXTENSION_PERMISSIONS,

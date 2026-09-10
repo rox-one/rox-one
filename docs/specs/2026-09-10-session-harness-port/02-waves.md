@@ -116,6 +116,8 @@ Paste и notify — reuse, не в этом PR.
 
 **DoD:** enable/disable skill и MCP source с одного экрана; физические сторы не мигрируют.
 
+Реализовано за `workbench.harness.ext-center.v1` на существующей `ExtensionsSettingsPage` (без `platform/ExtensionCenter.tsx`). Четыре группы на одном экране; `extensions:setEnabled` пишет только `extensions/state.json`.
+
 ## H5 — импорт, advisor, simplify, workflow (`RX-TSK-0805`)
 
 Без нового флага оболочки; фичи как команды/скиллы. Импорт — отдельный контур (H-04 §4), не «ещё одна кнопка в settings».
