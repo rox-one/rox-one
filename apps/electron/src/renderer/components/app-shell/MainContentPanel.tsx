@@ -50,6 +50,8 @@ import ConnectionsPage from '@/pages/ConnectionsPage'
 import KnowledgeEntityPage from '@/pages/KnowledgeEntityPage'
 import SkillInfoPage from '@/pages/SkillInfoPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
+import { SettingsOverviewPage } from '@/pages/settings/SettingsOverviewPage'
+import { recordRecentSetting } from '@/lib/settings-recent'
 import { AutomationInfoPage } from '../automations/AutomationInfoPage'
 import { AutomationGraphWorkspaceEditor } from '../automations/AutomationGraphWorkspaceEditor'
 import ProjectInfoPage from '@/pages/ProjectInfoPage'
@@ -132,6 +134,11 @@ export function MainContentPanel({
     // Leaving a view deep-link returns to search (proposals stays if user toggled it).
     setKnowledgeHomeView('search')
   }, [navState, setKnowledgeActiveViewId, setKnowledgeHomeView])
+
+  useEffect(() => {
+    if (!isSettingsNavigation(navState) || navState.subpage === null || !activeWorkspaceId) return
+    void recordRecentSetting(activeWorkspaceId, navState.subpage)
+  }, [navState, activeWorkspaceId])
 
   // Execution history for the selected automation
   const selectedAutomationId = isAutomationsNavigation(navState) ? navState.details?.automationId : undefined
@@ -272,12 +279,17 @@ export function MainContentPanel({
   )
 
   // Settings navigator - uses component map from settings-pages.ts.
-  // Bare `settings` route (subpage === null) means navigator-only view in compact mode;
-  // PanelStackContainer hides the content panel entirely. On desktop the panel still
-  // mounts, so fall back to the App page so it isn't empty.
+  // Bare `settings` route (subpage === null) renders the overview on desktop.
+  // PanelStackContainer still hides this panel in compact mode until drill-in.
   if (isSettingsNavigation(navState)) {
-    const subpage = navState.subpage ?? 'account'
-    const SettingsPageComponent = getSettingsPageComponent(subpage)
+    if (navState.subpage === null) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SettingsOverviewPage />
+        </Panel>
+      )
+    }
+    const SettingsPageComponent = getSettingsPageComponent(navState.subpage)
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <SettingsPageComponent />

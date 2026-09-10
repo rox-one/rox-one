@@ -6,10 +6,10 @@
  * browser trace. This module is the honest gate: missing ROX_API_KEY is
  * BLOCKED (named). A READY inspect is not a live run.
  *
- * Do not fake green. claimLiveTurnVerified refuses BLOCKED gates and
- * missing evidence files.
+ * Do not fake green. claimLiveTurnVerified refuses BLOCKED gates,
+ * missing evidence files, empty files, and directories.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
@@ -161,18 +161,27 @@ export function formatLiveTurnEvidence(gate: LiveTurnGate): string {
   return lines.join('\n');
 }
 
+function assertLiveTurnEvidenceFile(path: string, label: string): void {
+  if (!existsSync(path)) {
+    throw new Error(`Live-turn ${label} is missing: ${path}`);
+  }
+  const stat = statSync(path);
+  if (stat.isDirectory()) {
+    throw new Error(`Live-turn ${label} is a directory, not a file: ${path}`);
+  }
+  if (stat.size === 0) {
+    throw new Error(`Live-turn ${label} is empty: ${path}`);
+  }
+}
+
 export function claimLiveTurnVerified(input: LiveTurnVerifiedInput): LiveTurnGate {
   if (input.gate.status === 'BLOCKED' || input.gate.missingSecret) {
     throw new Error(
       `Cannot claim a live turn while the gate is BLOCKED (missing ${input.gate.missingSecret ?? LIVE_TURN_REQUIRED_SECRET}).`,
     );
   }
-  if (!existsSync(input.logPath)) {
-    throw new Error(`Live-turn log is missing: ${input.logPath}`);
-  }
-  if (!existsSync(input.browserTracePath)) {
-    throw new Error(`Live-turn browser trace is missing: ${input.browserTracePath}`);
-  }
+  assertLiveTurnEvidenceFile(input.logPath, 'log');
+  assertLiveTurnEvidenceFile(input.browserTracePath, 'browser trace');
   for (const step of LIVE_TURN_STEPS) {
     if (!input.stepEvidence[step]?.verified) {
       throw new Error(`Live-turn step ${step} has no verified evidence.`);

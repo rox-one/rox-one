@@ -1,15 +1,15 @@
 /**
  * SettingsNavigator
  *
- * Navigator panel content for settings. Displays a list of settings sections
- * (App, Workspace, Shortcuts, Preferences) that can be selected to show in the details panel.
+ * Navigator panel content for settings. Displays grouped, searchable settings
+ * sections that can be selected to show in the details panel.
  *
  * Styling follows SessionList/SourcesListPanel patterns for visual consistency.
  */
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, type ComponentType } from 'react'
 import { useTranslation } from 'react-i18next'
-import { MoreHorizontal, AppWindow } from 'lucide-react'
+import { MoreHorizontal, AppWindow, Search, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -17,11 +17,13 @@ import {
   StyledDropdownMenuItem,
 } from '@/components/ui/styled-dropdown'
 import { DropdownMenuProvider } from '@/components/ui/menu-context'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 import { Separator } from '@/components/ui/separator'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { SettingsSubpage } from '../../../shared/types'
 import { SETTINGS_ITEMS } from '../../../shared/menu-schema'
+import { filterSettingsPages, groupSettingsPages } from '../../../shared/settings-presentation'
 import { SETTINGS_ICONS } from '@/components/icons/SettingsIcons'
 
 export const meta: DetailsPageMeta = {
@@ -43,7 +45,7 @@ interface SettingsNavigatorProps {
 interface SettingsItem {
   id: SettingsSubpage
   label: string
-  icon: React.ComponentType<{ className?: string }>
+  icon: ComponentType<{ className?: string }>
   description: string
 }
 
@@ -153,6 +155,8 @@ export default function SettingsNavigator({
   onSelectSubpage,
 }: SettingsNavigatorProps) {
   const { t } = useTranslation()
+  const [query, setQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
 
   const settingsItems: SettingsItem[] = useMemo(() =>
     SETTINGS_ITEMS.map((item) => ({
@@ -164,20 +168,67 @@ export default function SettingsNavigator({
     [t]
   )
 
+  const groupedSettingsItems = useMemo(
+    () => groupSettingsPages(filterSettingsPages(settingsItems, query)),
+    [query, settingsItems],
+  )
+
+  const handleClearSearch = () => {
+    setQuery('')
+    searchInputRef.current?.focus()
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto">
-        <div className="pt-2">
-          {settingsItems.map((item, index) => (
-            <SettingsItemRow
-              key={item.id}
-              item={item}
-              isSelected={selectedSubpage === item.id}
-              isFirst={index === 0}
-              onSelect={() => onSelectSubpage(item.id)}
-            />
-          ))}
+      <div className="px-3 pt-3 pb-2">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            ref={searchInputRef}
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t('settings.navigator.search')}
+            aria-label={t('settings.navigator.search')}
+            className="h-9 pl-9 pr-9"
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-[6px] text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              aria-label={t('settings.navigator.clearSearch')}
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {groupedSettingsItems.length > 0 ? (
+          <div className="pb-2">
+            {groupedSettingsItems.map(({ group, pages }) => (
+              <section key={group.id} className="pt-3 first:pt-1">
+                <h2 className="px-5 pb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t(group.labelKey)}
+                </h2>
+                {pages.map((item, index) => (
+                  <SettingsItemRow
+                    key={item.id}
+                    item={item}
+                    isSelected={selectedSubpage === item.id}
+                    isFirst={index === 0}
+                    onSelect={() => onSelectSubpage(item.id)}
+                  />
+                ))}
+              </section>
+            ))}
+          </div>
+        ) : (
+          <div className="px-5 py-10 text-center text-sm text-muted-foreground" role="status">
+            {t('settings.navigator.noResults', { query })}
+          </div>
+        )}
       </div>
     </div>
   )

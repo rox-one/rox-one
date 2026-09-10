@@ -195,6 +195,11 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
     return { success: true }
   })
 
+  // Active device flow: abort the previous poll before starting another.
+  let roxConnectAbort: AbortController | null = null
+  let roxConnectError: string | null = null
+  let roxConnectExpiresAt: number | null = null
+
   server.handle(RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE, async () => {
     const manager = getCredentialManager()
     const session = await manager.getRoxCloudSession()
@@ -205,16 +210,19 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
       user: session
         ? { id: session.userId, email: session.email, name: session.name }
         : null,
+      connectError: roxConnectError,
+      connectExpiresAt: roxConnectExpiresAt,
     }
   })
 
   server.handle(RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD, async () => {
+    roxConnectAbort?.abort()
+    roxConnectAbort = null
+    roxConnectError = null
+    roxConnectExpiresAt = null
     await getCredentialManager().clearRoxCloudSession()
     return { success: true }
   })
-
-  // Active device flows: deviceCode -> abort controller / in-flight promise
-  const roxConnectInFlight = new Map<string, Promise<unknown>>()
 
   /**
    * Start Rox Connect: create device grant, return user-facing codes.
@@ -223,35 +231,38 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   server.handle(RPC_CHANNELS.onboarding.START_ROX_CONNECT, async () => {
     log.info('[Onboarding] Starting Rox cloud Connect device flow')
     try {
+      roxConnectAbort?.abort()
+      roxConnectAbort = new AbortController()
+      const signal = roxConnectAbort.signal
+      roxConnectError = null
+
       const started = await startRoxDeviceFlow()
-      const key = started.deviceCode
-      if (!roxConnectInFlight.has(key)) {
-        const p = waitForRoxDeviceApproval(started.deviceCode, {
-          timeoutMs: Math.max(started.expiresIn, 60) * 1000,
+      const timeoutMs = Math.max(started.expiresIn, 60) * 1000
+      roxConnectExpiresAt = Date.now() + timeoutMs
+      const p = waitForRoxDeviceApproval(started.deviceCode, {
+        timeoutMs,
+        signal,
+      })
+        .then(async (approved) => {
+          const expiresAt = Date.now() + Math.max(approved.expiresIn, 60) * 1000
+          await getCredentialManager().setRoxCloudSession({
+            accessToken: approved.accessToken,
+            expiresAt,
+            userId: approved.user.id,
+            email: approved.user.email,
+            name: approved.user.name,
+            authBaseUrl: getRoxAuthBaseUrl(),
+          })
+          roxConnectError = null
+          log.info('[Onboarding] Rox Connect succeeded for', approved.user.email)
         })
-          .then(async (approved) => {
-            const expiresAt = Date.now() + Math.max(approved.expiresIn, 60) * 1000
-            await getCredentialManager().setRoxCloudSession({
-              accessToken: approved.accessToken,
-              expiresAt,
-              userId: approved.user.id,
-              email: approved.user.email,
-              name: approved.user.name,
-              authBaseUrl: getRoxAuthBaseUrl(),
-            })
-            log.info('[Onboarding] Rox Connect succeeded for', approved.user.email)
-          })
-          .catch((err) => {
-            log.error(
-              '[Onboarding] Rox Connect poll failed:',
-              err instanceof Error ? err.message : String(err),
-            )
-          })
-          .finally(() => {
-            roxConnectInFlight.delete(key)
-          })
-        roxConnectInFlight.set(key, p)
-      }
+        .catch((err) => {
+          const message = err instanceof Error ? err.message : String(err)
+          if (message === 'ROX_CONNECT_CANCELLED') return
+          roxConnectError = message
+          log.error('[Onboarding] Rox Connect poll failed:', message)
+        })
+      void p
 
       return {
         success: true as const,
