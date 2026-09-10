@@ -166,9 +166,6 @@ export const routes = {
     /** Memory view (memory navigator — self-learning panel) */
     memory: () => 'memory' as const,
 
-    /** Connections view (native Workbench Connections surface) */
-    connections: () => 'connections' as const,
-
     /** Canonical local Markdown Notes route. */
     notes: buildNotesRoute,
 

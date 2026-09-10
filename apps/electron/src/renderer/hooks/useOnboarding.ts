@@ -10,6 +10,12 @@
  * 5. Complete
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
+import {
+  decideRoxConnectPoll,
+  roxConnectDeadline,
+  ROX_CONNECT_POLL_MS,
+} from '../lib/rox-connect-poll'
 import type {
   OnboardingState,
   OnboardingStep,
@@ -241,6 +247,7 @@ export function useOnboarding({
   editingSlug = null,
   existingSlugs = new Set(),
 }: UseOnboardingOptions): UseOnboardingReturn {
+  const { t } = useTranslation()
   const shouldApplyStartupGate = shouldApplyOnboardingLaunchGate(entryPoint, initialSetupNeeds)
 
   // Main wizard state
@@ -599,14 +606,25 @@ export function useOnboarding({
   const [roxConnectError, setRoxConnectError] = useState<string | undefined>()
   const [roxAuthBaseUrl, setRoxAuthBaseUrl] = useState('https://rox.one')
   const roxPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const roxPollGeneration = useRef(0)
 
-  useEffect(() => {
-    return () => {
-      if (roxPollRef.current) clearInterval(roxPollRef.current)
+  const stopRoxConnectPoll = useCallback(() => {
+    if (roxPollRef.current) {
+      clearInterval(roxPollRef.current)
+      roxPollRef.current = null
     }
   }, [])
 
+  useEffect(() => {
+    return () => {
+      roxPollGeneration.current += 1
+      stopRoxConnectPoll()
+    }
+  }, [stopRoxConnectPoll])
+
   const handleStartRoxConnect = useCallback(async () => {
+    const generation = ++roxPollGeneration.current
+    stopRoxConnectPoll()
     setRoxConnectStatus('starting')
     setRoxConnectError(undefined)
     try {
@@ -629,42 +647,74 @@ export function useOnboarding({
         verificationUri,
         verificationUriComplete,
       })
+      const deadline = roxConnectDeadline(result.expiresIn)
       try {
         const st = await window.electronAPI.getRoxCloudState()
         if (st?.authBaseUrl) setRoxAuthBaseUrl(st.authBaseUrl)
-      } catch { /* ignore */ }
+      } catch { /* first host hint is optional */ }
       setRoxConnectStatus('waiting')
-      // open browser
       if (result.verificationUriComplete) {
         await window.electronAPI.openUrl(result.verificationUriComplete)
       }
-      // poll cloud state until connected
-      if (roxPollRef.current) clearInterval(roxPollRef.current)
-      roxPollRef.current = setInterval(async () => {
+
+      const finish = (status: 'success' | 'error', error?: string) => {
+        if (roxPollGeneration.current !== generation) return
+        stopRoxConnectPoll()
+        if (status === 'success') {
+          setRoxConnectStatus('success')
+          setTimeout(() => {
+            if (roxPollGeneration.current !== generation) return
+            setState(s => {
+              if (s.gitBashStatus?.platform === 'win32' && !s.gitBashStatus?.found) {
+                return { ...s, step: 'git-bash' }
+              }
+              return { ...s, step: 'provider-select' }
+            })
+          }, 400)
+          return
+        }
+        setRoxConnectStatus('error')
+        setRoxConnectError(error)
+      }
+
+      const tick = async () => {
+        if (roxPollGeneration.current !== generation) return
+        let connected = false
+        let connectError: string | undefined
+        let stateReadFailed = false
+        let stateReadError: string | undefined
         try {
           const st = await window.electronAPI.getRoxCloudState()
-          if (st?.connected) {
-            if (roxPollRef.current) clearInterval(roxPollRef.current)
-            setRoxConnectStatus('success')
-            // advance to provider setup
-            setTimeout(() => {
-              setState(s => {
-                if (s.gitBashStatus?.platform === 'win32' && !s.gitBashStatus?.found) {
-                  return { ...s, step: 'git-bash' }
-                }
-                return { ...s, step: 'provider-select' }
-              })
-            }, 400)
-          }
-        } catch {
-          // keep waiting
+          if (st?.authBaseUrl) setRoxAuthBaseUrl(st.authBaseUrl)
+          connected = Boolean(st?.connected)
+          connectError = st?.connectError ?? undefined
+        } catch (err) {
+          stateReadFailed = true
+          stateReadError = err instanceof Error ? err.message : String(err)
         }
-      }, 2000)
+        const decision = decideRoxConnectPoll({
+          now: Date.now(),
+          deadline,
+          connected,
+          connectError,
+          stateReadFailed,
+          stateReadError,
+        })
+        if (decision.action === 'connected') finish('success')
+        else if (decision.action === 'expired') finish('error', t('onboarding.roxConnect.expired'))
+        else if (decision.action === 'failed') finish('error', t('onboarding.roxConnect.pollFailed'))
+      }
+
+      await tick()
+      if (roxPollGeneration.current !== generation) return
+      roxPollRef.current = setInterval(() => {
+        void tick()
+      }, ROX_CONNECT_POLL_MS)
     } catch (err) {
       setRoxConnectStatus('error')
       setRoxConnectError(err instanceof Error ? err.message : 'Connect failed')
     }
-  }, [])
+  }, [stopRoxConnectPoll, t])
 
   const handleOpenRoxConnectBrowser = useCallback(async () => {
     const uri = roxConnectCodes?.verificationUriComplete

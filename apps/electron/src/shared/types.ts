@@ -1181,6 +1181,8 @@ export interface ElectronAPI {
     connected: boolean
     authBaseUrl: string
     user: { id?: string; email?: string; name?: string } | null
+    connectError?: string | null
+    connectExpiresAt?: number | null
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
   deferSetup(): Promise<{ success: boolean }>

@@ -5,6 +5,7 @@
 
 import { spawn, type Subprocess } from "bun";
 import { existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
+import { createServer } from "net";
 import { join, basename } from "path";
 import * as esbuild from "esbuild";
 import { downloadUv, type Platform, type Arch } from "./build/common";
@@ -119,63 +120,28 @@ function loadEnvFile(): void {
   }
 }
 
-// Kill any process using the specified port
-async function killProcessOnPort(port: string): Promise<void> {
-  const isWindows = process.platform === "win32";
-
-  try {
-    if (isWindows) {
-      // Windows: use netstat to find PID, then taskkill
-      const netstat = spawn({
-        cmd: ["cmd", "/c", `netstat -ano | findstr :${port}`],
-        stdout: "pipe",
-        stderr: "pipe",
+// Refuse to start if the Vite port is already taken. Never kill the owner.
+async function assertPortAvailable(port: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const server = createServer();
+    server.once("error", (err: NodeJS.ErrnoException) => {
+      if (err.code === "EADDRINUSE") {
+        reject(
+          new Error(
+            `Port ${port} is already in use. Refusing to kill the owner. Set CRAFT_VITE_PORT or free the port.`,
+          ),
+        );
+        return;
+      }
+      reject(err);
+    });
+    server.listen(Number(port), "127.0.0.1", () => {
+      server.close((closeErr) => {
+        if (closeErr) reject(closeErr);
+        else resolve();
       });
-      const output = await new Response(netstat.stdout).text();
-      await netstat.exited;
-
-      // Parse PIDs from netstat output (last column)
-      const pids = new Set<string>();
-      for (const line of output.split("\n")) {
-        const parts = line.trim().split(/\s+/);
-        if (parts.length >= 5) {
-          const pid = parts[parts.length - 1];
-          if (pid && /^\d+$/.test(pid) && pid !== "0") {
-            pids.add(pid);
-          }
-        }
-      }
-
-      // Kill each PID
-      for (const pid of pids) {
-        const kill = spawn({
-          cmd: ["taskkill", "/PID", pid, "/F"],
-          stdout: "pipe",
-          stderr: "pipe",
-        });
-        await kill.exited;
-      }
-
-      if (pids.size > 0) {
-        console.log(`🔪 Killed ${pids.size} process(es) on port ${port}`);
-      }
-    } else {
-      // Mac/Linux: use lsof and kill
-      const lsof = spawn({
-        cmd: ["sh", "-c", `lsof -ti:${port} | xargs kill -9 2>/dev/null || true`],
-        stdout: "pipe",
-        stderr: "pipe",
-      });
-      const output = await new Response(lsof.stdout).text();
-      await lsof.exited;
-
-      if (output.trim()) {
-        console.log(`🔪 Killed process(es) on port ${port}`);
-      }
-    }
-  } catch {
-    // Ignore errors - port may not be in use
-  }
+    });
+  });
 }
 
 // Clean Vite cache directory
@@ -466,9 +432,6 @@ async function main(): Promise<void> {
   const vitePort = process.env.CRAFT_VITE_PORT || "5173";
   const oauthDefines = getOAuthDefines();
 
-  // Kill any existing process on the Vite port
-  await killProcessOnPort(vitePort);
-
   // =========================================================
   // PHASE 1: Initial build (one-shot, wait for completion)
   // =========================================================
@@ -563,6 +526,7 @@ async function main(): Promise<void> {
   const esbuildContexts: esbuild.BuildContext[] = [];
 
   // 1. Vite dev server (strictPort ensures we don't silently switch ports)
+  await assertPortAvailable(vitePort);
   const viteProc = spawn({
     cmd: [VITE_BIN, "dev", "--config", "apps/electron/vite.config.ts", "--port", vitePort, "--strictPort"],
     cwd: ROOT_DIR,

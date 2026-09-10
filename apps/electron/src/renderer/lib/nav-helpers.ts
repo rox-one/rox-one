@@ -39,8 +39,6 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return false
     case 'home':
       return true
-    case 'connections':
-      return true
     case 'knowledge':
     case 'cloud-run':
     case 'extension':

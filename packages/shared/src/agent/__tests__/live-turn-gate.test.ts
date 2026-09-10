@@ -169,6 +169,56 @@ describe('claimLiveTurnVerified', () => {
     ).toThrow(/log|browser|trace|missing/i);
   });
 
+  it('refuses empty evidence files', () => {
+    const homeDir = tempHome();
+    const logPath = join(homeDir, 'turn.log');
+    const browserTracePath = join(homeDir, 'trace.json');
+    writeFileSync(logPath, '');
+    writeFileSync(browserTracePath, '{"trace":true}');
+    const gate = evaluateLiveTurnGate(
+      inspectLiveTurnCredential({
+        homeDir,
+        env: { ROX_API_KEY: 'rox-live-test-key' },
+      }),
+    );
+
+    expect(() =>
+      claimLiveTurnVerified({
+        gate,
+        logPath,
+        browserTracePath,
+        stepEvidence: Object.fromEntries(
+          LIVE_TURN_STEPS.map((step) => [step, { verified: true, note: 'empty' }]),
+        ) as Record<LiveTurnStepId, { verified: true; note: string }>,
+      }),
+    ).toThrow(/empty/i);
+  });
+
+  it('refuses a directory used as an evidence file', () => {
+    const homeDir = tempHome();
+    const logPath = join(homeDir, 'turn-dir');
+    mkdirSync(logPath);
+    const browserTracePath = join(homeDir, 'trace.json');
+    writeFileSync(browserTracePath, '{"trace":true}');
+    const gate = evaluateLiveTurnGate(
+      inspectLiveTurnCredential({
+        homeDir,
+        env: { ROX_API_KEY: 'rox-live-test-key' },
+      }),
+    );
+
+    expect(() =>
+      claimLiveTurnVerified({
+        gate,
+        logPath,
+        browserTracePath,
+        stepEvidence: Object.fromEntries(
+          LIVE_TURN_STEPS.map((step) => [step, { verified: true, note: 'dir' }]),
+        ) as Record<LiveTurnStepId, { verified: true; note: string }>,
+      }),
+    ).toThrow(/directory/i);
+  });
+
   it('marks VERIFIED only when READY and both evidence files exist', () => {
     const homeDir = tempHome();
     const logPath = join(homeDir, 'turn.log');
