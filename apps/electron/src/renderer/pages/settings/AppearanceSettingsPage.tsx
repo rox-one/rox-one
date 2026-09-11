@@ -51,6 +51,7 @@ import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable
 import { Info_Badge } from '@/components/info/Info_Badge'
 import type { PresetTheme } from '@config/theme'
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
+import { ConationShellSettings } from './ConationShellSettings'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -633,6 +634,7 @@ export default function AppearanceSettingsPage() {
               </SettingsSection>
 
               <WorkbenchChromeSettings />
+              <ConationShellSettings />
 
               {/* Kanban board — column colors + live-pulse toggle */}
               <SettingsSection
