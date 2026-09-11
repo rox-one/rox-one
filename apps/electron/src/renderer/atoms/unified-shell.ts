@@ -110,6 +110,14 @@ export const inspectorVisibleAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
+/** Entire inspector chrome (panel + section rail) collapsed to a restore strip. */
+export const inspectorChromeCollapsedAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.inspectorChromeCollapsed),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
 /** Inspector sections: W1 knowledge + H1 session harness tabs. */
 export type InspectorSectionId =
   | 'info'
@@ -125,6 +133,30 @@ export type InspectorSectionId =
 export const inspectorSectionAtom = atomWithStorage<InspectorSectionId>(
   getKeyString(KEYS.inspectorSection),
   'info',
+  undefined,
+  { getOnInit: true },
+)
+
+/** Inspector panel width in px (drag-resized). */
+export const inspectorPanelWidthAtom = atomWithStorage<number>(
+  getKeyString(KEYS.inspectorPanelWidth),
+  420,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Terminal docked under the main column (stacks with the right inspector). */
+export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.bottomTerminalOpen),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+/** Bottom terminal dock height in px. */
+export const bottomDockHeightAtom = atomWithStorage<number>(
+  getKeyString(KEYS.bottomDockHeight),
+  240,
   undefined,
   { getOnInit: true },
 )

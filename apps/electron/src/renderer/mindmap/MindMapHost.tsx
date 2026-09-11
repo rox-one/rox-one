@@ -252,30 +252,30 @@ export function MindMapHost({
 
   const handleGraphChange = React.useCallback(
     (nextGraph: MindMapGraph) => {
-      if (
-        !pin ||
-        !showPinnedStructure ||
-        enrichDraft ||
-        nextGraph.derivation !== 'pinned'
-      ) {
-        return
-      }
-      const next: PinnedMap = {
-        ...pin,
-        graph: nextGraph,
-        layout: layoutFromCollapsed(collapsed),
-        updatedAt: Date.now(),
-      }
-      enqueuePinOperation(entityKey, () =>
-        savePinAsync(next, workspaceIdProp || activeWorkspaceId),
+      const workspaceId = workspaceIdProp || activeWorkspaceId
+      const sourceHash = graph?.contentHash
+      const pinned = createPinnedMap(
+        nextGraph,
+        layoutFromCollapsed(collapsed),
+        Date.now(),
+        sourceHash,
       )
-      setPin(next)
+      if (pin && showPinnedStructure && !enrichDraft) {
+        pinned.id = pin.id
+        pinned.createdAt = pin.createdAt
+        pinned.entity = pin.entity
+      }
+      enqueuePinOperation(entityKey, () => savePinAsync(pinned, workspaceId))
+      setPin(pinned)
+      setEnrichDraft(null)
+      setStaleDismissed(false)
     },
     [
       activeWorkspaceId,
       collapsed,
       enrichDraft,
       entityKey,
+      graph,
       pin,
       showPinnedStructure,
       workspaceIdProp,
@@ -484,20 +484,18 @@ export function MindMapHost({
   }
 
   const childCount = Object.keys((displayGraph ?? graph).nodes).length
-  // A pinned root-only graph must still render so users can add the first custom node.
-  const onlyRoot = childCount <= 1 && !isPinned
-  const showMapChrome = mode === 'map' && !onlyRoot
+  const showMapChrome = mode === 'map'
 
   const renderMap = () => (
     <SvgMindMapView
       ref={engineRef}
       graph={displayGraph!}
       layout="auto"
-      readOnlyStructure={!isPinned}
+      readOnlyStructure={false}
       searchQuery={search}
       selectedId={selectedId}
       collapsed={collapsed}
-      onGraphChange={isPinned ? handleGraphChange : undefined}
+      onGraphChange={handleGraphChange}
       onSelect={handleSelect}
       onNavigate={onNavigate}
       onToggleCollapse={handleToggleCollapse}
@@ -746,11 +744,7 @@ export function MindMapHost({
         </div>
       ) : null}
 
-      {onlyRoot ? (
-        <div className="flex-1 flex items-center justify-center px-6 text-center text-sm text-muted-foreground">
-          {t('mindmap.empty')}
-        </div>
-      ) : mode === 'outline' ? (
+      {mode === 'outline' ? (
         renderOutline()
       ) : split ? (
         <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">

@@ -101,6 +101,8 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
     const [structureEditor, setStructureEditor] = React.useState<StructureEditor | null>(null)
     const [structureError, setStructureError] = React.useState<string | null>(null)
     const [structureNotice, setStructureNotice] = React.useState<string | null>(null)
+    const [contextMenu, setContextMenu] = React.useState<{ x: number; y: number; nodeId: MindMapNodeId | null } | null>(null)
+    const [linkFrom, setLinkFrom] = React.useState<MindMapNodeId | null>(null)
 
     const collapsedList = React.useMemo(
       () => normalizeCollapsed(collapsedProp),
@@ -218,6 +220,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
     }
 
     const onPointerDownBg = (e: React.PointerEvent) => {
+      if (e.button === 0) setContextMenu(null)
       if (e.button !== 0) return
       const target = e.target as Element
       if (target.closest('[data-mindmap-node]')) return
@@ -351,6 +354,26 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
       }
     }
 
+    const beginAddNode = (parentId: MindMapNodeId) => {
+      if (!canEditStructure) return
+      setStructureEditor({ mode: 'add', parentId, label: '' })
+      setStructureError(null)
+      setStructureNotice(null)
+      setContextMenu(null)
+    }
+
+    const unlinkNode = (nodeId: MindMapNodeId) => {
+      if (!canEditStructure || !onGraphChange) return
+      try {
+        onGraphChange(reparentPinnedCustomNode(graph, nodeId, graph.rootId))
+        setStructureNotice(t('mindmap.nodeUnlinked'))
+      } catch (error) {
+        setStructureError(structureErrorMessage(error))
+      }
+      setContextMenu(null)
+      setLinkFrom(null)
+    }
+
     const visibleIds = React.useMemo(
       () => new Set(Object.keys(layout.positions)),
       [layout.positions],
@@ -425,7 +448,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
         ref={containerRef}
         className={cn(
           'relative flex-1 min-h-0 min-w-0 overflow-hidden bg-background touch-none select-none',
-          isPanning ? 'cursor-grabbing' : 'cursor-grab',
+          isPanning ? 'cursor-grabbing' : linkFrom ? 'cursor-crosshair' : 'cursor-grab',
           className,
         )}
         onWheel={onWheel}
@@ -433,6 +456,26 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
         onPointerMove={onPointerMove}
         onPointerUp={endPan}
         onPointerCancel={endPan}
+        onDoubleClick={(event) => {
+          if (!canEditStructure) return
+          const target = event.target as Element
+          if (target.closest('[data-mindmap-node]')) return
+          event.preventDefault()
+          beginAddNode(graph.rootId)
+        }}
+        onContextMenu={(event) => {
+          if (!canEditStructure) return
+          event.preventDefault()
+          const nodeEl = (event.target as Element).closest('[data-mindmap-node]')
+          const nodeId = nodeEl?.getAttribute('data-mindmap-node') ?? null
+          const rect = containerRef.current?.getBoundingClientRect()
+          if (!rect) return
+          setContextMenu({
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top,
+            nodeId,
+          })
+        }}
       >
         <svg
           width="100%"
@@ -472,11 +515,25 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                     }}
                     onClick={(e) => {
                       e.stopPropagation()
+                      if (linkFrom && canEditStructure && onGraphChange && linkFrom !== n.id) {
+                        try {
+                          onGraphChange(reparentPinnedCustomNode(graph, linkFrom, n.id))
+                          setStructureNotice(t('mindmap.nodeLinked'))
+                        } catch (error) {
+                          setStructureError(structureErrorMessage(error))
+                        }
+                        setLinkFrom(null)
+                        return
+                      }
                       onSelect?.(n.id)
                     }}
                     onDoubleClick={(e) => {
                       e.stopPropagation()
                       onSelect?.(n.id)
+                      if (canEditStructure && n.kind === 'custom') {
+                        setStructureEditor({ mode: 'rename', nodeId: n.id, label: n.label })
+                        return
+                      }
                       if (n.source) onNavigate?.(n.source)
                     }}
                   >
@@ -726,6 +783,66 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                   </button>
                 </div>
               </form>
+            ) : null}
+          </div>
+        ) : null}
+
+        {contextMenu ? (
+          <div
+            className="absolute z-20 min-w-[160px] rounded-lg border border-border/60 bg-background/95 py-1 shadow-lg backdrop-blur"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
+              onClick={() => beginAddNode(contextMenu.nodeId ?? graph.rootId)}
+            >
+              {contextMenu.nodeId ? t('mindmap.addChild') : t('mindmap.addNode')}
+            </button>
+            {contextMenu.nodeId && graph.nodes[contextMenu.nodeId]?.kind === 'custom' ? (
+              <>
+                <button
+                  type="button"
+                  className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
+                  onClick={() => {
+                    setLinkFrom(contextMenu.nodeId)
+                    setContextMenu(null)
+                    setStructureNotice(t('mindmap.linkPickTarget'))
+                  }}
+                >
+                  {t('mindmap.linkNode')}
+                </button>
+                {graph.nodes[contextMenu.nodeId]?.parentId &&
+                graph.nodes[contextMenu.nodeId]?.parentId !== graph.rootId ? (
+                  <button
+                    type="button"
+                    className="flex w-full px-3 py-1.5 text-left text-[12px] hover:bg-foreground/5"
+                    onClick={() => unlinkNode(contextMenu.nodeId!)}
+                  >
+                    {t('mindmap.unlinkNode')}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="flex w-full px-3 py-1.5 text-left text-[12px] text-destructive hover:bg-foreground/5"
+                  onClick={() => {
+                    const id = contextMenu.nodeId
+                    setContextMenu(null)
+                    if (!id || !onGraphChange) return
+                    try {
+                      const nextGraph = deletePinnedCustomNode(graph, id)
+                      onGraphChange(nextGraph)
+                      onSelect?.(nextGraph.rootId)
+                      setStructureNotice(t('mindmap.nodeDeleted'))
+                    } catch (error) {
+                      setStructureError(structureErrorMessage(error))
+                    }
+                  }}
+                >
+                  {t('mindmap.deleteNode')}
+                </button>
+              </>
             ) : null}
           </div>
         ) : null}

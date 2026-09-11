@@ -18,9 +18,11 @@ export interface BrowserPanelPageProps {
   instanceId: string
   /** Owning panel id in the panel stack (used to hide when unfocused) */
   panelId?: string
+  /** When true, parent owns destroy — this surface only syncs bounds. */
+  persist?: boolean
 }
 
-export default function BrowserPanelPage({ instanceId, panelId }: BrowserPanelPageProps) {
+export default function BrowserPanelPage({ instanceId, panelId, persist = false }: BrowserPanelPageProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef(0)
@@ -37,11 +39,15 @@ export default function BrowserPanelPage({ instanceId, panelId }: BrowserPanelPa
       return
     }
     const rect = el.getBoundingClientRect()
+    if (rect.width < 120 || rect.height < 80) {
+      window.electronAPI.browserPane.syncBounds(instanceId, null)
+      return
+    }
     window.electronAPI.browserPane.syncBounds(instanceId, {
-      x: rect.x,
-      y: rect.y,
-      width: rect.width,
-      height: rect.height,
+      x: Math.round(rect.x),
+      y: Math.round(rect.y),
+      width: Math.round(rect.width),
+      height: Math.round(rect.height),
     })
   }, [instanceId, isFocused, removed])
 
@@ -89,23 +95,21 @@ export default function BrowserPanelPage({ instanceId, panelId }: BrowserPanelPa
     }
   }, [instanceId])
 
-  // Unmount: hide the composited views, then destroy the embedded instance
+  // Hide native views on unmount. Destroy is deferred one microtask so React
+  // StrictMode remounts (dev) do not kill the instance before the second mount.
+  const destroyGen = React.useRef(0)
   useEffect(() => {
+    const id = instanceId
+    const gen = ++destroyGen.current
     return () => {
-      void (async () => {
-        try {
-          await window.electronAPI.browserPane.syncBounds(instanceId, null)
-        } catch {
-          // Best-effort hide; instance cleanup continues regardless
-        }
-        try {
-          await window.electronAPI.browserPane.destroy(instanceId)
-        } catch {
-          // Instance may already be gone (window teardown)
-        }
-      })()
+      void window.electronAPI.browserPane.syncBounds(id, null).catch(() => undefined)
+      if (persist) return
+      queueMicrotask(() => {
+        if (destroyGen.current !== gen) return
+        void window.electronAPI.browserPane.destroy(id).catch(() => undefined)
+      })
     }
-  }, [instanceId])
+  }, [instanceId, persist])
 
   if (removed) {
     return (

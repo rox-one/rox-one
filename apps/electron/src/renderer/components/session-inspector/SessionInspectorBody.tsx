@@ -1,9 +1,8 @@
-import { useTranslation } from 'react-i18next'
-import { Globe } from 'lucide-react'
 import type { InspectorSectionId } from '@/atoms/unified-shell'
 import { SessionFilesSection } from '@/components/right-sidebar/SessionFilesSection'
 import { SessionGitPanel } from './SessionGitPanel'
 import { SessionContextPanel } from './SessionContextPanel'
+import { InspectorBrowserPane } from './InspectorBrowserPane'
 
 export function SessionInspectorBody({
   section,
@@ -32,20 +31,12 @@ export function SessionInspectorBody({
   }
 
   if (section === 'browser') {
-    return <InspectorBrowserStub />
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <InspectorBrowserPane />
+      </div>
+    )
   }
 
   return <SessionContextPanel sessionId={sessionId} />
-}
-
-function InspectorBrowserStub() {
-  const { t } = useTranslation()
-  return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 px-6 text-center">
-      <Globe className="h-6 w-6 text-muted-foreground/40" />
-      <span className="text-[13px] font-medium text-foreground/80">
-        {t('inspector.browserDisabled', { defaultValue: 'Browser stays in the dock. Native windows are not opened from here.' })}
-      </span>
-    </div>
-  )
 }

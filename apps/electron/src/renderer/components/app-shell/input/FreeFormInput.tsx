@@ -740,6 +740,26 @@ export function FreeFormInput({
     prevInputValueRef.current = ''
   }, [onInputChange])
 
+  const handleImprovePrompt = React.useCallback(() => {
+    const next = improveDraftPrompt(input)
+    if (next === input) return
+    setInput(next)
+    syncToParent(next)
+    setTimeout(() => {
+      richInputRef.current?.focus()
+      richInputRef.current?.setSelectionRange(next.length, next.length)
+    }, 0)
+  }, [input, syncToParent, richInputRef])
+
+  React.useEffect(() => {
+    const onImprove = () => {
+      if (!isFocusedPanel) return
+      handleImprovePrompt()
+    }
+    window.addEventListener('craft:improve-prompt', onImprove)
+    return () => window.removeEventListener('craft:improve-prompt', onImprove)
+  }, [handleImprovePrompt, isFocusedPanel])
+
   const handleToggleModelVision = useModelVisionToggle()
 
   const consumeInputDraftSnapshot = React.useCallback((): string => {
@@ -2065,6 +2085,16 @@ export function FreeFormInput({
               disabled={disabled}
             />
           )}
+          <FreeFormInputContextBadge
+            icon={<Globe className="h-4 w-4" />}
+            label={t("browser.open")}
+            isExpanded={false}
+            hasSelection={false}
+            showChevron={false}
+            onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
+            tooltip={t("browser.newWindow")}
+            disabled={disabled}
+          />
           {onSourcesChange && (
             <div className="relative shrink min-w-0">
               <FreeFormInputContextBadge
@@ -2178,6 +2208,16 @@ export function FreeFormInput({
               disabled={disabled}
             />
           )}
+          <FreeFormInputContextBadge
+            icon={<Globe className="h-4 w-4" />}
+            label={t("browser.open")}
+            isExpanded={isEmptySession}
+            hasSelection={false}
+            showChevron={false}
+            onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
+            tooltip={t("browser.newWindow")}
+            disabled={disabled}
+          />
 
           {/* 2. Source Selector Badge - only show if onSourcesChange is provided */}
           {onSourcesChange && (

@@ -25,6 +25,7 @@ import {
 } from '@/components/app-shell/EntityViewTabs'
 import { MindMapHost } from '@/mindmap/MindMapHost'
 import { deriveNoteMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
+import { NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -532,6 +533,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [content, setContent] = React.useState('')
   const [query, setQuery] = React.useState('')
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null)
+  const [commentDraftQuote, setCommentDraftQuote] = React.useState('')
   const [loading, setLoading] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
@@ -1531,6 +1533,7 @@ h1,h2,h3{margin-top:1.5em}
 
   return (
     <>
+    <NotesEditorHeadlineStyles />
     <div className="flex h-full min-w-0 bg-background">
       <aside className="w-[300px] shrink-0 border-r border-border/60 flex flex-col min-h-0 bg-muted/[0.16]">
         <div className="shrink-0 px-3 py-2 border-b border-border/60">
@@ -1555,10 +1558,10 @@ h1,h2,h3{margin-top:1.5em}
             </button>
           </div>
           {allTags.length > 0 && (
-            <div className="mt-2 flex items-center gap-1.5 overflow-x-auto">
+            <div className="mt-2 max-h-36 overflow-y-auto rounded-[6px] border border-border/50 bg-background/60 p-1">
               <button
                 className={cn(
-                  'shrink-0 rounded-[5px] px-2 py-1 text-[11px] hover:bg-foreground/[0.06]',
+                  'flex w-full items-center rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                   !selectedTag && 'bg-foreground/[0.08]'
                 )}
                 onClick={() => setSelectedTag(null)}
@@ -1569,7 +1572,7 @@ h1,h2,h3{margin-top:1.5em}
                 <button
                   key={tag}
                   className={cn(
-                    'shrink-0 rounded-[5px] px-2 py-1 text-[11px] hover:bg-foreground/[0.06]',
+                    'flex w-full items-center rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                     selectedTag === tag && 'bg-foreground/[0.08]'
                   )}
                   onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
@@ -1768,8 +1771,24 @@ h1,h2,h3{margin-top:1.5em}
               sourceExcerpt={content || undefined}
             />
           ) : (
+            <div className="flex h-full min-h-0">
+            <NotesToc
+              markdown={content}
+              onJump={(text) => {
+                const root = document.querySelector('.notes-editor .ProseMirror')
+                if (!root) return
+                const heading = [...root.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(
+                  (node) => node.textContent?.trim() === text,
+                )
+                heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+            />
             <div
-              className="h-full overflow-y-auto px-6 py-6"
+              className="notes-editor h-full min-w-0 flex-1 overflow-y-auto px-8 py-6"
+              onMouseUp={() => {
+                const quote = window.getSelection()?.toString().trim() ?? ''
+                if (quote) setCommentDraftQuote(quote)
+              }}
               onKeyDownCapture={(event) => {
                 if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
                   event.preventDefault()
@@ -1829,7 +1848,7 @@ h1,h2,h3{margin-top:1.5em}
                 onTagClick={(tag) => setSelectedTag(selectedTag === tag ? null : tag)}
                 placeholder={t('notes.editor.placeholder')}
                 markdownEngine="legacy"
-                className="mx-auto w-full max-w-[720px] min-h-full"
+                className="notes-editor-prose mx-auto w-full max-w-[640px] min-h-full"
               />
               {richParts.frontmatter && (
                 <div className="mt-4 rounded-[6px] border border-border/60 bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
@@ -1837,6 +1856,14 @@ h1,h2,h3{margin-top:1.5em}
                 </div>
               )}
               {wikiMenu}
+            </div>
+            {activeNote ? (
+              <NotesComments
+                noteId={activeNote.id}
+                draftQuote={commentDraftQuote}
+                onClearDraft={() => setCommentDraftQuote('')}
+              />
+            ) : null}
             </div>
           )}
         </div>

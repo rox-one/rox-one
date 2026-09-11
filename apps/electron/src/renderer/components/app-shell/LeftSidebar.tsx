@@ -85,6 +85,8 @@ export interface LinkItem {
   afterTitle?: React.ReactNode
   /** Accent unseen dot (same treatment as What's New badge) */
   hasUnseen?: boolean
+  /** Optional hover tooltip (e.g. saved view descriptions). */
+  tooltip?: string
 }
 
 export interface SeparatorItem {
@@ -489,6 +491,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           if (!isOverlay && itemProps?.ref) itemProps.ref(el)
         }}
         onClick={isOverlay ? undefined : link.onClick}
+        title={link.tooltip}
         data-tutorial={link.dataTutorial}
         className={cn(
           "group flex w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none",

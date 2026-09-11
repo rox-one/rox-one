@@ -81,7 +81,11 @@ export const KEYS = {
   surfaceLayout: 'surface-layout', // Surface layout transport (URL search string; derived via platform/layout-snapshot.ts), workspace-scoped
   activityRailCollapsed: 'activity-rail-collapsed',
   inspectorVisible: 'inspector-visible',
+  inspectorChromeCollapsed: 'inspector-chrome-collapsed',
   inspectorSection: 'inspector-section',
+  inspectorPanelWidth: 'inspector-panel-width',
+  bottomTerminalOpen: 'bottom-terminal-open',
+  bottomDockHeight: 'bottom-dock-height',
   // Workbench v2 (ADR-0001) — granular chrome flags; all default OFF
   featureWorkbenchModeRegistryV1: 'feature-workbench-mode-registry-v1',
   featureWorkbenchTopChromeV2: 'feature-workbench-top-chrome-v2',

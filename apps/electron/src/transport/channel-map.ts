@@ -170,6 +170,7 @@ export const CHANNEL_MAP = {
   openUrl: invoke(RPC_CHANNELS.shell.OPEN_URL),
   openFile: invoke(RPC_CHANNELS.shell.OPEN_FILE),
   showInFolder: invoke(RPC_CHANNELS.shell.SHOW_IN_FOLDER),
+  runShellCommand: invoke(RPC_CHANNELS.shell.EXEC),
 
   // Menu event listeners
   onMenuNewChat: listener(RPC_CHANNELS.menu.NEW_CHAT),

@@ -1049,6 +1049,7 @@ export interface ElectronAPI {
   openUrl(url: string): Promise<void>
   openFile(path: string): Promise<void>
   showInFolder(path: string): Promise<void>
+  runShellCommand(input: { command: string; cwd?: string }): Promise<{ ok: boolean; stdout?: string; stderr?: string }>
   exportNotePdf(opts: { html: string; defaultPath: string }): Promise<{ canceled: boolean; filePath?: string }>
   /** Save plain text via native save dialog (knowledge export, etc.). */
   saveTextFile(opts: {

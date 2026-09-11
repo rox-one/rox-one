@@ -517,6 +517,7 @@ const EXPECTED_CHANNELS: string[] = [
   'settings:setServerConfig',
   'settings:setupLlmConnection',
   'settings:testLlmConnectionSetup',
+  'shell:exec',
   'shell:openFile',
   'shell:openUrl',
   'shell:showInFolder',

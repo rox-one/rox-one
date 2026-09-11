@@ -1,7 +1,8 @@
 import { resolve } from 'path'
 import { join } from 'path'
 import { homedir } from 'os'
-import { execSync } from 'child_process'
+import { execFile, execSync } from 'child_process'
+import { promisify } from 'util'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { emptyGitWorkingTreeStatus } from '@craft-agent/shared/git/status'
 import { readGitBranchName, readGitWorkingTreeStatus } from '@craft-agent/shared/git/exec'
@@ -29,6 +30,7 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.shell.OPEN_URL,
   RPC_CHANNELS.shell.OPEN_FILE,
   RPC_CHANNELS.shell.SHOW_IN_FOLDER,
+  RPC_CHANNELS.shell.EXEC,
   RPC_CHANNELS.releaseNotes.GET,
   RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION,
   RPC_CHANNELS.git.GET_BRANCH,
@@ -361,6 +363,34 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       const message = error instanceof Error ? error.message : 'Unknown error'
       deps.platform.logger.error('showInFolder error:', message)
       throw new Error(`Failed to show in folder: ${message}`)
+    }
+  })
+
+  const execFileAsync = promisify(execFile)
+  server.handle(RPC_CHANNELS.shell.EXEC, async (ctx, input: { command?: string; cwd?: string }) => {
+    assertLocalWorkspace(ctx, 'Run command')
+    const command = input?.command?.trim()
+    if (!command) return { ok: false, stderr: 'empty command' }
+    let cwd = homedir()
+    if (input.cwd) {
+      try {
+        const expanded = input.cwd.startsWith('~') ? input.cwd.replace(/^~/, homedir()) : input.cwd
+        cwd = await validateFilePath(resolve(expanded), getWorkspaceAllowedDirs(ctx.workspaceId))
+      } catch {
+        cwd = homedir()
+      }
+    }
+    try {
+      const { stdout, stderr } = await execFileAsync('/bin/zsh', ['-lc', command], {
+        cwd,
+        timeout: 20_000,
+        maxBuffer: 1024 * 1024,
+        env: process.env,
+      })
+      return { ok: true, stdout, stderr }
+    } catch (error) {
+      const err = error as { stdout?: string; stderr?: string; message?: string }
+      return { ok: false, stdout: err.stdout, stderr: err.stderr || err.message }
     }
   })
 }

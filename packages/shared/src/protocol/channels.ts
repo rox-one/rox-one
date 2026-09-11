@@ -308,6 +308,7 @@ export const RPC_CHANNELS = {
     OPEN_URL: 'shell:openUrl',
     OPEN_FILE: 'shell:openFile',
     SHOW_IN_FOLDER: 'shell:showInFolder',
+    EXEC: 'shell:exec',
   },
   menu: {
     NEW_CHAT: 'menu:newChat',

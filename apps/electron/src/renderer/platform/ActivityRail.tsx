@@ -27,8 +27,8 @@ import {
 
 /** Expanded rail width — AppShell uses it to offset the absolute resize sashes. */
 export const ACTIVITY_RAIL_WIDTH = 48
-/** Collapsed rail width (slim strip, expand chevron only). */
-export const ACTIVITY_RAIL_COLLAPSED_WIDTH = 20
+/** Collapsed rail keeps a full 48px hit target so the expand chevron is usable. */
+export const ACTIVITY_RAIL_COLLAPSED_WIDTH = 48
 
 function RailItem({ dest }: { dest: AppNavDestination }) {
   const { t } = useTranslation()
@@ -73,8 +73,9 @@ export function ActivityRail() {
 
   if (collapsed) {
     return (
-      <div
-        className="flex h-full shrink-0 flex-col items-center justify-center"
+      <nav
+        aria-label={t('rail.title')}
+        className="flex h-full shrink-0 flex-col items-center py-2"
         style={{ width: ACTIVITY_RAIL_COLLAPSED_WIDTH }}
       >
         <Tooltip>
@@ -83,14 +84,14 @@ export function ActivityRail() {
               type="button"
               aria-label={t('rail.expand')}
               onClick={() => setCollapsed(false)}
-              className="flex h-9 w-4 items-center justify-center rounded-[6px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
+              className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
-              <ChevronsRight className="h-3 w-3" />
+              <ChevronsRight className="h-4 w-4" />
             </button>
           </TooltipTrigger>
           <TooltipContent side="right">{t('rail.expand')}</TooltipContent>
         </Tooltip>
-      </div>
+      </nav>
     )
   }
 

@@ -92,10 +92,11 @@ import {
   ACTIVITY_RAIL_WIDTH,
   ACTIVITY_RAIL_COLLAPSED_WIDTH,
   StatusBarHost,
+  SurfaceTabs,
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -1996,21 +1997,23 @@ function AppShellContent({
     setTimeout(() => focusZone('chat', { intent: 'programmatic' }), 50)
   }, [activeWorkspace, focusZone, handleNewKnowledgeNote, navigate, navState, resolveInheritedNewSessionParams])
 
-  // Create a brand new embedded browser panel and focus it.
-  // Intentionally unbound: this action should always create a NEW panel.
+  const setInspectorVisible = useSetAtom(inspectorVisibleAtom)
+  const setInspectorChromeCollapsed = useSetAtom(inspectorChromeCollapsedAtom)
+  const setInspectorSection = useSetAtom(inspectorSectionAtom)
+  const setInspectorPanelWidth = useSetAtom(inspectorPanelWidthAtom)
+
+  // Open the inspector-hosted embedded browser instead of a native OS window
+  // or a main-lane panel that overlays the session list.
   const handleNewBrowserWindow = useCallback(async () => {
     if (isWebUI) {
       setWebBrowserOpen(true)
       return
     }
-    try {
-      const instanceId = await window.electronAPI.browserPane.createEmbedded()
-      navigate(routes.view.browser(instanceId), { newPanel: true, targetLaneId: 'main' })
-    } catch (error) {
-      console.error('[Chat] Failed to create browser panel:', error)
-      toast.error(t('toast.failedToCreateBrowser'))
-    }
-  }, [navigate, t])
+    setInspectorChromeCollapsed(false)
+    setInspectorVisible(true)
+    setInspectorSection('browser')
+    setInspectorPanelWidth((width) => Math.max(width, 560))
+  }, [setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible])
 
   // Delete Source - simplified since agents system is removed
   const handleDeleteSource = useCallback(async (sourceSlug: string) => {
@@ -2527,6 +2530,7 @@ function AppShellContent({
                       id: "nav:views",
                       title: t("sidebar.views"),
                       icon: Eye,
+                      tooltip: t("sidebar.viewsHint"),
                       variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === '__all__') ? "default" as const : "ghost" as const,
                       onClick: handleViewsAllClick,
                       expandable: sessionViewConfigs.length > 0,
@@ -2540,6 +2544,7 @@ function AppShellContent({
                         id: `nav:view:${view.id}`,
                         title: view.name,
                         icon: Eye,
+                        tooltip: view.description || t("sidebar.viewsHint"),
                         variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === view.id) ? "default" as const : "ghost" as const,
                         onClick: () => handleViewClick(view.id),
                         contextMenu: {
@@ -2757,6 +2762,7 @@ function AppShellContent({
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel"
             >
+            {(unifiedShellEnabled || workbenchEnabled) && <SurfaceTabs />}
             <PanelHeader
                 title={isSidebarVisible ? listTitle : undefined}
                 compensateForStoplight={!isSidebarVisible}

@@ -190,12 +190,11 @@ export function CompactModelSelector({
           className={cn(
             isWebUI
               ? 'h-7 w-7 p-0 text-xs font-medium rounded-[6px] flex items-center justify-center outline-none select-none shrink-0'
-              : 'h-7 pl-2 pr-2 text-xs font-medium rounded-[6px] flex items-center gap-1.5 shadow-tinted outline-none select-none min-w-[64px] shrink',
+              : 'h-7 pl-2 pr-2 text-xs font-medium rounded-[6px] flex items-center gap-1.5 outline-none select-none min-w-[64px] shrink',
             isWebUI
               ? (connectionUnavailable ? 'text-destructive hover:bg-destructive/10' : 'text-foreground/70 hover:bg-foreground/5')
-              : (connectionUnavailable ? 'bg-destructive/10 text-destructive' : 'bg-foreground/5 text-foreground/70'),
+              : (connectionUnavailable ? 'bg-destructive/10 text-destructive' : 'text-foreground/70 hover:bg-foreground/5'),
           )}
-          style={!isWebUI ? { '--shadow-color': 'var(--foreground-rgb)' } as React.CSSProperties : undefined}
         >
           {connectionUnavailable ? (
             <>

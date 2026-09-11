@@ -1322,7 +1322,7 @@ export function SessionList({
           if (row.familyHead) {
             const head = row.familyHead
             decorated = (
-              <div className="relative pl-3">
+              <div className="relative pl-6">
                 <button
                   type="button"
                   aria-label={t("sidebar.branchCount", { count: head.branchCount })}
@@ -1331,7 +1331,7 @@ export function SessionList({
                     e.stopPropagation()
                     toggleGroupCollapse(head.collapseKey)
                   }}
-                  className="absolute left-0 top-0 bottom-0 z-10 flex items-center gap-0.5 px-0 text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
+                  className="absolute left-2 top-0 bottom-0 z-10 flex items-center gap-0.5 px-1 text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
                 >
                   <ChevronRight
                     className={cn(

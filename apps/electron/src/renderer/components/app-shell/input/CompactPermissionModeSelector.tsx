@@ -38,10 +38,10 @@ function ModeIcon({ mode, className }: { mode: PermissionMode; className?: strin
   )
 }
 
-const MODE_STYLES: Record<PermissionMode, { className: string; shadowVar: string }> = {
-  safe: { className: 'bg-foreground/5 text-foreground/60', shadowVar: 'var(--foreground-rgb)' },
-  ask: { className: 'bg-info/10 text-info', shadowVar: 'var(--info-rgb)' },
-  'allow-all': { className: 'bg-accent/5 text-accent', shadowVar: 'var(--accent-rgb)' },
+const MODE_STYLES: Record<PermissionMode, { className: string }> = {
+  safe: { className: 'text-foreground/60' },
+  ask: { className: 'text-foreground/70' },
+  'allow-all': { className: 'text-foreground/80' },
 }
 
 // Localized labels for each mode (PERMISSION_MODE_CONFIG carries English-only
@@ -92,10 +92,9 @@ export function CompactPermissionModeSelector({
           className={cn(
             isWebUI
               ? "h-7 w-7 p-0 text-xs font-medium rounded-[6px] flex items-center justify-center outline-none select-none shrink-0 text-foreground/70 hover:bg-foreground/5 transition-colors"
-              : "h-7 pl-2 pr-2.5 text-xs font-medium rounded-[6px] flex items-center gap-1.5 shadow-tinted outline-none select-none shrink-0",
+              : "h-7 pl-2 pr-2.5 text-xs font-medium rounded-[6px] flex items-center gap-1.5 outline-none select-none shrink-0 hover:bg-foreground/5",
             !isWebUI && style.className,
           )}
-          style={!isWebUI ? { '--shadow-color': style.shadowVar } as React.CSSProperties : undefined}
         >
           <ModeIcon mode={optimisticMode} className="h-3.5 w-3.5" />
           {!isWebUI && <span>{t(MODE_LABEL_KEYS[optimisticMode].short)}</span>}

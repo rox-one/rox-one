@@ -20,7 +20,6 @@ import {
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
 import { PanelHost } from './PanelHost'
-import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 
 export { ActivityRail, ACTIVITY_RAIL_WIDTH, ACTIVITY_RAIL_COLLAPSED_WIDTH } from './ActivityRail'
@@ -59,7 +58,6 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
     <>
       {chrome.showRail && <ActivityRail />}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {chrome.showSurfaceTabs && <SurfaceTabs />}
         {children}
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>

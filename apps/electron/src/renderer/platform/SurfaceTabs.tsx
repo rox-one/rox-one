@@ -33,7 +33,7 @@ import {
   type SurfaceTabView,
 } from './surface-tab-model'
 
-const TAB_STRIP_HEIGHT = 36
+const TAB_STRIP_HEIGHT = 42
 
 function tabIcon(tab: SurfaceTabView): LucideIcon {
   if (tab.kind === 'browser') return Globe
@@ -201,13 +201,13 @@ export function SurfaceTabs() {
   return (
     <div
       role="tablist"
-      className="flex shrink-0 items-center gap-1 overflow-x-auto px-2"
+      className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-foreground/5 px-3"
       style={{ height: TAB_STRIP_HEIGHT }}
     >
-      {tabs.length === 0 ? (
+      {tabs.filter((tab) => tab.kind !== 'browser').length === 0 ? (
         <span className="px-1 text-[12px] text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
-        tabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)
+        tabs.filter((tab) => tab.kind !== 'browser').map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)
       )}
     </div>
   )

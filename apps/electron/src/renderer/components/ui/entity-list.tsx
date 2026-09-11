@@ -110,7 +110,7 @@ function SectionHeader({
   return (
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
-        <div className="sticky top-0 z-10 bg-background px-4 py-2">
+        <div className="sticky top-0 z-10 bg-background px-5 py-2">
           <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
             {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
           </span>
@@ -151,7 +151,7 @@ function CollapsibleGroupHeader({
       <ContextMenuTrigger asChild>
         <button
           onClick={onToggle}
-          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-4 py-2 group/header relative"
+          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative"
         >
           <div className="absolute inset-y-0.5 left-2 right-2 rounded-[6px] group-hover/header:bg-foreground/2 transition-colors pointer-events-none" />
           <ChevronRight
