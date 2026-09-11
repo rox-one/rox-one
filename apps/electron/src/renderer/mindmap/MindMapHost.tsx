@@ -514,7 +514,7 @@ export function MindMapHost({
 
   const body = (
     <>
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b border-border/30 text-[11px] text-muted-foreground shrink-0">
+      <div className="flex min-w-0 flex-wrap items-center gap-2 px-3 py-1.5 border-b border-border/30 text-[11px] text-muted-foreground shrink-0">
         <span className="inline-flex items-center rounded-full bg-foreground/5 px-2 py-0.5 font-medium text-foreground/80">
           {enriching
             ? t('mindmap.enriching')
@@ -524,7 +524,7 @@ export function MindMapHost({
                 ? t('mindmap.pinned')
                 : t('mindmap.live')}
         </span>
-        <span className="truncate">
+        <span className="min-w-0 truncate">
           {mode === 'outline' && !split
             ? t('entityView.outline')
             : split
@@ -544,7 +544,7 @@ export function MindMapHost({
           </span>
         ) : null}
 
-        <div className="ml-auto flex items-center gap-0.5">
+        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-1">
           {showMapChrome ? (
             <>
               <button
@@ -637,7 +637,7 @@ export function MindMapHost({
             <span className="text-[11px] font-medium">{t('mindmap.zen')}</span>
           </button>
 
-                    <button
+          <button
             type="button"
             className={cn(
               'h-7 inline-flex items-center gap-1 rounded-[6px] px-1.5 hover:bg-foreground/5 text-muted-foreground hover:text-foreground',
@@ -654,7 +654,7 @@ export function MindMapHost({
             </span>
           </button>
 
-<button
+          <button
             type="button"
             className={cn(
               'h-7 inline-flex items-center gap-1 rounded-[6px] px-1.5 hover:bg-foreground/5',
