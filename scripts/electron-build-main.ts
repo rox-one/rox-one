@@ -260,6 +260,10 @@ async function buildWhatsAppWorker(): Promise<void> {
       "--external:link-preview-js",
       "--external:qrcode-terminal",
       "--external:jimp",
+      // sharp: native .node binaries — must stay external (esbuild cannot load them).
+      // Same as scripts/build-wa-worker.ts / #160 — electron:build:main had drifted.
+      "--external:sharp",
+      "--external:@img/*",
     ],
     cwd: ROOT_DIR,
     stdout: "inherit",
