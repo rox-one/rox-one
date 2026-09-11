@@ -156,6 +156,7 @@ export type {
   CollectionOrderBy,
   CollectionOrderDir,
   CollectionProperty,
+  CollectionDensity,
   CollectionDisplay,
   DueRange,
   CollectionFilters,
@@ -165,6 +166,7 @@ export {
   DEFAULT_COLLECTION_FILTERS,
   COLLECTION_GROUP_BY_VALUES,
   COLLECTION_ORDER_BY_VALUES,
+  COLLECTION_DENSITY_VALUES,
   COLLECTION_PROPERTY_VALUES,
 } from './collection-types.ts'
 

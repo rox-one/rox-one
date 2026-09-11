@@ -37,6 +37,7 @@ describe('getDefaultCollectionDisplay', () => {
       visibleProperties: ['status', 'priority', 'project', 'labels', 'dueDate', 'updated', 'flag'],
       showEmptyGroups: false,
       showCompleted: true,
+      density: 'compact',
     })
   })
 })
@@ -65,6 +66,7 @@ describe('normalizeCollectionDisplay', () => {
       visibleProperties: ['status', 'model'],
       showEmptyGroups: true,
       showCompleted: false,
+      density: 'compact',
     })
   })
 
@@ -98,6 +100,7 @@ describe('loadCollectionDisplay / saveCollectionDisplay', () => {
       visibleProperties: ['status', 'dueDate', 'flag'],
       showEmptyGroups: true,
       showCompleted: false,
+      density: 'comfortable',
     }
     const saved = saveCollectionDisplay(workspaceRoot, input)
     expect(saved).toEqual(input)
@@ -118,6 +121,7 @@ describe('loadCollectionDisplay / saveCollectionDisplay', () => {
       visibleProperties: ['labels', 'labels', 'nope' as never],
       showEmptyGroups: false,
       showCompleted: true,
+      density: 'compact',
     })
     expect(saved.visibleProperties).toEqual(['labels'])
     expect(loadCollectionDisplay(workspaceRoot).visibleProperties).toEqual(['labels'])

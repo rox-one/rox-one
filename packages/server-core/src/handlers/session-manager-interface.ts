@@ -250,6 +250,7 @@ export interface ISessionManager {
    *  spec L2 conflict checks). Resolves the workspace by id — throws when unknown. */
   runDistillOneShot(workspaceId: string, prompt: string): Promise<string>
   refreshTitle(sessionId: string): Promise<{ success: boolean; title?: string; error?: string }>
+  improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }>
   refreshBadge(): void
   getUnreadSummary(): UnreadSummary
 

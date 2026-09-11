@@ -9,6 +9,14 @@ import { mainLog, isDebugMode } from './logger'
 
 type ClientResolver = (webContentsId: number) => string | undefined
 
+function reloadableWebContents(browserWindow: BrowserWindow): Electron.WebContents {
+  for (const child of browserWindow.contentView.children) {
+    const webContents = (child as { webContents?: Electron.WebContents }).webContents
+    if (webContents && !webContents.isDestroyed()) return webContents
+  }
+  return browserWindow.webContents
+}
+
 // Store references for rebuilding menu
 let cachedWindowManager: WindowManager | null = null
 let cachedEventSink: EventSink | null = null
@@ -149,12 +157,7 @@ export async function rebuildMenu(): Promise<void> {
               click: (_menuItem: Electron.MenuItem, window: Electron.BaseWindow | undefined) => {
                 const browserWindow = window instanceof BrowserWindow ? window : BrowserWindow.getFocusedWindow()
                 if (!browserWindow) return
-                const views = browserWindow.getBrowserViews()
-                if (views.length > 0) {
-                  views[0].webContents.reload()
-                } else {
-                  browserWindow.webContents.reload()
-                }
+                reloadableWebContents(browserWindow).reload()
               }
             },
             {
@@ -163,12 +166,7 @@ export async function rebuildMenu(): Promise<void> {
               click: (_menuItem: Electron.MenuItem, window: Electron.BaseWindow | undefined) => {
                 const browserWindow = window instanceof BrowserWindow ? window : BrowserWindow.getFocusedWindow()
                 if (!browserWindow) return
-                const views = browserWindow.getBrowserViews()
-                if (views.length > 0) {
-                  views[0].webContents.reloadIgnoringCache()
-                } else {
-                  browserWindow.webContents.reloadIgnoringCache()
-                }
+                reloadableWebContents(browserWindow).reloadIgnoringCache()
               }
             },
           ] : []),

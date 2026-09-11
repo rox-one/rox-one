@@ -327,7 +327,7 @@ export default function App() {
 
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, false)
+    storage.get(storage.KEYS.workspaceSelectorRail, true)
   )
 
   useEffect(() => {
@@ -336,7 +336,7 @@ export default function App() {
       setWorkspaceSelectorRail(
         typeof customEvent.detail === 'boolean'
           ? customEvent.detail
-          : storage.get(storage.KEYS.workspaceSelectorRail, false)
+          : storage.get(storage.KEYS.workspaceSelectorRail, true)
       )
     }
 
@@ -2219,6 +2219,7 @@ export default function App() {
                     isFocusedMode={isFocusedMode}
                     showTopBarWorkspaceSelector={!showWorkspaceIconRail}
                     topBarLeftInset={getTopBarLeftInset(showWorkspaceIconRail)}
+                    workbenchOperatorCapability={true}
                   />
                 )}
               </div>

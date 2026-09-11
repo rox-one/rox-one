@@ -945,14 +945,14 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     </DropdownMenu>
   ), [sharedUrl, handleShare, handleOpenInBrowser, handleCopyLink, handleUpdateShare, handleRevokeShare])
 
-  const compactInfoButton = React.useMemo(() => {
-    if (!isCompactMode || !sessionMeta) return undefined
+  const infoButton = React.useMemo(() => {
+    if (!sessionMeta) return undefined
 
     return (
       <SessionInfoPopover
         sessionId={sessionId}
         sessionFolderPath={session?.sessionFolderPath}
-        presentation="drawer"
+        presentation={isCompactMode ? "drawer" : "popover"}
         trigger={(
           <PanelHeaderCenterButton
             icon={<Info className="h-4 w-4" />}
@@ -961,7 +961,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         )}
       />
     )
-  }, [isCompactMode, sessionId, session?.sessionFolderPath, sessionMeta])
+  }, [isCompactMode, sessionId, session?.sessionFolderPath, sessionMeta, t])
 
   // Pencil opens the Task editor for orchestrator sessions; rendered before the
   // share/info action. The slot div has no gap of its own, so compose with one here.
@@ -999,17 +999,12 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     )
   }, [session?.memoryMode, sessionId, t])
 
-  const primaryHeaderAction = isCompactMode ? compactInfoButton : shareButton
-  const headerActions = editTaskButton ? (
+  const headerActions = (
     <div className="flex items-center gap-1.5">
       {editTaskButton}
       {memoryModeButton}
-      {primaryHeaderAction}
-    </div>
-  ) : (
-    <div className="flex items-center gap-1.5">
-      {memoryModeButton}
-      {primaryHeaderAction}
+      {!isCompactMode && shareButton}
+      {infoButton}
     </div>
   )
 

@@ -2,20 +2,20 @@
  * Unified Shell (W1) + Workbench v2 chrome flags.
  *
  * W1 master: `featureUnifiedShellAtom` (localStorage `craft-feature-unified-shell`,
- * default OFF) still gates ActivityRail + SurfaceTabs + InspectorHost together.
+ * default ON) gates ActivityRail + SurfaceTabs + InspectorHost together with
+ * the Workbench preference.
  *
  * Workbench v2 splits further chrome behind granular `workbench.*` flags
  * (ADR-0001) so Mode Bar, TabGroups, browser-as-surface and Status Bar can
- * ship independently. All default OFF.
+ * ship independently. Unified shell / inspector / workbench default ON.
  */
 import { atomWithStorage } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
-import { readWorkbenchPreference } from '@/platform/workbench-rollout'
 
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureUnifiedShell),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
@@ -24,7 +24,7 @@ export const featureUnifiedShellAtom = atomWithStorage<boolean>(
 /** Explicit Workbench user preference; operator policy is evaluated elsewhere. */
 export const featureWorkbenchAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.workbenchEnabled),
-  readWorkbenchPreference(),
+  true,
   undefined,
   { getOnInit: true },
 )
@@ -76,7 +76,7 @@ export const activityRailCollapsedAtom = atomWithStorage<boolean>(
 /** Inspector panel visibility (the 48px section rail itself always renders). */
 export const inspectorVisibleAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorVisible),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )

@@ -300,7 +300,7 @@ export default function AppearanceSettingsPage() {
   )
   // Workspace selector placement toggle
   const [workspaceSelectorRail, setWorkspaceSelectorRail] = useState(() =>
-    storage.get(storage.KEYS.workspaceSelectorRail, false)
+    storage.get(storage.KEYS.workspaceSelectorRail, true)
   )
   const handleWorkspaceSelectorRailChange = useCallback((checked: boolean) => {
     setWorkspaceSelectorRail(checked)
