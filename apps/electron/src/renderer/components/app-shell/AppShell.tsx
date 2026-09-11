@@ -118,7 +118,7 @@ import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
-import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuses, resolveStatusDisplayLabel, resolveLabelDisplayName } from "@/config/session-status-config"
+import { type SessionStatusId, type SessionStatus, statusConfigsToSessionStatuses, resolveStatusDisplayLabel, resolveLabelDisplayName, resolveViewDisplayName, resolveViewDisplayDescription } from "@/config/session-status-config"
 import { useStatuses } from "@/hooks/useStatuses"
 import { useLabels } from "@/hooks/useLabels"
 import { useViews } from "@/hooks/useViews"
@@ -2290,7 +2290,10 @@ function AppShellContent({
       case 'label':
         return sessionFilter.labelId === '__all__' ? t("sidebar.labels") : getLabelDisplayName(labelConfigs, sessionFilter.labelId)
       case 'view':
-        return sessionFilter.viewId === '__all__' ? t("sidebar.views") : viewConfigs.find(v => v.id === sessionFilter.viewId)?.name || t("sidebar.views")
+        return sessionFilter.viewId === '__all__' ? t("sidebar.views") : (() => {
+          const view = viewConfigs.find(v => v.id === sessionFilter.viewId)
+          return view ? resolveViewDisplayName(view, t) : t("sidebar.views")
+        })()
       default:
         return t("sidebar.allSessions")
     }
@@ -2558,9 +2561,9 @@ function AppShellContent({
                       },
                       items: sessionViewConfigs.map(view => ({
                         id: `nav:view:${view.id}`,
-                        title: view.name,
+                        title: resolveViewDisplayName(view, t),
                         icon: Eye,
-                        tooltip: view.description || t("sidebar.viewsHint"),
+                        tooltip: resolveViewDisplayDescription(view, t) || t("sidebar.viewsHint"),
                         variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === view.id) ? "default" as const : "ghost" as const,
                         onClick: () => handleViewClick(view.id),
                         contextMenu: {

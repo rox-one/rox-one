@@ -196,6 +196,54 @@ export function resolveLabelDisplayName(
 /**
  * Get the icon for a todo state
  */
+
+/**
+ * Default English names for built-in session views (getDefaultViews seeds).
+ */
+const DEFAULT_VIEW_ENGLISH_NAMES: Record<string, string> = {
+  'view-new': 'New',
+  'view-plan': 'Plan',
+  'view-explore': 'Explore',
+  'view-processing': 'Processing',
+}
+
+const DEFAULT_VIEW_ENGLISH_DESCRIPTIONS: Record<string, string> = {
+  'view-new': 'Sessions with unread messages',
+  'view-plan': 'Sessions with a pending plan awaiting approval',
+  'view-explore': 'Sessions in Explore (read-only) mode',
+  'view-processing': 'Sessions where the agent is currently running',
+}
+
+/**
+ * Resolve the display name for a built-in session view.
+ * Translates only when id is a default view and the persisted name still
+ * equals the English seed (same pattern as resolveStatusDisplayLabel).
+ */
+export function resolveViewDisplayName(
+  view: { id: string; name: string },
+  t: TFunction,
+): string {
+  const defaultEnglish = DEFAULT_VIEW_ENGLISH_NAMES[view.id]
+  if (defaultEnglish && view.name === defaultEnglish) {
+    const key = view.id.replace(/^view-/, '')
+    return t(`sidebar.view.${key}`, defaultEnglish)
+  }
+  return view.name
+}
+
+/** Resolve tooltip/description for a built-in session view when still seeded. */
+export function resolveViewDisplayDescription(
+  view: { id: string; description?: string },
+  t: TFunction,
+): string | undefined {
+  const defaultEnglish = DEFAULT_VIEW_ENGLISH_DESCRIPTIONS[view.id]
+  if (defaultEnglish && (view.description === defaultEnglish || !view.description)) {
+    const key = view.id.replace(/^view-/, '')
+    return t(`sidebar.view.${key}Desc`, defaultEnglish)
+  }
+  return view.description
+}
+
 export function getStateIcon(
   stateId: string,
   states: SessionStatus[]

@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "Állapotok",
   "sidebar.unknownProject": "Ismeretlen projekt",
   "sidebar.views": "Nézetek",
-  "sidebar.viewsHint": "Mentett munkamenet-szűrők. A New, Plan, Explore és Processing beépített szeletek.",
+  "sidebar.viewsHint": "Mentett munkamenet-szűrők. Az Új, Terv, Felfedezés és Feldolgozás beépített szeletek.",
   "sidebar.whatsNew": "Újdonságok",
   "sidebarMenu.addAutomation": "Automatizáció hozzáadása",
   "sidebarMenu.addNewLabel": "Új címke hozzáadása",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "Új",
+  "sidebar.view.newDesc": "Olvasatlan üzenetekkel rendelkező munkamenetek",
+  "sidebar.view.plan": "Terv",
+  "sidebar.view.planDesc": "Jóváhagyásra váró tervvel rendelkező munkamenetek",
+  "sidebar.view.explore": "Felfedezés",
+  "sidebar.view.exploreDesc": "Felfedezés (csak olvasható) módú munkamenetek",
+  "sidebar.view.processing": "Feldolgozás",
+  "sidebar.view.processingDesc": "Munkamenetek, ahol az ügynök éppen fut"
 }

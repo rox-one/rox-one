@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "状态",
   "sidebar.unknownProject": "未知项目",
   "sidebar.views": "视图",
-  "sidebar.viewsHint": "已保存的会话筛选。New、Plan、Explore 和 Processing 是内置切片。",
+  "sidebar.viewsHint": "已保存的会话筛选。新建、计划、探索和处理中是内置切片。",
   "sidebar.whatsNew": "最新动态",
   "sidebarMenu.addAutomation": "添加自动化",
   "sidebarMenu.addNewLabel": "添加新标签",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "新建",
+  "sidebar.view.newDesc": "有未读消息的会话",
+  "sidebar.view.plan": "计划",
+  "sidebar.view.planDesc": "有待批准计划的会话",
+  "sidebar.view.explore": "探索",
+  "sidebar.view.exploreDesc": "处于探索（只读）模式的会话",
+  "sidebar.view.processing": "处理中",
+  "sidebar.view.processingDesc": "代理正在运行的会话"
 }

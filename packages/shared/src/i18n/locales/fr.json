@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "Statuts",
   "sidebar.unknownProject": "Unknown project",
   "sidebar.views": "Vues",
-  "sidebar.viewsHint": "Filtres de session enregistrés. New, Plan, Explore et Processing sont des tranches intégrées.",
+  "sidebar.viewsHint": "Filtres de session enregistrés. Nouvelles, Plan, Explorer et Traitement sont des tranches intégrées.",
   "sidebar.whatsNew": "Nouveautés",
   "sidebarMenu.addAutomation": "Ajouter une automatisation",
   "sidebarMenu.addNewLabel": "Ajouter une nouvelle étiquette",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "Nouvelles",
+  "sidebar.view.newDesc": "Sessions avec messages non lus",
+  "sidebar.view.plan": "Plan",
+  "sidebar.view.planDesc": "Sessions avec un plan en attente d’approbation",
+  "sidebar.view.explore": "Explorer",
+  "sidebar.view.exploreDesc": "Sessions en mode Explorer (lecture seule)",
+  "sidebar.view.processing": "Traitement",
+  "sidebar.view.processingDesc": "Sessions où l’agent est en cours d’exécution"
 }
