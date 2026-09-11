@@ -254,6 +254,13 @@ let pendingDeepLink: string | null = null
 // Supports multi-instance dev: CRAFT_APP_NAME env var (e.g., "Rox [1]")
 app.setName(process.env.CRAFT_APP_NAME || 'Rox')
 
+// Isolate Chromium profile so a second dev instance does not share cookies/locks.
+const userDataOverride = process.env.CRAFT_USER_DATA_DIR?.trim()
+if (userDataOverride) {
+  mkdirSync(userDataOverride, { recursive: true })
+  app.setPath('userData', userDataOverride)
+}
+
 // Register as default protocol client for craftagents:// URLs
 // This must be done before app.whenReady() on some platforms
 if (process.defaultApp) {
@@ -289,11 +296,14 @@ app.on('open-url', (event, url) => {
   }
 })
 
-// Handle deeplink on Windows/Linux (single instance check)
-const gotTheLock = app.requestSingleInstanceLock()
+// Handle deeplink on Windows/Linux (single instance check).
+// macOS keys this lock to the bundle id, so a second `electron:dev` from another
+// tree/port would otherwise quit immediately. Numbered instances skip it.
+const allowMultiInstance = Boolean(process.env.CRAFT_INSTANCE_NUMBER)
+const gotTheLock = allowMultiInstance || app.requestSingleInstanceLock()
 if (!gotTheLock) {
   app.quit()
-} else {
+} else if (!allowMultiInstance) {
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
     // On Windows/Linux, the deeplink is in commandLine

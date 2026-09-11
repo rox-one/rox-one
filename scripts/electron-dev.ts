@@ -268,6 +268,8 @@ function getElectronEnv(): Record<string, string> {
     ...process.env as Record<string, string>,
     VITE_DEV_SERVER_URL: `http://localhost:${vitePort}`,
     CRAFT_CONFIG_DIR: process.env.CRAFT_CONFIG_DIR || "",
+    ROX_CONFIG_DIR: process.env.ROX_CONFIG_DIR || process.env.CRAFT_CONFIG_DIR || "",
+    CRAFT_USER_DATA_DIR: process.env.CRAFT_USER_DATA_DIR || "",
     CRAFT_APP_NAME: process.env.CRAFT_APP_NAME || "Rox",
     CRAFT_DEEPLINK_SCHEME: process.env.CRAFT_DEEPLINK_SCHEME || "craftagents",
     CRAFT_INSTANCE_NUMBER: process.env.CRAFT_INSTANCE_NUMBER || "",
@@ -616,8 +618,10 @@ async function main(): Promise<void> {
     );
     process.exit(1);
   }
+  const userDataDir = process.env.CRAFT_USER_DATA_DIR?.trim() ?? "";
   const electronArgs = [
     ...(debugPort ? [`--remote-debugging-port=${debugPort}`] : []),
+    ...(userDataDir ? [`--user-data-dir=${userDataDir}`] : []),
     "apps/electron",
   ];
 
