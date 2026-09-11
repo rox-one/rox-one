@@ -51,7 +51,8 @@ export function sanitizeSessionId(sessionId: string): string {
   if (!sessionId || typeof sessionId !== 'string') {
     return '';
   }
-  return basename(sessionId);
+  const base = basename(sessionId);
+  return SESSION_ID_PATTERN.test(base) ? base : '';
 }
 
 /**

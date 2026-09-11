@@ -235,3 +235,42 @@ git branch -r --format='%(refname:short)' \
 | donor-only (§4) | 4 | 3 | 0 (see shell-ext-activate2 residual note) | 0 | 0 |
 
 **SAFE_TO_DELETE total: 85 rox-one branches (21 + 2 + 62) + 9 donor branches (7 donor-only + 2 shared `fix/*`).**
+
+---
+
+## Disposition локальных веток rox/* — 2026-08-22 (RX-TSK-0103)
+
+**Метод:** как выше — `merge-base`, `rev-list --left-right --count`, `diff --shortstat`, `git cherry`, `worktree list`. База сравнения: текущий `main` (5dbaa25). Ветка волны `rox/ru-codex-navigation` исключена (KEEP, активная работа).
+
+**Итог классификации:** 14 веток класса **UNIQUE_DELTA** — у каждой есть контент, отсутствующий на `main`; MERGED/SUPERSEDED/SAFE_TO_DELETE не обнаружено. Ни одна не удерживается worktree.
+
+| Ветка | Unique | Behind | Cherry ± | Дельта | Последний коммит | Суть | Область |
+|---|---|---|---|---|---|---|---|
+| `rox/extension-broker` | 1 | 31 | +1/0 | 14 files changed, 1067 insertions(+), 76 deletions(-) | 2026-08-20 | persist capability revoke + URL allowlist | packages/shared/src/extensions |
+| `rox/fabric-fail-closed` | 81 | 31 | +81/0 | 156 files changed, 4244 insertions(+), 338 deletions(-) | 2026-08-21 | fail-closed connection fabric + redaction fixes | identity/fabric |
+| `rox/host-bash-sandbox` | 3 | 31 | +3/0 | 23 files changed, 1381 insertions(+), 84 deletions(-) | 2026-08-20 | опциональная FS+net тюрьма для host-tool Bash | session-tools/bash |
+| `rox/host-tool-bash-omp` | 1 | 102 | +0/0 | 16 files changed, 401 insertions(+), 26 deletions(-) | 2026-08-20 | Bash как craft host tool в OMP | omp-agent/host tools |
+| `rox/journal-primary-pi-bash` | 1 | 99 | +0/0 | 19 files changed, 326 insertions(+), 29 deletions(-) | 2026-08-20 | journal primary + Pi host-tool bash | native/journal |
+| `rox/native-docs-status` | 1 | 89 | +0/0 | 3 files changed, 12 insertions(+), 9 deletions(-) | 2026-08-20 | доки: N-suite opt-in, exec/journal план | docs/native |
+| `rox/native-exec-cwd` | 1 | 95 | +0/0 | 9 files changed, 240 insertions(+), 20 deletions(-) | 2026-08-20 | jail cwd host-tool Bash внутри workspace | native/exec |
+| `rox/native-health-check` | 1 | 92 | +0/0 | 6 files changed, 117 insertions(+), 1 deletion(-) | 2026-08-20 | sidecar в server health | server health |
+| `rox/native-index-cap` | 1 | 98 | +0/0 | 12 files changed, 334 insertions(+), 57 deletions(-) | 2026-08-20 | снятие cap craft-index, index primary | craft-index |
+| `rox/native-index-incremental` | 1 | 97 | +0/0 | 5 files changed, 210 insertions(+), 40 deletions(-) | 2026-08-20 | инкрементальный craft-index, --index-status | craft-index |
+| `rox/native-index-status` | 1 | 93 | +0/0 | 20 files changed, 183 insertions(+), 4 deletions(-) | 2026-08-20 | статус source-index через RPC и --health | RPC/health |
+| `rox/native-index-watch` | 1 | 70 | +0/0 | 13 files changed, 449 insertions(+), 3 deletions(-) | 2026-08-20 | watch локальных папок, debounce-reindex | craft-index/watch |
+| `rox/native-provider-exec` | 1 | 100 | +0/0 | 32 files changed, 627 insertions(+), 45 deletions(-) | 2026-08-20 | нативные cloud runs и craft-exec | cloud-runner/native |
+| `rox/native-sidecar-settings` | 1 | 91 | +0/0 | 16 files changed, 140 insertions(+), 1 deletion(-) | 2026-08-20 | статус sidecar на Server settings | UI settings |
+| `rox/native-toolchain` | 1 | 82 | +0/0 | 13 files changed, 280 insertions(+), 10 deletions(-) | 2026-08-20 | craft-native как opt-in toolchain tool | toolchain |
+
+**Паттерн серии:** 13 веток от 2026-08-20 несут ровно один squash-коммит каждый (один слайс — одна ветка), базы последовательно смещаются — резали их друг от друга. `fabric-fail-closed` — отдельная длинная линия (81 коммит).
+
+**Рекомендуемый порядок интеграции** (по зависимостям областей, каждая — squash-merge или ребейз после ревью):
+
+1. Инфраструктура исполнения: `host-tool-bash-omp` → `journal-primary-pi-bash` → `native-provider-exec`.
+2. Изоляция Bash: `host-bash-sandbox` ↔ `native-exec-cwd` (пересекаются в session-tools — мержить одной очередью, разрешив конфликты совместно).
+3. Индекс: `native-index-cap` → `native-index-incremental` → `native-index-watch` → `native-index-status`.
+4. Наблюдаемость/UI: `native-health-check` → `native-sidecar-settings` → `native-docs-status`.
+5. Расширения: `extension-broker`; отдельно длинная линия `fabric-fail-closed` (требует полного ревью из-за объёма).
+
+> Вливание и удаление веток — внешние мутации `main`: выполняются только по явному решению (см. D9 на странице решений Obsidian). Классификация RX-TSK-0103 этим завершена.
+

@@ -13,6 +13,7 @@ import { join } from 'node:path'
 
 import { atomicWriteFileSync } from './catalog.ts'
 import type { MarketplaceEntryKind } from './catalog.ts'
+import { resolveConfigDir } from "../config/paths.ts"
 
 export const MARKETPLACE_LOCK_VERSION = 1 as const
 export const INSTALL_MARKER_NAME = '.craft-marketplace.lock.json'

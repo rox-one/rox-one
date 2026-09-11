@@ -169,6 +169,18 @@ export const PermissionsConfigSchema = z.object({
       }),
     )
     .optional(),
+  /**
+   * Shadow auto-review of permission prompts. Recommendations only —
+   * never a network MITM proxy (DSH 127.0.0.1 whitelist is not accepted).
+   */
+  autoReview: z
+    .object({
+      enabled: z.boolean().optional(),
+      timeoutMs: z.number().int().positive().max(30_000).optional(),
+      denyPatterns: z.array(z.string()).optional(),
+      allowPatterns: z.array(z.string()).optional(),
+    })
+    .optional(),
 });
 
 export type PermissionsConfigFile = z.infer<typeof PermissionsConfigSchema>;

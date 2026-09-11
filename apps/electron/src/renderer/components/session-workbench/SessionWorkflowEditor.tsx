@@ -215,7 +215,7 @@ function EditorInner({
   const [draft, setDraft] = React.useState('')
   const [fanOutOpen, setFanOutOpen] = React.useState(false)
   const viewportRef = React.useRef<Viewport | undefined>(loadPin(sessionId)?.viewport)
-  const persistTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  const persistTimer = React.useRef<number | undefined>(undefined)
   const flowRef = React.useRef<ReactFlowInstance | null>(null)
   const contextPositionRef = React.useRef<{ x: number; y: number }>({ x: 24, y: 24 })
   const hasContextPositionRef = React.useRef(false)
@@ -235,7 +235,7 @@ function EditorInner({
 
   React.useEffect(() => {
     return () => {
-      clearTimeout(persistTimer.current)
+      window.clearTimeout(persistTimer.current)
     }
   }, [])
 
@@ -421,8 +421,8 @@ function EditorInner({
   const persistPin = React.useCallback(
     (next: SessionMapPin) => {
       setPin(next)
-      clearTimeout(persistTimer.current)
-      persistTimer.current = setTimeout(() => {
+      window.clearTimeout(persistTimer.current)
+      persistTimer.current = window.setTimeout(() => {
         try {
           localStorage.setItem(sessionMapPinStorageKey(sessionId), serializeSessionMapPin(next))
         } catch {

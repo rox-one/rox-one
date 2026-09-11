@@ -1,3 +1,4 @@
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 /**
  * Runtime-smoke новых компонентов toolchain (M1): реальная установка в чистый
  * CRAFT_CONFIG_DIR и запуск установленных бинарей.
@@ -18,10 +19,10 @@ const TOOLS: string[] = toolsArg >= 0
 
 // Динамический импорт намеренно: CONFIG_DIR — module-load const в shared/config/paths.ts,
 // env CRAFT_CONFIG_DIR должен быть выставлен ДО загрузки модуля (см. scripts/toolchain-smoke.ts).
-const { CONFIG_DIR } = await import('../packages/shared/src/config/paths.ts')
+const { resolveConfigDir() } = await import('../packages/shared/src/config/paths.ts')
 const { createManager, createResolver, toolchainPaths } = await import('../packages/shared/src/toolchain/index.ts')
 
-const paths = toolchainPaths(CONFIG_DIR)
+const paths = toolchainPaths(resolveConfigDir())
 const manager = createManager(paths)
 const results: Record<string, string> = {}
 

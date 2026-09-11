@@ -1,14 +1,18 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { SlidersHorizontal } from 'lucide-react'
-import { COLLECTION_GROUP_BY_VALUES,
-COLLECTION_ORDER_BY_VALUES,
-COLLECTION_PROPERTY_VALUES,
-type CollectionDisplay,
-type CollectionGroupBy,
-type CollectionOrderBy,
-type CollectionOrderDir,
-type CollectionProperty, } from '@craft-agent/shared/sessions/collection'
+import {
+  COLLECTION_DENSITY_VALUES,
+  COLLECTION_GROUP_BY_VALUES,
+  COLLECTION_ORDER_BY_VALUES,
+  COLLECTION_PROPERTY_VALUES,
+  type CollectionDensity,
+  type CollectionDisplay,
+  type CollectionGroupBy,
+  type CollectionOrderBy,
+  type CollectionOrderDir,
+  type CollectionProperty,
+} from '@craft-agent/shared/sessions/collection'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
@@ -19,6 +23,7 @@ import {
   CollectionMenuSection,
 } from './collection-menu-row'
 import { COLLECTION_POPOVER_SURFACE } from './collection-menu-surface'
+import { handleCollectionDialogKeyDown } from './collection-dialog-keyboard'
 
 export interface CollectionDisplayPopoverProps {
   display: CollectionDisplay
@@ -43,6 +48,11 @@ const ORDER_I18N: Record<CollectionOrderBy, string> = {
   lastMessageAt: 'collection.display.orderBy.lastMessageAt',
   createdAt: 'collection.display.orderBy.createdAt',
   name: 'collection.display.orderBy.name',
+}
+
+const DENSITY_I18N: Record<CollectionDensity, string> = {
+  compact: 'collection.display.density.compact',
+  comfortable: 'collection.display.density.comfortable',
 }
 
 const PROPERTY_I18N: Record<CollectionProperty, string> = {
@@ -112,6 +122,7 @@ export function CollectionDisplayPopover({
         role="dialog"
         aria-label={t('collection.display.trigger')}
         className={COLLECTION_POPOVER_SURFACE}
+        onKeyDown={(event) => handleCollectionDialogKeyDown(event.nativeEvent, event.currentTarget)}
       >
         <CollectionMenuDisclosure
           label={t('collection.display.groupByLabel')}
@@ -164,6 +175,21 @@ export function CollectionDisplayPopover({
           </div>
         </CollectionMenuDisclosure>
 
+        <CollectionMenuDisclosure
+          label={t('collection.display.densityLabel')}
+          valueLabel={t(DENSITY_I18N[display.density ?? 'compact'])}
+        >
+          {COLLECTION_DENSITY_VALUES.map((value) => (
+            <CollectionMenuRadioRow
+              key={value}
+              role="dialog"
+              selected={(display.density ?? 'compact') === value}
+              label={t(DENSITY_I18N[value])}
+              onClick={() => patch({ density: value })}
+            />
+          ))}
+        </CollectionMenuDisclosure>
+
         <div className="mx-1 my-1 h-px bg-foreground/8" />
 
         <ToggleRow
@@ -175,6 +201,11 @@ export function CollectionDisplayPopover({
           label={t('collection.display.showEmptyGroups')}
           checked={display.showEmptyGroups}
           onCheckedChange={(checked) => patch({ showEmptyGroups: checked })}
+        />
+        <ToggleRow
+          label={t('collection.display.hoverActions')}
+          checked={display.hoverActions !== false}
+          onCheckedChange={(checked) => patch({ hoverActions: checked })}
         />
 
         <CollectionMenuSection label={t('collection.display.propertiesLabel')}>
@@ -207,7 +238,11 @@ function ToggleRow({
   onCheckedChange: (checked: boolean) => void
 }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[12.5px] text-foreground/80 transition-colors hover:bg-foreground/[0.04] hover:text-foreground">
+    <label
+      data-collection-dialog-item
+      tabIndex={0}
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[12.5px] text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 outline-none motion-reduce:transition-none"
+    >
       <span>{label}</span>
       <Switch checked={checked} onCheckedChange={onCheckedChange} />
     </label>

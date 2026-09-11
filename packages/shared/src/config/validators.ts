@@ -15,7 +15,6 @@
 import { z } from 'zod';
 import { existsSync, readFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
-import { CONFIG_DIR } from './paths.ts';
 import { safeJsonParse, readJsonFileSync } from '../utils/files.ts';
 import { EntityColorSchema } from '../colors/validate.ts';
 import { THINKING_LEVEL_IDS } from '../agent/thinking-levels.ts';
@@ -28,8 +27,8 @@ import { SecretRefEntrySchema } from '../secrets/types.ts';
 // Config Directory
 // ============================================================
 
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
-const PREFERENCES_FILE = join(CONFIG_DIR, 'preferences.json');
+const CONFIG_FILE = join(resolveConfigDir(), 'config.json');
+const PREFERENCES_FILE = join(resolveConfigDir(), 'preferences.json');
 
 // ============================================================
 // Validation Result Types
@@ -837,15 +836,17 @@ export function validateSkillContent(markdownContent: string, slug: string): Val
   const file = `skills/${slug}/SKILL.md`;
   const errors: ValidationIssue[] = [];
 
-  // 1. Validate slug format
-  if (!/^[a-z0-9-]+$/.test(slug)) {
+  // 1. Validate slug format (length-capped + linear suggest — avoids CodeQL js/polynomial-redos)
+  if (slug.length > 128 || !/^[a-z0-9-]+$/.test(slug)) {
     const suggestedSlug = slug
+      .slice(0, 128)
       .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .replace(/-+/g, '-');
+      .replace(/[^a-z0-9]+/g, '-')
+      .split('-')
+      .filter(Boolean)
+      .join('-');
     errors.push({
-      file: `skills/${slug}`,
+      file: `skills/${slug.slice(0, 128)}`,
       path: 'slug',
       message: 'Slug must be lowercase alphanumeric with hyphens',
       severity: 'error',
@@ -1770,6 +1771,7 @@ export function isValidThemeFile(filePath: string): boolean {
 // ============================================================
 
 import { getToolIconsDir } from './storage.ts';
+import { resolveConfigDir } from "./paths.ts"
 
 /**
  * Zod schema for a single tool icon entry in tool-icons.json.
@@ -2095,7 +2097,7 @@ export function detectConfigFileType(filePath: string, workspaceRootPath: string
  */
 export function detectAppConfigFileType(filePath: string): ConfigFileDetection | null {
   const normalizedPath = filePath.replace(/\\/g, '/');
-  const normalizedConfigDir = CONFIG_DIR.replace(/\\/g, '/').replace(/\/?$/, '/');
+  const normalizedConfigDir = resolveConfigDir().replace(/\\/g, '/').replace(/\/?$/, '/');
 
   // Only check files within CONFIG_DIR
   if (!normalizedPath.startsWith(normalizedConfigDir)) {

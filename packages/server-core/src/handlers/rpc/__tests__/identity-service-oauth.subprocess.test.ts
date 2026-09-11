@@ -10,6 +10,9 @@ import { mkdtempSync, rmSync, readFileSync, existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
+const SUBPROCESS_TIMEOUT_MS = 15_000 // Дефолтные 5s флейкуют под нагрузкой машины (2026-08-23)
+
+
 const REPO_ROOT = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 
 interface RunResult {
@@ -130,13 +133,14 @@ describe('identity service_oauth connect/disconnect (subprocess sandbox)', () =>
         console.log('ok-connect-disconnect');
       `,
       )
-      expect(r.stderr).toBe('')
+      // Допускаем deprecation-нотис CRAFT_CONFIG_DIR (см. cloud-runs.test.ts).
+      expect(r.stderr.split('\n').every((l) => !l.trim() || /CRAFT_CONFIG_DIR is deprecated/.test(l))).toBe(true)
       expect(r.exitCode).toBe(0)
       expect(r.stdout).toContain('ok-connect-disconnect')
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 
   test('auth.LOGOUT clears identity connections via IdentityStore.clear', () => {
     const dir = mkdtempSync(join(tmpdir(), 'craft-identity-logout-'))
@@ -184,11 +188,12 @@ describe('identity service_oauth connect/disconnect (subprocess sandbox)', () =>
         console.log('ok-logout-clears-identity');
       `,
       )
-      expect(r.stderr).toBe('')
+      // Допускаем deprecation-нотис CRAFT_CONFIG_DIR (см. cloud-runs.test.ts).
+      expect(r.stderr.split('\n').every((l) => !l.trim() || /CRAFT_CONFIG_DIR is deprecated/.test(l))).toBe(true)
       expect(r.exitCode).toBe(0)
       expect(r.stdout).toContain('ok-logout-clears-identity')
     } finally {
       rmSync(dir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 })

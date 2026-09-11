@@ -25,7 +25,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs'
 import { randomUUID } from 'crypto'
 import { join } from 'path'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 /** Episode store file name inside the scope's memory directory. */
 export const EPISODIC_FILE = 'episodic.jsonl'
@@ -205,7 +205,7 @@ export class EpisodicMemory {
   constructor(memoryDir: string, opts: EpisodicMemoryOptions = {}) {
     this.memoryDir = memoryDir
     this.opts = opts
-    this.configDir = opts.configDir ?? (process.env.CRAFT_CONFIG_DIR || CONFIG_DIR)
+    this.configDir = opts.configDir ?? (process.env.CRAFT_CONFIG_DIR || resolveConfigDir())
     this.now = opts.now ?? (() => Date.now())
   }
 

@@ -16,7 +16,6 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync, safeJsonParse } from '../utils/files.ts';
-import { CONFIG_DIR } from '../config/paths.ts';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { getSourcePath } from '../sources/storage.ts';
 import { isValidPermissionsFile } from '../config/validators.ts';
@@ -33,6 +32,8 @@ import {
   type BlockedCommandHintRule,
   type PermissionPaths,
 } from './mode-types.ts';
+import { DEFAULT_PERMISSION_SHADOW_RULES, type PermissionShadowRules } from './permission-shadow-review.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
 // App-level Permissions Directory
@@ -282,6 +283,8 @@ export interface PermissionsCustomConfig {
   blockedTools: string[];
   /** Command-specific hints for blocked Bash commands */
   blockedCommandHints: BlockedCommandHintRule[];
+  /** Shadow reviewer rules (UI still owns Allow/Deny). */
+  autoReview: PermissionShadowRules;
 }
 
 /**
@@ -334,6 +337,7 @@ export function parsePermissionsJson(content: string): PermissionsCustomConfig {
     allowedWritePaths: [],
     blockedTools: [],
     blockedCommandHints: [],
+    autoReview: { ...DEFAULT_PERMISSION_SHADOW_RULES },
   };
 
   try {
@@ -377,6 +381,12 @@ export function parsePermissionsJson(content: string): PermissionsCustomConfig {
       // Exact tool names (not regex) — keep verbatim for Set-exact matching
       blockedTools: normalizePatterns(data.blockedTools),
       blockedCommandHints: data.blockedCommandHints ?? [],
+      autoReview: {
+        enabled: data.autoReview?.enabled ?? false,
+        timeoutMs: data.autoReview?.timeoutMs ?? DEFAULT_PERMISSION_SHADOW_RULES.timeoutMs,
+        denyPatterns: data.autoReview?.denyPatterns ?? [],
+        allowPatterns: data.autoReview?.allowPatterns ?? [],
+      },
     };
   } catch (error) {
     debug('[SafeMode] JSON parse error:', error);
@@ -742,7 +752,7 @@ class PermissionsConfigCache {
       permissionPaths: {
         workspacePath: getWorkspacePermissionsPath(context.workspaceRootPath),
         appDefaultPath: join(getAppPermissionsDir(), 'default.json'),
-        docsPath: join(CONFIG_DIR, 'docs', 'permissions.md'),
+        docsPath: join(resolveConfigDir(), 'docs', 'permissions.md'),
       },
     };
 

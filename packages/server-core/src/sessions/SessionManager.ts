@@ -2961,6 +2961,22 @@ export class SessionManager implements ISessionManager {
     this.loadSessionsFromDisk()
   }
 
+  ingestImportedSession(workspaceId: string, sessionId: string): void {
+    if (this.sessions.has(sessionId)) return
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return
+    const meta = listStoredSessions(workspace.rootPath).find((session) => session.id === sessionId)
+    if (!meta) return
+    const wsConfig = loadWorkspaceConfig(workspace.rootPath)
+    this.sessions.set(
+      sessionId,
+      createManagedSession(meta, workspace, {
+        enabledSourceSlugs: meta.enabledSourceSlugs,
+        workingDirectory: meta.workingDirectory ?? wsConfig?.defaults?.workingDirectory,
+      }),
+    )
+  }
+
   getSessions(workspaceId?: string): Session[] {
     // Returns session metadata only - messages are NOT included to save memory
     // Use getSession(id) to load messages for a specific session
@@ -3249,7 +3265,22 @@ export class SessionManager implements ISessionManager {
     const targetProviderType = targetBackendContext.connection?.providerType
       ?? (targetBackendContext.provider === 'pi' ? 'pi' : 'anthropic')
     const targetPiAuthProvider = targetBackendContext.connection?.piAuthProvider
-
+    // RX-TSK-0401: опциональный дефолт-лейбл omp-подключения навешивается на
+    // новую сессию через существующий label-CRUD; остальные провайдеры не трогаем.
+    const ompDefaultLabel = targetBackendContext.connection?.providerType === 'omp'
+      ? targetBackendContext.connection.defaultSessionLabel?.trim()
+      : undefined
+    if (ompDefaultLabel) {
+      try {
+        await ensureLabelsExist(workspaceRootPath, [ompDefaultLabel])
+      } catch (error) {
+        sessionLog.warn(`Failed to ensure default omp label "${ompDefaultLabel}":`, error)
+      }
+      options = {
+        ...options,
+        labels: [...new Set([...(options?.labels ?? []), ompDefaultLabel])],
+      }
+    }
     // Resolve working directory from options:
     // - 'user_default' or undefined: Use workspace's configured default
     // - 'none': No working directory (empty string means session folder only)
@@ -7886,8 +7917,8 @@ export class SessionManager implements ISessionManager {
       const requestMeta = this.pendingPermissionRequests.get(requestId)
       this.pendingPermissionRequests.delete(requestId)
 
-      if (shouldBrokerGatePermission(requestMeta)) {
-        const commandHash = requestMeta?.commandHash
+      if (requestMeta && shouldBrokerGatePermission(requestMeta)) {
+        const commandHash = requestMeta.commandHash
         const brokerResult = this.privilegedExecutionBroker.resolveApproval(requestId, allowed, {
           expectedCommandHash: commandHash,
         })

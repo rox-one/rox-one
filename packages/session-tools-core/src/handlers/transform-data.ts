@@ -84,6 +84,19 @@ export async function handleTransformData(
     mkdirSync(dataDir, { recursive: true });
   }
 
+  // RX-TSK-0417: подтвердить запуск перед созданием временного файла/процесса.
+  if (ctx.onTransformDataConfirm) {
+    const approved = await ctx.onTransformDataConfirm({
+      language: args.language,
+      scriptPreview: args.script.slice(0, 500) + (args.script.length > 500 ? '\u2026' : ''),
+      inputFiles: args.inputFiles,
+      outputFile: args.outputFile,
+    });
+    if (!approved) {
+      return errorResponse('transform_data cancelled by owner.');
+    }
+  }
+
   // Write script to temp file
   const ext = args.language === 'python3' ? '.py' : '.js';
   const tempScript = join(tmpdir(), `craft-transform-${ctx.sessionId}-${Date.now()}${ext}`);

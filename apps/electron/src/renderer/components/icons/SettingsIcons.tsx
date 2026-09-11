@@ -12,6 +12,7 @@ import {
   BookOpen,
   Building2,
   Cloud,
+  DownloadCloud,
   FileText,
   Keyboard,
   MessageSquare,
@@ -50,6 +51,7 @@ export const RuntimeIcon = ({ className }: IconProps) => <Settings className={cl
 export const ContextIcon = ({ className }: IconProps) => <FileText className={className} />
 export const KnowledgeIcon = ({ className }: IconProps) => <BookOpen className={className} />
 export const MarketplaceIcon = ({ className }: IconProps) => <ShoppingBag className={className} />
+export const ImportIcon = ({ className }: IconProps) => <DownloadCloud className={className} />
 
 /**
  * Map of settings subpage IDs to their icon components.
@@ -62,6 +64,7 @@ export const SETTINGS_ICONS: Record<SettingsSubpage, React.ComponentType<IconPro
   knowledge: KnowledgeIcon,
   marketplace: MarketplaceIcon,
   extensions: ExtensionsIcon,
+  import: ImportIcon,
   app: AppSettingsIcon,
   ai: AiSettingsIcon,
   appearance: AppearanceIcon,

@@ -12,6 +12,7 @@
  * cannot self-supply grantedPermissions.
  */
 
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import { RPC_CHANNELS } from '../../shared/types'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
@@ -24,7 +25,7 @@ import {
   setUrlAllowlist,
 } from '../extension-host/extension-url-allowlist'
 import type { ExtensionHostStatus } from '@craft-agent/shared/extensions'
-import { CONFIG_DIR, getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import {getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { loadRawWorkspacePermissions } from '@craft-agent/shared/agent'
 
 export const HANDLED_CHANNELS = [
@@ -289,7 +290,7 @@ export function registerExtensionHostHandlers(
         throw new Error('extensionHost.getUrlAllowlist requires { extensionId }')
       }
       return {
-        prefixes: getUrlAllowlist(args.extensionId, CONFIG_DIR),
+        prefixes: getUrlAllowlist(args.extensionId, resolveConfigDir()),
       }
     },
   )
@@ -306,7 +307,7 @@ export function registerExtensionHostHandlers(
         )
       }
       return {
-        prefixes: setUrlAllowlist(args.extensionId, args.prefixes, CONFIG_DIR),
+        prefixes: setUrlAllowlist(args.extensionId, args.prefixes, resolveConfigDir()),
       }
     },
   )

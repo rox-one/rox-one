@@ -67,4 +67,6 @@ export interface HandlerDeps<
   messagingRegistry?: IMessagingGatewayRegistry
   /** Optional because standalone/headless hosts do not compose a managed OpenClaw runtime. */
   openClawSecurity?: OpenClawSecurityService
+  /** RX-DOC-0032 phase 0: restart-safe pending-command store. */
+  commandGateway?: import('../command-gateway').PendingCommandsStore
 }

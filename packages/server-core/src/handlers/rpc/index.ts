@@ -3,6 +3,9 @@ import type { HandlerDeps } from '../handler-deps'
 
 import { registerAuthHandlers } from './auth'
 import { registerCloudRunsHandlers } from './cloud-runs'
+import { registerOpenClawHandlers } from './openclaw'
+import { registerCommandGatewayHandlers } from './command-gateway'
+import { registerNotesImportHandlers } from './notes-import'
 import { registerIdentityHandlers } from './identity'
 import { registerFabricHandlers } from './fabric'
 import { registerExtensionsHandlers } from './extensions'
@@ -19,6 +22,7 @@ import { registerOAuthHandlers } from './oauth'
 import { registerResourcesHandlers } from './resources'
 import { registerOnboardingHandlers } from './onboarding'
 import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
+import { registerSessionForeignImportHandlers } from './session-foreign-import'
 import { registerNotesHandlers, cleanupNotesWatchForClient } from './notes'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 export { cleanupNotesWatchForClient } from './notes'
@@ -48,7 +52,6 @@ import { registerMemoryHandlers } from './memory'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
 import { registerSkillsPendingHandlers } from './skills-pending'
-import { registerOpenClawHandlers } from './openclaw'
 export function cleanupCoreClientResources(clientId: string): void {
   cleanupSessionFileWatchForClient(clientId)
   cleanupNotesWatchForClient(clientId)
@@ -75,6 +78,9 @@ export function registerCoreRpcHandlers(
   registerAuthHandlers(server, deps)
   registerCloudRunsHandlers(server, deps)
   registerIdentityHandlers(server, deps)
+  registerOpenClawHandlers(server, deps)
+  registerCommandGatewayHandlers(server, deps)
+  registerNotesImportHandlers(server)
   registerFabricHandlers(server, deps)
   registerExtensionsHandlers(server, deps)
   registerPluginBridgeHandlers(server, deps)
@@ -90,6 +96,7 @@ export function registerCoreRpcHandlers(
   registerOnboardingHandlers(server, deps)
   registerResourcesHandlers(server, deps)
   registerSessionsHandlers(server, deps)
+  registerSessionForeignImportHandlers(server, deps)
   if (serverCtx) registerServerHandlers(server, deps, serverCtx)
   registerSettingsHandlers(server, deps)
   registerGamificationHandlers(server, deps)
@@ -104,7 +111,6 @@ export function registerCoreRpcHandlers(
   registerSystemCoreHandlers(server, deps)
   registerTasksHandlers(server, deps)
   registerToolchainHandlers(server, deps)
-  registerOpenClawHandlers(server, deps)
   registerTransferHandlers(server)
   registerWorkspaceCoreHandlers(server, deps)
   registerMessagingHandlers(server, deps)

@@ -133,11 +133,12 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   // Encoded as its own prefix (not `allSessions/board`) so it never collides
   // with the positional `{filter}/session/{id}` detail parsing below.
   if (first === 'board') {
+    const sessionId = segments[1] === 'session' && segments[2] ? decodeURIComponent(segments[2]) : undefined
     return {
       navigator: 'sessions',
       sessionFilter: { kind: 'allSessions' },
       viewMode: 'board',
-      details: null,
+      details: sessionId ? { type: 'session', id: sessionId } : null,
     }
   }
 
@@ -558,7 +559,12 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
 
   // Sessions navigator
   // Board/table are standalone views of all sessions; emit their own prefixes.
-  if (parsed.viewMode === 'board') return 'board'
+  if (parsed.viewMode === 'board') {
+    if (parsed.details?.type === 'session' && parsed.details.id) {
+      return `board/session/${parsed.details.id}`
+    }
+    return 'board'
+  }
   if (parsed.viewMode === 'table') return 'table'
 
   let base: string
@@ -983,6 +989,7 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return {
       navigator: 'sessions',
       filter,
+      viewMode: compound.viewMode,
       details: { type: 'session', sessionId: compound.details.id },
     }
   }
@@ -1350,6 +1357,7 @@ export function degradeSurfaceNavigationState(state: NavigationState): Navigatio
  *   'history' -> { type: 'history' }
  *   'files' -> { type: 'files' }
  *   'files/src/main.ts' -> { type: 'files', path: 'src/main.ts' }
+ *   'git' | 'browser' | 'context' -> { type }
  *   'none' -> { type: 'none' }
  */
 export function parseRightSidebarParam(sidebarStr?: string): RightSidebarPanel | undefined {
@@ -1357,6 +1365,15 @@ export function parseRightSidebarParam(sidebarStr?: string): RightSidebarPanel |
 
   if (sidebarStr === 'history') {
     return { type: 'history' }
+  }
+  if (sidebarStr === 'git') {
+    return { type: 'git' }
+  }
+  if (sidebarStr === 'browser') {
+    return { type: 'browser' }
+  }
+  if (sidebarStr === 'context') {
+    return { type: 'context' }
   }
   if (sidebarStr.startsWith('files')) {
     const path = sidebarStr.substring(6) // Remove 'files/' prefix
@@ -1380,6 +1397,12 @@ export function buildRightSidebarParam(panel?: RightSidebarPanel): string | unde
   switch (panel.type) {
     case 'history':
       return 'history'
+    case 'git':
+      return 'git'
+    case 'browser':
+      return 'browser'
+    case 'context':
+      return 'context'
     case 'files':
       return panel.path ? `files/${panel.path}` : 'files'
     default:

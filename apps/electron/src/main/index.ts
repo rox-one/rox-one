@@ -104,7 +104,8 @@ import { createWorkGraphKernel, type WorkGraphKernel } from '@craft-agent/server
 import type { PlatformServices } from '../runtime/platform'
 import { createElectronPlatform } from './platform'
 import type { HandlerDeps } from './handlers/handler-deps'
-import { bootstrapServer, releaseServerLock } from '@craft-agent/server-core/bootstrap'
+import { bootstrapServer, releaseServerLock, maskTokenForDisplay } from '@craft-agent/server-core/bootstrap'
+import { isAllowedServerEndpoint } from './server-endpoint-policy'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { initModelRefreshService, getModelRefreshService, setFetcherPlatform } from '@craft-agent/server-core/model-fetchers'
@@ -114,7 +115,6 @@ import { WindowManager } from './window-manager'
 import { stopAllExtensionHosts } from './extension-host-manager'
 import { loadWindowState, saveWindowState } from './window-state'
 import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig } from '@craft-agent/shared/config'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
 import { resolveUserDisplayName } from '@craft-agent/shared/os/user-display-name'
 import { initializeDocs } from '@craft-agent/shared/docs'
@@ -259,6 +259,8 @@ const userDataOverride = process.env.CRAFT_USER_DATA_DIR?.trim()
 if (userDataOverride) {
   mkdirSync(userDataOverride, { recursive: true })
   app.setPath('userData', userDataOverride)
+} else if (process.env.CRAFT_INSTANCE_NUMBER) {
+  app.setPath('userData', join(app.getPath('appData'), `craft-agent-${process.env.CRAFT_INSTANCE_NUMBER}`))
 }
 
 // Register as default protocol client for craftagents:// URLs
@@ -302,6 +304,10 @@ app.on('open-url', (event, url) => {
 const allowMultiInstance = Boolean(process.env.CRAFT_INSTANCE_NUMBER)
 const gotTheLock = allowMultiInstance || app.requestSingleInstanceLock()
 if (!gotTheLock) {
+  mainLog.warn('Single-instance lock not acquired; quitting', {
+    userData: app.getPath('userData'),
+    instance: process.env.CRAFT_INSTANCE_NUMBER ?? null,
+  })
   app.quit()
 } else if (!allowMultiInstance) {
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
@@ -778,7 +784,7 @@ app.whenReady().then(async () => {
             sessionManager: sm,
             credentialManager: getCredentialManager(),
             getMessagingDir: (wsId: string) =>
-              join(CONFIG_DIR, 'workspaces', wsId, 'messaging'),
+              join(resolveConfigDir(), 'workspaces', wsId, 'messaging'),
             getLegacyMessagingDir: (wsId: string) => {
               const ws = getWorkspaces().find((w) => w.id === wsId)
               return ws ? join(ws.rootPath, 'messaging') : undefined
@@ -911,8 +917,13 @@ app.whenReady().then(async () => {
       const { registerSshTunnelIpc } = await import('./ssh-tunnel/ipc')
       registerSshTunnelIpc()
 
-      // Cross-server RPC — invoke a channel on an arbitrary remote server
+      // Cross-server RPC — invoke a channel on an arbitrary remote server.
+      // RX-SEC-0006: URL рендерера проходит политику транспорта — открытый
+      // текст только на loopback, иначе TLS. Без этого компрометированный
+      // рендерер получает SSRF во внутреннюю сеть с нашим токеном.
       ipcMain.handle('server:invokeOnServer', async (_event, url: string, token: string, channel: string, ...args: unknown[]) => {
+        const policy = isAllowedServerEndpoint(url)
+        if (!policy.ok) throw new Error(`Blocked by server endpoint policy: ${policy.reason}`)
         const { connectToRemote } = await import('./handlers/workspace')
         const { client, error } = await connectToRemote(url, token)
         if (!client) throw new Error(error ?? 'Connection failed')
@@ -1224,7 +1235,7 @@ app.whenReady().then(async () => {
       // Headless: print connection details
       if (isHeadless) {
         console.log(`CRAFT_SERVER_URL=${instance.protocol}://${instance.host}:${instance.port}`)
-        console.log(`CRAFT_SERVER_TOKEN=${instance.token}`)
+        console.log(`CRAFT_SERVER_TOKEN=${maskTokenForDisplay(instance.token)}`)
       }
     }
 

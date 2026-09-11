@@ -8,6 +8,10 @@ import { describe, expect, test } from 'bun:test'
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+
+const SUBPROCESS_TIMEOUT_MS = 15_000 // Дефолтные 5s флейкуют под нагрузкой машины (2026-08-23)
+
 
 const REPO_ROOT = join(import.meta.dir, '..', '..', '..', '..', '..', '..')
 const PLANTED = 'sk-planted-must-not-reach-renderer'
@@ -133,7 +137,7 @@ describe('settings secretRef RPC (subprocess)', () => {
     } finally {
       rmSync(configDir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 
   test('GET returns refs only — never a value field, even if planted', () => {
     const configDir = setupConfigDir()
@@ -166,7 +170,7 @@ describe('settings secretRef RPC (subprocess)', () => {
     } finally {
       rmSync(configDir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 
   test('SET PATH / NODE_OPTIONS rejects with typed SECRET_ENVVAR_DENIED', () => {
     const configDir = setupConfigDir()
@@ -196,7 +200,7 @@ describe('settings secretRef RPC (subprocess)', () => {
     } finally {
       rmSync(configDir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 
   test('SET persists refs; GET has no values; spawn env has the resolved var', () => {
     const configDir = setupConfigDir()
@@ -237,5 +241,5 @@ describe('settings secretRef RPC (subprocess)', () => {
     } finally {
       rmSync(configDir, { recursive: true, force: true })
     }
-  })
+  }, SUBPROCESS_TIMEOUT_MS)
 })

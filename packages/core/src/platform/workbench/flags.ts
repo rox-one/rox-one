@@ -23,6 +23,10 @@ export const WORKBENCH_FLAG = {
   panelRegistryV2: 'workbench.panel-registry.v2',
   terminalV1: 'workbench.terminal.v1',
   coordinatorV1: 'execution.coordinator.v1',
+  harnessInspectorV1: 'workbench.harness.inspector.v1',
+  harnessChatChromeV1: 'workbench.harness.chat-chrome.v1',
+  harnessAgentIntelV1: 'workbench.harness.agent-intel.v1',
+  harnessExtCenterV1: 'workbench.harness.ext-center.v1',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -71,6 +75,30 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   },
   {
     id: WORKBENCH_FLAG.coordinatorV1,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.harnessInspectorV1,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.harnessChatChromeV1,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.harnessAgentIntelV1,
+    defaultValue: false,
+    dependencies: [WORKBENCH_FLAG.harnessInspectorV1],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.harnessExtCenterV1,
     defaultValue: false,
     dependencies: [],
     rollbackSafe: true,

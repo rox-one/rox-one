@@ -71,3 +71,51 @@ export function shouldRecallPromptOnArrowUp({
     && followUpItemCount === 0
     && !inlineMenuOpen
 }
+
+export interface PromptHistoryArrowState {
+  key: string
+  shiftKey: boolean
+  metaKey: boolean
+  ctrlKey: boolean
+  altKey: boolean
+  isComposing: boolean
+  isProcessing: boolean
+  selectionStart: number
+  selectionEnd: number
+  browsing: boolean
+  inlineMenuOpen: boolean
+  disabled: boolean
+}
+
+/**
+ * Idle ↑↓ walks prompt history. Never fires mid-turn (cancel owns ArrowUp
+ * while processing) and never steals the caret from the middle of a draft.
+ */
+export function shouldNavigatePromptHistory({
+  key,
+  shiftKey,
+  metaKey,
+  ctrlKey,
+  altKey,
+  isComposing,
+  isProcessing,
+  selectionStart,
+  selectionEnd,
+  browsing,
+  inlineMenuOpen,
+  disabled,
+}: PromptHistoryArrowState): 'up' | 'down' | false {
+  if (isProcessing) return false
+  if (key !== 'ArrowUp' && key !== 'ArrowDown') return false
+  if (shiftKey || metaKey || ctrlKey || altKey || isComposing) return false
+  if (inlineMenuOpen || disabled) return false
+  if (selectionStart !== selectionEnd) return false
+
+  if (key === 'ArrowUp') {
+    if (selectionStart !== 0) return false
+    return 'up'
+  }
+
+  if (!browsing) return false
+  return 'down'
+}

@@ -76,17 +76,26 @@ export const KEYS = {
 
   // Workbench rollout (PR-2)
   workbenchEnabled: 'workbench-enabled', // Explicit user preference
+  featureUnifiedShell: 'feature-unified-shell',
   workbenchLegacyEnabled: 'feature-unified-shell', // Bounded compatibility read only
   surfaceLayout: 'surface-layout', // Surface layout transport (URL search string; derived via platform/layout-snapshot.ts), workspace-scoped
   activityRailCollapsed: 'activity-rail-collapsed',
   inspectorVisible: 'inspector-visible',
+  inspectorChromeCollapsed: 'inspector-chrome-collapsed',
   inspectorSection: 'inspector-section',
+  inspectorPanelWidth: 'inspector-panel-width',
+  bottomTerminalOpen: 'bottom-terminal-open',
+  bottomDockHeight: 'bottom-dock-height',
   // Workbench v2 (ADR-0001) — granular chrome flags; all default OFF
   featureWorkbenchModeRegistryV1: 'feature-workbench-mode-registry-v1',
   featureWorkbenchTopChromeV2: 'feature-workbench-top-chrome-v2',
   featureWorkbenchTabGroupsV2: 'feature-workbench-tab-groups-v2',
   featureWorkbenchBrowserSurfaceV2: 'feature-workbench-browser-surface-v2',
   featureWorkbenchStatusBarV1: 'feature-workbench-status-bar-v1',
+  featureWorkbenchHarnessInspectorV1: 'feature-workbench-harness-inspector-v1',
+  featureWorkbenchHarnessChatChromeV1: 'feature-workbench-harness-chat-chrome-v1',
+  featureWorkbenchHarnessAgentIntelV1: 'feature-workbench-harness-agent-intel-v1',
+  featureWorkbenchHarnessExtCenterV1: 'feature-workbench-harness-ext-center-v1',
   workbenchLayout: 'workbench-layout', // WorkbenchLayout v2 JSON, workspace-scoped
   // Last collection layout origin (list/board/table) for Shift+click back
   collectionLastView: 'collection-last-view',

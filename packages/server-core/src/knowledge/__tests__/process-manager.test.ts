@@ -16,7 +16,13 @@ const pin = parseOemKernelPin({
   maxApiExclusive: '4.0.0',
 })
 
-function headerGet(headers: HeadersInit | undefined, name: string): string | null {
+type HeaderBag = RequestInit['headers']
+
+// Bun-тип typeof fetch требует preconnect; тестовые фейкам он не нужен.
+type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>
+const asFetch = (impl: FetchLike): typeof fetch => impl as unknown as typeof fetch
+
+function headerGet(headers: HeaderBag | undefined, name: string): string | null {
   if (!headers) return null
   if (headers instanceof Headers) return headers.get(name)
   if (Array.isArray(headers)) {
@@ -114,7 +120,7 @@ describe('SiyuanProcessManager', () => {
   it('seeds default notebook when kernel reports none', async () => {
     const pm = new SiyuanProcessManager()
     const called: string[] = []
-    const fetchImpl: typeof fetch = async (input, init) => {
+    const fetchImpl: FetchLike = async (input, init) => {
       const url = String(input)
       called.push(url)
       if (url.endsWith('/api/system/version')) {
@@ -139,7 +145,7 @@ describe('SiyuanProcessManager', () => {
       resolveBinary: () => '/fake/kernel',
       allocatePort: () => 19203,
       readyTimeoutMs: 5000,
-      fetchImpl,
+      fetchImpl: asFetch(fetchImpl),
       spawnFn: () => ({
         pid: 9,
         unref() {},
@@ -154,7 +160,7 @@ describe('SiyuanProcessManager', () => {
   it('does not create notebook when lsNotebooks is non-empty', async () => {
     const pm = new SiyuanProcessManager()
     const called: string[] = []
-    const fetchImpl: typeof fetch = async (input, init) => {
+    const fetchImpl: FetchLike = async (input, init) => {
       const url = String(input)
       called.push(url)
       if (url.endsWith('/api/system/version')) {
@@ -174,7 +180,7 @@ describe('SiyuanProcessManager', () => {
       resolveBinary: () => '/fake/kernel',
       allocatePort: () => 19204,
       readyTimeoutMs: 5000,
-      fetchImpl,
+      fetchImpl: asFetch(fetchImpl),
       spawnFn: () => ({
         pid: 9,
         unref() {},

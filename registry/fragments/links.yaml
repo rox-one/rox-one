@@ -1,0 +1,51 @@
+- id: RX-DOC-0007
+  title: Смежные репозитории и валидатор кодов RX-*
+  kind: doc
+  path: docs/ru/RX-DOC-0007-links.md
+  status: active
+  refs: [RX-TSK-0700, RX-TSK-0701, RX-PIP-0200, RX-PIP-0201]
+  note: |
+    Документ: устройство сабмодулей vendor/, компромисс публичный/приватный,
+    инициализация и чтение отчёта валидатора.
+
+- id: RX-TSK-0700
+  title: Слинковать приватные смежные репозитории как сабмодули
+  kind: task
+  path: .gitmodules
+  status: done
+  refs: [RX-DOC-0007, RX-PIP-0201]
+  note: |
+    Сабмодули vendor/rox-one-assets и vendor/rox-one-website с update = none
+    и shallow = true, чтобы внешний clone публичного репозитория не падал.
+    Поставлено: vendor/* инициализированы.
+
+- id: RX-TSK-0701
+  title: Написать валидатор системы кодов RX-*
+  kind: task
+  path: scripts/rx-validate.ts
+  status: done
+  refs: [RX-DOC-0007, RX-PIP-0200]
+  note: |
+    Скрипт bun run scripts/rx-validate.ts: грамматика, уникальность, status,
+    висячие refs, front matter документов, предупреждения по path.
+    Поставлено: bun run rx:validate зелёный.
+
+- id: RX-PIP-0200
+  title: Проверка реестра и документов RX-*
+  kind: pipeline
+  path: scripts/rx-validate.ts
+  status: active
+  refs: [RX-TSK-0701, RX-DOC-0007]
+  note: |
+    Локальный запуск bun run rx:validate. Ошибки дают код 1, предупреждения —
+    нет. Отсутствие фрагментов и основного реестра не является сбоем.
+
+- id: RX-PIP-0201
+  title: Инициализация приватных сабмодулей vendor/
+  kind: pipeline
+  path: vendor
+  status: active
+  refs: [RX-TSK-0700, RX-DOC-0007]
+  note: |
+    Не выполняется при обычном clone --recurse-submodules из-за update = none.
+    Мейнтейнер: git submodule update --init vendor/<name> с доступом к private.

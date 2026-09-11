@@ -165,7 +165,7 @@ function parseFile(raw: unknown): IdentityFile {
 }
 
 export interface IdentityStoreOptions {
-  /** Absolute path to config directory (e.g. CONFIG_DIR). */
+  /** Absolute path to config directory (e.g. resolveConfigDir()). */
   configDir: string;
 }
 

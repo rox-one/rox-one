@@ -45,6 +45,7 @@
  */
 
 import { spawn, execFile, type ChildProcess } from 'node:child_process';
+import type { LoadAllSkillsOptions } from '../skills/storage.ts';
 import { createInterface, type Interface as ReadlineInterface } from 'node:readline';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -104,6 +105,7 @@ import {
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
 import { resolveOmpSetModelTarget } from '../config/rox-public-models.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
 // ============================================================
 // Constants
@@ -299,6 +301,12 @@ interface PendingPermission {
 // ============================================================
 
 export class OmpAgent extends BaseAgent {
+  /** RX-TSK-0402 Phase 1 (G4): OMP sessions resolve mentions across the
+   * merged craft+OMP registry; craft wins on slug conflicts. */
+  protected override getSkillLoadOptions(): LoadAllSkillsOptions {
+    return { includeOmp: true };
+  }
+
   protected backendName = 'OMP';
 
   // Subprocess state
@@ -701,7 +709,7 @@ export class OmpAgent extends BaseAgent {
     // --append-system-prompt: craft runtime context (host tools, mirror policy).
     // --approval-mode yolo: craft permission mode 'allow-all' → full yolo
     //   (OMP's strongest auto mode: zero approval prompts, incl. destructive).
-    const args = ['--mode', 'rpc'];
+    const args = ['--mode', 'rpc', '--allow-home'];
     const craftSessionId = this.config.session?.id || this._sessionId || '';
     const ompSessionDir = craftSessionId ? this.getOmpSessionDir(craftSessionId) : null;
     if (ompSessionDir) {
@@ -1390,6 +1398,7 @@ export class OmpAgent extends BaseAgent {
       includePoolProxyDefs: true,
       includeHostBashAlias: true,
       miniModel: this.config.miniModel,
+      mcpLens: false,
     });
 
     const tools = unique.map((d: SessionToolDef) => ({

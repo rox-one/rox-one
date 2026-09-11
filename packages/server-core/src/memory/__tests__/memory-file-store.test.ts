@@ -13,6 +13,7 @@ import { tmpdir } from 'os'
 import { join } from 'path'
 import type { WorkspaceMemory } from '@craft-agent/shared/memory/types'
 import { MemoryFileStore, RECENT_HISTORY_DAYS } from '../MemoryFileStore'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 let configDir: string
 let workspaceRoot: string

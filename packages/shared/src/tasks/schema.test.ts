@@ -24,6 +24,7 @@ import {
 const CHAIN = {
   id: 'demo',
   title: 'Demo chain',
+  defaults: { permissionMode: 'allow-all' },
   goal: 'audit then design then implement',
   nodes: [
     { id: 'audit', prompt: 'Audit the code' },
@@ -275,6 +276,12 @@ describe('storage', () => {
     expect(loaded?.spec?.id).toBe('demo');
     expect(loaded?.spec?.nodes.map((n) => n.id)).toEqual(['audit', 'design', 'impl']);
     expect(nodeDeps(loaded!.spec!.nodes[1]!)).toEqual(['audit']);
+  });
+
+  it('refuses to save a spec without explicit defaults.permissionMode (RX-TSK-0304)', () => {
+    const spec = parsed();
+    delete (spec.defaults as { permissionMode?: string }).permissionMode;
+    expect(() => saveTaskSpec(root, spec)).toThrow(/defaults\.permissionMode/);
   });
 
   it('serializes to parseable yaml', () => {

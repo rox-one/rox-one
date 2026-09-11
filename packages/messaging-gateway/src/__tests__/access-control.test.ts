@@ -200,3 +200,39 @@ describe('buildRejectionReply', () => {
     expect(buildRejectionReply('not-owner')).toContain('private')
   })
 })
+
+// RX-TSK-0416: workspace-level 'disabled' kill switch.
+describe('platform accessMode disabled (RX-TSK-0416)', () => {
+  const msg = (senderId: string) =>
+    ({ senderId, senderIsBot: false, platform: 'telegram' }) as never
+  const ws = (mode: string) => ({
+    platforms: { telegram: { accessMode: mode, owners: [{ userId: 'owner-1' }] } },
+  }) as never
+
+  it('evaluatePreBindingAccess: blocks everyone, even before pairing', async () => {
+    const { evaluatePreBindingAccess } = await import('../access-control.ts')
+    const r = evaluatePreBindingAccess({ msg: msg('u1'), workspaceConfig: ws('disabled') })
+    expect(r).toEqual({ allow: false, reason: 'mode-disabled' })
+  })
+
+  it('evaluateBindingAccess: beats binding-level open and the owners list', async () => {
+    const { evaluateBindingAccess } = await import('../access-control.ts')
+    const nonOwner = evaluateBindingAccess({
+      msg: msg('u1'),
+      workspaceConfig: ws('disabled'),
+      binding: { config: { accessMode: 'open' } as never },
+    })
+    const owner = evaluateBindingAccess({
+      msg: msg('owner-1'),
+      workspaceConfig: ws('disabled'),
+      binding: { config: { accessMode: 'allow-list', allowedSenderIds: [] } as never },
+    })
+    expect(nonOwner).toEqual({ allow: false, reason: 'mode-disabled' })
+    expect(owner).toEqual({ allow: false, reason: 'mode-disabled' })
+  })
+
+  it('buildRejectionReply explains the disabled mode', async () => {
+    const { buildRejectionReply } = await import('../access-control.ts')
+    expect(buildRejectionReply('mode-disabled')).toContain('disabled')
+  })
+})

@@ -13,6 +13,7 @@ export interface WorkbenchChromeInput {
   tabGroups: boolean
   browserSurface: boolean
   statusBar: boolean
+  harnessInspector?: boolean
 }
 
 export interface WorkbenchChrome {
@@ -29,7 +30,7 @@ export function resolveWorkbenchChrome(input: WorkbenchChromeInput): WorkbenchCh
   return {
     showRail: input.unifiedShell || input.topChrome,
     showSurfaceTabs: input.unifiedShell || input.tabGroups || input.browserSurface,
-    showInspector: input.unifiedShell,
+    showInspector: input.unifiedShell || input.harnessInspector === true,
     showModeBar: input.modeRegistry || input.topChrome,
     hideBrowserTabStrip: input.browserSurface,
     showStatusBar: input.statusBar,

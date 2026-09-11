@@ -212,8 +212,9 @@ export const routes = {
     browser: (instanceId: string) =>
       `browser/instance/${encodeURIComponent(instanceId)}` as const,
 
-    /** Kanban board view (sessions navigator, board view mode, all sessions) */
-    board: () => 'board' as const,
+    /** Kanban board view. Optional sessionId opens that session's board card (`board/session/{id}`). */
+    board: (sessionId?: string) =>
+      sessionId ? `board/session/${sessionId}` as const : 'board' as const,
 
     /** Dense table collection view (sessions navigator, table view mode, all sessions) */
     table: () => 'table' as const,

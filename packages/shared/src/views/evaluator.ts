@@ -20,6 +20,7 @@ import type {
 } from './types.ts';
 import { VIEW_FUNCTIONS } from './functions.ts';
 import { debug } from '../utils/debug.ts';
+import { dueBucket } from '../sessions/collection-query.ts';
 
 /**
  * Compile a single view expression into a native JS function.
@@ -137,7 +138,12 @@ export function buildViewContext(meta: {
     costUsd?: number;
     contextTokens?: number;
   };
+  priority?: string | null;
+  projectId?: string | null;
+  dueDate?: number | null;
 }): ViewEvaluationContext {
+  const dueDate = meta.dueDate != null && Number.isFinite(meta.dueDate) ? meta.dueDate : 0;
+  const now = Date.now();
   return {
     // Strings (default to empty string for safe expression evaluation)
     name: meta.name ?? '',
@@ -172,6 +178,11 @@ export function buildViewContext(meta: {
 
     // Arrays
     labels: meta.labels ?? [],
+
+    priority: meta.priority ?? '',
+    projectId: meta.projectId ?? '',
+    dueDate,
+    dueBucket: dueBucket(dueDate || null, now),
   };
 }
 

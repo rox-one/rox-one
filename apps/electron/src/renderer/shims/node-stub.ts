@@ -60,18 +60,36 @@ const binaryOrEmpty = (...args: unknown[]) => (
 
 export const Buffer = BrowserBuffer
 export const EOL = '/'
-export const EventEmitter = fn as never
-export const PassThrough = fn as never
-export const Readable = fn as never
+
+export class EventEmitter {
+  on(..._args: unknown[]) { return this }
+  once(..._args: unknown[]) { return this }
+  off(..._args: unknown[]) { return this }
+  addListener(..._args: unknown[]) { return this }
+  removeListener(..._args: unknown[]) { return this }
+  removeAllListeners(..._args: unknown[]) { return this }
+  emit(..._args: unknown[]) { return false }
+  listeners(..._args: unknown[]) { return [] }
+  setMaxListeners(..._args: unknown[]) { return this }
+}
+
+export class Stream extends EventEmitter {
+  pipe(..._args: unknown[]) { return this }
+  write(..._args: unknown[]) { return true }
+  end(..._args: unknown[]) { return this }
+}
+
+export class Readable extends Stream {}
+export class Writable extends Stream {}
+export class Transform extends Stream {}
+export class PassThrough extends Transform {}
+
 export const Server = (..._args: unknown[]) => obj()
 export const Socket = (..._args: unknown[]) => obj()
-export const Stream = fn as never
 export const TextDecoder = fn as never
 export const TextEncoder = fn as never
-export const Transform = fn as never
 export const URL = fn as never
 export const URLSearchParams = fn as never
-export const Writable = fn as never
 export const access = fn
 export const accessSync = binaryOrEmpty
 export const appendFile = fn
@@ -80,6 +98,8 @@ export const arch = () => 'arm64'
 export const argv = fn as never
 export const basename = pathLike
 export const chdir = fn
+export const chmod = fn
+export const chmodSync = binaryOrEmpty
 export const closeSync = binaryOrEmpty
 export const connect = (..._args: unknown[]) => obj()
 export const constants = dynamic
@@ -92,6 +112,7 @@ export const createConnection = (..._args: unknown[]) => obj()
 export const createDecipheriv = (..._args: unknown[]) => hash()
 export const createHash = (..._args: unknown[]) => hash()
 export const createHmac = (..._args: unknown[]) => hash()
+export const createInterface = (..._args: unknown[]) => obj()
 export const createPrivateKey = binaryOrEmpty
 export const createPublicKey = binaryOrEmpty
 export const createReadStream = (..._args: unknown[]) => obj()
@@ -114,6 +135,8 @@ export const extname = fn
 export const fileURLToPath = fn
 export const fork = (..._args: unknown[]) => obj()
 export const format = fn
+export const fstatSync = binaryOrEmpty
+export const fsyncSync = binaryOrEmpty
 export const freemem = fn
 export const generateKeyPairSync = binaryOrEmpty
 export const get = (..._args: unknown[]) => obj()
@@ -124,6 +147,7 @@ export const inherits = fn
 export const inspect = fn
 export const isAbsolute = fn
 export const join = pathLike
+export const lookup = fn
 export const lstat = fn
 export const lstatSync = binaryOrEmpty
 export const mkdir = fn
@@ -139,6 +163,7 @@ export const parse = fn
 export const pathToFileURL = fn
 export const pbkdf2Sync = binaryOrEmpty
 export const pid = fn as never
+export const pipeline = fn
 export const platform = () => 'darwin'
 export const posix = dynamic
 export const ppid = fn as never
@@ -179,8 +204,11 @@ export const tmpdir = () => '/'
 export const totalmem = fn
 export const type = fn
 export const types = dynamic
+export const symlink = fn
+export const timingSafeEqual = binaryOrEmpty
 export const unlink = fn
 export const unlinkSync = binaryOrEmpty
+export const watch = fn
 export const uptime = fn
 export const userInfo = () => ({ username: 'renderer', uid: 0, gid: 0, shell: '', homedir: '/' })
 export const verify = binaryOrEmpty

@@ -231,14 +231,16 @@ export class WindowManager {
       minWidth: 800,
       minHeight: 600,
       show: false, // Don't show until ready-to-show event (faster perceived startup)
+      // Opaque fill so macOS vibrancy does not capture as a black frame if the
+      // GPU process dies before first paint (ready-to-show never fires).
+      backgroundColor: nativeTheme.shouldUseDarkColors ? '#0c0c0d' : '#f4f4f5',
       title: '',
       icon: iconExists ? iconPath : undefined,
-      // macOS-specific: hidden title bar with inset traffic lights
+      // macOS-specific: hidden title bar with inset traffic lights.
+      // Vibrancy waits until first paint — under-window + GPU crash paints black.
       ...(isMac && {
         titleBarStyle: 'hiddenInset',
         trafficLightPosition: { x: 18, y: 16 },
-        vibrancy: 'under-window',
-        visualEffectState: 'active',
       }),
       // Windows: use native frame with Mica/Acrylic transparency (Windows 10/11)
       ...(isWindows && {
@@ -273,10 +275,35 @@ export class WindowManager {
         windowLog.warn('Failed to apply default zoom level:', error)
       })
 
-    // Show window when first paint is ready (faster perceived startup)
-    window.once('ready-to-show', () => {
+    // Show on first compositor paint. GPU crash can skip ready-to-show and
+    // turn under-window vibrancy into a black capture — keep the opaque fill
+    // unless first paint actually arrived.
+    const revealWindow = (opts?: { vibrancy?: boolean }) => {
+      if (window.isDestroyed() || window.isVisible()) return
+      if (isMac && opts?.vibrancy !== false) {
+        try {
+          window.setVibrancy('under-window')
+          // setVisualEffectState появился в новых типах Electron; на старых
+          // типизация не знает метода — вызываем опционально через сужение.
+          ;(window as unknown as { setVisualEffectState?: (state: string) => void })
+            .setVisualEffectState?.('active')
+        } catch (error) {
+          windowLog.warn('Failed to apply macOS vibrancy after paint:', error)
+        }
+      }
       window.show()
+    }
+    window.once('ready-to-show', () => revealWindow({ vibrancy: true }))
+    window.webContents.once('did-finish-load', () => {
+      if (window.isDestroyed() || window.isVisible()) return
+      windowLog.info('did-finish-load before ready-to-show; showing opaque window')
+      revealWindow({ vibrancy: false })
     })
+    setTimeout(() => {
+      if (window.isDestroyed() || window.isVisible()) return
+      windowLog.warn('ready-to-show timed out; showing opaque window')
+      revealWindow({ vibrancy: false })
+    }, 4000)
 
     // Open external links in default browser, but never hand known-dangerous
     // schemes directly to shell.openExternal. Markdown normal-clicks go through
@@ -341,9 +368,26 @@ export class WindowManager {
         try {
           const savedUrl = new URL(restoreUrl)
           const devUrl = new URL(VITE_DEV_SERVER_URL)
-          // Preserve pathname and search from saved URL, use dev server host
-          devUrl.pathname = savedUrl.pathname
+          // Keep query params; never copy a packaged file:// pathname onto Vite.
           devUrl.search = savedUrl.search
+          const loopbackHosts = new Set(['localhost', '127.0.0.1', '[::1]', '::1'])
+          const isViteOrigin =
+            (savedUrl.protocol === 'http:' || savedUrl.protocol === 'https:') &&
+            (savedUrl.origin === devUrl.origin ||
+              (savedUrl.port === devUrl.port &&
+                loopbackHosts.has(savedUrl.hostname) &&
+                loopbackHosts.has(devUrl.hostname)))
+          const isFilesystemPath =
+            savedUrl.protocol === 'file:' ||
+            savedUrl.pathname.includes('dist/renderer') ||
+            /(?:^|\/)index\.html$/i.test(savedUrl.pathname)
+          if (isViteOrigin) {
+            devUrl.pathname = savedUrl.pathname || '/'
+          } else if (isFilesystemPath) {
+            devUrl.pathname = '/'
+          } else {
+            devUrl.pathname = savedUrl.pathname || '/'
+          }
           window.loadURL(devUrl.toString())
         } catch {
           // Fallback if URL parsing fails

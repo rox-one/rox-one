@@ -12,12 +12,12 @@
  * W1 scope: the `info` section is live (focused-surface properties derived
  * from panel-stack + NavigationContext); `agent`/`outline`/`backlinks` render
  * i18n empty states — their content lands with the Knowledge workspace (W2).
- * Mounted by `WorkspaceSurfaceHost` (platform/index.tsx) — rendered only when
- * the two-key Workbench rollout is enabled.
+ * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
+ * workbench rollout or harness inspector flag is enabled.
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { Bot, Info, Link2, ListTree, X, type LucideIcon } from 'lucide-react'
+import { Bot, ChevronsLeft, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, SquareTerminal, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import {
@@ -28,32 +28,46 @@ import {
 } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import {
+  bottomTerminalOpenAtom,
+  featureWorkbenchHarnessInspectorV1Atom,
+  inspectorChromeCollapsedAtom,
+  inspectorPanelWidthAtom,
   inspectorSectionAtom,
   inspectorVisibleAtom,
   type InspectorSectionId,
 } from '@/atoms/unified-shell'
 import { selectedConnectionAtom } from '@/atoms/connections'
-import { isConnectionsNavigation, useNavigationState } from '@/contexts/NavigationContext'
+import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/contexts/NavigationContext'
+import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
 import { projectConnectionInspector } from './connection-inspector-model'
+import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
+import { InspectorTerminal } from '@/components/session-inspector/InspectorTerminal'
+import { WORKBENCH_FLAG } from '@craft-agent/core/platform'
 import {
   INSPECTOR_LIVE_SECTIONS,
-  INSPECTOR_SECTION_IDS,
+  inspectorSectionsForMode,
+  isSessionInspectorSection,
   normalizeInspectorSection,
   resolveInspectorToggle,
 } from './inspector-model'
 import { panelTypeToSurfaceKind } from './surface-tab-model'
 
-const INSPECTOR_PANEL_WIDTH = 320
 const INSPECTOR_RAIL_WIDTH = 48
+const INSPECTOR_MIN_WIDTH = 280
+const INSPECTOR_MAX_WIDTH = 1400
 
 const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
   info: Info,
   agent: Bot,
   outline: ListTree,
   backlinks: Link2,
+  files: Folder,
+  git: GitBranch,
+  browser: Globe,
+  context: ListTree,
 }
 
 // -----------------------------------------------------------------------------
@@ -231,59 +245,195 @@ function EmptySection({ section }: { section: InspectorSectionId }) {
 export function InspectorHost() {
   const { t } = useTranslation()
   const [visible, setVisible] = useAtom(inspectorVisibleAtom)
+  const [chromeCollapsed, setChromeCollapsed] = useAtom(inspectorChromeCollapsedAtom)
   const [sectionRaw, setSection] = useAtom(inspectorSectionAtom)
-  // Persisted values can be arbitrary (older builds); validated on read.
+  const [panelWidth, setPanelWidth] = useAtom(inspectorPanelWidthAtom)
+  const [bottomTerminalOpen, setBottomTerminalOpen] = useAtom(bottomTerminalOpenAtom)
+  const widthDrag = useRef<{ startX: number; startW: number } | null>(null)
+  const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const route = useAtomValue(focusedPanelRouteAtom)
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const { updateRightSidebar, navigationState } = useNavigation()
+  const panelType = route ? getPanelTypeFromRoute(route) : null
+  const sessionMode = harnessInspector && panelType === 'session'
+  const sectionIds = inspectorSectionsForMode(sessionMode ? 'session' : 'knowledge')
   const section = normalizeInspectorSection(sectionRaw)
+  const activeSection = sectionIds.includes(section) ? section : sectionIds[0]!
+  const sessionId = route ? parseSessionIdFromRoute(route) : null
+  const sessionMeta = sessionId ? sessionMetaMap.get(sessionId) : undefined
+  const shell = useOptionalAppShellContext()
+  const workspace = shell?.workspaces.find((item) => item.id === (sessionMeta?.workspaceId ?? shell.activeWorkspaceId))
+  const sessionFolderPath =
+    sessionId && workspace?.rootPath
+      ? `${workspace.rootPath.replace(/[\\/]+$/, '')}/sessions/${sessionId}`
+      : undefined
+  const [terminalOpen, setTerminalOpen] = useState(false)
+
+  useEffect(() => {
+    const sidebar = navigationState.rightSidebar
+    if (!sessionMode || !sidebar) return
+    if (sidebar.type === 'files' || sidebar.type === 'git' || sidebar.type === 'browser' || sidebar.type === 'context') {
+      setChromeCollapsed(false)
+      setSection(sidebar.type)
+      setVisible(true)
+    }
+  }, [sessionMode, navigationState.rightSidebar, setChromeCollapsed, setSection, setVisible])
+
+  useEffect(() => {
+    if (visible && !chromeCollapsed && !terminalOpen && activeSection === 'browser') return
+    void (async () => {
+      const list = await window.electronAPI.browserPane.list().catch(() => [])
+      await Promise.all(
+        list
+          .filter((item) => item.embedded)
+          .map((item) => window.electronAPI.browserPane.syncBounds(item.id, null).catch(() => undefined)),
+      )
+    })()
+  }, [visible, chromeCollapsed, terminalOpen, activeSection])
 
   const handleSectionClick = (clicked: InspectorSectionId) => {
-    const next = resolveInspectorToggle({ visible, section }, clicked)
+    if (terminalOpen) setBottomTerminalOpen(true)
+    setTerminalOpen(false)
+    setChromeCollapsed(false)
+    const next = resolveInspectorToggle({ visible, section: activeSection }, clicked)
     setVisible(next.visible)
     setSection(next.section)
+    if (sessionMode && isSessionInspectorSection(clicked) && next.visible) {
+      updateRightSidebar({ type: clicked })
+    }
+  }
+
+  const titleKey = terminalOpen
+    ? 'inspector.terminal'
+    : sessionMode && isSessionInspectorSection(activeSection)
+      ? `inspector.tab.${activeSection}`
+      : `inspector.${activeSection}`
+
+  const collapseChrome = () => {
+    setChromeCollapsed(true)
+    setVisible(false)
+    setTerminalOpen(false)
+  }
+
+  if (chromeCollapsed) {
+    return (
+      <div
+        className="flex h-full shrink-0 flex-col items-center py-2"
+        style={{ width: INSPECTOR_RAIL_WIDTH }}
+        data-session-inspector={sessionMode ? 'true' : 'false'}
+      >
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t('inspector.expand')}
+              onClick={() => {
+                setChromeCollapsed(false)
+                setVisible(true)
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="left">{t('inspector.expand')}</TooltipContent>
+        </Tooltip>
+      </div>
+    )
   }
 
   return (
-    <div className="flex h-full shrink-0 items-stretch">
+    <div className="flex h-full shrink-0 items-stretch" data-session-inspector={sessionMode ? 'true' : 'false'}>
       {visible && (
         <div
-          className="flex h-full flex-col overflow-hidden bg-background shadow-middle"
-          style={{ width: INSPECTOR_PANEL_WIDTH, borderRadius: RADIUS_INNER }}
+          className="relative flex h-full flex-col overflow-hidden bg-background shadow-middle"
+          style={{
+            width: Math.min(
+              INSPECTOR_MAX_WIDTH,
+              Math.max(INSPECTOR_MIN_WIDTH, panelWidth),
+              Math.max(INSPECTOR_MIN_WIDTH, Math.floor(typeof window !== 'undefined' ? window.innerWidth * 0.72 : INSPECTOR_MAX_WIDTH)),
+            ),
+            borderRadius: RADIUS_INNER,
+          }}
         >
+          <div
+            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize hover:bg-foreground/15"
+            onPointerDown={(event) => {
+              event.preventDefault()
+              widthDrag.current = { startX: event.clientX, startW: panelWidth }
+              const move = (e: PointerEvent) => {
+                const drag = widthDrag.current
+                if (!drag) return
+                const viewportCap = Math.max(
+                  INSPECTOR_MIN_WIDTH,
+                  Math.floor(window.innerWidth * 0.72),
+                )
+                const next = Math.min(
+                  INSPECTOR_MAX_WIDTH,
+                  viewportCap,
+                  Math.max(INSPECTOR_MIN_WIDTH, drag.startW + (drag.startX - e.clientX)),
+                )
+                setPanelWidth(next)
+              }
+              const up = () => {
+                widthDrag.current = null
+                window.removeEventListener('pointermove', move)
+                window.removeEventListener('pointerup', up)
+                window.removeEventListener('pointercancel', up)
+              }
+              window.addEventListener('pointermove', move)
+              window.addEventListener('pointerup', up)
+              window.addEventListener('pointercancel', up)
+            }}
+          />
           <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-foreground/5 pl-3 pr-2">
-            <span className="truncate text-[13px] font-medium">{t(`inspector.${section}`)}</span>
+            <span className="truncate text-[13px] font-medium">{t(titleKey)}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   aria-label={t('inspector.hide')}
-                  onClick={() => setVisible(false)}
+                  onClick={collapseChrome}
                   className="flex h-6 w-6 items-center justify-center rounded-[6px] text-muted-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <ChevronsRight className="h-3.5 w-3.5" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
             </Tooltip>
           </div>
-          {INSPECTOR_LIVE_SECTIONS.includes(section) ? (
+          <div className="flex min-h-0 flex-1 flex-col">
+          {terminalOpen ? (
+            <InspectorTerminal cwd={sessionMeta?.workingDirectory} />
+          ) : sessionMode ? (
+            <SessionInspectorBody
+              section={activeSection}
+              sessionId={sessionId}
+              sessionFolderPath={sessionFolderPath}
+              cwd={sessionMeta?.workingDirectory}
+            />
+          ) : INSPECTOR_LIVE_SECTIONS.includes(activeSection) ? (
             <InfoSection />
           ) : (
-            <EmptySection section={section} />
+            <EmptySection section={activeSection} />
           )}
+          </div>
         </div>
       )}
       <div
         className="flex h-full shrink-0 flex-col items-center gap-0.5 py-2"
         style={{ width: INSPECTOR_RAIL_WIDTH }}
       >
-        {INSPECTOR_SECTION_IDS.map((sectionId) => {
+        {sectionIds.map((sectionId) => {
           const Icon = SECTION_ICONS[sectionId]
-          const active = visible && section === sectionId
+          const active = visible && activeSection === sectionId
+          const labelKey = sessionMode ? `inspector.tab.${sectionId}` : `inspector.${sectionId}`
           return (
             <Tooltip key={sectionId}>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  aria-label={t(`inspector.${sectionId}`)}
+                  aria-label={t(labelKey)}
                   aria-pressed={active}
                   onClick={() => handleSectionClick(sectionId)}
                   className={cn(
@@ -296,10 +446,63 @@ export function InspectorHost() {
                   <Icon className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="left">{t(`inspector.${sectionId}`)}</TooltipContent>
+              <TooltipContent side="left">{t(labelKey)}</TooltipContent>
             </Tooltip>
           )
         })}
+        <div className="mt-auto flex flex-col items-center gap-0.5">
+          {sessionMode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  aria-label={t('inspector.terminal')}
+                  data-terminal-flag={WORKBENCH_FLAG.terminalV1}
+                  onClick={() => {
+                    setChromeCollapsed(false)
+                    // Movable cycle: closed → bottom dock → side inspector → closed.
+                    // Terminal stays a UEW-style surface (bottom) by default; side is an alternate dock.
+                    if (terminalOpen && visible) {
+                      setTerminalOpen(false)
+                      setBottomTerminalOpen(false)
+                      return
+                    }
+                    if (bottomTerminalOpen) {
+                      setBottomTerminalOpen(false)
+                      setTerminalOpen(true)
+                      setVisible(true)
+                      return
+                    }
+                    setTerminalOpen(false)
+                    setBottomTerminalOpen(true)
+                  }}
+                  className={cn(
+                    'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
+                    (terminalOpen && visible) || bottomTerminalOpen
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+                  )}
+                >
+                  <SquareTerminal className="h-4 w-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="left">{t('inspector.terminal')}</TooltipContent>
+            </Tooltip>
+          )}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={t('inspector.hide')}
+                onClick={collapseChrome}
+                className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
     </div>
   )

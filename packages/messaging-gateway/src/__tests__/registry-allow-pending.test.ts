@@ -89,7 +89,7 @@ describe('MessagingGatewayRegistry.allowPendingSender — reason branching', () 
     const state = getInternalState(registry, workspaceId)!
     const store = state.gateway.getBindingStore()
     const binding = store.bind('ws-test', 'sess-A', 'telegram', 'chat-A', undefined, {
-      accessMode: 'allow-list',
+      accessMode: 'owner-control',
       allowedSenderIds: ['alice'],
     })
     state.gateway.getPendingStore().recordRejection({
@@ -144,7 +144,7 @@ describe('MessagingGatewayRegistry.allowPendingSender — reason branching', () 
     const state = getInternalState(registry, workspaceId)!
     const store = state.gateway.getBindingStore()
     const binding = store.bind('ws-test', 'sess-A', 'telegram', 'chat-A', undefined, {
-      accessMode: 'allow-list',
+      accessMode: 'owner-control',
       allowedSenderIds: ['alice'],
     })
     // Bob has TWO pending rows: one workspace-level, one binding-level.

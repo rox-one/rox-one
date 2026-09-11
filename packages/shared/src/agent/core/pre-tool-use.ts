@@ -1153,3 +1153,64 @@ export function shouldPromptInAskMode(
 
   return null;
 }
+
+// ---------------------------------------------------------------------------
+// RX-TSK-0303: hook-chain watchdog (fail-closed contract, вариант B из
+// docs/ru/RX-DOC-0031-pretooluse-failclosed.md)
+// ---------------------------------------------------------------------------
+
+/** Сколько PostToolUse-исполнений допускается при молчащем PreToolUse. */
+export const HOOK_WATCHDOG_THRESHOLD = 5
+
+export interface HookWatchdogState {
+  /** Сколько событий прошёл наш PreToolUse-колбэк. */
+  preToolUseCount: number
+  /** Сколько тулов реально исполнилось (PostToolUse). */
+  postToolUseCount: number
+}
+
+export type HookWatchdogVerdict =
+  | { action: 'ok'; note?: string }
+  | { action: 'kill-session'; reason: string }
+
+/**
+ * Решение сторожа цепочки хуков. При `bypassPermissions` PreToolUse-колбэк —
+ * единственный исполнитель проверок прав. Дивергенция счётчиков ловит ОБА
+ * режима отказа: холодный старт без единого события и тихий обрыв цепочки
+ * посреди сессии. Живая цепочка держит дивергенцию ≤1 (Post стреляет после Pre).
+ */
+/**
+ * Режим сторожа: `observe` (по умолчанию) только логирует дивергенцию —
+ * kill-path включается `CRAFT_HOOK_WATCHDOG=kill` после runtime-верификации
+ * допущения «каждый PostToolUsepreceded нашим PreToolUse» на реальных
+ * сессиях (параллельные вызовы, denied-пути).
+ */
+export type HookWatchdogMode = 'observe' | 'kill'
+
+export function getHookWatchdogMode(): HookWatchdogMode {
+  return process.env.CRAFT_HOOK_WATCHDOG === 'kill' ? 'kill' : 'observe'
+}
+
+export function evaluateHookWatchdog(
+  state: HookWatchdogState,
+  mode: HookWatchdogMode = getHookWatchdogMode(),
+): HookWatchdogVerdict {
+  const divergence = state.postToolUseCount - state.preToolUseCount
+  if (divergence < HOOK_WATCHDOG_THRESHOLD) return { action: 'ok' }
+  if (mode === 'observe') {
+    return {
+      action: 'ok',
+      note:
+        `[watchdog:observe] PreToolUse chain diverged (${state.postToolUseCount} `
+        + `executed vs ${state.preToolUseCount} checked); set CRAFT_HOOK_WATCHDOG=kill `
+        + 'to enforce fail-closed abort.',
+    }
+  }
+  return {
+    action: 'kill-session',
+    reason:
+      `PreToolUse permission chain diverged: ${state.postToolUseCount} tools executed `
+      + `vs ${state.preToolUseCount} checked; refusing to continue without `
+      + 'permission checks (RX-TSK-0303).',
+  }
+}

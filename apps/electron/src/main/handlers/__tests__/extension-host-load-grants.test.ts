@@ -33,6 +33,7 @@ const { startWorker } = await import('../../extension-host/worker')
 
 import { EventEmitter } from 'node:events'
 import type { ExtensionHostChild, ExtensionHostForkFn } from '../../extension-host-manager'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 class FakeChild extends EventEmitter implements ExtensionHostChild {
   pid = 9100

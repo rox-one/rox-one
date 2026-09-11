@@ -1,0 +1,334 @@
+# Фрагмент реестра RX — аудит заявленных функций.
+# Блоки номеров: FEA 0001-0199, TSK 0100-0299. Документ: RX-DOC-0025.
+
+- id: RX-FEA-0001
+  title: "Research-раны: pack-модель, resume/cancel/параллельные сабтаски"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F1-F3. Вердикт: работает (works). Доказательства: packages/cloud-runner/src/index.ts. Тесты есть.
+
+- id: RX-FEA-0002
+  title: "Real research-раннер: multi-tool loop (6 rounds / 15 tool calls)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F4. Вердикт: работает (works). Доказательства: packages/cloud-runner/src/research-pack.ts. Тесты есть.
+
+- id: RX-FEA-0003
+  title: "Structured artifacts: schema-выход brief.json"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F5. Вердикт: работает (works). Доказательства: packages/cloud-runner/src/research-pack.ts. Тесты есть.
+
+- id: RX-FEA-0004
+  title: "Scheduled runs + интеграция с Automations"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F8. Вердикт: работает (works). Доказательства: packages/shared/src/automations. Тесты есть.
+
+- id: RX-FEA-0005
+  title: "Публичные share-страницы по токену (mint/revoke)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F15. Вердикт: работает (works). Доказательства: apps/viewer/src/App.tsx. Тесты есть.
+
+- id: RX-FEA-0006
+  title: "WS-стриминг прогресса прогонов (hibernation-safe)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md W3/F14. Вердикт: работает (works). Доказательства: apps/cloud-gateway. Тесты есть.
+
+- id: RX-FEA-0007
+  title: "Marp-слайды на Cloudflare"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F16. Вердикт: работает (works). Доказательства: apps/cloud-gateway.
+
+- id: RX-FEA-0008
+  title: "Personas в ранах"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F19-F22. Вердикт: работает (works). Доказательства: packages/cloud-runner/src. Тесты есть.
+
+- id: RX-FEA-0009
+  title: "Conformance CI workflow облачных прогонов"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: .github/workflows/cloud-runs-conformance.yml; спека F17. Вердикт: частично (partial). Доказательства: .github/workflows/cloud-runs-conformance.yml.
+    Чтобы заработать: Задать секреты репозитория CLOUD_RUNS_TOKEN, CLOUD_RUNS_MODAL_GATEWAY_URL, CLOUD_RUNS_CLOUDFLARE_GATEWAY_URL
+
+- id: RX-FEA-0010
+  title: "E2B-провайдер песочниц"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F18. Вердикт: только замысел (idea_only). Доказательства: в packages/cloud-runner нет e2b-provider.
+    Чтобы заработать: Получить креды E2B и реализовать provider по образцу cloudflare-provider.ts / modal-provider.ts
+
+- id: RX-FEA-0011
+  title: "OMP-runner внутри Cloudflare-контейнера"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: docs/cloud-runs-features-spec.md F21. Вердикт: частично (partial). Доказательства: apps/cloud-gateway/Dockerfile.omp; .circleci/config.yml craft-gateway-deploy.
+    Чтобы заработать: Подтвердить user-managed env CCI проекта: CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID, CLOUD_RUNS_TOKEN
+
+- id: RX-FEA-0012
+  title: "Реестры поверхностей/панелей/режимов/команд Unified Shell"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/specs/2026-08-07-unified-shell/. Вердикт: работает (works). Доказательства: packages/core/src/platform/surfaces/registry.ts. Тесты есть.
+
+- id: RX-FEA-0013
+  title: "Омнибокс"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/specs/2026-08-07-unified-shell/04-omnibox.md. Вердикт: работает (works). Доказательства: packages/ui/src — 28 файлов omnibox. Тесты есть.
+
+- id: RX-FEA-0014
+  title: "Extension Center: маркетплейс с подписью каталога"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/specs/2026-08-07-unified-shell/05-extension-center.md. Вердикт: работает (works). Доказательства: packages/shared/src/marketplace/catalog-signing.ts. Тесты есть.
+
+- id: RX-FEA-0015
+  title: "Identity Center / Connection Fabric"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/specs/2026-08-11-rox-connection-fabric. Вердикт: работает (works). Доказательства: packages/core/src/platform/identity/; bun run test:connection-fabric. Тесты есть.
+
+- id: RX-FEA-0016
+  title: "Knowledge P1-P7: провайдер, writeback, distill, views, автоматизации"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: plans/branch-disposition.md (MERGED PR #4-#12). Вердикт: работает (works). Доказательства: packages/core/src/knowledge/; packages/shared/src/knowledge/. Тесты есть.
+
+- id: RX-FEA-0017
+  title: "SiYuan-интеграция: контракт knowledge-provider, поверхности публикации"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/specs/2026-08-07-siyuan-integration/. Вердикт: работает (works). Доказательства: siyuan: 196 файлов в packages/apps. Тесты есть.
+
+- id: RX-FEA-0018
+  title: "Mindmap"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: README Features. Вердикт: работает (works). Доказательства: mindmap: 56 файлов. Тесты есть.
+
+- id: RX-FEA-0019
+  title: "Workgraph (Case/Action/Outcome)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: packages/core identity. Вердикт: работает (works). Доказательства: packages/core/src/platform/identity/workgraph.test.ts. Тесты есть.
+
+- id: RX-FEA-0020
+  title: "Branch chat groups (дизайн-спека)"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: docs/specs/2026-08-06-branch-chat-groups-design.md. Вердикт: только замысел (idea_only). Доказательства: grep chat-group в packages/core — 0 совпадений.
+    Чтобы заработать: Портировать реализацию из донорской истории либо закрыть спеку ADR-решением
+
+- id: RX-FEA-0021
+  title: "Toolchain Download Manager (11 инструментов, sha256)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/superpowers/specs/2026-08-06-toolchain-download-manager-design.md. Вердикт: работает (works). Доказательства: packages/shared/src/toolchain; .circleci/config.yml toolchain-smoke-linux. Тесты есть.
+
+- id: RX-FEA-0022
+  title: "Runtime-context marketplace"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/runtime-context-marketplace-prd.md. Вердикт: работает (works). Доказательства: scripts/runtime-context-smoke.ts; packages/shared/src/extensions/catalog.ts. Тесты есть.
+
+- id: RX-FEA-0023
+  title: "Messaging: gateway + Discord/WhatsApp workers"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: packages/messaging-*. Вердикт: работает (works). Доказательства: packages/messaging-gateway/src/adapters. Тесты есть.
+
+- id: RX-FEA-0024
+  title: "Modal gateway"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: apps/modal-gateway. Вердикт: работает (works). Доказательства: apps/modal-gateway; packages/cloud-runner/src/modal-provider.ts. Тесты есть.
+
+- id: RX-FEA-0025
+  title: "Headless remote server (токен, TLS, CLI-подключение)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: README Remote Server; docs/repo-known-issues.md §3. Вердикт: работает (works). Доказательства: packages/server/src/index.ts. Тесты есть.
+
+- id: RX-FEA-0026
+  title: "Electron desktop (вибранность, окна, IPC)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: README Desktop App Features. Вердикт: работает (works). Доказательства: apps/electron; фиксы vibrancy/sessions на main. Тесты есть.
+
+- id: RX-FEA-0027
+  title: "iOS-приложение (CraftAgentKit + CraftAgentsApp)"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: apps/ios/README.md. Вердикт: частично (partial). Доказательства: apps/ios: 84 swift-файла.
+    Чтобы заработать: Собрать и прогнать smoke на симуляторе; зафиксировать статус в доке
+
+- id: RX-FEA-0028
+  title: "CLI-клиент (self-contained, JSON, pipe)"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: README CLI Client. Вердикт: работает (works). Доказательства: apps/cli; .github/workflows/validate-server.yml. Тесты есть.
+
+- id: RX-FEA-0029
+  title: "WebUI как самостоятельная поверхность (отличная от viewer/share)"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: apps/webui. Вердикт: частично (partial). Доказательства: apps/webui (vite, src).
+    Чтобы заработать: Аудит назначения webui vs viewer; зафиксировать вердикт в реестре поверхностей
+
+- id: RX-FEA-0030
+  title: "Native substrate на Rust"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: docs/specs/2026-08-12-native-substrate/. Вердикт: частично (partial). Доказательства: native/Cargo.toml, crates/; 15 локальных веток rox/native-* без merge.
+    Чтобы заработать: Разобрать 15 веток rox/native-* по методике plans/branch-disposition.md
+
+- id: RX-FEA-0031
+  title: "Мёртвые ручки корневого package.json"
+  kind: feature
+  status: done
+  note: |
+    Заявлено: docs/repo-known-issues.md §Root dead knobs. Вердикт: работает (works) — устранено ранее, tickets 08 и 16 зафиксированы в самом разделе. Доказательства: package.json.
+    Чтобы заработать: Удалить неработающие скрипты-ручки из корневого package.json
+
+- id: RX-FEA-0032
+  title: "ACP/OMP v2 мост агентов"
+  kind: feature
+  status: active
+  note: |
+    Заявлено: docs/omp-v2-prd.md. Вердикт: только замысел (idea_only). Доказательства: grep acp вне node_modules — только sample-icons.ts.
+    Чтобы заработать: Портировать ACP-клиент либо закрыть PRD решением ADR
+
+- id: RX-TSK-0100
+  title: "Активировать cloud-runs-conformance: задать секреты CLOUD_RUNS_* в settings репозитория"
+  kind: task
+  status: planned
+  refs: [RX-FEA-0009]
+  note: |
+    Из аудита функций RX-DOC-0025.
+
+- id: RX-TSK-0101
+  title: "E2B: получить креды и добавить e2b-provider по образцу modal-provider"
+  kind: task
+  status: planned
+  refs: [RX-FEA-0010]
+  note: |
+    Из аудита функций RX-DOC-0025.
+
+- id: RX-TSK-0102
+  title: "Подтвердить env CCI-проекта для craft-gateway-deploy (CLOUDFLARE_*, CLOUD_RUNS_TOKEN)"
+  kind: task
+  status: planned
+  refs: [RX-FEA-0011]
+  note: |
+    Из аудита функций RX-DOC-0025.
+
+- id: RX-TSK-0103
+  title: "Disposition 15 локальных веток rox/* (native-серия): классифицировать и смержить/удалить"
+  kind: task
+  status: done
+  note: |
+    Из аудита функций RX-DOC-0025.
+
+- id: RX-TSK-0104
+  title: "Удалить мёртвые ручки корневого package.json"
+  kind: task
+  status: dropped
+  refs: [RX-FEA-0031]
+  note: |
+    Из аудита функций RX-DOC-0025.
+
+- id: RX-TSK-0105
+  title: "Обновить устаревший комментарий кодовой базы (repo-known-issues §2)"
+  kind: task
+  status: dropped
+  note: |
+    Отменено: комментарий уже исправлен ранее (fcf4da70), подтверждено в omp-agent.ts 2026-08-22.
+
+- id: RX-TSK-0106
+  title: "Оформить операционные ограничения headless-сервера R1 в тикеты и документацию"
+  kind: task
+  status: blocked
+  note: |
+    Отменено: комментарий уже исправлен ранее (fcf4da70), подтверждено в omp-agent.ts 2026-08-22.
+    Blocker: создание GitHub-issue — внешняя публикация, ждёт решения (D-страница). Доки уже есть: repo-known-issues §3.
+
+- id: RX-TSK-0107
+  title: "ACP/OMP v2: принять решение ADR и портировать клиент либо закрыть PRD"
+  kind: task
+  status: planned
+  refs: [RX-FEA-0032]
+  note: |
+    Отменено: комментарий уже исправлен ранее (fcf4da70), подтверждено в omp-agent.ts 2026-08-22.
+
+- id: RX-TSK-0108
+  title: "iOS: сборка и smoke на симуляторе, фиксация статуса"
+  kind: task
+  status: planned
+  refs: [RX-FEA-0027]
+  note: |
+    Из аудита функций RX-DOC-0025.
+
+- id: RX-TSK-0110
+  title: "Свести typecheck:all к зелёному — устранить довесок до включения rx-main"
+  kind: task
+  status: done
+  note: |
+    Исполнено 2026-08-22: корни в core (HeadersInit через RequestInit['headers'],
+    InfisicalImporterEnv-адаптация process.env, guard locator), SessionManager
+    requestMeta-guard, и 9 тестовых файлов server-core + electron/pi-agent-server.
+    Гейт: bun run typecheck:all = 0 ошибок.
+
+- id: RX-TSK-0111
+  title: "Перевести потребителей CONFIG_DIR на ленивый getConfigDir"
+  kind: task
+  status: done
+  refs: [RX-TSK-0412]
+  note: |
+    123 файла используют eager CONFIG_DIR из config/paths. Цель спеки
+    owned-root-policy-slice: owned state не фиксируется на import-time;
+    тесты инжектируют адаптер. Исполнено 2026-08-22: 47 файлов переведены на resolveConfigDir(); eager-снапшот остался только в paths.ts как легаси-алиас. typecheck:all = 0.
+
+- id: RX-TSK-0109
+  title: "WebUI vs viewer: аудит назначения, запись вердикта в реестр поверхностей"
+  kind: task
+  status: done
+  refs: [RX-FEA-0029]
+  note: |
+    Из аудита функций RX-DOC-0025.
+    Вердикт 2026-08-22: webui — интерактивный клиент с login поверх WS-RPC; viewer — read-only share-страницы прогонов. Не дубли; оба остаются в реестре поверхностей.

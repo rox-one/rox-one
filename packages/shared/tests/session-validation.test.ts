@@ -121,6 +121,8 @@ describe('sanitizeSessionId', () => {
     expect(sanitizeSessionId('../../../tmp')).toBe('tmp');
     expect(sanitizeSessionId('foo/../bar')).toBe('bar');
     expect(sanitizeSessionId('../../etc/passwd')).toBe('passwd');
+    expect(sanitizeSessionId('..')).toBe('');
+    expect(sanitizeSessionId('.')).toBe('');
   });
 
   it('returns empty string for null/undefined', () => {

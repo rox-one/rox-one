@@ -22,8 +22,23 @@ import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
 import type { SessionMeta } from "@/atoms/sessions"
 import { messagingBindingsBySessionAtom } from "@/atoms/messaging"
+import { collectionDisplayAtom } from "@/atoms/collection-display"
 import { useAtomValue } from "jotai"
 import { extractLabelId } from "@craft-agent/shared/labels"
+
+function formatSessionDue(item: SessionMeta): string | undefined {
+  const dueValue = item.dueDate ?? (item as SessionMeta & { due?: number | null }).due
+  if (dueValue == null || !Number.isFinite(dueValue)) return undefined
+  return new Date(dueValue).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+}
+
+function formatLastActivity(lastMessageAt: number | undefined): string | undefined {
+  if (!lastMessageAt) return undefined
+  return formatDistanceToNowStrict(new Date(lastMessageAt), {
+    locale: shortTimeLocale as Locale,
+    roundingMethod: "floor",
+  })
+}
 
 const PLATFORM_PILL: Record<string, { label: string; colorClass: string } | undefined> = {
   telegram: {
@@ -65,6 +80,9 @@ export function SessionItem({
   const ctx = useSessionListContext()
   const { t } = useTranslation()
   const { workspaces, isCompactMode } = useAppShellContext()
+  const { density, hoverActions: hoverActionsEnabled } = useAtomValue(collectionDisplayAtom)
+  const isComfortable = density === "comfortable"
+  const showRowHoverActions = hoverActionsEnabled !== false
   const canSendToWorkspace = hasTransferTargets(workspaces)
   const { hotkey: nextHotkey } = useActionLabel('chat.nextSearchMatch')
   const { hotkey: prevHotkey } = useActionLabel('chat.prevSearchMatch')
@@ -81,7 +99,13 @@ export function SessionItem({
   }))
   const hasPendingPrompt = ctx.hasPendingPrompt?.(item.id) ?? false
   const unread = hasUnreadMeta(item)
-  const previewText = isCompactMode ? getSessionPreviewText(item) : null
+  const lastActivityText = formatLastActivity(item.lastMessageAt)
+  const showLastActivityInTrailing = Boolean(lastActivityText) && !isComfortable
+  const previewText = isComfortable
+    ? [lastActivityText, item.model, formatSessionDue(item)].filter(Boolean).join(" · ") || undefined
+    : isCompactMode
+      ? getSessionPreviewText(item)
+      : null
   const messagingBindingsBySession = useAtomValue(messagingBindingsBySessionAtom)
   const sessionBindings = messagingBindingsBySession.get(item.id) ?? []
   const hasMessagingBinding = sessionBindings.length > 0
@@ -139,6 +163,10 @@ export function SessionItem({
       onMouseDown={handleClick}
       buttonProps={{
         ...itemProps,
+        className: cn(
+          !isComfortable && "py-1.5",
+          (itemProps as { className?: string }).className,
+        ),
         onKeyDown: (e: React.KeyboardEvent) => {
           ;(itemProps as { onKeyDown: (event: React.KeyboardEvent) => void }).onKeyDown(e)
           ctx.onKeyDown(e, item)
@@ -190,6 +218,11 @@ export function SessionItem({
           onDelete={() => ctx.onDelete(item.id)}
         />
       )}
+      leading={
+        <div className={cn("flex items-center", !isComfortable ? "pt-1.5" : "pt-3")}>
+          <SessionStatusIcon item={item} />
+        </div>
+      }
       icon={
         <>
           <button
@@ -222,7 +255,6 @@ export function SessionItem({
               strokeWidth={2.25}
             />
           </button>
-          <SessionStatusIcon item={item} />
           <div className={cn(
             "flex items-center justify-center overflow-hidden gap-1",
             "transition-all duration-200 ease-out",
@@ -280,7 +312,7 @@ export function SessionItem({
         ) : undefined
       }
       hoverActions={
-        <>
+        showRowHoverActions ? <>
           {!unread && (
             <button
               type="button"
@@ -326,7 +358,7 @@ export function SessionItem({
               <Archive className="h-3.5 w-3.5 text-muted-foreground" />
             )}
           </button>
-        </>
+        </> : undefined
       }
       titleTrailing={hasMatch ? (
         <span
@@ -347,9 +379,9 @@ export function SessionItem({
         <div className="p-1 flex items-center justify-center">
           <Flag className="h-3.5 w-3.5 text-info" />
         </div>
-      ) : item.lastMessageAt ? (
+      ) : showLastActivityInTrailing ? (
         <span className="text-[11px] text-foreground/40 whitespace-nowrap">
-          {formatDistanceToNowStrict(new Date(item.lastMessageAt), { locale: shortTimeLocale as Locale, roundingMethod: 'floor' })}
+          {lastActivityText}
         </span>
       ) : undefined}
       badges={hasLabels ? <SessionBadges item={item} /> : undefined}

@@ -92,3 +92,6 @@ export {
   SettingsTextarea,
   type SettingsTextareaProps,
 } from './SettingsTextarea'
+
+export { OpenClawAuditSection } from './OpenClawAuditSection'
+export { CommandGatewaySection } from './CommandGatewaySection'

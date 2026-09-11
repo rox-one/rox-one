@@ -38,6 +38,7 @@ describe('getDefaultCollectionDisplay', () => {
       showEmptyGroups: false,
       showCompleted: true,
       density: 'compact',
+      hoverActions: true,
     })
   })
 })
@@ -67,7 +68,19 @@ describe('normalizeCollectionDisplay', () => {
       showEmptyGroups: true,
       showCompleted: false,
       density: 'compact',
+      hoverActions: true,
     })
+  })
+
+  it('keeps valid density and falls back invalid density to compact', () => {
+    expect(normalizeCollectionDisplay({ density: 'comfortable' }).density).toBe('comfortable')
+    expect(normalizeCollectionDisplay({ density: 'nope' }).density).toBe('compact')
+  })
+
+  it('keeps hoverActions false and defaults missing/invalid to true', () => {
+    expect(normalizeCollectionDisplay({ hoverActions: false }).hoverActions).toBe(false)
+    expect(normalizeCollectionDisplay({}).hoverActions).toBe(true)
+    expect(normalizeCollectionDisplay({ hoverActions: 'nope' }).hoverActions).toBe(true)
   })
 
   it('allows empty visibleProperties when author cleared all', () => {
@@ -101,6 +114,7 @@ describe('loadCollectionDisplay / saveCollectionDisplay', () => {
       showEmptyGroups: true,
       showCompleted: false,
       density: 'comfortable',
+      hoverActions: false,
     }
     const saved = saveCollectionDisplay(workspaceRoot, input)
     expect(saved).toEqual(input)
@@ -122,6 +136,7 @@ describe('loadCollectionDisplay / saveCollectionDisplay', () => {
       showEmptyGroups: false,
       showCompleted: true,
       density: 'compact',
+      hoverActions: true,
     })
     expect(saved.visibleProperties).toEqual(['labels'])
     expect(loadCollectionDisplay(workspaceRoot).visibleProperties).toEqual(['labels'])

@@ -61,4 +61,34 @@ describe('resolveEnabledFlags', () => {
       rollbackSafe: true,
     })
   })
+
+  it('harness flags default off and agent-intel needs inspector', () => {
+    expect(WORKBENCH_FLAG.harnessInspectorV1).toBe('workbench.harness.inspector.v1')
+    expect(WORKBENCH_FLAG.harnessChatChromeV1).toBe('workbench.harness.chat-chrome.v1')
+    expect(WORKBENCH_FLAG.harnessAgentIntelV1).toBe('workbench.harness.agent-intel.v1')
+    expect(WORKBENCH_FLAG.harnessExtCenterV1).toBe('workbench.harness.ext-center.v1')
+    for (const id of [
+      WORKBENCH_FLAG.harnessInspectorV1,
+      WORKBENCH_FLAG.harnessChatChromeV1,
+      WORKBENCH_FLAG.harnessAgentIntelV1,
+      WORKBENCH_FLAG.harnessExtCenterV1,
+    ]) {
+      expect(isWorkbenchFlagEnabled(id, new Set())).toBe(false)
+      const definition = WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)
+      expect(definition?.defaultValue).toBe(false)
+      expect(definition?.rollbackSafe).toBe(true)
+    }
+    expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.harnessAgentIntelV1, new Set([WORKBENCH_FLAG.harnessAgentIntelV1]))).toBe(
+      false,
+    )
+    expect(
+      isWorkbenchFlagEnabled(
+        WORKBENCH_FLAG.harnessAgentIntelV1,
+        new Set([WORKBENCH_FLAG.harnessAgentIntelV1, WORKBENCH_FLAG.harnessInspectorV1]),
+      ),
+    ).toBe(true)
+    expect(
+      isWorkbenchFlagEnabled(WORKBENCH_FLAG.harnessChatChromeV1, new Set([WORKBENCH_FLAG.harnessChatChromeV1])),
+    ).toBe(true)
+  })
 })

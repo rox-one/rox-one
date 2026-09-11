@@ -15,11 +15,11 @@ import {
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
+  featureWorkbenchHarnessInspectorV1Atom,
 } from '@/atoms/unified-shell'
 import { ActivityRail } from './ActivityRail'
 import { InspectorHost } from './InspectorHost'
 import { PanelHost } from './PanelHost'
-import { SurfaceTabs } from './SurfaceTabs'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 
 export { ActivityRail, ACTIVITY_RAIL_WIDTH, ACTIVITY_RAIL_COLLAPSED_WIDTH } from './ActivityRail'
@@ -47,6 +47,7 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
     tabGroups: useAtomValue(featureWorkbenchTabGroupsV2Atom),
     browserSurface: useAtomValue(featureWorkbenchBrowserSurfaceV2Atom),
     statusBar: false,
+    harnessInspector: useAtomValue(featureWorkbenchHarnessInspectorV1Atom),
   })
 
   if (!chrome.showRail && !chrome.showSurfaceTabs && !chrome.showInspector) {
@@ -56,9 +57,8 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
   return (
     <>
       {chrome.showRail && <ActivityRail />}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {chrome.showSurfaceTabs && <SurfaceTabs />}
-        {children}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
       {chrome.showInspector && <InspectorHost />}

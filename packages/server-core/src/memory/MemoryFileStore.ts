@@ -13,9 +13,9 @@
  */
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import type { LessonScope, WorkspaceMemory } from '@craft-agent/shared/memory/types'
 import { upsertContext, upsertHistory } from './fts-index'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 /** How many of the most recent daily history files loadWorkspaceMemory keeps. */
 export const RECENT_HISTORY_DAYS = 7
@@ -35,7 +35,7 @@ export class MemoryFileStore {
   // CRAFT_CONFIG_DIR is read lazily here (not via the frozen CONFIG_DIR
   // constant) so late-bound test harnesses with their own import order still
   // resolve the right directory at construction time.
-  constructor(scope: LessonScope, workspaceRoot?: string, configDir: string = process.env.CRAFT_CONFIG_DIR || CONFIG_DIR) {
+  constructor(scope: LessonScope, workspaceRoot?: string, configDir: string = process.env.CRAFT_CONFIG_DIR || resolveConfigDir()) {
     this.configDir = configDir
     if (scope === 'global') {
       this.memoryDir = join(configDir, 'memory')

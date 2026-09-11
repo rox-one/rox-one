@@ -11,6 +11,7 @@ describe('buildStatusBarModel', () => {
       permissionMode: null,
       peopleCount: 0,
       agentCount: 0,
+      costUsd: null,
     })
   })
 
@@ -37,12 +38,14 @@ describe('buildStatusBarModel', () => {
       permissionMode: 'ask',
       peopleCount: 2,
       agentCount: 4,
+      costUsd: 1.25,
     })
     expect(model.runCount).toBe(3)
     expect(model.approvalCount).toBe(1)
     expect(model.permissionMode).toBe('ask')
     expect(model.peopleCount).toBe(2)
     expect(model.agentCount).toBe(4)
+    expect(model.costUsd).toBe(1.25)
   })
 })
 

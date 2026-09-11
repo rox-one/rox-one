@@ -844,6 +844,13 @@ export class TaskRunner {
     if (!loaded.valid) {
       throw new Error(`Refusing to run invalid task "${slug}": ${loaded.errors.map((e) => e.message).join('; ')}`);
     }
+    // RX-TSK-0304: surface the effective permission mode on every start so an
+    // implicit 'allow-all' fallback is visible next to explicit author choices.
+    const effectiveMode = loaded.spec.defaults?.permissionMode ?? AUTONOMOUS_DEFAULT_MODE;
+    console.info(
+      `[task] "${slug}" permission mode: ${effectiveMode}`
+        + (loaded.spec.defaults?.permissionMode ? '' : ' (implicit fallback — set defaults.permissionMode in task.yaml)'),
+    );
     // One active run per orchestrator: a second concurrent run would race the same parent session's
     // verdict listener (two runs attaching onSessionComplete on the same orchestrator would cross
     // their verifications). Block it. NOTE: this does not guard against a human typing into the

@@ -98,7 +98,8 @@ export function PanelHost({
   )
 
   const panels = React.useMemo(
-    () => resolveSlotPanels(resolvedRegistry, slot, ctx, state.overrides),
+    () => resolveSlotPanels(resolvedRegistry, slot, ctx, state.overrides)
+      .filter((panel) => panel.source.id !== 'session-harness'),
     // registryVersion re-lists after registry mutations.
     [resolvedRegistry, slot, ctx, state.overrides, registryVersion],
   )

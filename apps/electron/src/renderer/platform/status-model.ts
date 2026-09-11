@@ -8,6 +8,7 @@ export interface StatusBarInput {
   permissionMode?: string | null
   peopleCount?: number
   agentCount?: number
+  costUsd?: number | null
 }
 
 export interface StatusBarModel {
@@ -18,6 +19,7 @@ export interface StatusBarModel {
   permissionMode: string | null
   peopleCount: number
   agentCount: number
+  costUsd: number | null
 }
 
 const ACTIVE_RUN_STATUSES = new Set(['running', 'stale'])
@@ -61,5 +63,6 @@ export function buildStatusBarModel(input: StatusBarInput): StatusBarModel {
     permissionMode: input.permissionMode ?? null,
     peopleCount: input.peopleCount ?? 0,
     agentCount: input.agentCount ?? 0,
+    costUsd: input.costUsd ?? null,
   }
 }

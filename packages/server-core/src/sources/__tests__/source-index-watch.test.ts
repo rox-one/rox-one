@@ -76,8 +76,14 @@ describe('source-index folder watch', () => {
         watch: ((_path, _opts, listener) => {
           const w = new FakeWatcher()
           watchers.push(w)
-          w.on('fire', (filename: string) => {
-            listener('change', filename)
+          if (!listener) return w as unknown as FSWatcher
+          w.on('fire', (filename) => {
+            if (typeof filename === 'string') {
+              // bun-types описывают filename пересечением типов; вызываем через
+              // явную сигнатуру листенера node:fs.
+              const fire = listener as (event: 'change', file?: string) => void
+              fire('change', filename)
+            }
           })
           return w as unknown as FSWatcher
         }) as typeof import('node:fs').watch,
@@ -127,7 +133,15 @@ describe('source-index folder watch', () => {
         watch: ((_path, _opts, listener) => {
           const w = new FakeWatcher()
           watchers.push(w)
-          w.on('fire', (filename: string) => listener('change', filename))
+          if (!listener) return w as unknown as FSWatcher
+          w.on('fire', (filename) => {
+            if (typeof filename === 'string') {
+              // bun-types описывают filename пересечением типов; вызываем через
+              // явную сигнатуру листенера node:fs.
+              const fire = listener as (event: 'change', file?: string) => void
+              fire('change', filename)
+            }
+          })
           return w as unknown as FSWatcher
         }) as typeof import('node:fs').watch,
         reindex: async () => {

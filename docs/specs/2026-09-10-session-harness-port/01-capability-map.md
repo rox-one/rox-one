@@ -1,0 +1,87 @@
+# H-01. Карта возможностей: DSH-плагин → вклад Rox
+
+- **Doc ID:** H-01
+- **Источник версий:** `~/.dsh/profiles/desktop` на 2026-09-10 (mounted bundles + patch inserts).
+- **Легенда:** `reuse` = уже есть, не копировать · `extend` = дотянуть существующее · `port` = новая first-party вкладка/сервис · `skip` = сознательно не берём.
+
+Каждая строка — проверяемый контракт волны. «Порт» значит UX + данные на контрактах Rox, не копипаст Cordis-модуля.
+
+## 1. Интерфейс
+
+| DSH-пакет | Ver | Возможность | Вердикт | Куда в Rox | Волна |
+|---|---|---|---|---|---|
+| `dsh-better-sidebar` | 0.17.1 | Правая панель: files / editor / terminal / git / browser на сессию | **extend+port** | Files: поднять `SessionFilesSection` в `InspectorHost` (док сейчас выключен). Git: **новый** panel workspace git — `SessionGitOutline` это outline веток *чата*, не git. Browser: reuse `WebBrowserPanel`. Editor: overlays/`FileViewer`. Terminal: UEW `SurfaceTab`, не сайдбар | H1 |
+| `dsh-web-plugin-manager` | 0.6.0 | Список / вкл / выкл расширений | **extend** | `ExtensionsSettingsPage.tsx` живой; хоста `ExtensionCenter.tsx` нет — это H4 | H4 |
+| `@dsh-community/dsh-paste-input` | 0.1.25 | Ctrl+V / drag-drop файлов в чат | **reuse** | `FreeFormInput` уже: `craft:paste-files`, drag-drop, `AttachmentPreview` | — |
+| `@dsh-external/dsh-input-history` | 0.1.13 | Ctrl+↑/↓ по отправленным сообщениям | **port** | Сейчас ArrowUp **во время хода** отменяет ход и возвращает этот промпт (`input-event-guards.ts`). Стек истории — только когда агент idle и caret в начале/пусто. Cancel-while-processing **MUST** сохранить | H2 |
+| `@dsh-external/dsh-ui-progress` | 0.9.17 | Полоса прогресса todos / interrupt / tok/s | **extend** | `ToolbarStatusSlot` + `ActiveTasksBar` + todo events сессии | H2 |
+| `dsh-open-in-vscode` | 0.1.6 | Открыть cwd в редакторе | **port** | Команда `workspace.openInEditor`; детект VS Code / Cursor / Zed / cmux. Не хардкодить только VS Code | H2 |
+| `@changfenhuang/dsh-genui` | 0.9.9 | Интерактивные блоки в ответе | **extend** | Rich blocks / mermaid / html overlay в `packages/ui`; не тащить GenUI runtime | H5 |
+| `@changfenhuang/dsh-annotation` | 1.4.9 | Выделить текст ответа и пометить | **reuse** | `packages/ui/src/components/annotations/` | — |
+| `@michengai/dsh-btw` | 0.1.4 | Одноразовый боковой вопрос | **extend** | Annotation island follow-up + `spawn_session` fork. Не новый тип агента | H5 |
+| `dsh-md-notes` | 0.12.0 | Markdown-заметки внутри harness | **reuse** | Notes + RX-DOC-0029 / RX-TSK-0411 | — |
+| `dsh-notification` | 0.1.1 | OS-notify по концу хода | **reuse** | `main/notifications.ts` + `hooks/useNotifications.ts` (unfocused + badge). Не второй buddy | — |
+| `dsh-cost-meter` | 1.7.17 | Стоимость сессии / дня / каталог цен | **extend** | В UI сейчас **% контекста / токены**, не $. `tokenUsage.costUsd` уже в атомах сессии (канбан). Status bar + popover сессии. Каталог цен — server-authoritative | H2 |
+| `dsh-chat-import` | 0.11.0 | Импорт 20 форматов (Claude/Codex/Grok/…) | **port** | Settings → Import; парсеры в `packages/shared/src/sessions/`; persist = Rox transcript, не `~/.dsh`; scan ≠ import; cwd `$HOME` → текущий workspace. Контракт: [H-04 §4](./04-calm-migration.md) | H5 |
+| `dsh-skill-mcp-panel` | 2.0.3 | Скиллы + MCP в одном settings UI | **extend** | Склеить `SkillsListPanel` + `SourcesListPanel` во вкладке Extension Center, не третий список | H4 |
+
+## 2. Мозг агента
+
+| DSH-пакет | Ver | Возможность | Вердикт | Куда в Rox | Волна |
+|---|---|---|---|---|---|
+| `dsh-context` | 0.47.0 | Дашборд «что съело окно» | **port** | Inspector tab `context`; данные из session transcript + compaction, не отдельный Cordis store | H3 |
+| `@michengai/dsh-skills-manager` | 0.1.45 | Ставить/грузить скиллы | **reuse** | `packages/shared/src/skills/` + OMP discovery | — |
+| `superpowers-dsh` | 0.1.1 | TDD / debug / plan skills | **reuse** | `apps/electron/resources/skills/superpowers/` уже бандлится | — |
+| `dsh-advisor` | 0.3.1 | Второй проход-ревьюер | **extend** | Subagent `reviewer` в `settings.yaml` fallbacks + опциональный skill-pack. Не второй LLM-loop в UI | H5 |
+| `dsh-auto-review` | 0.12.1 | Вторая модель на permission prompt | **port** | `PermissionRequest` structured input: optional shadow-review before allow. Fail-closed, timeout deny | H3 |
+| `@michengai/dsh-simplify` | 0.1.2 | Упростить git-дифф | **extend** | Skill + команда над `ShikiDiffViewer` / multi-diff overlay | H5 |
+| `dsh-llm-fallbacks` | 0.4.2 | Запасная модель при отказе | **extend** | Combo / OMP `retry.modelFallback` — UI честный статус в status bar (brandbook FR-11: не выдумывать combo id) | H3 |
+| `dsh-mcp-lens` | 0.1.0-rc.9 | Режет MCP-контекст | **port** | `mcpPool` loadMode + tool-defs filtering (`session-tools-core`). Inspector показывает «скрыто N tools» | H3 |
+| `dsh-permission-rules` | 0.6.16 | Декларативные правила + сетевой прокси | **extend** | `permissions-config.ts` + RX-DOC-0031 fail-closed. **Не** копировать whitelist-прокси DSH (он ломал github.com на Desktop) | H3 |
+| `@dsh-external/workflow` | 0.1.2 | Dynamic workflows | **extend** | `WorkflowSpec` / `tasks:*` + `SessionWorkflowEditor`. Не KodaX-harness внутри Cordis | H5 |
+| `@liustack/modlens` | 3.26.1 | Vision через Antigravity CLI | **skip→source** | Уже есть vision-модели Rox и `browser_tool`. Отдельный CLI-плагин не тащить. При необходимости — MCP source | H6 freeze |
+| `@liustack/modsearch` | 5.10.2 | Веб/X поиск | **skip→source** | MCP/API source (Exa/Tavily/Firecrawl уже в операторском контуре). Не вшивать ключи | H6 freeze |
+| `dsh-hot-reload` | 0.2.4 | Live reload плагинов | **skip** | В Desktop всё равно требовал рестарт; у Rox hot path — флаги и RPC refresh, не Cordis HMR | H6 freeze |
+
+## 3. Выключено в DSH и здесь тоже skip
+
+Эти пакеты лежали на диске Desktop, но были сняты с запуска. В Rox **MUST NOT** появляться как runtime:
+
+| DSH-пакет | Почему skip |
+|---|---|
+| `dsh-session-buddy` | Ломал клиент (`missed the module table`). Notify = H2 notifications |
+| `@hytime/dsh-client-ui-shortcuts` | Конфликт клиентских модулей. Хоткеи = `actions/` + `KeyboardShortcuts.tsx` |
+| `dsh-mnemon` | Требовал `webServer`. Память Rox = `packages/server-core/src/memory/` + self-learning specs |
+| `@michengai/dsh-automation` | Тот же `webServer`. Автоматизации уже first-party |
+| `dsh-sandbox-escalation-fix` | Патч чужого sandbox. У Rox — `craft-exec` / host-bash jail / UEW ExecutionPolicy |
+| `@nanmicoder/dsh-agent-teams` | Несовместимый host. Fan-out = `SessionFanOutSheet` + `spawn_session` |
+
+## 4. Хост DSH Desktop (не community-плагины)
+
+Эти поверхности даёт сам Desktop 2.0.9 / `@deepseek-ai/dsh-base` + `dsh-web-app`. В H-01 их не было — из-за этого «перенести DSH» легко путают с переносом Electron-хоста. Норматив: [H-04 §3](./04-calm-migration.md).
+
+| Фича хоста | Вердикт | Куда в Rox | Волна |
+|---|---|---|---|
+| Список сессий / workspace folders | **reuse** | Craft sessions + workspace | — |
+| `session.jsonl.zstd` (кадр 1 = header) | **skip** | Транскрипт Rox; импорт конвертирует, не пишет zstd | H5 читает чужое, пишет своё |
+| Compatibility mode / Remote control | **skip** | Нет цели | H6 freeze |
+| Slash `/import` | **extend** | Command palette / `actions/` | H5 |
+| Cordis plugin marketplace | **skip** | Extension Center + curated marketplace | H4 |
+| Loopback `:43120` + cookie-auth | **skip** | Rox RPC | — |
+| Preset `danger-full-access` | **reuse осторожно** | `allow-all` уже есть; UEW PTY — свой `ExecutionPolicy` | H1/UEW |
+
+`dsh-base` / `dsh-web-app` **MUST NOT** попасть в `package.json`.
+
+## 5. Сводка счёта
+
+| Вердикт | Кол-во | Смысл для плана |
+|---|---|---|
+| reuse | 6 | Paste, notify, annotations, notes, superpowers, skills manager |
+| extend | 12 | Inspector files, cost $, progress, Extension Center, permissions, workflow, … |
+| port | 7 | История промптов, git-док, context dashboard, chat import, MCP lens, open-in-editor, auto-review |
+| skip / skip→source | 11 | Явный отказ или MCP source без кода плагина |
+| host reuse/skip | 7 | Desktop-хром не портируем пакетом |
+
+(Git-док считается port, не reuse `SessionGitOutline`.)
+
+Итого новых поверхностей, которые пользователь *увидит*: inspector tabs (H1), chat chrome (H2), context/cost/review (H3), единый Extension Center (H4), import + advisor (H5). Не 29 плагинов в marketplace и не второй Electron-хост.

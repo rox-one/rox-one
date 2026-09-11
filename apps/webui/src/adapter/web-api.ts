@@ -101,6 +101,7 @@ export function createWebApi(options: WebApiOptions): {
     },
     openFile: () => Promise.resolve(), // no-op in browser
     showInFolder: () => Promise.resolve(), // no-op in browser
+    openInEditor: () => Promise.resolve({ opened: false, reason: 'no-editor' }),
 
     // File dialogs
     openFileDialog: webFilePicker,

@@ -6,15 +6,42 @@
  */
 import type { InspectorSectionId } from '@/atoms/unified-shell'
 
-export const INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
+export const KNOWLEDGE_INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
   'info',
   'agent',
   'outline',
   'backlinks',
 ]
 
+export const SESSION_INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
+  'files',
+  'git',
+  'browser',
+  'context',
+]
+
+export const INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
+  ...KNOWLEDGE_INSPECTOR_SECTION_IDS,
+  ...SESSION_INSPECTOR_SECTION_IDS,
+]
+
 /** Sections with a real implementation in W1; the rest render i18n empty states. */
 export const INSPECTOR_LIVE_SECTIONS: readonly InspectorSectionId[] = ['info']
+
+export const SESSION_INSPECTOR_LIVE_SECTIONS: readonly InspectorSectionId[] = [
+  'files',
+  'git',
+  'browser',
+  'context',
+]
+
+export function inspectorSectionsForMode(mode: 'knowledge' | 'session'): readonly InspectorSectionId[] {
+  return mode === 'session' ? SESSION_INSPECTOR_SECTION_IDS : KNOWLEDGE_INSPECTOR_SECTION_IDS
+}
+
+export function isSessionInspectorSection(value: InspectorSectionId): boolean {
+  return (SESSION_INSPECTOR_SECTION_IDS as readonly string[]).includes(value)
+}
 
 export function isInspectorSectionId(value: unknown): value is InspectorSectionId {
   return typeof value === 'string' && (INSPECTOR_SECTION_IDS as readonly string[]).includes(value)

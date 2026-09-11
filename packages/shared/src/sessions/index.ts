@@ -125,6 +125,7 @@ export { ADJECTIVES, NOUNS } from './word-lists.ts';
 export {
   validateSessionId,
   sanitizeSessionId,
+  isValidSessionId,
 } from './validation.ts';
 
 // Session bundle (export/import/dispatch)
@@ -138,7 +139,28 @@ export {
   serializeSession,
   validateBundle,
   MAX_BUNDLE_SIZE_BYTES,
-} from './bundle.ts';
+} from './bundle.ts'
+
+export { isAllowedForeignSourcePath, isHomePath, isSensitiveAgentCwd, realOrResolve } from './import-home.ts'
+export type {
+  ConvertedForeignSession,
+  ForeignDiscoverResult,
+  ForeignImportMode,
+  ForeignIndexEntry,
+  ForeignPersistResult,
+  ForeignSessionKind,
+} from './import-types.ts'
+export { FOREIGN_SESSION_KINDS } from './import-types.ts'
+export { discoverForeignSessions } from './import-discover.ts'
+export { convertForeignSource, convertClaudeJsonl, convertGrokCatalog, inferForeignKind, inspectForeignSource, redactSecrets } from './import-convert.ts'
+export { persistForeignSession, persistForeignSessions } from './import-persist.ts'
+export {
+  foreignImportRegistryPath,
+  foreignImportScanCachePath,
+  findScannedForeignSource,
+  loadForeignImportRegistry,
+  loadForeignImportScanCache,
+} from './import-registry.ts';
 
 // LexoRank helpers (manual session ordering)
 export {

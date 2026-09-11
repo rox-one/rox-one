@@ -10,13 +10,13 @@
  * - Injectable forkFn / workerPath for tests (never requires real Electron)
  */
 
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import { existsSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { EventEmitter } from 'node:events'
 
 import type { ExtensionHostStatus } from '@craft-agent/shared/extensions'
-import { CONFIG_DIR } from '@craft-agent/shared/config'
 import {
   getCredentialManager,
   type CredentialId,
@@ -188,7 +188,7 @@ export class ExtensionHostManager {
   constructor(options: ExtensionHostManagerOptions = {}) {
     this.forkFn = options.forkFn ?? tryLoadUtilityProcessFork()
     this.workerPath = options.workerPath ?? defaultWorkerPath()
-    this.configDir = options.configDir ?? CONFIG_DIR
+    this.configDir = options.configDir ?? resolveConfigDir()
     this.sandboxRootEnv = options.sandboxRootEnv
     this.messageTimeoutMs =
       options.messageTimeoutMs ??

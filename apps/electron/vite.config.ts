@@ -13,6 +13,27 @@ import { resolve } from 'path'
  * Vite needs concrete named exports to build those modules; runtime renderer
  * work remains behind the preload API and must not use these stand-ins.
  */
+function stubNpmLocksPlugin() {
+  const stub = resolve(__dirname, 'src/renderer/shims/npm-locks-stub.ts')
+  return {
+    name: 'stub-npm-locks',
+    enforce: 'pre' as const,
+    resolveId(id: string) {
+      const clean = (id.split('?')[0] || id).replace(/\\/g, '/')
+      if (
+        clean === './npm-locks' ||
+        clean === '../npm-locks' ||
+        clean.endsWith('/npm-locks') ||
+        clean.endsWith('/npm-locks.ts') ||
+        clean.endsWith('/toolchain/npm-locks')
+      ) {
+        return stub
+      }
+      return null
+    },
+  }
+}
+
 function nodeBuiltinStubPlugin() {
   const stub = resolve(__dirname, 'src/renderer/shims/node-stub.ts')
   const names: Record<string, true> = {
@@ -58,6 +79,7 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
+    stubNpmLocksPlugin(),
     nodeBuiltinStubPlugin(),
     // Sentry source map upload — intentionally disabled. See CLAUDE.md for re-enabling instructions.
     // sentryVitePlugin({
@@ -95,19 +117,26 @@ export default defineConfig({
       'react-dom': resolve(__dirname, '../../node_modules/react-dom'),
       // The real SDK has a Node shebang and belongs exclusively to main/server.
       '@anthropic-ai/claude-agent-sdk': resolve(__dirname, 'src/renderer/shims/claude-agent-sdk-stub.ts'),
+      'bash-parser': resolve(__dirname, 'src/renderer/shims/bash-parser-stub.ts'),
+      tar: resolve(__dirname, 'src/renderer/shims/tar-stub.ts'),
+      glob: resolve(__dirname, 'src/renderer/shims/glob-stub.ts'),
+      [resolve(__dirname, '../../packages/shared/src/toolchain/npm-locks.ts')]:
+        resolve(__dirname, 'src/renderer/shims/npm-locks-stub.ts'),
     },
     dedupe: ['react', 'react-dom']
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jotai', 'pdfjs-dist'],
-    exclude: ['@craft-agent/ui', '@anthropic-ai/claude-agent-sdk'],
+    exclude: ['@craft-agent/ui', '@anthropic-ai/claude-agent-sdk', 'tar', 'glob'],
     esbuildOptions: {
       supported: { 'top-level-await': true },
       target: 'esnext'
     }
   },
   server: {
+    host: true,
     port: 5173,
+    strictPort: true,
     open: false
   }
 })

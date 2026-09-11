@@ -65,6 +65,8 @@ export const CHANNEL_MAP = {
   sessionCommand: invoke(RPC_CHANNELS.sessions.COMMAND),
   exportSession: invoke(RPC_CHANNELS.sessions.EXPORT),
   importSession: invoke(RPC_CHANNELS.sessions.IMPORT),
+  foreignDiscoverSessions: invoke(RPC_CHANNELS.sessions.FOREIGN_DISCOVER),
+  foreignPersistSessions: invoke(RPC_CHANNELS.sessions.FOREIGN_PERSIST),
   exportRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER),
   importRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER),
   getPendingPlanExecution: invoke(RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION),
@@ -132,6 +134,20 @@ export const CHANNEL_MAP = {
   onUpdateDownloadProgress: listener(RPC_CHANNELS.update.DOWNLOAD_PROGRESS),
 
   // Toolchain manager
+  // OpenClaw security audit (RX-TSK-0112)
+  previewNotesImport: invoke(RPC_CHANNELS.notesImport.PREVIEW),
+  executeNotesImport: invoke(RPC_CHANNELS.notesImport.EXECUTE),
+
+  listPendingCommands: invoke(RPC_CHANNELS.commandGateway.LIST),
+  approveCommand: invoke(RPC_CHANNELS.commandGateway.APPROVE),
+  denyCommand: invoke(RPC_CHANNELS.commandGateway.DENY),
+
+  getOpenClawRuntimeStatus: invoke(RPC_CHANNELS.openclawRuntime.GET_STATUS),
+  runSecurityAudit: invoke(RPC_CHANNELS.securityAudit.RUN),
+  getLatestSecurityAudit: invoke(RPC_CHANNELS.securityAudit.GET_LATEST),
+  acceptSecurityRisk: invoke(RPC_CHANNELS.securityAudit.ACCEPT_RISK),
+  revokeSecurityRiskAcceptance: invoke(RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE),
+
   getToolchainStatus: invoke(RPC_CHANNELS.toolchain.STATUS),
   onToolchainStatusChanged: listener(RPC_CHANNELS.toolchain.STATUS_CHANGED),
   updateToolchainTool: invoke(RPC_CHANNELS.toolchain.UPDATE),
@@ -154,6 +170,7 @@ export const CHANNEL_MAP = {
   openUrl: invoke(RPC_CHANNELS.shell.OPEN_URL),
   openFile: invoke(RPC_CHANNELS.shell.OPEN_FILE),
   showInFolder: invoke(RPC_CHANNELS.shell.SHOW_IN_FOLDER),
+  runShellCommand: invoke(RPC_CHANNELS.shell.EXEC),
 
   // Menu event listeners
   onMenuNewChat: listener(RPC_CHANNELS.menu.NEW_CHAT),
@@ -611,6 +628,8 @@ export const CHANNEL_MAP = {
 
   // Git
   getGitBranch: invoke(RPC_CHANNELS.git.GET_BRANCH),
+  getGitStatus: invoke(RPC_CHANNELS.git.GET_STATUS),
+  openInEditor: invoke(RPC_CHANNELS.workspace.OPEN_IN_EDITOR),
   checkGitBash: invoke(RPC_CHANNELS.gitbash.CHECK),
   browseForGitBash: invoke(RPC_CHANNELS.gitbash.BROWSE),
   setGitBashPath: invoke(RPC_CHANNELS.gitbash.SET_PATH),

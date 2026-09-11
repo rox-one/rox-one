@@ -1,8 +1,8 @@
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import { writeFileSync, existsSync, mkdirSync } from 'fs'
 import { readJsonFileSync } from '@craft-agent/shared/utils/files'
 import { mainLog } from './logger'
 import { join } from 'path'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 
 export interface WindowBounds {
   x: number
@@ -29,7 +29,7 @@ export interface WindowState {
   lastFocusedWorkspaceId?: string
 }
 
-const WINDOW_STATE_FILE = join(CONFIG_DIR, 'window-state.json')
+const WINDOW_STATE_FILE = join(resolveConfigDir(), 'window-state.json')
 
 /**
  * Save the current window state (windows with bounds and type)
@@ -37,8 +37,8 @@ const WINDOW_STATE_FILE = join(CONFIG_DIR, 'window-state.json')
 export function saveWindowState(state: WindowState): void {
   try {
     // Ensure config directory exists
-    if (!existsSync(CONFIG_DIR)) {
-      mkdirSync(CONFIG_DIR, { recursive: true })
+    if (!existsSync(resolveConfigDir())) {
+      mkdirSync(resolveConfigDir(), { recursive: true })
     }
 
     writeFileSync(WINDOW_STATE_FILE, JSON.stringify(state, null, 2), 'utf-8')

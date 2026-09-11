@@ -41,6 +41,7 @@ function runScenario(configDir: string, code: string): { stdout: string; stderr:
     import { refreshRuntimeSecretEnv } from '${RUNTIME_MODULE_PATH}';
     import { getRuntimeEnvOverrides, getPersistedRuntimeEnvOverrides, getRuntimeSecretEnvFragment, setRuntimeSecretRefs, setRuntimeEnvOverrides } from '${STORAGE_MODULE_PATH}';
     import { redactRegisteredSecrets } from '${REDACT_MODULE_PATH}';
+import { resolveConfigDir } from "../../../config/paths.ts"
     const envProvider = (values) => ({
       id: 'environment',
       async isAvailable() { return true },

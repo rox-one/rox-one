@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'bun:test'
 import { startOfDay } from 'date-fns'
 import {
+  emptyListGroupBuckets,
   getListGroupKey,
   listCrossGroupDropAction,
   listRankReorderRequest,
   resolveListGroupingMode,
+  withEmptyListGroups,
 } from '../list-grouping'
 import type { SessionMeta } from '@/atoms/sessions'
 
@@ -139,3 +141,35 @@ describe('listRankReorderRequest (FR-45)', () => {
     expect(listRankReorderRequest('x', 'missing', true, peers)).toBeNull()
   })
 })
+
+describe('withEmptyListGroups', () => {
+  const t = (key: string, options?: Record<string, unknown>) => {
+    if (typeof options?.defaultValue === 'string') return options.defaultValue
+    return key
+  }
+
+  it('is a no-op when showEmptyGroups is false or buckets are empty', () => {
+    const groups = [{ key: 'status-todo', label: 'Todo', items: [{ id: 'a' }] }]
+    expect(withEmptyListGroups(groups, false, [{ key: 'status-done', label: 'Done' }])).toEqual(groups)
+    expect(withEmptyListGroups(groups, true, [])).toEqual(groups)
+  })
+
+  it('inserts missing status buckets in configured order and keeps populated groups', () => {
+    const populated = [{ key: 'status-todo', label: 'Todo', items: [{ id: 'a' }], collapsible: true }]
+    const buckets = emptyListGroupBuckets({
+      mode: 'status',
+      statuses: [
+        { id: 'todo', label: 'Todo' },
+        { id: 'done', label: 'Done' },
+      ],
+      projects: [],
+      labels: [],
+      t,
+    })
+    const next = withEmptyListGroups(populated, true, buckets)
+    expect(next.map((g) => g.key)).toEqual(['status-todo', 'status-done'])
+    expect(next[0].items).toEqual([{ id: 'a' }])
+    expect(next[1].items).toEqual([])
+  })
+})
+

@@ -1,7 +1,6 @@
 import * as React from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { type CollectionDisplay,
-type SessionPriority, } from '@craft-agent/shared/sessions/collection'
+import { type CollectionDisplay, type CollectionFilters, type SessionPriority } from '@craft-agent/shared/sessions/collection'
 import type { SessionStatus } from '@/config/session-status-config'
 import {
   collectionDisplayAtom,
@@ -21,6 +20,8 @@ import { CollectionGroupByMenu } from './CollectionGroupByMenu'
 import { CollectionOpsBar } from './CollectionOpsBar'
 import { CollectionViewCycleButton } from './CollectionViewCycleButton'
 import { cn } from '@/lib/utils'
+import { navigate, routes } from '@/lib/navigate'
+import { skipRailChipClearOnce, userSliceNavigation } from './collection-rail-filters'
 
 const DEFAULT_PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
 
@@ -35,6 +36,7 @@ export interface CollectionViewChromeProps {
   projects?: Array<{ id: string; name: string }>
   labels?: Array<{ id: string; name: string }>
   className?: string
+  onApplyUserSlice?: (viewId: string, filters: CollectionFilters) => void
 }
 
 /**
@@ -52,6 +54,7 @@ export function CollectionViewChrome({
   projects = [],
   labels = [],
   className,
+  onApplyUserSlice,
 }: CollectionViewChromeProps) {
   const display = useAtomValue(collectionDisplayAtom)
   const setDisplay = useSetAtom(setCollectionDisplayAtom)
@@ -59,6 +62,12 @@ export function CollectionViewChrome({
   const loadDisplay = useSetAtom(loadCollectionDisplayAtom)
   const filters = useAtomValue(collectionFiltersAtom)
   const setFilters = useSetAtom(collectionFiltersAtom)
+  const applyUserSlice = onApplyUserSlice ?? ((viewId: string, sliceFilters: CollectionFilters) => {
+    const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
+    skipRailChipClearOnce.current = nav.skipChipClear
+    void setFilters({ ...nav.filters })
+    navigate(nav.route)
+  })
   const loadFilters = useSetAtom(loadCollectionFiltersAtom)
   const replaceFiltersMap = useSetAtom(replaceCollectionFiltersMapAtom)
 
@@ -115,6 +124,7 @@ export function CollectionViewChrome({
           priorities={priorities}
           projects={projects}
           labels={labels}
+          onApplyUserSlice={applyUserSlice}
         />
       </div>
     )
@@ -132,6 +142,8 @@ export function CollectionViewChrome({
       labels={labels}
       trailing={cycle}
       className={className}
+      workspaceId={workspaceId}
+      onApplyUserSlice={applyUserSlice}
     />
   )
 }

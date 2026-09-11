@@ -24,18 +24,27 @@ import { getHostname, getThemeLuminance } from '@/components/browser/utils'
 import { browserInstancesAtom, filterInstancesForWorkspace } from '@/atoms/browser-pane'
 import { useAppShellContext } from '@/context/AppShellContext'
 import type { BrowserInstanceInfo } from '../../../../shared/types'
+import { computeTokensPerSecond, formatTokensPerSecond, type TurnPhase } from './turn-progress'
 
 interface ToolbarStatusSlotProps {
   /** Whether the escape interrupt overlay should be visible (highest priority) */
   showEscapeOverlay: boolean
   /** Session ID to find the bound browser instance */
   sessionId?: string
+  /** Live turn phase / tok/s while the agent is processing (below escape) */
+  turnProgress?: {
+    phase: TurnPhase
+    outputTokens: number
+    startedAt?: number
+  } | null
 }
 
 export function ToolbarStatusSlot({
   showEscapeOverlay,
   sessionId,
+  turnProgress = null,
 }: ToolbarStatusSlotProps) {
+  const { t } = useTranslation()
   // Filter to the active workspace so a session here doesn't surface a
   // browser-status banner for an agent running in a different workspace.
   // Accept both the local workspace id (manual tabs) and the remote-mirror
@@ -62,8 +71,24 @@ export function ToolbarStatusSlot({
     return visibleCandidates.at(-1) ?? null
   }, [browserInstances, sessionId])
 
-  // Priority resolution: escape interrupt > browser status
-  const showBrowser = !showEscapeOverlay && browserInstance !== null
+  const [now, setNow] = React.useState(() => Date.now())
+  React.useEffect(() => {
+    if (!turnProgress) return
+    setNow(Date.now())
+    const id = window.setInterval(() => setNow(Date.now()), 500)
+    return () => window.clearInterval(id)
+  }, [turnProgress])
+
+  const tokensPerSecond = turnProgress
+    ? computeTokensPerSecond(
+        turnProgress.outputTokens,
+        Math.max(0, now - (turnProgress.startedAt ?? now)),
+      )
+    : null
+
+  // Priority resolution: escape interrupt > turn progress > browser status
+  const showTurnProgress = !showEscapeOverlay && turnProgress !== null
+  const showBrowser = !showEscapeOverlay && !showTurnProgress && browserInstance !== null
 
   const handleBrowserClick = React.useCallback((instanceId: string) => {
     window.electronAPI?.browserPane?.focus?.(instanceId)
@@ -96,6 +121,35 @@ export function ToolbarStatusSlot({
               i18nKey="toolbar.escapeToInterrupt"
               components={{ kbd: <Kbd className="text-inherit bg-current/10" /> }}
             />
+          </span>
+        </motion.div>
+      )}
+
+      {showTurnProgress && turnProgress && (
+        <motion.div
+          key="turn-progress"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className={cn(
+            "absolute inset-0 z-10",
+            "rounded-b-[12px]",
+            "flex items-center justify-center",
+            "pointer-events-none",
+          )}
+          data-testid="chat-turn-progress"
+        >
+          <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+            {t(`chat.turnPhase.${turnProgress.phase}`)}
+            {tokensPerSecond != null && (
+              <>
+                <span aria-hidden="true">·</span>
+                <span>
+                  {t('chat.tokensPerSecond', { rate: formatTokensPerSecond(tokensPerSecond) })}
+                </span>
+              </>
+            )}
           </span>
         </motion.div>
       )}

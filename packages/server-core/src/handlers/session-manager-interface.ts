@@ -58,6 +58,9 @@ export interface ISessionManager {
    *  the orchestrator's cwd). */
   getSessionWorkingDirectory(sessionId: string): string | undefined
   deleteSession(sessionId: string): Promise<void>
+  /** Load one imported session from disk if missing. Must not replace a live session. */
+  ingestImportedSession(workspaceId: string, sessionId: string): void
+  notifySessionCreated(workspaceId: string, sessionId: string): void
 
   // ---------------------------------------------------------------------------
   // Session state

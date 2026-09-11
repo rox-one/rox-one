@@ -34,9 +34,13 @@ import { AppMenu } from "../AppMenu"
 import type { ReactNode } from "react"
 import {
   featureWorkbenchBrowserSurfaceV2Atom,
+  featureWorkbenchHarnessChatChromeV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTopChromeV2Atom,
 } from "@/atoms/unified-shell"
+import { focusedSessionIdAtom } from "@/atoms/panel-stack"
+import { sessionMetaMapAtom } from "@/atoms/sessions"
+import { formatCostUsd } from "./input/turn-progress"
 import { ModeBar } from "@/platform/ModeBar"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 
@@ -265,10 +269,7 @@ export function TopBar({
       {!isCompact && (
       <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-1" style={{ paddingRight: 12 }}>
         {chrome.utilityRail && (
-          <div className="mr-1 hidden items-center gap-2 text-[11px] text-muted-foreground/50 sm:flex">
-            <span>{t("workbench.presence.placeholder")}</span>
-            <span>{t("workbench.status.usagePlaceholder")}</span>
-          </div>
+          <TopBarUsageSlot />
         )}
         {!chrome.hideBrowserTabStrip && (
         <div className="min-w-0">
@@ -343,6 +344,26 @@ export function TopBar({
       </div>
       )}
       </div>
+    </div>
+  )
+}
+
+function TopBarUsageSlot() {
+  const { t } = useTranslation()
+  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  const focusedSessionId = useAtomValue(focusedSessionIdAtom)
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const costLabel = chatChromeEnabled
+    ? formatCostUsd(focusedSessionId ? sessionMetaMap.get(focusedSessionId)?.tokenUsage?.costUsd : undefined)
+    : null
+  return (
+    <div className="mr-1 hidden items-center gap-2 text-[11px] text-muted-foreground/50 sm:flex">
+      <span>{t("workbench.presence.placeholder")}</span>
+      <span data-testid="topbar-session-cost">
+        {costLabel
+          ? t("workbench.status.cost", { amount: costLabel })
+          : t("workbench.status.usagePlaceholder")}
+      </span>
     </div>
   )
 }

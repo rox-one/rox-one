@@ -79,7 +79,17 @@ import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
 import { hasOpenOverlay } from '@/lib/overlay-detection'
 import { ToolbarStatusSlot } from './ToolbarStatusSlot'
 import { buildPlanApprovalMessage } from '../plan-approval-message'
-import { shouldHandleScopedInputEvent, shouldRecallPromptOnArrowUp } from './input-event-guards'
+import { shouldHandleScopedInputEvent, shouldNavigatePromptHistory, shouldRecallPromptOnArrowUp } from './input-event-guards'
+import {
+  EMPTY_PROMPT_HISTORY,
+  isBrowsingPromptHistory,
+  navigatePromptHistory,
+  recordPrompt,
+  type PromptHistory,
+} from './prompt-history'
+import { formatCostUsd, resolveTurnPhase } from './turn-progress'
+import { useAtomValue } from 'jotai'
+import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
 import { clearPendingFocusForSession, consumePendingFocusForSession } from './focus-input-events'
 import {
   getRecentWorkingDirs,
@@ -226,6 +236,10 @@ export interface FreeFormInputProps {
     inputTokens?: number
     /** Model's context window size in tokens */
     contextWindow?: number
+    outputTokens?: number
+    costUsd?: number
+    statusType?: string
+    startedAt?: number
   }
   /** Follow-up annotations shown as context chips above the input */
   followUpItems?: FollowUpInputItem[]
@@ -355,6 +369,11 @@ export function FreeFormInput({
   onRequestExpand,
 }: FreeFormInputProps) {
   const { t } = useTranslation()
+  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
+  React.useEffect(() => {
+    promptHistoryRef.current = EMPTY_PROMPT_HISTORY
+  }, [sessionId])
 
   // Default rotating placeholders for onboarding/empty state (i18n-aware)
   const defaultPlaceholders = React.useMemo(() => [
@@ -720,6 +739,26 @@ export function FreeFormInput({
     onInputChange?.('')
     prevInputValueRef.current = ''
   }, [onInputChange])
+
+  const handleImprovePrompt = React.useCallback(() => {
+    const next = improveDraftPrompt(input)
+    if (next === input) return
+    setInput(next)
+    syncToParent(next)
+    setTimeout(() => {
+      richInputRef.current?.focus()
+      richInputRef.current?.setSelectionRange(next.length, next.length)
+    }, 0)
+  }, [input, syncToParent, richInputRef])
+
+  React.useEffect(() => {
+    const onImprove = () => {
+      if (!isFocusedPanel) return
+      handleImprovePrompt()
+    }
+    window.addEventListener('craft:improve-prompt', onImprove)
+    return () => window.removeEventListener('craft:improve-prompt', onImprove)
+  }, [handleImprovePrompt, isFocusedPanel])
 
   const handleToggleModelVision = useModelVisionToggle()
 
@@ -1413,6 +1452,10 @@ export function FreeFormInput({
 
     const attachmentSnapshot = attachments
 
+    if (chatChromeEnabled) {
+      promptHistoryRef.current = recordPrompt(promptHistoryRef.current, input)
+    }
+
     onSubmit(
       input.trim(),
       attachmentSnapshot.length > 0 ? attachmentSnapshot : undefined,
@@ -1432,7 +1475,7 @@ export function FreeFormInput({
     })
 
     return true
-  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills, sources, optimisticSourceSlugs, onSourcesChange, onWorkingDirectoryChange, homeDir])
+  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills, sources, optimisticSourceSlugs, onSourcesChange, onWorkingDirectoryChange, homeDir, chatChromeEnabled])
 
   // Listen for craft:submit-input events (simulate pressing the Send button)
   React.useEffect(() => {
@@ -1524,6 +1567,34 @@ export function FreeFormInput({
       e.preventDefault()
       handleStop()
       return
+    }
+
+    if (chatChromeEnabled) {
+      const historyDirection = shouldNavigatePromptHistory({
+        key: e.key,
+        shiftKey: e.shiftKey,
+        metaKey: e.metaKey,
+        ctrlKey: e.ctrlKey,
+        altKey: e.altKey,
+        isComposing: e.nativeEvent.isComposing,
+        isProcessing,
+        selectionStart: richInputRef.current?.selectionStart ?? (input.length === 0 ? 0 : -1),
+        selectionEnd: richInputRef.current?.selectionEnd ?? (input.length === 0 ? 0 : -1),
+        browsing: isBrowsingPromptHistory(promptHistoryRef.current),
+        inlineMenuOpen: inlineMention.isOpen || inlineSlash.isOpen || inlineLabel.isOpen,
+        disabled,
+      })
+      if (historyDirection) {
+        e.preventDefault()
+        const step = navigatePromptHistory(promptHistoryRef.current, historyDirection, input)
+        promptHistoryRef.current = step.history
+        if (step.value !== null) {
+          setInput(step.value)
+          prevInputValueRef.current = step.value
+          syncToParent(step.value)
+        }
+        return
+      }
     }
 
     // Skip submission during IME composition - user is confirming composed characters, not sending
@@ -1936,6 +2007,11 @@ export function FreeFormInput({
           <ToolbarStatusSlot
             showEscapeOverlay={isProcessing && showEscapeOverlay}
             sessionId={sessionId}
+            turnProgress={chatChromeEnabled && isProcessing ? {
+              phase: resolveTurnPhase(contextStatus?.statusType, true, contextStatus?.outputTokens) ?? 'thinking',
+              outputTokens: contextStatus?.outputTokens ?? 0,
+              startedAt: contextStatus?.startedAt,
+            } : null}
           />
 
           <div className={cn(
@@ -1965,17 +2041,24 @@ export function FreeFormInput({
             />
           )}
           {enableCompactModelPicker && (
-            <CompactModelSelector
-              currentModel={currentModel}
-              currentConnection={currentConnection}
-              onModelChange={onModelChange}
-              onConnectionChange={onConnectionChange}
-              thinkingLevel={thinkingLevel}
-              onThinkingLevelChange={onThinkingLevelChange}
-              isEmptySession={isEmptySession}
-              connectionUnavailable={connectionUnavailable}
-              contextStatus={contextStatus}
-            />
+            <>
+              <CompactModelSelector
+                currentModel={currentModel}
+                currentConnection={currentConnection}
+                onModelChange={onModelChange}
+                onConnectionChange={onConnectionChange}
+                thinkingLevel={thinkingLevel}
+                onThinkingLevelChange={onThinkingLevelChange}
+                isEmptySession={isEmptySession}
+                connectionUnavailable={connectionUnavailable}
+                contextStatus={contextStatus}
+              />
+              {chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
+                <span className="text-[11px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
+                  {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
+                </span>
+              )}
+            </>
           )}
           <FreeFormInputContextBadge
             icon={<Paperclip className="h-4 w-4" />}
@@ -2002,6 +2085,16 @@ export function FreeFormInput({
               disabled={disabled}
             />
           )}
+          <FreeFormInputContextBadge
+            icon={<Globe className="h-4 w-4" />}
+            label={t("browser.open")}
+            isExpanded={false}
+            hasSelection={false}
+            showChevron={false}
+            onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
+            tooltip={t("browser.newWindow")}
+            disabled={disabled}
+          />
           {onSourcesChange && (
             <div className="relative shrink min-w-0">
               <FreeFormInputContextBadge
@@ -2115,6 +2208,16 @@ export function FreeFormInput({
               disabled={disabled}
             />
           )}
+          <FreeFormInputContextBadge
+            icon={<Globe className="h-4 w-4" />}
+            label={t("browser.open")}
+            isExpanded={isEmptySession}
+            hasSelection={false}
+            showChevron={false}
+            onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
+            tooltip={t("browser.newWindow")}
+            disabled={disabled}
+          />
 
           {/* 2. Source Selector Badge - only show if onSourcesChange is provided */}
           {onSourcesChange && (
@@ -2590,6 +2693,11 @@ export function FreeFormInput({
                           <Spinner className="h-3 w-3" />
                         )}
                         {t('chat.tokensUsed', { displayCount: formatTokenCount(contextStatus.inputTokens) })}
+                        {chatChromeEnabled && formatCostUsd(contextStatus.costUsd) && (
+                          <span data-testid="chat-session-cost">
+                            {t('workbench.status.cost', { amount: formatCostUsd(contextStatus.costUsd) })}
+                          </span>
+                        )}
                       </span>
                     </div>
                   </div>

@@ -1,0 +1,93 @@
+# Фрагмент реестра RX — навигационные документы волны RU.
+# Свободные номера DOC после мастера (0001-0003, 0008-0022 заняты):
+# задачи 0023, хаб 0024, аудит функций 0025 (бронь).
+
+- id: RX-DOC-0023
+  title: Консолидированные задачи
+  kind: doc
+  path: docs/ru/RX-DOC-0023-tasks.md
+  status: active
+  refs: [RX-DOC-0004, RX-DOC-0006]
+  note: |
+    Единый список всех задач RX-TSK из всех фрагментов, сгруппированный
+    по волнам работ и происхождению.
+
+- id: RX-DOC-0024
+  title: Главная навигация
+  kind: doc
+  path: docs/ru/RX-DOC-0024-hub.md
+  status: active
+  refs: [RX-DOC-0023]
+  note: |
+    Входная страница русской документации: сводки реестра, документации,
+    операций, безопасности и сессий.
+
+- id: RX-DOC-0025
+  title: Аудит заявленных функций
+  kind: doc
+  path: docs/ru/RX-DOC-0025-audit.md
+  status: active
+  refs: [RX-DOC-0023]
+  note: |
+    Бронь номера: проверка заявленных функций README и docs против кода,
+    вердикты works/partial/broken/idea_only и задачи устранения.
+
+- id: RX-DOC-0028
+  title: Корпус документации безопасности
+  kind: doc
+  path: docs/ru/RX-DOC-0028-security-corpus.md
+  status: active
+  refs: [RX-TSK-0414]
+  note: |
+    Инвентарь перенесённого корпуса docs/security из бэкапов session-recovery.
+
+- id: RX-DOC-0029
+  title: ROX Notes — канонический корень и импорты (конспект)
+  kind: doc
+  path: docs/ru/RX-DOC-0029-notes-import.md
+  status: active
+  refs: [RX-TSK-0411]
+  note: |
+    RU-конспект апстрим-дизайна Notes import (оригиналы 1550 строк в
+    docs/upstream/notes-import/). Основа для реализации RX-TSK-0411.
+
+- id: RX-DOC-0031
+  title: Fail-closed контракт PreToolUse-цепочки (дизайн)
+  kind: doc
+  path: docs/ru/RX-DOC-0031-pretooluse-failclosed.md
+  status: active
+  refs: [RX-TSK-0303, RX-SEC-0004]
+  note: |
+    Установленные факты bypassPermissions + три варианта контракта
+    (отложенный bypass / эхо-сторож / canary), рекомендация A→B.
+
+- id: RX-DOC-0032
+  title: Command Gateway фаза 0 (дизайн)
+  kind: doc
+  path: docs/ru/RX-DOC-0032-command-gateway-phase0.md
+  status: active
+  refs: [RX-TSK-0402, RX-TSK-0407]
+  note: |
+    Модель PendingCommand, restart-safe store, state machine,
+    RPC command:list/approve/deny с авторизацией воркспейса,
+    совместимость с AdminApprovalRequest из recovery.
+
+- id: RX-DOC-0033
+  title: Default-deny messaging — редизайн режимов (дизайн)
+  kind: doc
+  path: docs/ru/RX-DOC-0033-messaging-default-deny.md
+  status: active
+  refs: [RX-TSK-0416, RX-SES-0009]
+  note: |
+    Маппинг legacy→новые режимы, миграция конфигов при загрузке,
+    evaluator-матрица с public-inbox через pending, UI/i18n-влияние.
+
+- id: RX-DOC-0034
+  title: Порт возможностей DSH-harness в Rox One
+  kind: doc
+  path: docs/ru/RX-DOC-0034-session-harness-port.md
+  status: active
+  refs: [RX-EPC-0001, RX-ADR-0019, RX-SPC-0021]
+  note: |
+    Русский конспект ADR-0019 и спеки RX-SPC-0021: возможности DSH
+    вливаем в Inspector/чат/Extension Center, без Cordis.

@@ -1,6 +1,9 @@
-import { existsSync } from 'node:fs'
-import { join } from 'path'
+import { existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync } from 'node:fs'
+import { spawn } from 'node:child_process'
+import { homedir } from 'node:os'
+import { join, basename } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import {
 import {
   addWorkspace,
   createAndActivateLocalWorkspace,
@@ -9,11 +12,18 @@ import {
   setActiveWorkspace,
   updateWorkspaceRemoteServer,
 } from '@craft-agent/shared/config'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import {
+  DEFAULT_EDITOR_EXTRA_DIRS,
+  launchWorkspaceInEditor,
+  lookupBinaryOnPath,
+  type EditorBinary,
+} from '@craft-agent/shared/workspace/open-in-editor'
 import { perf } from '@craft-agent/shared/utils'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { isValidWorkspaceRootPath } from '../../utils/path-validation'
+import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
+import { isSensitiveAgentCwd } from '@craft-agent/shared/sessions'
 import type { RemoteServerConfig, Workspace } from '@craft-agent/core/types'
 
 export const CORE_HANDLED_CHANNELS = [
@@ -24,6 +34,7 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.window.GET_WORKSPACE,
   RPC_CHANNELS.window.GET_MODE,
   RPC_CHANNELS.window.SWITCH_WORKSPACE,
+  RPC_CHANNELS.workspace.OPEN_IN_EDITOR,
   RPC_CHANNELS.workspace.READ_IMAGE,
   RPC_CHANNELS.workspace.WRITE_IMAGE,
   RPC_CHANNELS.theme.GET_APP,
@@ -150,7 +161,7 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Check if a workspace slug already exists (for validation before creation)
   server.handle(RPC_CHANNELS.workspaces.CHECK_SLUG, async (_ctx, slug: string) => {
-    const defaultWorkspacesDir = join(CONFIG_DIR, 'workspaces')
+    const defaultWorkspacesDir = join(resolveConfigDir(), 'workspaces')
     const workspacePath = join(defaultWorkspacesDir, slug)
     const exists = existsSync(workspacePath)
     return { exists, path: workspacePath }
@@ -378,6 +389,38 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     } else {
       // Small enough, write as-is
       writeFileSync(absolutePath, buffer)
+    }
+  })
+
+  server.handle(RPC_CHANNELS.workspace.OPEN_IN_EDITOR, async (_ctx, dirPath: string) => {
+    if (typeof dirPath !== 'string' || !isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) {
+      return { opened: false, reason: 'forbidden' }
+    }
+    const extraDirs = [
+      ...DEFAULT_EDITOR_EXTRA_DIRS,
+      join(homedir(), '.local', 'bin'),
+    ]
+    try {
+      return launchWorkspaceInEditor(dirPath, {
+        lookup: (bin: EditorBinary) => lookupBinaryOnPath(bin, {
+          pathEnv: process.env.PATH ?? '',
+          extraDirs,
+          exists: existsSync,
+          pathSep: process.platform === 'win32' ? '\\' : '/',
+          delimiter: process.platform === 'win32' ? ';' : ':',
+        }),
+        spawn: (command, args, cwd) => {
+          const child = spawn(command, args, {
+            cwd,
+            detached: true,
+            stdio: 'ignore',
+            env: process.env,
+          })
+          child.unref()
+        },
+      })
+    } catch {
+      return { opened: false, reason: 'no-editor' }
     }
   })
 

@@ -43,10 +43,12 @@ import { activeFilterCount } from "./collection/collection-filter-count"
 import { compareSessions, lexorankBetween } from "@craft-agent/shared/sessions/collection"
 import { isStaleRankNeighborsError, retryStaleRankReorder } from "@/lib/collection-reorder"
 import {
+  emptyListGroupBuckets,
   getListGroupKey,
   listCrossGroupDropAction,
   listRankReorderRequest,
   resolveListGroupingMode,
+  withEmptyListGroups,
   LIST_DUE_ORDER,
   LIST_PRIORITY_ORDER,
   type ListGroupingMode,
@@ -371,7 +373,7 @@ export function SessionList({
   // disabled in search mode where relevance owns the order.
   const rankDragEnabled = collectionDisplay.orderBy === 'rank' && !isSearchMode
 
-  const rowData = useMemo(() => {
+  const groupedRowData = useMemo(() => {
     // Within-group order: latest activity first — except under rank ordering,
     // where the incoming (rank-sorted) order must survive so drag targets
     // match what the user sees.
@@ -776,6 +778,27 @@ export function SessionList({
     }
   }, [isSearchMode, matchingFilterItems, otherResultItems, flatItems, effectiveGroupingMode, rankDragEnabled, sessionStatuses, projects, flatLabels, collapsedGroupsMeta, collapsedGroups, familyBySessionId, t])
 
+  const emptyBuckets = useMemo(
+    () => emptyListGroupBuckets({
+      mode: effectiveGroupingMode,
+      statuses: sessionStatuses,
+      projects: projects ?? [],
+      labels: flatLabels,
+      t,
+    }),
+    [effectiveGroupingMode, sessionStatuses, projects, flatLabels, t],
+  )
+
+  const rowData = useMemo(() => {
+    if (isSearchMode || !groupedRowData.groups) return groupedRowData
+    const groups = withEmptyListGroups(
+      groupedRowData.groups,
+      collectionDisplay.showEmptyGroups,
+      emptyBuckets,
+    )
+    return { rows: groupedRowData.rows, groups }
+  }, [groupedRowData, isSearchMode, collectionDisplay.showEmptyGroups, emptyBuckets])
+
   const flatRows = rowData.rows
   const visibleSessionIds = useMemo(() => flatRows.map(row => row.item.id), [flatRows])
 
@@ -810,6 +833,7 @@ export function SessionList({
   const itemById = useMemo(() => new Map(items.map(i => [i.id, i])), [items])
   const dragIdRef = useRef<string | null>(null)
   const [dropTarget, setDropTarget] = useState<{ sessionId: string; before: boolean } | null>(null)
+  const [dropGroupKey, setDropGroupKey] = useState<string | null>(null)
 
   // Bucket keys follow the family representative so drag validation matches
   // the rendered grouping (a whole family lives in ONE bucket).
@@ -835,6 +859,7 @@ export function SessionList({
         !listCrossGroupDropAction(effectiveGroupingMode, targetKey)
       ) {
         setDropTarget(null)
+        setDropGroupKey(null)
         e.dataTransfer.dropEffect = 'none'
         return
       }
@@ -843,6 +868,7 @@ export function SessionList({
     e.dataTransfer.dropEffect = 'move'
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     const before = e.clientY < rect.top + rect.height / 2
+    setDropGroupKey(null)
     setDropTarget({ sessionId: id, before })
   }, [rankDragEnabled, groupKeyOf, effectiveGroupingMode])
 
@@ -939,22 +965,65 @@ export function SessionList({
     [rankDragEnabled, itemById, groupKeyOf, effectiveGroupingMode, flatRows, items, updateMeta, refreshMetadata, loadedSessionIds, bucketRepresentatives, t],
   )
 
+  const handleEmptyGroupDragOver = useCallback((groupKey: string, e: React.DragEvent) => {
+    if (!rankDragEnabled) return
+    const dragId = dragIdRef.current
+    if (!dragId || !listCrossGroupDropAction(effectiveGroupingMode, groupKey)) {
+      setDropGroupKey(null)
+      e.dataTransfer.dropEffect = 'none'
+      return
+    }
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDropTarget(null)
+    setDropGroupKey(groupKey)
+  }, [rankDragEnabled, effectiveGroupingMode])
+
+  const finalizeEmptyGroupDrop = useCallback(async (groupKey: string) => {
+    const dragId = dragIdRef.current
+    dragIdRef.current = null
+    setDropTarget(null)
+    setDropGroupKey(null)
+    if (!dragId || !rankDragEnabled) return
+    const dragMeta = itemById.get(dragId)
+    const action = listCrossGroupDropAction(effectiveGroupingMode, groupKey)
+    if (!dragMeta || !action) return
+    const previousMetadataPatch =
+      action.command.type === 'setSessionStatus'
+        ? { sessionStatus: dragMeta.sessionStatus }
+        : action.command.type === 'setPriority'
+          ? { priority: dragMeta.priority }
+          : { projectId: dragMeta.projectId }
+    try {
+      updateMeta(dragId, action.metadataPatch)
+      await window.electronAPI.sessionCommand(dragId, action.command)
+    } catch (error) {
+      console.error('[SessionList] Failed to move session into empty group:', error)
+      updateMeta(dragId, previousMetadataPatch)
+      toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+    }
+  }, [rankDragEnabled, itemById, effectiveGroupingMode, updateMeta, t])
+
   const handleListDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
-      if (dropTarget) {
+      if (dropGroupKey) {
+        void finalizeEmptyGroupDrop(dropGroupKey)
+      } else if (dropTarget) {
         void finalizeReorder(dropTarget.sessionId, dropTarget.before)
       } else {
         dragIdRef.current = null
         setDropTarget(null)
+        setDropGroupKey(null)
       }
     },
-    [dropTarget, finalizeReorder],
+    [dropGroupKey, dropTarget, finalizeEmptyGroupDrop, finalizeReorder],
   )
 
   const handleListDragEnd = useCallback(() => {
     dragIdRef.current = null
     setDropTarget(null)
+    setDropGroupKey(null)
   }, [])
 
   // --- Action handlers with toast feedback ---
@@ -1046,7 +1115,7 @@ export function SessionList({
 
   const handleSelectGroup = useCallback((groupKey: string) => {
     const group = rowData.groups?.find((g) => g.key === groupKey)
-    if (!group) return
+    if (!group || group.items.length === 0) return
     addToSelection(group.items.map((row) => row.item.id))
   }, [addToSelection, rowData.groups])
 
@@ -1253,7 +1322,7 @@ export function SessionList({
           if (row.familyHead) {
             const head = row.familyHead
             decorated = (
-              <div className="relative pl-3">
+              <div className="relative pl-6">
                 <button
                   type="button"
                   aria-label={t("sidebar.branchCount", { count: head.branchCount })}
@@ -1262,7 +1331,7 @@ export function SessionList({
                     e.stopPropagation()
                     toggleGroupCollapse(head.collapseKey)
                   }}
-                  className="absolute left-0 top-0 bottom-0 z-10 flex items-center gap-0.5 px-0 text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
+                  className="absolute left-2 top-0 bottom-0 z-10 flex items-center gap-0.5 px-1 text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
                 >
                   <ChevronRight
                     className={cn(
@@ -1376,6 +1445,8 @@ export function SessionList({
         onCollapseAll={collapseAllGroups}
         onExpandAll={expandAllGroups}
         onSelectGroup={handleSelectGroup}
+        dropGroupKey={dropGroupKey}
+        onEmptyGroupDragOver={handleEmptyGroupDragOver}
       />
       </SessionListProvider>
 

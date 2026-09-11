@@ -33,12 +33,11 @@ import { join } from 'node:path'
 import { readFileSync, existsSync } from 'node:fs'
 import { version as packageVersion } from '../package.json'
 import { enableDebug } from '@craft-agent/shared/utils/debug'
-import { bootstrapServer, startHealthHttpServer, generateServerToken } from '@craft-agent/server-core/bootstrap'
+import { bootstrapServer, startHealthHttpServer, generateServerToken, maskTokenForDisplay } from '@craft-agent/server-core/bootstrap'
 import { validateSession, createWebuiHandler, nodeHttpAdapter } from '@craft-agent/server-core/webui'
 import type { WebuiHandler } from '@craft-agent/server-core/webui'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import { getWorkspaces } from '@craft-agent/shared/config'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import { createMessagingBootstrap, type MessagingBootstrapHandle } from '@craft-agent/messaging-gateway'
 import { VpsBrowserPaneManager } from './vps-browser-pane-manager'
 
@@ -53,6 +52,7 @@ import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@cra
 import { initModelRefreshService, setFetcherPlatform } from '@craft-agent/server-core/model-fetchers'
 import { setSearchPlatform, setImageProcessor } from '@craft-agent/server-core/services'
 import type { HandlerDeps } from '@craft-agent/server-core/handlers'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 process.env.CRAFT_IS_PACKAGED ??= 'false'
 
@@ -221,7 +221,7 @@ const instance = await (async () => {
           sessionManager,
           credentialManager: getCredentialManager(),
           getMessagingDir: (wsId: string) =>
-            join(CONFIG_DIR, 'workspaces', wsId, 'messaging'),
+            join(resolveConfigDir(), 'workspaces', wsId, 'messaging'),
           // Headless has no legacy messaging dir — workspaces start clean.
           whatsapp: {
             workerEntry: waWorkerEntry,
@@ -327,7 +327,10 @@ const healthServer = await startHealthHttpServer({
 
 const serverProto = instance.protocol === 'wss' ? 'https' : 'http'
 console.log(`CRAFT_SERVER_URL=${instance.protocol}://${instance.host}:${instance.port}`)
-console.log(`CRAFT_SERVER_TOKEN=${instance.token}`)
+// RX-SEC-0003: полное значение только при явном CRAFT_PRINT_TOKEN=1;
+// CLI-спавнер определяет готовность по CRAFT_SERVER_URL= и хранит токен сам.
+const echoFullToken = process.env.CRAFT_PRINT_TOKEN === '1'
+console.log(`CRAFT_SERVER_TOKEN=${echoFullToken ? instance.token : maskTokenForDisplay(instance.token)}`)
 if (webuiHandler) {
   console.log(`CRAFT_WEBUI_URL=${serverProto}://0.0.0.0:${instance.port}`)
 }

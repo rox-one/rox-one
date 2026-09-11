@@ -29,6 +29,7 @@ import {
   MailOpen,
   FolderKanban,
   PanelsTopLeft,
+  Eye,
 } from "lucide-react"
 // SessionStatusIcons no longer used - icons come from dynamic sessionStatuses
 import { SourceAvatar } from "@/components/ui/source-avatar"
@@ -71,6 +72,7 @@ import {
 import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
+import { getDefaultViews } from "@craft-agent/shared/views"
 import { collectionViewRoute, rememberCollectionView, resolveCycleTarget } from "./collection/collection-view-cycle"
 import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
@@ -90,10 +92,11 @@ import {
   ACTIVITY_RAIL_WIDTH,
   ACTIVITY_RAIL_COLLAPSED_WIDTH,
   StatusBarHost,
+  SurfaceTabs,
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -110,6 +113,7 @@ import { sessionMetaMapAtom, sendToWorkspaceAtom, type SessionMeta } from "@/ato
 import { collectionDisplayAtom, setCollectionDisplayAtom } from "@/atoms/collection-display"
 import { CompactSessionListFilter } from "./CompactSessionListFilter"
 import { collectionFiltersAtom, collectionFilterKeyAtom } from "@/atoms/collection-filters"
+import { chipsAfterRailChange, railViewNavigation, skipRailChipClearOnce, userSliceNavigation } from "./collection/collection-rail-filters"
 import { compareSessions, DEFAULT_COLLECTION_FILTERS, filterSessionMeta } from "@craft-agent/shared/sessions/collection"
 import { sourcesAtom } from "@/atoms/sources"
 import { skillsAtom } from "@/atoms/skills"
@@ -519,12 +523,27 @@ function AppShellContent({
   const collectionFilters = useAtomValue(collectionFiltersAtom)
   const setCollectionFilters = useSetAtom(collectionFiltersAtom)
   const setCollectionFilterKey = useSetAtom(collectionFilterKeyAtom)
+  const prevKeyRef = React.useRef(sessionFilterKey ?? 'allSessions')
+  const skipRailChipClearRef = React.useRef(false)
 
   // FR-11: the shared filters atom exposes chips for the active navigator
   // filter key; keep the key in sync with navigation.
   React.useEffect(() => {
-    setCollectionFilterKey(sessionFilterKey ?? 'allSessions')
-  }, [sessionFilterKey, setCollectionFilterKey])
+    const nextKey = sessionFilterKey ?? 'allSessions'
+    const prevKey = prevKeyRef.current
+    setCollectionFilterKey(nextKey)
+    if (skipRailChipClearRef.current || skipRailChipClearOnce.current) {
+      skipRailChipClearRef.current = false
+      skipRailChipClearOnce.current = false
+    } else if (prevKey !== nextKey) {
+      setCollectionFilters(chipsAfterRailChange({
+        prevKey,
+        nextKey,
+        prevChips: collectionFilters,
+      }))
+    }
+    prevKeyRef.current = nextKey
+  }, [sessionFilterKey, setCollectionFilterKey, setCollectionFilters])
 
   const { clearMultiSelect: clearSessionMultiSelect } = useSessionSelection()
   const sessionsViewMode = isSessionsNavigation(navState) ? navState.viewMode : null
@@ -554,12 +573,15 @@ function AppShellContent({
   // other filters), then navigates.
   const handleJumpToProjectSessions = useCallback((projectId: string) => {
     // FR-31: jump writes the shared CollectionFilters atom (not viewFiltersMap).
+    skipRailChipClearRef.current = true
+    setCollectionFilterKey('allSessions')
     setCollectionFilters(prev => ({
       ...prev,
       projectId: [projectId],
     }))
     navigate(routes.view.allSessions())
-  }, [setCollectionFilters, navigate])
+    if (prevKeyRef.current === 'allSessions') skipRailChipClearRef.current = false
+  }, [setCollectionFilters, setCollectionFilterKey, navigate])
 
   // Jump to All Sessions scoped to a task: replace the allSessions view's label filter
   // (and project filter, when the task is bound to one) with the task's scope, then open
@@ -568,14 +590,17 @@ function AppShellContent({
   // handleJumpToProjectSessions; used by kanban tile/subtask clicks and post-create.
   const handleJumpToTaskSessions = useCallback(
     (sessionId: string, scope: { labelId: string; projectId?: string }) => {
+      skipRailChipClearRef.current = true
+      setCollectionFilterKey('allSessions')
       setCollectionFilters(prev => ({
         ...prev,
         labels: [scope.labelId],
         projectId: scope.projectId ? [scope.projectId] : undefined,
       }))
       navigate(routes.view.allSessions(sessionId))
+      if (prevKeyRef.current === 'allSessions') skipRailChipClearRef.current = false
     },
-    [setCollectionFilters, navigate],
+    [setCollectionFilters, setCollectionFilterKey, navigate],
   )
 
   // Search state for session list
@@ -1213,6 +1238,65 @@ function AppShellContent({
   // This prevents closures from retaining full message arrays
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const setSessionMetaMap = useSetAtom(sessionMetaMapAtom)
+  const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  useAction('workspace.openInEditor', () => {
+    const cwd = (focusedSessionId && sessionMetaMap.get(focusedSessionId)?.workingDirectory)
+      || activeWorkspace?.rootPath
+      || ''
+    if (!cwd) {
+      toast.error(t('workspace.openInEditorFailed'))
+      return
+    }
+    const openInEditor = window.electronAPI.openInEditor
+    if (!openInEditor) {
+      toast.error(t('workspace.openInEditorFailed'))
+      return
+    }
+    void openInEditor(cwd).then((result) => {
+      if (!result?.opened) toast.error(t('workspace.openInEditorFailed'))
+    }).catch(() => {
+      toast.error(t('workspace.openInEditorFailed'))
+    })
+  }, {
+    enabled: () => chatChromeEnabled && Boolean(
+      (focusedSessionId && sessionMetaMap.get(focusedSessionId)?.workingDirectory)
+      || activeWorkspace?.rootPath,
+    ),
+  }, [chatChromeEnabled, focusedSessionId, sessionMetaMap, activeWorkspace, t])
+
+  useAction('sessions.import', () => {
+    navigate(routes.view.settings('import'))
+  })
+  useAction('session.advisor', () => {
+    const id = focusedSessionId ?? session.selected
+    if (!id) {
+      toast.error(t('session.advisorNeedChat'))
+      return
+    }
+    window.dispatchEvent(new CustomEvent('craft:restore-input', {
+      detail: { sessionId: id, text: t('session.advisorPrompt') },
+    }))
+  })
+  useAction('session.simplify', () => {
+    const id = focusedSessionId ?? session.selected
+    if (!id) {
+      toast.error(t('session.advisorNeedChat'))
+      return
+    }
+    window.dispatchEvent(new CustomEvent('craft:restore-input', {
+      detail: { sessionId: id, text: t('session.simplifyPrompt') },
+    }))
+  })
+  useAction('session.workflow', () => {
+    const id = focusedSessionId ?? session.selected
+    if (!id) {
+      toast.error(t('session.advisorNeedChat'))
+      return
+    }
+    window.dispatchEvent(new CustomEvent('craft:session-view', {
+      detail: { sessionId: id, view: 'map' },
+    }))
+  })
 
   const hasPendingPrompt = React.useCallback((sessionId: string) => {
     return (pendingPermissions.get(sessionId)?.length ?? 0) > 0
@@ -1572,37 +1656,49 @@ function AppShellContent({
   }, [collapsedItems, activeWorkspaceId])
 
   const handleAllSessionsClick = useCallback(() => {
-    void setCollectionFilters({})
     navigate(routes.view.allSessions())
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   const handleFlaggedClick = useCallback(() => {
-    void setCollectionFilters({})
     navigate(routes.view.flagged())
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   const handleArchivedClick = useCallback(() => {
-    void setCollectionFilters({})
     navigate(routes.view.archived())
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   // Handler for individual todo state views
   const handleSessionStatusClick = useCallback((stateId: SessionStatusId) => {
     if (activeWorkspaceId) clearStatusUnseen(activeWorkspaceId, stateId)
-    void setCollectionFilters({})
     navigate(routes.view.state(stateId))
-  }, [activeWorkspaceId, setCollectionFilters, navigate])
+  }, [activeWorkspaceId, navigate])
 
   // Handler for label filter views (hierarchical — includes descendant labels)
   const handleLabelClick = useCallback((labelId: string) => {
-    void setCollectionFilters({})
     navigate(routes.view.label(labelId))
-  }, [setCollectionFilters, navigate])
+  }, [navigate])
 
   const handleViewClick = useCallback((viewId: string) => {
-    void setCollectionFilters({})
-    navigate(routes.view.view(viewId))
-  }, [setCollectionFilters, navigate])
+    const view = viewConfigs.find(v => v.id === viewId)
+    const nav = railViewNavigation({ id: viewId, collectionFilters: view?.collectionFilters })
+    skipRailChipClearRef.current = true
+    skipRailChipClearOnce.current = nav.skipChipClear
+    if (nav.filters) setCollectionFilters({ ...nav.filters })
+    navigate(nav.route)
+  }, [navigate, viewConfigs, setCollectionFilters])
+
+  const handleViewsAllClick = useCallback(() => {
+    const nav = railViewNavigation({ id: '__all__' })
+    skipRailChipClearRef.current = true
+    skipRailChipClearOnce.current = nav.skipChipClear
+    navigate(nav.route)
+  }, [navigate])
+
+  const sessionViewConfigs = useMemo(
+    () => viewConfigs.filter(v => (v.domain ?? 'sessions') === 'sessions'),
+    [viewConfigs],
+  )
+  const defaultSessionViewIds = useMemo(() => new Set(getDefaultViews().map(v => v.id)), [])
 
   // DnD handler: reorder statuses (flat list drag-and-drop)
   // Sets optimistic order immediately for instant UI feedback, then fires IPC.
@@ -1901,21 +1997,23 @@ function AppShellContent({
     setTimeout(() => focusZone('chat', { intent: 'programmatic' }), 50)
   }, [activeWorkspace, focusZone, handleNewKnowledgeNote, navigate, navState, resolveInheritedNewSessionParams])
 
-  // Create a brand new embedded browser panel and focus it.
-  // Intentionally unbound: this action should always create a NEW panel.
+  const setInspectorVisible = useSetAtom(inspectorVisibleAtom)
+  const setInspectorChromeCollapsed = useSetAtom(inspectorChromeCollapsedAtom)
+  const setInspectorSection = useSetAtom(inspectorSectionAtom)
+  const setInspectorPanelWidth = useSetAtom(inspectorPanelWidthAtom)
+
+  // Open the inspector-hosted embedded browser instead of a native OS window
+  // or a main-lane panel that overlays the session list.
   const handleNewBrowserWindow = useCallback(async () => {
     if (isWebUI) {
       setWebBrowserOpen(true)
       return
     }
-    try {
-      const instanceId = await window.electronAPI.browserPane.createEmbedded()
-      navigate(routes.view.browser(instanceId), { newPanel: true, targetLaneId: 'main' })
-    } catch (error) {
-      console.error('[Chat] Failed to create browser panel:', error)
-      toast.error(t('toast.failedToCreateBrowser'))
-    }
-  }, [navigate, t])
+    setInspectorChromeCollapsed(false)
+    setInspectorVisible(true)
+    setInspectorSection('browser')
+    setInspectorPanelWidth((width) => Math.max(width, 560))
+  }, [setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible])
 
   // Delete Source - simplified since agents system is removed
   const handleDeleteSource = useCallback(async (sourceSlug: string) => {
@@ -1981,6 +2079,11 @@ function AppShellContent({
     }
     flattenTree(labelTree)
 
+    result.push({ id: 'nav:views', type: 'nav', action: handleViewsAllClick })
+    for (const view of sessionViewConfigs) {
+      result.push({ id: `nav:view:${view.id}`, type: 'nav', action: () => handleViewClick(view.id) })
+    }
+
     // 3. Destinations (matches APP_NAV_DESTINATIONS / sidebar order)
     result.push({ id: 'nav:projects', type: 'nav', action: handleProjectsClick })
     result.push({ id: 'nav:pages', type: 'nav', action: handlePagesClick })
@@ -1992,7 +2095,7 @@ function AppShellContent({
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
 
     return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, viewConfigs, handleViewClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
+  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, sessionViewConfigs, viewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -2423,6 +2526,35 @@ function AppShellContent({
                       },
                       items: buildLabelSidebarItems(labelTree),
                     },
+                    {
+                      id: "nav:views",
+                      title: t("sidebar.views"),
+                      icon: Eye,
+                      tooltip: t("sidebar.viewsHint"),
+                      variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === '__all__') ? "default" as const : "ghost" as const,
+                      onClick: handleViewsAllClick,
+                      expandable: sessionViewConfigs.length > 0,
+                      expanded: isExpanded('nav:views'),
+                      onToggle: () => toggleExpanded('nav:views'),
+                      contextMenu: {
+                        type: 'views' as const,
+                        onConfigureViews: openConfigureViews,
+                      },
+                      items: sessionViewConfigs.map(view => ({
+                        id: `nav:view:${view.id}`,
+                        title: view.name,
+                        icon: Eye,
+                        tooltip: view.description || t("sidebar.viewsHint"),
+                        variant: (sessionFilter?.kind === 'view' && sessionFilter.viewId === view.id) ? "default" as const : "ghost" as const,
+                        onClick: () => handleViewClick(view.id),
+                        contextMenu: {
+                          type: 'views' as const,
+                          viewId: defaultSessionViewIds.has(view.id) ? undefined : view.id,
+                          onConfigureViews: openConfigureViews,
+                          onDeleteView: defaultSessionViewIds.has(view.id) ? undefined : handleDeleteView,
+                        },
+                      })),
+                    },
                     // --- Projects (after session chrome) ---
                     {
                       id: "nav:projects",
@@ -2630,6 +2762,7 @@ function AppShellContent({
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel"
             >
+            {(unifiedShellEnabled || workbenchEnabled) && <SurfaceTabs />}
             <PanelHeader
                 title={isSidebarVisible ? listTitle : undefined}
                 compensateForStoplight={!isSidebarVisible}
@@ -2681,6 +2814,13 @@ function AppShellContent({
                         statuses={effectiveSessionStatuses}
                         projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
                         labels={displayLabelConfigs.map(l => ({ id: l.id, name: l.name }))}
+                        onApplyUserSlice={(viewId, sliceFilters) => {
+                          const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
+                          skipRailChipClearRef.current = true
+                          skipRailChipClearOnce.current = nav.skipChipClear
+                          setCollectionFilters({ ...nav.filters })
+                          navigate(nav.route)
+                        }}
                       />
                     </>
                   )}
@@ -2831,7 +2971,7 @@ function AppShellContent({
           )}
           navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
-          isRightSidebarVisible={inspectorVisible}
+          isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}
           isResizing={!!isResizing}
         />

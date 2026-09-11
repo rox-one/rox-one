@@ -7,6 +7,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { tmpdir } from 'os'
 import { pathToFileURL } from 'url'
+import { resolveConfigDir } from "../paths.ts"
 
 const VALIDATORS_MODULE_PATH = pathToFileURL(join(import.meta.dir, '..', 'validators.ts')).href
 

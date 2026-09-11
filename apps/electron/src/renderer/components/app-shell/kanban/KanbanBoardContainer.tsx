@@ -18,7 +18,7 @@ import {
   kanbanEditorTargetAtom,
   kanbanColumnColorsAtom,
 } from '@/atoms/kanban'
-import { useNavigation } from '@/contexts/NavigationContext'
+import { useNavigation, useNavigationState, isSessionsNavigation } from '@/contexts/NavigationContext'
 import { useProjectColorTreatment } from '@/hooks/useProjectColorTreatment'
 import { useLabels } from '@/hooks/useLabels'
 import { getSessionTitle } from '@/utils/session'
@@ -33,6 +33,7 @@ import { KANBAN_COLUMNS, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
+import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import { KanbanProjectFilter, type KanbanProjectFilterOption } from './KanbanProjectFilter'
 import { TaskEditor } from './TaskEditor'
 import { mergeSubtaskRows, type SpecNodeSummary, type SubtaskChildRow } from './subtask-merge'
@@ -163,7 +164,55 @@ function mergeBoardColumns(config: KanbanBoardConfig | null): KanbanColumnMeta[]
  * sessions become tiles; children become subtask rows. Board column layout,
  * rename/color/prompts, and group-by live in `{workspace}/kanban/config.json`.
  */
-export function KanbanBoardContainer() {
+
+class TaskEditorBoundary extends React.Component<
+  { onClose: () => void; children: React.ReactNode },
+  { err: Error | null }
+> {
+  state = { err: null as Error | null }
+  static getDerivedStateFromError(err: Error) {
+    return { err }
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
+          <p className="text-foreground/80">Task editor failed to open.</p>
+          <button type="button" className="rounded-md border px-3 py-1" onClick={this.props.onClose}>
+            Back to board
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+class BoardSurfaceBoundary extends React.Component<{ children: React.ReactNode }, { err: Error | null }> {
+  state = { err: null as Error | null }
+  static getDerivedStateFromError(err: Error) {
+    return { err }
+  }
+  componentDidCatch(err: Error) {
+    console.error('[kanban] board surface crashed', err)
+  }
+  render() {
+    if (this.state.err) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
+          <p className="text-foreground/80">Board failed to open.</p>
+          <p className="max-w-md text-xs text-muted-foreground">{this.state.err.message}</p>
+          <button type="button" className="rounded-md border px-3 py-1" onClick={() => this.setState({ err: null })}>
+            Retry
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
+function KanbanBoardContainerInner() {
   const { activeWorkspaceId, workspaces, llmConnections, sessionStatuses, onCreateSession, onSendMessage, onJumpToTaskSessions } =
     useAppShellContext()
   const { t } = useTranslation()
@@ -193,8 +242,34 @@ export function KanbanBoardContainer() {
 
   const [expandedTaskIds, setExpandedTaskIds] = React.useState<Set<string>>(() => new Set())
   const [editorTarget, setEditorTarget] = useAtom(kanbanEditorTargetAtom)
+  const navState = useNavigationState()
+  const boardSessionId =
+    isSessionsNavigation(navState) && navState.viewMode === 'board' && navState.details?.type === 'session'
+      ? navState.details.sessionId
+      : undefined
+
+  React.useEffect(() => {
+    if (!boardSessionId) return
+    setEditorTarget(prev => {
+      if (prev?.mode === 'edit' && prev.sessionId === boardSessionId) return prev
+      const meta = metaMap.get(boardSessionId)
+      return {
+        mode: 'edit',
+        sessionId: boardSessionId,
+        taskSlug: meta?.taskSlug,
+        initialTitle: meta ? getSessionTitle(meta) : undefined,
+      }
+    })
+  }, [boardSessionId, metaMap, setEditorTarget])
+
+  const closeTaskEditor = React.useCallback(() => {
+    setEditorTarget(null)
+    if (boardSessionId) navigate(routes.view.board())
+  }, [boardSessionId, navigate, setEditorTarget])
+
   const collectionDisplay = useAtomValue(collectionDisplayAtom)
   const collectionFilters = useAtomValue(collectionFiltersAtom)
+  const setCollectionFilters = useSetAtom(collectionFiltersAtom)
 
   // Workspace board config (columns + groupBy).
   const [boardConfig, setBoardConfig] = React.useState<KanbanBoardConfig | null>(null)
@@ -466,9 +541,11 @@ export function KanbanBoardContainer() {
   }, [tasks, projectFilter])
 
   const visibleColumns = React.useMemo(() => {
-    if (collectionDisplay.showEmptyGroups) return activeColumns
+    const groupBy = collectionDisplay.groupBy
+    const hideEmptyNested = !collectionDisplay.showEmptyGroups && groupBy !== 'none' && groupBy !== 'status' 
+    if (!hideEmptyNested) return activeColumns
     return activeColumns.filter(column => visibleTasks.some(task => task.column === column.id))
-  }, [activeColumns, collectionDisplay.showEmptyGroups, visibleTasks])
+  }, [activeColumns, collectionDisplay.groupBy, collectionDisplay.showEmptyGroups, visibleTasks])
 
   // B6: honor Display.orderBy when ranking cards within each column.
   const displayDrivenSort = React.useCallback(
@@ -887,10 +964,11 @@ export function KanbanBoardContainer() {
 
   if (editorTarget && activeWorkspaceId) {
     return (
+      <TaskEditorBoundary onClose={closeTaskEditor}>
       <TaskEditor
         workspaceId={activeWorkspaceId}
         target={editorTarget}
-        onClose={() => setEditorTarget(null)}
+        onClose={closeTaskEditor}
         onOpenSession={
           editorTarget.mode === 'edit'
             ? () => {
@@ -915,6 +993,7 @@ export function KanbanBoardContainer() {
         modelToConnection={modelToConnection}
         defaultModel={defaultSubtaskModel ?? DEFAULT_MODEL}
       />
+      </TaskEditorBoundary>
     )
   }
 
@@ -968,6 +1047,15 @@ export function KanbanBoardContainer() {
               else if (view === 'table') navigate(routes.view.table())
             }}
             compact
+            statuses={sessionStatuses ?? []}
+            projects={projects.map(pr => ({ id: pr.config.id, name: pr.config.name }))}
+            labels={labelConfigs.map(l => ({ id: l.id, name: l.name }))}
+            onApplyUserSlice={(viewId, sliceFilters) => {
+              const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
+              skipRailChipClearOnce.current = nav.skipChipClear
+              void setCollectionFilters({ ...nav.filters })
+              navigate(nav.route)
+            }}
           />
         </div>
       </div>
@@ -1010,5 +1098,13 @@ export function KanbanBoardContainer() {
         />
       </div>
     </div>
+  )
+}
+
+export function KanbanBoardContainer() {
+  return (
+    <BoardSurfaceBoundary>
+      <KanbanBoardContainerInner />
+    </BoardSurfaceBoundary>
   )
 }

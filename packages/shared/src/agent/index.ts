@@ -121,6 +121,29 @@ export {
   type PermissionsContext,
 } from './permissions-config.ts';
 
+export {
+  assembleContextShares,
+  estimateTokensFromChars,
+  sessionMessagesToTranscript,
+  CONTEXT_SHARE_KINDS,
+  type ContextShare,
+  type ContextShareInput,
+  type ContextShareKind,
+} from './context-budget.ts';
+
+export {
+  resolveModelFallbackStatus,
+  type ModelFallbackStatus,
+} from './model-fallback-status.ts';
+
+export {
+  DEFAULT_PERMISSION_SHADOW_RULES,
+  reviewPermissionShadow,
+  type PermissionShadowReview,
+  type PermissionShadowRules,
+  type PermissionShadowVerdict,
+} from './permission-shadow-review.ts';
+
 // Export BaseAgent - shared abstract class for all agent backends
 export {
   BaseAgent,

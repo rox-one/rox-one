@@ -30,6 +30,14 @@ function writeWorker(body: string): string {
   return path
 }
 
+async function waitFor(predicate: () => boolean, timeoutMs = 5_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (!predicate()) {
+    if (Date.now() >= deadline) throw new Error('Timed out waiting for Discord worker event')
+    await Bun.sleep(10)
+  }
+}
+
 async function makeAdapter(opts: { workerScript: string; sendTimeoutMs?: number }): Promise<DiscordAdapter> {
   const adapter = new DiscordAdapter()
   const cfg: DiscordConfig = {
@@ -142,7 +150,7 @@ describe('DiscordAdapter incoming translation', () => {
     const adapter = await makeAdapter({ workerScript: writeWorker(worker) })
     const seen: IncomingMessage[] = []
     adapter.onMessage(async (m) => { seen.push(m) })
-    await new Promise((r) => setTimeout(r, 250))
+    await waitFor(() => seen.length > 0)
     try {
       expect(seen.length).toBe(1)
       const msg = seen[0]!
@@ -193,7 +201,7 @@ describe('DiscordAdapter incoming translation', () => {
     const adapter = await makeAdapter({ workerScript: writeWorker(worker) })
     const seen: ButtonPress[] = []
     adapter.onButtonPress(async (p) => { seen.push(p) })
-    await new Promise((r) => setTimeout(r, 250))
+    await waitFor(() => seen.length > 0)
     try {
       expect(seen.length).toBe(1)
       expect(seen[0]?.buttonId).toBe('approve')

@@ -1,12 +1,17 @@
 import { resolve } from 'path'
 import { join } from 'path'
 import { homedir } from 'os'
-import { execSync } from 'child_process'
+import { execFile, execSync } from 'child_process'
+import { promisify } from 'util'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { emptyGitWorkingTreeStatus } from '@craft-agent/shared/git/status'
+import { readGitBranchName, readGitWorkingTreeStatus } from '@craft-agent/shared/git/exec'
 import { getWorkspaceByNameOrId, getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
 import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
+import { isValidWorkingDirectory } from '../../utils/path-validation'
+import { isSensitiveAgentCwd } from '@craft-agent/shared/sessions'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
@@ -25,9 +30,11 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.shell.OPEN_URL,
   RPC_CHANNELS.shell.OPEN_FILE,
   RPC_CHANNELS.shell.SHOW_IN_FOLDER,
+  RPC_CHANNELS.shell.EXEC,
   RPC_CHANNELS.releaseNotes.GET,
   RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION,
   RPC_CHANNELS.git.GET_BRANCH,
+  RPC_CHANNELS.git.GET_STATUS,
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,
   RPC_CHANNELS.gitbash.SET_PATH,
@@ -181,17 +188,17 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get git branch for a directory (returns null if not a git repo or git unavailable)
   server.handle(RPC_CHANNELS.git.GET_BRANCH, async (_ctx, dirPath: string) => {
-    try {
-      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
-        cwd: dirPath,
-        encoding: 'utf-8',
-        stdio: ['pipe', 'pipe', 'pipe'],
-        timeout: 5000,
-      }).trim()
-      return branch || null
-    } catch {
-      return null
+    if (typeof dirPath !== 'string' || dirPath.length === 0) return null
+    if (!isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) return null
+    return readGitBranchName(dirPath)
+  })
+
+  server.handle(RPC_CHANNELS.git.GET_STATUS, async (_ctx, dirPath: string) => {
+    if (typeof dirPath !== 'string' || dirPath.length === 0) return emptyGitWorkingTreeStatus()
+    if (!isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) {
+      return emptyGitWorkingTreeStatus()
     }
+    return readGitWorkingTreeStatus(dirPath)
   })
 
   // Git Bash detection and configuration (Windows only)
@@ -356,6 +363,34 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       const message = error instanceof Error ? error.message : 'Unknown error'
       deps.platform.logger.error('showInFolder error:', message)
       throw new Error(`Failed to show in folder: ${message}`)
+    }
+  })
+
+  const execFileAsync = promisify(execFile)
+  server.handle(RPC_CHANNELS.shell.EXEC, async (ctx, input: { command?: string; cwd?: string }) => {
+    assertLocalWorkspace(ctx, 'Run command')
+    const command = input?.command?.trim()
+    if (!command) return { ok: false, stderr: 'empty command' }
+    let cwd = homedir()
+    if (input.cwd) {
+      try {
+        const expanded = input.cwd.startsWith('~') ? input.cwd.replace(/^~/, homedir()) : input.cwd
+        cwd = await validateFilePath(resolve(expanded), getWorkspaceAllowedDirs(ctx.workspaceId))
+      } catch {
+        cwd = homedir()
+      }
+    }
+    try {
+      const { stdout, stderr } = await execFileAsync('/bin/zsh', ['-lc', command], {
+        cwd,
+        timeout: 20_000,
+        maxBuffer: 1024 * 1024,
+        env: process.env,
+      })
+      return { ok: true, stdout, stderr }
+    } catch (error) {
+      const err = error as { stdout?: string; stderr?: string; message?: string }
+      return { ok: false, stdout: err.stdout, stderr: err.stderr || err.message }
     }
   })
 }

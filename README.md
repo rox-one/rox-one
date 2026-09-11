@@ -9,6 +9,18 @@
 
 > **Note — Rox fork:** this repository is the Rox fork of [craft-ai-agents/craft-agents-oss](https://github.com/craft-ai-agents/craft-agents-oss). It adds Rox-specific surfaces (Rox Cloud Connect, the `omp` agent backend, knowledge/collections/toolchain subsystems) on top of upstream Craft Agents. See [docs/ROX_CLOUD_CONNECT.md](docs/ROX_CLOUD_CONNECT.md) for the Rox cloud integration and [plans/integration-audit.md](plans/integration-audit.md) for a full inventory of Rox deltas vs upstream. Sections below describe the upstream Craft product; install links point at upstream craft.do infrastructure.
 
+## Rox engineering system (RX-*)
+
+Engineering artifacts for this fork live under a coded registry:
+
+- **`registry/RX-LEGEND.md`** — grammar and rules of the `RX-<DOMAIN>-<NNNN>` code system.
+- **`registry/rx-registry.yaml`** + `registry/fragments/*.yaml` — single source of truth (427 entries), validated by `bun run rx:validate` (grammar, uniqueness, statuses, dangling refs, front matter; also guards per-package `bunfig.toml` parity).
+- **`docs/ru/`** — Russian documentation hub: [`RX-DOC-0024-hub.md`](docs/ru/RX-DOC-0024-hub.md) (index), tasks board [`RX-DOC-0023-tasks.md`](docs/ru/RX-DOC-0023-tasks.md), security audit, build/runbooks.
+- **CI:** CircleCI workflow `rx-main` runs the validator + Docker image build (`Dockerfile.build`, `scripts/rx-build.sh`).
+
+Test isolation: every package ships a `bunfig.toml` mirroring the root preloads — run tests from any directory without touching the live config.
+
+
 ## How it Works (Video)
 To understand what Craft Agents does and how it works watch this video.
 
@@ -81,8 +93,8 @@ irm https://agents.craft.do/install-app.ps1 | iex
 ### Build from Source
 
 ```bash
-git clone https://github.com/lukilabs/craft-agents-oss.git
-cd craft-agents-oss
+git clone https://github.com/rox-one/rox-one.git
+cd rox-one
 bun install
 bun run electron:start
 ```

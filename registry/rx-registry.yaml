@@ -1,0 +1,2868 @@
+# Машиночитаемый реестр сущностей ROX One.
+# Грамматика и словарь статусов: registry/RX-LEGEND.md.
+# Валидатор сливает этот файл с registry/fragments/*.yaml;
+# идентификаторы из фрагментов (RX-DOC-0004…0007, RX-PIP-0100…0104,
+# RX-PIP-0200…0201, RX-SES-*, RX-TSK-*, RX-SEC-*) сюда не дублируются.
+
+- id: RX-PKG-0001
+  title: Ядро платформы
+  kind: package
+  path: packages/core
+  status: done
+  refs: [RX-CMP-0008, RX-CMP-0044, RX-ADR-0001]
+  note: |
+    Пакет @craft-agent/core: типы, знания, mindmap, платформенные реестры (surfaces/panels/modes/commands/resources), identity fabric. Покрыт тестами platform/ и knowledge/.
+
+- id: RX-PKG-0002
+  title: Общая бизнес-логика
+  kind: package
+  path: packages/shared
+  status: done
+  refs: [RX-CMP-0031, RX-CMP-0051, RX-INT-0001]
+  note: |
+    Пакет @craft-agent/shared: агент, auth/OAuth, конфиг, credentials, MCP, sources, marketplace, secrets, automations. Есть bun test.
+
+- id: RX-PKG-0003
+  title: Общие UI-компоненты
+  kind: package
+  path: packages/ui
+  status: done
+  refs: [RX-CMP-0017, RX-CMP-0018, RX-CMP-0019]
+  note: |
+    Пакет @craft-agent/ui: чат, markdown/Tiptap, оверлеи, аннотации, Island, токены Tailwind v4. Тесты chat/markdown/overlay/annotations.
+
+- id: RX-PKG-0004
+  title: Headless-инфраструктура сервера
+  kind: package
+  path: packages/server-core
+  status: done
+  refs: [RX-CMP-0030, RX-CMP-0052, RX-CMP-0055]
+  note: |
+    Пакет @craft-agent/server-core: транспорт WS RPC, bootstrap, SessionManager, доменные хендлеры, memory, native sidecar, tasks.
+
+- id: RX-PKG-0005
+  title: Автономный headless-сервер
+  kind: package
+  path: packages/server
+  status: done
+  refs: [RX-PKG-0004, RX-CMP-0057]
+  note: |
+    Пакет @craft-agent/server, бинарь craft-server: тонкая оболочка над server-core (токен, TLS, webui, VpsBrowserPaneManager).
+
+- id: RX-PKG-0006
+  title: Провайдеры Cloud Runs
+  kind: package
+  path: packages/cloud-runner
+  status: done
+  refs: [RX-INT-0020, RX-INT-0021, RX-API-0003]
+  note: |
+    Пакет @craft-agent/cloud-runner: Cloudflare/Modal/local/native провайдеры и conformance. Есть bun test src/__tests__.
+
+- id: RX-PKG-0007
+  title: Шлюз мессенджеров
+  kind: package
+  path: packages/messaging-gateway
+  status: done
+  refs: [RX-CMP-0042, RX-INT-0022, RX-INT-0024]
+  note: |
+    Пакет @craft-agent/messaging-gateway: Telegram, WhatsApp, Discord, Lark, WeChat; BindingStore, pairing, access-control.
+
+- id: RX-PKG-0008
+  title: Воркер Discord
+  kind: package
+  path: packages/messaging-discord-worker
+  status: done
+  refs: [RX-PKG-0007, RX-INT-0022]
+  note: |
+    Подпроцесс discord.js (официальный Bot API) для messaging-gateway.
+
+- id: RX-PKG-0009
+  title: Воркер WhatsApp
+  kind: package
+  path: packages/messaging-whatsapp-worker
+  status: done
+  refs: [RX-PKG-0007, RX-INT-0023]
+  note: |
+    Подпроцесс Baileys (неофициальный API) для messaging-gateway.
+
+- id: RX-PKG-0010
+  title: Сервер агента Pi
+  kind: package
+  path: packages/pi-agent-server
+  status: done
+  refs: [RX-CMP-0031, RX-INT-0035]
+  note: |
+    Внепроцессный Pi-агент JSONL/stdio поверх @earendil-works/pi-*. Есть тесты model-resolution и session-tool-registration.
+
+- id: RX-PKG-0011
+  title: MCP-сервер сессии
+  kind: package
+  path: packages/session-mcp-server
+  status: done
+  refs: [RX-PKG-0012, RX-API-0008]
+  note: |
+    stdio MCP: SubmitPlan, config_validate и прочие session-scoped tools для Codex.
+
+- id: RX-PKG-0012
+  title: Ядро session tools
+  kind: package
+  path: packages/session-tools-core
+  status: done
+  refs: [RX-CMP-0033, RX-API-0008]
+  note: |
+    Общие хендлеры session tools (Claude и Codex): knowledge, sandbox, submit-plan, host-bash. Много unit-тестов.
+
+- id: RX-PKG-0013
+  title: Десктоп Electron
+  kind: package
+  path: apps/electron
+  status: done
+  refs: [RX-CMP-0002, RX-CMP-0059, RX-SRF-0014]
+  note: |
+    Приложение @craft-agent/electron: main/preload/renderer, workbench, BrowserPane, ExtensionHost.
+
+- id: RX-PKG-0014
+  title: Веб-клиент WebUI
+  kind: package
+  path: apps/webui
+  status: done
+  refs: [RX-PKG-0003, RX-SRF-0038]
+  note: |
+    Vite/React веб-клиент к headless-серверу; шимы Electron API, PWA-иконки.
+
+- id: RX-PKG-0015
+  title: Веб-просмотр сессий
+  kind: package
+  path: apps/viewer
+  status: done
+  refs: [RX-PKG-0003, RX-SRF-0039]
+  note: |
+    Публичный просмотр и шаринг транскриптов; Cloudflare Pages functions, тесты share-auth.
+
+- id: RX-PKG-0016
+  title: Терминальный клиент
+  kind: package
+  path: apps/cli
+  status: done
+  refs: [RX-PKG-0002, RX-DOC-0008]
+  note: |
+    Бинарь craft-cli, тесты commands.test.ts.
+
+- id: RX-PKG-0017
+  title: Cloudflare-шлюз Cloud Runs
+  kind: package
+  path: apps/cloud-gateway
+  status: active
+  refs: [RX-PKG-0006, RX-INT-0020, RX-SPC-0006]
+  note: |
+    Cloudflare Worker + RunDO + container runner (PRD Cloud Runs, фаза G2). Typecheck, без полного test-скрипта.
+
+- id: RX-PKG-0018
+  title: Клиент iOS/iPadOS
+  kind: package
+  path: apps/ios
+  status: active
+  refs: [RX-SRF-0036, RX-SPC-0013]
+  note: |
+    SwiftPM CraftAgentKit (много тестов протокола) и SwiftUI CraftAgentsApp. Сборка только на macOS+Xcode.
+
+- id: RX-PKG-0019
+  title: Modal-шлюз Cloud Runs
+  kind: package
+  path: apps/modal-gateway
+  status: active
+  refs: [RX-PKG-0006, RX-INT-0021, RX-API-0003]
+  note: |
+    Python fallback-шлюз на Modal: тот же HTTP-контракт, что у Cloudflare (фаза G4).
+
+- id: RX-CMP-0001
+  title: Единая оболочка
+  kind: component
+  path: apps/electron/src/renderer/platform/index.tsx
+  status: active
+  refs: [RX-ADR-0001, RX-CMP-0002, RX-PKG-0013]
+  note: |
+    Gate W1 + Workbench v2. Оборачивает PanelStackContainer; при всех chrome-флагах OFF рендерит children без дельты. При ON монтирует ActivityRail, SurfaceTabs, InspectorHost и PanelHost. Флаги по умолчанию выключены.
+
+- id: RX-CMP-0002
+  title: Классический каркас приложения
+  kind: component
+  path: apps/electron/src/renderer/components/app-shell/AppShell.tsx
+  status: done
+  refs: [RX-CMP-0001, RX-PKG-0013]
+  note: |
+    Действующий mega-shell: 3-колоночная сетка LeftSidebar / Navigator / MainContent, TopBar, саши, URL-навигация. UnifiedShellLayout встраивается сюда. URL/NavigationContext/panel-stack — источник истины раскладки.
+
+- id: RX-CMP-0003
+  title: Рельс режимов
+  kind: component
+  path: apps/electron/src/renderer/platform/ActivityRail.tsx
+  status: active
+  refs: [RX-CMP-0001, RX-CMP-0009]
+  note: |
+    Вертикальный 48px rail глобальных режимов (S-03). Читает единый реестр nav-destinations.ts. Живой только при featureUnifiedShellAtom.
+
+- id: RX-CMP-0004
+  title: Вкладки поверхностей
+  kind: component
+  path: apps/electron/src/renderer/platform/SurfaceTabs.tsx
+  status: active
+  refs: [RX-CMP-0008, RX-CMP-0011, RX-ADR-0001]
+  note: |
+    Хром вкладок поверх panel-stack (S-02): сессия, знание, браузер, run. Подчиняется workbench.tab-groups.v2. Не вторая навигация — адаптер над стеком панелей.
+
+- id: RX-CMP-0005
+  title: Хост инспектора
+  kind: component
+  path: apps/electron/src/renderer/platform/InspectorHost.tsx
+  status: active
+  refs: [RX-CMP-0009, RX-CMP-0048]
+  note: |
+    Правый inspector rail. Монтируется UnifiedShellLayout только при включённом флаге. Knowledge-панели регистрируются в PanelRegistry.
+
+- id: RX-CMP-0006
+  title: Статус-бар
+  kind: component
+  path: apps/electron/src/renderer/platform/StatusBarHost.tsx
+  status: active
+  refs: [RX-CMP-0001, RX-SRF-0013]
+  note: |
+    Нижняя полоса: kernel/sync, runtime, токены, фоновые задачи (S-03). Флаг workbench.status-bar.v1 по умолчанию OFF.
+
+- id: RX-CMP-0007
+  title: Панель режимов
+  kind: component
+  path: apps/electron/src/renderer/platform/ModeBar.tsx
+  status: active
+  refs: [RX-CMP-0010, RX-ADR-0001]
+  note: |
+    Переключатель ModeRegistry. Mode не Surface и не Tab: не закрывается, меняет контекст, LayoutProfile и sidebar. Флаг workbench.mode-registry.v1.
+
+- id: RX-CMP-0008
+  title: Реестр поверхностей
+  kind: component
+  path: packages/core/src/platform/surfaces
+  status: done
+  refs: [RX-PKG-0001, RX-SPC-0002]
+  note: |
+    Чистый TS-контракт S-02: SurfaceContribution, SurfaceTab, дескриптор, registry. Ноль React/Electron-зависимостей. Покрыт surfaces-registry.test.ts.
+
+- id: RX-CMP-0009
+  title: Реестр панелей
+  kind: component
+  path: packages/core/src/platform/panels
+  status: done
+  refs: [RX-PKG-0001, RX-SPC-0002]
+  note: |
+    Чистый TS-контракт S-03: слоты, ordering, LayoutProfile. React-хосты в renderer (PanelHost). Покрыт panels-registry.test.ts.
+
+- id: RX-CMP-0010
+  title: Реестр режимов
+  kind: component
+  path: packages/core/src/platform/modes
+  status: done
+  refs: [RX-PKG-0001, RX-ADR-0001]
+  note: |
+    Статические режимы приложения. Contribution: rootRoute, layoutProfileId, when, capabilities. Сид renderer: modes-seed.ts. Покрыт modes-registry.test.ts.
+
+- id: RX-CMP-0011
+  title: Модель раскладки Workbench
+  kind: component
+  path: packages/core/src/platform/workbench
+  status: done
+  refs: [RX-ADR-0001, RX-DAT-0015]
+  note: |
+    Модель вкладок/групп, open/close/split/pin, миграция legacy panel-stack, in-memory host. URL остаётся источником истины.
+
+- id: RX-CMP-0012
+  title: Флаги Workbench
+  kind: component
+  path: apps/electron/src/renderer/atoms/unified-shell.ts
+  status: active
+  refs: [RX-CMP-0011, RX-ADR-0001]
+  note: |
+    Jotai+localStorage: featureUnifiedShellAtom и гранулярные workbench.*. Все default OFF. Карта флагов — packages/core/src/platform/workbench/flags.ts.
+
+- id: RX-CMP-0013
+  title: Хост палитры команд
+  kind: component
+  path: apps/electron/src/renderer/platform/OmniboxHost.tsx
+  status: done
+  refs: [RX-CMP-0014, RX-SRF-0028]
+  note: |
+    Единая ⌘K-палитра (S-04). Бутстрапит CommandRegistry+ResourceRegistry. Смонтирован в App.tsx. Второй палитры нет.
+
+- id: RX-CMP-0014
+  title: Реестр действий renderer
+  kind: component
+  path: apps/electron/src/renderer/actions
+  status: done
+  refs: [RX-CMP-0013, RX-PKG-0013]
+  note: |
+    Исполняемые действия UI, хоткеи, меню (definitions.ts). Источник истины для нативных Craft-команд; Omnibox регистрирует их как source=craft.
+
+- id: RX-CMP-0015
+  title: Глобальный ввод ⌘K
+  kind: component
+  path: apps/electron/src/main/global-input-router.ts
+  status: done
+  refs: [RX-CMP-0013, RX-CMP-0061]
+  note: |
+    Main-process перехват ⌘K/Ctrl+K, когда фокус у BrowserView. browser-pane-manager шлёт omnibox:open в окно-владелец.
+
+- id: RX-CMP-0016
+  title: Корень renderer
+  kind: component
+  path: apps/electron/src/renderer/App.tsx
+  status: done
+  refs: [RX-CMP-0002, RX-CMP-0013]
+  note: |
+    Корень React: onboarding/reauth/workspace-picker, провайдеры, AppShell, OmniboxHost, preview overlays. Не layout-authority.
+
+- id: RX-CMP-0017
+  title: Дизайн-токены
+  kind: component
+  path: packages/ui/src/styles/index.css
+  status: done
+  refs: [RX-PKG-0003]
+  note: |
+    Единая Tailwind v4 тема @craft-agent/ui: 6 цветов, light/dark, тени, z-index. Импортируется приложениями.
+
+- id: RX-CMP-0018
+  title: Примитивы чата
+  kind: component
+  path: packages/ui/src/components/chat
+  status: done
+  refs: [RX-PKG-0003, RX-CMP-0068]
+  note: |
+    SessionViewer, TurnCard, ThinkingCard, UserMessageBubble, InlineExecution. Пакет ui не знает про Electron.
+
+- id: RX-CMP-0019
+  title: Движок markdown
+  kind: component
+  path: packages/ui/src/components/markdown
+  status: done
+  refs: [RX-PKG-0003]
+  note: |
+    Markdown + TiptapMarkdownEditor, rich-blocks (datatable, mermaid, latex, diff, html, image). Не редактор SiYuan.
+
+- id: RX-CMP-0020
+  title: Система оверлеев
+  kind: component
+  path: packages/ui/src/components/overlay
+  status: done
+  refs: [RX-PKG-0003, RX-CMP-0023]
+  note: |
+    Полноэкранные превью: code, diff, terminal, JSON, table, image, PDF, markdown, activity cards.
+
+- id: RX-CMP-0021
+  title: Слой аннотаций
+  kind: component
+  path: packages/ui/src/components/annotations
+  status: done
+  refs: [RX-CMP-0022, RX-PKG-0003]
+  note: |
+    Оверлей выделения/островов follow-up на markdown. Не знания SiYuan — аннотации ответа агента.
+
+- id: RX-CMP-0022
+  title: Примитивы Island
+  kind: component
+  path: packages/ui/src/components/ui/Island.tsx
+  status: done
+  refs: [RX-PKG-0003]
+  note: |
+    Морфирующие острова (якорь, follow-up, навигация видов). Используются аннотациями и компактными follow-up.
+
+- id: RX-CMP-0023
+  title: Платформенный контекст UI
+  kind: component
+  path: packages/ui/src/context/PlatformContext.tsx
+  status: done
+  refs: [RX-PKG-0003]
+  note: |
+    DI для open file/url/editor: Electron реализует, web — no-op/inline. Компоненты ui не импортируют electron.
+
+- id: RX-CMP-0024
+  title: Центр идентичности
+  kind: component
+  path: packages/core/src/platform/identity
+  status: active
+  refs: [RX-SPC-0003, RX-DAT-0013]
+  note: |
+    Профили, membership, ServiceConnection, IdentityStore (identity.json, без сырых секретов). RPC identity.ts. Не вторая аккаунт-система.
+
+- id: RX-CMP-0025
+  title: Брокер аренды секретов
+  kind: component
+  path: packages/core/src/platform/identity/broker.ts
+  status: active
+  refs: [RX-CMP-0024, RX-ADR-0008]
+  note: |
+    InProcessCredentialBroker: acquireLease по гранту, TTL≤15м, delivery без сырого секрета в renderer/агент/MCP.
+
+- id: RX-CMP-0026
+  title: Граф связей подключений
+  kind: component
+  path: packages/core/src/platform/identity/workgraph.ts
+  status: active
+  refs: [RX-CMP-0024, RX-CMP-0025]
+  note: |
+    Метаданные connections/bindings/audit без payload секрета. Не общий WorkGraph kernel сервера — fabric-проекция.
+
+- id: RX-CMP-0027
+  title: Фабрика подключений
+  kind: component
+  path: packages/server-core/src/handlers/rpc/fabric.ts
+  status: active
+  refs: [RX-CMP-0025, RX-API-0005, RX-INT-0014]
+  note: |
+    RPC LIST/CREATE/DISCOVER/PREVIEW/COMMIT_IMPORT/GRANTS/LEASE/REVOKE + GitHub vertical и Infisical health. Секреты стрипаются на границе.
+
+- id: RX-CMP-0028
+  title: Менеджер учётных данных
+  kind: component
+  path: packages/shared/src/credentials/manager.ts
+  status: done
+  refs: [RX-PKG-0002, RX-CMP-0025]
+  note: |
+    Legacy/migration seam: encrypted credentials.enc. Остаётся бэкендом Local/Legacy провайдера Fabric. Целевой контракт — broker.
+
+- id: RX-CMP-0029
+  title: Страница подключений
+  kind: component
+  path: apps/electron/src/renderer/pages/ConnectionsPage.tsx
+  status: active
+  refs: [RX-CMP-0027, RX-SRF-0032]
+  note: |
+    Нативная поверхность Connections в Workbench (FR-6). Не iframe Infisical.
+
+- id: RX-CMP-0030
+  title: Менеджер сессий
+  kind: component
+  path: packages/server-core/src/sessions/SessionManager.ts
+  status: done
+  refs: [RX-PKG-0004, RX-DAT-0001]
+  note: |
+    Владеет жизненным циклом сессий: spawn backend, persistence, permissions, share, memory, automations. Источник истины runtime сессии.
+
+- id: RX-CMP-0031
+  title: Фабрика бэкендов агента
+  kind: component
+  path: packages/shared/src/agent/backend/factory.ts
+  status: done
+  refs: [RX-CMP-0032, RX-CMP-0067]
+  note: |
+    createBackend / createBackendFromConnection: ClaudeAgent, PiAgent, OmpAgent по LlmConnection.
+
+- id: RX-CMP-0032
+  title: OMP-агент
+  kind: component
+  path: packages/shared/src/agent/omp-agent.ts
+  status: done
+  refs: [RX-INT-0034, RX-CMP-0031]
+  note: |
+    Первоклассный бэкенд omp (--mode rpc, NDJSON). Host tools через set_host_tools, thinking stream, branching. Craft-транскрипт — источник истины resume.
+
+- id: RX-CMP-0033
+  title: Определения session tools
+  kind: component
+  path: packages/shared/src/agent/session-tool-defs.ts
+  status: done
+  refs: [RX-PKG-0012, RX-API-0008]
+  note: |
+    Единый билдер tool defs для Pi/OMP: spawn_session, call_llm, browser_tool, mcp__session__*. Дублировать списки в бэкендах нельзя.
+
+- id: RX-CMP-0034
+  title: Процессор событий агента
+  kind: component
+  path: apps/electron/src/renderer/event-processor
+  status: done
+  refs: [RX-CMP-0068, RX-DAT-0002]
+  note: |
+    Клиентский редуктор AgentEvent → UI effects. Не исполняет инструменты — только проекция в атомы/карточки.
+
+- id: RX-CMP-0035
+  title: Верстак сессии
+  kind: component
+  path: apps/electron/src/renderer/components/session-workbench
+  status: done
+  refs: [RX-CMP-0036, RX-SRF-0044]
+  note: |
+    Граф/сценарий сессии: workflow editor, fan-out sheet, git outline. Надстройка над чатом, не замена SessionManager.
+
+- id: RX-CMP-0036
+  title: Проводник задач
+  kind: component
+  path: packages/server-core/src/tasks/TaskRunner.ts
+  status: done
+  refs: [RX-CMP-0030, RX-DAT-0012]
+  note: |
+    In-process DAG Conductor по task.yaml. v1 исполняет kind:session; route/loop/approval парсятся, но не исполняются (P4).
+
+- id: RX-CMP-0037
+  title: Брокер привилегированного исполнения
+  kind: component
+  path: packages/server-core/src/services/privileged-execution-broker.ts
+  status: done
+  refs: [RX-CMP-0030]
+  note: |
+    Апрув и аудит опасных команд (TTL, policy hash, jsonl audit). Не путать с CredentialBroker.
+
+- id: RX-CMP-0038
+  title: Пул MCP-клиентов
+  kind: component
+  path: packages/shared/src/mcp/mcp-pool.ts
+  status: done
+  refs: [RX-INT-0027, RX-CMP-0039]
+  note: |
+    Единственный владелец MCP/API source connections в main/server. Бэкенды получают proxy defs и зовут pool.
+
+- id: RX-CMP-0039
+  title: Рантайм источников
+  kind: component
+  path: packages/shared/src/sources
+  status: done
+  refs: [RX-PKG-0002, RX-INT-0028]
+  note: |
+    Конфиги MCP/API/local/folder sources, storage, token refresh, builtin-sources (Exa, Firecrawl).
+
+- id: RX-CMP-0040
+  title: Индекс локальных источников
+  kind: component
+  path: packages/server-core/src/sources/source-index.ts
+  status: active
+  refs: [RX-CMP-0066, RX-ADR-0014]
+  note: |
+    SQLite FTS по папкам workspace. TS-путь; native sidecar может стать primary при CRAFT_FEATURE_NATIVE_INDEX_PRIMARY.
+
+- id: RX-CMP-0041
+  title: Рантайм рабочих пространств
+  kind: component
+  path: packages/shared/src/workspaces
+  status: done
+  refs: [RX-DAT-0003, RX-PKG-0002]
+  note: |
+    Модель/storage workspace (корень, SSH, config). Не Identity Center: filesystem/remote root, не профиль пользователя.
+
+- id: RX-CMP-0042
+  title: Шлюз мессенджеров
+  kind: component
+  path: packages/messaging-gateway/src
+  status: done
+  refs: [RX-PKG-0007, RX-CMP-0043]
+  note: |
+    Платформенный gateway: адаптеры, BindingStore, pairing, router, access-control. Не UI — транспорт и политика привязок.
+
+- id: RX-CMP-0043
+  title: RPC мессенджеров
+  kind: component
+  path: packages/server-core/src/handlers/rpc/messaging.ts
+  status: done
+  refs: [RX-CMP-0042, RX-API-0006]
+  note: |
+    UI↔server каналы config/test/save/disconnect, pairing, owners, access mode. Требует messagingRegistry в HandlerDeps.
+
+- id: RX-CMP-0044
+  title: Контракт провайдера знаний
+  kind: component
+  path: packages/core/src/knowledge
+  status: done
+  refs: [RX-PKG-0001, RX-API-0004, RX-ADR-0003]
+  note: |
+    K-03: refs, search/get/context, capabilities, mutations/publications, work-envelope. In-memory provider для тестов. SiYuan — адаптер.
+
+- id: RX-CMP-0045
+  title: Провайдер SiYuan
+  kind: component
+  path: packages/core/src/knowledge/providers/siyuan
+  status: done
+  refs: [RX-CMP-0044, RX-INT-0030]
+  note: |
+    KP1Siyuan: kernel REST client, adapter (P1 read + P3 write-back), mutation-adapter, deep-links. Режим external-local; managed lifecycle — P7.
+
+- id: RX-CMP-0046
+  title: Мост мутаций знаний
+  kind: component
+  path: packages/server-core/src/knowledge/bridge-service.ts
+  status: done
+  refs: [RX-CMP-0044, RX-ADR-0005]
+  note: |
+    K-05 pipeline: propose → hash → draft → review → apply. Единственный путь Craft→SiYuan write (ADR-004).
+
+- id: RX-CMP-0047
+  title: RPC знаний
+  kind: component
+  path: packages/server-core/src/handlers/rpc/knowledge.ts
+  status: done
+  refs: [RX-CMP-0044, RX-CMP-0046]
+  note: |
+    Read + proposal + publication + saved views + watch + engine detect/start/status. Токен не уходит в renderer.
+
+- id: RX-CMP-0048
+  title: Навигатор знаний
+  kind: component
+  path: apps/electron/src/renderer/knowledge
+  status: active
+  refs: [RX-CMP-0047, RX-SRF-0031]
+  note: |
+    W2 UI: дерево ноутбуков, home, inspector, proposals/diff. Данные только через Knowledge Provider RPC.
+
+- id: RX-CMP-0049
+  title: Хранилище заметок
+  kind: component
+  path: packages/server-core/src/handlers/rpc/notes.ts
+  status: done
+  refs: [RX-SRF-0033, RX-PKG-0004]
+  note: |
+    Локальный markdown vault workspace (notes/, daily, assets, wiki-links). Параллелен Knowledge/SiYuan.
+
+- id: RX-CMP-0050
+  title: Сессия ядра знаний
+  kind: component
+  path: apps/electron/src/main/knowledge-engine-session.ts
+  status: done
+  refs: [RX-INT-0030, RX-CMP-0045]
+  note: |
+    Изолированный Electron partition persist:knowledge-engine. Cookie siyuan=token ставится в main, в renderer не попадает.
+
+- id: RX-CMP-0051
+  title: Протокол каналов
+  kind: component
+  path: packages/shared/src/protocol
+  status: done
+  refs: [RX-API-0001, RX-PKG-0002]
+  note: |
+    Канон RPC/push: channels, dto, events, routing, native-channels. LOCAL_ONLY vs REMOTE_ELIGIBLE.
+
+- id: RX-CMP-0052
+  title: WS RPC транспорт
+  kind: component
+  path: packages/server-core/src/transport
+  status: done
+  refs: [RX-CMP-0051, RX-PKG-0004]
+  note: |
+    Серверные примитивы WS RPC: codec, capabilities, push, TLS. Не знает доменных хендлеров.
+
+- id: RX-CMP-0053
+  title: Транспорт Electron-клиента
+  kind: component
+  path: apps/electron/src/transport
+  status: done
+  refs: [RX-CMP-0051, RX-CMP-0054]
+  note: |
+    CHANNEL_MAP, buildClientApi, WsRpcClient, RoutedClient. LOCAL_ONLY→local server, остальное→владелец workspace.
+
+- id: RX-CMP-0054
+  title: Preload RPC-мост
+  kind: component
+  path: apps/electron/src/preload/bootstrap.ts
+  status: done
+  refs: [RX-CMP-0053, RX-CMP-0025]
+  note: |
+    Context bridge: RoutedClient. Граница секретов: renderer видит только API, не сырые токены Fabric.
+
+- id: RX-CMP-0055
+  title: Шлюз RPC
+  kind: component
+  path: packages/server-core/src/handlers/rpc/index.ts
+  status: done
+  refs: [RX-CMP-0051, RX-PKG-0004]
+  note: |
+    registerCoreRpcHandlers — единая регистрация доменных каналов. Electron GUI отключает browserPane, чтобы не дублировать свои хендлеры.
+
+- id: RX-CMP-0056
+  title: Headless bootstrap
+  kind: component
+  path: packages/server-core/src/bootstrap/headless-start.ts
+  status: done
+  refs: [RX-CMP-0030, RX-CMP-0055]
+  note: |
+    Оркестрация headless: lock, WS server, platform factory, SessionManager, native sidecar, RPC registration.
+
+- id: RX-CMP-0057
+  title: Автономный сервер
+  kind: component
+  path: packages/server/src/index.ts
+  status: done
+  refs: [RX-PKG-0005, RX-CMP-0056]
+  note: |
+    CLI headless: токен, TLS, webui, VpsBrowserPaneManager, messaging-gateway bootstrap. Тонкая оболочка над server-core.
+
+- id: RX-CMP-0058
+  title: Платформенные сервисы
+  kind: component
+  path: packages/server-core/src/runtime/platform.ts
+  status: done
+  refs: [RX-PKG-0004]
+  note: |
+    DI-шов вместо import 'electron': пути, imageProcessor, openExternal, logger. Headless — sharp/pino no-op OS.
+
+- id: RX-CMP-0059
+  title: Главный процесс Electron
+  kind: component
+  path: apps/electron/src/main/index.ts
+  status: done
+  refs: [RX-PKG-0013, RX-CMP-0060]
+  note: |
+    Lifecycle приложения: окна, RPC composition, native/toolchain, Sentry scrub. Собирает WindowManager, SessionManager, fabric.
+
+- id: RX-CMP-0060
+  title: Менеджер окон
+  kind: component
+  path: apps/electron/src/main/window-manager.ts
+  status: done
+  refs: [RX-CMP-0059]
+  note: |
+    BrowserWindow, состояние, multi-window сессии. Отдельно от BrowserPaneManager и extension utilityProcess.
+
+- id: RX-CMP-0061
+  title: Менеджер браузерных панелей
+  kind: component
+  path: apps/electron/src/main/browser-pane-manager.ts
+  status: done
+  refs: [RX-CMP-0015, RX-SRF-0003]
+  note: |
+    Нативные BrowserWindow/BrowserView + CDP + partition + toolbar. Agent browser_tool и UI-браузер делят этот менеджер.
+
+- id: RX-CMP-0062
+  title: Хост расширений
+  kind: component
+  path: apps/electron/src/main/extension-host-manager.ts
+  status: done
+  refs: [RX-PLG-0005, RX-SPC-0002]
+  note: |
+    Один utilityProcess worker для craft-sandbox (S-05). CapabilityBroker минтит scoped tokens. Не исполняет плагины SiYuan.
+
+- id: RX-CMP-0063
+  title: Мост плагинов SiYuan
+  kind: component
+  path: packages/server-core/src/handlers/rpc/plugin-bridge.ts
+  status: active
+  refs: [RX-PLG-0003, RX-INT-0030]
+  note: |
+    W6 LOCAL_ONLY: список/enable/Bazaar install через kernel API, без исполнения third-party plugin code (G2).
+
+- id: RX-CMP-0064
+  title: Сервис памяти
+  kind: component
+  path: packages/server-core/src/memory/MemoryService.ts
+  status: done
+  refs: [RX-SPC-0015, RX-PKG-0004]
+  note: |
+    Self-learning: distill после complete/interrupt/idle → LessonStore, MemoryFileStore, SkillPendingQueue.
+
+- id: RX-CMP-0065
+  title: Система автоматизаций
+  kind: component
+  path: packages/shared/src/automations/automation-system.ts
+  status: done
+  refs: [RX-PKG-0002, RX-CMP-0046]
+  note: |
+    Фасад на workspace: EventBus, prompt/webhook/knowledge handlers, scheduler, history. Knowledge-actions идут в KnowledgeBridge.
+
+- id: RX-CMP-0066
+  title: Нативный sidecar
+  kind: component
+  path: packages/server-core/src/native/supervisor.ts
+  status: planned
+  refs: [RX-ADR-0012, RX-API-0002]
+  note: |
+    Супервизор craft-native (Rust): unix socket, health, index/journal/run/exec. Opt-in CRAFT_FEATURE_NATIVE_SIDECAR. Windows не шипится.
+
+- id: RX-CMP-0067
+  title: LLM-подключения
+  kind: component
+  path: packages/shared/src/config/llm-connections.ts
+  status: done
+  refs: [RX-DAT-0009, RX-INT-0001]
+  note: |
+    Именованные провайдерные конфиги (omp/claude/pi/…), модели, authType. Сессии лочатся на connection после первого сообщения.
+
+- id: RX-CMP-0068
+  title: Оболочка чата сессии
+  kind: component
+  path: apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx
+  status: done
+  refs: [RX-CMP-0018, RX-CMP-0034]
+  note: |
+    Сборка сессионного чата внутри AppShell: стрим, tools, follow-ups, plan approval. Не путать с SessionViewer пакета ui.
+
+- id: RX-SRF-0001
+  title: Вкладка сессии
+  kind: surface
+  path: packages/core/src/platform/surfaces/types.ts
+  status: done
+  refs: [RX-CMP-0008, RX-DAT-0005]
+  note: |
+    SurfaceTab kind: session. Каноническая вкладка разговора; дескриптор downgrade → chat.
+
+- id: RX-SRF-0002
+  title: Вкладка знания
+  kind: surface
+  path: packages/core/src/platform/surfaces/types.ts
+  status: done
+  refs: [RX-CMP-0008, RX-DAT-0004]
+  note: |
+    SurfaceTab kind: knowledge. Держит KnowledgeRef, не ephemeral instance id.
+
+- id: RX-SRF-0003
+  title: Вкладка браузера
+  kind: surface
+  path: packages/core/src/platform/surfaces/types.ts
+  status: active
+  refs: [RX-CMP-0008, RX-CMP-0061, RX-ADR-0001]
+  note: |
+    SurfaceTab kind: browser. OS-window browsers присоединяются к surface tab strip при workbench.browser-surface.v2.
+
+- id: RX-SRF-0004
+  title: Вкладка базы знаний
+  kind: surface
+  path: packages/core/src/platform/surfaces/types.ts
+  status: active
+  refs: [RX-CMP-0008, RX-DAT-0004]
+  note: |
+    SurfaceTab kind: database. Дескриптор сводится к knowledge с kind=database.
+
+- id: RX-SRF-0005
+  title: Вкладка Cloud Run
+  kind: surface
+  path: packages/core/src/platform/surfaces/types.ts
+  status: active
+  refs: [RX-CMP-0008, RX-SPC-0006]
+  note: |
+    SurfaceTab kind: cloud-run. Облачное продолжение сессии как поверхность workbench.
+
+- id: RX-SRF-0006
+  title: Вкладка расширения
+  kind: surface
+  path: packages/core/src/platform/surfaces/types.ts
+  status: planned
+  refs: [RX-CMP-0008, RX-PLG-0001]
+  note: |
+    SurfaceTab kind: extension. Дескриптор host возвращает null (S-02 downgrade); страница ExtensionSurfacePage жива.
+
+- id: RX-SRF-0007
+  title: Вкладка diff-предложения
+  kind: surface
+  path: packages/core/src/platform/surfaces/types.ts
+  status: active
+  refs: [RX-CMP-0008, RX-CMP-0046]
+  note: |
+    SurfaceTab kind: diff. Предложение мутации знаний / ChangeProposal.
+
+- id: RX-SRF-0008
+  title: Слот activity
+  kind: surface
+  path: packages/core/src/platform/panels/types.ts
+  status: active
+  refs: [RX-CMP-0009, RX-CMP-0003]
+  note: |
+    PanelSlot activity — рельс режимов. Живой при unified shell.
+
+- id: RX-SRF-0009
+  title: Слот navigator-primary
+  kind: surface
+  path: packages/core/src/platform/panels/types.ts
+  status: done
+  refs: [RX-CMP-0009, RX-CMP-0002]
+  note: |
+    Левый навигатор (сессии/источники/знания). В W1 живёт в классическом AppShell.
+
+- id: RX-SRF-0010
+  title: Слот navigator-secondary
+  kind: surface
+  path: packages/core/src/platform/panels/types.ts
+  status: planned
+  refs: [RX-CMP-0009]
+  note: |
+    Вторичный навигатор (S-03). Контракт есть, вкладки ядра пока не сидируют.
+
+- id: RX-SRF-0011
+  title: Слот inspector
+  kind: surface
+  path: packages/core/src/platform/panels/types.ts
+  status: active
+  refs: [RX-CMP-0009, RX-CMP-0005]
+  note: |
+    Правый инспектор. Единственная зарегистрированная вкладка ядра — knowledge.inspector.
+
+- id: RX-SRF-0012
+  title: Слот bottom
+  kind: surface
+  path: packages/core/src/platform/panels/types.ts
+  status: planned
+  refs: [RX-CMP-0009]
+  note: |
+    Нижняя панель (терминал/проблемы). Слот в контракте, хост монтируется флагом.
+
+- id: RX-SRF-0013
+  title: Слот status
+  kind: surface
+  path: packages/core/src/platform/panels/types.ts
+  status: active
+  refs: [RX-CMP-0009, RX-CMP-0006, RX-ADR-0001]
+  note: |
+    Статус-бар как слот платформы, не баннер. Флаг workbench.status-bar.v1.
+
+- id: RX-SRF-0014
+  title: Режим home
+  kind: surface
+  path: apps/electron/src/renderer/platform/modes-seed.ts
+  status: done
+  refs: [RX-CMP-0010, RX-SRF-0029]
+  note: |
+    Mode id=home, rootRoute живой, layoutProfileId=agent, defaultPinned.
+
+- id: RX-SRF-0015
+  title: Режим chat
+  kind: surface
+  path: apps/electron/src/renderer/platform/modes-seed.ts
+  status: done
+  refs: [RX-CMP-0010, RX-SRF-0030]
+  note: |
+    Mode id=chat → все сессии. Действующий рабочий контекст агента.
+
+- id: RX-SRF-0016
+  title: Режим meetings
+  kind: surface
+  path: apps/electron/src/renderer/platform/modes-seed.ts
+  status: planned
+  refs: [RX-CMP-0010, RX-ADR-0001]
+  note: |
+    Mode id=meetings, rootRoute=null, capability meetings.pipeline.v1. В Mode Bar выключен.
+
+- id: RX-SRF-0017
+  title: Режим tasks
+  kind: surface
+  path: apps/electron/src/renderer/platform/modes-seed.ts
+  status: planned
+  refs: [RX-CMP-0010, RX-DAT-0012]
+  note: |
+    Mode id=tasks, rootRoute=null, capability tasks.work-items.v1. WorkItem не расширяет Session.
+
+- id: RX-SRF-0018
+  title: Режим knowledge
+  kind: surface
+  path: apps/electron/src/renderer/platform/modes-seed.ts
+  status: done
+  refs: [RX-CMP-0010, RX-SRF-0031]
+  note: |
+    Mode id=knowledge, layoutProfileId=knowledge, живой rootRoute.
+
+- id: RX-SRF-0019
+  title: Режим feed
+  kind: surface
+  path: apps/electron/src/renderer/platform/modes-seed.ts
+  status: planned
+  refs: [RX-CMP-0010]
+  note: |
+    Mode id=feed, rootRoute=null, layoutProfileId=research, capability feed.ingest.
+
+- id: RX-SRF-0020
+  title: Режим inbox
+  kind: surface
+  path: apps/electron/src/renderer/platform/modes-seed.ts
+  status: planned
+  refs: [RX-CMP-0010]
+  note: |
+    Mode id=inbox, rootRoute=null, capability notifications.in-app.v1.
+
+- id: RX-SRF-0021
+  title: Профиль раскладки agent
+  kind: surface
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: active
+  refs: [RX-CMP-0009, RX-DAT-0007]
+  note: |
+    Встроенный LayoutProfile id=agent. Используется home/chat/meetings/tasks/inbox.
+
+- id: RX-SRF-0022
+  title: Профиль раскладки knowledge
+  kind: surface
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: active
+  refs: [RX-CMP-0009, RX-SRF-0018]
+  note: |
+    Встроенный LayoutProfile id=knowledge для режима знаний.
+
+- id: RX-SRF-0023
+  title: Профиль раскладки research
+  kind: surface
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: planned
+  refs: [RX-CMP-0009, RX-SRF-0019]
+  note: |
+    Встроенный LayoutProfile id=research (feed). Сид режима без rootRoute.
+
+- id: RX-SRF-0024
+  title: Профиль раскладки review
+  kind: surface
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: planned
+  refs: [RX-CMP-0009]
+  note: |
+    Встроенный id=review из контракта S-03 §3.8. Пока без сида режима.
+
+- id: RX-SRF-0025
+  title: Профиль раскладки browser
+  kind: surface
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: planned
+  refs: [RX-CMP-0009, RX-SRF-0003]
+  note: |
+    Встроенный id=browser. Связан с browser-surface v2.
+
+- id: RX-SRF-0026
+  title: Профиль раскладки focus
+  kind: surface
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: planned
+  refs: [RX-CMP-0009]
+  note: |
+    Встроенный id=focus (S-03). Без сида режима.
+
+- id: RX-SRF-0027
+  title: Профиль раскладки debug
+  kind: surface
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: planned
+  refs: [RX-CMP-0009]
+  note: |
+    Встроенный id=debug (S-03). Без сида режима.
+
+- id: RX-SRF-0028
+  title: Омнибокс
+  kind: surface
+  path: apps/electron/src/renderer/platform/Omnibox.tsx
+  status: done
+  refs: [RX-CMP-0013, RX-SPC-0002]
+  note: |
+    Поверхность палитры команд и ресурсов (префиксы > @ / ! ? #). Провайдеры: sessions/settings/skills/sources/automations/knowledge.
+
+- id: RX-SRF-0029
+  title: Домашняя страница workbench
+  kind: surface
+  path: apps/electron/src/renderer/platform/HomeFrontPage.tsx
+  status: active
+  refs: [RX-SRF-0014, RX-SPC-0016]
+  note: |
+    Front page режима home. Каталог сущностей и недавние сессии.
+
+- id: RX-SRF-0030
+  title: Страница чата
+  kind: surface
+  path: apps/electron/src/renderer/pages/ChatPage.tsx
+  status: done
+  refs: [RX-CMP-0068, RX-SRF-0015]
+  note: |
+    Основной экран сессии в Electron renderer.
+
+- id: RX-SRF-0031
+  title: Поверхность знаний
+  kind: surface
+  path: apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx
+  status: active
+  refs: [RX-CMP-0048, RX-SRF-0002]
+  note: |
+    Хост knowledge surface: документ/блок/ноутбук через KnowledgeRef.
+
+- id: RX-SRF-0032
+  title: Страница подключений
+  kind: surface
+  path: apps/electron/src/renderer/pages/ConnectionsPage.tsx
+  status: active
+  refs: [RX-CMP-0029, RX-SPC-0003]
+  note: |
+    Нативный Identity/Connections экран Workbench, не UI Infisical.
+
+- id: RX-SRF-0033
+  title: Страница заметок
+  kind: surface
+  path: apps/electron/src/renderer/pages/NotesPage.tsx
+  status: done
+  refs: [RX-CMP-0049]
+  note: |
+    Локальный vault notes/: список, инспектор, wiki-links. Параллелен SiYuan.
+
+- id: RX-SRF-0034
+  title: Навигатор настроек
+  kind: surface
+  path: apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Дерево страниц настроек: AI, runtime, messaging, marketplace, workbench chrome, secret refs.
+
+- id: RX-SRF-0035
+  title: Панель браузера
+  kind: surface
+  path: apps/electron/src/renderer/pages/BrowserPanelPage.tsx
+  status: done
+  refs: [RX-CMP-0061, RX-SRF-0003]
+  note: |
+    Renderer-хост нативной browser pane (toolbar + BrowserView).
+
+- id: RX-SRF-0036
+  title: Список сессий iOS
+  kind: surface
+  path: apps/ios/CraftAgentsApp/CraftAgentsApp/Sessions/SessionListView.swift
+  status: active
+  refs: [RX-PKG-0018]
+  note: |
+    SwiftUI список сессий нативного клиента.
+
+- id: RX-SRF-0037
+  title: Чат iOS
+  kind: surface
+  path: apps/ios/CraftAgentsApp/CraftAgentsApp/Chat/ChatView.swift
+  status: active
+  refs: [RX-PKG-0018]
+  note: |
+    SwiftUI чат: пузыри, tool cards, permission/credential sheets.
+
+- id: RX-SRF-0038
+  title: Веб-вход WebUI
+  kind: surface
+  path: apps/webui/src/login.html
+  status: done
+  refs: [RX-PKG-0014]
+  note: |
+    Страница логина веб-клиента к headless-серверу.
+
+- id: RX-SRF-0039
+  title: Публичный просмотр сессии
+  kind: surface
+  path: apps/viewer/src/App.tsx
+  status: done
+  refs: [RX-PKG-0015]
+  note: |
+    Загрузка и шаринг транскрипта без десктоп-шелла.
+
+- id: RX-SRF-0040
+  title: Терминальный CLI
+  kind: surface
+  path: apps/cli/src/index.ts
+  status: done
+  refs: [RX-PKG-0016, RX-DOC-0008]
+  note: |
+    Интерактивный терминальный клиент craft-cli.
+
+- id: RX-SRF-0041
+  title: Настройки Cloud Runs
+  kind: surface
+  path: apps/electron/src/renderer/pages/settings/CloudRunsSettingsPage.tsx
+  status: active
+  refs: [RX-SPC-0006, RX-PKG-0006]
+  note: |
+    UI конфигурации облачных прогонов в настройках десктопа.
+
+- id: RX-SRF-0042
+  title: Канбан сессий
+  kind: surface
+  path: apps/electron/src/renderer/components/app-shell/kanban
+  status: done
+  refs: [RX-CMP-0002]
+  note: |
+    Доска сессий как коллекционное представление inbox.
+
+- id: RX-SRF-0043
+  title: Коллекции сессий
+  kind: surface
+  path: apps/electron/src/renderer/components/app-shell/collection
+  status: done
+  refs: [RX-CMP-0002, RX-SPC-0001]
+  note: |
+    Collection view chrome: фильтры, group-by, table/list cycle (спека SiYuan K-09).
+
+- id: RX-SRF-0044
+  title: Хост карты сессии
+  kind: surface
+  path: apps/electron/src/renderer/mindmap/MindMapHost.tsx
+  status: done
+  refs: [RX-CMP-0035, RX-PKG-0001]
+  note: |
+    Mindmap/scene-graph сессии в renderer над packages/core/src/mindmap.
+
+- id: RX-SRF-0045
+  title: Панель источников
+  kind: surface
+  path: apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx
+  status: done
+  refs: [RX-CMP-0039, RX-CMP-0002]
+  note: |
+    Список MCP/API/folder sources в навигаторе AppShell.
+
+- id: RX-SRF-0046
+  title: Карточка навыка
+  kind: surface
+  path: apps/electron/src/renderer/pages/SkillInfoPage.tsx
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Инфо-страница workspace skill.
+
+- id: RX-SRF-0047
+  title: Список автоматизаций
+  kind: surface
+  path: apps/electron/src/renderer/components/automations
+  status: done
+  refs: [RX-CMP-0065]
+  note: |
+    UI автоматизаций: список, cron builder, timeline, test panel.
+
+- id: RX-SRF-0048
+  title: Поверхность расширения
+  kind: surface
+  path: apps/electron/src/renderer/pages/ExtensionSurfacePage.tsx
+  status: active
+  refs: [RX-SRF-0006, RX-PLG-0001]
+  note: |
+    Хост viewId расширения в главной области. Kind extension пока без SurfaceDescriptor.
+
+- id: RX-INT-0001
+  title: Anthropic
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    Прямой Anthropic API и Claude Agent SDK. OAuth Claude — отдельная интеграция.
+
+- id: RX-INT-0002
+  title: OpenAI
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067, RX-INT-0035]
+  note: |
+    Провайдер Pi/OpenAI API. Статус-страница и dashboard в provider-metadata.
+
+- id: RX-INT-0003
+  title: Google AI Studio
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    Google AI Studio через Pi authProvider=google.
+
+- id: RX-INT-0004
+  title: Amazon Bedrock
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    Claude на Bedrock (US/EU/global inference profiles) через Pi.
+
+- id: RX-INT-0005
+  title: Google Vertex AI
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    Vertex AI как Pi authProvider=google-vertex.
+
+- id: RX-INT-0006
+  title: GitHub Copilot
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    GitHub Copilot как LLM-провайдер (не Identity GitHub vertical).
+
+- id: RX-INT-0007
+  title: OpenRouter
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    Агрегатор моделей OpenRouter через Pi.
+
+- id: RX-INT-0008
+  title: Groq
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    Groq через Pi.
+
+- id: RX-INT-0009
+  title: Mistral
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    Mistral через Pi.
+
+- id: RX-INT-0010
+  title: DeepSeek
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    DeepSeek через Pi.
+
+- id: RX-INT-0011
+  title: xAI
+  kind: integration
+  path: packages/shared/src/config/provider-metadata.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    xAI через Pi.
+
+- id: RX-INT-0012
+  title: Infisical (spawn-секреты)
+  kind: integration
+  path: packages/shared/src/secrets/providers/infisical.ts
+  status: done
+  refs: [RX-DOC-0018, RX-CMP-0028]
+  note: |
+    SecretProvider цепочки spawn-env: environment → local-encrypted → infisical. Не UI Infisical, не Fabric authority.
+
+- id: RX-INT-0013
+  title: Infisical (Connection Fabric)
+  kind: integration
+  path: packages/core/src/platform/identity/infisical-fabric-provider.ts
+  status: active
+  refs: [RX-CMP-0025, RX-ADR-0008]
+  note: |
+    SecretProvider адаптер CF-8: locator metadata, resolveForLease без сырого значения в inspect.
+
+- id: RX-INT-0014
+  title: GitHub API (fabric vertical)
+  kind: integration
+  path: packages/core/src/platform/identity/github-vertical.ts
+  status: active
+  refs: [RX-CMP-0027, RX-CMP-0025]
+  note: |
+    CF-7: dotenv/env import → Connection → grant → lease → brokered GET /user. Токен не возвращается.
+
+- id: RX-INT-0015
+  title: Slack OAuth
+  kind: integration
+  path: packages/shared/src/auth/slack-oauth.ts
+  status: done
+  refs: [RX-PKG-0002]
+  note: |
+    OAuth Slack для источников/подключений.
+
+- id: RX-INT-0016
+  title: Microsoft OAuth
+  kind: integration
+  path: packages/shared/src/auth/microsoft-oauth.ts
+  status: done
+  refs: [RX-PKG-0002]
+  note: |
+    OAuth Microsoft для источников/подключений.
+
+- id: RX-INT-0017
+  title: Google OAuth
+  kind: integration
+  path: packages/shared/src/auth/google-oauth.ts
+  status: done
+  refs: [RX-PKG-0002]
+  note: |
+    OAuth Google (не путать с Google AI Studio как LLM).
+
+- id: RX-INT-0018
+  title: Claude OAuth
+  kind: integration
+  path: packages/shared/src/auth/claude-oauth.ts
+  status: done
+  refs: [RX-INT-0001]
+  note: |
+    OAuth Anthropic Claude (подписка), отдельно от API-ключа.
+
+- id: RX-INT-0019
+  title: ChatGPT OAuth
+  kind: integration
+  path: packages/shared/src/auth/chatgpt-oauth.ts
+  status: done
+  refs: [RX-INT-0002]
+  note: |
+    OAuth ChatGPT/OpenAI subscription path.
+
+- id: RX-INT-0020
+  title: Cloudflare Workers
+  kind: integration
+  path: apps/cloud-gateway
+  status: active
+  refs: [RX-PKG-0017, RX-PKG-0006]
+  note: |
+    Cloud Runs на Cloudflare Worker + RunDO + containers. Провайдер cloudflare-provider.ts.
+
+- id: RX-INT-0021
+  title: Modal
+  kind: integration
+  path: apps/modal-gateway/app.py
+  status: active
+  refs: [RX-PKG-0019, RX-PKG-0006]
+  note: |
+    Fallback Cloud Runs на Modal. HTTP-контракт зеркалит Cloudflare.
+
+- id: RX-INT-0022
+  title: Discord
+  kind: integration
+  path: packages/messaging-discord-worker
+  status: done
+  refs: [RX-PKG-0008, RX-CMP-0042]
+  note: |
+    Официальный Bot API через discord.js worker.
+
+- id: RX-INT-0023
+  title: WhatsApp
+  kind: integration
+  path: packages/messaging-whatsapp-worker
+  status: done
+  refs: [RX-PKG-0009, RX-CMP-0042]
+  note: |
+    Неофициальный Baileys worker.
+
+- id: RX-INT-0024
+  title: Telegram
+  kind: integration
+  path: packages/messaging-gateway/src/adapters
+  status: done
+  refs: [RX-CMP-0042]
+  note: |
+    Адаптер Telegram в messaging-gateway.
+
+- id: RX-INT-0025
+  title: Lark
+  kind: integration
+  path: packages/messaging-gateway/src/adapters
+  status: done
+  refs: [RX-CMP-0042]
+  note: |
+    Адаптер Lark (Feishu) в messaging-gateway.
+
+- id: RX-INT-0026
+  title: WeChat
+  kind: integration
+  path: packages/messaging-gateway/src/adapters
+  status: active
+  refs: [RX-CMP-0042, RX-ADR-0010]
+  note: |
+    Адаптер WeChat iLink; решение next-program 002 — оставить с предупреждением.
+
+- id: RX-INT-0027
+  title: Протокол MCP
+  kind: integration
+  path: packages/shared/src/mcp
+  status: done
+  refs: [RX-CMP-0038, RX-PKG-0011]
+  note: |
+    Клиент/пул/валидация MCP, session-mcp-server, proxy-tool-name. SDK @modelcontextprotocol/sdk.
+
+- id: RX-INT-0028
+  title: Exa
+  kind: integration
+  path: packages/shared/src/sources/builtin-sources.ts
+  status: done
+  refs: [RX-CMP-0039]
+  note: |
+    Встроенный API-source neural web search. Ключ EXA_API_KEY / ROX_EXA_API_KEY.
+
+- id: RX-INT-0029
+  title: Firecrawl
+  kind: integration
+  path: packages/shared/src/sources/builtin-sources.ts
+  status: done
+  refs: [RX-CMP-0039]
+  note: |
+    Встроенный API-source crawl. Ключ FIRECRAWL_API_KEY.
+
+- id: RX-INT-0030
+  title: Ядро SiYuan
+  kind: integration
+  path: packages/core/src/knowledge/providers/siyuan
+  status: done
+  refs: [RX-CMP-0045, RX-ADR-0002]
+  note: |
+    Внешний/OEM knowledge kernel. Craft — хост, SiYuan владеет каноном знаний.
+
+- id: RX-INT-0031
+  title: GitHub (репозиторий и CI)
+  kind: integration
+  path: .github/workflows
+  status: done
+  refs: [RX-PIP-0001]
+  note: |
+    Хостинг кода и GitHub Actions. Hosted-раннеры орг. ограничены биллингом — часть CI на CircleCI.
+
+- id: RX-INT-0032
+  title: Sentry
+  kind: integration
+  path: apps/electron/src/main/index.ts
+  status: done
+  refs: [RX-CMP-0059]
+  note: |
+    Сбор ошибок десктопа со scrub секретов.
+
+- id: RX-INT-0033
+  title: Rox Cloud Connect
+  kind: integration
+  path: docs/ROX_CLOUD_CONNECT.md
+  status: active
+  refs: [RX-DOC-0009]
+  note: |
+    Связка desktop ↔ rox.one. Отдельный облачный аккаунт не подменяет Identity Center.
+
+- id: RX-INT-0034
+  title: Рантайм OMP
+  kind: integration
+  path: packages/shared/src/agent/omp-agent.ts
+  status: done
+  refs: [RX-CMP-0032, RX-SPC-0009]
+  note: |
+    Внешний агентный рантайм omp --mode rpc. Toolchain скачивает бинарь.
+
+- id: RX-INT-0035
+  title: Pi SDK
+  kind: integration
+  path: packages/pi-agent-server
+  status: done
+  refs: [RX-PKG-0010, RX-CMP-0031]
+  note: |
+    @earendil-works/pi-* как унифицированный LLM-слой 20+ провайдеров.
+
+- id: RX-PLG-0001
+  title: Центр расширений
+  kind: plugin
+  path: packages/shared/src/extensions
+  status: active
+  refs: [RX-SPC-0002, RX-DAT-0008]
+  note: |
+    Один каталог UI над восемью рантаймами. Физические skills/sources/automations/marketplace не мигрированы — адаптеры проецируют в ExtensionRecord.
+
+- id: RX-PLG-0002
+  title: Каталог Craft curated
+  kind: plugin
+  path: packages/shared/src/extensions/catalog.ts
+  status: done
+  refs: [RX-PLG-0001, RX-PLG-0012]
+  note: |
+    CatalogProvider id=craft-curated, оборачивает marketplace catalog.
+
+- id: RX-PLG-0003
+  title: Базар SiYuan
+  kind: plugin
+  path: packages/shared/src/extensions/siyuan-bridge/bazaar.ts
+  status: active
+  refs: [RX-PLG-0001, RX-CMP-0063]
+  note: |
+    CatalogProvider id=siyuan-bazaar. Список через optional listFn, без исполнения third-party plugin code в Craft.
+
+- id: RX-PLG-0004
+  title: Рантайм craft-native
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: done
+  refs: [RX-PLG-0001]
+  note: |
+    ExtensionRuntime craft-native — встроенные вклады ядра.
+
+- id: RX-PLG-0005
+  title: Рантайм craft-sandbox
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: done
+  refs: [RX-PLG-0001, RX-CMP-0062]
+  note: |
+    Песочница utilityProcess. Секреты redeem только в main.
+
+- id: RX-PLG-0006
+  title: Рантайм siyuan-plugin
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: active
+  refs: [RX-PLG-0001, RX-CMP-0063]
+  note: |
+    Проекция вкладов плагинов ядра. executesSiyuanPlugins=false в Craft host.
+
+- id: RX-PLG-0007
+  title: Рантайм mcp-source
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: done
+  refs: [RX-PLG-0001, RX-CMP-0039]
+  note: |
+    MCP/API source как расширение каталога.
+
+- id: RX-PLG-0008
+  title: Рантайм skill-pack
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: done
+  refs: [RX-PLG-0001]
+  note: |
+    Пакет навыков workspace как категория каталога.
+
+- id: RX-PLG-0009
+  title: Рантайм automation-pack
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: done
+  refs: [RX-PLG-0001, RX-CMP-0065]
+  note: |
+    Пакет автоматизаций как категория каталога.
+
+- id: RX-PLG-0010
+  title: Рантайм web-widget
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: planned
+  refs: [RX-PLG-0001]
+  note: |
+    Web-widget runtime объявлен в восьмёрке, отдельного хоста нет.
+
+- id: RX-PLG-0011
+  title: Рантайм agent-runtime
+  kind: plugin
+  path: packages/shared/src/extensions/types.ts
+  status: planned
+  refs: [RX-PLG-0001]
+  note: |
+    Категория agent-runtimes в каталоге. Отдельный installer не выделен.
+
+- id: RX-PLG-0012
+  title: Маркетплейс плагинов
+  kind: plugin
+  path: packages/shared/src/marketplace
+  status: done
+  refs: [RX-PKG-0002, RX-SPC-0010]
+  note: |
+    Каталог, подпись, lock, installer, stats. Тесты catalog/signing/lock/installer.
+
+- id: RX-AUT-0001
+  title: Валидатор идентификаторов RX
+  kind: automation
+  path: scripts/rx-validate.ts
+  status: done
+  refs: [RX-PIP-0003, RX-DOC-0001]
+  note: |
+    Проверка грамматики, уникальности, status, висячих refs, front matter docs/ru. Сливает rx-registry.yaml и fragments/*.yaml.
+
+- id: RX-AUT-0002
+  title: Локальная сборка образа
+  kind: automation
+  path: scripts/rx-build.sh
+  status: active
+  refs: [RX-DOC-0005]
+  note: |
+    Вход docker buildx: секреты Infisical во временные файлы, --secret, trap EXIT. Каноническое описание — фрагмент RX-PIP-0101.
+
+- id: RX-AUT-0003
+  title: Dev-запуск Electron
+  kind: automation
+  path: scripts/electron-dev.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Локальный цикл разработки десктопа.
+
+- id: RX-AUT-0004
+  title: Сборка main-процесса
+  kind: automation
+  path: scripts/electron-build-main.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    esbuild бандл main process.
+
+- id: RX-AUT-0005
+  title: Сборка preload
+  kind: automation
+  path: scripts/electron-build-preload.ts
+  status: done
+  refs: [RX-CMP-0054]
+  note: |
+    esbuild бандл preload/context bridge.
+
+- id: RX-AUT-0006
+  title: Сборка renderer
+  kind: automation
+  path: scripts/electron-build-renderer.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Сборка Vite renderer.
+
+- id: RX-AUT-0007
+  title: Сборка ресурсов Electron
+  kind: automation
+  path: scripts/electron-build-resources.ts
+  status: done
+  refs: [RX-AST-0001]
+  note: |
+    Копирование resources/ в артефакт.
+
+- id: RX-AUT-0008
+  title: Сборка подпроцессов
+  kind: automation
+  path: scripts/electron-build-subprocess.ts
+  status: done
+  refs: [RX-PKG-0008, RX-PKG-0009]
+  note: |
+    Сборка discord/whatsapp workers и прочих subprocess binaries.
+
+- id: RX-AUT-0009
+  title: Очистка Electron-артефактов
+  kind: automation
+  path: scripts/electron-clean.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Удаление dist/промежуточных файлов десктоп-сборки.
+
+- id: RX-AUT-0010
+  title: Покрытие i18n
+  kind: automation
+  path: scripts/check-i18n-coverage.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Проверка, что ключи локалей покрыты.
+
+- id: RX-AUT-0011
+  title: Паритет i18n
+  kind: automation
+  path: scripts/check-i18n-parity.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Паритет ключей между локалями.
+
+- id: RX-AUT-0012
+  title: Проверка версии
+  kind: automation
+  path: scripts/check-version.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Согласованность version в package.json монорепо.
+
+- id: RX-AUT-0013
+  title: Дымовой маркетплейс
+  kind: automation
+  path: scripts/marketplace-smoke.ts
+  status: done
+  refs: [RX-PLG-0012, RX-PIP-0007]
+  note: |
+    Fresh-profile marketplace smoke без сети. CircleCI toolchain-smoke.
+
+- id: RX-AUT-0014
+  title: Дымовой toolchain
+  kind: automation
+  path: scripts/toolchain-smoke.ts
+  status: done
+  refs: [RX-PIP-0004, RX-INT-0034]
+  note: |
+    Fresh-profile ensureAll: скачать и проверить sha256 инструментов.
+
+- id: RX-AUT-0015
+  title: Дымовой runtime-context
+  kind: automation
+  path: scripts/runtime-context-smoke.ts
+  status: done
+  refs: [RX-PIP-0007, RX-SPC-0010]
+  note: |
+    Fresh-profile runtime-context smoke без сети.
+
+- id: RX-AUT-0016
+  title: Дымовые knowledge tools
+  kind: automation
+  path: scripts/smoke-knowledge-tools.ts
+  status: done
+  refs: [RX-CMP-0044]
+  note: |
+    Проверка session knowledge tools против провайдера.
+
+- id: RX-AUT-0017
+  title: Дымовой Docker
+  kind: automation
+  path: scripts/docker-smoke-test.sh
+  status: done
+  refs: [RX-PKG-0005]
+  note: |
+    Проверка серверного образа.
+
+- id: RX-AUT-0018
+  title: Уборка Docker
+  kind: automation
+  path: scripts/docker-housekeeping.sh
+  status: done
+  refs: [RX-PKG-0005]
+  note: |
+    Чистка висячих образов/контейнеров.
+
+- id: RX-AUT-0019
+  title: Релизный скрипт
+  kind: automation
+  path: scripts/release.ts
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Нарезка релиза десктопа/сервера.
+
+- id: RX-AUT-0020
+  title: Установщик приложения
+  kind: automation
+  path: scripts/install-app.sh
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    install-app.sh / install-app.ps1 — установка собранного клиента.
+
+- id: RX-AUT-0021
+  title: Установщик сервера
+  kind: automation
+  path: scripts/install-server.sh
+  status: done
+  refs: [RX-PKG-0005]
+  note: |
+    Установка headless craft-server.
+
+- id: RX-AUT-0022
+  title: Dev-сертификат TLS
+  kind: automation
+  path: scripts/generate-dev-cert.sh
+  status: done
+  refs: [RX-CMP-0052]
+  note: |
+    Локальный сертификат для WS/TLS dev.
+
+- id: RX-AUT-0023
+  title: Каркас Husky
+  kind: automation
+  path: .husky
+  status: planned
+  refs: [RX-PIP-0001]
+  note: |
+    В дереве только служебный .husky/_ без проектных pre-commit хуков. Кастомные хуки не настроены.
+
+- id: RX-AUT-0024
+  title: Сортировка локалей
+  kind: automation
+  path: scripts/sort-locales.ts
+  status: done
+  refs: [RX-AUT-0010]
+  note: |
+    Стабильная сортировка ключей i18n.
+
+- id: RX-AUT-0025
+  title: Пины toolchain
+  kind: automation
+  path: scripts/toolchain-locks.ts
+  status: done
+  refs: [RX-AUT-0014]
+  note: |
+    Фиксация sha256/версий скачиваемых инструментов.
+
+- id: RX-AUT-0026
+  title: Хеш контента маркетплейса
+  kind: automation
+  path: scripts/marketplace-content-sha.ts
+  status: done
+  refs: [RX-PLG-0012]
+  note: |
+    Контентный sha каталога marketplace.
+
+- id: RX-AUT-0027
+  title: Набор бенчмарков
+  kind: automation
+  path: scripts/bench
+  status: done
+  refs: [RX-CMP-0066]
+  note: |
+    index-bench, journal-bench, rpc-bench, runner-recovery-bench, sqlite probe.
+
+- id: RX-AUT-0028
+  title: Кросс-платформенная сборка
+  kind: automation
+  path: scripts/build
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    darwin.ts / linux.ts / win32.ts, stage-servers. Общая точка desktop packaging.
+
+- id: RX-AUT-0029
+  title: Локальный прогон workflow
+  kind: automation
+  path: scripts/test-workflow-local.sh
+  status: done
+  refs: [RX-PIP-0001]
+  note: |
+    Прогон GitHub workflow шагов локально.
+
+- id: RX-AUT-0030
+  title: Пересборка OMP lock
+  kind: automation
+  path: scripts/regen-omp-lock.sh
+  status: done
+  refs: [RX-INT-0034]
+  note: |
+    Регенерация lockfile/пина OMP toolchain.
+
+- id: RX-PIP-0001
+  title: Алиас CI Validate
+  kind: pipeline
+  path: .github/workflows/ci.yml
+  status: done
+  refs: [RX-INT-0031]
+  note: |
+    GitHub Actions workflow «CI Validate Alias»: push/PR/workflow_dispatch → job validate.
+
+- id: RX-PIP-0002
+  title: Интеграционная проверка сервера
+  kind: pipeline
+  path: .github/workflows/validate-server.yml
+  status: done
+  refs: [RX-PKG-0005]
+  note: |
+    Workflow «Validate Server (Integration)», job lifecycle.
+
+- id: RX-PIP-0003
+  title: Проверка идентификаторов RX в CI
+  kind: pipeline
+  path: scripts/rx-validate.ts
+  status: active
+  refs: [RX-AUT-0001, RX-DOC-0007]
+  note: |
+    Канонический прогон bun run rx:validate в CI (легенда RX-LEGEND). CircleCI job RX-PIP-0103 вызывает этот вход. Локальный запуск описан как RX-PIP-0200.
+
+- id: RX-PIP-0004
+  title: Дым toolchain на GitHub
+  kind: pipeline
+  path: .github/workflows/toolchain-smoke.yml
+  status: done
+  refs: [RX-AUT-0014]
+  note: |
+    Workflow «Toolchain Smoke». Hosted-раннеры ограничены; полноценный smoke — CircleCI.
+
+- id: RX-PIP-0005
+  title: Нативный субстрат CI
+  kind: pipeline
+  path: .github/workflows/native.yml
+  status: active
+  refs: [RX-CMP-0066, RX-SPC-0004]
+  note: |
+    Workflow «Native substrate»: сборка/проверка craft-native.
+
+- id: RX-PIP-0006
+  title: Соответствие Cloud Runs
+  kind: pipeline
+  path: .github/workflows/cloud-runs-conformance.yml
+  status: active
+  refs: [RX-PKG-0006, RX-SPC-0006]
+  note: |
+    Schedule + conformance прогон провайдеров Cloud Runs.
+
+- id: RX-PIP-0007
+  title: CircleCI toolchain-smoke-linux
+  kind: pipeline
+  path: .circleci/config.yml
+  status: done
+  refs: [RX-AUT-0014, RX-AUT-0013, RX-AUT-0015]
+  note: |
+    Job toolchain-smoke-linux на oven/bun: свежий профиль ensureAll + runtime-context + marketplace smoke.
+
+- id: RX-PIP-0008
+  title: CircleCI деплой cloud-gateway
+  kind: pipeline
+  path: .circleci/config.yml
+  status: active
+  refs: [RX-PKG-0017, RX-INT-0020]
+  note: |
+    Job craft-gateway-deploy: прод-путь образа gateway на реальном amd64 Linux.
+
+- id: RX-PIP-0009
+  title: CircleCI workflow toolchain-smoke
+  kind: pipeline
+  path: .circleci/config.yml
+  status: done
+  refs: [RX-PIP-0007]
+  note: |
+    Workflow toolchain-smoke, обёртка linux-job. Не путать с RX-PIP-0104 rx-main.
+
+- id: RX-PIP-0010
+  title: GitHub native push/PR
+  kind: pipeline
+  path: .github/workflows/native.yml
+  status: active
+  refs: [RX-PIP-0005]
+  note: |
+    Триггеры push/pull_request/workflow_dispatch нативного workflow.
+
+- id: RX-AST-0001
+  title: Логотипы Craft
+  kind: asset
+  path: apps/electron/resources/craft-logos
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    craft_app_icon.png/.dark, craft_logo_black/white. Бренд десктоп-сборки.
+
+- id: RX-AST-0002
+  title: Иконки приложения Electron
+  kind: asset
+  path: apps/electron/resources
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    icon.png, icon.icns, icon.ico, icon.svg, icon.icon — packager icons.
+
+- id: RX-AST-0003
+  title: Фон DMG
+  kind: asset
+  path: apps/electron/resources/dmg-background.png
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    dmg-background.png / @2x / .tiff для macOS installer.
+
+- id: RX-AST-0004
+  title: Assets.car
+  kind: asset
+  path: apps/electron/resources/Assets.car
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Скомпилированный Asset Catalog macOS.
+
+- id: RX-AST-0005
+  title: Иконки WebUI PWA
+  kind: asset
+  path: apps/webui/src/public
+  status: done
+  refs: [RX-PKG-0014]
+  note: |
+    favicon.ico/svg, apple-touch-icon, icon-192, icon-512, login-assets/manifest.json.
+
+- id: RX-AST-0006
+  title: Иконка iOS
+  kind: asset
+  path: apps/ios/CraftAgentsApp/CraftAgentsApp/Assets.xcassets/AppIcon.appiconset
+  status: done
+  refs: [RX-PKG-0018]
+  note: |
+    AppIcon-1024.png для CraftAgentsApp.
+
+- id: RX-AST-0007
+  title: Встроенные бинарники инструментов
+  kind: asset
+  path: apps/electron/resources/bin
+  status: done
+  refs: [RX-AUT-0014]
+  note: |
+    uv, pdf-tool, docx-tool, xlsx-tool, pptx-tool, img-tool, ical-tool, markitdown, doc-diff, craft-agent.
+
+- id: RX-AST-0008
+  title: Пин OEM-ядра знаний
+  kind: asset
+  path: apps/electron/resources/oem-kernel-pin.json
+  status: active
+  refs: [RX-ADR-0007, RX-INT-0030]
+  note: |
+    Манифест sha256 OEM-бинарника knowledge kernel. Сам бинарь в публичный git не входит.
+
+- id: RX-AST-0009
+  title: Иконка источника по умолчанию
+  kind: asset
+  path: apps/electron/resources/source.png
+  status: done
+  refs: [RX-CMP-0039]
+  note: |
+    Fallback-иконка MCP/API source.
+
+- id: RX-AST-0010
+  title: Иконка веб-вкладки
+  kind: asset
+  path: apps/webui/src/public/favicon.svg
+  status: done
+  refs: [RX-AST-0005]
+  note: |
+    Векторный favicon WebUI.
+
+- id: RX-API-0001
+  title: Контракт RPC-каналов
+  kind: api
+  path: packages/shared/src/protocol/channels.ts
+  status: done
+  refs: [RX-CMP-0051]
+  note: |
+    RPC_CHANNELS: стабильные wire-строки по доменам (sessions, knowledge, fabric, messaging, …). LOCAL_ONLY vs REMOTE_ELIGIBLE.
+
+- id: RX-API-0002
+  title: Каналы нативного sidecar
+  kind: api
+  path: packages/shared/src/protocol/native-channels.ts
+  status: active
+  refs: [RX-CMP-0066]
+  note: |
+    UDS-only: native:health/version/capabilities и index:*. Не регистрируются на продуктовом WS.
+
+- id: RX-API-0003
+  title: HTTP Cloud Runs
+  kind: api
+  path: apps/modal-gateway/app.py
+  status: active
+  refs: [RX-PKG-0006, RX-SPC-0006]
+  note: |
+    POST /runs, GET /runs/{id}/status, DELETE /runs/{id}, artifacts list/fetch. Cloudflare и Modal зеркалят контракт.
+
+- id: RX-API-0004
+  title: Контракт Knowledge Provider
+  kind: api
+  path: packages/core/src/knowledge/provider.ts
+  status: done
+  refs: [RX-CMP-0044, RX-SPC-0001]
+  note: |
+    K-03: search/get/context/capabilities/mutations. Ноль зависимостей на shared/server-core.
+
+- id: RX-API-0005
+  title: RPC Connection Fabric
+  kind: api
+  path: packages/server-core/src/handlers/rpc/fabric.ts
+  status: active
+  refs: [RX-CMP-0027, RX-SPC-0003]
+  note: |
+    LIST/CREATE/DISCOVER/PREVIEW/COMMIT_IMPORT/GRANTS/LEASE/REVOKE. Секреты стрипаются на границе.
+
+- id: RX-API-0006
+  title: RPC мессенджеров
+  kind: api
+  path: packages/server-core/src/handlers/rpc/messaging.ts
+  status: done
+  refs: [RX-CMP-0043]
+  note: |
+    config/test/save/disconnect, pairing, owners, access mode, pending senders.
+
+- id: RX-API-0007
+  title: RPC идентичности
+  kind: api
+  path: packages/server-core/src/handlers/rpc/identity.ts
+  status: active
+  refs: [RX-CMP-0024]
+  note: |
+    Профили и membership без сырых секретов.
+
+- id: RX-API-0008
+  title: Session tools MCP
+  kind: api
+  path: packages/session-tools-core/src/tool-defs.ts
+  status: done
+  refs: [RX-PKG-0011, RX-CMP-0033]
+  note: |
+    SubmitPlan, config_validate, knowledge_*, host_bash и прочие session-scoped tools.
+
+- id: RX-API-0009
+  title: OMP RPC
+  kind: api
+  path: packages/shared/src/agent/omp-agent.ts
+  status: done
+  refs: [RX-INT-0034, RX-DOC-0013]
+  note: |
+    NDJSON omp --mode rpc: set_host_tools, thinking stream, omp_turn_anchor.
+
+- id: RX-API-0010
+  title: Контракт SecretProvider
+  kind: api
+  path: packages/core/src/platform/identity/provider-contract.ts
+  status: active
+  refs: [RX-CMP-0025, RX-SPC-0003]
+  note: |
+    CF-3: SecretProvider / CredentialImporter, delivery mechanisms, ProviderMaterialization brand.
+
+- id: RX-API-0011
+  title: Манифест расширения
+  kind: api
+  path: packages/shared/src/extensions/types.ts
+  status: active
+  refs: [RX-PLG-0001, RX-DAT-0008]
+  note: |
+    ExtensionManifest, contribute keys, permission vocabulary. Неизвестные ключи fail-closed.
+
+- id: RX-API-0012
+  title: Реестр команд
+  kind: api
+  path: packages/core/src/platform/commands/registry.ts
+  status: done
+  refs: [RX-CMP-0013, RX-DAT-0016]
+  note: |
+    CommandRegistry.query по when/source/text. Исполнение — host-side.
+
+- id: RX-DAT-0001
+  title: Сессия
+  kind: data
+  path: packages/core/src/types/session.ts
+  status: done
+  refs: [RX-CMP-0030, RX-ADR-0001]
+  note: |
+    Агрегат разговора, не задача. Status todo/in_progress/needs_review/done/cancelled; memory mode persistent/incognito/temporary.
+
+- id: RX-DAT-0002
+  title: Сообщение
+  kind: data
+  path: packages/core/src/types/message.ts
+  status: done
+  refs: [RX-DAT-0001]
+  note: |
+    StoredMessage и роли user/assistant/tool/plan/thinking/auth-request.
+
+- id: RX-DAT-0003
+  title: Рабочее пространство
+  kind: data
+  path: packages/core/src/types/workspace.ts
+  status: done
+  refs: [RX-CMP-0041]
+  note: |
+    WorkspaceInfo DTO без server-path; RemoteServerConfig (ws/token/sshHostId).
+
+- id: RX-DAT-0004
+  title: Ссылка на знание
+  kind: data
+  path: packages/core/src/knowledge/refs.ts
+  status: done
+  refs: [RX-CMP-0044, RX-API-0004]
+  note: |
+    KnowledgeRef (scheme siyuan, kind notebook/document/block/database/asset) и CraftRef.
+
+- id: RX-DAT-0005
+  title: Вкладка поверхности
+  kind: data
+  path: packages/core/src/platform/surfaces/types.ts
+  status: done
+  refs: [RX-CMP-0008]
+  note: |
+    Нормативный union SurfaceTab из семи kind (S-02).
+
+- id: RX-DAT-0006
+  title: Ссылка на учётные данные
+  kind: data
+  path: packages/core/src/platform/identity/credential-types.ts
+  status: active
+  refs: [RX-CMP-0025, RX-API-0010]
+  note: |
+    CredentialRef / CredentialRefId / ProviderLocator. cred_<uuid> независим от провайдера.
+
+- id: RX-DAT-0007
+  title: Профиль раскладки
+  kind: data
+  path: packages/core/src/platform/panels/layout-profile.ts
+  status: done
+  refs: [RX-CMP-0009]
+  note: |
+    LayoutProfile + PanelRegistryState v1 (delta-only overrides).
+
+- id: RX-DAT-0008
+  title: Манифест расширения
+  kind: data
+  path: packages/shared/src/extensions/types.ts
+  status: active
+  refs: [RX-API-0011]
+  note: |
+    ExtensionRecord/Manifest, восемь runtimes, категории каталога.
+
+- id: RX-DAT-0009
+  title: LLM-подключение
+  kind: data
+  path: packages/shared/src/config/llm-connections.ts
+  status: done
+  refs: [RX-CMP-0067]
+  note: |
+    LlmProviderType anthropic|pi|pi_compat|anthropic_compat|omp и именованные connection configs.
+
+- id: RX-DAT-0010
+  title: Ссылка на секрет spawn
+  kind: data
+  path: packages/shared/src/secrets/types.ts
+  status: done
+  refs: [RX-INT-0012, RX-DOC-0018]
+  note: |
+    SecretRefEntry: name/envVar/provider/ref в config.json runtime.secretRefs.
+
+- id: RX-DAT-0011
+  title: Автоматизация
+  kind: data
+  path: packages/shared/src/automations
+  status: done
+  refs: [RX-CMP-0065]
+  note: |
+    AutomationDefinition: триггеры, actions, scheduler, history. Отдельно от WorkflowDefinition (ADR-0001).
+
+- id: RX-DAT-0012
+  title: Спецификация workflow
+  kind: data
+  path: packages/server-core/src/tasks
+  status: done
+  refs: [RX-CMP-0036, RX-ADR-0001]
+  note: |
+    WorkflowSpec/WorkflowRun (legacy task.yaml / TaskRunner). User task → будущий WorkItem, не Session.
+
+- id: RX-DAT-0013
+  title: Хранилище идентичности
+  kind: data
+  path: packages/core/src/platform/identity/store.ts
+  status: active
+  refs: [RX-CMP-0024]
+  note: |
+    identity.json: профили и ServiceConnection без сырых секретов.
+
+- id: RX-DAT-0014
+  title: Привязки мессенджеров
+  kind: data
+  path: packages/messaging-gateway/src/binding-store.ts
+  status: done
+  refs: [RX-CMP-0042]
+  note: |
+    BindingStore: pairing codes, owners, access mode, pending senders.
+
+- id: RX-DAT-0015
+  title: Раскладка Workbench v2
+  kind: data
+  path: packages/core/src/platform/workbench/types.ts
+  status: active
+  refs: [RX-CMP-0011, RX-ADR-0001]
+  note: |
+    WorkbenchLayout: TabGroup + SurfaceInstance. Пишется только при workbench.tab-groups.v2.
+
+- id: RX-DAT-0016
+  title: Вклад команды
+  kind: data
+  path: packages/core/src/platform/commands/types.ts
+  status: done
+  refs: [RX-API-0012]
+  note: |
+    CommandContribution: id/title/category/source/when/keywords/hotkey/execute.
+
+- id: RX-ADR-0001
+  title: Сходимость архитектуры Workbench
+  kind: adr
+  path: docs/architecture/adr/0001-rox-workbench-convergence.md
+  status: done
+  refs: [RX-CMP-0011, RX-SPC-0002]
+  note: |
+    Принято 2026-08-13. Mode/Surface/Tab/Panel разделены; Session ≠ WorkItem; browser — обычная Surface; layout persist per user, URL — истина фокуса.
+
+- id: RX-ADR-0002
+  title: Craft — продукт-хост
+  kind: adr
+  path: docs/specs/2026-08-07-siyuan-integration/01-adrs.md
+  status: done
+  refs: [RX-INT-0030, RX-SPC-0001]
+  note: |
+    SiYuan ADR-001: Craft is host product. Ядро знаний встраивается, не наоборот.
+
+- id: RX-ADR-0003
+  title: SiYuan владеет каноном знаний
+  kind: adr
+  path: docs/specs/2026-08-07-siyuan-integration/01-adrs.md
+  status: done
+  refs: [RX-CMP-0044, RX-INT-0030]
+  note: |
+    SiYuan ADR-002: канонические документы/блоки живут в kernel, Craft держит refs и проекции.
+
+- id: RX-ADR-0004
+  title: Нет общей базы данных
+  kind: adr
+  path: docs/specs/2026-08-07-siyuan-integration/01-adrs.md
+  status: done
+  refs: [RX-SPC-0001]
+  note: |
+    SiYuan ADR-003: не сливать SQLite/storage Craft и kernel.
+
+- id: RX-ADR-0005
+  title: Запись агента только через proposals
+  kind: adr
+  path: docs/specs/2026-08-07-siyuan-integration/01-adrs.md
+  status: done
+  refs: [RX-CMP-0046]
+  note: |
+    SiYuan ADR-004: единственный путь Craft→SiYuan write — KnowledgeBridge propose/review/apply.
+
+- id: RX-ADR-0006
+  title: Операционные и семантические метаданные разделены
+  kind: adr
+  path: docs/specs/2026-08-07-siyuan-integration/01-adrs.md
+  status: done
+  refs: [RX-SPC-0001]
+  note: |
+    SiYuan ADR-005: labels/status сессий не синхронизировать с tags ядра в фоне.
+
+- id: RX-ADR-0007
+  title: OEM-ядро знаний (вариант C)
+  kind: adr
+  path: docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
+  status: done
+  refs: [RX-AST-0008, RX-INT-0030]
+  note: |
+    G2 ACCEPTED: variant C OEM white-label. Пин бинаря в публичном репо, исходники форка — в приватном knowledge-engine. Совпадает с plans/next-program/decisions/001.
+
+- id: RX-ADR-0008
+  title: Connection Fabric — брокер, не UI Infisical
+  kind: adr
+  path: docs/specs/2026-08-11-rox-connection-fabric/00-decision.md
+  status: done
+  refs: [RX-CMP-0025, RX-SPC-0003]
+  note: |
+    Approved. Infisical — опциональный SecretProvider. Сырой секрет запрещён в renderer/WorkGraph/логах/агенте. Local-first default.
+
+- id: RX-ADR-0009
+  title: Сессия — не документ
+  kind: adr
+  path: docs/specs/2026-08-07-siyuan-integration/01-adrs.md
+  status: done
+  refs: [RX-DAT-0001, RX-ADR-0001]
+  note: |
+    SiYuan ADR-006: Session не мапится 1:1 на knowledge document.
+
+- id: RX-ADR-0010
+  title: WeChat iLink оставить с предупреждением
+  kind: adr
+  path: plans/next-program/decisions/002-wechat-ilink.md
+  status: done
+  refs: [RX-INT-0026]
+  note: |
+    Next-program 002: адаптер WeChat не выкидывать, показывать warning.
+
+- id: RX-ADR-0011
+  title: In-process knowledge kernel — будущее
+  kind: adr
+  path: plans/next-program/decisions/002-h3-in-process-knowledge-kernel.md
+  status: planned
+  refs: [RX-CMP-0045, RX-ADR-0007]
+  note: |
+    H3: in-process kernel отложен. Сейчас external-local / OEM managed payload.
+
+- id: RX-ADR-0012
+  title: Один sidecar, не десять демонов
+  kind: adr
+  path: docs/specs/2026-08-12-native-substrate/01-adrs.md
+  status: done
+  refs: [RX-CMP-0066, RX-SPC-0004]
+  note: |
+    ADR-N1: craft-native — один процесс, модули — crates. craft-icn отдельно только когда появится local inference.
+
+- id: RX-ADR-0013
+  title: Тот же MessageEnvelope
+  kind: adr
+  path: docs/specs/2026-08-12-native-substrate/01-adrs.md
+  status: done
+  refs: [RX-CMP-0051, RX-API-0002]
+  note: |
+    ADR-N2: sidecar не вводит второй RPC. Handshake major 1.0, length-prefixed JSON.
+
+- id: RX-ADR-0014
+  title: Source index — первый модуль sidecar
+  kind: adr
+  path: docs/specs/2026-08-12-native-substrate/01-adrs.md
+  status: active
+  refs: [RX-CMP-0040, RX-CMP-0066]
+  note: |
+    ADR-N3: четыре функции фасада, shadow TS primary. Native sqlite отдельно от bun:sqlite.
+
+- id: RX-ADR-0015
+  title: craft-exec не P0
+  kind: adr
+  path: docs/specs/2026-08-12-native-substrate/01-adrs.md
+  status: done
+  refs: [RX-CMP-0037, RX-CMP-0066]
+  note: |
+    ADR-N4: PrivilegedExecutionBroker не исполняет Bash. Host-tool Bash для Pi/OMP — предусловие.
+
+- id: RX-ADR-0016
+  title: "Cloud Runs: общий bearer"
+  kind: adr
+  path: plans/next-program/decisions/003-cloud-runs-auth.md
+  status: done
+  refs: [RX-API-0003, RX-SPC-0006]
+  note: |
+    Next-program 003: не плодить отдельную auth-схему Cloud Runs, оставить shared bearer.
+
+- id: RX-ADR-0017
+  title: appId / auto-update без bridge date
+  kind: adr
+  path: plans/next-program/decisions/004-appid-auto-update.md
+  status: done
+  refs: [RX-PKG-0013]
+  note: |
+    Next-program 004: не ставить календарную дату смены appId.
+
+- id: RX-ADR-0018
+  title: Удаление remote-веток не исполнять
+  kind: adr
+  path: plans/next-program/decisions/006-branch-deletion.md
+  status: done
+  refs: [RX-INT-0031]
+  note: |
+    Next-program 006: агенты не удаляют remote branches.
+
+- id: RX-ADR-0019
+  title: Порт возможностей DSH-harness без второго рантайма
+  kind: adr
+  path: docs/architecture/adr/0019-session-harness-capability-port.md
+  status: active
+  refs: [RX-ADR-0001, RX-SPC-0002, RX-SPC-0021]
+  note: |
+    Возможности community DSH вливаем в слоты Rox. Пакеты dsh-*, Cordis и
+    процесс DSH Desktop в runtime MUST NOT. Ветка rox/session-harness-port.
+
+- id: RX-SPC-0001
+  title: Интеграция SiYuan
+  kind: spec
+  path: docs/specs/2026-08-07-siyuan-integration
+  status: active
+  refs: [RX-ADR-0002, RX-CMP-0044]
+  note: |
+    Suite K: границы, KP-контракт, bridge, mutations, publication, connection modes, licensing, collection views.
+
+- id: RX-SPC-0002
+  title: Единая оболочка
+  kind: spec
+  path: docs/specs/2026-08-07-unified-shell
+  status: active
+  refs: [RX-ADR-0001, RX-CMP-0008]
+  note: |
+    Suite S: слоты, SurfaceRegistry, панели, омнибокс, extension center, plugin bridge, identity center, work envelope.
+
+- id: RX-SPC-0003
+  title: Connection Fabric
+  kind: spec
+  path: docs/specs/2026-08-11-rox-connection-fabric
+  status: active
+  refs: [RX-ADR-0008, RX-CMP-0027]
+  note: |
+    CF: доменная модель, threat model, provider contract, broker/leases, import, native UI, migration, deployment profiles.
+
+- id: RX-SPC-0004
+  title: Нативный субстрат
+  kind: spec
+  path: docs/specs/2026-08-12-native-substrate
+  status: active
+  refs: [RX-ADR-0012, RX-CMP-0066]
+  note: |
+    Suite N: sidecar, MessageEnvelope, source index, anti-goals, roadmap, baseline metrics.
+
+- id: RX-SPC-0005
+  title: Группы веток чата
+  kind: spec
+  path: docs/specs/2026-08-06-branch-chat-groups-design.md
+  status: active
+  refs: [RX-DAT-0001]
+  note: |
+    Дизайн branch/chat groups для сессий.
+
+- id: RX-SPC-0006
+  title: PRD Cloud Runs
+  kind: spec
+  path: docs/cloud-runs-prd.md
+  status: active
+  refs: [RX-PKG-0006, RX-API-0003]
+  note: |
+    Облачное продолжение сессий (глубокий рисёрч и фоновые задачи).
+
+- id: RX-SPC-0007
+  title: Пакет след-фич Cloud Runs
+  kind: spec
+  path: docs/cloud-runs-features-spec.md
+  status: planned
+  refs: [RX-SPC-0006]
+  note: |
+    F1–F22 поверх Cloud Runs PRD.
+
+- id: RX-SPC-0008
+  title: Классификация MCP-компонентов
+  kind: spec
+  path: docs/mcp-components.md
+  status: done
+  refs: [RX-INT-0027]
+  note: |
+    Lifecycle classification MCP components.
+
+- id: RX-SPC-0009
+  title: PRD OMP v2
+  kind: spec
+  path: docs/omp-v2-prd.md
+  status: active
+  refs: [RX-INT-0034, RX-CMP-0032]
+  note: |
+    Закрытие остаточных гэпов интеграции OMP ⇄ Craft Agents.
+
+- id: RX-SPC-0010
+  title: PRD runtime / context / marketplace
+  kind: spec
+  path: docs/runtime-context-marketplace-prd.md
+  status: active
+  refs: [RX-PLG-0012]
+  note: |
+    Runtime-конфигурация, контекстные документы и маркетплейс плагинов (M1–M5).
+
+- id: RX-SPC-0011
+  title: Менеджер загрузки toolchain
+  kind: spec
+  path: docs/superpowers/specs/2026-08-06-toolchain-download-manager-design.md
+  status: done
+  refs: [RX-AUT-0014, RX-PIP-0007]
+  note: |
+    Спека ensureAll / sha256 / 11 инструментов. CircleCI smoke.
+
+- id: RX-SPC-0012
+  title: Дизайн Discord-адаптера
+  kind: spec
+  path: docs/superpowers/specs/2026-07-09-discord-adapter-design.md
+  status: done
+  refs: [RX-INT-0022]
+  note: |
+    Проект Discord worker на официальном Bot API.
+
+- id: RX-SPC-0013
+  title: Нативный клиент iOS/iPadOS
+  kind: spec
+  path: docs/superpowers/specs/2026-07-11-ios-ipados-native-client-design.md
+  status: active
+  refs: [RX-PKG-0018]
+  note: |
+    Дизайн Swift-клиента: CraftAgentKit + SwiftUI app.
+
+- id: RX-SPC-0014
+  title: Самообучение памяти
+  kind: spec
+  path: docs/superpowers/specs/2026-08-06-self-learning-v2-master-spec.md
+  status: done
+  refs: [RX-CMP-0064]
+  note: |
+    Master spec F3 memory: distill, lessons, pending skills.
+
+- id: RX-SPC-0015
+  title: Память self-learning (дизайн)
+  kind: spec
+  path: docs/superpowers/specs/2026-08-06-self-learning-memory-design.md
+  status: done
+  refs: [RX-CMP-0064, RX-SPC-0014]
+  note: |
+    Детальный дизайн MemoryService / LessonStore.
+
+- id: RX-SPC-0016
+  title: Дизайн workbench home
+  kind: spec
+  path: docs/superpowers/specs/2026-08-13-workbench-home-design.md
+  status: active
+  refs: [RX-SRF-0029, RX-ADR-0001]
+  note: |
+    Front page режима home.
+
+- id: RX-SPC-0017
+  title: Дизайн Workbench shell v2
+  kind: spec
+  path: docs/superpowers/specs/2026-08-13-workbench-shell-v2-design.md
+  status: active
+  refs: [RX-ADR-0001, RX-CMP-0001]
+  note: |
+    Инкремент chrome поверх suite S: Mode Bar, tab groups.
+
+- id: RX-SPC-0018
+  title: Контракт пина OEM-ядра
+  kind: spec
+  path: docs/superpowers/specs/2026-08-20-oem-kernel-pin-contract.md
+  status: active
+  refs: [RX-AST-0008, RX-ADR-0007]
+  note: |
+    oem-kernel-pin.json: checksum и путь бинаря, исходники форка вне Apache-дерева.
+
+- id: RX-SPC-0019
+  title: Workflow карты сессии
+  kind: spec
+  path: docs/superpowers/specs/2026-08-20-session-map-workflow-design.md
+  status: active
+  refs: [RX-SRF-0044, RX-CMP-0035]
+  note: |
+    Session map / scene-graph как workflow поверхность.
+
+- id: RX-SPC-0020
+  title: White-label knowledge engine
+  kind: spec
+  path: docs/superpowers/specs/2026-08-20-white-label-knowledge-engine-design.md
+  status: active
+  refs: [RX-ADR-0007, RX-INT-0030]
+  note: |
+    Дизайн white-label ядра «Знания» под OEM-грант.
+
+- id: RX-SPC-0021
+  title: Порт возможностей DSH-harness в Rox One
+  kind: spec
+  path: docs/specs/2026-09-10-session-harness-port
+  status: active
+  refs: [RX-ADR-0019, RX-SPC-0002, RX-EPC-0001]
+  note: |
+    Карта 29 DSH-плагинов → reuse/extend/port/skip и волны H0–H6.
+    Не заменяет Suite S и UEW.
+
+- id: RX-DOC-0001
+  title: Легенда идентификаторов RX
+  kind: doc
+  path: registry/RX-LEGEND.md
+  status: done
+  refs: [RX-PIP-0003]
+  note: |
+    Единственный english-first документ: грамматика RX-<DOMAIN>-<NNNN>, таблица доменов, статусы, правила реестра. Русский вход — docs/ru.
+
+- id: RX-DOC-0002
+  title: Задачи и эпики
+  kind: doc
+  status: planned
+  refs: [RX-DOC-0001]
+  note: |
+    Нумератор TSK/EPC по легенде (docs/ru/RX-DOC-0002-tasks.md). Файла ещё нет — блок зарезервирован.
+
+- id: RX-DOC-0003
+  title: Русский вход в документацию
+  kind: doc
+  status: planned
+  refs: [RX-DOC-0001]
+  note: |
+    Запланированный docs/ru/README.md как точка входа. Сейчас в каталоге только RX-DOC-0005…0007.
+
+- id: RX-DOC-0008
+  title: Справочник CLI
+  kind: doc
+  path: docs/cli.md
+  status: done
+  refs: [RX-PKG-0016, RX-SRF-0040]
+  note: |
+    craft-cli — CLI Reference.
+
+- id: RX-DOC-0009
+  title: Rox cloud Connect
+  kind: doc
+  path: docs/ROX_CLOUD_CONNECT.md
+  status: active
+  refs: [RX-INT-0033]
+  note: |
+    Связка desktop ↔ rox.one.
+
+- id: RX-DOC-0010
+  title: Известные проблемы репозитория
+  kind: doc
+  path: docs/repo-known-issues.md
+  status: active
+  refs: [RX-PKG-0001]
+  note: |
+    Неблокирующие known issues.
+
+- id: RX-DOC-0011
+  title: Вердикт единой оболочки
+  kind: doc
+  path: docs/unified-shell-verdict.md
+  status: done
+  refs: [RX-SPC-0002, RX-CMP-0001]
+  note: |
+    KEEP_EXPERIMENTAL: какие слоты W1 пустые, какие флаги держать OFF.
+
+- id: RX-DOC-0012
+  title: Разрыв интеграции OMP
+  kind: doc
+  path: docs/omp-integration-gap.md
+  status: active
+  refs: [RX-SPC-0009, RX-INT-0034]
+  note: |
+    Gap analysis v1 shipped → full integration.
+
+- id: RX-DOC-0013
+  title: Заметки протокола OMP RPC
+  kind: doc
+  path: docs/omp-rpc-notes.md
+  status: done
+  refs: [RX-API-0009, RX-INT-0034]
+  note: |
+    Протокол omp --mode rpc (NDJSON).
+
+- id: RX-DOC-0014
+  title: Решения next-program
+  kind: doc
+  path: plans/next-program/decisions/README.md
+  status: done
+  refs: [RX-ADR-0007]
+  note: |
+    Индекс ticket 14 decision records.
+
+- id: RX-DOC-0015
+  title: План миграции идентичности
+  kind: doc
+  path: plans/identity-migration-plan.md
+  status: active
+  refs: [RX-CMP-0024, RX-SPC-0003]
+  note: |
+    Миграция legacy credentials → Connection Fabric.
+
+- id: RX-DOC-0016
+  title: Доска ремедиации
+  kind: doc
+  path: plans/remediation-board.md
+  status: active
+  refs: [RX-DOC-0010]
+  note: |
+    Трекинг устранения долга.
+
+- id: RX-DOC-0017
+  title: Распоряжение ветками
+  kind: doc
+  path: plans/branch-disposition.md
+  status: active
+  refs: [RX-ADR-0018]
+  note: |
+    Что делать с историческими ветками.
+
+- id: RX-DOC-0018
+  title: Провайдеры секретов
+  kind: doc
+  path: docs/secrets-providers.md
+  status: done
+  refs: [RX-INT-0012, RX-DAT-0010]
+  note: |
+    Spawn-time secret injection: environment / local-encrypted / infisical. v1 без UI.
+
+- id: RX-DOC-0019
+  title: Планы Superpowers
+  kind: doc
+  path: docs/superpowers/plans
+  status: active
+  refs: [RX-SPC-0016]
+  note: |
+    Операционные планы поверх specs/ (workbench, iOS, discord, session chrome).
+
+- id: RX-DOC-0020
+  title: Каталог архитектурных решений
+  kind: doc
+  path: docs/architecture
+  status: done
+  refs: [RX-ADR-0001]
+  note: |
+    docs/architecture/adr — канонические ADR продукта. Suite-ADR живут рядом со спеками.
+
+- id: RX-DOC-0021
+  title: План runtime / marketplace
+  kind: doc
+  path: docs/runtime-context-marketplace-plan.md
+  status: active
+  refs: [RX-SPC-0010]
+  note: |
+    Implementation plan M1–M5 к PRD runtime-context-marketplace.
+
+- id: RX-DOC-0022
+  title: Компоненты MCP (обзор)
+  kind: doc
+  path: docs/mcp-components.md
+  status: done
+  refs: [RX-SPC-0008]
+  note: |
+    Обзорный документ; нормативная классификация — RX-SPC-0008.
+

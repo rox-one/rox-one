@@ -424,7 +424,10 @@ export function createInfisicalImporter(
       const version = await provider.write({
         kind: candidate.kind,
         mode,
-        locator: candidate.locator,
+        locator: candidate.locator ?? (() => {
+          // managed/reference требуют локатор; его отсутствие — битый кандидат.
+          throw new ConnectionFabricError('IMPORT_CANDIDATE_UNKNOWN', `${input.candidateId}: locator отсутствует`);
+        })(),
         workspaceId: input.workspaceId,
         requestedBy: input.requestedBy,
         credentialRefId: input.credentialRefId,

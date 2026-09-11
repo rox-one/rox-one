@@ -9,7 +9,7 @@
 import { homedir } from 'os';
 import { resolve, join, normalize, isAbsolute } from 'path';
 import { existsSync } from 'fs';
-import { CONFIG_DIR } from '../config/paths';
+import { resolveConfigDir } from "../config/paths.ts"
 
 /**
  * Extra path variables that callers can provide for context-aware expansion.
@@ -39,6 +39,11 @@ export interface PathVars {
  * expandVars('${HOME}/.venv/bin/python')  // '/Users/alice/.venv/bin/python'
  * expandVars('${SOURCE_DIR}/server.js', { SOURCE_DIR: '/app/foo' })  // '/app/foo/server.js'
  */
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function expandVars(input: string, extraVars?: PathVars): string {
   if (!input) return input;
 
@@ -58,14 +63,15 @@ export function expandVars(input: string, extraVars?: PathVars): string {
   result = result.replace(/\$HOME(?=\/|$)/g, home);
 
   // Handle ${CRAFT_CONFIG_DIR} — centralized config directory
-  result = result.replace(/\$\{CRAFT_CONFIG_DIR\}/g, CONFIG_DIR);
+  result = result.replace(/\$\{CRAFT_CONFIG_DIR\}/g, resolveConfigDir());
 
   // Handle caller-provided extra variables
   if (extraVars) {
     for (const [key, value] of Object.entries(extraVars)) {
       if (!value) continue;
-      result = result.replace(new RegExp(`\\$\{${key}\}`, 'g'), value);
-      result = result.replace(new RegExp(`\\$${key}(?=/|$)`, 'g'), value);
+      const safeKey = escapeRegExp(key);
+      result = result.replace(new RegExp(`\\$\\{${safeKey}\\}`, 'g'), value);
+      result = result.replace(new RegExp(`\\$${safeKey}(?=/|$)`, 'g'), value);
     }
   }
 

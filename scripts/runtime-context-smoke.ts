@@ -12,6 +12,7 @@
  */
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 const CRAFT_CONFIG_DIR = process.env.CRAFT_CONFIG_DIR
 if (!CRAFT_CONFIG_DIR || !CRAFT_CONFIG_DIR.startsWith('/tmp/')) {
@@ -48,11 +49,11 @@ if (!existsSync(join(CRAFT_CONFIG_DIR, 'config.json'))) {
 const { setBundledAssetsRoot } = await import('../packages/shared/src/utils/paths.ts')
 setBundledAssetsRoot(ELECTRON_ROOT)
 
-const { CONFIG_DIR } = await import('../packages/shared/src/config/paths.ts')
+const { resolveConfigDir() } = await import('../packages/shared/src/config/paths.ts')
 check(
   'config_dir_external',
   CONFIG_DIR === CRAFT_CONFIG_DIR || CONFIG_DIR.startsWith(CRAFT_CONFIG_DIR),
-  `CONFIG_DIR=${CONFIG_DIR}`,
+  `resolveConfigDir()=${resolveConfigDir()}`,
 )
 
 // Seed config-defaults.json so storage getters (thinking level, etc.) work offline.

@@ -28,10 +28,10 @@ import {
   ensureLocalNotesSource,
 } from '../sources/builtin-sources.ts';
 import { loadConfigDefaults } from '../config/storage.ts';
-import { CONFIG_DIR } from '../config/paths.ts';
 import { generateSlug } from '../utils/slug.ts';
 import { parsePermissionMode, PERMISSION_MODE_ORDER } from '../agent/mode-types.ts';
 import { normalizeThinkingLevel } from '../agent/thinking-levels.ts';
+import { resolveConfigDir } from "../config/paths.ts";
 import type {
   WorkspaceConfig,
   LoadedWorkspace,
@@ -39,7 +39,7 @@ import type {
   WorkspaceKind,
 } from './types.ts';
 
-const DEFAULT_WORKSPACES_DIR = join(CONFIG_DIR, 'workspaces');
+const DEFAULT_WORKSPACES_DIR = join(resolveConfigDir(), 'workspaces');
 
 /**
  * Canonical identity supplied by the global registry when it creates or
@@ -571,20 +571,22 @@ export function ensurePluginManifest(rootPath: string, workspaceName: string): v
   const pluginDir = join(rootPath, '.claude-plugin');
   const manifestPath = join(pluginDir, 'plugin.json');
 
-  if (existsSync(manifestPath)) return;
-
   // Create .claude-plugin directory
   if (!existsSync(pluginDir)) {
     mkdirSync(pluginDir, { recursive: true });
   }
 
-  // Create minimal plugin manifest
+  // Create minimal plugin manifest (wx avoids existsSync→write TOCTOU)
   const manifest = {
     name: `craft-workspace-${workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
     version: '1.0.0',
   };
 
-  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  try {
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), { flag: 'wx' });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+  }
 }
 
-export { CONFIG_DIR, DEFAULT_WORKSPACES_DIR };
+export { DEFAULT_WORKSPACES_DIR };

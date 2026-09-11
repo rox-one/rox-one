@@ -7,12 +7,17 @@ import { useTranslation } from 'react-i18next'
 import {
   featureUnifiedShellAtom,
   featureWorkbenchBrowserSurfaceV2Atom,
+  featureWorkbenchHarnessAgentIntelV1Atom,
+  featureWorkbenchHarnessChatChromeV1Atom,
+  featureWorkbenchHarnessExtCenterV1Atom,
+  featureWorkbenchHarnessInspectorV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchStatusBarV1Atom,
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
 } from '@/atoms/unified-shell'
-import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
+import { HARNESS_SKIP_LIST } from '@craft-agent/core/platform'
+import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
 
 export function WorkbenchChromeSettings() {
   const { t } = useTranslation()
@@ -22,8 +27,13 @@ export function WorkbenchChromeSettings() {
   const [tabGroups, setTabGroups] = useAtom(featureWorkbenchTabGroupsV2Atom)
   const [browserSurface, setBrowserSurface] = useAtom(featureWorkbenchBrowserSurfaceV2Atom)
   const [statusBar, setStatusBar] = useAtom(featureWorkbenchStatusBarV1Atom)
+  const [harnessInspector, setHarnessInspector] = useAtom(featureWorkbenchHarnessInspectorV1Atom)
+  const [harnessChatChrome, setHarnessChatChrome] = useAtom(featureWorkbenchHarnessChatChromeV1Atom)
+  const [harnessAgentIntel, setHarnessAgentIntel] = useAtom(featureWorkbenchHarnessAgentIntelV1Atom)
+  const [harnessExtCenter, setHarnessExtCenter] = useAtom(featureWorkbenchHarnessExtCenterV1Atom)
 
   return (
+    <>
     <SettingsSection
       title={t('settings.appearance.workbench')}
       description={t('settings.appearance.workbenchDesc')}
@@ -65,7 +75,56 @@ export function WorkbenchChromeSettings() {
           checked={statusBar}
           onCheckedChange={setStatusBar}
         />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessInspector')}
+          description={t('settings.appearance.workbenchHarnessInspectorDesc')}
+          checked={harnessInspector}
+          onCheckedChange={(checked) => {
+            setHarnessInspector(checked)
+            if (!checked) setHarnessAgentIntel(false)
+          }}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessChatChrome')}
+          description={t('settings.appearance.workbenchHarnessChatChromeDesc')}
+          checked={harnessChatChrome}
+          onCheckedChange={setHarnessChatChrome}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessAgentIntel')}
+          description={t('settings.appearance.workbenchHarnessAgentIntelDesc')}
+          checked={harnessAgentIntel}
+          onCheckedChange={(checked) => {
+            setHarnessAgentIntel(checked)
+            if (checked) setHarnessInspector(true)
+          }}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessExtCenter')}
+          description={t('settings.appearance.workbenchHarnessExtCenterDesc')}
+          checked={harnessExtCenter}
+          onCheckedChange={setHarnessExtCenter}
+        />
       </SettingsCard>
     </SettingsSection>
+    <SettingsSection
+      title={t('settings.appearance.harnessSkipTitle')}
+      description={t('settings.appearance.harnessSkipDesc')}
+    >
+      <div data-testid="harness-skip-list">
+        <SettingsCard>
+          {HARNESS_SKIP_LIST.map((item) => (
+            <SettingsRow
+              key={item.id}
+              label={t(`settings.appearance.harnessSkip.${item.id}`)}
+              description={t(`settings.appearance.harnessSkip.${item.id}Desc`)}
+            >
+              <span className="text-xs opacity-60">{t('settings.appearance.harnessSkipNotInstalled')}</span>
+            </SettingsRow>
+          ))}
+        </SettingsCard>
+      </div>
+    </SettingsSection>
+    </>
   )
 }

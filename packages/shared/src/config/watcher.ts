@@ -20,7 +20,6 @@ import { watch, existsSync, readdirSync, statSync, readFileSync, mkdirSync } fro
 import { join, dirname, basename, relative } from 'path';
 import { platform } from 'os';
 import type { FSWatcher } from 'fs';
-import { CONFIG_DIR } from './paths.ts';
 import { getContextDocsDir } from '../context-docs/index.ts';
 import { debug } from '../utils/debug.ts';
 import { expandPath } from '../utils/paths.ts';
@@ -56,6 +55,7 @@ import type { SessionHeader } from '../sessions/types.ts';
 import { AUTOMATIONS_CONFIG_FILE } from '../automations/constants.ts';
 import { loadAppTheme, loadPresetThemes, loadPresetTheme, getAppThemesDir } from './storage.ts';
 import type { ThemeOverrides, PresetTheme } from './theme.ts';
+import { resolveConfigDir } from "./paths.ts"
 
 // ============================================================
 // Active Watcher Registry (duplicate detection)
@@ -77,8 +77,8 @@ export function _getActiveWatchers(): ReadonlyMap<string, string> {
 // Constants
 // ============================================================
 
-const CONFIG_FILE = join(CONFIG_DIR, 'config.json');
-const PREFERENCES_FILE = join(CONFIG_DIR, 'preferences.json');
+const CONFIG_FILE = join(resolveConfigDir(), 'config.json');
+const PREFERENCES_FILE = join(resolveConfigDir(), 'preferences.json');
 
 // Debounce delay in milliseconds
 const DEBOUNCE_MS = 100;
@@ -382,13 +382,13 @@ export class ConfigWatcher {
    */
   private watchGlobalConfigs(): void {
     // Ensure config directory exists
-    if (!existsSync(CONFIG_DIR)) {
-      mkdirSync(CONFIG_DIR, { recursive: true });
+    if (!existsSync(resolveConfigDir())) {
+      mkdirSync(resolveConfigDir(), { recursive: true });
     }
 
     try {
       // Watch the config directory for changes to config.json, preferences.json, and theme.json
-      const watcher = watch(CONFIG_DIR, (eventType, filename) => {
+      const watcher = watch(resolveConfigDir(), (eventType, filename) => {
         if (!filename) return;
 
         if (filename === 'config.json') {
@@ -401,7 +401,7 @@ export class ConfigWatcher {
       });
 
       this.watchers.push(watcher);
-      debug('[ConfigWatcher] Watching global configs:', CONFIG_DIR);
+      debug('[ConfigWatcher] Watching global configs:', resolveConfigDir());
     } catch (error) {
       debug('[ConfigWatcher] Error watching global configs:', error);
     }

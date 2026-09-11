@@ -2,7 +2,6 @@
  * Process-local Connection Fabric runtime (main / server only).
  */
 import { join } from 'node:path'
-import { CONFIG_DIR } from '@craft-agent/shared/config/paths'
 import {
   ConnectionWorkGraph,
   CredentialRefRegistry,
@@ -15,6 +14,7 @@ import {
   InfisicalFabricProvider,
   createInfisicalImporter,
 } from '@craft-agent/core/platform'
+import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 
 export interface FabricRuntime {
   readonly directory: string
@@ -35,7 +35,7 @@ export function resetFabricRuntime(): void {
 }
 
 export function getFabricRuntime(): FabricRuntime {
-  const directory = join(process.env.CRAFT_CONFIG_DIR || CONFIG_DIR, 'connection-fabric')
+  const directory = join(process.env.CRAFT_CONFIG_DIR || resolveConfigDir(), 'connection-fabric')
   if (cached?.directory === directory) return cached
 
   const graph = new ConnectionWorkGraph({ directory })

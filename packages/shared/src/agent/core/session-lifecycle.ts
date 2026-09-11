@@ -40,6 +40,9 @@ export enum AbortReason {
 
   /** Internal error requiring abort */
   InternalError = 'internal_error',
+
+  /** RX-TSK-0303: PreToolUse permission chain proven dead — fail-closed kill */
+  SecurityWatchdog = 'security_watchdog',
 }
 
 /**

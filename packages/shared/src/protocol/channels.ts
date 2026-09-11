@@ -71,6 +71,8 @@ export const RPC_CHANNELS = {
     IMPORT: 'sessions:import',
     EXPORT_REMOTE_TRANSFER: 'sessions:exportRemoteTransfer',
     IMPORT_REMOTE_TRANSFER: 'sessions:importRemoteTransfer',
+    FOREIGN_DISCOVER: 'sessions:foreignDiscover',
+    FOREIGN_PERSIST: 'sessions:foreignPersist',
   },
   transfer: {
     START: 'transfer:start',
@@ -178,10 +180,18 @@ export const RPC_CHANNELS = {
     UNWATCH: 'notes:unwatch',
     CHANGED: 'notes:changed',
   },
+  notesImport: {
+    PREVIEW: 'notesImport:preview',
+    EXECUTE: 'notesImport:execute',
+  },
   // knowledge — P1 read-only knowledge provider (spec 03) plus P3 write-back
   // mutation-proposal channels (spec 05) plus P4 Session→Knowledge publication
   // pipeline (spec 06). ENGINE_START is local bootstrap (detect/open/spawn);
   // full managed lifecycle (stop/pin) remains out of scope.
+  notesImport: {
+    PREVIEW: 'notesImport:preview',
+    EXECUTE: 'notesImport:execute',
+  },
   knowledge: {
     LIST_CONNECTIONS: 'knowledge:listConnections',
     CAPABILITIES: 'knowledge:capabilities',
@@ -298,6 +308,7 @@ export const RPC_CHANNELS = {
     OPEN_URL: 'shell:openUrl',
     OPEN_FILE: 'shell:openFile',
     SHOW_IN_FOLDER: 'shell:showInFolder',
+    EXEC: 'shell:exec',
   },
   menu: {
     NEW_CHAT: 'menu:newChat',
@@ -513,6 +524,7 @@ export const RPC_CHANNELS = {
   },
   workspace: {
     GET_PERMISSIONS: 'workspace:getPermissions',
+    OPEN_IN_EDITOR: 'workspace:openInEditor',
     READ_IMAGE: 'workspace:readImage',
     WRITE_IMAGE: 'workspace:writeImage',
     SETTINGS_GET: 'workspaceSettings:get',
@@ -587,6 +599,11 @@ export const RPC_CHANNELS = {
     GET_LATEST: 'securityAudit:getLatest',
     ACCEPT_RISK: 'securityAudit:acceptRisk',
     REVOKE_RISK_ACCEPTANCE: 'securityAudit:revokeRiskAcceptance',
+  },
+  commandGateway: {
+    LIST: 'command:list',
+    APPROVE: 'command:approve',
+    DENY: 'command:deny',
   },
   labels: {
     LIST: 'labels:list',
@@ -667,6 +684,7 @@ export const RPC_CHANNELS = {
   },
   git: {
     GET_BRANCH: 'git:getBranch',
+    GET_STATUS: 'git:getStatus',
   },
   gitbash: {
     CHECK: 'gitbash:check',

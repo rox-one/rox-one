@@ -10,6 +10,7 @@
  */
 
 import type { EntityColor } from '../colors/types.ts';
+import type { CollectionFilters } from '../sessions/collection-types.ts';
 
 /** Domain a view applies to. Default 'sessions' for back-compat with views.json v1. */
 export type ViewDomain = 'sessions' | 'knowledge';
@@ -74,6 +75,9 @@ export interface ViewConfig {
 
   /** Preset bulk actions for knowledge views */
   presetActions?: KnowledgeViewPresetAction[];
+
+  /** Structured collection chips mirrored onto this view. */
+  collectionFilters?: CollectionFilters;
 }
 
 /**
@@ -113,6 +117,10 @@ export interface ViewEvaluationContext {
   model: string;
   /** Role of last message ('user', 'assistant', 'plan', 'tool', 'error') */
   lastMessageRole: string;
+  /** Session priority id; empty string when unset */
+  priority: string;
+  /** Project id; empty string when unset */
+  projectId: string;
 
   // === Numbers ===
   /** Timestamp (ms) of last activity */
@@ -123,6 +131,8 @@ export interface ViewEvaluationContext {
   messageCount: number;
   /** Number of labels on the session */
   labelCount: number;
+  /** Due timestamp (ms); 0 when unset */
+  dueDate: number;
 
   // === Booleans ===
   /** Whether session is starred */
@@ -133,6 +143,9 @@ export interface ViewEvaluationContext {
   isProcessing: boolean;
   /** Whether there's a pending plan to accept (lastMessageRole == 'plan') */
   hasPendingPlan: boolean;
+
+  /** Derived due bucket */
+  dueBucket: string;
 
   // === Nested Objects (accessed via dot notation) ===
   /** Token usage stats — access via tokenUsage.costUsd, tokenUsage.totalTokens, etc. */

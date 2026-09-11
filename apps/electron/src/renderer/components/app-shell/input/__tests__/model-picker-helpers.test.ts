@@ -39,6 +39,11 @@ describe('stripPiPrefixForDisplay', () => {
   test('handles empty string', () => {
     expect(stripPiPrefixForDisplay('')).toBe('')
   })
+
+  it('strips a ROX catalog prefix from display names', () => {
+    expect(stripPiPrefixForDisplay('ROX Standard')).toBe('Standard')
+    expect(stripPiPrefixForDisplay('ROX Explore')).toBe('Explore')
+  })
 })
 
 // -----------------------------------------------------------------------------

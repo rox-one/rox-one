@@ -7,7 +7,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAtomValue, useSetAtom, useStore } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash } from 'lucide-react'
 import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -26,8 +26,9 @@ import { navigate, routes } from '@/lib/navigate'
 import { coerceInputText } from '@/lib/input-text'
 import { lookupImportedNote } from '@/lib/notes-migration-map'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
-import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionAtomFamily, sessionMetaMapAtom } from '@/atoms/sessions'
+import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
+import { rememberCollectionView } from '@/components/app-shell/collection/collection-view-cycle'
 import { getSessionTitle } from '@/utils/session'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
 import { resolveEffectiveConnectionSlug, isSessionConnectionUnavailable } from '@config/llm-connections'
@@ -136,7 +137,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   // Track if messages are loaded for this session (for lazy loading)
   const loadedSessions = useAtomValue(loadedSessionsAtom)
-  const jotaiStore = useStore()
   const messagesLoaded = loadedSessions.has(sessionId)
 
   // Check if session exists in metadata (for loading state detection)
@@ -292,11 +292,23 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         const nextText = coerceInputText(text)
         setInputValue(nextText)
         inputValueRef.current = nextText
+        onInputChange(sessionId, nextText)
       }
     }
     window.addEventListener('craft:restore-input', handler)
     return () => window.removeEventListener('craft:restore-input', handler)
-  }, [sessionId])
+  }, [sessionId, onInputChange])
+
+  React.useEffect(() => {
+    const handler = (e: Event) => {
+      const { sessionId: targetId, view } = (e as CustomEvent).detail ?? {}
+      if (targetId === sessionId && (view === 'map' || view === 'outline' || view === 'standard')) {
+        setSessionView(view)
+      }
+    }
+    window.addEventListener('craft:session-view', handler)
+    return () => window.removeEventListener('craft:session-view', handler)
+  }, [sessionId, setSessionView])
 
   const handleInputChange = React.useCallback((value: string) => {
     const nextText = coerceInputText(value)
@@ -687,20 +699,17 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (sessionView === 'map') {
         const relatedBranches = [...sessionMetaMap.values()]
           .filter((meta) => meta.id !== sessionId && (meta.branchFromSessionId === sessionId || meta.parentSessionId === sessionId))
-          .map((meta) => {
-            const loaded = loadedSessions.has(meta.id) ? jotaiStore.get(sessionAtomFamily(meta.id)) : null
-            const fromMessageId = loaded?.branchFromMessageId
-            return {
-              id: meta.id,
-              name: meta.name || meta.preview || meta.id,
-              ...(fromMessageId ? { fromMessageId } : {}),
-            }
-          })
+          .map((meta) => ({
+            id: meta.id,
+            name: meta.name || meta.preview || meta.id,
+            ...(meta.branchFromMessageId ? { fromMessageId: meta.branchFromMessageId } : {}),
+          }))
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
             <SessionWorkflowEditor
               sessionId={sessionId}
               messages={workbenchMessages}
+              loading={sessionMindMapLoading}
               relatedBranches={relatedBranches}
               onFork={handleWorkbenchFork}
               onRewrite={handleWorkbenchRewrite}
@@ -714,12 +723,17 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       if (sessionView === 'outline') {
         const relatedBranches = [...sessionMetaMap.values()]
           .filter((meta) => meta.id !== sessionId && (meta.branchFromSessionId === sessionId || meta.parentSessionId === sessionId))
-          .map((meta) => ({ id: meta.id, name: meta.name || meta.preview || meta.id }))
+          .map((meta) => ({
+            id: meta.id,
+            name: meta.name || meta.preview || meta.id,
+            ...(meta.branchFromMessageId ? { fromMessageId: meta.branchFromMessageId } : {}),
+          }))
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
             <SessionGitOutline
               sessionId={sessionId}
               messages={workbenchMessages}
+              loading={sessionMindMapLoading}
               relatedBranches={relatedBranches}
               onCheckoutMessage={(id) => {
                 setSessionView('standard')
@@ -753,8 +767,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       handleCreateChildSessions,
       handleInputChange,
       sessionMetaMap,
-      loadedSessions,
-      jotaiStore,
       activeWorkspaceId,
       session?.messages,
     ],
@@ -822,7 +834,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       taskSlug,
       initialTitle: sessionMeta ? getSessionTitle(sessionMeta) : undefined,
     })
-    navigate(routes.view.board())
+    rememberCollectionView('list')
+    navigate(routes.view.board(sessionId))
   }, [taskSlug, sessionId, sessionMeta, setKanbanEditorTarget])
 
   const handleDelete = React.useCallback(async () => {

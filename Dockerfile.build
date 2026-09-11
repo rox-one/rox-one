@@ -1,0 +1,149 @@
+# syntax=docker/dockerfile:1.7
+# RX-PIP-0100 — воспроизводимая сборка образа ROX One через BuildKit.
+#
+# Секреты допускаются ТОЛЬКО как `RUN --mount=type=secret,id=...`.
+# Запрещены ARG/ENV с секретами: они попадают в историю слоёв и `docker history`.
+#
+# Локально: `bash scripts/rx-build.sh`
+# CI: job `rx-build-image` в `.circleci/config.yml` (workflow `rx-main`).
+
+# Базовый образ совпадает с CircleCI (oven/bun:1.3.14-debian).
+FROM oven/bun:1.3.14-debian AS deps
+
+LABEL org.opencontainers.image.source="https://github.com/rox-one/rox-one"
+LABEL org.opencontainers.image.description="ROX One — сборочный образ сервера (BuildKit)"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
+WORKDIR /app
+
+# git нужен bun для git-зависимостей; python/make/g++ — для native addons.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates git python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
+
+# Каталог кэша bun: монтируется как BuildKit cache, не как слой образа.
+ENV BUN_INSTALL_CACHE_DIR=/root/.bun/install/cache
+
+# Манифесты workspace — отдельным слоем, чтобы смена исходников не сбрасывала bun install.
+COPY package.json bun.lock bunfig.toml ./
+COPY packages/server/package.json packages/server/
+COPY packages/server-core/package.json packages/server-core/
+COPY packages/shared/package.json packages/shared/
+COPY packages/core/package.json packages/core/
+COPY packages/session-tools-core/package.json packages/session-tools-core/
+COPY packages/session-mcp-server/package.json packages/session-mcp-server/
+COPY packages/pi-agent-server/package.json packages/pi-agent-server/
+COPY packages/ui/package.json packages/ui/
+COPY packages/messaging-gateway/package.json packages/messaging-gateway/
+COPY packages/messaging-whatsapp-worker/package.json packages/messaging-whatsapp-worker/
+COPY packages/messaging-discord-worker/package.json packages/messaging-discord-worker/
+COPY packages/cloud-runner/package.json packages/cloud-runner/
+COPY apps/electron/package.json apps/electron/
+COPY apps/cli/package.json apps/cli/
+COPY apps/viewer/package.json apps/viewer/
+COPY apps/webui/package.json apps/webui/
+COPY apps/cloud-gateway/package.json apps/cloud-gateway/
+
+# github_token / gh_token живут в tmpfs BuildKit и не попадают в слой.
+# Пустые файлы допустимы (required=false): публичные npm-пакеты ставятся без токена.
+RUN --mount=type=cache,id=rox-bun-install,target=/root/.bun/install/cache \
+    --mount=type=secret,id=github_token,required=false \
+    --mount=type=secret,id=gh_token,required=false \
+    /bin/sh -c 'set -eu; \
+      if [ -s /run/secrets/github_token ]; then \
+        GITHUB_TOKEN="$(cat /run/secrets/github_token)"; \
+        export GITHUB_TOKEN; \
+      fi; \
+      if [ -z "${GITHUB_TOKEN:-}" ] && [ -s /run/secrets/gh_token ]; then \
+        GITHUB_TOKEN="$(cat /run/secrets/gh_token)"; \
+        export GITHUB_TOKEN; \
+      fi; \
+      if [ -n "${GITHUB_TOKEN:-}" ]; then \
+        export GH_TOKEN="$GITHUB_TOKEN"; \
+      fi; \
+      bun install --frozen-lockfile'
+
+# ---------- сборка дистрибутива сервера ----------
+FROM deps AS build
+ARG TARGETARCH
+WORKDIR /app
+COPY . .
+
+# Токен GitHub снимает лимиты API при скачивании Bun/uv в scripts/build-server.ts.
+RUN --mount=type=cache,id=rox-bun-install,target=/root/.bun/install/cache \
+    --mount=type=secret,id=github_token,required=false \
+    --mount=type=secret,id=gh_token,required=false \
+    /bin/sh -c 'set -eu; \
+      if [ -s /run/secrets/github_token ]; then \
+        GITHUB_TOKEN="$(cat /run/secrets/github_token)"; \
+        export GITHUB_TOKEN; \
+      fi; \
+      if [ -z "${GITHUB_TOKEN:-}" ] && [ -s /run/secrets/gh_token ]; then \
+        GITHUB_TOKEN="$(cat /run/secrets/gh_token)"; \
+        export GITHUB_TOKEN; \
+      fi; \
+      if [ -n "${GITHUB_TOKEN:-}" ]; then \
+        export GH_TOKEN="$GITHUB_TOKEN"; \
+      fi; \
+      case "${TARGETARCH:-amd64}" in \
+        amd64|x86_64) ARCH=x64 ;; \
+        arm64|aarch64) ARCH=arm64 ;; \
+        *) echo "неподдерживаемый TARGETARCH=${TARGETARCH}" >&2; exit 1 ;; \
+      esac; \
+      bun build packages/session-mcp-server/src/index.ts \
+        --outfile packages/session-mcp-server/dist/index.js --target node --format cjs; \
+      bun build packages/pi-agent-server/src/index.ts \
+        --outfile packages/pi-agent-server/dist/index.js --target node --format cjs; \
+      bun run scripts/build-wa-worker.ts; \
+      bun run scripts/build-discord-worker.ts; \
+      NODE_OPTIONS="--max-old-space-size=4096" bunx vite build --config apps/webui/vite.config.ts; \
+      bun run scripts/build-server.ts --platform=linux --arch="$ARCH"; \
+      mkdir -p dist/server/apps/webui; \
+      cp -a apps/webui/dist dist/server/apps/webui/dist'
+
+# ---------- минимальный runtime ----------
+FROM oven/bun:1.3.14-debian AS runtime
+
+# Node нужен WhatsApp-воркеру (Baileys): Bun его не исполняет.
+# ARG NODE_MAJOR — не секрет, только номер мажора пакета.
+ARG NODE_MAJOR=20
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates git ripgrep curl gnupg && \
+    curl -fsSL https://deb.nodesource.com/setup_${NODE_MAJOR}.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Claude Code SDK не стартует от root.
+RUN groupadd -r craftagents && \
+    useradd -r -g craftagents -m -d /home/craftagents -s /bin/bash craftagents
+
+WORKDIR /app
+
+# В runtime попадает только собранный дистрибутив, не исходники монорепо.
+COPY --from=build --chown=craftagents:craftagents /app/dist/server /app
+
+RUN chmod +x /app/bin/craft-server /app/start.sh && \
+    if [ -f /app/vendor/bun/bun ]; then chmod +x /app/vendor/bun/bun; fi && \
+    if [ -f /app/resources/bin/uv ]; then chmod +x /app/resources/bin/uv; fi && \
+    mkdir -p /home/craftagents/.craft-agent && \
+    chown -R craftagents:craftagents /home/craftagents
+
+USER craftagents
+
+ENV CRAFT_IS_PACKAGED=true
+ENV CRAFT_BUNDLED_ASSETS_ROOT=/app
+ENV CRAFT_APP_ROOT=/app
+ENV CRAFT_RESOURCES_PATH=/app/resources
+ENV CRAFT_UV=/app/resources/bin/uv
+ENV CRAFT_SCRIPTS=/app/resources/scripts
+ENV CRAFT_RPC_HOST=0.0.0.0
+ENV CRAFT_RPC_PORT=9100
+ENV CRAFT_WEBUI_DIR=/app/apps/webui/dist
+ENV CRAFT_MESSAGING_WA_WORKER=/app/packages/messaging-whatsapp-worker/dist/worker.cjs
+ENV CRAFT_MESSAGING_DISCORD_WORKER=/app/packages/messaging-discord-worker/dist/worker.cjs
+ENV CRAFT_MESSAGING_NODE_BIN=node
+ENV PATH="/app/resources/bin:/app/vendor/bun:${PATH}"
+
+EXPOSE 9100
+
+ENTRYPOINT ["/app/bin/craft-server"]

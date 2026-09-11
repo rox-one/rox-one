@@ -39,6 +39,10 @@ mock.module('@craft-agent/shared/credentials', () => ({
     async get(id: CredentialId) {
       return credentials.get(`${id.type}::${id.workspaceId}::${id.sourceId}`) ?? null
     },
+    // RX-TSK-0417-аудит: identity RPC вызывает set/delete; без них mock.module
+    // утекает в соседние файлы сьюта и роняет identity.test.ts.
+    async set() {},
+    async delete() {},
   }),
 }))
 

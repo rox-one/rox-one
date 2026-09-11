@@ -32,6 +32,10 @@ export function groupHeaderCount(
   return isCollapsed ? (collapsedCount ?? 0) : itemsLength
 }
 
+export function selectGroupDisabled(itemCount: number): boolean {
+  return itemCount === 0
+}
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -83,6 +87,10 @@ export interface EntityListProps<T> {
   onExpandAll?: () => void
   /** Select every currently loaded item in this group */
   onSelectGroup?: (groupKey: string) => void
+  /** Highlighted empty-group drop lane */
+  dropGroupKey?: string | null
+  /** Drag over an empty expanded group (drop lane) */
+  onEmptyGroupDragOver?: (groupKey: string, event: React.DragEvent) => void
 }
 
 // ============================================================================
@@ -102,7 +110,7 @@ function SectionHeader({
   return (
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
-        <div className="sticky top-0 z-10 bg-background px-4 py-2">
+        <div className="sticky top-0 z-10 bg-background px-5 py-2">
           <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
             {label} <> · <span className="text-muted-foreground/50">{itemCount}</span></>
           </span>
@@ -110,7 +118,7 @@ function SectionHeader({
       </ContextMenuTrigger>
       {onSelectGroup ? (
         <StyledContextMenuContent>
-          <StyledContextMenuItem onClick={onSelectGroup}>
+          <StyledContextMenuItem disabled={selectGroupDisabled(itemCount)} onClick={onSelectGroup}>
             {t('entityList.selectGroup')}
           </StyledContextMenuItem>
         </StyledContextMenuContent>
@@ -143,7 +151,7 @@ function CollapsibleGroupHeader({
       <ContextMenuTrigger asChild>
         <button
           onClick={onToggle}
-          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-4 py-2 group/header relative"
+          className="sticky top-0 z-10 flex w-full cursor-pointer items-center gap-1.5 bg-background px-5 py-2 group/header relative"
         >
           <div className="absolute inset-y-0.5 left-2 right-2 rounded-[6px] group-hover/header:bg-foreground/2 transition-colors pointer-events-none" />
           <ChevronRight
@@ -162,7 +170,7 @@ function CollapsibleGroupHeader({
           {isCollapsed ? t('entityList.expand') : t('entityList.collapse')}
         </StyledContextMenuItem>
         {onSelectGroup ? (
-          <StyledContextMenuItem onClick={onSelectGroup}>
+          <StyledContextMenuItem disabled={selectGroupDisabled(itemCount)} onClick={onSelectGroup}>
             {t('entityList.selectGroup')}
           </StyledContextMenuItem>
         ) : null}
@@ -200,7 +208,10 @@ export function EntityList<T>({
   onCollapseAll,
   onExpandAll,
   onSelectGroup,
+  dropGroupKey,
+  onEmptyGroupDragOver,
 }: EntityListProps<T>) {
+  const { t } = useTranslation()
   // Determine if we have content
   const hasGroups = groups && groups.length > 0
   const hasItems = items && items.length > 0
@@ -249,6 +260,20 @@ export function EntityList<T>({
                           onSelectGroup={onSelectGroup ? () => onSelectGroup(group.key) : undefined}
                         />
                       )}
+                      {!isCollapsed && group.items.length === 0 ? (
+                        <div
+                          data-empty-group={group.key}
+                          className={cn(
+                            'mx-3 mb-2 rounded-[6px] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
+                            dropGroupKey === group.key
+                              ? 'border-foreground/40 bg-foreground/5 text-foreground/80'
+                              : 'border-foreground/15',
+                          )}
+                          onDragOver={(event) => onEmptyGroupDragOver?.(group.key, event)}
+                        >
+                          {t('entityList.emptyGroupDrop')}
+                        </div>
+                      ) : null}
                       {group.items.map((item, indexInGroup) =>
                         <React.Fragment key={getKey(item)}>
                           {renderItem(item, indexInGroup, indexInGroup === 0)}

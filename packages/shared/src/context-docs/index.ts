@@ -27,6 +27,7 @@ import { dirname, join, basename } from 'path';
 import { homedir } from 'os';
 import { getBundledAssetsDir } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
+import { resolveConfigDir } from "../config/paths.ts"
 
 /** Atomic write: tmp sibling + rename (same FS → atomic on POSIX/NTFS). */
 function atomicWriteFileSync(path: string, content: string): void {

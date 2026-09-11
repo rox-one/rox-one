@@ -620,6 +620,32 @@ export interface ElectronAPI {
   // Session export/import (cross-workspace transfer)
   exportSession(sessionId: string): Promise<unknown>
   importSession(targetWorkspaceId: string, bundle: unknown, mode: 'move' | 'fork'): Promise<{ sessionId: string; warnings?: string[] }>
+  foreignDiscoverSessions(args: { workspaceId: string }): Promise<{
+    entries: Array<{
+      id: string
+      kind: string
+      sourcePath: string
+      title?: string
+      cwd?: string
+      userTurns: number
+      skipReason?: string
+    }>
+    scannedAt: number
+    cachePath: string
+    truncated?: boolean
+  }>
+  foreignPersistSessions(args: {
+    workspaceId: string
+    sourcePaths: string[]
+    mode?: 'skip' | 'append' | 'force'
+  }): Promise<{
+    results: Array<{
+      sourcePath: string
+      action: 'created' | 'skipped' | 'appended' | 'replaced'
+      sessionId?: string
+      reason?: string
+    }>
+  }>
   exportRemoteSessionTransfer(sessionId: string): Promise<RemoteSessionTransferPayload>
   importRemoteSessionTransfer(targetWorkspaceId: string, payload: RemoteSessionTransferPayload): Promise<ImportRemoteSessionTransferResult>
 
@@ -980,6 +1006,24 @@ export interface ElectronAPI {
 
   // Toolchain manager (first-run download manager)
   /** Current per-tool status snapshot. */
+  /** RX-TSK-0411: bounded scan of a local folder for the import consent dialog. */
+  previewNotesImport(input: { workspaceId: string; sourcePath: string }): Promise<unknown>
+  /** Materialize consented copies into the workspace imports folder. */
+  executeNotesImport(input: { workspaceId: string; sourcePath: string }): Promise<unknown>
+  /** RX-DOC-0032: pending commands awaiting an owner decision. */
+  listPendingCommands(input: { workspaceId: string }): Promise<import('@craft-agent/server-core/command-gateway').PendingCommand[]>
+  approveCommand(input: { workspaceId: string; id: string }): Promise<{ ok: true }>
+  denyCommand(input: { workspaceId: string; id: string }): Promise<{ ok: true }>
+  /** RX-TSK-0112: OpenClaw runtime status for the audit panel. */
+  getOpenClawRuntimeStatus(input: { workspaceId: string }): Promise<import('@craft-agent/shared/openclaw').OpenClawRuntimeStatus>
+  /** Run a security audit ('standard' | 'deep') and return the snapshot. */
+  runSecurityAudit(input: { workspaceId: string; mode: import('@craft-agent/shared/openclaw').AuditMode }): Promise<import('@craft-agent/shared/openclaw').SecurityAuditSnapshot>
+  /** Latest stored snapshot or null. */
+  getLatestSecurityAudit(input: { workspaceId: string }): Promise<import('@craft-agent/shared/openclaw').SecurityAuditSnapshot | null>
+  /** Owner accepts a finding as a known risk. */
+  acceptSecurityRisk(input: import('@craft-agent/shared/openclaw').AcceptSecurityRiskRequest): Promise<void>
+  /** Revoke a previously accepted risk by fingerprint. */
+  revokeSecurityRiskAcceptance(input: { workspaceId: string; fingerprint: string }): Promise<void>
   getToolchainStatus(): Promise<ToolchainToolStatus[]>
   /** Push stream of per-tool status updates (download progress, phase changes). */
   onToolchainStatusChanged(callback: (status: ToolchainToolStatus) => void): () => void
@@ -1005,6 +1049,7 @@ export interface ElectronAPI {
   openUrl(url: string): Promise<void>
   openFile(path: string): Promise<void>
   showInFolder(path: string): Promise<void>
+  runShellCommand(input: { command: string; cwd?: string }): Promise<{ ok: boolean; stdout?: string; stderr?: string }>
   exportNotePdf(opts: { html: string; defaultPath: string }): Promise<{ canceled: boolean; filePath?: string }>
   /** Save plain text via native save dialog (knowledge export, etc.). */
   saveTextFile(opts: {
@@ -1534,6 +1579,14 @@ export interface ElectronAPI {
 
   // Git operations
   getGitBranch(dirPath: string): Promise<string | null>
+  getGitStatus(dirPath: string): Promise<{
+    isRepo: boolean
+    branch: string | null
+    ahead: number
+    behind: number
+    entries: Array<{ path: string; index: string; worktree: string }>
+  }>
+  openInEditor(dirPath: string): Promise<{ opened: boolean; editor?: string; reason?: string }>
 
   // Git Bash (Windows)
   checkGitBash(): Promise<GitBashStatus>
@@ -1842,6 +1895,9 @@ export type WeChatUiEvent =
 export type RightSidebarPanel =
   | { type: 'files'; path?: string }
   | { type: 'history' }
+  | { type: 'git' }
+  | { type: 'browser' }
+  | { type: 'context' }
   | { type: 'none' }
 
 /**
