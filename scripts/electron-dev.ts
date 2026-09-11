@@ -645,6 +645,37 @@ async function main(): Promise<void> {
     }),
   ]);
 
+  // Watch mode kicks an immediate rebuild that can still be writing the ~50MB
+  // main.cjs when Vite becomes ready. Re-stabilize + syntax-check before spawn
+  // so Electron never loads a truncated bundle (SyntaxError: Unexpected end of input).
+  console.log("⏳ Waiting for watch rebuild to stabilize before Electron...");
+  const [watchMainStable, watchPreloadStable, watchToolbarStable] = await Promise.all([
+    waitForFileStable(mainCjsPath),
+    waitForFileStable(preloadCjsPath),
+    waitForFileStable(toolbarPreloadCjsPath),
+  ]);
+  if (!watchMainStable || !watchPreloadStable || !watchToolbarStable) {
+    console.error("❌ Watch rebuild files did not stabilize");
+    process.exit(1);
+  }
+  const [watchMainValid, watchPreloadValid, watchToolbarValid] = await Promise.all([
+    verifyJsFile(mainCjsPath),
+    verifyJsFile(preloadCjsPath),
+    verifyJsFile(toolbarPreloadCjsPath),
+  ]);
+  if (!watchMainValid.valid) {
+    console.error("❌ main.cjs invalid after watch rebuild:", watchMainValid.error);
+    process.exit(1);
+  }
+  if (!watchPreloadValid.valid) {
+    console.error("❌ bootstrap-preload.cjs invalid after watch rebuild:", watchPreloadValid.error);
+    process.exit(1);
+  }
+  if (!watchToolbarValid.valid) {
+    console.error("❌ browser-toolbar-preload.cjs invalid after watch rebuild:", watchToolbarValid.error);
+    process.exit(1);
+  }
+
   console.log("🚀 Starting Electron...\n");
 
   const debugPort = process.env.CRAFT_REMOTE_DEBUGGING_PORT?.trim() ?? "";

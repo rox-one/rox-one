@@ -848,13 +848,18 @@ export function loadStoredConfig(): StoredConfig | null {
     // for every tracked folder. Legacy no-kind records normalize to personal
     // and lose any previously unverified org marker.
     config.workspaces = config.workspaces.map((workspace) => {
+      const expandedRootPath = expandPath(workspace.rootPath);
       const expanded = {
         ...workspace,
-        rootPath: expandPath(workspace.rootPath),
+        rootPath: expandedRootPath,
       };
       const normalized = normalizeWorkspaceRecord(expanded);
+      // Compare against the expanded on-disk path. Portable (`~/...`) vs absolute
+      // is not a real migration — treating it as one made every loadStoredConfig
+      // rewrite config.json, which re-fired ConfigWatcher in a tight loop and
+      // flaked ws-rpc connect/disconnect during boot.
       if (
-        normalized.rootPath !== workspace.rootPath ||
+        normalized.rootPath !== expandedRootPath ||
         normalized.name !== workspace.name ||
         normalized.slug !== workspace.slug ||
         normalized.kind !== workspace.kind ||
