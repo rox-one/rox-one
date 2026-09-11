@@ -552,8 +552,9 @@ function EditorInner({
           <div
             role="toolbar"
             aria-label={t('entityView.map')}
-            className="pointer-events-none absolute inset-x-0 top-0 z-10 flex min-w-0 items-center gap-2 px-3 py-1.5 text-[11px]"
+            className="pointer-events-none absolute inset-x-0 top-0 z-10 flex min-w-0 flex-col gap-1.5 px-3 py-1.5 text-[11px] sm:flex-row sm:flex-wrap sm:items-center sm:gap-2"
           >
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
               {t('entityView.flowLive')}
             </span>
@@ -568,7 +569,8 @@ function EditorInner({
                 {t(SESSION_NODE_KIND_I18N[selectedDraft.kind])}
               </span>
             ) : null}
-            <div className="pointer-events-auto ml-auto inline-flex min-w-0 flex-wrap items-center justify-end gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl">
+            </div>
+            <div className="pointer-events-auto inline-flex min-w-0 flex-wrap items-center gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl sm:ml-auto">
               <div className="inline-flex rounded-full border border-border/70 bg-background/60 p-0.5">
                 <Button
                   type="button"
@@ -621,7 +623,7 @@ function EditorInner({
           </div>
 
           {selected && (
-            <div className="pointer-events-auto absolute right-3 top-10 z-10 flex w-[min(18rem,calc(100%-1.5rem))] flex-col gap-2 rounded-xl border border-white/10 bg-background/70 p-3 shadow-strong backdrop-blur-2xl">
+            <div className="pointer-events-auto absolute right-3 top-16 z-10 flex w-[min(18rem,calc(100%-1.5rem))] flex-col gap-2 rounded-xl border border-white/10 bg-background/70 p-3 shadow-strong backdrop-blur-2xl">
               <div className="flex items-center gap-2">
                 <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                   {selectedKindLabel}
