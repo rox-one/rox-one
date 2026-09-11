@@ -104,6 +104,7 @@ export const KEYS = {
   featureWorkbenchConationNotesBridge: 'feature-workbench-conation-notes-bridge',
   featureWorkbenchConationDriveRead: 'feature-workbench-conation-drive-read',
   featureWorkbenchConationCanvas: 'feature-workbench-conation-canvas',
+  featureWorkbenchConationBoard: 'feature-workbench-conation-board',
   featureWorkbenchConationMail: 'feature-workbench-conation-mail',
   featureWorkbenchConationCal: 'feature-workbench-conation-cal',
   featureWorkbenchConationDssClient: 'feature-workbench-conation-dss-client',

@@ -43,6 +43,8 @@ import { registerNotesPanel } from './conation/conation-notes-panels'
 import { ConationNotesPanel } from './conation/ConationNotesPanel'
 import { registerFundPanel } from './conation/conation-fund-panels'
 import { ConationFundPanel } from './conation/ConationFundPanel'
+import { registerBoardPanel } from './conation/conation-board-panels'
+import { ConationBoardPanel } from './conation/ConationBoardPanel'
 import {
   DEFAULT_PANEL_REGISTRY_STATE,
   getAppPanelRegistry,
@@ -89,6 +91,22 @@ registerFundPanel(
     shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
     inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
     canvasEnabled: storage.get(KEYS.featureWorkbenchConationCanvas, false),
+  },
+)
+
+// Board deep-link panel: no-op unless shell + inspector + board are all on (default false).
+// No second in-pane kanban — Rox Board remains the board surface (ROX-010).
+registerBoardPanel(
+  {
+    register: (contribution) => {
+      void contribution
+    },
+  },
+  ConationBoardPanel,
+  {
+    shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
+    inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
+    boardEnabled: storage.get(KEYS.featureWorkbenchConationBoard, false),
   },
 )
 

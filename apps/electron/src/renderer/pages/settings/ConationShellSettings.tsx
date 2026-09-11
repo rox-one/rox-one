@@ -14,6 +14,7 @@ import {
   featureWorkbenchConationSessionApplyAtom,
   featureWorkbenchConationSoupClientAtom,
   featureWorkbenchConationCanvasAtom,
+  featureWorkbenchConationBoardAtom,
 } from '@/atoms/unified-shell'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 
@@ -27,6 +28,7 @@ export function ConationShellSettings() {
   const [dssClient, setDssClient] = useAtom(featureWorkbenchConationDssClientAtom)
   const [sessionApply, setSessionApply] = useAtom(featureWorkbenchConationSessionApplyAtom)
   const [canvas, setCanvas] = useAtom(featureWorkbenchConationCanvasAtom)
+  const [board, setBoard] = useAtom(featureWorkbenchConationBoardAtom)
 
   return (
     <SettingsSection
@@ -102,6 +104,15 @@ export function ConationShellSettings() {
           )}
           checked={canvas}
           onCheckedChange={setCanvas}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.conationBoard', 'Board deep-link')}
+          description={t(
+            'settings.appearance.conationBoardDesc',
+            'Open Board on Conation via deep-link (workbench.conation.board). Default off. No second in-pane kanban.',
+          )}
+          checked={board}
+          onCheckedChange={setBoard}
         />
       </SettingsCard>
     </SettingsSection>
