@@ -61,8 +61,10 @@ export function InspectorBrowserPane() {
   }
 
   return (
-    <div className="relative h-full min-h-0 w-full flex-1">
-      <BrowserPanelPage instanceId={instanceId} persist />
+    <div className="relative min-h-0 w-full flex-1">
+      <div className="absolute inset-0 min-h-0 min-w-0">
+        <BrowserPanelPage instanceId={instanceId} persist />
+      </div>
     </div>
   )
 }

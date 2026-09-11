@@ -11,8 +11,8 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { bottomDockHeightAtom, bottomTerminalOpenAtom } from '@/atoms/unified-shell'
 import { InspectorTerminal } from './InspectorTerminal'
 
-const MIN_HEIGHT = 140
-const MAX_HEIGHT = 640
+const MIN_HEIGHT = 120
+const MAX_HEIGHT = 900
 
 export function BottomTerminalDock() {
   const { t } = useTranslation()
@@ -27,23 +27,22 @@ export function BottomTerminalDock() {
   const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     event.preventDefault()
     drag.current = { startY: event.clientY, startH: height }
-    event.currentTarget.setPointerCapture(event.pointerId)
-  }
-
-  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    const state = drag.current
-    if (!state) return
-    const next = Math.min(MAX_HEIGHT, Math.max(MIN_HEIGHT, state.startH + (state.startY - event.clientY)))
-    setHeight(next)
-  }
-
-  const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
-    drag.current = null
-    try {
-      event.currentTarget.releasePointerCapture(event.pointerId)
-    } catch {
-      /* already released */
+    const move = (e: PointerEvent) => {
+      const state = drag.current
+      if (!state) return
+      const viewportCap = Math.max(MIN_HEIGHT, Math.floor(window.innerHeight * 0.72))
+      const next = Math.min(MAX_HEIGHT, viewportCap, Math.max(MIN_HEIGHT, state.startH + (state.startY - e.clientY)))
+      setHeight(next)
     }
+    const up = () => {
+      drag.current = null
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
   }
 
   if (!open) return null
@@ -57,9 +56,6 @@ export function BottomTerminalDock() {
       <div
         className="absolute inset-x-0 top-0 z-10 h-1.5 cursor-ns-resize hover:bg-foreground/15"
         onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
       />
       <div className="flex h-8 shrink-0 items-center justify-between border-b border-white/5 px-3">
         <span className="truncate text-[12px] font-medium">{t('inspector.terminal')}</span>
@@ -77,7 +73,9 @@ export function BottomTerminalDock() {
           <TooltipContent side="top">{t('inspector.hide')}</TooltipContent>
         </Tooltip>
       </div>
-      <InspectorTerminal cwd={cwd} />
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <InspectorTerminal cwd={cwd} />
+      </div>
     </div>
   )
 }

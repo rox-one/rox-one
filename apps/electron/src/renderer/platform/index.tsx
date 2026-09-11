@@ -57,8 +57,8 @@ export function UnifiedShellLayout({ children }: { children: ReactNode }) {
   return (
     <>
       {chrome.showRail && <ActivityRail />}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {children}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
       {chrome.showInspector && <InspectorHost />}

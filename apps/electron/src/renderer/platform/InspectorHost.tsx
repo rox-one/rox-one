@@ -57,7 +57,7 @@ import { panelTypeToSurfaceKind } from './surface-tab-model'
 
 const INSPECTOR_RAIL_WIDTH = 48
 const INSPECTOR_MIN_WIDTH = 280
-const INSPECTOR_MAX_WIDTH = 920
+const INSPECTOR_MAX_WIDTH = 1400
 
 const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
   info: Info,
@@ -248,7 +248,7 @@ export function InspectorHost() {
   const [chromeCollapsed, setChromeCollapsed] = useAtom(inspectorChromeCollapsedAtom)
   const [sectionRaw, setSection] = useAtom(inspectorSectionAtom)
   const [panelWidth, setPanelWidth] = useAtom(inspectorPanelWidthAtom)
-  const [, setBottomTerminalOpen] = useAtom(bottomTerminalOpenAtom)
+  const [bottomTerminalOpen, setBottomTerminalOpen] = useAtom(bottomTerminalOpenAtom)
   const widthDrag = useRef<{ startX: number; startW: number } | null>(null)
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const route = useAtomValue(focusedPanelRouteAtom)
@@ -347,31 +347,43 @@ export function InspectorHost() {
       {visible && (
         <div
           className="relative flex h-full flex-col overflow-hidden bg-background shadow-middle"
-          style={{ width: Math.min(INSPECTOR_MAX_WIDTH, Math.max(INSPECTOR_MIN_WIDTH, panelWidth)), borderRadius: RADIUS_INNER }}
+          style={{
+            width: Math.min(
+              INSPECTOR_MAX_WIDTH,
+              Math.max(INSPECTOR_MIN_WIDTH, panelWidth),
+              Math.max(INSPECTOR_MIN_WIDTH, Math.floor(typeof window !== 'undefined' ? window.innerWidth * 0.72 : INSPECTOR_MAX_WIDTH)),
+            ),
+            borderRadius: RADIUS_INNER,
+          }}
         >
           <div
             className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize hover:bg-foreground/15"
             onPointerDown={(event) => {
               event.preventDefault()
               widthDrag.current = { startX: event.clientX, startW: panelWidth }
-              event.currentTarget.setPointerCapture(event.pointerId)
-            }}
-            onPointerMove={(event) => {
-              const drag = widthDrag.current
-              if (!drag) return
-              const next = Math.min(
-                INSPECTOR_MAX_WIDTH,
-                Math.max(INSPECTOR_MIN_WIDTH, drag.startW + (drag.startX - event.clientX)),
-              )
-              setPanelWidth(next)
-            }}
-            onPointerUp={(event) => {
-              widthDrag.current = null
-              try {
-                event.currentTarget.releasePointerCapture(event.pointerId)
-              } catch {
-                /* already released */
+              const move = (e: PointerEvent) => {
+                const drag = widthDrag.current
+                if (!drag) return
+                const viewportCap = Math.max(
+                  INSPECTOR_MIN_WIDTH,
+                  Math.floor(window.innerWidth * 0.72),
+                )
+                const next = Math.min(
+                  INSPECTOR_MAX_WIDTH,
+                  viewportCap,
+                  Math.max(INSPECTOR_MIN_WIDTH, drag.startW + (drag.startX - e.clientX)),
+                )
+                setPanelWidth(next)
               }
+              const up = () => {
+                widthDrag.current = null
+                window.removeEventListener('pointermove', move)
+                window.removeEventListener('pointerup', up)
+                window.removeEventListener('pointercancel', up)
+              }
+              window.addEventListener('pointermove', move)
+              window.addEventListener('pointerup', up)
+              window.addEventListener('pointercancel', up)
             }}
           />
           <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-foreground/5 pl-3 pr-2">
@@ -448,16 +460,25 @@ export function InspectorHost() {
                   data-terminal-flag={WORKBENCH_FLAG.terminalV1}
                   onClick={() => {
                     setChromeCollapsed(false)
-                    if (visible && !terminalOpen) {
-                      setBottomTerminalOpen(true)
+                    // Movable cycle: closed → bottom dock → side inspector → closed.
+                    // Terminal stays a UEW-style surface (bottom) by default; side is an alternate dock.
+                    if (terminalOpen && visible) {
+                      setTerminalOpen(false)
+                      setBottomTerminalOpen(false)
                       return
                     }
-                    setTerminalOpen(true)
-                    setVisible(true)
+                    if (bottomTerminalOpen) {
+                      setBottomTerminalOpen(false)
+                      setTerminalOpen(true)
+                      setVisible(true)
+                      return
+                    }
+                    setTerminalOpen(false)
+                    setBottomTerminalOpen(true)
                   }}
                   className={cn(
                     'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
-                    terminalOpen && visible
+                    (terminalOpen && visible) || bottomTerminalOpen
                       ? 'bg-accent/10 text-accent'
                       : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
                   )}
