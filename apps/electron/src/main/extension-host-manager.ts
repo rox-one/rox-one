@@ -914,7 +914,7 @@ export function getExtensionHostManager(workspaceId?: string | null): ExtensionH
     // Isolated broker per workspace so stop/revoke in A cannot clear B's tokens.
     mgr = new ExtensionHostManager({
       broker: new CapabilityBroker({
-        persistDir: CONFIG_DIR,
+        persistDir: resolveConfigDir(),
         persistNamespace: key,
         requireUrlAllowlist: !isDevRuntime(),
       }),
