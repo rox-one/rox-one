@@ -102,6 +102,9 @@ async function main(): Promise<void> {
       "--external:link-preview-js",
       "--external:qrcode-terminal",
       "--external:jimp",
+      // sharp: native .node binaries — must stay external (esbuild cannot load them).
+      "--external:sharp",
+      "--external:@img/*",
     ],
     cwd: ROOT_DIR,
     stdout: "inherit",
