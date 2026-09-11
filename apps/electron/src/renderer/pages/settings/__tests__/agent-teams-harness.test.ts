@@ -51,4 +51,20 @@ describe('Agent Teams first-party wiring', () => {
       existsSync(join(repoRoot, 'apps/electron/src/renderer/platform/ExtensionCenter.tsx')),
     ).toBe(false)
   })
+
+  it('ships workspace .agent-teams durable store without enabling the flag', () => {
+    const storeSrc = readFileSync(
+      join(repoRoot, 'packages/core/src/platform/agent-teams/store.ts'),
+      'utf8',
+    )
+    const skillText = skill
+    expect(storeSrc).toContain("AGENT_TEAMS_STATE_DIR = '.agent-teams'")
+    expect(storeSrc).toContain('export class AgentTeamsStore')
+    expect(storeSrc).toContain('appendMailbox')
+    expect(storeSrc).not.toContain("defaultValue: true")
+    expect(skillText).toContain('.agent-teams/')
+    expect(skillText).toContain('AgentTeamsStore')
+    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: false/)
+  })
+
 })

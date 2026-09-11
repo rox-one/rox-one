@@ -178,3 +178,5 @@ rox/ru-codex-navigation ──► rox/session-harness-port (эта ветка)
 ```
 
 Не форсить в `main`. Не смешивать H1 и H3 в одном PR.
+
+**Post-H6 durable store (2026-09-11):** workspace `.agent-teams/` via `AgentTeamsStore` (`@craft-agent/core/platform/agent-teams`). Flag remains default false. Cordis `agentTeamsRuntime` stays skipped. No Timeline / inspector DAG in this follow-up.
