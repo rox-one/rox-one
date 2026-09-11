@@ -207,6 +207,13 @@ export {
   handleRenderTemplate,
   // Send Developer Feedback
   handleSendDeveloperFeedback,
+  // Pages
+  handleListPages,
+  handleGetPage,
+  handleCreatePage,
+  handleUpdatePage,
+  handleWritePageData,
+  handleDeletePage,
 } from './handlers/index.ts';
 
 // Knowledge handlers (registered in SESSION_TOOL_DEFS)
@@ -236,6 +243,12 @@ export type {
   HostBashArgs,
   RenderTemplateArgs,
   SendDeveloperFeedbackArgs,
+  ListPagesArgs,
+  GetPageArgs,
+  CreatePageArgs,
+  UpdatePageArgs,
+  WritePageDataArgs,
+  DeletePageArgs,
 } from './handlers/index.ts';
 
 // Tool definitions — single source of truth
@@ -258,6 +271,13 @@ export {
   BrowserToolSchema,
   // Developer feedback schema
   SendDeveloperFeedbackSchema,
+  // Pages schemas
+  ListPagesSchema,
+  GetPageSchema,
+  CreatePageSchema,
+  UpdatePageSchema,
+  WritePageDataSchema,
+  DeletePageSchema,
   // Knowledge tool schemas
   KnowledgeSearchSchema,
   KnowledgeReadSchema,

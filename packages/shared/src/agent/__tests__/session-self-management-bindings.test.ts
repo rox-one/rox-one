@@ -215,6 +215,34 @@ describe('attachSessionSelfManagementBindings', () => {
     // No callbacks registered — resolveLabels should be undefined, not an identity function
     expect(ctx.resolveLabels).toBeUndefined();
   });
+
+  it('pages callbacks resolve from the session registry', async () => {
+    const ctx = createBaseContext(sessionId);
+    attachSessionSelfManagementBindings(ctx, sessionId);
+    expect(ctx.pages).toBeUndefined();
+
+    registerSessionScopedToolCallbacks(sessionId, {
+      pages: {
+        listPages: () => [],
+        getPage: () => null,
+        createPage: async () => {
+          throw new Error('unused');
+        },
+        updatePage: async () => {
+          throw new Error('unused');
+        },
+        writePageData: async () => {
+          throw new Error('unused');
+        },
+        deletePage: async () => {
+          throw new Error('unused');
+        },
+      },
+    });
+
+    expect(ctx.pages).toBeDefined();
+    expect(await ctx.pages!.listPages()).toEqual([]);
+  });
 });
 
 // ============================================================
