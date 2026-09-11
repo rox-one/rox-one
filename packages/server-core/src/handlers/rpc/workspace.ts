@@ -4,7 +4,6 @@ import { homedir } from 'node:os'
 import { join, basename } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import {
-import {
   addWorkspace,
   createAndActivateLocalWorkspace,
   getActiveWorkspace,

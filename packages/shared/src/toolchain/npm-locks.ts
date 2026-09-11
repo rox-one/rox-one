@@ -83,16 +83,3 @@ export function getNpmLock(tool: string, version: string): string | null {
   if (!b64) return null;
   return Buffer.from(b64, 'base64').toString('utf8');
 }
-
-export const OPENCLAW_NPM_PIN = {
-  packageName: 'openclaw',
-  version: '2026.7.1-2',
-  tarballUrl: 'https://registry.npmjs.org/openclaw/-/openclaw-2026.7.1-2.tgz',
-  tarballSha256: '5bb525f36f471a41239615d321c441778c7e1c007018ed6d84b795be77803276',
-  tarballIntegrity: 'sha512-ycF3yPcbjN6bUPeaUx6Mh6vze1hQWoD3CT/wWcmD7a8xaHHHRUaAlaq+lFxMHf1ssEgODVAwjlzYqp2twkYZ7g==',
-  requiredNodeRange: '>=22.22.3 <23 || >=24.15.0 <25 || >=25.9.0',
-  entrypoint: 'openclaw.mjs',
-} as const;
-
-
-
