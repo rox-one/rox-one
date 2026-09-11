@@ -1,0 +1,27 @@
+name: Perf Budgets
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/electron/src/renderer/perf/**'
+      - 'packages/server-core/src/observability/**'
+      - 'scripts/bench/renderer-perf-report.ts'
+      - '.github/workflows/perf-budgets.yml'
+  pull_request:
+    paths:
+      - 'apps/electron/src/renderer/perf/**'
+      - 'packages/server-core/src/observability/**'
+      - 'scripts/bench/renderer-perf-report.ts'
+      - '.github/workflows/perf-budgets.yml'
+  workflow_dispatch:
+jobs:
+  budgets:
+    runs-on: [self-hosted, macos-toolchain]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: '1.3.10' }
+      - run: bun install --frozen-lockfile
+        env: { GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
+      - run: bun run test:perf-budgets
