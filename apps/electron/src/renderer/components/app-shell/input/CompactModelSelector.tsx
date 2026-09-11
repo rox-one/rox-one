@@ -131,7 +131,7 @@ export function CompactModelSelector({
     )
     if (!model) return stripPiPrefixForDisplay(getModelDisplayName(modelToDisplay))
     if (typeof model === 'string') return stripPiPrefixForDisplay(model)
-    return model.name ?? stripPiPrefixForDisplay(model.id)
+    return stripPiPrefixForDisplay(model.name ?? model.id)
   }, [availableModels, currentModel, connectionDefaultModel])
 
   const thinkingDisabled = React.useMemo(() => {
