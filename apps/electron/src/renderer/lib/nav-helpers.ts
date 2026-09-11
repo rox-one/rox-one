@@ -20,6 +20,8 @@ import type { NavigationState } from '../../shared/types'
  * - settings: Overview (bare `settings`) and every subpage are detail surfaces
  *   so compact mode shows Overview after navigating to Settings
  * - sources / skills / automations / projects / browser: a detail item is selected
+ * - pages: always — both the library grid and a page render in the content
+ *   panel (pages has no navigator list to fall back to)
  */
 export function isDetailNavState(navState: NavigationState | null): boolean {
   if (!navState) return false
@@ -35,6 +37,8 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'browser':
     case 'notes':
       return navState.details !== null
+    case 'pages':
+      return true
     case 'memory':
     case 'connections':
       return false

@@ -21,8 +21,9 @@ import { resolveAutomationsConfigPath, generateShortId } from './resolve-config-
 import { compactAutomationHistorySync } from './history-store.ts';
 import { createLogger } from '../utils/debug.ts';
 import { WorkspaceEventBus, type EventPayloadMap } from './event-bus.ts';
-import { PromptHandler, EventLogHandler, WebhookHandler, KnowledgeHandler, type AutomationsConfigProvider, type KnowledgeActionExecutor, type CloudRunSubmitExecutor } from './handlers/index.ts';
-import { type AutomationsConfig, type AutomationEvent, type AutomationMatcher, type PendingPrompt, type WebhookActionResult, type AppEvent, type AgentEvent, type SdkAutomationCallbackMatcher, type SdkAutomationInput } from './types.ts';
+import { PromptHandler, EventLogHandler, WebhookHandler, ScriptHandler, KnowledgeHandler, type AutomationsConfigProvider, type KnowledgeActionExecutor, type CloudRunSubmitExecutor } from './handlers/index.ts';
+import { type AutomationsConfig, type AutomationEvent, type AutomationMatcher, type PendingPrompt, type WebhookActionResult, type ScriptActionResult, type AppEvent, type AgentEvent, type SdkAutomationCallbackMatcher, type SdkAutomationInput } from './types.ts';
+import { buildPageRefreshMatchers } from '../pages/refresh.ts';
 import { validateAutomationsConfig } from './validation.ts';
 import { matcherMatchesSdk } from './utils.ts';
 import { SchedulerService, type SchedulerTickPayload } from '../scheduler/scheduler-service.ts';
@@ -52,6 +53,8 @@ export interface AutomationSystemOptions {
   onPromptsReady?: (prompts: PendingPrompt[]) => void;
   /** Called when webhook results are available */
   onWebhookResults?: (results: WebhookActionResult[]) => void;
+  /** Called when script results are available */
+  onScriptResults?: (results: ScriptActionResult[]) => void;
   /** Called when an error occurs during automation execution */
   onError?: (event: AutomationEvent, error: Error) => void;
   /** Called when events are lost after retries */
@@ -76,7 +79,10 @@ export class AutomationSystem implements AutomationsConfigProvider {
   private eventLogHandler: EventLogHandler | null = null;
   private scheduler: SchedulerService | null = null;
   private knowledgeHandler: KnowledgeHandler | null = null;
+  private scriptHandler: ScriptHandler | null = null;
   private disposed = false;
+  /** Synthetic SchedulerTick matchers derived from page refresh specs */
+  private pageRefreshMatchers: AutomationMatcher[] = [];
 
   // Session metadata tracking (moved from SessionManager)
   private readonly lastKnownMetadata: Map<string, SessionMetadataSnapshot> = new Map();
@@ -87,6 +93,9 @@ export class AutomationSystem implements AutomationsConfigProvider {
 
     // Load configuration
     this.loadConfig();
+
+    // Materialize page refresh specs as synthetic cron matchers
+    this.reloadPageRefreshMatchers();
 
     // Create handlers
     this.createHandlers();
@@ -238,7 +247,31 @@ export class AutomationSystem implements AutomationsConfigProvider {
   }
 
   getMatchersForEvent(event: AutomationEvent): AutomationMatcher[] {
-    return this.config?.automations[event] ?? [];
+    const configured = this.config?.automations[event] ?? [];
+    // Page refreshes are cron-driven: synthetic matchers only join SchedulerTick
+    if (event === 'SchedulerTick' && this.pageRefreshMatchers.length > 0) {
+      return [...configured, ...this.pageRefreshMatchers];
+    }
+    return configured;
+  }
+
+  /**
+   * Rebuild the synthetic page-refresh matchers from pages/{slug}/page.json.
+   * Called at construction and whenever the config watcher reports a pages
+   * change. Returns the number of scheduled page refreshes.
+   */
+  reloadPageRefreshMatchers(): number {
+    try {
+      this.pageRefreshMatchers = buildPageRefreshMatchers(this.options.workspaceRootPath);
+    } catch (e) {
+      // Non-critical — a broken page config must never break automations
+      log.debug(`[AutomationSystem] Failed to build page refresh matchers: ${e}`);
+      this.pageRefreshMatchers = [];
+    }
+    if (this.pageRefreshMatchers.length > 0) {
+      log.debug(`[AutomationSystem] ${this.pageRefreshMatchers.length} page refresh matcher(s) active`);
+    }
+    return this.pageRefreshMatchers.length;
   }
 
   // ============================================================================
@@ -280,6 +313,18 @@ export class AutomationSystem implements AutomationsConfigProvider {
       onEventLost: this.options.onEventLost,
     });
     this.eventLogHandler.subscribe(this.eventBus);
+
+    // Script handler (page refresh + workspace-local script automations)
+    this.scriptHandler = new ScriptHandler(
+      {
+        workspaceId: this.options.workspaceId,
+        workspaceRootPath: this.options.workspaceRootPath,
+        onScriptResults: this.options.onScriptResults,
+        onError: this.options.onError,
+      },
+      this
+    );
+    this.scriptHandler.subscribe(this.eventBus);
 
     // Knowledge handler (optional — requires executor from server-core)
     if (this.options.knowledgeExecutor) {
@@ -569,6 +614,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
     // Dispose handlers
     this.promptHandler?.dispose();
     this.webhookHandler?.dispose();
+    this.scriptHandler?.dispose();
     this.knowledgeHandler?.dispose();
     await this.eventLogHandler?.dispose();
 

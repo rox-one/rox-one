@@ -97,6 +97,7 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 }
 
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@craft-agent/server-core/sessions'
+import { PageThumbnailer } from './page-thumbnailer'
 import { registerAllRpcHandlers } from './handlers/index'
 import { registerCoreRpcHandlers, cleanupCoreClientResources } from '@craft-agent/server-core/handlers/rpc'
 import { createWorkGraphKernel, type WorkGraphKernel } from '@craft-agent/server-core/workgraph'
@@ -749,6 +750,13 @@ app.whenReady().then(async () => {
         createSessionManager: () => {
           const sm = new SessionManager()
           sm.setBrowserPaneManager(browserPaneManager!)
+          const pageThumbnailer = new PageThumbnailer({
+            log: (m) => mainLog.info(m),
+            onCaptured: ({ workspaceRootPath, slug }) => {
+              sm.notifyConfigFileChange(workspaceRootPath, `pages/${slug}/page.json`)
+            },
+          })
+          sm.setPageThumbnailer((req) => pageThumbnailer.enqueue(req))
           return sm
         },
         bindRpcServer: (sm, server) => sm.setRpcServer(server),

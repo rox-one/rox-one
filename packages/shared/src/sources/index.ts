@@ -112,8 +112,18 @@ export {
   type SourceTokenStats,
 } from './source-stats.ts';
 
-// API Tools (types)
-export type { SummarizeCallback } from './api-tools.ts';
+// API Tools
+export {
+  executeApiRequest,
+  ApiResponseTooLargeError,
+} from './api-tools.ts';
+export type {
+  SummarizeCallback,
+  ApiCredentialSource,
+  ApiRequestInput,
+  ExecuteApiRequestOptions,
+  ApiRequestOutcome,
+} from './api-tools.ts';
 
 // Token Refresh Manager (handles OAuth token refresh with rate limiting)
 export {

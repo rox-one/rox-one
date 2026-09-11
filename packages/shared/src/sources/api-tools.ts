@@ -9,6 +9,7 @@ import { createSdkMcpServer, tool } from '@anthropic-ai/claude-agent-sdk';
 import { z } from 'zod';
 import type { ApiConfig } from './types.ts';
 import { debug } from '../utils/debug.ts';
+import { redactUrlForLog } from '../utils/redaction.ts';
 import { guardLargeResult } from '../utils/large-response.ts';
 import { MAX_DOWNLOAD_SIZE, formatBytes } from '../utils/binary-detection.ts';
 import type { ApiCredential, BasicAuthCredential } from './credential-manager.ts';
@@ -184,6 +185,110 @@ function buildUrl(
   }
 
   return url;
+}
+
+/** One API request as executed against a source's baseUrl */
+export interface ApiRequestInput {
+  /** Endpoint path under the source's baseUrl */
+  path: string;
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+  /** Request body (POST/PUT/PATCH) or query parameters (GET); supports _rawBody/_contentType */
+  params?: Record<string, unknown>;
+}
+
+export interface ExecuteApiRequestOptions {
+  /** Cancels the in-flight fetch when aborted */
+  signal?: AbortSignal;
+  /** Abort automatically after this many ms (composed with `signal`) */
+  timeoutMs?: number;
+}
+
+/** Raw outcome of an API request (body not yet interpreted) */
+export interface ApiRequestOutcome {
+  /** True for 2xx responses */
+  ok: boolean;
+  status: number;
+  /** Raw response body */
+  buffer: Buffer;
+  /** Response Content-Type header, when present */
+  contentType: string | null;
+}
+
+/** Thrown before the body is loaded when Content-Length exceeds MAX_DOWNLOAD_SIZE */
+export class ApiResponseTooLargeError extends Error {
+  constructor(readonly sizeBytes: number) {
+    super(`Response too large: ${formatBytes(sizeBytes)} exceeds ${formatBytes(MAX_DOWNLOAD_SIZE)} limit. Use a streaming download tool for large files.`);
+    this.name = 'ApiResponseTooLargeError';
+  }
+}
+
+/**
+ * Execute one authenticated request against an API source.
+ *
+ * Shared by the MCP API tool handler and the Pages action bridge so credential
+ * resolution stays lazy (never crossing a process/IPC boundary).
+ *
+ * @throws ApiResponseTooLargeError when Content-Length exceeds the download cap
+ * @throws on network failure or abort (fetch semantics)
+ */
+export async function executeApiRequest(
+  config: ApiConfig,
+  credential: ApiCredentialSource,
+  request: ApiRequestInput,
+  options?: ExecuteApiRequestOptions,
+): Promise<ApiRequestOutcome> {
+  const { path, method, params } = request;
+
+  const rawCredential = isTokenGetter(credential)
+    ? await credential()
+    : credential;
+  const resolvedCredential: ApiCredential = rawCredential ?? '';
+
+  const url = buildUrl(config.baseUrl, path, method, params, config.auth, resolvedCredential);
+  const headers = buildHeaders(config.auth, resolvedCredential, config.defaultHeaders);
+
+  debug(`[api-tools] ${config.name}: ${method} ${redactUrlForLog(url)}`);
+
+  const signals: AbortSignal[] = [];
+  if (options?.signal) signals.push(options.signal);
+  if (options?.timeoutMs !== undefined) signals.push(AbortSignal.timeout(options.timeoutMs));
+
+  const fetchOptions: RequestInit = {
+    method,
+    headers,
+    ...(signals.length > 0 ? { signal: signals.length === 1 ? signals[0] : AbortSignal.any(signals) } : {}),
+  };
+
+  if (method !== 'GET' && params && Object.keys(params).length > 0) {
+    if (typeof params._rawBody === 'string') {
+      fetchOptions.body = params._rawBody;
+      (fetchOptions.headers as Record<string, string>)['Content-Type'] =
+        typeof params._contentType === 'string' ? params._contentType : 'text/plain';
+    } else {
+      fetchOptions.body = JSON.stringify(params);
+    }
+  }
+
+  debug(`[api-tools] ${config.name}: headerNames=[${Object.keys(headers).join(', ')}], bodyLength=${fetchOptions.body ? String(fetchOptions.body).length : 0}`);
+
+  const response = await fetch(url, fetchOptions);
+
+  const contentLength = response.headers.get('content-length');
+  if (contentLength) {
+    const size = parseInt(contentLength, 10);
+    if (!isNaN(size) && size > MAX_DOWNLOAD_SIZE) {
+      throw new ApiResponseTooLargeError(size);
+    }
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+
+  return {
+    ok: response.ok,
+    status: response.status,
+    buffer,
+    contentType: response.headers.get('content-type'),
+  };
 }
 
 /**

@@ -5,6 +5,7 @@
  * and the new Event Bus handlers (command-handler.ts, prompt-handler.ts).
  */
 
+import { join } from 'node:path';
 import type { BaseEventPayload } from './event-bus.ts';
 import type { AutomationEvent, AutomationMatcher, PromptReferences, AgentEvent, SdkAutomationInput } from './types.ts';
 import { matchesCron } from './cron-matcher.ts';
@@ -307,6 +308,69 @@ export function buildWebhookEnv(event: AutomationEvent, payload: BaseEventPayloa
       env[key] = value;
     }
   }
+
+  return env;
+}
+
+/**
+ * Env vars that are not CRAFT_* but that script runtimes cannot function
+ * without. Paths and OS plumbing only — never credentials.
+ */
+const SCRIPT_ENV_PLATFORM_ESSENTIALS = process.platform === 'win32'
+  ? ['USERPROFILE', 'SYSTEMROOT', 'WINDIR', 'SYSTEMDRIVE', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP']
+  : ['HOME'];
+
+export interface ScriptEnvOptions {
+  /** Workspace root, exposed as CRAFT_WORKSPACE_PATH */
+  workspaceRootPath: string;
+  /** Page slug when the script refreshes a page (adds CRAFT_PAGE_* vars) */
+  page?: string;
+}
+
+function applyPlatformAndCraftEnv(env: Record<string, string>): void {
+  for (const key of SCRIPT_ENV_PLATFORM_ESSENTIALS) {
+    const value = process.env[key];
+    if (value !== undefined) env[key] = value;
+  }
+
+  for (const [key, value] of Object.entries(process.env)) {
+    if (key.startsWith('CRAFT_') && value !== undefined) {
+      env[key] = value;
+    }
+  }
+}
+
+function applyWorkspaceAndPageEnv(env: Record<string, string>, options: ScriptEnvOptions): void {
+  env.CRAFT_WORKSPACE_PATH = options.workspaceRootPath;
+
+  if (options.page) {
+    const pageDir = join(options.workspaceRootPath, 'pages', options.page);
+    env.CRAFT_PAGE_SLUG = options.page;
+    env.CRAFT_PAGE_DIR = pageDir;
+    env.CRAFT_PAGE_DATA_DIR = join(pageDir, 'data');
+  }
+}
+
+/**
+ * Event-independent script env: CRAFT_*-only base without automation event context.
+ */
+export function buildBaseScriptEnv(options: ScriptEnvOptions): Record<string, string> {
+  const env: Record<string, string> = {};
+  applyPlatformAndCraftEnv(env);
+  applyWorkspaceAndPageEnv(env, options);
+  return env;
+}
+
+export function buildScriptEnv(
+  event: AutomationEvent,
+  payload: BaseEventPayload,
+  options: ScriptEnvOptions,
+): Record<string, string> {
+  const env: Record<string, string> = {};
+
+  applyPlatformAndCraftEnv(env);
+  Object.assign(env, buildBaseEventEnv(event, payload));
+  applyWorkspaceAndPageEnv(env, options);
 
   return env;
 }

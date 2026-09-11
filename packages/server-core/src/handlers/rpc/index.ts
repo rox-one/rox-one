@@ -31,6 +31,7 @@ export { getHealthCheck } from './server'
 import { registerSettingsHandlers } from './settings'
 import { registerGamificationHandlers } from './gamification'
 import { registerProjectsHandlers } from './projects'
+import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
 import { registerCollectionHandlers } from './collection'
 
@@ -93,6 +94,7 @@ export function registerCoreRpcHandlers(
   registerSettingsHandlers(server, deps)
   registerGamificationHandlers(server, deps)
   registerProjectsHandlers(server, deps)
+  registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 

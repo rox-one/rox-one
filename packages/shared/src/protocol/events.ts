@@ -7,6 +7,7 @@ import type { ThemeOverrides } from '../config/index'
 import type { LoadedSource } from '../sources/types'
 import type { LoadedSkill } from '../skills/types'
 import type { LoadedProject } from '../projects/types'
+import type { LoadedPage } from '../pages/types'
 import type { KanbanBoardConfig } from '../kanban/types'
 import type { CollectionDisplay } from '../sessions/collection-display-storage'
 import type { CollectionFilters } from '../sessions/collection-types'
@@ -70,6 +71,7 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.skillsPending.CHANGED]: [workspaceId: string]
   [RPC_CHANNELS.memory.CHANGED]: [workspaceId: string | null, scope: 'global' | 'workspace' | 'both']
   [RPC_CHANNELS.projects.CHANGED]: [workspaceId: string, projects: LoadedProject[]]
+  [RPC_CHANNELS.pages.CHANGED]: [workspaceId: string, pages: LoadedPage[]]
   [RPC_CHANNELS.kanban.CHANGED]: [workspaceId: string, config: KanbanBoardConfig]
   [RPC_CHANNELS.collection.CHANGED]: [workspaceId: string, display: CollectionDisplay]
   [RPC_CHANNELS.collection.FILTERS_CHANGED]: [workspaceId: string, filtersByKey: Record<string, CollectionFilters>]

@@ -34,6 +34,7 @@ import {
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
+  isPagesNavigation,
   isBrowserNavigation,
   isKnowledgeNavigation,
   isDiffNavigation,
@@ -57,6 +58,8 @@ import { recordRecentSetting } from '@/lib/settings-recent'
 import { AutomationInfoPage } from '../automations/AutomationInfoPage'
 import { AutomationGraphWorkspaceEditor } from '../automations/AutomationGraphWorkspaceEditor'
 import ProjectInfoPage from '@/pages/ProjectInfoPage'
+import { PagesHome } from '../pages/PagesHome'
+import { PageView } from '../pages/PageView'
 import { KanbanBoardContainer } from './kanban/KanbanBoardContainer'
 import { SessionTableHost } from './session-table/SessionTableHost'
 import type { ExecutionEntry } from '../automations/types'
@@ -430,6 +433,22 @@ export function MainContentPanel({
             className="min-h-0 flex-1"
           />
         </div>
+      </Panel>
+    )
+  }
+
+  // Pages navigator — full-width library or an open page (no middle list)
+  if (isPagesNavigation(navState)) {
+    if (navState.details?.type === 'page') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <PageView key={navState.details.pageSlug} pageSlug={navState.details.pageSlug} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <PagesHome />
       </Panel>
     )
   }
