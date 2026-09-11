@@ -39,7 +39,9 @@ export type CredentialType =
   // Managed OpenClaw Gateway token, keyed only by opaque runtimeId.
   | 'openclaw_gateway_token'
   // Identity Center service OAuth (SiYuan Cloud, etc.) — key service_oauth::{workspaceId}::{name}
-  | 'service_oauth';
+  | 'service_oauth'
+  // Page publication token (keyed by workspaceId + page id via `name`)
+  | 'page_publish_token';
 
 /** Valid credential types for validation */
 const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
@@ -58,6 +60,7 @@ const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
   'ssh_managed_token',
   'openclaw_gateway_token',
   'service_oauth',
+  'page_publish_token',
 ] as const;
 
 /** Check if a string is a valid CredentialType */
@@ -181,6 +184,11 @@ const LLM_CREDENTIAL_TYPES = [
   'llm_service_account',
 ] as const;
 
+/** Check if type is a page publication credential (workspaceId + pageId via `name`) */
+function isPageCredential(type: CredentialType): boolean {
+  return type === 'page_publish_token';
+}
+
 /** Check if type is a source credential */
 function isSourceCredential(type: CredentialType): boolean {
   return (SOURCE_CREDENTIAL_TYPES as readonly string[]).includes(type);
@@ -243,6 +251,14 @@ export function credentialIdToAccount(id: CredentialId): string {
   // Identity Center service OAuth:
   // service_oauth::{workspaceId}::{name}
   if (id.type === 'service_oauth' && id.workspaceId && id.name) {
+    parts.push(id.workspaceId);
+    parts.push(id.name);
+    return parts.join(CREDENTIAL_DELIMITER);
+  }
+
+  // Page-scoped format:
+  // page_publish_token::{workspaceId}::{pageId}
+  if (isPageCredential(id.type) && id.workspaceId && id.name) {
     parts.push(id.workspaceId);
     parts.push(id.name);
     return parts.join(CREDENTIAL_DELIMITER);
@@ -331,6 +347,12 @@ export function accountToCredentialId(account: string): CredentialId | null {
   // Identity Center service OAuth:
   // service_oauth::{workspaceId}::{name}
   if (type === 'service_oauth' && parts.length === 3) {
+    return { type, workspaceId: parts[1], name: parts[2] };
+  }
+
+  // Page-scoped format:
+  // page_publish_token::{workspaceId}::{pageId}
+  if (isPageCredential(type) && parts.length === 3) {
     return { type, workspaceId: parts[1], name: parts[2] };
   }
 

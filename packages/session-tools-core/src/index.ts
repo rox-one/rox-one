@@ -136,6 +136,16 @@ export type {
   ResolvedStatusResult,
   CreateTaskInput,
   CreateTaskResult,
+  PagesToolCallbacks,
+  PageToolRefreshSpec,
+  PageToolSummary,
+  PageToolDataSummary,
+  PageToolDetails,
+  CreatePageToolInput,
+  UpdatePageToolPatch,
+  PageDataToolPatch,
+  PageDataWriteSummary,
+  DeletePageToolResult,
 } from './context.ts';
 
 export { createNodeFileSystem } from './context.ts';
@@ -288,3 +298,18 @@ export type {
   KnowledgeReadArgs,
   KnowledgeGetBacklinksArgs,
 } from './tool-defs.ts';
+
+// Script runtime resolution + path containment (also used by the shared
+// automations script action — keep these exports runtime-only, no zod)
+export {
+  resolveScriptRuntime,
+} from './runtime/resolve-script-runtime.ts';
+export type {
+  ScriptRuntimeLanguage,
+  ResolvedScriptRuntime,
+  ResolveScriptRuntimeContext,
+} from './runtime/resolve-script-runtime.ts';
+export {
+  isPathWithinDirectory,
+  isPathWithinDirectoryForCreation,
+} from './runtime/path-security.ts';

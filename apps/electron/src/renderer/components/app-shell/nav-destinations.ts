@@ -22,6 +22,7 @@ import {
   Inbox,
   ListTodo,
   NotebookPen,
+  PanelsTopLeft,
   Settings,
   Zap,
   type LucideIcon,
@@ -33,6 +34,7 @@ import {
   isKnowledgeNavigation,
   isNotesNavigation,
   isMemoryNavigation,
+  isPagesNavigation,
   isProjectsNavigation,
   isSessionsNavigation,
   isSettingsNavigation,
@@ -48,6 +50,7 @@ export type AppNavDestinationId =
   | 'skills'
   | 'memory'
   | 'projects'
+  | 'pages'
   | 'automations'
   | 'connections'
   | 'settings'
@@ -91,6 +94,14 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     labelKey: 'sidebar.projects',
     route: () => routes.view.projects(),
     isActive: isProjectsNavigation,
+  },
+  {
+    id: 'pages',
+    linkId: 'nav:pages',
+    icon: PanelsTopLeft,
+    labelKey: 'sidebar.pages',
+    route: () => routes.view.pages(),
+    isActive: isPagesNavigation,
   },
   {
     id: 'memory',

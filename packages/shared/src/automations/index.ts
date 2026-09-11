@@ -29,6 +29,9 @@ export type {
   CraftActionRef,
   KnowledgeAutomationAction,
   CloudRunSubmitAction,
+  ScriptAction,
+  ScriptActionRuntime,
+  ScriptActionResult,
   AutomationAction,
   AutomationMatcher,
   AutomationsConfig,
@@ -85,7 +88,7 @@ export { buildEnvFromSdkInput } from './sdk-bridge.ts';
 // Utilities
 // ============================================================================
 
-export { parsePromptReferences } from './utils.ts';
+export { parsePromptReferences, buildScriptEnv, buildBaseScriptEnv, type ScriptEnvOptions } from './utils.ts';
 
 // ============================================================================
 // Re-exports from sub-modules
@@ -122,6 +125,13 @@ export { sanitizeForShell } from './security.ts';
 
 // Webhook execution utilities
 export { executeWebhookRequest, executeWithRetry, createWebhookHistoryEntry, createPromptHistoryEntry, type ExecuteWebhookOptions, type RetryConfig } from './webhook-utils.ts';
+
+export {
+  executeScriptAction,
+  createScriptHistoryEntry,
+  clampScriptTimeout,
+  DEFAULT_SCRIPT_TIMEOUT_MS,
+} from './script-executor.ts';
 
 // Retry scheduler
 export { RetryScheduler, type RetryQueueEntry, type RetrySchedulerOptions } from './retry-scheduler.ts';
@@ -196,11 +206,13 @@ export {
   PromptHandler,
   EventLogHandler,
   WebhookHandler,
+  ScriptHandler,
   KnowledgeHandler,
   type AutomationHandler,
   type PromptHandlerOptions,
   type EventLogHandlerOptions,
   type WebhookHandlerOptions,
+  type ScriptHandlerOptions,
   type KnowledgeHandlerOptions,
   type KnowledgeActionExecutor,
   type KnowledgeActionExecutorContext,

@@ -267,6 +267,8 @@ export interface ISessionManager {
    */
   notifyConfigFileChange(workspaceRootPath: string, relativePath: string): void
 
+  enqueuePageThumbnail(workspaceId: string, workspaceRootPath: string, slug: string): void
+
   // ---------------------------------------------------------------------------
   // Server-level observability
   // ---------------------------------------------------------------------------

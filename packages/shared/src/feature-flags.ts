@@ -107,6 +107,16 @@ export function isNativeIndexWatchEnabled(): boolean {
   return parseBooleanEnv(getEnv('CRAFT_FEATURE_NATIVE_INDEX_WATCH')) === true;
 }
 
+/**
+ * Public Pages sharing (publish/unpublish). Defaults to enabled.
+ * Override with CRAFT_FEATURE_PAGES_SHARING=1|0.
+ */
+export function isPagesSharingEnabled(): boolean {
+  const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_PAGES_SHARING'));
+  if (override !== undefined) return override;
+  return true;
+}
+
 export const FEATURE_FLAGS = {
   /** Enable Opus 4.7 fast mode (speed:"fast" + beta header). 6x pricing. */
   fastMode: false,
@@ -171,5 +181,12 @@ export const FEATURE_FLAGS = {
    */
   get nativeIndexWatch(): boolean {
     return isNativeIndexWatchEnabled();
+  },
+  /**
+   * Enable publishing a read-only copy of a Page to the web.
+   * Defaults to enabled. Override with CRAFT_FEATURE_PAGES_SHARING=1|0.
+   */
+  get pagesSharing(): boolean {
+    return isPagesSharingEnabled();
   },
 } as const;

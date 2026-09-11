@@ -23,3 +23,4 @@ export {
   type CloudRunSubmitExecutorContext,
   type CloudRunSubmitExecutorResult,
 } from './knowledge-handler.ts';
+export { ScriptHandler, type ScriptHandlerOptions } from './script-handler.ts';
