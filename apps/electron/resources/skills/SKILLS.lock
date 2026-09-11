@@ -126,10 +126,11 @@
       "commit": "local",
       "license": "MIT",
       "licenseFile": null,
-      "note": "H5 advisor/simplify skills. Current-session only; they must not spawn a hidden loop.",
+      "note": "H5 advisor/simplify (current-session only) + opt-in agent-teams captain skill (workbench.harness.agentTeams; not Cordis dsh-agent-teams).",
       "skills": [
         "advisor",
-        "simplify"
+        "simplify",
+        "agent-teams"
       ]
     }
   ]

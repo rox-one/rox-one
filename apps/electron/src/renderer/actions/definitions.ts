@@ -290,6 +290,13 @@ export const actions = {
     defaultHotkey: null,
     category: 'Chat',
   },
+  'session.agentTeams': {
+    id: 'session.agentTeams',
+    label: 'Agent Teams',
+    description: 'Prefill @agent-teams captain protocol (needs Appearance → Agent Teams flag)',
+    defaultHotkey: null,
+    category: 'Chat',
+  },
 
 } as const satisfies Record<string, ActionDefinition>
 

@@ -158,6 +158,8 @@ Skip-list заморожен в этом файле и в Appearance → «не 
 
 **Freeze (не устанавливаем):** session-buddy, mnemon, plugin hot-reload, agent-teams runtime, vision CLI plugin, search CLI plugin, extra automation runtime, remote-control compat. Канон: `HARNESS_SKIP_LIST`. Appearance показывает тот же список без тумблеров. Отложенного session-buddy в плане нет.
 
+**Post-H6 (2026-09-11):** Cordis `agent-teams runtime` остаётся в freeze. First-party skill `rox-harness/agent-teams` + Appearance-тумблер `workbench.harness.agentTeams` (default false) — отдельный opt-in поверх `spawn_session` / `send_agent_message`, без Cordis host.
+
 Реализовано: Appearance → Workbench → «не устанавливаем»; анти-цели H-03 §9.
 
 ## Порядок веток и merge

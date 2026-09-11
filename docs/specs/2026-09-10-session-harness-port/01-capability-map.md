@@ -54,7 +54,7 @@
 | `dsh-mnemon` | Требовал `webServer`. Память Rox = `packages/server-core/src/memory/` + self-learning specs |
 | `@michengai/dsh-automation` | Тот же `webServer`. Автоматизации уже first-party |
 | `dsh-sandbox-escalation-fix` | Патч чужого sandbox. У Rox — `craft-exec` / host-bash jail / UEW ExecutionPolicy |
-| `@nanmicoder/dsh-agent-teams` | Несовместимый host. Fan-out = `SessionFanOutSheet` + `spawn_session` |
+| `@nanmicoder/dsh-agent-teams` | Cordis host **skip**. Fan-out = `SessionFanOutSheet` + `spawn_session`. First-party skill `@agent-teams` за флагом `workbench.harness.agentTeams` (default false) |
 
 ## 4. Хост DSH Desktop (не community-плагины)
 

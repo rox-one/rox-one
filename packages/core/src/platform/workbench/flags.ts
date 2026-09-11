@@ -27,6 +27,8 @@ export const WORKBENCH_FLAG = {
   harnessChatChromeV1: 'workbench.harness.chat-chrome.v1',
   harnessAgentIntelV1: 'workbench.harness.agent-intel.v1',
   harnessExtCenterV1: 'workbench.harness.ext-center.v1',
+  /** Opt-in first-party Agent Teams skill (not Cordis @nanmicoder/dsh-agent-teams). */
+  harnessAgentTeams: 'workbench.harness.agentTeams',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -99,6 +101,12 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   },
   {
     id: WORKBENCH_FLAG.harnessExtCenterV1,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.harnessAgentTeams,
     defaultValue: false,
     dependencies: [],
     rollbackSafe: true,

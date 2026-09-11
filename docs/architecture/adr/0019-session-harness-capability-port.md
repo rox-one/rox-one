@@ -55,5 +55,6 @@ Protected by:
 | `workbench.harness.chat-chrome.v1` | false | H2 |
 | `workbench.harness.agent-intel.v1` | false | H3 |
 | `workbench.harness.ext-center.v1` | false | H4 |
+| `workbench.harness.agentTeams` | false | Post-H6: first-party Agent Teams skill (Cordis runtime stays skipped) |
 
 Существующие `featureUnifiedShellAtom` и `workbench.terminal.v1` / `execution.coordinator.v1` остаются независимыми.
