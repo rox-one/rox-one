@@ -709,7 +709,7 @@ export class OmpAgent extends BaseAgent {
     // --append-system-prompt: craft runtime context (host tools, mirror policy).
     // --approval-mode yolo: craft permission mode 'allow-all' → full yolo
     //   (OMP's strongest auto mode: zero approval prompts, incl. destructive).
-    const args = ['--mode', 'rpc'];
+    const args = ['--mode', 'rpc', '--allow-home'];
     const craftSessionId = this.config.session?.id || this._sessionId || '';
     const ompSessionDir = craftSessionId ? this.getOmpSessionDir(craftSessionId) : null;
     if (ompSessionDir) {

@@ -76,6 +76,7 @@ export const KEYS = {
 
   // Workbench rollout (PR-2)
   workbenchEnabled: 'workbench-enabled', // Explicit user preference
+  featureUnifiedShell: 'feature-unified-shell',
   workbenchLegacyEnabled: 'feature-unified-shell', // Bounded compatibility read only
   surfaceLayout: 'surface-layout', // Surface layout transport (URL search string; derived via platform/layout-snapshot.ts), workspace-scoped
   activityRailCollapsed: 'activity-rail-collapsed',
