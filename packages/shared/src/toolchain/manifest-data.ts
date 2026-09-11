@@ -85,7 +85,6 @@ export const TOOL_PLATFORM_MATRIX: Record<ToolName, ToolchainPlatform[]> = {
   // pip opt-in: uv pip install --require-hashes (embedded lock in pip-locks.ts)
   'pip-packaging': ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
   'cli-anything': ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
-  openclaw: ['darwin-arm64', 'darwin-x64', 'linux-x64', 'win32-x64'],
 };
 
 function uvPython(binPaths: string[]): ToolArtifact {
@@ -1249,46 +1248,6 @@ export const MANIFEST_DATA: Partial<Record<ToolName, ManifestToolData>> = {
         size: 234201,
         archive: 'tar.gz',
         binPaths: ["bin/dev3000.cmd"],
-      },
-    },
-  },
-
-  // OpenClaw is deliberately opt-in: exact registry tarball + embedded lock,
-  // installed script-free. Runtime resolution invokes managed Node + openclaw.mjs directly.
-  openclaw: {
-    version: OPENCLAW_NPM_PIN.version,
-    kind: 'npm',
-    tier: 'opt-in',
-    displayName: 'OpenClaw',
-    dependsOn: ['node'],
-    artifacts: {
-      'darwin-arm64': {
-        url: OPENCLAW_NPM_PIN.tarballUrl,
-        sha256: OPENCLAW_NPM_PIN.tarballSha256,
-        size: 19728152,
-        archive: 'tar.gz',
-        binPaths: ['package/openclaw.mjs'],
-      },
-      'darwin-x64': {
-        url: OPENCLAW_NPM_PIN.tarballUrl,
-        sha256: OPENCLAW_NPM_PIN.tarballSha256,
-        size: 19728152,
-        archive: 'tar.gz',
-        binPaths: ['package/openclaw.mjs'],
-      },
-      'linux-x64': {
-        url: OPENCLAW_NPM_PIN.tarballUrl,
-        sha256: OPENCLAW_NPM_PIN.tarballSha256,
-        size: 19728152,
-        archive: 'tar.gz',
-        binPaths: ['package/openclaw.mjs'],
-      },
-      'win32-x64': {
-        url: OPENCLAW_NPM_PIN.tarballUrl,
-        sha256: OPENCLAW_NPM_PIN.tarballSha256,
-        size: 19728152,
-        archive: 'tar.gz',
-        binPaths: ['package/openclaw.mjs'],
       },
     },
   },

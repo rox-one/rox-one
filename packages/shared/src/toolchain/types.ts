@@ -1,6 +1,4 @@
 import { resolveConfigDir } from "../config/paths.ts"
-/** Written only after an installation is complete; resolvers reject partial versions. */
-export const TOOLCHAIN_INSTALL_COMPLETE_MARKER = '.craft-toolchain-install-complete';
 /**
  * Toolchain Download Manager — контракты.
  * Spec: docs/superpowers/specs/2026-08-06-toolchain-download-manager-design.md

@@ -171,6 +171,10 @@ async function waitForViteReady(port: string, timeoutMs = 60_000): Promise<void>
 
 // Clean Vite cache directory
 function cleanViteCache(): void {
+  if (process.env.CRAFT_KEEP_VITE_CACHE === "1") {
+    console.log("♻️  Keeping Vite cache (CRAFT_KEEP_VITE_CACHE=1)");
+    return;
+  }
   const viteCacheDir = join(ELECTRON_DIR, "node_modules/.vite");
   if (existsSync(viteCacheDir)) {
     rmSync(viteCacheDir, { recursive: true, force: true });

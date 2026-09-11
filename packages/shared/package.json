@@ -45,7 +45,6 @@
     "./sources": "./src/sources/index.ts",
     "./sources/types": "./src/sources/types.ts",
     "./toolchain": "./src/toolchain/index.ts",
-    "./openclaw": "./src/openclaw/index.ts",
     "./toolchain/types": "./src/toolchain/types.ts",
     "./skills": "./src/skills/index.ts",
     "./workspaces": "./src/workspaces/index.ts",

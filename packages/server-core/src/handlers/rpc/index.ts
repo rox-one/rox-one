@@ -52,7 +52,6 @@ import { registerMemoryHandlers } from './memory'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
 import { registerSkillsPendingHandlers } from './skills-pending'
-import { registerOpenClawHandlers } from './openclaw'
 export function cleanupCoreClientResources(clientId: string): void {
   cleanupSessionFileWatchForClient(clientId)
   cleanupNotesWatchForClient(clientId)
@@ -112,7 +111,6 @@ export function registerCoreRpcHandlers(
   registerSystemCoreHandlers(server, deps)
   registerTasksHandlers(server, deps)
   registerToolchainHandlers(server, deps)
-  registerOpenClawHandlers(server, deps)
   registerTransferHandlers(server)
   registerWorkspaceCoreHandlers(server, deps)
   registerMessagingHandlers(server, deps)

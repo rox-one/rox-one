@@ -32,7 +32,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroupDefinition[] = [
   {
     id: 'workspace',
     labelKey: 'settings.navigator.groupWorkspace',
-    pageIds: ['workspace', 'labels', 'knowledge', 'extensions'],
+    pageIds: ['workspace', 'labels', 'knowledge', 'extensions', 'import'],
   },
   {
     id: 'integrations',

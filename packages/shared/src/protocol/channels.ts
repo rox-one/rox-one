@@ -180,6 +180,10 @@ export const RPC_CHANNELS = {
     UNWATCH: 'notes:unwatch',
     CHANGED: 'notes:changed',
   },
+  notesImport: {
+    PREVIEW: 'notesImport:preview',
+    EXECUTE: 'notesImport:execute',
+  },
   // knowledge — P1 read-only knowledge provider (spec 03) plus P3 write-back
   // mutation-proposal channels (spec 05) plus P4 Session→Knowledge publication
   // pipeline (spec 06). ENGINE_START is local bootstrap (detect/open/spawn);
