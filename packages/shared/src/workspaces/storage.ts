@@ -571,20 +571,22 @@ export function ensurePluginManifest(rootPath: string, workspaceName: string): v
   const pluginDir = join(rootPath, '.claude-plugin');
   const manifestPath = join(pluginDir, 'plugin.json');
 
-  if (existsSync(manifestPath)) return;
-
   // Create .claude-plugin directory
   if (!existsSync(pluginDir)) {
     mkdirSync(pluginDir, { recursive: true });
   }
 
-  // Create minimal plugin manifest
+  // Create minimal plugin manifest (wx avoids existsSync→write TOCTOU)
   const manifest = {
     name: `craft-workspace-${workspaceName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`,
     version: '1.0.0',
   };
 
-  writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
+  try {
+    writeFileSync(manifestPath, JSON.stringify(manifest, null, 2), { flag: 'wx' });
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
+  }
 }
 
 export { DEFAULT_WORKSPACES_DIR };

@@ -141,6 +141,15 @@ export async function checkoutPinnedRef(
   stagingDir: string,
   execFileFn: ExecFileFn = defaultExecFile,
 ): Promise<void> {
+  // Fail closed before any git argv: CodeQL js/secondary-command-injection + pin contract.
+  const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
+  const SHA_RE = /^[0-9a-f]{40}$|^[0-9a-f]{64}$/i
+  if (!REPO_RE.test(repo)) {
+    throw new MarketplaceIntegrityError(`invalid marketplace repo id: ${repo}`)
+  }
+  if (!SHA_RE.test(ref)) {
+    throw new MarketplaceIntegrityError(`ref must be a full commit SHA, got: ${ref}`)
+  }
   rmSync(stagingDir, { recursive: true, force: true })
   mkdirSync(stagingDir, { recursive: true })
   const url = `https://github.com/${repo}.git`
@@ -491,7 +500,19 @@ async function installContextDoc(entry: MarketplaceEntry, options: InstallOption
   const staged: { doc: MarketplaceDocument; body: string }[] = []
   for (const doc of entry.documents ?? []) {
     progress('fetch', doc.repoPath)
-    const url = `https://raw.githubusercontent.com/${entry.source.repo}/${entry.source.ref}/${doc.repoPath}`
+    const repo = entry.source.repo
+    const pin = entry.source.ref
+    const repoPath = doc.repoPath
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) {
+      throw new MarketplaceIntegrityError(`invalid document repo: ${repo}`)
+    }
+    if (!/^[0-9a-f]{40}$|^[0-9a-f]{64}$/i.test(pin)) {
+      throw new MarketplaceIntegrityError(`document ref must be full SHA: ${pin}`)
+    }
+    if (!repoPath || repoPath.includes('..') || repoPath.startsWith('/') || !/^[A-Za-z0-9._/-]+$/.test(repoPath)) {
+      throw new MarketplaceIntegrityError(`unsafe document path: ${repoPath}`)
+    }
+    const url = `https://raw.githubusercontent.com/${repo}/${pin}/${repoPath}`
     const res = await fetchFn(url, { headers: { 'user-agent': 'craft-agents-marketplace' }, signal: AbortSignal.timeout(30_000) })
     if (!res.ok) throw new MarketplaceIntegrityError(`HTTP ${res.status} downloading ${url}`)
     const body = await res.text()

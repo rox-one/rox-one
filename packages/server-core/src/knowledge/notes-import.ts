@@ -164,26 +164,28 @@ export function openWithNoFollow(root: string, relativePath: string): { fd: numb
   try {
     const path = deriveSourcePath(root, relativePath)
     assertNoSymlinkComponents(root, path)
-    const pre = lstatSync(path)
-    if (pre.isSymbolicLink()) return { error: 'symlink' }
-    if (!pre.isFile()) return { error: 'not-file' }
 
+    // Open first (O_NOFOLLOW) then fstat — avoids CodeQL js/file-system-race on lstat→open.
     const flags = fsConstants.O_RDONLY | (fsConstants.O_NOFOLLOW ?? 0)
     let fd: number
     try {
       fd = openSync(path, flags)
     } catch (err) {
-      // ELOOP on O_NOFOLLOW platforms, ENOENT if deleted between lstat and open.
+      // ELOOP on O_NOFOLLOW platforms, ENOENT if missing/raced away.
       const code = (err as NodeJS.ErrnoException).code
-      if (code === 'ELOOP' || code === 'ENOENT') return { error: 'swap-detected' }
+      if (code === 'ELOOP') return { error: 'symlink' }
+      if (code === 'ENOENT') return { error: 'swap-detected' }
       throw err
     }
     try {
       const post = fstatSync(fd)
-      // Identity check: catches symlink swap even without O_NOFOLLOW (Windows).
-      if (post.dev !== pre.dev || post.ino !== pre.ino) {
+      if (post.isSymbolicLink()) {
         closeSync(fd)
-        return { error: 'identity-mismatch' }
+        return { error: 'symlink' }
+      }
+      if (!post.isFile()) {
+        closeSync(fd)
+        return { error: 'not-file' }
       }
       // Second component pass: narrows (does not close) the parent-swap race.
       assertNoSymlinkComponents(root, path)

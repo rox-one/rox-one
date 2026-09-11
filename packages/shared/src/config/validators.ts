@@ -836,15 +836,17 @@ export function validateSkillContent(markdownContent: string, slug: string): Val
   const file = `skills/${slug}/SKILL.md`;
   const errors: ValidationIssue[] = [];
 
-  // 1. Validate slug format
-  if (!/^[a-z0-9-]+$/.test(slug)) {
+  // 1. Validate slug format (length-capped + linear suggest — avoids CodeQL js/polynomial-redos)
+  if (slug.length > 128 || !/^[a-z0-9-]+$/.test(slug)) {
     const suggestedSlug = slug
+      .slice(0, 128)
       .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-      .replace(/-+/g, '-');
+      .replace(/[^a-z0-9]+/g, '-')
+      .split('-')
+      .filter(Boolean)
+      .join('-');
     errors.push({
-      file: `skills/${slug}`,
+      file: `skills/${slug.slice(0, 128)}`,
       path: 'slug',
       message: 'Slug must be lowercase alphanumeric with hyphens',
       severity: 'error',

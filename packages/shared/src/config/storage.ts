@@ -695,8 +695,10 @@ function syncConfigDefaults(): void {
   const bundledDir = getBundledAssetsDir('.');
   if (!bundledDir) {
     debug('[config] No bundled assets dir found - using fallback config-defaults');
-    if (!existsSync(CONFIG_DEFAULTS_FILE)) {
-      writeFileSync(CONFIG_DEFAULTS_FILE, JSON.stringify(FALLBACK_CONFIG_DEFAULTS, null, 2), 'utf-8');
+    try {
+      writeFileSync(CONFIG_DEFAULTS_FILE, JSON.stringify(FALLBACK_CONFIG_DEFAULTS, null, 2), { encoding: 'utf-8', flag: 'wx' });
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
     }
     return;
   }
@@ -704,8 +706,10 @@ function syncConfigDefaults(): void {
   const bundledFile = join(bundledDir, 'config-defaults.json');
   if (!existsSync(bundledFile)) {
     debug('[config] Bundled config-defaults.json not found at: ' + bundledFile + ' - using fallback');
-    if (!existsSync(CONFIG_DEFAULTS_FILE)) {
-      writeFileSync(CONFIG_DEFAULTS_FILE, JSON.stringify(FALLBACK_CONFIG_DEFAULTS, null, 2), 'utf-8');
+    try {
+      writeFileSync(CONFIG_DEFAULTS_FILE, JSON.stringify(FALLBACK_CONFIG_DEFAULTS, null, 2), { encoding: 'utf-8', flag: 'wx' });
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err;
     }
     return;
   }
@@ -782,8 +786,12 @@ export function backupConfigFile(): void {
     // One backup per day, never overwritten: the first snapshot of the day is taken
     // before any mutation, so it holds the good pre-reset state. A second startup that
     // day (e.g. after a reset already nuked the registry) must NOT clobber it.
-    if (existsSync(dated)) return;
-    writeFileSync(dated, readFileSync(CONFIG_FILE, 'utf-8'), 'utf-8');
+    try {
+      writeFileSync(dated, readFileSync(CONFIG_FILE, 'utf-8'), { encoding: 'utf-8', flag: 'wx' });
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'EEXIST') return;
+      throw err;
+    }
 
     // ISO date in the name → lexical sort is chronological; drop all but the newest few.
     const backups = readdirSync(resolveConfigDir()).filter(f => CONFIG_BACKUP_DATE_RE.test(f)).sort();
@@ -1917,8 +1925,10 @@ export function getWorkspaceDataPath(workspaceId: string): string {
 // Clear workspace conversation
 export function clearWorkspaceConversation(workspaceId: string): void {
   const filePath = join(WORKSPACES_DIR, workspaceId, 'conversation.json');
-  if (existsSync(filePath)) {
+  try {
     writeFileSync(filePath, '{}', 'utf-8');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code !== 'ENOENT') throw err;
   }
 
   // Also clear any active plan (plans are session-scoped)
@@ -2240,9 +2250,18 @@ export function ensurePresetThemes(): void {
         continue;
       }
 
-      // Copy from bundle (new file or auto-heal corrupt file)
+      // Copy from bundle (new file or auto-heal corrupt file). Prefer exclusive
+      // create; if a corrupt file raced in, overwrite intentionally.
       const content = readFileSync(srcPath, 'utf-8');
-      writeFileSync(destPath, content, 'utf-8');
+      try {
+        writeFileSync(destPath, content, { encoding: 'utf-8', flag: 'wx' });
+      } catch (err) {
+        if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+          writeFileSync(destPath, content, 'utf-8');
+        } else {
+          throw err;
+        }
+      }
     }
   } catch {
     // Ignore errors - themes are optional

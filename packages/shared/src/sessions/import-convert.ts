@@ -29,7 +29,7 @@ const SECRET_PATTERNS: RegExp[] = [
   /Bearer\s+[A-Za-z0-9._\-]{20,}/g,
   /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9._-]+\.[A-Za-z0-9._-]+/g,
   /(?:api[_-]?key|token|cookie)\s*[:=]\s*['"]?[A-Za-z0-9._\-]{16,}/gi,
-  /-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----/g,
+  /-----BEGIN [A-Z0-9 ]{0,64}PRIVATE KEY-----[\s\S]{0,100000}?-----END [A-Z0-9 ]{0,64}PRIVATE KEY-----/g,
 ]
 
 export type ForeignSourceGuard = 'ok' | 'missing' | 'symlink' | 'too-large' | 'not-file'

@@ -39,6 +39,11 @@ export interface PathVars {
  * expandVars('${HOME}/.venv/bin/python')  // '/Users/alice/.venv/bin/python'
  * expandVars('${SOURCE_DIR}/server.js', { SOURCE_DIR: '/app/foo' })  // '/app/foo/server.js'
  */
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export function expandVars(input: string, extraVars?: PathVars): string {
   if (!input) return input;
 
@@ -64,8 +69,9 @@ export function expandVars(input: string, extraVars?: PathVars): string {
   if (extraVars) {
     for (const [key, value] of Object.entries(extraVars)) {
       if (!value) continue;
-      result = result.replace(new RegExp(`\\$\{${key}\}`, 'g'), value);
-      result = result.replace(new RegExp(`\\$${key}(?=/|$)`, 'g'), value);
+      const safeKey = escapeRegExp(key);
+      result = result.replace(new RegExp(`\\$\\{${safeKey}\\}`, 'g'), value);
+      result = result.replace(new RegExp(`\\$${safeKey}(?=/|$)`, 'g'), value);
     }
   }
 
