@@ -534,6 +534,7 @@ export type SessionCommand =
   | { type: 'updateShare' }
   | { type: 'revokeShare' }
   | { type: 'refreshTitle' }
+  | { type: 'improveDraft'; text: string }
   | { type: 'setConnection'; connectionSlug: string }
   | { type: 'setPendingPlanExecution'; planPath: string; draftInputSnapshot?: string }
   | { type: 'markCompactionComplete' }
@@ -970,6 +971,12 @@ export interface ShareResult {
 export interface RefreshTitleResult {
   success: boolean
   title?: string
+  error?: string
+}
+
+export interface ImproveDraftResult {
+  success: boolean
+  text?: string
   error?: string
 }
 

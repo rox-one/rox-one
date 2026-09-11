@@ -93,7 +93,7 @@ import {
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, activityRailCollapsedAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -229,7 +229,7 @@ function AppShellContent({
   isFocusedMode = false,
   showTopBarWorkspaceSelector = true,
   topBarLeftInset = 0,
-  workbenchOperatorCapability = false,
+  workbenchOperatorCapability = true,
 }: AppShellProps) {
   // Destructure commonly used values from context
   // Note: sessions is NOT destructured here - we use sessionMetaMapAtom instead
@@ -279,6 +279,7 @@ function AppShellContent({
   )
   const workbenchEnabled = workbenchAvailability === 'enabled'
   const activityRailCollapsed = useAtomValue(activityRailCollapsedAtom)
+  const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
@@ -2830,7 +2831,7 @@ function AppShellContent({
           )}
           navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
-          isRightSidebarVisible={false}
+          isRightSidebarVisible={inspectorVisible}
           isCompact={isAutoCompact}
           isResizing={!!isResizing}
         />

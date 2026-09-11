@@ -50,6 +50,7 @@ import {
   type TableGroupBucket,
 } from './table-empty-groups'
 import { isStaleRankNeighborsError, retryStaleRankReorder } from '@/lib/collection-reorder'
+import { collectionTableRowHeight } from './table-density'
 
 const PRIORITIES: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
 
@@ -96,7 +97,6 @@ function bucketFor(
 }
 
 const COLLAPSE_PREFERENCE_KEY = 'sessionTableCollapsedGroups'
-const TABLE_ROW_HEIGHT = 40
 const TABLE_GROUP_HEADER_HEIGHT = 32
 const TABLE_OVERSCAN = 240
 
@@ -322,10 +322,10 @@ export function SessionTableHost() {
     () =>
       flattenTableGroups(rows, collapsed, {
         getItemKey: (meta) => meta.id,
-        rowHeight: TABLE_ROW_HEIGHT,
+        rowHeight: collectionTableRowHeight(display.density),
         headerHeight: TABLE_GROUP_HEADER_HEIGHT,
       }),
-    [rows, collapsed],
+    [rows, collapsed, display.density],
   )
   const virtualWindow = React.useMemo(
     () =>
@@ -716,6 +716,7 @@ export function SessionTableHost() {
                         : 'after'
                       : null
                   }
+                  density={display.density}
                   style={style}
                 />
               )

@@ -12,7 +12,9 @@ import {
   AlertCircle,
   Globe,
   Image as ImageIcon,
+  Sparkles,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { Icon_Home, Spinner } from '@craft-agent/ui'
 
 import * as storage from '@/lib/local-storage'
@@ -511,6 +513,7 @@ export function FreeFormInput({
   // Sync FROM parent on mount/change (for restoring drafts)
   // Sync TO parent on blur/submit (debounced persistence)
   const [input, setInput] = React.useState(() => coerceInputText(inputValue))
+  const [improvingPrompt, setImprovingPrompt] = React.useState(false)
   const [attachments, setAttachments] = React.useState<FileAttachment[]>(attachmentsValue ?? [])
 
   // Ref to track current attachments for use in event handlers (avoids stale closure issues)
@@ -685,6 +688,31 @@ export function FreeFormInput({
     window.addEventListener('craft:insert-text', handleInsertText as EventListener)
     return () => window.removeEventListener('craft:insert-text', handleInsertText as EventListener)
   }, [sessionId, isFocusedPanel, syncToParent, richInputRef])
+
+  const handleImprovePrompt = React.useCallback(async () => {
+    if (!sessionId || improvingPrompt) return
+    const draft = input.trim()
+    if (!draft) return
+    setImprovingPrompt(true)
+    try {
+      const result = await window.electronAPI.sessionCommand(sessionId, {
+        type: 'improveDraft',
+        text: draft,
+      }) as { success: boolean; text?: string; error?: string } | undefined
+      if (result?.success && result.text) {
+        setInput(result.text)
+        onInputChange?.(result.text)
+        richInputRef.current?.setSelectionRange(result.text.length, result.text.length)
+      } else {
+        toast.error(t('chat.improvePromptFailed'), { description: result?.error })
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : undefined
+      toast.error(t('chat.improvePromptFailed'), { description: message })
+    } finally {
+      setImprovingPrompt(false)
+    }
+  }, [sessionId, improvingPrompt, input, onInputChange, t, richInputRef])
 
   const clearInputDraft = React.useCallback(() => {
     setInput('')
@@ -2176,6 +2204,25 @@ export function FreeFormInput({
             />
           )}
           </div>
+          )}
+
+          {sessionId && !compactMode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  disabled={disabled || disableSend || improvingPrompt || !input.trim()}
+                  onClick={() => { void handleImprovePrompt() }}
+                  aria-label={t('chat.improvePromptAria')}
+                  className="input-toolbar-btn inline-flex items-center h-7 px-1.5 shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors disabled:opacity-40"
+                >
+                  {improvingPrompt ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {improvingPrompt ? t('chat.improvingPrompt') : t('chat.improvePrompt')}
+              </TooltipContent>
+            </Tooltip>
           )}
 
           {/* Spacer — doubles as a tap / hover target while the input is

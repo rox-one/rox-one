@@ -7,6 +7,8 @@ import type { SessionStatusConfig } from '@/config/session-status-config'
 import { getSessionTitle } from '@/utils/session'
 import { cn } from '@/lib/utils'
 import { isDueOverdue } from './table-due'
+import { collectionTableRowClass } from './table-density'
+import type { CollectionDensity } from '@craft-agent/shared/sessions/collection'
 
 export interface SessionTableRowProps {
   meta: SessionMeta
@@ -32,6 +34,7 @@ export interface SessionTableRowProps {
   onDragOverRow?: (sessionId: string, event: React.DragEvent) => void
   dropIndicator?: 'before' | 'after' | null
   style?: React.CSSProperties
+  density?: CollectionDensity
 }
 
 const PRIORITY_ORDER: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
@@ -89,6 +92,7 @@ export function SessionTableRow({
   onDragOverRow,
   dropIndicator,
   style,
+  density = 'compact',
 }: SessionTableRowProps) {
   const { t } = useTranslation()
   const title = getSessionTitle(meta as never) || meta.id.slice(0, 8)
@@ -122,7 +126,8 @@ export function SessionTableRow({
   return (
     <li
       className={cn(
-        'group flex min-h-10 items-center gap-2 border-b border-border/30 px-3 py-1.5 text-sm hover:bg-foreground/[0.02]',
+        'group flex items-center gap-2 border-b border-border/30 px-3 text-sm hover:bg-foreground/[0.02] focus-within:bg-foreground/[0.03]',
+        collectionTableRowClass(density),
         selected && 'bg-foreground/[0.05]',
         dropIndicator === 'before' && 'border-t-2 border-t-foreground/40',
         dropIndicator === 'after' && 'border-b-2 border-b-foreground/40',
@@ -154,7 +159,7 @@ export function SessionTableRow({
 
       <button
         type="button"
-        className="min-w-0 flex-1 truncate text-left hover:underline"
+        className="min-w-0 flex-1 truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 rounded-[3px]"
         onClick={() => onOpen(meta.id)}
         title={title}
       >

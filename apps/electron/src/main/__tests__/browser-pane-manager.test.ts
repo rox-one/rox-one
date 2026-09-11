@@ -82,12 +82,11 @@ function createMockWebContents() {
   }
 }
 
-function createMockBrowserView() {
+function createMockWebContentsView() {
   const webContents = createMockWebContents()
   return {
     webContents,
     setBounds: mock(() => {}),
-    setAutoResize: mock(() => {}),
   }
 }
 
@@ -99,8 +98,23 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
   const minWidth = opts?.minWidth ?? 0
   const minHeight = opts?.minHeight ?? 0
 
+  const contentViewChildren: any[] = []
+  const contentView = {
+    children: contentViewChildren,
+    addChildView: mock((view: any) => {
+      const idx = contentViewChildren.indexOf(view)
+      if (idx >= 0) contentViewChildren.splice(idx, 1)
+      contentViewChildren.push(view)
+    }),
+    removeChildView: mock((view: any) => {
+      const idx = contentViewChildren.indexOf(view)
+      if (idx >= 0) contentViewChildren.splice(idx, 1)
+    }),
+  }
+
   const win = {
     webContents,
+    contentView,
     on: (event: string, cb: Function) => {
       if (!listeners[event]) listeners[event] = []
       listeners[event].push(cb)
@@ -129,9 +143,6 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
     destroy: mock(() => {
       win._emit('closed')
     }),
-    setBrowserView: mock((_view: any) => {}),
-    addBrowserView: mock((_view: any) => {}),
-    setTopBrowserView: mock((_view: any) => {}),
     getContentSize: mock(() => [contentWidth, contentHeight]),
     setContentSize: mock((width: number, height: number) => {
       contentWidth = Math.max(minWidth, Math.floor(width))
@@ -155,10 +166,10 @@ mock.module('electron', () => ({
       Object.assign(this, win)
     }
   },
-  BrowserView: class MockBrowserView {
+  WebContentsView: class MockWebContentsView {
     webContents: any
     constructor(_opts?: any) {
-      const view = createMockBrowserView()
+      const view = createMockWebContentsView()
       this.webContents = view.webContents
       Object.assign(this, view)
     }
@@ -264,6 +275,17 @@ describe('BrowserPaneManager', () => {
     expect(list).toHaveLength(1)
     expect(list[0].id).toBe('test-1')
     expect(list[0].agentControlActive).toBe(false)
+  })
+
+  it('attaches toolbar/page/overlay via contentView.addChildView', () => {
+    manager.createInstance('views-1')
+    const instance = (manager as any).instances.get('views-1')
+    const children = instance.window.contentView.children
+    expect(children).toContain(instance.pageView)
+    expect(children).toContain(instance.nativeOverlayView)
+    expect(children).toContain(instance.toolbarView)
+    expect(children[children.length - 1]).toBe(instance.toolbarView)
+    expect(instance.window.contentView.addChildView.mock.calls.length).toBeGreaterThanOrEqual(3)
   })
 
   it('is idempotent when explicit ID already exists', () => {
@@ -682,7 +704,7 @@ describe('BrowserPaneManager', () => {
     manager.createInstance('retry-toolbar')
     const instance = (manager as any).instances.get('retry-toolbar')
 
-    // Toolbar loads into instance.toolbarView (BrowserView), not the OS window.
+    // Toolbar loads into instance.toolbarView (WebContentsView), not the OS window.
     // Retry backoff is the code's real timer (TOOLBAR_LOAD_RETRY_DELAY_MS=500ms),
     // so poll for the expected attempt count instead of one guessed sleep.
     const toolbarContents = instance.toolbarView.webContents

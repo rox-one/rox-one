@@ -6023,6 +6023,78 @@ export class SessionManager implements ISessionManager {
     }
   }
 
+
+  /**
+   * Rewrite a user draft prompt via a short mini-completion.
+   * Does not persist; the renderer replaces the composer text.
+   */
+  async improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }> {
+    const trimmed = text.trim()
+    if (!trimmed) {
+      return { success: false, error: 'Draft is empty' }
+    }
+    const managed = this.sessions.get(sessionId)
+    if (!managed) {
+      sessionLog.warn(`improveDraft: Session ${sessionId} not found`)
+      return { success: false, error: 'Session not found' }
+    }
+
+    let agent: AgentInstance | null = managed.agent
+    let isTemporary = false
+
+    if (!agent && managed.llmConnection) {
+      try {
+        const connection = getLlmConnection(managed.llmConnection)
+        const resolvedMiniModel = connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined
+        agent = createBackendFromConnection(managed.llmConnection, {
+          workspace: managed.workspace,
+          miniModel: resolvedMiniModel,
+          session: {
+            id: `improve-${managed.id}`,
+            workspaceRootPath: managed.workspace.rootPath,
+            llmConnection: managed.llmConnection,
+            createdAt: Date.now(),
+            lastUsedAt: Date.now(),
+          },
+          isHeadless: true,
+        }, buildBackendHostRuntimeContext()) as AgentInstance
+        await agent.postInit()
+        isTemporary = true
+      } catch (error) {
+        sessionLog.error(`improveDraft: Failed to create temporary agent:`, error)
+        return { success: false, error: 'Failed to create agent' }
+      }
+    }
+
+    if (!agent) {
+      return { success: false, error: 'No agent available' }
+    }
+
+    const prompt = [
+      'Rewrite the user draft so it is clearer, more specific, and more effective for an AI coding agent.',
+      'Keep the original language. Return ONLY the improved prompt with no quotes or commentary.',
+      '',
+      'Draft:',
+      trimmed,
+    ].join('\n')
+
+    try {
+      const improved = await agent.runMiniCompletion(prompt)
+      if (!improved?.trim()) {
+        return { success: false, error: 'Empty improvement' }
+      }
+      return { success: true, text: improved.trim() }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      sessionLog.error(`improveDraft failed for session ${sessionId}:`, error)
+      return { success: false, error: message }
+    } finally {
+      if (isTemporary && agent) {
+        agent.destroy()
+      }
+    }
+  }
+
   /**
    * Update the working directory for a session.
    *

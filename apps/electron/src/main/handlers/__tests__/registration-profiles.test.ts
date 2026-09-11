@@ -35,6 +35,7 @@ mock.module('electron', () => ({
     getAllWindows: () => [],
   },
   BrowserView: class {},
+  WebContentsView: class {},
   Menu: {
     buildFromTemplate: () => ({ popup: () => {} }),
   },
