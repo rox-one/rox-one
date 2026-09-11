@@ -37,6 +37,8 @@ import { KEYS } from '@/lib/local-storage'
 import { cn } from '@/lib/utils'
 import { registerCorePanels } from './core-panels'
 import { KnowledgeInspectorPanel } from './KnowledgeInspectorPanel'
+import { registerConationPanels } from './conation/conation-panels'
+import { ConationInspectorPanel } from './conation/ConationInspectorPanel'
 import {
   DEFAULT_PANEL_REGISTRY_STATE,
   getAppPanelRegistry,
@@ -46,6 +48,12 @@ import {
 import { panelContextKeysFromRoute } from './surface-tab-model'
 
 registerCorePanels(getAppPanelRegistry(), KnowledgeInspectorPanel)
+
+// Conation host: only contributes when both shell+inspector flags are on (default false).
+registerConationPanels(getAppPanelRegistry(), ConationInspectorPanel, {
+  shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
+  inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
+})
 
 export interface PanelHostProps {
   slot: PanelSlot
