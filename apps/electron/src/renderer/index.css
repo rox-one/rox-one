@@ -93,7 +93,15 @@ html.dark[data-scenic]::after {
   content: '';
   position: fixed;
   inset: 0;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
+  /* Stronger side wash so sidebar/inspector text stays readable over busy wallpapers */
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.55) 18%,
+    rgba(0, 0, 0, 0.48) 50%,
+    rgba(0, 0, 0, 0.55) 82%,
+    rgba(0, 0, 0, 0.72) 100%
+  );
   z-index: -1;
   pointer-events: none;
 }
@@ -111,7 +119,8 @@ html[data-scenic][data-theme-override]::before {
 /* Scenic mode: Make background color semi-transparent for glass effect
    Panels with bg-background will become translucent glass */
 html[data-scenic] {
-  --background: oklch(0.2 0.005 270 / 0.55);
+  /* Raise panel opacity so wallpaper bleed does not wash out text */
+  --background: oklch(0.2 0.005 270 / 0.88);
 }
 
 /* Renderer-specific Tailwind utilities layered on top of the shared theme. */
@@ -223,8 +232,8 @@ html[data-scenic] {
 
   html[data-scenic] .shadow-middle,
   html[data-scenic] .shadow-strong {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   position: relative;
   /* Ensure panels are above the titlebar drag region (z-titlebar: 40) so header buttons are clickable.
      Without this, the position:relative creates a stacking context at z-index:auto which is below the fixed titlebar. */
@@ -234,7 +243,7 @@ html[data-scenic] {
 /* Scenic mode: Input field gets more transparency to show background through
    Uses a much lighter overlay to let the blurred background image show through */
 html[data-scenic] .input-container {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.28);
 }
 
 /* Scenic mode: Gradient border effect for glass panels
