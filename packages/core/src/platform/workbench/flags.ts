@@ -29,6 +29,18 @@ export const WORKBENCH_FLAG = {
   harnessExtCenterV1: 'workbench.harness.ext-center.v1',
   /** Opt-in first-party Agent Teams skill (not Cordis @nanmicoder/dsh-agent-teams). */
   harnessAgentTeams: 'workbench.harness.agentTeams',
+  /** Conation shell / domain clients (namespace workbench.conation.* — not harness). */
+  conationShell: 'workbench.conation.shell',
+  conationInspector: 'workbench.conation.inspector',
+  conationSurfacesSkill: 'skills.conation.surfaces',
+  conationSoupClient: 'workbench.conation.soupClient',
+  conationNotesBridge: 'workbench.conation.notesBridge',
+  conationDriveRead: 'workbench.conation.driveRead',
+  conationCanvas: 'workbench.conation.canvas',
+  conationMail: 'workbench.conation.mail',
+  conationCal: 'workbench.conation.cal',
+  conationDssClient: 'workbench.conation.dssClient',
+  conationSessionApply: 'workbench.conation.sessionApply',
 } as const;
 
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
@@ -107,6 +119,72 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   },
   {
     id: WORKBENCH_FLAG.harnessAgentTeams,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationShell,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationInspector,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationSurfacesSkill,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationSoupClient,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationNotesBridge,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationDriveRead,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationCanvas,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationMail,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationCal,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationDssClient,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationSessionApply,
     defaultValue: false,
     dependencies: [],
     rollbackSafe: true,

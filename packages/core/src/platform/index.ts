@@ -98,3 +98,9 @@ export type {
   AgentTeamTask,
   CreateAgentTeamInput,
 } from './agent-teams/index.ts';
+
+export {
+  SessionApplyClient,
+  DEFAULT_OPERATOR_ORIGIN,
+  recordSessionApplyOnTeam,
+} from './session-apply/index.ts';

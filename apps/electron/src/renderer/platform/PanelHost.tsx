@@ -39,6 +39,8 @@ import { registerCorePanels } from './core-panels'
 import { KnowledgeInspectorPanel } from './KnowledgeInspectorPanel'
 import { registerConationPanels } from './conation/conation-panels'
 import { ConationInspectorPanel } from './conation/ConationInspectorPanel'
+import { registerNotesPanel } from './conation/conation-notes-panels'
+import { ConationNotesPanel } from './conation/ConationNotesPanel'
 import {
   DEFAULT_PANEL_REGISTRY_STATE,
   getAppPanelRegistry,
@@ -54,6 +56,23 @@ registerConationPanels(getAppPanelRegistry(), ConationInspectorPanel, {
   shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
   inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
 })
+
+// Notes panel: no-op unless shell + inspector + notesBridge are all on (default false).
+// Adapter note: claim locker / Imports ACL remain fail-closed until wired (CX-Notes claim-locker follow-up).
+registerNotesPanel(
+  {
+    register: (contribution) => {
+      // Lightweight contribution bridge until Notes uses PanelRegistry slot fully.
+      void contribution
+    },
+  },
+  ConationNotesPanel,
+  {
+    shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
+    inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
+    notesBridgeEnabled: storage.get(KEYS.featureWorkbenchConationNotesBridge, false),
+  },
+)
 
 export interface PanelHostProps {
   slot: PanelSlot

@@ -101,6 +101,41 @@ export const featureWorkbenchHarnessAgentTeamsAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
+export const featureWorkbenchConationSoupClientAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchConationSoupClient),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchConationNotesBridgeAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchConationNotesBridge),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchConationDriveReadAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchConationDriveRead),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchConationDssClientAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchConationDssClient),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
+export const featureWorkbenchConationSessionApplyAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchConationSessionApply),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
 /** Activity rail collapsed (destinations hidden, expand chevron stays). */
 export const activityRailCollapsedAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.activityRailCollapsed),

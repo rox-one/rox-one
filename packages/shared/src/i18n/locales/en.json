@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "settings.appearance.conationSoupClient": "Soup client",
+  "settings.appearance.conationSoupClientDesc": "Read-only Conation Soup GraphQL client (workbench.conation.soupClient). Default off.",
+  "settings.appearance.conationNotesBridge": "Notes bridge",
+  "settings.appearance.conationNotesBridgeDesc": "Read-only Conation Notes bridge (workbench.conation.notesBridge). Default off.",
+  "settings.appearance.conationDssClient": "DSS client",
+  "settings.appearance.conationDssClientDesc": "Read-only Conation DSS/Drive HTTP client (workbench.conation.dssClient). Default off.",
+  "settings.appearance.conationSessionApply": "SessionApply (Conation)",
+  "settings.appearance.conationSessionApplyDesc": "SessionApply consumer stub linked to AgentTeamsStore (workbench.conation.sessionApply). Default off. Not Cordis."
 }

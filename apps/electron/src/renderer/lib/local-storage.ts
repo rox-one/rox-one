@@ -100,6 +100,14 @@ export const KEYS = {
   featureWorkbenchConationShell: 'feature-workbench-conation-shell',
   featureWorkbenchConationInspector: 'feature-workbench-conation-inspector',
   featureSkillsConationSurfaces: 'feature-skills-conation-surfaces',
+  featureWorkbenchConationSoupClient: 'feature-workbench-conation-soup-client',
+  featureWorkbenchConationNotesBridge: 'feature-workbench-conation-notes-bridge',
+  featureWorkbenchConationDriveRead: 'feature-workbench-conation-drive-read',
+  featureWorkbenchConationCanvas: 'feature-workbench-conation-canvas',
+  featureWorkbenchConationMail: 'feature-workbench-conation-mail',
+  featureWorkbenchConationCal: 'feature-workbench-conation-cal',
+  featureWorkbenchConationDssClient: 'feature-workbench-conation-dss-client',
+  featureWorkbenchConationSessionApply: 'feature-workbench-conation-session-apply',
   workbenchLayout: 'workbench-layout', // WorkbenchLayout v2 JSON, workspace-scoped
   // Last collection layout origin (list/board/table) for Shift+click back
   collectionLastView: 'collection-last-view',
