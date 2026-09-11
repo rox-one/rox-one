@@ -28,6 +28,7 @@ import {
 import { readJsonFileSync } from '@craft-agent/shared/utils/files'
 import { RPC_CHANNELS, type UpdateInfo } from '../shared/types'
 import type { EventSink } from '@craft-agent/server-core/transport'
+import { shouldSuppressUpdateFeed } from './auto-update-policy'
 
 // Platform detection
 const PLATFORM = platform()
@@ -501,13 +502,17 @@ export interface UpdateOnLaunchResult {
   version?: string | null
 }
 
-/**
- * Check for updates on app launch.
- * - Checks immediately (no delay)
- * - Respects dismissed version (skips notification but allows manual check)
- * - Auto-downloads if update available
- */
+
 export async function checkForUpdatesOnLaunch(): Promise<UpdateOnLaunchResult> {
+  if (shouldSuppressUpdateFeed({
+    craftDevRuntime: process.env.CRAFT_DEV_RUNTIME,
+    homeDir: app.getPath('home'),
+    execPath: process.execPath,
+  })) {
+    autoUpdateLog.info('Skipping auto-update feed (CRAFT_DEV_RUNTIME or ~/Applications install)')
+    return { action: 'skipped', reason: 'local-or-dev-channel' }
+  }
+
   autoUpdateLog.info('Checking for updates on launch...')
 
   const info = await checkForUpdates({ autoDownload: true })
