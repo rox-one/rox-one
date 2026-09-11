@@ -46,4 +46,19 @@ describe('legacy settings redirects', () => {
   it('rejects unknown pages', () => {
     expect(parseCompoundRoute('settings/does-not-exist')).toBeNull()
   })
+
+  it('maps bare settings to Overview and keeps settings/app as App', () => {
+    expect(parseRouteToNavigationState('settings')).toEqual({
+      navigator: 'settings',
+      subpage: null,
+    })
+    expect(parseRouteToNavigationState('settings/app')).toEqual({
+      navigator: 'settings',
+      subpage: 'app',
+    })
+    expect(parseRouteToNavigationState('settings/runtime')).toEqual({
+      navigator: 'settings',
+      subpage: 'runtime',
+    })
+  })
 })

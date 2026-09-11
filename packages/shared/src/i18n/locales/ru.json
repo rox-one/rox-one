@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "Подключение ИИ не настроено.",
   "settings.overview.noWorkspace": "Рабочее пространство не выбрано.",
   "settings.overview.recent": "Недавно открытые",
-  "settings.overview.runtime": "Среда выполнения",
   "settings.overview.title": "Настройки",
   "settings.overview.workspace": "Рабочее пространство",
   "settings.permissions.aboutPermissions": "О разрешениях",

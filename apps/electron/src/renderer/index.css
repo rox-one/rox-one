@@ -1,4 +1,8 @@
-@import "@craft-agent/ui/styles";
+/* Tailwind v4 does not inherit @source across @import boundaries. The shared
+   @craft-agent/ui/styles import brings theme tokens, but utility generation
+   must start in this file — same pattern as apps/webui/src/index.css. */
+@import "tailwindcss" source(none);
+@plugin "@tailwindcss/typography";
 
 /* Tell Tailwind where to scan for utility classes */
 @source "../renderer/App.tsx";
@@ -14,6 +18,8 @@
 @source "../renderer/config/**/*.{ts,tsx,jsx}";
 @source "../../../../packages/ui/src/components/**/*.{ts,tsx,jsx}";
 @source "../../../../packages/ui/src/lib/**/*.{ts,tsx,jsx}";
+
+@import "@craft-agent/ui/styles";
 
 /* Renderer-only tokens. Core color, font, elevation, and status tokens come
    from @craft-agent/ui/styles so Electron and shared surfaces cannot diverge. */

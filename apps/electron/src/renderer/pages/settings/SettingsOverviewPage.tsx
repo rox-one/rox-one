@@ -153,7 +153,7 @@ export function SettingsOverviewPage() {
                     {QUICK_ACTIONS.map((id) => {
                       const page = getSettingsPage(id)
                       const Icon = SETTINGS_ICONS[id]
-                      const label = id === 'runtime' ? t('settings.overview.runtime') : t(page.labelKey)
+                      const label = t(page.labelKey)
                       return (
                         <Button
                           key={id}

@@ -139,7 +139,11 @@ export function MainContentPanel({
 
   useEffect(() => {
     if (!isSettingsNavigation(navState) || navState.subpage === null || !activeWorkspaceId) return
-    void recordRecentSetting(activeWorkspaceId, navState.subpage)
+    const controller = new AbortController()
+    void recordRecentSetting(activeWorkspaceId, navState.subpage, { signal: controller.signal })
+    return () => {
+      controller.abort()
+    }
   }, [navState, activeWorkspaceId])
 
   // Execution history for the selected automation

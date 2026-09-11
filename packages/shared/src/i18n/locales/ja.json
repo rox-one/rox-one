@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "AI 接続が設定されていません。",
   "settings.overview.noWorkspace": "ワークスペースが選択されていません。",
   "settings.overview.recent": "最近開いた項目",
-  "settings.overview.runtime": "ランタイム",
   "settings.overview.title": "設定",
   "settings.overview.workspace": "ワークスペース",
   "settings.permissions.aboutPermissions": "権限について",

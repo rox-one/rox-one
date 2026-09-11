@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "No hay conexión de IA configurada.",
   "settings.overview.noWorkspace": "No hay espacio de trabajo seleccionado.",
   "settings.overview.recent": "Abiertos recientemente",
-  "settings.overview.runtime": "Entorno de ejecución",
   "settings.overview.title": "Ajustes",
   "settings.overview.workspace": "Espacio de trabajo",
   "settings.permissions.aboutPermissions": "Acerca de los permisos",

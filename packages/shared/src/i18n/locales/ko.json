@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "AI 연결이 구성되지 않았습니다.",
   "settings.overview.noWorkspace": "작업 공간이 선택되지 않았습니다.",
   "settings.overview.recent": "최근 열림",
-  "settings.overview.runtime": "런타임",
   "settings.overview.title": "설정",
   "settings.overview.workspace": "작업 공간",
   "settings.permissions.aboutPermissions": "권한 정보",

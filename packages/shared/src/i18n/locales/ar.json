@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "لم يُضبط اتصال ذكاء اصطناعي.",
   "settings.overview.noWorkspace": "لم تُحدد مساحة عمل.",
   "settings.overview.recent": "فُتح مؤخرًا",
-  "settings.overview.runtime": "بيئة التشغيل",
   "settings.overview.title": "الإعدادات",
   "settings.overview.workspace": "مساحة العمل",
   "settings.permissions.aboutPermissions": "حول الأذونات",

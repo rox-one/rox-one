@@ -17,7 +17,8 @@ import type { NavigationState } from '../../shared/types'
  *
  * Per-navigator semantics:
  * - sessions: a session is selected
- * - settings: a subpage is selected (bare `settings` route → false)
+ * - settings: Overview (bare `settings`) and every subpage are detail surfaces
+ *   so compact mode shows Overview after navigating to Settings
  * - sources / skills / automations / projects / browser: a detail item is selected
  */
 export function isDetailNavState(navState: NavigationState | null): boolean {
@@ -26,7 +27,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
     case 'sessions':
       return navState.details !== null
     case 'settings':
-      return navState.subpage !== null
+      return true
     case 'sources':
     case 'skills':
     case 'automations':

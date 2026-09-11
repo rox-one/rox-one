@@ -99,17 +99,32 @@ export async function readRecentSettings(
   return extractRecentSettings(await readPrefsDocument(), workspaceId)
 }
 
+let persistChain: Promise<void> = Promise.resolve()
+
 export async function recordRecentSetting(
   workspaceId: string | null | undefined,
   subpage: SettingsSubpage,
+  options?: { signal?: AbortSignal },
 ): Promise<SettingsSubpage[]> {
-  const current = await readPrefsDocument()
-  const { prefs, recents } = upsertRecentSetting(current, workspaceId, subpage)
-  if (!workspaceId) return recents
-  try {
-    await window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
-  } catch {
-    // Private-mode / IPC failures still return the in-memory list.
+  const run = async (): Promise<SettingsSubpage[]> => {
+    const current = await readPrefsDocument()
+    if (options?.signal?.aborted) {
+      return extractRecentSettings(current, workspaceId)
+    }
+    const { prefs, recents } = upsertRecentSetting(current, workspaceId, subpage)
+    if (!workspaceId || options?.signal?.aborted) return recents
+    try {
+      const result = await window.electronAPI.writePreferences(JSON.stringify(prefs, null, 2))
+      if (!result.success) {
+        console.error('Failed to save recent settings:', result.error)
+      }
+    } catch {
+      // Private-mode / IPC failures still return the in-memory list.
+    }
+    return recents
   }
-  return recents
+
+  const pending = persistChain.then(run, run)
+  persistChain = pending.then(() => undefined, () => undefined)
+  return pending
 }

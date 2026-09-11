@@ -157,7 +157,7 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   if (first === 'settings') {
     const subpage = segments[1]
     if (subpage === undefined) {
-      // Bare `settings` route — navigator-only view (compact) / App fallback (desktop).
+      // Bare `settings` route — Overview in the detail panel.
       return { navigator: 'settings', details: null }
     }
     // Legacy subpages.
@@ -633,7 +633,10 @@ export function parseRoute(route: string): ParsedRoute | null {
 function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute {
   // Settings
   if (compound.navigator === 'settings') {
-    const subpage = compound.details?.type || 'app'
+    if (!compound.details) {
+      return { type: 'view', name: 'settings', params: {} }
+    }
+    const subpage = compound.details.type
     if (subpage === 'app') {
       return { type: 'view', name: 'settings', params: {} }
     }
@@ -964,7 +967,7 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
 
   switch (parsed.name) {
     case 'settings':
-      return { navigator: 'settings', subpage: 'app' }
+      return { navigator: 'settings', subpage: null }
     case 'workspace':
       return { navigator: 'settings', subpage: 'workspace' }
     case 'permissions':

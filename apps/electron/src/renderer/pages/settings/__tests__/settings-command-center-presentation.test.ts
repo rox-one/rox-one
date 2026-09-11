@@ -17,7 +17,7 @@ describe('settings command center presentation', () => {
     expect(panelSrc).toContain('<SettingsOverviewPage />')
     expect(panelSrc).not.toContain("?? 'app'")
     expect(panelSrc).not.toContain("?? 'account'")
-    expect(panelSrc).toContain('recordRecentSetting(activeWorkspaceId, navState.subpage)')
+    expect(panelSrc).toContain('recordRecentSetting(activeWorkspaceId, navState.subpage, { signal: controller.signal })')
   })
 
   it('keeps overview actions on existing settings routes', () => {
@@ -33,6 +33,9 @@ describe('settings command center presentation', () => {
     expect(overviewSrc).toContain('data-testid={`settings-quick-${id}`}')
     expect(overviewSrc).toContain('data-testid="settings-recent"')
     expect(overviewSrc).toContain('data-testid={`settings-recent-${id}`}')
+    expect(overviewSrc).toContain('t(page.labelKey)')
+    expect(overviewSrc).not.toContain("settings.overview.runtime")
+    expect(overviewSrc).not.toContain("id === 'runtime'")
   })
 
   it('groups and searches navigator rows without changing the selection contract', () => {
@@ -45,5 +48,11 @@ describe('settings command center presentation', () => {
     expect(navigatorSrc).toContain('data-testid="settings-navigator-search"')
     expect(navigatorSrc).toContain('data-testid="settings-navigator-clear"')
     expect(navigatorSrc).toContain('data-testid="settings-navigator-empty"')
+  })
+
+  it('starts Tailwind utility generation in the renderer CSS entry', () => {
+    const css = readFileSync(join(__dirname, '../../../index.css'), 'utf8')
+    expect(css).toContain('@import "tailwindcss" source(none)')
+    expect(css).toContain('@import "@craft-agent/ui/styles"')
   })
 })
