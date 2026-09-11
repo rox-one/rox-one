@@ -28,29 +28,154 @@ import {
 import { readJsonFileSync } from '@craft-agent/shared/utils/files'
 import { RPC_CHANNELS, type UpdateInfo } from '../shared/types'
 import type { EventSink } from '@craft-agent/server-core/transport'
+import {
+  shouldSuppressUpdateFeed,
+  shouldAcceptReadyUpdate,
+} from './auto-update-policy'
+import { execFileSync, spawnSync } from 'child_process'
 
 // Platform detection
 const PLATFORM = platform()
 const IS_MAC = PLATFORM === 'darwin'
 const IS_WINDOWS = PLATFORM === 'win32'
 
-// Get the update cache directory path (for file watcher fallback on macOS)
-// electron-updater uses these paths:
-// - Windows: %LOCALAPPDATA%/{appName}-updater/pending
-// - macOS: ~/Library/Caches/{appName}-updater/pending
-// - Linux: ~/.cache/{appName}-updater/pending
-function getUpdateCacheDir(): string {
-  const appName = app.getName()
-  if (IS_MAC) {
-    return path.join(app.getPath('home'), 'Library', 'Caches', `${appName}-updater`, 'pending')
-  } else if (IS_WINDOWS) {
-    // Windows uses LOCALAPPDATA, not APPDATA (roaming)
-    const localAppData = process.env.LOCALAPPDATA || path.join(app.getPath('home'), 'AppData', 'Local')
-    return path.join(localAppData, `${appName}-updater`, 'pending')
-  } else {
-    // Linux
-    return path.join(app.getPath('home'), '.cache', `${appName}-updater`, 'pending')
+// electron-builder.yml sets updaterCacheDirName; fall back to app.getName()-updater.
+const DEFAULT_UPDATER_CACHE_DIR_NAME = '@craft-agentelectron-updater'
+
+function readUpdaterCacheDirName(): string {
+  try {
+    const ymlPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'app-update.yml')
+      : path.join(app.getAppPath(), 'dev-app-update.yml')
+    if (fs.existsSync(ymlPath)) {
+      const raw = fs.readFileSync(ymlPath, 'utf8')
+      const match = raw.match(/^updaterCacheDirName:\s*['"]?([^'"\n]+)['"]?\s*$/m)
+      if (match?.[1]) return match[1].trim()
+    }
+  } catch {
+    // ignore — use defaults
   }
+  return DEFAULT_UPDATER_CACHE_DIR_NAME
+}
+
+function getUpdaterCacheRoots(): string[] {
+  const names = new Set<string>([readUpdaterCacheDirName(), `${app.getName()}-updater`])
+  const roots: string[] = []
+  for (const name of names) {
+    if (IS_MAC) {
+      roots.push(path.join(app.getPath('home'), 'Library', 'Caches', name))
+    } else if (IS_WINDOWS) {
+      const localAppData = process.env.LOCALAPPDATA || path.join(app.getPath('home'), 'AppData', 'Local')
+      roots.push(path.join(localAppData, name))
+    } else {
+      roots.push(path.join(app.getPath('home'), '.cache', name))
+    }
+  }
+  return roots
+}
+
+function getUpdateCacheDir(): string {
+  // Prefer a pending dir that already exists (stale download may live here).
+  for (const root of getUpdaterCacheRoots()) {
+    const pending = path.join(root, 'pending')
+    if (fs.existsSync(pending)) return pending
+  }
+  return path.join(getUpdaterCacheRoots()[0]!, 'pending')
+}
+
+/** Detect macOS ad-hoc / unsigned local dist (CSC_IDENTITY_AUTO_DISCOVERY=false). */
+function detectMacAdHocSigned(execPath: string): boolean {
+  if (!IS_MAC) return false
+  try {
+    const result = spawnSync('codesign', ['-dv', '--verbose=4', execPath], { encoding: 'utf8' })
+    const out = `${result.stdout ?? ''}\n${result.stderr ?? ''}`
+    if (/Signature=adhoc/i.test(out)) return true
+    if (/code object is not signed/i.test(out)) return true
+  } catch {
+    try {
+      execFileSync('codesign', ['-dv', '--verbose=4', execPath], {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      })
+    } catch (err) {
+      const stderr = String((err as { stderr?: string }).stderr ?? err)
+      if (/Signature=adhoc/i.test(stderr)) return true
+      if (/code object is not signed/i.test(stderr)) return true
+    }
+  }
+  return false
+}
+
+function isUpdateFeedSuppressed(): boolean {
+  return shouldSuppressUpdateFeed({
+    craftDevRuntime: process.env.CRAFT_DEV_RUNTIME,
+    homeDir: app.getPath('home'),
+    execPath: process.execPath,
+    isAdHocSigned: detectMacAdHocSigned(process.execPath),
+  })
+}
+
+/**
+ * Clear stale downloadedUpdateHelper / pending cache when the channel is
+ * local/dev/ad-hoc or a cached version cannot be accepted for the feed.
+ */
+async function clearStaleDownloadedUpdate(reason: string): Promise<void> {
+  try {
+    // @ts-expect-error - internal electron-updater API
+    const helper = autoUpdater.downloadedUpdateHelper as { clear?: () => Promise<void> } | null
+    if (helper?.clear) {
+      await helper.clear()
+    }
+  } catch (error) {
+    mainLog.warn('[auto-update] downloadedUpdateHelper.clear failed:', error)
+  }
+
+  for (const root of getUpdaterCacheRoots()) {
+    const pending = path.join(root, 'pending')
+    try {
+      if (fs.existsSync(pending)) {
+        fs.rmSync(pending, { recursive: true, force: true })
+        mainLog.info(`[auto-update] Removed pending update cache: ${pending} (${reason})`)
+      }
+    } catch (error) {
+      mainLog.warn(`[auto-update] Failed to remove ${pending}:`, error)
+    }
+  }
+
+  if (updateInfo.available || updateInfo.downloadState === 'ready' || updateInfo.downloadState === 'downloading') {
+    updateInfo = {
+      ...updateInfo,
+      available: false,
+      latestVersion: null,
+      downloadState: 'idle',
+      downloadProgress: 0,
+      error: undefined,
+    }
+    broadcastUpdateInfo()
+  }
+}
+
+function markUpdateReady(feedVersion: string, cachedVersion?: string | null): boolean {
+  if (!shouldAcceptReadyUpdate({
+    localVersion: updateInfo.currentVersion,
+    feedVersion,
+    cachedVersion,
+  })) {
+    mainLog.info(
+      `[auto-update] Ignoring ready state (local=${updateInfo.currentVersion}, feed=${feedVersion}, cached=${cachedVersion ?? 'n/a'})`,
+    )
+    void clearStaleDownloadedUpdate('ready-version-mismatch')
+    return false
+  }
+  updateInfo = {
+    ...updateInfo,
+    available: true,
+    latestVersion: feedVersion,
+    downloadState: 'ready',
+    downloadProgress: 100,
+  }
+  broadcastUpdateInfo()
+  return true
 }
 
 // Module state — keeps track of update info for IPC queries
@@ -194,34 +319,35 @@ autoUpdater.on('checking-for-update', () => {
 autoUpdater.on('update-available', (info) => {
   autoUpdateLog.info(`Update available: ${updateInfo.currentVersion} → ${info.version}`)
 
+  if (!shouldAcceptReadyUpdate({
+    localVersion: updateInfo.currentVersion,
+    feedVersion: info.version,
+  })) {
+    mainLog.info(`[auto-update] Feed ${info.version} not newer than local ${updateInfo.currentVersion}; ignoring`)
+    void clearStaleDownloadedUpdate('feed-not-newer')
+    updateInfo = {
+      ...updateInfo,
+      available: false,
+      latestVersion: info.version,
+      downloadState: 'idle',
+      downloadProgress: 0,
+    }
+    broadcastUpdateInfo()
+    return
+  }
+
   // First, check electron-updater's internal state (most reliable)
   const internalState = checkElectronUpdaterState()
   if (internalState.ready) {
     mainLog.info(`[auto-update] electron-updater reports download ready`)
-    updateInfo = {
-      ...updateInfo,
-      available: true,
-      latestVersion: info.version,
-      downloadState: 'ready',
-      downloadProgress: 100,
-    }
-    broadcastUpdateInfo()
-    return
+    if (markUpdateReady(info.version, internalState.version ?? info.version)) return
   }
 
   // Fallback: check if file exists in cache directory
   const existing = checkForExistingDownload()
   if (existing.exists) {
     mainLog.info(`[auto-update] Update already downloaded (file check), setting state to ready`)
-    updateInfo = {
-      ...updateInfo,
-      available: true,
-      latestVersion: info.version,
-      downloadState: 'ready',
-      downloadProgress: 100,
-    }
-    broadcastUpdateInfo()
-    return
+    if (markUpdateReady(info.version, existing.version ?? null)) return
   }
 
   updateInfo = {
@@ -255,14 +381,9 @@ autoUpdater.on('download-progress', (progress) => {
 autoUpdater.on('update-downloaded', async (info) => {
   autoUpdateLog.info(`Update downloaded: v${info.version}`)
 
-  updateInfo = {
-    ...updateInfo,
-    available: true,
-    latestVersion: info.version,
-    downloadState: 'ready',
-    downloadProgress: 100,
+  if (!markUpdateReady(info.version, info.version)) {
+    return
   }
-  broadcastUpdateInfo()
 
   // Rebuild menu to show "Install Update..." option
   const { rebuildMenu } = await import('./menu')
@@ -297,7 +418,17 @@ function checkElectronUpdaterState(): { ready: boolean; version?: string } {
       const versionInfo = helper.versionInfo
       if (versionInfo) {
         mainLog.info(`[auto-update] electron-updater has validated download: ${JSON.stringify(versionInfo)}`)
-        return { ready: true, version: versionInfo.version }
+        const version = versionInfo.version as string | undefined
+        if (version && !shouldAcceptReadyUpdate({
+          localVersion: updateInfo.currentVersion,
+          feedVersion: version,
+          cachedVersion: version,
+        })) {
+          mainLog.info(`[auto-update] Ignoring stale downloadedUpdateHelper version ${version}`)
+          void clearStaleDownloadedUpdate('stale-helper-version')
+          return { ready: false }
+        }
+        return { ready: true, version }
       }
     }
   } catch (error) {
@@ -376,6 +507,20 @@ function checkForExistingDownload(): { exists: boolean; version?: string } {
 export async function checkForUpdates(options: CheckOptions = {}): Promise<UpdateInfo> {
   const { autoDownload = true } = options
 
+  if (isUpdateFeedSuppressed()) {
+    await clearStaleDownloadedUpdate('suppressed-channel')
+    autoUpdateLog.info('Skipping update check (CRAFT_DEV_RUNTIME / ~/Applications / ad-hoc sign)')
+    updateInfo = {
+      ...updateInfo,
+      available: false,
+      latestVersion: null,
+      downloadState: 'idle',
+      downloadProgress: 0,
+      error: undefined,
+    }
+    return getUpdateInfo()
+  }
+
   // Temporarily override autoDownload for this check if needed
   // (e.g., manual check from settings shouldn't auto-download on metered connections)
   const previousAutoDownload = autoUpdater.autoDownload
@@ -388,6 +533,7 @@ export async function checkForUpdates(options: CheckOptions = {}): Promise<Updat
     // If update is available and was already downloaded, the update-downloaded event
     // should fire. Wait a moment for events to settle before returning.
     if (result?.updateInfo) {
+      const feedVersion = result.updateInfo.version
       // Give electron-updater time to fire update-downloaded if file exists
       await new Promise(resolve => setTimeout(resolve, 500))
 
@@ -396,13 +542,16 @@ export async function checkForUpdates(options: CheckOptions = {}): Promise<Updat
         const existing = checkForExistingDownload()
         if (existing.exists) {
           mainLog.info('[auto-update] Update already downloaded, updating state to ready')
-          updateInfo = {
-            ...updateInfo,
-            downloadState: 'ready',
-            downloadProgress: 100,
-          }
-          broadcastUpdateInfo()
+          markUpdateReady(feedVersion, existing.version ?? null)
         }
+      }
+
+      if (updateInfo.downloadState === 'ready' && !shouldAcceptReadyUpdate({
+        localVersion: updateInfo.currentVersion,
+        feedVersion: updateInfo.latestVersion,
+        cachedVersion: updateInfo.latestVersion,
+      })) {
+        await clearStaleDownloadedUpdate('post-check-version-gate')
       }
     }
   } catch (error) {
@@ -420,14 +569,6 @@ export async function checkForUpdates(options: CheckOptions = {}): Promise<Updat
   return getUpdateInfo()
 }
 
-/**
- * Install the downloaded update and restart the app.
- * Calls electron-updater's quitAndInstall which handles:
- * - macOS: Extracts zip and swaps app bundle
- * - Windows: Runs NSIS installer silently
- * - Linux: Replaces AppImage file
- * Then relaunches the app automatically.
- */
 export async function installUpdate(): Promise<void> {
   if (updateInfo.downloadState !== 'ready') {
     throw new Error('No update ready to install')
@@ -501,13 +642,14 @@ export interface UpdateOnLaunchResult {
   version?: string | null
 }
 
-/**
- * Check for updates on app launch.
- * - Checks immediately (no delay)
- * - Respects dismissed version (skips notification but allows manual check)
- * - Auto-downloads if update available
- */
+
 export async function checkForUpdatesOnLaunch(): Promise<UpdateOnLaunchResult> {
+  if (isUpdateFeedSuppressed()) {
+    await clearStaleDownloadedUpdate('launch-suppressed-channel')
+    autoUpdateLog.info('Skipping auto-update feed (CRAFT_DEV_RUNTIME / ~/Applications / ad-hoc sign)')
+    return { action: 'skipped', reason: 'local-or-dev-channel' }
+  }
+
   autoUpdateLog.info('Checking for updates on launch...')
 
   const info = await checkForUpdates({ autoDownload: true })
