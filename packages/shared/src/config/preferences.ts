@@ -9,6 +9,12 @@ import {
 } from '../i18n/languages.ts';
 import { LOCALE_REGISTRY, type LanguageCode } from '../i18n/registry.ts';
 import { resolveConfigDir } from "./paths.ts"
+import {
+  persistAgentIdentity,
+  resolveAgentIdentity,
+  type AgentIdentity,
+  type AgentIdentityRecord,
+} from '../identity/agent-identity.ts';
 
 export interface UserLocation {
   city?: string;
@@ -39,6 +45,8 @@ export interface UserPreferences {
   location?: UserLocation;
   // Free-form notes the agent learns about the user
   notes?: string;
+  /** User-owned agent name/persona. Missing → generated Agent Rox#001. */
+  agentIdentity?: AgentIdentityRecord;
   // Diff viewer display preferences
   diffViewer?: DiffViewerPreferences;
   // Whether to include Co-Authored-By trailer on git commits (default: true)
@@ -101,9 +109,28 @@ export function updatePreferences(updates: Partial<UserPreferences>): UserPrefer
     diffViewer: updates.diffViewer
       ? { ...current.diffViewer, ...updates.diffViewer }
       : current.diffViewer,
+    agentIdentity: updates.agentIdentity !== undefined
+      ? updates.agentIdentity
+      : current.agentIdentity,
   };
   savePreferences(updated);
   return updated;
+}
+
+export function loadAgentIdentity(): AgentIdentity {
+  return resolveAgentIdentity(loadPreferences().agentIdentity);
+}
+
+export function saveAgentIdentity(input: { name?: string | null; persona?: string | null }): AgentIdentity {
+  const identity = persistAgentIdentity(input);
+  updatePreferences({
+    agentIdentity: {
+      name: identity.name,
+      persona: identity.persona,
+      source: identity.source,
+    },
+  });
+  return identity;
 }
 
 /**

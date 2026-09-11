@@ -12,6 +12,7 @@ import {
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
 } from '../model-picker-helpers'
+import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
 
 // -----------------------------------------------------------------------------
 // stripPiPrefixForDisplay
@@ -40,7 +41,7 @@ describe('stripPiPrefixForDisplay', () => {
     expect(stripPiPrefixForDisplay('')).toBe('')
   })
 
-  it('strips a ROX catalog prefix from display names', () => {
+  test('strips a ROX catalog prefix from display names', () => {
     expect(stripPiPrefixForDisplay('ROX Standard')).toBe('Standard')
     expect(stripPiPrefixForDisplay('ROX Explore')).toBe('Explore')
   })
@@ -156,5 +157,12 @@ describe('groupConnectionsByProvider', () => {
       ['Local', ['ollama']],
       ['Rox Backend', ['or', 'p']],
     ])
+  })
+
+  test('places omp connections under the visible Rox product name, not OMP', () => {
+    const omp = conn('rox-kimi', 'omp')
+    const result = groupConnectionsByProvider([omp])
+    expect(result).toEqual([[ROX_VISIBLE_TERMS.product, [omp]]])
+    expect(result[0][0]).not.toBe('OMP')
   })
 })
