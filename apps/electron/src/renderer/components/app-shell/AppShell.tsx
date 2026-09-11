@@ -96,7 +96,7 @@ import {
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -1239,6 +1239,7 @@ function AppShellContent({
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const setSessionMetaMap = useSetAtom(sessionMetaMapAtom)
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
+  const harnessAgentTeams = useAtomValue(featureWorkbenchHarnessAgentTeamsAtom)
   useAction('workspace.openInEditor', () => {
     const cwd = (focusedSessionId && sessionMetaMap.get(focusedSessionId)?.workingDirectory)
       || activeWorkspace?.rootPath
@@ -1295,6 +1296,21 @@ function AppShellContent({
     }
     window.dispatchEvent(new CustomEvent('craft:session-view', {
       detail: { sessionId: id, view: 'map' },
+    }))
+  })
+
+  useAction('session.agentTeams', () => {
+    if (!harnessAgentTeams) {
+      toast.error(t('session.agentTeamsFlagOff'))
+      return
+    }
+    const id = focusedSessionId ?? session.selected
+    if (!id) {
+      toast.error(t('session.advisorNeedChat'))
+      return
+    }
+    window.dispatchEvent(new CustomEvent('craft:restore-input', {
+      detail: { sessionId: id, text: t('session.agentTeamsPrompt') },
     }))
   })
 

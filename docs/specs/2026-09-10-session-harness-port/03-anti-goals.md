@@ -62,10 +62,13 @@ Desktop DSH у оператора стоит `danger-full-access`. Rox уже `a
 | `sessionBuddy` | `dsh-session-buddy` | Ломал клиент | OS-notify H2 |
 | `mnemon` | `dsh-mnemon` | Требовал `webServer` | `packages/server-core/src/memory/` |
 | `pluginHotReload` | `dsh-hot-reload` | Cordis HMR; Desktop всё равно рестартил | флаги + RPC refresh |
-| `agentTeamsRuntime` | `@nanmicoder/dsh-agent-teams` | Чужой host | `SessionFanOutSheet` + `spawn_session` |
+| `agentTeamsRuntime` | `@nanmicoder/dsh-agent-teams` | Чужой host (Cordis). **Не** ставим npm-плагин в Rox | `SessionFanOutSheet` + `spawn_session`; opt-in first-party skill `@agent-teams` за `workbench.harness.agentTeams` (default false) |
 | `visionCliPlugin` | `@liustack/modlens` | Отдельный CLI | vision-модели + `browser_tool` |
 | `searchCliPlugin` | `@liustack/modsearch` | Ключи в плагине | MCP/API sources |
 | `extraAutomationRuntime` | `@michengai/dsh-automation` | Тот же `webServer` | first-party automations |
 | `remoteControlCompat` | Desktop remote control | Нет цели | — |
+
+
+**Исключение (не runtime):** first-party skill `rox-harness/agent-teams` + флаг `workbench.harness.agentTeams` — это не установка Cordis-пакета и не второй оркестратор. Skip-list по-прежнему запрещает `@nanmicoder/dsh-agent-teams` как host runtime.
 
 Канон в коде: `packages/core/src/platform/workbench/harness-skip-list.ts`.

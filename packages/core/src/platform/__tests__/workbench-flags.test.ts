@@ -67,11 +67,13 @@ describe('resolveEnabledFlags', () => {
     expect(WORKBENCH_FLAG.harnessChatChromeV1).toBe('workbench.harness.chat-chrome.v1')
     expect(WORKBENCH_FLAG.harnessAgentIntelV1).toBe('workbench.harness.agent-intel.v1')
     expect(WORKBENCH_FLAG.harnessExtCenterV1).toBe('workbench.harness.ext-center.v1')
+    expect(WORKBENCH_FLAG.harnessAgentTeams).toBe('workbench.harness.agentTeams')
     for (const id of [
       WORKBENCH_FLAG.harnessInspectorV1,
       WORKBENCH_FLAG.harnessChatChromeV1,
       WORKBENCH_FLAG.harnessAgentIntelV1,
       WORKBENCH_FLAG.harnessExtCenterV1,
+      WORKBENCH_FLAG.harnessAgentTeams,
     ]) {
       expect(isWorkbenchFlagEnabled(id, new Set())).toBe(false)
       const definition = WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)

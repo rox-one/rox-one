@@ -94,6 +94,13 @@ export const featureWorkbenchHarnessExtCenterV1Atom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
+export const featureWorkbenchHarnessAgentTeamsAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchHarnessAgentTeams),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
 /** Activity rail collapsed (destinations hidden, expand chevron stays). */
 export const activityRailCollapsedAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.activityRailCollapsed),

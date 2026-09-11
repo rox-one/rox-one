@@ -60,6 +60,7 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
       'featureWorkbenchHarnessChatChromeV1',
       'featureWorkbenchHarnessAgentIntelV1',
       'featureWorkbenchHarnessExtCenterV1',
+      'featureWorkbenchHarnessAgentTeams',
     ]) {
       expect(src).toMatch(
         new RegExp(`atomWithStorage<boolean>\\(\\s*getKeyString\\(KEYS\\.${key}\\),\\s*false`),

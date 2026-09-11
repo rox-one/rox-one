@@ -7,15 +7,17 @@ const settingsPath = join(__dirname, '..', 'WorkbenchChromeSettings.tsx')
 describe('WorkbenchChromeSettings harness flags', () => {
   const src = readFileSync(settingsPath, 'utf8')
 
-  it('exposes the four harness toggles from ADR-0019', () => {
+  it('exposes the harness toggles from ADR-0019 plus Agent Teams', () => {
     expect(src).toContain('featureWorkbenchHarnessInspectorV1Atom')
     expect(src).toContain('featureWorkbenchHarnessChatChromeV1Atom')
     expect(src).toContain('featureWorkbenchHarnessAgentIntelV1Atom')
     expect(src).toContain('featureWorkbenchHarnessExtCenterV1Atom')
+    expect(src).toContain('featureWorkbenchHarnessAgentTeamsAtom')
     expect(src).toContain("t('settings.appearance.workbenchHarnessInspector')")
     expect(src).toContain("t('settings.appearance.workbenchHarnessChatChrome')")
     expect(src).toContain("t('settings.appearance.workbenchHarnessAgentIntel')")
     expect(src).toContain("t('settings.appearance.workbenchHarnessExtCenter')")
+    expect(src).toContain("t('settings.appearance.workbenchHarnessAgentTeams')")
   })
 
   it('does not mention DSH in the settings source', () => {

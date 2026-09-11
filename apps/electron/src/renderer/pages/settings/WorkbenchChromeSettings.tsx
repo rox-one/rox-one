@@ -10,6 +10,7 @@ import {
   featureWorkbenchHarnessAgentIntelV1Atom,
   featureWorkbenchHarnessChatChromeV1Atom,
   featureWorkbenchHarnessExtCenterV1Atom,
+  featureWorkbenchHarnessAgentTeamsAtom,
   featureWorkbenchHarnessInspectorV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchStatusBarV1Atom,
@@ -31,6 +32,7 @@ export function WorkbenchChromeSettings() {
   const [harnessChatChrome, setHarnessChatChrome] = useAtom(featureWorkbenchHarnessChatChromeV1Atom)
   const [harnessAgentIntel, setHarnessAgentIntel] = useAtom(featureWorkbenchHarnessAgentIntelV1Atom)
   const [harnessExtCenter, setHarnessExtCenter] = useAtom(featureWorkbenchHarnessExtCenterV1Atom)
+  const [harnessAgentTeams, setHarnessAgentTeams] = useAtom(featureWorkbenchHarnessAgentTeamsAtom)
 
   return (
     <>
@@ -104,6 +106,12 @@ export function WorkbenchChromeSettings() {
           description={t('settings.appearance.workbenchHarnessExtCenterDesc')}
           checked={harnessExtCenter}
           onCheckedChange={setHarnessExtCenter}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.workbenchHarnessAgentTeams')}
+          description={t('settings.appearance.workbenchHarnessAgentTeamsDesc')}
+          checked={harnessAgentTeams}
+          onCheckedChange={setHarnessAgentTeams}
         />
       </SettingsCard>
     </SettingsSection>
