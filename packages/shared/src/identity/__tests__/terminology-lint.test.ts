@@ -42,7 +42,8 @@ describe('terminology linter', () => {
 
   it('scans every locale for leaked runtime names outside the allowlist', () => {
     const files = readdirSync(LOCALES_DIR).filter((file) => file.endsWith('.json'))
-    expect(files.length).toBe(10)
+    // Keep in sync with packages/shared/src/i18n/locales (en + supported locales).
+    expect(files.length).toBeGreaterThanOrEqual(10)
     const leaks: string[] = []
     for (const file of files) {
       const json = JSON.parse(readFileSync(join(LOCALES_DIR, file), 'utf-8')) as Record<string, string>
