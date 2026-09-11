@@ -18,15 +18,6 @@ import { safeJsonParse } from '../utils/files.ts';
 import { pickSessionFields } from './utils.ts';
 import { notifySessionJournalShadow } from './journal-shadow.ts';
 import { replaceFileAtomically, replaceFileAtomicallySync } from './atomic-replace.ts';
-import { dirname } from 'path';
-import type { SessionHeader, StoredSession, StoredMessage, SessionTokenUsage } from './types.ts';
-import type { PermissionMode } from '../agent/mode-types.ts';
-import { parsePermissionMode } from '../agent/mode-types.ts';
-import { toPortablePath, expandPath, normalizePath } from '../utils/paths.ts';
-import { debug } from '../utils/debug.ts';
-import { safeJsonParse } from '../utils/files.ts';
-import { pickSessionFields } from './utils.ts';
-import { notifySessionJournalShadow } from './journal-shadow.ts';
 
 // ============================================================
 // Session Path Portability
