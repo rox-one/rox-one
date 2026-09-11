@@ -82,3 +82,19 @@ export { ConnectionWorkGraph } from './identity/workgraph.ts';
 export { revokeConnectionAndRevalidate } from './identity/revalidation.ts';
 export { InfisicalFabricProvider, createInfisicalImporter } from './identity/infisical-fabric-provider.ts';
 export { importGithubFromEnv, runGithubVertical } from './identity/github-vertical.ts';
+
+// Agent Teams durable store (workspace `.agent-teams/`; flag stays default-off)
+export {
+  AGENT_TEAMS_STATE_DIR,
+  CAPTAIN_KEY,
+  AgentTeamsStore,
+  sanitizeKey,
+  resolveAgentTeamsRoot,
+} from './agent-teams/index.ts';
+export type {
+  AgentTeamMember,
+  AgentTeamMessage,
+  AgentTeamState,
+  AgentTeamTask,
+  CreateAgentTeamInput,
+} from './agent-teams/index.ts';

@@ -63,6 +63,9 @@ pnpm-lock.yaml
 # Craft Agent local data (sessions, credentials, config)
 .craft-agent/
 
+# Agent Teams workspace durable state (roster / mailboxes)
+.agent-teams/
+
 # SSH keys and secrets
 *.pem
 *.key
