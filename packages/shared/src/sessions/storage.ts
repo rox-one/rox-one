@@ -41,6 +41,7 @@ import { validateSessionStatus } from '../statuses/validation.ts';
 import { debug } from '../utils/debug.ts';
 import { getStatusCategory } from '../statuses/storage.ts';
 import { readSessionHeader, readSessionJsonl } from './jsonl.ts';
+import { recoverSessionJournal } from './journal-recover.ts';
 import { sessionPersistenceQueue } from './persistence-queue.ts';
 
 // Re-export types for convenience
@@ -334,6 +335,7 @@ export function loadSession(workspaceRootPath: string, sessionId: string): Store
   const end = perf.start('session.loadSession', { sessionId });
 
   const jsonlPath = getSessionFilePath(workspaceRootPath, sessionId);
+  recoverSessionJournal(jsonlPath);
   if (existsSync(jsonlPath)) {
     const session = readSessionJsonl(jsonlPath);
     if (session) {
@@ -369,13 +371,7 @@ export function listSessions(workspaceRootPath: string): SessionMetadata[] {
       const sessionId = entry.name;
       const sessionDir = join(sessionsDir, sessionId);
       const jsonlFile = join(sessionDir, 'session.jsonl');
-
-      // Clean up orphaned .tmp files from crashed atomic writes.
-      // These are harmless but waste disk space.
-      const tmpFile = jsonlFile + '.tmp';
-      if (existsSync(tmpFile)) {
-        try { unlinkSync(tmpFile); } catch { /* ignore */ }
-      }
+      recoverSessionJournal(jsonlFile);
 
       if (existsSync(jsonlFile)) {
         const header = readSessionHeader(jsonlFile);

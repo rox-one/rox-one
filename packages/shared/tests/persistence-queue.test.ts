@@ -5,10 +5,11 @@
  * race conditions when rapid successive flushes write to the same .tmp file.
  */
 import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
-import { mkdirSync, rmSync, existsSync, readFileSync } from 'fs';
+import { mkdirSync, rmSync, existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { SessionPersistenceQueue } from '../src/sessions/persistence-queue.ts';
+import { setSessionJournalPrimary } from '../src/sessions/journal-primary.ts';
 import type { StoredSession } from '../src/sessions/types.ts';
 
 // Create a minimal stored session for testing
@@ -34,7 +35,7 @@ describe('SessionPersistenceQueue', () => {
 
   beforeEach(() => {
     // Create a unique test directory
-    testDir = join(tmpdir(), `persistence-queue-test-${Date.now()}`);
+    testDir = join(tmpdir(), `persistence-queue-test-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     mkdirSync(testDir, { recursive: true });
     // Create sessions subdirectory structure
     mkdirSync(join(testDir, 'sessions', 'test-session'), { recursive: true });
@@ -43,6 +44,7 @@ describe('SessionPersistenceQueue', () => {
   });
 
   afterEach(() => {
+    setSessionJournalPrimary(null);
     // Clean up test directory
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
@@ -119,5 +121,36 @@ describe('SessionPersistenceQueue', () => {
 
     expect(JSON.parse(contentA.split('\n')[0]).sdkSessionId).toBe('id-a');
     expect(JSON.parse(contentB.split('\n')[0]).sdkSessionId).toBe('id-b');
+  });
+
+  it('debounce timer waits for writeInProgress and does not interleave writes', async () => {
+    let inflight = 0;
+    let maxInflight = 0;
+    setSessionJournalPrimary(async ({ sessionDir, lines }) => {
+      inflight++;
+      maxInflight = Math.max(maxInflight, inflight);
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      writeFileSync(join(sessionDir, 'session.jsonl'), `${lines.join('\n')}\n`);
+      inflight--;
+      return true;
+    });
+
+    // Debounce path (timer) and flush must share the same writeInProgress chain.
+    const debounceQueue = new SessionPersistenceQueue(8);
+    debounceQueue.enqueue(createTestSession('test-session', testDir, 'first-id'));
+    const flush1 = debounceQueue.flush('test-session');
+
+    debounceQueue.enqueue(createTestSession('test-session', testDir, 'second-id'));
+    await flush1;
+    // Let the debounce timer fire and drain through the same lock.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await debounceQueue.flush('test-session');
+
+    expect(maxInflight).toBe(1);
+
+    const filePath = join(testDir, 'sessions', 'test-session', 'session.jsonl');
+    const header = JSON.parse(readFileSync(filePath, 'utf-8').split('\n')[0]);
+    expect(header.sdkSessionId).toBe('second-id');
+    expect(existsSync(filePath + '.tmp')).toBe(false);
   });
 });

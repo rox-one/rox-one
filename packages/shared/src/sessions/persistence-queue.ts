@@ -1,4 +1,4 @@
-import { writeFile, rename, unlink } from 'fs/promises'
+import { writeFile } from 'fs/promises'
 import { dirname } from 'path'
 import type { StoredSession, SessionHeader } from './types.js'
 import { getSessionFilePath, ensureSessionsDir, ensureSessionDir } from './storage.js'
@@ -6,6 +6,7 @@ import { toPortablePath } from '../utils/paths.js'
 import { createSessionHeader, makeSessionPathPortable, readSessionHeader, rewriteSessionJsonlHeader } from './jsonl.js'
 import { notifySessionJournalShadow } from './journal-shadow.js'
 import { trySessionJournalPrimary } from './journal-primary.js'
+import { replaceFileAtomically } from './atomic-replace.js'
 import { debug } from '../utils/debug.js'
 
 interface PendingWrite {
@@ -80,7 +81,7 @@ class SessionPersistenceQueue {
     }
 
     const timer = setTimeout(() => {
-      void this.write(session.id)
+      void this.runWrite(session.id)
     }, this.debounceMs)
 
     this.pending.set(session.id, { data: session, timer })
@@ -146,12 +147,12 @@ class SessionPersistenceQueue {
         ...persistableMessages.map(m => makeSessionPathPortable(JSON.stringify(m), sessionDir)),
       ]
 
-      // Atomic write: write to .tmp then rename over the real file.
+      // Atomic write: write to .tmp then replace dest without unlinking it first.
       // If the process crashes mid-write, only the .tmp is corrupted —
       // the original session.jsonl remains intact.
       //
       // Update signature BEFORE the write so that fs.watch events fired
-      // during unlink/rename are correctly identified as self-writes.
+      // during replace are correctly identified as self-writes.
       // Without this, onSessionMetadataChange sees the stale signature
       // and reverts in-memory metadata on idle sessions.
       const finalSignature = getHeaderMetadataSignature(header)
@@ -161,9 +162,7 @@ class SessionPersistenceQueue {
       if (!wrotePrimary) {
         const tmpFile = filePath + '.tmp'
         await writeFile(tmpFile, lines.join('\n') + '\n', 'utf-8')
-        // On Windows, rename fails if target exists. Delete first for cross-platform compatibility.
-        try { await unlink(filePath) } catch { /* ignore if doesn't exist */ }
-        await rename(tmpFile, filePath)
+        await replaceFileAtomically(tmpFile, filePath)
       }
       notifySessionJournalShadow(sessionDir, lines)
       this.writeFailures.delete(sessionId)
@@ -175,6 +174,22 @@ class SessionPersistenceQueue {
   }
 
   /**
+   * Run write() through the per-session writeInProgress chain so debounce
+   * and flush never share one .tmp concurrently.
+   */
+  private runWrite(sessionId: string): Promise<void> {
+    const previous = this.writeInProgress.get(sessionId) ?? Promise.resolve()
+    const next = previous.catch(() => {}).then(() => this.write(sessionId))
+    this.writeInProgress.set(sessionId, next)
+    void next.finally(() => {
+      if (this.writeInProgress.get(sessionId) === next) {
+        this.writeInProgress.delete(sessionId)
+      }
+    })
+    return next
+  }
+
+  /**
    * Immediately flush a specific session if pending.
    * Waits for any in-progress write to complete before starting a new one
    * to prevent race conditions on the shared .tmp file.
@@ -183,22 +198,12 @@ class SessionPersistenceQueue {
     const entry = this.pending.get(sessionId)
     if (entry) {
       clearTimeout(entry.timer)
-
-      // Wait for any in-progress write to complete first
-      const inProgress = this.writeInProgress.get(sessionId)
-      if (inProgress) {
-        await inProgress
-      }
-
-      // Start new write and track it
-      const writePromise = this.write(sessionId)
-      this.writeInProgress.set(sessionId, writePromise)
-
-      try {
-        await writePromise
-      } finally {
-        this.writeInProgress.delete(sessionId)
-      }
+      await this.runWrite(sessionId)
+      return
+    }
+    const inProgress = this.writeInProgress.get(sessionId)
+    if (inProgress) {
+      await inProgress
     }
   }
 

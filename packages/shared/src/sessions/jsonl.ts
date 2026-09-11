@@ -5,9 +5,19 @@
  * Format: Line 1 = SessionHeader, Lines 2+ = StoredMessage (one per line)
  */
 
-import { createReadStream, createWriteStream, openSync, readSync, closeSync, readFileSync, writeFileSync, renameSync, unlinkSync } from 'fs';
+import { createReadStream, createWriteStream, openSync, readSync, closeSync, readFileSync, writeFileSync } from 'fs';
 import { open, readFile, rename, stat, unlink, writeFile } from 'fs/promises';
 import { pipeline } from 'node:stream/promises';
+import { dirname } from 'path';
+import type { SessionHeader, StoredSession, StoredMessage, SessionTokenUsage } from './types.ts';
+import type { PermissionMode } from '../agent/mode-types.ts';
+import { parsePermissionMode } from '../agent/mode-types.ts';
+import { toPortablePath, expandPath, normalizePath } from '../utils/paths.ts';
+import { debug } from '../utils/debug.ts';
+import { safeJsonParse } from '../utils/files.ts';
+import { pickSessionFields } from './utils.ts';
+import { notifySessionJournalShadow } from './journal-shadow.ts';
+import { replaceFileAtomically, replaceFileAtomicallySync } from './atomic-replace.ts';
 import { dirname } from 'path';
 import type { SessionHeader, StoredSession, StoredMessage, SessionTokenUsage } from './types.ts';
 import type { PermissionMode } from '../agent/mode-types.ts';
@@ -147,8 +157,9 @@ export function readSessionJsonl(sessionFile: string): StoredSession | null {
 
 /**
  * Write session to JSONL format using atomic write (write-to-temp-then-rename).
- * Prevents file corruption if the process crashes mid-write: either the old
- * file remains intact or the new file is fully written. Never a partial file.
+ * POSIX rename(tmp, dest) replaces dest without unlinking it first, so a crash
+ * mid-write leaves the original session.jsonl intact. Windows falls back to
+ * copyFile-overwrite + unlink(tmp) so dest still exists if the process dies.
  *
  * Line 1: Header with pre-computed metadata
  * Lines 2+: Messages (one per line)
@@ -164,9 +175,7 @@ export function writeSessionJsonl(sessionFile: string, session: StoredSession): 
 
   const tmpFile = sessionFile + '.tmp';
   writeFileSync(tmpFile, lines.join('\n') + '\n');
-  // On Windows, rename fails if target exists. Delete first for cross-platform compatibility.
-  try { unlinkSync(sessionFile); } catch { /* ignore if doesn't exist */ }
-  renameSync(tmpFile, sessionFile);
+  replaceFileAtomicallySync(tmpFile, sessionFile);
   notifySessionJournalShadow(sessionDir, lines);
 }
 
@@ -318,11 +327,9 @@ export async function rewriteSessionJsonlHeader(
       );
     }
 
-    // Set the self-write signature before unlink/rename can notify watchers.
+    // Set the self-write signature before rename/replace can notify watchers.
     onBeforeCommit?.(nextHeader);
-    // Windows cannot replace an existing destination with rename().
-    try { await unlink(sessionFile); } catch { /* ignore if the file disappeared */ }
-    await rename(tmpFile, sessionFile);
+    await replaceFileAtomically(tmpFile, sessionFile);
     return nextHeader;
   } catch (error) {
     try { await unlink(tmpFile); } catch { /* best-effort temp cleanup */ }
