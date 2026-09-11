@@ -13,6 +13,7 @@ import {
   featureWorkbenchConationNotesBridgeAtom,
   featureWorkbenchConationSessionApplyAtom,
   featureWorkbenchConationSoupClientAtom,
+  featureWorkbenchConationCanvasAtom,
 } from '@/atoms/unified-shell'
 import { SettingsCard, SettingsSection, SettingsToggle } from '@/components/settings'
 
@@ -25,6 +26,7 @@ export function ConationShellSettings() {
   const [notesBridge, setNotesBridge] = useAtom(featureWorkbenchConationNotesBridgeAtom)
   const [dssClient, setDssClient] = useAtom(featureWorkbenchConationDssClientAtom)
   const [sessionApply, setSessionApply] = useAtom(featureWorkbenchConationSessionApplyAtom)
+  const [canvas, setCanvas] = useAtom(featureWorkbenchConationCanvasAtom)
 
   return (
     <SettingsSection
@@ -91,6 +93,15 @@ export function ConationShellSettings() {
           )}
           checked={sessionApply}
           onCheckedChange={setSessionApply}
+        />
+        <SettingsToggle
+          label={t('settings.appearance.conationCanvas', 'Fund canvas deep-link')}
+          description={t(
+            'settings.appearance.conationCanvasDesc',
+            'Open Fund canvas on Conation via deep-link (workbench.conation.canvas). Default off. No live in-pane until Perf.',
+          )}
+          checked={canvas}
+          onCheckedChange={setCanvas}
         />
       </SettingsCard>
     </SettingsSection>
