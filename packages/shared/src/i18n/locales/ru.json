@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "Статусы",
   "sidebar.unknownProject": "Неизвестный проект",
   "sidebar.views": "Представления",
-  "sidebar.viewsHint": "Сохранённые фильтры сессий. New, Plan, Explore и Processing — встроенные срезы.",
+  "sidebar.viewsHint": "Сохранённые фильтры сессий. «Новые», «План», «Обзор» и «Обработка» — встроенные срезы.",
   "sidebar.whatsNew": "Что нового",
   "sidebarMenu.addAutomation": "Добавить автоматизацию",
   "sidebarMenu.addNewLabel": "Добавить метку",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "Новые",
+  "sidebar.view.newDesc": "Сессии с непрочитанными сообщениями",
+  "sidebar.view.plan": "План",
+  "sidebar.view.planDesc": "Сессии с ожидающим утверждения планом",
+  "sidebar.view.explore": "Обзор",
+  "sidebar.view.exploreDesc": "Сессии в режиме Explore (только чтение)",
+  "sidebar.view.processing": "Обработка",
+  "sidebar.view.processingDesc": "Сессии, где агент сейчас работает"
 }

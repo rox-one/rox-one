@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "Estados",
   "sidebar.unknownProject": "Proyecto desconocido",
   "sidebar.views": "Vistas",
-  "sidebar.viewsHint": "Filtros de sesión guardados. New, Plan, Explore y Processing son cortes integrados.",
+  "sidebar.viewsHint": "Filtros de sesión guardados. Nuevas, Plan, Explorar y Procesando son cortes integrados.",
   "sidebar.whatsNew": "Novedades",
   "sidebarMenu.addAutomation": "Añadir automatización",
   "sidebarMenu.addNewLabel": "Añadir nueva etiqueta",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "Nuevas",
+  "sidebar.view.newDesc": "Sesiones con mensajes sin leer",
+  "sidebar.view.plan": "Plan",
+  "sidebar.view.planDesc": "Sesiones con un plan pendiente de aprobación",
+  "sidebar.view.explore": "Explorar",
+  "sidebar.view.exploreDesc": "Sesiones en modo Explorar (solo lectura)",
+  "sidebar.view.processing": "Procesando",
+  "sidebar.view.processingDesc": "Sesiones donde el agente está en ejecución"
 }

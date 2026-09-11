@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "Status",
   "sidebar.unknownProject": "Unbekanntes Projekt",
   "sidebar.views": "Ansichten",
-  "sidebar.viewsHint": "Gespeicherte Sitzungsfilter. New, Plan, Explore und Processing sind integrierte Slices.",
+  "sidebar.viewsHint": "Gespeicherte Sitzungsfilter. Neu, Plan, Erkunden und Verarbeitung sind integrierte Slices.",
   "sidebar.whatsNew": "Neuigkeiten",
   "sidebarMenu.addAutomation": "Automatisierung hinzufügen",
   "sidebarMenu.addNewLabel": "Neues Label hinzufügen",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "Neu",
+  "sidebar.view.newDesc": "Sitzungen mit ungelesenen Nachrichten",
+  "sidebar.view.plan": "Plan",
+  "sidebar.view.planDesc": "Sitzungen mit ausstehendem Plan",
+  "sidebar.view.explore": "Erkunden",
+  "sidebar.view.exploreDesc": "Sitzungen im Explore-Modus (nur lesen)",
+  "sidebar.view.processing": "Verarbeitung",
+  "sidebar.view.processingDesc": "Sitzungen, in denen der Agent gerade läuft"
 }

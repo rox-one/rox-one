@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "상태",
   "sidebar.unknownProject": "알 수 없는 프로젝트",
   "sidebar.views": "보기",
-  "sidebar.viewsHint": "저장된 세션 필터입니다. New, Plan, Explore, Processing은 기본 슬라이스입니다.",
+  "sidebar.viewsHint": "저장된 세션 필터입니다. 신규, 계획, 탐색, 처리 중은 기본 슬라이스입니다.",
   "sidebar.whatsNew": "새로운 기능",
   "sidebarMenu.addAutomation": "자동화 추가",
   "sidebarMenu.addNewLabel": "새 레이블 추가",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "신규",
+  "sidebar.view.newDesc": "읽지 않은 메시지가 있는 세션",
+  "sidebar.view.plan": "계획",
+  "sidebar.view.planDesc": "승인 대기 중인 계획이 있는 세션",
+  "sidebar.view.explore": "탐색",
+  "sidebar.view.exploreDesc": "탐색(읽기 전용) 모드의 세션",
+  "sidebar.view.processing": "처리 중",
+  "sidebar.view.processingDesc": "에이전트가 실행 중인 세션"
 }

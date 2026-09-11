@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "الحالات",
   "sidebar.unknownProject": "مشروع غير معروف",
   "sidebar.views": "طرق العرض",
-  "sidebar.viewsHint": "مرشحات جلسات محفوظة. New وPlan وExplore وProcessing شرائح مضمّنة.",
+  "sidebar.viewsHint": "مرشحات جلسات محفوظة. جديد وخطة واستكشاف ومعالجة شرائح مضمّنة.",
   "sidebar.whatsNew": "ما الجديد؟",
   "sidebarMenu.addAutomation": "إضافة أتمتة",
   "sidebarMenu.addNewLabel": "إضافة تسمية جديدة",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "جديد",
+  "sidebar.view.newDesc": "جلسات برسائل غير مقروءة",
+  "sidebar.view.plan": "خطة",
+  "sidebar.view.planDesc": "جلسات بخطة بانتظار الموافقة",
+  "sidebar.view.explore": "استكشاف",
+  "sidebar.view.exploreDesc": "جلسات في وضع الاستكشاف (للقراءة فقط)",
+  "sidebar.view.processing": "معالجة",
+  "sidebar.view.processingDesc": "جلسات يعمل فيها الوكيل حالياً"
 }

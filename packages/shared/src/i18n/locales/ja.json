@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "ステータス",
   "sidebar.unknownProject": "不明なプロジェクト",
   "sidebar.views": "ビュー",
-  "sidebar.viewsHint": "保存済みのセッションフィルターです。New、Plan、Explore、Processing は組み込みスライスです。",
+  "sidebar.viewsHint": "保存済みのセッションフィルターです。新規、プラン、探索、処理中は組み込みスライスです。",
   "sidebar.whatsNew": "新着情報",
   "sidebarMenu.addAutomation": "自動化を追加",
   "sidebarMenu.addNewLabel": "新規ラベルを追加",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "新規",
+  "sidebar.view.newDesc": "未読メッセージのあるセッション",
+  "sidebar.view.plan": "プラン",
+  "sidebar.view.planDesc": "承認待ちのプランがあるセッション",
+  "sidebar.view.explore": "探索",
+  "sidebar.view.exploreDesc": "探索（読み取り専用）モードのセッション",
+  "sidebar.view.processing": "処理中",
+  "sidebar.view.processingDesc": "エージェントが実行中のセッション"
 }

@@ -3699,5 +3699,13 @@
   "settings.appearance.conationDssClient": "DSS client",
   "settings.appearance.conationDssClientDesc": "Read-only Conation DSS/Drive HTTP client (workbench.conation.dssClient). Default off.",
   "settings.appearance.conationSessionApply": "SessionApply (Conation)",
-  "settings.appearance.conationSessionApplyDesc": "SessionApply consumer stub linked to AgentTeamsStore (workbench.conation.sessionApply). Default off. Not Cordis."
+  "settings.appearance.conationSessionApplyDesc": "SessionApply consumer stub linked to AgentTeamsStore (workbench.conation.sessionApply). Default off. Not Cordis.",
+  "sidebar.view.new": "New",
+  "sidebar.view.newDesc": "Sessions with unread messages",
+  "sidebar.view.plan": "Plan",
+  "sidebar.view.planDesc": "Sessions with a pending plan awaiting approval",
+  "sidebar.view.explore": "Explore",
+  "sidebar.view.exploreDesc": "Sessions in Explore (read-only) mode",
+  "sidebar.view.processing": "Processing",
+  "sidebar.view.processingDesc": "Sessions where the agent is currently running"
 }

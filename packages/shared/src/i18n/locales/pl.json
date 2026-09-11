@@ -3125,7 +3125,7 @@
   "sidebar.statuses": "Statusy",
   "sidebar.unknownProject": "Nieznany projekt",
   "sidebar.views": "Widoki",
-  "sidebar.viewsHint": "Zapisane filtry sesji. New, Plan, Explore i Processing to wbudowane wycinki.",
+  "sidebar.viewsHint": "Zapisane filtry sesji. Nowe, Plan, Eksploruj i Przetwarzanie to wbudowane wycinki.",
   "sidebar.whatsNew": "Co nowego",
   "sidebarMenu.addAutomation": "Dodaj automatyzację",
   "sidebarMenu.addNewLabel": "Dodaj nową etykietę",
@@ -3691,5 +3691,13 @@
   "settings.appearance.conationInspectorFlag": "Conation inspector host",
   "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
   "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
-  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet.",
+  "sidebar.view.new": "Nowe",
+  "sidebar.view.newDesc": "Sesje z nieprzeczytanymi wiadomościami",
+  "sidebar.view.plan": "Plan",
+  "sidebar.view.planDesc": "Sesje z planem oczekującym na zatwierdzenie",
+  "sidebar.view.explore": "Eksploruj",
+  "sidebar.view.exploreDesc": "Sesje w trybie Eksploruj (tylko odczyt)",
+  "sidebar.view.processing": "Przetwarzanie",
+  "sidebar.view.processingDesc": "Sesje, w których agent właśnie działa"
 }
