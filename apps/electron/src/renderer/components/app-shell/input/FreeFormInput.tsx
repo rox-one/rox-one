@@ -740,16 +740,6 @@ export function FreeFormInput({
     prevInputValueRef.current = ''
   }, [onInputChange])
 
-  const handleImprovePrompt = React.useCallback(() => {
-    const next = improveDraftPrompt(input)
-    if (next === input) return
-    setInput(next)
-    syncToParent(next)
-    setTimeout(() => {
-      richInputRef.current?.focus()
-      richInputRef.current?.setSelectionRange(next.length, next.length)
-    }, 0)
-  }, [input, syncToParent, richInputRef])
 
   React.useEffect(() => {
     const onImprove = () => {
