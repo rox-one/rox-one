@@ -122,6 +122,13 @@ export const featureWorkbenchConationDriveReadAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
+export const featureWorkbenchConationCanvasAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchConationCanvas),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
 export const featureWorkbenchConationDssClientAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchConationDssClient),
   false,

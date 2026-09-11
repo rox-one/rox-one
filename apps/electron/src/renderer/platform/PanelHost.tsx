@@ -41,6 +41,8 @@ import { registerConationPanels } from './conation/conation-panels'
 import { ConationInspectorPanel } from './conation/ConationInspectorPanel'
 import { registerNotesPanel } from './conation/conation-notes-panels'
 import { ConationNotesPanel } from './conation/ConationNotesPanel'
+import { registerFundPanel } from './conation/conation-fund-panels'
+import { ConationFundPanel } from './conation/ConationFundPanel'
 import {
   DEFAULT_PANEL_REGISTRY_STATE,
   getAppPanelRegistry,
@@ -71,6 +73,22 @@ registerNotesPanel(
     shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
     inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
     notesBridgeEnabled: storage.get(KEYS.featureWorkbenchConationNotesBridge, false),
+  },
+)
+
+// Fund deep-link panel: no-op unless shell + inspector + canvas are all on (default false).
+// Live in-pane Fund canvas is out of scope until Perf harness (ROX-009).
+registerFundPanel(
+  {
+    register: (contribution) => {
+      void contribution
+    },
+  },
+  ConationFundPanel,
+  {
+    shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
+    inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
+    canvasEnabled: storage.get(KEYS.featureWorkbenchConationCanvas, false),
   },
 )
 
