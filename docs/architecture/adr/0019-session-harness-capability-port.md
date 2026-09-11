@@ -56,5 +56,6 @@ Protected by:
 | `workbench.harness.agent-intel.v1` | false | H3 |
 | `workbench.harness.ext-center.v1` | false | H4 |
 | `workbench.harness.agentTeams` | false | Post-H6: first-party Agent Teams skill + workspace `.agent-teams/` store (Cordis runtime stays skipped; no Timeline) |
+| `workbench.conation.sessionApply` | false | WP-Agents SessionApply consumer stub + AgentTeamsStore linkage (not Cordis) |
 
 Существующие `featureUnifiedShellAtom` и `workbench.terminal.v1` / `execution.coordinator.v1` остаются независимыми.

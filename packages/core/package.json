@@ -22,7 +22,11 @@
     "./platform/agent-teams": "./src/platform/agent-teams/index.ts",
     "./platform/agent-teams/store": "./src/platform/agent-teams/store.ts",
     "./platform/agent-teams/types": "./src/platform/agent-teams/types.ts",
-    "./conation/shell": "./src/conation/shell/index.ts"
+    "./conation/shell": "./src/conation/shell/index.ts",
+    "./conation/soup": "./src/conation/soup/index.ts",
+    "./conation/notes": "./src/conation/notes/index.ts",
+    "./conation/dss": "./src/conation/dss/index.ts",
+    "./platform/session-apply": "./src/platform/session-apply/index.ts"
   },
   "peerDependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.220",
