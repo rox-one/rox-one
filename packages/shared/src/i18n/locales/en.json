@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "No AI connection is configured.",
   "settings.overview.noWorkspace": "No workspace is selected.",
   "settings.overview.recent": "Recently opened",
-  "settings.overview.runtime": "Runtime",
   "settings.overview.title": "Settings",
   "settings.overview.workspace": "Workspace",
   "settings.permissions.aboutPermissions": "About Permissions",

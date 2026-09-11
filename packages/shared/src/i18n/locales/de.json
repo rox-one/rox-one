@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "Keine KI-Verbindung konfiguriert.",
   "settings.overview.noWorkspace": "Kein Arbeitsbereich ausgewählt.",
   "settings.overview.recent": "Zuletzt geöffnet",
-  "settings.overview.runtime": "Laufzeit",
   "settings.overview.title": "Einstellungen",
   "settings.overview.workspace": "Arbeitsbereich",
   "settings.permissions.aboutPermissions": "Über Berechtigungen",

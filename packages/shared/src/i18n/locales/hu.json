@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "Nincs MI-kapcsolat beállítva.",
   "settings.overview.noWorkspace": "Nincs munkaterület kiválasztva.",
   "settings.overview.recent": "Nemrég megnyitott",
-  "settings.overview.runtime": "Futtatókörnyezet",
   "settings.overview.title": "Beállítások",
   "settings.overview.workspace": "Munkaterület",
   "settings.permissions.aboutPermissions": "Az engedélyekről",

@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "尚未配置 AI 连接。",
   "settings.overview.noWorkspace": "尚未选择工作区。",
   "settings.overview.recent": "最近打开",
-  "settings.overview.runtime": "运行时",
   "settings.overview.title": "设置",
   "settings.overview.workspace": "工作区",
   "settings.permissions.aboutPermissions": "关于权限",

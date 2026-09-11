@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import {
   extractRecentSettings,
   parsePreferences,
+  recordRecentSetting,
   SETTINGS_RECENT_KEY,
   upsertRecentSetting,
 } from '../settings-recent'
@@ -48,5 +49,41 @@ describe('settings recent history', () => {
     expect(latest).toEqual(['appearance', 'accounts', 'marketplace', 'permissions', 'ai'])
     expect(extractRecentSettings(prefs, 'ws-a')).toEqual(latest)
     expect(prefs.diffViewer).toEqual({ diffStyle: 'split' })
+  })
+})
+
+describe('recordRecentSetting persist', () => {
+  it('does not treat a failed write as saved', async () => {
+    const writes: string[] = []
+    const electronAPI = {
+      readPreferences: async () => ({ content: '{}' }),
+      writePreferences: async (content: string) => {
+        writes.push(content)
+        return { success: false, error: 'disk full' }
+      },
+    }
+    ;(globalThis as { window: { electronAPI: typeof electronAPI } }).window = { electronAPI }
+
+    const recents = await recordRecentSetting('ws-a', 'runtime')
+    expect(recents).toEqual(['runtime'])
+    expect(writes).toHaveLength(1)
+    expect(extractRecentSettings(parsePreferences(writes[0]!), 'ws-a')).toEqual(['runtime'])
+  })
+
+  it('skips the write when the caller aborts before persist', async () => {
+    const writes: string[] = []
+    const electronAPI = {
+      readPreferences: async () => ({ content: '{}' }),
+      writePreferences: async (content: string) => {
+        writes.push(content)
+        return { success: true }
+      },
+    }
+    ;(globalThis as { window: { electronAPI: typeof electronAPI } }).window = { electronAPI }
+
+    const controller = new AbortController()
+    controller.abort()
+    await recordRecentSetting('ws-a', 'ai', { signal: controller.signal })
+    expect(writes).toEqual([])
   })
 })

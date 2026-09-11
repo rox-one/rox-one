@@ -2580,7 +2580,6 @@
   "settings.overview.noConnection": "Nie skonfigurowano połączenia AI.",
   "settings.overview.noWorkspace": "Nie wybrano przestrzeni roboczej.",
   "settings.overview.recent": "Ostatnio otwarte",
-  "settings.overview.runtime": "Środowisko uruchomieniowe",
   "settings.overview.title": "Ustawienia",
   "settings.overview.workspace": "Przestrzeń robocza",
   "settings.permissions.aboutPermissions": "O uprawnieniach",
