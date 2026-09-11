@@ -97,6 +97,9 @@ export const KEYS = {
   featureWorkbenchHarnessAgentIntelV1: 'feature-workbench-harness-agent-intel-v1',
   featureWorkbenchHarnessExtCenterV1: 'feature-workbench-harness-ext-center-v1',
   featureWorkbenchHarnessAgentTeams: 'feature-workbench-harness-agent-teams',
+  featureWorkbenchConationShell: 'feature-workbench-conation-shell',
+  featureWorkbenchConationInspector: 'feature-workbench-conation-inspector',
+  featureSkillsConationSurfaces: 'feature-skills-conation-surfaces',
   workbenchLayout: 'workbench-layout', // WorkbenchLayout v2 JSON, workspace-scoped
   // Last collection layout origin (list/board/table) for Shift+click back
   collectionLastView: 'collection-last-view',

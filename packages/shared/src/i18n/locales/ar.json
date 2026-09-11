@@ -3683,5 +3683,13 @@
   "workspaceRail.linkMissingUrl": "أدخل URL",
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "معرّف الملاحظة (اختياري)",
-  "workspaceRail.removeLink": "إزالة الرابط"
+  "workspaceRail.removeLink": "إزالة الرابط",
+  "settings.appearance.conationShell": "Conation",
+  "settings.appearance.conationShellDesc": "Opt-in Conation data-plane panes in Rox. All off by default; no Timeline mode.",
+  "settings.appearance.conationShellFlag": "Conation shell",
+  "settings.appearance.conationShellFlagDesc": "Master gate for Conation panes (workbench.conation.shell). Default off.",
+  "settings.appearance.conationInspectorFlag": "Conation inspector host",
+  "settings.appearance.conationInspectorFlagDesc": "Empty inspector host for later domain WPs (workbench.conation.inspector). Needs shell. Default off.",
+  "settings.appearance.conationSurfacesSkill": "Conation surfaces skill",
+  "settings.appearance.conationSurfacesSkillDesc": "Gate for Conation surfaces skill registration (skills.conation.surfaces). Default off; no skill registered yet."
 }
