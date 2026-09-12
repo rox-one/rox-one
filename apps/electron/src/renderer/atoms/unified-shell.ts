@@ -2,12 +2,13 @@
  * Unified Shell (W1) + Workbench v2 chrome flags.
  *
  * W1 master: `featureUnifiedShellAtom` (localStorage `craft-feature-unified-shell`,
- * default ON) gates ActivityRail + SurfaceTabs + InspectorHost together with
+ * default OFF) gates ActivityRail + SurfaceTabs + InspectorHost together with
  * the Workbench preference.
  *
  * Workbench v2 splits further chrome behind granular `workbench.*` flags
  * (ADR-0001) so Mode Bar, TabGroups, browser-as-surface and Status Bar can
- * ship independently. Unified shell / inspector / workbench default ON.
+ * ship independently. Unified shell / workbench masters default OFF (factory
+ * anti-goal: flags default false). Granular workbench.* flags also default OFF.
  */
 import { atomWithStorage } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
@@ -15,7 +16,7 @@ import { KEYS, getKeyString } from '@/lib/local-storage'
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureUnifiedShell),
-  true,
+  false,
   undefined,
   { getOnInit: true },
 )
@@ -24,7 +25,7 @@ export const featureUnifiedShellAtom = atomWithStorage<boolean>(
 /** Explicit Workbench user preference; operator policy is evaluated elsewhere. */
 export const featureWorkbenchAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.workbenchEnabled),
-  true,
+  false,
   undefined,
   { getOnInit: true },
 )
