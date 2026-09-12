@@ -215,6 +215,9 @@ describe('getContextDocsPromptBlock', () => {
       expect(block).toContain('SOUL_TEMPLATE_MARKER');
       expect(block).toContain('RULES_TEMPLATE_MARKER');
       expect(block.indexOf('SOUL_TEMPLATE_MARKER')).toBeLessThan(block.indexOf('RULES_TEMPLATE_MARKER'));
+      expect(block).toContain('soul.md is optional identity and values (Rox CLI). It is not policy.');
+      expect(block).toContain('rules.md is policy (working rules and constraints).');
+      expect(block).not.toContain('personality and working rules');
     } finally {
       teardownDirs(dirs);
     }
