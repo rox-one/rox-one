@@ -28,7 +28,13 @@ export type {
 export { LocalSubprocessProvider } from './local-provider.ts';
 export { NativeRunProvider } from './native-provider.ts';
 export type { NativeRunProviderOptions, NativeRunRpc } from './native-provider.ts';
-export { DaytonaProvider, createMemoryDaytonaProvider } from './daytona-provider.ts';
+export {
+  DaytonaProvider,
+  createMemoryDaytonaProvider,
+  boundConcurrency,
+  DAYTONA_MAX_CONCURRENCY,
+  DAYTONA_DEFAULT_CONCURRENCY,
+} from './daytona-provider.ts';
 export type { DaytonaProviderOptions } from './daytona-provider.ts';
 export { MemoryDaytonaClient, HttpDaytonaClient, DAYTONA_RUN_LABEL } from './daytona-client.ts';
 export type { DaytonaClient, HttpDaytonaClientOptions } from './daytona-client.ts';

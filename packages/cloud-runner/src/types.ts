@@ -62,6 +62,8 @@ export interface RunSpec {
   agentic?: boolean;
   /** F21: runner flavor — default loop; omp = via omp CLI on Daytona. */
   agenticMode?: 'loop' | 'omp';
+  /** F3: parallel subtasks. Daytona clamps to 1–4 (default 2). */
+  concurrency?: number;
   /** Free-form linkage back to the originating session/workspace. */
   metadata?: Record<string, string>;
 }

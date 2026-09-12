@@ -2,7 +2,7 @@
  * DaytonaProvider — in-memory client conformance, lifecycle, secrets, zombies.
  */
 import { describe, expect, test } from 'bun:test';
-import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { conformanceSuite } from '../conformance.ts';
@@ -157,6 +157,61 @@ describe('DaytonaProvider (memory client)', () => {
       };
       await walk('');
       expect(dumped.join('\n')).not.toContain(secret);
+    });
+  });
+
+  test('clamps concurrency and passes omp mode on the exec line', async () => {
+    await withDir(async (dir) => {
+      const client = new MemoryDaytonaClient({ execDelayMs: 5 });
+      const provider = new DaytonaProvider({ baseDir: dir, client });
+      const spec = {
+        id: `conc-${Date.now().toString(36)}`,
+        name: 'concurrency',
+        subtasks: [{ id: 't1', prompt: 'A' }, { id: 't2', prompt: 'B' }],
+        concurrency: 99,
+        agenticMode: 'omp' as const,
+        limits: { maxWallClockSec: 60 },
+      };
+      await provider.createRun(spec);
+      for await (const _ of provider.subscribeEvents(spec.id)) {
+        /* drain */
+      }
+      const stored = JSON.parse(await readFile(join(dir, spec.id, 'spec.json'), 'utf8')) as {
+        concurrency: number;
+        agenticMode: string;
+      };
+      expect(stored.concurrency).toBe(4);
+      expect(stored.agenticMode).toBe('omp');
+      expect(client.lastExecCommand).toBe('rox-run --concurrency 4 --mode omp');
+    });
+  });
+
+  test('resume of a failed run skips host done.markers', async () => {
+    await withDir(async (dir) => {
+      const client = new MemoryDaytonaClient({ execDelayMs: 5 });
+      const provider = new DaytonaProvider({ baseDir: dir, client });
+      const spec = {
+        id: `resume-${Date.now().toString(36)}`,
+        name: 'resume',
+        subtasks: [{ id: 't1', prompt: 'first' }, { id: 't2', prompt: 'second' }],
+        limits: { maxWallClockSec: 60 },
+      };
+      await provider.createRun(spec);
+      for await (const _ of provider.subscribeEvents(spec.id)) {
+        /* drain */
+      }
+      const t1 = await readFile(join(dir, spec.id, 'artifacts', 't1', 'notes.md'), 'utf8');
+      await rm(join(dir, spec.id, 'artifacts', 't2'), { recursive: true, force: true });
+      await writeFile(
+        join(dir, spec.id, 'state.json'),
+        JSON.stringify({ id: spec.id, state: 'failed', failureReason: 'runner_error', startedAt: Date.now() }),
+      );
+      await provider.createRun(spec);
+      for await (const _ of provider.subscribeEvents(spec.id)) {
+        /* drain */
+      }
+      expect(await readFile(join(dir, spec.id, 'artifacts', 't1', 'notes.md'), 'utf8')).toBe(t1);
+      expect(await readFile(join(dir, spec.id, 'artifacts', 't2', 'done.marker'), 'utf8')).toBeTruthy();
     });
   });
 });

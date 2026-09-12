@@ -68,6 +68,7 @@ export class MemoryDaytonaClient implements DaytonaClient {
   readonly files = new Map<string, Map<string, Uint8Array>>();
   /** Delay applied to `rox-run` so cancel can win in conformance. */
   execDelayMs: number;
+  lastExecCommand = '';
   private seq = 0;
 
   constructor(opts?: { execDelayMs?: number }) {
@@ -155,6 +156,7 @@ export class MemoryDaytonaClient implements DaytonaClient {
   }
 
   async exec(sandboxId: string, command: string, signal?: AbortSignal): Promise<DaytonaExecResult> {
+    this.lastExecCommand = command;
     await this.getSandbox(sandboxId);
     if (command === 'rox-run' || command.startsWith('rox-run ')) {
       if (this.execDelayMs > 0) {

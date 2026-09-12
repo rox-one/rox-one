@@ -20,6 +20,7 @@ export const RPC_CHANNELS = {
     LIST: 'cloudRuns:list',
     GET_STATUS: 'cloudRuns:getStatus',
     CANCEL: 'cloudRuns:cancel',
+    KILL: 'cloudRuns:kill',
     LIST_ARTIFACTS: 'cloudRuns:listArtifacts',
     IMPORT: 'cloudRuns:import',
     AGGREGATE: 'cloudRuns:aggregate',
