@@ -561,6 +561,7 @@ function getToolDisplayName(name: string): string {
     'create_task': 'Create Task',
     'list_background_tasks': 'List Background Tasks',
     'send_agent_message': 'Send Agent Message',
+    'agent_teams': 'Agent Teams',
     'spawn_session': 'Spawn Session',
   }
 

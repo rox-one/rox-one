@@ -82,6 +82,8 @@ export { handleCreateTask } from './create-task.ts';
 export type { CreateTaskArgs } from './create-task.ts';
 export { handleArchiveSession } from './archive-session.ts';
 export type { ArchiveSessionArgs } from './archive-session.ts';
+export { handleAgentTeams } from './agent-teams.ts';
+export type { AgentTeamsArgs, AgentTeamsAction } from './agent-teams.ts';
 
 // Knowledge read tools (K-10 §3.1; args types derive from the zod schemas in tool-defs)
 export { handleKnowledgeSearch, KNOWLEDGE_SEARCH_MAX_LIMIT } from './knowledge-search.ts';

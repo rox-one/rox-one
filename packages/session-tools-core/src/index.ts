@@ -220,6 +220,7 @@ export {
   handleUpdatePage,
   handleWritePageData,
   handleDeletePage,
+  handleAgentTeams,
 } from './handlers/index.ts';
 
 // Knowledge handlers (registered in SESSION_TOOL_DEFS)

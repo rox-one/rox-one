@@ -42,6 +42,7 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'list_sessions',
   'list_background_tasks',
   'send_agent_message',
+  'agent_teams',
   'list_messaging_channels',
   'unbind_messaging_channel',
   'knowledge_search',
