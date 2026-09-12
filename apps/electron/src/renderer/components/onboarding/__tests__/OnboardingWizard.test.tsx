@@ -110,7 +110,9 @@ describe('OnboardingWizard', () => {
       />,
     )
 
-    expect(html).toBeTruthy()
+    expect(html).toContain('onboarding.environment.title')
+    expect(html).toContain('onboarding.environment.agentRulesMust')
+    expect(html).not.toMatch(/<select\b/)
   })
 
   test('renders the OMP first-run credential step with the typed code', () => {
