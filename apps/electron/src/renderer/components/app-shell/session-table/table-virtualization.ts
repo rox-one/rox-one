@@ -7,6 +7,7 @@ export interface FlattenTableGroupsOptions<TItem> {
   getItemKey: (item: TItem) => string
   rowHeight: number
   headerHeight: number
+  getRowHeight?: (item: TItem) => number
 }
 
 export type VirtualTableEntry<TItem, TBucket extends { key: string }> =
@@ -39,7 +40,7 @@ export function flattenTableGroups<TItem, TBucket extends { key: string }>(
   collapsed: ReadonlySet<string>,
   options: FlattenTableGroupsOptions<TItem>,
 ): FlattenedTableGroups<TItem, TBucket> {
-  const { getItemKey, rowHeight, headerHeight } = options
+  const { getItemKey, rowHeight, headerHeight, getRowHeight } = options
   const entries: VirtualTableEntry<TItem, TBucket>[] = []
   let offset = 0
 
@@ -57,14 +58,15 @@ export function flattenTableGroups<TItem, TBucket extends { key: string }>(
     }
 
     for (const item of group.items) {
+      const height = getRowHeight?.(item) ?? rowHeight
       entries.push({
         kind: 'row',
         key: `row:${getItemKey(item)}`,
         item,
         offset,
-        height: rowHeight,
+        height,
       })
-      offset += rowHeight
+      offset += height
     }
   }
 

@@ -38,4 +38,17 @@ describe('table virtualization', () => {
       'row:b',
     ])
   })
+
+  it('uses per-row heights when getRowHeight is provided', () => {
+    const flattened = flattenTableGroups(groups, new Set(), {
+      ...options,
+      getRowHeight: (item) => (item.id === 'a' ? 80 : 40),
+    })
+    expect(flattened.entries.filter((entry) => entry.kind === 'row').map((entry) => [entry.key, entry.offset, entry.height])).toEqual([
+      ['row:a', 32, 80],
+      ['row:b', 112, 40],
+      ['row:c', 184, 40],
+    ])
+    expect(flattened.totalHeight).toBe(224)
+  })
 })

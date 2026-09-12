@@ -9,6 +9,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { SessionStatusMenu } from '@/components/ui/session-status-menu'
 import { TaskTile } from './TaskTile'
 import { NewTaskComposer } from './NewTaskComposer'
+import { KanbanVirtualTaskList } from './KanbanVirtualTaskList'
 import { KANBAN_COLLAPSED_WIDTH_PX, KANBAN_COLUMN_MIN_WIDTH_PX } from './status-column'
 import type {
   KanbanColumnMeta,
@@ -145,6 +146,28 @@ export function KanbanColumn({
       : column.id
   const editable = !!onRename || !!onSetColor || !!onRemove || !!onSetPrompt
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const [scrollMetrics, setScrollMetrics] = React.useState({ scrollTop: 0, height: 0 })
+  const setScrollAndDroppable = React.useCallback((node: HTMLDivElement | null) => {
+    scrollRef.current = node
+    setNodeRef(node)
+  }, [setNodeRef])
+  const updateScrollMetrics = React.useCallback(() => {
+    const element = scrollRef.current
+    if (!element) return
+    const next = { scrollTop: element.scrollTop, height: element.clientHeight }
+    setScrollMetrics((previous) =>
+      previous.scrollTop === next.scrollTop && previous.height === next.height ? previous : next,
+    )
+  }, [])
+  React.useLayoutEffect(() => {
+    updateScrollMetrics()
+    const container = scrollRef.current
+    if (!container) return
+    const observer = new ResizeObserver(updateScrollMetrics)
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [updateScrollMetrics, tasks.length, priorityGroups, projectGroups])
   const collapsed = column.collapsed ?? column.defaultCollapsed ?? false
 
   const tileProps = {
@@ -247,7 +270,8 @@ export function KanbanColumn({
       </div>
 
       <div
-        ref={setNodeRef}
+        ref={setScrollAndDroppable}
+        onScroll={updateScrollMetrics}
         className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-2 transition-shadow"
         style={{
           backgroundColor: color?.tint,
@@ -258,6 +282,9 @@ export function KanbanColumn({
 
         {(() => {
           const sections = priorityGroups ?? projectGroups
+          const renderTask = (task: KanbanTask) => (
+            <ColumnTaskCard task={task} tileProps={tileProps} />
+          )
           return sections ? (
             sections.map(group => {
               const groupKey = group.projectId ?? '__none__'
@@ -270,39 +297,21 @@ export function KanbanColumn({
                   collapsed={isGroupCollapsed}
                   onToggle={() => onToggleProjectGroup?.(groupKey)}
                   tileProps={tileProps}
+                  scrollParentRef={scrollRef}
+                  scrollTop={scrollMetrics.scrollTop}
+                  viewportHeight={scrollMetrics.height}
                 />
               )
             })
           ) : (
-          tasks.map(task => (
-            <DraggableTile key={task.id} taskId={task.id}>
-              <TaskTile
-                task={task}
-                project={task.projectId ? projectsById.get(task.projectId) : undefined}
-                status={statusesById.get(task.statusId)}
-                statuses={statuses}
-                onStatusChange={onChangeStatus ? statusId => onChangeStatus(task.id, statusId) : undefined}
-                treatment={treatment}
-                expanded={expandedTaskIds.has(task.id)}
-                onClick={() => onTaskClick?.(task.id)}
-                onEdit={onEditTask ? () => onEditTask(task.id) : undefined}
-                onToggleSubtasks={() => onToggleSubtasks?.(task.id)}
-                onSubtaskClick={onSubtaskClick ? subtaskId => onSubtaskClick(task.id, subtaskId) : undefined}
-                onAddSubtask={onAddSubtask ? (title, model) => onAddSubtask(task.id, title, model) : undefined}
-                onRunSubtasks={onRunSubtasks ? () => onRunSubtasks(task.id) : undefined}
-                subtaskModelGroups={subtaskModelGroups}
-                defaultSubtaskModel={defaultSubtaskModel}
-                columnAccent={color?.solid}
-                selected={isTaskSelected?.(task.id)}
-                multiSelectActive={multiSelectActive}
-                onSelect={
-                  onSelectTask
-                    ? shiftKey => onSelectTask(task.id, shiftKey)
-                    : undefined
-                }
-              />
-            </DraggableTile>
-          ))
+            <KanbanVirtualTaskList
+              tasks={tasks}
+              expandedTaskIds={expandedTaskIds}
+              scrollParentRef={scrollRef}
+              scrollTop={scrollMetrics.scrollTop}
+              viewportHeight={scrollMetrics.height}
+              renderTask={renderTask}
+            />
           )
         })()}
       </div>
@@ -331,18 +340,76 @@ type TileSharedProps = {
   onSelectTask?: (taskId: string, shiftKey: boolean) => void
 }
 
+function ColumnTaskCard({
+  task,
+  tileProps,
+}: {
+  task: KanbanTask
+  tileProps: TileSharedProps
+}) {
+  return (
+    <DraggableTile taskId={task.id}>
+      <TaskTile
+        task={task}
+        project={task.projectId ? tileProps.projectsById.get(task.projectId) : undefined}
+        status={tileProps.statusesById.get(task.statusId)}
+        statuses={tileProps.statuses}
+        onStatusChange={
+          tileProps.onChangeStatus
+            ? statusId => tileProps.onChangeStatus!(task.id, statusId)
+            : undefined
+        }
+        treatment={tileProps.treatment}
+        expanded={tileProps.expandedTaskIds.has(task.id)}
+        onClick={() => tileProps.onTaskClick?.(task.id)}
+        onEdit={tileProps.onEditTask ? () => tileProps.onEditTask!(task.id) : undefined}
+        onToggleSubtasks={() => tileProps.onToggleSubtasks?.(task.id)}
+        onSubtaskClick={
+          tileProps.onSubtaskClick
+            ? subtaskId => tileProps.onSubtaskClick!(task.id, subtaskId)
+            : undefined
+        }
+        onAddSubtask={
+          tileProps.onAddSubtask
+            ? (title, model) => tileProps.onAddSubtask!(task.id, title, model)
+            : undefined
+        }
+        onRunSubtasks={
+          tileProps.onRunSubtasks ? () => tileProps.onRunSubtasks!(task.id) : undefined
+        }
+        subtaskModelGroups={tileProps.subtaskModelGroups}
+        defaultSubtaskModel={tileProps.defaultSubtaskModel}
+        columnAccent={tileProps.columnAccent}
+        selected={tileProps.isTaskSelected?.(task.id)}
+        multiSelectActive={tileProps.multiSelectActive}
+        onSelect={
+          tileProps.onSelectTask
+            ? shiftKey => tileProps.onSelectTask?.(task.id, shiftKey)
+            : undefined
+        }
+      />
+    </DraggableTile>
+  )
+}
+
 function ProjectGroupSection({
   columnId,
   group,
   collapsed,
   onToggle,
   tileProps,
+  scrollParentRef,
+  scrollTop,
+  viewportHeight,
 }: {
   columnId: string
   group: KanbanProjectGroup
   collapsed: boolean
   onToggle: () => void
   tileProps: TileSharedProps
+  scrollParentRef: React.RefObject<HTMLDivElement | null>
+  scrollTop: number
+  viewportHeight: number
 }) {
   const dropId = projectGroupDropId(columnId, group.projectId)
   const { setNodeRef, isOver } = useDroppable({ id: dropId })
@@ -379,50 +446,15 @@ function ProjectGroupSection({
         <span className="tabular-nums text-[10px] text-foreground/40">{group.tasks.length}</span>
       </button>
       {!collapsed && (
-        <div className="flex flex-col gap-2 px-1.5 pb-1.5">
-          {group.tasks.map(task => (
-            <DraggableTile key={task.id} taskId={task.id}>
-              <TaskTile
-                task={task}
-                project={task.projectId ? tileProps.projectsById.get(task.projectId) : undefined}
-                status={tileProps.statusesById.get(task.statusId)}
-                statuses={tileProps.statuses}
-                onStatusChange={
-                  tileProps.onChangeStatus
-                    ? statusId => tileProps.onChangeStatus!(task.id, statusId)
-                    : undefined
-                }
-                treatment={tileProps.treatment}
-                expanded={tileProps.expandedTaskIds.has(task.id)}
-                onClick={() => tileProps.onTaskClick?.(task.id)}
-                onEdit={tileProps.onEditTask ? () => tileProps.onEditTask!(task.id) : undefined}
-                onToggleSubtasks={() => tileProps.onToggleSubtasks?.(task.id)}
-                onSubtaskClick={
-                  tileProps.onSubtaskClick
-                    ? subtaskId => tileProps.onSubtaskClick!(task.id, subtaskId)
-                    : undefined
-                }
-                onAddSubtask={
-                  tileProps.onAddSubtask
-                    ? (title, model) => tileProps.onAddSubtask!(task.id, title, model)
-                    : undefined
-                }
-                onRunSubtasks={
-                  tileProps.onRunSubtasks ? () => tileProps.onRunSubtasks!(task.id) : undefined
-                }
-                subtaskModelGroups={tileProps.subtaskModelGroups}
-                defaultSubtaskModel={tileProps.defaultSubtaskModel}
-                columnAccent={tileProps.columnAccent}
-                selected={tileProps.isTaskSelected?.(task.id)}
-                multiSelectActive={tileProps.multiSelectActive}
-                onSelect={
-                  tileProps.onSelectTask
-                    ? shiftKey => tileProps.onSelectTask?.(task.id, shiftKey)
-                    : undefined
-                }
-              />
-            </DraggableTile>
-          ))}
+        <div className="px-1.5 pb-1.5">
+          <KanbanVirtualTaskList
+            tasks={group.tasks}
+            expandedTaskIds={tileProps.expandedTaskIds}
+            scrollParentRef={scrollParentRef}
+            scrollTop={scrollTop}
+            viewportHeight={viewportHeight}
+            renderTask={(task) => <ColumnTaskCard task={task} tileProps={tileProps} />}
+          />
         </div>
       )}
     </div>
