@@ -20,6 +20,23 @@ describe('TopBar navigation cutover', () => {
     expect(source).toContain('onOpenSettingsSubpage={onOpenSettingsSubpage}')
   })
 
+  it('keeps the compact left sidebar control wired to its existing callback', () => {
+    expect(source).toContain('<TopBarButton onClick={onToggleSidebar}')
+    expect(source).toContain('<PanelLeftRounded')
+    expect(source).toContain('aria-label={t("menu.toggleSidebar")}')
+  })
+
+  it('toggles the right inspector and restores fully collapsed chrome', () => {
+    expect(source).toContain('useAtom(inspectorVisibleAtom)')
+    expect(source).toContain('useAtom(inspectorChromeCollapsedAtom)')
+    expect(source).toContain('if (inspectorChromeCollapsed)')
+    expect(source).toContain('setInspectorChromeCollapsed(false)')
+    expect(source).toContain('setInspectorVisible(true)')
+    expect(source).toContain('setInspectorVisible((current) => !current)')
+    expect(source).toContain("t(inspectorOpen ? 'inspector.hide' : 'inspector.expand')")
+    expect(source).toContain('aria-pressed={inspectorOpen}')
+  })
+
   it('does not retain the legacy TopBar What’s New action', () => {
     expect(source).not.toContain('onWhatsNew')
     expect(source).not.toContain('hasUnseenWhatsNew')

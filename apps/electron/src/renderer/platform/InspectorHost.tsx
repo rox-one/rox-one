@@ -10,8 +10,8 @@
  * KEYS.inspectorSection (`atoms/unified-shell.ts`).
  *
  * W1 scope: the `info` section is live (focused-surface properties derived
- * from panel-stack + NavigationContext); `agent`/`outline`/`backlinks` render
- * i18n empty states — their content lands with the Knowledge workspace (W2).
+ * from panel-stack + NavigationContext), while `browser` hosts the shared
+ * embedded browser pane. `agent`/`outline`/`backlinks` render i18n empty states.
  * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
  * workbench rollout or harness inspector flag is enabled.
  */
@@ -44,6 +44,7 @@ import { getSessionTitle } from '@/utils/session'
 import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
 import { projectConnectionInspector } from './connection-inspector-model'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
+import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
 import { InspectorTerminal } from '@/components/session-inspector/InspectorTerminal'
 import { WORKBENCH_FLAG } from '@craft-agent/core/platform'
 import {
@@ -51,6 +52,7 @@ import {
   inspectorSectionsForMode,
   isSessionInspectorSection,
   normalizeInspectorSection,
+  resolveBottomTerminalToggle,
   resolveInspectorToggle,
 } from './inspector-model'
 import { panelTypeToSurfaceKind } from './surface-tab-model'
@@ -305,15 +307,49 @@ export function InspectorHost() {
 
   const titleKey = terminalOpen
     ? 'inspector.terminal'
-    : sessionMode && isSessionInspectorSection(activeSection)
-      ? `inspector.tab.${activeSection}`
-      : `inspector.${activeSection}`
+    : activeSection === 'browser'
+      ? 'inspector.tab.browser'
+      : sessionMode && isSessionInspectorSection(activeSection)
+        ? `inspector.tab.${activeSection}`
+        : `inspector.${activeSection}`
 
   const collapseChrome = () => {
     setChromeCollapsed(true)
     setVisible(false)
     setTerminalOpen(false)
   }
+
+  const handleBottomTerminalToggle = () => {
+    const next = resolveBottomTerminalToggle({
+      bottomOpen: bottomTerminalOpen,
+      sideOpen: terminalOpen,
+    })
+    setTerminalOpen(next.sideOpen)
+    setBottomTerminalOpen(next.bottomOpen)
+  }
+
+  const terminalControl = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={t('inspector.terminal')}
+          aria-pressed={(terminalOpen && visible) || bottomTerminalOpen}
+          data-terminal-flag={WORKBENCH_FLAG.terminalV1}
+          onClick={handleBottomTerminalToggle}
+          className={cn(
+            'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
+            (terminalOpen && visible) || bottomTerminalOpen
+              ? 'bg-accent/10 text-accent'
+              : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+          )}
+        >
+          <SquareTerminal className="h-4 w-4" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="left">{t('inspector.terminal')}</TooltipContent>
+    </Tooltip>
+  )
 
   if (chromeCollapsed) {
     return (
@@ -338,6 +374,9 @@ export function InspectorHost() {
           </TooltipTrigger>
           <TooltipContent side="left">{t('inspector.expand')}</TooltipContent>
         </Tooltip>
+        <div className="mt-auto flex flex-col items-center gap-0.5">
+          {terminalControl}
+        </div>
       </div>
     )
   }
@@ -405,6 +444,8 @@ export function InspectorHost() {
           <div className="flex min-h-0 flex-1 flex-col">
           {terminalOpen ? (
             <InspectorTerminal cwd={sessionMeta?.workingDirectory} />
+          ) : activeSection === 'browser' ? (
+            <InspectorBrowserPane />
           ) : sessionMode ? (
             <SessionInspectorBody
               section={activeSection}
@@ -427,7 +468,11 @@ export function InspectorHost() {
         {sectionIds.map((sectionId) => {
           const Icon = SECTION_ICONS[sectionId]
           const active = visible && activeSection === sectionId
-          const labelKey = sessionMode ? `inspector.tab.${sectionId}` : `inspector.${sectionId}`
+          const labelKey = sectionId === 'browser'
+            ? 'inspector.tab.browser'
+            : sessionMode
+              ? `inspector.tab.${sectionId}`
+              : `inspector.${sectionId}`
           return (
             <Tooltip key={sectionId}>
               <TooltipTrigger asChild>
@@ -451,44 +496,7 @@ export function InspectorHost() {
           )
         })}
         <div className="mt-auto flex flex-col items-center gap-0.5">
-          {sessionMode && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={t('inspector.terminal')}
-                  data-terminal-flag={WORKBENCH_FLAG.terminalV1}
-                  onClick={() => {
-                    setChromeCollapsed(false)
-                    // Movable cycle: closed → bottom dock → side inspector → closed.
-                    // Terminal stays a UEW-style surface (bottom) by default; side is an alternate dock.
-                    if (terminalOpen && visible) {
-                      setTerminalOpen(false)
-                      setBottomTerminalOpen(false)
-                      return
-                    }
-                    if (bottomTerminalOpen) {
-                      setBottomTerminalOpen(false)
-                      setTerminalOpen(true)
-                      setVisible(true)
-                      return
-                    }
-                    setTerminalOpen(false)
-                    setBottomTerminalOpen(true)
-                  }}
-                  className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
-                    (terminalOpen && visible) || bottomTerminalOpen
-                      ? 'bg-accent/10 text-accent'
-                      : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-                  )}
-                >
-                  <SquareTerminal className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="left">{t('inspector.terminal')}</TooltipContent>
-            </Tooltip>
-          )}
+          {terminalControl}
           <Tooltip>
             <TooltipTrigger asChild>
               <button

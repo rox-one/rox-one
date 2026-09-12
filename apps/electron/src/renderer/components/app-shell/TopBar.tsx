@@ -25,7 +25,7 @@ import {
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { useEffect, useRef, useState } from "react"
-import { useAtomValue } from "jotai"
+import { useAtom, useAtomValue } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
@@ -37,6 +37,8 @@ import {
   featureWorkbenchHarnessChatChromeV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTopChromeV2Atom,
+  inspectorChromeCollapsedAtom,
+  inspectorVisibleAtom,
 } from "@/atoms/unified-shell"
 import { focusedSessionIdAtom } from "@/atoms/panel-stack"
 import { sessionMetaMapAtom } from "@/atoms/sessions"
@@ -113,6 +115,8 @@ export function TopBar({
   const { t } = useTranslation()
   const [maxVisibleBrowserBadges, setMaxVisibleBrowserBadges] = useState(3)
   const rightSlotRef = useRef<HTMLDivElement | null>(null)
+  const [inspectorVisible, setInspectorVisible] = useAtom(inspectorVisibleAtom)
+  const [inspectorChromeCollapsed, setInspectorChromeCollapsed] = useAtom(inspectorChromeCollapsedAtom)
   const chrome = resolveWorkbenchChrome({
     unifiedShell: false,
     modeRegistry: useAtomValue(featureWorkbenchModeRegistryV1Atom),
@@ -124,6 +128,17 @@ export function TopBar({
 
   const goBackHotkey = useActionLabel('nav.goBackAlt').hotkey
   const goForwardHotkey = useActionLabel('nav.goForwardAlt').hotkey
+  const inspectorOpen = inspectorVisible && !inspectorChromeCollapsed
+  const inspectorToggleLabel = t(inspectorOpen ? 'inspector.hide' : 'inspector.expand')
+
+  const handleToggleInspector = () => {
+    if (inspectorChromeCollapsed) {
+      setInspectorChromeCollapsed(false)
+      setInspectorVisible(true)
+      return
+    }
+    setInspectorVisible((current) => !current)
+  }
 
   useEffect(() => {
     const slotEl = rightSlotRef.current
@@ -341,6 +356,19 @@ export function TopBar({
             </StyledDropdownMenuItem>
           </StyledDropdownMenuContent>
         </DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={handleToggleInspector}
+              aria-label={inspectorToggleLabel}
+              aria-pressed={inspectorOpen}
+              className="h-[26px] w-[26px] rounded-lg"
+            >
+              <Icons.PanelRight className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+            </TopBarButton>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
+        </Tooltip>
       </div>
       )}
       </div>
