@@ -11,6 +11,8 @@ const DATABASE_FILENAME = 'workgraph.db'
 const PROVISIONING_FILENAME = 'workgraph-provisioning.json'
 const WORKGRAPH_SCHEMA_VERSION = 2
 const OPAQUE_ID = /^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/
+const CREDENTIAL_REF_ID =
+  /^cred_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 type WorkGraphDatabase = Pick<Database, 'all' | 'close' | 'exec' | 'get' | 'run' | 'transactionAsync'>
 type WorkGraphTransaction = Pick<Transaction, 'all' | 'exec' | 'get' | 'run'>
@@ -94,7 +96,7 @@ export interface ConnectionRecord {
   readonly id: string
   readonly workspaceId: string
   readonly integrationId: string
-  readonly credentialRefId: string
+  readonly credentialRefId: `cred_${string}`
   readonly storageMode: ConnectionStorageMode
   readonly scopes: readonly string[]
   readonly createdAt: number
@@ -401,9 +403,7 @@ export class WorkGraphKernel {
     }
     assertOpaqueId(input.workspaceId, 'workspace ID')
     assertOpaqueId(input.integrationId, 'integration ID')
-    if (!/^cred_[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.credentialRefId)) {
-      throw new Error('Invalid credentialRefId')
-    }
+    assertCredentialRefId(input.credentialRefId)
     if (!['reference', 'copy', 'mirror', 'managed', 'ephemeral'].includes(input.storageMode)) {
       throw new Error('Invalid storageMode')
     }
@@ -866,6 +866,14 @@ function assertOpaqueId(value: string, label: string): void {
   }
 }
 
+/** Brand and reject malformed WorkGraph credential refs on create and on read. */
+export function assertCredentialRefId(value: string): `cred_${string}` {
+  if (!CREDENTIAL_REF_ID.test(value)) {
+    throw new Error('Invalid credentialRefId')
+  }
+  return value as `cred_${string}`
+}
+
 function rowToWorkItem(row: Record<string, unknown>): WorkItem {
   const requiredString = (key: string): string => {
     const value = row[key]
@@ -913,7 +921,7 @@ function rowToConnection(row: Record<string, unknown>): ConnectionRecord {
     id: requiredString('id'),
     workspaceId: requiredString('workspace_id'),
     integrationId: requiredString('integration_id'),
-    credentialRefId: requiredString('credential_ref_id'),
+    credentialRefId: assertCredentialRefId(requiredString('credential_ref_id')),
     storageMode: requiredString('storage_mode') as ConnectionStorageMode,
     scopes,
     createdAt: requiredInteger('created_at'),
