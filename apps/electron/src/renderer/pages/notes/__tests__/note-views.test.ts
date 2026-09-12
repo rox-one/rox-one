@@ -58,7 +58,7 @@ describe('notes views', () => {
       { key: 'ops', rows },
     ])
     const restored = restoreSavedViews(`[${serializeNoteBaseView(view!)}]`)
-    expect(restored).toEqual([view])
+    expect(restored).toEqual([view!])
   })
 
   test('JSON canvas import/export keeps card links and source-note provenance', () => {

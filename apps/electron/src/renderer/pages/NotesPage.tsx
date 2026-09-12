@@ -1894,7 +1894,7 @@ h1,h2,h3{margin-top:1.5em}
               onJump={(text) => {
                 const root = document.querySelector('.notes-editor .ProseMirror')
                 if (!root) return
-                const heading = [...root.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(
+                const heading = Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6')).find(
                   (node) => node.textContent?.trim() === text,
                 )
                 heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
