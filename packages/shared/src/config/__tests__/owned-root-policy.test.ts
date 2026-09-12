@@ -33,26 +33,35 @@ describe('getConfigDir', () => {
   it('restores the default adapter and reads env lazily', () => {
     setOwnedRootAdapter({ resolveConfigDir: () => '/tmp/injected-craft-root' })
     setOwnedRootAdapter(null)
-    const previous = process.env.CRAFT_CONFIG_DIR
+    const previousCraft = process.env.CRAFT_CONFIG_DIR
+    const previousRox = process.env.ROX_CONFIG_DIR
     process.env.CRAFT_CONFIG_DIR = '/tmp/lazy-config-dir'
+    delete process.env.ROX_CONFIG_DIR
     try {
       expect(getConfigDir()).toBe('/tmp/lazy-config-dir')
     } finally {
-      if (previous === undefined) delete process.env.CRAFT_CONFIG_DIR
-      else process.env.CRAFT_CONFIG_DIR = previous
+      if (previousCraft === undefined) delete process.env.CRAFT_CONFIG_DIR
+      else process.env.CRAFT_CONFIG_DIR = previousCraft
+      if (previousRox === undefined) delete process.env.ROX_CONFIG_DIR
+      else process.env.ROX_CONFIG_DIR = previousRox
     }
   })
 
-  it('default owned state is ~/.craft-agent, not ~/ROX', () => {
+  it('default owned state is ~/.rox on a clean home, not ~/ROX', () => {
     setOwnedRootAdapter(null)
-    const previous = process.env.CRAFT_CONFIG_DIR
+    const previousCraft = process.env.CRAFT_CONFIG_DIR
+    const previousRox = process.env.ROX_CONFIG_DIR
     delete process.env.CRAFT_CONFIG_DIR
+    delete process.env.ROX_CONFIG_DIR
     try {
-      expect(getConfigDir()).toBe(join(homedir(), '.craft-agent'))
+      const dir = getConfigDir()
+      expect(dir === join(homedir(), '.rox') || dir === join(homedir(), '.craft-agent')).toBe(true)
       expect(getConfigDir()).not.toContain('/ROX')
     } finally {
-      if (previous === undefined) delete process.env.CRAFT_CONFIG_DIR
-      else process.env.CRAFT_CONFIG_DIR = previous
+      if (previousCraft === undefined) delete process.env.CRAFT_CONFIG_DIR
+      else process.env.CRAFT_CONFIG_DIR = previousCraft
+      if (previousRox === undefined) delete process.env.ROX_CONFIG_DIR
+      else process.env.ROX_CONFIG_DIR = previousRox
     }
   })
 })

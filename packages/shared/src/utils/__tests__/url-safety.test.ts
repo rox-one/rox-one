@@ -44,8 +44,13 @@ describe('classifyExternalUrl — internal deep links', () => {
     expect(classifyExternalUrl('craftagents://settings').kind).toBe('internal-deeplink')
   })
 
+  it('classifies rox:// as internal-deeplink', () => {
+    expect(classifyExternalUrl('rox://settings').kind).toBe('internal-deeplink')
+  })
+
   it('is case-insensitive for the scheme', () => {
     expect(classifyExternalUrl('CRAFTAGENTS://settings').kind).toBe('internal-deeplink')
+    expect(classifyExternalUrl('ROX://settings').kind).toBe('internal-deeplink')
   })
 })
 

@@ -1,11 +1,9 @@
 /**
  * Ticket 07 — ROX_* names work beside CRAFT_*.
- *
- * getEnv('SERVER_TOKEN') prefers ROX_SERVER_TOKEN, then CRAFT_SERVER_TOKEN.
- * Config dir prefers ROX_CONFIG_DIR, then CRAFT_CONFIG_DIR, then ~/.craft-agent.
- * A CRAFT_* fallback logs one deprecation warning per process.
+ * Issue 33 — clean-install default is ~/.rox; Craft-era trees stay until migration.
  */
 import { afterEach, describe, expect, it } from 'bun:test';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -39,7 +37,7 @@ describe('getEnv', () => {
 });
 
 describe('resolveConfigDir', () => {
-  it('accepts ROX_CONFIG_DIR then CRAFT_CONFIG_DIR then ~/.craft-agent', () => {
+  it('accepts ROX_CONFIG_DIR then CRAFT_CONFIG_DIR then ~/.rox (clean install)', () => {
     expect(resolveConfigDir({ ROX_CONFIG_DIR: '/tmp/rox-cfg' }, '/home/u')).toBe('/tmp/rox-cfg');
     expect(resolveConfigDir({ CRAFT_CONFIG_DIR: '/tmp/craft-cfg' }, '/home/u')).toBe('/tmp/craft-cfg');
     expect(
@@ -48,11 +46,22 @@ describe('resolveConfigDir', () => {
         '/home/u',
       ),
     ).toBe('/tmp/rox-cfg');
-    expect(resolveConfigDir({}, '/home/u')).toBe(join('/home/u', '.craft-agent'));
+    expect(resolveConfigDir({}, '/home/u-no-such-rox-home')).toBe(join('/home/u-no-such-rox-home', '.rox'));
   });
 
-  it('does not move the default directory off ~/.craft-agent', () => {
-    expect(resolveConfigDir({}, homedir())).toBe(join(homedir(), '.craft-agent'));
+  it('keeps a Craft-era ~/.craft-agent until ~/.rox exists', () => {
+    const homeDir = join(homedir(), '.rox-issue33-env-home');
+    rmSync(homeDir, { recursive: true, force: true });
+    mkdirSync(join(homeDir, '.craft-agent'), { recursive: true });
+    writeFileSync(join(homeDir, '.craft-agent', 'keep.txt'), 'legacy');
+    try {
+      expect(resolveConfigDir({}, homeDir)).toBe(join(homeDir, '.craft-agent'));
+      mkdirSync(join(homeDir, '.rox'), { recursive: true });
+      expect(resolveConfigDir({}, homeDir)).toBe(join(homeDir, '.rox'));
+    } finally {
+      rmSync(homeDir, { recursive: true, force: true });
+      expect(existsSync(homeDir)).toBe(false);
+    }
   });
 });
 

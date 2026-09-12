@@ -2,6 +2,13 @@ appId: com.lukilabs.craft-agent
 productName: Rox
 copyright: Copyright © 2026 Craft Docs Ltd.
 
+# Issue 33: rox:// is primary; craftagents:// remains a compatibility alias.
+protocols:
+  - name: Rox
+    schemes:
+      - rox
+      - craftagents
+
 electronVersion: "39.2.7"
 
 # Hook to compile macOS 26+ Liquid Glass icon after packaging
@@ -163,15 +170,15 @@ mac:
     - "!**/resources/bin/win32-*/**"
     - "!**/resources/bin/linux-*/**"
   # Use predictable naming for macOS packages (applies to zip; dmg uses its own config below)
-  artifactName: "Craft-Agents-${arch}.${ext}"
+  artifactName: "Rox-${arch}.${ext}"
   # Code signing & notarization (disabled by default for local builds)
   # To enable: set CSC_LINK, APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD, APPLE_TEAM_ID
   # notarize:
   #   teamId: ${APPLE_TEAM_ID}
 
 dmg:
-  # Use predictable naming: Craft-Agents-arm64.dmg, Craft-Agents-x64.dmg
-  artifactName: "Craft-Agents-${arch}.dmg"
+  # Use predictable naming: Rox-arm64.dmg, Rox-x64.dmg
+  artifactName: "Rox-${arch}.dmg"
   # Custom background (multi-resolution TIFF with 1x+2x for retina support)
   background: resources/dmg-background.tiff
   # Use app icon as the mounted volume icon in Finder
@@ -196,7 +203,7 @@ win:
       arch:
         - x64
   # Use predictable naming: Craft-Agents-x64.exe
-  artifactName: "Craft-Agents-${arch}.${ext}"
+  artifactName: "Rox-${arch}.${ext}"
   files:
     # Exclude binaries for other platforms
     - "!**/resources/bin/darwin-*/**"
@@ -251,7 +258,7 @@ linux:
     - target: AppImage
       arch:
         - x64
-  artifactName: "Craft-Agents-${arch}.${ext}"
+  artifactName: "Rox-${arch}.${ext}"
   extraResources:
     - from: node_modules/@anthropic-ai/claude-agent-sdk
       to: app/node_modules/@anthropic-ai/claude-agent-sdk
