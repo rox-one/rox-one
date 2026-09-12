@@ -73,6 +73,8 @@ import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
 import { useNavigation } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
+import { SideThreadPreviewDialog, type SideThreadPreview } from "@/components/chat/SideThreadPreviewDialog"
+import { buildSideThreadPrompt, type SideThreadAction } from "@craft-agent/shared/side-threads"
 import { CHAT_LAYOUT } from "@/config/layout"
 import { collectFileChangesFromActivities, getFirstFileChangeIdForActivity } from "@/lib/file-changes"
 import { resolveBranchNewPanelOption } from "./branching"
@@ -573,6 +575,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     anchorY?: number
     nonce: number
   } | null>(null)
+  const [sideThreadPreview, setSideThreadPreview] = React.useState<SideThreadPreview | null>(null)
+  const [sideThreadBusy, setSideThreadBusy] = React.useState(false)
   const followUpOpenNonceRef = React.useRef(0)
 
   // Navigation for session branching
@@ -1409,6 +1413,46 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     onInputChange?.(t('chat.learnFromMessageDraft', { text }))
   }, [onInputChange, t])
 
+  const handlePickSideThread = useCallback((action: SideThreadAction, text: string, messageId: string) => {
+    if (!session) return
+    setSideThreadPreview({
+      action,
+      messageId,
+      prompt: buildSideThreadPrompt({
+        action,
+        sourceText: text,
+        sourceMessageId: messageId,
+        sourceSessionId: session.id,
+      }),
+    })
+  }, [session])
+
+  const handleConfirmSideThread = useCallback(async () => {
+    if (!session || !sideThreadPreview) return
+    setSideThreadBusy(true)
+    try {
+      const child = await appShellContext.onCreateSession(session.workspaceId, {
+        branchFromMessageId: sideThreadPreview.messageId,
+        branchFromSessionId: session.id,
+        name: `${t(`sideThread.action.${sideThreadPreview.action}`)} · ${session.name || t('chat.session')}`,
+        sessionStatus: 'in_progress',
+        llmConnection: session.llmConnection,
+        model: session.model,
+        permissionMode: permissionMode,
+        workingDirectory: session.workingDirectory,
+        enabledSourceSlugs: session.enabledSourceSlugs,
+      })
+      appShellContext.onInputChange(child.id, sideThreadPreview.prompt)
+      setSideThreadPreview(null)
+      navigate(routes.view.allSessions(child.id))
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
+      toast.error(t('toast.couldNotCreateBranch'), { description: rawMessage })
+    } finally {
+      setSideThreadBusy(false)
+    }
+  }, [appShellContext, permissionMode, session, sideThreadPreview, t])
+
   // Handle stop request from InputContainer
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
   const handleStop = (silent = false) => {
@@ -1670,6 +1714,20 @@ const handleFollowUpChipClick = useCallback((item: {
     <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
       {session ? (
         <div className="flex flex-1 flex-col min-h-0 min-w-0 relative">
+          {session.branchFromSessionId ? (
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
+              <span>
+                {t('sideThread.childBanner', { status: session.sessionStatus || 'in_progress' })}
+              </span>
+              <button
+                type="button"
+                className="text-foreground hover:underline"
+                onClick={() => navigate(routes.view.allSessions(session.branchFromSessionId!))}
+              >
+                {t('sideThread.returnToParent')}
+              </button>
+            </div>
+          ) : null}
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
@@ -1814,6 +1872,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             onQuote={handleQuoteMessage}
                             onShareMessage={(text) => { void handleShareMessage(text) }}
                             onLearnFromMessage={handleLearnFromMessage}
+                            onPickSideThread={handlePickSideThread}
                           />
                         </div>
                       )
@@ -1921,6 +1980,7 @@ const handleFollowUpChipClick = useCallback((item: {
                         onQuote={handleQuoteMessage}
                         onShareMessage={(text) => { void handleShareMessage(text) }}
                         onLearnFromMessage={handleLearnFromMessage}
+                        onPickSideThread={handlePickSideThread}
                         onBranch={session?.supportsBranching ? async (messageId: string, options?: { newPanel?: boolean }) => {
                           if (!session) return
                           try {
@@ -2152,6 +2212,13 @@ const handleFollowUpChipClick = useCallback((item: {
           />
           </div>
         </div>
+        <SideThreadPreviewDialog
+          draft={sideThreadPreview}
+          busy={sideThreadBusy}
+          onChangePrompt={(prompt) => setSideThreadPreview((current) => current ? { ...current, prompt } : current)}
+          onCancel={() => setSideThreadPreview(null)}
+          onConfirm={() => { void handleConfirmSideThread() }}
+        />
       ) : null}
 
       {/* ================================================================== */}
@@ -2325,6 +2392,7 @@ interface MessageBubbleProps {
   onQuote?: (text: string) => void
   onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
+  onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
 }
 
 /**
@@ -2417,6 +2485,7 @@ function MessageBubble({
   onQuote,
   onShareMessage,
   onLearnFromMessage,
+  onPickSideThread,
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
@@ -2441,6 +2510,7 @@ function MessageBubble({
         onQuote={onQuote}
         onShareMessage={onShareMessage}
         onLearnFromMessage={onLearnFromMessage}
+        onPickSideThread={onPickSideThread}
       />
     )
   }
@@ -2598,6 +2668,7 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.message.annotations === next.message.annotations &&
     prev.onQuote === next.onQuote &&
     prev.onShareMessage === next.onShareMessage &&
-    prev.onLearnFromMessage === next.onLearnFromMessage
+    prev.onLearnFromMessage === next.onLearnFromMessage &&
+    prev.onPickSideThread === next.onPickSideThread
   )
 })

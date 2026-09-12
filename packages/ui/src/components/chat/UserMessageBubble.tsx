@@ -21,6 +21,8 @@ import { FileTypeIcon, getFileTypeLabel } from './attachment-helpers'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../tooltip'
 import { useTranslation } from 'react-i18next'
 import { MessageHoverDock } from './MessageHoverDock'
+import { SideThreadMenu } from './SideThreadMenu'
+import type { SideThreadAction } from '@craft-agent/shared/side-threads'
 import {
   aggregateReactions,
   createReactionAnnotation,
@@ -339,6 +341,7 @@ export interface UserMessageBubbleProps {
   onQuote?: (text: string) => void
   onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
+  onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
 }
 
 /** Minimum visible duration of the "Queued" chip. Both backends ack
@@ -364,6 +367,7 @@ export function UserMessageBubble({
   onQuote,
   onShareMessage,
   onLearnFromMessage,
+  onPickSideThread,
 }: UserMessageBubbleProps) {
   const { t } = useTranslation()
   const hasAttachments = attachments && attachments.length > 0
@@ -563,18 +567,23 @@ export function UserMessageBubble({
           )
         }
       </div>
-      <MessageHoverDock
-        reactionCounts={reactionCounts}
-        pickerOpen={reactionPickerOpen}
-        onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
-        onToggleEmoji={handleToggleEmoji}
-        onTogglePicker={() => setReactionPickerOpen((open) => !open)}
-        onCopy={() => { void navigator.clipboard.writeText(displayContent) }}
-        onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(displayContent)) : undefined}
-        onShare={onShareMessage ? () => onShareMessage(displayContent) : undefined}
-        onLearn={onLearnFromMessage ? () => onLearnFromMessage(displayContent) : undefined}
-        className="opacity-100 group-focus-within:opacity-100"
-      />
+      <div className="flex flex-wrap items-center justify-end gap-1">
+        <MessageHoverDock
+          reactionCounts={reactionCounts}
+          pickerOpen={reactionPickerOpen}
+          onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
+          onToggleEmoji={handleToggleEmoji}
+          onTogglePicker={() => setReactionPickerOpen((open) => !open)}
+          onCopy={() => { void navigator.clipboard.writeText(displayContent) }}
+          onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(displayContent)) : undefined}
+          onShare={onShareMessage ? () => onShareMessage(displayContent) : undefined}
+          onLearn={onLearnFromMessage ? () => onLearnFromMessage(displayContent) : undefined}
+          className="opacity-100 group-focus-within:opacity-100"
+        />
+        {onPickSideThread && messageId ? (
+          <SideThreadMenu onSelect={(action) => onPickSideThread(action, displayContent, messageId)} />
+        ) : null}
+      </div>
     </div>
   )
 }

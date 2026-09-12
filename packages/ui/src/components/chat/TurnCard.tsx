@@ -39,6 +39,8 @@ import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
 import { getDiffStats, getUnifiedDiffStats } from '../code-viewer'
 import { TurnCardActionsMenu } from './TurnCardActionsMenu'
 import { MessageHoverDock } from './MessageHoverDock'
+import { SideThreadMenu } from './SideThreadMenu'
+import type { SideThreadAction } from '@craft-agent/shared/side-threads'
 import {
   aggregateReactions,
   createReactionAnnotation,
@@ -371,6 +373,7 @@ export interface TurnCardProps {
   onQuote?: (text: string) => void
   onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
+  onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
   /** Callback to add an annotation to a response message */
   onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
   /** Callback to remove a persisted annotation from a response message */
@@ -1475,6 +1478,7 @@ export interface ResponseCardProps {
   onQuote?: (text: string) => void
   onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
+  onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
   /** Callback to add annotation from selected text */
   onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
   /** Callback to remove persisted annotation */
@@ -1726,6 +1730,7 @@ export function ResponseCard({
   onQuote,
   onShareMessage,
   onLearnFromMessage,
+  onPickSideThread,
   onAddAnnotation,
   onRemoveAnnotation,
   onUpdateAnnotation,
@@ -2532,19 +2537,24 @@ export function ResponseCard({
   if (isCompleted || variant === 'plan') {
     const isPlan = variant === 'plan'
     const hoverDock = (
-      <MessageHoverDock
-        reactionCounts={reactionCounts}
-        pickerOpen={reactionPickerOpen}
-        onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
-        onToggleEmoji={handleToggleEmoji}
-        onTogglePicker={() => setReactionPickerOpen((open) => !open)}
-        onCopy={handleCopy}
-        onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(text)) : undefined}
-        onShare={onShareMessage ? () => onShareMessage(text) : undefined}
-        onLearn={onLearnFromMessage ? () => onLearnFromMessage(text) : undefined}
-        onHighlight={canAnnotate ? () => contentLayerRef.current?.focus() : undefined}
-        className="opacity-100 group-focus-within:opacity-100"
-      />
+      <div className="flex flex-wrap items-center gap-1">
+        <MessageHoverDock
+          reactionCounts={reactionCounts}
+          pickerOpen={reactionPickerOpen}
+          onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
+          onToggleEmoji={handleToggleEmoji}
+          onTogglePicker={() => setReactionPickerOpen((open) => !open)}
+          onCopy={handleCopy}
+          onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(text)) : undefined}
+          onShare={onShareMessage ? () => onShareMessage(text) : undefined}
+          onLearn={onLearnFromMessage ? () => onLearnFromMessage(text) : undefined}
+          onHighlight={canAnnotate ? () => contentLayerRef.current?.focus() : undefined}
+          className="opacity-100 group-focus-within:opacity-100"
+        />
+        {onPickSideThread && messageId ? (
+          <SideThreadMenu onSelect={(action) => onPickSideThread(action, text, messageId)} />
+        ) : null}
+      </div>
     )
 
     return (
@@ -2879,6 +2889,7 @@ export const TurnCard = React.memo(function TurnCard({
   onQuote,
   onShareMessage,
   onLearnFromMessage,
+  onPickSideThread,
   onAddAnnotation,
   onRemoveAnnotation,
   onUpdateAnnotation,
@@ -3256,6 +3267,7 @@ export const TurnCard = React.memo(function TurnCard({
             onQuote={onQuote}
             onShareMessage={onShareMessage}
             onLearnFromMessage={onLearnFromMessage}
+            onPickSideThread={onPickSideThread}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
             openAnnotationRequest={openAnnotationRequest}
             annotationInteractionMode={annotationInteractionMode}
@@ -3305,6 +3317,7 @@ export const TurnCard = React.memo(function TurnCard({
                 onQuote={onQuote}
                 onShareMessage={onShareMessage}
                 onLearnFromMessage={onLearnFromMessage}
+                onPickSideThread={onPickSideThread}
                 hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
                 openAnnotationRequest={openAnnotationRequest}
                 annotationInteractionMode={annotationInteractionMode}
@@ -3340,6 +3353,7 @@ export const TurnCard = React.memo(function TurnCard({
             onQuote={onQuote}
             onShareMessage={onShareMessage}
             onLearnFromMessage={onLearnFromMessage}
+            onPickSideThread={onPickSideThread}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
             openAnnotationRequest={openAnnotationRequest}
             annotationInteractionMode={annotationInteractionMode}

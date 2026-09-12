@@ -14,6 +14,7 @@ export { TurnCardActionsMenu, type TurnCardActionsMenuProps } from './TurnCardAc
 export { SessionViewer, type SessionViewerProps, type SessionViewerMode } from './SessionViewer'
 export { UserMessageBubble, type UserMessageBubbleProps } from './UserMessageBubble'
 export { MessageHoverDock, type MessageHoverDockProps } from './MessageHoverDock'
+export { SideThreadMenu, type SideThreadMenuProps } from './SideThreadMenu'
 export {
   aggregateReactions,
   createReactionAnnotation,
