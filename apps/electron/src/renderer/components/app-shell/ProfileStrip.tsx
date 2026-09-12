@@ -63,7 +63,7 @@ export function ProfileStrip({
       type="button"
       onClick={onClick}
       className={cn(
-        'w-full flex items-center gap-2 px-2 py-2 rounded-md',
+        'w-full flex items-center gap-2 px-2 py-2 rounded-[8px]',
         'text-left hover:bg-foreground/5 transition-colors',
         'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
         className,

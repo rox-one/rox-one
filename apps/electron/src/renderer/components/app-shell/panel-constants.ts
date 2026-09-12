@@ -1,7 +1,7 @@
 import { isMac } from '@/lib/platform'
 
 /** Gap between any adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar) */
-export const PANEL_GAP = 4
+export const PANEL_GAP = 8
 
 /** Padding from window edges to outermost panels (right, bottom, left when sidebar hidden) */
 export const PANEL_EDGE_INSET = 4

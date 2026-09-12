@@ -328,7 +328,7 @@ export function WorkspaceIconRail({
 
 			<aside
 				className={cn(
-					"h-full shrink-0 border-r border-border/40 bg-background/40 titlebar-no-drag",
+					"rox-rail h-full shrink-0 titlebar-no-drag",
 					"flex flex-col items-center overflow-y-auto overflow-x-hidden px-2 pb-2",
 					className,
 				)}
@@ -344,7 +344,9 @@ export function WorkspaceIconRail({
 						const disconnected = isRemoteDisconnected(workspace.id);
 						const title = disconnected
 							? `${workspace.name} — ${getDisconnectTooltip(workspace.id)}`
-							: workspace.name;
+							: workspace.remoteServer
+								? `${workspace.name} — ${t("dashboard.syncConnected")}`
+								: workspace.name;
 
 						return (
 							<Tooltip key={workspace.id}>

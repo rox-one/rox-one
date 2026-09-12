@@ -1,7 +1,7 @@
 /**
  * TopBar - Persistent top bar above all panels (Slack-style)
  *
- * Layout: [Sidebar] [Menu] [Back] [Forward] [Workspace selector] ... [Browser strip] [+] [Help]
+ * Layout: [Sidebar] [Menu] [Back] [Forward] [Workspace selector] ... [Browser strip] [Session] [Browser] [Help]
  *
  * Fixed at top of window; height from --topbar-height (design-compact: 40px desktop).
  * macOS: offset left to avoid stoplight controls.
@@ -323,23 +323,30 @@ export function TopBar({
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("entityView.map")}</TooltipContent>
         </Tooltip>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-0.5 h-6 w-6 rounded-md">
-              <Icons.Plus className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={onAddSessionPanel}
+              aria-label={t("session.newSessionInPanel")}
+              className="ml-1 h-[26px] w-[26px] rounded-lg"
+            >
+              <SquarePenRounded className="h-4 w-4 text-foreground/50" />
             </TopBarButton>
-          </DropdownMenuTrigger>
-          <StyledDropdownMenuContent align="end" minWidth="min-w-56">
-            <StyledDropdownMenuItem onClick={onAddSessionPanel}>
-              <SquarePenRounded className="h-3.5 w-3.5" />
-              {t("session.newSessionInPanel")}
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={onAddBrowserPanel}>
-              <Icons.Globe className="h-3.5 w-3.5" />
-              {t("browser.newWindow")}
-            </StyledDropdownMenuItem>
-          </StyledDropdownMenuContent>
-        </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("session.newSessionInPanel")}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={onAddBrowserPanel}
+              aria-label={t("browser.newWindow")}
+              className="h-[26px] w-[26px] rounded-lg"
+            >
+              <Icons.Globe className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+            </TopBarButton>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("browser.newWindow")}</TooltipContent>
+        </Tooltip>
 
 
 

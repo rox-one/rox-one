@@ -143,6 +143,15 @@
   --chrome-glass-bg: color-mix(in oklch, var(--surface-elevated) 86%, transparent);
   --chrome-glass-border: color-mix(in oklch, var(--border-subtle) 70%, transparent);
 
+  /* Rox graphite language (issue 32) — ink / graphite / mint, 6/8px radii */
+  --ink: oklch(0.22 0.014 255);
+  --graphite: oklch(0.46 0.012 255);
+  --rox-mint: oklch(0.72 0.08 165);
+  --rox-radius-sm: 6px;
+  --rox-radius-md: 8px;
+  --rox-gutter: 8px;
+  --rox-elev-panel: inset 0 0 0 1px var(--border-subtle);
+
   /* Z-index scale */
   --z-base: 0;
   --z-local: 10;
@@ -183,6 +192,8 @@
   --navigator: oklch(0.145 0.011 255);
   --input-surface: color-mix(in oklch, var(--foreground) 4%, var(--background));
   --popover-solid: color-mix(in oklch, var(--foreground) 7%, var(--background));
+  --ink: oklch(0.92 0.012 255);
+  --graphite: oklch(0.62 0.01 255);
 }
 
 /* Inter remains an explicit user preference; the default stays SF UI-first. */
@@ -369,6 +380,32 @@ html[data-font="inter"] {
   .shadow-tinted {
     --shadow-color: var(--foreground-rgb);
     box-shadow: inset 0 0 0 1px rgba(var(--shadow-color), 0.44);
+  }
+
+  .rox-panel {
+    border-radius: var(--rox-radius-md);
+    box-shadow: var(--rox-elev-panel);
+    background: var(--surface-elevated);
+  }
+
+  .rox-rail {
+    border-right: 1px solid var(--border-subtle);
+    background: var(--surface-rail);
+  }
+
+  .rox-card {
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--rox-radius-sm);
+    background: color-mix(in oklch, var(--graphite) 10%, var(--canvas));
+  }
+
+  [data-viewport="wide"] {
+    --rox-gutter: 12px;
+  }
+
+  [data-viewport="narrow"] .rox-rail,
+  [data-viewport="compact"] .rox-rail {
+    display: none;
   }
 
   /* Smooth corners (iOS-style superellipse)
