@@ -536,6 +536,10 @@ export type SessionCommand =
   | { type: 'shareToViewer' }
   | { type: 'updateShare' }
   | { type: 'revokeShare' }
+  | { type: 'inviteBro'; role?: 'editor' | 'viewer' }
+  | { type: 'revokeBroInvite'; joinKey: string }
+  | { type: 'joinBroInvite'; url: string }
+  | { type: 'listBroPresence' }
   | { type: 'refreshTitle' }
   | { type: 'improveDraft'; text: string }
   | { type: 'setConnection'; connectionSlug: string }
@@ -957,6 +961,26 @@ export interface UnreadSummary {
   totalUnreadSessions: number
   byWorkspace: Record<string, number>
   hasUnreadByWorkspace: Record<string, boolean>
+}
+
+export interface BroInviteCommandResult {
+  success: boolean
+  url?: string
+  qrPayload?: string
+  contactShareText?: string
+  expiresAt?: number
+  role?: 'editor' | 'viewer'
+  error?: string
+  errorCode?: string
+}
+
+export interface BroPresenceMemberDto {
+  accountId: string
+  displayName: string
+  username: string
+  role: 'owner' | 'editor' | 'viewer'
+  status: 'online' | 'away' | 'offline'
+  joinedAt: number
 }
 
 export interface ShareResult {

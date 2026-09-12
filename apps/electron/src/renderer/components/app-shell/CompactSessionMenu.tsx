@@ -50,6 +50,7 @@ import {
   Tag,
   Trash2,
   BookOpen,
+  UserPlus,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -323,6 +324,7 @@ export function CompactSessionMenu({
               hasKnowledgeConnection={hasKnowledgeConnection}
               onPublish={closeAfter(() => setPublishDialog({ open: true, sessionId: item.id }))}
               onShare={closeAfter(actions.share)}
+              onInviteBro={closeAfter(actions.inviteBro)}
               onOpenShareSub={() => setView('share')}
               onSendToWorkspace={closeAfter(onSendToWorkspace)}
               onOpenMessagingSub={() => setView('messaging')}
@@ -398,6 +400,7 @@ interface RootPaneProps {
   hasKnowledgeConnection?: boolean
   onPublish?: () => void
   onShare?: () => void
+  onInviteBro?: () => void
   onOpenShareSub: () => void
   onSendToWorkspace?: () => void
   onOpenMessagingSub: () => void
@@ -431,6 +434,7 @@ function RootPane({
   hasKnowledgeConnection,
   onPublish,
   onShare,
+  onInviteBro,
   onOpenShareSub,
   onSendToWorkspace,
   onOpenMessagingSub,
@@ -472,6 +476,8 @@ function RootPane({
           onTap={onOpenShareSub}
         />
       )}
+
+      <Row icon={<UserPlus className="h-4 w-4" />} label={t('sessionMenu.inviteBro')} onTap={onInviteBro} />
 
       {hasTransferTargets && onSendToWorkspace && (
         <Row icon={<Send className="h-4 w-4" />} label={t('sessionMenu.sendToWorkspace')} onTap={onSendToWorkspace} />

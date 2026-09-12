@@ -54,6 +54,8 @@ export interface SessionMenuActions {
   updateShare: () => Promise<void>
   /** Revoke the share. */
   revokeShare: () => Promise<void>
+  /** Generate a one-time collaborator invite (Позвать Бро). */
+  inviteBro: () => Promise<void>
 }
 
 // SOH (U+0001) — non-printable so it can't collide with label IDs (which
@@ -199,6 +201,20 @@ export function useSessionMenuActions({
     }
   }, [sessionId, t])
 
+  const inviteBro = React.useCallback(async () => {
+    const result = await window.electronAPI.sessionCommand(sessionId, { type: 'inviteBro' }) as {
+      success: boolean
+      url?: string
+      error?: string
+    } | undefined
+    if (result?.success && result.url) {
+      await navigator.clipboard.writeText(result.url)
+      toast.success(t('toast.inviteCopied'), { description: result.url })
+    } else {
+      toast.error(t('toast.failedToInvite'), { description: result?.error || t('toast.unknownError') })
+    }
+  }, [sessionId, t])
+
   return {
     appliedLabelIds,
     toggleLabel,
@@ -211,5 +227,6 @@ export function useSessionMenuActions({
     copySharedLink,
     updateShare,
     revokeShare,
+    inviteBro,
   }
 }
