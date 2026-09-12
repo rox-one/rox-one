@@ -252,6 +252,7 @@ mock.module('../browser-cdp', () => ({
       box: { x: 5, y: 5, width: 20, height: 20 },
       clickPoint: { x: 15, y: 15 },
     }))
+    drag = mock(async () => {})
   },
 }))
 

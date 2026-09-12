@@ -5,6 +5,8 @@
  * element interaction, and CDP lifecycle management.
  */
 
+import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { describe, it, expect, beforeEach, mock } from 'bun:test'
 
 // Mock logger before import
@@ -22,7 +24,10 @@ mock.module('../logger', () => {
   }
 })
 
-const { BrowserCDP } = await import('../browser-cdp')
+// Sibling files mock `../browser-cdp` process-wide. An absolute file URL plus
+// query bypasses that mock even when the resolved specifier is already hijacked.
+const browserCdpHref = `${pathToFileURL(join(import.meta.dir, '../browser-cdp.ts')).href}?unmocked=1`
+const { BrowserCDP } = await import(browserCdpHref)
 
 // ============================================================================
 // Mock Helpers
