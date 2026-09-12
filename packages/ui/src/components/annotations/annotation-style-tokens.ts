@@ -12,7 +12,7 @@ export function annotationColorToCss(color?: string): string {
       return 'rgba(168, 85, 247, 0.10)'
     case 'yellow':
     default:
-      return 'color-mix(in srgb, var(--info) 10%, transparent)'
+      return 'rgba(250, 204, 21, 0.28)'
   }
 }
 

@@ -1,0 +1,317 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`side thread prompts snapshots each quick action prompt 1`] = `
+{
+  "challenge": 
+"# Side thread: challenge
+
+## Source provenance
+- sessionId: sess-9
+- messageId: msg-42
+
+## Source message
+The system is always consistent under partition.
+
+## Intent
+Challenge the source answer: find the strongest counter-case and where it would fail.
+
+## Examples
+Treat the source message as the only starting artifact. Quote it when objecting.
+
+## Constraints
+Stay attached to source message msg-42 in session sess-9.
+Do not silently switch topics.
+
+## Requirements
+Give the best opposing argument, then a fair residual-confidence note.
+
+## Skills
+Use verification, structured critique, and explicit uncertainty.
+
+## Risk
+Stay on the original claim. No unrelated debates.
+
+## Evidence
+Prefer quotes from the source. Separate evidence from inference.
+
+## Output schema
+- verdict
+- findings[] (claim, status, note)
+- next_checks[]
+
+## Hardness
+high"
+,
+  "concise": 
+"# Side thread: concise
+
+## Source provenance
+- sessionId: sess-9
+- messageId: msg-42
+
+## Source message
+The system is always consistent under partition.
+
+## Intent
+Reply to the source answer as concisely as possible without losing the decision.
+
+## Examples
+Treat the source message as the only starting artifact. Quote it when objecting.
+
+## Constraints
+Stay attached to source message msg-42 in session sess-9.
+Do not silently switch topics.
+
+## Requirements
+At most 8 lines. Lead with the conclusion.
+
+## Skills
+Use verification, structured critique, and explicit uncertainty.
+
+## Risk
+Do not drop caveats that change the decision.
+
+## Evidence
+Prefer quotes from the source. Separate evidence from inference.
+
+## Output schema
+- verdict
+- findings[] (claim, status, note)
+- next_checks[]
+
+## Hardness
+low"
+,
+  "counterarguments": 
+"# Side thread: counterarguments
+
+## Source provenance
+- sessionId: sess-9
+- messageId: msg-42
+
+## Source message
+The system is always consistent under partition.
+
+## Intent
+Produce the strongest counterarguments to the source answer.
+
+## Examples
+Treat the source message as the only starting artifact. Quote it when objecting.
+
+## Constraints
+Stay attached to source message msg-42 in session sess-9.
+Do not silently switch topics.
+
+## Requirements
+At least three distinct counters, ranked by force.
+
+## Skills
+Use verification, structured critique, and explicit uncertainty.
+
+## Risk
+Do not strawman. Steelman the source first in one sentence.
+
+## Evidence
+Prefer quotes from the source. Separate evidence from inference.
+
+## Output schema
+- verdict
+- findings[] (claim, status, note)
+- next_checks[]
+
+## Hardness
+medium"
+,
+  "grill": 
+"# Side thread: grill
+
+## Source provenance
+- sessionId: sess-9
+- messageId: msg-42
+
+## Source message
+The system is always consistent under partition.
+
+## Intent
+Strictly verify the source answer. Attack weak claims, demand evidence, and refuse to rubber-stamp.
+
+## Examples
+Treat the source message as the only starting artifact. Quote it when objecting.
+
+## Constraints
+Stay attached to source message msg-42 in session sess-9.
+Do not silently switch topics.
+
+## Requirements
+List failures first. Cite the source passage for every objection.
+
+## Skills
+Use verification, structured critique, and explicit uncertainty.
+
+## Risk
+Do not invent facts. Mark speculation explicitly.
+
+## Evidence
+Prefer quotes from the source. Separate evidence from inference.
+
+## Output schema
+- verdict
+- findings[] (claim, status, note)
+- next_checks[]
+
+## Hardness
+high"
+,
+  "research": 
+"# Side thread: research
+
+## Source provenance
+- sessionId: sess-9
+- messageId: msg-42
+
+## Source message
+The system is always consistent under partition.
+
+## Intent
+Research the source answer: what to check next and which sources would decide it.
+
+## Examples
+Treat the source message as the only starting artifact. Quote it when objecting.
+
+## Constraints
+Stay attached to source message msg-42 in session sess-9.
+Do not silently switch topics.
+
+## Requirements
+List open questions, search queries, and what evidence would change the conclusion.
+
+## Skills
+Use verification, structured critique, and explicit uncertainty.
+
+## Risk
+Do not pretend to have fetched live sources unless tools are used.
+
+## Evidence
+Prefer quotes from the source. Separate evidence from inference.
+
+## Output schema
+- verdict
+- findings[] (claim, status, note)
+- next_checks[]
+
+## Hardness
+medium"
+,
+  "rewrite": 
+"# Side thread: rewrite
+
+## Source provenance
+- sessionId: sess-9
+- messageId: msg-42
+
+## Source message
+The system is always consistent under partition.
+
+## Intent
+Rewrite the source answer so it is clearer, tighter, and still faithful.
+
+## Examples
+Treat the source message as the only starting artifact. Quote it when objecting.
+
+## Constraints
+Stay attached to source message msg-42 in session sess-9.
+Do not silently switch topics.
+
+## Requirements
+Preserve meaning. Improve structure and remove filler.
+
+## Skills
+Use verification, structured critique, and explicit uncertainty.
+
+## Risk
+Do not add new claims.
+
+## Evidence
+Prefer quotes from the source. Separate evidence from inference.
+
+## Output schema
+- verdict
+- findings[] (claim, status, note)
+- next_checks[]
+
+## Hardness
+low"
+,
+  "verify": 
+"# Side thread: verify
+
+## Source provenance
+- sessionId: sess-9
+- messageId: msg-42
+
+## Source message
+The system is always consistent under partition.
+
+## Intent
+Independently verify the source answer against checkable claims.
+
+## Examples
+Treat the source message as the only starting artifact. Quote it when objecting.
+
+## Constraints
+Stay attached to source message msg-42 in session sess-9.
+Do not silently switch topics.
+
+## Requirements
+Mark each claim as confirmed, contradicted, or unverifiable.
+
+## Skills
+Use verification, structured critique, and explicit uncertainty.
+
+## Risk
+Do not treat missing evidence as confirmation.
+
+## Evidence
+Prefer quotes from the source. Separate evidence from inference.
+
+## Output schema
+- verdict
+- findings[] (claim, status, note)
+- next_checks[]
+
+## Hardness
+medium"
+,
+}
+`;
+
+exports[`side thread prompts wraps a draft in meta-prompt sections for magic improve 1`] = `
+"# Improved prompt
+
+## Intent
+Write a CAP-theorem critique.
+
+## Examples
+Follow the draft as the primary example of desired work.
+
+## Constraints
+Keep the original user wording unless it is ambiguous. Do not drop constraints present in the draft.
+
+## Requirements
+Cover the draft fully. Ask only if a missing input blocks the answer.
+
+## Skills
+Planning, tool use when needed, and explicit uncertainty.
+
+## Risk
+Do not invent sources, credentials, or completed work.
+
+## Evidence
+Cite files, quotes, or tool results when making factual claims.
+
+## Output schema
+Match the format implied by the draft. Default to short sections with a final answer.
+
+## Hardness
+low"
+`;

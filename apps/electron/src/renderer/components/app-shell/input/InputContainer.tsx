@@ -9,6 +9,7 @@ import type { StructuredInputState, StructuredResponse, InputMode } from './stru
 import { getStructuredInputMaxHeight } from './structured-height'
 import { BackgroundFinishedChip } from '../BackgroundFinishedChip'
 import { CloudRunsChip } from '@/components/cloud-runs/CloudRunsChip'
+import { MagicPromptChip } from '@/components/chat/MagicPromptChip'
 
 interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef'> {
   /** Structured input state - when present, shows structured UI instead of freeform */
@@ -305,7 +306,13 @@ export function InputContainer({
        * self-contained, renders nothing when the feature is disabled.
        * Hidden in compactMode (EditPopover) even if showCloudRunsChip is true. */}
       {showCloudRunsChip && !compactMode && mode === 'freeform' && freeFormProps.sessionId && (
-        <CloudRunsChip sessionId={freeFormProps.sessionId} />
+        <div className="absolute top-2 right-2 z-20 flex items-center gap-1">
+          <MagicPromptChip
+            draft={freeFormProps.inputValue ?? ''}
+            onApply={(prompt) => freeFormProps.onInputChange?.(prompt)}
+          />
+          <CloudRunsChip sessionId={freeFormProps.sessionId} />
+        </div>
       )}
     </div>
   )

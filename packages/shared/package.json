@@ -93,6 +93,7 @@
     "./protocol": "./src/protocol/index.ts",
     "./memory/types": "./src/memory/types.ts",
     "./tasks": "./src/tasks/index.ts",
+    "./side-threads": "./src/side-threads/index.ts",
     "./i18n": "./src/i18n/index.ts",
     "./os/user-display-name": "./src/os/user-display-name.ts",
     "./knowledge/siyuan-binary": "./src/knowledge/siyuan-binary.ts",

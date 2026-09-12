@@ -13,6 +13,14 @@ export { InlineExecution, mapToolEventToActivity, type InlineExecutionProps, typ
 export { TurnCardActionsMenu, type TurnCardActionsMenuProps } from './TurnCardActionsMenu'
 export { SessionViewer, type SessionViewerProps, type SessionViewerMode } from './SessionViewer'
 export { UserMessageBubble, type UserMessageBubbleProps } from './UserMessageBubble'
+export { MessageHoverDock, type MessageHoverDockProps } from './MessageHoverDock'
+export { SideThreadMenu, type SideThreadMenuProps } from './SideThreadMenu'
+export {
+  aggregateReactions,
+  createReactionAnnotation,
+  quoteMessageMarkdown,
+  migrateAnnotationActors,
+} from './message-reactions'
 export { SystemMessage, type SystemMessageProps, type SystemMessageType } from './SystemMessage'
 
 // Attachment helpers

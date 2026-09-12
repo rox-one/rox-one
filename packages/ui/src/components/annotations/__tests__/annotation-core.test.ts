@@ -3,7 +3,7 @@ import {
   createSelectionPreviewAnnotation,
   createTextSelectionAnnotation,
 } from '../annotation-core'
-import { getAnnotationChipVisual } from '../annotation-style-tokens'
+import { getAnnotationChipVisual, annotationColorToCss } from '../annotation-style-tokens'
 
 describe('annotation core helpers', () => {
   it('creates text selection annotation with follow-up metadata and session id', () => {
@@ -58,5 +58,9 @@ describe('annotation core helpers', () => {
     expect(pending.className.includes('shadow-tinted')).toBe(true)
     expect(String(pending.style.backgroundColor)).toContain('34%')
     expect(String(sent.style.backgroundColor)).toContain('14%')
+  })
+
+  it('uses a yellow transparent highlight token', () => {
+    expect(annotationColorToCss('yellow')).toBe('rgba(250, 204, 21, 0.28)')
   })
 })
