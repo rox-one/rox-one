@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ElectronAPI } from '../../../shared/types'
 
@@ -27,6 +27,8 @@ export type NotesBridge = {
 type Props = {
   bridge?: NotesBridge | null
 }
+
+type NotesErrorKey = 'conation.notes.loadError' | 'conation.notes.readError'
 
 /** Bind the existing Electron Notes reads to one active workspace. */
 export function createConationNotesBridge(
@@ -61,45 +63,59 @@ export function ConationNotesPanel({ bridge = null }: Props = {}) {
   const { t } = useTranslation()
   const [items, setItems] = useState<NotesDocument[]>([])
   const [open, setOpen] = useState<NotesDocument | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [errorKey, setErrorKey] = useState<NotesErrorKey | null>(null)
+  const readGenerationRef = useRef(0)
 
   useEffect(() => {
     let cancelled = false
-    if (!bridge) {
-      setItems([])
-      setOpen(null)
-      return
+    readGenerationRef.current += 1
+    setItems([])
+    setOpen(null)
+    setErrorKey(null)
+
+    if (bridge) {
+      void bridge
+        .listNotes()
+        .then((page) => {
+          if (!cancelled) setItems(page.items)
+        })
+        .catch((err: unknown) => {
+          console.error('[ConationNotesPanel] Failed to list notes:', err)
+          if (!cancelled) setErrorKey('conation.notes.loadError')
+        })
     }
-    void bridge
-      .listNotes()
-      .then((page) => {
-        if (!cancelled) setItems(page.items)
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : t('conation.notes.loadError'))
-      })
+
     return () => {
       cancelled = true
+      readGenerationRef.current += 1
     }
-  }, [bridge, t])
+  }, [bridge])
 
   if (!bridge) {
     return <div data-conation-notes="off">{t('conation.notes.off')}</div>
   }
 
   const openNote = (noteId: string) => {
-    setError(null)
+    const generation = ++readGenerationRef.current
+    setErrorKey(null)
+    setOpen(null)
     void bridge
       .getNote(noteId)
-      .then(setOpen)
+      .then((note) => {
+        if (generation !== readGenerationRef.current) return
+        setOpen(note)
+      })
       .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : null)
+        console.error('[ConationNotesPanel] Failed to read note:', err)
+        if (generation !== readGenerationRef.current) return
+        setOpen(null)
+        setErrorKey('conation.notes.readError')
       })
   }
 
   return (
     <div data-conation-notes="readonly">
-      {error ? <p>{error}</p> : null}
+      {errorKey ? <p>{t(errorKey)}</p> : null}
       <ul>
         {items.map((doc) => (
           <li key={doc.id}>

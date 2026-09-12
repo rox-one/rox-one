@@ -577,6 +577,7 @@
   "conation.fund.title": "Conation Fund",
   "conation.notes.loadError": "تعذر تحميل الملاحظات.",
   "conation.notes.off": "Conation Notes متوقفة.",
+  "conation.notes.readError": "تعذر فتح الملاحظة.",
   "connections.audit.columns.action": "Action",
   "connections.audit.columns.consumer": "Consumer",
   "connections.audit.columns.decision": "Decision",

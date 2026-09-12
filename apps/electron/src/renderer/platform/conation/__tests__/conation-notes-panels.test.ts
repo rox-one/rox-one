@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { createPanelRegistry } from '@craft-agent/core/platform'
 import {
   CONATION_NOTES_PANEL_ID,
@@ -6,6 +8,8 @@ import {
   shouldRegisterNotesPanel,
 } from '../conation-notes-panels.ts'
 import { createConationNotesBridge } from '../ConationNotesPanel'
+
+const notesPanelSource = readFileSync(join(__dirname, '../ConationNotesPanel.tsx'), 'utf8')
 
 describe('registerNotesPanel', () => {
   it('is off unless shell, inspector, and notesBridge are all on', () => {
@@ -132,5 +136,17 @@ describe('registerNotesPanel', () => {
 
     expect(createConationNotesBridge(api, null)).toBeNull()
     expect(createConationNotesBridge(null, 'workspace-1')).toBeNull()
+  })
+
+  it('guards note reads and maps technical failures to translated errors', () => {
+    expect(notesPanelSource).toContain('const readGenerationRef = useRef(0)')
+    expect(notesPanelSource).toContain('const generation = ++readGenerationRef.current')
+    expect(notesPanelSource).toContain('if (generation !== readGenerationRef.current) return')
+    expect(notesPanelSource.match(/readGenerationRef\.current \+= 1/g)).toHaveLength(2)
+    expect(notesPanelSource).toContain("setErrorKey('conation.notes.loadError')")
+    expect(notesPanelSource).toContain("setErrorKey('conation.notes.readError')")
+    expect(notesPanelSource).toContain("console.error('[ConationNotesPanel] Failed to list notes:'")
+    expect(notesPanelSource).toContain("console.error('[ConationNotesPanel] Failed to read note:'")
+    expect(notesPanelSource).not.toContain('err.message')
   })
 })

@@ -577,6 +577,7 @@
   "conation.fund.title": "Conation Fund",
   "conation.notes.loadError": "无法加载笔记。",
   "conation.notes.off": "Conation Notes 已关闭。",
+  "conation.notes.readError": "无法打开笔记。",
   "connections.audit.columns.action": "Action",
   "connections.audit.columns.consumer": "Consumer",
   "connections.audit.columns.decision": "Decision",

@@ -577,6 +577,7 @@
   "conation.fund.title": "Conation Fund",
   "conation.notes.loadError": "A jegyzeteket nem sikerült betölteni.",
   "conation.notes.off": "A Conation Notes ki van kapcsolva.",
+  "conation.notes.readError": "A jegyzetet nem sikerült megnyitni.",
   "connections.audit.columns.action": "Action",
   "connections.audit.columns.consumer": "Consumer",
   "connections.audit.columns.decision": "Decision",

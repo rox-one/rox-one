@@ -577,6 +577,7 @@
   "conation.fund.title": "Conation Fund",
   "conation.notes.loadError": "노트를 불러오지 못했습니다.",
   "conation.notes.off": "Conation Notes가 꺼져 있습니다.",
+  "conation.notes.readError": "노트를 열지 못했습니다.",
   "connections.audit.columns.action": "Action",
   "connections.audit.columns.consumer": "Consumer",
   "connections.audit.columns.decision": "Decision",

@@ -577,6 +577,7 @@
   "conation.fund.title": "Conation Fund",
   "conation.notes.loadError": "Не удалось загрузить заметки.",
   "conation.notes.off": "Conation Notes отключены.",
+  "conation.notes.readError": "Не удалось открыть заметку.",
   "connections.audit.columns.action": "Действие",
   "connections.audit.columns.consumer": "Потребитель",
   "connections.audit.columns.decision": "Решение",

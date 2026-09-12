@@ -577,6 +577,7 @@
   "conation.fund.title": "Conation Fund",
   "conation.notes.loadError": "Nie udało się wczytać notatek.",
   "conation.notes.off": "Conation Notes jest wyłączony.",
+  "conation.notes.readError": "Nie udało się otworzyć notatki.",
   "connections.audit.columns.action": "Action",
   "connections.audit.columns.consumer": "Consumer",
   "connections.audit.columns.decision": "Decision",
