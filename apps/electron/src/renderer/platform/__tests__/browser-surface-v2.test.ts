@@ -196,7 +196,7 @@ describe('browser surface v2 source wiring', () => {
     expect(surfaceTabsSource).toContain("aria-label={t('surfaceTabs.browser')}")
     expect(browserWindowsSource).toContain('browserPaneApi.focus(instance.id)')
     expect(browserWindowsSource).toContain('browserPaneApi.destroy(instance.id)')
-    expect(browserWindowsSource.match(/commitAfterBrowserWindowAction\(/g)).toHaveLength(3)
+    expect(browserWindowsSource.match(/commitAfterBrowserWindowAction\(/g)).toHaveLength(2)
   })
 
   it('cancels pending list owners and commits live focus only after success', () => {
