@@ -57,8 +57,8 @@ export function BottomTerminalDock() {
         className="absolute inset-x-0 top-0 z-10 h-1.5 cursor-ns-resize hover:bg-foreground/15"
         onPointerDown={onPointerDown}
       />
-      <div className="flex h-8 shrink-0 items-center justify-between border-b border-white/5 px-3">
-        <span className="truncate text-[12px] font-medium">{t('inspector.terminal')}</span>
+      <div className="chrome-strip flex h-7 shrink-0 items-center justify-between border-b border-white/5 px-2.5">
+        <span className="chrome-label truncate font-medium tracking-tight">{t('inspector.terminal')}</span>
         <Tooltip>
           <TooltipTrigger asChild>
             <button

@@ -28,13 +28,14 @@ import { useActiveWorkspace } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
+import { CHROME_DENSITY } from './chrome-density'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
   type SurfaceTabView,
 } from './surface-tab-model'
 
-const TAB_STRIP_HEIGHT = 42
+const TAB_STRIP_HEIGHT = CHROME_DENSITY.tabStripHeight
 
 function tabIcon(tab: SurfaceTabView): LucideIcon {
   if (tab.kind === 'browser') return Globe
@@ -81,7 +82,7 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
         }
       }}
       className={cn(
-        'group flex h-7 max-w-[220px] min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] transition-colors',
+        'group chrome-label flex h-6 max-w-[200px] min-w-0 shrink-0 cursor-default items-center gap-1 rounded-[5px] px-2 transition-colors',
         tab.focused
           ? 'bg-background text-foreground shadow-minimal'
           : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
@@ -206,11 +207,11 @@ export function SurfaceTabs() {
 
   return (
     <div
-      className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-foreground/5 px-3"
+      className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-foreground/5 px-2"
       style={{ height: TAB_STRIP_HEIGHT }}
     >
       {panelTabs.length === 0 ? (
-        <span className="px-1 text-[12px] text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
+        <span className="chrome-label px-1 text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
         <div role="tablist" className="flex shrink-0 items-center gap-1">
           {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}

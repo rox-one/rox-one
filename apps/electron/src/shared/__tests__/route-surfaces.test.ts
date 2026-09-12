@@ -185,6 +185,7 @@ describe('route-parser: unified shell surfaces', () => {
     'archived',
     'board',
     'table',
+    'heatmap',
     'memory',
     'home',
     'allSessions/session/abc123',
@@ -235,5 +236,25 @@ describe('route-parser: unified shell surfaces', () => {
       details: null,
     })
     expect(buildCompoundRoute(compound!)).toBe('table')
+  })
+
+  it('parses heatmap route into sessions viewMode heatmap and round-trips', () => {
+    expect(routes.view.heatmap()).toBe('heatmap')
+    const state = parseRouteToNavigationState('heatmap')
+    expect(state).toEqual({
+      navigator: 'sessions',
+      filter: { kind: 'allSessions' },
+      details: null,
+      viewMode: 'heatmap',
+    })
+    expect(buildRouteFromNavigationState(state!)).toBe('heatmap')
+    const compound = parseCompoundRoute('heatmap')
+    expect(compound).toEqual({
+      navigator: 'sessions',
+      sessionFilter: { kind: 'allSessions' },
+      viewMode: 'heatmap',
+      details: null,
+    })
+    expect(buildCompoundRoute(compound!)).toBe('heatmap')
   })
 })

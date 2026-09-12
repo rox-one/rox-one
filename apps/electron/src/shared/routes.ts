@@ -219,6 +219,9 @@ export const routes = {
     /** Dense table collection view (sessions navigator, table view mode, all sessions) */
     table: () => 'table' as const,
 
+    /** Year heatmap collection view (sessions navigator, heatmap view mode, all sessions) */
+    heatmap: () => 'heatmap' as const,
+
     // ----------------------------------------------------------------
     // Unified shell surface routes (W1 scaffolding, spec S-02 §3.5/§3.6).
     // These parse back through route-parser; rendering degrades to the

@@ -73,7 +73,7 @@ import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { CollectionViewChrome } from "./collection/CollectionViewChrome"
 import { getDefaultViews } from "@craft-agent/shared/views"
-import { collectionViewRoute, rememberCollectionView, resolveCycleTarget } from "./collection/collection-view-cycle"
+import { collectionViewRoute, isCollectionCanvasView, rememberCollectionView, resolveCycleTarget } from "./collection/collection-view-cycle"
 import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
@@ -455,8 +455,7 @@ function AppShellContent({
   // so the navigator (and its resize handle) collapse to zero width while active.
   // Compact cycle chrome lives on the list navigator; not CollectionViewToggle / full OpsBar.
   const isBoardView =
-    isSessionsNavigation(navState) &&
-    (navState.viewMode === 'board' || navState.viewMode === 'table')
+    isSessionsNavigation(navState) && isCollectionCanvasView(navState.viewMode)
 
   // Pages library + open page both render full-width in the content area;
   // collapse the middle navigator because pages has no navigator list.
@@ -549,7 +548,7 @@ function AppShellContent({
   const { clearMultiSelect: clearSessionMultiSelect } = useSessionSelection()
   const sessionsViewMode = isSessionsNavigation(navState) ? navState.viewMode : null
   const collectionViewMode: CollectionViewMode =
-    sessionsViewMode === 'board' || sessionsViewMode === 'table' ? sessionsViewMode : 'list'
+    isCollectionCanvasView(sessionsViewMode) ? sessionsViewMode as CollectionViewMode : 'list'
   const applyCollectionView = useCallback((mode: CollectionViewMode) => {
     if (mode !== collectionViewMode) rememberCollectionView(collectionViewMode)
     navigate(collectionViewRoute(mode))
@@ -559,6 +558,7 @@ function AppShellContent({
   useAction('collection.viewList', () => applyCollectionView('list'), undefined, [applyCollectionView])
   useAction('collection.viewBoard', () => applyCollectionView('board'), undefined, [applyCollectionView])
   useAction('collection.viewTable', () => applyCollectionView('table'), undefined, [applyCollectionView])
+  useAction('collection.viewHeatmap', () => applyCollectionView('heatmap'), undefined, [applyCollectionView])
   const collectionFiltersKey = JSON.stringify(collectionFilters)
 
   React.useEffect(() => {
@@ -2833,7 +2833,7 @@ function AppShellContent({
                 <>
                   {/* Compact cycle chrome for list mode — not CollectionViewToggle / full OpsBar.
                       Board/table hosts own their OpsBar. */}
-                  {isSessionsNavigation(navState) && navState.viewMode !== 'board' && navState.viewMode !== 'table' && (
+                  {isSessionsNavigation(navState) && !isCollectionCanvasView(navState.viewMode) && (
                     <>
                       {isAutoCompact && (
                         <CompactSessionListFilter

@@ -651,6 +651,7 @@ export function NavigationProvider({
         isSessionsNavigation(nextState) &&
         nextState.viewMode !== 'board' &&
         nextState.viewMode !== 'table' &&
+        nextState.viewMode !== 'heatmap' &&
         !nextState.details &&
         !options?.skipAutoSelect
       ) {

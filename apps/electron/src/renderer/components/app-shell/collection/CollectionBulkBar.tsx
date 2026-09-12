@@ -13,6 +13,7 @@ import { sessionSelection } from '@/hooks/useEntitySelection'
 import type { SessionStatus, SessionStatusId } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
 import { NO_PROJECT_VALUE, projectPatchForBulkValue } from './bulk-input'
+import { CollectionBulkMenu } from './CollectionBulkMenu'
 import {
   applyOptimisticCollectionBulkOperation,
   assessBulkUpdateOutcome,
@@ -252,95 +253,57 @@ export function CollectionBulkBar({
           {t('collection.bulk.selected', { count: visibleSelection.count })}
         </span>
 
-        <select
-          className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-          defaultValue=""
+        <CollectionBulkMenu
+          label={t('collection.bulk.setStatus')}
           disabled={busy}
-          onChange={(event) => {
-            const status = event.target.value as SessionStatusId
-            event.target.value = ''
-            if (status) apply({ sessionStatus: status })
-          }}
-        >
-          <option value="" disabled>{t('collection.bulk.setStatus')}</option>
-          {statusOptions.map(status => (
-            <option key={status} value={status}>
-              {t(`kanban.column.${status}`, { defaultValue: status })}
-            </option>
-          ))}
-        </select>
+          items={statusOptions.map((status) => ({
+            id: status,
+            label: t(`kanban.column.${status}`, { defaultValue: status }),
+          }))}
+          onPick={(id) => apply({ sessionStatus: id as SessionStatusId })}
+        />
 
-        <select
-          className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-          defaultValue=""
+        <CollectionBulkMenu
+          label={t('collection.bulk.setPriority')}
           disabled={busy}
-          onChange={(event) => {
-            const priority = event.target.value as SessionPriority
-            event.target.value = ''
-            if (priority) apply({ priority })
-          }}
-        >
-          <option value="" disabled>{t('collection.bulk.setPriority')}</option>
-          {PRIORITIES.map(priority => (
-            <option key={priority} value={priority}>{t(`priority.${priority}`)}</option>
-          ))}
-        </select>
+          items={PRIORITIES.map((priority) => ({
+            id: priority,
+            label: t(`priority.${priority}`),
+          }))}
+          onPick={(id) => apply({ priority: id as SessionPriority })}
+        />
 
         {projects.length > 0 && (
-          <select
-            className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            defaultValue=""
+          <CollectionBulkMenu
+            label={t('collection.bulk.setProject')}
             disabled={busy}
-            onChange={(event) => {
-              const patch = projectPatchForBulkValue(event.target.value)
-              event.target.value = ''
+            items={[
+              { id: NO_PROJECT_VALUE, label: t('collection.bulk.noProject') },
+              ...projects.map((project) => ({ id: project.id, label: project.name })),
+            ]}
+            onPick={(id) => {
+              const patch = projectPatchForBulkValue(id)
               if (patch) apply(patch)
             }}
-          >
-            <option value="" disabled>{t('collection.bulk.setProject')}</option>
-            <option value={NO_PROJECT_VALUE}>{t('collection.bulk.noProject')}</option>
-            {projects.map(project => (
-              <option key={project.id} value={project.id}>{project.name}</option>
-            ))}
-          </select>
+          />
         )}
 
         {labels.length > 0 && (
-          <select
-            aria-label={t('collection.bulk.addLabel')}
-            className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            defaultValue=""
+          <CollectionBulkMenu
+            label={t('collection.bulk.addLabel')}
             disabled={busy}
-            onChange={(event) => {
-              const labelId = event.target.value
-              event.target.value = ''
-              if (labelId) apply({ addLabels: [labelId] })
-            }}
-          >
-            <option value="" disabled>{t('collection.bulk.addLabel')}</option>
-            {labels.map(label => (
-              <option key={label.id} value={label.id}>{label.name}</option>
-            ))}
-          </select>
+            items={labels.map((label) => ({ id: label.id, label: label.name }))}
+            onPick={(id) => apply({ addLabels: [id] })}
+          />
         )}
 
         {labels.length > 0 && (
-          <select
-            aria-label={t('collection.bulk.removeLabel')}
-            className="rounded-md border border-border bg-background px-2 py-1 text-xs"
-            defaultValue=""
+          <CollectionBulkMenu
+            label={t('collection.bulk.removeLabel')}
             disabled={busy}
-            onChange={(event) => {
-              const labelId = event.target.value
-              event.target.value = ''
-              if (labelId) apply({ removeLabels: [labelId] })
-            }}
-          >
-            <option value="" disabled>{t('collection.bulk.removeLabel')}</option>
-            {labels.map(label => (
-              <option key={label.id} value={label.id}>{label.name}</option>
-            ))}
-          </select>
+            items={labels.map((label) => ({ id: label.id, label: label.name }))}
+            onPick={(id) => apply({ removeLabels: [id] })}
+          />
         )}
 
         <input

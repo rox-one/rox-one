@@ -23,6 +23,8 @@ export const ROX_DEFAULT_SUBAGENT_MODEL: RoxPublicModelId = 'rox/fast';
 export const ROX_DEFAULT_CONNECTION_NAME = 'ROX · OMP';
 export const ROX_GATEWAY_BASE_URL = 'https://api.rox.one/v1';
 export const ROX_LEGACY_INTERNAL_MODEL_IDS = ['kimi-K3', 'kimi-k3'] as const;
+export const ROX_KIMI_PUBLIC_MODELS_MIGRATION = 'rox-kimi-public-models-v1';
+export const ROX_DEFAULT_CONNECTION_SLUG = 'rox-kimi';
 
 /**
  * Subagents default to the cheap public endpoint. Gateway fallback of the
@@ -51,6 +53,43 @@ export function isRoxPublicModelId(id: string): id is RoxPublicModelId {
 
 export function isRoxLegacyInternalModelId(id: string): boolean {
   return (ROX_LEGACY_INTERNAL_MODEL_IDS as readonly string[]).includes(id);
+}
+
+export function toRoxPublicConnectionModels(): Array<{
+  id: RoxPublicModelId
+  name: string
+  shortName: string
+  description: string
+  provider: 'pi'
+  contextWindow: number
+  supportsThinking: boolean
+  supportsImages: boolean
+}> {
+  return ROX_PUBLIC_MODEL_CATALOG.map((entry) => ({
+    id: entry.id,
+    name: entry.name,
+    shortName: entry.shortName,
+    description: entry.description,
+    provider: 'pi',
+    contextWindow: entry.contextWindow,
+    supportsThinking: entry.supportsThinking,
+    supportsImages: entry.supportsImages,
+  }))
+}
+
+export function connectionUsesLegacyRoxInternalModels(connection: {
+  slug?: string
+  providerType?: string
+  defaultModel?: string
+  models?: Array<{ id?: string } | string>
+}): boolean {
+  if (connection.slug !== ROX_DEFAULT_CONNECTION_SLUG) return false
+  if (connection.providerType !== 'omp') return false
+  const ids = [
+    connection.defaultModel,
+    ...(connection.models ?? []).map((model) => (typeof model === 'string' ? model : model.id)),
+  ].filter((id): id is string => typeof id === 'string' && id.length > 0)
+  return ids.some(isRoxLegacyInternalModelId)
 }
 
 function assertNever(value: never): never {

@@ -30,6 +30,7 @@ async function runInConfigDir(configDir: string, body: string): Promise<{ exitCo
       `
 import { existsSync } from 'node:fs';
 process.env.CRAFT_CONFIG_DIR = ${JSON.stringify(configDir)};
+process.env.ROX_CONFIG_DIR = ${JSON.stringify(configDir)};
 // Dynamic imports are required because these modules capture CRAFT_CONFIG_DIR at evaluation time.
 const config = await import(${JSON.stringify(CONFIG_STORAGE_URL)});
 const workspace = await import(${JSON.stringify(WORKSPACE_STORAGE_URL)});
@@ -37,7 +38,7 @@ const orgs = await import(${JSON.stringify(ORGS_STORAGE_URL)});
 ${body}
 `,
     ],
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
     stdout: 'pipe',
     stderr: 'pipe',
   })

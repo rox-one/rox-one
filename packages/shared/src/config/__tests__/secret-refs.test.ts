@@ -54,7 +54,7 @@ function runEval(configDir: string, code: string): { stdout: string; stderr: str
       `import { getRuntimeSecretRefs, setRuntimeSecretRefs, getRuntimeEnvOverrides, getPersistedRuntimeEnvOverrides, setRuntimeEnvOverrides, setRuntimeSecretEnvFragment, getRuntimeSecretEnvFragment } from '${STORAGE_MODULE_PATH}'; ${code}`,
     ],
     {
-      env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+      env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
       stdout: 'pipe',
       stderr: 'pipe',
     },

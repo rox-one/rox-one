@@ -29,7 +29,7 @@ function isNoiseStderr(stderr: string): boolean {
 
 function runScript(configDir: string, script: string): RunResult {
   const result = Bun.spawnSync([process.execPath, '--eval', script], {
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..') },
+    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir, CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..') },
     stdout: 'pipe',
     stderr: 'pipe',
     cwd: join(import.meta.dir, '..', '..', '..', '..', '..'),
@@ -289,6 +289,7 @@ describe('cloud-runs rpc handlers (local provider)', () => {
         env: {
           ...process.env,
           CRAFT_CONFIG_DIR: dir,
+          ROX_CONFIG_DIR: dir,
           CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..'),
           CRAFT_FEATURE_NATIVE_SIDECAR: '1',
         },

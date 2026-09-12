@@ -1,20 +1,13 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Layers } from 'lucide-react'
+import { PremiumMenu } from '@craft-agent/ui'
 import {
   COLLECTION_GROUP_BY_VALUES,
   type CollectionDisplay,
   type CollectionGroupBy,
 } from '@craft-agent/shared/sessions/collection'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  StyledDropdownMenuContent,
-  StyledDropdownMenuItem,
-} from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
-import { CollectionMenuCheck } from './collection-menu-row'
-import { COLLECTION_POPOVER_SURFACE } from './collection-menu-surface'
 
 const GROUP_I18N: Record<CollectionGroupBy, string> = {
   none: 'collection.display.groupBy.none',
@@ -36,46 +29,45 @@ export function CollectionGroupByMenu({
 }) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
   const grouped = display.groupBy !== 'none'
   const groupTitle = `${t('collection.display.groupByLabel')}: ${t(GROUP_I18N[display.groupBy])}`
 
+  const menuItems = COLLECTION_GROUP_BY_VALUES.map((value) => ({
+    id: value,
+    label: t(GROUP_I18N[value]),
+  }))
+
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen} modal={false}>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            'header-icon-btn inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground',
-            grouped && 'text-foreground',
-            className,
-          )}
-          aria-label={groupTitle}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          title={groupTitle}
-        >
-          <Layers className="h-3.5 w-3.5" strokeWidth={2} />
-        </button>
-      </DropdownMenuTrigger>
-      <StyledDropdownMenuContent
-        align="end"
-        minWidth="min-w-40"
-        className={COLLECTION_POPOVER_SURFACE}
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className={cn(
+          'header-icon-btn inline-flex h-7 w-7 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground',
+          grouped && 'text-foreground',
+          className,
+        )}
+        aria-label={groupTitle}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        data-state={open ? 'open' : 'closed'}
+        title={groupTitle}
+        onClick={() => setOpen((next) => !next)}
       >
-        {COLLECTION_GROUP_BY_VALUES.map((value) => {
-          const current = display.groupBy === value
-          return (
-            <StyledDropdownMenuItem
-              key={value}
-              aria-current={current ? 'true' : undefined}
-              onSelect={() => onDisplayChange({ ...display, version: 1, groupBy: value })}
-            >
-              <CollectionMenuCheck selected={current} variant="radio" />
-              <span className="flex-1">{t(GROUP_I18N[value])}</span>
-            </StyledDropdownMenuItem>
-          )
-        })}
-      </StyledDropdownMenuContent>
-    </DropdownMenu>
+        <Layers className="h-3.5 w-3.5" strokeWidth={2} />
+      </button>
+      <PremiumMenu
+        open={open}
+        onOpenChange={setOpen}
+        anchorRef={triggerRef}
+        items={menuItems}
+        selectedId={display.groupBy}
+        onSelect={(item) => {
+          onDisplayChange({ ...display, version: 1, groupBy: item.id as CollectionGroupBy })
+        }}
+        variant="compact"
+      />
+    </>
   )
 }

@@ -49,7 +49,7 @@ function getDefaultZoom(config?: unknown): number {
     '--eval',
     `import { getDefaultZoomLevel } from '${STORAGE_MODULE_PATH}'; process.stdout.write(String(getDefaultZoomLevel()));`,
   ], {
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
     stdout: 'pipe',
     stderr: 'pipe',
   })
@@ -69,7 +69,7 @@ function getFreshDefaultZoom(): number {
     `import { ensureConfigDir, getDefaultZoomLevel } from '${STORAGE_MODULE_PATH}'; ensureConfigDir(); process.stdout.write(String(getDefaultZoomLevel()));`,
   ], {
     cwd: configDir,
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
     stdout: 'pipe',
     stderr: 'pipe',
   })

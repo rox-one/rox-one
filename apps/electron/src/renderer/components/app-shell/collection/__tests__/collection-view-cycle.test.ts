@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'bun:test'
 import {
   COLLECTION_VIEW_ORDER,
   collectionViewRoute,
+  isCollectionCanvasView,
   nextCollectionView,
   prevCollectionView,
   rememberCollectionView,
@@ -14,26 +15,34 @@ describe('collection-view-cycle', () => {
     resetLastCollectionViewForTests()
   })
 
-  it('orders list → board → table', () => {
-    expect([...COLLECTION_VIEW_ORDER]).toEqual(['list', 'board', 'table'])
+  it('orders list → board → table → heatmap', () => {
+    expect([...COLLECTION_VIEW_ORDER]).toEqual(['list', 'board', 'table', 'heatmap'])
   })
 
   it('wraps next', () => {
     expect(nextCollectionView('list')).toBe('board')
     expect(nextCollectionView('board')).toBe('table')
-    expect(nextCollectionView('table')).toBe('list')
+    expect(nextCollectionView('table')).toBe('heatmap')
+    expect(nextCollectionView('heatmap')).toBe('list')
   })
 
   it('wraps prev', () => {
-    expect(prevCollectionView('list')).toBe('table')
+    expect(prevCollectionView('list')).toBe('heatmap')
     expect(prevCollectionView('board')).toBe('list')
     expect(prevCollectionView('table')).toBe('board')
+    expect(prevCollectionView('heatmap')).toBe('table')
   })
 
   it('maps routes', () => {
     expect(collectionViewRoute('list')).toBe('allSessions')
     expect(collectionViewRoute('board')).toBe('board')
     expect(collectionViewRoute('table')).toBe('table')
+    expect(collectionViewRoute('heatmap')).toBe('heatmap')
+  })
+
+  it('treats board/table/heatmap as full-width canvas views', () => {
+    expect(isCollectionCanvasView('list')).toBe(false)
+    expect(isCollectionCanvasView('heatmap')).toBe(true)
   })
 
   it('list next always goes to board', () => {
@@ -58,12 +67,13 @@ describe('collection-view-cycle', () => {
     expect(resolveCycleTarget('table', 'prev')).toBe('list')
   })
 
-  it('with no history, list prev wraps to table', () => {
-    expect(resolveCycleTarget('list', 'prev')).toBe('table')
+  it('with no history, list prev wraps to heatmap', () => {
+    expect(resolveCycleTarget('list', 'prev')).toBe('heatmap')
   })
 
-  it('wraps table next to list', () => {
-    expect(resolveCycleTarget('table', 'next')).toBe('list')
+  it('wraps table next to heatmap and heatmap next to list', () => {
+    expect(resolveCycleTarget('table', 'next')).toBe('heatmap')
+    expect(resolveCycleTarget('heatmap', 'next')).toBe('list')
   })
 
   it('persists origin across remember and read', () => {

@@ -10,4 +10,11 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(source).toContain('const [defaultZoomLevel, setDefaultZoomLevel] = useState(90)')
     expect(source).toContain('window.electronAPI?.getDefaultZoomLevel?.().then(setDefaultZoomLevel)')
   })
+
+  it('always mounts workbench and Conation sections so settings is not blank with only shell+inspector on', () => {
+    expect(source).toContain('<WorkbenchChromeSettings />')
+    expect(source).toContain('<ConationShellSettings />')
+    expect(source).not.toMatch(/unifiedShell\s*&&\s*<WorkbenchChromeSettings/)
+    expect(source).not.toMatch(/inspector\s*&&\s*<ConationShellSettings/)
+  })
 })

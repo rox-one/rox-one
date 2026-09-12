@@ -949,7 +949,8 @@ html.dark[data-scenic] .fullscreen-overlay-background {
    fixed so the App content area reads the same variable for its padding-top.
    ========================================================================== */
 :root {
-  --topbar-height: 48px;
+  /* design-compact: denser desktop chrome; mobile keeps larger touch targets */
+  --topbar-height: var(--chrome-topbar-height, 40px);
 }
 @media (max-width: 768px) {
   :root {
@@ -962,6 +963,30 @@ html.dark[data-scenic] .fullscreen-overlay-background {
     width: 20px;
     height: 20px;
   }
+}
+
+/* TopBar / rail / tab / status glass polish — uses theme chrome tokens */
+.chrome-topbar {
+  background: var(--chrome-glass-bg, color-mix(in oklch, var(--background) 88%, transparent));
+  backdrop-filter: blur(var(--chrome-glass-blur, 14px));
+  -webkit-backdrop-filter: blur(var(--chrome-glass-blur, 14px));
+  border-bottom: 1px solid var(--chrome-glass-border, color-mix(in oklch, var(--foreground) 8%, transparent));
+}
+
+html[data-scenic] .chrome-topbar,
+html[data-scenic] .chrome-rail,
+html[data-scenic] .chrome-strip {
+  background: color-mix(in oklch, var(--surface-elevated) 70%, transparent);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.chrome-rail {
+  background: color-mix(in oklch, var(--surface-rail) 92%, transparent);
+}
+
+.chrome-strip {
+  background: color-mix(in oklch, var(--surface-elevated) 90%, transparent);
 }
 
 /* TurnCard action buttons (Copy, Markdown) — outside @container/shell,

@@ -3,7 +3,7 @@
  *
  * Layout: [Sidebar] [Menu] [Back] [Forward] [Workspace selector] ... [Browser strip] [+] [Help]
  *
- * Fixed at top of window, 48px tall.
+ * Fixed at top of window; height from --topbar-height (design-compact: 40px desktop).
  * macOS: offset left to avoid stoplight controls.
  */
 
@@ -195,14 +195,14 @@ export function TopBar({
   // in the Electron desktop window. The webui runs in a regular browser tab
   // and has no traffic lights regardless of host OS — collapse to a normal
   // 12px inset so the logo sits at the edge.
-  const menuLeftPadding = isMac && !isWebUI ? 86 : 12
+  const menuLeftPadding = isMac && !isWebUI ? 82 : 8
 
   return (
     <div
-      className="fixed top-0 right-0 z-panel titlebar-drag-region"
+      className="chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region"
       style={{ left: leftInset, height: 'var(--topbar-height)' }}
     >
-      <div className="flex h-full w-full items-center justify-between gap-2">
+      <div className="flex h-full w-full items-center justify-between gap-1.5">
       {/* === LEFT: Sidebar + Menu + Navigation + Workspace === */}
       {/* Keep this container draggable. Only individual interactive controls should use titlebar-no-drag. */}
       {/* In compact mode the right slot is hidden, so we add right padding here
@@ -214,14 +214,14 @@ export function TopBar({
       ) : (
       <div
         className="pointer-events-auto flex min-w-0 flex-1 items-center gap-0.5"
-        style={{ paddingLeft: menuLeftPadding, paddingRight: isCompact ? 12 : 0 }}
+        style={{ paddingLeft: menuLeftPadding, paddingRight: isCompact ? 8 : 0 }}
       >
         <div className="flex items-center gap-0.5">
         {!isCompact && (
         <Tooltip>
           <TooltipTrigger asChild>
             <TopBarButton onClick={onToggleSidebar} aria-label={t("menu.toggleSidebar")}>
-              <PanelLeftRounded className="h-[18px] w-[18px] text-foreground/70" />
+              <PanelLeftRounded className="h-4 w-4 text-foreground/70" />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("menu.toggleSidebar")}</TooltipContent>
@@ -253,7 +253,7 @@ export function TopBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label={t("common.back")}>
-                    <Icons.ChevronLeft className="h-[18px] w-[18px] text-foreground/70" strokeWidth={1.5} />
+                    <Icons.ChevronLeft className="h-4 w-4 text-foreground/70" strokeWidth={1.5} />
                   </TopBarButton>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{t("common.back")} {goBackHotkey}</TooltipContent>
@@ -262,7 +262,7 @@ export function TopBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TopBarButton onClick={onForward} disabled={!canGoForward} aria-label={t("common.forward")}>
-                    <Icons.ChevronRight className="h-[18px] w-[18px] text-foreground/70" strokeWidth={1.5} />
+                    <Icons.ChevronRight className="h-4 w-4 text-foreground/70" strokeWidth={1.5} />
                   </TopBarButton>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{t("common.forward")} {goForwardHotkey}</TooltipContent>
@@ -301,7 +301,7 @@ export function TopBar({
 
       {/* === RIGHT: Browser strip + add + help === */}
       {!isCompact && (
-      <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-1" style={{ paddingRight: 12 }}>
+      <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8 }}>
         {chrome.utilityRail && (
           <TopBarUsageSlot />
         )}
@@ -316,7 +316,7 @@ export function TopBar({
               onClick={onOpenMap}
               disabled={!mapAvailable}
               aria-label={t("entityView.map")}
-              className="h-[26px] w-[26px] rounded-lg"
+              className="h-6 w-6 rounded-md"
             >
               <Icons.Network className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
             </TopBarButton>
@@ -325,7 +325,7 @@ export function TopBar({
         </Tooltip>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-1 h-[26px] w-[26px] rounded-lg">
+            <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-0.5 h-6 w-6 rounded-md">
               <Icons.Plus className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
             </TopBarButton>
           </DropdownMenuTrigger>
@@ -346,7 +346,7 @@ export function TopBar({
         {/* Help button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t("menu.helpAndDocs")} className="h-[26px] w-[26px] rounded-lg">
+            <TopBarButton aria-label={t("menu.helpAndDocs")} className="h-6 w-6 rounded-md">
               <Icons.HelpCircle className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
             </TopBarButton>
           </DropdownMenuTrigger>
@@ -394,7 +394,7 @@ export function TopBar({
               onClick={handleToggleInspector}
               aria-label={inspectorToggleLabel}
               aria-pressed={inspectorOpen}
-              className="h-[26px] w-[26px] rounded-lg"
+              className="h-6 w-6 rounded-md"
             >
               <Icons.PanelRight className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
             </TopBarButton>
@@ -434,7 +434,7 @@ function TopBarUsageSlot() {
     ? formatCostUsd(focusedSessionId ? sessionMetaMap.get(focusedSessionId)?.tokenUsage?.costUsd : undefined)
     : null
   return (
-    <div className="mr-1 hidden items-center gap-2 text-[11px] text-muted-foreground/50 sm:flex">
+    <div className="chrome-label-sm mr-1 hidden items-center gap-1.5 text-muted-foreground/50 sm:flex">
       <span>{t("workbench.presence.placeholder")}</span>
       <span data-testid="topbar-session-cost">
         {costLabel

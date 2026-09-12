@@ -32,6 +32,7 @@ import { parsePriorityGroupId } from './priority-groups'
 import { KANBAN_COLUMNS, statusToColumn } from './status-column'
 import { DEFAULT_KANBAN_COLUMN_COLORS } from './kanban-colors'
 import { CollectionViewChrome } from '../collection/CollectionViewChrome'
+import { collectionViewRoute } from '../collection/collection-view-cycle'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import { KanbanProjectFilter, type KanbanProjectFilterOption } from './KanbanProjectFilter'
@@ -1043,8 +1044,7 @@ function KanbanBoardContainerInner() {
             workspaceId={activeWorkspaceId}
             viewMode="board"
             onViewModeChange={view => {
-              if (view === 'list') navigate(routes.view.allSessions())
-              else if (view === 'table') navigate(routes.view.table())
+              navigate(collectionViewRoute(view))
             }}
             compact
             statuses={sessionStatuses ?? []}

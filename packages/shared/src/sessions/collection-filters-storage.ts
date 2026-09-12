@@ -14,7 +14,8 @@ import { existsSync, mkdirSync } from 'fs'
 import { dirname, join } from 'path'
 import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts'
 import type { SessionPriority } from '../protocol/dto.ts'
-import type { CollectionFilters, DueRange } from './collection-types.ts'
+import { isCollectionAgentFamily } from './collection-agent-family.ts'
+import type { CollectionAgentFamily, CollectionFilters, DueRange } from './collection-types.ts'
 
 export const COLLECTION_FILTERS_RELATIVE_PATH = 'collection/filters.json'
 
@@ -85,6 +86,17 @@ export function normalizeCollectionFilters(raw: unknown): CollectionFilters {
   if (labels) filters.labels = labels
   const model = normalizeStringArray(obj.model)
   if (model) filters.model = model
+
+  if (Array.isArray(obj.agentFamily)) {
+    const seen = new Set<CollectionAgentFamily>()
+    const agentFamily: CollectionAgentFamily[] = []
+    for (const item of obj.agentFamily) {
+      if (!isCollectionAgentFamily(item) || seen.has(item)) continue
+      seen.add(item)
+      agentFamily.push(item)
+    }
+    if (agentFamily.length > 0) filters.agentFamily = agentFamily
+  }
 
   if (Array.isArray(obj.priority)) {
     const seen = new Set<SessionPriority>()

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import {
+  connectionUsesLegacyRoxInternalModels,
   getRoxSubagentModel,
   isRoxLegacyInternalModelId,
   isRoxPublicModelId,
@@ -88,6 +89,27 @@ describe('resolveSpawnSessionModel', () => {
       })
     ).toBe('rox/fast');
     expect(isRoxLegacyInternalModelId('kimi-K3')).toBe(true);
+    expect(isRoxLegacyInternalModelId('rox/standard')).toBe(false);
+  });
+
+  it('detects seeded kimi-K3 rox-kimi connections for the public-plane rewrite', () => {
+    expect(connectionUsesLegacyRoxInternalModels({
+      slug: 'rox-kimi',
+      providerType: 'omp',
+      defaultModel: 'kimi-K3',
+      models: ['kimi-K3'],
+    })).toBe(true);
+    expect(connectionUsesLegacyRoxInternalModels({
+      slug: 'rox-kimi',
+      providerType: 'omp',
+      defaultModel: 'rox/standard',
+      models: [...ROX_PUBLIC_MODEL_IDS],
+    })).toBe(false);
+    expect(connectionUsesLegacyRoxInternalModels({
+      slug: 'other',
+      providerType: 'omp',
+      defaultModel: 'kimi-K3',
+    })).toBe(false);
   });
 
   it('inherits the parent model on non-ROX connections', () => {

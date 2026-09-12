@@ -8,6 +8,7 @@ export function activeFilterCount(filters: CollectionFilters): number {
   n += filters.projectId?.length ?? 0
   n += filters.labels?.length ?? 0
   n += filters.model?.length ?? 0
+  n += filters.agentFamily?.length ?? 0
   if (filters.due) n += 1
   if (typeof filters.flagged === 'boolean') n += 1
   if (typeof filters.hasUnread === 'boolean') n += 1

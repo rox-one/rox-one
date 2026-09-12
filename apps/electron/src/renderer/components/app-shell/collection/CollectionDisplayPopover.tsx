@@ -65,6 +65,9 @@ const PROPERTY_I18N: Record<CollectionProperty, string> = {
   updated: 'collection.display.property.updated',
   created: 'collection.display.property.created',
   flag: 'collection.display.property.flag',
+  messages: 'collection.display.property.messages',
+  tokens: 'collection.display.property.tokens',
+  duration: 'collection.display.property.duration',
 }
 
 export function CollectionDisplayPopover({

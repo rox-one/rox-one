@@ -59,6 +59,7 @@ function runSub(configDir: string, script: string, extraEnv: Record<string, stri
   delete env.INFISICAL_PROJECT_ID
   delete env.INFISICAL_ENVIRONMENT
   env.CRAFT_CONFIG_DIR = configDir
+  env.ROX_CONFIG_DIR = configDir
   env.CRAFT_TEST_ROOT = REPO_ROOT
   for (const [key, value] of Object.entries(extraEnv)) {
     if (value === undefined) delete env[key]

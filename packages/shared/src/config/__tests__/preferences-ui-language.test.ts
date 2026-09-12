@@ -22,7 +22,7 @@ interface RunResult {
 
 function runScript(configDir: string, script: string): RunResult {
   const result = Bun.spawnSync([process.execPath, '--eval', script], {
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
     stdout: 'pipe',
     stderr: 'pipe',
   });
@@ -225,7 +225,7 @@ describe('preferences.uiLanguage', () => {
     it('maps a removed persisted code to the Russian language name', () => {
       const { configDir, prefsFile } = setupDir();
       try {
-        writeRawPrefs(prefsFile, { uiLanguage: 'hu' });
+        writeRawPrefs(prefsFile, { uiLanguage: 'pt' });
         const r = runScript(configDir, `
           import { resolveTitleLanguageName } from '${PREFS_MODULE}';
           console.log(JSON.stringify({ value: resolveTitleLanguageName() ?? null }));

@@ -9,15 +9,24 @@
  */
 
 import { useEffect, useMemo } from 'react'
-import { useAtom } from 'jotai'
+import { getDefaultStore, useAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { useAction, useActionRegistry } from '@/actions'
+import {
+  featureWorkbenchConationInspectorAtom,
+  featureWorkbenchConationShellAtom,
+} from '@/atoms/conation-shell'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
+import {
+  featureWorkbenchConationBoardAtom,
+  featureWorkbenchConationCanvasAtom,
+} from '@/atoms/unified-shell'
 import {
   bootstrapOmnibox,
   getOmniboxPlatform,
   setOmniboxActionExecutor,
 } from './omnibox-bootstrap'
+import { createConationContextKeyProvider } from './omnibox-conation'
 import { Omnibox } from './Omnibox'
 
 export function OmniboxHost() {
@@ -44,6 +53,20 @@ export function OmniboxHost() {
   useEffect(() => {
     void getOmniboxPlatform()
   }, [])
+
+  // Pull live workbench.conation.* flags so Fund/Board commands stay hidden
+  // while Appearance toggles are off (defaults false).
+  useEffect(() => {
+    const store = getDefaultStore()
+    return platform.contextKeys.registerProvider(
+      createConationContextKeyProvider(() => ({
+        shellEnabled: store.get(featureWorkbenchConationShellAtom),
+        inspectorEnabled: store.get(featureWorkbenchConationInspectorAtom),
+        canvasEnabled: store.get(featureWorkbenchConationCanvasAtom),
+        boardEnabled: store.get(featureWorkbenchConationBoardAtom),
+      })),
+    ).dispose
+  }, [platform])
 
   // ⌘K / mod+k via existing action hotkey system (definitions: app.omnibox)
   useAction('app.omnibox', () => {

@@ -31,6 +31,7 @@ function runSub(script: string): { exitCode: number; stdout: string; stderr: str
     env: {
       ...process.env,
       CRAFT_CONFIG_DIR: configDir,
+      ROX_CONFIG_DIR: configDir,
       CRAFT_TEST_ROOT: REPO_ROOT,
     },
     stdout: 'pipe',

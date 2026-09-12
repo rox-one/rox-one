@@ -24,6 +24,9 @@ const chatPageSource = readRendererSource('pages/ChatPage.tsx')
 const appShellSource = readRendererSource('components/app-shell/AppShell.tsx')
 const topBarSource = readRendererSource('components/app-shell/TopBar.tsx')
 const panelHostSource = readRendererSource('platform/PanelHost.tsx')
+const omniboxBootstrapSource = readRendererSource('platform/omnibox-bootstrap.ts')
+const omniboxHostSource = readRendererSource('platform/OmniboxHost.tsx')
+const omniboxConationSource = readRendererSource('platform/omnibox-conation.ts')
 const fundPanelSource = readRendererSource('platform/conation/ConationFundPanel.tsx')
 const boardPanelSource = readRendererSource('platform/conation/ConationBoardPanel.tsx')
 
@@ -59,6 +62,11 @@ describe('ship-rox Notes, Canvas, and Map wiring', () => {
     expect(chatPageSource).toContain("if (targetId === sessionId && (view === 'map'")
   })
 
+  it('keeps Map disabled when no session is focused', () => {
+    expect(appShellSource).toContain('mapAvailable={Boolean(effectiveSessionId)}')
+    expect(topBarSource).toContain('disabled={!mapAvailable}')
+  })
+
   it('registers Fund Canvas in the real registry while keeping Board separate', () => {
     const registry = createPanelRegistry()
     registerFundPanel(
@@ -92,6 +100,10 @@ describe('ship-rox Notes, Canvas, and Map wiring', () => {
     expect(panelHostSource).toContain('getAppPanelRegistry()')
     expect(panelHostSource).toContain('registerFundPanel(')
     expect(panelHostSource).toContain('registerBoardPanel(')
+    expect(omniboxBootstrapSource).toContain('registerConationCommands(')
+    expect(omniboxConationSource).toContain("CONATION_OPEN_FUND_COMMAND_ID = 'conation.openFund'")
+    expect(omniboxConationSource).toContain("CONATION_OPEN_BOARD_COMMAND_ID = 'conation.openBoard'")
+    expect(omniboxHostSource).toContain('createConationContextKeyProvider(')
     expect(panelHostSource).not.toContain('registerMapPanel')
     expect(panelHostSource).not.toContain('void contribution')
     expect(boardPanelSource).not.toContain('/kanban/')
