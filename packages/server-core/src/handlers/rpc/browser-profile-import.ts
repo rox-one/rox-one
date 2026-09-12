@@ -24,6 +24,7 @@ export const BROWSER_PROFILE_CHANNELS = [
   RPC_CHANNELS.browserProfile.ROLLBACK,
   RPC_CHANNELS.browserProfile.DELETE,
 ] as const
+export const HANDLED_CHANNELS = BROWSER_PROFILE_CHANNELS
 
 function nodeFs(): ProfileFs {
   return {
