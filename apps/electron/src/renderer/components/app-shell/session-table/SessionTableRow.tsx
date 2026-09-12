@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Flag as FlagIcon, GripVertical } from 'lucide-react'
 import { PremiumMenu, type PremiumMenuItem } from '@craft-agent/ui'
 import type { SessionPriority } from '@craft-agent/shared/sessions/collection'
+import { ModelChip } from '../kanban/ModelChip'
 import type { SessionMeta } from '@/atoms/sessions'
 import type { SessionStatusConfig } from '@/config/session-status-config'
 import { getSessionTitle } from '@/utils/session'
@@ -283,7 +284,13 @@ export function SessionTableRow({
       )}
 
       {showModel && (
-        <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">{meta.model ?? '—'}</span>
+        <span className="w-24 shrink-0">
+          {meta.model ? (
+            <ModelChip model={meta.model} llmConnection={meta.llmConnection} short className="w-full max-w-full" />
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </span>
       )}
       {showUpdated && (
         <span className="w-20 shrink-0 text-xs text-muted-foreground">{formatRelative(meta.lastMessageAt)}</span>

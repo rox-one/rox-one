@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { classifyAgentFamily } from '../collection-agent-family.ts'
+import { classifyAgentFamily, collectionHarnessProvider } from '../collection-agent-family.ts'
 import { filterSessionMeta, type CollectionSessionMeta } from '../collection-query.ts'
 
 function meta(partial: Partial<CollectionSessionMeta> & { id: string }): CollectionSessionMeta {
@@ -17,6 +17,19 @@ describe('classifyAgentFamily', () => {
     expect(classifyAgentFamily({ model: 'kimi', llmConnection: 'oh-my-pi' })).toBe('omp')
     expect(classifyAgentFamily({ model: 'gpt-4o' })).toBe('other')
     expect(classifyAgentFamily({})).toBe('other')
+  })
+})
+
+describe('collectionHarnessProvider', () => {
+  it('maps known families to real brand keys and leaves others unset', () => {
+    expect(collectionHarnessProvider({ model: 'claude-sonnet-4' })).toBe('anthropic')
+    expect(collectionHarnessProvider({ model: 'openai-codex' })).toBe('openai')
+    expect(collectionHarnessProvider({ model: 'rox/standard' })).toBe('omp')
+    expect(collectionHarnessProvider({ model: 'kimi', llmConnection: 'oh-my-pi' })).toBe('omp')
+    expect(collectionHarnessProvider({ model: 'hermes-3' })).toBeNull()
+    expect(collectionHarnessProvider({ model: 'opencode-go' })).toBeNull()
+    expect(collectionHarnessProvider({ model: 'gpt-4o' })).toBeNull()
+    expect(collectionHarnessProvider({})).toBeNull()
   })
 })
 

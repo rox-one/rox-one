@@ -40,3 +40,26 @@ export function classifyAgentFamily(input: {
   }
   return 'other'
 }
+
+/** Provider key for real harness icons. Null means "do not invent a brand". */
+export type CollectionHarnessProvider = 'anthropic' | 'openai' | 'omp'
+
+/**
+ * Map a session's model/connection onto a bundled provider icon.
+ * Unknown families stay null so the UI never falls back to a fake Claude mark.
+ */
+export function collectionHarnessProvider(input: {
+  model?: string | null
+  llmConnection?: string | null
+}): CollectionHarnessProvider | null {
+  switch (classifyAgentFamily(input)) {
+    case 'claude':
+      return 'anthropic'
+    case 'codex':
+      return 'openai'
+    case 'omp':
+      return 'omp'
+    default:
+      return null
+  }
+}
