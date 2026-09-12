@@ -18,4 +18,18 @@ describe('IpcCallCounter', () => {
     ipc.record('sessions.metadata')
     expect(ipc.detectSessionMetadataNPlusOne(2000)).toEqual([])
   })
+
+  it('counts live RPC aliases as harness permission/metadata channels', () => {
+    const ipc = new IpcCallCounter()
+    ipc.record('sessions:get')
+    for (let i = 0; i < 500; i++) {
+      ipc.record('sessions:getPermissionModeState')
+      ipc.record('sessions:getProvenance')
+    }
+    expect(ipc.get('sessions.list')).toBe(1)
+    expect(ipc.detectSessionMetadataNPlusOne(500)).toEqual([
+      'sessions.permission called 500 times for 500 sessions',
+      'sessions.metadata called 500 times for 500 sessions',
+    ])
+  })
 })

@@ -88,3 +88,25 @@ export function indexSessionsById(
   }
   return index
 }
+
+export interface BulkSessionSidecar {
+  permissions: Record<string, PermissionMode>
+  metadata: Record<string, { labels: string[]; projectId: string | null }>
+}
+
+/**
+ * Batched permission/metadata payload. One object replaces N per-session
+ * `sessions:getPermissionModeState` / provenance round-trips.
+ */
+export function createBulkSessionSidecar(sessions: SessionIndexEntry[]): BulkSessionSidecar {
+  const permissions: BulkSessionSidecar['permissions'] = {}
+  const metadata: BulkSessionSidecar['metadata'] = {}
+  for (const session of sessions) {
+    permissions[session.id] = session.permissionMode
+    metadata[session.id] = {
+      labels: session.labels,
+      projectId: session.projectId,
+    }
+  }
+  return { permissions, metadata }
+}

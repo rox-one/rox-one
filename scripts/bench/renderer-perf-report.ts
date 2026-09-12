@@ -16,10 +16,13 @@ const ci = args.includes('--ci')
 const outFlag = args.indexOf('--out')
 const outPath = outFlag >= 0 ? args[outFlag + 1] : undefined
 const includeBundle = args.includes('--bundle')
+const sessionCountFlag = args.indexOf('--session-count')
+const sessionCountRaw = sessionCountFlag >= 0 ? Number(args[sessionCountFlag + 1]) : 2000
+const sessionCount: 500 | 2000 = sessionCountRaw === 500 ? 500 : 2000
 
 const report = runPerfHarness({
-  sessionCount: 2000,
-  switchIterations: 60,
+  sessionCount,
+  switchIterations: sessionCount === 500 ? 24 : 60,
   includeBundleProfile: includeBundle,
 })
 const text = formatPerfReport(report)

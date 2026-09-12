@@ -4,13 +4,17 @@ on:
     branches: [main]
     paths:
       - 'apps/electron/src/renderer/perf/**'
+      - 'apps/electron/src/renderer/main.tsx'
       - 'packages/server-core/src/observability/**'
+      - 'packages/server-core/src/transport/server.ts'
       - 'scripts/bench/renderer-perf-report.ts'
       - '.github/workflows/perf-budgets.yml'
   pull_request:
     paths:
       - 'apps/electron/src/renderer/perf/**'
+      - 'apps/electron/src/renderer/main.tsx'
       - 'packages/server-core/src/observability/**'
+      - 'packages/server-core/src/transport/server.ts'
       - 'scripts/bench/renderer-perf-report.ts'
       - '.github/workflows/perf-budgets.yml'
   workflow_dispatch:
@@ -25,3 +29,14 @@ jobs:
       - run: bun install --frozen-lockfile
         env: { GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}' }
       - run: bun run test:perf-budgets
+      - name: Runtime report (2000 sessions)
+        run: bun run scripts/bench/renderer-perf-report.ts --out renderer-perf-2000.md
+      - name: Bundle profile (separate clock)
+        run: bun run scripts/bench/renderer-perf-report.ts --bundle --out renderer-perf-bundle.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: renderer-perf-reports
+          path: |
+            renderer-perf-2000.md
+            renderer-perf-bundle.md
