@@ -624,20 +624,25 @@ Returns { slug, orchestratorSessionId, taskLabelId, warnings } — unknown sourc
   list_pages: `List the workspace's Pages — persistent, agent-authored HTML mini dashboards/documents rendered in the app's Pages section (sidebar) and optionally shared via password-protected public links.
 
 Returns compact summaries: slug, name, kind (static/interactive/live), project, refresh schedule, last refresh outcome, share state, and folder path. Optionally filter by projectId. Use get_page for full details on one page.`,
+
   get_page: `Get full details for one Page by slug: config, content digest/length/path, a data summary (KV keys + per-series point counts and latest values), source-action grants, and share state.
 
 The response includes absolute paths (contentPath, data.snapshotPath) — Read those files for the full HTML or the complete data snapshot. Pass includeContent: true only when you need the HTML inline.`,
+
   create_page: `Create a new Page: a persistent, self-contained HTML document stored at pages/{slug}/ in the workspace, shown as a tile in the app's Pages section, and rendered in a sandboxed iframe.
 
 IMPORTANT — read ~/.craft-agent/docs/pages.md BEFORE authoring page HTML. Key rules: provide a FULL standalone HTML document with ALL CSS/JS inline (no external requests — shared copies get network egress blocked); to display data from the page's data store, listen for the 'craft-pages/v1' bridge messages (init/data) documented there; kind 'live' pages receive replacement data snapshots automatically while open.
 
 Use Pages (instead of chat previews) when the user wants something persistent: a dashboard that an automation refreshes, a report they'll revisit or share, a tracker fed by write_page_data. Returns the created page details including the slug.`,
+
   update_page: `Update an existing Page: metadata (name, description, kind, projectId), the scheduled refresh spec, and/or replace its HTML content.
 
 Only provided fields change; pass null to clear description/projectId/refresh. Replacing content re-computes the content digest, so existing source-action grants go stale by design (the user must re-approve them). The slug never changes.`,
+
   write_page_data: `Write to a Page's data store: KV upserts/deletes plus numeric timeseries appends/prunes, applied in one transaction. The data snapshot (data/snapshot.json) is regenerated and pushed to open renders — 'live' pages update on screen without a reload.
 
 Data model: kv is key → any JSON value; series are named lists of { t: epoch ms, v: number } points with idempotent (series, t) upserts — re-running the same write is safe. Use timeseries for anything you may want charted over time (metrics, counts, prices). Composes with scheduled refresh scripts writing the same store.`,
+
   delete_page: `Delete a Page permanently — removes its folder including content, data store, and grants. DESTRUCTIVE: confirm with the user first unless they explicitly asked for the deletion.
 
 A published page is unpublished first (best effort); the result reports publicCopyMayRemain when the remote copy could not be confirmed removed.`,
@@ -793,6 +798,7 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'set_session_status', description: TOOL_DESCRIPTIONS.set_session_status, inputSchema: SetSessionStatusSchema, executionMode: 'registry', safeMode: 'block', handler: handleSetSessionStatus },
   { name: 'archive_session', description: TOOL_DESCRIPTIONS.archive_session, inputSchema: ArchiveSessionSchema, executionMode: 'registry', safeMode: 'block', handler: handleArchiveSession },
   { name: 'create_task', description: TOOL_DESCRIPTIONS.create_task, inputSchema: CreateTaskSchema, executionMode: 'registry', safeMode: 'block', handler: handleCreateTask },
+  // Pages tools (registry — use the grouped ctx.pages callbacks from SessionManager)
   { name: 'list_pages', description: TOOL_DESCRIPTIONS.list_pages, inputSchema: ListPagesSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListPages },
   { name: 'get_page', description: TOOL_DESCRIPTIONS.get_page, inputSchema: GetPageSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleGetPage },
   { name: 'create_page', description: TOOL_DESCRIPTIONS.create_page, inputSchema: CreatePageSchema, executionMode: 'registry', safeMode: 'block', handler: handleCreatePage },

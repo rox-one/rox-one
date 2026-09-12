@@ -40,8 +40,8 @@ export type CredentialType =
   | 'openclaw_gateway_token'
   // Identity Center service OAuth (SiYuan Cloud, etc.) — key service_oauth::{workspaceId}::{name}
   | 'service_oauth'
-  // Page publication token (keyed by workspaceId + page id via `name`)
-  | 'page_publish_token';
+  // Page publication admin token (keyed by workspaceId + pageId)
+  | 'page_publish_token'; // Secret capability that authorizes publication update/unpublish
 
 /** Valid credential types for validation */
 const VALID_CREDENTIAL_TYPES: readonly CredentialType[] = [
@@ -176,6 +176,11 @@ function isMessagingCredential(type: CredentialType): boolean {
   return (MESSAGING_CREDENTIAL_TYPES as readonly string[]).includes(type);
 }
 
+/** Check if type is a page publication credential (workspaceId + pageId via `name`) */
+function isPageCredential(type: CredentialType): boolean {
+  return type === 'page_publish_token';
+}
+
 /** LLM connection credential types */
 const LLM_CREDENTIAL_TYPES = [
   'llm_api_key',
@@ -183,11 +188,6 @@ const LLM_CREDENTIAL_TYPES = [
   'llm_iam',
   'llm_service_account',
 ] as const;
-
-/** Check if type is a page publication credential (workspaceId + pageId via `name`) */
-function isPageCredential(type: CredentialType): boolean {
-  return type === 'page_publish_token';
-}
 
 /** Check if type is a source credential */
 function isSourceCredential(type: CredentialType): boolean {

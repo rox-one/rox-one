@@ -63,7 +63,7 @@ export function buildKimiCodingProviderModels(existingModels: Model<Api>[]): Pro
 }
 
 /**
- * Register K3 into the pinned Pi 0.80 runtime under the existing Kimi provider.
+ * Register K3 into the pinned Pi 0.85.1 runtime under the existing Kimi provider.
  */
 export function registerKimiCodingModels(
   registry: PiModelRegistry,

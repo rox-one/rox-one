@@ -31,7 +31,6 @@ export type {
   CloudRunSubmitAction,
   ScriptAction,
   ScriptActionRuntime,
-  ScriptActionResult,
   AutomationAction,
   AutomationMatcher,
   AutomationsConfig,
@@ -52,6 +51,7 @@ export type {
   PromptReferences,
   PromptActionResult,
   WebhookActionResult,
+  ScriptActionResult,
   ActionExecutionResult,
   PendingPrompt,
   AutomationResult,
@@ -109,6 +109,7 @@ export {
   ActionDefinitionSchema,
   PromptActionSchema,
   WebhookActionSchema,
+  ScriptActionSchema,
   AutomationGraphNodeSchema,
   AutomationGraphEdgeSchema,
   AutomationGraphSchema,
@@ -126,11 +127,14 @@ export { sanitizeForShell } from './security.ts';
 // Webhook execution utilities
 export { executeWebhookRequest, executeWithRetry, createWebhookHistoryEntry, createPromptHistoryEntry, type ExecuteWebhookOptions, type RetryConfig } from './webhook-utils.ts';
 
+// Script execution utilities
 export {
   executeScriptAction,
   createScriptHistoryEntry,
   clampScriptTimeout,
   DEFAULT_SCRIPT_TIMEOUT_MS,
+  MAX_SCRIPT_TIMEOUT_MS,
+  type ScriptExecutionContext,
 } from './script-executor.ts';
 
 // Retry scheduler

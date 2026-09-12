@@ -43,6 +43,7 @@ import {
 import { permissionsConfigCache, getAppPermissionsDir } from '../agent/permissions-config.ts';
 import { getWorkspacePath, getWorkspaceSourcesPath, getWorkspaceSkillsPath } from '../workspaces/storage.ts';
 import type { LoadedSkill } from '../skills/types.ts';
+import { loadWorkspacePages } from '../pages/storage.ts';
 import { loadSkill, loadAllSkills, invalidateSkillsCache, skillNeedsIconDownload, downloadSkillIcon } from '../skills/storage.ts';
 import { loadWorkspacePages } from '../pages/storage.ts';
 import {
@@ -980,6 +981,26 @@ export class ConfigWatcher {
     debug('[ConfigWatcher] automations config changed:', this.workspaceId);
     this.callbacks.onAutomationsConfigChange?.(this.workspaceId);
   }
+
+  /**
+   * Handle a pages change (any page.json touched, or a page folder
+   * added/removed). Coarse by design: reload the full list once per
+   * debounce window.
+   */
+  private handlePagesChange(): void {
+    if (!this.callbacks.onPagesListChange) return;
+    try {
+      const pages = loadWorkspacePages(this.workspaceDir);
+      debug('[ConfigWatcher] pages changed:', this.workspaceId, `(${pages.length} pages)`);
+      this.callbacks.onPagesListChange(pages);
+    } catch (error) {
+      debug('[ConfigWatcher] Failed to reload pages:', error);
+    }
+  }
+
+  // ============================================================
+  // Page Handlers
+  // ============================================================
 
   /**
    * Handle a pages change (any page.json touched, or a page folder

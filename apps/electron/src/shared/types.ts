@@ -1704,11 +1704,14 @@ export interface ElectronAPI {
   executePageAction(workspaceId: string, request: import('@craft-agent/shared/pages/types').PageActionRequest): Promise<import('@craft-agent/shared/pages/types').PageActionResult>
   cancelPageAction(workspaceId: string, requestId: string): Promise<boolean>
   getPageShareCapabilities(): Promise<{ sharingEnabled: boolean }>
+  /** What `includeData` would publish + key paths that look credential-bearing (warn-only). */
   getPageShareDataScan(workspaceId: string, pageSlug: string): Promise<{ snapshotBytes: number | null; secretCandidates: string[] }>
   publishPage(workspaceId: string, pageSlug: string, options: { includeData: boolean; password?: string; viewOnlyAcknowledged?: boolean }): Promise<import('@craft-agent/shared/pages/types').PageConfig>
   setPagePublicationPassword(workspaceId: string, pageSlug: string, password: string | null): Promise<import('@craft-agent/shared/pages/types').PageConfig>
   unpublishPage(workspaceId: string, pageSlug: string): Promise<{ config: import('@craft-agent/shared/pages/types').PageConfig; warning?: 'remote-copy-may-remain' }>
+  /** Read a page's cached poster as a data URL — only returns when fresh (digest matches current content). */
   getPageThumbnail(workspaceId: string, pageSlug: string): Promise<{ dataUrl: string; digest: string } | null>
+  /** Request a (re)capture of a page's poster (no-op on hosts without a capturer). */
   regeneratePageThumbnail(workspaceId: string, pageSlug: string): Promise<boolean>
   onPagesChanged(callback: (workspaceId: string, pages: import('@craft-agent/shared/pages/types').LoadedPage[]) => void): () => void
 
@@ -1721,7 +1724,6 @@ export interface ElectronAPI {
   getCollectionDisplay(workspaceId: string): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   setCollectionDisplay(workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   onCollectionDisplayChanged(callback: (workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay) => void): () => void
-
 
   // Automations
   getAutomations(workspaceId: string): Promise<unknown>

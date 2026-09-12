@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'bun:test'
 import {
-  AuthStorage as PiAuthStorage,
   ModelRegistry as PiModelRegistry,
+  ModelRuntime as PiModelRuntime,
 } from '@earendil-works/pi-coding-agent'
+import { InMemoryCredentialStore, InMemoryModelsStore } from '@earendil-works/pi-ai'
 import type { Api, Model } from '@earendil-works/pi-ai'
 import {
   buildKimiCodingProviderModels,
@@ -45,9 +46,18 @@ describe('buildKimiCodingProviderModels', () => {
   })
 
   it('registers K3 in the pinned Pi runtime with Kimi API-key auth', async () => {
-    const authStorage = PiAuthStorage.inMemory()
-    authStorage.set('kimi-coding', { type: 'api_key', key: 'test-kimi-key' })
-    const registry = PiModelRegistry.inMemory(authStorage)
+    const credentials = new InMemoryCredentialStore()
+    await credentials.modify('kimi-coding', async () => ({
+      type: 'api_key',
+      key: 'test-kimi-key',
+    }))
+
+    const modelRuntime = await PiModelRuntime.create({
+      credentials,
+      modelsPath: null,
+      modelsStore: new InMemoryModelsStore(),
+    })
+    const registry = new PiModelRegistry(modelRuntime)
 
     registerKimiCodingModels(registry, 'test-kimi-key')
 

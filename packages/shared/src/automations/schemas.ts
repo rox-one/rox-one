@@ -126,12 +126,35 @@ export const CloudRunSubmitActionSchema = z.object({
   sessionId: z.string().optional(),
 });
 
-/** Accepts known actions strictly; passes through legacy/unknown action types without erroring */
+export const ScriptActionSchema = z.object({
+  type: z.literal('script'),
+  script: z.string().min(1, 'Script path cannot be empty').superRefine((script, ctx) => {
+    // Workspace-relative only; the executor re-validates with symlink resolution.
+    if (script.startsWith('/') || /^[a-zA-Z]:[\\/]/.test(script)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Script path must be relative to the workspace root' });
+    }
+    if (script.split(/[\\/]/).includes('..')) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Script path must not contain ".." segments' });
+    }
+  }),
+  args: z.array(z.string()).optional(),
+  runtime: z.enum(['bun', 'node', 'python3']).optional(),
+  timeoutMs: z.number().int().positive().optional(),
+  page: z.string().min(1).optional(),
+});
+
+/**
+ * Known actions are strict (incl. upstream `script`). Unknown/legacy action
+ * types still parse on config load so existing automations.json is not rejected.
+ * Graph projection separately rejects non-mappable actions so the UI cannot
+ * silently drop them (see graph.test.ts legacy.action case).
+ */
 export const ActionDefinitionSchema = z.union([
-  PromptActionSchema,
-  WebhookActionSchema,
-  KnowledgeAutomationActionSchema,
-  CloudRunSubmitActionSchema,
+  PromptActionSchema.strict(),
+  WebhookActionSchema.strict(),
+  KnowledgeAutomationActionSchema.strict(),
+  CloudRunSubmitActionSchema.strict(),
+  ScriptActionSchema.strict(),
   z.object({ type: z.string() }).passthrough(),
 ]);
 

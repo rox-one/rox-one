@@ -315,6 +315,9 @@ export function buildWebhookEnv(event: AutomationEvent, payload: BaseEventPayloa
 /**
  * Env vars that are not CRAFT_* but that script runtimes cannot function
  * without. Paths and OS plumbing only — never credentials.
+ * - HOME/USERPROFILE: bun/uv cache + python interpreter installs
+ * - SYSTEMROOT/WINDIR/SYSTEMDRIVE/COMSPEC/PATHEXT/TEMP/TMP: Windows can't
+ *   spawn or do DNS/socket work without these
  */
 const SCRIPT_ENV_PLATFORM_ESSENTIALS = process.platform === 'win32'
   ? ['USERPROFILE', 'SYSTEMROOT', 'WINDIR', 'SYSTEMDRIVE', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP']
@@ -327,6 +330,22 @@ export interface ScriptEnvOptions {
   page?: string;
 }
 
+/**
+ * Build environment variables for script actions: CRAFT_*-only by design.
+ *
+ * Unlike buildEnvFromPayload (prompt actions), process.env is NOT spread —
+ * a script's env is exactly:
+ * - every CRAFT_* var from process.env (runtime hints like CRAFT_BUN/CRAFT_UV,
+ *   user-defined CRAFT_* secrets, CRAFT_CONFIG_DIR, ...)
+ * - CRAFT_* event context (same base as webhooks; no shell sanitization —
+ *   values are argv/env payloads, never interpreted by a shell)
+ * - CRAFT_WORKSPACE_PATH and, for page refreshes, CRAFT_PAGE_SLUG /
+ *   CRAFT_PAGE_DIR / CRAFT_PAGE_DATA_DIR
+ * - a documented minimal set of non-secret platform essentials (HOME etc.)
+ *
+ * Notably absent: PATH (runtimes are spawned by absolute path) and every
+ * non-CRAFT credential (ANTHROPIC_API_KEY, GITHUB_TOKEN, ...).
+ */
 function applyPlatformAndCraftEnv(env: Record<string, string>): void {
   for (const key of SCRIPT_ENV_PLATFORM_ESSENTIALS) {
     const value = process.env[key];
@@ -352,7 +371,12 @@ function applyWorkspaceAndPageEnv(env: Record<string, string>, options: ScriptEn
 }
 
 /**
- * Event-independent script env: CRAFT_*-only base without automation event context.
+ * Event-independent script env: the CRAFT_*-only base without any automation
+ * event context. Used by callers that run a script outside the automations
+ * pipeline (e.g. a page action a user triggers by hand) — there is no event to
+ * describe, so injecting a synthetic CRAFT_EVENT would be a lie.
+ *
+ * See buildScriptEnv for the full contract; this is that minus buildBaseEventEnv.
  */
 export function buildBaseScriptEnv(options: ScriptEnvOptions): Record<string, string> {
   const env: Record<string, string> = {};
@@ -369,7 +393,12 @@ export function buildScriptEnv(
   const env: Record<string, string> = {};
 
   applyPlatformAndCraftEnv(env);
+
+  // Event context wins over any same-named pass-through
   Object.assign(env, buildBaseEventEnv(event, payload));
+
+  // Workspace/page context is applied last so an event payload can never
+  // clobber CRAFT_WORKSPACE_PATH / CRAFT_PAGE_* (unchanged ordering).
   applyWorkspaceAndPageEnv(env, options);
 
   return env;

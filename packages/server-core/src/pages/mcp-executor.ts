@@ -53,7 +53,7 @@ export function createPagesMcpExecutor(deps: PagesMcpExecutorDeps) {
 
   return async (
     invocation: { sourceSlug: string; toolName: string; args: Record<string, unknown> },
-    _options: { signal: AbortSignal },
+    options: { signal: AbortSignal },
   ): Promise<unknown> => {
     const { sourceSlug, toolName, args } = invocation
 
@@ -95,7 +95,9 @@ export function createPagesMcpExecutor(deps: PagesMcpExecutorDeps) {
 
     await deps.pool.ensureConnected(sourceSlug, config)
 
-    const result = await deps.pool.callTool(proxyToolName(sourceSlug, toolName), args)
+    const result = await deps.pool.callTool(proxyToolName(sourceSlug, toolName), args, {
+      signal: options.signal,
+    })
     if (result.isError) {
       throw new Error(result.content || `Tool ${toolName} on ${sourceSlug} failed`)
     }

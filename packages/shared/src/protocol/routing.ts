@@ -91,6 +91,7 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.shell.OPEN_URL,
   RPC_CHANNELS.shell.OPEN_FILE,
   RPC_CHANNELS.shell.SHOW_IN_FOLDER,
+  RPC_CHANNELS.shell.EXEC,
   RPC_CHANNELS.workspace.OPEN_IN_EDITOR,
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
   RPC_CHANNELS.sessions.FOREIGN_PERSIST,
@@ -344,6 +345,8 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.knowledge.ENGINE_START,
   // Local vault/kernel import: remote clients must not drive host filesystem paths.
   RPC_CHANNELS.knowledge.MIGRATE_NOTES,
+  RPC_CHANNELS.notesImport.PREVIEW,
+  RPC_CHANNELS.notesImport.EXECUTE,
   RPC_CHANNELS.mindmap.ENRICH,
   RPC_CHANNELS.mindmap.PIN_LOAD,
   RPC_CHANNELS.mindmap.PIN_SAVE,
@@ -381,6 +384,21 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.identity.DISCONNECT,
   RPC_CHANNELS.identity.REFRESH_STATUS,
   RPC_CHANNELS.identity.CHANGED,
+
+  // Connection Fabric — local providers, OS discovery, credential grants, and leases.
+  RPC_CHANNELS.fabric.LIST_CONNECTIONS,
+  RPC_CHANNELS.fabric.CREATE_CONNECTION,
+  RPC_CHANNELS.fabric.LIST_CREDENTIALS,
+  RPC_CHANNELS.fabric.LIST_AUDIT,
+  RPC_CHANNELS.fabric.DISCOVER,
+  RPC_CHANNELS.fabric.PREVIEW,
+  RPC_CHANNELS.fabric.COMMIT_IMPORT,
+  RPC_CHANNELS.fabric.LIST_GRANTS,
+  RPC_CHANNELS.fabric.PUT_GRANT,
+  RPC_CHANNELS.fabric.ACQUIRE_LEASE,
+  RPC_CHANNELS.fabric.REVOKE_CONNECTION,
+  RPC_CHANNELS.fabric.GITHUB_STATUS,
+  RPC_CHANNELS.fabric.INFISICAL_HEALTH,
 
 ])
 
@@ -640,6 +658,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.sources.REINDEX,
   RPC_CHANNELS.sources.SEARCH,
   RPC_CHANNELS.sources.STATUS,
+  RPC_CHANNELS.sources.INDEX_CHANGED,
 
   // oauth — OAuth state management
   RPC_CHANNELS.oauth.START,
@@ -685,6 +704,11 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.securityAudit.GET_LATEST,
   RPC_CHANNELS.securityAudit.ACCEPT_RISK,
   RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE,
+
+  // Command Gateway — owner-authorized decisions stored on the workspace host.
+  RPC_CHANNELS.commandGateway.LIST,
+  RPC_CHANNELS.commandGateway.APPROVE,
+  RPC_CHANNELS.commandGateway.DENY,
 
   // labels — workspace metadata
   RPC_CHANNELS.labels.LIST,
@@ -743,11 +767,15 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.pages.RELEASE_LEASE,
   RPC_CHANNELS.pages.EXECUTE_ACTION,
   RPC_CHANNELS.pages.CANCEL_ACTION,
+  // Sharing runs on the workspace server: it holds the page files, the vault
+  // token, and evaluates the CRAFT_FEATURE_PAGES_SHARING flag.
   RPC_CHANNELS.pages.GET_SHARE_CAPABILITIES,
   RPC_CHANNELS.pages.GET_SHARE_DATA_SCAN,
   RPC_CHANNELS.pages.PUBLISH,
   RPC_CHANNELS.pages.SET_PUBLICATION_PASSWORD,
   RPC_CHANNELS.pages.UNPUBLISH,
+  // Thumbnails: the poster file lives on the workspace server; regeneration is
+  // a no-op unless that host injected a capturer (Electron main).
   RPC_CHANNELS.pages.GET_THUMBNAIL,
   RPC_CHANNELS.pages.REGENERATE_THUMBNAIL,
   RPC_CHANNELS.pages.CHANGED,

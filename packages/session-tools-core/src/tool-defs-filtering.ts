@@ -47,6 +47,12 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'knowledge_search',
   'knowledge_read',
   'knowledge_get_backlinks',
+  'list_pages',
+  'get_page',
+  'create_page',
+  'update_page',
+  'write_page_data',
+  'delete_page',
 ])
 
 export function isEssentialHostTool(name: string): boolean {
