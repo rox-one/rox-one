@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { createSoupClient } from '../client.ts'
 import { SOUP_GRAPHQL_DEFAULT_ENDPOINT } from '../types.ts'
+import type { HttpFetch } from '../../../platform/http-fetch.ts'
 
 describe('createSoupClient', () => {
   it('returns null when flag/enabled is false', () => {
@@ -8,7 +9,7 @@ describe('createSoupClient', () => {
   })
 
   it('pings SoupQueryRoot with mocked fetch when enabled', async () => {
-    const fetchMock: typeof fetch = async () =>
+    const fetchMock: HttpFetch = async () =>
       new Response(JSON.stringify({ data: { __typename: 'SoupQueryRoot' } }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -23,7 +24,7 @@ describe('createSoupClient', () => {
   })
 
   it('maps user.soup page items from mocked fetch', async () => {
-    const fetchMock: typeof fetch = async (_input, init) => {
+    const fetchMock: HttpFetch = async (_input, init) => {
       const body = JSON.parse(String((init as RequestInit).body)) as { query: string }
       expect(body.query).toContain('SoupUserPage')
       return new Response(

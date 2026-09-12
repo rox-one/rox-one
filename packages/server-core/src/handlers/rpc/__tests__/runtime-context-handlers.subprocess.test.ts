@@ -43,6 +43,7 @@ function runSub(script: string, env: Record<string, string> = {}): RunResult {
     env: {
       ...process.env,
       CRAFT_CONFIG_DIR: configDir,
+      ROX_CONFIG_DIR: configDir,
       CRAFT_TEST_ROOT: REPO_ROOT,
       CRAFT_ELECTRON_ROOT: ELECTRON_ROOT,
       ...env,

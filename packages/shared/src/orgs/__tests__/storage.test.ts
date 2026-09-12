@@ -19,6 +19,7 @@ async function runInConfigDir(configDir: string, body: string): Promise<RunResul
       '-e',
       `
 process.env.CRAFT_CONFIG_DIR = ${JSON.stringify(configDir)};
+process.env.ROX_CONFIG_DIR = ${JSON.stringify(configDir)};
 const api = await import(${JSON.stringify(STORAGE_PATH)});
 ${body}
 `,
@@ -28,6 +29,7 @@ ${body}
     env: {
       ...process.env,
       CRAFT_CONFIG_DIR: configDir,
+      ROX_CONFIG_DIR: configDir,
     },
   })
   const [stdout, stderr, exitCode] = await Promise.all([

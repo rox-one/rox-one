@@ -26,6 +26,7 @@ function runScript(configDir: string, script: string): RunResult {
     env: {
       ...process.env,
       CRAFT_CONFIG_DIR: configDir,
+      ROX_CONFIG_DIR: configDir,
       CRAFT_TEST_ROOT: REPO_ROOT,
     },
     stdout: 'pipe',

@@ -20,7 +20,7 @@ function runStorageEval(configDir: string, code: string): string {
   const run = Bun.spawnSync(
     [process.execPath, '--eval', `import { getDefaultThinkingLevel, setDefaultThinkingLevel } from '${STORAGE_MODULE}'; ${code}`],
     {
-      env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+      env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
       stdout: 'pipe',
       stderr: 'pipe',
     },

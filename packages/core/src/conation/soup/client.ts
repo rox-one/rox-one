@@ -25,15 +25,15 @@ async function postGraphQl<T>(
   query: string,
   variables: Record<string, unknown> | undefined,
   getHeaders: SoupClientOptions['getHeaders'],
-  fetchImpl: typeof fetch,
+  fetchImpl: NonNullable<SoupClientOptions['fetch']>,
 ): Promise<T> {
-  const extra = getHeaders ? await getHeaders() : undefined
+  const headers = new Headers({ 'content-type': 'application/json' })
+  if (getHeaders) {
+    new Headers(await getHeaders()).forEach((value, key) => headers.set(key, value))
+  }
   const res = await fetchImpl(endpoint, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(extra ?? {}),
-    },
+    headers,
     body: JSON.stringify({ query, variables }),
   })
   if (!res.ok) {

@@ -13,6 +13,7 @@ import {
   getEnv,
   resolveConfigDir,
 } from '../env.ts';
+import { isolatedConfigEnv } from '../isolated-config-env.ts';
 
 afterEach(() => {
   _resetEnvDeprecationWarnings();
@@ -78,6 +79,24 @@ describe('CRAFT_* deprecation', () => {
     expect(dirWarns).toHaveLength(1);
     expect(tokenWarns[0]).toMatch(/ROX_SERVER_TOKEN/);
     expect(dirWarns[0]).toMatch(/ROX_CONFIG_DIR/);
+  });
+
+  it('spawn overrides must set ROX_CONFIG_DIR or preload wins over CRAFT_CONFIG_DIR', () => {
+    const preloadDir = '/tmp/rox-agent-test-preload';
+    const suiteDir = '/tmp/suite-config';
+    expect(
+      resolveConfigDir(
+        { ROX_CONFIG_DIR: preloadDir, CRAFT_CONFIG_DIR: suiteDir },
+        '/home/u',
+      ),
+    ).toBe(preloadDir);
+    expect(
+      resolveConfigDir(
+        { ROX_CONFIG_DIR: suiteDir, CRAFT_CONFIG_DIR: suiteDir },
+        '/home/u',
+      ),
+    ).toBe(suiteDir);
+    expect(resolveConfigDir(isolatedConfigEnv(suiteDir), '/home/u')).toBe(suiteDir);
   });
 
   it('does not warn when the ROX_* name is set', () => {

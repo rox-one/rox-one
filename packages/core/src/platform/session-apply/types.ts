@@ -4,6 +4,8 @@
  * Not Cordis. Not a second orchestrator.
  */
 
+import type { HttpFetch } from '../http-fetch.ts';
+
 export const DEFAULT_OPERATOR_ORIGIN = 'https://conation.dev';
 export const DEFAULT_READ_PATH = '/session-apply';
 export const DEFAULT_APPLY_PATH = '/session-apply';
@@ -23,7 +25,7 @@ export interface SessionApplyClientOptions {
   flagEnabled: boolean;
   readPath?: string;
   applyPath?: string;
-  fetch?: typeof fetch;
+  fetch?: HttpFetch;
 }
 
 export interface SessionApplyReadResult {

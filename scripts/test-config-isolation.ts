@@ -7,9 +7,10 @@
  * `CONFIG_DIR` freezes to the real `~/.craft-agent` and tests can write into
  * the developer's actual installation.
  *
- * Setting the preferred variable here before any config import keeps the run in
- * one disposable directory. Tests can still override `ROX_CONFIG_DIR` or the
- * legacy `CRAFT_CONFIG_DIR` before the preload runs.
+ * Tests can still override `ROX_CONFIG_DIR` (and the legacy `CRAFT_CONFIG_DIR`)
+ * in spawned children — they must set **both**, because `resolveConfigDir()`
+ * prefers ROX_*. Overriding only CRAFT_CONFIG_DIR leaves the preload directory
+ * in place. See `packages/shared/src/config/isolated-config-env.ts`.
  *
  * Wired through `[test].preload` in `bunfig.toml`. An externally supplied
  * config directory always wins.
