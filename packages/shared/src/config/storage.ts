@@ -85,14 +85,22 @@ export interface StoredConfig {
   // Cloud Runs (PRD docs/cloud-runs-prd.md). Token lives in <configDir>/cloud-runs.env, not here.
   cloudRuns?: {
     enabled?: boolean;
-    provider?: 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native';
+    provider?: 'local' | 'daytona' | 'native' | 'cloudflare' | 'modal' | 'e2b';
     gatewayUrl?: string;
     defaultMaxWallClockSec?: number;
     defaultMaxLlmTokens?: number;
     defaultMaxArtifactsBytes?: number;
-    notifyWebhookUrl?: string;  // optional outbound POST on run completion (see server-core watcher)
-    cheapModelId?: string;      // F6: draft subtasks (landscape/alternatives) on cheap model
-    personas?: boolean;         // F22: default on/off for persona-expanded runs
+    defaultTtlSec?: number;
+    notifyWebhookUrl?: string;
+    cheapModelId?: string;
+    personas?: boolean;
+    daytonaProjectId?: string;
+    daytonaSnapshot?: string;
+    daytonaSandbox?: string;
+    daytonaRegion?: string;
+    daytonaImage?: string;
+    daytonaApiUrl?: string;
+    daytonaSecretRef?: string;
   };
   // LLM Connections (authoritative source for auth and model config)
   llmConnections?: LlmConnection[];
@@ -913,13 +921,11 @@ export function loadStoredConfig(): StoredConfig | null {
     if (config.cloudRuns === undefined) {
       config.cloudRuns = {
         enabled: true,
-        provider: 'cloudflare',
-        gatewayUrl:
-          process.env.CRAFT_CLOUD_RUNS_GATEWAY_URL
-          ?? 'https://craft-cloud-gateway.scharlesky-192.workers.dev',
+        provider: 'daytona',
         defaultMaxWallClockSec: 5400,
         defaultMaxLlmTokens: 2_000_000,
         defaultMaxArtifactsBytes: 25 * 1024 * 1024,
+        defaultTtlSec: 3600,
       };
       needsSave = true;
     }

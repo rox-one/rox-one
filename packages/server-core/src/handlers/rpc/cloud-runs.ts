@@ -18,16 +18,17 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol';
-import { getWorkspaceDataPath, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage';
+import { getWorkspaceDataPath, getRuntimeSecretRefs, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage';
 import {
-  CloudflareComputerProvider,
   CloudRunnerError,
   LocalSubprocessProvider,
-  ModalProvider,
   NativeRunProvider,
+  DaytonaProvider,
   DEFAULT_PERSONAS,
   buildResearchSpec,
+  coercePublicCloudRunProvider,
   type CloudRunProvider,
+  type PublicCloudRunProvider,
   type ResearchPackKind,
   type RunHandle,
   type RunStatus,
@@ -39,6 +40,7 @@ import { resolveContainedRelativePath } from '../../utils/path-validation';
 import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags';
 import { getNativeSidecarClient } from '../../native/supervisor.ts';
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { registerSecretValues, resolveSecretsForSpawn } from '@craft-agent/shared/secrets';
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.GET_CONFIG,
@@ -67,19 +69,23 @@ export const HANDLED_CHANNELS = [
 
 export interface CloudRunsSettings {
   enabled: boolean;
-  provider: 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native';
+  provider: PublicCloudRunProvider;
   gatewayUrl?: string;
+  daytonaProjectId?: string;
+  daytonaSnapshot?: string;
+  daytonaSandbox?: string;
+  daytonaRegion?: string;
+  daytonaImage?: string;
+  daytonaApiUrl?: string;
+  daytonaSecretRef?: string;
+  defaultTtlSec?: number;
   defaults: { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number };
 }
 
-const DEFAULT_GATEWAY_URL =
-  process.env.CRAFT_CLOUD_RUNS_GATEWAY_URL
-  ?? 'https://craft-cloud-gateway.scharlesky-192.workers.dev';
-
 const SETTINGS_DEFAULTS: CloudRunsSettings = {
   enabled: true,
-  provider: 'cloudflare',
-  gatewayUrl: DEFAULT_GATEWAY_URL,
+  provider: 'daytona',
+  defaultTtlSec: 3600,
   defaults: { maxWallClockSec: 5400, maxLlmTokens: 2_000_000, maxArtifactsBytes: 25 * 1024 * 1024 },
 };
 
@@ -92,10 +98,10 @@ function ensureCloudRunsDefaults(): void {
     cloudRuns: {
       enabled: SETTINGS_DEFAULTS.enabled,
       provider: SETTINGS_DEFAULTS.provider,
-      gatewayUrl: SETTINGS_DEFAULTS.gatewayUrl,
       defaultMaxWallClockSec: SETTINGS_DEFAULTS.defaults.maxWallClockSec,
       defaultMaxLlmTokens: SETTINGS_DEFAULTS.defaults.maxLlmTokens,
       defaultMaxArtifactsBytes: SETTINGS_DEFAULTS.defaults.maxArtifactsBytes,
+      defaultTtlSec: SETTINGS_DEFAULTS.defaultTtlSec,
     },
   });
 }
@@ -105,14 +111,44 @@ function readSettings(): CloudRunsSettings {
   const cfg = loadStoredConfig()?.cloudRuns;
   return {
     enabled: cfg?.enabled ?? SETTINGS_DEFAULTS.enabled,
-    provider: cfg?.provider ?? SETTINGS_DEFAULTS.provider,
-    gatewayUrl: cfg?.gatewayUrl ?? SETTINGS_DEFAULTS.gatewayUrl,
+    provider: coercePublicCloudRunProvider(cfg?.provider),
+    gatewayUrl: cfg?.gatewayUrl,
+    daytonaProjectId: cfg?.daytonaProjectId,
+    daytonaSnapshot: cfg?.daytonaSnapshot,
+    daytonaSandbox: cfg?.daytonaSandbox,
+    daytonaRegion: cfg?.daytonaRegion,
+    daytonaImage: cfg?.daytonaImage,
+    daytonaApiUrl: cfg?.daytonaApiUrl,
+    daytonaSecretRef: cfg?.daytonaSecretRef,
+    defaultTtlSec: cfg?.defaultTtlSec ?? SETTINGS_DEFAULTS.defaultTtlSec,
     defaults: {
       maxWallClockSec: cfg?.defaultMaxWallClockSec ?? SETTINGS_DEFAULTS.defaults.maxWallClockSec,
       maxLlmTokens: cfg?.defaultMaxLlmTokens ?? SETTINGS_DEFAULTS.defaults.maxLlmTokens,
       maxArtifactsBytes: cfg?.defaultMaxArtifactsBytes ?? SETTINGS_DEFAULTS.defaults.maxArtifactsBytes,
     },
   };
+}
+
+function daytonaSecretConfigured(): boolean {
+  const refs = getRuntimeSecretRefs();
+  const secretName = loadStoredConfig()?.cloudRuns?.daytonaSecretRef ?? 'daytona';
+  return refs.some((ref) => ref.envVar === 'DAYTONA_API_KEY' || ref.name === secretName)
+    || Boolean(process.env.DAYTONA_API_KEY);
+}
+
+async function resolveDaytonaApiKey(): Promise<string> {
+  const secretName = loadStoredConfig()?.cloudRuns?.daytonaSecretRef ?? 'daytona';
+  const refs = getRuntimeSecretRefs().filter(
+    (ref) => ref.envVar === 'DAYTONA_API_KEY' || ref.name === secretName,
+  );
+  const result = await resolveSecretsForSpawn(refs.length > 0 ? refs : [{ name: 'daytona', envVar: 'DAYTONA_API_KEY' }]);
+  registerSecretValues(result.values);
+  const key = result.env.DAYTONA_API_KEY ?? process.env.DAYTONA_API_KEY;
+  if (!key) {
+    throw new CloudRunnerError('daytona requires secret reference DAYTONA_API_KEY', 'provider_error');
+  }
+  registerSecretValues([key]);
+  return key;
 }
 
 /**
@@ -174,7 +210,8 @@ function readSecretsEnv(): Record<string, string> {
 }
 
 function makeProvider(settings: CloudRunsSettings): CloudRunProvider {
-  if (settings.provider === 'native') {
+  const providerId = coercePublicCloudRunProvider(settings.provider);
+  if (providerId === 'native') {
     if (!isNativeSidecarEnabled()) {
       throw new CloudRunnerError(
         'native provider requires CRAFT_FEATURE_NATIVE_SIDECAR=1',
@@ -193,38 +230,20 @@ function makeProvider(settings: CloudRunsSettings): CloudRunProvider {
       rpc: client,
     });
   }
-  if (settings.provider === 'cloudflare' || settings.provider === 'modal') {
-    const secrets = readSecretsEnv();
-    // Per-provider URL env beats the generic one, so flipping the
-    // provider setting doesn't require re-editing URLs.
-    const envKey = settings.provider === 'modal' ? 'MODAL_GATEWAY_URL' : 'CLOUDFLARE_GATEWAY_URL';
-    const baseUrl = secrets[envKey] ?? settings.gatewayUrl ?? secrets.CLOUD_RUNS_GATEWAY_URL;
-    const token = secrets.CLOUD_RUNS_TOKEN;
-    if (!baseUrl || !token) {
-      throw new CloudRunnerError(
-        `${settings.provider} provider requires ${envKey}/cloudRuns.gatewayUrl and CLOUD_RUNS_TOKEN in <configDir>/cloud-runs.env`,
-        'provider_error',
-      );
-    }
-    return settings.provider === 'modal'
-      ? new ModalProvider({ baseUrl, token })
-      : new CloudflareComputerProvider({ baseUrl, token });
+  if (providerId === 'daytona') {
+    return new DaytonaProvider({
+      baseDir: join(resolveConfigDir(), 'cloud-runs', 'daytona'),
+      resolveApiKey: resolveDaytonaApiKey,
+      apiUrl: settings.daytonaApiUrl,
+      projectId: settings.daytonaProjectId,
+      snapshot: settings.daytonaSnapshot,
+      sandboxName: settings.daytonaSandbox,
+      region: settings.daytonaRegion,
+      image: settings.daytonaImage,
+      ttlSec: settings.defaultTtlSec,
+    });
   }
   return new LocalSubprocessProvider({ baseDir: join(resolveConfigDir(), 'cloud-runs', 'local') });
-}
-
-/** Fallback candidate for auto-create-flip: cloudflare ↔ modal, never local. */
-function makeFallbackProvider(settings: CloudRunsSettings): CloudRunProvider | null {
-  if (settings.provider !== 'cloudflare' && settings.provider !== 'modal') return null;
-  const flipped: CloudRunsSettings = {
-    ...settings,
-    provider: settings.provider === 'cloudflare' ? 'modal' : 'cloudflare',
-  };
-  try {
-    return makeProvider(flipped);
-  } catch {
-    return null; // fallback not configured — stay single-provider
-  }
 }
 
 
@@ -343,14 +362,11 @@ async function resolveWorkspaceId(deps: HandlerDeps, sessionId: string): Promise
   return session.workspaceId;
 }
 
-/** Provider for a specific run: the one that owns it (post-fallback record), else the configured default. */
+/** Provider for a specific run: the one that owns it, else the configured default. */
 function providerForRun(settings: CloudRunsSettings, runId: string): CloudRunProvider {
   const entry = readRegistry().find((r) => r.id === runId);
   if (!entry) return makeProvider(settings);
-  if (entry.provider !== 'cloudflare' && entry.provider !== 'modal' && entry.provider !== 'local') {
-    return makeProvider(settings);
-  }
-  return makeProvider({ ...settings, provider: entry.provider });
+  return makeProvider({ ...settings, provider: coercePublicCloudRunProvider(entry.provider) });
 }
 
 // ---------------------------------------------------------------
@@ -420,7 +436,7 @@ function startCompletionWatcher(deps?: HandlerDeps): void {
         }
       }
       if (prev !== status.state) lastState.set(entry.id, status.state);
-      const terminal = status.state === 'done' || status.state === 'failed' || status.state === 'cancelled';
+      const terminal = status.state === 'done' || status.state === 'failed' || status.state === 'cancelled' || status.state === 'expired';
       if (terminal && prev && prev !== status.state && prev !== 'unknown') {
         // Emit AppEvent for knowledge automation chains (all providers, all terminal states).
         const workspaceId = entry.workspaceId;
@@ -471,6 +487,11 @@ function startCompletionWatcher(deps?: HandlerDeps): void {
           }
         }
       }
+    }
+    if (settings.provider === 'daytona') {
+      try {
+        await makeProvider(settings).sweepZombies?.();
+      } catch { /* zombie sweep is best-effort */ }
     }
   }, WATCHER_POLL_MS).unref();
 }
@@ -535,16 +556,8 @@ export async function submitCloudRunInternal(
       spec.name = `${namePrefix}${spec.name}`.slice(0, 80);
     }
     const provider = makeProvider(settings);
-    let handle: RunHandle;
-    let usedProvider = settings.provider;
-    try {
-      handle = await provider.createRun(spec);
-    } catch (error) {
-      const fallback = makeFallbackProvider(settings);
-      if (!fallback) throw error;
-      handle = await fallback.createRun(spec);
-      usedProvider = fallback.providerId as typeof usedProvider;
-    }
+    const handle = await provider.createRun(spec);
+    const usedProvider = provider.providerId as typeof settings.provider;
     const registry = readRegistry();
     registry.push({
       id: handle.id,
@@ -627,7 +640,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
       notifyWebhookUrl: loadStoredConfig()?.cloudRuns?.notifyWebhookUrl,
       cheapModelId: loadStoredConfig()?.cloudRuns?.cheapModelId,
       personas: loadStoredConfig()?.cloudRuns?.personas ?? false,
-      tokenConfigured: Boolean(readSecretsEnv().CLOUD_RUNS_TOKEN),
+      tokenConfigured: settings.provider === 'daytona' ? daytonaSecretConfigured() : Boolean(readSecretsEnv().CLOUD_RUNS_TOKEN),
+      secretConfigured: daytonaSecretConfigured(),
       estimatedRunTokens,
     };
   });
@@ -636,11 +650,14 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     RPC_CHANNELS.cloudRuns.SET_CONFIG,
     async (
       _ctx,
-      patch: Partial<Pick<CloudRunsSettings, 'enabled' | 'provider' | 'gatewayUrl'>> &
+      patch: Partial<Pick<CloudRunsSettings, 'enabled' | 'provider' | 'gatewayUrl' | 'daytonaProjectId' | 'daytonaSnapshot' | 'daytonaSandbox' | 'daytonaRegion' | 'daytonaImage' | 'daytonaApiUrl' | 'daytonaSecretRef' | 'defaultTtlSec'>> &
         { defaultMaxWallClockSec?: number; defaultMaxLlmTokens?: number; defaultMaxArtifactsBytes?: number; notifyWebhookUrl?: string; cheapModelId?: string; personas?: boolean },
     ) => {
       const stored = loadStoredConfig();
       if (!stored) throw new CloudRunnerError('config.json not found', 'provider_error');
+      if (patch.provider !== undefined) {
+        patch.provider = coercePublicCloudRunProvider(patch.provider);
+      }
       if (patch.provider === 'native' && !isNativeSidecarEnabled()) {
         throw new CloudRunnerError(
           'native provider requires CRAFT_FEATURE_NATIVE_SIDECAR=1',
@@ -724,20 +741,9 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
         spec.name = `Fork: ${parent?.name ?? args.fromRunId}`.slice(0, 80);
       }
       const provider = makeProvider(settings);
-      // Auto-flip ONLY at createRun: a failed creation bills nothing, so the
-      // double-charge concern (PRD §G4.3) doesn't apply to this hop. Mid-run
-      // flips stay manual — status/cancel keep addressing the recorded
-      // provider for run lifetime.
-      let handle: RunHandle;
-      let usedProvider = settings.provider;
-      try {
-        handle = await provider.createRun(spec);
-      } catch (error) {
-        const fallback = makeFallbackProvider(settings);
-        if (!fallback) throw error;
-        handle = await fallback.createRun(spec);
-        usedProvider = fallback.providerId as typeof usedProvider;
-      }
+      // Issue 25: never fall back to another provider on Daytona failure.
+      const handle = await provider.createRun(spec);
+      const usedProvider = provider.providerId as typeof settings.provider;
       const registry = readRegistry();
       let workspaceId: string | undefined;
       if (args.sessionId) {
