@@ -494,6 +494,14 @@ export const RPC_CHANNELS = {
     SET_CONSENT: 'gamification:setConsent',
     CHANGED: 'gamification:changed',
   },
+  voice: {
+    GET: 'voice:get',
+    SAVE: 'voice:save',
+    HEALTH: 'voice:health',
+    TRANSCRIBE: 'voice:transcribe',
+    SPEAK: 'voice:speak',
+    CHANGED: 'voice:changed',
+  },
   drafts: {
     GET: 'drafts:get',
     SET: 'drafts:set',
