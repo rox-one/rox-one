@@ -32,6 +32,11 @@ export interface CollectionSessionMeta {
   createdAt?: number | null
   messageCount?: number | null
   tokenUsage?: { totalTokens?: number } | null
+  transcriptBytes?: number | null
+  toolCallCount?: number | null
+  commitCount?: number | null
+  parallelAgentCount?: number | null
+  parentSessionId?: string | null
 }
 
 

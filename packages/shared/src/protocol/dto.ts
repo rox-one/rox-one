@@ -96,6 +96,9 @@ export interface Session {
   }
   createdAt?: number
   messageCount?: number
+  transcriptBytes?: number
+  toolCallCount?: number
+  commitCount?: number
   tokenUsage?: {
     inputTokens: number
     outputTokens: number

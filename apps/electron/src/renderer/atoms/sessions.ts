@@ -14,6 +14,7 @@ import { atomFamily } from 'jotai-family'
 import type { Session, Message, SessionPriority } from '../../shared/types'
 
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
+import { countGitCommits, countToolCalls } from '@craft-agent/shared/sessions/collection'
 
 /**
  * Session metadata for list display (lightweight, no messages)
@@ -71,6 +72,12 @@ export interface SessionMeta {
   createdAt?: number
   /** Total number of messages in this session */
   messageCount?: number
+  /** Transcript file size in bytes */
+  transcriptBytes?: number
+  /** Tool-call rows in the transcript */
+  toolCallCount?: number
+  /** Git-commit tool calls in the transcript */
+  commitCount?: number
   /** When true, session is hidden from session list (e.g., mini edit sessions) */
   hidden?: boolean
   /** Whether this session is archived */
@@ -131,6 +138,7 @@ export function extractSessionMeta(session: Session): SessionMeta {
     workspaceName: _wn, thinkingLevel: _tl, currentStatus: _cs,
     isAsyncOperationOngoing, isRegeneratingTitle,
     messageCount, lastFinalMessageId: sessionLastFinal,
+    toolCallCount, commitCount,
     ...sessionFields
   } = session
 
@@ -142,6 +150,8 @@ export function extractSessionMeta(session: Session): SessionMeta {
     // load/creation) must never shadow the live length. Meta-only sessions
     // (empty `messages`) keep the server/header count.
     messageCount: Math.max(messageCount ?? 0, messages.length),
+    toolCallCount: messages.length > 0 ? countToolCalls(messages) : toolCallCount,
+    commitCount: messages.length > 0 ? countGitCommits(messages) : commitCount,
     isAsyncOperationOngoing: isAsyncOperationOngoing ?? isRegeneratingTitle,
     isRegeneratingTitle,
   } as SessionMeta

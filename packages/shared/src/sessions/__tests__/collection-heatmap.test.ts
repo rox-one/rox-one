@@ -10,6 +10,7 @@ import {
   sessionsOnDay,
   sessionDurationMs,
 } from '../collection-heatmap.ts'
+import { countChildSessionsByParent } from '../collection-metrics.ts'
 
 function meta(partial: Partial<CollectionSessionMeta> & { id: string }): CollectionSessionMeta {
   return { lastMessageAt: 0, createdAt: 0, ...partial }
@@ -125,14 +126,53 @@ describe('sessionDurationMs / compareDaySessions', () => {
     expect(sorted.map((s) => s.id)).toEqual(['c', 'a', 'b'])
   })
 
-  it('sorts a day table by createdAt with nulls last on asc', () => {
+  it('sorts a day table by size, tool calls, commits and parallel agents', () => {
     const items = [
-      meta({ id: 'none', createdAt: null }),
-      meta({ id: 'late', createdAt: 200 }),
-      meta({ id: 'early', createdAt: 100 }),
+      meta({ id: 'a', transcriptBytes: 10, toolCallCount: 1, commitCount: 0, parallelAgentCount: 3 }),
+      meta({ id: 'b', transcriptBytes: 90, toolCallCount: 8, commitCount: 2, parallelAgentCount: 0 }),
+      meta({ id: 'c', transcriptBytes: null, toolCallCount: null, commitCount: 1, parallelAgentCount: 1 }),
     ]
-    const sorted = [...items].sort((x, y) => compareDaySessions(x, y, 'createdAt', 'asc'))
-    expect(sorted.map((s) => s.id)).toEqual(['early', 'late', 'none'])
+    expect([...items].sort((x, y) => compareDaySessions(x, y, 'size', 'desc')).map((s) => s.id)).toEqual([
+      'c',
+      'b',
+      'a',
+    ])
+    expect([...items].sort((x, y) => compareDaySessions(x, y, 'toolCalls', 'desc')).map((s) => s.id)).toEqual([
+      'c',
+      'b',
+      'a',
+    ])
+    expect([...items].sort((x, y) => compareDaySessions(x, y, 'commits', 'desc')).map((s) => s.id)).toEqual([
+      'b',
+      'c',
+      'a',
+    ])
+    expect([...items].sort((x, y) => compareDaySessions(x, y, 'parallelAgents', 'desc')).map((s) => s.id)).toEqual([
+      'a',
+      'c',
+      'b',
+    ])
+  })
+
+  it('counts heatmap parallel agents from parentSessionId before sorting', () => {
+    const items = [
+      meta({ id: 'p1' }),
+      meta({ id: 'p2' }),
+      meta({ id: 'c1', parentSessionId: 'p1' }),
+      meta({ id: 'c2', parentSessionId: 'p1' }),
+      meta({ id: 'c3', parentSessionId: 'p2' }),
+    ]
+    const counts = countChildSessionsByParent(items)
+    const withCounts = items.map((item) => ({
+      ...item,
+      parallelAgentCount: counts.get(item.id) ?? 0,
+    }))
+    expect(counts.get('p1')).toBe(2)
+    expect(counts.get('p2')).toBe(1)
+    expect([...withCounts].sort((x, y) => compareDaySessions(x, y, 'parallelAgents', 'desc')).map((s) => s.id).slice(0, 2)).toEqual([
+      'p1',
+      'p2',
+    ])
   })
 })
 

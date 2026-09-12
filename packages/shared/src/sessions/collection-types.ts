@@ -43,6 +43,10 @@ export type CollectionProperty =
   | 'messages'
   | 'tokens'
   | 'duration'
+  | 'size'
+  | 'toolCalls'
+  | 'commits'
+  | 'parallelAgents'
 
 export type CollectionOrderDir = 'asc' | 'desc'
 
@@ -151,4 +155,8 @@ export const COLLECTION_PROPERTY_VALUES: readonly CollectionProperty[] = [
   'messages',
   'tokens',
   'duration',
+  'size',
+  'toolCalls',
+  'commits',
+  'parallelAgents',
 ] as const

@@ -16,6 +16,7 @@ import { toPortablePath, expandPath, normalizePath } from '../utils/paths.ts';
 import { debug } from '../utils/debug.ts';
 import { safeJsonParse } from '../utils/files.ts';
 import { pickSessionFields } from './utils.ts';
+import { countGitCommits, countToolCalls } from './collection-metrics.ts';
 import { notifySessionJournalShadow } from './journal-shadow.ts';
 import { replaceFileAtomically, replaceFileAtomicallySync } from './atomic-replace.ts';
 
@@ -184,6 +185,8 @@ export function createSessionHeader(session: StoredSession): SessionHeader {
     lastUsedAt: Date.now(),
     // Pre-computed fields
     messageCount: session.messages.length,
+    toolCallCount: countToolCalls(session.messages),
+    commitCount: countGitCommits(session.messages),
     lastMessageRole: extractLastMessageRole(session.messages),
     preview: extractPreview(session.messages),
     tokenUsage: session.tokenUsage,

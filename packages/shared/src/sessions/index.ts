@@ -227,3 +227,10 @@ export {
   saveCollectionFiltersMap,
 } from './collection-filters-storage.ts'
 
+export {
+  countChildSessionsByParent,
+  countGitCommits,
+  countToolCalls,
+  formatTranscriptSize,
+} from './collection-metrics.ts'
+
