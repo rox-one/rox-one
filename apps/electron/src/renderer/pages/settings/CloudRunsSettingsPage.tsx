@@ -95,6 +95,11 @@ function SettingText({ label, description }: { label: string; description: strin
   )
 }
 
+function translateCloudRunsError(message: string, t: (key: string) => string): string {
+  if (message.startsWith('security.assurance.')) return t(message)
+  return message
+}
+
 export default function CloudRunsSettingsPage() {
   const { t } = useTranslation()
   const [config, setConfig] = React.useState<Config | null>(null)
@@ -146,7 +151,7 @@ export default function CloudRunsSettingsPage() {
         }),
       )
       .catch((error) => {
-        const message = error instanceof Error ? error.message : String(error)
+        const message = translateCloudRunsError(error instanceof Error ? error.message : String(error), t)
         setSaveError(message)
         setFailedPatch(nextPatch)
         toast.error(t('cloudRuns.error'), { description: message })
