@@ -1876,6 +1876,7 @@
   "preferences.placeholderLanguage": "مثال: الإنجليزية",
   "premiumMenu.empty": "لا توجد عناصر",
   "premiumMenu.noResults": "لا توجد عناصر مطابقة",
+  "premiumMenu.search": "بحث...",
   "preview.expandPreview": "توسيع المعاينة",
   "preview.failedToRenderPdf": "تعذر عرض PDF",
   "preview.htmlPreview": "معاينة HTML",

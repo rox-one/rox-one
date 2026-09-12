@@ -1878,6 +1878,7 @@
   "preferences.placeholderLanguage": "например, русский",
   "premiumMenu.empty": "Нет элементов",
   "premiumMenu.noResults": "Нет совпадений",
+  "premiumMenu.search": "Поиск...",
   "preview.expandPreview": "Развернуть предпросмотр",
   "preview.failedToRenderPdf": "Не удалось отобразить PDF",
   "preview.htmlPreview": "Предпросмотр HTML",

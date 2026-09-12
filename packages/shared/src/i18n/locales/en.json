@@ -1876,6 +1876,7 @@
   "preferences.placeholderLanguage": "e.g., English",
   "premiumMenu.empty": "No items",
   "premiumMenu.noResults": "No matching items",
+  "premiumMenu.search": "Search...",
   "preview.expandPreview": "Expand Preview",
   "preview.failedToRenderPdf": "Failed to render PDF",
   "preview.htmlPreview": "HTML Preview",
