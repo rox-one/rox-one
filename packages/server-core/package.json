@@ -22,7 +22,8 @@
     "./tasks": "./src/tasks/index.ts",
     "./knowledge": "./src/knowledge/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
-    "./workgraph": "./src/workgraph/index.ts"
+    "./workgraph": "./src/workgraph/index.ts",
+    "./observability": "./src/observability/index.ts"
   },
   "scripts": {},
   "dependencies": {

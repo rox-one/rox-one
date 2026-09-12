@@ -95,6 +95,7 @@ export interface BenchmarkReport {
   stats: Partial<Record<PerfMarkName, PercentileStats>>
   verdicts: BudgetVerdict[]
   ipcTotals: IpcCounts
+  nPlusOne: string[]
   longTasks: number
   reactCommits: number
   payloadSamples: number

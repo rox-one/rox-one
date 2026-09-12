@@ -29,6 +29,15 @@ export function formatPerfReport(report: BenchmarkReport): string {
     lines.push(`- ${channel}: ${count}`)
   }
 
+  lines.push('', '## Session permission/metadata N+1', '')
+  if (report.nPlusOne.length === 0) {
+    lines.push('No collection-wide permission/metadata N+1 detected.')
+  } else {
+    for (const reason of report.nPlusOne) {
+      lines.push(`- ${reason}`)
+    }
+  }
+
   const failures = gatedFailures(report.verdicts)
   lines.push('', '## CI gates', '')
   if (failures.length === 0) {

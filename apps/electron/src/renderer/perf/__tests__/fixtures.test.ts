@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  createBulkSessionSidecar,
   createLargeVaultFixture,
   createSessionFixture,
   LARGE_VAULT_NOTE_COUNT,
@@ -22,5 +23,13 @@ describe('perf fixtures', () => {
     expect(vault.notes[0]?.path).toBe('vault/notes/note-00000.md')
     expect(createLargeVaultFixture().notes[99]).toEqual(vault.notes[99])
     expect(vault.notes.some((note) => note.outboundLinks.length > 0)).toBe(true)
+  })
+
+  it('builds a bulk permission/metadata sidecar instead of per-session fetches', () => {
+    const fixture = createSessionFixture(500)
+    const sidecar = createBulkSessionSidecar(fixture.sessions)
+    expect(Object.keys(sidecar.permissions)).toHaveLength(500)
+    expect(sidecar.permissions['sess-00000']).toBe(fixture.sessions[0]?.permissionMode)
+    expect(sidecar.metadata['sess-00000']?.projectId).toBe(fixture.sessions[0]?.projectId)
   })
 })
