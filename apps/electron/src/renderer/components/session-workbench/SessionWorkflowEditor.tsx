@@ -55,7 +55,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SessionFanOutSheet, type FanOutChildJob } from './SessionFanOutSheet'
-import { SceneNode } from './SceneNode'
+import { SceneNode, sceneVisualStatus } from './SceneNode'
 import { toFlowElements, type FlowSceneNode, type SceneNodeData } from './to-flow-elements'
 import { holesFromScene } from './holes-from-scene'
 import {
@@ -78,7 +78,6 @@ import {
   type AlignMode,
   type DistributeMode,
 } from './canvas-layout'
-import { sceneVisualStatus } from './SceneNode'
 import { draftGraphToSpec, loadWorkflowDocument, persistWorkflowDocument, specToDraftGraph } from './workflow-document'
 import {
   compareVersions,
@@ -993,7 +992,12 @@ function EditorInner({
               </Button>
               <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('tile')}>
                 {t('entityView.mapTile')}
-              </Button>                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                 onClick={handlePromoteTrace}
               >
                 {t('entityView.mapPromoteTrace')}
