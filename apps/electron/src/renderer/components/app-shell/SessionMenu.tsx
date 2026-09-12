@@ -27,6 +27,8 @@ import {
   AppWindow,
   Columns2,
   CloudUpload,
+  Download,
+  Link2,
   UserPlus,
   RefreshCw,
   Tag,
@@ -165,6 +167,15 @@ export function SessionMenu({
           </SubContent>
         </Sub>
       )}
+
+      <MenuItem onClick={() => void actions.exportSession()}>
+        <Download className="h-3.5 w-3.5" />
+        <span className="flex-1">{t("sessionMenu.export")}</span>
+      </MenuItem>
+      <MenuItem onClick={() => void actions.joinSession()}>
+        <Link2 className="h-3.5 w-3.5" />
+        <span className="flex-1">{t("sessionMenu.join")}</span>
+      </MenuItem>
 
       <MenuItem onClick={actions.inviteBro}>
         <UserPlus className="h-3.5 w-3.5" />

@@ -1030,7 +1030,7 @@ export function FreeFormInput({
     return active
   }, [permissionMode])
 
-  // Handle slash command selection (mode/feature commands)
+  // Handle slash command selection (mode/feature commands). Terminal syntax is secondary.
   const handleSlashCommand = React.useCallback((commandId: SlashCommandId) => {
     if (commandId === 'safe') onPermissionModeChange?.('safe')
     else if (commandId === 'ask') onPermissionModeChange?.('ask')
@@ -1043,8 +1043,55 @@ export function FreeFormInput({
           richInputRef.current?.focus()
         }
       }).catch((err: unknown) => console.error('Undo failed:', err))
+    } else if (commandId === 'share' && sessionId) {
+      window.electronAPI.sessionCommand(sessionId, { type: 'shareToViewer' }).then((result) => {
+        const payload = result as { success?: boolean; url?: string; error?: string } | undefined
+        if (payload?.success && payload.url) {
+          void navigator.clipboard.writeText(payload.url)
+          toast.success(t('toast.linkCopied'), { description: payload.url })
+        } else {
+          toast.error(t('toast.failedToShare'), { description: payload?.error || t('toast.unknownError') })
+        }
+      }).catch((err: unknown) => toast.error(t('toast.failedToShare'), { description: String(err) }))
+    } else if (commandId === 'export' && sessionId) {
+      void (async () => {
+        try {
+          const bundle = await window.electronAPI.exportSession(sessionId)
+          if (!bundle) {
+            toast.error(t('toast.failedToExport'))
+            return
+          }
+          const save = await window.electronAPI.saveTextFile({
+            content: JSON.stringify(bundle, null, 2),
+            defaultPath: `session-${sessionId}.json`,
+            filters: [{ name: 'JSON', extensions: ['json'] }],
+          })
+          if (save?.canceled) return
+          toast.success(t('toast.exportedSession'), { description: save?.filePath })
+        } catch (error) {
+          toast.error(t('toast.failedToExport'), {
+            description: error instanceof Error ? error.message : t('toast.unknownError'),
+          })
+        }
+      })()
+    } else if (commandId === 'join') {
+      void (async () => {
+        let candidate = ''
+        try {
+          candidate = (await navigator.clipboard.readText()).trim()
+        } catch {
+          candidate = ''
+        }
+        if (/^https?:\/\//i.test(candidate)) {
+          window.electronAPI.openUrl(candidate)
+          return
+        }
+        toast.info(t('toast.joinNeedsLink'))
+      })()
+    } else if (commandId === 'vibe') {
+      toast.info(t('toast.vibeHint'))
     }
-  }, [onPermissionModeChange, isProcessing, onSubmit, sessionId, setInput, richInputRef])
+  }, [onPermissionModeChange, isProcessing, onSubmit, sessionId, setInput, richInputRef, t])
 
   // Handle folder selection from slash command menu
   const handleSlashFolderSelect = React.useCallback((path: string) => {

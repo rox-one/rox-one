@@ -37,10 +37,12 @@ import {
   CloudUpload,
   Columns2,
   Copy,
+  Download,
   Flag,
   FlagOff,
   FolderOpen,
   Globe,
+  Link2,
   Link2Off,
   MailOpen,
   MessageSquare,
@@ -324,6 +326,8 @@ export function CompactSessionMenu({
               hasKnowledgeConnection={hasKnowledgeConnection}
               onPublish={closeAfter(() => setPublishDialog({ open: true, sessionId: item.id }))}
               onShare={closeAfter(actions.share)}
+              onExport={closeAfter(actions.exportSession)}
+              onJoin={closeAfter(actions.joinSession)}
               onInviteBro={closeAfter(actions.inviteBro)}
               onOpenShareSub={() => setView('share')}
               onSendToWorkspace={closeAfter(onSendToWorkspace)}
@@ -400,6 +404,8 @@ interface RootPaneProps {
   hasKnowledgeConnection?: boolean
   onPublish?: () => void
   onShare?: () => void
+  onExport?: () => void
+  onJoin?: () => void
   onInviteBro?: () => void
   onOpenShareSub: () => void
   onSendToWorkspace?: () => void
@@ -434,6 +440,8 @@ function RootPane({
   hasKnowledgeConnection,
   onPublish,
   onShare,
+  onExport,
+  onJoin,
   onInviteBro,
   onOpenShareSub,
   onSendToWorkspace,
@@ -477,6 +485,8 @@ function RootPane({
         />
       )}
 
+      <Row icon={<Download className="h-4 w-4" />} label={t('sessionMenu.export')} onTap={onExport} />
+      <Row icon={<Link2 className="h-4 w-4" />} label={t('sessionMenu.join')} onTap={onJoin} />
       <Row icon={<UserPlus className="h-4 w-4" />} label={t('sessionMenu.inviteBro')} onTap={onInviteBro} />
 
       {hasTransferTargets && onSendToWorkspace && (
