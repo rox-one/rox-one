@@ -68,6 +68,6 @@ describe('security settings locale keys', () => {
     const russian = JSON.parse(readFileSync(join(localesDirectory, 'ru.json'), 'utf8')) as Record<string, string>
 
     expect(russian['settings.security.title']).toBe('Безопасность')
-    expect(russian['settings.security.description']).toBe('Срез рисков, прав и изоляции Craft и OpenClaw')
+    expect(russian['settings.security.description']).toBe('Срез рисков, прав и изоляции Rox и OpenClaw')
   })
 })

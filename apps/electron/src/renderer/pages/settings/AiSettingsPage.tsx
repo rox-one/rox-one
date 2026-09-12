@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import type { LlmConnectionWithStatus, ThinkingLevel, WorkspaceSettings, Workspace, ToolchainToolStatus } from '../../../shared/types'
 import { useToolchainStatus } from '@/hooks/useToolchainStatus'
 import { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@craft-agent/shared/agent/thinking-levels'
+import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import {
   DropdownMenu,
@@ -291,7 +292,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
           ? 'Manifest'
           : 'Rox Backend Compatible')
         break
-      case 'omp': parts.push('OMP'); break
+      case 'omp': parts.push(ROX_VISIBLE_TERMS.product); break
       default: parts.push(provider || 'Unknown')
     }
 
@@ -1173,7 +1174,7 @@ export default function AiSettingsPage() {
                       description: conn.providerType === 'anthropic' ? 'Anthropic API' :
                                    conn.providerType === 'anthropic_compat' ? 'Anthropic-Compatible' :
                                    conn.providerType === 'pi' ? 'Rox Backend' :
-                                   conn.providerType === 'omp' ? 'OMP' :
+                                   conn.providerType === 'omp' ? ROX_VISIBLE_TERMS.product :
                                    conn.providerType === 'pi_compat' ? (conn.baseUrl?.toLowerCase().includes('manifest.build') ? 'Manifest' : 'Rox Backend Compatible') :
                                    conn.providerType || 'Unknown',
                     }))}

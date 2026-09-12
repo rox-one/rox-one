@@ -17,7 +17,6 @@ import mistralIcon from '@/assets/provider-icons/mistral.svg'
 import ollamaIcon from '@/assets/provider-icons/ollama.svg'
 import openaiIcon from '@/assets/provider-icons/openai.svg'
 import openrouterIcon from '@/assets/provider-icons/openrouter.svg'
-import piIcon from '@/assets/provider-icons/pi.svg'
 import roxIcon from '@/assets/provider-icons/rox.svg'
 import vercelIcon from '@/assets/provider-icons/vercel.svg'
 
@@ -40,7 +39,6 @@ export const providerIcons = {
   openai: openaiIcon,
   openrouter: openrouterIcon,
   omp: roxIcon,
-  pi: piIcon,
   rox: roxIcon,
   vercel: vercelIcon,
 } as const
