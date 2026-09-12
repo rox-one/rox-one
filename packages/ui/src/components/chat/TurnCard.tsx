@@ -38,6 +38,15 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '../tooltip'
 import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
 import { getDiffStats, getUnifiedDiffStats } from '../code-viewer'
 import { TurnCardActionsMenu } from './TurnCardActionsMenu'
+import { MessageHoverDock } from './MessageHoverDock'
+import {
+  aggregateReactions,
+  createReactionAnnotation,
+  DEFAULT_REACTION_EMOJI,
+  findOwnReaction,
+  LOCAL_REACTION_ACTOR,
+  quoteMessageMarkdown,
+} from './message-reactions'
 import { ThinkingCard } from './ThinkingCard'
 import { computeLastChildSet, groupActivitiesByParent, isActivityGroup, formatDuration, formatTokens, deriveTurnPhase, shouldShowThinkingIndicator, type ActivityGroup, type AssistantTurn } from './turn-utils'
 import { extractAnnotationSelectedText } from './follow-up-helpers'
@@ -359,6 +368,9 @@ export interface TurnCardProps {
   compactMode?: boolean
   /** Callback to branch the session from a specific message */
   onBranch?: (messageId: string, options?: { newPanel?: boolean }) => void
+  onQuote?: (text: string) => void
+  onShareMessage?: (text: string) => void
+  onLearnFromMessage?: (text: string) => void
   /** Callback to add an annotation to a response message */
   onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
   /** Callback to remove a persisted annotation from a response message */
@@ -1460,6 +1472,9 @@ export interface ResponseCardProps {
   compactMode?: boolean
   /** Callback to branch the session from this response */
   onBranch?: (options?: { newPanel?: boolean }) => void
+  onQuote?: (text: string) => void
+  onShareMessage?: (text: string) => void
+  onLearnFromMessage?: (text: string) => void
   /** Callback to add annotation from selected text */
   onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
   /** Callback to remove persisted annotation */
@@ -1708,6 +1723,9 @@ export function ResponseCard({
   showAcceptPlan = true,
   compactMode = false,
   onBranch,
+  onQuote,
+  onShareMessage,
+  onLearnFromMessage,
   onAddAnnotation,
   onRemoveAnnotation,
   onUpdateAnnotation,
@@ -1723,6 +1741,7 @@ export function ResponseCard({
   const lastUpdateRef = useRef(Date.now())
   // Copy to clipboard state
   const [copied, setCopied] = useState(false)
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false)
   // Dark mode detection - scroll fade only shown in dark mode
@@ -1825,6 +1844,28 @@ export function ResponseCard({
       console.error('Failed to copy:', err)
     }
   }, [text])
+
+  const reactionCounts = useMemo(() => aggregateReactions(annotations, LOCAL_REACTION_ACTOR.id), [annotations])
+  const handleToggleEmoji = useCallback(
+    (emoji: string) => {
+      if (!messageId || !onAddAnnotation) return
+      const existing = findOwnReaction(annotations, emoji, LOCAL_REACTION_ACTOR.id)
+      if (existing && onRemoveAnnotation) {
+        onRemoveAnnotation(messageId, existing.id)
+        return
+      }
+      onAddAnnotation(
+        messageId,
+        createReactionAnnotation({
+          messageId,
+          sessionId: sessionId ?? '',
+          emoji,
+          actor: LOCAL_REACTION_ACTOR,
+        }),
+      )
+    },
+    [annotations, messageId, onAddAnnotation, onRemoveAnnotation, sessionId],
+  )
 
   const renderedAnnotations = useMemo(() => {
     const persisted = annotations ?? []
@@ -2490,10 +2531,25 @@ export function ResponseCard({
   // Completed response or plan - show with max height and footer
   if (isCompleted || variant === 'plan') {
     const isPlan = variant === 'plan'
+    const hoverDock = (
+      <MessageHoverDock
+        reactionCounts={reactionCounts}
+        pickerOpen={reactionPickerOpen}
+        onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
+        onToggleEmoji={handleToggleEmoji}
+        onTogglePicker={() => setReactionPickerOpen((open) => !open)}
+        onCopy={handleCopy}
+        onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(text)) : undefined}
+        onShare={onShareMessage ? () => onShareMessage(text) : undefined}
+        onLearn={onLearnFromMessage ? () => onLearnFromMessage(text) : undefined}
+        onHighlight={canAnnotate ? () => contentLayerRef.current?.focus() : undefined}
+        className="opacity-100 group-focus-within:opacity-100"
+      />
+    )
 
     return (
       <>
-        <div className="bg-background shadow-minimal rounded-[8px] overflow-hidden relative group">
+        <div className="bg-background shadow-minimal rounded-[8px] overflow-hidden relative group group-focus-within:opacity-100" tabIndex={-1}>
           {/* Fullscreen button - desktop only; compact mode keeps message chrome minimal */}
           {!compactMode && (
           <button
@@ -2540,7 +2596,7 @@ export function ResponseCard({
               }),
             }}
           >
-            <div ref={contentLayerRef} className="relative">
+            <div ref={contentLayerRef} className="relative" tabIndex={-1}>
               <Markdown
                 mode="minimal"
                 onUrlClick={onOpenUrl}
@@ -2560,27 +2616,8 @@ export function ResponseCard({
               SIZE_CONFIG.fontSize
             )}>
               {/* Left side - Copy, View as Markdown, Annotation hint */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleCopy}
-                  className={cn(
-                    "turn-action-btn flex items-center gap-1.5 transition-colors select-none",
-                    copied ? "text-success" : "text-muted-foreground hover:text-foreground",
-                    "focus:outline-none focus-visible:underline"
-                  )}
-                >
-                  {copied ? (
-                    <>
-                      <Check className={SIZE_CONFIG.iconSize} />
-                      <span>{t("common.copied")}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className={SIZE_CONFIG.iconSize} />
-                      <span>{t("common.copy")}</span>
-                    </>
-                  )}
-                </button>
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+                {hoverDock}
                 {onPopOut && (
                   <button
                     onClick={onPopOut}
@@ -2621,23 +2658,24 @@ export function ResponseCard({
             </div>
           )}
 
-          {/* Compact footer — Accept Plan only (mobile / auto-compact / popover).
-              Uses a bottom-sheet drawer to match the CompactPermissionModeSelector
-              / CompactModelSelector pattern. Guarded by isLastResponse so older
-              plans don't render an empty strip with a hidden-but-focusable button. */}
-          {compactMode && isPlan && showAcceptPlan && isLastResponse && onAccept && onAcceptWithCompact && (
+          {/* Compact footer keeps the keyboard/touch dock (never hover-only).
+              Accept Plan stays in a bottom-sheet drawer and is last-response only. */}
+          {compactMode && (
             <div
               className={cn(
-                "pl-3 pr-2 py-1.5 border-t border-border/30 flex items-center justify-end bg-muted/20",
+                "pl-3 pr-2 py-1.5 border-t border-border/30 flex items-center justify-between gap-2 bg-muted/20",
                 SIZE_CONFIG.fontSize
               )}
             >
-              <CompactAcceptPlanDrawer
-                onAccept={onAccept}
-                onAcceptWithCompact={onAcceptWithCompact}
-                acceptLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.acceptPlan')}
-                acceptOptionLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.accept')}
-              />
+              {hoverDock}
+              {isPlan && showAcceptPlan && isLastResponse && onAccept && onAcceptWithCompact && (
+                <CompactAcceptPlanDrawer
+                  onAccept={onAccept}
+                  onAcceptWithCompact={onAcceptWithCompact}
+                  acceptLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.acceptPlan')}
+                  acceptOptionLabel={hasActiveFollowUpAnnotations ? t('plan.acceptAndSendFollowups') : t('plan.accept')}
+                />
+              )}
             </div>
           )}
         </div>
@@ -2686,7 +2724,7 @@ export function ResponseCard({
             }),
           }}
         >
-          <div ref={contentLayerRef} className="relative">
+          <div ref={contentLayerRef} className="relative" tabIndex={-1}>
             <Markdown
               mode="minimal"
               onUrlClick={onOpenUrl}
@@ -2838,6 +2876,9 @@ export const TurnCard = React.memo(function TurnCard({
   animateResponse = false,
   compactMode = false,
   onBranch,
+  onQuote,
+  onShareMessage,
+  onLearnFromMessage,
   onAddAnnotation,
   onRemoveAnnotation,
   onUpdateAnnotation,
@@ -3212,6 +3253,9 @@ export const TurnCard = React.memo(function TurnCard({
             compactMode={compactMode}
             onBranch={onBranch ? (options?: { newPanel?: boolean }) => onBranch(planActivity.messageId ?? planActivity.id, options) : undefined}
             sendMessageKey={sendMessageKey}
+            onQuote={onQuote}
+            onShareMessage={onShareMessage}
+            onLearnFromMessage={onLearnFromMessage}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
             openAnnotationRequest={openAnnotationRequest}
             annotationInteractionMode={annotationInteractionMode}
@@ -3258,6 +3302,9 @@ export const TurnCard = React.memo(function TurnCard({
                 compactMode={compactMode}
                 onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
                 sendMessageKey={sendMessageKey}
+                onQuote={onQuote}
+                onShareMessage={onShareMessage}
+                onLearnFromMessage={onLearnFromMessage}
                 hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
                 openAnnotationRequest={openAnnotationRequest}
                 annotationInteractionMode={annotationInteractionMode}
@@ -3290,6 +3337,9 @@ export const TurnCard = React.memo(function TurnCard({
             compactMode={compactMode}
             onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
             sendMessageKey={sendMessageKey}
+            onQuote={onQuote}
+            onShareMessage={onShareMessage}
+            onLearnFromMessage={onLearnFromMessage}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
             openAnnotationRequest={openAnnotationRequest}
             annotationInteractionMode={annotationInteractionMode}

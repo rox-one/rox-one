@@ -43,6 +43,7 @@ import {
 import { useFocusZone } from "@/hooks/keyboard"
 import { useTheme } from "@/hooks/useTheme"
 import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSource, LoadedSkill } from "../../../shared/types"
+import type { AnnotationV1 } from "@craft-agent/core"
 import type { PermissionMode } from "@craft-agent/shared/agent/modes"
 import type { ThinkingLevel } from "@craft-agent/shared/agent/thinking-levels"
 import {
@@ -1349,6 +1350,65 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }, 0)
   }, [session, isInputDisabled, disableSend, connectionUnavailable])
 
+  const persistAnnotation = useCallback(async (messageId: string, annotation: AnnotationV1) => {
+    if (!session) return
+    try {
+      await window.electronAPI.sessionCommand(session.id, {
+        type: 'addAnnotation',
+        messageId,
+        annotation,
+      })
+    } catch (error) {
+      toast.error(t('toast.couldNotSaveHighlight'), {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      })
+      throw error
+    }
+  }, [session, t])
+
+  const removeAnnotation = useCallback(async (messageId: string, annotationId: string) => {
+    if (!session) return
+    try {
+      await window.electronAPI.sessionCommand(session.id, {
+        type: 'removeAnnotation',
+        messageId,
+        annotationId,
+      })
+    } catch (error) {
+      toast.error(t('toast.couldNotRemoveHighlight'), {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      })
+    }
+  }, [session, t])
+
+  const handleQuoteMessage = useCallback((text: string) => {
+    const next = inputValue?.trim() ? `${inputValue.trim()}\n\n${text}` : text
+    onInputChange?.(next)
+  }, [inputValue, onInputChange])
+
+  const handleShareMessage = useCallback(async (text: string) => {
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ text })
+        return
+      }
+      await navigator.clipboard.writeText(text)
+      toast.success(t('chat.shareCopied'))
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
+      try {
+        await navigator.clipboard.writeText(text)
+        toast.success(t('chat.shareCopied'))
+      } catch {
+        toast.error(t('chat.shareMessage'))
+      }
+    }
+  }, [t])
+
+  const handleLearnFromMessage = useCallback((text: string) => {
+    onInputChange?.(t('chat.learnFromMessageDraft', { text }))
+  }, [onInputChange, t])
+
   // Handle stop request from InputContainer
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
   const handleStop = (silent = false) => {
@@ -1749,6 +1809,11 @@ const handleFollowUpChipClick = useCallback((item: {
                             onOpenUrl={onOpenUrl}
                             sessionId={session?.id}
                             compactMode={compactMode}
+                            onAddAnnotation={persistAnnotation}
+                            onRemoveAnnotation={removeAnnotation}
+                            onQuote={handleQuoteMessage}
+                            onShareMessage={(text) => { void handleShareMessage(text) }}
+                            onLearnFromMessage={handleLearnFromMessage}
                           />
                         </div>
                       )
@@ -1853,6 +1918,9 @@ const handleFollowUpChipClick = useCallback((item: {
                         compactMode={compactMode}
                         sendMessageKey={sendMessageKey}
                         openAnnotationRequest={openAnnotationRequest}
+                        onQuote={handleQuoteMessage}
+                        onShareMessage={(text) => { void handleShareMessage(text) }}
+                        onLearnFromMessage={handleLearnFromMessage}
                         onBranch={session?.supportsBranching ? async (messageId: string, options?: { newPanel?: boolean }) => {
                           if (!session) return
                           try {
@@ -1880,35 +1948,8 @@ const handleFollowUpChipClick = useCallback((item: {
                             toast.error(t('toast.couldNotCreateBranch'), { description: message })
                           }
                         } : undefined}
-                        onAddAnnotation={async (messageId, annotation) => {
-                          if (!session) return
-                          try {
-                            await window.electronAPI.sessionCommand(session.id, {
-                              type: 'addAnnotation',
-                              messageId,
-                              annotation,
-                            })
-                          } catch (error) {
-                            toast.error(t('toast.couldNotSaveHighlight'), {
-                              description: error instanceof Error ? error.message : 'Unknown error',
-                            })
-                            throw error
-                          }
-                        }}
-                        onRemoveAnnotation={async (messageId, annotationId) => {
-                          if (!session) return
-                          try {
-                            await window.electronAPI.sessionCommand(session.id, {
-                              type: 'removeAnnotation',
-                              messageId,
-                              annotationId,
-                            })
-                          } catch (error) {
-                            toast.error(t('toast.couldNotRemoveHighlight'), {
-                              description: error instanceof Error ? error.message : 'Unknown error',
-                            })
-                          }
-                        }}
+                        onAddAnnotation={persistAnnotation}
+                        onRemoveAnnotation={removeAnnotation}
                         onUpdateAnnotation={async (messageId, annotationId, patch) => {
                           if (!session) return
                           try {
@@ -2279,6 +2320,11 @@ interface MessageBubbleProps {
   compactMode?: boolean
   /** Callback to resend the user message that preceded an error */
   onRetry?: () => void
+  onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void | Promise<void>
+  onRemoveAnnotation?: (messageId: string, annotationId: string) => void | Promise<void>
+  onQuote?: (text: string) => void
+  onShareMessage?: (text: string) => void
+  onLearnFromMessage?: (text: string) => void
 }
 
 /**
@@ -2366,6 +2412,11 @@ function MessageBubble({
   onPopOut,
   compactMode,
   onRetry,
+  onAddAnnotation,
+  onRemoveAnnotation,
+  onQuote,
+  onShareMessage,
+  onLearnFromMessage,
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
@@ -2382,6 +2433,14 @@ function MessageBubble({
         onUrlClick={onOpenUrl}
         onFileClick={onOpenFile}
         compactMode={compactMode}
+        messageId={message.id}
+        sessionId={sessionId}
+        annotations={message.annotations}
+        onAddAnnotation={onAddAnnotation}
+        onRemoveAnnotation={onRemoveAnnotation}
+        onQuote={onQuote}
+        onShareMessage={onShareMessage}
+        onLearnFromMessage={onLearnFromMessage}
       />
     )
   }
@@ -2535,6 +2594,10 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.message.content === next.message.content &&
     prev.message.role === next.message.role &&
     prev.sessionId === next.sessionId &&
-    prev.compactMode === next.compactMode
+    prev.compactMode === next.compactMode &&
+    prev.message.annotations === next.message.annotations &&
+    prev.onQuote === next.onQuote &&
+    prev.onShareMessage === next.onShareMessage &&
+    prev.onLearnFromMessage === next.onLearnFromMessage
   )
 })
