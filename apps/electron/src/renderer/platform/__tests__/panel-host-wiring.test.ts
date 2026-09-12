@@ -58,10 +58,10 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
     expect(host).toContain('notesRegistration?.dispose()')
   })
 
-  it('keeps featureUnifiedShellAtom defaulted to false', () => {
+  it('keeps featureUnifiedShellAtom defaulted to true', () => {
     const src = readFileSync(atomPath, 'utf8')
     expect(src).toMatch(
-      /atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.featureUnifiedShell\),\s*false/,
+      /atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.featureUnifiedShell\),\s*true/,
     )
   })
 
