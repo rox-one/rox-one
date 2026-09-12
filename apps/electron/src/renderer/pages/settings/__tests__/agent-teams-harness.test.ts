@@ -37,6 +37,7 @@ describe('Agent Teams first-party wiring', () => {
     expect(skill).toContain('name: agent-teams')
     expect(skill).toContain('spawn_session')
     expect(skill).toContain('send_agent_message')
+    expect(skill).toContain('agent_teams')
     expect(skill).toContain('@nanmicoder/dsh-agent-teams')
     expect(lock).toContain('"agent-teams"')
     expect(shell).toContain("'session.agentTeams'")
@@ -60,7 +61,13 @@ describe('Agent Teams first-party wiring', () => {
     const skillText = skill
     expect(storeSrc).toContain("AGENT_TEAMS_STATE_DIR = '.agent-teams'")
     expect(storeSrc).toContain('export class AgentTeamsStore')
+    const toolDefs = readFileSync(
+      join(repoRoot, 'packages/session-tools-core/src/tool-defs.ts'),
+      'utf8',
+    )
     expect(storeSrc).toContain('appendMailbox')
+    expect(toolDefs).toContain("name: 'agent_teams'")
+    expect(toolDefs).not.toContain("defaultValue: true")
     expect(storeSrc).not.toContain("defaultValue: true")
     expect(skillText).toContain('.agent-teams/')
     expect(skillText).toContain('AgentTeamsStore')

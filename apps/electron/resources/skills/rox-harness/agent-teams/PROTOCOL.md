@@ -1,6 +1,6 @@
 # Agent Teams protocol (Rox)
 
-Staged plan → user approve → `spawn_session` members → durable `.agent-teams/<teamId>/team.json` roster → dependency tasks → `send_agent_message` + `inbox/*.jsonl` → captain summary → `archiveTeam`.
+Staged plan → user approve → `spawn_session` members → durable `.agent-teams/<teamId>/team.json` roster via `agent_teams` → dependency tasks → `send_agent_message` + `inbox/*.jsonl` → captain summary → `agent_teams` `archive`.
 
 ## State root
 

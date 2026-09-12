@@ -51,6 +51,7 @@ import {
 } from './handlers/pages.ts';
 import { handleArchiveSession } from './handlers/archive-session.ts';
 import { handleSendAgentMessage } from './handlers/send-agent-message.ts';
+import { handleAgentTeams } from './handlers/agent-teams.ts';
 import { handleListMessagingChannels, handleUnbindMessagingChannel } from './handlers/messaging.ts';
 import { handleKnowledgeSearch } from './handlers/knowledge-search.ts';
 import { handleKnowledgeRead } from './handlers/knowledge-read.ts';
@@ -311,6 +312,39 @@ export const SendAgentMessageSchema = z.object({
     path: z.string().describe('Absolute file path on disk'),
     name: z.string().optional().describe('Display name (defaults to file basename)'),
   })).optional().describe('Files to include with the message'),
+});
+
+export const AgentTeamsSchema = z.object({
+  action: z.enum([
+    'create',
+    'list',
+    'status',
+    'resume',
+    'add_member',
+    'set_member_session',
+    'upsert_task',
+    'append_mailbox',
+    'read_mailbox',
+    'archive',
+  ]).describe('Durable Agent Teams store action (workspace .agent-teams/, not Cordis)'),
+  teamId: z.string().optional().describe('Team id (sanitized name). Required except create/list/resume/status'),
+  name: z.string().optional().describe('Team name for create'),
+  description: z.string().optional().describe('Team description for create'),
+  phase: z.enum(['staged', 'running']).optional().describe('create phase (default staged)'),
+  memberName: z.string().optional().describe('Member display name'),
+  role: z.string().optional().describe('Member role'),
+  memberSessionId: z.string().optional().describe('spawn_session id to bind on a member'),
+  taskId: z.string().optional().describe('Existing task id for upsert (omit to create)'),
+  subject: z.string().optional().describe('Task subject'),
+  taskDescription: z.string().optional().describe('Task description'),
+  status: z.enum(['pending', 'claimed', 'in_progress', 'completed', 'failed', 'cancelled']).optional(),
+  assignee: z.string().optional().describe('Member name or captain'),
+  dependencies: z.array(z.string()).optional().describe('Task ids that must be completed first'),
+  output: z.string().optional().describe('Task output / pointer'),
+  from: z.string().optional().describe('Mailbox sender key'),
+  to: z.string().optional().describe('Mailbox recipient key'),
+  content: z.string().optional().describe('Mailbox message body'),
+  agentKey: z.string().optional().describe('Mailbox file key (captain or member name)'),
 });
 
 export const ListMessagingChannelsSchema = z.object({
@@ -677,6 +711,13 @@ Use list_sessions to find session IDs, or use the sessionId returned by spawn_se
 
 The target session receives your message with a sender envelope containing your session ID, so it can use send_agent_message to reply.`,
 
+  agent_teams: `Durable first-party Agent Teams store under the project \`.agent-teams/\` directory.
+
+Use with spawn_session + send_agent_message. This is NOT the Cordis plugin @nanmicoder/dsh-agent-teams (H6 skip-list). The Appearance flag workbench.harness.agentTeams stays default false — do not flip it.
+
+Actions: create, list, status, resume, add_member, set_member_session, upsert_task, append_mailbox, read_mailbox, archive.
+Resume restores roster + mailbox pointers for this session as captain or member. Refuse to write under $HOME.`,
+
   list_messaging_channels: `List messaging channels (Telegram, WhatsApp) bound to a session.
 Shows which external chat apps are connected and can send/receive messages.`,
 
@@ -810,6 +851,7 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'list_background_tasks', description: TOOL_DESCRIPTIONS.list_background_tasks, inputSchema: ListBackgroundTasksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListBackgroundTasks },
   // Inter-session messaging
   { name: 'send_agent_message', description: TOOL_DESCRIPTIONS.send_agent_message, inputSchema: SendAgentMessageSchema, executionMode: 'registry', safeMode: 'block', handler: handleSendAgentMessage },
+  { name: 'agent_teams', description: TOOL_DESCRIPTIONS.agent_teams, inputSchema: AgentTeamsSchema, executionMode: 'registry', safeMode: 'block', handler: handleAgentTeams },
   // Messaging gateway tools
   { name: 'list_messaging_channels', description: TOOL_DESCRIPTIONS.list_messaging_channels, inputSchema: ListMessagingChannelsSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListMessagingChannels },
   { name: 'unbind_messaging_channel', description: TOOL_DESCRIPTIONS.unbind_messaging_channel, inputSchema: UnbindMessagingChannelSchema, executionMode: 'registry', safeMode: 'block', handler: handleUnbindMessagingChannel },
