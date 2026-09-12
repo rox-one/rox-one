@@ -1724,6 +1724,14 @@ export interface ElectronAPI {
   getCollectionDisplay(workspaceId: string): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   setCollectionDisplay(workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   onCollectionDisplayChanged(callback: (workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay) => void): () => void
+  getCollectionFilters(workspaceId: string): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+  setCollectionFilters(
+    workspaceId: string,
+    filters: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>,
+  ): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+  onCollectionFiltersChanged(
+    callback: (workspaceId: string, filters: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>) => void,
+  ): () => void
 
   // Automations
   getAutomations(workspaceId: string): Promise<unknown>
