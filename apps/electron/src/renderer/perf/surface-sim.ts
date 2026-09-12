@@ -1,3 +1,4 @@
+import { buildYearHeatmap } from '@craft-agent/shared/sessions/collection'
 import { IpcCallCounter } from './ipc-counter'
 import { nowMs } from './stats'
 import type { PerfMarkName, SessionIndexEntry, VaultNoteEntry } from './types'
@@ -42,12 +43,18 @@ export function simulateViewSwitch(
     }
     void columns.size
   } else if (view === 'heatmap') {
-    const days = new Map<string, number>()
-    for (const session of sessions) {
-      const day = new Date(session.lastMessageAt).toISOString().slice(0, 10)
-      days.set(day, (days.get(day) ?? 0) + 1)
-    }
-    void days.size
+    const now = sessions[0]?.lastMessageAt ?? Date.now()
+    const year = new Date(now).getFullYear()
+    const grid = buildYearHeatmap(
+      sessions.map((session) => ({
+        id: session.id,
+        lastMessageAt: session.lastMessageAt,
+        createdAt: session.createdAt,
+      })),
+      year,
+      now,
+    )
+    void grid.weeks.length
   } else {
     void sessions.length
   }

@@ -107,4 +107,32 @@ describe('sessionDurationMs / compareDaySessions', () => {
     const sorted = [...items].sort((x, y) => compareDaySessions(x, y, 'messages', 'desc'))
     expect(sorted.map((s) => s.id)).toEqual(['c', 'a', 'b'])
   })
+
+  it('sorts a day table by createdAt with nulls last on asc', () => {
+    const items = [
+      meta({ id: 'none', createdAt: null }),
+      meta({ id: 'late', createdAt: 200 }),
+      meta({ id: 'early', createdAt: 100 }),
+    ]
+    const sorted = [...items].sort((x, y) => compareDaySessions(x, y, 'createdAt', 'asc'))
+    expect(sorted.map((s) => s.id)).toEqual(['early', 'late', 'none'])
+  })
+})
+
+describe('2000-session heatmap', () => {
+  it('buckets 2000 sessions onto a year grid in local days', () => {
+    const now = new Date(2026, 8, 12, 15, 0, 0).getTime()
+    const sessions = Array.from({ length: 2000 }, (_, i) => {
+      const day = new Date(2026, 0, 1 + (i % 365), 12, 0, 0).getTime()
+      return meta({ id: `s${i}`, lastMessageAt: day, createdAt: day - 60_000, messageCount: i % 10 })
+    })
+    const started = performance.now()
+    const grid = buildYearHeatmap(sessions, 2026, now)
+    const elapsed = performance.now() - started
+    const counted = grid.weeks.flat().reduce((sum, cell) => sum + cell.count, 0)
+    expect(grid.todayKey).toBe('2026-09-12')
+    expect(grid.weeks.length).toBeGreaterThanOrEqual(52)
+    expect(counted).toBe(2000)
+    expect(elapsed).toBeLessThan(250)
+  })
 })

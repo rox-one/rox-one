@@ -10,7 +10,7 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export type HeatmapNavDir = 'left' | 'right' | 'up' | 'down'
 export type HeatmapLevel = 0 | 1 | 2 | 3 | 4
-export type HeatmapDayOrderBy = 'name' | 'lastMessageAt' | 'messages' | 'tokens' | 'duration'
+export type HeatmapDayOrderBy = 'name' | 'lastMessageAt' | 'createdAt' | 'messages' | 'tokens' | 'duration'
 
 export interface HeatmapCell {
   /** YYYY-MM-DD when the cell is in the displayed year; otherwise null. */
@@ -214,6 +214,9 @@ export function compareDaySessions(
       break
     case 'lastMessageAt':
       primary = cmpNullable(a.lastMessageAt, b.lastMessageAt, orderDir)
+      break
+    case 'createdAt':
+      primary = cmpNullable(a.createdAt, b.createdAt, orderDir)
       break
     case 'messages':
       primary = cmpNullable(a.messageCount, b.messageCount, orderDir)

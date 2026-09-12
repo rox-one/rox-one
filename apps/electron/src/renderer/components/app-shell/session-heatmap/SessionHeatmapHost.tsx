@@ -46,6 +46,7 @@ const DAY_COLUMNS: Array<{ id: HeatmapDayOrderBy; labelKey: string }> = [
   { id: 'messages', labelKey: 'collection.table.column.messages' },
   { id: 'tokens', labelKey: 'collection.table.column.tokens' },
   { id: 'duration', labelKey: 'collection.table.column.duration' },
+  { id: 'createdAt', labelKey: 'collection.table.column.created' },
   { id: 'lastMessageAt', labelKey: 'collection.table.column.updated' },
 ]
 
@@ -89,6 +90,11 @@ function formatRelative(ts: number | null | undefined): string {
   const h = Math.floor(m / 60)
   if (h < 24) return `${h}h`
   return `${Math.floor(h / 24)}d`
+}
+
+function formatDate(ts: number | null | undefined): string {
+  if (ts == null || !Number.isFinite(ts)) return '—'
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
 function levelClass(level: number): string {
@@ -421,6 +427,9 @@ export function SessionHeatmapHost() {
                     </span>
                     <span className="w-24 shrink-0 text-xs tabular-nums text-muted-foreground">
                       {formatDuration(sessionDurationMs(session))}
+                    </span>
+                    <span className="w-24 shrink-0 text-xs text-muted-foreground">
+                      {formatDate(session.createdAt)}
                     </span>
                     <span className="w-24 shrink-0 text-xs text-muted-foreground">
                       {formatRelative(session.lastMessageAt)}
