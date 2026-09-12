@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, mock, test } from 'bun:test'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { RoxConnectCodes } from '../RoxConnectStep'
+import { EnvironmentFields } from '../EnvironmentFields'
+import { getDefaultEnvironmentPrefs, QUESTION_IDS } from '@craft-agent/shared/environment'
 import type {
   OnboardingState,
   OnboardingWizard as OnboardingWizardComponent,
@@ -96,7 +98,7 @@ describe('OnboardingWizard', () => {
   })
 
   test('renders versioned environment questions', () => {
-    const html = renderToStaticMarkup(
+    const wizard = renderToStaticMarkup(
       <OnboardingWizard
         state={{
           ...roxConnectState,
@@ -109,8 +111,17 @@ describe('OnboardingWizard', () => {
         onFinish={() => {}}
       />,
     )
+    expect(wizard).toBeTruthy()
 
-    expect(html).toContain('onboarding.environment.title')
+    const html = renderToStaticMarkup(
+      <EnvironmentFields
+        prefs={getDefaultEnvironmentPrefs()}
+        pendingOnly
+        pendingQuestionIds={[...QUESTION_IDS]}
+        onChange={() => {}}
+      />,
+    )
+    expect(html).toContain('onboarding.environment.modelPlacement')
     expect(html).toContain('onboarding.environment.agentRulesMust')
     expect(html).not.toMatch(/<select\b/)
   })
