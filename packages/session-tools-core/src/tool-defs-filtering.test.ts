@@ -55,6 +55,7 @@ describe('session tool filtering helpers', () => {
 
     expect(allowed.has('send_developer_feedback')).toBe(true);
     expect(allowed.has('call_llm')).toBe(true);
+    expect(allowed.has('github_user')).toBe(true);
     expect(allowed.has('browser_tool')).toBe(true);
     expect(allowed.has('script_sandbox')).toBe(true);
     expect(blocked.has('bash')).toBe(true);

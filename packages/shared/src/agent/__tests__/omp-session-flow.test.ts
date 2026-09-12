@@ -111,6 +111,7 @@ describe('OmpAgent host tool bridge', () => {
     const names = tools.map((t) => t.name);
     expect(names).toContain('mcp__session__spawn_session');
     expect(names).toContain('mcp__session__call_llm');
+    expect(names).toContain('mcp__session__github_user');
     expect(names).toContain('mcp__session__browser_tool');
     // Host-tool Bash: session name plus unprefixed `bash` so OMP's built-in
     // bash is shadowed by craft-side execution (unlocks later craft-exec).

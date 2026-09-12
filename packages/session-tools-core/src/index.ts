@@ -269,6 +269,7 @@ export {
   SourceOAuthTriggerSchema,
   CredentialPromptSchema,
   CallLlmSchema,
+  GithubUserSchema,
   UpdatePreferencesSchema,
   TransformDataSchema,
   ScriptSandboxSchema,

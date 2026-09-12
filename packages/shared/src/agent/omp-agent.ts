@@ -103,6 +103,7 @@ import {
   getSessionScopedToolCallbacks,
 } from './session-scoped-tools.ts';
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
+import { runGithubUserSessionTool } from '../connections/github-user-tool.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
 import { resolveOmpSetModelTarget } from '../config/rox-public-models.ts';
 import { resolveConfigDir } from "../config/paths.ts"
@@ -1584,6 +1585,11 @@ export class OmpAgent extends BaseAgent {
           const msg = error instanceof Error ? error.message : String(error);
           return { content: `spawn_session failed: ${msg}`, isError: true };
         }
+      }
+
+      // github_user — brokered GitHub /user (token stays inside broker.perform)
+      if (strippedName === 'github_user') {
+        return runGithubUserSessionTool(args);
       }
 
       // browser_tool — desktop browser pane callbacks from the session registry
