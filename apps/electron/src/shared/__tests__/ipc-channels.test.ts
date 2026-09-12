@@ -95,6 +95,7 @@ const EXPECTED_CHANNELS: string[] = [
   'cloudRuns:getEvents',
   'cloudRuns:getStatus',
   'cloudRuns:import',
+  'cloudRuns:kill',
   'cloudRuns:list',
   'cloudRuns:listArtifacts',
   'cloudRuns:listSchedules',
