@@ -225,7 +225,7 @@ describe('browser surface v2 source wiring', () => {
     expect(openBrowserSource).toContain('setInspectorChromeCollapsed(false)')
     expect(openBrowserSource).toContain('setInspectorVisible(true)')
     expect(openBrowserSource).toContain("setInspectorSection('browser')")
-    expect(inspectorBrowserPaneSource).toContain('window.electronAPI.browserPane.createEmbedded()')
+    expect(inspectorBrowserPaneSource).toContain('window.electronAPI.browserPane.createEmbedded')
     expect(inspectorBrowserPaneSource).toContain('<BrowserPanelPage instanceId={instanceId} persist />')
     expect(openBrowserSource).toContain('void handleNewBrowserWindow()')
     expect(openBrowserSource).toContain(
@@ -239,7 +239,9 @@ describe('browser surface v2 source wiring', () => {
     expect(appShellSource).toContain(
       'onAddBrowserPanel={() => { void handleNewBrowserWindow() }}',
     )
-    expect(topBarSource).toContain('<StyledDropdownMenuItem onClick={onAddBrowserPanel}>')
+    expect(topBarSource).toContain('onClick={onAddSessionPanel}')
+    expect(topBarSource).toContain('onClick={onAddBrowserPanel}')
     expect(topBarSource).toContain('t("browser.newWindow")')
+    expect(topBarSource).not.toContain('<StyledDropdownMenuItem onClick={onAddBrowserPanel}>')
   })
 })

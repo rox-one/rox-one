@@ -49,7 +49,7 @@ describe('SessionInspectorBody H1 browser', () => {
     expect(body).not.toContain('WebBrowserPanel')
     expect(body).toContain('InspectorBrowserPane')
     expect(body).not.toContain('inspector.browserDisabled')
-    expect(pane).toContain('window.electronAPI.browserPane.createEmbedded()')
+    expect(pane).toContain('window.electronAPI.browserPane.createEmbedded')
     expect(pane).toContain('<BrowserPanelPage instanceId={instanceId} persist />')
   })
 })

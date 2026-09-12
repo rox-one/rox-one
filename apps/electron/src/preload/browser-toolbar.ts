@@ -18,6 +18,9 @@ const CHANNELS = {
   FORCE_CLOSE_MENU: 'browser-toolbar:force-close-menu',
   HIDE: 'browser-toolbar:hide',
   DESTROY: 'browser-toolbar:destroy',
+  OPEN_DEVTOOLS: 'browser-toolbar:open-devtools',
+  LIST_HISTORY: 'browser-toolbar:list-history',
+  LIST_DOWNLOADS: 'browser-toolbar:list-downloads',
   STATE_UPDATE: 'browser-toolbar:state-update',
   THEME_COLOR: 'browser-toolbar:theme-color',
 } as const
@@ -35,6 +38,9 @@ contextBridge.exposeInMainWorld('browserToolbar', {
   setMenuGeometry: (open: boolean, height = 0) => ipcRenderer.invoke(CHANNELS.MENU_GEOMETRY, instanceId, open, height),
   hideWindow: () => ipcRenderer.invoke(CHANNELS.HIDE, instanceId),
   closeWindowEntirely: () => ipcRenderer.invoke(CHANNELS.DESTROY, instanceId),
+  openDevTools: () => ipcRenderer.invoke(CHANNELS.OPEN_DEVTOOLS, instanceId),
+  listHistory: () => ipcRenderer.invoke(CHANNELS.LIST_HISTORY, instanceId),
+  listDownloads: () => ipcRenderer.invoke(CHANNELS.LIST_DOWNLOADS, instanceId),
   onStateUpdate: (callback: (state: unknown) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, state: unknown) => callback(state)
     ipcRenderer.on(CHANNELS.STATE_UPDATE, handler)

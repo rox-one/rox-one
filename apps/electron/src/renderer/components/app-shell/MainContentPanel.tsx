@@ -481,7 +481,7 @@ export function MainContentPanel({
     if (instanceId) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
-          <BrowserPanelPage instanceId={instanceId} panelId={panelId} />
+          <BrowserPanelPage instanceId={instanceId} panelId={panelId} persist />
         </Panel>
       )
     }

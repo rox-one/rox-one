@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'bun:test'
-import { classifyExternalUrl, isSafeExternalUrl, formatBlockedUrlError } from '../url-safety.ts'
+import { classifyExternalUrl, isSafeExternalUrl, formatBlockedUrlError, classifyLinkPolicy } from '../url-safety.ts'
 
 describe('classifyExternalUrl — safe external (standard web schemes)', () => {
   it('classifies http:// as safe-external', () => {
@@ -134,6 +134,27 @@ describe('formatBlockedUrlError', () => {
   it('returns an empty string for non-dangerous classifications', () => {
     expect(formatBlockedUrlError(classifyExternalUrl('https://example.com'))).toBe('')
     expect(formatBlockedUrlError(classifyExternalUrl('craftagents://settings'))).toBe('')
+  })
+})
+
+describe('classifyLinkPolicy — Issue 14 product table', () => {
+  it('routes safe http/https to the internal browser', () => {
+    expect(classifyLinkPolicy('https://example.com/docs').kind).toBe('internal-browser')
+    expect(classifyLinkPolicy('http://localhost:3000').kind).toBe('internal-browser')
+  })
+
+  it('sends auth and OAuth callbacks to the system browser', () => {
+    expect(classifyLinkPolicy('https://accounts.google.com/o/oauth2/v2/auth').kind).toBe('external')
+    expect(classifyLinkPolicy('https://github.com/login/oauth/authorize').kind).toBe('external')
+    expect(classifyLinkPolicy('https://app.example.com/callback?code=abc&state=1').kind).toBe('external')
+  })
+
+  it('keeps deep links, custom schemes, and unsafe schemes on the explicit table', () => {
+    expect(classifyLinkPolicy('craftagents://settings').kind).toBe('deeplink')
+    expect(classifyLinkPolicy('mailto:user@example.com').kind).toBe('external')
+    expect(classifyLinkPolicy('obsidian://open?vault=mine').kind).toBe('external')
+    expect(classifyLinkPolicy('file:///tmp/x').kind).toBe('blocked')
+    expect(classifyLinkPolicy('javascript:alert(1)').kind).toBe('blocked')
   })
 })
 
