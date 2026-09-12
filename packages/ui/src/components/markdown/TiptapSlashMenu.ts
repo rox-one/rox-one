@@ -317,6 +317,72 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
       },
     },
     {
+      id: 'footnote',
+      title: 'Footnote',
+      description: 'Insert a footnote reference and definition',
+      icon: 'text-quote',
+      group: 'Blocks',
+      aliases: ['fn', 'footnote', 'reference'],
+      run: (e) => {
+        e.chain().focus().insertContent('See note.[^1]\n\n[^1]: ').run()
+      },
+    },
+    {
+      id: 'table',
+      title: 'Table',
+      description: 'Insert a two-column markdown table',
+      icon: 'list',
+      group: 'Blocks',
+      aliases: ['table', 'grid'],
+      run: (e) => {
+        e.chain().focus().insertContent('| A | B |\n| --- | --- |\n|  |  |\n').run()
+      },
+    },
+    {
+      id: 'columns-2',
+      title: 'Two columns',
+      description: 'Insert a portable two-column layout',
+      icon: 'square-code',
+      group: 'Blocks',
+      aliases: ['columns', 'split', 'layout'],
+      run: (e) => {
+        e.chain().focus().insertContent(':::columns 2\n:::column\n\n:::\n:::column\n\n:::\n:::\n').run()
+      },
+    },
+    {
+      id: 'columns-3',
+      title: 'Three columns',
+      description: 'Insert a portable three-column layout',
+      icon: 'square-code',
+      group: 'Blocks',
+      aliases: ['columns', 'split', 'layout'],
+      run: (e) => {
+        e.chain().focus().insertContent(':::columns 3\n:::column\n\n:::\n:::column\n\n:::\n:::column\n\n:::\n:::\n').run()
+      },
+    },
+    {
+      id: 'spoiler',
+      title: 'Spoiler',
+      description: 'Insert a foldable spoiler callout',
+      icon: 'quote',
+      group: 'Blocks',
+      aliases: ['spoiler', 'hidden', 'fold'],
+      run: (e) => {
+        e.chain().focus().insertContent('> [!spoiler]\n> \n').run()
+      },
+    },
+    {
+      id: 'embed',
+      title: 'Embed',
+      description: 'Insert a note embed',
+      icon: 'workflow',
+      group: 'Blocks',
+      aliases: ['embed', 'transclude', 'wikilink'],
+      run: (e) => {
+        e.chain().focus().insertContent('![[').run()
+      },
+    },
+    {
       id: 'code-block',
       title: 'Code Block',
       description: 'Insert a fenced code block',
