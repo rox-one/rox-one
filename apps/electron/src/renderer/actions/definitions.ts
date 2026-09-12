@@ -147,7 +147,7 @@ export const actions = {
   'collection.viewNext': {
     id: 'collection.viewNext',
     label: 'Next collection view',
-    description: 'Cycle sessions layout: list → board → table',
+    description: 'Cycle sessions layout: list → board → table → heatmap',
     defaultHotkey: 'alt+v',
     category: 'View',
     when: '!inputFocus',
@@ -178,6 +178,13 @@ export const actions = {
     id: 'collection.viewTable',
     label: 'Sessions table',
     defaultHotkey: 'mod+shift+3',
+    category: 'View',
+    when: '!inputFocus',
+  },
+  'collection.viewHeatmap': {
+    id: 'collection.viewHeatmap',
+    label: 'Sessions heatmap',
+    defaultHotkey: 'mod+shift+4',
     category: 'View',
     when: '!inputFocus',
   },

@@ -29,6 +29,9 @@ export interface SessionTableRowProps {
   showUpdated: boolean
   showCreated: boolean
   showFlag: boolean
+  showMessages?: boolean
+  showTokens?: boolean
+  showDuration?: boolean
   /** B5: HTML5 drag reorder callbacks (table host wires when showGrip). */
   onDragStartRow?: (sessionId: string) => void
   onDragOverRow?: (sessionId: string, event: React.DragEvent) => void
@@ -69,6 +72,22 @@ function formatDue(
   }
 }
 
+function formatDuration(ms: number | null | undefined): string {
+  if (ms == null || !Number.isFinite(ms) || ms < 0) return '—'
+  const minutes = Math.floor(ms / 60_000)
+  if (minutes < 1) return '<1m'
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 48) return `${hours}h`
+  return `${Math.floor(hours / 24)}d`
+}
+
+function sessionDuration(meta: SessionMeta): number | null {
+  if (meta.createdAt == null || meta.lastMessageAt == null) return null
+  const duration = meta.lastMessageAt - meta.createdAt
+  return duration >= 0 ? duration : null
+}
+
 export function SessionTableRow({
   meta,
   statuses = [],
@@ -88,6 +107,9 @@ export function SessionTableRow({
   showUpdated,
   showCreated,
   showFlag,
+  showMessages = false,
+  showTokens = false,
+  showDuration = false,
   onDragStartRow,
   onDragOverRow,
   dropIndicator,
@@ -230,6 +252,15 @@ export function SessionTableRow({
       )}
       {showCreated && (
         <span className="w-20 shrink-0 text-xs text-muted-foreground">{formatDate(meta.createdAt)}</span>
+      )}
+      {showMessages && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.messageCount ?? '—'}</span>
+      )}
+      {showTokens && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.tokenUsage?.totalTokens ?? '—'}</span>
+      )}
+      {showDuration && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatDuration(sessionDuration(meta))}</span>
       )}
 
       {showFlag && (

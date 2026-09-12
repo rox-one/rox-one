@@ -62,6 +62,7 @@ import { PagesHome } from '../pages/PagesHome'
 import { PageView } from '../pages/PageView'
 import { KanbanBoardContainer } from './kanban/KanbanBoardContainer'
 import { SessionTableHost } from './session-table/SessionTableHost'
+import { SessionHeatmapHost } from './session-heatmap/SessionHeatmapHost'
 import type { ExecutionEntry } from '../automations/types'
 import { automationsAtom } from '@/atoms/automations'
 import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
@@ -586,6 +587,14 @@ export function MainContentPanel({
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <SessionTableHost />
+        </Panel>
+      )
+    }
+
+    if (navState.viewMode === 'heatmap') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SessionHeatmapHost />
         </Panel>
       )
     }

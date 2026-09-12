@@ -1,8 +1,9 @@
 /**
- * Pure filter/sort for sessions collection views (list, board, table).
+ * Pure filter/sort for sessions collection views (list, board, table, heatmap).
  */
 
 import type { SessionPriority } from '../protocol/dto.ts'
+import { classifyAgentFamily } from './collection-agent-family.ts'
 import type {
   CollectionDisplay,
   CollectionFilters,
@@ -25,9 +26,12 @@ export interface CollectionSessionMeta {
   isFlagged?: boolean
   hasUnread?: boolean
   model?: string | null
+  llmConnection?: string | null
   rank?: string | null
   lastMessageAt?: number | null
   createdAt?: number | null
+  messageCount?: number | null
+  tokenUsage?: { totalTokens?: number } | null
 }
 
 
@@ -159,6 +163,11 @@ export function filterSessionMeta(
   if (f.model && f.model.length > 0) {
     const m = meta.model ?? ''
     if (!f.model.includes(m)) return false
+  }
+
+  if (f.agentFamily && f.agentFamily.length > 0) {
+    const family = classifyAgentFamily(meta)
+    if (!f.agentFamily.includes(family)) return false
   }
 
   return true

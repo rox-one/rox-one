@@ -68,7 +68,7 @@ export interface ParsedCompoundRoute {
   /** Automation filter (only for automations navigator) */
   automationFilter?: AutomationFilter
   /** Sessions presentation mode (only for sessions navigator). 'board' = Kanban; 'table' = dense collection. */
-  viewMode?: 'list' | 'board' | 'table'
+  viewMode?: 'list' | 'board' | 'table' | 'heatmap'
   /**
    * Details page info (null for empty state).
    * W1 surface navigators reuse this shape: `id` is the entity id (runId /
@@ -91,7 +91,7 @@ export interface ParsedCompoundRoute {
  * Known prefixes that indicate a compound route
  */
 const COMPOUND_ROUTE_PREFIXES = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'connections', 'home',
   // Unified-shell surfaces (W1)
   'knowledge', 'cloud-run', 'extension', 'diff',
 ]
@@ -150,6 +150,15 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       navigator: 'sessions',
       sessionFilter: { kind: 'allSessions' },
       viewMode: 'table',
+      details: null,
+    }
+  }
+
+  if (first === 'heatmap') {
+    return {
+      navigator: 'sessions',
+      sessionFilter: { kind: 'allSessions' },
+      viewMode: 'heatmap',
       details: null,
     }
   }
@@ -580,6 +589,7 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'board'
   }
   if (parsed.viewMode === 'table') return 'table'
+  if (parsed.viewMode === 'heatmap') return 'heatmap'
 
   let base: string
   const filter = parsed.sessionFilter

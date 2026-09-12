@@ -1,8 +1,13 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { X } from 'lucide-react'
-import type { SessionPriority } from '@craft-agent/shared/sessions/collection'
-import type { CollectionFilters, DueRange } from '@craft-agent/shared/sessions/collection'
+import {
+  COLLECTION_AGENT_FAMILY_VALUES,
+  type CollectionAgentFamily,
+  type CollectionFilters,
+  type DueRange,
+  type SessionPriority,
+} from '@craft-agent/shared/sessions/collection'
 import type { SessionStatus } from '@/config/session-status-config'
 import { resolveStatusDisplayLabel } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
@@ -40,7 +45,8 @@ function hasActiveFilters(filters: CollectionFilters): boolean {
       filters.due ||
       typeof filters.flagged === 'boolean' ||
       typeof filters.hasUnread === 'boolean' ||
-      (filters.model && filters.model.length > 0),
+      (filters.model && filters.model.length > 0) ||
+      (filters.agentFamily && filters.agentFamily.length > 0),
   )
 }
 
@@ -101,6 +107,17 @@ export function CollectionFilterChips({
     })
   }
 
+  const toggleAgentFamily = (family: CollectionAgentFamily) => {
+    const current = new Set(filters.agentFamily ?? [])
+    if (current.has(family)) current.delete(family)
+    else current.add(family)
+    const next = Array.from(current)
+    onFiltersChange({
+      ...filters,
+      agentFamily: next.length > 0 ? next : undefined,
+    })
+  }
+
   const toggleDue = (type: SimpleDue) => {
     const current = dueType(filters)
     if (current === type) {
@@ -152,6 +169,13 @@ export function CollectionFilterChips({
     onClick: () => toggleDue(type),
     radio: true,
   }))
+  const agentOptions = COLLECTION_AGENT_FAMILY_VALUES.map((family) => ({
+    key: family,
+    selected: (filters.agentFamily ?? []).includes(family),
+    label: t(`collection.filter.agentFamily.${family}`),
+    onClick: () => toggleAgentFamily(family),
+    radio: false,
+  }))
 
   const groups = [
     statuses.length > 0 ? { label: t('collection.filter.status'), options: statusOptions } : null,
@@ -159,6 +183,7 @@ export function CollectionFilterChips({
     projects.length > 0 ? { label: t('collection.filter.project', { defaultValue: 'Project' }), options: projectOptions } : null,
     labels.length > 0 ? { label: t('collection.filter.label', { defaultValue: 'Label' }), options: labelOptions } : null,
     { label: t('collection.filter.due'), options: dueOptions },
+    { label: t('collection.filter.agentFamily'), options: agentOptions },
   ].filter(Boolean) as Array<{
     label: string
     options: Array<{ key: string; selected: boolean; label: string; onClick: () => void; radio: boolean }>

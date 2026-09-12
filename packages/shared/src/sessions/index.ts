@@ -173,6 +173,7 @@ export {
 
 // Collection display / filter contracts (pure types)
 export type {
+  CollectionAgentFamily,
   CollectionViewMode,
   CollectionGroupBy,
   CollectionOrderBy,

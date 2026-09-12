@@ -1932,8 +1932,9 @@ export interface SessionsNavigationState {
    * - Absent/`'list'` — default list + chat.
    * - `'board'` — Kanban (all sessions, To Do / In Progress / Done) in the content area.
    * - `'table'` — dense collection/issue-line table view in the content area.
+   * - `'heatmap'` — year contribution grid + selected-day session table.
    */
-  viewMode?: 'list' | 'board' | 'table'
+  viewMode?: 'list' | 'board' | 'table' | 'heatmap'
 }
 
 /**

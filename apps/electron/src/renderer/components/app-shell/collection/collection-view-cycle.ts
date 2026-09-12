@@ -2,7 +2,11 @@ import { routes } from '../../../../shared/routes'
 import * as storage from '@/lib/local-storage'
 import type { CollectionViewMode } from '../kanban/BoardListToggle'
 
-export const COLLECTION_VIEW_ORDER: readonly CollectionViewMode[] = ['list', 'board', 'table']
+export const COLLECTION_VIEW_ORDER: readonly CollectionViewMode[] = ['list', 'board', 'table', 'heatmap']
+
+export function isCollectionCanvasView(mode: string | null | undefined): boolean {
+  return mode === 'board' || mode === 'table' || mode === 'heatmap'
+}
 
 function isCollectionViewMode(mode: string | null): mode is CollectionViewMode {
   return mode !== null && (COLLECTION_VIEW_ORDER as readonly string[]).includes(mode)
@@ -64,5 +68,6 @@ export function resolveCycleTarget(
 export function collectionViewRoute(mode: CollectionViewMode) {
   if (mode === 'board') return routes.view.board()
   if (mode === 'table') return routes.view.table()
+  if (mode === 'heatmap') return routes.view.heatmap()
   return routes.view.allSessions()
 }
