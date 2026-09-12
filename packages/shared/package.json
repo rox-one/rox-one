@@ -125,7 +125,8 @@
     "./workspaces": "./src/workspaces/index.ts",
     "./environment": "./src/environment/index.ts",
     "./voice": "./src/voice/index.ts",
-    "./cli": "./src/cli/index.ts"
+    "./cli": "./src/cli/index.ts",
+    "./capabilities": "./src/capabilities/index.ts"
   },
   "license": "Apache-2.0",
   "main": "src/index.ts",
