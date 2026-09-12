@@ -36,6 +36,7 @@ export const PROPOSAL_HANDLED_CHANNELS = [
   RPC_CHANNELS.memory.EDIT_PROPOSAL,
   RPC_CHANNELS.memory.DELETE_PROPOSAL,
 ] as const
+export const HANDLED_CHANNELS = PROPOSAL_HANDLED_CHANNELS
 
 export interface ExtractProposalsArgs {
   workspaceId: string

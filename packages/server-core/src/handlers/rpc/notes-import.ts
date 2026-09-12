@@ -52,6 +52,11 @@ function toPublicError(err: unknown): never {
   throw new CodedError('PROVIDER_ERROR', 'Notes import operation failed')
 }
 
+export const HANDLED_CHANNELS = [
+  RPC_CHANNELS.notesImport.PREVIEW,
+  RPC_CHANNELS.notesImport.EXECUTE,
+] as const
+
 export function registerNotesImportHandlers(server: RpcServer): void {
   server.handle(RPC_CHANNELS.notesImport.PREVIEW, async (_context, rawInput: unknown) => {
     const { sourcePath } = parseInput(rawInput)
