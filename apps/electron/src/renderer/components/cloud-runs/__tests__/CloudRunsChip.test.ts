@@ -34,7 +34,7 @@ describe('CloudRunsChip compact dialog accessibility', () => {
   it('groups run operations in a named accessible menu without dropping actions', () => {
     expect(source).toContain('<DropdownMenuContent align="end">')
     expect(source).toContain("aria-label={t('common.more')}")
-    for (const action of ['cancel', 'resume', 'retry', 'fork', 'preview', 'share', 'import', 'aggregate'] as const) {
+    for (const action of ['cancel', 'kill', 'resume', 'retry', 'fork', 'preview', 'share', 'import', 'aggregate'] as const) {
       expect(source).toContain(`t('cloudRuns.${action}')`)
     }
   })

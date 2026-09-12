@@ -477,25 +477,41 @@ export interface ElectronAPI {
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
     enabled: boolean
-    provider: 'local' | 'cloudflare' | 'modal' | 'e2b'
+    provider: 'local' | 'daytona' | 'native'
     gatewayUrl?: string
     notifyWebhookUrl?: string
     cheapModelId?: string
     personas?: boolean
     tokenConfigured: boolean
+    secretConfigured?: boolean
     estimatedRunTokens?: number | null
+    daytonaProjectId?: string
+    daytonaSnapshot?: string
+    daytonaSandbox?: string
+    daytonaRegion?: string
+    daytonaImage?: string
+    daytonaApiUrl?: string
+    defaultTtlSec?: number
     defaults: { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number }
   }>
   setCloudRunsConfig(patch: {
     enabled?: boolean
-    provider?: 'local' | 'cloudflare' | 'modal' | 'e2b'
+    provider?: 'local' | 'daytona' | 'native'
     gatewayUrl?: string
     defaultMaxWallClockSec?: number
     defaultMaxLlmTokens?: number
     defaultMaxArtifactsBytes?: number
+    defaultTtlSec?: number
     notifyWebhookUrl?: string
     cheapModelId?: string
     personas?: boolean
+    daytonaProjectId?: string
+    daytonaSnapshot?: string
+    daytonaSandbox?: string
+    daytonaRegion?: string
+    daytonaImage?: string
+    daytonaApiUrl?: string
+    daytonaSecretRef?: string
   }): Promise<{ ok: boolean }>
   submitCloudRun(args: {
     topic: string
@@ -503,10 +519,12 @@ export interface ElectronAPI {
     language?: 'en' | 'ru'
     kind?: 'research' | 'competitor' | 'literature' | 'vendor'
     personas?: boolean
+    omp?: boolean
     fromRunId?: string
     model?: { connectionSlug?: string; modelId?: string }
   }): Promise<{ id: string; provider: string; createdAt: number }>
   resumeCloudRun(args: { runId: string }): Promise<{ ok: boolean }>
+  killCloudRun(id: string): Promise<{ ok: boolean }>
   sessionTopicCloudRun(args: { sessionId: string }): Promise<{ topic: string }>
   readCloudRunArtifact(args: { runId: string; path: string }): Promise<{ content: string }>
   getCloudRunEvents(args: { runId: string }): Promise<{ t: number; message: string }[]>

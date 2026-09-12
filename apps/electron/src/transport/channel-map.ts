@@ -33,6 +33,7 @@ export const CHANNEL_MAP = {
   listCloudRuns: invoke(RPC_CHANNELS.cloudRuns.LIST),
   getCloudRunStatus: invoke(RPC_CHANNELS.cloudRuns.GET_STATUS),
   cancelCloudRun: invoke(RPC_CHANNELS.cloudRuns.CANCEL),
+  killCloudRun: invoke(RPC_CHANNELS.cloudRuns.KILL),
   listCloudRunArtifacts: invoke(RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS),
   importCloudRun: invoke(RPC_CHANNELS.cloudRuns.IMPORT),
   aggregateCloudRun: invoke(RPC_CHANNELS.cloudRuns.AGGREGATE),

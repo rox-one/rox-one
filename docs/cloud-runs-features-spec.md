@@ -1,5 +1,12 @@
 > **W3 (commit a5ba72b2c):** WS-стриминг на обеих gateway (/runs/:id/ws, hibernation-safe) — CF acceptWebSocket + logEvent fanout, Modal FastAPI ws; strict scoping (инцидент: первая версия перехватывала backend handshake). Schedules UI в диалоге (list/toggle/delete/add, i18n ×9). docker-housekeeping.sh + launchd (Ср+Вс 09:30). F21 prod: CI job craft-gateway-deploy (amd64 без QEMU, wrangler deploy через CCI env CLOUDFLARE_API_TOKEN/ACCOUNT_ID/CLOUD_RUNS_TOKEN — добавить в CCI project env) + Dockerfile.omp. runner-omp lazy-install убит spike'ом — fail-fast вариант.
 
+> **2026-09-12 (issues 25–26):** Public registry is Daytona | local | native.
+> Cloudflare, Modal and E2B are retired from the normal provider registry and UI.
+> A failed Daytona request never falls back to another provider. F18 is
+> withdrawn. F17 nightly conformance is local + Daytona. F21 OMP and F22
+> personas run on Daytona only. F3 concurrency is clamped to 1–4 (default 2).
+> True cancel/kill is `cloudRuns:cancel` / `cloudRuns:kill`.
+
 # Spec: Cloud Runs — пакет след-фич (F1–F22)
 
 > **Статусы по 2026-08-06 (commits eef8d6891 → 5e91c5e75):** зашиты и live-проверены F1,F2,F3 (pack-model),F4 (agent-loop runner v2: 6 rounds/15 tool calls live),F5 (brief.json structured, 12 claims/10 links live),F6 (cheapModelId),F8 (self-contained scheduler в watcher + schedules CRUD channels),F9,F10,F11 (preview Markdown renderer),F12,F13,F14 (eventLog + events route + dialog tail; WS отложен),F16 (marp slides CF),F19,F20,F22 (personas). **Отложено: F18 E2B (нужны креды от вашего E2B), F21 omp-runner (см. ниже), F17 workflow CI — активируется с secrets CLOUD_RUNS_{TOKEN,MODAL_GATEWAY_URL,CLOUDFLARE_GATEWAY_URL} в repo settings.**
@@ -222,7 +229,7 @@
 
 **Цель:** возврат к исходному юзкейсу «преза по теме»: runner генерит слайды.
 
-**Дизайн:** в образ CF (и modal-image) добавить marp-cli (npm-g) → опц. журнал: spec.outputs: ['slides'] → runner после LLM прогоняет marp answer.md → slides.html/pdf → артефакт. UI: чекбокс «Слайды» в диалоге; import скачивает.
+**Дизайн:** spec.outputs: ['slides'] → Daytona runner after LLM runs marp on answer.md → slides.html/pdf artifact. UI: checkbox in the dialog; import downloads it.
 **Приёмка:** стандартный ран с флагом выдаёт slides.html среди артефактов, открываемый браузером.
 **Оценка:** 1 день + образ rebuild.
 
@@ -230,21 +237,25 @@
 
 ## F17. Nightly conformance CI
 
-**Цель:** preview-API рассинхрон CF ловится раньше пользователей.
+**Цель:** рассинхрон Daytona API / local contract ловится раньше пользователей.
 
-**Дизайн:** GitHub Action (cron 04:00 UTC): install → conformanceSuite local + CF + Modal (secrets в actions secrets), fail → issue создаётся/комментируется. RWX no deployments, только run'ы.
-**Приёмка:** зелёный крон на момент сдачи; форс-фейл (несуществующий токен временно) создаёт алерт.
-**Оценка:** 0.5 дня.
+**Дизайн:** GitHub Action (cron 04:00 UTC): install → conformanceSuite local + Daytona memory (live sandbox when `DAYTONA_LIVE=1` and secret `DAYTONA_API_KEY`), fail → issue создаётся. Нет Cloudflare/Modal ног.
 
----
+**Приёмка:** зелёный крон на момент сдачи; live-нога skip без секрета.
 
-## F18. E2B-провайдер (третья нога)
+## F18. E2B-провайдер — WITHDRAWN
 
-**Цель:** vendor risk хеджировать до трёх.
+**Статус:** withdrawn (issue 25/26). E2B is not in the public registry. Do not add it back as a Daytona fallback.
 
-**Дизайн:** E2BProvider в cloud-runner: E2B Sandbox API (create sandbox, write config+runner py (re-использовать модал-runner скрипт!), watch markers, template `python:3.11`). API-контракт E2B SDK JS — assess in impl. Тот же conformanceSuite gate.
-**Приёмка:** E2B conformance leg green; флип provider=e2b работает.
-**Оценка:** 1-2 дня.
+## F21. omp-runner path (Daytona)
+
+**Цель:** вариант A из F4 как альтернативный раннер на Daytona.
+
+**Дизайн:**
+- `spec.agenticMode: 'omp' | 'loop'` (default loop). Daytona exec: `rox-run --concurrency N --mode omp`.
+- Snapshot/image may include omp+bun; do not lazy-install inside the wall-clock budget.
+- Personas (F22) and OMP are Daytona-only; local/native ignore both flags.
+- Риски: размер образа, холодный старт — nightly (F17) прикрывает.
 
 ---
 
@@ -268,21 +279,7 @@
 
 ---
 
-## F21. omp-runner path (возвращён по решению владельца)
-
-**Цель:** вариант A из F4 как альтернативный раннер (первый класс, не сброс).
-
-**Дизайн:**
-- Образ: `npm i -g @oh-my-pi/pi-coding-agent` на слое поверх computerd (image tag bump).
-- Config injection: gateway пишет `/workspace/.omp/agent/config.yml` (providers: rox base+key из Secrets env), `~/.omp` → symlink в workspace для persistence.
-- Runner: спавн `omp --mode rpc --session-dir <dir>`, NDJSON протокол (docs/omp-rpc-notes подробно), host-tools только для fs/web — депривизировать craft-бинарки.
-- Риски: размер образа (+~150MB node_modules), холодный старт +10-20с, версионирование omp (pin semver) — nightly conformance (F17) прикрывает.
-**Приёмка:** в CF sandbox omp стартует rpc, принимает turn с research prompt и даёт tool-trace в artifacts/trace.jsonl.
-**Оценка:** spike 1 день + 2 дня интеграция.
-
----
-
-## F22. Multi-run personas (возвращён)
+## F22. Multi-run personas (Daytona only)
 
 **Цель:** «спор экспертов» — один запрос = 3 персоны (аналитик/скептик/оптимист) с разными системными промптами, агрегатор пишет «синтез дискуссии».
 

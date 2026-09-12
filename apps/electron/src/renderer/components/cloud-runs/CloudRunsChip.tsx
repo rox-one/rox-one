@@ -8,7 +8,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Cloud, Download, FileText, Link2, MoreHorizontal, RefreshCw, Rocket, XCircle } from 'lucide-react'
+import { Cloud, Download, FileText, Link2, MoreHorizontal, OctagonX, RefreshCw, Rocket, XCircle } from 'lucide-react'
 import { Markdown } from '@craft-agent/ui'
 import {
   Dialog,
@@ -27,7 +27,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { useRegisterModal } from '@/context/ModalContext'
 
-type RunState = 'queued' | 'running' | 'done' | 'failed' | 'cancelled'
+type RunState = 'queued' | 'start' | 'ready' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired'
 interface ListedRun {
   id: string
   name: string
@@ -101,6 +101,8 @@ function CloudRunsChipInner({
   const [topic, setTopic] = React.useState('')
   const [kind, setKind] = React.useState<'research' | 'competitor' | 'literature' | 'vendor'>('research')
   const [personas, setPersonas] = React.useState(false)
+  const [omp, setOmp] = React.useState(false)
+  const [provider, setProvider] = React.useState<'daytona' | 'local' | 'native' | string>('daytona')
   const [estimatedTokens, setEstimatedTokens] = React.useState<number | null>(null)
   const [preview, setPreview] = React.useState<{ title: string; content: string } | null>(null)
   const [forkTarget, setForkTarget] = React.useState<string | null>(null)
@@ -129,7 +131,11 @@ function CloudRunsChipInner({
     if (!isAvailable) return
     window.electronAPI
       .getCloudRunsConfig()
-      .then((cfg) => setEstimatedTokens(cfg.estimatedRunTokens ?? null))
+      .then((cfg) => {
+        setEstimatedTokens(cfg.estimatedRunTokens ?? null)
+        setProvider(cfg.provider ?? 'daytona')
+        if (cfg.personas && cfg.provider === 'daytona') setPersonas(true)
+      })
       .catch(() => null)
   }, [isAvailable])
 
@@ -144,7 +150,7 @@ function CloudRunsChipInner({
   // F14: pull event tails for rows currently running (cheap, follows the 5s dialog poll).
   React.useEffect(() => {
     if (!open || !isAvailable) return
-    const running = runs.filter((run) => run.status && (run.status.state === 'running' || run.status.state === 'queued'))
+    const running = runs.filter((run) => run.status && (run.status.state === 'running' || run.status.state === 'queued' || run.status.state === 'start' || run.status.state === 'ready'))
     for (const run of running) {
       window.electronAPI
         .getCloudRunEvents({ runId: run.id })
@@ -274,17 +280,25 @@ function CloudRunsChipInner({
                   onKeyDown={(e) => {
                     if (isAvailable && e.key === 'Enter' && topic.trim()) {
                       void act('submit', async () => {
-                        await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas })
+                        await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas: provider === 'daytona' && personas, omp: provider === 'daytona' && omp })
                         setTopic('')
                         toast.success(t('cloudRuns.submitted'))
                       })
                     }
                   }}
                 />
+                {provider === 'daytona' && (
                 <label className="flex min-w-0 items-center gap-1 whitespace-normal break-words text-xs text-muted-foreground" title={t('cloudRuns.personasHint')}>
                   <input disabled={!isAvailable} type="checkbox" checked={personas} onChange={(e) => setPersonas(e.target.checked)} />
                   {t('cloudRuns.personas')}
                 </label>
+                )}
+                {provider === 'daytona' && (
+                <label className="flex min-w-0 items-center gap-1 whitespace-normal break-words text-xs text-muted-foreground" title={t('cloudRuns.ompHint')}>
+                  <input disabled={!isAvailable} type="checkbox" checked={omp} onChange={(e) => setOmp(e.target.checked)} />
+                  {t('cloudRuns.omp')}
+                </label>
+                )}
                 <Button
                   aria-label={t('cloudRuns.prefill')}
                   size="sm"
@@ -298,7 +312,7 @@ function CloudRunsChipInner({
                   disabled={!isAvailable || !topic.trim() || busy === 'submit'}
                   onClick={() =>
                     void act('submit', async () => {
-                      await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas })
+                      await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas: provider === 'daytona' && personas, omp: provider === 'daytona' && omp })
                       setTopic('')
                       toast.success(t('cloudRuns.submitted'))
                     })
@@ -332,7 +346,7 @@ function CloudRunsChipInner({
                         return
                       }
                       void act('submit', async () => {
-                        await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas })
+                        await window.electronAPI.submitCloudRun({ topic: topic.trim(), sessionId, kind, personas: provider === 'daytona' && personas, omp: provider === 'daytona' && omp })
                         setTopic('')
                         toast.success(t('cloudRuns.submitted'))
                       })
@@ -346,7 +360,7 @@ function CloudRunsChipInner({
               {runs.map((run) => {
                 const state = run.status?.state
                 const progress = run.status?.progress
-                const hasActions = state === 'running' || state === 'queued' || state === 'failed' || state === 'done'
+                const hasActions = state === 'running' || state === 'queued' || state === 'start' || state === 'ready' || state === 'failed' || state === 'done'
                 return (
                   <div key={run.id} className="flex items-start gap-2 rounded-md border border-border/50 px-2 py-2 text-sm">
                     <div className="min-w-0 flex-1">
@@ -382,10 +396,14 @@ function CloudRunsChipInner({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {(state === 'running' || state === 'queued') && (
+                          {(state === 'running' || state === 'queued' || state === 'start' || state === 'ready') && (
                             <DropdownMenuItem onSelect={() => void act(run.id, () => window.electronAPI.cancelCloudRun(run.id))}>
                               <XCircle className="h-4 w-4" />
                               {t('cloudRuns.cancel')}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => void act(run.id, () => window.electronAPI.killCloudRun(run.id))}>
+                              <OctagonX className="h-4 w-4" />
+                              {t('cloudRuns.kill')}
                             </DropdownMenuItem>
                           )}
                           {state === 'failed' && (
