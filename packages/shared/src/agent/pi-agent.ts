@@ -107,6 +107,7 @@ import { extractWorkspaceSlug } from '../utils/workspace.ts';
 // LLM tool types
 import { LLM_QUERY_TIMEOUT_MS, type LLMQueryRequest, type LLMQueryResult } from './llm-tool.ts';
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
+import { runGithubUserSessionTool } from '../connections/github-user-tool.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
 
 // ============================================================
@@ -117,6 +118,7 @@ import { saveBinaryResponse } from '../utils/binary-detection.ts';
 export const PI_BACKEND_SESSION_TOOL_NAMES = new Set<string>([
   'call_llm',
   'spawn_session',
+  'github_user',
   'browser_tool',
 ]);
 
@@ -1540,6 +1542,11 @@ export class PiAgent extends BaseAgent {
           const msg = error instanceof Error ? error.message : String(error);
           return { content: `spawn_session failed: ${msg}`, isError: true };
         }
+      }
+
+      // github_user — brokered GitHub /user (token stays inside broker.perform)
+      if (toolName === 'github_user') {
+        return runGithubUserSessionTool(args);
       }
 
       // browser_tool — single CLI-like tool for all browser actions

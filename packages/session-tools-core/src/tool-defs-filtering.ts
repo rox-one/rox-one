@@ -33,6 +33,7 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'send_developer_feedback',
   'call_llm',
   'spawn_session',
+  'github_user',
   'browser_tool',
   'set_session_labels',
   'set_session_status',
