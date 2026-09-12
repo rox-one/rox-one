@@ -32,12 +32,17 @@ describe('terminology linter', () => {
     expect(localeValueViolations('skillsList.ompBadge', 'OMP')).toEqual([])
     expect(localeValueViolations('onboarding.reauth.loginAgain', 'Craft Agents')).toEqual([])
     expect(localeValueViolations('errors.omp.noModels.title', 'OMP has no models configured')).toEqual([])
+    expect(localeValueViolations('collection.filter.agentFamily.hermes', 'Hermes')).toEqual([])
+    expect(localeValueViolations('collection.filter.agentFamily.omp', 'OMP / Rox')).toEqual([])
   })
 
   it('flags runtime names in normal-UI locale values', () => {
     expect(localeValueViolations('onboarding.providerSelect.ompDesc', 'Local oh-my-pi agent')).toContain('oh-my-pi')
     expect(localeValueViolations('settings.identity.title', 'OMP identity')).toContain('OMP')
     expect(localeValueViolations('onboarding.welcome.title', 'Welcome to Craft Agents')).toContain('Craft Agents')
+    expect(localeValueViolations('settings.security.description', 'slice for Craft and OpenClaw')).toContain('Craft')
+    expect(localeValueViolations('settings.ai.backend', 'Pi backend')).toContain('Pi')
+    expect(localeValueViolations('inspector.context.attachments', 'Pièces jointes')).toEqual([])
   })
 
   it('scans every locale for leaked runtime names outside the allowlist', () => {

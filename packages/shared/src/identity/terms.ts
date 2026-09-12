@@ -33,6 +33,7 @@ export interface TerminologyAllowlistEntry {
 
 /** Locale keys that may still name compatibility runtimes. */
 export const TERMINOLOGY_KEY_ALLOWLIST: readonly TerminologyAllowlistEntry[] = [
+  { match: 'collection.filter.agentFamily.', kind: 'technical-detail' },
   { match: 'errors.omp.', kind: 'technical-detail' },
   { match: 'onboarding.ompCredential.', kind: 'technical-detail' },
   { match: 'onboarding.reauth.', kind: 'legacy-dead' },
@@ -63,6 +64,9 @@ const FORBIDDEN_IN_NORMAL_UI: Array<{ id: string; pattern: RegExp }> = [
   { id: 'Hermes', pattern: /\bHermes\b/ },
   { id: 'Craft Agents', pattern: /Craft Agents/ },
   { id: 'Craft Agent', pattern: /Craft Agent(?!s)/ },
+  { id: 'Craft', pattern: /\bCraft\b/ },
+  // Latin "Pi" as a whole word — not French Pièces / Pile / etc.
+  { id: 'Pi', pattern: /(?<![A-Za-z\u00C0-\u024F])Pi(?![A-Za-z\u00C0-\u024F])/ },
 ]
 
 export function localeValueViolations(key: string, value: string): string[] {
