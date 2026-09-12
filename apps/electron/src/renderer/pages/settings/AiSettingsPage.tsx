@@ -816,6 +816,7 @@ export default function AiSettingsPage() {
   // OnboardingWizard hook for editing API connection
   const apiSetupOnboarding = useOnboarding({
     initialStep: 'provider-select',
+    includeEnvironmentQuestions: false,
     onConfigSaved: refreshLlmConnections,
     onComplete: () => {
       closeApiSetup()

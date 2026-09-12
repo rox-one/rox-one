@@ -502,6 +502,11 @@ export const RPC_CHANNELS = {
     SPEAK: 'voice:speak',
     CHANGED: 'voice:changed',
   },
+  environment: {
+    GET: 'environment:get',
+    SAVE: 'environment:save',
+    CHANGED: 'environment:changed',
+  },
   drafts: {
     GET: 'drafts:get',
     SET: 'drafts:set',

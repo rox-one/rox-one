@@ -2104,6 +2104,8 @@ export default function App() {
             onBack={onboarding.handleBack}
             onSelectProvider={onboarding.handleSelectProvider}
             onSkipSetup={onboarding.handleSkipSetup}
+            onSaveEnvironment={onboarding.handleSaveEnvironment}
+            onSkipEnvironment={onboarding.handleSkipEnvironment}
             roxConnectCodes={onboarding.roxConnectCodes}
             roxConnectStatus={onboarding.roxConnectStatus}
             roxConnectError={onboarding.roxConnectError}

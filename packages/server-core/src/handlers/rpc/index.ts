@@ -35,6 +35,7 @@ export { getHealthCheck } from './server'
 import { registerSettingsHandlers } from './settings'
 import { registerGamificationHandlers } from './gamification'
 import { registerVoiceHandlers } from './voice'
+import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
@@ -104,6 +105,7 @@ export function registerCoreRpcHandlers(
   registerSettingsHandlers(server, deps)
   registerGamificationHandlers(server, deps)
   registerVoiceHandlers(server, deps)
+  registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)

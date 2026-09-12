@@ -131,6 +131,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     collection,
     gamification,
     voice,
+    environment,
     messaging,
     pages,
   ] = await Promise.all([
@@ -173,6 +174,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@craft-agent/server-core/handlers/rpc/collection'),
     import('@craft-agent/server-core/handlers/rpc/gamification'),
     import('@craft-agent/server-core/handlers/rpc/voice'),
+    import('@craft-agent/server-core/handlers/rpc/environment'),
     import('@craft-agent/server-core/handlers/rpc/messaging'),
     import('@craft-agent/server-core/handlers/rpc/pages'),
   ])
@@ -227,6 +229,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...collection.HANDLED_CHANNELS,
     ...gamification.HANDLED_CHANNELS,
     ...voice.HANDLED_CHANNELS,
+    ...environment.HANDLED_CHANNELS,
     ...messaging.HANDLED_CHANNELS,
     ...pages.HANDLED_CHANNELS,
     ...browser.HANDLED_CHANNELS,
