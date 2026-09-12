@@ -4,6 +4,8 @@ import { useAtomValue } from 'jotai'
 import { Brain, Pencil, Trash2, Check, Plus, Link2, ChevronDown, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Lesson, LessonCategory, LessonConflictVerdict, LessonScope, MemoryInsights, ProjectMemoryDto, PromotionCandidate } from '@craft-agent/shared/memory/types'
+import type { MemoryProposal } from '@craft-agent/shared/memory/proposals'
+import { MemoryProposalCard } from './MemoryProposalCard'
 import { useNavigation, routes } from '@/contexts/NavigationContext'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 
@@ -49,6 +51,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
   const [historyContent, setHistoryContent] = React.useState('')
   // L3: rules used in ≥2 workspaces, candidates for global promotion
   const [promotionCandidates, setPromotionCandidates] = React.useState<PromotionCandidate[]>([])
+  const [proposals, setProposals] = React.useState<MemoryProposal[]>([])
   // Y1: 7-day audit counters + live store aggregates for the insights card
   const [insights, setInsights] = React.useState<MemoryInsights | null>(null)
   // L2: conflicts reported by ADD_LESSON for the just-added rule (panel stays in the form)
@@ -109,6 +112,14 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
       .catch(() => setPromotionCandidates([]))
   }, [])
 
+  const loadProposals = React.useCallback(() => {
+    if (!workspaceId) { setProposals([]); return }
+    window.electronAPI
+      .listMemoryProposals(workspaceId)
+      .then((items) => setProposals(items.filter((p) => p.status !== 'deleted')))
+      .catch(() => setProposals([]))
+  }, [workspaceId])
+
   // Y1: the server accepts an optional workspace id — without one the card
   // falls back to global-only aggregates (audit reads are best-effort).
   const loadInsights = React.useCallback(() => {
@@ -133,6 +144,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
     loadPromotionCandidates()
     loadProjectMemory()
     loadInsights()
+    loadProposals()
     setHistoryDate(null)
     setHistoryContent('')
     setAddConflicts(null)
@@ -143,11 +155,12 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
       loadPromotionCandidates()
       loadProjectMemory()
       loadInsights()
+      loadProposals()
     })
     // Y1: pendingCount lives in the card, so pending-queue changes refresh it too.
     const offPending = window.electronAPI.onSkillsPendingChanged(() => loadInsights())
     return () => { off(); offPending() }
-  }, [loadLessons, loadContext, loadHistoryDates, loadPromotionCandidates, loadProjectMemory, loadInsights])
+  }, [loadLessons, loadContext, loadHistoryDates, loadPromotionCandidates, loadProjectMemory, loadInsights, loadProposals])
 
   const openDate = (date: string) => {
     if (!workspaceId) return
@@ -504,6 +517,15 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
           </button>
         )}
       </div>
+
+      {workspaceId && proposals.filter((p) => p.status === 'pending' || p.status === 'approved_project').length > 0 && (
+        <div className="mx-1 flex flex-col gap-2" data-memory-proposal-review>
+          <div className={sectionTitleClass()}>{t('memory.proposal.review')}</div>
+          {proposals.filter((p) => p.status === 'pending' || p.status === 'approved_project').map((proposal) => (
+            <MemoryProposalCard key={proposal.id} proposal={proposal} workspaceId={workspaceId} onChanged={loadProposals} />
+          ))}
+        </div>
+      )}
 
       {/* Category tabs with counters */}
       <div className="mx-1 flex flex-wrap items-center gap-1">

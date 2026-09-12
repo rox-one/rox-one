@@ -572,6 +572,12 @@ export const RPC_CHANNELS = {
     // plus the Y4 onboarding marker state.
     INSIGHTS: 'memory:insights',
     MARK_ONBOARDED: 'memory:markOnboarded',
+    LIST_PROPOSALS: 'memory:listProposals',
+    EXTRACT_PROPOSALS: 'memory:extractProposals',
+    APPROVE_PROPOSAL: 'memory:approveProposal',
+    REJECT_PROPOSAL: 'memory:rejectProposal',
+    EDIT_PROPOSAL: 'memory:editProposal',
+    DELETE_PROPOSAL: 'memory:deleteProposal',
     CHANGED: 'memory:changed',
   },
   statuses: {

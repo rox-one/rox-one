@@ -526,6 +526,12 @@ export const CHANNEL_MAP = {
   promoteLesson: invoke(RPC_CHANNELS.memory.PROMOTE_LESSON),
   listInsights: invoke(RPC_CHANNELS.memory.INSIGHTS),
   markMemoryOnboarded: invoke(RPC_CHANNELS.memory.MARK_ONBOARDED),
+  listMemoryProposals: invoke(RPC_CHANNELS.memory.LIST_PROPOSALS),
+  extractMemoryProposals: invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS),
+  approveMemoryProposal: invoke(RPC_CHANNELS.memory.APPROVE_PROPOSAL),
+  rejectMemoryProposal: invoke(RPC_CHANNELS.memory.REJECT_PROPOSAL),
+  editMemoryProposal: invoke(RPC_CHANNELS.memory.EDIT_PROPOSAL),
+  deleteMemoryProposal: invoke(RPC_CHANNELS.memory.DELETE_PROPOSAL),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
 
   // Statuses

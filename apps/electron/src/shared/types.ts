@@ -1456,6 +1456,28 @@ export interface ElectronAPI {
   listInsights(workspaceId?: string): Promise<MemoryInsights>
   // Y4: stamp the one-shot onboarding marker ({configDir}/memory/.onboarded)
   markMemoryOnboarded(): Promise<void>
+  listMemoryProposals(workspaceId: string, sessionId?: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal[]>
+  extractMemoryProposals(args: {
+    workspaceId: string
+    sessionId: string
+    projectId?: string
+    trigger: import('@craft-agent/shared/memory/proposals').MemoryProposalTrigger
+    messages: Array<{ id: string; role: string; content: string }>
+  }): Promise<{
+    disabled: boolean
+    proposals: import('@craft-agent/shared/memory/proposals').MemoryProposal[]
+    preview: string[]
+  }>
+  approveMemoryProposal(
+    workspaceId: string,
+    proposalId: string,
+    scope: import('@craft-agent/shared/memory/proposals').MemoryProposalScope,
+    editedText?: string,
+    projectId?: string,
+  ): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
+  rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
+  editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
+  deleteMemoryProposal(workspaceId: string, proposalId: string): Promise<boolean>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@craft-agent/core/mindmap').MindMapEntityRef
