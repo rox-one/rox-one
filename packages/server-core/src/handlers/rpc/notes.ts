@@ -11,6 +11,16 @@ import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
+import {
+  ensureVaultIndex,
+  getVaultBacklinks,
+  isVaultIndexAvailable,
+  listVaultDocuments,
+  queryVaultDocuments,
+  type VaultBacklink,
+  type VaultDocumentSummary,
+  type VaultWikiLink,
+} from '../../knowledge/vault-index.ts'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.LIST,
@@ -226,6 +236,82 @@ function parseNoteContent(content: string): ParsedNote {
   }
 }
 
+function wikiLinksToNoteLinks(links: VaultWikiLink[]): NoteLink[] {
+  return links.map(link => ({
+    target: link.target,
+    ...(link.alias ? { alias: link.alias } : {}),
+    line: link.line,
+  }))
+}
+
+function summaryFromVaultDoc(notesRoot: string, doc: VaultDocumentSummary): NoteSummary {
+  return {
+    id: doc.id,
+    title: doc.title,
+    path: join(notesRoot, doc.relativePath),
+    relativePath: doc.relativePath,
+    tags: doc.tags,
+    properties: doc.properties,
+    links: wikiLinksToNoteLinks(doc.links),
+    assetRefs: doc.assetRefs,
+    updatedAt: doc.updatedAt,
+    createdAt: doc.createdAt,
+    size: doc.size,
+  }
+}
+
+function backlinkFromVault(notesRoot: string, item: VaultBacklink): NoteBacklink {
+  return {
+    noteId: item.noteId,
+    title: item.title,
+    path: join(notesRoot, item.relativePath),
+    line: item.line,
+    preview: item.preview,
+  }
+}
+
+function tryListFromVaultIndex(notesRoot: string): NoteSummary[] | null {
+  if (!isVaultIndexAvailable()) return null
+  try {
+    const result = ensureVaultIndex(notesRoot)
+    if (!result.ok) return null
+    return listVaultDocuments(notesRoot).map(doc => summaryFromVaultDoc(notesRoot, doc))
+  } catch {
+    return null
+  }
+}
+
+function tryQueryFromVaultIndex(notesRoot: string, query: string): NoteSummary[] | null {
+  if (!isVaultIndexAvailable()) return null
+  try {
+    const result = ensureVaultIndex(notesRoot)
+    if (!result.ok) return null
+    return queryVaultDocuments(notesRoot, query).map(doc => summaryFromVaultDoc(notesRoot, doc))
+  } catch {
+    return null
+  }
+}
+
+function tryBacklinksFromVaultIndex(notesRoot: string, noteId: string): NoteBacklink[] | null {
+  if (!isVaultIndexAvailable()) return null
+  try {
+    const result = ensureVaultIndex(notesRoot)
+    if (!result.ok) return null
+    return getVaultBacklinks(notesRoot, noteId).map(item => backlinkFromVault(notesRoot, item))
+  } catch {
+    return null
+  }
+}
+
+function refreshVaultIndex(notesRoot: string): void {
+  if (!isVaultIndexAvailable()) return
+  try {
+    ensureVaultIndex(notesRoot)
+  } catch {
+    /* projection only — Markdown remains canonical */
+  }
+}
+
 async function summarizeNote(notesRoot: string, filePath: string): Promise<NoteSummary> {
   const [content, info] = await Promise.all([
     readFile(filePath, 'utf-8'),
@@ -255,6 +341,8 @@ async function summarizeNote(notesRoot: string, filePath: string): Promise<NoteS
 
 async function listNotes(notesRoot: string): Promise<NoteSummary[]> {
   await ensureNotesDirs(notesRoot)
+  const indexed = tryListFromVaultIndex(notesRoot)
+  if (indexed) return indexed
   const files = await listMarkdownFiles(notesRoot)
   const notes = await Promise.all(files.map(file => summarizeNote(notesRoot, file)))
   notes.sort((a, b) => b.updatedAt - a.updatedAt || a.title.localeCompare(b.title))
@@ -270,6 +358,8 @@ function noteMatchesTarget(note: NoteSummary, target: string): boolean {
 
 async function getBacklinks(notesRoot: string, noteId: string): Promise<NoteBacklink[]> {
   await ensureNotesDirs(notesRoot)
+  const indexed = tryBacklinksFromVaultIndex(notesRoot, noteId)
+  if (indexed) return indexed
   const notes = await listNotes(notesRoot)
   const target = notes.find(note => note.id === noteId)
   if (!target) return []
@@ -837,6 +927,7 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
       // new / unreadable note — treat as zero prior links
     }
     const note = await saveNote(notesRoot, noteId, content)
+    refreshVaultIndex(notesRoot)
     const nextLinkCount = note.links?.length ?? 0
     if (nextLinkCount > previousLinkCount) {
       awardXpSafe('note_linked')
@@ -847,12 +938,14 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
 
   server.handle(RPC_CHANNELS.notes.CREATE, async (_ctx, workspaceId: string, title: string, folder?: string) => {
     const note = await createNote(getWorkspaceNotesRoot(workspaceId), title, folder)
+    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'create', noteId: note.id })
     return note
   })
 
   server.handle(RPC_CHANNELS.notes.RENAME, async (_ctx, workspaceId: string, noteId: string, nextTitle: string) => {
     const result = await renameNote(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle)
+    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'rename', noteId: result.note.id })
     return result
   })
@@ -861,24 +954,29 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureNotesDirs(notesRoot)
     await unlink(notePathFromId(notesRoot, noteId))
+    refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'delete', noteId })
     return true
   })
 
   server.handle(RPC_CHANNELS.notes.RENAME_FOLDER, async (_ctx, workspaceId: string, folder: string, nextName: string) => {
     const result = await renameFolder(getWorkspaceNotesRoot(workspaceId), folder, nextName)
+    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'rename' })
     return result
   })
 
   server.handle(RPC_CHANNELS.notes.DELETE_FOLDER, async (_ctx, workspaceId: string, folder: string) => {
     const result = await deleteFolder(getWorkspaceNotesRoot(workspaceId), folder)
+    refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'delete' })
     return result
   })
 
   server.handle(RPC_CHANNELS.notes.SEARCH, async (_ctx, workspaceId: string, query: string) => {
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    const indexed = tryQueryFromVaultIndex(notesRoot, query)
+    if (indexed) return indexed
     const notes = await listNotes(notesRoot)
     const q = query.trim().toLowerCase()
     if (!q) return notes
@@ -916,6 +1014,7 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
     if (!existsSync(filePath)) {
       await mkdir(dirname(filePath), { recursive: true })
       await writeFile(filePath, await buildDailyNoteContent(notesRoot, dailyDate), 'utf-8')
+      refreshVaultIndex(notesRoot)
       changed({ workspaceId, reason: 'create', noteId: id })
     }
     return readNote(notesRoot, id)
@@ -947,7 +1046,9 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
   })
 
   server.handle(RPC_CHANNELS.notes.UPDATE_PROPERTIES, async (_ctx, workspaceId: string, noteId: string, properties: Record<string, unknown>) => {
-    const note = await updateNoteProperties(getWorkspaceNotesRoot(workspaceId), noteId, properties)
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    const note = await updateNoteProperties(notesRoot, noteId, properties)
+    refreshVaultIndex(notesRoot)
     changed({ workspaceId, reason: 'properties', noteId: note.id })
     return note
   })
