@@ -19,7 +19,20 @@ import {
   type Viewport,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Brain, Cpu, DatabaseZap, FileText, Trash2, type LucideIcon } from 'lucide-react'
+import {
+  Brain,
+  Cpu,
+  DatabaseZap,
+  FileText,
+  Flag,
+  GitBranch,
+  GitMerge,
+  Split,
+  Square,
+  Trash2,
+  UserRound,
+  type LucideIcon,
+} from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -42,7 +55,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { SessionFanOutSheet, type FanOutChildJob } from './SessionFanOutSheet'
-import { SceneNode } from './SceneNode'
+import { SceneNode, sceneVisualStatus } from './SceneNode'
 import { toFlowElements, type FlowSceneNode, type SceneNodeData } from './to-flow-elements'
 import { holesFromScene } from './holes-from-scene'
 import {
@@ -55,7 +68,21 @@ import {
   type SessionDraftGraph,
   type SessionDraftNode,
 } from './draft-nodes'
-import { deriveSessionNodeKind, type SessionNodeKind } from './node-kinds'
+import { deriveSessionNodeKind, SESSION_NODE_KINDS, type SessionNodeKind } from './node-kinds'
+import { draftGraphToSpec, loadWorkflowDocument, persistWorkflowDocument, specToDraftGraph } from './workflow-document'
+import {
+  compareVersions,
+  exportSpec,
+  forkVersion,
+  importSpec,
+  promoteTraceToDraft,
+  recordRun,
+  replayRun,
+  runWorkflow,
+  saveVersion,
+  convertNodeKind,
+  type WorkflowRun,
+} from '@craft-agent/shared/workflows'
 import {
   alignBoxes,
   distributeBoxes,
@@ -65,7 +92,6 @@ import {
   type AlignMode,
   type DistributeMode,
 } from './canvas-layout'
-import { sceneVisualStatus } from './SceneNode'
 
 export type RelatedBranch = {
   id: string
@@ -91,6 +117,12 @@ const SESSION_NODE_KIND_I18N: Record<SessionNodeKind, string> = {
   model: 'entityView.mapKindModel',
   tool: 'entityView.mapKindTool',
   memory: 'entityView.mapKindMemory',
+  subflow: 'entityView.mapKindSubflow',
+  condition: 'entityView.mapKindCondition',
+  merge: 'entityView.mapKindMerge',
+  human_input: 'entityView.mapKindHumanInput',
+  output: 'entityView.mapKindOutput',
+  annotation_frame: 'entityView.mapKindFrame',
 }
 
 const SESSION_DRAFT_PROMPT_I18N: Record<SessionNodeKind, string> = {
@@ -98,6 +130,25 @@ const SESSION_DRAFT_PROMPT_I18N: Record<SessionNodeKind, string> = {
   model: 'entityView.mapDraftModel',
   tool: 'entityView.mapDraftTool',
   memory: 'entityView.mapDraftMemory',
+  subflow: 'entityView.mapDraftSubflow',
+  condition: 'entityView.mapDraftCondition',
+  merge: 'entityView.mapDraftMerge',
+  human_input: 'entityView.mapDraftHumanInput',
+  output: 'entityView.mapDraftOutput',
+  annotation_frame: 'entityView.mapDraftFrame',
+}
+
+const PALETTE_ICONS: Record<SessionNodeKind, LucideIcon> = {
+  note: FileText,
+  model: Cpu,
+  tool: DatabaseZap,
+  memory: Brain,
+  subflow: GitBranch,
+  condition: Split,
+  merge: GitMerge,
+  human_input: UserRound,
+  output: Flag,
+  annotation_frame: Square,
 }
 
 
@@ -118,16 +169,12 @@ type DraftNodeData = {
   kindLabel: string
   placeholder: string
   deleteAriaLabel: string
+  runStatus?: string
   onChangeTitle: (id: string, title: string) => void
   onDelete: (id: string) => void
 }
 
-const DRAFT_NODE_ICONS: Record<SessionNodeKind, LucideIcon> = {
-  note: FileText,
-  model: Cpu,
-  tool: DatabaseZap,
-  memory: Brain,
-}
+const DRAFT_NODE_ICONS: Record<SessionNodeKind, LucideIcon> = PALETTE_ICONS
 
 function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) {
   const Icon = DRAFT_NODE_ICONS[data.draft.kind]
@@ -155,6 +202,11 @@ function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) 
         {data.draft.anchorSceneId ? (
           <span className="shrink-0 rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
             {data.draft.anchorSceneId}
+          </span>
+        ) : null}
+        {data.runStatus ? (
+          <span className="shrink-0 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-100">
+            {data.runStatus}
           </span>
         ) : null}
         <button
@@ -224,6 +276,8 @@ function EditorInner({
   const { t } = useTranslation()
   const [pin, setPin] = React.useState<SessionMapPin | null>(() => loadPin(sessionId))
   const [draftGraph, setDraftGraph] = React.useState<SessionDraftGraph>(() => loadDraftGraph(sessionId))
+  const [workflowDoc, setWorkflowDoc] = React.useState(() => loadWorkflowDocument(sessionId, loadDraftGraph(sessionId)))
+  const importRef = React.useRef<HTMLInputElement>(null)
   const [camera, setCamera] = React.useState<SessionMapCamera>(() => loadPin(sessionId)?.camera ?? 'map')
   const [selectedId, setSelectedId] = React.useState<string | null>(null)
   const [selectedDraftEdgeId, setSelectedDraftEdgeId] = React.useState<string | null>(null)
@@ -240,8 +294,10 @@ function EditorInner({
 
   React.useEffect(() => {
     const next = loadPin(sessionId)
+    const nextDraft = loadDraftGraph(sessionId)
     setPin(next)
-    setDraftGraph(loadDraftGraph(sessionId))
+    setDraftGraph(nextDraft)
+    setWorkflowDoc(loadWorkflowDocument(sessionId, nextDraft))
     setCamera(next?.camera ?? 'map')
     viewportRef.current = next?.viewport
     setSelectedId(null)
@@ -296,6 +352,23 @@ function EditorInner({
       } catch {
         /* ignore quota */
       }
+      setWorkflowDoc((prev) => {
+        const spec = draftGraphToSpec(nextGraph)
+        const nextDoc = {
+          ...prev,
+          sessionId,
+          draft: {
+            ...spec,
+            id: prev.draft.id,
+            versionId: prev.draft.versionId,
+            parentVersionId: prev.draft.parentVersionId,
+            title: prev.draft.title,
+            defaults: prev.draft.defaults,
+          },
+        }
+        persistWorkflowDocument(nextDoc)
+        return nextDoc
+      })
     },
     [sessionId],
   )
@@ -352,6 +425,7 @@ function EditorInner({
     [projected, t],
   )
 
+  const lastRun = workflowDoc.runs[workflowDoc.runs.length - 1] as WorkflowRun | undefined
   const draftFlowNodes = React.useMemo<Node<DraftNodeData, 'draft'>[]>(
     () =>
       draftNodes.map((draftNode) => ({
@@ -363,11 +437,12 @@ function EditorInner({
           kindLabel: t(SESSION_NODE_KIND_I18N[draftNode.kind]),
           placeholder: t(SESSION_DRAFT_PROMPT_I18N[draftNode.kind]),
           deleteAriaLabel: t('entityView.mapDeleteDraftNode'),
+          runStatus: lastRun?.status[draftNode.id],
           onChangeTitle: updateDraftTitle,
           onDelete: deleteDraftNode,
         },
       })),
-    [deleteDraftNode, draftNodes, t, updateDraftTitle],
+    [deleteDraftNode, draftNodes, lastRun, t, updateDraftTitle],
   )
 
   const flowSeedNodes = React.useMemo(
@@ -612,6 +687,154 @@ function EditorInner({
     [camera, draftEdges, draftNodes, nodes, persistDraftGraph, persistPin, pin?.nodes, sessionId],
   )
 
+  const currentSpec = React.useCallback(() => {
+    const spec = draftGraphToSpec({ v: 1, sessionId, nodes: draftNodes, edges: draftEdges })
+    return {
+      ...spec,
+      id: workflowDoc.draft.id,
+      versionId: workflowDoc.draft.versionId,
+      parentVersionId: workflowDoc.draft.parentVersionId,
+      title: workflowDoc.draft.title,
+    }
+  }, [draftEdges, draftNodes, sessionId, workflowDoc.draft])
+
+  const handleSaveVersion = React.useCallback(() => {
+    try {
+      const next = saveVersion({ ...workflowDoc, draft: currentSpec() })
+      setWorkflowDoc(next)
+      persistWorkflowDocument(next)
+      toast.success(t('entityView.mapVersionSaved'))
+    } catch (error) {
+      toast.error(t('entityView.mapValidationBlocked'), {
+        description: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }, [currentSpec, t, workflowDoc])
+
+  const handlePromoteTrace = React.useCallback(() => {
+    const promoted = promoteTraceToDraft({ sessionId, scenes: graph.scenes })
+    const extras = draftNodes.filter((node) => !node.anchorSceneId && !promoted.nodes.some((item) => item.id === node.id))
+    persistDraftGraph({
+      nodes: [...specToDraftGraph(promoted).nodes, ...extras],
+      edges: [...specToDraftGraph(promoted).edges, ...draftEdges.filter((edge) => extras.some((node) => node.id === edge.source || node.id === edge.target))],
+    })
+    toast.success(t('entityView.mapPromoteTrace'))
+  }, [draftEdges, draftNodes, graph.scenes, persistDraftGraph, sessionId, t])
+
+  const handleRun = React.useCallback(
+    (mode: 'node' | 'from-here' | 'selection' | 'pipeline') => {
+      try {
+        let document = { ...workflowDoc, draft: currentSpec() }
+        document = saveVersion(document)
+        const spec = document.versions[document.versions.length - 1] ?? document.draft
+        const seedIds =
+          mode === 'pipeline'
+            ? []
+            : mode === 'selection'
+              ? nodes.filter((node) => node.selected).map((node) => node.id)
+              : selectedId
+                ? [selectedId]
+                : []
+        const run = runWorkflow({ spec, mode, seedIds })
+        const next = recordRun(document, run)
+        setWorkflowDoc(next)
+        persistWorkflowDocument(next)
+        toast.success(t('entityView.mapRunComplete'))
+      } catch (error) {
+        toast.error(t('entityView.mapValidationBlocked'), {
+          description: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+    [currentSpec, nodes, selectedId, t, workflowDoc],
+  )
+
+  const handleReplay = React.useCallback(() => {
+    const previous = workflowDoc.runs[workflowDoc.runs.length - 1]
+    const version = workflowDoc.versions.find((item) => item.versionId === previous?.specVersionId)
+    if (!previous || !version) {
+      toast.error(t('entityView.mapValidationBlocked'))
+      return
+    }
+    try {
+      const run = replayRun(version, previous)
+      const next = recordRun(workflowDoc, run)
+      setWorkflowDoc(next)
+      persistWorkflowDocument(next)
+      toast.success(t('entityView.mapRunComplete'))
+    } catch (error) {
+      toast.error(t('entityView.mapValidationBlocked'), {
+        description: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }, [t, workflowDoc])
+
+  const handleForkVersion = React.useCallback(() => {
+    const version = workflowDoc.versions[workflowDoc.versions.length - 1]
+    if (!version) {
+      toast.error(t('entityView.mapValidationBlocked'))
+      return
+    }
+    const next = forkVersion(workflowDoc, version.versionId)
+    setWorkflowDoc(next)
+    persistWorkflowDocument(next)
+    persistDraftGraph(specToDraftGraph(next.draft))
+  }, [persistDraftGraph, t, workflowDoc])
+
+  const handleCompareVersions = React.useCallback(() => {
+    const [older, newer] = workflowDoc.versions.slice(-2)
+    if (!older || !newer) {
+      toast.message(t('entityView.mapCompareVersions'))
+      return
+    }
+    const diff = compareVersions(older, newer)
+    toast.message(t('entityView.mapCompareVersions'), {
+      description: `+${diff.addedNodes.length}/-${diff.removedNodes.length} nodes`,
+    })
+  }, [t, workflowDoc.versions])
+
+  const handleExport = React.useCallback(() => {
+    const blob = new Blob([exportSpec(currentSpec())], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${sessionId}.workflow.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }, [currentSpec, sessionId])
+
+  const handleImport = React.useCallback(
+    async (file: File) => {
+      try {
+        const spec = importSpec(await file.text(), sessionId)
+        persistDraftGraph(specToDraftGraph(spec))
+      } catch (error) {
+        toast.error(t('entityView.mapValidationBlocked'), {
+          description: error instanceof Error ? error.message : String(error),
+        })
+      }
+    },
+    [persistDraftGraph, sessionId, t],
+  )
+
+  const handleConvert = React.useCallback(
+    (kind: SessionNodeKind) => {
+      if (!selectedId || !draftNodes.some((node) => node.id === selectedId)) return
+      persistDraftGraph({
+        nodes: draftNodes.map((node) => {
+          if (node.id !== selectedId) return node
+          const converted = convertNodeKind(
+            draftGraphToSpec({ v: 1, sessionId, nodes: [node], edges: [] }).nodes[0]!,
+            kind,
+          )
+          return { ...node, kind: converted.kind, title: node.title }
+        }),
+        edges: draftEdges,
+      })
+    },
+    [draftEdges, draftNodes, persistDraftGraph, selectedId, sessionId],
+  )
+
   const selected = graph.scenes.find((s) => s.id === selectedId) ?? null
   const selectedDraft = draftNodes.find((node) => node.id === selectedId) ?? null
 
@@ -770,6 +993,44 @@ function EditorInner({
               <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('tile')}>
                 {t('entityView.mapTile')}
               </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                onClick={handlePromoteTrace}
+              >
+                {t('entityView.mapPromoteTrace')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                onClick={handleSaveVersion}
+              >
+                {t('entityView.mapSaveVersion')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                onClick={() => handleRun('pipeline')}
+              >
+                {t('entityView.mapRunPipeline')}
+              </Button>
+              <input
+                ref={importRef}
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0]
+                  if (file) void handleImport(file)
+                  event.currentTarget.value = ''
+                }}
+              />
             </div>
           </div>
 
@@ -858,6 +1119,14 @@ function EditorInner({
               setSelectedId(null)
               setSelectedDraftEdgeId(null)
               setContextTargetId(null)
+            }}
+            onDoubleClick={(event) => {
+              const target = event.target as HTMLElement
+              if (target.classList.contains('react-flow__pane')) {
+                hasContextPositionRef.current = true
+                rememberContextPosition(event)
+                handleCreateNode('note')
+              }
             }}
             onPaneContextMenu={(event) => {
               rememberContextPosition(event)
@@ -978,22 +1247,15 @@ function EditorInner({
         <StyledContextMenuSub>
           <StyledContextMenuSubTrigger>{t('entityView.mapAddNode')}</StyledContextMenuSubTrigger>
           <StyledContextMenuSubContent minWidth="min-w-56">
-            <StyledContextMenuItem onSelect={() => handleCreateNode('note')}>
-              <FileText className="h-3.5 w-3.5" />
-              {t('entityView.mapKindNote')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => handleCreateNode('model')}>
-              <Cpu className="h-3.5 w-3.5" />
-              {t('entityView.mapKindModel')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => handleCreateNode('tool')}>
-              <DatabaseZap className="h-3.5 w-3.5" />
-              {t('entityView.mapKindTool')}
-            </StyledContextMenuItem>
-            <StyledContextMenuItem onSelect={() => handleCreateNode('memory')}>
-              <Brain className="h-3.5 w-3.5" />
-              {t('entityView.mapKindMemory')}
-            </StyledContextMenuItem>
+            {SESSION_NODE_KINDS.map((kind) => {
+              const Icon = PALETTE_ICONS[kind]
+              return (
+                <StyledContextMenuItem key={kind} onSelect={() => handleCreateNode(kind)}>
+                  <Icon className="h-3.5 w-3.5" />
+                  {t(SESSION_NODE_KIND_I18N[kind])}
+                </StyledContextMenuItem>
+              )
+            })}
           </StyledContextMenuSubContent>
         </StyledContextMenuSub>
         <StyledContextMenuItem onSelect={() => handleCreateChrome('sticky')}>
@@ -1011,6 +1273,24 @@ function EditorInner({
         </StyledContextMenuItem>
         <StyledContextMenuItem onSelect={resetLayout}>
           {t('entityView.mapResetLayout')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={handlePromoteTrace}>
+          {t('entityView.mapPromoteTrace')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={handleSaveVersion}>
+          {t('entityView.mapSaveVersion')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={handleExport}>
+          {t('entityView.mapExportSpec')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={() => importRef.current?.click()}>
+          {t('entityView.mapImportSpec')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={handleForkVersion}>
+          {t('entityView.mapForkVersion')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={handleCompareVersions}>
+          {t('entityView.mapCompareVersions')}
         </StyledContextMenuItem>
         {selected ? (
           <>
@@ -1034,6 +1314,31 @@ function EditorInner({
         {selectedDraft ? (
           <>
             <StyledContextMenuSeparator />
+            <StyledContextMenuSub>
+              <StyledContextMenuSubTrigger>{t('entityView.mapConvertNode')}</StyledContextMenuSubTrigger>
+              <StyledContextMenuSubContent minWidth="min-w-56">
+                {SESSION_NODE_KINDS.map((kind) => (
+                  <StyledContextMenuItem key={kind} onSelect={() => handleConvert(kind)}>
+                    {t(SESSION_NODE_KIND_I18N[kind])}
+                  </StyledContextMenuItem>
+                ))}
+              </StyledContextMenuSubContent>
+            </StyledContextMenuSub>
+            <StyledContextMenuItem onSelect={() => handleRun('node')}>
+              {t('entityView.mapRunNode')}
+            </StyledContextMenuItem>
+            <StyledContextMenuItem onSelect={() => handleRun('from-here')}>
+              {t('entityView.mapRunFromHere')}
+            </StyledContextMenuItem>
+            <StyledContextMenuItem onSelect={() => handleRun('selection')}>
+              {t('entityView.mapRunSelection')}
+            </StyledContextMenuItem>
+            <StyledContextMenuItem onSelect={() => handleRun('pipeline')}>
+              {t('entityView.mapRunPipeline')}
+            </StyledContextMenuItem>
+            <StyledContextMenuItem onSelect={handleReplay}>
+              {t('entityView.mapReplayRun')}
+            </StyledContextMenuItem>
             <StyledContextMenuItem variant="destructive" onSelect={() => deleteDraftNode(selectedDraft.id)}>
               <Trash2 className="h-3.5 w-3.5" />
               {t('entityView.mapDeleteDraftNode')}
