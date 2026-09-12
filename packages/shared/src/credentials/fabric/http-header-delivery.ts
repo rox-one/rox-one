@@ -8,6 +8,9 @@ function readToken(materialization: ProviderMaterialization): string {
   if (typeof token !== 'string' || token.length === 0) {
     throw new Error('missing_token');
   }
+  for (let i = 0; i < token.length; i++) {
+    if (token.charCodeAt(i) < 32) throw new Error('invalid_token');
+  }
   return token;
 }
 
