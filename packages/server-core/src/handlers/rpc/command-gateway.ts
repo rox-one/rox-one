@@ -60,6 +60,12 @@ function requireStore(deps: HandlerDeps): NonNullable<HandlerDeps['commandGatewa
   return store
 }
 
+export const HANDLED_CHANNELS = [
+  RPC_CHANNELS.commandGateway.LIST,
+  RPC_CHANNELS.commandGateway.APPROVE,
+  RPC_CHANNELS.commandGateway.DENY,
+] as const
+
 export function registerCommandGatewayHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.commandGateway.LIST, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
