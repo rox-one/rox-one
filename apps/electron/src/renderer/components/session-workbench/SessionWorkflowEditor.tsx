@@ -56,6 +56,16 @@ import {
   type SessionDraftNode,
 } from './draft-nodes'
 import { deriveSessionNodeKind, type SessionNodeKind } from './node-kinds'
+import {
+  alignBoxes,
+  distributeBoxes,
+  keyboardConnectTarget,
+  magneticPorts,
+  tileBoxes,
+  type AlignMode,
+  type DistributeMode,
+} from './canvas-layout'
+import { sceneVisualStatus } from './SceneNode'
 
 export type RelatedBranch = {
   id: string
@@ -121,10 +131,16 @@ const DRAFT_NODE_ICONS: Record<SessionNodeKind, LucideIcon> = {
 
 function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) {
   const Icon = DRAFT_NODE_ICONS[data.draft.kind]
+  const role = data.draft.role ?? 'node'
   return (
     <div
+      data-role={role}
       className={cn(
-        'group relative w-[224px] min-w-0 overflow-hidden rounded-xl border border-white/10 bg-background/80 p-2 text-left shadow-strong backdrop-blur-xl',
+        'group relative min-w-0 overflow-hidden border p-2 text-left shadow-strong backdrop-blur-xl',
+        role === 'sticky' && 'w-[180px] rounded-md border-amber-400/40 bg-amber-300/20',
+        role === 'frame' && 'w-[280px] rounded-md border-dashed border-foreground/35 bg-transparent',
+        role === 'group' && 'w-[260px] rounded-md border-dashed border-violet-400/35 bg-foreground/[0.04]',
+        role === 'node' && 'w-[224px] rounded-lg border-border/70 bg-background/80',
         selected && 'border-violet-400/70 ring-1 ring-violet-400/30',
       )}
     >
@@ -522,6 +538,80 @@ function EditorInner({
     [anchorScene?.id, draftEdges, draftNodes, persistDraftGraph, t],
   )
 
+  const handleCreateChrome = React.useCallback(
+    (role: 'sticky' | 'frame' | 'group') => {
+      const position = hasContextPositionRef.current
+        ? contextPositionRef.current
+        : { x: 48, y: 48 }
+      const next = createSessionDraftNode({
+        kind: 'note',
+        position,
+        anchorSceneId: anchorScene?.id ?? null,
+        title: t(
+          role === 'sticky'
+            ? 'entityView.mapSticky'
+            : role === 'frame'
+              ? 'entityView.mapFrame'
+              : 'entityView.mapGroup',
+        ),
+        role,
+      })
+      persistDraftGraph({ nodes: [...draftNodes, next], edges: draftEdges })
+      setSelectedId(next.id)
+    },
+    [anchorScene?.id, draftEdges, draftNodes, persistDraftGraph, t],
+  )
+
+  const applyCanvasLayout = React.useCallback(
+    (mode: AlignMode | DistributeMode | 'tile') => {
+      const selectedBoxes = nodes
+        .filter((node) => node.selected)
+        .map((node) => ({
+          id: node.id,
+          x: node.position.x,
+          y: node.position.y,
+          width: 198,
+          height: 88,
+        }))
+      const nextBoxes =
+        mode === 'tile'
+          ? tileBoxes(selectedBoxes.length ? selectedBoxes : nodes.map((node) => ({
+              id: node.id,
+              x: node.position.x,
+              y: node.position.y,
+              width: 198,
+              height: 88,
+            })))
+          : mode === 'horizontal' || mode === 'vertical'
+            ? distributeBoxes(selectedBoxes, mode)
+            : alignBoxes(selectedBoxes, mode)
+      if (nextBoxes.length === 0) return
+      const byId = new Map(nextBoxes.map((box) => [box.id, box]))
+      persistDraftGraph({
+        nodes: draftNodes.map((node) => {
+          const box = byId.get(node.id)
+          return box ? { ...node, position: { x: box.x, y: box.y } } : node
+        }),
+        edges: draftEdges,
+      })
+      persistPin({
+        v: 1,
+        sessionId,
+        camera,
+        ...(viewportRef.current ? { viewport: viewportRef.current } : {}),
+        nodes: {
+          ...(pin?.nodes ?? {}),
+          ...Object.fromEntries(
+            nextBoxes
+              .filter((box) => !draftNodes.some((draft) => draft.id === box.id))
+              .map((box) => [box.id, { x: box.x, y: box.y }]),
+          ),
+        },
+      })
+    },
+    [camera, draftEdges, draftNodes, nodes, persistDraftGraph, persistPin, pin?.nodes, sessionId],
+  )
+
   const selected = graph.scenes.find((s) => s.id === selectedId) ?? null
   const selectedDraft = draftNodes.find((node) => node.id === selectedId) ?? null
 
@@ -540,6 +630,14 @@ function EditorInner({
 
   const selectedKind = selected ? sceneLabelKind(selected) : null
   const selectedKindLabel = selectedKind ? t('entityView.mapKindInferred', { kind: t(SESSION_NODE_KIND_I18N[selectedKind]) }) : ''
+  const selectedStatus = selected ? sceneVisualStatus(selected.tools, true) : null
+
+  React.useEffect(() => {
+    if (!selected) return
+    const status = sceneVisualStatus(selected.tools)
+    if (status !== 'running' && status !== 'waiting') return
+    flowRef.current?.fitView({ nodes: [{ id: selected.id }], padding: 0.35 })
+  }, [selected])
 
   return (
     <ContextMenu>
@@ -547,6 +645,37 @@ function EditorInner({
         <div
           className="session-workflow-editor relative flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-background"
           onContextMenu={rememberTriggerPosition}
+          onKeyDown={(event) => {
+            if (!selectedId) return
+            if (!(event.altKey || event.metaKey) || !['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return
+            event.preventDefault()
+            const direction =
+              event.key === 'ArrowLeft' ? 'left'
+                : event.key === 'ArrowRight' ? 'right'
+                  : event.key === 'ArrowUp' ? 'top'
+                    : 'bottom'
+            const target = keyboardConnectTarget(
+              selectedId,
+              direction,
+              nodes.map((node) => ({
+                id: node.id,
+                x: node.position.x,
+                y: node.position.y,
+                width: 198,
+                height: 88,
+              })),
+            )
+            if (!target) return
+            const magnet = magneticPorts(
+              { id: selectedId, x: 0, y: 0, width: 198, height: 88 },
+              { id: target, x: 1, y: 0, width: 198, height: 88 },
+            )
+            const next = createSessionDraftEdge({ source: selectedId, target })
+            if (canPersistDraftEdge(next, draftNodes, draftEdges)) {
+              persistDraftGraph({ nodes: draftNodes, edges: [...draftEdges, next] })
+            }
+            void magnet
+          }}
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.12),transparent_30%)]" />
           <div
@@ -614,21 +743,48 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                className="h-7 rounded-md border-border/70 bg-background/70 px-2.5 text-[11px]"
                 onClick={resetLayout}
               >
                 {t('entityView.mapResetLayout')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-md border-border/70 bg-background/70 px-2.5 text-[11px]"
+                disabled={!selected}
+                onClick={() => {
+                  const prompt = draft.trim() || selected?.triggerPreview
+                  if (selected && prompt) onRewrite?.(selected.triggerMessageId, prompt)
+                }}
+              >
+                {t('entityView.mapRun')}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('left')}>
+                {t('entityView.mapAlign')}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('horizontal')}>
+                {t('entityView.mapDistribute')}
+              </Button>
+              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('tile')}>
+                {t('entityView.mapTile')}
               </Button>
             </div>
           </div>
 
           <div className="relative min-h-0 flex-1">
           {selected && (
-            <div className="pointer-events-auto absolute right-3 top-3 z-10 flex w-[min(18rem,calc(100%-1.5rem))] flex-col gap-2 rounded-xl border border-white/10 bg-background/70 p-3 shadow-strong backdrop-blur-2xl">
+            <div className="pointer-events-auto absolute right-3 top-3 z-10 flex w-[min(18rem,calc(100%-1.5rem))] flex-col gap-2 rounded-lg border border-border/60 bg-background/80 p-3 shadow-strong backdrop-blur-2xl" data-testid="session-canvas-inspector">
               <div className="flex items-center gap-2">
-                <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                <span className="rounded-full border border-border/60 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
                   {selectedKindLabel}
                 </span>
+                {selectedStatus ? (
+                  <span className="rounded-full border border-border/50 px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    {t(`entityView.mapStatus.${selectedStatus}`)}
+                  </span>
+                ) : null}
                 <span className="truncate text-xs text-muted-foreground">{selected.triggerPreview || selected.id}</span>
               </div>
               <label className="sr-only" htmlFor="session-map-compose">
@@ -840,6 +996,15 @@ function EditorInner({
             </StyledContextMenuItem>
           </StyledContextMenuSubContent>
         </StyledContextMenuSub>
+        <StyledContextMenuItem onSelect={() => handleCreateChrome('sticky')}>
+          {t('entityView.mapSticky')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={() => handleCreateChrome('frame')}>
+          {t('entityView.mapFrame')}
+        </StyledContextMenuItem>
+        <StyledContextMenuItem onSelect={() => handleCreateChrome('group')}>
+          {t('entityView.mapGroup')}
+        </StyledContextMenuItem>
         <StyledContextMenuSeparator />
         <StyledContextMenuItem onSelect={() => flowRef.current?.fitView({ padding: 0.2 })}>
           {t('entityView.mapFit')}

@@ -7,6 +7,7 @@ export type SessionDraftNode = {
   position: { x: number; y: number }
   anchorSceneId: string | null
   createdAt: number
+  role?: 'node' | 'sticky' | 'frame' | 'group'
 }
 
 export type SessionDraftEdge = {
@@ -43,6 +44,7 @@ export function createSessionDraftNode({
   anchorSceneId = null,
   now = Date.now(),
   title,
+  role = 'node',
 }: {
   id?: string
   kind: SessionNodeKind
@@ -50,6 +52,7 @@ export function createSessionDraftNode({
   anchorSceneId?: string | null
   now?: number
   title?: string
+  role?: SessionDraftNode['role']
 }): SessionDraftNode {
   nextDraftSequence += 1
   return {
@@ -59,6 +62,7 @@ export function createSessionDraftNode({
     position,
     anchorSceneId,
     createdAt: now,
+    role,
   }
 }
 
@@ -128,7 +132,8 @@ function isDraftNode(value: unknown): value is SessionDraftNode {
     typeof position?.x === 'number' &&
     typeof position?.y === 'number' &&
     (node.anchorSceneId === null || typeof node.anchorSceneId === 'string') &&
-    typeof node.createdAt === 'number'
+    typeof node.createdAt === 'number' &&
+    (node.role === undefined || node.role === 'node' || node.role === 'sticky' || node.role === 'frame' || node.role === 'group')
   )
 }
 
