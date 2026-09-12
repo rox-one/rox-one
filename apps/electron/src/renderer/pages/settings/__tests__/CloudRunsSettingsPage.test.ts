@@ -60,4 +60,12 @@ describe('CloudRunsSettingsPage compact layout and recovery', () => {
     expect(source).not.toContain('cloudflare')
     expect(source).not.toContain('modal')
   })
+
+  it('exposes a Rox-native sandbox tab instead of embedding grok-bot UI', () => {
+    expect(source).toContain("t('settings.cloudRuns.sectionSandbox')")
+    expect(source).toContain("t('settings.cloudRuns.sandboxTab')")
+    expect(source).toContain("t('settings.cloudRuns.sandboxGated')")
+    expect(source).not.toContain('grok-bot')
+    expect(source).not.toContain('iframe')
+  })
 })
