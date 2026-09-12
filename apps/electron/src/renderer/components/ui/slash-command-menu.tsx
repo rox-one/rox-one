@@ -1,16 +1,17 @@
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
 import { Command as CommandPrimitive } from 'cmdk'
-import { Check, Minimize2, Undo2 } from 'lucide-react'
+import { Check, CloudUpload, Download, Link2, Minimize2, Sparkles, Undo2 } from 'lucide-react'
 import { Icon_Folder } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
 import { PERMISSION_MODE_CONFIG, PERMISSION_MODE_ORDER, type PermissionMode } from '@craft-agent/shared/agent/modes'
+import { getCliCommand, type CliCommandId } from '@craft-agent/shared/cli'
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type SlashCommandId = PermissionMode | 'compact' | 'undo'
+export type SlashCommandId = PermissionMode | CliCommandId
 
 /** Union type for all item types in the slash menu */
 export type SlashItemType = 'command' | 'folder'
@@ -104,10 +105,39 @@ const undoCommand: SlashCommand = {
   icon: <Undo2 className={MENU_ICON_SIZE} />,
 }
 
+const shareCommand: SlashCommand = {
+  id: 'share',
+  label: 'Share',
+  description: 'Publish a read-only session link',
+  icon: <CloudUpload className={MENU_ICON_SIZE} />,
+}
+
+const joinCommand: SlashCommand = {
+  id: 'join',
+  label: 'Join',
+  description: 'Open a shared session link',
+  icon: <Link2 className={MENU_ICON_SIZE} />,
+}
+
+const exportCommand: SlashCommand = {
+  id: 'export',
+  label: 'Export',
+  description: 'Save a portable session bundle',
+  icon: <Download className={MENU_ICON_SIZE} />,
+}
+
+const vibeCommand: SlashCommand = {
+  id: 'vibe',
+  label: 'Vibe',
+  description: 'Creative Rox CLI workflow',
+  icon: <Sparkles className={MENU_ICON_SIZE} />,
+}
+
+const nativeMappedCommands: SlashCommand[] = [compactCommand, undoCommand, shareCommand, joinCommand, exportCommand, vibeCommand]
+
 export const DEFAULT_SLASH_COMMANDS: SlashCommand[] = [
   ...permissionModeCommands,
-  compactCommand,
-  undoCommand,
+  ...nativeMappedCommands,
 ]
 
 export const DEFAULT_SLASH_COMMAND_GROUPS: CommandGroup[] = [
@@ -174,7 +204,12 @@ const MODE_COMMAND_IDS = new Set<string>(['safe', 'ask', 'allow-all'])
 
 function CommandItemContent({ command, isActive }: { command: SlashCommand; isActive: boolean }) {
   const { t } = useTranslation()
-  const label = MODE_COMMAND_IDS.has(command.id) ? t(`mode.${command.id}`, command.label) : command.label
+  const catalog = getCliCommand(command.id)
+  const label = MODE_COMMAND_IDS.has(command.id)
+    ? t(`mode.${command.id}`, command.label)
+    : catalog
+      ? t(catalog.labelKey, command.label)
+      : command.label
   return (
     <>
       <div className="shrink-0 text-muted-foreground">{command.icon}</div>
@@ -343,6 +378,7 @@ export function InlineSlashCommand({
   position,
   className,
 }: InlineSlashCommandProps) {
+  const { t } = useTranslation()
   const menuRef = React.useRef<HTMLDivElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
@@ -499,7 +535,7 @@ export function InlineSlashCommand({
       {/* Always-visible footer hint for @ mentions */}
       <div className="h-px bg-border/50 mx-2" />
       <div className="px-3 py-2.5 select-none text-xs text-muted-foreground">
-        Use @ for skills and files
+        {t('cli.slashHint')}
       </div>
     </div>
   )
@@ -564,6 +600,7 @@ export function useInlineSlashCommand({
   recentFolders = [],
   homeDir,
 }: UseInlineSlashCommandOptions): UseInlineSlashCommandReturn {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = React.useState(false)
   const [filter, setFilter] = React.useState('')
   const [position, setPosition] = React.useState({ x: 0, y: 0 })
@@ -578,15 +615,15 @@ export function useInlineSlashCommand({
     // Modes section
     result.push({
       id: 'modes',
-      label: 'Modes',
+      label: t('cli.section.modes'),
       items: permissionModeCommands,
     })
 
-    // Commands section
+    // Commands section — slash is secondary to native session-menu / settings
     result.push({
       id: 'commands',
-      label: 'Commands',
-      items: [compactCommand, undoCommand],
+      label: t('cli.section.commands'),
+      items: nativeMappedCommands,
     })
 
     // Recent folders section - sorted alphabetically by folder name, show all
@@ -600,7 +637,7 @@ export function useInlineSlashCommand({
 
       result.push({
         id: 'folders',
-        label: 'Recent Working Directories',
+        label: t('cli.section.folders'),
         items: sortedFolders.map(path => ({
           id: path,
           type: 'folder' as const,
@@ -612,7 +649,7 @@ export function useInlineSlashCommand({
     }
 
     return result
-  }, [recentFolders, homeDir])
+  }, [recentFolders, homeDir, t])
 
   const handleInputChange = React.useCallback((value: string, cursorPosition: number) => {
     // Store current state for handleSelect
