@@ -37,6 +37,7 @@ import {
   featureWorkbenchHarnessChatChromeV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTopChromeV2Atom,
+  bottomTerminalOpenAtom,
   inspectorChromeCollapsedAtom,
   inspectorVisibleAtom,
 } from "@/atoms/unified-shell"
@@ -45,6 +46,8 @@ import { sessionMetaMapAtom } from "@/atoms/sessions"
 import { formatCostUsd } from "./input/turn-progress"
 import { ModeBar } from "@/platform/ModeBar"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
+import { resolveBottomTerminalToggle } from "@/platform/inspector-model"
+import { WORKBENCH_FLAG } from "@craft-agent/core/platform"
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300
@@ -145,6 +148,15 @@ export function TopBar({
     }
     setInspectorChromeCollapsed(true)
     setInspectorVisible(false)
+  }
+
+  const [bottomTerminalOpen, setBottomTerminalOpen] = useAtom(bottomTerminalOpenAtom)
+  const handleTopBarTerminalToggle = () => {
+    const next = resolveBottomTerminalToggle({
+      bottomOpen: bottomTerminalOpen,
+      sideOpen: false,
+    })
+    setBottomTerminalOpen(next.bottomOpen)
   }
 
   useEffect(() => {
@@ -389,6 +401,23 @@ export function TopBar({
           </TooltipTrigger>
           <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
         </Tooltip>}
+        {showInspectorToggle && inspectorChromeCollapsed && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <TopBarButton
+                onClick={handleTopBarTerminalToggle}
+                aria-label={t('inspector.terminal')}
+                aria-pressed={bottomTerminalOpen}
+                data-testid="bottom-terminal-toggle"
+                data-terminal-flag={WORKBENCH_FLAG.terminalV1}
+                className="h-[26px] w-[26px] rounded-lg"
+              >
+                <Icons.SquareTerminal className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+              </TopBarButton>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">{t('inspector.terminal')}</TooltipContent>
+          </Tooltip>
+        )}
       </div>
       )}
       </div>
