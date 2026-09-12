@@ -98,16 +98,26 @@ const LlmConnectionSchema = z.object({
 }).passthrough();
 
 const CloudRunsConfigSchema = z.object({
-  // P0: cloud runs on by default with Cloudflare gateway (token still optional until seeded).
   enabled: z.boolean().default(true),
-  provider: z.enum(['local', 'cloudflare', 'modal', 'e2b', 'native']).default('cloudflare'),
-  gatewayUrl: z.string().optional(),        // cloud gateway base URL (cloudflare/modal providers)
+  provider: z.preprocess(
+    (value) => (value === 'cloudflare' || value === 'modal' || value === 'e2b' ? 'daytona' : value),
+    z.enum(['local', 'daytona', 'native']).default('daytona'),
+  ),
+  gatewayUrl: z.string().optional(),
   defaultMaxWallClockSec: z.number().int().positive().optional(),
   defaultMaxLlmTokens: z.number().int().positive().optional(),
   defaultMaxArtifactsBytes: z.number().int().positive().optional(),
+  defaultTtlSec: z.number().int().positive().optional(),
   notifyWebhookUrl: z.string().url().optional(),
   cheapModelId: z.string().optional(),
   personas: z.boolean().optional(),
+  daytonaProjectId: z.string().optional(),
+  daytonaSnapshot: z.string().optional(),
+  daytonaSandbox: z.string().optional(),
+  daytonaRegion: z.string().optional(),
+  daytonaImage: z.string().optional(),
+  daytonaApiUrl: z.string().optional(),
+  daytonaSecretRef: z.string().optional(),
 }).passthrough();
 /**
  * Agent session runtime settings (additive). envOverrides values are

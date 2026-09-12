@@ -7,7 +7,7 @@
  * never provider internals.
  */
 import type { CloudRunProvider, RunSpec, RunStatus } from './types.ts';
-import { CloudRunnerError } from './types.ts';
+import { CloudRunnerError, isActiveRunState, isTerminalRunState } from './types.ts';
 
 type AssertFn = (cond: boolean, msg: string) => void;
 
@@ -54,7 +54,7 @@ export async function conformanceSuite(
   await record('run reaches a terminal state', async () => {
     // Marker-polled gateways (10s alarm ticks, real LLM latency) legitimately
     // take minutes for 2 subtasks; blocking execs used to finish in seconds.
-    const final = await waitFor(provider, spec.id, (s) => s.state !== 'queued' && s.state !== 'running', 300_000);
+    const final = await waitFor(provider, spec.id, (s) => !isActiveRunState(s.state), 300_000);
     assert(final.state === 'done', `expected done, got ${final.state} (${final.failureReason ?? ''})`);
   });
 
@@ -84,7 +84,7 @@ export async function conformanceSuite(
   await record('subscribeEvents yields a terminal state event', async () => {
     let terminal: RunStatus | null = null;
     for await (const event of provider.subscribeEvents(spec.id)) {
-      if (event.type === 'state' && event.status.state !== 'queued' && event.status.state !== 'running') {
+      if (event.type === 'state' && isTerminalRunState(event.status.state)) {
         terminal = event.status;
       }
     }

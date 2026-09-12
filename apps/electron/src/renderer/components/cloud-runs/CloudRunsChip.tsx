@@ -346,7 +346,7 @@ function CloudRunsChipInner({
               {runs.map((run) => {
                 const state = run.status?.state
                 const progress = run.status?.progress
-                const hasActions = state === 'running' || state === 'queued' || state === 'failed' || state === 'done'
+                const hasActions = state === 'running' || state === 'queued' || state === 'start' || state === 'ready' || state === 'failed' || state === 'done'
                 return (
                   <div key={run.id} className="flex items-start gap-2 rounded-md border border-border/50 px-2 py-2 text-sm">
                     <div className="min-w-0 flex-1">
@@ -382,7 +382,7 @@ function CloudRunsChipInner({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {(state === 'running' || state === 'queued') && (
+                          {(state === 'running' || state === 'queued' || state === 'start' || state === 'ready') && (
                             <DropdownMenuItem onSelect={() => void act(run.id, () => window.electronAPI.cancelCloudRun(run.id))}>
                               <XCircle className="h-4 w-4" />
                               {t('cloudRuns.cancel')}
