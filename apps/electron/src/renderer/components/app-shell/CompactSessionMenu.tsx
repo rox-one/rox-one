@@ -326,12 +326,9 @@ export function CompactSessionMenu({
               hasKnowledgeConnection={hasKnowledgeConnection}
               onPublish={closeAfter(() => setPublishDialog({ open: true, sessionId: item.id }))}
               onShare={closeAfter(actions.share)}
-<<<<<<< HEAD
               onInviteBro={closeAfter(actions.inviteBro)}
-=======
               onExport={closeAfter(actions.exportSession)}
               onJoin={closeAfter(actions.joinSession)}
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
               onOpenShareSub={() => setView('share')}
               onSendToWorkspace={closeAfter(onSendToWorkspace)}
               onOpenMessagingSub={() => setView('messaging')}
@@ -407,12 +404,9 @@ interface RootPaneProps {
   hasKnowledgeConnection?: boolean
   onPublish?: () => void
   onShare?: () => void
-<<<<<<< HEAD
   onInviteBro?: () => void
-=======
   onExport?: () => void
   onJoin?: () => void
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
   onOpenShareSub: () => void
   onSendToWorkspace?: () => void
   onOpenMessagingSub: () => void
@@ -446,12 +440,9 @@ function RootPane({
   hasKnowledgeConnection,
   onPublish,
   onShare,
-<<<<<<< HEAD
   onInviteBro,
-=======
   onExport,
   onJoin,
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
   onOpenShareSub,
   onSendToWorkspace,
   onOpenMessagingSub,
@@ -494,12 +485,9 @@ function RootPane({
         />
       )}
 
-<<<<<<< HEAD
       <Row icon={<UserPlus className="h-4 w-4" />} label={t('sessionMenu.inviteBro')} onTap={onInviteBro} />
-=======
       <Row icon={<Download className="h-4 w-4" />} label={t('sessionMenu.export')} onTap={onExport} />
       <Row icon={<Link2 className="h-4 w-4" />} label={t('sessionMenu.join')} onTap={onJoin} />
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
 
       {hasTransferTargets && onSendToWorkspace && (
         <Row icon={<Send className="h-4 w-4" />} label={t('sessionMenu.sendToWorkspace')} onTap={onSendToWorkspace} />

@@ -27,12 +27,9 @@ import {
   AppWindow,
   Columns2,
   CloudUpload,
-<<<<<<< HEAD
   UserPlus,
-=======
   Download,
   Link2,
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
   RefreshCw,
   Tag,
   Send,
@@ -171,11 +168,10 @@ export function SessionMenu({
         </Sub>
       )}
 
-<<<<<<< HEAD
       <MenuItem onClick={actions.inviteBro}>
         <UserPlus className="h-3.5 w-3.5" />
         <span className="flex-1">{t('sessionMenu.inviteBro')}</span>
-=======
+      </MenuItem>
       <MenuItem onClick={() => void actions.exportSession()}>
         <Download className="h-3.5 w-3.5" />
         <span className="flex-1">{t("sessionMenu.export")}</span>
@@ -183,7 +179,6 @@ export function SessionMenu({
       <MenuItem onClick={() => void actions.joinSession()}>
         <Link2 className="h-3.5 w-3.5" />
         <span className="flex-1">{t("sessionMenu.join")}</span>
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
       </MenuItem>
 
       {/* Send to Workspace — visible when at least one other workspace exists */}

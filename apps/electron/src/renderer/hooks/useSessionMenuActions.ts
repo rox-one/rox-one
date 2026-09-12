@@ -54,15 +54,12 @@ export interface SessionMenuActions {
   updateShare: () => Promise<void>
   /** Revoke the share. */
   revokeShare: () => Promise<void>
-<<<<<<< HEAD
   /** Generate a one-time collaborator invite (Позвать Бро). */
   inviteBro: () => Promise<void>
-=======
   /** Save a portable session bundle via the native save dialog. */
   exportSession: () => Promise<void>
   /** Open a shared session URL from the clipboard, or explain how to join. */
   joinSession: () => Promise<void>
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
 }
 
 // SOH (U+0001) — non-printable so it can't collide with label IDs (which
@@ -208,7 +205,6 @@ export function useSessionMenuActions({
     }
   }, [sessionId, t])
 
-<<<<<<< HEAD
   const inviteBro = React.useCallback(async () => {
     const result = await window.electronAPI.sessionCommand(sessionId, { type: 'inviteBro' }) as {
       success: boolean
@@ -223,7 +219,6 @@ export function useSessionMenuActions({
     }
   }, [sessionId, t])
 
-=======
   const exportSession = React.useCallback(async () => {
     try {
       const bundle = await window.electronAPI.exportSession(sessionId)
@@ -259,7 +254,6 @@ export function useSessionMenuActions({
     toast.info(t('toast.joinNeedsLink'))
   }, [t])
 
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
   return {
     appliedLabelIds,
     toggleLabel,
@@ -272,11 +266,8 @@ export function useSessionMenuActions({
     copySharedLink,
     updateShare,
     revokeShare,
-<<<<<<< HEAD
     inviteBro,
-=======
     exportSession,
     joinSession,
->>>>>>> 4a01f864 (feat(cli): map Rox CLI slash commands to native surfaces)
   }
 }
