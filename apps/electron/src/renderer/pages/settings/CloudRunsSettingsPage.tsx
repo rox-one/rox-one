@@ -305,6 +305,21 @@ export default function CloudRunsSettingsPage() {
                     onCheckedChange={(checked) => patch({ personas: checked })}
                   />
                 </SettingsCard>
+              <SettingsSection title={t('settings.cloudRuns.sectionSandbox')}>
+                <SettingsCard>
+                  <SettingsRow
+                    label={
+                      <SettingText
+                        label={t('settings.cloudRuns.sandboxTab')}
+                        description={t('settings.cloudRuns.sandboxHint')}
+                      />
+                    }
+                  >
+                    <span className="text-xs text-muted-foreground">
+                      {t('settings.cloudRuns.sandboxGated')}
+                    </span>
+                  </SettingsRow>
+                </SettingsCard>
               </SettingsSection>
             </>
           )}
