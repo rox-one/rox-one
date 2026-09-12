@@ -748,7 +748,6 @@ export const CHANNEL_MAP = {
   bulkUpdateSessions: invoke(RPC_CHANNELS.sessions.BULK_UPDATE),
   onSessionsBulkChanged: listener(RPC_CHANNELS.sessions.BULK_CHANGED),
 
-
   // Automations
   getAutomations: invoke(RPC_CHANNELS.automations.GET),
   getAutomationGraph: invoke(RPC_CHANNELS.automations.GET_GRAPH),

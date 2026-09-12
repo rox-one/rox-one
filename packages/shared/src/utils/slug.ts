@@ -1,12 +1,24 @@
-/** Generate a URL/filesystem-safe slug from a name; falls back to `fallback` when it reduces to empty. */
-export function generateSlug(name: string, fallback = 'workspace'): string {
+/**
+ * Shared slug utilities (browser-safe, pure)
+ *
+ * One kebab-and-collision implementation for workspace entities (Projects,
+ * Pages, ...) instead of per-module copies. Callers supply the existing slug
+ * set — no filesystem access here.
+ */
+
+/** Kebab-case a display name: lowercase, alphanumerics, single hyphens, max 50 chars. */
+export function slugifyName(name: string, fallback: string): string {
   const slug = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .substring(0, 50);
-
   return slug || fallback;
+}
+
+/** Backward-compatible workspace slug helper with the historical default fallback. */
+export function generateSlug(name: string, fallback = 'workspace'): string {
+  return slugifyName(name, fallback);
 }
 
 /**
@@ -18,7 +30,7 @@ export function generateUniqueSlug(
   existingSlugs: ReadonlySet<string>,
   fallback: string,
 ): string {
-  const slug = generateSlug(name, fallback);
+  const slug = slugifyName(name, fallback);
   if (!existingSlugs.has(slug)) return slug;
 
   let counter = 2;

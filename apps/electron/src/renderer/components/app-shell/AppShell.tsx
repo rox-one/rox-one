@@ -458,7 +458,8 @@ function AppShellContent({
     isSessionsNavigation(navState) &&
     (navState.viewMode === 'board' || navState.viewMode === 'table')
 
-  // Pages library + open page both render full-width; collapse the middle navigator.
+  // Pages library + open page both render full-width in the content area;
+  // collapse the middle navigator because pages has no navigator list.
   const isPagesView = isPagesNavigation(navState)
 
   // Derive source filter from navigation state (only when in sources navigator)
@@ -1768,6 +1769,7 @@ function AppShellContent({
     navigate(routes.view.projects())
   }, [])
 
+  // Handler for pages view
   const handlePagesClick = useCallback(() => {
     navigate(routes.view.pages())
   }, [])
@@ -2111,7 +2113,7 @@ function AppShellContent({
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
 
     return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelConfigs, labelTree, sessionViewConfigs, viewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
+  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -2707,6 +2709,25 @@ function AppShellContent({
                     // --- Separator before footer ---
                     { id: "separator:notes-automations", type: "separator" },
                     {
+                      id: "nav:pages",
+                      title: t("sidebar.pages"),
+                      label: String(pages.length),
+                      icon: PanelsTopLeft,
+                      // Highlight on the library grid only, not when a page is open (mirrors Projects)
+                      variant: (isPagesNavigation(navState) && !navState.details) ? "default" : "ghost",
+                      onClick: handlePagesClick,
+                      expandable: pages.length > 0,
+                      expanded: isExpanded('nav:pages'),
+                      onToggle: () => toggleExpanded('nav:pages'),
+                      items: pages.map(p => ({
+                        id: `nav:pages:${p.config.id}`,
+                        title: p.config.name,
+                        icon: PanelsTopLeft,
+                        variant: (isPagesNavigation(navState) && navState.details?.pageSlug === p.config.slug) ? "default" as const : "ghost" as const,
+                        onClick: () => navigate(routes.view.pages(p.config.slug)),
+                      })),
+                    },
+                    {
                       id: "nav:automations",
                       title: t(APP_NAV_DESTINATIONS_BY_ID.automations.labelKey),
                       label: String(automations.length),
@@ -3029,7 +3050,7 @@ function AppShellContent({
         </div>
         )}
 
-        {/* Session List Resize Handle (absolute, hidden in focused mode and board view) */}
+        {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
         {!effectiveSidebarAndNavigatorHidden && !isBoardView && !isPagesView && (
         <div
           ref={sessionListHandleRef}

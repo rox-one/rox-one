@@ -298,6 +298,20 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return null
   }
 
+  // Pages navigator
+  if (first === 'pages') {
+    if (segments.length === 1) {
+      return { navigator: 'pages', details: null }
+    }
+    if (segments[1] === 'page' && segments[2]) {
+      return {
+        navigator: 'pages',
+        details: { type: 'page', id: segments[2] },
+      }
+    }
+    return null
+  }
+
   // Automations navigator - supports type filters (scheduled, event, agentic)
   if (first === 'automations') {
     if (segments.length === 1) {
@@ -1109,6 +1123,16 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'projects', details: null }
+    case 'pages':
+      return { navigator: 'pages', details: null }
+    case 'page-info':
+      if (parsed.id) {
+        return {
+          navigator: 'pages',
+          details: { type: 'page', pageSlug: parsed.id },
+        }
+      }
+      return { navigator: 'pages', details: null }
     case 'session':
       if (parsed.id) {
         // Reconstruct filter from params

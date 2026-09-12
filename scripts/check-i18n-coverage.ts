@@ -2,11 +2,13 @@
 /**
  * check-i18n-coverage.ts — CI-safe translation key coverage check.
  *
- * Scans TypeScript/TSX source for literal translation keys in `t(...)`,
- * `i18n.t(...)`, and Trans `i18nKey` callsites, then verifies those keys
- * resolve against the English locale. Unit-test files and directories are
- * skipped so fixture strings are not treated as production keys. Dynamic
- * keys are intentionally skipped because they cannot be proven statically.
+ * Scans TypeScript/TSX source for literal translation keys in bare translation
+ * calls, i18n/i18next calls, and i18nKey JSX props, then verifies those keys
+ * resolve against the English locale. Test fixtures and generated directories
+ * are skipped. Dynamic keys are intentionally skipped because they cannot be
+ * proven statically.
+ *
+ * Pass --all to print every missing key (default truncates to 20).
  */
 
 import { readdirSync, readFileSync } from 'node:fs'
@@ -29,46 +31,64 @@ const IGNORED_DIRS = new Set([
   'dist',
   'node_modules',
   'out',
+  'playground',
+  'registry',
   'release',
   'tests',
 ])
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx'])
 const TEST_FILE = /\.(?:test|spec)\.[cm]?tsx?$/
-const PLURAL_SUFFIXES = ['zero', 'one', 'two', 'few', 'many', 'other']
 
 type Locale = Record<string, string>
 type Reference = {
-  kind: 't' | 'i18n.t' | 'Trans'
+  kind: 't' | 'i18n.t' | 'i18next.t' | 'Trans'
   key: string
   file: string
   line: number
   column: number
 }
 
-const en = JSON.parse(readFileSync(EN_LOCALE_PATH, 'utf-8')) as Locale
-const enKeys = new Set(Object.keys(en))
+function main(): void {
+  const en = JSON.parse(readFileSync(EN_LOCALE_PATH, 'utf-8')) as Locale
+  const enKeys = new Set(Object.keys(en))
 
-const sourceFiles = SOURCE_ROOTS.flatMap(root => collectSourceFiles(resolve(REPO_ROOT, root)))
-  .sort((a, b) => a.localeCompare(b))
+  const sourceFiles = SOURCE_ROOTS.flatMap(root => collectSourceFiles(resolve(REPO_ROOT, root)))
+    .sort((a, b) => a.localeCompare(b))
+  const references = sourceFiles.flatMap(file => extractReferences(file))
+  const missing = references.filter(ref => !hasLocaleKey(ref.key, enKeys))
 
-const references = sourceFiles.flatMap(file => extractReferences(file))
-const missing = references.filter(ref => !hasLocaleKey(ref.key))
-
-if (missing.length > 0) {
-  console.error('i18n coverage check failed:')
-  for (const ref of missing) {
-    console.error(
-      `  ${ref.file}:${ref.line}:${ref.column} ${ref.kind}("${ref.key}") is missing from packages/shared/src/i18n/locales/en.json`,
+  if (missing.length === 0) {
+    const uniqueKeys = new Set(references.map(ref => ref.key))
+    console.log(
+      `i18n coverage OK (${references.length} literal references, ${uniqueKeys.size} unique keys, ${enKeys.size} English keys)`,
     )
+    return
   }
-  console.error(`\n${missing.length} missing translation reference(s).`)
+
+  const firstByKey = new Map<string, Reference>()
+  for (const ref of missing) {
+    if (!firstByKey.has(ref.key)) firstByKey.set(ref.key, ref)
+  }
+
+  const showAll = process.argv.includes('--all')
+  const items = [...firstByKey.values()]
+  const limit = showAll ? items.length : Math.min(20, items.length)
+
+  console.error(`i18n coverage check failed: ${firstByKey.size} missing keys`)
+  console.error('')
+  for (const ref of items.slice(0, limit)) {
+    console.error(`${ref.file}:${ref.line}:${ref.column}`)
+    console.error(`  ${ref.kind}("${ref.key}")`)
+    console.error('')
+  }
+  if (!showAll && items.length > limit) {
+    console.error(`… (truncated to first ${limit}; run with --all to see all)`)
+    console.error('')
+  }
+  console.error(`${missing.length} unresolved literal reference(s).`)
+  console.error('Add the keys to packages/shared/src/i18n/locales/en.json and every locale.')
   process.exit(1)
 }
-
-const uniqueKeys = new Set(references.map(ref => ref.key))
-console.log(
-  `i18n coverage OK (${references.length} literal references, ${uniqueKeys.size} unique keys, ${enKeys.size} English keys)`,
-)
 
 function collectSourceFiles(dir: string): string[] {
   let entries: Dirent[]
@@ -104,10 +124,12 @@ function extractReferences(file: string): Reference[] {
   const patterns: Array<{ kind: Reference['kind']; regex: RegExp }> = [
     { kind: 'i18n.t', regex: /(?<![\w$])i18n\.t\s*\(\s*'((?:\\.|[^'\\])*)'/g },
     { kind: 'i18n.t', regex: /(?<![\w$])i18n\.t\s*\(\s*"((?:\\.|[^"\\])*)"/g },
+    { kind: 'i18next.t', regex: /(?<![\w$])i18next\.t\s*\(\s*'((?:\\.|[^'\\])*)'/g },
+    { kind: 'i18next.t', regex: /(?<![\w$])i18next\.t\s*\(\s*"((?:\\.|[^"\\])*)"/g },
     { kind: 't', regex: /(?<![\w$.])t\s*\(\s*'((?:\\.|[^'\\])*)'/g },
     { kind: 't', regex: /(?<![\w$.])t\s*\(\s*"((?:\\.|[^"\\])*)"/g },
-    { kind: 'Trans', regex: /<Trans\b[^>]*\bi18nKey\s*=\s*'((?:\\.|[^'\\])*)'/g },
-    { kind: 'Trans', regex: /<Trans\b[^>]*\bi18nKey\s*=\s*"((?:\\.|[^"\\])*)"/g },
+    { kind: 'Trans', regex: /\bi18nKey\s*=\s*'((?:\\.|[^'\\])*)'/g },
+    { kind: 'Trans', regex: /\bi18nKey\s*=\s*"((?:\\.|[^"\\])*)"/g },
   ]
 
   for (const { kind, regex } of patterns) {
@@ -123,9 +145,9 @@ function extractReferences(file: string): Reference[] {
   return refs.sort((a, b) => a.line - b.line || a.column - b.column || a.key.localeCompare(b.key))
 }
 
-function hasLocaleKey(key: string): boolean {
+function hasLocaleKey(key: string, enKeys: Set<string>): boolean {
   if (enKeys.has(key)) return true
-  return PLURAL_SUFFIXES.some(suffix => enKeys.has(`${key}_${suffix}`))
+  return enKeys.has(`${key}_one`) && enKeys.has(`${key}_other`)
 }
 
 function lineAndColumn(source: string, index: number): { line: number; column: number } {
@@ -153,3 +175,5 @@ function unescapeStringLiteral(value: string): string {
     }
   })
 }
+
+main()

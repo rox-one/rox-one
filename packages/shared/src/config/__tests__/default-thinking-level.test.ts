@@ -69,7 +69,11 @@ function runEval(configDir: string, code: string): string {
     '--eval',
     `import { getDefaultThinkingLevel, setDefaultThinkingLevel } from '${STORAGE_MODULE_PATH}'; ${code}`,
   ], {
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+    env: {
+      ...process.env,
+      CRAFT_CONFIG_DIR: configDir,
+      ROX_CONFIG_DIR: configDir,
+    },
     stdout: 'pipe',
     stderr: 'pipe',
   })
@@ -113,14 +117,18 @@ describe('default thinking level storage', () => {
 
   it('supports every thinking level', () => {
     const { configDir } = setupWorkspaceConfigDir()
-    // Минимум subprocess-ов (ранее 12 × ~540ms превышало 5s таймаут под нагрузкой).
+    // Keep the expensive cold import to one subprocess for the full level matrix.
     const levels = THINKING_LEVEL_IDS
     const script = levels
       .map((level) => `setDefaultThinkingLevel('${level}'); console.log('${level}=' + String(getDefaultThinkingLevel()))`)
       .join('\n')
     const output = runEval(configDir, script)
     expect(output.trim().split('\n')).toEqual(levels.map((level) => `${level}=${level}`))
-  })
+
+    // The last write must also survive a fresh process (disk, not module state).
+    const last = levels[levels.length - 1]!
+    expect(runEval(configDir, "console.log(String(getDefaultThinkingLevel()))")).toBe(last)
+  }, 15_000)
 
   it('migrates legacy "think" value to "medium"', () => {
     const { configDir, configPath } = setupWorkspaceConfigDir()

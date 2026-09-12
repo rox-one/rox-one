@@ -88,7 +88,8 @@ export interface SessionScopedToolCallbacks {
     input: import('@craft-agent/session-tools-core').CreateTaskInput
   ) => Promise<import('@craft-agent/session-tools-core').CreateTaskResult>;
   /**
-   * Pages tool callbacks (list/get/create/update/write/delete). Wired by
+   * Pages tools (list/get/create/update/write data/delete) — grouped in one
+   * object because the six operations always ship together. Wired by
    * SessionManager to the invoking session's workspace.
    */
   pages?: import('@craft-agent/session-tools-core').PagesToolCallbacks;

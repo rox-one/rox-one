@@ -108,8 +108,15 @@ export function isNativeIndexWatchEnabled(): boolean {
 }
 
 /**
- * Public Pages sharing (publish/unpublish). Defaults to enabled.
- * Override with CRAFT_FEATURE_PAGES_SHARING=1|0.
+ * Runtime-evaluated check for Pages sharing (Cloudflare publication).
+ *
+ * Server-evaluated: the renderer learns it via `pages:getShareCapabilities`,
+ * never from its own process.env. Gates publish/update only — unpublish stays
+ * available regardless, so disabling the flag never strands a published page.
+ *
+ * Defaults to ENABLED as of 2026-08-27 (the Cloudflare publication Worker is
+ * deployed and verified live). Publishing sends the page bundle to Cloudflare,
+ * so this is opt-out: set CRAFT_FEATURE_PAGES_SHARING=0 to hide the Share UI.
  */
 export function isPagesSharingEnabled(): boolean {
   const override = parseBooleanEnv(getEnv('CRAFT_FEATURE_PAGES_SHARING'));
@@ -183,8 +190,10 @@ export const FEATURE_FLAGS = {
     return isNativeIndexWatchEnabled();
   },
   /**
-   * Enable publishing a read-only copy of a Page to the web.
-   * Defaults to enabled. Override with CRAFT_FEATURE_PAGES_SHARING=1|0.
+   * Enable Pages sharing (publish to Cloudflare).
+   *
+   * Defaults to ENABLED (Worker deployed 2026-08-27). Opt out with
+   * CRAFT_FEATURE_PAGES_SHARING=0.
    */
   get pagesSharing(): boolean {
     return isPagesSharingEnabled();

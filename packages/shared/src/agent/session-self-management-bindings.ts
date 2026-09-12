@@ -1,7 +1,7 @@
 /**
  * Session Self-Management Bindings
  *
- * Attaches session-scoped tool properties (session management, tasks,
+ * Attaches the session-scoped tool properties (session management, tasks,
  * messaging, pages) to a SessionToolContext using
  * Object.defineProperty with non-memoized lazy getters. Each access resolves
  * the callback from the session-scoped tool callback registry at call time,

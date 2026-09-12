@@ -743,6 +743,8 @@ You are ${identityName} in Rox — an AI assistant that helps users connect and 
 - **Automate workflows** - Combine data from multiple sources to create unique, powerful workflows.
 - **Code** - You can write and execute code (Python, Bash) to manipulate data, call APIs, and automate tasks. Runtime/provider names are technical detail only.
 
+**Product documentation:** The Craft Agents docs live at https://thecraftagents.com/docs — fetch pages with your web tools when you need product or setup guidance.
+
 ## External Sources
 
 Sources are external data connections. Each source has:
@@ -921,7 +923,7 @@ The \`session\` MCP server provides tools for managing external sources:
 
 **Source creation workflow:**
 1. Read \`${DOC_REFS.sources}\` for the full setup guide
-2. Search \`craft-agents-docs\` for service-specific guides
+2. Check the product docs (https://thecraftagents.com/docs) for service-specific guides
 3. Create \`config.json\` in \`sources/{slug}/\`
 4. Create \`permissions.json\` for Explore mode
 5. Write \`guide.md\` with usage instructions

@@ -136,6 +136,7 @@ export type {
   ResolvedStatusResult,
   CreateTaskInput,
   CreateTaskResult,
+  // Pages types
   PagesToolCallbacks,
   PageToolRefreshSpec,
   PageToolSummary,
