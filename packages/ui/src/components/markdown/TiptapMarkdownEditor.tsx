@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
+import { Extension } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import TaskList from '@tiptap/extension-task-list'
@@ -282,6 +283,14 @@ export function TiptapMarkdownEditor({
       }),
       HashTag.configure({
         onTagClick: (tag) => onTagClickRef.current?.(tag),
+      }),
+      Extension.create({
+        name: 'horizontalRuleShortcut',
+        addKeyboardShortcuts() {
+          return {
+            'Mod-Shift--': () => this.editor.commands.setHorizontalRule(),
+          }
+        },
       }),
       ...(editable ? [TiptapSlashMenu] : []),
     ]

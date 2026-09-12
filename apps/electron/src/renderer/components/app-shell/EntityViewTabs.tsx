@@ -8,6 +8,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   GitBranch,
+  LayoutGrid,
   ListTree,
   MessageSquare,
   Network,
@@ -24,6 +25,8 @@ export type EntityViewId =
   | 'graph'
   | 'mindmap'
   | 'teamchat'
+  | 'table'
+  | 'canvas'
 
 export interface EntityViewCapability {
   id: EntityViewId
@@ -39,6 +42,8 @@ const DEFAULT_ICONS: Record<EntityViewId, LucideIcon> = {
   graph: Share2,
   mindmap: Network,
   teamchat: GitBranch,
+  table: LayoutGrid,
+  canvas: Network,
 }
 
 export function defaultSessionEntityCapabilities(opts?: {
@@ -63,8 +68,11 @@ export function defaultSessionEntityCapabilities(opts?: {
 export function defaultNoteEntityCapabilities(): EntityViewCapability[] {
   return [
     { id: 'standard', available: true, labelKey: 'entityView.standard', icon: DEFAULT_ICONS.standard },
-    { id: 'map', available: true, labelKey: 'entityView.map', icon: DEFAULT_ICONS.map },
+    { id: 'table', available: true, labelKey: 'entityView.table', icon: DEFAULT_ICONS.table },
+    { id: 'canvas', available: true, labelKey: 'entityView.canvas', icon: DEFAULT_ICONS.canvas },
     { id: 'outline', available: true, labelKey: 'entityView.outline', icon: DEFAULT_ICONS.outline },
+    { id: 'graph', available: true, labelKey: 'entityView.graph', icon: DEFAULT_ICONS.graph },
+    { id: 'map', available: true, labelKey: 'entityView.map', icon: DEFAULT_ICONS.map },
   ]
 }
 

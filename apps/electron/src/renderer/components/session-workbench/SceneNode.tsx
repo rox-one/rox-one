@@ -3,13 +3,21 @@ import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
 import { cn } from '@/lib/utils'
 import type { SceneNodeData } from './to-flow-elements'
 import type { SessionNodeKind } from './node-kinds'
+import { canvasNodeStatus, canvasStatusClass, type CanvasRunStatus } from './canvas-layout'
 
 export type SceneFlowNode = Node<SceneNodeData, 'scene'>
 
-function sceneStatus(tools: SceneNodeData['scene']['tools']): 'error' | 'pending' | 'ok' {
-  if (tools.some((t) => t.status === 'error')) return 'error'
-  if (tools.some((t) => t.status === 'pending')) return 'pending'
-  return 'ok'
+export function sceneVisualStatus(tools: SceneNodeData['scene']['tools'], selected?: boolean): CanvasRunStatus {
+  const toolStatus = tools.some((t) => t.status === 'error')
+    ? 'error'
+    : tools.some((t) => t.status === 'pending')
+      ? 'pending'
+      : 'ok'
+  return canvasNodeStatus({
+    selected,
+    toolStatus,
+    streaming: tools.some((t) => t.status === 'pending' && t.name === 'stream'),
+  })
 }
 
 function kindTone(kind: SessionNodeKind): string {
@@ -29,25 +37,28 @@ export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
   const scene = data.scene
   const kind = data.kind
   const kindLabel = data.kindLabel ?? kind
-  const status = sceneStatus(scene.tools)
+  const status = sceneVisualStatus(scene.tools, selected)
   return (
     <div
       className={cn(
-        'group relative w-[198px] min-w-0 overflow-hidden rounded-xl border bg-card/80 px-2.5 py-2 text-left shadow-strong backdrop-blur-xl',
-        scene.orphaned ? 'border-amber-400/50' : 'border-white/10',
+        'group relative w-[198px] min-w-0 overflow-hidden rounded-lg border bg-card/80 px-2.5 py-2 text-left shadow-strong backdrop-blur-xl',
+        canvasStatusClass(status),
+        scene.orphaned ? 'border-amber-400/50' : 'border-border/70',
         selected && 'border-violet-400/70 ring-1 ring-violet-400/30',
       )}
+      data-status={status}
       title={scene.triggerPreview || scene.id}
     >
-      <Handle type="target" position={Position.Left} className="!h-2.5 !w-2.5 !border-border !bg-background/90" />
+      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-border !bg-background" />
       <div className="mb-1.5 flex min-w-0 items-start gap-2">
         <div
           aria-hidden
           className={cn(
             'mt-1.5 h-2 w-2 shrink-0 rounded-full ring-4 ring-white/[0.02]',
             status === 'error' && 'bg-rose-400',
-            status === 'pending' && 'animate-pulse bg-amber-300',
-            status === 'ok' && 'bg-emerald-400',
+            status === 'waiting' && 'animate-pulse bg-amber-300',
+            status === 'running' && 'animate-pulse bg-sky-400',
+            (status === 'idle' || status === 'selected') && 'bg-emerald-400',
           )}
         />
         <div className="min-w-0 flex-1">
@@ -88,7 +99,7 @@ export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
           {scene.outcomePreview}
         </div>
       ) : null}
-      <Handle type="source" position={Position.Right} className="!h-2.5 !w-2.5 !border-border !bg-background/90" />
+      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-border !bg-background" />
     </div>
   )
 }
