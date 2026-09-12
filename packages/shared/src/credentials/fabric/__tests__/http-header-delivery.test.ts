@@ -55,6 +55,16 @@ describe('CF-4 trusted-http-header delivery', () => {
     expect(JSON.stringify(logged)).not.toContain(SECRET);
   });
 
+  it('fails closed on control characters in the bearer token', () => {
+    const withNewline = materializationWith('tok\nen');
+    expect(() => applyTrustedHttpHeader({}, withNewline)).toThrow('invalid_token');
+    try {
+      applyTrustedHttpHeader({}, withNewline);
+    } catch (error) {
+      expect(JSON.stringify(error instanceof Error ? error.message : error)).not.toContain('\n');
+    }
+  });
+
   it('fails closed without leaking when the materialization has no token', () => {
     const empty = materializationWith('');
     expect(() => applyTrustedHttpHeader({}, empty)).toThrow('missing_token');

@@ -113,6 +113,44 @@ export { JsonAccessGrantStore, MemoryAccessGrantStore } from './fabric/grant-sto
 export type { AccessGrantStore } from './fabric/grant-store.ts';
 export { DELIVERY_MECHANISM_RANK, selectDeliveryMechanism, applyTrustedHttpHeader, redactHeaders } from './fabric/delivery.ts';
 export type { DeliveryMechanism } from './fabric/delivery.ts';
+export {
+  GithubOAuthImporter,
+  pollDeviceLogin,
+  startDeviceLogin,
+} from './fabric/github-oauth-importer.ts';
+export type {
+  GithubDeviceLoginPollResult,
+  GithubDeviceLoginStart,
+  GithubOAuthHttpClient,
+  GithubOAuthHttpRequest,
+  GithubOAuthHttpResponse,
+  GithubOAuthImporterOptions,
+} from './fabric/github-oauth-importer.ts';
+export {
+  createAwsCredentialProcessRun,
+  createDockerCredentialGet,
+  createGitCredentialFill,
+  createKeychainGet,
+  createKeychainList,
+  createSshAgentList,
+  defaultPaths,
+  parseAwsCredentialProcess,
+  parseDockerCredentialGet,
+  parseGitCredentialFill,
+  parseKeychainDump,
+  parseSshAgentList,
+} from './fabric/host-runners.ts';
+export type {
+  AwsProcessRun,
+  DockerRun,
+  GitRun,
+  HostPaths,
+  HostProcessResult,
+  HostSpawn,
+  KeychainGetRun,
+  KeychainListRun,
+  SshListRun,
+} from './fabric/host-runners.ts';
 
 export {
   applyCredentialMigration,

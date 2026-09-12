@@ -29,6 +29,7 @@
     "./config/types": "./src/config/types.ts",
     "./context-docs": "./src/context-docs/index.ts",
     "./credentials": "./src/credentials/index.ts",
+    "./connections": "./src/connections/index.ts",
     "./secrets": "./src/secrets/index.ts",
     "./mcp": "./src/mcp/index.ts",
     "./prompts": "./src/prompts/index.ts",
