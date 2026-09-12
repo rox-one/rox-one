@@ -144,16 +144,18 @@ export const ScriptActionSchema = z.object({
 });
 
 /**
- * Strict action union — unknown action types are validation errors.
- * (Replaced the legacy `.passthrough()` escape hatch: silently-ignored actions
- * hid typos and let unvalidated config reach handlers.)
+ * Known actions are strict (incl. upstream `script`). Unknown/legacy action
+ * types still parse on config load so existing automations.json is not rejected.
+ * Graph projection separately rejects non-mappable actions so the UI cannot
+ * silently drop them (see graph.test.ts legacy.action case).
  */
-export const ActionDefinitionSchema = z.discriminatedUnion('type', [
+export const ActionDefinitionSchema = z.union([
   PromptActionSchema.strict(),
   WebhookActionSchema.strict(),
   KnowledgeAutomationActionSchema.strict(),
   CloudRunSubmitActionSchema.strict(),
   ScriptActionSchema.strict(),
+  z.object({ type: z.string() }).passthrough(),
 ]);
 
 // ============================================================================
