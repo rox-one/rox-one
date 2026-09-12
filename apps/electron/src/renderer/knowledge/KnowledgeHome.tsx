@@ -240,6 +240,33 @@ export function firstSetAttributeAction(
   return null
 }
 
+export type KnowledgeEnvelopeLike = {
+  knowledgeRef: { kind: string; id: string }
+  updatedAt: number
+}
+
+/** Most recently updated document envelope, or null when none exist. */
+export function pickDefaultKnowledgeDocument(
+  envelopes: readonly KnowledgeEnvelopeLike[],
+): { kind: 'document'; id: string } | null {
+  let best: KnowledgeEnvelopeLike | null = null
+  for (const envelope of envelopes) {
+    if (envelope.knowledgeRef.kind !== 'document') continue
+    if (!best || envelope.updatedAt > best.updatedAt) best = envelope
+  }
+  if (!best) return null
+  return { kind: 'document', id: best.knowledgeRef.id }
+}
+
+/** In-app editor route for the default document, else the knowledge home. */
+export function defaultKnowledgeEditorRoute(
+  envelopes: readonly KnowledgeEnvelopeLike[],
+): string {
+  const doc = pickDefaultKnowledgeDocument(envelopes)
+  if (!doc) return 'knowledge'
+  return routes.view.siyuan({ kind: doc.kind, id: doc.id })
+}
+
 // ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
