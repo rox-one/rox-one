@@ -13,14 +13,14 @@ type NotesBridge = {
 }
 
 type Props = {
-  bridge: NotesBridge | null
+  bridge?: NotesBridge | null
 }
 
 /**
  * Read-only Conation Notes pane. No write controls.
  * Forge: restyle to Rox Notes/Imports chrome if KnowledgeInspector is the host.
  */
-export function ConationNotesPanel({ bridge }: Props) {
+export function ConationNotesPanel({ bridge = null }: Props = {}) {
   const [items, setItems] = useState<NotesDocument[]>([])
   const [open, setOpen] = useState<NotesDocument | null>(null)
   const [error, setError] = useState<string | null>(null)

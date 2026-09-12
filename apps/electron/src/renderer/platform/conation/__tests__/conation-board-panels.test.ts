@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+import { createPanelRegistry } from '@craft-agent/core/platform'
 import {
   CONATION_BOARD_DEEP_LINK,
   CONATION_BOARD_PANEL_ID,
@@ -12,6 +13,13 @@ describe('registerBoardPanel', () => {
       shouldRegisterBoardPanel({
         shellEnabled: false,
         inspectorEnabled: true,
+        boardEnabled: true,
+      }),
+    ).toBe(false)
+    expect(
+      shouldRegisterBoardPanel({
+        shellEnabled: true,
+        inspectorEnabled: false,
         boardEnabled: true,
       }),
     ).toBe(false)
@@ -32,25 +40,41 @@ describe('registerBoardPanel', () => {
   })
 
   it('does not register when board flag is off', () => {
-    const calls: unknown[] = []
-    registerBoardPanel({ register: (c) => calls.push(c) }, { name: 'Panel' }, {
+    const registry = createPanelRegistry()
+    registerBoardPanel(registry)
+    registerBoardPanel(registry, () => null, {
       shellEnabled: true,
       inspectorEnabled: true,
       boardEnabled: false,
     })
-    expect(calls).toEqual([])
+    expect(registry.get(CONATION_BOARD_PANEL_ID)).toBeUndefined()
+    expect(registry.list('inspector', {}).map((panel) => panel.id)).not.toContain(
+      CONATION_BOARD_PANEL_ID,
+    )
   })
 
-  it('registers conation.board when all flags on', () => {
-    const calls: Array<{ id: string; title: string }> = []
-    registerBoardPanel({ register: (c) => calls.push(c) }, { name: 'Panel' }, {
+  it('registers conation.board once when all flags are on', () => {
+    const registry = createPanelRegistry()
+    const render = () => null
+    const registration = registerBoardPanel(registry, render, {
       shellEnabled: true,
       inspectorEnabled: true,
       boardEnabled: true,
     })
-    expect(calls).toHaveLength(1)
-    expect(calls[0]?.id).toBe(CONATION_BOARD_PANEL_ID)
-    expect(calls[0]?.title).toBe('Conation Board')
+    const duplicate = registerBoardPanel(registry, render, {
+      shellEnabled: true,
+      inspectorEnabled: true,
+      boardEnabled: true,
+    })
+
+    expect(registry.get(CONATION_BOARD_PANEL_ID)?.title).toBe('Conation Board')
+    expect(registry.get(CONATION_BOARD_PANEL_ID)?.source.id).toBe('conation')
+    expect(registry.get(CONATION_BOARD_PANEL_ID)?.defaultOrder).toBe(42)
+    expect(
+      registry.list('inspector', {}).filter((panel) => panel.id === CONATION_BOARD_PANEL_ID),
+    ).toHaveLength(1)
+    expect(registration).toBeDefined()
+    expect(duplicate).toBeUndefined()
   })
 
   it('deep-links to conation.dev', () => {

@@ -33,12 +33,10 @@ export function registerConationPanels(
   registry: PanelRegistry,
   render: PanelRenderer = () => null,
   options: RegisterConationPanelsOptions = { shellEnabled: false, inspectorEnabled: false },
-): PanelRegistry {
+): ReturnType<PanelRegistry['register']> | undefined {
   if (!isConationInspectorEnabled(options.shellEnabled, options.inspectorEnabled)) {
-    return registry
+    return undefined
   }
-  if (!registry.get(CONATION_INSPECTOR_PANEL_ID)) {
-    registry.register(conationInspectorContribution(render))
-  }
-  return registry
+  if (registry.get(CONATION_INSPECTOR_PANEL_ID)) return undefined
+  return registry.register(conationInspectorContribution(render))
 }

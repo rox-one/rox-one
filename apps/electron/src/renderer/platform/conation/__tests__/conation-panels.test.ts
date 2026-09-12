@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { createPanelRegistry } from '@craft-agent/core/platform'
 import {
   CONATION_INSPECTOR_PANEL_ID,
+  conationInspectorContribution,
   registerConationPanels,
 } from '../conation-panels'
 import { isConationInspectorEnabled } from '@/atoms/conation-shell'
@@ -19,9 +20,41 @@ describe('registerConationPanels', () => {
 
   it('registers conation.inspector only when both flags are on', () => {
     const registry = createPanelRegistry()
-    registerConationPanels(registry, () => null, { shellEnabled: true, inspectorEnabled: true })
+    const registration = registerConationPanels(
+      registry,
+      () => null,
+      { shellEnabled: true, inspectorEnabled: true },
+    )
+    const duplicate = registerConationPanels(
+      registry,
+      () => null,
+      { shellEnabled: true, inspectorEnabled: true },
+    )
     expect(registry.get(CONATION_INSPECTOR_PANEL_ID)?.id).toBe(CONATION_INSPECTOR_PANEL_ID)
-    expect(registry.list('inspector', {}).map((p) => p.id)).toContain(CONATION_INSPECTOR_PANEL_ID)
+    expect(
+      registry.list('inspector', {}).filter((panel) => panel.id === CONATION_INSPECTOR_PANEL_ID),
+    ).toHaveLength(1)
+    expect(registration).toBeDefined()
+    expect(duplicate).toBeUndefined()
+
+    registration?.dispose()
+    expect(registry.get(CONATION_INSPECTOR_PANEL_ID)).toBeUndefined()
+  })
+
+  it('does not claim a contribution registered by another owner', () => {
+    const registry = createPanelRegistry()
+    const owner = registry.register(conationInspectorContribution(() => null))
+
+    expect(
+      registerConationPanels(
+        registry,
+        () => null,
+        { shellEnabled: true, inspectorEnabled: true },
+      ),
+    ).toBeUndefined()
+    expect(registry.get(CONATION_INSPECTOR_PANEL_ID)).toBeDefined()
+
+    owner.dispose()
   })
 
   it('helper and core flags default false', () => {
