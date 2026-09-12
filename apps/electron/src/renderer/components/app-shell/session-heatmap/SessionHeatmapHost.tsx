@@ -16,7 +16,6 @@ import {
   sessionDurationMs,
   sessionTokenTotal,
   formatTranscriptSize,
-  type CollectionFilters,
   type CollectionSessionMeta,
   type HeatmapDayOrderBy,
   type HeatmapNavDir,
@@ -31,16 +30,14 @@ import {
   collectionDisplayAtom,
   loadCollectionDisplayAtom,
   replaceCollectionDisplayAtom,
-  setCollectionDisplayAtom,
 } from '@/atoms/collection-display'
 import {
   collectionFiltersAtom,
   loadCollectionFiltersAtom,
   replaceCollectionFiltersMapAtom,
 } from '@/atoms/collection-filters'
-import { CollectionViewCycleButton } from '../collection/CollectionViewCycleButton'
+import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
-import { CollectionOpsBar } from '../collection/CollectionOpsBar'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import type { SessionStatus } from '@/config/session-status-config'
@@ -162,11 +159,15 @@ function levelClass(level: number): string {
 export function SessionHeatmapHost() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { activeWorkspaceId, sessionStatuses = [], projects = [], labels: labelConfigs } =
-    useAppShellContext()
+  const {
+    activeWorkspaceId,
+    sessionStatuses = [],
+    projects = [],
+    labels: labelConfigs,
+    isCompactMode,
+  } = useAppShellContext()
   const metaMap = useAtomValue(sessionMetaMapAtom)
   const display = useAtomValue(collectionDisplayAtom)
-  const setDisplay = useSetAtom(setCollectionDisplayAtom)
   const replaceDisplay = useSetAtom(replaceCollectionDisplayAtom)
   const loadDisplay = useSetAtom(loadCollectionDisplayAtom)
   const filters = useAtomValue(collectionFiltersAtom)
@@ -213,13 +214,6 @@ export function SessionHeatmapHost() {
       replaceFiltersMap(next)
     })
   }, [activeWorkspaceId, replaceFiltersMap])
-
-  const handleDisplayChange = React.useCallback(
-    (next: typeof display) => {
-      void setDisplay({ display: next, workspaceId: activeWorkspaceId })
-    },
-    [setDisplay, activeWorkspaceId],
-  )
 
   const filtered = React.useMemo(() => {
     const metas = [...metaMap.values()].map(toCollectionMeta)
@@ -283,31 +277,24 @@ export function SessionHeatmapHost() {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <CollectionOpsBar
-        display={display}
-        filters={filters}
-        onDisplayChange={handleDisplayChange}
-        onFiltersChange={(next: CollectionFilters) => setFilters(next)}
+      <CollectionViewChrome
+        workspaceId={activeWorkspaceId}
+        viewMode="heatmap"
+        onViewModeChange={(view) => {
+          navigate(collectionViewRoute(view))
+        }}
+        compact={!!isCompactMode}
         statuses={sessionStatuses as unknown as SessionStatus[]}
         priorities={PRIORITIES}
         projects={projectOptions}
         labels={labelOptions}
-        workspaceId={activeWorkspaceId}
         onApplyUserSlice={(viewId, sliceFilters) => {
           const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
           skipRailChipClearOnce.current = nav.skipChipClear
           void setFilters({ ...nav.filters })
           navigate(nav.route)
         }}
-        trailing={
-          <CollectionViewCycleButton
-            value="heatmap"
-            onChange={(view) => {
-              navigate(collectionViewRoute(view))
-            }}
-          />
-        }
-        className="border-b border-border/50"
+        className={isCompactMode ? 'w-full border-b border-border/50 px-2 py-1.5' : 'border-b border-border/50'}
       />
 
       <div className="min-h-0 flex-1 overflow-auto px-4 py-3">

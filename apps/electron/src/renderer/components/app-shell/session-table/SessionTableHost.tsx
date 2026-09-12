@@ -27,7 +27,6 @@ import {
   collectionDisplayAtom,
   loadCollectionDisplayAtom,
   replaceCollectionDisplayAtom,
-  setCollectionDisplayAtom,
 } from '@/atoms/collection-display'
 import {
   collectionFiltersAtom,
@@ -36,9 +35,8 @@ import {
 } from '@/atoms/collection-filters'
 import { sessionSelection } from '@/hooks/useEntitySelection'
 import type { SessionStatus } from '@/config/session-status-config'
-import { CollectionViewCycleButton } from '../collection/CollectionViewCycleButton'
+import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
-import { CollectionOpsBar } from '../collection/CollectionOpsBar'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { SessionTableRow } from './SessionTableRow'
@@ -188,14 +186,18 @@ function groupTableRows(
 export function SessionTableHost() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
-  const { activeWorkspaceId, sessionStatuses = [], projects = [], labels: labelConfigs } =
-    useAppShellContext()
+  const {
+    activeWorkspaceId,
+    sessionStatuses = [],
+    projects = [],
+    labels: labelConfigs,
+    isCompactMode,
+  } = useAppShellContext()
   const metaMap = useAtomValue(sessionMetaMapAtom)
   const loadedSessionIds = useAtomValue(loadedSessionsAtom)
   const updateMeta = useSetAtom(updateSessionMetaAtom)
   const refreshMetadata = useSetAtom(refreshSessionsMetadataAtom)
   const display = useAtomValue(collectionDisplayAtom)
-  const setDisplay = useSetAtom(setCollectionDisplayAtom)
   const replaceDisplay = useSetAtom(replaceCollectionDisplayAtom)
   const loadDisplay = useSetAtom(loadCollectionDisplayAtom)
   const filters = useAtomValue(collectionFiltersAtom)
@@ -262,13 +264,6 @@ export function SessionTableHost() {
       replaceFiltersMap(next)
     })
   }, [activeWorkspaceId, replaceFiltersMap])
-
-  const handleDisplayChange = React.useCallback(
-    (next: CollectionDisplay) => {
-      void setDisplay({ display: next, workspaceId: activeWorkspaceId })
-    },
-    [setDisplay, activeWorkspaceId],
-  )
 
   const statusById = React.useMemo(() => {
     const map = new Map<string, SessionStatus>()
@@ -579,31 +574,24 @@ export function SessionTableHost() {
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <CollectionOpsBar
-        display={display}
-        filters={filters}
-        onDisplayChange={handleDisplayChange}
-        onFiltersChange={setFilters}
+      <CollectionViewChrome
+        workspaceId={activeWorkspaceId}
+        viewMode="table"
+        onViewModeChange={(view) => {
+          navigate(collectionViewRoute(view))
+        }}
+        compact={!!isCompactMode}
         statuses={sessionStatuses as unknown as SessionStatus[]}
         priorities={PRIORITIES}
         projects={projectOptions}
         labels={labelOptions}
-        workspaceId={activeWorkspaceId}
         onApplyUserSlice={(viewId, sliceFilters) => {
           const nav = userSliceNavigation({ id: viewId, filters: sliceFilters })
           skipRailChipClearOnce.current = nav.skipChipClear
           void setFilters({ ...nav.filters })
           navigate(nav.route)
         }}
-        trailing={
-          <CollectionViewCycleButton
-            value="table"
-            onChange={(view) => {
-              navigate(collectionViewRoute(view))
-            }}
-          />
-        }
-        className="border-b border-border/50"
+        className={isCompactMode ? 'w-full border-b border-border/50 px-2 py-1.5' : 'border-b border-border/50'}
       />
 
       <div
