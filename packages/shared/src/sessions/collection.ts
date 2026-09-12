@@ -52,6 +52,8 @@ export {
 export {
   buildYearHeatmap,
   compareDaySessions,
+  heatmapEndKey,
+  heatmapHomeKey,
   heatmapNavigate,
   keyFromDayOfYear,
   localDayKey,

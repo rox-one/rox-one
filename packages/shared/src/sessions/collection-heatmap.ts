@@ -125,6 +125,16 @@ export function heatmapNavigate(focusedKey: string, dir: HeatmapNavDir, year: nu
   return keyFromDayOfYear(year, index + delta)
 }
 
+/** Home: today when it belongs to `year`, otherwise Jan 1. */
+export function heatmapHomeKey(year: number, todayKey: string): string {
+  return todayKey.startsWith(`${year}-`) ? todayKey : `${year}-01-01`
+}
+
+/** End: Dec 31 of the displayed year. */
+export function heatmapEndKey(year: number): string {
+  return `${year}-12-31`
+}
+
 export function buildYearHeatmap(
   sessions: ReadonlyArray<Pick<CollectionSessionMeta, 'lastMessageAt' | 'createdAt'>>,
   year: number,

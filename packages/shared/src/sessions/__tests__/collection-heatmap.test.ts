@@ -3,6 +3,8 @@ import type { CollectionSessionMeta } from '../collection-query.ts'
 import {
   buildYearHeatmap,
   compareDaySessions,
+  heatmapEndKey,
+  heatmapHomeKey,
   heatmapNavigate,
   localDayKey,
   sessionsOnDay,
@@ -77,6 +79,21 @@ describe('heatmapNavigate', () => {
     expect(heatmapNavigate('2026-01-10', 'up', 2026)).toBe('2026-01-03')
     expect(heatmapNavigate('2026-01-10', 'down', 2026)).toBe('2026-01-17')
     expect(heatmapNavigate('2026-01-03', 'up', 2026)).toBe('2026-12-27')
+  })
+})
+
+describe('heatmapHomeKey / heatmapEndKey', () => {
+  it('homes to today when today is in the displayed year', () => {
+    expect(heatmapHomeKey(2026, '2026-09-12')).toBe('2026-09-12')
+  })
+
+  it('homes to Jan 1 when today is in another year', () => {
+    expect(heatmapHomeKey(2025, '2026-09-12')).toBe('2025-01-01')
+  })
+
+  it('ends on Dec 31 of the displayed year', () => {
+    expect(heatmapEndKey(2026)).toBe('2026-12-31')
+    expect(heatmapEndKey(2025)).toBe('2025-12-31')
   })
 })
 

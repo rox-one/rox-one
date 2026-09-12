@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next'
 import {
   DEFAULT_COLLECTION_FILTERS,
   buildYearHeatmap,
+  classifyAgentFamily,
   compareDaySessions,
+  heatmapEndKey,
+  heatmapHomeKey,
   heatmapNavigate,
   querySessionMetas,
   sessionsOnDay,
@@ -21,6 +24,7 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
+import { sessionSelection } from '@/hooks/useEntitySelection'
 import {
   collectionDisplayAtom,
   loadCollectionDisplayAtom,
@@ -35,6 +39,7 @@ import {
 import { CollectionViewCycleButton } from '../collection/CollectionViewCycleButton'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
 import { CollectionOpsBar } from '../collection/CollectionOpsBar'
+import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import type { SessionStatus } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
@@ -137,6 +142,7 @@ export function SessionHeatmapHost() {
   const [orderBy, setOrderBy] = React.useState<HeatmapDayOrderBy>('lastMessageAt')
   const [orderDir, setOrderDir] = React.useState<'asc' | 'desc'>('desc')
   const gridRef = React.useRef<HTMLDivElement>(null)
+  const { toggle, selectRange, isSelected } = sessionSelection.useSelection()
 
   React.useEffect(() => {
     void loadDisplay(activeWorkspaceId)
@@ -185,7 +191,7 @@ export function SessionHeatmapHost() {
 
   React.useEffect(() => {
     if (focusedKey.startsWith(`${year}-`)) return
-    setFocusedKey(year === new Date().getFullYear() ? heatmap.todayKey : `${year}-01-01`)
+    setFocusedKey(heatmapHomeKey(year, heatmap.todayKey))
   }, [year, focusedKey, heatmap.todayKey])
 
   const daySessions = React.useMemo(() => {
@@ -193,6 +199,7 @@ export function SessionHeatmapHost() {
       compareDaySessions(a, b, orderBy, orderDir),
     )
   }, [filtered, focusedKey, orderBy, orderDir])
+  const visibleIds = React.useMemo(() => daySessions.map((session) => session.id), [daySessions])
 
   const projectOptions = React.useMemo(
     () => projects.map((p) => ({ id: p.id, name: p.name })),
@@ -298,6 +305,16 @@ export function SessionHeatmapHost() {
             tabIndex={0}
             className="outline-none"
             onKeyDown={(event) => {
+              if (event.key === 'Home') {
+                event.preventDefault()
+                setFocusedKey(heatmapHomeKey(year, heatmap.todayKey))
+                return
+              }
+              if (event.key === 'End') {
+                event.preventDefault()
+                setFocusedKey(heatmapEndKey(year))
+                return
+              }
               const dir: HeatmapNavDir | null =
                 event.key === 'ArrowLeft'
                   ? 'left'
@@ -390,6 +407,7 @@ export function SessionHeatmapHost() {
           ) : (
             <div className="overflow-x-auto">
               <div className="flex items-center gap-2 border-b border-border/40 px-2 py-1.5 text-[11px] font-semibold text-muted-foreground">
+                <span className="w-6 shrink-0" />
                 {DAY_COLUMNS.map((column) => (
                   <button
                     key={column.id}
@@ -405,13 +423,27 @@ export function SessionHeatmapHost() {
                     {orderBy === column.id ? (orderDir === 'asc' ? ' ↑' : ' ↓') : ''}
                   </button>
                 ))}
+                <span className="w-24 shrink-0">{t('collection.filter.agentFamily')}</span>
               </div>
               <ul>
-                {daySessions.map((session) => (
+                {daySessions.map((session, index) => (
                   <li
                     key={session.id}
                     className="flex items-center gap-2 border-b border-border/30 px-2 py-1.5 text-sm hover:bg-foreground/[0.02]"
                   >
+                    <span className="w-6 shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={isSelected(session.id)}
+                        onChange={(event) => {
+                          if ((event.nativeEvent as MouseEvent).shiftKey) selectRange(index, visibleIds)
+                          else toggle(session.id, index)
+                        }}
+                        aria-label={t('collection.table.select', {
+                          title: session.name || session.id.slice(0, 8),
+                        })}
+                      />
+                    </span>
                     <button
                       type="button"
                       className="min-w-0 flex-1 truncate text-left hover:underline"
@@ -434,6 +466,9 @@ export function SessionHeatmapHost() {
                     <span className="w-24 shrink-0 text-xs text-muted-foreground">
                       {formatRelative(session.lastMessageAt)}
                     </span>
+                    <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">
+                      {t(`collection.filter.agentFamily.${classifyAgentFamily(session)}`)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -441,6 +476,13 @@ export function SessionHeatmapHost() {
           )}
         </section>
       </div>
+      <CollectionBulkBar
+        workspaceId={activeWorkspaceId}
+        visibleSessionIds={visibleIds}
+        statuses={sessionStatuses as unknown as SessionStatus[]}
+        projects={projectOptions}
+        labels={labelOptions}
+      />
     </div>
   )
 }
