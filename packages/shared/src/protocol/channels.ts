@@ -174,6 +174,7 @@ export const RPC_CHANNELS = {
     DELETE_FOLDER: 'notes:deleteFolder',
     SEARCH: 'notes:search',
     GET_BACKLINKS: 'notes:getBacklinks',
+    GET_INSIGHTS: 'notes:getInsights',
     GET_RENAME_IMPACT: 'notes:getRenameImpact',
     GET_DAILY_NOTE: 'notes:getDailyNote',
     IMPORT_ASSET: 'notes:importAsset',

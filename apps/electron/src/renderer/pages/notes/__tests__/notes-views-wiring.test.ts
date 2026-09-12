@@ -15,6 +15,16 @@ describe('issues 07–09 wiring', () => {
     expect(notesPage).toContain('sanitizePastedMarkdown')
     expect(notesPage).toContain('setHorizontalRule')
     expect(notesPage).toContain('upsertMarkdownComment')
+    expect(notesPage).toContain('buildVaultInsights')
+    expect(notesPage).toContain('aliasesFromProperties')
+    expect(notesPage).toContain('applyLinkSuggestion')
+    expect(notesPage).toContain('insertFootnote')
+    expect(notesPage).toContain('VaultInsightsPanel')
+    const inspector = read('pages/notes/NoteInspector.tsx')
+    const panel = read('pages/notes/VaultInsightsPanel.tsx')
+    expect(inspector).toContain('VaultInsightsPanel')
+    expect(panel).toContain("t('notes.inspector.linkSuggestions')")
+    expect(panel).toContain("t('notes.inspector.footnotes')")
   })
 
   it('hosts table, canvas, outline and graph views without replacing Map', () => {

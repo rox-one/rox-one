@@ -7,6 +7,7 @@ import {
   closeAllVaultIndexes,
   ensureVaultIndex,
   getVaultBacklinks,
+  getVaultInsights,
   hashVaultMarkdownFiles,
   isVaultIndexAvailable,
   listVaultDocuments,
@@ -199,5 +200,37 @@ body
     expect(third.indexed).toBe(1)
     expect(third.unchanged).toBe(1)
     expect(listVaultDocuments(notesRoot).map(doc => doc.id).sort()).toEqual(['one', 'two'])
+  })
+
+  it('indexes named entities and ranked link insights without mutating markdown', () => {
+    const notesRoot = tmpNotes()
+    const alpha = `---
+title: Alpha
+aliases: [A1]
+people:
+  - Alice Smith
+---
+
+Ask Bee about the work.
+
+A claim[^fn].
+
+[^fn]: source
+`
+    const beta = `---
+title: Beta
+aliases: [Bee]
+---
+
+body
+`
+    writeFileSync(join(notesRoot, 'alpha.md'), alpha)
+    writeFileSync(join(notesRoot, 'beta.md'), beta)
+    expect(rebuildVaultIndex(notesRoot).ok).toBe(true)
+    const insights = getVaultInsights(notesRoot, 'alpha')
+    expect(insights.entities.some((item) => item.name === 'Alice Smith' && item.kind === 'person')).toBe(true)
+    expect(insights.linkSuggestions.some((item) => item.targetTitle === 'Beta' && item.mention === 'Bee')).toBe(true)
+    expect(insights.footnotes.some((item) => item.id === 'fn' && item.hasDef && item.hasRef)).toBe(true)
+    expect(readFileSync(join(notesRoot, 'alpha.md'), 'utf8')).toBe(alpha)
   })
 })

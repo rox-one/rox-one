@@ -14,6 +14,7 @@ import { awardXpSafe } from '@craft-agent/shared/gamification'
 import {
   ensureVaultIndex,
   getVaultBacklinks,
+  getVaultInsights,
   isVaultIndexAvailable,
   listVaultDocuments,
   queryVaultDocuments,
@@ -33,6 +34,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.DELETE_FOLDER,
   RPC_CHANNELS.notes.SEARCH,
   RPC_CHANNELS.notes.GET_BACKLINKS,
+  RPC_CHANNELS.notes.GET_INSIGHTS,
   RPC_CHANNELS.notes.GET_RENAME_IMPACT,
   RPC_CHANNELS.notes.GET_DAILY_NOTE,
   RPC_CHANNELS.notes.IMPORT_ASSET,
@@ -999,6 +1001,23 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
 
   server.handle(RPC_CHANNELS.notes.GET_BACKLINKS, async (_ctx, workspaceId: string, noteId: string) => {
     return getBacklinks(getWorkspaceNotesRoot(workspaceId), noteId)
+  })
+
+  server.handle(RPC_CHANNELS.notes.GET_INSIGHTS, async (_ctx, workspaceId: string, noteId: string) => {
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    try {
+      ensureVaultIndex(notesRoot)
+      return getVaultInsights(notesRoot, noteId)
+    } catch {
+      return {
+        entities: [],
+        linkSuggestions: [],
+        unlinkedMentions: [],
+        brokenLinks: [],
+        suggestedMerges: [],
+        footnotes: [],
+      }
+    }
   })
 
   server.handle(RPC_CHANNELS.notes.GET_RENAME_IMPACT, async (_ctx, workspaceId: string, noteId: string, nextTitle: string) => {

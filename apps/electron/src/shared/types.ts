@@ -439,6 +439,7 @@ import type {
   NoteAssetRenameResult,
   NoteBacklink,
   NoteDocument,
+  NoteInsights,
   NoteRenameImpact,
   NoteRenameResult,
   NoteSummary,
@@ -797,6 +798,7 @@ export interface ElectronAPI {
   deleteFolderNote(workspaceId: string, folder: string): Promise<{ deletedNotes: string[] }>
   searchNotes(workspaceId: string, query: string): Promise<NoteSummary[]>
   getNoteBacklinks(workspaceId: string, noteId: string): Promise<NoteBacklink[]>
+  getNoteInsights(workspaceId: string, noteId: string): Promise<NoteInsights>
   getNoteRenameImpact(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameImpact>
   getDailyNote(workspaceId: string, date?: string): Promise<NoteDocument>
   importNoteAsset(workspaceId: string, attachment: FileAttachment): Promise<NoteAssetImportResult>

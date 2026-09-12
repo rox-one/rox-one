@@ -14,6 +14,12 @@ import { dirname, join, relative, resolve } from 'node:path'
 import type { Database } from 'bun:sqlite'
 import { isImportProvenancedRelativePath } from '@craft-agent/shared/config'
 import {
+  buildVaultInsights,
+  extractNamedEntities,
+  type VaultCatalogEntry,
+  type VaultInsights,
+} from '@craft-agent/shared/knowledge/vault-insights'
+import {
   noteIdFromRelativePath,
   parseVaultMarkdown,
   stripMdExtension,
@@ -100,6 +106,8 @@ export interface VaultHealth {
   documentCount: number
   recovered: boolean
 }
+
+export type { VaultInsights }
 
 const handles = new Map<string, { db: Database; fts: boolean }>()
 
@@ -427,8 +435,45 @@ function walkMarkdownFiles(notesRoot: string): { files: string[]; truncated: boo
   return { files, truncated, skipped }
 }
 
-function entityIdFor(name: string): string {
-  return stripMdExtension(name).trim().toLowerCase().replace(/\s+/g, '-')
+function loadCatalog(db: Database): VaultCatalogEntry[] {
+  const docs = db.query<{ id: string; title: string }, []>('SELECT id, title FROM documents').all()
+  const aliasRows = db.query<{ document_id: string; alias: string }, []>('SELECT document_id, alias FROM aliases').all()
+  const aliases = new Map<string, string[]>()
+  for (const row of aliasRows) {
+    const list = aliases.get(row.document_id) ?? []
+    list.push(row.alias)
+    aliases.set(row.document_id, list)
+  }
+  return docs.map((doc) => ({ id: doc.id, title: doc.title, aliases: aliases.get(doc.id) ?? [] }))
+}
+
+function reindexNamedEntities(db: Database, notesRoot: string): void {
+  db.exec('DELETE FROM entity_mentions')
+  db.exec('DELETE FROM entities')
+  const catalog = loadCatalog(db)
+  const rows = db
+    .query<{ id: string; relative_path: string; properties_json: string }, []>(
+      'SELECT id, relative_path, properties_json FROM documents',
+    )
+    .all()
+  const insertEntity = db.query('INSERT OR REPLACE INTO entities(id, name, kind) VALUES (?, ?, ?)')
+  const insertMention = db.query(
+    'INSERT INTO entity_mentions(entity_id, document_id, line, evidence) VALUES (?, ?, ?, ?)',
+  )
+  const root = resolve(notesRoot)
+  for (const row of rows) {
+    let content = ''
+    try {
+      content = readFileSync(join(root, row.relative_path), 'utf8')
+    } catch {
+      continue
+    }
+    const entities = extractNamedEntities(row.id, content, catalog, parseProperties(row.properties_json))
+    for (const entity of entities) {
+      insertEntity.run(entity.id, entity.name, entity.kind)
+      insertMention.run(entity.id, entity.documentId, entity.line, entity.evidence)
+    }
+  }
 }
 
 function replaceChildren(db: Database, documentId: string, parsed: ParsedVaultNote, content: string): void {
@@ -451,16 +496,9 @@ function replaceChildren(db: Database, documentId: string, parsed: ParsedVaultNo
   const insertLink = db.query(
     'INSERT INTO wikilinks(source_id, target, alias, heading, line, preview) VALUES (?, ?, ?, ?, ?, ?)',
   )
-  const insertEntity = db.query('INSERT OR REPLACE INTO entities(id, name, kind) VALUES (?, ?, ?)')
-  const insertMention = db.query(
-    'INSERT INTO entity_mentions(entity_id, document_id, line, evidence) VALUES (?, ?, ?, ?)',
-  )
   for (const link of parsed.links) {
     const preview = linePreview(content, link.line)
     insertLink.run(documentId, link.target, link.alias ?? null, link.heading ?? null, link.line, preview)
-    const entityId = entityIdFor(link.target)
-    insertEntity.run(entityId, stripMdExtension(link.target), 'mention')
-    insertMention.run(entityId, documentId, link.line, preview)
   }
 
   const insertFootnote = db.query(
@@ -577,6 +615,7 @@ function rebuildInto(db: Database, notesRoot: string, clear: boolean): Omit<Vaul
       if (seen.has(row.id)) continue
       db.query('DELETE FROM documents WHERE id = ?').run(row.id)
     }
+    reindexNamedEntities(db, notesRoot)
   })
   tx()
   return { indexed, unchanged, skipped, truncated: walk.truncated }
@@ -833,6 +872,47 @@ export function vaultIndexHealth(notesRoot: string): VaultHealth {
     documentCount: count,
     recovered: false,
   }
+}
+
+export function getVaultInsights(notesRoot: string, noteId: string): VaultInsights {
+  const empty: VaultInsights = {
+    entities: [],
+    linkSuggestions: [],
+    unlinkedMentions: [],
+    brokenLinks: [],
+    suggestedMerges: [],
+    footnotes: [],
+  }
+  const opened = openDb(notesRoot, false)
+  if (!opened) return empty
+  const doc = opened.db
+    .query<{ id: string; relative_path: string; properties_json: string }, [string]>(
+      'SELECT id, relative_path, properties_json FROM documents WHERE id = ?',
+    )
+    .get(noteId)
+  if (!doc) return empty
+  let content = ''
+  try {
+    content = readFileSync(join(resolve(notesRoot), doc.relative_path), 'utf8')
+  } catch {
+    return empty
+  }
+  const linkRows = opened.db
+    .query<{ target: string; alias: string | null; line: number }, [string]>(
+      'SELECT target, alias, line FROM wikilinks WHERE source_id = ?',
+    )
+    .all(noteId)
+  return buildVaultInsights({
+    documentId: noteId,
+    content,
+    links: linkRows.map((row) => ({
+      target: row.target,
+      ...(row.alias ? { alias: row.alias } : {}),
+      line: row.line,
+    })),
+    catalog: loadCatalog(opened.db),
+    properties: parseProperties(doc.properties_json),
+  })
 }
 
 export function hashVaultMarkdownFiles(notesRoot: string): Record<string, string> {

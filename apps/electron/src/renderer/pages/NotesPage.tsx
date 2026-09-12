@@ -43,7 +43,16 @@ import {
   serializePersistedFolds,
   upsertMarkdownComment,
 } from './notes/document-ia'
-import { convertNote, dailyNoteDestination } from './notes/note-views'
+import {
+  aliasesFromProperties,
+  applyEntityMerge,
+  applyLinkSuggestion,
+  buildVaultInsights,
+  insertFootnote,
+  undoEntityMerge,
+  updateFootnoteDefinition,
+} from '@craft-agent/shared/knowledge/vault-insights'
+import { EMPTY_NOTE_INSIGHTS } from './notes/VaultInsightsPanel'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -560,6 +569,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [query, setQuery] = React.useState('')
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null)
   const [commentDraftQuote, setCommentDraftQuote] = React.useState('')
+  const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [loading, setLoading] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
@@ -900,6 +910,20 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     })
     return [...targets.values()].sort((a, b) => a.localeCompare(b))
   }, [activeNote?.links, notes])
+  const noteInsights = React.useMemo(() => {
+    if (!activeNote) return EMPTY_NOTE_INSIGHTS
+    return buildVaultInsights({
+      documentId: activeNote.id,
+      content,
+      links: activeNote.links,
+      catalog: notes.map((note) => ({
+        id: note.id,
+        title: note.title,
+        aliases: aliasesFromProperties(note.properties),
+      })),
+      properties: activeNote.properties,
+    })
+  }, [activeNote, content, notes])
   const orphanAssets = React.useMemo(
     () => allAssets.filter(asset => (asset.referencedBy?.length ?? 0) === 0),
     [allAssets]
@@ -1217,6 +1241,15 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     }
     setContent(prev => `${prev}${prev && !prev.endsWith('\n') ? '\n' : ''}${text}`)
     setDirty(true)
+  }
+
+  const applyNoteMarkdown = (next: string) => {
+    setContent(next)
+    setDirty(true)
+    const editor = richEditorRef.current
+    if (editor) {
+      editor.commands.setContent(splitFrontmatter(next).body)
+    }
   }
 
   const importFiles = React.useCallback(async (files: File[] | FileList) => {
@@ -2137,6 +2170,34 @@ h1,h2,h3{margin-top:1.5em}
           const note = findNoteByTarget(notes, target)
           if (note) void handleOpenNote(note.id)
           else setMissingLinkTarget(target)
+        }}
+        insights={noteInsights}
+        footnoteDraft={footnoteDraft}
+        onFootnoteDraftChange={setFootnoteDraft}
+        onApplyLink={(suggestion) => applyNoteMarkdown(applyLinkSuggestion(content, suggestion.mention, suggestion.targetTitle))}
+        onApplyMerge={(merge) => applyNoteMarkdown(applyEntityMerge(content, merge.fromName, merge.toName))}
+        onUndoMerge={(merge) => applyNoteMarkdown(undoEntityMerge(content, merge.fromName, merge.toName))}
+        onCreateFootnote={() => {
+          const inserted = insertFootnote(content, footnoteDraft)
+          setFootnoteDraft('')
+          applyNoteMarkdown(inserted.markdown)
+        }}
+        onUpdateFootnote={(footnote, body) => applyNoteMarkdown(updateFootnoteDefinition(content, footnote.id, body))}
+        onJumpFootnote={(footnote) => {
+          const editor = richEditorRef.current
+          if (!editor) return
+          editor.chain().focus().run()
+          const needle = `[^${footnote.id}]`
+          const from = content.indexOf(needle)
+          if (from >= 0) {
+            const bodyOffset = splitFrontmatter(content).frontmatter.length
+            const pos = Math.max(1, from - bodyOffset)
+            try {
+              editor.chain().focus().setTextSelection(pos).run()
+            } catch {
+              /* selection mapping is best-effort */
+            }
+          }
         }}
         collapsed={inspectorCollapsed}
         onToggleCollapsed={toggleInspector}

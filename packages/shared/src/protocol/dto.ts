@@ -723,6 +723,15 @@ export interface NoteChangedPayload {
   noteId?: string
 }
 
+export type {
+  VaultBrokenLink as NoteBrokenLink,
+  VaultEntityMerge as NoteEntityMerge,
+  VaultFootnoteChrome as NoteFootnoteChrome,
+  VaultInsights as NoteInsights,
+  VaultLinkSuggestion as NoteLinkSuggestion,
+  VaultNamedEntity as NoteNamedEntity,
+} from '../knowledge/vault-insights.ts'
+
 // ---------------------------------------------------------------------------
 // Knowledge provider types (P1 read-only, spec 03)
 // ---------------------------------------------------------------------------
