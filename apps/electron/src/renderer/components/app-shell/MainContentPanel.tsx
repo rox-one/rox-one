@@ -31,6 +31,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isTasksNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
@@ -49,6 +50,7 @@ import type { SessionStatusId } from '@/config/session-status-config'
 import { SourceInfoPage, ChatPage, BrowserPanelPage, KnowledgeSurfacePage, ExtensionSurfacePage } from '@/pages'
 import NotesPage from '@/pages/NotesPage'
 import ConnectionsPage from '@/pages/ConnectionsPage'
+import TasksPage from '@/pages/TasksPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import KnowledgeEntityPage from '@/pages/KnowledgeEntityPage'
 import SkillInfoPage from '@/pages/SkillInfoPage'
@@ -550,6 +552,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <HomeFrontPage />
+      </Panel>
+    )
+  }
+
+  if (isTasksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <TasksPage />
       </Panel>
     )
   }

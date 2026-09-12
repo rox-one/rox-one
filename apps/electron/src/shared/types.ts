@@ -2054,6 +2054,12 @@ export interface MemoryNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface TasksNavigationState {
+  navigator: 'tasks'
+  details: { type: 'task'; taskId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface ConnectionsNavigationState {
   navigator: 'connections'
   details: null
@@ -2132,6 +2138,7 @@ export type NavigationState =
   | PagesNavigationState
   | BrowserNavigationState
   | MemoryNavigationState
+  | TasksNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
   | ExtensionNavigationState
@@ -2177,6 +2184,10 @@ export const isBrowserNavigation = (
 export const isMemoryNavigation = (
   state: NavigationState
 ): state is MemoryNavigationState => state.navigator === 'memory'
+
+export const isTasksNavigation = (
+  state: NavigationState
+): state is TasksNavigationState => state.navigator === 'tasks'
 
 export const isConnectionsNavigation = (
   state: NavigationState
@@ -2257,6 +2268,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'memory') {
     return 'memory'
+  }
+  if (state.navigator === 'tasks') {
+    return state.details?.type === 'task' ? `tasks/task/${encodeURIComponent(state.details.taskId)}` : 'tasks'
   }
   if (state.navigator === 'connections') {
     return 'connections'
@@ -2450,6 +2464,12 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+  if (key === 'tasks') return { navigator: 'tasks', details: null }
+  if (key.startsWith('tasks/task/')) {
+    const taskId = decodeURIComponent(key.slice('tasks/task/'.length))
+    if (taskId) return { navigator: 'tasks', details: { type: 'task', taskId } }
+    return { navigator: 'tasks', details: null }
+  }
 
   // Handle sessions
   const parseSessionsKey = (filterKey: string, sessionId?: string): NavigationState | null => {

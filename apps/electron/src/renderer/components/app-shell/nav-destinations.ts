@@ -20,6 +20,7 @@ import {
   DatabaseZap,
   FolderKanban,
   Inbox,
+  ListChecks,
   ListTodo,
   NotebookPen,
   PanelsTopLeft,
@@ -34,6 +35,7 @@ import {
   isKnowledgeNavigation,
   isNotesNavigation,
   isMemoryNavigation,
+  isTasksNavigation,
   isPagesNavigation,
   isProjectsNavigation,
   isSessionsNavigation,
@@ -49,6 +51,7 @@ export type AppNavDestinationId =
   | 'sources'
   | 'skills'
   | 'memory'
+  | 'tasks'
   | 'projects'
   | 'pages'
   | 'automations'
@@ -110,6 +113,14 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     labelKey: 'sidebar.memory',
     route: () => routes.view.memory(),
     isActive: isMemoryNavigation,
+  },
+  {
+    id: 'tasks',
+    linkId: 'nav:tasks',
+    icon: ListChecks,
+    labelKey: 'sidebar.tasks',
+    route: () => routes.view.tasks(),
+    isActive: isTasksNavigation,
   },
   {
     id: 'sources',
