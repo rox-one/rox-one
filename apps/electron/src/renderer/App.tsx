@@ -79,6 +79,7 @@ import {
   JSONPreviewOverlay,
 } from '@craft-agent/ui'
 import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
+import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { useSshConnectionStatus } from '@/hooks/useSshConnectionStatus'
 import { useStaleSessionRecovery } from '@/hooks/useStaleSessionRecovery'
@@ -1779,6 +1780,10 @@ export default function App() {
           description: `${message}${tail}`,
         })
       }
+    },
+    openInAppBrowser: (url) => {
+      queueInternalBrowserUrl(url)
+      window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))
     },
     showInFolder: async (path) => {
       try {

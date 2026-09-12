@@ -2,6 +2,8 @@ import * as React from 'react'
 import { Globe } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import BrowserPanelPage from '@/pages/BrowserPanelPage'
+import { INTERNAL_BROWSER_OPEN_EVENT, planRetainedBrowserOpen } from '@craft-agent/shared/browser/retained-pane'
+import { takePendingInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 
 /** Embedded BrowserView hosted in the inspector column. */
 export function InspectorBrowserPane() {
@@ -10,37 +12,41 @@ export function InspectorBrowserPane() {
   const [error, setError] = React.useState<string | null>(null)
   const createdRef = React.useRef<string | null>(null)
 
+  const attach = React.useCallback(async (url?: string) => {
+    const existing = await window.electronAPI.browserPane.list()
+    const plan = planRetainedBrowserOpen(existing, url)
+    if (plan.action === 'navigate') {
+      createdRef.current = plan.id
+      setInstanceId(plan.id)
+      if (plan.url) await window.electronAPI.browserPane.navigate(plan.id, plan.url)
+      return
+    }
+    const id = await window.electronAPI.browserPane.createEmbedded(plan.url ? { url: plan.url } : undefined)
+    createdRef.current = id
+    setInstanceId(id)
+  }, [])
+
   React.useEffect(() => {
     let cancelled = false
-    void (async () => {
-      try {
-        const existing = await window.electronAPI.browserPane.list()
-        await Promise.all(
-          existing
-            .filter((item) => item.embedded)
-            .map((item) => window.electronAPI.browserPane.destroy(item.id).catch(() => undefined)),
-        )
-        const id = await window.electronAPI.browserPane.createEmbedded()
-        if (cancelled) {
-          await window.electronAPI.browserPane.destroy(id).catch(() => undefined)
-          return
-        }
-        createdRef.current = id
-        setInstanceId(id)
-      } catch (err) {
+    void attach(takePendingInternalBrowserUrl()).catch((err) => {
+      if (!cancelled) setError(err instanceof Error ? err.message : String(err))
+    })
+    const onOpen = (event: Event) => {
+      const nextUrl = (event as CustomEvent<{ url?: string }>).detail?.url ?? takePendingInternalBrowserUrl()
+      void attach(nextUrl).catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err))
-      }
-    })()
+      })
+    }
+    window.addEventListener(INTERNAL_BROWSER_OPEN_EVENT, onOpen)
     return () => {
       cancelled = true
+      window.removeEventListener(INTERNAL_BROWSER_OPEN_EVENT, onOpen)
       const id = createdRef.current
-      createdRef.current = null
       if (id) {
         void window.electronAPI.browserPane.syncBounds(id, null).catch(() => undefined)
-        void window.electronAPI.browserPane.destroy(id).catch(() => undefined)
       }
     }
-  }, [])
+  }, [attach])
 
   if (error) {
     return (

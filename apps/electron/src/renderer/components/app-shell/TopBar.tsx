@@ -23,7 +23,6 @@ import {
   StyledDropdownMenuSeparator,
 } from "@/components/ui/styled-dropdown"
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
-import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { useEffect, useRef, useState } from "react"
 import { useAtom, useAtomValue } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
@@ -323,23 +322,30 @@ export function TopBar({
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("entityView.map")}</TooltipContent>
         </Tooltip>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-0.5 h-6 w-6 rounded-md">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={onAddSessionPanel}
+              aria-label={t("session.newSessionInPanel")}
+              className="ml-0.5 h-6 w-6 rounded-md"
+            >
               <Icons.Plus className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
             </TopBarButton>
-          </DropdownMenuTrigger>
-          <StyledDropdownMenuContent align="end" minWidth="min-w-56">
-            <StyledDropdownMenuItem onClick={onAddSessionPanel}>
-              <SquarePenRounded className="h-3.5 w-3.5" />
-              {t("session.newSessionInPanel")}
-            </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={onAddBrowserPanel}>
-              <Icons.Globe className="h-3.5 w-3.5" />
-              {t("browser.newWindow")}
-            </StyledDropdownMenuItem>
-          </StyledDropdownMenuContent>
-        </DropdownMenu>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("session.newSessionInPanel")}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={onAddBrowserPanel}
+              aria-label={t("browser.newWindow")}
+              className="h-6 w-6 rounded-md"
+            >
+              <Icons.Globe className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+            </TopBarButton>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("browser.newWindow")}</TooltipContent>
+        </Tooltip>
 
 
 

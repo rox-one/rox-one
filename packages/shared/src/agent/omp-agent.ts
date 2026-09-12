@@ -165,6 +165,9 @@ const OMP_CRAFT_CONTEXT_PROMPT = [
   'When Craft is in "Выполнение" (Execute / allow-all) mode, tools run without',
   'prompts; otherwise the user confirms sensitive calls via a dialog and a denial',
   'is final for that call.',
+  'Safe http/https links belong in the host browser pane via mcp__session__browser_tool.',
+  'Do not force every URL open. Auth callbacks, deep links, file: URLs and unsafe',
+  'schemes stay outside that pane (OS handler or blocked).',
 ].join('\n');
 
 /**

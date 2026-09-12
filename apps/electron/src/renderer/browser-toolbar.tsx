@@ -11,7 +11,7 @@ import ReactDOM from 'react-dom/client'
 import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { setupI18n } from '@craft-agent/shared/i18n'
-import { EyeOff, X, XCircle } from 'lucide-react'
+import { EyeOff, X, XCircle, Bug, Download, History, User } from 'lucide-react'
 import { BrowserControls } from '@craft-agent/ui'
 import { HeaderIconButton } from '@/components/ui/HeaderIconButton'
 import {
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
   StyledDropdownMenuContent,
   StyledDropdownMenuItem,
+  StyledDropdownMenuSeparator,
 } from '@/components/ui/styled-dropdown'
 import './index.css'
 
@@ -37,6 +38,8 @@ interface ToolbarState {
   canGoBack: boolean
   canGoForward: boolean
   themeColor?: string | null
+  downloadCount?: number
+  profileLabel?: string
 }
 
 declare global {
@@ -51,6 +54,9 @@ declare global {
       setMenuGeometry: (open: boolean, height?: number) => Promise<void>
       hideWindow: () => Promise<void>
       closeWindowEntirely: () => Promise<void>
+      openDevTools: () => Promise<void>
+      listHistory: () => Promise<Array<{ url: string; title: string }>>
+      listDownloads: () => Promise<Array<{ filename: string }>>
       onStateUpdate: (callback: (state: ToolbarState) => void) => () => void
       onThemeColor: (callback: (color: string | null) => void) => () => void
       onForceCloseMenu: (callback: (payload: { reason?: string }) => void) => () => void
@@ -73,6 +79,8 @@ function BrowserToolbarApp() {
   })
   const [themeColor, setThemeColor] = useState<string | null>(null)
   const [windowMenuOpen, setWindowMenuOpen] = useState(false)
+  const [history, setHistory] = useState<Array<{ url: string; title: string }>>([])
+  const [downloads, setDownloads] = useState<Array<{ filename: string }>>([])
   const menuContentRef = useRef<HTMLDivElement | null>(null)
 
   const api = window.browserToolbar
@@ -152,6 +160,17 @@ function BrowserToolbarApp() {
     void api?.stop()
   }, [api])
 
+  useEffect(() => {
+    if (!api || !windowMenuOpen) return
+    void api.listHistory().then(setHistory).catch(() => setHistory([]))
+    void api.listDownloads().then(setDownloads).catch(() => setDownloads([]))
+  }, [api, windowMenuOpen])
+
+  const handleInspect = useCallback(() => {
+    setWindowMenuOpen(false)
+    void api?.openDevTools()
+  }, [api])
+
   const handleHideWindow = useCallback(() => {
     setWindowMenuOpen(false)
     void api?.hideWindow()
@@ -209,6 +228,49 @@ function BrowserToolbarApp() {
                 minWidth="min-w-44"
                 className="titlebar-no-drag z-[110] max-h-none overflow-visible"
               >
+                <StyledDropdownMenuItem disabled>
+                  <User className="h-3.5 w-3.5" />
+                  {t('browser.profile')}: {state.profileLabel ?? 'Rox'}
+                </StyledDropdownMenuItem>
+                <StyledDropdownMenuItem onSelect={handleInspect}>
+                  <Bug className="h-3.5 w-3.5" />
+                  {t('browser.inspect')}
+                </StyledDropdownMenuItem>
+                <StyledDropdownMenuSeparator />
+                {history.length === 0 ? (
+                  <StyledDropdownMenuItem disabled>
+                    <History className="h-3.5 w-3.5" />
+                    {t('browser.historyEmpty')}
+                  </StyledDropdownMenuItem>
+                ) : (
+                  history.slice(0, 5).map((entry) => (
+                    <StyledDropdownMenuItem
+                      key={entry.url}
+                      onSelect={() => {
+                        setWindowMenuOpen(false)
+                        void api?.navigate(entry.url)
+                      }}
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      <span className="truncate">{entry.title || entry.url}</span>
+                    </StyledDropdownMenuItem>
+                  ))
+                )}
+                <StyledDropdownMenuSeparator />
+                {downloads.length === 0 ? (
+                  <StyledDropdownMenuItem disabled>
+                    <Download className="h-3.5 w-3.5" />
+                    {t('browser.downloadsEmpty')}
+                  </StyledDropdownMenuItem>
+                ) : (
+                  downloads.map((item) => (
+                    <StyledDropdownMenuItem key={item.filename} disabled>
+                      <Download className="h-3.5 w-3.5" />
+                      <span className="truncate">{item.filename}</span>
+                    </StyledDropdownMenuItem>
+                  ))
+                )}
+                <StyledDropdownMenuSeparator />
                 <StyledDropdownMenuItem onSelect={handleHideWindow}>
                   <EyeOff className="h-3.5 w-3.5" />
                   {t('browser.hideWindow')}

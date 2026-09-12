@@ -828,6 +828,8 @@ describe('BrowserPaneManager', () => {
         canGoBack: true,
         canGoForward: false,
         themeColor: '#123456',
+        downloadCount: 0,
+        profileLabel: 'Rox',
       },
     ])
   })
@@ -859,6 +861,8 @@ describe('BrowserPaneManager', () => {
         canGoBack: true,
         canGoForward: true,
         themeColor: '#654321',
+        downloadCount: 0,
+        profileLabel: 'Rox',
       },
     ])
   })
