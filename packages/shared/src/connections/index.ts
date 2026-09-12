@@ -3,6 +3,7 @@ export {
   GithubUserToolInputSchema,
   createGithubUserTool,
   executeGithubUserTool,
+  runGithubUserSessionTool,
   getGithubUserToolHost,
   performGithubUser,
   setGithubUserToolHost,

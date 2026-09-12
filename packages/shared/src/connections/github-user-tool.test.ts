@@ -12,6 +12,7 @@ import {
   executeGithubUserTool,
   getGithubUserToolHost,
   performGithubUser,
+  runGithubUserSessionTool,
   setGithubUserToolHost,
   type GithubUserConnection,
   type GithubUserFetch,
@@ -133,6 +134,12 @@ describe('github_user tool', () => {
       workspaceId: 'ws_a',
       connectionId: 'conn_other',
     })).rejects.toThrow('unsupported_integration');
+  });
+
+  it('runGithubUserSessionTool wraps missing host as isError content', async () => {
+    const result = await runGithubUserSessionTool({ workspaceId: 'ws', connectionId: 'conn' });
+    expect(result.isError).toBe(true);
+    expect(result.content).toContain('github_tool_unavailable');
   });
 
   it('performGithubUser returns login only', async () => {
