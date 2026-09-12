@@ -2856,7 +2856,6 @@ function AppShellContent({
                   promoKind={promoKind}
                   onPromoCta={handleMemoryClick}
                 />
->>>>>>> 48c63cc5 (feat(shell): graphite mini-dashboard and labeled chrome)
               </div>
 
             </div>
