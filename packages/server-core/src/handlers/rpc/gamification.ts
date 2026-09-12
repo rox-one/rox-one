@@ -7,14 +7,22 @@
 
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import {
+  applyQuestAction,
   awardXp,
   getGamificationProgress,
   getLevelProgress,
+  isQuestId,
   isXpEventType,
   loadGamificationState,
+  saveSessionRating,
+  setAnalyticsConsent,
   setGamificationAwardListener,
+  visibleQuests,
   type AwardXpResult,
   type GamificationState,
+  type QuestId,
+  type QuestRecord,
+  type SessionRating,
   type XpEventType,
 } from '@craft-agent/shared/gamification'
 import type { RpcServer } from '@craft-agent/server-core/transport'
@@ -25,6 +33,9 @@ import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.gamification.GET,
   RPC_CHANNELS.gamification.AWARD,
+  RPC_CHANNELS.gamification.QUEST,
+  RPC_CHANNELS.gamification.RATE,
+  RPC_CHANNELS.gamification.SET_CONSENT,
 ] as const
 
 export type GamificationProfileDto = {
@@ -38,6 +49,9 @@ export type GamificationProfileDto = {
   currentThreshold: number
   displayNameHint?: string
   recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
+  quests: QuestRecord[]
+  ratings: SessionRating[]
+  analyticsConsent: boolean
 }
 
 function toDto(state: GamificationState): GamificationProfileDto {
@@ -52,6 +66,9 @@ function toDto(state: GamificationState): GamificationProfileDto {
     nextThreshold: progress.nextThreshold,
     currentThreshold: progress.currentThreshold,
     recentEvents: state.recentEvents,
+    quests: visibleQuests(state.quests),
+    ratings: state.ratings,
+    analyticsConsent: state.analyticsConsent,
   }
 }
 
@@ -96,6 +113,52 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
       leveledUp: result.leveledUp,
       previousLevel: result.previousLevel,
     }
+  })
+
+  server.handle(RPC_CHANNELS.gamification.QUEST, async (_ctx, payload: unknown) => {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('quest payload required')
+    }
+    const body = payload as { action?: unknown; questId?: unknown; cloudFeaturesEnabled?: unknown }
+    if (body.action !== 'complete' && body.action !== 'dismiss' && body.action !== 'snooze') {
+      throw new Error('Unknown quest action')
+    }
+    if (!isQuestId(body.questId)) {
+      throw new Error(`Unknown quest: ${String(body.questId)}`)
+    }
+    const { state, analytics } = applyQuestAction(body.action, body.questId as QuestId, {
+      cloudFeaturesEnabled: body.cloudFeaturesEnabled !== false,
+    })
+    broadcast(server, state)
+    return { ...toDto(state), analytics }
+  })
+
+  server.handle(RPC_CHANNELS.gamification.RATE, async (_ctx, payload: unknown) => {
+    if (!payload || typeof payload !== 'object') {
+      throw new Error('rating payload required')
+    }
+    const body = payload as { sessionId?: unknown; score?: unknown; feedback?: unknown; provenance?: unknown }
+    if (typeof body.sessionId !== 'string' || !body.sessionId) {
+      throw new Error('sessionId required')
+    }
+    const score = body.score
+    if (score !== 1 && score !== 2 && score !== 3 && score !== 4 && score !== 5) {
+      throw new Error('score must be 1-5')
+    }
+    const { state, analytics } = saveSessionRating({
+      sessionId: body.sessionId,
+      score,
+      feedback: typeof body.feedback === 'string' ? body.feedback : undefined,
+      provenance: typeof body.provenance === 'string' ? body.provenance : undefined,
+    })
+    broadcast(server, state)
+    return { ...toDto(state), analytics }
+  })
+
+  server.handle(RPC_CHANNELS.gamification.SET_CONSENT, async (_ctx, consent: unknown) => {
+    const state = setAnalyticsConsent(consent === true)
+    broadcast(server, state)
+    return toDto(state)
   })
 }
 

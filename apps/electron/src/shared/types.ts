@@ -33,6 +33,7 @@ export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 // Thinking level types
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
 import type { XpEventType } from '@craft-agent/shared/gamification';
+import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
 import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
 import type {
   AutomationGraphProjection,
@@ -1283,8 +1284,11 @@ export interface ElectronAPI {
     nextThreshold: number | null
     currentThreshold: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
+    quests: QuestRecord[]
+    ratings: SessionRating[]
+    analyticsConsent: boolean
   }>
-  awardGamificationXp(event: 'session_completed' | 'automation_ran' | 'cloud_run_imported' | 'note_linked'): Promise<{
+  awardGamificationXp(event: XpEventType): Promise<{
     xp: number
     level: number
     balance: number | null
@@ -1299,6 +1303,18 @@ export interface ElectronAPI {
     leveledUp: boolean
     previousLevel: number
   }>
+  applyGamificationQuest(payload: {
+    action: 'complete' | 'dismiss' | 'snooze'
+    questId: string
+    cloudFeaturesEnabled?: boolean
+  }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>
+  rateGamificationSession(payload: {
+    sessionId: string
+    score: 1 | 2 | 3 | 4 | 5
+    feedback?: string
+    provenance?: string
+  }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>
+  setGamificationAnalyticsConsent(consent: boolean): Promise<{ analyticsConsent: boolean }>
   onGamificationChanged(callback: (payload: {
     xp: number
     level: number
@@ -1309,6 +1325,9 @@ export interface ElectronAPI {
     nextThreshold: number | null
     currentThreshold?: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
+    quests?: QuestRecord[]
+    ratings?: SessionRating[]
+    analyticsConsent?: boolean
   }) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)

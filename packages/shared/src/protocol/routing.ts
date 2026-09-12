@@ -365,6 +365,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // gamification — user XP lives in local CONFIG_DIR
   RPC_CHANNELS.gamification.GET,
   RPC_CHANNELS.gamification.AWARD,
+  RPC_CHANNELS.gamification.QUEST,
+  RPC_CHANNELS.gamification.RATE,
+  RPC_CHANNELS.gamification.SET_CONSENT,
   RPC_CHANNELS.gamification.CHANGED,
 
   // orgs — local-only identity/membership bookkeeping (CONFIG_DIR)

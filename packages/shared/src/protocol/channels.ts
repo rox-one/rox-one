@@ -489,6 +489,9 @@ export const RPC_CHANNELS = {
   gamification: {
     GET: 'gamification:get',
     AWARD: 'gamification:award',
+    QUEST: 'gamification:quest',
+    RATE: 'gamification:rate',
+    SET_CONSENT: 'gamification:setConsent',
     CHANGED: 'gamification:changed',
   },
   drafts: {

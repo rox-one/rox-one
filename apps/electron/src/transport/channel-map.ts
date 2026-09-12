@@ -448,6 +448,9 @@ export const CHANNEL_MAP = {
   // Gamification profile
   getGamificationProfile: invoke(RPC_CHANNELS.gamification.GET),
   awardGamificationXp: invoke(RPC_CHANNELS.gamification.AWARD),
+  applyGamificationQuest: invoke(RPC_CHANNELS.gamification.QUEST),
+  rateGamificationSession: invoke(RPC_CHANNELS.gamification.RATE),
+  setGamificationAnalyticsConsent: invoke(RPC_CHANNELS.gamification.SET_CONSENT),
   onGamificationChanged: listener(RPC_CHANNELS.gamification.CHANGED),
 
   // Session Drafts
