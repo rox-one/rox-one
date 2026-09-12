@@ -11,6 +11,7 @@ import { cn } from '@/lib/utils'
 import { isDueOverdue } from './table-due'
 import { collectionTableRowClass } from './table-density'
 import type { CollectionDensity } from '@craft-agent/shared/sessions/collection'
+import { formatTranscriptSize } from '@craft-agent/shared/sessions/collection'
 
 export interface SessionTableRowProps {
   meta: SessionMeta
@@ -34,6 +35,11 @@ export interface SessionTableRowProps {
   showMessages?: boolean
   showTokens?: boolean
   showDuration?: boolean
+  showSize?: boolean
+  showToolCalls?: boolean
+  showCommits?: boolean
+  showParallelAgents?: boolean
+  parallelAgentCount?: number
   /** B5: HTML5 drag reorder callbacks (table host wires when showGrip). */
   onDragStartRow?: (sessionId: string) => void
   onDragOverRow?: (sessionId: string, event: React.DragEvent) => void
@@ -155,6 +161,11 @@ export function SessionTableRow({
   showMessages = false,
   showTokens = false,
   showDuration = false,
+  showSize = false,
+  showToolCalls = false,
+  showCommits = false,
+  showParallelAgents = false,
+  parallelAgentCount = 0,
   onDragStartRow,
   onDragOverRow,
   dropIndicator,
@@ -306,6 +317,18 @@ export function SessionTableRow({
       )}
       {showDuration && (
         <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatDuration(sessionDuration(meta))}</span>
+      )}
+      {showSize && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatTranscriptSize(meta.transcriptBytes)}</span>
+      )}
+      {showToolCalls && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.toolCallCount ?? '—'}</span>
+      )}
+      {showCommits && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.commitCount ?? '—'}</span>
+      )}
+      {showParallelAgents && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{parallelAgentCount}</span>
       )}
 
       {showFlag && (

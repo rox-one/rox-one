@@ -10,7 +10,17 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000
 
 export type HeatmapNavDir = 'left' | 'right' | 'up' | 'down'
 export type HeatmapLevel = 0 | 1 | 2 | 3 | 4
-export type HeatmapDayOrderBy = 'name' | 'lastMessageAt' | 'createdAt' | 'messages' | 'tokens' | 'duration'
+export type HeatmapDayOrderBy =
+  | 'name'
+  | 'lastMessageAt'
+  | 'createdAt'
+  | 'messages'
+  | 'tokens'
+  | 'duration'
+  | 'size'
+  | 'toolCalls'
+  | 'commits'
+  | 'parallelAgents'
 
 export interface HeatmapCell {
   /** YYYY-MM-DD when the cell is in the displayed year; otherwise null. */
@@ -236,6 +246,18 @@ export function compareDaySessions(
       break
     case 'duration':
       primary = cmpNullable(sessionDurationMs(a), sessionDurationMs(b), orderDir)
+      break
+    case 'size':
+      primary = cmpNullable(a.transcriptBytes, b.transcriptBytes, orderDir)
+      break
+    case 'toolCalls':
+      primary = cmpNullable(a.toolCallCount, b.toolCallCount, orderDir)
+      break
+    case 'commits':
+      primary = cmpNullable(a.commitCount, b.commitCount, orderDir)
+      break
+    case 'parallelAgents':
+      primary = cmpNullable(a.parallelAgentCount, b.parallelAgentCount, orderDir)
       break
     default: {
       const _never: never = orderBy
