@@ -29,7 +29,15 @@ const REPO_ROOT = join(import.meta.dir, '..');
 const BUNDLED_DEFAULTS = join(REPO_ROOT, 'apps', 'electron', 'resources', 'config-defaults.json');
 
 if (!process.env.ROX_CONFIG_DIR && !process.env.CRAFT_CONFIG_DIR) {
-  process.env.ROX_CONFIG_DIR = mkdtempSync(join(tmpdir(), 'rox-agent-test-'));
+  const dir = mkdtempSync(join(tmpdir(), 'rox-agent-test-'));
+  process.env.ROX_CONFIG_DIR = dir;
+  process.env.CRAFT_CONFIG_DIR = dir;
+} else {
+  const dir = process.env.ROX_CONFIG_DIR || process.env.CRAFT_CONFIG_DIR;
+  if (dir) {
+    process.env.ROX_CONFIG_DIR ??= dir;
+    process.env.CRAFT_CONFIG_DIR ??= dir;
+  }
 }
 
 const configDir = process.env.ROX_CONFIG_DIR ?? process.env.CRAFT_CONFIG_DIR;

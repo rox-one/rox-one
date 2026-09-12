@@ -195,7 +195,7 @@ describe('sessions file watchers', () => {
     const bulkUpdate = bulkHandlers.get(RPC_CHANNELS.sessions.BULK_UPDATE)
     expect(bulkUpdate).toBeTruthy()
 
-    const result = await bulkUpdate!({ clientId: 'client-a' }, {
+    const result = await bulkUpdate!({ clientId: 'client-a', workspaceId: 'ws' }, {
       workspaceId: 'ws',
       ids: ['valid', 'missing'],
       patch: { priority: 'high' },
