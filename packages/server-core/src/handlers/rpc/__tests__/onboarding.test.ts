@@ -25,6 +25,24 @@ mock.module('@craft-agent/shared/auth', () => ({
     isSetupDeferred: deferred === true,
     shouldShowOnboardingOnLaunch: false,
   }),
+  getOnboardingAuthPayload: async (deferred?: boolean) => ({
+    authState: {
+      billing: {
+        type: null,
+        hasCredentials: false,
+        apiKey: null,
+        claudeOAuthToken: null,
+      },
+      workspace: { hasWorkspace: false, active: null },
+    },
+    setupNeeds: {
+      needsBillingConfig: true,
+      needsCredentials: false,
+      isFullyConfigured: true,
+      isSetupDeferred: deferred === true,
+      shouldShowOnboardingOnLaunch: false,
+    },
+  }),
   prepareClaudeOAuth: () => {
     oauthPreparationCalls += 1
     return 'https://example.test/oauth'
