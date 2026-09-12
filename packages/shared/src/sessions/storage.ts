@@ -377,7 +377,14 @@ export function listSessions(workspaceRootPath: string): SessionMetadata[] {
         const header = readSessionHeader(jsonlFile);
         if (header) {
           const metadata = headerToMetadata(header, workspaceRootPath);
-          if (metadata) sessions.push(metadata);
+          if (metadata) {
+            try {
+              metadata.transcriptBytes = statSync(jsonlFile).size
+            } catch {
+              // Size is optional; listing still succeeds without it.
+            }
+            sessions.push(metadata)
+          }
         }
       }
     }

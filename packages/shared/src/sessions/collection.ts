@@ -75,6 +75,13 @@ export type {
 } from './collection-heatmap.ts'
 
 export {
+  countChildSessionsByParent,
+  countGitCommits,
+  countToolCalls,
+  formatTranscriptSize,
+} from './collection-metrics.ts'
+
+export {
   LEXORANK_MAX_LENGTH,
   lexorankValidate,
   lexorankBetween,

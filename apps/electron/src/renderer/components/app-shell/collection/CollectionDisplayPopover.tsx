@@ -68,6 +68,10 @@ const PROPERTY_I18N: Record<CollectionProperty, string> = {
   messages: 'collection.display.property.messages',
   tokens: 'collection.display.property.tokens',
   duration: 'collection.display.property.duration',
+  size: 'collection.display.property.size',
+  toolCalls: 'collection.display.property.toolCalls',
+  commits: 'collection.display.property.commits',
+  parallelAgents: 'collection.display.property.parallelAgents',
 }
 
 export function CollectionDisplayPopover({

@@ -8,6 +8,7 @@ import {
   dueBucket,
   filterSessionMeta,
   lexorankBetween,
+  countChildSessionsByParent,
   type CollectionDisplay,
   type CollectionFilters,
   type SessionPriority,
@@ -315,6 +316,10 @@ export function SessionTableHost() {
 
   const showGrip = display.orderBy === 'rank'
   const showCol = (prop: string) => display.visibleProperties.includes(prop as never)
+  const parallelAgentCounts = React.useMemo(
+    () => countChildSessionsByParent([...metaMap.values()]),
+    [metaMap],
+  )
 
   const scrollContainerRef = React.useRef<HTMLDivElement>(null)
   const tableHeaderRef = React.useRef<HTMLDivElement>(null)
@@ -636,6 +641,10 @@ export function SessionTableHost() {
           {showCol('messages') && <span className="w-20 shrink-0">{t('collection.table.column.messages')}</span>}
           {showCol('tokens') && <span className="w-20 shrink-0">{t('collection.table.column.tokens')}</span>}
           {showCol('duration') && <span className="w-20 shrink-0">{t('collection.table.column.duration')}</span>}
+          {showCol('size') && <span className="w-20 shrink-0">{t('collection.table.column.size')}</span>}
+          {showCol('toolCalls') && <span className="w-20 shrink-0">{t('collection.table.column.toolCalls')}</span>}
+          {showCol('commits') && <span className="w-20 shrink-0">{t('collection.table.column.commits')}</span>}
+          {showCol('parallelAgents') && <span className="w-20 shrink-0">{t('collection.table.column.parallelAgents')}</span>}
           {showCol('flag') && <span className="w-8 shrink-0" />}
         </div>
 
@@ -721,6 +730,11 @@ export function SessionTableHost() {
                   showMessages={showCol('messages')}
                   showTokens={showCol('tokens')}
                   showDuration={showCol('duration')}
+                  showSize={showCol('size')}
+                  showToolCalls={showCol('toolCalls')}
+                  showCommits={showCol('commits')}
+                  showParallelAgents={showCol('parallelAgents')}
+                  parallelAgentCount={parallelAgentCounts.get(meta.id) ?? 0}
                   onDragStartRow={handleRowDragStart}
                   onDragOverRow={handleRowDragOver}
                   dropIndicator={

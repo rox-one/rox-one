@@ -373,6 +373,12 @@ export interface SessionHeader {
   // Pre-computed fields for fast list loading
   /** Number of messages in session */
   messageCount: number;
+  /** Transcript file size in bytes (list-time stat, not persisted). */
+  transcriptBytes?: number;
+  /** Tool-call rows in the transcript (precomputed on save). */
+  toolCallCount?: number;
+  /** Git-commit tool calls in the transcript (precomputed on save). */
+  commitCount?: number;
   /** Role/type of the last message (for badge display without loading messages) */
   lastMessageRole?: 'user' | 'assistant' | 'plan' | 'tool' | 'error';
   /** Preview of first user message (first 150 chars) */
@@ -395,6 +401,12 @@ export interface SessionMetadata {
   /** Timestamp of last meaningful message — used for date grouping. Falls back to lastUsedAt for pre-fix sessions. */
   lastMessageAt?: number;
   messageCount: number;
+  /** Transcript file size in bytes (list-time stat). */
+  transcriptBytes?: number;
+  /** Tool-call rows in the transcript. */
+  toolCallCount?: number;
+  /** Git-commit tool calls in the transcript. */
+  commitCount?: number;
   /** Preview of first user message */
   preview?: string;
   sdkSessionId?: string;
