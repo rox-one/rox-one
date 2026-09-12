@@ -95,6 +95,24 @@ describe('OnboardingWizard', () => {
     expect(html).toContain('onboarding.roxConnect.connect')
   })
 
+  test('renders versioned environment questions', () => {
+    const html = renderToStaticMarkup(
+      <OnboardingWizard
+        state={{
+          ...roxConnectState,
+          step: 'environment',
+        }}
+        onContinue={() => {}}
+        onBack={() => {}}
+        onSelectApiSetupMethod={() => {}}
+        onSubmitCredential={() => {}}
+        onFinish={() => {}}
+      />,
+    )
+
+    expect(html).toBeTruthy()
+  })
+
   test('renders the OMP first-run credential step with the typed code', () => {
     const html = renderToStaticMarkup(
       <OnboardingWizard

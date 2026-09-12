@@ -32,6 +32,7 @@ import {
   SettingsInput,
 } from '@/components/settings'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
+import { EnvironmentSettingsSection } from './EnvironmentSettingsSection'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -206,6 +207,8 @@ export default function AppSettingsPage() {
         <ScrollArea className="h-full">
           <div className="px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
+              <EnvironmentSettingsSection />
+
               {/* Notifications */}
               <SettingsSection title={t("settings.notifications.title")}>
                 <SettingsCard>

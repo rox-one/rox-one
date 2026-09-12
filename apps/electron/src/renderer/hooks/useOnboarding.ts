@@ -23,6 +23,7 @@ import type {
   RoxConnectCodes,
 } from '@/components/onboarding'
 import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
+import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
@@ -72,6 +73,8 @@ interface UseOnboardingOptions {
   editingSlug?: string | null
   /** Set of slugs already in use (for generating unique slugs when creating new) */
   existingSlugs?: Set<string>
+  /** First-run wizard asks environment questions; Settings provider edit skips them. */
+  includeEnvironmentQuestions?: boolean
 }
 
 interface UseOnboardingReturn {
@@ -121,6 +124,8 @@ interface UseOnboardingReturn {
 
   // Skip setup ("Setup later")
   handleSkipSetup: () => void
+  handleSaveEnvironment: (prefs: EnvironmentPrefs, completeQuestionnaire: boolean) => void
+  handleSkipEnvironment: () => void
 
   // Completion
   handleFinish: () => void
@@ -246,9 +251,11 @@ export function useOnboarding({
   onConfigSaved,
   editingSlug = null,
   existingSlugs = new Set(),
+  includeEnvironmentQuestions = true,
 }: UseOnboardingOptions): UseOnboardingReturn {
   const { t } = useTranslation()
   const shouldApplyStartupGate = shouldApplyOnboardingLaunchGate(entryPoint, initialSetupNeeds)
+  const afterProviderStep: OnboardingStep = includeEnvironmentQuestions ? 'environment' : 'complete'
 
   // Main wizard state
   const [state, setState] = useState<OnboardingState>({
@@ -408,6 +415,9 @@ export function useOnboarding({
         // Handled by handleSubmitCredential
         break
 
+      case 'environment':
+        break
+
       case 'complete':
         onComplete()
         break
@@ -443,6 +453,9 @@ export function useOnboarding({
       case 'omp-credential':
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
         break
+      case 'environment':
+        setState(s => ({ ...s, step: 'provider-select' }))
+        break
     }
   }, [state.step, state.gitBashStatus, initialStep, onDismiss])
 
@@ -472,7 +485,7 @@ export function useOnboarding({
           bedrockAuthMethod: data.bedrockAuthMethod,
         })
         if (saved) {
-          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+          setState(s => ({ ...s, credentialStatus: 'success', step: afterProviderStep }))
         } else {
           setState(s => ({ ...s, credentialStatus: 'error' }))
         }
@@ -490,7 +503,7 @@ export function useOnboarding({
           customEndpoint: data.customEndpoint,
         })
         if (saved) {
-          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+          setState(s => ({ ...s, credentialStatus: 'success', step: afterProviderStep }))
         } else {
           setState(s => ({ ...s, credentialStatus: 'error' }))
         }
@@ -555,7 +568,7 @@ export function useOnboarding({
         setState(s => ({
           ...s,
           credentialStatus: 'success',
-          step: 'complete',
+          step: afterProviderStep,
         }))
       } else {
         // Save failed — error is already set by handleSaveConfig, stay on credentials step
@@ -583,7 +596,7 @@ export function useOnboarding({
     }
     const testResult = await window.electronAPI.testLlmConnection(connectionSlug)
     if (testResult.success) {
-      setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+      setState(s => ({ ...s, credentialStatus: 'success', step: afterProviderStep }))
       return true
     } else {
       setState(s => ({ ...s, credentialStatus: 'error', errorMessage: testResult.error || 'Connection test failed' }))
@@ -889,7 +902,7 @@ export function useOnboarding({
         }
         const testResult = await window.electronAPI.testLlmConnection(slug)
         if (testResult.success) {
-          setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+          setState(s => ({ ...s, credentialStatus: 'success', step: afterProviderStep }))
         } else {
           setState(s => ({
             ...s,
@@ -959,7 +972,7 @@ export function useOnboarding({
     try {
       const result = await window.electronAPI.saveOmpCredential(data.apiKey)
       if (result.success) {
-        setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+        setState(s => ({ ...s, credentialStatus: 'success', step: afterProviderStep }))
         onConfigSaved?.()
         return
       }
@@ -991,7 +1004,7 @@ export function useOnboarding({
       })
 
       if (saved) {
-        setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+        setState(s => ({ ...s, credentialStatus: 'success', step: afterProviderStep }))
       } else {
         setState(s => ({ ...s, credentialStatus: 'error' }))
       }
@@ -1068,6 +1081,30 @@ export function useOnboarding({
     }
     onComplete()
   }, [onComplete])
+
+  const handleSaveEnvironment = useCallback(async (prefs: EnvironmentPrefs, completeQuestionnaire: boolean) => {
+    try {
+      await window.electronAPI.saveEnvironmentSetup({
+        ...prefs,
+        completeQuestionnaire,
+      })
+      if (prefs.notifications.status === 'answered' && typeof prefs.notifications.value === 'boolean') {
+        await window.electronAPI.setNotificationsEnabled(prefs.notifications.value)
+      }
+    } catch (error) {
+      console.error('[Onboarding] Failed to save environment:', error)
+    }
+    setState(s => ({ ...s, step: 'complete', completionStatus: 'complete' }))
+  }, [])
+
+  const handleSkipEnvironment = useCallback(async () => {
+    try {
+      await window.electronAPI.saveEnvironmentSetup({ completeQuestionnaire: true })
+    } catch (error) {
+      console.error('[Onboarding] Failed to skip environment:', error)
+    }
+    setState(s => ({ ...s, step: 'complete', completionStatus: 'complete' }))
+  }, [])
 
   // Finish onboarding
   const handleFinish = useCallback(() => {
@@ -1146,6 +1183,8 @@ export function useOnboarding({
     handleRecheckGitBash,
     handleClearError,
     handleSkipSetup,
+    handleSaveEnvironment,
+    handleSkipEnvironment,
     handleFinish,
     handleCancel,
     jumpToCredentials,

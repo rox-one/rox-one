@@ -457,6 +457,10 @@ export const CHANNEL_MAP = {
   setGamificationAnalyticsConsent: invoke(RPC_CHANNELS.gamification.SET_CONSENT),
   onGamificationChanged: listener(RPC_CHANNELS.gamification.CHANGED),
 
+  getEnvironmentSetup: invoke(RPC_CHANNELS.environment.GET),
+  saveEnvironmentSetup: invoke(RPC_CHANNELS.environment.SAVE),
+  onEnvironmentChanged: listener(RPC_CHANNELS.environment.CHANGED),
+
   // Session Drafts
   getDraft: invoke(RPC_CHANNELS.drafts.GET),
   setDraft: invoke(RPC_CHANNELS.drafts.SET),

@@ -28,6 +28,7 @@ import type {
   SessionsBulkChangedEvent,
 } from './dto'
 import type { ExtensionsChangedPayload } from '../extensions/types'
+import type { EnvironmentPrefs } from '../environment'
 
 /** Payload of marketplace:CHANGED — pushed after an install/update/remove completes. */
 export interface MarketplaceChangedPayload {
@@ -92,6 +93,7 @@ export interface BroadcastEventMap {
     xpForNext: number
     nextThreshold: number | null
   }]
+  [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
 
   // Theme broadcasts (global)
   [RPC_CHANNELS.theme.APP_CHANGED]: [theme: ThemeOverrides | null]

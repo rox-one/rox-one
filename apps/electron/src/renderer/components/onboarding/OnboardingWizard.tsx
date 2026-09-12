@@ -10,6 +10,8 @@ import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
 import { OmpCredentialStep, type OmpCredentialSubmitData } from "./OmpCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
 import type { CustomEndpointApi } from '@config/llm-connections'
+import { EnvironmentSetupStep } from "./EnvironmentSetupStep"
+import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 
 export type OnboardingStep =
   | 'welcome'
@@ -19,6 +21,7 @@ export type OnboardingStep =
   | 'local-model'
   | 'credentials'
   | 'omp-credential'
+  | 'environment'
   | 'complete'
 
 export type LoginStatus = 'idle' | 'waiting' | 'success' | 'error'
@@ -68,6 +71,8 @@ interface OnboardingWizardProps {
   onSelectProvider?: (choice: ProviderChoice) => void
   /** Called when user chooses "Setup later" on provider select */
   onSkipSetup?: () => void
+  onSaveEnvironment?: (prefs: EnvironmentPrefs, completeQuestionnaire: boolean) => void
+  onSkipEnvironment?: () => void
 
   // Rox cloud Connect
   roxConnectCodes?: RoxConnectCodes | null
@@ -126,6 +131,8 @@ export function OnboardingWizard({
   // Provider select (new flow)
   onSelectProvider,
   onSkipSetup,
+  onSaveEnvironment,
+  onSkipEnvironment,
   roxConnectCodes,
   roxConnectStatus = 'idle',
   roxConnectError,
@@ -219,6 +226,14 @@ export function OnboardingWizard({
             status={state.credentialStatus === 'validating' ? 'validating' : state.credentialStatus === 'error' ? 'error' : 'idle'}
             errorMessage={state.errorMessage}
             typedCode="OMP_NO_MODELS"
+          />
+        )
+
+      case 'environment':
+        return (
+          <EnvironmentSetupStep
+            onContinue={(prefs, completeQuestionnaire) => onSaveEnvironment?.(prefs, completeQuestionnaire)}
+            onSkip={() => onSkipEnvironment?.()}
           />
         )
 

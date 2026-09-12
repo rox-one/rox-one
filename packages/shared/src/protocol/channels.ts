@@ -494,6 +494,11 @@ export const RPC_CHANNELS = {
     SET_CONSENT: 'gamification:setConsent',
     CHANGED: 'gamification:changed',
   },
+  environment: {
+    GET: 'environment:get',
+    SAVE: 'environment:save',
+    CHANGED: 'environment:changed',
+  },
   drafts: {
     GET: 'drafts:get',
     SET: 'drafts:set',

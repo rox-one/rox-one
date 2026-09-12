@@ -35,6 +35,7 @@ export function SettingsOverviewPage() {
     [llmConnections, workspaceDefaultLlmConnection],
   )
   const [recentPages, setRecentPages] = useState<Array<{ id: SettingsSubpage; page: ReturnType<typeof getSettingsPage> }>>([])
+  const [pendingEnvironment, setPendingEnvironment] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -52,6 +53,16 @@ export function SettingsOverviewPage() {
     }
   }, [activeWorkspaceId])
 
+  useEffect(() => {
+    let cancelled = false
+    void window.electronAPI.getEnvironmentSetup?.().then((payload) => {
+      if (!cancelled) setPendingEnvironment(payload.pendingQuestionIds.length > 0)
+    }).catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const goTo = useCallback((subpage: SettingsSubpage) => {
     void recordRecentSetting(activeWorkspaceId, subpage)
     navigate(routes.view.settings(subpage))
@@ -59,7 +70,7 @@ export function SettingsOverviewPage() {
 
   const missingWorkspace = !activeWorkspace
   const missingConnections = llmConnections.length === 0
-  const needsAttention = missingWorkspace || missingConnections
+  const needsAttention = missingWorkspace || missingConnections || pendingEnvironment
 
   return (
     <div className="h-full flex flex-col" data-testid="settings-overview">
@@ -119,6 +130,9 @@ export function SettingsOverviewPage() {
                         {missingConnections && (
                           <p className="text-sm text-muted-foreground">{t('settings.overview.noConnection')}</p>
                         )}
+                        {pendingEnvironment && (
+                          <p className="text-sm text-muted-foreground">{t('settings.environment.pending')}</p>
+                        )}
                         <div className="flex flex-wrap gap-2">
                           {missingWorkspace && (
                             <Button
@@ -138,6 +152,16 @@ export function SettingsOverviewPage() {
                               aria-label={t('settings.overview.configureAi')}
                             >
                               {t('settings.overview.configureAi')}
+                            </Button>
+                          )}
+                          {pendingEnvironment && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => goTo('app')}
+                              aria-label={t('settings.environment.title')}
+                            >
+                              {t('settings.environment.title')}
                             </Button>
                           )}
                         </div>

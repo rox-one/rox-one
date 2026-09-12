@@ -106,6 +106,7 @@
     "./orgs": "./src/orgs/index.ts",
     "./collaboration": "./src/collaboration/index.ts",
     "./gamification": "./src/gamification/index.ts",
+    "./environment": "./src/environment/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",
     "./resources": "./src/resources/index.ts",

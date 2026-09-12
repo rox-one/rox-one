@@ -34,6 +34,7 @@ export type { ServerHandlerContext } from '../../bootstrap/headless-start'
 export { getHealthCheck } from './server'
 import { registerSettingsHandlers } from './settings'
 import { registerGamificationHandlers } from './gamification'
+import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
@@ -102,6 +103,7 @@ export function registerCoreRpcHandlers(
   if (serverCtx) registerServerHandlers(server, deps, serverCtx)
   registerSettingsHandlers(server, deps)
   registerGamificationHandlers(server, deps)
+  registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)

@@ -39,6 +39,7 @@ export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
 import type { XpEventType } from '@craft-agent/shared/gamification';
 import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
+import type { EnvironmentPrefs, QuestionId } from '@craft-agent/shared/environment';
 import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
 import type {
   AutomationGraphProjection,
@@ -1290,6 +1291,13 @@ export interface ElectronAPI {
   writePreferences(content: string): Promise<{ success: boolean; error?: string }>
 
   // Gamification profile (XP/level/balance)
+  getEnvironmentSetup(): Promise<{ prefs: EnvironmentPrefs; pendingQuestionIds: QuestionId[] }>
+  saveEnvironmentSetup(patch: Partial<EnvironmentPrefs> & { completeQuestionnaire?: boolean }): Promise<{
+    prefs: EnvironmentPrefs
+    pendingQuestionIds: QuestionId[]
+  }>
+  onEnvironmentChanged(callback: (prefs: EnvironmentPrefs) => void): () => void
+
   getGamificationProfile(): Promise<{
     xp: number
     level: number
