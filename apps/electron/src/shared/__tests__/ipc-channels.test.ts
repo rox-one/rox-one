@@ -375,6 +375,7 @@ const EXPECTED_CHANNELS: string[] = [
   'notes:deleteFolder',
   'notes:getBacklinks',
   'notes:getDailyNote',
+  'notes:getInsights',
   'notes:getRenameImpact',
   'notes:importAsset',
   'notes:list',

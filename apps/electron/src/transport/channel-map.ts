@@ -328,6 +328,7 @@ export const CHANNEL_MAP = {
   deleteFolderNote: invoke(RPC_CHANNELS.notes.DELETE_FOLDER),
   searchNotes: invoke(RPC_CHANNELS.notes.SEARCH),
   getNoteBacklinks: invoke(RPC_CHANNELS.notes.GET_BACKLINKS),
+  getNoteInsights: invoke(RPC_CHANNELS.notes.GET_INSIGHTS),
   getNoteRenameImpact: invoke(RPC_CHANNELS.notes.GET_RENAME_IMPACT),
   getDailyNote: invoke(RPC_CHANNELS.notes.GET_DAILY_NOTE),
   importNoteAsset: invoke(RPC_CHANNELS.notes.IMPORT_ASSET),

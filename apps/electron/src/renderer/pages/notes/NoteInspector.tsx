@@ -2,7 +2,8 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Check, CheckSquare2, ChevronLeft, ChevronRight, FileText, Link2, ListChecks, Paperclip, Plus, Tag, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { NoteAsset, NoteDocument, NoteSummary } from '../../../shared/types'
+import type { NoteAsset, NoteDocument, NoteEntityMerge, NoteFootnoteChrome, NoteInsights, NoteLinkSuggestion, NoteSummary } from '../../../shared/types'
+import { VaultInsightsPanel } from './VaultInsightsPanel'
 
 // ---------------------------------------------------------------------------
 // Types shared between inspector and dialogs
@@ -94,6 +95,15 @@ export interface NoteInspectorProps {
   onToggleTask(task: NoteTask): void
   onOpenNote(noteId: string): void
   onMissingLink(target: string): void
+  insights?: NoteInsights
+  footnoteDraft?: string
+  onFootnoteDraftChange?(value: string): void
+  onApplyLink?(suggestion: NoteLinkSuggestion): void
+  onApplyMerge?(merge: NoteEntityMerge): void
+  onUndoMerge?(merge: NoteEntityMerge): void
+  onCreateFootnote?(): void
+  onUpdateFootnote?(footnote: NoteFootnoteChrome, body: string): void
+  onJumpFootnote?(footnote: NoteFootnoteChrome): void
   collapsed?: boolean
   onToggleCollapsed?(): void
 }
@@ -138,6 +148,15 @@ export function NoteInspector({
   onToggleTask,
   onOpenNote,
   onMissingLink,
+  insights,
+  footnoteDraft = '',
+  onFootnoteDraftChange,
+  onApplyLink,
+  onApplyMerge,
+  onUndoMerge,
+  onCreateFootnote,
+  onUpdateFootnote,
+  onJumpFootnote,
   collapsed = false,
   onToggleCollapsed,
 }: NoteInspectorProps) {
@@ -375,6 +394,20 @@ export function NoteInspector({
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noAssets')}</span>}
         </div>
       </section>
+
+      {insights && onApplyLink && onApplyMerge && onUndoMerge && onCreateFootnote && onUpdateFootnote && onJumpFootnote && onFootnoteDraftChange ? (
+        <VaultInsightsPanel
+          insights={insights}
+          footnoteDraft={footnoteDraft}
+          onFootnoteDraftChange={onFootnoteDraftChange}
+          onApplyLink={onApplyLink}
+          onApplyMerge={onApplyMerge}
+          onUndoMerge={onUndoMerge}
+          onCreateFootnote={onCreateFootnote}
+          onUpdateFootnote={onUpdateFootnote}
+          onJumpFootnote={onJumpFootnote}
+        />
+      ) : null}
 
       {/* Uncreated links */}
       <section className="mb-5">
