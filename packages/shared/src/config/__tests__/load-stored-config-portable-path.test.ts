@@ -67,7 +67,7 @@ describe('loadStoredConfig portable rootPath', () => {
         `import { loadStoredConfig } from '${storageUrl}'; const c = loadStoredConfig(); if (!c) throw new Error('null config');`,
       ],
       {
-        env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+        env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
         stdout: 'pipe',
         stderr: 'pipe',
       },

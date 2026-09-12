@@ -85,7 +85,7 @@ import { resolveConfigDir } from "../../../config/paths.ts"
     }));
   `
   const run = Bun.spawnSync([process.execPath, '--eval', code], {
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir },
+    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir },
     stdout: 'pipe',
     stderr: 'pipe',
   })
