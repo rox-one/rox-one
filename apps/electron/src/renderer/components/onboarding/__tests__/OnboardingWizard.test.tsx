@@ -122,7 +122,7 @@ describe('OnboardingWizard', () => {
       />,
     )
     expect(html).toContain('onboarding.environment.modelPlacement')
-    expect(html).toContain('onboarding.environment.agentRulesMust')
+    expect(html).toContain('onboarding.environment.agentRulesAdd')
     expect(html).not.toMatch(/<select\b/)
   })
 
