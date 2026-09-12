@@ -102,7 +102,8 @@
     "./gamification": "./src/gamification/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",
-    "./resources": "./src/resources/index.ts"
+    "./resources": "./src/resources/index.ts",
+    "./browser": "./src/browser/index.ts"
   },
   "dependencies": {
     "@craft-agent/core": "workspace:*",
