@@ -7,6 +7,7 @@ import {
   buildYearHeatmap,
   classifyAgentFamily,
   compareDaySessions,
+  countChildSessionsByParent,
   heatmapEndKey,
   heatmapHomeKey,
   heatmapNavigate,
@@ -14,6 +15,7 @@ import {
   sessionsOnDay,
   sessionDurationMs,
   sessionTokenTotal,
+  formatTranscriptSize,
   type CollectionFilters,
   type CollectionSessionMeta,
   type HeatmapDayOrderBy,
@@ -51,6 +53,10 @@ const DAY_COLUMNS: Array<{ id: HeatmapDayOrderBy; labelKey: string }> = [
   { id: 'messages', labelKey: 'collection.table.column.messages' },
   { id: 'tokens', labelKey: 'collection.table.column.tokens' },
   { id: 'duration', labelKey: 'collection.table.column.duration' },
+  { id: 'size', labelKey: 'collection.table.column.size' },
+  { id: 'toolCalls', labelKey: 'collection.table.column.toolCalls' },
+  { id: 'commits', labelKey: 'collection.table.column.commits' },
+  { id: 'parallelAgents', labelKey: 'collection.table.column.parallelAgents' },
   { id: 'createdAt', labelKey: 'collection.table.column.created' },
   { id: 'lastMessageAt', labelKey: 'collection.table.column.updated' },
 ]
@@ -73,6 +79,10 @@ function toCollectionMeta(meta: SessionMeta): CollectionSessionMeta {
     createdAt: meta.createdAt,
     messageCount: meta.messageCount,
     tokenUsage: meta.tokenUsage,
+    transcriptBytes: meta.transcriptBytes,
+    toolCallCount: meta.toolCallCount,
+    commitCount: meta.commitCount,
+    parentSessionId: meta.parentSessionId,
   }
 }
 
@@ -100,6 +110,38 @@ function formatRelative(ts: number | null | undefined): string {
 function formatDate(ts: number | null | undefined): string {
   if (ts == null || !Number.isFinite(ts)) return '—'
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+}
+
+function dayMetricValue(session: CollectionSessionMeta, id: HeatmapDayOrderBy): string {
+  switch (id) {
+    case 'name':
+      return session.name || session.id.slice(0, 8)
+    case 'messages':
+      return session.messageCount != null ? String(session.messageCount) : '—'
+    case 'tokens': {
+      const total = sessionTokenTotal(session)
+      return total == null ? '—' : String(total)
+    }
+    case 'duration':
+      return formatDuration(sessionDurationMs(session))
+    case 'size':
+      return formatTranscriptSize(session.transcriptBytes)
+    case 'toolCalls':
+      return session.toolCallCount != null ? String(session.toolCallCount) : '—'
+    case 'commits':
+      return session.commitCount != null ? String(session.commitCount) : '—'
+    case 'parallelAgents':
+      return String(session.parallelAgentCount ?? 0)
+    case 'createdAt':
+      return formatDate(session.createdAt)
+    case 'lastMessageAt':
+      return formatRelative(session.lastMessageAt)
+    default: {
+      const _never: never = id
+      void _never
+      return '—'
+    }
+  }
 }
 
 function levelClass(level: number): string {
@@ -181,7 +223,12 @@ export function SessionHeatmapHost() {
 
   const filtered = React.useMemo(() => {
     const metas = [...metaMap.values()].map(toCollectionMeta)
-    return querySessionMetas(metas, filters, display, now)
+    const childCounts = countChildSessionsByParent(metas)
+    const withChildren = metas.map((meta) => ({
+      ...meta,
+      parallelAgentCount: childCounts.get(meta.id) ?? 0,
+    }))
+    return querySessionMetas(withChildren, filters, display, now)
   }, [metaMap, filters, display, now])
 
   const heatmap = React.useMemo(
@@ -451,21 +498,14 @@ export function SessionHeatmapHost() {
                     >
                       {session.name || session.id.slice(0, 8)}
                     </button>
-                    <span className="w-24 shrink-0 text-xs tabular-nums text-muted-foreground">
-                      {session.messageCount ?? '—'}
-                    </span>
-                    <span className="w-24 shrink-0 text-xs tabular-nums text-muted-foreground">
-                      {sessionTokenTotal(session) ?? '—'}
-                    </span>
-                    <span className="w-24 shrink-0 text-xs tabular-nums text-muted-foreground">
-                      {formatDuration(sessionDurationMs(session))}
-                    </span>
-                    <span className="w-24 shrink-0 text-xs text-muted-foreground">
-                      {formatDate(session.createdAt)}
-                    </span>
-                    <span className="w-24 shrink-0 text-xs text-muted-foreground">
-                      {formatRelative(session.lastMessageAt)}
-                    </span>
+                    {DAY_COLUMNS.filter((column) => column.id !== 'name').map((column) => (
+                      <span
+                        key={column.id}
+                        className="w-24 shrink-0 truncate text-xs tabular-nums text-muted-foreground"
+                      >
+                        {dayMetricValue(session, column.id)}
+                      </span>
+                    ))}
                     <span className="w-24 shrink-0 truncate text-xs text-muted-foreground">
                       {t(`collection.filter.agentFamily.${classifyAgentFamily(session)}`)}
                     </span>

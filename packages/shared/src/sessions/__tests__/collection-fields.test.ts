@@ -40,4 +40,10 @@ describe('session persistence: collection linear-view fields', () => {
     const picked = pickSessionFields(source);
     expect(picked.dueDate).toBeNull();
   });
+
+  it('does not persist list-time transcriptBytes on SESSION_PERSISTENT_FIELDS', () => {
+    expect(SESSION_PERSISTENT_FIELDS).not.toContain('transcriptBytes');
+    expect(SESSION_PERSISTENT_FIELDS).not.toContain('toolCallCount');
+    expect(SESSION_PERSISTENT_FIELDS).not.toContain('commitCount');
+  });
 });

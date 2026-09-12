@@ -89,6 +89,13 @@ describe('normalizeCollectionDisplay', () => {
     })
     expect(normalized.visibleProperties).toEqual([])
   })
+
+  it('keeps Issue 05 metric columns when listed', () => {
+    const normalized = normalizeCollectionDisplay({
+      visibleProperties: ['size', 'toolCalls', 'commits', 'parallelAgents', 'bogus'],
+    })
+    expect(normalized.visibleProperties).toEqual(['size', 'toolCalls', 'commits', 'parallelAgents'])
+  })
 })
 
 describe('loadCollectionDisplay / saveCollectionDisplay', () => {

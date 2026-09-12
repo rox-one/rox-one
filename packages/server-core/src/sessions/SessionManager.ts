@@ -94,6 +94,8 @@ import {
   lexorankValidate,
   lexorankBetween,
   backfillRanks,
+  countGitCommits,
+  countToolCalls,
 } from '@craft-agent/shared/sessions'
 import { loadWorkspaceSources, loadAllSources, getSourcesBySlugs, isSourceUsable, type LoadedSource, type McpServerConfig, getSourcesNeedingAuth, getSourceCredentialManager, TokenRefreshManager } from '@craft-agent/shared/sources'
 import { listTaskSlugs, parseTaskSpec, uniqueTaskSlug } from '@craft-agent/shared/tasks'
@@ -964,6 +966,12 @@ interface ManagedSession {
   createdAt?: number
   // Total message count (pre-computed in JSONL header for fast list loading)
   messageCount?: number
+  // Transcript size from list-time stat
+  transcriptBytes?: number
+  // Tool-call rows (precomputed on save / hydrated from header)
+  toolCallCount?: number
+  // Git-commit tool calls (precomputed on save / hydrated from header)
+  commitCount?: number
   // Message queue for handling new messages while processing
   // When a message arrives during processing, we interrupt and queue
   messageQueue: Array<{
@@ -1205,6 +1213,9 @@ export function managedToSession(m: ManagedSession, overrides?: Partial<Session>
     lastMessageRole: m.lastMessageRole,
     tokenUsage: m.tokenUsage,
     messageCount: m.messageCount,
+    transcriptBytes: m.transcriptBytes,
+    toolCallCount: m.toolCallCount,
+    commitCount: m.commitCount,
     lastFinalMessageId: m.lastFinalMessageId,
     // Runtime-only fields
     workspaceId: m.workspace.id,
@@ -2504,6 +2515,10 @@ export class SessionManager implements ISessionManager {
   private persistSession(managed: ManagedSession): void {
     if (!managed.messagesLoaded) {
       this.hydrateMessagesForColdPersist(managed)
+    }
+    if (managed.messagesLoaded) {
+      managed.toolCallCount = countToolCalls(managed.messages)
+      managed.commitCount = countGitCommits(managed.messages)
     }
     this.enqueuePersist(managed)
     // Self-learning memory: count-driven distill trigger (no-op when disabled).
