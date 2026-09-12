@@ -7,6 +7,12 @@ import type {
   BrowserScreenshotRegionArgs,
   BrowserWaitArgs,
 } from './browser-tools.ts';
+import {
+  classifyDestructiveAction,
+  getInspectSession,
+  type InspectEditKind,
+  type LiveElement,
+} from '../browser/element-inspect.ts';
 
 export interface BrowserCommandImage {
   data: string;
@@ -76,6 +82,15 @@ export function getBrowserToolHelp(): string {
     '  release [windowId|all]                         dismiss agent overlay (user keeps browsing)',
     '  close [windowId]                               close & destroy the browser window',
     '  hide [windowId]                                hide the window (keeps state, "open" re-shows)',
+    '  inspect [on|off]                               grab-element mode on the current tab',
+    '  grab <@eN|css-selector>                        stable selector + screenshot, no page mutation',
+    '  annotate <comment>                             attach instruction to the last grabbed element',
+    '  preview-edit text|style|property <value> [name]  stage a safe edit (not applied yet)',
+    '  approve-edit                                   apply the staged preview on the current tab',
+    '  discard-edit                                   drop the staged preview',
+    '  approve-destructive                            allow pending submit/purchase/publish',
+    '  deny-destructive                               reject pending submit/purchase/publish',
+    '  annotations                                    list annotations for the current page',
     '',
     'Batching (string mode, semicolon-separated, stops after navigation commands):',
     '  fill @e1 user@example.com; fill @e2 password123; click @e3',
@@ -619,6 +634,38 @@ async function verifySelectResult(args: {
 }
 
 
+function snapshotNodesToLive(
+  nodes: Array<{ ref: string; role: string; name: string; value?: string }>,
+): LiveElement[] {
+  return nodes.map((node) => ({
+    ref: node.ref,
+    role: node.role,
+    name: node.name,
+    selector: `[data-rox-ref="${node.ref}"]`,
+  }));
+}
+
+function findSnapshotNode(
+  nodes: Array<{ ref: string; role: string; name: string; value?: string }>,
+  target: string,
+) {
+  const normalized = target.startsWith('@') ? target : `@${target}`;
+  return nodes.find((node) => node.ref === target || node.ref === normalized);
+}
+
+function buildPreviewEvaluate(kind: InspectEditKind, css: string, value: string, property?: string): string {
+  const sel = JSON.stringify(css);
+  const val = JSON.stringify(value);
+  if (kind === 'text') {
+    return `(() => { const el = document.querySelector(${sel}); if (!el) return { ok:false, reason:'missing' }; el.textContent = ${val}; return { ok:true, kind:'text' }; })()`;
+  }
+  if (kind === 'style') {
+    return `(() => { const el = document.querySelector(${sel}); if (!el) return { ok:false, reason:'missing' }; el.setAttribute('style', ${val}); return { ok:true, kind:'style' }; })()`;
+  }
+  const prop = JSON.stringify(property ?? 'value');
+  return `(() => { const el = document.querySelector(${sel}); if (!el) return { ok:false, reason:'missing' }; el[${prop}] = ${val}; return { ok:true, kind:'property' }; })()`;
+}
+
 export async function executeBrowserToolCommand(args: {
   command: string | string[];
   fns: BrowserPaneFns;
@@ -922,6 +969,34 @@ async function executeSingleCommand(args: {
     const timeoutMs = timeoutRaw ? Number(timeoutRaw) : undefined;
     if (timeoutRaw && Number.isNaN(timeoutMs)) {
       throw new Error(`Invalid click timeout "${timeoutRaw}". Expected a number.`);
+    }
+
+    const inspect = getInspectSession(args.sessionId);
+    const pendingDestructive = inspect.getPendingDestructive();
+    if (!pendingDestructive || pendingDestructive.ref !== ref) {
+      const snapshotForClick = await fns.snapshot();
+      const targetNode = findSnapshotNode(snapshotForClick.nodes, ref);
+      const destructive = classifyDestructiveAction({
+        role: targetNode?.role,
+        name: targetNode?.name,
+        type: targetNode?.value,
+      });
+      if (destructive) {
+        inspect.grab({
+          node: { ref, role: targetNode?.role, name: targetNode?.name },
+          pageUrl: snapshotForClick.url,
+          pageVersion: snapshotForClick.title,
+        });
+        inspect.requestDestructive({ kind: destructive, ref });
+        return {
+          output: [
+            `Destructive ${destructive} action on ${ref} requires approval.`,
+            'The page was not mutated.',
+            'Run "approve-destructive" to continue or "deny-destructive" to cancel.',
+          ].join('\n'),
+          appendReleaseHint: false,
+        };
+      }
     }
 
     const before = await getPageMetrics(fns);
@@ -1724,6 +1799,180 @@ async function executeSingleCommand(args: {
       ].join('\n'),
       appendReleaseHint: false,
     };
+  }
+
+  if (cmd === 'inspect') {
+    const inspect = getInspectSession(args.sessionId);
+    const mode = (parts[1] ?? 'on').toLowerCase();
+    if (mode === 'off') inspect.exitInspectMode();
+    else inspect.enterInspectMode();
+    return {
+      output: inspect.inspectMode
+        ? 'Inspect mode on. Grab an element with "grab @eN" on the current tab.'
+        : 'Inspect mode off.',
+      appendReleaseHint: false,
+    };
+  }
+
+  if (cmd === 'grab') {
+    const target = parts[1];
+    if (!target) throw new Error('grab requires a ref or CSS selector. Example: grab @e1');
+    const inspect = getInspectSession(args.sessionId);
+    inspect.enterInspectMode();
+    const snapshot = await fns.snapshot();
+    const node = findSnapshotNode(snapshot.nodes, target);
+    const isRef = target.startsWith('@') || /^e\d+$/i.test(target);
+    let screenshotBase64: string | undefined;
+    try {
+      const shot = isRef
+        ? await fns.screenshotRegion({ ref: node?.ref ?? target, padding: 8, format: 'png' })
+        : await fns.screenshotRegion({ selector: target, padding: 8, format: 'png' });
+      screenshotBase64 = shot.imageBuffer.toString('base64');
+    } catch {
+      // Screenshot is optional; selector + comment still go to the agent.
+    }
+    const grabbed = inspect.grab({
+      node: {
+        ref: node?.ref ?? (isRef ? target : undefined),
+        role: node?.role,
+        name: node?.name,
+      },
+      pageUrl: snapshot.url,
+      pageVersion: snapshot.title,
+      screenshotBase64,
+    });
+    if (!isRef) grabbed.selector.css = target;
+    return {
+      output: [
+        `Grabbed element on current tab.`,
+        `URL: ${grabbed.pageUrl}`,
+        `Version: ${grabbed.pageVersion}`,
+        `Selector: ${grabbed.selector.css}`,
+        grabbed.selector.ref ? `Ref: ${grabbed.selector.ref}` : undefined,
+        screenshotBase64 ? 'Screenshot: attached' : 'Screenshot: unavailable',
+        'Page was not mutated. Add a comment with "annotate <instruction>".',
+      ].filter(Boolean).join('\n'),
+      appendReleaseHint: false,
+      image: screenshotBase64
+        ? { data: screenshotBase64, mimeType: 'image/png', sizeBytes: Buffer.byteLength(screenshotBase64, 'base64') }
+        : undefined,
+    };
+  }
+
+  if (cmd === 'annotate') {
+    const comment = parts.slice(1).join(' ').trim();
+    if (!comment) throw new Error('annotate requires a comment. Example: annotate Fix the checkout CTA');
+    const inspect = getInspectSession(args.sessionId);
+    const snapshot = await fns.snapshot();
+    const annotation = inspect.annotate({
+      comment,
+      pageUrl: snapshot.url,
+      pageVersion: snapshot.title,
+    });
+    const payload = inspect.toAgentPayload(annotation.id);
+    return {
+      output: [
+        `Annotation ${annotation.id} stored.`,
+        `Selector: ${payload.selector.css}`,
+        `Comment: ${payload.comment}`,
+        `URL: ${payload.pageUrl}`,
+        `Version: ${payload.pageVersion}`,
+        payload.screenshotBase64 ? 'Screenshot: attached' : 'Screenshot: none',
+        'Page was not mutated.',
+      ].join('\n'),
+      appendReleaseHint: false,
+      image: payload.screenshotBase64
+        ? {
+            data: payload.screenshotBase64,
+            mimeType: 'image/png',
+            sizeBytes: Buffer.byteLength(payload.screenshotBase64, 'base64'),
+          }
+        : undefined,
+    };
+  }
+
+  if (cmd === 'preview-edit') {
+    const kindRaw = parts[1]?.toLowerCase();
+    if (kindRaw !== 'text' && kindRaw !== 'style' && kindRaw !== 'property') {
+      throw new Error('preview-edit requires kind text|style|property. Example: preview-edit text Hello');
+    }
+    const inspect = getInspectSession(args.sessionId);
+    let property: string | undefined;
+    let value: string;
+    if (kindRaw === 'property') {
+      property = parts[2];
+      value = parts.slice(3).join(' ').trim();
+      if (!property || !value) {
+        throw new Error('preview-edit property requires a name and value. Example: preview-edit property value Alice');
+      }
+    } else {
+      value = parts.slice(2).join(' ').trim();
+      if (!value) throw new Error(`preview-edit ${kindRaw} requires a value`);
+    }
+    const staged = inspect.stagePreviewEdit({ kind: kindRaw, value, property });
+    return {
+      output: [
+        `Preview ${staged.kind} edit staged (${staged.id}).`,
+        `Selector: ${staged.selector.css}`,
+        staged.property ? `Property: ${staged.property}` : undefined,
+        `Value: ${staged.value}`,
+        'Page was not mutated. Run "approve-edit" to apply or "discard-edit" to drop it.',
+      ].filter(Boolean).join('\n'),
+      appendReleaseHint: false,
+    };
+  }
+
+  if (cmd === 'approve-edit') {
+    const inspect = getInspectSession(args.sessionId);
+    const staged = inspect.getPreviewEdit();
+    if (!staged) throw new Error('No preview edit to approve');
+    const snapshot = await fns.snapshot();
+    const applied = inspect.applyPreview(snapshotNodesToLive(snapshot.nodes));
+    await fns.evaluate(buildPreviewEvaluate(applied.kind, applied.selector.css, applied.value, applied.property));
+    return {
+      output: `Applied preview ${applied.kind} edit on the current tab (${applied.selector.css}).`,
+      appendReleaseHint: false,
+    };
+  }
+
+  if (cmd === 'discard-edit') {
+    getInspectSession(args.sessionId).discardPreview();
+    return { output: 'Discarded staged preview edit. Page was not mutated.', appendReleaseHint: false };
+  }
+
+  if (cmd === 'approve-destructive') {
+    const inspect = getInspectSession(args.sessionId);
+    const pending = inspect.getPendingDestructive();
+    if (!pending) throw new Error('No destructive action awaiting approval');
+    const snapshot = await fns.snapshot();
+    const approved = inspect.approveDestructive(snapshotNodesToLive(snapshot.nodes));
+    if (approved.ref) await fns.click(approved.ref);
+    return {
+      output: `Approved ${approved.kind} on ${approved.ref ?? approved.selector.css}.`,
+      appendReleaseHint: true,
+    };
+  }
+
+  if (cmd === 'deny-destructive') {
+    getInspectSession(args.sessionId).denyDestructive();
+    return { output: 'Denied destructive action. Page was not mutated.', appendReleaseHint: false };
+  }
+
+  if (cmd === 'annotations') {
+    const inspect = getInspectSession(args.sessionId);
+    const snapshot = await fns.snapshot();
+    const listed = inspect.refreshStale(
+      snapshotNodesToLive(snapshot.nodes),
+      snapshot.url,
+      snapshot.title,
+    );
+    if (listed.length === 0) {
+      return { output: 'No element annotations for this page.', appendReleaseHint: false };
+    }
+    const lines = listed.map((ann) =>
+      `${ann.id} ${ann.stale ? '(stale) ' : ''}${ann.selector.css} — ${ann.comment}`,
+    );
+    return { output: lines.join('\n'), appendReleaseHint: false };
   }
 
   throw new Error(`Unknown browser_tool command "${cmd}". Use "--help" to see supported commands.`);

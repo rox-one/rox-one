@@ -568,7 +568,14 @@ Examples:
 - \`windows\` — list current browser windows and ownership state
 - \`release\` — dismiss the agent control overlay when done
 - \`close\` — close and destroy the browser window
-- \`hide\` — hide the window while preserving state`,
+- \`hide\` — hide the window while preserving state
+- \`inspect on|off\` — grab-element mode on the current tab
+- \`grab @eN\` — stable selector + screenshot; does not mutate the page
+- \`annotate "fix the CTA"\` — attach a comment for the agent
+- \`preview-edit text Hello\` — stage a text/style/property edit
+- \`approve-edit\` / \`discard-edit\` — apply or drop the staged preview
+- \`approve-destructive\` / \`deny-destructive\` — submit/purchase/publish gate
+- \`annotations\` — list element comments for this page`,
 
   call_llm: `Invoke a secondary LLM for focused subtasks. Use for:
 - Cost optimization: use a smaller model for simple tasks (summarization, classification)

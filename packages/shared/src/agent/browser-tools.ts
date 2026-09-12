@@ -224,7 +224,14 @@ Examples:
 - \`windows\` — list current browser windows and ownership state
 - \`release [windowId|all]\` — dismiss the agent control overlay when done
 - \`close [windowId]\` — close and destroy the browser window
-- \`hide [windowId]\` — hide the window while preserving state`;
+- \`hide [windowId]\` — hide the window while preserving state
+- \`inspect on|off\` — grab-element mode on the current tab
+- \`grab @eN\` — stable selector + screenshot; does not mutate the page
+- \`annotate "fix the CTA"\` — attach a comment/instruction to the grabbed element
+- \`preview-edit text Hello\` — stage a text/style/property edit
+- \`approve-edit\` / \`discard-edit\` — apply or drop the staged preview
+- \`approve-destructive\` / \`deny-destructive\` — submit/purchase/publish gate
+- \`annotations\` — list persisted element comments for this page`;
 
 // ============================================================================
 // Tool Factories
