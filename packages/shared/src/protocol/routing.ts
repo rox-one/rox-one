@@ -240,6 +240,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.browserPane.TYPE,
   RPC_CHANNELS.browserPane.KEY,
 
+  RPC_CHANNELS.browserProfile.DISCOVER,
+  RPC_CHANNELS.browserProfile.IMPORT,
+  RPC_CHANNELS.browserProfile.ROLLBACK,
+  RPC_CHANNELS.browserProfile.DELETE,
+
   // gitbash — Windows-specific local
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,

@@ -59,6 +59,7 @@ export function cleanupCoreClientResources(clientId: string): void {
   cleanupKnowledgeWatchForClient(clientId)
 }
 import { registerBrowserPaneHandlers } from './browser-pane'
+import { registerBrowserProfileImportHandlers } from './browser-profile-import'
 
 export interface CoreRpcRegistrationOptions {
   /**
@@ -123,5 +124,6 @@ export function registerCoreRpcHandlers(
   registerNotesHandlers(server, deps)
   registerKnowledgeHandlers(server, deps)
   registerMindmapHandlers(server, deps)
+  registerBrowserProfileImportHandlers(server, deps)
   if (options?.browserPane !== false) registerBrowserPaneHandlers(server, deps)
 }

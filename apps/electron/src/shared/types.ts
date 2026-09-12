@@ -27,6 +27,11 @@ import type {
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@craft-agent/shared/agent/modes';
+import type {
+  DiscoveredProfile,
+  ImportConsent,
+  ImportSummary,
+} from '@craft-agent/shared/browser/profile-import'
 export type { PermissionMode };
 export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 
@@ -648,6 +653,17 @@ export interface ElectronAPI {
       sessionId?: string
       reason?: string
     }>
+  }>
+  discoverBrowserProfiles(explicitId?: string): Promise<DiscoveredProfile[]>
+  importBrowserProfile(args: {
+    workspaceId: string
+    profileId: string
+    consent: ImportConsent
+    dryRun?: boolean
+  }): Promise<ImportSummary>
+  rollbackBrowserProfileImport(args: { workspaceId: string; token: string }): Promise<{ ok: boolean }>
+  deleteImportedBrowserProfile(workspaceId: string): Promise<{
+    deletionReceipt: { deletedAt: number; categories: string[]; itemCount: number }
   }>
   exportRemoteSessionTransfer(sessionId: string): Promise<RemoteSessionTransferPayload>
   importRemoteSessionTransfer(targetWorkspaceId: string, payload: RemoteSessionTransferPayload): Promise<ImportRemoteSessionTransferResult>
