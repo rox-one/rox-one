@@ -54,6 +54,15 @@ function toMessages(sourcePath: string, messages: ConvertedForeignMessage[]): Ro
   }))
 }
 
+function mergeImportedMessages(
+  existing: RoxSessionFile['messages'],
+  incoming: RoxSessionFile['messages'],
+): RoxSessionFile['messages'] {
+  const seen = new Set(existing.map((message) => message.id))
+  const extra = incoming.filter((message) => !seen.has(message.id))
+  return extra.length === 0 ? existing : [...existing, ...extra]
+}
+
 function hashCode(value: string): number {
   let hash = 0
   for (let i = 0; i < value.length; i++) hash = (hash * 31 + value.charCodeAt(i)) | 0
@@ -149,7 +158,10 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
   if (existing && (mode === 'append' || mode === 'force')) {
     const session = readRoxSession(options.workspaceRoot, existing.sessionId)
     if (session) {
-      session.messages = mode === 'append' ? [...session.messages, ...storedMessages] : storedMessages
+      session.messages =
+        mode === 'append'
+          ? mergeImportedMessages(session.messages, storedMessages)
+          : storedMessages
       session.name = converted.title
       session.workingDirectory = options.workspaceRoot
       if (!writeRoxSession(options.workspaceRoot, session)) {
