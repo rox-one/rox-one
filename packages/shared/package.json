@@ -109,7 +109,8 @@
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",
     "./resources": "./src/resources/index.ts",
-    "./browser": "./src/browser/index.ts"
+    "./browser": "./src/browser/index.ts",
+    "./workflows": "./src/workflows/index.ts"
   },
   "dependencies": {
     "@craft-agent/core": "workspace:*",

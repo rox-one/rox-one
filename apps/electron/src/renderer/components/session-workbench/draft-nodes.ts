@@ -29,6 +29,12 @@ export const DRAFT_NODE_PROMPTS: Record<SessionNodeKind, string> = {
   model: 'Model inference',
   tool: 'Tool call',
   memory: 'Memory lookup',
+  subflow: 'Subflow',
+  condition: 'Condition',
+  merge: 'Merge',
+  human_input: 'Human input',
+  output: 'Output',
+  annotation_frame: 'Frame',
 }
 
 let nextDraftSequence = 0
@@ -127,7 +133,16 @@ function isDraftNode(value: unknown): value is SessionDraftNode {
   const position = node.position as Partial<SessionDraftNode['position']> | undefined
   return (
     typeof node.id === 'string' &&
-    (node.kind === 'note' || node.kind === 'model' || node.kind === 'tool' || node.kind === 'memory') &&
+    (node.kind === 'note' ||
+      node.kind === 'model' ||
+      node.kind === 'tool' ||
+      node.kind === 'memory' ||
+      node.kind === 'subflow' ||
+      node.kind === 'condition' ||
+      node.kind === 'merge' ||
+      node.kind === 'human_input' ||
+      node.kind === 'output' ||
+      node.kind === 'annotation_frame') &&
     typeof node.title === 'string' &&
     typeof position?.x === 'number' &&
     typeof position?.y === 'number' &&
