@@ -519,6 +519,7 @@ function KanbanBoardContainerInner() {
         column,
         statusId,
         model: meta.model ?? DEFAULT_MODEL,
+        llmConnection: meta.llmConnection,
         projectId: meta.projectId,
         priority: meta.priority ?? 'none',
         taskSlug: meta.taskSlug,

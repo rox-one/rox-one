@@ -46,8 +46,10 @@ export {
 export {
   COLLECTION_AGENT_FAMILY_VALUES,
   classifyAgentFamily,
+  collectionHarnessProvider,
   isCollectionAgentFamily,
 } from './collection-agent-family.ts'
+export type { CollectionHarnessProvider } from './collection-agent-family.ts'
 
 export {
   buildYearHeatmap,

@@ -14,4 +14,10 @@ describe('session table row chrome', () => {
     expect(ROW).toContain("t('collection.table.column.priority')")
     expect(ROW).toContain('selectedId={value}')
   })
+
+  it('renders real model/harness icons via ModelChip', () => {
+    expect(ROW).toContain("import { ModelChip } from '../kanban/ModelChip'")
+    expect(ROW).toContain('<ModelChip model={meta.model} llmConnection={meta.llmConnection}')
+    expect(ROW).not.toContain('{meta.model ?? \'—\'}')
+  })
 })

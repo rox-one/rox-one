@@ -60,6 +60,8 @@ export interface KanbanTask {
   statusId: string
   /** Orchestrator model id for the parent task. */
   model: string
+  /** LLM connection slug/name — used for real harness icons when the model id is ambiguous. */
+  llmConnection?: string
   /** Optional project binding; colors the tile. */
   projectId?: string
   /**

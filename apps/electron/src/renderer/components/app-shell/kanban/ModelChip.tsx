@@ -1,23 +1,29 @@
 import { getModelDisplayName, getModelShortName, getModelProvider } from '@config/models'
+import { collectionHarnessProvider } from '@craft-agent/shared/sessions/collection'
 import { getProviderIcon } from '@/lib/provider-icons'
 import { cn } from '@/lib/utils'
 
 interface ModelChipProps {
   /** Model id, e.g. 'claude-opus-4-7'. */
   model: string
+  /** LLM connection slug/name — used when the model id alone is ambiguous (kimi + oh-my-pi). */
+  llmConnection?: string | null
   /** Show the short name ("Haiku") instead of the full display name ("Haiku 4.5"). */
   short?: boolean
   className?: string
 }
 
 /**
- * Read-only chip: provider brand icon + model name. Reuses the centralized
- * model registry (`@config/models`) and provider icon map so it can't drift
- * from the real model metadata.
+ * Read-only chip: real harness/provider icon + model name.
+ * Unknown models stay unmarked rather than borrowing Anthropic's logo.
  */
-export function ModelChip({ model, short = false, className }: ModelChipProps) {
-  const provider = getModelProvider(model) ?? 'anthropic'
-  const iconUrl = getProviderIcon(provider)
+export function ModelChip({ model, llmConnection, short = false, className }: ModelChipProps) {
+  const harness = collectionHarnessProvider({ model, llmConnection })
+  const registry = getModelProvider(model)
+  const provider = harness ?? registry
+  const iconUrl = provider
+    ? (getProviderIcon(provider) ?? getProviderIcon('pi', null, provider))
+    : null
   const label = short ? getModelShortName(model) : getModelDisplayName(model)
 
   return (
