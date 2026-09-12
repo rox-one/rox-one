@@ -68,6 +68,17 @@ import {
   normalizeDeprecatedModelId,
   type ModelDefinition,
 } from './models.ts';
+import {
+  connectionUsesLegacyRoxInternalModels,
+  ROX_DEFAULT_CONNECTION_NAME,
+  ROX_DEFAULT_CONNECTION_SLUG,
+  ROX_DEFAULT_PARENT_MODEL,
+  ROX_GATEWAY_BASE_URL,
+  ROX_KIMI_PUBLIC_MODELS_MIGRATION,
+  toRoxPublicConnectionModels,
+} from './rox-public-models.ts';
+
+export { ROX_DEFAULT_CONNECTION_SLUG } from './rox-public-models.ts';
 
 // Config stored in JSON file (credentials stored in encrypted file, not here)
 export interface StoredConfig {
@@ -3221,6 +3232,34 @@ function migrateModelDefaultsToConnections(config: StoredConfig): boolean {
 }
 
 /**
+ * Rewrite the seeded rox-kimi OMP connection from the internal kimi-K3 id
+ * onto the public ROX catalog. Existing installs keep working; new seeds
+ * already use the public plane.
+ */
+function migrateRoxKimiPublicModels(config: StoredConfig): boolean {
+  if (config.migrationsApplied?.includes(ROX_KIMI_PUBLIC_MODELS_MIGRATION)) {
+    return false;
+  }
+
+  let changed = false;
+  for (const connection of config.llmConnections ?? []) {
+    if (!connectionUsesLegacyRoxInternalModels(connection)) continue;
+    connection.name = ROX_DEFAULT_CONNECTION_NAME;
+    connection.baseUrl = ROX_GATEWAY_BASE_URL;
+    connection.defaultModel = ROX_DEFAULT_PARENT_MODEL;
+    connection.models = toRoxPublicConnectionModels();
+    changed = true;
+  }
+
+  if (!changed) return false;
+  config.migrationsApplied = [
+    ...(config.migrationsApplied ?? []),
+    ROX_KIMI_PUBLIC_MODELS_MIGRATION,
+  ];
+  return true;
+}
+
+/**
  * Migrate legacy auth config to LLM connections.
  * Call this on app startup before any getLlmConnections() calls.
  *
@@ -3364,6 +3403,9 @@ export function migrateLegacyLlmConnectionsConfig(): void {
     // previously force-migrated away from it (one-shot, guarded by marker).
     // TODO(opus-4.6-sunset): drop this call and the function when 4.6 is deprecated.
     if (restoreOpus46ToAnthropicConnections(config)) {
+      needsSave = true;
+    }
+    if (migrateRoxKimiPublicModels(config)) {
       needsSave = true;
     }
 
@@ -3542,7 +3584,8 @@ export function migrateOrphanedDefaultConnections(): void {
  * When the config has no LLM connections at all (fresh install), a single
  * "rox-kimi" connection is created pointing at the Rox gateway
  * (https://api.rox.one/v1) and runs on the OMP backend (providerType 'omp')
- * with kimi-K3 as the default model. OMP reads the gateway credentials from
+ * with the public ROX catalog (`rox/explore|standard|max|vision|fast`,
+ * default `rox/standard`). OMP reads the gateway credentials from
  * its own config (~/.omp/agent/config.yml); the ROX_API_KEY env var is still
  * mirrored into the craft credential store for potential pi_compat fallback.
  *
@@ -3553,8 +3596,6 @@ export function migrateOrphanedDefaultConnections(): void {
  *
  * Called on app startup before migrateOrphanedDefaultConnections().
  */
-export const ROX_DEFAULT_CONNECTION_SLUG = 'rox-kimi';
-
 export async function seedDefaultLlmConnection(): Promise<void> {
   // A null config means a fresh install with no config.json yet — seed into a
   // minimal config; workspace/onboarding flows will fill in the rest.
@@ -3569,22 +3610,12 @@ export async function seedDefaultLlmConnection(): Promise<void> {
 
   const connection: LlmConnection = {
     slug: ROX_DEFAULT_CONNECTION_SLUG,
-    name: 'Rox (Kimi K3) · OMP',
+    name: ROX_DEFAULT_CONNECTION_NAME,
     providerType: 'omp',
-    baseUrl: 'https://api.rox.one/v1',
+    baseUrl: ROX_GATEWAY_BASE_URL,
     authType: 'none',
-    models: [
-      {
-        id: 'kimi-K3',
-        name: 'Kimi K3',
-        shortName: 'Kimi K3',
-        description: 'Kimi K3 via api.rox.one gateway',
-        provider: 'pi',
-        contextWindow: 262144,
-        supportsThinking: false,
-      },
-    ],
-    defaultModel: 'kimi-K3',
+    models: toRoxPublicConnectionModels(),
+    defaultModel: ROX_DEFAULT_PARENT_MODEL,
     modelSelectionMode: 'automaticallySyncedFromProvider',
     createdAt: Date.now(),
   };
