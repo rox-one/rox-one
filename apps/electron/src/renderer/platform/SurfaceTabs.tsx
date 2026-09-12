@@ -111,7 +111,7 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
   )
 }
 
-function OsBrowserTabItem({
+function OsBrowserWindowControl({
   tab,
   instance,
   liveWindowActions,
@@ -128,44 +128,42 @@ function OsBrowserTabItem({
 
   return (
     <div
-      role="tab"
-      aria-selected={tab.focused}
-      tabIndex={0}
-      title={tab.title}
-      onClick={() => onFocus(instance)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault()
-          onFocus(instance)
-        }
-      }}
-      onAuxClick={(event) => {
-        if (event.button === 1 && liveWindowActions) {
-          event.preventDefault()
-          onTerminate(instance)
-        }
-      }}
+      role="group"
+      aria-label={tab.title}
       className={cn(
-        'group flex h-7 max-w-[220px] min-w-0 shrink-0 cursor-default items-center gap-1.5 rounded-[6px] px-2.5 text-[12px] transition-colors',
+        'group flex h-7 max-w-[220px] min-w-0 shrink-0 items-center gap-1.5 rounded-[6px] pl-2.5 pr-2 text-[12px] transition-colors',
         tab.focused
           ? 'bg-background text-foreground shadow-minimal'
           : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
       )}
     >
-      <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" />
-      <span className="min-w-0 flex-1 truncate">{tab.title}</span>
+      <button
+        type="button"
+        title={tab.title}
+        aria-label={`${t('workbench.browser.showWindow')}: ${tab.title}`}
+        onClick={() => onFocus(instance)}
+        onAuxClick={(event) => {
+          if (event.button === 1 && liveWindowActions) {
+            event.preventDefault()
+            onTerminate(instance)
+          }
+        }}
+        className="flex min-w-0 flex-1 items-center gap-1.5 rounded-[4px] outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" />
+        <span className="min-w-0 flex-1 truncate">{tab.title}</span>
+      </button>
       <button
         type="button"
         aria-label={t('workbench.browser.terminate')}
         disabled={!liveWindowActions}
-        onClick={(event) => {
-          event.stopPropagation()
-          onTerminate(instance)
-        }}
+        onClick={() => onTerminate(instance)}
         onKeyDown={(event) => event.stopPropagation()}
         className={cn(
           'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] transition-all hover:bg-foreground/10 disabled:pointer-events-none',
-          tab.focused ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60',
+          tab.focused
+            ? 'opacity-60 hover:opacity-100'
+            : 'opacity-0 group-hover:opacity-60 group-focus-within:opacity-60',
         )}
       >
         <X className="h-3 w-3" />
@@ -286,7 +284,6 @@ export function SurfaceTabs() {
 
   return (
     <div
-      role="tablist"
       className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-foreground/5 px-3"
       style={{ height: TAB_STRIP_HEIGHT }}
     >
@@ -294,24 +291,36 @@ export function SurfaceTabs() {
         <span className="px-1 text-[12px] text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
         <>
-          {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
+          {panelTabs.length > 0 && (
+            <div role="tablist" className="flex shrink-0 items-center gap-1">
+              {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
+            </div>
+          )}
           {panelTabs.length > 0 && osTabs.length > 0 && (
             <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-border/80" />
           )}
-          {osTabs.map((tab) => {
-            const instance = osInstancesById.get(tab.instanceId)
-            if (!instance) return null
-            return (
-              <OsBrowserTabItem
-                key={tab.instanceId}
-                tab={tab}
-                instance={instance}
-                liveWindowActions={browserWindows.liveWindowActions}
-                onFocus={browserWindows.focusBrowserWindow}
-                onTerminate={browserWindows.terminateBrowserWindow}
-              />
-            )
-          })}
+          {osTabs.length > 0 && (
+            <div
+              role="group"
+              aria-label={t('surfaceTabs.browser')}
+              className="flex shrink-0 items-center gap-1"
+            >
+              {osTabs.map((tab) => {
+                const instance = osInstancesById.get(tab.instanceId)
+                if (!instance) return null
+                return (
+                  <OsBrowserWindowControl
+                    key={tab.instanceId}
+                    tab={tab}
+                    instance={instance}
+                    liveWindowActions={browserWindows.liveWindowActions}
+                    onFocus={browserWindows.focusBrowserWindow}
+                    onTerminate={browserWindows.terminateBrowserWindow}
+                  />
+                )
+              })}
+            </div>
+          )}
         </>
       )}
     </div>

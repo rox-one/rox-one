@@ -25,6 +25,14 @@ export interface UseWorkspaceBrowserWindowsOptions {
   enabled?: boolean
 }
 
+export async function removeBrowserWindowAfterDestroy<Result>(
+  destroy: () => Promise<Result>,
+  remove: () => void,
+): Promise<void> {
+  await destroy()
+  remove()
+}
+
 export function useWorkspaceBrowserWindows({
   activeSessionId = null,
   instancesOverride,
@@ -180,22 +188,26 @@ export function useWorkspaceBrowserWindows({
   }, [])
 
   const terminateBrowserWindow = useCallback((instance: BrowserInstanceInfo) => {
-    if (!instancesOverride) {
-      const browserPaneApi = window.electronAPI?.browserPane
-      if (!browserPaneApi) {
-        console.warn('[BrowserTabStrip] browserPane API unavailable for terminate action')
-      } else {
-        void browserPaneApi.destroy(instance.id).catch((error) => {
-          console.warn(`[BrowserTabStrip] Failed to terminate browser window ${instance.id}:`, error)
-        })
-      }
-      removeInstance(instance.id)
+    if (instancesOverride) return
+
+    const browserPaneApi = window.electronAPI?.browserPane
+    if (!browserPaneApi) {
+      console.warn('[BrowserTabStrip] browserPane API unavailable for terminate action')
+      return
     }
 
-    setActiveInstanceId((prev) => {
-      if (prev !== instance.id) return prev
-      const remaining = instancesRef.current.filter((item) => item.id !== instance.id)
-      return remaining[0]?.id ?? null
+    void removeBrowserWindowAfterDestroy(
+      () => browserPaneApi.destroy(instance.id),
+      () => {
+        removeInstance(instance.id)
+        setActiveInstanceId((prev) => {
+          if (prev !== instance.id) return prev
+          const remaining = instancesRef.current.filter((item) => item.id !== instance.id)
+          return remaining[0]?.id ?? null
+        })
+      },
+    ).catch((error) => {
+      console.warn(`[BrowserTabStrip] Failed to terminate browser window ${instance.id}:`, error)
     })
   }, [instancesOverride, removeInstance, setActiveInstanceId])
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { removeBrowserWindowAfterDestroy } from '../../components/browser/use-workspace-browser-windows'
 import { osBrowserSurfaceTabs, type OsBrowserInstanceLike } from '../os-browser-tabs'
 
 const platformDir = join(import.meta.dir, '..')
@@ -38,6 +39,52 @@ describe('browser surface v2 model', () => {
   })
 })
 
+describe('removeBrowserWindowAfterDestroy', () => {
+  it('commits removal after destroy succeeds', async () => {
+    let resolveDestroy!: () => void
+    const destroyResult = new Promise<void>((resolve) => {
+      resolveDestroy = resolve
+    })
+    let removed = false
+
+    const termination = removeBrowserWindowAfterDestroy(
+      () => destroyResult,
+      () => {
+        removed = true
+      },
+    )
+
+    await Promise.resolve()
+    expect(removed).toBe(false)
+
+    resolveDestroy()
+    await termination
+    expect(removed).toBe(true)
+  })
+
+  it('does not remove the live instance when destroy rejects', async () => {
+    const failure = new Error('destroy failed')
+    let removed = false
+    let thrown: unknown
+
+    try {
+      await removeBrowserWindowAfterDestroy(
+        async () => {
+          throw failure
+        },
+        () => {
+          removed = true
+        },
+      )
+    } catch (error) {
+      thrown = error
+    }
+
+    expect(thrown).toBe(failure)
+    expect(removed).toBe(false)
+  })
+})
+
 describe('browser surface v2 source wiring', () => {
   const surfaceTabsSource = readFileSync(join(platformDir, 'SurfaceTabs.tsx'), 'utf8')
   const appShellSource = readFileSync(
@@ -62,18 +109,24 @@ describe('browser surface v2 source wiring', () => {
   })
 
   it('routes OS tab activation and termination without panel-stack ids', () => {
-    const osTabItemSource = surfaceTabsSource.slice(
-      surfaceTabsSource.indexOf('function OsBrowserTabItem'),
+    const osWindowControlSource = surfaceTabsSource.slice(
+      surfaceTabsSource.indexOf('function OsBrowserWindowControl'),
       surfaceTabsSource.indexOf('export function SurfaceTabs'),
     )
 
-    expect(osTabItemSource).toContain('onFocus(instance)')
-    expect(osTabItemSource).toContain('onTerminate(instance)')
-    expect(osTabItemSource).toContain('onAuxClick=')
-    expect(osTabItemSource).not.toContain('setFocusedPanelId')
-    expect(osTabItemSource).not.toContain('closePanel')
+    expect(osWindowControlSource).toContain('onFocus(instance)')
+    expect(osWindowControlSource).toContain('onTerminate(instance)')
+    expect(osWindowControlSource).toContain('onAuxClick=')
+    expect(osWindowControlSource).toContain('role="group"')
+    expect(osWindowControlSource).not.toContain('role="tab"')
+    expect(osWindowControlSource).not.toContain('aria-selected')
+    expect(osWindowControlSource).not.toContain('setFocusedPanelId')
+    expect(osWindowControlSource).not.toContain('closePanel')
+    expect(surfaceTabsSource.match(/role="tablist"/g)).toHaveLength(1)
+    expect(surfaceTabsSource).toContain("aria-label={t('surfaceTabs.browser')}")
     expect(browserWindowsSource).toContain('browserPaneApi.focus(instance.id)')
     expect(browserWindowsSource).toContain('browserPaneApi.destroy(instance.id)')
+    expect(browserWindowsSource).toContain('removeBrowserWindowAfterDestroy(')
   })
 
   it('mounts the strip and creates a real desktop window only for browser surface v2', () => {
