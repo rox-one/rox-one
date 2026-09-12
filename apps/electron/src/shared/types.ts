@@ -2203,6 +2203,15 @@ export interface DiffNavigationState {
 }
 
 /**
+ * Local terminal surface navigation state (`terminal/{terminalId}`).
+ */
+export interface TerminalNavigationState {
+  navigator: 'terminal'
+  details: { type: 'terminal'; id: string; sessionId?: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Unified navigation state
  */
 export type NavigationState =
@@ -2221,6 +2230,7 @@ export type NavigationState =
   | CloudRunNavigationState
   | ExtensionNavigationState
   | DiffNavigationState
+  | TerminalNavigationState
   | ConnectionsNavigationState
   | HomeNavigationState
 
@@ -2290,6 +2300,10 @@ export const isExtensionNavigation = (
 export const isDiffNavigation = (
   state: NavigationState
 ): state is DiffNavigationState => state.navigator === 'diff'
+
+export const isTerminalNavigation = (
+  state: NavigationState
+): state is TerminalNavigationState => state.navigator === 'terminal'
 
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
   navigator: 'sessions',
@@ -2384,6 +2398,12 @@ export const getNavigationStateKey = (state: NavigationState): string => {
       return `diff/${encodeURIComponent(state.details.proposalId)}`
     }
     return 'diff'
+  }
+  if (state.navigator === 'terminal') {
+    if (state.details?.type === 'terminal') {
+      return `terminal/${encodeURIComponent(state.details.id)}`
+    }
+    return 'terminal'
   }
   // Chats
   const f = state.filter
@@ -2538,6 +2558,15 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
       return { navigator: 'diff', details: { type: 'diff', proposalId: decodeURIComponent(proposalId) } }
     }
     return { navigator: 'diff', details: null }
+  }
+
+  if (key === 'terminal') return { navigator: 'terminal', details: null }
+  if (key.startsWith('terminal/')) {
+    const terminalId = key.slice('terminal/'.length)
+    if (terminalId) {
+      return { navigator: 'terminal', details: { type: 'terminal', id: decodeURIComponent(terminalId) } }
+    }
+    return { navigator: 'terminal', details: null }
   }
 
   if (key === 'connections') return { navigator: 'connections', details: null }

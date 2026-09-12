@@ -159,10 +159,19 @@ describe('sessions file watchers', () => {
     }
     const deps: HandlerDeps = {
       sessionManager: {
+        waitForInit: async () => {},
         getSession: async (sessionId: string) => sessionId === 'valid'
           ? { id: 'valid', workspaceId: 'ws', isProcessing: false, labels: [] }
           : null,
         setPriority: async (sessionId: string) => { priorityUpdates.push(sessionId) },
+        bulkUpdateSessions: async (_workspaceId: string, input: { ids: string[] }) => {
+          const missing = input.ids.filter((id) => id !== 'valid')
+          if (missing.length > 0) {
+            return { ok: [], failed: missing.map((id) => ({ id, error: 'not_found' })) }
+          }
+          for (const id of input.ids) priorityUpdates.push(id)
+          return { ok: input.ids, failed: [] }
+        },
       } as unknown as HandlerDeps['sessionManager'],
       platform: {
         appRootPath: '',
@@ -195,7 +204,7 @@ describe('sessions file watchers', () => {
     const bulkUpdate = bulkHandlers.get(RPC_CHANNELS.sessions.BULK_UPDATE)
     expect(bulkUpdate).toBeTruthy()
 
-    const result = await bulkUpdate!({ clientId: 'client-a' }, {
+    const result = await bulkUpdate!({ clientId: 'client-a', workspaceId: 'ws' }, {
       workspaceId: 'ws',
       ids: ['valid', 'missing'],
       patch: { priority: 'high' },

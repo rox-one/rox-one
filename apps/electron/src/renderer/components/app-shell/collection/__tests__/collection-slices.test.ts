@@ -26,7 +26,7 @@ const memory = new Map<string, string>()
 describe('collection-slices', () => {
   beforeEach(() => {
     memory.clear()
-    globalThis.localStorage = {
+    const storageMock = {
       clear: () => memory.clear(),
       getItem: (key: string) => memory.get(key) ?? null,
       setItem: (key: string, value: string) => { memory.set(key, value) },
@@ -34,6 +34,11 @@ describe('collection-slices', () => {
       key: (index: number) => [...memory.keys()][index] ?? null,
       get length() { return memory.size },
     } as Storage
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      writable: true,
+      value: storageMock,
+    })
   })
 
   it('matches unread and toggles off', () => {

@@ -349,6 +349,9 @@ interface LastBrowserAction {
 let instanceCounter = 0
 
 export class BrowserPaneManager implements IBrowserPaneManager {
+  /** Test override so pane-manager tests do not mock.module the real BrowserCDP. */
+  static CdpImpl = BrowserCDP
+
   private instances: Map<string, BrowserInstance> = new Map()
   private destroyingIds: Set<string> = new Set()
   private stateChangeCallback: ((info: BrowserInstanceInfo) => void) | null = null
@@ -465,7 +468,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     const overlayWcWithBg = nativeOverlayView.webContents as typeof nativeOverlayView.webContents & { setBackgroundColor?: (color: string) => void }
     overlayWcWithBg.setBackgroundColor?.('#00000000')
 
-    const cdp = new BrowserCDP(pageView.webContents)
+    const cdp = new BrowserPaneManager.CdpImpl(pageView.webContents)
 
     const instance: BrowserInstance = {
       id: instanceId,
@@ -2282,7 +2285,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     const overlayWcWithBg = nativeOverlayView.webContents as typeof nativeOverlayView.webContents & { setBackgroundColor?: (color: string) => void }
     overlayWcWithBg.setBackgroundColor?.('#00000000')
 
-    const cdp = new BrowserCDP(pageView.webContents)
+    const cdp = new BrowserPaneManager.CdpImpl(pageView.webContents)
 
     const instance: BrowserInstance = {
       id: instanceId,
