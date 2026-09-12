@@ -128,6 +128,7 @@ function ExtensionCard({
   compatLevel,
   requiresFullChrome,
   onOpenCompat,
+  origin,
 }: {
   name: string
   version: string
@@ -149,6 +150,7 @@ function ExtensionCard({
   compatLevel?: 0 | 1 | 2 | 3
   requiresFullChrome?: boolean
   onOpenCompat?: () => void
+  origin?: string
 }) {
   const { t } = useTranslation()
   const enabled = status === 'enabled' || status === 'installed' || status === 'update-available'
@@ -269,6 +271,11 @@ function ExtensionCard({
       <div className="grid gap-2 text-xs">
         <div className="flex flex-wrap items-center gap-2">
           <RuntimeBadge runtime={runtime} />
+          {origin ? (
+            <span className="opacity-70" data-extension-origin={origin}>
+              {t(`extensions.origin.${origin}`, { defaultValue: origin })}
+            </span>
+          ) : null}
           {installTarget ? (
             <span className="opacity-70">
               {t('extensions.card.installTarget', { defaultValue: 'Install to' })}:{' '}
@@ -687,40 +694,41 @@ export default function ExtensionsSettingsPage() {
     )
   }
 
-  const renderRecordCard = (rec: ExtensionRecord) => {
-    const marketplaceId = rec.marketplaceId
-    const curated = Boolean(marketplaceId) && !rec.readOnly
-    const compatLevel = parseCompatLevelFromTags(rec.tags)
-    const requiresFullChrome = tagsRequireFullChrome(rec.tags)
+  const renderRecordCard = (record: ExtensionRecord) => {
+    const marketplaceId = record.marketplaceId
+    const curated = Boolean(marketplaceId) && !record.readOnly
+    const compatLevel = parseCompatLevelFromTags(record.tags)
+    const requiresFullChrome = tagsRequireFullChrome(record.tags)
     const isSiyuanBazaar =
-      rec.providerId === 'siyuan-bazaar' || rec.manifest.runtime === 'siyuan-plugin'
-    const bareBazaarName = rec.id.startsWith('siyuan-plugin:')
-      ? rec.id.slice('siyuan-plugin:'.length)
-      : rec.id
-    const canUninstallBazaar = isSiyuanBazaar && !rec.readOnly
+      record.providerId === 'siyuan-bazaar' || record.manifest.runtime === 'siyuan-plugin'
+    const bareBazaarName = record.id.startsWith('siyuan-plugin:')
+      ? record.id.slice('siyuan-plugin:'.length)
+      : record.id
+    const canUninstallBazaar = isSiyuanBazaar && !record.readOnly
     return (
       <ExtensionCard
-        key={rec.id}
-        name={rec.manifest.name}
-        version={rec.manifest.version}
-        description={rec.description}
-        runtime={rec.manifest.runtime}
-        category={rec.category}
-        permissions={rec.manifest.permissions}
-        worksIn={rec.worksIn}
-        installTarget={rec.installTarget}
-        status={rec.status}
-        providerLabel={providerLabel(rec.providerId)}
-        readOnly={rec.readOnly}
-        busy={Boolean(busy[rec.id])}
+        key={record.id}
+        name={record.manifest.name}
+        version={record.manifest.version}
+        description={record.description}
+        runtime={record.manifest.runtime}
+        category={record.category}
+        permissions={record.manifest.permissions}
+        worksIn={record.worksIn}
+        installTarget={record.installTarget}
+        status={record.status}
+        providerLabel={providerLabel(record.providerId)}
+        origin={record.providerId}
+        readOnly={record.readOnly}
+        busy={Boolean(busy[record.id])}
         marketplaceId={marketplaceId}
         compatLevel={compatLevel}
         requiresFullChrome={requiresFullChrome}
-        onOpenCompat={rec.manifest.runtime === 'siyuan-plugin' ? openSiyuanCompat : undefined}
+        onOpenCompat={record.manifest.runtime === 'siyuan-plugin' ? openSiyuanCompat : undefined}
         onUpdate={
-          curated && rec.status === 'update-available'
+          curated && record.status === 'update-available'
             ? () =>
-                void runBusy(rec.id, async () => {
+                void runBusy(record.id, async () => {
                   await window.electronAPI.updateMarketplaceEntry(marketplaceId!)
                 })
             : undefined
@@ -728,21 +736,21 @@ export default function ExtensionsSettingsPage() {
         onUninstall={
           canUninstallBazaar
             ? () =>
-                void runBusy(rec.id, async () => {
+                void runBusy(record.id, async () => {
                   await window.electronAPI.pluginBridgeUninstallBazaar({
                     packageName: bareBazaarName,
                   })
                 })
             : curated
               ? () =>
-                  void runBusy(rec.id, async () => {
+                  void runBusy(record.id, async () => {
                     await window.electronAPI.removeMarketplaceEntry(marketplaceId!)
                   })
               : undefined
         }
         onToggle={(enabled) =>
-          void runBusy(rec.id, async () => {
-            await window.electronAPI.extensionsSetEnabled({ id: rec.id, enabled })
+          void runBusy(record.id, async () => {
+            await window.electronAPI.extensionsSetEnabled({ id: record.id, enabled })
           })
         }
       />
