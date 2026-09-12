@@ -5,6 +5,11 @@ import type { ToolResult } from '../types.ts';
 import { createSanitizedEnv } from '../runtime/sandbox-env.ts';
 import { resolveHostBashCwd } from '../runtime/host-bash-cwd.ts';
 import { getHostBashPort, type HostBashExecResult } from '../runtime/host-bash-port.ts';
+import {
+  isHostBashSandboxEnabled,
+  planHostBashSandbox,
+  type HostBashSandboxPlan,
+} from '../runtime/host-bash-sandbox.ts';
 
 export interface HostBashArgs {
   command: string;
@@ -55,7 +60,10 @@ function resolveShell(): { command: string; argsPrefix: string[] } {
  * spawning Bash inside the backend. When the native sidecar is up, execution
  * goes through `exec:run` (`craft-exec`); otherwise local spawn. Caps:
  * stdout size, wall-clock timeout, process-tree kill, credential env scrub,
- * cwd jailed to the workspace root. Not a full sandbox.
+ * cwd jailed to the workspace root. Optional FS+net jail via
+ * CRAFT_FEATURE_HOST_BASH_SANDBOX=1 (default off). When that flag is on,
+ * skip the native exec port and wrap local spawn; fail closed if no
+ * isolation backend is available.
  */
 export async function runHostBash(req: {
   command: string;
@@ -78,8 +86,9 @@ export async function runHostBash(req: {
     HOST_BASH_MAX_TIMEOUT_MS,
   );
 
+  const sandboxEnabled = isHostBashSandboxEnabled();
   const port = getHostBashPort();
-  if (port) {
+  if (port && !sandboxEnabled) {
     try {
       const remote = await port({
         command,
@@ -95,6 +104,16 @@ export async function runHostBash(req: {
 
   const env = createSanitizedEnv();
   const shell = resolveShell();
+  const shellArgs = [...shell.argsPrefix, command];
+  const jailRoot = req.workspaceRoot?.trim() || cwd;
+  const sandbox = sandboxEnabled ? planHostBashSandbox(shell.command, shellArgs, jailRoot) : null;
+  if (sandbox && sandbox.status !== 'enforced') {
+    return errorResponse(
+      'host-tool bash sandbox requested (CRAFT_FEATURE_HOST_BASH_SANDBOX) but no FS+net isolation backend is available on this platform/runtime.',
+    );
+  }
+  const spawnCommand = sandbox?.command ?? shell.command;
+  const spawnArgs = sandbox?.args ?? shellArgs;
   const memoryCap = HOST_BASH_MAX_OUTPUT_CHARS * 2;
 
   const startedAt = Date.now();
@@ -105,7 +124,7 @@ export async function runHostBash(req: {
       code: number | null;
       timedOut: boolean;
     }>((resolvePromise, reject) => {
-      const child = spawn(shell.command, [...shell.argsPrefix, command], {
+      const child = spawn(spawnCommand, spawnArgs, {
         cwd,
         env,
         stdio: ['ignore', 'pipe', 'pipe'],
@@ -140,14 +159,17 @@ export async function runHostBash(req: {
     });
 
     const durationMs = Date.now() - startedAt;
-    return formatHostBashResult({
-      stdout: result.stdout,
-      stderr: result.stderr,
-      exitCode: result.code,
-      timedOut: result.timedOut,
-      durationMs,
-      cwd,
-    });
+    return formatHostBashResult(
+      {
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.code,
+        timedOut: result.timedOut,
+        durationMs,
+        cwd,
+      },
+      sandbox ?? undefined,
+    );
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     return errorResponse(`Error running host-tool bash: ${msg}`);
@@ -167,7 +189,7 @@ export async function handleHostBash(
   });
 }
 
-function formatHostBashResult(result: HostBashExecResult): ToolResult {
+function formatHostBashResult(result: HostBashExecResult, sandbox?: HostBashSandboxPlan): ToolResult {
   const stdout = result.stdoutTruncated
     ? { text: result.stdout, truncated: true }
     : truncateOutput(result.stdout);
@@ -180,6 +202,14 @@ function formatHostBashResult(result: HostBashExecResult): ToolResult {
     `timedOut: ${result.timedOut}`,
     `cwd: ${result.cwd}`,
   ];
+  if (sandbox) {
+    lines.push(
+      `filesystemIsolation: ${sandbox.filesystem.status}`,
+      `filesystemBackend: ${sandbox.filesystem.backend}`,
+      `networkIsolation: ${sandbox.network.status}`,
+      `networkBackend: ${sandbox.network.backend}`,
+    );
+  }
 
   if (stdout.text.length > 0) {
     lines.push('', 'stdout:', stdout.text);

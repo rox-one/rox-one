@@ -139,4 +139,52 @@ describe('host-tool bash', () => {
     expect(result.isError).toBe(false);
     expect(result.content[0]?.text).toContain('local-fallback');
   });
+
+  it('does not mention isolation when the sandbox flag is off', async () => {
+    const previous = process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX;
+    delete process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX;
+    try {
+      const result = await handleHostBash(ctx(), { command: 'echo nosandbox' });
+      expect(result.isError).toBe(false);
+      const text = result.content[0]?.text ?? '';
+      expect(text).toContain('nosandbox');
+      expect(text).not.toContain('filesystemIsolation:');
+    } finally {
+      if (previous === undefined) delete process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX;
+      else process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX = previous;
+    }
+  });
+
+  it('skips the native port and fail-closes when sandbox is on without a backend', async () => {
+    const previous = process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX;
+    process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX = '1';
+    let portCalled = false;
+    setHostBashPort(async () => {
+      portCalled = true;
+      return {
+        stdout: 'should-not-run',
+        stderr: '',
+        exitCode: 0,
+        timedOut: false,
+        durationMs: 1,
+        cwd: workspaceDir,
+      };
+    });
+    try {
+      const result = await handleHostBash(ctx(), { command: 'echo sandboxed' });
+      const text = result.content[0]?.text ?? '';
+      expect(portCalled).toBe(false);
+      if (result.isError) {
+        expect(text).toContain('CRAFT_FEATURE_HOST_BASH_SANDBOX');
+        expect(text).toContain('isolation backend');
+      } else {
+        expect(text).toContain('filesystemIsolation: enforced');
+        expect(text).toContain('networkIsolation: enforced');
+        expect(text).toContain('sandboxed');
+      }
+    } finally {
+      if (previous === undefined) delete process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX;
+      else process.env.CRAFT_FEATURE_HOST_BASH_SANDBOX = previous;
+    }
+  });
 });
