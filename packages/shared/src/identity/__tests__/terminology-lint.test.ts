@@ -30,6 +30,8 @@ describe('Rox terminology catalog', () => {
 describe('terminology linter', () => {
   it('does not flag allowlisted compatibility locale keys', () => {
     expect(localeValueViolations('skillsList.ompBadge', 'OMP')).toEqual([])
+    expect(localeValueViolations('collection.filter.agentFamily.omp', 'OMP')).toEqual([])
+    expect(localeValueViolations('collection.filter.agentFamily.hermes', 'Hermes')).toEqual([])
     expect(localeValueViolations('onboarding.reauth.loginAgain', 'Craft Agents')).toEqual([])
     expect(localeValueViolations('errors.omp.noModels.title', 'OMP has no models configured')).toEqual([])
   })
