@@ -81,10 +81,16 @@ const fakeDeps = {
   },
 };
 registerCloudRunsHandlers(fakeServer, fakeDeps);
+const caller = { clientId: 'c1', workspaceId: 'ws-test', webContentsId: 1 };
 const invoke = async (channel, ...args) => {
   const handler = handlers.get(channel);
   if (!handler) throw new Error('no handler for ' + channel);
-  return handler({}, ...args);
+  return handler(caller, ...args);
+};
+const invokeAs = async (workspaceId, channel, ...args) => {
+  const handler = handlers.get(channel);
+  if (!handler) throw new Error('no handler for ' + channel);
+  return handler({ clientId: 'c1', workspaceId, webContentsId: 1 }, ...args);
 };
 `
 
@@ -354,6 +360,91 @@ describe('cloud-runs rpc handlers (local provider)', () => {
       });
       expect(isNoiseStderr(result.stderr.toString())).toBe(true);
       expect(result.exitCode ?? -1).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('denies a workspace-B run id with a safe audit event', () => {
+    const dir = freshConfigDir();
+    try {
+      writeFileSync(
+        join(dir, 'cloud-runs-registry.json'),
+        JSON.stringify([
+          { id: 'run-b', name: 'foreign', provider: 'local', createdAt: Date.now(), workspaceId: 'ws-b' },
+          { id: 'run-a', name: 'mine', provider: 'local', createdAt: Date.now(), workspaceId: 'ws-test' },
+        ]),
+      );
+      const r = runScript(dir, SETUP + `
+        const { readFileSync } = await import('node:fs');
+        let denied = false;
+        try {
+          await invoke(RPC_CHANNELS.cloudRuns.GET_STATUS, 'run-b');
+        } catch (e) {
+          const text = String(e?.message ?? e);
+          denied = /security\\.assurance\\.crossWorkspaceDenied/.test(text) && !text.includes('ws-b');
+          if (e?.code && e.code !== 'AUTH_FAILED') throw new Error('code=' + e.code + ' text=' + text);
+        }
+        if (!denied) throw new Error('expected AUTH_FAILED without foreign id');
+        const listed = await invoke(RPC_CHANNELS.cloudRuns.LIST);
+        const items = listed?.runs ?? [];
+        if (items.some((it) => it?.id === 'run-b')) throw new Error('foreign run leaked in LIST');
+        if (!items.some((it) => it?.id === 'run-a')) throw new Error('own run missing from LIST');
+        const audit = readFileSync(process.env.CRAFT_CONFIG_DIR + '/security-audit.jsonl', 'utf8');
+        if (!audit.includes('cross-workspace-denied')) throw new Error('audit missing deny');
+        if (audit.includes('ws-b')) throw new Error('audit echoed foreign workspace');
+        console.log('ok');
+      `);
+      if (r.exitCode !== 0) {
+        console.error('STDERR:', r.stderr.slice(0, 2000));
+        console.error('STDOUT:', r.stdout.slice(0, 2000));
+      }
+      expect(r.exitCode).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('kill switch blocks submit', () => {
+    const dir = freshConfigDir();
+    try {
+      writeFileSync(
+        join(dir, 'incident-kill-switch.json'),
+        JSON.stringify({ enabled: true, reason: 'incident', setAt: '2026-09-12T00:00:00.000Z' }),
+      );
+      const r = runScript(dir, SETUP + `
+        let blocked = false;
+        try {
+          await invoke(RPC_CHANNELS.cloudRuns.SUBMIT, { sessionId: 'sess-test', topic: 'x' });
+        } catch (e) {
+          blocked = /security\\.assurance\\.killSwitchActive/.test(String(e?.message ?? e));
+        }
+        if (!blocked) throw new Error('kill switch did not block SUBMIT');
+        console.log('ok');
+      `);
+      expect(isNoiseStderr(r.stderr)).toBe(true);
+      expect(r.exitCode).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('SET_CONFIG rejects raw apiKey payloads', () => {
+    const dir = freshConfigDir();
+    try {
+      const r = runScript(dir, SETUP + `
+        let threw = false;
+        try {
+          await invoke(RPC_CHANNELS.cloudRuns.SET_CONFIG, { apiKey: 'sk-live-not-a-real-key' });
+        } catch (e) {
+          const text = String(e?.message ?? e);
+          threw = /credentialRef/.test(text) && !text.includes('sk-live');
+        }
+        if (!threw) throw new Error('raw apiKey was accepted');
+        console.log('ok');
+      `);
+      expect(isNoiseStderr(r.stderr)).toBe(true);
+      expect(r.exitCode).toBe(0);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

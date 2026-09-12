@@ -32,6 +32,7 @@ describe('CloudRunsSettingsPage compact layout and recovery', () => {
     expect(source).toContain('onClick={() => void load()}')
     expect(source).toContain('onClick={() => patch(failedPatch)}')
     expect(source).toContain("t('common.retry')")
+    expect(source).toContain('translateCloudRunsError')
   })
 
   it('names the refresh operation and exposes enabled or disabled status', () => {
