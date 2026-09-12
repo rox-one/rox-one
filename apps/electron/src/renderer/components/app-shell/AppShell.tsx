@@ -96,7 +96,7 @@ import {
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchBrowserSurfaceV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -274,6 +274,7 @@ function AppShellContent({
   // sashes shift right by the rail width (+ one PANEL_GAP); zero when OFF.
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
+  const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
   // PR-2: the rail offset follows the same two-key decision as the host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
@@ -1924,13 +1925,6 @@ function AppShellContent({
   const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
   const [webBrowserOpen, setWebBrowserOpen] = useState(false)
 
-  React.useEffect(() => {
-    if (!isWebUI) return
-    const handleOpenBrowser = () => setWebBrowserOpen(true)
-    window.addEventListener('craft:open-vps-browser', handleOpenBrowser)
-    return () => window.removeEventListener('craft:open-vps-browser', handleOpenBrowser)
-  }, [])
-
   const openAddProject = useCallback(() => {
     if (!activeWorkspace?.id) return
     setCreateProjectDialogOpen(true)
@@ -2018,18 +2012,35 @@ function AppShellContent({
   const setInspectorSection = useSetAtom(inspectorSectionAtom)
   const setInspectorPanelWidth = useSetAtom(inspectorPanelWidthAtom)
 
-  // Open the inspector-hosted embedded browser instead of a native OS window
-  // or a main-lane panel that overlays the session list.
   const handleNewBrowserWindow = useCallback(async () => {
     if (isWebUI) {
       setWebBrowserOpen(true)
       return
     }
+    if (browserSurfaceEnabled) {
+      try {
+        await window.electronAPI.browserPane.create({ show: true })
+      } catch (error) {
+        console.error('[AppShell] Failed to create browser window:', error)
+        toast.error(t('toast.failedToCreateBrowser'))
+      }
+      return
+    }
+
+    // The legacy desktop path keeps its inspector-hosted embedded browser.
     setInspectorChromeCollapsed(false)
     setInspectorVisible(true)
     setInspectorSection('browser')
     setInspectorPanelWidth((width) => Math.max(width, 560))
-  }, [setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible])
+  }, [browserSurfaceEnabled, setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible, t])
+
+  React.useEffect(() => {
+    const handleOpenBrowser = () => {
+      void handleNewBrowserWindow()
+    }
+    window.addEventListener('craft:open-vps-browser', handleOpenBrowser)
+    return () => window.removeEventListener('craft:open-vps-browser', handleOpenBrowser)
+  }, [handleNewBrowserWindow])
 
   // Delete Source - simplified since agents system is removed
   const handleDeleteSource = useCallback(async (sourceSlug: string) => {
@@ -2781,7 +2792,7 @@ function AppShellContent({
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel"
             >
-            {(unifiedShellEnabled || workbenchEnabled) && <SurfaceTabs />}
+            {(unifiedShellEnabled || workbenchEnabled || browserSurfaceEnabled) && <SurfaceTabs />}
             <PanelHeader
                 title={isSidebarVisible ? listTitle : undefined}
                 compensateForStoplight={!isSidebarVisible}
