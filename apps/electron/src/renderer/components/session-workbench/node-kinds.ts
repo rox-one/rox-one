@@ -1,12 +1,21 @@
 import type { SessionScene } from '@craft-agent/core/mindmap'
+import { CANVAS_NODE_KINDS, type CanvasNodeKind } from '@craft-agent/shared/workflows'
 
-export type SessionNodeKind = 'note' | 'model' | 'tool' | 'memory'
+export type SessionNodeKind = CanvasNodeKind
+
+export const SESSION_NODE_KINDS = CANVAS_NODE_KINDS
 
 export const SESSION_NODE_KIND_LABELS: Record<SessionNodeKind, string> = {
   note: 'Note',
   model: 'Model',
   tool: 'Tool',
   memory: 'Memory',
+  subflow: 'Subflow',
+  condition: 'Condition',
+  merge: 'Merge',
+  human_input: 'Human input',
+  output: 'Output',
+  annotation_frame: 'Frame',
 }
 
 const MEMORY_PATTERNS = [
