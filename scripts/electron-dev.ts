@@ -7,9 +7,10 @@ import { spawn, type Subprocess } from "bun";
 import { PRELOAD_BUNDLE_ALIAS, PRELOAD_BUNDLE_EXTERNALS } from "./electron-preload-bundle";
 import { existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
 import { createServer } from "net";
-import { join, basename } from "path";
+import { join } from "path";
 import * as esbuild from "esbuild";
 import { downloadUv, type Platform, type Arch } from "./build/common";
+import { detectInstanceNumber, resolveVitePort } from "./electron-dev-helpers";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const ELECTRON_DIR = join(ROOT_DIR, "apps/electron");
@@ -79,20 +80,20 @@ async function ensureBundledUvForCurrentPlatform(): Promise<void> {
 // Multi-instance detection (matches detect-instance.sh logic)
 // Detects instance number from folder name suffix (e.g., craft-agents-1 → instance 1)
 function detectInstance(): void {
-  // Don't override if already set (e.g., by sourcing detect-instance.sh first)
-  if (process.env.CRAFT_VITE_PORT) return;
+  const vitePort = resolveVitePort(process.env, ROOT_DIR);
+  process.env.CRAFT_VITE_PORT = vitePort;
+  process.env.ROX_VITE_PORT ??= vitePort;
 
-  const folderName = basename(ROOT_DIR);
-  const match = folderName.match(/-(\d+)$/);
+  // Don't override instance identity if already set (e.g. by detect-instance.sh)
+  if (process.env.CRAFT_INSTANCE_NUMBER) return;
 
-  if (match) {
-    const instanceNum = match[1];
+  const instanceNum = detectInstanceNumber(ROOT_DIR);
+  if (instanceNum) {
     process.env.CRAFT_INSTANCE_NUMBER = instanceNum;
-    process.env.CRAFT_VITE_PORT = `${instanceNum}173`;
     process.env.CRAFT_APP_NAME = `Rox [${instanceNum}]`;
     process.env.CRAFT_CONFIG_DIR = join(process.env.HOME || "", `.craft-agent-${instanceNum}`);
     process.env.CRAFT_DEEPLINK_SCHEME = `craftagents${instanceNum}`;
-    console.log(`🔢 Instance ${instanceNum} detected: port=${process.env.CRAFT_VITE_PORT}, config=${process.env.CRAFT_CONFIG_DIR}`);
+    console.log(`🔢 Instance ${instanceNum} detected: port=${vitePort}, config=${process.env.CRAFT_CONFIG_DIR}`);
   }
 }
 
@@ -129,7 +130,7 @@ async function assertPortAvailable(port: string): Promise<void> {
       if (err.code === "EADDRINUSE") {
         reject(
           new Error(
-            `Port ${port} is already in use. Refusing to kill the owner. Set CRAFT_VITE_PORT or free the port.`,
+            `Port ${port} is already in use. Refusing to kill the owner. Set ROX_VITE_PORT or CRAFT_VITE_PORT, or free the port.`,
           ),
         );
         return;
@@ -444,9 +445,10 @@ async function waitForFileStable(filePath: string, timeoutMs = 10000): Promise<b
 async function main(): Promise<void> {
   console.log("🚀 Starting Electron dev environment...\n");
 
-  // Setup
-  detectInstance();
+  // Setup: load .env first so ROX_VITE_PORT / CRAFT_VITE_PORT win over the
+  // numbered-worktree fallback.
   loadEnvFile();
+  detectInstance();
   cleanViteCache();
 
   // Ensure dist directory exists
