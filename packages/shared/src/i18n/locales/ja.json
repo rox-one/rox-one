@@ -1968,6 +1968,7 @@
   "preferences.placeholderLanguage": "例: 日本語",
   "premiumMenu.empty": "項目がありません",
   "premiumMenu.noResults": "一致する項目がありません",
+  "premiumMenu.search": "検索...",
   "preview.expandPreview": "プレビューを展開",
   "preview.failedToRenderPdf": "PDFのレンダリングに失敗しました",
   "preview.htmlPreview": "HTMLプレビュー",

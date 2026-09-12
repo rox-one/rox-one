@@ -1968,6 +1968,7 @@
   "preferences.placeholderLanguage": "ex. : Français",
   "premiumMenu.empty": "Aucun élément",
   "premiumMenu.noResults": "Aucun résultat",
+  "premiumMenu.search": "Rechercher...",
   "preview.expandPreview": "Expand Preview",
   "preview.failedToRenderPdf": "Échec du rendu du PDF",
   "preview.htmlPreview": "Aperçu HTML",

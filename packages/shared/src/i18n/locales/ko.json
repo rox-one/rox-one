@@ -1968,6 +1968,7 @@
   "preferences.placeholderLanguage": "예: 영어",
   "premiumMenu.empty": "항목 없음",
   "premiumMenu.noResults": "일치하는 항목 없음",
+  "premiumMenu.search": "검색...",
   "preview.expandPreview": "미리보기 확장",
   "preview.failedToRenderPdf": "PDF 렌더링에 실패했습니다",
   "preview.htmlPreview": "HTML 미리보기",

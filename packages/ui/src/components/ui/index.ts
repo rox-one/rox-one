@@ -62,13 +62,22 @@ export {
   type IslandNavigation,
 } from './useIslandNavigation'
 export { PremiumMenu, type PremiumMenuProps } from './PremiumMenu'
+export { PremiumMenuSelect, type PremiumMenuSelectProps } from './PremiumMenuSelect'
 export {
+  auditPremiumMenuAxe,
   filterPremiumMenuItems,
+  isIndexVisible,
   measureMenuOpen,
   placeAnchoredMenu,
+  PREMIUM_MENU_OPEN_BUDGET_MS,
   PREMIUM_MENU_TOKENS,
+  PREMIUM_MENU_VIRTUALIZE_AFTER,
+  reduceMenuKey,
+  scrollTopToRevealIndex,
   typeaheadIndex,
   virtualizeWindow,
+  type PremiumMenuAxeTree,
   type PremiumMenuItem,
+  type PremiumMenuSide,
   type PremiumMenuVariant,
 } from './premium-menu-model'
