@@ -342,8 +342,8 @@ export function AccountMenu({
       type="button"
       data-account-menu={compact ? 'compact' : 'topbar'}
       className={cn(
-        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[8px] text-[13px] text-foreground/50 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
-        compact ? 'flex-1 px-2' : 'flex-1 px-3',
+        'header-icon-btn titlebar-no-drag ml-0.5 flex min-w-0 items-center justify-start gap-0.5 h-[26px] rounded-[6px] text-[12px] tracking-tight text-foreground/50 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
+        compact ? 'flex-1 px-1.5' : 'flex-1 px-2',
       )}
       aria-label={t('workspace.selectWorkspace')}
     >

@@ -127,6 +127,22 @@
   --spacing: 0.25rem;
   --tracking-normal: 0em;
 
+  /* Workbench chrome density (design-compact) */
+  --chrome-topbar-height: 40px;
+  --chrome-rail-width: 44px;
+  --chrome-control: 24px;
+  --chrome-control-lg: 26px;
+  --chrome-tab-strip-height: 34px;
+  --chrome-status-height: 24px;
+  --chrome-panel-header-height: 32px;
+  --chrome-gap: 4px;
+  --chrome-font-size: 12px;
+  --chrome-font-size-sm: 11px;
+  --chrome-tracking: 0.01em;
+  --chrome-glass-blur: 14px;
+  --chrome-glass-bg: color-mix(in oklch, var(--surface-elevated) 86%, transparent);
+  --chrome-glass-border: color-mix(in oklch, var(--border-subtle) 70%, transparent);
+
   /* Z-index scale */
   --z-base: 0;
   --z-local: 10;
@@ -457,4 +473,26 @@ html[data-font="inter"] {
   animation: shimmer 1.5s ease-in-out infinite;
   pointer-events: none;
   border-radius: inherit;
+}
+
+/* =============================================================================
+   WORKBENCH CHROME SURFACE (glass + density)
+============================================================================= */
+
+.chrome-surface {
+  background: var(--chrome-glass-bg);
+  backdrop-filter: blur(var(--chrome-glass-blur));
+  -webkit-backdrop-filter: blur(var(--chrome-glass-blur));
+  border-color: var(--chrome-glass-border);
+}
+
+.chrome-label {
+  font-size: var(--chrome-font-size);
+  letter-spacing: var(--chrome-tracking);
+  font-feature-settings: "ss01", "cv01";
+}
+
+.chrome-label-sm {
+  font-size: var(--chrome-font-size-sm);
+  letter-spacing: var(--chrome-tracking);
 }

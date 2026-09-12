@@ -19,8 +19,9 @@ import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { cn } from '@/lib/utils'
 import { buildStatusBarModel, countActiveRuns, countPendingApprovals, statusBarPermissionMode } from './status-model'
+import { CHROME_DENSITY } from './chrome-density'
 
-const STATUS_BAR_HEIGHT = 28
+const STATUS_BAR_HEIGHT = CHROME_DENSITY.statusBarHeight
 
 function permissionLabel(
   mode: string,
@@ -85,20 +86,20 @@ function StatusBarInner() {
   return (
     <div
       data-slot="status"
-      className="flex shrink-0 items-center justify-between gap-3 border-t border-border/60 bg-background px-3 text-[11px] text-muted-foreground"
+      className="chrome-strip chrome-label-sm flex shrink-0 items-center justify-between gap-2 border-t border-border/50 px-2.5 text-muted-foreground"
       style={{ height: STATUS_BAR_HEIGHT }}
     >
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-1.5">
         <span className={cn(model.workspaceMode === 'offline' && 'text-destructive')}>
           {workspaceModeLabel(model.workspaceMode, t)}
         </span>
         {model.syncOk && <span>{t('workbench.status.syncOk')}</span>}
       </div>
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-1.5">
         <span>{t('workbench.status.runs', { count: model.runCount })}</span>
         <span>{t('workbench.status.approvals', { count: model.approvalCount })}</span>
       </div>
-      <div className="flex min-w-0 items-center justify-end gap-2">
+      <div className="flex min-w-0 items-center justify-end gap-1.5">
         {model.permissionMode ? <span>{permissionLabel(model.permissionMode, t)}</span> : null}
         <span>{t('workbench.status.people', { count: model.peopleCount })}</span>
         <span>{t('workbench.status.agents', { count: model.agentCount })}</span>
