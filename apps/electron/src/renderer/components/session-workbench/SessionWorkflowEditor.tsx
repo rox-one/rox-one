@@ -993,7 +993,12 @@ function EditorInner({
               </Button>
               <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('tile')}>
                 {t('entityView.mapTile')}
-              </Button>                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                 onClick={handlePromoteTrace}
               >
                 {t('entityView.mapPromoteTrace')}

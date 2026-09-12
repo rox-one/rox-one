@@ -15,6 +15,10 @@ describe('workflow spec editor wiring', () => {
     expect(editorSource).toContain('handleSaveVersion')
     expect(editorSource).toContain('mapConvertNode')
     expect(editorSource).toContain('SESSION_NODE_KINDS.map')
+    expect(editorSource).not.toMatch(/<\/Button>\s+className=/)
+    expect(editorSource).toMatch(
+      /<Button\b[\s\S]*?onClick=\{handlePromoteTrace\}[\s\S]*?entityView\.mapPromoteTrace/,
+    )
   })
 
   test('round-trips expanded kinds through the workflow document adapter', () => {
