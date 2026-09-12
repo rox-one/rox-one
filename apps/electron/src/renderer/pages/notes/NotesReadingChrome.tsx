@@ -59,11 +59,27 @@ function extractHeadings(markdown: string): Array<{ id: string; level: number; t
   return headings
 }
 
-export function NotesToc({ markdown, onJump }: { markdown: string; onJump: (text: string) => void }) {
+export function NotesToc({
+  markdown,
+  onJump,
+  foldedIds,
+  onToggleFold,
+  width,
+}: {
+  markdown: string
+  onJump: (text: string) => void
+  foldedIds?: ReadonlySet<string>
+  onToggleFold?: (id: string) => void
+  width?: number
+}) {
   const { t } = useTranslation()
   const headings = React.useMemo(() => extractHeadings(markdown), [markdown])
   return (
-    <aside className="sticky top-0 flex w-[180px] shrink-0 flex-col self-stretch overflow-y-auto border-r border-border/50 px-3 py-4">
+    <aside
+      className="sticky top-0 flex shrink-0 flex-col self-stretch overflow-y-auto border-r border-border/50 px-3 py-4"
+      style={{ width: width ?? 180 }}
+      data-testid="notes-toc-rail"
+    >
       <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
         {t('notes.toc.title')}
       </div>
@@ -73,17 +89,31 @@ export function NotesToc({ markdown, onJump }: { markdown: string; onJump: (text
         </p>
       ) : (
         <nav className="flex flex-col gap-0.5">
-          {headings.map((heading) => (
-            <button
-              key={heading.id}
-              type="button"
-              onClick={() => onJump(heading.text)}
-              className="rounded-[4px] px-1.5 py-1 text-left text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
-              style={{ paddingLeft: 6 + (heading.level - 1) * 10 }}
-            >
-              {heading.text}
-            </button>
-          ))}
+          {headings.map((heading) => {
+            const foldId = heading.text.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')
+            const folded = foldedIds?.has(foldId) ?? false
+            return (
+              <div key={heading.id} className="flex items-center gap-0.5" style={{ paddingLeft: (heading.level - 1) * 10 }}>
+                {onToggleFold ? (
+                  <button
+                    type="button"
+                    aria-label={folded ? t('notes.fold.expand') : t('notes.fold.collapse')}
+                    className="h-5 w-5 shrink-0 rounded-[4px] text-muted-foreground hover:bg-foreground/[0.06]"
+                    onClick={() => onToggleFold(foldId)}
+                  >
+                    {folded ? '+' : '–'}
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => onJump(heading.text)}
+                  className="min-w-0 flex-1 rounded-[4px] px-1.5 py-1 text-left text-[12px] text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
+                >
+                  {heading.text}
+                </button>
+              </div>
+            )
+          })}
         </nav>
       )}
     </aside>
@@ -94,19 +124,25 @@ export function NotesComments({
   noteId,
   draftQuote,
   onClearDraft,
+  markdownComments,
+  onCommit,
+  width,
 }: {
   noteId: string
   draftQuote: string
   onClearDraft: () => void
+  markdownComments?: NoteComment[]
+  onCommit?: (comments: NoteComment[]) => void
+  width?: number
 }) {
   const { t } = useTranslation()
-  const [comments, setComments] = React.useState<NoteComment[]>(() => loadNoteComments(noteId))
+  const [comments, setComments] = React.useState<NoteComment[]>(() => markdownComments ?? loadNoteComments(noteId))
   const [body, setBody] = React.useState('')
 
   React.useEffect(() => {
-    setComments(loadNoteComments(noteId))
+    setComments(markdownComments ?? loadNoteComments(noteId))
     setBody('')
-  }, [noteId])
+  }, [markdownComments, noteId])
 
   const add = React.useCallback(() => {
     const text = body.trim()
@@ -117,12 +153,13 @@ export function NotesComments({
     ]
     setComments(next)
     saveNoteComments(noteId, next)
+    onCommit?.(next)
     setBody('')
     onClearDraft()
-  }, [body, comments, draftQuote, noteId, onClearDraft])
+  }, [body, comments, draftQuote, noteId, onClearDraft, onCommit])
 
   return (
-    <aside className="flex w-[220px] shrink-0 flex-col border-l border-border/50">
+    <aside className="flex shrink-0 flex-col border-l border-border/50" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
       <div className="flex h-9 shrink-0 items-center gap-1.5 border-b border-border/50 px-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
         <MessageSquarePlus className="h-3.5 w-3.5" />
         {t('notes.comments.title')}

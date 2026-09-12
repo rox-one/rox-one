@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import { toast } from "sonner"
+import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -43,6 +44,7 @@ import {
 import { useFocusZone } from "@/hooks/keyboard"
 import { useTheme } from "@/hooks/useTheme"
 import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSource, LoadedSkill } from "../../../shared/types"
+import type { AnnotationV1 } from "@craft-agent/core"
 import type { PermissionMode } from "@craft-agent/shared/agent/modes"
 import type { ThinkingLevel } from "@craft-agent/shared/agent/thinking-levels"
 import {
@@ -72,6 +74,8 @@ import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
 import { useNavigation } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
+import { SideThreadPreviewDialog, type SideThreadPreview } from "@/components/chat/SideThreadPreviewDialog"
+import { buildSideThreadPrompt, type SideThreadAction } from "@craft-agent/shared/side-threads"
 import { CHAT_LAYOUT } from "@/config/layout"
 import { collectFileChangesFromActivities, getFirstFileChangeIdForActivity } from "@/lib/file-changes"
 import { resolveBranchNewPanelOption } from "./branching"
@@ -572,6 +576,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     anchorY?: number
     nonce: number
   } | null>(null)
+  const [sideThreadPreview, setSideThreadPreview] = React.useState<SideThreadPreview | null>(null)
+  const [sideThreadBusy, setSideThreadBusy] = React.useState(false)
   const followUpOpenNonceRef = React.useRef(0)
 
   // Navigation for session branching
@@ -1349,6 +1355,105 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }, 0)
   }, [session, isInputDisabled, disableSend, connectionUnavailable])
 
+  const persistAnnotation = useCallback(async (messageId: string, annotation: AnnotationV1) => {
+    if (!session) return
+    try {
+      await window.electronAPI.sessionCommand(session.id, {
+        type: 'addAnnotation',
+        messageId,
+        annotation,
+      })
+    } catch (error) {
+      toast.error(t('toast.couldNotSaveHighlight'), {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      })
+      throw error
+    }
+  }, [session, t])
+
+  const removeAnnotation = useCallback(async (messageId: string, annotationId: string) => {
+    if (!session) return
+    try {
+      await window.electronAPI.sessionCommand(session.id, {
+        type: 'removeAnnotation',
+        messageId,
+        annotationId,
+      })
+    } catch (error) {
+      toast.error(t('toast.couldNotRemoveHighlight'), {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      })
+    }
+  }, [session, t])
+
+  const handleQuoteMessage = useCallback((text: string) => {
+    const next = inputValue?.trim() ? `${inputValue.trim()}\n\n${text}` : text
+    onInputChange?.(next)
+  }, [inputValue, onInputChange])
+
+  const handleShareMessage = useCallback(async (text: string) => {
+    try {
+      if (typeof navigator.share === 'function') {
+        await navigator.share({ text })
+        return
+      }
+      await navigator.clipboard.writeText(text)
+      toast.success(t('chat.shareCopied'))
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') return
+      try {
+        await navigator.clipboard.writeText(text)
+        toast.success(t('chat.shareCopied'))
+      } catch {
+        toast.error(t('chat.shareMessage'))
+      }
+    }
+  }, [t])
+
+  const handleLearnFromMessage = useCallback((text: string) => {
+    onInputChange?.(t('chat.learnFromMessageDraft', { text }))
+  }, [onInputChange, t])
+
+  const handlePickSideThread = useCallback((action: SideThreadAction, text: string, messageId: string) => {
+    if (!session) return
+    setSideThreadPreview({
+      action,
+      messageId,
+      prompt: buildSideThreadPrompt({
+        action,
+        sourceText: text,
+        sourceMessageId: messageId,
+        sourceSessionId: session.id,
+      }),
+    })
+  }, [session])
+
+  const handleConfirmSideThread = useCallback(async () => {
+    if (!session || !sideThreadPreview) return
+    setSideThreadBusy(true)
+    try {
+      const child = await appShellContext.onCreateSession(session.workspaceId, {
+        branchFromMessageId: sideThreadPreview.messageId,
+        branchFromSessionId: session.id,
+        name: `${t(`sideThread.action.${sideThreadPreview.action}`)} · ${session.name || t('chat.session')}`,
+        sessionStatus: 'in_progress',
+        llmConnection: session.llmConnection,
+        model: session.model,
+        permissionMode: permissionMode,
+        workingDirectory: session.workingDirectory,
+        enabledSourceSlugs: session.enabledSourceSlugs,
+      })
+      appShellContext.onInputChange(child.id, sideThreadPreview.prompt)
+      setSideThreadPreview(null)
+      navigate(routes.view.allSessions(child.id))
+    } catch (error) {
+      const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
+      toast.error(t('toast.couldNotCreateBranch'), { description: rawMessage })
+    } finally {
+      setSideThreadBusy(false)
+    }
+  }, [appShellContext, permissionMode, session, sideThreadPreview, t])
+
   // Handle stop request from InputContainer
   // silent=true when redirecting (sending new message), silent=false when user clicks Stop button
   const handleStop = (silent = false) => {
@@ -1610,6 +1715,20 @@ const handleFollowUpChipClick = useCallback((item: {
     <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
       {session ? (
         <div className="flex flex-1 flex-col min-h-0 min-w-0 relative">
+          {session.branchFromSessionId ? (
+            <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
+              <span>
+                {t('sideThread.childBanner', { status: session.sessionStatus || 'in_progress' })}
+              </span>
+              <button
+                type="button"
+                className="text-foreground hover:underline"
+                onClick={() => navigate(routes.view.allSessions(session.branchFromSessionId!))}
+              >
+                {t('sideThread.returnToParent')}
+              </button>
+            </div>
+          ) : null}
           {/* Content layer */}
           <div className="flex flex-1 flex-col min-h-0 min-w-0 relative z-10">
           {/* === MESSAGES AREA: Scrollable list of message bubbles === */}
@@ -1749,6 +1868,12 @@ const handleFollowUpChipClick = useCallback((item: {
                             onOpenUrl={onOpenUrl}
                             sessionId={session?.id}
                             compactMode={compactMode}
+                            onAddAnnotation={persistAnnotation}
+                            onRemoveAnnotation={removeAnnotation}
+                            onQuote={handleQuoteMessage}
+                            onShareMessage={(text) => { void handleShareMessage(text) }}
+                            onLearnFromMessage={handleLearnFromMessage}
+                            onPickSideThread={handlePickSideThread}
                           />
                         </div>
                       )
@@ -1853,6 +1978,10 @@ const handleFollowUpChipClick = useCallback((item: {
                         compactMode={compactMode}
                         sendMessageKey={sendMessageKey}
                         openAnnotationRequest={openAnnotationRequest}
+                        onQuote={handleQuoteMessage}
+                        onShareMessage={(text) => { void handleShareMessage(text) }}
+                        onLearnFromMessage={handleLearnFromMessage}
+                        onPickSideThread={handlePickSideThread}
                         onBranch={session?.supportsBranching ? async (messageId: string, options?: { newPanel?: boolean }) => {
                           if (!session) return
                           try {
@@ -1880,35 +2009,8 @@ const handleFollowUpChipClick = useCallback((item: {
                             toast.error(t('toast.couldNotCreateBranch'), { description: message })
                           }
                         } : undefined}
-                        onAddAnnotation={async (messageId, annotation) => {
-                          if (!session) return
-                          try {
-                            await window.electronAPI.sessionCommand(session.id, {
-                              type: 'addAnnotation',
-                              messageId,
-                              annotation,
-                            })
-                          } catch (error) {
-                            toast.error(t('toast.couldNotSaveHighlight'), {
-                              description: error instanceof Error ? error.message : 'Unknown error',
-                            })
-                            throw error
-                          }
-                        }}
-                        onRemoveAnnotation={async (messageId, annotationId) => {
-                          if (!session) return
-                          try {
-                            await window.electronAPI.sessionCommand(session.id, {
-                              type: 'removeAnnotation',
-                              messageId,
-                              annotationId,
-                            })
-                          } catch (error) {
-                            toast.error(t('toast.couldNotRemoveHighlight'), {
-                              description: error instanceof Error ? error.message : 'Unknown error',
-                            })
-                          }
-                        }}
+                        onAddAnnotation={persistAnnotation}
+                        onRemoveAnnotation={removeAnnotation}
                         onUpdateAnnotation={async (messageId, annotationId, patch) => {
                           if (!session) return
                           try {
@@ -2021,6 +2123,16 @@ const handleFollowUpChipClick = useCallback((item: {
                       </div>
                     )
                   })}
+                    <SessionMemoryProposalLane
+                      workspaceId={workspaceId ?? session.workspaceId}
+                      sessionId={session.id}
+                      projectId={session.projectId}
+                      messages={session.messages.map((m) => ({
+                        id: m.id,
+                        role: m.role,
+                        content: typeof m.content === 'string' ? m.content : '',
+                      }))}
+                    />
                     </motion.div>
                     )}
                     </AnimatePresence>
@@ -2111,6 +2223,13 @@ const handleFollowUpChipClick = useCallback((item: {
           />
           </div>
         </div>
+        <SideThreadPreviewDialog
+          draft={sideThreadPreview}
+          busy={sideThreadBusy}
+          onChangePrompt={(prompt) => setSideThreadPreview((current) => current ? { ...current, prompt } : current)}
+          onCancel={() => setSideThreadPreview(null)}
+          onConfirm={() => { void handleConfirmSideThread() }}
+        />
       ) : null}
 
       {/* ================================================================== */}
@@ -2279,6 +2398,12 @@ interface MessageBubbleProps {
   compactMode?: boolean
   /** Callback to resend the user message that preceded an error */
   onRetry?: () => void
+  onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void | Promise<void>
+  onRemoveAnnotation?: (messageId: string, annotationId: string) => void | Promise<void>
+  onQuote?: (text: string) => void
+  onShareMessage?: (text: string) => void
+  onLearnFromMessage?: (text: string) => void
+  onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
 }
 
 /**
@@ -2366,6 +2491,12 @@ function MessageBubble({
   onPopOut,
   compactMode,
   onRetry,
+  onAddAnnotation,
+  onRemoveAnnotation,
+  onQuote,
+  onShareMessage,
+  onLearnFromMessage,
+  onPickSideThread,
 }: MessageBubbleProps) {
   const { t } = useTranslation()
   const messageContent = useMemo(() => linkifyNoteReferences(message.content), [message.content])
@@ -2382,6 +2513,15 @@ function MessageBubble({
         onUrlClick={onOpenUrl}
         onFileClick={onOpenFile}
         compactMode={compactMode}
+        messageId={message.id}
+        sessionId={sessionId}
+        annotations={message.annotations}
+        onAddAnnotation={onAddAnnotation}
+        onRemoveAnnotation={onRemoveAnnotation}
+        onQuote={onQuote}
+        onShareMessage={onShareMessage}
+        onLearnFromMessage={onLearnFromMessage}
+        onPickSideThread={onPickSideThread}
       />
     )
   }
@@ -2535,6 +2675,11 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.message.content === next.message.content &&
     prev.message.role === next.message.role &&
     prev.sessionId === next.sessionId &&
-    prev.compactMode === next.compactMode
+    prev.compactMode === next.compactMode &&
+    prev.message.annotations === next.message.annotations &&
+    prev.onQuote === next.onQuote &&
+    prev.onShareMessage === next.onShareMessage &&
+    prev.onLearnFromMessage === next.onLearnFromMessage &&
+    prev.onPickSideThread === next.onPickSideThread
   )
 })

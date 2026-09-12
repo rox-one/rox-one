@@ -13,6 +13,18 @@ import {
   isXpEventType,
   type XpEventType,
 } from './levels.ts'
+import {
+  QUEST_CLOUD_REQUIRED,
+  QUEST_SNOOZE_MS,
+  QUEST_XP_EVENT,
+  defaultQuestRecords,
+  isQuestId,
+  planProductAnalytics,
+  type QuestId,
+  type QuestRecord,
+  type QuestStatus,
+  type SessionRating,
+} from './quests.ts'
 
 export const GAMIFICATION_FILE = 'gamification.json'
 
@@ -30,6 +42,9 @@ export interface GamificationState {
     xp: number
     at: number
   }>
+  quests: Record<QuestId, QuestRecord>
+  ratings: SessionRating[]
+  analyticsConsent: boolean
   updatedAt?: number
 }
 
@@ -62,6 +77,9 @@ export function getDefaultGamificationState(): GamificationState {
     level: 1,
     balance: null,
     recentEvents: [],
+    quests: defaultQuestRecords(),
+    ratings: [],
+    analyticsConsent: false,
     updatedAt: Date.now(),
   }
 }
@@ -95,13 +113,56 @@ function normalizeState(raw: unknown): GamificationState {
       if (recentEvents.length >= RECENT_EVENTS_CAP) break
     }
   }
+  const quests = defaultQuestRecords()
+  if (obj.quests && typeof obj.quests === 'object') {
+    for (const [key, value] of Object.entries(obj.quests as Record<string, unknown>)) {
+      if (!isQuestId(key) || !value || typeof value !== 'object') continue
+      const rec = value as Record<string, unknown>
+      const status = rec.status
+      if (
+        status !== 'available' &&
+        status !== 'completed' &&
+        status !== 'dismissed' &&
+        status !== 'snoozed' &&
+        status !== 'skipped_cloud'
+      ) continue
+      quests[key] = {
+        id: key,
+        status,
+        snoozeUntil: typeof rec.snoozeUntil === 'number' ? rec.snoozeUntil : undefined,
+        completedAt: typeof rec.completedAt === 'number' ? rec.completedAt : undefined,
+      }
+    }
+  }
+  const ratings: SessionRating[] = []
+  if (Array.isArray(obj.ratings)) {
+    for (const entry of obj.ratings) {
+      if (!entry || typeof entry !== 'object') continue
+      const rec = entry as Record<string, unknown>
+      const score = rec.score
+      if (
+        typeof rec.sessionId !== 'string' ||
+        (score !== 1 && score !== 2 && score !== 3 && score !== 4 && score !== 5)
+      ) continue
+      ratings.push({
+        sessionId: rec.sessionId,
+        score,
+        feedback: typeof rec.feedback === 'string' ? rec.feedback : undefined,
+        provenance: typeof rec.provenance === 'string' ? rec.provenance : undefined,
+        at: typeof rec.at === 'number' ? rec.at : Date.now(),
+      })
+      if (ratings.length >= 50) break
+    }
+  }
   return {
     version: 1,
     xp,
-    // Prefer derived level from XP so manual edits stay coherent
     level: getLevelForXp(xp) || level,
     balance,
     recentEvents,
+    quests,
+    ratings,
+    analyticsConsent: obj.analyticsConsent === true,
     updatedAt:
       typeof obj.updatedAt === 'number' && Number.isFinite(obj.updatedAt)
         ? obj.updatedAt
@@ -154,10 +215,10 @@ export function awardXp(
     ...(current.recentEvents ?? []),
   ].slice(0, RECENT_EVENTS_CAP)
   const state: GamificationState = {
+    ...current,
     version: 1,
     xp,
     level,
-    balance: current.balance,
     recentEvents,
     updatedAt: Date.now(),
   }
@@ -195,4 +256,92 @@ export function getGamificationProgress(configDir: string = resolveConfigDir()) 
     state,
     ...getLevelProgress(state.xp),
   }
+}
+
+export function applyQuestAction(
+  action: 'complete' | 'dismiss' | 'snooze',
+  questId: QuestId,
+  options: { cloudFeaturesEnabled?: boolean; now?: number } = {},
+  configDir: string = resolveConfigDir(),
+): { state: GamificationState; analytics: ReturnType<typeof planProductAnalytics> } {
+  const now = options.now ?? Date.now()
+  const cloudFeaturesEnabled = options.cloudFeaturesEnabled !== false
+  const current = loadGamificationState(configDir)
+  const quest = current.quests[questId] ?? { id: questId, status: 'available' as QuestStatus }
+  const analytics = planProductAnalytics(`quest.${action}.${questId}`, current.analyticsConsent)
+
+  if (action === 'complete' && QUEST_CLOUD_REQUIRED[questId] && !cloudFeaturesEnabled) {
+    const quests = {
+      ...current.quests,
+      [questId]: { ...quest, status: 'skipped_cloud' as const, completedAt: now },
+    }
+    const state = { ...current, quests, updatedAt: now }
+    saveGamificationState(state, configDir)
+    return { state, analytics }
+  }
+
+  if (action === 'complete' && quest.status !== 'completed') {
+    const awarded = awardXp(QUEST_XP_EVENT[questId], configDir)
+    const next = loadGamificationState(configDir)
+    const quests = {
+      ...next.quests,
+      [questId]: { ...quest, status: 'completed' as const, completedAt: now },
+    }
+    const state = { ...awarded.state, ...next, quests, updatedAt: now }
+    saveGamificationState(state, configDir)
+    return { state, analytics }
+  }
+
+  if (action === 'dismiss' && quest.status !== 'completed') {
+    const quests = {
+      ...current.quests,
+      [questId]: { ...quest, status: 'dismissed' as const },
+    }
+    const state = { ...current, quests, updatedAt: now }
+    saveGamificationState(state, configDir)
+    return { state, analytics }
+  }
+
+  if (action === 'snooze') {
+    const quests = {
+      ...current.quests,
+      [questId]: { ...quest, status: 'snoozed' as const, snoozeUntil: now + QUEST_SNOOZE_MS },
+    }
+    const state = { ...current, quests, updatedAt: now }
+    saveGamificationState(state, configDir)
+    return { state, analytics }
+  }
+
+  return { state: current, analytics }
+}
+
+export function saveSessionRating(
+  rating: Omit<SessionRating, 'at'> & { at?: number },
+  configDir: string = resolveConfigDir(),
+): { state: GamificationState; analytics: ReturnType<typeof planProductAnalytics> } {
+  const current = loadGamificationState(configDir)
+  const nextRating: SessionRating = {
+    sessionId: rating.sessionId,
+    score: rating.score,
+    feedback: rating.feedback,
+    provenance: rating.provenance,
+    at: rating.at ?? Date.now(),
+  }
+  const ratings = [nextRating, ...current.ratings.filter((item) => item.sessionId !== rating.sessionId)].slice(0, 50)
+  const state = { ...current, ratings, updatedAt: Date.now() }
+  saveGamificationState(state, configDir)
+  return {
+    state,
+    analytics: planProductAnalytics('session.rate', current.analyticsConsent),
+  }
+}
+
+export function setAnalyticsConsent(
+  consent: boolean,
+  configDir: string = resolveConfigDir(),
+): GamificationState {
+  const current = loadGamificationState(configDir)
+  const state = { ...current, analyticsConsent: consent === true, updatedAt: Date.now() }
+  saveGamificationState(state, configDir)
+  return state
 }

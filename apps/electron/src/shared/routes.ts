@@ -166,6 +166,10 @@ export const routes = {
     /** Memory view (memory navigator — self-learning panel) */
     memory: () => 'memory' as const,
 
+    /** Things-style personal tasks (Issue 17). Distinct from DAG Conductor tasks. */
+    tasks: (taskId?: string) =>
+      taskId ? `tasks/task/${encodeURIComponent(taskId)}` as const : 'tasks' as const,
+
     /** Canonical local Markdown Notes route. */
     notes: buildNotesRoute,
 

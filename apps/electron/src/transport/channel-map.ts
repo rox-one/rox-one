@@ -67,6 +67,10 @@ export const CHANNEL_MAP = {
   importSession: invoke(RPC_CHANNELS.sessions.IMPORT),
   foreignDiscoverSessions: invoke(RPC_CHANNELS.sessions.FOREIGN_DISCOVER),
   foreignPersistSessions: invoke(RPC_CHANNELS.sessions.FOREIGN_PERSIST),
+  discoverBrowserProfiles: invoke(RPC_CHANNELS.browserProfile.DISCOVER),
+  importBrowserProfile: invoke(RPC_CHANNELS.browserProfile.IMPORT),
+  rollbackBrowserProfileImport: invoke(RPC_CHANNELS.browserProfile.ROLLBACK),
+  deleteImportedBrowserProfile: invoke(RPC_CHANNELS.browserProfile.DELETE),
   exportRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.EXPORT_REMOTE_TRANSFER),
   importRemoteSessionTransfer: invoke(RPC_CHANNELS.sessions.IMPORT_REMOTE_TRANSFER),
   getPendingPlanExecution: invoke(RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION),
@@ -448,6 +452,9 @@ export const CHANNEL_MAP = {
   // Gamification profile
   getGamificationProfile: invoke(RPC_CHANNELS.gamification.GET),
   awardGamificationXp: invoke(RPC_CHANNELS.gamification.AWARD),
+  applyGamificationQuest: invoke(RPC_CHANNELS.gamification.QUEST),
+  rateGamificationSession: invoke(RPC_CHANNELS.gamification.RATE),
+  setGamificationAnalyticsConsent: invoke(RPC_CHANNELS.gamification.SET_CONSENT),
   onGamificationChanged: listener(RPC_CHANNELS.gamification.CHANGED),
 
   // Session Drafts
@@ -523,6 +530,12 @@ export const CHANNEL_MAP = {
   promoteLesson: invoke(RPC_CHANNELS.memory.PROMOTE_LESSON),
   listInsights: invoke(RPC_CHANNELS.memory.INSIGHTS),
   markMemoryOnboarded: invoke(RPC_CHANNELS.memory.MARK_ONBOARDED),
+  listMemoryProposals: invoke(RPC_CHANNELS.memory.LIST_PROPOSALS),
+  extractMemoryProposals: invoke(RPC_CHANNELS.memory.EXTRACT_PROPOSALS),
+  approveMemoryProposal: invoke(RPC_CHANNELS.memory.APPROVE_PROPOSAL),
+  rejectMemoryProposal: invoke(RPC_CHANNELS.memory.REJECT_PROPOSAL),
+  editMemoryProposal: invoke(RPC_CHANNELS.memory.EDIT_PROPOSAL),
+  deleteMemoryProposal: invoke(RPC_CHANNELS.memory.DELETE_PROPOSAL),
   onMemoryChanged: listener(RPC_CHANNELS.memory.CHANGED),
 
   // Statuses

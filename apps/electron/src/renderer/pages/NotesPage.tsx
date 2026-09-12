@@ -26,6 +26,24 @@ import {
 import { MindMapHost } from '@/mindmap/MindMapHost'
 import { deriveNoteMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
 import { NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
+import {
+  NotesBreadcrumbs,
+  NotesCommandPalette,
+  NotesRailSash,
+  useNotesRailLayout,
+} from './notes/NotesDocumentChrome'
+import { NotesViewHost } from './notes/NotesViewHost'
+import {
+  applyPersistentFolds,
+  defaultNoteCommands,
+  extractComments,
+  notesFoldStorageKey,
+  parsePersistedFolds,
+  sanitizePastedMarkdown,
+  serializePersistedFolds,
+  upsertMarkdownComment,
+} from './notes/document-ia'
+import { convertNote, dailyNoteDestination } from './notes/note-views'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -139,6 +157,14 @@ function findRichWikiQueryRange(editor: TiptapEditorHandle | null): { from: numb
   const match = textBefore.match(/\[\[([^\]\n]*)$/)
   if (!match) return null
   return { from: to - match[0].length, to }
+}
+
+function findRichCommandQuery(editor: TiptapEditorHandle | null): string | null {
+  if (!editor) return null
+  const from = editor.state.selection.from
+  const textBefore = editor.state.doc.textBetween(Math.max(0, from - 80), from, '\n', '\n')
+  const match = textBefore.match(/([!@][^\s\n]*)$/)
+  return match ? match[1] : null
 }
 
 function findRichWikiLinkAtCursor(editor: TiptapEditorHandle | null): string | null {
@@ -578,6 +604,9 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     try { return JSON.parse(localStorage.getItem('notes:inspector-collapsed') ?? 'true') }
     catch { return true }
   })
+  const [railLayout, setRailLayout] = useNotesRailLayout()
+  const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
+  const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const saveTimerRef = React.useRef<number | null>(null)
   const saveQueueRef = React.useRef<Promise<boolean>>(Promise.resolve(true))
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
@@ -591,7 +620,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   )
   const noteMindMapGraph = React.useMemo((): MindMapGraph | null => {
     if (!activeNote) return null
-    if (noteView !== 'map' && noteView !== 'outline') return null
+    if (noteView !== 'map') return null
     return deriveNoteMindMap({
       noteId: activeNote.id,
       title: activeNote.title,
@@ -1491,6 +1520,39 @@ h1,h2,h3{margin-top:1.5em}
     richEditorRef.current = editor
   }, [])
 
+  React.useEffect(() => {
+    if (!activeNote) {
+      setFoldedHeadingIds([])
+      return
+    }
+    setFoldedHeadingIds(parsePersistedFolds(localStorage.getItem(notesFoldStorageKey(activeNote.id))))
+  }, [activeNote?.id])
+
+  const markdownComments = React.useMemo(
+    () => extractComments(content).map((comment) => ({
+      id: comment.id,
+      quote: comment.quote,
+      body: comment.body,
+      createdAt: comment.createdAt,
+    })),
+    [content],
+  )
+
+  const commandCatalog = React.useMemo(() => {
+    const sessions = [...sessionMetaMap.values()].slice(0, 20).map((session) => ({
+      id: session.id,
+      title: session.name || session.preview || session.id,
+    }))
+    return defaultNoteCommands({
+      sessions,
+      agents: [{ id: 'rox', label: 'Rox' }],
+      projects: projects.slice(0, 20).map((project) => ({ id: project.id, name: project.name || project.slug || project.id })),
+      tasks: allTasks.slice(0, 20).map((task) => ({ id: `${task.noteId}:${task.line}`, text: task.text })),
+      people: [],
+      entities: notes.slice(0, 20).map((note) => ({ id: note.id, name: note.title })),
+    })
+  }, [allTasks, notes, projects, sessionMetaMap])
+
   const wikiMenu = showWikiMenu ? (
     <div
       className="absolute z-20 w-80 rounded-[8px] border border-border/70 bg-popover p-1 shadow-strong"
@@ -1535,7 +1597,12 @@ h1,h2,h3{margin-top:1.5em}
     <>
     <NotesEditorHeadlineStyles />
     <div className="flex h-full min-w-0 bg-background">
-      <aside className="w-[300px] shrink-0 border-r border-border/60 flex flex-col min-h-0 bg-muted/[0.16]">
+      <aside
+        className="shrink-0 border-r border-border/60 flex flex-col min-h-0 bg-muted/[0.16]"
+        style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
+        hidden={railLayout.vaultCollapsed}
+        data-testid="notes-vault-rail"
+      >
         <div className="shrink-0 px-3 py-2 border-b border-border/60">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -1543,17 +1610,17 @@ h1,h2,h3{margin-top:1.5em}
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search notes"
+                placeholder={t('notes.search.placeholder')}
                 className="h-7 w-full rounded-[6px] border border-border/60 bg-background pl-7 pr-2 text-xs outline-none focus:border-foreground/30"
               />
             </div>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title="Daily note">
+            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')}>
               <CalendarDays className="h-4 w-4" />
             </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title="New folder">
+            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')}>
               <FolderPlus className="h-4 w-4" />
             </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title="New note">
+            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')}>
               <FilePlus2 className="h-4 w-4" />
             </button>
           </div>
@@ -1695,11 +1762,22 @@ h1,h2,h3{margin-top:1.5em}
           {notes.length} note{notes.length === 1 ? '' : 's'} · {allAssets.length} asset{allAssets.length === 1 ? '' : 's'}
         </div>
       </aside>
+      <NotesRailSash
+        width={railLayout.vault}
+        onWidth={(vault) => setRailLayout({ vault })}
+        collapsed={railLayout.vaultCollapsed}
+        onToggle={() => setRailLayout({ vaultCollapsed: !railLayout.vaultCollapsed })}
+        label={t('notes.layout.resizeVault')}
+      />
 
       <main className="flex-1 min-w-0 flex flex-col">
         <div className="h-[42px] shrink-0 border-b border-border/60 px-3 flex items-center gap-2">
           <div className="min-w-0 flex-1 flex items-center gap-2">
-            <div className="truncate text-sm font-medium">{activeNote?.title ?? 'Notes'}</div>
+            {activeNote ? (
+              <NotesBreadcrumbs noteId={activeNote.id} title={activeNote.title} onOpenFolder={(folder) => setQuery(folder ?? '')} />
+            ) : (
+              <div className="truncate text-sm font-medium">{t('notes.header.title')}</div>
+            )}
             {activeNote && <div className="shrink-0 text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
           </div>
           {dailyDate && (
@@ -1762,7 +1840,7 @@ h1,h2,h3{margin-top:1.5em}
                 </div>
               )}
             </div>
-          ) : noteView === 'map' || noteView === 'outline' ? (
+          ) : noteView === 'map' ? (
             <MindMapHost
               entity={{ type: 'note', noteId: activeNote.id }}
               graph={noteMindMapGraph}
@@ -1770,18 +1848,65 @@ h1,h2,h3{margin-top:1.5em}
               workspaceId={activeWorkspaceId || undefined}
               sourceExcerpt={content || undefined}
             />
+          ) : noteView === 'table' || noteView === 'canvas' || noteView === 'graph' || noteView === 'outline' ? (
+            <NotesViewHost
+              view={noteView}
+              notes={notes.map((note) => ({
+                id: note.id,
+                title: note.title,
+                markdown: note.id === activeNote.id ? content : '',
+                tags: note.tags,
+                properties: note.properties,
+                links: note.links,
+                backlinks: note.id === activeNote.id ? activeNote.backlinks : undefined,
+              }))}
+              activeNoteId={activeNote.id}
+              workspaceId={activeWorkspaceId ?? ''}
+              onOpenNote={(noteId) => void handleOpenNote(noteId)}
+              onCreateNote={(folder) => openCreateNoteDialog(folder ?? dailyNoteDestination().folder)}
+              onConvert={(noteId, kind) => {
+                if (noteId !== activeNote.id) return
+                const converted = convertNote(
+                  { id: activeNote.id, title: activeNote.title, markdown: content, tags: activeNote.tags },
+                  kind,
+                )
+                if (converted.kind === 'session-draft') void handleAskAgent('summarize')
+                else toast.success(t('notes.views.convertTaskDone'))
+              }}
+            />
           ) : (
             <div className="flex h-full min-h-0">
+            {!railLayout.tocCollapsed ? (
             <NotesToc
               markdown={content}
+              width={railLayout.toc}
+              foldedIds={new Set(foldedHeadingIds)}
+              onToggleFold={(id) => {
+                if (!activeNote) return
+                const next = foldedHeadingIds.includes(id)
+                  ? foldedHeadingIds.filter((item) => item !== id)
+                  : [...foldedHeadingIds, id]
+                setFoldedHeadingIds(next)
+                localStorage.setItem(notesFoldStorageKey(activeNote.id), serializePersistedFolds(next))
+                setContent(applyPersistentFolds(content, next))
+                setDirty(true)
+              }}
               onJump={(text) => {
                 const root = document.querySelector('.notes-editor .ProseMirror')
                 if (!root) return
-                const heading = [...root.querySelectorAll('h1,h2,h3,h4,h5,h6')].find(
+                const heading = Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6')).find(
                   (node) => node.textContent?.trim() === text,
                 )
                 heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
               }}
+            />
+            ) : null}
+            <NotesRailSash
+              width={railLayout.toc}
+              onWidth={(toc) => setRailLayout({ toc })}
+              collapsed={railLayout.tocCollapsed}
+              onToggle={() => setRailLayout({ tocCollapsed: !railLayout.tocCollapsed })}
+              label={t('notes.layout.resizeToc')}
             />
             <div
               className="notes-editor h-full min-w-0 flex-1 overflow-y-auto px-8 py-6"
@@ -1789,42 +1914,70 @@ h1,h2,h3{margin-top:1.5em}
                 const quote = window.getSelection()?.toString().trim() ?? ''
                 if (quote) setCommentDraftQuote(quote)
               }}
+              onDoubleClick={() => {
+                const quote = window.getSelection()?.toString().trim() ?? ''
+                if (quote) setCommentDraftQuote(quote)
+                setRailLayout({ commentsCollapsed: false })
+              }}
               onKeyDownCapture={(event) => {
+                if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === '-') {
+                  event.preventDefault()
+                  richEditorRef.current?.chain().focus().setHorizontalRule().run()
+                  return
+                }
                 if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
                   event.preventDefault()
                   void openWikiLinkAtCursor()
                   return
                 }
-                if (!showWikiMenu) return
-                if (event.key === 'ArrowDown') {
-                  event.preventDefault()
-                  setWikiIndex(index => Math.min(index + 1, Math.max(0, wikiMatches.length - 1)))
+                if (showWikiMenu) {
+                  if (event.key === 'ArrowDown') {
+                    event.preventDefault()
+                    setWikiIndex(index => Math.min(index + 1, Math.max(0, wikiMatches.length - 1)))
+                    return
+                  }
+                  if (event.key === 'ArrowUp') {
+                    event.preventDefault()
+                    setWikiIndex(index => Math.max(index - 1, 0))
+                    return
+                  }
+                  if (event.key === 'Escape') {
+                    event.preventDefault()
+                    setWikiQuery(null)
+                    return
+                  }
+                  if (event.key === 'Enter' || event.key === 'Tab') {
+                    event.preventDefault()
+                    const match = wikiMatches[wikiIndex]
+                    if (match) completeWikiLink(match)
+                    else if (wikiCreateLabel) completeWikiText(wikiCreateLabel)
+                  }
                   return
                 }
-                if (event.key === 'ArrowUp') {
-                  event.preventDefault()
-                  setWikiIndex(index => Math.max(index - 1, 0))
-                  return
-                }
-                if (event.key === 'Escape') {
-                  event.preventDefault()
-                  setWikiQuery(null)
-                  return
-                }
-                if (event.key === 'Enter' || event.key === 'Tab') {
-                  event.preventDefault()
-                  const match = wikiMatches[wikiIndex]
-                  if (match) completeWikiLink(match)
-                  else if (wikiCreateLabel) completeWikiText(wikiCreateLabel)
+                if (commandQuery) {
+                  if (event.key === 'Escape') {
+                    event.preventDefault()
+                    setCommandQuery(null)
+                  }
                 }
               }}
-              onKeyUpCapture={syncRichWikiQuery}
+              onKeyUpCapture={() => {
+                syncRichWikiQuery()
+                setCommandQuery(findRichCommandQuery(richEditorRef.current))
+              }}
               onMouseUpCapture={syncRichWikiQuery}
               onPasteCapture={(event) => {
                 if (event.clipboardData.files.length > 0) {
                   event.preventDefault()
                   event.stopPropagation()
                   void importFiles(event.clipboardData.files)
+                  return
+                }
+                const html = event.clipboardData.getData('text/html')
+                const text = event.clipboardData.getData('text/plain')
+                if (/<script|javascript:/i.test(`${html}\n${text}`)) {
+                  event.preventDefault()
+                  richEditorRef.current?.chain().focus().insertContent(sanitizePastedMarkdown(text)).run()
                 }
               }}
               onDropCapture={(event) => {
@@ -1852,16 +2005,49 @@ h1,h2,h3{margin-top:1.5em}
               />
               {richParts.frontmatter && (
                 <div className="mt-4 rounded-[6px] border border-border/60 bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
-                  Frontmatter is preserved. Edit tags and properties in the right panel.
+                  {t('notes.frontmatterPreserved')}
                 </div>
               )}
               {wikiMenu}
+              {commandQuery ? (
+                <NotesCommandPalette
+                  query={commandQuery}
+                  items={commandCatalog}
+                  onClose={() => setCommandQuery(null)}
+                  onSelect={(item) => {
+                    const editor = richEditorRef.current
+                    if (!editor) return
+                    const to = editor.state.selection.from
+                    const from = Math.max(0, to - commandQuery.length)
+                    editor.chain().focus().deleteRange({ from, to }).insertContent(item.insert).run()
+                    setCommandQuery(null)
+                    if (item.subject === 'action' && item.id === 'bang:ask-agent') void handleAskAgent('summarize')
+                    if (item.subject === 'session') navigate(routes.view.allSessions(item.insert.replace('@session:', '')))
+                  }}
+                />
+              ) : null}
             </div>
-            {activeNote ? (
+            <NotesRailSash
+              width={railLayout.comments}
+              invert
+              onWidth={(comments) => setRailLayout({ comments })}
+              collapsed={railLayout.commentsCollapsed}
+              onToggle={() => setRailLayout({ commentsCollapsed: !railLayout.commentsCollapsed })}
+              label={t('notes.layout.resizeComments')}
+            />
+            {activeNote && !railLayout.commentsCollapsed ? (
               <NotesComments
                 noteId={activeNote.id}
                 draftQuote={commentDraftQuote}
+                markdownComments={markdownComments}
+                width={railLayout.comments}
                 onClearDraft={() => setCommentDraftQuote('')}
+                onCommit={(comments) => {
+                  let next = content
+                  for (const comment of comments) next = upsertMarkdownComment(next, comment)
+                  setContent(next)
+                  setDirty(true)
+                }}
               />
             ) : null}
             </div>

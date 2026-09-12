@@ -13,6 +13,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./account-replica": "./src/account-replica/index.ts",
     "./agent": "./src/agent/index.ts",
     "./agent/modes": "./src/agent/mode-types.ts",
     "./agent/mode-types": "./src/agent/mode-types.ts",
@@ -29,6 +30,7 @@
     "./config/types": "./src/config/types.ts",
     "./context-docs": "./src/context-docs/index.ts",
     "./credentials": "./src/credentials/index.ts",
+    "./connections": "./src/connections/index.ts",
     "./secrets": "./src/secrets/index.ts",
     "./mcp": "./src/mcp/index.ts",
     "./prompts": "./src/prompts/index.ts",
@@ -59,6 +61,7 @@
     "./colors": "./src/colors/index.ts",
     "./utils/icon-constants": "./src/utils/icon-constants.ts",
     "./utils/url-safety": "./src/utils/url-safety.ts",
+    "./browser/profile-import": "./src/browser/profile-import.ts",
     "./utils/workspace": "./src/utils/workspace.ts",
     "./utils/workspace-slug": "./src/utils/workspace-slug.ts",
     "./labels": "./src/labels/index.ts",
@@ -92,7 +95,9 @@
     "./automations/validation": "./src/automations/validation.ts",
     "./protocol": "./src/protocol/index.ts",
     "./memory/types": "./src/memory/types.ts",
+    "./memory/proposals": "./src/memory/proposals.ts",
     "./tasks": "./src/tasks/index.ts",
+    "./side-threads": "./src/side-threads/index.ts",
     "./i18n": "./src/i18n/index.ts",
     "./os/user-display-name": "./src/os/user-display-name.ts",
     "./knowledge/siyuan-binary": "./src/knowledge/siyuan-binary.ts",
@@ -103,7 +108,8 @@
     "./gamification": "./src/gamification/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",
-    "./resources": "./src/resources/index.ts"
+    "./resources": "./src/resources/index.ts",
+    "./browser": "./src/browser/index.ts"
   },
   "dependencies": {
     "@craft-agent/core": "workspace:*",

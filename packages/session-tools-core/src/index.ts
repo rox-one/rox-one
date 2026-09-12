@@ -155,6 +155,11 @@ export {
   setHostBashPort,
   getHostBashPort,
 } from './runtime/host-bash-port.ts';
+export {
+  isHostBashSandboxEnabled,
+  planHostBashSandbox,
+} from './runtime/host-bash-sandbox.ts';
+export type { HostBashSandboxPlan } from './runtime/host-bash-sandbox.ts';
 export type {
   HostBashPort,
   HostBashExecRequest,
@@ -215,6 +220,7 @@ export {
   handleUpdatePage,
   handleWritePageData,
   handleDeletePage,
+  handleAgentTeams,
 } from './handlers/index.ts';
 
 // Knowledge handlers (registered in SESSION_TOOL_DEFS)

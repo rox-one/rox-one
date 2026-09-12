@@ -27,12 +27,18 @@ import type {
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@craft-agent/shared/agent/modes';
+import type {
+  DiscoveredProfile,
+  ImportConsent,
+  ImportSummary,
+} from '@craft-agent/shared/browser/profile-import'
 export type { PermissionMode };
 export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 
 // Thinking level types
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
 import type { XpEventType } from '@craft-agent/shared/gamification';
+import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
 import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
 import type {
   AutomationGraphProjection,
@@ -647,6 +653,17 @@ export interface ElectronAPI {
       sessionId?: string
       reason?: string
     }>
+  }>
+  discoverBrowserProfiles(explicitId?: string): Promise<DiscoveredProfile[]>
+  importBrowserProfile(args: {
+    workspaceId: string
+    profileId: string
+    consent: ImportConsent
+    dryRun?: boolean
+  }): Promise<ImportSummary>
+  rollbackBrowserProfileImport(args: { workspaceId: string; token: string }): Promise<{ ok: boolean }>
+  deleteImportedBrowserProfile(workspaceId: string): Promise<{
+    deletionReceipt: { deletedAt: number; categories: string[]; itemCount: number }
   }>
   exportRemoteSessionTransfer(sessionId: string): Promise<RemoteSessionTransferPayload>
   importRemoteSessionTransfer(targetWorkspaceId: string, payload: RemoteSessionTransferPayload): Promise<ImportRemoteSessionTransferResult>
@@ -1283,8 +1300,11 @@ export interface ElectronAPI {
     nextThreshold: number | null
     currentThreshold: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
+    quests: QuestRecord[]
+    ratings: SessionRating[]
+    analyticsConsent: boolean
   }>
-  awardGamificationXp(event: 'session_completed' | 'automation_ran' | 'cloud_run_imported' | 'note_linked'): Promise<{
+  awardGamificationXp(event: XpEventType): Promise<{
     xp: number
     level: number
     balance: number | null
@@ -1299,6 +1319,18 @@ export interface ElectronAPI {
     leveledUp: boolean
     previousLevel: number
   }>
+  applyGamificationQuest(payload: {
+    action: 'complete' | 'dismiss' | 'snooze'
+    questId: string
+    cloudFeaturesEnabled?: boolean
+  }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>
+  rateGamificationSession(payload: {
+    sessionId: string
+    score: 1 | 2 | 3 | 4 | 5
+    feedback?: string
+    provenance?: string
+  }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>
+  setGamificationAnalyticsConsent(consent: boolean): Promise<{ analyticsConsent: boolean }>
   onGamificationChanged(callback: (payload: {
     xp: number
     level: number
@@ -1309,6 +1341,9 @@ export interface ElectronAPI {
     nextThreshold: number | null
     currentThreshold?: number
     recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
+    quests?: QuestRecord[]
+    ratings?: SessionRating[]
+    analyticsConsent?: boolean
   }) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
@@ -1437,6 +1472,28 @@ export interface ElectronAPI {
   listInsights(workspaceId?: string): Promise<MemoryInsights>
   // Y4: stamp the one-shot onboarding marker ({configDir}/memory/.onboarded)
   markMemoryOnboarded(): Promise<void>
+  listMemoryProposals(workspaceId: string, sessionId?: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal[]>
+  extractMemoryProposals(args: {
+    workspaceId: string
+    sessionId: string
+    projectId?: string
+    trigger: import('@craft-agent/shared/memory/proposals').MemoryProposalTrigger
+    messages: Array<{ id: string; role: string; content: string }>
+  }): Promise<{
+    disabled: boolean
+    proposals: import('@craft-agent/shared/memory/proposals').MemoryProposal[]
+    preview: string[]
+  }>
+  approveMemoryProposal(
+    workspaceId: string,
+    proposalId: string,
+    scope: import('@craft-agent/shared/memory/proposals').MemoryProposalScope,
+    editedText?: string,
+    projectId?: string,
+  ): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
+  rejectMemoryProposal(workspaceId: string, proposalId: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
+  editMemoryProposal(workspaceId: string, proposalId: string, text: string): Promise<import('@craft-agent/shared/memory/proposals').MemoryProposal | null>
+  deleteMemoryProposal(workspaceId: string, proposalId: string): Promise<boolean>
   enrichMindMap(input: {
     workspaceId: string
     entity: import('@craft-agent/core/mindmap').MindMapEntityRef
@@ -2054,6 +2111,12 @@ export interface MemoryNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface TasksNavigationState {
+  navigator: 'tasks'
+  details: { type: 'task'; taskId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface ConnectionsNavigationState {
   navigator: 'connections'
   details: null
@@ -2132,6 +2195,7 @@ export type NavigationState =
   | PagesNavigationState
   | BrowserNavigationState
   | MemoryNavigationState
+  | TasksNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
   | ExtensionNavigationState
@@ -2177,6 +2241,10 @@ export const isBrowserNavigation = (
 export const isMemoryNavigation = (
   state: NavigationState
 ): state is MemoryNavigationState => state.navigator === 'memory'
+
+export const isTasksNavigation = (
+  state: NavigationState
+): state is TasksNavigationState => state.navigator === 'tasks'
 
 export const isConnectionsNavigation = (
   state: NavigationState
@@ -2257,6 +2325,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'memory') {
     return 'memory'
+  }
+  if (state.navigator === 'tasks') {
+    return state.details?.type === 'task' ? `tasks/task/${encodeURIComponent(state.details.taskId)}` : 'tasks'
   }
   if (state.navigator === 'connections') {
     return 'connections'
@@ -2450,6 +2521,12 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+  if (key === 'tasks') return { navigator: 'tasks', details: null }
+  if (key.startsWith('tasks/task/')) {
+    const taskId = decodeURIComponent(key.slice('tasks/task/'.length))
+    if (taskId) return { navigator: 'tasks', details: { type: 'task', taskId } }
+    return { navigator: 'tasks', details: null }
+  }
 
   // Handle sessions
   const parseSessionsKey = (filterKey: string, sessionId?: string): NavigationState | null => {

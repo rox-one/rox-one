@@ -24,37 +24,37 @@ Persist roster + mailbox pointers under the **workspace** root (not Cordis, not 
   inbox/<member>.jsonl      # member mailbox
 ```
 
-Runtime API (Node): `@craft-agent/core/platform/agent-teams` → `AgentTeamsStore`.
+Runtime API: session tool `agent_teams` (wraps `AgentTeamsStore` under the project `.agent-teams/`). Do not import the Node module from the chat; call the tool.
 
-- `createTeam` / `addMember` / `setMemberSession` after `spawn_session`
-- `upsertTask` for DAG + status (`pending → claimed → in_progress → completed | failed | cancelled`)
-- `appendMailbox` / `readMailbox` alongside `send_agent_message` (disk truth + live message)
-- `archiveTeam` when done (moves to `.agent-teams/archive/`)
+- `action: create` / `add_member` / `set_member_session` after `spawn_session`
+- `action: upsert_task` for DAG + status (`pending → claimed → in_progress → completed | failed | cancelled`)
+- `action: append_mailbox` / `read_mailbox` alongside `send_agent_message` (disk truth + live message)
+- `action: resume` to restore roster after restart; `action: archive` when done
 
 Do **not** invent a Timeline surface or a live inspector DAG panel in this skill turn.
 
 ## Captain protocol (this session is captain)
 
-1. Restate the goal and propose a **staged plan**: roster (roles) + task DAG (dependencies). Do **not** spawn members until the user approves (or they explicitly say to run immediately). Optionally `createTeam({ phase: 'staged', ... })` so the plan is durable.
-2. After approval, create members with `spawn_session` (one session per member). Prefer clear labels such as `agent-teams`, `role:<name>`, `team:<short-id>`. Call `addMember` / `setMemberSession` so `team.json` holds session ids.
-3. Give each member a focused prompt: role, assigned tasks, acceptance criteria, path to `.agent-teams/<teamId>/`, and instruction to report back via `send_agent_message` (and optionally append the captain mailbox).
-4. Track tasks in `team.json` via the store (and chat). States: `pending → claimed → in_progress → completed | failed | cancelled`.
-5. Enforce dependencies: do not assign or claim a task until its dependencies are completed (`upsertTask` rejects early claims).
-6. Coordinate with `send_agent_message` (live) + `appendMailbox` (durable). Captain consolidates; members may message each other when useful.
-7. When done, summarize results in this chat, `archiveTeam`, and stop spawning. Prefer archive over delete unless the user asks.
+1. Restate the goal and propose a **staged plan**: roster (roles) + task DAG (dependencies). Do **not** spawn members until the user approves (or they explicitly say to run immediately). Optionally `agent_teams` `action: create` with `phase: staged` so the plan is durable.
+2. After approval, create members with `spawn_session` (one session per member). Prefer clear labels such as `agent-teams`, `role:<name>`, `team:<short-id>`. Call `add_member` / `set_member_session` so `team.json` holds session ids.
+3. Give each member a focused prompt: role, assigned tasks, acceptance criteria, path to `.agent-teams/<teamId>/`, and instruction to report back via `send_agent_message` (and optionally `append_mailbox`).
+4. Track tasks in `team.json` via `upsert_task` (and chat). States: `pending → claimed → in_progress → completed | failed | cancelled`.
+5. Enforce dependencies: do not assign or claim a task until its dependencies are completed (`upsert_task` rejects early claims).
+6. Coordinate with `send_agent_message` (live) + `append_mailbox` (durable). Captain consolidates; members may message each other when useful.
+7. When done, summarize results in this chat, `action: archive`, and stop spawning. Prefer archive over delete unless the user asks. Use `action: resume` after a restart.
 
 ## Tool mapping (DSH plugin → Rox)
 
 | DSH coordination tool | Rox equivalent |
 | --- | --- |
-| `agent_teams_create` | `AgentTeamsStore.createTeam` + this session as captain |
-| `agent_teams_add_member` | `spawn_session` + `addMember` / `setMemberSession` |
+| `agent_teams_create` | `agent_teams` `action: create` (this session as captain) |
+| `agent_teams_add_member` | `spawn_session` + `add_member` / `set_member_session` |
 | `agent_teams_remove_member` | Stop assigning; mark member `removed` / archive label |
-| `agent_teams_create_task` | `upsertTask` (new) |
-| `agent_teams_claim_task` / `update_task` / `reassign_task` | `upsertTask` + `send_agent_message` |
-| `agent_teams_send_message` | `send_agent_message` + `appendMailbox` |
-| `agent_teams_status` | `readTeam` / `describePointers` + `list_sessions` |
-| `agent_teams_resume` / `delete` | Continue from `team.json` or `archiveTeam` |
+| `agent_teams_create_task` | `agent_teams` `action: upsert_task` (new) |
+| `agent_teams_claim_task` / `update_task` / `reassign_task` | `upsert_task` + `send_agent_message` |
+| `agent_teams_send_message` | `send_agent_message` + `append_mailbox` |
+| `agent_teams_status` | `action: status` + `list_sessions` |
+| `agent_teams_resume` / `delete` | `action: resume` or `action: archive` |
 
 ## Hard rules
 

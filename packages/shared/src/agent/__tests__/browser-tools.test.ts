@@ -7,6 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { createBrowserTools, type BrowserPaneFns } from '../browser-tools'
+import { resetInspectSessions } from '../../browser/element-inspect.ts'
 
 // ============================================================================
 // Mock BrowserPaneFns
@@ -96,6 +97,7 @@ describe('createBrowserTools', () => {
   let tools: ReturnType<typeof createBrowserTools>
 
   beforeEach(() => {
+    resetInspectSessions()
     mockFns = createMockFns()
     tools = createBrowserTools({
       sessionId: 'test-session',
@@ -1059,6 +1061,56 @@ describe('createBrowserTools', () => {
       const result = await executeTool(tools, 'browser_tool', { command: 'navigate test.com' })
       expect(result.isError).toBe(true)
       expect(result.content[0].text).toContain('Network error')
+    })
+  })
+
+  describe('inspect / grab / annotate (issue 16)', () => {
+    it('documents inspect commands in --help', async () => {
+      const result = await executeTool(tools, 'browser_tool', { command: '--help' })
+      expect(result.content[0].text).toContain('inspect [on|off]')
+      expect(result.content[0].text).toContain('grab <@eN|css-selector>')
+      expect(result.content[0].text).toContain('approve-destructive')
+    })
+
+    it('grabs an element with selector and screenshot without mutating the page', async () => {
+      const result = await executeTool(tools, 'browser_tool', { command: 'grab @e1' })
+      expect(result.content[0].text).toContain('Grabbed element')
+      expect(result.content[0].text).toContain('Page was not mutated')
+      expect(result.content[0].text).toContain('Selector:')
+      expect(result.content.some((block: { type: string }) => block.type === 'image')).toBe(true)
+    })
+
+    it('sends selector, screenshot and comment to the agent', async () => {
+      await executeTool(tools, 'browser_tool', { command: 'grab @e1' })
+      const result = await executeTool(tools, 'browser_tool', { command: 'annotate Use the primary CTA' })
+      expect(result.content[0].text).toContain('Use the primary CTA')
+      expect(result.content[0].text).toContain('Selector:')
+      expect(result.content[0].text).toContain('Page was not mutated')
+    })
+
+    it('stages preview edits until approve-edit', async () => {
+      await executeTool(tools, 'browser_tool', { command: 'grab @e2' })
+      const staged = await executeTool(tools, 'browser_tool', { command: 'preview-edit text Hello' })
+      expect(staged.content[0].text).toContain('Page was not mutated')
+      mockFns.evaluate = async () => ({ ok: true })
+      const applied = await executeTool(tools, 'browser_tool', { command: 'approve-edit' })
+      expect(applied.content[0].text).toContain('Applied preview text')
+    })
+
+    it('requires approval before a purchase click', async () => {
+      mockFns.snapshot = async () => ({
+        url: 'https://shop.example/cart',
+        title: 'Cart',
+        nodes: [{ ref: '@e8', role: 'button', name: 'Checkout' }],
+      })
+      let clicked = false
+      mockFns.click = async () => { clicked = true }
+      const blocked = await executeTool(tools, 'browser_tool', { command: 'click @e8' })
+      expect(blocked.content[0].text).toContain('requires approval')
+      expect(clicked).toBe(false)
+      const approved = await executeTool(tools, 'browser_tool', { command: 'approve-destructive' })
+      expect(approved.content[0].text).toContain('Approved purchase')
+      expect(clicked).toBe(true)
     })
   })
 })

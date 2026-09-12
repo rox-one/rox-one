@@ -1,12 +1,12 @@
-import { homedir } from 'node:os'
-import { isAbsolute, join, resolve, sep } from 'node:path'
+import { isAbsolute, resolve, sep } from 'node:path'
+import { resolveConfigDir } from './env.ts'
 
 export interface OwnedRootAdapter {
   resolveConfigDir(): string
 }
 
 function defaultConfigDir(): string {
-  return process.env.CRAFT_CONFIG_DIR || join(homedir(), '.craft-agent')
+  return resolveConfigDir()
 }
 
 let adapter: OwnedRootAdapter = { resolveConfigDir: defaultConfigDir }

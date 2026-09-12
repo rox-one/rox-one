@@ -764,7 +764,16 @@ export class WsRpcServer implements RpcServer {
 
     this.rpcCallCounter?.record(channel)
 
-    if (isLocalOnly(channel) && this.shouldEnforceLocalOnly() && !client.capabilities.has(CLIENT_OPEN_FILE_DIALOG)) {
+    // LOCAL_ONLY is a desktop-process gate, not a second handshake
+    // capability. Electron-main proof (`localBinding`) already means
+    // this client is the trusted desktop. `openFileDialog` remains a
+    // fallback for tests that only advertise that capability.
+    if (
+      isLocalOnly(channel)
+      && this.shouldEnforceLocalOnly()
+      && client.localBinding === null
+      && !client.capabilities.has(CLIENT_OPEN_FILE_DIALOG)
+    ) {
       this.sendResponseError(
         client.ws,
         id,

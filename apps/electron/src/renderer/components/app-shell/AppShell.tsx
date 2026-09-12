@@ -79,6 +79,7 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { QuestProgressCard } from "./QuestProgressCard"
 import {
   clearStatusUnseen,
   getUnseenStatuses,
@@ -138,6 +139,7 @@ import {
   isSettingsNavigation,
   isSkillsNavigation,
   isMemoryNavigation,
+  isTasksNavigation,
   isHomeNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
@@ -460,6 +462,7 @@ function AppShellContent({
   // Pages library + open page both render full-width in the content area;
   // collapse the middle navigator because pages has no navigator list.
   const isPagesView = isPagesNavigation(navState)
+  const isTasksView = isTasksNavigation(navState)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -1754,6 +1757,10 @@ function AppShellContent({
     navigate(routes.view.memory())
   }, [])
 
+  const handleTasksClick = useCallback(() => {
+    navigate(routes.view.tasks())
+  }, [])
+
   // Handler for workspace-local Notes.
   const handleNotesClick = useCallback(() => {
     navigate(routes.view.notes())
@@ -2115,6 +2122,7 @@ function AppShellContent({
     result.push({ id: 'nav:projects', type: 'nav', action: handleProjectsClick })
     result.push({ id: 'nav:pages', type: 'nav', action: handlePagesClick })
     result.push({ id: 'nav:memory', type: 'nav', action: handleMemoryClick })
+    result.push({ id: 'nav:tasks', type: 'nav', action: handleTasksClick })
     result.push({ id: 'nav:sources', type: 'nav', action: handleSourcesClick })
     result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
     result.push({ id: 'nav:notes', type: 'nav', action: handleNotesClick })
@@ -2122,7 +2130,7 @@ function AppShellContent({
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
 
     return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
+  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleTasksClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -2249,6 +2257,10 @@ function AppShellContent({
     // Memory navigator
     if (isMemoryNavigation(navState)) {
       return t("sidebar.memory")
+    }
+
+    if (isTasksNavigation(navState)) {
+      return t("sidebar.tasks")
     }
 
     if (isHomeNavigation(navState)) {
@@ -2641,6 +2653,13 @@ function AppShellContent({
                       variant: isMemoryNavigation(navState) ? "default" : "ghost",
                       onClick: handleMemoryClick,
                     },
+                    {
+                      id: "nav:tasks",
+                      title: t(APP_NAV_DESTINATIONS_BY_ID.tasks.labelKey),
+                      icon: APP_NAV_DESTINATIONS_BY_ID.tasks.icon,
+                      variant: isTasksNavigation(navState) ? "default" : "ghost",
+                      onClick: handleTasksClick,
+                    },
                     // --- Sources ---
                     {
                       id: "nav:sources",
@@ -2798,6 +2817,10 @@ function AppShellContent({
                 </div>
                 {/* Pinned profile strip — opens Settings */}
                 <div className="shrink-0 border-t border-foreground/5 px-1 py-1.5">
+                  <QuestProgressCard
+                    sessionId={effectiveSessionId}
+                    cloudFeaturesEnabled={true}
+                  />
                   <ProfileStrip
                     data={profileStrip}
                     onClick={() => handleSettingsClick('account')}
@@ -3020,7 +3043,7 @@ function AppShellContent({
             )}
             </div>
           )}
-          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView ? 0 : sessionListWidth))}
+          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView || isTasksView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView || isTasksView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}
@@ -3062,7 +3085,7 @@ function AppShellContent({
         )}
 
         {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
-        {!effectiveSidebarAndNavigatorHidden && !isBoardView && !isPagesView && (
+        {!effectiveSidebarAndNavigatorHidden && !isBoardView && !isPagesView && !isTasksView && (
         <div
           ref={sessionListHandleRef}
           onMouseDown={(e) => { e.preventDefault(); setIsResizing('session-list') }}

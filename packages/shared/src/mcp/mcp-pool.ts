@@ -193,25 +193,6 @@ export class McpClientPool {
   }
 
   /**
-   * Connect if needed; reconnect when HTTP/SSE auth or URL changed.
-   * Pages action executor uses this so rotated credentials take effect.
-   */
-  async ensureConnected(slug: string, config: SdkMcpServerConfig): Promise<void> {
-    if (config.type === 'stdio' && this.workspaceRootPath && !isLocalMcpEnabled(this.workspaceRootPath)) {
-      throw new Error(`Local MCP is disabled for this workspace — cannot connect stdio source "${slug}"`);
-    }
-
-    if (this.clients.has(slug)) {
-      const oldConfig = this.activeConfigs.get(slug);
-      if (!oldConfig || !mcpConfigChanged(oldConfig, config)) return;
-      this.debug(`Config changed for ${slug}, reconnecting with fresh credentials`);
-      await this.disconnect(slug);
-    }
-
-    await this.connect(slug, config);
-  }
-
-  /**
    * Connect to an in-process MCP server (API source) via in-memory transport.
    */
   async connectInProcess(slug: string, mcpServer: McpServer): Promise<void> {

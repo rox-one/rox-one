@@ -11,15 +11,26 @@
  * - Pending/queued states (Electron only)
  */
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Clock } from 'lucide-react'
-import type { StoredAttachment, ContentBadge } from '@craft-agent/core'
+import type { AnnotationV1, StoredAttachment, ContentBadge } from '@craft-agent/core'
 import { normalizePath } from '@craft-agent/core/utils'
 import { cn } from '../../lib/utils'
 import { Markdown } from '../markdown'
 import { FileTypeIcon, getFileTypeLabel } from './attachment-helpers'
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../tooltip'
 import { useTranslation } from 'react-i18next'
+import { MessageHoverDock } from './MessageHoverDock'
+import { SideThreadMenu } from './SideThreadMenu'
+import type { SideThreadAction } from '@craft-agent/shared/side-threads'
+import {
+  aggregateReactions,
+  createReactionAnnotation,
+  DEFAULT_REACTION_EMOJI,
+  findOwnReaction,
+  LOCAL_REACTION_ACTOR,
+  quoteMessageMarkdown,
+} from './message-reactions'
 
 // Fallback text icons for badges without iconDataUrl
 // Using simple characters since SVG rendering may not work in all contexts
@@ -322,6 +333,15 @@ export interface UserMessageBubbleProps {
   isQueued?: boolean
   /** Compact mode - reduces padding for popover embedding */
   compactMode?: boolean
+  messageId?: string
+  sessionId?: string
+  annotations?: AnnotationV1[]
+  onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
+  onRemoveAnnotation?: (messageId: string, annotationId: string) => void
+  onQuote?: (text: string) => void
+  onShareMessage?: (text: string) => void
+  onLearnFromMessage?: (text: string) => void
+  onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
 }
 
 /** Minimum visible duration of the "Queued" chip. Both backends ack
@@ -339,9 +359,41 @@ export function UserMessageBubble({
   badges,
   isQueued,
   compactMode,
+  messageId,
+  sessionId,
+  annotations,
+  onAddAnnotation,
+  onRemoveAnnotation,
+  onQuote,
+  onShareMessage,
+  onLearnFromMessage,
+  onPickSideThread,
 }: UserMessageBubbleProps) {
   const { t } = useTranslation()
   const hasAttachments = attachments && attachments.length > 0
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
+  const reactionCounts = useMemo(
+    () => aggregateReactions(annotations, LOCAL_REACTION_ACTOR.id),
+    [annotations],
+  )
+
+  const handleToggleEmoji = (emoji: string) => {
+    if (!messageId || !onAddAnnotation) return
+    const existing = findOwnReaction(annotations, emoji, LOCAL_REACTION_ACTOR.id)
+    if (existing && onRemoveAnnotation) {
+      onRemoveAnnotation(messageId, existing.id)
+      return
+    }
+    onAddAnnotation(
+      messageId,
+      createReactionAnnotation({
+        messageId,
+        sessionId: sessionId ?? '',
+        emoji,
+        actor: LOCAL_REACTION_ACTOR,
+      }),
+    )
+  }
 
   // Show the queued chip while `isQueued` is true AND for at least
   // QUEUED_MIN_VISIBLE_MS after it first became true — even if the backend
@@ -411,7 +463,7 @@ export function UserMessageBubble({
   }
 
   return (
-    <div className={cn("flex flex-col items-end gap-3 w-full", className)}>
+    <div className={cn("flex flex-col items-end gap-3 w-full group", className)} tabIndex={-1}>
       {/* Attachment preview row - stored attachments with thumbnails */}
       {hasAttachments && (
         <div className="flex gap-2 justify-end max-w-[80%] flex-wrap">
@@ -514,6 +566,23 @@ export function UserMessageBubble({
             </Markdown>
           )
         }
+      </div>
+      <div className="flex flex-wrap items-center justify-end gap-1">
+        <MessageHoverDock
+          reactionCounts={reactionCounts}
+          pickerOpen={reactionPickerOpen}
+          onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
+          onToggleEmoji={handleToggleEmoji}
+          onTogglePicker={() => setReactionPickerOpen((open) => !open)}
+          onCopy={() => { void navigator.clipboard.writeText(displayContent) }}
+          onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(displayContent)) : undefined}
+          onShare={onShareMessage ? () => onShareMessage(displayContent) : undefined}
+          onLearn={onLearnFromMessage ? () => onLearnFromMessage(displayContent) : undefined}
+          className="opacity-100 group-focus-within:opacity-100"
+        />
+        {onPickSideThread && messageId ? (
+          <SideThreadMenu onSelect={(action) => onPickSideThread(action, displayContent, messageId)} />
+        ) : null}
       </div>
     </div>
   )

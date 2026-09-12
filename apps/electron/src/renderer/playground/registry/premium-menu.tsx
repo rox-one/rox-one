@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { PremiumMenu, type PremiumMenuItem, type PremiumMenuVariant } from '@craft-agent/ui'
+import { PremiumMenu, PremiumMenuSelect, type PremiumMenuItem, type PremiumMenuVariant } from '@craft-agent/ui'
 import type { ComponentEntry } from './types'
 
 function makeItems(count: number): PremiumMenuItem[] {
@@ -12,17 +12,28 @@ function makeItems(count: number): PremiumMenuItem[] {
 function PremiumMenuPlayground({
   count,
   variant,
+  searchable = true,
+  selectedIndex = 0,
+  narrow = false,
 }: {
   count: number
   variant: PremiumMenuVariant
+  searchable?: boolean
+  selectedIndex?: number
+  narrow?: boolean
 }) {
   const items = React.useMemo(() => makeItems(count), [count])
   const [open, setOpen] = React.useState(true)
-  const [selectedId, setSelectedId] = React.useState<string | null>(items[0]?.id ?? null)
+  const [selectedId, setSelectedId] = React.useState<string | null>(
+    items[selectedIndex]?.id ?? items[0]?.id ?? null,
+  )
   const anchorRef = React.useRef<HTMLButtonElement>(null)
 
   return (
-    <div className="flex min-h-[420px] items-start justify-center p-8">
+    <div
+      className="flex min-h-[420px] items-start justify-center p-8"
+      style={narrow ? { width: 280, maxWidth: 280 } : undefined}
+    >
       <button
         ref={anchorRef}
         type="button"
@@ -38,6 +49,24 @@ function PremiumMenuPlayground({
         items={items}
         selectedId={selectedId}
         variant={variant}
+        searchable={searchable}
+        maxWidth={narrow ? 260 : undefined}
+        onSelect={(item) => setSelectedId(item.id)}
+      />
+    </div>
+  )
+}
+
+function PremiumMenuSelectPlayground() {
+  const items = React.useMemo(() => makeItems(8), [])
+  const [selectedId, setSelectedId] = React.useState<string | null>(null)
+  return (
+    <div className="flex min-h-[240px] items-start justify-center p-8">
+      <PremiumMenuSelect
+        items={items}
+        placeholder="Status"
+        selectedId={selectedId}
+        variant="compact"
         onSelect={(item) => setSelectedId(item.id)}
       />
     </div>
@@ -71,11 +100,44 @@ export const premiumMenuComponents: ComponentEntry[] = [
     id: 'premium-menu-1000',
     name: 'Premium menu · 1000 items',
     category: 'Premium Menu',
-    description: 'Virtualized inspector menu with one thousand items.',
+    description: 'Virtualized inspector menu with one thousand items; selected row stays visible.',
     component: PremiumMenuPlayground,
     props: [],
-    variants: [{ name: 'inspector-1000', props: { count: 1000, variant: 'inspector' } }],
-    mockData: () => ({ count: 1000, variant: 'inspector' }),
+    variants: [{ name: 'inspector-1000', props: { count: 1000, variant: 'inspector', selectedIndex: 42 } }],
+    mockData: () => ({ count: 1000, variant: 'inspector', selectedIndex: 42 }),
+    layout: 'full',
+  },
+  {
+    id: 'premium-menu-narrow',
+    name: 'Premium menu · narrow panel',
+    category: 'Premium Menu',
+    description: 'Regular 50-item menu constrained to a 280px inspector column.',
+    component: PremiumMenuPlayground,
+    props: [],
+    variants: [{ name: 'narrow-50', props: { count: 50, variant: 'regular', narrow: true } }],
+    mockData: () => ({ count: 50, variant: 'regular', narrow: true }),
+    layout: 'full',
+  },
+  {
+    id: 'premium-menu-typeahead',
+    name: 'Premium menu · typeahead',
+    category: 'Premium Menu',
+    description: 'Compact 50-item menu without a search field; keyboard typeahead highlights rows.',
+    component: PremiumMenuPlayground,
+    props: [],
+    variants: [{ name: 'typeahead-50', props: { count: 50, variant: 'compact', searchable: false } }],
+    mockData: () => ({ count: 50, variant: 'compact', searchable: false }),
+    layout: 'full',
+  },
+  {
+    id: 'premium-menu-select',
+    name: 'Premium menu · select trigger',
+    category: 'Premium Menu',
+    description: 'Compact PremiumMenuSelect trigger used by filters and bulk bars.',
+    component: PremiumMenuSelectPlayground,
+    props: [],
+    variants: [{ name: 'compact-select', props: {} }],
+    mockData: () => ({}),
     layout: 'full',
   },
 ]

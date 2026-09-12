@@ -54,7 +54,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'connections' | 'home'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff'
 
@@ -91,7 +91,7 @@ export interface ParsedCompoundRoute {
  * Known prefixes that indicate a compound route
  */
 const COMPOUND_ROUTE_PREFIXES = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'connections', 'home',
   // Unified-shell surfaces (W1)
   'knowledge', 'cloud-run', 'extension', 'diff',
 ]
@@ -241,6 +241,17 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   // Memory navigator (self-learning lessons / context / history)
   if (first === 'memory') {
     return { navigator: 'memory', details: null }
+  }
+
+  // Personal tasks (Things-style; Issue 17)
+  if (first === 'tasks') {
+    if (segments[1] === 'task' && segments[2]) {
+      return {
+        navigator: 'tasks',
+        details: { type: 'task', id: decodeURIComponent(segments[2]) },
+      }
+    }
+    return { navigator: 'tasks', details: null }
   }
 
   if (first === 'connections') {
@@ -531,6 +542,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return 'memory'
   }
 
+  if (parsed.navigator === 'tasks') {
+    if (!parsed.details) return 'tasks'
+    return `tasks/task/${encodeURIComponent(parsed.details.id)}`
+  }
+
   if (parsed.navigator === 'connections') {
     return 'connections'
   }
@@ -713,6 +729,13 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'memory', params: {} }
   }
 
+  if (compound.navigator === 'tasks') {
+    if (!compound.details) {
+      return { type: 'view', name: 'tasks', params: {} }
+    }
+    return { type: 'view', name: 'task-info', id: compound.details.id, params: {} }
+  }
+
   if (compound.navigator === 'connections') {
     return { type: 'view', name: 'connections', params: {} }
   }
@@ -883,6 +906,16 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
   // Memory
   if (compound.navigator === 'memory') {
     return { navigator: 'memory', details: null }
+  }
+
+  if (compound.navigator === 'tasks') {
+    if (!compound.details) {
+      return { navigator: 'tasks', details: null }
+    }
+    return {
+      navigator: 'tasks',
+      details: { type: 'task', taskId: compound.details.id },
+    }
   }
 
   if (compound.navigator === 'connections') {
@@ -1064,6 +1097,16 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
       return { navigator: 'skills', details: null }
     case 'memory':
       return { navigator: 'memory', details: null }
+    case 'tasks':
+      return { navigator: 'tasks', details: null }
+    case 'task-info':
+      if (parsed.id) {
+        return {
+          navigator: 'tasks',
+          details: { type: 'task', taskId: parsed.id },
+        }
+      }
+      return { navigator: 'tasks', details: null }
     case 'connections':
       return { navigator: 'connections', details: null }
     case 'home':
@@ -1276,6 +1319,13 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
     return {
       navigator: 'memory',
       details: null,
+    }
+  }
+
+  if (state.navigator === 'tasks') {
+    return {
+      navigator: 'tasks',
+      details: state.details ? { type: 'task', id: state.details.taskId } : null,
     }
   }
 

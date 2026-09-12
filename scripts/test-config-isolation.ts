@@ -14,11 +14,28 @@
  *
  * Wired through `[test].preload` in `bunfig.toml`. An externally supplied
  * config directory always wins.
+ *
+ * Seed `config-defaults.json` in that throwaway root. `getSystemPrompt`
+ * reads `getBrowserToolEnabled()` → `loadConfigDefaults()`, which uses the
+ * import-time `CONFIG_DEFAULTS_FILE` snapshot and throws if the file is
+ * missing. Do not import `storage.ts` here — that would freeze CONFIG_DIR
+ * before the env is set.
  */
-import { mkdtempSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+const REPO_ROOT = join(import.meta.dir, '..');
+const BUNDLED_DEFAULTS = join(REPO_ROOT, 'apps', 'electron', 'resources', 'config-defaults.json');
+
 if (!process.env.ROX_CONFIG_DIR && !process.env.CRAFT_CONFIG_DIR) {
   process.env.ROX_CONFIG_DIR = mkdtempSync(join(tmpdir(), 'rox-agent-test-'));
+}
+
+const configDir = process.env.ROX_CONFIG_DIR ?? process.env.CRAFT_CONFIG_DIR;
+if (configDir && existsSync(BUNDLED_DEFAULTS)) {
+  const dest = join(configDir, 'config-defaults.json');
+  if (!existsSync(dest)) {
+    copyFileSync(BUNDLED_DEFAULTS, dest);
+  }
 }

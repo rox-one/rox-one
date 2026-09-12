@@ -489,6 +489,9 @@ export const RPC_CHANNELS = {
   gamification: {
     GET: 'gamification:get',
     AWARD: 'gamification:award',
+    QUEST: 'gamification:quest',
+    RATE: 'gamification:rate',
+    SET_CONSENT: 'gamification:setConsent',
     CHANGED: 'gamification:changed',
   },
   drafts: {
@@ -569,6 +572,12 @@ export const RPC_CHANNELS = {
     // plus the Y4 onboarding marker state.
     INSIGHTS: 'memory:insights',
     MARK_ONBOARDED: 'memory:markOnboarded',
+    LIST_PROPOSALS: 'memory:listProposals',
+    EXTRACT_PROPOSALS: 'memory:extractProposals',
+    APPROVE_PROPOSAL: 'memory:approveProposal',
+    REJECT_PROPOSAL: 'memory:rejectProposal',
+    EDIT_PROPOSAL: 'memory:editProposal',
+    DELETE_PROPOSAL: 'memory:deleteProposal',
     CHANGED: 'memory:changed',
   },
   statuses: {
@@ -714,6 +723,12 @@ export const RPC_CHANNELS = {
     STATE_CHANGED: 'browser-pane:state-changed',
     REMOVED: 'browser-pane:removed',
     INTERACTED: 'browser-pane:interacted',
+  },
+  browserProfile: {
+    DISCOVER: 'browserProfile:discover',
+    IMPORT: 'browserProfile:import',
+    ROLLBACK: 'browserProfile:rollback',
+    DELETE: 'browserProfile:delete',
   },
   automations: {
     GET: 'automations:get',

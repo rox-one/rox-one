@@ -12,6 +12,7 @@ import { Spinner } from '@craft-agent/ui'
 import { routes } from '@/lib/navigate'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import BrowserProfileImportPanel from './BrowserProfileImportPanel'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -150,6 +151,7 @@ export default function ImportSettingsPage() {
               ))}
             </ul>
           ) : null}
+          <BrowserProfileImportPanel />
         </div>
       </ScrollArea>
     </div>

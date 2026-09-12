@@ -8,6 +8,7 @@ import { emptyGitWorkingTreeStatus } from '@craft-agent/shared/git/status'
 import { readGitBranchName, readGitWorkingTreeStatus } from '@craft-agent/shared/git/exec'
 import { getWorkspaceByNameOrId, getGitBashPath, setGitBashPath, clearGitBashPath } from '@craft-agent/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
+import { isRoxDeeplinkProtocol } from '@craft-agent/shared/identity'
 import { isUsableGitBashPath, validateGitBashPath } from '@craft-agent/server-core/services'
 import { validateFilePath, getWorkspaceAllowedDirs } from '@craft-agent/server-core/handlers'
 import { isValidWorkingDirectory } from '../../utils/path-validation'
@@ -75,7 +76,7 @@ function collectDeepLinkParams(parsed: URL, pathId?: string): Record<string, str
 }
 
 function parseInternalCraftAgentsDeepLink(parsed: URL): ParsedInternalDeepLink | null {
-  if (parsed.protocol !== 'craftagents:') return null
+  if (!isRoxDeeplinkProtocol(parsed.protocol)) return null
 
   const host = parsed.hostname
   const pathParts = parsed.pathname.split('/').filter(Boolean)

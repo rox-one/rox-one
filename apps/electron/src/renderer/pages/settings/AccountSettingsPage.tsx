@@ -14,6 +14,7 @@ import {
   SettingsRow,
   SettingsSection,
   SettingsSegmentedControl,
+  SettingsToggle,
 } from '@/components/settings'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -41,6 +42,11 @@ const XP_EVENT_KEYS: Record<XpEventType, string> = {
   automation_ran: 'settings.account.event.automationRan',
   cloud_run_imported: 'settings.account.event.cloudRunImported',
   note_linked: 'settings.account.event.noteLinked',
+  first_note: 'settings.account.event.firstNote',
+  first_task: 'settings.account.event.firstTask',
+  first_workflow: 'settings.account.event.firstWorkflow',
+  first_browser: 'settings.account.event.firstBrowser',
+  privacy_review: 'settings.account.event.privacyReview',
 }
 
 type GamificationSnapshot = {
@@ -53,6 +59,7 @@ type GamificationSnapshot = {
   nextThreshold: number | null
   currentThreshold?: number
   recentEvents?: Array<{ type: XpEventType; xp: number; at: number }>
+  analyticsConsent?: boolean
 }
 
 function errorMessage(error: unknown): string {
@@ -260,6 +267,16 @@ export default function AccountSettingsPage() {
             <SettingsRow label={t('profile.balanceLabel')} description={t('settings.account.balanceHint')}>
               <span className="text-sm tabular-nums">{formatBalance(gamification?.balance ?? null, t)}</span>
             </SettingsRow>
+            <SettingsToggle
+              label={t('settings.account.analyticsConsent')}
+              description={t('settings.account.analyticsConsentDesc')}
+              checked={gamification?.analyticsConsent === true}
+              onCheckedChange={(checked) => {
+                void window.electronAPI.setGamificationAnalyticsConsent(checked).then((next) => {
+                  setGamification((prev) => prev ? { ...prev, analyticsConsent: next.analyticsConsent } : prev)
+                })
+              }}
+            />
           </SettingsCard>
         </SettingsSection>
 

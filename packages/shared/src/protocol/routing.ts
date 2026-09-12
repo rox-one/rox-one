@@ -240,6 +240,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.browserPane.TYPE,
   RPC_CHANNELS.browserPane.KEY,
 
+  RPC_CHANNELS.browserProfile.DISCOVER,
+  RPC_CHANNELS.browserProfile.IMPORT,
+  RPC_CHANNELS.browserProfile.ROLLBACK,
+  RPC_CHANNELS.browserProfile.DELETE,
+
   // gitbash — Windows-specific local
   RPC_CHANNELS.gitbash.CHECK,
   RPC_CHANNELS.gitbash.BROWSE,
@@ -365,6 +370,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   // gamification — user XP lives in local CONFIG_DIR
   RPC_CHANNELS.gamification.GET,
   RPC_CHANNELS.gamification.AWARD,
+  RPC_CHANNELS.gamification.QUEST,
+  RPC_CHANNELS.gamification.RATE,
+  RPC_CHANNELS.gamification.SET_CONSENT,
   RPC_CHANNELS.gamification.CHANGED,
 
   // orgs — local-only identity/membership bookkeeping (CONFIG_DIR)
@@ -577,6 +585,12 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.memory.GET_PROJECT_MEMORY,
   RPC_CHANNELS.memory.INSIGHTS,
   RPC_CHANNELS.memory.MARK_ONBOARDED,
+  RPC_CHANNELS.memory.LIST_PROPOSALS,
+  RPC_CHANNELS.memory.EXTRACT_PROPOSALS,
+  RPC_CHANNELS.memory.APPROVE_PROPOSAL,
+  RPC_CHANNELS.memory.REJECT_PROPOSAL,
+  RPC_CHANNELS.memory.EDIT_PROPOSAL,
+  RPC_CHANNELS.memory.DELETE_PROPOSAL,
 
   // skillsPending — pending skill approvals per workspace
   RPC_CHANNELS.skillsPending.LIST,

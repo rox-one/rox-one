@@ -3,6 +3,8 @@
 import { loadShellEnv } from './shell-env'
 loadShellEnv()
 
+import './brand-config-boot'
+
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, nativeTheme, session, shell, type BrowserWindowConstructorOptions } from 'electron'
 import { createHash, randomUUID } from 'crypto'
 import { hostname, homedir } from 'os'
@@ -215,9 +217,10 @@ registerPiModelResolver((piAuthProvider) =>
   piAuthProvider ? getPiModelsForAuthProvider(piAuthProvider) : getAllPiModels()
 )
 
-// Custom URL scheme for deeplinks (e.g., craftagents://auth-complete)
-// Supports multi-instance dev: CRAFT_DEEPLINK_SCHEME env var (craftagents1, craftagents2, etc.)
-const DEEPLINK_SCHEME = process.env.CRAFT_DEEPLINK_SCHEME || 'craftagents'
+// Custom URL scheme for deeplinks (rox:// primary, craftagents:// alias)
+// Supports multi-instance dev: ROX_DEEPLINK_SCHEME / CRAFT_DEEPLINK_SCHEME
+const DEEPLINK_SCHEME = process.env.ROX_DEEPLINK_SCHEME || process.env.CRAFT_DEEPLINK_SCHEME || 'rox'
+const LEGACY_DEEPLINK_SCHEME = 'craftagents'
 
 let windowManager: WindowManager | null = null
 let sessionManager: SessionManager | null = null
@@ -242,10 +245,10 @@ let pendingDeepLink: string | null = null
 
 // Set app name early (before app.whenReady) to ensure correct macOS menu bar title
 // Supports multi-instance dev: CRAFT_APP_NAME env var (e.g., "Rox [1]")
-app.setName(process.env.CRAFT_APP_NAME || 'Rox')
+app.setName(process.env.ROX_APP_NAME || process.env.CRAFT_APP_NAME || 'Rox')
 
 // Isolate Chromium profile so a second dev instance does not share cookies/locks.
-const userDataOverride = process.env.CRAFT_USER_DATA_DIR?.trim()
+const userDataOverride = (process.env.ROX_USER_DATA_DIR || process.env.CRAFT_USER_DATA_DIR)?.trim()
 if (userDataOverride) {
   mkdirSync(userDataOverride, { recursive: true })
   app.setPath('userData', userDataOverride)
@@ -253,16 +256,19 @@ if (userDataOverride) {
   app.setPath('userData', join(app.getPath('appData'), `craft-agent-${process.env.CRAFT_INSTANCE_NUMBER}`))
 }
 
-// Register as default protocol client for craftagents:// URLs
-// This must be done before app.whenReady() on some platforms
-if (process.defaultApp) {
-  // Development mode: need to pass the app path
-  if (process.argv.length >= 2) {
-    app.setAsDefaultProtocolClient(DEEPLINK_SCHEME, process.execPath, [process.argv[1]])
+function registerDeeplinkScheme(scheme: string): void {
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(scheme, process.execPath, [process.argv[1]])
+    }
+  } else {
+    app.setAsDefaultProtocolClient(scheme)
   }
-} else {
-  // Production mode
-  app.setAsDefaultProtocolClient(DEEPLINK_SCHEME)
+}
+
+registerDeeplinkScheme(DEEPLINK_SCHEME)
+if (DEEPLINK_SCHEME !== LEGACY_DEEPLINK_SCHEME) {
+  registerDeeplinkScheme(LEGACY_DEEPLINK_SCHEME)
 }
 
 // Apply network proxy settings early (Node-level only — Electron sessions require app.whenReady)
@@ -303,7 +309,9 @@ if (!gotTheLock) {
   app.on('second-instance', (_event, commandLine, _workingDirectory) => {
     // Someone tried to run a second instance, we should focus our window.
     // On Windows/Linux, the deeplink is in commandLine
-    const url = commandLine.find(arg => arg.startsWith(`${DEEPLINK_SCHEME}://`))
+    const url = commandLine.find(arg =>
+      arg.startsWith(`${DEEPLINK_SCHEME}://`) || arg.startsWith(`${LEGACY_DEEPLINK_SCHEME}://`),
+    )
     if (url && windowManager) {
       mainLog.info('Received deeplink from second instance:', url)
       handleDeepLink(url, windowManager, moduleSink ?? undefined, moduleClientResolver ?? undefined).catch(err => {
