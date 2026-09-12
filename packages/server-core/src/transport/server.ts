@@ -28,6 +28,10 @@ import type { RpcServer, HandlerFn, RequestContext, RpcHandlerOptions } from './
 import { serializeEnvelope, deserializeEnvelope } from './codec'
 import { createLogger } from '@craft-agent/shared/utils'
 import { CLIENT_OPEN_FILE_DIALOG } from './capabilities'
+import {
+  createRpcCallCounterFromEnv,
+  type RpcCallCounter,
+} from '../observability/rpc-call-counter'
 
 // ---------------------------------------------------------------------------
 // Client connection state
@@ -146,6 +150,11 @@ export interface WsRpcServerOptions {
    * Must use Node.js HTTP callback signature (IncomingMessage, ServerResponse).
    */
   httpHandler?: (req: import('node:http').IncomingMessage, res: import('node:http').ServerResponse) => void
+  /**
+   * Optional RPC call counter. Default off. Pass an instance or set
+   * CRAFT_PERF_RPC_TRACE=1 to count session permission/metadata N+1.
+   */
+  rpcCallCounter?: RpcCallCounter | null
 }
 
 const transportLog = createLogger('ws-rpc-server')
@@ -183,6 +192,7 @@ export class WsRpcServer implements RpcServer {
   private readonly onClientDisconnected: WsRpcServerOptions['onClientDisconnected']
   private readonly resolveLocalClientBinding: WsRpcServerOptions['resolveLocalClientBinding']
   private readonly httpHandler: WsRpcServerOptions['httpHandler']
+  private readonly rpcCallCounter: RpcCallCounter | null
 
   constructor(opts?: WsRpcServerOptions) {
     this.host = opts?.host ?? '127.0.0.1'
@@ -198,6 +208,9 @@ export class WsRpcServer implements RpcServer {
     this.onClientDisconnected = opts?.onClientDisconnected
     this.resolveLocalClientBinding = opts?.resolveLocalClientBinding
     this.httpHandler = opts?.httpHandler
+    this.rpcCallCounter = opts?.rpcCallCounter === undefined
+      ? createRpcCallCounterFromEnv()
+      : opts.rpcCallCounter
   }
 
   /** The actual port the server is listening on (available after listen()). */
@@ -213,6 +226,10 @@ export class WsRpcServer implements RpcServer {
   /** Number of currently connected (handshake-completed) clients. */
   getConnectedClientCount(): number {
     return this.clients.size
+  }
+
+  getRpcCallCounter(): RpcCallCounter | null {
+    return this.rpcCallCounter
   }
 
   // -------------------------------------------------------------------------
@@ -744,6 +761,8 @@ export class WsRpcServer implements RpcServer {
       this.sendResponseError(client.ws, id, channel, 'CHANNEL_NOT_FOUND', `No handler for: ${channel}`)
       return
     }
+
+    this.rpcCallCounter?.record(channel)
 
     if (isLocalOnly(channel) && this.shouldEnforceLocalOnly() && !client.capabilities.has(CLIENT_OPEN_FILE_DIALOG)) {
       this.sendResponseError(

@@ -15,8 +15,35 @@ import {
   simulateNotesOpen,
   simulateViewSwitch,
 } from './surface-sim'
+import {
+  attachLongTaskObserver,
+  createReactCommitOnRender,
+  type LongTaskObserverHost,
+} from './observers'
 import { PerfTelemetry } from './telemetry'
 import type { BenchmarkReport, BenchmarkSample } from './types'
+
+export interface InMemoryLongTaskHost extends LongTaskObserverHost {
+  emit(durationMs: number): void
+}
+
+export function createInMemoryLongTaskHost(): InMemoryLongTaskHost {
+  const callbacks: Array<(list: { getEntries(): Array<{ duration: number }> }) => void> = []
+  return {
+    PerformanceObserver: class {
+      constructor(callback: (list: { getEntries(): Array<{ duration: number }> }) => void) {
+        callbacks.push(callback)
+      }
+      observe(): void {}
+      disconnect(): void {}
+    },
+    emit(durationMs: number) {
+      for (const callback of callbacks) {
+        callback({ getEntries: () => [{ duration: durationMs }] })
+      }
+    },
+  }
+}
 
 export interface RunHarnessOptions {
   sessionCount?: 500 | 2000
@@ -31,6 +58,9 @@ export function runPerfHarness(options: RunHarnessOptions = {}): BenchmarkReport
   const vault = createLargeVaultFixture()
   const ipc = new IpcCallCounter()
   const telemetry = new PerfTelemetry()
+  const longTaskHost = createInMemoryLongTaskHost()
+  const longTaskObserver = attachLongTaskObserver(telemetry, longTaskHost)
+  const onReactCommit = createReactCommitOnRender(telemetry)
   const samples: BenchmarkSample[] = []
 
   const cold = simulateColdReady(sessionFixture.sessions, ipc)
@@ -40,6 +70,7 @@ export function runPerfHarness(options: RunHarnessOptions = {}): BenchmarkReport
     ipc: { 'sessions.list': 1 },
     reloadedCollection: cold.reloadedCollection,
   })
+  const nPlusOne = ipc.detectSessionMetadataNPlusOne(sessionCount)
 
   const cache = warmRendererCache(sessionFixture.sessions)
   const targets = pickSwitchTargets(cache, switchIterations)
@@ -99,13 +130,14 @@ export function runPerfHarness(options: RunHarnessOptions = {}): BenchmarkReport
     reloadedCollection: canvas.reloadedCollection,
   })
 
-  telemetry.recordLongTask(8)
-  telemetry.recordReactCommit(3)
+  longTaskHost.emit(8)
+  onReactCommit('rox-root', 'update', 3)
   telemetry.recordPayload({
     sessionId: 'sess-00001',
     authorization: 'Bearer sk-live-exampletokenvalue',
     preview: 'ok',
   })
+  longTaskObserver.disconnect()
 
   let bundleProfileMs: number | null = null
   if (options.includeBundleProfile) {
@@ -126,6 +158,7 @@ export function runPerfHarness(options: RunHarnessOptions = {}): BenchmarkReport
     stats,
     verdicts,
     ipcTotals: mergeIpc(samples),
+    nPlusOne,
     longTasks: telemetry.longTasks.length,
     reactCommits: telemetry.reactCommits.length,
     payloadSamples: telemetry.payloads.length,

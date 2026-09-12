@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
-import { RpcCallCounter } from './rpc-call-counter.ts'
+import { createRpcCallCounterFromEnv, RpcCallCounter } from './rpc-call-counter.ts'
+import { WsRpcServer } from '../transport/server.ts'
 
 describe('RpcCallCounter', () => {
   it('wraps a handler and counts invocations', () => {
@@ -27,5 +28,28 @@ describe('RpcCallCounter', () => {
     counter.record('sessions.list')
     counter.record('sessions.metadata')
     expect(counter.detectSessionMetadataNPlusOne(2000)).toEqual([])
+  })
+
+  it('counts live sessions:getPermissionModeState as permission N+1', () => {
+    const counter = new RpcCallCounter()
+    for (let i = 0; i < 50; i++) {
+      counter.record('sessions:getPermissionModeState')
+    }
+    expect(counter.detectSessionMetadataNPlusOne(50)).toEqual([
+      'sessions.permission called 50 times for 50 sessions',
+    ])
+  })
+
+  it('stays disabled unless CRAFT_PERF_RPC_TRACE is set', () => {
+    expect(createRpcCallCounterFromEnv({})).toBeNull()
+    expect(createRpcCallCounterFromEnv({ CRAFT_PERF_RPC_TRACE: '1' })).not.toBeNull()
+  })
+
+  it('does not install a WsRpcServer counter unless injected', () => {
+    const server = new WsRpcServer({ host: '127.0.0.1', port: 0, rpcCallCounter: null })
+    expect(server.getRpcCallCounter()).toBeNull()
+    const injected = new RpcCallCounter()
+    const traced = new WsRpcServer({ host: '127.0.0.1', port: 0, rpcCallCounter: injected })
+    expect(traced.getRpcCallCounter()).toBe(injected)
   })
 })
