@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Flag as FlagIcon, GripVertical } from 'lucide-react'
+import { PremiumMenu, type PremiumMenuItem } from '@craft-agent/ui'
 import type { SessionPriority } from '@craft-agent/shared/sessions/collection'
 import type { SessionMeta } from '@/atoms/sessions'
 import type { SessionStatusConfig } from '@/config/session-status-config'
@@ -38,6 +39,49 @@ export interface SessionTableRowProps {
 }
 
 const PRIORITY_ORDER: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
+
+function SessionRowCompactMenu({
+  label,
+  value,
+  items,
+  onPick,
+}: {
+  label: string
+  value: string
+  items: PremiumMenuItem[]
+  onPick: (id: string) => void
+}) {
+  const [open, setOpen] = React.useState(false)
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+  const selectedLabel = items.find((item) => item.id === value)?.label ?? value
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`${label}: ${selectedLabel}`}
+        title={selectedLabel}
+        className="w-full truncate rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-left text-xs hover:bg-foreground/[0.03] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={() => setOpen((next) => !next)}
+      >
+        {selectedLabel}
+      </button>
+      <PremiumMenu
+        open={open}
+        onOpenChange={setOpen}
+        anchorRef={triggerRef}
+        items={items}
+        selectedId={value}
+        onSelect={(item) => onPick(item.id)}
+        variant="compact"
+      />
+    </>
+  )
+}
 
 function formatRelative(ts: number | null | undefined): string {
   if (ts == null || !Number.isFinite(ts)) return '—'
@@ -168,35 +212,29 @@ export function SessionTableRow({
 
       {showStatus && (
         <span className="w-28 shrink-0">
-          <select
-            className="w-full rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-xs"
+          <SessionRowCompactMenu
+            label={t('collection.table.column.status')}
             value={sessionStatus}
-            onChange={(e) =>
-              onUpdate({ sessionStatus: e.target.value })
-            }
-          >
-            {(statuses.length > 0 ? statuses : [{ id: sessionStatus } as never]).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label ?? s.id}
-              </option>
-            ))}
-          </select>
+            items={(statuses.length > 0 ? statuses : [{ id: sessionStatus, label: sessionStatus }]).map((s) => ({
+              id: s.id,
+              label: s.label ?? s.id,
+            }))}
+            onPick={(id) => onUpdate({ sessionStatus: id })}
+          />
         </span>
       )}
 
       {showPriority && (
         <span className="w-20 shrink-0">
-          <select
-            className="w-full rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-xs"
+          <SessionRowCompactMenu
+            label={t('collection.table.column.priority')}
             value={priority}
-            onChange={(e) => onUpdate({ priority: e.target.value as SessionPriority })}
-          >
-            {PRIORITY_ORDER.map((p) => (
-              <option key={p} value={p}>
-                {t(`priority.${p}`)}
-              </option>
-            ))}
-          </select>
+            items={PRIORITY_ORDER.map((p) => ({
+              id: p,
+              label: t(`priority.${p}`),
+            }))}
+            onPick={(id) => onUpdate({ priority: id as SessionPriority })}
+          />
         </span>
       )}
 
