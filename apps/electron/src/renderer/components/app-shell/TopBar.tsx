@@ -1,7 +1,7 @@
 /**
  * TopBar - Persistent top bar above all panels (Slack-style)
  *
- * Layout: [Sidebar] [Menu] [Back] [Forward] [Workspace selector] ... [Browser strip] [+] [Help]
+ * Layout: [Sidebar] [Menu] [Back] [Forward] [Workspace selector] ... [Browser strip] [Session] [Browser] [Help]
  *
  * Fixed at top of window; height from --topbar-height (design-compact: 40px desktop).
  * macOS: offset left to avoid stoplight controls.
@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next"
 import * as Icons from "lucide-react"
 import { Tooltip, TooltipTrigger, TooltipContent } from "@craft-agent/ui"
 import { PanelLeftRounded } from "../icons/PanelLeftRounded"
+import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { TopBarButton } from "../ui/TopBarButton"
 import { cn } from "@/lib/utils"
 import { isMac, isWebUI } from "@/lib/platform"
@@ -327,9 +328,9 @@ export function TopBar({
             <TopBarButton
               onClick={onAddSessionPanel}
               aria-label={t("session.newSessionInPanel")}
-              className="ml-0.5 h-6 w-6 rounded-md"
+              className="ml-1 h-[26px] w-[26px] rounded-lg"
             >
-              <Icons.Plus className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+              <SquarePenRounded className="h-4 w-4 text-foreground/50" />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("session.newSessionInPanel")}</TooltipContent>
@@ -339,7 +340,7 @@ export function TopBar({
             <TopBarButton
               onClick={onAddBrowserPanel}
               aria-label={t("browser.newWindow")}
-              className="h-6 w-6 rounded-md"
+              className="h-[26px] w-[26px] rounded-lg"
             >
               <Icons.Globe className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
             </TopBarButton>

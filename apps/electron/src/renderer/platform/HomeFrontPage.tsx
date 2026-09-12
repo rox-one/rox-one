@@ -11,11 +11,15 @@ import { useTranslation } from 'react-i18next'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { Button } from '@/components/ui/button'
+import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
+import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
+import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { routes } from '@/lib/navigate'
 import { getSessionTitle } from '@/utils/session'
 import { isHomeSessionInWorkspace, pickRecentHomeSessions } from './home-model'
+import { buildMiniDashboard } from './mini-dashboard'
 
 export function HomeFrontPage() {
   const { t } = useTranslation()
@@ -23,20 +27,34 @@ export function HomeFrontPage() {
   const workspace = useActiveWorkspace()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const setOmniboxOpen = useSetAtom(omniboxOpenAtom)
+  const connectionState = useTransportConnectionState()
+  const taskCount = useWorkspaceTaskCount(workspace?.id)
 
-  const recent = useMemo(() => {
+  const workspaceSessions = useMemo(() => {
     const workspaceId = workspace?.id
     const remoteWorkspaceId = workspace?.remoteServer?.remoteWorkspaceId
-    return pickRecentHomeSessions(
-      [...sessionMetaMap.values()].filter((session) =>
-        isHomeSessionInWorkspace(session, workspaceId, remoteWorkspaceId),
-      ),
+    return [...sessionMetaMap.values()].filter((session) =>
+      isHomeSessionInWorkspace(session, workspaceId, remoteWorkspaceId),
     )
   }, [sessionMetaMap, workspace])
+
+  const dashboard = useMemo(
+    () =>
+      buildMiniDashboard({
+        sessions: workspaceSessions,
+        tasks: taskCount,
+        connection: connectionState,
+      }),
+    [workspaceSessions, taskCount, connectionState],
+  )
+
+  const recent = useMemo(() => pickRecentHomeSessions(workspaceSessions), [workspaceSessions])
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">
+        <MiniDashboardCards snapshot={dashboard} className="grid-cols-2 sm:grid-cols-3" />
+
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-medium text-foreground">{t('workbench.home.title')}</h1>
           {workspace?.name ? (
