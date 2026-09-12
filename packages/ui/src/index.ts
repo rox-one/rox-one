@@ -68,6 +68,7 @@ export {
 export {
   Markdown,
   MemoizedMarkdown,
+  SourcedStatement,
   CodeBlock,
   InlineCode,
   CollapsibleMarkdownProvider,
@@ -78,6 +79,7 @@ export {
   ImageCardStack,
   type MarkdownProps,
   type RenderMode,
+  type SourcedStatementProps,
   TiptapMarkdownEditor,
   type TiptapEditorHandle,
   type TiptapMarkdownEditorProps,

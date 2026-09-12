@@ -148,4 +148,28 @@ describe('createSearchTool', () => {
     expect((result.content[0] as any).text).toContain('Search failed');
     expect((result.content[0] as any).text).toContain('ddg boom');
   });
+
+  it('runs a bounded research plan with query provenance', async () => {
+    const seen: string[] = []
+    const provider: WebSearchProvider = {
+      name: 'Exa',
+      async search(query) {
+        seen.push(query)
+        return [{ title: `Hit ${query}`, url: `https://example.com/${encodeURIComponent(query)}`, description: '2026 note' }]
+      },
+    }
+    const tool = createSearchTool(provider)
+    const result = await tool.execute('tool-r', {
+      query: 'Analyze https://example.com/source Rox notes',
+      research: true,
+      languages: ['en', 'ru'],
+    })
+    expect(result.details?.isError).toBeUndefined()
+    expect(seen.length).toBeGreaterThan(0)
+    expect(seen.length).toBeLessThan(10)
+    const text = (result.content[0] as { text: string }).text
+    expect(text).toContain('Query provenance')
+    expect(text).toContain('primary')
+    expect(text).toContain('https://example.com/source')
+  })
 });

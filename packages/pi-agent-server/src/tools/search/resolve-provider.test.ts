@@ -4,6 +4,7 @@ import { ResponsesApiSearchProvider } from './providers/openai.ts';
 import { ChatGPTBackendSearchProvider } from './providers/chatgpt.ts';
 import { GoogleSearchProvider } from './providers/google.ts';
 import { DDGSearchProvider } from './providers/ddg.ts';
+import { ExaSearchProvider } from './providers/exa.ts';
 
 /** Build a minimal JWT with a chatgpt_account_id claim. */
 function makeJwt(accountId: string): string {
@@ -65,7 +66,7 @@ describe('resolveSearchProvider', () => {
         refresh: 'r',
         expires: Date.now() + 60_000,
       },
-    });
+    }, undefined, {});
 
     expect(provider).toBeInstanceOf(DDGSearchProvider);
   });
@@ -74,7 +75,7 @@ describe('resolveSearchProvider', () => {
     const provider = resolveSearchProvider({
       provider: 'openai-codex',
       credential: { type: 'api_key', key: 'not-a-jwt' },
-    });
+    }, undefined, {});
 
     expect(provider).toBeInstanceOf(DDGSearchProvider);
   });
@@ -113,7 +114,7 @@ describe('resolveSearchProvider', () => {
         refresh: 'r',
         expires: Date.now() + 60_000,
       },
-    });
+    }, undefined, {});
 
     expect(provider).toBeInstanceOf(DDGSearchProvider);
   });
@@ -122,7 +123,7 @@ describe('resolveSearchProvider', () => {
     const provider = resolveSearchProvider({
       provider: 'unknown',
       credential: { type: 'api_key', key: 'x' },
-    });
+    }, undefined, {});
 
     expect(provider).toBeInstanceOf(DDGSearchProvider);
   });
@@ -131,14 +132,14 @@ describe('resolveSearchProvider', () => {
     const provider = resolveSearchProvider({
       provider: 'openai',
       credential: { type: 'api_key', key: '' },
-    });
+    }, undefined, {});
 
     expect(provider).toBeInstanceOf(DDGSearchProvider);
   });
 
   it('falls back to DDG when no piAuth is provided', () => {
-    expect(resolveSearchProvider()).toBeInstanceOf(DDGSearchProvider);
-    expect(resolveSearchProvider(undefined)).toBeInstanceOf(DDGSearchProvider);
+    expect(resolveSearchProvider(undefined, undefined, {})).toBeInstanceOf(DDGSearchProvider);
+    expect(resolveSearchProvider(undefined, undefined, {})).toBeInstanceOf(DDGSearchProvider);
   });
 
   it('falls back to DDG for github-copilot (no search API available)', () => {
@@ -150,7 +151,7 @@ describe('resolveSearchProvider', () => {
         refresh: 'r',
         expires: Date.now() + 60_000,
       },
-    });
+    }, undefined, {});
 
     expect(provider).toBeInstanceOf(DDGSearchProvider);
   });
@@ -159,8 +160,16 @@ describe('resolveSearchProvider', () => {
     const provider = resolveSearchProvider({
       provider: 'vercel-ai-gateway',
       credential: { type: 'api_key', key: 'vercel-test-key' },
-    });
+    }, undefined, {});
 
     expect(provider).toBeInstanceOf(DDGSearchProvider);
+  });
+
+  it('selects Exa when an Exa env key is present', () => {
+    const provider = resolveSearchProvider(undefined, undefined, {
+      EXA_API_KEY: 'exa-test-key',
+    } as NodeJS.ProcessEnv);
+    expect(provider).toBeInstanceOf(ExaSearchProvider);
+    expect(provider.name).toBe('Exa');
   });
 });
