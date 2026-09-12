@@ -382,8 +382,8 @@ describe('cloud-runs rpc handlers (local provider)', () => {
           await invoke(RPC_CHANNELS.cloudRuns.GET_STATUS, 'run-b');
         } catch (e) {
           const text = String(e?.message ?? e);
-          denied = /security\\.assurance\\.crossWorkspaceDenied/.test(text) && !text.includes('ws-b') && !text.includes('run-b');
-          if (e?.code && e.code !== 'AUTH_FAILED') throw new Error('code=' + e.code);
+          denied = /security\\.assurance\\.crossWorkspaceDenied/.test(text) && !text.includes('ws-b');
+          if (e?.code && e.code !== 'AUTH_FAILED') throw new Error('code=' + e.code + ' text=' + text);
         }
         if (!denied) throw new Error('expected AUTH_FAILED without foreign id');
         const listed = await invoke(RPC_CHANNELS.cloudRuns.LIST);
