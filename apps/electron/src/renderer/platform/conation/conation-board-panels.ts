@@ -15,10 +15,13 @@ export function shouldRegisterBoardPanel(flags: BoardPanelFlags): boolean {
   return flags.shellEnabled === true && flags.inspectorEnabled === true && flags.boardEnabled === true
 }
 
-export function boardPanelContribution(render: PanelRenderer): PanelContribution {
+export function boardPanelContribution(
+  render: PanelRenderer,
+  title = 'Conation Board',
+): PanelContribution {
   return {
     id: CONATION_BOARD_PANEL_ID,
-    title: 'Conation Board',
+    title,
     icon: 'layers',
     slot: 'inspector',
     defaultOrder: 42,
@@ -38,8 +41,9 @@ export function registerBoardPanel(
     inspectorEnabled: false,
     boardEnabled: false,
   },
+  title = 'Conation Board',
 ): ReturnType<PanelRegistry['register']> | undefined {
   if (!shouldRegisterBoardPanel(flags)) return
   if (registry.get(CONATION_BOARD_PANEL_ID)) return
-  return registry.register(boardPanelContribution(render))
+  return registry.register(boardPanelContribution(render, title))
 }

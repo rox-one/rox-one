@@ -23,6 +23,7 @@
  */
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
+import { useTranslation } from 'react-i18next'
 import type {
   ContextKeys,
   PanelRegistry,
@@ -48,7 +49,10 @@ import { KnowledgeInspectorPanel } from './KnowledgeInspectorPanel'
 import { registerConationPanels } from './conation/conation-panels'
 import { ConationInspectorPanel } from './conation/ConationInspectorPanel'
 import { registerNotesPanel } from './conation/conation-notes-panels'
-import { ConationNotesPanel } from './conation/ConationNotesPanel'
+import {
+  ConationNotesPanel,
+  createConationNotesBridge,
+} from './conation/ConationNotesPanel'
 import { registerFundPanel } from './conation/conation-fund-panels'
 import { ConationFundPanel } from './conation/ConationFundPanel'
 import { registerBoardPanel } from './conation/conation-board-panels'
@@ -88,6 +92,7 @@ export function PanelHost({
   contextKeys,
   className,
 }: PanelHostProps) {
+  const { t } = useTranslation()
   const windowWorkspaceId = useAtomValue(windowWorkspaceIdAtom)
   const activeWorkspaceId = workspaceId === undefined ? windowWorkspaceId : workspaceId
   const route = useAtomValue(focusedPanelRouteAtom)
@@ -98,6 +103,21 @@ export function PanelHost({
   const conationNotesBridgeEnabled = useAtomValue(featureWorkbenchConationNotesBridgeAtom)
 
   const resolvedRegistry = registry ?? getAppPanelRegistry()
+  const notesBridge = React.useMemo(
+    () => createConationNotesBridge(
+      typeof window === 'undefined' ? null : window.electronAPI,
+      activeWorkspaceId,
+    ),
+    [activeWorkspaceId],
+  )
+  const renderNotesPanel = React.useCallback(
+    () => <ConationNotesPanel bridge={notesBridge} />,
+    [notesBridge],
+  )
+  const conationPanelTitle = t('settings.appearance.conationShell')
+  const fundPanelTitle = t('conation.fund.title')
+  const boardPanelTitle = t('conation.board.title')
+  const notesPanelTitle = t('knowledge.nav.filterNotes')
 
   const [state, setState] = React.useState<PanelRegistryState>(() => loadPanelState(activeWorkspaceId))
 
@@ -125,23 +145,41 @@ export function PanelHost({
         shellEnabled: conationShellEnabled,
         inspectorEnabled: conationInspectorEnabled,
       },
+      conationPanelTitle,
     )
     // Fund and Board remain deep-link panes; live canvas/kanban is out of scope.
-    const fundRegistration = registerFundPanel(resolvedRegistry, ConationFundPanel, {
-      shellEnabled: conationShellEnabled,
-      inspectorEnabled: conationInspectorEnabled,
-      canvasEnabled: conationCanvasEnabled,
-    })
-    const boardRegistration = registerBoardPanel(resolvedRegistry, ConationBoardPanel, {
-      shellEnabled: conationShellEnabled,
-      inspectorEnabled: conationInspectorEnabled,
-      boardEnabled: conationBoardEnabled,
-    })
-    const notesRegistration = registerNotesPanel(resolvedRegistry, ConationNotesPanel, {
-      shellEnabled: conationShellEnabled,
-      inspectorEnabled: conationInspectorEnabled,
-      notesBridgeEnabled: conationNotesBridgeEnabled,
-    })
+    const fundRegistration = registerFundPanel(
+      resolvedRegistry,
+      ConationFundPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+        canvasEnabled: conationCanvasEnabled,
+      },
+      fundPanelTitle,
+    )
+    const boardRegistration = registerBoardPanel(
+      resolvedRegistry,
+      ConationBoardPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+        boardEnabled: conationBoardEnabled,
+      },
+      boardPanelTitle,
+    )
+    const notesRegistration = notesBridge
+      ? registerNotesPanel(
+          resolvedRegistry,
+          renderNotesPanel,
+          {
+            shellEnabled: conationShellEnabled,
+            inspectorEnabled: conationInspectorEnabled,
+            notesBridgeEnabled: conationNotesBridgeEnabled,
+          },
+          notesPanelTitle,
+        )
+      : undefined
 
     return () => {
       inspectorRegistration?.dispose()
@@ -157,6 +195,12 @@ export function PanelHost({
     conationCanvasEnabled,
     conationBoardEnabled,
     conationNotesBridgeEnabled,
+    notesBridge,
+    renderNotesPanel,
+    conationPanelTitle,
+    fundPanelTitle,
+    boardPanelTitle,
+    notesPanelTitle,
   ])
 
   const ctx = React.useMemo<ContextKeys>(

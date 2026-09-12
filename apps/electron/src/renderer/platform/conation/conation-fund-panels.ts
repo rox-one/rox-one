@@ -15,10 +15,13 @@ export function shouldRegisterFundPanel(flags: FundPanelFlags): boolean {
   return flags.shellEnabled === true && flags.inspectorEnabled === true && flags.canvasEnabled === true
 }
 
-export function fundPanelContribution(render: PanelRenderer): PanelContribution {
+export function fundPanelContribution(
+  render: PanelRenderer,
+  title = 'Conation Fund',
+): PanelContribution {
   return {
     id: CONATION_FUND_PANEL_ID,
-    title: 'Conation Fund',
+    title,
     icon: 'layers',
     slot: 'inspector',
     defaultOrder: 41,
@@ -38,8 +41,9 @@ export function registerFundPanel(
     inspectorEnabled: false,
     canvasEnabled: false,
   },
+  title = 'Conation Fund',
 ): ReturnType<PanelRegistry['register']> | undefined {
   if (!shouldRegisterFundPanel(flags)) return
   if (registry.get(CONATION_FUND_PANEL_ID)) return
-  return registry.register(fundPanelContribution(render))
+  return registry.register(fundPanelContribution(render, title))
 }

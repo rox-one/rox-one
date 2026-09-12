@@ -56,18 +56,28 @@ describe('registerBoardPanel', () => {
   it('registers conation.board once when all flags are on', () => {
     const registry = createPanelRegistry()
     const render = () => null
-    const registration = registerBoardPanel(registry, render, {
-      shellEnabled: true,
-      inspectorEnabled: true,
-      boardEnabled: true,
-    })
-    const duplicate = registerBoardPanel(registry, render, {
-      shellEnabled: true,
-      inspectorEnabled: true,
-      boardEnabled: true,
-    })
+    const registration = registerBoardPanel(
+      registry,
+      render,
+      {
+        shellEnabled: true,
+        inspectorEnabled: true,
+        boardEnabled: true,
+      },
+      'Localized Board',
+    )
+    const duplicate = registerBoardPanel(
+      registry,
+      render,
+      {
+        shellEnabled: true,
+        inspectorEnabled: true,
+        boardEnabled: true,
+      },
+      'Localized Board',
+    )
 
-    expect(registry.get(CONATION_BOARD_PANEL_ID)?.title).toBe('Conation Board')
+    expect(registry.get(CONATION_BOARD_PANEL_ID)?.title).toBe('Localized Board')
     expect(registry.get(CONATION_BOARD_PANEL_ID)?.source.id).toBe('conation')
     expect(registry.get(CONATION_BOARD_PANEL_ID)?.defaultOrder).toBe(42)
     expect(

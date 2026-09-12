@@ -5,6 +5,7 @@ import {
   registerNotesPanel,
   shouldRegisterNotesPanel,
 } from '../conation-notes-panels.ts'
+import { createConationNotesBridge } from '../ConationNotesPanel'
 
 describe('registerNotesPanel', () => {
   it('is off unless shell, inspector, and notesBridge are all on', () => {
@@ -55,18 +56,28 @@ describe('registerNotesPanel', () => {
   it('registers conation.notes once when all flags are on', () => {
     const registry = createPanelRegistry()
     const render = () => null
-    const registration = registerNotesPanel(registry, render, {
-      shellEnabled: true,
-      inspectorEnabled: true,
-      notesBridgeEnabled: true,
-    })
-    const duplicate = registerNotesPanel(registry, render, {
-      shellEnabled: true,
-      inspectorEnabled: true,
-      notesBridgeEnabled: true,
-    })
+    const registration = registerNotesPanel(
+      registry,
+      render,
+      {
+        shellEnabled: true,
+        inspectorEnabled: true,
+        notesBridgeEnabled: true,
+      },
+      'Localized Notes',
+    )
+    const duplicate = registerNotesPanel(
+      registry,
+      render,
+      {
+        shellEnabled: true,
+        inspectorEnabled: true,
+        notesBridgeEnabled: true,
+      },
+      'Localized Notes',
+    )
 
-    expect(registry.get(CONATION_NOTES_PANEL_ID)?.title).toBe('Conation Notes')
+    expect(registry.get(CONATION_NOTES_PANEL_ID)?.title).toBe('Localized Notes')
     expect(registry.get(CONATION_NOTES_PANEL_ID)?.source.id).toBe('conation')
     expect(registry.get(CONATION_NOTES_PANEL_ID)?.defaultOrder).toBe(43)
     expect(
@@ -74,5 +85,52 @@ describe('registerNotesPanel', () => {
     ).toHaveLength(1)
     expect(registration).toBeDefined()
     expect(duplicate).toBeUndefined()
+  })
+
+  it('adapts the existing Notes API and scopes reads to one workspace', async () => {
+    const calls: string[] = []
+    const bridge = createConationNotesBridge(
+      {
+        listNotes: async (workspaceId) => {
+          calls.push(`list:${workspaceId}`)
+          return [{ id: 'folder/note', title: 'Note title' }]
+        },
+        readNote: async (workspaceId, noteId) => {
+          calls.push(`read:${workspaceId}:${noteId}`)
+          return { id: noteId, title: 'Note title', content: '# Body' }
+        },
+      },
+      'workspace-1',
+    )
+
+    expect(bridge).not.toBeNull()
+    if (!bridge) throw new Error('Expected Notes bridge')
+
+    expect(await bridge.listNotes()).toEqual({
+      items: [{ id: 'folder/note', title: 'Note title' }],
+    })
+    expect(await bridge.getNote('folder/note')).toEqual({
+      id: 'folder/note',
+      title: 'Note title',
+      body: '# Body',
+    })
+    expect(calls).toEqual([
+      'list:workspace-1',
+      'read:workspace-1:folder/note',
+    ])
+  })
+
+  it('does not create a Notes bridge without an API or active workspace', () => {
+    const api = {
+      listNotes: async () => [],
+      readNote: async (_workspaceId: string, noteId: string) => ({
+        id: noteId,
+        title: '',
+        content: '',
+      }),
+    }
+
+    expect(createConationNotesBridge(api, null)).toBeNull()
+    expect(createConationNotesBridge(null, 'workspace-1')).toBeNull()
   })
 })

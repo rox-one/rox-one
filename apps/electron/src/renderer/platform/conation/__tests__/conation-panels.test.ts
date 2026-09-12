@@ -24,13 +24,16 @@ describe('registerConationPanels', () => {
       registry,
       () => null,
       { shellEnabled: true, inspectorEnabled: true },
+      'Localized Conation',
     )
     const duplicate = registerConationPanels(
       registry,
       () => null,
       { shellEnabled: true, inspectorEnabled: true },
+      'Localized Conation',
     )
     expect(registry.get(CONATION_INSPECTOR_PANEL_ID)?.id).toBe(CONATION_INSPECTOR_PANEL_ID)
+    expect(registry.get(CONATION_INSPECTOR_PANEL_ID)?.title).toBe('Localized Conation')
     expect(
       registry.list('inspector', {}).filter((panel) => panel.id === CONATION_INSPECTOR_PANEL_ID),
     ).toHaveLength(1)

@@ -56,18 +56,28 @@ describe('registerFundPanel', () => {
   it('registers conation.fund once when all flags are on', () => {
     const registry = createPanelRegistry()
     const render = () => null
-    const registration = registerFundPanel(registry, render, {
-      shellEnabled: true,
-      inspectorEnabled: true,
-      canvasEnabled: true,
-    })
-    const duplicate = registerFundPanel(registry, render, {
-      shellEnabled: true,
-      inspectorEnabled: true,
-      canvasEnabled: true,
-    })
+    const registration = registerFundPanel(
+      registry,
+      render,
+      {
+        shellEnabled: true,
+        inspectorEnabled: true,
+        canvasEnabled: true,
+      },
+      'Localized Fund',
+    )
+    const duplicate = registerFundPanel(
+      registry,
+      render,
+      {
+        shellEnabled: true,
+        inspectorEnabled: true,
+        canvasEnabled: true,
+      },
+      'Localized Fund',
+    )
 
-    expect(registry.get(CONATION_FUND_PANEL_ID)?.title).toBe('Conation Fund')
+    expect(registry.get(CONATION_FUND_PANEL_ID)?.title).toBe('Localized Fund')
     expect(registry.get(CONATION_FUND_PANEL_ID)?.source.id).toBe('conation')
     expect(registry.get(CONATION_FUND_PANEL_ID)?.defaultOrder).toBe(41)
     expect(

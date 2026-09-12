@@ -13,10 +13,13 @@ export function shouldRegisterNotesPanel(flags: NotesPanelFlags): boolean {
   return flags.shellEnabled === true && flags.inspectorEnabled === true && flags.notesBridgeEnabled === true
 }
 
-export function notesPanelContribution(render: PanelRenderer): PanelContribution {
+export function notesPanelContribution(
+  render: PanelRenderer,
+  title = 'Conation Notes',
+): PanelContribution {
   return {
     id: CONATION_NOTES_PANEL_ID,
-    title: 'Conation Notes',
+    title,
     icon: 'layers',
     slot: 'inspector',
     defaultOrder: 43,
@@ -36,8 +39,9 @@ export function registerNotesPanel(
     inspectorEnabled: false,
     notesBridgeEnabled: false,
   },
+  title = 'Conation Notes',
 ): ReturnType<PanelRegistry['register']> | undefined {
   if (!shouldRegisterNotesPanel(flags)) return
   if (registry.get(CONATION_NOTES_PANEL_ID)) return
-  return registry.register(notesPanelContribution(render))
+  return registry.register(notesPanelContribution(render, title))
 }
