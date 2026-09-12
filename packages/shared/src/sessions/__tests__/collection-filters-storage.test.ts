@@ -43,6 +43,7 @@ describe('normalizeCollectionFilters', () => {
       flagged: true,
       hasUnread: 'yes',
       model: ['kimi-K3'],
+      agentFamily: ['omp', 'nope', 'claude', 'omp'],
       unknownField: 'dropped',
     })
     expect(normalized).toEqual({
@@ -51,6 +52,7 @@ describe('normalizeCollectionFilters', () => {
       projectId: ['p1', 'p2'],
       flagged: true,
       model: ['kimi-K3'],
+      agentFamily: ['omp', 'claude'],
     })
   })
 

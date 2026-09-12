@@ -13,6 +13,7 @@ describe('activeFilterCount', () => {
       labels: ['a', 'b', 'c'],
       due: { type: 'today' },
       flagged: true,
-    })).toBe(8)
+      agentFamily: ['omp', 'claude'],
+    })).toBe(10)
   })
 })

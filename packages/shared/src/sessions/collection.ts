@@ -9,6 +9,7 @@ import type { BulkUpdateSessionsPatch } from '../protocol/dto.ts'
 
 export type {
   SessionPriority,
+  CollectionAgentFamily,
   CollectionViewMode,
   CollectionGroupBy,
   CollectionOrderBy,
@@ -41,6 +42,35 @@ export {
   compareSessions,
   querySessionMetas,
 } from './collection-query.ts'
+
+export {
+  COLLECTION_AGENT_FAMILY_VALUES,
+  classifyAgentFamily,
+  isCollectionAgentFamily,
+} from './collection-agent-family.ts'
+
+export {
+  buildYearHeatmap,
+  compareDaySessions,
+  heatmapEndKey,
+  heatmapHomeKey,
+  heatmapNavigate,
+  keyFromDayOfYear,
+  localDayKey,
+  parseDayKey,
+  sessionActivityAt,
+  sessionDurationMs,
+  sessionTokenTotal,
+  sessionsOnDay,
+} from './collection-heatmap.ts'
+export type {
+  HeatmapCell,
+  HeatmapDayOrderBy,
+  HeatmapLevel,
+  HeatmapMonthLabel,
+  HeatmapNavDir,
+  YearHeatmap,
+} from './collection-heatmap.ts'
 
 export {
   LEXORANK_MAX_LENGTH,

@@ -4,11 +4,12 @@
  */
 
 import type { SessionPriority } from '../protocol/dto.ts'
+import type { CollectionAgentFamily } from './collection-agent-family.ts'
 
-export type { SessionPriority }
+export type { SessionPriority, CollectionAgentFamily }
 
-/** Collection surface mode (list navigator, kanban board, dense table). */
-export type CollectionViewMode = 'list' | 'board' | 'table'
+/** Collection surface mode (list navigator, kanban board, dense table, year heatmap). */
+export type CollectionViewMode = 'list' | 'board' | 'table' | 'heatmap'
 
 /** Grouping dimension for list/table (board uses this for secondary subsections). */
 export type CollectionGroupBy =
@@ -39,6 +40,9 @@ export type CollectionProperty =
   | 'updated'
   | 'created'
   | 'flag'
+  | 'messages'
+  | 'tokens'
+  | 'duration'
 
 export type CollectionOrderDir = 'asc' | 'desc'
 
@@ -83,6 +87,7 @@ export interface CollectionFilters {
   flagged?: boolean
   hasUnread?: boolean
   model?: string[]
+  agentFamily?: CollectionAgentFamily[]
 }
 
 /** Default Display for new workspaces / missing files (plan B2.2). */
@@ -143,4 +148,7 @@ export const COLLECTION_PROPERTY_VALUES: readonly CollectionProperty[] = [
   'updated',
   'created',
   'flag',
+  'messages',
+  'tokens',
+  'duration',
 ] as const

@@ -1724,6 +1724,14 @@ export interface ElectronAPI {
   getCollectionDisplay(workspaceId: string): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   setCollectionDisplay(workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay): Promise<import('@craft-agent/shared/sessions').CollectionDisplay>
   onCollectionDisplayChanged(callback: (workspaceId: string, display: import('@craft-agent/shared/sessions').CollectionDisplay) => void): () => void
+  getCollectionFilters(workspaceId: string): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+  setCollectionFilters(
+    workspaceId: string,
+    filters: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>,
+  ): Promise<Record<string, import('@craft-agent/shared/sessions').CollectionFilters>>
+  onCollectionFiltersChanged(
+    callback: (workspaceId: string, filters: Record<string, import('@craft-agent/shared/sessions').CollectionFilters>) => void,
+  ): () => void
 
   // Automations
   getAutomations(workspaceId: string): Promise<unknown>
@@ -1932,8 +1940,9 @@ export interface SessionsNavigationState {
    * - Absent/`'list'` — default list + chat.
    * - `'board'` — Kanban (all sessions, To Do / In Progress / Done) in the content area.
    * - `'table'` — dense collection/issue-line table view in the content area.
+   * - `'heatmap'` — year contribution grid + selected-day session table.
    */
-  viewMode?: 'list' | 'board' | 'table'
+  viewMode?: 'list' | 'board' | 'table' | 'heatmap'
 }
 
 /**

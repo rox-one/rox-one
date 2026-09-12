@@ -1,5 +1,5 @@
 /**
- * Shared sessions collection filters (B6) — one live chip set for list/board/table.
+ * Shared sessions collection filters (B6) — one live chip set for list/board/table/heatmap.
  *
  * FR-11: chips persist per navigator filter key (`allSessions`, `flagged`,
  * `archived`, `state:<id>`, `label:<id>`, `view:<id>`) in
@@ -27,6 +27,7 @@ function cloneFiltersMap(
       projectId: filters.projectId ? [...filters.projectId] : undefined,
       labels: filters.labels ? [...filters.labels] : undefined,
       model: filters.model ? [...filters.model] : undefined,
+      agentFamily: filters.agentFamily ? [...filters.agentFamily] : undefined,
       due: filters.due ? { ...filters.due } : undefined,
     }
   }

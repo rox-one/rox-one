@@ -59,6 +59,11 @@ describe('ship-rox Notes, Canvas, and Map wiring', () => {
     expect(chatPageSource).toContain("if (targetId === sessionId && (view === 'map'")
   })
 
+  it('keeps Map disabled when no session is focused', () => {
+    expect(appShellSource).toContain('mapAvailable={Boolean(effectiveSessionId)}')
+    expect(topBarSource).toContain('disabled={!mapAvailable}')
+  })
+
   it('registers Fund Canvas in the real registry while keeping Board separate', () => {
     const registry = createPanelRegistry()
     registerFundPanel(

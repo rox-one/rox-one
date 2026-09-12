@@ -633,6 +633,9 @@ export function SessionTableHost() {
           {showCol('model') && <span className="w-24 shrink-0">{t('collection.table.column.model')}</span>}
           {showCol('updated') && <span className="w-20 shrink-0">{t('collection.table.column.updated')}</span>}
           {showCol('created') && <span className="w-20 shrink-0">{t('collection.table.column.created')}</span>}
+          {showCol('messages') && <span className="w-20 shrink-0">{t('collection.table.column.messages')}</span>}
+          {showCol('tokens') && <span className="w-20 shrink-0">{t('collection.table.column.tokens')}</span>}
+          {showCol('duration') && <span className="w-20 shrink-0">{t('collection.table.column.duration')}</span>}
           {showCol('flag') && <span className="w-8 shrink-0" />}
         </div>
 
@@ -715,6 +718,9 @@ export function SessionTableHost() {
                   showUpdated={showCol('updated')}
                   showCreated={showCol('created')}
                   showFlag={showCol('flag')}
+                  showMessages={showCol('messages')}
+                  showTokens={showCol('tokens')}
+                  showDuration={showCol('duration')}
                   onDragStartRow={handleRowDragStart}
                   onDragOverRow={handleRowDragOver}
                   dropIndicator={

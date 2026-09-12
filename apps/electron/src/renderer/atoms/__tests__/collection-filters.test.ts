@@ -144,4 +144,12 @@ describe('replaceCollectionFiltersMapAtom', () => {
     store.set(replaceCollectionFiltersMapAtom, { 'view:x': { priority: ['urgent'] } })
     expect(store.get(collectionFiltersMapAtom)).toEqual({ 'view:x': { priority: ['urgent'] } })
   })
+
+  it('copies agentFamily so later mutation does not leak into the stored map', () => {
+    const store = createStore()
+    const agentFamily: Array<'omp' | 'claude'> = ['omp']
+    store.set(replaceCollectionFiltersMapAtom, { allSessions: { agentFamily } })
+    agentFamily.push('claude')
+    expect(store.get(collectionFiltersMapAtom).allSessions?.agentFamily).toEqual(['omp'])
+  })
 })

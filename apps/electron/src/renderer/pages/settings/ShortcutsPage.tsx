@@ -96,6 +96,7 @@ const ACTION_LABEL_KEYS: Partial<Record<ActionId, string>> = {
   'collection.viewList': 'shortcuts.action.collectionViewList',
   'collection.viewBoard': 'shortcuts.action.collectionViewBoard',
   'collection.viewTable': 'shortcuts.action.collectionViewTable',
+  'collection.viewHeatmap': 'shortcuts.action.collectionViewHeatmap',
   'navigator.selectAll': 'shortcuts.action.selectAll',
   'navigator.clearSelection': 'shortcuts.action.clearSelection',
   'panel.focusNext': 'shortcuts.action.focusNextPanel',

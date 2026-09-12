@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Flag as FlagIcon, GripVertical } from 'lucide-react'
+import { PremiumMenu, type PremiumMenuItem } from '@craft-agent/ui'
 import type { SessionPriority } from '@craft-agent/shared/sessions/collection'
 import type { SessionMeta } from '@/atoms/sessions'
 import type { SessionStatusConfig } from '@/config/session-status-config'
@@ -29,6 +30,9 @@ export interface SessionTableRowProps {
   showUpdated: boolean
   showCreated: boolean
   showFlag: boolean
+  showMessages?: boolean
+  showTokens?: boolean
+  showDuration?: boolean
   /** B5: HTML5 drag reorder callbacks (table host wires when showGrip). */
   onDragStartRow?: (sessionId: string) => void
   onDragOverRow?: (sessionId: string, event: React.DragEvent) => void
@@ -38,6 +42,49 @@ export interface SessionTableRowProps {
 }
 
 const PRIORITY_ORDER: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
+
+function SessionRowCompactMenu({
+  label,
+  value,
+  items,
+  onPick,
+}: {
+  label: string
+  value: string
+  items: PremiumMenuItem[]
+  onPick: (id: string) => void
+}) {
+  const [open, setOpen] = React.useState(false)
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+  const selectedLabel = items.find((item) => item.id === value)?.label ?? value
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={`${label}: ${selectedLabel}`}
+        title={selectedLabel}
+        className="w-full truncate rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-left text-xs hover:bg-foreground/[0.03] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70"
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={() => setOpen((next) => !next)}
+      >
+        {selectedLabel}
+      </button>
+      <PremiumMenu
+        open={open}
+        onOpenChange={setOpen}
+        anchorRef={triggerRef}
+        items={items}
+        selectedId={value}
+        onSelect={(item) => onPick(item.id)}
+        variant="compact"
+      />
+    </>
+  )
+}
 
 function formatRelative(ts: number | null | undefined): string {
   if (ts == null || !Number.isFinite(ts)) return '—'
@@ -69,6 +116,22 @@ function formatDue(
   }
 }
 
+function formatDuration(ms: number | null | undefined): string {
+  if (ms == null || !Number.isFinite(ms) || ms < 0) return '—'
+  const minutes = Math.floor(ms / 60_000)
+  if (minutes < 1) return '<1m'
+  if (minutes < 60) return `${minutes}m`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 48) return `${hours}h`
+  return `${Math.floor(hours / 24)}d`
+}
+
+function sessionDuration(meta: SessionMeta): number | null {
+  if (meta.createdAt == null || meta.lastMessageAt == null) return null
+  const duration = meta.lastMessageAt - meta.createdAt
+  return duration >= 0 ? duration : null
+}
+
 export function SessionTableRow({
   meta,
   statuses = [],
@@ -88,6 +151,9 @@ export function SessionTableRow({
   showUpdated,
   showCreated,
   showFlag,
+  showMessages = false,
+  showTokens = false,
+  showDuration = false,
   onDragStartRow,
   onDragOverRow,
   dropIndicator,
@@ -168,35 +234,29 @@ export function SessionTableRow({
 
       {showStatus && (
         <span className="w-28 shrink-0">
-          <select
-            className="w-full rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-xs"
+          <SessionRowCompactMenu
+            label={t('collection.table.column.status')}
             value={sessionStatus}
-            onChange={(e) =>
-              onUpdate({ sessionStatus: e.target.value })
-            }
-          >
-            {(statuses.length > 0 ? statuses : [{ id: sessionStatus } as never]).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.label ?? s.id}
-              </option>
-            ))}
-          </select>
+            items={(statuses.length > 0 ? statuses : [{ id: sessionStatus, label: sessionStatus }]).map((s) => ({
+              id: s.id,
+              label: s.label ?? s.id,
+            }))}
+            onPick={(id) => onUpdate({ sessionStatus: id })}
+          />
         </span>
       )}
 
       {showPriority && (
         <span className="w-20 shrink-0">
-          <select
-            className="w-full rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-xs"
+          <SessionRowCompactMenu
+            label={t('collection.table.column.priority')}
             value={priority}
-            onChange={(e) => onUpdate({ priority: e.target.value as SessionPriority })}
-          >
-            {PRIORITY_ORDER.map((p) => (
-              <option key={p} value={p}>
-                {t(`priority.${p}`)}
-              </option>
-            ))}
-          </select>
+            items={PRIORITY_ORDER.map((p) => ({
+              id: p,
+              label: t(`priority.${p}`),
+            }))}
+            onPick={(id) => onUpdate({ priority: id as SessionPriority })}
+          />
         </span>
       )}
 
@@ -230,6 +290,15 @@ export function SessionTableRow({
       )}
       {showCreated && (
         <span className="w-20 shrink-0 text-xs text-muted-foreground">{formatDate(meta.createdAt)}</span>
+      )}
+      {showMessages && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.messageCount ?? '—'}</span>
+      )}
+      {showTokens && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.tokenUsage?.totalTokens ?? '—'}</span>
+      )}
+      {showDuration && (
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatDuration(sessionDuration(meta))}</span>
       )}
 
       {showFlag && (
