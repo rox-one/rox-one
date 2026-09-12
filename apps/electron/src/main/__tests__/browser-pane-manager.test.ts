@@ -5,7 +5,7 @@
  * session binding, and navigation behavior.
  */
 
-import { describe, it, expect, beforeEach, mock } from 'bun:test'
+import { describe, it, expect, beforeEach, afterAll, mock } from 'bun:test'
 
 const createdWindows: any[] = []
 let toolbarLoadFailuresRemaining = 0
@@ -216,47 +216,50 @@ mock.module('../logger', () => {
   }
 })
 
-mock.module('../browser-cdp', () => ({
-  BrowserCDP: class MockBrowserCDP {
-    detach = mock(() => {})
-    getAccessibilitySnapshot = mock(async () => ({
-      url: 'https://example.com',
-      title: 'Example',
-      nodes: [],
-    }))
-    clickElement = mock(async () => ({
-      ref: '@e1',
-      box: { x: 0, y: 0, width: 10, height: 10 },
-      clickPoint: { x: 5, y: 5 },
-    }))
-    fillElement = mock(async () => ({
-      ref: '@e1',
-      box: { x: 0, y: 0, width: 10, height: 10 },
-      clickPoint: { x: 5, y: 5 },
-    }))
-    selectOption = mock(async () => ({
-      ref: '@e1',
-      box: { x: 0, y: 0, width: 10, height: 10 },
-      clickPoint: { x: 5, y: 5 },
-    }))
-    renderTemporaryOverlay = mock(async () => {})
-    clearTemporaryOverlay = mock(async () => {})
-    getViewportMetrics = mock(async () => ({ width: 1200, height: 900, dpr: 2, scrollX: 0, scrollY: 0 }))
-    getElementGeometry = mock(async () => ({
-      ref: '@e1',
-      box: { x: 0, y: 0, width: 10, height: 10 },
-      clickPoint: { x: 5, y: 5 },
-    }))
-    getElementGeometryBySelector = mock(async () => ({
-      ref: 'selector:div.card',
-      box: { x: 5, y: 5, width: 20, height: 20 },
-      clickPoint: { x: 15, y: 15 },
-    }))
-    drag = mock(async () => {})
-  },
-}))
+class MockBrowserCDP {
+  constructor(_webContents?: unknown) {}
+  detach = mock(() => {})
+  getAccessibilitySnapshot = mock(async () => ({
+    url: 'https://example.com',
+    title: 'Example',
+    nodes: [],
+  }))
+  clickElement = mock(async () => ({
+    ref: '@e1',
+    box: { x: 0, y: 0, width: 10, height: 10 },
+    clickPoint: { x: 5, y: 5 },
+  }))
+  fillElement = mock(async () => ({
+    ref: '@e1',
+    box: { x: 0, y: 0, width: 10, height: 10 },
+    clickPoint: { x: 5, y: 5 },
+  }))
+  selectOption = mock(async () => ({
+    ref: '@e1',
+    box: { x: 0, y: 0, width: 10, height: 10 },
+    clickPoint: { x: 5, y: 5 },
+  }))
+  renderTemporaryOverlay = mock(async () => {})
+  clearTemporaryOverlay = mock(async () => {})
+  getViewportMetrics = mock(async () => ({ width: 1200, height: 900, dpr: 2, scrollX: 0, scrollY: 0 }))
+  getElementGeometry = mock(async () => ({
+    ref: '@e1',
+    box: { x: 0, y: 0, width: 10, height: 10 },
+    clickPoint: { x: 5, y: 5 },
+  }))
+  getElementGeometryBySelector = mock(async () => ({
+    ref: 'selector:div.card',
+    box: { x: 5, y: 5, width: 20, height: 20 },
+    clickPoint: { x: 15, y: 15 },
+  }))
+}
 
 const { BrowserPaneManager } = await import('../browser-pane-manager')
+const RealBrowserCDP = BrowserPaneManager.CdpImpl
+BrowserPaneManager.CdpImpl = MockBrowserCDP as unknown as typeof BrowserPaneManager.CdpImpl
+afterAll(() => {
+  BrowserPaneManager.CdpImpl = RealBrowserCDP
+})
 
 describe('BrowserPaneManager', () => {
   let manager: InstanceType<typeof BrowserPaneManager>
