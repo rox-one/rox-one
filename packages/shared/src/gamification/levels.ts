@@ -10,6 +10,11 @@ export type XpEventType =
   | 'automation_ran'
   | 'cloud_run_imported'
   | 'note_linked'
+  | 'first_note'
+  | 'first_task'
+  | 'first_workflow'
+  | 'first_browser'
+  | 'privacy_review'
 
 /** XP awarded per event type. */
 export const XP_EVENT_REWARDS: Record<XpEventType, number> = {
@@ -17,6 +22,11 @@ export const XP_EVENT_REWARDS: Record<XpEventType, number> = {
   automation_ran: 15,
   cloud_run_imported: 40,
   note_linked: 10,
+  first_note: 15,
+  first_task: 15,
+  first_workflow: 20,
+  first_browser: 15,
+  privacy_review: 10,
 }
 
 /**

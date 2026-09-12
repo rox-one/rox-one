@@ -99,6 +99,7 @@ describe('gamification storage + award', () => {
     const dir = tempConfigDir()
     saveGamificationState(
       {
+        ...getDefaultGamificationState(),
         version: 1,
         xp: 450,
         level: 1, // stale — load should derive 4
@@ -115,6 +116,7 @@ describe('gamification storage + award', () => {
     const dir = tempConfigDir()
     saveGamificationState(
       {
+        ...getDefaultGamificationState(),
         version: 1,
         xp: 10,
         level: 1,

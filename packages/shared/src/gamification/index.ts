@@ -11,6 +11,21 @@ export {
 } from './levels.ts'
 
 export {
+  QUEST_IDS,
+  QUEST_XP_EVENT,
+  QUEST_CLOUD_REQUIRED,
+  QUEST_SNOOZE_MS,
+  isQuestId,
+  defaultQuestRecords,
+  visibleQuests,
+  planProductAnalytics,
+  type QuestId,
+  type QuestStatus,
+  type QuestRecord,
+  type SessionRating,
+} from './quests.ts'
+
+export {
   GAMIFICATION_FILE,
   getGamificationPath,
   getDefaultGamificationState,
@@ -20,6 +35,9 @@ export {
   setGamificationAwardListener,
   awardXpSafe,
   getGamificationProgress,
+  applyQuestAction,
+  saveSessionRating,
+  setAnalyticsConsent,
   type GamificationState,
   type AwardXpResult,
 } from './storage.ts'

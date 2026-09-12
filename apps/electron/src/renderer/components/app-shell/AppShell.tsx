@@ -79,6 +79,7 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
 import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { QuestProgressCard } from "./QuestProgressCard"
 import {
   clearStatusUnseen,
   getUnseenStatuses,
@@ -2798,6 +2799,10 @@ function AppShellContent({
                 </div>
                 {/* Pinned profile strip — opens Settings */}
                 <div className="shrink-0 border-t border-foreground/5 px-1 py-1.5">
+                  <QuestProgressCard
+                    sessionId={effectiveSessionId}
+                    cloudFeaturesEnabled={true}
+                  />
                   <ProfileStrip
                     data={profileStrip}
                     onClick={() => handleSettingsClick('account')}
