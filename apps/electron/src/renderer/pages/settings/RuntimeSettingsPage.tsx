@@ -27,6 +27,7 @@ import {
   SettingsMenuSelectRow,
 } from '@/components/settings'
 import { useToolchainStatus } from '@/hooks/useToolchainStatus'
+import { ROX_VISIBLE_TERMS } from '@craft-agent/shared/identity'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { PermissionMode, ThinkingLevel, ToolchainToolName, ToolchainToolStatus } from '../../../shared/types'
 import { cn } from '@/lib/utils'
@@ -85,7 +86,7 @@ const TOOL_ORDER: readonly ToolchainToolName[] = [
 ]
 
 const TOOL_LABELS: Partial<Record<ToolchainToolName, string>> = {
-  omp: 'OMP runtime',
+  omp: `${ROX_VISIBLE_TERMS.cli} runtime`,
   bun: 'Bun',
   uv: 'uv',
   node: 'Node.js LTS',
