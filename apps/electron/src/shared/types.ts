@@ -519,10 +519,12 @@ export interface ElectronAPI {
     language?: 'en' | 'ru'
     kind?: 'research' | 'competitor' | 'literature' | 'vendor'
     personas?: boolean
+    omp?: boolean
     fromRunId?: string
     model?: { connectionSlug?: string; modelId?: string }
   }): Promise<{ id: string; provider: string; createdAt: number }>
   resumeCloudRun(args: { runId: string }): Promise<{ ok: boolean }>
+  killCloudRun(id: string): Promise<{ ok: boolean }>
   sessionTopicCloudRun(args: { sessionId: string }): Promise<{ topic: string }>
   readCloudRunArtifact(args: { runId: string; path: string }): Promise<{ content: string }>
   getCloudRunEvents(args: { runId: string }): Promise<{ t: number; message: string }[]>

@@ -32,6 +32,8 @@ import {
 
 export const DAYTONA_MAX_WALL_CLOCK_SEC = 6 * 60 * 60;
 export const DAYTONA_MAX_TTL_SEC = 24 * 60 * 60;
+export const DAYTONA_MAX_CONCURRENCY = 4;
+export const DAYTONA_DEFAULT_CONCURRENCY = 2;
 export const DAYTONA_DEFAULT_TTL_SEC = 60 * 60;
 
 export interface DaytonaProviderOptions {
@@ -59,6 +61,11 @@ interface SandboxMeta {
 function boundTtl(ttlSec?: number): number {
   const ttl = ttlSec && ttlSec > 0 ? ttlSec : DAYTONA_DEFAULT_TTL_SEC;
   return Math.min(ttl, DAYTONA_MAX_TTL_SEC);
+}
+
+export function boundConcurrency(value?: number): number {
+  if (!value || !Number.isFinite(value) || value < 1) return DAYTONA_DEFAULT_CONCURRENCY;
+  return Math.min(DAYTONA_MAX_CONCURRENCY, Math.floor(value));
 }
 
 function boundLimits(spec: RunSpec): { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number; ttlSec: number } {
@@ -142,6 +149,8 @@ export class DaytonaProvider implements CloudRunProvider {
         maxArtifactsBytes: bounds.maxArtifactsBytes,
       },
       ttlSec: bounds.ttlSec,
+      concurrency: boundConcurrency(spec.concurrency),
+      agenticMode: spec.agenticMode === 'omp' ? 'omp' : 'loop',
     };
     await writeFile(join(dir, 'spec.json'), JSON.stringify(safeSpec, null, 2));
     const startedAt = Date.now();
@@ -322,9 +331,13 @@ export class DaytonaProvider implements CloudRunProvider {
 
       const specBytes = await readFile(join(dir, 'spec.json'));
       await this.client.writeFile(sandboxId, '/run/spec.json', specBytes);
+      await this.seedSandboxFromHost(dir, sandboxId);
       if (signal.aborted) return;
       await this.setState(dir, { ...(await readJson<RunRecord>(join(dir, 'state.json')))!, state: 'running' });
-      await this.client.exec(sandboxId, 'rox-run', signal);
+      const spec = JSON.parse(specBytes.toString('utf8')) as RunSpec;
+      const concurrency = boundConcurrency(spec.concurrency);
+      const mode = spec.agenticMode === 'omp' ? 'omp' : 'loop';
+      await this.client.exec(sandboxId, `rox-run --concurrency ${concurrency} --mode ${mode}`, signal);
 
       await this.importArtifacts(dir, sandboxId, bounds.maxArtifactsBytes);
       if (signal.aborted) return;
@@ -360,6 +373,25 @@ export class DaytonaProvider implements CloudRunProvider {
     } finally {
       clearTimeout(watchdog);
     }
+  }
+
+  private async seedSandboxFromHost(dir: string, sandboxId: string): Promise<void> {
+    const root = join(dir, 'artifacts');
+    if (!existsSync(root)) return;
+    const walk = async (rel: string): Promise<void> => {
+      const abs = join(root, rel);
+      for (const entry of await readdir(abs, { withFileTypes: true })) {
+        const child = rel ? `${rel}/${entry.name}` : entry.name;
+        if (entry.isDirectory()) {
+          await walk(child);
+          continue;
+        }
+        assertSafeArtifactPath(child);
+        const bytes = new Uint8Array(await readFile(join(root, child)));
+        await this.client.writeFile(sandboxId, `/run/artifacts/${child}`, bytes);
+      }
+    };
+    await walk('');
   }
 
   private async importArtifacts(dir: string, sandboxId: string, maxBytes: number): Promise<void> {

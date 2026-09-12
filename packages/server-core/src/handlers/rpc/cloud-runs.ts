@@ -49,6 +49,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.LIST,
   RPC_CHANNELS.cloudRuns.GET_STATUS,
   RPC_CHANNELS.cloudRuns.CANCEL,
+  RPC_CHANNELS.cloudRuns.KILL,
   RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS,
   RPC_CHANNELS.cloudRuns.IMPORT,
   RPC_CHANNELS.cloudRuns.AGGREGATE,
@@ -714,21 +715,26 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(
     RPC_CHANNELS.cloudRuns.SUBMIT,
-    async (_ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
+    async (_ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; omp?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
       const settings = requireEnabled();
       if (!args?.topic?.trim()) throw new CloudRunnerError('topic is required', 'invalid_spec');
       const stored = loadStoredConfig()?.cloudRuns;
       // F7: fork narrows the pack to a single followup subtask with the
       // parent's briefs as context (gateway copies them server-side).
+      const daytona = settings.provider === 'daytona';
       const spec = buildResearchSpec(args.topic, {
         language: args.language ?? 'ru',
         kind: args.kind,
-        personas: args.fromRunId ? undefined : (args.personas ?? stored?.personas) ? DEFAULT_PERSONAS : undefined,
+        personas: args.fromRunId ? undefined : daytona && (args.personas ?? stored?.personas) ? DEFAULT_PERSONAS : undefined,
         cheapModelId: stored?.cheapModelId,
         model: args.model,
         limits: { ...settings.defaults },
         metadata: { sessionId: args.sessionId ?? '', parentRunId: args.fromRunId ?? '' },
       });
+      spec.concurrency = 2;
+      if (daytona) {
+        spec.agenticMode = args.omp ? 'omp' : 'loop';
+      }
       if (args.fromRunId) {
         spec.fromRunId = args.fromRunId;
         const registry = readRegistry();
@@ -875,6 +881,12 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(RPC_CHANNELS.cloudRuns.CANCEL, async (_ctx, id: string) => {
     await providerForRun(requireEnabled(), id).cancel(id);
+    return { ok: true };
+  });
+
+  server.handle(RPC_CHANNELS.cloudRuns.KILL, async (_ctx, id: string) => {
+    const provider = providerForRun(requireEnabled(), id);
+    await (provider.kill ?? provider.cancel).call(provider, id);
     return { ok: true };
   });
 

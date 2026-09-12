@@ -303,6 +303,20 @@ describe('cloud-runs rpc handlers (local provider)', () => {
     }
   });
 
+  test('KILL handler is registered', () => {
+    const dir = freshConfigDir();
+    try {
+      const r = runScript(dir, SETUP + `
+        if (!handlers.has(RPC_CHANNELS.cloudRuns.KILL)) throw new Error('missing KILL handler');
+        console.log('ok');
+      `);
+      expect(isNoiseStderr(r.stderr)).toBe(true);
+      expect(r.exitCode).toBe(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test('SET_CONFIG native is rejected without sidecar flag', () => {
     const dir = freshConfigDir();
     try {
