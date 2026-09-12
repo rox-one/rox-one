@@ -24,6 +24,7 @@ import {
   SettingsToggle,
   SettingsMenuSelectRow,
 } from '@/components/settings'
+import { VoiceSettingsSection } from './VoiceSettingsSection'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -106,6 +107,8 @@ export default function InputSettingsPage() {
                   />
                 </SettingsCard>
               </SettingsSection>
+
+              <VoiceSettingsSection />
 
               {/* Send Behavior */}
               <SettingsSection title={t("settings.input.sending")} description={t("settings.input.sendingDesc")}>

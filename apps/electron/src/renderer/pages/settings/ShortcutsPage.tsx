@@ -54,6 +54,7 @@ function useComponentSpecificSections(): ShortcutSection[] {
         { keys: ['Enter'], description: t('shortcuts.sendMessage') },
         { keys: ['Shift', 'Enter'], description: t('shortcuts.newLine') },
         { keys: ['Esc'], description: t('shortcuts.closeDialogBlur') },
+        { keys: [isMac ? '⌘' : 'Ctrl', 'Shift', 'D'], description: t('shortcuts.dictateMessage') },
       ],
     },
   ]
