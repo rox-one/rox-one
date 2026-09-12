@@ -30,6 +30,11 @@ import type {
   MarketplaceLockRecord,
 } from '@craft-agent/shared/marketplace'
 import {
+  CAPABILITY_PACKS,
+  CAPABILITY_TOOLS,
+  buildOfflineCapabilityReport,
+} from '@craft-agent/shared/capabilities'
+import {
   isHighRiskMarketplacePermission,
   permissionsForMarketplaceKind,
 } from '@craft-agent/shared/extensions/browser'
@@ -122,6 +127,7 @@ export default function MarketplaceSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copiedReport, setCopiedReport] = useState(false)
   /** Short-lived success banner from run() (cleared after 3s or next action). */
   const [actionSuccess, setActionSuccess] = useState<string | null>(null)
   /** Live install phase text per entry id (from marketplace:progress). */
@@ -248,6 +254,20 @@ export default function MarketplaceSettingsPage() {
     },
     [run, t],
   )
+
+  const copyOfflineReport = useCallback(async () => {
+    const installedIds = Object.entries(view?.installs ?? {})
+      .filter(([, lock]) => lock.status === 'installed')
+      .map(([id]) => id)
+    const report = buildOfflineCapabilityReport({
+      installedIds,
+      online: false,
+      generatedAt: Date.now(),
+    })
+    await navigator.clipboard.writeText(report)
+    setCopiedReport(true)
+    window.setTimeout(() => setCopiedReport(false), 3000)
+  }, [view])
 
   const allTags = useMemo(() => {
     if (!view) return []
@@ -383,6 +403,41 @@ export default function MarketplaceSettingsPage() {
             {actionSuccess}
           </div>
         ) : null}
+
+        <div className="mb-4" data-testid="capability-packs">
+        <SettingsCard className="mb-0">
+          <SettingsCardContent>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-medium">{t('capabilities.title')}</div>
+                <div className="text-xs text-muted-foreground mt-1">{t('capabilities.availableOnly')}</div>
+                <div className="text-xs text-muted-foreground mt-1">{t('capabilities.highRiskOff')}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void copyOfflineReport()}
+                className="text-xs px-2 py-1 rounded-md border border-border/50 hover:bg-muted shrink-0"
+              >
+                {copiedReport ? t('capabilities.copiedReport') : t('capabilities.offlineReport')}
+              </button>
+            </div>
+            <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              {CAPABILITY_PACKS.map((pack) => {
+                const tools = CAPABILITY_TOOLS.filter((item) => item.packId === pack.id)
+                const installedCount = tools.filter((item) => installs[item.id]?.status === 'installed').length
+                return (
+                  <li key={pack.id} className="text-xs border border-border/50 rounded-md px-2 py-1.5">
+                    <div className="font-medium">{t(`capabilities.pack.${pack.id}`)}</div>
+                    <div className="text-muted-foreground">
+                      {installedCount}/{tools.length}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </SettingsCardContent>
+        </SettingsCard>
+        </div>
 
         {/* Tabs: Skills | Tools | Services | Rules */}
         <div

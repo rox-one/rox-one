@@ -45,6 +45,7 @@
     "./browser": "./src/browser/index.ts",
     "./browser/profile-import": "./src/browser/profile-import.ts",
     "./browser/retained-pane": "./src/browser/retained-pane.ts",
+    "./capabilities": "./src/capabilities/index.ts",
     "./collaboration": "./src/collaboration/index.ts",
     "./colors": "./src/colors/index.ts",
     "./config": "./src/config/index.ts",
