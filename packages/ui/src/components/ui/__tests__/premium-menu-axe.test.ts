@@ -20,7 +20,7 @@ describe('premium menu axe source contract', () => {
     expect(menu).toContain('reduceMenuKey')
     expect(menu).toContain('handleTypeahead')
     expect(menu).toContain('searchable')
-    expect(menu).toContain('popover-styled')
+    expect(menu).toContain('tokens.surfaceClass')
   })
 
   it('keeps typeahead on the list when search is off', () => {
