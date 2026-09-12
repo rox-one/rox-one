@@ -297,9 +297,12 @@ function getElectronEnv(): Record<string, string> {
     VITE_DEV_SERVER_URL: `http://127.0.0.1:${vitePort}`,
     CRAFT_CONFIG_DIR: process.env.CRAFT_CONFIG_DIR || "",
     ROX_CONFIG_DIR: process.env.ROX_CONFIG_DIR || process.env.CRAFT_CONFIG_DIR || "",
-    CRAFT_USER_DATA_DIR: process.env.CRAFT_USER_DATA_DIR || "",
-    CRAFT_APP_NAME: process.env.CRAFT_APP_NAME || "Rox",
-    CRAFT_DEEPLINK_SCHEME: process.env.CRAFT_DEEPLINK_SCHEME || "craftagents",
+    CRAFT_USER_DATA_DIR: process.env.CRAFT_USER_DATA_DIR || process.env.ROX_USER_DATA_DIR || "",
+    ROX_USER_DATA_DIR: process.env.ROX_USER_DATA_DIR || process.env.CRAFT_USER_DATA_DIR || "",
+    CRAFT_APP_NAME: process.env.CRAFT_APP_NAME || process.env.ROX_APP_NAME || "Rox",
+    ROX_APP_NAME: process.env.ROX_APP_NAME || process.env.CRAFT_APP_NAME || "Rox",
+    CRAFT_DEEPLINK_SCHEME: process.env.CRAFT_DEEPLINK_SCHEME || process.env.ROX_DEEPLINK_SCHEME || "rox",
+    ROX_DEEPLINK_SCHEME: process.env.ROX_DEEPLINK_SCHEME || process.env.CRAFT_DEEPLINK_SCHEME || "rox",
     CRAFT_INSTANCE_NUMBER: process.env.CRAFT_INSTANCE_NUMBER || "",
   };
 }

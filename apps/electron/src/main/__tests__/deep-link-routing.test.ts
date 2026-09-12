@@ -101,4 +101,32 @@ describe('handleDeepLink routing', () => {
     expect(sent.length).toBe(1)
     expect(sent[0]?.target).toEqual({ to: 'workspace', workspaceId: 'ws-target' })
   })
+
+  it('routes the Rox deeplink scheme the same as the Craft-era alias', async () => {
+    const targetWindow = createMockWindow(22)
+
+    const windowManager = {
+      focusOrCreateWindow: () => targetWindow,
+      getFocusedWindow: () => targetWindow,
+      getLastActiveWindow: () => targetWindow,
+      getWorkspaceForWindow: (webContentsId: number) => webContentsId === 22 ? 'ws-target' : 'ws-other',
+    } as unknown as WindowManager
+
+    const sent: Array<{ channel: string; target: unknown; args: unknown[] }> = []
+    const sink: EventSink = (channel, target, ...args) => {
+      sent.push({ channel, target, args })
+    }
+
+    await handleDeepLink(
+      'rox://workspace/ws-target/allSessions',
+      windowManager,
+      sink,
+      (wcId) => wcId === 22 ? 'client-target' : undefined,
+      'client-caller',
+    )
+
+    expect(sent.length).toBe(1)
+    expect(sent[0]?.channel).toBe(RPC_CHANNELS.deeplink.NAVIGATE)
+    expect(sent[0]?.target).toEqual({ to: 'client', clientId: 'client-target' })
+  })
 })

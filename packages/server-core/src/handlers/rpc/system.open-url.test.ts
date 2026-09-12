@@ -78,6 +78,20 @@ describe('registerSystemCoreHandlers OPEN_URL', () => {
     })
   })
 
+  it('routes rox:// action links internally via deeplink:navigate', async () => {
+    const { openUrl, ctx, invokeClientCalls, pushCalls } = createTestHarness()
+
+    await openUrl(ctx, 'rox://action/new-session?input=sg&send=true')
+
+    expect(invokeClientCalls).toHaveLength(0)
+    expect(pushCalls).toHaveLength(1)
+    expect(pushCalls[0]).toEqual({
+      channel: RPC_CHANNELS.deeplink.NAVIGATE,
+      target: { to: 'client', clientId: 'client-1' },
+      args: [{ action: 'new-session', actionParams: { input: 'sg', send: 'true' } }],
+    })
+  })
+
   it('routes workspace deep links to workspace target when URL workspace differs', async () => {
     const { openUrl, ctx, invokeClientCalls, pushCalls } = createTestHarness({ workspaceId: 'ws-1' })
 

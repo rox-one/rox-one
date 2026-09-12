@@ -1,12 +1,19 @@
 /**
- * Identity expand (ticket 07): ROX_* names work beside CRAFT_*.
+ * Identity expand (ticket 07) + Issue 33 directory cutover:
+ * ROX_* names work beside CRAFT_*. A CRAFT_* fallback logs one
+ * deprecation warning per process per name.
  *
- * Existing ~/.craft-agent installs keep working. A CRAFT_* fallback logs
- * one deprecation warning per process per name. The default config
- * directory is not moved.
+ * Default directory: ~/.rox when present or on a clean install.
+ * Existing ~/.craft-agent trees stay readable until brand migration
+ * copies them (see identity/config-migration.ts).
  */
+import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import {
+  ROX_CONFIG_DIR_NAME,
+  ROX_LEGACY_CONFIG_DIR_NAME,
+} from '../identity/manifest.ts';
 
 const warnedCraftNames = new Set<string>();
 
@@ -43,12 +50,22 @@ export function getEnv(
 }
 
 /**
- * Config dir: ROX_CONFIG_DIR, then CRAFT_CONFIG_DIR, then ~/.craft-agent.
- * Does not relocate the default directory.
+ * Config dir: ROX_CONFIG_DIR, then CRAFT_CONFIG_DIR, then ~/.rox when
+ * it exists or neither tree exists (clean install). A Craft-era
+ * ~/.craft-agent without ~/.rox stays in place until migration runs.
  */
 export function resolveConfigDir(
   env: NodeJS.ProcessEnv | Record<string, string | undefined> = process.env,
   homeDir: string = homedir(),
 ): string {
-  return getEnv('CONFIG_DIR', env) || join(homeDir, '.craft-agent');
+  const override = getEnv('CONFIG_DIR', env);
+  if (override) return override;
+  const roxDir = join(homeDir, ROX_CONFIG_DIR_NAME);
+  const legacyDir = join(homeDir, ROX_LEGACY_CONFIG_DIR_NAME);
+  if (existsSync(roxDir)) return roxDir;
+  if (existsSync(legacyDir)) {
+    warnCraftDeprecated(`~/${ROX_LEGACY_CONFIG_DIR_NAME}`, `~/${ROX_CONFIG_DIR_NAME}`);
+    return legacyDir;
+  }
+  return roxDir;
 }

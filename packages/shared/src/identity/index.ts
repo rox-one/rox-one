@@ -23,3 +23,41 @@ export {
   type AgentIdentitySource,
   type AgentIdentityRecord,
 } from './agent-identity.ts'
+
+export {
+  ROX_ALIAS_REMOVAL_DEADLINE,
+  ROX_BRAND_MIGRATION_VERSION,
+  ROX_BRO_ORIGIN,
+  ROX_BUNDLE_ID,
+  ROX_CONFIG_DIR_ENV,
+  ROX_CONFIG_DIR_NAME,
+  ROX_DEEPLINK_SCHEME,
+  ROX_LEGACY_ALIASES,
+  ROX_LEGACY_BUNDLE_ID,
+  ROX_LEGACY_CONFIG_DIR_ENV,
+  ROX_LEGACY_CONFIG_DIR_NAME,
+  ROX_LEGACY_DEEPLINK_SCHEME,
+  ROX_LEGACY_UPDATE_CHANNEL,
+  ROX_MIGRATION_MANIFEST,
+  ROX_PRODUCT_NAME,
+  ROX_PUBLIC_ORIGIN,
+  ROX_TYPOGRAPHY,
+  ROX_UPDATE_CHANNEL,
+  isRoxDeeplinkProtocol,
+  isRoxDeeplinkUrl,
+  type RoxMigrationManifest,
+} from './manifest.ts'
+
+export {
+  ROX_MIGRATION_STAMP_NAME,
+  defaultBrandMigrationPaths,
+  exportBrandConfig,
+  readMigrationStamp,
+  rollbackBrandConfigMigration,
+  runBrandConfigMigration,
+  stampPath,
+  uninstallBrandConfig,
+  type BrandMigrationOutcome,
+  type BrandMigrationResult,
+  type BrandMigrationStamp,
+} from './config-migration.ts'

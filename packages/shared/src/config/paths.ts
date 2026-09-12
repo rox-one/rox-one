@@ -5,7 +5,8 @@
  * CRAFT_CONFIG_DIR. When running from a numbered folder (e.g., craft-tui-agent-1),
  * detect-instance.sh sets the override to ~/.craft-agent-1 so instances stay isolated.
  *
- * Default (non-numbered folders): ~/.craft-agent/
+ * Default (clean install): ~/.rox/
+ * Existing Craft-era tree without ~/.rox: ~/.craft-agent/ until Issue 33 migration.
  * Instance 1 (-1 suffix): ~/.craft-agent-1/
  * Instance 2 (-2 suffix): ~/.craft-agent-2/
  *
