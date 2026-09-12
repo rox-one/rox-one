@@ -43,6 +43,7 @@ mock.module('@craft-agent/shared/auth', () => ({
       shouldShowOnboardingOnLaunch: false,
     },
   }),
+  saveOmpRoxCredential: async () => ({ success: true, ready: true }),
   prepareClaudeOAuth: () => {
     oauthPreparationCalls += 1
     return 'https://example.test/oauth'
