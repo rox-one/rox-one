@@ -63,6 +63,76 @@ export function isSafeExternalUrl(rawUrl: string): boolean {
 }
 
 /**
+ * Product link policy (Issue 14): where a user-clicked URL should open.
+ * `classifyExternalUrl` stays the OS-open blocklist; this table decides
+ * internal browser vs OS handler vs blocked.
+ */
+export type LinkPolicyKind = 'internal-browser' | 'external' | 'deeplink' | 'blocked'
+
+export type LinkPolicy = {
+  kind: LinkPolicyKind
+  reason: string
+}
+
+const AUTH_HOST_MARKERS = [
+  'accounts.google.',
+  'login.microsoftonline.',
+  'login.live.',
+  'login.yahoo.',
+  'appleid.apple.com',
+]
+
+function hostLooksLikeAuth(hostname: string): boolean {
+  const host = hostname.toLowerCase()
+  if (host.endsWith('.auth0.com') || host.endsWith('.okta.com') || host.endsWith('.oktacdn.com')) {
+    return true
+  }
+  return AUTH_HOST_MARKERS.some((marker) => host.includes(marker))
+}
+
+function pathLooksLikeAuth(pathname: string, search: string): boolean {
+  const path = pathname.toLowerCase()
+  const query = search.toLowerCase()
+  if (
+    path.includes('/oauth/')
+    || path.includes('/oauth2/')
+    || path.includes('/oidc/')
+    || path.endsWith('/callback')
+    || path.includes('/authorize')
+  ) {
+    return true
+  }
+  return query.includes('code=') && query.includes('state=')
+}
+
+export function classifyLinkPolicy(rawUrl: string): LinkPolicy {
+  const classified = classifyExternalUrl(rawUrl)
+  if (classified.kind === 'dangerous') {
+    return { kind: 'blocked', reason: classified.reason }
+  }
+  if (classified.kind === 'internal-deeplink') {
+    return { kind: 'deeplink', reason: 'Craft deep link stays inside the app router.' }
+  }
+
+  let parsed: URL
+  try {
+    parsed = new URL(rawUrl.trim())
+  } catch {
+    return { kind: 'blocked', reason: 'URL is malformed and cannot be parsed.' }
+  }
+
+  const protocol = parsed.protocol.toLowerCase()
+  if (protocol === 'http:' || protocol === 'https:') {
+    if (hostLooksLikeAuth(parsed.hostname) || pathLooksLikeAuth(parsed.pathname, parsed.search)) {
+      return { kind: 'external', reason: 'Auth and OAuth callbacks open in the system browser.' }
+    }
+    return { kind: 'internal-browser', reason: 'Safe http/https links open in the Rox browser.' }
+  }
+
+  return { kind: 'external', reason: 'Mailto, tel, and custom app schemes open in the OS handler.' }
+}
+
+/**
  * Format a `dangerous` classification into a user-facing error message.
  * Returns an empty string for non-dangerous classifications.
  */

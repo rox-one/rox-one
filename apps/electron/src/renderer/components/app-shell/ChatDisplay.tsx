@@ -539,6 +539,32 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   connectionUnavailable = false,
 }, ref) {
   const { t } = useTranslation()
+  const [listeningTurnId, setListeningTurnId] = React.useState<string | null>(null)
+
+  const handleListen = useCallback(async (text: string, turnId: string) => {
+    if (!text.trim()) return
+    if (listeningTurnId === turnId) {
+      window.speechSynthesis?.cancel()
+      setListeningTurnId(null)
+      return
+    }
+    setListeningTurnId(turnId)
+    try {
+      await window.electronAPI.speakVoice({ text })
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.onend = () => setListeningTurnId((current) => current === turnId ? null : current)
+        utterance.onerror = () => setListeningTurnId(null)
+        window.speechSynthesis.speak(utterance)
+      } else {
+        setListeningTurnId(null)
+      }
+    } catch (error) {
+      setListeningTurnId(null)
+      toast.error(error instanceof Error ? error.message : t('chat.listen'))
+    }
+  }, [listeningTurnId, t])
 
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
@@ -1974,6 +2000,8 @@ const handleFollowUpChipClick = useCallback((item: {
                         todos={turn.todos}
                         onOpenFile={onOpenFile}
                         onOpenUrl={onOpenUrl}
+                        onListen={(text) => { void handleListen(text, turn.turnId) }}
+                        isListening={listeningTurnId === turn.turnId}
                         isLastResponse={isLastResponse}
                         compactMode={compactMode}
                         sendMessageKey={sendMessageKey}

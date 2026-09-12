@@ -32,6 +32,7 @@ describe('CloudRunsSettingsPage compact layout and recovery', () => {
     expect(source).toContain('onClick={() => void load()}')
     expect(source).toContain('onClick={() => patch(failedPatch)}')
     expect(source).toContain("t('common.retry')")
+    expect(source).toContain('translateCloudRunsError')
   })
 
   it('names the refresh operation and exposes enabled or disabled status', () => {
@@ -39,17 +40,33 @@ describe('CloudRunsSettingsPage compact layout and recovery', () => {
     expect(source).toContain("t('automations.statusDisabled')")
   })
 
-  it('rebinds gateway, webhook, limits, and cheap-model fields after a successful load', () => {
+  it('rebinds webhook, limits, cheap-model, and Daytona sandbox fields after a successful load', () => {
     expect(source).toContain('setDraft(draftFromConfig(next))')
-    expect(source).toContain('value={draft.gatewayUrl}')
     expect(source).toContain('value={draft.notifyWebhookUrl}')
     expect(source).toContain('value={draft.maxWallClockSec}')
     expect(source).toContain('value={draft.maxLlmTokens}')
     expect(source).toContain('value={draft.maxArtifactsBytes}')
     expect(source).toContain('value={draft.cheapModelId}')
+    expect(source).toContain('value={draft.daytonaProjectId}')
+    expect(source).toContain('value={draft.daytonaSnapshot}')
+    expect(source).toContain('value={draft.daytonaSandbox}')
+    expect(source).toContain('value={draft.daytonaRegion}')
+    expect(source).toContain('value={draft.daytonaImage}')
+    expect(source).toContain('value={draft.defaultTtlSec}')
     expect(source).not.toContain('defaultValue=')
     expect(source).toContain('config.tokenConfigured')
     expect(source).not.toMatch(/type=["']password["']/)
     expect(source).not.toMatch(/BYOK|jwt|JWT|secret editor/i)
+    expect(source).not.toContain('<select')
+    expect(source).not.toContain('cloudflare')
+    expect(source).not.toContain('modal')
+  })
+
+  it('exposes a Rox-native sandbox tab instead of embedding grok-bot UI', () => {
+    expect(source).toContain("t('settings.cloudRuns.sectionSandbox')")
+    expect(source).toContain("t('settings.cloudRuns.sandboxTab')")
+    expect(source).toContain("t('settings.cloudRuns.sandboxGated')")
+    expect(source).not.toContain('grok-bot')
+    expect(source).not.toContain('iframe')
   })
 })

@@ -28,13 +28,15 @@ describe('CloudRunsChip compact dialog accessibility', () => {
     expect(source).toContain('refreshError')
     expect(source).toContain('role="alert"')
     expect(source).toContain("t('common.retry')")
+    expect(source).toContain('translateCloudRunsError')
+    expect(source).toContain("message.startsWith('security.assurance.')")
     expect(source).toContain('onRetryAvailability')
   })
 
   it('groups run operations in a named accessible menu without dropping actions', () => {
     expect(source).toContain('<DropdownMenuContent align="end">')
     expect(source).toContain("aria-label={t('common.more')}")
-    for (const action of ['cancel', 'resume', 'retry', 'fork', 'preview', 'share', 'import', 'aggregate'] as const) {
+    for (const action of ['cancel', 'kill', 'resume', 'retry', 'fork', 'preview', 'share', 'import', 'aggregate'] as const) {
       expect(source).toContain(`t('cloudRuns.${action}')`)
     }
   })

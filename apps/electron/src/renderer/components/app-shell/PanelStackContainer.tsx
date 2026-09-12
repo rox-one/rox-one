@@ -122,6 +122,7 @@ export function PanelStackContainer({
       <div
         ref={scrollRef}
         data-mobile-menu-root="true"
+        data-shell-density="compact"
         className="flex-1 min-w-0 relative panel-scroll @container/shell"
         style={{
           paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
@@ -138,7 +139,7 @@ export function PanelStackContainer({
               data-panel-role="navigator"
               className={cn(
                 'h-full w-full overflow-hidden relative',
-                'bg-background shadow-middle',
+                'bg-background shadow-middle rox-panel',
               )}
               style={{
                 // Compact mode runs flush to the viewport floor — no rounded bottom.
@@ -181,6 +182,7 @@ export function PanelStackContainer({
     <div
       ref={scrollRef}
       data-mobile-menu-root="true"
+      data-shell-density={isCompact ? 'compact' : 'regular'}
       className="flex-1 min-w-0 flex relative z-panel panel-scroll @container/shell"
       style={{
         overflowX: 'auto',
@@ -230,7 +232,7 @@ export function PanelStackContainer({
           transition={transition}
           className={cn(
             'h-full overflow-hidden relative shrink-0 z-[2]',
-            'bg-background shadow-middle',
+            'bg-background shadow-middle rox-panel',
           )}
           style={{
             borderTopLeftRadius: RADIUS_INNER,

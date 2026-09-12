@@ -22,7 +22,7 @@ export interface BrowserPanelPageProps {
   persist?: boolean
 }
 
-export default function BrowserPanelPage({ instanceId, panelId, persist = false }: BrowserPanelPageProps) {
+export default function BrowserPanelPage({ instanceId, panelId, persist = true }: BrowserPanelPageProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef(0)
@@ -81,7 +81,7 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = false 
     scheduleSync()
   }, [isFocused, removed, scheduleSync])
 
-  // Track instance lifecycle: show placeholder if main reports this id removed
+  // Track instance lifecycle: hide native views, but restore from list() instead of a dead pane.
   useEffect(() => {
     const offRemoved = window.electronAPI.browserPane.onRemoved((id) => {
       if (id === instanceId) setRemoved(true)
@@ -94,6 +94,21 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = false 
       offStateChanged()
     }
   }, [instanceId])
+
+  useEffect(() => {
+    if (!removed) return
+    let cancelled = false
+    void window.electronAPI.browserPane.list().then((items) => {
+      if (cancelled) return
+      if (items.some((item) => item.id === instanceId)) setRemoved(false)
+    }).catch(() => undefined)
+    return () => { cancelled = true }
+  }, [removed, instanceId])
+
+  const restorePane = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))
+    setRemoved(false)
+  }, [])
 
   // Hide native views on unmount. Destroy is deferred one microtask so React
   // StrictMode remounts (dev) do not kill the instance before the second mount.
@@ -113,8 +128,15 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = false 
 
   if (removed) {
     return (
-      <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
-        <p className="text-sm">{t('browser.closed', { defaultValue: 'Browser closed' })}</p>
+      <div className="flex flex-col items-center justify-center h-full w-full gap-3 bg-background text-muted-foreground">
+        <p className="text-sm">{t('browser.closed')}</p>
+        <button
+          type="button"
+          className="rounded-md border border-border px-3 py-1 text-xs text-foreground hover:bg-foreground/5"
+          onClick={restorePane}
+        >
+          {t('browser.restore')}
+        </button>
       </div>
     )
   }

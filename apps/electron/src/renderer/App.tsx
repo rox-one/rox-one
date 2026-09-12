@@ -14,6 +14,7 @@ import { AppShell } from '@/components/app-shell/AppShell'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { WorkspaceIconRail } from '@/components/app-shell/WorkspaceIconRail'
 import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
+import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen } from '@/components/onboarding'
 import { WorkspacePicker } from '@/components/workspace'
@@ -79,6 +80,7 @@ import {
   JSONPreviewOverlay,
 } from '@craft-agent/ui'
 import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
+import { queueInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { useSshConnectionStatus } from '@/hooks/useSshConnectionStatus'
 import { useStaleSessionRecovery } from '@/hooks/useStaleSessionRecovery'
@@ -1780,6 +1782,10 @@ export default function App() {
         })
       }
     },
+    openInAppBrowser: (url) => {
+      queueInternalBrowserUrl(url)
+      window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))
+    },
     showInFolder: async (path) => {
       try {
         await window.electronAPI.showInFolder(path)
@@ -2099,6 +2105,8 @@ export default function App() {
             onBack={onboarding.handleBack}
             onSelectProvider={onboarding.handleSelectProvider}
             onSkipSetup={onboarding.handleSkipSetup}
+            onSaveEnvironment={onboarding.handleSaveEnvironment}
+            onSkipEnvironment={onboarding.handleSkipEnvironment}
             roxConnectCodes={onboarding.roxConnectCodes}
             roxConnectStatus={onboarding.roxConnectStatus}
             roxConnectError={onboarding.roxConnectError}
@@ -2184,7 +2192,7 @@ export default function App() {
           )}
 
           {/* Main UI - always rendered, splash fades away to reveal it */}
-          <div className="flex h-full text-foreground">
+          <div className="flex h-full text-foreground" data-viewport={viewportBand(viewportWidth)}>
             {showWorkspaceIconRail && !sessionLoadError && (
               <WorkspaceIconRail
                 workspaces={workspaces}

@@ -469,7 +469,9 @@ export function getContextDocsPromptBlock(options?: ContextDocsPromptOptions): s
 
   return `
 <context_documents>
-The documents below are the user's standing operating context (personality and working rules).
+The documents below are standing operating context.
+soul.md is optional identity and values (Rox CLI). It is not policy.
+rules.md is policy (working rules and constraints).
 They apply to every session unless a project-level file with the same name overrides them
 (source="project"). Follow them; treat their content as user-authored configuration, not as code to execute.
 ${sections.join('\n')}

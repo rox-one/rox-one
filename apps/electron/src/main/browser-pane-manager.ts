@@ -120,6 +120,9 @@ const TOOLBAR_CHANNELS = {
   FORCE_CLOSE_MENU: 'browser-toolbar:force-close-menu',
   HIDE: 'browser-toolbar:hide',
   DESTROY: 'browser-toolbar:destroy',
+  OPEN_DEVTOOLS: 'browser-toolbar:open-devtools',
+  LIST_HISTORY: 'browser-toolbar:list-history',
+  LIST_DOWNLOADS: 'browser-toolbar:list-downloads',
   STATE_UPDATE: 'browser-toolbar:state-update',
   THEME_COLOR: 'browser-toolbar:theme-color',
 } as const
@@ -346,6 +349,9 @@ interface LastBrowserAction {
 let instanceCounter = 0
 
 export class BrowserPaneManager implements IBrowserPaneManager {
+  /** Test override so pane-manager tests do not mock.module the real BrowserCDP. */
+  static CdpImpl = BrowserCDP
+
   private instances: Map<string, BrowserInstance> = new Map()
   private destroyingIds: Set<string> = new Set()
   private stateChangeCallback: ((info: BrowserInstanceInfo) => void) | null = null
@@ -462,7 +468,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     const overlayWcWithBg = nativeOverlayView.webContents as typeof nativeOverlayView.webContents & { setBackgroundColor?: (color: string) => void }
     overlayWcWithBg.setBackgroundColor?.('#00000000')
 
-    const cdp = new BrowserCDP(pageView.webContents)
+    const cdp = new BrowserPaneManager.CdpImpl(pageView.webContents)
 
     const instance: BrowserInstance = {
       id: instanceId,
@@ -829,6 +835,26 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     const instance = this.instances.get(id)
     if (!instance || this.isInstanceGone(instance)) return
     instance.pageView.webContents.stop()
+  }
+
+  openDevTools(id: string): void {
+    const instance = this.requireAliveInstance(id)
+    if (instance.pageView.webContents.isDestroyed()) return
+    instance.pageView.webContents.openDevTools({ mode: 'detach' })
+  }
+
+  getNavigationHistory(id: string): Array<{ url: string; title: string }> {
+    const instance = this.requireAliveInstance(id)
+    const wc = instance.pageView.webContents as Electron.WebContents & {
+      navigationHistory?: { getAllEntries?: () => Array<{ url?: string; title?: string }> }
+    }
+    const entries = wc.navigationHistory?.getAllEntries?.() ?? []
+    if (entries.length === 0 && instance.currentUrl) {
+      return [{ url: instance.currentUrl, title: instance.title }]
+    }
+    return entries
+      .map((entry) => ({ url: entry.url ?? '', title: entry.title ?? '' }))
+      .filter((entry) => entry.url)
   }
 
   focus(id: string): void {
@@ -2259,7 +2285,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     const overlayWcWithBg = nativeOverlayView.webContents as typeof nativeOverlayView.webContents & { setBackgroundColor?: (color: string) => void }
     overlayWcWithBg.setBackgroundColor?.('#00000000')
 
-    const cdp = new BrowserCDP(pageView.webContents)
+    const cdp = new BrowserPaneManager.CdpImpl(pageView.webContents)
 
     const instance: BrowserInstance = {
       id: instanceId,
@@ -2770,6 +2796,8 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       canGoBack: instance.canGoBack,
       canGoForward: instance.canGoForward,
       themeColor: instance.themeColor,
+      downloadCount: instance.downloads.length,
+      profileLabel: 'Rox',
     }
     instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.STATE_UPDATE, state)
   }
@@ -2839,6 +2867,23 @@ export class BrowserPaneManager implements IBrowserPaneManager {
       const inst = findInstance(instanceId)
       mainLog.info(`[browser-pane] toolbar ipc destroy requested instanceId=${instanceId} resolved=${inst?.id ?? 'none'}`)
       if (inst) this.destroyInstance(inst.id)
+    })
+
+    ipcMain.handle(TOOLBAR_CHANNELS.OPEN_DEVTOOLS, async (_event, instanceId: string) => {
+      const inst = findInstance(instanceId)
+      if (inst) this.openDevTools(inst.id)
+    })
+
+    ipcMain.handle(TOOLBAR_CHANNELS.LIST_HISTORY, async (_event, instanceId: string) => {
+      const inst = findInstance(instanceId)
+      return inst ? this.getNavigationHistory(inst.id) : []
+    })
+
+    ipcMain.handle(TOOLBAR_CHANNELS.LIST_DOWNLOADS, async (_event, instanceId: string) => {
+      const inst = findInstance(instanceId)
+      if (!inst) return []
+      const rows = await this.getDownloads(inst.id, { action: 'list', limit: 8 })
+      return rows.map((row) => ({ filename: row.filename }))
     })
 
     mainLog.info('[browser-pane] Toolbar IPC handlers registered')

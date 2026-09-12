@@ -78,8 +78,16 @@ import type { CollectionViewMode } from "./kanban/BoardListToggle"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
-import { ProfileStrip, type ProfileStripData } from "./ProfileStrip"
+import { type ProfileStripData } from "./ProfileStrip"
 import { QuestProgressCard } from "./QuestProgressCard"
+import { SidebarChrome } from "./SidebarChrome"
+import { useTransportConnectionState } from "@/hooks/useTransportConnectionState"
+import { useWorkspaceTaskCount } from "@/hooks/useWorkspaceTaskCount"
+import { usePromoInsights } from "@/hooks/usePromoInsights"
+import { buildMiniDashboard } from "@/platform/mini-dashboard"
+import { resolvePromoSlot } from "@/platform/promo-slot"
+import { viewportBand } from "@/platform/viewport-band"
+import { isHomeSessionInWorkspace } from "@/platform/home-model"
 import {
   clearStatusUnseen,
   getUnseenStatuses,
@@ -339,6 +347,9 @@ function AppShellContent({
 
 
   // Profile strip (gamification footer)
+  const transportConnectionState = useTransportConnectionState()
+  const workspaceTaskCount = useWorkspaceTaskCount(activeWorkspaceId)
+  const promoInsights = usePromoInsights(activeWorkspaceId ?? undefined)
   const [profileStrip, setProfileStrip] = React.useState<ProfileStripData>({
     displayName: '',
     plan: 'standard',
@@ -1241,6 +1252,22 @@ function AppShellContent({
   // Use session metadata from Jotai atom (lightweight, no messages)
   // This prevents closures from retaining full message arrays
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const dashboardSnapshot = useMemo(() => {
+    const remoteWorkspaceId = activeWorkspace?.remoteServer?.remoteWorkspaceId
+    const sessions = [...sessionMetaMap.values()].filter((session) =>
+      isHomeSessionInWorkspace(session, activeWorkspaceId, remoteWorkspaceId),
+    )
+    return buildMiniDashboard({
+      sessions,
+      tasks: workspaceTaskCount,
+      connection: transportConnectionState,
+    })
+  }, [sessionMetaMap, activeWorkspaceId, activeWorkspace, workspaceTaskCount, transportConnectionState])
+  const promoKind = resolvePromoSlot({
+    insightsLoaded: promoInsights.loaded,
+    onboarded: promoInsights.onboarded,
+    totalLessons: promoInsights.totalLessons,
+  })
   const setSessionMetaMap = useSetAtom(sessionMetaMapAtom)
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const harnessAgentTeams = useAtomValue(featureWorkbenchHarnessAgentTeamsAtom)
@@ -2420,6 +2447,7 @@ function AppShellContent({
       <div
         ref={shellRef}
         className="relative flex min-h-0 flex-1 items-stretch"
+        data-viewport={shellWidth > 0 ? viewportBand(shellWidth) : undefined}
         style={{
           paddingRight: isAutoCompact ? 0 : PANEL_EDGE_INSET,
           paddingBottom: (isAutoCompact || showStatusBar) ? 0 : PANEL_EDGE_INSET,
@@ -2815,15 +2843,19 @@ function AppShellContent({
                 {/* Agent Tree: Hierarchical list of agents */}
                 {/* Agents section removed */}
                 </div>
-                {/* Pinned profile strip — opens Settings */}
-                <div className="shrink-0 border-t border-foreground/5 px-1 py-1.5">
-                  <QuestProgressCard
-                    sessionId={effectiveSessionId}
-                    cloudFeaturesEnabled={true}
-                  />
-                  <ProfileStrip
-                    data={profileStrip}
-                    onClick={() => handleSettingsClick('account')}
+                <div className="shrink-0">
+                  <div className="border-t border-foreground/5 px-1 pt-1.5">
+                    <QuestProgressCard
+                      sessionId={effectiveSessionId}
+                      cloudFeaturesEnabled={true}
+                    />
+                  </div>
+                  <SidebarChrome
+                    profile={profileStrip}
+                    onProfileClick={() => handleSettingsClick('account')}
+                    snapshot={dashboardSnapshot}
+                    promoKind={promoKind}
+                    onPromoCta={handleMemoryClick}
                   />
                 </div>
               </div>
@@ -2848,7 +2880,7 @@ function AppShellContent({
                     </span>
                   </TooltipTrigger>
                   <TooltipContent side="bottom" className="max-w-[220px]">
-                    Scheduling requires your machine to be running. It can be locked, but must be powered on.
+                    {t("automations.schedulingRequiresMachine")}
                   </TooltipContent>
                 </Tooltip>
               ) : undefined}

@@ -26,6 +26,8 @@ import { wrapWithSafeProxy } from './safe-components'
 import { MARKDOWN_MATH_OPTIONS } from './math-options'
 import { markdownUrlTransform } from './url-transform'
 import { usePlatform } from '../../context/PlatformContext'
+import { SourcedStatement } from './SourcedStatement'
+import { indexCitationViews, lookupCitation, type SourceCitationView } from '@craft-agent/core/research'
 
 /**
  * Names of preview-block code-fence types that recursive `Markdown` callers
@@ -74,6 +76,10 @@ export interface MarkdownProps {
    * Callback when a file path is clicked
    */
   onFileClick?: (path: string) => void
+  /**
+   * Ranked research sources for dotted-underline hover cards on matching links.
+   */
+  sourceCitations?: readonly SourceCitationView[]
   /**
    * Enable collapsible headings
    * Requires wrapping in CollapsibleMarkdownProvider
@@ -193,6 +199,7 @@ function createComponents(
   firstMermaidCodeRef?: React.RefObject<string | null>,
   hideFirstMermaidExpand: boolean = true,
   disablePreviewBlocks?: ReadonlySet<DisablablePreviewBlock>,
+  sourceByUrl?: ReadonlyMap<string, SourceCitationView>,
 ): Partial<Components> {
   const isPreviewEnabled = (name: DisablablePreviewBlock) => !disablePreviewBlocks?.has(name)
   let blockIndex = 0
@@ -284,13 +291,17 @@ function createComponents(
         }
       }
 
+      const citation = sourceByUrl
+        ? lookupCitation(safeHref ?? trimmedHref, sourceByUrl)
+        : undefined
+
       return (
         <a
           href={safeHref}
           onClick={handleClick}
-          className="text-accent hover:underline cursor-pointer"
+          className={citation ? 'text-accent cursor-pointer' : 'text-accent hover:underline cursor-pointer'}
         >
-          {children}
+          {citation ? <SourcedStatement source={citation}>{children}</SourcedStatement> : children}
         </a>
       )
     },
@@ -639,6 +650,7 @@ export function Markdown({
   id,
   onUrlClick,
   onFileClick,
+  sourceCitations,
   collapsible = false,
   hideFirstMermaidExpand = true,
   disablePreviewBlocks,
@@ -659,9 +671,14 @@ export function Markdown({
     firstMermaidCodeRef.current = null
   }
 
+  const sourceByUrl = React.useMemo(
+    () => (sourceCitations?.length ? indexCitationViews(sourceCitations) : undefined),
+    [sourceCitations],
+  )
+
   const components = React.useMemo(
-    () => wrapWithSafeProxy(createComponents(mode, onUrlClick, onFileClick, collapsible ? collapsibleContext : null, firstMermaidCodeRef, hideFirstMermaidExpand, disablePreviewBlocks)),
-    [mode, onUrlClick, onFileClick, collapsible, collapsibleContext, hideFirstMermaidExpand, disablePreviewBlocks]
+    () => wrapWithSafeProxy(createComponents(mode, onUrlClick, onFileClick, collapsible ? collapsibleContext : null, firstMermaidCodeRef, hideFirstMermaidExpand, disablePreviewBlocks, sourceByUrl)),
+    [mode, onUrlClick, onFileClick, collapsible, collapsibleContext, hideFirstMermaidExpand, disablePreviewBlocks, sourceByUrl]
   )
 
   // Preprocess to convert raw URLs and file paths to markdown links
@@ -715,14 +732,16 @@ export const MemoizedMarkdown = React.memo(
         prevProps.id === nextProps.id &&
         prevProps.children === nextProps.children &&
         prevProps.mode === nextProps.mode &&
-        prevProps.disablePreviewBlocks === nextProps.disablePreviewBlocks
+        prevProps.disablePreviewBlocks === nextProps.disablePreviewBlocks &&
+        prevProps.sourceCitations === nextProps.sourceCitations
       )
     }
     // Otherwise compare content and mode
     return (
       prevProps.children === nextProps.children &&
       prevProps.mode === nextProps.mode &&
-      prevProps.disablePreviewBlocks === nextProps.disablePreviewBlocks
+      prevProps.disablePreviewBlocks === nextProps.disablePreviewBlocks &&
+      prevProps.sourceCitations === nextProps.sourceCitations
     )
   }
 )

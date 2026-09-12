@@ -30,6 +30,12 @@ const PROVIDER_ICONS: Record<ProviderChoice, React.ReactNode> = {
   local: <Monitor className="size-5" />,
 }
 
+const PROVIDER_GROUPS: Array<{ id: 'rox' | 'subscriptions' | 'custom'; ids: ProviderChoice[] }> = [
+  { id: 'rox', ids: ['omp'] },
+  { id: 'subscriptions', ids: ['claude', 'chatgpt', 'copilot'] },
+  { id: 'custom', ids: ['api_key', 'local'] },
+]
+
 interface ProviderSelectStepProps {
   /** Called when the user selects a provider */
   onSelect: (choice: ProviderChoice) => void
@@ -47,6 +53,12 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
   const { t } = useTranslation()
 
   const PROVIDER_OPTIONS: ProviderOption[] = [
+    {
+      id: 'omp',
+      name: t("onboarding.providerSelect.omp"),
+      description: t("onboarding.providerSelect.ompDesc"),
+      icon: PROVIDER_ICONS.omp,
+    },
     {
       id: 'claude',
       name: t("onboarding.providerSelect.claudeProMax"),
@@ -68,22 +80,23 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
     {
       id: 'api_key',
       name: t("onboarding.providerSelect.otherProvider"),
-      description: 'Anthropic, AWS Bedrock, OpenRouter, Google or any compatible provider.',
+      description: t("onboarding.providerSelect.otherProviderDesc"),
       icon: PROVIDER_ICONS.api_key,
     },
     {
       id: 'local',
       name: t("onboarding.providerSelect.localModel"),
-      description: 'Run models locally with Ollama.',
+      description: t("onboarding.providerSelect.localModelDesc"),
       icon: PROVIDER_ICONS.local,
     },
-    {
-      id: 'omp',
-      name: t("onboarding.providerSelect.omp"),
-      description: t("onboarding.providerSelect.ompDesc"),
-      icon: PROVIDER_ICONS.omp,
-    },
   ]
+
+  const byId = new Map(PROVIDER_OPTIONS.map((option) => [option.id, option]))
+  const GROUP_LABEL: Record<(typeof PROVIDER_GROUPS)[number]['id'], string> = {
+    rox: t('onboarding.providerSelect.groupRox'),
+    subscriptions: t('onboarding.providerSelect.groupSubscriptions'),
+    custom: t('onboarding.providerSelect.groupCustom'),
+  }
 
   return (
     <StepFormLayout
@@ -95,8 +108,16 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
       title={t("onboarding.providerSelect.title")}
       description={t("onboarding.providerSelect.description")}
     >
-      <div className="space-y-2 sm:space-y-3">
-        {PROVIDER_OPTIONS.map((option) => (
+      <div className="space-y-4">
+        {PROVIDER_GROUPS.map((group) => (
+          <div key={group.id} className="space-y-2">
+            <p className="px-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              {GROUP_LABEL[group.id]}
+            </p>
+            {group.ids.map((id) => {
+              const option = byId.get(id)
+              if (!option) return null
+              return (
           <button
             key={option.id}
             onClick={() => onSelect(option.id)}
@@ -107,12 +128,9 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
               "hover:bg-foreground/[0.02] shadow-minimal",
             )}
           >
-            {/* Icon */}
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
               {option.icon}
             </div>
-
-            {/* Content */}
             <div className="flex-1 min-w-0">
               <span className="font-medium text-sm">{option.name}</span>
               <p className="mt-0 hidden sm:block text-xs text-muted-foreground">
@@ -120,6 +138,9 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
               </p>
             </div>
           </button>
+              )
+            })}
+          </div>
         ))}
       </div>
 

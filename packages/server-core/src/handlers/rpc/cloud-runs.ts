@@ -18,16 +18,31 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol';
-import { getWorkspaceDataPath, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage';
+import { getWorkspaceDataPath, getRuntimeSecretRefs, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage';
+import {
+  assertCredentialReferenceOnly,
+  assertNoSecretsInArtifact,
+  readIncidentKillSwitch,
+} from '@craft-agent/shared/security';
+import {
+  FileScopeAudit,
+  assertCallerOwnsWorkspace,
+  assertIncidentKillSwitchInactive,
+  resolveCallerWorkspaceId,
+  scopeAuditPath,
+} from '../../security/workspace-scope.ts';
+import type { RequestContext } from '../../transport/types.ts';
 import {
   CloudflareComputerProvider,
   CloudRunnerError,
   LocalSubprocessProvider,
-  ModalProvider,
   NativeRunProvider,
+  DaytonaProvider,
   DEFAULT_PERSONAS,
   buildResearchSpec,
+  coercePublicCloudRunProvider,
   type CloudRunProvider,
+  type PublicCloudRunProvider,
   type ResearchPackKind,
   type RunHandle,
   type RunStatus,
@@ -39,6 +54,7 @@ import { resolveContainedRelativePath } from '../../utils/path-validation';
 import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags';
 import { getNativeSidecarClient } from '../../native/supervisor.ts';
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { registerSecretValues, resolveSecretsForSpawn } from '@craft-agent/shared/secrets';
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.GET_CONFIG,
@@ -47,6 +63,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.LIST,
   RPC_CHANNELS.cloudRuns.GET_STATUS,
   RPC_CHANNELS.cloudRuns.CANCEL,
+  RPC_CHANNELS.cloudRuns.KILL,
   RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS,
   RPC_CHANNELS.cloudRuns.IMPORT,
   RPC_CHANNELS.cloudRuns.AGGREGATE,
@@ -67,19 +84,23 @@ export const HANDLED_CHANNELS = [
 
 export interface CloudRunsSettings {
   enabled: boolean;
-  provider: 'local' | 'cloudflare' | 'modal' | 'e2b' | 'native';
+  provider: PublicCloudRunProvider;
   gatewayUrl?: string;
+  daytonaProjectId?: string;
+  daytonaSnapshot?: string;
+  daytonaSandbox?: string;
+  daytonaRegion?: string;
+  daytonaImage?: string;
+  daytonaApiUrl?: string;
+  daytonaSecretRef?: string;
+  defaultTtlSec?: number;
   defaults: { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number };
 }
 
-const DEFAULT_GATEWAY_URL =
-  process.env.CRAFT_CLOUD_RUNS_GATEWAY_URL
-  ?? 'https://craft-cloud-gateway.scharlesky-192.workers.dev';
-
 const SETTINGS_DEFAULTS: CloudRunsSettings = {
   enabled: true,
-  provider: 'cloudflare',
-  gatewayUrl: DEFAULT_GATEWAY_URL,
+  provider: 'daytona',
+  defaultTtlSec: 3600,
   defaults: { maxWallClockSec: 5400, maxLlmTokens: 2_000_000, maxArtifactsBytes: 25 * 1024 * 1024 },
 };
 
@@ -92,10 +113,10 @@ function ensureCloudRunsDefaults(): void {
     cloudRuns: {
       enabled: SETTINGS_DEFAULTS.enabled,
       provider: SETTINGS_DEFAULTS.provider,
-      gatewayUrl: SETTINGS_DEFAULTS.gatewayUrl,
       defaultMaxWallClockSec: SETTINGS_DEFAULTS.defaults.maxWallClockSec,
       defaultMaxLlmTokens: SETTINGS_DEFAULTS.defaults.maxLlmTokens,
       defaultMaxArtifactsBytes: SETTINGS_DEFAULTS.defaults.maxArtifactsBytes,
+      defaultTtlSec: SETTINGS_DEFAULTS.defaultTtlSec,
     },
   });
 }
@@ -105,14 +126,44 @@ function readSettings(): CloudRunsSettings {
   const cfg = loadStoredConfig()?.cloudRuns;
   return {
     enabled: cfg?.enabled ?? SETTINGS_DEFAULTS.enabled,
-    provider: cfg?.provider ?? SETTINGS_DEFAULTS.provider,
-    gatewayUrl: cfg?.gatewayUrl ?? SETTINGS_DEFAULTS.gatewayUrl,
+    provider: coercePublicCloudRunProvider(cfg?.provider),
+    gatewayUrl: cfg?.gatewayUrl,
+    daytonaProjectId: cfg?.daytonaProjectId,
+    daytonaSnapshot: cfg?.daytonaSnapshot,
+    daytonaSandbox: cfg?.daytonaSandbox,
+    daytonaRegion: cfg?.daytonaRegion,
+    daytonaImage: cfg?.daytonaImage,
+    daytonaApiUrl: cfg?.daytonaApiUrl,
+    daytonaSecretRef: cfg?.daytonaSecretRef,
+    defaultTtlSec: cfg?.defaultTtlSec ?? SETTINGS_DEFAULTS.defaultTtlSec,
     defaults: {
       maxWallClockSec: cfg?.defaultMaxWallClockSec ?? SETTINGS_DEFAULTS.defaults.maxWallClockSec,
       maxLlmTokens: cfg?.defaultMaxLlmTokens ?? SETTINGS_DEFAULTS.defaults.maxLlmTokens,
       maxArtifactsBytes: cfg?.defaultMaxArtifactsBytes ?? SETTINGS_DEFAULTS.defaults.maxArtifactsBytes,
     },
   };
+}
+
+function daytonaSecretConfigured(): boolean {
+  const refs = getRuntimeSecretRefs();
+  const secretName = loadStoredConfig()?.cloudRuns?.daytonaSecretRef ?? 'daytona';
+  return refs.some((ref) => ref.envVar === 'DAYTONA_API_KEY' || ref.name === secretName)
+    || Boolean(process.env.DAYTONA_API_KEY);
+}
+
+async function resolveDaytonaApiKey(): Promise<string> {
+  const secretName = loadStoredConfig()?.cloudRuns?.daytonaSecretRef ?? 'daytona';
+  const refs = getRuntimeSecretRefs().filter(
+    (ref) => ref.envVar === 'DAYTONA_API_KEY' || ref.name === secretName,
+  );
+  const result = await resolveSecretsForSpawn(refs.length > 0 ? refs : [{ name: 'daytona', envVar: 'DAYTONA_API_KEY' }]);
+  registerSecretValues(result.values);
+  const key = result.env.DAYTONA_API_KEY ?? process.env.DAYTONA_API_KEY;
+  if (!key) {
+    throw new CloudRunnerError('daytona requires secret reference DAYTONA_API_KEY', 'provider_error');
+  }
+  registerSecretValues([key]);
+  return key;
 }
 
 /**
@@ -174,7 +225,8 @@ function readSecretsEnv(): Record<string, string> {
 }
 
 function makeProvider(settings: CloudRunsSettings): CloudRunProvider {
-  if (settings.provider === 'native') {
+  const providerId = coercePublicCloudRunProvider(settings.provider);
+  if (providerId === 'native') {
     if (!isNativeSidecarEnabled()) {
       throw new CloudRunnerError(
         'native provider requires CRAFT_FEATURE_NATIVE_SIDECAR=1',
@@ -193,38 +245,20 @@ function makeProvider(settings: CloudRunsSettings): CloudRunProvider {
       rpc: client,
     });
   }
-  if (settings.provider === 'cloudflare' || settings.provider === 'modal') {
-    const secrets = readSecretsEnv();
-    // Per-provider URL env beats the generic one, so flipping the
-    // provider setting doesn't require re-editing URLs.
-    const envKey = settings.provider === 'modal' ? 'MODAL_GATEWAY_URL' : 'CLOUDFLARE_GATEWAY_URL';
-    const baseUrl = secrets[envKey] ?? settings.gatewayUrl ?? secrets.CLOUD_RUNS_GATEWAY_URL;
-    const token = secrets.CLOUD_RUNS_TOKEN;
-    if (!baseUrl || !token) {
-      throw new CloudRunnerError(
-        `${settings.provider} provider requires ${envKey}/cloudRuns.gatewayUrl and CLOUD_RUNS_TOKEN in <configDir>/cloud-runs.env`,
-        'provider_error',
-      );
-    }
-    return settings.provider === 'modal'
-      ? new ModalProvider({ baseUrl, token })
-      : new CloudflareComputerProvider({ baseUrl, token });
+  if (providerId === 'daytona') {
+    return new DaytonaProvider({
+      baseDir: join(resolveConfigDir(), 'cloud-runs', 'daytona'),
+      resolveApiKey: resolveDaytonaApiKey,
+      apiUrl: settings.daytonaApiUrl,
+      projectId: settings.daytonaProjectId,
+      snapshot: settings.daytonaSnapshot,
+      sandboxName: settings.daytonaSandbox,
+      region: settings.daytonaRegion,
+      image: settings.daytonaImage,
+      ttlSec: settings.defaultTtlSec,
+    });
   }
   return new LocalSubprocessProvider({ baseDir: join(resolveConfigDir(), 'cloud-runs', 'local') });
-}
-
-/** Fallback candidate for auto-create-flip: cloudflare ↔ modal, never local. */
-function makeFallbackProvider(settings: CloudRunsSettings): CloudRunProvider | null {
-  if (settings.provider !== 'cloudflare' && settings.provider !== 'modal') return null;
-  const flipped: CloudRunsSettings = {
-    ...settings,
-    provider: settings.provider === 'cloudflare' ? 'modal' : 'cloudflare',
-  };
-  try {
-    return makeProvider(flipped);
-  } catch {
-    return null; // fallback not configured — stay single-provider
-  }
 }
 
 
@@ -305,6 +339,7 @@ export interface CloudRunSchedule {
   kind?: string;
   enabled: boolean;
   lastFireAt?: number;
+  workspaceId?: string;
 }
 
 function readSchedules(): CloudRunSchedule[] {
@@ -343,14 +378,11 @@ async function resolveWorkspaceId(deps: HandlerDeps, sessionId: string): Promise
   return session.workspaceId;
 }
 
-/** Provider for a specific run: the one that owns it (post-fallback record), else the configured default. */
+/** Provider for a specific run: the one that owns it, else the configured default. */
 function providerForRun(settings: CloudRunsSettings, runId: string): CloudRunProvider {
   const entry = readRegistry().find((r) => r.id === runId);
   if (!entry) return makeProvider(settings);
-  if (entry.provider !== 'cloudflare' && entry.provider !== 'modal' && entry.provider !== 'local') {
-    return makeProvider(settings);
-  }
-  return makeProvider({ ...settings, provider: entry.provider });
+  return makeProvider({ ...settings, provider: coercePublicCloudRunProvider(entry.provider) });
 }
 
 // ---------------------------------------------------------------
@@ -389,6 +421,7 @@ function startCompletionWatcher(deps?: HandlerDeps): void {
         registry.push({
           id: spec.id, name: spec.name, provider: settings.provider, createdAt: Date.now(),
           sessionId: schedule.sessionId, topic: schedule.topic,
+          workspaceId: schedule.workspaceId,
           spec: { kind: schedule.kind ?? 'research', limits: { ...settings.defaults }, language: 'ru' },
         });
         await writeFile(REGISTRY_PATH, JSON.stringify(registry.slice(-200), null, 2));
@@ -420,7 +453,7 @@ function startCompletionWatcher(deps?: HandlerDeps): void {
         }
       }
       if (prev !== status.state) lastState.set(entry.id, status.state);
-      const terminal = status.state === 'done' || status.state === 'failed' || status.state === 'cancelled';
+      const terminal = status.state === 'done' || status.state === 'failed' || status.state === 'cancelled' || status.state === 'expired';
       if (terminal && prev && prev !== status.state && prev !== 'unknown') {
         // Emit AppEvent for knowledge automation chains (all providers, all terminal states).
         const workspaceId = entry.workspaceId;
@@ -471,6 +504,11 @@ function startCompletionWatcher(deps?: HandlerDeps): void {
           }
         }
       }
+    }
+    if (settings.provider === 'daytona') {
+      try {
+        await makeProvider(settings).sweepZombies?.();
+      } catch { /* zombie sweep is best-effort */ }
     }
   }, WATCHER_POLL_MS).unref();
 }
@@ -535,16 +573,8 @@ export async function submitCloudRunInternal(
       spec.name = `${namePrefix}${spec.name}`.slice(0, 80);
     }
     const provider = makeProvider(settings);
-    let handle: RunHandle;
-    let usedProvider = settings.provider;
-    try {
-      handle = await provider.createRun(spec);
-    } catch (error) {
-      const fallback = makeFallbackProvider(settings);
-      if (!fallback) throw error;
-      handle = await fallback.createRun(spec);
-      usedProvider = fallback.providerId as typeof usedProvider;
-    }
+    const handle = await provider.createRun(spec);
+    const usedProvider = provider.providerId as typeof settings.provider;
     const registry = readRegistry();
     registry.push({
       id: handle.id,
@@ -612,6 +642,23 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     return settings;
   };
 
+  const audit = new FileScopeAudit(scopeAuditPath(resolveConfigDir()));
+
+  const denyIfKillSwitch = (ctx: RequestContext): void => {
+    assertIncidentKillSwitchInactive(
+      readIncidentKillSwitch(resolveConfigDir()).enabled,
+      audit,
+      resolveCallerWorkspaceId(ctx),
+    );
+  };
+
+  const requireOwnedRun = (ctx: RequestContext, runId: string): RunRegistryEntry => {
+    const entry = readRegistry().find((r) => r.id === runId);
+    if (!entry) throw new CloudRunnerError(`run not found: ${runId}`, 'not_found');
+    assertCallerOwnsWorkspace(ctx, entry.workspaceId ?? '', audit, 'cloud-run');
+    return entry;
+  };
+
   startCompletionWatcher(deps);
 
   server.handle(RPC_CHANNELS.cloudRuns.GET_CONFIG, async () => {
@@ -627,7 +674,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
       notifyWebhookUrl: loadStoredConfig()?.cloudRuns?.notifyWebhookUrl,
       cheapModelId: loadStoredConfig()?.cloudRuns?.cheapModelId,
       personas: loadStoredConfig()?.cloudRuns?.personas ?? false,
-      tokenConfigured: Boolean(readSecretsEnv().CLOUD_RUNS_TOKEN),
+      tokenConfigured: settings.provider === 'daytona' ? daytonaSecretConfigured() : Boolean(readSecretsEnv().CLOUD_RUNS_TOKEN),
+      secretConfigured: daytonaSecretConfigured(),
       estimatedRunTokens,
     };
   });
@@ -635,12 +683,17 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.cloudRuns.SET_CONFIG,
     async (
-      _ctx,
-      patch: Partial<Pick<CloudRunsSettings, 'enabled' | 'provider' | 'gatewayUrl'>> &
+      ctx,
+      patch: Partial<Pick<CloudRunsSettings, 'enabled' | 'provider' | 'gatewayUrl' | 'daytonaProjectId' | 'daytonaSnapshot' | 'daytonaSandbox' | 'daytonaRegion' | 'daytonaImage' | 'daytonaApiUrl' | 'daytonaSecretRef' | 'defaultTtlSec'>> &
         { defaultMaxWallClockSec?: number; defaultMaxLlmTokens?: number; defaultMaxArtifactsBytes?: number; notifyWebhookUrl?: string; cheapModelId?: string; personas?: boolean },
     ) => {
+      denyIfKillSwitch(ctx);
+      assertCredentialReferenceOnly(patch, 'cloudRuns');
       const stored = loadStoredConfig();
       if (!stored) throw new CloudRunnerError('config.json not found', 'provider_error');
+      if (patch.provider !== undefined) {
+        patch.provider = coercePublicCloudRunProvider(patch.provider);
+      }
       if (patch.provider === 'native' && !isNativeSidecarEnabled()) {
         throw new CloudRunnerError(
           'native provider requires CRAFT_FEATURE_NATIVE_SIDECAR=1',
@@ -652,13 +705,18 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.LIST_SCHEDULES, async () => {
-    return readSchedules();
+  server.handle(RPC_CHANNELS.cloudRuns.LIST_SCHEDULES, async (ctx) => {
+    const caller = resolveCallerWorkspaceId(ctx);
+    if (!caller) return [];
+    return readSchedules().filter((schedule) => schedule.workspaceId === caller);
   });
 
   server.handle(
     RPC_CHANNELS.cloudRuns.SAVE_SCHEDULE,
-    async (_ctx, args: { schedule: Partial<CloudRunSchedule> & { topic?: string; everyHours?: number; sessionId?: string } }) => {
+    async (ctx, args: { schedule: Partial<CloudRunSchedule> & { topic?: string; everyHours?: number; sessionId?: string } }) => {
+      denyIfKillSwitch(ctx);
+      const caller = resolveCallerWorkspaceId(ctx);
+      assertCallerOwnsWorkspace(ctx, caller ?? '', audit, 'schedule');
       const incoming = args?.schedule;
       if (!incoming || typeof incoming !== 'object') {
         throw new CloudRunnerError('schedule is required', 'invalid_spec');
@@ -671,13 +729,15 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
         kind: incoming.kind,
         enabled: incoming.enabled !== false,
         lastFireAt: incoming.lastFireAt,
+        workspaceId: caller ?? undefined,
       };
       if (!schedule.topic) throw new CloudRunnerError('schedule.topic is required', 'invalid_spec');
       if (!schedule.sessionId) throw new CloudRunnerError('schedule.sessionId is required', 'invalid_spec');
       const schedules = readSchedules();
       const idx = schedules.findIndex((s) => s.id === schedule.id);
       if (idx >= 0) {
-        schedules[idx] = { ...schedules[idx]!, ...schedule };
+        assertCallerOwnsWorkspace(ctx, schedules[idx]!.workspaceId ?? '', audit, 'schedule');
+        schedules[idx] = { ...schedules[idx]!, ...schedule, workspaceId: caller ?? undefined };
       } else {
         schedules.push(schedule);
       }
@@ -686,10 +746,16 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.DELETE_SCHEDULE, async (_ctx, args: { id: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.DELETE_SCHEDULE, async (ctx, args: { id: string }) => {
+    denyIfKillSwitch(ctx);
     const id = args?.id;
     if (!id) throw new CloudRunnerError('id is required', 'invalid_spec');
-    const next = readSchedules().filter((s) => s.id !== id);
+    const current = readSchedules();
+    const existing = current.find((s) => s.id === id);
+    if (existing) {
+      assertCallerOwnsWorkspace(ctx, existing.workspaceId ?? '', audit, 'schedule');
+    }
+    const next = current.filter((s) => s.id !== id);
     await writeSchedules(next);
     return { ok: true };
   });
@@ -697,21 +763,28 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(
     RPC_CHANNELS.cloudRuns.SUBMIT,
-    async (_ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
+    async (ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; omp?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
+      denyIfKillSwitch(ctx);
       const settings = requireEnabled();
       if (!args?.topic?.trim()) throw new CloudRunnerError('topic is required', 'invalid_spec');
+      if (args.fromRunId) requireOwnedRun(ctx, args.fromRunId);
       const stored = loadStoredConfig()?.cloudRuns;
       // F7: fork narrows the pack to a single followup subtask with the
       // parent's briefs as context (gateway copies them server-side).
+      const daytona = settings.provider === 'daytona';
       const spec = buildResearchSpec(args.topic, {
         language: args.language ?? 'ru',
         kind: args.kind,
-        personas: args.fromRunId ? undefined : (args.personas ?? stored?.personas) ? DEFAULT_PERSONAS : undefined,
+        personas: args.fromRunId ? undefined : daytona && (args.personas ?? stored?.personas) ? DEFAULT_PERSONAS : undefined,
         cheapModelId: stored?.cheapModelId,
         model: args.model,
         limits: { ...settings.defaults },
         metadata: { sessionId: args.sessionId ?? '', parentRunId: args.fromRunId ?? '' },
       });
+      spec.concurrency = 2;
+      if (daytona) {
+        spec.agenticMode = args.omp ? 'omp' : 'loop';
+      }
       if (args.fromRunId) {
         spec.fromRunId = args.fromRunId;
         const registry = readRegistry();
@@ -724,29 +797,15 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
         spec.name = `Fork: ${parent?.name ?? args.fromRunId}`.slice(0, 80);
       }
       const provider = makeProvider(settings);
-      // Auto-flip ONLY at createRun: a failed creation bills nothing, so the
-      // double-charge concern (PRD §G4.3) doesn't apply to this hop. Mid-run
-      // flips stay manual — status/cancel keep addressing the recorded
-      // provider for run lifetime.
-      let handle: RunHandle;
-      let usedProvider = settings.provider;
-      try {
-        handle = await provider.createRun(spec);
-      } catch (error) {
-        const fallback = makeFallbackProvider(settings);
-        if (!fallback) throw error;
-        handle = await fallback.createRun(spec);
-        usedProvider = fallback.providerId as typeof usedProvider;
-      }
+      // Issue 25: never fall back to another provider on Daytona failure.
+      const handle = await provider.createRun(spec);
+      const usedProvider = provider.providerId as typeof settings.provider;
       const registry = readRegistry();
-      let workspaceId: string | undefined;
+      let workspaceId = resolveCallerWorkspaceId(ctx) ?? '';
       if (args.sessionId) {
-        try {
-          workspaceId = await resolveWorkspaceId(deps, args.sessionId);
-        } catch {
-          workspaceId = undefined;
-        }
+        workspaceId = await resolveWorkspaceId(deps, args.sessionId);
       }
+      assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'cloud-run');
       registry.push({
         id: handle.id,
         name: spec.name,
@@ -768,9 +827,11 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.LIST, async () => {
+  server.handle(RPC_CHANNELS.cloudRuns.LIST, async (ctx) => {
     const settings = readSettings();
-    const entries = readRegistry();
+    const caller = resolveCallerWorkspaceId(ctx);
+    const registry = readRegistry();
+    const entries = caller ? registry.filter((entry) => entry.workspaceId === caller) : [];
     let dirty = false;
     const runs = await Promise.all(
       entries.map(async (entry) => {
@@ -787,15 +848,14 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
         return { ...entry, status };
       }),
     );
-    if (dirty) await writeFile(REGISTRY_PATH, JSON.stringify(entries, null, 2));
+    if (dirty) await writeFile(REGISTRY_PATH, JSON.stringify(registry, null, 2));
     return { enabled: settings.enabled, provider: settings.provider, runs: runs.reverse() };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.RESUME, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.RESUME, async (ctx, args: { runId: string }) => {
+    denyIfKillSwitch(ctx);
     const settings = requireEnabled();
-    const registry = readRegistry();
-    const entry = registry.find((r) => r.id === args.runId);
-    if (!entry) throw new CloudRunnerError(`run not found: ${args.runId}`, 'not_found');
+    const entry = requireOwnedRun(ctx, args.runId);
     const status = await providerForRun(settings, args.runId).getStatus(args.runId);
     if (status.state !== 'failed' && status.state !== 'cancelled') {
       throw new CloudRunnerError(`run is ${status.state}; resume is only for failed/cancelled runs`, 'provider_error');
@@ -817,10 +877,12 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     return { ok: true };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.SESSION_TOPIC, async (_ctx, args: { sessionId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.SESSION_TOPIC, async (ctx, args: { sessionId: string }) => {
     // Cheap heuristic first (fast+deterministic): title + last user message.
     // LLM formulation would cost a smol call — heuristics prove better UX
     // for the common case (PRD F9 fallback documented).
+    const workspaceId = await resolveWorkspaceId(deps, args.sessionId);
+    assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'session');
     const session = await deps.sessionManager.getSession(args.sessionId);
     if (!session) throw new CloudRunnerError(`session not found: ${args.sessionId}`, 'not_found');
     const messages = (session.messages ?? []) as { role?: string; content?: unknown }[];
@@ -830,18 +892,23 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     return { topic };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.SHARE, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.SHARE, async (ctx, args: { runId: string }) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     return (providerForRun(settings, args.runId) as CloudRunProvider & { shareRun: (id: string) => Promise<{ url: string }> }).shareRun(args.runId);
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.REVOKE_SHARE, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.REVOKE_SHARE, async (ctx, args: { runId: string }) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     await (providerForRun(settings, args.runId) as CloudRunProvider & { revokeShare: (id: string) => Promise<void> }).revokeShare(args.runId);
     return { ok: true };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.GET_EVENTS, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.GET_EVENTS, async (ctx, args: { runId: string }) => {
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     return (providerForRun(settings, args.runId) as CloudRunProvider & {
       getEvents?: (id: string) => Promise<{ t: number; message: string }[]>;
@@ -852,34 +919,52 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(
     RPC_CHANNELS.cloudRuns.READ_ARTIFACT,
-    async (_ctx, args: { runId: string; path: string }) => {
+    async (ctx, args: { runId: string; path: string }) => {
+      requireOwnedRun(ctx, args.runId);
       const settings = requireEnabled();
       const provider = providerForRun(settings, args.runId);
       const bytes = await provider.fetchArtifact(args.runId, args.path);
       if (bytes.byteLength > 1024 * 1024) {
         throw new CloudRunnerError('artifact too large for preview', 'artifact_too_large');
       }
-      return { content: new TextDecoder().decode(bytes) };
+      const content = new TextDecoder().decode(bytes);
+      assertNoSecretsInArtifact(content, 'artifact');
+      return { content };
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.GET_STATUS, async (_ctx, id: string) => {
+  server.handle(RPC_CHANNELS.cloudRuns.GET_STATUS, async (ctx, id: string) => {
+    requireOwnedRun(ctx, id);
     return providerForRun(requireEnabled(), id).getStatus(id);
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.CANCEL, async (_ctx, id: string) => {
+  server.handle(RPC_CHANNELS.cloudRuns.CANCEL, async (ctx, id: string) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, id);
     await providerForRun(requireEnabled(), id).cancel(id);
     return { ok: true };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS, async (_ctx, id: string) => {
+  server.handle(RPC_CHANNELS.cloudRuns.KILL, async (ctx, id: string) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, id);
+    const provider = providerForRun(requireEnabled(), id);
+    await (provider.kill ?? provider.cancel).call(provider, id);
+    return { ok: true };
+  });
+
+  server.handle(RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS, async (ctx, id: string) => {
+    requireOwnedRun(ctx, id);
     return providerForRun(requireEnabled(), id).listArtifacts(id);
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.IMPORT, async (_ctx, args: { runId: string; sessionId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.IMPORT, async (ctx, args: { runId: string; sessionId: string }) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     const provider = providerForRun(settings, args.runId);
     const workspaceId = await resolveWorkspaceId(deps, args.sessionId);
+    assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'cloud-run');
     const status = await provider.getStatus(args.runId);
     if (status.state !== 'done') {
       throw new CloudRunnerError(`run ${args.runId} is ${status.state}, not done`, 'provider_error');
@@ -913,10 +998,13 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(
     RPC_CHANNELS.cloudRuns.AGGREGATE,
-    async (_ctx, args: { runId: string; sessionId: string; language?: 'en' | 'ru' }) => {
+    async (ctx, args: { runId: string; sessionId: string; language?: 'en' | 'ru' }) => {
+      denyIfKillSwitch(ctx);
+      requireOwnedRun(ctx, args.runId);
       const settings = requireEnabled();
       const provider = providerForRun(settings, args.runId);
       const workspaceId = await resolveWorkspaceId(deps, args.sessionId);
+      assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'cloud-run');
       const status = await provider.getStatus(args.runId);
       if (status.state !== 'done') {
         throw new CloudRunnerError(`run ${args.runId} is ${status.state}, not done`, 'provider_error');

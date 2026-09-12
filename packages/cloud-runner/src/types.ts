@@ -2,7 +2,7 @@
  * Cloud Runs — core contract.
  *
  * Types and the CloudRunProvider interface shared by every provider
- * (local subprocess, Cloudflare Computer, Modal/E2B fallback).
+ * (Daytona, local subprocess, native sidecar).
  *
  * Design rule (PRD docs/cloud-runs-prd.md §G1): the interface is
  * modelled after the craft-agents use case — submit a pack of
@@ -54,14 +54,16 @@ export interface RunSpec {
   limits?: RunLimits;
   /** Artifact retention; provider may garbage-collect afterwards. */
   ttlSec?: number;
-  /** F16: extra deliverables, e.g. ['slides'] (CF provider only). */
+  /** F16: extra deliverables, e.g. ['slides']. */
   outputs?: string[];
   /** F7: fork — parent run id; its briefs land in the new run's context. */
   fromRunId?: string;
   /** F4 switch: agentic tool-loop (default true); false = one-shot LLM per subtask. */
   agentic?: boolean;
-  /** F21: runner flavor — default loop; omp = via omp CLI in CF image. */
+  /** F21: runner flavor — default loop; omp = via omp CLI on Daytona. */
   agenticMode?: 'loop' | 'omp';
+  /** F3: parallel subtasks. Daytona clamps to 1–4 (default 2). */
+  concurrency?: number;
   /** Free-form linkage back to the originating session/workspace. */
   metadata?: Record<string, string>;
 }
@@ -70,13 +72,37 @@ export interface RunSpec {
 // Run status (provider → client)
 // ============================================================
 
-export type RunState = 'queued' | 'running' | 'done' | 'failed' | 'cancelled';
+export type RunState =
+  | 'queued'
+  | 'start'
+  | 'ready'
+  | 'running'
+  | 'done'
+  | 'failed'
+  | 'cancelled'
+  | 'expired';
+
+export const ACTIVE_RUN_STATES: ReadonlySet<RunState> = new Set([
+  'queued',
+  'start',
+  'ready',
+  'running',
+]);
+
+export function isActiveRunState(state: RunState): boolean {
+  return ACTIVE_RUN_STATES.has(state);
+}
+
+export function isTerminalRunState(state: RunState): boolean {
+  return !isActiveRunState(state);
+}
 
 export type RunFailureReason =
   | 'budget_exceeded'
   | 'runner_error'
   | 'provider_error'
-  | 'cancelled';
+  | 'cancelled'
+  | 'expired';
 
 export interface RunHandle {
   id: string;
@@ -127,7 +153,8 @@ export class CloudRunnerError extends Error {
       | 'invalid_spec'
       | 'artifact_too_large'
       | 'path_traversal'
-      | 'provider_error',
+      | 'provider_error'
+      | 'cancelled',
     options?: ErrorOptions,
   ) {
     super(message, options);
@@ -140,12 +167,16 @@ export class CloudRunnerError extends Error {
 // ============================================================
 
 export interface CloudRunProvider {
-  /** Stable provider id used in config: 'local' | 'cloudflare' | ... */
+  /** Stable provider id used in config: 'daytona' | 'local' | 'native'. */
   readonly providerId: string;
 
   createRun(spec: RunSpec): Promise<RunHandle>;
   getStatus(id: string): Promise<RunStatus>;
   cancel(id: string): Promise<void>;
+  /** Force-terminate compute. Default implementations may alias cancel. */
+  kill?(id: string): Promise<void>;
+  /** Destroy leftover sandboxes past TTL. Daytona only. */
+  sweepZombies?(): Promise<{ deletedSandboxIds: string[] }>;
   listArtifacts(id: string): Promise<ArtifactMeta[]>;
   /** Sanitizing read: rejects path traversal and oversize payloads. */
   fetchArtifact(id: string, path: string): Promise<Uint8Array>;

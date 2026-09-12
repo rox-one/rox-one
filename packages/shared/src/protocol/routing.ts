@@ -379,6 +379,19 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.gamification.SET_CONSENT,
   RPC_CHANNELS.gamification.CHANGED,
 
+  // voice — local prefs, capture policy and STT/TTS adapters
+  RPC_CHANNELS.voice.GET,
+  RPC_CHANNELS.voice.SAVE,
+  RPC_CHANNELS.voice.HEALTH,
+  RPC_CHANNELS.voice.TRANSCRIBE,
+  RPC_CHANNELS.voice.SPEAK,
+  RPC_CHANNELS.voice.CHANGED,
+
+  // environment — versioned onboarding questionnaire lives in local CONFIG_DIR
+  RPC_CHANNELS.environment.GET,
+  RPC_CHANNELS.environment.SAVE,
+  RPC_CHANNELS.environment.CHANGED,
+
   // orgs — local-only identity/membership bookkeeping (CONFIG_DIR)
   RPC_CHANNELS.orgs.LIST,
   RPC_CHANNELS.orgs.CREATE,
@@ -829,6 +842,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.cloudRuns.LIST,
   RPC_CHANNELS.cloudRuns.GET_STATUS,
   RPC_CHANNELS.cloudRuns.CANCEL,
+  RPC_CHANNELS.cloudRuns.KILL,
   RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS,
   RPC_CHANNELS.cloudRuns.IMPORT,
   RPC_CHANNELS.cloudRuns.AGGREGATE,

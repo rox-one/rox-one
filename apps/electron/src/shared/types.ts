@@ -39,6 +39,8 @@ export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
 import type { XpEventType } from '@craft-agent/shared/gamification';
 import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
+import type { VoiceHealth, VoicePrefs } from '@craft-agent/shared/voice';
+import type { EnvironmentPrefs, QuestionId } from '@craft-agent/shared/environment';
 import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
 import type {
   AutomationGraphProjection,
@@ -475,25 +477,41 @@ export interface ElectronAPI {
   // Cloud Runs (PRD docs/cloud-runs-prd.md)
   getCloudRunsConfig(): Promise<{
     enabled: boolean
-    provider: 'local' | 'cloudflare' | 'modal' | 'e2b'
+    provider: 'local' | 'daytona' | 'native'
     gatewayUrl?: string
     notifyWebhookUrl?: string
     cheapModelId?: string
     personas?: boolean
     tokenConfigured: boolean
+    secretConfigured?: boolean
     estimatedRunTokens?: number | null
+    daytonaProjectId?: string
+    daytonaSnapshot?: string
+    daytonaSandbox?: string
+    daytonaRegion?: string
+    daytonaImage?: string
+    daytonaApiUrl?: string
+    defaultTtlSec?: number
     defaults: { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number }
   }>
   setCloudRunsConfig(patch: {
     enabled?: boolean
-    provider?: 'local' | 'cloudflare' | 'modal' | 'e2b'
+    provider?: 'local' | 'daytona' | 'native'
     gatewayUrl?: string
     defaultMaxWallClockSec?: number
     defaultMaxLlmTokens?: number
     defaultMaxArtifactsBytes?: number
+    defaultTtlSec?: number
     notifyWebhookUrl?: string
     cheapModelId?: string
     personas?: boolean
+    daytonaProjectId?: string
+    daytonaSnapshot?: string
+    daytonaSandbox?: string
+    daytonaRegion?: string
+    daytonaImage?: string
+    daytonaApiUrl?: string
+    daytonaSecretRef?: string
   }): Promise<{ ok: boolean }>
   submitCloudRun(args: {
     topic: string
@@ -501,10 +519,12 @@ export interface ElectronAPI {
     language?: 'en' | 'ru'
     kind?: 'research' | 'competitor' | 'literature' | 'vendor'
     personas?: boolean
+    omp?: boolean
     fromRunId?: string
     model?: { connectionSlug?: string; modelId?: string }
   }): Promise<{ id: string; provider: string; createdAt: number }>
   resumeCloudRun(args: { runId: string }): Promise<{ ok: boolean }>
+  killCloudRun(id: string): Promise<{ ok: boolean }>
   sessionTopicCloudRun(args: { sessionId: string }): Promise<{ topic: string }>
   readCloudRunArtifact(args: { runId: string; path: string }): Promise<{ content: string }>
   getCloudRunEvents(args: { runId: string }): Promise<{ t: number; message: string }[]>
@@ -1314,6 +1334,13 @@ export interface ElectronAPI {
   writePreferences(content: string): Promise<{ success: boolean; error?: string }>
 
   // Gamification profile (XP/level/balance)
+  getEnvironmentSetup(): Promise<{ prefs: EnvironmentPrefs; pendingQuestionIds: QuestionId[] }>
+  saveEnvironmentSetup(patch: Partial<EnvironmentPrefs> & { completeQuestionnaire?: boolean }): Promise<{
+    prefs: EnvironmentPrefs
+    pendingQuestionIds: QuestionId[]
+  }>
+  onEnvironmentChanged(callback: (prefs: EnvironmentPrefs) => void): () => void
+
   getGamificationProfile(): Promise<{
     xp: number
     level: number
@@ -1369,6 +1396,18 @@ export interface ElectronAPI {
     ratings?: SessionRating[]
     analyticsConsent?: boolean
   }) => void): () => void
+
+  getVoicePrefs(): Promise<VoicePrefs>
+  saveVoicePrefs(patch: Partial<VoicePrefs>): Promise<VoicePrefs>
+  getVoiceHealth(): Promise<VoiceHealth>
+  transcribeVoice(payload: {
+    audioBase64: string
+    mimeType?: string
+    language?: string
+    transcript?: string
+  }): Promise<{ text: string; engine: string; uploaded: boolean }>
+  speakVoice(payload: { text: string }): Promise<{ engine: string; uploaded: false }>
+  onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@craft-agent/shared/config').SessionDraft | null>
@@ -2206,6 +2245,15 @@ export interface DiffNavigationState {
 }
 
 /**
+ * Local terminal surface navigation state (`terminal/{terminalId}`).
+ */
+export interface TerminalNavigationState {
+  navigator: 'terminal'
+  details: { type: 'terminal'; id: string; sessionId?: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Unified navigation state
  */
 export type NavigationState =
@@ -2224,6 +2272,7 @@ export type NavigationState =
   | CloudRunNavigationState
   | ExtensionNavigationState
   | DiffNavigationState
+  | TerminalNavigationState
   | ConnectionsNavigationState
   | HomeNavigationState
 
@@ -2293,6 +2342,10 @@ export const isExtensionNavigation = (
 export const isDiffNavigation = (
   state: NavigationState
 ): state is DiffNavigationState => state.navigator === 'diff'
+
+export const isTerminalNavigation = (
+  state: NavigationState
+): state is TerminalNavigationState => state.navigator === 'terminal'
 
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
   navigator: 'sessions',
@@ -2387,6 +2440,12 @@ export const getNavigationStateKey = (state: NavigationState): string => {
       return `diff/${encodeURIComponent(state.details.proposalId)}`
     }
     return 'diff'
+  }
+  if (state.navigator === 'terminal') {
+    if (state.details?.type === 'terminal') {
+      return `terminal/${encodeURIComponent(state.details.id)}`
+    }
+    return 'terminal'
   }
   // Chats
   const f = state.filter
@@ -2541,6 +2600,15 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
       return { navigator: 'diff', details: { type: 'diff', proposalId: decodeURIComponent(proposalId) } }
     }
     return { navigator: 'diff', details: null }
+  }
+
+  if (key === 'terminal') return { navigator: 'terminal', details: null }
+  if (key.startsWith('terminal/')) {
+    const terminalId = key.slice('terminal/'.length)
+    if (terminalId) {
+      return { navigator: 'terminal', details: { type: 'terminal', id: decodeURIComponent(terminalId) } }
+    }
+    return { navigator: 'terminal', details: null }
   }
 
   if (key === 'connections') return { navigator: 'connections', details: null }

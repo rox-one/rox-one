@@ -33,6 +33,7 @@ export const CHANNEL_MAP = {
   listCloudRuns: invoke(RPC_CHANNELS.cloudRuns.LIST),
   getCloudRunStatus: invoke(RPC_CHANNELS.cloudRuns.GET_STATUS),
   cancelCloudRun: invoke(RPC_CHANNELS.cloudRuns.CANCEL),
+  killCloudRun: invoke(RPC_CHANNELS.cloudRuns.KILL),
   listCloudRunArtifacts: invoke(RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS),
   importCloudRun: invoke(RPC_CHANNELS.cloudRuns.IMPORT),
   aggregateCloudRun: invoke(RPC_CHANNELS.cloudRuns.AGGREGATE),
@@ -460,6 +461,16 @@ export const CHANNEL_MAP = {
   rateGamificationSession: invoke(RPC_CHANNELS.gamification.RATE),
   setGamificationAnalyticsConsent: invoke(RPC_CHANNELS.gamification.SET_CONSENT),
   onGamificationChanged: listener(RPC_CHANNELS.gamification.CHANGED),
+
+  getVoicePrefs: invoke(RPC_CHANNELS.voice.GET),
+  saveVoicePrefs: invoke(RPC_CHANNELS.voice.SAVE),
+  getVoiceHealth: invoke(RPC_CHANNELS.voice.HEALTH),
+  transcribeVoice: invoke(RPC_CHANNELS.voice.TRANSCRIBE),
+  speakVoice: invoke(RPC_CHANNELS.voice.SPEAK),
+  onVoiceChanged: listener(RPC_CHANNELS.voice.CHANGED),
+  getEnvironmentSetup: invoke(RPC_CHANNELS.environment.GET),
+  saveEnvironmentSetup: invoke(RPC_CHANNELS.environment.SAVE),
+  onEnvironmentChanged: listener(RPC_CHANNELS.environment.CHANGED),
 
   // Session Drafts
   getDraft: invoke(RPC_CHANNELS.drafts.GET),

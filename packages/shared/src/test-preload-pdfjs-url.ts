@@ -9,3 +9,8 @@ import { mock } from 'bun:test'
 mock.module('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({
   default: '/pdf.worker.min.mjs',
 }))
+mock.module('react-pdf', () => ({
+  Document: () => null,
+  Page: () => null,
+  pdfjs: { GlobalWorkerOptions: { workerSrc: '' } },
+}))

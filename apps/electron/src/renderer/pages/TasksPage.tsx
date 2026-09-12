@@ -9,6 +9,7 @@ import {
   type TaskPriority,
   type TaskProjectionId,
 } from '@craft-agent/core/tasks/personal'
+import { CalendarStatusStrip } from '@/components/calendar/CalendarStatusStrip'
 import { cn } from '@/lib/utils'
 
 const PROJECTIONS: TaskProjectionId[] = ['inbox', 'today', 'upcoming', 'anytime', 'someday', 'logbook']
@@ -160,6 +161,9 @@ export default function TasksPage() {
             aria-label={t('tasks.quickEntryPlaceholder')}
           />
         </form>
+        {projection === 'today' || projection === 'upcoming' ? (
+          <CalendarStatusStrip tasks={tasks} now={now} />
+        ) : null}
         {projection === 'today' ? (
           <div className="flex gap-2 overflow-x-auto border-b border-border px-3 py-2 text-[11px] text-muted-foreground">
             {todayPlan.length === 0 ? t('tasks.emptyToday') : todayPlan.map((group) => (

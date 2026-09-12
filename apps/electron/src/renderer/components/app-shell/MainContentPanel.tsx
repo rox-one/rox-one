@@ -11,8 +11,8 @@
  * In focused mode (single window), wraps content with StoplightProvider
  * so PanelHeader components automatically compensate for macOS traffic lights.
  *
- * When multiple sessions are selected (multi-select mode), shows the
- * MultiSelectPanel with batch action buttons instead of a single chat.
+ * When multiple sessions are selected (multi-select mode), CollectionBulkBar
+ * is the sessions bulk UI. MultiSelectPanel stays for sources/skills/automations.
  */
 
 import * as React from 'react'
@@ -21,8 +21,9 @@ import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
 import { MultiSelectPanel } from './MultiSelectPanel'
+import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
-import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { StoplightProvider } from '@/context/StoplightContext'
 import {
   useNavigationState,
@@ -43,10 +44,7 @@ import {
   isConnectionsNavigation,
   isHomeNavigation,
 } from '@/contexts/NavigationContext'
-import { useSessionSelection, useIsMultiSelectActive, useSelectedIds, useSelectionCount } from '@/hooks/useSession'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { extractLabelId } from '@craft-agent/shared/labels'
-import type { SessionStatusId } from '@/config/session-status-config'
 import { SourceInfoPage, ChatPage, BrowserPanelPage, KnowledgeSurfacePage, ExtensionSurfacePage } from '@/pages'
 import NotesPage from '@/pages/NotesPage'
 import ConnectionsPage from '@/pages/ConnectionsPage'
@@ -103,9 +101,6 @@ export function MainContentPanel({
   const {
     activeWorkspaceId,
     workspaces,
-    onSessionStatusChange,
-    onArchiveSession,
-    onSessionLabelsChange,
     sessionStatuses,
     projects,
     labels,
@@ -119,12 +114,14 @@ export function MainContentPanel({
     activeSessionWorkingDirectory,
   } = useAppShellContext()
 
-  // Session multi-select state
-  const isMultiSelectActive = useIsMultiSelectActive()
-  const selectedIds = useSelectedIds()
-  const selectionCount = useSelectionCount()
-  const { clearMultiSelect } = useSessionSelection()
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const visibleSessionIds = useMemo(
+    () =>
+      [...sessionMetaMap.values()]
+        .filter((meta) => !activeWorkspaceId || meta.workspaceId === activeWorkspaceId)
+        .map((meta) => meta.id),
+    [sessionMetaMap, activeWorkspaceId],
+  )
   const automations = useAtomValue(automationsAtom)
   const setKnowledgeHomeView = useSetAtom(knowledgeHomeViewAtom)
   const setKnowledgeActiveViewId = useSetAtom(knowledgeActiveViewIdAtom)
@@ -211,67 +208,6 @@ export function MainContentPanel({
     setSendResourceLabel(`${count} ${type}${count !== 1 ? 's' : ''}`)
     setSendDialogOpen(true)
   }, [])
-
-  const selectedMetas = useMemo(() => {
-    const metas: SessionMeta[] = []
-    selectedIds.forEach((id) => {
-      const meta = sessionMetaMap.get(id)
-      if (meta) metas.push(meta)
-    })
-    return metas
-  }, [selectedIds, sessionMetaMap])
-
-  const activeStatusId = useMemo((): SessionStatusId | null => {
-    if (selectedMetas.length === 0) return null
-    const first = (selectedMetas[0].sessionStatus || 'todo') as SessionStatusId
-    const allSame = selectedMetas.every(meta => (meta.sessionStatus || 'todo') === first)
-    return allSame ? first : null
-  }, [selectedMetas])
-
-  const appliedLabelIds = useMemo(() => {
-    if (selectedMetas.length === 0) return new Set<string>()
-    const toLabelSet = (meta: SessionMeta) =>
-      new Set((meta.labels || []).map(entry => extractLabelId(entry)))
-    const [first, ...rest] = selectedMetas.map(toLabelSet)
-    const intersection = new Set(first)
-    for (const labelSet of rest) {
-      for (const id of [...intersection]) {
-        if (!labelSet.has(id)) intersection.delete(id)
-      }
-    }
-    return intersection
-  }, [selectedMetas])
-
-  // Batch operations for multi-select
-  const handleBatchSetStatus = useCallback((status: SessionStatusId) => {
-    selectedIds.forEach(sessionId => {
-      onSessionStatusChange(sessionId, status)
-    })
-  }, [selectedIds, onSessionStatusChange])
-
-  const handleBatchArchive = useCallback(() => {
-    selectedIds.forEach(sessionId => {
-      onArchiveSession(sessionId)
-    })
-    clearMultiSelect()
-  }, [selectedIds, onArchiveSession, clearMultiSelect])
-
-  const handleBatchToggleLabel = useCallback((labelId: string) => {
-    if (!onSessionLabelsChange) return
-    const allHaveLabel = selectedMetas.every(meta =>
-      (meta.labels || []).some(entry => extractLabelId(entry) === labelId)
-    )
-
-    selectedMetas.forEach(meta => {
-      const labels = meta.labels || []
-      const hasLabel = labels.some(entry => extractLabelId(entry) === labelId)
-      const filtered = labels.filter(entry => extractLabelId(entry) !== labelId)
-      const nextLabels = allHaveLabel
-        ? filtered
-        : (hasLabel ? labels : [...labels, labelId])
-      onSessionLabelsChange(meta.id, nextLabels)
-    })
-  }, [selectedMetas, onSessionLabelsChange])
 
   // Wrap content with StoplightProvider so PanelHeaders auto-compensate in focused mode.
   // Also renders the Send to Workspace dialog (portal-based, so it overlays regardless of position).
@@ -481,7 +417,7 @@ export function MainContentPanel({
     if (instanceId) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
-          <BrowserPanelPage instanceId={instanceId} panelId={panelId} />
+          <BrowserPanelPage instanceId={instanceId} panelId={panelId} persist />
         </Panel>
       )
     }
@@ -609,29 +545,21 @@ export function MainContentPanel({
       )
     }
 
-    // Multi-select mode: show batch actions panel
-    if (isMultiSelectActive) {
-      return wrapWithStoplight(
-        <Panel variant="grow" className={className}>
-          <MultiSelectPanel
-            count={selectionCount}
-            sessionStatuses={sessionStatuses}
-            activeStatusId={activeStatusId}
-            onSetStatus={handleBatchSetStatus}
-            labels={labels}
-            appliedLabelIds={appliedLabelIds}
-            onToggleLabel={handleBatchToggleLabel}
-            onArchive={handleBatchArchive}
-            onClearSelection={clearMultiSelect}
-          />
-        </Panel>
-      )
-    }
+    const sessionsBulkBar = (
+      <CollectionBulkBar
+        workspaceId={activeWorkspaceId}
+        visibleSessionIds={visibleSessionIds}
+        statuses={sessionStatuses}
+        projects={projects}
+        labels={labels}
+      />
+    )
 
     if (navState.details) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
           <ChatPage sessionId={navState.details.sessionId} />
+          {sessionsBulkBar}
         </Panel>
       )
     }
@@ -641,6 +569,7 @@ export function MainContentPanel({
         <div className="flex items-center justify-center h-full text-muted-foreground">
           <p className="text-sm">{t("session.noSessionSelected")}</p>
         </div>
+        {sessionsBulkBar}
       </Panel>
     )
   }

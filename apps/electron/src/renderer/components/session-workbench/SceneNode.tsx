@@ -30,6 +30,22 @@ function kindTone(kind: SessionNodeKind): string {
       return 'bg-cyan-500/15 text-cyan-100 ring-cyan-400/20'
     case 'memory':
       return 'bg-emerald-500/15 text-emerald-100 ring-emerald-400/20'
+    case 'subflow':
+      return 'bg-sky-500/15 text-sky-100 ring-sky-400/20'
+    case 'condition':
+      return 'bg-orange-500/15 text-orange-100 ring-orange-400/20'
+    case 'merge':
+      return 'bg-pink-500/15 text-pink-100 ring-pink-400/20'
+    case 'human_input':
+      return 'bg-blue-500/15 text-blue-100 ring-blue-400/20'
+    case 'output':
+      return 'bg-lime-500/15 text-lime-100 ring-lime-400/20'
+    case 'annotation_frame':
+      return 'bg-white/10 text-white/80 ring-white/15'
+    default: {
+      const _exhaustive: never = kind
+      return _exhaustive
+    }
   }
 }
 

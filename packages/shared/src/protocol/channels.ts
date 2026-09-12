@@ -20,6 +20,7 @@ export const RPC_CHANNELS = {
     LIST: 'cloudRuns:list',
     GET_STATUS: 'cloudRuns:getStatus',
     CANCEL: 'cloudRuns:cancel',
+    KILL: 'cloudRuns:kill',
     LIST_ARTIFACTS: 'cloudRuns:listArtifacts',
     IMPORT: 'cloudRuns:import',
     AGGREGATE: 'cloudRuns:aggregate',
@@ -497,6 +498,19 @@ export const RPC_CHANNELS = {
     RATE: 'gamification:rate',
     SET_CONSENT: 'gamification:setConsent',
     CHANGED: 'gamification:changed',
+  },
+  voice: {
+    GET: 'voice:get',
+    SAVE: 'voice:save',
+    HEALTH: 'voice:health',
+    TRANSCRIBE: 'voice:transcribe',
+    SPEAK: 'voice:speak',
+    CHANGED: 'voice:changed',
+  },
+  environment: {
+    GET: 'environment:get',
+    SAVE: 'environment:save',
+    CHANGED: 'environment:changed',
   },
   drafts: {
     GET: 'drafts:get',

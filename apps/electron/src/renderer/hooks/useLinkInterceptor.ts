@@ -16,6 +16,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { classifyFile, type FilePreviewType } from '@craft-agent/ui'
+import { classifyLinkPolicy } from '@craft-agent/shared/utils/url-safety'
 import { getLanguageFromPath } from '@/lib/file-utils'
 
 // ── Preview state types ────────────────────────────────────────────────────────
@@ -78,6 +79,8 @@ interface LinkInterceptorOptions {
   openFileExternal: (path: string) => Promise<void>
   /** Open URL in default browser */
   openUrl: (url: string) => Promise<void>
+  /** Open a safe http/https URL in the retained in-app browser */
+  openInAppBrowser?: (url: string) => void | Promise<void>
   /** Reveal file in system file manager */
   showInFolder: (path: string) => Promise<void>
   /** Read file as UTF-8 text (for code, markdown, json, text previews) */
@@ -93,7 +96,7 @@ interface LinkInterceptorOptions {
 interface LinkInterceptorResult {
   /** Replacement for App.tsx handleOpenFile — classifies and routes */
   handleOpenFile: (path: string) => void
-  /** Replacement for App.tsx handleOpenUrl — always opens externally */
+  /** Replacement for App.tsx handleOpenUrl — policy table routes http/https in-app */
   handleOpenUrl: (url: string) => void
   /** Open file directly in external app, bypassing classification/preview */
   openFileExternal: (path: string) => void
@@ -173,8 +176,13 @@ export function useLinkInterceptor(options: LinkInterceptorOptions): LinkInterce
     optionsRef.current.openFileExternal(path)
   }, []) // Stable: uses optionsRef
 
-  /** URLs always open externally — no in-app browser for security */
+  /** Safe http/https open in the retained browser; auth/deep-link/unsafe stay on the policy table. */
   const handleOpenUrl = useCallback((url: string) => {
+    const policy = classifyLinkPolicy(url)
+    if (policy.kind === 'internal-browser' && optionsRef.current.openInAppBrowser) {
+      void optionsRef.current.openInAppBrowser(url)
+      return
+    }
     optionsRef.current.openUrl(url)
   }, []) // Stable: uses optionsRef
 

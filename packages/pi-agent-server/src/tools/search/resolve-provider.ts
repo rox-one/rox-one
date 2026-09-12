@@ -15,6 +15,7 @@ import { ResponsesApiSearchProvider } from './providers/openai.ts';
 import { ChatGPTBackendSearchProvider, extractChatGptAccountId } from './providers/chatgpt.ts';
 import { GoogleSearchProvider } from './providers/google.ts';
 import { DDGSearchProvider } from './providers/ddg.ts';
+import { ExaSearchProvider, readExaApiKey } from './providers/exa.ts';
 
 export type SearchProviderCredential =
   | { type: 'api_key'; key: string }
@@ -54,7 +55,11 @@ function getOpenAiCodexAccessToken(piAuth?: SearchProviderAuthConfig): string | 
  *   by the ChatGPT backend provider to search with a model the account actually supports,
  *   instead of a hardcoded one that may have been retired (craft-agents-oss#1023).
  */
-export function resolveSearchProvider(piAuth?: SearchProviderAuthConfig, activeModel?: string): WebSearchProvider {
+export function resolveSearchProvider(
+  piAuth?: SearchProviderAuthConfig,
+  activeModel?: string,
+  env: NodeJS.ProcessEnv = process.env,
+): WebSearchProvider {
   const provider = piAuth?.provider;
   const apiKey = getApiKey(piAuth);
   const openAiCodexAccess = getOpenAiCodexAccessToken(piAuth);
@@ -93,6 +98,11 @@ export function resolveSearchProvider(piAuth?: SearchProviderAuthConfig, activeM
   // Google → Gemini API with native Google Search grounding
   if (provider === 'google' && apiKey) {
     return new GoogleSearchProvider(apiKey);
+  }
+
+  const exaKey = readExaApiKey(env);
+  if (exaKey) {
+    return new ExaSearchProvider(exaKey);
   }
 
   // Vercel AI Gateway is currently not wired to provider-native search routing.

@@ -13,6 +13,9 @@ import { redactSensitiveHeadersInPlace, redactSensitiveKeysInPlace } from '@craf
 import { initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import './index.css'
+import { installRendererPerfHarness } from './perf/install'
+
+const rendererPerfHarness = installRendererPerfHarness()
 
 // Initialize i18n before any React rendering
 const i18n = setupI18n([LanguageDetector, initReactI18next])
@@ -121,9 +124,13 @@ function Root() {
   // Shared atom — written by App on init & workspace switch, read here for ThemeProvider
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
 
+  const app = <App />
+
   return (
     <ThemeProvider activeWorkspaceId={workspaceId}>
-      <App />
+      {rendererPerfHarness.enabled
+        ? <React.Profiler id="rox-root" onRender={rendererPerfHarness.onRender}>{app}</React.Profiler>
+        : app}
       <Toaster />
     </ThemeProvider>
   )

@@ -24,7 +24,7 @@ export const meta: DetailsPageMeta = {
   slug: 'cloudRuns',
 }
 
-type Provider = 'local' | 'cloudflare' | 'modal' | 'e2b'
+type Provider = 'local' | 'daytona' | 'native'
 interface Config {
   enabled: boolean
   provider: Provider
@@ -33,6 +33,14 @@ interface Config {
   cheapModelId?: string
   personas?: boolean
   tokenConfigured: boolean
+  secretConfigured?: boolean
+  daytonaProjectId?: string
+  daytonaSnapshot?: string
+  daytonaSandbox?: string
+  daytonaRegion?: string
+  daytonaImage?: string
+  daytonaApiUrl?: string
+  defaultTtlSec?: number
   defaults: { maxWallClockSec: number; maxLlmTokens: number; maxArtifactsBytes: number }
 }
 
@@ -43,25 +51,38 @@ type ConfigPatch = Partial<Config> & {
   defaultMaxWallClockSec?: number
   defaultMaxLlmTokens?: number
   defaultMaxArtifactsBytes?: number
+  defaultTtlSec?: number
 }
 
 type FieldDraft = {
-  gatewayUrl: string
   notifyWebhookUrl: string
   maxWallClockSec: string
   maxLlmTokens: string
   maxArtifactsBytes: string
   cheapModelId: string
+  daytonaProjectId: string
+  daytonaSnapshot: string
+  daytonaSandbox: string
+  daytonaRegion: string
+  daytonaImage: string
+  daytonaApiUrl: string
+  defaultTtlSec: string
 }
 
 function draftFromConfig(config: Config): FieldDraft {
   return {
-    gatewayUrl: config.gatewayUrl ?? '',
     notifyWebhookUrl: config.notifyWebhookUrl ?? '',
     maxWallClockSec: String(config.defaults.maxWallClockSec),
     maxLlmTokens: String(config.defaults.maxLlmTokens),
     maxArtifactsBytes: String(config.defaults.maxArtifactsBytes),
     cheapModelId: config.cheapModelId ?? '',
+    daytonaProjectId: config.daytonaProjectId ?? '',
+    daytonaSnapshot: config.daytonaSnapshot ?? '',
+    daytonaSandbox: config.daytonaSandbox ?? '',
+    daytonaRegion: config.daytonaRegion ?? '',
+    daytonaImage: config.daytonaImage ?? '',
+    daytonaApiUrl: config.daytonaApiUrl ?? '',
+    defaultTtlSec: String(config.defaultTtlSec ?? 3600),
   }
 }
 
@@ -72,6 +93,11 @@ function SettingText({ label, description }: { label: string; description: strin
       <div className="mt-1 text-xs font-normal text-muted-foreground">{description}</div>
     </div>
   )
+}
+
+function translateCloudRunsError(message: string, t: (key: string) => string): string {
+  if (message.startsWith('security.assurance.')) return t(message)
+  return message
 }
 
 export default function CloudRunsSettingsPage() {
@@ -125,7 +151,7 @@ export default function CloudRunsSettingsPage() {
         }),
       )
       .catch((error) => {
-        const message = error instanceof Error ? error.message : String(error)
+        const message = translateCloudRunsError(error instanceof Error ? error.message : String(error), t)
         setSaveError(message)
         setFailedPatch(nextPatch)
         toast.error(t('cloudRuns.error'), { description: message })
@@ -181,44 +207,39 @@ export default function CloudRunsSettingsPage() {
                     onCheckedChange={(checked) => patch({ enabled: checked })}
                   />
                   <SettingsRow label={<SettingText label={t('settings.cloudRuns.provider')} description={t('settings.cloudRuns.providerHint')} />}>
-                    <select
-                      aria-label={t('settings.cloudRuns.provider')}
-                      className={fieldClass + ' w-56'}
-                      value={config.provider}
-                      onChange={(e) => patch({ provider: e.target.value as Provider })}
-                    >
-                      <option value="local">{t('settings.cloudRuns.providerLocal')}</option>
-                      <option value="cloudflare">Cloudflare</option>
-                      <option value="modal">Modal</option>
-                    </select>
+                    <div className="flex flex-wrap gap-1" role="radiogroup" aria-label={t('settings.cloudRuns.provider')}>
+                      {(['daytona', 'local', 'native'] as const).map((id) => (
+                        <Button
+                          key={id}
+                          type="button"
+                          size="sm"
+                          variant={config.provider === id ? 'default' : 'outline'}
+                          aria-pressed={config.provider === id}
+                          onClick={() => patch({ provider: id })}
+                        >
+                          {id === 'daytona' ? t('settings.cloudRuns.providerDaytona') : id === 'local' ? t('settings.cloudRuns.providerLocal') : t('settings.cloudRuns.providerNative')}
+                        </Button>
+                      ))}
+                    </div>
                   </SettingsRow>
-                  {(config.provider === 'cloudflare' || config.provider === 'modal') && (
+                  {config.provider === 'daytona' && (
                     <>
-                      <SettingsRow label={<SettingText label={t('settings.cloudRuns.gatewayUrl')} description={t('settings.cloudRuns.gatewayUrlHint')} />}>
-                        <Input
-                          className={fieldClass}
-                          value={draft.gatewayUrl}
-                          placeholder="https://craft-cloud-gateway.<sub>.workers.dev"
-                          onChange={(e) => setDraft((current) => current && { ...current, gatewayUrl: e.target.value })}
-                          onBlur={(e) => patch({ gatewayUrl: e.target.value.trim() || undefined })}
-                        />
-                      </SettingsRow>
                       <SettingsRow
                         label={
                           <SettingText
-                            label={t('settings.cloudRuns.token')}
-                            description={config.tokenConfigured ? t('settings.cloudRuns.tokenSet') : t('settings.cloudRuns.tokenMissing')}
+                            label={t('settings.cloudRuns.secretRef')}
+                            description={(config.secretConfigured ?? config.tokenConfigured) ? t('settings.cloudRuns.secretRefSet') : t('settings.cloudRuns.secretRefMissing')}
                           />
                         }
                       >
                         <span
                           className={`inline-flex h-7 min-w-[2rem] items-center justify-center rounded-md border px-2 text-xs font-medium ${
-                            config.tokenConfigured
+                            config.secretConfigured ?? config.tokenConfigured
                               ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
                               : 'border-destructive/40 bg-destructive/10 text-destructive'
                           }`}
                         >
-                          {config.tokenConfigured ? '✓' : '✗'}
+                          {(config.secretConfigured ?? config.tokenConfigured) ? '✓' : '✗'}
                         </span>
                       </SettingsRow>
                     </>
@@ -234,6 +255,66 @@ export default function CloudRunsSettingsPage() {
                   </SettingsRow>
                 </SettingsCard>
               </SettingsSection>
+
+              {config.provider === 'daytona' && (
+              <SettingsSection title={t('settings.cloudRuns.sectionSandbox')}>
+                <SettingsCard>
+                  <SettingsRow label={<SettingText label={t('settings.cloudRuns.project')} description={t('settings.cloudRuns.projectHint')} />}>
+                    <Input
+                      className={fieldClass}
+                      value={draft.daytonaProjectId}
+                      onChange={(e) => setDraft((current) => current && { ...current, daytonaProjectId: e.target.value })}
+                      onBlur={(e) => patch({ daytonaProjectId: e.target.value.trim() || undefined })}
+                    />
+                  </SettingsRow>
+                  <SettingsRow label={<SettingText label={t('settings.cloudRuns.snapshot')} description={t('settings.cloudRuns.snapshotHint')} />}>
+                    <Input
+                      className={fieldClass}
+                      value={draft.daytonaSnapshot}
+                      onChange={(e) => setDraft((current) => current && { ...current, daytonaSnapshot: e.target.value })}
+                      onBlur={(e) => patch({ daytonaSnapshot: e.target.value.trim() || undefined })}
+                    />
+                  </SettingsRow>
+                  <SettingsRow label={<SettingText label={t('settings.cloudRuns.sandbox')} description={t('settings.cloudRuns.sandboxHint')} />}>
+                    <Input
+                      className={fieldClass}
+                      value={draft.daytonaSandbox}
+                      onChange={(e) => setDraft((current) => current && { ...current, daytonaSandbox: e.target.value })}
+                      onBlur={(e) => patch({ daytonaSandbox: e.target.value.trim() || undefined })}
+                    />
+                  </SettingsRow>
+                  <SettingsRow label={<SettingText label={t('settings.cloudRuns.region')} description={t('settings.cloudRuns.regionHint')} />}>
+                    <Input
+                      className={fieldClass + ' w-40'}
+                      value={draft.daytonaRegion}
+                      onChange={(e) => setDraft((current) => current && { ...current, daytonaRegion: e.target.value })}
+                      onBlur={(e) => patch({ daytonaRegion: e.target.value.trim() || undefined })}
+                    />
+                  </SettingsRow>
+                  <SettingsRow label={<SettingText label={t('settings.cloudRuns.image')} description={t('settings.cloudRuns.imageHint')} />}>
+                    <Input
+                      className={fieldClass}
+                      value={draft.daytonaImage}
+                      onChange={(e) => setDraft((current) => current && { ...current, daytonaImage: e.target.value })}
+                      onBlur={(e) => patch({ daytonaImage: e.target.value.trim() || undefined })}
+                    />
+                  </SettingsRow>
+                  <SettingsRow label={<SettingText label={t('settings.cloudRuns.ttl')} description={t('settings.cloudRuns.ttlHint')} />}>
+                    <Input
+                      className={fieldClass + ' w-32'}
+                      type="number"
+                      min={60}
+                      value={draft.defaultTtlSec}
+                      onChange={(e) => setDraft((current) => current && { ...current, defaultTtlSec: e.target.value })}
+                      onBlur={(e) => {
+                        const value = Number(e.target.value)
+                        if (Number.isInteger(value) && value >= 60) patch({ defaultTtlSec: value })
+                      }}
+                    />
+                  </SettingsRow>
+                </SettingsCard>
+              </SettingsSection>
+              )}
 
               <SettingsSection title={t('settings.cloudRuns.sectionLimits')}>
                 <SettingsCard>
@@ -304,6 +385,21 @@ export default function CloudRunsSettingsPage() {
                     checked={config.personas ?? false}
                     onCheckedChange={(checked) => patch({ personas: checked })}
                   />
+                </SettingsCard>
+              <SettingsSection title={t('settings.cloudRuns.sectionSandbox')}>
+                <SettingsCard>
+                  <SettingsRow
+                    label={
+                      <SettingText
+                        label={t('settings.cloudRuns.sandboxTab')}
+                        description={t('settings.cloudRuns.sandboxHint')}
+                      />
+                    }
+                  >
+                    <span className="text-xs text-muted-foreground">
+                      {t('settings.cloudRuns.sandboxGated')}
+                    </span>
+                  </SettingsRow>
                 </SettingsCard>
               </SettingsSection>
             </>
