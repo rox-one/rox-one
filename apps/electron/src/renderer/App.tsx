@@ -14,6 +14,7 @@ import { AppShell } from '@/components/app-shell/AppShell'
 import { collectionBulkOperationRegistry } from '@/components/app-shell/collection/collection-bulk-optimistic'
 import { WorkspaceIconRail } from '@/components/app-shell/WorkspaceIconRail'
 import { getTopBarLeftInset, shouldShowWorkspaceIconRail, WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT } from '@/components/app-shell/workspace-rail'
+import { viewportBand } from '@/platform/viewport-band'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen } from '@/components/onboarding'
 import { WorkspacePicker } from '@/components/workspace'
@@ -2184,7 +2185,7 @@ export default function App() {
           )}
 
           {/* Main UI - always rendered, splash fades away to reveal it */}
-          <div className="flex h-full text-foreground">
+          <div className="flex h-full text-foreground" data-viewport={viewportBand(viewportWidth)}>
             {showWorkspaceIconRail && !sessionLoadError && (
               <WorkspaceIconRail
                 workspaces={workspaces}

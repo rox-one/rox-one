@@ -342,7 +342,7 @@ export function AccountMenu({
       type="button"
       data-account-menu={compact ? 'compact' : 'topbar'}
       className={cn(
-        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[8px] text-[13px] text-foreground/50 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
+        'header-icon-btn titlebar-no-drag ml-1 flex min-w-0 items-center justify-start gap-0.5 h-[30px] rounded-[8px] border border-border/50 bg-[var(--surface-elevated)] text-[13px] text-foreground/70 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground',
         compact ? 'flex-1 px-2' : 'flex-1 px-3',
       )}
       aria-label={t('workspace.selectWorkspace')}
@@ -357,9 +357,15 @@ export function AccountMenu({
       <span className="truncate min-w-0 flex-1 text-left">{triggerLabel}</span>
       {selectedWorkspace?.remoteServer &&
         (isRemoteDisconnected(selectedWorkspace.id) ? (
-          <CloudOff className="h-3 w-3 text-destructive shrink-0" />
+          <CloudOff
+            className="h-3 w-3 text-destructive shrink-0"
+            aria-label={t('dashboard.syncOffline')}
+          />
         ) : (
-          <Cloud className="h-3 w-3 opacity-60 shrink-0" />
+          <Cloud
+            className="h-3 w-3 opacity-60 shrink-0"
+            aria-label={t('dashboard.syncConnected')}
+          />
         ))}
       <ChevronDown data-slot="chevron" className="h-3 w-3 opacity-60 shrink-0" />
       {hasUnreadInOtherWorkspaces && <span className="h-2 w-2 rounded-full bg-accent shrink-0" />}

@@ -1,7 +1,7 @@
 import { isMac } from '@/lib/platform'
 
 /** Gap between any adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar) */
-export const PANEL_GAP = 6
+export const PANEL_GAP = 8
 
 /** Padding from window edges to outermost panels (right, bottom, left when sidebar hidden) */
 export const PANEL_EDGE_INSET = 6
@@ -10,7 +10,7 @@ export const PANEL_EDGE_INSET = 6
 export const RADIUS_EDGE = isMac ? 14 : 8
 
 /** Corner radius for interior corners between panels */
-export const RADIUS_INNER = 10
+export const RADIUS_INNER = 8
 
 /** Minimum width for any content panel */
 export const PANEL_MIN_WIDTH = 440
