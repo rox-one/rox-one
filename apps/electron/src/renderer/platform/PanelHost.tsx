@@ -67,42 +67,6 @@ import { panelContextKeysFromRoute } from './surface-tab-model'
 
 registerCorePanels(getAppPanelRegistry(), KnowledgeInspectorPanel)
 
-type AgentDebugWindow = Window & {
-  __agentDebugLog?: (payload: {
-    hypothesisId: string
-    location: string
-    message: string
-    data: Record<string, unknown>
-    timestamp: number
-  }) => void
-}
-
-function agentDebugLog(
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown>,
-): void {
-  if (typeof window === 'undefined') return
-  // #region agent log
-  ;(window as AgentDebugWindow).__agentDebugLog?.({
-    hypothesisId,
-    location,
-    message,
-    data,
-    timestamp: Date.now(),
-  })
-  // #endregion
-}
-
-// #region agent log
-agentDebugLog('C,E', 'PanelHost.tsx:module', 'panel host module evaluated', {
-  bridgePresent:
-    typeof window !== 'undefined'
-    && typeof (window as AgentDebugWindow).__agentDebugLog === 'function',
-})
-// #endregion
-
 export interface PanelHostProps {
   slot: PanelSlot
   /** Override the app singleton (tests / embedded hosts). */
@@ -165,29 +129,14 @@ export function PanelHost({
   // Live re-render on (de)registration.
   const [registryVersion, setRegistryVersion] = React.useState(0)
   React.useEffect(() => {
-    const sub = resolvedRegistry.onDidChange(() => {
-      // #region agent log
-      agentDebugLog('B,C', 'PanelHost.tsx:registry-listener', 'registry change observed', {
-        slot,
-      })
-      // #endregion
-      setRegistryVersion((v) => v + 1)
-    })
+    const sub = resolvedRegistry.onDidChange(() => setRegistryVersion((v) => v + 1))
     return () => sub.dispose()
-  }, [resolvedRegistry, slot])
+  }, [resolvedRegistry])
 
   // The inspector host owns runtime-gated Conation registrations. Cleanup only
   // disposes contributions this host registered; pre-existing owners are untouched.
   React.useEffect(() => {
     if (slot !== 'inspector') return
-
-    // #region agent log
-    agentDebugLog('B,C', 'PanelHost.tsx:registration-effect', 'registration effect entered', {
-      shellEnabled: conationShellEnabled,
-      inspectorEnabled: conationInspectorEnabled,
-      inspectorPanelIdsBefore: resolvedRegistry.list('inspector', {}).map((panel) => panel.id),
-    })
-    // #endregion
 
     const inspectorRegistration = registerConationPanels(
       resolvedRegistry,
@@ -232,25 +181,7 @@ export function PanelHost({
         )
       : undefined
 
-    // #region agent log
-    agentDebugLog('A,B', 'PanelHost.tsx:registration-effect', 'registrations completed', {
-      inspectorRegistered: Boolean(inspectorRegistration),
-      fundRegistered: Boolean(fundRegistration),
-      boardRegistered: Boolean(boardRegistration),
-      notesRegistered: Boolean(notesRegistration),
-      inspectorPanelIds: resolvedRegistry.list('inspector', {}).map((panel) => panel.id),
-    })
-    // #endregion
-
     return () => {
-      // #region agent log
-      agentDebugLog('B,C', 'PanelHost.tsx:registration-cleanup', 'registration cleanup entered', {
-        shellEnabled: conationShellEnabled,
-        inspectorEnabled: conationInspectorEnabled,
-        inspectorRegistered: Boolean(inspectorRegistration),
-        inspectorPanelIdsBeforeCleanup: resolvedRegistry.list('inspector', {}).map((panel) => panel.id),
-      })
-      // #endregion
       inspectorRegistration?.dispose()
       fundRegistration?.dispose()
       boardRegistration?.dispose()
@@ -284,31 +215,10 @@ export function PanelHost({
     [resolvedRegistry, slot, ctx, state.overrides, registryVersion],
   )
 
-  const hostRef = React.useRef<HTMLDivElement>(null)
-  React.useLayoutEffect(() => {
-    if (slot !== 'inspector') return
-    const host = hostRef.current
-    const parent = host?.parentElement
-    // #region agent log
-    agentDebugLog('A,D', 'PanelHost.tsx:layout', 'inspector layout measured', {
-      shellEnabled: conationShellEnabled,
-      inspectorEnabled: conationInspectorEnabled,
-      panelIds: panels.map((panel) => panel.id),
-      viewportWidth: window.innerWidth,
-      hostWidth: host ? Math.round(host.getBoundingClientRect().width) : null,
-      parentWidth: parent ? Math.round(parent.getBoundingClientRect().width) : null,
-      siblingWidths: parent
-        ? Array.from(parent.children, (element) =>
-            Math.round(element.getBoundingClientRect().width))
-        : [],
-    })
-    // #endregion
-  }, [slot, panels, conationShellEnabled, conationInspectorEnabled])
-
   if (panels.length === 0) return null
 
   return (
-    <div ref={hostRef} className={cn('flex shrink-0 items-stretch', className)} data-panel-slot={slot}>
+    <div className={cn('flex shrink-0 items-stretch', className)} data-panel-slot={slot}>
       {panels.map((panel) => {
         const PanelComponent = panel.render as React.ComponentType
         return <PanelComponent key={panel.id} />

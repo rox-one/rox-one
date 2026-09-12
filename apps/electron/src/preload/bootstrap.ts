@@ -17,7 +17,6 @@
  */
 
 import '@sentry/electron/preload'
-import { appendFileSync } from 'node:fs'
 import { contextBridge, ipcRenderer, shell, webUtils } from 'electron'
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { RoutedClient } from '../transport/routed-client'
@@ -555,35 +554,3 @@ contextBridge.exposeInMainWorld('electronAPI', api)
 if (openClawHostControl) {
   contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
 }
-
-const appendAgentDebugLog = (payload: unknown): void => {
-  appendFileSync('/opt/cursor/logs/debug.log', `${JSON.stringify(payload)}\n`)
-}
-
-// #region agent log
-contextBridge.exposeInMainWorld('__agentDebugLog', (payload: unknown) => {
-  appendAgentDebugLog(payload)
-})
-// #endregion
-
-// #region agent log
-appendAgentDebugLog({
-  hypothesisId: 'E',
-  location: 'bootstrap.ts:preload-heartbeat',
-  message: 'preload probe installed',
-  data: { pid: process.pid, probeVersion: 'layout-v2' },
-  timestamp: Date.now(),
-})
-// #endregion
-
-window.addEventListener('DOMContentLoaded', () => {
-  // #region agent log
-  appendAgentDebugLog({
-    hypothesisId: 'C,E',
-    location: 'bootstrap.ts:dom-content-loaded',
-    message: 'renderer document loaded',
-    data: { readyState: document.readyState, probeVersion: 'layout-v2' },
-    timestamp: Date.now(),
-  })
-  // #endregion
-}, { once: true })
