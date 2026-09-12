@@ -13,10 +13,13 @@ export interface RegisterConationPanelsOptions {
   inspectorEnabled: boolean
 }
 
-export function conationInspectorContribution(render: PanelRenderer): PanelContribution {
+export function conationInspectorContribution(
+  render: PanelRenderer,
+  title = 'Conation',
+): PanelContribution {
   return {
     id: CONATION_INSPECTOR_PANEL_ID,
-    title: 'Conation',
+    title,
     icon: 'layers',
     slot: 'inspector',
     defaultOrder: 40,
@@ -33,12 +36,11 @@ export function registerConationPanels(
   registry: PanelRegistry,
   render: PanelRenderer = () => null,
   options: RegisterConationPanelsOptions = { shellEnabled: false, inspectorEnabled: false },
-): PanelRegistry {
+  title = 'Conation',
+): ReturnType<PanelRegistry['register']> | undefined {
   if (!isConationInspectorEnabled(options.shellEnabled, options.inspectorEnabled)) {
-    return registry
+    return undefined
   }
-  if (!registry.get(CONATION_INSPECTOR_PANEL_ID)) {
-    registry.register(conationInspectorContribution(render))
-  }
-  return registry
+  if (registry.get(CONATION_INSPECTOR_PANEL_ID)) return undefined
+  return registry.register(conationInspectorContribution(render, title))
 }

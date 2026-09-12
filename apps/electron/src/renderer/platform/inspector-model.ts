@@ -11,6 +11,7 @@ export const KNOWLEDGE_INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
   'agent',
   'outline',
   'backlinks',
+  'browser',
 ]
 
 export const SESSION_INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
@@ -21,11 +22,17 @@ export const SESSION_INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
 ]
 
 export const INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
-  ...KNOWLEDGE_INSPECTOR_SECTION_IDS,
-  ...SESSION_INSPECTOR_SECTION_IDS,
+  'info',
+  'agent',
+  'outline',
+  'backlinks',
+  'files',
+  'git',
+  'browser',
+  'context',
 ]
 
-/** Sections with a real implementation in W1; the rest render i18n empty states. */
+/** Knowledge sections rendered by InfoSection; browser is handled directly by InspectorHost. */
 export const INSPECTOR_LIVE_SECTIONS: readonly InspectorSectionId[] = ['info']
 
 export const SESSION_INSPECTOR_LIVE_SECTIONS: readonly InspectorSectionId[] = [
@@ -57,6 +64,11 @@ export interface InspectorUiState {
   section: InspectorSectionId
 }
 
+export interface InspectorTerminalUiState {
+  bottomOpen: boolean
+  sideOpen: boolean
+}
+
 export function resolveInspectorToggle(
   prev: InspectorUiState,
   clicked: InspectorSectionId,
@@ -66,4 +78,14 @@ export function resolveInspectorToggle(
     return { visible: false, section: clicked }
   }
   return { visible: true, section: clicked }
+}
+
+/** A normal rail click owns the bottom dock and closes the side alternate. */
+export function resolveBottomTerminalToggle(
+  prev: InspectorTerminalUiState,
+): InspectorTerminalUiState {
+  return {
+    bottomOpen: !prev.bottomOpen,
+    sideOpen: false,
+  }
 }

@@ -25,7 +25,7 @@ import {
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { useEffect, useRef, useState } from "react"
-import { useAtomValue } from "jotai"
+import { useAtom, useAtomValue } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
@@ -37,6 +37,8 @@ import {
   featureWorkbenchHarnessChatChromeV1Atom,
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTopChromeV2Atom,
+  inspectorChromeCollapsedAtom,
+  inspectorVisibleAtom,
 } from "@/atoms/unified-shell"
 import { focusedSessionIdAtom } from "@/atoms/panel-stack"
 import { sessionMetaMapAtom } from "@/atoms/sessions"
@@ -68,6 +70,9 @@ interface TopBarProps {
   onToggleFocusMode: () => void
   onAddSessionPanel: () => void
   onAddBrowserPanel: () => void
+  onOpenMap: () => void
+  mapAvailable: boolean
+  showInspectorToggle: boolean
   /** Active panel header rendered beside the workspace switcher on compact screens. */
   compactHeaderRenderer?: () => ReactNode
   /** Chat detail uses a minimal back/title/menu bar on compact screens. */
@@ -103,6 +108,9 @@ export function TopBar({
   onToggleFocusMode,
   onAddSessionPanel,
   onAddBrowserPanel,
+  onOpenMap,
+  mapAvailable,
+  showInspectorToggle,
   compactHeaderRenderer,
   isCompactChatMode,
   isCompactSettingsMode,
@@ -113,6 +121,8 @@ export function TopBar({
   const { t } = useTranslation()
   const [maxVisibleBrowserBadges, setMaxVisibleBrowserBadges] = useState(3)
   const rightSlotRef = useRef<HTMLDivElement | null>(null)
+  const [inspectorVisible, setInspectorVisible] = useAtom(inspectorVisibleAtom)
+  const [inspectorChromeCollapsed, setInspectorChromeCollapsed] = useAtom(inspectorChromeCollapsedAtom)
   const chrome = resolveWorkbenchChrome({
     unifiedShell: false,
     modeRegistry: useAtomValue(featureWorkbenchModeRegistryV1Atom),
@@ -124,6 +134,18 @@ export function TopBar({
 
   const goBackHotkey = useActionLabel('nav.goBackAlt').hotkey
   const goForwardHotkey = useActionLabel('nav.goForwardAlt').hotkey
+  const inspectorOpen = inspectorVisible && !inspectorChromeCollapsed
+  const inspectorToggleLabel = t(inspectorOpen ? 'inspector.hide' : 'inspector.expand')
+
+  const handleToggleInspector = () => {
+    if (!inspectorOpen) {
+      setInspectorChromeCollapsed(false)
+      setInspectorVisible(true)
+      return
+    }
+    setInspectorChromeCollapsed(true)
+    setInspectorVisible(false)
+  }
 
   useEffect(() => {
     const slotEl = rightSlotRef.current
@@ -276,6 +298,19 @@ export function TopBar({
           <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
         </div>
         )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={onOpenMap}
+              disabled={!mapAvailable}
+              aria-label={t("entityView.map")}
+              className="h-[26px] w-[26px] rounded-lg"
+            >
+              <Icons.Network className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+            </TopBarButton>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{t("entityView.map")}</TooltipContent>
+        </Tooltip>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-1 h-[26px] w-[26px] rounded-lg">
@@ -341,6 +376,19 @@ export function TopBar({
             </StyledDropdownMenuItem>
           </StyledDropdownMenuContent>
         </DropdownMenu>
+        {showInspectorToggle && <Tooltip>
+          <TooltipTrigger asChild>
+            <TopBarButton
+              onClick={handleToggleInspector}
+              aria-label={inspectorToggleLabel}
+              aria-pressed={inspectorOpen}
+              className="h-[26px] w-[26px] rounded-lg"
+            >
+              <Icons.PanelRight className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+            </TopBarButton>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
+        </Tooltip>}
       </div>
       )}
       </div>

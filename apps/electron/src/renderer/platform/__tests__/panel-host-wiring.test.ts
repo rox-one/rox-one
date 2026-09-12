@@ -38,14 +38,45 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
   it('bootstraps core panels with the real KnowledgeInspectorPanel render', () => {
     const host = readFileSync(hostPath, 'utf8')
     expect(host).toContain('registerCorePanels')
+    expect(host).toContain('getAppPanelRegistry()')
     expect(host).toContain('KnowledgeInspectorPanel')
     expect(host).toContain('panelContextKeysFromRoute')
+    expect(host).not.toContain('void contribution')
+  })
+
+  it('owns runtime-gated Conation registrations only from the inspector host', () => {
+    const host = readFileSync(hostPath, 'utf8')
+    expect(host).toContain('useAtomValue(featureWorkbenchConationShellAtom)')
+    expect(host).toContain('useAtomValue(featureWorkbenchConationInspectorAtom)')
+    expect(host).toContain('useAtomValue(featureWorkbenchConationCanvasAtom)')
+    expect(host).toContain('useAtomValue(featureWorkbenchConationBoardAtom)')
+    expect(host).toContain('useAtomValue(featureWorkbenchConationNotesBridgeAtom)')
+    expect(host).toContain('createConationNotesBridge')
+    expect(host).toContain('const notesRegistration = registerNotesPanel(')
+    expect(host).not.toContain('const notesRegistration = notesBridge')
+    expect(host).toContain('renderNotesPanel')
+    expect(host).toContain("t('settings.appearance.conationShell')")
+    expect(host).toContain("t('conation.fund.title')")
+    expect(host).toContain("t('conation.board.title')")
+    expect(host).toContain("t('knowledge.nav.filterNotes')")
+    expect(host).toContain("if (slot !== 'inspector') return")
+    expect(host).toContain('inspectorRegistration?.dispose()')
+    expect(host).toContain('fundRegistration?.dispose()')
+    expect(host).toContain('boardRegistration?.dispose()')
+    expect(host).toContain('notesRegistration?.dispose()')
   })
 
   it('keeps featureUnifiedShellAtom defaulted to false', () => {
     const src = readFileSync(atomPath, 'utf8')
     expect(src).toMatch(
       /atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.featureUnifiedShell\),\s*false/,
+    )
+  })
+
+  it('keeps featureWorkbenchAtom defaulted to false', () => {
+    const src = readFileSync(atomPath, 'utf8')
+    expect(src).toMatch(
+      /atomWithStorage<boolean>\(\s*getKeyString\(KEYS\.workbenchEnabled\),\s*false/,
     )
   })
 

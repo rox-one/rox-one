@@ -10,9 +10,8 @@
  *   `panel-registry-state:${workspaceId}` (S-03 §3.7, KEYS.panelState);
  * - re-renders on `registry.onDidChange` and on workspace switch (state is
  *   re-read per workspace; absence/parse-failure yields defaults);
- * - renders nothing when the slot has no visible contributions. Ticket 11
- *   registers `knowledge.inspector` on slot `inspector`; other slots stay
- *   empty until later waves.
+ * - renders nothing when the slot has no visible contributions. Core and
+ *   runtime-gated Conation panels contribute to the `inspector` slot.
  *
  * The default context snapshot publishes `activeSurface` from the focused
  * panel route (`panelContextKeysFromRoute`); callers may pass a full
@@ -24,14 +23,24 @@
  */
 import * as React from 'react'
 import { useAtomValue } from 'jotai'
+import { useTranslation } from 'react-i18next'
 import type {
   ContextKeys,
   PanelRegistry,
   PanelRegistryState,
   PanelSlot,
 } from '@craft-agent/core/platform'
+import {
+  featureWorkbenchConationInspectorAtom,
+  featureWorkbenchConationShellAtom,
+} from '@/atoms/conation-shell'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { focusedPanelRouteAtom } from '@/atoms/panel-stack'
+import {
+  featureWorkbenchConationBoardAtom,
+  featureWorkbenchConationCanvasAtom,
+  featureWorkbenchConationNotesBridgeAtom,
+} from '@/atoms/unified-shell'
 import * as storage from '@/lib/local-storage'
 import { KEYS } from '@/lib/local-storage'
 import { cn } from '@/lib/utils'
@@ -40,7 +49,10 @@ import { KnowledgeInspectorPanel } from './KnowledgeInspectorPanel'
 import { registerConationPanels } from './conation/conation-panels'
 import { ConationInspectorPanel } from './conation/ConationInspectorPanel'
 import { registerNotesPanel } from './conation/conation-notes-panels'
-import { ConationNotesPanel } from './conation/ConationNotesPanel'
+import {
+  ConationNotesPanel,
+  createConationNotesBridge,
+} from './conation/ConationNotesPanel'
 import { registerFundPanel } from './conation/conation-fund-panels'
 import { ConationFundPanel } from './conation/ConationFundPanel'
 import { registerBoardPanel } from './conation/conation-board-panels'
@@ -54,61 +66,6 @@ import {
 import { panelContextKeysFromRoute } from './surface-tab-model'
 
 registerCorePanels(getAppPanelRegistry(), KnowledgeInspectorPanel)
-
-// Conation host: only contributes when both shell+inspector flags are on (default false).
-registerConationPanels(getAppPanelRegistry(), ConationInspectorPanel, {
-  shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
-  inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
-})
-
-// Notes panel: no-op unless shell + inspector + notesBridge are all on (default false).
-// Adapter note: claim locker / Imports ACL remain fail-closed until wired (CX-Notes claim-locker follow-up).
-registerNotesPanel(
-  {
-    register: (contribution) => {
-      // Lightweight contribution bridge until Notes uses PanelRegistry slot fully.
-      void contribution
-    },
-  },
-  ConationNotesPanel,
-  {
-    shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
-    inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
-    notesBridgeEnabled: storage.get(KEYS.featureWorkbenchConationNotesBridge, false),
-  },
-)
-
-// Fund deep-link panel: no-op unless shell + inspector + canvas are all on (default false).
-// Live in-pane Fund canvas is out of scope until Perf harness (ROX-009).
-registerFundPanel(
-  {
-    register: (contribution) => {
-      void contribution
-    },
-  },
-  ConationFundPanel,
-  {
-    shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
-    inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
-    canvasEnabled: storage.get(KEYS.featureWorkbenchConationCanvas, false),
-  },
-)
-
-// Board deep-link panel: no-op unless shell + inspector + board are all on (default false).
-// No second in-pane kanban — Rox Board remains the board surface (ROX-010).
-registerBoardPanel(
-  {
-    register: (contribution) => {
-      void contribution
-    },
-  },
-  ConationBoardPanel,
-  {
-    shellEnabled: storage.get(KEYS.featureWorkbenchConationShell, false),
-    inspectorEnabled: storage.get(KEYS.featureWorkbenchConationInspector, false),
-    boardEnabled: storage.get(KEYS.featureWorkbenchConationBoard, false),
-  },
-)
 
 export interface PanelHostProps {
   slot: PanelSlot
@@ -135,11 +92,32 @@ export function PanelHost({
   contextKeys,
   className,
 }: PanelHostProps) {
+  const { t } = useTranslation()
   const windowWorkspaceId = useAtomValue(windowWorkspaceIdAtom)
   const activeWorkspaceId = workspaceId === undefined ? windowWorkspaceId : workspaceId
   const route = useAtomValue(focusedPanelRouteAtom)
+  const conationShellEnabled = useAtomValue(featureWorkbenchConationShellAtom)
+  const conationInspectorEnabled = useAtomValue(featureWorkbenchConationInspectorAtom)
+  const conationCanvasEnabled = useAtomValue(featureWorkbenchConationCanvasAtom)
+  const conationBoardEnabled = useAtomValue(featureWorkbenchConationBoardAtom)
+  const conationNotesBridgeEnabled = useAtomValue(featureWorkbenchConationNotesBridgeAtom)
 
   const resolvedRegistry = registry ?? getAppPanelRegistry()
+  const notesBridge = React.useMemo(
+    () => createConationNotesBridge(
+      typeof window === 'undefined' ? null : window.electronAPI,
+      activeWorkspaceId,
+    ),
+    [activeWorkspaceId],
+  )
+  const renderNotesPanel = React.useCallback(
+    () => <ConationNotesPanel bridge={notesBridge} />,
+    [notesBridge],
+  )
+  const conationPanelTitle = t('settings.appearance.conationShell')
+  const fundPanelTitle = t('conation.fund.title')
+  const boardPanelTitle = t('conation.board.title')
+  const notesPanelTitle = t('knowledge.nav.filterNotes')
 
   const [state, setState] = React.useState<PanelRegistryState>(() => loadPanelState(activeWorkspaceId))
 
@@ -154,6 +132,74 @@ export function PanelHost({
     const sub = resolvedRegistry.onDidChange(() => setRegistryVersion((v) => v + 1))
     return () => sub.dispose()
   }, [resolvedRegistry])
+
+  // The inspector host owns runtime-gated Conation registrations. Cleanup only
+  // disposes contributions this host registered; pre-existing owners are untouched.
+  React.useEffect(() => {
+    if (slot !== 'inspector') return
+
+    const inspectorRegistration = registerConationPanels(
+      resolvedRegistry,
+      ConationInspectorPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+      },
+      conationPanelTitle,
+    )
+    // Fund and Board remain deep-link panes; live canvas/kanban is out of scope.
+    const fundRegistration = registerFundPanel(
+      resolvedRegistry,
+      ConationFundPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+        canvasEnabled: conationCanvasEnabled,
+      },
+      fundPanelTitle,
+    )
+    const boardRegistration = registerBoardPanel(
+      resolvedRegistry,
+      ConationBoardPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+        boardEnabled: conationBoardEnabled,
+      },
+      boardPanelTitle,
+    )
+    const notesRegistration = registerNotesPanel(
+      resolvedRegistry,
+      renderNotesPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+        notesBridgeEnabled: conationNotesBridgeEnabled,
+      },
+      notesPanelTitle,
+    )
+
+    return () => {
+      inspectorRegistration?.dispose()
+      fundRegistration?.dispose()
+      boardRegistration?.dispose()
+      notesRegistration?.dispose()
+    }
+  }, [
+    resolvedRegistry,
+    slot,
+    conationShellEnabled,
+    conationInspectorEnabled,
+    conationCanvasEnabled,
+    conationBoardEnabled,
+    conationNotesBridgeEnabled,
+    notesBridge,
+    renderNotesPanel,
+    conationPanelTitle,
+    fundPanelTitle,
+    boardPanelTitle,
+    notesPanelTitle,
+  ])
 
   const ctx = React.useMemo<ContextKeys>(
     () => contextKeys ?? panelContextKeysFromRoute(route),

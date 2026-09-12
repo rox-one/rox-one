@@ -1,3 +1,5 @@
+import type { PanelContribution, PanelRegistry, PanelRenderer } from '@craft-agent/core/platform'
+
 /** Keep id aligned with workbench.conation.board (Board deep-link pane). */
 export const CONATION_BOARD_PANEL_ID = 'conation.board' as const
 
@@ -9,30 +11,39 @@ export type BoardPanelFlags = {
   boardEnabled: boolean
 }
 
-export type BoardPanelContribution<C> = {
-  id: typeof CONATION_BOARD_PANEL_ID
-  title: 'Conation Board'
-  component: C
-}
-
-export type BoardPanelRegistry<C> = {
-  register: (contribution: BoardPanelContribution<C>) => void
-}
-
 export function shouldRegisterBoardPanel(flags: BoardPanelFlags): boolean {
   return flags.shellEnabled === true && flags.inspectorEnabled === true && flags.boardEnabled === true
 }
 
-/** No-op unless shell + inspector + board are all on (all default false). */
-export function registerBoardPanel<C>(
-  registry: BoardPanelRegistry<C>,
-  component: C,
-  flags: BoardPanelFlags,
-): void {
-  if (!shouldRegisterBoardPanel(flags)) return
-  registry.register({
+export function boardPanelContribution(
+  render: PanelRenderer,
+  title = 'Conation Board',
+): PanelContribution {
+  return {
     id: CONATION_BOARD_PANEL_ID,
-    title: 'Conation Board',
-    component,
-  })
+    title,
+    icon: 'layers',
+    slot: 'inspector',
+    defaultOrder: 42,
+    defaultVisible: true,
+    resizable: true,
+    source: { type: 'core', id: 'conation' },
+    render,
+  }
+}
+
+/** No-op unless shell + inspector + board are all on (all default false). */
+export function registerBoardPanel(
+  registry: PanelRegistry,
+  render: PanelRenderer = () => null,
+  flags: BoardPanelFlags = {
+    shellEnabled: false,
+    inspectorEnabled: false,
+    boardEnabled: false,
+  },
+  title = 'Conation Board',
+): ReturnType<PanelRegistry['register']> | undefined {
+  if (!shouldRegisterBoardPanel(flags)) return
+  if (registry.get(CONATION_BOARD_PANEL_ID)) return
+  return registry.register(boardPanelContribution(render, title))
 }

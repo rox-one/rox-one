@@ -1,3 +1,5 @@
+import type { PanelContribution, PanelRegistry, PanelRenderer } from '@craft-agent/core/platform'
+
 /** Keep id in sync with packages/core/src/conation/notes/flags.ts */
 export const CONATION_NOTES_PANEL_ID = 'conation.notes' as const
 
@@ -7,30 +9,39 @@ export type NotesPanelFlags = {
   notesBridgeEnabled: boolean
 }
 
-export type NotesPanelContribution<C> = {
-  id: typeof CONATION_NOTES_PANEL_ID
-  title: 'Conation Notes'
-  component: C
-}
-
-export type NotesPanelRegistry<C> = {
-  register: (contribution: NotesPanelContribution<C>) => void
-}
-
 export function shouldRegisterNotesPanel(flags: NotesPanelFlags): boolean {
   return flags.shellEnabled === true && flags.inspectorEnabled === true && flags.notesBridgeEnabled === true
 }
 
-/** No-op unless shell + inspector + notesBridge are all on. */
-export function registerNotesPanel<C>(
-  registry: NotesPanelRegistry<C>,
-  component: C,
-  flags: NotesPanelFlags,
-): void {
-  if (!shouldRegisterNotesPanel(flags)) return
-  registry.register({
+export function notesPanelContribution(
+  render: PanelRenderer,
+  title = 'Conation Notes',
+): PanelContribution {
+  return {
     id: CONATION_NOTES_PANEL_ID,
-    title: 'Conation Notes',
-    component,
-  })
+    title,
+    icon: 'layers',
+    slot: 'inspector',
+    defaultOrder: 43,
+    defaultVisible: true,
+    resizable: true,
+    source: { type: 'core', id: 'conation' },
+    render,
+  }
+}
+
+/** No-op unless shell + inspector + notesBridge are all on. */
+export function registerNotesPanel(
+  registry: PanelRegistry,
+  render: PanelRenderer = () => null,
+  flags: NotesPanelFlags = {
+    shellEnabled: false,
+    inspectorEnabled: false,
+    notesBridgeEnabled: false,
+  },
+  title = 'Conation Notes',
+): ReturnType<PanelRegistry['register']> | undefined {
+  if (!shouldRegisterNotesPanel(flags)) return
+  if (registry.get(CONATION_NOTES_PANEL_ID)) return
+  return registry.register(notesPanelContribution(render, title))
 }
