@@ -674,7 +674,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
     spellCheck: false,
     keepAwakeWhileRunning: false,
     richToolDescriptions: true,
-    defaultZoomLevel: DEFAULT_ZOOM_LEVEL,
+    defaultZoomLevel: 90,
     extendedPromptCache: false,
     browserToolEnabled: true,
     allowRemoteEvaluate: true,

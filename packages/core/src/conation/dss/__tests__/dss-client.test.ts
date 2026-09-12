@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { createDssClient } from '../client.ts'
 import { DSS_DEFAULT_BASE_URL } from '../types.ts'
 import { dssProjectsPath } from '../paths.ts'
+import type { HttpFetch } from '../../../platform/http-fetch.ts'
 
 describe('createDssClient', () => {
   it('returns null when flag/enabled is false', () => {
@@ -9,7 +10,7 @@ describe('createDssClient', () => {
   })
 
   it('lists projects with mocked fetch when enabled', async () => {
-    const fetchMock: typeof fetch = async (input) => {
+    const fetchMock: HttpFetch = async (input) => {
       expect(String(input)).toBe(`${DSS_DEFAULT_BASE_URL}${dssProjectsPath()}`)
       return new Response(JSON.stringify({ projects: [{ id: 'p1', name: 'Drive' }] }), {
         status: 200,
@@ -24,7 +25,7 @@ describe('createDssClient', () => {
   })
 
   it('lists entries and fetches content bytes with mocked fetch', async () => {
-    const fetchMock: typeof fetch = async (input) => {
+    const fetchMock: HttpFetch = async (input) => {
       const url = String(input)
       if (url.includes('/entries')) {
         return new Response(
@@ -48,7 +49,7 @@ describe('createDssClient', () => {
   })
 
   it('surfaces HTTP errors without hitting live network defaults in assert path', async () => {
-    const fetchMock: typeof fetch = async () => new Response('', { status: 401 })
+    const fetchMock: HttpFetch = async () => new Response('', { status: 401 })
     const client = createDssClient({ enabled: true, fetch: fetchMock })
     await expect(client!.listProjects()).rejects.toThrow(/DSS HTTP 401/)
   })

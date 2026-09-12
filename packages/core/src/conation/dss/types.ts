@@ -4,6 +4,8 @@
  * Writes and Apple FileProvider are intentionally omitted (signing BLOCKED).
  */
 
+import type { HttpFetch, HttpHeadersInit } from '../../platform/http-fetch.ts'
+
 export const DSS_DEFAULT_BASE_URL = 'https://conation.dev/dss' as const
 
 /** Alternate Caddy/alias path — same operator origin. */
@@ -57,15 +59,15 @@ export type DssClientOptions = {
   enabled: boolean
   baseUrl?: string
   /** Optional auth/cookie/HMAC headers for operator origin. */
-  getHeaders?: () => HeadersInit | Promise<HeadersInit>
+  getHeaders?: () => HttpHeadersInit | Promise<HttpHeadersInit>
   /**
    * Optional request signer (SessionApply / HMAC inject).
    * Exact scheme is owned outside this pack — never guess secrets here.
    */
   signRequest?: (
     input: DssSignRequestInput,
-  ) => HeadersInit | Promise<HeadersInit>
-  fetch?: typeof fetch
+  ) => HttpHeadersInit | Promise<HttpHeadersInit>
+  fetch?: HttpFetch
 }
 
 export type DssListEntriesArgs = {

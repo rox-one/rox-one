@@ -4,6 +4,7 @@
  * Never logs or forwards secrets. Origin is configurable; no HMAC/DAYTONA keys here.
  */
 
+import type { HttpFetch } from '../http-fetch.ts';
 import {
   DEFAULT_APPLY_PATH,
   DEFAULT_OPERATOR_ORIGIN,
@@ -24,8 +25,8 @@ function requireFlag(options: SessionApplyClientOptions): void {
   if (!options.flagEnabled) throw new SessionApplyFlagOffError();
 }
 
-function fetcher(options: SessionApplyClientOptions): typeof fetch {
-  const fn = options.fetch ?? globalThis.fetch;
+function fetcher(options: SessionApplyClientOptions): HttpFetch {
+  const fn = options.fetch ?? (globalThis.fetch as HttpFetch);
   if (typeof fn !== 'function') {
     throw new Error('fetch is unavailable');
   }

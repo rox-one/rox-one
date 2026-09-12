@@ -4,6 +4,8 @@
  * Writes (CompleteMutationRoot) are intentionally omitted.
  */
 
+import type { HttpFetch, HttpHeadersInit } from '../../platform/http-fetch.ts'
+
 export const SOUP_GRAPHQL_DEFAULT_ENDPOINT = 'https://conation.dev/graphql' as const
 
 /** GraphQL query root name verified live: SoupQueryRoot */
@@ -100,8 +102,8 @@ export type SoupClientOptions = {
   enabled: boolean
   endpoint?: string
   /** Optional auth/cookie headers for operator origin. */
-  getHeaders?: () => HeadersInit | Promise<HeadersInit>
-  fetch?: typeof fetch
+  getHeaders?: () => HttpHeadersInit | Promise<HttpHeadersInit>
+  fetch?: HttpFetch
 }
 
 export type SoupPageQueryArgs = {
