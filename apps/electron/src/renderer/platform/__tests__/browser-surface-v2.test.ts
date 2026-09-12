@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
-import { removeBrowserWindowAfterDestroy } from '../../components/browser/use-workspace-browser-windows'
+import { commitAfterBrowserWindowAction } from '../../components/browser/use-workspace-browser-windows'
 import { osBrowserSurfaceTabs, type OsBrowserInstanceLike } from '../os-browser-tabs'
 
 const platformDir = join(import.meta.dir, '..')
@@ -39,7 +39,7 @@ describe('browser surface v2 model', () => {
   })
 })
 
-describe('removeBrowserWindowAfterDestroy', () => {
+describe('commitAfterBrowserWindowAction termination boundary', () => {
   it('commits removal after destroy succeeds', async () => {
     let resolveDestroy!: () => void
     const destroyResult = new Promise<void>((resolve) => {
@@ -47,7 +47,7 @@ describe('removeBrowserWindowAfterDestroy', () => {
     })
     let removed = false
 
-    const termination = removeBrowserWindowAfterDestroy(
+    const termination = commitAfterBrowserWindowAction(
       () => destroyResult,
       () => {
         removed = true
@@ -68,7 +68,7 @@ describe('removeBrowserWindowAfterDestroy', () => {
     let thrown: unknown
 
     try {
-      await removeBrowserWindowAfterDestroy(
+      await commitAfterBrowserWindowAction(
         async () => {
           throw failure
         },
@@ -85,8 +85,58 @@ describe('removeBrowserWindowAfterDestroy', () => {
   })
 })
 
+describe('commitAfterBrowserWindowAction focus boundary', () => {
+  it('commits the active id only after focus succeeds', async () => {
+    let resolveFocus!: () => void
+    const focusResult = new Promise<void>((resolve) => {
+      resolveFocus = resolve
+    })
+    let activeId = 'previous'
+
+    const focus = commitAfterBrowserWindowAction(
+      () => focusResult,
+      () => {
+        activeId = 'focused'
+      },
+    )
+
+    await Promise.resolve()
+    expect(activeId).toBe('previous')
+
+    resolveFocus()
+    await focus
+    expect(activeId).toBe('focused')
+  })
+
+  it('retains the prior active id when focus rejects', async () => {
+    const failure = new Error('focus failed')
+    let activeId = 'previous'
+    let thrown: unknown
+
+    try {
+      await commitAfterBrowserWindowAction(
+        async () => {
+          throw failure
+        },
+        () => {
+          activeId = 'focused'
+        },
+      )
+    } catch (error) {
+      thrown = error
+    }
+
+    expect(thrown).toBe(failure)
+    expect(activeId).toBe('previous')
+  })
+})
+
 describe('browser surface v2 source wiring', () => {
   const surfaceTabsSource = readFileSync(join(platformDir, 'SurfaceTabs.tsx'), 'utf8')
+  const workspaceSurfaceHostSource = readFileSync(
+    join(platformDir, 'WorkspaceSurfaceHost.tsx'),
+    'utf8',
+  )
   const appShellSource = readFileSync(
     join(rendererDir, 'components', 'app-shell', 'AppShell.tsx'),
     'utf8',
@@ -100,6 +150,20 @@ describe('browser surface v2 source wiring', () => {
     'utf8',
   )
 
+  it('mounts one persistent SurfaceTabs owner from WorkspaceSurfaceHost', () => {
+    expect(workspaceSurfaceHostSource).toContain("import { SurfaceTabs } from './SurfaceTabs'")
+    expect(workspaceSurfaceHostSource).toContain(
+      '{chrome.showSurfaceTabs && <SurfaceTabs />}',
+    )
+    expect(workspaceSurfaceHostSource.indexOf('<SurfaceTabs />')).toBeLessThan(
+      workspaceSurfaceHostSource.lastIndexOf('{children}'),
+    )
+    expect(appShellSource).not.toContain('SurfaceTabs')
+    expect(
+      `${workspaceSurfaceHostSource}\n${appShellSource}`.match(/<SurfaceTabs \/>/g),
+    ).toHaveLength(1)
+  })
+
   it('keeps the live browser subscription in SurfaceTabs while v2 is enabled', () => {
     expect(surfaceTabsSource).toContain('useWorkspaceBrowserWindows({')
     expect(surfaceTabsSource).toMatch(/enabled:\s*browserSurfaceEnabled/)
@@ -108,7 +172,7 @@ describe('browser surface v2 source wiring', () => {
     expect(surfaceTabsSource).toContain('onTerminate={browserWindows.terminateBrowserWindow}')
   })
 
-  it('routes OS tab activation and termination without panel-stack ids', () => {
+  it('routes OS window controls without panel-stack ids', () => {
     const osWindowControlSource = surfaceTabsSource.slice(
       surfaceTabsSource.indexOf('function OsBrowserWindowControl'),
       surfaceTabsSource.indexOf('export function SurfaceTabs'),
@@ -118,6 +182,12 @@ describe('browser surface v2 source wiring', () => {
     expect(osWindowControlSource).toContain('onTerminate(instance)')
     expect(osWindowControlSource).toContain('onAuxClick=')
     expect(osWindowControlSource).toContain('role="group"')
+    expect(osWindowControlSource).toContain('aria-label={tab.title}')
+    expect(osWindowControlSource).toContain('aria-pressed={tab.focused}')
+    expect(osWindowControlSource).toContain(
+      "aria-label={t('workbench.browser.showWindow')}",
+    )
+    expect(osWindowControlSource).not.toContain('aria-label={`${')
     expect(osWindowControlSource).not.toContain('role="tab"')
     expect(osWindowControlSource).not.toContain('aria-selected')
     expect(osWindowControlSource).not.toContain('setFocusedPanelId')
@@ -126,15 +196,37 @@ describe('browser surface v2 source wiring', () => {
     expect(surfaceTabsSource).toContain("aria-label={t('surfaceTabs.browser')}")
     expect(browserWindowsSource).toContain('browserPaneApi.focus(instance.id)')
     expect(browserWindowsSource).toContain('browserPaneApi.destroy(instance.id)')
-    expect(browserWindowsSource).toContain('removeBrowserWindowAfterDestroy(')
+    expect(browserWindowsSource.match(/commitAfterBrowserWindowAction\(/g)).toHaveLength(3)
   })
 
-  it('mounts the strip and creates a real desktop window only for browser surface v2', () => {
+  it('cancels pending list owners and commits live focus only after success', () => {
+    expect(browserWindowsSource.match(/let cancelled = false/g)).toHaveLength(2)
+    expect(browserWindowsSource.match(/cancelled = true/g)).toHaveLength(2)
+    expect(browserWindowsSource.match(/if \(cancelled\) return/g)).toHaveLength(7)
+
+    const focusSource = browserWindowsSource.slice(
+      browserWindowsSource.indexOf('const focusBrowserWindow'),
+      browserWindowsSource.indexOf('const openSessionUsingWindow'),
+    )
+    expect(focusSource).toContain('if (instancesOverride)')
+    expect(focusSource).toContain('setActiveInstanceId(instance.id)')
+    expect(focusSource).toMatch(
+      /if \(instancesOverride\) \{\s+setActiveInstanceId\(instance\.id\)\s+return/,
+    )
+    expect(focusSource).toContain('commitAfterBrowserWindowAction(')
+    expect(focusSource).toContain(
+      'Failed to focus browser window ${instance.id}',
+    )
+
+    const liveFocusSource = focusSource.slice(focusSource.indexOf('const browserPaneApi'))
+    expect(liveFocusSource.indexOf('browserPaneApi.focus(instance.id)')).toBeLessThan(
+      liveFocusSource.indexOf('setActiveInstanceId(instance.id)'),
+    )
+  })
+
+  it('creates a real desktop window only for browser surface v2', () => {
     expect(appShellSource).toContain(
       'const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)',
-    )
-    expect(appShellSource).toContain(
-      '(unifiedShellEnabled || workbenchEnabled || browserSurfaceEnabled) && <SurfaceTabs />',
     )
 
     const openBrowserSource = appShellSource.slice(

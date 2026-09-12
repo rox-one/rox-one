@@ -140,7 +140,8 @@ function OsBrowserWindowControl({
       <button
         type="button"
         title={tab.title}
-        aria-label={`${t('workbench.browser.showWindow')}: ${tab.title}`}
+        aria-label={t('workbench.browser.showWindow')}
+        aria-pressed={tab.focused}
         onClick={() => onFocus(instance)}
         onAuxClick={(event) => {
           if (event.button === 1 && liveWindowActions) {

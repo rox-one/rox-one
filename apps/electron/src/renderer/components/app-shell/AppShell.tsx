@@ -92,7 +92,6 @@ import {
   ACTIVITY_RAIL_WIDTH,
   ACTIVITY_RAIL_COLLAPSED_WIDTH,
   StatusBarHost,
-  SurfaceTabs,
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
@@ -2792,7 +2791,6 @@ function AppShellContent({
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel"
             >
-            {(unifiedShellEnabled || workbenchEnabled || browserSurfaceEnabled) && <SurfaceTabs />}
             <PanelHeader
                 title={isSidebarVisible ? listTitle : undefined}
                 compensateForStoplight={!isSidebarVisible}

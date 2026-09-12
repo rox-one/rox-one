@@ -25,12 +25,12 @@ export interface UseWorkspaceBrowserWindowsOptions {
   enabled?: boolean
 }
 
-export async function removeBrowserWindowAfterDestroy<Result>(
-  destroy: () => Promise<Result>,
-  remove: () => void,
+export async function commitAfterBrowserWindowAction<Result>(
+  action: () => Promise<Result>,
+  commit: () => void,
 ): Promise<void> {
-  await destroy()
-  remove()
+  await action()
+  commit()
 }
 
 export function useWorkspaceBrowserWindows({
@@ -86,8 +86,10 @@ export function useWorkspaceBrowserWindows({
       return
     }
 
-    browserPaneApi.list()
+    let cancelled = false
+    void browserPaneApi.list()
       .then((items) => {
+        if (cancelled) return
         setInstances(items)
         if (items.length === 0) {
           setActiveInstanceId(null)
@@ -96,10 +98,15 @@ export function useWorkspaceBrowserWindows({
         setActiveInstanceId((prev) => prev ?? items[0]?.id ?? null)
       })
       .catch((error) => {
+        if (cancelled) return
         console.warn('[BrowserTabStrip] Failed to list browser panes:', error)
         setInstances([])
         setActiveInstanceId(null)
       })
+
+    return () => {
+      cancelled = true
+    }
   }, [enabled, instancesOverride, setInstances, setActiveInstanceId])
 
   useEffect(() => {
@@ -108,11 +115,14 @@ export function useWorkspaceBrowserWindows({
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi || !window.electronAPI.isChannelAvailable('browser-pane:list')) return
 
+    let cancelled = false
     const cleanupState = browserPaneApi.onStateChanged((info: BrowserInstanceInfo) => {
+      if (cancelled) return
       updateInstance(info)
     })
 
     const cleanupRemoved = browserPaneApi.onRemoved((id: string) => {
+      if (cancelled) return
       removeInstance(id)
       setActiveInstanceId((prev) => {
         if (prev !== id) return prev
@@ -128,6 +138,7 @@ export function useWorkspaceBrowserWindows({
         removeReconcileTimerRef.current = null
         void browserPaneApi.list()
           .then((items) => {
+            if (cancelled) return
             setInstances(items)
             setActiveInstanceId((prev) => {
               if (!prev) return items[0]?.id ?? null
@@ -135,16 +146,19 @@ export function useWorkspaceBrowserWindows({
             })
           })
           .catch((error) => {
+            if (cancelled) return
             console.warn('[BrowserTabStrip] Reconcile list failed after remove:', error)
           })
       }, 75)
     })
 
     const cleanupInteracted = browserPaneApi.onInteracted((id: string) => {
+      if (cancelled) return
       setActiveInstanceId(id)
     })
 
     return () => {
+      cancelled = true
       cleanupState()
       cleanupRemoved()
       cleanupInteracted()
@@ -167,8 +181,10 @@ export function useWorkspaceBrowserWindows({
   }, [enabled, orderedInstances, activeInstanceId, setActiveInstanceId])
 
   const focusBrowserWindow = useCallback((instance: BrowserInstanceInfo) => {
-    setActiveInstanceId(instance.id)
-    if (instancesOverride) return
+    if (instancesOverride) {
+      setActiveInstanceId(instance.id)
+      return
+    }
 
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi) {
@@ -176,7 +192,10 @@ export function useWorkspaceBrowserWindows({
       return
     }
 
-    void browserPaneApi.focus(instance.id).catch((error) => {
+    void commitAfterBrowserWindowAction(
+      () => browserPaneApi.focus(instance.id),
+      () => setActiveInstanceId(instance.id),
+    ).catch((error) => {
       console.warn(`[BrowserTabStrip] Failed to focus browser window ${instance.id}:`, error)
     })
   }, [instancesOverride, setActiveInstanceId])
@@ -196,7 +215,7 @@ export function useWorkspaceBrowserWindows({
       return
     }
 
-    void removeBrowserWindowAfterDestroy(
+    void commitAfterBrowserWindowAction(
       () => browserPaneApi.destroy(instance.id),
       () => {
         removeInstance(instance.id)
