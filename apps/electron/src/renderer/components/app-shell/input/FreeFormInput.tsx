@@ -75,6 +75,7 @@ import { derivePickerMode } from './picker-mode'
 import type { FileAttachment, LoadedSource, LoadedSkill } from '../../../../shared/types'
 import type { PermissionMode } from '@craft-agent/shared/agent/modes'
 import { type ThinkingLevel, THINKING_LEVELS, getThinkingLevelNameKey } from '@craft-agent/shared/agent/thinking-levels'
+import { needsConfirmation, resolveMagicWords } from '@craft-agent/shared/workflows'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
 import { hasOpenOverlay } from '@/lib/overlay-detection'
 import { ToolbarStatusSlot } from './ToolbarStatusSlot'
@@ -1442,6 +1443,13 @@ export function FreeFormInput({
 
     const attachmentSnapshot = attachments
 
+    const magicHits = resolveMagicWords(input)
+    const confirmHits = magicHits.filter(needsConfirmation)
+    if (confirmHits.length > 0) {
+      const names = confirmHits.map((workflow) => t(`workflows.label.${workflow.id}`)).join(', ')
+      if (!window.confirm(t('workflows.confirmBody', { names }))) return false
+    }
+
     if (chatChromeEnabled) {
       promptHistoryRef.current = recordPrompt(promptHistoryRef.current, input)
     }
@@ -1465,7 +1473,7 @@ export function FreeFormInput({
     })
 
     return true
-  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills, sources, optimisticSourceSlugs, onSourcesChange, onWorkingDirectoryChange, homeDir, chatChromeEnabled])
+  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills, sources, optimisticSourceSlugs, onSourcesChange, onWorkingDirectoryChange, homeDir, chatChromeEnabled, t])
 
   // Listen for craft:submit-input events (simulate pressing the Send button)
   React.useEffect(() => {
@@ -1762,6 +1770,7 @@ export function FreeFormInput({
   }, [followUpLayoutKey])
 
   const hasContent = input.trim() || attachments.length > 0 || followUpItems.length > 0
+  const magicWorkflows = React.useMemo(() => resolveMagicWords(input), [input])
 
   // Pre-flight image-support check: warn when staged images would be silently
   // stripped by Pi SDK because the active custom-endpoint model is text-only.
@@ -1861,6 +1870,27 @@ export function FreeFormInput({
             modelName={currentModelDisplayName}
             onEnable={() => handleToggleModelVision(effectiveConnectionDetails.slug, currentModel, true)}
           />
+        )}
+
+        {magicWorkflows.length > 0 && (
+          <div className="flex flex-wrap gap-1 px-3 pt-2.5" data-testid="magic-workflow-chips">
+            {magicWorkflows.map((workflow) => (
+              <Tooltip key={workflow.id} delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex max-w-full items-center gap-1 rounded-[6px] bg-foreground/5 px-2 py-0.5 text-[12px] text-foreground/80">
+                    {t(`workflows.label.${workflow.id}`)}
+                    <span className="text-foreground/50">{t(`workflows.cost.${workflow.costClass}`)}</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-[12px]">
+                  <div>{t(`workflows.hint.${workflow.id}`)}</div>
+                  <div>{t('workflows.skills')}: {workflow.skills.join(', ')}</div>
+                  <div>{t('workflows.stop')}: {workflow.stopCondition}</div>
+                  {needsConfirmation(workflow) && <div>{t('workflows.confirm')}</div>}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </div>
         )}
 
         {/* Attachment Preview */}
