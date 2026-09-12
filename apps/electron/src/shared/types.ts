@@ -398,6 +398,8 @@ import type {
   CredentialResponse,
   SessionCommand,
   ShareResult,
+  BroInviteCommandResult,
+  BroPresenceMemberDto,
   RefreshTitleResult,
   ImproveDraftResult,
   UndoResult,
@@ -577,7 +579,7 @@ export interface ElectronAPI {
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
 
   // Consolidated session command handler
-  sessionCommand(sessionId: string, command: SessionCommand): Promise<void | ShareResult | RefreshTitleResult | ImproveDraftResult | UndoResult | { count: number }>
+  sessionCommand(sessionId: string, command: SessionCommand): Promise<void | ShareResult | BroInviteCommandResult | BroPresenceMemberDto[] | RefreshTitleResult | ImproveDraftResult | UndoResult | { count: number }>
 
   // B4: multi-select bulk patch over sessions:command setters (rank forbidden; 200 ids max)
   bulkUpdateSessions(input: import('@craft-agent/shared/protocol/dto').BulkUpdateSessionsInput): Promise<import('@craft-agent/shared/protocol/dto').BulkUpdateSessionsResult>

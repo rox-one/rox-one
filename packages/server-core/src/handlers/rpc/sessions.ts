@@ -18,6 +18,7 @@ import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { setTransferableHandler } from './transfer'
 import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../sessions/bulk-labels'
+import { getBroInviteService } from '../../collaboration/bro-invite-service.ts'
 
 interface ClientSessionWatchState {
   watcher: import('fs').FSWatcher
@@ -376,6 +377,30 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         return sessionManager.updateShare(sessionId)
       case 'revokeShare':
         return sessionManager.revokeShare(sessionId)
+      case 'inviteBro': {
+        const invited = await getBroInviteService().invite(sessionId, command.role)
+        if (!invited.success) {
+          return {
+            success: false,
+            error: invited.error,
+            errorCode: invited.errorCode,
+          }
+        }
+        return {
+          success: true,
+          url: invited.card.url,
+          qrPayload: invited.card.qrPayload,
+          contactShareText: invited.card.contactShareText,
+          expiresAt: invited.card.expiresAt,
+          role: invited.card.role,
+        }
+      }
+      case 'revokeBroInvite':
+        return getBroInviteService().revoke(command.joinKey)
+      case 'joinBroInvite':
+        return getBroInviteService().join(command.url)
+      case 'listBroPresence':
+        return getBroInviteService().listPresence(sessionId)
       case 'refreshTitle':
         log.info(`IPC: refreshTitle received for session ${sessionId}`)
         return sessionManager.refreshTitle(sessionId)

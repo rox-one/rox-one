@@ -13,6 +13,7 @@ import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SessionMenu } from '@/components/app-shell/SessionMenu'
 import { CompactSessionMenu } from '@/components/app-shell/CompactSessionMenu'
+import { SessionPresenceAvatars } from '@/components/app-shell/SessionPresenceAvatars'
 import { SessionInfoPopover } from '@/components/app-shell/SessionInfoPopover'
 import { RenameDialog } from '@/components/ui/rename-dialog'
 import { toast } from 'sonner'
@@ -1016,6 +1017,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     <div className="flex items-center gap-1.5">
       {editTaskButton}
       {memoryModeButton}
+      <SessionPresenceAvatars sessionId={sessionId} />
       {!isCompactMode && shareButton}
       {infoButton}
     </div>

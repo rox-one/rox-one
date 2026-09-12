@@ -27,6 +27,7 @@ import {
   AppWindow,
   Columns2,
   CloudUpload,
+  UserPlus,
   RefreshCw,
   Tag,
   Send,
@@ -164,6 +165,11 @@ export function SessionMenu({
           </SubContent>
         </Sub>
       )}
+
+      <MenuItem onClick={actions.inviteBro}>
+        <UserPlus className="h-3.5 w-3.5" />
+        <span className="flex-1">{t('sessionMenu.inviteBro')}</span>
+      </MenuItem>
 
       {/* Send to Workspace — visible when at least one other workspace exists */}
       {hasTransferTargets && onSendToWorkspace && (
