@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { useTransportConnectionState } from './useTransportConnectionState'
+import { folderPickerErrorDescription } from '../pages/connections-ui'
 import { toast } from 'sonner'
 
 type ServerBrowserMode = 'browse' | 'manual'
@@ -46,9 +47,8 @@ export function useDirectoryPicker(
       const path = await window.electronAPI.openFolderDialog()
       if (path) onSelect(path)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
       toast.error(t('toast.failedToOpenFolderPicker'), {
-        description: message,
+        description: folderPickerErrorDescription(error),
       })
     }
   }, [isRemote, onSelect])

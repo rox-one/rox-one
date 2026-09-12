@@ -972,3 +972,19 @@ export {
   commitSshAgentImport,
 } from './local-imports.ts'
 export type { LocalImportPreview } from './local-imports.ts'
+export { createConnectionGrant } from './create-grant.ts'
+export type { CreateConnectionGrantKernel } from './create-grant.ts'
+export { inspectConnectionMetadata } from './inspect-connection.ts'
+export type { ConnectionInspectRecord, InspectConnectionKernel } from './inspect-connection.ts'
+export {
+  commitGithubOAuthImport,
+  createGithubDeviceFlow,
+  previewGithubOAuthImport,
+} from './github-oauth-import.ts'
+export type {
+  GithubDevicePollView,
+  GithubDeviceStartView,
+  GithubOAuthImportPreview,
+} from './github-oauth-import.ts'
+export { commitInfisicalImport, previewInfisicalAccount } from './infisical-import.ts'
+export type { InfisicalAccountPreview, PreviewInfisicalAccountInput } from './infisical-import.ts'

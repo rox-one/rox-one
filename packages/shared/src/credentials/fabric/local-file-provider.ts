@@ -13,7 +13,12 @@ import type { ProviderCredentialMetadata, ProviderMaterialization, SecretProvide
 
 export class LocalFileSecretProvider implements SecretProvider {
   readonly id = 'local-file';
-  private readonly copies = new Map<string, { id: CredentialId; payload: StoredCredential; kind: CredentialKind }>();
+  private readonly copies = new Map<string, {
+    id: CredentialId;
+    payload: StoredCredential;
+    kind: CredentialKind;
+    backend: CredentialBackend;
+  }>();
   private readonly byConflict = new Map<string, CredentialRef>();
 
   constructor(
@@ -35,6 +40,7 @@ export class LocalFileSecretProvider implements SecretProvider {
     locator: ProviderLocator;
     payload: StoredCredential;
     copyPayload?: boolean;
+    expiresAt?: number;
   }): Promise<{ ref: CredentialRef; version: import('@craft-agent/core/platform').CredentialVersion }> {
     const conflictKey = input.locator.type === 'local' ? input.locator.key : JSON.stringify(input.locator);
     const fingerprint = credentialPayloadFingerprint(input.kind, input.payload);
@@ -52,11 +58,12 @@ export class LocalFileSecretProvider implements SecretProvider {
       credentialRefId: ref.id,
       codec: 'stored-credential/v1',
       fingerprint,
+      ...(input.expiresAt !== undefined ? { expiresAt: input.expiresAt } : {}),
     });
     if (input.copyPayload !== false) {
       const id: CredentialId = { type: 'source_apikey', workspaceId: 'fabric', sourceId: ref.id };
       await this.backend.set(id, input.payload);
-      this.copies.set(ref.id, { id, payload: input.payload, kind: input.kind });
+      this.copies.set(ref.id, { id, payload: input.payload, kind: input.kind, backend: this.backend });
     }
     this.byConflict.set(`${conflictKey}:${fingerprint}`, ref);
     return { ref, version };
@@ -64,15 +71,35 @@ export class LocalFileSecretProvider implements SecretProvider {
 
   async inspect(ref: CredentialRef): Promise<ProviderCredentialMetadata> {
     const copy = this.copies.get(ref.id);
+    const versions = this.registry.listVersions(ref.id);
+    const current = versions.find((version) => version.status === 'active') ?? versions[0];
     if (!copy) {
-      return { credentialRefId: ref.id, kind: ref.kind, fingerprint: '', status: 'missing' };
+      return {
+        credentialRefId: ref.id,
+        kind: ref.kind,
+        fingerprint: current?.fingerprint ?? '',
+        status: 'missing',
+        backend: undefined,
+        expiresAt: current?.expiresAt ?? null,
+        versionId: current?.id,
+      };
     }
     return {
       credentialRefId: ref.id,
       kind: copy.kind,
       fingerprint: credentialPayloadFingerprint(copy.kind, copy.payload),
       status: 'active',
+      backend: copy.backend.name,
+      expiresAt: current?.expiresAt ?? null,
+      versionId: current?.id,
     };
+  }
+
+  async dropCopy(ref: CredentialRef): Promise<void> {
+    const copy = this.copies.get(ref.id);
+    if (!copy) return;
+    await copy.backend.delete(copy.id);
+    this.copies.delete(ref.id);
   }
 
   async resolveForLease(input: { credentialRef: CredentialRef }): Promise<ProviderMaterialization> {
@@ -81,10 +108,23 @@ export class LocalFileSecretProvider implements SecretProvider {
     return createProviderMaterialization(input.credentialRef.id, copy.kind, copy.payload);
   }
 
+  async moveCopy(
+    ref: CredentialRef,
+    target: CredentialBackend,
+  ): Promise<{ from: string; to: string }> {
+    const copy = this.copies.get(ref.id);
+    if (!copy) throw new Error('move_unavailable');
+    if (copy.backend.name === target.name) throw new Error('same_backend');
+    await target.set(copy.id, copy.payload);
+    await copy.backend.delete(copy.id);
+    this.copies.set(ref.id, { ...copy, backend: target });
+    return { from: copy.backend.name, to: target.name };
+  }
+
   async revoke(input: { credentialRef: CredentialRef }): Promise<void> {
     const copy = this.copies.get(input.credentialRef.id);
     if (!copy) return;
-    await this.backend.delete(copy.id);
+    await copy.backend.delete(copy.id);
     this.copies.delete(input.credentialRef.id);
     if (input.credentialRef.currentVersionId) {
       this.registry.setVersionStatus(input.credentialRef.currentVersionId, 'revoked');
