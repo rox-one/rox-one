@@ -19,6 +19,8 @@ export { LocalModelStep, type LocalModelSubmitData } from './LocalModelStep'
 export { OmpCredentialStep, type OmpCredentialSubmitData } from './OmpCredentialStep'
 export { ReauthScreen } from './ReauthScreen'
 export { GitBashWarning, type GitBashStatus } from './GitBashWarning'
+export { EnvironmentSetupStep } from './EnvironmentSetupStep'
+export { EnvironmentFields } from './EnvironmentFields'
 
 // Main wizard container
 export { OnboardingWizard, type OnboardingState, type OnboardingStep, type LoginStatus } from './OnboardingWizard'

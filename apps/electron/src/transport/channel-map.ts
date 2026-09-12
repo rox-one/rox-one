@@ -463,6 +463,9 @@ export const CHANNEL_MAP = {
   transcribeVoice: invoke(RPC_CHANNELS.voice.TRANSCRIBE),
   speakVoice: invoke(RPC_CHANNELS.voice.SPEAK),
   onVoiceChanged: listener(RPC_CHANNELS.voice.CHANGED),
+  getEnvironmentSetup: invoke(RPC_CHANNELS.environment.GET),
+  saveEnvironmentSetup: invoke(RPC_CHANNELS.environment.SAVE),
+  onEnvironmentChanged: listener(RPC_CHANNELS.environment.CHANGED),
 
   // Session Drafts
   getDraft: invoke(RPC_CHANNELS.drafts.GET),

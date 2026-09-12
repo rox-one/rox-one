@@ -383,6 +383,11 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.voice.SPEAK,
   RPC_CHANNELS.voice.CHANGED,
 
+  // environment — versioned onboarding questionnaire lives in local CONFIG_DIR
+  RPC_CHANNELS.environment.GET,
+  RPC_CHANNELS.environment.SAVE,
+  RPC_CHANNELS.environment.CHANGED,
+
   // orgs — local-only identity/membership bookkeeping (CONFIG_DIR)
   RPC_CHANNELS.orgs.LIST,
   RPC_CHANNELS.orgs.CREATE,
