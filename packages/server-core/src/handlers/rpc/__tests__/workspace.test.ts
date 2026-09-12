@@ -46,7 +46,14 @@ mock.module('@craft-agent/shared/utils', () => ({
 }))
 
 mock.module('@craft-agent/server-core/transport', () => ({
-  pushTyped: () => {},
+  pushTyped: (
+    server: { push: (channel: string, target: unknown, ...args: unknown[]) => void },
+    channel: string,
+    target: unknown,
+    ...args: unknown[]
+  ) => {
+    server.push(channel, target, ...args)
+  },
 }))
 
 type Handler = (

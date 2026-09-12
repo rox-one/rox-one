@@ -542,10 +542,11 @@ describe('updateConnection', () => {
     expect(credentials.get('source_bearer::ws1::conn-1')?.value).toBe('fresh-token')
   })
 
-  it('keeps the auto-seeded siyuan-local row updatable and survives an offline kernel (save still succeeds)', async () => {
+  it('keeps the siyuan-local row updatable and survives an offline kernel (save still succeeds)', async () => {
+    // LIST_CONNECTIONS is a pure read (no auto-seed). Seed the default local
+    // row the same way ENGINE_START / ensureDefaultLocalConnection would.
+    seedConnection('siyuan-local', { status: 'unknown' })
     const { invoke } = createHarness()
-    // Seed via the listConnections path (ensureDefaultLocalConnection).
-    await invoke(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, {})
     kernelProbeError = new Error('connect ECONNREFUSED 127.0.0.1:6806')
     const updated = (await invoke(RPC_CHANNELS.knowledge.UPDATE_CONNECTION, {
       connectionId: 'siyuan-local',

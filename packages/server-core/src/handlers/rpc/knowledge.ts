@@ -63,6 +63,7 @@ import { getWorkspaceByNameOrId, getWorkspaces } from '@craft-agent/shared/confi
 import { getCredentialManager } from '@craft-agent/shared/credentials'
 import assertKnowledgeActionAllowed from '@craft-agent/shared/agent/knowledge-permissions'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { registerKnowledgeToolRuntime } from '@craft-agent/session-tools-core'
 import type { HandlerDeps } from '../handler-deps'
 import {
   createKnowledgeRegistry,
@@ -77,6 +78,7 @@ import type {
   ContextPayload,
   ContextSnapshot,
   KnowledgeConnection,
+  KnowledgeNotebookInfo,
   KnowledgeProvider,
   KnowledgeRef,
   KnowledgeWorkEnvelope,
@@ -92,6 +94,7 @@ import {
 import { listViews as listViewsFromStorage } from '@craft-agent/shared/views/storage'
 import {
   SiyuanKernelClient,
+  type ListDocTreeResult,
   SiyuanKnowledgeProvider,
 } from '@craft-agent/core/knowledge/providers/siyuan'
 import {
@@ -112,9 +115,12 @@ import {
   ensureLocalKernel,
   getKernelBootstrapStatus,
   KnowledgeMetricsStore,
+  normalizeKnowledgeBaseUrl,
+  probeKernelHealth,
   SIYUAN_INSTALL_URL,
   SIYUAN_LOCAL_CONNECTION_ID,
 } from '../../knowledge'
+import { createKnowledgeToolRuntime } from '../../knowledge/tool-runtime'
 import {
   KnowledgeBridgeService,
   type KnowledgeProposalFileRecord,
@@ -145,7 +151,7 @@ import type {
 type SiyuanKnowledgeProviderCtor = new (options: { connection: KnowledgeConnection; token: string }) => KnowledgeProvider
 type SiyuanKernelClientCtor = new (options: { baseUrl: string; token: string }) => Pick<
   SiyuanKernelClient,
-  'getVersion' | 'listNotebooks' | 'createDocWithMd' | 'checkBlockExist'
+  'getVersion' | 'listNotebooks' | 'listDocTree' | 'createDocWithMd' | 'checkBlockExist'
 >
 let knowledgeProviderCtor: SiyuanKnowledgeProviderCtor = SiyuanKnowledgeProvider as unknown as SiyuanKnowledgeProviderCtor
 let siyuanKernelClientCtor: SiyuanKernelClientCtor = SiyuanKernelClient
@@ -162,7 +168,7 @@ export function __setSkipKnowledgeWatchAutoStart(skip: boolean): void {
   skipKnowledgeWatchAutoStart = skip
 }
 
-/** The complete knowledge channel set — 9 P1 read + getExportPayload + ENGINE_STATUS/DETECT/START + METRICS_GET + 7 P3 write-back + 8 P4 publication + 6 P5 views/envelopes + 2 P6 watch + migrateNotes; asserted by knowledge.test.ts. */
+/** The complete knowledge channel set — 9 P1 read + getExportPayload + listNotebooks/listTree/userCreate/updateConnection + ENGINE_STATUS/DETECT/START + METRICS_GET + 7 P3 write-back + 8 P4 publication + 6 P5 views/envelopes + 2 P6 watch + migrateNotes; asserted by knowledge.test.ts. */
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.knowledge.LIST_CONNECTIONS,
   RPC_CHANNELS.knowledge.CAPABILITIES,
@@ -171,6 +177,10 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.knowledge.GET_CONTEXT,
   RPC_CHANNELS.knowledge.GET_BACKLINKS,
   RPC_CHANNELS.knowledge.GET_EXPORT_PAYLOAD,
+  RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+  RPC_CHANNELS.knowledge.LIST_TREE,
+  RPC_CHANNELS.knowledge.USER_CREATE,
+  RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
   RPC_CHANNELS.knowledge.SNAPSHOT_CREATE,
   RPC_CHANNELS.knowledge.SNAPSHOT_GET,
   RPC_CHANNELS.knowledge.ENGINE_STATUS,
@@ -215,6 +225,23 @@ export interface KnowledgeConnectionArgs {
   connectionId: string
 }
 
+export interface KnowledgeListTreeArgs extends KnowledgeConnectionArgs {
+  notebookId: string
+  path?: string
+}
+
+export type KnowledgeUserCreateSource = 'navigator' | 'agent'
+
+export type KnowledgeUserCreateArgs = KnowledgeConnectionArgs & {
+  source: KnowledgeUserCreateSource
+} & (
+  | { op: 'notebook'; name: string }
+  | { op: 'folder'; notebookId: string; path: string; name: string }
+  | { op: 'document'; notebookId: string; path: string; title: string }
+)
+
+export type KnowledgeUserCreateResult = { id: string } | { path: string }
+
 export interface KnowledgeSearchArgs extends KnowledgeConnectionArgs {
   input: SearchInput
 }
@@ -256,6 +283,14 @@ export interface KnowledgeSnapshotCreateArgs extends KnowledgeConnectionArgs {
 export interface KnowledgeSnapshotGetArgs {
   workspaceId: string
   snapshotId: string
+}
+
+/** Settings → Knowledge edit flow: patch baseUrl and/or token on an existing connection. */
+export interface KnowledgeUpdateConnectionArgs {
+  connectionId: string
+  baseUrl?: string
+  /** Plain token; empty/undefined leaves the stored credential untouched. */
+  token?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -459,6 +494,12 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
     new knowledgeProviderCtor({ connection, token: tokensByConnection.get(connection.id) ?? '' }),
   )
 
+  function joinSiyuanPath(parent: string, name: string): string {
+    const leaf = name.replace(/^\/+/, '')
+    if (!parent || parent === '/') return `/${leaf}`
+    return `${parent.replace(/\/+$/, '')}/${leaf}`
+  }
+
   /** Domain KnowledgeError code → transport CodedError with the identical code string. */
   function toTransportError(error: unknown): unknown {
     if (error instanceof KnowledgeError) return new CodedError(error.code, error.message)
@@ -501,6 +542,11 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       throw toTransportError(error)
     }
   }
+
+  // K-10 §3.1: publish the knowledge read runtime for the knowledge_search /
+  // knowledge_read / knowledge_get_backlinks session tools. The runtime reuses
+  // the exact provider resolution above, so token rotation matches the read channels.
+  registerKnowledgeToolRuntime(createKnowledgeToolRuntime({ resolveProvider }))
 
   function requireWorkspaceRoot(workspaceId: string): string {
     const workspace = getWorkspaceByNameOrId(workspaceId)
@@ -704,6 +750,153 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
       }
 
       return payload
+    },
+  )
+
+  // ——— LIST_NOTEBOOKS({connectionId}) → KnowledgeNotebookInfo[] ———
+  // Navigator tree data. The KnowledgeProvider contract has no listNotebooks method
+  // (K-03 §3.2), so this reads the kernel client's lsNotebooks wrapper directly —
+  // same token/baseUrl resolution as MIGRATE_NOTES.
+  server.handle(
+    RPC_CHANNELS.knowledge.LIST_NOTEBOOKS,
+    async (_ctx, args: KnowledgeConnectionArgs): Promise<KnowledgeNotebookInfo[]> => {
+      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
+        throw new CodedError('INVALID_REF', 'knowledge.listNotebooks: connectionId is required')
+      }
+      const record = requireConnection(args.connectionId)
+      const token = await readToken(record)
+      try {
+        const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
+        const notebooks = await client.listNotebooks()
+        return notebooks.map((notebook) => ({
+          id: notebook.id,
+          name: notebook.name,
+          icon: notebook.icon,
+          closed: notebook.closed === true,
+        }))
+      } catch (error) {
+        throw toTransportError(error)
+      }
+    },
+  )
+
+  // ——— LIST_TREE({connectionId, notebookId, path?}) → ListDocTreeResult ———
+  // Navigator recursive tree. Same kernel-client seam as LIST_NOTEBOOKS.
+  server.handle(
+    RPC_CHANNELS.knowledge.LIST_TREE,
+    async (_ctx, args: KnowledgeListTreeArgs): Promise<ListDocTreeResult> => {
+      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
+        throw new CodedError('INVALID_REF', 'knowledge.listTree: connectionId is required')
+      }
+      if (typeof args?.notebookId !== 'string' || args.notebookId.length === 0) {
+        throw new CodedError('INVALID_REF', 'knowledge.listTree: notebookId is required')
+      }
+      const record = requireConnection(args.connectionId)
+      const token = await readToken(record)
+      const path = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
+      try {
+        const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
+        return await client.listDocTree(args.notebookId, path)
+      } catch (error) {
+        throw toTransportError(error)
+      }
+    },
+  )
+
+  // ——— USER_CREATE({connectionId, source, op, ...}) ———
+  // Navigator-direct creates only. Agents must go through proposeMutation (P3).
+  server.handle(
+    RPC_CHANNELS.knowledge.USER_CREATE,
+    async (_ctx, args: KnowledgeUserCreateArgs): Promise<KnowledgeUserCreateResult> => {
+      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
+        throw new CodedError('INVALID_REF', 'knowledge.userCreate: connectionId is required')
+      }
+      if (args?.source !== 'navigator') {
+        throw new CodedError(
+          'UNSUPPORTED_OPERATION',
+          'knowledge.userCreate: only source navigator is allowed; agents must use proposeMutation',
+        )
+      }
+      const record = requireConnection(args.connectionId)
+      const token = await readToken(record)
+      try {
+        const client = new siyuanKernelClientCtor({ baseUrl: record.baseUrl, token })
+        if (args.op === 'notebook') {
+          throw new CodedError(
+            'UNSUPPORTED_OPERATION',
+            'knowledge.userCreate: notebook create is not exposed on the kernel client; create a document instead',
+          )
+        }
+        if (args.op === 'folder') {
+          if (typeof args.notebookId !== 'string' || args.notebookId.length === 0) {
+            throw new CodedError('INVALID_REF', 'knowledge.userCreate: notebookId is required for folder')
+          }
+          if (typeof args.name !== 'string' || args.name.length === 0) {
+            throw new CodedError('INVALID_REF', 'knowledge.userCreate: name is required for folder')
+          }
+          const parent = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
+          const path = joinSiyuanPath(parent, args.name)
+          await client.createDocWithMd({ notebook: args.notebookId, path, markdown: '' })
+          return { path }
+        }
+        if (args.op === 'document') {
+          if (typeof args.notebookId !== 'string' || args.notebookId.length === 0) {
+            throw new CodedError('INVALID_REF', 'knowledge.userCreate: notebookId is required for document')
+          }
+          if (typeof args.title !== 'string' || args.title.length === 0) {
+            throw new CodedError('INVALID_REF', 'knowledge.userCreate: title is required for document')
+          }
+          const title = args.title
+          const parent = typeof args.path === 'string' && args.path.length > 0 ? args.path : '/'
+          const path = joinSiyuanPath(parent, title)
+          const id = await client.createDocWithMd({
+            notebook: args.notebookId,
+            path,
+            markdown: `# ${title}\n`,
+          })
+          return { id }
+        }
+        throw new CodedError('INVALID_REF', `knowledge.userCreate: unknown op ${String((args as { op?: string }).op)}`)
+      } catch (error) {
+        throw toTransportError(error)
+      }
+    },
+  )
+
+  // ——— UPDATE_CONNECTION({connectionId, baseUrl?, token?}) → KnowledgeConnection ———
+  // Settings → Knowledge edit flow. Best-effort health probe refreshes cached
+  // status but never fails the save.
+  server.handle(
+    RPC_CHANNELS.knowledge.UPDATE_CONNECTION,
+    async (_ctx, args: KnowledgeUpdateConnectionArgs): Promise<KnowledgeConnection> => {
+      if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
+        throw new CodedError('INVALID_REF', 'knowledge.updateConnection: connectionId is required')
+      }
+      const store = new KnowledgeConnectionsStore()
+      const record = store.get(args.connectionId)
+      if (!record) {
+        throw new CodedError('NOT_FOUND', `Knowledge connection not found: ${args.connectionId}`)
+      }
+
+      const nextBaseUrl = args.baseUrl !== undefined ? normalizeKnowledgeBaseUrl(args.baseUrl) : record.baseUrl
+
+      const token = typeof args.token === 'string' && args.token.trim() ? args.token.trim() : undefined
+      if (token !== undefined) {
+        const credentialId = credentialIdFromRef(record.credentialRef)
+        if (!credentialId) {
+          throw new CodedError(
+            'CONNECTION_UNAVAILABLE',
+            `Knowledge connection '${record.id}' has a malformed credential reference`,
+          )
+        }
+        await getCredentialManager().set(credentialId, { value: token })
+      }
+
+      store.save({ id: record.id, baseUrl: nextBaseUrl, credentialRef: record.credentialRef })
+
+      const health = await probeKernelHealth(nextBaseUrl)
+      const updated = store.setStatus(record.id, health.running ? 'ok' : 'failed') ?? store.get(record.id)
+      return toContractConnection(updated!)
     },
   )
 

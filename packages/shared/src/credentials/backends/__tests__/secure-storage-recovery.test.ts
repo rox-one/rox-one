@@ -35,9 +35,9 @@ describe('SecureStorageBackend recovery', () => {
 
     expect(await backend.get({ type: 'source_bearer', name: 'x', workspaceId: 'w', sourceId: 's' })).toBeNull();
     expect(existsSync(filePath)).toBe(false);
-    const quarantined = readdirSync(join(dir, 'credential-quarantine'));
+    const quarantined = readdirSync(dir).filter((name) => name.startsWith('credentials.enc.quarantine.'));
     expect(quarantined).toHaveLength(1);
-    expect(digest(readFileSync(join(dir, 'credential-quarantine', quarantined[0]!)))).toBe(before);
+    expect(digest(readFileSync(join(dir, quarantined[0]!)))).toBe(before);
   });
 
   it('quarantines an undersized file instead of deleting it', async () => {
@@ -46,9 +46,9 @@ describe('SecureStorageBackend recovery', () => {
     writeFileSync(filePath, original);
     expect(await backend.get({ type: 'anthropic_api_key' })).toBeNull();
     expect(existsSync(filePath)).toBe(false);
-    const quarantined = readdirSync(join(dir, 'credential-quarantine'));
+    const quarantined = readdirSync(dir).filter((name) => name.startsWith('credentials.enc.quarantine.'));
     expect(quarantined).toHaveLength(1);
-    expect(digest(readFileSync(join(dir, 'credential-quarantine', quarantined[0]!)))).toBe(digest(original));
+    expect(digest(readFileSync(join(dir, quarantined[0]!)))).toBe(digest(original));
   });
 
   it('does not rewrite a healthy store on get', async () => {

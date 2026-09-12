@@ -274,6 +274,7 @@ describe('bundled packs end-to-end (real bundle, synthetic HOME)', () => {
     expect(out.packs.map(p => p.slug).sort()).toEqual([
       'craft-knowledge',
       'mattpocock-skills',
+      'rox-harness',
       'superpowers',
       'vercel-agent-skills',
       'vercel-next-skills',

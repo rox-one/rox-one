@@ -40,7 +40,7 @@ import {
   type SiyuanInstalledPluginPackage,
   type SiyuanPetalInfo,
 } from '@craft-agent/core/knowledge/providers/siyuan'
-import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
   credentialIdFromRef,
@@ -569,11 +569,10 @@ function broadcastExtensionsChanged(
   server: RpcServer,
   reason: 'install' | 'remove' | 'state' | 'refresh' | 'projection',
 ): void {
-  try {
-    pushTyped(server, RPC_CHANNELS.extensions.CHANGED, { to: 'all' }, { reason })
-  } catch {
-    /* push optional */
-  }
+  // Push through the RpcServer instance (not module-level pushTyped): bun
+  // mock.module of @craft-agent/server-core/transport is process-global and
+  // would otherwise swallow extensions:changed in combined handler suites.
+  server.push(RPC_CHANNELS.extensions.CHANGED, { to: 'all' }, { reason })
 }
 
 export function registerPluginBridgeHandlers(
