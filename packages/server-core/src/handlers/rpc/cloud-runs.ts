@@ -20,6 +20,19 @@ import { randomUUID } from 'node:crypto';
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol';
 import { getWorkspaceDataPath, getRuntimeSecretRefs, loadStoredConfig, saveConfig } from '@craft-agent/shared/config/storage';
 import {
+  assertCredentialReferenceOnly,
+  assertNoSecretsInArtifact,
+  readIncidentKillSwitch,
+} from '@craft-agent/shared/security';
+import {
+  FileScopeAudit,
+  assertCallerOwnsWorkspace,
+  assertIncidentKillSwitchInactive,
+  resolveCallerWorkspaceId,
+  scopeAuditPath,
+} from '../../security/workspace-scope.ts';
+import type { RequestContext } from '../../transport/types.ts';
+import {
   CloudRunnerError,
   LocalSubprocessProvider,
   NativeRunProvider,
@@ -325,6 +338,7 @@ export interface CloudRunSchedule {
   kind?: string;
   enabled: boolean;
   lastFireAt?: number;
+  workspaceId?: string;
 }
 
 function readSchedules(): CloudRunSchedule[] {
@@ -406,6 +420,7 @@ function startCompletionWatcher(deps?: HandlerDeps): void {
         registry.push({
           id: spec.id, name: spec.name, provider: settings.provider, createdAt: Date.now(),
           sessionId: schedule.sessionId, topic: schedule.topic,
+          workspaceId: schedule.workspaceId,
           spec: { kind: schedule.kind ?? 'research', limits: { ...settings.defaults }, language: 'ru' },
         });
         await writeFile(REGISTRY_PATH, JSON.stringify(registry.slice(-200), null, 2));
@@ -626,6 +641,23 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     return settings;
   };
 
+  const audit = new FileScopeAudit(scopeAuditPath(resolveConfigDir()));
+
+  const denyIfKillSwitch = (ctx: RequestContext): void => {
+    assertIncidentKillSwitchInactive(
+      readIncidentKillSwitch(resolveConfigDir()).enabled,
+      audit,
+      resolveCallerWorkspaceId(ctx),
+    );
+  };
+
+  const requireOwnedRun = (ctx: RequestContext, runId: string): RunRegistryEntry => {
+    const entry = readRegistry().find((r) => r.id === runId);
+    if (!entry) throw new CloudRunnerError(`run not found: ${runId}`, 'not_found');
+    assertCallerOwnsWorkspace(ctx, entry.workspaceId ?? '', audit, 'cloud-run');
+    return entry;
+  };
+
   startCompletionWatcher(deps);
 
   server.handle(RPC_CHANNELS.cloudRuns.GET_CONFIG, async () => {
@@ -650,10 +682,12 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.cloudRuns.SET_CONFIG,
     async (
-      _ctx,
+      ctx,
       patch: Partial<Pick<CloudRunsSettings, 'enabled' | 'provider' | 'gatewayUrl' | 'daytonaProjectId' | 'daytonaSnapshot' | 'daytonaSandbox' | 'daytonaRegion' | 'daytonaImage' | 'daytonaApiUrl' | 'daytonaSecretRef' | 'defaultTtlSec'>> &
         { defaultMaxWallClockSec?: number; defaultMaxLlmTokens?: number; defaultMaxArtifactsBytes?: number; notifyWebhookUrl?: string; cheapModelId?: string; personas?: boolean },
     ) => {
+      denyIfKillSwitch(ctx);
+      assertCredentialReferenceOnly(patch, 'cloudRuns');
       const stored = loadStoredConfig();
       if (!stored) throw new CloudRunnerError('config.json not found', 'provider_error');
       if (patch.provider !== undefined) {
@@ -670,13 +704,18 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.LIST_SCHEDULES, async () => {
-    return readSchedules();
+  server.handle(RPC_CHANNELS.cloudRuns.LIST_SCHEDULES, async (ctx) => {
+    const caller = resolveCallerWorkspaceId(ctx);
+    if (!caller) return [];
+    return readSchedules().filter((schedule) => schedule.workspaceId === caller);
   });
 
   server.handle(
     RPC_CHANNELS.cloudRuns.SAVE_SCHEDULE,
-    async (_ctx, args: { schedule: Partial<CloudRunSchedule> & { topic?: string; everyHours?: number; sessionId?: string } }) => {
+    async (ctx, args: { schedule: Partial<CloudRunSchedule> & { topic?: string; everyHours?: number; sessionId?: string } }) => {
+      denyIfKillSwitch(ctx);
+      const caller = resolveCallerWorkspaceId(ctx);
+      assertCallerOwnsWorkspace(ctx, caller ?? '', audit, 'schedule');
       const incoming = args?.schedule;
       if (!incoming || typeof incoming !== 'object') {
         throw new CloudRunnerError('schedule is required', 'invalid_spec');
@@ -689,13 +728,15 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
         kind: incoming.kind,
         enabled: incoming.enabled !== false,
         lastFireAt: incoming.lastFireAt,
+        workspaceId: caller ?? undefined,
       };
       if (!schedule.topic) throw new CloudRunnerError('schedule.topic is required', 'invalid_spec');
       if (!schedule.sessionId) throw new CloudRunnerError('schedule.sessionId is required', 'invalid_spec');
       const schedules = readSchedules();
       const idx = schedules.findIndex((s) => s.id === schedule.id);
       if (idx >= 0) {
-        schedules[idx] = { ...schedules[idx]!, ...schedule };
+        assertCallerOwnsWorkspace(ctx, schedules[idx]!.workspaceId ?? '', audit, 'schedule');
+        schedules[idx] = { ...schedules[idx]!, ...schedule, workspaceId: caller ?? undefined };
       } else {
         schedules.push(schedule);
       }
@@ -704,10 +745,16 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.DELETE_SCHEDULE, async (_ctx, args: { id: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.DELETE_SCHEDULE, async (ctx, args: { id: string }) => {
+    denyIfKillSwitch(ctx);
     const id = args?.id;
     if (!id) throw new CloudRunnerError('id is required', 'invalid_spec');
-    const next = readSchedules().filter((s) => s.id !== id);
+    const current = readSchedules();
+    const existing = current.find((s) => s.id === id);
+    if (existing) {
+      assertCallerOwnsWorkspace(ctx, existing.workspaceId ?? '', audit, 'schedule');
+    }
+    const next = current.filter((s) => s.id !== id);
     await writeSchedules(next);
     return { ok: true };
   });
@@ -715,9 +762,11 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(
     RPC_CHANNELS.cloudRuns.SUBMIT,
-    async (_ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; omp?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
+    async (ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; omp?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
+      denyIfKillSwitch(ctx);
       const settings = requireEnabled();
       if (!args?.topic?.trim()) throw new CloudRunnerError('topic is required', 'invalid_spec');
+      if (args.fromRunId) requireOwnedRun(ctx, args.fromRunId);
       const stored = loadStoredConfig()?.cloudRuns;
       // F7: fork narrows the pack to a single followup subtask with the
       // parent's briefs as context (gateway copies them server-side).
@@ -751,14 +800,11 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
       const handle = await provider.createRun(spec);
       const usedProvider = provider.providerId as typeof settings.provider;
       const registry = readRegistry();
-      let workspaceId: string | undefined;
+      let workspaceId = resolveCallerWorkspaceId(ctx) ?? '';
       if (args.sessionId) {
-        try {
-          workspaceId = await resolveWorkspaceId(deps, args.sessionId);
-        } catch {
-          workspaceId = undefined;
-        }
+        workspaceId = await resolveWorkspaceId(deps, args.sessionId);
       }
+      assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'cloud-run');
       registry.push({
         id: handle.id,
         name: spec.name,
@@ -780,9 +826,11 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.LIST, async () => {
+  server.handle(RPC_CHANNELS.cloudRuns.LIST, async (ctx) => {
     const settings = readSettings();
-    const entries = readRegistry();
+    const caller = resolveCallerWorkspaceId(ctx);
+    const registry = readRegistry();
+    const entries = caller ? registry.filter((entry) => entry.workspaceId === caller) : [];
     let dirty = false;
     const runs = await Promise.all(
       entries.map(async (entry) => {
@@ -799,15 +847,14 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
         return { ...entry, status };
       }),
     );
-    if (dirty) await writeFile(REGISTRY_PATH, JSON.stringify(entries, null, 2));
+    if (dirty) await writeFile(REGISTRY_PATH, JSON.stringify(registry, null, 2));
     return { enabled: settings.enabled, provider: settings.provider, runs: runs.reverse() };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.RESUME, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.RESUME, async (ctx, args: { runId: string }) => {
+    denyIfKillSwitch(ctx);
     const settings = requireEnabled();
-    const registry = readRegistry();
-    const entry = registry.find((r) => r.id === args.runId);
-    if (!entry) throw new CloudRunnerError(`run not found: ${args.runId}`, 'not_found');
+    const entry = requireOwnedRun(ctx, args.runId);
     const status = await providerForRun(settings, args.runId).getStatus(args.runId);
     if (status.state !== 'failed' && status.state !== 'cancelled') {
       throw new CloudRunnerError(`run is ${status.state}; resume is only for failed/cancelled runs`, 'provider_error');
@@ -829,10 +876,12 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     return { ok: true };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.SESSION_TOPIC, async (_ctx, args: { sessionId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.SESSION_TOPIC, async (ctx, args: { sessionId: string }) => {
     // Cheap heuristic first (fast+deterministic): title + last user message.
     // LLM formulation would cost a smol call — heuristics prove better UX
     // for the common case (PRD F9 fallback documented).
+    const workspaceId = await resolveWorkspaceId(deps, args.sessionId);
+    assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'session');
     const session = await deps.sessionManager.getSession(args.sessionId);
     if (!session) throw new CloudRunnerError(`session not found: ${args.sessionId}`, 'not_found');
     const messages = (session.messages ?? []) as { role?: string; content?: unknown }[];
@@ -842,18 +891,23 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
     return { topic };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.SHARE, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.SHARE, async (ctx, args: { runId: string }) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     return (providerForRun(settings, args.runId) as CloudRunProvider & { shareRun: (id: string) => Promise<{ url: string }> }).shareRun(args.runId);
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.REVOKE_SHARE, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.REVOKE_SHARE, async (ctx, args: { runId: string }) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     await (providerForRun(settings, args.runId) as CloudRunProvider & { revokeShare: (id: string) => Promise<void> }).revokeShare(args.runId);
     return { ok: true };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.GET_EVENTS, async (_ctx, args: { runId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.GET_EVENTS, async (ctx, args: { runId: string }) => {
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     return (providerForRun(settings, args.runId) as CloudRunProvider & {
       getEvents?: (id: string) => Promise<{ t: number; message: string }[]>;
@@ -864,40 +918,52 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(
     RPC_CHANNELS.cloudRuns.READ_ARTIFACT,
-    async (_ctx, args: { runId: string; path: string }) => {
+    async (ctx, args: { runId: string; path: string }) => {
+      requireOwnedRun(ctx, args.runId);
       const settings = requireEnabled();
       const provider = providerForRun(settings, args.runId);
       const bytes = await provider.fetchArtifact(args.runId, args.path);
       if (bytes.byteLength > 1024 * 1024) {
         throw new CloudRunnerError('artifact too large for preview', 'artifact_too_large');
       }
-      return { content: new TextDecoder().decode(bytes) };
+      const content = new TextDecoder().decode(bytes);
+      assertNoSecretsInArtifact(content, 'artifact');
+      return { content };
     },
   );
 
-  server.handle(RPC_CHANNELS.cloudRuns.GET_STATUS, async (_ctx, id: string) => {
+  server.handle(RPC_CHANNELS.cloudRuns.GET_STATUS, async (ctx, id: string) => {
+    requireOwnedRun(ctx, id);
     return providerForRun(requireEnabled(), id).getStatus(id);
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.CANCEL, async (_ctx, id: string) => {
+  server.handle(RPC_CHANNELS.cloudRuns.CANCEL, async (ctx, id: string) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, id);
     await providerForRun(requireEnabled(), id).cancel(id);
     return { ok: true };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.KILL, async (_ctx, id: string) => {
+  server.handle(RPC_CHANNELS.cloudRuns.KILL, async (ctx, id: string) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, id);
     const provider = providerForRun(requireEnabled(), id);
     await (provider.kill ?? provider.cancel).call(provider, id);
     return { ok: true };
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS, async (_ctx, id: string) => {
+  server.handle(RPC_CHANNELS.cloudRuns.LIST_ARTIFACTS, async (ctx, id: string) => {
+    requireOwnedRun(ctx, id);
     return providerForRun(requireEnabled(), id).listArtifacts(id);
   });
 
-  server.handle(RPC_CHANNELS.cloudRuns.IMPORT, async (_ctx, args: { runId: string; sessionId: string }) => {
+  server.handle(RPC_CHANNELS.cloudRuns.IMPORT, async (ctx, args: { runId: string; sessionId: string }) => {
+    denyIfKillSwitch(ctx);
+    requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
     const provider = providerForRun(settings, args.runId);
     const workspaceId = await resolveWorkspaceId(deps, args.sessionId);
+    assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'cloud-run');
     const status = await provider.getStatus(args.runId);
     if (status.state !== 'done') {
       throw new CloudRunnerError(`run ${args.runId} is ${status.state}, not done`, 'provider_error');
@@ -931,10 +997,13 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(
     RPC_CHANNELS.cloudRuns.AGGREGATE,
-    async (_ctx, args: { runId: string; sessionId: string; language?: 'en' | 'ru' }) => {
+    async (ctx, args: { runId: string; sessionId: string; language?: 'en' | 'ru' }) => {
+      denyIfKillSwitch(ctx);
+      requireOwnedRun(ctx, args.runId);
       const settings = requireEnabled();
       const provider = providerForRun(settings, args.runId);
       const workspaceId = await resolveWorkspaceId(deps, args.sessionId);
+      assertCallerOwnsWorkspace(ctx, workspaceId, audit, 'cloud-run');
       const status = await provider.getStatus(args.runId);
       if (status.state !== 'done') {
         throw new CloudRunnerError(`run ${args.runId} is ${status.state}, not done`, 'provider_error');

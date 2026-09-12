@@ -55,6 +55,11 @@ function formatUsage(promptTokens: number, completionTokens: number, cpuMs?: num
   return `${tok(promptTokens)}+${tok(completionTokens)} tok${cpu}`
 }
 
+function translateCloudRunsError(message: string, t: (key: string) => string): string {
+  if (message.startsWith('security.assurance.')) return t(message)
+  return message
+}
+
 type Availability = 'loading' | 'enabled' | 'disabled' | 'unavailable'
 
 /**
@@ -122,9 +127,9 @@ function CloudRunsChipInner({
       setRuns(result.runs)
       setRefreshError(null)
     } catch (error) {
-      setRefreshError(error instanceof Error ? error.message : String(error))
+      setRefreshError(translateCloudRunsError(error instanceof Error ? error.message : String(error), t))
     }
-  }, [])
+  }, [t])
 
   // F13: fetch the usage-median estimate once when Cloud Runs are available.
   React.useEffect(() => {
@@ -190,7 +195,9 @@ function CloudRunsChipInner({
     try {
       await fn()
     } catch (error) {
-      toast.error(t('cloudRuns.error'), { description: error instanceof Error ? error.message : String(error) })
+      toast.error(t('cloudRuns.error'), {
+        description: translateCloudRunsError(error instanceof Error ? error.message : String(error), t),
+      })
     } finally {
       setBusy(null)
       void refresh()
