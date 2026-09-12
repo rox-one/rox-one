@@ -93,4 +93,32 @@ describe('resolveEnabledFlags', () => {
       isWorkbenchFlagEnabled(WORKBENCH_FLAG.harnessChatChromeV1, new Set([WORKBENCH_FLAG.harnessChatChromeV1])),
     ).toBe(true)
   })
+
+  it('keeps every renderer Conation flag canonical, default off, and rollback-safe', () => {
+    const conationFlags = [
+      ['conationShell', 'workbench.conation.shell'],
+      ['conationInspector', 'workbench.conation.inspector'],
+      ['conationSurfacesSkill', 'skills.conation.surfaces'],
+      ['conationSoupClient', 'workbench.conation.soupClient'],
+      ['conationNotesBridge', 'workbench.conation.notesBridge'],
+      ['conationDriveRead', 'workbench.conation.driveRead'],
+      ['conationCanvas', 'workbench.conation.canvas'],
+      ['conationBoard', 'workbench.conation.board'],
+      ['conationMail', 'workbench.conation.mail'],
+      ['conationCal', 'workbench.conation.cal'],
+      ['conationDssClient', 'workbench.conation.dssClient'],
+      ['conationSessionApply', 'workbench.conation.sessionApply'],
+    ] as const
+
+    for (const [key, id] of conationFlags) {
+      expect(WORKBENCH_FLAG[key]).toBe(id)
+      expect(isWorkbenchFlagEnabled(id, new Set())).toBe(false)
+      expect(WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)).toEqual({
+        id,
+        defaultValue: false,
+        dependencies: [],
+        rollbackSafe: true,
+      })
+    }
+  })
 })

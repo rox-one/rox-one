@@ -37,6 +37,7 @@ export const WORKBENCH_FLAG = {
   conationNotesBridge: 'workbench.conation.notesBridge',
   conationDriveRead: 'workbench.conation.driveRead',
   conationCanvas: 'workbench.conation.canvas',
+  conationBoard: 'workbench.conation.board',
   conationMail: 'workbench.conation.mail',
   conationCal: 'workbench.conation.cal',
   conationDssClient: 'workbench.conation.dssClient',
@@ -161,6 +162,12 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   },
   {
     id: WORKBENCH_FLAG.conationCanvas,
+    defaultValue: false,
+    dependencies: [],
+    rollbackSafe: true,
+  },
+  {
+    id: WORKBENCH_FLAG.conationBoard,
     defaultValue: false,
     dependencies: [],
     rollbackSafe: true,
