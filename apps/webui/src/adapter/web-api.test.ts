@@ -4,7 +4,10 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createWebuiHandler } from '../../../../packages/server-core/src/webui/http-server'
-import type { createWebApi as CreateWebApi } from './web-api'
+import type {
+  buildSessionWindowUrl as BuildSessionWindowUrl,
+  createWebApi as CreateWebApi,
+} from './web-api'
 
 // web-api → @craft-agent/ui → pdfjs Vite `?url` import, which bun cannot load.
 mock.module('pdfjs-dist/build/pdf.worker.min.mjs?url', () => ({ default: '' }))
@@ -22,9 +25,21 @@ const HANDLERS: Array<{ dispose: () => void }> = []
 const CLIENTS: Array<{ destroy: () => void }> = []
 
 let createWebApi: typeof CreateWebApi
+let buildSessionWindowUrl: typeof BuildSessionWindowUrl
 
 beforeAll(async () => {
-  ;({ createWebApi } = await import('./web-api'))
+  ;({ buildSessionWindowUrl, createWebApi } = await import('./web-api'))
+})
+
+describe('web session window links', () => {
+  it('uses the canonical sessionId parameter consumed by the renderer', () => {
+    const url = new URL(buildSessionWindowUrl('https://rox.example', 'session /?#1'))
+
+    expect(url.origin).toBe('https://rox.example')
+    expect(url.pathname).toBe('/')
+    expect(url.searchParams.get('sessionId')).toBe('session /?#1')
+    expect(url.searchParams.has('session')).toBe(false)
+  })
 })
 
 function extractManifestHref(html: string): string | null {
