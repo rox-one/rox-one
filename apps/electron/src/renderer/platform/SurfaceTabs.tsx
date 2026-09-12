@@ -24,14 +24,10 @@ import {
   type PanelType,
 } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
-import { featureWorkbenchBrowserSurfaceV2Atom } from '@/atoms/unified-shell'
-import { useWorkspaceBrowserWindows } from '@/components/browser/use-workspace-browser-windows'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
-import type { BrowserInstanceInfo } from '../../shared/types'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
-import { osBrowserSurfaceTabs, type OsBrowserSurfaceTab } from './os-browser-tabs'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
@@ -111,81 +107,14 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
   )
 }
 
-function OsBrowserWindowControl({
-  tab,
-  instance,
-  liveWindowActions,
-  onFocus,
-  onTerminate,
-}: {
-  tab: OsBrowserSurfaceTab
-  instance: BrowserInstanceInfo
-  liveWindowActions: boolean
-  onFocus: (instance: BrowserInstanceInfo) => void
-  onTerminate: (instance: BrowserInstanceInfo) => void
-}) {
-  const { t } = useTranslation()
-
-  return (
-    <div
-      role="group"
-      aria-label={tab.title}
-      className={cn(
-        'group flex h-7 max-w-[220px] min-w-0 shrink-0 items-center gap-1.5 rounded-[6px] pl-2.5 pr-2 text-[12px] transition-colors',
-        tab.focused
-          ? 'bg-background text-foreground shadow-minimal'
-          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-      )}
-    >
-      <button
-        type="button"
-        title={tab.title}
-        aria-label={t('workbench.browser.showWindow')}
-        aria-pressed={tab.focused}
-        onClick={() => onFocus(instance)}
-        onAuxClick={(event) => {
-          if (event.button === 1 && liveWindowActions) {
-            event.preventDefault()
-            onTerminate(instance)
-          }
-        }}
-        className="flex min-w-0 flex-1 items-center gap-1.5 rounded-[4px] outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      >
-        <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" />
-        <span className="min-w-0 flex-1 truncate">{tab.title}</span>
-      </button>
-      <button
-        type="button"
-        aria-label={t('workbench.browser.terminate')}
-        disabled={!liveWindowActions}
-        onClick={() => onTerminate(instance)}
-        onKeyDown={(event) => event.stopPropagation()}
-        className={cn(
-          'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] transition-all hover:bg-foreground/10 disabled:pointer-events-none',
-          tab.focused
-            ? 'opacity-60 hover:opacity-100'
-            : 'opacity-0 group-hover:opacity-60 group-focus-within:opacity-60',
-        )}
-      >
-        <X className="h-3 w-3" />
-      </button>
-    </div>
-  )
-}
-
 export function SurfaceTabs() {
   const { t } = useTranslation()
   const entries = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id
-  const browserWindows = useWorkspaceBrowserWindows({
-    activeSessionId: focusedSessionId,
-    enabled: browserSurfaceEnabled,
-  })
 
   const resolveSessionTitle = useCallback(
     (sessionId: string) => {
@@ -271,58 +200,21 @@ export function SurfaceTabs() {
     },
   })
   const panelTabs = tabs.filter((tab) => tab.kind !== 'browser')
-  const osTabs = browserSurfaceEnabled
-    ? osBrowserSurfaceTabs(
-        browserWindows.orderedInstances,
-        browserWindows.activeInstanceId,
-        t('surfaceTabs.browser'),
-      )
-    : []
-  const osInstancesById = useMemo(
-    () => new Map(browserWindows.orderedInstances.map((instance) => [instance.id, instance])),
-    [browserWindows.orderedInstances],
-  )
+  // Embedded-default desktop path: do not mount OS BrowserWindow chips in SurfaceTabs.
+  // Browser lives in the inspector via createEmbedded(); os-browser-tabs helper remains
+  // available for legacy callers/tests but is not product chrome here.
 
   return (
     <div
       className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-foreground/5 px-3"
       style={{ height: TAB_STRIP_HEIGHT }}
     >
-      {panelTabs.length === 0 && osTabs.length === 0 ? (
+      {panelTabs.length === 0 ? (
         <span className="px-1 text-[12px] text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
-        <>
-          {panelTabs.length > 0 && (
-            <div role="tablist" className="flex shrink-0 items-center gap-1">
-              {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
-            </div>
-          )}
-          {panelTabs.length > 0 && osTabs.length > 0 && (
-            <span aria-hidden className="mx-0.5 h-4 w-px shrink-0 bg-border/80" />
-          )}
-          {osTabs.length > 0 && (
-            <div
-              role="group"
-              aria-label={t('surfaceTabs.browser')}
-              className="flex shrink-0 items-center gap-1"
-            >
-              {osTabs.map((tab) => {
-                const instance = osInstancesById.get(tab.instanceId)
-                if (!instance) return null
-                return (
-                  <OsBrowserWindowControl
-                    key={tab.instanceId}
-                    tab={tab}
-                    instance={instance}
-                    liveWindowActions={browserWindows.liveWindowActions}
-                    onFocus={browserWindows.focusBrowserWindow}
-                    onTerminate={browserWindows.terminateBrowserWindow}
-                  />
-                )
-              })}
-            </div>
-          )}
-        </>
+        <div role="tablist" className="flex shrink-0 items-center gap-1">
+          {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
+        </div>
       )}
     </div>
   )

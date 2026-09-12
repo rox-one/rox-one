@@ -17,7 +17,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
-import { Bot, ChevronsLeft, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, SquareTerminal, type LucideIcon } from 'lucide-react'
+import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, SquareTerminal, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import {
@@ -241,7 +241,7 @@ function EmptySection({ section }: { section: InspectorSectionId }) {
 }
 
 // -----------------------------------------------------------------------------
-// Host: 320px panel (when visible) + 48px section rail (always visible).
+// Host: panel when visible; R-hide collapses to zero width (TopBar restores).
 // -----------------------------------------------------------------------------
 
 export function InspectorHost() {
@@ -353,34 +353,9 @@ export function InspectorHost() {
     </Tooltip>
   )
 
+  // R-hide = zero chrome: TopBar restores via inspector expand. No collapse-to-strip rail.
   if (chromeCollapsed) {
-    return (
-      <div
-        className="flex h-full shrink-0 flex-col items-center py-2"
-        style={{ width: INSPECTOR_RAIL_WIDTH }}
-        data-session-inspector={sessionMode ? 'true' : 'false'}
-      >
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('inspector.expand')}
-              onClick={() => {
-                setChromeCollapsed(false)
-                setVisible(true)
-              }}
-              className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="left">{t('inspector.expand')}</TooltipContent>
-        </Tooltip>
-        <div className="mt-auto flex flex-col items-center gap-0.5">
-          {terminalControl}
-        </div>
-      </div>
-    )
+    return null
   }
 
   return (

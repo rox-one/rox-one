@@ -29,8 +29,10 @@ describe('InspectorHost H1 session inspector', () => {
     expect(src).not.toContain('inspector.browserDisabled')
   })
 
-  it('keeps the terminal control in both collapsed and expanded rails without session gating', () => {
-    expect(src.match(/\{terminalControl\}/g)).toHaveLength(2)
+  it('keeps the terminal control on the expanded rail; R-hide is zero-width', () => {
+    expect(src.match(/\{terminalControl\}/g)).toHaveLength(1)
+    expect(src).toContain('if (chromeCollapsed) {')
+    expect(src).toContain('return null')
     expect(src).toContain('onClick={handleBottomTerminalToggle}')
     expect(src).toContain('data-testid="bottom-terminal-toggle"')
     expect(src).toContain('setTerminalOpen(next.sideOpen)')

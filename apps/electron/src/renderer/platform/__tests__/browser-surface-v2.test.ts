@@ -133,6 +133,7 @@ describe('commitAfterBrowserWindowAction focus boundary', () => {
 
 describe('browser surface v2 source wiring', () => {
   const surfaceTabsSource = readFileSync(join(platformDir, 'SurfaceTabs.tsx'), 'utf8')
+  const osBrowserTabsSource = readFileSync(join(platformDir, 'os-browser-tabs.ts'), 'utf8')
   const workspaceSurfaceHostSource = readFileSync(
     join(platformDir, 'WorkspaceSurfaceHost.tsx'),
     'utf8',
@@ -168,36 +169,16 @@ describe('browser surface v2 source wiring', () => {
     ).toHaveLength(1)
   })
 
-  it('keeps the live browser subscription in SurfaceTabs while v2 is enabled', () => {
-    expect(surfaceTabsSource).toContain('useWorkspaceBrowserWindows({')
-    expect(surfaceTabsSource).toMatch(/enabled:\s*browserSurfaceEnabled/)
-    expect(surfaceTabsSource).toContain('osBrowserSurfaceTabs(')
-    expect(surfaceTabsSource).toContain('onFocus={browserWindows.focusBrowserWindow}')
-    expect(surfaceTabsSource).toContain('onTerminate={browserWindows.terminateBrowserWindow}')
+  it('does not mount OS BrowserWindow chips on the embedded-default SurfaceTabs path', () => {
+    expect(surfaceTabsSource).not.toContain('useWorkspaceBrowserWindows({')
+    expect(surfaceTabsSource).not.toContain('osBrowserSurfaceTabs(')
+    expect(surfaceTabsSource).not.toContain('function OsBrowserWindowControl')
+    expect(surfaceTabsSource).toContain('do not mount OS BrowserWindow chips')
+    expect(surfaceTabsSource.match(/role="tablist"/g)).toHaveLength(1)
+    expect(osBrowserTabsSource).toContain('export function osBrowserSurfaceTabs')
   })
 
-  it('routes OS window controls without panel-stack ids', () => {
-    const osWindowControlSource = surfaceTabsSource.slice(
-      surfaceTabsSource.indexOf('function OsBrowserWindowControl'),
-      surfaceTabsSource.indexOf('export function SurfaceTabs'),
-    )
-
-    expect(osWindowControlSource).toContain('onFocus(instance)')
-    expect(osWindowControlSource).toContain('onTerminate(instance)')
-    expect(osWindowControlSource).toContain('onAuxClick=')
-    expect(osWindowControlSource).toContain('role="group"')
-    expect(osWindowControlSource).toContain('aria-label={tab.title}')
-    expect(osWindowControlSource).toContain('aria-pressed={tab.focused}')
-    expect(osWindowControlSource).toContain(
-      "aria-label={t('workbench.browser.showWindow')}",
-    )
-    expect(osWindowControlSource).not.toContain('aria-label={`${')
-    expect(osWindowControlSource).not.toContain('role="tab"')
-    expect(osWindowControlSource).not.toContain('aria-selected')
-    expect(osWindowControlSource).not.toContain('setFocusedPanelId')
-    expect(osWindowControlSource).not.toContain('closePanel')
-    expect(surfaceTabsSource.match(/role="tablist"/g)).toHaveLength(1)
-    expect(surfaceTabsSource).toContain("aria-label={t('surfaceTabs.browser')}")
+  it('keeps workspace browser window focus/terminate helpers for non-SurfaceTabs callers', () => {
     expect(browserWindowsSource).toContain('browserPaneApi.focus(instance.id)')
     expect(browserWindowsSource).toContain('browserPaneApi.destroy(instance.id)')
     expect(browserWindowsSource.match(/commitAfterBrowserWindowAction\(/g)).toHaveLength(2)
