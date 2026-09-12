@@ -59,7 +59,9 @@ export function collectionHarnessProvider(input: {
       return 'openai'
     case 'omp':
       return 'omp'
-    default:
+    case 'hermes':
+    case 'opencode':
+    case 'other':
       return null
   }
 }
