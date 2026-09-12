@@ -40,6 +40,7 @@ export const TERMINOLOGY_KEY_ALLOWLIST: readonly TerminologyAllowlistEntry[] = [
   { match: 'onboarding.reauth.', kind: 'legacy-dead' },
   { match: 'skillsList.omp', kind: 'technical-detail' },
   { match: 'extensions.runtime.', kind: 'technical-detail' },
+  { match: 'collection.filter.agentFamily.', kind: 'technical-detail' },
   { match: 'knowledge.', kind: 'external-product' },
   { match: 'hints.', kind: 'external-product' },
   { match: 'editPopover.example.addSource', kind: 'external-product' },
