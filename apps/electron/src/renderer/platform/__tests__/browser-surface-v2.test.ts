@@ -149,6 +149,10 @@ describe('browser surface v2 source wiring', () => {
     join(rendererDir, 'components', 'browser', 'use-workspace-browser-windows.ts'),
     'utf8',
   )
+  const inspectorBrowserPaneSource = readFileSync(
+    join(rendererDir, 'components', 'session-inspector', 'InspectorBrowserPane.tsx'),
+    'utf8',
+  )
 
   it('mounts one persistent SurfaceTabs owner from WorkspaceSurfaceHost', () => {
     expect(workspaceSurfaceHostSource).toContain("import { SurfaceTabs } from './SurfaceTabs'")
@@ -197,6 +201,13 @@ describe('browser surface v2 source wiring', () => {
     expect(browserWindowsSource).toContain('browserPaneApi.focus(instance.id)')
     expect(browserWindowsSource).toContain('browserPaneApi.destroy(instance.id)')
     expect(browserWindowsSource.match(/commitAfterBrowserWindowAction\(/g)).toHaveLength(2)
+    const terminateSource = browserWindowsSource.slice(
+      browserWindowsSource.indexOf('const terminateBrowserWindow'),
+      browserWindowsSource.indexOf('return {', browserWindowsSource.indexOf('const terminateBrowserWindow')),
+    )
+    expect(terminateSource).toContain('if (instancesOverride)')
+    expect(terminateSource).toContain('instancesOverride.find((item) => item.id !== instance.id)')
+    expect(terminateSource).toContain('setActiveInstanceId')
   })
 
   it('cancels pending list owners and commits live focus only after success', () => {
@@ -210,9 +221,6 @@ describe('browser surface v2 source wiring', () => {
     )
     expect(focusSource).toContain('if (instancesOverride)')
     expect(focusSource).toContain('setActiveInstanceId(instance.id)')
-    expect(focusSource).toMatch(
-      /if \(instancesOverride\) \{\s+setActiveInstanceId\(instance\.id\)\s+return/,
-    )
     expect(focusSource).toContain('commitAfterBrowserWindowAction(')
     expect(focusSource).toContain(
       'Failed to focus browser window ${instance.id}',
@@ -224,11 +232,7 @@ describe('browser surface v2 source wiring', () => {
     )
   })
 
-  it('creates a real desktop window only for browser surface v2', () => {
-    expect(appShellSource).toContain(
-      'const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)',
-    )
-
+  it('routes every desktop browser-open affordance to the embedded inspector pane', () => {
     const openBrowserSource = appShellSource.slice(
       appShellSource.indexOf('const handleNewBrowserWindow'),
       appShellSource.indexOf('// Delete Source'),
@@ -236,9 +240,12 @@ describe('browser surface v2 source wiring', () => {
     expect(openBrowserSource).toContain('if (isWebUI)')
     expect(openBrowserSource).toContain('setWebBrowserOpen(true)')
     expect(openBrowserSource).not.toContain('if (!isWebUI) return')
-    expect(openBrowserSource).toContain('if (browserSurfaceEnabled)')
-    expect(openBrowserSource).toContain('browserPane.create({ show: true })')
+    expect(openBrowserSource).not.toContain('browserPane.create({ show: true })')
+    expect(openBrowserSource).toContain('setInspectorChromeCollapsed(false)')
+    expect(openBrowserSource).toContain('setInspectorVisible(true)')
     expect(openBrowserSource).toContain("setInspectorSection('browser')")
+    expect(inspectorBrowserPaneSource).toContain('window.electronAPI.browserPane.createEmbedded()')
+    expect(inspectorBrowserPaneSource).toContain('<BrowserPanelPage instanceId={instanceId} persist />')
     expect(openBrowserSource).toContain('void handleNewBrowserWindow()')
     expect(openBrowserSource).toContain(
       "window.addEventListener('craft:open-vps-browser', handleOpenBrowser)",

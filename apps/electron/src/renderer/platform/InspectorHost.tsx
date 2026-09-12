@@ -335,13 +335,15 @@ export function InspectorHost() {
           type="button"
           aria-label={t('inspector.terminal')}
           aria-pressed={(terminalOpen && visible) || bottomTerminalOpen}
+          title={t('inspector.terminal')}
+          data-testid="bottom-terminal-toggle"
           data-terminal-flag={WORKBENCH_FLAG.terminalV1}
           onClick={handleBottomTerminalToggle}
           className={cn(
-            'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
+            'flex h-9 w-9 items-center justify-center rounded-[8px] border border-border/60 transition-colors',
             (terminalOpen && visible) || bottomTerminalOpen
               ? 'bg-accent/10 text-accent'
-              : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+              : 'bg-foreground/[0.025] text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
           )}
         >
           <SquareTerminal className="h-4 w-4" />

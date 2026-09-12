@@ -32,6 +32,7 @@ describe('InspectorHost H1 session inspector', () => {
   it('keeps the terminal control in both collapsed and expanded rails without session gating', () => {
     expect(src.match(/\{terminalControl\}/g)).toHaveLength(2)
     expect(src).toContain('onClick={handleBottomTerminalToggle}')
+    expect(src).toContain('data-testid="bottom-terminal-toggle"')
     expect(src).toContain('setTerminalOpen(next.sideOpen)')
     expect(src).toContain('setBottomTerminalOpen(next.bottomOpen)')
     expect(src).not.toContain('Movable cycle')

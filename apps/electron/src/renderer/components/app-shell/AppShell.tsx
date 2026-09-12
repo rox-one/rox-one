@@ -95,7 +95,7 @@ import {
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchBrowserSurfaceV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -273,7 +273,7 @@ function AppShellContent({
   // sashes shift right by the rail width (+ one PANEL_GAP); zero when OFF.
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
-  const browserSurfaceEnabled = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
+  const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
   // PR-2: the rail offset follows the same two-key decision as the host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
@@ -2011,27 +2011,26 @@ function AppShellContent({
   const setInspectorSection = useSetAtom(inspectorSectionAtom)
   const setInspectorPanelWidth = useSetAtom(inspectorPanelWidthAtom)
 
-  const handleNewBrowserWindow = useCallback(async () => {
+  const handleNewBrowserWindow = useCallback(() => {
     if (isWebUI) {
       setWebBrowserOpen(true)
       return
     }
-    if (browserSurfaceEnabled) {
-      try {
-        await window.electronAPI.browserPane.create({ show: true })
-      } catch (error) {
-        console.error('[AppShell] Failed to create browser window:', error)
-        toast.error(t('toast.failedToCreateBrowser'))
-      }
-      return
-    }
 
-    // The legacy desktop path keeps its inspector-hosted embedded browser.
+    // Desktop browser affordances always target the in-app inspector surface.
+    // InspectorBrowserPane owns createEmbedded() and the native view lifecycle.
     setInspectorChromeCollapsed(false)
     setInspectorVisible(true)
     setInspectorSection('browser')
     setInspectorPanelWidth((width) => Math.max(width, 560))
-  }, [browserSurfaceEnabled, setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible, t])
+  }, [setInspectorChromeCollapsed, setInspectorPanelWidth, setInspectorSection, setInspectorVisible])
+
+  const handleOpenMap = useCallback(() => {
+    if (!effectiveSessionId) return
+    window.dispatchEvent(new CustomEvent('craft:session-view', {
+      detail: { sessionId: effectiveSessionId, view: 'map' },
+    }))
+  }, [effectiveSessionId])
 
   React.useEffect(() => {
     const handleOpenBrowser = () => {
@@ -2389,6 +2388,9 @@ function AppShellContent({
           onToggleFocusMode={() => setIsSidebarAndNavigatorHidden(prev => !prev)}
           onAddSessionPanel={() => handleNewChat(true)}
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
+          onOpenMap={handleOpenMap}
+          mapAvailable={Boolean(effectiveSessionId)}
+          showInspectorToggle={unifiedShellEnabled || workbenchEnabled || harnessInspectorEnabled}
           compactHeaderRenderer={compactHeaderRenderer}
           isCompactChatMode={isAutoCompact && isSessionsNavigation(navState) && !!navState.details}
           isCompactSettingsMode={isWebUI && isAutoCompact && isSettingsNavigation(navState)}

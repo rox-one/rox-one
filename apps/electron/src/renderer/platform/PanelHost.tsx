@@ -168,18 +168,16 @@ export function PanelHost({
       },
       boardPanelTitle,
     )
-    const notesRegistration = notesBridge
-      ? registerNotesPanel(
-          resolvedRegistry,
-          renderNotesPanel,
-          {
-            shellEnabled: conationShellEnabled,
-            inspectorEnabled: conationInspectorEnabled,
-            notesBridgeEnabled: conationNotesBridgeEnabled,
-          },
-          notesPanelTitle,
-        )
-      : undefined
+    const notesRegistration = registerNotesPanel(
+      resolvedRegistry,
+      renderNotesPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+        notesBridgeEnabled: conationNotesBridgeEnabled,
+      },
+      notesPanelTitle,
+    )
 
     return () => {
       inspectorRegistration?.dispose()

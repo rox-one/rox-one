@@ -207,7 +207,13 @@ export function useWorkspaceBrowserWindows({
   }, [])
 
   const terminateBrowserWindow = useCallback((instance: BrowserInstanceInfo) => {
-    if (instancesOverride) return
+    if (instancesOverride) {
+      setActiveInstanceId((prev) => {
+        if (prev !== instance.id) return prev
+        return instancesOverride.find((item) => item.id !== instance.id)?.id ?? null
+      })
+      return
+    }
 
     const browserPaneApi = window.electronAPI?.browserPane
     if (!browserPaneApi) {
