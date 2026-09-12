@@ -23,6 +23,7 @@ import { PanelHost } from './PanelHost'
 import { resolveWorkbenchChrome } from './workbench-chrome'
 
 export { ActivityRail, ACTIVITY_RAIL_WIDTH, ACTIVITY_RAIL_COLLAPSED_WIDTH } from './ActivityRail'
+export { CHROME_DENSITY } from './chrome-density'
 export { SurfaceTabs } from './SurfaceTabs'
 export { InspectorHost } from './InspectorHost'
 export { ModeBar } from './ModeBar'

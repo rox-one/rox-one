@@ -70,7 +70,7 @@ function ModeItem({
       aria-disabled={disabled || undefined}
       onClick={disabled ? undefined : onSelect}
       className={cn(
-        'titlebar-no-drag flex h-[26px] items-center gap-1.5 rounded-lg px-2 text-[12px] transition-colors',
+        'titlebar-no-drag chrome-label flex h-6 items-center gap-1 rounded-md px-1.5 transition-colors',
         disabled
           ? 'cursor-not-allowed text-muted-foreground/40'
           : active
@@ -125,7 +125,7 @@ export function ModeBar() {
             <button
               type="button"
               aria-label={t('workbench.mode.more')}
-              className="titlebar-no-drag flex h-[26px] w-[26px] items-center justify-center rounded-lg text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+              className="titlebar-no-drag flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
             >
               <MoreHorizontal className="h-3.5 w-3.5" />
             </button>

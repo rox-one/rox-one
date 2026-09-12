@@ -1,6 +1,6 @@
 /**
- * ActivityRail (W1 unified shell, spec S-03 §3.1/§3.2) — 48px vertical icon
- * rail for top-level navigation.
+ * ActivityRail (W1 unified shell, spec S-03 §3.1/§3.2) — compact vertical icon
+ * rail for top-level navigation (design-compact density).
  *
  * The destinations list mirrors AppShell's `links[]` via the shared
  * `APP_NAV_DESTINATIONS` config (no divergent copy); navigation goes through
@@ -24,11 +24,12 @@ import {
   APP_NAV_DESTINATIONS,
   type AppNavDestination,
 } from '../components/app-shell/nav-destinations'
+import { CHROME_DENSITY } from './chrome-density'
 
 /** Expanded rail width — AppShell uses it to offset the absolute resize sashes. */
-export const ACTIVITY_RAIL_WIDTH = 48
-/** Collapsed rail keeps a full 48px hit target so the expand chevron is usable. */
-export const ACTIVITY_RAIL_COLLAPSED_WIDTH = 48
+export const ACTIVITY_RAIL_WIDTH = CHROME_DENSITY.railWidth
+/** Collapsed rail keeps a usable hit target so the expand chevron stays clickable. */
+export const ACTIVITY_RAIL_COLLAPSED_WIDTH = CHROME_DENSITY.railWidth
 
 function RailItem({ dest }: { dest: AppNavDestination }) {
   const { t } = useTranslation()
@@ -45,7 +46,7 @@ function RailItem({ dest }: { dest: AppNavDestination }) {
       aria-disabled={disabled || undefined}
       onClick={disabled ? undefined : () => void navigate(dest.route!())}
       className={cn(
-        'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
+        'flex h-8 w-8 items-center justify-center rounded-[7px] transition-colors',
         disabled
           ? 'cursor-not-allowed text-muted-foreground/40'
           : dest.isActive(navState)
@@ -75,7 +76,7 @@ export function ActivityRail() {
     return (
       <nav
         aria-label={t('rail.title')}
-        className="flex h-full shrink-0 flex-col items-center py-2"
+        className="chrome-rail flex h-full shrink-0 flex-col items-center py-1.5"
         style={{ width: ACTIVITY_RAIL_COLLAPSED_WIDTH }}
       >
         <Tooltip>
@@ -84,7 +85,7 @@ export function ActivityRail() {
               type="button"
               aria-label={t('rail.expand')}
               onClick={() => setCollapsed(false)}
-              className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-[7px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
               <ChevronsRight className="h-4 w-4" />
             </button>
@@ -98,7 +99,7 @@ export function ActivityRail() {
   return (
     <nav
       aria-label={t('rail.title')}
-      className="flex h-full shrink-0 flex-col items-center py-2"
+      className="chrome-rail flex h-full shrink-0 flex-col items-center py-1.5"
       style={{ width: ACTIVITY_RAIL_WIDTH }}
     >
       <div className="flex flex-col items-center gap-0.5">
@@ -113,7 +114,7 @@ export function ActivityRail() {
               type="button"
               aria-label={t('rail.collapse')}
               onClick={() => setCollapsed(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-[7px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
               <ChevronsLeft className="h-4 w-4" />
             </button>

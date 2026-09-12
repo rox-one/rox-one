@@ -1,7 +1,7 @@
 /**
  * InspectorHost (W1 unified shell, spec S-03 §3.1/§3.3) — right-side
- * collapsible inspector: a 48px section rail (always visible) plus one
- * 320px inspector panel.
+ * collapsible inspector: compact section rail (always visible) plus one
+ * resizable inspector panel (design-compact density).
  *
  * Behavior contract (S-03 §3.3, implemented by `inspector-model.ts`):
  * clicking an inactive section icon opens the panel with that section;
@@ -55,9 +55,10 @@ import {
   resolveBottomTerminalToggle,
   resolveInspectorToggle,
 } from './inspector-model'
+import { CHROME_DENSITY } from './chrome-density'
 import { panelTypeToSurfaceKind } from './surface-tab-model'
 
-const INSPECTOR_RAIL_WIDTH = 48
+const INSPECTOR_RAIL_WIDTH = CHROME_DENSITY.railWidth
 const INSPECTOR_MIN_WIDTH = 280
 const INSPECTOR_MAX_WIDTH = 1400
 
@@ -78,11 +79,11 @@ const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
 
 function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="flex min-w-0 flex-col gap-0.5 px-3 py-1.5">
-      <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground/60">
+    <div className="flex min-w-0 flex-col gap-0.5 px-2.5 py-1">
+      <span className="chrome-label-sm font-medium uppercase tracking-wide text-muted-foreground/60">
         {label}
       </span>
-      <span className={cn('break-all text-[12px] text-foreground/90', mono && 'font-mono text-[11px]')}>
+      <span className={cn('chrome-label break-all text-foreground/90', mono && 'font-mono text-[11px]')}>
         {value}
       </span>
     </div>
@@ -123,7 +124,7 @@ function ConnectionInfoSection() {
           value={consumers.map((row) => `${row.consumerId}: ${row.status}`).join(', ')}
         />
       ) : null}
-      <div className="flex flex-wrap gap-1 px-3 py-2">
+      <div className="flex flex-wrap gap-1 px-2.5 py-1.5">
         <button
           type="button"
           className="rounded border px-2 py-1 text-[12px]"
@@ -340,7 +341,7 @@ export function InspectorHost() {
           data-terminal-flag={WORKBENCH_FLAG.terminalV1}
           onClick={handleBottomTerminalToggle}
           className={cn(
-            'flex h-9 w-9 items-center justify-center rounded-[8px] border border-border/60 transition-colors',
+            'flex h-8 w-8 items-center justify-center rounded-[7px] border border-border/60 transition-colors',
             (terminalOpen && visible) || bottomTerminalOpen
               ? 'bg-accent/10 text-accent'
               : 'bg-foreground/[0.025] text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
@@ -356,7 +357,7 @@ export function InspectorHost() {
   if (chromeCollapsed) {
     return (
       <div
-        className="flex h-full shrink-0 flex-col items-center py-2"
+        className="chrome-rail flex h-full shrink-0 flex-col items-center py-1.5"
         style={{ width: INSPECTOR_RAIL_WIDTH }}
         data-session-inspector={sessionMode ? 'true' : 'false'}
       >
@@ -369,7 +370,7 @@ export function InspectorHost() {
                 setChromeCollapsed(false)
                 setVisible(true)
               }}
-              className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-[7px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
               <ChevronsLeft className="h-4 w-4" />
             </button>
@@ -427,8 +428,8 @@ export function InspectorHost() {
               window.addEventListener('pointercancel', up)
             }}
           />
-          <div className="flex h-10 shrink-0 items-center justify-between gap-2 border-b border-foreground/5 pl-3 pr-2">
-            <span className="truncate text-[13px] font-medium">{t(titleKey)}</span>
+          <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-foreground/5 pl-2.5 pr-1.5">
+            <span className="chrome-label truncate font-medium tracking-tight">{t(titleKey)}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -464,7 +465,7 @@ export function InspectorHost() {
         </div>
       )}
       <div
-        className="flex h-full shrink-0 flex-col items-center gap-0.5 py-2"
+        className="chrome-rail flex h-full shrink-0 flex-col items-center gap-0.5 py-1.5"
         style={{ width: INSPECTOR_RAIL_WIDTH }}
       >
         {sectionIds.map((sectionId) => {
@@ -484,7 +485,7 @@ export function InspectorHost() {
                   aria-pressed={active}
                   onClick={() => handleSectionClick(sectionId)}
                   className={cn(
-                    'flex h-9 w-9 items-center justify-center rounded-[8px] transition-colors',
+                    'flex h-8 w-8 items-center justify-center rounded-[7px] transition-colors',
                     active
                       ? 'bg-accent/10 text-accent'
                       : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
@@ -505,7 +506,7 @@ export function InspectorHost() {
                 type="button"
                 aria-label={t('inspector.hide')}
                 onClick={collapseChrome}
-                className="flex h-9 w-9 items-center justify-center rounded-[8px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-[7px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
               >
                 <ChevronsRight className="h-4 w-4" />
               </button>
