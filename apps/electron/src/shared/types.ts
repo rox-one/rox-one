@@ -39,6 +39,7 @@ export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
 import type { XpEventType } from '@craft-agent/shared/gamification';
 import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
+import type { VoiceHealth, VoicePrefs } from '@craft-agent/shared/voice';
 import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
 import type {
   AutomationGraphProjection,
@@ -1345,6 +1346,18 @@ export interface ElectronAPI {
     ratings?: SessionRating[]
     analyticsConsent?: boolean
   }) => void): () => void
+
+  getVoicePrefs(): Promise<VoicePrefs>
+  saveVoicePrefs(patch: Partial<VoicePrefs>): Promise<VoicePrefs>
+  getVoiceHealth(): Promise<VoiceHealth>
+  transcribeVoice(payload: {
+    audioBase64: string
+    mimeType?: string
+    language?: string
+    transcript?: string
+  }): Promise<{ text: string; engine: string; uploaded: boolean }>
+  speakVoice(payload: { text: string }): Promise<{ engine: string; uploaded: false }>
+  onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@craft-agent/shared/config').SessionDraft | null>

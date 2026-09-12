@@ -23,6 +23,7 @@ import {
   Pencil,
   FilePenLine,
   GitBranch,
+  Volume2,
 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { Markdown } from '../markdown'
@@ -340,6 +341,9 @@ export interface TurnCardProps {
   onOpenUrl?: (url: string) => void
   /** Callback to open response in Monaco editor */
   onPopOut?: (text: string) => void
+  /** Play the assistant text through the configured TTS engine */
+  onListen?: (text: string) => void
+  isListening?: boolean
   /** Callback to open turn details in a new window */
   onOpenDetails?: () => void
   /** Callback to open individual activity details in Monaco */
@@ -1455,6 +1459,9 @@ export interface ResponseCardProps {
   onOpenUrl?: (url: string) => void
   /** Callback to open response in Monaco editor */
   onPopOut?: () => void
+  /** Play this response through TTS */
+  onListen?: () => void
+  isListening?: boolean
   /** Card variant - 'response' for AI messages, 'plan' for plan messages */
   variant?: 'response' | 'plan'
   /** Parent session ID (used to reset local annotation/island UI state on session switches) */
@@ -1718,6 +1725,8 @@ export function ResponseCard({
   onOpenFile,
   onOpenUrl,
   onPopOut,
+  onListen,
+  isListening = false,
   variant = 'response',
   sessionId,
   messageId,
@@ -2642,6 +2651,21 @@ export function ResponseCard({
                     <span>Markdown</span>
                   </button>
                 )}
+                {onListen && (
+                  <button
+                    type="button"
+                    onClick={onListen}
+                    className={cn(
+                      "turn-action-btn flex items-center gap-1.5 transition-colors select-none",
+                      isListening ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                      "focus:outline-none focus-visible:underline"
+                    )}
+                    aria-label={t("chat.listen")}
+                  >
+                    <Volume2 className={SIZE_CONFIG.iconSize} />
+                    <span>{isListening ? t("chat.listenStop") : t("chat.listen")}</span>
+                  </button>
+                )}
               </div>
 
               {/* Right side */}
@@ -2873,6 +2897,8 @@ export const TurnCard = React.memo(function TurnCard({
   onOpenFile,
   onOpenUrl,
   onPopOut,
+  onListen,
+  isListening = false,
   onOpenDetails,
   onOpenActivityDetails,
   onOpenMultiFileDiff,
@@ -3252,6 +3278,8 @@ export const TurnCard = React.memo(function TurnCard({
             onOpenFile={onOpenFile}
             onOpenUrl={onOpenUrl}
             onPopOut={onPopOut ? () => onPopOut(planActivity.content || '') : undefined}
+            onListen={onListen ? () => onListen(planActivity.content || '') : undefined}
+            isListening={isListening}
             variant="plan"
             messageId={planActivity.messageId}
             annotations={planActivity.annotations}
@@ -3302,6 +3330,8 @@ export const TurnCard = React.memo(function TurnCard({
                 onOpenFile={onOpenFile}
                 onOpenUrl={onOpenUrl}
                 onPopOut={onPopOut ? () => onPopOut(response.text) : undefined}
+                onListen={onListen ? () => onListen(response.text) : undefined}
+                isListening={isListening}
                 variant={response.isPlan ? 'plan' : 'response'}
                 messageId={response.messageId}
                 annotations={response.annotations}
@@ -3338,6 +3368,8 @@ export const TurnCard = React.memo(function TurnCard({
             onOpenFile={onOpenFile}
             onOpenUrl={onOpenUrl}
             onPopOut={onPopOut ? () => onPopOut(response.text) : undefined}
+            onListen={onListen ? () => onListen(response.text) : undefined}
+            isListening={isListening}
             variant={response.isPlan ? 'plan' : 'response'}
             messageId={response.messageId}
             annotations={response.annotations}

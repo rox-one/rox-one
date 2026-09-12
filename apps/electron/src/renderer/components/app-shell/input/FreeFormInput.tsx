@@ -104,7 +104,7 @@ import {
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
-import { useModelVisionToggle } from './useModelVisionToggle'
+import { VoiceDictationControl } from './VoiceDictationControl'
 
 function dedupModelsById<T extends string | ModelDefinition>(models: T[]): T[] {
   const seen = new Set<string>()
@@ -2063,6 +2063,12 @@ export function FreeFormInput({
             tooltip={t("chat.attachFilesTooltip")}
             disabled={disabled}
           />
+          <VoiceDictationControl
+            disabled={disabled}
+            compactMode
+            inputValue={input}
+            onInputChange={onInputChange}
+          />
           {isWebUI && (
             <FreeFormInputContextBadge
               icon={<Globe className="h-4 w-4" />}
@@ -2184,6 +2190,11 @@ export function FreeFormInput({
             onClick={handleAttachClick}
             tooltip={t("chat.attachFilesTooltip")}
             disabled={disabled}
+          />
+          <VoiceDictationControl
+            disabled={disabled}
+            inputValue={input}
+            onInputChange={onInputChange}
           />
 
           {isWebUI && (
