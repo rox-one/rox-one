@@ -17,6 +17,7 @@ describe('isDetailNavState', () => {
     })).toBe(true)
     expect(isDetailNavState({ navigator: 'home', details: null })).toBe(true)
     expect(isDetailNavState({ navigator: 'memory', details: null })).toBe(false)
+    expect(isDetailNavState({ navigator: 'tasks', details: null })).toBe(false)
     expect(isDetailNavState({ navigator: 'pages', details: null })).toBe(true)
     expect(isDetailNavState({ navigator: 'pages', details: { type: 'page', pageSlug: 'dash' } })).toBe(true)
   })
