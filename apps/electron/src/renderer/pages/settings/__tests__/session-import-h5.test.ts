@@ -31,6 +31,25 @@ describe('H5 import and advisor wiring', () => {
     expect(page).toContain('data-testid="session-import"')
     expect(page).toContain("t('settings.import.truncated'")
     expect(page).not.toContain('spawn_session')
+    expect(page).toContain('BrowserProfileImportPanel')
+  })
+
+  it('wires privileged browser profile import with separate OS credential approval', () => {
+    const panel = readFileSync(join(__dirname, '..', 'BrowserProfileImportPanel.tsx'), 'utf8')
+    const types = readFileSync(join(repoRoot, 'apps/electron/src/shared/types.ts'), 'utf8')
+    const handler = readFileSync(
+      join(repoRoot, 'packages/server-core/src/handlers/rpc/browser-profile-import.ts'),
+      'utf8',
+    )
+    expect(panel).toContain('data-testid="browser-profile-import"')
+    expect(panel).toContain('data-testid="browser-profile-os-approved"')
+    expect(panel).toContain('discoverBrowserProfiles')
+    expect(panel).toContain('importBrowserProfile')
+    expect(panel).toContain('osCredentialsApproved')
+    expect(types).toContain('discoverBrowserProfiles')
+    expect(handler).not.toContain('COOKIE_SECRET')
+    expect(handler).toContain('cookie-vault.json')
+    expect(handler).toContain('never leave this process')
   })
 
   it('imports via command without a hidden second agent loop', () => {

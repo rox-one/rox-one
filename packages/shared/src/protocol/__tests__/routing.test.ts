@@ -286,3 +286,12 @@ describe('WorkGraph routing', () => {
     }
   })
 })
+
+describe('browser profile import routing', () => {
+  test('keeps privileged profile import local-only', () => {
+    for (const channel of Object.values(RPC_CHANNELS.browserProfile)) {
+      expect(LOCAL_ONLY_CHANNELS.has(channel)).toBe(true)
+      expect(REMOTE_ELIGIBLE_CHANNELS.has(channel)).toBe(false)
+    }
+  })
+})

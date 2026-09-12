@@ -715,6 +715,12 @@ export const RPC_CHANNELS = {
     REMOVED: 'browser-pane:removed',
     INTERACTED: 'browser-pane:interacted',
   },
+  browserProfile: {
+    DISCOVER: 'browserProfile:discover',
+    IMPORT: 'browserProfile:import',
+    ROLLBACK: 'browserProfile:rollback',
+    DELETE: 'browserProfile:delete',
+  },
   automations: {
     GET: 'automations:get',
     GET_GRAPH: 'automations:getGraph',
