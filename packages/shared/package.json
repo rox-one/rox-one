@@ -79,6 +79,7 @@
     "./workspace/open-in-editor": "./src/workspace/open-in-editor.ts",
     "./interceptor": "./src/interceptor-common.ts",
     "./search": "./src/search/index.ts",
+    "./security": "./src/security/index.ts",
     "./tools": "./src/tools/index.ts",
     "./mentions": "./src/mentions/index.ts",
     "./marketplace": "./src/marketplace/index.ts",

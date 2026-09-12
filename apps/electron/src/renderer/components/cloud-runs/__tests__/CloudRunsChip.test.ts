@@ -28,6 +28,8 @@ describe('CloudRunsChip compact dialog accessibility', () => {
     expect(source).toContain('refreshError')
     expect(source).toContain('role="alert"')
     expect(source).toContain("t('common.retry')")
+    expect(source).toContain('translateCloudRunsError')
+    expect(source).toContain("message.startsWith('security.assurance.')")
     expect(source).toContain('onRetryAvailability')
   })
 
