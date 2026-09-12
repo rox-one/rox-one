@@ -5,6 +5,7 @@
  * - Bridges existing `actions` definitions as craft CommandContributions
  * - Registers minimal resource providers (sessions/settings/skills/sources/knowledge/automations)
  * - knowledge.search / knowledge.openHome / knowledge.openCompat (+ siyuan.openCompat)
+ * - conation.openFund / conation.openBoard (when workbench.conation.* flags on)
  * - Soft-load enabled L2+ SiYuan plugin bridge commands (fail-soft if API absent)
  *
  * Called once from OmniboxHost on mount. Safe to call multiple times (idempotent).
@@ -43,6 +44,7 @@ import {
   createSourcesProvider,
 } from './omnibox-providers'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
+import { registerConationOmniboxCommands } from './omnibox-conation'
 
 export interface OmniboxPlatform {
   commands: CommandRegistry
@@ -89,6 +91,7 @@ export function bootstrapOmnibox(options?: { t?: LabelResolver }): OmniboxPlatfo
 
   registerActionCommands(p.commands)
   registerKnowledgeCommands(p.commands)
+  registerConationCommands(p.commands, options?.t)
   registerResourceProviders(p.resources, options?.t)
   // Fail-soft: never block palette bootstrap if plugin bridge is missing.
   void refreshPluginBridgeCommands(p.commands).catch((err) => {
@@ -182,6 +185,25 @@ function registerActionCommands(commands: CommandRegistry): void {
 
 function openSiyuanCompatSurface(): void {
   navigate(routes.view.siyuan({ kind: 'notebook', id: SIYUAN_FULL_SURFACE_ID }))
+}
+
+function registerConationCommands(commands: CommandRegistry, t?: LabelResolver): void {
+  const label = (key: string, fallback: string) => (t ? t(key, fallback) : fallback)
+  try {
+    for (const d of registerConationOmniboxCommands(commands, {
+      fundTitle: label('conation.fund.open', 'Open Fund in Conation'),
+      boardTitle: label('conation.board.open', 'Open Board in Conation'),
+      category: label('settings.appearance.conationShell', 'Conation'),
+      openUrl: (url) => {
+        const openUrl = typeof window === 'undefined' ? undefined : window.electronAPI?.openUrl
+        return openUrl?.(url)
+      },
+    })) {
+      track(d)
+    }
+  } catch (err) {
+    console.error('[omnibox] failed to register conation commands', err)
+  }
 }
 
 function registerKnowledgeCommands(commands: CommandRegistry): void {
