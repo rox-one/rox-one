@@ -66,4 +66,13 @@ describe('TopBar navigation cutover', () => {
     expect(profileStripSource).not.toContain("t('menu.checkForUpdates')")
     expect(profileStripSource).not.toContain('window.electronAPI.checkForUpdates()')
   })
+
+  it('uses dedicated session and browser actions instead of a generic plus menu', () => {
+    expect(source).not.toContain('menu.addPanelMenu')
+    expect(source).not.toContain('<Icons.Plus')
+    expect(source).toContain('onClick={onAddSessionPanel}')
+    expect(source).toContain('aria-label={t("session.newSessionInPanel")}')
+    expect(source).toContain('onClick={onAddBrowserPanel}')
+    expect(source).toContain('aria-label={t("browser.newWindow")}')
+  })
 })
