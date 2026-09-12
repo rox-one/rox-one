@@ -127,6 +127,58 @@ describe('H5 foreign import', () => {
     expect(convertGrokCatalog(emptyDir).userTurns).toBe(0)
   })
 
+  it('append of the same source does not duplicate already imported messages', async () => {
+    const home = tmp('h5-home-')
+    const workspace = tmp('h5-ws-')
+    const grokDir = writeGrok(home, 'g-append', join(home, 'proj'), 'hello once', 'hi once')
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const first = await persistForeignSession({
+      workspaceRoot: workspace,
+      sourcePath: grokDir,
+      kind: 'grok',
+      homeDir: home,
+    })
+    expect(first.action).toBe('created')
+    const before = readImportedSession(workspace, first.sessionId!)
+    expect(before?.messages).toHaveLength(2)
+
+    const again = await persistForeignSession({
+      workspaceRoot: workspace,
+      sourcePath: grokDir,
+      kind: 'grok',
+      mode: 'append',
+      homeDir: home,
+    })
+    expect(again.action).toBe('appended')
+    expect(again.sessionId).toBe(first.sessionId)
+    const dup = readImportedSession(workspace, first.sessionId!)
+    expect(dup?.messages).toHaveLength(2)
+    expect(dup?.messages.filter((m) => m.content.includes('hello once'))).toHaveLength(1)
+
+    writeFileSync(
+      join(grokDir, 'chat_history.jsonl'),
+      [
+        JSON.stringify({ type: 'user', content: [{ type: 'text', text: 'hello once' }] }),
+        JSON.stringify({ type: 'assistant', content: 'hi once' }),
+        JSON.stringify({ type: 'user', content: [{ type: 'text', text: 'second turn' }] }),
+        JSON.stringify({ type: 'assistant', content: 'second reply' }),
+      ].join('\n') + '\n',
+    )
+    discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const grown = await persistForeignSession({
+      workspaceRoot: workspace,
+      sourcePath: grokDir,
+      kind: 'grok',
+      mode: 'append',
+      homeDir: home,
+    })
+    expect(grown.action).toBe('appended')
+    const after = readImportedSession(workspace, first.sessionId!)
+    expect(after?.messages).toHaveLength(4)
+    expect(after?.messages.filter((m) => m.content.includes('hello once'))).toHaveLength(1)
+    expect(after?.messages.some((m) => m.content.includes('second turn'))).toBe(true)
+  })
+
   it('attaches $HOME cwd to the current workspace and redacts secrets', async () => {
     expect(isHomePath('/tmp/not-home', '/Users/mark')).toBe(false)
     expect(isHomePath('/Users/mark', '/Users/mark')).toBe(true)
