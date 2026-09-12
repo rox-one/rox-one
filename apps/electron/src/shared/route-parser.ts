@@ -20,6 +20,7 @@
  * | cloud-run/{runId}                 | navigator 'cloud-run'           | sessions/allSessions (runs UI in sessions) |
  * | extension/{extId}[/{viewId}]      | navigator 'extension'           | settings (Extension Center is W5)          |
  * | diff/{proposalId}                 | navigator 'diff'                | sessions/allSessions (until K-05 host)     |
+ * | terminal/{terminalId}             | navigator 'terminal'            | identity (dedicated terminal surface)      |
  * | knowledge/{unknownKind}/{id}      | n/a (malformed)                 | sessions/allSessions (lossy, by design)    |
  * | surface routes via parseRoute()   | convertCompoundToViewRoute      | '{allSessions}' view route fallthrough     |
  *
@@ -56,7 +57,7 @@ export interface ParsedRoute {
 
 export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'connections' | 'home'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
-  | 'knowledge' | 'cloud-run' | 'extension' | 'diff'
+  | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
 
 export interface ParsedCompoundRoute {
   /** The navigator type */
@@ -93,7 +94,7 @@ export interface ParsedCompoundRoute {
 const COMPOUND_ROUTE_PREFIXES = [
   'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'connections', 'home',
   // Unified-shell surfaces (W1)
-  'knowledge', 'cloud-run', 'extension', 'diff',
+  'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
 ]
 
 /**
@@ -430,6 +431,18 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
     return { navigator: 'diff', details: { type: 'diff', id: proposalId } }
   }
 
+  // Local terminal surface — terminal/{terminalId}
+  if (first === 'terminal') {
+    if (segments.length === 1) {
+      return { navigator: 'terminal', details: null }
+    }
+    const terminalId = decodeURIComponent(segments.slice(1).join('/'))
+    if (!terminalId) {
+      return { navigator: 'terminal', details: null }
+    }
+    return { navigator: 'terminal', details: { type: 'terminal', id: terminalId } }
+  }
+
   // Sessions navigator (allSessions, flagged, state)
   let sessionFilter: SessionFilter
   let detailsStartIndex: number
@@ -578,6 +591,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
   if (parsed.navigator === 'diff') {
     if (!parsed.details) return 'diff'
     return `diff/${encodeURIComponent(parsed.details.id)}`
+  }
+
+  if (parsed.navigator === 'terminal') {
+    if (!parsed.details) return 'terminal'
+    return `terminal/${encodeURIComponent(parsed.details.id)}`
   }
 
   // Sessions navigator
@@ -1007,6 +1025,16 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     }
   }
 
+  if (compound.navigator === 'terminal') {
+    if (!compound.details) {
+      return { navigator: 'terminal', details: null }
+    }
+    return {
+      navigator: 'terminal',
+      details: { type: 'terminal', id: compound.details.id },
+    }
+  }
+
   // Sessions
   const filter = compound.sessionFilter || { kind: 'allSessions' as const }
   if (compound.details) {
@@ -1339,6 +1367,15 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
       navigator: 'diff',
       details: state.details?.type === 'diff'
         ? { type: 'diff', id: state.details.proposalId }
+        : null,
+    }
+  }
+
+  if (state.navigator === 'terminal') {
+    return {
+      navigator: 'terminal',
+      details: state.details?.type === 'terminal'
+        ? { type: 'terminal', id: state.details.id }
         : null,
     }
   }
