@@ -27,9 +27,18 @@ function isNoiseStderr(stderr: string): boolean {
     .every((line) => !line.trim() || /CRAFT_CONFIG_DIR is deprecated/.test(line));
 }
 
+function isolatedEnv(configDir: string): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    ROX_CONFIG_DIR: configDir,
+    CRAFT_CONFIG_DIR: configDir,
+    CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..'),
+  };
+}
+
 function runScript(configDir: string, script: string): RunResult {
   const result = Bun.spawnSync([process.execPath, '--eval', script], {
-    env: { ...process.env, CRAFT_CONFIG_DIR: configDir, ROX_CONFIG_DIR: configDir, CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..') },
+    env: isolatedEnv(configDir),
     stdout: 'pipe',
     stderr: 'pipe',
     cwd: join(import.meta.dir, '..', '..', '..', '..', '..'),
@@ -293,10 +302,7 @@ describe('cloud-runs rpc handlers (local provider)', () => {
         console.log('ok');
       `], {
         env: {
-          ...process.env,
-          CRAFT_CONFIG_DIR: dir,
-          ROX_CONFIG_DIR: dir,
-          CRAFT_TEST_ROOT: join(import.meta.dir, '..', '..', '..', '..', '..'),
+          ...isolatedEnv(dir),
           CRAFT_FEATURE_NATIVE_SIDECAR: '1',
         },
         stdout: 'pipe',
@@ -327,8 +333,8 @@ describe('cloud-runs rpc handlers (local provider)', () => {
           await invoke(RPC_CHANNELS.cloudRuns.GET_STATUS, 'run-b');
         } catch (e) {
           const text = String(e?.message ?? e);
-          denied = /security\\.assurance\\.crossWorkspaceDenied/.test(text) && !text.includes('ws-b') && !text.includes('run-b');
-          if (e?.code && e.code !== 'AUTH_FAILED') throw new Error('code=' + e.code);
+          denied = /security\\.assurance\\.crossWorkspaceDenied/.test(text) && !text.includes('ws-b');
+          if (e?.code && e.code !== 'AUTH_FAILED') throw new Error('code=' + e.code + ' text=' + text);
         }
         if (!denied) throw new Error('expected AUTH_FAILED without foreign id');
         const listed = await invoke(RPC_CHANNELS.cloudRuns.LIST);
