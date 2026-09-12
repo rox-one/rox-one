@@ -18,6 +18,7 @@
     "./knowledge/providers/siyuan": "./src/knowledge/providers/siyuan/index.ts",
     "./knowledge/*": "./src/knowledge/*",
     "./tasks/personal": "./src/tasks/personal/index.ts",
+    "./calendar": "./src/calendar/index.ts",
     "./mindmap": "./src/mindmap/index.ts",
     "./mindmap/*": "./src/mindmap/*",
     "./platform/agent-teams": "./src/platform/agent-teams/index.ts",
