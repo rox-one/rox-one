@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 import { motion, AnimatePresence } from "motion/react"
 import { toast } from "sonner"
+import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -2021,6 +2022,16 @@ const handleFollowUpChipClick = useCallback((item: {
                       </div>
                     )
                   })}
+                    <SessionMemoryProposalLane
+                      workspaceId={workspaceId ?? session.workspaceId}
+                      sessionId={session.id}
+                      projectId={session.projectId}
+                      messages={session.messages.map((m) => ({
+                        id: m.id,
+                        role: m.role,
+                        content: typeof m.content === 'string' ? m.content : '',
+                      }))}
+                    />
                     </motion.div>
                     )}
                     </AnimatePresence>

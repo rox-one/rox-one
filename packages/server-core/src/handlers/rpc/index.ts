@@ -49,6 +49,7 @@ import { registerTransferHandlers } from './transfer'
 import { registerWorkspaceCoreHandlers } from './workspace'
 import { registerMessagingHandlers } from './messaging'
 import { registerMemoryHandlers } from './memory'
+import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
 import { registerSkillsPendingHandlers } from './skills-pending'
@@ -115,6 +116,7 @@ export function registerCoreRpcHandlers(
   registerWorkspaceCoreHandlers(server, deps)
   registerMessagingHandlers(server, deps)
   registerMemoryHandlers(server, deps)
+  registerMemoryProposalHandlers(server, deps)
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)
   registerSkillsPendingHandlers(server, deps)
