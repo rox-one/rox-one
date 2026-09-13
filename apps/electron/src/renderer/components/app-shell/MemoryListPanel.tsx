@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { Brain, Pencil, Trash2, Check, Plus, Link2, ChevronDown, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import type { Lesson, LessonCategory, LessonConflictVerdict, LessonScope, MemoryInsights, ProjectMemoryDto, PromotionCandidate } from '@craft-agent/shared/memory/types'
 import type { MemoryProposal } from '@craft-agent/shared/memory/proposals'
 import { MemoryProposalCard } from './MemoryProposalCard'
@@ -604,23 +605,28 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
             {t('memory.tokenEstimate', { count: formatTokenEstimate(formRule) })}
           </div>
           <div className="flex items-center gap-1.5">
-            <select
-              value={formCategory}
-              onChange={(e) => setFormCategory(e.target.value as LessonCategory)}
-              className="h-6 flex-1 rounded-[6px] bg-background/60 px-1.5 text-[11px] text-foreground outline-none"
-            >
-              {BUILTIN_CATEGORIES.map((c) => (
-                <option key={c} value={c}>{t(`memory.category.${c}`)}</option>
-              ))}
-            </select>
-            <select
-              value={formScope}
-              onChange={(e) => setFormScope(e.target.value as LessonScope)}
-              className="h-6 flex-1 rounded-[6px] bg-background/60 px-1.5 text-[11px] text-foreground outline-none"
-            >
-              <option value="workspace">{t('memory.scope.workspace')}</option>
-              <option value="global">{t('memory.scope.global')}</option>
-            </select>
+            <PremiumMenuSelect
+              aria-label={t('memory.categoryLabel')}
+              className="h-6 flex-1"
+              items={BUILTIN_CATEGORIES.map((c) => ({
+                id: c,
+                label: t(`memory.category.${c}`),
+              }))}
+              selectedId={formCategory}
+              placeholder={t('common.select')}
+              onSelect={(item) => setFormCategory(item.id as LessonCategory)}
+            />
+            <PremiumMenuSelect
+              aria-label={t('memory.scopeLabel')}
+              className="h-6 flex-1"
+              items={[
+                { id: 'workspace', label: t('memory.scope.workspace') },
+                { id: 'global', label: t('memory.scope.global') },
+              ]}
+              selectedId={formScope}
+              placeholder={t('common.select')}
+              onSelect={(item) => setFormScope(item.id as LessonScope)}
+            />
           </div>
           <input
             value={customCategory}

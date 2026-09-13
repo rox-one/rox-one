@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useTranslation } from 'react-i18next'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
@@ -63,12 +64,14 @@ export function SettingsSelect({
   value,
   onValueChange,
   options,
-  placeholder = 'Select...',
+  placeholder,
   disabled,
   className,
   inCard = false,
 }: SettingsSelectProps) {
+  const { t } = useTranslation()
   const id = React.useId()
+  const effectivePlaceholder = placeholder ?? t('common.select')
 
   return (
     <div
@@ -90,7 +93,7 @@ export function SettingsSelect({
       )}
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger id={id} className="w-full bg-muted/50">
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={effectivePlaceholder} />
         </SelectTrigger>
         <SelectContent>
           {options.map((option) => (
@@ -136,12 +139,14 @@ export function SettingsSelectRow({
   value,
   onValueChange,
   options,
-  placeholder = 'Select...',
+  placeholder,
   disabled,
   className,
   inCard = true,
 }: SettingsSelectRowProps) {
+  const { t } = useTranslation()
   const id = React.useId()
+  const effectivePlaceholder = placeholder ?? t('common.select')
 
   return (
     <div
@@ -163,7 +168,7 @@ export function SettingsSelectRow({
       <div data-layout="settings-control" className="ml-4 shrink-0">
         <Select value={value} onValueChange={onValueChange} disabled={disabled}>
           <SelectTrigger id={id} className="w-[180px] bg-muted/50">
-            <SelectValue placeholder={placeholder} />
+            <SelectValue placeholder={effectivePlaceholder} />
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (

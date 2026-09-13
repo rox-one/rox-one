@@ -228,7 +228,7 @@ export function KanbanColumn({
           >
             {label}
           </span>
-          <ChevronRight className="mt-auto h-3.5 w-3.5 text-foreground/40" />
+            <ChevronRight className="mt-auto h-3.5 w-3.5 text-foreground/70" />
         </button>
         {/* Keep droppable while collapsed so cards can still land here. */}
         <div ref={setNodeRef} className="h-0 w-0 overflow-hidden" aria-hidden />
@@ -248,7 +248,7 @@ export function KanbanColumn({
             data-no-dnd="true"
             onClick={onToggleCollapsed}
             title={t('kanban.column.collapse')}
-            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-foreground/45 transition-colors hover:bg-foreground/[0.06] hover:text-foreground/80"
+            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-foreground/70 transition-colors hover:bg-foreground/[0.06] hover:text-foreground"
           >
             <ChevronDown className="h-3.5 w-3.5" />
           </button>
@@ -317,6 +317,14 @@ export function KanbanColumn({
             />
           )
         })()}
+        {tasks.length === 0 ? (
+          <p
+            className="px-1 py-6 text-center text-xs text-muted-foreground"
+            data-testid="kanban-column-empty"
+          >
+            {t('kanban.column.emptyDrop')}
+          </p>
+        ) : null}
       </div>
     </div>
   )
@@ -436,9 +444,9 @@ function ProjectGroupSection({
         className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left transition-colors hover:bg-foreground/[0.03]"
       >
         {collapsed ? (
-          <ChevronRight className="h-3 w-3 shrink-0 text-foreground/40" />
+          <ChevronRight className="h-3 w-3 shrink-0 text-foreground/70" />
         ) : (
-          <ChevronDown className="h-3 w-3 shrink-0 text-foreground/40" />
+          <ChevronDown className="h-3 w-3 shrink-0 text-foreground/70" />
         )}
         {group.color && (
           <span
@@ -449,7 +457,7 @@ function ProjectGroupSection({
         <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-foreground/70">
           {group.name}
         </span>
-        <span className="tabular-nums text-[10px] text-foreground/40">{group.tasks.length}</span>
+        <span className="tabular-nums text-[10px] text-muted-foreground">{group.tasks.length}</span>
       </button>
       {!collapsed && (
         <div className="px-1.5 pb-1.5">
