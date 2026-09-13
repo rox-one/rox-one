@@ -1,3 +1,4 @@
+import i18n from 'i18next'
 import type { Session, TransportConnectionState } from '../../shared/types'
 
 interface MessageLoadMeta {
@@ -82,5 +83,5 @@ export function shouldTreatSessionLoadFailureAsTransportFallback(
 export function formatSessionLoadFailure(error: unknown): string {
   if (error instanceof Error && error.message.trim()) return error.message
   if (typeof error === 'string' && error.trim()) return error
-  return 'Unknown error'
+  return i18n.t('toast.unknownError')
 }

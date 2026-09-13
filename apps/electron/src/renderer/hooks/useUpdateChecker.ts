@@ -76,10 +76,10 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
     } catch (error) {
       console.error('[useUpdateChecker] Install failed:', error)
       toast.error(t('toast.failedToInstallUpdate'), {
-        description: error instanceof Error ? error.message : 'Unknown error',
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
       })
     }
-  }, [])
+  }, [t])
 
   // Load initial state and check if update ready
   useEffect(() => {
@@ -139,10 +139,10 @@ export function useUpdateChecker(): UseUpdateCheckerResult {
     } catch (error) {
       console.error('[useUpdateChecker] Check failed:', error)
       toast.error(t('toast.failedToCheckUpdates'), {
-        description: error instanceof Error ? error.message : 'Unknown error',
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
       })
     }
-  }, [showUpdateToast, installUpdate])
+  }, [showUpdateToast, installUpdate, t])
 
   return {
     updateInfo,
