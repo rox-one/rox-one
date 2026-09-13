@@ -9,7 +9,9 @@ import {
   DEFAULT_APPLY_PATH,
   DEFAULT_OPERATOR_ORIGIN,
   DEFAULT_READ_PATH,
+  SESSION_APPLY_TRANSPORT_OK,
   SessionApplyFlagOffError,
+  SessionApplyHttpError,
   type SessionApplyApplyInput,
   type SessionApplyApplyResult,
   type SessionApplyClientOptions,
@@ -33,6 +35,38 @@ function fetcher(options: SessionApplyClientOptions): HttpFetch {
   return fn;
 }
 
+async function discardUnreadBody(response: Response): Promise<void> {
+  try {
+    const body = response.body;
+    if (body && typeof body.cancel === 'function') {
+      await body.cancel();
+    }
+  } catch {
+    // Cleanup failure must not mask the HTTP error.
+  }
+}
+
+async function readTransportBody(response: Response): Promise<unknown> {
+  if (response.status === 204) return null;
+  return response.json().catch(() => null);
+}
+
+async function requireTransportOk(
+  response: Response,
+  meta: { origin: string; method: 'GET' | 'POST'; path: string },
+): Promise<unknown> {
+  if (SESSION_APPLY_TRANSPORT_OK.has(response.status)) {
+    return readTransportBody(response);
+  }
+  await discardUnreadBody(response);
+  throw new SessionApplyHttpError({
+    status: response.status,
+    origin: meta.origin,
+    method: meta.method,
+    path: meta.path,
+  });
+}
+
 export class SessionApplyClient {
   constructor(private readonly options: SessionApplyClientOptions) {}
 
@@ -44,7 +78,7 @@ export class SessionApplyClient {
       method: 'GET',
       headers: { accept: 'application/json' },
     });
-    const body: unknown = await response.json().catch(() => null);
+    const body = await requireTransportOk(response, { origin, method: 'GET', path });
     return { ok: true, origin, status: response.status, body };
   }
 
@@ -61,7 +95,7 @@ export class SessionApplyClient {
         source: input.source,
       }),
     });
-    const body: unknown = await response.json().catch(() => null);
+    const body = await requireTransportOk(response, { origin, method: 'POST', path });
     const pointer = `${origin}${path}#team=${input.teamId ?? ''}`;
     return { ok: true, origin, status: response.status, body, pointer };
   }

@@ -8,7 +8,9 @@ export {
   DEFAULT_APPLY_PATH,
   DEFAULT_OPERATOR_ORIGIN,
   DEFAULT_READ_PATH,
+  SESSION_APPLY_TRANSPORT_OK,
   SessionApplyFlagOffError,
+  SessionApplyHttpError,
 } from './types.ts';
 export type {
   SessionApplyApplyInput,
