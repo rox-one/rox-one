@@ -3,9 +3,10 @@
  *
  * Local markdown + sidecar revisions. SiYuan is not required. Conation is
  * an adapter, not this store. Saves require the current `expectedRevision`
- * token: omitting it is rejected, and a stale token conflicts (no silent
- * overwrite). Import validates and stages before commit; failure restores
- * the prior vault snapshot.
+ * token: callers must pass it, and a stale token conflicts (no silent
+ * overwrite). Import validates head extra/sidecar against the tip before
+ * commit; failure restores the prior vault snapshot. `list()` seed restores
+ * heads from the tip and keeps the revision chain.
  */
 
 import { formatRox2EntityId } from './platform-contract.ts'
@@ -50,7 +51,7 @@ export type NativeNote = {
 export type NoteSaveInput = {
   noteId: string
   markdown: string
-  expectedRevision?: string
+  expectedRevision: string
   extra?: Record<string, unknown>
   now?: number
 }
@@ -69,6 +70,7 @@ export type NotesEngineExport = {
 
 const BLOCK_RE = /<!--\s*block:([A-Za-z0-9_-]+)\s*-->/g
 const WIKI_RE = /\[\[([^\]|#]+)(#[^\]|]*)?(\|[^\]]*)?\]\]/g
+const NOTE_REVISION_LOG = Symbol.for('rox.notes.revisionLog')
 
 export function contentHash(markdown: string): string {
   let hash = 0x811c9dc5
@@ -113,26 +115,49 @@ export function extractWikilinks(markdown: string): string[] {
   return links
 }
 
+function allocateBlockId(base: string, used: Set<string>): string {
+  if (!used.has(base)) return base
+  let suffix = 2
+  while (used.has(`${base}_${suffix}`)) suffix += 1
+  return `${base}_${suffix}`
+}
+
+function parseUnlabeledBlocks(markdown: string, used: Set<string>): NoteBlock[] {
+  return markdown
+    .split(/\n\n+/)
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .map((text) => {
+      const id = allocateBlockId(`b_${contentHash(text)}`, used)
+      used.add(id)
+      return { id, text }
+    })
+}
+
 export function parseBlocks(markdown: string): NoteBlock[] {
   const marked = [...markdown.matchAll(BLOCK_RE)]
-  if (marked.length === 0) {
-    const seen = new Map<string, number>()
-    return markdown
-      .split(/\n\n+/)
-      .map((text) => text.trim())
-      .filter(Boolean)
-      .map((text) => {
-        const base = `b_${contentHash(text)}`
-        const count = (seen.get(base) ?? 0) + 1
-        seen.set(base, count)
-        return { id: count === 1 ? base : `${base}_${count}`, text }
-      })
+  if (marked.length === 0) return parseUnlabeledBlocks(markdown, new Set())
+  const used = new Set(marked.map((match) => match[1]!))
+  const blocks: NoteBlock[] = []
+  const firstIndex = marked[0]?.index ?? 0
+  if (firstIndex > 0) {
+    blocks.push(...parseUnlabeledBlocks(markdown.slice(0, firstIndex), used))
   }
-  return marked.map((match, index) => {
+  for (const [index, match] of marked.entries()) {
     const start = (match.index ?? 0) + match[0].length
     const end = marked[index + 1]?.index ?? markdown.length
-    return { id: match[1]!, text: markdown.slice(start, end).trim() }
-  })
+    blocks.push({ id: match[1]!, text: markdown.slice(start, end).trim() })
+  }
+  return blocks
+}
+
+function stampBlockMarkers(markdown: string): { markdown: string; blocks: NoteBlock[] } {
+  const blocks = parseBlocks(markdown)
+  if (blocks.length === 0) return { markdown, blocks }
+  return {
+    markdown: blocks.map((block) => `<!-- block:${block.id} -->\n${block.text}`).join('\n\n'),
+    blocks,
+  }
 }
 
 export function rewriteWikilinks(markdown: string, fromTitle: string, toTitle: string): string {
@@ -181,6 +206,51 @@ function cloneRevision(revision: NoteRevision): NoteRevision {
     },
     createdAt: revision.createdAt,
   }
+}
+
+function sidecarFromNote(note: NativeNote): NoteSidecar {
+  return {
+    title: note.title,
+    blocks: note.blocks.map((block) => ({ id: block.id, text: block.text })),
+    attachments: [...note.attachments],
+    wikilinks: [...note.wikilinks],
+    extra: cloneJson(note.extra),
+  }
+}
+
+function sidecarFingerprint(sidecar: NoteSidecar): string {
+  return stableStringify({
+    title: sidecar.title,
+    blocks: sidecar.blocks.map((block) => ({ id: block.id, text: block.text })),
+    attachments: sidecar.attachments,
+    wikilinks: sidecar.wikilinks,
+    extra: sidecar.extra,
+  })
+}
+
+function tipRevisionFromNote(note: NativeNote): NoteRevision {
+  return {
+    id: note.revision,
+    parentId: null,
+    markdown: note.markdown,
+    sidecar: sidecarFromNote(note),
+    createdAt: note.updatedAt,
+  }
+}
+
+function attachRevisionLog(note: NativeNote, log: readonly NoteRevision[]): NativeNote {
+  const copy = cloneNote(note)
+  Object.defineProperty(copy, NOTE_REVISION_LOG, {
+    value: log.map(cloneRevision),
+    enumerable: false,
+  })
+  return copy
+}
+
+function revisionLogOf(note: NativeNote): NoteRevision[] | undefined {
+  const value = (note as unknown as Record<symbol, unknown>)[NOTE_REVISION_LOG]
+  if (!Array.isArray(value) || value.length === 0) return undefined
+  return value as NoteRevision[]
 }
 
 function snapshotVault(
@@ -255,6 +325,9 @@ function validateImportBundle(bundle: NotesEngineExport): void {
     if (tip.markdown !== note.markdown) {
       throw new Error(`import: head markdown does not match tip for ${note.noteId}`)
     }
+    if (sidecarFingerprint(tip.sidecar) !== sidecarFingerprint(sidecarFromNote(note))) {
+      throw new Error(`import: head extra/sidecar does not match tip for ${note.noteId}`)
+    }
   }
 }
 
@@ -307,17 +380,18 @@ export function createNativeNotesEngine(seed: readonly NativeNote[] = []): Nativ
   const history = new Map<string, NoteRevision[]>()
 
   const writeHead = (noteId: string, markdown: string, parentId: string | null, extra: Record<string, unknown>, now: number): NativeNote => {
+    const stamped = stampBlockMarkers(markdown)
     const sidecar: NoteSidecar = {
-      title: titleFromMarkdown(markdown, noteId),
-      blocks: parseBlocks(markdown),
+      title: titleFromMarkdown(stamped.markdown, noteId),
+      blocks: stamped.blocks,
       attachments: [...(extra.attachments as string[] | undefined ?? [])],
-      wikilinks: extractWikilinks(markdown),
+      wikilinks: extractWikilinks(stamped.markdown),
       extra: { ...extra },
     }
     const revision: NoteRevision = {
-      id: revisionId(markdown, sidecar),
+      id: revisionId(stamped.markdown, sidecar),
       parentId,
-      markdown,
+      markdown: stamped.markdown,
       sidecar,
       createdAt: now,
     }
@@ -329,7 +403,9 @@ export function createNativeNotesEngine(seed: readonly NativeNote[] = []): Nativ
   }
 
   for (const note of seed) {
-    writeHead(note.noteId, note.markdown, null, note.extra, note.updatedAt)
+    heads.set(note.noteId, cloneNote(note))
+    const log = revisionLogOf(note)
+    history.set(note.noteId, log ? log.map(cloneRevision) : [tipRevisionFromNote(note)])
   }
 
   return {
@@ -378,7 +454,7 @@ export function createNativeNotesEngine(seed: readonly NativeNote[] = []): Nativ
       )
     },
     list() {
-      return [...heads.values()]
+      return [...heads.values()].map((note) => attachRevisionLog(note, history.get(note.noteId) ?? []))
     },
     revisions(noteId) {
       return history.get(noteId) ?? []
