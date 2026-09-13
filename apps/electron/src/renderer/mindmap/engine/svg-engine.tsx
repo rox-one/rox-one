@@ -619,7 +619,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
 
         {canEditStructure ? (
           <div
-            className="absolute left-3 top-3 z-10 max-w-[min(20rem,calc(100%-1.5rem))] rounded-lg border border-border/60 bg-background/95 p-1.5 shadow-sm backdrop-blur"
+            className="absolute left-3 top-3 z-10 max-w-[min(20rem,calc(100%-1.5rem))] rounded-lg border border-border/60 bg-background/95 p-1.5 shadow-thin backdrop-blur"
             data-mindmap-structure-controls
             onPointerDown={(event) => event.stopPropagation()}
           >
@@ -789,7 +789,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
 
         {contextMenu ? (
           <div
-            className="absolute z-20 min-w-[160px] rounded-lg border border-border/60 bg-background/95 py-1 shadow-lg backdrop-blur"
+            className="absolute z-20 min-w-[160px] rounded-lg border border-border/60 bg-background/95 py-1 shadow-strong backdrop-blur"
             style={{ left: contextMenu.x, top: contextMenu.y }}
             onPointerDown={(event) => event.stopPropagation()}
           >

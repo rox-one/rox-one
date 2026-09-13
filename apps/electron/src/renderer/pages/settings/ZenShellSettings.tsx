@@ -38,7 +38,10 @@ export function ZenShellSettings() {
     if (next) setSnapshot(next)
   }, [])
 
-  const nativeAvailable = Boolean(window.electronAPI?.getShellSnapshot && window.electronAPI?.setZenShell)
+  const nativeAvailable = Boolean(
+    typeof window.electronAPI?.getShellSnapshot === 'function'
+      && typeof window.electronAPI?.setZenShell === 'function',
+  )
 
   return (
     <SettingsSection

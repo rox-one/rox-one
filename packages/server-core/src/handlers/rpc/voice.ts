@@ -37,6 +37,7 @@ import {
   speakWithPolicy,
   transcribeWithPolicy,
   voiceGatewayBaseUrl,
+  VOICE_PREFS_VERSION,
   type SpeakAdapter,
   type TranscribeAdapter,
   type TranscribeInput,
@@ -230,8 +231,9 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
     const current = loadVoicePrefs()
     const next = saveVoicePrefs({
       ...current,
-      ...(patch && typeof patch === 'object' ? patch : {}),
-    } as VoicePrefs)
+      ...(patch && typeof patch === 'object' && !Array.isArray(patch) ? patch as Partial<VoicePrefs> : {}),
+      version: VOICE_PREFS_VERSION,
+    })
     broadcast(server, next)
     return next
   })

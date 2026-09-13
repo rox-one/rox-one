@@ -72,6 +72,8 @@ export interface RichTextInputHandle {
   value: string
   /** Selection start position in text model */
   selectionStart: number
+  /** Selection end position in text model */
+  selectionEnd: number
   /** Set the text value */
   setValue: (value: string) => void
   /** Set selection range */
@@ -567,6 +569,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
       blur: () => divRef.current?.blur(),
       get value() { return lastValueRef.current },
       get selectionStart() { return cursorPositionRef.current },
+      get selectionEnd() { return cursorPositionRef.current },
       setValue: (newValue: string) => {
         lastValueRef.current = newValue
       },

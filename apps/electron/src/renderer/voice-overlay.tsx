@@ -35,7 +35,7 @@ function OverlayApp() {
   }
 
   return (
-    <div style={{
+    <div className="shadow-strong" style={{
       display: 'flex',
       alignItems: 'center',
       gap: 12,
@@ -44,7 +44,6 @@ function OverlayApp() {
       borderRadius: 999,
       background: 'rgba(20,20,24,0.92)',
       color: 'white',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
     }}>
       <span style={{
         width: 10, height: 10, borderRadius: 999,

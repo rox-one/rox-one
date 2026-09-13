@@ -23,12 +23,14 @@ import type {
   RemoteServerConfig,
   RemoteTlsTrust,
   SessionMemoryMode,
+  ServerHealth,
 } from '@craft-agent/core/types';
 
 // Mode types from dedicated subpath export (avoids pulling in SDK)
 import type { PermissionMode } from '@craft-agent/shared/agent/modes';
 import type {
   DiscoveredProfile,
+  ImportCategory,
   ImportConsent,
   ImportSummary,
 } from '@craft-agent/shared/browser/profile-import'
@@ -243,6 +245,7 @@ import type {
   SearchHit,
   SearchInput,
   SearchPage,
+  KnowledgeNotebookInfo,
 } from '@craft-agent/core/knowledge';
 export type {
   ContextMode,
@@ -256,10 +259,14 @@ export type {
   SearchHit,
   SearchInput,
   SearchPage,
+  KnowledgeNotebookInfo,
 };
 
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views';
 export type { KnowledgeViewConfig };
+import type { SecretRefEntry, SecretRefsSettingsPayload } from '@craft-agent/shared/secrets';
+export type { SecretRefEntry, SecretRefsSettingsPayload };
+import type { ZenShellSnapshot } from './shell-appearance';
 
 // Toolchain manager types (first-run download manager, spec 2026-08-06)
 import type { ToolStatus as ToolchainToolStatus, ToolName as ToolchainToolName } from '@craft-agent/shared/toolchain/types';
@@ -616,6 +623,7 @@ export interface ElectronAPI {
 
   // Server info (REMOTE_ELIGIBLE — returns data from whichever server owns the workspace)
   getServerHomeDir(): Promise<string>
+  getServerHealth(): Promise<ServerHealth>
 
   // Server mode configuration
   getServerConfig(): Promise<import('@craft-agent/shared/config/server-config').ServerConfig>
@@ -686,7 +694,7 @@ export interface ElectronAPI {
   }): Promise<ImportSummary>
   rollbackBrowserProfileImport(args: { workspaceId: string; token: string }): Promise<{ ok: boolean }>
   deleteImportedBrowserProfile(workspaceId: string): Promise<{
-    deletionReceipt: { deletedAt: number; categories: string[]; itemCount: number }
+    deletionReceipt: { deletedAt: number; categories: ImportCategory[]; itemCount: number }
   }>
   exportRemoteSessionTransfer(sessionId: string): Promise<RemoteSessionTransferPayload>
   importRemoteSessionTransfer(targetWorkspaceId: string, payload: RemoteSessionTransferPayload): Promise<ImportRemoteSessionTransferResult>
@@ -1021,6 +1029,35 @@ export interface ElectronAPI {
     metricsGet(args?: { workspaceId?: string }): Promise<KnowledgeMetricsSnapshot>
     /** LOCAL_ONLY: detect user-installed SiYuan + default port (never downloads). */
     detectEngine(): Promise<KnowledgeDetectEngineResult>
+    listNotebooks(args: { connectionId: string }): Promise<KnowledgeNotebookInfo[]>
+    listTree(args: {
+      connectionId: string
+      notebookId: string
+      path?: string
+    }): Promise<{
+      notebookId: string
+      nodes: Array<{
+        id: string
+        name: string
+        path: string
+        kind: 'document' | 'folder' | 'database'
+        children?: unknown[]
+      }>
+    }>
+    userCreate(args: {
+      connectionId: string
+      source: 'navigator' | 'agent'
+      op: 'notebook' | 'folder' | 'document'
+      name?: string
+      notebookId?: string
+      path?: string
+      title?: string
+    }): Promise<{ id?: string; path?: string }>
+    updateConnection(args: {
+      connectionId: string
+      baseUrl?: string
+      token?: string
+    }): Promise<KnowledgeConnection>
     onChanged(callback: (payload: KnowledgeChangedPayload) => void): () => void
   }
 
@@ -1106,6 +1143,8 @@ export interface ElectronAPI {
   // Session env overrides (config runtime.envOverrides — applied to new agent subprocesses)
   getEnvOverrides(): Promise<Record<string, string>>
   setEnvOverrides(env: Record<string, string>): Promise<{ success: boolean; error?: string }>
+  getSecretRefs(): Promise<SecretRefsSettingsPayload>
+  setSecretRefs(refs: SecretRefEntry[]): Promise<{ success: boolean }>
 
   // Release notes
   getReleaseNotes(): Promise<string>
@@ -1150,6 +1189,18 @@ export interface ElectronAPI {
   getCredentialMigrationStatus(): Promise<CredentialMigrationResult<CredentialMigrationStatusDto>>
   rollbackCredentialMigration(migrationId: string): Promise<CredentialMigrationResult<CredentialMigrationRollbackDto>>
   fabricInfisicalHealth(): Promise<{ available: boolean; providerId?: string }>
+  fabricListConnections(...args: unknown[]): Promise<unknown>
+  fabricCreateConnection(...args: unknown[]): Promise<unknown>
+  fabricListCredentials(...args: unknown[]): Promise<unknown>
+  fabricDiscover(...args: unknown[]): Promise<unknown>
+  fabricPreview(...args: unknown[]): Promise<unknown>
+  fabricCommitImport(...args: unknown[]): Promise<unknown>
+  fabricListGrants(...args: unknown[]): Promise<unknown>
+  fabricPutGrant(...args: unknown[]): Promise<unknown>
+  fabricListAudit(...args: unknown[]): Promise<unknown>
+  fabricAcquireLease(...args: unknown[]): Promise<unknown>
+  fabricRevokeConnection(...args: unknown[]): Promise<unknown>
+  fabricGithubStatus(...args: unknown[]): Promise<unknown>
 
   // Identity Center (S-07)
   identityGetState(args?: { workspaceId?: string }): Promise<IdentityState>
@@ -1327,6 +1378,7 @@ export interface ElectronAPI {
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
   deferSetup(): Promise<{ success: boolean }>
+  saveOmpCredential(apiKey: string): Promise<{ success: boolean; ready: boolean; code?: string; error?: string }>
 
   // ChatGPT OAuth (for Codex chatgptAuthTokens mode)
   startChatGptOAuth(connectionSlug: string): Promise<{ success: boolean; error?: string }>
@@ -1527,6 +1579,13 @@ export interface ElectronAPI {
     fts: boolean
     query: string
   }>
+  getSourceIndexStatus(workspaceId: string): Promise<{ indexed: number; primary: 'native' | 'ts' }>
+  onSourceIndexChanged(
+    callback: (
+      workspaceId: string,
+      payload: { indexed: number; written?: number; unchanged?: number; truncated: boolean },
+    ) => void,
+  ): () => void
 
   // OAuth (server-owned credentials, client-orchestrated flow)
   performOAuth(args: { sourceSlug: string; sessionId?: string; authRequestId?: string }): Promise<{ success: boolean; error?: string; email?: string }>
@@ -1723,33 +1782,12 @@ export interface ElectronAPI {
   setRichToolDescriptions(enabled: boolean): Promise<void>
   getDefaultZoomLevel(): Promise<number>
   setDefaultZoomLevel(level: number): Promise<void>
-  getShellSnapshot(): Promise<{
-    flag: 'shell.zen.v1'
-    enabled: boolean
-    preference: 'system' | 'glass' | 'opaque'
-    material: 'vibrancy' | 'mica' | 'solid'
-    platform: 'darwin' | 'win32' | 'linux' | 'web'
-    fallbackReason?: string
-  }>
+  getShellSnapshot(): Promise<ZenShellSnapshot>
   setZenShell(patch: {
     enabled?: boolean
     materialPreference?: 'system' | 'glass' | 'opaque'
-  }): Promise<{
-    flag: 'shell.zen.v1'
-    enabled: boolean
-    preference: 'system' | 'glass' | 'opaque'
-    material: 'vibrancy' | 'mica' | 'solid'
-    platform: 'darwin' | 'win32' | 'linux' | 'web'
-    fallbackReason?: string
-  }>
-  onShellChanged(callback: (snapshot: {
-    flag: 'shell.zen.v1'
-    enabled: boolean
-    preference: 'system' | 'glass' | 'opaque'
-    material: 'vibrancy' | 'mica' | 'solid'
-    platform: 'darwin' | 'win32' | 'linux' | 'web'
-    fallbackReason?: string
-  }) => void): () => void
+  }): Promise<ZenShellSnapshot>
+  onShellChanged(callback: (snapshot: ZenShellSnapshot) => void): () => void
 
   // Prompt caching & context
   getExtendedPromptCache(): Promise<boolean>

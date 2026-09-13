@@ -24,5 +24,5 @@ export const GROK_BOT_REUSE_DECISION = {
 export type GrokBotReuseDecision = typeof GROK_BOT_REUSE_DECISION
 
 export function mayEmbedGrokBotUi(): boolean {
-  return GROK_BOT_REUSE_DECISION.embedRawUi === true && GROK_BOT_REUSE_DECISION.reuse === 'approved'
+  return false
 }

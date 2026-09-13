@@ -62,6 +62,7 @@ export interface InstallOptions {
   skillsDir?: string
   /** Default <configDir>/context */
   contextDir?: string
+  lockPath?: string
   execFileFn?: ExecFileFn
   fetchFn?: MarketplaceFetch
   now?: () => number

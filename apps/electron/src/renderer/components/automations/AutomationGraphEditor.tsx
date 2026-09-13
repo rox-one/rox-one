@@ -236,7 +236,7 @@ export function AutomationGraphEditor({
                   }}
                   onClick={() => selectNode(node.id)}
                   className={cn(
-                    'absolute flex h-16 w-52 cursor-grab items-center gap-2 rounded-lg border px-3 text-left shadow-sm transition-shadow hover:shadow-md active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    'absolute flex h-16 w-52 cursor-grab items-center gap-2 rounded-lg border px-3 text-left shadow-thin transition-shadow hover:shadow-modal-small active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     NODE_ACCENT[node.kind],
                     isSelected && 'ring-2 ring-ring ring-offset-2 ring-offset-background',
                   )}

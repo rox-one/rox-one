@@ -53,11 +53,13 @@ export function createHeadlessPlatform(options?: { appVersion?: string }): Platf
 
     imageProcessor: {
       async getMetadata(buffer) {
+        // @ts-expect-error sharp package.json exports omit its bundled types
         const sharp = (await import('sharp')).default
         const m = await sharp(buffer).metadata().catch(() => null)
         return (m?.width && m?.height) ? { width: m.width, height: m.height } : null
       },
       async process(input, opts = {}) {
+        // @ts-expect-error sharp package.json exports omit its bundled types
         const sharp = (await import('sharp')).default
         let pipeline = sharp(input)
         if (opts.resize) {

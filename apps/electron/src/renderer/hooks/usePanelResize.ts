@@ -59,7 +59,7 @@ export function usePanelResize(handlers: UsePanelResizeHandlers) {
   const stopCapture = React.useCallback(() => {
     const el = capturingElRef.current
     capturingElRef.current = null
-    if (el && el.hasPointerCapture) {
+    if (el && typeof el.hasPointerCapture === 'function') {
       try {
         // hasPointerCapture needs an id; release if any
       } catch {

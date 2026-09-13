@@ -27,6 +27,7 @@ export {
   type SpeakAdapter,
   type EnhancementMode,
   type HotkeyMode,
+  type OverlayPosition,
 } from './types.ts'
 
 export {
