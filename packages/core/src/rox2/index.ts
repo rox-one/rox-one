@@ -42,3 +42,19 @@ export {
   type Rox2TypedParseResult,
   type Rox2TypedRecord,
 } from './platform-contract.ts'
+export {
+  PROJECT_MEMBERSHIP_SCHEMA_VERSION,
+  compatiblePrimaryProjectId,
+  emptyProjectMembershipStore,
+  entityIdsForProject,
+  linkEntityToProject,
+  parseProjectMembershipStore,
+  portfolioEntityIds,
+  unlinkEntityFromProject,
+  visibleProjectsForEntity,
+  type ProjectLinkRole,
+  type ProjectMembershipParseResult,
+  type ProjectMembershipStore,
+  type ProjectVisibility,
+  type Rox2ProjectMembership,
+} from './project-membership.ts'
