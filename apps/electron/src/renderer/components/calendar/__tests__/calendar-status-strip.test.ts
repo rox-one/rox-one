@@ -33,5 +33,7 @@ describe('Issue 18 calendar strip', () => {
     expect(chips).toContain('yandex')
     expect(chips).toContain('outlook')
     expect(chips).toContain('google')
+    expect(chips).not.toContain('ROX_APPLE_REMINDERS_HELPER')
+    expect(chips).not.toContain('appleRemindersAvailable')
   })
 })

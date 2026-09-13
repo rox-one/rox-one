@@ -216,6 +216,32 @@ describe('calendar connectors (issue 18)', () => {
     }
   })
 
+  it('availableFlag cannot be true when listEvents is unavailable', async () => {
+    const adapter = new UnavailableCalendarAdapter('appleReminders', true)
+    expect(adapter.available()).toBe(false)
+    await expect(adapter.listEvents('live')).rejects.toBeInstanceOf(CalendarProviderUnavailableError)
+  })
+
+  it('Apple helper presence is not live evidence for production adapters', async () => {
+    const previousHelper = process.env.ROX_APPLE_REMINDERS_HELPER
+    const platformDescriptor = Object.getOwnPropertyDescriptor(process, 'platform')
+    process.env.ROX_APPLE_REMINDERS_HELPER = '1'
+    Object.defineProperty(process, 'platform', { configurable: true, value: 'darwin' })
+    try {
+      expect(liveCredentialsPresent('appleReminders')).toBe(true)
+      const adapter = createProductionAdapter('appleReminders')
+      expect(adapter.available()).toBe(false)
+      expect(isCalendarConnectorWired('appleReminders')).toBe(false)
+      expect(isFixtureCalendarAdapter(adapter)).toBe(false)
+      expect(adapter.mode).toBe('unavailable')
+      await expect(adapter.listEvents('live')).rejects.toBeInstanceOf(CalendarProviderUnavailableError)
+    } finally {
+      if (previousHelper === undefined) delete process.env.ROX_APPLE_REMINDERS_HELPER
+      else process.env.ROX_APPLE_REMINDERS_HELPER = previousHelper
+      if (platformDescriptor) Object.defineProperty(process, 'platform', platformDescriptor)
+    }
+  })
+
   const providers: CalendarProvider[] = ['google', 'outlook', 'yandex', 'mailru', 'appleReminders']
   for (const provider of providers) {
     it(`live ${provider} account test skips without a verified adapter`, async () => {
