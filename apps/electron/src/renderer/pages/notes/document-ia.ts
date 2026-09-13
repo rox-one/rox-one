@@ -258,6 +258,107 @@ export function extractColumns(markdown: string): NoteColumnLayout[] {
   return layouts
 }
 
+export type LocatedColumnLayout = NoteColumnLayout & { start: number; end: number }
+
+export function locateColumnBlocks(markdown: string): LocatedColumnLayout[] {
+  const layouts: LocatedColumnLayout[] = []
+  const lines = markdown.split('\n')
+  let cursor = 0
+  for (let i = 0; i < lines.length; i += 1) {
+    const lineStart = cursor
+    const header = /^:::columns\s+(\d+)\s*$/.exec(lines[i]!)
+    const newline = i < lines.length - 1 || markdown.endsWith('\n') ? 1 : 0
+    cursor += lines[i]!.length + newline
+    if (!header) continue
+    const cells: string[] = []
+    let current: string[] | null = null
+    let j = i + 1
+    for (; j < lines.length; j += 1) {
+      const line = lines[j]!
+      const extra = j < lines.length - 1 || markdown.endsWith('\n') ? 1 : 0
+      cursor += line.length + extra
+      if (line === ':::') {
+        if (current) {
+          cells.push(current.join('\n').trim())
+          current = null
+          continue
+        }
+        break
+      }
+      if (line === ':::column') {
+        if (current) cells.push(current.join('\n').trim())
+        current = []
+        continue
+      }
+      if (current) current.push(line)
+    }
+    if (current) cells.push(current.join('\n').trim())
+    layouts.push({
+      columns: Number(header[1]),
+      cells,
+      start: lineStart,
+      end: Math.min(cursor, markdown.length),
+    })
+    i = j
+  }
+  return layouts
+}
+
+export function columnBlockAt(markdown: string, offset: number): LocatedColumnLayout | null {
+  const blocks = locateColumnBlocks(markdown)
+  return blocks.find((block) => offset >= block.start && offset <= block.end) ?? blocks.at(-1) ?? null
+}
+
+export function resizeColumnsAt(markdown: string, offset: number, columns: 2 | 3): string {
+  const block = columnBlockAt(markdown, offset)
+  if (!block) return markdown
+  const cells = [...block.cells]
+  while (cells.length < columns) cells.push('')
+  const next = serializeColumns(cells.slice(0, columns))
+  return `${markdown.slice(0, block.start)}${next}${markdown.slice(block.end)}`
+}
+
+export type NoteColumnKeyboardAction = 'insert-2' | 'insert-3' | 'widen' | 'narrow'
+
+export function noteColumnKeyboardAction(event: {
+  key: string
+  altKey: boolean
+  shiftKey: boolean
+  metaKey: boolean
+  ctrlKey: boolean
+}): NoteColumnKeyboardAction | null {
+  const mod = event.metaKey || event.ctrlKey
+  if (mod && event.altKey && event.key === '2') return 'insert-2'
+  if (mod && event.altKey && event.key === '3') return 'insert-3'
+  if (event.altKey && event.shiftKey && (event.key === 'ArrowRight' || event.key === 'Right')) return 'widen'
+  if (event.altKey && event.shiftKey && (event.key === 'ArrowLeft' || event.key === 'Left')) return 'narrow'
+  return null
+}
+
+export function noteCommentKeyboardAction(event: {
+  key: string
+  shiftKey?: boolean
+  altKey?: boolean
+  metaKey: boolean
+  ctrlKey: boolean
+}): 'open' | null {
+  const mod = event.metaKey || event.ctrlKey
+  if (mod && (event.shiftKey || event.altKey) && event.key.toLowerCase() === 'm') return 'open'
+  return null
+}
+
+export function notePaletteKeyAction(
+  event: { key: string },
+  index: number,
+  count: number,
+): { type: 'move'; index: number } | { type: 'select' } | { type: 'close' } | null {
+  if (event.key === 'ArrowDown') return { type: 'move', index: Math.min(index + 1, Math.max(0, count - 1)) }
+  if (event.key === 'ArrowUp') return { type: 'move', index: Math.max(index - 1, 0) }
+  if (event.key === 'Enter' || event.key === 'Tab') return { type: 'select' }
+  if (event.key === 'Escape') return { type: 'close' }
+  return null
+}
+
 export function wrapFoldedHeading(heading: string, content: string): string {
   const id = foldIdForHeading(heading)
   return `<details data-rox-fold="${id}"><summary>${heading}</summary>\n\n${content.trim()}\n</details>`
@@ -334,21 +435,58 @@ export type NoteCommandItem = {
   subject: NoteCommandSubject
   label: string
   insert: string
+  aliases?: string[]
+}
+
+export type ParsedNoteCommandQuery = {
+  kind: NoteCommandKind
+  subject: NoteCommandSubject | null
+  needle: string
+}
+
+const AT_SUBJECTS: NoteCommandSubject[] = ['session', 'agent', 'project', 'task', 'person', 'entity']
+
+export function parseNoteCommandQuery(query: string): ParsedNoteCommandQuery | null {
+  const trimmed = query.trim()
+  if (!trimmed.startsWith('!') && !trimmed.startsWith('@')) return null
+  const kind: NoteCommandKind = trimmed.startsWith('!') ? 'bang' : 'at'
+  const rest = trimmed.slice(1)
+  if (kind === 'at') {
+    for (const subject of AT_SUBJECTS) {
+      if (rest === subject || rest.startsWith(`${subject}:`)) {
+        return { kind, subject, needle: rest.slice(subject.length).replace(/^:/, '').toLowerCase() }
+      }
+    }
+  }
+  return { kind, subject: null, needle: rest.toLowerCase() }
+}
+
+function commandHaystack(item: NoteCommandItem): string[] {
+  return [item.label, item.insert, ...(item.aliases ?? [])].map((value) => value.toLowerCase())
+}
+
+function scoreNoteCommand(item: NoteCommandItem, needle: string): number {
+  if (!needle) return 1
+  const fields = commandHaystack(item)
+  if (fields.some((value) => value === needle)) return 3
+  if (fields.some((value) => value.startsWith(needle))) return 2
+  if (fields.some((value) => value.includes(needle))) return 1
+  return 0
 }
 
 export function matchNoteCommands(
   query: string,
   catalog: readonly NoteCommandItem[],
 ): NoteCommandItem[] {
-  const trimmed = query.trim()
-  if (!trimmed.startsWith('!') && !trimmed.startsWith('@')) return []
-  const kind: NoteCommandKind = trimmed.startsWith('!') ? 'bang' : 'at'
-  const needle = trimmed.slice(1).toLowerCase()
-  return catalog.filter((item) => {
-    if (item.kind !== kind) return false
-    if (!needle) return true
-    return item.label.toLowerCase().includes(needle) || item.insert.toLowerCase().includes(needle)
-  })
+  const parsed = parseNoteCommandQuery(query)
+  if (!parsed) return []
+  return catalog
+    .filter((item) => item.kind === parsed.kind)
+    .filter((item) => parsed.subject == null || item.subject === parsed.subject)
+    .map((item) => ({ item, score: scoreNoteCommand(item, parsed.needle) }))
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.item.label.localeCompare(b.item.label))
+    .map((entry) => entry.item)
 }
 
 export function defaultNoteCommands(input: {
@@ -356,13 +494,15 @@ export function defaultNoteCommands(input: {
   agents: Array<{ id: string; label: string }>
   projects: Array<{ id: string; name: string }>
   tasks: Array<{ id: string; text: string }>
-  people: Array<{ id: string; name: string }>
-  entities: Array<{ id: string; name: string }>
+  people: Array<{ id: string; name: string; aliases?: string[] }>
+  entities: Array<{ id: string; name: string; aliases?: string[] }>
 }): NoteCommandItem[] {
   const bang: NoteCommandItem[] = [
     { id: 'bang:new-session', kind: 'bang', subject: 'action', label: 'New session', insert: '!session' },
     { id: 'bang:ask-agent', kind: 'bang', subject: 'action', label: 'Ask agent', insert: '!agent' },
     { id: 'bang:new-task', kind: 'bang', subject: 'action', label: 'Create task', insert: '!task' },
+    { id: 'bang:columns-2', kind: 'bang', subject: 'action', label: 'Two columns', insert: '!columns2' },
+    { id: 'bang:columns-3', kind: 'bang', subject: 'action', label: 'Three columns', insert: '!columns3' },
   ]
   const at: NoteCommandItem[] = [
     ...input.sessions.map((session) => ({
@@ -399,6 +539,7 @@ export function defaultNoteCommands(input: {
       subject: 'person' as const,
       label: person.name,
       insert: `@person:${person.id}`,
+      aliases: person.aliases,
     })),
     ...input.entities.map((entity) => ({
       id: `at:entity:${entity.id}`,
@@ -406,9 +547,102 @@ export function defaultNoteCommands(input: {
       subject: 'entity' as const,
       label: entity.name,
       insert: `@entity:${entity.id}`,
+      aliases: entity.aliases,
     })),
   ]
   return [...bang, ...at]
+}
+
+export function peopleAndEntitiesFromInsights(
+  entities: ReadonlyArray<{ id: string; name: string; kind?: string }>,
+  propertiesList: ReadonlyArray<Record<string, unknown>> = [],
+): { people: Array<{ id: string; name: string }>; entities: Array<{ id: string; name: string }> } {
+  const people: Array<{ id: string; name: string }> = []
+  const others: Array<{ id: string; name: string }> = []
+  const seenPeople = new Set<string>()
+  const seenEntities = new Set<string>()
+  const push = (
+    bucket: Array<{ id: string; name: string }>,
+    seen: Set<string>,
+    id: string,
+    name: string,
+  ) => {
+    const key = id || name.trim().toLowerCase()
+    if (!key || seen.has(key)) return
+    seen.add(key)
+    bucket.push({ id: id || key, name })
+  }
+  for (const properties of propertiesList) {
+    const raw = properties.people
+    const values = Array.isArray(raw) ? raw : typeof raw === 'string' ? raw.split(/[,\n]+/) : []
+    for (const value of values) {
+      if (typeof value !== 'string' || !value.trim()) continue
+      const name = value.trim()
+      push(people, seenPeople, name.toLowerCase().replace(/\s+/g, '-'), name)
+    }
+  }
+  for (const entity of entities) {
+    if (!entity.name.trim()) continue
+    if (entity.kind === 'person') {
+      push(people, seenPeople, entity.id, entity.name)
+      continue
+    }
+    if (entity.kind === 'date') continue
+    push(others, seenEntities, entity.id, entity.name)
+  }
+  return { people, entities: others }
+}
+
+export function noteCommandLabelKey(item: NoteCommandItem): string | null {
+  switch (item.id) {
+    case 'bang:new-session':
+      return 'notes.authoring.newSession'
+    case 'bang:ask-agent':
+      return 'notes.authoring.askAgent'
+    case 'bang:new-task':
+      return 'notes.authoring.newTask'
+    case 'bang:columns-2':
+      return 'notes.authoring.columns2'
+    case 'bang:columns-3':
+      return 'notes.authoring.columns3'
+    default:
+      return null
+  }
+}
+
+export function noteCommandGroupKey(subject: NoteCommandSubject): string {
+  switch (subject) {
+    case 'action':
+      return 'notes.palette.action'
+    case 'session':
+      return 'notes.palette.session'
+    case 'agent':
+      return 'notes.palette.agent'
+    case 'project':
+      return 'notes.palette.project'
+    case 'task':
+      return 'notes.palette.task'
+    case 'person':
+      return 'notes.palette.person'
+    case 'entity':
+      return 'notes.palette.entity'
+  }
+}
+
+export function groupNoteCommands(items: readonly NoteCommandItem[]): Array<{
+  subject: NoteCommandSubject
+  items: NoteCommandItem[]
+}> {
+  const order: NoteCommandSubject[] = ['action', 'session', 'agent', 'project', 'task', 'person', 'entity']
+  return order
+    .map((subject) => ({ subject, items: items.filter((item) => item.subject === subject) }))
+    .filter((group) => group.items.length > 0)
+}
+
+export function snippetForColumnCommand(id: string): string | null {
+  if (id === 'bang:columns-2') return TWO_COLUMN_SNIPPET
+  if (id === 'bang:columns-3') return THREE_COLUMN_SNIPPET
+  return null
 }
 
 export function parseNoteDocument(markdown: string): NoteDocumentStructure {
