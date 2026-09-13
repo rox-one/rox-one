@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "Invitación copiada",
   "toast.joinNeedsLink": "Pega la URL de una sesión compartida para unirte",
   "toast.linkCopied": "Enlace copiado al portapapeles",
+  "toast.localPathUseOpenFile": "Si es una ruta local, use Abrir archivo.",
   "toast.messagingNotConfigured": "La mensajería no está configurada. Añade un token de bot en Ajustes → Mensajería.",
   "toast.messagingPaired": "Canal de mensajería vinculado",
   "toast.messagingRateLimited": "Demasiadas solicitudes de código de emparejamiento. Espera un momento e inténtalo de nuevo.",

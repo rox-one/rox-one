@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "Invite copied",
   "toast.joinNeedsLink": "Paste a shared session URL to join",
   "toast.linkCopied": "Link copied to clipboard",
+  "toast.localPathUseOpenFile": "If this is a local path, use Open File instead.",
   "toast.messagingNotConfigured": "Messaging is not configured. Add a bot token in Settings → Messaging.",
   "toast.messagingPaired": "Messaging channel paired",
   "toast.messagingRateLimited": "Too many pairing code requests. Please wait a moment and try again.",

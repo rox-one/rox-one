@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "邀请已复制",
   "toast.joinNeedsLink": "粘贴共享会话 URL 以加入",
   "toast.linkCopied": "链接已复制到剪贴板",
+  "toast.localPathUseOpenFile": "如果这是本地路径，请改用“打开文件”。",
   "toast.messagingNotConfigured": "尚未配置消息功能。请在设置 → 消息中添加机器人令牌。",
   "toast.messagingPaired": "消息通道已配对",
   "toast.messagingRateLimited": "配对码请求过于频繁，请稍候再试。",

@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "Meghívó másolva",
   "toast.joinNeedsLink": "Illesszen be egy megosztott munkamenet-URL-t",
   "toast.linkCopied": "Hivatkozás másolva a vágólapra",
+  "toast.localPathUseOpenFile": "Ha ez egy helyi útvonal, használja a Fájl megnyitása funkciót.",
   "toast.messagingNotConfigured": "Az üzenetküldés nincs beállítva. Adj hozzá egy bot-tokent a Beállítások → Üzenetküldés alatt.",
   "toast.messagingPaired": "Üzenetküldő csatorna párosítva",
   "toast.messagingRateLimited": "Túl sok párosítási kód igénylés. Várj egy pillanatot, majd próbáld újra.",

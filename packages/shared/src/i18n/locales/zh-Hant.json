@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "邀請已複製",
   "toast.joinNeedsLink": "貼上共用工作階段 URL 以加入",
   "toast.linkCopied": "連結已複製到剪貼簿",
+  "toast.localPathUseOpenFile": "如果這是本機路徑，請改用「開啟檔案」。",
   "toast.messagingNotConfigured": "尚未設定訊息功能。請在設定 → 訊息中新增機器人令牌。",
   "toast.messagingPaired": "訊息通道已配對",
   "toast.messagingRateLimited": "配對碼請求過於頻繁，請稍候再試。",

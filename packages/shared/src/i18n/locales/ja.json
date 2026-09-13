@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "招待をコピーしました",
   "toast.joinNeedsLink": "参加するには共有セッション URL を貼り付けてください",
   "toast.linkCopied": "リンクをクリップボードにコピーしました",
+  "toast.localPathUseOpenFile": "ローカルパスの場合は「ファイルを開く」を使ってください。",
   "toast.messagingNotConfigured": "メッセージングが設定されていません。設定 → メッセージングでボットトークンを追加してください。",
   "toast.messagingPaired": "メッセージチャネルをペアリングしました",
   "toast.messagingRateLimited": "ペアリングコードのリクエストが多すぎます。少し待ってから再度お試しください。",

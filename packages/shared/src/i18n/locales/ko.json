@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "초대를 복사했습니다",
   "toast.joinNeedsLink": "참가하려면 공유 세션 URL을 붙여 넣으세요",
   "toast.linkCopied": "링크가 클립보드에 복사되었습니다",
+  "toast.localPathUseOpenFile": "로컬 경로인 경우 '파일 열기'를 사용하세요.",
   "toast.messagingNotConfigured": "메시징이 설정되지 않았습니다. 설정 → 메시징에서 봇 토큰을 추가하세요.",
   "toast.messagingPaired": "메시징 채널이 페어링되었습니다",
   "toast.messagingRateLimited": "페어링 코드 요청이 너무 많습니다. 잠시 후 다시 시도하세요.",

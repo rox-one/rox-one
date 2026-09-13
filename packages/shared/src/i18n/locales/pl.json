@@ -4574,6 +4574,7 @@
   "toast.inviteCopied": "Zaproszenie skopiowano",
   "toast.joinNeedsLink": "Wklej URL udostępnionej sesji, aby dołączyć",
   "toast.linkCopied": "Łącze skopiowane do schowka",
+  "toast.localPathUseOpenFile": "Jeśli to ścieżka lokalna, użyj Otwórz plik.",
   "toast.messagingNotConfigured": "Wiadomości nie są skonfigurowane. Dodaj token bota w Ustawienia → Wiadomości.",
   "toast.messagingPaired": "Kanał wiadomości sparowany",
   "toast.messagingRateLimited": "Zbyt wiele żądań kodu parowania. Poczekaj chwilę i spróbuj ponownie.",
