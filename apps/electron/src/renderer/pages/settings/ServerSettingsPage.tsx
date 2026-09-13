@@ -16,6 +16,8 @@ import { Spinner } from '@craft-agent/ui'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ServerConfig, ServerStatus } from '@craft-agent/shared/config/server-config'
 import { nativeSidecarHealthView, type NativeSidecarHealthView } from './native-sidecar-health'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 import {
   SettingsSection,
@@ -80,6 +82,16 @@ export default function ServerSettingsPage() {
   const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm)
 
   const loadSettings = useCallback(async () => {
+    const gate = settingsPageActionResult({
+      pageId: 'server',
+      action: 'config-read',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) {
+      setIsLoading(false)
+      return
+    }
     try {
       const [config, serverStatus, health] = await Promise.all([
         window.electronAPI.getServerConfig(),
@@ -122,6 +134,15 @@ export default function ServerSettingsPage() {
 
     setIsSaving(true)
     try {
+      const gate = settingsPageActionResult({
+        pageId: 'server',
+        action: 'pref-write',
+        source: 'native',
+      })
+      if (!isClaimableLive(gate)) {
+        setIsSaving(false)
+        return
+      }
       await window.electronAPI.setServerConfig(formToConfig(form))
       setSavedForm(form)
       const newStatus = await window.electronAPI.getServerStatus()
@@ -147,6 +168,13 @@ export default function ServerSettingsPage() {
   }
 
   const handleBrowseCert = async () => {
+    const gate = settingsPageActionResult({
+      pageId: 'server',
+      action: 'config-read',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) return
     const paths = await window.electronAPI.openFileDialog()
     if (paths.length > 0) {
       setForm(f => ({ ...f, tlsCertPath: paths[0]! }))
@@ -154,6 +182,13 @@ export default function ServerSettingsPage() {
   }
 
   const handleBrowseKey = async () => {
+    const gate = settingsPageActionResult({
+      pageId: 'server',
+      action: 'config-read',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) return
     const paths = await window.electronAPI.openFileDialog()
     if (paths.length > 0) {
       setForm(f => ({ ...f, tlsKeyPath: paths[0]! }))
@@ -173,9 +208,10 @@ export default function ServerSettingsPage() {
   const showServerDetails = form.enabled || savedForm.enabled
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t("settings.server.title")} />
-      <ScrollArea className="flex-1">
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
         <div className="px-5 py-7 max-w-3xl mx-auto space-y-5">
 
           {/* Enable toggle + restart banner */}
@@ -197,7 +233,15 @@ export default function ServerSettingsPage() {
                   variant="outline"
                   size="sm"
                   className="h-6 text-[11px] px-2"
-                  onClick={() => window.electronAPI.relaunchApp()}
+                  onClick={() => {
+                    const gate = settingsPageActionResult({
+                      pageId: 'server',
+                      action: 'toggle',
+                      source: 'native',
+                    })
+                    if (!isClaimableLive(gate)) return
+                    window.electronAPI.relaunchApp()
+                  }}
                 >
                   {t("settings.server.restartNow")}
                 </Button>
@@ -318,6 +362,7 @@ export default function ServerSettingsPage() {
 
         </div>
       </ScrollArea>
+      </div>
     </div>
   )
 }

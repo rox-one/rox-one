@@ -22,6 +22,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { routes } from '@/lib/navigate'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -117,6 +119,16 @@ export default function CloudRunsSettingsPage() {
     setLoading(true)
     setLoadError(null)
     try {
+      const gate = settingsPageActionResult({
+        pageId: 'cloudRuns',
+        action: 'config-read',
+        source: 'native',
+        granted: true,
+      })
+      if (!isClaimableLive(gate)) {
+        setLoading(false)
+        return
+      }
       const getConfig = window.electronAPI?.getCloudRunsConfig
       if (typeof getConfig !== 'function') throw new Error(t('common.unavailable'))
       const next = await getConfig()
@@ -136,6 +148,12 @@ export default function CloudRunsSettingsPage() {
   const patch = (nextPatch: ConfigPatch) => {
     setSaveError(null)
     setFailedPatch(null)
+    const gate = settingsPageActionResult({
+      pageId: 'cloudRuns',
+      action: 'pref-write',
+      source: 'native',
+    })
+    if (!isClaimableLive(gate)) return
     window.electronAPI
       .setCloudRunsConfig(nextPatch)
       .then(() =>
