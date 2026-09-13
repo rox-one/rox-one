@@ -3,6 +3,7 @@ import type {
   LoadedSource,
   PermissionMode,
   MessagingPlatformRuntimeInfo,
+  WeChatUiEvent,
   WhatsAppUiEvent,
 } from '../../shared/types'
 import type { ZenShellSnapshot } from '../../shared/shell-appearance'
@@ -38,6 +39,7 @@ type PlatformStatusListener = (
 ) => void
 type BindingListener = (workspaceId: string) => void
 type WhatsAppEventListener = (payload: { workspaceId: string; event: WhatsAppUiEvent }) => void
+type WeChatEventListener = (payload: { workspaceId: string; event: WeChatUiEvent }) => void
 
 const PLAYGROUND_WORKSPACE_ID = 'playground-workspace'
 
@@ -81,6 +83,7 @@ interface MessagingMockState {
   platformStatusListeners: Set<PlatformStatusListener>
   bindingListeners: Set<BindingListener>
   waEventListeners: Set<WhatsAppEventListener>
+  wechatEventListeners: Set<WeChatEventListener>
 }
 
 function defaultRuntime(platform: 'telegram' | 'whatsapp'): MessagingPlatformRuntimeInfo {
@@ -112,6 +115,7 @@ const messagingMockState: MessagingMockState = {
   platformStatusListeners: new Set(),
   bindingListeners: new Set(),
   waEventListeners: new Set(),
+  wechatEventListeners: new Set(),
 }
 
 function emitPlatformStatus(platform: 'telegram' | 'whatsapp') {
@@ -129,6 +133,12 @@ function emitBindingChanged() {
 
 function emitWhatsAppEvent(event: WhatsAppUiEvent) {
   for (const listener of messagingMockState.waEventListeners) {
+    try { listener({ workspaceId: PLAYGROUND_WORKSPACE_ID, event }) } catch (err) { console.error(err) }
+  }
+}
+
+function emitWeChatEvent(event: WeChatUiEvent) {
+  for (const listener of messagingMockState.wechatEventListeners) {
     try { listener({ workspaceId: PLAYGROUND_WORKSPACE_ID, event }) } catch (err) { console.error(err) }
   }
 }
@@ -1308,6 +1318,58 @@ export const mockElectronAPI = {
       messagingMockState.waEventListeners.delete(callback)
     }
   },
+
+  // Lark / Discord credential flows — the full settings-messaging story opens
+  // these dialogs; mirror the Telegram token mock so test/save resolve.
+  testLarkCredentials: async (creds: { appId: string; appSecret: string; domain: 'lark' | 'feishu' }) => {
+    console.log('[Playground] testLarkCredentials called:', creds.domain)
+    if (creds.appId.trim() && creds.appSecret.trim()) {
+      return { success: true, botName: 'Playground Lark Bot' }
+    }
+    return { success: false, error: 'App ID and App Secret are required' }
+  },
+
+  saveLarkCredentials: async (creds: { appId: string; appSecret: string; domain: 'lark' | 'feishu' }) => {
+    console.log('[Playground] saveLarkCredentials called:', creds.domain)
+  },
+
+  testDiscordCredentials: async (creds: { token: string }) => {
+    console.log('[Playground] testDiscordCredentials called')
+    if (creds.token.trim().length > 10) {
+      return { success: true, botName: 'Playground Discord Bot' }
+    }
+    return { success: false, error: 'Invalid bot token' }
+  },
+
+  saveDiscordCredentials: async (_creds: { token: string }) => {
+    console.log('[Playground] saveDiscordCredentials called')
+  },
+
+  // WeChat QR login — same synthetic QR shape as WhatsApp above.
+  startWeChatConnect: async () => {
+    console.log('[Playground] startWeChatConnect called')
+    setTimeout(() => {
+      emitWeChatEvent({
+        type: 'qr',
+        qr: 'playground://wechat/qr/' + Math.random().toString(36).slice(2),
+      })
+    }, 400)
+    return { success: true }
+  },
+
+  submitWeChatVerifyCode: async (code: string) => {
+    console.log('[Playground] submitWeChatVerifyCode called:', code)
+    return { success: true }
+  },
+
+  onWeChatEvent: (
+    callback: (payload: { workspaceId: string; event: WeChatUiEvent }) => void,
+  ) => {
+    messagingMockState.wechatEventListeners.add(callback)
+    return () => {
+      messagingMockState.wechatEventListeners.delete(callback)
+    }
+  },
 }
 
 /**
@@ -1335,6 +1397,11 @@ export function ensureMockElectronAPI() {
   if (!(window as any).__playgroundAllowList) {
     ;(window as any).__playgroundAllowList = playgroundAllowListHandle
     console.log('[Playground] Exposed __playgroundAllowList handle')
+  }
+  // ROX2-015: settings pages read this via settingsRuntimeSource() so their
+  // Rox2 gates resolve to `fixture` instead of `native` inside the playground.
+  if (!(window as any).__playgroundFixture) {
+    ;(window as any).__playgroundFixture = true
   }
 }
 

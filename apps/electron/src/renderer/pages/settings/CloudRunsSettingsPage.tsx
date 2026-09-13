@@ -110,25 +110,25 @@ export default function CloudRunsSettingsPage() {
   const { t } = useTranslation()
   const [config, setConfig] = React.useState<Config | null>(null)
   const [draft, setDraft] = React.useState<FieldDraft | null>(null)
-  const [loading, setLoading] = React.useState(true)
+  // config-read is device-read: config.json is only read after the user
+  // explicitly grants it. Opening the page is not a grant.
+  const [granted, setGranted] = React.useState(false)
+  const [loading, setLoading] = React.useState(false)
   const [loadError, setLoadError] = React.useState<string | null>(null)
   const [saveError, setSaveError] = React.useState<string | null>(null)
   const [failedPatch, setFailedPatch] = React.useState<ConfigPatch | null>(null)
 
-  const load = React.useCallback(async () => {
+  const load = React.useCallback(async (isGranted: boolean) => {
+    const gate = settingsPageActionResult({
+      pageId: 'cloudRuns',
+      action: 'config-read',
+      source: 'native',
+      granted: isGranted,
+    })
+    if (!isClaimableLive(gate)) return
     setLoading(true)
     setLoadError(null)
     try {
-      const gate = settingsPageActionResult({
-        pageId: 'cloudRuns',
-        action: 'config-read',
-        source: 'native',
-        granted: true,
-      })
-      if (!isClaimableLive(gate)) {
-        setLoading(false)
-        return
-      }
       const getConfig = window.electronAPI?.getCloudRunsConfig
       if (typeof getConfig !== 'function') throw new Error(t('common.unavailable'))
       const next = await getConfig()
@@ -142,8 +142,9 @@ export default function CloudRunsSettingsPage() {
   }, [t])
 
   React.useEffect(() => {
-    void load()
-  }, [load])
+    if (!granted) return
+    void load(granted)
+  }, [granted, load])
 
   const patch = (nextPatch: ConfigPatch) => {
     setSaveError(null)
@@ -186,7 +187,7 @@ export default function CloudRunsSettingsPage() {
         title={t('settings.cloudRuns.title')}
         actions={
           <>
-            <Button size="sm" variant="outline" disabled={loading} onClick={() => void load()}>
+            <Button size="sm" variant="outline" disabled={loading || !granted} onClick={() => void load(granted)}>
               {loading ? t('common.loading') : t('common.refresh')}
             </Button>
             <HeaderMenu route={routes.view.settings('cloudRuns')} />
@@ -205,7 +206,7 @@ export default function CloudRunsSettingsPage() {
           {loadError && (
             <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
               <span className="min-w-0 whitespace-normal break-words">{loadError}</span>
-              <Button size="sm" variant="outline" onClick={() => void load()}>
+              <Button size="sm" variant="outline" onClick={() => void load(granted)}>
                 {t('common.retry')}
               </Button>
             </div>
@@ -221,11 +222,22 @@ export default function CloudRunsSettingsPage() {
             </div>
           )}
 
-          {!config && !loadError && (
+          {!granted ? (
+            <SettingsCard className="px-4 py-3.5">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {t('settings.cloudRuns.loadConfigDesc')}
+                </p>
+                <Button size="sm" onClick={() => setGranted(true)}>
+                  {t('settings.cloudRuns.loadConfig')}
+                </Button>
+              </div>
+            </SettingsCard>
+          ) : !config && !loadError ? (
             <div role="status" className="rounded-md border border-border/60 px-3 py-2 text-sm text-muted-foreground">
               {t('common.loading')}
             </div>
-          )}
+          ) : null}
 
           {config && draft && (
             <>

@@ -94,6 +94,21 @@ const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'org-invite': 'cloud-send',
 }
 
+/**
+ * ROX2-015: playground mounts install `window.__playgroundFixture` from
+ * mock-utils. Pages pass this as `source` so fixture stories never claim
+ * live and never reach the throwing destructive mocks.
+ */
+export function settingsRuntimeSource(): 'native' | 'fixture' {
+  if (
+    typeof window !== 'undefined' &&
+    (window as { __playgroundFixture?: boolean }).__playgroundFixture === true
+  ) {
+    return 'fixture'
+  }
+  return 'native'
+}
+
 export function bindSettingsHubContext(
   workspaceId: string,
   pageId: string,

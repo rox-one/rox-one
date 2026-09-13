@@ -74,24 +74,25 @@ export default function ServerSettingsPage() {
   const [savedForm, setSavedForm] = useState<ServerFormState>(form)
   const [status, setStatus] = useState<ServerStatus | null>(null)
   const [sidecar, setSidecar] = useState<NativeSidecarHealthView>({ tone: 'off', detail: 'disabled' })
-  const [isLoading, setIsLoading] = useState(true)
+  // config-read is device-read: the server config, cert paths and token are
+  // only read after the user explicitly grants it. Opening the page is not a grant.
+  const [granted, setGranted] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [tokenVisible, setTokenVisible] = useState(false)
   const [error, setError] = useState<string>()
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm)
 
-  const loadSettings = useCallback(async () => {
+  const loadSettings = useCallback(async (isGranted: boolean) => {
     const gate = settingsPageActionResult({
       pageId: 'server',
       action: 'config-read',
       source: 'native',
-      granted: true,
+      granted: isGranted,
     })
-    if (!isClaimableLive(gate)) {
-      setIsLoading(false)
-      return
-    }
+    if (!isClaimableLive(gate)) return
+    setIsLoading(true)
     try {
       const [config, serverStatus, health] = await Promise.all([
         window.electronAPI.getServerConfig(),
@@ -113,8 +114,9 @@ export default function ServerSettingsPage() {
   }, [])
 
   useEffect(() => {
-    loadSettings()
-  }, [loadSettings])
+    if (!granted) return
+    void loadSettings(granted)
+  }, [granted, loadSettings])
 
   const handleSave = async () => {
     setError(undefined)
@@ -172,7 +174,7 @@ export default function ServerSettingsPage() {
       pageId: 'server',
       action: 'config-read',
       source: 'native',
-      granted: true,
+      granted,
     })
     if (!isClaimableLive(gate)) return
     const paths = await window.electronAPI.openFileDialog()
@@ -186,7 +188,7 @@ export default function ServerSettingsPage() {
       pageId: 'server',
       action: 'config-read',
       source: 'native',
-      granted: true,
+      granted,
     })
     if (!isClaimableLive(gate)) return
     const paths = await window.electronAPI.openFileDialog()
@@ -195,17 +197,41 @@ export default function ServerSettingsPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Spinner />
-      </div>
-    )
-  }
-
   const hasTls = !!(form.tlsCertPath && form.tlsKeyPath)
   const needsRestart = status?.needsRestart ?? false
   const showServerDetails = form.enabled || savedForm.enabled
+
+  if (!granted || isLoading) {
+    return (
+      <div className="flex h-full min-h-0 flex-col">
+        <PanelHeader title={t("settings.server.title")} />
+        <div className="flex-1 min-h-0 mask-fade-y">
+          <ScrollArea className="h-full">
+            <div className="px-5 py-7 max-w-3xl mx-auto space-y-5">
+              {isLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Spinner />
+                </div>
+              ) : (
+                <SettingsSection title={t("settings.server.remoteAccess")}>
+                  <SettingsCard className="px-4 py-3.5">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {t("settings.server.loadConfigDesc")}
+                      </p>
+                      <Button size="sm" onClick={() => setGranted(true)}>
+                        {t("settings.server.loadConfig")}
+                      </Button>
+                    </div>
+                  </SettingsCard>
+                </SettingsSection>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex h-full min-h-0 flex-col">

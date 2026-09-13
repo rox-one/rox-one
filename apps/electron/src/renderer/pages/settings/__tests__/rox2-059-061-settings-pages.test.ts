@@ -170,6 +170,9 @@ describe('ROX2-059..061 native settings pages', () => {
     expect(messaging).toContain("messagingActionLive('connection-delete'")
     expect(messaging).toContain("messagingActionLive('pref-write'")
     expect(messaging).toContain('settingsPageActionResult')
+    // Playground mounts resolve to fixture, never a hard-coded native source.
+    expect(messaging).toContain('source: settingsRuntimeSource()')
+    expect(messaging).not.toContain("source: 'native'")
     expect(messaging).not.toContain('checkout')
     expect(messaging).not.toContain('stripe')
 
@@ -183,6 +186,14 @@ describe('ROX2-059..061 native settings pages', () => {
     expect(cloudRuns).toContain("action: 'pref-write'")
     expect(cloudRuns).toContain("action: 'config-read'")
     expect(cloudRuns).toContain('settingsPageActionResult')
+
+    // config-read is device-read: mount-time loaders collect a real grant
+    // from the user instead of asserting `granted: true`.
+    for (const [id, rel] of Object.entries(PAGE_FILES)) {
+      const text = source(rel)
+      expect(text, id).not.toContain('granted: true')
+      expect(text, id).toContain('setGranted(true)')
+    }
   })
 
   test('playground mocks messaging and server without claiming live Conation', () => {
@@ -193,6 +204,19 @@ describe('ROX2-059..061 native settings pages', () => {
     expect(mock).toContain('setServerConfig')
     expect(mock).toContain('setCloudRunsConfig')
     expect(mock).toContain('Playground fixture. Not live.')
+    expect(mock).toContain('__playgroundFixture = true')
+    // Every bridge the full messaging screen can reach must be mocked.
+    for (const method of [
+      'testLarkCredentials',
+      'saveLarkCredentials',
+      'testDiscordCredentials',
+      'saveDiscordCredentials',
+      'startWeChatConnect',
+      'submitWeChatVerifyCode',
+      'onWeChatEvent',
+    ]) {
+      expect(mock, method).toContain(`${method}:`)
+    }
     expect(mock).not.toContain('conation.dev')
     const stories = source('apps/electron/src/renderer/playground/registry/settings.tsx')
     expect(stories).toContain("id: 'settings-messaging'")
