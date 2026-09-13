@@ -6,6 +6,7 @@ import type { PermissionMode } from '@craft-agent/shared/agent/modes'
 import type { SessionStatus } from '@/config/session-status-config'
 import type { BackgroundTask } from '../ActiveTasksBar'
 import { ActiveOptionBadges } from '../ActiveOptionBadges'
+import { SessionRatingPill } from '../SessionRatingPill'
 import { InputContainer } from './InputContainer'
 import { InputErrorBoundary } from './InputErrorBoundary'
 
@@ -83,6 +84,7 @@ export function ChatInputZone({
       compactMode ? 'px-2 pb-3' : 'px-3 @xs/panel:px-4 pb-4',
       className,
     )}>
+      {sessionId ? <SessionRatingPill sessionId={sessionId} /> : null}
       {shouldShowOptionBadges && (
         <ActiveOptionBadges
           permissionMode={permissionMode}

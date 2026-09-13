@@ -47,6 +47,8 @@ describe('H5 import and advisor wiring', () => {
     expect(panel).toContain('data-testid="browser-profile-import"')
     expect(panel).toContain('data-testid="browser-profile-os-approved"')
     expect(panel).toContain('discoverBrowserProfiles')
+    expect(panel).toContain('void discover()')
+    expect(panel).toMatch(/useEffect\(\(\) => \{\s*void discover\(\)/)
     expect(panel).toContain('importBrowserProfile')
     expect(panel).toContain('osCredentialsApproved')
     expect(types).toContain('discoverBrowserProfiles')

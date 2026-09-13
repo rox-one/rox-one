@@ -299,32 +299,103 @@ export function summaryLeaksSecrets(summary: unknown, secrets: string[]): boolea
   return secrets.some((secret) => secret.length > 0 && blob.includes(secret))
 }
 
-function chromiumRoots(home: string, platform: NodeJS.Platform): string[] {
+/** Relative Chromium-family roots (under $HOME). Discovery is read-only. */
+export function chromiumRootRel(platform: NodeJS.Platform): string[] {
   if (platform === 'darwin') {
     return [
-      `${home}/Library/Application Support/Google/Chrome`,
-      `${home}/Library/Application Support/Chromium`,
-      `${home}/Library/Application Support/Microsoft Edge`,
-      `${home}/Library/Application Support/BraveSoftware/Brave-Browser`,
+      'Library/Application Support/Google/Chrome',
+      'Library/Application Support/Google/Chrome Canary',
+      'Library/Application Support/Google/Chrome Beta',
+      'Library/Application Support/Google/Chrome Dev',
+      'Library/Application Support/Chromium',
+      'Library/Application Support/Microsoft Edge',
+      'Library/Application Support/BraveSoftware/Brave-Browser',
+      'Library/Application Support/com.operasoftware.Opera',
+      'Library/Application Support/com.operasoftware.OperaGX',
+      'Library/Application Support/Vivaldi',
+      'Library/Application Support/zen',
+      'Library/Application Support/Zen',
+      'Library/Application Support/app.zen-browser.zen',
+      'Library/Application Support/Perplexity',
+      'Library/Application Support/PerplexityComet',
+      'Library/Application Support/ChatGPT Atlas',
+      'Library/Application Support/OpenAI Atlas',
+      'Library/Application Support/Yandex/YandexBrowser',
+      'Library/Application Support/Yandex/YandexBrowserEnterprise',
     ]
   }
   if (platform === 'win32') {
     return [
-      `${home}/AppData/Local/Google/Chrome/User Data`,
-      `${home}/AppData/Local/Microsoft/Edge/User Data`,
+      'AppData/Local/Google/Chrome/User Data',
+      'AppData/Local/Google/Chrome SxS/User Data',
+      'AppData/Local/Google/Chrome Beta/User Data',
+      'AppData/Local/Google/Chrome Dev/User Data',
+      'AppData/Local/Chromium/User Data',
+      'AppData/Local/Microsoft/Edge/User Data',
+      'AppData/Local/BraveSoftware/Brave-Browser/User Data',
+      'AppData/Roaming/Opera Software/Opera Stable',
+      'AppData/Roaming/Opera Software/Opera GX Stable',
+      'AppData/Local/Vivaldi/User Data',
+      'AppData/Roaming/zen',
+      'AppData/Local/Yandex/YandexBrowser/User Data',
+      'AppData/Local/Yandex/YandexBrowserEnterprise/User Data',
+      'AppData/Local/Perplexity/User Data',
+      'AppData/Local/ChatGPT Atlas/User Data',
     ]
   }
   return [
-    `${home}/.config/google-chrome`,
-    `${home}/.config/chromium`,
-    `${home}/.config/microsoft-edge`,
+    '.config/google-chrome',
+    '.config/google-chrome-beta',
+    '.config/google-chrome-unstable',
+    '.config/google-chrome-canary',
+    '.config/chromium',
+    '.config/microsoft-edge',
+    '.config/microsoft-edge-beta',
+    '.config/microsoft-edge-dev',
+    '.config/BraveSoftware/Brave-Browser',
+    '.config/opera',
+    '.config/opera-beta',
+    '.config/vivaldi',
+    '.config/zen',
+    '.config/zen-browser',
+    '.config/yandex-browser',
+    '.config/yandex-browser-beta',
+    '.config/perplexity',
+    '.config/chatgpt-atlas',
   ]
 }
 
+export function firefoxRootRel(platform: NodeJS.Platform): string[] {
+  if (platform === 'darwin') {
+    return [
+      'Library/Application Support/Firefox',
+      'Library/Application Support/Firefox Nightly',
+      'Library/Application Support/Firefox Developer Edition',
+      'Library/Application Support/FirefoxNightly',
+      'Library/Application Support/Mozilla/Firefox',
+    ]
+  }
+  if (platform === 'win32') {
+    return [
+      'AppData/Roaming/Mozilla/Firefox',
+      'AppData/Roaming/Mozilla/Firefox Nightly',
+      'AppData/Roaming/Mozilla/Firefox Developer Edition',
+    ]
+  }
+  return [
+    '.mozilla/firefox',
+    '.mozilla/firefox-nightly',
+    '.mozilla/firefox-dev',
+    '.mozilla/firefox-developer-edition',
+  ]
+}
+
+function chromiumRoots(home: string, platform: NodeJS.Platform): string[] {
+  return chromiumRootRel(platform).map((rel) => `${home}/${rel}`)
+}
+
 function firefoxRoots(home: string, platform: NodeJS.Platform): string[] {
-  if (platform === 'darwin') return [`${home}/Library/Application Support/Firefox`]
-  if (platform === 'win32') return [`${home}/AppData/Roaming/Mozilla/Firefox`]
-  return [`${home}/.mozilla/firefox`]
+  return firefoxRootRel(platform).map((rel) => `${home}/${rel}`)
 }
 
 function discoverChromium(root: string, fs: ProfileFs): DiscoveredProfile[] {
