@@ -69,8 +69,27 @@ describe('SessionApplyClient', () => {
     const result = await client.apply({ workspaceRoot: '/ws', teamId: 'alpha' });
     expect(result.status).toBe(202);
     expect(result.ok).toBe(true);
+    expect(result.transportAccepted).toBe(true);
+    expect(result.businessCompleted).toBe(false);
     expect(result.pointer).toContain('https://conation.dev/session-apply');
     expect(result.pointer).toContain('team=alpha');
+  });
+
+  it('treats HTTP 200 as transport accepted and business completed', async () => {
+    const fetch: HttpFetch = async () =>
+      new Response(JSON.stringify({ stub: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    const client = new SessionApplyClient({ flagEnabled: true, fetch });
+    const read = await client.read();
+    expect(read.ok).toBe(true);
+    expect(read.transportAccepted).toBe(true);
+    expect(read.businessCompleted).toBe(true);
+    const apply = await client.apply({ workspaceRoot: '/ws' });
+    expect(apply.ok).toBe(true);
+    expect(apply.transportAccepted).toBe(true);
+    expect(apply.businessCompleted).toBe(true);
   });
 
   it('treats 204 as transport success with a null body', async () => {
@@ -79,9 +98,13 @@ describe('SessionApplyClient', () => {
     const read = await client.read();
     expect(read.status).toBe(204);
     expect(read.body).toBeNull();
+    expect(read.transportAccepted).toBe(true);
+    expect(read.businessCompleted).toBe(true);
     const apply = await client.apply({ workspaceRoot: '/ws' });
     expect(apply.status).toBe(204);
     expect(apply.body).toBeNull();
+    expect(apply.transportAccepted).toBe(true);
+    expect(apply.businessCompleted).toBe(true);
   });
 
   for (const status of [401, 403, 404, 429, 500, 503] as const) {
@@ -113,6 +136,9 @@ describe('SessionApplyClient', () => {
       expect(applyError).toBeInstanceOf(SessionApplyHttpError);
       expect((applyError as SessionApplyHttpError).status).toBe(status);
       expect((applyError as SessionApplyHttpError).method).toBe('POST');
+      expect(applyError).not.toHaveProperty('ok');
+      expect(applyError).not.toHaveProperty('transportAccepted');
+      expect(applyError).not.toHaveProperty('businessCompleted');
       assertRedacted(applyError as SessionApplyHttpError);
       expect(cancelled).toBe(2);
     });

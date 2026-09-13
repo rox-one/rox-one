@@ -91,7 +91,7 @@ export function ConationShellSettings() {
           label={t('settings.appearance.conationSessionApply', 'SessionApply (Conation)')}
           description={t(
             'settings.appearance.conationSessionApplyDesc',
-            'SessionApply consumer stub linked to AgentTeamsStore (workbench.conation.sessionApply). Default off. Not Cordis.',
+            'SessionApply consumer stub linked to AgentTeamsStore (workbench.conation.sessionApply). Default off. HTTP 202 is transport-accepted, not business-completed. No receipt or readback. Not Cordis.',
           )}
           checked={sessionApply}
           onCheckedChange={setSessionApply}

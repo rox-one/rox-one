@@ -39,6 +39,24 @@ export class SessionApplyHttpError extends Error {
 /** 200/204 completed; 202 is transport accepted, not business completed. */
 export const SESSION_APPLY_TRANSPORT_OK = new Set([200, 202, 204]);
 
+/**
+ * Semantics for a transport-accepted SessionApply response.
+ * HTTP errors throw SessionApplyHttpError instead of returning this.
+ */
+export interface SessionApplyCompletion {
+  /** Always true on a returned result: status was 200, 202, or 204. */
+  transportAccepted: true;
+  /** False for HTTP 202 Accepted. True for 200/204. */
+  businessCompleted: boolean;
+}
+
+export function sessionApplyCompletion(status: number): SessionApplyCompletion {
+  return {
+    transportAccepted: true,
+    businessCompleted: status !== 202,
+  };
+}
+
 export interface SessionApplyClientOptions {
   /** Operator origin. Default https://conation.dev */
   origin?: string;
@@ -49,7 +67,7 @@ export interface SessionApplyClientOptions {
   fetch?: HttpFetch;
 }
 
-export interface SessionApplyReadResult {
+export interface SessionApplyReadResult extends SessionApplyCompletion {
   ok: true;
   origin: string;
   status: number;
@@ -62,7 +80,7 @@ export interface SessionApplyApplyInput {
   source?: string;
 }
 
-export interface SessionApplyApplyResult {
+export interface SessionApplyApplyResult extends SessionApplyCompletion {
   ok: true;
   origin: string;
   status: number;

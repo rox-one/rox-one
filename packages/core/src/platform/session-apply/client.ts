@@ -10,6 +10,7 @@ import {
   DEFAULT_OPERATOR_ORIGIN,
   DEFAULT_READ_PATH,
   SESSION_APPLY_TRANSPORT_OK,
+  sessionApplyCompletion,
   SessionApplyFlagOffError,
   SessionApplyHttpError,
   type SessionApplyApplyInput,
@@ -79,7 +80,13 @@ export class SessionApplyClient {
       headers: { accept: 'application/json' },
     });
     const body = await requireTransportOk(response, { origin, method: 'GET', path });
-    return { ok: true, origin, status: response.status, body };
+    return {
+      ok: true,
+      origin,
+      status: response.status,
+      body,
+      ...sessionApplyCompletion(response.status),
+    };
   }
 
   async apply(input: SessionApplyApplyInput): Promise<SessionApplyApplyResult> {
@@ -97,6 +104,13 @@ export class SessionApplyClient {
     });
     const body = await requireTransportOk(response, { origin, method: 'POST', path });
     const pointer = `${origin}${path}#team=${input.teamId ?? ''}`;
-    return { ok: true, origin, status: response.status, body, pointer };
+    return {
+      ok: true,
+      origin,
+      status: response.status,
+      body,
+      pointer,
+      ...sessionApplyCompletion(response.status),
+    };
   }
 }

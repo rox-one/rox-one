@@ -26,6 +26,8 @@ describe('recordSessionApplyOnTeam', () => {
       status: 202,
       body: { applied: true },
       pointer: 'https://conation.dev/session-apply#team=alpha',
+      transportAccepted: true,
+      businessCompleted: false,
     });
     const task = next.tasks.find((t) => t.subject === 'session-apply');
     expect(task?.output).toBe('https://conation.dev/session-apply#team=alpha');

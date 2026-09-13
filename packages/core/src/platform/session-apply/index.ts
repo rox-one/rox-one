@@ -9,6 +9,7 @@ export {
   DEFAULT_OPERATOR_ORIGIN,
   DEFAULT_READ_PATH,
   SESSION_APPLY_TRANSPORT_OK,
+  sessionApplyCompletion,
   SessionApplyFlagOffError,
   SessionApplyHttpError,
 } from './types.ts';
@@ -16,5 +17,6 @@ export type {
   SessionApplyApplyInput,
   SessionApplyApplyResult,
   SessionApplyClientOptions,
+  SessionApplyCompletion,
   SessionApplyReadResult,
 } from './types.ts';
