@@ -8,7 +8,7 @@
 import * as React from 'react'
 
 import { createLayoutCommitDebouncer, SHELL_LAYOUT_KEYBOARD_DEBOUNCE_MS } from '@/lib/shell-layout-preferences'
-import { createResizeController, type ResizeBounds, type ResizeController } from './resize-controller'
+import { createResizeController, type ResizeBounds, type ResizeController } from '@/components/app-shell/resize-controller'
 
 export interface UsePanelResizeHandlers {
   onPreview: (sizeA: number, sizeB: number) => void
