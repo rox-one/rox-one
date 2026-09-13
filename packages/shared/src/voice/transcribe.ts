@@ -10,7 +10,7 @@ import type {
 } from './types.ts'
 
 export class VoicePrivacyError extends Error {
-  readonly code: 'cloud-stt-offline' | 'local-model-missing' | 'empty-transcript'
+  readonly code: 'cloud-stt-offline' | 'local-model-missing' | 'empty-transcript' | 'consent-required'
 
   constructor(code: VoicePrivacyError['code'], message: string) {
     super(message)
@@ -25,8 +25,12 @@ export async function transcribeWithPolicy(
   adapters: { local: TranscribeAdapter; cloud: TranscribeAdapter },
   options: { offline?: boolean } = {},
 ): Promise<TranscribeResult> {
+  if (prefs.privacyMigrationPending && shouldUploadAudio(prefs)) {
+    throw new VoicePrivacyError('consent-required', 'Confirm archive and cloud ASR consent before recording')
+  }
+
   if (!shouldUploadAudio(prefs)) {
-    if (prefs.whisperStatus === 'missing' || prefs.whisperStatus === 'unsupported') {
+    if (prefs.whisperStatus !== 'ready') {
       throw new VoicePrivacyError(
         'local-model-missing',
         'Local Whisper model is not installed',
@@ -37,6 +41,8 @@ export async function transcribeWithPolicy(
       text: result.text,
       engine: 'local-whisper',
       uploaded: false,
+      noSpeech: result.noSpeech,
+      requestId: result.requestId,
     }
   }
 
@@ -49,6 +55,8 @@ export async function transcribeWithPolicy(
     text: result.text,
     engine: prefs.sttEngine,
     uploaded: true,
+    noSpeech: result.noSpeech,
+    requestId: result.requestId,
   }
 }
 

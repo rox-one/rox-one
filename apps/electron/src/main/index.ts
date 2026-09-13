@@ -503,6 +503,11 @@ app.whenReady().then(async () => {
     browserPaneManager.registerToolbarIpc()
     browserPaneManager.registerCapabilityIpc()
 
+    const { registerVoiceHotkeys, showVoiceOverlay } = await import('./voice/overlay-window')
+    registerVoiceHotkeys(() => {
+      showVoiceOverlay()
+    })
+
     // Build real PlatformServices from Electron APIs
     const platform: PlatformServices = createElectronPlatform({
       app,

@@ -9,6 +9,9 @@ describe('voice composer and listen wiring', () => {
       'utf8',
     )
     expect(input).toContain('VoiceDictationControl')
+    const control = readFileSync(join(import.meta.dir, '../input/VoiceDictationControl.tsx'), 'utf8')
+    expect(control).toContain('startVoiceCapture')
+    expect(control).not.toContain('transcript: draft')
     const display = readFileSync(
       join(import.meta.dir, '../ChatDisplay.tsx'),
       'utf8',

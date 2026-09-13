@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import {
   DEFAULT_WAKE_PHRASE,
+  ROCKS_T1_DISPLAY_NAME,
+  ROCKS_T1_MODEL_ID,
   VoicePrivacyError,
   assertEditableTranscript,
   buildVoiceHealth,
@@ -37,7 +39,7 @@ function cloudAdapter(text = 'hello cloud'): TranscribeAdapter {
     engine: 'cloud-deepgram',
     async transcribe() {
       return { text, engine: 'cloud-deepgram', uploaded: true }
-    }
+    },
   }
 }
 
@@ -51,15 +53,36 @@ function edgeAdapter(): SpeakAdapter {
 }
 
 describe('voice privacy policy', () => {
-  it('defaults to local STT with wake word disarmed', () => {
+  it('defaults new installs to cloud-rox rocks-t1 without auto-submit', () => {
     const prefs = getDefaultVoicePrefs(1)
-    expect(prefs.sttEngine).toBe('local-whisper')
+    expect(prefs.sttEngine).toBe('cloud-rox')
+    expect(prefs.asrModelId).toBe(ROCKS_T1_MODEL_ID)
     expect(prefs.ttsEngine).toBe('edge')
     expect(prefs.wakeWordEnabled).toBe(false)
     expect(prefs.alwaysListeningConsent).toBe(false)
+    expect(prefs.autoSubmit).toBe(false)
+    expect(prefs.cloudEnhancementConsent).toBe(false)
+    expect(prefs.webEnrichmentConsent).toBe(false)
     expect(prefs.wakePhrase).toBe(DEFAULT_WAKE_PHRASE)
-    expect(shouldUploadAudio(prefs)).toBe(false)
+    expect(shouldUploadAudio(prefs)).toBe(true)
     expect(canStartWakeListening(prefs)).toEqual({ ok: false, reason: 'disabled' })
+  })
+
+  it('does not upload without cloud ASR consent', () => {
+    const prefs = { ...getDefaultVoicePrefs(1), cloudAsrConsent: false }
+    expect(shouldUploadAudio(prefs)).toBe(false)
+  })
+
+  it('does not silently migrate an explicit v1 local user to cloud', () => {
+    const prefs = normalizeVoicePrefs({
+      version: 1,
+      sttEngine: 'local-whisper',
+      audioRetention: 'none',
+    }, 5)
+    expect(prefs.sttEngine).toBe('local-whisper')
+    expect(prefs.cloudAsrConsent).toBe(false)
+    expect(prefs.privacyMigrationPending).toBe(true)
+    expect(shouldUploadAudio(prefs)).toBe(false)
   })
 
   it('refuses to arm wake word without always-listening consent', () => {
@@ -82,7 +105,12 @@ describe('voice privacy policy', () => {
   })
 
   it('transcribes locally without calling the cloud adapter', async () => {
-    const prefs: VoicePrefs = { ...getDefaultVoicePrefs(1), whisperStatus: 'ready' }
+    const prefs: VoicePrefs = {
+      ...getDefaultVoicePrefs(1),
+      sttEngine: 'local-whisper',
+      cloudAsrConsent: false,
+      whisperStatus: 'ready',
+    }
     let cloudCalls = 0
     const cloud: TranscribeAdapter = {
       engine: 'cloud-rox',
@@ -99,14 +127,17 @@ describe('voice privacy policy', () => {
       text: 'dictate this',
       engine: 'local-whisper',
       uploaded: false,
+      noSpeech: undefined,
+      requestId: undefined,
     })
     expect(cloudCalls).toBe(0)
   })
 
-  it('uploads audio only when a cloud STT engine is selected', async () => {
+  it('uploads audio only when a cloud STT engine is selected and consented', async () => {
     const prefs: VoicePrefs = {
       ...getDefaultVoicePrefs(1),
       sttEngine: 'cloud-deepgram',
+      cloudAsrConsent: true,
       audioRetention: 'cloud-policy',
     }
     let localCalls = 0
@@ -166,7 +197,7 @@ describe('voice privacy policy', () => {
     })
     expect(health.offline).toBe(true)
     expect(health.wakeWordArmed).toBe(false)
-    expect(health.audioRetention).toBe('none')
+    expect(health.asrBrand).toBe(ROCKS_T1_DISPLAY_NAME)
   })
 
   it('normalizes persisted wake-word flags so consent cannot be skipped', () => {
@@ -174,6 +205,7 @@ describe('voice privacy policy', () => {
       wakeWordEnabled: true,
       alwaysListeningConsent: false,
       sttEngine: 'local-whisper',
+      version: 1,
     }, 5)
     expect(prefs.wakeWordEnabled).toBe(false)
     expect(prefs.alwaysListeningConsent).toBe(false)
@@ -188,7 +220,8 @@ describe('voice privacy policy', () => {
     }, dir)
     expect(loadVoicePrefs(dir).selectedInputDeviceId).toBe('mic-1')
     const raw = readFileSync(join(dir, 'voice.json'), 'utf8')
-    expect(raw).toContain('"sttEngine": "local-whisper"')
+    expect(raw).toContain('"sttEngine": "cloud-rox"')
+    expect(raw).toContain('"asrModelId": "rocks-t1"')
     expect(saved.wakeWordEnabled).toBe(false)
   })
 })

@@ -28,7 +28,9 @@ import type {
   SessionsBulkChangedEvent,
 } from './dto'
 import type { ExtensionsChangedPayload } from '../extensions/types'
-import type { VoicePrefs } from '../voice'
+import type { VoicePrefs } from '../voice/types.ts'
+import type { OverlayState } from '../voice/overlay-types.ts'
+import type { VoiceJob } from '../voice/job-machine.ts'
 import type { EnvironmentPrefs } from '../environment'
 
 /** Payload of marketplace:CHANGED — pushed after an install/update/remove completes. */
@@ -95,6 +97,9 @@ export interface BroadcastEventMap {
     nextThreshold: number | null
   }]
   [RPC_CHANNELS.voice.CHANGED]: [payload: VoicePrefs]
+  [RPC_CHANNELS.voice.JOB]: [payload: VoiceJob]
+  [RPC_CHANNELS.voice.OVERLAY]: [payload: OverlayState]
+  [RPC_CHANNELS.voice.HOTKEY]: [payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }]
   [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
 
   // Theme broadcasts (global)
