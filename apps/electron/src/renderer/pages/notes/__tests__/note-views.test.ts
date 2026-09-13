@@ -1,14 +1,18 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  addFormula,
   applyNoteBaseView,
+  availableFormulaExprs,
   convertNote,
   createCanvasFileCard,
   dailyNoteDestination,
   filterGraphByEdgeKind,
+  formulaI18nKey,
   formulaValue,
   graphFromLinks,
   groupNoteRows,
   loadSavedViews,
+  removeFormula,
   notesOutlineFoldsStorageKey,
   outlineFromHeadings,
   parseJsonCanvas,
@@ -122,6 +126,18 @@ describe('notes views', () => {
 
     const folds = parseOutlineFolds(serializeOutlineFolds(new Set(['ops/alpha:0:Intro'])))
     expect(folds.has('ops/alpha:0:Intro')).toBe(true)
+  })
+
+  test('formula columns add, remove and evaluate without duplicating exprs', () => {
+    const view = loadSavedViews(null)[0]!
+    expect(view.formulas.map((formula) => formula.expr)).toEqual(['openTaskCount'])
+    const withBacklinks = addFormula(view, 'backlinkCount')
+    expect(addFormula(withBacklinks, 'backlinkCount').formulas).toHaveLength(2)
+    expect(availableFormulaExprs(withBacklinks)).toEqual(['taskCount', 'tagCount'])
+    expect(formulaI18nKey('backlinkCount')).toBe('notes.views.formulaBacklinks')
+    const rows = projectNoteRows(notes)
+    expect(formulaValue(rows[0]!, withBacklinks.formulas[1]!)).toBe(1)
+    expect(removeFormula(withBacklinks, 'openTaskCount').formulas.map((formula) => formula.expr)).toEqual(['backlinkCount'])
     expect(notesOutlineFoldsStorageKey('ws', 'ops/alpha')).toBe('notes:outline-folds:ws:ops/alpha')
   })
 })

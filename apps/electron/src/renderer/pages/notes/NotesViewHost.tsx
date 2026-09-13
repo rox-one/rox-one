@@ -4,10 +4,14 @@ import { FilePlus2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
+  addFormula,
   applyNoteBaseView,
+  availableFormulaExprs,
   createCanvasFileCard,
   dailyNoteDestination,
   filterGraphByEdgeKind,
+  formulaI18nKey,
+  formulaValue,
   graphFromLinks,
   groupNoteRows,
   loadSavedViews,
@@ -17,10 +21,12 @@ import {
   parseJsonCanvas,
   parseOutlineFolds,
   projectNoteRows,
+  removeFormula,
   serializeJsonCanvas,
   serializeOutlineFolds,
   tagFilterValue,
   withTagFilter,
+  type NoteViewFormulaExpr,
   type JsonCanvas,
   type NoteBaseView,
   type NoteGraphEdgeKindFilter,
@@ -139,6 +145,8 @@ function NotesTableView({
 
   const visible = applyNoteBaseView(rows, view)
   const groups = groupNoteRows(visible, view.groupBy)
+  const unusedFormulas = availableFormulaExprs(view)
+  const colSpan = 4 + view.formulas.length
 
   return (
     <div className="h-full overflow-auto p-4" data-testid="notes-table-view">
@@ -175,6 +183,38 @@ function NotesTableView({
             onChange={(event) => patchView(withTagFilter(view, event.target.value))}
           />
         </label>
+        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          {t('notes.views.formula')}
+          <select
+            data-testid="notes-table-formula"
+            className="h-7 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
+            value=""
+            disabled={unusedFormulas.length === 0}
+            onChange={(event) => {
+              const expr = event.target.value as NoteViewFormulaExpr
+              if (!expr) return
+              patchView(addFormula(view, expr))
+            }}
+          >
+            <option value="">{unusedFormulas.length === 0 ? t('notes.views.formulaNone') : t('notes.views.formulaAdd')}</option>
+            {unusedFormulas.map((expr) => (
+              <option key={expr} value={expr}>{t(formulaI18nKey(expr))}</option>
+            ))}
+          </select>
+        </label>
+        {view.formulas.map((formula) => (
+          <button
+            key={formula.expr}
+            type="button"
+            data-testid={`notes-table-formula-${formula.expr}`}
+            className="inline-flex h-7 items-center gap-1 rounded-[5px] border border-border/60 px-2 text-[11px] hover:bg-foreground/[0.06]"
+            onClick={() => patchView(removeFormula(view, formula.expr))}
+            aria-label={t('notes.views.formulaRemove')}
+          >
+            {t(formulaI18nKey(formula.expr))}
+            <span aria-hidden="true">×</span>
+          </button>
+        ))}
       </div>
       <table className="w-full text-left text-xs">
         <thead>
@@ -182,7 +222,9 @@ function NotesTableView({
             <th className="px-2 py-1">{t('notes.views.colTitle')}</th>
             <th className="px-2 py-1">{t('notes.views.colFolder')}</th>
             <th className="px-2 py-1">{t('notes.views.colTags')}</th>
-            <th className="px-2 py-1">{t('notes.views.colTasks')}</th>
+            {view.formulas.map((formula) => (
+              <th key={formula.expr} className="px-2 py-1">{t(formulaI18nKey(formula.expr))}</th>
+            ))}
             <th className="px-2 py-1" />
           </tr>
         </thead>
@@ -190,7 +232,7 @@ function NotesTableView({
           <tbody key={group.key || 'all'}>
             {view.groupBy ? (
               <tr>
-                <td colSpan={5} className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
+                <td colSpan={colSpan} className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
                   {group.key || t('notes.views.ungrouped')}
                 </td>
               </tr>
@@ -207,7 +249,11 @@ function NotesTableView({
                 </td>
                 <td className="px-2 py-1.5 text-muted-foreground">{row.folder || '—'}</td>
                 <td className="px-2 py-1.5 text-muted-foreground">{row.tags.join(', ') || '—'}</td>
-                <td className="px-2 py-1.5">{row.openTasks}</td>
+                {view.formulas.map((formula) => (
+                  <td key={formula.expr} className="px-2 py-1.5" data-testid={`notes-formula-${formula.expr}`}>
+                    {formulaValue(row, formula)}
+                  </td>
+                ))}
                 <td className="px-2 py-1.5 text-right">
                   <button type="button" className="mr-2 text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'session-draft')}>
                     {t('notes.views.convertSession')}
