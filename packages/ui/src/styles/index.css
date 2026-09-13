@@ -205,6 +205,36 @@ html[data-font="inter"] {
 }
 
 /* =============================================================================
+   HIGH CONTRAST (issue 07 leftover — app-wide, not notes-scoped)
+   Applied via html[data-contrast="high"] from ThemeProvider.
+============================================================================= */
+
+html[data-contrast="high"] {
+  --border-subtle: color-mix(in oklch, var(--foreground) 46%, var(--canvas));
+  --border-strong: color-mix(in oklch, var(--foreground) 72%, var(--canvas));
+  --text-secondary: color-mix(in oklch, var(--foreground) 90%, var(--canvas));
+  --text-muted: color-mix(in oklch, var(--foreground) 78%, var(--canvas));
+  --muted-foreground: var(--text-muted);
+  --border: var(--border-strong);
+  --input: var(--border-strong);
+  --ring-width: 3px;
+  --chrome-glass-bg: var(--surface-elevated);
+  --chrome-glass-blur: 0px;
+  --chrome-glass-border: var(--border-strong);
+  --rox-elev-panel: inset 0 0 0 2px var(--border-strong);
+  --shadow-minimal: inset 0 0 0 2px var(--border-strong);
+}
+
+html[data-contrast="high"][data-scenic]::before {
+  background: var(--background);
+}
+
+html[data-contrast="high"] :focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* =============================================================================
    TAILWIND V4 THEME INTEGRATION
 ============================================================================= */
 

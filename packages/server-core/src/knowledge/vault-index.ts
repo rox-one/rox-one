@@ -948,3 +948,42 @@ export function hashVaultMarkdownFiles(notesRoot: string): Record<string, string
   }
   return out
 }
+
+/** Batch fs.watch bursts before an incremental index refresh. */
+export const VAULT_WATCH_DEBOUNCE_MS = 120
+
+/**
+ * Map a notes-root-relative watch filename to a document id.
+ * Index internals (`.craft/`), assets, templates, and non-markdown paths are ignored.
+ */
+export function vaultWatchNoteIdFromFilename(filename: string | Buffer | null | undefined): string | undefined {
+  if (!filename) return undefined
+  const rel = toSlashPath(filename.toString())
+  if (!rel) return undefined
+  const top = rel.split('/')[0] ?? ''
+  if (SKIP_DIRS.has(top) || rel.startsWith('.') || rel.includes('/.')) return undefined
+  if (!rel.toLowerCase().endsWith('.md')) return undefined
+  return noteIdFromRelativePath(rel)
+}
+
+export interface VaultWatchTickResult {
+  noteIds: string[]
+  rebuilt: VaultRebuildResult | null
+}
+
+/**
+ * Incremental index refresh for coalesced external vault writes.
+ * Canonical Markdown is never rewritten.
+ */
+export function applyVaultWatchTick(
+  notesRoot: string,
+  filenames: Array<string | Buffer | null | undefined>,
+): VaultWatchTickResult {
+  const noteIds = [...new Set(
+    filenames
+      .map(vaultWatchNoteIdFromFilename)
+      .filter((id): id is string => Boolean(id)),
+  )]
+  if (noteIds.length === 0) return { noteIds, rebuilt: null }
+  return { noteIds, rebuilt: ensureVaultIndex(notesRoot) }
+}

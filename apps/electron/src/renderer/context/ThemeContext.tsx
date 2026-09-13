@@ -9,9 +9,16 @@ import {
   type ThemeFile,
   type ShikiThemeConfig,
 } from '@config/theme'
+import {
+  isContrastMode,
+  prefersMoreContrast,
+  resolveContrast,
+  type ContrastMode,
+} from './contrast-mode'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
 export type FontFamily = 'inter' | 'system'
+export type { ContrastMode }
 
 interface ThemeContextType {
   // Preferences (persisted at app level)
@@ -19,10 +26,14 @@ interface ThemeContextType {
   /** App-level default color theme (used when workspace has no override) */
   colorTheme: string
   font: FontFamily
+  contrast: ContrastMode
   setMode: (mode: ThemeMode) => void
   /** Set app-level default color theme */
   setColorTheme: (theme: string) => void
   setFont: (font: FontFamily) => void
+  setContrast: (contrast: ContrastMode) => void
+  /** Resolved high/standard contrast after system preference */
+  resolvedContrast: 'normal' | 'high'
 
   // Workspace-level theme override
   /** Active workspace ID (null if no workspace context) */
@@ -67,6 +78,7 @@ interface StoredTheme {
   mode: ThemeMode
   colorTheme: string
   font?: FontFamily
+  contrast?: ContrastMode
   /** True when user explicitly changed theme in UI (not auto-saved on startup) */
   isUserOverride?: boolean
 }
@@ -102,6 +114,10 @@ function getSystemPreference(): 'light' | 'dark' {
   return 'light'
 }
 
+function storedContrast(stored: StoredTheme | null): ContrastMode {
+  return stored && isContrastMode(stored.contrast) ? stored.contrast : 'system'
+}
+
 function loadStoredTheme(): StoredTheme | null {
   if (typeof window === 'undefined') return null
   return storage.get<StoredTheme | null>(storage.KEYS.theme, null)
@@ -130,7 +146,9 @@ export function ThemeProvider({
     return defaultColorTheme // Will be updated by config.json effect
   })
   const [font, setFontState] = useState<FontFamily>(stored?.font ?? defaultFont)
+  const [contrast, setContrastState] = useState<ContrastMode>(storedContrast(stored))
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
+  const [systemPrefersMoreContrast, setSystemPrefersMoreContrast] = useState(prefersMoreContrast)
   const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
 
   // === Workspace-level theme override ===
@@ -161,6 +179,7 @@ export function ThemeProvider({
 
   // === Derived values ===
   const resolvedMode = mode === 'system' ? systemPreference : mode
+  const resolvedContrast = resolveContrast(contrast, systemPrefersMoreContrast)
   // Effective theme: preview > workspace override > app default
   const effectiveColorTheme = previewColorTheme ?? workspaceColorTheme ?? colorTheme
   const effectiveColorThemeSource: 'preview' | 'workspace' | 'app' =
@@ -302,7 +321,8 @@ export function ThemeProvider({
 
     // Always set theme override for semi-transparent background (vibrancy effect)
     root.dataset.themeOverride = 'true'
-  }, [effectiveColorTheme, font])
+    root.dataset.contrast = resolvedContrast
+  }, [effectiveColorTheme, font, resolvedContrast])
 
   // Apply dark/light class and theme-specific DOM attributes
   // This runs when preset loads or mode changes
@@ -384,8 +404,13 @@ export function ThemeProvider({
     const handleMediaChange = (e: MediaQueryListEvent) => {
       setSystemPreference(e.matches ? 'dark' : 'light')
     }
+    const contrastQuery = window.matchMedia('(prefers-contrast: more)')
+    const handleContrastChange = (e: MediaQueryListEvent) => {
+      setSystemPrefersMoreContrast(e.matches)
+    }
 
     mediaQuery.addEventListener('change', handleMediaChange)
+    contrastQuery.addEventListener('change', handleContrastChange)
 
     // Listen via Electron IPC if available (more reliable on macOS)
     let cleanup: (() => void) | undefined
@@ -404,6 +429,7 @@ export function ThemeProvider({
 
     return () => {
       mediaQuery.removeEventListener('change', handleMediaChange)
+      contrastQuery.removeEventListener('change', handleContrastChange)
       cleanup?.()
     }
   }, [])
@@ -414,14 +440,16 @@ export function ThemeProvider({
 
     const cleanup = window.electronAPI.onThemePreferencesChange((preferences) => {
       isExternalUpdate.current = true
+      const nextContrast = isContrastMode(preferences.contrast) ? preferences.contrast : storedContrast(loadStoredTheme())
       setModeState(preferences.mode as ThemeMode)
       setColorThemeState(preferences.colorTheme)
       setFontState(preferences.font as FontFamily)
-      // When syncing from another window, mark as user override since user explicitly changed theme
+      setContrastState(nextContrast)
       saveTheme({
         mode: preferences.mode as ThemeMode,
         colorTheme: preferences.colorTheme,
         font: preferences.font as FontFamily,
+        contrast: nextContrast,
         isUserOverride: true
       })
       setTimeout(() => {
@@ -435,32 +463,38 @@ export function ThemeProvider({
   // === Setters with persistence and broadcast ===
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode)
-    // Preserve existing isUserOverride flag
     const existing = loadStoredTheme()
-    saveTheme({ mode: newMode, colorTheme, font, isUserOverride: existing?.isUserOverride })
+    saveTheme({ mode: newMode, colorTheme, font, contrast, isUserOverride: existing?.isUserOverride })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font })
+      window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font, contrast })
     }
-  }, [colorTheme, font])
+  }, [colorTheme, font, contrast])
 
   const setColorTheme = useCallback((newTheme: string) => {
     setColorThemeState(newTheme)
-    // Mark as user override - user explicitly changed theme via UI
-    saveTheme({ mode, colorTheme: newTheme, font, isUserOverride: true })
+    saveTheme({ mode, colorTheme: newTheme, font, contrast, isUserOverride: true })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme: newTheme, font })
+      window.electronAPI.broadcastThemePreferences({ mode, colorTheme: newTheme, font, contrast })
     }
-  }, [mode, font])
+  }, [mode, font, contrast])
 
   const setFont = useCallback((newFont: FontFamily) => {
     setFontState(newFont)
-    // Preserve existing isUserOverride flag
     const existing = loadStoredTheme()
-    saveTheme({ mode, colorTheme, font: newFont, isUserOverride: existing?.isUserOverride })
+    saveTheme({ mode, colorTheme, font: newFont, contrast, isUserOverride: existing?.isUserOverride })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font: newFont })
+      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font: newFont, contrast })
     }
-  }, [mode, colorTheme])
+  }, [mode, colorTheme, contrast])
+
+  const setContrast = useCallback((newContrast: ContrastMode) => {
+    setContrastState(newContrast)
+    const existing = loadStoredTheme()
+    saveTheme({ mode, colorTheme, font, contrast: newContrast, isUserOverride: existing?.isUserOverride })
+    if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
+      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font, contrast: newContrast })
+    }
+  }, [mode, colorTheme, font])
 
   // Set workspace-specific color theme override
   const setWorkspaceColorTheme = useCallback((newTheme: string | null) => {
@@ -492,9 +526,12 @@ export function ThemeProvider({
         mode,
         colorTheme,
         font,
+        contrast,
         setMode,
         setColorTheme,
         setFont,
+        setContrast,
+        resolvedContrast,
 
         // Workspace-level theme override
         activeWorkspaceId,
