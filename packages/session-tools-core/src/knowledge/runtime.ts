@@ -20,6 +20,8 @@ import type {
   ContextPayload,
   KnowledgeNode,
   KnowledgeRef,
+  MutationInput,
+  MutationProposal,
   SearchInput,
   SearchPage,
 } from '@craft-agent/core/knowledge';
@@ -49,6 +51,11 @@ export interface KnowledgeToolRuntime {
     contextMode?: KnowledgeReadContextMode;
   }): Promise<KnowledgeReadResult>;
   getBacklinks(args: { connectionId?: string; ref: KnowledgeRef }): Promise<KnowledgeBacklink[]>;
+  /**
+   * Create a mutation proposal (P3 write-back). Must NOT apply.
+   * Optional so read-only runtimes (and tests) can omit it.
+   */
+  propose?(args: { connectionId?: string; input: MutationInput }): Promise<MutationProposal>;
   /**
    * The connection id a call WITHOUT an explicit connectionId resolves to
    * (first configured connection), or null when none exists. Handlers use it

@@ -171,6 +171,9 @@ export class SiyuanKnowledgeProvider implements KnowledgeProvider {
         backlinks: true,
         attributes: true,
         databases: false, // attribute-view reads are out of P1 scope
+        inbox: false, // no kernel inbox list endpoint
+        daily: false, // no kernel daily-notes list endpoint
+        tags: false, // no kernel tags list endpoint
         assets: false,
         liveReference: true,
         watch: false, // PUSH knowledge:changed arrives with the watch slice

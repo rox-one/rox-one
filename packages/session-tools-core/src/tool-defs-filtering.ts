@@ -49,6 +49,7 @@ export const SESSION_MCP_ESSENTIAL_SUFFIXES = new Set([
   'knowledge_search',
   'knowledge_read',
   'knowledge_get_backlinks',
+  'knowledge_propose',
   'list_pages',
   'get_page',
   'create_page',

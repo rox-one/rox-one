@@ -97,14 +97,25 @@ export const UNCONTRACTED_NAV_SECTION_IDS = ['inbox', 'daily', 'databases', 'tag
 
 export type UncontractedNavSectionId = (typeof UNCONTRACTED_NAV_SECTION_IDS)[number]
 
-export type UncontractedNavPresentation = 'hidden' | 'items'
+export type UncontractedNavPresentation = 'hidden' | 'items' | 'unsupported'
 
 /**
  * Inbox/Daily/Tags (and Databases) have no list endpoint. Empty chrome must
  * disappear — never look like a load failure / unavailable kernel.
+ * `unsupported` is the honest state when the provider capability is false;
+ * the tree still hides the row (same pixels as hidden) so it does not look broken.
  */
 export function uncontractedNavSectionPresentation(itemCount: number): UncontractedNavPresentation {
   return itemCount > 0 ? 'items' : 'hidden'
+}
+
+/** Capability-aware presentation: missing provider surface ≠ kernel failure. */
+export function navSectionPresentation(opts: {
+  featureSupported: boolean
+  itemCount: number
+}): UncontractedNavPresentation {
+  if (!opts.featureSupported) return 'unsupported'
+  return uncontractedNavSectionPresentation(opts.itemCount)
 }
 
 /** Recently touched work items: non-archived envelopes, updatedAt desc, capped. */

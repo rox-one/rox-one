@@ -74,7 +74,8 @@ function providerDouble(overrides: Partial<KnowledgeProvider> = {}) {
       calls.push({ method: 'getContext', args: [ref, mode] })
       return CONTEXT
     },
-    async proposeMutation() {
+    async proposeMutation(input) {
+      calls.push({ method: 'proposeMutation', args: [input] })
       throw new KnowledgeError('UNSUPPORTED_OPERATION', 'not needed')
     },
     async applyMutation() {
@@ -181,5 +182,40 @@ describe('createKnowledgeToolRuntime', () => {
     expect(error).toBeInstanceOf(KnowledgeError)
     expect((error as KnowledgeError).code).toBe('PROVIDER_ERROR')
     expect((error as KnowledgeError).message).toContain('socket hangup')
+  })
+
+  it('propose forwards to provider.proposeMutation and never applyMutation', async () => {
+    const { provider, calls } = providerDouble({
+      async proposeMutation(input) {
+        calls.push({ method: 'proposeMutation', args: [input] })
+        return {
+          id: 'prop-1',
+          connectionId: 'conn-1',
+          targetRef: input.targetRef,
+          ops: input.ops,
+          selectionProofs: [],
+          baseHash: 'hash-1',
+          baseReadAt: '2026-01-01T00:00:00.000Z',
+          preState: '',
+          hashAlgorithm: 'sha256-canonical-v1',
+          status: 'pending_review',
+          statusHistory: [],
+          actor: 'agent',
+          createdAt: '2026-01-01T00:00:00.000Z',
+        }
+      },
+    })
+    const { runtime } = makeRuntime({ provider })
+    const proposal = await runtime.propose!({
+      input: {
+        targetRef: { ...DOC_REF },
+        ops: [{ op: 'updateBlock', blockId: 'doc-1', markdown: '# Next' }],
+        actor: 'agent',
+      },
+    })
+    expect(proposal.id).toBe('prop-1')
+    expect(proposal.status).toBe('pending_review')
+    expect(calls.some((c) => c.method === 'applyMutation')).toBe(false)
+    expect(calls.some((c) => c.method === 'proposeMutation')).toBe(true)
   })
 })

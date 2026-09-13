@@ -46,7 +46,7 @@ function check(name: string, condition: boolean, detail?: string) {
 // ---------------------------------------------------------------------------
 console.log('1. buildSessionToolDefs advertises the knowledge tools (Pi/OMP frame)')
 const defs = buildSessionToolDefs()
-for (const name of ['knowledge_search', 'knowledge_read', 'knowledge_get_backlinks']) {
+for (const name of ['knowledge_search', 'knowledge_read', 'knowledge_get_backlinks', 'knowledge_propose']) {
   const def = defs.find((d) => d.name === `mcp__session__${name}`)
   check(`${name} advertised`, !!def)
   if (def) {

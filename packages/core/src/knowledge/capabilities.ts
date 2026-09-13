@@ -12,6 +12,9 @@ export interface KnowledgeCapabilities {
     backlinks: boolean;
     attributes: boolean;
     databases: boolean;           // database/attribute views (att1 §4.3)
+    inbox: boolean;               // inbox list endpoint (navigator; SiYuan: false)
+    daily: boolean;               // daily notes list endpoint (navigator; SiYuan: false)
+    tags: boolean;                // tags list endpoint (navigator; SiYuan: false)
     assets: boolean;
     liveReference: boolean;       // поддержан режим getContext(ref, 'live-reference')
     watch: boolean;               // события изменений → knowledge:changed push
