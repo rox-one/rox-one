@@ -8,7 +8,8 @@
  * Status is a triad, not a single overloaded run state (ROX-P0-CONTRACT-STATUS-SPLIT):
  * executionMode × lifecycle × verification. `isClaimableLive` is live + succeeded +
  * policy-verified. queued is not an error. live+failed is not success. Succeeded
- * without a receipt stays unverified. Legacy `Rox2RunState` remains as a compat alias.
+ * without a receipt stays unverified. Compat types can still parse `{ ok, state }`
+ * but must not claim live. Legacy `Rox2RunState` remains as a compat alias.
  */
 
 import type { SoupEntityConcreteType } from '../conation/soup/types.ts'
@@ -159,9 +160,9 @@ export type Rox2CanonicalResult = Rox2Status & {
   receipt?: Rox2Receipt
   code?: string
   message?: string
-  /** Derived from lifecycle: failed/cancelled are false. queued is not false. */
+  /** True only for live + succeeded + verified. queued/fixture/simulated/failed are not success. */
   ok?: boolean
-  /** @deprecated Compat projection of the triad. */
+  /** @deprecated Compat projection of the triad. Absent when the triad is not a legacy success. */
   state?: Rox2RunState
 }
 
@@ -180,15 +181,13 @@ export type Rox2LegacyErrResult = {
   message: string
 }
 
-export type Rox2OkResult =
-  | Rox2LegacyOkResult
-  | (Rox2CanonicalResult & {
-      ok: true
-      executionMode: 'live'
-      lifecycle: 'succeeded'
-      verification: 'receipt_verified' | 'readback_verified'
-      entityId: string
-    })
+export type Rox2OkResult = Rox2CanonicalResult & {
+  ok: true
+  executionMode: 'live'
+  lifecycle: 'succeeded'
+  verification: 'receipt_verified' | 'readback_verified'
+  entityId: string
+}
 
 export type Rox2ErrResult = Rox2LegacyErrResult | (Rox2CanonicalResult & { ok: false })
 
@@ -434,14 +433,25 @@ function isCanonicalResult(result: Rox2Result): result is Rox2CanonicalResult {
 }
 
 function derivedOk(status: Rox2Status): boolean {
-  return status.lifecycle !== 'failed' && status.lifecycle !== 'cancelled'
+  return (
+    status.executionMode === 'live' &&
+    status.lifecycle === 'succeeded' &&
+    status.verification !== 'unverified'
+  )
 }
 
-function projectRunState(status: Rox2Status): Rox2RunState {
+function projectRunState(status: Rox2Status): Rox2RunState | undefined {
   if (status.executionMode === 'fixture') return 'fixture'
   if (status.executionMode === 'simulated') return 'simulated'
   if (status.lifecycle === 'queued') return 'queued'
-  return 'live'
+  if (
+    status.executionMode === 'live' &&
+    status.lifecycle === 'succeeded' &&
+    status.verification !== 'unverified'
+  ) {
+    return 'live'
+  }
+  return undefined
 }
 
 function legacyRunStateToStatus(state: Rox2RunState): Rox2Status {
@@ -464,11 +474,12 @@ function legacyRunStateToStatus(state: Rox2RunState): Rox2Status {
 }
 
 function withStatusFields(status: Rox2Status, extra: Omit<Rox2CanonicalResult, keyof Rox2Status | 'ok' | 'state'>): Rox2CanonicalResult {
+  const state = projectRunState(status)
   return {
     ...status,
     ...extra,
     ok: derivedOk(status),
-    state: projectRunState(status),
+    ...(state !== undefined ? { state } : {}),
   }
 }
 
@@ -525,14 +536,11 @@ export function liveResult(input: {
   )
 }
 
-/** live + succeeded + policy-verified. Legacy `{ ok, state: 'live' }` stays claimable. */
+/** live + succeeded + policy-verified. Legacy `{ ok, state: 'live' }` parses, but is not claimable. */
 export function isClaimableLive(
   result: Rox2Result,
   policy: Rox2VerificationPolicy = 'any',
 ): result is Rox2OkResult {
-  if (!isCanonicalResult(result)) {
-    return result.ok === true && result.state === 'live'
-  }
   const status = normalizeRox2Result(result)
   return (
     status.executionMode === 'live' &&

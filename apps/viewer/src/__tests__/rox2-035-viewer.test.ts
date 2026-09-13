@@ -34,7 +34,7 @@ describe('ROX2-035 native viewer share surface', () => {
     })
     expect(entity.source).toBe('native')
     expect(entity.permissions).toEqual(['read'])
-    expect(isClaimableLive(viewerSurfaceResult('native'))).toBe(true)
+    expect(isClaimableLive(viewerSurfaceResult('native'))).toBe(false)
     expect(isClaimableLive(viewerSurfaceResult('fixture'))).toBe(false)
     expect(isClaimableLive(viewerSurfaceResult('conation'))).toBe(false)
   })
