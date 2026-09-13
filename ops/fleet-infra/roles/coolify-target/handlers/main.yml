@@ -1,0 +1,11 @@
+---
+- name: Validate and restart isolated coolify sshd
+  listen: validate and restart isolated coolify sshd
+  ansible.builtin.shell: |
+    set -euo pipefail
+    /usr/sbin/sshd -t -f {{ coolify_sshd_config }}
+    systemctl daemon-reload
+    systemctl restart sshd-coolify.service
+  args:
+    executable: /bin/bash
+  when: not ansible_check_mode

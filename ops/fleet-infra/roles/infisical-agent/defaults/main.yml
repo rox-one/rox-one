@@ -1,0 +1,22 @@
+---
+# Pins (keep in sync with inventory/group_vars/all/versions.yml)
+infisical_cli_version: "0.43.125"
+infisical_cli_deb_sha256: "08b62f70db297e91fe67e86a134c5e00256620fca5cb09e181dbf25c01879184"
+infisical_cli_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+infisical_cli_install_dir: /usr/bin
+infisical_agent_config_dir: /etc/infisical
+infisical_agent_runtime_dir: /etc/infisical/runtime
+infisical_agent_config_file: /etc/infisical/agent-config.yaml
+infisical_agent_token_file: /etc/infisical/runtime/access-token
+infisical_agent_domain: "{{ infisical_public_domain | default('https://infisical.example.internal') }}"
+infisical_agent_user: root
+
+# Universal Auth credentials are referenced from this env file at runtime.
+# The file itself is provisioned out-of-band (or via vault lookup) on the host;
+# its contents are NEVER embedded in this repository.
+infisical_agent_project_id: "{{ infisical_project_id | default('') }}"
+infisical_agent_environment_slug: "prod"
+infisical_agent_secret_path: "/"

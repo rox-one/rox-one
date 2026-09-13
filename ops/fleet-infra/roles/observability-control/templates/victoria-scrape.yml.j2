@@ -1,0 +1,11 @@
+scrape_configs:
+  - job_name: netdata
+    scrape_interval: 30s
+    metrics_path: /api/v1/allmetrics
+    params:
+      format: [prometheus]
+    static_configs:
+      - targets:
+{% for host in groups['managed_linux'] | default([]) %}
+          - {{ hostvars[host].tailscale_ip }}:19999
+{% endfor %}

@@ -1,0 +1,15 @@
+[Unit]
+Description=Tailnet-only SSH endpoint for Coolify deployments
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/install -d -o root -g root -m 0755 /run/sshd
+ExecStartPre=/usr/sbin/sshd -t -f {{ coolify_sshd_config }}
+ExecStart=/usr/sbin/sshd -D -e -f {{ coolify_sshd_config }}
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+---
+ansible_user: root
+arch: x86_64
+fleet_role: recovery
+reachable: false
+tailscale_ip: 192.0.2.20
+os_family: Debian
+os_release: "24.04"
+has_docker: false
+probe_errors:
+  - unreachable

@@ -1,0 +1,7 @@
+---
+{% for u in fleet_admin_users %}
+{{ u.name }} ALL=(ALL) NOPASSWD:ALL
+{% endfor %}
+{% for u in fleet_deploy_users %}
+{{ u.name }} ALL=(ALL) ALL
+{% endfor %}

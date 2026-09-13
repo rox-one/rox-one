@@ -1,0 +1,8 @@
+---
+- name: Deploy observability control plane
+  hosts: observability_control
+  become: true
+  gather_facts: true
+  roles:
+    - observability-control
+

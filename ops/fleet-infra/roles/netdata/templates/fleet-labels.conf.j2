@@ -1,0 +1,6 @@
+# Managed by Ansible - ROX fleet host labels
+[host labels]
+{% for key, value in netdata_labels.items() %}
+    {{ key }} = {{ value }}
+{% endfor %}
+

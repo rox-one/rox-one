@@ -1,0 +1,60 @@
+---
+# docker role: official Docker apt repo, pinned version, daemon.json, compose plugin.
+- name: Install docker repo prerequisites
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - gnupg
+    state: present
+  when: docker_package_source == 'official'
+
+- name: Add Docker GPG key
+  ansible.builtin.apt_key:
+    url: "{{ docker_repo_key_url }}"
+    keyring: /etc/apt/keyrings/docker.asc
+    state: present
+  when: docker_package_source == 'official'
+
+- name: Add Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/docker.asc] {{ docker_repo_url }} {{ ansible_distribution_release }} stable"
+    filename: docker
+    state: present
+  when: docker_package_source == 'official'
+
+- name: Install pinned Docker engine and compose plugin
+  ansible.builtin.apt:
+    name:
+      - "docker-ce={{ docker_ce_version }}"
+      - "docker-ce-cli={{ docker_ce_version }}"
+      - "containerd.io={{ docker_containerd_version }}"
+      - "docker-buildx-plugin={{ docker_buildx_version }}"
+      - "docker-compose-plugin={{ docker_compose_version }}"
+    state: present
+    force: true
+  notify: restart docker
+  when: docker_package_source == 'official'
+
+- name: Preserve Ubuntu Docker engine and install Compose v2
+  ansible.builtin.apt:
+    name: "{{ docker_ubuntu_packages }}"
+    state: present
+    update_cache: true
+  when: docker_package_source == 'ubuntu'
+
+- name: Deploy daemon.json (log rotation + live-restore)
+  ansible.builtin.copy:
+    content: "{{ docker_daemon_json | to_nice_json }}\n"
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart docker
+
+- name: Enable and start docker
+  ansible.builtin.systemd_service:
+    name: docker
+    state: started
+    enabled: true
+
+# Rollback: `apt install docker-ce=<prev> ...` to downgrade; restore prior /etc/docker/daemon.json; optionally remove /etc/apt/sources.list.d/docker.list and the keyring.

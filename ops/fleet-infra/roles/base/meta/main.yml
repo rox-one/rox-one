@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: fleet-infra
+  description: OS baseline (packages, time sync, auto-updates, sysctl) for Ubuntu 24.04
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+allow_duplicates: false
+dependencies: []

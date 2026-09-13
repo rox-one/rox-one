@@ -1,0 +1,16 @@
+---
+# Pins (keep in sync with inventory/group_vars/all/versions.yml)
+windmill_image: "ghcr.io/windmill-labs/windmill-worker:1.500.0"
+windmill_image_digest: ""   # REQUIRED: pin digest for reproducibility, e.g. sha256:...
+windmill_worker_group: "linux-small"   # linux-small|linux-heavy|browser|omp|hermes|mac-arm64|privileged-ops|backup
+windmill_worker_concurrency: 4
+
+windmill_install_dir: /opt/windmill
+windmill_container_name: "windmill-worker-{{ windmill_worker_group }}"
+windmill_env_file: /etc/windmill-worker.env   # runtime secrets from Infisical agent output; never committed
+
+# Resource limits enforced by systemd unit
+windmill_cpu_max: "50%"
+windmill_memory_max: "2G"
+
+windmill_drain_timeout_seconds: 120

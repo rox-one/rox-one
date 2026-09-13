@@ -1,0 +1,20 @@
+# local artifacts
+.venv/
+*.retry
+settings.yml
+
+# secrets — never commit
+*.key
+*.env
+*.pem
+vault.yml
+inventory/host_vars/private/
+
+# reports: keep markdown reports, exclude raw machine output
+reports/raw/
+reports/before/
+reports/**/*.log
+reports/**/*.json
+reports/**/*.txt
+reports/**/*.hujson
+reports/**/*.csv

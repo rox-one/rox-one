@@ -1,0 +1,8 @@
+---
+- name: Retire NetBird after two-origin Tailscale proof
+  hosts: netbird_retire
+  become: true
+  gather_facts: true
+  roles:
+    - netbird-retire
+

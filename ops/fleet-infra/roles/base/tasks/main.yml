@@ -1,0 +1,61 @@
+---
+# base role: OS baseline for Ubuntu 24.04 fleet hosts.
+# All steps idempotent and check_mode-safe. Fail loudly on any required step.
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ base_apt_cache_valid_time }}"
+
+- name: Install baseline packages
+  ansible.builtin.apt:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Install unattended-upgrades
+  ansible.builtin.apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Enable unattended-upgrades periodic config
+  ansible.builtin.copy:
+    src: 20auto-upgrades
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart unattended-upgrades
+
+- name: Install chrony
+  ansible.builtin.apt:
+    name: chrony
+    state: present
+
+- name: Deploy chrony config
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart chrony
+
+- name: Apply sysctl baseline (ip_forward explicitly absent)
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    sysctl_set: true
+    state: present
+    reload: true
+    sysctl_file: /etc/sysctl.d/90-fleet-baseline.conf
+  loop: "{{ base_sysctl }}"
+  notify: sysctl reload
+
+- name: Ensure ip_forward is explicitly absent from baseline file
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    sysctl_set: false
+    state: absent
+    reload: false
+    sysctl_file: /etc/sysctl.d/90-fleet-baseline.conf
+
+# Rollback: apt remove chrony jq curl git htop unattended-upgrades; rm /etc/apt/apt.conf.d/20auto-upgrades /etc/sysctl.d/90-fleet-baseline.conf; restore original /etc/chrony/chrony.conf.

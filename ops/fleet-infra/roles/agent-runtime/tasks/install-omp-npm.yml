@@ -1,0 +1,73 @@
+---
+- name: Assert omp npm pin is set
+  ansible.builtin.assert:
+    that:
+      - omp_npm_package | length > 0
+      - omp_version | length > 0
+      - bun_version | length > 0
+      - bun_sha256_map[ansible_architecture] | length == 64
+    fail_msg: "agent-runtime: omp_npm_package/omp_version must be pinned in role defaults"
+
+- name: Check installed Bun version
+  ansible.builtin.command: "{{ agent_runtime_bin_dir }}/bun --version"
+  register: bun_ver
+  changed_when: false
+  failed_when: false
+
+- name: Create temporary Bun extraction directory
+  ansible.builtin.file:
+    path: /tmp/fleet-bun
+    state: directory
+    mode: "0755"
+  when: "bun_version not in (bun_ver.stdout | default(''))"
+
+- name: Download pinned Bun runtime
+  ansible.builtin.get_url:
+    url: "https://github.com/oven-sh/bun/releases/download/bun-v{{ bun_version }}/bun-linux-{{ bun_arch_map[ansible_architecture] }}.zip"
+    dest: "/tmp/bun-linux-{{ bun_arch_map[ansible_architecture] }}.zip"
+    checksum: "sha256:{{ bun_sha256_map[ansible_architecture] }}"
+    mode: "0644"
+  when: "bun_version not in (bun_ver.stdout | default(''))"
+
+- name: Extract pinned Bun runtime
+  ansible.builtin.unarchive:
+    src: "/tmp/bun-linux-{{ bun_arch_map[ansible_architecture] }}.zip"
+    dest: /tmp/fleet-bun
+    remote_src: true
+  when: "bun_version not in (bun_ver.stdout | default(''))"
+
+- name: Install Bun binary
+  ansible.builtin.copy:
+    src: "/tmp/fleet-bun/bun-linux-{{ bun_arch_map[ansible_architecture] }}/bun"
+    dest: "{{ agent_runtime_bin_dir }}/bun"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  when: "bun_version not in (bun_ver.stdout | default(''))"
+
+- name: Remove Bun temporary artifacts
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/fleet-bun
+    - "/tmp/bun-linux-{{ bun_arch_map[ansible_architecture] }}.zip"
+  when: "bun_version not in (bun_ver.stdout | default(''))"
+
+- name: Check installed omp version
+  ansible.builtin.command: "{{ agent_runtime_bin_dir }}/omp --version"
+  register: omp_ver
+  changed_when: false
+  failed_when: false
+
+- name: Install pinned omp via npm registry
+  community.general.npm:
+    name: "{{ omp_npm_package }}"
+    version: "{{ omp_version }}"
+    global: true
+    production: true
+    state: present
+  when: "omp_version not in (omp_ver.stdout | default(''))"
+
+# Rollback: npm -g rm {{ omp_npm_package }}; remove bin symlink.

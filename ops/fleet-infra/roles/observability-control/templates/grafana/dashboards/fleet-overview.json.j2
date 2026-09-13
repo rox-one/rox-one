@@ -1,0 +1,18 @@
+{
+  "uid": "rox-fleet-overview",
+  "title": "ROX Fleet Overview",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Netdata targets up",
+      "datasource": {"type": "prometheus", "uid": "victoria"},
+      "targets": [{"refId": "A", "expr": "sum(up{job=\"netdata\"})"}],
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0}
+    }
+  ]
+}
+

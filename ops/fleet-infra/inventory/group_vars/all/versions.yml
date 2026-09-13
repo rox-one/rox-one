@@ -1,0 +1,29 @@
+---
+# Pinned versions for the fleet. Each pin carries its source URL.
+# Verified 2026-08-25; re-verify before bumping.
+
+docker_ce: "27.5.1"
+  # https://docs.docker.com/engine/release-notes/27.x/
+
+tailscale_version: "1.102.3"
+  # https://pkgs.tailscale.com/stable/ubuntu noble; live candidate verified 2026-08-26
+
+netdata_version: "v2.3.2"
+  # https://github.com/netdata/netdata/releases (Agent stream)
+
+coolify_version: "4.0.0-beta.400"
+  # https://github.com/coollabsio/coolify/releases
+  # NOTE: upstream does not ship a plain "4.9"; 4.x uses 4.0.0-beta.N scheme.
+
+restic_version: "0.18.1"
+  # https://github.com/restic/restic/releases (0.18.1 fixes 0.18.0 regressions)
+
+windmill_version: "1.594.0"
+  # https://www.windmill.dev/changelog
+
+node_major: "22"
+  # https://nodejs.org/en/about/previous-releases (22 = active LTS)
+
+# Runtime pins source of truth: roles/agent-runtime/defaults/main.yml
+# omp = npm @oh-my-pi/pi-coding-agent@18.0.4 (registry-verified 2026-08-26)
+# hermes = agisota/oh-my-hermes-private v1.0.6 (239eef2e1fb902e6c14ee5f50c5b4bf7a556ec82)

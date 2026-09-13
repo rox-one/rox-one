@@ -1,0 +1,18 @@
+# Managed by Ansible - fleet-infra roles/coolify-target
+Port {{ coolify_ssh_port }}
+ListenAddress {{ tailscale_ip }}
+PidFile /run/sshd-coolify.pid
+HostKey /etc/ssh/ssh_host_ed25519_key
+AuthorizedKeysFile .ssh/authorized_keys
+AuthenticationMethods publickey
+PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PermitRootLogin no
+AllowUsers {{ coolify_user }}
+StrictModes yes
+UsePAM yes
+X11Forwarding no
+AllowTcpForwarding yes
+Subsystem sftp internal-sftp

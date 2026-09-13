@@ -1,0 +1,101 @@
+---
+# netdata role: kickstart.sh pinned stable channel, guarded by existing-install check.
+# Cloud claim token comes from NETDATA_CLAIM_TOKEN env at runtime only.
+- name: Check for existing netdata install
+  ansible.builtin.stat:
+    path: /usr/sbin/netdata
+  register: netdata_binary
+
+- name: Assert kickstart checksum is pinned
+  ansible.builtin.assert:
+    that:
+      - netdata_kickstart_sha256 | length == 64
+
+- name: Download pinned kickstart script to /tmp
+  ansible.builtin.get_url:
+    url: "{{ netdata_kickstart_url }}"
+    dest: /tmp/netdata-kickstart.sh
+    mode: "0700"
+    checksum: "sha256:{{ netdata_kickstart_sha256 }}"
+  when: not netdata_binary.stat.exists or netdata_claim_enabled
+
+- name: Install netdata via kickstart (pinned stable, non-interactive)
+  ansible.builtin.command:
+    cmd: >
+      /tmp/netdata-kickstart.sh
+      --non-interactive
+      --stable-channel
+      --disable-telemetry
+  environment:
+    NETDATA_INSTALL_OPTIONS: ""
+  when: not netdata_binary.stat.exists
+
+- name: Create Netdata drop-in directory
+  ansible.builtin.file:
+    path: /etc/netdata/netdata.conf.d
+    state: directory
+    owner: root
+    group: netdata
+    mode: "0750"
+
+- name: Deploy fleet host labels
+  ansible.builtin.template:
+    src: fleet-labels.conf.j2
+    dest: /etc/netdata/netdata.conf.d/90-fleet-labels.conf
+    owner: root
+    group: netdata
+    mode: "0640"
+  notify: restart netdata
+
+- name: Deploy streaming configuration only when explicitly enabled
+  ansible.builtin.template:
+    src: stream.conf.j2
+    dest: /etc/netdata/stream.conf
+    owner: root
+    group: netdata
+    mode: "0640"
+  notify: restart netdata
+  when: netdata_stream_enabled | bool
+
+- name: Remove stale placeholder streaming configuration
+  ansible.builtin.file:
+    path: /etc/netdata/stream.conf
+    state: absent
+  notify: restart netdata
+  when: not (netdata_stream_enabled | bool)
+
+- name: Claim node to Netdata Cloud (token via env, runtime only)
+  ansible.builtin.command:
+    cmd: >
+      /tmp/netdata-kickstart.sh --non-interactive --claim-only
+      --claim-url {{ netdata_claim_url }}
+      --claim-rooms {{ netdata_claim_rooms | join(',') }}
+      --claim-hostname {{ inventory_hostname }}
+  environment:
+    NETDATA_CLAIM_TOKEN: "{{ lookup('env', 'NETDATA_CLAIM_TOKEN') }}"
+  when:
+    - netdata_claim_enabled
+    - lookup('env', 'NETDATA_CLAIM_TOKEN') | length > 0
+  args:
+    creates: /var/lib/netdata/cloud.d/claimed_id
+  no_log: true
+
+- name: Fail loudly when claiming is requested without NETDATA_CLAIM_TOKEN
+  ansible.builtin.fail:
+    msg: "netdata_claim_enabled is true but NETDATA_CLAIM_TOKEN env var is empty on the controller"
+  when:
+    - netdata_claim_enabled
+    - lookup('env', 'NETDATA_CLAIM_TOKEN') | length == 0
+
+- name: Remove downloaded kickstart script
+  ansible.builtin.file:
+    path: /tmp/netdata-kickstart.sh
+    state: absent
+
+- name: Enable and start netdata
+  ansible.builtin.systemd_service:
+    name: netdata
+    state: started
+    enabled: true
+
+# Rollback: `/usr/libexec/netdata/netdata-uninstaller.sh --force --yes`; remove /etc/netdata/stream.conf; unclaim in Netdata Cloud UI before uninstalling.

@@ -1,0 +1,29 @@
+{{ ansible_managed }}
+Port {{ ssh_port }}
+Protocol 2
+
+HostKey /etc/ssh/ssh_host_rsa_key
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+# Kept YES until dual-key login is proven on every host; then flip fleet_ssh_password_auth.
+PasswordAuthentication {{ 'yes' if fleet_ssh_password_auth else 'no' }}
+KbdInteractiveAuthentication no
+PermitRootLogin {{ fleet_ssh_permit_root_login }}
+MaxAuthTries {{ fleet_ssh_max_auth_tries }}
+
+PubkeyAuthentication yes
+AuthorizedKeysFile .ssh/authorized_keys
+
+X11Forwarding {{ 'yes' if fleet_ssh_x11_forwarding else 'no' }}
+AllowTcpForwarding {{ fleet_ssh_allow_tcp_forwarding }}
+ClientAliveInterval {{ fleet_ssh_client_alive_interval }}
+ClientAliveCountMax {{ fleet_ssh_client_alive_count_max }}
+
+UsePAM yes
+PrintMotd no
+AcceptEnv LANG LC_*
+Subsystem sftp /usr/lib/openssh/sftp-server
+{% if fleet_ssh_allow_users | length > 0 %}
+AllowUsers {{ fleet_ssh_allow_users | join(' ') }}
+{% endif %}

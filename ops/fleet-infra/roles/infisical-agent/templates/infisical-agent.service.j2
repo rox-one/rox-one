@@ -1,0 +1,15 @@
+[Unit]
+Description=Infisical agent secret renderer
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart={{ infisical_cli_install_dir }}/infisical agent --config {{ infisical_agent_config_file }}
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

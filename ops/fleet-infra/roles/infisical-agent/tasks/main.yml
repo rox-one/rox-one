@@ -1,0 +1,104 @@
+---
+- name: Assert required variables are set
+  ansible.builtin.assert:
+    that:
+      - infisical_cli_version | length > 0
+      - infisical_cli_deb_sha256 | length == 64
+      - infisical_agent_project_id | length > 0
+    fail_msg: "infisical-agent: infisical_cli_version and infisical_agent_project_id are REQUIRED"
+
+- name: Create config directory
+  ansible.builtin.file:
+    path: "{{ infisical_agent_config_dir }}"
+    state: directory
+    owner: "{{ infisical_agent_user }}"
+    group: "{{ infisical_agent_user }}"
+    mode: "0750"
+
+- name: Create root-only Infisical runtime directory
+  ansible.builtin.file:
+    path: "{{ infisical_agent_runtime_dir }}"
+    state: directory
+    owner: "{{ infisical_agent_user }}"
+    group: "{{ infisical_agent_user }}"
+    mode: "0700"
+
+- name: Install pinned Infisical CLI
+  ansible.builtin.get_url:
+    url: >-
+      https://github.com/Infisical/cli/releases/download/v{{ infisical_cli_version }}/infisical_{{ infisical_cli_version }}_linux_{{ infisical_cli_arch_map[ansible_architecture] }}.deb
+    dest: "/tmp/infisical_{{ infisical_cli_version }}.deb"
+    mode: "0644"
+    checksum: "sha256:{{ infisical_cli_deb_sha256 }}"
+  register: infisical_deb
+
+- name: Install Infisical CLI package
+  become: true
+  ansible.builtin.apt:
+    deb: "/tmp/infisical_{{ infisical_cli_version }}.deb"
+    state: present
+  when: not ansible_check_mode
+
+- name: Check Universal Auth client ID file
+  ansible.builtin.stat:
+    path: "{{ infisical_agent_runtime_dir }}/client-id"
+  register: infisical_client_id_file
+
+- name: Check Universal Auth client secret file
+  ansible.builtin.stat:
+    path: "{{ infisical_agent_runtime_dir }}/client-secret"
+  register: infisical_client_secret_file
+
+- name: Fail loudly if runtime env file is missing
+  ansible.builtin.fail:
+    msg: >-
+      Per-node Universal Auth files must exist in {{ infisical_agent_runtime_dir }}.
+      Provision them through scripts/bootstrap-infisical-identities.sh over SSH stdin.
+  when:
+    - not ansible_check_mode
+    - not infisical_client_id_file.stat.exists or not infisical_client_secret_file.stat.exists
+
+- name: Enforce Universal Auth file permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop:
+    - "{{ infisical_agent_runtime_dir }}/client-id"
+    - "{{ infisical_agent_runtime_dir }}/client-secret"
+  when: not ansible_check_mode
+
+- name: Deploy Infisical Agent config
+  ansible.builtin.template:
+    src: agent-config.yaml.j2
+    dest: "{{ infisical_agent_config_file }}"
+    owner: "{{ infisical_agent_user }}"
+    group: "{{ infisical_agent_user }}"
+    mode: "0600"
+  notify: restart infisical-agent
+
+- name: Deploy systemd unit
+  ansible.builtin.template:
+    src: infisical-agent.service.j2
+    dest: /etc/systemd/system/infisical-agent.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart infisical-agent
+
+- name: Enable and start service
+  ansible.builtin.systemd:
+    name: infisical-agent
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Wait for short-lived access-token sink
+  ansible.builtin.wait_for:
+    path: "{{ infisical_agent_token_file }}"
+    timeout: 20
+  when: not ansible_check_mode
+
+# Rollback: disable infisical-agent; remove CLI/config after revoking this node's client secret.

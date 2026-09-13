@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Managed by Ansible - fleet-infra roles/windmill-worker
+set -euo pipefail
+# Graceful drain: stop accepting jobs, wait for running jobs up to timeout.
+docker exec {{ windmill_container_name }} sh -c 'kill -USR1 1' || {
+  echo "worker container unreachable; proceeding to stop" >&2
+}
+deadline=$(( $(date +%s) + {{ windmill_drain_timeout_seconds }} ))
+while docker inspect -f '{{ '{{' }}.State.Running{{ '}}' }}' {{ windmill_container_name }} >/dev/null 2>&1; do
+  [ "$(date +%s)" -ge "$deadline" ] && break
+  sleep 5
+done
+docker stop -t 30 {{ windmill_container_name }}

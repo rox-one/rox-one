@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Managed by Ansible - fleet-infra roles/backups
+set -euo pipefail
+DATASET="{{ dataset.name }}"
+/usr/local/sbin/restic-managed backup \
+{% for p in dataset.paths %}
+  "{{ p }}" \
+{% endfor %}
+  --tag "dataset:${DATASET}"
+/usr/local/sbin/restic-managed forget \
+  --keep-daily {{ dataset.keep_daily | default(14) }} \
+  --keep-weekly {{ dataset.keep_weekly | default(8) }} \
+  --keep-monthly {{ dataset.keep_monthly | default(12) }} \
+  --prune

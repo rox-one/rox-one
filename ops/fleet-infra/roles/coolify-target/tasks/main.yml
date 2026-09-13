@@ -1,0 +1,74 @@
+---
+- name: Assert deploy key source is configured
+  ansible.builtin.assert:
+    that:
+      - coolify_public_key_lookup | length > 0
+      - tailscale_ip | default('') | length > 0
+    fail_msg: "coolify-target: coolify_public_key_lookup is REQUIRED (public key material via vault/host_vars, never embedded)"
+
+- name: Ensure docker group exists (delegated to roles/docker when applied first)
+  ansible.builtin.group:
+    name: "{{ coolify_group }}"
+    state: present
+
+- name: Create coolify deploy user
+  ansible.builtin.user:
+    name: "{{ coolify_user }}"
+    group: "{{ coolify_group }}"
+    shell: /bin/bash
+    create_home: true
+    state: present
+
+- name: Install authorized key from configured path/lookup
+  ansible.posix.authorized_key:
+    user: "{{ coolify_user }}"
+    key: "{{ coolify_public_key_lookup }}"
+    state: present
+
+- name: Allow non-interactive administration for the dedicated Coolify user
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/90-coolify
+    content: "{{ coolify_user }} ALL=(ALL) NOPASSWD: ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+
+- name: Deploy isolated Coolify sshd configuration
+  ansible.builtin.template:
+    src: sshd-coolify.conf.j2
+    dest: "{{ coolify_sshd_config }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: validate and restart isolated coolify sshd
+
+- name: Deploy isolated Coolify sshd systemd service
+  ansible.builtin.template:
+    src: sshd-coolify.service.j2
+    dest: "{{ coolify_sshd_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: validate and restart isolated coolify sshd
+
+- name: Enable isolated Coolify sshd
+  ansible.builtin.systemd_service:
+    name: sshd-coolify.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Flush handler before reachability check
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify the dedicated port is listening on the Tailnet address
+  ansible.builtin.wait_for:
+    host: "{{ tailscale_ip }}"
+    port: "{{ coolify_ssh_port }}"
+    timeout: 10
+  when: not ansible_check_mode
+
+# Rollback: disable/remove sshd-coolify.service and its config; userdel -r coolify;
+# revoke key in Coolify UI before deleting user.

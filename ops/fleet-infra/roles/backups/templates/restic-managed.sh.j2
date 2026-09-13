@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+token="$(<{{ restic_infisical_token_file }})"
+export INFISICAL_TOKEN="$token"
+export INFISICAL_DOMAIN="{{ restic_infisical_domain }}"
+export RESTIC_REPOSITORY="{{ restic_repository }}"
+unset token
+exec /usr/bin/infisical run \
+  --projectId={{ restic_project_id }} \
+  --env=prod \
+  --path={{ restic_secret_path }} \
+  -- {{ restic_install_dir }}/restic "$@"
+

@@ -1,0 +1,28 @@
+---
+# Pins verified against live registries on 2026-08-26.
+# omp: https://registry.npmjs.org/@oh-my-pi/pi-coding-agent
+omp_npm_package: "@oh-my-pi/pi-coding-agent"
+omp_version: "18.0.5"
+
+bun_version: "1.4.0"
+bun_arch_map:
+  x86_64: x64
+  aarch64: aarch64
+bun_sha256_map:
+  x86_64: "2d03fb5fb83ac8b567aca0a281b2ce1a1a19d488f56c2968d88c3f25e92fe452"
+  aarch64: "4b1a332ee861983eb93bcfe6f770fff94e3e31b2c388bdaea3c8ed35e58eed0e"
+
+# hermes: private fork, built ONLY from the pinned checkout.
+hermes_git_repo: "https://github.com/agisota/oh-my-hermes-private.git"
+hermes_commit: "239eef2e1fb902e6c14ee5f50c5b4bf7a556ec82"   # == tag v1.0.6
+hermes_version: "v1.0.6"   # smoke expectation marker; adjust only together with hermes_commit
+
+agent_runtime_install_dir: /usr/local/lib/agent-runtime
+agent_runtime_bin_dir: /usr/local/bin
+
+agent_runtime_components: []
+
+agent_runtime_health_interval: "15min"
+
+# NOTE: legacy `curl <url> | bash` and unverifiable tarball-checksum placeholders
+# are removed. Sources: npm registry pin (omp) and pinned git checkout (hermes).

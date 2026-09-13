@@ -1,0 +1,8 @@
+[Unit]
+Description=Run agent runtime smoke test periodically
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec={{ agent_runtime_health_interval }}
+Persistent=true
+[Install]
+WantedBy=timers.target

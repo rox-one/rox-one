@@ -1,0 +1,15 @@
+---
+# Dedicated SSH port. Changing this requires firewall coordination (see firewall role mgmt_ports).
+ssh_port: 22
+
+# PasswordAuthentication stays YES until dual-key access is PROVEN on every host.
+# Flip fleet_ssh_password_auth to false only after verifying deploy+admin key logins.
+fleet_ssh_password_auth: true
+
+fleet_ssh_permit_root_login: "prohibit-password"
+fleet_ssh_max_auth_tries: 5
+fleet_ssh_client_alive_interval: 300
+fleet_ssh_client_alive_count_max: 2
+fleet_ssh_allow_tcp_forwarding: "no"
+fleet_ssh_x11_forwarding: "no"
+fleet_ssh_allow_users: []

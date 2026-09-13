@@ -1,0 +1,130 @@
+---
+- name: Assert checksum pinned and datasets defined
+  ansible.builtin.assert:
+    that:
+      - restic_checksum_map[ansible_architecture] | length == 64
+      - restic_binary_checksum_map[ansible_architecture] | length == 64
+      - restic_repository | length > 0
+      - backups_datasets | length > 0
+    fail_msg: "backups: checksum, repository, and datasets are REQUIRED"
+
+- name: Create config directory
+  ansible.builtin.file:
+    path: "{{ restic_config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Check installed Restic version
+  ansible.builtin.command: "{{ restic_install_dir }}/restic version"
+  register: restic_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install Restic archive prerequisite
+  ansible.builtin.apt:
+    name: bzip2
+    state: present
+
+- name: Download pinned restic binary (checksum-verified)
+  ansible.builtin.get_url:
+    url: "https://github.com/restic/restic/releases/download/v{{ restic_version }}/restic_{{ restic_version }}_linux_{{ restic_arch_map[ansible_architecture] }}.bz2"
+    dest: "/tmp/restic_{{ restic_version }}.bz2"
+    mode: "0644"
+    checksum: "sha256:{{ restic_checksum_map[ansible_architecture] }}"
+  when: "restic_version not in (restic_installed.stdout | default(''))"
+
+- name: Verify pinned binary checksum before install
+  ansible.builtin.shell: >
+    bash -c 'bunzip2 -c /tmp/restic_{{ restic_version }}.bz2 | sha256sum | cut -d" " -f1'
+  args:
+    executable: /bin/bash
+  register: restic_sha
+  changed_when: false
+  failed_when: restic_sha.stdout != restic_binary_checksum_map[ansible_architecture]
+  when: "restic_version not in (restic_installed.stdout | default(''))"
+
+- name: Decompress restic into install dir
+  ansible.builtin.shell: |
+    set -euo pipefail
+    bunzip2 -c "/tmp/restic_{{ restic_version }}.bz2" > "{{ restic_install_dir }}/restic.tmp"
+    chmod 0755 "{{ restic_install_dir }}/restic.tmp"
+    mv "{{ restic_install_dir }}/restic.tmp" "{{ restic_install_dir }}/restic"
+  args:
+    executable: /bin/bash
+  when:
+    - not ansible_check_mode
+    - restic_version not in (restic_installed.stdout | default(''))
+
+- name: Remove compressed Restic artifact
+  ansible.builtin.file:
+    path: "/tmp/restic_{{ restic_version }}.bz2"
+    state: absent
+  when: "restic_version not in (restic_installed.stdout | default(''))"
+
+- name: Create local repository directory when using a filesystem target
+  ansible.builtin.file:
+    path: "{{ restic_repository }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  when: restic_repository is match('^/')
+
+- name: Verify Infisical token sink exists
+  ansible.builtin.stat:
+    path: "{{ restic_infisical_token_file }}"
+  register: restic_token_stat
+
+- name: Require Infisical token sink
+  ansible.builtin.assert:
+    that: [restic_token_stat.stat.exists]
+
+- name: Deploy Infisical-backed Restic wrapper
+  ansible.builtin.template:
+    src: restic-managed.sh.j2
+    dest: /usr/local/sbin/restic-managed
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Guarded repository init (skips when repo already initialized)
+  ansible.builtin.shell: |
+    set -euo pipefail
+    if ! /usr/local/sbin/restic-managed snapshots >/dev/null 2>&1; then
+      /usr/local/sbin/restic-managed init
+    fi
+  args:
+    executable: /bin/bash
+  environment:
+    PATH: "{{ ansible_env.PATH }}"
+  no_log: true
+  changed_when: false
+  when: not ansible_check_mode
+
+- name: Deploy per-dataset backup scripts, services and timers
+  ansible.builtin.include_tasks: dataset.yml
+  loop: "{{ backups_datasets }}"
+  loop_control:
+    loop_var: dataset
+
+- name: Deploy restore-test script
+  ansible.builtin.template:
+    src: restore-test.sh.j2
+    dest: "{{ restic_config_dir }}/restore-test.sh"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Enable all backup timers
+  ansible.builtin.systemd:
+    name: "restic-backup@{{ item.name }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: "{{ backups_datasets }}"
+  when: not ansible_check_mode
+
+# Rollback: systemctl disable --now restic-backup@*.timer;
+# rm unit/template files + scripts; keep remote repo for data retention decision.
