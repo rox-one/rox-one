@@ -51,6 +51,7 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
     expect(host).toContain('useAtomValue(featureWorkbenchConationCanvasAtom)')
     expect(host).toContain('useAtomValue(featureWorkbenchConationBoardAtom)')
     expect(host).toContain('useAtomValue(featureWorkbenchConationNotesBridgeAtom)')
+    expect(host).toContain('useAtomValue(featureWorkbenchConationMailAtom)')
     expect(host).toContain('createConationNotesBridge')
     expect(host).toContain('const notesRegistration = registerNotesPanel(')
     expect(host).not.toContain('const notesRegistration = notesBridge')
@@ -64,6 +65,8 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
     expect(host).toContain('fundRegistration?.dispose()')
     expect(host).toContain('boardRegistration?.dispose()')
     expect(host).toContain('notesRegistration?.dispose()')
+    expect(host).toContain('const mailRegistration = registerMailPanel(')
+    expect(host).toContain('mailRegistration?.dispose()')
   })
 
   it('keeps featureUnifiedShellAtom defaulted to false', () => {
