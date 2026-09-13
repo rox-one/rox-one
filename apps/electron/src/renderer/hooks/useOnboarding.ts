@@ -26,8 +26,7 @@ import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
-import { nextStepAfterUsername, parseOnboardingUsername } from '@/components/onboarding/onboarding-username'
-import * as storage from '@/lib/local-storage'
+import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
@@ -85,7 +84,6 @@ interface UseOnboardingReturn {
 
   // Wizard actions
   handleContinue: () => void
-  handleSubmitUsername: (displayName: string) => void
   handleBack: () => void
 
   // Provider select (new flow)
@@ -277,14 +275,14 @@ export function useOnboarding({
   // explicitly request a launch gate.
   useEffect(() => {
     if (shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'rox-connect' || s.step === 'username' ? s : { ...s, step: 'rox-connect' }))
+      setState(s => (s.step === 'rox-connect' || s.step === 'welcome' ? s : { ...s, step: 'rox-connect' }))
     }
   }, [initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
   // Seeded OMP connection without ~/.omp models / Rox key — one credential step.
   useEffect(() => {
     if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'omp-credential' || s.step === 'username' ? s : { ...s, step: 'omp-credential' }))
+      setState(s => (s.step === 'omp-credential' || s.step === 'welcome' ? s : { ...s, step: 'omp-credential' }))
     }
   }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud])
 
@@ -299,7 +297,7 @@ export function useOnboarding({
           gitBashStatus: status,
           isCheckingGitBash: false,
           // Redirect to git-bash step when missing on Windows
-          ...(status.platform === 'win32' && !status.found && s.step !== 'username' ? { step: 'git-bash' as const } : {}),
+          ...(status.platform === 'win32' && !status.found && s.step !== 'welcome' ? { step: 'git-bash' as const } : {}),
         }))
       } catch (error) {
         console.error('[Onboarding] Failed to check Git Bash:', error)
@@ -390,12 +388,19 @@ export function useOnboarding({
         // Handled by handleSelectProvider (card click navigates directly)
         break
 
-      case 'welcome':
-        setState(s => ({ ...s, step: 'username' }))
+      case 'welcome': {
+        const next = nextStepAfterUsername({
+          isFullyConfigured: Boolean(initialSetupNeeds?.isFullyConfigured),
+          applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
+          gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
+        })
+        if (next === 'complete') {
+          onComplete()
+          return
+        }
+        setState(s => ({ ...s, step: next }))
         break
-
-      case 'username':
-        break
+      }
 
       case 'rox-connect':
         // Advancement handled by poll success in handleStartRoxConnect
@@ -420,7 +425,7 @@ export function useOnboarding({
         onComplete()
         break
     }
-  }, [state.step, state.gitBashStatus, state.apiSetupMethod, onComplete, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
+  }, [state.step, state.gitBashStatus, state.apiSetupMethod, onComplete, initialSetupNeeds?.isFullyConfigured, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
   // Go back to previous step. If at the initial step, call onDismiss instead.
   const handleBack = useCallback(() => {
@@ -430,8 +435,8 @@ export function useOnboarding({
     }
     switch (state.step) {
       case 'git-bash':
-        if (initialStep === 'username') {
-          setState(s => ({ ...s, step: 'username' }))
+        if (initialStep === 'welcome') {
+          setState(s => ({ ...s, step: 'welcome' }))
         } else if (onDismiss) {
           onDismiss()
         }
@@ -440,8 +445,8 @@ export function useOnboarding({
         // If on Windows and Git Bash was needed, go back to git-bash step
         if (state.gitBashStatus?.platform === 'win32' && state.gitBashStatus?.found === false) {
           setState(s => ({ ...s, step: 'git-bash' }))
-        } else if (initialStep === 'username') {
-          setState(s => ({ ...s, step: 'username' }))
+        } else if (initialStep === 'welcome') {
+          setState(s => ({ ...s, step: 'welcome' }))
         } else if (onDismiss) {
           onDismiss()
         }
@@ -460,38 +465,6 @@ export function useOnboarding({
         break
     }
   }, [state.step, state.gitBashStatus, initialStep, onDismiss])
-
-  const handleSubmitUsername = useCallback(async (rawName: string) => {
-    const name = parseOnboardingUsername(rawName)
-    if (!name) return
-    try {
-      await window.electronAPI.identityUpdateProfile({ displayName: name })
-    } catch (error) {
-      console.error('[Onboarding] Failed to save display name:', error)
-      setState(s => ({
-        ...s,
-        errorMessage: error instanceof Error ? error.message : 'Failed to save name',
-      }))
-      return
-    }
-    storage.set(storage.KEYS.onboardingUsernameConfirmed, true)
-    const next = nextStepAfterUsername({
-      isFullyConfigured: Boolean(initialSetupNeeds?.isFullyConfigured),
-      applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
-      gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
-    })
-    if (next === 'complete') {
-      onComplete()
-      return
-    }
-    setState(s => ({ ...s, step: next, errorMessage: undefined }))
-  }, [
-    initialSetupNeeds?.isFullyConfigured,
-    initialSetupNeeds?.needsRoxCloud,
-    onComplete,
-    shouldApplyStartupGate,
-    state.gitBashStatus,
-  ])
 
   // Select API setup method (legacy — kept for direct edit flows)
   const handleSelectApiSetupMethod = useCallback((method: ApiSetupMethod) => {
@@ -1191,7 +1164,6 @@ export function useOnboarding({
   return {
     state,
     handleContinue,
-    handleSubmitUsername,
     handleBack,
     handleSelectProvider,
     handleSelectApiSetupMethod,

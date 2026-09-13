@@ -63,27 +63,6 @@ function renderRoxConnect({
 }
 
 describe('OnboardingWizard', () => {
-  test('renders the username step', () => {
-    const html = renderToStaticMarkup(
-      <OnboardingWizard
-        state={{
-          ...roxConnectState,
-          step: 'username',
-        }}
-        onContinue={() => {}}
-        onSubmitUsername={() => {}}
-        onBack={() => {}}
-        onSelectApiSetupMethod={() => {}}
-        onSubmitCredential={() => {}}
-        onFinish={() => {}}
-      />,
-    )
-
-    expect(html).toContain('onboarding.username.title')
-    expect(html).toContain('onboarding.username.placeholder')
-    expect(html).toContain('onboarding-username')
-  })
-
   test('renders the Rox Connect gate', () => {
     const html = renderRoxConnect()
 

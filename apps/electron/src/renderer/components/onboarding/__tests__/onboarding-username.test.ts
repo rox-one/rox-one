@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
   nextStepAfterUsername,
   parseOnboardingUsername,
@@ -48,5 +50,14 @@ describe('nextStepAfterUsername', () => {
       applyRoxConnectGate: false,
       gitBashMissing: false,
     })).toBe('provider-select')
+  })
+})
+
+describe('WelcomeStep username gate', () => {
+  it('reuses the parser and records onboardingUsernameConfirmed', () => {
+    const source = readFileSync(join(import.meta.dir, '../WelcomeStep.tsx'), 'utf8')
+    expect(source).toContain('parseOnboardingUsername')
+    expect(source).toContain('onboardingUsernameConfirmed')
+    expect(source).toContain('identityUpdateProfile')
   })
 })

@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils"
 import { WelcomeStep } from "./WelcomeStep"
-import { UsernameStep } from "./UsernameStep"
 import type { ApiSetupMethod } from "./APISetupStep"
 import { ProviderSelectStep, type ProviderChoice } from "./ProviderSelectStep"
 import { CredentialsStep, type CredentialStatus } from "./CredentialsStep"
@@ -15,7 +14,6 @@ import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 
 export type OnboardingStep =
   | 'welcome'
-  | 'username'
   | 'rox-connect'
   | 'git-bash'
   | 'provider-select'
@@ -46,7 +44,6 @@ interface OnboardingWizardProps {
 
   // Event handlers
   onContinue: () => void
-  onSubmitUsername?: (displayName: string) => void
   onBack: () => void
   onSelectApiSetupMethod: (method: ApiSetupMethod) => void
   onSubmitCredential: (data: ApiKeySubmitData) => void
@@ -112,7 +109,6 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({
   state,
   onContinue,
-  onSubmitUsername,
   onBack,
   onSelectApiSetupMethod,
   onSubmitCredential,
@@ -155,14 +151,6 @@ export function OnboardingWizard({
           <WelcomeStep
             isExistingUser={state.isExistingUser}
             onContinue={onContinue}
-            isLoading={state.isCheckingGitBash}
-          />
-        )
-
-      case 'username':
-        return (
-          <UsernameStep
-            onSubmit={onSubmitUsername ?? (() => {})}
             isLoading={state.isCheckingGitBash}
           />
         )

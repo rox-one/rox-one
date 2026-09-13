@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next"
 import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import * as storage from "@/lib/local-storage"
+import { parseOnboardingUsername } from "./onboarding-username"
 import { StepFormLayout, ContinueButton } from "./primitives"
 
 interface WelcomeStepProps {
@@ -60,12 +62,16 @@ export function WelcomeStep({
       onContinue()
       return
     }
-    const trimmed = username.trim()
-    if (!trimmed || saving) return
+    const trimmed = parseOnboardingUsername(username)
+    if (!trimmed || saving) {
+      if (!trimmed) setError(t("onboarding.welcome.usernameRequired"))
+      return
+    }
     setSaving(true)
     setError(null)
     try {
       await persistOnboardingUsername(trimmed)
+      storage.set(storage.KEYS.onboardingUsernameConfirmed, true)
       onContinue()
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : t("onboarding.welcome.usernameRequired"))
@@ -76,7 +82,7 @@ export function WelcomeStep({
 
   const continueDisabled = isExistingUser
     ? isLoading
-    : isLoading || saving || username.trim().length === 0
+    : isLoading || saving || !parseOnboardingUsername(username)
 
   return (
     <StepFormLayout

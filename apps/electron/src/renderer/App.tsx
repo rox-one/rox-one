@@ -720,7 +720,7 @@ export default function App() {
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
     initialSetupNeeds: setupNeeds || undefined,
-    initialStep: usernameConfirmed ? 'provider-select' : 'username',
+    initialStep: usernameConfirmed ? 'provider-select' : 'welcome',
   })
 
   // Reauth login handler - placeholder (reauth is not currently used)
@@ -2104,7 +2104,6 @@ export default function App() {
           <OnboardingWizard
             state={onboarding.state}
             onContinue={onboarding.handleContinue}
-            onSubmitUsername={onboarding.handleSubmitUsername}
             onBack={onboarding.handleBack}
             onSelectProvider={onboarding.handleSelectProvider}
             onSkipSetup={onboarding.handleSkipSetup}
