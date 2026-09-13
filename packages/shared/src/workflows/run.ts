@@ -1,5 +1,12 @@
+/**
+ * In-process canvas runner. This path is simulate-only (ROX-AUD-052 / #325).
+ * It must not be treated as production success. Live execution needs a server
+ * Run/NodeRun + gateway/ToolRegistry.
+ */
+
 import { fingerprintSpec, mintId, reachableFrom, topologicalOrder } from './graph.ts'
 import type {
+  CanvasNode,
   SessionWorkflowSpec,
   WorkflowArtifact,
   WorkflowNodeRunStatus,
@@ -38,6 +45,26 @@ function selectNodeIds(spec: SessionWorkflowSpec, mode: WorkflowRunMode, seedIds
   return [...fromHere]
 }
 
+function simulatedStatus(node: CanvasNode): WorkflowNodeRunStatus {
+  if (node.kind === 'human_input') return 'waiting_approval'
+  if (isExecutableNodeKind(node.kind)) return 'simulated'
+  if (
+    node.kind === 'note' ||
+    node.kind === 'memory' ||
+    node.kind === 'condition' ||
+    node.kind === 'merge' ||
+    node.kind === 'output'
+  ) {
+    return 'simulated'
+  }
+  return 'skipped'
+}
+
+/** The canvas runner never claims a completed product action. */
+export function isProductionWorkflowSuccess(run: WorkflowRun): boolean {
+  return run.evidence === 'live'
+}
+
 export function runWorkflow({
   spec,
   mode,
@@ -57,6 +84,7 @@ export function runWorkflow({
   const order = topologicalOrder(spec.nodes, spec.edges) ?? spec.nodes.map((node) => node.id)
   const status: Record<string, WorkflowNodeRunStatus> = {}
   const artifacts: Record<string, WorkflowArtifact> = {}
+  let waiting = false
   for (const node of spec.nodes) {
     if (node.kind === 'annotation_frame') {
       status[node.id] = 'skipped'
@@ -66,10 +94,10 @@ export function runWorkflow({
       status[node.id] = 'skipped'
       continue
     }
-    status[node.id] = isExecutableNodeKind(node.kind) || node.kind === 'note' || node.kind === 'memory' || node.kind === 'condition' || node.kind === 'merge' || node.kind === 'output'
-      ? 'done'
-      : 'skipped'
-    if (status[node.id] === 'done') {
+    const next = simulatedStatus(node)
+    status[node.id] = next
+    if (next === 'waiting_approval') waiting = true
+    if (next === 'simulated' && !isExecutableNodeKind(node.kind)) {
       artifacts[node.id] = artifactFor(spec, node.id)
     }
   }
@@ -83,7 +111,8 @@ export function runWorkflow({
     status,
     artifacts,
     startedAt: now,
-    finishedAt: now,
+    finishedAt: waiting ? undefined : now,
+    evidence: 'simulated',
   }
 }
 
