@@ -100,6 +100,7 @@ describe('ROX2 platform contract', () => {
     }, 'rev-1')
     expect(workRef.entityId).toContain('google:work:event:e1')
     expect(workRef.revisionId).toBe('rev-1')
+    const index = new Map<string, Rox2EntityRef>()
     const first = registerExternalBinding(index, 'ws-1', 'calendar-event', {
       provider: 'google',
       account: 'work',
@@ -118,6 +119,14 @@ describe('ROX2 platform contract', () => {
       expect(again.ref.entityId).toBe(first.ref.entityId)
       expect(again.ref.revisionId).toBe('rev-2')
     }
+    index.set('google:work:event:e1', { workspaceId: 'ws-1', entityId: 'calendar-event:other' })
+    const clash = registerExternalBinding(index, 'ws-1', 'calendar-event', {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    })
+    expect(clash.status).toBe('quarantine')
   })
 
   test('relation dictionary allows note→person and forbids task-dependency cycles', () => {
