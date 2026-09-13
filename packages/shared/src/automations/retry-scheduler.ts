@@ -19,8 +19,10 @@
  * for a workspace. Multi-worker / multi-process leases and DLQ are unsupported.
  * Effect is the HTTP call; ack is the atomic JSONL rewrite. Outcomes stay in
  * memory until ack succeeds so a same-process crash after effect does not
- * re-fire. Process restart drops in-memory acks; the JSONL row remains
- * recoverable (at-least-once across restart).
+ * re-fire. History is written only after ack succeeds — a crash between effect
+ * and ack must not leave `"ok":true` while the queue row remains. Process
+ * restart drops in-memory acks; the JSONL row remains recoverable
+ * (at-least-once across restart, without a false success history entry).
  */
 
 import { readFile, writeFile, appendFile, rename } from 'fs/promises';
@@ -71,7 +73,7 @@ export interface RetrySchedulerOptions {
 type HistoryInput = Parameters<typeof createWebhookHistoryEntry>[0];
 
 type QueueOutcome =
-  | { kind: 'drop'; history: HistoryInput; historyWritten: boolean }
+  | { kind: 'drop'; history: HistoryInput }
   | { kind: 'keep'; entry: RetryQueueEntry };
 
 export class RetryScheduler {
@@ -192,9 +194,6 @@ export class RetryScheduler {
 
         const outcome = this.outcomeFor(entry, result);
         this.pendingAcks.set(entry.id, outcome);
-        if (outcome.kind === 'drop') {
-          outcome.historyWritten = await this.writeHistory(generation, outcome.history);
-        }
       }
 
       if (this.isStale(generation)) return;
@@ -206,19 +205,21 @@ export class RetryScheduler {
         if (this.isStale(generation)) return;
         const current = await this.readEntries();
         const remaining: RetryQueueEntry[] = [];
+        const ackedHistory: HistoryInput[] = [];
         for (const entry of current) {
           const outcome = this.pendingAcks.get(entry.id);
           if (!outcome) {
             remaining.push(entry);
             continue;
           }
-          if (outcome.kind === 'drop' && !outcome.historyWritten) {
-            outcome.historyWritten = await this.writeHistory(generation, outcome.history);
-          }
           if (outcome.kind === 'keep') remaining.push(outcome.entry);
+          else ackedHistory.push(outcome.history);
         }
         await this.writeEntriesAtomic(remaining);
         this.pendingAcks.clear();
+        for (const history of ackedHistory) {
+          await this.writeHistory(history);
+        }
       });
     } catch (err) {
       log.debug(`[RetryScheduler] Tick error: ${err}`);
@@ -232,7 +233,6 @@ export class RetryScheduler {
       log.debug(`[RetryScheduler] ${entry.id} succeeded on deferred attempt ${entry.deferredAttempt + 1}`);
       return {
         kind: 'drop',
-        historyWritten: false,
         history: {
           matcherId: entry.matcherId,
           ok: true,
@@ -248,7 +248,6 @@ export class RetryScheduler {
       log.debug(`[RetryScheduler] ${entry.id} permanently failed after ${MAX_DEFERRED_ATTEMPTS} deferred attempts`);
       return {
         kind: 'drop',
-        historyWritten: false,
         history: {
           matcherId: entry.matcherId,
           ok: false,
@@ -278,18 +277,12 @@ export class RetryScheduler {
     return this.stopped || generation !== this.generation;
   }
 
-  private async writeHistory(
-    generation: number,
-    input: HistoryInput,
-  ): Promise<boolean> {
-    if (this.isStale(generation)) return false;
+  private async writeHistory(input: HistoryInput): Promise<void> {
     const historyEntry = createWebhookHistoryEntry(input);
     try {
       await appendAutomationHistoryEntry(this.workspaceRootPath, historyEntry);
-      return true;
     } catch (e) {
       log.debug(`[RetryScheduler] Failed to write history: ${e}`);
-      return false;
     }
   }
 

@@ -67,6 +67,27 @@ function throwOnceBeforeAck(): { beforeAck: () => Promise<void>; crashes: () => 
   };
 }
 
+function readHistory(dir: string): string {
+  try {
+    return readFileSync(join(dir, AUTOMATIONS_HISTORY_FILE), 'utf-8');
+  } catch {
+    return '';
+  }
+}
+
+function successHistoryCount(dir: string): number {
+  return readHistory(dir)
+    .split('\n')
+    .filter(Boolean)
+    .filter((line) => {
+      try {
+        return (JSON.parse(line) as { ok?: boolean }).ok === true;
+      } catch {
+        return false;
+      }
+    }).length;
+}
+
 describe('RetryScheduler', () => {
   const dirs: string[] = [];
 
@@ -156,12 +177,7 @@ describe('RetryScheduler', () => {
     release(okResult());
     await ticking;
     expect(readQueue(dir).map((e) => e.id)).toEqual(['due-1']);
-    try {
-      const history = readFileSync(join(dir, AUTOMATIONS_HISTORY_FILE), 'utf-8');
-      expect(history.trim()).toBe('');
-    } catch {
-      // no history file is also fine
-    }
+    expect(successHistoryCount(dir)).toBe(0);
   });
 
   it('dispose aborts only owned requests, not a sibling scheduler', async () => {
@@ -245,10 +261,12 @@ describe('RetryScheduler', () => {
     expect(ids[0]).toMatch(/^m2-/);
   });
 
-  // Fail-closed JSONL: effect (HTTP) then ack (atomic rewrite). Same-process pending
-  // acks prevent a duplicate fire when the rewrite crashes. Process restart loses
-  // those acks; the JSONL row is the recoverability source of truth (at-least-once).
-  // Multi-worker / multi-process ownership of one queue file is unsupported.
+  // Effect (HTTP) then ack (atomic rewrite) then history. Same-process pending
+  // acks prevent a duplicate fire when the rewrite crashes. History is not
+  // written until ack succeeds, so a crash cannot leave ok:true with the queue
+  // row still present. Process restart loses those acks; the JSONL row is the
+  // recoverability source of truth (at-least-once). Multi-worker / multi-process
+  // ownership of one queue file is unsupported.
 
   it('same-process crash after effect before ack does not duplicate fire and stays recoverable until ack', async () => {
     const dir = tmp();
@@ -270,16 +288,16 @@ describe('RetryScheduler', () => {
     expect(crashes()).toBe(1);
     expect(calls).toBe(1);
     expect(readQueue(dir).map((e) => e.id)).toEqual(['due-1']);
+    expect(successHistoryCount(dir)).toBe(0);
 
     await scheduler.tick();
     expect(calls).toBe(1);
     expect(readQueue(dir)).toEqual([]);
-    const history = readFileSync(join(dir, AUTOMATIONS_HISTORY_FILE), 'utf-8');
-    expect(history).toContain('"ok":true');
+    expect(successHistoryCount(dir)).toBe(1);
     scheduler.dispose();
   });
 
-  it('process restart after crash keeps the JSONL job recoverable (at-least-once)', async () => {
+  it('process restart after crash before ack has no success history and stays recoverable (at-least-once)', async () => {
     const dir = tmp();
     let callsA = 0;
     const executeA: RetryExecuteRequest = async () => {
@@ -299,6 +317,7 @@ describe('RetryScheduler', () => {
     crashed.dispose();
     expect(callsA).toBe(1);
     expect(readQueue(dir).map((e) => e.id)).toEqual(['due-1']);
+    expect(successHistoryCount(dir)).toBe(0);
 
     let callsB = 0;
     const recovered = new RetryScheduler({
@@ -312,6 +331,7 @@ describe('RetryScheduler', () => {
     await recovered.tick();
     expect(callsB).toBe(1);
     expect(readQueue(dir)).toEqual([]);
+    expect(successHistoryCount(dir)).toBe(1);
     recovered.dispose();
   });
 
