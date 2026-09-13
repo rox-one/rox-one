@@ -307,11 +307,11 @@ export default function ServerSettingsPage() {
           {(isDirty || error) && (
             <SettingsCardFooter>
               <Button variant="outline" size="sm" onClick={handleReset} disabled={isSaving}>
-                Reset
+                {t('common.reset')}
               </Button>
               <Button size="sm" onClick={handleSave} disabled={isSaving}>
                 {isSaving ? <Spinner className="mr-1.5" /> : null}
-                Save
+                {t('common.save')}
               </Button>
             </SettingsCardFooter>
           )}

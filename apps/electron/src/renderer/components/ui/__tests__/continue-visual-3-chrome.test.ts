@@ -70,6 +70,8 @@ describe('continue-visual-3 leftover chrome', () => {
     const tiptap = readFileSync(join(renderer, '../../../../packages/ui/src/components/markdown/TiptapSlashMenu.ts'), 'utf8')
     expect(server).toContain("t('settings.server.notConfigured')")
     expect(server).toContain("t('common.browse')")
+    expect(server).toContain("t('common.reset')")
+    expect(server).toContain("t('common.save')")
     expect(server).not.toContain("'Not configured'")
     expect(server).not.toContain('>Browse<')
     expect(table).toContain("t('common.noResults')")
