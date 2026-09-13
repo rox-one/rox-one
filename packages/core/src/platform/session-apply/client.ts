@@ -33,6 +33,28 @@ function fetcher(options: SessionApplyClientOptions): HttpFetch {
   return fn;
 }
 
+/** An HTTP failure is not a successful SessionApply transport result.
+ * Do not include the response body, statusText, URL or request input in errors.
+ */
+export class SessionApplyHttpError extends Error {
+  readonly code = 'SESSION_APPLY_HTTP_ERROR' as const;
+  constructor(readonly status: number, readonly method: 'GET' | 'POST') {
+    super(`SessionApply ${method} failed (HTTP ${status})`);
+    this.name = 'SessionApplyHttpError';
+  }
+}
+
+async function requireHttpSuccess(response: Response, method: 'GET' | 'POST'): Promise<void> {
+  if (response.ok) return;
+  // Release the unread body without parsing potentially sensitive provider data.
+  try {
+    await response.body?.cancel();
+  } catch {
+    // Cleanup failures must not replace the original transport error.
+  }
+  throw new SessionApplyHttpError(response.status, method);
+}
+
 export class SessionApplyClient {
   constructor(private readonly options: SessionApplyClientOptions) {}
 
@@ -44,6 +66,7 @@ export class SessionApplyClient {
       method: 'GET',
       headers: { accept: 'application/json' },
     });
+    await requireHttpSuccess(response, 'GET');
     const body: unknown = await response.json().catch(() => null);
     return { ok: true, origin, status: response.status, body };
   }
@@ -61,6 +84,7 @@ export class SessionApplyClient {
         source: input.source,
       }),
     });
+    await requireHttpSuccess(response, 'POST');
     const body: unknown = await response.json().catch(() => null);
     const pointer = `${origin}${path}#team=${input.teamId ?? ''}`;
     return { ok: true, origin, status: response.status, body, pointer };
