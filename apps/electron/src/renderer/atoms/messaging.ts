@@ -25,6 +25,7 @@ export interface MessagingBinding {
    */
   accessMode?: 'public-inbox' | 'owner-control' | 'disabled'
   allowedSenderIds?: string[]
+  discordGuildTrigger?: 'mention' | 'all'
 }
 
 export const messagingBindingsAtom = atom<MessagingBinding[]>([])

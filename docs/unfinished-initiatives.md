@@ -159,6 +159,7 @@
 - закончить registry wiring: test/save/connect/disconnect/forget и все platform iteration sites;
 - довести shared protocol, server-core RPC, Electron transport и packaging worker resource;
 - добавить Discord settings/connect UI, icons, unions и session menu;
+  **срез 2026-09-13:** settings toggle for guild `mention` vs `all` (`messaging:setDiscordGuildTrigger`) + i18n. Live E2E still open.
 - добавить все i18n keys во все 10 локалей и документацию;
 - live-проверить DM, guild mention gating, pairing/access control, restart/drainPending и rate limits;
 - threads остаются отдельной следующей фазой.

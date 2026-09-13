@@ -1930,6 +1930,26 @@ export class MessagingGatewayRegistry implements IMessagingGatewayRegistry {
     this.emitBindingChanged(workspaceId)
   }
 
+  setDiscordGuildTrigger(
+    workspaceId: string,
+    bindingId: string,
+    trigger: 'mention' | 'all',
+  ): void {
+    const state = this.workspaces.get(workspaceId)
+    if (!state) throw new Error('Workspace not initialised')
+    const store = state.gateway.getBindingStore()
+    const current = store.getAll().find((b) => b.id === bindingId)
+    if (!current) throw new Error('Binding not found')
+    if (current.platform !== 'discord') {
+      throw new Error('discordGuildTrigger is only valid on Discord bindings')
+    }
+    const next = store.updateBindingConfig(bindingId, {
+      discordGuildTrigger: trigger === 'all' ? 'all' : 'mention',
+    })
+    if (!next) throw new Error('Binding not found')
+    this.emitBindingChanged(workspaceId)
+  }
+
   private emitPlatformStatus(
     workspaceId: string,
     platform: PlatformType,
@@ -1976,6 +1996,7 @@ function toBindingInfo(b: ChannelBinding): MessagingBindingInfo {
     createdAt: b.createdAt,
     accessMode: b.config.accessMode,
     allowedSenderIds: [...b.config.allowedSenderIds],
+    discordGuildTrigger: b.platform === 'discord' ? b.config.discordGuildTrigger : undefined,
   }
 }
 

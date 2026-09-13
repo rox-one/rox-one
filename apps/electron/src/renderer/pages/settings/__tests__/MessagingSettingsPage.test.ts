@@ -199,4 +199,13 @@ describe('MessagingSettingsPage source contracts', () => {
       /exact sender/i,
     )
   })
+
+  it('exposes Discord guild mention vs all trigger on the settings page', () => {
+    expect(page).toContain('setMessagingDiscordGuildTrigger')
+    expect(page).toContain('guildTriggerMention')
+    expect(page).toContain('guildTriggerAll')
+    expect(mocks).toContain('setMessagingDiscordGuildTrigger')
+    expect(en['settings.messaging.discord.guildTriggerMention']).toBeTruthy()
+    expect(en['settings.messaging.discord.guildTriggerAll']).toBeTruthy()
+  })
 })

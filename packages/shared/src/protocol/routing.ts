@@ -936,6 +936,7 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.messaging.DISMISS_PENDING_SENDER,
   RPC_CHANNELS.messaging.ALLOW_PENDING_SENDER,
   RPC_CHANNELS.messaging.SET_BINDING_ACCESS,
+  RPC_CHANNELS.messaging.SET_DISCORD_GUILD_TRIGGER,
 ])
 
 // ---------------------------------------------------------------------------
