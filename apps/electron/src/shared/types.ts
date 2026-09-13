@@ -614,6 +614,12 @@ export interface ElectronAPI {
   listMeetings(workspaceId: string, cursor?: string, limit?: number): Promise<unknown>
   getMeeting(workspaceId: string, meetingId: string): Promise<unknown>
   searchMeetings(workspaceId: string, query: string): Promise<unknown>
+  createMeeting(
+    workspaceId: string,
+    title: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
   createMeetingProposal(
     workspaceId: string,
     meetingId: string,
