@@ -157,6 +157,135 @@ export function parseRox2EntityId(ref: string): { kind: Rox2EntityKind; id: stri
   return { kind, id }
 }
 
+/** Workspace-scoped identity with an optional revision. Not a second entity store. */
+export type Rox2EntityRef = {
+  workspaceId: string
+  entityId: string
+  revisionId?: string
+}
+
+export type Rox2ExternalBinding = {
+  provider: string
+  account: string
+  remoteType: string
+  remoteId: string
+}
+
+export type Rox2BindingRegisterResult =
+  | { status: 'ok'; ref: Rox2EntityRef }
+  | { status: 'quarantine'; reason: string; existing: Rox2EntityRef }
+
+export function formatRox2ExternalBindingKey(binding: Rox2ExternalBinding): string {
+  if (!binding.provider || !binding.account || !binding.remoteType || !binding.remoteId) {
+    throw new Error('incomplete external binding')
+  }
+  return `${binding.provider}:${binding.account}:${binding.remoteType}:${binding.remoteId}`
+}
+
+export function parseRox2ExternalBindingKey(key: string): Rox2ExternalBinding {
+  const parts = key.split(':')
+  if (parts.length < 4) throw new Error(`Invalid external binding key: ${key}`)
+  const [provider, account, remoteType, ...rest] = parts
+  const remoteId = rest.join(':')
+  if (!provider || !account || !remoteType || !remoteId) throw new Error(`Invalid external binding key: ${key}`)
+  return { provider, account, remoteType, remoteId }
+}
+
+export function entityRefFromBinding(
+  workspaceId: string,
+  kind: Rox2EntityKind,
+  binding: Rox2ExternalBinding,
+  revisionId?: string,
+): Rox2EntityRef {
+  if (!workspaceId) throw new Error('workspace id is empty')
+  return {
+    workspaceId,
+    entityId: formatRox2EntityId(kind, formatRox2ExternalBindingKey(binding)),
+    revisionId,
+  }
+}
+
+/** Re-import of the same remote key is stable. Colliding keys quarantine. */
+export function registerExternalBinding(
+  index: Map<string, Rox2EntityRef>,
+  workspaceId: string,
+  kind: Rox2EntityKind,
+  binding: Rox2ExternalBinding,
+  revisionId?: string,
+): Rox2BindingRegisterResult {
+  const key = formatRox2ExternalBindingKey(binding)
+  const ref = entityRefFromBinding(workspaceId, kind, binding, revisionId)
+  const existing = index.get(key)
+  if (existing && existing.entityId !== ref.entityId) {
+    return { status: 'quarantine', reason: 'binding-collision', existing }
+  }
+  if (existing) {
+    return {
+      status: 'ok',
+      ref: { ...existing, revisionId: revisionId ?? existing.revisionId },
+    }
+  }
+  index.set(key, ref)
+  return { status: 'ok', ref }
+}
+
+export type Rox2RelationRule = {
+  domain: readonly Rox2EntityKind[] | '*'
+  range: readonly Rox2EntityKind[] | '*'
+  cyclic: boolean
+  deletion: 'clear-edge' | 'restrict'
+}
+
+export const ROX2_RELATION_RULES: Record<Rox2RelationKind, Rox2RelationRule> = {
+  parent: { domain: '*', range: '*', cyclic: false, deletion: 'clear-edge' },
+  mentions: { domain: '*', range: '*', cyclic: true, deletion: 'clear-edge' },
+  blocks: { domain: ['task'], range: ['task'], cyclic: false, deletion: 'restrict' },
+  assigned: { domain: ['task', 'session', 'note'], range: ['person'], cyclic: false, deletion: 'clear-edge' },
+  'in-calendar': { domain: '*', range: ['calendar-event'], cyclic: false, deletion: 'clear-edge' },
+  'derived-from': { domain: '*', range: '*', cyclic: false, deletion: 'clear-edge' },
+  'attached-to': { domain: ['file', 'note'], range: '*', cyclic: true, deletion: 'clear-edge' },
+}
+
+function kindMatches(allowed: readonly Rox2EntityKind[] | '*', kind: Rox2EntityKind): boolean {
+  return allowed === '*' || allowed.includes(kind)
+}
+
+export function isAllowedRox2Relation(
+  kind: Rox2RelationKind,
+  fromKind: Rox2EntityKind,
+  toKind: Rox2EntityKind,
+): boolean {
+  const rule = ROX2_RELATION_RULES[kind]
+  return kindMatches(rule.domain, fromKind) && kindMatches(rule.range, toKind)
+}
+
+export function wouldCreateRelationCycle(
+  kind: Rox2RelationKind,
+  edges: readonly Rox2Relation[],
+  fromId: string,
+  toId: string,
+): boolean {
+  if (ROX2_RELATION_RULES[kind].cyclic) return false
+  if (fromId === toId) return true
+  const outbound = new Map<string, string[]>()
+  for (const edge of edges) {
+    if (edge.kind !== kind) continue
+    const list = outbound.get(edge.fromId) ?? []
+    list.push(edge.toId)
+    outbound.set(edge.fromId, list)
+  }
+  const pending = [toId]
+  const seen = new Set<string>()
+  while (pending.length > 0) {
+    const current = pending.pop()
+    if (!current || seen.has(current)) continue
+    if (current === fromId) return true
+    seen.add(current)
+    for (const next of outbound.get(current) ?? []) pending.push(next)
+  }
+  return false
+}
+
 /** Only `live` may be presented as a completed product action. */
 export function isClaimableLive(result: Rox2Result): result is Rox2OkResult {
   return result.ok === true && result.state === 'live'
