@@ -3841,6 +3841,8 @@
   "settings.permissions.defaultPermissions": "Разрешения по умолчанию",
   "settings.permissions.defaultPermissionsDesc": "Шаблоны уровня приложения, разрешённые в режиме Explore. Команды не из этого списка блокируются.",
   "settings.permissions.description": "Правила режима Explore",
+  "settings.permissions.loadConfig": "Загрузить файлы разрешений",
+  "settings.permissions.loadConfigDesc": "Чтение файлов разрешений с этого устройства требует вашего явного разрешения.",
   "settings.permissions.noCustomPermissions": "Пользовательские разрешения не настроены.",
   "settings.permissions.noCustomPermissionsDesc": "Создайте файл permissions.json в рабочем пространстве, чтобы добавить свои правила.",
   "settings.permissions.noDefaultPermissions": "Разрешения по умолчанию не найдены.",

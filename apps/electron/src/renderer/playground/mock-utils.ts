@@ -783,7 +783,6 @@ export const mockElectronAPI = {
   getToolIconMappings: async () => ({}),
   getHomeDir: async () => '/home/playground',
   getAllWorkspaceThemes: async () => ({}),
-  getWorkspaceSettings: async () => ({ permissionMode: 'ask' }),
   awardGamificationXp: async (event: string) => {
     console.log('[Playground] awardGamificationXp', event)
     return {
@@ -821,6 +820,72 @@ export const mockElectronAPI = {
   getRtkStatus: async () => ({ installed: false, path: null, version: null }),
   getRtkGain: async () => null,
   getCredentialHealth: async () => ({ issues: [] }),
+  getWorkspaceSettings: async () => ({
+    name: 'Playground',
+    permissionMode: 'ask',
+    workingDirectory: '',
+    notesPath: '',
+    localMcpEnabled: true,
+    cyclablePermissionModes: ['safe', 'ask', 'allow-all'],
+    enabledSourceSlugs: [],
+  }),
+  updateWorkspaceSetting: async (_workspaceId: string, key: string, value: unknown) => {
+    console.log('[Playground] updateWorkspaceSetting', key, value)
+  },
+  getSources: async () => [],
+  onSourcesChanged: () => () => {},
+  readWorkspaceImage: async () => null,
+  writeWorkspaceImage: async () => {},
+  identityGetState: async () => ({
+    profile: {
+      id: 'playground-profile',
+      displayName: 'Playground',
+      plan: 'standard' as const,
+      mode: 'local' as const,
+    },
+    connections: [],
+    entitlements: [],
+  }),
+  identityUpdateProfile: async (input: { displayName?: string }) => ({
+    profile: {
+      id: 'playground-profile',
+      displayName: input.displayName || 'Playground',
+      plan: 'standard' as const,
+      mode: 'local' as const,
+    },
+    connections: [],
+    entitlements: [],
+  }),
+  identityConnect: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
+  identityDisconnect: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
+  identityRefreshStatus: async () => ({
+    profile: {
+      id: 'playground-profile',
+      displayName: 'Playground',
+      plan: 'standard' as const,
+      mode: 'local' as const,
+    },
+    connections: [],
+    entitlements: [],
+  }),
+  onIdentityChanged: () => () => {},
+  showLogoutConfirmation: async () => false,
+  logout: async () => {},
+  getDefaultPermissionsConfig: async () => ({
+    config: {
+      allowedBashPatterns: ['echo *'],
+      allowedMcpPatterns: [],
+      allowedApiEndpoints: [],
+      allowedWritePaths: [],
+    },
+    path: '/mock/permissions/default.json',
+  }),
+  getWorkspacePermissionsConfig: async () => null,
+  onDefaultPermissionsChanged: () => () => {},
   getKanbanConfig: async () => ({
     version: 1 as const,
     groupBy: 'project' as const,

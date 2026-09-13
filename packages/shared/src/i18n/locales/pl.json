@@ -3841,6 +3841,8 @@
   "settings.permissions.defaultPermissions": "Domyślne uprawnienia",
   "settings.permissions.defaultPermissionsDesc": "Wzorce na poziomie aplikacji dozwolone w trybie Eksploruj. Polecenia spoza tej listy są blokowane.",
   "settings.permissions.description": "Reguły trybu Eksploruj",
+  "settings.permissions.loadConfig": "Wczytaj pliki uprawnień",
+  "settings.permissions.loadConfigDesc": "Odczyt plików uprawnień z tego urządzenia wymaga Twojej wyraźnej zgody.",
   "settings.permissions.noCustomPermissions": "Brak skonfigurowanych niestandardowych uprawnień.",
   "settings.permissions.noCustomPermissionsDesc": "Utwórz plik permissions.json w swoim Workspace, aby dodać niestandardowe reguły.",
   "settings.permissions.noDefaultPermissions": "Nie znaleziono domyślnych uprawnień.",

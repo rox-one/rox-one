@@ -3835,6 +3835,8 @@
   "settings.permissions.defaultPermissions": "Permisos predeterminados",
   "settings.permissions.defaultPermissionsDesc": "Patrones a nivel de aplicación permitidos en el modo Explore. Los comandos que no están en esta lista están bloqueados.",
   "settings.permissions.description": "Reglas del modo exploración",
+  "settings.permissions.loadConfig": "Cargar archivos de permisos",
+  "settings.permissions.loadConfigDesc": "Leer los archivos de permisos de este dispositivo requiere tu autorización explícita.",
   "settings.permissions.noCustomPermissions": "No hay permisos personalizados configurados.",
   "settings.permissions.noCustomPermissionsDesc": "Crea un archivo permissions.json en tu Workspace para añadir reglas personalizadas.",
   "settings.permissions.noDefaultPermissions": "No se encontraron permisos predeterminados.",

@@ -3835,6 +3835,8 @@
   "settings.permissions.defaultPermissions": "الأذونات الافتراضية",
   "settings.permissions.defaultPermissionsDesc": "أنماط على مستوى التطبيق مسموح بها في وضع الاستكشاف. تُحظر الأوامر غير الموجودة في هذه القائمة.",
   "settings.permissions.description": "قواعد وضع الاستكشاف",
+  "settings.permissions.loadConfig": "تحميل ملفات الأذونات",
+  "settings.permissions.loadConfigDesc": "قراءة ملفات الأذونات من هذا الجهاز تتطلب إذنك الصريح.",
   "settings.permissions.noCustomPermissions": "لم تُضبط أي أذونات مخصصة.",
   "settings.permissions.noCustomPermissionsDesc": "أنشئ ملف permissions.json في مساحة عملك لإضافة قواعد مخصصة.",
   "settings.permissions.noDefaultPermissions": "لم يتم العثور على أذونات افتراضية.",

@@ -3835,6 +3835,8 @@
   "settings.permissions.defaultPermissions": "デフォルト権限",
   "settings.permissions.defaultPermissionsDesc": "Exploreモードで許可されるアプリレベルのパターンです。このリストにないコマンドはブロックされます。",
   "settings.permissions.description": "Exploreモードのルール",
+  "settings.permissions.loadConfig": "権限ファイルを読み込む",
+  "settings.permissions.loadConfigDesc": "このデバイスから権限ファイルを読み取るには明示的な許可が必要です。",
   "settings.permissions.noCustomPermissions": "カスタム権限が設定されていません。",
   "settings.permissions.noCustomPermissionsDesc": "カスタムルールを追加するには、Workspace内にpermissions.jsonファイルを作成してください。",
   "settings.permissions.noDefaultPermissions": "デフォルト権限が見つかりません。",

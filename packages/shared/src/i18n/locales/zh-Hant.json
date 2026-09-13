@@ -3835,6 +3835,8 @@
   "settings.permissions.defaultPermissions": "預設許可權",
   "settings.permissions.defaultPermissionsDesc": "應用級別的探索模式允許模式。不在此列表中的命令將被阻止。",
   "settings.permissions.description": "探索模式規則",
+  "settings.permissions.loadConfig": "載入權限檔案",
+  "settings.permissions.loadConfigDesc": "從此裝置讀取權限檔案需要您的明確授權。",
   "settings.permissions.noCustomPermissions": "未設定自定義許可權。",
   "settings.permissions.noCustomPermissionsDesc": "在 Workspace 中建立 permissions.json 檔案以新增自定義規則。",
   "settings.permissions.noDefaultPermissions": "未找到預設許可權。",
