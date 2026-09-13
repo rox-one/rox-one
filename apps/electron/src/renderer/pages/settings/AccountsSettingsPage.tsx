@@ -25,6 +25,8 @@ import type {
 } from '../../../shared/types'
 import { navigate, routes } from '@/lib/navigate'
 import { CredentialMigrationCard } from './CredentialMigrationCard'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -107,6 +109,12 @@ export default function AccountsSettingsPage() {
   const handleSaveProfile = async () => {
     const trimmed = displayName.trim()
     if (!trimmed) return
+    const gate = settingsPageActionResult({
+      pageId: 'accounts',
+      action: 'profile-write',
+      source: 'native',
+    })
+    if (!isClaimableLive(gate)) return
     setSavingProfile(true)
     try {
       const next = await window.electronAPI.identityUpdateProfile({ displayName: trimmed })
@@ -129,6 +137,13 @@ export default function AccountsSettingsPage() {
       toast.error(t('settings.accounts.tokenRequired'))
       return
     }
+    const gate = settingsPageActionResult({
+      pageId: 'accounts',
+      action: 'identity-connect',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) return
     setConnecting(true)
     try {
       const next = await window.electronAPI.identityConnect({
@@ -151,6 +166,13 @@ export default function AccountsSettingsPage() {
   }
 
   const handleDisconnect = async (connectionId: string) => {
+    const gate = settingsPageActionResult({
+      pageId: 'accounts',
+      action: 'connection-delete',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) return
     setBusyId(connectionId)
     try {
       const next = await window.electronAPI.identityDisconnect({ connectionId })
@@ -178,6 +200,13 @@ export default function AccountsSettingsPage() {
     try {
       const confirmed = await window.electronAPI.showLogoutConfirmation()
       if (!confirmed) return
+      const gate = settingsPageActionResult({
+        pageId: 'accounts',
+        action: 'identity-reset',
+        source: 'native',
+        granted: true,
+      })
+      if (!isClaimableLive(gate)) return
       await window.electronAPI.logout()
       toast.success(t('settings.accounts.resetDone'))
       void load()

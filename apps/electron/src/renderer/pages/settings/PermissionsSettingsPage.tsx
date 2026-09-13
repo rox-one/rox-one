@@ -32,6 +32,8 @@ import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopo
 import { getDocUrl } from '@craft-agent/shared/docs/doc-links'
 import { routes } from '@/lib/navigate'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -171,6 +173,16 @@ export default function PermissionsSettingsPage() {
 
       setIsLoading(true)
       try {
+        const gate = settingsPageActionResult({
+          pageId: 'permissions',
+          action: 'config-read',
+          source: 'native',
+          granted: true,
+        })
+        if (!isClaimableLive(gate)) {
+          setIsLoading(false)
+          return
+        }
         // Load default permissions (app-level) - returns both config and path
         const { config: defaults, path: defaultsPath } = await window.electronAPI.getDefaultPermissionsConfig()
         setDefaultConfig(defaults)
@@ -205,7 +217,7 @@ export default function PermissionsSettingsPage() {
   }, [])
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t("settings.permissions.title")} actions={<HeaderMenu route={routes.view.settings('permissions')} helpFeature="permissions" />} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">

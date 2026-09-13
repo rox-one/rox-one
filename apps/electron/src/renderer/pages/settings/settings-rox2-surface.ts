@@ -1,5 +1,5 @@
 /**
- * ROX2-031 hub + ROX2-041..052 settings pages.
+ * ROX2-031 hub + ROX2-041..055 settings pages.
  * Settings pages stay in SETTINGS_PAGES. Conation is not this surface.
  */
 import {
@@ -26,11 +26,14 @@ export const ROX2_SETTINGS_WAVE2_PAGE_IDS = ['context', 'marketplace', 'knowledg
 export const ROX2_SETTINGS_WAVE3_PAGE_IDS = ['extensions', 'import', 'app'] as const
 /** ROX2-050..052: ai, appearance, input. */
 export const ROX2_SETTINGS_WAVE4_PAGE_IDS = ['ai', 'appearance', 'input'] as const
+/** ROX2-053..055: workspace, accounts, permissions. */
+export const ROX2_SETTINGS_WAVE5_PAGE_IDS = ['workspace', 'accounts', 'permissions'] as const
 export type Rox2SettingsPageId =
   | (typeof ROX2_SETTINGS_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE2_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE3_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE4_PAGE_IDS)[number]
+  | (typeof ROX2_SETTINGS_WAVE5_PAGE_IDS)[number]
 
 export type SettingsPageActionKind =
   | 'profile-write'
@@ -53,6 +56,9 @@ export type SettingsPageActionKind =
   | 'connection-write'
   | 'connection-delete'
   | 'connection-test'
+  | 'identity-connect'
+  | 'identity-reset'
+  | 'config-read'
 
 const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'profile-write': 'write',
@@ -75,6 +81,9 @@ const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'connection-write': 'write',
   'connection-delete': 'destroy',
   'connection-test': 'cloud-send',
+  'identity-connect': 'cloud-send',
+  'identity-reset': 'destroy',
+  'config-read': 'device-read',
 }
 
 export function bindSettingsHubContext(
@@ -115,6 +124,9 @@ export function settingsHubActionResult(opts: {
  * Marketplace and extension install is cloud-send; it is never spend.
  * Import scan is device-read. App/appearance/input prefs are local writes.
  * AI connection save is local; test is cloud-send; delete is destroy.
+ * Workspace prefs are local writes; permission mode is write, not spend.
+ * Accounts profile is local; identity connect is cloud-send; reset is destroy.
+ * Permissions config load is device-read.
  */
 export function settingsPageActionResult(opts: {
   pageId: Rox2SettingsPageId

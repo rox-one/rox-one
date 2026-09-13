@@ -13,6 +13,9 @@ import ExtensionsSettingsPage from '@/pages/settings/ExtensionsSettingsPage'
 import AppSettingsPage from '@/pages/settings/AppSettingsPage'
 import AiSettingsPage from '@/pages/settings/AiSettingsPage'
 import InputSettingsPage from '@/pages/settings/InputSettingsPage'
+import WorkspaceSettingsPage from '@/pages/settings/WorkspaceSettingsPage'
+import AccountsSettingsPage from '@/pages/settings/AccountsSettingsPage'
+import PermissionsSettingsPage from '@/pages/settings/PermissionsSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import { ModalProvider } from '@/context/ModalContext'
@@ -64,6 +67,30 @@ function InputPlayground() {
   return (
     <SettingsScreen>
       <InputSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function WorkspacePlayground() {
+  return (
+    <SettingsScreen>
+      <WorkspaceSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function AccountsPlayground() {
+  return (
+    <SettingsScreen>
+      <AccountsSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function PermissionsPlayground() {
+  return (
+    <SettingsScreen>
+      <PermissionsSettingsPage />
     </SettingsScreen>
   )
 }
@@ -312,6 +339,36 @@ export const settingsComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'ROX2-052 native input chrome; prefs are local writes',
     component: InputPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-workspace',
+    name: 'Settings · Workspace',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-053 native workspace chrome; prefs are local writes',
+    component: WorkspacePlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-accounts',
+    name: 'Settings · Accounts',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-054 native accounts chrome; connect is not spend',
+    component: AccountsPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-permissions',
+    name: 'Settings · Permissions',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-055 native permissions chrome; config load is device-read',
+    component: PermissionsPlayground,
     props: [],
     layout: 'full',
   },

@@ -30,6 +30,8 @@ import { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/mode-types'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { SourceAvatar } from '@/components/ui/source-avatar'
 import { toast } from 'sonner'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 import {
   SettingsSection,
@@ -175,6 +177,10 @@ export default function WorkspaceSettingsPage() {
   const updateWorkspaceSetting = useCallback(
     async <K extends keyof WorkspaceSettings>(key: K, value: WorkspaceSettings[K]) => {
       if (!window.electronAPI || !activeWorkspaceId) return false
+      const action =
+        key === 'permissionMode' || key === 'cyclablePermissionModes' ? 'permission-mode' : 'pref-write'
+      const gate = settingsPageActionResult({ pageId: 'workspace', action, source: 'native' })
+      if (!isClaimableLive(gate)) return false
 
       try {
         await window.electronAPI.updateWorkspaceSetting(activeWorkspaceId, key, value)
@@ -195,6 +201,8 @@ export default function WorkspaceSettingsPage() {
   const handleIconUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !activeWorkspaceId || !window.electronAPI) return
+    const gate = settingsPageActionResult({ pageId: 'workspace', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
 
     // Validate file type
     const validTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp', 'image/gif']
@@ -353,7 +361,7 @@ export default function WorkspaceSettingsPage() {
   // Show empty state if no workspace is active
   if (!activeWorkspaceId) {
     return (
-      <div className="h-full flex flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         <PanelHeader title={t("settings.workspace.workspaceSettings")} actions={<HeaderMenu route={routes.view.settings('workspace')} helpFeature="workspaces" />} />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-sm text-muted-foreground">{t("settings.workspace.noWorkspaceSelected")}</p>
@@ -365,7 +373,7 @@ export default function WorkspaceSettingsPage() {
   // Show loading state
   if (isLoadingWorkspace) {
     return (
-      <div className="h-full flex flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         <PanelHeader title={t("settings.workspace.workspaceSettings")} actions={<HeaderMenu route={routes.view.settings('workspace')} helpFeature="workspaces" />} />
         <div className="flex-1 flex items-center justify-center">
           <Spinner className="text-muted-foreground" />
@@ -375,7 +383,7 @@ export default function WorkspaceSettingsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t("settings.workspace.workspaceSettings")} actions={<HeaderMenu route={routes.view.settings('workspace')} helpFeature="workspaces" />} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
