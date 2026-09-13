@@ -23,30 +23,19 @@ describe('parseOnboardingUsername', () => {
 })
 
 describe('nextStepAfterUsername', () => {
-  it('closes the wizard when setup is already complete', () => {
-    expect(nextStepAfterUsername({
-      isFullyConfigured: true,
-      applyRoxConnectGate: true,
-      gitBashMissing: true,
-    })).toBe('complete')
-  })
-
   it('keeps Rox Connect and Git Bash gates after the name step', () => {
     expect(nextStepAfterUsername({
-      isFullyConfigured: false,
       applyRoxConnectGate: true,
       gitBashMissing: true,
     })).toBe('rox-connect')
     expect(nextStepAfterUsername({
-      isFullyConfigured: false,
       applyRoxConnectGate: false,
       gitBashMissing: true,
     })).toBe('git-bash')
   })
 
-  it('continues to provider select on a normal first run', () => {
+  it('continues to provider select even when OMP setup is already complete', () => {
     expect(nextStepAfterUsername({
-      isFullyConfigured: false,
       applyRoxConnectGate: false,
       gitBashMissing: false,
     })).toBe('provider-select')
@@ -59,5 +48,19 @@ describe('WelcomeStep username gate', () => {
     expect(source).toContain('parseOnboardingUsername')
     expect(source).toContain('onboardingUsernameConfirmed')
     expect(source).toContain('identityUpdateProfile')
+    expect(source).toContain('ONBOARDING_USERNAME_MAX')
+    expect(source).toContain('usernameSaveFailed')
+    expect(source).toContain('usernameTooLong')
+    expect(source).not.toContain('caught.message')
+  })
+})
+
+describe('useOnboarding welcome advance', () => {
+  it('does not treat isFullyConfigured as wizard-complete and always shows the name field on Welcome', () => {
+    const source = readFileSync(join(import.meta.dir, '../../../hooks/useOnboarding.ts'), 'utf8')
+    expect(source).toContain('nextStepAfterUsername')
+    expect(source).not.toMatch(/nextStepAfterUsername\(\{[\s\S]*isFullyConfigured/)
+    expect(source).not.toMatch(/if \(next === 'complete'\)/)
+    expect(source).toContain("initialStep === 'welcome' ? false")
   })
 })

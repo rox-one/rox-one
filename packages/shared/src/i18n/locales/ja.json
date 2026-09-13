@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "アプリ内の表示名です。ワークスペース名は OS のユーザー名またはコンピューター名のままです。",
   "onboarding.welcome.usernamePlaceholder": "ユーザー名",
   "onboarding.welcome.usernameRequired": "続行するにはユーザー名を入力してください。",
+  "onboarding.welcome.usernameSaveFailed": "ユーザー名を保存できませんでした。もう一度お試しください。",
+  "onboarding.welcome.usernameTooLong": "ユーザー名は80文字以内にしてください。",
   "overlay.code": "コード",
   "overlay.mermaidDiagram": "Mermaidダイアグラム",
   "overlay.nextItem": "次のアイテム",

@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "앱 안에서 보이는 표시 이름입니다. 작업 공간 이름은 OS 사용자 또는 컴퓨터 이름으로 유지됩니다.",
   "onboarding.welcome.usernamePlaceholder": "사용자 이름",
   "onboarding.welcome.usernameRequired": "계속하려면 사용자 이름을 입력하세요.",
+  "onboarding.welcome.usernameSaveFailed": "사용자 이름을 저장하지 못했습니다. 다시 시도하세요.",
+  "onboarding.welcome.usernameTooLong": "사용자 이름은 80자 이하여야 합니다.",
   "overlay.code": "코드",
   "overlay.mermaidDiagram": "Mermaid 다이어그램",
   "overlay.nextItem": "다음 항목",

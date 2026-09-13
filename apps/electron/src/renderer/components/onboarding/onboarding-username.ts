@@ -3,7 +3,6 @@ import type { OnboardingStep } from './OnboardingWizard'
 export const ONBOARDING_USERNAME_MAX = 80
 
 export type UsernameAdvanceContext = {
-  isFullyConfigured: boolean
   applyRoxConnectGate: boolean
   gitBashMissing: boolean
 }
@@ -15,7 +14,6 @@ export function parseOnboardingUsername(raw: string): string | null {
 }
 
 export function nextStepAfterUsername(ctx: UsernameAdvanceContext): OnboardingStep {
-  if (ctx.isFullyConfigured) return 'complete'
   if (ctx.applyRoxConnectGate) return 'rox-connect'
   if (ctx.gitBashMissing) return 'git-bash'
   return 'provider-select'

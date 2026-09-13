@@ -2147,6 +2147,8 @@
   "onboarding.welcome.usernameHint": "Это отображаемое имя в приложении. Имя рабочего пространства остаётся именем пользователя или компьютера ОС.",
   "onboarding.welcome.usernamePlaceholder": "имя пользователя",
   "onboarding.welcome.usernameRequired": "Введите имя пользователя, чтобы продолжить.",
+  "onboarding.welcome.usernameSaveFailed": "Не удалось сохранить имя. Попробуйте снова.",
+  "onboarding.welcome.usernameTooLong": "Имя — не длиннее 80 символов.",
   "overlay.code": "Код",
   "overlay.mermaidDiagram": "Диаграмма Mermaid",
   "overlay.nextItem": "Следующий элемент",

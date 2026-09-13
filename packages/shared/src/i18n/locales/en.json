@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "This is your in-app display name. The workspace name stays the computer or OS user name.",
   "onboarding.welcome.usernamePlaceholder": "username",
   "onboarding.welcome.usernameRequired": "Enter a username to continue.",
+  "onboarding.welcome.usernameSaveFailed": "Could not save the username. Try again.",
+  "onboarding.welcome.usernameTooLong": "Username must be 80 characters or fewer.",
   "overlay.code": "Code",
   "overlay.mermaidDiagram": "Mermaid Diagram",
   "overlay.nextItem": "Next item",

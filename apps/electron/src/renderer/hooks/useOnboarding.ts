@@ -265,7 +265,8 @@ export function useOnboarding({
     credentialStatus: 'idle',
     completionStatus: 'saving',
     apiSetupMethod: initialApiSetupMethod ?? null,
-    isExistingUser: initialSetupNeeds?.needsBillingConfig ?? false,
+    isExistingUser:
+      initialStep === 'welcome' ? false : (initialSetupNeeds?.needsBillingConfig ?? false),
     gitBashStatus: undefined,
     isRecheckingGitBash: false,
     isCheckingGitBash: true, // Start as true until check completes
@@ -390,14 +391,9 @@ export function useOnboarding({
 
       case 'welcome': {
         const next = nextStepAfterUsername({
-          isFullyConfigured: Boolean(initialSetupNeeds?.isFullyConfigured),
           applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
           gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
         })
-        if (next === 'complete') {
-          onComplete()
-          return
-        }
         setState(s => ({ ...s, step: next }))
         break
       }
@@ -425,7 +421,7 @@ export function useOnboarding({
         onComplete()
         break
     }
-  }, [state.step, state.gitBashStatus, state.apiSetupMethod, onComplete, initialSetupNeeds?.isFullyConfigured, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
+  }, [state.step, state.gitBashStatus, state.apiSetupMethod, onComplete, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
   // Go back to previous step. If at the initial step, call onDismiss instead.
   const handleBack = useCallback(() => {

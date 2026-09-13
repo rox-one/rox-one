@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "Das ist dein Anzeigename in der App. Der Arbeitsbereichsname bleibt der OS-Benutzer- oder Computername.",
   "onboarding.welcome.usernamePlaceholder": "Benutzername",
   "onboarding.welcome.usernameRequired": "Gib einen Benutzernamen ein, um fortzufahren.",
+  "onboarding.welcome.usernameSaveFailed": "Der Benutzername konnte nicht gespeichert werden. Versuche es erneut.",
+  "onboarding.welcome.usernameTooLong": "Der Benutzername darf höchstens 80 Zeichen lang sein.",
   "overlay.code": "Code",
   "overlay.mermaidDiagram": "Mermaid-Diagramm",
   "overlay.nextItem": "Nächstes Element",

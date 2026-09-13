@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "Ez a megjelenített név az alkalmazásban. A munkaterület neve marad az OS-felhasználó vagy a gép neve.",
   "onboarding.welcome.usernamePlaceholder": "felhasználónév",
   "onboarding.welcome.usernameRequired": "A folytatáshoz adj meg egy felhasználónevet.",
+  "onboarding.welcome.usernameSaveFailed": "A felhasználónevet nem sikerült menteni. Próbáld újra.",
+  "onboarding.welcome.usernameTooLong": "A felhasználónév legfeljebb 80 karakter lehet.",
   "overlay.code": "Kód",
   "overlay.mermaidDiagram": "Mermaid diagram",
   "overlay.nextItem": "Következő elem",
