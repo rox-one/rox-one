@@ -380,11 +380,13 @@ export interface SettingsMenuItem {
  */
 const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
   account: 'CircleUser',
+  privacy: 'Shield',
   runtime: 'Settings',
   context: 'FileText',
   knowledge: 'BookOpen',
   marketplace: 'ShoppingBag',
   extensions: 'Blocks',
+  import: 'DownloadCloud',
   app: 'ToggleRight',
   ai: 'Sparkles',
   appearance: 'Palette',

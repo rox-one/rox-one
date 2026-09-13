@@ -39,6 +39,7 @@ export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
 import type { XpEventType } from '@craft-agent/shared/gamification';
 import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
+import type { ConsentPurpose, ExportReceipt, PrivacyDeletionReceipt, PrivacyDto } from '@craft-agent/shared/privacy';
 import type { VoiceHealth, VoicePrefs } from '@craft-agent/shared/voice';
 import type { EnvironmentPrefs, QuestionId } from '@craft-agent/shared/environment';
 import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
@@ -1426,6 +1427,13 @@ export interface ElectronAPI {
     ratings?: SessionRating[]
     analyticsConsent?: boolean
   }) => void): () => void
+
+  getPrivacyState(): Promise<PrivacyDto>
+  setPrivacyPurpose(payload: { purpose: ConsentPurpose; granted: boolean }): Promise<PrivacyDto>
+  requestPrivacyExport(): Promise<PrivacyDto & { exportReceipt: ExportReceipt }>
+  requestPrivacyDeletion(): Promise<PrivacyDto & { deletionReceipt: PrivacyDeletionReceipt }>
+  completePrivacyDeletion(payload: { deletionId: string }): Promise<PrivacyDto>
+  onPrivacyChanged(callback: (state: PrivacyDto) => void): () => void
 
   getVoicePrefs(): Promise<VoicePrefs>
   saveVoicePrefs(patch: Partial<VoicePrefs>): Promise<VoicePrefs>

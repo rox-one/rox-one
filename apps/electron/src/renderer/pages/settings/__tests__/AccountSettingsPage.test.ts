@@ -23,5 +23,6 @@ describe('AccountSettingsPage', () => {
     expect(source).not.toContain('stripe')
     expect(source).not.toContain('USD')
     expect(source).toContain("routes.view.settings('accounts')")
+    expect(source).toContain("routes.view.settings('privacy')")
   })
 })

@@ -382,6 +382,14 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.gamification.SET_CONSENT,
   RPC_CHANNELS.gamification.CHANGED,
 
+  // privacy — consent ledger lives in local CONFIG_DIR
+  RPC_CHANNELS.privacy.GET,
+  RPC_CHANNELS.privacy.SET_PURPOSE,
+  RPC_CHANNELS.privacy.REQUEST_EXPORT,
+  RPC_CHANNELS.privacy.REQUEST_DELETION,
+  RPC_CHANNELS.privacy.COMPLETE_DELETION,
+  RPC_CHANNELS.privacy.CHANGED,
+
   // voice — local prefs, capture policy and STT/TTS adapters
   RPC_CHANNELS.voice.GET,
   RPC_CHANNELS.voice.SAVE,
