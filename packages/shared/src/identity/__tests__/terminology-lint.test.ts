@@ -31,7 +31,6 @@ describe('terminology linter', () => {
   it('does not flag allowlisted compatibility locale keys', () => {
     expect(localeValueViolations('collection.filter.agentFamily.omp', 'OMP')).toEqual([])
     expect(localeValueViolations('collection.filter.agentFamily.hermes', 'Hermes')).toEqual([])
-    expect(localeValueViolations('onboarding.reauth.loginAgain', 'Craft Agents')).toEqual([])
     expect(localeValueViolations('errors.omp.noModels.title', 'Rox has no models configured')).toEqual([])
     expect(localeValueViolations('errors.omp.noModels.title', 'OMP has no models configured')).toContain('OMP')
     expect(localeValueViolations('extensions.registries.provider.community-hermes', 'Hermes')).toEqual([])
@@ -43,6 +42,9 @@ describe('terminology linter', () => {
     expect(localeValueViolations('skillsList.ompBadge', 'OMP')).toContain('OMP')
     expect(localeValueViolations('skillsList.ompSection', 'OMP Skills')).toContain('OMP')
     expect(localeValueViolations('onboarding.ompCredential.description', 'The OMP runtime needs a key')).toContain('OMP')
+    expect(localeValueViolations('onboarding.ompCredential.description', 'existing ~/.omp/agent/models.yml')).toContain('~/.omp')
+    expect(localeValueViolations('onboarding.reauth.expired', 'Your Craft session expired')).toContain('Craft')
+    expect(localeValueViolations('onboarding.reauth.loginWithCraft', 'Log In with Craft')).toContain('Craft')
   })
 
   it('flags runtime names in normal-UI locale values', () => {

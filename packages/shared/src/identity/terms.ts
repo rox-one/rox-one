@@ -35,7 +35,6 @@ export interface TerminologyAllowlistEntry {
 export const TERMINOLOGY_KEY_ALLOWLIST: readonly TerminologyAllowlistEntry[] = [
   { match: 'branding.migration.', kind: 'filesystem' },
   { match: 'collection.filter.agentFamily.', kind: 'technical-detail' },
-  { match: 'onboarding.reauth.', kind: 'legacy-dead' },
   { match: 'extensions.registries.provider.', kind: 'technical-detail' },
   { match: 'extensions.runtime.', kind: 'technical-detail' },
   { match: 'extensions.registries.provider.', kind: 'technical-detail' },
@@ -61,6 +60,7 @@ export function isCompatibilityRuntimeTerm(value: string): boolean {
 /** Runtime names that must not appear in normal-UI locale values. */
 const FORBIDDEN_IN_NORMAL_UI: Array<{ id: string; pattern: RegExp }> = [
   { id: 'OMP', pattern: /\bOMP\b/ },
+  { id: '~/.omp', pattern: /~\/\.omp\b|\/\.omp\// },
   { id: 'oh-my-pi', pattern: /oh-my-pi/i },
   { id: 'Hermes', pattern: /\bHermes\b/ },
   { id: 'Craft Agents', pattern: /Craft Agents/ },
