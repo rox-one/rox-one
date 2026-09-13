@@ -77,7 +77,18 @@ export type SessionWorkflowSpec = {
 
 export type WorkflowRunMode = 'node' | 'from-here' | 'selection' | 'pipeline'
 
-export type WorkflowNodeRunStatus = 'queued' | 'running' | 'done' | 'skipped' | 'blocked'
+export type WorkflowNodeRunStatus =
+  | 'queued'
+  | 'running'
+  | 'done'
+  | 'skipped'
+  | 'blocked'
+  | 'simulated'
+  | 'waiting_approval'
+  | 'failed'
+  | 'cancelled'
+
+export type WorkflowRunEvidence = 'simulated' | 'live'
 
 export type WorkflowArtifact = {
   nodeId: string
@@ -95,6 +106,8 @@ export type WorkflowRun = {
   artifacts: Record<string, WorkflowArtifact>
   startedAt: number
   finishedAt?: number
+  /** The in-process canvas runner is simulate-only. Live needs a server adapter. */
+  evidence: WorkflowRunEvidence
 }
 
 export type SessionWorkflowDocument = {
