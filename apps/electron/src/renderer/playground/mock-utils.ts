@@ -602,6 +602,19 @@ export const mockElectronAPI = {
     truncated: false,
   }),
   foreignPersistSessions: async () => ({ results: [] }),
+  discoverBrowserProfiles: async () => [],
+  importBrowserProfile: async () => ({
+    dryRun: true,
+    profileId: '',
+    counts: { history: 0, bookmarks: 0, cookies: 0, credentials: 0, skipped: 0 },
+    accessedStores: [],
+    rollbackToken: null,
+    deletionReceipt: null,
+  }),
+  rollbackBrowserProfileImport: async () => ({ ok: true }),
+  deleteImportedBrowserProfile: async () => ({
+    deletionReceipt: { deletedAt: 0, categories: [], itemCount: 0 },
+  }),
   setCloudRunsConfig: async (patch: unknown) => {
     console.log('[Playground] setCloudRunsConfig', patch)
   },

@@ -12,6 +12,7 @@ import { ensureMockElectronAPI } from '../mock-utils'
 import { GripHorizontal, Pencil } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { useTranslation } from 'react-i18next'
 
 // Ensure mock electronAPI is available before any component renders
 ensureMockElectronAPI()
@@ -97,8 +98,10 @@ interface CompactChatPreviewProps {
 function CompactChatPreview({
   messages = completedMessages,
   isProcessing = false,
-  placeholder = "Describe what you'd like to change...",
+  placeholder,
 }: CompactChatPreviewProps) {
+  const { t } = useTranslation()
+  const resolvedPlaceholder = placeholder ?? t('editPopover.describePlaceholder')
   const [model, setModel] = useState('haiku')
   const session = createSession(messages, isProcessing)
 
@@ -229,7 +232,7 @@ function CompactChatPreview({
               currentModel={model}
               onModelChange={setModel}
               compactMode={true}
-              placeholder={placeholder}
+              placeholder={resolvedPlaceholder}
             />
           </div>
 
