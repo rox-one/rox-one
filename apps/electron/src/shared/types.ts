@@ -267,6 +267,7 @@ export type { KnowledgeViewConfig };
 import type { SecretRefEntry, SecretRefsSettingsPayload } from '@craft-agent/shared/secrets';
 export type { SecretRefEntry, SecretRefsSettingsPayload };
 import type { ZenShellSnapshot } from './shell-appearance';
+import type { ListDocTreeResult } from '@craft-agent/core/knowledge/providers/siyuan';
 
 // Toolchain manager types (first-run download manager, spec 2026-08-06)
 import type { ToolStatus as ToolchainToolStatus, ToolName as ToolchainToolName } from '@craft-agent/shared/toolchain/types';
@@ -1034,16 +1035,7 @@ export interface ElectronAPI {
       connectionId: string
       notebookId: string
       path?: string
-    }): Promise<{
-      notebookId: string
-      nodes: Array<{
-        id: string
-        name: string
-        path: string
-        kind: 'document' | 'folder' | 'database'
-        children?: unknown[]
-      }>
-    }>
+    }): Promise<ListDocTreeResult>
     userCreate(args: {
       connectionId: string
       source: 'navigator' | 'agent'
