@@ -10,6 +10,7 @@ import type {
   ResourceProvider,
   ResourceSearchContext,
 } from '@craft-agent/core/platform'
+import i18n from 'i18next'
 import { scoreMatch, scoreMatchAny } from './omnibox-helpers'
 
 export interface SessionMetaLike {
@@ -66,7 +67,7 @@ export function createSessionsProvider(
 ): ResourceProvider {
   return {
     id: 'craft-sessions',
-    label: 'Sessions',
+    label: i18n.t('sidebar.allSessions'),
     prefixes: ['', '@'],
     async search(ctx: ResourceSearchContext): Promise<ResourceItem[]> {
       const q = ctx.query.trim()
@@ -104,7 +105,7 @@ export function createSettingsProvider(
 ): ResourceProvider {
   return {
     id: 'craft-settings',
-    label: 'Settings',
+    label: i18n.t('sidebar.settings'),
     prefixes: [''],
     async search(ctx: ResourceSearchContext): Promise<ResourceItem[]> {
       const q = ctx.query.trim()
@@ -139,7 +140,7 @@ export function createSkillsProvider(
 ): ResourceProvider {
   return {
     id: 'craft-skills',
-    label: 'Skills',
+    label: i18n.t('sidebar.skills'),
     prefixes: ['', '/'],
     async search(ctx: ResourceSearchContext): Promise<ResourceItem[]> {
       const q = ctx.query.trim()
@@ -176,7 +177,7 @@ export function createSourcesProvider(
 ): ResourceProvider {
   return {
     id: 'craft-sources',
-    label: 'Sources',
+    label: i18n.t('sidebar.sources'),
     prefixes: ['', '@'],
     async search(ctx: ResourceSearchContext): Promise<ResourceItem[]> {
       const q = ctx.query.trim()
@@ -213,7 +214,7 @@ export function createAutomationsProvider(
 ): ResourceProvider {
   return {
     id: 'craft-automations',
-    label: 'Automations',
+    label: i18n.t('sidebar.automations'),
     prefixes: ['', '!'],
     async search(ctx: ResourceSearchContext): Promise<ResourceItem[]> {
       const q = ctx.query.trim()
@@ -248,7 +249,7 @@ export function createAutomationsProvider(
 export function createKnowledgeProvider(searchFn: KnowledgeSearchFn): ResourceProvider {
   return {
     id: 'knowledge-docs',
-    label: 'Knowledge',
+    label: i18n.t('sidebar.knowledge'),
     prefixes: ['', '@', '?'],
     async search(ctx: ResourceSearchContext): Promise<ResourceItem[]> {
       const q = ctx.query.trim()
