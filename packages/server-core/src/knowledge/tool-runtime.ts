@@ -71,5 +71,8 @@ export function createKnowledgeToolRuntime(deps: KnowledgeToolRuntimeDeps): Know
 
     getBacklinks: ({ connectionId, ref }) =>
       call(connectionId, async (provider) => (await provider.getContext(ref, 'snapshot')).backlinks),
+
+    propose: ({ connectionId, input }) =>
+      call(connectionId, (provider) => provider.proposeMutation(input)),
   }
 }

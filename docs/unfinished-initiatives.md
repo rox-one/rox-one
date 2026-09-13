@@ -54,8 +54,10 @@
 **Осталось:**
 
 - дать реальные provider contracts и данные разделам Inbox, Daily, Databases и Tags, которые сейчас dynamic-empty;
+  **срез 2026-09-13:** capability flags `features.inbox|daily|tags` (SiYuan: false) + navigator `unsupported` vs `hidden`; write-back tool `knowledge_propose` (proposal only, no apply). Full list endpoints and UI approve/apply remain.
 - смонтировать/интегрировать `KnowledgeAgentPanel` вместо сохранения неиспользуемой W2-поверхности;
 - реализовать write-proposal tools и полный безопасный цикл preview → permission → snapshot → apply → verify → rollback;
+  **срез 2026-09-13:** `knowledge_propose` session tool lands a pending proposal; approve/apply stay human-only.
 - завершить publication pipeline с provenance, конфликтами, идемпотентностью и восстановлением;
 - довести collection/view engine для knowledge и runs, включая remote-domain collapse/saved-view semantics;
 - определить пороги G1-метрик, которые пока `TBD`, и прогнать их на реальных базах;
