@@ -39,7 +39,7 @@ describe('ROX2-031 native settings hub', () => {
   test('native settings actions are live; fixture, conation, and ungranted spend are not', () => {
     const ctx = bindSettingsHubContext('ws-1', 'account')
     expect(ctx.surfaceId).toBe('settings:account')
-    expect(isClaimableLive(settingsHubActionResult({ source: 'native' }))).toBe(true)
+    expect(isClaimableLive(settingsHubActionResult({ source: 'native' }))).toBe(false)
     expect(isClaimableLive(settingsHubActionResult({ source: 'fixture' }))).toBe(false)
     expect(isClaimableLive(settingsHubActionResult({ source: 'conation' }))).toBe(false)
     expect(
@@ -47,6 +47,6 @@ describe('ROX2-031 native settings hub', () => {
     ).toBe(false)
     expect(
       isClaimableLive(settingsHubActionResult({ source: 'native', permission: 'spend', granted: true })),
-    ).toBe(true)
+    ).toBe(false)
   })
 })

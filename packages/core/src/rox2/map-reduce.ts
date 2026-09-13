@@ -7,7 +7,7 @@
  * except for the local excerpt adapter (native session fields only).
  */
 
-import { formatRox2EntityId, queuedResult, type Rox2Result } from './platform-contract.ts'
+import { formatRox2EntityId, liveResult, queuedResult, type Rox2Result } from './platform-contract.ts'
 
 export const MAP_REDUCE_SCHEMA_VERSION = 1
 
@@ -217,9 +217,10 @@ export function mapReduceProductResult(result: ReduceResult): Rox2Result {
   if (result.outcomes.length === 0) {
     return queuedResult('map-reduce.empty', 'No verified outcomes')
   }
-  return {
-    ok: true,
-    state: 'live',
+  return liveResult({
     entityId: formatRox2EntityId('workflow', result.lineage.snapshotId),
-  }
+    lifecycle: 'succeeded',
+    verification: 'unverified',
+    message: 'Reduce completed without receipt or readback',
+  })
 }

@@ -87,6 +87,7 @@ describe('ROX2 platform contract', () => {
     })
     expect(failed.ok).toBe(false)
     expect(failed.lifecycle).toBe('failed')
+    expect(failed.state).not.toBe('live')
     expect(isRox2Error(failed)).toBe(true)
     expect(isClaimableLive(failed)).toBe(false)
   })
@@ -96,7 +97,20 @@ describe('ROX2 platform contract', () => {
     expect(queued.lifecycle).toBe('queued')
     expect(queued.executionMode).toBe('live')
     expect(isRox2Error(queued)).toBe(false)
-    expect(queued.ok).not.toBe(false)
+    expect(queued.ok).toBe(false)
+    expect(isClaimableLive(queued)).toBe(false)
+  })
+
+  test('fixture and queued results are non-success for ok', () => {
+    const fixture = fixtureResult('F', 'fixture')
+    const queued = queuedResult('Q', 'queued')
+    const simulated = simulatedResult('S', 'sim')
+    expect(fixture.ok).toBe(false)
+    expect(queued.ok).toBe(false)
+    expect(simulated.ok).toBe(false)
+    expect(fixture.state).toBe('fixture')
+    expect(queued.state).toBe('queued')
+    expect(isClaimableLive(fixture)).toBe(false)
     expect(isClaimableLive(queued)).toBe(false)
   })
 
@@ -107,6 +121,8 @@ describe('ROX2 platform contract', () => {
     })
     expect(unverified.verification).toBe('unverified')
     expect(unverified.lifecycle).toBe('succeeded')
+    expect(unverified.ok).not.toBe(true)
+    expect(unverified.state).not.toBe('live')
     expect(isClaimableLive(unverified)).toBe(false)
     expect(
       isClaimableLive({
@@ -142,16 +158,15 @@ describe('ROX2 platform contract', () => {
   })
 
   test('live succeeded is claimable only when policy-verified', () => {
-    expect(
-      isClaimableLive(
-        liveResult({
-          entityId: 'note:1',
-          lifecycle: 'succeeded',
-          verification: 'receipt_verified',
-          receipt: { requestId: 'r1' },
-        }),
-      ),
-    ).toBe(true)
+    const receiptLive = liveResult({
+      entityId: 'note:1',
+      lifecycle: 'succeeded',
+      verification: 'receipt_verified',
+      receipt: { requestId: 'r1' },
+    })
+    expect(receiptLive.ok).toBe(true)
+    expect(receiptLive.state).toBe('live')
+    expect(isClaimableLive(receiptLive)).toBe(true)
     expect(
       isClaimableLive(
         liveResult({
@@ -189,8 +204,10 @@ describe('ROX2 platform contract', () => {
     expect(adapted.executionMode).toBe('live')
     expect(adapted.lifecycle).toBe('succeeded')
     expect(adapted.verification).toBe('unverified')
-    expect(isClaimableLive(legacyLive)).toBe(true)
+    expect(isClaimableLive(legacyLive)).toBe(false)
     expect(isClaimableLive(adapted)).toBe(false)
+    expect(adapted.ok).not.toBe(true)
+    expect(adapted.state).not.toBe('live')
     expect(isRox2Error(legacyLive)).toBe(false)
 
     const legacyQueued = { ok: false as const, state: 'queued' as const, code: 'Q', message: 'queued' }

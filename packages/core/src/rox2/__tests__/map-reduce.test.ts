@@ -21,7 +21,7 @@ describe('ROX-AUD-054 Map → Outcomes → Reduce', () => {
     expect(snapshot.entityRefs.map((ref) => ref.entityId)).toEqual(['session:a', 'session:b'])
   })
 
-  test('local excerpt map/reduce is live only on full coverage', async () => {
+  test('local excerpt map/reduce is not claimable live without receipt or readback', async () => {
     const snapshot = snapshotSelection(sources, ['a', 'b'])
     const result = await runMapReduce({
       snapshot,
@@ -32,7 +32,9 @@ describe('ROX-AUD-054 Map → Outcomes → Reduce', () => {
     expect(result.coverage.complete).toBe(true)
     expect(result.outcomes).toHaveLength(2)
     expect(result.summary).toContain('Alpha: first')
-    expect(isClaimableLive(mapReduceProductResult(result))).toBe(true)
+    const product = mapReduceProductResult(result)
+    expect(isClaimableLive(product)).toBe(false)
+    expect(product).not.toMatchObject({ ok: true, state: 'live' })
   })
 
   test('cancel stops remaining jobs and does not claim full coverage', async () => {
