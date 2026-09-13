@@ -152,7 +152,7 @@ function getHealthIssueMessage(issue: CredentialHealthIssue, t: (key: string) =>
     case 'no_default_credentials':
       return t("settings.ai.credentialNotFound")
     default:
-      return issue.message || 'Credential issue detected.'
+      return issue.message || t("settings.ai.credentialIssue")
   }
 }
 
@@ -295,7 +295,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
           : 'Rox Backend Compatible')
         break
       case 'omp': parts.push(ROX_VISIBLE_TERMS.product); break
-      default: parts.push(provider || 'Unknown')
+      default: parts.push(provider || t("common.unknown"))
     }
 
     // Base URL for API key connections (show custom endpoint or default for provider)
@@ -661,7 +661,7 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
                     label: conn.name,
                     description: conn.providerType === 'anthropic' ? 'Anthropic' :
                                  conn.providerType === 'pi' ? 'Rox Backend' :
-                                 conn.providerType || 'Unknown',
+                                 conn.providerType || t("common.unknown"),
                   })),
                 ]}
               />
@@ -1211,7 +1211,7 @@ export default function AiSettingsPage() {
                                    conn.providerType === 'pi' ? 'Rox Backend' :
                                    conn.providerType === 'omp' ? ROX_VISIBLE_TERMS.product :
                                    conn.providerType === 'pi_compat' ? (conn.baseUrl?.toLowerCase().includes('manifest.build') ? 'Manifest' : 'Rox Backend Compatible') :
-                                   conn.providerType || 'Unknown',
+                                   conn.providerType || t("common.unknown"),
                     }))}
                   />
                   <SettingsMenuSelectRow
