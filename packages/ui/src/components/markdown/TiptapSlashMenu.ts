@@ -214,11 +214,31 @@ function insertCodeBlockWithPlaceholder(editor: Editor, insertPos?: number) {
   rememberCodeLanguage(editor, language)
 }
 
+function slashTitle(key: string, fallback: string): string {
+  const value = i18n.t(key, { defaultValue: fallback })
+  return typeof value === 'string' && value.length > 0 ? value : fallback
+}
+
+function slashGroupLabel(group: SlashCommandItem['group']): string {
+  switch (group) {
+    case 'Format':
+      return slashTitle('notes.slash.group.format', 'Format')
+    case 'Lists':
+      return slashTitle('notes.slash.group.lists', 'Lists')
+    case 'Blocks':
+      return slashTitle('notes.slash.group.blocks', 'Blocks')
+    default: {
+      const _exhaustive: never = group
+      return _exhaustive
+    }
+  }
+}
+
 export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
   return [
     {
       id: 'paragraph',
-      title: 'Text',
+      title: slashTitle('notes.slash.text', 'Text'),
       description: 'Turn into a normal paragraph',
       icon: 'pilcrow',
       group: 'Format',
@@ -229,7 +249,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'heading-1',
-      title: 'Heading 1',
+      title: slashTitle('notes.slash.heading1', 'Heading 1'),
       description: 'Large section heading',
       icon: 'heading-1',
       group: 'Format',
@@ -240,7 +260,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'heading-2',
-      title: 'Heading 2',
+      title: slashTitle('notes.slash.heading2', 'Heading 2'),
       description: 'Medium section heading',
       icon: 'heading-2',
       group: 'Format',
@@ -251,7 +271,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'heading-3',
-      title: 'Heading 3',
+      title: slashTitle('notes.slash.heading3', 'Heading 3'),
       description: 'Small section heading',
       icon: 'heading-3',
       group: 'Format',
@@ -262,7 +282,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'bullet-list',
-      title: 'Bullet List',
+      title: slashTitle('notes.slash.bulletList', 'Bullet List'),
       description: 'Create a bulleted list',
       icon: 'list',
       group: 'Lists',
@@ -273,7 +293,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'ordered-list',
-      title: 'Numbered List',
+      title: slashTitle('notes.slash.numberedList', 'Numbered List'),
       description: 'Create an ordered list',
       icon: 'list-ordered',
       group: 'Lists',
@@ -284,7 +304,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'task-list',
-      title: 'Todo List',
+      title: slashTitle('notes.slash.todoList', 'Todo List'),
       description: 'Create a checkbox task list',
       icon: 'list-checks',
       group: 'Lists',
@@ -295,7 +315,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'blockquote',
-      title: 'Quote',
+      title: slashTitle('notes.slash.quote', 'Quote'),
       description: 'Insert a block quote',
       icon: 'text-quote',
       group: 'Blocks',
@@ -308,7 +328,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'horizontal-rule',
-      title: 'Horizontal Rule',
+      title: slashTitle('notes.slash.horizontalRule', 'Horizontal Rule'),
       description: 'Insert a divider line',
       icon: 'minus',
       group: 'Blocks',
@@ -319,7 +339,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'footnote',
-      title: 'Footnote',
+      title: slashTitle('notes.slash.footnote', 'Footnote'),
       description: 'Insert a footnote reference and definition',
       icon: 'text-quote',
       group: 'Blocks',
@@ -330,7 +350,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'table',
-      title: 'Table',
+      title: slashTitle('notes.slash.table', 'Table'),
       description: 'Insert a two-column markdown table',
       icon: 'list',
       group: 'Blocks',
@@ -341,7 +361,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'columns-2',
-      title: 'Two columns',
+      title: slashTitle('notes.slash.twoColumns', 'Two columns'),
       description: 'Insert a portable two-column layout',
       icon: 'square-code',
       group: 'Blocks',
@@ -352,7 +372,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'columns-3',
-      title: 'Three columns',
+      title: slashTitle('notes.slash.threeColumns', 'Three columns'),
       description: 'Insert a portable three-column layout',
       icon: 'square-code',
       group: 'Blocks',
@@ -363,7 +383,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'spoiler',
-      title: 'Spoiler',
+      title: slashTitle('notes.slash.spoiler', 'Spoiler'),
       description: 'Insert a foldable spoiler callout',
       icon: 'quote',
       group: 'Blocks',
@@ -374,7 +394,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'embed',
-      title: 'Embed',
+      title: slashTitle('notes.slash.embed', 'Embed'),
       description: 'Insert a note embed',
       icon: 'workflow',
       group: 'Blocks',
@@ -385,7 +405,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'code-block',
-      title: 'Code Block',
+      title: slashTitle('notes.slash.codeBlock', 'Code Block'),
       description: 'Insert a fenced code block',
       icon: 'square-code',
       group: 'Blocks',
@@ -396,7 +416,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'mermaid-code-block',
-      title: 'Mermaid Diagram',
+      title: slashTitle('notes.slash.mermaid', 'Mermaid Diagram'),
       description: 'Insert a mermaid diagram block',
       icon: 'workflow',
       group: 'Blocks',
@@ -407,7 +427,7 @@ export function createSlashCommandItems(_editor: Editor): SlashCommandItem[] {
     },
     {
       id: 'latex-code-block',
-      title: 'LaTeX Block',
+      title: slashTitle('notes.slash.latex', 'LaTeX Block'),
       description: 'Insert a latex math block',
       icon: 'sigma',
       group: 'Blocks',
@@ -424,7 +444,7 @@ export function filterSlashCommandItems(items: SlashCommandItem[], query: string
   if (!normalized) return items
 
   return items.filter((item) => {
-    if (item.title.toLowerCase().includes(normalized)) return true
+    if (item.title?.toLowerCase().includes(normalized)) return true
     if (item.description?.toLowerCase().includes(normalized)) return true
     return item.aliases?.some((alias) => alias.toLowerCase().includes(normalized)) ?? false
   })
@@ -463,7 +483,7 @@ function renderMenuItems(container: HTMLElement, items: SlashCommandItem[], sele
 
     const label = document.createElement('div')
     label.className = 'tiptap-slash-group-label'
-    label.textContent = groupName
+    label.textContent = slashGroupLabel(groupItems[0]!.group)
     group.appendChild(label)
 
     for (const item of groupItems) {
