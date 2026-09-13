@@ -34,6 +34,10 @@ describe('resolveListGroupingMode (Display groupBy drives list grouping)', () =>
     expect(resolveListGroupingMode('dueDate', 'date')).toBe('dueDate')
     expect(resolveListGroupingMode('label', 'date')).toBe('label')
   })
+
+  it('keeps the none fallback even when leftover compact cycle chrome is hidden', () => {
+    expect(resolveListGroupingMode('none', 'date')).toBe('date')
+  })
 })
 
 describe('getListGroupKey', () => {

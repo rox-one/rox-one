@@ -39,7 +39,7 @@ import { CollectionViewChrome } from '../collection/CollectionViewChrome'
 import { collectionViewRoute } from '../collection/collection-view-cycle'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
-import { SessionTableRow } from './SessionTableRow'
+import { SessionTablePropertyHeader, SessionTableRow } from './SessionTableRow'
 import { SessionTableEmptyDropLane, SessionTableGroupHeader } from './SessionTableGroupHeader'
 import { crossGroupDropAction } from './table-drag'
 import { flattenTableGroups, virtualTableWindow } from './table-virtualization'
@@ -691,12 +691,14 @@ export function SessionTableHost() {
           </span>
           {showGrip && <span className="w-4 shrink-0" />}
           <span className="min-w-0 flex-1">{t('collection.table.column.title')}</span>
-          {showCol('status') && <span className="w-28 shrink-0">{t('collection.table.column.status')}</span>}
-          {showCol('priority') && <span className="w-20 shrink-0">{t('collection.table.column.priority')}</span>}
-          {showCol('project') && <span className="w-28 shrink-0">{t('collection.table.column.project')}</span>}
-          {showCol('labels') && <span className="w-32 shrink-0">{t('collection.table.column.labels')}</span>}
-          {showCol('dueDate') && <span className="w-24 shrink-0">{t('collection.table.column.dueDate')}</span>}
-          {showCol('model') && <span className="w-24 shrink-0">{t('collection.table.column.model')}</span>}
+          <SessionTablePropertyHeader
+            showStatus={showCol('status')}
+            showLabels={showCol('labels')}
+            showPriority={showCol('priority')}
+            showDue={showCol('dueDate')}
+            showModel={showCol('model')}
+            showProject={showCol('project')}
+          />
           {showCol('updated') && <span className="w-20 shrink-0">{t('collection.table.column.updated')}</span>}
           {showCol('created') && <span className="w-20 shrink-0">{t('collection.table.column.created')}</span>}
           {showCol('messages') && <span className="w-20 shrink-0">{t('collection.table.column.messages')}</span>}
@@ -767,6 +769,8 @@ export function SessionTableHost() {
                       statuses={sessionStatuses}
                       projectNameById={projectNameById}
                       labelById={labelById}
+                      projects={projectOptions}
+                      labels={labelOptions}
                       selected={isSelected(meta.id)}
                       onSelect={(_checked, shiftKey) => {
                         const globalIndex = visibleIndexById.get(meta.id) ?? 0
@@ -790,6 +794,8 @@ export function SessionTableHost() {
                         if (partial.dueDate !== undefined) void send({ type: 'setDueDate', dueDate: partial.dueDate })
                         if (partial.sessionStatus !== undefined) void send({ type: 'setSessionStatus', state: partial.sessionStatus })
                         if (partial.isFlagged !== undefined) void send({ type: partial.isFlagged ? 'flag' : 'unflag' })
+                        if ('projectId' in partial) void send({ type: 'setProjectId', projectId: partial.projectId ?? null })
+                        if (partial.labels !== undefined) void send({ type: 'setLabels', labels: partial.labels })
                       }}
                       showGrip={showGrip}
                       showStatus={showCol('status')}

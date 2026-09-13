@@ -22,13 +22,9 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Calendar,
   Check,
   Flag,
-  Inbox,
-  Layers,
   ListFilter,
-  MailOpen,
   Search,
   X,
 } from 'lucide-react'
@@ -95,9 +91,9 @@ export function CompactSessionListFilter({
   effectiveSessionStatuses,
   displayLabelConfigs,
   labelConfigs,
-  chatGroupingMode,
-  setChatGroupingMode,
-  isStateSubView,
+  chatGroupingMode: _chatGroupingMode,
+  setChatGroupingMode: _setChatGroupingMode,
+  isStateSubView: _isStateSubView,
   onOpenSearch,
 }: CompactSessionListFilterProps) {
   const { t } = useTranslation()
@@ -301,28 +297,9 @@ export function CompactSessionListFilter({
             </div>
           )}
 
-          {!isSearching && !isStateSubView && (
-            <Section title={t('sidebar.group')} icon={<Layers className="h-3.5 w-3.5" />}>
-              <FilterRow
-                icon={<Calendar className="h-4 w-4" />}
-                label={t('sidebar.groupByDate')}
-                radioSelected={chatGroupingMode === 'date'}
-                onTap={() => setChatGroupingMode('date')}
-              />
-              <FilterRow
-                icon={<Inbox className="h-4 w-4" />}
-                label={t('sidebar.groupByStatus')}
-                radioSelected={chatGroupingMode === 'status'}
-                onTap={() => setChatGroupingMode('status')}
-              />
-              <FilterRow
-                icon={<MailOpen className="h-4 w-4" />}
-                label={t('sidebar.groupByUnread')}
-                radioSelected={chatGroupingMode === 'unread'}
-                onTap={() => setChatGroupingMode('unread')}
-              />
-            </Section>
-          )}
+          {/* Leftover compact groupingMode cycle (date/status/unread) is hidden.
+              CollectionGroupByMenu in CollectionViewChrome owns grouping, including
+              the groupBy === 'none' fallback that still reads viewFiltersMap. */}
 
           {!isSearching && (
             <div className="px-2 pt-2">
