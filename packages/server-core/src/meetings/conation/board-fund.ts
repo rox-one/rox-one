@@ -5,7 +5,37 @@
  */
 
 import { confirmWrite } from './capabilities.ts'
-import { blocked, denied, type MeetingOpResult } from '../types.ts'
+import { blocked, denied, unsupported, type MeetingOpResult } from '../types.ts'
+
+export type BoardFundSurfaceKind = 'native' | 'iframe' | 'deeplink' | 'second-shell'
+
+export type BoardFundSurfaceOptions = {
+  readonly conationEnabled?: boolean
+}
+
+/** Conation iframe is a remote pane, never native ROX UI. */
+export function iframeIsNativeProduct(): false {
+  return false
+}
+
+/** Do not ship a second Kanban/Fund product shell beside native views. */
+export function secondProductShellEnabled(): false {
+  return false
+}
+
+export function presentBoardFundSurface(
+  kind: BoardFundSurfaceKind,
+  _options: BoardFundSurfaceOptions = {},
+): MeetingOpResult {
+  if (kind === 'iframe') return unsupported('iframe-is-not-native')
+  if (kind === 'deeplink') return unsupported('deeplink-is-not-native')
+  if (kind === 'second-shell') return unsupported('second-shell-forbidden')
+  return { status: 'verified', reason: 'native-surface', live: false, evidenceLevel: 'U1' }
+}
+
+export function applyUnknownConationOp(_op: string): MeetingOpResult {
+  return unsupported('unknown-conation-op')
+}
 
 export type NativeTask = {
   readonly id: string

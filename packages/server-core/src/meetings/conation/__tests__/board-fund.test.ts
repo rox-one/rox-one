@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'bun:test'
 import {
+  applyUnknownConationOp,
   createBoardViews,
   dragTask,
+  iframeIsNativeProduct,
   linkRelation,
+  presentBoardFundSurface,
   renameTask,
+  secondProductShellEnabled,
   sourceDeleted,
   taskInViews,
   unlinkTask,
@@ -45,5 +49,39 @@ describe('board-fund (#378)', () => {
     expect(linkRelation(views, 'a', 'b', 'depends').status).toBe('verified')
     expect(linkRelation(views, 'b', 'a', 'depends').reason).toBe('cycle')
     expect(linkRelation(views, 'b', 'a', 'related').status).toBe('verified')
+  })
+
+  it('does not present Conation iframe, deep-link, or a second shell as native ROX UI', () => {
+    expect(iframeIsNativeProduct()).toBe(false)
+    expect(secondProductShellEnabled()).toBe(false)
+
+    const iframe = presentBoardFundSurface('iframe')
+    expect(iframe.status).toBe('unsupported')
+    expect(iframe.reason).toBe('iframe-is-not-native')
+    expect(iframe.live).toBe(false)
+    expect(iframe.evidenceLevel).toBe('U1')
+
+    expect(presentBoardFundSurface('deeplink').status).toBe('unsupported')
+    expect(presentBoardFundSurface('deeplink').reason).toBe('deeplink-is-not-native')
+    expect(presentBoardFundSurface('second-shell').status).toBe('unsupported')
+    expect(presentBoardFundSurface('second-shell').reason).toBe('second-shell-forbidden')
+  })
+
+  it('keeps native Board/Fund working when Conation is off and rejects unknown ops', () => {
+    const native = presentBoardFundSurface('native', { conationEnabled: false })
+    expect(native.status).toBe('verified')
+    expect(native.reason).toBe('native-surface')
+    expect(native.live).toBe(false)
+    expect(native.evidenceLevel).toBe('U1')
+
+    const views = createBoardViews({ id: 't1', title: 'Task', revision: '1', status: 'todo' })
+    expect(renameTask(views, 't1', 'Still native').status).toBe('verified')
+    expect(taskInViews(views, 't1').every((row) => row.title === 'Still native')).toBe(true)
+
+    const unknown = applyUnknownConationOp('invented-schema')
+    expect(unknown.status).toBe('unsupported')
+    expect(unknown.reason).toBe('unknown-conation-op')
+    expect(unknown.live).toBe(false)
+    expect(unknown.evidenceLevel).toBe('U1')
   })
 })
