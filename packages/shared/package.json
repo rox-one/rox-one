@@ -129,6 +129,7 @@
     "./workspaces": "./src/workspaces/index.ts",
     "./environment": "./src/environment/index.ts",
     "./voice": "./src/voice/index.ts",
+    "./meeting-agents": "./src/meeting-agents/index.ts",
     "./cli": "./src/cli/index.ts",
     "./capabilities": "./src/capabilities/index.ts",
     "./code-intelligence": "./src/code-intelligence/index.ts",
