@@ -129,3 +129,20 @@ export {
   type ReduceResult,
   type SelectionSnapshot,
 } from './map-reduce.ts'
+
+export {
+  FIRST_RESULT_SCHEMA_VERSION,
+  FIRST_RESULT_STEPS,
+  advanceFirstResult,
+  emptyFirstResult,
+  isAccountRegistered,
+  parseFirstResultCheckpoint,
+  recordFirstResultError,
+  resumeFirstResult,
+  seedOfflineFirstResult,
+  skipFirstResult,
+  type FirstResultCheckpoint,
+  type FirstResultStep,
+  type FirstResultStore,
+  type SeededFirstResult,
+} from './onboarding-first-result.ts'
