@@ -173,6 +173,7 @@ export class MeetingJournal {
       snapshot.events.push(event)
       if (event.type === 'meeting.created') snapshot.meeting = { ...event.meeting }
       if (event.type === 'meeting.status') snapshot.meeting.status = event.status
+      if (event.type === 'meeting.binding') snapshot.meeting.sourceBinding = event.sourceBinding
     }
     snapshot.outbox.push(...input.outboxEntries)
     snapshot.commandIds.push(input.commandId)

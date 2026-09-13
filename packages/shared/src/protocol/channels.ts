@@ -960,6 +960,9 @@ export const RPC_CHANNELS = {
     CALENDAR_BIND: 'meetings:calendarBind',
     ROOM_JOIN: 'meetings:roomJoin',
     MAIL_THREADS: 'meetings:mailThreads',
+    START_CAPTURE: 'meetings:startCapture',
+    PAUSE_CAPTURE: 'meetings:pauseCapture',
+    STOP_CAPTURE: 'meetings:stopCapture',
   },
 } as const
 

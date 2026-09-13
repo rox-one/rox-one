@@ -101,6 +101,43 @@ describe('meeting journal (RMA-I001)', () => {
     expect(restarted.read('m1').meeting.revision).toBe(1)
   })
 
+  test('binding event persists native-journal sourceBinding', () => {
+    const journal = new MeetingJournal(tempRoot())
+    journal.acquireWriter()
+    journal.commit({
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      expectedRevision: 0,
+      commandId: 'c1',
+      events: [created('ws', 'm1')],
+      outboxEntries: [],
+    })
+    journal.commit({
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      expectedRevision: 1,
+      commandId: 'c2',
+      events: [
+        {
+          type: 'meeting.binding',
+          sourceBinding: {
+            provider: 'native-journal',
+            accountId: 'user',
+            remoteType: 'capture-intent',
+            remoteId: 'm1',
+          },
+        },
+        { type: 'meeting.status', status: 'capturing' },
+      ],
+      outboxEntries: [],
+    })
+    const meeting = journal.read('m1').meeting
+    expect(meeting.status).toBe('capturing')
+    expect(meeting.sourceBinding?.provider).toBe('native-journal')
+    expect(meeting.sourceBinding?.remoteType).toBe('capture-intent')
+    journal.releaseWriter()
+  })
+
   test('migration backup count hash and readback', () => {
     const root = tempRoot()
     const journal = new MeetingJournal(root)
