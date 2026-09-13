@@ -203,6 +203,11 @@ export type Rox2BindingRegisterResult =
  * Four-slot keys with only unreserved characters still decode (identity), so
  * simple historical keys such as `google:work:event:e1` remain readable.
  * Invalid percent-encoding is rejected. New writes always emit encoded slots.
+ *
+ * `registerExternalBinding` dual-reads the encoded key, then a distinct
+ * historical unencoded four-slot key (e.g. `google:user@x.com:event:1` vs
+ * `google:user%40x.com:event:1`). Hits persist only under the encoded key and
+ * reuse the existing entity. Five-or-more-slot keys are not dual-read.
  */
 const BINDING_KEY_SLOT_COUNT = 4
 
@@ -262,6 +267,10 @@ export function entityRefFromBinding(
   }
 }
 
+function rawFourSlotBindingKey(binding: Rox2ExternalBinding): string {
+  return [binding.provider, binding.account, binding.remoteType, binding.remoteId].join(':')
+}
+
 /** Re-import of the same remote key is stable. Colliding keys and workspace mismatches quarantine. */
 export function registerExternalBinding(
   index: Map<string, Rox2EntityRef>,
@@ -271,13 +280,21 @@ export function registerExternalBinding(
   revisionId?: string,
 ): Rox2BindingRegisterResult {
   const key = formatRox2ExternalBindingKey(binding)
+  const rawKey = rawFourSlotBindingKey(binding)
   const ref = entityRefFromBinding(workspaceId, kind, binding, revisionId)
-  const existing = index.get(key)
+  const fromEncoded = index.get(key)
+  const fromRaw =
+    fromEncoded === undefined &&
+    rawKey !== key &&
+    rawKey.split(':').length === BINDING_KEY_SLOT_COUNT
+      ? index.get(rawKey)
+      : undefined
+  const existing = fromEncoded ?? fromRaw
   if (existing && existing.workspaceId !== workspaceId) {
     return { status: 'quarantine', reason: 'workspace-mismatch', existing }
   }
-  if (existing && existing.entityId !== ref.entityId) {
-    return { status: 'quarantine', reason: 'binding-collision', existing }
+  if (fromEncoded && fromEncoded.entityId !== ref.entityId) {
+    return { status: 'quarantine', reason: 'binding-collision', existing: fromEncoded }
   }
   if (existing) {
     const next: Rox2EntityRef = {
@@ -285,6 +302,7 @@ export function registerExternalBinding(
       revisionId: revisionId ?? existing.revisionId,
     }
     index.set(key, next)
+    if (fromRaw !== undefined) index.delete(rawKey)
     return { status: 'ok', ref: next }
   }
   index.set(key, ref)
