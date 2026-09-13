@@ -44,6 +44,7 @@ export const ROX2_RELATION_KINDS = [
   'in-calendar',
   'derived-from',
   'attached-to',
+  'member-of',
 ] as const
 
 export type Rox2RelationKind = (typeof ROX2_RELATION_KINDS)[number]
@@ -244,6 +245,7 @@ export const ROX2_RELATION_RULES: Record<Rox2RelationKind, Rox2RelationRule> = {
   'in-calendar': { domain: '*', range: ['calendar-event'], cyclic: false, deletion: 'clear-edge' },
   'derived-from': { domain: '*', range: '*', cyclic: false, deletion: 'clear-edge' },
   'attached-to': { domain: ['file', 'note'], range: '*', cyclic: true, deletion: 'clear-edge' },
+  'member-of': { domain: ['session', 'note', 'task'], range: ['project'], cyclic: false, deletion: 'clear-edge' },
 }
 
 function kindMatches(allowed: readonly Rox2EntityKind[] | '*', kind: Rox2EntityKind): boolean {

@@ -134,6 +134,7 @@ describe('ROX2 platform contract', () => {
   test('relation dictionary allows note→person and forbids task-dependency cycles', () => {
     expect(isAllowedRox2Relation('mentions', 'note', 'person')).toBe(true)
     expect(isAllowedRox2Relation('blocks', 'task', 'task')).toBe(true)
+    expect(isAllowedRox2Relation('member-of', 'session', 'project')).toBe(true)
     expect(isAllowedRox2Relation('blocks', 'note', 'task')).toBe(false)
     expect(wouldCreateRelationCycle('mentions', [], 'note:a', 'person:b')).toBe(false)
     expect(
