@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+import { isLiveVerified } from '../../types.ts'
 import {
   createNotesProjectsStore,
   getNote,
@@ -50,5 +51,41 @@ describe('notes-projects (#377)', () => {
     const store = createNotesProjectsStore([page2])
     expect(renameNote(store, 'note-page-2', 'X', '0').reason).toBe('conflicting-edit')
     expect(replayImport(store, page2).status).toBe('duplicate')
+  })
+
+  it('does not stamp verified when importing an unconfirmed Conation note', () => {
+    const store = createNotesProjectsStore()
+    const incoming: NoteRecord = {
+      id: 'c-import',
+      title: 'Remote note',
+      revision: '1',
+      page: 1,
+      origin: 'conation',
+    }
+    const result = replayImport(store, incoming)
+    expect(result.status).not.toBe('verified')
+    expect(result.status).toBe('blocked')
+    expect(result.live).toBe(false)
+    expect(result.evidenceLevel).toBe('U1')
+    expect(result.evidenceLevel).not.toBe('L4')
+    expect(isLiveVerified(result)).toBe(false)
+    expect(store.notes.has('c-import')).toBe(false)
+  })
+
+  it('does not mutate the store when a duplicate Conation import is still unconfirmed', () => {
+    const existing: NoteRecord = {
+      id: 'c1',
+      title: 'Kept',
+      revision: '1',
+      page: 1,
+      origin: 'conation',
+    }
+    const store = createNotesProjectsStore([existing])
+    const result = replayImport(store, { ...existing, title: 'Clobber', revision: '2' })
+    expect(result.status).toBe('blocked')
+    expect(result.live).toBe(false)
+    expect(isLiveVerified(result)).toBe(false)
+    expect(store.notes.get('c1')?.title).toBe('Kept')
+    expect(store.notes.get('c1')?.revision).toBe('1')
   })
 })
