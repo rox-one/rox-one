@@ -12,6 +12,7 @@ import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
 import {
+  applyVaultWatchTick,
   ensureVaultIndex,
   getVaultBacklinks,
   getVaultInsights,
@@ -19,7 +20,9 @@ import {
   listVaultDocuments,
   queryVaultDocuments,
   rebuildVaultIndex,
+  VAULT_WATCH_DEBOUNCE_MS,
   vaultIndexHealth,
+  vaultWatchNoteIdFromFilename,
   type VaultBacklink,
   type VaultDocumentSummary,
   type VaultWikiLink,
@@ -70,6 +73,7 @@ type ClientNotesWatchState = {
   workspaceId: string
   debounceTimer: ReturnType<typeof setTimeout> | null
   lastExternalChangeAt: number | null
+  pendingFilenames: Array<string | Buffer | null>
 }
 
 const clientNotesWatches = new Map<string, ClientNotesWatchState>()
@@ -647,11 +651,7 @@ function mimeFromName(name: string): string {
 }
 
 function noteIdFromWatchFilename(filename: string | Buffer | null): string | undefined {
-  if (!filename) return undefined
-  const rel = toSlashPath(filename.toString())
-  if (!rel || rel.startsWith('.') || rel.includes('/.') || rel.startsWith(`${ASSETS_DIR}/`) || rel.startsWith(`${TEMPLATES_DIR}/`)) return undefined
-  if (!rel.toLowerCase().endsWith('.md')) return undefined
-  return noteIdFromRelativePath(rel)
+  return vaultWatchNoteIdFromFilename(filename)
 }
 
 // Returns true if this file change was caused by our own writeFile() call.
@@ -1137,23 +1137,34 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
         workspaceId,
         debounceTimer: null,
         lastExternalChangeAt: lastExternalChangeByWorkspace.get(workspaceId) ?? null,
+        pendingFilenames: [],
       }
 
       state.watcher = watch(notesRoot, { recursive: true }, (_eventType, filename) => {
         const noteId = noteIdFromWatchFilename(filename)
         if (filename && !noteId) return
-
-        // Resolve absolute path for mtime comparison (filename is relative to watched dir)
-        const absPath = filename ? join(notesRoot, filename.toString()) : null
+        state.pendingFilenames.push(filename ?? null)
 
         if (state.debounceTimer) clearTimeout(state.debounceTimer)
         state.debounceTimer = setTimeout(async () => {
-          if (absPath && await isOwnWrite(absPath)) return
+          const burst = state.pendingFilenames.splice(0)
+          const external: Array<string | Buffer | null> = []
+          for (const name of burst) {
+            const absPath = name ? join(notesRoot, name.toString()) : null
+            if (absPath && await isOwnWrite(absPath)) continue
+            external.push(name)
+          }
+          if (external.length === 0) return
+          const tick = applyVaultWatchTick(notesRoot, external)
           const at = Date.now()
           state.lastExternalChangeAt = at
           lastExternalChangeByWorkspace.set(workspaceId, at)
-          changed({ workspaceId, reason: 'external', noteId }, { to: 'client', clientId })
-        }, 50)
+          changed({
+            workspaceId,
+            reason: 'external',
+            noteId: tick.noteIds.length === 1 ? tick.noteIds[0] : undefined,
+          }, { to: 'client', clientId })
+        }, VAULT_WATCH_DEBOUNCE_MS)
       })
 
       clientNotesWatches.set(clientId, state)
