@@ -2489,6 +2489,7 @@
   "premiumMenu.noResults": "لا توجد عناصر مطابقة",
   "premiumMenu.search": "بحث...",
   "preview.expandPreview": "توسيع المعاينة",
+  "preview.failedToReadFile": "تعذر قراءة الملف",
   "preview.failedToRenderPdf": "تعذر عرض PDF",
   "preview.htmlPreview": "معاينة HTML",
   "preview.loadingImage": "جارٍ تحميل الصورة...",

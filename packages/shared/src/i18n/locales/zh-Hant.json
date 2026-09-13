@@ -2489,6 +2489,7 @@
   "premiumMenu.noResults": "沒有符合的項目",
   "premiumMenu.search": "搜尋...",
   "preview.expandPreview": "展開預覽",
+  "preview.failedToReadFile": "無法讀取檔案",
   "preview.failedToRenderPdf": "PDF 渲染失敗",
   "preview.htmlPreview": "HTML 預覽",
   "preview.loadingImage": "正在載入圖片...",

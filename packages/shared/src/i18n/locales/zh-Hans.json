@@ -2489,6 +2489,7 @@
   "premiumMenu.noResults": "没有匹配项",
   "premiumMenu.search": "搜索...",
   "preview.expandPreview": "展开预览",
+  "preview.failedToReadFile": "无法读取文件",
   "preview.failedToRenderPdf": "PDF 渲染失败",
   "preview.htmlPreview": "HTML 预览",
   "preview.loadingImage": "正在加载图片...",

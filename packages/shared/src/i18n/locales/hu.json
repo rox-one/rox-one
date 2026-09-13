@@ -2489,6 +2489,7 @@
   "premiumMenu.noResults": "Nincs találat",
   "premiumMenu.search": "Keresés...",
   "preview.expandPreview": "Előnézet kibontása",
+  "preview.failedToReadFile": "Nem sikerült olvasni a fájlt",
   "preview.failedToRenderPdf": "Nem sikerült a PDF renderelése",
   "preview.htmlPreview": "HTML előnézet",
   "preview.loadingImage": "Kép betöltése...",
