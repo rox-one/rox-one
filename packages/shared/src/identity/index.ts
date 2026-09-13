@@ -61,3 +61,4 @@ export {
   type BrandMigrationResult,
   type BrandMigrationStamp,
 } from './config-migration.ts'
+export { UI_BRAND_MANIFEST, UI_BRAND_ALLOWLIST } from './ui-brand.ts'
