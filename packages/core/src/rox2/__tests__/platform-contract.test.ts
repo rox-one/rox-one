@@ -2,14 +2,21 @@ import { describe, expect, test } from 'bun:test'
 import type { SoupEntityConcreteType } from '../../conation/soup/types.ts'
 import {
   ROX2_ENTITY_KINDS,
+  entityRefFromBinding,
   fixtureResult,
   formatRox2EntityId,
+  formatRox2ExternalBindingKey,
+  isAllowedRox2Relation,
   isClaimableLive,
   parseRox2EntityId,
+  parseRox2ExternalBindingKey,
   queuedResult,
+  registerExternalBinding,
   requiresExplicitGrant,
   simulatedResult,
   soupTypeToRox2Kind,
+  wouldCreateRelationCycle,
+  type Rox2EntityRef,
 } from '../platform-contract.ts'
 
 const ALL_SOUP_TYPES: SoupEntityConcreteType[] = [
@@ -63,5 +70,76 @@ describe('ROX2 platform contract', () => {
     expect(requiresExplicitGrant('cloud-send')).toBe(true)
     expect(requiresExplicitGrant('spend')).toBe(true)
     expect(requiresExplicitGrant('destroy')).toBe(true)
+  })
+
+  test('external bindings namespace remote ids by account', () => {
+    const work = formatRox2ExternalBindingKey({
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    })
+    const home = formatRox2ExternalBindingKey({
+      provider: 'google',
+      account: 'home',
+      remoteType: 'event',
+      remoteId: 'e1',
+    })
+    expect(work).not.toBe(home)
+    expect(parseRox2ExternalBindingKey(work)).toEqual({
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    })
+    const workRef = entityRefFromBinding('ws-1', 'calendar-event', {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    }, 'rev-1')
+    expect(workRef.entityId).toContain('google:work:event:e1')
+    expect(workRef.revisionId).toBe('rev-1')
+    const first = registerExternalBinding(index, 'ws-1', 'calendar-event', {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    }, 'rev-1')
+    const again = registerExternalBinding(index, 'ws-1', 'calendar-event', {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    }, 'rev-2')
+    expect(first.status).toBe('ok')
+    expect(again.status).toBe('ok')
+    if (first.status === 'ok' && again.status === 'ok') {
+      expect(again.ref.entityId).toBe(first.ref.entityId)
+      expect(again.ref.revisionId).toBe('rev-2')
+    }
+  })
+
+  test('relation dictionary allows note→person and forbids task-dependency cycles', () => {
+    expect(isAllowedRox2Relation('mentions', 'note', 'person')).toBe(true)
+    expect(isAllowedRox2Relation('blocks', 'task', 'task')).toBe(true)
+    expect(isAllowedRox2Relation('blocks', 'note', 'task')).toBe(false)
+    expect(wouldCreateRelationCycle('mentions', [], 'note:a', 'person:b')).toBe(false)
+    expect(
+      wouldCreateRelationCycle(
+        'blocks',
+        [{ fromId: 'task:b', toId: 'task:a', kind: 'blocks' }],
+        'task:a',
+        'task:b',
+      ),
+    ).toBe(true)
+    expect(
+      wouldCreateRelationCycle(
+        'blocks',
+        [{ fromId: 'task:c', toId: 'task:d', kind: 'blocks' }],
+        'task:a',
+        'task:b',
+      ),
+    ).toBe(false)
   })
 })
