@@ -190,7 +190,7 @@ jobs:
 
       - name: Install pinned OpenCode CLI
         if: steps.provider.outcome == 'success'
-        run: npm install --global --ignore-scripts opencode-ai@1.18.30
+        run: npm install --global opencode-ai@1.18.30
 
       - name: Run bounded read-only review
         id: review
