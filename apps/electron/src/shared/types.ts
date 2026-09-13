@@ -1227,8 +1227,33 @@ export interface ElectronAPI {
     singleUse?: boolean
     workspaceId?: string | null
   }): Promise<{ token: string; expiresAt: number; permission: string }>
+  extensionHostListCapabilities(args?: {
+    workspaceId?: string | null
+  }): Promise<{
+    minted: Array<{
+      tokenHash: string
+      extensionId: string
+      permission: string
+      expiresAt: number
+      mintedAt: number
+      singleUse?: boolean
+      revokedAt?: number
+      status: 'active' | 'revoked' | 'expired'
+    }>
+    revoked: Array<{
+      tokenHash: string
+      extensionId: string
+      permission: string
+      expiresAt: number
+      mintedAt: number
+      singleUse?: boolean
+      revokedAt?: number
+      status: 'active' | 'revoked' | 'expired'
+    }>
+  }>
   extensionHostRevokeCapability(args: {
     token?: string
+    tokenHash?: string
     extensionId?: string
     workspaceId?: string | null
   }): Promise<{ ok: true }>
@@ -1382,7 +1407,7 @@ export interface ElectronAPI {
   }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>
   rateGamificationSession(payload: {
     sessionId: string
-    score: 1 | 2 | 3 | 4 | 5
+    score: number
     feedback?: string
     provenance?: string
   }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>

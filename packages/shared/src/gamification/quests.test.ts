@@ -59,6 +59,12 @@ describe('onboarding quests', () => {
     }, dir)
     expect(rated.state.ratings[0]?.score).toBe(5)
     expect(rated.analytics.sent).toBe(false)
+    const hundred = saveSessionRating({
+      sessionId: 'sess-1',
+      score: 100,
+      provenance: 'session-composer',
+    }, dir)
+    expect(hundred.state.ratings[0]?.score).toBe(100)
     const consented = setAnalyticsConsent(true, dir)
     expect(consented.analyticsConsent).toBe(true)
   })

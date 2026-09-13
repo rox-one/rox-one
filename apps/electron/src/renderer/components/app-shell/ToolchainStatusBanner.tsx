@@ -56,6 +56,10 @@ export function toolchainBannerPercent(tool: ToolchainToolStatus): number | unde
   return Math.min(100, Math.max(0, Math.round((tool.downloadedBytes / tool.totalBytes) * 100)))
 }
 
+export function formatToolchainBytes(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
 export interface ToolchainBannerCopy {
   text: string
   tone: 'info' | 'warning' | 'error'
@@ -73,10 +77,19 @@ export function getToolchainBannerCopy(tool: ToolchainToolStatus): ToolchainBann
 
   if (phase === 'downloading') {
     const percent = toolchainBannerPercent(tool)
-    return {
-      text: percent != null
+    const downloadedMb = tool.downloadedBytes != null ? formatToolchainBytes(tool.downloadedBytes) : null
+    const totalMb = tool.totalBytes != null ? formatToolchainBytes(tool.totalBytes) : null
+    const text = percent != null && downloadedMb && totalMb
+      ? i18n.t('settings.toolchain.banner.downloadingBytes', {
+          percent,
+          downloadedMb,
+          totalMb,
+        })
+      : percent != null
         ? i18n.t('settings.toolchain.banner.downloading', { percent })
-        : i18n.t('settings.toolchain.banner.downloadingUnknown'),
+        : i18n.t('settings.toolchain.banner.downloadingUnknown')
+    return {
+      text,
       tone: 'info',
       showProgress: true,
       percent,

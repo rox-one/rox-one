@@ -20,10 +20,11 @@ export type RoxPublicModelId = (typeof ROX_PUBLIC_MODEL_IDS)[number];
 
 export const ROX_DEFAULT_PARENT_MODEL: RoxPublicModelId = 'rox/standard';
 export const ROX_DEFAULT_SUBAGENT_MODEL: RoxPublicModelId = 'rox/fast';
-export const ROX_DEFAULT_CONNECTION_NAME = 'ROX · OMP';
+export const ROX_DEFAULT_CONNECTION_NAME = 'ROX';
 export const ROX_GATEWAY_BASE_URL = 'https://api.rox.one/v1';
 export const ROX_LEGACY_INTERNAL_MODEL_IDS = ['kimi-K3', 'kimi-k3'] as const;
 export const ROX_KIMI_PUBLIC_MODELS_MIGRATION = 'rox-kimi-public-models-v1';
+export const ROX_CONNECTION_DISPLAY_NAME_MIGRATION = 'rox-connection-display-name-v1';
 export const ROX_DEFAULT_CONNECTION_SLUG = 'rox-kimi';
 
 /**
@@ -155,8 +156,8 @@ export const ROX_PUBLIC_MODEL_CATALOG: ReadonlyArray<{
   },
   {
     id: 'rox/standard',
-    name: 'ROX Standard',
-    shortName: 'Standard',
+    name: 'ROX R1',
+    shortName: 'R1',
     description: 'Default coding endpoint',
     contextWindow: 262_144,
     supportsThinking: true,

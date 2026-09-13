@@ -38,6 +38,8 @@ import {
 import { navigate, routes } from "@/lib/navigate";
 import type { Workspace } from "../../../shared/types";
 
+const bundledRoxLogo = new URL("../../assets/rox-logo.svg", import.meta.url).href;
+
 interface WorkspaceIconRailProps {
 	workspaces: Workspace[];
 	activeWorkspaceId: string | null;
@@ -380,14 +382,20 @@ export function WorkspaceIconRail({
 											aria-hidden="true"
 										/>
 										<CrossfadeAvatar
-											src={workspaceIconMap.get(workspace.id)}
+											src={workspaceIconMap.get(workspace.id) ?? bundledRoxLogo}
 											alt={workspace.name}
 											className={cn(
 												"h-8 w-8 rounded-full ring-1 ring-border/60 transition-transform duration-150",
 												selected && "ring-2 ring-accent/55",
 											)}
 											fallbackClassName="bg-muted text-xs font-medium rounded-full"
-											fallback={workspace.name.charAt(0)}
+											fallback={
+												<img
+													src={bundledRoxLogo}
+													alt=""
+													className="h-full w-full object-contain p-0.5"
+												/>
+											}
 										/>
 										{workspace.remoteServer &&
 											(disconnected ? (

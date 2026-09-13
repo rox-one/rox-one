@@ -9,7 +9,7 @@ const longCyrillicDescription = 'Фоновое выполнение облач�
 
 describe('CloudRunsSettingsPage compact layout and recovery', () => {
   it('uses one viewport-sized local body scroll owner between fixed header and footer', () => {
-    expect(source).toContain('h-[calc(100dvh-3rem)] min-h-0 flex-col')
+    expect(source).toContain('h-full min-h-0 flex-col')
     expect(source).toContain('<header className="flex shrink-0')
     expect(source).toContain('min-h-0 flex-1 overflow-y-auto overscroll-contain')
     expect(source.match(/overflow-y-auto overscroll-contain/g)).toHaveLength(1)

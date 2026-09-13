@@ -40,7 +40,7 @@ describe('OMP LlmConnection factory dispatch', () => {
 
     const connection: LlmConnection = {
       slug: 'rox-kimi',
-      name: 'ROX · OMP',
+      name: 'ROX',
       providerType: 'omp',
       authType: 'none',
       defaultModel: 'rox/standard',

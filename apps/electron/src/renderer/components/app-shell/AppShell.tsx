@@ -81,14 +81,10 @@ import { LeftSidebar } from "./LeftSidebar"
 import { type ProfileStripData } from "./ProfileStrip"
 import { QuestProgressCard } from "./QuestProgressCard"
 import { SidebarChrome } from "./SidebarChrome"
-import { useTransportConnectionState } from "@/hooks/useTransportConnectionState"
-import { useWorkspaceTaskCount } from "@/hooks/useWorkspaceTaskCount"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
-import { buildMiniDashboard } from "@/platform/mini-dashboard"
 import { resolvePromoSlot } from "@/platform/promo-slot"
 import { viewportBand } from "@/platform/viewport-band"
-import { isHomeSessionInWorkspace } from "@/platform/home-model"
 import {
   clearStatusUnseen,
   getUnseenStatuses,
@@ -349,8 +345,6 @@ function AppShellContent({
 
 
   // Profile strip (gamification footer)
-  const transportConnectionState = useTransportConnectionState()
-  const workspaceTaskCount = useWorkspaceTaskCount(activeWorkspaceId)
   const promoInsights = usePromoInsights(activeWorkspaceId ?? undefined)
   const [profileStrip, setProfileStrip] = React.useState<ProfileStripData>({
     displayName: '',
@@ -1254,17 +1248,6 @@ function AppShellContent({
   // Use session metadata from Jotai atom (lightweight, no messages)
   // This prevents closures from retaining full message arrays
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const dashboardSnapshot = useMemo(() => {
-    const remoteWorkspaceId = activeWorkspace?.remoteServer?.remoteWorkspaceId
-    const sessions = [...sessionMetaMap.values()].filter((session) =>
-      isHomeSessionInWorkspace(session, activeWorkspaceId, remoteWorkspaceId),
-    )
-    return buildMiniDashboard({
-      sessions,
-      tasks: workspaceTaskCount,
-      connection: transportConnectionState,
-    })
-  }, [sessionMetaMap, activeWorkspaceId, activeWorkspace, workspaceTaskCount, transportConnectionState])
   const promoKind = resolvePromoSlot({
     insightsLoaded: promoInsights.loaded,
     onboarded: promoInsights.onboarded,
@@ -2855,7 +2838,6 @@ function AppShellContent({
                   <SidebarChrome
                     profile={profileStrip}
                     onProfileClick={() => handleSettingsClick('account')}
-                    snapshot={dashboardSnapshot}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                   />

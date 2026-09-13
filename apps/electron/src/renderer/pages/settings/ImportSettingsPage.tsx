@@ -2,7 +2,7 @@
  * Settings → Import (H5). Scan is not persist. Persist writes Rox sessions.
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DownloadCloud, RefreshCw } from 'lucide-react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -12,6 +12,12 @@ import { Spinner } from '@craft-agent/ui'
 import { routes } from '@/lib/navigate'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import {
+  FOREIGN_SESSION_KINDS,
+  filterForeignIndexEntries,
+  type ForeignIndexEntry,
+  type ForeignSessionKind,
+} from '@craft-agent/shared/sessions'
 import BrowserProfileImportPanel from './BrowserProfileImportPanel'
 
 export const meta: DetailsPageMeta = {
@@ -37,6 +43,19 @@ export default function ImportSettingsPage() {
   const [selected, setSelected] = useState<Record<string, boolean>>({})
   const [results, setResults] = useState<string[]>([])
   const [truncated, setTruncated] = useState(false)
+  const [query, setQuery] = useState('')
+  const [kindFilter, setKindFilter] = useState<ForeignSessionKind | 'all'>('all')
+
+  const visible = useMemo(
+    () =>
+      filterForeignIndexEntries(entries as ForeignIndexEntry[], {
+        query,
+        kind: kindFilter,
+      }),
+    [entries, query, kindFilter],
+  )
+  const selectable = visible.filter((entry) => !entry.skipReason)
+  const selectedCount = selectable.filter((entry) => selected[entry.sourcePath]).length
 
   const scan = useCallback(async () => {
     if (!workspace?.id) return
@@ -79,6 +98,16 @@ export default function ImportSettingsPage() {
     }
   }, [entries, selected, workspace?.id])
 
+  const selectVisible = (on: boolean) => {
+    setSelected((prev) => {
+      const next = { ...prev }
+      for (const entry of selectable) {
+        next[entry.sourcePath] = on
+      }
+      return next
+    })
+  }
+
   return (
     <div className="flex flex-col h-full">
       <PanelHeader
@@ -86,7 +115,7 @@ export default function ImportSettingsPage() {
         actions={<HeaderMenu route={routes.view.settings('import')} />}
       />
       <ScrollArea className="flex-1">
-        <div className="px-5 pt-6 pb-10 max-w-3xl mx-auto w-full space-y-4" data-testid="session-import">
+        <div className="px-5 pt-6 pb-24 max-w-3xl mx-auto w-full space-y-4" data-testid="session-import">
           <p className="text-sm opacity-70">{t('settings.import.scanHint')}</p>
           {truncated ? (
             <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-truncated">
@@ -110,7 +139,54 @@ export default function ImportSettingsPage() {
               <DownloadCloud className="w-3 h-3" />
               {t('settings.import.persist')}
             </button>
+            <button
+              type="button"
+              data-testid="session-import-select-all"
+              onClick={() => selectVisible(true)}
+              disabled={selectable.length === 0}
+              className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted disabled:opacity-50"
+            >
+              {t('settings.import.selectAll')}
+            </button>
+            <button
+              type="button"
+              data-testid="session-import-clear"
+              onClick={() => selectVisible(false)}
+              disabled={selectedCount === 0}
+              className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted disabled:opacity-50"
+            >
+              {t('settings.import.clearSelection')}
+            </button>
           </div>
+          <div className="flex flex-wrap gap-2">
+            <input
+              type="search"
+              data-testid="session-import-search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t('settings.import.searchPlaceholder')}
+              className="h-8 min-w-[180px] flex-1 rounded-md border bg-background px-2 text-sm"
+            />
+            <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+              {t('settings.import.filterKind')}
+              <select
+                data-testid="session-import-kind"
+                value={kindFilter}
+                onChange={(event) => setKindFilter(event.target.value as ForeignSessionKind | 'all')}
+                className="h-8 rounded-md border bg-background px-2 text-sm text-foreground"
+              >
+                <option value="all">{t('settings.import.filterAll')}</option>
+                {FOREIGN_SESSION_KINDS.map((kind) => (
+                  <option key={kind} value={kind}>
+                    {kind}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {selectedCount > 0 ? (
+            <p className="text-xs text-muted-foreground">{t('settings.import.selectedCount', { count: selectedCount })}</p>
+          ) : null}
           {loading ? (
             <div className="flex items-center gap-2 text-sm opacity-70">
               <Spinner className="w-4 h-4" />
@@ -121,7 +197,7 @@ export default function ImportSettingsPage() {
             <p className="text-sm opacity-60">{t('settings.import.empty')}</p>
           ) : (
             <ul className="space-y-2">
-              {entries.map((entry) => (
+              {visible.map((entry) => (
                 <li key={entry.sourcePath} className="border rounded-md px-3 py-2 text-sm">
                   <label className="flex items-start gap-2">
                     <input
