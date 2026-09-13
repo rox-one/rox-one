@@ -613,7 +613,15 @@ export interface ElectronAPI {
   getTaskResults(workspaceId: string, slug: string, runId?: string): Promise<TaskResultsDto>
   listMeetings(workspaceId: string, cursor?: string, limit?: number): Promise<unknown>
   getMeeting(workspaceId: string, meetingId: string): Promise<unknown>
-  searchMeetings(workspaceId: string, query: string): Promise<unknown>
+  searchMeetings(
+    workspaceId: string,
+    query: string,
+  ): Promise<{
+    page: import('@craft-agent/core/meetings').Meeting[]
+    continueCursor: string | null
+    denied?: boolean
+    error?: { code: string }
+  }>
   createMeeting(
     workspaceId: string,
     title: string,

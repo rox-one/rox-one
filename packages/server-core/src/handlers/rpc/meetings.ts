@@ -5,7 +5,7 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { Meeting, MeetingProposal } from '@craft-agent/core/meetings'
 import { queryMeetings } from '../../meetings/queries.ts'
-import { listNativeMeetings, startNativeMeeting } from '../../meetings/catalog.ts'
+import { listNativeMeetings, startNativeMeeting, searchNativeMeetings } from '../../meetings/catalog.ts'
 import { applyNativeCaptureIntent, type CaptureIntentAction } from '../../meetings/capture.ts'
 import { applyNativeImportIntent, type ImportIntentSpec } from '../../meetings/import.ts'
 import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
@@ -147,13 +147,15 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
     return catalogItems(workspaceId).find((item) => item.meetingId === meetingId) ?? null
   })
   server.handle(RPC_CHANNELS.meetings.SEARCH, async (_ctx, workspaceId: string, query: string) => {
-    return queryMeetings({
-      items: catalogItems(workspaceId),
+    const persistRootDir = meetingPersistRoot(workspaceId)
+    if (!persistRootDir) return { page: [], continueCursor: null, denied: false, error: { code: 'config-dir-required' } }
+    const searched = searchNativeMeetings({
+      persistRootDir,
       workspaceId,
-      readableWorkspaceId: workspaceId,
-      query,
-      limit: 50,
+      query: typeof query === 'string' ? query : '',
     })
+    if (!searched.ok) return { page: [], continueCursor: null, denied: false, error: { code: searched.code } }
+    return { page: searched.page, continueCursor: searched.continueCursor, denied: false }
   })
   server.handle(
     RPC_CHANNELS.meetings.CREATE,
