@@ -167,8 +167,8 @@ describe('ROX-P1-ONBOARDING-UI first-result (evidence U1)', () => {
         calls.push({ op: 'createNote', args: [workspaceId, title] })
         return { id: 'n1', content: '---\ntitle: Hello\n---\n' }
       },
-      saveNote: async (workspaceId, noteId, content) => {
-        calls.push({ op: 'saveNote', args: [workspaceId, noteId, content] })
+      saveNote: async (workspaceId, noteId, content, revision) => {
+        calls.push({ op: 'saveNote', args: [workspaceId, noteId, content, revision] })
       },
     })
     await ports.persistNote?.({
@@ -180,6 +180,32 @@ describe('ROX-P1-ONBOARDING-UI first-result (evidence U1)', () => {
     expect(calls[1]?.args[0]).toBe('ws-1')
     expect(calls[1]?.args[1]).toBe('n1')
     expect(String(calls[1]?.args[2])).toContain('Get a first result without waiting for every service.')
+    expect(typeof calls[1]?.args[3]).toBe('string')
+    expect(String(calls[1]?.args[3]).length).toBeGreaterThan(0)
+  })
+
+  test('persistNote passes createNote revision as expectedRevision', async () => {
+    let expected: string | undefined
+    const ports = createDefaultFirstResultPorts({
+      getWorkspaces: async () => [{ id: 'ws-1' }],
+      createNote: async () => ({ id: 'n1', content: '# Hello\n', revision: 'rev-from-engine' }),
+      saveNote: async (_ws, _id, _content, revision) => {
+        expected = revision
+      },
+    })
+    await ports.persistNote?.({ id: 'welcome-1', title: 'Hello', body: 'Body' })
+    expect(expected).toBe('rev-from-engine')
+  })
+
+  test('persistNote refuses a write without a CAS token', async () => {
+    const ports = createDefaultFirstResultPorts({
+      getWorkspaces: async () => [{ id: 'ws-1' }],
+      createNote: async () => ({ id: 'n1' }),
+      saveNote: async () => undefined,
+    })
+    await expect(
+      ports.persistNote?.({ id: 'welcome-1', title: 'Hello', body: 'Body must persist' }),
+    ).rejects.toMatchObject({ message: 'notes-unavailable' })
   })
 
   test('persistNote does not succeed as title-only when saveNote is missing', async () => {

@@ -11,6 +11,7 @@
 
 import {
   advanceFirstResult,
+  contentHash,
   emptyFirstResult,
   parseFirstResultCheckpoint,
   recordFirstResultError,
@@ -68,7 +69,7 @@ export type FirstResultHostApi = {
     workspaceId: string,
     title: string,
     folder?: string,
-  ) => Promise<{ id: string; content?: string }>
+  ) => Promise<{ id: string; content?: string; revision?: string }>
   saveNote?: (
     workspaceId: string,
     noteId: string,
@@ -116,7 +117,17 @@ export function createDefaultFirstResultPorts(api?: FirstResultHostApi | null): 
       if (!api.saveNote) {
         throw new Error('notes-unavailable')
       }
-      await api.saveNote(workspaceId, created.id, firstResultNoteContent(created.content, note))
+      const expectedRevision = created.revision
+        ?? (created.content != null ? contentHash(created.content) : undefined)
+      if (!expectedRevision) {
+        throw new Error('notes-unavailable')
+      }
+      await api.saveNote(
+        workspaceId,
+        created.id,
+        firstResultNoteContent(created.content, note),
+        expectedRevision,
+      )
     },
     importNotes: async () => {
       const workspaces = await api?.getWorkspaces?.()
