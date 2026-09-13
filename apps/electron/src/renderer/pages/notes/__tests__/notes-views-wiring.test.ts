@@ -47,6 +47,11 @@ describe('issues 07–09 wiring', () => {
     expect(tabs).toContain("id: 'table'")
     expect(tabs).toContain("id: 'canvas'")
     expect(notesPage).toContain('<NotesViewHost')
+    const host = read('pages/notes/NotesViewHost.tsx')
+    expect(host).toContain('data-testid="notes-table-toolbar"')
+    expect(host).toContain('data-testid="notes-graph-kind"')
+    expect(host).toContain('serializeOutlineFolds')
+    expect(host).toContain('filterGraphByEdgeKind')
     expect(notesPage).toMatch(/<EntityViewTabs[\s\S]{0,5000}map[\s\S]{0,5000}<MindMapHost/)
   })
 

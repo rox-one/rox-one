@@ -7,14 +7,24 @@ import {
   applyNoteBaseView,
   createCanvasFileCard,
   dailyNoteDestination,
+  filterGraphByEdgeKind,
   graphFromLinks,
+  groupNoteRows,
+  loadSavedViews,
+  notesOutlineFoldsStorageKey,
+  notesViewsStorageKey,
   outlineFromHeadings,
   parseJsonCanvas,
+  parseOutlineFolds,
   projectNoteRows,
-  restoreSavedViews,
   serializeJsonCanvas,
+  serializeOutlineFolds,
+  tagFilterValue,
+  withTagFilter,
   type JsonCanvas,
   type NoteBaseView,
+  type NoteGraphEdgeKindFilter,
+  type NoteOutlineNode,
   type NoteProjectionRow,
 } from './note-views'
 import { parseNoteDocument } from './document-ia'
@@ -46,7 +56,6 @@ export function NotesViewHost({
   onCreateNote: (folder?: string) => void
   onConvert: (noteId: string, kind: 'session-draft' | 'task') => void
 }) {
-  const { t } = useTranslation()
   const rows = React.useMemo(
     () =>
       projectNoteRows(
@@ -80,54 +89,10 @@ export function NotesViewHost({
     )
   }
   if (view === 'outline') {
-    const active = notes.find((note) => note.id === activeNoteId) ?? notes[0]
-    const headings = active ? parseNoteDocument(active.markdown).headings : []
-    const tree = active ? outlineFromHeadings(active.id, headings, new Set(), active.tags?.[0]) : null
-    return (
-      <div className="h-full overflow-y-auto p-6" data-testid="notes-outline-view">
-        {tree ? (
-          <OutlineTree node={tree} />
-        ) : (
-          <p className="text-sm text-muted-foreground">{t('notes.views.outlineEmpty')}</p>
-        )}
-      </div>
-    )
+    return <NotesOutlineView notes={notes} activeNoteId={activeNoteId} workspaceId={workspaceId} />
   }
 
-  const graph = graphFromLinks(notes)
-  return (
-    <div className="flex h-full min-h-0" data-testid="notes-graph-view">
-      <aside className="w-[220px] shrink-0 overflow-y-auto border-r border-border/50 p-3">
-        <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-          {t('entityView.graph')}
-        </div>
-        {graph.nodes.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">{t('notes.views.graphEmpty')}</p>
-        ) : (
-          graph.nodes.map((node) => (
-            <button
-              key={node.id}
-              type="button"
-              className={cn(
-                'mb-0.5 w-full truncate rounded-[5px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
-                node.id === activeNoteId && 'bg-foreground/[0.08]',
-              )}
-              onClick={() => onOpenNote(node.id)}
-            >
-              {node.title}
-            </button>
-          ))
-        )}
-      </aside>
-      <div className="min-w-0 flex-1 overflow-y-auto p-4">
-        {graph.edges.map((edge) => (
-          <div key={`${edge.from}->${edge.to}:${edge.kind}`} className="mb-1 font-mono text-[11px] text-muted-foreground">
-            {edge.from} → {edge.to} · {edge.kind}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+  return <NotesGraphView notes={notes} activeNoteId={activeNoteId} onOpenNote={onOpenNote} />
 }
 
 function NotesTableView({
@@ -144,37 +109,73 @@ function NotesTableView({
   onConvert: (noteId: string, kind: 'session-draft' | 'task') => void
 }) {
   const { t } = useTranslation()
-  const view = React.useMemo((): NoteBaseView => {
-    const saved = restoreSavedViews(
-      typeof localStorage === 'undefined' ? null : localStorage.getItem(`notes:views:${workspaceId}`),
-    )[0]
-    return (
-      saved ?? {
-        v: 1,
-        id: 'vault-table',
-        name: 'Vault',
-        kind: 'table',
-        filters: [],
-        formulas: [{ name: 'open', expr: 'openTaskCount' }],
-        sort: { field: 'title', dir: 'asc' },
-        columns: ['title', 'folder', 'tags', 'openTasks'],
-      }
-    )
-  }, [workspaceId])
+  const storageKey = notesViewsStorageKey(workspaceId)
+  const [views, setViews] = React.useState<NoteBaseView[]>(() =>
+    loadSavedViews(typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey)),
+  )
+  const [activeViewId, setActiveViewId] = React.useState(views[0]?.id ?? 'vault-table')
+  const view = views.find((item) => item.id === activeViewId) ?? views[0]!
 
   React.useEffect(() => {
     try {
-      const key = `notes:views:${workspaceId}`
-      if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify([view]))
+      if (!localStorage.getItem(storageKey)) localStorage.setItem(storageKey, JSON.stringify(views))
     } catch {
       /* ignore quota */
     }
-  }, [view, workspaceId])
+  }, [storageKey, views])
+
+  const persistViews = (next: NoteBaseView[]) => {
+    setViews(next)
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(next))
+    } catch {
+      /* ignore quota */
+    }
+  }
+
+  const patchView = (next: NoteBaseView) => {
+    persistViews(views.map((item) => (item.id === next.id ? next : item)))
+  }
 
   const visible = applyNoteBaseView(rows, view)
+  const groups = groupNoteRows(visible, view.groupBy)
 
   return (
     <div className="h-full overflow-auto p-4" data-testid="notes-table-view">
+      <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="notes-table-toolbar">
+        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          {t('notes.views.savedLayout')}
+          <select
+            className="h-7 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
+            value={view.id}
+            onChange={(event) => setActiveViewId(event.target.value)}
+          >
+            {views.map((item) => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          {t('notes.views.groupBy')}
+          <select
+            className="h-7 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
+            value={view.groupBy ?? ''}
+            onChange={(event) => patchView({ ...view, groupBy: event.target.value || undefined })}
+          >
+            <option value="">{t('notes.views.groupNone')}</option>
+            <option value="folder">{t('notes.views.groupFolder')}</option>
+            <option value="tags">{t('notes.views.groupTags')}</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          {t('notes.views.filterTags')}
+          <input
+            className="h-7 w-36 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
+            value={tagFilterValue(view)}
+            onChange={(event) => patchView(withTagFilter(view, event.target.value))}
+          />
+        </label>
+      </div>
       <table className="w-full text-left text-xs">
         <thead>
           <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -185,31 +186,40 @@ function NotesTableView({
             <th className="px-2 py-1" />
           </tr>
         </thead>
-        <tbody>
-          {visible.map((row) => (
-            <tr
-              key={row.id}
-              className={cn('border-t border-border/40 hover:bg-foreground/[0.03]', row.id === activeNoteId && 'bg-foreground/[0.06]')}
-            >
-              <td className="px-2 py-1.5">
-                <button type="button" className="truncate font-medium" onClick={() => onOpenNote(row.id)}>
-                  {row.title}
-                </button>
-              </td>
-              <td className="px-2 py-1.5 text-muted-foreground">{row.folder || '—'}</td>
-              <td className="px-2 py-1.5 text-muted-foreground">{row.tags.join(', ') || '—'}</td>
-              <td className="px-2 py-1.5">{row.openTasks}</td>
-              <td className="px-2 py-1.5 text-right">
-                <button type="button" className="mr-2 text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'session-draft')}>
-                  {t('notes.views.convertSession')}
-                </button>
-                <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'task')}>
-                  {t('notes.views.convertTask')}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+        {groups.map((group) => (
+          <tbody key={group.key || 'all'}>
+            {view.groupBy ? (
+              <tr>
+                <td colSpan={5} className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground">
+                  {group.key || t('notes.views.ungrouped')}
+                </td>
+              </tr>
+            ) : null}
+            {group.rows.map((row) => (
+              <tr
+                key={row.id}
+                className={cn('border-t border-border/40 hover:bg-foreground/[0.03]', row.id === activeNoteId && 'bg-foreground/[0.06]')}
+              >
+                <td className="px-2 py-1.5">
+                  <button type="button" className="truncate font-medium" onClick={() => onOpenNote(row.id)}>
+                    {row.title}
+                  </button>
+                </td>
+                <td className="px-2 py-1.5 text-muted-foreground">{row.folder || '—'}</td>
+                <td className="px-2 py-1.5 text-muted-foreground">{row.tags.join(', ') || '—'}</td>
+                <td className="px-2 py-1.5">{row.openTasks}</td>
+                <td className="px-2 py-1.5 text-right">
+                  <button type="button" className="mr-2 text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'session-draft')}>
+                    {t('notes.views.convertSession')}
+                  </button>
+                  <button type="button" className="text-muted-foreground hover:text-foreground" onClick={() => onConvert(row.id, 'task')}>
+                    {t('notes.views.convertTask')}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        ))}
       </table>
       {visible.length === 0 ? (
         <p className="mt-6 text-center text-sm text-muted-foreground">{t('notes.views.tableEmpty')}</p>
@@ -296,8 +306,121 @@ function NotesCanvasView({
   )
 }
 
-function OutlineTree({ node }: { node: ReturnType<typeof outlineFromHeadings> }) {
-  const [collapsed, setCollapsed] = React.useState(node.collapsed)
+function NotesOutlineView({
+  notes,
+  activeNoteId,
+  workspaceId,
+}: {
+  notes: NotesViewNote[]
+  activeNoteId: string | null
+  workspaceId: string
+}) {
+  const { t } = useTranslation()
+  const active = notes.find((note) => note.id === activeNoteId) ?? notes[0]
+  const storageKey = active ? notesOutlineFoldsStorageKey(workspaceId, active.id) : ''
+  const [collapsedIds, setCollapsedIds] = React.useState<Set<string>>(
+    () => parseOutlineFolds(typeof localStorage === 'undefined' || !storageKey ? null : localStorage.getItem(storageKey)),
+  )
+
+  React.useEffect(() => {
+    setCollapsedIds(parseOutlineFolds(typeof localStorage === 'undefined' || !storageKey ? null : localStorage.getItem(storageKey)))
+  }, [storageKey])
+
+  const toggleCollapsed = (id: string) => {
+    setCollapsedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      try {
+        if (storageKey) localStorage.setItem(storageKey, serializeOutlineFolds(next))
+      } catch {
+        /* ignore quota */
+      }
+      return next
+    })
+  }
+
+  const headings = active ? parseNoteDocument(active.markdown).headings : []
+  const tree = active ? outlineFromHeadings(active.id, headings, collapsedIds, active.tags?.[0]) : null
+  return (
+    <div className="h-full overflow-y-auto p-6" data-testid="notes-outline-view">
+      {tree ? (
+        <OutlineTree node={tree} onToggle={toggleCollapsed} />
+      ) : (
+        <p className="text-sm text-muted-foreground">{t('notes.views.outlineEmpty')}</p>
+      )}
+    </div>
+  )
+}
+
+function NotesGraphView({
+  notes,
+  activeNoteId,
+  onOpenNote,
+}: {
+  notes: NotesViewNote[]
+  activeNoteId: string | null
+  onOpenNote: (noteId: string) => void
+}) {
+  const { t } = useTranslation()
+  const [kind, setKind] = React.useState<NoteGraphEdgeKindFilter>('all')
+  const graph = filterGraphByEdgeKind(graphFromLinks(notes), kind)
+  return (
+    <div className="flex h-full min-h-0" data-testid="notes-graph-view">
+      <aside className="w-[220px] shrink-0 overflow-y-auto border-r border-border/50 p-3">
+        <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          {t('entityView.graph')}
+        </div>
+        <div className="mb-3 flex flex-col gap-1" data-testid="notes-graph-kind">
+          {(['all', 'wikilink', 'backlink'] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              className={cn(
+                'rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                kind === value && 'bg-foreground/[0.08]',
+              )}
+              aria-pressed={kind === value}
+              onClick={() => setKind(value)}
+            >
+              {value === 'all'
+                ? t('notes.views.graphAll')
+                : value === 'wikilink'
+                  ? t('notes.views.graphWikilinks')
+                  : t('notes.views.graphBacklinks')}
+            </button>
+          ))}
+        </div>
+        {graph.nodes.length === 0 ? (
+          <p className="text-[11px] text-muted-foreground">{t('notes.views.graphEmpty')}</p>
+        ) : (
+          graph.nodes.map((node) => (
+            <button
+              key={node.id}
+              type="button"
+              className={cn(
+                'mb-0.5 w-full truncate rounded-[5px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+                node.id === activeNoteId && 'bg-foreground/[0.08]',
+              )}
+              onClick={() => onOpenNote(node.id)}
+            >
+              {node.title}
+            </button>
+          ))
+        )}
+      </aside>
+      <div className="min-w-0 flex-1 overflow-y-auto p-4">
+        {graph.edges.map((edge) => (
+          <div key={`${edge.from}->${edge.to}:${edge.kind}`} className="mb-1 font-mono text-[11px] text-muted-foreground">
+            {edge.from} → {edge.to} · {edge.kind}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function OutlineTree({ node, onToggle }: { node: NoteOutlineNode; onToggle: (id: string) => void }) {
   return (
     <div className="pl-3">
       <div className="flex items-center gap-2 py-0.5 text-sm">
@@ -305,17 +428,17 @@ function OutlineTree({ node }: { node: ReturnType<typeof outlineFromHeadings> })
           <button
             type="button"
             className="h-5 w-5 shrink-0 rounded-[4px] text-muted-foreground hover:bg-foreground/[0.06]"
-            aria-expanded={!collapsed}
-            onClick={() => setCollapsed((value) => !value)}
+            aria-expanded={!node.collapsed}
+            onClick={() => onToggle(node.id)}
           >
-            {collapsed ? '+' : '–'}
+            {node.collapsed ? '+' : '–'}
           </button>
         ) : null}
         {node.supertag ? <span className="rounded bg-foreground/10 px-1.5 text-[10px]">#{node.supertag}</span> : null}
         <span>{node.title}</span>
       </div>
-      {!collapsed
-        ? node.children.map((child) => <OutlineTree key={child.id} node={child} />)
+      {!node.collapsed
+        ? node.children.map((child) => <OutlineTree key={child.id} node={child} onToggle={onToggle} />)
         : null}
     </div>
   )
