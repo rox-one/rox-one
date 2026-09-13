@@ -4,6 +4,7 @@ export {
   ROX2_RELATION_KINDS,
   ROX2_RELATION_RULES,
   ROX2_RUN_STATES,
+  ROX2_SCHEMA_VERSION,
   SENSITIVE_PERMISSIONS,
   entityRefFromBinding,
   fixtureResult,
@@ -14,6 +15,7 @@ export {
   isRox2EntityKind,
   parseRox2EntityId,
   parseRox2ExternalBindingKey,
+  parseRox2TypedRecord,
   queuedResult,
   registerExternalBinding,
   requiresExplicitGrant,
@@ -36,4 +38,7 @@ export {
   type Rox2RelationRule,
   type Rox2Result,
   type Rox2RunState,
+  type Rox2SystemFields,
+  type Rox2TypedParseResult,
+  type Rox2TypedRecord,
 } from './platform-contract.ts'

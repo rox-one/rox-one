@@ -315,3 +315,73 @@ export const SENSITIVE_PERMISSIONS: readonly Rox2Permission[] = [
 export function requiresExplicitGrant(permission: Rox2Permission): boolean {
   return (SENSITIVE_PERMISSIONS as readonly string[]).includes(permission)
 }
+
+export const ROX2_SCHEMA_VERSION = 1
+
+export type Rox2SystemFields = {
+  id: string
+  workspaceId: string
+  displayName: string
+  updatedAt: number
+}
+
+export type Rox2TypedRecord = {
+  schemaVersion: number
+  kind: Rox2EntityKind
+  system: Rox2SystemFields
+  properties: Record<string, unknown>
+  unknownFields?: Record<string, unknown>
+}
+
+export type Rox2TypedParseResult =
+  | { ok: true; record: Rox2TypedRecord }
+  | { ok: false; code: 'unsupported-version' | 'invalid'; preserved: unknown }
+
+function isSystemFields(value: unknown): value is Rox2SystemFields {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, unknown>
+  return (
+    typeof record.id === 'string' &&
+    record.id.length > 0 &&
+    typeof record.workspaceId === 'string' &&
+    record.workspaceId.length > 0 &&
+    typeof record.displayName === 'string' &&
+    typeof record.updatedAt === 'number' &&
+    Number.isFinite(record.updatedAt)
+  )
+}
+
+/** Versioned entity envelope. Unknown versions keep the original payload. */
+export function parseRox2TypedRecord(raw: unknown): Rox2TypedParseResult {
+  if (!raw || typeof raw !== 'object') return { ok: false, code: 'invalid', preserved: raw }
+  const record = raw as Record<string, unknown>
+  const version = record.schemaVersion
+  if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
+    return { ok: false, code: 'invalid', preserved: raw }
+  }
+  if (version > ROX2_SCHEMA_VERSION) {
+    return { ok: false, code: 'unsupported-version', preserved: raw }
+  }
+  if (typeof record.kind !== 'string' || !isRox2EntityKind(record.kind)) {
+    return { ok: false, code: 'invalid', preserved: raw }
+  }
+  if (!isSystemFields(record.system)) return { ok: false, code: 'invalid', preserved: raw }
+  const properties =
+    record.properties && typeof record.properties === 'object' && !Array.isArray(record.properties)
+      ? (record.properties as Record<string, unknown>)
+      : {}
+  const unknownFields =
+    record.unknownFields && typeof record.unknownFields === 'object' && !Array.isArray(record.unknownFields)
+      ? (record.unknownFields as Record<string, unknown>)
+      : undefined
+  return {
+    ok: true,
+    record: {
+      schemaVersion: version,
+      kind: record.kind,
+      system: record.system,
+      properties,
+      unknownFields,
+    },
+  }
+}

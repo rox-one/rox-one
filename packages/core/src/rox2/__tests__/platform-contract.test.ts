@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import type { SoupEntityConcreteType } from '../../conation/soup/types.ts'
 import {
   ROX2_ENTITY_KINDS,
+  ROX2_SCHEMA_VERSION,
   entityRefFromBinding,
   fixtureResult,
   formatRox2EntityId,
@@ -10,6 +11,7 @@ import {
   isClaimableLive,
   parseRox2EntityId,
   parseRox2ExternalBindingKey,
+  parseRox2TypedRecord,
   queuedResult,
   registerExternalBinding,
   requiresExplicitGrant,
@@ -150,5 +152,24 @@ describe('ROX2 platform contract', () => {
         'task:b',
       ),
     ).toBe(false)
+  })
+
+  test('versioned records preserve unknown versions and round-trip properties', () => {
+    const parsed = parseRox2TypedRecord({
+      schemaVersion: ROX2_SCHEMA_VERSION,
+      kind: 'note',
+      system: { id: 'n1', workspaceId: 'ws-1', displayName: 'Daily', updatedAt: 1 },
+      properties: { body: 'hello' },
+      extra: 'kept-out',
+    })
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) {
+      expect(parsed.record.properties.body).toBe('hello')
+      expect(parsed.record.kind).toBe('note')
+    }
+    const future = { schemaVersion: ROX2_SCHEMA_VERSION + 1, kind: 'note', payload: { body: 'keep' } }
+    const unsupported = parseRox2TypedRecord(future)
+    expect(unsupported).toEqual({ ok: false, code: 'unsupported-version', preserved: future })
+    expect(parseRox2TypedRecord({ schemaVersion: 1, kind: 'note', system: { id: 'n1', workspaceId: 'ws', displayName: 'x', updatedAt: Number.NaN } }).ok).toBe(false)
   })
 })
