@@ -426,15 +426,25 @@ export default function AppearanceSettingsPage() {
   )
 
   // Theme options for dropdowns
-  const themeOptions = useMemo(() => [
-    { value: 'default', label: t("settings.appearance.useDefault") },
-    ...presetThemes
-      .filter(t => t.id !== 'default')
-      .map(t => ({
-        value: t.id,
-        label: t.theme.name || t.id,
-      })),
-  ], [presetThemes, t])
+  const themeOptions = useMemo(() => {
+    const options = [
+      { value: 'default', label: t("settings.appearance.useDefault") },
+      ...presetThemes
+        .filter(preset => preset.id !== 'default')
+        .map(preset => ({
+          value: preset.id,
+          label: preset.theme.name || preset.id,
+        })),
+    ]
+    if (
+      colorTheme &&
+      colorTheme !== 'default' &&
+      !options.some(option => option.value === colorTheme)
+    ) {
+      options.push({ value: colorTheme, label: colorTheme })
+    }
+    return options
+  }, [presetThemes, t, colorTheme])
 
   // Get current app default theme label for display (null when using 'default' to avoid redundant "Use Default (Default)")
   const appDefaultLabel = useMemo(() => {

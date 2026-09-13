@@ -55,6 +55,22 @@ function NotesPlayground({ view }: { view: 'table' | 'canvas' | 'graph' | 'outli
   )
 }
 
+function NotesEmptyPlayground({ view }: { view: 'table' | 'canvas' | 'graph' | 'outline' }) {
+  return (
+    <div className="h-full min-h-[420px] bg-background" data-testid={`playground-notes-empty-${view}`}>
+      <NotesViewHost
+        view={view}
+        notes={[]}
+        activeNoteId={null}
+        workspaceId="playground-workspace"
+        onOpenNote={() => undefined}
+        onCreateNote={() => undefined}
+        onConvert={() => undefined}
+      />
+    </div>
+  )
+}
+
 function NotesInspectorPlayground() {
   const [footnoteDraft, setFootnoteDraft] = React.useState('Clarify heatmap empty-day copy')
   return (
@@ -226,6 +242,16 @@ export const notesComponents: ComponentEntry[] = [
     layout: 'full',
   },
   {
+    id: 'notes-table-empty',
+    name: 'Notes · table empty',
+    category: 'Notes',
+    level: 'Screens',
+    description: 'Table empty copy when the vault has no matching notes',
+    component: NotesEmptyPlayground,
+    props: [{ name: 'view', control: { type: 'select', options: [{ label: 'Table', value: 'table' }] }, defaultValue: 'table' }],
+    layout: 'full',
+  },
+  {
     id: 'notes-graph',
     name: 'Notes · graph neighborhood',
     category: 'Notes',
@@ -242,6 +268,16 @@ export const notesComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'Heading outline empty and populated states',
     component: NotesPlayground,
+    props: [{ name: 'view', control: { type: 'select', options: [{ label: 'Outline', value: 'outline' }] }, defaultValue: 'outline' }],
+    layout: 'full',
+  },
+  {
+    id: 'notes-outline-empty',
+    name: 'Notes · outline empty',
+    category: 'Notes',
+    level: 'Screens',
+    description: 'Outline empty copy when the note has no headings',
+    component: NotesEmptyPlayground,
     props: [{ name: 'view', control: { type: 'select', options: [{ label: 'Outline', value: 'outline' }] }, defaultValue: 'outline' }],
     layout: 'full',
   },

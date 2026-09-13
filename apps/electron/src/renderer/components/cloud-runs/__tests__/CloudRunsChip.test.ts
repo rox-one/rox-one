@@ -46,4 +46,9 @@ describe('CloudRunsChip compact dialog accessibility', () => {
       /state === 'ready'\) && \(\s*<>\s*<DropdownMenuItem[\s\S]*?cloudRuns\.cancel[\s\S]*?cloudRuns\.kill[\s\S]*?<\/>/,
     )
   })
+
+  it('uses PremiumMenuSelect for the preset picker instead of a native select', () => {
+    expect(source).toContain('PremiumMenuSelect')
+    expect(source).not.toContain('<select')
+  })
 })

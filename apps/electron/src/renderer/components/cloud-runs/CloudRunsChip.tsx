@@ -9,7 +9,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Cloud, Download, FileText, Link2, MoreHorizontal, OctagonX, RefreshCw, Rocket, XCircle } from 'lucide-react'
-import { Markdown } from '@craft-agent/ui'
+import { Markdown, PremiumMenuSelect } from '@craft-agent/ui'
 import {
   Dialog,
   DialogContent,
@@ -266,18 +266,20 @@ function CloudRunsChipInner({
             <div className="space-y-2 rounded-lg border border-border/60 bg-muted/20 p-3">
               <div className="text-xs font-medium text-muted-foreground">{t('cloudRuns.sectionNewRun')}</div>
               <div className="flex flex-wrap gap-2">
-                <select
+                <PremiumMenuSelect
                   aria-label={t('cloudRuns.preset')}
-                  className="h-8 rounded-md border border-border bg-background px-1.5 text-xs"
+                  className="h-8 max-w-[160px]"
                   disabled={!isAvailable}
-                  value={kind}
-                  onChange={(e) => setKind(e.target.value as typeof kind)}
-                >
-                  <option value="research">{t('cloudRuns.presetResearch')}</option>
-                  <option value="competitor">{t('cloudRuns.presetCompetitor')}</option>
-                  <option value="literature">{t('cloudRuns.presetLiterature')}</option>
-                  <option value="vendor">{t('cloudRuns.presetVendor')}</option>
-                </select>
+                  items={[
+                    { id: 'research', label: t('cloudRuns.presetResearch') },
+                    { id: 'competitor', label: t('cloudRuns.presetCompetitor') },
+                    { id: 'literature', label: t('cloudRuns.presetLiterature') },
+                    { id: 'vendor', label: t('cloudRuns.presetVendor') },
+                  ]}
+                  selectedId={kind}
+                  placeholder={t('cloudRuns.preset')}
+                  onSelect={(item) => setKind(item.id as typeof kind)}
+                />
                 <Input
                   className="min-w-[12rem] flex-1 border-border"
                   disabled={!isAvailable}
