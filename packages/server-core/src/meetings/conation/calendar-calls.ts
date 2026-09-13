@@ -28,7 +28,7 @@ export function applyCalendarWrite(row: CalendarOccurrence): MeetingOpResult {
     authPresent: true,
   })
   if (!write.allowed) return blocked('calendar-conation-unconfirmed')
-  if (row.canceled) return { status: 'verified', reason: 'canceled', live: false, evidenceLevel: 'U1' }
+  if (row.canceled) return blocked('calendar-canceled-not-live')
   return denied('not-live')
 }
 
@@ -42,8 +42,7 @@ export function bindCall(meetingId: string, remoteCallId: string, seen: Map<stri
   if (seen.has(remoteCallId) && seen.get(remoteCallId) !== meetingId) {
     return { status: 'duplicate', reason: 'call-dedupe', live: false, evidenceLevel: 'U1' }
   }
-  seen.set(remoteCallId, meetingId)
-  return { status: 'verified', reason: 'bound', live: false, evidenceLevel: 'U1' }
+  return blocked('call-bind-not-live')
 }
 
 export function fakeDialerEnabled(): false {
