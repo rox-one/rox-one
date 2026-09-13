@@ -115,6 +115,8 @@ export const KEYS = {
   collectionSlices: 'collection-slices',
   // Panel registry user overrides (S-03 §3.7), workspace-scoped via suffix
   panelState: 'panel-registry-state',
+  // Zen Shell geometry snapshot (ZS-06). Workspace-scoped; dual-writes legacy width keys.
+  shellLayout: 'shell-layout-v1',
 } as const
 
 export const EVENTS = {

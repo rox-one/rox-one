@@ -133,6 +133,7 @@ import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, e
 import type { LabelConfig, LabelTreeNode } from "@craft-agent/shared/labels"
 import { resolveEntityColor } from "@craft-agent/shared/colors"
 import * as storage from "@/lib/local-storage"
+import { commitShellLayout, loadShellLayout } from "@/lib/shell-layout-preferences"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
@@ -296,11 +297,11 @@ function AppShellContent({
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
   const [sidebarWidth, setSidebarWidth] = React.useState(() => {
-    return storage.get(storage.KEYS.sidebarWidth, 220)
+    return loadShellLayout(null).sidebarWidth
   })
   // Session list width in pixels (min 240, max 480)
   const [sessionListWidth, setSessionListWidth] = React.useState(() => {
-    return storage.get(storage.KEYS.sessionListWidth, 300)
+    return loadShellLayout(null).navigatorWidth
   })
 
   // Hides both sidebar and navigator (CMD+. toggle)
@@ -784,8 +785,8 @@ function AppShellContent({
   // Track which expandable sidebar items are collapsed
   // Labels are collapsed by default; user preference is persisted once toggled
   const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(() => {
-    const saved = storage.get<string[] | null>(storage.KEYS.collapsedSidebarItems, null)
-    if (saved !== null) return new Set(saved)
+    const saved = loadShellLayout(null).collapsedSectionIds
+    if (saved.length > 0) return new Set(saved)
     return new Set(['nav:labels'])
   })
   const isExpanded = React.useCallback((id: string) => !collapsedItems.has(id), [collapsedItems])
@@ -1195,7 +1196,7 @@ function AppShellContent({
 
     const handleMouseMove = (e: MouseEvent) => {
       if (isResizing === 'sidebar') {
-        const newWidth = Math.min(Math.max(e.clientX, 180), 320)
+        const newWidth = Math.min(Math.max(e.clientX, 180), 360)
         setSidebarWidth(newWidth)
         if (resizeHandleRef.current) {
           const rect = resizeHandleRef.current.getBoundingClientRect()
@@ -1213,11 +1214,12 @@ function AppShellContent({
     }
 
     const handleMouseUp = () => {
+      const workspaceId = activeWorkspaceId ?? '_default'
       if (isResizing === 'sidebar') {
-        storage.set(storage.KEYS.sidebarWidth, sidebarWidth)
+        commitShellLayout({ workspaceId, sidebarWidth })
         setSidebarHandleY(null)
       } else if (isResizing === 'session-list') {
-        storage.set(storage.KEYS.sessionListWidth, sessionListWidth)
+        commitShellLayout({ workspaceId, navigatorWidth: sessionListWidth })
         setSessionListHandleY(null)
       }
       setIsResizing(null)
@@ -1235,6 +1237,7 @@ function AppShellContent({
     sidebarWidth,
     sessionListWidth,
     isSidebarVisible,
+    activeWorkspaceId,
   ])
 
   // Spring transition config - shared between sidebar and header
@@ -1685,6 +1688,7 @@ function AppShellContent({
   React.useEffect(() => {
     if (!activeWorkspaceId) return
     storage.set(storage.KEYS.collapsedSidebarItems, [...collapsedItems], activeWorkspaceId)
+    commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...collapsedItems] })
   }, [collapsedItems, activeWorkspaceId])
 
   const handleAllSessionsClick = useCallback(() => {
