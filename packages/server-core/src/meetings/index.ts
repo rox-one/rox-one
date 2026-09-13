@@ -8,3 +8,10 @@ export { reserveOutbox } from './outbox.ts'
 export { verificationLabel } from './verification.ts'
 export { applyNativeMeetingAction, readbackNative, createNativeActionHarness } from './native-actions.ts'
 export { queryMeetings } from './queries.ts'
+export {
+  prepareMailDraft,
+  sendPreparedMail,
+  listMailThreads,
+  joinNativeRoom,
+} from './conation/native-shells.ts'
+export { stageMeetingAgentResources } from './packaging.ts'

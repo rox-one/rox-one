@@ -4,7 +4,7 @@
   "issues": "373-390",
   "parent": 356,
   "killSwitch": false,
-  "notes": "AUD #333 and live Mail/CRM/Calendar Conation remain blocked. Fixture is not live. Parent #356 is not closed.",
+  "notes": "Native Mail/CRM/Calendar shells and unsigned linux resource staging shipped. AUD #333 and live Mail/CRM/Calendar Conation remain blocked. Fixture is not live. Parent #356 is not closed.",
   "commands": [],
   "cases": [
     { "id": "i017-tracker-stubs", "issue": 373, "status": "passed", "live": false, "evidenceLevel": "U1" },
