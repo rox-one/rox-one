@@ -1,4 +1,5 @@
 import * as React from 'react'
+import i18n from 'i18next'
 import { useEditor, EditorContent } from '@tiptap/react'
 import { Extension } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
@@ -127,9 +128,9 @@ async function readFileAsDataUrl(file: File): Promise<string> {
     reader.onload = () => {
       const result = reader.result
       if (typeof result === 'string') resolve(result)
-      else reject(new Error('Failed to read file as data URL'))
+      else reject(new Error(i18n.t('editor.failedToReadFileAsDataUrl')))
     }
-    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'))
+    reader.onerror = () => reject(reader.error ?? new Error(i18n.t('editor.failedToReadFile')))
     reader.readAsDataURL(file)
   })
 }

@@ -994,6 +994,8 @@
   "editor.bold": "粗體",
   "editor.code": "程式碼",
   "editor.codeLanguage": "程式碼語言",
+  "editor.failedToReadFile": "無法讀取檔案",
+  "editor.failedToReadFileAsDataUrl": "無法將檔案讀取為 data URL",
   "editor.italic": "斜體",
   "editor.math": "數學公式",
   "editor.noLanguagesFound": "未找到語言",

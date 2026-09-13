@@ -996,6 +996,8 @@
   "editor.bold": "Pogrubienie",
   "editor.code": "Kod",
   "editor.codeLanguage": "Język kodu",
+  "editor.failedToReadFile": "Nie udało się odczytać pliku",
+  "editor.failedToReadFileAsDataUrl": "Nie udało się odczytać pliku jako data URL",
   "editor.italic": "Kursywa",
   "editor.math": "Matematyka",
   "editor.noLanguagesFound": "Nie znaleziono języków",

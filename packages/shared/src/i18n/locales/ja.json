@@ -994,6 +994,8 @@
   "editor.bold": "太字",
   "editor.code": "コード",
   "editor.codeLanguage": "コード言語",
+  "editor.failedToReadFile": "ファイルを読み込めませんでした",
+  "editor.failedToReadFileAsDataUrl": "ファイルを data URL として読み込めませんでした",
   "editor.italic": "斜体",
   "editor.math": "数式",
   "editor.noLanguagesFound": "言語が見つかりません",

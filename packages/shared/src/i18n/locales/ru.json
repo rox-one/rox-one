@@ -996,6 +996,8 @@
   "editor.bold": "Полужирный",
   "editor.code": "Код",
   "editor.codeLanguage": "Язык кода",
+  "editor.failedToReadFile": "Не удалось прочитать файл",
+  "editor.failedToReadFileAsDataUrl": "Не удалось прочитать файл как data URL",
   "editor.italic": "Курсив",
   "editor.math": "Формула",
   "editor.noLanguagesFound": "Языки не найдены",
