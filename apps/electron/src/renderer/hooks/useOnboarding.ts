@@ -26,6 +26,7 @@ import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
+import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
@@ -264,7 +265,8 @@ export function useOnboarding({
     credentialStatus: 'idle',
     completionStatus: 'saving',
     apiSetupMethod: initialApiSetupMethod ?? null,
-    isExistingUser: initialSetupNeeds?.needsBillingConfig ?? false,
+    isExistingUser:
+      initialStep === 'welcome' ? false : (initialSetupNeeds?.needsBillingConfig ?? false),
     gitBashStatus: undefined,
     isRecheckingGitBash: false,
     isCheckingGitBash: true, // Start as true until check completes
@@ -274,14 +276,14 @@ export function useOnboarding({
   // explicitly request a launch gate.
   useEffect(() => {
     if (shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'rox-connect' ? s : { ...s, step: 'rox-connect' }))
+      setState(s => (s.step === 'rox-connect' || s.step === 'welcome' ? s : { ...s, step: 'rox-connect' }))
     }
   }, [initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
   // Seeded OMP connection without ~/.omp models / Rox key — one credential step.
   useEffect(() => {
     if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
-      setState(s => (s.step === 'omp-credential' ? s : { ...s, step: 'omp-credential' }))
+      setState(s => (s.step === 'omp-credential' || s.step === 'welcome' ? s : { ...s, step: 'omp-credential' }))
     }
   }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud])
 
@@ -296,7 +298,7 @@ export function useOnboarding({
           gitBashStatus: status,
           isCheckingGitBash: false,
           // Redirect to git-bash step when missing on Windows
-          ...(status.platform === 'win32' && !status.found ? { step: 'git-bash' as const } : {}),
+          ...(status.platform === 'win32' && !status.found && s.step !== 'welcome' ? { step: 'git-bash' as const } : {}),
         }))
       } catch (error) {
         console.error('[Onboarding] Failed to check Git Bash:', error)
@@ -387,17 +389,14 @@ export function useOnboarding({
         // Handled by handleSelectProvider (card click navigates directly)
         break
 
-      case 'welcome':
-        // A cloud connection only gates a startup flow when the server has
-        // explicitly requested it. Direct settings/onboarding actions stay optional.
-        if (shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud) {
-          setState(s => ({ ...s, step: 'rox-connect' }))
-        } else if (state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found) {
-          setState(s => ({ ...s, step: 'git-bash' }))
-        } else {
-          setState(s => ({ ...s, step: 'provider-select' }))
-        }
+      case 'welcome': {
+        const next = nextStepAfterUsername({
+          applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
+          gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
+        })
+        setState(s => ({ ...s, step: next }))
         break
+      }
 
       case 'rox-connect':
         // Advancement handled by poll success in handleStartRoxConnect
@@ -432,7 +431,9 @@ export function useOnboarding({
     }
     switch (state.step) {
       case 'git-bash':
-        if (onDismiss) {
+        if (initialStep === 'welcome') {
+          setState(s => ({ ...s, step: 'welcome' }))
+        } else if (onDismiss) {
           onDismiss()
         }
         break
@@ -440,6 +441,8 @@ export function useOnboarding({
         // If on Windows and Git Bash was needed, go back to git-bash step
         if (state.gitBashStatus?.platform === 'win32' && state.gitBashStatus?.found === false) {
           setState(s => ({ ...s, step: 'git-bash' }))
+        } else if (initialStep === 'welcome') {
+          setState(s => ({ ...s, step: 'welcome' }))
         } else if (onDismiss) {
           onDismiss()
         }

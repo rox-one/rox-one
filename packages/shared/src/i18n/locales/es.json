@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "Este es tu nombre visible en la app. El nombre del espacio de trabajo sigue siendo el usuario o el equipo del sistema.",
   "onboarding.welcome.usernamePlaceholder": "nombre de usuario",
   "onboarding.welcome.usernameRequired": "Introduce un nombre de usuario para continuar.",
+  "onboarding.welcome.usernameSaveFailed": "No se pudo guardar el nombre de usuario. Inténtalo de nuevo.",
+  "onboarding.welcome.usernameTooLong": "El nombre de usuario debe tener 80 caracteres o menos.",
   "overlay.code": "Código",
   "overlay.mermaidDiagram": "Diagrama Mermaid",
   "overlay.nextItem": "Siguiente elemento",

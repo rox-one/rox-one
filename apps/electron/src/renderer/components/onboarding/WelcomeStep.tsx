@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next"
 import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import * as storage from "@/lib/local-storage"
+import { ONBOARDING_USERNAME_MAX, parseOnboardingUsername } from "./onboarding-username"
 import { StepFormLayout, ContinueButton } from "./primitives"
 
 interface WelcomeStepProps {
@@ -61,14 +63,24 @@ export function WelcomeStep({
       return
     }
     const trimmed = username.trim()
-    if (!trimmed || saving) return
+    if (trimmed.length === 0) {
+      setError(t("onboarding.welcome.usernameRequired"))
+      return
+    }
+    if (trimmed.length > ONBOARDING_USERNAME_MAX) {
+      setError(t("onboarding.welcome.usernameTooLong"))
+      return
+    }
+    const parsed = parseOnboardingUsername(username)
+    if (!parsed || saving) return
     setSaving(true)
     setError(null)
     try {
-      await persistOnboardingUsername(trimmed)
+      await persistOnboardingUsername(parsed)
+      storage.set(storage.KEYS.onboardingUsernameConfirmed, true)
       onContinue()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : t("onboarding.welcome.usernameRequired"))
+    } catch {
+      setError(t("onboarding.welcome.usernameSaveFailed"))
     } finally {
       setSaving(false)
     }
@@ -76,7 +88,7 @@ export function WelcomeStep({
 
   const continueDisabled = isExistingUser
     ? isLoading
-    : isLoading || saving || username.trim().length === 0
+    : isLoading || saving || !parseOnboardingUsername(username)
 
   return (
     <StepFormLayout
@@ -114,6 +126,7 @@ export function WelcomeStep({
             placeholder={t("onboarding.welcome.usernamePlaceholder")}
             autoComplete="username"
             autoFocus
+            maxLength={ONBOARDING_USERNAME_MAX}
             aria-required
             onKeyDown={(event) => {
               if (event.key === "Enter") {

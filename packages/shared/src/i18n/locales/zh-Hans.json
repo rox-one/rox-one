@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "这是应用内显示名称。工作区名称仍为操作系统用户名或计算机名。",
   "onboarding.welcome.usernamePlaceholder": "用户名",
   "onboarding.welcome.usernameRequired": "请输入用户名以继续。",
+  "onboarding.welcome.usernameSaveFailed": "无法保存用户名。请重试。",
+  "onboarding.welcome.usernameTooLong": "用户名不能超过 80 个字符。",
   "overlay.code": "代码",
   "overlay.mermaidDiagram": "Mermaid 图表",
   "overlay.nextItem": "下一项",

@@ -2145,6 +2145,8 @@
   "onboarding.welcome.usernameHint": "هذا هو الاسم الظاهر داخل التطبيق. يبقى اسم مساحة العمل اسم مستخدم نظام التشغيل أو اسم الجهاز.",
   "onboarding.welcome.usernamePlaceholder": "اسم المستخدم",
   "onboarding.welcome.usernameRequired": "أدخل اسم مستخدم للمتابعة.",
+  "onboarding.welcome.usernameSaveFailed": "تعذر حفظ اسم المستخدم. حاول مرة أخرى.",
+  "onboarding.welcome.usernameTooLong": "يجب ألا يتجاوز اسم المستخدم 80 حرفًا.",
   "overlay.code": "الشفرة البرمجية",
   "overlay.mermaidDiagram": "مخطط Mermaid",
   "overlay.nextItem": "العنصر التالي",

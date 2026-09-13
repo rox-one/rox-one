@@ -50,6 +50,7 @@ export const KEYS = {
 
   // Settings navigation
   lastSettingsSubpage: 'last-settings-subpage',
+  onboardingUsernameConfirmed: 'onboarding-username-confirmed',
 
   // Appearance
   showConnectionIcons: 'show-connection-icons',

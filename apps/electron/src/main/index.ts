@@ -109,6 +109,7 @@ import { loadWindowState, saveWindowState } from './window-state'
 import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@craft-agent/shared/config'
 import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
 import { resolveWorkspaceMachineName } from '@craft-agent/shared/os/user-display-name'
+import { ensureDemoPage } from '@craft-agent/shared/pages'
 import { initializeDocs } from '@craft-agent/shared/docs'
 import { ensureBundledSkills } from '@craft-agent/shared/skills'
 import { initializeReleaseNotes } from '@craft-agent/shared/release-notes'
@@ -361,6 +362,11 @@ async function createInitialWindows(): Promise<void> {
       }
     }
     addWorkspace({ rootPath: defaultPath, name: workspaceName })
+    try {
+      ensureDemoPage(defaultPath)
+    } catch (err) {
+      mainLog.warn('Failed to seed default Pages demo', err)
+    }
     workspaces = getWorkspaces() // Refresh after creation
     mainLog.info(`Created default workspace on first run (name=${workspaceName})`)
   }
