@@ -5,7 +5,7 @@
 
 import { closeSync, constants, fstatSync, lstatSync, openSync, readFileSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
-import { foreignImportRoots, isAllowedForeignSourcePath, realOrResolve } from './import-home.ts'
+import { inferKindFromAllowlistedPath, splitForeignSourceRef } from './import-home.ts'
 import type {
   ConvertedForeignMessage,
   ConvertedForeignSession,
@@ -13,6 +13,7 @@ import type {
 } from './import-types.ts'
 
 export const MAX_FOREIGN_FILE_BYTES = 5 * 1024 * 1024
+export const MAX_FOREIGN_EXPORT_BYTES = 32 * 1024 * 1024
 
 const SECRET_PATTERNS: RegExp[] = [
   /sk-[A-Za-z0-9_-]{16,}/g,
@@ -34,13 +35,16 @@ const SECRET_PATTERNS: RegExp[] = [
 
 export type ForeignSourceGuard = 'ok' | 'missing' | 'symlink' | 'too-large' | 'not-file'
 
-export function inspectForeignSource(path: string): { status: ForeignSourceGuard; size?: number } {
+export function inspectForeignSource(
+  path: string,
+  maxBytes = MAX_FOREIGN_FILE_BYTES,
+): { status: ForeignSourceGuard; size?: number } {
   try {
     const st = lstatSync(path)
     if (st.isSymbolicLink()) return { status: 'symlink' }
     if (st.isDirectory()) return { status: 'ok', size: st.size }
     if (!st.isFile()) return { status: 'not-file' }
-    if (st.size > MAX_FOREIGN_FILE_BYTES) return { status: 'too-large', size: st.size }
+    if (st.size > maxBytes) return { status: 'too-large', size: st.size }
     return { status: 'ok', size: st.size }
   } catch {
     return { status: 'missing' }
@@ -103,12 +107,37 @@ export function extractText(content: unknown): string {
   }
   if (content && typeof content === 'object' && 'text' in content) {
     const text = (content as { text?: unknown }).text
-    return typeof text === 'string' ? text : ''
+    if (typeof text === 'string') return text
+  }
+  if (content && typeof content === 'object' && 'parts' in content) {
+    const parts = (content as { parts?: unknown }).parts
+    if (Array.isArray(parts)) {
+      return parts
+        .map((part) => (typeof part === 'string' ? part : extractText(part)))
+        .filter(Boolean)
+        .join('\n')
+    }
   }
   return ''
 }
 
-function emptyConverted(
+export function coerceChatRole(raw: string | undefined): 'user' | 'assistant' | undefined {
+  if (!raw) return undefined
+  const role = raw.toLowerCase()
+  if (role === 'user' || role === 'human' || role === 'prompter') return 'user'
+  if (
+    role === 'assistant' ||
+    role === 'gemini' ||
+    role === 'model' ||
+    role === 'ai' ||
+    role === 'bot'
+  ) {
+    return 'assistant'
+  }
+  return undefined
+}
+
+export function emptyConverted(
   sourcePath: string,
   kind: ForeignSessionKind,
   anomaly: string,
@@ -161,7 +190,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
     : null
 }
 
-function parseGenericRow(
+export function parseGenericRow(
   row: unknown,
   messages: ConvertedForeignMessage[],
   anomalies: string[],
@@ -173,16 +202,18 @@ function parseGenericRow(
   const roleRaw = typeof rec.role === 'string' ? rec.role : type
   const message = asRecord(rec.message)
   const nestedRole = typeof message?.role === 'string' ? message.role : undefined
-  const role = nestedRole ?? roleRaw
-  if (role !== 'user' && role !== 'assistant') return
-  const content = message?.content ?? rec.content
+  const role = coerceChatRole(nestedRole ?? roleRaw)
+  if (!role) return
+  const content = message?.content ?? rec.content ?? rec.parts
   const text = extractText(content)
   const ts =
     typeof rec.timestamp === 'number'
       ? rec.timestamp
-      : typeof rec.timestamp === 'string'
-        ? Date.parse(rec.timestamp)
-        : undefined
+      : typeof rec.create_time === 'number'
+        ? rec.create_time * (rec.create_time < 1e12 ? 1000 : 1)
+        : typeof rec.timestamp === 'string'
+          ? Date.parse(rec.timestamp)
+          : undefined
   pushMessage(messages, anomalies, role, text, Number.isFinite(ts) ? ts : undefined)
 }
 
@@ -295,44 +326,161 @@ export function convertJsonlFile(path: string, kind: ForeignSessionKind): Conver
   }
 }
 
-const KIND_BY_ROOT_SUFFIX: Array<{ suffix: string; kind: ForeignSessionKind }> = [
-  { suffix: '/.grok/sessions', kind: 'grok' },
-  { suffix: '/.claude/projects', kind: 'claude' },
-  { suffix: '/.codex/sessions', kind: 'codex' },
-  { suffix: '/.local/share/opencode', kind: 'opencode' },
-  { suffix: '/.hermes', kind: 'hermes' },
-  { suffix: '/.opencode', kind: 'opencode' },
-]
+function chatgptNodeMessage(node: Record<string, unknown>): unknown {
+  const message = asRecord(node.message)
+  if (!message) return null
+  const author = asRecord(message.author)
+  const role = coerceChatRole(typeof author?.role === 'string' ? author.role : undefined)
+  if (!role) return null
+  return {
+    role,
+    content: message.content,
+    create_time: message.create_time,
+    timestamp: message.create_time,
+  }
+}
 
-export function inferForeignKind(sourcePath: string, homeDir?: string): ForeignSessionKind | undefined {
-  if (!isAllowedForeignSourcePath(sourcePath, homeDir)) return undefined
-  const resolved = realOrResolve(sourcePath).replaceAll('\\', '/')
-  const roots = foreignImportRoots(homeDir).map((root) => realOrResolve(root).replaceAll('\\', '/'))
-  for (const root of roots) {
-    if (resolved === root || resolved.startsWith(`${root}/`)) {
-      const match = KIND_BY_ROOT_SUFFIX.find((entry) => root.endsWith(entry.suffix) || root.includes(entry.suffix))
-      return match?.kind
+function conversationFromMapping(
+  rec: Record<string, unknown>,
+  fallbackId: string,
+): { id: string; title: string; rows: unknown[] } {
+  const id =
+    (typeof rec.id === 'string' && rec.id) ||
+    (typeof rec.conversation_id === 'string' && rec.conversation_id) ||
+    fallbackId
+  const title = typeof rec.title === 'string' && rec.title.trim() ? rec.title : id
+  const mapping = asRecord(rec.mapping)
+  const rows: unknown[] = []
+  if (mapping) {
+    for (const node of Object.values(mapping)) {
+      const recNode = asRecord(node)
+      if (!recNode) continue
+      const row = chatgptNodeMessage(recNode)
+      if (row) rows.push(row)
     }
   }
-  return undefined
+  return { id, title, rows }
+}
+
+function conversationsFromJson(value: unknown, fileBase: string): Array<{ id: string; title: string; rows: unknown[] }> {
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => conversationsFromJson(item, `${fileBase}-${index}`))
+  }
+  const rec = asRecord(value)
+  if (!rec) return []
+  if (Array.isArray(rec.conversations)) {
+    return rec.conversations.flatMap((item, index) => conversationsFromJson(item, `${fileBase}-${index}`))
+  }
+  if (asRecord(rec.mapping)) return [conversationFromMapping(rec, fileBase)]
+  const messages = rec.messages ?? rec.chat ?? rec.history
+  if (Array.isArray(messages)) {
+    const id =
+      (typeof rec.id === 'string' && rec.id) ||
+      (typeof rec.sessionId === 'string' && rec.sessionId) ||
+      fileBase
+    const title =
+      (typeof rec.title === 'string' && rec.title.trim() && rec.title) ||
+      (typeof rec.name === 'string' && rec.name.trim() && rec.name) ||
+      id
+    return [{ id, title, rows: messages }]
+  }
+  return []
+}
+
+export function listChatExportConversations(
+  path: string,
+): Array<{ id: string; title: string; userTurns: number }> {
+  const raw = readRegularFile(path, MAX_FOREIGN_EXPORT_BYTES)
+  if (raw === null) return []
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    return conversationsFromJson(parsed, basename(path, '.json')).map((conv) => ({
+      id: conv.id,
+      title: conv.title,
+      userTurns: conv.rows.reduce((count: number, row) => {
+        const rec = asRecord(row)
+        const role = coerceChatRole(
+          typeof rec?.role === 'string'
+            ? rec.role
+            : typeof rec?.type === 'string'
+              ? rec.type
+              : undefined,
+        )
+        return role === 'user' ? count + 1 : count
+      }, 0),
+    }))
+  } catch {
+    return []
+  }
+}
+
+export function convertStructuredChatFile(
+  path: string,
+  kind: ForeignSessionKind,
+  fragment?: string,
+  sourcePath = path,
+): ConvertedForeignSession {
+  const guard = inspectForeignSource(path, MAX_FOREIGN_EXPORT_BYTES)
+  if (guard.status !== 'ok') return emptyConverted(sourcePath, kind, `source-${guard.status}`)
+  const raw = readRegularFile(path, MAX_FOREIGN_EXPORT_BYTES)
+  if (raw === null) return emptyConverted(sourcePath, kind, 'source-unreadable')
+  const anomalies: string[] = []
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw) as unknown
+  } catch {
+    return emptyConverted(sourcePath, kind, 'source-unreadable')
+  }
+  const conversations = conversationsFromJson(parsed, basename(path, '.json'))
+  const selected = fragment
+    ? conversations.filter((conv) => conv.id === fragment)
+    : conversations
+  const messages: ConvertedForeignMessage[] = []
+  for (const conv of selected) {
+    for (const row of conv.rows) parseGenericRow(row, messages, anomalies)
+  }
+  const titleSource = selected.length === 1 ? selected[0]!.title : basename(path, '.json')
+  const titleRedact = redactSecrets(titleSource)
+  if (titleRedact.hit) anomalies.push('secret-redacted')
+  return {
+    sourcePath,
+    kind,
+    title: titleRedact.text,
+    messages,
+    userTurns: messages.filter((m) => m.role === 'user').length,
+    anomalies: [...new Set(anomalies)],
+  }
+}
+
+export function inferForeignKind(sourcePath: string, homeDir?: string): ForeignSessionKind | undefined {
+  return inferKindFromAllowlistedPath(sourcePath, homeDir)
+}
+
+function isJsonChatFile(path: string): boolean {
+  return path.endsWith('.json') && !path.endsWith('.jsonl')
 }
 
 export function convertForeignSource(sourcePath: string, kind: ForeignSessionKind): ConvertedForeignSession {
-  const guard = inspectForeignSource(sourcePath)
+  const { path, fragment } = splitForeignSourceRef(sourcePath)
+  const maxBytes = isJsonChatFile(path) ? MAX_FOREIGN_EXPORT_BYTES : MAX_FOREIGN_FILE_BYTES
+  const guard = inspectForeignSource(path, maxBytes)
   if (guard.status === 'missing') return emptyConverted(sourcePath, kind, 'source-unreadable')
   if (guard.status === 'symlink') return emptyConverted(sourcePath, kind, 'source-symlink')
   if (guard.status === 'too-large') return emptyConverted(sourcePath, kind, 'source-too-large')
   if (kind === 'grok') {
-    const dir = sourcePath.endsWith('summary.json') ? dirname(sourcePath) : sourcePath
+    const dir = path.endsWith('summary.json') ? dirname(path) : path
     return convertGrokCatalog(dir)
   }
   try {
-    if (lstatSync(sourcePath).isDirectory()) {
-      const history = join(sourcePath, 'chat_history.jsonl')
-      if (inspectForeignSource(history).status === 'ok') return convertGrokCatalog(sourcePath)
+    if (lstatSync(path).isDirectory()) {
+      const history = join(path, 'chat_history.jsonl')
+      if (inspectForeignSource(history).status === 'ok') return convertGrokCatalog(path)
     }
   } catch {
     return emptyConverted(sourcePath, kind, 'source-unreadable')
   }
-  return convertJsonlFile(sourcePath, kind)
+  if (fragment || isJsonChatFile(path)) {
+    return convertStructuredChatFile(path, kind, fragment, sourcePath)
+  }
+  return convertJsonlFile(path, kind)
 }

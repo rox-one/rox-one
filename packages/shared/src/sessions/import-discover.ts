@@ -3,10 +3,16 @@
  */
 
 import { existsSync, lstatSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { homedir } from 'node:os'
-import { convertForeignSource, inspectForeignSource, redactSecrets } from './import-convert.ts'
-import { isSensitiveAgentCwd } from './import-home.ts'
+import {
+  convertForeignSource,
+  inspectForeignSource,
+  listChatExportConversations,
+  MAX_FOREIGN_EXPORT_BYTES,
+  redactSecrets,
+} from './import-convert.ts'
+import { isSensitiveAgentCwd, splitForeignSourceRef } from './import-home.ts'
 import { foreignImportScanCachePath } from './import-registry.ts'
 import type { ForeignDiscoverResult, ForeignIndexEntry, ForeignSessionKind } from './import-types.ts'
 
@@ -39,7 +45,10 @@ function listFiles(path: string, suffix: string): string[] {
     return readdirSync(path, { withFileTypes: true })
       .filter((entry) => entry.isFile() && !entry.isSymbolicLink() && entry.name.endsWith(suffix))
       .map((entry) => join(path, entry.name))
-      .filter((file) => inspectForeignSource(file).status === 'ok')
+      .filter((file) => {
+        const maxBytes = file.endsWith('.json') && !file.endsWith('.jsonl') ? MAX_FOREIGN_EXPORT_BYTES : undefined
+        return inspectForeignSource(file, maxBytes).status === 'ok'
+      })
   } catch {
     return []
   }
@@ -62,9 +71,64 @@ function walkFiles(root: string, suffix: string, maxDepth: number, depth = 0): s
 
 function mtimeMs(path: string): number | undefined {
   try {
-    return lstatSync(path).mtimeMs
+    return lstatSync(splitForeignSourceRef(path).path).mtimeMs
   } catch {
     return undefined
+  }
+}
+
+const SKIP_BASENAMES = new Set([
+  'settings.json',
+  'config.json',
+  'config.yml',
+  'config.yaml',
+  'package.json',
+  'sessions.json',
+  'ledger.jsonl',
+])
+
+function shouldSkipFile(file: string): boolean {
+  return SKIP_BASENAMES.has(basename(file))
+}
+
+function expandChatSources(
+  kind: ForeignSessionKind,
+  file: string,
+  consider: (entry: ForeignIndexEntry) => boolean,
+): boolean {
+  if (shouldSkipFile(file)) return true
+  if (basename(file) === 'conversations.json') {
+    const listed = listChatExportConversations(file)
+    if (listed.length > 1) {
+      for (const conv of listed) {
+        const sourcePath = `${file}#${conv.id}`
+        if (!consider(toEntry(kind, sourcePath, convertForeignSource(sourcePath, kind)))) return false
+      }
+      return true
+    }
+  }
+  return consider(toEntry(kind, file, convertForeignSource(file, kind)))
+}
+
+function scanKindFiles(
+  kind: ForeignSessionKind,
+  roots: string[],
+  suffixes: string[],
+  depth: number,
+  consider: (entry: ForeignIndexEntry) => boolean,
+  halted: () => boolean,
+  filter?: (file: string) => boolean,
+): void {
+  if (halted()) return
+  for (const root of roots) {
+    for (const suffix of suffixes) {
+      for (const file of walkFiles(root, suffix, depth)) {
+        if (halted()) return
+        if (shouldSkipFile(file)) continue
+        if (filter && !filter(file)) continue
+        if (!expandChatSources(kind, file, consider)) return
+      }
+    }
   }
 }
 
@@ -186,6 +250,25 @@ export function discoverForeignSessions(options: DiscoverForeignOptions): Foreig
       if (!consider(toEntry('hermes', jsonl, convertForeignSource(jsonl, 'hermes')))) break
     }
   }
+
+  const homeJoin = (...segments: string[]) => join(home, ...segments)
+  const transcriptDir = (file: string) => file.replaceAll('\\', '/').includes('/agent-transcripts/')
+  const sessionsDir = (file: string) => file.replaceAll('\\', '/').includes('/sessions/')
+  const halted = () => halt
+
+  scanKindFiles('chatgpt', [homeJoin('.chatgpt'), homeJoin('Downloads', 'chatgpt'), homeJoin('Downloads', 'ChatGPT')], ['.json', '.jsonl'], 3, consider, halted)
+  scanKindFiles('deepseek', [homeJoin('.deepseek'), homeJoin('Downloads', 'deepseek')], ['.json', '.jsonl'], 3, consider, halted)
+  scanKindFiles('gemini', [homeJoin('.gemini')], ['.jsonl', '.json'], 4, consider, halted)
+  scanKindFiles('qwen', [homeJoin('.qwen')], ['.jsonl', '.json'], 4, consider, halted)
+  scanKindFiles('amp', [homeJoin('.local', 'share', 'amp'), homeJoin('.amp'), homeJoin('Library', 'Application Support', 'amp'), homeJoin('AppData', 'Roaming', 'amp')], ['.json'], 3, consider, halted)
+  scanKindFiles('cursor', [homeJoin('.cursor', 'projects')], ['.jsonl'], 4, consider, halted, transcriptDir)
+  scanKindFiles('openclaw', [homeJoin('.openclaw')], ['.jsonl'], 5, consider, halted)
+  scanKindFiles('omp', [homeJoin('.omp')], ['.jsonl'], 4, consider, halted, sessionsDir)
+  scanKindFiles('pi', [homeJoin('.pi')], ['.jsonl'], 4, consider, halted, sessionsDir)
+  scanKindFiles('kiro', [homeJoin('.kiro', 'projects')], ['.jsonl'], 4, consider, halted, transcriptDir)
+  scanKindFiles('kimi', [homeJoin('.kimi')], ['.jsonl', '.json'], 3, consider, halted)
+  scanKindFiles('glm', [homeJoin('.glm')], ['.jsonl', '.json'], 3, consider, halted)
+  scanKindFiles('z', [homeJoin('.zai'), homeJoin('.zagent')], ['.jsonl', '.json'], 3, consider, halted)
 
   const scannedAt = options.now ?? Date.now()
   const cachePath = foreignImportScanCachePath(options.workspaceRoot)

@@ -3043,7 +3043,7 @@
   "settings.identity.title": "에이전트 신원",
   "settings.import.clearSelection": "선택 해제",
   "settings.import.description": "Scan local chats, then persist them as Rox sessions",
-  "settings.import.empty": "Scan to list Grok and Claude chats. Nothing is imported until you persist.",
+  "settings.import.empty": "Scan to list local chats. Nothing is imported until you persist.",
   "settings.import.filterAll": "모든 소스",
   "settings.import.filterKind": "소스",
   "settings.import.persist": "Persist selected",
