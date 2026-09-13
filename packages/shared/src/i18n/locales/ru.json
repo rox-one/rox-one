@@ -2377,6 +2377,7 @@
   "overlay.zoomPresets": "Пресеты масштаба",
   "overlay.zoomReset": "Сбросить масштаб (⌘0)",
   "overlay.zoomToFit": "По размеру окна",
+  "pages.actionFailed": "Действие не выполнено",
   "pages.askAgent": "Спросить агента",
   "pages.askAgentPrompt": "Создай для меня страницу, которая показывает ",
   "pages.auth.credentialDescription": "Введите новые учётные данные для этого источника. Они хранятся зашифрованными на этом компьютере.",

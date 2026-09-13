@@ -2371,6 +2371,7 @@
   "overlay.zoomPresets": "Nagyítási beállítások",
   "overlay.zoomReset": "Nagyítás visszaállítása (⌘0)",
   "overlay.zoomToFit": "Illesztés mérethez",
+  "pages.actionFailed": "A művelet sikertelen",
   "pages.askAgent": "Kérj meg egy ügynököt",
   "pages.askAgentPrompt": "Készíts nekem egy oldalt, ami ezt mutatja: ",
   "pages.auth.credentialDescription": "Add meg a forrás új hitelesítő adatát. Titkosítva tároljuk ezen a gépen.",

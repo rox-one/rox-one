@@ -2371,6 +2371,7 @@
   "overlay.zoomPresets": "확대/축소 사전 설정",
   "overlay.zoomReset": "확대/축소 재설정 (⌘0)",
   "overlay.zoomToFit": "화면에 맞추기",
+  "pages.actionFailed": "작업 실패",
   "pages.askAgent": "Ask an agent",
   "pages.askAgentPrompt": "Create a page for me that shows ",
   "pages.auth.credentialDescription": "Enter a new credential for this source. It's stored encrypted on this computer.",

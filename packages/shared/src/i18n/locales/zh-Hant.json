@@ -2371,6 +2371,7 @@
   "overlay.zoomPresets": "縮放預設",
   "overlay.zoomReset": "重置縮放 (⌘0)",
   "overlay.zoomToFit": "適應視窗",
+  "pages.actionFailed": "操作失敗",
   "pages.askAgent": "詢問代理",
   "pages.askAgentPrompt": "幫我建立一個頁面，顯示 ",
   "pages.auth.credentialDescription": "為此來源輸入新的憑證。它會以加密方式儲存在這台電腦上。",
