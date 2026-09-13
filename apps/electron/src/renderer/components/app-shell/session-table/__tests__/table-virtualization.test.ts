@@ -39,6 +39,39 @@ describe('table virtualization', () => {
     ])
   })
 
+  it('keeps an empty drop lane under expanded empty buckets', () => {
+    const flattened = flattenTableGroups(
+      [
+        { bucket: { key: 'status:todo', label: 'Todo', count: 0 }, items: [] },
+        {
+          bucket: { key: 'status:done', label: 'Done', count: 1 },
+          items: [{ id: 'c' }],
+        },
+      ],
+      new Set(),
+      { ...options, emptyLaneHeight: 40 },
+    )
+
+    expect(flattened.entries.map((entry) => [entry.kind, entry.key, entry.offset, entry.height])).toEqual([
+      ['header', 'header:status:todo', 0, 32],
+      ['empty', 'empty:status:todo', 32, 40],
+      ['header', 'header:status:done', 72, 32],
+      ['row', 'row:c', 104, 40],
+    ])
+    expect(flattened.totalHeight).toBe(144)
+  })
+
+  it('omits the empty drop lane when that group is collapsed', () => {
+    const flattened = flattenTableGroups(
+      [{ bucket: { key: 'status:todo', label: 'Todo', count: 0 }, items: [] }],
+      new Set(['status:todo']),
+      { ...options, emptyLaneHeight: 40 },
+    )
+
+    expect(flattened.entries.map((entry) => entry.kind)).toEqual(['header'])
+    expect(flattened.totalHeight).toBe(32)
+  })
+
   it('uses per-row heights when getRowHeight is provided', () => {
     const flattened = flattenTableGroups(groups, new Set(), {
       ...options,
