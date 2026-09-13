@@ -375,6 +375,19 @@ export type NativeNotesEngine = {
   importVault(bundle: NotesEngineExport): { restored: number; hash: string }
 }
 
+/** Duck-type NativeNotesEngine vs NotesRepository (`put`/`get` Map). */
+export function isNativeNotesEngine(value: unknown): value is NativeNotesEngine {
+  if (value === null || typeof value !== 'object') return false
+  const notes = value as Record<string, unknown>
+  return (
+    typeof notes.create === 'function' &&
+    typeof notes.read === 'function' &&
+    typeof notes.save === 'function' &&
+    typeof notes.list === 'function' &&
+    typeof notes.revisions === 'function'
+  )
+}
+
 export function createNativeNotesEngine(seed: readonly NativeNote[] = []): NativeNotesEngine {
   const heads = new Map<string, NativeNote>()
   const history = new Map<string, NoteRevision[]>()

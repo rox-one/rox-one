@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test'
+import { createNotesRepository } from '../notes-repository.ts'
 import {
   createNativeNotesEngine,
   extractWikilinks,
+  isNativeNotesEngine,
   migrateNotesVault,
   parseBlocks,
   rewriteWikilinks,
@@ -322,5 +324,11 @@ describe('ROX-AUD-031 native notes engine', () => {
       expect(stale.currentRevision).toBe(meta.note.revision)
     }
     expect(engine.read('daily')?.extra.color).toBe('blue')
+  })
+
+  test('isNativeNotesEngine distinguishes the engine from NotesRepository', () => {
+    expect(isNativeNotesEngine(createNativeNotesEngine())).toBe(true)
+    expect(isNativeNotesEngine(createNotesRepository())).toBe(false)
+    expect(isNativeNotesEngine(null)).toBe(false)
   })
 })
