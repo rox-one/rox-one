@@ -6,6 +6,8 @@ import RuntimeSettingsPage from '@/pages/settings/RuntimeSettingsPage'
 import CloudRunsSettingsPage from '@/pages/settings/CloudRunsSettingsPage'
 import SecuritySettingsPage from '@/pages/settings/SecuritySettingsPage'
 import MarketplaceSettingsPage from '@/pages/settings/MarketplaceSettingsPage'
+import ContextSettingsPage from '@/pages/settings/ContextSettingsPage'
+import KnowledgeSettingsPage from '@/pages/settings/KnowledgeSettingsPage'
 import ImportSettingsPage from '@/pages/settings/ImportSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
@@ -71,6 +73,22 @@ function MarketplacePlayground() {
   return (
     <SettingsScreen>
       <MarketplaceSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function ContextPlayground() {
+  return (
+    <SettingsScreen>
+      <ContextSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function KnowledgePlayground() {
+  return (
+    <SettingsScreen>
+      <KnowledgeSettingsPage />
     </SettingsScreen>
   )
 }
@@ -183,8 +201,28 @@ export const settingsComponents: ComponentEntry[] = [
     name: 'Settings · Marketplace',
     category: 'Settings',
     level: 'Screens',
-    description: 'PremiumMenu sort/tag filters and compact stats',
+    description: 'ROX2-045 native marketplace chrome; install is not spend',
     component: MarketplacePlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-context',
+    name: 'Settings · Context',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-044 native context docs chrome; no Conation iframe',
+    component: ContextPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-knowledge',
+    name: 'Settings · Knowledge',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-046 native knowledge chrome; token write is local',
+    component: KnowledgePlayground,
     props: [],
     layout: 'full',
   },
