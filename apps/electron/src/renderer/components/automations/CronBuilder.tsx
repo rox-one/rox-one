@@ -3,7 +3,7 @@
  *
  * Visual cron expression builder with three synchronized layers:
  * 1. Preset buttons — common schedules
- * 2. Visual fields — 5 interactive fields with dropdowns
+ * 2. Visual fields — 5 interactive fields
  * 3. Raw expression — editable text input
  *
  * Plus human-readable summary and next-run preview.
@@ -14,90 +14,63 @@ import { useState, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Clock, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { describeCron as describeCronExpression, computeNextRuns } from './utils'
+import { describeCron as describeCronExpression, computeNextRuns, type TranslateFn } from './utils'
 
-// ============================================================================
-// Presets
-// ============================================================================
+const PRESETS = [
+  { id: 'everyMinute', cron: '* * * * *' },
+  { id: 'every15', cron: '*/15 * * * *' },
+  { id: 'everyHour', cron: '0 * * * *' },
+  { id: 'dailyMidnight', cron: '0 0 * * *' },
+  { id: 'daily9am', cron: '0 9 * * *' },
+  { id: 'weekdays9am', cron: '0 9 * * 1-5' },
+  { id: 'monthly1st', cron: '0 0 1 * *' },
+] as const
 
-interface CronPreset {
-  label: string
-  cron: string
-  description: string
+const PRESET_KEYS: Record<(typeof PRESETS)[number]['id'], string> = {
+  everyMinute: 'automations.cronPresetEveryMinute',
+  every15: 'automations.cronPresetEvery15',
+  everyHour: 'automations.cronPresetEveryHour',
+  dailyMidnight: 'automations.cronPresetDailyMidnight',
+  daily9am: 'automations.cronPresetDaily9am',
+  weekdays9am: 'automations.cronPresetWeekdays9am',
+  monthly1st: 'automations.cronPresetMonthly1st',
 }
 
-const PRESETS: CronPreset[] = [
-  { label: 'Every minute',       cron: '* * * * *',     description: 'Runs every minute' },
-  { label: 'Every 15 min',       cron: '*/15 * * * *',  description: 'Runs every 15 minutes' },
-  { label: 'Every hour',         cron: '0 * * * *',     description: 'At the top of every hour' },
-  { label: 'Daily at midnight',  cron: '0 0 * * *',     description: 'Once a day at 00:00' },
-  { label: 'Daily at 9am',       cron: '0 9 * * *',     description: 'Once a day at 09:00' },
-  { label: 'Weekdays at 9am',    cron: '0 9 * * 1-5',   description: 'Monday–Friday at 09:00' },
-  { label: 'Monthly on 1st',     cron: '0 0 1 * *',     description: 'First day of each month at 00:00' },
-]
+const FIELD_KEYS = [
+  'automations.cronFieldMinute',
+  'automations.cronFieldHour',
+  'automations.cronFieldDay',
+  'automations.cronFieldMonth',
+  'automations.cronFieldWeekday',
+] as const
 
-// ============================================================================
-// Cron Field Definitions
-// ============================================================================
-
-interface FieldDef {
-  label: string
-  min: number
-  max: number
-  options?: { value: string; label: string }[]
-}
-
-const FIELDS: FieldDef[] = [
-  { label: 'Minute', min: 0, max: 59 },
-  { label: 'Hour', min: 0, max: 23 },
-  { label: 'Day', min: 1, max: 31 },
-  { label: 'Month', min: 1, max: 12, options: [
-    { value: '1', label: 'Jan' }, { value: '2', label: 'Feb' }, { value: '3', label: 'Mar' },
-    { value: '4', label: 'Apr' }, { value: '5', label: 'May' }, { value: '6', label: 'Jun' },
-    { value: '7', label: 'Jul' }, { value: '8', label: 'Aug' }, { value: '9', label: 'Sep' },
-    { value: '10', label: 'Oct' }, { value: '11', label: 'Nov' }, { value: '12', label: 'Dec' },
-  ]},
-  { label: 'Weekday', min: 0, max: 6, options: [
-    { value: '0', label: 'Sun' }, { value: '1', label: 'Mon' }, { value: '2', label: 'Tue' },
-    { value: '3', label: 'Wed' }, { value: '4', label: 'Thu' }, { value: '5', label: 'Fri' },
-    { value: '6', label: 'Sat' },
-  ]},
-]
-
-// ============================================================================
-// Helpers
-// ============================================================================
-
-function validateCron(cron: string): string | null {
+function validateCron(cron: string, t: TranslateFn): string | null {
   const parts = cron.trim().split(/\s+/)
-  if (parts.length !== 5) return 'Schedule needs 5 parts: minute, hour, day, month, and weekday'
-  // Basic validation per field
-  const ranges = [[0, 59], [0, 23], [1, 31], [1, 12], [0, 7]]
+  if (parts.length !== 5) return t('automations.cronInvalidParts')
   for (let i = 0; i < 5; i++) {
     const part = parts[i]
     if (part === '*') continue
     if (/^\*\/\d+$/.test(part)) continue
     if (/^[\d,\-\/]+$/.test(part)) continue
-    return `Invalid value in ${FIELDS[i]?.label ?? `field ${i + 1}`}: "${part}"`
+    return t('automations.cronInvalidField', {
+      field: t(FIELD_KEYS[i] ?? 'automations.cronInvalid'),
+      value: part,
+    })
   }
   return null
 }
 
-// ============================================================================
-// Field Editor
-// ============================================================================
-
 interface CronFieldProps {
-  field: FieldDef
+  label: string
   value: string
   onChange: (value: string) => void
 }
 
-function CronField({ field, value, onChange }: CronFieldProps) {
+function CronField({ label, value, onChange }: CronFieldProps) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-        {field.label}
+        {label}
       </label>
       <input
         type="text"
@@ -113,10 +86,6 @@ function CronField({ field, value, onChange }: CronFieldProps) {
   )
 }
 
-// ============================================================================
-// Component
-// ============================================================================
-
 export interface CronBuilderProps {
   value?: string
   onChange?: (cron: string) => void
@@ -129,20 +98,17 @@ export function CronBuilder({
   value = '0 9 * * 1-5',
   onChange,
   timezone,
-  onTimezoneChange,
   className,
 }: CronBuilderProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [rawInput, setRawInput] = useState(value)
   const [fields, setFields] = useState<string[]>(value.split(/\s+/))
 
-  // Sync raw input and fields
   useEffect(() => {
     setRawInput(value)
     setFields(value.split(/\s+/))
   }, [value])
 
-  // Update from raw input
   const handleRawChange = useCallback((raw: string) => {
     setRawInput(raw)
     const parts = raw.trim().split(/\s+/)
@@ -152,7 +118,6 @@ export function CronBuilder({
     }
   }, [onChange])
 
-  // Update from field editor
   const handleFieldChange = useCallback((index: number, val: string) => {
     const newFields = [...fields]
     newFields[index] = val || '*'
@@ -162,23 +127,21 @@ export function CronBuilder({
     onChange?.(cron)
   }, [fields, onChange])
 
-  // Apply preset
   const handlePreset = useCallback((cron: string) => {
     setRawInput(cron)
     setFields(cron.split(/\s+/))
     onChange?.(cron)
   }, [onChange])
 
-  const validationError = useMemo(() => validateCron(rawInput), [rawInput])
-  const description = useMemo(() => describeCronExpression(rawInput), [rawInput])
+  const validationError = useMemo(() => validateCron(rawInput, t), [rawInput, t])
+  const description = useMemo(() => describeCronExpression(rawInput, t), [rawInput, t])
   const nextRuns = useMemo(() => computeNextRuns(rawInput), [rawInput])
 
   return (
     <div className={cn('space-y-5', className)}>
-      {/* Layer 1: Common Schedules */}
       <div className="space-y-2">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pl-1">
-          Common Schedules
+          {t('automations.cronCommonSchedules')}
         </h4>
         <div className="flex flex-wrap gap-1.5">
           {PRESETS.map((preset) => (
@@ -192,22 +155,21 @@ export function CronBuilder({
                   : 'bg-foreground/[0.03] text-foreground/70 hover:bg-foreground/[0.06] shadow-minimal'
               )}
             >
-              {preset.label}
+              {t(PRESET_KEYS[preset.id])}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Layer 2: Custom Schedule */}
       <div className="space-y-2">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pl-1">
-          Custom Schedule
+          {t('automations.cronCustomSchedule')}
         </h4>
         <div className="grid grid-cols-5 gap-2">
-          {FIELDS.map((field, i) => (
+          {FIELD_KEYS.map((key, i) => (
             <CronField
-              key={field.label}
-              field={field}
+              key={key}
+              label={t(key)}
               value={fields[i] || '*'}
               onChange={(val) => handleFieldChange(i, val)}
             />
@@ -215,10 +177,9 @@ export function CronBuilder({
         </div>
       </div>
 
-      {/* Layer 3: Advanced */}
       <div className="space-y-2">
         <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wider pl-1">
-          Advanced
+          {t('automations.cronAdvanced')}
         </h4>
         <input
           type="text"
@@ -241,29 +202,27 @@ export function CronBuilder({
         )}
       </div>
 
-      {/* Summary */}
       <div className="bg-background shadow-minimal rounded-[8px] p-4 space-y-3">
-        {/* Human-readable description */}
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">{description}</span>
         </div>
 
-        {/* Next runs */}
         {nextRuns.length > 0 && !validationError && (
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Next runs:</span>
+            <span className="text-xs text-muted-foreground">{t('automations.labelNextRuns')}</span>
             <div className="flex flex-col gap-0.5">
               {(() => {
                 const spansYears = nextRuns.length > 1 && nextRuns[0].getFullYear() !== nextRuns[nextRuns.length - 1].getFullYear()
+                const locale = i18n.language || 'ru'
                 return nextRuns.map((date, i) => (
                   <span key={i} className="text-xs text-foreground/70 tabular-nums">
-                    {date.toLocaleDateString('en-US', {
+                    {date.toLocaleDateString(locale, {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
                       ...(spansYears && { year: 'numeric' }),
-                    })} {date.toLocaleTimeString('en-US', {
+                    })} {date.toLocaleTimeString(locale, {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: false,
@@ -275,7 +234,6 @@ export function CronBuilder({
           </div>
         )}
 
-        {/* Timezone */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{t('automations.labelTimezone')}:</span>
           <span className="font-medium text-foreground/70">{timezone || t('automations.systemDefault')}</span>

@@ -4,6 +4,8 @@ import AppearanceSettingsPage from '@/pages/settings/AppearanceSettingsPage'
 import RuntimeSettingsPage from '@/pages/settings/RuntimeSettingsPage'
 import CloudRunsSettingsPage from '@/pages/settings/CloudRunsSettingsPage'
 import SecuritySettingsPage from '@/pages/settings/SecuritySettingsPage'
+import MarketplaceSettingsPage from '@/pages/settings/MarketplaceSettingsPage'
+import ImportSettingsPage from '@/pages/settings/ImportSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import type { ComponentEntry } from './types'
@@ -52,6 +54,22 @@ function SecurityPlayground() {
   return (
     <SettingsScreen>
       <SecuritySettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function MarketplacePlayground() {
+  return (
+    <SettingsScreen>
+      <MarketplaceSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function ImportPlayground() {
+  return (
+    <SettingsScreen>
+      <ImportSettingsPage />
     </SettingsScreen>
   )
 }
@@ -138,6 +156,26 @@ export const settingsComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'Audit empty findings, HOST_ONLY, Infisical health',
     component: SecurityPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-marketplace',
+    name: 'Settings · Marketplace',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'PremiumMenu sort/tag filters and compact stats',
+    component: MarketplacePlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-import',
+    name: 'Settings · Import',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'PremiumMenu kind filter and scan/persist chrome',
+    component: ImportPlayground,
     props: [],
     layout: 'full',
   },

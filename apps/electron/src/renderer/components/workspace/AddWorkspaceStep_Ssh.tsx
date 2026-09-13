@@ -225,7 +225,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
             <Input
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
-              placeholder="My server"
+              placeholder={t("ssh.placeholder.label")}
             />
           </Field>
           <div className="flex gap-2">
@@ -233,7 +233,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
               <Input
                 value={form.host}
                 onChange={(e) => setForm({ ...form, host: e.target.value })}
-                placeholder="example.com"
+                placeholder={t("ssh.placeholder.host")}
               />
             </Field>
             <Field label={t("ssh.field.port")} className="w-24">
@@ -245,7 +245,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
               <Input
                 value={form.user}
                 onChange={(e) => setForm({ ...form, user: e.target.value })}
-                placeholder="deploy"
+                placeholder={t("ssh.placeholder.user")}
               />
             </Field>
             <Field label={t("ssh.field.remotePort")} className="w-28">
@@ -256,7 +256,7 @@ export function AddWorkspaceStep_Ssh({ onBack, onCreate }: AddWorkspaceStep_SshP
             <Input
               value={form.identityFile ?? ""}
               onChange={(e) => setForm({ ...form, identityFile: e.target.value })}
-              placeholder="~/.ssh/id_ed25519"
+              placeholder={t("ssh.placeholder.identityFile")}
             />
           </Field>
         </div>

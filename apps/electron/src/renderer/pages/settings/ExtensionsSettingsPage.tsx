@@ -1196,7 +1196,7 @@ export default function ExtensionsSettingsPage() {
                     value={allowlistExtId}
                     onChange={(e) => setAllowlistExtId(e.target.value)}
                     className="flex-1 min-w-[12rem] text-xs px-2 py-1 rounded border bg-background font-mono"
-                    placeholder="my-extension"
+                    placeholder={t('extensions.developer.extensionIdPlaceholder')}
                   />
                   <button
                     type="button"
@@ -1250,7 +1250,7 @@ export default function ExtensionsSettingsPage() {
                       }
                     }}
                     className="flex-1 min-w-[12rem] text-xs px-2 py-1 rounded border bg-background font-mono"
-                    placeholder="https://api.example.com/"
+                    placeholder={t('extensions.developer.urlPrefixPlaceholder')}
                   />
                   <button
                     type="button"

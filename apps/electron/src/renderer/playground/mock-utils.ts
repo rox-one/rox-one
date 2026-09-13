@@ -224,6 +224,33 @@ export const playgroundAllowListHandle: PlaygroundAllowListHandle = {
   },
 }
 
+function playgroundMarketplaceCatalog() {
+  return {
+    catalog: {
+      catalogVersion: 1,
+      updatedAt: '2026-09-13T00:00:00.000Z',
+      entries: [
+        {
+          id: 'playground-skill',
+          kind: 'skillpack' as const,
+          title: 'Playground skill',
+          descriptionRu: 'Демонстрационный навык',
+          source: {
+            type: 'github' as const,
+            repo: 'rox-one/playground',
+            ref: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+          },
+          tags: ['demo'],
+          default: 'available' as const,
+        },
+      ],
+    },
+    origin: 'bundled' as const,
+    lastCatalogFetchAt: Date.now(),
+    installs: {},
+  }
+}
+
 // ============================================================================
 // Mock electronAPI
 // ============================================================================
@@ -375,6 +402,26 @@ export const mockElectronAPI = {
     defaultTtlSec: 3600,
     defaults: { maxWallClockSec: 3600, maxLlmTokens: 200_000, maxArtifactsBytes: 50_000_000 },
   }),
+  getMarketplaceCatalog: async () => playgroundMarketplaceCatalog(),
+  refreshMarketplaceCatalog: async () => playgroundMarketplaceCatalog(),
+  getMarketplaceStats: async () => ({
+    'playground-skill': { stars: 1280, npmWeeklyDownloads: 4200 },
+  }),
+  onMarketplaceChanged: () => () => {},
+  onMarketplaceProgress: () => () => {},
+  foreignDiscoverSessions: async () => ({
+    entries: [
+      {
+        id: 'pg-chatgpt',
+        kind: 'chatgpt',
+        sourcePath: '/tmp/playground/chatgpt.json',
+        title: 'Playground chat',
+        userTurns: 4,
+      },
+    ],
+    truncated: false,
+  }),
+  foreignPersistSessions: async () => ({ results: [] }),
   setCloudRunsConfig: async (patch: unknown) => {
     console.log('[Playground] setCloudRunsConfig', patch)
   },

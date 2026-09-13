@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { fullscreenOverlayOpenAtom } from "@/atoms/overlay";
 import { CrossfadeAvatar } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@craft-agent/ui";
+import { Tooltip, TooltipContent, TooltipTrigger, PremiumMenuSelect } from "@craft-agent/ui";
 import { WorkspaceCreationScreen, type WorkspaceCreationSuccess } from "@/components/workspace";
 import { waitForTransportConnected } from "@/lib/transport-wait";
 import { useTransportConnectionState } from "@/hooks/useTransportConnectionState";
@@ -479,21 +479,18 @@ export function WorkspaceIconRail({
 									placeholder={t("workspaceRail.linkLabelPlaceholder")}
 									className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none focus:border-accent/50"
 								/>
-								<select
-									value={draftKind}
-									onChange={(e) =>
-										setDraftKind(e.target.value as RailLinkKind)
-									}
-									className="mb-1.5 w-full rounded-md border border-border/50 bg-background px-1.5 py-1 text-[11px] outline-none"
-								>
-									<option value="knowledge">
-										{t("workspaceRail.kindKnowledge")}
-									</option>
-									<option value="notes">{t("workspaceRail.kindNotes")}</option>
-									<option value="external">
-										{t("workspaceRail.kindExternal")}
-									</option>
-								</select>
+								<PremiumMenuSelect
+									aria-label={t("workspaceRail.addLink")}
+									className="mb-1.5 h-7 w-full max-w-none text-[11px]"
+									items={[
+										{ id: "knowledge", label: t("workspaceRail.kindKnowledge") },
+										{ id: "notes", label: t("workspaceRail.kindNotes") },
+										{ id: "external", label: t("workspaceRail.kindExternal") },
+									]}
+									placeholder={t("workspaceRail.addLink")}
+									selectedId={draftKind}
+									onSelect={(item) => setDraftKind(item.id as RailLinkKind)}
+								/>
 								{(draftKind === "external" || draftKind === "notes") && (
 									<input
 										value={draftTarget}

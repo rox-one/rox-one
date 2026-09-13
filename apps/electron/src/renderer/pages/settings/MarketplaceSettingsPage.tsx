@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner, PremiumMenuSelect } from '@craft-agent/ui'
 import { SettingsCard, SettingsCardContent } from '@/components/settings'
 import {
   ShoppingBag,
@@ -64,8 +64,8 @@ const TAB_ICONS: Record<Exclude<MarketplaceTab, ''>, typeof Package> = {
   rule: BookOpen,
 }
 
-function formatCompact(n: number): string {
-  return Intl.NumberFormat('ru-RU', { notation: 'compact', maximumFractionDigits: 1 }).format(n)
+function formatCompact(n: number, locale: string): string {
+  return Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(n)
 }
 
 /** Human-readable package size hint (KB below 1 MB, MB above), locale-agnostic units. */
@@ -117,7 +117,7 @@ function githubTreeUrl(repo: string, ref: string): string | null {
 }
 
 export default function MarketplaceSettingsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [view, setView] = useState<MarketplaceCatalogResult | null>(null)
   const [statsMap, setStatsMap] = useState<Record<string, MarketplaceEntryStats>>({})
   const [busy, setBusy] = useState<BusyState>({})
@@ -491,31 +491,32 @@ export default function MarketplaceSettingsPage() {
             onChange={(ev) => setQuery(ev.target.value)}
           />
           {allTags.length > 0 && (
-            <select
-              className="border border-border/60 rounded-md px-2 py-1.5 bg-background"
-              value={tagFilter}
-              onChange={(ev) => setTagFilter(ev.target.value)}
-            >
-              <option value="">{t('marketplace.filterAllTags')}</option>
-              {allTags.map((tag) => (
-                <option key={tag} value={tag}>
-                  #{tag}
-                </option>
-              ))}
-            </select>
+            <PremiumMenuSelect
+              aria-label={t('marketplace.filterAllTags')}
+              className="h-8 max-w-[180px]"
+              items={[
+                { id: '__all__', label: t('marketplace.filterAllTags') },
+                ...allTags.map((tag) => ({ id: tag, label: `#${tag}` })),
+              ]}
+              placeholder={t('marketplace.filterAllTags')}
+              selectedId={tagFilter || '__all__'}
+              onSelect={(item) => setTagFilter(item.id === '__all__' ? '' : item.id)}
+            />
           )}
           <div className="flex-1 min-w-[1rem]" />
-          <select
-            className="border border-border/60 rounded-md px-2 py-1.5 bg-background ml-auto"
-            value={sortKey}
-            onChange={(ev) => setSortKey(ev.target.value as SortKey)}
+          <PremiumMenuSelect
             aria-label={t('marketplace.sortLabel')}
-          >
-            <option value="stars">{t('marketplace.sortStars')}</option>
-            <option value="downloads">{t('marketplace.sortDownloads')}</option>
-            <option value="updated">{t('marketplace.sortUpdated')}</option>
-            <option value="name">{t('marketplace.sortName')}</option>
-          </select>
+            className="h-8 max-w-[180px] ml-auto"
+            items={[
+              { id: 'stars', label: t('marketplace.sortStars') },
+              { id: 'downloads', label: t('marketplace.sortDownloads') },
+              { id: 'updated', label: t('marketplace.sortUpdated') },
+              { id: 'name', label: t('marketplace.sortName') },
+            ]}
+            placeholder={t('marketplace.sortLabel')}
+            selectedId={sortKey}
+            onSelect={(item) => setSortKey(item.id as SortKey)}
+          />
         </div>
       </div>
 
@@ -574,7 +575,7 @@ export default function MarketplaceSettingsPage() {
                               {typeof st.stars === 'number' ? (
                                 <div className="flex items-center justify-end gap-1.5 font-medium">
                                   <Star className="w-3 h-3 fill-amber-500 text-amber-500" />
-                                  {formatCompact(st.stars)}
+                                  {formatCompact(st.stars, i18n.language)}
                                 </div>
                               ) : null}
                               {typeof st.npmWeeklyDownloads === 'number' ||
@@ -585,6 +586,7 @@ export default function MarketplaceSettingsPage() {
                                     {formatCompact(
                                       (st.npmWeeklyDownloads ?? 0) +
                                         (st.githubReleaseDownloads ?? 0),
+                                      i18n.language,
                                     )}
                                   </span>
                                 </div>

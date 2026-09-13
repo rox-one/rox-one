@@ -18,6 +18,7 @@ import {
   type MindMapLayout,
   type MindMapNodeId,
 } from '@craft-agent/core/mindmap'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import { MindMapMinimap } from './minimap'
 import {
   MIND_MAP_NODE_HEIGHT,
@@ -712,29 +713,26 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                 {structureEditor.mode !== 'rename' ? (
                   <label className="block space-y-0.5 px-1 text-[11px] text-muted-foreground">
                     <span>{t('mindmap.parentNode')}</span>
-                    <select
-                      className="h-7 w-full rounded-md border border-border/60 bg-background px-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-foreground/30"
-                      value={structureEditor.parentId}
-                      onChange={(event) => {
-                        const parentId = event.target.value
+                    <PremiumMenuSelect
+                      aria-label={t('mindmap.parentNode')}
+                      className="h-7 w-full max-w-none"
+                      items={parentOptions.map((node) => ({
+                        id: node.id,
+                        label: node.label,
+                        disabled:
+                          structureEditor.mode === 'reparent' &&
+                          node.id === structureEditor.nodeId,
+                      }))}
+                      placeholder={t('mindmap.parentNode')}
+                      selectedId={structureEditor.parentId}
+                      onSelect={(item) => {
                         setStructureEditor((current) =>
-                          current && current.mode !== 'rename' ? { ...current, parentId } : current,
+                          current && current.mode !== 'rename'
+                            ? { ...current, parentId: item.id }
+                            : current,
                         )
                       }}
-                    >
-                      {parentOptions.map((node) => (
-                        <option
-                          key={node.id}
-                          value={node.id}
-                          disabled={
-                            structureEditor.mode === 'reparent' &&
-                            node.id === structureEditor.nodeId
-                          }
-                        >
-                          {node.label}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </label>
                 ) : null}
 

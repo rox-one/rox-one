@@ -7,45 +7,49 @@
 
 import { Cron } from 'croner'
 
+export type TranslateFn = (key: string, options?: Record<string, unknown>) => string
+
 /**
  * Format a timestamp as a compact relative time string (e.g. "3m", "2h", "5d").
  * Used by both AutomationsListPanel (trailing timestamp) and AutomationEventTimeline.
  */
-export function formatShortRelativeTime(timestamp: number): string {
+export function formatShortRelativeTime(timestamp: number, t: TranslateFn): string {
   const diff = Date.now() - timestamp
   const seconds = Math.floor(diff / 1000)
   const minutes = Math.floor(diff / 60000)
   const hours = Math.floor(diff / 3600000)
   const days = Math.floor(diff / 86400000)
 
-  if (seconds < 60) return 'Just now'
-  if (minutes < 60) return `${minutes}m ago`
-  if (hours < 24) return `${hours}h ago`
-  return `${days}d ago`
+  if (seconds < 60) return t('common.justNow')
+  if (minutes < 60) return t('common.minutesAgoShort', { count: minutes })
+  if (hours < 24) return t('common.hoursAgoShort', { count: hours })
+  return t('common.daysAgoShort', { count: days })
 }
 
 /**
  * Describe a cron expression in human-readable form.
  */
-export function describeCron(cron: string): string {
+export function describeCron(cron: string, t: TranslateFn): string {
   const parts = cron.trim().split(/\s+/)
-  if (parts.length !== 5) return 'Invalid schedule'
+  if (parts.length !== 5) return t('automations.cronInvalid')
 
   const [minute, hour, dom, month, dow] = parts
 
-  if (cron.trim() === '* * * * *') return 'Every minute'
-  if (minute.startsWith('*/')) return `Every ${minute.slice(2)} minutes`
-  if (hour === '*' && minute !== '*') return `Every hour at :${minute.padStart(2, '0')}`
+  if (cron.trim() === '* * * * *') return t('automations.cronEveryMinute')
+  if (minute.startsWith('*/')) return t('automations.cronEveryNMinutes', { count: minute.slice(2) })
+  if (hour === '*' && minute !== '*') {
+    return t('automations.cronEveryHourAt', { minute: minute.padStart(2, '0') })
+  }
   if (dom === '*' && month === '*') {
     const time = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
-    if (dow === '*') return `Daily at ${time}`
-    if (dow === '1-5') return `Weekdays at ${time}`
-    if (dow === '0,6') return `Weekends at ${time}`
-    return `At ${time} (weekday: ${dow})`
+    if (dow === '*') return t('automations.cronDailyAt', { time })
+    if (dow === '1-5') return t('automations.cronWeekdaysAt', { time })
+    if (dow === '0,6') return t('automations.cronWeekendsAt', { time })
+    return t('automations.cronAtWeekday', { time, dow })
   }
   if (month === '*' && dow === '*') {
     const time = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
-    return `Monthly on day ${dom} at ${time}`
+    return t('automations.cronMonthlyOn', { day: dom, time })
   }
   return cron
 }

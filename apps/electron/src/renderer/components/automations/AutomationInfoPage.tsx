@@ -55,7 +55,7 @@ export function AutomationInfoPage({
   onReplay,
   className,
 }: AutomationInfoPageProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
   const nextRuns = automation.cron ? computeNextRuns(automation.cron) : []
 
@@ -146,7 +146,7 @@ export function AutomationInfoPage({
             )}
             {automation.cron && (
               <>
-                <Info_Table.Row label={t('automations.labelRepeats')} value={describeCron(automation.cron)} />
+                <Info_Table.Row label={t('automations.labelRepeats')} value={describeCron(automation.cron, t)} />
                 <Info_Table.Row label={t('automations.labelScheduleExpression')}>
                   <code className="text-xs font-mono bg-foreground/5 px-1.5 py-0.5 rounded">
                     {automation.cron}
@@ -157,10 +157,11 @@ export function AutomationInfoPage({
                     <div className="flex flex-col gap-0.5">
                       {(() => {
                         const spansYears = nextRuns.length > 1 && nextRuns[0].getFullYear() !== nextRuns[nextRuns.length - 1].getFullYear()
+                        const locale = i18n.language || 'ru'
                         return nextRuns.map((date, i) => (
                           <span key={i} className="text-sm text-foreground/70">
-                            {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', ...(spansYears && { year: 'numeric' }) })}{' '}
-                            {date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            {date.toLocaleDateString(locale, { month: 'short', day: 'numeric', ...(spansYears && { year: 'numeric' }) })}{' '}
+                            {date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', hour12: false })}
                           </span>
                         ))
                       })()}
