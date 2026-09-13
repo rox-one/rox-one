@@ -1889,13 +1889,13 @@ h1,h2,h3{margin-top:1.5em}
             </>
           ) : (
             <div className="px-3 py-10 text-center text-xs text-muted-foreground">
-              {query || selectedTag ? 'No matching notes' : 'No notes yet'}
+              {query || selectedTag ? t('notes.vault.noMatches') : t('notes.vault.empty')}
             </div>
           )}
         </div>
         </DndContext>
         <div className="shrink-0 border-t border-border/60 px-3 py-2 text-[11px] text-muted-foreground">
-          {notes.length} note{notes.length === 1 ? '' : 's'} · {allAssets.length} asset{allAssets.length === 1 ? '' : 's'}
+          {t('notes.vault.noteCount', { count: notes.length })} · {t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
       </aside>
       <NotesRailSash

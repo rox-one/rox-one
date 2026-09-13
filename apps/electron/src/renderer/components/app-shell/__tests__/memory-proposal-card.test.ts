@@ -17,5 +17,7 @@ describe('Issue 13 memory proposal UI wiring', () => {
     expect(chat).toContain('SessionMemoryProposalLane')
     expect(memory).toContain('data-memory-proposal-review')
     expect(memory).toContain('MemoryProposalCard')
+    expect(memory).toContain('PremiumMenuSelect')
+    expect(memory).not.toContain('<select')
   })
 })

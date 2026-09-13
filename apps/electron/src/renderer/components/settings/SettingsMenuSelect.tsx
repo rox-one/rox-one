@@ -56,7 +56,7 @@ export function SettingsMenuSelect({
   value,
   onValueChange,
   options,
-  placeholder = 'Select...',
+  placeholder,
   disabled,
   className,
   menuWidth = 280,
@@ -65,6 +65,7 @@ export function SettingsMenuSelect({
   searchPlaceholder,
 }: SettingsMenuSelectProps) {
   const { t } = useTranslation()
+  const effectivePlaceholder = placeholder ?? t('common.select')
   const effectiveSearchPlaceholder = searchPlaceholder ?? t("common.search")
   const [isOpen, setIsOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
@@ -121,8 +122,8 @@ export function SettingsMenuSelect({
             className
           )}
         >
-          <span className="truncate">{selectedOption?.label || placeholder}</span>
-          <ChevronDown className="opacity-50 shrink-0 size-3.5" />
+          <span className="truncate">{selectedOption?.label || (value ? value : effectivePlaceholder)}</span>
+          <ChevronDown className="size-3.5 shrink-0 text-foreground/70" />
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -145,7 +146,7 @@ export function SettingsMenuSelect({
               className={cn(
                 'w-full h-8 pl-8 pr-3 text-sm rounded-md',
                 'bg-foreground/5 border-0',
-                'placeholder:text-muted-foreground/50',
+                'placeholder:text-muted-foreground',
                 'focus:outline-none focus:ring-1 focus:ring-foreground/20'
               )}
             />
@@ -154,7 +155,7 @@ export function SettingsMenuSelect({
         <div className="space-y-0.5 max-h-64 overflow-auto">
           {filteredOptions.length === 0 ? (
             <div className="px-2.5 py-3 text-sm text-muted-foreground text-center">
-              No results found
+              {t('common.noResults')}
             </div>
           ) : (
             filteredOptions.map((option) => {
@@ -230,7 +231,7 @@ export function SettingsMenuSelectRow({
   value,
   onValueChange,
   options,
-  placeholder = 'Select...',
+  placeholder,
   disabled,
   className,
   inCard = true,

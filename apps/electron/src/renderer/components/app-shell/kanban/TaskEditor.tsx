@@ -1250,8 +1250,8 @@ function ResultsPanel({
 
   if (!results || !results.runId || results.nodes.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 text-center text-foreground/50 shadow-minimal">
-        <CircleSlash className="h-6 w-6 text-foreground/30" strokeWidth={2} />
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 rounded-xl border border-border bg-card px-6 text-center text-muted-foreground shadow-minimal">
+        <CircleSlash className="h-6 w-6 text-muted-foreground" strokeWidth={2} />
         <p className="text-[12.5px]">{t('tasks.resultsEmpty')}</p>
       </div>
     )
