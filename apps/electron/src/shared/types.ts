@@ -611,6 +611,28 @@ export interface ElectronAPI {
   getTask(workspaceId: string, slug: string, runId?: string): Promise<TaskGetResult>
   listTasks(workspaceId: string): Promise<string[]>
   getTaskResults(workspaceId: string, slug: string, runId?: string): Promise<TaskResultsDto>
+  listMeetings(workspaceId: string, cursor?: string, limit?: number): Promise<unknown>
+  getMeeting(workspaceId: string, meetingId: string): Promise<unknown>
+  searchMeetings(workspaceId: string, query: string): Promise<unknown>
+  createMeetingProposal(
+    workspaceId: string,
+    meetingId: string,
+    type: 'create_task' | 'create_note',
+    payload: Record<string, unknown>,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ proposal: import('@craft-agent/core/meetings').MeetingProposal | null; error?: { code: string } }>
+  approveMeetingProposal(
+    workspaceId: string,
+    proposalId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    payload: Record<string, unknown>,
+  ): Promise<{
+    proposal: import('@craft-agent/core/meetings').MeetingProposal
+    operation: import('@craft-agent/core/meetings').OperationResultV2
+  }>
+  rejectMeetingProposal(workspaceId: string, proposalId: string): Promise<import('@craft-agent/core/meetings').MeetingProposal>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
