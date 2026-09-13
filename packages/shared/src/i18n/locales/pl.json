@@ -1001,6 +1001,7 @@
   "editor.italic": "Kursywa",
   "editor.math": "Matematyka",
   "editor.noLanguagesFound": "Nie znaleziono języków",
+  "editor.placeholder": "Napisz coś...",
   "editor.searchLanguages": "Szukaj języków...",
   "editor.strikethrough": "Przekreślenie",
   "entityList.collapse": "Zwiń",

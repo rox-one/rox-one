@@ -999,6 +999,7 @@
   "editor.italic": "斜体",
   "editor.math": "数式",
   "editor.noLanguagesFound": "言語が見つかりません",
+  "editor.placeholder": "何か書く...",
   "editor.searchLanguages": "言語を検索...",
   "editor.strikethrough": "取り消し線",
   "entityList.collapse": "折りたたむ",

@@ -999,6 +999,7 @@
   "editor.italic": "기울임꼴",
   "editor.math": "수식",
   "editor.noLanguagesFound": "언어를 찾을 수 없습니다",
+  "editor.placeholder": "무언가 작성...",
   "editor.searchLanguages": "언어 검색...",
   "editor.strikethrough": "취소선",
   "entityList.collapse": "Collapse",
