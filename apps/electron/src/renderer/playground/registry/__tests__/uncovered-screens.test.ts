@@ -20,6 +20,8 @@ describe('uncovered playground screens', () => {
     const chat = readFileSync(join(playground, 'registry/chat.tsx'), 'utf8')
     expect(chat).toContain("inputMode: 'credential'")
     expect(chat).toContain('sampleCredentialRequest')
+    expect(chat).toContain("t('auth.signInToContinueSource')")
+    expect(chat).not.toContain('Sign in to continue the source connection.')
   })
 
   it('mocks cloud-run, security, and quest IPC for those screens', () => {

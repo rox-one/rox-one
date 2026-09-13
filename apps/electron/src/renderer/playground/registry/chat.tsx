@@ -28,6 +28,7 @@ import {
 } from '../mock-utils'
 import { mockAdminApprovalRequest } from '../adapters/input-adapters'
 import { getRecentDirsForScenario, type RecentDirScenario } from '../recent-working-dirs'
+import { useTranslation } from 'react-i18next'
 
 const sampleCodeAttachment: FileAttachment = {
   type: 'text',
@@ -60,7 +61,6 @@ const sampleCredentialRequest: CredentialRequest = {
   sourceSlug: 'github',
   sourceName: 'GitHub',
   mode: 'basic',
-  hint: 'Sign in to continue the source connection.',
 }
 
 const veryLongPermissionRequest: PermissionRequest = {
@@ -593,6 +593,7 @@ function InputContainerPlayground({
   showFollowUps = false,
   followUpCount = 2,
 }: InputContainerPlaygroundProps) {
+  const { t } = useTranslation()
   const playgroundSessionId = 'playground-session'
   const [model, setModel] = React.useState(currentModel)
   const [mode, setMode] = React.useState<PermissionMode>(permissionMode)
@@ -745,12 +746,15 @@ function InputContainerPlayground({
     if (inputMode === 'credential') {
       return {
         type: 'credential' as const,
-        data: sampleCredentialRequest,
+        data: {
+          ...sampleCredentialRequest,
+          hint: t('auth.signInToContinueSource'),
+        },
       }
     }
 
     return undefined
-  }, [inputMode])
+  }, [inputMode, t])
 
   return (
     <ModalProvider>
