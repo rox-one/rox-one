@@ -1,6 +1,7 @@
 /**
- * RMA-I025 / #381 — CRM. DisplayName is not a unique key.
- * Live mutations stay BLOCKED until AUD #333. SoupCompany ≠ contact/deal mutation.
+ * RMA-I025 / #381 leftover — CRM. DisplayName is not a unique key.
+ * Live mutations stay BLOCKED until AUD #333. SoupCompany ≠ contact/deal
+ * mutation. Live CRM mutate/send stay blocked (evidence U1; L4 NOT_RUN).
  */
 
 import { confirmWrite } from './capabilities.ts'
@@ -46,5 +47,15 @@ export function proposeCrmEdit(
   if (options.baseRevision !== options.currentRevision) {
     return { status: 'conflict', reason: 'concurrent-update', live: false, evidenceLevel: 'U1' }
   }
-  return { status: 'verified', reason: 'proposal', live: false, evidenceLevel: 'U1' }
+  return blocked('crm-edit-not-live')
+}
+
+export function sendCrm(_target: CrmTarget): MeetingOpResult {
+  const write = confirmWrite({
+    moduleId: 'GraphqlSoupCrmCompany',
+    operation: 'send',
+    authPresent: true,
+  })
+  if (!write.allowed) return blocked('crm-conation-unconfirmed')
+  return blocked('crm-send-not-live')
 }
