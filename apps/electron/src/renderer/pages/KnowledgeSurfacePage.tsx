@@ -507,7 +507,7 @@ export default function KnowledgeSurfacePage({
   if (error) {
     return (
       <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
-        <p className="text-sm">{t('knowledge.surface.error', { defaultValue: 'Failed to open knowledge surface' })}</p>
+        <p className="text-sm">{t('knowledge.surface.error')}</p>
       </div>
     )
   }
