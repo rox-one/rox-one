@@ -359,8 +359,8 @@ export default function AppearanceSettingsPage() {
         return
       }
       try {
-        const themes = await window.electronAPI.loadPresetThemes()
-        setPresetThemes(themes)
+        const themes = await window.electronAPI.loadPresetThemes?.()
+        setPresetThemes(themes ?? [])
       } catch (error) {
         console.error('Failed to load preset themes:', error)
         setPresetThemes([])
@@ -389,8 +389,8 @@ export default function AppearanceSettingsPage() {
       if (!window.electronAPI) return
       try {
         const [mappings, homeDir] = await Promise.all([
-          window.electronAPI.getToolIconMappings(),
-          window.electronAPI.getHomeDir(),
+          window.electronAPI.getToolIconMappings?.() ?? Promise.resolve({}),
+          window.electronAPI.getHomeDir?.() ?? Promise.resolve(''),
         ])
         setToolIcons(mappings)
         setToolIconsJsonPath(`${homeDir}/.craft-agent/tool-icons/tool-icons.json`)

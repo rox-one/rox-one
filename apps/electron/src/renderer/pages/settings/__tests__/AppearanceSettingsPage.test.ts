@@ -41,4 +41,10 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(zen).toContain('enabled: false')
     expect(source).toContain('<ZenShellSettings />')
   })
+
+  it('does not throw when playground IPC is missing preset themes or tool icons', () => {
+    expect(source).toContain('window.electronAPI.loadPresetThemes?.()')
+    expect(source).toContain('window.electronAPI.getToolIconMappings?.()')
+    expect(source).toContain('window.electronAPI.getHomeDir?.()')
+  })
 })

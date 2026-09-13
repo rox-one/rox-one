@@ -39,6 +39,8 @@ describe('issues 07–09 wiring', () => {
     expect(health).toContain("t('notes.inspector.indexRebuild')")
     expect(panel).toContain("t('notes.inspector.linkSuggestions')")
     expect(panel).toContain("t('notes.inspector.footnotes')")
+    expect(panel).toContain('mb-2 flex flex-col gap-1.5')
+    expect(panel).toContain('w-full min-w-0')
   })
 
   it('hosts table, canvas, outline and graph views without replacing Map', () => {

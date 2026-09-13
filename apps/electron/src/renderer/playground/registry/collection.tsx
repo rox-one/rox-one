@@ -4,18 +4,22 @@ import { useTranslation } from 'react-i18next'
 import {
   buildYearHeatmap,
   DEFAULT_COLLECTION_DISPLAY,
+  dueBucket,
   type CollectionDisplay,
+  type CollectionGroupBy,
+  type CollectionProperty,
   type CollectionSessionMeta,
   type CollectionViewMode,
 } from '@craft-agent/shared/sessions/collection'
 import { cn } from '@/lib/utils'
 import type { SessionMeta } from '@/atoms/sessions'
 import type { SessionStatusConfig } from '@/config/session-status-config'
+import { ActionRegistryProvider } from '@/actions/registry'
 import { CollectionDisplayPopover } from '@/components/app-shell/collection/CollectionDisplayPopover'
 import { CollectionGroupByMenu } from '@/components/app-shell/collection/CollectionGroupByMenu'
 import { CollectionViewCycleButton } from '@/components/app-shell/collection/CollectionViewCycleButton'
 import { SessionTableGroupHeader } from '@/components/app-shell/session-table/SessionTableGroupHeader'
-import { SessionTableRow } from '@/components/app-shell/session-table/SessionTableRow'
+import { SessionTablePropertyHeader, SessionTableRow } from '@/components/app-shell/session-table/SessionTableRow'
 import type { ComponentEntry } from './types'
 
 const STATUSES: SessionStatusConfig[] = [
@@ -84,6 +88,44 @@ const SAMPLE_ROWS: SessionMeta[] = [
   }),
 ]
 
+function playgroundGroupBucket(
+  row: SessionMeta,
+  groupBy: CollectionGroupBy,
+  t: (key: string) => string,
+  projectNameById: Map<string, string>,
+  labelById: Map<string, string>,
+): { key: string; label: string } {
+  switch (groupBy) {
+    case 'status': {
+      const id = row.sessionStatus ?? 'todo'
+      return { key: `status:${id}`, label: STATUSES.find((status) => status.id === id)?.label ?? id }
+    }
+    case 'priority': {
+      const priority = row.priority ?? 'none'
+      return { key: `priority:${priority}`, label: t(`priority.${priority}`) }
+    }
+    case 'project': {
+      const projectId = row.projectId ?? ''
+      return {
+        key: `project:${projectId}`,
+        label: projectId ? (projectNameById.get(projectId) ?? projectId) : t('collection.bulk.noProject'),
+      }
+    }
+    case 'dueDate': {
+      const bucket = dueBucket(row.dueDate ?? null, Date.now())
+      return { key: `due:${bucket}`, label: t(`collection.display.dueBucket.${bucket}`) }
+    }
+    case 'label': {
+      const first = [...(row.labels ?? [])].sort()[0]
+      if (!first) return { key: 'label:none', label: t('collection.display.labelNone') }
+      return { key: `label:${first}`, label: labelById.get(first) ?? first }
+    }
+    case 'none':
+    default:
+      return { key: '__all__', label: t('collection.display.groupBy.none') }
+  }
+}
+
 function heatmapLevelClass(level: number): string {
   switch (level) {
     case 1: return 'bg-emerald-900/55'
@@ -95,6 +137,7 @@ function heatmapLevelClass(level: number): string {
 }
 
 function CollectionChromePlayground() {
+  const { t } = useTranslation()
   const [display, setDisplay] = React.useState<CollectionDisplay>(DEFAULT_COLLECTION_DISPLAY)
   const [viewMode, setViewMode] = React.useState<CollectionViewMode>('table')
   const [selected, setSelected] = React.useState<Set<string>>(new Set())
@@ -103,81 +146,102 @@ function CollectionChromePlayground() {
   const projectNameById = React.useMemo(() => new Map([['ops', 'Ops'], ['notes', 'Notes']]), [])
   const labelById = React.useMemo(() => new Map([['feature', 'feature']]), [])
   const grouped = React.useMemo(() => {
-    const buckets = new Map<string, SessionMeta[]>()
+    const buckets = new Map<string, { label: string; items: SessionMeta[] }>()
     for (const row of rows) {
-      const key = display.groupBy === 'status' ? (row.sessionStatus ?? 'todo') : 'all'
-      const list = buckets.get(key) ?? []
-      list.push(row)
-      buckets.set(key, list)
+      const bucket = playgroundGroupBucket(row, display.groupBy, t, projectNameById, labelById)
+      const existing = buckets.get(bucket.key)
+      if (existing) existing.items.push(row)
+      else buckets.set(bucket.key, { label: bucket.label, items: [row] })
     }
-    return [...buckets.entries()]
-  }, [display.groupBy, rows])
+    return [...buckets.entries()].map(([key, value]) => ({ key, ...value }))
+  }, [display.groupBy, labelById, projectNameById, rows, t])
+  const showCol = (id: CollectionProperty) => display.visibleProperties.includes(id)
 
   return (
+    <ActionRegistryProvider>
     <div className="flex h-full min-h-[420px] flex-col bg-background" data-testid="playground-collection-chrome">
       <div className="flex items-center gap-1 border-b border-border/40 px-3 py-2">
         <CollectionViewCycleButton value={viewMode} onChange={setViewMode} />
         <CollectionGroupByMenu display={display} onDisplayChange={setDisplay} />
         <CollectionDisplayPopover display={display} onDisplayChange={setDisplay} />
       </div>
-      <ul className="min-h-0 flex-1 overflow-auto">
-        {grouped.map(([key, items]) => (
-          <React.Fragment key={key}>
-            <SessionTableGroupHeader
-              bucket={{
-                key,
-                label: key === 'all' ? 'All' : key,
-                count: items.length,
-              }}
-              collapsed={Boolean(collapsed[key])}
-              onToggle={() => setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }))}
-              onSelectGroup={() => setSelected(new Set(items.map((item) => item.id)))}
-              onCollapseAll={() => {
-                const next: Record<string, boolean> = {}
-                for (const [bucketKey] of grouped) next[bucketKey] = true
-                setCollapsed(next)
-              }}
-              onExpandAll={() => setCollapsed({})}
-            />
-            {collapsed[key] ? null : items.map((meta) => (
-              <SessionTableRow
-                key={meta.id}
-                meta={meta}
-                statuses={STATUSES}
-                projectNameById={projectNameById}
-                labelById={labelById}
-                projects={[...projectNameById.entries()].map(([id, name]) => ({ id, name }))}
-                labels={[...labelById.entries()].map(([id, name]) => ({ id, name }))}
-                selected={selected.has(meta.id)}
-                onSelect={(checked) => {
-                  setSelected((prev) => {
-                    const next = new Set(prev)
-                    if (checked) next.add(meta.id)
-                    else next.delete(meta.id)
-                    return next
-                  })
-                }}
-                onOpen={() => undefined}
-                onUpdate={(partial) => {
-                  setRows((prev) => prev.map((row) => (row.id === meta.id ? { ...row, ...partial } : row)))
-                }}
-                showGrip={false}
-                showStatus={display.visibleProperties.includes('status')}
-                showPriority={display.visibleProperties.includes('priority')}
-                showProject={display.visibleProperties.includes('project')}
-                showLabels={display.visibleProperties.includes('labels')}
-                showDue={display.visibleProperties.includes('dueDate')}
-                showModel={display.visibleProperties.includes('model')}
-                showUpdated={display.visibleProperties.includes('updated')}
-                showCreated={display.visibleProperties.includes('created')}
-                showFlag={display.visibleProperties.includes('flag')}
-                density={display.density}
-              />
-            ))}
-          </React.Fragment>
-        ))}
-      </ul>
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground backdrop-blur">
+          <span className="w-6 shrink-0" />
+          <span className="min-w-0 flex-1">{t('collection.table.column.title')}</span>
+          <SessionTablePropertyHeader
+            showStatus={showCol('status')}
+            showLabels={showCol('labels')}
+            showPriority={showCol('priority')}
+            showDue={showCol('dueDate')}
+            showModel={showCol('model')}
+            showProject={showCol('project')}
+          />
+          {showCol('updated') && <span className="w-20 shrink-0">{t('collection.table.column.updated')}</span>}
+          {showCol('flag') && <span className="w-8 shrink-0" />}
+        </div>
+        <ul>
+          {grouped.map((group) => (
+            <React.Fragment key={group.key}>
+              {display.groupBy === 'none' ? null : (
+                <SessionTableGroupHeader
+                  bucket={{
+                    key: group.key,
+                    label: group.label,
+                    count: group.items.length,
+                  }}
+                  collapsed={Boolean(collapsed[group.key])}
+                  onToggle={() => setCollapsed((prev) => ({ ...prev, [group.key]: !prev[group.key] }))}
+                  onSelectGroup={() => setSelected(new Set(group.items.map((item) => item.id)))}
+                  onCollapseAll={() => {
+                    const next: Record<string, boolean> = {}
+                    for (const bucket of grouped) next[bucket.key] = true
+                    setCollapsed(next)
+                  }}
+                  onExpandAll={() => setCollapsed({})}
+                />
+              )}
+              {collapsed[group.key] ? null : group.items.map((meta) => (
+                <SessionTableRow
+                  key={meta.id}
+                  meta={meta}
+                  statuses={STATUSES}
+                  projectNameById={projectNameById}
+                  labelById={labelById}
+                  projects={[...projectNameById.entries()].map(([id, name]) => ({ id, name }))}
+                  labels={[...labelById.entries()].map(([id, name]) => ({ id, name }))}
+                  selected={selected.has(meta.id)}
+                  onSelect={(checked) => {
+                    setSelected((prev) => {
+                      const next = new Set(prev)
+                      if (checked) next.add(meta.id)
+                      else next.delete(meta.id)
+                      return next
+                    })
+                  }}
+                  onOpen={() => undefined}
+                  onUpdate={(partial) => {
+                    setRows((prev) => prev.map((row) => (row.id === meta.id ? { ...row, ...partial } : row)))
+                  }}
+                  showGrip={false}
+                  showStatus={showCol('status')}
+                  showPriority={showCol('priority')}
+                  showProject={showCol('project')}
+                  showLabels={showCol('labels')}
+                  showDue={showCol('dueDate')}
+                  showModel={showCol('model')}
+                  showUpdated={showCol('updated')}
+                  showCreated={showCol('created')}
+                  showFlag={showCol('flag')}
+                  density={display.density}
+                />
+              ))}
+            </React.Fragment>
+          ))}
+        </ul>
+      </div>
     </div>
+    </ActionRegistryProvider>
   )
 }
 

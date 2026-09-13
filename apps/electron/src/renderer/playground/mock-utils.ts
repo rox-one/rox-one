@@ -449,6 +449,17 @@ export const mockElectronAPI = {
     infisical: { available: false, errorCode: 'INFISICAL_UNAVAILABLE' as const },
   }),
   setSecretRefs: async (refs: unknown) => refs,
+  getToolchainDisabled: async () => [],
+  setToolchainDisabled: async (next: string[]) => next,
+  getDefaultThinkingLevel: async () => 'medium',
+  setDefaultThinkingLevel: async () => ({ success: true }),
+  getEnvOverrides: async () => ({}),
+  setEnvOverrides: async (env: Record<string, string>) => env,
+  loadPresetThemes: async () => [],
+  getToolIconMappings: async () => ({}),
+  getHomeDir: async () => '/home/playground',
+  getAllWorkspaceThemes: async () => ({}),
+  getWorkspaceSettings: async () => ({ permissionMode: 'ask' }),
   awardGamificationXp: async (event: string) => {
     console.log('[Playground] awardGamificationXp', event)
     return {
