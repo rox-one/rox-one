@@ -27,6 +27,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { coerceInputText } from '@/lib/input-text'
 import { lookupImportedNote } from '@/lib/notes-migration-map'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
+import { branchErrorDescription } from '@/lib/branch-error'
 import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
 import { rememberCollectionView } from '@/components/app-shell/collection/collection-view-cycle'
@@ -595,7 +596,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         const child = await onCreateSession(session.workspaceId, {
           branchFromMessageId: messageId,
           branchFromSessionId: session.id,
-          name: `Branch of ${session.name || 'Untitled'}`,
+          name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
           llmConnection: session.llmConnection,
           model: session.model,
           permissionMode: session.permissionMode,
@@ -604,8 +605,12 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         })
         navigate(routes.view.allSessions(child.id))
       } catch (error) {
-        const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
-        toast.error(t('toast.couldNotCreateBranch'), { description: rawMessage })
+        toast.error(t('toast.couldNotCreateBranch'), {
+          description: branchErrorDescription(error, {
+            fallback: t('toast.createBranchFailed'),
+            sameProvider: t('toast.branchSameProvider'),
+          }),
+        })
       }
     },
     [session, onCreateSession, t],
@@ -618,7 +623,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         const child = await onCreateSession(session.workspaceId, {
           branchFromMessageId: messageId,
           branchFromSessionId: session.id,
-          name: `Branch of ${session.name || 'Untitled'}`,
+          name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
           llmConnection: session.llmConnection,
           model: session.model,
           permissionMode: session.permissionMode,
@@ -628,8 +633,12 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         onInputChange(child.id, prompt)
         navigate(routes.view.allSessions(child.id))
       } catch (error) {
-        const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
-        toast.error(t('toast.couldNotCreateBranch'), { description: rawMessage })
+        toast.error(t('toast.couldNotCreateBranch'), {
+          description: branchErrorDescription(error, {
+            fallback: t('toast.createBranchFailed'),
+            sameProvider: t('toast.branchSameProvider'),
+          }),
+        })
       }
     },
     [session, onCreateSession, onInputChange, t],
@@ -655,8 +664,12 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           }
         }
       } catch (error) {
-        const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
-        toast.error(t('toast.couldNotCreateBranch'), { description: rawMessage })
+        toast.error(t('toast.couldNotCreateBranch'), {
+          description: branchErrorDescription(error, {
+            fallback: t('toast.createBranchFailed'),
+            sameProvider: t('toast.branchSameProvider'),
+          }),
+        })
       }
     },
     [session, onCreateSession, onInputChange, t],

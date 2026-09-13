@@ -19,6 +19,7 @@ import { SessionMemoryProposalLane } from "./MemoryProposalCard"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { coerceInputText, appendRestoredInput } from "@/lib/input-text"
+import { branchErrorDescription } from "@/lib/branch-error"
 import { Markdown, CollapsibleMarkdownProvider, StreamingMarkdown, type RenderMode } from "@/components/markdown"
 import { AnimatedCollapsibleContent } from "@/components/ui/collapsible"
 import {
@@ -1391,7 +1392,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       })
     } catch (error) {
       toast.error(t('toast.couldNotSaveHighlight'), {
-        description: error instanceof Error ? error.message : 'Unknown error',
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
       })
       throw error
     }
@@ -1407,7 +1408,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       })
     } catch (error) {
       toast.error(t('toast.couldNotRemoveHighlight'), {
-        description: error instanceof Error ? error.message : 'Unknown error',
+        description: error instanceof Error ? error.message : t('toast.unknownError'),
       })
     }
   }, [session, t])
@@ -1473,8 +1474,12 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       setSideThreadPreview(null)
       navigate(routes.view.allSessions(child.id))
     } catch (error) {
-      const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
-      toast.error(t('toast.couldNotCreateBranch'), { description: rawMessage })
+      toast.error(t('toast.couldNotCreateBranch'), {
+        description: branchErrorDescription(error, {
+          fallback: t('toast.createBranchFailed'),
+          sameProvider: t('toast.branchSameProvider'),
+        }),
+      })
     } finally {
       setSideThreadBusy(false)
     }
@@ -2019,7 +2024,7 @@ const handleFollowUpChipClick = useCallback((item: {
                               {
                                 branchFromMessageId: messageId,
                                 branchFromSessionId: session.id,
-                                name: `Branch of ${session.name || 'Untitled'}`,
+                                name: t('chat.branchOf', { name: session.name || t('chat.titlePlaceholder') }),
                                 // Keep branch on the same backend/provider by inheriting parent session settings.
                                 llmConnection: session.llmConnection,
                                 model: session.model,
@@ -2030,12 +2035,12 @@ const handleFollowUpChipClick = useCallback((item: {
                             )
                             navigate(routes.view.allSessions(child.id), { newPanel: resolveBranchNewPanelOption(options) })
                           } catch (error) {
-                            const rawMessage = error instanceof Error ? error.message : 'Failed to create branch'
-                            const message = rawMessage.includes('source and target providers must match')
-                              || rawMessage.includes('same provider/backend')
-                              ? 'Branching is only supported within the same provider/backend. Switch this panel connection and try again.'
-                              : rawMessage
-                            toast.error(t('toast.couldNotCreateBranch'), { description: message })
+                            toast.error(t('toast.couldNotCreateBranch'), {
+                              description: branchErrorDescription(error, {
+                                fallback: t('toast.createBranchFailed'),
+                                sameProvider: t('toast.branchSameProvider'),
+                              }),
+                            })
                           }
                         } : undefined}
                         onAddAnnotation={persistAnnotation}
@@ -2051,7 +2056,7 @@ const handleFollowUpChipClick = useCallback((item: {
                             })
                           } catch (error) {
                             toast.error(t('toast.couldNotUpdateHighlight'), {
-                              description: error instanceof Error ? error.message : 'Unknown error',
+                              description: error instanceof Error ? error.message : t('toast.unknownError'),
                             })
                             throw error
                           }
