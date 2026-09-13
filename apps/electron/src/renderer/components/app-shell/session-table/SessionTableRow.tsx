@@ -1,23 +1,33 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Flag as FlagIcon, GripVertical } from 'lucide-react'
+import {
+  Bot,
+  Calendar,
+  ChevronsUp,
+  Circle,
+  Flag as FlagIcon,
+  FolderKanban,
+  GripVertical,
+  Tag,
+} from 'lucide-react'
 import { PremiumMenu, type PremiumMenuItem } from '@craft-agent/ui'
-import type { SessionPriority } from '@craft-agent/shared/sessions/collection'
-import { ModelChip } from '../kanban/ModelChip'
+import type { CollectionDensity, SessionPriority } from '@craft-agent/shared/sessions/collection'
+import { formatTranscriptSize } from '@craft-agent/shared/sessions/collection'
 import type { SessionMeta } from '@/atoms/sessions'
 import type { SessionStatusConfig } from '@/config/session-status-config'
 import { getSessionTitle } from '@/utils/session'
 import { cn } from '@/lib/utils'
 import { isDueOverdue } from './table-due'
 import { collectionTableRowClass } from './table-density'
-import type { CollectionDensity } from '@craft-agent/shared/sessions/collection'
-import { formatTranscriptSize } from '@craft-agent/shared/sessions/collection'
+import { NO_PROJECT_VALUE } from '../collection/bulk-input'
 
 export interface SessionTableRowProps {
   meta: SessionMeta
   statuses?: SessionStatusConfig[]
   projectNameById: Map<string, string>
   labelById: Map<string, string>
+  projects?: Array<{ id: string; name: string }>
+  labels?: Array<{ id: string; name: string }>
   selected: boolean
   onSelect: (checked: boolean, shiftKey: boolean) => void
   onOpen: (sessionId: string) => void
@@ -49,21 +59,32 @@ export interface SessionTableRowProps {
 }
 
 const PRIORITY_ORDER: SessionPriority[] = ['urgent', 'high', 'medium', 'low', 'none']
+const NONE_LABEL_VALUE = '__collection_no_label__'
+
+const ICON_BTN =
+  'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] text-muted-foreground transition-colors hover:bg-foreground/3 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 data-[state=open]:bg-foreground/3 data-[state=open]:text-foreground'
+
+const PROPERTY_CLUSTER_CLASS = 'flex shrink-0 items-center gap-0.5'
 
 function SessionRowCompactMenu({
   label,
   value,
   items,
   onPick,
+  icon,
+  valueLabel,
 }: {
   label: string
   value: string
   items: PremiumMenuItem[]
   onPick: (id: string) => void
+  icon: React.ReactNode
+  valueLabel?: string
 }) {
   const [open, setOpen] = React.useState(false)
   const triggerRef = React.useRef<HTMLButtonElement>(null)
-  const selectedLabel = items.find((item) => item.id === value)?.label ?? value
+  const selectedLabel = valueLabel ?? items.find((item) => item.id === value)?.label ?? value
+  const name = `${label}: ${selectedLabel}`
 
   return (
     <>
@@ -72,13 +93,14 @@ function SessionRowCompactMenu({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-label={`${label}: ${selectedLabel}`}
-        title={selectedLabel}
-        className="w-full truncate rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-left text-xs hover:bg-foreground/[0.03] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70"
+        aria-label={name}
+        title={name}
+        data-state={open ? 'open' : 'closed'}
+        className={ICON_BTN}
         onMouseDown={(event) => event.stopPropagation()}
         onClick={() => setOpen((next) => !next)}
       >
-        {selectedLabel}
+        {icon}
       </button>
       <PremiumMenu
         open={open}
@@ -90,6 +112,54 @@ function SessionRowCompactMenu({
         variant="compact"
       />
     </>
+  )
+}
+
+function SessionRowDueIcon({
+  label,
+  value,
+  text,
+  overdue,
+  onPick,
+}: {
+  label: string
+  value: string
+  text: string
+  overdue: boolean
+  onPick: (v: string | null) => void
+}) {
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const name = `${label}: ${text}`
+
+  return (
+    <span className="relative inline-flex h-7 w-7 shrink-0 items-center justify-center">
+      <button
+        type="button"
+        aria-label={name}
+        title={name}
+        className={cn(ICON_BTN, overdue && 'text-red-500')}
+        onMouseDown={(event) => event.stopPropagation()}
+        onClick={() => {
+          const input = inputRef.current
+          if (!input) return
+          if (typeof input.showPicker === 'function') input.showPicker()
+          else input.click()
+        }}
+      >
+        <Calendar className="h-3.5 w-3.5" />
+      </button>
+      <input
+        ref={inputRef}
+        type="date"
+        className="sr-only"
+        value={value}
+        aria-label={name}
+        onChange={(event) => {
+          if (!event.target.value) onPick(null)
+          else onPick(event.target.value)
+        }}
+      />
+    </span>
   )
 }
 
@@ -139,11 +209,55 @@ function sessionDuration(meta: SessionMeta): number | null {
   return duration >= 0 ? duration : null
 }
 
+export function SessionTablePropertyHeader({
+  showStatus,
+  showLabels,
+  showPriority,
+  showDue,
+  showModel,
+  showProject,
+}: {
+  showStatus: boolean
+  showLabels: boolean
+  showPriority: boolean
+  showDue: boolean
+  showModel: boolean
+  showProject: boolean
+}) {
+  const { t } = useTranslation()
+  if (!showStatus && !showLabels && !showPriority && !showDue && !showModel && !showProject) {
+    return null
+  }
+
+  const icon = (key: string, node: React.ReactNode) => (
+    <span
+      className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground"
+      aria-label={t(key)}
+      title={t(key)}
+    >
+      {node}
+    </span>
+  )
+
+  return (
+    <span data-property-cluster className={PROPERTY_CLUSTER_CLASS} role="group">
+      {showStatus && icon('collection.table.column.status', <Circle className="h-3.5 w-3.5" />)}
+      {showLabels && icon('collection.table.column.labels', <Tag className="h-3.5 w-3.5" />)}
+      {showPriority && icon('collection.table.column.priority', <ChevronsUp className="h-3.5 w-3.5" />)}
+      {showDue && icon('collection.table.column.dueDate', <Calendar className="h-3.5 w-3.5" />)}
+      {showModel && icon('collection.table.column.model', <Bot className="h-3.5 w-3.5" />)}
+      {showProject && icon('collection.table.column.project', <FolderKanban className="h-3.5 w-3.5" />)}
+    </span>
+  )
+}
+
 export function SessionTableRow({
   meta,
   statuses = [],
   projectNameById,
   labelById,
+  projects = [],
+  labels = [],
   selected,
   onSelect,
   onOpen,
@@ -178,8 +292,11 @@ export function SessionTableRow({
   const priority = meta.priority ?? 'none'
   const sessionStatus: string = meta.sessionStatus ?? 'todo'
 
-  const projectName = meta.projectId ? (projectNameById.get(meta.projectId) ?? meta.projectId) : ''
+  const projectName = meta.projectId ? (projectNameById.get(meta.projectId) ?? meta.projectId) : t('collection.bulk.noProject')
   const labelNames = (meta.labels ?? []).map((id) => labelById.get(id) ?? id).join(', ')
+  const modelLabel = meta.model || '—'
+  const showPropertyCluster =
+    showStatus || showLabels || showPriority || showDue || showModel || showProject
 
   const onPickDue = (v: string | null) => {
     if (v === null) {
@@ -200,6 +317,21 @@ export function SessionTableRow({
     const day = String(d.getUTCDate()).padStart(2, '0')
     return `${y}-${m}-${day}`
   }, [meta.dueDate])
+
+  const statusItems = (statuses.length > 0 ? statuses : [{ id: sessionStatus, label: sessionStatus }]).map((s) => ({
+    id: s.id,
+    label: s.label ?? s.id,
+  }))
+  const labelItems: PremiumMenuItem[] = [
+    { id: NONE_LABEL_VALUE, label: t('collection.display.labelNone') },
+    ...labels.map((item) => ({ id: item.id, label: item.name })),
+  ]
+  const projectItems: PremiumMenuItem[] = [
+    { id: NO_PROJECT_VALUE, label: t('collection.bulk.noProject') },
+    ...projects.map((item) => ({ id: item.id, label: item.name })),
+  ]
+  const firstLabel = (meta.labels ?? [])[0] ?? NONE_LABEL_VALUE
+  const modelName = `${t('collection.table.column.model')}: ${modelLabel}`
 
   return (
     <li
@@ -244,65 +376,70 @@ export function SessionTableRow({
         {title}
       </button>
 
-      {showStatus && (
-        <span className="w-28 shrink-0">
-          <SessionRowCompactMenu
-            label={t('collection.table.column.status')}
-            value={sessionStatus}
-            items={(statuses.length > 0 ? statuses : [{ id: sessionStatus, label: sessionStatus }]).map((s) => ({
-              id: s.id,
-              label: s.label ?? s.id,
-            }))}
-            onPick={(id) => onUpdate({ sessionStatus: id })}
-          />
-        </span>
-      )}
-
-      {showPriority && (
-        <span className="w-20 shrink-0">
-          <SessionRowCompactMenu
-            label={t('collection.table.column.priority')}
-            value={priority}
-            items={PRIORITY_ORDER.map((p) => ({
-              id: p,
-              label: t(`priority.${p}`),
-            }))}
-            onPick={(id) => onUpdate({ priority: id as SessionPriority })}
-          />
-        </span>
-      )}
-
-      {showProject && (
-        <span className="w-28 shrink-0 truncate text-xs text-muted-foreground">{projectName || '—'}</span>
-      )}
-
-      {showLabels && (
-        <span className="w-32 shrink-0 truncate text-xs text-muted-foreground">{labelNames || '—'}</span>
-      )}
-
-      {showDue && (
-        <span className={cn('w-24 shrink-0', due.overdue && 'text-red-500 font-medium')}>
-          <input
-            type="date"
-            className="w-full rounded-md border border-border/60 bg-background px-1 py-0.5 text-[11px]"
-            value={dueInputValue}
-            onChange={(e) => {
-              if (!e.target.value) onPickDue(null)
-              else onPickDue(e.target.value)
-            }}
-          />
-        </span>
-      )}
-
-      {showModel && (
-        <span className="w-24 shrink-0">
-          {meta.model ? (
-            <ModelChip model={meta.model} llmConnection={meta.llmConnection} short className="w-full max-w-full" />
-          ) : (
-            <span className="text-xs text-muted-foreground">—</span>
+      {showPropertyCluster && (
+        <span data-property-cluster className={PROPERTY_CLUSTER_CLASS}>
+          {showStatus && (
+            <SessionRowCompactMenu
+              label={t('collection.table.column.status')}
+              value={sessionStatus}
+              items={statusItems}
+              onPick={(id) => onUpdate({ sessionStatus: id })}
+              icon={<Circle className="h-3.5 w-3.5" />}
+            />
+          )}
+          {showLabels && (
+            <SessionRowCompactMenu
+              label={t('collection.table.column.labels')}
+              value={firstLabel}
+              items={labelItems}
+              valueLabel={labelNames || t('collection.display.labelNone')}
+              onPick={(id) => onUpdate({ labels: id === NONE_LABEL_VALUE ? [] : [id] })}
+              icon={<Tag className="h-3.5 w-3.5" />}
+            />
+          )}
+          {showPriority && (
+            <SessionRowCompactMenu
+              label={t('collection.table.column.priority')}
+              value={priority}
+              items={PRIORITY_ORDER.map((p) => ({
+                id: p,
+                label: t(`priority.${p}`),
+              }))}
+              onPick={(id) => onUpdate({ priority: id as SessionPriority })}
+              icon={<ChevronsUp className="h-3.5 w-3.5" />}
+            />
+          )}
+          {showDue && (
+            <SessionRowDueIcon
+              label={t('collection.table.column.dueDate')}
+              value={dueInputValue}
+              text={due.text}
+              overdue={due.overdue}
+              onPick={onPickDue}
+            />
+          )}
+          {showModel && (
+            <span
+              className={ICON_BTN}
+              aria-label={modelName}
+              title={modelName}
+            >
+              <Bot className="h-3.5 w-3.5" />
+            </span>
+          )}
+          {showProject && (
+            <SessionRowCompactMenu
+              label={t('collection.table.column.project')}
+              value={meta.projectId ?? NO_PROJECT_VALUE}
+              items={projectItems}
+              valueLabel={projectName}
+              onPick={(id) => onUpdate({ projectId: id === NO_PROJECT_VALUE ? undefined : id })}
+              icon={<FolderKanban className="h-3.5 w-3.5" />}
+            />
           )}
         </span>
       )}
+
       {showUpdated && (
         <span className="w-20 shrink-0 text-xs text-muted-foreground">{formatRelative(meta.lastMessageAt)}</span>
       )}
