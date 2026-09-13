@@ -3,6 +3,9 @@
  *
  * Renderer atoms map onto these ids. A flag is treated as enabled only when
  * every dependency is also in the requested set.
+ *
+ * P35-08: experimental workbench.* / harness flags default ON. Conation stays
+ * off. The unified-shell master is a renderer atom, not this list.
  */
 
 export interface FeatureFlagDefinition {
@@ -47,80 +50,80 @@ export const WORKBENCH_FLAG = {
 export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
   {
     id: WORKBENCH_FLAG.modeRegistryV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.topChromeV2,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [WORKBENCH_FLAG.modeRegistryV1],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.tabGroupsV2,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
     migrationRequired: true,
   },
   {
     id: WORKBENCH_FLAG.browserSurfaceV2,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.statusBarV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.panelRegistryV2,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.terminalV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.coordinatorV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.harnessInspectorV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.harnessChatChromeV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.harnessAgentIntelV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [WORKBENCH_FLAG.harnessInspectorV1],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.harnessExtCenterV1,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },
   {
     id: WORKBENCH_FLAG.harnessAgentTeams,
-    defaultValue: false,
+    defaultValue: true,
     dependencies: [],
     rollbackSafe: true,
   },

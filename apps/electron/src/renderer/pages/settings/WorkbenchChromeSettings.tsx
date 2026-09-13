@@ -1,6 +1,7 @@
 /**
  * Experimental workbench chrome flags (ADR-0001). Renderer-only localStorage
- * via jotai; all default OFF so W1 behavior is unchanged until toggled.
+ * via jotai. Granular experimental flags default ON (P35-08); the unified-shell
+ * master stays off. Conation flags stay off.
  */
 import { useAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'

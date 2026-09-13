@@ -22,10 +22,10 @@ describe('CollectionDisplayPopover density toggle', () => {
   })
 })
 
-describe('workbench harness flags stay default-off', () => {
-  it('keeps every WORKBENCH_FEATURE_FLAGS defaultValue false in source', () => {
+describe('workbench harness flags default on', () => {
+  it('keeps Conation defaultValue false and harness experimental flags on', () => {
     expect(flags).toContain('id: WORKBENCH_FLAG.harnessAgentTeams')
-    expect(flags).not.toMatch(/defaultValue:\s*true/)
+    expect(flags).toMatch(/id: WORKBENCH_FLAG\.conationShell[\s\S]*?defaultValue: false/)
     for (const id of [
       'harnessInspectorV1',
       'harnessChatChromeV1',
@@ -34,7 +34,8 @@ describe('workbench harness flags stay default-off', () => {
       'harnessAgentTeams',
     ]) {
       expect(flags).toContain(`id: WORKBENCH_FLAG.${id}`)
+      expect(flags).toMatch(new RegExp(`id: WORKBENCH_FLAG\\.${id}[\\s\\S]*?defaultValue: true`))
     }
-    expect(flags.match(/defaultValue: false/g)?.length ?? 0).toBeGreaterThanOrEqual(13)
+    expect(flags.match(/defaultValue: false/g)?.length ?? 0).toBeGreaterThanOrEqual(11)
   })
 })

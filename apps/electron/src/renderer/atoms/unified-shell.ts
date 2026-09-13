@@ -7,13 +7,13 @@
  *
  * Workbench v2 splits further chrome behind granular `workbench.*` flags
  * (ADR-0001) so Mode Bar, TabGroups, browser-as-surface and Status Bar can
- * ship independently. Unified shell / workbench masters default OFF (factory
- * anti-goal: flags default false). Granular workbench.* flags also default OFF.
+ * ship independently. Unified shell / workbench masters default OFF.
+ * Granular workbench.* experimental flags default ON (P35-08). Conation stays off.
  */
 import { atomWithStorage } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 
-/** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). */
+/** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). Master stays off. */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureUnifiedShell),
   false,
@@ -33,35 +33,35 @@ export const featureWorkbenchAtom = atomWithStorage<boolean>(
 
 export const featureWorkbenchModeRegistryV1Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchModeRegistryV1),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchTopChromeV2Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchTopChromeV2),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchTabGroupsV2Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchTabGroupsV2),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchBrowserSurfaceV2Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchBrowserSurfaceV2),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchStatusBarV1Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchStatusBarV1),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
@@ -69,35 +69,35 @@ export const featureWorkbenchStatusBarV1Atom = atomWithStorage<boolean>(
 /** Session inspector tabs (files / git / browser). Independent of unified-shell master. */
 export const featureWorkbenchHarnessInspectorV1Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchHarnessInspectorV1),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchHarnessChatChromeV1Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchHarnessChatChromeV1),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchHarnessAgentIntelV1Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchHarnessAgentIntelV1),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchHarnessExtCenterV1Atom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchHarnessExtCenterV1),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )
 
 export const featureWorkbenchHarnessAgentTeamsAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchHarnessAgentTeams),
-  false,
+  true,
   undefined,
   { getOnInit: true },
 )

@@ -43,26 +43,26 @@ describe('resolveEnabledFlags', () => {
     expect(enabled.has(WORKBENCH_FLAG.statusBarV1)).toBe(true)
   })
 
-  it('terminal flags default off', () => {
+  it('terminal flags default on', () => {
     expect(WORKBENCH_FLAG.terminalV1).toBe('workbench.terminal.v1')
     expect(WORKBENCH_FLAG.coordinatorV1).toBe('execution.coordinator.v1')
     expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.terminalV1, new Set())).toBe(false)
     expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.coordinatorV1, new Set())).toBe(false)
     expect(WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === WORKBENCH_FLAG.terminalV1)).toEqual({
       id: 'workbench.terminal.v1',
-      defaultValue: false,
+      defaultValue: true,
       dependencies: [],
       rollbackSafe: true,
     })
     expect(WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === WORKBENCH_FLAG.coordinatorV1)).toEqual({
       id: 'execution.coordinator.v1',
-      defaultValue: false,
+      defaultValue: true,
       dependencies: [],
       rollbackSafe: true,
     })
   })
 
-  it('harness flags default off and agent-intel needs inspector', () => {
+  it('harness flags default on and agent-intel needs inspector', () => {
     expect(WORKBENCH_FLAG.harnessInspectorV1).toBe('workbench.harness.inspector.v1')
     expect(WORKBENCH_FLAG.harnessChatChromeV1).toBe('workbench.harness.chat-chrome.v1')
     expect(WORKBENCH_FLAG.harnessAgentIntelV1).toBe('workbench.harness.agent-intel.v1')
@@ -77,7 +77,7 @@ describe('resolveEnabledFlags', () => {
     ]) {
       expect(isWorkbenchFlagEnabled(id, new Set())).toBe(false)
       const definition = WORKBENCH_FEATURE_FLAGS.find((flag) => flag.id === id)
-      expect(definition?.defaultValue).toBe(false)
+      expect(definition?.defaultValue).toBe(true)
       expect(definition?.rollbackSafe).toBe(true)
     }
     expect(isWorkbenchFlagEnabled(WORKBENCH_FLAG.harnessAgentIntelV1, new Set([WORKBENCH_FLAG.harnessAgentIntelV1]))).toBe(

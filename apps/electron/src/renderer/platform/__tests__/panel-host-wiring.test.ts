@@ -84,7 +84,7 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
     expect(src).toContain('harnessInspector: useAtomValue(featureWorkbenchHarnessInspectorV1Atom)')
   })
 
-  it('keeps harness chrome atoms defaulted to false', () => {
+  it('keeps harness chrome atoms defaulted to true', () => {
     const src = readFileSync(atomPath, 'utf8')
     for (const key of [
       'featureWorkbenchHarnessInspectorV1',
@@ -94,7 +94,7 @@ describe('UnifiedShellLayout PanelHost wiring', () => {
       'featureWorkbenchHarnessAgentTeams',
     ]) {
       expect(src).toMatch(
-        new RegExp(`atomWithStorage<boolean>\\(\\s*getKeyString\\(KEYS\\.${key}\\),\\s*false`),
+        new RegExp(`atomWithStorage<boolean>\\(\\s*getKeyString\\(KEYS\\.${key}\\),\\s*true`),
       )
     }
   })

@@ -112,6 +112,15 @@ export function SourcesListPanel({
     return sources.filter(s => s.config.type === sourceFilter.sourceType)
   }, [sources, sourceFilter])
 
+  const groupedSources = React.useMemo(() => {
+    if (sourceFilter) return null
+    return {
+      microservices: sources.filter((s) => s.config.type === 'local'),
+      mcp: sources.filter((s) => s.config.type === 'mcp'),
+      other: sources.filter((s) => s.config.type !== 'local' && s.config.type !== 'mcp'),
+    }
+  }, [sources, sourceFilter])
+
   const emptyMessage = React.useMemo(() => {
     if (sourceFilter?.kind === 'type') {
       const filterLabelKey = SOURCE_TYPE_FILTER_LABEL_KEYS[sourceFilter.sourceType]
@@ -144,6 +153,75 @@ export function SourcesListPanel({
       setReindexing(false)
     }
   }, [activeWorkspaceId, reindexing, t])
+
+  const mapSource = React.useCallback((source: LoadedSource) => {
+    const connectionStatus = deriveConnectionStatus(source, localMcpEnabled)
+    const typeConfig = SOURCE_TYPE_CONFIG[source.config.type]
+    const statusConfig = SOURCE_STATUS_CONFIG[connectionStatus]
+    const subtitle = source.config.tagline || source.config.provider || ''
+    return {
+      icon: <SourceAvatar source={source} size="sm" />,
+      title: source.config.name,
+      badges: (
+        <>
+          {typeConfig && <EntityListBadge colorClass={typeConfig.colorClass}>{t(typeConfig.labelKey)}</EntityListBadge>}
+          {statusConfig && (
+            <EntityListBadge colorClass={statusConfig.colorClass} tooltip={source.config.connectionError || undefined} className="cursor-default">
+              {t(statusConfig.labelKey)}
+            </EntityListBadge>
+          )}
+          {(() => {
+            const tokens = estimateTokensFromGuide(source.guide?.raw)
+            if (tokens <= 0) return null
+            return (
+              <EntityListBadge colorClass="bg-foreground/5 text-foreground/55" className="cursor-default tabular-nums">
+                {t('sourcesList.tokenEstimate', { tokens: formatApproxTokens(tokens) })}
+              </EntityListBadge>
+            )
+          })()}
+          {subtitle && <span className="truncate">{subtitle}</span>}
+        </>
+      ),
+      menu: (
+        <SourceMenu
+          sourceSlug={source.config.slug}
+          sourceName={source.config.name}
+          onOpenInNewWindow={() => window.electronAPI.openUrl(`craftagents://sources/source/${source.config.slug}?window=focused`)}
+          onShowInFinder={() => window.electronAPI.showInFolder(source.folderPath)}
+          onDelete={() => onDeleteSource(source.config.slug)}
+          onSendToWorkspace={hasOtherWorkspaces ? () => {
+            setSendResourceSlug(source.config.slug)
+            setSendResourceLabel(source.config.name)
+            setSendDialogOpen(true)
+          } : undefined}
+        />
+      ),
+    }
+  }, [hasOtherWorkspaces, localMcpEnabled, onDeleteSource, t])
+
+  const emptyState = (
+    <EntityListEmptyScreen
+      icon={<DatabaseZap />}
+      title={emptyMessage}
+      description={t('sourcesList.emptyDescription')}
+      docKey="sources"
+    >
+      {workspaceRootPath && (
+        <EditPopover
+          align="center"
+          trigger={
+            <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors">
+              {t('sourcesList.addSource')}
+            </button>
+          }
+          {...getEditConfig(
+            sourceFilter?.kind === 'type' ? `add-source-${sourceFilter.sourceType}` as EditContextKey : 'add-source',
+            workspaceRootPath
+          )}
+        />
+      )}
+    </EntityListEmptyScreen>
+  )
 
   return (
     <>
@@ -183,82 +261,77 @@ export function SourcesListPanel({
         {reindexing ? t('sourcesList.reindexing') : t('sourcesList.reindex')}
       </button>
     </div>
-    <EntityPanel<LoadedSource>
-      items={filteredSources}
-      getId={(s) => s.config.slug}
-      selection={sourceSelection}
-      selectedId={selectedSourceSlug}
-      onItemClick={onSourceClick}
-      className={className}
-      containerProps={{ 'data-list-role': 'sources' }}
-      emptyState={
-        <EntityListEmptyScreen
-          icon={<DatabaseZap />}
-          title={emptyMessage}
-          description={t('sourcesList.emptyDescription')}
-          docKey="sources"
-        >
-          {workspaceRootPath && (
-            <EditPopover
-              align="center"
-              trigger={
-                <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors">
-                  {t('sourcesList.addSource')}
-                </button>
-              }
-              {...getEditConfig(
-                sourceFilter?.kind === 'type' ? `add-source-${sourceFilter.sourceType}` as EditContextKey : 'add-source',
-                workspaceRootPath
-              )}
-            />
+    {groupedSources ? (
+      filteredSources.length === 0 ? (
+        emptyState
+      ) : (
+        <div data-testid="sources-grouped-list">
+          {groupedSources.microservices.length > 0 && (
+            <section>
+              <h3 className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t('sourcesList.groupMicroservices')}
+              </h3>
+              <EntityPanel<LoadedSource>
+                items={groupedSources.microservices}
+                getId={(s) => s.config.slug}
+                selection={sourceSelection}
+                selectedId={selectedSourceSlug}
+                onItemClick={onSourceClick}
+                className={className}
+                containerProps={{ 'data-list-role': 'sources' }}
+                mapItem={mapSource}
+              />
+            </section>
           )}
-        </EntityListEmptyScreen>
-      }
-      mapItem={(source) => {
-        const connectionStatus = deriveConnectionStatus(source, localMcpEnabled)
-        const typeConfig = SOURCE_TYPE_CONFIG[source.config.type]
-        const statusConfig = SOURCE_STATUS_CONFIG[connectionStatus]
-        const subtitle = source.config.tagline || source.config.provider || ''
-        return {
-          icon: <SourceAvatar source={source} size="sm" />,
-          title: source.config.name,
-          badges: (
-            <>
-              {typeConfig && <EntityListBadge colorClass={typeConfig.colorClass}>{t(typeConfig.labelKey)}</EntityListBadge>}
-              {statusConfig && (
-                <EntityListBadge colorClass={statusConfig.colorClass} tooltip={source.config.connectionError || undefined} className="cursor-default">
-                  {t(statusConfig.labelKey)}
-                </EntityListBadge>
-              )}
-              {(() => {
-                const tokens = estimateTokensFromGuide(source.guide?.raw)
-                if (tokens <= 0) return null
-                return (
-                  <EntityListBadge colorClass="bg-foreground/5 text-foreground/55" className="cursor-default tabular-nums">
-                    {t('sourcesList.tokenEstimate', { tokens: formatApproxTokens(tokens) })}
-                  </EntityListBadge>
-                )
-              })()}
-              {subtitle && <span className="truncate">{subtitle}</span>}
-            </>
-          ),
-          menu: (
-            <SourceMenu
-              sourceSlug={source.config.slug}
-              sourceName={source.config.name}
-              onOpenInNewWindow={() => window.electronAPI.openUrl(`craftagents://sources/source/${source.config.slug}?window=focused`)}
-              onShowInFinder={() => window.electronAPI.showInFolder(source.folderPath)}
-              onDelete={() => onDeleteSource(source.config.slug)}
-              onSendToWorkspace={hasOtherWorkspaces ? () => {
-                setSendResourceSlug(source.config.slug)
-                setSendResourceLabel(source.config.name)
-                setSendDialogOpen(true)
-              } : undefined}
-            />
-          ),
-        }
-      }}
-    />
+          {groupedSources.mcp.length > 0 && (
+            <section>
+              <h3 className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t('sourcesList.groupMcp')}
+              </h3>
+              <EntityPanel<LoadedSource>
+                items={groupedSources.mcp}
+                getId={(s) => s.config.slug}
+                selection={sourceSelection}
+                selectedId={selectedSourceSlug}
+                onItemClick={onSourceClick}
+                className={className}
+                containerProps={{ 'data-list-role': 'sources' }}
+                mapItem={mapSource}
+              />
+            </section>
+          )}
+          {groupedSources.other.length > 0 && (
+            <section>
+              <h3 className="px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t('sourcesList.filterApi')}
+              </h3>
+              <EntityPanel<LoadedSource>
+                items={groupedSources.other}
+                getId={(s) => s.config.slug}
+                selection={sourceSelection}
+                selectedId={selectedSourceSlug}
+                onItemClick={onSourceClick}
+                className={className}
+                containerProps={{ 'data-list-role': 'sources' }}
+                mapItem={mapSource}
+              />
+            </section>
+          )}
+        </div>
+      )
+    ) : (
+      <EntityPanel<LoadedSource>
+        items={filteredSources}
+        getId={(s) => s.config.slug}
+        selection={sourceSelection}
+        selectedId={selectedSourceSlug}
+        onItemClick={onSourceClick}
+        className={className}
+        containerProps={{ 'data-list-role': 'sources' }}
+        emptyState={emptyState}
+        mapItem={mapSource}
+      />
+    )}
 
     {/* Send to Workspace dialog */}
     {sendResourceSlug && (
