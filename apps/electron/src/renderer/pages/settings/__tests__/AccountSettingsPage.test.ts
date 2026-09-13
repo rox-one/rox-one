@@ -23,10 +23,7 @@ describe('AccountSettingsPage', () => {
     expect(source).not.toContain('stripe')
     expect(source).not.toContain('USD')
     expect(source).toContain("routes.view.settings('accounts')")
-<<<<<<< HEAD
     expect(source).toContain("routes.view.settings('privacy')")
-=======
     expect(source).toContain("t('settings.accounts.displayNameHint')")
->>>>>>> e410f553 (feat(teams): show member identity, Rox Server URL, honest local invites)
   })
 })
