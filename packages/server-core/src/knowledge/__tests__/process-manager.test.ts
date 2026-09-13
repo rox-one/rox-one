@@ -54,6 +54,26 @@ describe('SiyuanProcessManager', () => {
     expect(pm.status().running).toBe(false)
   })
 
+  it('fails closed when provider-gate evidence is incomplete even with G2=C', async () => {
+    const pm = new SiyuanProcessManager()
+    await expect(
+      pm.start({
+        configDir: '/tmp/cfg',
+        connectionId: 'c1',
+        g2AcceptedVariant: 'C',
+        pin,
+        providerGate: { license: 'AGPL-3.0' },
+        resolveBinary: () => '/bin/true',
+        spawnFn: () => {
+          throw new Error('should not spawn')
+        },
+        allocatePort: () => 19200,
+        readyTimeoutMs: 0,
+      }),
+    ).rejects.toMatchObject({ code: 'PROVIDER_GATE_BLOCKED' })
+    expect(pm.status().running).toBe(false)
+  })
+
   it('spawns on ephemeral port with G2=C', async () => {
     const kids: Array<{ pid: number; killed?: string }> = []
     const pm = new SiyuanProcessManager()

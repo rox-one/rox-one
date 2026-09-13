@@ -75,6 +75,7 @@
 - сверить фактическое выполнение всех K-срезов плана с кодом и отметить их статус в самом плане;
 - завершить managed spawn и затем remote TLS UX без расхождения error-code contract;
 - зафиксировать provider gate: repository/commit/license/EE boundary/notices/trademark/TLS/auth/tenant behavior;
+  **срез 2026-09-13:** `evaluateKnowledgeProviderGate` fail-closed matrix + optional `providerGate` on managed spawn. No OEM binary.
 - довести broker/delivery/import/recovery/WorkGraph metadata ledger до заявленной матрицы тестов;
 - доказать, что raw secrets не попадают в renderer, agent context, логи и remote/headless transport;
 - выполнить E2E GitHub operation, revoke/rotate/repair и feature-off parity.
