@@ -27,8 +27,8 @@ export function applyCalendarWrite(row: CalendarOccurrence): MeetingOpResult {
     operation: 'edit',
     authPresent: true,
   })
-  if (!write.allowed) return blocked('calendar-conation-unconfirmed')
   if (row.canceled) return blocked('calendar-canceled-not-live')
+  if (!write.allowed) return blocked('calendar-conation-unconfirmed')
   return denied('not-live')
 }
 
@@ -38,7 +38,7 @@ export function bindCall(meetingId: string, remoteCallId: string, seen: Map<stri
     operation: 'create',
     authPresent: true,
   })
-  if (!write.allowed) return blocked('call-conation-unconfirmed')
+  if (!write.allowed) return blocked('call-bind-not-live')
   if (seen.has(remoteCallId) && seen.get(remoteCallId) !== meetingId) {
     return { status: 'duplicate', reason: 'call-dedupe', live: false, evidenceLevel: 'U1' }
   }
