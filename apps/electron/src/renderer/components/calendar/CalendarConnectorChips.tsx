@@ -17,6 +17,7 @@ export function CalendarConnectorChips({
   return (
     <div className={cn('flex flex-wrap items-center gap-2', className)} data-testid="calendar-connector-chips">
       {CALENDAR_PROVIDERS.map((provider) => {
+        // Listable production adapter only — helper/env presence is not connected.
         const wired = isCalendarConnectorWired(provider)
         const label = t(`calendar.provider.${provider}`)
         const chip = (
