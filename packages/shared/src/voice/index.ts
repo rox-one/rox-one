@@ -128,3 +128,4 @@ export {
 export { voiceFlagEnabled, voiceV2Enabled } from './flags.ts'
 export * from './meeting-capture.ts';
 export * from './meeting-stream.ts';
+export * from './transcript-reducer.ts';
