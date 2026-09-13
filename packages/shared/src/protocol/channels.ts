@@ -946,6 +946,13 @@ export const RPC_CHANNELS = {
     PROGRESS: 'marketplace:progress',
     CHANGED: 'marketplace:CHANGED',
   },
+  meetings: {
+    LIST: 'meetings:list',
+    GET: 'meetings:get',
+    SEARCH: 'meetings:search',
+    APPROVE_PROPOSAL: 'meetings:approveProposal',
+    REJECT_PROPOSAL: 'meetings:rejectProposal',
+  },
 } as const
 
 // IPC_CHANNELS compat alias removed — all consumers now use RPC_CHANNELS
