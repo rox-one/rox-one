@@ -1407,7 +1407,7 @@ export interface ElectronAPI {
   }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>
   rateGamificationSession(payload: {
     sessionId: string
-    score: 1 | 2 | 3 | 4 | 5
+    score: number
     feedback?: string
     provenance?: string
   }): Promise<{ analytics: { sent: boolean; localOnly: boolean } }>

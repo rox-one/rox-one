@@ -20,12 +20,22 @@ export interface QuestRecord {
   completedAt?: number
 }
 
+/** Fill-pill scores shown in the session composer (not the home quest strip). */
+export const SESSION_RATING_PILLS = [1, 2, 3, 10, 25, 50, 75, 100] as const
+
 export interface SessionRating {
   sessionId: string
-  score: 1 | 2 | 3 | 4 | 5
+  score: number
   feedback?: string
   provenance?: string
   at: number
+}
+
+export function normalizeSessionRatingScore(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  const rounded = Math.round(value)
+  if (rounded < 1 || rounded > 100) return null
+  return rounded
 }
 
 export const QUEST_XP_EVENT: Record<QuestId, XpEventType> = {

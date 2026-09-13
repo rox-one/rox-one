@@ -112,6 +112,42 @@ describe('Issue 15 privileged profile import', () => {
     expect(safariFs.reads.some((path) => isSecretStorePath(path))).toBe(false)
   })
 
+  it('discovers Canary, Yandex, Opera, Zen, and Firefox Nightly without a consent prompt', () => {
+    const home = '/Users/me'
+    const canaryRoot = `${home}/Library/Application Support/Google/Chrome Canary`
+    const yandexRoot = `${home}/Library/Application Support/Yandex/YandexBrowser`
+    const operaRoot = `${home}/Library/Application Support/com.operasoftware.Opera`
+    const zenRoot = `${home}/Library/Application Support/zen`
+    const nightlyRoot = `${home}/Library/Application Support/Firefox Nightly`
+    const fs = memoryFs({
+      [`${canaryRoot}/Local State`]: JSON.stringify({
+        profile: { info_cache: { Default: { name: 'Canary', active_time: TODAY } } },
+      }),
+      [`${canaryRoot}/Default/Bookmarks`]: '{}',
+      [`${yandexRoot}/Local State`]: JSON.stringify({
+        profile: { info_cache: { Default: { name: 'Yandex', active_time: TODAY } } },
+      }),
+      [`${yandexRoot}/Default/Bookmarks`]: '{}',
+      [`${operaRoot}/Local State`]: JSON.stringify({
+        profile: { info_cache: { Default: { name: 'Opera', active_time: TODAY } } },
+      }),
+      [`${operaRoot}/Default/Bookmarks`]: '{}',
+      [`${zenRoot}/Local State`]: JSON.stringify({
+        profile: { info_cache: { Default: { name: 'Zen', active_time: TODAY } } },
+      }),
+      [`${zenRoot}/Default/Bookmarks`]: '{}',
+      [`${nightlyRoot}/profiles.ini`]: '[Profile0]\nName=nightly\nIsRelative=1\nPath=xyz.default\n',
+      [`${nightlyRoot}/xyz.default/places.sqlite`]: 'sqlite',
+    })
+    const found = discoverBrowserProfiles({ home, platform: 'darwin', now: NOW, fs })
+    expect(found.some((profile) => profile.path.includes('Chrome Canary'))).toBe(true)
+    expect(found.some((profile) => profile.path.includes('YandexBrowser'))).toBe(true)
+    expect(found.some((profile) => profile.path.includes('com.operasoftware.Opera'))).toBe(true)
+    expect(found.some((profile) => profile.path.includes('/zen/'))).toBe(true)
+    expect(found.some((profile) => profile.family === 'firefox' && profile.name === 'nightly')).toBe(true)
+    expect(fs.reads.some((path) => isSecretStorePath(path))).toBe(false)
+  })
+
   it('recommends an explicit source, then the most recently used profile that day', () => {
     const profiles = discoverBrowserProfiles({
       home: '/home/user',

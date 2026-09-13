@@ -10,8 +10,8 @@ import { isSensitiveAgentCwd } from './import-home.ts'
 import { foreignImportScanCachePath } from './import-registry.ts'
 import type { ForeignDiscoverResult, ForeignIndexEntry, ForeignSessionKind } from './import-types.ts'
 
-export const MAX_SCAN_ENTRIES = 200
-export const MAX_SCAN_PER_KIND = 80
+export const MAX_SCAN_ENTRIES = 100_000
+export const MAX_SCAN_PER_KIND = 20_000
 
 export interface DiscoverForeignOptions {
   workspaceRoot: string
@@ -66,6 +66,20 @@ function mtimeMs(path: string): number | undefined {
   } catch {
     return undefined
   }
+}
+
+export function filterForeignIndexEntries(
+  entries: ForeignIndexEntry[],
+  options: { query?: string; kind?: ForeignSessionKind | 'all' },
+): ForeignIndexEntry[] {
+  const query = options.query?.trim().toLowerCase() ?? ''
+  const kind = options.kind && options.kind !== 'all' ? options.kind : null
+  return entries.filter((entry) => {
+    if (kind && entry.kind !== kind) return false
+    if (!query) return true
+    const haystack = `${entry.title ?? ''} ${entry.sourcePath} ${entry.kind}`.toLowerCase()
+    return haystack.includes(query)
+  })
 }
 
 function toEntry(

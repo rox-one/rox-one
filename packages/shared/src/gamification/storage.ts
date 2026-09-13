@@ -19,6 +19,7 @@ import {
   QUEST_XP_EVENT,
   defaultQuestRecords,
   isQuestId,
+  normalizeSessionRatingScore,
   planProductAnalytics,
   type QuestId,
   type QuestRecord,
@@ -320,9 +321,13 @@ export function saveSessionRating(
   configDir: string = resolveConfigDir(),
 ): { state: GamificationState; analytics: ReturnType<typeof planProductAnalytics> } {
   const current = loadGamificationState(configDir)
+  const score = normalizeSessionRatingScore(rating.score)
+  if (score == null) {
+    throw new Error('score must be 1-100')
+  }
   const nextRating: SessionRating = {
     sessionId: rating.sessionId,
-    score: rating.score,
+    score,
     feedback: rating.feedback,
     provenance: rating.provenance,
     at: rating.at ?? Date.now(),

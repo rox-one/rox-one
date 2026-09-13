@@ -292,7 +292,7 @@ export default function SecuritySettingsPage() {
         : 'security.action.audit'
 
   return (
-    <div className="flex h-[calc(100dvh-3rem)] min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-border/50 px-6 py-4">
         <div className="min-w-0">
           <h2 className="whitespace-normal break-words text-lg font-semibold">{t('settings.security.title')}</h2>

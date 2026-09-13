@@ -268,7 +268,7 @@ function CloudRunsChipInner({
               <div className="flex flex-wrap gap-2">
                 <select
                   aria-label={t('cloudRuns.preset')}
-                  className="h-9 rounded-md border border-border bg-background px-1.5 text-xs"
+                  className="h-8 rounded-md border border-border bg-background px-1.5 text-xs"
                   disabled={!isAvailable}
                   value={kind}
                   onChange={(e) => setKind(e.target.value as typeof kind)}
