@@ -12,9 +12,13 @@ export type NoteViewFilter = {
   value?: unknown
 }
 
+export const NOTE_FORMULA_EXPRS = ['taskCount', 'openTaskCount', 'backlinkCount', 'tagCount'] as const
+
+export type NoteViewFormulaExpr = (typeof NOTE_FORMULA_EXPRS)[number]
+
 export type NoteViewFormula = {
   name: string
-  expr: 'taskCount' | 'openTaskCount' | 'backlinkCount' | 'tagCount'
+  expr: NoteViewFormulaExpr
 }
 
 export type NoteBaseView = {
@@ -189,6 +193,33 @@ export function formulaValue(row: NoteProjectionRow, formula: NoteViewFormula): 
     case 'tagCount':
       return row.tags.length
   }
+}
+
+export function formulaI18nKey(expr: NoteViewFormulaExpr): string {
+  switch (expr) {
+    case 'taskCount':
+      return 'notes.views.formulaTaskCount'
+    case 'openTaskCount':
+      return 'notes.views.formulaOpenTasks'
+    case 'backlinkCount':
+      return 'notes.views.formulaBacklinks'
+    case 'tagCount':
+      return 'notes.views.formulaTagCount'
+  }
+}
+
+export function addFormula(view: NoteBaseView, expr: NoteViewFormulaExpr): NoteBaseView {
+  if (view.formulas.some((formula) => formula.expr === expr)) return view
+  return { ...view, formulas: [...view.formulas, { name: expr, expr }] }
+}
+
+export function removeFormula(view: NoteBaseView, expr: NoteViewFormulaExpr): NoteBaseView {
+  return { ...view, formulas: view.formulas.filter((formula) => formula.expr !== expr) }
+}
+
+export function availableFormulaExprs(view: NoteBaseView): NoteViewFormulaExpr[] {
+  const used = new Set(view.formulas.map((formula) => formula.expr))
+  return NOTE_FORMULA_EXPRS.filter((expr) => !used.has(expr))
 }
 
 export function parseJsonCanvas(raw: string | null): JsonCanvas {
@@ -388,7 +419,7 @@ function isFilter(value: unknown): value is NoteViewFilter {
 function isFormula(value: unknown): value is NoteViewFormula {
   if (!value || typeof value !== 'object') return false
   const formula = value as NoteViewFormula
-  return typeof formula.name === 'string' && ['taskCount', 'openTaskCount', 'backlinkCount', 'tagCount'].includes(formula.expr)
+  return typeof formula.name === 'string' && (NOTE_FORMULA_EXPRS as readonly string[]).includes(formula.expr)
 }
 
 function isCanvasNode(value: unknown): value is JsonCanvasNode {
