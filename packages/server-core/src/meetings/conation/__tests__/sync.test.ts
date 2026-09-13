@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { readFileSync } from 'node:fs'
+
 import { isLiveVerified } from '../../types.ts'
 import { CONATION_FIXTURE_SCHEMA_HASH } from '../capabilities.ts'
 import {
@@ -21,8 +21,54 @@ describe('conation sync (#383)', () => {
     expect(result.status).toBe('blocked')
     expect(result.live).toBe(false)
     expect(result.evidenceLevel).toBe('U1')
+    expect(result.evidenceLevel).not.toBe('L4')
+    expect(result.evidenceLevel).not.toBe('E3')
+    expect(isLiveVerified(result)).toBe(false)
     expect(state.applied.has('n1')).toBe(false)
     expect(state.checkpoint).toBeNull()
+  })
+
+  it('cannot return verified on the default unconfirmed path', () => {
+    const state = createSyncState()
+    const result = syncConationPage(
+      state,
+      { cursor: 'c1', nextCursor: null, items: [{ id: 'n1', revision: '1' }] },
+      { authPresent: true, revokeGeneration: 0 },
+    )
+    expect(result.status).not.toBe('verified')
+    expect(result.status).toBe('blocked')
+    expect(isLiveVerified(result)).toBe(false)
+  })
+
+  it('leaves applied, tombstones, and checkpoint unchanged when confirmWrite is denied', () => {
+    const state = createSyncState()
+    state.applied.set('keep', { id: 'keep', revision: '1' })
+    state.tombstones.add('gone')
+    state.checkpoint = 'c0'
+    const appliedBefore = new Map(state.applied)
+    const tombstonesBefore = new Set(state.tombstones)
+    const checkpointBefore = state.checkpoint
+    const result = syncConationPage(
+      state,
+      {
+        cursor: 'c1',
+        nextCursor: null,
+        items: [
+          { id: 'n1', revision: '1' },
+          { id: 'keep', revision: '2', deleted: true },
+        ],
+      },
+      { authPresent: true, revokeGeneration: 0 },
+    )
+    expect(result.status).toBe('blocked')
+    expect(result.live).toBe(false)
+    expect(result.evidenceLevel).not.toBe('L4')
+    expect(isLiveVerified(result)).toBe(false)
+    expect(state.applied.size).toBe(appliedBefore.size)
+    expect(state.applied.get('keep')?.revision).toBe('1')
+    expect(state.applied.has('n1')).toBe(false)
+    expect(state.tombstones).toEqual(tombstonesBefore)
+    expect(state.checkpoint).toBe(checkpointBefore)
   })
 
   it('does not apply a second page as a live checkpoint while writes are unconfirmed', () => {
@@ -129,33 +175,31 @@ describe('conation sync (#383)', () => {
     )
     expect(result.status).toBe('blocked')
     expect(result.live).toBe(false)
+    expect(result.evidenceLevel).not.toBe('L4')
+    expect(isLiveVerified(result)).toBe(false)
     expect(CONATION_FIXTURE_SCHEMA_HASH).toBe('fixture-not-live')
   })
 
-  it('does not stamp verified / live:true / L4 on in-memory sync checkpoints', () => {
-    const src = readFileSync(new URL('../sync.ts', import.meta.url), 'utf8')
-    expect(src).not.toMatch(/status:\s*'verified'/)
-    expect(src).not.toMatch(/live:\s*true/)
-    expect(src).not.toMatch(/evidenceLevel:\s*'L4'/)
-
+  it('fixture schema-hash path does not claim live or L4', () => {
     const state = createSyncState()
-    state.applied.set('n1', { id: 'n1', revision: '1' })
-    const empty = syncConationPage(
+    const result = syncConationPage(
       state,
-      { cursor: 'empty', nextCursor: null, items: [] },
-      { authPresent: true, revokeGeneration: 0 },
-    )
-    const checkpoint = syncConationPage(
-      createSyncState(),
       { cursor: 'c1', nextCursor: null, items: [{ id: 'n1', revision: '1' }] },
-      { authPresent: true, revokeGeneration: 0 },
+      {
+        authPresent: true,
+        revokeGeneration: 0,
+        schemaHash: CONATION_FIXTURE_SCHEMA_HASH,
+      },
     )
-    for (const result of [empty, checkpoint]) {
-      expect(result.status).toBe('pending')
-      expect(result.status).not.toBe('verified')
-      expect(result.live).toBe(false)
-      expect(result.evidenceLevel).not.toBe('L4')
-      expect(isLiveVerified(result)).toBe(false)
-    }
+    expect(CONATION_FIXTURE_SCHEMA_HASH).toBe('fixture-not-live')
+    expect(result.status).not.toBe('verified')
+    expect(result.status).toBe('blocked')
+    expect(result.live).toBe(false)
+    expect(result.evidenceLevel).toBe('U1')
+    expect(result.evidenceLevel).not.toBe('L4')
+    expect(result.evidenceLevel).not.toBe('E3')
+    expect(isLiveVerified(result)).toBe(false)
+    expect(state.applied.size).toBe(0)
+    expect(state.checkpoint).toBeNull()
   })
 })
