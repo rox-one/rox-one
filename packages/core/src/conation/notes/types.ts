@@ -30,6 +30,21 @@ export type NotesPage = {
   nextCursor?: string | null
 }
 
+export type NotesListOptions = {
+  cursor?: string | null
+  limit?: number
+}
+
+export type NotesLookup =
+  | { status: 'ok'; document: NotesDocument }
+  | { status: 'denied' }
+  | { status: 'not_found' }
+  | { status: 'unavailable'; message: string }
+  | { status: 'incomplete' }
+
+export const NOTES_BRIDGE_PAGE_LIMIT = 50
+export const NOTES_BRIDGE_MAX_PAGES = 32
+
 /** Minimal Soup page client Notes needs (WP-Soup createSoupClient). */
 export type NotesSoupClient = {
   queryUserSoupPage: (args?: { input?: Record<string, unknown> }) => Promise<{
@@ -54,6 +69,7 @@ export type NotesBridgeOptions = {
 }
 
 export type NotesBridge = {
-  listNotes: () => Promise<NotesPage>
+  listNotes: (opts?: NotesListOptions) => Promise<NotesPage>
   getNote: (id: string) => Promise<NotesDocument | null>
+  lookupNote: (id: string) => Promise<NotesLookup>
 }
