@@ -24,6 +24,7 @@ export const MEETING_RPC_METHODS = [
   'meetings:pauseCapture',
   'meetings:stopCapture',
   'meetings:importMedia',
+  'meetings:finalize',
 ] as const
 
 export type MeetingRpcMethod = (typeof MEETING_RPC_METHODS)[number]

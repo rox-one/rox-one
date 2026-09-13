@@ -11,6 +11,7 @@ export { applyNativeMeetingAction, readbackNative, createNativeActionHarness, is
 export { queryMeetings } from './queries.ts'
 export { startNativeMeeting, listNativeMeetings } from './catalog.ts'
 export { applyNativeCaptureIntent, nativeCaptureBinding, NATIVE_CAPTURE_PROVIDER, NATIVE_CAPTURE_REMOTE_TYPE } from './capture.ts'
+export { applyNativeFinalizeIntent } from './finalize.ts'
 export {
   prepareMailDraft,
   sendPreparedMail,

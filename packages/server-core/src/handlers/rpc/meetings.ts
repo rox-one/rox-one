@@ -8,6 +8,7 @@ import { queryMeetings } from '../../meetings/queries.ts'
 import { listNativeMeetings, startNativeMeeting } from '../../meetings/catalog.ts'
 import { applyNativeCaptureIntent, type CaptureIntentAction } from '../../meetings/capture.ts'
 import { applyNativeImportIntent, type ImportIntentSpec } from '../../meetings/import.ts'
+import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness } from '../../meetings/native-actions.ts'
@@ -126,6 +127,7 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.PAUSE_CAPTURE,
   RPC_CHANNELS.meetings.STOP_CAPTURE,
   RPC_CHANNELS.meetings.IMPORT_MEDIA,
+  RPC_CHANNELS.meetings.FINALIZE,
 ] as const
 
 export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): void {
@@ -304,6 +306,23 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
         grant,
         meetingId,
         spec,
+      })
+      if (!result.ok) return { meeting: null, error: { code: result.code } }
+      return { meeting: result.meeting }
+    },
+  )
+  server.handle(
+    RPC_CHANNELS.meetings.FINALIZE,
+    async (_ctx, workspaceId: string, meetingId: string, actorId: string, grant: MeetingGrant | null) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { meeting: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { meeting: null, error: { code: 'config-dir-required' } }
+      const result = applyNativeFinalizeIntent({
+        persistRootDir,
+        workspaceId,
+        actorId,
+        grant,
+        meetingId,
       })
       if (!result.ok) return { meeting: null, error: { code: result.code } }
       return { meeting: result.meeting }
