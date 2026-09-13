@@ -76,4 +76,51 @@ describe('ROX-AUD-054 Map → Outcomes → Reduce', () => {
     expect(queued.coverage.complete).toBe(false)
     expect(queued.errors[0]).toContain('not live')
   })
+
+  test('omitted mapper is fail-closed and is not live success', async () => {
+    const result = await runMapReduce({
+      snapshot: snapshotSelection(sources, ['a', 'b']),
+      sources,
+      template: LOCAL_EXCERPT_TEMPLATE,
+    })
+    expect(result.coverage.complete).toBe(false)
+    expect(result.outcomes).toHaveLength(0)
+    expect(result.errors.every((error) => error.includes('not live'))).toBe(true)
+    const product = mapReduceProductResult(result)
+    expect(product.ok).toBe(false)
+    expect(product.state).toBe('queued')
+    expect(isClaimableLive(product)).toBe(false)
+  })
+
+  test('stale revision yields a stale job and does not invoke the mapper', async () => {
+    let mapped = 0
+    const result = await runMapReduce({
+      snapshot: snapshotSelection(sources, ['a']),
+      sources: [{ ...sources[0]!, revision: '2' }],
+      template: LOCAL_EXCERPT_TEMPLATE,
+      mapper: async (source) => {
+        mapped += 1
+        return localExcerptMapper(source, LOCAL_EXCERPT_TEMPLATE)
+      },
+    })
+    expect(result.jobs.map((job) => job.status)).toEqual(['stale'])
+    expect(result.outcomes).toHaveLength(0)
+    expect(mapped).toBe(0)
+    expect(result.coverage.complete).toBe(false)
+    expect(isClaimableLive(mapReduceProductResult(result))).toBe(false)
+  })
+
+  test('map-reduce does not invoke the simulated canvas runWorkflow runner', async () => {
+    const source = await Bun.file(new URL('../map-reduce.ts', import.meta.url)).text()
+    expect(/\bimport\b[\s\S]*\brunWorkflow\b/.test(source)).toBe(false)
+    expect(/\brunWorkflow\s*\(/.test(source)).toBe(false)
+
+    const result = await runMapReduce({
+      snapshot: snapshotSelection(sources, ['a']),
+      sources,
+      template: LOCAL_EXCERPT_TEMPLATE,
+    })
+    expect(result.jobs.every((job) => job.status !== 'ok')).toBe(true)
+    expect(isClaimableLive(mapReduceProductResult(result))).toBe(false)
+  })
 })
