@@ -12,6 +12,9 @@ import {
   isAuditableRox2Event,
   isClaimableLive,
   isRevisionedEntityRef,
+  isRox2Error,
+  liveResult,
+  normalizeRox2Result,
   parseRox2EntityId,
   parseRox2ExternalBindingKey,
   parseRox2TypedRecord,
@@ -65,8 +68,152 @@ describe('ROX2 platform contract', () => {
     expect(isClaimableLive(simulatedResult('S', 'sim'))).toBe(false)
     expect(isClaimableLive(fixtureResult('F', 'fixture'))).toBe(false)
     expect(
-      isClaimableLive({ ok: true, state: 'live', entityId: 'note:1' }),
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'succeeded',
+        verification: 'receipt_verified',
+        entityId: 'note:1',
+        receipt: { requestId: 'r1' },
+      }),
     ).toBe(true)
+  })
+
+  test('live plus failed is not success', () => {
+    const failed = liveResult({
+      entityId: 'note:1',
+      lifecycle: 'failed',
+      code: 'write.failed',
+      message: 'remote rejected',
+    })
+    expect(failed.ok).toBe(false)
+    expect(failed.lifecycle).toBe('failed')
+    expect(failed.state).not.toBe('live')
+    expect(isRox2Error(failed)).toBe(true)
+    expect(isClaimableLive(failed)).toBe(false)
+  })
+
+  test('queued is not an error and is not claimable', () => {
+    const queued = queuedResult('Q', 'queued')
+    expect(queued.lifecycle).toBe('queued')
+    expect(queued.executionMode).toBe('live')
+    expect(isRox2Error(queued)).toBe(false)
+    expect(queued.ok).toBe(false)
+    expect(isClaimableLive(queued)).toBe(false)
+  })
+
+  test('fixture and queued results are non-success for ok', () => {
+    const fixture = fixtureResult('F', 'fixture')
+    const queued = queuedResult('Q', 'queued')
+    const simulated = simulatedResult('S', 'sim')
+    expect(fixture.ok).toBe(false)
+    expect(queued.ok).toBe(false)
+    expect(simulated.ok).toBe(false)
+    expect(fixture.state).toBe('fixture')
+    expect(queued.state).toBe('queued')
+    expect(isClaimableLive(fixture)).toBe(false)
+    expect(isClaimableLive(queued)).toBe(false)
+  })
+
+  test('succeeded without receipt stays unverified and is not claimable', () => {
+    const unverified = liveResult({
+      entityId: 'note:1',
+      lifecycle: 'succeeded',
+    })
+    expect(unverified.verification).toBe('unverified')
+    expect(unverified.lifecycle).toBe('succeeded')
+    expect(unverified.ok).not.toBe(true)
+    expect(unverified.state).not.toBe('live')
+    expect(isClaimableLive(unverified)).toBe(false)
+    expect(
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'succeeded',
+        verification: 'unverified',
+        entityId: 'note:1',
+      }),
+    ).toBe(false)
+  })
+
+  test('fixture and simulated are never claimable even when succeeded', () => {
+    expect(
+      isClaimableLive({
+        executionMode: 'fixture',
+        lifecycle: 'succeeded',
+        verification: 'receipt_verified',
+        entityId: 'note:1',
+        receipt: { requestId: 'fx' },
+      }),
+    ).toBe(false)
+    expect(
+      isClaimableLive({
+        executionMode: 'simulated',
+        lifecycle: 'succeeded',
+        verification: 'readback_verified',
+        entityId: 'note:1',
+        receipt: { requestId: 'sim' },
+      }),
+    ).toBe(false)
+    expect(isClaimableLive(fixtureResult('F', 'fixture'))).toBe(false)
+    expect(isClaimableLive(simulatedResult('S', 'sim'))).toBe(false)
+  })
+
+  test('live succeeded is claimable only when policy-verified', () => {
+    const receiptLive = liveResult({
+      entityId: 'note:1',
+      lifecycle: 'succeeded',
+      verification: 'receipt_verified',
+      receipt: { requestId: 'r1' },
+    })
+    expect(receiptLive.ok).toBe(true)
+    expect(receiptLive.state).toBe('live')
+    expect(isClaimableLive(receiptLive)).toBe(true)
+    expect(
+      isClaimableLive(
+        liveResult({
+          entityId: 'note:1',
+          lifecycle: 'succeeded',
+          verification: 'readback_verified',
+          receipt: { observedRevision: 'rev-2' },
+        }),
+      ),
+    ).toBe(true)
+    expect(
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'running',
+        verification: 'unverified',
+        entityId: 'note:1',
+      }),
+    ).toBe(false)
+    expect(
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'waiting_approval',
+        verification: 'unverified',
+      }),
+    ).toBe(false)
+  })
+
+  test('legacy overloaded run state still type-checks and maps through the adapter', () => {
+    const legacyLive: { ok: true; state: 'live'; entityId: string } = {
+      ok: true,
+      state: 'live',
+      entityId: 'note:1',
+    }
+    const adapted = normalizeRox2Result(legacyLive)
+    expect(adapted.executionMode).toBe('live')
+    expect(adapted.lifecycle).toBe('succeeded')
+    expect(adapted.verification).toBe('unverified')
+    expect(isClaimableLive(legacyLive)).toBe(false)
+    expect(isClaimableLive(adapted)).toBe(false)
+    expect(adapted.ok).not.toBe(true)
+    expect(adapted.state).not.toBe('live')
+    expect(isRox2Error(legacyLive)).toBe(false)
+
+    const legacyQueued = { ok: false as const, state: 'queued' as const, code: 'Q', message: 'queued' }
+    expect(normalizeRox2Result(legacyQueued).lifecycle).toBe('queued')
+    expect(isRox2Error(legacyQueued)).toBe(false)
+    expect(isClaimableLive(legacyQueued)).toBe(false)
   })
 
   test('entity permission catalogs are not actor-scoped authorization', () => {

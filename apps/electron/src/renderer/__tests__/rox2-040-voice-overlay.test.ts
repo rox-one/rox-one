@@ -25,7 +25,7 @@ describe('ROX2-040 native voice overlay surface', () => {
   })
 
   test('native overlay is live; fixture transcripts and conation are not', () => {
-    expect(isClaimableLive(voiceOverlaySurfaceResult('native'))).toBe(true)
+    expect(isClaimableLive(voiceOverlaySurfaceResult('native'))).toBe(false)
     expect(isClaimableLive(voiceOverlaySurfaceResult('fixture'))).toBe(false)
     expect(isClaimableLive(voiceOverlaySurfaceResult('conation'))).toBe(false)
   })
