@@ -4683,6 +4683,7 @@
   "workspace.connectedVersion": "接続済み — v{{version}}",
   "workspace.connectedVersionEmpty": "接続済み — v{{version}} — ワークスペースはまだありません",
   "workspace.connectionFailed": "接続に失敗しました",
+  "workspace.connectionTimeout": "{{ms}}ms 待ってもワークスペースに接続できませんでした",
   "workspace.createAndConnect": "作成して接続",
   "workspace.createNew": "新規作成",
   "workspace.createNewDesc": "空のWorkspaceから始めます。",

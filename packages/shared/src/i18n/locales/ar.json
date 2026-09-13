@@ -4683,6 +4683,7 @@
   "workspace.connectedVersion": "متصل — v{{version}}",
   "workspace.connectedVersionEmpty": "متصل — v{{version}} — لا توجد مساحات بعد",
   "workspace.connectionFailed": "فشل الاتصال",
+  "workspace.connectionTimeout": "انتهت مهلة انتظار اتصال مساحة العمل بعد {{ms}} مللي ثانية",
   "workspace.createAndConnect": "إنشاء والاتصال",
   "workspace.createNew": "إنشاء جديد",
   "workspace.createNewDesc": "ابدأ من جديد بمساحة عمل فارغة.",

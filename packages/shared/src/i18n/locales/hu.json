@@ -4683,6 +4683,7 @@
   "workspace.connectedVersion": "Csatlakozva — v{{version}}",
   "workspace.connectedVersionEmpty": "Csatlakozva — v{{version}} — még nincs munkaterület",
   "workspace.connectionFailed": "A csatlakozás sikertelen",
+  "workspace.connectionTimeout": "Időtúllépés a munkaterület-kapcsolatra várakozáskor {{ms}} ms után",
   "workspace.createAndConnect": "Létrehozás és csatlakozás",
   "workspace.createNew": "Új létrehozása",
   "workspace.createNewDesc": "Kezdj egy üres munkaterülettel.",

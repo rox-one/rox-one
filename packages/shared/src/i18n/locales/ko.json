@@ -4683,6 +4683,7 @@
   "workspace.connectedVersion": "연결됨 — v{{version}}",
   "workspace.connectedVersionEmpty": "연결됨 — v{{version}} — 아직 워크스페이스가 없습니다",
   "workspace.connectionFailed": "연결에 실패했습니다",
+  "workspace.connectionTimeout": "{{ms}}ms 동안 워크스페이스 연결을 기다리다 시간 초과됨",
   "workspace.createAndConnect": "만들고 연결",
   "workspace.createNew": "새로 만들기",
   "workspace.createNewDesc": "빈 워크스페이스로 새로 시작합니다.",
