@@ -4,8 +4,11 @@ import {
   applyNoteBaseView,
   availableFormulaExprs,
   convertNote,
+  canvasFitTransform,
   createCanvasFileCard,
   dailyNoteDestination,
+  isolateCanvasForNote,
+  moveCanvasNode,
   filterGraphByEdgeKind,
   formulaI18nKey,
   formulaValue,
@@ -87,6 +90,22 @@ describe('notes views', () => {
     expect(canvas.nodes[0]?.file).toBe('ops/alpha.md')
     expect(canvas.edges).toEqual([{ id: 'e1', fromNode: card.id, toNode: 'sticky' }])
     expect(parseJsonCanvas('{"nodes":[{"id":"ghost"}]}').nodes).toEqual([])
+  })
+
+  test('opening one note seeds only that neighborhood and keeps cards movable', () => {
+    const canvas = isolateCanvasForNote(notes, 'ops/alpha')
+    expect(canvas.nodes.map((node) => node.noteId).sort()).toEqual(['ops/alpha', 'ops/beta'])
+    expect(isolateCanvasForNote(notes, 'ops/beta').nodes.some((node) => node.noteId === 'ops/alpha')).toBe(true)
+    const unrelated = isolateCanvasForNote(
+      [...notes, { id: 'ops/gamma', title: 'Gamma', tags: [], links: [], backlinks: [] }],
+      'ops/alpha',
+    )
+    expect(unrelated.nodes.some((node) => node.noteId === 'ops/gamma')).toBe(false)
+    const moved = moveCanvasNode(canvas, canvas.nodes[0]!.id, 120, 200)
+    expect(moved.nodes[0]).toMatchObject({ x: 120, y: 200 })
+    const fit = canvasFitTransform(canvas.nodes, { width: 800, height: 600 })
+    expect(fit.scale).toBeGreaterThan(0)
+    expect(Number.isFinite(fit.x)).toBe(true)
   })
 
   test('outline, graph, daily destination and conversion keep provenance', () => {

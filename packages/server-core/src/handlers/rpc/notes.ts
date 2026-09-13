@@ -27,6 +27,18 @@ import {
   type VaultDocumentSummary,
   type VaultWikiLink,
 } from '../../knowledge/vault-index.ts'
+import {
+  assertDailyDate,
+  buildDailyNoteMarkdown,
+  datesToEnsure,
+  dailyNoteId,
+  DAILY_FOLDER,
+  formatDateId,
+  INSTALL_DAY_FILE,
+  mergeSessionsBlock,
+  sessionsForDate,
+  type DailySessionRef,
+} from '../../knowledge/daily-notes.ts'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.LIST,
@@ -55,7 +67,7 @@ export const HANDLED_CHANNELS = [
 
 const NOTES_DIR = 'notes'
 const ASSETS_DIR = 'assets'
-const DAILY_DIR = 'daily'
+const DAILY_DIR = DAILY_FOLDER
 const TEMPLATES_DIR = 'templates'
 const PROJECTS_DIR = 'projects'
 const DAILY_TEMPLATE_FILE = 'daily.md'
@@ -588,53 +600,59 @@ async function updateNoteProperties(notesRoot: string, noteId: string, propertie
   return readNote(notesRoot, noteId)
 }
 
-function formatDateId(date: Date): string {
-  const yyyy = date.getFullYear()
-  const mm = String(date.getMonth() + 1).padStart(2, '0')
-  const dd = String(date.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
+async function readInstallDay(notesRoot: string, now = new Date()): Promise<string> {
+  const marker = join(notesRoot, INSTALL_DAY_FILE)
+  if (existsSync(marker)) {
+    const stored = (await readFile(marker, 'utf-8')).trim()
+    if (/^\d{4}-\d{2}-\d{2}$/.test(stored)) return stored
+  }
+  const today = formatDateId(now)
+  await writeFile(marker, `${today}\n`, 'utf-8')
+  return today
 }
 
-function todayDateString(): string {
-  const d = new Date()
-  return formatDateId(d)
+async function upsertDailyNote(
+  notesRoot: string,
+  date: string,
+  sessions: readonly DailySessionRef[],
+): Promise<string> {
+  const dailyDate = assertDailyDate(date)
+  const id = dailyNoteId(dailyDate)
+  const filePath = notePathFromId(notesRoot, id)
+  await mkdir(dirname(filePath), { recursive: true })
+  const daySessions = sessionsForDate(sessions, dailyDate)
+  if (!existsSync(filePath)) {
+    const templatePath = join(notesRoot, TEMPLATES_DIR, DAILY_TEMPLATE_FILE)
+    const template = await readFile(templatePath, 'utf-8').catch(() => '')
+    await writeFile(filePath, buildDailyNoteMarkdown({ date: dailyDate, sessions: daySessions, template }), 'utf-8')
+    return id
+  }
+  const existing = await readFile(filePath, 'utf-8')
+  const next = mergeSessionsBlock(existing, daySessions)
+  if (next !== existing) await writeFile(filePath, next, 'utf-8')
+  return id
 }
 
-function assertDailyDate(date?: string): string {
-  const value = date?.trim() || todayDateString()
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Invalid daily note date')
-  return value
+async function ensureDailyNotes(notesRoot: string, sessions: readonly DailySessionRef[], now = new Date()): Promise<void> {
+  await ensureNotesDirs(notesRoot)
+  const today = formatDateId(now)
+  const install = await readInstallDay(notesRoot, now)
+  for (const date of datesToEnsure(install, today)) {
+    await upsertDailyNote(notesRoot, date, sessions)
+  }
 }
 
-function dailyId(date?: string): string {
-  return `${DAILY_DIR}/${assertDailyDate(date)}`
-}
-
-function shiftDate(date: string, deltaDays: number): string {
-  const [year, month, day] = date.split('-').map(Number)
-  const d = new Date(year, month - 1, day)
-  d.setDate(d.getDate() + deltaDays)
-  return formatDateId(d)
-}
-
-async function buildDailyNoteContent(notesRoot: string, date: string): Promise<string> {
-  const templatePath = join(notesRoot, TEMPLATES_DIR, DAILY_TEMPLATE_FILE)
-  const fallback = [
-    '---',
-    'title: "{{date}}"',
-    'tags:',
-    '  - daily',
-    '---',
-    '',
-    '# {{date}}',
-    '',
-  ].join('\n')
-  const template = await readFile(templatePath, 'utf-8').catch(() => fallback)
-  return template
-    .replaceAll('{{date}}', date)
-    .replaceAll('{{title}}', date)
-    .replaceAll('{{yesterday}}', shiftDate(date, -1))
-    .replaceAll('{{tomorrow}}', shiftDate(date, 1))
+function sessionsFromDeps(deps: HandlerDeps, workspaceId: string): DailySessionRef[] {
+  try {
+    return deps.sessionManager.getSessions(workspaceId).map((session) => ({
+      id: session.id,
+      name: session.name?.trim() || session.preview?.trim() || session.id,
+      createdAt: session.createdAt,
+      lastMessageAt: session.lastMessageAt,
+    }))
+  } catch {
+    return []
+  }
 }
 
 function mimeFromName(name: string): string {
@@ -940,13 +958,16 @@ async function deleteFolder(notesRoot: string, folder: string): Promise<{ delete
   return { deletedNotes }
 }
 
-export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): void {
+export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): void {
   const changed = (payload: NoteChangedPayload, target: { to: 'workspace'; workspaceId: string } | { to: 'client'; clientId: string } = { to: 'workspace', workspaceId: payload.workspaceId }) => {
     pushTyped(server, RPC_CHANNELS.notes.CHANGED, target, payload)
   }
 
   server.handle(RPC_CHANNELS.notes.LIST, async (_ctx, workspaceId: string) => {
-    return listNotes(getWorkspaceNotesRoot(workspaceId))
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    await ensureDailyNotes(notesRoot, sessionsFromDeps(deps, workspaceId))
+    refreshVaultIndex(notesRoot)
+    return listNotes(notesRoot)
   })
 
   server.handle(RPC_CHANNELS.notes.READ, async (_ctx, workspaceId: string, noteId: string) => {
@@ -1078,16 +1099,11 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
 
   server.handle(RPC_CHANNELS.notes.GET_DAILY_NOTE, async (_ctx, workspaceId: string, date?: string) => {
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
-    const dailyDate = assertDailyDate(date)
-    const id = dailyId(dailyDate)
-    await ensureNotesDirs(notesRoot)
-    const filePath = notePathFromId(notesRoot, id)
-    if (!existsSync(filePath)) {
-      await mkdir(dirname(filePath), { recursive: true })
-      await writeFile(filePath, await buildDailyNoteContent(notesRoot, dailyDate), 'utf-8')
-      refreshVaultIndex(notesRoot)
-      changed({ workspaceId, reason: 'create', noteId: id })
-    }
+    const sessions = sessionsFromDeps(deps, workspaceId)
+    await ensureDailyNotes(notesRoot, sessions)
+    const id = await upsertDailyNote(notesRoot, date || formatDateId(new Date()), sessions)
+    refreshVaultIndex(notesRoot)
+    changed({ workspaceId, reason: 'create', noteId: id })
     return readNote(notesRoot, id)
   })
 

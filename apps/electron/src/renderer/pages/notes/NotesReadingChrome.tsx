@@ -25,6 +25,14 @@ export function NotesEditorHeadlineStyles() {
         border-color: hsl(var(--foreground) / 0.28);
         color: hsl(var(--foreground));
       }
+      mark.notes-comment-hl,
+      button.notes-comment-hl {
+        background: hsl(48 96% 56% / 0.35);
+        border-bottom: 1.5px solid hsl(38 92% 50% / 0.9);
+        border-radius: 2px;
+        cursor: pointer;
+        color: inherit;
+      }
     `}</style>
   )
 }
@@ -132,6 +140,100 @@ export function NotesToc({
   )
 }
 
+export function NotesCommentComposer({
+  quote,
+  body,
+  onBodyChange,
+  onSubmit,
+  onCancel,
+  top,
+  className,
+}: {
+  quote: string
+  body: string
+  onBodyChange: (value: string) => void
+  onSubmit: () => void
+  onCancel?: () => void
+  top?: number
+  className?: string
+}) {
+  const { t } = useTranslation()
+  const composeRef = React.useRef<HTMLTextAreaElement>(null)
+  React.useEffect(() => {
+    composeRef.current?.focus()
+  }, [quote])
+  return (
+    <form
+      className={cn(
+        'w-[240px] rounded-[8px] border border-foreground/30 bg-background p-2 shadow-thin',
+        className,
+      )}
+      data-testid="notes-comments-compose"
+      style={top == null ? undefined : { position: 'absolute', top }}
+      onSubmit={(event) => {
+        event.preventDefault()
+        onSubmit()
+      }}
+    >
+      {quote ? (
+        <p className="mb-1 truncate px-1 text-[11px] italic text-foreground/80">“{quote}”</p>
+      ) : null}
+      <textarea
+        ref={composeRef}
+        value={body}
+        onChange={(event) => onBodyChange(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            onCancel?.()
+            return
+          }
+          if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+            event.preventDefault()
+            onSubmit()
+          }
+        }}
+        rows={3}
+        placeholder={quote ? t('notes.comments.placeholderOnSelection') : t('notes.comments.placeholder')}
+        className={cn(
+          'w-full resize-none rounded-[6px] border border-foreground/30 bg-background px-2 py-1.5 text-[12px] outline-none',
+          'focus:border-foreground/55',
+        )}
+      />
+      <p className="mt-1 px-0.5 text-[10px] text-muted-foreground">{t('notes.comments.submitHint')}</p>
+      <button
+        type="submit"
+        disabled={!body.trim()}
+        className="mt-1.5 h-7 w-full rounded-[5px] bg-foreground/12 text-[11px] font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
+      >
+        {t('notes.comments.add')}
+      </button>
+    </form>
+  )
+}
+
+export function NotesCommentTooltip({
+  comment,
+  top,
+  left,
+}: {
+  comment: NoteComment
+  top: number
+  left: number
+}) {
+  return (
+    <div
+      className="pointer-events-none absolute z-20 max-w-[240px] rounded-[6px] border border-foreground/25 bg-background px-2.5 py-2 text-[12px] shadow-thin"
+      data-testid="notes-comment-tooltip"
+      style={{ top, left }}
+      role="tooltip"
+    >
+      {comment.quote ? <p className="mb-1 truncate italic text-foreground/80">“{comment.quote}”</p> : null}
+      <p className="leading-relaxed text-foreground">{comment.body}</p>
+    </div>
+  )
+}
+
 export function NotesComments({
   noteId,
   draftQuote,
@@ -140,6 +242,7 @@ export function NotesComments({
   onCommit,
   onJumpToQuote,
   width,
+  composerTop,
 }: {
   noteId: string
   draftQuote: string
@@ -148,21 +251,16 @@ export function NotesComments({
   onCommit?: (comments: NoteComment[]) => void
   onJumpToQuote?: (quote: string) => void
   width?: number
+  composerTop?: number
 }) {
   const { t } = useTranslation()
   const [comments, setComments] = React.useState<NoteComment[]>(() => markdownComments ?? loadNoteComments(noteId))
   const [body, setBody] = React.useState('')
-  const composeRef = React.useRef<HTMLTextAreaElement>(null)
 
   React.useEffect(() => {
     setComments(markdownComments ?? loadNoteComments(noteId))
     setBody('')
   }, [markdownComments, noteId])
-
-  React.useEffect(() => {
-    if (!draftQuote) return
-    composeRef.current?.focus()
-  }, [draftQuote])
 
   const add = React.useCallback(() => {
     const text = body.trim()
@@ -179,7 +277,7 @@ export function NotesComments({
   }, [body, comments, draftQuote, noteId, onClearDraft, onCommit])
 
   return (
-    <aside className="flex shrink-0 flex-col border-l border-foreground/25 bg-background" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
+    <aside className="relative flex shrink-0 flex-col border-l border-foreground/25 bg-background" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
       <div className="flex h-9 shrink-0 items-center gap-1.5 border-b border-foreground/20 px-3 text-[10px] font-medium uppercase tracking-wider text-foreground/70">
         <MessageSquarePlus className="h-3.5 w-3.5" />
         {t('notes.comments.title')}
@@ -206,43 +304,92 @@ export function NotesComments({
           </article>
         ))}
       </div>
-      <form
-        className="shrink-0 border-t border-foreground/20 p-2"
-        data-testid="notes-comments-compose"
-        onSubmit={(event) => {
-          event.preventDefault()
-          add()
-        }}
-      >
-        {draftQuote ? (
-          <p className="mb-1 truncate px-1 text-[11px] italic text-foreground/80">“{draftQuote}”</p>
-        ) : null}
-        <textarea
-          ref={composeRef}
-          value={body}
-          onChange={(event) => setBody(event.target.value)}
-          onKeyDown={(event) => {
-            if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-              event.preventDefault()
-              add()
-            }
-          }}
-          rows={2}
-          placeholder={draftQuote ? t('notes.comments.placeholderOnSelection') : t('notes.comments.placeholder')}
-          className={cn(
-            'w-full resize-none rounded-[6px] border border-foreground/30 bg-background px-2 py-1.5 text-[12px] outline-none',
-            'focus:border-foreground/55',
-          )}
+      {draftQuote ? (
+        <NotesCommentComposer
+          className="absolute right-2 z-10"
+          top={composerTop ?? 48}
+          quote={draftQuote}
+          body={body}
+          onBodyChange={setBody}
+          onSubmit={add}
+          onCancel={onClearDraft}
         />
-        <p className="mt-1 px-0.5 text-[10px] text-muted-foreground">{t('notes.comments.submitHint')}</p>
-        <button
-          type="submit"
-          disabled={!body.trim()}
-          className="mt-1.5 h-7 w-full rounded-[5px] bg-foreground/12 text-[11px] font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
-        >
-          {t('notes.comments.add')}
-        </button>
-      </form>
+      ) : null}
     </aside>
+  )
+}
+
+export function NotesCommentHighlights({
+  comments,
+  hidden,
+  contentKey,
+  onActivate,
+}: {
+  comments: NoteComment[]
+  hidden: boolean
+  contentKey: string
+  onActivate: (comment: NoteComment, rect: DOMRect) => void
+}) {
+  const [hits, setHits] = React.useState<Array<{ id: string; top: number; left: number; width: number; height: number }>>([])
+
+  React.useLayoutEffect(() => {
+    const root = document.querySelector('.notes-editor .ProseMirror') as HTMLElement | null
+    const editor = document.querySelector('.notes-editor') as HTMLElement | null
+    if (!root || !editor) {
+      setHits([])
+      return
+    }
+    const editorBox = editor.getBoundingClientRect()
+    const next: Array<{ id: string; top: number; left: number; width: number; height: number }> = []
+    for (const comment of comments) {
+      const quote = comment.quote.trim()
+      if (!quote) continue
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+      let node: Node | null
+      while ((node = walker.nextNode())) {
+        const text = node.textContent ?? ''
+        const idx = text.indexOf(quote)
+        if (idx < 0) continue
+        const range = document.createRange()
+        range.setStart(node, idx)
+        range.setEnd(node, Math.min(text.length, idx + quote.length))
+        for (const rect of Array.from(range.getClientRects())) {
+          next.push({
+            id: comment.id,
+            top: rect.top - editorBox.top + editor.scrollTop,
+            left: rect.left - editorBox.left + editor.scrollLeft,
+            width: rect.width,
+            height: rect.height,
+          })
+        }
+        break
+      }
+    }
+    setHits(next)
+  }, [comments, contentKey])
+
+  if (hits.length === 0) return null
+  return (
+    <div className="pointer-events-none absolute inset-0 z-[1]" data-testid="notes-comment-highlights">
+      {hits.map((hit, index) => {
+        const comment = comments.find((item) => item.id === hit.id)
+        if (!comment) return null
+        return (
+          <button
+            key={`${hit.id}:${index}`}
+            type="button"
+            className="notes-comment-hl pointer-events-auto absolute border-0 p-0"
+            style={{ top: hit.top, left: hit.left, width: hit.width, height: hit.height }}
+            aria-label={comment.body}
+            title={hidden ? comment.body : undefined}
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+              if (hidden) onActivate(comment, event.currentTarget.getBoundingClientRect())
+            }}
+          />
+        )
+      })}
+    </div>
   )
 }

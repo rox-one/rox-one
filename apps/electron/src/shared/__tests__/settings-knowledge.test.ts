@@ -4,6 +4,8 @@
  * entry + component by the registry recipe).
  */
 import { describe, it, expect } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { SETTINGS_PAGES, isValidSettingsSubpage, getSettingsPage } from '../settings-registry'
 import { parseCompoundRoute, buildCompoundRoute } from '../route-parser'
 
@@ -30,5 +32,14 @@ describe('settings knowledge page', () => {
     expect(parseCompoundRoute('settings/knowledge-mutations')).toBeNull()
     expect(parseCompoundRoute('settings/does-not-exist')).toBeNull()
     expect(isValidSettingsSubpage('proposeMutation')).toBe(false)
+  })
+
+  it('presents local notes as default and does not require an external engine', () => {
+    const page = readFileSync(join(__dirname, '../../renderer/pages/settings/KnowledgeSettingsPage.tsx'), 'utf8')
+    expect(page).toContain("t('knowledge.local.title')")
+    expect(page).toContain("t('knowledge.local.body')")
+    expect(page).toContain("t('knowledge.local.engineOptional')")
+    expect(page).toContain('NOTES_AI_MODEL')
+    expect(page).not.toContain('required connection')
   })
 })

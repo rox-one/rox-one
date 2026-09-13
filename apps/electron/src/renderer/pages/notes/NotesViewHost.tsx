@@ -1,15 +1,18 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { FilePlus2 } from 'lucide-react'
+import { FilePlus2, ScanSearch } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   addFormula,
   applyNoteBaseView,
   availableFormulaExprs,
+  canvasFitTransform,
   createCanvasFileCard,
   dailyNoteDestination,
   filterGraphByEdgeKind,
+  isolateCanvasForNote,
+  moveCanvasNode,
   formulaI18nKey,
   formulaValue,
   graphFromLinks,
@@ -17,6 +20,7 @@ import {
   isolateNoteNeighborhood,
   loadSavedViews,
   NOTE_GRAPH_PAGE_SIZE,
+  notesCanvasStorageKey,
   notesOnlyGraph,
   notesOutlineFoldsStorageKey,
   notesViewsStorageKey,
@@ -93,6 +97,7 @@ export function NotesViewHost({
     return (
       <NotesCanvasView
         notes={notes}
+        activeNoteId={activeNoteId}
         workspaceId={workspaceId}
         onOpenNote={onOpenNote}
         onCreateNote={onCreateNote}
@@ -295,20 +300,37 @@ function NotesTableView({
 
 function NotesCanvasView({
   notes,
+  activeNoteId,
   workspaceId,
   onOpenNote,
   onCreateNote,
 }: {
   notes: NotesViewNote[]
+  activeNoteId: string | null
   workspaceId: string
   onOpenNote: (noteId: string) => void
   onCreateNote: (folder?: string) => void
 }) {
   const { t } = useTranslation()
-  const storageKey = `notes:canvas:${workspaceId}:vault`
-  const [canvas, setCanvas] = React.useState<JsonCanvas>(() =>
-    parseJsonCanvas(typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey)),
+  const canvasId = activeNoteId || 'vault'
+  const storageKey = notesCanvasStorageKey(workspaceId, canvasId)
+  const seeded = React.useMemo(
+    () => (activeNoteId ? isolateCanvasForNote(notes, activeNoteId) : { nodes: [], edges: [] }),
+    [activeNoteId, notes],
   )
+  const [canvas, setCanvas] = React.useState<JsonCanvas>(() => {
+    const stored = parseJsonCanvas(typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey))
+    return stored.nodes.length > 0 ? stored : seeded
+  })
+  const [fit, setFit] = React.useState({ scale: 1, x: 0, y: 0 })
+  const viewportRef = React.useRef<HTMLDivElement>(null)
+  const dragRef = React.useRef<{ id: string; dx: number; dy: number; moved: boolean } | null>(null)
+
+  React.useEffect(() => {
+    const stored = parseJsonCanvas(typeof localStorage === 'undefined' ? null : localStorage.getItem(storageKey))
+    setCanvas(stored.nodes.length > 0 ? stored : seeded)
+    setFit({ scale: 1, x: 0, y: 0 })
+  }, [seeded, storageKey])
 
   React.useEffect(() => {
     try {
@@ -318,9 +340,15 @@ function NotesCanvasView({
     }
   }, [canvas, storageKey])
 
+  const applyFit = () => {
+    const viewport = viewportRef.current?.getBoundingClientRect()
+    setFit(canvasFitTransform(canvas.nodes, { width: viewport?.width ?? 800, height: viewport?.height ?? 600 }))
+  }
+
   return (
     <div
-      className="relative h-full min-h-0 bg-muted/10"
+      ref={viewportRef}
+      className="relative h-full min-h-0 overflow-hidden bg-muted/10"
       data-testid="notes-canvas-view"
       onDoubleClick={(event) => {
         if (event.target !== event.currentTarget) return
@@ -333,8 +361,8 @@ function NotesCanvasView({
             createCanvasFileCard({
               noteId: `${dest.folder}/${dest.title}`,
               title: dest.title,
-              x: event.nativeEvent.offsetX,
-              y: event.nativeEvent.offsetY,
+              x: (event.nativeEvent.offsetX - fit.x) / fit.scale,
+              y: (event.nativeEvent.offsetY - fit.y) / fit.scale,
             }),
           ],
         }))
@@ -345,28 +373,55 @@ function NotesCanvasView({
           {t('notes.views.canvasEmpty')}
         </div>
       ) : null}
-      {canvas.nodes.map((node) => (
-        <button
-          key={node.id}
-          type="button"
-          className="absolute rounded-lg border border-border/60 bg-card/90 p-2 text-left text-xs shadow-thin"
-          style={{ left: node.x, top: node.y, width: node.width, minHeight: node.height }}
-          onClick={() => node.noteId && onOpenNote(node.noteId)}
-        >
-          <div className="truncate font-medium">{node.text || node.file || node.id}</div>
-          {node.noteId ? <div className="mt-1 font-mono text-[10px] text-muted-foreground">{node.noteId}</div> : null}
-        </button>
-      ))}
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="absolute bottom-3 right-3"
-        onClick={() => onCreateNote(dailyNoteDestination().folder)}
+      <div
+        className="absolute inset-0 origin-top-left"
+        style={{ transform: `translate(${fit.x}px, ${fit.y}px) scale(${fit.scale})` }}
       >
-        <FilePlus2 className="h-3.5 w-3.5" />
-        {t('notes.views.doubleClickCreate')}
-      </Button>
+        {canvas.nodes.map((node) => (
+          <button
+            key={node.id}
+            type="button"
+            className="absolute cursor-grab rounded-lg border border-border/60 bg-card/90 p-2 text-left text-xs shadow-thin active:cursor-grabbing"
+            style={{ left: node.x, top: node.y, width: node.width, minHeight: node.height }}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId)
+              dragRef.current = { id: node.id, dx: event.clientX - node.x * fit.scale, dy: event.clientY - node.y * fit.scale, moved: false }
+            }}
+            onPointerMove={(event) => {
+              const drag = dragRef.current
+              if (!drag || drag.id !== node.id) return
+              const x = (event.clientX - drag.dx) / fit.scale
+              const y = (event.clientY - drag.dy) / fit.scale
+              if (Math.abs(x - node.x) + Math.abs(y - node.y) > 2) drag.moved = true
+              setCanvas((prev) => moveCanvasNode(prev, node.id, x, y))
+            }}
+            onPointerUp={() => {
+              const drag = dragRef.current
+              dragRef.current = null
+              if (drag?.moved) return
+              if (node.noteId) onOpenNote(node.noteId)
+            }}
+          >
+            <div className="truncate font-medium">{node.text || node.file || node.id}</div>
+            {node.noteId ? <div className="mt-1 font-mono text-[10px] text-muted-foreground">{node.noteId}</div> : null}
+          </button>
+        ))}
+      </div>
+      <div className="absolute bottom-3 right-3 flex gap-2">
+        <Button type="button" size="sm" variant="outline" data-testid="notes-canvas-fit" onClick={applyFit}>
+          <ScanSearch className="h-3.5 w-3.5" />
+          {t('notes.canvas.fit')}
+        </Button>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => onCreateNote(dailyNoteDestination().folder)}
+        >
+          <FilePlus2 className="h-3.5 w-3.5" />
+          {t('notes.views.doubleClickCreate')}
+        </Button>
+      </div>
     </div>
   )
 }
@@ -429,7 +484,7 @@ function NotesGraphView({
 }) {
   const { t } = useTranslation()
   const [kind, setKind] = React.useState<NoteGraphEdgeKindFilter>('all')
-  const [nearby, setNearby] = React.useState(false)
+  const [nearby, setNearby] = React.useState(Boolean(activeNoteId))
   const [limit, setLimit] = React.useState(NOTE_GRAPH_PAGE_SIZE)
   const graph = React.useMemo(() => {
     let next = notesOnlyGraph(graphFromLinks(notes))
