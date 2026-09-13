@@ -732,6 +732,21 @@ export type {
   VaultNamedEntity as NoteNamedEntity,
 } from '../knowledge/vault-insights.ts'
 
+export interface NoteIndexHealth {
+  ok: boolean
+  available: boolean
+  dbPath: string
+  schemaVersion: number | null
+  documentCount: number
+  recovered: boolean
+  indexed: number
+  unchanged: number
+  skipped: number
+  truncated: boolean
+  watching: boolean
+  lastExternalChangeAt: number | null
+}
+
 // ---------------------------------------------------------------------------
 // Knowledge provider types (P1 read-only, spec 03)
 // ---------------------------------------------------------------------------

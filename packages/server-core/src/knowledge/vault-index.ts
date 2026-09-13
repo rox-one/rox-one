@@ -105,6 +105,17 @@ export interface VaultHealth {
   schemaVersion: number | null
   documentCount: number
   recovered: boolean
+  indexed: number
+  unchanged: number
+  skipped: number
+  truncated: boolean
+}
+
+const lastRebuildByRoot = new Map<string, VaultRebuildResult>()
+
+function rememberRebuild(notesRoot: string, result: VaultRebuildResult): VaultRebuildResult {
+  lastRebuildByRoot.set(resolve(notesRoot), result)
+  return result
 }
 
 export type { VaultInsights }
@@ -639,9 +650,9 @@ export function rebuildVaultIndex(notesRoot: string): VaultRebuildResult {
   if (!opened) return empty
   try {
     const stats = rebuildInto(opened.db, notesRoot, true)
-    return { ok: true, dbPath, recovered: true, available: true, ...stats }
+    return rememberRebuild(notesRoot, { ok: true, dbPath, recovered: true, available: true, ...stats })
   } catch {
-    return { ...empty, recovered: opened.recovered, available: true }
+    return rememberRebuild(notesRoot, { ...empty, recovered: opened.recovered, available: true })
   }
 }
 
@@ -669,11 +680,11 @@ export function ensureVaultIndex(notesRoot: string): VaultRebuildResult {
   if (!opened) return empty
   try {
     const stats = rebuildInto(opened.db, notesRoot, false)
-    return { ok: true, dbPath, recovered: recovered || opened.recovered, available: true, ...stats }
+    return rememberRebuild(notesRoot, { ok: true, dbPath, recovered: recovered || opened.recovered, available: true, ...stats })
   } catch {
     closeHandle(notesRoot)
     const rebuilt = rebuildVaultIndex(notesRoot)
-    return { ...rebuilt, recovered: true }
+    return rememberRebuild(notesRoot, { ...rebuilt, recovered: true })
   }
 }
 
@@ -853,13 +864,18 @@ export function listVaultTasks(notesRoot: string): VaultTaskHit[] {
 
 export function vaultIndexHealth(notesRoot: string): VaultHealth {
   const dbPath = vaultIndexPath(notesRoot)
+  const last = lastRebuildByRoot.get(resolve(notesRoot))
   const unavailable: VaultHealth = {
     ok: false,
     available: isVaultIndexAvailable(),
     dbPath,
     schemaVersion: null,
     documentCount: 0,
-    recovered: false,
+    recovered: last?.recovered ?? false,
+    indexed: last?.indexed ?? 0,
+    unchanged: last?.unchanged ?? 0,
+    skipped: last?.skipped ?? 0,
+    truncated: last?.truncated ?? false,
   }
   const opened = openDb(notesRoot, false)
   if (!opened) return unavailable
@@ -870,7 +886,11 @@ export function vaultIndexHealth(notesRoot: string): VaultHealth {
     dbPath,
     schemaVersion: schemaVersionOf(opened.db),
     documentCount: count,
-    recovered: false,
+    recovered: last?.recovered ?? opened.recovered,
+    indexed: last?.indexed ?? 0,
+    unchanged: last?.unchanged ?? 0,
+    skipped: last?.skipped ?? 0,
+    truncated: last?.truncated ?? false,
   }
 }
 

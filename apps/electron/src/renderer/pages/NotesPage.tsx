@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { DndContext, useDraggable, useDroppable, type DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@craft-agent/ui'
-import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteRenameImpact, NoteSummary } from '../../shared/types'
+import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
@@ -53,6 +53,7 @@ import {
   updateFootnoteDefinition,
 } from '@craft-agent/shared/knowledge/vault-insights'
 import { EMPTY_NOTE_INSIGHTS } from './notes/VaultInsightsPanel'
+import { EMPTY_NOTE_INDEX_HEALTH } from './notes/VaultIndexHealthPanel'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -570,6 +571,8 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null)
   const [commentDraftQuote, setCommentDraftQuote] = React.useState('')
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
+  const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
+  const [indexRebuilding, setIndexRebuilding] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [saving, setSaving] = React.useState(false)
   const [dirty, setDirty] = React.useState(false)
@@ -658,11 +661,37 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     })
   }, [])
 
-  const refreshNotes = React.useCallback(async () => {    if (!activeWorkspaceId) return
+  const refreshNotes = React.useCallback(async () => {
+    if (!activeWorkspaceId) return
     const next = await window.electronAPI.listNotes(activeWorkspaceId)
     setNotes(next)
     setSidebarOrder(next.map(n => n.id))
   }, [activeWorkspaceId])
+
+  const refreshIndexHealth = React.useCallback(async () => {
+    if (!activeWorkspaceId) {
+      setIndexHealth(EMPTY_NOTE_INDEX_HEALTH)
+      return
+    }
+    try {
+      setIndexHealth(await window.electronAPI.getNoteIndexHealth(activeWorkspaceId))
+    } catch {
+      setIndexHealth(EMPTY_NOTE_INDEX_HEALTH)
+    }
+  }, [activeWorkspaceId])
+
+  const rebuildIndex = React.useCallback(async () => {
+    if (!activeWorkspaceId) return
+    setIndexRebuilding(true)
+    try {
+      setIndexHealth(await window.electronAPI.rebuildNoteIndex(activeWorkspaceId))
+      await refreshNotes()
+    } catch {
+      await refreshIndexHealth()
+    } finally {
+      setIndexRebuilding(false)
+    }
+  }, [activeWorkspaceId, refreshNotes, refreshIndexHealth])
 
   const refreshAssets = React.useCallback(async () => {
     if (!activeWorkspaceId) {
@@ -740,10 +769,11 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   React.useEffect(() => {
     refreshNotes()
     refreshAssets()
+    void refreshIndexHealth()
     if (!activeWorkspaceId) return
     window.electronAPI.watchNotes(activeWorkspaceId).catch(error => {
       toast.error(error instanceof Error ? error.message : 'Failed to watch notes')
-    })
+    }).then(() => { void refreshIndexHealth() })
     const unsubscribe = window.electronAPI.onNotesChanged((rawPayload) => {
       const payload = normalizeChangedPayload(rawPayload)
       if (payload.workspaceId !== activeWorkspaceId) return
@@ -754,6 +784,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
 
       refreshNotes()
       refreshAssets()
+      void refreshIndexHealth()
 
       if (payload.noteId && payload.noteId === activeNoteIdRef.current) {
         if (dirtyRef.current) {
@@ -768,7 +799,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       unsubscribe()
       window.electronAPI.unwatchNotes(activeWorkspaceId).catch(() => {})
     }
-  }, [activeWorkspaceId, openNote, refreshAssets, refreshNotes])
+  }, [activeWorkspaceId, openNote, refreshAssets, refreshIndexHealth, refreshNotes])
 
   React.useEffect(() => {
     if (selectedNoteId) {
@@ -2172,6 +2203,9 @@ h1,h2,h3{margin-top:1.5em}
           else setMissingLinkTarget(target)
         }}
         insights={noteInsights}
+        indexHealth={indexHealth}
+        indexRebuilding={indexRebuilding}
+        onRebuildIndex={() => { void rebuildIndex() }}
         footnoteDraft={footnoteDraft}
         onFootnoteDraftChange={setFootnoteDraft}
         onApplyLink={(suggestion) => applyNoteMarkdown(applyLinkSuggestion(content, suggestion.mention, suggestion.targetTitle))}

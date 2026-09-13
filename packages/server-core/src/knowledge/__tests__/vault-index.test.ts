@@ -119,6 +119,9 @@ Back to [[Alpha note]].
     expect(rebuilt.indexed).toBe(2)
     expect(rebuilt.available).toBe(true)
     expect(vaultIndexHealth(notesRoot).documentCount).toBe(2)
+    expect(vaultIndexHealth(notesRoot).ok).toBe(true)
+    expect(vaultIndexHealth(notesRoot).indexed).toBe(2)
+    expect(vaultIndexHealth(notesRoot).schemaVersion).toBe(1)
 
     const listed = listVaultDocuments(notesRoot)
     expect(listed.map(doc => doc.id).sort()).toEqual(['alpha', 'beta'])
@@ -169,6 +172,8 @@ body
     const recovered = ensureVaultIndex(notesRoot)
     expect(recovered.ok).toBe(true)
     expect(recovered.recovered).toBe(true)
+    expect(vaultIndexHealth(notesRoot).recovered).toBe(true)
+    expect(vaultIndexHealth(notesRoot).ok).toBe(true)
     expect(listVaultDocuments(notesRoot).map(doc => doc.id).sort()).toEqual(['alpha', 'beta'])
     expect(getVaultBacklinks(notesRoot, 'beta').map(item => item.noteId)).toEqual(['alpha'])
     expect(listVaultTasks(notesRoot)[0]?.text).toBe('recovered')
