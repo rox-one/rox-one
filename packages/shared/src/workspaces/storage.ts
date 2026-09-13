@@ -22,11 +22,12 @@ import { atomicWriteFileSync, readJsonFileSync } from '../utils/files.ts';
 import { getDefaultStatusConfig, saveStatusConfig, ensureDefaultIconFiles } from '../statuses/storage.ts';
 import { getDefaultLabelConfig, saveLabelConfig } from '../labels/storage.ts';
 import { ensureDefaultAutomations } from '../automations/default-seeds.ts';
+import { ensureBuiltinSources } from '../sources/builtin-sources.ts';
 import {
-  DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS,
-  ensureBuiltinSources,
-  ensureLocalNotesSource,
-} from '../sources/builtin-sources.ts';
+  collectDefaultEnabledSourceSlugs,
+  ensureDefaultMicroserviceSources,
+} from '../sources/default-microservices.ts';
+import { ensureRoxLayout } from './rox-layout.ts';
 import { loadConfigDefaults } from '../config/storage.ts';
 import { generateSlug } from '../utils/slug.ts';
 import { parsePermissionMode, PERMISSION_MODE_ORDER } from '../agent/mode-types.ts';
@@ -351,7 +352,7 @@ export function createWorkspaceAtPath(
     // defaultLlmConnection: undefined - falls back to app default
     permissionMode: globalDefaults.workspaceDefaults.permissionMode,
     cyclablePermissionModes: globalDefaults.workspaceDefaults.cyclablePermissionModes,
-    enabledSourceSlugs: [...DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS],
+    enabledSourceSlugs: defaults?.enabledSourceSlugs ?? collectDefaultEnabledSourceSlugs(),
     workingDirectory: undefined,
     ...defaults, // User-provided defaults override global defaults
   };
@@ -379,6 +380,21 @@ export function createWorkspaceAtPath(
   mkdirSync(getWorkspaceSessionsPath(rootPath), { recursive: true });
   mkdirSync(getWorkspaceSkillsPath(rootPath), { recursive: true });
 
+  const layout = ensureRoxLayout({ workspaceRoot: rootPath });
+  const notesPath = config.notesPath ?? join(layout.root, 'notes');
+
+  // Seed credentialed API templates as disabled; they are never workspace defaults.
+  ensureBuiltinSources(rootPath);
+  // Local microservices (notes, memory, sessions, …) default ON. Existing configs win.
+  ensureDefaultMicroserviceSources(rootPath, { roxRoot: layout.root, notesPath });
+
+  if (defaults?.enabledSourceSlugs === undefined) {
+    config.defaults = {
+      ...config.defaults,
+      enabledSourceSlugs: collectDefaultEnabledSourceSlugs(),
+    };
+  }
+
   // Save config
   saveWorkspaceConfig(rootPath, config);
 
@@ -391,12 +407,6 @@ export function createWorkspaceAtPath(
 
   // Seed default automations (30 templates, mostly disabled)
   ensureDefaultAutomations(rootPath);
-
-  // Seed credentialed API templates as disabled; they are never workspace defaults.
-  ensureBuiltinSources(rootPath);
-
-  // The default Notes source must exist before a session resolves these defaults.
-  ensureLocalNotesSource(rootPath, join(DEFAULT_WORKSPACES_DIR, config.id, 'notes'));
 
   // Initialize plugin manifest for SDK integration (enables skills, commands, agents)
   ensurePluginManifest(rootPath, name);

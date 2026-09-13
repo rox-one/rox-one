@@ -6,6 +6,7 @@ import {
   ensureBuiltinSources,
   isBuiltinSource,
   getBuiltinSources,
+  getDocsSource,
 } from '../builtin-sources.ts';
 import { computeSourceTokenStats } from '../source-stats.ts';
 
@@ -51,6 +52,12 @@ describe('builtin sources seed', () => {
     ensureBuiltinSources(dir);
     const again = JSON.parse(readFileSync(path, 'utf-8'));
     expect(again.name).toBe('My Exa');
+  });
+
+  it('enables the docs MCP placeholder by default', () => {
+    const docs = getDocsSource('ws', dir);
+    expect(docs.config.enabled).toBe(true);
+    expect(docs.config.type).toBe('mcp');
   });
 
   it('computeSourceTokenStats uses guide for api builtins', () => {

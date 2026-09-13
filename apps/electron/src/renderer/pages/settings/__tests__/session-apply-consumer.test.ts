@@ -27,8 +27,8 @@ describe('SessionApply consumer stub wiring', () => {
     expect(flags).toMatch(/id: WORKBENCH_FLAG\.conationSessionApply[\s\S]*?defaultValue: false/)
   })
 
-  it('does not flip Agent Teams flag or Cordis skip-list', () => {
-    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: false/)
+  it('does not flip Cordis skip-list when Agent Teams defaults on', () => {
+    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: true/)
     expect(skip).toContain("id: 'agentTeamsRuntime'")
     expect(skip).toContain('@nanmicoder/dsh-agent-teams')
   })

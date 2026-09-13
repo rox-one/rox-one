@@ -21,10 +21,10 @@
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
-/** Whether the in-app "background session finished" chip is shown. Default off. */
+/** Whether the in-app "background session finished" chip is shown. Default on. */
 export const showBackgroundFinishedChipAtom = atomWithStorage<boolean>(
   'craft-show-background-finished-chip',
-  false
+  true
 )
 
 export interface BackgroundFinishedEntry {

@@ -102,9 +102,17 @@ export {
   estimateSourceGuideTokens,
   formatTokenEstimate,
   BUILTIN_SOURCE_SLUGS,
-  DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS,
   type BuiltinSourceSlug,
 } from './builtin-sources.ts';
+
+export {
+  collectDefaultEnabledSourceSlugs,
+  ensureDefaultMicroserviceSources,
+  DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS,
+  DEFAULT_ENABLED_MCP_SOURCE_SLUGS,
+  DEFAULT_ENABLED_SOURCE_SLUGS,
+} from './default-microservices.ts';
+export type { MicroserviceSeedOptions } from './default-microservices.ts';
 
 export {
   computeSourceTokenStats,

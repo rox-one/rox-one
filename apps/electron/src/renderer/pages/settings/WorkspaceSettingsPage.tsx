@@ -543,22 +543,35 @@ export default function WorkspaceSettingsPage() {
               description={t("settings.workspace.defaultSourcesDesc")}
             >
               {availableSources.length > 0 ? (
-                <SettingsCard>
-                  {availableSources.map((source) => (
-                    <SettingsToggle
-                      key={source.config.slug}
-                      label={
-                        <span className="inline-flex items-center gap-2">
-                          <SourceAvatar source={source} size="xs" />
-                          {source.config.name}
-                        </span>
-                      }
-                      description={source.config.tagline}
-                      checked={enabledSourceSlugs.includes(source.config.slug)}
-                      onCheckedChange={(checked) => handleSourceToggle(source.config.slug, checked)}
-                    />
+                <>
+                  {([
+                    { key: 'microservices' as const, labelKey: 'sourcesList.groupMicroservices', items: availableSources.filter((s) => s.config.type === 'local') },
+                    { key: 'mcp' as const, labelKey: 'sourcesList.groupMcp', items: availableSources.filter((s) => s.config.type === 'mcp') },
+                    { key: 'api' as const, labelKey: 'sourcesList.filterApi', items: availableSources.filter((s) => s.config.type !== 'local' && s.config.type !== 'mcp') },
+                  ]).map((group) => group.items.length === 0 ? null : (
+                    <div key={group.key} className="mb-3 last:mb-0" data-testid={`default-sources-${group.key}`}>
+                      <p className="mb-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                        {t(group.labelKey)}
+                      </p>
+                      <SettingsCard>
+                        {group.items.map((source) => (
+                          <SettingsToggle
+                            key={source.config.slug}
+                            label={
+                              <span className="inline-flex items-center gap-2">
+                                <SourceAvatar source={source} size="xs" />
+                                {source.config.name}
+                              </span>
+                            }
+                            description={source.config.tagline}
+                            checked={enabledSourceSlugs.includes(source.config.slug)}
+                            onCheckedChange={(checked) => handleSourceToggle(source.config.slug, checked)}
+                          />
+                        ))}
+                      </SettingsCard>
+                    </div>
                   ))}
-                </SettingsCard>
+                </>
               ) : (
                 <p className="text-sm text-muted-foreground">{t("settings.workspace.noSourcesConfigured")}</p>
               )}
