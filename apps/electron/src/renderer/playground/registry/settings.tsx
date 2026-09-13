@@ -11,6 +11,8 @@ import KnowledgeSettingsPage from '@/pages/settings/KnowledgeSettingsPage'
 import ImportSettingsPage from '@/pages/settings/ImportSettingsPage'
 import ExtensionsSettingsPage from '@/pages/settings/ExtensionsSettingsPage'
 import AppSettingsPage from '@/pages/settings/AppSettingsPage'
+import AiSettingsPage from '@/pages/settings/AiSettingsPage'
+import InputSettingsPage from '@/pages/settings/InputSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import type { ComponentEntry } from './types'
@@ -43,6 +45,22 @@ function AppearancePlayground() {
   return (
     <SettingsScreen>
       <AppearanceSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function AiPlayground() {
+  return (
+    <SettingsScreen>
+      <AiSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function InputPlayground() {
+  return (
+    <SettingsScreen>
+      <InputSettingsPage />
     </SettingsScreen>
   )
 }
@@ -179,7 +197,7 @@ export const settingsComponents: ComponentEntry[] = [
     name: 'Settings · Appearance',
     category: 'Settings',
     level: 'Screens',
-    description: 'High contrast, font triad, Zen Shell default OFF',
+    description: 'ROX2-051 native appearance chrome; prefs are local writes',
     component: AppearancePlayground,
     props: [],
     layout: 'full',
@@ -271,6 +289,26 @@ export const settingsComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'ROX2-048 native import chrome; scan is device-read, persist is local',
     component: ImportPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-ai',
+    name: 'Settings · AI',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-050 native AI chrome; connection test is not spend',
+    component: AiPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-input',
+    name: 'Settings · Input',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-052 native input chrome; prefs are local writes',
+    component: InputPlayground,
     props: [],
     layout: 'full',
   },

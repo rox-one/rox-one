@@ -41,6 +41,8 @@ import {
 } from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import { ConnectionIcon } from '@/components/icons/ConnectionIcon'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 import {
   SettingsSection,
@@ -526,6 +528,8 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
   // Save workspace setting helper (optimistic update with rollback)
   const updateSetting = useCallback(async <K extends keyof WorkspaceSettings>(key: K, value: WorkspaceSettings[K]) => {
     if (!window.electronAPI) return
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
 
     const previousValue = settings?.[key]
 
@@ -872,6 +876,8 @@ export default function AiSettingsPage() {
 
   const handleRenameSubmit = useCallback(async () => {
     if (!renamingConnection || !window.electronAPI) return
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'connection-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     const trimmedName = renameValue.trim()
     if (!trimmedName || trimmedName === renamingConnection.name) {
       setRenameDialogOpen(false)
@@ -965,6 +971,13 @@ export default function AiSettingsPage() {
 
   const handleDeleteConnection = useCallback(async (slug: string) => {
     if (!window.electronAPI) return
+    const gate = settingsPageActionResult({
+      pageId: 'ai',
+      action: 'connection-delete',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) return
     try {
       const result = await window.electronAPI.deleteLlmConnection(slug)
       if (result.success) {
@@ -979,6 +992,13 @@ export default function AiSettingsPage() {
 
   const handleValidateConnection = useCallback(async (slug: string) => {
     if (!window.electronAPI) return
+    const gate = settingsPageActionResult({
+      pageId: 'ai',
+      action: 'connection-test',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) return
 
     // Set validating state
     setValidationStates(prev => ({ ...prev, [slug]: { state: 'validating' } }))
@@ -1015,6 +1035,8 @@ export default function AiSettingsPage() {
 
   const handleSetDefaultConnection = useCallback(async (slug: string) => {
     if (!window.electronAPI) return
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     try {
       const result = await window.electronAPI.setDefaultLlmConnection(slug)
       if (result.success) {
@@ -1034,6 +1056,8 @@ export default function AiSettingsPage() {
     behavior: MidStreamBehavior,
   ) => {
     if (!window.electronAPI) return
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'connection-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     if (resolveMidStreamBehavior(connection) === behavior) return
     try {
       const updated = { ...connection, midStreamBehavior: behavior }
@@ -1072,6 +1096,8 @@ export default function AiSettingsPage() {
   // App-level default handlers
   const handleDefaultModelChange = useCallback(async (model: string) => {
     if (!window.electronAPI || !defaultConnection) return
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'connection-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     // Update defaultModel on the connection, then save the full connection
     const updated = { ...defaultConnection, defaultModel: model }
     // Remove status fields that aren't part of LlmConnection
@@ -1082,6 +1108,8 @@ export default function AiSettingsPage() {
 
   const handleDefaultThinkingChange = useCallback(async (level: ThinkingLevel) => {
     if (!window.electronAPI) return
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
 
     const previous = defaultThinking
     setDefaultThinking(level)
@@ -1099,16 +1127,22 @@ export default function AiSettingsPage() {
   }, [defaultThinking])
 
   const handleExtendedPromptCacheChange = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setExtendedPromptCache(enabled)
     await window.electronAPI?.setExtendedPromptCache(enabled)
   }, [])
 
   const handleEnable1MContextChange = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setEnable1MContext(enabled)
     await window.electronAPI?.setEnable1MContext(enabled)
   }, [])
 
   const handleRtkToggle = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'ai', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setRtkEnabled(enabled)
     await window.electronAPI?.setRtkEnabled(enabled)
   }, [])
@@ -1148,7 +1182,7 @@ export default function AiSettingsPage() {
   }, [refreshLlmConnections])
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t("settings.ai.title")} actions={<HeaderMenu route={routes.view.settings('ai')} />} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">

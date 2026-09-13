@@ -38,6 +38,14 @@ import { workspaceAvatarColorsAtom } from '@/atoms/workspace-avatar-colors'
 import { kanbanColumnColorsAtom, kanbanColumnStatusAtom, kanbanLivePulseAtom } from '@/atoms/kanban'
 import { showBackgroundFinishedChipAtom } from '@/atoms/background-finished'
 import { KANBAN_COLUMNS } from '@/components/app-shell/kanban/status-column'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
+
+function appearancePrefLive(): boolean {
+  return isClaimableLive(
+    settingsPageActionResult({ pageId: 'appearance', action: 'pref-write', source: 'native' }),
+  )
+}
 import { DEFAULT_KANBAN_COLUMN_COLORS } from '@/components/app-shell/kanban/kanban-colors'
 import type { BuiltInKanbanColumnId, KanbanColumnId } from '@/components/app-shell/kanban/types'
 import {
@@ -158,10 +166,12 @@ export default function AppearanceSettingsPage() {
     storage.get(storage.KEYS.showConnectionIcons, true)
   )
   const handleConnectionIconsChange = useCallback((checked: boolean) => {
+    if (!appearancePrefLive()) return
     setShowConnectionIcons(checked)
     storage.set(storage.KEYS.showConnectionIcons, checked)
   }, [])
   const handleLanguageChange = useCallback((value: string) => {
+    if (!appearancePrefLive()) return
     void (async () => {
       try {
         console.info('[i18n] Appearance dropdown change', {
@@ -179,6 +189,7 @@ export default function AppearanceSettingsPage() {
   // Project color treatment in the SessionList
   const projectColorTreatment = useProjectColorTreatment()
   const handleProjectColorTreatmentChange = useCallback((value: string) => {
+    if (!appearancePrefLive()) return
     setProjectColorTreatment(value as ProjectColorTreatment)
   }, [])
 
@@ -249,6 +260,7 @@ export default function AppearanceSettingsPage() {
 
   const persistKanbanConfig = useCallback(
     async (next: KanbanBoardConfig) => {
+      if (!appearancePrefLive()) return
       setKanbanBoardConfig(next)
       kanbanBoardConfigRef.current = next
       syncKanbanAtomsFromConfig(next)
@@ -311,6 +323,7 @@ export default function AppearanceSettingsPage() {
     storage.get(storage.KEYS.workspaceSelectorRail, true)
   )
   const handleWorkspaceSelectorRailChange = useCallback((checked: boolean) => {
+    if (!appearancePrefLive()) return
     setWorkspaceSelectorRail(checked)
     storage.set(storage.KEYS.workspaceSelectorRail, checked)
     window.dispatchEvent(new CustomEvent(WORKSPACE_SELECTOR_RAIL_CHANGED_EVENT, { detail: checked }))
@@ -320,6 +333,7 @@ export default function AppearanceSettingsPage() {
     storage.get(storage.KEYS.turnActivitiesExpandedByDefault, false)
   )
   const handleTurnActivitiesDefaultChange = useCallback((value: string) => {
+    if (!appearancePrefLive()) return
     const expanded = value === 'expanded'
     setTurnActivitiesExpandedByDefault(expanded)
     storage.set(storage.KEYS.turnActivitiesExpandedByDefault, expanded)
@@ -332,6 +346,7 @@ export default function AppearanceSettingsPage() {
     window.electronAPI?.getDefaultZoomLevel?.().then(setDefaultZoomLevel)
   }, [])
   const handleDefaultZoomLevelChange = useCallback(async (level: number) => {
+    if (!appearancePrefLive()) return
     setDefaultZoomLevel(level)
     await window.electronAPI?.setDefaultZoomLevel?.(level)
   }, [])
@@ -346,6 +361,7 @@ export default function AppearanceSettingsPage() {
     window.electronAPI?.getRichToolDescriptions?.().then(setRichToolDescriptions)
   }, [])
   const handleRichToolDescriptionsChange = useCallback(async (checked: boolean) => {
+    if (!appearancePrefLive()) return
     setRichToolDescriptions(checked)
     await window.electronAPI?.setRichToolDescriptions?.(checked)
   }, [])
@@ -405,6 +421,7 @@ export default function AppearanceSettingsPage() {
   // Uses ThemeContext for the active workspace (immediate visual update) and IPC for other workspaces
   const handleWorkspaceThemeChange = useCallback(
     async (workspaceId: string, value: string) => {
+      if (!appearancePrefLive()) return
       // 'default' means inherit from app default (null in storage)
       const themeId = value === 'default' ? null : value
 
@@ -454,7 +471,7 @@ export default function AppearanceSettingsPage() {
   }, [colorTheme, presetThemes])
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
         title={t("settings.appearance.title")}
         actions={<HeaderMenu route={routes.view.settings('appearance')} helpFeature="themes" />}
@@ -470,7 +487,10 @@ export default function AppearanceSettingsPage() {
                   <SettingsRow label={t("settings.appearance.mode")}>
                     <SettingsSegmentedControl
                       value={mode}
-                      onValueChange={setMode}
+                      onValueChange={(value) => {
+                        if (!appearancePrefLive()) return
+                        setMode(value)
+                      }}
                       options={[
                         { value: 'system', label: t("settings.appearance.system"), icon: <Monitor className="w-4 h-4" /> },
                         { value: 'light', label: t("settings.appearance.light"), icon: <Sun className="w-4 h-4" /> },
@@ -484,7 +504,10 @@ export default function AppearanceSettingsPage() {
                   >
                     <SettingsSegmentedControl
                       value={contrast}
-                      onValueChange={setContrast}
+                      onValueChange={(value) => {
+                        if (!appearancePrefLive()) return
+                        setContrast(value)
+                      }}
                       options={[
                         { value: 'system', label: t("settings.appearance.contrastSystem") },
                         { value: 'normal', label: t("settings.appearance.contrastNormal") },
@@ -495,7 +518,10 @@ export default function AppearanceSettingsPage() {
                   <SettingsRow label={t("settings.appearance.colorTheme")}>
                     <SettingsMenuSelect
                       value={colorTheme}
-                      onValueChange={setColorTheme}
+                      onValueChange={(value) => {
+                        if (!appearancePrefLive()) return
+                        setColorTheme(value)
+                      }}
                       options={themeOptions}
                     />
                   </SettingsRow>
@@ -505,7 +531,10 @@ export default function AppearanceSettingsPage() {
                   >
                     <SettingsSegmentedControl
                       value={font}
-                      onValueChange={(value) => setFont(value as typeof font)}
+                      onValueChange={(value) => {
+                        if (!appearancePrefLive()) return
+                        setFont(value as typeof font)
+                      }}
                       options={[
                         { value: 'rox', label: t("settings.appearance.fontRox") },
                         { value: 'inter', label: t("settings.appearance.fontInter") },
@@ -519,7 +548,10 @@ export default function AppearanceSettingsPage() {
                   >
                     <SettingsSegmentedControl
                       value={chatFont}
-                      onValueChange={(value) => setChatFont(value as typeof chatFont)}
+                      onValueChange={(value) => {
+                        if (!appearancePrefLive()) return
+                        setChatFont(value as typeof chatFont)
+                      }}
                       options={[
                         { value: 'rox', label: t("settings.appearance.fontRox") },
                         { value: 'inter', label: t("settings.appearance.fontInter") },
@@ -533,7 +565,10 @@ export default function AppearanceSettingsPage() {
                   >
                     <SettingsSegmentedControl
                       value={terminalFont}
-                      onValueChange={(value) => setTerminalFont(value as typeof terminalFont)}
+                      onValueChange={(value) => {
+                        if (!appearancePrefLive()) return
+                        setTerminalFont(value as typeof terminalFont)
+                      }}
                       options={[
                         { value: 'rox', label: t("settings.appearance.fontRox") },
                         { value: 'jetbrains', label: t("settings.appearance.fontJetbrains") },
@@ -678,7 +713,10 @@ export default function AppearanceSettingsPage() {
                     label={t("settings.appearance.backgroundFinishedChip")}
                     description={t("settings.appearance.backgroundFinishedChipDesc")}
                     checked={showBackgroundFinishedChip}
-                    onCheckedChange={setShowBackgroundFinishedChip}
+                    onCheckedChange={(checked) => {
+                      if (!appearancePrefLive()) return
+                      setShowBackgroundFinishedChip(checked)
+                    }}
                   />
                   <SettingsRow
                     label={t("settings.appearance.projectColorTreatment")}
@@ -729,7 +767,10 @@ export default function AppearanceSettingsPage() {
                     label={t("settings.appearance.kanbanLivePulse")}
                     description={t("settings.appearance.kanbanLivePulseDesc")}
                     checked={kanbanLivePulse}
-                    onCheckedChange={setKanbanLivePulse}
+                    onCheckedChange={(checked) => {
+                      if (!appearancePrefLive()) return
+                      setKanbanLivePulse(checked)
+                    }}
                   />
                 </SettingsCard>
               </SettingsSection>
