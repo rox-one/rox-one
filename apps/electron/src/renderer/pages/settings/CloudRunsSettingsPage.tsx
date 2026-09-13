@@ -10,14 +10,18 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import {
   SettingsCard,
   SettingsRow,
   SettingsSection,
   SettingsToggle,
 } from '@/components/settings'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { routes } from '@/lib/navigate'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -160,18 +164,26 @@ export default function CloudRunsSettingsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-border/50 px-6 py-4">
-        <div className="min-w-0">
-          <h2 className="whitespace-normal break-words text-lg font-semibold">{t('settings.cloudRuns.title')}</h2>
-          <p className="mt-1 whitespace-normal break-words text-sm text-muted-foreground">{t('settings.cloudRuns.description')}</p>
-        </div>
-        <Button size="sm" variant="outline" disabled={loading} onClick={() => void load()}>
-          {loading ? t('common.loading') : t('common.retry')}
-        </Button>
-      </header>
-
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto w-full max-w-3xl space-y-8 px-6 py-5">
+      <PanelHeader
+        title={t('settings.cloudRuns.title')}
+        actions={
+          <>
+            <Button size="sm" variant="outline" disabled={loading} onClick={() => void load()}>
+              {loading ? t('common.loading') : t('common.refresh')}
+            </Button>
+            <HeaderMenu route={routes.view.settings('cloudRuns')} />
+          </>
+        }
+      />
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
+        <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
+          <p className="whitespace-normal break-words text-sm text-muted-foreground">
+            {t('settings.cloudRuns.description')}
+          </p>
+          <p className="text-xs text-muted-foreground" role="status">
+            {config?.enabled ? t('automations.statusActive') : t('automations.statusDisabled')}
+          </p>
           {loadError && (
             <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
               <span className="min-w-0 whitespace-normal break-words">{loadError}</span>
@@ -248,7 +260,7 @@ export default function CloudRunsSettingsPage() {
                     <Input
                       className={fieldClass}
                       value={draft.notifyWebhookUrl}
-                      placeholder="https://example.com/cloud-runs-hook"
+                      placeholder={t('settings.cloudRuns.webhookPlaceholder')}
                       onChange={(e) => setDraft((current) => current && { ...current, notifyWebhookUrl: e.target.value })}
                       onBlur={(e) => patch({ notifyWebhookUrl: e.target.value.trim() || undefined })}
                     />
@@ -361,7 +373,7 @@ export default function CloudRunsSettingsPage() {
                     <Input
                       className={fieldClass + ' w-64'}
                       value={draft.cheapModelId}
-                      placeholder="kimi-lite / gpt-4o-mini"
+                      placeholder={t('settings.cloudRuns.cheapModelPlaceholder')}
                       onChange={(e) => setDraft((current) => current && { ...current, cheapModelId: e.target.value })}
                       onBlur={(e) => patch({ cheapModelId: e.target.value.trim() || undefined })}
                     />
@@ -387,7 +399,7 @@ export default function CloudRunsSettingsPage() {
                   />
                 </SettingsCard>
               </SettingsSection>
-              <SettingsSection title={t('settings.cloudRuns.sectionSandbox')}>
+              <SettingsSection title={t('settings.cloudRuns.sectionRoxSandbox')}>
                 <SettingsCard>
                   <SettingsRow
                     label={
@@ -406,11 +418,8 @@ export default function CloudRunsSettingsPage() {
             </>
           )}
         </div>
+        </ScrollArea>
       </div>
-
-      <footer className="shrink-0 border-t border-border/50 px-6 py-3 text-xs text-muted-foreground">
-        <span role="status">{config?.enabled ? t('automations.statusActive') : t('automations.statusDisabled')}</span>
-      </footer>
     </div>
   )
 }

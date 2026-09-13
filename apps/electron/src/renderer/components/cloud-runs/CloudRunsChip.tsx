@@ -8,7 +8,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Cloud, Download, FileText, Link2, MoreHorizontal, OctagonX, RefreshCw, Rocket, XCircle } from 'lucide-react'
+import { Cloud, Download, FileText, Link2, MoreHorizontal, OctagonX, RefreshCw, Rocket, Sparkles, XCircle } from 'lucide-react'
 import { Markdown, PremiumMenuSelect } from '@craft-agent/ui'
 import {
   Dialog,
@@ -49,10 +49,15 @@ interface CloudRunsChipProps {
 const POLL_MS = 5_000
 
 /** Compact "12.3k tok · 4.2k out · 3m40s" ledger line for the runs list. */
-function formatUsage(promptTokens: number, completionTokens: number, cpuMs?: number): string {
+function formatUsage(
+  promptTokens: number,
+  completionTokens: number,
+  t: (key: string, opts?: Record<string, string>) => string,
+  cpuMs?: number,
+): string {
   const tok = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n))
   const cpu = cpuMs && cpuMs > 0 ? ` · ${Math.floor(cpuMs / 60000)}m${Math.round((cpuMs % 60000) / 1000)}s` : ''
-  return `${tok(promptTokens)}+${tok(completionTokens)} tok${cpu}`
+  return t('cloudRuns.usageTokens', { prompt: tok(promptTokens), completion: tok(completionTokens), cpu })
 }
 
 function translateCloudRunsError(message: string, t: (key: string) => string): string {
@@ -298,13 +303,13 @@ function CloudRunsChipInner({
                 />
                 {provider === 'daytona' && (
                 <label className="flex min-w-0 items-center gap-1 whitespace-normal break-words text-xs text-muted-foreground" title={t('cloudRuns.personasHint')}>
-                  <input disabled={!isAvailable} type="checkbox" checked={personas} onChange={(e) => setPersonas(e.target.checked)} />
+                  <input className="size-3.5 shrink-0 accent-foreground" disabled={!isAvailable} type="checkbox" checked={personas} onChange={(e) => setPersonas(e.target.checked)} />
                   {t('cloudRuns.personas')}
                 </label>
                 )}
                 {provider === 'daytona' && (
                 <label className="flex min-w-0 items-center gap-1 whitespace-normal break-words text-xs text-muted-foreground" title={t('cloudRuns.ompHint')}>
-                  <input disabled={!isAvailable} type="checkbox" checked={omp} onChange={(e) => setOmp(e.target.checked)} />
+                  <input className="size-3.5 shrink-0 accent-foreground" disabled={!isAvailable} type="checkbox" checked={omp} onChange={(e) => setOmp(e.target.checked)} />
                   {t('cloudRuns.omp')}
                 </label>
                 )}
@@ -315,7 +320,7 @@ function CloudRunsChipInner({
                   disabled={!isAvailable || busy === 'prefill'}
                   onClick={() => void prefillFromSession()}
                 >
-                  ✦
+                  <Sparkles className="h-4 w-4" />
                 </Button>
                 <Button
                   disabled={!isAvailable || !topic.trim() || busy === 'submit'}
@@ -386,7 +391,7 @@ function CloudRunsChipInner({
                     <div className="flex shrink-0 flex-wrap justify-end gap-x-2 gap-y-1 text-xs text-muted-foreground">
                       {run.status?.usage && (
                         <span title={t('cloudRuns.usageHint')}>
-                          {formatUsage(run.status.usage.promptTokens, run.status.usage.completionTokens, run.status.usage.cpuMs)}
+                          {formatUsage(run.status.usage.promptTokens, run.status.usage.completionTokens, t, run.status.usage.cpuMs)}
                         </span>
                       )}
                       {progress && state === 'running' && <span>{progress.completed}/{progress.total}</span>}

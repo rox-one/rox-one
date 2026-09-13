@@ -39,7 +39,21 @@ export function EnvironmentSetupStep({ onContinue, onSkip }: EnvironmentSetupSte
     }
   }, [onContinue])
 
-  if (pending === null || pending.length === 0) {
+  if (pending === null) {
+    return (
+      <StepFormLayout
+        icon={<SlidersHorizontal />}
+        title={t('onboarding.environment.title')}
+        description={t('onboarding.environment.description')}
+      >
+        <p role="status" className="text-sm text-muted-foreground" aria-live="polite">
+          {t('common.loading')}
+        </p>
+      </StepFormLayout>
+    )
+  }
+
+  if (pending.length === 0) {
     return null
   }
 

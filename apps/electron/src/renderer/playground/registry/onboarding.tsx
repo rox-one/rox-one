@@ -7,6 +7,8 @@ import { CredentialsStep } from '@/components/onboarding/CredentialsStep'
 import { CompletionStep } from '@/components/onboarding/CompletionStep'
 import { GitBashWarning, type GitBashStatus } from '@/components/onboarding/GitBashWarning'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
+import { ReauthScreen } from '@/components/onboarding/ReauthScreen'
+import { EnvironmentSetupStep } from '@/components/onboarding/EnvironmentSetupStep'
 import type { OnboardingState } from '@/components/onboarding/OnboardingWizard'
 
 const createOnboardingState = (overrides: Partial<OnboardingState> = {}): OnboardingState => ({
@@ -437,6 +439,38 @@ export const onboardingComponents: ComponentEntry[] = [
       onRecheckGitBash: noopHandler,
       onClearError: noopHandler,
       onSkipSetup: () => console.log('[Playground] Setup deferred'),
+    }),
+  },
+  {
+    id: 'onboarding-reauth',
+    name: 'ReauthScreen',
+    category: 'Onboarding',
+    description: 'Expired-session re-login with Rox copy and an i18n error fallback',
+    component: ReauthScreen,
+    props: [],
+    variants: [],
+    layout: 'full',
+    mockData: () => ({
+      onLogin: async () => {
+        console.log('[Playground] Reauth login')
+      },
+      onReset: noopHandler,
+    }),
+  },
+  {
+    id: 'onboarding-environment',
+    name: 'Environment setup',
+    category: 'Onboarding',
+    description: 'Optional environment questionnaire with PremiumMenuSelect agent-rule labels',
+    component: EnvironmentSetupStep,
+    props: [],
+    variants: [],
+    layout: 'full',
+    mockData: () => ({
+      onContinue: (prefs: unknown, complete: boolean) => {
+        console.log('[Playground] Environment continue', complete, prefs)
+      },
+      onSkip: noopHandler,
     }),
   },
 ]

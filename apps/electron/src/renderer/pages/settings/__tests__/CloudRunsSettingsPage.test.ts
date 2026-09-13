@@ -8,12 +8,14 @@ const source = readFileSync(cloudRunsSettingsPath, 'utf8')
 const longCyrillicDescription = 'Фоновое выполнение облачных задач продолжает работать после закрытия приложения и должно оставаться полностью читаемым'
 
 describe('CloudRunsSettingsPage compact layout and recovery', () => {
-  it('uses one viewport-sized local body scroll owner between fixed header and footer', () => {
+  it('uses shared PanelHeader chrome and one ScrollArea body', () => {
     expect(source).toContain('h-full min-h-0 flex-col')
-    expect(source).toContain('<header className="flex shrink-0')
-    expect(source).toContain('min-h-0 flex-1 overflow-y-auto overscroll-contain')
-    expect(source.match(/overflow-y-auto overscroll-contain/g)).toHaveLength(1)
-    expect(source).toContain('<footer className="shrink-0')
+    expect(source).toContain('<PanelHeader')
+    expect(source).toContain('mask-fade-y')
+    expect(source).toContain('<ScrollArea')
+    expect(source).not.toContain('<header className="flex shrink-0')
+    expect(source).not.toContain('<footer className="shrink-0')
+    expect(source).not.toContain('100dvh')
   })
 
   it('keeps long Cyrillic settings labels and descriptions readable', () => {
@@ -36,8 +38,16 @@ describe('CloudRunsSettingsPage compact layout and recovery', () => {
   })
 
   it('names the refresh operation and exposes enabled or disabled status', () => {
+    expect(source).toContain("t('common.refresh')")
     expect(source).toContain("t('automations.statusActive')")
     expect(source).toContain("t('automations.statusDisabled')")
+  })
+
+  it('uses i18n placeholders instead of English example strings', () => {
+    expect(source).toContain("t('settings.cloudRuns.webhookPlaceholder')")
+    expect(source).toContain("t('settings.cloudRuns.cheapModelPlaceholder')")
+    expect(source).not.toContain('https://example.com/cloud-runs-hook')
+    expect(source).not.toContain('kimi-lite / gpt-4o-mini')
   })
 
   it('rebinds webhook, limits, cheap-model, and Daytona sandbox fields after a successful load', () => {
@@ -64,6 +74,7 @@ describe('CloudRunsSettingsPage compact layout and recovery', () => {
 
   it('exposes a Rox-native sandbox tab instead of embedding grok-bot UI', () => {
     expect(source).toContain("t('settings.cloudRuns.sectionSandbox')")
+    expect(source).toContain("t('settings.cloudRuns.sectionRoxSandbox')")
     expect(source).toContain("t('settings.cloudRuns.sandboxTab')")
     expect(source).toContain("t('settings.cloudRuns.sandboxGated')")
     expect(source).not.toContain('grok-bot')

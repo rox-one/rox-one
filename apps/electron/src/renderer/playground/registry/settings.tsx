@@ -2,6 +2,9 @@ import * as React from 'react'
 import PrivacySettingsPage from '@/pages/settings/PrivacySettingsPage'
 import AppearanceSettingsPage from '@/pages/settings/AppearanceSettingsPage'
 import RuntimeSettingsPage from '@/pages/settings/RuntimeSettingsPage'
+import CloudRunsSettingsPage from '@/pages/settings/CloudRunsSettingsPage'
+import SecuritySettingsPage from '@/pages/settings/SecuritySettingsPage'
+import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import type { ComponentEntry } from './types'
 
@@ -37,6 +40,56 @@ function RuntimePlayground() {
   )
 }
 
+function CloudRunsPlayground() {
+  return (
+    <SettingsScreen>
+      <CloudRunsSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function SecurityPlayground() {
+  return (
+    <SettingsScreen>
+      <SecuritySettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function QuestEmptyPlayground() {
+  const [ready, setReady] = React.useState(false)
+  React.useLayoutEffect(() => {
+    const api = window.electronAPI
+    const previous = api.getGamificationProfile
+    api.getGamificationProfile = async () => {
+      const profile = await previous()
+      return { ...profile, quests: [] }
+    }
+    setReady(true)
+    return () => {
+      api.getGamificationProfile = previous
+    }
+  }, [])
+  if (!ready) return null
+  return (
+    <PlaygroundAppShellProvider>
+      <div className="mx-auto w-full max-w-md bg-background p-4">
+        <QuestProgressCard />
+      </div>
+    </PlaygroundAppShellProvider>
+  )
+}
+
+function QuestActivePlayground() {
+  return (
+    <PlaygroundAppShellProvider>
+      <div className="mx-auto w-full max-w-md bg-background p-4">
+        <QuestProgressCard />
+      </div>
+    </PlaygroundAppShellProvider>
+  )
+}
+
 export const settingsComponents: ComponentEntry[] = [
   {
     id: 'settings-privacy',
@@ -65,6 +118,46 @@ export const settingsComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'Secret refs with Infisical unavailable row, no native select',
     component: RuntimePlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-cloud-runs',
+    name: 'Settings · Cloud Runs',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'PanelHeader chrome, i18n placeholders, Rox sandbox empty gate',
+    component: CloudRunsPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-security',
+    name: 'Settings · Security',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'Audit empty findings, HOST_ONLY, Infisical health',
+    component: SecurityPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'home-quests-active',
+    name: 'Home · Quest slider',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'Home quest strip with available quests',
+    component: QuestActivePlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'home-quests-empty',
+    name: 'Home · Quests empty',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'Caught-up empty state when no visible quests remain',
+    component: QuestEmptyPlayground,
     props: [],
     layout: 'full',
   },

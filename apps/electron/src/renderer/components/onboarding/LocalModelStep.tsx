@@ -79,7 +79,7 @@ export function LocalModelStep({
             form="local-model-form"
             disabled={false}
             loading={status === 'validating'}
-            loadingText="Connecting..."
+            loadingText={t("common.connecting")}
           />
         </>
       }

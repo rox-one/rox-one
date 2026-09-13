@@ -92,4 +92,10 @@ describe('SecuritySettingsPage source contracts', () => {
     expect(source).not.toContain('overflow-y-auto overscroll-contain')
     expect(source).not.toContain('100dvh')
   })
+
+  it('uses PremiumMenuSelect for the findings domain filter', () => {
+    expect(source).toContain('PremiumMenuSelect')
+    expect(source).not.toContain('<select')
+    expect(source).not.toContain('security-domain-filter')
+  })
 })

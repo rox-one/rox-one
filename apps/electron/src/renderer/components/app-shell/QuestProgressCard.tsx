@@ -33,12 +33,18 @@ export function QuestProgressCard({
   const { t } = useTranslation()
   const [quests, setQuests] = useState<QuestRecord[]>([])
   const [index, setIndex] = useState(0)
+  const [ready, setReady] = useState(false)
 
   const reload = useCallback(async () => {
-    if (!window.electronAPI.getGamificationProfile) return
+    if (!window.electronAPI.getGamificationProfile) {
+      setQuests([])
+      setReady(true)
+      return
+    }
     const profile = await window.electronAPI.getGamificationProfile()
     setQuests(profile.quests ?? [])
     setIndex(0)
+    setReady(true)
   }, [])
 
   useEffect(() => {
@@ -58,7 +64,19 @@ export function QuestProgressCard({
     await reload()
   }, [cloudFeaturesEnabled, reload])
 
-  if (quests.length === 0) return null
+  if (!ready) return null
+
+  if (quests.length === 0) {
+    return (
+      <div
+        className={cn('rounded-md border border-dashed border-border/70 bg-foreground/5 px-3 py-2', className)}
+        data-testid="quest-progress-card-empty"
+      >
+        <p className="text-xs font-medium">{t('quests.empty')}</p>
+        <p className="mt-0.5 text-[10px] text-muted-foreground">{t('quests.emptyHint')}</p>
+      </div>
+    )
+  }
 
   const safeIndex = Math.min(index, quests.length - 1)
   const quest = quests[safeIndex]

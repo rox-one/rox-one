@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -256,23 +257,24 @@ export function EnvironmentFields({
                   onChange({ agentRules: next })
                 }}
               />
-              <select
-                className="w-full rounded-md border bg-background px-2 py-1 text-xs"
-                value={rule.label}
-                onChange={(event) => {
-                  const label = event.target.value as AgentRuleLabel
-                  const next = prefs.agentRules.map((item) => (
-                    item.id === rule.id ? { ...item, label } : item
+              <PremiumMenuSelect
+                aria-label={t('onboarding.environment.agentRules')}
+                className="h-8 w-full max-w-none"
+                items={(Object.keys(RULE_KEYS) as AgentRuleLabel[]).map((label) => ({
+                  id: label,
+                  label: t(RULE_KEYS[label]),
+                }))}
+                selectedId={rule.label}
+                placeholder={t('onboarding.environment.agentRules')}
+                onSelect={(item) => {
+                  const label = item.id as AgentRuleLabel
+                  const next = prefs.agentRules.map((current) => (
+                    current.id === rule.id ? { ...current, label } : current
                   ))
                   onChange({ agentRules: next })
                 }}
-              >
-                {(Object.keys(RULE_KEYS) as AgentRuleLabel[]).map((label) => (
-                  <option key={label} value={label}>
-                    {t(RULE_KEYS[label])}
-                  </option>
-                ))}
-              </select>
+                variant="compact"
+              />
             </div>
           ))}
           <Button

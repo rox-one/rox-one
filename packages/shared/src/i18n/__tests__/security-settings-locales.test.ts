@@ -66,8 +66,18 @@ describe('security settings locale keys', () => {
 
   it('keeps the canonical Russian title and description user-facing', () => {
     const russian = JSON.parse(readFileSync(join(localesDirectory, 'ru.json'), 'utf8')) as Record<string, string>
+    const english = JSON.parse(readFileSync(join(localesDirectory, 'en.json'), 'utf8')) as Record<string, string>
 
     expect(russian['settings.security.title']).toBe('Безопасность')
     expect(russian['settings.security.description']).toBe('Срез рисков, прав и изоляции Rox и OpenClaw')
+    expect(russian['security.section.overview']).toBe('Обзор')
+    expect(russian['security.finding.empty']).not.toBe('Empty')
+    expect(russian['security.coverage.openclaw']).toBe('OpenClaw')
+    expect(russian['settings.cloudRuns.providerNative']).toBe('Нативный sidecar (этот компьютер)')
+    expect(russian['settings.cloudRuns.sectionSandbox']).toBe('Песочница Daytona')
+    expect(english['security.audit.refreshingLastSnapshot']).toContain('{{date}}')
+    expect(english['security.confirm.scope']).toContain('{{action}}')
+    expect(english['security.finding.whyDescription']).toContain('{{domain}}')
+    expect(english['security.acceptance.rationaleHint']).toContain('{{count}}')
   })
 })
