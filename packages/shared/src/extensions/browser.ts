@@ -11,13 +11,18 @@ export {
   type ExtensionCenterGroupId,
   type ExtensionCenterItem,
 } from './center-groups.ts'
+export { countInstalledExtensionRecords } from './installed-counts.ts'
 export type { ExtensionHostStatus } from './siyuan-bridge/types.ts'
 export {
+  EXTENSION_PERMISSION_GROUPS,
   EXTENSION_PERMISSIONS,
   HIGH_RISK_PERMISSIONS,
   extensionPermissionRisk,
+  groupExtensionPermissions,
   isExtensionPermission,
+  permissionGroupFor,
   permissionsFromAlwaysAllow,
+  type ExtensionPermissionGroup,
   type ExtensionPermissionRisk,
 } from './permissions.ts'
 export {

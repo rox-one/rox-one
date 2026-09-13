@@ -23,6 +23,7 @@ import {
   marketplaceEntryToRecord,
   pluginJsonToExtensionRecord,
   resetExtensionStateStoreCache,
+  seedDefaultMarketplaceInstalls,
   skillsToExtensionRecords,
   sourcesToExtensionRecords,
   type CatalogFilter,
@@ -123,7 +124,12 @@ export function registerExtensionsHandlers(server: RpcServer, deps: HandlerDeps)
       const entries = await registry.listAll(args?.filter)
       return {
         entries,
-        providers: registry.listProviders().map((p) => ({ id: p.id, label: p.label })),
+        providers: registry.listProviders().map((p) => ({
+          id: p.id,
+          label: p.label,
+          docsUrl: p.docsUrl,
+          community: p.community,
+        })),
       }
     },
   )
@@ -133,6 +139,16 @@ export function registerExtensionsHandlers(server: RpcServer, deps: HandlerDeps)
     async (_ctx, args?: ExtensionsListInstalledArgs): Promise<ExtensionsListInstalledResult> => {
       const dir = configDir()
       const store = getExtensionStateStore(dir)
+      try {
+        const catalog = await loadMarketplaceCatalog()
+        seedDefaultMarketplaceInstalls({ catalog, configDir: dir, stateStore: store })
+      } catch (err) {
+        log?.warn?.(
+          `EXTENSIONS_LIST_INSTALLED: default marketplace seed failed: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        )
+      }
       const state = store.getState()
       const enabledMap = state.enabled
       const records: ExtensionRecord[] = []
