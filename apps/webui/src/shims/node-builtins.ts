@@ -21,6 +21,9 @@ export const mkdirSync = () => {}
 export const readdirSync = () => []
 export const readdir = () => {}
 export const copyFileSync = () => {}
+export const cpSync = () => {}
+export const realpathSync = (p: string) => p
+export const rmSync = () => {}
 export const promises = {
   readFile: async () => { throw new Error('fs.promises not available in browser') },
   writeFile: async () => { throw new Error('fs.promises not available in browser') },

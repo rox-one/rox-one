@@ -9,4 +9,5 @@ export const rm = async () => {}
 export const unlink = async () => {}
 export const rename = async () => {}
 export const copyFile = async () => {}
-export default { readFile, writeFile, mkdir, readdir, stat, access, rm, unlink, rename, copyFile }
+export const open = async () => { throw new Error('fs.promises not available in browser') }
+export default { readFile, writeFile, mkdir, readdir, stat, access, rm, unlink, rename, copyFile, open }

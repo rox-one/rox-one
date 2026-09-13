@@ -221,4 +221,9 @@ export const writeFile = fn
 export const writeFileSync = binaryOrEmpty
 export const writeSync = binaryOrEmpty
 
+export class X509Certificate {
+  constructor(..._args: unknown[]) {}
+  publicKey = { export: (..._args: unknown[]) => BrowserBuffer.alloc(0) }
+}
+
 export default {}
