@@ -2,8 +2,10 @@
  * Native Notes engine (ROX-AUD-031 / #334).
  *
  * Local markdown + sidecar revisions. SiYuan is not required. Conation is
- * an adapter, not this store. Concurrent saves without the current revision
- * are rejected (no silent overwrite).
+ * an adapter, not this store. Saves require the current `expectedRevision`
+ * token: omitting it is rejected, and a stale token conflicts (no silent
+ * overwrite). Import validates and stages before commit; failure restores
+ * the prior vault snapshot.
  */
 
 import { formatRox2EntityId } from './platform-contract.ts'
@@ -341,7 +343,7 @@ export function createNativeNotesEngine(seed: readonly NativeNote[] = []): Nativ
     save(input) {
       const current = heads.get(input.noteId)
       if (!current) return { status: 'not_found' }
-      if (input.expectedRevision != null && input.expectedRevision !== current.revision) {
+      if (input.expectedRevision == null || input.expectedRevision === '' || input.expectedRevision !== current.revision) {
         return { status: 'conflict', currentRevision: current.revision, note: current }
       }
       const note = writeHead(

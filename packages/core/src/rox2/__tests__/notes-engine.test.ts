@@ -46,6 +46,29 @@ describe('ROX-AUD-031 native notes engine', () => {
     expect(ok.status).toBe('ok')
   })
 
+  test('save without expectedRevision is rejected; stale conflicts; matching succeeds', () => {
+    const engine = createNativeNotesEngine()
+    const created = engine.create('daily', '# Daily\n\nA')
+    const omitted = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB' })
+    expect(omitted.status).not.toBe('ok')
+    expect(engine.read('daily')?.markdown).toContain('A')
+    expect(engine.revisions('daily')).toHaveLength(1)
+
+    const empty = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB', expectedRevision: '' })
+    expect(empty.status).toBe('conflict')
+    expect(engine.read('daily')?.markdown).toContain('A')
+
+    const stale = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB', expectedRevision: 'stale-rev' })
+    expect(stale.status).toBe('conflict')
+    if (stale.status === 'conflict') {
+      expect(stale.currentRevision).toBe(created.revision)
+    }
+
+    const ok = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB', expectedRevision: created.revision })
+    expect(ok.status).toBe('ok')
+    expect(engine.read('daily')?.markdown).toContain('B')
+  })
+
   test('export/import is lossless for fields, attachments, and extra', () => {
     const engine = createNativeNotesEngine()
     engine.create('daily', '# Daily\n\nBody', { attachments: ['assets/a.png'], color: 'blue' })
