@@ -1,5 +1,5 @@
 /**
- * ROX2-031 hub + ROX2-041..055 settings pages.
+ * ROX2-031 hub + ROX2-041..058 settings pages.
  * Settings pages stay in SETTINGS_PAGES. Conation is not this surface.
  */
 import {
@@ -28,12 +28,15 @@ export const ROX2_SETTINGS_WAVE3_PAGE_IDS = ['extensions', 'import', 'app'] as c
 export const ROX2_SETTINGS_WAVE4_PAGE_IDS = ['ai', 'appearance', 'input'] as const
 /** ROX2-053..055: workspace, accounts, permissions. */
 export const ROX2_SETTINGS_WAVE5_PAGE_IDS = ['workspace', 'accounts', 'permissions'] as const
+/** ROX2-056..058: security, labels, organizations. */
+export const ROX2_SETTINGS_WAVE6_PAGE_IDS = ['security', 'labels', 'organizations'] as const
 export type Rox2SettingsPageId =
   | (typeof ROX2_SETTINGS_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE2_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE3_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE4_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE5_PAGE_IDS)[number]
+  | (typeof ROX2_SETTINGS_WAVE6_PAGE_IDS)[number]
 
 export type SettingsPageActionKind =
   | 'profile-write'
@@ -59,6 +62,7 @@ export type SettingsPageActionKind =
   | 'identity-connect'
   | 'identity-reset'
   | 'config-read'
+  | 'org-invite'
 
 const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'profile-write': 'write',
@@ -84,6 +88,7 @@ const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'identity-connect': 'cloud-send',
   'identity-reset': 'destroy',
   'config-read': 'device-read',
+  'org-invite': 'cloud-send',
 }
 
 export function bindSettingsHubContext(
@@ -127,6 +132,9 @@ export function settingsHubActionResult(opts: {
  * Workspace prefs are local writes; permission mode is write, not spend.
  * Accounts profile is local; identity connect is cloud-send; reset is destroy.
  * Permissions config load is device-read.
+ * Security install/start is cloud-send; audit is device-read; revoke is destroy.
+ * Labels create/update are local writes; delete is destroy.
+ * Organization create is local; invite/accept are cloud-send.
  */
 export function settingsPageActionResult(opts: {
   pageId: Rox2SettingsPageId

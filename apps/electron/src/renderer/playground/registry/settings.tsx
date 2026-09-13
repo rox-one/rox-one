@@ -16,6 +16,8 @@ import InputSettingsPage from '@/pages/settings/InputSettingsPage'
 import WorkspaceSettingsPage from '@/pages/settings/WorkspaceSettingsPage'
 import AccountsSettingsPage from '@/pages/settings/AccountsSettingsPage'
 import PermissionsSettingsPage from '@/pages/settings/PermissionsSettingsPage'
+import LabelsSettingsPage from '@/pages/settings/LabelsSettingsPage'
+import OrganizationsSettingsPage from '@/pages/settings/OrganizationsSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import { ModalProvider } from '@/context/ModalContext'
@@ -91,6 +93,22 @@ function PermissionsPlayground() {
   return (
     <SettingsScreen>
       <PermissionsSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function LabelsPlayground() {
+  return (
+    <SettingsScreen>
+      <LabelsSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function OrganizationsPlayground() {
+  return (
+    <SettingsScreen>
+      <OrganizationsSettingsPage />
     </SettingsScreen>
   )
 }
@@ -257,7 +275,7 @@ export const settingsComponents: ComponentEntry[] = [
     name: 'Settings · Security',
     category: 'Settings',
     level: 'Screens',
-    description: 'Audit empty findings, HOST_ONLY, Infisical health',
+    description: 'ROX2-056 native security chrome; install is not spend',
     component: SecurityPlayground,
     props: [],
     layout: 'full',
@@ -369,6 +387,26 @@ export const settingsComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'ROX2-055 native permissions chrome; config load is device-read',
     component: PermissionsPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-labels',
+    name: 'Settings · Labels',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-057 native labels chrome; delete is destroy',
+    component: LabelsPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-organizations',
+    name: 'Settings · Organizations',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-058 native orgs chrome; invite is not spend',
+    component: OrganizationsPlayground,
     props: [],
     layout: 'full',
   },

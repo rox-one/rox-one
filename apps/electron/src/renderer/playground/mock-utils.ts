@@ -311,7 +311,17 @@ export const mockElectronAPI = {
   // no label backend, so demos render with an empty label tree.
   listLabels: async (_workspaceId: string) => {
     void _workspaceId
-    return []
+    return [
+      { id: 'lab-inbox', name: 'Inbox', color: { h: 220, s: 62, l: 54 }, children: [] },
+    ]
+  },
+  createLabel: async (_workspaceId: string, input: { name: string }) => {
+    console.log('[Playground] createLabel', input)
+    return { id: 'lab-new', name: input.name, color: { h: 220, s: 62, l: 54 }, children: [] }
+  },
+  updateLabel: async () => {},
+  deleteLabel: async () => {
+    throw new Error('Playground fixture. Not live.')
   },
   onLabelsChanged: (_callback: unknown) => {
     void _callback
@@ -886,6 +896,25 @@ export const mockElectronAPI = {
   }),
   getWorkspacePermissionsConfig: async () => null,
   onDefaultPermissionsChanged: () => () => {},
+  listOrganizations: async () => [],
+  getOrgIdentity: async () => ({ userId: 'playground-user', username: 'playground', email: '' }),
+  createOrganization: async (input: { name: string }) => ({
+    id: 'org-playground',
+    name: input.name,
+    members: [],
+    pendingInvites: [],
+  }),
+  inviteToOrganization: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
+  acceptOrganizationInvite: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
+  updateOrgIdentity: async (updates: { username?: string; email?: string }) => ({
+    userId: 'playground-user',
+    username: updates.username || 'playground',
+    email: updates.email || '',
+  }),
   getKanbanConfig: async () => ({
     version: 1 as const,
     groupBy: 'project' as const,
