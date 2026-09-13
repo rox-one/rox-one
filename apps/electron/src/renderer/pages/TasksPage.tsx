@@ -134,9 +134,10 @@ export default function TasksPage() {
 
   const onImport = async (file: File) => {
     const text = await file.text()
-    const incoming = PersonalTaskStore.fromJson(text)
+    const incoming = PersonalTaskStore.tryFromJson(text)
+    if (incoming.status !== 'ok') return
     const next = PersonalTaskStore.fromJson(store.exportJson())
-    next.importBundle(incoming.snapshot(), 'merge')
+    next.importBundle(incoming.store.snapshot(), 'merge')
     persist(next)
   }
 
