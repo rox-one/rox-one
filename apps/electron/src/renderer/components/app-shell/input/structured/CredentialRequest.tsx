@@ -134,7 +134,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-foreground">
-                  Authentication Required
+                  {t('auth.authenticationRequired')}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   ({request.sourceName})
