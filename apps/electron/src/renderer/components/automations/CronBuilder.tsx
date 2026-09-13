@@ -132,7 +132,7 @@ export function CronBuilder({
   onTimezoneChange,
   className,
 }: CronBuilderProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [rawInput, setRawInput] = useState(value)
   const [fields, setFields] = useState<string[]>(value.split(/\s+/))
 
@@ -252,18 +252,19 @@ export function CronBuilder({
         {/* Next runs */}
         {nextRuns.length > 0 && !validationError && (
           <div className="space-y-1">
-            <span className="text-xs text-muted-foreground">Next runs:</span>
+            <span className="text-xs text-muted-foreground">{t('automations.labelNextRuns')}</span>
             <div className="flex flex-col gap-0.5">
               {(() => {
                 const spansYears = nextRuns.length > 1 && nextRuns[0].getFullYear() !== nextRuns[nextRuns.length - 1].getFullYear()
+                const locale = i18n.language || 'ru'
                 return nextRuns.map((date, i) => (
                   <span key={i} className="text-xs text-foreground/70 tabular-nums">
-                    {date.toLocaleDateString('en-US', {
+                    {date.toLocaleDateString(locale, {
                       weekday: 'short',
                       month: 'short',
                       day: 'numeric',
                       ...(spansYears && { year: 'numeric' }),
-                    })} {date.toLocaleTimeString('en-US', {
+                    })} {date.toLocaleTimeString(locale, {
                       hour: '2-digit',
                       minute: '2-digit',
                       hour12: false,

@@ -176,17 +176,22 @@ class TaskEditorBoundary extends React.Component<
   }
   render() {
     if (this.state.err) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
-          <p className="text-foreground/80">Task editor failed to open.</p>
-          <button type="button" className="rounded-md border px-3 py-1" onClick={this.props.onClose}>
-            Back to board
-          </button>
-        </div>
-      )
+      return <TaskEditorCrashFallback onClose={this.props.onClose} />
     }
     return this.props.children
   }
+}
+
+function TaskEditorCrashFallback({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
+      <p className="text-foreground/80">{t('kanban.editorFailed')}</p>
+      <button type="button" className="rounded-md border px-3 py-1" onClick={onClose}>
+        {t('kanban.backToBoard')}
+      </button>
+    </div>
+  )
 }
 
 class BoardSurfaceBoundary extends React.Component<{ children: React.ReactNode }, { err: Error | null }> {
@@ -199,18 +204,23 @@ class BoardSurfaceBoundary extends React.Component<{ children: React.ReactNode }
   }
   render() {
     if (this.state.err) {
-      return (
-        <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
-          <p className="text-foreground/80">Board failed to open.</p>
-          <p className="max-w-md text-xs text-muted-foreground">{this.state.err.message}</p>
-          <button type="button" className="rounded-md border px-3 py-1" onClick={() => this.setState({ err: null })}>
-            Retry
-          </button>
-        </div>
-      )
+      return <BoardCrashFallback message={this.state.err.message} onRetry={() => this.setState({ err: null })} />
     }
     return this.props.children
   }
+}
+
+function BoardCrashFallback({ message, onRetry }: { message: string; onRetry: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-sm">
+      <p className="text-foreground/80">{t('kanban.boardFailed')}</p>
+      <p className="max-w-md text-xs text-muted-foreground">{message}</p>
+      <button type="button" className="rounded-md border px-3 py-1" onClick={onRetry}>
+        {t('common.retry')}
+      </button>
+    </div>
+  )
 }
 
 function KanbanBoardContainerInner() {

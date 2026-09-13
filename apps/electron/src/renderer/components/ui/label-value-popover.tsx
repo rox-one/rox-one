@@ -207,7 +207,7 @@ export function LabelValuePopover({
                       onValueChange?.(undefined)
                     }
                   }}
-                  placeholder="tomorrow, next friday..."
+                  placeholder={t('labels.datePlaceholder')}
                   className={cn(
                     'flex-1 h-7 px-2 text-[13px]',
                     'bg-transparent',

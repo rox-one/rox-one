@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { slugify } from "@/lib/slugify"
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
+import { PremiumMenuSelect } from "@craft-agent/ui"
 import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspaceSecondaryButton, AddWorkspacePrimaryButton } from "./primitives"
 import { AddWorkspace_RadioOption } from "./AddWorkspace_RadioOption"
 import { useDirectoryPicker } from "@/hooks/useDirectoryPicker"
@@ -238,24 +239,22 @@ export function AddWorkspaceStep_CreateNew({
           <p className="text-xs text-muted-foreground">
             {t("workspace.organizationRequired")}
           </p>
-          <select
-            id="team-space-organization"
-            value={selectedOrgId}
-            onChange={(event) => setSelectedOrgId(event.target.value)}
+          <PremiumMenuSelect
+            aria-label={t("workspace.organization")}
+            className="h-9 w-full max-w-none"
             disabled={busy || isLoadingOrganizations || organizations.length === 0}
-            className="h-9 w-full rounded-md border border-foreground/15 bg-background px-3 text-sm shadow-minimal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <option value="">
-              {isLoadingOrganizations
+            items={organizations.map((organization) => ({
+              id: organization.id,
+              label: organization.name,
+            }))}
+            placeholder={
+              isLoadingOrganizations
                 ? t("common.loading")
-                : t("workspace.organizationSelect")}
-            </option>
-            {organizations.map((organization) => (
-              <option key={organization.id} value={organization.id}>
-                {organization.name}
-              </option>
-            ))}
-          </select>
+                : t("workspace.organizationSelect")
+            }
+            selectedId={selectedOrgId || null}
+            onSelect={(item) => setSelectedOrgId(item.id)}
+          />
           {organizations.length === 0 && !isLoadingOrganizations && (
             <p className="text-xs text-muted-foreground">
               {t("workspace.organizationEmpty")}
