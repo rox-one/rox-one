@@ -1,3 +1,4 @@
+import { ROCKS_T1_DISPLAY_NAME, ROCKS_T1_MODEL_ID } from './contracts.ts'
 import {
   DEFAULT_WAKE_PHRASE,
   type SttEngine,
@@ -13,15 +14,15 @@ export function usesCloudStt(engine: SttEngine): boolean {
   return engine === 'cloud-rox' || engine === 'cloud-deepgram'
 }
 
-/** Local Whisper never leaves the machine. Cloud engines upload by policy. */
-export function shouldUploadAudio(prefs: Pick<VoicePrefs, 'sttEngine'>): boolean {
-  return usesCloudStt(prefs.sttEngine)
+/** Cloud engines upload only after explicit ASR consent. Local never leaves the machine. */
+export function shouldUploadAudio(prefs: Pick<VoicePrefs, 'sttEngine' | 'cloudAsrConsent'>): boolean {
+  return usesCloudStt(prefs.sttEngine) && prefs.cloudAsrConsent === true
 }
 
 export function resolveAudioRetention(
-  prefs: Pick<VoicePrefs, 'sttEngine' | 'audioRetention'>,
+  prefs: Pick<VoicePrefs, 'sttEngine' | 'audioRetention' | 'cloudAsrConsent'>,
 ): VoicePrefs['audioRetention'] {
-  if (!usesCloudStt(prefs.sttEngine)) return 'none'
+  if (!shouldUploadAudio(prefs)) return 'none'
   return prefs.audioRetention === 'none' ? 'cloud-policy' : prefs.audioRetention
 }
 
@@ -66,6 +67,9 @@ export function buildVoiceHealth(
     offline: info.offline,
     wakeWordArmed: wake.ok,
     audioRetention: resolveAudioRetention(prefs),
+    asrModelId: prefs.asrModelId || ROCKS_T1_MODEL_ID,
+    asrBrand: ROCKS_T1_DISPLAY_NAME,
+    evidenceClass: prefs.whisperStatus === 'ready' ? 'local-model-beta' : 'cloud-beta',
   }
 }
 

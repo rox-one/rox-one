@@ -9,5 +9,14 @@ describe('InputSettingsPage voice section', () => {
       'utf8',
     )
     expect(source).toContain('VoiceSettingsSection')
+    const section = readFileSync(join(import.meta.dir, '../VoiceSettingsSection.tsx'), 'utf8')
+    expect(section).toContain('settings.input.voiceGroupGeneral')
+    expect(section).toContain('settings.input.voiceGroupHistory')
+    expect(section).toContain('settings.input.voiceGroupModels')
+    expect(section).toContain('settings.input.voiceGroupProcessing')
+    expect(section).toContain('voiceAsrConsent')
+    expect(section).toContain('voiceEnhancementConsent')
+    expect(section).toContain('voiceWebEnrichment')
+
   })
 })

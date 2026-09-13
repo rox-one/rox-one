@@ -1,5 +1,6 @@
 /**
  * Persist voice prefs to `~/.craft-agent/voice.json`.
+ * v1 → v2 is idempotent. Explicit local/none users are not silently moved to cloud.
  */
 
 import { existsSync, mkdirSync } from 'node:fs'
@@ -11,9 +12,15 @@ import {
   DEFAULT_WAKE_PHRASE,
   getDefaultVoicePrefs,
   isAudioRetention,
+  isLocalArchivePolicy,
   isModelHealthStatus,
   isSttEngine,
   isTtsEngine,
+  type EnhancementMode,
+  type HotkeyMode,
+  type OverlayPosition,
+  type OverlayStyle,
+  type RecognitionLanguage,
   type VoicePrefs,
 } from './types.ts'
 
@@ -23,10 +30,31 @@ export function getVoicePrefsPath(configDir: string = resolveConfigDir()): strin
   return join(configDir, VOICE_PREFS_FILE)
 }
 
+function asLanguage(value: unknown): RecognitionLanguage {
+  return value === 'en' || value === 'ru' || value === 'auto' ? value : 'auto'
+}
+
+function asEnhancement(value: unknown): EnhancementMode {
+  return value === 'clean' || value === 'improve-prompt' || value === 'verbatim' ? value : 'verbatim'
+}
+
+function asHotkeyMode(value: unknown): HotkeyMode {
+  return value === 'ptt' ? 'ptt' : 'toggle'
+}
+
+function asOverlayPosition(value: unknown): OverlayPosition {
+  return value === 'top' ? 'top' : 'bottom'
+}
+
+function asOverlayStyle(value: unknown): OverlayStyle {
+  return value === 'live' ? 'live' : 'minimal'
+}
+
 export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): VoicePrefs {
   const base = getDefaultVoicePrefs(now)
   if (!raw || typeof raw !== 'object') return base
   const obj = raw as Record<string, unknown>
+  const version = obj.version === 2 ? 2 : typeof obj.version === 'number' ? obj.version : 1
   const sttEngine = isSttEngine(obj.sttEngine) ? obj.sttEngine : base.sttEngine
   const ttsEngine = isTtsEngine(obj.ttsEngine) ? obj.ttsEngine : base.ttsEngine
   const audioRetention = isAudioRetention(obj.audioRetention)
@@ -50,11 +78,37 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
       ? obj.updatedAt
       : now
 
+  const explicitLocal = version < 2 && sttEngine === 'local-whisper'
+  const privacyMigrationPending = explicitLocal
+    ? obj.privacyMigrationPending !== false
+    : obj.privacyMigrationPending === true
+
   const prefs: VoicePrefs = {
-    version: 1,
-    sttEngine,
+    version: 2,
+    sttEngine: explicitLocal ? 'local-whisper' : sttEngine,
     ttsEngine,
-    audioRetention: sttEngine === 'local-whisper' ? 'none' : audioRetention,
+    audioRetention,
+    localArchivePolicy: isLocalArchivePolicy(obj.localArchivePolicy)
+      ? obj.localArchivePolicy
+      : (explicitLocal ? 'none' : base.localArchivePolicy),
+    asrModelId: typeof obj.asrModelId === 'string' ? obj.asrModelId : (explicitLocal ? 'whisper-large-v3-turbo' : base.asrModelId),
+    recognitionLanguage: asLanguage(obj.recognitionLanguage),
+    timestamps: obj.timestamps === 'word' || obj.timestamps === 'none' || obj.timestamps === 'segment' ? obj.timestamps : 'segment',
+    cloudAsrConsent: explicitLocal ? false : obj.cloudAsrConsent !== false,
+    cloudEnhancementConsent: obj.cloudEnhancementConsent === true,
+    webEnrichmentConsent: obj.webEnrichmentConsent === true,
+    privacyMigrationPending,
+    autoSubmit: false,
+    enhancementMode: asEnhancement(obj.enhancementMode),
+    enhancementModules: Array.isArray(obj.enhancementModules)
+      ? obj.enhancementModules.filter((item): item is string => typeof item === 'string')
+      : [],
+    hotkeyMode: asHotkeyMode(obj.hotkeyMode),
+    toggleAccelerator: typeof obj.toggleAccelerator === 'string' ? obj.toggleAccelerator : base.toggleAccelerator,
+    cancelAccelerator: typeof obj.cancelAccelerator === 'string' ? obj.cancelAccelerator : base.cancelAccelerator,
+    overlayPosition: asOverlayPosition(obj.overlayPosition),
+    overlayStyle: asOverlayStyle(obj.overlayStyle),
+    soundFeedback: obj.soundFeedback === true,
     wakeWordEnabled: false,
     alwaysListeningConsent: false,
     wakePhrase,

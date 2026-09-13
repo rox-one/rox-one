@@ -36,7 +36,6 @@ export function VoiceDictationControl({
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const [recording, setRecording] = useState(false)
-  const [draft, setDraft] = useState('')
   const recorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const streamRef = useRef<MediaStream | null>(null)
@@ -46,10 +45,20 @@ export function VoiceDictationControl({
     void window.electronAPI.getVoicePrefs?.().then((next) => {
       if (!cancelled) setPrefs(next)
     }).catch(() => {})
-    const off = window.electronAPI.onVoiceChanged?.((next) => setPrefs(next))
+    const offChanged = window.electronAPI.onVoiceChanged?.((next) => setPrefs(next))
+    const offJob = window.electronAPI.onVoiceJob?.((job) => {
+      if (job.job === 'ready') setRecording(false)
+      if (job.job === 'cancelled' || job.job === 'failed') setRecording(false)
+    })
+    const offHotkey = window.electronAPI.onVoiceHotkey?.((payload) => {
+      if (payload.command === 'toggle') toggleRef.current()
+      if (payload.command === 'cancel') void window.electronAPI.cancelVoiceCapture?.()
+    })
     return () => {
       cancelled = true
-      off?.()
+      offChanged?.()
+      offJob?.()
+      offHotkey?.()
     }
   }, [])
 
@@ -68,18 +77,19 @@ export function VoiceDictationControl({
     chunksRef.current = []
     try {
       const audioBase64 = await blobToBase64(blob)
+      await window.electronAPI.sendVoiceChunk?.({ audioBase64 })
+      const job = await window.electronAPI.stopVoiceCapture?.()
       const result = await window.electronAPI.transcribeVoice({
         audioBase64,
         mimeType: blob.type || 'audio/webm',
-        transcript: draft || undefined,
       })
       const text = result.text.trim()
-      setDraft(text)
       if (text) onInputChange?.(inputValue ? `${inputValue} ${text}` : text)
+      void job
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('chat.dictate'))
     }
-  }, [draft, inputValue, onInputChange, stopTracks, t])
+  }, [inputValue, onInputChange, stopTracks, t])
 
   const startRecording = useCallback(async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -87,11 +97,13 @@ export function VoiceDictationControl({
       return
     }
     try {
+      await window.electronAPI.startVoiceCapture?.()
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: prefs?.selectedInputDeviceId
           ? { deviceId: { exact: prefs.selectedInputDeviceId } }
           : true,
       })
+      await window.electronAPI.grantVoicePermission?.()
       streamRef.current = stream
       const recorder = new MediaRecorder(stream)
       chunksRef.current = []
@@ -102,10 +114,10 @@ export function VoiceDictationControl({
         void finishRecording()
       }
       recorderRef.current = recorder
-      setDraft('')
       setRecording(true)
       recorder.start()
     } catch (error) {
+      await window.electronAPI.cancelVoiceCapture?.()
       toast.error(error instanceof Error ? error.message : t('chat.dictate'))
     }
   }, [finishRecording, prefs?.selectedInputDeviceId, t])
@@ -118,6 +130,9 @@ export function VoiceDictationControl({
     }
     void startRecording()
   }, [disabled, recording, startRecording])
+
+  const toggleRef = useRef(toggle)
+  toggleRef.current = toggle
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {

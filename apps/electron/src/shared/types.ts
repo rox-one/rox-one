@@ -1434,10 +1434,28 @@ export interface ElectronAPI {
     audioBase64: string
     mimeType?: string
     language?: string
-    transcript?: string
-  }): Promise<{ text: string; engine: string; uploaded: boolean }>
+  }): Promise<{ text: string; engine: string; uploaded: boolean; noSpeech?: boolean; requestId?: string }>
   speakVoice(payload: { text: string }): Promise<{ engine: string; uploaded: false }>
   onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
+  bootstrapVoice(): Promise<{ installationId: string; expiresAt: number; scopes: string[] }>
+  getVoiceCapabilities(): Promise<{ displayName: string; languageCount: number; show74Badge: boolean; modelId: string }>
+  startVoiceCapture(): Promise<import('@craft-agent/shared/voice').VoiceJob>
+  stopVoiceCapture(): Promise<import('@craft-agent/shared/voice').VoiceJob>
+  cancelVoiceCapture(): Promise<import('@craft-agent/shared/voice').VoiceJob | null>
+  grantVoicePermission(): Promise<import('@craft-agent/shared/voice').VoiceJob>
+  sendVoiceChunk(payload: { audioBase64: string }): Promise<{ ok: true }>
+  listVoiceHistory(query?: { cursor?: string; limit?: number; search?: string; favorite?: boolean }): Promise<{ page: unknown[]; continueCursor: string | null; isDone: boolean }>
+  getVoiceHistoryItem(payload: { id: string }): Promise<{ recording: unknown; revisions: unknown[]; runs: unknown[] }>
+  favoriteVoiceRecording(payload: { id: string; favorite: boolean }): Promise<{ ok: true }>
+  deleteVoiceRecording(payload: { id: string }): Promise<{ ok: true }>
+  exportVoiceRecording(payload: { id: string; format?: 'txt' | 'srt' | 'json' }): Promise<{ text: string }>
+  retranscribeVoice(payload: { id: string }): Promise<{ ok: true; recordingId: string }>
+  reprocessVoice(payload: { id: string }): Promise<{ ok: true; recordingId: string }>
+  processVoiceTranscript(payload: { text: string }): Promise<unknown>
+  listVoiceModels(): Promise<{ families: string[]; catalog: unknown[] }>
+  onVoiceJob(callback: (job: import('@craft-agent/shared/voice').VoiceJob) => void): () => void
+  onVoiceOverlay(callback: (state: import('@craft-agent/shared/voice').OverlayState) => void): () => void
+  onVoiceHotkey(callback: (payload: { command: 'toggle' | 'ptt-down' | 'ptt-up' | 'cancel' }) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@craft-agent/shared/config').SessionDraft | null>
