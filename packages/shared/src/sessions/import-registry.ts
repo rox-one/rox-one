@@ -5,7 +5,7 @@
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { sameRealPath } from './import-home.ts'
+import { sameRealPath, splitForeignSourceRef } from './import-home.ts'
 import type { ForeignIndexEntry, ForeignRegistryRecord } from './import-types.ts'
 
 export function foreignImportRegistryPath(workspaceRoot: string): string {
@@ -68,7 +68,12 @@ export function findScannedForeignSource(
   workspaceRoot: string,
   sourcePath: string,
 ): ForeignIndexEntry | undefined {
-  return loadForeignImportScanCache(workspaceRoot).find(
-    (entry) => entry.sourcePath === sourcePath || sameRealPath(entry.sourcePath, sourcePath),
-  )
+  const entries = loadForeignImportScanCache(workspaceRoot)
+  const exact = entries.find((entry) => entry.sourcePath === sourcePath)
+  if (exact) return exact
+  const want = splitForeignSourceRef(sourcePath)
+  return entries.find((entry) => {
+    const have = splitForeignSourceRef(entry.sourcePath)
+    return have.fragment === want.fragment && sameRealPath(have.path, want.path)
+  })
 }

@@ -3067,7 +3067,7 @@
   "settings.identity.title": "هوية الوكيل",
   "settings.import.clearSelection": "إلغاء التحديد",
   "settings.import.description": "Scan local chats, then persist them as Rox sessions",
-  "settings.import.empty": "Scan to list Grok and Claude chats. Nothing is imported until you persist.",
+  "settings.import.empty": "Scan to list local chats. Nothing is imported until you persist.",
   "settings.import.filterAll": "كل المصادر",
   "settings.import.filterKind": "المصدر",
   "settings.import.persist": "Persist selected",

@@ -3067,7 +3067,7 @@
   "settings.identity.title": "Agent identity",
   "settings.import.clearSelection": "Clear selection",
   "settings.import.description": "Scan local chats, then persist them as Rox sessions",
-  "settings.import.empty": "Scan to list Grok and Claude chats. Nothing is imported until you persist.",
+  "settings.import.empty": "Scan to list local chats. Nothing is imported until you persist.",
   "settings.import.filterAll": "All sources",
   "settings.import.filterKind": "Source",
   "settings.import.persist": "Persist selected",
