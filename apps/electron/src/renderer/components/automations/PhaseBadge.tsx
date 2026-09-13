@@ -5,20 +5,21 @@
  * Derives from getEventCategory() to avoid duplicating event classification.
  */
 
+import { useTranslation } from 'react-i18next'
 import { getEventCategory, type AutomationTrigger, type EventCategory } from './types'
 import { Info_Badge, type BadgeColor } from '@/components/info'
 
-const CATEGORY_BADGE: Record<EventCategory, { label: string; color: BadgeColor }> = {
-  'scheduled':   { label: 'Scheduled', color: 'success' },
-  'agent-pre':   { label: 'Before',    color: 'warning' },
-  'agent-post':  { label: 'After',     color: 'success' },
-  'agent-error': { label: 'On Error',  color: 'destructive' },
-  'label':       { label: 'Event',     color: 'default' },
-  'permission':  { label: 'Event',     color: 'default' },
-  'flag':        { label: 'Event',     color: 'default' },
-  'todo':        { label: 'Event',     color: 'default' },
-  'session':     { label: 'Event',     color: 'default' },
-  'other':       { label: 'Event',     color: 'default' },
+const CATEGORY_BADGE: Record<EventCategory, { labelKey: string; color: BadgeColor }> = {
+  'scheduled':   { labelKey: 'sidebar.scheduled', color: 'success' },
+  'agent-pre':   { labelKey: 'automations.phaseBefore', color: 'warning' },
+  'agent-post':  { labelKey: 'automations.phaseAfter', color: 'success' },
+  'agent-error': { labelKey: 'automations.phaseOnError', color: 'destructive' },
+  'label':       { labelKey: 'automations.labelEvent', color: 'default' },
+  'permission':  { labelKey: 'automations.labelEvent', color: 'default' },
+  'flag':        { labelKey: 'automations.labelEvent', color: 'default' },
+  'todo':        { labelKey: 'automations.labelEvent', color: 'default' },
+  'session':     { labelKey: 'automations.labelEvent', color: 'default' },
+  'other':       { labelKey: 'automations.labelEvent', color: 'default' },
 }
 
 export interface PhaseBadgeProps {
@@ -27,12 +28,13 @@ export interface PhaseBadgeProps {
 }
 
 export function PhaseBadge({ event, className }: PhaseBadgeProps) {
+  const { t } = useTranslation()
   const category = getEventCategory(event)
   const badge = CATEGORY_BADGE[category]
 
   return (
     <Info_Badge color={badge.color} className={className}>
-      {badge.label}
+      {t(badge.labelKey)}
     </Info_Badge>
   )
 }
