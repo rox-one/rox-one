@@ -3,10 +3,12 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 describe('quest progress card', () => {
-  it('is mounted in the sidebar and never blocks core chrome', () => {
+  it('is mounted on Home and never blocks core chrome', () => {
     const shell = readFileSync(join(import.meta.dir, '../AppShell.tsx'), 'utf8')
+    const home = readFileSync(join(import.meta.dir, '../../../platform/HomeFrontPage.tsx'), 'utf8')
     const card = readFileSync(join(import.meta.dir, '../QuestProgressCard.tsx'), 'utf8')
-    expect(shell).toContain('QuestProgressCard')
+    expect(home).toContain('QuestProgressCard')
+    expect(shell).not.toContain('QuestProgressCard')
     expect(card).toContain('quests.dismiss')
     expect(card).toContain('quests.snooze')
     expect(card).toContain('quests.next')
