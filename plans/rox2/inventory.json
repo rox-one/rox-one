@@ -1,0 +1,312 @@
+{
+  "screens": [
+    {
+      "id": "sessions",
+      "title": "Sessions collection + chat",
+      "files": [
+        "apps/electron/src/renderer/components/app-shell/nav-destinations.ts",
+        "apps/electron/src/renderer/pages/ChatPage.tsx"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native session list and ChatPage. Right inspector is partial."
+    },
+    {
+      "id": "projects",
+      "title": "Projects",
+      "files": [
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+        "packages/server-core/src/handlers/rpc/projects.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native project info. No Conation GraphqlSoupProject actions."
+    },
+    {
+      "id": "pages",
+      "title": "Pages / canvas",
+      "files": [
+        "packages/server-core/src/handlers/rpc/pages.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Pages RPC exists. Interactive canvas is still gated."
+    },
+    {
+      "id": "memory",
+      "title": "Memory",
+      "files": [
+        "packages/server-core/src/handlers/rpc/memory.ts",
+        "packages/server-core/src/handlers/rpc/memory-proposals.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Memory RPC + proposals. Candidate auto-create is incomplete."
+    },
+    {
+      "id": "tasks",
+      "title": "Tasks / kanban",
+      "files": [
+        "apps/electron/src/renderer/pages/TasksPage.tsx",
+        "packages/server-core/src/handlers/rpc/tasks.ts",
+        "packages/server-core/src/handlers/rpc/kanban.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native tasks/kanban. Conation Board is a deep link, not a second board."
+    },
+    {
+      "id": "sources",
+      "title": "Sources",
+      "files": [
+        "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+        "packages/server-core/src/handlers/rpc/sources.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native MCP/source list."
+    },
+    {
+      "id": "skills",
+      "title": "Skills",
+      "files": [
+        "apps/electron/src/renderer/pages/SkillInfoPage.tsx",
+        "packages/server-core/src/handlers/rpc/skills.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native skills. Conation surfaces skill flag is off and unregistered."
+    },
+    {
+      "id": "notes",
+      "title": "Notes / knowledge",
+      "files": [
+        "apps/electron/src/renderer/pages/NotesPage.tsx",
+        "apps/electron/src/renderer/pages/KnowledgeSurfacePage.tsx",
+        "packages/server-core/src/handlers/rpc/notes.ts",
+        "packages/core/src/knowledge/providers/siyuan/adapter.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native Notes exist. Knowledge still has a SiYuan provider path. Conation Notes is read-only."
+    },
+    {
+      "id": "automations",
+      "title": "Automations / workflows",
+      "files": [
+        "apps/electron/src/renderer/components/automations/AutomationGraphEditor.tsx",
+        "packages/server-core/src/handlers/rpc/automations.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Graph editor exists. Verifiable workflow candidates are not auto-created."
+    },
+    {
+      "id": "connections",
+      "title": "Connections",
+      "files": [
+        "apps/electron/src/renderer/pages/ConnectionsPage.tsx",
+        "packages/server-core/src/handlers/rpc/fabric.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Connection fabric UI. Drive/Mail/CRM are not first-class native entities."
+    },
+    {
+      "id": "settings",
+      "title": "Settings hub",
+      "files": [
+        "apps/electron/src/shared/settings-registry.ts",
+        "apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "22 registered settings pages. Conation toggles live under Appearance."
+    },
+    {
+      "id": "browser",
+      "title": "Embedded browser",
+      "files": [
+        "apps/electron/src/renderer/pages/BrowserPanelPage.tsx",
+        "apps/electron/src/renderer/components/browser/WebBrowserPanel.tsx"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native browser pane. Not a Conation iframe."
+    },
+    {
+      "id": "playground",
+      "title": "Playground",
+      "files": [
+        "apps/electron/src/renderer/playground/registry/types.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Fixture gallery. Must stay labeled fixture, never live."
+    },
+    {
+      "id": "webui",
+      "title": "Web UI",
+      "files": [
+        "apps/webui/src/App.tsx"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Web client. Parity with desktop is incomplete."
+    },
+    {
+      "id": "viewer",
+      "title": "Viewer share",
+      "files": [
+        "apps/viewer/src/App.tsx"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Share viewer. Residual hardening is a follow-up."
+    },
+    {
+      "id": "conation-inspector",
+      "title": "Conation inspector host",
+      "files": [
+        "apps/electron/src/renderer/platform/conation/ConationInspectorPanel.tsx",
+        "packages/core/src/conation/shell/flags.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Empty inspector contribution, flags default off."
+    },
+    {
+      "id": "conation-board",
+      "title": "Conation Board pane",
+      "files": [
+        "apps/electron/src/renderer/platform/conation/ConationBoardPanel.tsx",
+        "apps/electron/src/renderer/platform/conation/conation-board-panels.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Deep link to Conation Board. No second in-app kanban."
+    },
+    {
+      "id": "conation-fund",
+      "title": "Conation Fund pane",
+      "files": [
+        "apps/electron/src/renderer/platform/conation/ConationFundPanel.tsx",
+        "apps/electron/src/renderer/platform/conation/conation-fund-panels.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Deep link to Fund canvas. In-app interactive canvas gated."
+    },
+    {
+      "id": "conation-notes",
+      "title": "Conation Notes pane",
+      "files": [
+        "apps/electron/src/renderer/platform/conation/ConationNotesPanel.tsx",
+        "packages/core/src/conation/notes/bridge.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Read-only Soup document bridge. Writes omitted."
+    },
+    {
+      "id": "voice-overlay",
+      "title": "Voice overlay",
+      "files": [
+        "apps/electron/src/renderer/voice-overlay.tsx"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Voice overlay host. Independent of Conation."
+    }
+  ],
+  "services": [
+    {
+      "id": "rpc-server-core",
+      "title": "server-core RPC handlers",
+      "files": [
+        "packages/server-core/src/handlers/rpc/index.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Canonical RPC surface. Results are not yet Rox2Result-typed."
+    },
+    {
+      "id": "conation-soup",
+      "title": "Conation Soup GraphQL client",
+      "files": [
+        "packages/core/src/conation/soup/client.ts"
+      ],
+      "evidence": "documented",
+      "coverage": "Read-only. Writes (CompleteMutationRoot) omitted."
+    },
+    {
+      "id": "conation-dss",
+      "title": "Conation DSS / Drive client",
+      "files": [
+        "packages/core/src/conation/dss/client.ts"
+      ],
+      "evidence": "documented",
+      "coverage": "Read-only HTTP. Writes and FileProvider omitted."
+    },
+    {
+      "id": "knowledge-siyuan",
+      "title": "SiYuan knowledge provider",
+      "files": [
+        "packages/core/src/knowledge/providers/siyuan/adapter.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Runtime dependency still present. Native Notes should not require it."
+    },
+    {
+      "id": "knowledge-inmemory",
+      "title": "In-memory knowledge provider",
+      "files": [
+        "packages/core/src/knowledge/providers/inmemory.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Test/fixture provider. Not a production vault."
+    },
+    {
+      "id": "calendar",
+      "title": "Calendar core",
+      "files": [
+        "packages/core/src/calendar/index.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Typed calendar package exists. Soup calendar events are not merged."
+    },
+    {
+      "id": "tasks-personal",
+      "title": "Personal tasks",
+      "files": [
+        "packages/core/src/tasks/personal/index.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Native task model. Not bound to Conation Board."
+    },
+    {
+      "id": "mindmap",
+      "title": "Mindmap / canvas engine",
+      "files": [
+        "packages/core/src/mindmap/types.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Entity refs exist. Not a full Fund replacement."
+    },
+    {
+      "id": "identity",
+      "title": "Identity / grants",
+      "files": [
+        "packages/core/src/platform/identity/grants.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Grants exist. Sensitive-action mapping to Rox2Permission is new."
+    },
+    {
+      "id": "session-apply",
+      "title": "SessionApply stub",
+      "files": [
+        "packages/core/src/platform/session-apply/client.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Flag-gated stub linked to AgentTeamsStore. Not Cordis."
+    },
+    {
+      "id": "omp-agent",
+      "title": "OMP agent backend",
+      "files": [
+        "packages/shared/src/agent/omp-agent.ts"
+      ],
+      "evidence": "documented",
+      "coverage": "Primary agent runtime. Out of ROX2 data-plane except as actor on events."
+    },
+    {
+      "id": "electron-transport",
+      "title": "Electron transport",
+      "files": [
+        "apps/electron/src/transport/index.ts"
+      ],
+      "evidence": "statically-confirmed",
+      "coverage": "Shared owner file. Parallel ROX2 waves must not race edits here."
+    }
+  ]
+}

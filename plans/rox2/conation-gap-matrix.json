@@ -1,0 +1,164 @@
+{
+  "rows": [
+    {
+      "id": "GraphqlSoupDocument",
+      "asIs": "Read-only Notes bridge filters Soup documents. Native NotesPage uses a separate store.",
+      "toBe": "Document actions (open/edit) go through native Notes + Rox2Result. Conation is a source adapter, not an iframe.",
+      "files": [
+        "packages/core/src/conation/notes/bridge.ts",
+        "apps/electron/src/renderer/pages/NotesPage.tsx"
+      ],
+      "integration": "read-client",
+      "evidence": "statically-confirmed"
+    },
+    {
+      "id": "GraphqlSoupChat",
+      "asIs": "Soup chat type exists on the GraphQL contract. Rox sessions are native transcripts.",
+      "toBe": "Do not dual-write chats. Map Conation chat ids as relations onto native sessions when a user links them.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts",
+        "apps/electron/src/renderer/pages/ChatPage.tsx"
+      ],
+      "integration": "none",
+      "evidence": "documented"
+    },
+    {
+      "id": "GraphqlSoupProject",
+      "asIs": "Soup project type exists. Rox ProjectInfoPage is a separate native model.",
+      "toBe": "Project list/read from Soup is an adapter behind native projects RPC.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts",
+        "apps/electron/src/renderer/pages/ProjectInfoPage.tsx"
+      ],
+      "integration": "none",
+      "evidence": "documented"
+    },
+    {
+      "id": "GraphqlSoupEmailThread",
+      "asIs": "No native Mail surface. Mail is not a first-class entity in Rox UI.",
+      "toBe": "Native mail-thread entity + list/read actions with cloud-send permission. No iframe.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts"
+      ],
+      "integration": "none",
+      "evidence": "new-requirement"
+    },
+    {
+      "id": "GraphqlSoupChannel",
+      "asIs": "Soup channel type exists. Messaging settings are Rox-native, not Conation channels.",
+      "toBe": "Channel entities in the unified model; posting requires permission.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts",
+        "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx"
+      ],
+      "integration": "none",
+      "evidence": "documented"
+    },
+    {
+      "id": "GraphqlSoupChannelMessage",
+      "asIs": "Type-only on Soup contract.",
+      "toBe": "Messages are events on a channel entity, not a second inbox UI.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts"
+      ],
+      "integration": "none",
+      "evidence": "documented"
+    },
+    {
+      "id": "GraphqlSoupCall",
+      "asIs": "Type-only. No Rox call surface.",
+      "toBe": "Optional call entity in the model. Do not ship a fake in-app dialer.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts"
+      ],
+      "integration": "none",
+      "evidence": "new-requirement"
+    },
+    {
+      "id": "GraphqlSoupCalendarEvent",
+      "asIs": "Calendar package is native. Soup events are not merged into it.",
+      "toBe": "Merge adapters into packages/core/src/calendar without replacing native store.",
+      "files": [
+        "packages/core/src/calendar/index.ts",
+        "packages/core/src/conation/soup/types.ts"
+      ],
+      "integration": "none",
+      "evidence": "statically-confirmed"
+    },
+    {
+      "id": "GraphqlSoupCrmCompany",
+      "asIs": "No native CRM surface.",
+      "toBe": "CRM company as a native entity list (entity-list), actions behind permission.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts"
+      ],
+      "integration": "none",
+      "evidence": "new-requirement"
+    },
+    {
+      "id": "GraphqlSoupForeignEntity",
+      "asIs": "Opaque foreign entity on Soup. Rox sources are MCP/connections.",
+      "toBe": "Map foreign entities onto source/connection refs; do not invent a third catalog.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts",
+        "apps/electron/src/renderer/pages/SourceInfoPage.tsx"
+      ],
+      "integration": "none",
+      "evidence": "documented"
+    },
+    {
+      "id": "GraphqlSoupReminder",
+      "asIs": "Type-only. Native reminders are incomplete.",
+      "toBe": "Reminder entity + calendar relation. Creating one is a live write with permission.",
+      "files": [
+        "packages/core/src/conation/soup/types.ts"
+      ],
+      "integration": "none",
+      "evidence": "new-requirement"
+    },
+    {
+      "id": "dss-drive",
+      "asIs": "Read-only DSS client. Flags default off. No native Drive browser.",
+      "toBe": "File entities from DSS list/read. Writes and FileProvider stay blocked until signing exists.",
+      "files": [
+        "packages/core/src/conation/dss/client.ts",
+        "packages/core/src/conation/dss/types.ts"
+      ],
+      "integration": "read-client",
+      "evidence": "documented"
+    },
+    {
+      "id": "board-deeplink",
+      "asIs": "ConationBoardPanel opens Conation via deep link. Copy says there is no second kanban.",
+      "toBe": "Keep a single native KanbanBoard. Conation Board is a source of task entities, not a pane iframe.",
+      "files": [
+        "apps/electron/src/renderer/platform/conation/ConationBoardPanel.tsx",
+        "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoard.tsx"
+      ],
+      "integration": "deep-link",
+      "evidence": "statically-confirmed"
+    },
+    {
+      "id": "fund-deeplink",
+      "asIs": "Fund pane is a deep link. Interactive canvas disabled pending perf proof.",
+      "toBe": "Native mindmap/pages remain the canvas. Fund is an adapter or stays a documented external open.",
+      "files": [
+        "apps/electron/src/renderer/platform/conation/ConationFundPanel.tsx",
+        "packages/core/src/mindmap/types.ts"
+      ],
+      "integration": "deep-link",
+      "evidence": "statically-confirmed"
+    },
+    {
+      "id": "shell-flags",
+      "asIs": "workbench.conation.* flags default false. Visibility is not background sync.",
+      "toBe": "Keep defaults off for network clients. Native entity features stay available without Conation.",
+      "files": [
+        "packages/core/src/conation/shell/flags.ts",
+        "apps/electron/src/renderer/pages/settings/ConationShellSettings.tsx"
+      ],
+      "integration": "flag-off",
+      "evidence": "statically-confirmed"
+    }
+  ]
+}

@@ -19,3 +19,4 @@ export * from './platform/index.ts';
 // Re-export the KnowledgeProvider contract (K-03); zero deps on shared/server-core
 export * from './knowledge/index.ts';
 export * from './tasks/personal/index.ts';
+export * from './rox2/index.ts';
