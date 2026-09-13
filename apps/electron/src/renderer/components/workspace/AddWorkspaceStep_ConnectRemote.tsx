@@ -100,7 +100,7 @@ export function AddWorkspaceStep_ConnectRemote({
       }
     } else {
       setTestState('error')
-      setTestError(result.error || 'Connection failed')
+      setTestError(result.error || t('workspace.connectionFailed'))
     }
   }
 
@@ -113,9 +113,9 @@ export function AddWorkspaceStep_ConnectRemote({
       applyTestResult(result)
     } catch (err) {
       setTestState('error')
-      setTestError(err instanceof Error ? err.message : 'Connection failed')
+      setTestError(err instanceof Error ? err.message : t('workspace.connectionFailed'))
     }
-  }, [serverUrl, token, tlsTrust])
+  }, [serverUrl, token, tlsTrust, t])
 
   const handleTestConnection = useCallback(async () => {
     if (!serverUrl || !token) return
@@ -189,7 +189,7 @@ export function AddWorkspaceStep_ConnectRemote({
         return
       } catch (err) {
         setTestState('error')
-        setTestError(err instanceof Error ? err.message : 'Failed to reconnect workspace')
+        setTestError(err instanceof Error ? err.message : t('workspace.reconnectFailed'))
         return
       }
     }
@@ -206,7 +206,7 @@ export function AddWorkspaceStep_ConnectRemote({
         await onCreate(prepared.folderPath, prepared.name, prepared.remoteServer)
       } catch (err) {
         setTestState('error')
-        setTestError(err instanceof Error ? err.message : 'Failed to create workspace on remote server')
+        setTestError(err instanceof Error ? err.message : t('workspace.createRemoteFailed'))
         return
       }
     } else if (selectedWorkspace) {
@@ -222,7 +222,7 @@ export function AddWorkspaceStep_ConnectRemote({
       })
       await onCreate(prepared.folderPath, prepared.name, prepared.remoteServer)
     }
-  }, [serverUrl, token, homeDir, isCreateNew, isFreshServer, newWorkspaceName, selectedWorkspace, onCreate, isReconnectMode, onUpdate, reconnectWorkspace, sshHostId, tlsTrust])
+  }, [serverUrl, token, homeDir, isCreateNew, isFreshServer, newWorkspaceName, selectedWorkspace, onCreate, isReconnectMode, onUpdate, reconnectWorkspace, sshHostId, tlsTrust, t])
 
   const canConnect = testState === 'ok' && !isCreating && (
     isReconnectMode ? true :
