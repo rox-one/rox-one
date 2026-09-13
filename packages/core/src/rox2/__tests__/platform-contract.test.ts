@@ -3,10 +3,12 @@ import type { SoupEntityConcreteType } from '../../conation/soup/types.ts'
 import {
   ROX2_ENTITY_KINDS,
   assertRelationKinds,
+  decodeRox2V2Result,
   fixtureResult,
   formatRox2EntityId,
   formatRox2EntityRef,
   isClaimableLive,
+  isVerifiedEffect,
   parseRox2EntityId,
   parseRox2EntityRef,
   queuedResult,
@@ -65,6 +67,13 @@ describe('ROX2 platform contract', () => {
     expect(
       isClaimableLive({ ok: true, state: 'live', entityId: 'note:1' }),
     ).toBe(true)
+  })
+
+  test('legacy live is not a verified effect', () => {
+    const decoded = decodeRox2V2Result({ ok: true, state: 'live', entityId: 'meeting:1' })
+    expect(decoded.verification).toBe('unknown')
+    expect(isVerifiedEffect(decoded)).toBe(false)
+    expect(formatRox2EntityId('meeting', 'm1')).toBe('meeting:m1')
   })
 
   test('sensitive actions require an explicit grant', () => {

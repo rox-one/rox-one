@@ -31,6 +31,7 @@ export const ROX2_ENTITY_KINDS = [
   'channel',
   'channel-message',
   'call',
+  'meeting',
   'reminder',
   'workflow',
   'person',
@@ -157,6 +158,26 @@ export type Rox2ErrResult = {
 
 export type Rox2Result = Rox2OkResult | Rox2ErrResult
 
+export const ROX2_LIFECYCLES = ['accepted', 'applied', 'failed', 'rejected'] as const
+export type Rox2Lifecycle = (typeof ROX2_LIFECYCLES)[number]
+
+export const ROX2_VERIFICATIONS = ['verified', 'unknown', 'unverified'] as const
+export type Rox2Verification = (typeof ROX2_VERIFICATIONS)[number]
+
+/**
+ * V2 result: execution mode is not proof. Legacy `{ ok, state: 'live' }`
+ * decodes as verification `unknown` and must not be promoted to verified.
+ */
+export type Rox2V2Result = {
+  ok: boolean
+  mode: Rox2RunState
+  lifecycle: Rox2Lifecycle
+  verification: Rox2Verification
+  entityId?: string
+  code?: string
+  message?: string
+}
+
 const SOUP_TO_ROX2: Record<SoupEntityConcreteType, Rox2EntityKind> = {
   GraphqlSoupDocument: 'note',
   GraphqlSoupChat: 'session',
@@ -223,6 +244,69 @@ export function isClaimableLive(result: Rox2Result): result is Rox2OkResult {
   return result.ok === true && result.state === 'live'
 }
 
+export function isRox2RunState(value: unknown): value is Rox2RunState {
+  return typeof value === 'string' && (ROX2_RUN_STATES as readonly string[]).includes(value)
+}
+
+export function isRox2Lifecycle(value: unknown): value is Rox2Lifecycle {
+  return typeof value === 'string' && (ROX2_LIFECYCLES as readonly string[]).includes(value)
+}
+
+export function isRox2Verification(value: unknown): value is Rox2Verification {
+  return typeof value === 'string' && (ROX2_VERIFICATIONS as readonly string[]).includes(value)
+}
+
+export function decodeRox2V2Result(raw: unknown): Rox2V2Result {
+  if (!raw || typeof raw !== 'object') {
+    throw new Error('Invalid Rox2 result')
+  }
+  const obj = raw as Record<string, unknown>
+  if ('mode' in obj || 'lifecycle' in obj || 'verification' in obj) {
+    if (!isRox2RunState(obj.mode) || !isRox2Lifecycle(obj.lifecycle) || !isRox2Verification(obj.verification)) {
+      throw new Error('Invalid Rox2 V2 result')
+    }
+    if (obj.verification === 'verified' && (obj.ok !== true || obj.mode !== 'live' || obj.lifecycle !== 'applied')) {
+      throw new Error('Verified Rox2 result requires live applied success')
+    }
+    return {
+      ok: obj.ok === true,
+      mode: obj.mode,
+      lifecycle: obj.lifecycle,
+      verification: obj.verification,
+      entityId: typeof obj.entityId === 'string' ? obj.entityId : undefined,
+      code: typeof obj.code === 'string' ? obj.code : undefined,
+      message: typeof obj.message === 'string' ? obj.message : undefined,
+    }
+  }
+  if (obj.ok === true && obj.state === 'live') {
+    return {
+      ok: true,
+      mode: 'live',
+      lifecycle: 'applied',
+      verification: 'unknown',
+      entityId: typeof obj.entityId === 'string' ? obj.entityId : undefined,
+    }
+  }
+  if (obj.ok === false && isRox2RunState(obj.state) && obj.state !== 'live') {
+    return {
+      ok: false,
+      mode: obj.state,
+      lifecycle: 'failed',
+      verification: 'unverified',
+      code: typeof obj.code === 'string' ? obj.code : 'error',
+      message: typeof obj.message === 'string' ? obj.message : '',
+    }
+  }
+  throw new Error('Invalid Rox2 result')
+}
+
+export function isVerifiedEffect(result: Rox2V2Result): boolean {
+  return result.ok === true
+    && result.mode === 'live'
+    && result.lifecycle === 'applied'
+    && result.verification === 'verified'
+}
+
 export function queuedResult(code: string, message: string): Rox2ErrResult {
   return { ok: false, state: 'queued', code, message }
 }
@@ -254,15 +338,15 @@ export const ROX2_RELATION_CONSTRAINTS: Record<Rox2RelationKind, { domain: reado
     range: ROX2_ENTITY_KINDS,
   },
   mentions: {
-    domain: ['session', 'note', 'task', 'workflow', 'outcome'],
-    range: ['session', 'note', 'task', 'person', 'crm-company', 'file', 'calendar-event', 'workflow'],
+    domain: ['session', 'note', 'task', 'workflow', 'outcome', 'meeting', 'call'],
+    range: ['session', 'note', 'task', 'person', 'crm-company', 'file', 'calendar-event', 'workflow', 'meeting', 'call'],
   },
   blocks: {
     domain: ['task', 'workflow', 'outcome'],
     range: ['task', 'workflow', 'outcome'],
   },
   assigned: {
-    domain: ['task', 'workflow', 'session', 'calendar-event'],
+    domain: ['task', 'workflow', 'session', 'calendar-event', 'meeting'],
     range: ['person'],
   },
   'in-calendar': {
@@ -270,15 +354,15 @@ export const ROX2_RELATION_CONSTRAINTS: Record<Rox2RelationKind, { domain: reado
     range: ['calendar-event'],
   },
   'derived-from': {
-    domain: ['note', 'outcome', 'workflow', 'file', 'session'],
-    range: ['session', 'note', 'file', 'workflow', 'outcome'],
+    domain: ['note', 'outcome', 'workflow', 'file', 'session', 'meeting'],
+    range: ['session', 'note', 'file', 'workflow', 'outcome', 'meeting', 'call'],
   },
   'attached-to': {
     domain: ['file', 'note'],
     range: ['session', 'note', 'task', 'project', 'workflow', 'person', 'crm-company'],
   },
   membership: {
-    domain: ['session', 'note', 'task', 'file', 'workflow', 'outcome', 'calendar-event'],
+    domain: ['session', 'note', 'task', 'file', 'workflow', 'outcome', 'calendar-event', 'meeting', 'call'],
     range: ['project'],
   },
   'depends-on': {
@@ -286,11 +370,11 @@ export const ROX2_RELATION_CONSTRAINTS: Record<Rox2RelationKind, { domain: reado
     range: ['task', 'workflow', 'outcome'],
   },
   discusses: {
-    domain: ['note', 'session', 'channel-message'],
-    range: ['person', 'crm-company', 'note', 'session', 'task'],
+    domain: ['note', 'session', 'channel-message', 'meeting'],
+    range: ['person', 'crm-company', 'note', 'session', 'task', 'meeting'],
   },
   produces: {
-    domain: ['session', 'note', 'workflow', 'task'],
+    domain: ['session', 'note', 'workflow', 'task', 'meeting'],
     range: ['outcome', 'file', 'note'],
   },
   replaces: {

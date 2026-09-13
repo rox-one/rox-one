@@ -21,6 +21,7 @@
     "./sessions": "./src/sessions/index.ts",
     "./tasks": "./src/tasks/index.ts",
     "./knowledge": "./src/knowledge/index.ts",
+    "./meetings": "./src/meetings/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./workgraph": "./src/workgraph/index.ts",
     "./observability": "./src/observability/index.ts"

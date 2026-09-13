@@ -134,3 +134,14 @@ export {
   loadVoicePrefs,
   saveVoicePrefs,
 } from './storage.ts'
+
+export {
+  applyTranscriptPatch,
+  bindSpeaker,
+  coverageGaps,
+  emptyTranscriptState,
+  segmentKey,
+  type SpeakerBinding,
+  type TranscriptSegmentPatch,
+  type TranscriptState,
+} from './transcript-reducer.ts'

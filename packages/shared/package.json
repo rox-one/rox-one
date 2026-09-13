@@ -76,6 +76,7 @@
     "./labels/crud": "./src/labels/crud.ts",
     "./labels/storage": "./src/labels/storage.ts",
     "./marketplace": "./src/marketplace/index.ts",
+    "./meeting-agents": "./src/meeting-agents/index.ts",
     "./mcp": "./src/mcp/index.ts",
     "./memory/proposals": "./src/memory/proposals.ts",
     "./memory/types": "./src/memory/types.ts",

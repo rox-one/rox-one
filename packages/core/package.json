@@ -20,6 +20,7 @@
     "./tasks/personal": "./src/tasks/personal/index.ts",
     "./calendar": "./src/calendar/index.ts",
     "./rox2": "./src/rox2/index.ts",
+    "./meetings": "./src/meetings/index.ts",
     "./mindmap": "./src/mindmap/index.ts",
     "./mindmap/*": "./src/mindmap/*",
     "./platform/agent-teams": "./src/platform/agent-teams/index.ts",
