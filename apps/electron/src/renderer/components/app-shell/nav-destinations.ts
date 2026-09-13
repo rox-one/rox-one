@@ -29,6 +29,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { routes, type ViewRoute } from '../../../shared/routes'
+import { NATIVE_SURFACE_REQUIRES_CONATION_FLAG } from '../../pages/rox2-native-surfaces'
 import {
   isAutomationsNavigation,
   isConnectionsNavigation,
@@ -174,6 +175,9 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
 
 /** ROX2-021: sessions collection + chat are native; Conation flags do not hide this rail. */
 export const SESSIONS_REQUIRES_CONATION_FLAG = false as const
+
+/** ROX2-022..030: remaining rail destinations stay native without Conation flags. */
+export { NATIVE_SURFACE_REQUIRES_CONATION_FLAG } from '../../pages/rox2-native-surfaces'
 
 /** Lookup by destination id for AppShell's hand-written `links[]` entries. */
 export const APP_NAV_DESTINATIONS_BY_ID: Record<AppNavDestinationId, AppNavDestination> =
