@@ -123,6 +123,24 @@ html[data-scenic] {
   --background: oklch(0.2 0.005 270 / 0.88);
 }
 
+/* Zen Shell: scenic wallpaper stays on ::before. Documents stay opaque. */
+html[data-shell-style="zen"][data-scenic] [data-shell-role="content"] {
+  --background: var(--shell-content);
+  background: var(--shell-content);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-shell-style="zen"] .chrome-topbar,
+html[data-shell-style="zen"] .chrome-rail,
+html[data-shell-style="zen"] .chrome-strip,
+html[data-shell-style="zen"][data-scenic] .chrome-topbar,
+html[data-shell-style="zen"][data-scenic] .chrome-rail,
+html[data-shell-style="zen"][data-scenic] .chrome-strip {
+  background: var(--shell-backdrop-tint);
+  border-color: var(--shell-border);
+}
+
 /* Renderer-specific Tailwind utilities layered on top of the shared theme. */
 @theme inline {
   --color-foreground-1\.5: var(--foreground-1\.5);

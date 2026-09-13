@@ -200,6 +200,7 @@ export function TopBar({
   return (
     <div
       className="chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region"
+      data-shell-role="chrome"
       style={{ left: leftInset, height: 'var(--topbar-height)' }}
     >
       <div className="flex h-full w-full items-center justify-between gap-1.5">
