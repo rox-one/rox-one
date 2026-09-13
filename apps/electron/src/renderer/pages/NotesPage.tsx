@@ -1025,7 +1025,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!activeWorkspaceId || !createFolderName.trim()) return
     if (!await flushBeforeAction()) return
     const folder = stripMdExtension(createFolderName.trim()).replace(/^\/+|\/+$/g, '')
-    const note = await window.electronAPI.createNote(activeWorkspaceId, 'Untitled', folder)
+    const note = await window.electronAPI.createNote(activeWorkspaceId, t('notes.untitled'), folder)
     setCreateFolderDialogOpen(false)
     setCreateFolderName('')
     await refreshNotes()
