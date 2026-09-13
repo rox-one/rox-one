@@ -552,6 +552,26 @@ export const mockElectronAPI = {
       format: 'craft-markdown' as const,
     }),
   },
+  extensionsListCatalog: async () => ({
+    entries: [],
+    providers: [{ id: 'playground', label: 'Playground' }],
+  }),
+  extensionsListInstalled: async () => ({
+    records: [],
+    state: { version: 1 as const, enabled: {} },
+  }),
+  onExtensionsChanged: () => () => {},
+  pluginBridgeInstallBazaar: async () => {},
+  pluginBridgeUninstallBazaar: async () => {},
+  extensionsSetEnabled: async () => {},
+  getNotificationsEnabled: async () => true,
+  setNotificationsEnabled: async () => {},
+  getKeepAwakeWhileRunning: async () => false,
+  setKeepAwakeWhileRunning: async () => {},
+  getBrowserToolEnabled: async () => true,
+  setBrowserToolEnabled: async () => {},
+  getNetworkProxySettings: async () => ({ enabled: false }),
+  setNetworkProxySettings: async () => ({ enabled: false }),
   foreignDiscoverSessions: async () => ({
     entries: [
       {

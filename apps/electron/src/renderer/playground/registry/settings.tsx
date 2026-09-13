@@ -9,6 +9,8 @@ import MarketplaceSettingsPage from '@/pages/settings/MarketplaceSettingsPage'
 import ContextSettingsPage from '@/pages/settings/ContextSettingsPage'
 import KnowledgeSettingsPage from '@/pages/settings/KnowledgeSettingsPage'
 import ImportSettingsPage from '@/pages/settings/ImportSettingsPage'
+import ExtensionsSettingsPage from '@/pages/settings/ExtensionsSettingsPage'
+import AppSettingsPage from '@/pages/settings/AppSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import type { ComponentEntry } from './types'
@@ -73,6 +75,22 @@ function MarketplacePlayground() {
   return (
     <SettingsScreen>
       <MarketplaceSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function ExtensionsPlayground() {
+  return (
+    <SettingsScreen>
+      <ExtensionsSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function AppPlayground() {
+  return (
+    <SettingsScreen>
+      <AppSettingsPage />
     </SettingsScreen>
   )
 }
@@ -227,11 +245,31 @@ export const settingsComponents: ComponentEntry[] = [
     layout: 'full',
   },
   {
+    id: 'settings-extensions',
+    name: 'Settings · Extensions',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-047 native extensions chrome; install is not spend',
+    component: ExtensionsPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-app',
+    name: 'Settings · App',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-049 native app chrome; prefs are local writes',
+    component: AppPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
     id: 'settings-import',
     name: 'Settings · Import',
     category: 'Settings',
     level: 'Screens',
-    description: 'PremiumMenu kind filter and scan/persist chrome',
+    description: 'ROX2-048 native import chrome; scan is device-read, persist is local',
     component: ImportPlayground,
     props: [],
     layout: 'full',
