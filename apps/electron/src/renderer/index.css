@@ -998,6 +998,10 @@ html[data-shell-style="zen"] .sidebar-disclosure {
   transition: opacity var(--shell-motion-fast, 120ms) ease;
 }
 
+html[data-shell-style="zen"] .shell-sash-active {
+  background: color-mix(in oklch, var(--shell-sash, var(--foreground)) 28%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html[data-shell-style="zen"] .sidebar-disclosure {
     transition: none;
