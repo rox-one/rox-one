@@ -10,7 +10,22 @@ import {
 } from '../sync.ts'
 
 describe('conation sync (#383)', () => {
-  it('treats a repeated cursor as duplicate, not a second apply', () => {
+  it('does not stamp verified when live Conation writes are unconfirmed', () => {
+    const state = createSyncState()
+    const result = syncConationPage(
+      state,
+      { cursor: 'c1', nextCursor: null, items: [{ id: 'n1', revision: '1' }] },
+      { authPresent: true, revokeGeneration: 0 },
+    )
+    expect(result.status).not.toBe('verified')
+    expect(result.status).toBe('blocked')
+    expect(result.live).toBe(false)
+    expect(result.evidenceLevel).toBe('U1')
+    expect(state.applied.has('n1')).toBe(false)
+    expect(state.checkpoint).toBeNull()
+  })
+
+  it('does not apply a second page as a live checkpoint while writes are unconfirmed', () => {
     const state = createSyncState()
     const page = {
       cursor: 'c1',
@@ -18,12 +33,13 @@ describe('conation sync (#383)', () => {
       items: [{ id: 'n1', revision: '1' }],
     }
     const first = syncConationPage(state, page, { authPresent: true, revokeGeneration: 0 })
-    expect(first.reason).toBe('checkpoint')
-    expect(first.status).toBe('pending')
-    expect(first.status).not.toBe('verified')
+    const second = syncConationPage(state, page, { authPresent: true, revokeGeneration: 0 })
+    expect(first.status).toBe('blocked')
+    expect(second.status).toBe('blocked')
     expect(first.live).toBe(false)
-    expect(isLiveVerified(first)).toBe(false)
-    expect(syncConationPage(state, page, { authPresent: true, revokeGeneration: 0 }).status).toBe('duplicate')
+    expect(second.live).toBe(false)
+    expect(state.applied.size).toBe(0)
+    expect(state.checkpoint).toBeNull()
   })
 
   it('does not delete-all on an empty page', () => {
@@ -34,24 +50,24 @@ describe('conation sync (#383)', () => {
       { cursor: 'empty', nextCursor: null, items: [] },
       { authPresent: true, revokeGeneration: 0 },
     )
-    expect(result.reason).toBe('empty-page-not-delete-all')
-    expect(result.status).toBe('pending')
     expect(result.status).not.toBe('verified')
+    expect(result.status).toBe('blocked')
     expect(result.live).toBe(false)
-    expect(isLiveVerified(result)).toBe(false)
     expect(state.applied.size).toBe(1)
   })
 
-  it('applies remote deletes as tombstones', () => {
+  it('does not apply remote deletes as tombstones while writes are unconfirmed', () => {
     const state = createSyncState()
     state.applied.set('n1', { id: 'n1', revision: '1' })
-    syncConationPage(
+    const result = syncConationPage(
       state,
       { cursor: 'd1', nextCursor: null, items: [{ id: 'n1', revision: '2', deleted: true }] },
       { authPresent: true, revokeGeneration: 0 },
     )
-    expect(state.applied.has('n1')).toBe(false)
-    expect(state.tombstones.has('n1')).toBe(true)
+    expect(result.status).toBe('blocked')
+    expect(result.live).toBe(false)
+    expect(state.applied.has('n1')).toBe(true)
+    expect(state.tombstones.has('n1')).toBe(false)
   })
 
   it('re-checks revoke generation after await', () => {
@@ -67,11 +83,12 @@ describe('conation sync (#383)', () => {
 
   it('skips echo-loop items with origin=rox', () => {
     const state = createSyncState()
-    syncConationPage(
+    const result = syncConationPage(
       state,
       { cursor: 'e1', nextCursor: null, items: [{ id: 'n1', revision: '1', origin: 'rox' }] },
       { authPresent: true, revokeGeneration: 0 },
     )
+    expect(result.status).toBe('blocked')
     expect(state.applied.has('n1')).toBe(false)
   })
 
@@ -82,11 +99,12 @@ describe('conation sync (#383)', () => {
       { cursor: 'c1', nextCursor: null, items: [{ id: 'n1', revision: '1' }] },
       { authPresent: true, revokeGeneration: 0, crashBeforeCheckpoint: true },
     )
-    expect(result.reason).toBe('crash-before-checkpoint')
+    expect(result.status).not.toBe('verified')
+    expect(result.live).toBe(false)
     expect(state.checkpoint).toBeNull()
   })
 
-  it('offline writes stay pending and dirty local+remote is a conflict', () => {
+  it('offline writes stay pending and unconfirmed sync does not merge over dirty local', () => {
     const state = createSyncState()
     expect(queueOfflineWrite(state, { id: 'n1', revision: '1' }).status).toBe('pending')
     state.applied.set('n1', { id: 'n1', revision: '1', localDirty: true })
@@ -95,7 +113,11 @@ describe('conation sync (#383)', () => {
       { cursor: 'c2', nextCursor: null, items: [{ id: 'n1', revision: '2' }] },
       { authPresent: true, revokeGeneration: 0 },
     )
-    expect(conflict.status).toBe('conflict')
+    expect(conflict.status).not.toBe('verified')
+    expect(conflict.status).toBe('blocked')
+    expect(conflict.live).toBe(false)
+    expect(state.applied.get('n1')?.revision).toBe('1')
+    expect(state.pending).toHaveLength(1)
   })
 
   it('blocks incompatible schema hashes', () => {
@@ -106,6 +128,7 @@ describe('conation sync (#383)', () => {
       { authPresent: true, revokeGeneration: 0, schemaHash: 'sha256:other' },
     )
     expect(result.status).toBe('blocked')
+    expect(result.live).toBe(false)
     expect(CONATION_FIXTURE_SCHEMA_HASH).toBe('fixture-not-live')
   })
 
