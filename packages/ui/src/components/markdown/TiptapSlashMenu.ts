@@ -2,6 +2,7 @@ import { Extension } from '@tiptap/core'
 import Suggestion, { type SuggestionKeyDownProps, type SuggestionProps } from '@tiptap/suggestion'
 import { NodeSelection, PluginKey } from '@tiptap/pm/state'
 import type { Editor } from '@tiptap/core'
+import i18n from 'i18next'
 import { InlineMenuSurface } from '../ui/InlineMenuSurface'
 import { RICH_BLOCK_EDIT_EVENT } from './rich-block-events'
 
@@ -450,7 +451,7 @@ function renderMenuItems(container: HTMLElement, items: SlashCommandItem[], sele
   if (items.length === 0) {
     const empty = document.createElement('div')
     empty.className = 'tiptap-slash-empty'
-    empty.textContent = 'No commands found'
+    empty.textContent = i18n.t('commands.noCommands')
     container.appendChild(empty)
     return
   }

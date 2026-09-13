@@ -3,13 +3,7 @@ import { PanelRight } from 'lucide-react'
 import { CraftAgentsSymbol } from '@/components/icons/CraftAgentsSymbol'
 import { cn } from '@/lib/utils'
 import { useTheme } from '@/context/ThemeContext'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import type { PresetTheme } from '@config/theme'
 import { ThemeToggle } from './ThemeToggle'
 import { Sidebar } from './Sidebar'
@@ -203,18 +197,14 @@ export function PlaygroundApp() {
         </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Select value={effectiveColorTheme ?? 'default'} onValueChange={handleThemeChange}>
-            <SelectTrigger className="h-8 w-[170px] bg-foreground/5 border-border/50 text-xs">
-              <SelectValue placeholder="Theme" />
-            </SelectTrigger>
-            <SelectContent>
-              {themeOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <PremiumMenuSelect
+            aria-label="Theme"
+            className="h-8 w-[170px] max-w-[170px] bg-foreground/5 border-border/50"
+            items={themeOptions.map((option) => ({ id: option.value, label: option.label }))}
+            placeholder="Theme"
+            selectedId={effectiveColorTheme ?? 'default'}
+            onSelect={(item) => handleThemeChange(item.id)}
+          />
           <button
             onClick={() => setVariantsSidebarOpen(!variantsSidebarOpen)}
             className={cn(
