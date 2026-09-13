@@ -52,7 +52,7 @@ export function inspectForeignSource(
 }
 
 export function readRegularFile(path: string, maxBytes = MAX_FOREIGN_FILE_BYTES): string | null {
-  const guard = inspectForeignSource(path)
+  const guard = inspectForeignSource(path, maxBytes)
   if (guard.status !== 'ok') return null
   let fd: number | undefined
   try {

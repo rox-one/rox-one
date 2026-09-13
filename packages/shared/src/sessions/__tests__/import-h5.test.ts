@@ -3,7 +3,16 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { discoverForeignSessions, filterForeignIndexEntries, MAX_SCAN_ENTRIES, MAX_SCAN_PER_KIND } from '../import-discover.ts'
-import { convertClaudeJsonl, convertGrokCatalog, inferForeignKind, redactSecrets } from '../import-convert.ts'
+import {
+  convertClaudeJsonl,
+  convertGrokCatalog,
+  inferForeignKind,
+  inspectForeignSource,
+  MAX_FOREIGN_EXPORT_BYTES,
+  MAX_FOREIGN_FILE_BYTES,
+  readRegularFile,
+  redactSecrets,
+} from '../import-convert.ts'
 import { isAllowedForeignSourcePath, isHomePath, isSensitiveAgentCwd } from '../import-home.ts'
 import { FOREIGN_SESSION_KINDS } from '../import-types.ts'
 import { listImportedSessionFiles, persistForeignSession, readImportedSession } from '../import-persist.ts'
@@ -425,5 +434,16 @@ describe('H5 foreign import', () => {
     const session = readImportedSession(workspace, persisted.sessionId!)
     expect(session?.messages.some((message) => message.content.includes('hello chatgpt'))).toBe(true)
     expect(session?.messages.some((message) => message.content.includes('second chatgpt'))).toBe(false)
+  })
+
+  it('readRegularFile inspects with the caller maxBytes, not the 5 MiB JSONL default', () => {
+    const dir = tmp('h5-size-')
+    const path = join(dir, 'conversations.json')
+    const overDefault = MAX_FOREIGN_FILE_BYTES + 1
+    writeFileSync(path, Buffer.alloc(overDefault, 0x20))
+    expect(inspectForeignSource(path).status).toBe('too-large')
+    expect(inspectForeignSource(path, MAX_FOREIGN_EXPORT_BYTES).status).toBe('ok')
+    expect(readRegularFile(path)).toBeNull()
+    expect(readRegularFile(path, MAX_FOREIGN_EXPORT_BYTES)?.length).toBe(overDefault)
   })
 })
