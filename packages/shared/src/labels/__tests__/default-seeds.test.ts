@@ -83,6 +83,24 @@ describe('ensureStockDefaultLabels migrate-in-place', () => {
     expect(ensureStockDefaultLabels(again)).toBe(false);
   });
 
+  it('preinstalls auto-label rules on code and bug', () => {
+    const config = getDefaultLabelConfig();
+    const code = flattenLabels(config.labels).find((l) => l.id === 'code');
+    const bug = flattenLabels(config.labels).find((l) => l.id === 'bug');
+    expect(code?.autoRules?.length).toBeGreaterThan(0);
+    expect(bug?.autoRules?.length).toBeGreaterThan(0);
+  });
+
+  it('migrates missing auto-label rules onto existing stock labels', () => {
+    const config = getDefaultLabelConfig();
+    const bug = flattenLabels(config.labels).find((l) => l.id === 'bug')!;
+    bug.autoRules = undefined;
+    saveLabelConfig(workspaceRoot, config);
+    const loaded = loadLabelConfig(workspaceRoot);
+    const restored = flattenLabels(loaded.labels).find((l) => l.id === 'bug');
+    expect(restored?.autoRules?.length).toBeGreaterThan(0);
+  });
+
   it('fills missing child under existing parent without duplicating id elsewhere', () => {
     const config = getDefaultLabelConfig();
     // Remove sales child

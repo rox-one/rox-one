@@ -78,3 +78,8 @@ export function liveCredentialsPresent(provider: CalendarProvider): boolean {
   if (provider === 'appleReminders') return appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER))
   return Boolean(process.env[LIVE_ENV[provider]])
 }
+
+/** Optional connectors are wired only when live credentials / helper exist. Never pretend. */
+export function isCalendarConnectorWired(provider: CalendarProvider): boolean {
+  return liveCredentialsPresent(provider)
+}

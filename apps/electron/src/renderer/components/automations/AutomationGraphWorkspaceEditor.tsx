@@ -2,6 +2,7 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationGraphProjection } from '@craft-agent/shared/automations/graph'
 import type { AutomationGraph } from '@craft-agent/shared/automations/types'
+import { CalendarConnectorChips } from '@/components/calendar/CalendarConnectorChips'
 import { cn } from '@/lib/utils'
 import { AutomationGraphEditor } from './AutomationGraphEditor'
 
@@ -98,11 +99,18 @@ export function AutomationGraphWorkspaceEditor({
   }
 
   return (
-    <AutomationGraphEditor
-      graph={projection.graph}
-      onChange={handleGraphChange}
-      onSave={saveGraph}
-      className={className}
-    />
+    <div className={cn('flex min-h-0 flex-1 flex-col gap-3', className)} data-testid="automation-graph-workspace">
+      <div className="shrink-0 space-y-1">
+        <p className="text-sm text-muted-foreground">{t('automations.graphNoCalendar')}</p>
+        <p className="text-xs text-muted-foreground">{t('automations.connectorsOptional')}</p>
+        <CalendarConnectorChips />
+      </div>
+      <AutomationGraphEditor
+        graph={projection.graph}
+        onChange={handleGraphChange}
+        onSave={saveGraph}
+        className="min-h-0 flex-1"
+      />
+    </div>
   )
 }
