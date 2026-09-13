@@ -82,6 +82,7 @@ export {
   PAGE_THUMBNAIL_FILENAME,
   DEFAULT_PAGE_GRANT_TTL_MS,
 } from './storage.ts';
+export { ensureDemoPage, DEMO_PAGE_NAME, DEMO_PAGE_HTML } from './demo-page.ts';
 
 // Validation
 export {
