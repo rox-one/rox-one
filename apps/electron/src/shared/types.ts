@@ -801,7 +801,7 @@ export interface ElectronAPI {
   // Notes
   listNotes(workspaceId: string): Promise<NoteSummary[]>
   readNote(workspaceId: string, noteId: string): Promise<NoteDocument>
-  saveNote(workspaceId: string, noteId: string, content: string): Promise<NoteDocument>
+  saveNote(workspaceId: string, noteId: string, content: string, expectedRevision?: string): Promise<NoteDocument>
   createNote(workspaceId: string, title: string, folder?: string): Promise<NoteDocument>
   renameNote(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameResult>
   deleteNote(workspaceId: string, noteId: string): Promise<boolean>

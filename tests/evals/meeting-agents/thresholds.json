@@ -1,0 +1,7 @@
+{
+  "taskPrecision": 0.85,
+  "taskRecall": 0.8,
+  "abstain": 0.05,
+  "ownerDateResolved": 0.75,
+  "note": "PRD targets, not current measurements. Holdout must not be used to tune."
+}

@@ -11,6 +11,7 @@ import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
+import { contentHash } from '@craft-agent/core/rox2'
 import {
   applyVaultWatchTick,
   ensureVaultIndex,
@@ -492,9 +493,15 @@ async function createNote(notesRoot: string, title: string, folder?: string): Pr
   return readNote(notesRoot, noteIdFromRelativePath(relative(notesRoot, filePath)))
 }
 
-async function saveNote(notesRoot: string, noteId: string, content: string): Promise<NoteDocument> {
+async function saveNote(notesRoot: string, noteId: string, content: string, expectedRevision?: string): Promise<NoteDocument> {
   await ensureNotesDirs(notesRoot)
   const filePath = notePathFromId(notesRoot, noteId)
+  if (expectedRevision && existsSync(filePath)) {
+    const existing = await readFile(filePath, 'utf-8')
+    if (contentHash(existing) !== expectedRevision) {
+      throw new Error('note revision conflict')
+    }
+  }
   await mkdir(dirname(filePath), { recursive: true })
   await writeFile(filePath, content, 'utf-8')
   // Record the exact mtime of our write so the watcher can recognize it as internal
@@ -974,7 +981,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     return readNote(getWorkspaceNotesRoot(workspaceId), noteId)
   })
 
-  server.handle(RPC_CHANNELS.notes.SAVE, async (_ctx, workspaceId: string, noteId: string, content: string) => {
+  server.handle(RPC_CHANNELS.notes.SAVE, async (_ctx, workspaceId: string, noteId: string, content: string, expectedRevision?: string) => {
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     let previousLinkCount = 0
     try {
@@ -983,7 +990,7 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
     } catch {
       // new / unreadable note — treat as zero prior links
     }
-    const note = await saveNote(notesRoot, noteId, content)
+    const note = await saveNote(notesRoot, noteId, content, expectedRevision)
     refreshVaultIndex(notesRoot)
     const nextLinkCount = note.links?.length ?? 0
     if (nextLinkCount > previousLinkCount) {
