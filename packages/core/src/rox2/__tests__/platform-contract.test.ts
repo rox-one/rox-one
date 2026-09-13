@@ -326,6 +326,63 @@ describe('ROX2 platform contract', () => {
     expect(clash.status).toBe('quarantine')
   })
 
+  test('legacy unencoded four-slot key finds the existing entity after encoded write without forking', () => {
+    const binding = {
+      provider: 'google',
+      account: 'user@x.com',
+      remoteType: 'event',
+      remoteId: '1',
+    }
+    const encoded = formatRox2ExternalBindingKey(binding)
+    const legacy = 'google:user@x.com:event:1'
+    expect(encoded).toBe('google:user%40x.com:event:1')
+    expect(legacy).not.toBe(encoded)
+    expect(parseRox2ExternalBindingKey(legacy)).toEqual(binding)
+
+    const existingRef: Rox2EntityRef = {
+      workspaceId: 'ws-1',
+      entityId: 'calendar-event:google:user@x.com:event:1',
+      revisionId: 'rev-1',
+      accountNamespace: 'user@x.com',
+    }
+    const index = new Map<string, Rox2EntityRef>([[legacy, existingRef]])
+    const again = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-2')
+
+    expect(again.status).toBe('ok')
+    if (again.status === 'ok') {
+      expect(again.ref.entityId).toBe(existingRef.entityId)
+      expect(again.ref.revisionId).toBe('rev-2')
+    }
+    expect(index.get(encoded)?.entityId).toBe(existingRef.entityId)
+    expect(index.get(encoded)?.revisionId).toBe('rev-2')
+    expect(index.has(legacy)).toBe(false)
+    expect(index.size).toBe(1)
+  })
+
+  test('legacy unencoded four-slot workspace mismatch quarantines without encoded write', () => {
+    const binding = {
+      provider: 'google',
+      account: 'user@x.com',
+      remoteType: 'event',
+      remoteId: '1',
+    }
+    const encoded = formatRox2ExternalBindingKey(binding)
+    const legacy = 'google:user@x.com:event:1'
+    const index = new Map<string, Rox2EntityRef>([
+      [legacy, { workspaceId: 'ws-1', entityId: 'calendar-event:legacy', revisionId: 'rev-1' }],
+    ])
+    const clash = registerExternalBinding(index, 'ws-2', 'calendar-event', binding, 'rev-2')
+    expect(clash.status).toBe('quarantine')
+    if (clash.status === 'quarantine') {
+      expect(clash.reason).toBe('workspace-mismatch')
+      expect(clash.existing.workspaceId).toBe('ws-1')
+      expect(clash.existing.revisionId).toBe('rev-1')
+    }
+    expect(index.has(encoded)).toBe(false)
+    expect(index.get(legacy)?.workspaceId).toBe('ws-1')
+    expect(index.get(legacy)?.revisionId).toBe('rev-1')
+  })
+
   test('encodes binding slots so colons in account cannot shift parse', () => {
     const binding = {
       provider: 'g',
@@ -337,6 +394,22 @@ describe('ROX2 platform contract', () => {
     expect(key).toBe('g:ac%3Act:event:1')
     expect(parseRox2ExternalBindingKey(key)).toEqual(binding)
     expect(() => parseRox2ExternalBindingKey('g:ac:ct:event:1')).toThrow('Invalid external binding key')
+    expect(() => parseRox2ExternalBindingKey('google:user@x.com:event:extra:1')).toThrow(
+      'Invalid external binding key',
+    )
+    const stale: Rox2EntityRef = {
+      workspaceId: 'ws-1',
+      entityId: 'calendar-event:stale',
+      revisionId: 'rev-0',
+    }
+    const index = new Map<string, Rox2EntityRef>([['g:ac:ct:event:1', stale]])
+    const minted = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-1')
+    expect(minted.status).toBe('ok')
+    if (minted.status === 'ok') {
+      expect(minted.ref.entityId).not.toBe(stale.entityId)
+    }
+    expect(index.get('g:ac:ct:event:1')?.entityId).toBe(stale.entityId)
+    expect(index.get(key)?.entityId).not.toBe(stale.entityId)
   })
 
   test('round-trips colons in every binding slot', () => {
