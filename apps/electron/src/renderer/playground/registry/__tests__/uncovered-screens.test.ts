@@ -22,6 +22,7 @@ describe('uncovered playground screens', () => {
     expect(settings).toContain('AppSettingsPage')
     expect(settings).toContain('AiSettingsPage')
     expect(settings).toContain('InputSettingsPage')
+    expect(settings).toContain('ModalProvider')
     expect(settings).toContain("id: 'home-quests-empty'")
     expect(settings).toContain("id: 'home-quests-active'")
     expect(settings).toContain('QuestProgressCard')
