@@ -113,6 +113,8 @@ export {
 export {
   createConfiguredLocalTranscribeAdapter,
   createLocalAsrAdapter,
+  createProductionLocalTranscribeAdapter,
+  createProductionVoiceHttp,
   hasVoiceCredentials,
   isFixtureOnlyEvidence,
   localAdapterManifest,
@@ -120,6 +122,7 @@ export {
   resolveLocalAsrFamily,
   resolveVoiceGatewayMode,
   voiceGatewayBaseUrl,
+  VoiceGatewayUnavailableError,
   type VoiceGatewayMode,
 } from './runtime.ts'
 export { voiceFlagEnabled, voiceV2Enabled } from './flags.ts'

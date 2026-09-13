@@ -3,6 +3,8 @@ import {
   classifyEvidence,
   collectEvidenceInput,
   createLocalAsrAdapter,
+  createProductionLocalTranscribeAdapter,
+  createProductionVoiceHttp,
   hasVoiceCredentials,
   isFixtureOnlyEvidence,
   localAdapterManifest,
@@ -10,6 +12,7 @@ import {
   reportEvidence,
   resolveLocalAsrFamily,
   resolveVoiceGatewayMode,
+  VoiceGatewayUnavailableError,
 } from '../index.ts'
 
 const ciEnv = { CI: '1' }
@@ -86,6 +89,15 @@ describe('local ASR adapter selection', () => {
     expect(resolveLocalAsrFamily('whisper-large-v3-turbo')).toBe('whisper-large-v3-turbo')
     expect(resolveLocalAsrFamily('nemotron-3.5-asr-streaming-0.6b')).toBe('nemotron-3.5-asr-streaming-0.6b')
     expect(resolveLocalAsrFamily('gigaam-v3-e2e-rnnt')).toBe('gigaam-v3-e2e-rnnt')
+  })
+
+  it('production factories never return fixture transcripts', async () => {
+    const http = createProductionVoiceHttp({})
+    await expect(http.fetch('https://api.rox.one/v1/audio/transcriptions')).rejects.toThrow(VoiceGatewayUnavailableError)
+    const live = createProductionVoiceHttp({ CRAFT_VOICE_GATEWAY_FIXTURE: '0' })
+    expect(live.fetch).toBe(fetch)
+    const adapter = createProductionLocalTranscribeAdapter({ asrModelId: 'whisper-large-v3-turbo' })
+    await expect(adapter.transcribe({ audio: new Uint8Array([1]), mimeType: 'audio/wav' })).rejects.toThrow()
   })
 
   it('runs fixture inference for the configured family and refuses missing weights', async () => {
