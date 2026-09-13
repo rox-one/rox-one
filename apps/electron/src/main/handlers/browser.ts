@@ -61,7 +61,13 @@ export function registerBrowserHandlers(server: RpcServer, deps: HandlerDeps): v
     })
   })
 
+  // ZS-07 receiver: BrowserPanelPage → browserPane.syncBounds → syncEmbeddedBounds.
+  // Finite bounds only; invalid payloads hide the view. Do not confuse with WebBrowserPanel's 390×720 VPS viewport.
   server.handle(RPC_CHANNELS.browserPane.SYNC_BOUNDS, (_ctx, id: string, rect: { x: number; y: number; width: number; height: number } | null) => {
+    if (rect && ![rect.x, rect.y, rect.width, rect.height].every((value) => Number.isFinite(value))) {
+      browserPaneManager.syncEmbeddedBounds(id, null)
+      return
+    }
     browserPaneManager.syncEmbeddedBounds(id, rect)
   })
 
