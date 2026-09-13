@@ -14,6 +14,7 @@ export const MEETING_RPC_METHODS = [
   'meetings:addManualNote',
   'meetings:approveProposal',
   'meetings:rejectProposal',
+  'meetings:openTarget',
   'meetings:mailPrepare',
   'meetings:mailSend',
   'meetings:crmPropose',

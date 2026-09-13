@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
+import { navigate } from '@/lib/navigate'
 import MeetingDetail from './meetings/MeetingDetail'
 import ProposalInbox from './meetings/ProposalInbox'
 import {
   approveNativeProposalViaRpc,
   buildMeetingGrant,
   createNativeProposalViaRpc,
+  openNativeProposalTargetViaRpc,
   rejectNativeProposalViaRpc,
+  resolveMeetingOpenTargetApi,
   resolveMeetingProposalApi,
+  type MeetingOpenTargetApi,
   type MeetingProposalApi,
   type MeetingProposalRow,
   type NativeProposalType,
@@ -58,7 +62,7 @@ export default function MeetingsPage(props: {
   selectedId?: string | null
   workspaceId?: string | null
   actorId?: string
-  api?: (MeetingProposalApi & Partial<MeetingCatalogApi> & Partial<MeetingSearchApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi>) | null
+  api?: (MeetingProposalApi & Partial<MeetingOpenTargetApi> & Partial<MeetingCatalogApi> & Partial<MeetingSearchApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi>) | null
 }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
@@ -68,6 +72,7 @@ export default function MeetingsPage(props: {
   const captureGrant = workspaceId ? buildMeetingCaptureGrant({ workspaceId, actorId }) : null
   const importGrant = workspaceId ? buildMeetingImportGrant({ workspaceId, actorId }) : null
   const proposalApi = resolveMeetingProposalApi(props.api)
+  const openTargetApi = resolveMeetingOpenTargetApi(props.api)
   const catalogApi = resolveMeetingCatalogApi(props.api)
   const searchApi = resolveMeetingSearchApi(props.api)
   const captureApi = resolveMeetingCaptureApi(props.api)
@@ -177,6 +182,22 @@ export default function MeetingsPage(props: {
     setApprovingId(null)
     setItems((current) => current.map((item) => item.id === row.id ? result.row : item))
     if (!result.ok) setBanner(result.code)
+  }
+
+  async function handleOpenTarget(row: MeetingProposalRow) {
+    setBanner(null)
+    const result = await openNativeProposalTargetViaRpc({
+      api: openTargetApi,
+      workspaceId,
+      actorId,
+      grant,
+      row,
+    })
+    if (!result.ok) {
+      setBanner(result.code)
+      return
+    }
+    navigate(result.route)
   }
 
   async function handleCapture(action: CaptureIntentAction) {
@@ -392,6 +413,7 @@ export default function MeetingsPage(props: {
           proposals={items}
           onApprove={(row) => void handleApprove(row)}
           onReject={(row) => void handleReject(row)}
+          onOpenTarget={(row) => void handleOpenTarget(row)}
           pendingId={approvingId}
         />
       </div>
@@ -430,6 +452,7 @@ export default function MeetingsPage(props: {
           proposals={items}
           onApprove={(row) => void handleApprove(row)}
           onReject={(row) => void handleReject(row)}
+          onOpenTarget={(row) => void handleOpenTarget(row)}
           pendingId={approvingId}
         />
       </section>

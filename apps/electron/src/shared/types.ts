@@ -652,6 +652,16 @@ export interface ElectronAPI {
     actorId: string,
     grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
   ): Promise<{ proposal: import('@craft-agent/core/meetings').MeetingProposal | null; error?: { code: string } }>
+  openMeetingTarget(
+    workspaceId: string,
+    entityId: string,
+    revisionId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{
+    target: { kind: 'note' | 'task'; id: string; revisionId: string; entityId: string } | null
+    error?: { code: string }
+  }>
   startCapture(
     workspaceId: string,
     meetingId: string,

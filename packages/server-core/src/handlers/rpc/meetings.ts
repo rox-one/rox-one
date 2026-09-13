@@ -12,7 +12,7 @@ import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
 import { applyNativeManualNote, applyNativeSegmentCorrection, type ManualNoteSpec, type SegmentCorrectionSpec } from '../../meetings/manual.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
-import { createNativeActionHarness } from '../../meetings/native-actions.ts'
+import { createNativeActionHarness, openNativePersistTarget } from '../../meetings/native-actions.ts'
 import type { OutboxJob } from '../../meetings/executor.ts'
 import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
 import type { CalendarOccurrence } from '../../meetings/conation/calendar-calls.ts'
@@ -118,6 +118,7 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.CREATE_PROPOSAL,
   RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
   RPC_CHANNELS.meetings.REJECT_PROPOSAL,
+  RPC_CHANNELS.meetings.OPEN_TARGET,
   RPC_CHANNELS.meetings.MAIL_PREPARE,
   RPC_CHANNELS.meetings.MAIL_SEND,
   RPC_CHANNELS.meetings.CRM_PROPOSE,
@@ -379,6 +380,42 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       })
       if (!result.ok) return { meeting: null, error: { code: result.code } }
       return { meeting: result.meeting }
+    },
+  )
+  server.handle(
+    RPC_CHANNELS.meetings.OPEN_TARGET,
+    async (
+      _ctx,
+      workspaceId: string,
+      entityId: string,
+      revisionId: string,
+      actorId: string,
+      grant: MeetingGrant | null,
+    ) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { target: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { target: null, error: { code: 'config-dir-required' } }
+      const runtime = runtimeFor(workspaceId, persistRootDir)
+      const opened = openNativePersistTarget({
+        persistRootDir,
+        workspaceId,
+        actorId,
+        grant,
+        entityId,
+        revisionId,
+        notes: runtime.notes,
+        tasks: runtime.tasks,
+        persist: runtime.persist,
+      })
+      if (!opened.ok) return { target: null, error: { code: opened.code } }
+      return {
+        target: {
+          kind: opened.kind,
+          id: opened.id,
+          revisionId: opened.revisionId,
+          entityId: opened.entityId,
+        },
+      }
     },
   )
 }

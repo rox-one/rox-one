@@ -66,6 +66,7 @@ export const CHANNEL_MAP = {
   createMeetingProposal: invoke(RPC_CHANNELS.meetings.CREATE_PROPOSAL),
   approveMeetingProposal: invoke(RPC_CHANNELS.meetings.APPROVE_PROPOSAL),
   rejectMeetingProposal: invoke(RPC_CHANNELS.meetings.REJECT_PROPOSAL),
+  openMeetingTarget: invoke(RPC_CHANNELS.meetings.OPEN_TARGET),
   startCapture: invoke(RPC_CHANNELS.meetings.START_CAPTURE),
   pauseCapture: invoke(RPC_CHANNELS.meetings.PAUSE_CAPTURE),
   stopCapture: invoke(RPC_CHANNELS.meetings.STOP_CAPTURE),

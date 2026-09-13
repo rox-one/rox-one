@@ -954,6 +954,7 @@ export const RPC_CHANNELS = {
     CREATE_PROPOSAL: 'meetings:createProposal',
     APPROVE_PROPOSAL: 'meetings:approveProposal',
     REJECT_PROPOSAL: 'meetings:rejectProposal',
+    OPEN_TARGET: 'meetings:openTarget',
     MAIL_PREPARE: 'meetings:mailPrepare',
     MAIL_SEND: 'meetings:mailSend',
     CRM_PROPOSE: 'meetings:crmPropose',

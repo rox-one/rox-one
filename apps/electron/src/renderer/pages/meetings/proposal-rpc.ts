@@ -1,6 +1,7 @@
 import type { MeetingProposal, OperationResultV2 } from '@craft-agent/core/meetings'
 import { isUiVerified } from '@craft-agent/core/meetings'
 import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
+import { routes, type Route } from '../../../shared/routes'
 
 export type NativeProposalType = 'create_task' | 'create_note'
 
@@ -31,6 +32,23 @@ export type MeetingProposalApi = {
   ): Promise<{ proposal: MeetingProposal | null; error?: { code: string } }>
 }
 
+export type NativePersistTarget = {
+  kind: 'note' | 'task'
+  id: string
+  revisionId: string
+  entityId: string
+}
+
+export type MeetingOpenTargetApi = {
+  openMeetingTarget(
+    workspaceId: string,
+    entityId: string,
+    revisionId: string,
+    actorId: string,
+    grant: MeetingGrant | null,
+  ): Promise<{ target: NativePersistTarget | null; error?: { code: string } }>
+}
+
 export type MeetingProposalRow = {
   id: string
   title: string
@@ -39,6 +57,7 @@ export type MeetingProposalRow = {
   type: NativeProposalType
   payload: Record<string, unknown>
   revisionId?: string
+  entityId?: string
   errorCode?: string
 }
 
@@ -48,10 +67,13 @@ export const PROPOSAL_ERROR_I18N: Record<string, string> = {
   'create-failed': 'meetings.createFailed',
   'grant-required': 'meetings.grantRequired',
   'meeting-required': 'meetings.meetingRequired',
+  'open-failed': 'meetings.openFailed',
   'outbox-required': 'meetings.outboxRequired',
   'payload-conflict': 'meetings.payloadConflict',
+  'persist-miss': 'meetings.persistMiss',
   'proposal-not-found': 'meetings.rejectFailed',
   'reject-failed': 'meetings.rejectFailed',
+  'revision-required': 'meetings.revisionRequired',
   'rpc-unavailable': 'meetings.rpcUnavailable',
   'search-failed': 'meetings.searchFailed',
   'unsupported-native-kind': 'meetings.unsupportedKind',
@@ -85,9 +107,23 @@ export function resolveMeetingProposalApi(injected?: MeetingProposalApi | null):
   return api
 }
 
+export function resolveMeetingOpenTargetApi(
+  injected?: MeetingOpenTargetApi | null,
+): MeetingOpenTargetApi | null {
+  if (injected?.openMeetingTarget) return injected
+  if (typeof window === 'undefined') return null
+  const api = window.electronAPI
+  if (!api?.openMeetingTarget) return null
+  return api
+}
+
+export function routeForNativePersistTarget(kind: 'note' | 'task', id: string): Route {
+  return kind === 'note' ? routes.view.notes(id) : routes.view.tasks(id)
+}
+
 export function rowFromProposal(
   proposal: MeetingProposal,
-  extras?: { revisionId?: string; errorCode?: string },
+  extras?: { revisionId?: string; entityId?: string; errorCode?: string },
 ): MeetingProposalRow {
   const title = typeof proposal.payload.title === 'string' && proposal.payload.title.length > 0
     ? proposal.payload.title
@@ -101,6 +137,7 @@ export function rowFromProposal(
     type,
     payload: proposal.payload,
     revisionId: extras?.revisionId,
+    entityId: extras?.entityId,
     errorCode: extras?.errorCode,
   }
 }
@@ -191,7 +228,8 @@ export async function approveNativeProposalViaRpc(input: {
     }
   }
   const revisionId = result.operation.entityRef?.revisionId
-  if (!revisionId) {
+  const entityId = result.operation.entityRef?.entityId
+  if (!revisionId || !entityId) {
     return {
       ok: false,
       code: 'approve-failed',
@@ -200,7 +238,7 @@ export async function approveNativeProposalViaRpc(input: {
   }
   return {
     ok: true,
-    row: rowFromProposal(result.proposal, { revisionId }),
+    row: rowFromProposal(result.proposal, { revisionId, entityId }),
   }
 }
 
@@ -237,4 +275,36 @@ export async function rejectNativeProposalViaRpc(input: {
     }
   }
   return { ok: true, row: rowFromProposal(result.proposal) }
+}
+
+export async function openNativeProposalTargetViaRpc(input: {
+  api: MeetingOpenTargetApi | null
+  workspaceId: string | null
+  actorId: string
+  grant: MeetingGrant | null
+  row: MeetingProposalRow
+}): Promise<{ ok: true; route: Route; target: NativePersistTarget } | { ok: false; code: string }> {
+  if (!input.api) return { ok: false, code: 'rpc-unavailable' }
+  if (!input.workspaceId) return { ok: false, code: 'workspace-required' }
+  if (!input.grant) return { ok: false, code: 'grant-required' }
+  if (!input.row.revisionId || !input.row.entityId) return { ok: false, code: 'revision-required' }
+  const result = await input.api.openMeetingTarget(
+    input.workspaceId,
+    input.row.entityId,
+    input.row.revisionId,
+    input.actorId,
+    input.grant,
+  )
+  if (!result.target) return { ok: false, code: result.error?.code ?? 'open-failed' }
+  if (result.target.kind !== 'note' && result.target.kind !== 'task') {
+    return { ok: false, code: 'unsupported-native-kind' }
+  }
+  if (!result.target.id || result.target.revisionId !== input.row.revisionId) {
+    return { ok: false, code: 'persist-miss' }
+  }
+  return {
+    ok: true,
+    route: routeForNativePersistTarget(result.target.kind, result.target.id),
+    target: result.target,
+  }
 }
