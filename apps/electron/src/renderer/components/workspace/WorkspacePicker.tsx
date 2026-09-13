@@ -34,10 +34,10 @@ export function WorkspacePicker({ onSelectWorkspace }: WorkspacePickerProps) {
         setLoading(false)
       })
       .catch(err => {
-        setError(err instanceof Error ? err.message : 'Failed to load workspaces')
+        setError(err instanceof Error ? err.message : t('workspace.loadFailed'))
         setLoading(false)
       })
-  }, [])
+  }, [t])
 
   const handleCreate = useCallback(async () => {
     if (!newName.trim()) return
@@ -46,10 +46,10 @@ export function WorkspacePicker({ onSelectWorkspace }: WorkspacePickerProps) {
       const ws = await window.electronAPI.createServerWorkspace(newName.trim())
       onSelectWorkspace(ws.id)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create workspace')
+      setError(err instanceof Error ? err.message : t('toast.failedToCreateWorkspace'))
       setCreating(false)
     }
-  }, [newName, onSelectWorkspace])
+  }, [newName, onSelectWorkspace, t])
 
   if (loading) {
     return (
