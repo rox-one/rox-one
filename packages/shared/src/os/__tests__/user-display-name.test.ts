@@ -21,6 +21,7 @@ describe('parseDsclRealName', () => {
 describe('parseWorkspaceMachineName', () => {
   it('uses the computer hostname, not the macOS RealName', () => {
     expect(parseWorkspaceMachineName('Marks-MacBook-Pro.local', 'jane')).toBe('Marks-MacBook-Pro')
+    expect(parseWorkspaceMachineName('Marks-MacBook-Pro.local.', 'jane')).toBe('Marks-MacBook-Pro')
   })
 
   it('falls back to the OS username when hostname is localhost', () => {

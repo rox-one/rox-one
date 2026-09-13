@@ -96,8 +96,13 @@ export function parseWorkspaceMachineName(
   rawHostname: string,
   osUsername: string | null,
 ): string {
-  const host = rawHostname.trim().replace(/\.+$/, '').replace(/\.local$/i, '')
-  if (host && !/^(localhost|localhost\.localdomain)$/i.test(host)) return host
+  let host = rawHostname.trim()
+  while (host.endsWith('.')) host = host.slice(0, -1)
+  if (host.length >= 6 && host.toLowerCase().endsWith('.local')) {
+    host = host.slice(0, -6)
+  }
+  const lower = host.toLowerCase()
+  if (host && lower !== 'localhost' && lower !== 'localhost.localdomain') return host
   const user = osUsername?.trim()
   if (user) return user
   return 'Workspace'
