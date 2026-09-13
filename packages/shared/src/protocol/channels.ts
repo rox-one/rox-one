@@ -963,6 +963,7 @@ export const RPC_CHANNELS = {
     START_CAPTURE: 'meetings:startCapture',
     PAUSE_CAPTURE: 'meetings:pauseCapture',
     STOP_CAPTURE: 'meetings:stopCapture',
+    IMPORT_MEDIA: 'meetings:importMedia',
   },
 } as const
 

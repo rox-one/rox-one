@@ -22,11 +22,18 @@ import {
 import {
   applyCaptureIntentViaRpc,
   buildMeetingCaptureGrant,
-  i18nKeyForCaptureError,
   resolveMeetingCaptureApi,
   type CaptureIntentAction,
   type MeetingCaptureApi,
 } from './meetings/capture-rpc'
+import {
+  buildMeetingImportGrant,
+  i18nKeyForImportError,
+  importMediaViaRpc,
+  resolveMeetingImportApi,
+  specFromBytes,
+  type MeetingImportApi,
+} from './meetings/import-rpc'
 
 export type { MeetingListItem }
 
@@ -36,7 +43,7 @@ export default function MeetingsPage(props: {
   selectedId?: string | null
   workspaceId?: string | null
   actorId?: string
-  api?: (MeetingProposalApi & Partial<MeetingCatalogApi> & Partial<MeetingCaptureApi>) | null
+  api?: (MeetingProposalApi & Partial<MeetingCatalogApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi>) | null
 }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
@@ -44,9 +51,11 @@ export default function MeetingsPage(props: {
   const actorId = props.actorId ?? 'local-actor'
   const grant = workspaceId ? buildMeetingGrant({ workspaceId, actorId }) : null
   const captureGrant = workspaceId ? buildMeetingCaptureGrant({ workspaceId, actorId }) : null
+  const importGrant = workspaceId ? buildMeetingImportGrant({ workspaceId, actorId }) : null
   const proposalApi = resolveMeetingProposalApi(props.api)
   const catalogApi = resolveMeetingCatalogApi(props.api)
   const captureApi = resolveMeetingCaptureApi(props.api)
+  const importApi = resolveMeetingImportApi(props.api)
   const [meetings, setMeetings] = useState<MeetingListItem[]>(props.meetings ?? [])
   const [selectedId, setSelectedId] = useState<string | null>(props.selectedId ?? meetings[0]?.id ?? null)
   const [items, setItems] = useState<MeetingProposalRow[]>(props.proposals ?? [])
@@ -132,6 +141,29 @@ export default function MeetingsPage(props: {
     setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
   }
 
+  async function handleImport(file: File | null) {
+    setBanner(null)
+    if (!file) {
+      setBanner('import-empty')
+      return
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const spec = await specFromBytes(bytes, file.type || undefined)
+    const result = await importMediaViaRpc({
+      api: importApi,
+      workspaceId,
+      meetingId: selected?.id ?? null,
+      actorId,
+      grant: importGrant,
+      spec,
+    })
+    if (!result.ok) {
+      setBanner(result.code)
+      return
+    }
+    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+  }
+
   const createForm = (
     <div className="mt-4 flex flex-col gap-2" data-testid="meetings-create-form">
       <label>
@@ -157,7 +189,7 @@ export default function MeetingsPage(props: {
   )
 
   const bannerNode = banner ? (
-    <p data-testid="meetings-rpc-error">{t(i18nKeyForCaptureError(banner))}</p>
+    <p data-testid="meetings-rpc-error">{t(i18nKeyForImportError(banner))}</p>
   ) : null
 
   const nativeNote = <p data-testid="meetings-native-catalog">{t('meetings.nativeCatalog')}</p>
@@ -173,6 +205,20 @@ export default function MeetingsPage(props: {
       <button type="button" data-testid="meetings-capture-stop" onClick={() => void handleCapture('stop')}>
         {t('meetings.captureStop')}
       </button>
+      <p data-testid="meetings-import-intent">{t('meetings.importIntent')}</p>
+      <label>
+        {t('meetings.importMedia')}
+        <input
+          data-testid="meetings-import-file"
+          type="file"
+          accept="audio/*"
+          onChange={(event) => {
+            const file = event.target.files?.[0] ?? null
+            void handleImport(file)
+            event.target.value = ''
+          }}
+        />
+      </label>
     </div>
   ) : null
 
