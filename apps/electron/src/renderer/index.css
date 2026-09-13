@@ -52,6 +52,23 @@ html[data-theme-override]::before {
   pointer-events: none;
 }
 
+/* Named solid palettes: body is otherwise transparent over macOS vibrancy, so
+   skipping the overlay alone still lets wallpaper tint Primer/Ghostty hex. */
+html[data-theme]:not([data-scenic]):not([data-theme-override]),
+html[data-theme]:not([data-scenic]):not([data-theme-override]) body,
+html[data-theme]:not([data-scenic]):not([data-theme-override]) #root {
+  background: var(--background);
+}
+
+html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-rail {
+  background: var(--surface-rail);
+}
+
+html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-strip,
+html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-topbar {
+  background: var(--surface-elevated);
+}
+
 /* Theme Mismatch - Solid background when theme doesn't support current mode
    e.g. dark-only theme in light mode. Uses foreground-10 for subtle contrast. */
 html[data-theme-mismatch]::before {

@@ -45,4 +45,14 @@ describe('ThemeProvider wiring', () => {
     )
     expect(source).toContain('shouldSetThemeOverride(effectiveColorTheme, isScenic)')
   })
+
+  it('paints opaque html/body/chrome when the overlay attribute is absent', () => {
+    const css = readFileSync(
+      join(import.meta.dir, '../../../../apps/electron/src/renderer/index.css'),
+      'utf8',
+    )
+    expect(css).toContain('html[data-theme]:not([data-scenic]):not([data-theme-override])')
+    expect(css).toContain('html[data-theme]:not([data-scenic]):not([data-theme-override]) body')
+    expect(css).toContain('html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-rail')
+  })
 })
