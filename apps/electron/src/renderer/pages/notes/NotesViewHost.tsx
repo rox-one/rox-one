@@ -14,17 +14,22 @@ import {
   formulaValue,
   graphFromLinks,
   groupNoteRows,
+  isolateNoteNeighborhood,
   loadSavedViews,
+  NOTE_GRAPH_PAGE_SIZE,
+  notesOnlyGraph,
   notesOutlineFoldsStorageKey,
   notesViewsStorageKey,
   outlineFromHeadings,
   parseJsonCanvas,
   parseOutlineFolds,
+  progressiveGraph,
   projectNoteRows,
   removeFormula,
   serializeJsonCanvas,
   serializeOutlineFolds,
   tagFilterValue,
+  toggleNoteViewSort,
   withTagFilter,
   type NoteViewFormulaExpr,
   type JsonCanvas,
@@ -144,7 +149,7 @@ function NotesTableView({
   }
 
   const visible = applyNoteBaseView(rows, view)
-  const groups = groupNoteRows(visible, view.groupBy)
+  const groups = groupNoteRows(visible, view.groupBy, view.formulas)
   const unusedFormulas = availableFormulaExprs(view)
   const colSpan = 4 + view.formulas.length
 
@@ -173,6 +178,9 @@ function NotesTableView({
             <option value="">{t('notes.views.groupNone')}</option>
             <option value="folder">{t('notes.views.groupFolder')}</option>
             <option value="tags">{t('notes.views.groupTags')}</option>
+            {view.formulas.map((formula) => (
+              <option key={formula.expr} value={formula.expr}>{t(formulaI18nKey(formula.expr))}</option>
+            ))}
           </select>
         </label>
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
@@ -223,7 +231,18 @@ function NotesTableView({
             <th className="px-2 py-1">{t('notes.views.colFolder')}</th>
             <th className="px-2 py-1">{t('notes.views.colTags')}</th>
             {view.formulas.map((formula) => (
-              <th key={formula.expr} className="px-2 py-1">{t(formulaI18nKey(formula.expr))}</th>
+              <th key={formula.expr} className="px-2 py-1">
+                <button
+                  type="button"
+                  className="uppercase tracking-wider hover:text-foreground"
+                  aria-label={t('notes.views.formulaSort')}
+                  data-testid={`notes-table-sort-${formula.expr}`}
+                  onClick={() => patchView(toggleNoteViewSort(view, formula.expr))}
+                >
+                  {t(formulaI18nKey(formula.expr))}
+                  {view.sort?.field === formula.expr ? (view.sort.dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                </button>
+              </th>
             ))}
             <th className="px-2 py-1" />
           </tr>
@@ -410,7 +429,14 @@ function NotesGraphView({
 }) {
   const { t } = useTranslation()
   const [kind, setKind] = React.useState<NoteGraphEdgeKindFilter>('all')
-  const graph = filterGraphByEdgeKind(graphFromLinks(notes), kind)
+  const [nearby, setNearby] = React.useState(false)
+  const [limit, setLimit] = React.useState(NOTE_GRAPH_PAGE_SIZE)
+  const graph = React.useMemo(() => {
+    let next = notesOnlyGraph(graphFromLinks(notes))
+    next = filterGraphByEdgeKind(next, kind)
+    if (nearby && activeNoteId) next = isolateNoteNeighborhood(next, activeNoteId)
+    return progressiveGraph(next, limit)
+  }, [activeNoteId, kind, limit, nearby, notes])
   return (
     <div className="flex h-full min-h-0" data-testid="notes-graph-view">
       <aside className="w-[220px] shrink-0 overflow-y-auto border-r border-border/50 p-3">
@@ -427,7 +453,10 @@ function NotesGraphView({
                 kind === value && 'bg-foreground/[0.08]',
               )}
               aria-pressed={kind === value}
-              onClick={() => setKind(value)}
+              onClick={() => {
+                setKind(value)
+                setLimit(NOTE_GRAPH_PAGE_SIZE)
+              }}
             >
               {value === 'all'
                 ? t('notes.views.graphAll')
@@ -436,6 +465,21 @@ function NotesGraphView({
                   : t('notes.views.graphBacklinks')}
             </button>
           ))}
+          <button
+            type="button"
+            className={cn(
+              'rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+              nearby && 'bg-foreground/[0.08]',
+            )}
+            aria-pressed={nearby}
+            data-testid="notes-graph-nearby"
+            onClick={() => {
+              setNearby((prev) => !prev)
+              setLimit(NOTE_GRAPH_PAGE_SIZE)
+            }}
+          >
+            {t('notes.views.graphNearby')}
+          </button>
         </div>
         {graph.nodes.length === 0 ? (
           <p className="text-[11px] text-muted-foreground">{t('notes.views.graphEmpty')}</p>
@@ -461,6 +505,16 @@ function NotesGraphView({
             {edge.from} → {edge.to} · {edge.kind}
           </div>
         ))}
+        {graph.hidden > 0 ? (
+          <button
+            type="button"
+            className="mt-2 rounded-[5px] border border-border/60 px-2 py-1 text-[11px] hover:bg-foreground/[0.06]"
+            data-testid="notes-graph-more"
+            onClick={() => setLimit((prev) => prev + NOTE_GRAPH_PAGE_SIZE)}
+          >
+            {t('notes.views.graphMore')}
+          </button>
+        ) : null}
       </div>
     </div>
   )

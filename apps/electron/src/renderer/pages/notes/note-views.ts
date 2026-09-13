@@ -158,11 +158,13 @@ export function projectNoteRows(
 }
 
 export function applyNoteBaseView(rows: readonly NoteProjectionRow[], view: NoteBaseView): NoteProjectionRow[] {
-  let next = rows.filter((row) => view.filters.every((filter) => matchesFilter(row, filter)))
+  let next = rows.filter((row) => view.filters.every((filter) => matchesFilter(row, filter, view.formulas)))
   if (view.sort) {
     const field = view.sort.field
     const dir = view.sort.dir === 'asc' ? 1 : -1
-    next = [...next].sort((a, b) => compareUnknown(readField(a, field), readField(b, field)) * dir)
+    next = [...next].sort(
+      (a, b) => compareUnknown(readField(a, field, view.formulas), readField(b, field, view.formulas)) * dir,
+    )
   }
   return next
 }
@@ -170,11 +172,12 @@ export function applyNoteBaseView(rows: readonly NoteProjectionRow[], view: Note
 export function groupNoteRows(
   rows: readonly NoteProjectionRow[],
   groupBy: string | undefined,
+  formulas: readonly NoteViewFormula[] = [],
 ): Array<{ key: string; rows: NoteProjectionRow[] }> {
   if (!groupBy) return [{ key: '', rows: [...rows] }]
   const groups = new Map<string, NoteProjectionRow[]>()
   for (const row of rows) {
-    const key = String(readField(row, groupBy) ?? '')
+    const key = String(readField(row, groupBy, formulas) ?? '')
     const bucket = groups.get(key) ?? []
     bucket.push(row)
     groups.set(key, bucket)
@@ -192,6 +195,10 @@ export function formulaValue(row: NoteProjectionRow, formula: NoteViewFormula): 
       return row.backlinks
     case 'tagCount':
       return row.tags.length
+    default: {
+      const _exhaustive: never = formula.expr
+      return _exhaustive
+    }
   }
 }
 
@@ -205,21 +212,41 @@ export function formulaI18nKey(expr: NoteViewFormulaExpr): string {
       return 'notes.views.formulaBacklinks'
     case 'tagCount':
       return 'notes.views.formulaTagCount'
+    default: {
+      const _exhaustive: never = expr
+      return _exhaustive
+    }
   }
 }
 
 export function addFormula(view: NoteBaseView, expr: NoteViewFormulaExpr): NoteBaseView {
   if (view.formulas.some((formula) => formula.expr === expr)) return view
-  return { ...view, formulas: [...view.formulas, { name: expr, expr }] }
+  return {
+    ...view,
+    formulas: [...view.formulas, { name: expr, expr }],
+    columns: view.columns.includes(expr) ? view.columns : [...view.columns, expr],
+  }
 }
 
 export function removeFormula(view: NoteBaseView, expr: NoteViewFormulaExpr): NoteBaseView {
-  return { ...view, formulas: view.formulas.filter((formula) => formula.expr !== expr) }
+  return {
+    ...view,
+    formulas: view.formulas.filter((formula) => formula.expr !== expr),
+    columns: view.columns.filter((column) => column !== expr),
+  }
 }
 
 export function availableFormulaExprs(view: NoteBaseView): NoteViewFormulaExpr[] {
   const used = new Set(view.formulas.map((formula) => formula.expr))
   return NOTE_FORMULA_EXPRS.filter((expr) => !used.has(expr))
+}
+
+export function toggleNoteViewSort(view: NoteBaseView, field: string): NoteBaseView {
+  if (view.sort?.field === field) {
+    if (view.sort.dir === 'asc') return { ...view, sort: { field, dir: 'desc' } }
+    return { ...view, sort: { field: 'title', dir: 'asc' } }
+  }
+  return { ...view, sort: { field, dir: 'asc' } }
 }
 
 export function parseJsonCanvas(raw: string | null): JsonCanvas {
@@ -310,18 +337,61 @@ export function graphFromLinks(
 
 export type NoteGraphEdgeKindFilter = 'all' | 'wikilink' | 'backlink'
 
+export const NOTE_GRAPH_PAGE_SIZE = 48
+
+export function notesOnlyGraph(
+  graph: { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] },
+): { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] } {
+  const nodes = graph.nodes.filter((node) => node.kind === 'note')
+  const known = new Set(nodes.map((node) => node.id))
+  return {
+    nodes,
+    edges: graph.edges.filter((edge) => known.has(edge.from) && known.has(edge.to)),
+  }
+}
+
+export function isolateNoteNeighborhood(
+  graph: { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] },
+  noteId: string,
+): { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] } {
+  const notes = notesOnlyGraph(graph)
+  const ids = new Set<string>([noteId])
+  for (const edge of notes.edges) {
+    if (edge.from === noteId) ids.add(edge.to)
+    if (edge.to === noteId) ids.add(edge.from)
+  }
+  return {
+    nodes: notes.nodes.filter((node) => ids.has(node.id)),
+    edges: notes.edges.filter((edge) => ids.has(edge.from) && ids.has(edge.to)),
+  }
+}
+
+export function progressiveGraph(
+  graph: { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] },
+  limit: number,
+): { nodes: NoteGraphNode[]; edges: NoteGraphEdge[]; hidden: number } {
+  const capped = Number.isFinite(limit) ? Math.max(0, Math.floor(limit)) : 0
+  const edges = graph.edges.slice(0, capped)
+  return {
+    nodes: [...graph.nodes],
+    edges,
+    hidden: Math.max(0, graph.edges.length - edges.length),
+  }
+}
+
 export function filterGraphByEdgeKind(
   graph: { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] },
   kind: NoteGraphEdgeKindFilter,
 ): { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] } {
-  if (kind === 'all') return { nodes: [...graph.nodes], edges: [...graph.edges] }
-  const edges = graph.edges.filter((edge) => edge.kind === kind)
+  const notes = notesOnlyGraph(graph)
+  if (kind === 'all') return { nodes: [...notes.nodes], edges: [...notes.edges] }
+  const edges = notes.edges.filter((edge) => edge.kind === kind)
   const used = new Set<string>()
   for (const edge of edges) {
     used.add(edge.from)
     used.add(edge.to)
   }
-  return { nodes: graph.nodes.filter((node) => used.has(node.id)), edges }
+  return { nodes: notes.nodes.filter((node) => used.has(node.id)), edges }
 }
 
 export const DEFAULT_VAULT_TABLE_VIEW: NoteBaseView = {
@@ -441,18 +511,29 @@ function isCanvasEdge(value: unknown): value is JsonCanvasEdge {
   return typeof edge.id === 'string' && typeof edge.fromNode === 'string' && typeof edge.toNode === 'string'
 }
 
-function readField(row: NoteProjectionRow, field: string): unknown {
+function formulaForField(formulas: readonly NoteViewFormula[], field: string): NoteViewFormula | undefined {
+  return formulas.find((formula) => formula.expr === field)
+}
+
+function readField(row: NoteProjectionRow, field: string, formulas: readonly NoteViewFormula[] = []): unknown {
+  const formula = formulaForField(formulas, field)
+  if (formula) return formulaValue(row, formula)
   if (field === 'title') return row.title
   if (field === 'folder') return row.folder
   if (field === 'tags') return row.tags
-  if (field === 'tasks') return row.tasks
-  if (field === 'openTasks') return row.openTasks
-  if (field === 'backlinks') return row.backlinks
+  if (field === 'tasks' || field === 'taskCount') return row.tasks
+  if (field === 'openTasks' || field === 'openTaskCount') return row.openTasks
+  if (field === 'backlinks' || field === 'backlinkCount') return row.backlinks
+  if (field === 'tagCount') return row.tags.length
   return row.properties[field]
 }
 
-function matchesFilter(row: NoteProjectionRow, filter: NoteViewFilter): boolean {
-  const actual = readField(row, filter.field)
+function matchesFilter(
+  row: NoteProjectionRow,
+  filter: NoteViewFilter,
+  formulas: readonly NoteViewFormula[] = [],
+): boolean {
+  const actual = readField(row, filter.field, formulas)
   switch (filter.op) {
     case 'exists':
       return actual !== undefined && actual !== null && actual !== ''

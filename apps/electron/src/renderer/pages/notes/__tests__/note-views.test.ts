@@ -11,8 +11,10 @@ import {
   formulaValue,
   graphFromLinks,
   groupNoteRows,
+  isolateNoteNeighborhood,
   loadSavedViews,
-  removeFormula,
+  NOTE_GRAPH_PAGE_SIZE,
+  notesOnlyGraph,
   notesOutlineFoldsStorageKey,
   outlineFromHeadings,
   parseJsonCanvas,
@@ -24,6 +26,7 @@ import {
   serializeNoteBaseView,
   serializeOutlineFolds,
   tagFilterValue,
+  toggleNoteViewSort,
   withTagFilter,
 } from '../note-views'
 
@@ -133,11 +136,62 @@ describe('notes views', () => {
     expect(view.formulas.map((formula) => formula.expr)).toEqual(['openTaskCount'])
     const withBacklinks = addFormula(view, 'backlinkCount')
     expect(addFormula(withBacklinks, 'backlinkCount').formulas).toHaveLength(2)
+    expect(withBacklinks.columns).toContain('backlinkCount')
     expect(availableFormulaExprs(withBacklinks)).toEqual(['taskCount', 'tagCount'])
     expect(formulaI18nKey('backlinkCount')).toBe('notes.views.formulaBacklinks')
     const rows = projectNoteRows(notes)
     expect(formulaValue(rows[0]!, withBacklinks.formulas[1]!)).toBe(1)
     expect(removeFormula(withBacklinks, 'openTaskCount').formulas.map((formula) => formula.expr)).toEqual(['backlinkCount'])
+    expect(removeFormula(withBacklinks, 'backlinkCount').columns).not.toContain('backlinkCount')
     expect(notesOutlineFoldsStorageKey('ws', 'ops/alpha')).toBe('notes:outline-folds:ws:ops/alpha')
+  })
+
+  test('formula engine filters, sorts and groups by named exprs and properties', () => {
+    const rows = projectNoteRows(notes)
+    const view = parseNoteBaseView({
+      v: 1,
+      id: 'formula-engine',
+      name: 'Formula engine',
+      kind: 'table',
+      filters: [{ field: 'openTaskCount', op: 'gt', value: 0 }],
+      formulas: [{ name: 'open', expr: 'openTaskCount' }, { name: 'tags', expr: 'tagCount' }],
+      groupBy: 'openTaskCount',
+      sort: { field: 'backlinkCount', dir: 'desc' },
+      columns: ['title'],
+    })
+    expect(view).not.toBeNull()
+    const visible = applyNoteBaseView(rows, view!)
+    expect(visible.map((row) => row.id)).toEqual(['ops/alpha'])
+    const sorted = applyNoteBaseView(rows, { ...view!, filters: [], sort: { field: 'taskCount', dir: 'desc' } })
+    expect(sorted.map((row) => row.id)).toEqual(['ops/alpha', 'ops/beta'])
+    expect(groupNoteRows(rows, 'openTaskCount', view!.formulas).map((group) => group.key)).toEqual(['1', '0'])
+    const cycled = toggleNoteViewSort(toggleNoteViewSort(view!, 'openTaskCount'), 'openTaskCount')
+    expect(cycled.sort).toEqual({ field: 'openTaskCount', dir: 'desc' })
+    const byStatus = applyNoteBaseView(rows, {
+      ...view!,
+      filters: [{ field: 'status', op: 'eq', value: 'done' }],
+      sort: { field: 'title', dir: 'asc' },
+    })
+    expect(byStatus.map((row) => row.id)).toEqual(['ops/beta'])
+  })
+
+  test('graph stays notes-only, isolates local neighborhood, and pages edges', () => {
+    const graph = graphFromLinks(notes)
+    const withEntity = {
+      nodes: [...graph.nodes, { id: 'ent:ship', title: 'ship', kind: 'entity' as const }],
+      edges: [...graph.edges, { from: 'ops/alpha', to: 'ent:ship', kind: 'wikilink' as const }],
+    }
+    const notesOnly = notesOnlyGraph(withEntity)
+    expect(notesOnly.nodes.every((node) => node.kind === 'note')).toBe(true)
+    expect(notesOnly.edges.some((edge) => edge.to === 'ent:ship')).toBe(false)
+
+    const nearby = isolateNoteNeighborhood(graph, 'ops/alpha')
+    expect(nearby.nodes.map((node) => node.id).sort()).toEqual(['ops/alpha', 'ops/beta'])
+    expect(isolateNoteNeighborhood(graph, 'ops/beta').nodes.some((node) => node.id === 'ops/alpha')).toBe(true)
+
+    const page = progressiveGraph(graph, 1)
+    expect(page.edges).toHaveLength(1)
+    expect(page.hidden).toBe(graph.edges.length - 1)
+    expect(progressiveGraph(graph, NOTE_GRAPH_PAGE_SIZE).hidden).toBe(0)
   })
 })
