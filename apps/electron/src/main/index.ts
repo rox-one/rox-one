@@ -1232,6 +1232,21 @@ app.whenReady().then(async () => {
       setMenuEventSink(moduleSink!, resolveClientId)
       const { setNotificationEventSink } = await import('./notifications')
       setNotificationEventSink(moduleSink!, resolveClientId)
+      const {
+        setVoiceHotkeyTransport,
+        rebindVoiceHotkeys,
+        attachVoicePttToWebContents,
+      } = await import('./voice-hotkeys')
+      setVoiceHotkeyTransport(windowManager, moduleSink!, resolveClientId)
+      rebindVoiceHotkeys()
+      const { registerVoiceOverlayIpc } = await import('./voice-overlay')
+      registerVoiceOverlayIpc()
+      app.on('browser-window-created', (_event, win) => {
+        attachVoicePttToWebContents(win.webContents)
+      })
+      for (const win of BrowserWindow.getAllWindows()) {
+        attachVoicePttToWebContents(win.webContents)
+      }
 
       // Headless: print connection details
       if (isHeadless) {
@@ -1495,6 +1510,10 @@ app.on('before-quit', async (event) => {
 
   // Ensure Cmd+Q/app quit bypasses layered window close interception (Cmd+W behavior).
   windowManager?.setAppQuitting(true)
+
+  void import('./voice-hotkeys').then(({ unbindVoiceHotkeys }) => unbindVoiceHotkeys())
+  void import('./voice-overlay').then(({ destroyVoiceOverlay }) => destroyVoiceOverlay())
+  void import('@craft-agent/server-core/handlers/rpc').then(({ shutdownVoiceHandlers }) => shutdownVoiceHandlers())
 
   if (windowManager) {
     const windows = windowManager.getWindowStates()

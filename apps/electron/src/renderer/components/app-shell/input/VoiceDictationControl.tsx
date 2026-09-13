@@ -6,25 +6,14 @@ import { cn } from '@/lib/utils'
 import { isMac } from '@/lib/platform'
 import { FreeFormInputContextBadge } from './FreeFormInputContextBadge'
 import type { VoicePrefs } from '@craft-agent/shared/voice'
+import { joinDraftTranscript } from '@craft-agent/shared/voice'
+import { voiceCaptureSession } from '@/voice/capture-session'
 
 interface VoiceDictationControlProps {
   disabled?: boolean
   compactMode?: boolean
   inputValue: string
   onInputChange?: (value: string) => void
-}
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = String(reader.result ?? '')
-      const comma = result.indexOf(',')
-      resolve(comma >= 0 ? result.slice(comma + 1) : result)
-    }
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(blob)
-  })
 }
 
 export function VoiceDictationControl({
@@ -35,91 +24,62 @@ export function VoiceDictationControl({
 }: VoiceDictationControlProps) {
   const { t } = useTranslation()
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
-  const [recording, setRecording] = useState(false)
-  const [draft, setDraft] = useState('')
-  const recorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
-  const streamRef = useRef<MediaStream | null>(null)
+  const [recording, setRecording] = useState(voiceCaptureSession.getState().recording)
+  const [busy, setBusy] = useState(voiceCaptureSession.getState().busy)
+  const inputRef = useRef(inputValue)
+  inputRef.current = inputValue
+  const onInputChangeRef = useRef(onInputChange)
+  onInputChangeRef.current = onInputChange
 
   useEffect(() => {
     let cancelled = false
     void window.electronAPI.getVoicePrefs?.().then((next) => {
       if (!cancelled) setPrefs(next)
     }).catch(() => {})
-    const off = window.electronAPI.onVoiceChanged?.((next) => setPrefs(next))
+    const offPrefs = window.electronAPI.onVoiceChanged?.((next) => setPrefs(next))
+    const offCapture = voiceCaptureSession.subscribe((state) => {
+      setRecording(state.recording)
+      setBusy(state.busy)
+    })
+    const offText = voiceCaptureSession.onTranscript((text) => {
+      if (!text) return
+      onInputChangeRef.current?.(joinDraftTranscript(inputRef.current, text))
+    })
     return () => {
       cancelled = true
-      off?.()
+      offPrefs?.()
+      offCapture()
+      offText()
     }
   }, [])
 
-  const stopTracks = useCallback(() => {
-    streamRef.current?.getTracks().forEach((track) => track.stop())
-    streamRef.current = null
-  }, [])
-
-  const finishRecording = useCallback(async () => {
-    const recorder = recorderRef.current
-    recorderRef.current = null
-    setRecording(false)
-    stopTracks()
-    if (!recorder) return
-    const blob = new Blob(chunksRef.current, { type: recorder.mimeType || 'audio/webm' })
-    chunksRef.current = []
+  const finish = useCallback(async () => {
     try {
-      const audioBase64 = await blobToBase64(blob)
-      const result = await window.electronAPI.transcribeVoice({
-        audioBase64,
-        mimeType: blob.type || 'audio/webm',
-        transcript: draft || undefined,
-      })
-      const text = result.text.trim()
-      setDraft(text)
-      if (text) onInputChange?.(inputValue ? `${inputValue} ${text}` : text)
+      await voiceCaptureSession.stop()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t('chat.dictate'))
     }
-  }, [draft, inputValue, onInputChange, stopTracks, t])
+  }, [t])
 
-  const startRecording = useCallback(async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error(t('settings.input.voiceOffline'))
-      return
-    }
+  const start = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: prefs?.selectedInputDeviceId
-          ? { deviceId: { exact: prefs.selectedInputDeviceId } }
-          : true,
-      })
-      streamRef.current = stream
-      const recorder = new MediaRecorder(stream)
-      chunksRef.current = []
-      recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data)
-      }
-      recorder.onstop = () => {
-        void finishRecording()
-      }
-      recorderRef.current = recorder
-      setDraft('')
-      setRecording(true)
-      recorder.start()
+      await voiceCaptureSession.start(prefs?.selectedInputDeviceId)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('chat.dictate'))
+      toast.error(error instanceof Error ? error.message : t('settings.input.voiceOffline'))
     }
-  }, [finishRecording, prefs?.selectedInputDeviceId, t])
+  }, [prefs?.selectedInputDeviceId, t])
 
   const toggle = useCallback(() => {
-    if (disabled) return
+    if (disabled || busy) return
     if (recording) {
-      recorderRef.current?.stop()
+      void finish()
       return
     }
-    void startRecording()
-  }, [disabled, recording, startRecording])
+    void start()
+  }, [busy, disabled, finish, recording, start])
 
   useEffect(() => {
+    if (window.electronAPI.onVoiceCommand) return
     const onKey = (event: KeyboardEvent) => {
       const mod = isMac ? event.metaKey : event.ctrlKey
       if (!mod || !event.shiftKey || event.key.toLowerCase() !== 'd') return
@@ -130,11 +90,6 @@ export function VoiceDictationControl({
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [toggle])
-
-  useEffect(() => () => {
-    recorderRef.current?.stop()
-    stopTracks()
-  }, [stopTracks])
 
   const label = recording ? t('chat.dictateStop') : t('chat.dictate')
 
@@ -148,7 +103,7 @@ export function VoiceDictationControl({
         showChevron={false}
         onClick={toggle}
         tooltip={t('chat.dictateTooltip')}
-        disabled={disabled}
+        disabled={disabled || busy}
       />
     </div>
   )

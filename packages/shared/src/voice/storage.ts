@@ -9,13 +9,26 @@ import { resolveConfigDir } from '../config/paths.ts'
 import { withWakeWordConsent } from './policy.ts'
 import {
   DEFAULT_WAKE_PHRASE,
+  VOICE_PREFS_VERSION,
   getDefaultVoicePrefs,
   isAudioRetention,
   isModelHealthStatus,
   isSttEngine,
   isTtsEngine,
+  shouldMigrateLegacyLocalDefault,
   type VoicePrefs,
 } from './types.ts'
+import {
+  DEFAULT_VOICE_CANCEL_ACCELERATOR,
+  DEFAULT_VOICE_TOGGLE_ACCELERATOR,
+  isVoicePttModifier,
+  normalizeAccelerator,
+} from './hotkeys.ts'
+import {
+  isVoiceDelivery,
+  isVoiceOverlayPosition,
+  isVoiceRecognitionLanguage,
+} from './history.ts'
 
 export const VOICE_PREFS_FILE = 'voice.json'
 
@@ -27,7 +40,10 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
   const base = getDefaultVoicePrefs(now)
   if (!raw || typeof raw !== 'object') return base
   const obj = raw as Record<string, unknown>
-  const sttEngine = isSttEngine(obj.sttEngine) ? obj.sttEngine : base.sttEngine
+  const migratedToCloud = shouldMigrateLegacyLocalDefault(obj)
+  const sttEngine = migratedToCloud
+    ? 'cloud-rox'
+    : (isSttEngine(obj.sttEngine) ? obj.sttEngine : base.sttEngine)
   const ttsEngine = isTtsEngine(obj.ttsEngine) ? obj.ttsEngine : base.ttsEngine
   const audioRetention = isAudioRetention(obj.audioRetention)
     ? obj.audioRetention
@@ -45,22 +61,40 @@ export function normalizeVoicePrefs(raw: unknown, now: number = Date.now()): Voi
   const whisperStatus = isModelHealthStatus(obj.whisperStatus)
     ? obj.whisperStatus
     : base.whisperStatus
+  const overlayEnabled = obj.overlayEnabled === false ? false : true
+  const overlayPosition = isVoiceOverlayPosition(obj.overlayPosition) ? obj.overlayPosition : base.overlayPosition
+  const hotkeyToggle = normalizeAccelerator(obj.hotkeyToggle, DEFAULT_VOICE_TOGGLE_ACCELERATOR)
+  const hotkeyCancel = normalizeAccelerator(obj.hotkeyCancel, DEFAULT_VOICE_CANCEL_ACCELERATOR)
+  const pttModifier = isVoicePttModifier(obj.pttModifier) ? obj.pttModifier : base.pttModifier
+  const recognitionLanguage = isVoiceRecognitionLanguage(obj.recognitionLanguage)
+    ? obj.recognitionLanguage
+    : base.recognitionLanguage
+  const delivery = isVoiceDelivery(obj.delivery) ? obj.delivery : base.delivery
+  const trailingSpace = obj.trailingSpace === true
   const updatedAt =
     typeof obj.updatedAt === 'number' && Number.isFinite(obj.updatedAt)
       ? obj.updatedAt
       : now
 
   const prefs: VoicePrefs = {
-    version: 1,
+    version: VOICE_PREFS_VERSION,
     sttEngine,
     ttsEngine,
-    audioRetention: sttEngine === 'local-whisper' ? 'none' : audioRetention,
+    audioRetention,
     wakeWordEnabled: false,
     alwaysListeningConsent: false,
     wakePhrase,
     selectedInputDeviceId,
     selectedOutputDeviceId,
     whisperStatus,
+    overlayEnabled,
+    overlayPosition,
+    hotkeyToggle,
+    hotkeyCancel,
+    pttModifier,
+    recognitionLanguage,
+    delivery,
+    trailingSpace,
     updatedAt,
   }
   return withWakeWordConsent(prefs, {

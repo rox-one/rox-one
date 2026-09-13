@@ -28,7 +28,7 @@ import type {
   SessionsBulkChangedEvent,
 } from './dto'
 import type { ExtensionsChangedPayload } from '../extensions/types'
-import type { VoicePrefs } from '../voice'
+import type { VoicePrefs, VoiceRecording, VoiceCommand } from '../voice'
 import type { EnvironmentPrefs } from '../environment'
 
 /** Payload of marketplace:CHANGED — pushed after an install/update/remove completes. */
@@ -95,6 +95,12 @@ export interface BroadcastEventMap {
     nextThreshold: number | null
   }]
   [RPC_CHANNELS.voice.CHANGED]: [payload: VoicePrefs]
+  [RPC_CHANNELS.voice.COMMAND]: [payload: VoiceCommand]
+  [RPC_CHANNELS.voice.CAPTURE_CHANGED]: [payload: {
+    activeId: string | null
+    recording: VoiceRecording | null
+    archiveDir?: string
+  }]
   [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
 
   // Theme broadcasts (global)

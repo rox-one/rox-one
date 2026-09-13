@@ -20,6 +20,7 @@ import { OnboardingWizard, ReauthScreen } from '@/components/onboarding'
 import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog'
+import { VoiceRuntime } from '@/voice/VoiceRuntime'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TooltipProvider } from '@craft-agent/ui'
 import { FocusProvider } from '@/context/FocusContext'
@@ -2178,6 +2179,7 @@ export default function App() {
         >
           {/* Handle window close requests (X button, Cmd+W) - close modal first if open */}
           <WindowCloseHandler />
+          <VoiceRuntime />
 
           {/* W3 Omnibox — unified ⌘K palette (S-04). Renderer hotkey + embedded
               SiYuan webContents ⌘K bridge are both implemented. */}

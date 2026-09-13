@@ -39,7 +39,7 @@ export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 import type { ThinkingLevel } from '@craft-agent/shared/agent/thinking-levels';
 import type { XpEventType } from '@craft-agent/shared/gamification';
 import type { QuestRecord, SessionRating } from '@craft-agent/shared/gamification';
-import type { VoiceHealth, VoicePrefs } from '@craft-agent/shared/voice';
+import type { TranscribeResult, VoiceCommand, VoiceHealth, VoicePrefs, VoiceRecording } from '@craft-agent/shared/voice';
 import type { EnvironmentPrefs, QuestionId } from '@craft-agent/shared/environment';
 import type { ContextDocContent, ContextDocInfo } from '@craft-agent/shared/context-docs';
 import type {
@@ -1409,10 +1409,38 @@ export interface ElectronAPI {
     audioBase64: string
     mimeType?: string
     language?: string
-    transcript?: string
-  }): Promise<{ text: string; engine: string; uploaded: boolean }>
+  }): Promise<TranscribeResult>
+  startVoiceCapture(payload?: { mimeType?: string }): Promise<{ id: string }>
+  appendVoiceCaptureChunk(payload: { id: string; chunkBase64: string }): Promise<{ ok: true }>
+  stopVoiceCapture(payload?: { id?: string; language?: string; durationMs?: number }): Promise<TranscribeResult>
+  cancelVoiceCapture(payload?: { id?: string; durationMs?: number }): Promise<VoiceRecording>
+  listVoiceRecordings(): Promise<VoiceRecording[]>
+  getVoiceCaptureStatus(): Promise<{ activeId: string | null; recording: VoiceRecording | null; archiveDir?: string }>
+  deleteVoiceRecording(payload: { id: string }): Promise<{ ok: true }>
+  favoriteVoiceRecording(payload: { id: string; favorite: boolean }): Promise<VoiceRecording>
+  getVoiceArchiveDir(): Promise<{ path: string }>
+  getVoiceRecordingAudio(payload: { id: string }): Promise<{ mimeType: string; audioBase64: string }>
+  retranscribeVoiceRecording(payload: { id: string; language?: string }): Promise<TranscribeResult>
+  exportVoiceRecording(payload: { id: string; format: 'txt' | 'json' | 'srt' }): Promise<{ path: string }>
+  selectVoiceRevision(payload: { id: string; revisionId: string }): Promise<VoiceRecording>
+  editVoiceTranscript(payload: { id: string; text: string }): Promise<VoiceRecording>
+  setVoiceOverlayVisible(payload: {
+    visible: boolean
+    recording?: boolean
+    busy?: boolean
+    rms?: number
+    elapsedMs?: number
+  }): Promise<{ ok: true; visible: boolean }>
+  rebindVoiceHotkeys(): Promise<{ ok: boolean; conflict?: string }>
+  dispatchVoiceCommand(command: VoiceCommand): Promise<{ ok: true }>
   speakVoice(payload: { text: string }): Promise<{ engine: string; uploaded: false }>
   onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
+  onVoiceCommand(callback: (command: VoiceCommand) => void): () => void
+  onVoiceCaptureChanged(callback: (status: {
+    activeId: string | null
+    recording: VoiceRecording | null
+    archiveDir?: string
+  }) => void): () => void
 
   // Session Drafts (persisted composer state — text + attachment refs)
   getDraft(sessionId: string): Promise<import('@craft-agent/shared/config').SessionDraft | null>

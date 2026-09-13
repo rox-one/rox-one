@@ -14,6 +14,7 @@ import {
   loadVoicePrefs,
   normalizeVoicePrefs,
   saveVoicePrefs,
+  shouldDiscardAudio,
   shouldUploadAudio,
   speakWithPolicy,
   transcribeWithPolicy,
@@ -51,15 +52,21 @@ function edgeAdapter(): SpeakAdapter {
 }
 
 describe('voice privacy policy', () => {
-  it('defaults to local STT with wake word disarmed', () => {
+  it('defaults to free cloud ROX with wake word disarmed', () => {
     const prefs = getDefaultVoicePrefs(1)
-    expect(prefs.sttEngine).toBe('local-whisper')
+    expect(prefs.sttEngine).toBe('cloud-rox')
     expect(prefs.ttsEngine).toBe('edge')
+    expect(prefs.audioRetention).toBe('session')
     expect(prefs.wakeWordEnabled).toBe(false)
     expect(prefs.alwaysListeningConsent).toBe(false)
     expect(prefs.wakePhrase).toBe(DEFAULT_WAKE_PHRASE)
-    expect(shouldUploadAudio(prefs)).toBe(false)
+    expect(shouldUploadAudio(prefs)).toBe(true)
     expect(canStartWakeListening(prefs)).toEqual({ ok: false, reason: 'disabled' })
+    expect(prefs.version).toBe(2)
+    expect(prefs.overlayPosition).toBe('top')
+    expect(prefs.recognitionLanguage).toBe('auto')
+    expect(prefs.delivery).toBe('draft')
+    expect(prefs.trailingSpace).toBe(false)
   })
 
   it('refuses to arm wake word without always-listening consent', () => {
@@ -82,7 +89,12 @@ describe('voice privacy policy', () => {
   })
 
   it('transcribes locally without calling the cloud adapter', async () => {
-    const prefs: VoicePrefs = { ...getDefaultVoicePrefs(1), whisperStatus: 'ready' }
+    const prefs: VoicePrefs = {
+      ...getDefaultVoicePrefs(1),
+      sttEngine: 'local-whisper',
+      audioRetention: 'session',
+      whisperStatus: 'ready',
+    }
     let cloudCalls = 0
     const cloud: TranscribeAdapter = {
       engine: 'cloud-rox',
@@ -94,13 +106,63 @@ describe('voice privacy policy', () => {
     const result = await transcribeWithPolicy(prefs, {
       audio: new Uint8Array([1, 2, 3]),
       mimeType: 'audio/webm',
-    }, { local: localAdapter('dictate this'), cloud })
+    }, { local: localAdapter('dictate this'), cloud }, { localModelReady: true })
     expect(result).toEqual({
       text: 'dictate this',
       engine: 'local-whisper',
       uploaded: false,
     })
     expect(cloudCalls).toBe(0)
+  })
+
+  it('refuses local transcription unless a real model probe passed', async () => {
+    const prefs: VoicePrefs = {
+      ...getDefaultVoicePrefs(1),
+      sttEngine: 'local-whisper',
+      whisperStatus: 'ready',
+    }
+    await expect(transcribeWithPolicy(prefs, {
+      audio: new Uint8Array([1]),
+      mimeType: 'audio/webm',
+    }, { local: localAdapter(), cloud: cloudAdapter() })).rejects.toMatchObject({
+      code: 'local-model-missing',
+    })
+  })
+
+  it('keeps local STT and audio retention independent', () => {
+    const prefs = normalizeVoicePrefs({
+      sttEngine: 'local-whisper',
+      audioRetention: 'session',
+      whisperStatus: 'ready',
+    }, 5)
+    expect(prefs.sttEngine).toBe('local-whisper')
+    expect(prefs.audioRetention).toBe('session')
+  })
+
+  it('promotes v1 local-ready prefs to v2 without flipping engine or retention', () => {
+    const prefs = normalizeVoicePrefs({
+      version: 1,
+      sttEngine: 'local-whisper',
+      whisperStatus: 'ready',
+      audioRetention: 'none',
+    }, 9)
+    expect(prefs.version).toBe(2)
+    expect(prefs.sttEngine).toBe('local-whisper')
+    expect(prefs.audioRetention).toBe('none')
+    expect(prefs.overlayPosition).toBe('top')
+    expect(prefs.recognitionLanguage).toBe('auto')
+    expect(prefs.delivery).toBe('draft')
+    expect(prefs.trailingSpace).toBe(false)
+  })
+
+  it('migrates the legacy local-missing default to cloud ROX', () => {
+    const prefs = normalizeVoicePrefs({
+      sttEngine: 'local-whisper',
+      whisperStatus: 'missing',
+      audioRetention: 'none',
+    }, 5)
+    expect(prefs.sttEngine).toBe('cloud-rox')
+    expect(prefs.audioRetention).toBe('none')
   })
 
   it('uploads audio only when a cloud STT engine is selected', async () => {
@@ -124,6 +186,19 @@ describe('voice privacy policy', () => {
     expect(result.uploaded).toBe(true)
     expect(result.engine).toBe('cloud-deepgram')
     expect(localCalls).toBe(0)
+  })
+
+  it('refuses an empty ASR payload instead of treating it as success', async () => {
+    const prefs = getDefaultVoicePrefs(1)
+    await expect(transcribeWithPolicy(prefs, {
+      audio: new Uint8Array([1]),
+      mimeType: 'audio/webm',
+    }, {
+      local: localAdapter(),
+      cloud: cloudAdapter('   '),
+    })).rejects.toMatchObject({
+      code: 'empty-transcript',
+    })
   })
 
   it('blocks cloud STT while offline', async () => {
@@ -150,6 +225,49 @@ describe('voice privacy policy', () => {
     expect(() => assertEditableTranscript('   ')).toThrow(VoicePrivacyError)
   })
 
+  it('discards local audio bytes according to retention, not STT engine', () => {
+    expect(shouldDiscardAudio(
+      { audioRetention: 'none' },
+      { status: 'complete' },
+      'immediate',
+    )).toBe(true)
+    expect(shouldDiscardAudio(
+      { audioRetention: 'none' },
+      { status: 'canceled' },
+      'immediate',
+    )).toBe(true)
+    expect(shouldDiscardAudio(
+      { audioRetention: 'none' },
+      { status: 'error' },
+      'immediate',
+    )).toBe(false)
+    expect(shouldDiscardAudio(
+      { audioRetention: 'none' },
+      { status: 'interrupted' },
+      'host-reload',
+    )).toBe(false)
+    expect(shouldDiscardAudio(
+      { audioRetention: 'session' },
+      { status: 'complete' },
+      'immediate',
+    )).toBe(false)
+    expect(shouldDiscardAudio(
+      { audioRetention: 'session' },
+      { status: 'complete' },
+      'host-reload',
+    )).toBe(true)
+    expect(shouldDiscardAudio(
+      { audioRetention: 'session' },
+      { status: 'complete', favorite: true },
+      'host-reload',
+    )).toBe(false)
+    expect(shouldDiscardAudio(
+      { audioRetention: 'cloud-policy' },
+      { status: 'complete' },
+      'host-reload',
+    )).toBe(false)
+  })
+
   it('gates VAD on RMS energy', () => {
     expect(isVoiceActive(new Float32Array(32), 0.02)).toBe(false)
     const loud = new Float32Array(8)
@@ -166,7 +284,9 @@ describe('voice privacy policy', () => {
     })
     expect(health.offline).toBe(true)
     expect(health.wakeWordArmed).toBe(false)
-    expect(health.audioRetention).toBe('none')
+    expect(health.audioRetention).toBe('session')
+    expect(health.cloudModelId).toBe('rocks-t1')
+    expect(health.localModelReady).toBe(false)
   })
 
   it('normalizes persisted wake-word flags so consent cannot be skipped', () => {
@@ -188,7 +308,7 @@ describe('voice privacy policy', () => {
     }, dir)
     expect(loadVoicePrefs(dir).selectedInputDeviceId).toBe('mic-1')
     const raw = readFileSync(join(dir, 'voice.json'), 'utf8')
-    expect(raw).toContain('"sttEngine": "local-whisper"')
+    expect(raw).toContain('"sttEngine": "cloud-rox"')
     expect(saved.wakeWordEnabled).toBe(false)
   })
 })

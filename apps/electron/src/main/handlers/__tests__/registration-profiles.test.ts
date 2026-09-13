@@ -34,6 +34,11 @@ mock.module('electron', () => ({
     getFocusedWindow: () => null,
     getAllWindows: () => [],
   },
+  globalShortcut: {
+    register: () => true,
+    unregister: () => {},
+    unregisterAll: () => {},
+  },
   BrowserView: class {},
   WebContentsView: class {},
   Menu: {
@@ -255,6 +260,7 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     import('../extension-host'),
     import('../extension-surface'),
   ])
+  const { RPC_CHANNELS } = await import('@craft-agent/shared/protocol')
 
   return new Set([
     ...browser.HANDLED_CHANNELS,
@@ -264,6 +270,9 @@ async function getExpectedGuiChannels(): Promise<Set<string>> {
     ...siyuan.HANDLED_CHANNELS,
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
+    RPC_CHANNELS.voice.SET_OVERLAY,
+    RPC_CHANNELS.voice.REBIND_HOTKEYS,
+    RPC_CHANNELS.voice.COMMAND,
   ])
 }
 

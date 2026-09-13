@@ -1,9 +1,20 @@
+import { getCachedVoiceCapabilities } from './capabilities.ts'
+import { voiceLanguageLabel, type VoiceCapabilities } from './contracts.ts'
 import {
   DEFAULT_WAKE_PHRASE,
   type SttEngine,
   type VoiceHealth,
   type VoicePrefs,
+  type VoiceRecordingStatus,
 } from './types.ts'
+
+const KEEP_AUDIO_STATUSES: ReadonlySet<VoiceRecordingStatus> = new Set([
+  'recording',
+  'interrupted',
+  'queued',
+  'transcribing',
+  'error',
+])
 
 export type WakeListenDecision =
   | { ok: true }
@@ -19,10 +30,29 @@ export function shouldUploadAudio(prefs: Pick<VoicePrefs, 'sttEngine'>): boolean
 }
 
 export function resolveAudioRetention(
-  prefs: Pick<VoicePrefs, 'sttEngine' | 'audioRetention'>,
+  prefs: Pick<VoicePrefs, 'audioRetention'>,
 ): VoicePrefs['audioRetention'] {
-  if (!usesCloudStt(prefs.sttEngine)) return 'none'
-  return prefs.audioRetention === 'none' ? 'cloud-policy' : prefs.audioRetention
+  return prefs.audioRetention
+}
+
+/**
+ * Local audio bytes vs transcript history.
+ *
+ * `none` discards bytes as soon as capture is complete or canceled.
+ * `session` keeps bytes until the host reloads, then only favorites.
+ * `cloud-policy` keeps local bytes until the user deletes the recording.
+ * In-flight / interrupted / failed captures always keep bytes so retry works.
+ */
+export function shouldDiscardAudio(
+  prefs: Pick<VoicePrefs, 'audioRetention'>,
+  rec: { status: VoiceRecordingStatus; favorite?: boolean },
+  phase: 'immediate' | 'host-reload',
+): boolean {
+  if (KEEP_AUDIO_STATUSES.has(rec.status)) return false
+  if (prefs.audioRetention === 'cloud-policy') return false
+  if (prefs.audioRetention === 'none') return true
+  if (phase === 'immediate') return false
+  return rec.favorite !== true
 }
 
 export function canStartWakeListening(
@@ -54,18 +84,29 @@ export function describeLocalSttBackend(info: { appleSilicon: boolean }): VoiceH
 
 export function buildVoiceHealth(
   prefs: VoicePrefs,
-  info: { appleSilicon: boolean; offline: boolean },
+  info: {
+    appleSilicon: boolean
+    offline: boolean
+    localModelReady?: boolean
+    capabilities?: VoiceCapabilities
+  },
 ): VoiceHealth {
   const wake = canStartWakeListening(prefs)
+  const localModelReady = info.localModelReady === true
+  const caps = info.capabilities ?? getCachedVoiceCapabilities()
   return {
     sttEngine: prefs.sttEngine,
     ttsEngine: prefs.ttsEngine,
-    whisper: prefs.whisperStatus,
+    whisper: localModelReady ? 'ready' : (prefs.whisperStatus === 'ready' ? 'missing' : prefs.whisperStatus),
     localBackend: describeLocalSttBackend(info),
     appleSilicon: info.appleSilicon,
     offline: info.offline,
     wakeWordArmed: wake.ok,
     audioRetention: resolveAudioRetention(prefs),
+    localModelReady,
+    cloudModelId: caps.modelId,
+    cloudDisplayName: caps.displayName,
+    languageLabel: voiceLanguageLabel(caps),
   }
 }
 

@@ -11,6 +11,7 @@ import { registerSettingsGuiHandlers } from './settings'
 import { registerSiyuanHandlers } from './siyuan'
 import { registerExtensionHostHandlers } from './extension-host'
 import { registerExtensionSurfaceHandlers } from './extension-surface'
+import { registerVoiceGuiHandlers } from './voice-gui'
 import { setGithubUserToolHost } from '@craft-agent/shared/connections'
 import { createGithubEnvImportHost, registerWorkGraphHandlers } from './workgraph'
 import type { WorkGraphKernel } from '@craft-agent/server-core/workgraph'
@@ -23,6 +24,7 @@ export function registerGuiRpcHandlers(server: RpcServer, deps: HandlerDeps): vo
   registerSiyuanHandlers(server, deps)
   registerExtensionHostHandlers(server, deps)
   registerExtensionSurfaceHandlers(server, deps)
+  registerVoiceGuiHandlers(server, deps)
 }
 
 export function registerAllRpcHandlers(

@@ -10,7 +10,14 @@ import type {
 } from './types.ts'
 
 export class VoicePrivacyError extends Error {
-  readonly code: 'cloud-stt-offline' | 'local-model-missing' | 'empty-transcript'
+  readonly code:
+    | 'cloud-stt-offline'
+    | 'local-model-missing'
+    | 'empty-transcript'
+    | 'cloud-stt-unauthorized'
+    | 'cloud-stt-quota'
+    | 'cloud-stt-too-large'
+    | 'cloud-stt-failed'
 
   constructor(code: VoicePrivacyError['code'], message: string) {
     super(message)
@@ -23,21 +30,22 @@ export async function transcribeWithPolicy(
   prefs: VoicePrefs,
   input: TranscribeInput,
   adapters: { local: TranscribeAdapter; cloud: TranscribeAdapter },
-  options: { offline?: boolean } = {},
+  options: { offline?: boolean; localModelReady?: boolean } = {},
 ): Promise<TranscribeResult> {
   if (!shouldUploadAudio(prefs)) {
-    if (prefs.whisperStatus === 'missing' || prefs.whisperStatus === 'unsupported') {
+    const ready = options.localModelReady === true
+    if (!ready) {
       throw new VoicePrivacyError(
         'local-model-missing',
         'Local Whisper model is not installed',
       )
     }
     const result = await adapters.local.transcribe(input)
-    return {
-      text: result.text,
+    return requireTranscript({
+      ...result,
       engine: 'local-whisper',
       uploaded: false,
-    }
+    })
   }
 
   if (options.offline) {
@@ -45,11 +53,18 @@ export async function transcribeWithPolicy(
   }
 
   const result = await adapters.cloud.transcribe(input)
-  return {
-    text: result.text,
+  return requireTranscript({
+    ...result,
     engine: prefs.sttEngine,
     uploaded: true,
+  })
+}
+
+function requireTranscript(result: TranscribeResult): TranscribeResult {
+  if (!result.text.trim()) {
+    throw new VoicePrivacyError('empty-transcript', 'Transcript is empty')
   }
+  return result
 }
 
 export async function speakWithPolicy(

@@ -30,10 +30,18 @@ mock.module('electron', () => ({
     openPath: async () => '',
     showItemInFolder: () => {},
   },
+  screen: {
+    getPrimaryDisplay: () => ({ workArea: { x: 0, y: 0, width: 1280, height: 800 } }),
+  },
   BrowserWindow: {
     fromWebContents: () => null,
     getFocusedWindow: () => null,
     getAllWindows: () => [],
+  },
+  globalShortcut: {
+    register: () => true,
+    unregister: () => {},
+    unregisterAll: () => {},
   },
   BrowserView: class {},
   WebContentsView: class {},
@@ -191,7 +199,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('@craft-agent/server-core/handlers/rpc/pages'),
   ])
 
-  const [browser, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface] = await Promise.all([
+  const [browser, guiSystem, guiWorkspace, guiSettings, siyuan, extensionHost, extensionSurface, voiceGui] = await Promise.all([
     import('../browser'),
     import('../system'),
     import('../workspace'),
@@ -199,6 +207,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     import('../siyuan'),
     import('../extension-host'),
     import('../extension-surface'),
+    import('../voice-gui'),
   ])
 
   return new Set([
@@ -257,6 +266,7 @@ async function getExpectedChannels(): Promise<Set<string>> {
     ...siyuan.HANDLED_CHANNELS,
     ...extensionHost.HANDLED_CHANNELS,
     ...extensionSurface.HANDLED_CHANNELS,
+    ...voiceGui.HANDLED_CHANNELS,
   ])
 }
 
