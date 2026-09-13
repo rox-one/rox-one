@@ -440,6 +440,7 @@ import type {
   NoteBacklink,
   NoteDocument,
   NoteInsights,
+  NoteIndexHealth,
   NoteRenameImpact,
   NoteRenameResult,
   NoteSummary,
@@ -799,6 +800,8 @@ export interface ElectronAPI {
   searchNotes(workspaceId: string, query: string): Promise<NoteSummary[]>
   getNoteBacklinks(workspaceId: string, noteId: string): Promise<NoteBacklink[]>
   getNoteInsights(workspaceId: string, noteId: string): Promise<NoteInsights>
+  getNoteIndexHealth(workspaceId: string): Promise<NoteIndexHealth>
+  rebuildNoteIndex(workspaceId: string): Promise<NoteIndexHealth>
   getNoteRenameImpact(workspaceId: string, noteId: string, nextTitle: string): Promise<NoteRenameImpact>
   getDailyNote(workspaceId: string, date?: string): Promise<NoteDocument>
   importNoteAsset(workspaceId: string, attachment: FileAttachment): Promise<NoteAssetImportResult>

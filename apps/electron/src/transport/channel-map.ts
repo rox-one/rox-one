@@ -329,6 +329,8 @@ export const CHANNEL_MAP = {
   searchNotes: invoke(RPC_CHANNELS.notes.SEARCH),
   getNoteBacklinks: invoke(RPC_CHANNELS.notes.GET_BACKLINKS),
   getNoteInsights: invoke(RPC_CHANNELS.notes.GET_INSIGHTS),
+  getNoteIndexHealth: invoke(RPC_CHANNELS.notes.GET_INDEX_HEALTH),
+  rebuildNoteIndex: invoke(RPC_CHANNELS.notes.REBUILD_INDEX),
   getNoteRenameImpact: invoke(RPC_CHANNELS.notes.GET_RENAME_IMPACT),
   getDailyNote: invoke(RPC_CHANNELS.notes.GET_DAILY_NOTE),
   importNoteAsset: invoke(RPC_CHANNELS.notes.IMPORT_ASSET),

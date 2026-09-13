@@ -6,7 +6,7 @@ import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
 import { loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import matter from 'gray-matter'
 import yaml from 'js-yaml'
-import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteDocument, type NoteLink, type NoteRenameImpact, type NoteSummary } from '@craft-agent/shared/protocol'
+import { RPC_CHANNELS, type FileAttachment, type NoteAsset, type NoteAssetRenameResult, type NoteBacklink, type NoteChangedPayload, type NoteDocument, type NoteIndexHealth, type NoteLink, type NoteRenameImpact, type NoteSummary } from '@craft-agent/shared/protocol'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
@@ -18,6 +18,8 @@ import {
   isVaultIndexAvailable,
   listVaultDocuments,
   queryVaultDocuments,
+  rebuildVaultIndex,
+  vaultIndexHealth,
   type VaultBacklink,
   type VaultDocumentSummary,
   type VaultWikiLink,
@@ -35,6 +37,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.SEARCH,
   RPC_CHANNELS.notes.GET_BACKLINKS,
   RPC_CHANNELS.notes.GET_INSIGHTS,
+  RPC_CHANNELS.notes.GET_INDEX_HEALTH,
   RPC_CHANNELS.notes.GET_RENAME_IMPACT,
   RPC_CHANNELS.notes.GET_DAILY_NOTE,
   RPC_CHANNELS.notes.IMPORT_ASSET,
@@ -42,6 +45,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.notes.DELETE_ASSET,
   RPC_CHANNELS.notes.RENAME_ASSET,
   RPC_CHANNELS.notes.UPDATE_PROPERTIES,
+  RPC_CHANNELS.notes.REBUILD_INDEX,
   RPC_CHANNELS.notes.WATCH,
   RPC_CHANNELS.notes.UNWATCH,
 ] as const
@@ -65,9 +69,11 @@ type ClientNotesWatchState = {
   watcher: import('fs').FSWatcher
   workspaceId: string
   debounceTimer: ReturnType<typeof setTimeout> | null
+  lastExternalChangeAt: number | null
 }
 
 const clientNotesWatches = new Map<string, ClientNotesWatchState>()
+const lastExternalChangeByWorkspace = new Map<string, number>()
 // noteFilePath → mtime recorded immediately after our own writeFile()
 // If watcher fires and stat() mtime matches, it's our own write — suppress it.
 const lastInternalMtime = new Map<string, number>()
@@ -302,6 +308,34 @@ function tryBacklinksFromVaultIndex(notesRoot: string, noteId: string): NoteBack
     return getVaultBacklinks(notesRoot, noteId).map(item => backlinkFromVault(notesRoot, item))
   } catch {
     return null
+  }
+}
+
+function emptyIndexHealth(): NoteIndexHealth {
+  return {
+    ok: false,
+    available: isVaultIndexAvailable(),
+    dbPath: '',
+    schemaVersion: null,
+    documentCount: 0,
+    recovered: false,
+    indexed: 0,
+    unchanged: 0,
+    skipped: 0,
+    truncated: false,
+    watching: false,
+    lastExternalChangeAt: null,
+  }
+}
+
+function indexHealthForWorkspace(workspaceId: string): NoteIndexHealth {
+  const notesRoot = getWorkspaceNotesRoot(workspaceId)
+  const health = vaultIndexHealth(notesRoot)
+  const watching = [...clientNotesWatches.values()].some((state) => state.workspaceId === workspaceId)
+  return {
+    ...health,
+    watching,
+    lastExternalChangeAt: lastExternalChangeByWorkspace.get(workspaceId) ?? null,
   }
 }
 
@@ -1020,6 +1054,24 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
     }
   })
 
+  server.handle(RPC_CHANNELS.notes.GET_INDEX_HEALTH, async (_ctx, workspaceId: string) => {
+    try {
+      return indexHealthForWorkspace(workspaceId)
+    } catch {
+      return emptyIndexHealth()
+    }
+  })
+
+  server.handle(RPC_CHANNELS.notes.REBUILD_INDEX, async (_ctx, workspaceId: string) => {
+    const notesRoot = getWorkspaceNotesRoot(workspaceId)
+    try {
+      rebuildVaultIndex(notesRoot)
+      return indexHealthForWorkspace(workspaceId)
+    } catch {
+      return emptyIndexHealth()
+    }
+  })
+
   server.handle(RPC_CHANNELS.notes.GET_RENAME_IMPACT, async (_ctx, workspaceId: string, noteId: string, nextTitle: string) => {
     return getRenameImpact(getWorkspaceNotesRoot(workspaceId), noteId, nextTitle)
   })
@@ -1084,6 +1136,7 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
         watcher: null as unknown as import('fs').FSWatcher,
         workspaceId,
         debounceTimer: null,
+        lastExternalChangeAt: lastExternalChangeByWorkspace.get(workspaceId) ?? null,
       }
 
       state.watcher = watch(notesRoot, { recursive: true }, (_eventType, filename) => {
@@ -1096,6 +1149,9 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
         if (state.debounceTimer) clearTimeout(state.debounceTimer)
         state.debounceTimer = setTimeout(async () => {
           if (absPath && await isOwnWrite(absPath)) return
+          const at = Date.now()
+          state.lastExternalChangeAt = at
+          lastExternalChangeByWorkspace.set(workspaceId, at)
           changed({ workspaceId, reason: 'external', noteId }, { to: 'client', clientId })
         }, 50)
       })
