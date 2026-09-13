@@ -23,7 +23,8 @@
     "./knowledge": "./src/knowledge/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./workgraph": "./src/workgraph/index.ts",
-    "./observability": "./src/observability/index.ts"
+    "./observability": "./src/observability/index.ts",
+    "./meetings": "./src/meetings/index.ts"
   },
   "scripts": {},
   "dependencies": {
