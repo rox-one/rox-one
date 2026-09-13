@@ -5,7 +5,10 @@ import {
   migrateNotesVault,
   parseBlocks,
   rewriteWikilinks,
+  type NoteSaveInput,
 } from '../notes-engine.ts'
+
+type CanOmitExpectedRevision = Omit<NoteSaveInput, 'expectedRevision'> extends NoteSaveInput ? 'yes' : 'no'
 
 describe('ROX-AUD-031 native notes engine', () => {
   test('CRUD and restart work without SiYuan', () => {
@@ -47,9 +50,12 @@ describe('ROX-AUD-031 native notes engine', () => {
   })
 
   test('save without expectedRevision is rejected; stale conflicts; matching succeeds', () => {
+    const canOmit: CanOmitExpectedRevision = 'no'
+    expect(canOmit).toBe('no')
+
     const engine = createNativeNotesEngine()
     const created = engine.create('daily', '# Daily\n\nA')
-    const omitted = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB' })
+    const omitted = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB' } as NoteSaveInput)
     expect(omitted.status).not.toBe('ok')
     expect(engine.read('daily')?.markdown).toContain('A')
     expect(engine.revisions('daily')).toHaveLength(1)
@@ -67,6 +73,41 @@ describe('ROX-AUD-031 native notes engine', () => {
     const ok = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB', expectedRevision: created.revision })
     expect(ok.status).toBe('ok')
     expect(engine.read('daily')?.markdown).toContain('B')
+  })
+
+  test('list() seed reconstructs heads from the tip and keeps the revision chain', () => {
+    const engine = createNativeNotesEngine()
+    const v1 = engine.create('daily', '# Daily\n\nA', { color: 'red' }, 1000)
+    const v2 = engine.save({
+      noteId: 'daily',
+      markdown: '# Daily\n\nB',
+      expectedRevision: v1.revision,
+      extra: { color: 'green' },
+      now: 2000,
+    })
+    expect(v2.status).toBe('ok')
+    const original = engine.read('daily')
+    const originalHistory = engine.revisions('daily')
+    expect(original).not.toBeNull()
+    expect(originalHistory).toHaveLength(2)
+
+    const restarted = createNativeNotesEngine(engine.list())
+    expect(restarted.read('daily')?.revision).toBe(original?.revision)
+    expect(restarted.read('daily')?.extra).toEqual({ color: 'green' })
+    expect(restarted.read('daily')?.markdown).toBe(original?.markdown)
+    expect(restarted.revisions('daily')).toEqual(originalHistory)
+    expect(restarted.revisions('daily')[0]?.parentId).toBeNull()
+    expect(restarted.revisions('daily')[1]?.parentId).toBe(v1.revision)
+
+    const stale = restarted.save({ noteId: 'daily', markdown: '# Daily\n\nC', expectedRevision: v1.revision })
+    expect(stale.status).toBe('conflict')
+    const ok = restarted.save({
+      noteId: 'daily',
+      markdown: '# Daily\n\nC',
+      expectedRevision: original!.revision,
+      now: 3000,
+    })
+    expect(ok.status).toBe('ok')
   })
 
   test('export/import is lossless for fields, attachments, and extra', () => {
@@ -111,7 +152,7 @@ describe('ROX-AUD-031 native notes engine', () => {
     expect(other.revisions('daily')).toEqual(engine.revisions('daily'))
     expect(other.revisions('daily')).toHaveLength(4)
     expect(other.read('daily')?.revision).toBe(engine.read('daily')?.revision)
-    expect(other.read('daily')?.markdown).toBe('# Daily\n\nD')
+    expect(other.read('daily')?.markdown.replace(/<!--\s*block:[A-Za-z0-9_-]+\s*-->\n?/g, '')).toBe('# Daily\n\nD')
     expect(other.revisions('scratch')).toHaveLength(0)
   })
 
@@ -162,6 +203,33 @@ describe('ROX-AUD-031 native notes engine', () => {
     expect(engine.revisions('daily')).toEqual(originalHistory)
   })
 
+  test('import rejects head extra or sidecar that does not match the tip', () => {
+    const engine = createNativeNotesEngine()
+    engine.create('daily', '# Daily\n\nA', { color: 'red', order: 1 }, 1000)
+    const backup = engine.exportVault()
+    const other = createNativeNotesEngine()
+    other.create('keep', '# Keep\n\nBody', { tag: 'safe' }, 500)
+
+    expect(() =>
+      other.importVault({
+        ...backup,
+        notes: [{ ...backup.notes[0]!, extra: { color: 'hacked' } }],
+      }),
+    ).toThrow(/sidecar|extra/)
+    expect(other.read('keep')?.extra.tag).toBe('safe')
+    expect(other.read('daily')).toBeNull()
+    expect(other.revisions('keep')).toHaveLength(1)
+
+    expect(() =>
+      other.importVault({
+        ...backup,
+        notes: [{ ...backup.notes[0]!, blocks: [{ id: 'nope', text: 'A' }] }],
+      }),
+    ).toThrow(/sidecar|extra/)
+    expect(other.read('keep')?.title).toBe('Keep')
+    expect(other.read('daily')).toBeNull()
+  })
+
   test('block and wikilink helpers are lossless', () => {
     const markdown = '<!-- block:a -->One\n\n<!-- block:b -->Two [[Inbox]]'
     expect(parseBlocks(markdown).map((block) => block.id)).toEqual(['a', 'b'])
@@ -195,6 +263,32 @@ describe('ROX-AUD-031 native notes engine', () => {
     if (saved.status !== 'ok') return
     const shifted = saved.note.blocks.filter((block) => block.text === 'Alpha paragraph' || block.text === 'Beta paragraph')
     expect(shifted.map((block) => block.id)).toEqual(originalIds)
+  })
+
+  test('inserting a duplicate unlabeled paragraph does not remap existing suffix ids', () => {
+    const original = 'Alpha paragraph\n\nAlpha paragraph'
+    const [first, second] = parseBlocks(original)
+    expect(first?.id).toBeTruthy()
+    expect(second?.id).toBeTruthy()
+    expect(first?.id).not.toBe(second?.id)
+
+    const engine = createNativeNotesEngine()
+    const created = engine.create('daily', `# Daily\n\n${original}`)
+    const alphaIds = created.blocks.filter((block) => block.text === 'Alpha paragraph').map((block) => block.id)
+    expect(alphaIds).toEqual([first!.id, second!.id])
+
+    const saved = engine.save({
+      noteId: 'daily',
+      markdown: `Alpha paragraph\n\n${created.markdown}`,
+      expectedRevision: created.revision,
+    })
+    expect(saved.status).toBe('ok')
+    if (saved.status !== 'ok') return
+    const alphas = saved.note.blocks.filter((block) => block.text === 'Alpha paragraph')
+    expect(alphas.length).toBe(3)
+    expect(alphas.slice(1).map((block) => block.id)).toEqual(alphaIds)
+    expect(alphas[0]?.id).not.toBe(alphaIds[0])
+    expect(alphas[0]?.id).not.toBe(alphaIds[1])
   })
 
   test('same markdown with different extra yields a new revision id and CAS conflict', () => {
