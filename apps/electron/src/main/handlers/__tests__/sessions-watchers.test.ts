@@ -4,10 +4,14 @@ import { join } from 'path'
 import { tmpdir } from 'os'
 import { RPC_CHANNELS } from '../../../shared/types'
 import { registerSessionsHandlers, cleanupSessionFileWatchForClient } from '@craft-agent/server-core/handlers/rpc'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import type { RpcServer, RequestContext } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
-type HandlerFn = (ctx: { clientId: string }, ...args: any[]) => Promise<any> | any
+type HandlerFn = (ctx: RequestContext, ...args: any[]) => Promise<any> | any
+
+function ctx(clientId: string, workspaceId: string | null = 'ws'): RequestContext {
+  return { clientId, workspaceId, webContentsId: null }
+}
 
 function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -97,8 +101,8 @@ describe('sessions file watchers', () => {
     expect(watch).toBeTruthy()
     expect(unwatch).toBeTruthy()
 
-    await watch!({ clientId: 'client-a' }, 'session-a')
-    await watch!({ clientId: 'client-b' }, 'session-b')
+    await watch!(ctx('client-a'), 'session-a')
+    await watch!(ctx('client-b'), 'session-b')
     await wait(50)
 
     writeFileSync(join(sessionDirA, 'a.txt'), `a-${Date.now()}`)
@@ -112,7 +116,7 @@ describe('sessions file watchers', () => {
     expect(bEvents.some((evt) => evt.channel === RPC_CHANNELS.sessions.FILES_CHANGED && evt.args[0] === 'session-b')).toBe(true)
 
     pushed.length = 0
-    await unwatch!({ clientId: 'client-a' })
+    await unwatch!(ctx('client-a'))
 
     writeFileSync(join(sessionDirA, 'a.txt'), `a2-${Date.now()}`)
     writeFileSync(join(sessionDirB, 'b.txt'), `b2-${Date.now()}`)
@@ -129,7 +133,7 @@ describe('sessions file watchers', () => {
     const watch = handlers.get(RPC_CHANNELS.sessions.WATCH_FILES)
     expect(watch).toBeTruthy()
 
-    await watch!({ clientId: 'client-a' }, 'session-a')
+    await watch!(ctx('client-a'), 'session-a')
     await wait(50)
 
     cleanupSessionFileWatchForClient('client-a')
@@ -204,7 +208,7 @@ describe('sessions file watchers', () => {
     const bulkUpdate = bulkHandlers.get(RPC_CHANNELS.sessions.BULK_UPDATE)
     expect(bulkUpdate).toBeTruthy()
 
-    const result = await bulkUpdate!({ clientId: 'client-a' }, {
+    const result = await bulkUpdate!(ctx('client-a'), {
       workspaceId: 'ws',
       ids: ['valid', 'missing'],
       patch: { priority: 'high' },
