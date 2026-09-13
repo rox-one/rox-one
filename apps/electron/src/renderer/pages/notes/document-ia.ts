@@ -5,6 +5,11 @@
 
 import i18n from 'i18next'
 
+function authoringLabel(key: string): string {
+  const value = i18n.t(key)
+  return typeof value === 'string' && value.length > 0 ? value : key
+}
+
 export const NOTES_RAIL_STORAGE_KEY = 'notes:rails:v1'
 export const NOTES_FOLD_STORAGE_PREFIX = 'notes:folds:'
 
@@ -500,11 +505,11 @@ export function defaultNoteCommands(input: {
   entities: Array<{ id: string; name: string; aliases?: string[] }>
 }): NoteCommandItem[] {
   const bang: NoteCommandItem[] = [
-    { id: 'bang:new-session', kind: 'bang', subject: 'action', label: i18n.t('notes.authoring.newSession'), insert: '!session' },
-    { id: 'bang:ask-agent', kind: 'bang', subject: 'action', label: i18n.t('notes.authoring.askAgent'), insert: '!agent' },
-    { id: 'bang:new-task', kind: 'bang', subject: 'action', label: i18n.t('notes.authoring.newTask'), insert: '!task' },
-    { id: 'bang:columns-2', kind: 'bang', subject: 'action', label: i18n.t('notes.authoring.columns2'), insert: '!columns2' },
-    { id: 'bang:columns-3', kind: 'bang', subject: 'action', label: i18n.t('notes.authoring.columns3'), insert: '!columns3' },
+    { id: 'bang:new-session', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.newSession'), insert: '!session' },
+    { id: 'bang:ask-agent', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.askAgent'), insert: '!agent' },
+    { id: 'bang:new-task', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.newTask'), insert: '!task' },
+    { id: 'bang:columns-2', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.columns2'), insert: '!columns2' },
+    { id: 'bang:columns-3', kind: 'bang', subject: 'action', label: authoringLabel('notes.authoring.columns3'), insert: '!columns3' },
   ]
   const at: NoteCommandItem[] = [
     ...input.sessions.map((session) => ({

@@ -29,11 +29,12 @@ function bangLabels(catalog = defaultNoteCommands({
 
 describe('document-ia bang labels are i18n', () => {
   it('resolves bang labels via existing notes.authoring keys', () => {
-    expect(source).toContain("i18n.t('notes.authoring.newSession')")
-    expect(source).toContain("i18n.t('notes.authoring.askAgent')")
-    expect(source).toContain("i18n.t('notes.authoring.newTask')")
-    expect(source).toContain("i18n.t('notes.authoring.columns2')")
-    expect(source).toContain("i18n.t('notes.authoring.columns3')")
+    expect(source).toContain("authoringLabel('notes.authoring.newSession')")
+    expect(source).toContain("authoringLabel('notes.authoring.askAgent')")
+    expect(source).toContain("authoringLabel('notes.authoring.newTask')")
+    expect(source).toContain("authoringLabel('notes.authoring.columns2')")
+    expect(source).toContain("authoringLabel('notes.authoring.columns3')")
+    expect(source).toContain('i18n.t(key)')
     expect(source).not.toContain("label: 'New session'")
     expect(source).not.toContain("label: 'Ask agent'")
     expect(source).not.toContain("label: 'Create task'")
