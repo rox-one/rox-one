@@ -14,6 +14,13 @@
  * Queue mutations are serialized so enqueue during an in-flight tick cannot
  * be overwritten. HTTP runs outside the lock; the rewrite re-reads the file
  * and merges. Dispose cancels the bootstrap timer and owned in-flight requests.
+ *
+ * Single-process invariant: one RetryScheduler owns AUTOMATIONS_RETRY_QUEUE_FILE
+ * for a workspace. Multi-worker / multi-process leases and DLQ are unsupported.
+ * Effect is the HTTP call; ack is the atomic JSONL rewrite. Outcomes stay in
+ * memory until ack succeeds so a same-process crash after effect does not
+ * re-fire. Process restart drops in-memory acks; the JSONL row remains
+ * recoverable (at-least-once across restart).
  */
 
 import { readFile, writeFile, appendFile, rename } from 'fs/promises';
@@ -57,15 +64,22 @@ export interface RetrySchedulerOptions {
   executeRequest?: RetryExecuteRequest;
   bootstrapDelayMs?: number;
   tickIntervalMs?: number;
+  /** Invoked after the HTTP effect, immediately before the JSONL ack. */
+  beforeAck?: () => Promise<void>;
 }
 
-type QueueOutcome = { kind: 'drop' } | { kind: 'keep'; entry: RetryQueueEntry };
+type HistoryInput = Parameters<typeof createWebhookHistoryEntry>[0];
+
+type QueueOutcome =
+  | { kind: 'drop'; history: HistoryInput; historyWritten: boolean }
+  | { kind: 'keep'; entry: RetryQueueEntry };
 
 export class RetryScheduler {
   private readonly workspaceRootPath: string;
   private readonly executeRequest: RetryExecuteRequest;
   private readonly bootstrapDelayMs: number;
   private readonly tickIntervalMs: number;
+  private readonly beforeAck?: () => Promise<void>;
   private timer: ReturnType<typeof setInterval> | null = null;
   private bootstrapTimer: ReturnType<typeof setTimeout> | null = null;
   private processing = false;
@@ -73,12 +87,14 @@ export class RetryScheduler {
   private generation = 0;
   private requestAbort: AbortController | null = null;
   private queueLock: Promise<void> = Promise.resolve();
+  private pendingAcks = new Map<string, QueueOutcome>();
 
   constructor(options: RetrySchedulerOptions) {
     this.workspaceRootPath = options.workspaceRootPath;
     this.executeRequest = options.executeRequest ?? executeWebhookRequest;
     this.bootstrapDelayMs = options.bootstrapDelayMs ?? BOOTSTRAP_DELAY_MS;
     this.tickIntervalMs = options.tickIntervalMs ?? TICK_INTERVAL_MS;
+    this.beforeAck = options.beforeAck;
   }
 
   start(): void {
@@ -110,6 +126,7 @@ export class RetryScheduler {
     }
     this.requestAbort?.abort();
     this.requestAbort = null;
+    this.pendingAcks.clear();
     log.debug('[RetryScheduler] Disposed');
   }
 
@@ -144,13 +161,13 @@ export class RetryScheduler {
 
     try {
       const snapshot = await this.withQueueLock(() => this.readEntries());
-      if (snapshot.length === 0) return;
+      if (snapshot.length === 0 && this.pendingAcks.size === 0) return;
       if (this.isStale(generation)) return;
 
       const now = Date.now();
-      const outcomes = new Map<string, QueueOutcome>();
 
       for (const entry of snapshot) {
+        if (this.pendingAcks.has(entry.id)) continue;
         if (entry.nextRetryAt > now) continue;
         if (this.isStale(generation)) return;
 
@@ -173,61 +190,35 @@ export class RetryScheduler {
 
         if (this.isStale(generation)) return;
 
-        if (result.success) {
-          log.debug(`[RetryScheduler] ${entry.id} succeeded on deferred attempt ${entry.deferredAttempt + 1}`);
-          await this.writeHistory(generation, {
-            matcherId: entry.matcherId,
-            ok: true,
-            method: entry.action.method,
-            url: entry.expandedUrl,
-            statusCode: result.statusCode,
-            durationMs: result.durationMs ?? 0,
-            attempts: entry.deferredAttempt + 1,
-          });
-          outcomes.set(entry.id, { kind: 'drop' });
-        } else if (entry.deferredAttempt + 1 >= MAX_DEFERRED_ATTEMPTS) {
-          log.debug(`[RetryScheduler] ${entry.id} permanently failed after ${MAX_DEFERRED_ATTEMPTS} deferred attempts`);
-          await this.writeHistory(generation, {
-            matcherId: entry.matcherId,
-            ok: false,
-            method: entry.action.method,
-            url: entry.expandedUrl,
-            statusCode: result.statusCode,
-            durationMs: result.durationMs ?? 0,
-            attempts: entry.deferredAttempt + 1,
-            error: result.error ?? 'Unknown error',
-          });
-          outcomes.set(entry.id, { kind: 'drop' });
-        } else {
-          const nextDelay = DEFERRED_DELAYS_MS[entry.deferredAttempt + 1]!;
-          outcomes.set(entry.id, {
-            kind: 'keep',
-            entry: {
-              ...entry,
-              deferredAttempt: entry.deferredAttempt + 1,
-              nextRetryAt: Date.now() + nextDelay,
-              lastError: result.error,
-            },
-          });
-          log.debug(`[RetryScheduler] ${entry.id} failed — next retry in ${nextDelay / 60_000}m`);
+        const outcome = this.outcomeFor(entry, result);
+        this.pendingAcks.set(entry.id, outcome);
+        if (outcome.kind === 'drop') {
+          outcome.historyWritten = await this.writeHistory(generation, outcome.history);
         }
       }
 
       if (this.isStale(generation)) return;
+      if (this.pendingAcks.size === 0) return;
 
       await this.withQueueLock(async () => {
+        if (this.isStale(generation)) return;
+        await this.beforeAck?.();
         if (this.isStale(generation)) return;
         const current = await this.readEntries();
         const remaining: RetryQueueEntry[] = [];
         for (const entry of current) {
-          const outcome = outcomes.get(entry.id);
+          const outcome = this.pendingAcks.get(entry.id);
           if (!outcome) {
             remaining.push(entry);
             continue;
           }
+          if (outcome.kind === 'drop' && !outcome.historyWritten) {
+            outcome.historyWritten = await this.writeHistory(generation, outcome.history);
+          }
           if (outcome.kind === 'keep') remaining.push(outcome.entry);
         }
         await this.writeEntriesAtomic(remaining);
+        this.pendingAcks.clear();
       });
     } catch (err) {
       log.debug(`[RetryScheduler] Tick error: ${err}`);
@@ -236,20 +227,69 @@ export class RetryScheduler {
     }
   }
 
+  private outcomeFor(entry: RetryQueueEntry, result: WebhookActionResult): QueueOutcome {
+    if (result.success) {
+      log.debug(`[RetryScheduler] ${entry.id} succeeded on deferred attempt ${entry.deferredAttempt + 1}`);
+      return {
+        kind: 'drop',
+        historyWritten: false,
+        history: {
+          matcherId: entry.matcherId,
+          ok: true,
+          method: entry.action.method,
+          url: entry.expandedUrl,
+          statusCode: result.statusCode,
+          durationMs: result.durationMs ?? 0,
+          attempts: entry.deferredAttempt + 1,
+        },
+      };
+    }
+    if (entry.deferredAttempt + 1 >= MAX_DEFERRED_ATTEMPTS) {
+      log.debug(`[RetryScheduler] ${entry.id} permanently failed after ${MAX_DEFERRED_ATTEMPTS} deferred attempts`);
+      return {
+        kind: 'drop',
+        historyWritten: false,
+        history: {
+          matcherId: entry.matcherId,
+          ok: false,
+          method: entry.action.method,
+          url: entry.expandedUrl,
+          statusCode: result.statusCode,
+          durationMs: result.durationMs ?? 0,
+          attempts: entry.deferredAttempt + 1,
+          error: result.error ?? 'Unknown error',
+        },
+      };
+    }
+    const nextDelay = DEFERRED_DELAYS_MS[entry.deferredAttempt + 1]!;
+    log.debug(`[RetryScheduler] ${entry.id} failed — next retry in ${nextDelay / 60_000}m`);
+    return {
+      kind: 'keep',
+      entry: {
+        ...entry,
+        deferredAttempt: entry.deferredAttempt + 1,
+        nextRetryAt: Date.now() + nextDelay,
+        lastError: result.error,
+      },
+    };
+  }
+
   private isStale(generation: number): boolean {
     return this.stopped || generation !== this.generation;
   }
 
   private async writeHistory(
     generation: number,
-    input: Parameters<typeof createWebhookHistoryEntry>[0],
-  ): Promise<void> {
-    if (this.isStale(generation)) return;
+    input: HistoryInput,
+  ): Promise<boolean> {
+    if (this.isStale(generation)) return false;
     const historyEntry = createWebhookHistoryEntry(input);
     try {
       await appendAutomationHistoryEntry(this.workspaceRootPath, historyEntry);
+      return true;
     } catch (e) {
       log.debug(`[RetryScheduler] Failed to write history: ${e}`);
+      return false;
     }
   }
 

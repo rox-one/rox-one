@@ -43,6 +43,30 @@ function okResult(): WebhookActionResult {
   return { type: 'webhook', url: 'https://example.com/hook', statusCode: 200, success: true, durationMs: 1 };
 }
 
+function failResult(): WebhookActionResult {
+  return {
+    type: 'webhook',
+    url: 'https://example.com/hook',
+    statusCode: 500,
+    success: false,
+    error: 'remote 500',
+    durationMs: 1,
+  };
+}
+
+function throwOnceBeforeAck(): { beforeAck: () => Promise<void>; crashes: () => number } {
+  let crashes = 0;
+  return {
+    crashes: () => crashes,
+    beforeAck: async () => {
+      if (crashes === 0) {
+        crashes += 1;
+        throw new Error('simulated crash after effect before ack');
+      }
+    },
+  };
+}
+
 describe('RetryScheduler', () => {
   const dirs: string[] = [];
 
@@ -219,5 +243,108 @@ describe('RetryScheduler', () => {
     expect(ids).not.toContain('due-1');
     expect(ids.length).toBe(1);
     expect(ids[0]).toMatch(/^m2-/);
+  });
+
+  // Fail-closed JSONL: effect (HTTP) then ack (atomic rewrite). Same-process pending
+  // acks prevent a duplicate fire when the rewrite crashes. Process restart loses
+  // those acks; the JSONL row is the recoverability source of truth (at-least-once).
+  // Multi-worker / multi-process ownership of one queue file is unsupported.
+
+  it('same-process crash after effect before ack does not duplicate fire and stays recoverable until ack', async () => {
+    const dir = tmp();
+    let calls = 0;
+    const { beforeAck, crashes } = throwOnceBeforeAck();
+    const executeRequest: RetryExecuteRequest = async () => {
+      calls += 1;
+      return okResult();
+    };
+    writeQueue(dir, [dueEntry('due-1')]);
+    const scheduler = new RetryScheduler({
+      workspaceRootPath: dir,
+      executeRequest,
+      beforeAck,
+      bootstrapDelayMs: 60_000,
+    });
+
+    await scheduler.tick();
+    expect(crashes()).toBe(1);
+    expect(calls).toBe(1);
+    expect(readQueue(dir).map((e) => e.id)).toEqual(['due-1']);
+
+    await scheduler.tick();
+    expect(calls).toBe(1);
+    expect(readQueue(dir)).toEqual([]);
+    const history = readFileSync(join(dir, AUTOMATIONS_HISTORY_FILE), 'utf-8');
+    expect(history).toContain('"ok":true');
+    scheduler.dispose();
+  });
+
+  it('process restart after crash keeps the JSONL job recoverable (at-least-once)', async () => {
+    const dir = tmp();
+    let callsA = 0;
+    const executeA: RetryExecuteRequest = async () => {
+      callsA += 1;
+      return okResult();
+    };
+    writeQueue(dir, [dueEntry('due-1')]);
+    const crashed = new RetryScheduler({
+      workspaceRootPath: dir,
+      executeRequest: executeA,
+      beforeAck: async () => {
+        throw new Error('simulated process crash after effect before ack');
+      },
+      bootstrapDelayMs: 60_000,
+    });
+    await crashed.tick();
+    crashed.dispose();
+    expect(callsA).toBe(1);
+    expect(readQueue(dir).map((e) => e.id)).toEqual(['due-1']);
+
+    let callsB = 0;
+    const recovered = new RetryScheduler({
+      workspaceRootPath: dir,
+      executeRequest: async () => {
+        callsB += 1;
+        return okResult();
+      },
+      bootstrapDelayMs: 60_000,
+    });
+    await recovered.tick();
+    expect(callsB).toBe(1);
+    expect(readQueue(dir)).toEqual([]);
+    recovered.dispose();
+  });
+
+  it('ack crash after a failed effect does not re-fire HTTP and persists the deferred attempt', async () => {
+    const dir = tmp();
+    let calls = 0;
+    const { beforeAck } = throwOnceBeforeAck();
+    const executeRequest: RetryExecuteRequest = async () => {
+      calls += 1;
+      return failResult();
+    };
+    writeQueue(dir, [dueEntry('due-1')]);
+    const scheduler = new RetryScheduler({
+      workspaceRootPath: dir,
+      executeRequest,
+      beforeAck,
+      bootstrapDelayMs: 60_000,
+    });
+
+    await scheduler.tick();
+    expect(calls).toBe(1);
+    const afterCrash = readQueue(dir);
+    expect(afterCrash).toHaveLength(1);
+    expect(afterCrash[0]?.id).toBe('due-1');
+    expect(afterCrash[0]?.deferredAttempt).toBe(0);
+
+    await scheduler.tick();
+    expect(calls).toBe(1);
+    const queued = readQueue(dir);
+    expect(queued).toHaveLength(1);
+    expect(queued[0]?.id).toBe('due-1');
+    expect(queued[0]?.deferredAttempt).toBe(1);
+    expect(queued[0]?.nextRetryAt).toBeGreaterThan(Date.now());
+    scheduler.dispose();
   });
 });
