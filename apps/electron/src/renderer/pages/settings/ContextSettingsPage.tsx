@@ -278,8 +278,7 @@ export default function ContextSettingsPage() {
     } finally {
       setAdding(false)
     }
-    [newDocName, openDoc, t],
-  )
+  }, [newDocName, openDoc, t])
 
   const acceptTemplate = useCallback(async () => {
     if (!currentDoc) return
