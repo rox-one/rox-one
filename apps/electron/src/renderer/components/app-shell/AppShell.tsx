@@ -84,6 +84,7 @@ import { SidebarChrome } from "./SidebarChrome"
 import { useTransportConnectionState } from "@/hooks/useTransportConnectionState"
 import { useWorkspaceTaskCount } from "@/hooks/useWorkspaceTaskCount"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
+import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { buildMiniDashboard } from "@/platform/mini-dashboard"
 import { resolvePromoSlot } from "@/platform/promo-slot"
 import { viewportBand } from "@/platform/viewport-band"
@@ -272,6 +273,7 @@ function AppShellContent({
   } = contextValue
 
   const { t } = useTranslation()
+  useShellAppearance()
 
   // Get hotkey labels from centralized action registry
   const newChatHotkey = useActionLabel('app.newChat').hotkey

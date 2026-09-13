@@ -16,7 +16,8 @@ mock.module('electron', () => ({
     quit: () => {},
     dock: { setIcon: () => {}, setBadge: () => {} },
   },
-  nativeTheme: { shouldUseDarkColors: false },
+  nativeTheme: { shouldUseDarkColors: false, shouldUseHighContrastColors: false, prefersReducedTransparency: false },
+  systemPreferences: { getUserDefault: () => false },
   nativeImage: {
     createFromPath: () => ({ isEmpty: () => true }),
     createFromDataURL: () => ({}),
