@@ -583,3 +583,65 @@ html[data-contrast="high"] :focus-visible {
 .rox-sourced:focus-within .rox-sourced-card {
   display: block;
 }
+
+/* =============================================================================
+   ZEN SHELL (ZS-02) — scoped to html[data-shell-style="zen"]
+   Does not change global window/text/React-tree transparency.
+   --shell-content is always opaque. Scenic wallpaper stays on ::before.
+============================================================================= */
+
+html[data-shell-style="zen"] {
+  --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 6%, transparent);
+  --shell-border: color-mix(in oklch, var(--foreground) 12%, transparent);
+  --shell-content: oklch(0.985 0.004 255);
+  --shell-hover: color-mix(in oklch, var(--foreground) 7%, transparent);
+  --shell-selected: color-mix(in oklch, var(--accent) 18%, transparent);
+  --shell-focus: var(--focus);
+  --shell-sash: color-mix(in oklch, var(--foreground) 22%, transparent);
+  --shell-motion-fast: 120ms;
+  --shell-motion-disclosure: 180ms;
+}
+
+html[data-shell-style="zen"].dark {
+  --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --shell-content: oklch(0.17 0.012 255);
+  --shell-hover: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --shell-selected: color-mix(in oklch, var(--accent) 22%, transparent);
+  --shell-sash: color-mix(in oklch, var(--foreground) 28%, transparent);
+}
+
+html[data-shell-style="zen"][data-shell-material="solid"] {
+  --shell-backdrop-tint: var(--surface-elevated);
+}
+
+html[data-shell-style="zen"][data-contrast="high"] {
+  --shell-backdrop-tint: var(--surface-elevated);
+  --shell-content: var(--canvas);
+  --shell-border: var(--border-strong);
+  --shell-hover: color-mix(in oklch, var(--foreground) 14%, var(--canvas));
+  --shell-selected: color-mix(in oklch, var(--accent) 28%, var(--canvas));
+  --shell-focus: var(--focus);
+  --shell-sash: var(--border-strong);
+}
+
+html[data-shell-style="zen"] [data-shell-role="chrome"] {
+  background: var(--shell-backdrop-tint);
+  border-color: var(--shell-border);
+}
+
+html[data-shell-style="zen"] [data-shell-role="content"] {
+  background: var(--shell-content);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-shell-style="zen"] [data-shell-role="chrome"] :focus-visible,
+html[data-shell-style="zen"] [data-shell-role="content"] :focus-visible {
+  outline: 2px solid var(--shell-focus);
+  outline-offset: 2px;
+}
+
+html[data-shell-style="zen"] [data-shell-role="sash"] {
+  background: var(--shell-sash);
+}
+

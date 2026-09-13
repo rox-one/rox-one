@@ -109,6 +109,7 @@ export function PanelSlot({
       <div
         onPointerDown={handlePointerDown}
         data-panel-role="content"
+        data-shell-role="content"
         data-compact={isCompact || undefined}
         className={cn(
           'h-full overflow-hidden relative @container/panel',

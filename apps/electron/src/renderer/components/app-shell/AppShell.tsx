@@ -2448,7 +2448,8 @@ function AppShellContent({
             <div
               ref={sidebarRef}
               style={{ width: sidebarWidth }}
-              className="h-full font-sans relative"
+              className="h-full font-sans relative chrome-rail"
+              data-shell-role="chrome"
               data-focus-zone="sidebar"
               tabIndex={sidebarFocused ? 0 : -1}
               onKeyDown={handleSidebarKeyDown}
@@ -2851,7 +2852,8 @@ function AppShellContent({
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState)) ? null : (
             <div
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
-              className="h-full flex flex-col min-w-0 relative z-panel"
+              className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
+              data-shell-role="chrome"
             >
             <PanelHeader
                 title={isSidebarVisible ? listTitle : undefined}
