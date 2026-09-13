@@ -8,6 +8,7 @@ import { PersonalTaskStore, type PersonalTask } from '@craft-agent/core/tasks/pe
 import type { MeetingProposal } from '@craft-agent/core/meetings'
 import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
 import { PersonalTaskPersistStore } from '../tasks/personal-persist.ts'
+import { MeetingNotePersistStore } from './note-persist.ts'
 
 export type NativeActionResult = {
   entityId: string
@@ -34,14 +35,27 @@ function remember(seen: Set<string>, proposalId: string, result: NativeActionRes
   return result
 }
 
-function replayNote(proposal: MeetingProposal, notes: NativeNotesEngine): NativeActionResult | null {
-  const note = notes.read(`meeting-${proposal.id}`)
+function meetingNoteId(proposalId: string): string {
+  return `meeting-${proposalId}`
+}
+
+function replayNote(
+  proposal: MeetingProposal,
+  notes: NativeNotesEngine,
+  notesPersist: MeetingNotePersistStore,
+): NativeActionResult | null {
+  const noteId = meetingNoteId(proposal.id)
+  const note = notes.read(noteId) ?? notesPersist.get(noteId)?.note
   if (!note) return null
   return { entityId: note.entityId, revision: note.revision, kind: 'note' }
 }
 
-function persistRevision(persist: PersonalTaskPersistStore, task: PersonalTask): string {
+function persistTaskRevision(persist: PersonalTaskPersistStore, task: PersonalTask): string {
   return String(persist.put(task).revision)
+}
+
+function persistNoteRevision(notesPersist: MeetingNotePersistStore, note: ReturnType<NativeNotesEngine['create']>): string {
+  return notesPersist.put(note).revision
 }
 
 function taskIdFromPayload(payload: Record<string, unknown>): string | null {
@@ -69,13 +83,14 @@ export function applyNativeMeetingAction(
   tasks: PersonalTaskStore,
   seenOperations: Set<string>,
   persist: PersonalTaskPersistStore,
+  notesPersist: MeetingNotePersistStore,
 ): NativeActionResult {
   const applied = appliedResults(seenOperations)
   const previous = applied.get(proposal.id)
   if (previous) return previous
   if (seenOperations.has(proposal.id)) {
     if (proposal.type === 'create_note') {
-      const replayed = replayNote(proposal, notes)
+      const replayed = replayNote(proposal, notes, notesPersist)
       if (replayed) return remember(seenOperations, proposal.id, replayed)
     }
     const existingId = taskIdFromPayload(proposal.payload)
@@ -92,13 +107,23 @@ export function applyNativeMeetingAction(
     return { entityId: '', revision: '', kind: proposal.type === 'create_note' ? 'note' : 'task' }
   }
   if (proposal.type === 'create_note') {
-    const noteId = `meeting-${proposal.id}`
+    const noteId = meetingNoteId(proposal.id)
+    const existing = notes.read(noteId) ?? notesPersist.get(noteId)?.note
+    if (existing) {
+      persistNoteRevision(notesPersist, existing)
+      return remember(seenOperations, proposal.id, {
+        entityId: existing.entityId,
+        revision: existing.revision,
+        kind: 'note',
+      })
+    }
     const title = String(proposal.payload.title ?? 'Meeting note')
     const body = String(proposal.payload.body ?? '')
     const note = notes.create(noteId, `# ${title}\n\n${body}`)
+    const revision = persistNoteRevision(notesPersist, note)
     return remember(seenOperations, proposal.id, {
       entityId: note.entityId,
-      revision: note.revision,
+      revision,
       kind: 'note',
     })
   }
@@ -113,7 +138,7 @@ export function applyNativeMeetingAction(
     const updated = tasks.get(existingTaskId)
       ? tasks.update(existingTaskId, { title: nextTitle, dueAt: nextDue })
       : { ...current, title: nextTitle, dueAt: nextDue }
-    const revision = persistRevision(persist, updated)
+    const revision = persistTaskRevision(persist, updated)
     return remember(seenOperations, proposal.id, {
       entityId: `task:${updated.id}`,
       revision,
@@ -124,7 +149,7 @@ export function applyNativeMeetingAction(
     title: String(proposal.payload.title ?? 'Meeting task'),
     dueAt: typeof proposal.payload.dueAt === 'number' ? proposal.payload.dueAt : undefined,
   })
-  const revision = persistRevision(persist, task)
+  const revision = persistTaskRevision(persist, task)
   return remember(seenOperations, proposal.id, {
     entityId: `task:${task.id}`,
     revision,
@@ -137,6 +162,7 @@ export function readbackNative(
   notes: NativeNotesEngine,
   _tasks: PersonalTaskStore,
   persist: PersonalTaskPersistStore,
+  notesPersist: MeetingNotePersistStore,
 ): { entityId: string; revision: string } | null {
   let parsed: ReturnType<typeof parseRox2EntityId>
   try {
@@ -145,7 +171,7 @@ export function readbackNative(
     return null
   }
   if (parsed.kind === 'note') {
-    const note = notes.read(parsed.id)
+    const note = notes.read(parsed.id) ?? notesPersist.get(parsed.id)?.note
     if (!note) return null
     return { entityId: note.entityId, revision: note.revision }
   }
@@ -156,10 +182,13 @@ export function readbackNative(
 }
 
 export function createNativeActionHarness(rootDir: string) {
+  const persist = new PersonalTaskPersistStore(rootDir)
+  const notesPersist = new MeetingNotePersistStore(rootDir)
   return {
-    notes: createNativeNotesEngine(),
+    notes: createNativeNotesEngine(notesPersist.list()),
     tasks: new PersonalTaskStore(),
-    persist: new PersonalTaskPersistStore(rootDir),
+    persist,
+    notesPersist,
     seen: new Set<string>(),
   }
 }
@@ -179,6 +208,7 @@ export function openNativePersistTarget(input: {
   notes: NativeNotesEngine
   tasks: PersonalTaskStore
   persist: PersonalTaskPersistStore
+  notesPersist: MeetingNotePersistStore
 }): OpenNativePersistTargetResult {
   if (!input.grant) return { ok: false, code: 'grant-required' }
   if (!input.persistRootDir) return { ok: false, code: 'config-dir-required' }
@@ -201,7 +231,7 @@ export function openNativePersistTarget(input: {
   if (parsed.kind !== 'note' && parsed.kind !== 'task') {
     return { ok: false, code: 'unsupported-native-kind' }
   }
-  const seen = readbackNative(input.entityId, input.notes, input.tasks, input.persist)
+  const seen = readbackNative(input.entityId, input.notes, input.tasks, input.persist, input.notesPersist)
   if (!seen || seen.entityId !== input.entityId || seen.revision !== input.revisionId) {
     return { ok: false, code: 'persist-miss' }
   }

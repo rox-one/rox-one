@@ -457,6 +457,7 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
         notes: runtime.notes,
         tasks: runtime.tasks,
         persist: runtime.persist,
+        notesPersist: runtime.notesPersist,
       })
       if (!opened.ok) return { target: null, error: { code: opened.code } }
       return {
