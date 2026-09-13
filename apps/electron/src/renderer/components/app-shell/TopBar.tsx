@@ -15,6 +15,7 @@ import { SquarePenRounded } from "../icons/SquarePenRounded"
 import { TopBarButton } from "../ui/TopBarButton"
 import { cn } from "@/lib/utils"
 import { isMac, isWebUI } from "@/lib/platform"
+import { zenTopBarSafeLeftPx } from "./zen-topbar-safe-area"
 import { useActionLabel } from "@/actions"
 import {
   DropdownMenu,
@@ -194,8 +195,37 @@ export function TopBar({
   // Stoplight padding clears macOS traffic-light controls, which only exist
   // in the Electron desktop window. The webui runs in a regular browser tab
   // and has no traffic lights regardless of host OS — collapse to a normal
-  // 12px inset so the logo sits at the edge.
-  const menuLeftPadding = isMac && !isWebUI ? 82 : 8
+  // 8px inset so the logo sits at the edge. Zoom 100/125/150 and fullscreen
+  // are resolved separately so one magic padding cannot cover every case.
+  const [zoomPercent, setZoomPercent] = useState(100)
+  const [isFullScreen, setIsFullScreen] = useState(false)
+  useEffect(() => {
+    void window.electronAPI?.getDefaultZoomLevel?.().then((level) => {
+      if (typeof level === 'number' && Number.isFinite(level)) setZoomPercent(level)
+    })
+  }, [])
+  useEffect(() => {
+    const sync = () => {
+      const displayFull = window.matchMedia?.('(display-mode: fullscreen)').matches === true
+      setIsFullScreen(displayFull || document.fullscreenElement != null)
+    }
+    sync()
+    const media = window.matchMedia?.('(display-mode: fullscreen)')
+    media?.addEventListener?.('change', sync)
+    document.addEventListener('fullscreenchange', sync)
+    window.addEventListener('resize', sync)
+    return () => {
+      media?.removeEventListener?.('change', sync)
+      document.removeEventListener('fullscreenchange', sync)
+      window.removeEventListener('resize', sync)
+    }
+  }, [])
+  const menuLeftPadding = zenTopBarSafeLeftPx({
+    isMac,
+    isWebUI,
+    zoomPercent,
+    isFullScreen,
+  })
 
   return (
     <div
