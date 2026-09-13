@@ -572,7 +572,7 @@ export function SkillsListPanel({
       </div>
     )}
 
-    {/* OMP skills — read-only group with export-to-craft action */}
+    {/* Runtime skills — read-only group with export action */}
     {ompSkills.length > 0 && (
       <div className="mt-2 border-t border-foreground/5 pt-1.5" data-list-role="omp-skills">
         <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">

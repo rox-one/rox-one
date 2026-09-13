@@ -29,7 +29,6 @@ describe('Rox terminology catalog', () => {
 
 describe('terminology linter', () => {
   it('does not flag allowlisted compatibility locale keys', () => {
-    expect(localeValueViolations('skillsList.ompBadge', 'OMP')).toEqual([])
     expect(localeValueViolations('collection.filter.agentFamily.omp', 'OMP')).toEqual([])
     expect(localeValueViolations('collection.filter.agentFamily.hermes', 'Hermes')).toEqual([])
     expect(localeValueViolations('onboarding.reauth.loginAgain', 'Craft Agents')).toEqual([])
@@ -38,6 +37,12 @@ describe('terminology linter', () => {
     expect(localeValueViolations('extensions.registries.provider.community-hermes', 'Hermes')).toEqual([])
     expect(localeValueViolations('collection.filter.agentFamily.hermes', 'Hermes')).toEqual([])
     expect(localeValueViolations('collection.filter.agentFamily.omp', 'OMP / Rox')).toEqual([])
+  })
+
+  it('flags OMP in skills and onboarding credential copy', () => {
+    expect(localeValueViolations('skillsList.ompBadge', 'OMP')).toContain('OMP')
+    expect(localeValueViolations('skillsList.ompSection', 'OMP Skills')).toContain('OMP')
+    expect(localeValueViolations('onboarding.ompCredential.description', 'The OMP runtime needs a key')).toContain('OMP')
   })
 
   it('flags runtime names in normal-UI locale values', () => {

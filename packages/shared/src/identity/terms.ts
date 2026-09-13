@@ -35,9 +35,8 @@ export interface TerminologyAllowlistEntry {
 export const TERMINOLOGY_KEY_ALLOWLIST: readonly TerminologyAllowlistEntry[] = [
   { match: 'branding.migration.', kind: 'filesystem' },
   { match: 'collection.filter.agentFamily.', kind: 'technical-detail' },
-  { match: 'onboarding.ompCredential.', kind: 'technical-detail' },
   { match: 'onboarding.reauth.', kind: 'legacy-dead' },
-  { match: 'skillsList.omp', kind: 'technical-detail' },
+  { match: 'extensions.registries.provider.', kind: 'technical-detail' },
   { match: 'extensions.runtime.', kind: 'technical-detail' },
   { match: 'extensions.registries.provider.', kind: 'technical-detail' },
   { match: 'collection.filter.agentFamily.', kind: 'technical-detail' },
