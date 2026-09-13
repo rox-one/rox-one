@@ -2295,6 +2295,12 @@ export interface TasksNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface MeetingsNavigationState {
+  navigator: 'meetings'
+  details: { type: 'meeting'; meetingId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface ConnectionsNavigationState {
   navigator: 'connections'
   details: null
@@ -2383,6 +2389,7 @@ export type NavigationState =
   | BrowserNavigationState
   | MemoryNavigationState
   | TasksNavigationState
+  | MeetingsNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
   | ExtensionNavigationState
@@ -2433,6 +2440,10 @@ export const isMemoryNavigation = (
 export const isTasksNavigation = (
   state: NavigationState
 ): state is TasksNavigationState => state.navigator === 'tasks'
+
+export const isMeetingsNavigation = (
+  state: NavigationState
+): state is MeetingsNavigationState => state.navigator === 'meetings'
 
 export const isConnectionsNavigation = (
   state: NavigationState
@@ -2520,6 +2531,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'tasks') {
     return state.details?.type === 'task' ? `tasks/task/${encodeURIComponent(state.details.taskId)}` : 'tasks'
+  }
+  if (state.navigator === 'meetings') {
+    return state.details?.type === 'meeting' ? `meetings/meeting/${encodeURIComponent(state.details.meetingId)}` : 'meetings'
   }
   if (state.navigator === 'connections') {
     return 'connections'
@@ -2728,6 +2742,12 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+  if (key === 'meetings') return { navigator: 'meetings', details: null }
+  if (key.startsWith('meetings/meeting/')) {
+    const meetingId = decodeURIComponent(key.slice('meetings/meeting/'.length))
+    if (meetingId) return { navigator: 'meetings', details: { type: 'meeting', meetingId } }
+    return { navigator: 'meetings', details: null }
+  }
   if (key === 'tasks') return { navigator: 'tasks', details: null }
   if (key.startsWith('tasks/task/')) {
     const taskId = decodeURIComponent(key.slice('tasks/task/'.length))

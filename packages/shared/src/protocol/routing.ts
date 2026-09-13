@@ -310,6 +310,12 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.marketplace.PROGRESS,
   RPC_CHANNELS.marketplace.CHANGED,
 
+  RPC_CHANNELS.meetings.LIST,
+  RPC_CHANNELS.meetings.GET,
+  RPC_CHANNELS.meetings.SEARCH,
+  RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
+  RPC_CHANNELS.meetings.REJECT_PROPOSAL,
+
   // extensions — Extension Center catalog/state (local config dir + projections; same host as marketplace)
   RPC_CHANNELS.extensions.LIST_CATALOG,
   RPC_CHANNELS.extensions.LIST_INSTALLED,

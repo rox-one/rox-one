@@ -145,6 +145,7 @@ import {
   isSkillsNavigation,
   isMemoryNavigation,
   isTasksNavigation,
+  isMeetingsNavigation,
   isHomeNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
@@ -1746,6 +1747,10 @@ function AppShellContent({
     navigate(routes.view.tasks())
   }, [])
 
+  const handleMeetingsClick = useCallback(() => {
+    navigate(routes.view.meetings())
+  }, [])
+
   // Handler for workspace-local Notes.
   const handleNotesClick = useCallback(() => {
     navigate(routes.view.notes())
@@ -2108,6 +2113,7 @@ function AppShellContent({
     result.push({ id: 'nav:pages', type: 'nav', action: handlePagesClick })
     result.push({ id: 'nav:memory', type: 'nav', action: handleMemoryClick })
     result.push({ id: 'nav:tasks', type: 'nav', action: handleTasksClick })
+    result.push({ id: 'nav:meetings', type: 'nav', action: handleMeetingsClick })
     result.push({ id: 'nav:sources', type: 'nav', action: handleSourcesClick })
     result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
     result.push({ id: 'nav:notes', type: 'nav', action: handleNotesClick })
@@ -2115,7 +2121,7 @@ function AppShellContent({
     result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
 
     return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleTasksClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
+  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleTasksClick, handleMeetingsClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
 
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
@@ -2246,6 +2252,10 @@ function AppShellContent({
 
     if (isTasksNavigation(navState)) {
       return t("sidebar.tasks")
+    }
+
+    if (isMeetingsNavigation(navState)) {
+      return t("sidebar.meetings")
     }
 
     if (isHomeNavigation(navState)) {
@@ -2646,6 +2656,13 @@ function AppShellContent({
                       icon: APP_NAV_DESTINATIONS_BY_ID.tasks.icon,
                       variant: isTasksNavigation(navState) ? "default" : "ghost",
                       onClick: handleTasksClick,
+                    },
+                    {
+                      id: "nav:meetings",
+                      title: t(APP_NAV_DESTINATIONS_BY_ID.meetings.labelKey),
+                      icon: APP_NAV_DESTINATIONS_BY_ID.meetings.icon,
+                      variant: isMeetingsNavigation(navState) ? "default" : "ghost",
+                      onClick: handleMeetingsClick,
                     },
                     // --- Sources ---
                     {

@@ -16,6 +16,7 @@
  */
 import {
   Brain,
+  Calendar,
   Cable,
   DatabaseZap,
   FolderKanban,
@@ -37,6 +38,7 @@ import {
   isNotesNavigation,
   isMemoryNavigation,
   isTasksNavigation,
+  isMeetingsNavigation,
   isPagesNavigation,
   isProjectsNavigation,
   isSessionsNavigation,
@@ -122,6 +124,14 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     labelKey: 'sidebar.tasks',
     route: () => routes.view.tasks(),
     isActive: isTasksNavigation,
+  },
+  {
+    id: 'meetings',
+    linkId: 'nav:meetings',
+    icon: Calendar,
+    labelKey: 'sidebar.meetings',
+    route: () => routes.view.meetings(),
+    isActive: isMeetingsNavigation,
   },
   {
     id: 'sources',
