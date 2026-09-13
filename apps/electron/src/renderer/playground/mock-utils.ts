@@ -18,6 +18,7 @@ import type {
   PlatformAccessMode,
   PlatformOwner,
 } from '../components/messaging/access/types'
+import { getDefaultEnvironmentPrefs, pendingQuestionIds } from '@craft-agent/shared/environment'
 
 // ============================================================================
 // Messaging mock state + control handle
@@ -353,6 +354,10 @@ export const mockElectronAPI = {
   }),
   applyGamificationQuest: async (payload: unknown) => {
     console.log('[Playground] applyGamificationQuest', payload)
+  },
+  getEnvironmentSetup: async () => {
+    const prefs = getDefaultEnvironmentPrefs()
+    return { prefs, pendingQuestionIds: pendingQuestionIds(prefs) }
   },
   getCloudRunsConfig: async () => ({
     enabled: true,

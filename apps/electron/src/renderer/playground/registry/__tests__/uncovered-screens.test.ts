@@ -11,9 +11,15 @@ describe('uncovered playground screens', () => {
     expect(settings).toContain("id: 'settings-security'")
     expect(settings).toContain("id: 'settings-cloud-runs'")
     expect(settings).toContain("id: 'home-quests-empty'")
-    expect(settings).toContain('quest-progress-card')
+    expect(settings).toContain("id: 'home-quests-active'")
+    expect(settings).toContain('QuestProgressCard')
     expect(onboarding).toContain("id: 'onboarding-reauth'")
     expect(onboarding).toContain('ReauthScreen')
+    expect(onboarding).toContain("id: 'onboarding-environment'")
+    expect(onboarding).toContain('EnvironmentSetupStep')
+    const chat = readFileSync(join(playground, 'registry/chat.tsx'), 'utf8')
+    expect(chat).toContain("inputMode: 'credential'")
+    expect(chat).toContain('sampleCredentialRequest')
   })
 
   it('mocks cloud-run, security, and quest IPC for those screens', () => {
@@ -23,5 +29,6 @@ describe('uncovered playground screens', () => {
     expect(mock).toContain('securityAudit')
     expect(mock).toContain("id: 'first_note'")
     expect(mock).toContain('findings: []')
+    expect(mock).toContain('getEnvironmentSetup')
   })
 })

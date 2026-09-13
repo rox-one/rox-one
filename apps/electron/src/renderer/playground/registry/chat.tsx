@@ -14,7 +14,7 @@ import { motion } from 'motion/react'
 import { ArrowUp, Paperclip, ChevronDown, Circle, Sparkles } from 'lucide-react'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import type { SessionStatus } from '@/config/session-status-config'
-import type { FileAttachment, PermissionRequest, PermissionMode } from '../../../shared/types'
+import type { CredentialRequest, FileAttachment, PermissionRequest, PermissionMode } from '../../../shared/types'
 import { cn } from '@/lib/utils'
 import { AppShellProvider } from '@/context/AppShellContext'
 import { ModalProvider } from '@/context/ModalContext'
@@ -51,6 +51,16 @@ const longPermissionRequest: PermissionRequest = {
   toolName: 'bash',
   description: 'Run shell command',
   command: 'find /Users/test/project -type f -name "*.ts" | xargs grep -l "deprecated" | head -20',
+}
+
+const sampleCredentialRequest: CredentialRequest = {
+  type: 'credential',
+  requestId: 'cred-1',
+  sessionId: 'session-1',
+  sourceSlug: 'github',
+  sourceName: 'GitHub',
+  mode: 'basic',
+  hint: 'Sign in to continue the source connection.',
 }
 
 const veryLongPermissionRequest: PermissionRequest = {
@@ -532,7 +542,7 @@ const deepNestedActivities: ActivityItem[] = [
   },
 ]
 
-type InputContainerMode = 'freeform' | 'permission' | 'admin_approval'
+type InputContainerMode = 'freeform' | 'permission' | 'admin_approval' | 'credential'
 
 interface InputContainerPlaygroundProps {
   disabled?: boolean
@@ -729,6 +739,13 @@ function InputContainerPlayground({
           impact: 'May install files in /Applications and system-managed directories.',
           command: 'brew install --cask docker',
         }),
+      }
+    }
+
+    if (inputMode === 'credential') {
+      return {
+        type: 'credential' as const,
+        data: sampleCredentialRequest,
       }
     }
 
@@ -1263,6 +1280,7 @@ export const chatComponents: ComponentEntry[] = [
             { label: 'Freeform', value: 'freeform' },
             { label: 'Permission', value: 'permission' },
             { label: 'Admin Approval', value: 'admin_approval' },
+            { label: 'Credential', value: 'credential' },
           ],
         },
         defaultValue: 'freeform',
@@ -1490,6 +1508,14 @@ export const chatComponents: ComponentEntry[] = [
         description: 'Structured admin approval request state',
         props: {
           inputMode: 'admin_approval',
+          showFollowUps: false,
+        },
+      },
+      {
+        name: 'Credential UI',
+        description: 'Composer credential prompt with i18n save/cancel and encrypted-at-rest hint',
+        props: {
+          inputMode: 'credential',
           showFollowUps: false,
         },
       },

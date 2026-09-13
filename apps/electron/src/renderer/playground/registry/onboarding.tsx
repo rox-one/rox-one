@@ -8,6 +8,7 @@ import { CompletionStep } from '@/components/onboarding/CompletionStep'
 import { GitBashWarning, type GitBashStatus } from '@/components/onboarding/GitBashWarning'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
 import { ReauthScreen } from '@/components/onboarding/ReauthScreen'
+import { EnvironmentSetupStep } from '@/components/onboarding/EnvironmentSetupStep'
 import type { OnboardingState } from '@/components/onboarding/OnboardingWizard'
 
 const createOnboardingState = (overrides: Partial<OnboardingState> = {}): OnboardingState => ({
@@ -454,6 +455,22 @@ export const onboardingComponents: ComponentEntry[] = [
         console.log('[Playground] Reauth login')
       },
       onReset: noopHandler,
+    }),
+  },
+  {
+    id: 'onboarding-environment',
+    name: 'Environment setup',
+    category: 'Onboarding',
+    description: 'Optional environment questionnaire with PremiumMenuSelect agent-rule labels',
+    component: EnvironmentSetupStep,
+    props: [],
+    variants: [],
+    layout: 'full',
+    mockData: () => ({
+      onContinue: (prefs: unknown, complete: boolean) => {
+        console.log('[Playground] Environment continue', complete, prefs)
+      },
+      onSkip: noopHandler,
     }),
   },
 ]

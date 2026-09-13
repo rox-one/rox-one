@@ -25,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import { SecuritySnake, filterSecurityFindings } from './security/SecuritySnake'
 import { runConfirmedSecurityAction } from './security/security-actions'
 import {
@@ -502,23 +503,26 @@ export default function SecuritySettingsPage() {
           <SettingsSection title={t('security.section.findings')}>
             <SettingsCard className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <label htmlFor="security-domain-filter" className="text-sm font-medium">{t('security.filter.label')}</label>
-                <select
-                  id="security-domain-filter"
-                  className="h-8 rounded-md border border-border bg-background px-2 text-sm"
-                  value={selectedDomain ?? 'all'}
-                  onChange={(event) => setSelectedDomain(event.target.value === 'all' ? null : event.target.value as SecurityDomain)}
-                >
-                  <option value="all">{t('security.filter.all')}</option>
-                  <option value="ingress">{t('security.snake.domain.ingress')}</option>
-                  <option value="sessions">{t('security.snake.domain.sessions')}</option>
-                  <option value="tools">{t('security.snake.domain.tools')}</option>
-                  <option value="secrets">{t('security.snake.domain.secrets')}</option>
-                  <option value="network">{t('security.snake.domain.network')}</option>
-                  <option value="extensions">{t('security.snake.domain.extensions')}</option>
-                  <option value="isolation">{t('security.snake.domain.isolation')}</option>
-                  <option value="other">{t('security.filter.other')}</option>
-                </select>
+                <span className="text-sm font-medium">{t('security.filter.label')}</span>
+                <PremiumMenuSelect
+                  aria-label={t('security.filter.label')}
+                  className="h-8 max-w-[200px]"
+                  items={[
+                    { id: 'all', label: t('security.filter.all') },
+                    { id: 'ingress', label: t('security.snake.domain.ingress') },
+                    { id: 'sessions', label: t('security.snake.domain.sessions') },
+                    { id: 'tools', label: t('security.snake.domain.tools') },
+                    { id: 'secrets', label: t('security.snake.domain.secrets') },
+                    { id: 'network', label: t('security.snake.domain.network') },
+                    { id: 'extensions', label: t('security.snake.domain.extensions') },
+                    { id: 'isolation', label: t('security.snake.domain.isolation') },
+                    { id: 'other', label: t('security.filter.other') },
+                  ]}
+                  selectedId={selectedDomain ?? 'all'}
+                  placeholder={t('security.filter.label')}
+                  onSelect={(item) => setSelectedDomain(item.id === 'all' ? null : item.id as SecurityDomain)}
+                  variant="compact"
+                />
                 {selectedDomain && (
                   <Button size="sm" variant="ghost" onClick={() => setSelectedDomain(null)}>
                     {t('security.action.clearFilter')}

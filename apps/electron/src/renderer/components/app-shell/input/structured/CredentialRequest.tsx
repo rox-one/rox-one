@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Key, User, Lock, Eye, EyeOff, Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import type { CredentialRequest as CredentialRequestType, CredentialResponse } from '../../../../../shared/types'
-import { validateBasicAuthCredentials, getPasswordValue, getPasswordLabel, getPasswordPlaceholder } from '@/utils/auth-validation'
+import { validateBasicAuthCredentials, getPasswordValue } from '@/utils/auth-validation'
 
 interface CredentialRequestProps {
   request: CredentialRequestType
@@ -24,6 +25,7 @@ interface CredentialRequestProps {
  * - query: API Key for query parameter auth
  */
 export function CredentialRequest({ request, onResponse, unstyled = false }: CredentialRequestProps) {
+  const { t } = useTranslation()
   const [value, setValue] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -99,11 +101,15 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
 
   // Get field labels
   const credentialLabel = request.labels?.credential ||
-    (request.mode === 'bearer' ? 'Bearer Token' : 'API Key')
-  const usernameLabel = request.labels?.username || 'Username'
-  const basePasswordLabel = request.labels?.password || 'Password'
-  const passwordLabel = getPasswordLabel(basePasswordLabel, passwordRequired)
-  const passwordPlaceholder = getPasswordPlaceholder(basePasswordLabel, passwordRequired)
+    (request.mode === 'bearer' ? t('auth.bearerToken') : t('auth.apiKey'))
+  const usernameLabel = request.labels?.username || t('auth.username')
+  const basePasswordLabel = request.labels?.password || t('auth.password')
+  const passwordLabel = passwordRequired
+    ? basePasswordLabel
+    : t('auth.fieldOptional', { field: basePasswordLabel })
+  const passwordPlaceholder = passwordRequired
+    ? t('common.enterField', { field: basePasswordLabel })
+    : t('auth.optionalLeaveBlank')
 
   return (
     <div className={cn(
@@ -160,7 +166,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                       onChange={(e) => setUsername(e.target.value)}
                       onKeyDown={handleKeyDown}
                       className="pl-9"
-                      placeholder={`Enter ${usernameLabel.toLowerCase()}`}
+                      placeholder={t('common.enterField', { field: usernameLabel })}
                       autoFocus
                     />
                   </div>
@@ -216,7 +222,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                         }))}
                         onKeyDown={handleKeyDown}
                         className="pl-9 pr-9"
-                        placeholder={`Enter ${headerName}`}
+                        placeholder={t('common.enterField', { field: headerName })}
                         autoFocus={index === 0}
                       />
                       <button
@@ -253,7 +259,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
                     onChange={(e) => setValue(e.target.value)}
                     onKeyDown={handleKeyDown}
                     className="pl-9 pr-9"
-                    placeholder={`Enter ${credentialLabel.toLowerCase()}`}
+                    placeholder={t('common.enterField', { field: credentialLabel })}
                     autoFocus
                   />
                   <button
@@ -287,7 +293,7 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
             disabled={!isValid}
           >
             <Check className="h-3.5 w-3.5" />
-            Save
+            {t('common.save')}
           </Button>
           <Button
             type="button"
@@ -297,11 +303,11 @@ export function CredentialRequest({ request, onResponse, unstyled = false }: Cre
             onClick={handleCancel}
           >
             <X className="h-3.5 w-3.5" />
-            Cancel
+            {t('common.cancel')}
           </Button>
 
           <span className="min-w-0 flex-1 basis-full text-[10px] text-muted-foreground sm:basis-auto sm:text-right">
-            Credentials are encrypted at rest
+            {t('chat.credentialsEncrypted')}
           </span>
         </div>
       </form>
