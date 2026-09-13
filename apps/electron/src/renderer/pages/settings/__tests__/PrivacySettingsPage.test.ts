@@ -34,6 +34,15 @@ describe('PrivacySettingsPage', () => {
     expect(source).not.toContain('training dataset')
   })
 
+  it('uses shared PanelHeader chrome and does not repeat export/deletion copy', () => {
+    expect(source).toContain('<PanelHeader')
+    expect(source).toContain('h-full min-h-0')
+    expect(source).not.toContain('100dvh')
+    expect(source).not.toContain('<h1 className="text-lg font-semibold">')
+    expect(source).not.toContain("label={t('settings.privacy.requestExport')}")
+    expect(source).not.toContain("label={t('settings.privacy.localKept')} description={t('settings.privacy.localKept')}")
+  })
+
   it('derives the deep link and menu/component/icon integration from the registry', () => {
     const parsed = parseCompoundRoute('settings/privacy')
     expect(parsed).toEqual({ navigator: 'settings', details: { type: 'privacy', id: 'privacy' } })
