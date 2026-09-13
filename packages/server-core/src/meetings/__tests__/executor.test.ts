@@ -39,6 +39,8 @@ describe('meeting executor (RMA-I010)', () => {
     expect(first.verification).toBe('verified')
     const dup = executeApprovedProposal({ proposal: approved(), grant, actorId: 'user', deviceId: 'dev', jobs, hooks })
     expect(dup.operationId).toBe(first.operationId)
+    expect(dup.entityRef?.revisionId).toBe('1')
+    expect(dup.entityRef?.entityId).toBe('task:p1')
     const crashBefore = executeApprovedProposal({
       proposal: { ...approved(), id: 'p2' },
       grant,

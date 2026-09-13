@@ -7,6 +7,8 @@ export type OutboxJob = {
   idempotencyKey: string
   leaseUntil?: number
   status: 'queued' | 'running' | 'unknown' | 'done'
+  entityId?: string
+  revision?: string
 }
 
 export type ExecutorHooks = {
@@ -34,6 +36,16 @@ export function executeApprovedProposal(input: {
       lifecycle: 'succeeded',
       verification: 'verified',
       operationId: existing.operationId,
+      entityRef: existing.entityId
+        ? {
+            workspaceId: input.proposal.workspaceId,
+            entityId: existing.entityId,
+            revisionId: existing.revision ?? '',
+          }
+        : undefined,
+      receipt: existing.entityId
+        ? { provider: 'native', remoteId: existing.entityId, observedRevision: existing.revision }
+        : undefined,
     }
   }
   if (input.proposal.status !== 'approved') {
@@ -96,7 +108,7 @@ export function executeApprovedProposal(input: {
     }
   }
   const seen = input.hooks.readback(applied.entityId)
-  if (!seen || seen.entityId !== applied.entityId) {
+  if (!seen || seen.entityId !== applied.entityId || seen.revision !== applied.revision) {
     return {
       schemaVersion: 2,
       mode: 'production',
@@ -111,6 +123,8 @@ export function executeApprovedProposal(input: {
     proposalId: input.proposal.id,
     idempotencyKey: input.proposal.id,
     status: 'done',
+    entityId: applied.entityId,
+    revision: applied.revision,
   })
   return {
     schemaVersion: 2,
