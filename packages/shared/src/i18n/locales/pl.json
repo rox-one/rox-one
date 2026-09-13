@@ -2409,7 +2409,7 @@
   "security.action.install": "Install",
   "security.action.openControlUi": "Open Control Ui",
   "security.action.provision": "Provision",
-  "security.action.refresh": "Refresh",
+  "security.action.refresh": "Odśwież",
   "security.action.start": "Start",
   "security.action.stop": "Stop",
   "security.assurance.auditExported": "Dziennik audytu wyeksportowany",

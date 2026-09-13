@@ -23,7 +23,12 @@ describe('Program 35 settings chrome', () => {
     expect(security).toContain('h-full min-h-0')
   })
 
-  it('keeps Security on the shared 50px PanelHeader so switching settings tabs does not jump', () => {
+  it('keeps Security on the shared 42px PanelHeader so switching settings tabs does not jump', () => {
+    const panelHeader = readFileSync(
+      join(__dirname, '../../../components/app-shell/PanelHeader.tsx'),
+      'utf8',
+    )
+    expect(panelHeader).toContain('h-[42px]')
     expect(security).toContain('<PanelHeader')
     expect(security).toContain('mask-fade-y')
     expect(security).not.toContain('<header className="flex shrink-0')
