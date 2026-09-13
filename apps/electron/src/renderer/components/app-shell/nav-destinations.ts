@@ -172,6 +172,9 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
   },
 ] as const
 
+/** ROX2-021: sessions collection + chat are native; Conation flags do not hide this rail. */
+export const SESSIONS_REQUIRES_CONATION_FLAG = false as const
+
 /** Lookup by destination id for AppShell's hand-written `links[]` entries. */
 export const APP_NAV_DESTINATIONS_BY_ID: Record<AppNavDestinationId, AppNavDestination> =
   Object.fromEntries(APP_NAV_DESTINATIONS.map((dest) => [dest.id, dest])) as Record<
