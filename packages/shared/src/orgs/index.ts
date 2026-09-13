@@ -19,6 +19,7 @@ export {
   getOrganization,
   getOrganizationMembership,
   getOrgsPath,
+  hydrateMemberIdentity,
   inviteToOrganization,
   isCurrentLocalOrganizationMember,
   listOrgMembers,

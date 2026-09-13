@@ -78,6 +78,30 @@ console.log(JSON.stringify({ id: org.id, userId: org.members[0].userId }));
     expect(store.members[0].role).toBe('owner')
   })
 
+  it('stores owner userId, username, and email on the member record', async () => {
+    const configDir = tmp()
+    const result = await runInConfigDir(
+      configDir,
+      `
+const { updatePreferences } = await import(${JSON.stringify(pathToFileURL(join(import.meta.dir, '../../config/preferences.ts')).href)});
+updatePreferences({ username: 'ada', email: 'ada@example.com', name: 'Ada' });
+const org = api.createOrganization({ name: 'Acme Team' });
+const member = org.members[0];
+if (member.username !== 'ada') throw new Error('username: ' + member.username);
+if (member.email !== 'ada@example.com') throw new Error('email: ' + member.email);
+if (!member.userId) throw new Error('missing userId');
+const listed = api.listOrganizations()[0].members[0];
+if (listed.username !== 'ada' || listed.email !== 'ada@example.com') {
+  throw new Error('list hydrate failed');
+}
+console.log('ok');
+`,
+    )
+    expect(result.stderr).toBe('')
+    expect(result.exitCode).toBe(0)
+    expect(result.stdout.trim()).toBe('ok')
+  })
+
   it('invites and accepts locally', async () => {
     const configDir = tmp()
     const result = await runInConfigDir(
@@ -96,6 +120,7 @@ const accepted = api.acceptInvite({ token: invite.token, userId: 'user_teammate_
 if (accepted.org.id !== org.id) throw new Error('org mismatch');
 if (accepted.member.role !== 'member') throw new Error('role mismatch: ' + accepted.member.role);
 if (accepted.member.userId !== 'user_teammate_test') throw new Error('userId mismatch');
+if (accepted.member.email !== 'teammate@example.com') throw new Error('email: ' + accepted.member.email);
 if (!accepted.invite.acceptedAt) throw new Error('not accepted');
 const members = api.listOrgMembers(org.id);
 if (!members.some((m) => m.role === 'owner')) throw new Error('missing owner');

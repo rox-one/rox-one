@@ -24,5 +24,6 @@ describe('AccountSettingsPage', () => {
     expect(source).not.toContain('USD')
     expect(source).toContain("routes.view.settings('accounts')")
     expect(source).toContain("routes.view.settings('privacy')")
+    expect(source).toContain("t('settings.accounts.displayNameHint')")
   })
 })

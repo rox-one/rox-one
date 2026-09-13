@@ -244,7 +244,10 @@ export default function AccountSettingsPage() {
                 </div>
               </div>
             </SettingsRow>
-            <SettingsRow label={t('settings.accounts.displayName')}>
+            <SettingsRow
+              label={t('settings.accounts.displayName')}
+              description={t('settings.accounts.displayNameHint')}
+            >
               <div className="flex items-center gap-2 min-w-[240px]">
                 <Input
                   value={displayName}
