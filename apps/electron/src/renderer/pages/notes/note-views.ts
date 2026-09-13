@@ -291,6 +291,9 @@ export function isolateCanvasForNote(
   notes: ReadonlyArray<{
     id: string
     title: string
+    tags?: string[]
+    properties?: Record<string, unknown>
+    tasks?: Array<{ checked: boolean }>
     links?: Array<{ target: string }>
     backlinks?: Array<{ noteId: string }>
   }>,

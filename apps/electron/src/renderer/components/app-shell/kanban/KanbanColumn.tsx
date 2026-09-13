@@ -10,6 +10,7 @@ import { SessionStatusMenu } from '@/components/ui/session-status-menu'
 import { TaskTile } from './TaskTile'
 import { NewTaskComposer } from './NewTaskComposer'
 import { KanbanVirtualTaskList } from './KanbanVirtualTaskList'
+import { cn } from '@/lib/utils'
 import { KANBAN_COLLAPSED_WIDTH_PX, KANBAN_COLUMN_MIN_WIDTH_PX } from './status-column'
 import type {
   KanbanColumnMeta,
@@ -146,7 +147,7 @@ export function KanbanColumn({
       : column.id
   const editable = !!onRename || !!onSetColor || !!onRemove || !!onSetPrompt
   const { setNodeRef, isOver } = useDroppable({ id: column.id })
-  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const scrollRef = React.useRef<HTMLDivElement | null>(null)
   const [scrollMetrics, setScrollMetrics] = React.useState({ scrollTop: 0, height: 0 })
   const setScrollAndDroppable = React.useCallback((node: HTMLDivElement | null) => {
     scrollRef.current = node
@@ -272,10 +273,12 @@ export function KanbanColumn({
       <div
         ref={setScrollAndDroppable}
         onScroll={updateScrollMetrics}
-        className="flex flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-2 transition-shadow"
+        className={cn(
+          'flex flex-1 flex-col gap-2 overflow-y-auto rounded-lg p-2 transition-shadow',
+          isOver && color && 'shadow-panel-focused',
+        )}
         style={{
           backgroundColor: color?.tint,
-          boxShadow: isOver && color ? `inset 0 0 0 2px ${color.solid}` : undefined,
         }}
       >
         {onCreateTask && <NewTaskComposer onCreate={onCreateTask} />}
@@ -417,9 +420,12 @@ function ProjectGroupSection({
   return (
     <div
       ref={setNodeRef}
-      className="rounded-md border border-border/40 bg-background/30"
+      className={cn(
+        'rounded-md border border-border/40 bg-background/30',
+        isOver && 'shadow-panel-focused',
+      )}
       style={{
-        boxShadow: isOver ? 'inset 0 0 0 1.5px var(--foreground)' : undefined,
+        minHeight: '48px',
         opacity: isOver ? 0.95 : 1,
       }}
     >
@@ -577,8 +583,8 @@ function ColumnHeader({
       <PopoverContent
         align="start"
         sideOffset={4}
-        className="dark w-64 space-y-3 border-border/50 bg-background/80 p-3 backdrop-blur-xl backdrop-saturate-150"
-        style={{ borderRadius: '8px', boxShadow: '0 8px 24px rgba(0, 0, 0, 0.25)' }}
+        className="dark w-64 space-y-3 border-border/50 bg-background/80 p-3 shadow-modal-small backdrop-blur-xl backdrop-saturate-150"
+        style={{ borderRadius: '8px' }}
         data-no-dnd="true"
       >
         {onRename && (

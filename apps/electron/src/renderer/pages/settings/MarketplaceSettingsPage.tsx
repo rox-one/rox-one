@@ -616,7 +616,7 @@ export default function MarketplaceSettingsPage() {
                             className="group relative text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground cursor-help inline-flex items-center gap-1"
                           >
                             {e.source.repo}@{e.source.ref.slice(0, 8)}
-                            <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-max max-w-xs rounded-md border border-border bg-popover px-2 py-1.5 text-[10px] text-popover-foreground shadow-md group-hover:block">
+                            <span className="pointer-events-none absolute bottom-full left-0 z-30 mb-1 hidden w-max max-w-xs rounded-md border border-border bg-popover px-2 py-1.5 text-[10px] text-popover-foreground shadow-modal-small group-hover:block">
                               <span className="font-mono break-all">{e.source.ref}</span>
                               {ghUrl ? (
                                 <a

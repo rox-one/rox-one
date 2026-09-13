@@ -5,6 +5,7 @@ import type {
   MessagingPlatformRuntimeInfo,
   WhatsAppUiEvent,
 } from '../../shared/types'
+import type { ZenShellSnapshot } from '../../shared/shell-appearance'
 import type { MessagingBinding } from '../atoms/messaging'
 import {
   applyDisplayedSenderApproval,
@@ -48,10 +49,10 @@ const DEFAULT_ZEN_SNAPSHOT = {
   fallbackReason: 'zen-disabled' as const,
 }
 
-let playgroundZenState = { ...DEFAULT_ZEN_SNAPSHOT }
-const playgroundZenListeners = new Set<(snapshot: typeof DEFAULT_ZEN_SNAPSHOT) => void>()
+let playgroundZenState: ZenShellSnapshot = { ...DEFAULT_ZEN_SNAPSHOT }
+const playgroundZenListeners = new Set<(snapshot: ZenShellSnapshot) => void>()
 
-function playgroundZenSnapshot() {
+function playgroundZenSnapshot(): ZenShellSnapshot {
   return {
     ...playgroundZenState,
     fallbackReason: playgroundZenState.enabled ? undefined : 'zen-disabled',
@@ -438,7 +439,7 @@ export const mockElectronAPI = {
     for (const listener of playgroundZenListeners) listener(next)
     return next
   },
-  onShellChanged: (callback: (snapshot: ReturnType<typeof playgroundZenSnapshot>) => void) => {
+  onShellChanged: (callback: (snapshot: ZenShellSnapshot) => void) => {
     playgroundZenListeners.add(callback)
     return () => { playgroundZenListeners.delete(callback) }
   },

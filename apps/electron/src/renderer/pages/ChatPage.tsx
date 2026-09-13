@@ -710,7 +710,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             <SessionWorkflowEditor
               sessionId={sessionId}
               messages={workbenchMessages}
-              loading={sessionMindMapLoading}
               relatedBranches={relatedBranches}
               onFork={handleWorkbenchFork}
               onRewrite={handleWorkbenchRewrite}

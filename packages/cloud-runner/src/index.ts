@@ -25,6 +25,8 @@ export type {
   RunState,
   RunStatus,
 } from './types.ts';
+export { CloudflareComputerProvider } from './cloudflare-provider.ts';
+export type { CloudflareProviderOptions } from './cloudflare-provider.ts';
 export { LocalSubprocessProvider } from './local-provider.ts';
 export { NativeRunProvider } from './native-provider.ts';
 export type { NativeRunProviderOptions, NativeRunRpc } from './native-provider.ts';

@@ -33,6 +33,7 @@ import {
   useNotesRailLayout,
 } from './notes/NotesDocumentChrome'
 import { NotesViewHost } from './notes/NotesViewHost'
+import { convertNote, dailyNoteDestination } from './notes/note-views'
 import {
   applyPersistentFolds,
   defaultNoteCommands,

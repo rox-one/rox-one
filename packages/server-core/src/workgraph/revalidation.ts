@@ -152,7 +152,7 @@ export async function convertCopyToReferenceAndRevalidate(
       updatedAt: 0,
     })
   }
-  const consumers = await revalidateAffected(input)
+  const { consumers } = await revalidateAffected(input)
   return { storageMode: 'reference', consumers }
 }
 

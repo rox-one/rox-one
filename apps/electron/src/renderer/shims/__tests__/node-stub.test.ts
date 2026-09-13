@@ -9,5 +9,6 @@ describe('renderer node builtin stub', () => {
     expect(stub).toContain('export const copyFileSync')
     expect(stub).toContain('export const cpSync')
     expect(stub).toContain('export const cp =')
+    expect(stub).toContain('export class X509Certificate')
   })
 })

@@ -9,6 +9,7 @@ import { RoxConnectStep, type RoxConnectCodes } from "./RoxConnectStep"
 import { GitBashWarning, type GitBashStatus } from "./GitBashWarning"
 import { OmpCredentialStep, type OmpCredentialSubmitData } from "./OmpCredentialStep"
 import type { ApiKeySubmitData, CustomEndpointModelInput } from "../apisetup"
+import type { CustomEndpointApi } from '@config/llm-connections'
 import { EnvironmentSetupStep } from "./EnvironmentSetupStep"
 import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 

@@ -13,7 +13,7 @@ import {
 } from '@craft-agent/shared/sessions/collection'
 import { cn } from '@/lib/utils'
 import type { SessionMeta } from '@/atoms/sessions'
-import type { SessionStatusConfig } from '@/config/session-status-config'
+import type { SessionStatus } from '@/config/session-status-config'
 import { ActionRegistryProvider } from '@/actions/registry'
 import { CollectionDisplayPopover } from '@/components/app-shell/collection/CollectionDisplayPopover'
 import { CollectionGroupByMenu } from '@/components/app-shell/collection/CollectionGroupByMenu'
@@ -22,7 +22,7 @@ import { SessionTableGroupHeader } from '@/components/app-shell/session-table/Se
 import { SessionTablePropertyHeader, SessionTableRow } from '@/components/app-shell/session-table/SessionTableRow'
 import type { ComponentEntry } from './types'
 
-const STATUSES: SessionStatusConfig[] = [
+const STATUSES: SessionStatus[] = [
   {
     id: 'todo',
     label: 'Todo',

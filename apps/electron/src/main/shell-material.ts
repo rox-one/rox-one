@@ -150,8 +150,11 @@ export function attachZenWindowPolicy(window: BrowserWindow): void {
     if (window.isDestroyed()) return
     dispatch(window, record, { type: 'gpu-crash' })
   }
-  window.webContents.on('gpu-crashed', onGpuCrash)
-  window.webContents.on('child-process-gone', onGpuCrash)
+  const contents = window.webContents as unknown as {
+    on(event: string, listener: () => void): void
+  }
+  contents.on('gpu-crashed', onGpuCrash)
+  contents.on('child-process-gone', onGpuCrash)
   window.on('closed', () => {
     attached.delete(window)
   })

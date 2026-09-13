@@ -1,4 +1,5 @@
 import type { SessionNodeKind } from './node-kinds'
+export type { SessionNodeKind }
 
 export type SessionDraftNode = {
   id: string

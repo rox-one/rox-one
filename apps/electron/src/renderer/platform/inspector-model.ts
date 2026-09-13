@@ -46,7 +46,9 @@ export function inspectorSectionsForMode(mode: 'knowledge' | 'session'): readonl
   return mode === 'session' ? SESSION_INSPECTOR_SECTION_IDS : KNOWLEDGE_INSPECTOR_SECTION_IDS
 }
 
-export function isSessionInspectorSection(value: InspectorSectionId): boolean {
+export function isSessionInspectorSection(
+  value: InspectorSectionId,
+): value is Extract<InspectorSectionId, 'files' | 'git' | 'browser' | 'context'> {
   return (SESSION_INSPECTOR_SECTION_IDS as readonly string[]).includes(value)
 }
 

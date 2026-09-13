@@ -110,7 +110,7 @@ export class RoxTranscriptionAdapter {
   ): Promise<NormalizedTranscript> {
     const token = await this.options.identity.bearer()
     const form = new FormData()
-    form.append('file', new Blob([audio], { type: mime }), 'audio')
+    form.append('file', new Blob([audio as BlobPart], { type: mime }), 'audio')
     form.append('model', ROCKS_T1_MODEL_ID)
     form.append('response_format', 'verbose_json')
     const granularities = wordTimestamps && this.options.capabilities.timestampGranularities.includes('word') ? ['segment', 'word'] : ['segment']

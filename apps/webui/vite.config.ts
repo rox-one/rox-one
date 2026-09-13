@@ -1,7 +1,92 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { resolve } from 'path'
+import { readFileSync } from 'fs'
+import { join, resolve } from 'path'
+
+function nodeBuiltinShimPlugin() {
+  const stub = resolve(__dirname, '../electron/src/renderer/shims/node-stub.ts')
+  const names: Record<string, true> = {
+    fs: true, 'fs/promises': true, path: true, os: true, crypto: true, child_process: true,
+    url: true, util: true, stream: true, events: true, http: true, https: true,
+    net: true, tls: true, zlib: true, buffer: true, assert: true,
+    string_decoder: true, readline: true, module: true,
+    'node:fs': true, 'node:fs/promises': true, 'node:path': true, 'node:os': true,
+    'node:crypto': true, 'node:child_process': true, 'node:url': true, 'node:util': true,
+    'node:stream': true, 'node:events': true, 'node:buffer': true, 'node:process': true,
+    'node:http': true, 'node:https': true, 'node:net': true,
+    'node:tls': true, 'node:zlib': true, 'node:assert': true,
+    'node:string_decoder': true, 'node:readline': true, 'node:module': true,
+  }
+  return {
+    name: 'node-builtin-shim',
+    enforce: 'pre' as const,
+    resolveId(id: string) {
+      const clean = id.split('?')[0] || id
+      if (Object.hasOwn(names, clean) || Object.hasOwn(names, id)) return stub
+      if (clean.startsWith('node:')) return stub
+      return null
+    },
+  }
+}
+
+function stubNpmLocksPlugin() {
+  const stub = resolve(__dirname, '../electron/src/renderer/shims/npm-locks-stub.ts')
+  return {
+    name: 'stub-npm-locks',
+    enforce: 'pre' as const,
+    resolveId(id: string) {
+      const clean = (id.split('?')[0] || id).replace(/\\/g, '/')
+      if (
+        clean === './npm-locks' ||
+        clean === '../npm-locks' ||
+        clean.endsWith('/npm-locks') ||
+        clean.endsWith('/npm-locks.ts') ||
+        clean.endsWith('/toolchain/npm-locks')
+      ) {
+        return stub
+      }
+      return null
+    },
+  }
+}
+
+/**
+ * Resolve @craft-agent/* from this checkout. A shared node_modules symlink
+ * otherwise follows workspace links into another worktree's packages.
+ */
+function worktreeCraftPackagePlugin() {
+  const packages: Array<{ name: string; dir: string }> = [
+    { name: '@craft-agent/shared', dir: 'shared' },
+    { name: '@craft-agent/ui', dir: 'ui' },
+    { name: '@craft-agent/core', dir: 'core' },
+    { name: '@craft-agent/server-core', dir: 'server-core' },
+    { name: '@craft-agent/cloud-runner', dir: 'cloud-runner' },
+  ]
+  const maps = packages.map(({ name, dir }) => {
+    const pkgRoot = resolve(__dirname, `../../packages/${dir}`)
+    const pkg = JSON.parse(readFileSync(join(pkgRoot, 'package.json'), 'utf8')) as {
+      exports?: Record<string, string>
+    }
+    return { name, pkgRoot, exports: pkg.exports ?? {} }
+  })
+
+  return {
+    name: 'worktree-craft-packages',
+    enforce: 'pre' as const,
+    resolveId(id: string) {
+      const clean = (id.split('?')[0] || id).replace(/\\/g, '/')
+      for (const entry of maps) {
+        if (clean !== entry.name && !clean.startsWith(`${entry.name}/`)) continue
+        const sub = clean === entry.name ? '.' : `.${clean.slice(entry.name.length)}`
+        const target = entry.exports[sub]
+        if (typeof target !== 'string') return null
+        return resolve(entry.pkgRoot, target)
+      }
+      return null
+    },
+  }
+}
 
 export default defineConfig({
   plugins: [
@@ -14,6 +99,9 @@ export default defineConfig({
       },
     }),
     tailwindcss(),
+    worktreeCraftPackagePlugin(),
+    stubNpmLocksPlugin(),
+    nodeBuiltinShimPlugin(),
   ],
   root: resolve(__dirname, 'src'),
   base: './',
@@ -52,21 +140,12 @@ export default defineConfig({
       '@sentry/electron': resolve(__dirname, 'src/shims/sentry-electron.ts'),
       // Node.js 'ws' library → browser uses native WebSocket
       'ws': resolve(__dirname, 'src/shims/ws.ts'),
-      // Node.js builtins → browser-safe shims (shared code imports these
-      // but the codepaths aren't reached in browser — web API adapter intercepts)
-      // Node.js builtins → browser-safe shims (shared code imports these
-      // but the codepaths aren't reached in browser — web API adapter intercepts)
-      ...Object.fromEntries([
-        'fs', 'node:fs', 'path', 'node:path', 'child_process', 'node:child_process',
-        'os', 'node:os', 'node:crypto', 'node:util', 'node:process', 'node:buffer',
-        'node:https', 'node:http', 'node:net', 'node:url', 'node:events',
-        'crypto', 'https', 'http', 'net', 'events', 'util', 'buffer', 'stream',
-        'node:stream', 'tls', 'node:tls', 'url', 'zlib', 'node:zlib',
-        'string_decoder', 'node:string_decoder', 'assert', 'node:assert',
-      ].map(m => [m, resolve(__dirname, 'src/shims/node-builtins.ts')])),
-      // fs/promises and node:fs/promises need a separate shim file to avoid path confusion
-      'fs/promises': resolve(__dirname, 'src/shims/fs-promises.ts'),
-      'node:fs/promises': resolve(__dirname, 'src/shims/fs-promises.ts'),
+      '@anthropic-ai/claude-agent-sdk': resolve(__dirname, '../electron/src/renderer/shims/claude-agent-sdk-stub.ts'),
+      'bash-parser': resolve(__dirname, '../electron/src/renderer/shims/bash-parser-stub.ts'),
+      tar: resolve(__dirname, '../electron/src/renderer/shims/tar-stub.ts'),
+      glob: resolve(__dirname, '../electron/src/renderer/shims/glob-stub.ts'),
+      [resolve(__dirname, '../../packages/shared/src/toolchain/npm-locks.ts')]:
+        resolve(__dirname, '../electron/src/renderer/shims/npm-locks-stub.ts'),
       // 'open' npm package (Node.js shell utility) — no-op in browser
       'open': resolve(__dirname, 'src/shims/open.ts'),
     },
@@ -78,7 +157,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jotai'],
-    exclude: ['@craft-agent/ui'],
+    exclude: ['@craft-agent/ui', '@craft-agent/shared', '@craft-agent/core'],
     esbuildOptions: {
       supported: { 'top-level-await': true },
       target: 'esnext',

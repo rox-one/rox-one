@@ -11,6 +11,7 @@ export interface ResizeBounds {
   rightId: string
   total: number
   sizeA: number
+  sizeB?: number
   minA: number
   maxA: number
   minB: number
@@ -154,7 +155,7 @@ export function createResizeController(handlers: ResizeControllerHandlers): Resi
     cancel() {
       if (!snapshot || ended) return
       const restoreA = snapshot.sizeA
-      const restoreB = snapshot.sizeB
+      const restoreB = snapshot.sizeB ?? snapshot.total - snapshot.sizeA
       ended = 'cancel'
       if (frame) { cancelFrame(frame); frame = 0; pending = null }
       cancelCount += 1

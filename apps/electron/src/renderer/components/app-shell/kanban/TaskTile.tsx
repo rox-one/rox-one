@@ -173,14 +173,8 @@ export function TaskTile({
         'cursor-pointer transition-colors hover:border-border focus-visible:outline-none',
         'focus-visible:ring-2 focus-visible:ring-ring/50',
         selected && 'border-foreground/60 bg-foreground/[0.045]',
+        isLive && 'shadow-panel-focused',
       )}
-      style={
-        isLive
-          ? {
-              boxShadow: `0 0 0 1px ${accent}, 0 4px 16px -4px color-mix(in srgb, ${accent} 40%, transparent)`,
-            }
-          : undefined
-      }
     >
       {showTint && color && (
         <div

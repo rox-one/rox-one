@@ -198,6 +198,7 @@ export function SurfaceTabs() {
       skills: t('surfaceTabs.skills'),
       knowledge: t('knowledge.nav.title'),
       knowledgeDiff: t('knowledge.diff.review'),
+      home: t('surfaceTabs.home'),
     },
   })
   const panelTabs = tabs.filter((tab) => tab.kind !== 'browser')
