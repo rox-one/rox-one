@@ -11,11 +11,15 @@ describe('marketplace and import native-select chrome', () => {
     expect(source).toContain("t('marketplace.sortLabel')")
     expect(source).toContain('Intl.NumberFormat(locale')
     expect(source).not.toMatch(/<select[\s\S]*marketplace.sortStars/)
+    expect(source).toContain("t('extensions.action.openBrowser')")
+    expect(source).not.toContain("defaultValue: 'Open browser'")
   })
 
   it('uses PremiumMenuSelect for the import kind filter', () => {
     expect(importPage).toContain('PremiumMenuSelect')
     expect(importPage).toContain("t('settings.import.filterKind')")
+    expect(importPage).toContain("t('settings.import.title')")
+    expect(importPage).not.toContain("defaultValue: 'Import chats'")
     expect(importPage).not.toContain('<select')
   })
 })

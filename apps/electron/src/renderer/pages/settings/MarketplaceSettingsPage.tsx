@@ -407,7 +407,7 @@ export default function MarketplaceSettingsPage() {
               data-testid="marketplace-open-browser"
               title={t('browser.newWindow')}
             >
-              {t('extensions.action.openBrowser', { defaultValue: 'Open browser' })}
+              {t('extensions.action.openBrowser')}
             </button>
             <HeaderMenu route={routes.view.settings('marketplace')} />
           </div>
