@@ -313,8 +313,15 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.meetings.LIST,
   RPC_CHANNELS.meetings.GET,
   RPC_CHANNELS.meetings.SEARCH,
+  RPC_CHANNELS.meetings.CREATE_PROPOSAL,
   RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
   RPC_CHANNELS.meetings.REJECT_PROPOSAL,
+  RPC_CHANNELS.meetings.MAIL_PREPARE,
+  RPC_CHANNELS.meetings.MAIL_SEND,
+  RPC_CHANNELS.meetings.CRM_PROPOSE,
+  RPC_CHANNELS.meetings.CALENDAR_BIND,
+  RPC_CHANNELS.meetings.ROOM_JOIN,
+  RPC_CHANNELS.meetings.MAIL_THREADS,
 
   // extensions — Extension Center catalog/state (local config dir + projections; same host as marketplace)
   RPC_CHANNELS.extensions.LIST_CATALOG,

@@ -21,6 +21,8 @@ import {
 } from 'lucide-react'
 
 import { routes } from '@/lib/navigate'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type {
   MarketplaceCatalogResult,
@@ -211,7 +213,17 @@ export default function MarketplaceSettingsPage() {
   }, [refreshCatalog])
 
   const run = useCallback(
-    async (id: string, fn: () => Promise<unknown>, successKey: string) => {
+    async (id: string, fn: () => Promise<unknown>, successKey: string, action: 'install' | 'uninstall') => {
+      const gate = settingsPageActionResult({
+        pageId: 'marketplace',
+        action,
+        source: 'native',
+        granted: true,
+      })
+      if (!isClaimableLive(gate)) {
+        setError(t('settings.rox2.grantRequired'))
+        return
+      }
       setBusy((b) => ({ ...b, [id]: 'busy' }))
       setActionSuccess(null)
       setError(null)
@@ -251,7 +263,7 @@ export default function MarketplaceSettingsPage() {
   const confirmRemove = useCallback(
     (id: string) => {
       if (!window.confirm(t('marketplace.removeConfirm'))) return
-      void run(id, () => window.electronAPI.removeMarketplaceEntry(id), 'remove')
+      void run(id, () => window.electronAPI.removeMarketplaceEntry(id), 'remove', 'uninstall')
     },
     [run, t],
   )
@@ -349,7 +361,7 @@ export default function MarketplaceSettingsPage() {
 
   if (loading) {
     return (
-      <div className="h-full flex flex-col">
+      <div className="flex h-full min-h-0 flex-col">
         <PanelHeader
           title={t('settings.marketplace.title')}
           actions={<HeaderMenu route={routes.view.settings('marketplace')} />}
@@ -373,7 +385,7 @@ export default function MarketplaceSettingsPage() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
         title={t('settings.marketplace.title')}
         actions={
@@ -690,7 +702,7 @@ export default function MarketplaceSettingsPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  void run(e.id, () => window.electronAPI.updateMarketplaceEntry(e.id), 'update')
+                                  void run(e.id, () => window.electronAPI.updateMarketplaceEntry(e.id), 'update', 'install')
                                 }
                                 disabled={isBusy}
                                 className="text-xs px-4 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1.5 disabled:opacity-40"
@@ -712,7 +724,7 @@ export default function MarketplaceSettingsPage() {
                               <button
                                 type="button"
                                 onClick={() =>
-                                  void run(e.id, () => window.electronAPI.updateMarketplaceEntry(e.id), 'update')
+                                  void run(e.id, () => window.electronAPI.updateMarketplaceEntry(e.id), 'update', 'install')
                                 }
                                 disabled={isBusy}
                                 className="text-xs px-4 py-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-1.5 disabled:opacity-40"
@@ -733,7 +745,7 @@ export default function MarketplaceSettingsPage() {
                             <button
                               type="button"
                               onClick={() =>
-                                void run(e.id, () => window.electronAPI.installMarketplaceEntry(e.id), 'install')
+                                void run(e.id, () => window.electronAPI.installMarketplaceEntry(e.id), 'install', 'install')
                               }
                               disabled={isBusy}
                               className="text-xs px-4 py-1 rounded-md bg-primary text-primary-foreground hover:opacity-90 flex items-center gap-1.5 disabled:opacity-40"

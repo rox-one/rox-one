@@ -27,6 +27,7 @@ import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
 import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
+import { skipSetupLandingStep } from '@/components/onboarding/first-result-ui'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
@@ -1104,15 +1105,16 @@ export function useOnboarding({
     setState(s => ({ ...s, errorMessage: undefined }))
   }, [])
 
-  // Skip setup — user chose "Setup later"
+  // Skip setup — user chose "Setup later". Still land on first-result;
+  // deferring cloud credentials must not skip the offline Note→Task chain.
   const handleSkipSetup = useCallback(async () => {
     try {
       await window.electronAPI.deferSetup()
     } catch (error) {
       console.error('[Onboarding] Failed to defer setup:', error)
     }
-    onComplete()
-  }, [onComplete])
+    setState(s => ({ ...s, step: skipSetupLandingStep(), completionStatus: 'complete' }))
+  }, [])
 
   const handleSaveEnvironment = useCallback(async (prefs: EnvironmentPrefs, completeQuestionnaire: boolean) => {
     try {

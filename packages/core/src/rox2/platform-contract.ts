@@ -5,8 +5,11 @@
  * adapters. It does not perform I/O. Conation Soup/DSS clients stay read-only
  * until a later card lands writes behind permission + budget gates.
  *
- * Live vs queued/simulated/fixture is explicit: callers must not treat a
- * non-live result as a completed product action (issue #315).
+ * Status is a triad, not a single overloaded run state (ROX-P0-CONTRACT-STATUS-SPLIT):
+ * executionMode × lifecycle × verification. `isClaimableLive` is live + succeeded +
+ * policy-verified. queued is not an error. live+failed is not success. Succeeded
+ * without a receipt stays unverified. Compat types can still parse `{ ok, state }`
+ * but must not claim live. Legacy `Rox2RunState` remains as a compat alias.
  */
 
 import type { SoupEntityConcreteType } from '../conation/soup/types.ts'
@@ -62,6 +65,26 @@ export const ROX2_PERMISSIONS = [
 
 export type Rox2Permission = (typeof ROX2_PERMISSIONS)[number]
 
+export const ROX2_EXECUTION_MODES = ['live', 'fixture', 'simulated'] as const
+export type Rox2ExecutionMode = (typeof ROX2_EXECUTION_MODES)[number]
+
+export const ROX2_LIFECYCLES = [
+  'queued',
+  'running',
+  'waiting_approval',
+  'succeeded',
+  'failed',
+  'cancelled',
+  'unknown',
+] as const
+export type Rox2Lifecycle = (typeof ROX2_LIFECYCLES)[number]
+
+export const ROX2_VERIFICATIONS = ['unverified', 'receipt_verified', 'readback_verified'] as const
+export type Rox2Verification = (typeof ROX2_VERIFICATIONS)[number]
+
+export type Rox2VerificationPolicy = 'receipt' | 'readback' | 'any'
+
+/** @deprecated Overload of executionMode/lifecycle/verification. Adapter maps this to the triad. */
 export const ROX2_RUN_STATES = [
   'live',
   'queued',
@@ -70,7 +93,22 @@ export const ROX2_RUN_STATES = [
   'documented',
 ] as const
 
+/** @deprecated Prefer Rox2ExecutionMode, Rox2Lifecycle, and Rox2Verification. */
 export type Rox2RunState = (typeof ROX2_RUN_STATES)[number]
+
+export type Rox2Receipt = {
+  provider?: string
+  remoteId?: string
+  requestId?: string
+  observedRevision?: string
+  verifiedAt?: string
+}
+
+export type Rox2Status = {
+  executionMode: Rox2ExecutionMode
+  lifecycle: Rox2Lifecycle
+  verification: Rox2Verification
+}
 
 export type Rox2EntitySource = 'native' | 'conation' | 'hybrid'
 
@@ -117,20 +155,43 @@ export type Rox2Context = {
   }
 }
 
-export type Rox2OkResult = {
+export type Rox2CanonicalResult = Rox2Status & {
+  entityId?: string
+  receipt?: Rox2Receipt
+  code?: string
+  message?: string
+  /** True only for live + succeeded + verified. queued/fixture/simulated/failed are not success. */
+  ok?: boolean
+  /** @deprecated Compat projection of the triad. Absent when the triad is not a legacy success. */
+  state?: Rox2RunState
+}
+
+/** @deprecated Prefer a canonical triad result. Kept so `{ ok, state: 'live' }` still type-checks. */
+export type Rox2LegacyOkResult = {
   ok: true
   state: 'live'
   entityId: string
 }
 
-export type Rox2ErrResult = {
+/** @deprecated Prefer a canonical triad result. Kept so queued/fixture/simulated objects still type-check. */
+export type Rox2LegacyErrResult = {
   ok: false
   state: Exclude<Rox2RunState, 'live'>
   code: string
   message: string
 }
 
-export type Rox2Result = Rox2OkResult | Rox2ErrResult
+export type Rox2OkResult = Rox2CanonicalResult & {
+  ok: true
+  executionMode: 'live'
+  lifecycle: 'succeeded'
+  verification: 'receipt_verified' | 'readback_verified'
+  entityId: string
+}
+
+export type Rox2ErrResult = Rox2LegacyErrResult | (Rox2CanonicalResult & { ok: false })
+
+export type Rox2Result = Rox2CanonicalResult | Rox2LegacyOkResult | Rox2LegacyErrResult
 
 const SOUP_TO_ROX2: Record<SoupEntityConcreteType, Rox2EntityKind> = {
   GraphqlSoupDocument: 'note',
@@ -188,20 +249,68 @@ export type Rox2BindingRegisterResult =
   | { status: 'ok'; ref: Rox2EntityRef }
   | { status: 'quarantine'; reason: string; existing: Rox2EntityRef }
 
+/**
+ * Binding key format (v1 writes):
+ *   encodeURIComponent(provider) + ':' + encodeURIComponent(account)
+ *     + ':' + encodeURIComponent(remoteType) + ':' + encodeURIComponent(remoteId)
+ *
+ * Exactly four slots. `:` `%` and other encodeURIComponent reserved characters
+ * inside a field cannot shift slots. Round-trip is format → parse.
+ *
+ * Reads: reject-closed unless the key has exactly four slots and each slot
+ * decodes via decodeURIComponent to a non-empty string. Ambiguous legacy keys that
+ * concatenated unencoded fields (five or more `:`-split segments, e.g.
+ * `g:ac:ct:event:1` for account `ac:ct`) are rejected — they are not migrated.
+ * Four-slot keys with only unreserved characters still decode (identity), so
+ * simple historical keys such as `google:work:event:e1` remain readable.
+ * Invalid percent-encoding is rejected. New writes always emit encoded slots.
+ *
+ * `registerExternalBinding` dual-reads the encoded key, then a distinct
+ * historical unencoded four-slot key (e.g. `google:user@x.com:event:1` vs
+ * `google:user%40x.com:event:1`). Hits persist only under the encoded key and
+ * reuse the existing entity. Five-or-more-slot keys are not dual-read.
+ */
+const BINDING_KEY_SLOT_COUNT = 4
+
+function encodeBindingSlot(value: string): string {
+  return encodeURIComponent(value)
+}
+
+function decodeBindingSlot(slot: string, key: string): string {
+  if (!slot) throw new Error(`Invalid external binding key: ${key}`)
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(slot)
+  } catch {
+    throw new Error(`Invalid external binding key: ${key}`)
+  }
+  if (!decoded) throw new Error(`Invalid external binding key: ${key}`)
+  return decoded
+}
+
 export function formatRox2ExternalBindingKey(binding: Rox2ExternalBinding): string {
   if (!binding.provider || !binding.account || !binding.remoteType || !binding.remoteId) {
     throw new Error('incomplete external binding')
   }
-  return `${binding.provider}:${binding.account}:${binding.remoteType}:${binding.remoteId}`
+  return [
+    encodeBindingSlot(binding.provider),
+    encodeBindingSlot(binding.account),
+    encodeBindingSlot(binding.remoteType),
+    encodeBindingSlot(binding.remoteId),
+  ].join(':')
 }
 
 export function parseRox2ExternalBindingKey(key: string): Rox2ExternalBinding {
   const parts = key.split(':')
-  if (parts.length < 4) throw new Error(`Invalid external binding key: ${key}`)
-  const [provider, account, remoteType, ...rest] = parts
-  const remoteId = rest.join(':')
-  if (!provider || !account || !remoteType || !remoteId) throw new Error(`Invalid external binding key: ${key}`)
-  return { provider, account, remoteType, remoteId }
+  if (parts.length !== BINDING_KEY_SLOT_COUNT) {
+    throw new Error(`Invalid external binding key: ${key}`)
+  }
+  return {
+    provider: decodeBindingSlot(parts[0] ?? '', key),
+    account: decodeBindingSlot(parts[1] ?? '', key),
+    remoteType: decodeBindingSlot(parts[2] ?? '', key),
+    remoteId: decodeBindingSlot(parts[3] ?? '', key),
+  }
 }
 
 export function entityRefFromBinding(
@@ -219,7 +328,11 @@ export function entityRefFromBinding(
   }
 }
 
-/** Re-import of the same remote key is stable. Colliding keys quarantine. */
+function rawFourSlotBindingKey(binding: Rox2ExternalBinding): string {
+  return [binding.provider, binding.account, binding.remoteType, binding.remoteId].join(':')
+}
+
+/** Re-import of the same remote key is stable. Colliding keys and workspace mismatches quarantine. */
 export function registerExternalBinding(
   index: Map<string, Rox2EntityRef>,
   workspaceId: string,
@@ -228,16 +341,30 @@ export function registerExternalBinding(
   revisionId?: string,
 ): Rox2BindingRegisterResult {
   const key = formatRox2ExternalBindingKey(binding)
+  const rawKey = rawFourSlotBindingKey(binding)
   const ref = entityRefFromBinding(workspaceId, kind, binding, revisionId)
-  const existing = index.get(key)
-  if (existing && existing.entityId !== ref.entityId) {
-    return { status: 'quarantine', reason: 'binding-collision', existing }
+  const fromEncoded = index.get(key)
+  const fromRaw =
+    fromEncoded === undefined &&
+    rawKey !== key &&
+    rawKey.split(':').length === BINDING_KEY_SLOT_COUNT
+      ? index.get(rawKey)
+      : undefined
+  const existing = fromEncoded ?? fromRaw
+  if (existing && existing.workspaceId !== workspaceId) {
+    return { status: 'quarantine', reason: 'workspace-mismatch', existing }
+  }
+  if (fromEncoded && fromEncoded.entityId !== ref.entityId) {
+    return { status: 'quarantine', reason: 'binding-collision', existing: fromEncoded }
   }
   if (existing) {
-    return {
-      status: 'ok',
-      ref: { ...existing, revisionId: revisionId ?? existing.revisionId },
+    const next: Rox2EntityRef = {
+      ...existing,
+      revisionId: revisionId ?? existing.revisionId,
     }
+    index.set(key, next)
+    if (fromRaw !== undefined) index.delete(rawKey)
+    return { status: 'ok', ref: next }
   }
   index.set(key, ref)
   return { status: 'ok', ref }
@@ -301,21 +428,152 @@ export function wouldCreateRelationCycle(
   return false
 }
 
-/** Only `live` may be presented as a completed product action. */
-export function isClaimableLive(result: Rox2Result): result is Rox2OkResult {
-  return result.ok === true && result.state === 'live'
+function isCanonicalResult(result: Rox2Result): result is Rox2CanonicalResult {
+  return 'executionMode' in result && 'lifecycle' in result && 'verification' in result
 }
 
-export function queuedResult(code: string, message: string): Rox2ErrResult {
-  return { ok: false, state: 'queued', code, message }
+function derivedOk(status: Rox2Status): boolean {
+  return (
+    status.executionMode === 'live' &&
+    status.lifecycle === 'succeeded' &&
+    status.verification !== 'unverified'
+  )
 }
 
-export function fixtureResult(code: string, message: string): Rox2ErrResult {
-  return { ok: false, state: 'fixture', code, message }
+function projectRunState(status: Rox2Status): Rox2RunState | undefined {
+  if (status.executionMode === 'fixture') return 'fixture'
+  if (status.executionMode === 'simulated') return 'simulated'
+  if (status.lifecycle === 'queued') return 'queued'
+  if (
+    status.executionMode === 'live' &&
+    status.lifecycle === 'succeeded' &&
+    status.verification !== 'unverified'
+  ) {
+    return 'live'
+  }
+  return undefined
 }
 
-export function simulatedResult(code: string, message: string): Rox2ErrResult {
-  return { ok: false, state: 'simulated', code, message }
+function legacyRunStateToStatus(state: Rox2RunState): Rox2Status {
+  switch (state) {
+    case 'live':
+      return { executionMode: 'live', lifecycle: 'succeeded', verification: 'unverified' }
+    case 'queued':
+      return { executionMode: 'live', lifecycle: 'queued', verification: 'unverified' }
+    case 'simulated':
+      return { executionMode: 'simulated', lifecycle: 'succeeded', verification: 'unverified' }
+    case 'fixture':
+      return { executionMode: 'fixture', lifecycle: 'succeeded', verification: 'unverified' }
+    case 'documented':
+      return { executionMode: 'simulated', lifecycle: 'succeeded', verification: 'unverified' }
+    default: {
+      const _exhaustive: never = state
+      return _exhaustive
+    }
+  }
+}
+
+function withStatusFields(status: Rox2Status, extra: Omit<Rox2CanonicalResult, keyof Rox2Status | 'ok' | 'state'>): Rox2CanonicalResult {
+  const state = projectRunState(status)
+  return {
+    ...status,
+    ...extra,
+    ok: derivedOk(status),
+    ...(state !== undefined ? { state } : {}),
+  }
+}
+
+function isPolicyVerified(
+  verification: Rox2Verification,
+  policy: Rox2VerificationPolicy = 'any',
+): boolean {
+  if (verification === 'unverified') return false
+  if (policy === 'receipt') return verification === 'receipt_verified'
+  if (policy === 'readback') return verification === 'readback_verified'
+  return verification === 'receipt_verified' || verification === 'readback_verified'
+}
+
+/** Map a legacy `{ ok, state }` object or a canonical triad result onto the triad. */
+export function normalizeRox2Result(result: Rox2Result): Rox2CanonicalResult {
+  if (isCanonicalResult(result)) {
+    return withStatusFields(result, {
+      entityId: result.entityId,
+      receipt: result.receipt,
+      code: result.code,
+      message: result.message,
+    })
+  }
+  if (result.ok) {
+    return withStatusFields(legacyRunStateToStatus(result.state), { entityId: result.entityId })
+  }
+  return withStatusFields(legacyRunStateToStatus(result.state), {
+    code: result.code,
+    message: result.message,
+  })
+}
+
+export function liveResult(input: {
+  entityId: string
+  lifecycle?: Rox2Lifecycle
+  verification?: Rox2Verification
+  receipt?: Rox2Receipt
+  code?: string
+  message?: string
+}): Rox2CanonicalResult {
+  const lifecycle = input.lifecycle ?? 'succeeded'
+  return withStatusFields(
+    {
+      executionMode: 'live',
+      lifecycle,
+      verification: input.verification ?? 'unverified',
+    },
+    {
+      entityId: input.entityId,
+      receipt: input.receipt,
+      code: input.code,
+      message: input.message,
+    },
+  )
+}
+
+/** live + succeeded + policy-verified. Legacy `{ ok, state: 'live' }` parses, but is not claimable. */
+export function isClaimableLive(
+  result: Rox2Result,
+  policy: Rox2VerificationPolicy = 'any',
+): result is Rox2OkResult {
+  const status = normalizeRox2Result(result)
+  return (
+    status.executionMode === 'live' &&
+    status.lifecycle === 'succeeded' &&
+    isPolicyVerified(status.verification, policy) &&
+    typeof status.entityId === 'string' &&
+    status.entityId.length > 0
+  )
+}
+
+export function isRox2Error(result: Rox2Result): boolean {
+  return normalizeRox2Result(result).lifecycle === 'failed'
+}
+
+export function queuedResult(code: string, message: string): Rox2CanonicalResult {
+  return withStatusFields(
+    { executionMode: 'live', lifecycle: 'queued', verification: 'unverified' },
+    { code, message },
+  )
+}
+
+export function fixtureResult(code: string, message: string): Rox2CanonicalResult {
+  return withStatusFields(
+    { executionMode: 'fixture', lifecycle: 'succeeded', verification: 'unverified' },
+    { code, message },
+  )
+}
+
+export function simulatedResult(code: string, message: string): Rox2CanonicalResult {
+  return withStatusFields(
+    { executionMode: 'simulated', lifecycle: 'succeeded', verification: 'unverified' },
+    { code, message },
+  )
 }
 
 export const SENSITIVE_PERMISSIONS: readonly Rox2Permission[] = [

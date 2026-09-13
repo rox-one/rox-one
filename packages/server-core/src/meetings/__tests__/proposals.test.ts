@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'bun:test'
-import { approveMeetingProposal, editMeetingProposal, payloadHash, rejectMeetingProposal, type ProposalStore } from '../proposals.ts'
+import {
+  approveMeetingProposal,
+  createMeetingProposal,
+  editMeetingProposal,
+  payloadHash,
+  rejectMeetingProposal,
+  type ProposalStore,
+} from '../proposals.ts'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
 import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
 
@@ -66,5 +73,56 @@ describe('meeting proposals (RMA-I009)', () => {
     })).toThrow(/revoked/)
     const rejectStore: ProposalStore = { items: [proposal()] }
     expect(rejectMeetingProposal(rejectStore, 'p1').status).toBe('rejected')
+  })
+
+  test('create is fail-closed without grant and idempotent by payload hash', () => {
+    const store: ProposalStore = { items: [] }
+    const payload = { title: 'прототип' }
+    expect(createMeetingProposal({
+      store,
+      actorId: 'user',
+      grant: null,
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      type: 'create_task',
+      payload,
+    })).toEqual({ ok: false, code: 'grant-required' })
+    expect(store.items).toEqual([])
+    const created = createMeetingProposal({
+      store,
+      actorId: 'user',
+      grant,
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      type: 'create_task',
+      payload,
+    })
+    expect(created.ok).toBe(true)
+    if (!created.ok) throw new Error('expected create')
+    expect(created.proposal.status).toBe('proposed')
+    expect(created.proposal.id.startsWith('prop-m1-')).toBe(true)
+    const again = createMeetingProposal({
+      store,
+      actorId: 'user',
+      grant,
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      type: 'create_task',
+      payload,
+    })
+    expect(again.ok).toBe(true)
+    if (!again.ok) throw new Error('expected idempotent create')
+    expect(again.proposal.id).toBe(created.proposal.id)
+    expect(store.items).toHaveLength(1)
+    expect(createMeetingProposal({
+      store,
+      actorId: 'user',
+      grant,
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      type: 'create_task',
+      payload: { title: 'other' },
+      id: created.proposal.id,
+    })).toEqual({ ok: false, code: 'payload-conflict' })
   })
 })

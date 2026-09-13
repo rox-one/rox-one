@@ -12,6 +12,9 @@ import {
   isAuditableRox2Event,
   isClaimableLive,
   isRevisionedEntityRef,
+  isRox2Error,
+  liveResult,
+  normalizeRox2Result,
   parseRox2EntityId,
   parseRox2ExternalBindingKey,
   parseRox2TypedRecord,
@@ -65,8 +68,152 @@ describe('ROX2 platform contract', () => {
     expect(isClaimableLive(simulatedResult('S', 'sim'))).toBe(false)
     expect(isClaimableLive(fixtureResult('F', 'fixture'))).toBe(false)
     expect(
-      isClaimableLive({ ok: true, state: 'live', entityId: 'note:1' }),
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'succeeded',
+        verification: 'receipt_verified',
+        entityId: 'note:1',
+        receipt: { requestId: 'r1' },
+      }),
     ).toBe(true)
+  })
+
+  test('live plus failed is not success', () => {
+    const failed = liveResult({
+      entityId: 'note:1',
+      lifecycle: 'failed',
+      code: 'write.failed',
+      message: 'remote rejected',
+    })
+    expect(failed.ok).toBe(false)
+    expect(failed.lifecycle).toBe('failed')
+    expect(failed.state).not.toBe('live')
+    expect(isRox2Error(failed)).toBe(true)
+    expect(isClaimableLive(failed)).toBe(false)
+  })
+
+  test('queued is not an error and is not claimable', () => {
+    const queued = queuedResult('Q', 'queued')
+    expect(queued.lifecycle).toBe('queued')
+    expect(queued.executionMode).toBe('live')
+    expect(isRox2Error(queued)).toBe(false)
+    expect(queued.ok).toBe(false)
+    expect(isClaimableLive(queued)).toBe(false)
+  })
+
+  test('fixture and queued results are non-success for ok', () => {
+    const fixture = fixtureResult('F', 'fixture')
+    const queued = queuedResult('Q', 'queued')
+    const simulated = simulatedResult('S', 'sim')
+    expect(fixture.ok).toBe(false)
+    expect(queued.ok).toBe(false)
+    expect(simulated.ok).toBe(false)
+    expect(fixture.state).toBe('fixture')
+    expect(queued.state).toBe('queued')
+    expect(isClaimableLive(fixture)).toBe(false)
+    expect(isClaimableLive(queued)).toBe(false)
+  })
+
+  test('succeeded without receipt stays unverified and is not claimable', () => {
+    const unverified = liveResult({
+      entityId: 'note:1',
+      lifecycle: 'succeeded',
+    })
+    expect(unverified.verification).toBe('unverified')
+    expect(unverified.lifecycle).toBe('succeeded')
+    expect(unverified.ok).not.toBe(true)
+    expect(unverified.state).not.toBe('live')
+    expect(isClaimableLive(unverified)).toBe(false)
+    expect(
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'succeeded',
+        verification: 'unverified',
+        entityId: 'note:1',
+      }),
+    ).toBe(false)
+  })
+
+  test('fixture and simulated are never claimable even when succeeded', () => {
+    expect(
+      isClaimableLive({
+        executionMode: 'fixture',
+        lifecycle: 'succeeded',
+        verification: 'receipt_verified',
+        entityId: 'note:1',
+        receipt: { requestId: 'fx' },
+      }),
+    ).toBe(false)
+    expect(
+      isClaimableLive({
+        executionMode: 'simulated',
+        lifecycle: 'succeeded',
+        verification: 'readback_verified',
+        entityId: 'note:1',
+        receipt: { requestId: 'sim' },
+      }),
+    ).toBe(false)
+    expect(isClaimableLive(fixtureResult('F', 'fixture'))).toBe(false)
+    expect(isClaimableLive(simulatedResult('S', 'sim'))).toBe(false)
+  })
+
+  test('live succeeded is claimable only when policy-verified', () => {
+    const receiptLive = liveResult({
+      entityId: 'note:1',
+      lifecycle: 'succeeded',
+      verification: 'receipt_verified',
+      receipt: { requestId: 'r1' },
+    })
+    expect(receiptLive.ok).toBe(true)
+    expect(receiptLive.state).toBe('live')
+    expect(isClaimableLive(receiptLive)).toBe(true)
+    expect(
+      isClaimableLive(
+        liveResult({
+          entityId: 'note:1',
+          lifecycle: 'succeeded',
+          verification: 'readback_verified',
+          receipt: { observedRevision: 'rev-2' },
+        }),
+      ),
+    ).toBe(true)
+    expect(
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'running',
+        verification: 'unverified',
+        entityId: 'note:1',
+      }),
+    ).toBe(false)
+    expect(
+      isClaimableLive({
+        executionMode: 'live',
+        lifecycle: 'waiting_approval',
+        verification: 'unverified',
+      }),
+    ).toBe(false)
+  })
+
+  test('legacy overloaded run state still type-checks and maps through the adapter', () => {
+    const legacyLive: { ok: true; state: 'live'; entityId: string } = {
+      ok: true,
+      state: 'live',
+      entityId: 'note:1',
+    }
+    const adapted = normalizeRox2Result(legacyLive)
+    expect(adapted.executionMode).toBe('live')
+    expect(adapted.lifecycle).toBe('succeeded')
+    expect(adapted.verification).toBe('unverified')
+    expect(isClaimableLive(legacyLive)).toBe(false)
+    expect(isClaimableLive(adapted)).toBe(false)
+    expect(adapted.ok).not.toBe(true)
+    expect(adapted.state).not.toBe('live')
+    expect(isRox2Error(legacyLive)).toBe(false)
+
+    const legacyQueued = { ok: false as const, state: 'queued' as const, code: 'Q', message: 'queued' }
+    expect(normalizeRox2Result(legacyQueued).lifecycle).toBe('queued')
+    expect(isRox2Error(legacyQueued)).toBe(false)
+    expect(isClaimableLive(legacyQueued)).toBe(false)
   })
 
   test('entity permission catalogs are not actor-scoped authorization', () => {
@@ -194,6 +341,146 @@ describe('ROX2 platform contract', () => {
       remoteId: 'e1',
     })
     expect(clash.status).toBe('quarantine')
+  })
+
+  test('legacy unencoded four-slot key finds the existing entity after encoded write without forking', () => {
+    const binding = {
+      provider: 'google',
+      account: 'user@x.com',
+      remoteType: 'event',
+      remoteId: '1',
+    }
+    const encoded = formatRox2ExternalBindingKey(binding)
+    const legacy = 'google:user@x.com:event:1'
+    expect(encoded).toBe('google:user%40x.com:event:1')
+    expect(legacy).not.toBe(encoded)
+    expect(parseRox2ExternalBindingKey(legacy)).toEqual(binding)
+
+    const existingRef: Rox2EntityRef = {
+      workspaceId: 'ws-1',
+      entityId: 'calendar-event:google:user@x.com:event:1',
+      revisionId: 'rev-1',
+      accountNamespace: 'user@x.com',
+    }
+    const index = new Map<string, Rox2EntityRef>([[legacy, existingRef]])
+    const again = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-2')
+
+    expect(again.status).toBe('ok')
+    if (again.status === 'ok') {
+      expect(again.ref.entityId).toBe(existingRef.entityId)
+      expect(again.ref.revisionId).toBe('rev-2')
+    }
+    expect(index.get(encoded)?.entityId).toBe(existingRef.entityId)
+    expect(index.get(encoded)?.revisionId).toBe('rev-2')
+    expect(index.has(legacy)).toBe(false)
+    expect(index.size).toBe(1)
+  })
+
+  test('legacy unencoded four-slot workspace mismatch quarantines without encoded write', () => {
+    const binding = {
+      provider: 'google',
+      account: 'user@x.com',
+      remoteType: 'event',
+      remoteId: '1',
+    }
+    const encoded = formatRox2ExternalBindingKey(binding)
+    const legacy = 'google:user@x.com:event:1'
+    const index = new Map<string, Rox2EntityRef>([
+      [legacy, { workspaceId: 'ws-1', entityId: 'calendar-event:legacy', revisionId: 'rev-1' }],
+    ])
+    const clash = registerExternalBinding(index, 'ws-2', 'calendar-event', binding, 'rev-2')
+    expect(clash.status).toBe('quarantine')
+    if (clash.status === 'quarantine') {
+      expect(clash.reason).toBe('workspace-mismatch')
+      expect(clash.existing.workspaceId).toBe('ws-1')
+      expect(clash.existing.revisionId).toBe('rev-1')
+    }
+    expect(index.has(encoded)).toBe(false)
+    expect(index.get(legacy)?.workspaceId).toBe('ws-1')
+    expect(index.get(legacy)?.revisionId).toBe('rev-1')
+  })
+
+  test('encodes binding slots so colons in account cannot shift parse', () => {
+    const binding = {
+      provider: 'g',
+      account: 'ac:ct',
+      remoteType: 'event',
+      remoteId: '1',
+    }
+    const key = formatRox2ExternalBindingKey(binding)
+    expect(key).toBe('g:ac%3Act:event:1')
+    expect(parseRox2ExternalBindingKey(key)).toEqual(binding)
+    expect(() => parseRox2ExternalBindingKey('g:ac:ct:event:1')).toThrow('Invalid external binding key')
+    expect(() => parseRox2ExternalBindingKey('google:user@x.com:event:extra:1')).toThrow(
+      'Invalid external binding key',
+    )
+    const stale: Rox2EntityRef = {
+      workspaceId: 'ws-1',
+      entityId: 'calendar-event:stale',
+      revisionId: 'rev-0',
+    }
+    const index = new Map<string, Rox2EntityRef>([['g:ac:ct:event:1', stale]])
+    const minted = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-1')
+    expect(minted.status).toBe('ok')
+    if (minted.status === 'ok') {
+      expect(minted.ref.entityId).not.toBe(stale.entityId)
+    }
+    expect(index.get('g:ac:ct:event:1')?.entityId).toBe(stale.entityId)
+    expect(index.get(key)?.entityId).not.toBe(stale.entityId)
+  })
+
+  test('round-trips colons in every binding slot', () => {
+    const binding = {
+      provider: 'p:v',
+      account: 'a:c',
+      remoteType: 't:y',
+      remoteId: 'id:x',
+    }
+    expect(parseRox2ExternalBindingKey(formatRox2ExternalBindingKey(binding))).toEqual(binding)
+  })
+
+  test('rejects invalid percent-encoding and empty slots on read', () => {
+    expect(() => parseRox2ExternalBindingKey('g:ac%ZZ:event:1')).toThrow('Invalid external binding key')
+    expect(() => parseRox2ExternalBindingKey('g::event:1')).toThrow('Invalid external binding key')
+  })
+
+  test('quarantines re-register when workspaceId differs', () => {
+    const index = new Map<string, Rox2EntityRef>()
+    const binding = {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    }
+    const first = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-1')
+    const second = registerExternalBinding(index, 'ws-2', 'calendar-event', binding, 'rev-2')
+    expect(first.status).toBe('ok')
+    expect(second.status).toBe('quarantine')
+    if (second.status === 'quarantine') {
+      expect(second.reason).toBe('workspace-mismatch')
+      expect(second.existing.workspaceId).toBe('ws-1')
+      expect(second.existing.revisionId).toBe('rev-1')
+    }
+    expect(index.get(formatRox2ExternalBindingKey(binding))?.workspaceId).toBe('ws-1')
+    expect(index.get(formatRox2ExternalBindingKey(binding))?.revisionId).toBe('rev-1')
+  })
+
+  test('writes returned revisionId into the index on same-key update', () => {
+    const index = new Map<string, Rox2EntityRef>()
+    const binding = {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    }
+    const first = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-1')
+    const again = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-2')
+    expect(first.status).toBe('ok')
+    expect(again.status).toBe('ok')
+    if (again.status === 'ok') {
+      expect(again.ref.revisionId).toBe('rev-2')
+    }
+    expect(index.get(formatRox2ExternalBindingKey(binding))?.revisionId).toBe('rev-2')
   })
 
   test('relation dictionary allows note→person and forbids task-dependency cycles', () => {

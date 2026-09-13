@@ -77,13 +77,14 @@ export class UnavailableCalendarAdapter implements CalendarAdapter {
   readonly capabilities: CapabilityGap
   constructor(
     readonly provider: CalendarProvider,
-    private readonly availableFlag = false,
+    /** Ignored. listEvents always throws, so this adapter is never available. */
+    _availableFlag = false,
   ) {
     this.capabilities = capabilityFor(provider)
   }
 
   available(): boolean {
-    return this.availableFlag
+    return false
   }
 
   async listEvents(_accountId: string, _cursor?: string): Promise<CalendarListPage> {
@@ -106,16 +107,10 @@ export function createFixtureAdapter(provider: CalendarProvider, seeds: FixtureE
 
 /**
  * Production factory. Never returns a fixture adapter.
- * Env flags are not live evidence; HTTP providers stay unavailable until a verified adapter exists.
+ * Env flags and Apple helper presence are not live evidence; stay unavailable until a verified adapter exists.
  */
 export function createProductionAdapter(provider: CalendarProvider): CalendarAdapter {
-  if (provider === 'appleReminders') {
-    return new UnavailableCalendarAdapter(
-      provider,
-      appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER)),
-    )
-  }
-  return new UnavailableCalendarAdapter(provider, false)
+  return new UnavailableCalendarAdapter(provider)
 }
 
 /** Production alias. Does not accept fixture seeds. */
@@ -137,7 +132,7 @@ export function liveCredentialsPresent(provider: CalendarProvider): boolean {
   return Boolean(process.env[LIVE_ENV[provider]])
 }
 
-/** Optional connectors are wired only with a verified production adapter. Env is not connected. */
+/** Optional connectors are wired only with a verified production adapter. Helper/env is not connected. */
 export function isCalendarConnectorWired(provider: CalendarProvider): boolean {
   const adapter = createProductionAdapter(provider)
   return adapter.available() && adapter.mode !== 'fixture'

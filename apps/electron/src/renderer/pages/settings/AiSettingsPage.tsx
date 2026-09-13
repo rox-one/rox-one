@@ -539,14 +539,14 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
       // Roll back only the changed key
       setSettings(prev => prev ? { ...prev, [key]: previousValue } : prev)
 
-      const message = error instanceof Error ? error.message : 'Unknown error'
+      const message = error instanceof Error ? error.message : t("toast.unknownError")
       const settingLabel = WORKSPACE_SETTING_LABELS[key] ?? String(key)
       console.error(`Failed to save ${String(key)}:`, error)
       toast.error(t("toast.failedToSaveSetting", { setting: settingLabel }), {
         description: message,
       })
     }
-  }, [workspace.id, onSettingsChange, settings])
+  }, [workspace.id, onSettingsChange, settings, t])
 
   const handleConnectionChange = useCallback((slug: string) => {
     // 'global' means use app default (clear workspace override)

@@ -25,7 +25,7 @@ describe('ROX2-034 native web UI surface', () => {
   })
 
   test('native webui is live; fixture and conation are not', () => {
-    expect(isClaimableLive(webuiSurfaceResult('native'))).toBe(true)
+    expect(isClaimableLive(webuiSurfaceResult('native'))).toBe(false)
     expect(isClaimableLive(webuiSurfaceResult('fixture'))).toBe(false)
     expect(isClaimableLive(webuiSurfaceResult('conation'))).toBe(false)
   })

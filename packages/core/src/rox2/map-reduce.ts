@@ -2,12 +2,14 @@
  * Map → Outcomes → Reduce (ROX-AUD-054 / #337).
  *
  * Durable per-source jobs over an immutable SelectionSnapshot. This is not
- * the simulate-only canvas runner in packages/shared/src/workflows/run.ts.
- * Live LLM gateway mapping is injected; without it, map stays fail-closed
- * except for the local excerpt adapter (native session fields only).
+ * the simulate-only canvas runner in packages/shared/src/workflows/run.ts
+ * and must not call that runner. Live LLM gateway mapping is injected; without
+ * a mapper/gateway, map stays fail-closed (queued, not live). Stale snapshot
+ * revisions become stale jobs and never map. Local excerpt mapping is an
+ * opt-in native adapter, not a default.
  */
 
-import { formatRox2EntityId, queuedResult, type Rox2Result } from './platform-contract.ts'
+import { formatRox2EntityId, liveResult, queuedResult, type Rox2Result } from './platform-contract.ts'
 
 export const MAP_REDUCE_SCHEMA_VERSION = 1
 
@@ -51,6 +53,7 @@ export type Outcome = {
 export type ReduceResult = {
   summary: string
   outcomes: Outcome[]
+  jobs: MapJob[]
   coverage: { selected: number; included: number; complete: boolean }
   errors: string[]
   lineage: { snapshotId: string; templateId: string; templateVersion: number }
@@ -123,10 +126,11 @@ export async function runMapReduce(opts: {
   snapshot: SelectionSnapshot
   sources: readonly MapSource[]
   template: PromptTemplate
-  mapper: MapMapper
+  mapper?: MapMapper
   concurrency?: number
   signal?: AbortSignal
 }): Promise<ReduceResult> {
+  const mapper = opts.mapper ?? gatewayMapper(false, localExcerptMapper)
   const byId = new Map(opts.sources.map((source) => [source.id, source]))
   const jobs: MapJob[] = []
   const outcomes: Outcome[] = []
@@ -162,7 +166,7 @@ export async function runMapReduce(opts: {
         continue
       }
       try {
-        const output = await opts.mapper(source, opts.template)
+        const output = await mapper(source, opts.template)
         job.status = 'ok'
         job.output = output
         outcomes.push({
@@ -196,6 +200,7 @@ export async function runMapReduce(opts: {
   return {
     summary: outcomes.map((outcome) => outcome.text).join('\n'),
     outcomes,
+    jobs,
     coverage: {
       selected: opts.snapshot.coverage.selected,
       included: outcomes.length,
@@ -217,9 +222,10 @@ export function mapReduceProductResult(result: ReduceResult): Rox2Result {
   if (result.outcomes.length === 0) {
     return queuedResult('map-reduce.empty', 'No verified outcomes')
   }
-  return {
-    ok: true,
-    state: 'live',
+  return liveResult({
     entityId: formatRox2EntityId('workflow', result.lineage.snapshotId),
-  }
+    lifecycle: 'succeeded',
+    verification: 'unverified',
+    message: 'Reduce completed without receipt or readback',
+  })
 }

@@ -20,6 +20,10 @@ const atoms = readFileSync(
   join(repoRoot, 'apps/electron/src/renderer/atoms/unified-shell.ts'),
   'utf8',
 )
+const settings = readFileSync(
+  join(repoRoot, 'apps/electron/src/renderer/pages/settings/ConationShellSettings.tsx'),
+  'utf8',
+)
 
 describe('SessionApply consumer stub wiring', () => {
   it('adds workbench.conation.sessionApply default false', () => {
@@ -43,5 +47,12 @@ describe('SessionApply consumer stub wiring', () => {
     expect(client).not.toContain('defaultValue: true')
     expect(atoms).toContain('featureWorkbenchConationSessionApplyAtom')
     expect(atoms).toMatch(/featureWorkbenchConationSessionApplyAtom[\s\S]*?false/)
+  })
+
+  it('settings copy does not imply receipt or readback exists', () => {
+    expect(settings).toContain('transport-accepted, not business-completed')
+    expect(settings).toContain('No receipt or readback')
+    expect(settings).not.toMatch(/receipt id|live readback|readback operator/i)
+    expect(settings).toContain('Default off')
   })
 })

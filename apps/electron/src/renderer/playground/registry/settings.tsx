@@ -1,11 +1,16 @@
 import * as React from 'react'
 import PrivacySettingsPage from '@/pages/settings/PrivacySettingsPage'
+import AccountSettingsPage from '@/pages/settings/AccountSettingsPage'
 import AppearanceSettingsPage from '@/pages/settings/AppearanceSettingsPage'
 import RuntimeSettingsPage from '@/pages/settings/RuntimeSettingsPage'
 import CloudRunsSettingsPage from '@/pages/settings/CloudRunsSettingsPage'
 import SecuritySettingsPage from '@/pages/settings/SecuritySettingsPage'
 import MarketplaceSettingsPage from '@/pages/settings/MarketplaceSettingsPage'
+import ContextSettingsPage from '@/pages/settings/ContextSettingsPage'
+import KnowledgeSettingsPage from '@/pages/settings/KnowledgeSettingsPage'
 import ImportSettingsPage from '@/pages/settings/ImportSettingsPage'
+import ExtensionsSettingsPage from '@/pages/settings/ExtensionsSettingsPage'
+import AppSettingsPage from '@/pages/settings/AppSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import type { ComponentEntry } from './types'
@@ -15,6 +20,14 @@ function SettingsScreen({ children }: { children: React.ReactNode }) {
     <PlaygroundAppShellProvider>
       <div className="h-full min-h-[520px] overflow-auto bg-background">{children}</div>
     </PlaygroundAppShellProvider>
+  )
+}
+
+function AccountPlayground() {
+  return (
+    <SettingsScreen>
+      <AccountSettingsPage />
+    </SettingsScreen>
   )
 }
 
@@ -66,6 +79,38 @@ function MarketplacePlayground() {
   )
 }
 
+function ExtensionsPlayground() {
+  return (
+    <SettingsScreen>
+      <ExtensionsSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function AppPlayground() {
+  return (
+    <SettingsScreen>
+      <AppSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function ContextPlayground() {
+  return (
+    <SettingsScreen>
+      <ContextSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function KnowledgePlayground() {
+  return (
+    <SettingsScreen>
+      <KnowledgeSettingsPage />
+    </SettingsScreen>
+  )
+}
+
 function ImportPlayground() {
   return (
     <SettingsScreen>
@@ -109,6 +154,16 @@ function QuestActivePlayground() {
 }
 
 export const settingsComponents: ComponentEntry[] = [
+  {
+    id: 'settings-account',
+    name: 'Settings · Account',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-041 native account chrome; plan is not spend',
+    component: AccountPlayground,
+    props: [],
+    layout: 'full',
+  },
   {
     id: 'settings-privacy',
     name: 'Settings · Privacy',
@@ -164,8 +219,48 @@ export const settingsComponents: ComponentEntry[] = [
     name: 'Settings · Marketplace',
     category: 'Settings',
     level: 'Screens',
-    description: 'PremiumMenu sort/tag filters and compact stats',
+    description: 'ROX2-045 native marketplace chrome; install is not spend',
     component: MarketplacePlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-context',
+    name: 'Settings · Context',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-044 native context docs chrome; no Conation iframe',
+    component: ContextPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-knowledge',
+    name: 'Settings · Knowledge',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-046 native knowledge chrome; token write is local',
+    component: KnowledgePlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-extensions',
+    name: 'Settings · Extensions',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-047 native extensions chrome; install is not spend',
+    component: ExtensionsPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-app',
+    name: 'Settings · App',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-049 native app chrome; prefs are local writes',
+    component: AppPlayground,
     props: [],
     layout: 'full',
   },
@@ -174,7 +269,7 @@ export const settingsComponents: ComponentEntry[] = [
     name: 'Settings · Import',
     category: 'Settings',
     level: 'Screens',
-    description: 'PremiumMenu kind filter and scan/persist chrome',
+    description: 'ROX2-048 native import chrome; scan is device-read, persist is local',
     component: ImportPlayground,
     props: [],
     layout: 'full',

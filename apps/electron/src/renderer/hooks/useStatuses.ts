@@ -5,6 +5,7 @@
  * Auto-refreshes when workspace changes.
  */
 
+import i18n from 'i18next'
 import { useState, useEffect, useCallback } from 'react'
 import type { StatusConfig } from '@craft-agent/shared/statuses'
 import { clearIconCache } from '@/config/session-status-config'
@@ -43,7 +44,7 @@ export function useStatuses(workspaceId: string | null): UseStatusesResult {
       setError(null)
     } catch (err) {
       console.error('[useStatuses] Failed to load statuses:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load statuses')
+      setError(err instanceof Error ? err.message : i18n.t('status.loadFailed'))
     } finally {
       setIsLoading(false)
     }

@@ -103,7 +103,7 @@ export function SessionStatusMenu({
       </div>
       <CommandPrimitive.List className={MENU_LIST_STYLE}>
         <CommandPrimitive.Empty className="py-3 text-center text-sm text-muted-foreground">
-          No status found
+          {t('status.noneFound')}
         </CommandPrimitive.Empty>
         {states.map((state) => {
           const isActive = activeState === state.id

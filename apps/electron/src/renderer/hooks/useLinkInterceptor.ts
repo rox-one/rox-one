@@ -15,6 +15,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
+import i18n from 'i18next'
 import { classifyFile, type FilePreviewType } from '@craft-agent/ui'
 import { classifyLinkPolicy } from '@craft-agent/shared/utils/url-safety'
 import { getLanguageFromPath } from '@/lib/file-utils'
@@ -164,7 +165,7 @@ export function useLinkInterceptor(options: LinkInterceptorOptions): LinkInterce
       const state = buildInitialTextState(type, path)
       setPreviewState({ ...state, content } as FilePreviewState)
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Failed to read file'
+      const errorMsg = err instanceof Error ? err.message : i18n.t('preview.failedToReadFile')
       const state = buildInitialTextState(type, path)
       setPreviewState({ ...state, content: '', error: errorMsg } as FilePreviewState)
     }

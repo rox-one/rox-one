@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import type { ComponentEntry, ComponentVariant, PropDefinition } from './registry'
 
 interface VariantsSidebarProps {
@@ -162,17 +163,13 @@ function PropControl({ definition, value, onChange }: PropControlProps) {
       )}
 
       {control.type === 'select' && (
-        <select
-          value={String(value ?? '')}
-          onChange={e => onChange(e.target.value)}
-          className="w-full px-3 py-1.5 rounded-md bg-foreground/5 border border-border text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-        >
-          {control.options.map(opt => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
+        <PremiumMenuSelect
+          className="h-8 w-full max-w-none"
+          items={control.options.map((opt) => ({ id: opt.value, label: opt.label }))}
+          placeholder={name}
+          selectedId={String(value ?? '') || null}
+          onSelect={(item) => onChange(item.id)}
+        />
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, CheckCircle, XCircle, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -6,7 +6,7 @@ import { prepareRemoteWorkspace, type RemoteServerBinding } from "./remote-works
 import { needsRemoteTlsInspect, tlsTrustFromDecision } from "./remote-tls-connect"
 import type { RemoteTlsTrust } from "../../../shared/types"
 import { Input } from "../ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
+import { PremiumMenuSelect } from "@craft-agent/ui"
 import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspacePrimaryButton, AddWorkspaceSecondaryButton } from "./primitives"
 
 const CREATE_NEW_VALUE = '__create_new__'
@@ -60,7 +60,6 @@ export function AddWorkspaceStep_ConnectRemote({
   const [tlsGate, setTlsGate] = useState<'none' | 'inspecting' | 'review' | 'rollover'>('none')
   const [pendingInspect, setPendingInspect] = useState<{ nonce: string; origin: string; spkiSha256: string } | null>(null)
   const [tlsTrust, setTlsTrust] = useState<RemoteTlsTrust | undefined>(undefined)
-  const selectPortalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     window.electronAPI.getHomeDir().then(setHomeDir)
@@ -364,32 +363,22 @@ export function AddWorkspaceStep_ConnectRemote({
           </div>
         )}
 
-        {/* Portal container for Select — must be inside the Dialog to receive pointer events */}
-        <div ref={selectPortalRef} />
-
         {/* Workspace selector — pick existing or create new (hidden in reconnect mode) */}
         {!isReconnectMode && testState === 'ok' && remoteWorkspaces.length > 0 && !isCreateNew && (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-foreground">
               {t('workspace.workspaceLabel')}
             </label>
-            <div className="bg-background shadow-minimal rounded-lg">
-              <Select
-                value={selectedValue ?? ''}
-                onValueChange={setSelectedValue}
+            <div className="bg-background shadow-minimal rounded-lg p-1">
+              <PremiumMenuSelect
+                aria-label={t('workspace.workspaceLabel')}
+                className="h-9 w-full max-w-none border-0 bg-transparent shadow-none"
                 disabled={isCreating}
-              >
-                <SelectTrigger className="border-0 bg-transparent shadow-none">
-                  <SelectValue placeholder={t("workspace.selectWorkspacePlaceholder")} />
-                </SelectTrigger>
-                <SelectContent container={selectPortalRef.current}>
-                  {remoteWorkspaces.map(ws => (
-                    <SelectItem key={ws.id} value={ws.id}>
-                      {ws.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                items={remoteWorkspaces.map((ws) => ({ id: ws.id, label: ws.name }))}
+                placeholder={t("workspace.selectWorkspacePlaceholder")}
+                selectedId={selectedValue}
+                onSelect={(item) => setSelectedValue(item.id)}
+              />
             </div>
             <button
               type="button"

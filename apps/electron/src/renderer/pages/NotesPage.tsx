@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, SquarePen, Trash2, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, SquarePen, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
@@ -7,8 +7,15 @@ import { DndContext, useDraggable, useDroppable, type DragEndEvent, PointerSenso
 import { TiptapMarkdownEditor, type TiptapEditorHandle } from '@craft-agent/ui'
 import type { FileAttachment, NoteAsset, NoteChangedPayload, NoteDocument, NoteIndexHealth, NoteRenameImpact, NoteSummary } from '../../shared/types'
 import { useAppShellContext } from '@/context/AppShellContext'
+import { RightSessionShell } from '@/components/session-workbench/RightSessionShell'
+import {
+  bindRightSessionContext,
+  describeRightSessionOpen,
+  revisionByEntityId,
+} from '@/components/session-workbench/right-session-shell'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
+import type { Rox2Context } from '@craft-agent/core/rox2'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { NotesImportButton } from '@/components/notes/NotesImportButton'
@@ -55,6 +62,7 @@ import {
 } from './notes/document-ia'
 import { selectionComposerOffset } from './notes/comment-highlights'
 import { NOTES_AI_MODEL, NOTES_AI_PROMPTS_STORAGE_KEY, parseNotesAiPrompts, resolveNotesAiInstruction } from './notes/note-ai'
+import { NOTES_SURFACE_ID, bindNativeNote } from './notes-rox2-surface'
 import {
   aliasesFromProperties,
   applyEntityMerge,
@@ -388,6 +396,7 @@ function FolderTreeItem({
   onCopyNotePath,
   onRevealNote,
 }: FolderTreeItemProps) {
+  const { t } = useTranslation()
   const isCollapsed = collapsedFolders.has(node.fullPath)
   const indent = depth * 12
 
@@ -422,16 +431,16 @@ function FolderTreeItem({
             <StyledContextMenuContent>
               <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(node.fullPath)}>
                 <FilePlus2 className="h-3.5 w-3.5" />
-                New note in folder
+                {t('notes.menu.newInFolder')}
               </StyledContextMenuItem>
               <StyledContextMenuItem onClick={() => onOpenRenameFolder(node.fullPath)}>
                 <Pencil className="h-3.5 w-3.5" />
-                Rename folder
+                {t('notes.menu.renameFolder')}
               </StyledContextMenuItem>
               <StyledContextMenuSeparator />
               <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteFolder(node.fullPath)}>
                 <Trash2 className="h-3.5 w-3.5" />
-                Delete folder
+                {t('notes.menu.deleteFolder')}
               </StyledContextMenuItem>
             </StyledContextMenuContent>
           </ContextMenu>
@@ -499,41 +508,41 @@ function FolderTreeItem({
                   <StyledContextMenuContent>
                     <StyledContextMenuItem onClick={() => onOpenNote(note.id)}>
                       <FileText className="h-3.5 w-3.5" />
-                      Open
+                      {t('common.open')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenRenameDialogForNote(note)}>
                       <Pencil className="h-3.5 w-3.5" />
-                      Rename
+                      {t('common.rename')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(noteFolder(note) || undefined)}>
                       <FilePlus2 className="h-3.5 w-3.5" />
-                      New note here
+                      {t('notes.menu.newHere')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onDuplicateNote(note)}>
                       <Copy className="h-3.5 w-3.5" />
-                      Duplicate
+                      {t('notes.menu.duplicate')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenMoveDialog(note)}>
                       <FolderInput className="h-3.5 w-3.5" />
-                      Move to folder
+                      {t('notes.menu.moveToFolder')}
                     </StyledContextMenuItem>
                     <StyledContextMenuSeparator />
                     <StyledContextMenuItem onClick={() => onCopyNoteLink(note)}>
                       <Link2 className="h-3.5 w-3.5" />
-                      Copy note link
+                      {t('notes.menu.copyLink')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onCopyNotePath(note)}>
                       <FileText className="h-3.5 w-3.5" />
-                      Copy markdown path
+                      {t('notes.menu.copyPath')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onRevealNote(note)}>
                       <ExternalLink className="h-3.5 w-3.5" />
-                      Reveal in Finder
+                      {t('notes.menu.reveal')}
                     </StyledContextMenuItem>
                     <StyledContextMenuSeparator />
                     <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteDialogForNote(note)}>
                       <Trash2 className="h-3.5 w-3.5" />
-                      Delete
+                      {t('common.delete')}
                     </StyledContextMenuItem>
                   </StyledContextMenuContent>
                 </ContextMenu>
@@ -567,9 +576,11 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const activeProjectId = activeSessionId ? sessionMetaMap.get(activeSessionId)?.projectId : undefined
   const activeProjectSlug = projects.find((p) => p.id === activeProjectId)?.slug
-  const [sideSessionId, setSideSessionId] = React.useState<string | null>(null)
+  const [rightSessionContext, setRightSessionContext] = React.useState<Rox2Context | null>(null)
   const [sideSessionPrompt, setSideSessionPrompt] = React.useState('')
   const [sideNoteChip, setSideNoteChip] = React.useState<{ title: string; path: string } | null>(null)
+  const [rightSessionFocusToken, setRightSessionFocusToken] = React.useState(0)
+  const sideSessionId = rightSessionContext?.sessionId ?? null
   const [notes, setNotes] = React.useState<NoteSummary[]>([])
   // Stable insertion order for sidebar — only updated on full refreshes, not optimistic saves
   const [sidebarOrder, setSidebarOrder] = React.useState<string[]>([])
@@ -1462,22 +1473,50 @@ h1,h2,h3{margin-top:1.5em}
     return Array.from(tags).sort((a, b) => a.localeCompare(b))
   }, [labels, sessionStatuses, t])
 
+  const openNotesRightSession = React.useCallback(async (opts: {
+    sessionName: string
+    prompt: string
+    chip: { title: string; path: string }
+  }) => {
+    if (!activeWorkspaceId || !activeNote) return
+    const entity = bindNativeNote({
+      id: activeNote.id,
+      title: activeNote.title,
+      workspaceId: activeWorkspaceId,
+      updatedAt: activeNote.updatedAt,
+    })
+    const surface = {
+      workspaceId: activeWorkspaceId,
+      surfaceId: NOTES_SURFACE_ID,
+      entityRefs: [entity.id],
+      permissionMode: 'allow-all' as const,
+      revisionByEntityId: revisionByEntityId(entity.id, activeNote.updatedAt),
+    }
+    if (describeRightSessionOpen(rightSessionContext, surface) === 'reuse') {
+      setRightSessionFocusToken((n) => n + 1)
+      return
+    }
+    const session = await onCreateSession(activeWorkspaceId, { name: opts.sessionName, model: NOTES_AI_MODEL })
+    const ctx = bindRightSessionContext({ ...surface, sessionId: session.id })
+    // Prefill only — do NOT auto-send. Keep note open; open side session panel.
+    onInputChange(session.id, opts.prompt)
+    setRightSessionContext(ctx)
+    setSideSessionPrompt(opts.prompt)
+    setSideNoteChip(opts.chip)
+    setRightSessionFocusToken((n) => n + 1)
+  }, [activeWorkspaceId, activeNote, rightSessionContext, onCreateSession, onInputChange])
+
   const handleAskAgent = async (mode: AIActionMode = 'extract-tasks') => {
     if (!activeWorkspaceId || !activeNote) return
     if (!await flushBeforeAction()) return
     const { sessionNameKey } = AI_PROMPTS[mode]
-    const sessionName = `${t(sessionNameKey)}: ${activeNote.title}`
-    const session = await onCreateSession(activeWorkspaceId, { name: sessionName, model: NOTES_AI_MODEL })
-    const storedPrompts = parseNotesAiPrompts(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_AI_PROMPTS_STORAGE_KEY))
-    const instruction = resolveNotesAiInstruction(mode, t, storedPrompts)
-
     const attachPath = `notes/${activeNote.relativePath}`
     const attachTitle = activeNote.title
-    const pathLine = t('notes.ai.contextPath', { path: attachPath })
-
+    const storedPrompts = parseNotesAiPrompts(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_AI_PROMPTS_STORAGE_KEY))
+    const instruction = resolveNotesAiInstruction(mode, t, storedPrompts)
     const prompt = [
       t('notes.ai.contextHeader', { title: attachTitle }),
-      pathLine,
+      t('notes.ai.contextPath', { path: attachPath }),
       t('notes.ai.contextTags', {
         tags: activeNote.tags.length ? activeNote.tags.map(tag => `#${tag}`).join(' ') : t('notes.inspector.none'),
       }),
@@ -1496,34 +1535,31 @@ h1,h2,h3{margin-top:1.5em}
       '',
       instruction,
     ].join('\n')
-    // Prefill only — do NOT auto-send. Keep note open; open side session panel.
-    onInputChange(session.id, prompt)
-    setSideSessionId(session.id)
-    setSideSessionPrompt(prompt)
-    setSideNoteChip({ title: attachTitle, path: attachPath })
+    await openNotesRightSession({
+      sessionName: `${t(sessionNameKey)}: ${activeNote.title}`,
+      prompt,
+      chip: { title: attachTitle, path: attachPath },
+    })
   }
 
   const handleBoundChat = async () => {
     if (!activeWorkspaceId || !activeNote) return
     if (!await flushBeforeAction()) return
     const attachPath = `notes/${activeNote.relativePath}`
-    const session = await onCreateSession(activeWorkspaceId, {
-      name: activeNote.title,
-      model: NOTES_AI_MODEL,
-    })
     const prompt = [
       t('notes.ai.contextHeader', { title: activeNote.title }),
       t('notes.ai.contextPath', { path: attachPath }),
       '',
     ].join('\n')
-    onInputChange(session.id, prompt)
-    setSideSessionId(session.id)
-    setSideSessionPrompt(prompt)
-    setSideNoteChip({ title: activeNote.title, path: attachPath })
+    await openNotesRightSession({
+      sessionName: activeNote.title,
+      prompt,
+      chip: { title: activeNote.title, path: attachPath },
+    })
   }
 
   const closeSideSession = React.useCallback(() => {
-    setSideSessionId(null)
+    setRightSessionContext(null)
     setSideSessionPrompt('')
     setSideNoteChip(null)
   }, [])
@@ -1532,13 +1568,10 @@ h1,h2,h3{margin-top:1.5em}
     if (!sideSessionId) return
     const draft = (getDraft(sideSessionId) || sideSessionPrompt).trim()
     if (!draft) return
-    const sessionId = sideSessionId
-    onSendMessage(sessionId, draft)
-    onInputChange(sessionId, '')
+    onSendMessage(sideSessionId, draft)
+    onInputChange(sideSessionId, '')
     setSideSessionPrompt('')
-    closeSideSession()
-    navigate(routes.view.allSessions(sessionId))
-  }, [sideSessionId, sideSessionPrompt, getDraft, onSendMessage, onInputChange, closeSideSession])
+  }, [sideSessionId, sideSessionPrompt, getDraft, onSendMessage, onInputChange])
 
   const openAssetRenameDialog = (asset: NoteAsset) => {
     setAssetRenameTarget(asset)
@@ -1726,7 +1759,7 @@ h1,h2,h3{margin-top:1.5em}
   ) : null
 
   if (!activeWorkspaceId) {
-    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Select a workspace to use notes.</div>
+    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('notes.empty.selectWorkspace')}</div>
   }
 
   return (
@@ -1822,41 +1855,41 @@ h1,h2,h3{margin-top:1.5em}
                       <StyledContextMenuContent>
                         <StyledContextMenuItem onClick={() => handleOpenNote(note.id)}>
                           <FileText className="h-3.5 w-3.5" />
-                          Open
+                          {t('common.open')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openRenameDialogForNote(note)}>
                           <Pencil className="h-3.5 w-3.5" />
-                          Rename
+                          {t('common.rename')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openCreateNoteDialog()}>
                           <FilePlus2 className="h-3.5 w-3.5" />
-                          New note here
+                          {t('notes.menu.newHere')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => duplicateNote(note)}>
                           <Copy className="h-3.5 w-3.5" />
-                          Duplicate
+                          {t('notes.menu.duplicate')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openMoveDialog(note)}>
                           <FolderInput className="h-3.5 w-3.5" />
-                          Move to folder
+                          {t('notes.menu.moveToFolder')}
                         </StyledContextMenuItem>
                         <StyledContextMenuSeparator />
                         <StyledContextMenuItem onClick={() => copyNoteLink(note)}>
                           <Link2 className="h-3.5 w-3.5" />
-                          Copy note link
+                          {t('notes.menu.copyLink')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => copyNotePath(note)}>
                           <FileText className="h-3.5 w-3.5" />
-                          Copy markdown path
+                          {t('notes.menu.copyPath')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => revealNote(note)}>
                           <ExternalLink className="h-3.5 w-3.5" />
-                          Reveal in Finder
+                          {t('notes.menu.reveal')}
                         </StyledContextMenuItem>
                         <StyledContextMenuSeparator />
                         <StyledContextMenuItem variant="destructive" onClick={() => openDeleteDialogForNote(note)}>
                           <Trash2 className="h-3.5 w-3.5" />
-                          Delete
+                          {t('common.delete')}
                         </StyledContextMenuItem>
                       </StyledContextMenuContent>
                     </ContextMenu>
@@ -1918,11 +1951,11 @@ h1,h2,h3{margin-top:1.5em}
           </div>
           {dailyDate && (
             <div className="mr-1 flex items-center gap-1">
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title="Previous daily note">
+              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <span className="text-xs text-muted-foreground">{dailyDate}</span>
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title="Next daily note">
+              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -1937,20 +1970,20 @@ h1,h2,h3{margin-top:1.5em}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title="Attach asset">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title="Export as PDF">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title="Rename note">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
             <Pencil className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title="Delete note">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
             <Trash2 className="h-4 w-4" />
           </button>
-          <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title="Notes autosave as you type">
-            {saveError ? 'Save failed' : saving ? 'Saving' : dirty ? 'Autosaving' : activeNote ? 'Saved' : ''}
+          <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
+            {saveError ? t('notes.save.failed') : saving ? t('common.saving') : dirty ? t('notes.save.autosaving') : activeNote ? t('notes.save.saved') : ''}
           </span>
         </div>
 
@@ -1966,20 +1999,20 @@ h1,h2,h3{margin-top:1.5em}
           {!activeNote ? (
             <div className="h-full grid place-items-center">
               {loading ? (
-                <div className="text-sm text-muted-foreground">Loading note...</div>
+                <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
               ) : (
                 <div className="w-[360px] max-w-[calc(100%-48px)] rounded-[8px] border border-border/60 bg-muted/[0.16] p-4 text-center">
-                  <div className="text-sm font-medium">No note selected</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Open a note, create one, or start today's daily note.</div>
+                  <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{t('notes.empty.noNoteHint')}</div>
                   <div className="mt-3 flex justify-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleDaily()}>
                       <CalendarDays className="h-3.5 w-3.5" />
-                      Daily
+                      {t('notes.toolbar.daily')}
                     </Button>
                     <NotesImportButton workspaceId={activeWorkspaceId || undefined} onImported={() => void refreshNotes()} />
                     <Button size="sm" onClick={() => openCreateNoteDialog()}>
                       <FilePlus2 className="h-3.5 w-3.5" />
-                      New note
+                      {t('notes.toolbar.newNote')}
                     </Button>
                   </div>
                 </div>
@@ -2285,49 +2318,19 @@ h1,h2,h3{margin-top:1.5em}
         </div>
       </main>
 
-      {sideSessionId && (
-        <aside className="w-[380px] shrink-0 border-l border-border/60 bg-muted/[0.10] flex flex-col min-h-0">
-          <div className="h-[42px] shrink-0 border-b border-border/60 px-3 flex items-center gap-2">
-            <div className="min-w-0 flex-1 truncate text-sm font-medium">{t('notes.sideSession.title')}</div>
-            <button
-              type="button"
-              className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
-              onClick={closeSideSession}
-              title={t('notes.sideSession.close')}
-            >
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="px-3 pt-3 pb-2 shrink-0 space-y-2">
-            {sideNoteChip && (
-              <div className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-border/60 bg-background px-2.5 py-1 text-[11px]">
-                <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
-                <span className="truncate font-medium">{sideNoteChip.title}</span>
-                <span className="truncate text-muted-foreground">{sideNoteChip.path}</span>
-              </div>
-            )}
-            <div className="text-[11px] text-muted-foreground">{t('notes.sideSession.hint')}</div>
-          </div>
-          <div className="flex-1 min-h-0 px-3 pb-3 flex flex-col gap-2">
-            <textarea
-              value={sideSessionPrompt}
-              onChange={(e) => {
-                setSideSessionPrompt(e.target.value)
-                if (sideSessionId) onInputChange(sideSessionId, e.target.value)
-              }}
-              className="min-h-0 flex-1 w-full resize-none rounded-[8px] border border-border/60 bg-background p-2.5 text-xs leading-relaxed outline-none focus:border-foreground/30"
-              placeholder={t('notes.sideSession.promptPlaceholder')}
-            />
-            <div className="flex items-center justify-end gap-2 shrink-0">
-              <Button variant="outline" size="sm" onClick={closeSideSession}>
-                {t('notes.sideSession.cancel')}
-              </Button>
-              <Button size="sm" onClick={sendSideSession} disabled={!sideSessionPrompt.trim()}>
-                {t('notes.sideSession.send')}
-              </Button>
-            </div>
-          </div>
-        </aside>
+      {rightSessionContext && (
+        <RightSessionShell
+          context={rightSessionContext}
+          prompt={sideSessionPrompt}
+          focusToken={rightSessionFocusToken}
+          chips={sideNoteChip ? [{ id: rightSessionContext.entityRefs[0] ?? 'note', title: sideNoteChip.title, detail: sideNoteChip.path }] : undefined}
+          onPromptChange={(value) => {
+            setSideSessionPrompt(value)
+            if (sideSessionId) onInputChange(sideSessionId, value)
+          }}
+          onSend={sendSideSession}
+          onClose={closeSideSession}
+        />
       )}
 
       <NoteInspector

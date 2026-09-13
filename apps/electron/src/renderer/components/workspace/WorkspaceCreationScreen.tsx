@@ -81,7 +81,7 @@ export function WorkspaceCreationScreen({
       const result = await window.electronAPI.createWorkspace(folderPath, name, remoteServer)
       onWorkspaceCreated(resolveWorkspaceCreation(result, !remoteServer))
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+      const message = error instanceof Error ? error.message : t('toast.unknownError')
       toast.error(t('toast.failedToCreateWorkspace'), {
         description: message,
       })
@@ -107,7 +107,7 @@ export function WorkspaceCreationScreen({
       )
       onWorkspaceCreated(resolveWorkspaceCreation(result, true))
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+      const message = error instanceof Error ? error.message : t('toast.unknownError')
       toast.error(t('toast.failedToCreateWorkspace'), {
         description: message,
       })

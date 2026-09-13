@@ -950,8 +950,15 @@ export const RPC_CHANNELS = {
     LIST: 'meetings:list',
     GET: 'meetings:get',
     SEARCH: 'meetings:search',
+    CREATE_PROPOSAL: 'meetings:createProposal',
     APPROVE_PROPOSAL: 'meetings:approveProposal',
     REJECT_PROPOSAL: 'meetings:rejectProposal',
+    MAIL_PREPARE: 'meetings:mailPrepare',
+    MAIL_SEND: 'meetings:mailSend',
+    CRM_PROPOSE: 'meetings:crmPropose',
+    CALENDAR_BIND: 'meetings:calendarBind',
+    ROOM_JOIN: 'meetings:roomJoin',
+    MAIL_THREADS: 'meetings:mailThreads',
   },
 } as const
 

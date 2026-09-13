@@ -3,11 +3,15 @@ import {
   cancelCalendar,
   createFollowupRuntime,
   disableSchedules,
+  FOLLOWUP_SEND_GATE,
   occurrenceKey,
+  queueFollowupDraft,
   runFollowup,
   upsertSchedule,
   type FollowupSchedule,
 } from '../followup.ts'
+import { dispatchOutbox } from '../outbox.ts'
+import { isLiveVerified } from '../types.ts'
 
 function schedule(overrides: Partial<FollowupSchedule> = {}): FollowupSchedule {
   return {
@@ -81,5 +85,55 @@ describe('followup schedules (#374)', () => {
     disableSchedules(runtime)
     expect(runtime.persisted.schedules.get('sched-1')?.optOut).toBe(true)
     expect(runtime.persisted.ledger).toHaveLength(1)
+  })
+
+  it('persists a send on the outbox and fail-closes without a live L4 send', () => {
+    const runtime = createFollowupRuntime(() => Date.UTC(2026, 5, 1))
+    upsertSchedule(runtime, schedule({ freshSendGrant: true }))
+    const result = runFollowup(runtime, 'sched-1', 'send')
+    expect(FOLLOWUP_SEND_GATE.evidenceLevel).toBe('U1')
+    expect(FOLLOWUP_SEND_GATE.l4).toBe('not_run')
+    expect(result.status).toBe('blocked')
+    expect(result.reason).toBe('followup-send-not-live')
+    expect(result.live).toBe(false)
+    expect(result.evidenceLevel).toBe('U1')
+    expect(isLiveVerified(result)).toBe(false)
+    expect(runtime.persisted.outbox).toHaveLength(1)
+    expect(runtime.persisted.outbox[0]?.kind).toBe('send')
+    expect(runtime.persisted.outbox[0]?.status).toBe('blocked')
+  })
+
+  it('does not auto-resend an unknown outbox entry', () => {
+    const runtime = createFollowupRuntime(() => Date.UTC(2026, 5, 1))
+    upsertSchedule(runtime, schedule({ freshSendGrant: true, occurrenceKey: 'sched-1:2026-06-01' }))
+    runtime.persisted.outbox.push({
+      operationId: 'op-unknown',
+      idempotencyKey: 'sched-1:send:sched-1:2026-06-01',
+      payloadHash: 'sched-1:2026-06-01',
+      kind: 'send',
+      status: 'unknown',
+    })
+    const result = runFollowup(runtime, 'sched-1', 'send')
+    expect(result.status).toBe('unknown')
+    expect(result.reason).toBe('no-automatic-resend')
+    expect(result.live).toBe(false)
+    expect(result.evidenceLevel).toBe('U1')
+    expect(runtime.persisted.outbox).toHaveLength(1)
+    expect(runtime.persisted.outbox[0]?.status).toBe('unknown')
+  })
+
+  it('keeps draft distinct from send and never dispatches production mail', () => {
+    const runtime = createFollowupRuntime(() => Date.UTC(2026, 5, 1))
+    upsertSchedule(runtime, schedule())
+    const drafted = queueFollowupDraft(runtime, 'sched-1', {
+      operationId: 'draft-1',
+      idempotencyKey: 'draft-1',
+      payloadHash: 'body-1',
+    })
+    expect(drafted.status).toBe('pending')
+    expect(drafted.reason).toBe('draft-not-send')
+    expect(drafted.live).toBe(false)
+    expect(dispatchOutbox(runtime.persisted.outbox[0]!).reason).toBe('draft-not-send')
+    expect(runtime.persisted.outbox[0]?.kind).toBe('draft')
   })
 })

@@ -329,7 +329,7 @@ export function SlashCommandMenu({
       <CommandPrimitive.List className={MENU_LIST_STYLE}>
         {allFilteredCommands.length === 0 ? (
           <CommandPrimitive.Empty className="py-4 text-center text-sm text-muted-foreground">
-            No commands found
+            {t('commands.noCommands')}
           </CommandPrimitive.Empty>
         ) : filteredGroups ? (
           // Group-based rendering with smart separators

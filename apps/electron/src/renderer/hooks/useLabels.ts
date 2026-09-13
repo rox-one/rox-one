@@ -7,6 +7,7 @@
  * Auto-refreshes when workspace changes or label config changes.
  */
 
+import i18n from 'i18next'
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import { flattenLabels } from '@craft-agent/shared/labels'
@@ -49,7 +50,7 @@ export function useLabels(workspaceId: string | null): UseLabelsResult {
       setError(null)
     } catch (err) {
       console.error('[useLabels] Failed to load labels:', err)
-      setError(err instanceof Error ? err.message : 'Failed to load labels')
+      setError(err instanceof Error ? err.message : i18n.t('settings.labels.loadFailed'))
     } finally {
       setIsLoading(false)
     }

@@ -3,7 +3,8 @@
  *
  * Native slice: fail-closed stubs over injected adapters. Exact
  * repository/team/project/assignee IDs required. Wrong target is never
- * auto-retargeted. Fixture adapters are not live integration. Draft PRs
+ * auto-retargeted. Fixture/simulated adapters are not live integration and
+ * cannot claim live/L4, including a `mode: 'live'` label. Draft PRs
  * never auto-merge. Post-write timeout → unknown (reconcile), not success.
  */
 
@@ -114,6 +115,36 @@ function grantAllows(grant: TrackerGrant, target: TrackerTarget): boolean {
   return grant.resources.includes(resource) || grant.resources.includes(`${target.provider}:*`)
 }
 
+function isSimulatedProviderUrl(url: string | undefined): boolean {
+  if (!url) return true
+  try {
+    const host = new URL(url).hostname
+    return host.endsWith('.invalid') || host === 'localhost' || host === '127.0.0.1'
+  } catch {
+    return true
+  }
+}
+
+/** Live GitHub/Linear is not shipped. A `mode: 'live'` label is not a live adapter. */
+function refuseLiveModeAdapter(adapter: TrackerAdapter): MeetingOpResult<string, SanitizedReceipt> | null {
+  if (adapter.mode !== 'live') return null
+  return {
+    status: 'blocked',
+    reason: 'fixture-not-live',
+    live: false,
+    evidenceLevel: 'U1',
+  }
+}
+
+/** Fixture/simulated receipts (including *.invalid URLs) are never L4 live. */
+function canClaimLive(adapter: TrackerAdapter, result: TrackerAdapterResult): false {
+  if (adapter.mode !== 'live') return false
+  if ((result.kind === 'ok' || result.kind === 'duplicate') && isSimulatedProviderUrl(result.htmlUrl)) {
+    return false
+  }
+  return false
+}
+
 function validateRequest(request: TrackerCreateRequest): MeetingOpResult<string> | null {
   if (!targetIdsPresent(request.target) || !targetIdsPresent(request.approvedTarget)) {
     return denied('missing-exact-ids')
@@ -142,11 +173,12 @@ function fromAdapter(
   adapter: TrackerAdapter,
   result: TrackerAdapterResult,
 ): MeetingOpResult<string, SanitizedReceipt> {
+  const live = canClaimLive(adapter, result)
   const base = {
     operationId: request.operationId,
     provider: request.target.provider,
-    mode: adapter.mode,
-  } as const
+    mode: live ? ('live' as const) : ('fixture' as const),
+  }
   if (result.kind === 'timeout' || result.kind === 'rate_limit') {
     return {
       ...unknownEffect(result.kind),
@@ -169,16 +201,16 @@ function fromAdapter(
     return {
       status: 'duplicate',
       reason: 'idempotent',
-      live: adapter.mode === 'live',
-      evidenceLevel: adapter.mode === 'live' ? 'L4' : 'U1',
+      live,
+      evidenceLevel: live ? 'L4' : 'U1',
       payload: { ...base, remoteId: result.remoteId, htmlUrl: result.htmlUrl },
     }
   }
   return {
     status: 'verified',
     reason: 'created',
-    live: adapter.mode === 'live',
-    evidenceLevel: adapter.mode === 'live' ? 'L4' : 'U1',
+    live,
+    evidenceLevel: live ? 'L4' : 'U1',
     payload: {
       ...base,
       remoteId: result.remoteId,
@@ -247,18 +279,15 @@ export function createTrackerActions(adapter: TrackerAdapter = createDisabledTra
     if (cached) return { ...cached, status: 'duplicate' as const, reason: 'idempotent' }
     const invalid = validateRequest(request)
     if (invalid) return invalid
-    if (adapter.mode !== 'live') {
-      const wrote = fromAdapter(request, adapter, await adapter.createIssue(request))
-      if (wrote.status === 'verified') {
-        // Fixture success is recorded but never live.
-        const stored = { ...wrote, live: false as const, evidenceLevel: 'U1' as const }
-        completed.set(request.idempotencyKey, stored)
-        return stored
-      }
-      return wrote
-    }
+    const liveRefused = refuseLiveModeAdapter(adapter)
+    if (liveRefused) return liveRefused
     const wrote = fromAdapter(request, adapter, await adapter.createIssue(request))
-    if (wrote.status === 'verified' || wrote.status === 'duplicate') {
+    if (wrote.status === 'verified') {
+      const stored = { ...wrote, live: false as const, evidenceLevel: 'U1' as const }
+      completed.set(request.idempotencyKey, stored)
+      return stored
+    }
+    if (wrote.status === 'duplicate') {
       completed.set(request.idempotencyKey, wrote)
     }
     return wrote
@@ -279,6 +308,8 @@ export function createTrackerActions(adapter: TrackerAdapter = createDisabledTra
     async updateFromMeeting(request) {
       const invalid = validateRequest(request)
       if (invalid) return invalid
+      const liveRefused = refuseLiveModeAdapter(adapter)
+      if (liveRefused) return liveRefused
       if (request.currentRevision && request.currentRevision !== request.baseRevision) {
         return {
           status: 'conflict',

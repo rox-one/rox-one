@@ -23,7 +23,8 @@ import { SettingsSection, SettingsCard, SettingsRow } from '@/components/setting
 import { PreferencesForm } from './PreferencesPage'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ContextDocContent, ContextDocInfo, Lesson } from '../../../shared/types'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 const BUILTIN_CONTEXT_DOCS = new Set(['soul.md', 'rules.md'])
 
@@ -67,10 +68,14 @@ export default function ContextSettingsPage() {
   const [showTemplateDiff, setShowTemplateDiff] = useState(false)
 
   const loadDocs = useCallback(() => {
-    window.electronAPI
-      .listContextDocs()
-      .then((list) => {
-        setDocs(list)
+    const list = window.electronAPI.listContextDocs
+    if (typeof list !== 'function') {
+      setLoadingDocs(false)
+      return
+    }
+    list()
+      .then((docs) => {
+        setDocs(docs)
         setLoadingDocs(false)
       })
       .catch((error) => {
@@ -82,9 +87,9 @@ export default function ContextSettingsPage() {
 
   useEffect(() => {
     loadDocs()
-    const offDocs = window.electronAPI.onContextDocsChanged(() => loadDocs())
+    const offDocs = window.electronAPI.onContextDocsChanged?.(() => loadDocs())
     return () => {
-      offDocs()
+      offDocs?.()
     }
   }, [loadDocs])
 
@@ -121,8 +126,14 @@ export default function ContextSettingsPage() {
   useEffect(() => {
     let cancelled = false
     setLessons(null)
-    window.electronAPI
-      .listMemoryLessons('both', activeWorkspaceId ?? undefined)
+    const listLessons = window.electronAPI.listMemoryLessons
+    if (typeof listLessons !== 'function') {
+      setLessons([])
+      return () => {
+        cancelled = true
+      }
+    }
+    listLessons('both', activeWorkspaceId ?? undefined)
       .then((list) => {
         if (!cancelled) setLessons(list)
       })
@@ -190,6 +201,16 @@ export default function ContextSettingsPage() {
     async (filename: string) => {
       if (BUILTIN_CONTEXT_DOCS.has(filename)) return
       if (!window.confirm(t('settings.context.deleteConfirm'))) return
+      const gate = settingsPageActionResult({
+        pageId: 'context',
+        action: 'doc-delete',
+        source: 'native',
+        granted: true,
+      })
+      if (!isClaimableLive(gate)) {
+        setPageError(t('settings.rox2.grantRequired'))
+        return
+      }
       setDeleting(true)
       setPageError(null)
       try {
@@ -214,6 +235,15 @@ export default function ContextSettingsPage() {
 
   const saveDoc = useCallback(async () => {
     if (!currentDoc) return
+    const gate = settingsPageActionResult({
+      pageId: 'context',
+      action: 'doc-write',
+      source: 'native',
+    })
+    if (!isClaimableLive(gate)) {
+      setPageError(t('settings.rox2.grantRequired'))
+      return
+    }
     setSaving(true)
     setPageError(null)
     try {
@@ -226,11 +256,20 @@ export default function ContextSettingsPage() {
     } finally {
       setSaving(false)
     }
-  }, [currentDoc, draft])
+  }, [currentDoc, draft, t])
 
   const createDoc = useCallback(async () => {
     const filename = normalizeNewDocFilename(newDocName)
     if (!filename) return
+    const gate = settingsPageActionResult({
+      pageId: 'context',
+      action: 'doc-write',
+      source: 'native',
+    })
+    if (!isClaimableLive(gate)) {
+      setPageError(t('settings.rox2.grantRequired'))
+      return
+    }
     setAdding(true)
     setPageError(null)
     try {
@@ -248,7 +287,7 @@ export default function ContextSettingsPage() {
     } finally {
       setAdding(false)
     }
-  }, [newDocName, openDoc])
+  }, [newDocName, openDoc, t])
 
   const acceptTemplate = useCallback(async () => {
     if (!currentDoc) return
@@ -299,7 +338,7 @@ export default function ContextSettingsPage() {
   const showTemplateActions = currentDoc?.templateStale === true
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
         title={t('settings.context.title')}
         actions={<HeaderMenu route={routes.view.settings('context')} />}
