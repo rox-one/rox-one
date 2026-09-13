@@ -71,11 +71,25 @@ describe('voice RPC', () => {
 
   it('lists the three local model families without claiming they are ready', async () => {
     const handlers = createHarness()
-    const listed = await handlers.get(RPC_CHANNELS.voice.MODELS_LIST)!({}) as { families: string[] }
+    const listed = await handlers.get(RPC_CHANNELS.voice.MODELS_LIST)!({}) as { families: string[]; selected: string }
     expect(listed.families).toEqual([
       'whisper-large-v3-turbo',
       'nemotron-3.5-asr-streaming-0.6b',
       'gigaam-v3-e2e-rnnt',
     ])
+    expect(listed.selected).toBe('whisper-large-v3-turbo')
+  })
+
+  it('reports scaffold health on the CI fixture path and does not claim live ASR', async () => {
+    const previous = process.env.CRAFT_VOICE_GATEWAY_FIXTURE
+    process.env.CRAFT_VOICE_GATEWAY_FIXTURE = '1'
+    try {
+      const handlers = createHarness()
+      const health = await handlers.get(RPC_CHANNELS.voice.HEALTH)!({}) as { evidenceClass: string }
+      expect(health.evidenceClass).toBe('scaffold')
+    } finally {
+      if (previous === undefined) delete process.env.CRAFT_VOICE_GATEWAY_FIXTURE
+      else process.env.CRAFT_VOICE_GATEWAY_FIXTURE = previous
+    }
   })
 })

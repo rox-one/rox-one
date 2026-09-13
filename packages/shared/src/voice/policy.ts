@@ -1,4 +1,6 @@
+import { classifyEvidence, collectEvidenceInput } from './acceptance.ts'
 import { ROCKS_T1_DISPLAY_NAME, ROCKS_T1_MODEL_ID } from './contracts.ts'
+import type { VoiceEnv } from './runtime.ts'
 import {
   DEFAULT_WAKE_PHRASE,
   type SttEngine,
@@ -56,8 +58,16 @@ export function describeLocalSttBackend(info: { appleSilicon: boolean }): VoiceH
 export function buildVoiceHealth(
   prefs: VoicePrefs,
   info: { appleSilicon: boolean; offline: boolean },
+  env: VoiceEnv = process.env,
 ): VoiceHealth {
   const wake = canStartWakeListening(prefs)
+  const evidence = classifyEvidence(collectEvidenceInput(env, {
+    localWhisperReady: prefs.whisperStatus === 'ready',
+    liveCloudAsr: false,
+    liveEnhancement: false,
+    overlayWithoutFocusSteal: false,
+    historyDurable: false,
+  }))
   return {
     sttEngine: prefs.sttEngine,
     ttsEngine: prefs.ttsEngine,
@@ -69,7 +79,7 @@ export function buildVoiceHealth(
     audioRetention: resolveAudioRetention(prefs),
     asrModelId: prefs.asrModelId || ROCKS_T1_MODEL_ID,
     asrBrand: ROCKS_T1_DISPLAY_NAME,
-    evidenceClass: prefs.whisperStatus === 'ready' ? 'local-model-beta' : 'cloud-beta',
+    evidenceClass: evidence.class,
   }
 }
 

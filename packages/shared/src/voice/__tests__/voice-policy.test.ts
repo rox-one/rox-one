@@ -198,6 +198,17 @@ describe('voice privacy policy', () => {
     expect(health.offline).toBe(true)
     expect(health.wakeWordArmed).toBe(false)
     expect(health.asrBrand).toBe(ROCKS_T1_DISPLAY_NAME)
+    const fixtureHealth = buildVoiceHealth(getDefaultVoicePrefs(1), {
+      appleSilicon: false,
+      offline: true,
+    }, { CI: '1' })
+    expect(fixtureHealth.evidenceClass).toBe('scaffold')
+    const credHealth = buildVoiceHealth({ ...getDefaultVoicePrefs(1), whisperStatus: 'ready' }, {
+      appleSilicon: false,
+      offline: true,
+    }, { ROX_API_KEY: 'rox_test_key' })
+    expect(credHealth.evidenceClass).toBe('local-model-beta')
+
   })
 
   it('normalizes persisted wake-word flags so consent cannot be skipped', () => {
