@@ -15,7 +15,13 @@ import {
 } from '@/components/session-workbench/right-session-shell'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
-import type { Rox2Context } from '@craft-agent/core/rox2'
+import {
+  isClaimableLive,
+  soupDocumentActResult,
+  soupDocumentListResult,
+  soupDocumentReadResult,
+  type Rox2Context,
+} from '@craft-agent/core/rox2'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { NotesImportButton } from '@/components/notes/NotesImportButton'
@@ -687,6 +693,8 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
 
   const refreshNotes = React.useCallback(async () => {
     if (!activeWorkspaceId) return
+    const listed = soupDocumentListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return
     const next = await window.electronAPI.listNotes(activeWorkspaceId)
     setNotes(next)
     setSidebarOrder(next.map(n => n.id))
@@ -751,6 +759,8 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
 
   const openNote = React.useCallback(async (noteId: string) => {
     if (!activeWorkspaceId) return
+    const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
+    if (!isClaimableLive(read.result)) return
     setLoading(true)
     try {
       const note = await window.electronAPI.readNote(activeWorkspaceId, noteId)
@@ -855,6 +865,8 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setSaving(true)
       setSaveError(null)
       try {
+        const act = soupDocumentActResult({ source: 'native', action: 'write', nativeId: noteId })
+        if (!isClaimableLive(act)) return false
         const saved = await window.electronAPI.saveNote(activeWorkspaceId, noteId, currentContent)
         if (activeNoteIdRef.current === noteId) {
           setActiveNote(saved)
@@ -1243,6 +1255,13 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const handleDelete = async () => {
     if (!activeWorkspaceId || !activeNote) return
     if (!await flushBeforeAction()) return
+    const act = soupDocumentActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: activeNote.id,
+    })
+    if (!isClaimableLive(act)) return
     await window.electronAPI.deleteNote(activeWorkspaceId, activeNote.id)
     setDeleteDialogOpen(false)
     await refreshNotes()
