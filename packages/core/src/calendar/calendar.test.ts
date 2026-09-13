@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { CalendarStore, resetCalendarIds } from './store.ts'
-import { FixtureCalendarAdapter, createProviderAdapter, isCalendarConnectorWired, liveCredentialsPresent } from './adapters.ts'
+import { FixtureCalendarAdapter, createProductionAdapter, isCalendarConnectorWired, isFixtureCalendarAdapter, liveCredentialsPresent, UnavailableCalendarAdapter, CalendarProviderUnavailableError } from './adapters.ts'
 import { CALENDAR_CAPABILITIES } from './capabilities.ts'
 import { mergeTodayUpcoming } from './merge.ts'
 import type { CalendarProvider, TaskLike } from './types.ts'
@@ -135,17 +135,41 @@ describe('calendar connectors (issue 18)', () => {
     expect(isCalendarConnectorWired('appleReminders')).toBe(false)
   })
 
+  it('production factory never returns fixture adapters', () => {
+    const providers: CalendarProvider[] = ['google', 'outlook', 'yandex', 'mailru', 'appleReminders']
+    for (const provider of providers) {
+      const adapter = createProductionAdapter(provider)
+      expect(isFixtureCalendarAdapter(adapter)).toBe(false)
+      expect(adapter).toBeInstanceOf(UnavailableCalendarAdapter)
+      expect(adapter.mode).toBe('unavailable')
+    }
+  })
+
+  it('env credentials are not live evidence for production adapters', () => {
+    const previous = process.env.ROX_CALENDAR_GOOGLE_LIVE
+    process.env.ROX_CALENDAR_GOOGLE_LIVE = '1'
+    try {
+      expect(liveCredentialsPresent('google')).toBe(true)
+      const adapter = createProductionAdapter('google')
+      expect(adapter.available()).toBe(false)
+      expect(isCalendarConnectorWired('google')).toBe(false)
+      expect(isFixtureCalendarAdapter(adapter)).toBe(false)
+    } finally {
+      if (previous === undefined) delete process.env.ROX_CALENDAR_GOOGLE_LIVE
+      else process.env.ROX_CALENDAR_GOOGLE_LIVE = previous
+    }
+  })
+
   const providers: CalendarProvider[] = ['google', 'outlook', 'yandex', 'mailru', 'appleReminders']
   for (const provider of providers) {
-    it(`live ${provider} account test skips without credentials`, async () => {
-      if (!liveCredentialsPresent(provider)) {
-        expect(createProviderAdapter(provider).capabilities.provider).toBe(provider)
+    it(`live ${provider} account test skips without a verified adapter`, async () => {
+      const adapter = createProductionAdapter(provider)
+      expect(isFixtureCalendarAdapter(adapter)).toBe(false)
+      if (!adapter.available()) {
+        await expect(adapter.listEvents('live')).rejects.toBeInstanceOf(CalendarProviderUnavailableError)
         return
       }
-      const adapter = createProviderAdapter(provider)
-      expect(adapter.available()).toBe(true)
-      const page = await adapter.listEvents('live')
-      expect(Array.isArray(page.events)).toBe(true)
+      await expect(adapter.listEvents('live')).rejects.toBeInstanceOf(CalendarProviderUnavailableError)
     })
   }
 })

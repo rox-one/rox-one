@@ -1,5 +1,5 @@
 import { emptyCalendarBundle, type CalendarAccount, type CalendarBundle, type CalendarEvent, type CalendarProvider, type CalendarUiStatus, type ReminderProposal, type TaskLike } from './types.ts'
-import { createProviderAdapter, type CalendarAdapter } from './adapters.ts'
+import { createProductionAdapter, type CalendarAdapter } from './adapters.ts'
 import { capabilityFor } from './capabilities.ts'
 import { timezoneWarnings } from './merge.ts'
 
@@ -61,7 +61,7 @@ export class CalendarStore {
   }
 
   connect(provider: CalendarProvider, displayName: string, timeZone: string): CalendarAccount {
-    if (provider === 'appleReminders' && !createProviderAdapter(provider).available()) {
+    if (provider === 'appleReminders' && !createProductionAdapter(provider).available()) {
       throw new Error('Apple Reminders requires a privileged macOS helper')
     }
     const id = mint('cal')
