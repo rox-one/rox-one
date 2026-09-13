@@ -180,8 +180,8 @@ export function CollectionFilterChips({
   const groups = [
     statuses.length > 0 ? { label: t('collection.filter.status'), options: statusOptions } : null,
     { label: t('collection.filter.priority'), options: priorityOptions },
-    projects.length > 0 ? { label: t('collection.filter.project', { defaultValue: 'Project' }), options: projectOptions } : null,
-    labels.length > 0 ? { label: t('collection.filter.label', { defaultValue: 'Label' }), options: labelOptions } : null,
+    projects.length > 0 ? { label: t('collection.filter.project'), options: projectOptions } : null,
+    labels.length > 0 ? { label: t('collection.filter.label'), options: labelOptions } : null,
     { label: t('collection.filter.due'), options: dueOptions },
     { label: t('collection.filter.agentFamily'), options: agentOptions },
   ].filter(Boolean) as Array<{

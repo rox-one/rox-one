@@ -548,8 +548,8 @@ export function SessionList({
         sortUnitsByActivity(groupUnits)
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         const label = projectId
-          ? (projectNameById.get(projectId) ?? t('sidebar.unknownProject', { defaultValue: 'Unknown project' }))
-          : t('sidebar.noProject', { defaultValue: 'No project' })
+          ? (projectNameById.get(projectId) ?? t('sidebar.unknownProject'))
+          : t('sidebar.noProject')
         orderedGroups.push({
           key,
           label,
@@ -701,7 +701,7 @@ export function SessionList({
           key,
           label: labelId
             ? (labelNameById.get(labelId) ?? labelId)
-            : t('collection.display.labelNone', { defaultValue: 'No label' }),
+            : t('collection.display.labelNone'),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
