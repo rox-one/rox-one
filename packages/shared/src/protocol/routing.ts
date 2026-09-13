@@ -199,6 +199,9 @@ export const LOCAL_ONLY_CHANNELS = new Set<string>([
   RPC_CHANNELS.appearance.SET_RICH_TOOL_DESCRIPTIONS,
   RPC_CHANNELS.appearance.GET_DEFAULT_ZOOM_LEVEL,
   RPC_CHANNELS.appearance.SET_DEFAULT_ZOOM_LEVEL,
+  RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT,
+  RPC_CHANNELS.appearance.SET_ZEN_SHELL,
+  RPC_CHANNELS.appearance.SHELL_CHANGED,
 
   // caching — prompt cache and context settings
   RPC_CHANNELS.caching.GET_EXTENDED_PROMPT_CACHE,

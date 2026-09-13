@@ -52,6 +52,7 @@ import { Info_Badge } from '@/components/info/Info_Badge'
 import type { PresetTheme } from '@config/theme'
 import { WorkbenchChromeSettings } from './WorkbenchChromeSettings'
 import { ConationShellSettings } from './ConationShellSettings'
+import { ZenShellSettings } from './ZenShellSettings'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -649,6 +650,7 @@ export default function AppearanceSettingsPage() {
                 </SettingsCard>
               </SettingsSection>
 
+              <ZenShellSettings />
               <WorkbenchChromeSettings />
               <ConationShellSettings />
 

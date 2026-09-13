@@ -1696,6 +1696,34 @@ export interface ElectronAPI {
   setRichToolDescriptions(enabled: boolean): Promise<void>
   getDefaultZoomLevel(): Promise<number>
   setDefaultZoomLevel(level: number): Promise<void>
+  getShellSnapshot(): Promise<{
+    flag: 'shell.zen.v1'
+    enabled: boolean
+    preference: 'system' | 'glass' | 'opaque'
+    material: 'vibrancy' | 'mica' | 'solid'
+    platform: 'darwin' | 'win32' | 'linux' | 'web'
+    fallbackReason?: string
+  }>
+  setZenShell(patch: {
+    enabled?: boolean
+    materialPreference?: 'system' | 'glass' | 'opaque'
+  }): Promise<{
+    flag: 'shell.zen.v1'
+    enabled: boolean
+    preference: 'system' | 'glass' | 'opaque'
+    material: 'vibrancy' | 'mica' | 'solid'
+    platform: 'darwin' | 'win32' | 'linux' | 'web'
+    fallbackReason?: string
+  }>
+  onShellChanged(callback: (snapshot: {
+    flag: 'shell.zen.v1'
+    enabled: boolean
+    preference: 'system' | 'glass' | 'opaque'
+    material: 'vibrancy' | 'mica' | 'solid'
+    platform: 'darwin' | 'win32' | 'linux' | 'web'
+    fallbackReason?: string
+  }) => void): () => void
+
   // Prompt caching & context
   getExtendedPromptCache(): Promise<boolean>
   setExtendedPromptCache(enabled: boolean): Promise<void>

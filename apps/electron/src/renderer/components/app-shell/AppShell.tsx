@@ -82,6 +82,7 @@ import { type ProfileStripData } from "./ProfileStrip"
 import { QuestProgressCard } from "./QuestProgressCard"
 import { SidebarChrome } from "./SidebarChrome"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
+import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
 import { viewportBand } from "@/platform/viewport-band"
 import {
@@ -268,6 +269,7 @@ function AppShellContent({
   } = contextValue
 
   const { t } = useTranslation()
+  useShellAppearance()
 
   // Get hotkey labels from centralized action registry
   const newChatHotkey = useActionLabel('app.newChat').hotkey

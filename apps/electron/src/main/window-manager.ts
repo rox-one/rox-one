@@ -4,11 +4,12 @@ import { join, resolve, sep } from 'path'
 import { existsSync } from 'fs'
 import { release } from 'os'
 import { fileURLToPath } from 'url'
-import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import { getWorkspaceByNameOrId, isZenShellEnabled } from '@craft-agent/shared/config'
 import { classifyExternalUrl, formatBlockedUrlError } from '@craft-agent/shared/utils/url-safety'
 import { RPC_CHANNELS, type WindowCloseRequestSource } from '../shared/types'
 import { getExtensionHostManager } from './extension-host-manager'
 import type { SavedWindow } from './window-state'
+import { attachZenWindowPolicy } from './shell-material'
 
 // Vite dev server URL for hot reload
 const VITE_DEV_SERVER_URL = process.env.VITE_DEV_SERVER_URL
@@ -223,6 +224,7 @@ export class WindowManager {
     // Platform-specific window options
     const isMac = process.platform === 'darwin'
     const isWindows = process.platform === 'win32'
+    const zenEnabled = isZenShellEnabled()
     const windowsBackgroundMaterial = getWindowsBackgroundMaterial()
 
     const window = new BrowserWindow({
@@ -247,7 +249,8 @@ export class WindowManager {
         frame: true, // Keep native frame for better UX
         autoHideMenuBar: true, // Menu is null on Windows, this is just for safety
         // Note: Don't use transparent:true with backgroundMaterial - it hides the window frame
-        ...(windowsBackgroundMaterial && {
+        // Zen ON: keep the first frame opaque; mica is applied after paint.
+        ...(!zenEnabled && windowsBackgroundMaterial && {
           backgroundMaterial: windowsBackgroundMaterial,
         }),
       }),
@@ -275,35 +278,41 @@ export class WindowManager {
         windowLog.warn('Failed to apply default zoom level:', error)
       })
 
-    // Show on first compositor paint. GPU crash can skip ready-to-show and
-    // turn under-window vibrancy into a black capture — keep the opaque fill
-    // unless first paint actually arrived.
-    const revealWindow = (opts?: { vibrancy?: boolean }) => {
-      if (window.isDestroyed() || window.isVisible()) return
-      if (isMac && opts?.vibrancy !== false) {
-        try {
-          window.setVibrancy('under-window')
-          // setVisualEffectState появился в новых типах Electron; на старых
-          // типизация не знает метода — вызываем опционально через сужение.
-          ;(window as unknown as { setVisualEffectState?: (state: string) => void })
-            .setVisualEffectState?.('active')
-        } catch (error) {
-          windowLog.warn('Failed to apply macOS vibrancy after paint:', error)
+    // Zen ON: show once + apply material after healthy paint (see shell-material.ts).
+    // Zen OFF: existing revealWindow — isVisible() early-return is intentional.
+    if (zenEnabled) {
+      attachZenWindowPolicy(window)
+    } else {
+      // Show on first compositor paint. GPU crash can skip ready-to-show and
+      // turn under-window vibrancy into a black capture — keep the opaque fill
+      // unless first paint actually arrived.
+      const revealWindow = (opts?: { vibrancy?: boolean }) => {
+        if (window.isDestroyed() || window.isVisible()) return
+        if (isMac && opts?.vibrancy !== false) {
+          try {
+            window.setVibrancy('under-window')
+            // setVisualEffectState появился в новых типах Electron; на старых
+            // типизация не знает метода — вызываем опционально через сужение.
+            ;(window as unknown as { setVisualEffectState?: (state: string) => void })
+              .setVisualEffectState?.('active')
+          } catch (error) {
+            windowLog.warn('Failed to apply macOS vibrancy after paint:', error)
+          }
         }
+        window.show()
       }
-      window.show()
+      window.once('ready-to-show', () => revealWindow({ vibrancy: true }))
+      window.webContents.once('did-finish-load', () => {
+        if (window.isDestroyed() || window.isVisible()) return
+        windowLog.info('did-finish-load before ready-to-show; showing opaque window')
+        revealWindow({ vibrancy: false })
+      })
+      setTimeout(() => {
+        if (window.isDestroyed() || window.isVisible()) return
+        windowLog.warn('ready-to-show timed out; showing opaque window')
+        revealWindow({ vibrancy: false })
+      }, 4000)
     }
-    window.once('ready-to-show', () => revealWindow({ vibrancy: true }))
-    window.webContents.once('did-finish-load', () => {
-      if (window.isDestroyed() || window.isVisible()) return
-      windowLog.info('did-finish-load before ready-to-show; showing opaque window')
-      revealWindow({ vibrancy: false })
-    })
-    setTimeout(() => {
-      if (window.isDestroyed() || window.isVisible()) return
-      windowLog.warn('ready-to-show timed out; showing opaque window')
-      revealWindow({ vibrancy: false })
-    }, 4000)
 
     // Open external links in default browser, but never hand known-dangerous
     // schemes directly to shell.openExternal. Markdown normal-clicks go through

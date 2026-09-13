@@ -58,6 +58,13 @@ export interface UserPreferences {
    * Not user-editable; not exposed via the `update_user_preferences` tool.
    */
   uiLanguage?: LanguageCode;
+  /**
+   * Zen Shell (`shell.zen.v1`). Main-owned so WindowManager can read it before
+   * first paint. Default OFF. Not exposed via `update_user_preferences`.
+   */
+  zenShellEnabled?: boolean;
+  /** User material preference while Zen Shell is on. Default `system`. */
+  zenShellMaterialPreference?: 'system' | 'glass' | 'opaque';
   // When the preferences were last updated
   updatedAt?: number;
 }
@@ -312,4 +319,40 @@ export function formatPreferencesDisplay(): string {
 export function getCoAuthorPreference(): boolean {
   const prefs = loadPreferences();
   return prefs.includeCoAuthoredBy !== false;
+}
+
+/** `shell.zen.v1` — missing/invalid values are OFF. */
+export function isZenShellEnabled(): boolean {
+  return loadPreferences().zenShellEnabled === true;
+}
+
+export function getZenShellMaterialPreference(): 'system' | 'glass' | 'opaque' {
+  const value = loadPreferences().zenShellMaterialPreference;
+  if (value === 'system' || value === 'glass' || value === 'opaque') return value;
+  return 'system';
+}
+
+/**
+ * Persist Zen Shell enablement and/or material preference.
+ * Idempotent when values are unchanged (does not bump `updatedAt`).
+ */
+export function setZenShellPreference(patch: {
+  enabled?: boolean;
+  materialPreference?: 'system' | 'glass' | 'opaque';
+}): { enabled: boolean; materialPreference: 'system' | 'glass' | 'opaque' } {
+  const current = loadPreferences();
+  const enabled = patch.enabled !== undefined ? patch.enabled === true : current.zenShellEnabled === true;
+  const materialPreference =
+    patch.materialPreference === 'system' || patch.materialPreference === 'glass' || patch.materialPreference === 'opaque'
+      ? patch.materialPreference
+      : getZenShellMaterialPreference();
+  if (current.zenShellEnabled === enabled && current.zenShellMaterialPreference === materialPreference) {
+    return { enabled, materialPreference };
+  }
+  savePreferences({
+    ...current,
+    zenShellEnabled: enabled,
+    zenShellMaterialPreference: materialPreference,
+  });
+  return { enabled, materialPreference };
 }
