@@ -20,6 +20,7 @@ export interface CalendarAccount {
 }
 
 export interface CalendarEvent {
+  /** Remote event id within one account+calendar. Not globally unique. */
   id: string
   accountId: string
   calendarId: string
@@ -31,6 +32,8 @@ export interface CalendarEvent {
   recurrence?: string
   deleted: boolean
   etag?: string
+  /** Local unsynced edits. Remote-only etag changes are not conflicts. */
+  localDirty?: boolean
   kind: 'event'
 }
 
@@ -62,6 +65,7 @@ export interface SyncJournal {
   accountId: string
   cursor?: string
   lastSyncAt?: number
+  lastSyncedRevision?: string
   conflicts: SyncConflict[]
 }
 
@@ -81,6 +85,8 @@ export type MergedTodayItem =
 
 export interface CalendarBundle {
   version: number
+  /** Persisted mint counter so fromJson does not collide with existing ids. */
+  idSeq?: number
   accounts: CalendarAccount[]
   events: CalendarEvent[]
   journals: SyncJournal[]
@@ -91,4 +97,18 @@ export const CALENDAR_BUNDLE_VERSION = 1
 
 export function emptyCalendarBundle(): CalendarBundle {
   return { version: CALENDAR_BUNDLE_VERSION, accounts: [], events: [], journals: [], proposals: [] }
+}
+
+/** Account-scoped event identity. Remote ids collide across accounts. */
+export function calendarEventIdentity(
+  event: Pick<CalendarEvent, 'accountId' | 'calendarId' | 'id'>,
+): string {
+  return `${event.accountId}/${event.calendarId}/${event.id}`
+}
+
+export function sameCalendarEvent(
+  a: Pick<CalendarEvent, 'accountId' | 'calendarId' | 'id'>,
+  b: Pick<CalendarEvent, 'accountId' | 'calendarId' | 'id'>,
+): boolean {
+  return calendarEventIdentity(a) === calendarEventIdentity(b)
 }

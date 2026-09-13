@@ -90,16 +90,72 @@ describe('calendar connectors (issue 18)', () => {
     expect(store.events().every((event) => event.kind === 'event')).toBe(true)
   })
 
-  it('records incremental sync conflicts for the UI', async () => {
+  it('records incremental sync conflicts only when the local event is dirty', async () => {
     const store = new CalendarStore()
     const account = store.connect('mailru', 'Mail', 'UTC')
     store.markConnected(account.id)
     const first = new FixtureCalendarAdapter('mailru', [{ id: 'e1', title: 'A', startAt: morning, endAt: morning + 1000, etag: '1' }])
     await store.sync(account.id, first, morning)
+    store.markLocalDirty(account.id, 'e1')
     const second = new FixtureCalendarAdapter('mailru', [{ id: 'e1', title: 'A2', startAt: morning, endAt: morning + 1000, etag: '2' }])
     await store.sync(account.id, second, morning + 1000)
     expect(store.conflicts().some((conflict) => conflict.kind === 'update')).toBe(true)
     expect(store.uiStatus('UTC')).toBe('conflict')
+    expect(store.events().find((event) => event.id === 'e1')?.title).toBe('A')
+  })
+
+  it('keeps same remote event ids from two accounts and delete is scoped', async () => {
+    const store = new CalendarStore()
+    const work = store.connect('google', 'Work', 'UTC')
+    const home = store.connect('google', 'Home', 'UTC')
+    store.markConnected(work.id)
+    store.markConnected(home.id)
+    await store.sync(work.id, new FixtureCalendarAdapter('google', [{ id: 'shared', title: 'Work copy', startAt: morning, endAt: morning + 1000, etag: 'w1' }]), morning)
+    await store.sync(home.id, new FixtureCalendarAdapter('google', [{ id: 'shared', title: 'Home copy', startAt: morning, endAt: morning + 2000, etag: 'h1' }]), morning)
+    expect(store.events()).toHaveLength(2)
+    expect(store.events().map((event) => event.title).sort()).toEqual(['Home copy', 'Work copy'])
+    await store.sync(work.id, new FixtureCalendarAdapter('google', [{ id: 'shared', title: 'Work copy', startAt: morning, endAt: morning + 1000, etag: 'w1', deleted: true }]), morning + 1)
+    expect(store.events()).toHaveLength(1)
+    expect(store.events()[0]?.accountId).toBe(home.id)
+    expect(store.events()[0]?.title).toBe('Home copy')
+  })
+
+  it('applies remote-only etag updates without a false conflict', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{ id: 'e1', title: 'A', startAt: morning, endAt: morning + 1000, etag: '1' }]), morning)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{ id: 'e1', title: 'A2', startAt: morning, endAt: morning + 1000, etag: '2' }]), morning + 1)
+    expect(store.conflicts()).toHaveLength(0)
+    expect(store.events()[0]?.title).toBe('A2')
+    expect(store.events()[0]?.etag).toBe('2')
+  })
+
+  it('restores mint seq fromJson so later creates do not collide', () => {
+    const store = new CalendarStore()
+    store.connect('google', 'Work', 'UTC')
+    store.addLocalReminder('Keep', morning)
+    const restored = CalendarStore.fromJson(store.exportJson())
+    const next = restored.connect('outlook', 'Mail', 'UTC')
+    const reminder = restored.addLocalReminder('Later', morning)
+    const ids = [...restored.accounts().map((account) => account.id), reminder.id]
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(next.id).not.toBe(store.accounts()[0]?.id)
+  })
+
+  it('does not apply a delayed fetch after revoke', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('outlook', 'Mail', 'UTC')
+    store.markConnected(account.id)
+    const adapter = new FixtureCalendarAdapter('outlook', [{ id: 'late', title: 'Too late', startAt: morning, endAt: morning + 1000 }])
+    const original = adapter.listEvents.bind(adapter)
+    adapter.listEvents = async (accountId, cursor) => {
+      store.revoke(account.id)
+      return original(accountId, cursor)
+    }
+    await store.sync(account.id, adapter, morning)
+    expect(store.events()).toHaveLength(0)
+    expect(store.accounts()[0]?.status).toBe('revoked')
   })
 
   it('flags timezone mismatch as a visible warning', async () => {

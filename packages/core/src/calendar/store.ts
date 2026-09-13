@@ -1,16 +1,27 @@
-import { emptyCalendarBundle, type CalendarAccount, type CalendarBundle, type CalendarEvent, type CalendarProvider, type CalendarUiStatus, type ReminderProposal, type TaskLike } from './types.ts'
+import { emptyCalendarBundle, sameCalendarEvent, type CalendarAccount, type CalendarBundle, type CalendarEvent, type CalendarProvider, type CalendarUiStatus, type ReminderProposal, type TaskLike } from './types.ts'
 import { createProductionAdapter, type CalendarAdapter } from './adapters.ts'
 import { capabilityFor } from './capabilities.ts'
 import { timezoneWarnings } from './merge.ts'
 
-let seq = 0
-function mint(prefix: string): string {
-  seq += 1
-  return `${prefix}-${seq.toString(16)}`
+function seqFromId(id: string): number {
+  const match = /-([0-9a-f]+)$/i.exec(id)
+  if (!match?.[1]) return 0
+  const value = Number.parseInt(match[1], 16)
+  return Number.isFinite(value) ? value : 0
+}
+
+function restoreSeq(bundle: CalendarBundle): number {
+  let max = bundle.idSeq ?? 0
+  for (const account of bundle.accounts) max = Math.max(max, seqFromId(account.id))
+  for (const proposal of bundle.proposals) max = Math.max(max, seqFromId(proposal.id))
+  for (const journal of bundle.journals) {
+    for (const conflict of journal.conflicts) max = Math.max(max, seqFromId(conflict.id))
+  }
+  return max
 }
 
 export function resetCalendarIds(): void {
-  seq = 0
+  // Per-store seq is restored from persisted ids. Kept for test isolation of older callers.
 }
 
 export function credentialRefFor(provider: CalendarProvider, accountId: string): string {
@@ -19,14 +30,18 @@ export function credentialRefFor(provider: CalendarProvider, accountId: string):
 
 export class CalendarStore {
   private bundle: CalendarBundle
+  private seq: number
 
   constructor(bundle: CalendarBundle = emptyCalendarBundle()) {
     this.bundle = structuredClone(bundle)
     this.bundle.version = 1
+    this.seq = restoreSeq(this.bundle)
   }
 
   snapshot(): CalendarBundle {
-    return structuredClone(this.bundle)
+    const copy = structuredClone(this.bundle)
+    copy.idSeq = this.seq
+    return copy
   }
 
   exportJson(): string {
@@ -37,6 +52,7 @@ export class CalendarStore {
     const parsed = JSON.parse(raw) as Partial<CalendarBundle>
     return new CalendarStore({
       version: 1,
+      idSeq: typeof parsed.idSeq === 'number' ? parsed.idSeq : 0,
       accounts: Array.isArray(parsed.accounts) ? parsed.accounts : [],
       events: Array.isArray(parsed.events) ? parsed.events : [],
       journals: Array.isArray(parsed.journals) ? parsed.journals : [],
@@ -64,7 +80,7 @@ export class CalendarStore {
     if (provider === 'appleReminders' && !createProductionAdapter(provider).available()) {
       throw new Error('Apple Reminders requires a privileged macOS helper')
     }
-    const id = mint('cal')
+    const id = this.mint('cal')
     const account: CalendarAccount = {
       id,
       provider,
@@ -92,6 +108,15 @@ export class CalendarStore {
     return account
   }
 
+  markLocalDirty(accountId: string, remoteEventId: string): CalendarEvent {
+    const event = this.bundle.events.find(
+      (item) => item.accountId === accountId && item.id === remoteEventId && !item.deleted,
+    )
+    if (!event) throw new Error(`Unknown event ${remoteEventId}`)
+    event.localDirty = true
+    return event
+  }
+
   async sync(accountId: string, adapter: CalendarAdapter, now = Date.now()): Promise<void> {
     const account = this.requireAccount(accountId)
     if (account.status === 'revoked') return
@@ -99,28 +124,46 @@ export class CalendarStore {
     const journal = this.bundle.journals.find((item) => item.accountId === accountId)
     if (!journal) return
     const page = await adapter.listEvents(accountId, journal.cursor)
+    if (this.requireAccount(accountId).status !== 'connected') return
     for (const incoming of page.events) {
-      const existing = this.bundle.events.find((event) => event.id === incoming.id)
-      if (existing && existing.etag && incoming.etag && existing.etag !== incoming.etag && !incoming.deleted) {
-        journal.conflicts.push({ id: mint('conf'), kind: 'update', eventId: incoming.id })
+      const scoped: CalendarEvent = {
+        ...incoming,
+        accountId,
+        calendarId: incoming.calendarId || 'primary',
       }
+      const existing = this.bundle.events.find((event) => sameCalendarEvent(event, scoped))
       if (existing && incoming.deleted) {
-        journal.conflicts.push({ id: mint('conf'), kind: 'delete', eventId: incoming.id })
-        existing.deleted = true
+        if (existing.localDirty) {
+          journal.conflicts.push({ id: this.mint('conf'), kind: 'delete', eventId: incoming.id })
+        } else {
+          existing.deleted = true
+          existing.localDirty = false
+        }
         continue
       }
-      if (existing) Object.assign(existing, incoming)
-      else this.bundle.events.push(incoming)
+      if (existing && existing.localDirty && existing.etag && incoming.etag && existing.etag !== incoming.etag && !incoming.deleted) {
+        journal.conflicts.push({ id: this.mint('conf'), kind: 'update', eventId: incoming.id })
+        continue
+      }
+      if (existing) {
+        Object.assign(existing, scoped)
+        existing.localDirty = false
+      } else {
+        this.bundle.events.push({ ...scoped, localDirty: false })
+      }
     }
     journal.cursor = page.cursor
     journal.lastSyncAt = now
+    journal.lastSyncedRevision = page.cursor
   }
 
-  proposeReminder(eventId: string): ReminderProposal {
-    const event = this.bundle.events.find((item) => item.id === eventId)
+  proposeReminder(eventId: string, accountId?: string): ReminderProposal {
+    const event = this.bundle.events.find((item) =>
+      item.id === eventId && (accountId == null || item.accountId === accountId),
+    )
     if (!event) throw new Error(`Unknown event ${eventId}`)
     const proposal: ReminderProposal = {
-      id: mint('prop'),
+      id: this.mint('prop'),
       title: event.title,
       dueAt: event.startAt,
       sourceEventId: event.id,
@@ -136,7 +179,7 @@ export class CalendarStore {
     const trimmed = title.trim()
     if (!trimmed) throw new Error('Reminder title is required')
     const proposal: ReminderProposal = {
-      id: mint('prop'),
+      id: this.mint('prop'),
       title: trimmed,
       dueAt,
       accepted: false,
@@ -181,6 +224,12 @@ export class CalendarStore {
   /** Revoke must not mutate caller task lists. */
   revokeLeavesTasks(tasks: readonly TaskLike[]): TaskLike[] {
     return tasks.map((task) => ({ ...task }))
+  }
+
+  private mint(prefix: string): string {
+    this.seq += 1
+    this.bundle.idSeq = this.seq
+    return `${prefix}-${this.seq.toString(16)}`
   }
 
   private requireAccount(id: string): CalendarAccount {
