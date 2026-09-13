@@ -999,6 +999,7 @@
   "editor.italic": "Cursiva",
   "editor.math": "Matemáticas",
   "editor.noLanguagesFound": "No se encontraron lenguajes",
+  "editor.placeholder": "Escribe algo...",
   "editor.searchLanguages": "Buscar lenguajes...",
   "editor.strikethrough": "Tachado",
   "entityList.collapse": "Contraer",

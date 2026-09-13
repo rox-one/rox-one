@@ -999,6 +999,7 @@
   "editor.italic": "مائل",
   "editor.math": "رياضيات",
   "editor.noLanguagesFound": "لم يُعثر على لغات",
+  "editor.placeholder": "اكتب شيئًا...",
   "editor.searchLanguages": "البحث عن لغات...",
   "editor.strikethrough": "يتوسطه خط",
   "entityList.collapse": "Collapse",
