@@ -166,6 +166,31 @@ describe('upgradePromptCacheTtl', () => {
     writeExtendedCache(false);
   }
 
+  it('upgrades ttl when extendedPromptCache is omitted (default on)', () => {
+    mkdirSync(dirname(configFile), { recursive: true });
+    const existing = originalConfig ? JSON.parse(originalConfig) as Record<string, unknown> : {};
+    const { extendedPromptCache: _omit, ...rest } = existing;
+    writeFileSync(configFile, JSON.stringify(rest));
+    _resetConfigCacheForTesting();
+
+    const body = {
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: 'hello', cache_control: { type: 'ephemeral' } },
+        ],
+      }],
+    };
+
+    const result = upgradePromptCacheTtl(body);
+
+    expect(result).toBe(1);
+    expect((body.messages[0]!.content as Array<{ cache_control: unknown }>)[0]!.cache_control).toEqual({
+      type: 'ephemeral',
+      ttl: '1h',
+    });
+  });
+
   it('leaves blocks without ttl untouched when disabled', () => {
     disableExtendedCache();
     const body = {

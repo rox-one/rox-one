@@ -15,10 +15,19 @@ import {
   resolveContrast,
   type ContrastMode,
 } from './contrast-mode'
+import {
+  normalizeChatFont,
+  normalizeTerminalFont,
+  normalizeUiFont,
+  resolveStoredUiFont,
+  type ChatFontFamily,
+  type TerminalFontFamily,
+  type UiFontFamily,
+} from './font-preferences'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
-export type FontFamily = 'inter' | 'system'
-export type { ContrastMode }
+export type FontFamily = UiFontFamily
+export type { ChatFontFamily, ContrastMode, TerminalFontFamily }
 
 interface ThemeContextType {
   // Preferences (persisted at app level)
@@ -26,11 +35,15 @@ interface ThemeContextType {
   /** App-level default color theme (used when workspace has no override) */
   colorTheme: string
   font: FontFamily
+  chatFont: ChatFontFamily
+  terminalFont: TerminalFontFamily
   contrast: ContrastMode
   setMode: (mode: ThemeMode) => void
   /** Set app-level default color theme */
   setColorTheme: (theme: string) => void
   setFont: (font: FontFamily) => void
+  setChatFont: (font: ChatFontFamily) => void
+  setTerminalFont: (font: TerminalFontFamily) => void
   setContrast: (contrast: ContrastMode) => void
   /** Resolved high/standard contrast after system preference */
   resolvedContrast: 'normal' | 'high'
@@ -78,6 +91,8 @@ interface StoredTheme {
   mode: ThemeMode
   colorTheme: string
   font?: FontFamily
+  chatFont?: ChatFontFamily
+  terminalFont?: TerminalFontFamily
   contrast?: ContrastMode
   /** True when user explicitly changed theme in UI (not auto-saved on startup) */
   isUserOverride?: boolean
@@ -131,7 +146,7 @@ export function ThemeProvider({
   children,
   defaultMode = 'dark',
   defaultColorTheme = 'pierre',
-  defaultFont = 'system',
+  defaultFont = 'rox',
   activeWorkspaceId = null
 }: ThemeProviderProps) {
   const stored = loadStoredTheme()
@@ -145,7 +160,11 @@ export function ThemeProvider({
     }
     return defaultColorTheme // Will be updated by config.json effect
   })
-  const [font, setFontState] = useState<FontFamily>(stored?.font ?? defaultFont)
+  const [font, setFontState] = useState<FontFamily>(resolveStoredUiFont(stored, defaultFont))
+  const [chatFont, setChatFontState] = useState<ChatFontFamily>(normalizeChatFont(stored?.chatFont, defaultFont))
+  const [terminalFont, setTerminalFontState] = useState<TerminalFontFamily>(
+    normalizeTerminalFont(stored?.terminalFont),
+  )
   const [contrast, setContrastState] = useState<ContrastMode>(storedContrast(stored))
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
   const [systemPrefersMoreContrast, setSystemPrefersMoreContrast] = useState(prefersMoreContrast)
@@ -305,12 +324,10 @@ export function ThemeProvider({
   useLayoutEffect(() => {
     const root = document.documentElement
 
-    // Apply font
-    if (font === 'inter') {
-      root.dataset.font = 'inter'
-    } else {
-      delete root.dataset.font
-    }
+    // Apply font roles. Rox and system share the SF-first stack; Inter is explicit.
+    root.dataset.font = font
+    root.dataset.chatFont = chatFont
+    root.dataset.terminalFont = terminalFont
 
     // Apply color theme data attribute
     if (effectiveColorTheme && effectiveColorTheme !== 'default') {
@@ -322,7 +339,7 @@ export function ThemeProvider({
     // Always set theme override for semi-transparent background (vibrancy effect)
     root.dataset.themeOverride = 'true'
     root.dataset.contrast = resolvedContrast
-  }, [effectiveColorTheme, font, resolvedContrast])
+  }, [effectiveColorTheme, font, chatFont, terminalFont, resolvedContrast])
 
   // Apply dark/light class and theme-specific DOM attributes
   // This runs when preset loads or mode changes
@@ -443,12 +460,15 @@ export function ThemeProvider({
       const nextContrast = isContrastMode(preferences.contrast) ? preferences.contrast : storedContrast(loadStoredTheme())
       setModeState(preferences.mode as ThemeMode)
       setColorThemeState(preferences.colorTheme)
-      setFontState(preferences.font as FontFamily)
+      setFontState(normalizeUiFont(preferences.font))
       setContrastState(nextContrast)
+      const existingStored = loadStoredTheme()
       saveTheme({
         mode: preferences.mode as ThemeMode,
         colorTheme: preferences.colorTheme,
-        font: preferences.font as FontFamily,
+        font: normalizeUiFont(preferences.font),
+        chatFont: existingStored?.chatFont,
+        terminalFont: existingStored?.terminalFont,
         contrast: nextContrast,
         isUserOverride: true
       })
@@ -464,37 +484,100 @@ export function ThemeProvider({
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode)
     const existing = loadStoredTheme()
-    saveTheme({ mode: newMode, colorTheme, font, contrast, isUserOverride: existing?.isUserOverride })
+    saveTheme({
+      mode: newMode,
+      colorTheme,
+      font,
+      chatFont,
+      terminalFont,
+      contrast,
+      isUserOverride: existing?.isUserOverride,
+    })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
       window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font, contrast })
     }
-  }, [colorTheme, font, contrast])
+  }, [colorTheme, font, chatFont, terminalFont, contrast])
 
   const setColorTheme = useCallback((newTheme: string) => {
     setColorThemeState(newTheme)
-    saveTheme({ mode, colorTheme: newTheme, font, contrast, isUserOverride: true })
+    saveTheme({
+      mode,
+      colorTheme: newTheme,
+      font,
+      chatFont,
+      terminalFont,
+      contrast,
+      isUserOverride: true,
+    })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
       window.electronAPI.broadcastThemePreferences({ mode, colorTheme: newTheme, font, contrast })
     }
-  }, [mode, font, contrast])
+  }, [mode, font, chatFont, terminalFont, contrast])
 
   const setFont = useCallback((newFont: FontFamily) => {
-    setFontState(newFont)
+    const next = normalizeUiFont(newFont)
+    setFontState(next)
     const existing = loadStoredTheme()
-    saveTheme({ mode, colorTheme, font: newFont, contrast, isUserOverride: existing?.isUserOverride })
+    saveTheme({
+      mode,
+      colorTheme,
+      font: next,
+      chatFont,
+      terminalFont,
+      contrast,
+      isUserOverride: existing?.isUserOverride,
+    })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font: newFont, contrast })
+      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font: next, contrast })
     }
-  }, [mode, colorTheme, contrast])
+  }, [mode, colorTheme, chatFont, terminalFont, contrast])
+
+  const setChatFont = useCallback((newFont: ChatFontFamily) => {
+    const next = normalizeChatFont(newFont)
+    setChatFontState(next)
+    const existing = loadStoredTheme()
+    saveTheme({
+      mode,
+      colorTheme,
+      font,
+      chatFont: next,
+      terminalFont,
+      contrast,
+      isUserOverride: existing?.isUserOverride,
+    })
+  }, [mode, colorTheme, font, terminalFont, contrast])
+
+  const setTerminalFont = useCallback((newFont: TerminalFontFamily) => {
+    const next = normalizeTerminalFont(newFont)
+    setTerminalFontState(next)
+    const existing = loadStoredTheme()
+    saveTheme({
+      mode,
+      colorTheme,
+      font,
+      chatFont,
+      terminalFont: next,
+      contrast,
+      isUserOverride: existing?.isUserOverride,
+    })
+  }, [mode, colorTheme, font, chatFont, contrast])
 
   const setContrast = useCallback((newContrast: ContrastMode) => {
     setContrastState(newContrast)
     const existing = loadStoredTheme()
-    saveTheme({ mode, colorTheme, font, contrast: newContrast, isUserOverride: existing?.isUserOverride })
+    saveTheme({
+      mode,
+      colorTheme,
+      font,
+      chatFont,
+      terminalFont,
+      contrast: newContrast,
+      isUserOverride: existing?.isUserOverride,
+    })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
       window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font, contrast: newContrast })
     }
-  }, [mode, colorTheme, font])
+  }, [mode, colorTheme, font, chatFont, terminalFont])
 
   // Set workspace-specific color theme override
   const setWorkspaceColorTheme = useCallback((newTheme: string | null) => {
@@ -526,10 +609,14 @@ export function ThemeProvider({
         mode,
         colorTheme,
         font,
+        chatFont,
+        terminalFont,
         contrast,
         setMode,
         setColorTheme,
         setFont,
+        setChatFont,
+        setTerminalFont,
         setContrast,
         resolvedContrast,
 

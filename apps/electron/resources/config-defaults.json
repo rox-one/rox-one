@@ -10,7 +10,7 @@
     "keepAwakeWhileRunning": false,
     "richToolDescriptions": true,
     "defaultZoomLevel": 90,
-    "extendedPromptCache": false,
+    "extendedPromptCache": true,
     "browserToolEnabled": true,
     "allowRemoteEvaluate": true
   },

@@ -206,7 +206,7 @@ export function ShikiDiffViewer({
       )}
       style={{
         backgroundColor,
-        fontFamily: '"JetBrains Mono", monospace',
+        fontFamily: 'var(--font-mono)',
         fontSize: 13,
         lineHeight: 1.6,
       }}

@@ -1149,6 +1149,7 @@ export interface ElectronAPI {
   applyCredentialMigration(): Promise<CredentialMigrationResult<CredentialMigrationApplyDto>>
   getCredentialMigrationStatus(): Promise<CredentialMigrationResult<CredentialMigrationStatusDto>>
   rollbackCredentialMigration(migrationId: string): Promise<CredentialMigrationResult<CredentialMigrationRollbackDto>>
+  fabricInfisicalHealth(): Promise<{ available: boolean; providerId?: string }>
 
   // Identity Center (S-07)
   identityGetState(args?: { workspaceId?: string }): Promise<IdentityState>

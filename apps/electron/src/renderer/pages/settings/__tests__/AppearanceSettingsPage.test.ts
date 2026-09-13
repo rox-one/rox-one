@@ -24,4 +24,14 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(source).toContain('settings.appearance.contrastHigh')
     expect(source).toContain('setContrast')
   })
+
+  it('exposes independent UI, chat, and terminal font controls', () => {
+    expect(source).toContain('settings.appearance.fontUi')
+    expect(source).toContain('settings.appearance.fontChat')
+    expect(source).toContain('settings.appearance.fontTerminal')
+    expect(source).toContain('settings.appearance.fontRox')
+    expect(source).toContain('settings.appearance.fontJetbrains')
+    expect(source).toContain('setChatFont')
+    expect(source).toContain('setTerminalFont')
+  })
 })

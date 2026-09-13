@@ -733,9 +733,9 @@ export default function AiSettingsPage() {
 
   // Default settings state (app-level)
   const [defaultThinking, setDefaultThinking] = useState<ThinkingLevel>(DEFAULT_THINKING_LEVEL)
-  const [extendedPromptCache, setExtendedPromptCache] = useState(false)
+  const [extendedPromptCache, setExtendedPromptCache] = useState(true)
   const [enable1MContext, setEnable1MContext] = useState(false)
-  const [rtkEnabled, setRtkEnabled] = useState(false)
+  const [rtkEnabled, setRtkEnabled] = useState(true)
   const [rtkStatus, setRtkStatus] = useState<{ installed: boolean; path: string | null; version: string | null } | null>(null)
   const [rtkRechecking, setRtkRechecking] = useState(false)
   const [rtkGain, setRtkGain] = useState<{ totalCommands: number; totalInput: number; totalOutput: number; totalSaved: number; avgSavingsPct: number; totalTimeMs: number; avgTimeMs: number } | null>(null)

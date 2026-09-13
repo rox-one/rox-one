@@ -125,6 +125,10 @@ export default function AppearanceSettingsPage() {
     setColorTheme,
     font,
     setFont,
+    chatFont,
+    setChatFont,
+    terminalFont,
+    setTerminalFont,
     contrast,
     setContrast,
     activeWorkspaceId,
@@ -485,12 +489,44 @@ export default function AppearanceSettingsPage() {
                       options={themeOptions}
                     />
                   </SettingsRow>
-                  <SettingsRow label={t("settings.appearance.font")}>
+                  <SettingsRow
+                    label={t("settings.appearance.fontUi")}
+                    description={t("settings.appearance.fontUiDesc")}
+                  >
                     <SettingsSegmentedControl
                       value={font}
-                      onValueChange={setFont}
+                      onValueChange={(value) => setFont(value as typeof font)}
                       options={[
+                        { value: 'rox', label: t("settings.appearance.fontRox") },
                         { value: 'inter', label: t("settings.appearance.fontInter") },
+                        { value: 'system', label: t("settings.appearance.fontSystem") },
+                      ]}
+                    />
+                  </SettingsRow>
+                  <SettingsRow
+                    label={t("settings.appearance.fontChat")}
+                    description={t("settings.appearance.fontChatDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={chatFont}
+                      onValueChange={(value) => setChatFont(value as typeof chatFont)}
+                      options={[
+                        { value: 'rox', label: t("settings.appearance.fontRox") },
+                        { value: 'inter', label: t("settings.appearance.fontInter") },
+                        { value: 'system', label: t("settings.appearance.fontSystem") },
+                      ]}
+                    />
+                  </SettingsRow>
+                  <SettingsRow
+                    label={t("settings.appearance.fontTerminal")}
+                    description={t("settings.appearance.fontTerminalDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={terminalFont}
+                      onValueChange={(value) => setTerminalFont(value as typeof terminalFont)}
+                      options={[
+                        { value: 'rox', label: t("settings.appearance.fontRox") },
+                        { value: 'jetbrains', label: t("settings.appearance.fontJetbrains") },
                         { value: 'system', label: t("settings.appearance.fontSystem") },
                       ]}
                     />

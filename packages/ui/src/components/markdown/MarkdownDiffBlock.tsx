@@ -116,7 +116,7 @@ export function MarkdownDiffBlock({ code, className }: MarkdownDiffBlockProps) {
           className,
         )}
         style={{
-          fontFamily: '"JetBrains Mono", monospace',
+          fontFamily: 'var(--font-mono)',
           fontSize: 13,
           lineHeight: 1.6,
         }}
