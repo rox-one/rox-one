@@ -68,3 +68,12 @@ export {
   type Rox2SnapshotPolicy,
   type SurfaceContextInput,
 } from './surface-context.ts'
+export {
+  createNotesRepository,
+  nativeNoteRecord,
+  type NoteOrigin,
+  type NoteReadResult,
+  type NoteSyncState,
+  type NotesRepository,
+  type Rox2NoteRecord,
+} from './notes-repository.ts'
