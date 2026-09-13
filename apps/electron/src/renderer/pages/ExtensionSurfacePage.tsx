@@ -156,7 +156,7 @@ export default function ExtensionSurfacePage({
     return (
       <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
         <p className="text-sm">
-          {t('extensions.surface.error', { defaultValue: 'Failed to open extension surface' })}
+          {t('extensions.surface.error')}
         </p>
       </div>
     )
@@ -166,7 +166,7 @@ export default function ExtensionSurfacePage({
     return (
       <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
         <p className="text-sm">
-          {t('extensions.surface.removed', { defaultValue: 'Extension surface closed' })}
+          {t('extensions.surface.removed')}
         </p>
       </div>
     )
@@ -176,7 +176,7 @@ export default function ExtensionSurfacePage({
     return (
       <div className="flex items-center justify-center h-full w-full bg-background text-muted-foreground">
         <p className="text-sm">
-          {t('extensions.surface.loading', { defaultValue: 'Loading extension surface…' })}
+          {t('extensions.surface.loading')}
         </p>
       </div>
     )
@@ -186,9 +186,7 @@ export default function ExtensionSurfacePage({
     return (
       <div className="flex h-full w-full flex-col bg-background">
         <div className="border-b border-border px-3 py-2 text-xs text-muted-foreground">
-          {t('extensions.surface.loadUrlHint', {
-            defaultValue: 'No URL configured for this extension view. Pass a URL to load sandboxed UI.',
-          })}
+          {t('extensions.surface.loadUrlHint')}
         </div>
         <div className="relative min-h-0 flex-1">{fullSurface}</div>
       </div>

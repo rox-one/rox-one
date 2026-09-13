@@ -467,9 +467,7 @@ export function MainContentPanel({
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
           <p className="text-sm">
-            {t('extensions.surface.noViewSelected', {
-              defaultValue: 'Select an extension view to open',
-            })}
+            {t('extensions.surface.noViewSelected')}
           </p>
         </div>
       </Panel>
