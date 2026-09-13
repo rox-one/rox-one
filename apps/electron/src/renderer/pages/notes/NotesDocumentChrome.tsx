@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import {
   NOTES_RAIL_STORAGE_KEY,
+  groupNoteCommands,
   matchNoteCommands,
   noteBreadcrumbs,
+  noteCommandGroupKey,
+  noteCommandLabelKey,
   parseNotesRailLayout,
   serializeNotesRailLayout,
   type NoteCommandItem,
@@ -113,28 +116,35 @@ export function NotesRailSash({
 export function NotesCommandPalette({
   query,
   items,
+  activeIndex,
   onSelect,
   onClose,
 }: {
   query: string
   items: readonly NoteCommandItem[]
+  activeIndex?: number
   onSelect: (item: NoteCommandItem) => void
   onClose: () => void
 }) {
   const { t } = useTranslation()
   const matches = matchNoteCommands(query, items)
+  const groups = groupNoteCommands(matches)
+  const flat = groups.flatMap((group) => group.items)
   const [index, setIndex] = React.useState(0)
   React.useEffect(() => setIndex(0), [query])
-  if (matches.length === 0) return null
+  const selected = activeIndex ?? index
+  if (flat.length === 0) return null
+  let offset = 0
   return (
     <div
-      className="absolute z-30 w-80 rounded-[8px] border border-border/70 bg-popover p-1 shadow-strong"
+      className="notes-authoring-palette absolute z-30 w-80 rounded-[8px] border border-foreground/35 bg-popover p-1 shadow-strong"
       role="listbox"
-      aria-label={t('notes.command.title')}
+      aria-label={t('notes.palette.title')}
+      data-testid="notes-command-palette"
       onKeyDown={(event) => {
         if (event.key === 'ArrowDown') {
           event.preventDefault()
-          setIndex((value) => Math.min(value + 1, matches.length - 1))
+          setIndex((value) => Math.min(value + 1, flat.length - 1))
         }
         if (event.key === 'ArrowUp') {
           event.preventDefault()
@@ -142,7 +152,7 @@ export function NotesCommandPalette({
         }
         if (event.key === 'Enter') {
           event.preventDefault()
-          const item = matches[index]
+          const item = flat[selected]
           if (item) onSelect(item)
         }
         if (event.key === 'Escape') {
@@ -151,20 +161,38 @@ export function NotesCommandPalette({
         }
       }}
     >
-      {matches.map((item, itemIndex) => (
-        <button
-          key={item.id}
-          type="button"
-          className={cn(
-            'flex w-full items-center justify-between rounded-[5px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
-            itemIndex === index && 'bg-foreground/[0.08]',
-          )}
-          onClick={() => onSelect(item)}
-        >
-          <span className="truncate">{item.label}</span>
-          <span className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground">{item.insert}</span>
-        </button>
-      ))}
+      {groups.map((group) => {
+        const start = offset
+        offset += group.items.length
+        return (
+          <div key={group.subject} data-testid={`notes-command-group-${group.subject}`}>
+            <div className="px-2 py-1 text-[10px] font-medium uppercase tracking-wider text-foreground/70">
+              {t(noteCommandGroupKey(group.subject))}
+            </div>
+            {group.items.map((item, itemIndex) => {
+              const flatIndex = start + itemIndex
+              const labelKey = noteCommandLabelKey(item)
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-[5px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+                    flatIndex === selected && 'bg-foreground/[0.10] text-foreground',
+                  )}
+                  onClick={() => onSelect(item)}
+                >
+                  <span className="truncate">{labelKey ? t(labelKey) : item.label}</span>
+                  <span className="ml-2 shrink-0 font-mono text-[10px] text-muted-foreground">{item.insert}</span>
+                </button>
+              )
+            })}
+          </div>
+        )
+      })}
+      <div className="border-t border-foreground/20 px-2 py-1 text-[10px] text-foreground/70">
+        {t('notes.palette.hint')}
+      </div>
     </div>
   )
 }

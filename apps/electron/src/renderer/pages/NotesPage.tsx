@@ -37,10 +37,19 @@ import {
   applyPersistentFolds,
   defaultNoteCommands,
   extractComments,
+  matchNoteCommands,
+  noteColumnKeyboardAction,
+  noteCommentKeyboardAction,
+  notePaletteKeyAction,
   notesFoldStorageKey,
   parsePersistedFolds,
+  peopleAndEntitiesFromInsights,
+  resizeColumnsAt,
   sanitizePastedMarkdown,
   serializePersistedFolds,
+  snippetForColumnCommand,
+  THREE_COLUMN_SNIPPET,
+  TWO_COLUMN_SNIPPET,
   upsertMarkdownComment,
 } from './notes/document-ia'
 import {
@@ -617,6 +626,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [railLayout, setRailLayout] = useNotesRailLayout()
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
+  const [commandIndex, setCommandIndex] = React.useState(0)
   const saveTimerRef = React.useRef<number | null>(null)
   const saveQueueRef = React.useRef<Promise<boolean>>(Promise.resolve(true))
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
@@ -1616,15 +1626,37 @@ h1,h2,h3{margin-top:1.5em}
       id: session.id,
       title: session.name || session.preview || session.id,
     }))
+    const refs = peopleAndEntitiesFromInsights(
+      noteInsights.entities,
+      notes.map((note) => note.properties ?? {}),
+    )
     return defaultNoteCommands({
       sessions,
       agents: [{ id: 'rox', label: 'Rox' }],
       projects: projects.slice(0, 20).map((project) => ({ id: project.id, name: project.name || project.slug || project.id })),
       tasks: allTasks.slice(0, 20).map((task) => ({ id: `${task.noteId}:${task.line}`, text: task.text })),
-      people: [],
-      entities: notes.slice(0, 20).map((note) => ({ id: note.id, name: note.title })),
+      people: refs.people.slice(0, 20),
+      entities: refs.entities.slice(0, 20),
     })
-  }, [allTasks, notes, projects, sessionMetaMap])
+  }, [allTasks, noteInsights.entities, notes, projects, sessionMetaMap])
+
+  const commandMatches = React.useMemo(
+    () => (commandQuery ? matchNoteCommands(commandQuery, commandCatalog) : []),
+    [commandCatalog, commandQuery],
+  )
+  React.useEffect(() => setCommandIndex(0), [commandQuery])
+
+  const applyCommandItem = React.useCallback((item: (typeof commandCatalog)[number]) => {
+    const editor = richEditorRef.current
+    if (!editor || !commandQuery) return
+    const to = editor.state.selection.from
+    const from = Math.max(0, to - commandQuery.length)
+    const snippet = snippetForColumnCommand(item.id)
+    editor.chain().focus().deleteRange({ from, to }).insertContent(snippet ?? item.insert).run()
+    setCommandQuery(null)
+    if (item.subject === 'action' && item.id === 'bang:ask-agent') void handleAskAgent('summarize')
+    if (item.subject === 'session') navigate(routes.view.allSessions(item.insert.replace('@session:', '')))
+  }, [commandQuery])
 
   const wikiMenu = showWikiMenu ? (
     <div
@@ -2003,6 +2035,30 @@ h1,h2,h3{margin-top:1.5em}
                   richEditorRef.current?.chain().focus().setHorizontalRule().run()
                   return
                 }
+                if (noteCommentKeyboardAction(event) === 'open') {
+                  event.preventDefault()
+                  const quote = window.getSelection()?.toString().trim() ?? ''
+                  if (quote) setCommentDraftQuote(quote)
+                  setRailLayout({ commentsCollapsed: false })
+                  return
+                }
+                const columnAction = noteColumnKeyboardAction(event)
+                if (columnAction === 'insert-2' || columnAction === 'insert-3') {
+                  event.preventDefault()
+                  insertAtCursor(columnAction === 'insert-2' ? TWO_COLUMN_SNIPPET : THREE_COLUMN_SNIPPET)
+                  return
+                }
+                if (columnAction === 'widen' || columnAction === 'narrow') {
+                  event.preventDefault()
+                  const editor = richEditorRef.current
+                  const from = editor?.state.selection.from ?? 0
+                  const textBefore = editor
+                    ? editor.state.doc.textBetween(0, from, '\n', '\n')
+                    : splitFrontmatter(content).body
+                  const next = resizeColumnsAt(splitFrontmatter(content).body, textBefore.length, columnAction === 'widen' ? 3 : 2)
+                  applyNoteMarkdown(mergeFrontmatter(richParts.frontmatter, next))
+                  return
+                }
                 if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
                   event.preventDefault()
                   void openWikiLinkAtCursor()
@@ -2033,7 +2089,19 @@ h1,h2,h3{margin-top:1.5em}
                   return
                 }
                 if (commandQuery) {
-                  if (event.key === 'Escape') {
+                  const action = notePaletteKeyAction(event, commandIndex, commandMatches.length)
+                  if (action?.type === 'move') {
+                    event.preventDefault()
+                    setCommandIndex(action.index)
+                    return
+                  }
+                  if (action?.type === 'select') {
+                    event.preventDefault()
+                    const item = commandMatches[commandIndex]
+                    if (item) applyCommandItem(item)
+                    return
+                  }
+                  if (action?.type === 'close') {
                     event.preventDefault()
                     setCommandQuery(null)
                   }
@@ -2091,17 +2159,9 @@ h1,h2,h3{margin-top:1.5em}
                 <NotesCommandPalette
                   query={commandQuery}
                   items={commandCatalog}
+                  activeIndex={commandIndex}
                   onClose={() => setCommandQuery(null)}
-                  onSelect={(item) => {
-                    const editor = richEditorRef.current
-                    if (!editor) return
-                    const to = editor.state.selection.from
-                    const from = Math.max(0, to - commandQuery.length)
-                    editor.chain().focus().deleteRange({ from, to }).insertContent(item.insert).run()
-                    setCommandQuery(null)
-                    if (item.subject === 'action' && item.id === 'bang:ask-agent') void handleAskAgent('summarize')
-                    if (item.subject === 'session') navigate(routes.view.allSessions(item.insert.replace('@session:', '')))
-                  }}
+                  onSelect={applyCommandItem}
                 />
               ) : null}
             </div>
@@ -2120,6 +2180,14 @@ h1,h2,h3{margin-top:1.5em}
                 markdownComments={markdownComments}
                 width={railLayout.comments}
                 onClearDraft={() => setCommentDraftQuote('')}
+                onJumpToQuote={(quote) => {
+                  const root = document.querySelector('.notes-editor .ProseMirror')
+                  if (!root || !quote) return
+                  const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
+                    (node) => node.textContent?.includes(quote),
+                  )
+                  hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }}
                 onCommit={(comments) => {
                   let next = content
                   for (const comment of comments) next = upsertMarkdownComment(next, comment)

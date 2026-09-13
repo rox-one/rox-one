@@ -7,16 +7,26 @@ import {
   extractFootnotes,
   extractWikiLinks,
   foldIdForHeading,
+  groupNoteCommands,
+  locateColumnBlocks,
   matchNoteCommands,
   noteBreadcrumbs,
+  noteColumnKeyboardAction,
+  noteCommandGroupKey,
+  noteCommentKeyboardAction,
+  notePaletteKeyAction,
+  parseNoteCommandQuery,
   parseNoteDocument,
   parseNotesRailLayout,
   parsePersistedFolds,
+  peopleAndEntitiesFromInsights,
+  resizeColumnsAt,
   roundTripNoteMarkdown,
   sanitizePastedMarkdown,
   serializeColumns,
   serializeComment,
   serializeNotesRailLayout,
+  snippetForColumnCommand,
   upsertMarkdownComment,
 } from '../document-ia'
 
@@ -139,7 +149,50 @@ describe('notes document IA', () => {
     })
     expect(matchNoteCommands('!ag', catalog).map((item) => item.id)).toEqual(['bang:ask-agent'])
     expect(matchNoteCommands('@ada', catalog).map((item) => item.subject)).toEqual(['person'])
+    expect(matchNoteCommands('@person', catalog).map((item) => item.subject)).toEqual(['person'])
+    expect(matchNoteCommands('@entity:ker', catalog).map((item) => item.subject)).toEqual(['entity'])
+    expect(matchNoteCommands('!col', catalog).map((item) => item.id).sort()).toEqual(['bang:columns-2', 'bang:columns-3'])
     expect(matchNoteCommands('nope', catalog)).toEqual([])
+    expect(parseNoteCommandQuery('@person:ada')).toEqual({ kind: 'at', subject: 'person', needle: 'ada' })
+    const grouped = groupNoteCommands(matchNoteCommands('@', catalog))
+    expect(grouped.map((group) => group.subject)).toEqual(['session', 'agent', 'project', 'task', 'person', 'entity'])
+    expect(noteCommandGroupKey('person')).toBe('notes.palette.person')
+    const refs = peopleAndEntitiesFromInsights(
+      [{ id: 'ada', name: 'Ada Lovelace', kind: 'person' }, { id: 'kernel', name: 'Kernel', kind: 'org' }],
+      [{ people: ['Grace Hopper'] }],
+    )
+    expect(refs.people.map((person) => person.name)).toEqual(['Grace Hopper', 'Ada Lovelace'])
+    expect(refs.entities.map((entity) => entity.name)).toEqual(['Kernel'])
+    const aliasCatalog = defaultNoteCommands({
+      sessions: [],
+      agents: [],
+      projects: [],
+      tasks: [],
+      people: [{ id: 'gh', name: 'Grace Hopper', aliases: ['Amazing Grace'] }],
+      entities: [],
+    })
+    expect(matchNoteCommands('@amazing', aliasCatalog).map((item) => item.id)).toEqual(['at:person:gh'])
+  })
+
+  test('2/3-column keyboard inserts and resizes portable column layouts', () => {
+    const two = serializeColumns(['Left', 'Right'])
+    expect(locateColumnBlocks(two)[0]?.columns).toBe(2)
+    expect(resizeColumnsAt(two, 8, 3)).toContain(':::columns 3')
+    expect(extractColumns(resizeColumnsAt(two, 8, 3))[0]?.cells).toEqual(['Left', 'Right', ''])
+    expect(noteColumnKeyboardAction({ key: '2', altKey: true, shiftKey: false, metaKey: true, ctrlKey: false })).toBe('insert-2')
+    expect(noteColumnKeyboardAction({ key: '3', altKey: true, shiftKey: false, metaKey: false, ctrlKey: true })).toBe('insert-3')
+    expect(noteColumnKeyboardAction({ key: 'ArrowRight', altKey: true, shiftKey: true, metaKey: false, ctrlKey: false })).toBe('widen')
+    expect(noteColumnKeyboardAction({ key: 'ArrowLeft', altKey: true, shiftKey: true, metaKey: false, ctrlKey: false })).toBe('narrow')
+    expect(snippetForColumnCommand('bang:columns-2')).toContain(':::columns 2')
+    expect(snippetForColumnCommand('bang:columns-3')).toContain(':::columns 3')
+  })
+
+  test('palette and comment keyboard stay in the notes editor', () => {
+    expect(notePaletteKeyAction({ key: 'ArrowDown' }, 0, 3)).toEqual({ type: 'move', index: 1 })
+    expect(notePaletteKeyAction({ key: 'Enter' }, 1, 3)).toEqual({ type: 'select' })
+    expect(notePaletteKeyAction({ key: 'Escape' }, 1, 3)).toEqual({ type: 'close' })
+    expect(noteCommentKeyboardAction({ key: 'm', shiftKey: true, metaKey: true, ctrlKey: false })).toBe('open')
+    expect(noteCommentKeyboardAction({ key: 'Enter', shiftKey: false, metaKey: true, ctrlKey: false })).toBe(null)
   })
 
   test('document breadcrumbs replace session-style modes', () => {
