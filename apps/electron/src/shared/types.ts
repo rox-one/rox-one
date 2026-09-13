@@ -1227,8 +1227,33 @@ export interface ElectronAPI {
     singleUse?: boolean
     workspaceId?: string | null
   }): Promise<{ token: string; expiresAt: number; permission: string }>
+  extensionHostListCapabilities(args?: {
+    workspaceId?: string | null
+  }): Promise<{
+    minted: Array<{
+      tokenHash: string
+      extensionId: string
+      permission: string
+      expiresAt: number
+      mintedAt: number
+      singleUse?: boolean
+      revokedAt?: number
+      status: 'active' | 'revoked' | 'expired'
+    }>
+    revoked: Array<{
+      tokenHash: string
+      extensionId: string
+      permission: string
+      expiresAt: number
+      mintedAt: number
+      singleUse?: boolean
+      revokedAt?: number
+      status: 'active' | 'revoked' | 'expired'
+    }>
+  }>
   extensionHostRevokeCapability(args: {
     token?: string
+    tokenHash?: string
     extensionId?: string
     workspaceId?: string | null
   }): Promise<{ ok: true }>
@@ -1671,7 +1696,6 @@ export interface ElectronAPI {
   setRichToolDescriptions(enabled: boolean): Promise<void>
   getDefaultZoomLevel(): Promise<number>
   setDefaultZoomLevel(level: number): Promise<void>
-
   // Prompt caching & context
   getExtendedPromptCache(): Promise<boolean>
   setExtendedPromptCache(enabled: boolean): Promise<void>
