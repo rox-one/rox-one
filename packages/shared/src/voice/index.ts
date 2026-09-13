@@ -126,3 +126,4 @@ export {
   type VoiceGatewayMode,
 } from './runtime.ts'
 export { voiceFlagEnabled, voiceV2Enabled } from './flags.ts'
+export * from './meeting-capture.ts';

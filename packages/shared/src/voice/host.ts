@@ -6,6 +6,13 @@ import { addRevision, loadHistoryIndex, saveHistoryIndex, upsertRecording } from
 import type { VoiceRecording } from './history.ts'
 import { applyJobEvent, canStartCapture, createVoiceJob, type VoiceJob } from './job-machine.ts'
 import { overlayFromCapture, type OverlayState } from './overlay-types.ts'
+import {
+  appendMeetingAudio,
+  pauseMeetingCaptureSession,
+  startMeetingCaptureSession,
+  stopMeetingCaptureSession,
+  type MeetingCaptureSession,
+} from './meeting-capture.ts'
 import { shouldUploadAudio } from './policy.ts'
 import type { VoicePrefs } from './types.ts'
 
@@ -24,6 +31,7 @@ export class VoiceHost {
   private job: VoiceJob | null = null
   private journal: CaptureJournal | null = null
   private chunks: Uint8Array[] = []
+  private meetingCapture: MeetingCaptureSession | null = null
   private listeners = new Set<(event: VoiceHostEvent) => void>()
 
   constructor(
@@ -35,6 +43,28 @@ export class VoiceHost {
   on(listener: (event: VoiceHostEvent) => void): () => void {
     this.listeners.add(listener)
     return () => { this.listeners.delete(listener) }
+  }
+
+  startMeetingCapture(meetingId: string): MeetingCaptureSession {
+    this.meetingCapture = startMeetingCaptureSession(meetingId)
+    return this.meetingCapture
+  }
+
+  pauseMeetingCapture(): MeetingCaptureSession | null {
+    if (!this.meetingCapture) return null
+    this.meetingCapture = pauseMeetingCaptureSession(this.meetingCapture)
+    return this.meetingCapture
+  }
+
+  appendMeetingCapture(source: 'mic' | 'system', bytes: Uint8Array): void {
+    if (this.meetingCapture) this.meetingCapture = appendMeetingAudio(this.meetingCapture, source, bytes)
+  }
+
+  stopMeetingCapture() {
+    if (!this.meetingCapture) return { status: 'stopped' as const, mic: { sha256: '', bytes: 0, durationMs: 0 }, system: { sha256: '', bytes: 0, durationMs: 0 } }
+    const result = stopMeetingCaptureSession(this.meetingCapture)
+    this.meetingCapture = null
+    return result
   }
 
   recover(): CaptureJournal[] {
