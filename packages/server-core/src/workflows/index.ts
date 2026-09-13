@@ -6,7 +6,8 @@
  * succeeded + verified non-loopback receipt + a caller-injected receipt store.
  *
  * Loopback gateways/tools execute for U1 but are stamped `evidence: 'loopback'`
- * and `operation.mode: 'fixture'`. They never satisfy
+ * and `operation.mode: 'fixture'`. Succeeded loopback runs keep
+ * `verification: 'unknown'` (never `'verified'`). They never satisfy
  * `isLiveWorkflowProductionSuccess`.
  *
  * `permissionMode: 'ask'` waits (`waiting_approval`); `'safe'` fails closed

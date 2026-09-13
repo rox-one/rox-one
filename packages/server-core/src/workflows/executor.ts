@@ -36,7 +36,8 @@ const PERMISSION_DENIED_SAFE_MESSAGE = 'Live execution is not allowed in this pe
 /**
  * Production success is live evidence + production mode + succeeded +
  * verified non-loopback receipt + a caller-injected receipt store.
- * Loopback/fake gateways can execute, but they are not claimable live.
+ * Loopback/fake gateways can execute, but they are not claimable live
+ * and never stamp `verification: 'verified'`.
  * A per-call in-memory Map (U1) is not a durable store.
  */
 export function isLiveWorkflowProductionSuccess(run: {
@@ -284,9 +285,11 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
     }
   }
 
-  const verified = lifecycle === 'succeeded' && receipts.length > 0
-  const receipt = verified ? receipts[receipts.length - 1] : undefined
   const claimed = claimStamps({ loopbackTransport, receipts })
+  const succeededWithReceipts = lifecycle === 'succeeded' && receipts.length > 0
+  const verified =
+    succeededWithReceipts && claimed.evidence === 'live' && claimed.mode === 'production'
+  const receipt = succeededWithReceipts ? receipts[receipts.length - 1] : undefined
   const run: LiveWorkflowRun = {
     ...base,
     evidence: claimed.evidence,
