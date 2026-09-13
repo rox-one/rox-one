@@ -7,10 +7,14 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SettingsCard, SettingsRow, SettingsSection } from '@/components/settings'
 import { Button } from '@/components/ui/button'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { routes } from '@/lib/navigate'
 import type {
   KnowledgeConnection,
   KnowledgeDetectEngineResult,
@@ -256,11 +260,17 @@ export default function KnowledgeSettingsPage() {
       : t('settings.knowledge.status.stopped')
 
   return (
-    <div className="flex flex-col gap-6 p-6">
-      <div>
-        <h2 className="text-lg font-semibold">{t('settings.knowledge.title')}</h2>
-        <p className="text-sm text-muted-foreground">{t('settings.knowledge.description')}</p>
-      </div>
+    <div className="flex h-full min-h-0 flex-col">
+      <PanelHeader
+        title={t('settings.knowledge.title')}
+        actions={<HeaderMenu route={routes.view.settings('knowledge')} />}
+      />
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
+          <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
+            <p className="whitespace-normal break-words text-sm text-muted-foreground">
+              {t('settings.knowledge.description')}
+            </p>
 
       <SettingsSection title={t('knowledge.local.title')}>
         <SettingsCard>
@@ -491,6 +501,9 @@ export default function KnowledgeSettingsPage() {
           </SettingsCard>
         </SettingsSection>
       )}
+          </div>
+        </ScrollArea>
+      </div>
     </div>
   )
 }
