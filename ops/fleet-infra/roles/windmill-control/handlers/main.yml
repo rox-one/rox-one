@@ -1,0 +1,13 @@
+---
+- name: Reload systemd
+  listen: reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+
+- name: Restart Windmill control
+  listen: restart windmill control
+  ansible.builtin.systemd_service:
+    name: windmill-control.service
+    state: restarted
+  when: not ansible_check_mode
+

@@ -1,0 +1,39 @@
+---
+# users role: deploy/admin users from vars, sudo rules, lock root password login.
+- name: Create deploy users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default(['sudo']) }}"
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    append: true
+    password: "{{ item.password_hash | default(omit) }}"
+    state: present
+  loop: "{{ fleet_deploy_users }}"
+  no_log: true
+
+- name: Install deploy user SSH public keys
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_public_key }}"
+    state: present
+  loop: "{{ fleet_deploy_users }}"
+  when: item.ssh_public_key is defined
+
+- name: Create admin-only sudoers drop-in
+  ansible.builtin.template:
+    src: sudoers-users.j2
+    dest: /etc/sudoers.d/90-fleet-users
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"
+
+# Lock direct root PASSWORD login only (root key login via prohibit-password remains).
+- name: Lock root account password
+  ansible.builtin.user:
+    name: root
+    password_lock: true
+    state: present
+  check_mode: false
+
+# Rollback: unlock with `passwd -u root` (if not expired), remove /etc/sudoers.d/90-fleet-users, delete created users with `userdel -r <name>`.

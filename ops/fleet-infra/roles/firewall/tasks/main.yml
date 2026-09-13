@@ -1,0 +1,45 @@
+---
+# firewall role: ufw default deny in, allow tailscale0, allow configured mgmt ports.
+# NEVER enables forwarding.
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+
+- name: Set default incoming policy to deny
+  community.general.ufw:
+    default: deny
+    direction: incoming
+
+- name: Set default outgoing policy to allow
+  community.general.ufw:
+    default: allow
+    direction: outgoing
+
+- name: Allow all traffic on tailscale0
+  community.general.ufw:
+    interface: tailscale0
+    direction: in
+    rule: allow
+
+- name: Allow configured mgmt ports
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto | default('tcp') }}"
+    from_ip: "{{ item.from_ip | default(omit) }}"
+  loop: "{{ firewall_mgmt_ports }}"
+
+- name: Enable ufw (forwarding stays disabled)
+  community.general.ufw:
+    state: enabled
+
+- name: Assert ufw forwarding remains disabled
+  ansible.builtin.lineinfile:
+    path: /etc/default/ufw
+    regexp: '^DEFAULT_FORWARD_POLICY='
+    line: 'DEFAULT_FORWARD_POLICY="DROP"'
+    backup: true
+  notify: reload ufw
+
+# Rollback: `ufw disable` restores unfiltered traffic; delete rules with `ufw status numbered` + `ufw --force delete <n>`; revert DEFAULT_FORWARD_POLICY if changed.

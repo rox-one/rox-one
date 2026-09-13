@@ -1,0 +1,11 @@
+---
+# Pins and tunables
+coolify_user: coolify
+coolify_group: docker
+coolify_ssh_port: 2222
+coolify_deploy_key_path: /home/{{ coolify_user }}/.ssh/authorized_keys
+# Public key MATERIAL must be supplied via host_vars/vault lookup; never embedded here.
+coolify_public_key_lookup: ""   # e.g. lookup('infisical', 'coolify/deploy_pubkey') set in host_vars
+
+coolify_sshd_config: /etc/ssh/sshd_config_coolify
+coolify_sshd_unit: /etc/systemd/system/sshd-coolify.service

@@ -1,0 +1,86 @@
+---
+- name: Assert observability prerequisites
+  ansible.builtin.assert:
+    that:
+      - observability_tailnet_ip | length > 0
+      - observability_project_id | length > 0
+
+- name: Verify per-node Infisical token sink
+  ansible.builtin.stat:
+    path: "{{ observability_infisical_token_file }}"
+  register: observability_token
+
+- name: Fail when Infisical Agent is unavailable
+  ansible.builtin.assert:
+    that: [observability_token.stat.exists]
+
+- name: Create observability directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+  loop:
+    - "{{ observability_install_dir }}"
+    - "{{ observability_install_dir }}/grafana/provisioning/datasources"
+    - "{{ observability_install_dir }}/grafana/provisioning/dashboards"
+    - "{{ observability_install_dir }}/grafana/dashboards"
+
+- name: Deploy observability configuration
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ observability_install_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - compose.yml
+    - victoria-scrape.yml
+    - loki.yml
+    - alertmanager.yml
+    - grafana/provisioning/datasources/fleet.yml
+    - grafana/provisioning/dashboards/provider.yml
+    - grafana/dashboards/fleet-overview.json
+  notify: restart observability control
+
+- name: Deploy Infisical-backed observability wrapper
+  ansible.builtin.template:
+    src: observability-compose.sh.j2
+    dest: /usr/local/sbin/observability-compose
+    owner: root
+    group: root
+    mode: "0750"
+  notify: restart observability control
+
+- name: Deploy observability systemd service
+  ansible.builtin.template:
+    src: observability-control.service.j2
+    dest: /etc/systemd/system/observability-control.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart observability control
+
+- name: Enable observability stack
+  ansible.builtin.systemd_service:
+    name: observability-control.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Flush handlers before health checks
+  ansible.builtin.meta: flush_handlers
+
+- name: Verify Grafana Tailnet health
+  ansible.builtin.uri:
+    url: "http://{{ observability_tailnet_ip }}:3000/api/health"
+    status_code: 200
+  register: grafana_health
+  retries: 30
+  delay: 3
+  until: grafana_health.status == 200
+  when: not ansible_check_mode

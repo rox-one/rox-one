@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+encoded_password="$(python3 -c 'import os, urllib.parse; print(urllib.parse.quote(os.environ["WINDMILL_DB_PASSWORD"], safe=""))')"
+export WINDMILL_DATABASE_URL="postgresql://postgres:${encoded_password}@db:5432/windmill?sslmode=disable"
+unset encoded_password
+exec /usr/bin/docker compose -f {{ windmill_install_dir }}/compose.yml "$@"
+

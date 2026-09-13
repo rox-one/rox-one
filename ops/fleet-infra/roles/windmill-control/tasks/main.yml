@@ -1,0 +1,88 @@
+---
+- name: Assert Windmill control prerequisites
+  ansible.builtin.assert:
+    that:
+      - windmill_version | length > 0
+      - windmill_tailnet_ip | length > 0
+      - windmill_project_id | length > 0
+
+- name: Check Infisical token sink
+  ansible.builtin.stat:
+    path: "{{ windmill_infisical_token_file }}"
+  register: windmill_infisical_token
+
+- name: Fail when per-node Infisical Agent is unavailable
+  ansible.builtin.assert:
+    that:
+      - windmill_infisical_token.stat.exists
+
+- name: Create Windmill install directory
+  ansible.builtin.file:
+    path: "{{ windmill_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0750"
+
+- name: Deploy pinned Windmill compose
+  ansible.builtin.template:
+    src: compose.yml.j2
+    dest: "{{ windmill_install_dir }}/compose.yml"
+    owner: root
+    group: root
+    mode: "0640"
+  notify: restart windmill control
+
+- name: Deploy Infisical-backed compose wrapper
+  ansible.builtin.template:
+    src: windmill-compose.sh.j2
+    dest: /usr/local/sbin/windmill-compose
+    owner: root
+    group: root
+    mode: "0750"
+  notify: restart windmill control
+
+- name: Deploy secret-aware inner compose wrapper
+  ansible.builtin.template:
+    src: windmill-compose-inner.sh.j2
+    dest: /usr/local/sbin/windmill-compose-inner
+    owner: root
+    group: root
+    mode: "0750"
+  notify: restart windmill control
+
+- name: Deploy Windmill systemd service
+  ansible.builtin.template:
+    src: windmill-control.service.j2
+    dest: /etc/systemd/system/windmill-control.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart windmill control
+
+- name: Enable Windmill control service
+  ansible.builtin.systemd_service:
+    name: windmill-control.service
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+- name: Flush Windmill restart handlers before health check
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for Windmill Tailnet UI
+  ansible.builtin.uri:
+    url: "http://{{ windmill_tailnet_ip }}:{{ windmill_port }}/api/version"
+    return_content: true
+    status_code: 200
+  register: windmill_version_probe
+  retries: 30
+  delay: 3
+  until: windmill_version_probe.status == 200
+  when: not ansible_check_mode
+
+# Rollback: systemctl disable --now windmill-control; run windmill-compose down;
+# preserve /var/lib/docker volumes until an explicit backup/restore decision.

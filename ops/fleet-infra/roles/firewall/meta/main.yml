@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: fleet-infra
+  description: ufw baseline — deny in, allow tailscale0 and mgmt ports, no forwarding
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+allow_duplicates: false
+dependencies: []

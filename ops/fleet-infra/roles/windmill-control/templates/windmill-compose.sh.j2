@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+token="$(<{{ windmill_infisical_token_file }})"
+export INFISICAL_TOKEN="$token"
+export INFISICAL_DOMAIN="{{ windmill_infisical_domain }}"
+unset token
+exec /usr/bin/infisical run \
+  --projectId={{ windmill_project_id }} \
+  --env=prod \
+  --path={{ windmill_secret_path }} \
+  -- /usr/local/sbin/windmill-compose-inner "$@"
+

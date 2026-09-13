@@ -1,0 +1,11 @@
+---
+# Rollback for reload sshd: if a bad config slips past validate, restore
+# /etc/ssh/sshd_config.bak.<date> and run `systemctl restart ssh` from console/Tailscale.
+- name: validate sshd before reload
+  ansible.builtin.command: /usr/sbin/sshd -t
+  changed_when: false
+
+- name: reload sshd
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: reloaded

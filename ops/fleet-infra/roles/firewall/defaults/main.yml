@@ -1,0 +1,4 @@
+---
+# Public management ports. Empty by default: management enters through
+# tailscale0. A provider break-glass rule must be an explicit per-host opt-in.
+firewall_mgmt_ports: []

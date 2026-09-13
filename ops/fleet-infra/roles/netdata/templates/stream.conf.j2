@@ -1,0 +1,10 @@
+{{ ansible_managed }}
+# Streaming config with label placeholders from netdata_labels.
+
+[default]
+    enabled = no
+
+[stream]
+    enabled = yes
+    destination = {{ netdata_stream_destination }}
+    api key = {{ netdata_stream_api_key }}

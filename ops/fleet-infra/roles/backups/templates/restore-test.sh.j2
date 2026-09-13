@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Managed by Ansible - fleet-infra roles/backups
+set -euo pipefail
+DATASET="${1:?usage: restore-test.sh <dataset-name>}"
+STAMP="$(date +%Y%m%dT%H%M%S)"
+RESTORE_ROOT="/var/tmp/restic-restore-test/${DATASET}/${STAMP}"
+MANIFEST="${RESTORE_ROOT}/manifest.txt"
+install -d -m 0700 "/var/tmp/restic-restore-test/${DATASET}"
+mkdir -p "$RESTORE_ROOT"
+SNAP_ID="$(/usr/local/sbin/restic-managed snapshots --tag "dataset:${DATASET}" --latest 1 --json | jq -r '.[0].id')"
+[ -n "$SNAP_ID" ] && [ "$SNAP_ID" != "null" ] || { echo "no snapshot found for ${DATASET}" >&2; exit 1; }
+
+/usr/local/sbin/restic-managed restore "$SNAP_ID" --target "$RESTORE_ROOT"
+
+{
+  echo "dataset=${DATASET}"
+  echo "snapshot=${SNAP_ID}"
+  echo "restore_dir=${RESTORE_ROOT}"
+  echo "files=$(find "$RESTORE_ROOT" -type f | wc -l)"
+  echo "bytes=$(du -sb "$RESTORE_ROOT" | cut -f1)"
+} > "$MANIFEST"
+echo "restore-test complete: $MANIFEST"

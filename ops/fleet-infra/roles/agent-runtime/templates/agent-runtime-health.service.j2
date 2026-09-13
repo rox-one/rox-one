@@ -1,0 +1,5 @@
+[Unit]
+Description=Agent runtime health smoke test
+[Service]
+Type=oneshot
+ExecStart={{ agent_runtime_install_dir }}/smoke.sh

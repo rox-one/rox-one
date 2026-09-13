@@ -1,0 +1,26 @@
+---
+# ssh role: harden sshd_config via template. Handler reloads sshd with rollback path.
+- name: Install openssh-server
+  ansible.builtin.apt:
+    name: openssh-server
+    state: present
+
+- name: Deploy hardened sshd_config
+  ansible.builtin.template:
+    src: sshd_config.j2
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: "0600"
+    validate: "/usr/sbin/sshd -t -f %s"
+  notify:
+    - validate sshd before reload
+    - reload sshd
+
+- name: Ensure sshd enabled and running
+  ansible.builtin.systemd_service:
+    name: ssh
+    state: started
+    enabled: true
+
+# Rollback: restore prior /etc/ssh/sshd_config from backup (cp /etc/ssh/sshd_config.bak.<date> back), then `systemctl restart ssh`. Handler rollback comment lives in handlers/main.yml.

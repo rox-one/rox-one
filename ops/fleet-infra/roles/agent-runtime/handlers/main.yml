@@ -1,0 +1,12 @@
+---
+- name: Reload systemd
+  listen: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart health timer
+  listen: restart health timer
+  ansible.builtin.systemd:
+    name: agent-runtime-health.timer
+    state: restarted
+  when: not ansible_check_mode

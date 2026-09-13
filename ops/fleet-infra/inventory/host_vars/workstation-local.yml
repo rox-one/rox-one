@@ -1,0 +1,7 @@
+---
+ansible_connection: local
+arch: arm64
+reachable: true
+os_version: "example"
+tailscale_present: true
+netbird_present: false

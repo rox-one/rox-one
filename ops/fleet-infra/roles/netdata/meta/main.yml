@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: fleet-infra
+  description: Netdata agent install (pinned stable) with labeled streaming and cloud claim
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+allow_duplicates: false
+dependencies: []

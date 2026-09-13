@@ -1,0 +1,21 @@
+[Unit]
+Description=Windmill worker (group={{ windmill_worker_group }})
+After=network-online.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+EnvironmentFile={{ windmill_env_file }}
+ExecStartPre=-/usr/bin/docker rm -f {{ windmill_container_name }}
+ExecStart=/usr/bin/docker run --rm --name {{ windmill_container_name }} \
+  --env-file {{ windmill_env_file }} \
+  -e WORKER_GROUP={{ windmill_worker_group }} \
+  -e CONCURRENCY={{ windmill_worker_concurrency }} \
+  {{ windmill_image }}@{{ windmill_image_digest }}
+ExecStop={{ windmill_install_dir }}/drain.sh
+Restart=on-failure
+CPUMax={{ windmill_cpu_max }}
+MemoryMax={{ windmill_memory_max }}
+
+[Install]
+WantedBy=multi-user.target
