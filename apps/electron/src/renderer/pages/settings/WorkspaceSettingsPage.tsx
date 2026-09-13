@@ -180,7 +180,7 @@ export default function WorkspaceSettingsPage() {
         await window.electronAPI.updateWorkspaceSetting(activeWorkspaceId, key, value)
         return true
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error'
+        const message = error instanceof Error ? error.message : t("toast.unknownError")
         console.error(`Failed to save ${String(key)}:`, error)
         toast.error(t("settings.workspace.failedToSave", { setting: String(key) }), {
           description: message,

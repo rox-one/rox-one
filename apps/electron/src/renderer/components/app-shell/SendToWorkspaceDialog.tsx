@@ -160,7 +160,7 @@ export function SendToWorkspaceDialog({
       onOpenChange(false)
       setSelectedWorkspaceId(null)
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+      const message = error instanceof Error ? error.message : t('toast.unknownError')
       toast.error(t('sendToWorkspace.failedToSend', { count }), {
         id: toastId,
         description: message,
@@ -168,7 +168,7 @@ export function SendToWorkspaceDialog({
     } finally {
       setIsTransferring(false)
     }
-  }, [selectedWorkspaceId, sessionIds, workspaces, onOpenChange, onTransferComplete])
+  }, [selectedWorkspaceId, sessionIds, workspaces, onOpenChange, onTransferComplete, t])
 
   const count = sessionIds.length
 

@@ -49,6 +49,8 @@
     "test:perf-budgets": "bun test apps/electron/src/renderer/perf packages/server-core/src/observability && bun run scripts/bench/renderer-perf-report.ts --ci && bun run scripts/bench/renderer-perf-report.ts --ci --session-count 500 && bun run scripts/bench/renderer-perf-report.ts --bundle",
     "test:meetings:unit": "bun test packages/server-core/src/meetings/conation/__tests__ packages/server-core/src/meetings/__tests__/tracker-actions.test.ts packages/server-core/src/meetings/__tests__/followup.test.ts packages/server-core/src/meetings/__tests__/security.test.ts packages/server-core/src/meetings/__tests__/budgets.test.ts packages/server-core/src/meetings/__tests__/sharing-retention.test.ts packages/server-core/src/meetings/__tests__/rooms.test.ts packages/server-core/src/meetings/__tests__/release-gate.test.ts packages/server-core/src/meetings/__tests__/packaging.test.ts packages/shared/src/meeting-agents/__tests__/recipes.test.ts",
     "test:meetings:e2e": "bun test tests/e2e/meeting-agents/harness.test.ts",
+    "package:meeting-agents": "bun run scripts/package-meeting-agents.ts",
+    "electron:dist:unsigned:linux": "CSC_IDENTITY_AUTO_DISCOVERY=false bun run electron:build && cd apps/electron && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --config electron-builder.yml --linux --publish never",
     "test:meetings:eval": "bun tests/evals/meeting-agents/run.ts",
     "test:meetings:live": "bun tests/evals/meeting-agents/live.ts",
     "validate:dev": "bun run typecheck:all && bun run test:shared:all && bun run test:connection-fabric && bun run test:config-isolation && bun run test:doc-tools",

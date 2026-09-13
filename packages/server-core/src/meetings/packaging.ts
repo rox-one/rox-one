@@ -2,8 +2,12 @@
  * RMA-I031 / #387 — packaging resource assertions (U1).
  * Linux-only. Packaged OS smoke stays N5 not_run. Web cannot fake OS capture.
  * Protocol/storage IDs are not renamed.
+ * Linux unsigned staging does not require macOS codesign.
  */
 
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { BUILTIN_MEETING_AGENT_IDS, BUILTIN_MEETING_AGENTS } from '@craft-agent/shared/meeting-agents'
 import { blocked, type EvidenceLevel, type GateStatus, type MeetingOpResult } from './types.ts'
 
 export const MEETING_AGENT_ROLES = [
@@ -79,4 +83,50 @@ export function applyPackagedUpgrade(
 export function startOsCapture(surface: 'web' | 'packaged'): MeetingOpResult<'os-capture-unavailable'> {
   void surface
   return blocked('os-capture-unavailable', 'N5')
+}
+
+export type UnsignedStageResult = {
+  readonly roles: readonly string[]
+  readonly signed: false
+  readonly resourceStage: 'passed' | 'blocked'
+  readonly osPackage: GateStatus
+}
+
+export function refuseCodesign(codesign: boolean): void {
+  if (codesign) {
+    throw new Error('codesign-not-supported')
+  }
+}
+
+export function stageMeetingAgentResources(
+  destDir: string,
+  options: { readonly os: PackagingOs; readonly codesign?: boolean; readonly osVerified?: boolean },
+): UnsignedStageResult {
+  refuseCodesign(options.codesign === true)
+  mkdirSync(destDir, { recursive: true })
+  const roles: string[] = []
+  for (const agent of BUILTIN_MEETING_AGENTS) {
+    roles.push(agent.id)
+    writeFileSync(
+      join(destDir, `${agent.id}.json`),
+      `${JSON.stringify({
+        id: agent.id,
+        version: agent.version,
+        packageId: PACKAGING_IDENTITY.packageId,
+        protocol: PACKAGING_IDENTITY.protocol,
+        storage: PACKAGING_IDENTITY.storage,
+        oauth: PACKAGING_IDENTITY.oauth,
+        signed: false,
+      }, null, 2)}\n`,
+    )
+  }
+  const resourceStage = BUILTIN_MEETING_AGENT_IDS.every((id) => roles.includes(id)) && roles.length === 8
+    ? 'passed'
+    : 'blocked'
+  return {
+    roles,
+    signed: false,
+    resourceStage,
+    osPackage: packagingStatus(options.os, options.osVerified === true),
+  }
 }

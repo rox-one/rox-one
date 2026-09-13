@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'bun:test'
+import { mkdtempSync, readFileSync, readdirSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { BUILTIN_MEETING_AGENT_IDS } from '@craft-agent/shared/meeting-agents'
 import {
   applyPackagedUpgrade,
   hasEightRoles,
@@ -8,6 +12,8 @@ import {
   PACKAGING_RESOURCE_EVIDENCE,
   packagedOsSmokeStatus,
   packagingStatus,
+  refuseCodesign,
+  stageMeetingAgentResources,
   startOsCapture,
   WEB_MEETING_SURFACE,
 } from '../packaging.ts'
@@ -38,6 +44,7 @@ describe('meeting-agent packaging (#387)', () => {
 
   it('does not let a verified linux flag fake packaged OS smoke as passed', () => {
     expect(packagingStatus('linux', true)).not.toBe('passed')
+    expect(packagingStatus('linux', true)).toBe('not_run')
     expect(packagedOsSmokeStatus('linux')).toBe('not_run')
     expect(packagedOsSmokeStatus('darwin')).toBe('not_run')
     expect(packagedOsSmokeStatus('win32')).toBe('not_run')
@@ -88,5 +95,19 @@ describe('meeting-agent packaging (#387)', () => {
     expect(packaged.status).toBe('blocked')
     expect(packaged.live).toBe(false)
     expect(packaged.evidenceLevel).toBe('N5')
+  })
+
+  it('stages eight builtin agents on linux without codesign', () => {
+    const dest = mkdtempSync(join(tmpdir(), 'meeting-agents-'))
+    const staged = stageMeetingAgentResources(dest, { os: 'linux', codesign: false })
+    expect(staged.signed).toBe(false)
+    expect(staged.resourceStage).toBe('passed')
+    expect(staged.osPackage).toBe('blocked')
+    expect(staged.roles).toEqual([...BUILTIN_MEETING_AGENT_IDS])
+    expect(readdirSync(dest)).toHaveLength(8)
+    const first = JSON.parse(readFileSync(join(dest, `${staged.roles[0]}.json`), 'utf8')) as { storage: string; signed: boolean }
+    expect(first.storage).toBe('craft-agent')
+    expect(first.signed).toBe(false)
+    expect(() => refuseCodesign(true)).toThrow('codesign-not-supported')
   })
 })

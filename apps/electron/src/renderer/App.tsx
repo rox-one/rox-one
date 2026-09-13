@@ -1510,13 +1510,15 @@ export default function App() {
           {
             id: generateMessageId(),
             role: 'error' as const,
-            content: `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            content: t('chat.failedToSendMessage', {
+              error: error instanceof Error ? error.message : t('toast.unknownError'),
+            }),
             timestamp: Date.now()
           }
         ]
       }))
     }
-  }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId])
+  }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId, t])
 
   /**
    * Unified handler for all session option changes.
@@ -1760,7 +1762,7 @@ export default function App() {
       try {
         await window.electronAPI.openFile(path)
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error'
+        const message = error instanceof Error ? error.message : t('toast.unknownError')
         console.error('Failed to open file:', error)
         toast.error(t('toast.failedToOpenFile'), {
           description: message,
@@ -1771,7 +1773,7 @@ export default function App() {
       try {
         await window.electronAPI.openUrl(url)
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error'
+        const message = error instanceof Error ? error.message : t('toast.unknownError')
         console.error('Failed to open URL:', error)
         // The blocked-URL classifier already explains WHY and (for file:)
         // points the user at preview blocks. Don't append the generic
@@ -1792,7 +1794,7 @@ export default function App() {
       try {
         await window.electronAPI.showInFolder(path)
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Unknown error'
+        const message = error instanceof Error ? error.message : t('toast.unknownError')
         console.error('Failed to show in folder:', error)
         toast.error(t("toast.failedToReveal", { fileManager: getFileManagerName() }), {
           description: message,
@@ -1826,7 +1828,7 @@ export default function App() {
 
   const handleReconnectTransport = useCallback(() => {
     void window.electronAPI.reconnectTransport().catch((error) => {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+      const message = error instanceof Error ? error.message : t('toast.unknownError')
       toast.error(t('toast.reconnectFailed'), { description: message })
     })
   }, [t])
