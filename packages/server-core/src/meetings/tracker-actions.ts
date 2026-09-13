@@ -4,11 +4,12 @@
  * Native slice: fail-closed stubs over injected adapters. Exact
  * repository/team/project/assignee IDs required. Wrong target is never
  * auto-retargeted. Fixture/simulated adapters are not live integration and
- * cannot claim live/L4, including a `mode: 'live'` label. Draft PRs
+ * cannot claim verified/live/L4, including a `mode: 'live'` label. Draft PRs
  * never auto-merge. Post-write timeout → unknown (reconcile), not success.
  */
 
 import {
+  blocked,
   denied,
   unknownEffect,
   unsupported,
@@ -201,23 +202,12 @@ function fromAdapter(
     return {
       status: 'duplicate',
       reason: 'idempotent',
-      live,
-      evidenceLevel: live ? 'L4' : 'U1',
+      live: false,
+      evidenceLevel: 'U1',
       payload: { ...base, remoteId: result.remoteId, htmlUrl: result.htmlUrl },
     }
   }
-  return {
-    status: 'verified',
-    reason: 'created',
-    live,
-    evidenceLevel: live ? 'L4' : 'U1',
-    payload: {
-      ...base,
-      remoteId: result.remoteId,
-      htmlUrl: result.htmlUrl,
-      revision: result.revision,
-    },
-  }
+  return { ...blocked('tracker-not-live'), payload: { ...base } }
 }
 
 export function createDisabledTrackerAdapter(): TrackerAdapter {
@@ -282,12 +272,7 @@ export function createTrackerActions(adapter: TrackerAdapter = createDisabledTra
     const liveRefused = refuseLiveModeAdapter(adapter)
     if (liveRefused) return liveRefused
     const wrote = fromAdapter(request, adapter, await adapter.createIssue(request))
-    if (wrote.status === 'verified') {
-      const stored = { ...wrote, live: false as const, evidenceLevel: 'U1' as const }
-      completed.set(request.idempotencyKey, stored)
-      return stored
-    }
-    if (wrote.status === 'duplicate') {
+    if (wrote.status === 'blocked' || wrote.status === 'duplicate') {
       completed.set(request.idempotencyKey, wrote)
     }
     return wrote
