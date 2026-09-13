@@ -994,6 +994,8 @@
   "editor.bold": "عريض",
   "editor.code": "تعليمة برمجية",
   "editor.codeLanguage": "لغة البرمجة",
+  "editor.failedToReadFile": "تعذر قراءة الملف",
+  "editor.failedToReadFileAsDataUrl": "تعذر قراءة الملف كـ data URL",
   "editor.italic": "مائل",
   "editor.math": "رياضيات",
   "editor.noLanguagesFound": "لم يُعثر على لغات",

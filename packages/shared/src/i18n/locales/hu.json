@@ -994,6 +994,8 @@
   "editor.bold": "Félkövér",
   "editor.code": "Kód",
   "editor.codeLanguage": "Programozási nyelv",
+  "editor.failedToReadFile": "Nem sikerült olvasni a fájlt",
+  "editor.failedToReadFileAsDataUrl": "Nem sikerült a fájlt data URL-ként olvasni",
   "editor.italic": "Dőlt",
   "editor.math": "Matematika",
   "editor.noLanguagesFound": "Nem található nyelv",

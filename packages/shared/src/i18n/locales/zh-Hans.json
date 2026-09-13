@@ -994,6 +994,8 @@
   "editor.bold": "粗体",
   "editor.code": "代码",
   "editor.codeLanguage": "代码语言",
+  "editor.failedToReadFile": "无法读取文件",
+  "editor.failedToReadFileAsDataUrl": "无法将文件读取为 data URL",
   "editor.italic": "斜体",
   "editor.math": "数学公式",
   "editor.noLanguagesFound": "未找到语言",

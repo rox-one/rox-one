@@ -994,6 +994,8 @@
   "editor.bold": "Negrita",
   "editor.code": "Código",
   "editor.codeLanguage": "Lenguaje de código",
+  "editor.failedToReadFile": "No se pudo leer el archivo",
+  "editor.failedToReadFileAsDataUrl": "No se pudo leer el archivo como data URL",
   "editor.italic": "Cursiva",
   "editor.math": "Matemáticas",
   "editor.noLanguagesFound": "No se encontraron lenguajes",
