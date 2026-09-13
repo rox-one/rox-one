@@ -60,6 +60,85 @@ describe('ROX-AUD-031 native notes engine', () => {
     expect(other.revisions('daily').length).toBeGreaterThan(0)
   })
 
+  test('multi-revision export/import restores full parent chain and tip', () => {
+    const engine = createNativeNotesEngine()
+    const v1 = engine.create('daily', '# Daily\n\nA', { color: 'red' }, 1000)
+    const v2 = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB', expectedRevision: v1.revision, extra: { color: 'green' }, now: 2000 })
+    expect(v2.status).toBe('ok')
+    const v3 = engine.save({
+      noteId: 'daily',
+      markdown: '# Daily\n\nC',
+      expectedRevision: v2.status === 'ok' ? v2.note.revision : '',
+      extra: { color: 'blue' },
+      now: 3000,
+    })
+    expect(v3.status).toBe('ok')
+    const v4 = engine.save({
+      noteId: 'daily',
+      markdown: '# Daily\n\nD',
+      expectedRevision: v3.status === 'ok' ? v3.note.revision : '',
+      now: 4000,
+    })
+    expect(v4.status).toBe('ok')
+    expect(engine.revisions('daily')).toHaveLength(4)
+    const backup = engine.exportVault()
+    const other = createNativeNotesEngine()
+    other.create('scratch', '# Scratch\n\nignore')
+    other.importVault(backup)
+    expect(other.revisions('daily')).toEqual(engine.revisions('daily'))
+    expect(other.revisions('daily')).toHaveLength(4)
+    expect(other.read('daily')?.revision).toBe(engine.read('daily')?.revision)
+    expect(other.read('daily')?.markdown).toBe('# Daily\n\nD')
+    expect(other.revisions('scratch')).toHaveLength(0)
+  })
+
+  test('invalid or throwing mid-import leaves original notes and history intact', () => {
+    const engine = createNativeNotesEngine()
+    const v1 = engine.create('daily', '# Daily\n\nA', { tag: 'keep' }, 1000)
+    const v2 = engine.save({ noteId: 'daily', markdown: '# Daily\n\nB', expectedRevision: v1.revision, now: 2000 })
+    expect(v2.status).toBe('ok')
+    const originalNote = engine.read('daily')
+    const originalHistory = engine.revisions('daily')
+    expect(originalHistory).toHaveLength(2)
+
+    expect(() =>
+      engine.importVault({
+        notes: [{ ...(originalNote!), markdown: undefined as unknown as string }],
+        revisions: {},
+        count: 1,
+        hash: 'invalid',
+      }),
+    ).toThrow()
+    expect(engine.read('daily')).toEqual(originalNote)
+    expect(engine.revisions('daily')).toEqual(originalHistory)
+
+    const backup = engine.exportVault()
+    let clones = 0
+    const poisonedRevisions: Record<string, typeof backup.revisions[string]> = {}
+    for (const [noteId, log] of Object.entries(backup.revisions)) {
+      poisonedRevisions[noteId] = log.map((revision) => {
+        const clone = { ...revision, sidecar: { ...revision.sidecar } }
+        Object.defineProperty(clone, 'markdown', {
+          enumerable: true,
+          get() {
+            clones += 1
+            if (clones > 1) throw new Error('mid-import')
+            return revision.markdown
+          },
+        })
+        return clone
+      })
+    }
+    expect(() =>
+      engine.importVault({
+        ...backup,
+        revisions: poisonedRevisions,
+      }),
+    ).toThrow()
+    expect(engine.read('daily')).toEqual(originalNote)
+    expect(engine.revisions('daily')).toEqual(originalHistory)
+  })
+
   test('block and wikilink helpers are lossless', () => {
     const markdown = '<!-- block:a -->One\n\n<!-- block:b -->Two [[Inbox]]'
     expect(parseBlocks(markdown).map((block) => block.id)).toEqual(['a', 'b'])

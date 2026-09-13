@@ -122,6 +122,133 @@ function titleFromMarkdown(markdown: string, fallback: string): string {
   return heading?.[1]?.trim() || fallback
 }
 
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T
+}
+
+function cloneNote(note: NativeNote): NativeNote {
+  return {
+    entityId: note.entityId,
+    noteId: note.noteId,
+    title: note.title,
+    markdown: note.markdown,
+    revision: note.revision,
+    blocks: note.blocks.map((block) => ({ id: block.id, text: block.text })),
+    attachments: [...note.attachments],
+    wikilinks: [...note.wikilinks],
+    extra: cloneJson(note.extra),
+    updatedAt: note.updatedAt,
+  }
+}
+
+function cloneRevision(revision: NoteRevision): NoteRevision {
+  return {
+    id: revision.id,
+    parentId: revision.parentId,
+    markdown: revision.markdown,
+    sidecar: {
+      title: revision.sidecar.title,
+      blocks: revision.sidecar.blocks.map((block) => ({ id: block.id, text: block.text })),
+      attachments: [...revision.sidecar.attachments],
+      wikilinks: [...revision.sidecar.wikilinks],
+      extra: cloneJson(revision.sidecar.extra),
+    },
+    createdAt: revision.createdAt,
+  }
+}
+
+function snapshotVault(
+  heads: Map<string, NativeNote>,
+  history: Map<string, NoteRevision[]>,
+): { heads: Map<string, NativeNote>; history: Map<string, NoteRevision[]> } {
+  return {
+    heads: new Map(heads),
+    history: new Map([...history.entries()].map(([id, log]) => [id, log.slice()])),
+  }
+}
+
+function restoreVault(
+  liveHeads: Map<string, NativeNote>,
+  liveHistory: Map<string, NoteRevision[]>,
+  snapshot: { heads: Map<string, NativeNote>; history: Map<string, NoteRevision[]> },
+): void {
+  liveHeads.clear()
+  liveHistory.clear()
+  for (const [id, note] of snapshot.heads) liveHeads.set(id, note)
+  for (const [id, log] of snapshot.history) liveHistory.set(id, log)
+}
+
+function isNote(value: unknown): value is NativeNote {
+  if (typeof value !== 'object' || value === null) return false
+  const note = value as NativeNote
+  return typeof note.noteId === 'string' && note.noteId.length > 0
+    && typeof note.markdown === 'string'
+    && typeof note.revision === 'string' && note.revision.length > 0
+    && typeof note.title === 'string'
+    && Array.isArray(note.blocks)
+    && Array.isArray(note.attachments)
+    && Array.isArray(note.wikilinks)
+    && typeof note.extra === 'object' && note.extra !== null
+    && typeof note.updatedAt === 'number'
+}
+
+function isRevision(value: unknown): value is NoteRevision {
+  if (typeof value !== 'object' || value === null) return false
+  const revision = value as NoteRevision
+  return typeof revision.id === 'string' && revision.id.length > 0
+    && (revision.parentId === null || typeof revision.parentId === 'string')
+    && typeof revision.markdown === 'string'
+    && typeof revision.sidecar === 'object' && revision.sidecar !== null
+    && typeof revision.createdAt === 'number'
+}
+
+function validateImportBundle(bundle: NotesEngineExport): void {
+  if (!Array.isArray(bundle.notes)) throw new Error('import: notes must be an array')
+  if (typeof bundle.revisions !== 'object' || bundle.revisions === null || Array.isArray(bundle.revisions)) {
+    throw new Error('import: revisions must be an object')
+  }
+  for (const note of bundle.notes) {
+    if (!isNote(note)) throw new Error('import: invalid note')
+    const log = bundle.revisions[note.noteId]
+    if (!Array.isArray(log) || log.length === 0) {
+      throw new Error(`import: missing revisions for ${note.noteId}`)
+    }
+    for (const [index, revision] of log.entries()) {
+      if (!isRevision(revision)) throw new Error(`import: invalid revision for ${note.noteId}`)
+      if (index === 0 && revision.parentId !== null) {
+        throw new Error(`import: root parentId must be null for ${note.noteId}`)
+      }
+      if (index > 0 && revision.parentId !== log[index - 1]?.id) {
+        throw new Error(`import: broken parent chain for ${note.noteId}`)
+      }
+    }
+    const tip = log[log.length - 1]!
+    if (tip.id !== note.revision) {
+      throw new Error(`import: head ${note.noteId} does not match tip`)
+    }
+    if (tip.markdown !== note.markdown) {
+      throw new Error(`import: head markdown does not match tip for ${note.noteId}`)
+    }
+  }
+}
+
+function stageImport(bundle: NotesEngineExport): {
+  heads: Map<string, NativeNote>
+  history: Map<string, NoteRevision[]>
+} {
+  validateImportBundle(bundle)
+  const heads = new Map<string, NativeNote>()
+  const history = new Map<string, NoteRevision[]>()
+  for (const [noteId, log] of Object.entries(bundle.revisions)) {
+    if (!Array.isArray(log)) throw new Error(`import: revisions for ${noteId} must be an array`)
+    history.set(noteId, log.map(cloneRevision))
+  }
+  for (const note of bundle.notes) {
+    heads.set(note.noteId, cloneNote(note))
+  }
+  return { heads, history }
+}
+
 function toNativeNote(noteId: string, revision: NoteRevision): NativeNote {
   return {
     entityId: formatRox2EntityId('note', noteId),
@@ -243,13 +370,19 @@ export function createNativeNotesEngine(seed: readonly NativeNote[] = []): Nativ
       }
     },
     importVault(bundle) {
-      heads.clear()
-      history.clear()
-      for (const note of bundle.notes) {
-        writeHead(note.noteId, note.markdown, null, note.extra, note.updatedAt)
+      const snapshot = snapshotVault(heads, history)
+      try {
+        const staged = stageImport(bundle)
+        heads.clear()
+        history.clear()
+        for (const [id, note] of staged.heads) heads.set(id, note)
+        for (const [id, log] of staged.history) history.set(id, log)
+        const exported = this.exportVault()
+        return { restored: exported.count, hash: exported.hash }
+      } catch (error) {
+        restoreVault(heads, history, snapshot)
+        throw error
       }
-      const exported = this.exportVault()
-      return { restored: exported.count, hash: exported.hash }
     },
   }
 }
