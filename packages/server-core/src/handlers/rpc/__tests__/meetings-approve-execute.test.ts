@@ -12,6 +12,8 @@ import { createNativeNotesEngine } from '@craft-agent/core/rox2'
 import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
 import { approveAndExecuteNative } from '../../../meetings/approve-execute.ts'
 import { loadProposalStore } from '../../../meetings/proposals.ts'
+import { startNativeMeeting } from '../../../meetings/catalog.ts'
+import { MeetingJournal } from '../../../meetings/journal.ts'
 import {
   registerMeetingHandlers,
   resetMeetingHandlerStateForTests,
@@ -65,8 +67,29 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
     rmSync(configDir, { recursive: true, force: true })
   })
 
+  function persistRoot(): string {
+    return join(configDir, 'meetings', 'ws')
+  }
+
+  function startMeeting(meetingId = 'm1'): void {
+    const started = startNativeMeeting({
+      persistRootDir: persistRoot(),
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      title: 'локальная',
+      meetingId,
+    })
+    if (!started.ok) throw new Error('expected start')
+  }
+
+  function upserts(meetingId: string) {
+    return new MeetingJournal(persistRoot()).read(meetingId).events.filter((event) => event.type === 'proposal.upsert')
+  }
+
   it('create then approve applies persist revision without test-only seeding', async () => {
     const handlers = createHarness()
+    startMeeting()
     const payload = { title: 'прототип' }
     const created = await handlers.get(RPC_CHANNELS.meetings.CREATE_PROPOSAL)!(
       {},
@@ -80,6 +103,8 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
     expect(created.error).toBeUndefined()
     expect(created.proposal?.status).toBe('proposed')
     expect(existsSync(join(configDir, 'meetings', 'ws', 'proposals.json'))).toBe(true)
+    expect(upserts('m1')).toHaveLength(1)
+    expect(upserts('m1')[0]?.proposal.status).toBe('proposed')
 
     const result = await handlers.get(RPC_CHANNELS.meetings.APPROVE_PROPOSAL)!(
       {},
@@ -94,6 +119,7 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
     }
     expect(result.proposal.status).toBe('applied')
     expect(result.operation.verification).toBe('verified')
+    expect(upserts('m1').map((event) => event.proposal.status)).toEqual(['proposed', 'applied'])
     const entityId = result.operation.entityRef?.entityId
     const revision = result.operation.entityRef?.revisionId
     expect(entityId?.startsWith('task:')).toBe(true)
@@ -107,6 +133,7 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
 
   it('create survives handler reset so approve does not need seedMeetingProposalForTests', async () => {
     const handlers = createHarness()
+    startMeeting()
     const payload = { title: 'прототип' }
     const created = await handlers.get(RPC_CHANNELS.meetings.CREATE_PROPOSAL)!(
       {},
@@ -164,8 +191,26 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
     expect(noDir.error?.code).toBe('config-dir-required')
   })
 
+  it('create fail-closes without a meeting and does not persist proposals.json', async () => {
+    const handlers = createHarness()
+    const payload = { title: 'прототип' }
+    const missing = await handlers.get(RPC_CHANNELS.meetings.CREATE_PROPOSAL)!(
+      {},
+      'ws',
+      'm1',
+      'create_task',
+      payload,
+      'user',
+      grant,
+    ) as { proposal: MeetingProposal | null; error?: { code: string } }
+    expect(missing.proposal).toBeNull()
+    expect(missing.error?.code).toBe('meeting-not-found')
+    expect(existsSync(join(configDir, 'meetings', 'ws', 'proposals.json'))).toBe(false)
+  })
+
   it('approve after create is still fail-closed without outbox', async () => {
     const handlers = createHarness()
+    startMeeting()
     const payload = { title: 'прототип' }
     const created = await handlers.get(RPC_CHANNELS.meetings.CREATE_PROPOSAL)!(
       {},

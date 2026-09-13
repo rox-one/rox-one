@@ -20,6 +20,8 @@ import LabelsSettingsPage from '@/pages/settings/LabelsSettingsPage'
 import OrganizationsSettingsPage from '@/pages/settings/OrganizationsSettingsPage'
 import MessagingSettingsPage from '@/pages/settings/MessagingSettingsPage'
 import ServerSettingsPage from '@/pages/settings/ServerSettingsPage'
+import ShortcutsPage from '@/pages/settings/ShortcutsPage'
+import { ActionRegistryProvider } from '@/actions/registry'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import { ModalProvider } from '@/context/ModalContext'
@@ -139,6 +141,16 @@ function ServerPlayground() {
   return (
     <SettingsScreen>
       <ServerSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function ShortcutsPlayground() {
+  return (
+    <SettingsScreen>
+      <ActionRegistryProvider>
+        <ShortcutsPage />
+      </ActionRegistryProvider>
     </SettingsScreen>
   )
 }
@@ -457,6 +469,16 @@ export const settingsComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'ROX2-060 native server chrome; save is a local write',
     component: ServerPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-shortcuts',
+    name: 'Settings · Shortcuts',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-062 native shortcuts chrome; catalog load is device-read',
+    component: ShortcutsPlayground,
     props: [],
     layout: 'full',
   },
