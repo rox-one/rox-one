@@ -188,20 +188,63 @@ export type Rox2BindingRegisterResult =
   | { status: 'ok'; ref: Rox2EntityRef }
   | { status: 'quarantine'; reason: string; existing: Rox2EntityRef }
 
+/**
+ * Binding key format (v1 writes):
+ *   encodeURIComponent(provider) + ':' + encodeURIComponent(account)
+ *     + ':' + encodeURIComponent(remoteType) + ':' + encodeURIComponent(remoteId)
+ *
+ * Exactly four slots. `:` `%` and other encodeURIComponent reserved characters
+ * inside a field cannot shift slots. Round-trip is format → parse.
+ *
+ * Reads: reject-closed unless the key has exactly four slots and each slot
+ * decodes via decodeURIComponent to a non-empty string. Ambiguous legacy keys that
+ * concatenated unencoded fields (five or more `:`-split segments, e.g.
+ * `g:ac:ct:event:1` for account `ac:ct`) are rejected — they are not migrated.
+ * Four-slot keys with only unreserved characters still decode (identity), so
+ * simple historical keys such as `google:work:event:e1` remain readable.
+ * Invalid percent-encoding is rejected. New writes always emit encoded slots.
+ */
+const BINDING_KEY_SLOT_COUNT = 4
+
+function encodeBindingSlot(value: string): string {
+  return encodeURIComponent(value)
+}
+
+function decodeBindingSlot(slot: string, key: string): string {
+  if (!slot) throw new Error(`Invalid external binding key: ${key}`)
+  let decoded: string
+  try {
+    decoded = decodeURIComponent(slot)
+  } catch {
+    throw new Error(`Invalid external binding key: ${key}`)
+  }
+  if (!decoded) throw new Error(`Invalid external binding key: ${key}`)
+  return decoded
+}
+
 export function formatRox2ExternalBindingKey(binding: Rox2ExternalBinding): string {
   if (!binding.provider || !binding.account || !binding.remoteType || !binding.remoteId) {
     throw new Error('incomplete external binding')
   }
-  return `${binding.provider}:${binding.account}:${binding.remoteType}:${binding.remoteId}`
+  return [
+    encodeBindingSlot(binding.provider),
+    encodeBindingSlot(binding.account),
+    encodeBindingSlot(binding.remoteType),
+    encodeBindingSlot(binding.remoteId),
+  ].join(':')
 }
 
 export function parseRox2ExternalBindingKey(key: string): Rox2ExternalBinding {
   const parts = key.split(':')
-  if (parts.length < 4) throw new Error(`Invalid external binding key: ${key}`)
-  const [provider, account, remoteType, ...rest] = parts
-  const remoteId = rest.join(':')
-  if (!provider || !account || !remoteType || !remoteId) throw new Error(`Invalid external binding key: ${key}`)
-  return { provider, account, remoteType, remoteId }
+  if (parts.length !== BINDING_KEY_SLOT_COUNT) {
+    throw new Error(`Invalid external binding key: ${key}`)
+  }
+  return {
+    provider: decodeBindingSlot(parts[0] ?? '', key),
+    account: decodeBindingSlot(parts[1] ?? '', key),
+    remoteType: decodeBindingSlot(parts[2] ?? '', key),
+    remoteId: decodeBindingSlot(parts[3] ?? '', key),
+  }
 }
 
 export function entityRefFromBinding(
@@ -219,7 +262,7 @@ export function entityRefFromBinding(
   }
 }
 
-/** Re-import of the same remote key is stable. Colliding keys quarantine. */
+/** Re-import of the same remote key is stable. Colliding keys and workspace mismatches quarantine. */
 export function registerExternalBinding(
   index: Map<string, Rox2EntityRef>,
   workspaceId: string,
@@ -230,14 +273,19 @@ export function registerExternalBinding(
   const key = formatRox2ExternalBindingKey(binding)
   const ref = entityRefFromBinding(workspaceId, kind, binding, revisionId)
   const existing = index.get(key)
+  if (existing && existing.workspaceId !== workspaceId) {
+    return { status: 'quarantine', reason: 'workspace-mismatch', existing }
+  }
   if (existing && existing.entityId !== ref.entityId) {
     return { status: 'quarantine', reason: 'binding-collision', existing }
   }
   if (existing) {
-    return {
-      status: 'ok',
-      ref: { ...existing, revisionId: revisionId ?? existing.revisionId },
+    const next: Rox2EntityRef = {
+      ...existing,
+      revisionId: revisionId ?? existing.revisionId,
     }
+    index.set(key, next)
+    return { status: 'ok', ref: next }
   }
   index.set(key, ref)
   return { status: 'ok', ref }

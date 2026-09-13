@@ -196,6 +196,73 @@ describe('ROX2 platform contract', () => {
     expect(clash.status).toBe('quarantine')
   })
 
+  test('encodes binding slots so colons in account cannot shift parse', () => {
+    const binding = {
+      provider: 'g',
+      account: 'ac:ct',
+      remoteType: 'event',
+      remoteId: '1',
+    }
+    const key = formatRox2ExternalBindingKey(binding)
+    expect(key).toBe('g:ac%3Act:event:1')
+    expect(parseRox2ExternalBindingKey(key)).toEqual(binding)
+    expect(() => parseRox2ExternalBindingKey('g:ac:ct:event:1')).toThrow('Invalid external binding key')
+  })
+
+  test('round-trips colons in every binding slot', () => {
+    const binding = {
+      provider: 'p:v',
+      account: 'a:c',
+      remoteType: 't:y',
+      remoteId: 'id:x',
+    }
+    expect(parseRox2ExternalBindingKey(formatRox2ExternalBindingKey(binding))).toEqual(binding)
+  })
+
+  test('rejects invalid percent-encoding and empty slots on read', () => {
+    expect(() => parseRox2ExternalBindingKey('g:ac%ZZ:event:1')).toThrow('Invalid external binding key')
+    expect(() => parseRox2ExternalBindingKey('g::event:1')).toThrow('Invalid external binding key')
+  })
+
+  test('quarantines re-register when workspaceId differs', () => {
+    const index = new Map<string, Rox2EntityRef>()
+    const binding = {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    }
+    const first = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-1')
+    const second = registerExternalBinding(index, 'ws-2', 'calendar-event', binding, 'rev-2')
+    expect(first.status).toBe('ok')
+    expect(second.status).toBe('quarantine')
+    if (second.status === 'quarantine') {
+      expect(second.reason).toBe('workspace-mismatch')
+      expect(second.existing.workspaceId).toBe('ws-1')
+      expect(second.existing.revisionId).toBe('rev-1')
+    }
+    expect(index.get(formatRox2ExternalBindingKey(binding))?.workspaceId).toBe('ws-1')
+    expect(index.get(formatRox2ExternalBindingKey(binding))?.revisionId).toBe('rev-1')
+  })
+
+  test('writes returned revisionId into the index on same-key update', () => {
+    const index = new Map<string, Rox2EntityRef>()
+    const binding = {
+      provider: 'google',
+      account: 'work',
+      remoteType: 'event',
+      remoteId: 'e1',
+    }
+    const first = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-1')
+    const again = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-2')
+    expect(first.status).toBe('ok')
+    expect(again.status).toBe('ok')
+    if (again.status === 'ok') {
+      expect(again.ref.revisionId).toBe('rev-2')
+    }
+    expect(index.get(formatRox2ExternalBindingKey(binding))?.revisionId).toBe('rev-2')
+  })
+
   test('relation dictionary allows note→person and forbids task-dependency cycles', () => {
     expect(isAllowedRox2Relation('mentions', 'note', 'person')).toBe(true)
     expect(isAllowedRox2Relation('blocks', 'task', 'task')).toBe(true)
