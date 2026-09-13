@@ -386,6 +386,7 @@ export default function CloudRunsSettingsPage() {
                     onCheckedChange={(checked) => patch({ personas: checked })}
                   />
                 </SettingsCard>
+              </SettingsSection>
               <SettingsSection title={t('settings.cloudRuns.sectionSandbox')}>
                 <SettingsCard>
                   <SettingsRow

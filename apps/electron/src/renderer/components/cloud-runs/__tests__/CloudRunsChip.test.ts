@@ -40,4 +40,10 @@ describe('CloudRunsChip compact dialog accessibility', () => {
       expect(source).toContain(`t('cloudRuns.${action}')`)
     }
   })
+
+  it('wraps cancel and kill items in one JSX parent', () => {
+    expect(source).toMatch(
+      /state === 'ready'\) && \(\s*<>\s*<DropdownMenuItem[\s\S]*?cloudRuns\.cancel[\s\S]*?cloudRuns\.kill[\s\S]*?<\/>/,
+    )
+  })
 })

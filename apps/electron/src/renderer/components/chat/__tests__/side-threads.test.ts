@@ -24,6 +24,11 @@ describe('side thread wiring', () => {
     expect(chatDisplay).toContain('branchFromSessionId')
   })
 
+  it('wraps session chat and side-thread preview in one JSX parent', () => {
+    expect(chatDisplay).toMatch(/\{session \? \(\s*<>/)
+    expect(chatDisplay).toContain('<SideThreadPreviewDialog')
+  })
+
   it('builds a grill prompt linked to the source message', () => {
     const prompt = buildSideThreadPrompt({
       action: 'grill',

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import type { ZenShellSnapshot } from '../../../shared/shell-appearance'
+import type { ZenShellSnapshot } from '../../shared/shell-appearance'
 
 function applySnapshot(snapshot: ZenShellSnapshot): void {
   const root = document.documentElement
