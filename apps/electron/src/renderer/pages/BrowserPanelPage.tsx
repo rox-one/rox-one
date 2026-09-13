@@ -5,6 +5,10 @@
  * composites native WebContentsViews (toolbar + page) on top of this surface;
  * this component only reports its DOM rect and focus state so main can
  * position or hide those views.
+ *
+ * Visibility: mounted && focused && !removed && validBounds && !suppressed.
+ * Receiver: apps/electron/src/main/handlers/browser.ts → browserPaneManager.syncEmbeddedBounds.
+ * Remote VPS screenshots stay in WebBrowserPanel (390×720) and are not this path.
  */
 
 import * as React from 'react'
@@ -12,6 +16,15 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { focusedPanelIdAtom } from '@/atoms/panel-stack'
+import { hasOpenOverlay } from '@/lib/overlay-detection'
+import {
+  createNativeSurfaceTracker,
+  isValidNativeBounds,
+} from '@/lib/native-surface-visibility'
+import {
+  isPanelResizeActive,
+  subscribePanelResizeActivity,
+} from '@/components/app-shell/resize-activity'
 
 export interface BrowserPanelPageProps {
   /** Embedded browser instance id (from browserPane.createEmbedded) */
@@ -26,41 +39,83 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef(0)
+  const trackerRef = useRef(createNativeSurfaceTracker())
   const [removed, setRemoved] = useState(false)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
-  // Without a panelId (rendered outside the panel stack) assume focused.
   const isFocused = panelId === undefined || focusedPanelId === panelId
 
-  // Push current bounds (or null when hidden) to the main process
   const syncBounds = useCallback(() => {
+    const tracker = trackerRef.current
     const el = containerRef.current
-    if (!el || !isFocused || removed) {
-      window.electronAPI.browserPane.syncBounds(instanceId, null)
-      return
-    }
-    const rect = el.getBoundingClientRect()
-    if (rect.width < 120 || rect.height < 80) {
-      window.electronAPI.browserPane.syncBounds(instanceId, null)
-      return
-    }
-    window.electronAPI.browserPane.syncBounds(instanceId, {
-      x: Math.round(rect.x),
-      y: Math.round(rect.y),
-      width: Math.round(rect.width),
-      height: Math.round(rect.height),
-    })
-  }, [instanceId, isFocused, removed])
+    const rect = el ? el.getBoundingClientRect() : null
+    const bounds = rect
+      ? {
+          x: Math.round(rect.x),
+          y: Math.round(rect.y),
+          width: Math.round(rect.width),
+          height: Math.round(rect.height),
+        }
+      : null
+    tracker.setBounds(isValidNativeBounds(bounds) ? bounds : null)
+    const decision = tracker.resolve(tracker.snapshot.generation)
+    if (!decision.apply) return
+    window.electronAPI.browserPane.syncBounds(instanceId, decision.rect)
+  }, [instanceId])
 
-  // rAF-throttled bounds sync
   const scheduleSync = useCallback(() => {
-    if (frameRef.current) return
+    if (frameRef.current) cancelAnimationFrame(frameRef.current)
+    const gen = trackerRef.current.snapshot.generation
     frameRef.current = requestAnimationFrame(() => {
       frameRef.current = 0
+      if (gen !== trackerRef.current.snapshot.generation) return
       syncBounds()
     })
   }, [syncBounds])
 
-  // Observe geometry changes: element resize, window resize
+  useEffect(() => {
+    const tracker = trackerRef.current
+    tracker.mount()
+    return () => {
+      tracker.unmount()
+      if (frameRef.current) cancelAnimationFrame(frameRef.current)
+      frameRef.current = 0
+    }
+  }, [])
+
+  useEffect(() => {
+    trackerRef.current.setFocused(isFocused)
+    scheduleSync()
+  }, [isFocused, scheduleSync])
+
+  useEffect(() => {
+    trackerRef.current.setRemoved(removed)
+    scheduleSync()
+  }, [removed, scheduleSync])
+
+  useEffect(() => {
+    const tracker = trackerRef.current
+    const applyResize = (active: boolean) => {
+      if (active) tracker.acquire('resize')
+      else tracker.release('resize')
+      scheduleSync()
+    }
+    applyResize(isPanelResizeActive())
+    return subscribePanelResizeActivity(applyResize)
+  }, [scheduleSync])
+
+  useEffect(() => {
+    const tracker = trackerRef.current
+    const syncOverlay = () => {
+      if (hasOpenOverlay()) tracker.acquire('overlay')
+      else tracker.release('overlay')
+      scheduleSync()
+    }
+    syncOverlay()
+    const observer = new MutationObserver(syncOverlay)
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true })
+    return () => observer.disconnect()
+  }, [scheduleSync])
+
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -76,12 +131,6 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
     }
   }, [scheduleSync])
 
-  // Re-sync when focus or removal state flips (hide when unfocused, restore when focused)
-  useEffect(() => {
-    scheduleSync()
-  }, [isFocused, removed, scheduleSync])
-
-  // Track instance lifecycle: hide native views, but restore from list() instead of a dead pane.
   useEffect(() => {
     const offRemoved = window.electronAPI.browserPane.onRemoved((id) => {
       if (id === instanceId) setRemoved(true)
@@ -110,8 +159,6 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
     setRemoved(false)
   }, [])
 
-  // Hide native views on unmount. Destroy is deferred one microtask so React
-  // StrictMode remounts (dev) do not kill the instance before the second mount.
   const destroyGen = React.useRef(0)
   useEffect(() => {
     const id = instanceId
@@ -141,6 +188,5 @@ export default function BrowserPanelPage({ instanceId, panelId, persist = true }
     )
   }
 
-  // Full-size surface for the native views to cover
   return <div ref={containerRef} className="h-full w-full bg-background" />
 }
