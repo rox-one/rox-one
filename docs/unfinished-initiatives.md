@@ -143,6 +143,7 @@
 - завершить streaming chat, tool visualization, permission approval, new session и attachments;
 - завершить offline read-only cache, reconnect/resubscribe и disabled controls без сети;
 - закончить auth/server connection/error mapping и совместимость protocol versions;
+  **срез 2026-09-13:** iOS `ProtocolVersionPolicy` rejects major mismatch on `handshake_ack`; TS `version-policy.ts` mirrors the server rule.
 - выполнить iPad Split View, Stage Manager, multi-window, rotation, external keyboard и focus QA;
 - прогнать `xcodegen`/`xcodebuild` на поддерживаемом macOS runner и device/simulator acceptance;
 - отдельными будущими эпиками остаются APNs/push и Sources/MCP management UI.

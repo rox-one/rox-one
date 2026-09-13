@@ -3,6 +3,11 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { PROTOCOL_VERSION } from '../types.ts'
+import {
+  protocolMajor,
+  protocolVersionRejectionMessage,
+  protocolVersionsCompatible,
+} from '../version-policy.ts'
 
 const dir = dirname(fileURLToPath(import.meta.url))
 const fixtures = join(dir, '../__fixtures__')
@@ -33,5 +38,20 @@ describe('native sidecar handshake fixtures', () => {
     expect(ack.registeredChannels).toContain('index:search')
     expect(ack.registeredChannels).toContain('run:create')
     expect(ack.registeredChannels).toContain('journal:write')
+  })
+})
+
+describe('iOS handshake protocol version policy', () => {
+  it('accepts the same major as PROTOCOL_VERSION', () => {
+    expect(protocolMajor(PROTOCOL_VERSION)).toBe(1)
+    expect(protocolVersionsCompatible(PROTOCOL_VERSION, '1.0')).toBe(true)
+    expect(protocolVersionsCompatible(PROTOCOL_VERSION, '1.9')).toBe(true)
+  })
+
+  it('rejects a missing version or a different major (server 99.0)', () => {
+    expect(protocolVersionsCompatible(PROTOCOL_VERSION, '')).toBe(false)
+    expect(protocolVersionsCompatible(PROTOCOL_VERSION, '99.0')).toBe(false)
+    expect(protocolMajor('v1.0')).toBeNull()
+    expect(protocolVersionRejectionMessage('1.0', '99.0')).toContain('99.0')
   })
 })
