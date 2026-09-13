@@ -145,4 +145,32 @@ describe('ROX-AUD-031 native notes engine', () => {
     expect(extractWikilinks(markdown)).toEqual(['Inbox'])
     expect(rewriteWikilinks('See [[Inbox#top|x]]', 'Inbox', 'Inbox v2')).toBe('See [[Inbox v2#top|x]]')
   })
+
+  test('unlabeled paragraph insert keeps existing block ids', () => {
+    const original = 'Alpha paragraph\n\nBeta paragraph'
+    const [first, second] = parseBlocks(original)
+    expect(first?.id).toBeTruthy()
+    expect(second?.id).toBeTruthy()
+    expect(first?.id).not.toBe(second?.id)
+    const prepended = parseBlocks(`Intro paragraph\n\n${original}`)
+    expect(prepended).toHaveLength(3)
+    expect(prepended[1]?.id).toBe(first?.id)
+    expect(prepended[2]?.id).toBe(second?.id)
+    expect(prepended[0]?.id).not.toBe(first?.id)
+    expect(prepended[1]?.text).toBe(first?.text)
+    expect(prepended[2]?.text).toBe(second?.text)
+
+    const engine = createNativeNotesEngine()
+    const created = engine.create('daily', `# Daily\n\n${original}`)
+    const originalIds = created.blocks.filter((block) => block.text === 'Alpha paragraph' || block.text === 'Beta paragraph').map((block) => block.id)
+    const saved = engine.save({
+      noteId: 'daily',
+      markdown: `# Daily\n\nIntro paragraph\n\n${original}`,
+      expectedRevision: created.revision,
+    })
+    expect(saved.status).toBe('ok')
+    if (saved.status !== 'ok') return
+    const shifted = saved.note.blocks.filter((block) => block.text === 'Alpha paragraph' || block.text === 'Beta paragraph')
+    expect(shifted.map((block) => block.id)).toEqual(originalIds)
+  })
 })
