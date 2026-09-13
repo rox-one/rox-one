@@ -23,6 +23,7 @@ import ServerSettingsPage from '@/pages/settings/ServerSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import { ModalProvider } from '@/context/ModalContext'
+import { NavigationProvider } from '@/contexts/NavigationContext'
 import type { ComponentEntry } from './types'
 
 function SettingsScreen({ children }: { children: React.ReactNode }) {
@@ -116,9 +117,20 @@ function OrganizationsPlayground() {
 }
 
 function MessagingPlayground() {
+  const onCreateSession = React.useCallback(async () => {
+    throw new Error('[Playground] onCreateSession is not available')
+  }, [])
   return (
     <SettingsScreen>
-      <MessagingSettingsPage />
+      <NavigationProvider
+        workspaceId="playground-workspace"
+        workspaceSlug="playground"
+        onCreateSession={onCreateSession}
+        isReady
+        isSessionsReady
+      >
+        <MessagingSettingsPage />
+      </NavigationProvider>
     </SettingsScreen>
   )
 }

@@ -198,5 +198,6 @@ describe('ROX2-059..061 native settings pages', () => {
     expect(stories).toContain("id: 'settings-messaging'")
     expect(stories).toContain("id: 'settings-server'")
     expect(stories).toContain("id: 'settings-cloud-runs'")
+    expect(stories).toContain('NavigationProvider')
   })
 })
