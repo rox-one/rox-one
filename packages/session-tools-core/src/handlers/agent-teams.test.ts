@@ -4,6 +4,7 @@ import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { handleAgentTeams } from './agent-teams.ts';
 import type { SessionToolContext } from '../context.ts';
+import { AgentTeamsStore } from '@craft-agent/core/platform';
 
 const dirs: string[] = [];
 
@@ -31,6 +32,13 @@ function payload(result: Awaited<ReturnType<typeof handleAgentTeams>>): Record<s
   expect(result.isError).toBeFalsy();
   const text = result.content[0] && 'text' in result.content[0] ? result.content[0].text : '';
   return JSON.parse(text) as Record<string, unknown>;
+}
+
+async function errText(
+  result: Awaited<ReturnType<typeof handleAgentTeams>>,
+): Promise<string> {
+  expect(result.isError).toBe(true);
+  return result.content[0] && 'text' in result.content[0] ? result.content[0].text : '';
 }
 
 describe('handleAgentTeams', () => {
@@ -68,6 +76,7 @@ describe('handleAgentTeams', () => {
         action: 'upsert_task',
         teamId: team.id,
         subject: 'Read diff',
+        assignee: 'alice',
       }),
     );
     payload(
@@ -75,9 +84,28 @@ describe('handleAgentTeams', () => {
         action: 'append_mailbox',
         teamId: team.id,
         agentKey: 'captain',
+        from: 'captain',
+        to: 'captain',
+        content: 'please review',
+      }),
+    );
+
+    const alice = ctx(workspace, 'sess-alice');
+    payload(
+      await handleAgentTeams(alice, {
+        action: 'append_mailbox',
+        teamId: team.id,
         from: 'alice',
         to: 'captain',
         content: 'diff looks good',
+      }),
+    );
+    payload(
+      await handleAgentTeams(alice, {
+        action: 'upsert_task',
+        teamId: team.id,
+        taskId: 't1',
+        status: 'claimed',
       }),
     );
 
@@ -90,7 +118,7 @@ describe('handleAgentTeams', () => {
       await handleAgentTeams(captain, { action: 'read_mailbox', teamId: team.id, agentKey: 'captain' }),
     );
     const messages = mail.messages as Array<{ content: string }>;
-    expect(messages[0]?.content).toBe('diff looks good');
+    expect(messages.map((m) => m.content)).toEqual(['please review', 'diff looks good']);
 
     const archived = payload(await handleAgentTeams(captain, { action: 'archive', teamId: team.id }));
     expect(archived.archived).toBe('review-squad');
@@ -116,5 +144,149 @@ describe('handleAgentTeams', () => {
     expect(src).toContain('Not Cordis');
     expect(src).not.toContain('dsh-agent-teams');
     expect(src).not.toContain('defaultValue: true');
+  });
+
+  it('keeps roster and DAG mutations captain-only and mailbox reads participant-scoped', async () => {
+    const workspace = tmpWorkspace();
+    const captain = ctx(workspace, 'cap-1');
+    const created = payload(
+      await handleAgentTeams(captain, { action: 'create', name: 'Gate', phase: 'staged' }),
+    );
+    const teamId = (created.team as { id: string }).id;
+    payload(
+      await handleAgentTeams(captain, {
+        action: 'add_member',
+        teamId,
+        memberName: 'alice',
+        memberSessionId: 'sess-alice',
+      }),
+    );
+    payload(
+      await handleAgentTeams(captain, {
+        action: 'upsert_task',
+        teamId,
+        subject: 'A',
+        assignee: 'alice',
+      }),
+    );
+    payload(
+      await handleAgentTeams(captain, {
+        action: 'upsert_task',
+        teamId,
+        subject: 'B',
+        dependencies: ['t1'],
+      }),
+    );
+
+    const alice = ctx(workspace, 'sess-alice');
+    const stranger = ctx(workspace, 'sess-stranger');
+
+    expect(
+      await errText(
+        await handleAgentTeams(alice, {
+          action: 'add_member',
+          teamId,
+          memberName: 'bob',
+        }),
+      ),
+    ).toMatch(/only the captain/i);
+
+    expect(
+      await errText(
+        await handleAgentTeams(stranger, { action: 'status', teamId }),
+      ),
+    ).toMatch(/not a participant/i);
+
+    expect(
+      await errText(
+        await handleAgentTeams(alice, {
+          action: 'upsert_task',
+          teamId,
+          subject: 'sneaky',
+        }),
+      ),
+    ).toMatch(/only the captain can create tasks/i);
+
+    expect(
+      await errText(
+        await handleAgentTeams(alice, {
+          action: 'upsert_task',
+          teamId,
+          taskId: 't2',
+          status: 'claimed',
+          dependencies: ['t1'],
+        }),
+      ),
+    ).toMatch(/assigned to them/i);
+
+    const beforeDag = new AgentTeamsStore({ workspaceRoot: workspace }).readTeam(teamId)!;
+    const dagFail = await handleAgentTeams(captain, {
+      action: 'upsert_task',
+      teamId,
+      taskId: 't2',
+      subject: 'B',
+      status: 'claimed',
+      dependencies: ['t1'],
+    });
+    expect(dagFail.isError).toBe(true);
+    expect(await errText(dagFail)).toMatch(/dependencies not completed/);
+    const afterDag = new AgentTeamsStore({ workspaceRoot: workspace }).readTeam(teamId)!;
+    expect(afterDag.tasks.find((t) => t.id === 't2')?.status).toBe('pending');
+    expect(afterDag.updatedAt).toBe(beforeDag.updatedAt);
+
+    expect(
+      await errText(
+        await handleAgentTeams(alice, {
+          action: 'append_mailbox',
+          teamId,
+          from: 'captain',
+          to: 'alice',
+          content: 'spoof',
+        }),
+      ),
+    ).toMatch(/from must match/i);
+
+    expect(
+      await errText(
+        await handleAgentTeams(alice, {
+          action: 'read_mailbox',
+          teamId,
+          agentKey: 'captain',
+        }),
+      ),
+    ).toMatch(/own mailbox/i);
+
+    expect(
+      await errText(
+        await handleAgentTeams(alice, {
+          action: 'append_mailbox',
+          teamId,
+          from: 'alice',
+          to: 'captain',
+          agentKey: 'alice/../captain',
+          content: 'alias',
+        }),
+      ),
+    ).toMatch(/filesystem path/i);
+
+    const store = new AgentTeamsStore({ workspaceRoot: workspace });
+    const live = store.readTeam(teamId)!;
+    store.writeTeam({
+      ...live,
+      members: live.members.map((m) =>
+        m.name === 'alice' ? { ...m, status: 'removed' as const } : m,
+      ),
+    });
+    expect(
+      await errText(
+        await handleAgentTeams(alice, {
+          action: 'append_mailbox',
+          teamId,
+          from: 'alice',
+          to: 'captain',
+          content: 'after removal',
+        }),
+      ),
+    ).toMatch(/not a participant|removed/i);
   });
 });

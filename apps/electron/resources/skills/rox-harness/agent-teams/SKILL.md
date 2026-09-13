@@ -59,6 +59,7 @@ Do **not** invent a Timeline surface or a live inspector DAG panel in this skill
 ## Hard rules
 
 - One captain (this session) leads one active team at a time.
+- `agent_teams` roster / DAG / archive mutations are **captain-only**. Members may claim tasks assigned to them and read/write their own mailbox. Never spoof `from`, never use filesystem path aliases as mailbox keys, and never act after being `removed`.
 - Do **not** install or require Cordis / `dsh-cordis` / npm `@nanmicoder/dsh-agent-teams` inside Rox.
 - Prefer `SessionFanOutSheet` / existing fan-out only when the user wants simple parallel replicas — Agent Teams is role + DAG oriented.
 - Keep harness flags default-safe: never assume Agent Teams is enabled; never set the flag on behalf of the user.
