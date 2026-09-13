@@ -83,13 +83,6 @@ const SECTIONS: SectionId[] = [
   'registries',
 ]
 
-const CENTER_GROUP_DEFAULTS: Record<(typeof EXTENSION_CENTER_GROUPS)[number], string> = {
-  skills: 'Skills',
-  sources: 'Sources',
-  automations: 'Automations',
-  marketplace: 'Marketplace',
-}
-
 function isHighRisk(perm: ExtensionPermission): boolean {
   if (perm.startsWith('secrets.use:')) return true
   return (HIGH_RISK_PERMISSIONS as readonly string[]).includes(perm)
@@ -179,12 +172,10 @@ function ExtensionCard({
               <span
                 className="text-[10px] uppercase tracking-wide border rounded px-1.5 py-0.5 font-mono opacity-80"
                 title={t('extensions.card.compatLevelHint', {
-                  defaultValue: 'SiYuan plugin compatibility level',
                   level: compatLevel,
                 })}
               >
                 {t('extensions.card.compatLevel', {
-                  defaultValue: 'L{{level}}',
                   level: compatLevel,
                 })}
               </span>
@@ -201,7 +192,7 @@ function ExtensionCard({
             {readOnly ? (
               <span className="inline-flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3" />
-                {t('extensions.card.readOnly', { defaultValue: 'projection' })}
+                {t('extensions.card.readOnly')}
               </span>
             ) : null}
           </div>
@@ -214,7 +205,7 @@ function ExtensionCard({
               onClick={() => onOpenCompat?.()}
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1 hover:bg-muted disabled:opacity-50"
             >
-              {t('extensions.action.openFullSiyuan', { defaultValue: 'Open in full SiYuan' })}
+              {t('extensions.action.openFullSiyuan')}
             </button>
           ) : null}
           {permissions.includes('browser.open') ? (
@@ -226,7 +217,7 @@ function ExtensionCard({
               data-testid="extensions-open-browser"
             >
               <Globe className="w-3.5 h-3.5" />
-              {t('extensions.action.openBrowser', { defaultValue: 'Open browser' })}
+              {t('extensions.action.openBrowser')}
             </button>
           ) : null}
           {onToggle && !available ? (
@@ -243,15 +234,15 @@ function ExtensionCard({
               }`}
               title={
                 enabled
-                  ? t('extensions.action.disable', { defaultValue: 'Disable' })
-                  : t('extensions.action.enable', { defaultValue: 'Enable' })
+                  ? t('extensions.action.disable')
+                  : t('extensions.action.enable')
               }
             >
               {enabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
               <span className="font-medium">
                 {enabled
-                  ? t('extensions.status.enabled', { defaultValue: 'enabled' })
-                  : t('extensions.status.disabled', { defaultValue: 'disabled' })}
+                  ? t('extensions.status.enabled')
+                  : t('extensions.status.disabled')}
               </span>
             </button>
           ) : null}
@@ -263,7 +254,7 @@ function ExtensionCard({
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1 bg-primary/10 text-primary hover:bg-primary/20 disabled:opacity-50"
             >
               {busy ? <Spinner className="w-3 h-3" /> : <RefreshCw className="w-3.5 h-3.5" />}
-              {t('marketplace.update', { defaultValue: 'Update' })}
+              {t('marketplace.update')}
             </button>
           ) : null}
           {onUninstall && !available ? (
@@ -274,7 +265,7 @@ function ExtensionCard({
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1 hover:bg-muted disabled:opacity-50"
             >
               {busy ? <Spinner className="w-3 h-3" /> : <Trash2 className="w-3.5 h-3.5" />}
-              {t('marketplace.remove', { defaultValue: 'Remove' })}
+              {t('marketplace.remove')}
             </button>
           ) : null}
           {onInstall && available ? (
@@ -285,7 +276,7 @@ function ExtensionCard({
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1 hover:bg-muted disabled:opacity-50"
             >
               {busy ? <Spinner className="w-3 h-3" /> : <DownloadCloud className="w-3.5 h-3.5" />}
-              {t('extensions.action.install', { defaultValue: 'Install' })}
+              {t('extensions.action.install')}
             </button>
           ) : null}
         </div>
@@ -303,7 +294,7 @@ function ExtensionCard({
           ) : null}
           {installTarget ? (
             <span className="opacity-70">
-              {t('extensions.card.installTarget', { defaultValue: 'Install to' })}:{' '}
+              {t('extensions.card.installTarget')}:{' '}
               <span className="font-medium">
                 {t(`extensions.installTarget.${installTarget}`, { defaultValue: installTarget })}
               </span>
@@ -312,7 +303,7 @@ function ExtensionCard({
         </div>
         <div>
           <div className="opacity-70 mb-1">
-            {t('extensions.card.worksIn', { defaultValue: 'Works in' })}
+            {t('extensions.card.worksIn')}
           </div>
           <div className="flex flex-wrap gap-1">
             {worksIn.length ? (
@@ -329,7 +320,6 @@ function ExtensionCard({
         <div>
           <div className="opacity-70 mb-1">
             {t('extensions.card.permissions', {
-              defaultValue: 'Permissions',
               count: permissions.length,
             })}{' '}
             ({permissions.length})
@@ -350,7 +340,7 @@ function RuntimeBadge({ runtime }: { runtime: ExtensionRuntime }) {
         defaultValue: RUNTIME_PLACEMENT[runtime],
       })}
     >
-      <span className="opacity-70">{t('extensions.card.runtime', { defaultValue: 'Runtime' })}:</span>
+      <span className="opacity-70">{t('extensions.card.runtime')}:</span>
       {t(`extensions.runtime.${runtime}`, { defaultValue: runtime })}
     </span>
   )
@@ -361,7 +351,7 @@ function PermissionsList({ permissions }: { permissions: ExtensionPermission[] }
   if (!permissions.length) {
     return (
       <span className="text-xs opacity-60">
-        {t('extensions.card.noPermissions', { defaultValue: 'No permissions' })}
+        {t('extensions.card.noPermissions')}
       </span>
     )
   }
@@ -544,7 +534,7 @@ export default function ExtensionsSettingsPage() {
       setBusy((b) => ({ ...b, [id]: true }))
       try {
         await fn()
-        setActionMsg(t('extensions.action.success', { defaultValue: 'Done' }))
+        setActionMsg(t('extensions.action.success'))
         window.setTimeout(() => setActionMsg(null), 2500)
         await load()
       } catch (err) {
@@ -861,7 +851,7 @@ export default function ExtensionsSettingsPage() {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
-        title={t('settings.extensions.title', { defaultValue: 'Extensions' })}
+        title={t('settings.extensions.title')}
         actions={<HeaderMenu route={routes.view.settings('extensions')} />}
       />
 
@@ -897,7 +887,7 @@ export default function ExtensionsSettingsPage() {
                       category === 'all' ? 'bg-muted font-medium' : 'opacity-70'
                     }`}
                   >
-                    {t('extensions.category.all', { defaultValue: 'All' })}
+                    {t('extensions.category.all')}
                   </button>
                   {CATALOG_CATEGORIES.map((c) => (
                     <button
@@ -915,7 +905,7 @@ export default function ExtensionsSettingsPage() {
               ) : null}
               <input
                 className="ml-auto border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-1 focus:ring-ring bg-background min-w-[12rem]"
-                placeholder={t('extensions.search', { defaultValue: 'Search extensions…' })}
+                placeholder={t('extensions.search')}
                 value={query}
                 onChange={(ev) => setQuery(ev.target.value)}
               />
@@ -925,7 +915,7 @@ export default function ExtensionsSettingsPage() {
                 className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1.5 hover:bg-muted"
               >
                 <RefreshCw className="w-3 h-3" />
-                {t('extensions.refresh', { defaultValue: 'Refresh' })}
+                {t('extensions.refresh')}
               </button>
             </div>
           )}
@@ -945,7 +935,7 @@ export default function ExtensionsSettingsPage() {
           {loading ? (
             <div className="flex items-center gap-2 text-sm opacity-70 py-10 justify-center">
               <Spinner className="w-4 h-4" />
-              {t('extensions.loading', { defaultValue: 'Loading extensions…' })}
+              {t('extensions.loading')}
             </div>
           ) : null}
 
@@ -965,13 +955,11 @@ export default function ExtensionsSettingsPage() {
                 return (
                   <section key={groupId} className="space-y-3" data-testid={`extension-center-${groupId}`}>
                     <h2 className="text-sm font-medium">
-                      {t(`extensions.center.${groupId}`, {
-                        defaultValue: CENTER_GROUP_DEFAULTS[groupId],
-                      })}
+                      {t(`extensions.center.${groupId}`)}
                     </h2>
                     {empty ? (
                       <p className="text-sm opacity-60">
-                        {t('extensions.center.empty', { defaultValue: 'Nothing in this group yet.' })}
+                        {t('extensions.center.empty')}
                       </p>
                     ) : groupId === 'marketplace' ? (
                       <>
@@ -992,13 +980,12 @@ export default function ExtensionsSettingsPage() {
               <div className="text-xs opacity-60 flex items-center gap-2">
                 <Package className="w-3.5 h-3.5" />
                 {t('extensions.catalog.count', {
-                  defaultValue: '{{count}} catalog entries',
                   count: catalogEntries.length,
                 })}
               </div>
               {catalogEntries.length === 0 ? (
                 <p className="text-sm opacity-60">
-                  {t('extensions.catalog.empty', { defaultValue: 'No catalog entries match.' })}
+                  {t('extensions.catalog.empty')}
                 </p>
               ) : (
                 catalogEntries.map(renderCatalogCard)
@@ -1011,16 +998,13 @@ export default function ExtensionsSettingsPage() {
               <div className="text-xs opacity-60 flex items-center gap-2 flex-wrap">
                 <Blocks className="w-3.5 h-3.5" />
                 {t('extensions.installed.countWithDisabled', {
-                  defaultValue: '{{count}} installed · {{disabled}} disabled',
                   count: installedCounts.total,
                   disabled: installedCounts.disabled,
                 })}
               </div>
               {filteredInstalled.length === 0 ? (
                 <p className="text-sm opacity-60">
-                  {t('extensions.installed.empty', {
-                    defaultValue: 'No installed extensions in this workspace yet.',
-                  })}
+                  {t('extensions.installed.empty')}
                 </p>
               ) : (
                 filteredInstalled.map(renderRecordCard)
@@ -1032,7 +1016,7 @@ export default function ExtensionsSettingsPage() {
             <div className="space-y-3">
               {updates.length === 0 ? (
                 <p className="text-sm opacity-60">
-                  {t('extensions.updates.empty', { defaultValue: 'No updates available.' })}
+                  {t('extensions.updates.empty')}
                 </p>
               ) : (
                 updates.map(renderRecordCard)
@@ -1044,13 +1028,11 @@ export default function ExtensionsSettingsPage() {
             <div className="space-y-3">
               <div className="text-xs opacity-60 flex items-center gap-2">
                 <Shield className="w-3.5 h-3.5" />
-                {t('extensions.permissions.summary', {
-                  defaultValue: 'Granted permissions by extension',
-                })}
+                {t('extensions.permissions.summary')}
               </div>
               {permissionRows.length === 0 ? (
                 <p className="text-sm opacity-60">
-                  {t('extensions.permissions.empty', { defaultValue: 'No extensions installed.' })}
+                  {t('extensions.permissions.empty')}
                 </p>
               ) : (
                 permissionRows.map((row) => (
@@ -1070,13 +1052,12 @@ export default function ExtensionsSettingsPage() {
             <div className="space-y-3">
               <div className="text-xs opacity-60">
                 {t('extensions.disabled.count', {
-                  defaultValue: '{{count}} disabled',
                   count: disabled.length,
                 })}
               </div>
               {disabled.length === 0 ? (
                 <p className="text-sm opacity-60">
-                  {t('extensions.disabled.empty', { defaultValue: 'No disabled extensions.' })}
+                  {t('extensions.disabled.empty')}
                 </p>
               ) : (
                 disabled.map(renderRecordCard)
@@ -1089,33 +1070,27 @@ export default function ExtensionsSettingsPage() {
               <div className="space-y-2">
                 <div className="flex items-center gap-2 font-medium">
                   <Wrench className="w-4 h-4" />
-                  {t('extensions.developer.title', { defaultValue: 'Developer mode' })}
+                  {t('extensions.developer.title')}
                 </div>
                 <p className="opacity-70 text-xs leading-relaxed">
-                  {t('extensions.developer.hint', {
-                    defaultValue:
-                      'Inspect sandboxed extension hosts per workspace and restrict which URLs they can request.',
-                  })}
+                  {t('extensions.developer.hint')}
                 </p>
                 <p className="opacity-70 text-xs leading-relaxed">
-                  {t('extensions.developer.body', {
-                    defaultValue:
-                      'Per-workspace Extension Hosts run craft-sandbox modules in a utilityProcess. Configure network.request URL allowlists here. SiYuan plugins are never executed in the host.',
-                  })}
+                  {t('extensions.developer.body')}
                 </p>
               </div>
 
               <div className="space-y-2">
                 <div className="text-xs font-medium opacity-80">
-                  {t('extensions.developer.hostStatus', { defaultValue: 'Host status' })}
+                  {t('extensions.developer.hostStatus')}
                 </div>
                 <div className="rounded-md border bg-muted/30 px-3 py-2 text-xs space-y-1 font-mono">
                   <div>
-                    {t('extensions.developer.workspaceId', { defaultValue: 'Workspace' })}:{' '}
+                    {t('extensions.developer.workspaceId')}:{' '}
                     <span className="font-semibold">{workspaceId ?? '—'}</span>
                   </div>
                   <div>
-                    {t('extensions.developer.hostStatus', { defaultValue: 'Host status' })}:{' '}
+                    {t('extensions.developer.hostStatus')}:{' '}
                     <span className="font-semibold">{hostStatus?.status ?? 'unknown'}</span>
                     {hostStatus?.pid != null ? ` · pid ${hostStatus.pid}` : null}
                   </div>
@@ -1137,7 +1112,7 @@ export default function ExtensionsSettingsPage() {
                     disabled={Boolean(busy['host-start'])}
                     onClick={() => void hostLifecycle('start')}
                   >
-                    {t('extensions.developer.hostStart', { defaultValue: 'Start host' })}
+                    {t('extensions.developer.hostStart')}
                   </button>
                   <button
                     type="button"
@@ -1145,7 +1120,7 @@ export default function ExtensionsSettingsPage() {
                     disabled={Boolean(busy['host-stop'])}
                     onClick={() => void hostLifecycle('stop')}
                   >
-                    {t('extensions.developer.hostStop', { defaultValue: 'Stop host' })}
+                    {t('extensions.developer.hostStop')}
                   </button>
                   <button
                     type="button"
@@ -1153,19 +1128,17 @@ export default function ExtensionsSettingsPage() {
                     disabled={Boolean(busy['host-restart'])}
                     onClick={() => void hostLifecycle('restart')}
                   >
-                    {t('extensions.developer.hostRestart', { defaultValue: 'Restart host' })}
+                    {t('extensions.developer.hostRestart')}
                   </button>
                 </div>
 
                 <div className="space-y-1">
                   <div className="text-xs font-medium opacity-80">
-                    {t('extensions.developer.allHosts', { defaultValue: 'All hosts' })}
+                    {t('extensions.developer.allHosts')}
                   </div>
                   {allHosts.length === 0 ? (
                     <p className="text-xs opacity-60">
-                      {t('extensions.developer.noHosts', {
-                        defaultValue: 'No extension hosts started',
-                      })}
+                      {t('extensions.developer.noHosts')}
                     </p>
                   ) : (
                     <ul className="rounded-md border divide-y text-xs font-mono">
@@ -1175,7 +1148,7 @@ export default function ExtensionsSettingsPage() {
                           className="px-3 py-2 flex flex-wrap items-center gap-x-3 gap-y-1"
                         >
                           <span>
-                            {t('extensions.developer.workspaceId', { defaultValue: 'Workspace' })}:{' '}
+                            {t('extensions.developer.workspaceId')}:{' '}
                             <span className="font-semibold">{h.workspaceId}</span>
                           </span>
                           <span>
@@ -1193,19 +1166,14 @@ export default function ExtensionsSettingsPage() {
 
               <div className="space-y-2 border-t pt-3">
                 <div className="text-xs font-medium opacity-80">
-                  {t('extensions.developer.urlAllowlistTitle', { defaultValue: 'URL allowlist' })}
+                  {t('extensions.developer.urlAllowlistTitle')}
                 </div>
                 <p className="text-xs opacity-60 leading-relaxed">
-                  {t('extensions.developer.urlAllowlistHint', {
-                    defaultValue:
-                      'Allowed URL prefixes for network.request / proxyFetch. Empty allowlist allows all URLs (dev default).',
-                  })}
+                  {t('extensions.developer.urlAllowlistHint')}
                 </p>
                 <div className="flex flex-wrap gap-2 items-center">
                   <label className="text-xs opacity-70 shrink-0">
-                    {t('extensions.developer.urlAllowlistExtensionId', {
-                      defaultValue: 'Extension id',
-                    })}
+                    {t('extensions.developer.urlAllowlistExtensionId')}
                   </label>
                   <input
                     type="text"
@@ -1219,7 +1187,7 @@ export default function ExtensionsSettingsPage() {
                     className="text-xs px-2 py-1 rounded border hover:bg-muted/50"
                     onClick={() => void loadAllowlist()}
                   >
-                    {t('extensions.developer.urlAllowlistLoad', { defaultValue: 'Load' })}
+                    {t('extensions.developer.urlAllowlistLoad')}
                   </button>
                 </div>
 
@@ -1227,9 +1195,7 @@ export default function ExtensionsSettingsPage() {
                   <div className="flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400">
                     <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
                     <span>
-                      {t('extensions.developer.urlAllowlistEmpty', {
-                        defaultValue: 'Warning: no URL allowlist — all URLs allowed',
-                      })}
+                      {t('extensions.developer.urlAllowlistEmpty')}
                     </span>
                   </div>
                 ) : (
@@ -1245,9 +1211,7 @@ export default function ExtensionsSettingsPage() {
                           className="shrink-0 text-xs px-1.5 py-0.5 rounded border hover:bg-muted/50"
                           onClick={() => removeAllowlistPrefix(prefix)}
                         >
-                          {t('extensions.developer.urlAllowlistRemove', {
-                            defaultValue: 'Remove',
-                          })}
+                          {t('extensions.developer.urlAllowlistRemove')}
                         </button>
                       </li>
                     ))}
@@ -1273,7 +1237,7 @@ export default function ExtensionsSettingsPage() {
                     className="text-xs px-2 py-1 rounded border hover:bg-muted/50"
                     onClick={addAllowlistPrefix}
                   >
-                    {t('extensions.developer.urlAllowlistAdd', { defaultValue: 'Add prefix' })}
+                    {t('extensions.developer.urlAllowlistAdd')}
                   </button>
                   <button
                     type="button"
@@ -1281,9 +1245,7 @@ export default function ExtensionsSettingsPage() {
                     disabled={!allowlistExtId.trim() || Boolean(busy['allowlist-save'])}
                     onClick={() => void saveAllowlist()}
                   >
-                    {t('extensions.developer.urlAllowlistSave', {
-                      defaultValue: 'Save allowlist',
-                    })}
+                    {t('extensions.developer.urlAllowlistSave')}
                   </button>
                 </div>
               </div>
@@ -1353,13 +1315,10 @@ export default function ExtensionsSettingsPage() {
             <div className="space-y-3">
               <div className="text-xs opacity-60 flex items-center gap-2">
                 <FileText className="w-3.5 h-3.5" />
-                {t('extensions.registries.title', { defaultValue: 'Catalog providers' })}
+                {t('extensions.registries.title')}
               </div>
               <p className="text-xs opacity-70 leading-relaxed">
-                {t('extensions.registries.hint', {
-                  defaultValue:
-                    'Each registry is a catalog of installable extensions. Community sources link to public docs and do not ship credentials.',
-                })}
+                {t('extensions.registries.hint')}
               </p>
               {(catalog?.providers ?? []).map((p) => (
                 <div key={p.id} className="border rounded-lg p-3 flex items-center justify-between gap-3">
@@ -1374,14 +1333,14 @@ export default function ExtensionsSettingsPage() {
                         className="mt-1 text-xs text-primary underline inline-flex items-center gap-1"
                         onClick={() => void window.electronAPI.openUrl(p.docsUrl!)}
                       >
-                        {t('extensions.registries.docsLink', { defaultValue: 'Docs' })}
+                        {t('extensions.registries.docsLink')}
                       </button>
                     ) : null}
                   </div>
                   <span className="text-[10px] uppercase opacity-60 shrink-0">
                     {p.community
-                      ? t('extensions.registries.community', { defaultValue: 'community' })
-                      : t('extensions.registries.active', { defaultValue: 'active' })}
+                      ? t('extensions.registries.community')
+                      : t('extensions.registries.active')}
                   </span>
                 </div>
               ))}
