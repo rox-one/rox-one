@@ -189,11 +189,11 @@ export default function AppSettingsPage() {
       setProxyForm(form)
       setSavedProxyForm(form)
     } catch (error) {
-      setProxyError(error instanceof Error ? error.message : 'Failed to save')
+      setProxyError(error instanceof Error ? error.message : t('settings.network.failedToSave'))
     } finally {
       setIsSavingProxy(false)
     }
-  }, [proxyForm])
+  }, [proxyForm, t])
 
   const handleResetProxy = useCallback(() => {
     setProxyForm(savedProxyForm)

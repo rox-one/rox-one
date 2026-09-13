@@ -8,3 +8,11 @@ describe('AppSettingsPage environment section', () => {
     expect(source).toContain('EnvironmentSettingsSection')
   })
 })
+
+describe('AppSettingsPage proxy save copy', () => {
+  it('uses settings.network.failedToSave instead of hardcoded English', () => {
+    const source = readFileSync(join(import.meta.dir, '../AppSettingsPage.tsx'), 'utf8')
+    expect(source).toContain("t('settings.network.failedToSave')")
+    expect(source).not.toContain("'Failed to save'")
+  })
+})

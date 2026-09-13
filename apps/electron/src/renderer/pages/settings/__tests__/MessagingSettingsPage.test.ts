@@ -208,4 +208,13 @@ describe('MessagingSettingsPage source contracts', () => {
     expect(en['settings.messaging.discord.guildTriggerMention']).toBeTruthy()
     expect(en['settings.messaging.discord.guildTriggerAll']).toBeTruthy()
   })
+
+  it('routes owner-control toasts through i18n keys', () => {
+    expect(page).toContain("t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint')")
+    expect(page).toContain("t('settings.messaging.telegram.access.failedToUpdateAccess')")
+    expect(page).not.toContain('Select at least one allowed sender before saving owner control.')
+    expect(page).not.toContain("'Failed to update access'")
+    expect(en['settings.messaging.telegram.access.bindingPopover.saveDisabledHint']).toBeTruthy()
+    expect(en['settings.messaging.telegram.access.failedToUpdateAccess']).toBeTruthy()
+  })
 })
