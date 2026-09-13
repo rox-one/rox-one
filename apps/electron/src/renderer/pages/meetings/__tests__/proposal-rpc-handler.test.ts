@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
@@ -8,6 +8,7 @@ import {
   registerMeetingHandlers,
   resetMeetingHandlerStateForTests,
 } from '@craft-agent/server-core/handlers/rpc/meetings'
+import { loadProposalStore, MeetingJournal, startNativeMeeting } from '@craft-agent/server-core/meetings'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
 import type { OperationResultV2 } from '@craft-agent/core/meetings'
 import {
@@ -86,8 +87,29 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
     rmSync(configDir, { recursive: true, force: true })
   })
 
+  function persistRoot(): string {
+    return join(configDir, 'meetings', 'ws')
+  }
+
+  function startMeeting(meetingId = 'm1'): void {
+    const started = startNativeMeeting({
+      persistRootDir: persistRoot(),
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      title: 'локальная',
+      meetingId,
+    })
+    if (!started.ok) throw new Error('expected start')
+  }
+
+  function upserts(meetingId: string) {
+    return new MeetingJournal(persistRoot()).read(meetingId).events.filter((event) => event.type === 'proposal.upsert')
+  }
+
   it('create then approve returns persist revision', async () => {
     const api = apiFromHandlers()
+    startMeeting()
     const created = await createNativeProposalViaRpc({
       api,
       workspaceId: 'ws',
@@ -110,6 +132,23 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
     if (!approved.ok) throw new Error('expected approve')
     expect(approved.row.status).toBe('applied')
     expect(Number(approved.row.revisionId)).toBeGreaterThan(0)
+    expect(upserts('m1').map((event) => event.proposal.status)).toEqual(['proposed', 'applied'])
+  })
+
+  it('create fail-closes without a meeting and does not persist proposals.json', async () => {
+    const api = apiFromHandlers()
+    const missing = await createNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      actorId: 'user',
+      grant,
+      type: 'create_task',
+      payload: { title: 'прототип' },
+    })
+    expect(missing).toEqual({ ok: false, code: 'meeting-not-found' })
+    expect(existsSync(join(configDir, 'meetings', 'ws', 'proposals.json'))).toBe(false)
+    expect(loadProposalStore(persistRoot()).items).toEqual([])
   })
 
   it('create fail-closes without grant or CONFIG_DIR', async () => {
@@ -140,6 +179,7 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
 
   it('reject persist is fail-closed without grant or CONFIG_DIR and does not invent a revision', async () => {
     const api = apiFromHandlers()
+    startMeeting()
     const created = await createNativeProposalViaRpc({
       api,
       workspaceId: 'ws',
@@ -188,10 +228,12 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
     if (!rejected.ok) throw new Error('expected reject')
     expect(rejected.row.status).toBe('rejected')
     expect(rejected.row.revisionId).toBeUndefined()
+    expect(upserts('m1').map((event) => event.proposal.status)).toEqual(['proposed', 'rejected'])
   })
 
   it('openTarget navigates only after persist revision verify and fail-closes without CONFIG_DIR', async () => {
     const api = apiFromHandlers()
+    startMeeting()
     const created = await createNativeProposalViaRpc({
       api,
       workspaceId: 'ws',

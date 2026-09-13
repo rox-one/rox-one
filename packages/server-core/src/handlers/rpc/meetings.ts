@@ -3,7 +3,7 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getEnv } from '@craft-agent/shared/config'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import type { Meeting, MeetingProposal } from '@craft-agent/core/meetings'
+import type { Meeting, MeetingProposal, OperationResultV2 } from '@craft-agent/core/meetings'
 import { queryMeetings } from '../../meetings/queries.ts'
 import { listNativeMeetings, startNativeMeeting, searchNativeMeetings } from '../../meetings/catalog.ts'
 import { applyNativeCaptureIntent, type CaptureIntentAction } from '../../meetings/capture.ts'
@@ -11,6 +11,7 @@ import { applyNativeImportIntent, type ImportIntentSpec } from '../../meetings/i
 import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
 import { applyNativeManualNote, applyNativeSegmentCorrection, type ManualNoteSpec, type SegmentCorrectionSpec } from '../../meetings/manual.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
+import { appendProposalJournalEvent } from '../../meetings/proposal-journal.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness, openNativePersistTarget } from '../../meetings/native-actions.ts'
 import type { OutboxJob } from '../../meetings/executor.ts'
@@ -104,6 +105,17 @@ function seenFor(workspaceId: string): Set<string> {
   return created
 }
 
+function journalFailOperation(operationId: string, code: string): OperationResultV2 {
+  return {
+    schemaVersion: 2,
+    mode: 'production',
+    lifecycle: 'failed',
+    verification: 'not_requested',
+    operationId,
+    error: { code, retryable: true, safeMessage: code },
+  }
+}
+
 function catalogItems(workspaceId: string): Meeting[] {
   const persistRoot = meetingPersistRoot(workspaceId)
   if (!persistRoot) return []
@@ -190,6 +202,7 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       if (!grant) return { proposal: null, error: { code: 'grant-required' } }
       if (!persistRootDir) return { proposal: null, error: { code: 'config-dir-required' } }
       const store = storeFor(workspaceId)
+      const priorIds = new Set(store.items.map((item) => item.id))
       const created = createMeetingProposal({
         store,
         actorId,
@@ -200,6 +213,18 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
         payload,
       })
       if (!created.ok) return { proposal: null, error: { code: created.code } }
+      const journaled = appendProposalJournalEvent({
+        persistRootDir,
+        workspaceId,
+        proposal: created.proposal,
+      })
+      if (!journaled.ok) {
+        if (!priorIds.has(created.proposal.id)) {
+          const idx = store.items.findIndex((item) => item.id === created.proposal.id)
+          if (idx >= 0) store.items.splice(idx, 1)
+        }
+        return { proposal: null, error: { code: journaled.code } }
+      }
       persistStore(workspaceId, store)
       return { proposal: created.proposal }
     },
@@ -217,6 +242,20 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       persistRootDir,
       runtime: persistRootDir ? runtimeFor(workspaceId, persistRootDir) : undefined,
     })
+    if (persistRootDir && result.proposal.status !== 'proposed') {
+      const journaled = appendProposalJournalEvent({
+        persistRootDir,
+        workspaceId,
+        proposal: result.proposal,
+      })
+      if (!journaled.ok) {
+        persistStore(workspaceId, store)
+        if (result.operation.verification === 'verified') {
+          return { proposal: result.proposal, operation: journalFailOperation(result.proposal.id, journaled.code) }
+        }
+        return result
+      }
+    }
     persistStore(workspaceId, store)
     return result
   })
@@ -227,6 +266,7 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       if (!grant) return { proposal: null, error: { code: 'grant-required' } }
       if (!persistRootDir) return { proposal: null, error: { code: 'config-dir-required' } }
       const store = storeFor(workspaceId)
+      const previousStatus = store.items.find((item) => item.id === proposalId)?.status
       const rejected = rejectMeetingProposal({
         store,
         proposalId,
@@ -234,6 +274,17 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
         grant,
       })
       if (!rejected.ok) return { proposal: null, error: { code: rejected.code } }
+      const journaled = appendProposalJournalEvent({
+        persistRootDir,
+        workspaceId,
+        proposal: rejected.proposal,
+      })
+      if (!journaled.ok) {
+        if (previousStatus && previousStatus !== rejected.proposal.status) {
+          rejected.proposal.status = previousStatus
+        }
+        return { proposal: null, error: { code: journaled.code } }
+      }
       persistStore(workspaceId, store)
       return { proposal: rejected.proposal }
     },

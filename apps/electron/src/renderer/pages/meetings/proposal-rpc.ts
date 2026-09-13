@@ -66,6 +66,8 @@ export const PROPOSAL_ERROR_I18N: Record<string, string> = {
   'config-dir-required': 'meetings.configDirRequired',
   'create-failed': 'meetings.createFailed',
   'grant-required': 'meetings.grantRequired',
+  'journal-locked': 'meetings.createFailed',
+  'meeting-not-found': 'meetings.meetingNotFound',
   'meeting-required': 'meetings.meetingRequired',
   'open-failed': 'meetings.openFailed',
   'outbox-required': 'meetings.outboxRequired',
@@ -77,6 +79,8 @@ export const PROPOSAL_ERROR_I18N: Record<string, string> = {
   'rpc-unavailable': 'meetings.rpcUnavailable',
   'search-failed': 'meetings.searchFailed',
   'unsupported-native-kind': 'meetings.unsupportedKind',
+  'upsert-failed': 'meetings.createFailed',
+  'workspace-mismatch': 'meetings.workspaceRequired',
   'workspace-required': 'meetings.workspaceRequired',
 }
 
