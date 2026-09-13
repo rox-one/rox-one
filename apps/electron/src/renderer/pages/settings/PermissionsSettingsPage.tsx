@@ -10,10 +10,11 @@
  */
 
 import * as React from 'react'
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@/components/ui/button'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Loader2 } from 'lucide-react'
 import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
@@ -139,8 +140,12 @@ export default function PermissionsSettingsPage() {
   const { activeWorkspaceId } = useAppShellContext()
   const activeWorkspace = useActiveWorkspace()
 
+  // config-read is device-read: the user must explicitly grant it before any
+  // permission file is read. Opening the page is not a grant.
+  const [granted, setGranted] = useState(false)
+
   // Loading and data state
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [defaultConfig, setDefaultConfig] = useState<PermissionsConfigFile | null>(null)
   const [defaultPermissionsPath, setDefaultPermissionsPath] = useState<string | null>(null)
   const [customConfig, setCustomConfig] = useState<PermissionsConfigFile | null>(null)
@@ -163,58 +168,63 @@ export default function PermissionsSettingsPage() {
     return buildCustomPermissionsData(customConfig, permissionFallbackLabels)
   }, [customConfig, permissionFallbackLabels])
 
-  // Load both default and workspace permissions configs
-  useEffect(() => {
-    const loadPermissions = async () => {
-      if (!window.electronAPI) {
-        setIsLoading(false)
-        return
-      }
+  // Load both default and workspace permissions configs. Only runs with a real grant.
+  const loadPermissions = useCallback(async (isGranted: boolean) => {
+    if (!window.electronAPI) return
 
-      setIsLoading(true)
-      try {
-        const gate = settingsPageActionResult({
-          pageId: 'permissions',
-          action: 'config-read',
-          source: 'native',
-          granted: true,
-        })
-        if (!isClaimableLive(gate)) {
-          setIsLoading(false)
-          return
-        }
-        // Load default permissions (app-level) - returns both config and path
-        const { config: defaults, path: defaultsPath } = await window.electronAPI.getDefaultPermissionsConfig()
-        setDefaultConfig(defaults)
-        setDefaultPermissionsPath(defaultsPath)
+    const gate = settingsPageActionResult({
+      pageId: 'permissions',
+      action: 'config-read',
+      source: 'native',
+      granted: isGranted,
+    })
+    if (!isClaimableLive(gate)) return
 
-        // Load workspace permissions if we have an active workspace
-        if (activeWorkspaceId) {
-          const workspace = await window.electronAPI.getWorkspacePermissionsConfig(activeWorkspaceId)
-          setCustomConfig(workspace)
-        }
-      } catch (error) {
-        console.error('Failed to load permissions:', error)
-      } finally {
-        setIsLoading(false)
+    setIsLoading(true)
+    try {
+      // Load default permissions (app-level) - returns both config and path
+      const { config: defaults, path: defaultsPath } = await window.electronAPI.getDefaultPermissionsConfig()
+      setDefaultConfig(defaults)
+      setDefaultPermissionsPath(defaultsPath)
+
+      // Load workspace permissions if we have an active workspace
+      if (activeWorkspaceId) {
+        const workspace = await window.electronAPI.getWorkspacePermissionsConfig(activeWorkspaceId)
+        setCustomConfig(workspace)
       }
+    } catch (error) {
+      console.error('Failed to load permissions:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    loadPermissions()
   }, [activeWorkspaceId])
 
-  // Listen for default permissions changes (file watcher)
+  // Load on grant and reload when the workspace changes, but only after a grant was collected
   useEffect(() => {
+    if (!granted) return
+    void loadPermissions(granted)
+  }, [granted, loadPermissions])
+
+  // Listen for default permissions changes (file watcher); rereads go through the same gate
+  useEffect(() => {
+    if (!granted) return
     if (!window.electronAPI?.onDefaultPermissionsChanged) return
 
     const unsubscribe = window.electronAPI.onDefaultPermissionsChanged(async () => {
+      const gate = settingsPageActionResult({
+        pageId: 'permissions',
+        action: 'config-read',
+        source: 'native',
+        granted,
+      })
+      if (!isClaimableLive(gate)) return
       // Reload default permissions when the file changes
       const { config: defaults } = await window.electronAPI.getDefaultPermissionsConfig()
       setDefaultConfig(defaults)
     })
 
     return unsubscribe
-  }, [])
+  }, [granted])
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -223,7 +233,20 @@ export default function PermissionsSettingsPage() {
         <ScrollArea className="h-full">
           <div className="px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
-              {isLoading ? (
+              {!granted ? (
+                <SettingsSection title={t("settings.permissions.aboutPermissions")}>
+                  <SettingsCard className="px-4 py-3.5">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {t("settings.permissions.loadConfigDesc")}
+                      </p>
+                      <Button size="sm" onClick={() => setGranted(true)}>
+                        {t("settings.permissions.loadConfig")}
+                      </Button>
+                    </div>
+                  </SettingsCard>
+                </SettingsSection>
+              ) : isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 </div>

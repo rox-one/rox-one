@@ -3835,6 +3835,8 @@
   "settings.permissions.defaultPermissions": "Standardberechtigungen",
   "settings.permissions.defaultPermissionsDesc": "App-weite Muster, die im Explore-Modus erlaubt sind. Befehle, die nicht auf dieser Liste stehen, werden blockiert.",
   "settings.permissions.description": "Explore-Modus-Regeln",
+  "settings.permissions.loadConfig": "Berechtigungsdateien laden",
+  "settings.permissions.loadConfigDesc": "Das Lesen der Berechtigungsdateien von diesem Gerät erfordert Ihre ausdrückliche Zustimmung.",
   "settings.permissions.noCustomPermissions": "Keine benutzerdefinierten Berechtigungen konfiguriert.",
   "settings.permissions.noCustomPermissionsDesc": "Erstellen Sie eine permissions.json-Datei in Ihrem Workspace, um benutzerdefinierte Regeln hinzuzufügen.",
   "settings.permissions.noDefaultPermissions": "Keine Standardberechtigungen gefunden.",

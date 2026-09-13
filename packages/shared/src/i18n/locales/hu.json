@@ -3835,6 +3835,8 @@
   "settings.permissions.defaultPermissions": "Alapértelmezett engedélyek",
   "settings.permissions.defaultPermissionsDesc": "Alkalmazásszintű minták, amelyek engedélyezettek Felfedező módban. Az ezen a listán nem szereplő parancsok blokkolva vannak.",
   "settings.permissions.description": "Felfedező mód szabályai",
+  "settings.permissions.loadConfig": "Engedélyfájlok betöltése",
+  "settings.permissions.loadConfigDesc": "Az engedélyfájlok beolvasása erről az eszközről kifejezett hozzájárulást igényel.",
   "settings.permissions.noCustomPermissions": "Nincsenek beállított egyéni engedélyek.",
   "settings.permissions.noCustomPermissionsDesc": "Hozz létre egy permissions.json fájlt a munkaterületen egyéni szabályok hozzáadásához.",
   "settings.permissions.noDefaultPermissions": "Nem találhatók alapértelmezett engedélyek.",

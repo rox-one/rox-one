@@ -3835,6 +3835,8 @@
   "settings.permissions.defaultPermissions": "Permissions par défaut",
   "settings.permissions.defaultPermissionsDesc": "Patterns au niveau de l'application autorisés en mode Explore. Les commandes absentes de cette liste sont bloquées.",
   "settings.permissions.description": "Règles du mode Explore",
+  "settings.permissions.loadConfig": "Charger les fichiers de permissions",
+  "settings.permissions.loadConfigDesc": "La lecture des fichiers de permissions depuis cet appareil nécessite votre autorisation explicite.",
   "settings.permissions.noCustomPermissions": "Aucune permission personnalisée configurée.",
   "settings.permissions.noCustomPermissionsDesc": "Créez un fichier permissions.json dans votre espace de travail pour ajouter des règles personnalisées.",
   "settings.permissions.noDefaultPermissions": "Aucune permission par défaut trouvée.",
