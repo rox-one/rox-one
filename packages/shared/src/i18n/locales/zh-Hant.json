@@ -4683,6 +4683,7 @@
   "workspace.connectedVersion": "已連線 — v{{version}}",
   "workspace.connectedVersionEmpty": "已連線 — v{{version}} — 尚無工作區",
   "workspace.connectionFailed": "連線失敗",
+  "workspace.connectionTimeout": "等待工作區連線逾時（{{ms}}ms）",
   "workspace.createAndConnect": "建立並連線",
   "workspace.createNew": "新建",
   "workspace.createNewDesc": "從空白 Workspace 開始。",

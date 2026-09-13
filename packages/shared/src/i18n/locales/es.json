@@ -4683,6 +4683,7 @@
   "workspace.connectedVersion": "Conectado — v{{version}}",
   "workspace.connectedVersionEmpty": "Conectado — v{{version}} — aún no hay espacios",
   "workspace.connectionFailed": "Error de conexión",
+  "workspace.connectionTimeout": "Tiempo de espera agotado al conectar el workspace tras {{ms}} ms",
   "workspace.createAndConnect": "Crear y conectar",
   "workspace.createNew": "Crear nuevo",
   "workspace.createNewDesc": "Empieza desde cero con un Workspace vacío.",

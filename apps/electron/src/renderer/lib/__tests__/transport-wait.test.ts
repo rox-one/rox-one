@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'bun:test'
+import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
 import type { ElectronAPI, TransportConnectionState } from '../../../shared/types'
 import { waitForTransportConnected } from '../transport-wait'
+
+setupI18n().changeLanguage('en')
 
 function createState(overrides?: Partial<TransportConnectionState>): TransportConnectionState {
   return {
@@ -64,6 +67,31 @@ describe('waitForTransportConnected', () => {
     }))
 
     await expect(result).rejects.toThrow('Authentication failed')
+  })
+
+  it('rejects with i18n fallback when failed without lastError', async () => {
+    const { api, emit } = createApi(createState({ status: 'reconnecting' }))
+
+    const result = waitForTransportConnected(api)
+    emit(createState({
+      status: 'failed',
+      updatedAt: Date.now() + 1,
+    }))
+
+    await expect(result).rejects.toThrow('Connection failed')
+  })
+
+  it('rejects with i18n close copy when failed with lastClose', async () => {
+    const { api, emit } = createApi(createState({ status: 'reconnecting' }))
+
+    const result = waitForTransportConnected(api)
+    emit(createState({
+      status: 'failed',
+      lastClose: { code: 1006, reason: 'abnormal' },
+      updatedAt: Date.now() + 1,
+    }))
+
+    await expect(result).rejects.toThrow('WebSocket closed with code 1006 (abnormal).')
   })
 
   it('times out when the transport never connects', async () => {

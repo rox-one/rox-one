@@ -1,3 +1,4 @@
+import i18n from 'i18next'
 import type { ElectronAPI, TransportConnectionState } from '../../shared/types'
 
 const DEFAULT_TIMEOUT_MS = 12_000
@@ -5,10 +6,12 @@ const DEFAULT_TIMEOUT_MS = 12_000
 function formatTransportFailure(state: TransportConnectionState): string {
   if (state.lastError?.message) return state.lastError.message
   if (state.lastClose?.code != null) {
-    const reason = state.lastClose.reason ? ` (${state.lastClose.reason})` : ''
-    return `Connection closed (${state.lastClose.code})${reason}`
+    const reason = state.lastClose.reason
+      ? i18n.t('transport.wsClosedReason', { reason: state.lastClose.reason })
+      : ''
+    return i18n.t('transport.wsClosedWithCode', { code: state.lastClose.code, reason })
   }
-  return 'Connection failed'
+  return i18n.t('workspace.connectionFailed')
 }
 
 export async function waitForTransportConnected(
@@ -35,7 +38,7 @@ export async function waitForTransportConnected(
     }
 
     timeout = setTimeout(() => {
-      finish(reject, new Error(`Timed out waiting for workspace connection after ${timeoutMs}ms`))
+      finish(reject, new Error(i18n.t('workspace.connectionTimeout', { ms: timeoutMs })))
     }, timeoutMs)
 
     unsubscribe = api.onTransportConnectionStateChanged((state) => {
