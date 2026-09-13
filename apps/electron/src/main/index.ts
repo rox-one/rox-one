@@ -108,7 +108,7 @@ import { stopAllExtensionHosts } from './extension-host-manager'
 import { loadWindowState, saveWindowState } from './window-state'
 import { getWorkspaces, getWorkspaceByNameOrId, loadStoredConfig, addWorkspace, saveConfig, CONFIG_DIR } from '@craft-agent/shared/config'
 import { getDefaultWorkspacesDir } from '@craft-agent/shared/workspaces'
-import { resolveUserDisplayName } from '@craft-agent/shared/os/user-display-name'
+import { resolveWorkspaceMachineName } from '@craft-agent/shared/os/user-display-name'
 import { initializeDocs } from '@craft-agent/shared/docs'
 import { ensureBundledSkills } from '@craft-agent/shared/skills'
 import { initializeReleaseNotes } from '@craft-agent/shared/release-notes'
@@ -337,14 +337,14 @@ async function createInitialWindows(): Promise<void> {
   const savedState = loadWindowState()
   let workspaces = getWorkspaces()
 
-  // If no workspaces exist, create a default workspace named after the OS user
+  // If no workspaces exist, create a default workspace named after this machine
   if (workspaces.length === 0) {
     // Ensure config file exists (addWorkspace requires it)
     if (!loadStoredConfig()) {
       saveConfig({ workspaces: [], activeWorkspaceId: null, activeSessionId: null })
     }
     const defaultPath = join(getDefaultWorkspacesDir(), 'my-workspace')
-    const displayName = resolveUserDisplayName()
+    const workspaceName = resolveWorkspaceMachineName()
     // Seed workspace icon from the app mark when available (discovered via icon.png)
     const appIconPath = [
       join(__dirname, 'resources/icon.png'),
@@ -360,9 +360,9 @@ async function createInitialWindows(): Promise<void> {
         mainLog.warn('Failed to seed default workspace icon', err)
       }
     }
-    addWorkspace({ rootPath: defaultPath, name: displayName })
+    addWorkspace({ rootPath: defaultPath, name: workspaceName })
     workspaces = getWorkspaces() // Refresh after creation
-    mainLog.info(`Created default workspace on first run (name=${displayName})`)
+    mainLog.info(`Created default workspace on first run (name=${workspaceName})`)
   }
 
   const validWorkspaceIds = workspaces.map(ws => ws.id)
