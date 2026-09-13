@@ -5,9 +5,14 @@ import { randomBytes } from 'node:crypto'
 import { mkdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { OemKernelPin } from '@craft-agent/shared/knowledge/oem-pin'
+import {
+  evaluateKnowledgeProviderGate,
+  type ProviderGateEvidence,
+} from '@craft-agent/shared/knowledge/provider-gate'
 
 export type ManagedKernelError =
   | 'G2_BLOCKED'
+  | 'PROVIDER_GATE_BLOCKED'
   | 'PIN_MISSING'
   | 'BINARY_MISSING'
   | 'PORT_CONFLICT'
@@ -29,6 +34,8 @@ export interface ManagedStartInput {
   connectionId: string
   g2AcceptedVariant: 'C' | null
   pin: OemKernelPin
+  /** Optional full I03-02 evidence; when set, spawn fails closed unless every check passes. */
+  providerGate?: ProviderGateEvidence
   resolveBinary: (pin: OemKernelPin) => string | null
   spawnFn: (
     cmd: string,
@@ -80,6 +87,20 @@ export class SiyuanProcessManager {
   private stopping = false
 
   async start(input: ManagedStartInput): Promise<ManagedInstance> {
+    if (input.providerGate) {
+      const gate = evaluateKnowledgeProviderGate({
+        ...input.providerGate,
+        g2AcceptedVariant: input.g2AcceptedVariant,
+      })
+      if (!gate.allowed) {
+        this.lastError = 'PROVIDER_GATE_BLOCKED'
+        const first = gate.failed[0]
+        throw new ManagedKernelCodedError(
+          'PROVIDER_GATE_BLOCKED',
+          (first && gate.reasons[first]) || 'knowledge: provider gate blocked managed spawn',
+        )
+      }
+    }
     if (input.g2AcceptedVariant !== 'C') {
       this.lastError = 'G2_BLOCKED'
       throw new ManagedKernelCodedError(

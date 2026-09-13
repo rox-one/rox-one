@@ -24,4 +24,9 @@ describe('discord binding config', () => {
     const cfg = normalizeBindingConfig('discord', { responseMode: 'progress' })
     expect(cfg.discordGuildTrigger).toBe('mention')
   })
+
+  it('coerces invalid discordGuildTrigger values to mention', () => {
+    const cfg = normalizeBindingConfig('discord', { discordGuildTrigger: 'sometimes' as 'mention' })
+    expect(cfg.discordGuildTrigger).toBe('mention')
+  })
 })

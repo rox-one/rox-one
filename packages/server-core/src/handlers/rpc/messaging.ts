@@ -42,6 +42,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.messaging.DISMISS_PENDING_SENDER,
   RPC_CHANNELS.messaging.ALLOW_PENDING_SENDER,
   RPC_CHANNELS.messaging.SET_BINDING_ACCESS,
+  RPC_CHANNELS.messaging.SET_DISCORD_GUILD_TRIGGER,
   RPC_CHANNELS.messaging.WC_START_CONNECT,
   RPC_CHANNELS.messaging.WC_CANCEL_CONNECT,
 ] as const
@@ -252,6 +253,18 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
     ) => {
       if (!ctx.workspaceId) throw new Error('Missing workspaceId')
       registry.setBindingAccess(ctx.workspaceId, bindingId, access)
+      return { success: true }
+    },
+  )
+
+  server.handle(
+    RPC_CHANNELS.messaging.SET_DISCORD_GUILD_TRIGGER,
+    async (ctx, bindingId: string, trigger: 'mention' | 'all') => {
+      if (!ctx.workspaceId) throw new Error('Missing workspaceId')
+      if (trigger !== 'mention' && trigger !== 'all') {
+        throw new Error('discordGuildTrigger must be mention or all')
+      }
+      registry.setDiscordGuildTrigger(ctx.workspaceId, bindingId, trigger)
       return { success: true }
     },
   )

@@ -497,6 +497,22 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
                   sessionMetaMap={sessionMetaMap}
                   onOpen={() => navigateToSession(binding.sessionId)}
                   onUnbind={() => handleUnbind(binding)}
+                  onDiscordTriggerChange={
+                    platform === 'discord'
+                      ? async (bindingId, trigger) => {
+                          try {
+                            await window.electronAPI.setMessagingDiscordGuildTrigger(bindingId, trigger)
+                            toast.success(t('settings.messaging.discord.guildTriggerUpdated'))
+                          } catch (err) {
+                            toast.error(
+                              err instanceof Error
+                                ? err.message
+                                : t('settings.messaging.discord.guildTriggerFailed'),
+                            )
+                          }
+                        }
+                      : undefined
+                  }
                 />
               ))}
             </div>
@@ -865,19 +881,41 @@ function FlatBindingRow({
   sessionMetaMap,
   onOpen,
   onUnbind,
+  onDiscordTriggerChange,
 }: {
   binding: MessagingBinding
   sessionMetaMap: TelegramBindingsBodyProps['sessionMetaMap']
   onOpen: () => void
   onUnbind: () => void
+  onDiscordTriggerChange?: (bindingId: string, trigger: 'mention' | 'all') => void
 }) {
-  // Used by WhatsApp + Lark (no supergroup/topic concept) — same compact
+  const { t } = useTranslation()
+  // Used by WhatsApp + Lark + Discord (no supergroup/topic concept) — same compact
   // row the page used to render for every platform before the Telegram split.
   const meta = sessionMetaMap.get(binding.sessionId)
   const sessionLabel = meta ? getSessionTitle(meta) : binding.channelName || binding.channelId
+  const trigger = binding.discordGuildTrigger === 'all' ? 'all' : 'mention'
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-2.5 pl-[52px]">
       <div className="min-w-0 truncate text-sm">{sessionLabel}</div>
+      {binding.platform === 'discord' && onDiscordTriggerChange ? (
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            variant={trigger === 'mention' ? 'outline' : 'ghost'}
+            size="sm"
+            onClick={() => onDiscordTriggerChange(binding.id, 'mention')}
+          >
+            {t('settings.messaging.discord.guildTriggerMention')}
+          </Button>
+          <Button
+            variant={trigger === 'all' ? 'outline' : 'ghost'}
+            size="sm"
+            onClick={() => onDiscordTriggerChange(binding.id, 'all')}
+          >
+            {t('settings.messaging.discord.guildTriggerAll')}
+          </Button>
+        </div>
+      ) : null}
       <RowActions onOpen={onOpen} onUnbind={onUnbind} />
     </div>
   )

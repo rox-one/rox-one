@@ -75,6 +75,7 @@
 - сверить фактическое выполнение всех K-срезов плана с кодом и отметить их статус в самом плане;
 - завершить managed spawn и затем remote TLS UX без расхождения error-code contract;
 - зафиксировать provider gate: repository/commit/license/EE boundary/notices/trademark/TLS/auth/tenant behavior;
+  **срез 2026-09-13:** `evaluateKnowledgeProviderGate` fail-closed matrix + optional `providerGate` on managed spawn. No OEM binary.
 - довести broker/delivery/import/recovery/WorkGraph metadata ledger до заявленной матрицы тестов;
 - доказать, что raw secrets не попадают в renderer, agent context, логи и remote/headless transport;
 - выполнить E2E GitHub operation, revoke/rotate/repair и feature-off parity.
@@ -158,6 +159,7 @@
 - закончить registry wiring: test/save/connect/disconnect/forget и все platform iteration sites;
 - довести shared protocol, server-core RPC, Electron transport и packaging worker resource;
 - добавить Discord settings/connect UI, icons, unions и session menu;
+  **срез 2026-09-13:** settings toggle for guild `mention` vs `all` (`messaging:setDiscordGuildTrigger`) + i18n. Live E2E still open.
 - добавить все i18n keys во все 10 локалей и документацию;
 - live-проверить DM, guild mention gating, pairing/access control, restart/drainPending и rate limits;
 - threads остаются отдельной следующей фазой.

@@ -22,6 +22,8 @@ export interface MessagingBindingInfo {
    */
   accessMode?: 'public-inbox' | 'owner-control' | 'disabled'
   allowedSenderIds?: string[]
+  /** Discord guild-channel routing. Absent on other platforms. */
+  discordGuildTrigger?: 'mention' | 'all'
 }
 
 /**
@@ -287,6 +289,12 @@ export interface IMessagingGatewayRegistry {
     workspaceId: string,
     bindingId: string,
     access: { mode: MessagingBindingAccessMode; allowedSenderIds?: string[] },
+  ): void
+  /** Discord guild-channel trigger: mention (default) or all messages. */
+  setDiscordGuildTrigger(
+    workspaceId: string,
+    bindingId: string,
+    trigger: 'mention' | 'all',
   ): void
   /**
    * Start the WeChat QR-login flow. Fetches a QR image from Tencent's iLink

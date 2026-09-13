@@ -327,6 +327,10 @@ export const DEFAULT_BINDING_CONFIG: BindingConfig = {
   discordGuildTrigger: 'mention',
 }
 
+export function normalizeDiscordGuildTrigger(value: unknown): 'mention' | 'all' {
+  return value === 'all' ? 'all' : 'mention'
+}
+
 export function getDefaultBindingConfig(platform: PlatformType): BindingConfig {
   return {
     ...DEFAULT_BINDING_CONFIG,
@@ -359,6 +363,9 @@ export function normalizeBindingConfig(
     approvalChannel: platform === 'whatsapp' ? 'app' : (config?.approvalChannel ?? base.approvalChannel),
     accessMode,
     allowedSenderIds,
+    discordGuildTrigger: normalizeDiscordGuildTrigger(
+      config?.discordGuildTrigger ?? base.discordGuildTrigger,
+    ),
   }
 }
 

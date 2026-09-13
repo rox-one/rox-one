@@ -912,6 +912,7 @@ export const RPC_CHANNELS = {
     DISMISS_PENDING_SENDER: 'messaging:access:dismissPending',
     ALLOW_PENDING_SENDER: 'messaging:access:allowPending',
     SET_BINDING_ACCESS: 'messaging:access:setBindingAccess',
+    SET_DISCORD_GUILD_TRIGGER: 'messaging:setDiscordGuildTrigger',
     // UI ↔ Server — WeChat QR-login flow (in-process, iLink long-poll)
     WC_START_CONNECT: 'messaging:wc:startConnect',
     WC_CANCEL_CONNECT: 'messaging:wc:cancelConnect',

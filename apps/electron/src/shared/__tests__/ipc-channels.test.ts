@@ -340,6 +340,7 @@ const EXPECTED_CHANNELS: string[] = [
   'messaging:saveDiscord',
   'messaging:saveLark',
   'messaging:saveTelegram',
+  'messaging:setDiscordGuildTrigger',
   'messaging:testDiscord',
   'messaging:testLark',
   'messaging:testTelegram',
