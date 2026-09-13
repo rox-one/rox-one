@@ -34,4 +34,11 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(source).toContain('setChatFont')
     expect(source).toContain('setTerminalFont')
   })
+
+  it('keeps Zen Shell behind shell.zen.v1 with default OFF', () => {
+    const zen = readFileSync(join(__dirname, '../ZenShellSettings.tsx'), 'utf8')
+    expect(zen).toContain("flag: 'shell.zen.v1'")
+    expect(zen).toContain('enabled: false')
+    expect(source).toContain('<ZenShellSettings />')
+  })
 })

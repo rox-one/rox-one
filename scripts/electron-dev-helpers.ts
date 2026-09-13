@@ -26,8 +26,20 @@ export function resolveVitePort(
   if (env.CRAFT_VITE_PORT) return normalizePort(env.CRAFT_VITE_PORT, "CRAFT_VITE_PORT");
   if (env.VITE_PORT) return normalizePort(env.VITE_PORT, "VITE_PORT");
 
-  const match = basename(rootDir).match(/-(\d+)$/);
-  return match ? `${match[1]}173` : "5173";
+  const numbered = numberedWorktreePort(rootDir);
+  return numbered ?? "5173";
+}
+
+/**
+ * Sibling checkouts such as `craft-agents-1` map to 1173.
+ * Branch suffixes like `-1771` are not instance numbers — `${1771}173` is not a TCP port.
+ */
+function numberedWorktreePort(rootDir: string): string | undefined {
+  const instance = detectInstanceNumber(rootDir);
+  if (!instance || instance.length > 2) return undefined;
+  const port = `${instance}173`;
+  if (!/^\d+$/.test(port) || Number(port) > 65535) return undefined;
+  return port;
 }
 
 export function detectInstanceNumber(rootDir: string): string | undefined {

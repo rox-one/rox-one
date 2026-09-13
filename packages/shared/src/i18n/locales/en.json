@@ -2591,6 +2591,8 @@
   "session.simplifyPrompt": "@simplify Simplify the current git diff in this session. Do not spawn a hidden session.",
   "session.unreadGroup": "Unread ({{count}})",
   "session.unreadLabel": "Unread",
+  "sessionItem.connectedTo": "Connected to {{label}}",
+  "sessionItem.matchesFound": "Matches found ({{next}} next, {{prev}} prev)",
   "sessionMenu.archive": "Archive",
   "sessionMenu.connectMessaging": "Connect Messaging",
   "sessionMenu.copyLink": "Copy Link",

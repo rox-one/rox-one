@@ -2591,6 +2591,8 @@
   "session.simplifyPrompt": "@simplify Simplify the current git diff in this session. Do not spawn a hidden session.",
   "session.unreadGroup": "읽지 않음 ({{count}})",
   "session.unreadLabel": "Unread",
+  "sessionItem.connectedTo": "{{label}}에 연결됨",
+  "sessionItem.matchesFound": "일치 항목 ({{next}} 다음, {{prev}} 이전)",
   "sessionMenu.archive": "보관",
   "sessionMenu.connectMessaging": "메시징 연결",
   "sessionMenu.copyLink": "링크 복사",

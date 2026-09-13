@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { FilePlus2, ScanSearch } from 'lucide-react'
+import { PremiumMenuSelect } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -163,30 +164,31 @@ function NotesTableView({
       <div className="mb-3 flex flex-wrap items-center gap-2" data-testid="notes-table-toolbar">
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
           {t('notes.views.savedLayout')}
-          <select
-            className="h-7 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
-            value={view.id}
-            onChange={(event) => setActiveViewId(event.target.value)}
-          >
-            {views.map((item) => (
-              <option key={item.id} value={item.id}>{item.name}</option>
-            ))}
-          </select>
+          <PremiumMenuSelect
+            items={views.map((item) => ({ id: item.id, label: item.name }))}
+            selectedId={view.id}
+            placeholder={t('notes.views.savedLayout')}
+            onSelect={(item) => setActiveViewId(item.id)}
+            variant="compact"
+          />
         </label>
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
           {t('notes.views.groupBy')}
-          <select
-            className="h-7 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
-            value={view.groupBy ?? ''}
-            onChange={(event) => patchView({ ...view, groupBy: event.target.value || undefined })}
-          >
-            <option value="">{t('notes.views.groupNone')}</option>
-            <option value="folder">{t('notes.views.groupFolder')}</option>
-            <option value="tags">{t('notes.views.groupTags')}</option>
-            {view.formulas.map((formula) => (
-              <option key={formula.expr} value={formula.expr}>{t(formulaI18nKey(formula.expr))}</option>
-            ))}
-          </select>
+          <PremiumMenuSelect
+            items={[
+              { id: 'none', label: t('notes.views.groupNone') },
+              { id: 'folder', label: t('notes.views.groupFolder') },
+              { id: 'tags', label: t('notes.views.groupTags') },
+              ...view.formulas.map((formula) => ({
+                id: formula.expr,
+                label: t(formulaI18nKey(formula.expr)),
+              })),
+            ]}
+            selectedId={view.groupBy ?? 'none'}
+            placeholder={t('notes.views.groupBy')}
+            onSelect={(item) => patchView({ ...view, groupBy: item.id === 'none' ? undefined : item.id })}
+            variant="compact"
+          />
         </label>
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
           {t('notes.views.filterTags')}
@@ -198,22 +200,18 @@ function NotesTableView({
         </label>
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
           {t('notes.views.formula')}
-          <select
-            data-testid="notes-table-formula"
-            className="h-7 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
-            value=""
-            disabled={unusedFormulas.length === 0}
-            onChange={(event) => {
-              const expr = event.target.value as NoteViewFormulaExpr
-              if (!expr) return
-              patchView(addFormula(view, expr))
-            }}
-          >
-            <option value="">{unusedFormulas.length === 0 ? t('notes.views.formulaNone') : t('notes.views.formulaAdd')}</option>
-            {unusedFormulas.map((expr) => (
-              <option key={expr} value={expr}>{t(formulaI18nKey(expr))}</option>
-            ))}
-          </select>
+          <span data-testid="notes-table-formula">
+            <PremiumMenuSelect
+              items={unusedFormulas.map((expr) => ({
+                id: expr,
+                label: t(formulaI18nKey(expr)),
+              }))}
+              placeholder={unusedFormulas.length === 0 ? t('notes.views.formulaNone') : t('notes.views.formulaAdd')}
+              disabled={unusedFormulas.length === 0}
+              onSelect={(item) => patchView(addFormula(view, item.id as NoteViewFormulaExpr))}
+              variant="compact"
+            />
+          </span>
         </label>
         {view.formulas.map((formula) => (
           <button

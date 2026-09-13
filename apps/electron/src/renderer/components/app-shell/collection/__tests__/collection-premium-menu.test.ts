@@ -22,4 +22,19 @@ describe('collection chrome PremiumMenu', () => {
     expect(src).not.toContain('StyledDropdown')
     expect(src).not.toContain('DropdownMenuTrigger')
   })
+
+  it('playground collection chrome wires table, heatmap empty-day and a 390 viewport', () => {
+    const playground = readFileSync(
+      join(import.meta.dir, '../../../../playground/registry/collection.tsx'),
+      'utf8',
+    )
+    expect(playground).toContain("id: 'collection-chrome'")
+    expect(playground).toContain("id: 'collection-chrome-narrow'")
+    expect(playground).toContain("id: 'collection-heatmap-empty'")
+    expect(playground).toContain('onCollapseAll')
+    expect(playground).toContain('onSelectGroup')
+    expect(playground).toContain("width: 390")
+    expect(playground).toContain("t('collection.heatmap.emptyDay')")
+    expect(playground).not.toContain('<select')
+  })
 })

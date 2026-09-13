@@ -29,6 +29,7 @@ describe('PrivacySettingsPage', () => {
     expect(source).toContain('window.electronAPI.requestPrivacyExport()')
     expect(source).toContain('window.electronAPI.requestPrivacyDeletion()')
     expect(source).toContain("t('settings.privacy.legalNote')")
+    expect(source).toContain("t('common.loading')")
     expect(source).not.toContain('GDPR signed')
     expect(source).not.toContain('training dataset')
   })
