@@ -179,6 +179,7 @@ describe('ROX2-047..049 native settings pages', () => {
     expect(mock).toContain('setNotificationsEnabled')
     expect(mock).toContain('getUpdateInfo')
     expect(mock).toContain('foreignDiscoverSessions')
+    expect(mock).toContain('discoverBrowserProfiles')
     expect(mock).toContain('Playground fixture. Not live.')
     expect(mock).not.toContain('conation.dev')
     const stories = source('apps/electron/src/renderer/playground/registry/settings.tsx')
