@@ -312,12 +312,12 @@ export const mockElectronAPI = {
   listLabels: async (_workspaceId: string) => {
     void _workspaceId
     return [
-      { id: 'lab-inbox', name: 'Inbox', color: { h: 220, s: 62, l: 54 }, children: [] },
+      { id: 'lab-inbox', name: 'Inbox', color: { light: '#3B82F6', dark: '#60A5FA' }, children: [] },
     ]
   },
   createLabel: async (_workspaceId: string, input: { name: string }) => {
     console.log('[Playground] createLabel', input)
-    return { id: 'lab-new', name: input.name, color: { h: 220, s: 62, l: 54 }, children: [] }
+    return { id: 'lab-new', name: input.name, color: { light: '#3B82F6', dark: '#60A5FA' }, children: [] }
   },
   updateLabel: async () => {},
   deleteLabel: async () => {
