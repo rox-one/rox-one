@@ -137,6 +137,13 @@ export const featureWorkbenchConationBoardAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
+export const featureWorkbenchConationMailAtom = atomWithStorage<boolean>(
+  getKeyString(KEYS.featureWorkbenchConationMail),
+  false,
+  undefined,
+  { getOnInit: true },
+)
+
 export const featureWorkbenchConationDssClientAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.featureWorkbenchConationDssClient),
   false,

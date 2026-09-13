@@ -39,6 +39,7 @@ import { focusedPanelRouteAtom } from '@/atoms/panel-stack'
 import {
   featureWorkbenchConationBoardAtom,
   featureWorkbenchConationCanvasAtom,
+  featureWorkbenchConationMailAtom,
   featureWorkbenchConationNotesBridgeAtom,
 } from '@/atoms/unified-shell'
 import * as storage from '@/lib/local-storage'
@@ -57,6 +58,8 @@ import { registerFundPanel } from './conation/conation-fund-panels'
 import { ConationFundPanel } from './conation/ConationFundPanel'
 import { registerBoardPanel } from './conation/conation-board-panels'
 import { ConationBoardPanel } from './conation/ConationBoardPanel'
+import { registerMailPanel } from './conation/conation-mail-panels'
+import { ConationMailPanel } from './conation/ConationMailPanel'
 import {
   DEFAULT_PANEL_REGISTRY_STATE,
   getAppPanelRegistry,
@@ -100,6 +103,7 @@ export function PanelHost({
   const conationInspectorEnabled = useAtomValue(featureWorkbenchConationInspectorAtom)
   const conationCanvasEnabled = useAtomValue(featureWorkbenchConationCanvasAtom)
   const conationBoardEnabled = useAtomValue(featureWorkbenchConationBoardAtom)
+  const conationMailEnabled = useAtomValue(featureWorkbenchConationMailAtom)
   const conationNotesBridgeEnabled = useAtomValue(featureWorkbenchConationNotesBridgeAtom)
 
   const resolvedRegistry = registry ?? getAppPanelRegistry()
@@ -178,12 +182,22 @@ export function PanelHost({
       },
       notesPanelTitle,
     )
+    const mailRegistration = registerMailPanel(
+      resolvedRegistry,
+      ConationMailPanel,
+      {
+        shellEnabled: conationShellEnabled,
+        inspectorEnabled: conationInspectorEnabled,
+        mailEnabled: conationMailEnabled,
+      },
+    )
 
     return () => {
       inspectorRegistration?.dispose()
       fundRegistration?.dispose()
       boardRegistration?.dispose()
       notesRegistration?.dispose()
+      mailRegistration?.dispose()
     }
   }, [
     resolvedRegistry,
@@ -192,6 +206,7 @@ export function PanelHost({
     conationInspectorEnabled,
     conationCanvasEnabled,
     conationBoardEnabled,
+    conationMailEnabled,
     conationNotesBridgeEnabled,
     notesBridge,
     renderNotesPanel,
