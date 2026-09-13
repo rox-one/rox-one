@@ -22,8 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { routes } from '@/lib/navigate'
-import { isClaimableLive } from '@craft-agent/core/rox2'
-import { settingsPageActionResult } from './settings-rox2-surface'
+import { settingsPageActionAllowed, settingsRuntimeSource } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -119,13 +118,13 @@ export default function CloudRunsSettingsPage() {
   const [failedPatch, setFailedPatch] = React.useState<ConfigPatch | null>(null)
 
   const load = React.useCallback(async (isGranted: boolean) => {
-    const gate = settingsPageActionResult({
+    const allowed = settingsPageActionAllowed({
       pageId: 'cloudRuns',
       action: 'config-read',
-      source: 'native',
+      source: settingsRuntimeSource(),
       granted: isGranted,
     })
-    if (!isClaimableLive(gate)) return
+    if (!allowed) return
     setLoading(true)
     setLoadError(null)
     try {
@@ -149,12 +148,12 @@ export default function CloudRunsSettingsPage() {
   const patch = (nextPatch: ConfigPatch) => {
     setSaveError(null)
     setFailedPatch(null)
-    const gate = settingsPageActionResult({
+    const allowed = settingsPageActionAllowed({
       pageId: 'cloudRuns',
       action: 'pref-write',
-      source: 'native',
+      source: settingsRuntimeSource(),
     })
-    if (!isClaimableLive(gate)) return
+    if (!allowed) return
     window.electronAPI
       .setCloudRunsConfig(nextPatch)
       .then(() =>

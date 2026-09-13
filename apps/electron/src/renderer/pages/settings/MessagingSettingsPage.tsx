@@ -76,9 +76,8 @@ import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { getSessionTitle } from '@/utils/session'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { MessagingPlatformRuntimeInfo } from '../../../shared/types'
-import { isClaimableLive } from '@craft-agent/core/rox2'
 import {
-  settingsPageActionResult,
+  settingsPageActionAllowed,
   settingsRuntimeSource,
   type SettingsPageActionKind,
 } from './settings-rox2-surface'
@@ -88,15 +87,18 @@ export const meta: DetailsPageMeta = {
   slug: 'messaging',
 }
 
-function messagingActionLive(action: SettingsPageActionKind, granted?: boolean): boolean {
-  return isClaimableLive(
-    settingsPageActionResult({
-      pageId: 'messaging',
-      action,
-      source: settingsRuntimeSource(),
-      granted,
-    }),
-  )
+/**
+ * Native mounts must be claimable live. Playground (fixture) mounts may still
+ * read mock data and open mocked connect dialogs, but destructive actions
+ * (forget, unbind, reset) stay blocked.
+ */
+function messagingActionAllowed(action: SettingsPageActionKind, granted?: boolean): boolean {
+  return settingsPageActionAllowed({
+    pageId: 'messaging',
+    action,
+    source: settingsRuntimeSource(),
+    granted,
+  })
 }
 
 export default function MessagingSettingsPage() {
@@ -115,7 +117,7 @@ export default function MessagingSettingsPage() {
     if (!workspaceId || !granted) return
     let cancelled = false
     const load = async () => {
-      if (!messagingActionLive('config-read', granted)) return
+      if (!messagingActionAllowed('config-read', granted)) return
       try {
         const rows = await window.electronAPI.getMessagingBindings()
         if (!cancelled) setBindings(rows as MessagingBinding[])
@@ -328,7 +330,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
         toast.error(t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint'))
         return
       }
-      if (!messagingActionLive('pref-write')) return
+      if (!messagingActionAllowed('pref-write')) return
       try {
         await window.electronAPI.setMessagingBindingAccess(bindingId, {
           mode: next.mode as BindingAccessMode,
@@ -368,19 +370,19 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   }, [])
 
   const handleConnect = () => {
-    if (!messagingActionLive('identity-connect', true)) return
+    if (!messagingActionAllowed('identity-connect', true)) return
     setReconfigure(false)
     setConnectOpen(true)
   }
 
   const handleReconfigure = () => {
-    if (!messagingActionLive('identity-connect', true)) return
+    if (!messagingActionAllowed('identity-connect', true)) return
     setReconfigure(true)
     setConnectOpen(true)
   }
 
   const handleDisconnect = async () => {
-    if (!messagingActionLive('identity-reset', true)) return
+    if (!messagingActionAllowed('identity-reset', true)) return
     try {
       await window.electronAPI.disconnectMessagingPlatform(platform)
       toast.success(
@@ -394,7 +396,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   }
 
   const handleForget = async () => {
-    if (!messagingActionLive('identity-reset', true)) return
+    if (!messagingActionAllowed('identity-reset', true)) return
     try {
       await window.electronAPI.forgetMessagingPlatform(platform)
       toast.success(
@@ -408,7 +410,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   }
 
   const handleUnbind = async (binding: MessagingBinding) => {
-    if (!messagingActionLive('connection-delete', true)) return
+    if (!messagingActionAllowed('connection-delete', true)) return
     try {
       await window.electronAPI.unbindMessagingBinding(binding.id)
     } catch (err) {
@@ -494,11 +496,11 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
               sessionMetaMap={sessionMetaMap}
               supergroup={supergroup}
               onPairSupergroup={() => {
-                if (!messagingActionLive('identity-connect', true)) return
+                if (!messagingActionAllowed('identity-connect', true)) return
                 setSupergroupDialogOpen(true)
               }}
               onUnpairSupergroup={async () => {
-                if (!messagingActionLive('identity-reset', true)) return
+                if (!messagingActionAllowed('identity-reset', true)) return
                 try {
                   await window.electronAPI.unbindMessagingSupergroup()
                   toast.success(
@@ -551,7 +553,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
                   onDiscordTriggerChange={
                     platform === 'discord'
                       ? async (bindingId, trigger) => {
-                          if (!messagingActionLive('pref-write')) return
+                          if (!messagingActionAllowed('pref-write')) return
                           try {
                             await window.electronAPI.setMessagingDiscordGuildTrigger(bindingId, trigger)
                             toast.success(t('settings.messaging.discord.guildTriggerUpdated'))
@@ -654,7 +656,7 @@ function TelegramBindingsBody({
         toast.error(t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint'))
         return
       }
-      if (!messagingActionLive('pref-write')) return
+      if (!messagingActionAllowed('pref-write')) return
       try {
         await window.electronAPI.setMessagingBindingAccess(bindingId, {
           mode: next.mode as BindingAccessMode,

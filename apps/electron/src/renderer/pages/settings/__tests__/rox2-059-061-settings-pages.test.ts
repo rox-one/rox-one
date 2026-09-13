@@ -7,6 +7,7 @@ import {
   ROX2_SETTINGS_WAVE7_PAGE_IDS,
   SETTINGS_HUB_REQUIRES_CONATION_FLAG,
   bindSettingsHubContext,
+  settingsPageActionAllowed,
   settingsPageActionResult,
 } from '../settings-rox2-surface.ts'
 
@@ -163,16 +164,45 @@ describe('ROX2-059..061 native settings pages', () => {
     expect(verified.verification).toBe('receipt_verified')
   })
 
+  test('fixture mounts may read mock data and open connect dialogs, never destroy', () => {
+    // Native: same answer as isClaimableLive.
+    expect(
+      settingsPageActionAllowed({ pageId: 'server', action: 'config-read', source: 'native', granted: false }),
+    ).toBe(false)
+    expect(
+      settingsPageActionAllowed({ pageId: 'server', action: 'config-read', source: 'native', granted: true }),
+    ).toBe(true)
+    expect(
+      settingsPageActionAllowed({ pageId: 'messaging', action: 'identity-reset', source: 'native', granted: true }),
+    ).toBe(true)
+    // Fixture: reads, connect and local writes pass so playground stories render
+    // mock data and reach the mocked dialogs; the result is still not live.
+    for (const pageId of ROX2_SETTINGS_WAVE7_PAGE_IDS) {
+      expect(settingsPageActionAllowed({ pageId, action: 'config-read', source: 'fixture' }), pageId).toBe(true)
+      expect(settingsPageActionAllowed({ pageId, action: 'pref-write', source: 'fixture' }), pageId).toBe(true)
+      expect(
+        isClaimableLive(settingsPageActionResult({ pageId, action: 'config-read', source: 'fixture' })),
+        pageId,
+      ).toBe(false)
+    }
+    expect(
+      settingsPageActionAllowed({ pageId: 'messaging', action: 'identity-connect', source: 'fixture' }),
+    ).toBe(true)
+    // Destroy and spend stay blocked so fixtures never hit the throwing mocks.
+    for (const action of ['identity-reset', 'connection-delete', 'spend'] as const) {
+      expect(
+        settingsPageActionAllowed({ pageId: 'messaging', action, source: 'fixture', granted: true }),
+        action,
+      ).toBe(false)
+    }
+  })
+
   test('pages call the Rox2 gate and do not treat connect or cloudRuns as spend', () => {
     const messaging = source(PAGE_FILES.messaging)
-    expect(messaging).toContain("messagingActionLive('identity-connect'")
-    expect(messaging).toContain("messagingActionLive('identity-reset'")
-    expect(messaging).toContain("messagingActionLive('connection-delete'")
-    expect(messaging).toContain("messagingActionLive('pref-write'")
-    expect(messaging).toContain('settingsPageActionResult')
-    // Playground mounts resolve to fixture, never a hard-coded native source.
-    expect(messaging).toContain('source: settingsRuntimeSource()')
-    expect(messaging).not.toContain("source: 'native'")
+    expect(messaging).toContain("messagingActionAllowed('identity-connect'")
+    expect(messaging).toContain("messagingActionAllowed('identity-reset'")
+    expect(messaging).toContain("messagingActionAllowed('connection-delete'")
+    expect(messaging).toContain("messagingActionAllowed('pref-write'")
     expect(messaging).not.toContain('checkout')
     expect(messaging).not.toContain('stripe')
 
@@ -180,17 +210,21 @@ describe('ROX2-059..061 native settings pages', () => {
     expect(server).toContain("action: 'pref-write'")
     expect(server).toContain("action: 'config-read'")
     expect(server).toContain("action: 'toggle'")
-    expect(server).toContain('settingsPageActionResult')
 
     const cloudRuns = source(PAGE_FILES.cloudRuns)
     expect(cloudRuns).toContain("action: 'pref-write'")
     expect(cloudRuns).toContain("action: 'config-read'")
-    expect(cloudRuns).toContain('settingsPageActionResult')
 
-    // config-read is device-read: mount-time loaders collect a real grant
-    // from the user instead of asserting `granted: true`.
     for (const [id, rel] of Object.entries(PAGE_FILES)) {
       const text = source(rel)
+      // Every gate goes through the fixture-aware helper and resolves its
+      // source at runtime; playground mounts are never a hard-coded native.
+      expect(text, id).toContain('settingsPageActionAllowed')
+      expect(text, id).toContain('source: settingsRuntimeSource()')
+      expect(text, id).not.toContain("source: 'native'")
+      expect(text, id).not.toContain('isClaimableLive(')
+      // config-read is device-read: mount-time loaders collect a real grant
+      // from the user instead of asserting `granted: true`.
       expect(text, id).not.toContain('granted: true')
       expect(text, id).toContain('setGranted(true)')
     }

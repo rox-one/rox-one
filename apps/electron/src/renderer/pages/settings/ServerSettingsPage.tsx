@@ -16,8 +16,7 @@ import { Spinner } from '@craft-agent/ui'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ServerConfig, ServerStatus } from '@craft-agent/shared/config/server-config'
 import { nativeSidecarHealthView, type NativeSidecarHealthView } from './native-sidecar-health'
-import { isClaimableLive } from '@craft-agent/core/rox2'
-import { settingsPageActionResult } from './settings-rox2-surface'
+import { settingsPageActionAllowed, settingsRuntimeSource } from './settings-rox2-surface'
 
 import {
   SettingsSection,
@@ -85,13 +84,13 @@ export default function ServerSettingsPage() {
   const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm)
 
   const loadSettings = useCallback(async (isGranted: boolean) => {
-    const gate = settingsPageActionResult({
+    const allowed = settingsPageActionAllowed({
       pageId: 'server',
       action: 'config-read',
-      source: 'native',
+      source: settingsRuntimeSource(),
       granted: isGranted,
     })
-    if (!isClaimableLive(gate)) return
+    if (!allowed) return
     setIsLoading(true)
     try {
       const [config, serverStatus, health] = await Promise.all([
@@ -136,12 +135,12 @@ export default function ServerSettingsPage() {
 
     setIsSaving(true)
     try {
-      const gate = settingsPageActionResult({
+      const allowed = settingsPageActionAllowed({
         pageId: 'server',
         action: 'pref-write',
-        source: 'native',
+        source: settingsRuntimeSource(),
       })
-      if (!isClaimableLive(gate)) {
+      if (!allowed) {
         setIsSaving(false)
         return
       }
@@ -170,13 +169,13 @@ export default function ServerSettingsPage() {
   }
 
   const handleBrowseCert = async () => {
-    const gate = settingsPageActionResult({
+    const allowed = settingsPageActionAllowed({
       pageId: 'server',
       action: 'config-read',
-      source: 'native',
+      source: settingsRuntimeSource(),
       granted,
     })
-    if (!isClaimableLive(gate)) return
+    if (!allowed) return
     const paths = await window.electronAPI.openFileDialog()
     if (paths.length > 0) {
       setForm(f => ({ ...f, tlsCertPath: paths[0]! }))
@@ -184,13 +183,13 @@ export default function ServerSettingsPage() {
   }
 
   const handleBrowseKey = async () => {
-    const gate = settingsPageActionResult({
+    const allowed = settingsPageActionAllowed({
       pageId: 'server',
       action: 'config-read',
-      source: 'native',
+      source: settingsRuntimeSource(),
       granted,
     })
-    if (!isClaimableLive(gate)) return
+    if (!allowed) return
     const paths = await window.electronAPI.openFileDialog()
     if (paths.length > 0) {
       setForm(f => ({ ...f, tlsKeyPath: paths[0]! }))
@@ -260,12 +259,12 @@ export default function ServerSettingsPage() {
                   size="sm"
                   className="h-6 text-[11px] px-2"
                   onClick={() => {
-                    const gate = settingsPageActionResult({
+                    const allowed = settingsPageActionAllowed({
                       pageId: 'server',
                       action: 'toggle',
-                      source: 'native',
+                      source: settingsRuntimeSource(),
                     })
-                    if (!isClaimableLive(gate)) return
+                    if (!allowed) return
                     window.electronAPI.relaunchApp()
                   }}
                 >
