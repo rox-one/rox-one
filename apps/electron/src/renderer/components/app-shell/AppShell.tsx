@@ -79,7 +79,6 @@ import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
 import { LeftSidebar } from "./LeftSidebar"
 import { type ProfileStripData } from "./ProfileStrip"
-import { QuestProgressCard } from "./QuestProgressCard"
 import { SidebarChrome } from "./SidebarChrome"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
@@ -2804,12 +2803,6 @@ function AppShellContent({
                 {/* Agents section removed */}
                 </div>
                 <div className="shrink-0">
-                  <div className="border-t border-foreground/5 px-1 pt-1.5">
-                    <QuestProgressCard
-                      sessionId={effectiveSessionId}
-                      cloudFeaturesEnabled={true}
-                    />
-                  </div>
                   <SidebarChrome
                     profile={profileStrip}
                     onProfileClick={() => handleSettingsClick('account')}

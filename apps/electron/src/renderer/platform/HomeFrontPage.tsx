@@ -12,6 +12,7 @@ import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { Button } from '@/components/ui/button'
 import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
+import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
@@ -54,6 +55,7 @@ export function HomeFrontPage() {
     <div className="h-full overflow-y-auto">
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-6 py-10">
         <MiniDashboardCards snapshot={dashboard} className="grid-cols-2 sm:grid-cols-3" />
+        <QuestProgressCard cloudFeaturesEnabled={true} className="px-0" />
 
         <div className="flex flex-col gap-1">
           <h1 className="text-xl font-medium text-foreground">{t('workbench.home.title')}</h1>

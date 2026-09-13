@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { QuestId, QuestRecord } from '@craft-agent/shared/gamification'
+import { cn } from '@/lib/utils'
 
 const QUEST_TITLE: Record<QuestId, string> = {
   first_note: 'quests.firstNote',
@@ -21,12 +22,13 @@ const QUEST_SERVICE: Record<QuestId, string> = {
 }
 
 interface QuestProgressCardProps {
-  sessionId?: string | null
   cloudFeaturesEnabled?: boolean
+  className?: string
 }
 
 export function QuestProgressCard({
   cloudFeaturesEnabled = true,
+  className,
 }: QuestProgressCardProps) {
   const { t } = useTranslation()
   const [quests, setQuests] = useState<QuestRecord[]>([])
@@ -63,7 +65,7 @@ export function QuestProgressCard({
   if (!quest) return null
 
   return (
-    <div className="space-y-2 px-2 py-2" data-testid="quest-progress-card">
+    <div className={cn('space-y-2 px-2 py-2', className)} data-testid="quest-progress-card">
       <div className="flex items-center justify-between gap-1">
         <button
           type="button"
