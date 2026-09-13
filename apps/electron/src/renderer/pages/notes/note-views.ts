@@ -287,6 +287,65 @@ export function createCanvasFileCard(input: {
   }
 }
 
+export function isolateCanvasForNote(
+  notes: ReadonlyArray<{
+    id: string
+    title: string
+    links?: Array<{ target: string }>
+    backlinks?: Array<{ noteId: string }>
+  }>,
+  activeNoteId: string,
+  origin = { x: 48, y: 48 },
+): JsonCanvas {
+  const nearby = isolateNoteNeighborhood(graphFromLinks(notes), activeNoteId)
+  const ordered = [
+    ...nearby.nodes.filter((node) => node.id === activeNoteId),
+    ...nearby.nodes.filter((node) => node.id !== activeNoteId),
+  ]
+  return {
+    nodes: ordered.map((node, index) =>
+      createCanvasFileCard({
+        noteId: node.id,
+        title: node.title,
+        x: origin.x + (index % 3) * 260,
+        y: origin.y + Math.floor(index / 3) * 150,
+      }),
+    ),
+    edges: [],
+  }
+}
+
+export function moveCanvasNode(canvas: JsonCanvas, nodeId: string, x: number, y: number): JsonCanvas {
+  return {
+    ...canvas,
+    nodes: canvas.nodes.map((node) => (node.id === nodeId ? { ...node, x, y } : node)),
+  }
+}
+
+export function canvasFitTransform(
+  nodes: readonly JsonCanvasNode[],
+  viewport: { width: number; height: number },
+  padding = 48,
+): { scale: number; x: number; y: number } {
+  if (nodes.length === 0 || viewport.width <= 0 || viewport.height <= 0) {
+    return { scale: 1, x: 0, y: 0 }
+  }
+  const minX = Math.min(...nodes.map((node) => node.x))
+  const minY = Math.min(...nodes.map((node) => node.y))
+  const maxX = Math.max(...nodes.map((node) => node.x + node.width))
+  const maxY = Math.max(...nodes.map((node) => node.y + node.height))
+  const width = Math.max(1, maxX - minX)
+  const height = Math.max(1, maxY - minY)
+  const scale = Math.min(1, (viewport.width - padding * 2) / width, (viewport.height - padding * 2) / height)
+  const cx = (minX + maxX) / 2
+  const cy = (minY + maxY) / 2
+  return {
+    scale,
+    x: viewport.width / 2 - cx * scale,
+    y: viewport.height / 2 - cy * scale,
+  }
+}
+
 export function outlineFromHeadings(
   noteId: string,
   headings: ReadonlyArray<{ level: number; text: string }>,

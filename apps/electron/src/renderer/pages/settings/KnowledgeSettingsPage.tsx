@@ -1,15 +1,6 @@
 /**
- * KnowledgeSettingsPage — SiYuan knowledge engine connection (P1, read-only).
- *
- * Settings → Knowledge contract (spec K-11 P1): baseUrl (default
- * http://localhost:6806), token, health status.
- *
- * The token never touches renderer-side storage: it goes through the
- * existing sources:saveCredentials RPC straight into CredentialManager under
- * 'source_bearer::{workspaceId}::{connectionId}'. No knowledge mutation
- * channels exist in P1 — listConnections/engineStatus are the only
- * knowledge RPC calls the page makes (read-only by contract), so the
- * baseUrl field is informational until a save-connection channel lands.
+ * KnowledgeSettingsPage — local notes are the default knowledge store.
+ * An external engine connection is optional.
  */
 
 import * as React from 'react'
@@ -25,6 +16,15 @@ import type {
   KnowledgeDetectEngineResult,
   KnowledgeEngineStatus,
 } from '../../../shared/types'
+import type { AIActionMode } from '../notes/NotesAIMenu'
+import {
+  NOTES_AI_ACTIONS,
+  NOTES_AI_MODEL,
+  NOTES_AI_PROMPT_KEYS,
+  NOTES_AI_PROMPTS_STORAGE_KEY,
+  parseNotesAiPrompts,
+  serializeNotesAiPrompts,
+} from '../notes/note-ai'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -70,6 +70,9 @@ export default function KnowledgeSettingsPage() {
   const [testing, setTesting] = React.useState(false)
   const [starting, setStarting] = React.useState(false)
   const [migrating, setMigrating] = React.useState(false)
+  const [aiPrompts, setAiPrompts] = React.useState(() =>
+    parseNotesAiPrompts(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_AI_PROMPTS_STORAGE_KEY)),
+  )
   // MVP: a single external-local connection (spec K-03 §3.3); the list still
   // renders every entry so additional providers stay visible.
   const connection = connections?.[0] ?? null
@@ -259,7 +262,51 @@ export default function KnowledgeSettingsPage() {
         <p className="text-sm text-muted-foreground">{t('settings.knowledge.description')}</p>
       </div>
 
-      <SettingsSection title={t('settings.knowledge.detect')}>
+      <SettingsSection title={t('knowledge.local.title')}>
+        <SettingsCard>
+          <SettingsRow label={t('knowledge.local.title')} description={t('knowledge.local.body')} />
+          <SettingsRow
+            label={t('knowledge.local.aiPrompts')}
+            description={t('notes.ai.defaultModel', { model: NOTES_AI_MODEL })}
+          >
+            <div className="flex w-full max-w-xl flex-col gap-2 pt-1">
+              {NOTES_AI_ACTIONS.map((mode: AIActionMode) => (
+                <label key={mode} className="block">
+                  <span className="mb-1 block text-[11px] text-muted-foreground">
+                    {t(
+                      mode === 'extract-tasks'
+                        ? 'notes.ai.extractTasks'
+                        : mode === 'analyze'
+                          ? 'notes.ai.analyze'
+                          : mode === 'expand'
+                            ? 'notes.ai.expand'
+                            : 'notes.ai.summarize',
+                    )}
+                  </span>
+                  <textarea
+                    className="h-16 w-full rounded-[6px] border border-border/60 bg-background px-2 py-1.5 text-xs"
+                    value={aiPrompts[mode] ?? ''}
+                    placeholder={t(NOTES_AI_PROMPT_KEYS[mode])}
+                    onChange={(event) => setAiPrompts((prev) => ({ ...prev, [mode]: event.target.value }))}
+                  />
+                </label>
+              ))}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  localStorage.setItem(NOTES_AI_PROMPTS_STORAGE_KEY, serializeNotesAiPrompts(aiPrompts))
+                  toast.success(t('knowledge.local.promptsSaved'))
+                }}
+              >
+                {t('knowledge.local.savePrompts')}
+              </Button>
+            </div>
+          </SettingsRow>
+        </SettingsCard>
+      </SettingsSection>
+
+      <SettingsSection title={t('knowledge.local.engineOptional')}>
         <SettingsCard>
           <SettingsRow
             label={t('settings.knowledge.detectResult.installed')}

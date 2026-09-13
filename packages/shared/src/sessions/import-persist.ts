@@ -6,8 +6,8 @@
 
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { isAllowedForeignSourcePath } from './import-home.ts'
-import { convertForeignSource, inspectForeignSource } from './import-convert.ts'
+import { isAllowedForeignSourcePath, splitForeignSourceRef } from './import-home.ts'
+import { convertForeignSource, inspectForeignSource, MAX_FOREIGN_EXPORT_BYTES } from './import-convert.ts'
 import { findScannedForeignSource, lookupImportedSession, recordImportedSession } from './import-registry.ts'
 import { generateUniqueSessionId } from './slug-generator.ts'
 import { isValidSessionId, sanitizeSessionId } from './validation.ts'
@@ -126,7 +126,11 @@ export async function persistForeignSession(options: PersistForeignOptions): Pro
   if (!isAllowedForeignSourcePath(options.sourcePath, options.homeDir)) {
     return { sourcePath: options.sourcePath, action: 'skipped', reason: 'outside-p0-root' }
   }
-  const sourceGuard = inspectForeignSource(options.sourcePath)
+  const filePath = splitForeignSourceRef(options.sourcePath).path
+  const sourceGuard = inspectForeignSource(
+    filePath,
+    filePath.endsWith('.json') && !filePath.endsWith('.jsonl') ? MAX_FOREIGN_EXPORT_BYTES : undefined,
+  )
   if (sourceGuard.status === 'symlink') {
     return { sourcePath: options.sourcePath, action: 'skipped', reason: 'source-symlink' }
   }

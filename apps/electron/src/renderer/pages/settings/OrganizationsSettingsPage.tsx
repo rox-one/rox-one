@@ -2,7 +2,8 @@
  * OrganizationsSettingsPage (P3.1)
  *
  * Create orgs, invite by email/username, list members + pending invites.
- * Local-first; invite redemption prefers CRAFT_SERVER_URL when present.
+ * Local-first; invite redemption prefers Rox Server URL (env CRAFT_SERVER_URL)
+ * when present. Invite RPC creates a local token — there is no mailer.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -30,6 +31,7 @@ import type {
 } from '@craft-agent/shared/orgs'
 import type { Workspace } from '../../../shared/types'
 import { getTeamSpacesForOrganization } from './organization-team-spaces'
+import { formatOrgMemberIdentity } from './organization-member-identity'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -148,7 +150,9 @@ export default function OrganizationsSettingsPage() {
             : organization,
         ),
       )
-      toast.success(t('settings.orgs.inviteSent', { target: invite.emailOrUsername }))
+      toast.success(t('settings.orgs.inviteSent', { target: invite.emailOrUsername }), {
+        description: t('settings.orgs.inviteNoMailer'),
+      })
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       toast.error(t('settings.orgs.inviteFailed'), { description: message })
@@ -309,17 +313,47 @@ export default function OrganizationsSettingsPage() {
                   </div>
                   <SettingsCard>
                     <div className="divide-y divide-border/40">
-                      {selected.members.map((member: OrgMember) => (
-                        <SettingsRow
-                          key={`${member.orgId}:${member.userId}`}
-                          label={member.displayLabel || t('settings.orgs.memberUnknown')}
-                          action={
-                            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                      {selected.members.map((member: OrgMember) => {
+                        const identity = formatOrgMemberIdentity(
+                          member,
+                          {
+                            userId: t('settings.orgs.userId'),
+                            username: t('settings.orgs.username'),
+                            email: t('settings.orgs.email'),
+                          },
+                          t('settings.orgs.valueEmpty'),
+                        )
+                        return (
+                          <div
+                            key={`${member.orgId}:${member.userId}`}
+                            className="flex items-start justify-between gap-3 px-4 py-3"
+                            data-testid="org-member-row"
+                          >
+                            <div className="min-w-0 space-y-1">
+                              <div className="truncate text-sm font-medium">
+                                {member.displayLabel || member.username || t('settings.orgs.memberUnknown')}
+                              </div>
+                              <dl className="space-y-0.5 text-xs text-muted-foreground">
+                                <div>
+                                  <dt className="inline">{t('settings.orgs.userId')}: </dt>
+                                  <dd className="inline break-all font-mono">{member.userId}</dd>
+                                </div>
+                                <div>
+                                  <dt className="inline">{t('settings.orgs.username')}: </dt>
+                                  <dd className="inline break-all">{identity.username}</dd>
+                                </div>
+                                <div>
+                                  <dt className="inline">{t('settings.orgs.email')}: </dt>
+                                  <dd className="inline break-all">{identity.email}</dd>
+                                </div>
+                              </dl>
+                            </div>
+                            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
                               {roleLabel(member.role, t)}
                             </span>
-                          }
-                        />
-                      ))}
+                          </div>
+                        )
+                      })}
                       {selected.pendingInvites.map((invite: OrgInvitePublic) => (
                         <SettingsRow
                           key={invite.id}
@@ -342,6 +376,13 @@ export default function OrganizationsSettingsPage() {
                     <p className="text-sm text-muted-foreground">
                       {t('settings.orgs.inviteDesc')}
                     </p>
+                    <p className="text-sm text-muted-foreground">
+                      {t('settings.orgs.inviteNoMailer')}
+                    </p>
+                    <ul className="list-disc space-y-1 pl-4 text-sm text-muted-foreground">
+                      <li>{t('settings.orgs.roleMemberHint')}</li>
+                      <li>{t('settings.orgs.roleAdminHint')}</li>
+                    </ul>
                   </div>
                   <SettingsCard>
                     <div className="grid gap-3 p-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto] sm:items-end">
@@ -416,6 +457,10 @@ export default function OrganizationsSettingsPage() {
           >
             <SettingsCard>
               <div className="space-y-3 p-3">
+                <div className="space-y-0.5">
+                  <div className="text-sm font-medium">{t('settings.orgs.roxServerUrl')}</div>
+                  <p className="text-sm text-muted-foreground">{t('settings.orgs.roxServerUrlHint')}</p>
+                </div>
                 <SettingsInput
                   label={t('settings.orgs.username')}
                   value={usernameDraft}

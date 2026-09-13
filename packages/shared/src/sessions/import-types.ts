@@ -3,7 +3,26 @@
  * Scan ≠ persist. Persist writes Rox transcripts only — never a DSH store or zstd frames.
  */
 
-export const FOREIGN_SESSION_KINDS = ['grok', 'claude', 'codex', 'opencode', 'hermes'] as const
+export const FOREIGN_SESSION_KINDS = [
+  'grok',
+  'claude',
+  'codex',
+  'opencode',
+  'hermes',
+  'chatgpt',
+  'deepseek',
+  'gemini',
+  'qwen',
+  'amp',
+  'cursor',
+  'openclaw',
+  'omp',
+  'pi',
+  'kiro',
+  'kimi',
+  'glm',
+  'z',
+] as const
 
 export type ForeignSessionKind = (typeof FOREIGN_SESSION_KINDS)[number]
 

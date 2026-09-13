@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { parseNlDate, parseQuickEntry, startOfLocalDay } from './dates.ts'
-import { buildTodayPlan, projectTasks, tasksLinkedTo } from './projections.ts'
+import { buildTodayPlan, filterAndSortTasks, projectTasks, tasksForProject, tasksLinkedTo } from './projections.ts'
 import { PersonalTaskStore, resetPersonalTaskIds } from './store.ts'
 
 const morning = startOfLocalDay(Date.now()) + 9 * 60 * 60 * 1000
@@ -116,5 +116,18 @@ describe('personal tasks (issue 17)', () => {
     expect(store.get(b.id)?.order).toBe(0)
     expect(store.get(a.id)?.order).toBe(1)
     expect(store.get(a.id)?.title).toBe('A')
+  })
+
+  it('lists every open task and filters/sorts by workspace project id', () => {
+    const store = new PersonalTaskStore()
+    const inbox = store.create({ title: 'Inbox item', list: 'inbox', projectId: 'proj-alpha', now: morning })
+    store.create({ title: 'Later', list: 'upcoming', projectId: 'proj-beta', dueAt: morning + 86400000, now: morning })
+    store.create({ title: 'Today', list: 'today', projectId: 'proj-alpha', now: morning })
+    const all = filterAndSortTasks(store.list(), morning, { filter: 'all', sort: 'title' })
+    expect(all.map((task) => task.title)).toEqual(['Inbox item', 'Later', 'Today'])
+    expect(filterAndSortTasks(store.list(), morning, { filter: 'all', projectId: 'proj-alpha' })).toHaveLength(2)
+    expect(tasksForProject(store.list(), 'proj-beta')[0]?.title).toBe('Later')
+    store.update(inbox.id, { priority: 'high' })
+    expect(filterAndSortTasks(store.list(), morning, { filter: 'all', sort: 'priority' })[0]?.id).toBe(inbox.id)
   })
 })

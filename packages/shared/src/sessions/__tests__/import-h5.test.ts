@@ -3,8 +3,18 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, 
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { discoverForeignSessions, filterForeignIndexEntries, MAX_SCAN_ENTRIES, MAX_SCAN_PER_KIND } from '../import-discover.ts'
-import { convertClaudeJsonl, convertGrokCatalog, inferForeignKind, redactSecrets } from '../import-convert.ts'
+import {
+  convertClaudeJsonl,
+  convertGrokCatalog,
+  inferForeignKind,
+  inspectForeignSource,
+  MAX_FOREIGN_EXPORT_BYTES,
+  MAX_FOREIGN_FILE_BYTES,
+  readRegularFile,
+  redactSecrets,
+} from '../import-convert.ts'
 import { isAllowedForeignSourcePath, isHomePath, isSensitiveAgentCwd } from '../import-home.ts'
+import { FOREIGN_SESSION_KINDS } from '../import-types.ts'
 import { listImportedSessionFiles, persistForeignSession, readImportedSession } from '../import-persist.ts'
 import { loadForeignImportRegistry } from '../import-registry.ts'
 
@@ -329,5 +339,111 @@ describe('H5 foreign import', () => {
   it('keeps a large default scan budget', () => {
     expect(MAX_SCAN_ENTRIES).toBe(100_000)
     expect(MAX_SCAN_PER_KIND).toBe(20_000)
+    expect(FOREIGN_SESSION_KINDS).toContain('chatgpt')
+    expect(FOREIGN_SESSION_KINDS).toContain('cursor')
+    expect(FOREIGN_SESSION_KINDS).toContain('gemini')
+  })
+
+  it('discovers and persists extra local kinds without leaving P0 roots', async () => {
+    const home = tmp('h5-extra-home-')
+    const workspace = tmp('h5-extra-ws-')
+    const chatgptDir = join(home, '.chatgpt')
+    mkdirSync(chatgptDir, { recursive: true })
+    writeFileSync(
+      join(chatgptDir, 'conversations.json'),
+      JSON.stringify([
+        {
+          id: 'c-login',
+          title: 'Login flow',
+          mapping: {
+            a: { message: { author: { role: 'user' }, content: { parts: ['hello chatgpt'] } } },
+            b: { message: { author: { role: 'assistant' }, content: { parts: ['hi from chatgpt'] } } },
+          },
+        },
+        {
+          id: 'c-review',
+          title: 'Review PR',
+          mapping: {
+            a: { message: { author: { role: 'user' }, content: { parts: ['second chatgpt'] } } },
+            b: { message: { author: { role: 'assistant' }, content: { parts: ['ok'] } } },
+          },
+        },
+      ]),
+    )
+    const geminiDir = join(home, '.gemini', 'tmp', 'proj', 'chats')
+    mkdirSync(geminiDir, { recursive: true })
+    writeFileSync(
+      join(geminiDir, 'session-1.jsonl'),
+      [
+        JSON.stringify({ type: 'user', content: [{ text: 'hello gemini' }] }),
+        JSON.stringify({ type: 'gemini', content: [{ text: 'hi from gemini' }] }),
+      ].join('\n') + '\n',
+    )
+    const ampDir = join(home, '.local', 'share', 'amp', 'threads')
+    mkdirSync(ampDir, { recursive: true })
+    writeFileSync(
+      join(ampDir, 'T-amp.json'),
+      JSON.stringify({
+        title: 'Amp thread',
+        messages: [
+          { role: 'user', content: [{ type: 'text', text: 'hello amp' }] },
+          { role: 'assistant', content: [{ type: 'text', text: 'hi from amp' }] },
+        ],
+      }),
+    )
+    const cursorFile = join(home, '.cursor', 'projects', 'demo', 'agent-transcripts', 't1.jsonl')
+    mkdirSync(join(cursorFile, '..'), { recursive: true })
+    writeFileSync(
+      cursorFile,
+      [
+        JSON.stringify({ role: 'user', message: { content: [{ type: 'text', text: 'hello cursor' }] } }),
+        JSON.stringify({ role: 'assistant', message: { content: [{ type: 'text', text: 'hi from cursor' }] } }),
+      ].join('\n') + '\n',
+    )
+    const piFile = join(home, '.pi', 'agent', 'sessions', 's1.jsonl')
+    mkdirSync(join(piFile, '..'), { recursive: true })
+    writeFileSync(
+      piFile,
+      [
+        JSON.stringify({ type: 'message', message: { role: 'user', content: 'hello pi' } }),
+        JSON.stringify({ type: 'message', message: { role: 'assistant', content: 'hi from pi' } }),
+      ].join('\n') + '\n',
+    )
+    mkdirSync(join(home, 'Documents'), { recursive: true })
+    writeFileSync(join(home, 'Documents', 'not-imported.json'), JSON.stringify({ messages: [{ role: 'user', content: 'nope' }] }))
+
+    const discovered = discoverForeignSessions({ workspaceRoot: workspace, homeDir: home })
+    const kinds = new Set(discovered.entries.map((entry) => entry.kind))
+    expect(kinds.has('chatgpt')).toBe(true)
+    expect(kinds.has('gemini')).toBe(true)
+    expect(kinds.has('amp')).toBe(true)
+    expect(kinds.has('cursor')).toBe(true)
+    expect(kinds.has('pi')).toBe(true)
+    expect(discovered.entries.filter((entry) => entry.kind === 'chatgpt')).toHaveLength(2)
+    expect(inferForeignKind(join(home, 'Documents', 'not-imported.json'), home)).toBeUndefined()
+    expect(inferForeignKind(cursorFile, home)).toBe('cursor')
+
+    const chatgpt = discovered.entries.find((entry) => entry.sourcePath.endsWith('#c-login'))
+    expect(chatgpt?.title).toBe('Login flow')
+    const persisted = await persistForeignSession({
+      workspaceRoot: workspace,
+      sourcePath: chatgpt!.sourcePath,
+      homeDir: home,
+    })
+    expect(persisted.action).toBe('created')
+    const session = readImportedSession(workspace, persisted.sessionId!)
+    expect(session?.messages.some((message) => message.content.includes('hello chatgpt'))).toBe(true)
+    expect(session?.messages.some((message) => message.content.includes('second chatgpt'))).toBe(false)
+  })
+
+  it('readRegularFile inspects with the caller maxBytes, not the 5 MiB JSONL default', () => {
+    const dir = tmp('h5-size-')
+    const path = join(dir, 'conversations.json')
+    const overDefault = MAX_FOREIGN_FILE_BYTES + 1
+    writeFileSync(path, Buffer.alloc(overDefault, 0x20))
+    expect(inspectForeignSource(path).status).toBe('too-large')
+    expect(inspectForeignSource(path, MAX_FOREIGN_EXPORT_BYTES).status).toBe('ok')
+    expect(readRegularFile(path)).toBeNull()
+    expect(readRegularFile(path, MAX_FOREIGN_EXPORT_BYTES)?.length).toBe(overDefault)
   })
 })

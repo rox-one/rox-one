@@ -39,3 +39,11 @@ export {
   // Constants
   DEFAULT_WORKSPACES_DIR,
 } from './storage.ts';
+
+export {
+  ensureRoxLayout,
+  resolveRoxRoot,
+  roxFolderPath,
+  ROX_LAYOUT_FOLDERS,
+} from './rox-layout.ts';
+export type { RoxLayoutFolder, RoxLayoutOptions } from './rox-layout.ts';

@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react"
 import { useTranslation } from "react-i18next"
 import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { StepFormLayout, ContinueButton } from "./primitives"
 
 interface WelcomeStepProps {
@@ -10,12 +13,22 @@ interface WelcomeStepProps {
   isLoading?: boolean
 }
 
+function persistOnboardingUsername(username: string): Promise<void> {
+  const api = typeof window !== "undefined" ? window.electronAPI : undefined
+  if (!api?.updateOrgIdentity || !api.identityUpdateProfile) {
+    return Promise.reject(new Error('identity-unavailable'))
+  }
+  return Promise.all([
+    api.updateOrgIdentity({ username, name: username }),
+    api.identityUpdateProfile({ displayName: username }),
+  ]).then(() => undefined)
+}
+
 /**
  * WelcomeStep - Initial welcome screen for onboarding
  *
- * Shows different messaging for new vs existing users:
- * - New users: Welcome to Craft Agents
- * - Existing users: Update your API connection settings
+ * First-run collects a username (in-app DisplayName). Workspace name stays
+ * the OS user/computer name. Existing-user settings edits skip the gate.
  */
 export function WelcomeStep({
   onContinue,
@@ -23,6 +36,47 @@ export function WelcomeStep({
   isLoading = false
 }: WelcomeStepProps) {
   const { t } = useTranslation()
+  const [username, setUsername] = useState("")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (isExistingUser) return
+    const api = typeof window !== "undefined" ? window.electronAPI : undefined
+    if (!api?.getOrgIdentity) return
+    void api
+      .getOrgIdentity()
+      .then((identity) => {
+        const existing = identity.username?.trim()
+        if (existing) setUsername(existing)
+      })
+      .catch(() => {
+        // Local identity read is optional; the username field still gates continue.
+      })
+  }, [isExistingUser])
+
+  const handleContinue = async () => {
+    if (isExistingUser) {
+      onContinue()
+      return
+    }
+    const trimmed = username.trim()
+    if (!trimmed || saving) return
+    setSaving(true)
+    setError(null)
+    try {
+      await persistOnboardingUsername(trimmed)
+      onContinue()
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : t("onboarding.welcome.usernameRequired"))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const continueDisabled = isExistingUser
+    ? isLoading
+    : isLoading || saving || username.trim().length === 0
 
   return (
     <StepFormLayout
@@ -38,10 +92,39 @@ export function WelcomeStep({
           : t("onboarding.welcome.description")
       }
       actions={
-        <ContinueButton onClick={onContinue} className="w-full" loading={isLoading} loadingText={t("common.checking")}>
+        <ContinueButton
+          onClick={() => void handleContinue()}
+          className="w-full"
+          disabled={continueDisabled}
+          loading={isLoading || saving}
+          loadingText={t("common.checking")}
+        >
           {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
         </ContinueButton>
       }
-    />
+    >
+      {!isExistingUser && (
+        <div className="space-y-2 text-left">
+          <Label htmlFor="onboarding-username">{t("onboarding.welcome.username")}</Label>
+          <p className="text-sm text-muted-foreground">{t("onboarding.welcome.usernameHint")}</p>
+          <Input
+            id="onboarding-username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder={t("onboarding.welcome.usernamePlaceholder")}
+            autoComplete="username"
+            autoFocus
+            aria-required
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault()
+                void handleContinue()
+              }
+            }}
+          />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
+      )}
+    </StepFormLayout>
   )
 }

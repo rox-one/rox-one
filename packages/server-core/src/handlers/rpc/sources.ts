@@ -1,10 +1,10 @@
 import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
-import { ensureLocalNotesSource, loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGuide, type FolderSourceConfig } from '@craft-agent/shared/sources'
+import { ensureDefaultMicroserviceSources, loadSourceConfig, loadWorkspaceSources, saveSourceConfig, saveSourceGuide, type FolderSourceConfig } from '@craft-agent/shared/sources'
 import { safeJsonParse } from '@craft-agent/shared/utils/files'
 import { getCredentialManager } from '@craft-agent/shared/credentials'
-import { getDefaultWorkspacesDir, loadWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { ensureRoxLayout, loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
@@ -24,10 +24,11 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.SEARCH,
 ] as const
 
-function ensureNotesSource(workspaceRoot: string, workspaceId: string): void {
+function ensureWorkspaceSourceDefaults(workspaceRoot: string): void {
+  const layout = ensureRoxLayout({ workspaceRoot })
   const wsConfig = loadWorkspaceConfig(workspaceRoot)
-  const notesPath = wsConfig?.notesPath ?? join(getDefaultWorkspacesDir(), workspaceId, 'notes')
-  ensureLocalNotesSource(workspaceRoot, notesPath)
+  const notesPath = wsConfig?.notesPath ?? join(layout.root, 'notes')
+  ensureDefaultMicroserviceSources(workspaceRoot, { roxRoot: layout.root, notesPath })
 }
 
 export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): void {
@@ -40,7 +41,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       log.error(`SOURCES_GET: Workspace not found: ${workspaceId}`)
       return []
     }
-    ensureNotesSource(workspace.rootPath, workspace.id)
+    ensureWorkspaceSourceDefaults(workspace.rootPath)
     return loadWorkspaceSources(workspace.rootPath)
   })
 
@@ -49,7 +50,7 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { createSource } = await import('@craft-agent/shared/sources')
-    return createSource(workspace.rootPath, {
+    const created = await createSource(workspace.rootPath, {
       name: config.name || 'New Source',
       provider: config.provider || 'custom',
       type: config.type || 'mcp',
@@ -58,6 +59,16 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       api: config.api,
       local: config.local,
     })
+    if (created.enabled) {
+      const wsConfig = loadWorkspaceConfig(workspace.rootPath)
+      if (wsConfig) {
+        const slugs = new Set(wsConfig.defaults?.enabledSourceSlugs ?? [])
+        slugs.add(created.slug)
+        wsConfig.defaults = { ...wsConfig.defaults, enabledSourceSlugs: [...slugs] }
+        saveWorkspaceConfig(workspace.rootPath, wsConfig)
+      }
+    }
+    return created
   })
 
   // Update an existing source's editable fields (name, enabled, url/path, tagline, guide)

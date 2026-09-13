@@ -28,9 +28,9 @@ describe('Agent Teams first-party wiring', () => {
     expect(skip).toContain('@nanmicoder/dsh-agent-teams')
   })
 
-  it('adds opt-in flag workbench.harness.agentTeams default false', () => {
+  it('adds first-party flag workbench.harness.agentTeams default on', () => {
     expect(flags).toContain("harnessAgentTeams: 'workbench.harness.agentTeams'")
-    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: false/)
+    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: true/)
   })
 
   it('bundles the captain skill and gates the command palette action on the flag', () => {
@@ -53,7 +53,7 @@ describe('Agent Teams first-party wiring', () => {
     ).toBe(false)
   })
 
-  it('ships workspace .agent-teams durable store without enabling the flag', () => {
+  it('ships workspace .agent-teams durable store', () => {
     const storeSrc = readFileSync(
       join(repoRoot, 'packages/core/src/platform/agent-teams/store.ts'),
       'utf8',
@@ -67,11 +67,9 @@ describe('Agent Teams first-party wiring', () => {
     )
     expect(storeSrc).toContain('appendMailbox')
     expect(toolDefs).toContain("name: 'agent_teams'")
-    expect(toolDefs).not.toContain("defaultValue: true")
-    expect(storeSrc).not.toContain("defaultValue: true")
     expect(skillText).toContain('.agent-teams/')
     expect(skillText).toContain('AgentTeamsStore')
-    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: false/)
+    expect(flags).toMatch(/id: WORKBENCH_FLAG\.harnessAgentTeams[\s\S]*?defaultValue: true/)
   })
 
 })

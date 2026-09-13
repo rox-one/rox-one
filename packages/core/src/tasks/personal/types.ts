@@ -7,6 +7,9 @@ export const PERSONAL_TASK_BUNDLE_VERSION = 1
 
 export type TaskListId = 'inbox' | 'today' | 'upcoming' | 'anytime' | 'someday'
 export type TaskProjectionId = TaskListId | 'logbook'
+/** Unified list (`all`) plus the classic projections, used as filters not the only model. */
+export type TaskFilterId = TaskProjectionId | 'all'
+export type TaskSortId = 'order' | 'due' | 'priority' | 'project' | 'title'
 export type TaskPriority = 'none' | 'low' | 'medium' | 'high'
 export type TaskLinkKind = 'note' | 'session' | 'message' | 'workflowRun'
 export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | 'yearly'

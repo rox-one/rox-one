@@ -23,7 +23,7 @@ import { join } from 'path'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { CredentialId } from '@craft-agent/shared/credentials'
 import { loadSourceConfig, saveSourceConfig, type FolderSourceConfig } from '@craft-agent/shared/sources'
-import { createWorkspaceAtPath, getDefaultWorkspacesDir, loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
+import { createWorkspaceAtPath, loadWorkspaceConfig, saveWorkspaceConfig } from '@craft-agent/shared/workspaces'
 import type { HandlerFn, RequestContext, RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../../handler-deps'
 import { KnowledgeConnectionsStore } from '../../../knowledge'
@@ -160,7 +160,17 @@ describe('sources:get — local default source seeding', () => {
       slug: 'fresh-workspace',
     })
 
-    expect(created.defaults?.enabledSourceSlugs).toEqual(['notes'])
+    expect(created.defaults?.enabledSourceSlugs).toEqual([
+      'notes',
+      'memory',
+      'sessions',
+      'tasks',
+      'projects',
+      'workspace-tree',
+      'applications',
+      'telegram-support',
+      'craft-agents-docs',
+    ])
     expect(loadSourceConfig(rootPath, 'exa')?.enabled).toBe(false)
     expect(loadSourceConfig(rootPath, 'firecrawl')?.enabled).toBe(false)
 
@@ -181,7 +191,7 @@ describe('sources:get — local default source seeding', () => {
       isAuthenticated: true,
       connectionStatus: 'connected',
     })
-    expect(notes?.local?.path).toBe(join(getDefaultWorkspacesDir(), 'ws-owner', 'notes'))
+    expect(notes?.local?.path).toBe(join(rootPath, 'rox', 'notes'))
     expect(existsSync(notes?.local?.path ?? '')).toBe(true)
     expect(readFileSync(notesConfigPath, 'utf-8')).toBe(before)
   })

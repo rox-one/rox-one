@@ -36,6 +36,7 @@ import {
 } from '@craft-agent/shared/capabilities'
 import {
   isHighRiskMarketplacePermission,
+  groupExtensionPermissions,
   permissionsForMarketplaceKind,
 } from '@craft-agent/shared/extensions/browser'
 
@@ -387,6 +388,15 @@ export default function MarketplaceSettingsPage() {
               {refreshing ? <Spinner className="w-3 h-3" /> : null}
               {t('marketplace.refresh')}
             </button>
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))}
+              className="text-xs px-2 py-1 rounded-md border border-border/50 hover:bg-muted flex items-center gap-1.5"
+              data-testid="marketplace-open-browser"
+              title={t('browser.newWindow')}
+            >
+              {t('extensions.action.openBrowser', { defaultValue: 'Open browser' })}
+            </button>
             <HeaderMenu route={routes.view.settings('marketplace')} />
           </div>
         }
@@ -623,7 +633,12 @@ export default function MarketplaceSettingsPage() {
                               ) : null}
                             </span>
                           </span>
-                          {permissionsForMarketplaceKind(e.kind).map((permission) => (
+                          {groupExtensionPermissions(permissionsForMarketplaceKind(e.kind)).map((group) => (
+                            <span key={group.group} className="inline-flex items-center gap-1 flex-wrap">
+                              <span className="text-[10px] uppercase tracking-wide opacity-50">
+                                {t(`extensions.permissionGroup.${group.group}`, { defaultValue: group.group })}
+                              </span>
+                              {group.permissions.map((permission) => (
                             <span
                               key={permission}
                               data-marketplace-permission={permission}
@@ -634,6 +649,8 @@ export default function MarketplaceSettingsPage() {
                               }`}
                             >
                               {permission}
+                            </span>
+                              ))}
                             </span>
                           ))}
                           {e.tags?.slice(0, 3).map((tag) => (

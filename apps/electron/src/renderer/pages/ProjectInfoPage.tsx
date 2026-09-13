@@ -1,7 +1,7 @@
 /**
  * ProjectInfoPage
  *
- * Workspace-project detail page with three tabs: Sessions, Assets, Settings.
+ * Workspace-project detail page with Sessions, Tasks, Assets, and Settings.
  * v1 scope only — no memory tab, no provider selection, no plugin marketplace.
  */
 
@@ -14,6 +14,12 @@ import { ProjectIcon, invalidateProjectIconCache } from '@/components/projects/P
 import { toast } from 'sonner'
 import { useActiveWorkspace, useAppShellContext } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
+import {
+  loadPersonalTaskStore,
+  persistPersonalTaskStore,
+  subscribePersonalTasks,
+  tasksForWorkspaceProject,
+} from '@/lib/personal-tasks'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import {
   Info_Page,
@@ -33,7 +39,7 @@ interface ProjectInfoPageProps {
   projectSlug: string
 }
 
-type TabKey = 'sessions' | 'assets' | 'settings'
+type TabKey = 'sessions' | 'tasks' | 'assets' | 'settings'
 
 export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const { t } = useTranslation()
@@ -46,6 +52,8 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<TabKey>('sessions')
+  const [taskStore, setTaskStore] = useState(loadPersonalTaskStore)
+  const [newTaskTitle, setNewTaskTitle] = useState('')
   const [assets, setAssets] = useState<ProjectAsset[]>([])
   const [editName, setEditName] = useState('')
   const [editDescription, setEditDescription] = useState('')
@@ -120,6 +128,23 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
     }
     return result
   }, [project, sessionMetaMap])
+
+  const projectTasks = useMemo(() => {
+    if (!project) return []
+    return tasksForWorkspaceProject(taskStore, project.config.id)
+  }, [project, taskStore])
+
+  useEffect(() => subscribePersonalTasks(() => setTaskStore(loadPersonalTaskStore())), [])
+
+  const handleCreateProjectTask = useCallback((event: React.FormEvent) => {
+    event.preventDefault()
+    if (!project || !newTaskTitle.trim()) return
+    const next = loadPersonalTaskStore()
+    next.create({ title: newTaskTitle, list: 'inbox', projectId: project.config.id })
+    persistPersonalTaskStore(next)
+    setTaskStore(next)
+    setNewTaskTitle('')
+  }, [project, newTaskTitle])
 
   const handleStartSession = useCallback(async () => {
     if (!workspaceId || !project) return
@@ -292,6 +317,9 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
             <TabButton active={tab === 'sessions'} onClick={() => setTab('sessions')}>
               {t('projectInfo.tabSessions')}
             </TabButton>
+            <TabButton active={tab === 'tasks'} onClick={() => setTab('tasks')}>
+              {t('projectInfo.tabTasks')}
+            </TabButton>
             <TabButton active={tab === 'assets'} onClick={() => setTab('assets')}>
               {t('projectInfo.tabAssets')}
             </TabButton>
@@ -326,6 +354,42 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
                       >
                         {s.name}
                       </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Info_Section>
+          )}
+
+          {tab === 'tasks' && (
+            <Info_Section
+              title={t('projectInfo.tabTasks')}
+              actions={
+                <form onSubmit={handleCreateProjectTask} className="flex items-center gap-1">
+                  <input
+                    value={newTaskTitle}
+                    onChange={(event) => setNewTaskTitle(event.target.value)}
+                    placeholder={t('tasks.quickEntryPlaceholder')}
+                    aria-label={t('tasks.newTask')}
+                    className="h-7 w-40 rounded-[6px] border border-foreground/10 bg-transparent px-2 text-xs"
+                  />
+                  <Button size="sm" variant="ghost" type="submit" data-testid="project-new-task">
+                    <Plus className="h-3.5 w-3.5 mr-1" />
+                    {t('projectInfo.newTaskButton')}
+                  </Button>
+                </form>
+              }
+            >
+              <p className="px-4 pt-2 text-xs text-muted-foreground">{t('projectInfo.tasksHint')}</p>
+              {projectTasks.length === 0 ? (
+                <div className="px-4 py-6 text-sm text-muted-foreground">
+                  {t('projectInfo.noTasks')}
+                </div>
+              ) : (
+                <ul className="divide-y divide-border/50" data-testid="project-task-list">
+                  {projectTasks.map((task) => (
+                    <li key={task.id} className="px-4 py-2 text-sm">
+                      <span className={cn(task.completedAt && 'line-through text-muted-foreground')}>{task.title}</span>
                     </li>
                   ))}
                 </ul>

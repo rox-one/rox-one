@@ -1,6 +1,6 @@
 /**
- * CatalogProvider interface + Craft curated provider (wraps marketplace catalog).
- * SiYuan Bazaar accepts optional listFn (W6 bridge); default empty.
+ * CatalogProvider interface + Rox Kiro curated provider (wraps marketplace catalog).
+ * Community registries are stub sources with docs URLs (P35-06).
  */
 
 import type { MarketplaceCatalog, MarketplaceEntry } from '../marketplace/catalog.ts'
@@ -10,10 +10,8 @@ import type {
   CatalogFilter,
   ExtensionProviderId,
 } from './types.ts'
-import {
-  SiyuanBazaarProvider as SiyuanBazaarProviderImpl,
-  type SiyuanBazaarListFn,
-} from './siyuan-bridge/bazaar.ts'
+import type { SiyuanBazaarListFn } from './siyuan-bridge/bazaar.ts'
+import { createCommunityRegistryProviders } from './community-registries.ts'
 
 /** Opaque package bytes / metadata from a provider fetch (W5: unused beyond type). */
 export interface ExtensionPackage {
@@ -26,6 +24,8 @@ export interface ExtensionPackage {
 export interface CatalogProvider {
   id: ExtensionProviderId
   label: string
+  docsUrl?: string
+  community?: boolean
   list(filter?: CatalogFilter): Promise<CatalogEntry[]>
   fetch(id: string, version: string): Promise<ExtensionPackage | null>
 }
@@ -56,7 +56,7 @@ export interface CraftCuratedProviderOptions {
 /** Wraps existing marketplace catalog as CatalogProvider. */
 export class CraftCuratedProvider implements CatalogProvider {
   readonly id = 'craft-curated' as const
-  readonly label = 'Craft curated'
+  readonly label = 'Rox Kiro'
   private readonly loadCatalog: CraftCuratedProviderOptions['loadCatalog']
 
   constructor(options: CraftCuratedProviderOptions) {
@@ -84,8 +84,6 @@ export class CraftCuratedProvider implements CatalogProvider {
   }
 }
 
-
-
 export class CatalogRegistry {
   private readonly providers = new Map<ExtensionProviderId, CatalogProvider>()
 
@@ -107,13 +105,15 @@ export class CatalogRegistry {
   }
 }
 
-/** Default registry: craft-curated + siyuan-bazaar (optional listFn). */
+/** Default registry: Rox Kiro curated catalog + community stubs. SiYuan Bazaar is not registered. */
 export function createDefaultCatalogRegistry(
   loadCatalog: CraftCuratedProviderOptions['loadCatalog'],
-  opts?: { bazaarListFn?: SiyuanBazaarListFn },
+  _opts?: { bazaarListFn?: SiyuanBazaarListFn },
 ): CatalogRegistry {
   const registry = new CatalogRegistry()
   registry.register(new CraftCuratedProvider({ loadCatalog }))
-  registry.register(new SiyuanBazaarProviderImpl(opts?.bazaarListFn))
+  for (const provider of createCommunityRegistryProviders()) {
+    registry.register(provider)
+  }
   return registry
 }

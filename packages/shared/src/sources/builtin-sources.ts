@@ -23,9 +23,6 @@ function sourcesDir(workspaceRootPath: string): string {
 export const BUILTIN_SOURCE_SLUGS = ['exa', 'firecrawl'] as const;
 export type BuiltinSourceSlug = (typeof BUILTIN_SOURCE_SLUGS)[number];
 
-/** Source defaults that are usable without credentials, network access, or onboarding. */
-export const DEFAULT_ENABLED_LOCAL_SOURCE_SLUGS = ['notes'] as const;
-
 const EXA_ENV_KEYS = ['EXA_API_KEY', 'CRAFT_EXA_API_KEY', 'ROX_EXA_API_KEY'] as const;
 const FIRECRAWL_ENV_KEYS = [
   'FIRECRAWL_API_KEY',
@@ -277,7 +274,7 @@ export function getDocsSource(workspaceId: string, workspaceRootPath: string): L
     id: 'builtin-craft-agents-docs',
     name: 'Craft Agents Docs',
     slug: 'craft-agents-docs',
-    enabled: false,
+    enabled: true,
     provider: 'mintlify',
     type: 'mcp',
     mcp: {

@@ -436,8 +436,15 @@ export default function AccountsSettingsPage() {
         </SettingsSection>
 
         {/* ACCOUNT & SECURITY */}
-        <SettingsSection title={t('settings.accounts.securitySection')}>
+        <SettingsSection
+          title={t('settings.accounts.securitySection')}
+          description={t('settings.accounts.localProfileDesc')}
+        >
           <SettingsCard>
+            <SettingsRow
+              label={t('settings.accounts.roxServerUrl')}
+              description={t('settings.accounts.roxServerUrlHint')}
+            />
             <SettingsRow
               label={t('settings.accounts.credentialHealth')}
               description={

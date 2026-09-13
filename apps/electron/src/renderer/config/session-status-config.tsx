@@ -231,6 +231,12 @@ export function resolveViewDisplayName(
   return view.name
 }
 
+const DEFAULT_VIEW_PURPOSE_KEYS: Record<string, string> = {
+  'view-new': 'sidebar.view.overviewPurpose',
+  'view-plan': 'sidebar.view.planPurpose',
+  'view-processing': 'sidebar.view.processPurpose',
+}
+
 /** Resolve tooltip/description for a built-in session view when still seeded. */
 export function resolveViewDisplayDescription(
   view: { id: string; description?: string },
@@ -238,6 +244,8 @@ export function resolveViewDisplayDescription(
 ): string | undefined {
   const defaultEnglish = DEFAULT_VIEW_ENGLISH_DESCRIPTIONS[view.id]
   if (defaultEnglish && (view.description === defaultEnglish || !view.description)) {
+    const purposeKey = DEFAULT_VIEW_PURPOSE_KEYS[view.id]
+    if (purposeKey) return t(purposeKey, defaultEnglish)
     const key = view.id.replace(/^view-/, '')
     return t(`sidebar.view.${key}Desc`, defaultEnglish)
   }

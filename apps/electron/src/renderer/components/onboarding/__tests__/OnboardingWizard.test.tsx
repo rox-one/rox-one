@@ -155,6 +155,47 @@ describe('OnboardingWizard', () => {
     expect(html).toContain('OMP_NO_MODELS')
   })
 
+  test('first-run welcome collects a username for display name', () => {
+    const html = renderToStaticMarkup(
+      <OnboardingWizard
+        state={{
+          ...roxConnectState,
+          step: 'welcome',
+          isExistingUser: false,
+        }}
+        onContinue={() => {}}
+        onBack={() => {}}
+        onSelectApiSetupMethod={() => {}}
+        onSubmitCredential={() => {}}
+        onFinish={() => {}}
+      />,
+    )
+
+    expect(html).toContain('onboarding.welcome.username')
+    expect(html).toContain('onboarding.welcome.usernameHint')
+    expect(html).toContain('onboarding-username')
+  })
+
+  test('existing-user welcome skips the username gate', () => {
+    const html = renderToStaticMarkup(
+      <OnboardingWizard
+        state={{
+          ...roxConnectState,
+          step: 'welcome',
+          isExistingUser: true,
+        }}
+        onContinue={() => {}}
+        onBack={() => {}}
+        onSelectApiSetupMethod={() => {}}
+        onSubmitCredential={() => {}}
+        onFinish={() => {}}
+      />,
+    )
+
+    expect(html).toContain('onboarding.welcome.updateTitle')
+    expect(html).not.toContain('onboarding-username')
+  })
+
   test('in-chat OMP_AUTH_REQUIRED uses error-code i18n copy', async () => {
     const { OmpCredentialStep } = await import('../OmpCredentialStep')
     const html = renderToStaticMarkup(

@@ -2,7 +2,8 @@
  * Organization storage — CONFIG_DIR/orgs.json
  *
  * Local single-device org bookkeeping. Invite tokens are opaque random strings.
- * Server-mode redemption (CRAFT_SERVER_URL) is handled at the RPC layer.
+ * Server-mode redemption (Rox Server URL / env CRAFT_SERVER_URL) is handled
+ * at the RPC layer. There is no mailer — invites are device-local tokens.
  */
 
 import { existsSync, mkdirSync } from 'fs'
@@ -102,6 +103,46 @@ function toPublicInvite(invite: OrgInvite): OrgInvitePublic {
   return rest
 }
 
+function looksLikeEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+}
+
+function contactFields(
+  identity: LocalUserIdentity,
+  inviteTarget?: string,
+): { username?: string; email?: string } {
+  const username = identity.username?.trim() || undefined
+  const email = identity.email?.trim() || undefined
+  if (!inviteTarget) return { username, email }
+  if (looksLikeEmail(inviteTarget)) {
+    return { username, email: email || inviteTarget.trim() }
+  }
+  return { username: username || inviteTarget.trim(), email }
+}
+
+/** Overlay the local profile onto the matching member without writing the store. */
+export function hydrateMemberIdentity(
+  member: OrgMember,
+  identity: LocalUserIdentity = ensureLocalUserIdentity(),
+): OrgMember {
+  if (member.userId !== identity.userId) {
+    return member
+  }
+  const username = identity.username?.trim() || member.username
+  const email = identity.email?.trim() || member.email
+  return {
+    ...member,
+    username,
+    email,
+    displayLabel: identity.username || identity.email || member.displayLabel || member.userId,
+  }
+}
+
+function hydrateMembers(members: OrgMember[]): OrgMember[] {
+  const identity = ensureLocalUserIdentity()
+  return members.map((member) => hydrateMemberIdentity(member, identity))
+}
+
 function uniqueSlug(base: string, existing: Organization[]): string {
   const root = slugify(base) || 'org'
   let slug = root
@@ -178,7 +219,7 @@ export function listOrganizations(): OrganizationWithMembers[] {
   const store = loadOrgsStore()
   return store.organizations.map((org) => ({
     ...org,
-    members: store.members.filter((m) => m.orgId === org.id),
+    members: hydrateMembers(store.members.filter((m) => m.orgId === org.id)),
     pendingInvites: store.invites
       .filter((i) => i.orgId === org.id && !i.acceptedAt)
       .map(toPublicInvite),
@@ -191,7 +232,7 @@ export function getOrganization(orgId: string): OrganizationWithMembers | null {
   if (!org) return null
   return {
     ...org,
-    members: store.members.filter((m) => m.orgId === org.id),
+    members: hydrateMembers(store.members.filter((m) => m.orgId === org.id)),
     pendingInvites: store.invites
       .filter((i) => i.orgId === org.id && !i.acceptedAt)
       .map(toPublicInvite),
@@ -203,7 +244,7 @@ export function listOrgMembers(orgId: string): OrgMember[] {
   if (!store.organizations.some((o) => o.id === orgId)) {
     throw new Error(`Organization not found: ${orgId}`)
   }
-  return store.members.filter((m) => m.orgId === orgId)
+  return hydrateMembers(store.members.filter((m) => m.orgId === orgId))
 }
 
 export function createOrganization(input: CreateOrganizationInput): OrganizationWithMembers {
@@ -221,11 +262,14 @@ export function createOrganization(input: CreateOrganizationInput): Organization
     createdBy: identity.userId,
     createdAt: now,
   }
+  const contact = contactFields(identity)
   const owner: OrgMember = {
     orgId: org.id,
     userId: identity.userId,
     role: 'owner',
     displayLabel: identity.username || identity.email || identity.userId,
+    username: contact.username,
+    email: contact.email,
     joinedAt: now,
   }
 
@@ -235,7 +279,7 @@ export function createOrganization(input: CreateOrganizationInput): Organization
 
   return {
     ...org,
-    members: [owner],
+    members: hydrateMembers([owner]),
     pendingInvites: [],
   }
 }
@@ -295,7 +339,8 @@ export function inviteToOrganization(input: InviteToOrgInput): OrgInvite {
  * Accept an invite by token.
  * Local path: matches email/username against local profile when possible,
  * otherwise attaches to the current local userId.
- * When CRAFT_SERVER_URL is set, callers should prefer server redemption first.
+ * When Rox Server URL (CRAFT_SERVER_URL) is set, callers should prefer
+ * server redemption first. Email delivery is not implemented.
  */
 export function acceptInvite(input: AcceptInviteInput): {
   org: OrganizationWithMembers
@@ -326,6 +371,11 @@ export function acceptInvite(input: AcceptInviteInput): {
       : prefs.username?.toLowerCase() === invite.emailOrUsername.toLowerCase()
         ? prefs.username
         : invite.emailOrUsername
+  const identityForContact =
+    userId === identity.userId
+      ? identity
+      : { userId, username: undefined, email: undefined }
+  const contact = contactFields(identityForContact, invite.emailOrUsername)
 
   let member = store.members.find((m) => m.orgId === invite.orgId && m.userId === userId)
   const now = Date.now()
@@ -335,6 +385,8 @@ export function acceptInvite(input: AcceptInviteInput): {
       userId,
       role: invite.role,
       displayLabel: label,
+      username: contact.username,
+      email: contact.email,
       joinedAt: now,
     }
     store.members.push(member)
@@ -345,6 +397,8 @@ export function acceptInvite(input: AcceptInviteInput): {
       member.role = invite.role
     }
     if (!member.displayLabel) member.displayLabel = label
+    if (!member.username && contact.username) member.username = contact.username
+    if (!member.email && contact.email) member.email = contact.email
   }
 
   invite.acceptedAt = now
@@ -354,7 +408,7 @@ export function acceptInvite(input: AcceptInviteInput): {
   return {
     org: {
       ...org,
-      members: store.members.filter((m) => m.orgId === org.id),
+      members: hydrateMembers(store.members.filter((m) => m.orgId === org.id)),
       pendingInvites: store.invites
         .filter((i) => i.orgId === org.id && !i.acceptedAt)
         .map(toPublicInvite),

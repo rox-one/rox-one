@@ -5,6 +5,7 @@ const t = ((key: string, fallback?: string) => {
   const map: Record<string, string> = {
     'sidebar.view.new': 'Новые',
     'sidebar.view.newDesc': 'Сессии с непрочитанными сообщениями',
+    'sidebar.view.overviewPurpose': 'Непрочитанные сессии, которые стоит посмотреть',
   }
   return map[key] ?? fallback ?? key
 }) as any
@@ -28,6 +29,6 @@ describe('resolveViewDisplayDescription', () => {
         { id: 'view-new', description: 'Sessions with unread messages' },
         t,
       ),
-    ).toBe('Сессии с непрочитанными сообщениями')
+    ).toBe('Непрочитанные сессии, которые стоит посмотреть')
   })
 })

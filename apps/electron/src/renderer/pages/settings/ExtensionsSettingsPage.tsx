@@ -22,6 +22,7 @@ import {
   Wrench,
   FileText,
   AlertTriangle,
+  Globe,
 } from 'lucide-react'
 
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
@@ -44,7 +45,9 @@ import type {
 import {
   CATALOG_CATEGORIES,
   EXTENSION_CENTER_GROUPS,
+  countInstalledExtensionRecords,
   groupExtensionCenterRecords,
+  groupExtensionPermissions,
   HIGH_RISK_PERMISSIONS,
   RUNTIME_PLACEMENT,
 } from '@craft-agent/shared/extensions/browser'
@@ -212,22 +215,42 @@ function ExtensionCard({
               {t('extensions.action.openFullSiyuan', { defaultValue: 'Open in full SiYuan' })}
             </button>
           ) : null}
-          {onToggle && !available ? (
+          {permissions.includes('browser.open') ? (
             <button
               type="button"
               disabled={busy}
-              onClick={() => onToggle(!enabled)}
+              onClick={() => window.dispatchEvent(new CustomEvent('craft:open-vps-browser'))}
               className="inline-flex items-center gap-1 text-xs border rounded-md px-2 py-1 hover:bg-muted disabled:opacity-50"
+              data-testid="extensions-open-browser"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              {t('extensions.action.openBrowser', { defaultValue: 'Open browser' })}
+            </button>
+          ) : null}
+          {onToggle && !available ? (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={enabled}
+              disabled={busy}
+              onClick={() => onToggle(!enabled)}
+              className={`inline-flex items-center gap-1.5 text-xs border rounded-md px-2 py-1 disabled:opacity-50 ${
+                enabled
+                  ? 'bg-emerald-500/15 border-emerald-600/40 text-emerald-800 dark:text-emerald-200'
+                  : 'bg-muted/70 border-border text-muted-foreground'
+              }`}
               title={
                 enabled
                   ? t('extensions.action.disable', { defaultValue: 'Disable' })
                   : t('extensions.action.enable', { defaultValue: 'Enable' })
               }
             >
-              {enabled ? <ToggleRight className="w-3.5 h-3.5" /> : <ToggleLeft className="w-3.5 h-3.5" />}
-              {enabled
-                ? t('extensions.action.disable', { defaultValue: 'Disable' })
-                : t('extensions.action.enable', { defaultValue: 'Enable' })}
+              {enabled ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+              <span className="font-medium">
+                {enabled
+                  ? t('extensions.status.enabled', { defaultValue: 'enabled' })
+                  : t('extensions.status.disabled', { defaultValue: 'disabled' })}
+              </span>
             </button>
           ) : null}
           {onUpdate && updateAvailable ? (
@@ -340,19 +363,29 @@ function PermissionsList({ permissions }: { permissions: ExtensionPermission[] }
       </span>
     )
   }
+  const groups = groupExtensionPermissions(permissions)
   return (
-    <div className="flex flex-wrap gap-1">
-      {permissions.map((p) => (
-        <span
-          key={p}
-          className={`rounded px-1.5 py-0.5 text-[10px] font-mono border ${
-            isHighRisk(p)
-              ? 'border-amber-500/60 text-amber-700 dark:text-amber-300 bg-amber-500/10'
-              : 'opacity-80'
-          }`}
-        >
-          {p}
-        </span>
+    <div className="space-y-2" data-testid="extensions-permission-groups">
+      {groups.map((group) => (
+        <div key={group.group} className="space-y-1">
+          <div className="text-[10px] uppercase tracking-wide opacity-60 font-medium">
+            {t(`extensions.permissionGroup.${group.group}`, { defaultValue: group.group })}
+          </div>
+          <div className="flex flex-wrap gap-1">
+            {group.permissions.map((p) => (
+              <span
+                key={p}
+                className={`rounded px-1.5 py-0.5 text-[10px] font-mono border ${
+                  isHighRisk(p)
+                    ? 'border-amber-500/60 text-amber-700 dark:text-amber-300 bg-amber-500/10'
+                    : 'opacity-80'
+                }`}
+              >
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
   )
@@ -542,6 +575,11 @@ export default function ExtensionsSettingsPage() {
   const disabled = useMemo(
     () => installedRecords.filter((r) => r.status === 'disabled'),
     [installedRecords],
+  )
+
+  const installedCounts = useMemo(
+    () => countInstalledExtensionRecords(filteredInstalled),
+    [filteredInstalled],
   )
 
   const permissionRows = useMemo(() => {
@@ -954,11 +992,12 @@ export default function ExtensionsSettingsPage() {
 
           {!loading && !unifiedCenter && section === 'installed' ? (
             <div className="space-y-3">
-              <div className="text-xs opacity-60 flex items-center gap-2">
+              <div className="text-xs opacity-60 flex items-center gap-2 flex-wrap">
                 <Blocks className="w-3.5 h-3.5" />
-                {t('extensions.installed.count', {
-                  defaultValue: '{{count}} installed',
-                  count: filteredInstalled.length,
+                {t('extensions.installed.countWithDisabled', {
+                  defaultValue: '{{count}} installed · {{disabled}} disabled',
+                  count: installedCounts.total,
+                  disabled: installedCounts.disabled,
                 })}
               </div>
               {filteredInstalled.length === 0 ? (
@@ -1013,6 +1052,12 @@ export default function ExtensionsSettingsPage() {
 
           {!loading && !unifiedCenter && section === 'disabled' ? (
             <div className="space-y-3">
+              <div className="text-xs opacity-60">
+                {t('extensions.disabled.count', {
+                  defaultValue: '{{count}} disabled',
+                  count: disabled.length,
+                })}
+              </div>
               {disabled.length === 0 ? (
                 <p className="text-sm opacity-60">
                   {t('extensions.disabled.empty', { defaultValue: 'No disabled extensions.' })}
@@ -1030,6 +1075,12 @@ export default function ExtensionsSettingsPage() {
                   <Wrench className="w-4 h-4" />
                   {t('extensions.developer.title', { defaultValue: 'Developer mode' })}
                 </div>
+                <p className="opacity-70 text-xs leading-relaxed">
+                  {t('extensions.developer.hint', {
+                    defaultValue:
+                      'Inspect sandboxed extension hosts per workspace and restrict which URLs they can request.',
+                  })}
+                </p>
                 <p className="opacity-70 text-xs leading-relaxed">
                   {t('extensions.developer.body', {
                     defaultValue:
@@ -1288,17 +1339,32 @@ export default function ExtensionsSettingsPage() {
                 <FileText className="w-3.5 h-3.5" />
                 {t('extensions.registries.title', { defaultValue: 'Catalog providers' })}
               </div>
+              <p className="text-xs opacity-70 leading-relaxed">
+                {t('extensions.registries.hint', {
+                  defaultValue:
+                    'Each registry is a catalog of installable extensions. Community sources link to public docs and do not ship credentials.',
+                })}
+              </p>
               {(catalog?.providers ?? []).map((p) => (
-                <div key={p.id} className="border rounded-lg p-3 flex items-center justify-between">
-                  <div>
-                    <div className="font-medium text-sm">{p.label}</div>
+                <div key={p.id} className="border rounded-lg p-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm">
+                      {t(`extensions.registries.provider.${p.id}`, { defaultValue: p.label })}
+                    </div>
                     <div className="text-xs opacity-60 font-mono">{p.id}</div>
+                    {p.docsUrl ? (
+                      <button
+                        type="button"
+                        className="mt-1 text-xs text-primary underline inline-flex items-center gap-1"
+                        onClick={() => void window.electronAPI.openUrl(p.docsUrl!)}
+                      >
+                        {t('extensions.registries.docsLink', { defaultValue: 'Docs' })}
+                      </button>
+                    ) : null}
                   </div>
-                  <span className="text-[10px] uppercase opacity-60">
-                    {p.id === 'siyuan-bazaar'
-                      ? t('extensions.registries.bazaarEmpty', {
-                          defaultValue: 'Empty without kernel plugin list',
-                        })
+                  <span className="text-[10px] uppercase opacity-60 shrink-0">
+                    {p.community
+                      ? t('extensions.registries.community', { defaultValue: 'community' })
                       : t('extensions.registries.active', { defaultValue: 'active' })}
                   </span>
                 </div>

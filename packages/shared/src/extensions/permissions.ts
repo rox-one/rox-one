@@ -54,6 +54,55 @@ export function extensionPermissionRisk(perm: ExtensionPermission): ExtensionPer
  * Approximate agent alwaysAllow tool names → extension permissions.
  * Fail-soft: unknown tools map to ui.command (surface activation only).
  */
+export const EXTENSION_PERMISSION_GROUPS = [
+  'knowledge',
+  'sessions',
+  'browser',
+  'filesystem',
+  'network',
+  'shell',
+  'automation',
+  'ui',
+  'secrets',
+  'other',
+] as const
+
+export type ExtensionPermissionGroup = (typeof EXTENSION_PERMISSION_GROUPS)[number]
+
+export function permissionGroupFor(perm: ExtensionPermission): ExtensionPermissionGroup {
+  if (perm.startsWith('secrets.use:')) return 'secrets'
+  const prefix = perm.split('.')[0]
+  switch (prefix) {
+    case 'knowledge':
+    case 'sessions':
+    case 'browser':
+    case 'filesystem':
+    case 'network':
+    case 'shell':
+    case 'automation':
+    case 'ui':
+      return prefix
+    default:
+      return 'other'
+  }
+}
+
+export function groupExtensionPermissions(
+  permissions: readonly ExtensionPermission[],
+): Array<{ group: ExtensionPermissionGroup; permissions: ExtensionPermission[] }> {
+  const buckets = new Map<ExtensionPermissionGroup, ExtensionPermission[]>()
+  for (const perm of permissions) {
+    const group = permissionGroupFor(perm)
+    const list = buckets.get(group)
+    if (list) list.push(perm)
+    else buckets.set(group, [perm])
+  }
+  return EXTENSION_PERMISSION_GROUPS.filter((group) => buckets.has(group)).map((group) => ({
+    group,
+    permissions: buckets.get(group)!,
+  }))
+}
+
 export function permissionsFromAlwaysAllow(alwaysAllow: string[] | undefined): ExtensionPermission[] {
   const out = new Set<ExtensionPermission>(['ui.command'])
   if (!alwaysAllow?.length) return [...out]

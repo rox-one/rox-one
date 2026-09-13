@@ -45,11 +45,26 @@ export function getDefaultLabelConfig(): WorkspaceLabelConfig {
             id: 'code',
             name: 'Code',
             color: { light: '#4F46E5', dark: '#818CF8' }, // indigo shift
+            autoRules: [
+              {
+                pattern: 'github\\.com/[^\\s]+/(?:issues|pull)/(\\d+)',
+                flags: 'gi',
+                valueTemplate: '$1',
+                description: 'GitHub issue or pull request URLs',
+              },
+            ],
           },
           {
             id: 'bug',
             name: 'Bug',
             color: { light: '#0EA5E9', dark: '#38BDF8' }, // sky shift
+            autoRules: [
+              {
+                pattern: '\\b(bug|regression|hotfix)\\b',
+                flags: 'gi',
+                description: 'Mentions of bugs, regressions, or hotfixes',
+              },
+            ],
           },
           {
             id: 'automation',
@@ -246,6 +261,30 @@ export function ensureStockDefaultLabels(config: WorkspaceLabelConfig): boolean 
     }
   }
 
+  if (ensureStockDefaultAutoRules(config)) {
+    changed = true;
+  }
+
+  return changed;
+}
+
+const STOCK_AUTO_RULE_LABEL_IDS = ['code', 'bug'] as const;
+
+/**
+ * Seed a couple of stock auto-label rules onto default labels that have none.
+ * Never overwrites user-authored autoRules.
+ */
+export function ensureStockDefaultAutoRules(config: WorkspaceLabelConfig): boolean {
+  const defaults = getDefaultLabelConfig();
+  let changed = false;
+  for (const id of STOCK_AUTO_RULE_LABEL_IDS) {
+    const stock = findLabelById(defaults.labels, id);
+    const existing = findLabelById(config.labels, id);
+    if (!stock?.autoRules?.length || !existing) continue;
+    if (existing.autoRules && existing.autoRules.length > 0) continue;
+    existing.autoRules = JSON.parse(JSON.stringify(stock.autoRules)) as typeof stock.autoRules;
+    changed = true;
+  }
   return changed;
 }
 
