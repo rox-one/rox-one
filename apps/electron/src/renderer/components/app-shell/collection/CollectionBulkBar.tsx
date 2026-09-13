@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useStore } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Archive, Flag, X } from 'lucide-react'
+import { Archive, Flag, Layers, X } from 'lucide-react'
 import {
   BULK_UPDATE_MAX_IDS,
   type BulkUpdateSessionsPatch,
@@ -24,6 +24,11 @@ import {
   type OptimisticCollectionBulkOperation,
   type VisibleBulkSelectionSnapshot,
 } from './collection-bulk-optimistic'
+import {
+  mapReduceProductResult,
+  mapReduceVisibleSessions,
+} from './collection-map-reduce'
+import { isClaimableLive } from '@craft-agent/core/rox2'
 
 export interface CollectionBulkBarProps {
   workspaceId: string | null | undefined
@@ -235,6 +240,37 @@ export function CollectionBulkBar({
     }
   }, [dispatchAccepted, selection.state.selectedIds, t, visibleSessionIds])
 
+  const applyMapReduce = React.useCallback(async () => {
+    const accepted = snapshotVisibleEligibleSelection(
+      selection.state.selectedIds,
+      visibleSessionIds,
+    )
+    if (accepted.count === 0) return
+    setBusy(true)
+    try {
+      const result = await mapReduceVisibleSessions({
+        ids: accepted.ids,
+        metaById: store.get(sessionMetaMapAtom),
+      })
+      if (isClaimableLive(mapReduceProductResult(result))) {
+        toast.success(t('collection.bulk.mapDone', { count: result.outcomes.length }))
+      } else {
+        toast.message(t('collection.bulk.mapPartial', {
+          included: result.coverage.included,
+          selected: result.coverage.selected,
+        }))
+      }
+    } catch (error) {
+      toast.error(
+        t('collection.bulk.mapFailed', {
+          message: error instanceof Error ? error.message : String(error),
+        }),
+      )
+    } finally {
+      setBusy(false)
+    }
+  }, [selection.state.selectedIds, store, t, visibleSessionIds])
+
   if (!selection.isMultiSelectActive || !workspaceId || visibleSelection.count === 0) {
     return null
   }
@@ -323,6 +359,15 @@ export function CollectionBulkBar({
             if (Number.isFinite(dueDate)) apply({ dueDate })
           }}
         />
+
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void applyMapReduce()}
+          className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-background px-2 text-xs text-foreground/80 hover:bg-foreground/[0.03]"
+        >
+          <Layers className="h-3.5 w-3.5" /> {t('collection.bulk.map')}
+        </button>
 
         <button
           type="button"
