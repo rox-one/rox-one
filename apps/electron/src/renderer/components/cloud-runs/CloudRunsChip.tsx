@@ -404,14 +404,16 @@ function CloudRunsChipInner({
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           {(state === 'running' || state === 'queued' || state === 'start' || state === 'ready') && (
-                            <DropdownMenuItem onSelect={() => void act(run.id, () => window.electronAPI.cancelCloudRun(run.id))}>
-                              <XCircle className="h-4 w-4" />
-                              {t('cloudRuns.cancel')}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => void act(run.id, () => window.electronAPI.killCloudRun(run.id))}>
-                              <OctagonX className="h-4 w-4" />
-                              {t('cloudRuns.kill')}
-                            </DropdownMenuItem>
+                            <>
+                              <DropdownMenuItem onSelect={() => void act(run.id, () => window.electronAPI.cancelCloudRun(run.id))}>
+                                <XCircle className="h-4 w-4" />
+                                {t('cloudRuns.cancel')}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => void act(run.id, () => window.electronAPI.killCloudRun(run.id))}>
+                                <OctagonX className="h-4 w-4" />
+                                {t('cloudRuns.kill')}
+                              </DropdownMenuItem>
+                            </>
                           )}
                           {state === 'failed' && (
                             <DropdownMenuItem

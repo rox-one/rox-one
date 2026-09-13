@@ -1740,6 +1740,7 @@ const handleFollowUpChipClick = useCallback((item: {
   return (
     <div ref={zoneRef} className="flex h-full flex-col min-w-0" data-focus-zone="chat">
       {session ? (
+        <>
         <div className="flex flex-1 flex-col min-h-0 min-w-0 relative">
           {session.branchFromSessionId ? (
             <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border/40 px-3 py-1.5 text-xs text-muted-foreground">
@@ -2258,6 +2259,7 @@ const handleFollowUpChipClick = useCallback((item: {
           onCancel={() => setSideThreadPreview(null)}
           onConfirm={() => { void handleConfirmSideThread() }}
         />
+        </>
       ) : null}
 
       {/* ================================================================== */}

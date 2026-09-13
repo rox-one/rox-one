@@ -69,4 +69,12 @@ describe('CloudRunsSettingsPage compact layout and recovery', () => {
     expect(source).not.toContain('grok-bot')
     expect(source).not.toContain('iframe')
   })
+
+  it('closes the personas section before the sandbox tab section', () => {
+    const personas = source.indexOf("t('settings.cloudRuns.sectionPersonas')")
+    const sandboxTab = source.indexOf("t('settings.cloudRuns.sandboxTab')")
+    expect(personas).toBeGreaterThan(-1)
+    expect(sandboxTab).toBeGreaterThan(personas)
+    expect(source.slice(personas, sandboxTab)).toContain('</SettingsSection>')
+  })
 })
