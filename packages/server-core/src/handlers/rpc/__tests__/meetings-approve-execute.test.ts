@@ -88,6 +88,10 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
     return new MeetingJournal(persistRoot()).read(meetingId).events.filter((event) => event.type === 'proposal.upsert')
   }
 
+  function operationResults(meetingId: string) {
+    return new MeetingJournal(persistRoot()).read(meetingId).events.filter((event) => event.type === 'operation.result')
+  }
+
   it('create then approve applies persist revision without test-only seeding', async () => {
     const handlers = createHarness()
     startMeeting()
@@ -121,6 +125,9 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
     expect(result.proposal.status).toBe('applied')
     expect(result.operation.verification).toBe('verified')
     expect(upserts('m1').map((event) => event.proposal.status)).toEqual(['proposed', 'applied'])
+    expect(operationResults('m1')).toHaveLength(1)
+    expect(operationResults('m1')[0]?.result.verification).toBe('verified')
+    expect(operationResults('m1')[0]?.result.operationId).toBe(created.proposal!.id)
     const entityId = result.operation.entityRef?.entityId
     const revision = result.operation.entityRef?.revisionId
     expect(entityId?.startsWith('task:')).toBe(true)
