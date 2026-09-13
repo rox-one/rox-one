@@ -93,3 +93,21 @@ export {
   type ConationPagination,
   type ConationRecordStore,
 } from './conation-api.ts'
+export {
+  NOTES_ENGINE_SCHEMA_VERSION,
+  NOTES_SIDECAR_DIR,
+  contentHash,
+  createNativeNotesEngine,
+  extractWikilinks,
+  migrateNotesVault,
+  parseBlocks,
+  rewriteWikilinks,
+  type NativeNote,
+  type NativeNotesEngine,
+  type NoteBlock,
+  type NoteRevision,
+  type NoteSaveInput,
+  type NoteSaveResult,
+  type NoteSidecar,
+  type NotesEngineExport,
+} from './notes-engine.ts'
