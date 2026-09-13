@@ -40,6 +40,7 @@ export type MeetingCommitCommand = {
 export type MeetingJournalEvent =
   | { type: 'meeting.created'; meeting: Meeting }
   | { type: 'meeting.status'; status: Meeting['status'] }
+  | { type: 'meeting.binding'; sourceBinding: NonNullable<Meeting['sourceBinding']> }
   | { type: 'segment.upsert'; segment: TranscriptSegment }
   | { type: 'proposal.upsert'; proposal: MeetingProposal }
   | { type: 'manual.note'; noteId: string; text: string }

@@ -6,6 +6,7 @@ import type { HandlerDeps } from '../handler-deps'
 import type { Meeting, MeetingProposal } from '@craft-agent/core/meetings'
 import { queryMeetings } from '../../meetings/queries.ts'
 import { listNativeMeetings, startNativeMeeting } from '../../meetings/catalog.ts'
+import { applyNativeCaptureIntent, type CaptureIntentAction } from '../../meetings/capture.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness } from '../../meetings/native-actions.ts'
@@ -120,6 +121,9 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.CALENDAR_BIND,
   RPC_CHANNELS.meetings.ROOM_JOIN,
   RPC_CHANNELS.meetings.MAIL_THREADS,
+  RPC_CHANNELS.meetings.START_CAPTURE,
+  RPC_CHANNELS.meetings.PAUSE_CAPTURE,
+  RPC_CHANNELS.meetings.STOP_CAPTURE,
 ] as const
 
 export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): void {
@@ -265,4 +269,24 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       return listMailThreads({ present: credentialsPresent })
     },
   )
+  function handleCapture(action: CaptureIntentAction) {
+    return async (_ctx: unknown, workspaceId: string, meetingId: string, actorId: string, grant: MeetingGrant | null) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { meeting: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { meeting: null, error: { code: 'config-dir-required' } }
+      const result = applyNativeCaptureIntent({
+        persistRootDir,
+        workspaceId,
+        actorId,
+        grant,
+        meetingId,
+        action,
+      })
+      if (!result.ok) return { meeting: null, error: { code: result.code } }
+      return { meeting: result.meeting }
+    }
+  }
+  server.handle(RPC_CHANNELS.meetings.START_CAPTURE, handleCapture('start'))
+  server.handle(RPC_CHANNELS.meetings.PAUSE_CAPTURE, handleCapture('pause'))
+  server.handle(RPC_CHANNELS.meetings.STOP_CAPTURE, handleCapture('stop'))
 }

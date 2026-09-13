@@ -639,6 +639,24 @@ export interface ElectronAPI {
     operation: import('@craft-agent/core/meetings').OperationResultV2
   }>
   rejectMeetingProposal(workspaceId: string, proposalId: string): Promise<import('@craft-agent/core/meetings').MeetingProposal>
+  startCapture(
+    workspaceId: string,
+    meetingId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+  pauseCapture(
+    workspaceId: string,
+    meetingId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+  stopCapture(
+    workspaceId: string,
+    meetingId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>

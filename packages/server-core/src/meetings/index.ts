@@ -10,6 +10,7 @@ export { verificationLabel } from './verification.ts'
 export { applyNativeMeetingAction, readbackNative, createNativeActionHarness, isNativeNotesEngine } from './native-actions.ts'
 export { queryMeetings } from './queries.ts'
 export { startNativeMeeting, listNativeMeetings } from './catalog.ts'
+export { applyNativeCaptureIntent, nativeCaptureBinding, NATIVE_CAPTURE_PROVIDER, NATIVE_CAPTURE_REMOTE_TYPE } from './capture.ts'
 export {
   prepareMailDraft,
   sendPreparedMail,
