@@ -54,6 +54,7 @@
     "./context-docs": "./src/context-docs/index.ts",
     "./credentials": "./src/credentials/index.ts",
     "./docs": "./src/docs/index.ts",
+    "./design-manifest": "./src/design-manifest/index.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
     "./extensions": "./src/extensions/index.ts",
     "./extensions/browser": "./src/extensions/browser.ts",

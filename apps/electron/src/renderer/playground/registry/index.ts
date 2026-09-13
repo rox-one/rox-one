@@ -30,6 +30,12 @@ import { unifiedShellComponents } from './unified-shell'
 import { premiumMenuComponents } from './premium-menu'
 
 export * from './types'
+export {
+  definePlaygroundStory,
+  normalizeDiscoveredPlaygroundStories,
+  normalizePlaygroundStories,
+  resolvePlaygroundAppearance,
+} from './story-loader'
 
 export const componentRegistry: ComponentEntry[] = [
   ...mobileWebUIComponents,
