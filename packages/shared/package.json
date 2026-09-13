@@ -69,6 +69,7 @@
     "./kanban": "./src/kanban/index.ts",
     "./kanban/browser": "./src/kanban/browser.ts",
     "./knowledge/oem-pin": "./src/knowledge/oem-pin.ts",
+    "./knowledge/provider-gate": "./src/knowledge/provider-gate.ts",
     "./knowledge/vault-insights": "./src/knowledge/vault-insights.ts",
     "./knowledge/plugin-allowlist": "./src/knowledge/plugin-allowlist.ts",
     "./knowledge/siyuan-binary": "./src/knowledge/siyuan-binary.ts",
