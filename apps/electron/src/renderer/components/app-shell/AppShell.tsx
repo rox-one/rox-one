@@ -3215,7 +3215,7 @@ function AppShellContent({
             side="bottom"
             align="start"
             secondaryAction={{
-              label: 'Edit File',
+              label: t('common.editFile'),
               filePath: `${activeWorkspace.rootPath}/statuses/config.json`,
             }}
             {...getEditConfig('edit-statuses', activeWorkspace.rootPath)}
@@ -3235,7 +3235,7 @@ function AppShellContent({
             side="bottom"
             align="start"
             secondaryAction={{
-              label: 'Edit File',
+              label: t('common.editFile'),
               filePath: `${activeWorkspace.rootPath}/labels/config.json`,
             }}
             {...(() => {
@@ -3271,7 +3271,7 @@ function AppShellContent({
             side="bottom"
             align="start"
             secondaryAction={{
-              label: 'Edit File',
+              label: t('common.editFile'),
               filePath: `${activeWorkspace.rootPath}/views.json`,
             }}
             {...getEditConfig('edit-views', activeWorkspace.rootPath)}
@@ -3344,7 +3344,7 @@ function AppShellContent({
             side="bottom"
             align="start"
             secondaryAction={{
-              label: 'Edit File',
+              label: t('common.editFile'),
               filePath: `${activeWorkspace.rootPath}/labels/config.json`,
             }}
             {...(() => {
