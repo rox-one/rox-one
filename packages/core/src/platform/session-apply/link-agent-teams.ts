@@ -20,7 +20,7 @@ export function recordSessionApplyOnTeam(
   return store.upsertTask(teamId, {
     id: existing?.id,
     subject: TASK_SUBJECT,
-    status: existing ? undefined : 'completed',
+    status: result.businessCompleted ? 'completed' : existing ? undefined : 'in_progress',
     output: result.pointer,
     description: `SessionApply consumer stub @ ${result.origin} HTTP ${result.status}`,
   });
