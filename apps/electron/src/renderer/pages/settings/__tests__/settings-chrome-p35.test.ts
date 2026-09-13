@@ -23,6 +23,12 @@ describe('Program 35 settings chrome', () => {
     expect(security).toContain('h-full min-h-0')
   })
 
+  it('keeps Security on the shared 50px PanelHeader so switching settings tabs does not jump', () => {
+    expect(security).toContain('<PanelHeader')
+    expect(security).toContain('mask-fade-y')
+    expect(security).not.toContain('<header className="flex shrink-0')
+  })
+
   it('keeps the new-workspace overlay opaque', () => {
     expect(overlay).toContain('bg-background')
     expect(overlay).not.toContain('bg-background/95')
