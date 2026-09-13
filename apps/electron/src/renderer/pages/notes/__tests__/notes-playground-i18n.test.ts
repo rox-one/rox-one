@@ -29,6 +29,7 @@ describe('notes and playground leftover chrome is i18n', () => {
     expect(planner).not.toContain('placeholder="Add notes..."')
     expect(chat).toContain("t('playground.chat.messagePlaceholder')")
     expect(chat).not.toContain("placeholder=\"Message Craft Agent...\"")
+    expect(chat).not.toContain("defaultValue: 'Message Craft Agent...'")
   })
 
   it('keeps Russian copy distinct from English', () => {
