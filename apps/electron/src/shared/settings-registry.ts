@@ -59,6 +59,9 @@ export const SETTINGS_PAGES = [
   { id: 'shortcuts' as const, labelKey: 'settings.shortcuts.title', descriptionKey: 'settings.shortcuts.description' },
 ] satisfies readonly SettingsPageDefinition[]
 
+/** ROX2-031: settings hub is native; Conation flags do not gate SETTINGS_PAGES. */
+export const SETTINGS_HUB_REQUIRES_CONATION_FLAG = false as const
+
 /**
  * Settings subpage type - derived from SETTINGS_PAGES
  * This replaces the manual union type in types.ts
