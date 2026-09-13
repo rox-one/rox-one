@@ -1243,6 +1243,7 @@
   "extensions.updates.empty": "No updates available.",
   "fileViewer.clickToView": "Нажмите на путь к файлу в чате, чтобы просмотреть его здесь",
   "fileViewer.errorLoading": "Ошибка загрузки файла",
+  "fileViewer.failedToLoad": "Не удалось загрузить файл",
   "fileViewer.loadingContent": "Загрузка содержимого...",
   "fileViewer.noFileSelected": "Файл не выбран",
   "filter.exclude": "Исключить",

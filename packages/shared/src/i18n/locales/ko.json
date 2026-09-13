@@ -1241,6 +1241,7 @@
   "extensions.updates.empty": "사용 가능한 업데이트가 없습니다.",
   "fileViewer.clickToView": "여기에서 보려면 채팅에서 파일 경로를 클릭하세요",
   "fileViewer.errorLoading": "파일을 불러오는 중 오류가 발생했습니다",
+  "fileViewer.failedToLoad": "파일을 불러오지 못했습니다",
   "fileViewer.loadingContent": "콘텐츠 불러오는 중...",
   "fileViewer.noFileSelected": "선택된 파일이 없습니다",
   "filter.exclude": "제외",

@@ -1241,6 +1241,7 @@
   "extensions.updates.empty": "No updates available.",
   "fileViewer.clickToView": "點擊聊天中的檔案路徑在此檢視",
   "fileViewer.errorLoading": "載入檔案出錯",
+  "fileViewer.failedToLoad": "無法載入檔案",
   "fileViewer.loadingContent": "正在載入內容...",
   "fileViewer.noFileSelected": "未選擇檔案",
   "filter.exclude": "排除",
