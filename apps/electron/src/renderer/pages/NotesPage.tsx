@@ -388,6 +388,7 @@ function FolderTreeItem({
   onCopyNotePath,
   onRevealNote,
 }: FolderTreeItemProps) {
+  const { t } = useTranslation()
   const isCollapsed = collapsedFolders.has(node.fullPath)
   const indent = depth * 12
 
@@ -422,16 +423,16 @@ function FolderTreeItem({
             <StyledContextMenuContent>
               <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(node.fullPath)}>
                 <FilePlus2 className="h-3.5 w-3.5" />
-                New note in folder
+                {t('notes.menu.newInFolder')}
               </StyledContextMenuItem>
               <StyledContextMenuItem onClick={() => onOpenRenameFolder(node.fullPath)}>
                 <Pencil className="h-3.5 w-3.5" />
-                Rename folder
+                {t('notes.menu.renameFolder')}
               </StyledContextMenuItem>
               <StyledContextMenuSeparator />
               <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteFolder(node.fullPath)}>
                 <Trash2 className="h-3.5 w-3.5" />
-                Delete folder
+                {t('notes.menu.deleteFolder')}
               </StyledContextMenuItem>
             </StyledContextMenuContent>
           </ContextMenu>
@@ -499,41 +500,41 @@ function FolderTreeItem({
                   <StyledContextMenuContent>
                     <StyledContextMenuItem onClick={() => onOpenNote(note.id)}>
                       <FileText className="h-3.5 w-3.5" />
-                      Open
+                      {t('common.open')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenRenameDialogForNote(note)}>
                       <Pencil className="h-3.5 w-3.5" />
-                      Rename
+                      {t('common.rename')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(noteFolder(note) || undefined)}>
                       <FilePlus2 className="h-3.5 w-3.5" />
-                      New note here
+                      {t('notes.menu.newHere')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onDuplicateNote(note)}>
                       <Copy className="h-3.5 w-3.5" />
-                      Duplicate
+                      {t('notes.menu.duplicate')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onOpenMoveDialog(note)}>
                       <FolderInput className="h-3.5 w-3.5" />
-                      Move to folder
+                      {t('notes.menu.moveToFolder')}
                     </StyledContextMenuItem>
                     <StyledContextMenuSeparator />
                     <StyledContextMenuItem onClick={() => onCopyNoteLink(note)}>
                       <Link2 className="h-3.5 w-3.5" />
-                      Copy note link
+                      {t('notes.menu.copyLink')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onCopyNotePath(note)}>
                       <FileText className="h-3.5 w-3.5" />
-                      Copy markdown path
+                      {t('notes.menu.copyPath')}
                     </StyledContextMenuItem>
                     <StyledContextMenuItem onClick={() => onRevealNote(note)}>
                       <ExternalLink className="h-3.5 w-3.5" />
-                      Reveal in Finder
+                      {t('notes.menu.reveal')}
                     </StyledContextMenuItem>
                     <StyledContextMenuSeparator />
                     <StyledContextMenuItem variant="destructive" onClick={() => onOpenDeleteDialogForNote(note)}>
                       <Trash2 className="h-3.5 w-3.5" />
-                      Delete
+                      {t('common.delete')}
                     </StyledContextMenuItem>
                   </StyledContextMenuContent>
                 </ContextMenu>
@@ -1726,7 +1727,7 @@ h1,h2,h3{margin-top:1.5em}
   ) : null
 
   if (!activeWorkspaceId) {
-    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">Select a workspace to use notes.</div>
+    return <div className="flex h-full items-center justify-center text-sm text-muted-foreground">{t('notes.empty.selectWorkspace')}</div>
   }
 
   return (
@@ -1822,41 +1823,41 @@ h1,h2,h3{margin-top:1.5em}
                       <StyledContextMenuContent>
                         <StyledContextMenuItem onClick={() => handleOpenNote(note.id)}>
                           <FileText className="h-3.5 w-3.5" />
-                          Open
+                          {t('common.open')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openRenameDialogForNote(note)}>
                           <Pencil className="h-3.5 w-3.5" />
-                          Rename
+                          {t('common.rename')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openCreateNoteDialog()}>
                           <FilePlus2 className="h-3.5 w-3.5" />
-                          New note here
+                          {t('notes.menu.newHere')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => duplicateNote(note)}>
                           <Copy className="h-3.5 w-3.5" />
-                          Duplicate
+                          {t('notes.menu.duplicate')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => openMoveDialog(note)}>
                           <FolderInput className="h-3.5 w-3.5" />
-                          Move to folder
+                          {t('notes.menu.moveToFolder')}
                         </StyledContextMenuItem>
                         <StyledContextMenuSeparator />
                         <StyledContextMenuItem onClick={() => copyNoteLink(note)}>
                           <Link2 className="h-3.5 w-3.5" />
-                          Copy note link
+                          {t('notes.menu.copyLink')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => copyNotePath(note)}>
                           <FileText className="h-3.5 w-3.5" />
-                          Copy markdown path
+                          {t('notes.menu.copyPath')}
                         </StyledContextMenuItem>
                         <StyledContextMenuItem onClick={() => revealNote(note)}>
                           <ExternalLink className="h-3.5 w-3.5" />
-                          Reveal in Finder
+                          {t('notes.menu.reveal')}
                         </StyledContextMenuItem>
                         <StyledContextMenuSeparator />
                         <StyledContextMenuItem variant="destructive" onClick={() => openDeleteDialogForNote(note)}>
                           <Trash2 className="h-3.5 w-3.5" />
-                          Delete
+                          {t('common.delete')}
                         </StyledContextMenuItem>
                       </StyledContextMenuContent>
                     </ContextMenu>
@@ -1918,11 +1919,11 @@ h1,h2,h3{margin-top:1.5em}
           </div>
           {dailyDate && (
             <div className="mr-1 flex items-center gap-1">
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title="Previous daily note">
+              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <span className="text-xs text-muted-foreground">{dailyDate}</span>
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title="Next daily note">
+              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
@@ -1937,20 +1938,20 @@ h1,h2,h3{margin-top:1.5em}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title="Attach asset">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title="Export as PDF">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title="Rename note">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
             <Pencil className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title="Delete note">
+          <button className="h-7 w-7 rounded-[5px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
             <Trash2 className="h-4 w-4" />
           </button>
-          <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title="Notes autosave as you type">
-            {saveError ? 'Save failed' : saving ? 'Saving' : dirty ? 'Autosaving' : activeNote ? 'Saved' : ''}
+          <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
+            {saveError ? t('notes.save.failed') : saving ? t('common.saving') : dirty ? t('notes.save.autosaving') : activeNote ? t('notes.save.saved') : ''}
           </span>
         </div>
 
@@ -1966,20 +1967,20 @@ h1,h2,h3{margin-top:1.5em}
           {!activeNote ? (
             <div className="h-full grid place-items-center">
               {loading ? (
-                <div className="text-sm text-muted-foreground">Loading note...</div>
+                <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
               ) : (
                 <div className="w-[360px] max-w-[calc(100%-48px)] rounded-[8px] border border-border/60 bg-muted/[0.16] p-4 text-center">
-                  <div className="text-sm font-medium">No note selected</div>
-                  <div className="mt-1 text-xs text-muted-foreground">Open a note, create one, or start today's daily note.</div>
+                  <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>
+                  <div className="mt-1 text-xs text-muted-foreground">{t('notes.empty.noNoteHint')}</div>
                   <div className="mt-3 flex justify-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleDaily()}>
                       <CalendarDays className="h-3.5 w-3.5" />
-                      Daily
+                      {t('notes.toolbar.daily')}
                     </Button>
                     <NotesImportButton workspaceId={activeWorkspaceId || undefined} onImported={() => void refreshNotes()} />
                     <Button size="sm" onClick={() => openCreateNoteDialog()}>
                       <FilePlus2 className="h-3.5 w-3.5" />
-                      New note
+                      {t('notes.toolbar.newNote')}
                     </Button>
                   </div>
                 </div>

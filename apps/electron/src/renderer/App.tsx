@@ -1780,7 +1780,7 @@ export default function App() {
         // "use Open File instead" hint when the message already carries
         // that guidance.
         const hasRichGuidance = /URL blocked/.test(message)
-        const tail = hasRichGuidance ? '' : '. If this is a local path, use Open File instead.'
+        const tail = hasRichGuidance ? '' : `. ${t('toast.localPathUseOpenFile')}`
         toast.error(t('toast.failedToOpenLink'), {
           description: `${message}${tail}`,
         })
