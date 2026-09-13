@@ -7,8 +7,17 @@
  * Does not mock React, RPC, or the product Task store.
  */
 const { app, BrowserWindow, session } = require('electron')
-const { writeFileSync, mkdirSync, readFileSync, existsSync } = require('fs')
-const { join } = require('path')
+const {
+  closeSync,
+  constants,
+  fstatSync,
+  mkdirSync,
+  openSync,
+  readSync,
+  writeFileSync,
+  writeSync,
+} = require('fs')
+const { isAbsolute, join, relative, resolve, sep } = require('path')
 
 const userData = process.env.ROX_USER_DATA_DIR || process.env.CRAFT_USER_DATA_DIR
 const configDir = process.env.ROX_CONFIG_DIR || process.env.CRAFT_CONFIG_DIR
@@ -25,22 +34,82 @@ if (!userData || !configDir || !readyFile || !storeFile) {
 
 app.setPath('userData', userData)
 
+function resolveInside(root, candidate, label) {
+  if (!root || !candidate) {
+    throw new Error(`${label}: missing path`)
+  }
+  if (!isAbsolute(root) || !isAbsolute(candidate)) {
+    throw new Error(`${label}: path must be absolute`)
+  }
+  const resolvedRoot = resolve(root)
+  const resolvedCandidate = resolve(candidate)
+  const rel = relative(resolvedRoot, resolvedCandidate)
+  if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) {
+    throw new Error(`${label}: path escapes isolated root`)
+  }
+  return resolvedCandidate
+}
+
 function persistStore() {
-  mkdirSync(join(storeFile, '..'), { recursive: true })
+  let bounded
+  try {
+    bounded = resolveInside(configDir, storeFile, 'HARNESS_STORE_FILE')
+  } catch (err) {
+    console.error('fixture store fail-closed', err instanceof Error ? err.message : err)
+    app.exit(2)
+    throw err
+  }
+
+  mkdirSync(join(bounded, '..'), { recursive: true })
   let bootCount = 1
-  if (existsSync(storeFile)) {
+  const nofollow = constants.O_NOFOLLOW ?? 0
+  // Open first (O_NOFOLLOW). Never existsSync/lstat then write — CodeQL js/file-system-race.
+  let readFd
+  try {
+    readFd = openSync(bounded, constants.O_RDONLY | nofollow)
     try {
-      const prev = JSON.parse(readFileSync(storeFile, 'utf8'))
+      const st = fstatSync(readFd)
+      if (!st.isFile()) {
+        const notFile = new Error('store-not-file')
+        notFile.code = 'ENOTFILE'
+        throw notFile
+      }
+      const size = Math.min(st.size, 65536)
+      const buf = Buffer.alloc(size)
+      const n = readSync(readFd, buf, 0, size, 0)
+      const prev = JSON.parse(buf.subarray(0, n).toString('utf8'))
       if (prev && typeof prev.bootCount === 'number') bootCount = prev.bootCount + 1
-    } catch {
+    } finally {
+      closeSync(readFd)
+    }
+  } catch (err) {
+    const code = err && err.code
+    if (code === 'ENOENT' || err instanceof SyntaxError) {
       bootCount = 1
+    } else {
+      console.error('fixture store fail-closed', code || (err instanceof Error ? err.message : err))
+      app.exit(2)
+      throw err
     }
   }
-  writeFileSync(
-    storeFile,
-    JSON.stringify({ caseId, bootCount, writtenAt: new Date().toISOString() }),
-    'utf8',
-  )
+
+  const payload = JSON.stringify({ caseId, bootCount, writtenAt: new Date().toISOString() })
+  try {
+    const writeFd = openSync(
+      bounded,
+      constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | nofollow,
+      0o600,
+    )
+    try {
+      writeSync(writeFd, payload, 'utf8')
+    } finally {
+      closeSync(writeFd)
+    }
+  } catch (err) {
+    console.error('fixture store write fail-closed', err && err.code)
+    app.exit(2)
+    throw err
+  }
   return bootCount
 }
 
