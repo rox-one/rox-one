@@ -628,6 +628,27 @@ export const mockElectronAPI = {
   setCloudRunsConfig: async (patch: unknown) => {
     console.log('[Playground] setCloudRunsConfig', patch)
   },
+  getServerConfig: async () => ({
+    enabled: false,
+    port: 9100,
+  }),
+  getServerStatus: async () => ({
+    running: false,
+    host: '127.0.0.1',
+    port: 9100,
+    tls: false,
+    url: 'ws://127.0.0.1:9100',
+    token: '',
+    needsRestart: false,
+    insecureWarning: false,
+  }),
+  getServerHealth: async () => ({ checks: [] }),
+  setServerConfig: async (config: unknown) => {
+    console.log('[Playground] setServerConfig', config)
+  },
+  relaunchApp: async () => {
+    throw new Error('Playground fixture. Not live.')
+  },
   listCloudRuns: async () => [],
   listCloudRunSchedules: async () => [],
   submitCloudRun: async (payload: unknown) => {
@@ -1067,14 +1088,8 @@ export const mockElectronAPI = {
     if (platform === 'whatsapp') playgroundMessagingHandle.setWhatsAppConnected(false)
   },
 
-  forgetMessagingPlatform: async (platform: string) => {
-    console.log('[Playground] forgetMessagingPlatform called:', platform)
-    if (platform === 'telegram') playgroundMessagingHandle.setTelegramConnected(false)
-    if (platform === 'whatsapp') playgroundMessagingHandle.setWhatsAppConnected(false)
-    // Drop bindings for that platform
-    playgroundMessagingHandle.setBindings(
-      messagingMockState.bindings.filter((b) => b.platform !== platform),
-    )
+  forgetMessagingPlatform: async (_platform: string) => {
+    throw new Error('Playground fixture. Not live.')
   },
 
   getMessagingBindings: async () => {
@@ -1102,12 +1117,8 @@ export const mockElectronAPI = {
     )
   },
 
-  unbindMessagingBinding: async (bindingId: string) => {
-    console.log('[Playground] unbindMessagingBinding called:', bindingId)
-    playgroundMessagingHandle.setBindings(
-      messagingMockState.bindings.filter((b) => b.id !== bindingId),
-    )
-    return { success: true }
+  unbindMessagingBinding: async (_bindingId: string) => {
+    throw new Error('Playground fixture. Not live.')
   },
 
   // ------------------------------------------------------------------

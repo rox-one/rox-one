@@ -1,5 +1,5 @@
 /**
- * ROX2-031 hub + ROX2-041..058 settings pages.
+ * ROX2-031 hub + ROX2-041..061 settings pages.
  * Settings pages stay in SETTINGS_PAGES. Conation is not this surface.
  */
 import {
@@ -30,6 +30,8 @@ export const ROX2_SETTINGS_WAVE4_PAGE_IDS = ['ai', 'appearance', 'input'] as con
 export const ROX2_SETTINGS_WAVE5_PAGE_IDS = ['workspace', 'accounts', 'permissions'] as const
 /** ROX2-056..058: security, labels, organizations. */
 export const ROX2_SETTINGS_WAVE6_PAGE_IDS = ['security', 'labels', 'organizations'] as const
+/** ROX2-059..061: messaging, server, cloudRuns. */
+export const ROX2_SETTINGS_WAVE7_PAGE_IDS = ['messaging', 'server', 'cloudRuns'] as const
 export type Rox2SettingsPageId =
   | (typeof ROX2_SETTINGS_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE2_PAGE_IDS)[number]
@@ -37,6 +39,7 @@ export type Rox2SettingsPageId =
   | (typeof ROX2_SETTINGS_WAVE4_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE5_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE6_PAGE_IDS)[number]
+  | (typeof ROX2_SETTINGS_WAVE7_PAGE_IDS)[number]
 
 export type SettingsPageActionKind =
   | 'profile-write'
@@ -135,6 +138,9 @@ export function settingsHubActionResult(opts: {
  * Security install/start is cloud-send; audit is device-read; revoke is destroy.
  * Labels create/update are local writes; delete is destroy.
  * Organization create is local; invite/accept are cloud-send.
+ * Messaging connect is cloud-send; disconnect/forget/unbind are destroy; access is local.
+ * Server config save is a local write; load/browse are device-read; relaunch is write.
+ * Cloud Runs config load is device-read; save is a local write, never spend.
  */
 export function settingsPageActionResult(opts: {
   pageId: Rox2SettingsPageId

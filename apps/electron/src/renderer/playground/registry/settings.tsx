@@ -18,6 +18,8 @@ import AccountsSettingsPage from '@/pages/settings/AccountsSettingsPage'
 import PermissionsSettingsPage from '@/pages/settings/PermissionsSettingsPage'
 import LabelsSettingsPage from '@/pages/settings/LabelsSettingsPage'
 import OrganizationsSettingsPage from '@/pages/settings/OrganizationsSettingsPage'
+import MessagingSettingsPage from '@/pages/settings/MessagingSettingsPage'
+import ServerSettingsPage from '@/pages/settings/ServerSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
 import { ModalProvider } from '@/context/ModalContext'
@@ -109,6 +111,22 @@ function OrganizationsPlayground() {
   return (
     <SettingsScreen>
       <OrganizationsSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function MessagingPlayground() {
+  return (
+    <SettingsScreen>
+      <MessagingSettingsPage />
+    </SettingsScreen>
+  )
+}
+
+function ServerPlayground() {
+  return (
+    <SettingsScreen>
+      <ServerSettingsPage />
     </SettingsScreen>
   )
 }
@@ -265,7 +283,7 @@ export const settingsComponents: ComponentEntry[] = [
     name: 'Settings · Cloud Runs',
     category: 'Settings',
     level: 'Screens',
-    description: 'PanelHeader chrome, i18n placeholders, Rox sandbox empty gate',
+    description: 'ROX2-061 native cloudRuns chrome; config save is not spend',
     component: CloudRunsPlayground,
     props: [],
     layout: 'full',
@@ -407,6 +425,26 @@ export const settingsComponents: ComponentEntry[] = [
     level: 'Screens',
     description: 'ROX2-058 native orgs chrome; invite is not spend',
     component: OrganizationsPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-messaging',
+    name: 'Settings · Messaging',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-059 native messaging chrome; connect is not spend',
+    component: MessagingPlayground,
+    props: [],
+    layout: 'full',
+  },
+  {
+    id: 'settings-server',
+    name: 'Settings · Server',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-060 native server chrome; save is a local write',
+    component: ServerPlayground,
     props: [],
     layout: 'full',
   },
