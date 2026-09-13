@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import {
   compareRuns,
   compareVersions,
@@ -20,6 +22,17 @@ import {
   validateWorkflowSpec,
   workflowDocumentStorageKey,
 } from '../index.ts'
+
+const enLocale = JSON.parse(
+  readFileSync(join(import.meta.dir, '../../i18n/locales/en.json'), 'utf8'),
+) as Record<string, string>
+const editorSource = readFileSync(
+  join(
+    import.meta.dir,
+    '../../../../../apps/electron/src/renderer/components/session-workbench/SessionWorkflowEditor.tsx',
+  ),
+  'utf8',
+)
 
 function note(id: string, x = 0) {
   return createCanvasNode({ id, kind: 'note', title: id, position: { x, y: 0 }, now: 1 })
@@ -168,6 +181,40 @@ describe('session WorkflowSpec', () => {
     expect(run.status[model.id]).not.toBe('done')
     expect(run.finishedAt).toBeUndefined()
     expect(run.artifacts[model.id]).toBeUndefined()
+  })
+
+  test('simulated and waiting_approval copy is never production-success copy', () => {
+    const spec = createDraftSpec('s1', 1)
+    const model = createCanvasNode({ id: 'm1', kind: 'model', title: 'm', position: { x: 0, y: 0 }, now: 1 })
+    const human = createCanvasNode({ id: 'h1', kind: 'human_input', title: 'h', position: { x: 1, y: 0 }, now: 2 })
+    const noteNode = note('n1')
+    spec.nodes = [model, human, noteNode]
+    spec.edges = [
+      createCanvasEdge({ source: noteNode.id, target: model.id, now: 3 }),
+      createCanvasEdge({ source: noteNode.id, target: human.id, now: 4 }),
+    ]
+    const run = runWorkflow({ spec, mode: 'pipeline', now: 8 })
+
+    expect(isProductionWorkflowSuccess(run)).toBe(false)
+    expect(isProductionWorkflowSuccess({ ...run, evidence: 'live' })).toBe(true)
+
+    expect(enLocale['entityView.mapRunComplete']).toBe('Run complete')
+    expect(enLocale['entityView.mapRunSimulated']).toMatch(/simulat/i)
+    expect(enLocale['entityView.mapRunSimulated'].toLowerCase()).not.toMatch(/\b(complete|success)\b/)
+    expect(enLocale['entityView.mapRunWaitingApproval']).toMatch(/waiting|approval/i)
+    expect(enLocale['entityView.mapRunWaitingApproval'].toLowerCase()).not.toMatch(/\b(complete|done)\b/)
+    expect(enLocale['entityView.mapRunStatus.simulated']).toMatch(/simulat/i)
+    expect(enLocale['entityView.mapRunStatus.waiting_approval']).toMatch(/waiting|approval/i)
+    expect(enLocale['entityView.mapRunStatus.waiting_approval'].toLowerCase()).not.toMatch(/\b(done|complete)\b/)
+
+    expect(editorSource).toContain('function notifyWorkflowRun')
+    expect(editorSource).toContain('isProductionWorkflowSuccess')
+    expect(editorSource).toContain("entityView.mapRunSimulated")
+    expect(editorSource).toContain("entityView.mapRunWaitingApproval")
+    expect(editorSource.match(/toast\.success\(\s*t\('entityView\.mapRunComplete'\)\s*\)/g)?.length).toBe(1)
+    expect(editorSource).not.toMatch(
+      /persistWorkflowDocument\(next\)\s*\n\s*toast\.success\(\s*t\('entityView\.mapRunComplete'\)\s*\)/,
+    )
   })
 
   test('forks a version and compares node/edge edits', () => {
