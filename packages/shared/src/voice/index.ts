@@ -99,5 +99,26 @@ export { WhisperLargeV3TurboAdapter } from './local/whisper-adapter.ts'
 export { NemotronStreamingAdapter } from './local/nemotron-adapter.ts'
 export { GigaamE2eRnntAdapter } from './local/gigaam-adapter.ts'
 export { LocalModelError } from './local/adapter.ts'
-export { classifyEvidence } from './acceptance.ts'
+export {
+  classifyEvidence,
+  collectEvidenceInput,
+  probeVoiceGateway,
+  reportEvidence,
+  type EvidenceClass,
+  type EvidenceInput,
+  type EvidenceReport,
+  type GatewayProbe,
+} from './acceptance.ts'
+export {
+  createConfiguredLocalTranscribeAdapter,
+  createLocalAsrAdapter,
+  hasVoiceCredentials,
+  isFixtureOnlyEvidence,
+  localAdapterManifest,
+  localWeightsFixtureEnabled,
+  resolveLocalAsrFamily,
+  resolveVoiceGatewayMode,
+  voiceGatewayBaseUrl,
+  type VoiceGatewayMode,
+} from './runtime.ts'
 export { voiceFlagEnabled, voiceV2Enabled } from './flags.ts'

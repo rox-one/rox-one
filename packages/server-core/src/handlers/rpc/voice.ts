@@ -10,6 +10,7 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 import {
   LAST_KNOWN_GOOD_CAPABILITIES,
+  LOCAL_MODEL_FAMILIES,
   ROCKS_T1_DISPLAY_NAME,
   ROCKS_T1_MODEL_ID,
   RoxTranscriptionAdapter,
@@ -19,6 +20,7 @@ import {
   assertEditableTranscript,
   buildVoiceHealth,
   catalogTemplate,
+  createConfiguredLocalTranscribeAdapter,
   deleteRecording,
   exportRecording,
   getDefaultVoicePrefs,
@@ -27,11 +29,14 @@ import {
   loadVoicePrefs,
   memoryIdentityStore,
   parseCapabilities,
+  resolveLocalAsrFamily,
+  resolveVoiceGatewayMode,
   saveHistoryIndex,
   saveVoicePrefs,
   setFavorite,
   speakWithPolicy,
   transcribeWithPolicy,
+  voiceGatewayBaseUrl,
   type SpeakAdapter,
   type TranscribeAdapter,
   type TranscribeInput,
@@ -77,16 +82,8 @@ function decodeAudio(audioBase64: unknown): Uint8Array {
   return Uint8Array.from(Buffer.from(audioBase64, 'base64'))
 }
 
-function localFixtureAdapter(): TranscribeAdapter {
-  return {
-    engine: 'local-whisper',
-    async transcribe() {
-      if (process.env.CRAFT_VOICE_LOCAL_FIXTURE === '1') {
-        return { text: 'fixture dictation', engine: 'local-whisper', uploaded: false }
-      }
-      return { text: '', engine: 'local-whisper', uploaded: false }
-    },
-  }
+function localAdapter(prefs: VoicePrefs): TranscribeAdapter {
+  return createConfiguredLocalTranscribeAdapter(prefs)
 }
 
 function fixtureHttp() {
@@ -143,15 +140,22 @@ function liveHttp() {
   return { fetch }
 }
 
+function voiceHttp() {
+  return resolveVoiceGatewayMode() === 'live' ? liveHttp() : fixtureHttp()
+}
+
 function identityClient() {
-  return new VoiceIdentityClient(memoryIdentityStore(), process.env.CRAFT_VOICE_GATEWAY_FIXTURE === '0' ? liveHttp() : fixtureHttp())
+  return new VoiceIdentityClient(memoryIdentityStore(), voiceHttp(), {
+    baseUrl: voiceGatewayBaseUrl(),
+  })
 }
 
 function cloudAdapter(prefs: VoicePrefs, caps: VoiceCapabilities): TranscribeAdapter {
   const adapter = new RoxTranscriptionAdapter({
     capabilities: caps,
     identity: identityClient(),
-    http: process.env.CRAFT_VOICE_GATEWAY_FIXTURE === '0' ? liveHttp() : fixtureHttp(),
+    http: voiceHttp(),
+    baseUrl: voiceGatewayBaseUrl(),
   })
   return {
     engine: prefs.sttEngine,
@@ -193,7 +197,7 @@ function getHost(server: RpcServer): VoiceHost {
       async transcribe(audio, mimeType, language) {
         const prefs = loadVoicePrefs()
         const result = await transcribeWithPolicy(prefs, { audio, mimeType, language }, {
-          local: localFixtureAdapter(),
+          local: localAdapter(prefs),
           cloud: cloudAdapter(prefs, cachedCaps),
         })
         return {
@@ -236,6 +240,13 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
     return buildVoiceHealth(loadVoicePrefs(), {
       appleSilicon: appleSilicon(),
       offline: false,
+    }, {
+      CI: process.env.CI,
+      CRAFT_VOICE_GATEWAY_FIXTURE: process.env.CRAFT_VOICE_GATEWAY_FIXTURE,
+      CRAFT_VOICE_LOCAL_FIXTURE: process.env.CRAFT_VOICE_LOCAL_FIXTURE,
+      CRAFT_VOICE_ACCESS_TOKEN: process.env.CRAFT_VOICE_ACCESS_TOKEN,
+      CRAFT_VOICE_GATEWAY_TOKEN: process.env.CRAFT_VOICE_GATEWAY_TOKEN,
+      ROX_API_KEY: process.env.ROX_API_KEY,
     })
   })
 
@@ -246,9 +257,9 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
 
   server.handle(RPC_CHANNELS.voice.CAPABILITIES, async () => {
     try {
-      const http = process.env.CRAFT_VOICE_GATEWAY_FIXTURE === '0' ? liveHttp() : fixtureHttp()
+      const http = voiceHttp()
       const token = await identityClient().bearer()
-      const response = await http.fetch(`${process.env.CRAFT_VOICE_GATEWAY_URL ?? 'https://api.rox.one/v1'}/voice/capabilities`, {
+      const response = await http.fetch(`${voiceGatewayBaseUrl()}/voice/capabilities`, {
         headers: { authorization: `Bearer ${token}` },
       })
       cachedCaps = parseCapabilities(await response.json(), cachedCaps)
@@ -273,7 +284,7 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
     }
     try {
       return await transcribeWithPolicy(prefs, input, {
-        local: localFixtureAdapter(),
+        local: localAdapter(prefs),
         cloud: cloudAdapter(prefs, cachedCaps),
       })
     } catch (error) {
@@ -357,8 +368,8 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
     if (!prefs.cloudEnhancementConsent) {
       return { skipped: true, reason: 'enhancement-off', text: typeof body.text === 'string' ? body.text : '' }
     }
-    const http = process.env.CRAFT_VOICE_GATEWAY_FIXTURE === '0' ? liveHttp() : fixtureHttp()
-    const response = await http.fetch('https://api.rox.one/v1/voice/process', {
+    const http = voiceHttp()
+    const response = await http.fetch(`${voiceGatewayBaseUrl()}/voice/process`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ user: body.text, tools: prefs.webEnrichmentConsent ? ['web_search'] : [] }),
@@ -367,15 +378,14 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
   })
 
   server.handle(RPC_CHANNELS.voice.MODELS_LIST, async () => {
+    const prefs = loadVoicePrefs()
     const platform = process.platform === 'darwin' || process.platform === 'win32' || process.platform === 'linux' ? process.platform : 'linux'
     const archName = appleSilicon() || process.arch === 'arm64' ? 'arm64' : 'x64'
+    const selected = resolveLocalAsrFamily(prefs.asrModelId)
     return {
-      families: ['whisper-large-v3-turbo', 'nemotron-3.5-asr-streaming-0.6b', 'gigaam-v3-e2e-rnnt'] as const,
-      catalog: [
-        catalogTemplate('whisper-large-v3-turbo', platform, archName),
-        catalogTemplate('nemotron-3.5-asr-streaming-0.6b', platform, archName),
-        catalogTemplate('gigaam-v3-e2e-rnnt', platform, archName),
-      ],
+      families: LOCAL_MODEL_FAMILIES,
+      selected,
+      catalog: LOCAL_MODEL_FAMILIES.map((family) => catalogTemplate(family, platform, archName)),
     }
   })
 }
