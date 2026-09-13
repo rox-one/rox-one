@@ -36,6 +36,14 @@ export function localWeightsFixtureEnabled(env: VoiceEnv = process.env): boolean
   return env.CRAFT_VOICE_LOCAL_FIXTURE === '1'
 }
 
+export class VoiceGatewayUnavailableError extends Error {
+  readonly code = 'VOICE_GATEWAY_UNAVAILABLE' as const
+  constructor(message = 'Voice gateway is not live; fixture transcripts are not production results') {
+    super(message)
+    this.name = 'VoiceGatewayUnavailableError'
+  }
+}
+
 /** Transport: live only when explicitly opted in. CI and default stay fixtures. */
 export function resolveVoiceGatewayMode(env: VoiceEnv = process.env): VoiceGatewayMode {
   if (env.CRAFT_VOICE_GATEWAY_FIXTURE === '0') return 'live'
@@ -139,4 +147,37 @@ export function createConfiguredLocalTranscribeAdapter(
       return inner.transcribe(input)
     },
   }
+}
+
+/** Production local ASR. Never loads fixture weights or returns fixture transcripts. */
+export function createProductionLocalTranscribeAdapter(
+  prefs: Pick<VoicePrefs, 'asrModelId'>,
+): TranscribeAdapter {
+  const family = resolveLocalAsrFamily(prefs.asrModelId)
+  const adapter = createLocalAsrAdapter(family, { fixtures: false })
+  const inner = wrapLocalAsrAdapter(adapter)
+  const manifest = localAdapterManifest(family, {
+    fixtures: false,
+    platform: hostPlatform(),
+    arch: hostArch(),
+  })
+  return {
+    engine: inner.engine,
+    async transcribe(input) {
+      await adapter.load(manifest)
+      return inner.transcribe(input)
+    },
+  }
+}
+
+/** Production HTTP. Never returns fixture ASR JSON. */
+export function createProductionVoiceHttp(env: VoiceEnv = process.env): { fetch: typeof fetch } {
+  if (resolveVoiceGatewayMode(env) !== 'live') {
+    return {
+      async fetch() {
+        throw new VoiceGatewayUnavailableError()
+      },
+    }
+  }
+  return { fetch }
 }
