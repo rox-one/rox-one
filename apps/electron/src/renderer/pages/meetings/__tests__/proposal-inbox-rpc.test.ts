@@ -13,7 +13,8 @@ describe('meetings UI create/approve/reject RPC wiring', () => {
     expect(inbox).toContain('onReject')
     expect(inbox).toContain('proposal-approve')
     expect(inbox).toContain('proposal-reject')
-    expect(inbox).toContain('proposal-revision')
+    expect(inbox).toContain('onOpenTarget')
+    expect(inbox).toContain('proposal-target-link')
     expect(inbox).toContain('disabled={!proposal.revisionId}')
   })
 
@@ -21,6 +22,8 @@ describe('meetings UI create/approve/reject RPC wiring', () => {
     expect(page).toContain('createNativeProposalViaRpc')
     expect(page).toContain('approveNativeProposalViaRpc')
     expect(page).toContain('rejectNativeProposalViaRpc')
+    expect(page).toContain('openNativeProposalTargetViaRpc')
+    expect(page).toContain('navigate(result.route)')
     expect(page).toContain('startNativeMeetingViaRpc')
     expect(page).toContain('searchNativeMeetingsViaRpc')
     expect(page).toContain('meetings.nativeCatalog')

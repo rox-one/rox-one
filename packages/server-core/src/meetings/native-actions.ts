@@ -6,6 +6,7 @@ import {
 } from '@craft-agent/core/rox2'
 import { PersonalTaskStore, type PersonalTask } from '@craft-agent/core/tasks/personal'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
+import { authorizeMeetingAction, type MeetingGrant } from '@craft-agent/shared/meeting-agents'
 import { PersonalTaskPersistStore } from '../tasks/personal-persist.ts'
 
 export type NativeActionResult = {
@@ -160,5 +161,55 @@ export function createNativeActionHarness(rootDir: string) {
     tasks: new PersonalTaskStore(),
     persist: new PersonalTaskPersistStore(rootDir),
     seen: new Set<string>(),
+  }
+}
+
+export type OpenNativePersistTargetResult =
+  | { ok: true; kind: 'note' | 'task'; id: string; revisionId: string; entityId: string }
+  | { ok: false; code: string }
+
+/** Fail-closed persist verify for native note/task. Not Mail/CRM/SFU. */
+export function openNativePersistTarget(input: {
+  persistRootDir: string | null
+  workspaceId: string
+  actorId: string
+  grant: MeetingGrant | null
+  entityId: string | null | undefined
+  revisionId: string | null | undefined
+  notes: NativeNotesEngine
+  tasks: PersonalTaskStore
+  persist: PersonalTaskPersistStore
+}): OpenNativePersistTargetResult {
+  if (!input.grant) return { ok: false, code: 'grant-required' }
+  if (!input.persistRootDir) return { ok: false, code: 'config-dir-required' }
+  if (!input.workspaceId) return { ok: false, code: 'workspace-required' }
+  if (!input.entityId || !input.revisionId) return { ok: false, code: 'revision-required' }
+  const auth = authorizeMeetingAction(input.grant, {
+    actorId: input.actorId,
+    workspaceId: input.workspaceId,
+    deviceId: input.grant.deviceId,
+    capability: 'send',
+    operation: 'open',
+  })
+  if (!auth.ok) return { ok: false, code: auth.code }
+  let parsed: ReturnType<typeof parseRox2EntityId>
+  try {
+    parsed = parseRox2EntityId(input.entityId)
+  } catch {
+    return { ok: false, code: 'unsupported-native-kind' }
+  }
+  if (parsed.kind !== 'note' && parsed.kind !== 'task') {
+    return { ok: false, code: 'unsupported-native-kind' }
+  }
+  const seen = readbackNative(input.entityId, input.notes, input.tasks, input.persist)
+  if (!seen || seen.entityId !== input.entityId || seen.revision !== input.revisionId) {
+    return { ok: false, code: 'persist-miss' }
+  }
+  return {
+    ok: true,
+    kind: parsed.kind,
+    id: parsed.id,
+    revisionId: seen.revision,
+    entityId: seen.entityId,
   }
 }

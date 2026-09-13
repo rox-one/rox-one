@@ -6,8 +6,11 @@ import {
   buildMeetingGrant,
   createNativeProposalViaRpc,
   i18nKeyForProposalError,
+  openNativeProposalTargetViaRpc,
   rejectNativeProposalViaRpc,
+  resolveMeetingOpenTargetApi,
   resolveMeetingProposalApi,
+  routeForNativePersistTarget,
   type MeetingProposalApi,
 } from '../proposal-rpc'
 
@@ -63,6 +66,9 @@ describe('meetings proposal RPC client', () => {
     expect(i18nKeyForProposalError('rpc-unavailable')).toBe('meetings.rpcUnavailable')
     expect(i18nKeyForProposalError('workspace-required')).toBe('meetings.workspaceRequired')
     expect(i18nKeyForProposalError('reject-failed')).toBe('meetings.rejectFailed')
+    expect(i18nKeyForProposalError('revision-required')).toBe('meetings.revisionRequired')
+    expect(i18nKeyForProposalError('persist-miss')).toBe('meetings.persistMiss')
+    expect(i18nKeyForProposalError('open-failed')).toBe('meetings.openFailed')
     expect(i18nKeyForProposalError('already-applied')).toBe('meetings.rejectFailed')
     expect(i18nKeyForProposalError('proposal-not-found')).toBe('meetings.rejectFailed')
   })
@@ -284,6 +290,98 @@ describe('meetings proposal RPC client', () => {
     expect(calls).toEqual([{
       channel: 'meetings:rejectProposal',
       args: ['ws', 'prop-m1-abc', 'user', grant],
+    }])
+  })
+
+  it('fail-closes openTarget without api/workspace/grant/revision and does not call RPC', async () => {
+    const calls: unknown[] = []
+    const api = {
+      openMeetingTarget: async (...args: unknown[]) => {
+        calls.push(args)
+        return { target: { kind: 'task' as const, id: '1', revisionId: '3', entityId: 'task:1' } }
+      },
+    }
+    const row = {
+      id: 'prop-m1-abc',
+      title: 'прототип',
+      status: 'applied' as const,
+      source: 'native',
+      type: 'create_task' as const,
+      payload: { title: 'прототип' },
+      revisionId: '3',
+      entityId: 'task:1',
+    }
+    expect(await openNativeProposalTargetViaRpc({
+      api: null,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row,
+    })).toEqual({ ok: false, code: 'rpc-unavailable' })
+    expect(await openNativeProposalTargetViaRpc({
+      api,
+      workspaceId: null,
+      actorId: 'user',
+      grant,
+      row,
+    })).toEqual({ ok: false, code: 'workspace-required' })
+    expect(await openNativeProposalTargetViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant: null,
+      row,
+    })).toEqual({ ok: false, code: 'grant-required' })
+    expect(await openNativeProposalTargetViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: { ...row, revisionId: undefined },
+    })).toEqual({ ok: false, code: 'revision-required' })
+    expect(await openNativeProposalTargetViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: { ...row, entityId: undefined },
+    })).toEqual({ ok: false, code: 'revision-required' })
+    expect(calls).toEqual([])
+    expect(resolveMeetingOpenTargetApi(null)).toBeNull()
+    expect(routeForNativePersistTarget('task', '1')).toBe('tasks/task/1')
+    expect(routeForNativePersistTarget('note', 'meeting-n1')).toBe('notes/note/meeting-n1')
+  })
+
+  it('openTarget goes through RPC and returns native note/task route only', async () => {
+    const calls: Array<{ channel: string; args: unknown[] }> = []
+    const api = {
+      openMeetingTarget: async (...args: unknown[]) => {
+        calls.push({ channel: 'meetings:openTarget', args })
+        return { target: { kind: 'task' as const, id: '1', revisionId: '3', entityId: 'task:1' } }
+      },
+    }
+    const opened = await openNativeProposalTargetViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: {
+        id: 'prop-m1-abc',
+        title: 'прототип',
+        status: 'applied',
+        source: 'native',
+        type: 'create_task',
+        payload: { title: 'прототип' },
+        revisionId: '3',
+        entityId: 'task:1',
+      },
+    })
+    expect(opened.ok).toBe(true)
+    if (!opened.ok) throw new Error('expected open')
+    expect(opened.route).toBe('tasks/task/1')
+    expect(calls).toEqual([{
+      channel: 'meetings:openTarget',
+      args: ['ws', 'task:1', '3', 'user', grant],
     }])
   })
 })

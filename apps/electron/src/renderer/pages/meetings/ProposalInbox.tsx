@@ -7,6 +7,7 @@ export default function ProposalInbox(props: {
   proposals: MeetingProposalRow[]
   onApprove?: (proposal: MeetingProposalRow) => void
   onReject?: (proposal: MeetingProposalRow) => void
+  onOpenTarget?: (proposal: MeetingProposalRow) => void
   pendingId?: string | null
 }) {
   const { t } = useTranslation()
@@ -50,7 +51,8 @@ export default function ProposalInbox(props: {
           <button
             type="button"
             data-testid="proposal-target-link"
-            disabled={!proposal.revisionId}
+            disabled={!proposal.revisionId || !props.onOpenTarget}
+            onClick={() => props.onOpenTarget?.(proposal)}
           >
             {t('meetings.openTarget')}
           </button>

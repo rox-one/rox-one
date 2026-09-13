@@ -5,9 +5,10 @@ import { join } from 'path'
 import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
 import { createNativeNotesEngine, createNotesRepository } from '@craft-agent/core/rox2'
 import { PersonalTaskPersistStore } from '../../tasks/personal-persist.ts'
-import { applyNativeMeetingAction, createNativeActionHarness, isNativeNotesEngine, readbackNative } from '../native-actions.ts'
+import { applyNativeMeetingAction, createNativeActionHarness, isNativeNotesEngine, openNativePersistTarget, readbackNative } from '../native-actions.ts'
 import { payloadHash } from '../proposals.ts'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
+import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
 
 const tmpDirs: string[] = []
 
@@ -148,5 +149,101 @@ describe('native meeting actions (RMA-I011)', () => {
     expect(isNativeNotesEngine(harness.notes)).toBe(true)
     expect(isNativeNotesEngine(createNotesRepository())).toBe(false)
     expect(harness.persist).toBeInstanceOf(PersonalTaskPersistStore)
+  })
+
+  test('openNativePersistTarget fail-closes without grant, configDir, revision, or persist hit', () => {
+    const persistRootDir = root()
+    const harness = createNativeActionHarness(persistRootDir)
+    const grant: MeetingGrant = {
+      id: 'g',
+      actorId: 'user',
+      workspaceId: 'ws',
+      deviceId: 'dev',
+      capabilities: ['send'],
+    }
+    const created = applyNativeMeetingAction({
+      id: 'p-open',
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      type: 'create_task',
+      payload: { title: 'прототип' },
+      payloadHash: 'x',
+      status: 'approved',
+      sourceSpans: [],
+      baseRevisions: {},
+    }, harness.notes, harness.tasks, harness.seen, harness.persist)
+    expect(openNativePersistTarget({
+      persistRootDir,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant: null,
+      entityId: created.entityId,
+      revisionId: created.revision,
+      notes: harness.notes,
+      tasks: harness.tasks,
+      persist: harness.persist,
+    })).toEqual({ ok: false, code: 'grant-required' })
+    expect(openNativePersistTarget({
+      persistRootDir: null,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      entityId: created.entityId,
+      revisionId: created.revision,
+      notes: harness.notes,
+      tasks: harness.tasks,
+      persist: harness.persist,
+    })).toEqual({ ok: false, code: 'config-dir-required' })
+    expect(openNativePersistTarget({
+      persistRootDir,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      entityId: created.entityId,
+      revisionId: '',
+      notes: harness.notes,
+      tasks: harness.tasks,
+      persist: harness.persist,
+    })).toEqual({ ok: false, code: 'revision-required' })
+    expect(openNativePersistTarget({
+      persistRootDir,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      entityId: 'mail-thread:t1',
+      revisionId: created.revision,
+      notes: harness.notes,
+      tasks: harness.tasks,
+      persist: harness.persist,
+    })).toEqual({ ok: false, code: 'unsupported-native-kind' })
+    expect(openNativePersistTarget({
+      persistRootDir,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      entityId: created.entityId,
+      revisionId: 'nope',
+      notes: harness.notes,
+      tasks: harness.tasks,
+      persist: harness.persist,
+    })).toEqual({ ok: false, code: 'persist-miss' })
+    const opened = openNativePersistTarget({
+      persistRootDir,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      entityId: created.entityId,
+      revisionId: created.revision,
+      notes: harness.notes,
+      tasks: harness.tasks,
+      persist: harness.persist,
+    })
+    expect(opened).toEqual({
+      ok: true,
+      kind: 'task',
+      id: created.entityId.replace(/^task:/, ''),
+      revisionId: created.revision,
+      entityId: created.entityId,
+    })
   })
 })

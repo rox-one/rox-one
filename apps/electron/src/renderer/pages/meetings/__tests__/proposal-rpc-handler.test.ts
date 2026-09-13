@@ -13,13 +13,15 @@ import type { OperationResultV2 } from '@craft-agent/core/meetings'
 import {
   approveNativeProposalViaRpc,
   createNativeProposalViaRpc,
+  openNativeProposalTargetViaRpc,
   rejectNativeProposalViaRpc,
+  type MeetingOpenTargetApi,
   type MeetingProposalApi,
 } from '../proposal-rpc'
 
 type Handler = (ctx: unknown, ...args: unknown[]) => unknown | Promise<unknown>
 
-function apiFromHandlers(): MeetingProposalApi {
+function apiFromHandlers(): MeetingProposalApi & MeetingOpenTargetApi {
   const handlers = new Map<string, Handler>()
   const server = {
     handle(channel: string, handler: Handler) {
@@ -46,6 +48,13 @@ function apiFromHandlers(): MeetingProposalApi {
       {},
       ...args,
     ) as Promise<{ proposal: MeetingProposal | null; error?: { code: string } }>,
+    openMeetingTarget: async (...args) => handlers.get(RPC_CHANNELS.meetings.OPEN_TARGET)!(
+      {},
+      ...args,
+    ) as Promise<{
+      target: { kind: 'note' | 'task'; id: string; revisionId: string; entityId: string } | null
+      error?: { code: string }
+    }>,
   }
 }
 
@@ -179,5 +188,52 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
     if (!rejected.ok) throw new Error('expected reject')
     expect(rejected.row.status).toBe('rejected')
     expect(rejected.row.revisionId).toBeUndefined()
+  })
+
+  it('openTarget navigates only after persist revision verify and fail-closes without CONFIG_DIR', async () => {
+    const api = apiFromHandlers()
+    const created = await createNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      actorId: 'user',
+      grant,
+      type: 'create_task',
+      payload: { title: 'прототип' },
+    })
+    expect(created.ok).toBe(true)
+    if (!created.ok) throw new Error('expected create')
+    const approved = await approveNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: created.row,
+    })
+    expect(approved.ok).toBe(true)
+    if (!approved.ok) throw new Error('expected approve')
+    expect(approved.row.entityId?.startsWith('task:')).toBe(true)
+    const opened = await openNativeProposalTargetViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: approved.row,
+    })
+    expect(opened.ok).toBe(true)
+    if (!opened.ok) throw new Error('expected open')
+    expect(opened.route.startsWith('tasks/task/')).toBe(true)
+    expect(opened.target.kind).toBe('task')
+    expect(opened.target.revisionId).toBe(approved.row.revisionId)
+    delete process.env.ROX_CONFIG_DIR
+    delete process.env.CRAFT_CONFIG_DIR
+    const noDir = await openNativeProposalTargetViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: approved.row,
+    })
+    expect(noDir).toEqual({ ok: false, code: 'config-dir-required' })
   })
 })
