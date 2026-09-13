@@ -63,7 +63,7 @@ export function MobileMenuItem({
         )}
       </span>
       {affordance === 'chevron' && (
-        <Icons.ChevronRight className="h-4 w-4 shrink-0 text-foreground/40" strokeWidth={1.75} />
+        <Icons.ChevronRight className="h-4 w-4 shrink-0 text-foreground/70" strokeWidth={2} />
       )}
       {affordance === 'external' && (
         <Icons.ExternalLink className="h-4 w-4 shrink-0 text-foreground/40" strokeWidth={1.75} />

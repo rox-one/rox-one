@@ -715,7 +715,7 @@ function Row({
       <span className="flex-1 min-w-0 text-sm truncate">{label}</span>
       {trailing}
       {radioSelected && <Check className="h-4 w-4 shrink-0 text-foreground/70" />}
-      {chevron && <ChevronRight className="h-4 w-4 shrink-0 text-foreground/50" />}
+      {chevron && <ChevronRight className="h-4 w-4 shrink-0 text-foreground/70" />}
     </button>
   )
 }

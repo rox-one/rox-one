@@ -141,7 +141,7 @@ export function CollectionMenuDisclosure({
         <span className="max-w-[7rem] truncate text-[11px] text-muted-foreground">{valueLabel}</span>
         <ChevronRight
           className={cn(
-            'h-3 w-3 shrink-0 text-muted-foreground/70 transition-transform duration-150',
+            'h-3 w-3 shrink-0 text-foreground/70 transition-transform duration-150',
             open && 'rotate-90',
           )}
           strokeWidth={2}
