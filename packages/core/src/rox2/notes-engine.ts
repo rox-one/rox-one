@@ -96,11 +96,17 @@ export function extractWikilinks(markdown: string): string[] {
 export function parseBlocks(markdown: string): NoteBlock[] {
   const marked = [...markdown.matchAll(BLOCK_RE)]
   if (marked.length === 0) {
+    const seen = new Map<string, number>()
     return markdown
       .split(/\n\n+/)
       .map((text) => text.trim())
       .filter(Boolean)
-      .map((text, index) => ({ id: `b_${index + 1}`, text }))
+      .map((text) => {
+        const base = `b_${contentHash(text)}`
+        const count = (seen.get(base) ?? 0) + 1
+        seen.set(base, count)
+        return { id: count === 1 ? base : `${base}_${count}`, text }
+      })
   }
   return marked.map((match, index) => {
     const start = (match.index ?? 0) + match[0].length
