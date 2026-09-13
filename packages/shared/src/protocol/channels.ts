@@ -965,6 +965,8 @@ export const RPC_CHANNELS = {
     STOP_CAPTURE: 'meetings:stopCapture',
     IMPORT_MEDIA: 'meetings:importMedia',
     FINALIZE: 'meetings:finalize',
+    ADD_MANUAL_NOTE: 'meetings:addManualNote',
+    CORRECT_SEGMENT: 'meetings:correctSegment',
   },
 } as const
 

@@ -9,6 +9,7 @@ import { listNativeMeetings, startNativeMeeting } from '../../meetings/catalog.t
 import { applyNativeCaptureIntent, type CaptureIntentAction } from '../../meetings/capture.ts'
 import { applyNativeImportIntent, type ImportIntentSpec } from '../../meetings/import.ts'
 import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
+import { applyNativeManualNote, applyNativeSegmentCorrection, type ManualNoteSpec, type SegmentCorrectionSpec } from '../../meetings/manual.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness } from '../../meetings/native-actions.ts'
@@ -128,6 +129,8 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.STOP_CAPTURE,
   RPC_CHANNELS.meetings.IMPORT_MEDIA,
   RPC_CHANNELS.meetings.FINALIZE,
+  RPC_CHANNELS.meetings.ADD_MANUAL_NOTE,
+  RPC_CHANNELS.meetings.CORRECT_SEGMENT,
 ] as const
 
 export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): void {
@@ -323,6 +326,42 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
         actorId,
         grant,
         meetingId,
+      })
+      if (!result.ok) return { meeting: null, error: { code: result.code } }
+      return { meeting: result.meeting }
+    },
+  )
+  server.handle(
+    RPC_CHANNELS.meetings.ADD_MANUAL_NOTE,
+    async (_ctx, workspaceId: string, meetingId: string, actorId: string, grant: MeetingGrant | null, spec: ManualNoteSpec) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { meeting: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { meeting: null, error: { code: 'config-dir-required' } }
+      const result = applyNativeManualNote({
+        persistRootDir,
+        workspaceId,
+        actorId,
+        grant,
+        meetingId,
+        spec,
+      })
+      if (!result.ok) return { meeting: null, error: { code: result.code } }
+      return { meeting: result.meeting }
+    },
+  )
+  server.handle(
+    RPC_CHANNELS.meetings.CORRECT_SEGMENT,
+    async (_ctx, workspaceId: string, meetingId: string, actorId: string, grant: MeetingGrant | null, spec: SegmentCorrectionSpec) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { meeting: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { meeting: null, error: { code: 'config-dir-required' } }
+      const result = applyNativeSegmentCorrection({
+        persistRootDir,
+        workspaceId,
+        actorId,
+        grant,
+        meetingId,
+        spec,
       })
       if (!result.ok) return { meeting: null, error: { code: result.code } }
       return { meeting: result.meeting }

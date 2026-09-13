@@ -71,6 +71,8 @@ export const CHANNEL_MAP = {
   stopCapture: invoke(RPC_CHANNELS.meetings.STOP_CAPTURE),
   importMedia: invoke(RPC_CHANNELS.meetings.IMPORT_MEDIA),
   finalizeMeeting: invoke(RPC_CHANNELS.meetings.FINALIZE),
+  addManualNote: invoke(RPC_CHANNELS.meetings.ADD_MANUAL_NOTE),
+  correctSegment: invoke(RPC_CHANNELS.meetings.CORRECT_SEGMENT),
   getTaskResults: invoke(RPC_CHANNELS.tasks.GET_RESULTS),
   onTaskGenerated: listener(RPC_CHANNELS.tasks.GENERATED),
   respondToPermission: invoke(RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION),

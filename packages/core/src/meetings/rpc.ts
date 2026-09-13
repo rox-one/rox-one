@@ -43,6 +43,7 @@ export type MeetingJournalEvent =
   | { type: 'meeting.status'; status: Meeting['status'] }
   | { type: 'meeting.binding'; sourceBinding: NonNullable<Meeting['sourceBinding']> }
   | { type: 'segment.upsert'; segment: TranscriptSegment }
+  | { type: 'segment.correct'; segmentId: string; replacement: string }
   | { type: 'proposal.upsert'; proposal: MeetingProposal }
   | { type: 'manual.note'; noteId: string; text: string }
   | { type: 'operation.result'; result: OperationResultV2 }

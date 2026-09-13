@@ -670,6 +670,20 @@ export interface ElectronAPI {
     actorId: string,
     grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
   ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+  addManualNote(
+    workspaceId: string,
+    meetingId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    spec: { noteId: string; text: string },
+  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
+  correctSegment(
+    workspaceId: string,
+    meetingId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+    spec: { segmentId: string; replacement: string },
+  ): Promise<{ meeting: import('@craft-agent/core/meetings').Meeting | null; error?: { code: string } }>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
