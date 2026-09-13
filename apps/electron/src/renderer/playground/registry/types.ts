@@ -47,10 +47,40 @@ export interface PlaygroundAppearanceConstraint {
 
 export type Category = 'Sources' | 'Automations' | 'Mobile WebUI' | 'Onboarding' | 'Agent Setup' | 'Chat' | 'Island' | 'Browser' | 'Planner' | 'Custom Shadows' | 'Session List' | 'Collection' | 'Notes' | 'Kanban' | 'Entity Lists' | 'Edit Popover' | 'Turn Cards' | 'TurnCard Modes' | 'Fullscreen' | 'Chat Messages' | 'Chat Inputs' | 'Toast Messages' | 'Markdown' | 'Icons' | 'Settings' | 'Messaging' | 'Feedback' | 'OAuth' | 'Unified Shell' | 'Premium Menu'
 
+/**
+ * Playground stories are QA fixtures (ROX2-015). They must never claim a
+ * completed live product action. queued/simulated/live are not valid here.
+ */
+export const PLAYGROUND_ROX2_RUN_STATE = 'fixture' as const
+export type PlaygroundRox2RunState = typeof PLAYGROUND_ROX2_RUN_STATE
+
+export type PlaygroundRox2Result = {
+  ok: false
+  state: PlaygroundRox2RunState
+  code: 'playground.fixture'
+  message: string
+}
+
+/** Story results are always fixture. Callers must not treat this as live. */
+export function playgroundStoryResult(storyId: string): PlaygroundRox2Result {
+  if (!storyId.trim()) throw new Error('playground story id is empty')
+  return {
+    ok: false,
+    state: PLAYGROUND_ROX2_RUN_STATE,
+    code: 'playground.fixture',
+    message: `Playground story ${storyId} is a QA fixture, not a live product action`,
+  }
+}
+
 export interface ComponentEntry {
   id: string
   name: string
   category: Category
+  /**
+   * Rox2 run state for this story. Playground cannot set `live`.
+   * Defaults to `fixture` when omitted (ROX2-015).
+   */
+  rox2RunState?: PlaygroundRox2RunState
   /**
    * Design-system layer. Omitted by legacy registry entries and normalized to
    * `Patterns` by the registry loader.
