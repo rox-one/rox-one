@@ -20,7 +20,8 @@ import {
   assertEditableTranscript,
   buildVoiceHealth,
   catalogTemplate,
-  createConfiguredLocalTranscribeAdapter,
+  createProductionLocalTranscribeAdapter,
+  createProductionVoiceHttp,
   deleteRecording,
   exportRecording,
   getDefaultVoicePrefs,
@@ -30,7 +31,6 @@ import {
   memoryIdentityStore,
   parseCapabilities,
   resolveLocalAsrFamily,
-  resolveVoiceGatewayMode,
   saveHistoryIndex,
   saveVoicePrefs,
   setFavorite,
@@ -84,65 +84,11 @@ function decodeAudio(audioBase64: unknown): Uint8Array {
 }
 
 function localAdapter(prefs: VoicePrefs): TranscribeAdapter {
-  return createConfiguredLocalTranscribeAdapter(prefs)
-}
-
-function fixtureHttp() {
-  return {
-    async fetch(url: string, init?: RequestInit) {
-      if (url.includes('/voice/bootstrap')) {
-        return new Response(JSON.stringify({
-          accessToken: 'fixture-token',
-          expiresIn: 900,
-          scopes: ['voice:transcribe', 'voice:process', 'voice:capabilities'],
-          installationId: 'fixture',
-        }), { status: 200 })
-      }
-      if (url.includes('/voice/capabilities')) {
-        return new Response(JSON.stringify({
-          ...LAST_KNOWN_GOOD_CAPABILITIES,
-          availability: 'ok',
-          signatureValid: true,
-          quota: { asr: { remaining: 100, resetAt: 0 }, process: { remaining: 100, resetAt: 0 } },
-        }), { status: 200 })
-      }
-      if (url.includes('/audio/transcriptions')) {
-        return new Response(JSON.stringify({
-          text: 'rox cloud dictation',
-          language: 'en',
-          duration: 1.2,
-          model: 'whisper-large-v3-turbo',
-          segments: [{ start: 0, end: 1.2, text: 'rox cloud dictation' }],
-        }), { status: 200, headers: { 'x-request-id': 'fixture-asr' } })
-      }
-      if (url.includes('/voice/process')) {
-        const body = typeof init?.body === 'string' ? JSON.parse(init.body) : {}
-        return new Response(JSON.stringify({
-          executed_tools: [],
-          result: {
-            outputText: `cleaned: ${body.user ?? 'ok'}`,
-            transcriptLanguage: 'en',
-            outputLanguage: 'en',
-            answerLanguage: 'en',
-            appliedModules: [],
-            unresolvedQuestions: [],
-            assumptions: [],
-            sources: [],
-            warnings: [],
-          },
-        }), { status: 200 })
-      }
-      return new Response('not found', { status: 404 })
-    },
-  }
-}
-
-function liveHttp() {
-  return { fetch }
+  return createProductionLocalTranscribeAdapter(prefs)
 }
 
 function voiceHttp() {
-  return resolveVoiceGatewayMode() === 'live' ? liveHttp() : fixtureHttp()
+  return createProductionVoiceHttp()
 }
 
 function identityClient() {

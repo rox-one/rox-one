@@ -1,25 +1,43 @@
 /**
  * Shared personal-task cache used by Tasks and Projects.
  * Workspace project ids are assigned on tasks; this store is calendar-independent.
+ * Corrupt JSON is quarantined; persist never overwrites the original blob.
  */
 
-import { PersonalTaskStore, type PersonalTask } from '@craft-agent/core/tasks/personal'
+import {
+  loadPersonalTaskCache,
+  persistPersonalTaskCache,
+  PERSONAL_TASKS_STORAGE_KEY,
+  PERSONAL_TASKS_QUARANTINE_KEY,
+  type PersonalTaskCacheLoad,
+  type PersonalTask,
+} from '@craft-agent/core/tasks/personal'
 
-export const PERSONAL_TASKS_STORAGE_KEY = 'rox.personal-tasks.v1'
+export {
+  PERSONAL_TASKS_QUARANTINE_KEY,
+  PERSONAL_TASKS_STORAGE_KEY,
+} from '@craft-agent/core/tasks/personal'
+
 export const PERSONAL_TASKS_CHANGED_EVENT = 'rox.personal-tasks.changed'
 
+let loadStatus: PersonalTaskCacheLoad['status'] = 'empty'
+
+function kv(): Storage {
+  return localStorage
+}
+
+export function personalTasksLoadStatus(): PersonalTaskCacheLoad['status'] {
+  return loadStatus
+}
+
 export function loadPersonalTaskStore(): PersonalTaskStore {
-  try {
-    const raw = localStorage.getItem(PERSONAL_TASKS_STORAGE_KEY)
-    if (raw) return PersonalTaskStore.fromJson(raw)
-  } catch {
-    // Corrupt local cache — start empty; import remains available.
-  }
-  return new PersonalTaskStore()
+  const loaded = loadPersonalTaskCache(kv())
+  loadStatus = loaded.status
+  return loaded.store
 }
 
 export function persistPersonalTaskStore(store: PersonalTaskStore): void {
-  localStorage.setItem(PERSONAL_TASKS_STORAGE_KEY, store.exportJson())
+  persistPersonalTaskCache(kv(), store, loadStatus)
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event(PERSONAL_TASKS_CHANGED_EVENT))
   }
@@ -27,7 +45,7 @@ export function persistPersonalTaskStore(store: PersonalTaskStore): void {
 
 export function subscribePersonalTasks(onChange: () => void): () => void {
   const onStorage = (event: StorageEvent) => {
-    if (event.key === PERSONAL_TASKS_STORAGE_KEY) onChange()
+    if (event.key === PERSONAL_TASKS_STORAGE_KEY || event.key === PERSONAL_TASKS_QUARANTINE_KEY) onChange()
   }
   window.addEventListener(PERSONAL_TASKS_CHANGED_EVENT, onChange)
   window.addEventListener('storage', onStorage)

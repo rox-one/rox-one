@@ -32,6 +32,9 @@ import {
 } from '@craft-agent/ui'
 import { SessionUpload } from './components/SessionUpload'
 import { Header } from './components/Header'
+import { VIEWER_REQUIRES_CONATION_FLAG } from './rox2-viewer-surface'
+
+export { VIEWER_REQUIRES_CONATION_FLAG, VIEWER_SURFACE_ID, viewerSurfaceResult } from './rox2-viewer-surface'
 
 /** Default session ID for development */
 const DEV_SESSION_ID = 'tz5-13I84pwK_he'
@@ -52,6 +55,9 @@ function getSessionIdFromUrl(): string | null {
 }
 
 export function App() {
+  if (VIEWER_REQUIRES_CONATION_FLAG) {
+    throw new Error('Viewer is native and must not require Conation')
+  }
   const { t } = useTranslation()
   const [session, setSession] = useState<StoredSession | null>(null)
   const [isLoading, setIsLoading] = useState(false)

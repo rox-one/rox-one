@@ -1,5 +1,18 @@
 import { parseQuickEntry } from './dates.ts'
-import { emptyBundle, isOpenTask, type PersonalTask, type PersonalTaskBundle, type TaskLink, type TaskListId, type TaskPriority } from './types.ts'
+import {
+  emptyBundle,
+  isOpenTask,
+  PERSONAL_TASK_BUNDLE_VERSION,
+  type PersonalTask,
+  type PersonalTaskBundle,
+  type TaskLink,
+  type TaskListId,
+  type TaskPriority,
+} from './types.ts'
+
+export type PersonalTaskParseResult =
+  | { status: 'ok'; store: PersonalTaskStore }
+  | { status: 'quarantine'; reason: 'invalid-json' | 'invalid-shape' | 'unsupported-version'; preserved: string }
 
 let seq = 0
 function mint(prefix: string): string {
@@ -46,16 +59,51 @@ export class PersonalTaskStore {
     return JSON.stringify(this.snapshot(), null, 2)
   }
 
+  static tryFromJson(raw: string): PersonalTaskParseResult {
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(raw)
+    } catch {
+      return { status: 'quarantine', reason: 'invalid-json', preserved: raw }
+    }
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { status: 'quarantine', reason: 'invalid-shape', preserved: raw }
+    }
+    const record = parsed as Record<string, unknown>
+    const version = record.version
+    if (version === undefined) {
+      if (!Array.isArray(record.tasks)) {
+        return { status: 'quarantine', reason: 'invalid-shape', preserved: raw }
+      }
+    } else if (typeof version !== 'number' || !Number.isInteger(version) || version < 1) {
+      return { status: 'quarantine', reason: 'invalid-shape', preserved: raw }
+    } else if (version > PERSONAL_TASK_BUNDLE_VERSION) {
+      return { status: 'quarantine', reason: 'unsupported-version', preserved: raw }
+    }
+    for (const key of ['tasks', 'projects', 'areas', 'headings', 'audit'] as const) {
+      if (record[key] !== undefined && !Array.isArray(record[key])) {
+        return { status: 'quarantine', reason: 'invalid-shape', preserved: raw }
+      }
+    }
+    return {
+      status: 'ok',
+      store: new PersonalTaskStore({
+        version: 1,
+        tasks: Array.isArray(record.tasks) ? (record.tasks as PersonalTaskBundle['tasks']) : [],
+        projects: Array.isArray(record.projects) ? (record.projects as PersonalTaskBundle['projects']) : [],
+        areas: Array.isArray(record.areas) ? (record.areas as PersonalTaskBundle['areas']) : [],
+        headings: Array.isArray(record.headings) ? (record.headings as PersonalTaskBundle['headings']) : [],
+        audit: Array.isArray(record.audit) ? (record.audit as PersonalTaskBundle['audit']) : [],
+      }),
+    }
+  }
+
   static fromJson(raw: string): PersonalTaskStore {
-    const parsed = JSON.parse(raw) as Partial<PersonalTaskBundle>
-    return new PersonalTaskStore({
-      version: 1,
-      tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
-      projects: Array.isArray(parsed.projects) ? parsed.projects : [],
-      areas: Array.isArray(parsed.areas) ? parsed.areas : [],
-      headings: Array.isArray(parsed.headings) ? parsed.headings : [],
-      audit: Array.isArray(parsed.audit) ? parsed.audit : [],
-    })
+    const parsed = PersonalTaskStore.tryFromJson(raw)
+    if (parsed.status !== 'ok') {
+      throw new Error(`personal-task bundle ${parsed.reason}`)
+    }
+    return parsed.store
   }
 
   importBundle(incoming: PersonalTaskBundle, mode: 'merge' | 'replace'): void {

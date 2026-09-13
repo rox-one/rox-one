@@ -110,7 +110,10 @@ export function parseWorkflowDocument(raw: string | null, sessionId: string): Se
       sessionId,
       draft: parsed.draft,
       versions: Array.isArray(parsed.versions) ? parsed.versions : [],
-      runs: Array.isArray(parsed.runs) ? parsed.runs : [],
+      runs: (Array.isArray(parsed.runs) ? parsed.runs : []).map((run) => ({
+        ...run,
+        evidence: 'simulated',
+      })),
     }
   } catch {
     return createWorkflowDocument(sessionId)

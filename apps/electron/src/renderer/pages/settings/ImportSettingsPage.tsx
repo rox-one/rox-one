@@ -8,7 +8,7 @@ import { DownloadCloud, RefreshCw } from 'lucide-react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Spinner } from '@craft-agent/ui'
+import { Spinner, PremiumMenuSelect } from '@craft-agent/ui'
 import { routes } from '@/lib/navigate'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -169,19 +169,17 @@ export default function ImportSettingsPage() {
             />
             <label className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
               {t('settings.import.filterKind')}
-              <select
-                data-testid="session-import-kind"
-                value={kindFilter}
-                onChange={(event) => setKindFilter(event.target.value as ForeignSessionKind | 'all')}
-                className="h-8 rounded-md border bg-background px-2 text-sm text-foreground"
-              >
-                <option value="all">{t('settings.import.filterAll')}</option>
-                {FOREIGN_SESSION_KINDS.map((kind) => (
-                  <option key={kind} value={kind}>
-                    {kind}
-                  </option>
-                ))}
-              </select>
+              <PremiumMenuSelect
+                aria-label={t('settings.import.filterKind')}
+                className="h-8 max-w-[200px]"
+                items={[
+                  { id: 'all', label: t('settings.import.filterAll') },
+                  ...FOREIGN_SESSION_KINDS.map((kind) => ({ id: kind, label: kind })),
+                ]}
+                placeholder={t('settings.import.filterKind')}
+                selectedId={kindFilter}
+                onSelect={(item) => setKindFilter(item.id as ForeignSessionKind | 'all')}
+              />
             </label>
           </div>
           {selectedCount > 0 ? (

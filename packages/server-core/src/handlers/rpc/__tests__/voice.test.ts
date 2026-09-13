@@ -55,18 +55,16 @@ describe('voice RPC', () => {
     })
   })
 
-  it('does not let body.transcript override ASR', async () => {
+  it('does not let body.transcript override ASR and never returns a fixture phrase', async () => {
     const handlers = createHarness()
     const wav = Buffer.alloc(44)
     wav.write('RIFF', 0)
     wav.write('WAVE', 8)
-    const result = await handlers.get(RPC_CHANNELS.voice.TRANSCRIBE)!({}, {
+    await expect(handlers.get(RPC_CHANNELS.voice.TRANSCRIBE)!({}, {
       audioBase64: wav.toString('base64'),
       mimeType: 'audio/wav',
       transcript: 'injected by the renderer',
-    }) as { text: string }
-    expect(result.text).not.toBe('injected by the renderer')
-    expect(result.text).toBe('rox cloud dictation')
+    })).rejects.toThrow(/Voice gateway is not live|fixture transcripts are not production/)
   })
 
   it('lists the three local model families without claiming they are ready', async () => {

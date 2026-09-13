@@ -35,6 +35,8 @@ describe('H5 import and advisor wiring', () => {
     expect(page).toContain('session-import-select-all')
     expect(page).toContain('filterForeignIndexEntries')
     expect(page).toContain('session-import-search')
+    expect(page).toContain('PremiumMenuSelect')
+    expect(page).not.toContain('<select')
   })
 
   it('wires privileged browser profile import with separate OS credential approval', () => {

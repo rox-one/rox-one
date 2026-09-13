@@ -14,6 +14,7 @@ import {
   promoteTraceToDraft,
   replayRun,
   runWorkflow,
+  isProductionWorkflowSuccess,
   saveVersion,
   serializeWorkflowDocument,
   validateWorkflowSpec,
@@ -146,6 +147,27 @@ describe('session WorkflowSpec', () => {
     expect(fromHere.nodeIds.sort()).toEqual(['b', 'c'])
     expect(selection.nodeIds.sort()).toEqual(['a', 'c'])
     expect(pipeline.nodeIds.sort()).toEqual(['a', 'b', 'c'])
+  })
+
+  test('in-process runner is simulate-only and never production success', () => {
+    const spec = createDraftSpec('s1', 1)
+    const model = createCanvasNode({ id: 'm1', kind: 'model', title: 'm', position: { x: 0, y: 0 }, now: 1 })
+    const human = createCanvasNode({ id: 'h1', kind: 'human_input', title: 'h', position: { x: 1, y: 0 }, now: 2 })
+    const noteNode = note('n1')
+    spec.nodes = [model, human, noteNode]
+    spec.edges = [
+      createCanvasEdge({ source: noteNode.id, target: model.id, now: 3 }),
+      createCanvasEdge({ source: noteNode.id, target: human.id, now: 4 }),
+    ]
+    const run = runWorkflow({ spec, mode: 'pipeline', now: 8 })
+    expect(run.evidence).toBe('simulated')
+    expect(isProductionWorkflowSuccess(run)).toBe(false)
+    expect(run.status[model.id]).toBe('simulated')
+    expect(run.status[human.id]).toBe('waiting_approval')
+    expect(run.status[noteNode.id]).toBe('simulated')
+    expect(run.status[model.id]).not.toBe('done')
+    expect(run.finishedAt).toBeUndefined()
+    expect(run.artifacts[model.id]).toBeUndefined()
   })
 
   test('forks a version and compares node/edge edits', () => {
