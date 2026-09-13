@@ -2319,6 +2319,7 @@
   "overlay.zoomPresets": "Zoom presets",
   "overlay.zoomReset": "Reset zoom (⌘0)",
   "overlay.zoomToFit": "Zoom to Fit",
+  "pages.actionFailed": "Action failed",
   "pages.askAgent": "Ask an agent",
   "pages.askAgentPrompt": "Create a page for me that shows ",
   "pages.auth.credentialDescription": "Enter a new credential for this source. It's stored encrypted on this computer.",
