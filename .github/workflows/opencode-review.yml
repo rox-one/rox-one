@@ -23,7 +23,7 @@ jobs:
         with:
           script: |
             const body = context.payload.comment.body.trim()
-            if (!/(^|\s)\/(?:opencode|oc)\s+review\s*$/i.test(body)) {
+            if (!/(?:^|\r?\n)\s*\/(?:opencode|oc)\s+review\s*(?=\r?$|\r?\n)/im.test(body)) {
               core.setOutput("should_review", "false")
               return
             }
