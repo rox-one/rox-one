@@ -80,8 +80,21 @@ export function approveAndExecuteNative(input: ApproveAndExecuteInput): ApproveE
     deviceId: input.grant.deviceId,
     jobs: input.jobs,
     hooks: {
-      apply: (next) => applyNativeMeetingAction(next, runtime.notes, runtime.tasks, runtime.seen, runtime.persist),
-      readback: (entityId) => readbackNative(entityId, runtime.notes, runtime.tasks, runtime.persist),
+      apply: (next) => applyNativeMeetingAction(
+        next,
+        runtime.notes,
+        runtime.tasks,
+        runtime.seen,
+        runtime.persist,
+        runtime.notesPersist,
+      ),
+      readback: (entityId) => readbackNative(
+        entityId,
+        runtime.notes,
+        runtime.tasks,
+        runtime.persist,
+        runtime.notesPersist,
+      ),
     },
     now: input.now,
   })

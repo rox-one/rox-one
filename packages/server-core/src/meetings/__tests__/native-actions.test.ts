@@ -5,6 +5,7 @@ import { join } from 'path'
 import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
 import { createNativeNotesEngine, createNotesRepository } from '@craft-agent/core/rox2'
 import { PersonalTaskPersistStore } from '../../tasks/personal-persist.ts'
+import { MeetingNotePersistStore } from '../note-persist.ts'
 import { applyNativeMeetingAction, createNativeActionHarness, isNativeNotesEngine, openNativePersistTarget, readbackNative } from '../native-actions.ts'
 import { payloadHash } from '../proposals.ts'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
@@ -22,6 +23,31 @@ afterEach(() => {
 
 function root(): string {
   return tmpDirs[tmpDirs.length - 1]!
+}
+
+function notesDisk(): MeetingNotePersistStore {
+  return new MeetingNotePersistStore(root())
+}
+
+function apply(
+  proposal: MeetingProposal,
+  notes: ReturnType<typeof createNativeNotesEngine>,
+  tasks: PersonalTaskStore,
+  seen: Set<string>,
+  persist: PersonalTaskPersistStore,
+  notesPersist = notesDisk(),
+) {
+  return applyNativeMeetingAction(proposal, notes, tasks, seen, persist, notesPersist)
+}
+
+function read(
+  entityId: string,
+  notes: ReturnType<typeof createNativeNotesEngine>,
+  tasks: PersonalTaskStore,
+  persist: PersonalTaskPersistStore,
+  notesPersist = notesDisk(),
+) {
+  return readbackNative(entityId, notes, tasks, persist, notesPersist)
 }
 
 describe('native meeting actions (RMA-I011)', () => {
@@ -42,17 +68,17 @@ describe('native meeting actions (RMA-I011)', () => {
       sourceSpans: [],
       baseRevisions: {},
     }
-    const first = applyNativeMeetingAction(proposal, notes, tasks, seen, persist)
-    const second = applyNativeMeetingAction(proposal, notes, tasks, seen, persist)
+    const first = apply(proposal, notes, tasks, seen, persist)
+    const second = apply(proposal, notes, tasks, seen, persist)
     expect(first.entityId).toBe(second.entityId)
     expect(first.revision).toBe(second.revision)
     expect(tasks.list()).toHaveLength(1)
     expect(persist.list()).toHaveLength(1)
-    expect(readbackNative(first.entityId, notes, tasks, persist)?.entityId).toBe(first.entityId)
+    expect(read(first.entityId, notes, tasks, persist)?.entityId).toBe(first.entityId)
     expect(first.entityId.startsWith('task:')).toBe(true)
     expect(first.revision).not.toBe('')
     expect(Number(first.revision)).toBeGreaterThan(0)
-    expect(readbackNative(first.entityId, notes, tasks, persist)?.revision).toBe(first.revision)
+    expect(read(first.entityId, notes, tasks, persist)?.revision).toBe(first.revision)
     expect(proposal.payload.entityId).toBeUndefined()
     expect(proposal.payload.revision).toBeUndefined()
   })
@@ -62,7 +88,7 @@ describe('native meeting actions (RMA-I011)', () => {
     const tasks = new PersonalTaskStore()
     const persist = new PersonalTaskPersistStore(root())
     const seen = new Set<string>()
-    const created = applyNativeMeetingAction({
+    const created = apply({
       id: 'p-create',
       workspaceId: 'ws',
       meetingId: 'm1',
@@ -79,11 +105,11 @@ describe('native meeting actions (RMA-I011)', () => {
 
     const restartedPersist = new PersonalTaskPersistStore(root())
     const emptyMemory = new PersonalTaskStore()
-    const afterRestart = readbackNative(created.entityId, notes, emptyMemory, restartedPersist)
+    const afterRestart = read(created.entityId, notes, emptyMemory, restartedPersist)
     expect(afterRestart?.entityId).toBe(created.entityId)
     expect(afterRestart?.revision).toBe(created.revision)
 
-    const updated = applyNativeMeetingAction({
+    const updated = apply({
       id: 'p-update',
       workspaceId: 'ws',
       meetingId: 'm1',
@@ -98,13 +124,14 @@ describe('native meeting actions (RMA-I011)', () => {
     expect(Number(updated.revision)).toBeGreaterThan(Number(created.revision))
     expect(updated.revision).not.toBe('1')
     expect(restartedPersist.get(taskId)?.task.title).toBe('Buy oat milk')
-    expect(readbackNative(created.entityId, notes, emptyMemory, restartedPersist)?.revision).toBe(updated.revision)
+    expect(read(created.entityId, notes, emptyMemory, restartedPersist)?.revision).toBe(updated.revision)
   })
 
-  test('note write/readback uses NativeNotesEngine revision and survives vault restart', () => {
+  test('note write/readback persists NativeNotesEngine revision to disk', () => {
     const notes = createNativeNotesEngine()
     const tasks = new PersonalTaskStore()
     const persist = new PersonalTaskPersistStore(root())
+    const notesPersist = notesDisk()
     const seen = new Set<string>()
     const proposal: MeetingProposal = {
       id: 'n1',
@@ -117,8 +144,8 @@ describe('native meeting actions (RMA-I011)', () => {
       sourceSpans: [],
       baseRevisions: {},
     }
-    const written = applyNativeMeetingAction(proposal, notes, tasks, seen, persist)
-    const duplicate = applyNativeMeetingAction(proposal, notes, tasks, seen, persist)
+    const written = apply(proposal, notes, tasks, seen, persist, notesPersist)
+    const duplicate = apply(proposal, notes, tasks, seen, persist, notesPersist)
     expect(duplicate.entityId).toBe(written.entityId)
     expect(duplicate.revision).toBe(written.revision)
     expect(notes.list()).toHaveLength(1)
@@ -130,16 +157,21 @@ describe('native meeting actions (RMA-I011)', () => {
     expect(written.revision).toBe(stored!.revision)
     expect(written.revision).not.toBe('1')
     expect(written.revision.length).toBeGreaterThan(0)
-    const read = readbackNative(written.entityId, notes, tasks, persist)
-    expect(read?.entityId).toBe(written.entityId)
-    expect(read?.revision).toBe(written.revision)
+    expect(existsSync(join(notesPersist.dir, 'meeting-n1.json'))).toBe(true)
+    const seenRead = read(written.entityId, notes, tasks, persist, notesPersist)
+    expect(seenRead?.entityId).toBe(written.entityId)
+    expect(seenRead?.revision).toBe(written.revision)
 
-    const restarted = createNativeNotesEngine(notes.list())
-    const again = readbackNative(written.entityId, restarted, tasks, persist)
-    expect(again?.revision).toBe(written.revision)
-    expect(restarted.read('meeting-n1')?.markdown).toContain('ok')
+    const emptyEngine = createNativeNotesEngine()
+    const reopened = new MeetingNotePersistStore(root())
+    const fromDisk = read(written.entityId, emptyEngine, tasks, persist, reopened)
+    expect(fromDisk?.revision).toBe(written.revision)
+    const harness = createNativeActionHarness(root())
+    expect(harness.notes.read('meeting-n1')?.markdown).toContain('ok')
+    expect(harness.notes.read('meeting-n1')?.revision).toBe(written.revision)
     expect(tasks.exportJson()).toContain('"tasks": []')
     expect(persist.list()).toEqual([])
+    expect(notesPersist.list()).toHaveLength(1)
     expect(proposal.payload.entityId).toBeUndefined()
     expect(proposal.payload.revision).toBeUndefined()
   })
@@ -149,6 +181,7 @@ describe('native meeting actions (RMA-I011)', () => {
     expect(isNativeNotesEngine(harness.notes)).toBe(true)
     expect(isNativeNotesEngine(createNotesRepository())).toBe(false)
     expect(harness.persist).toBeInstanceOf(PersonalTaskPersistStore)
+    expect(harness.notesPersist).toBeInstanceOf(MeetingNotePersistStore)
   })
 
   test('openNativePersistTarget fail-closes without grant, configDir, revision, or persist hit', () => {
@@ -161,7 +194,7 @@ describe('native meeting actions (RMA-I011)', () => {
       deviceId: 'dev',
       capabilities: ['send'],
     }
-    const created = applyNativeMeetingAction({
+    const created = apply({
       id: 'p-open',
       workspaceId: 'ws',
       meetingId: 'm1',
@@ -171,7 +204,7 @@ describe('native meeting actions (RMA-I011)', () => {
       status: 'approved',
       sourceSpans: [],
       baseRevisions: {},
-    }, harness.notes, harness.tasks, harness.seen, harness.persist)
+    }, harness.notes, harness.tasks, harness.seen, harness.persist, harness.notesPersist)
     expect(openNativePersistTarget({
       persistRootDir,
       workspaceId: 'ws',
@@ -182,6 +215,7 @@ describe('native meeting actions (RMA-I011)', () => {
       notes: harness.notes,
       tasks: harness.tasks,
       persist: harness.persist,
+      notesPersist: harness.notesPersist,
     })).toEqual({ ok: false, code: 'grant-required' })
     expect(openNativePersistTarget({
       persistRootDir: null,
@@ -193,6 +227,7 @@ describe('native meeting actions (RMA-I011)', () => {
       notes: harness.notes,
       tasks: harness.tasks,
       persist: harness.persist,
+      notesPersist: harness.notesPersist,
     })).toEqual({ ok: false, code: 'config-dir-required' })
     expect(openNativePersistTarget({
       persistRootDir,
@@ -204,6 +239,7 @@ describe('native meeting actions (RMA-I011)', () => {
       notes: harness.notes,
       tasks: harness.tasks,
       persist: harness.persist,
+      notesPersist: harness.notesPersist,
     })).toEqual({ ok: false, code: 'revision-required' })
     expect(openNativePersistTarget({
       persistRootDir,
@@ -215,6 +251,7 @@ describe('native meeting actions (RMA-I011)', () => {
       notes: harness.notes,
       tasks: harness.tasks,
       persist: harness.persist,
+      notesPersist: harness.notesPersist,
     })).toEqual({ ok: false, code: 'unsupported-native-kind' })
     expect(openNativePersistTarget({
       persistRootDir,
@@ -226,6 +263,7 @@ describe('native meeting actions (RMA-I011)', () => {
       notes: harness.notes,
       tasks: harness.tasks,
       persist: harness.persist,
+      notesPersist: harness.notesPersist,
     })).toEqual({ ok: false, code: 'persist-miss' })
     const opened = openNativePersistTarget({
       persistRootDir,
@@ -237,6 +275,7 @@ describe('native meeting actions (RMA-I011)', () => {
       notes: harness.notes,
       tasks: harness.tasks,
       persist: harness.persist,
+      notesPersist: harness.notesPersist,
     })
     expect(opened).toEqual({
       ok: true,
@@ -244,6 +283,36 @@ describe('native meeting actions (RMA-I011)', () => {
       id: created.entityId.replace(/^task:/, ''),
       revisionId: created.revision,
       entityId: created.entityId,
+    })
+    const noteWritten = apply({
+      id: 'n-open',
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      type: 'create_note',
+      payload: { title: 'Minutes', body: 'ok' },
+      payloadHash: 'x',
+      status: 'approved',
+      sourceSpans: [],
+      baseRevisions: {},
+    }, harness.notes, harness.tasks, harness.seen, harness.persist, harness.notesPersist)
+    const restarted = createNativeActionHarness(persistRootDir)
+    expect(openNativePersistTarget({
+      persistRootDir,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      entityId: noteWritten.entityId,
+      revisionId: noteWritten.revision,
+      notes: restarted.notes,
+      tasks: restarted.tasks,
+      persist: restarted.persist,
+      notesPersist: restarted.notesPersist,
+    })).toEqual({
+      ok: true,
+      kind: 'note',
+      id: 'meeting-n-open',
+      revisionId: noteWritten.revision,
+      entityId: noteWritten.entityId,
     })
   })
 })

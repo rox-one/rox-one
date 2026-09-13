@@ -77,11 +77,11 @@ describe('approve then native execute (RMA-I010/I011)', () => {
     expect(entityId.startsWith('task:')).toBe(true)
     const taskId = entityId.replace(/^task:/, '')
     expect(existsSync(join(runtime.persist.dir, `${taskId}.json`))).toBe(true)
-    expect(readbackNative(entityId, runtime.notes, runtime.tasks, runtime.persist)?.revision).toBe(revision)
+    expect(readbackNative(entityId, runtime.notes, runtime.tasks, runtime.persist, runtime.notesPersist)?.revision).toBe(revision)
 
     const restarted = new PersonalTaskPersistStore(persistRootDir)
     const empty = createNativeActionHarness(persistRootDir)
-    expect(readbackNative(entityId, empty.notes, empty.tasks, restarted)?.revision).toBe(revision)
+    expect(readbackNative(entityId, empty.notes, empty.tasks, restarted, empty.notesPersist)?.revision).toBe(revision)
 
     const again = approveAndExecuteNative({
       store,
@@ -96,6 +96,42 @@ describe('approve then native execute (RMA-I010/I011)', () => {
     expect(again.operation.entityRef?.entityId).toBe(entityId)
     expect(again.operation.entityRef?.revisionId).toBe(revision)
     expect(runtime.persist.list()).toHaveLength(1)
+  })
+
+  test('approve create_note persists engine revision and readback survives harness restart', () => {
+    const persistRootDir = root()
+    const runtime = createNativeActionHarness(persistRootDir)
+    const jobs: OutboxJob[] = []
+    const payload = { title: 'Minutes', body: 'ok' }
+    const store: ProposalStore = { items: [proposed({
+      id: 'p-note',
+      type: 'create_note',
+      payload,
+      payloadHash: payloadHash(payload),
+    })] }
+    const result = approveAndExecuteNative({
+      store,
+      proposalId: 'p-note',
+      actorId: 'user',
+      grant,
+      payload,
+      jobs,
+      persistRootDir,
+      runtime,
+    })
+    expect(result.proposal.status).toBe('applied')
+    expect(result.operation.verification).toBe('verified')
+    const entityId = result.operation.entityRef!.entityId
+    const revision = result.operation.entityRef!.revisionId
+    expect(entityId).toBe('note:meeting-p-note')
+    expect(revision).not.toBe('1')
+    expect(revision.length).toBeGreaterThan(0)
+    expect(existsSync(join(runtime.notesPersist.dir, 'meeting-p-note.json'))).toBe(true)
+    expect(readbackNative(entityId, runtime.notes, runtime.tasks, runtime.persist, runtime.notesPersist)?.revision).toBe(revision)
+    const empty = createNativeActionHarness(persistRootDir)
+    expect(readbackNative(entityId, empty.notes, empty.tasks, empty.persist, empty.notesPersist)?.revision).toBe(revision)
+    expect(runtime.persist.list()).toEqual([])
+    expect(runtime.notesPersist.list()).toHaveLength(1)
   })
 
   test('grant missing is fail-closed: proposed stays, persist empty', () => {
@@ -116,6 +152,7 @@ describe('approve then native execute (RMA-I010/I011)', () => {
     expect(result.operation.error?.code).toBe('grant-required')
     expect(result.operation.entityRef).toBeUndefined()
     expect(runtime.persist.list()).toEqual([])
+    expect(runtime.notesPersist.list()).toEqual([])
   })
 
   test('missing configDir does not apply after approve', () => {
@@ -136,6 +173,7 @@ describe('approve then native execute (RMA-I010/I011)', () => {
     expect(result.operation.error?.code).toBe('config-dir-required')
     expect(result.operation.entityRef).toBeUndefined()
     expect(runtime.persist.list()).toEqual([])
+    expect(runtime.notesPersist.list()).toEqual([])
   })
 
   test('missing outbox does not apply after approve', () => {
@@ -155,6 +193,7 @@ describe('approve then native execute (RMA-I010/I011)', () => {
     expect(result.proposal.status).toBe('approved')
     expect(result.operation.error?.code).toBe('outbox-required')
     expect(runtime.persist.list()).toEqual([])
+    expect(runtime.notesPersist.list()).toEqual([])
   })
 
   test('revoked grant does not apply', () => {
@@ -174,5 +213,6 @@ describe('approve then native execute (RMA-I010/I011)', () => {
     expect(result.proposal.status).toBe('proposed')
     expect(result.operation.error?.code).toBe('revoked')
     expect(runtime.persist.list()).toEqual([])
+    expect(runtime.notesPersist.list()).toEqual([])
   })
 })

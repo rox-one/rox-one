@@ -7,6 +7,7 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
 import { PersonalTaskPersistStore } from '../../../tasks/personal-persist.ts'
+import { MeetingNotePersistStore } from '../../../meetings/note-persist.ts'
 import { readbackNative } from '../../../meetings/native-actions.ts'
 import { createNativeNotesEngine } from '@craft-agent/core/rox2'
 import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
@@ -127,7 +128,8 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
     expect(Number(revision)).toBeGreaterThan(0)
 
     const persist = new PersonalTaskPersistStore(join(configDir, 'meetings', 'ws'))
-    const read = readbackNative(entityId!, createNativeNotesEngine(), new PersonalTaskStore(), persist)
+    const notesPersist = new MeetingNotePersistStore(join(configDir, 'meetings', 'ws'))
+    const read = readbackNative(entityId!, createNativeNotesEngine(), new PersonalTaskStore(), persist, notesPersist)
     expect(read?.revision).toBe(revision)
   })
 
