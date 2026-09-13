@@ -1,0 +1,411 @@
+{
+  "schemaVersion": 1,
+  "baseline": {
+    "commit": "1dd6ebae (origin/main at gate start)",
+    "electronManifest": "^39.2.7",
+    "os": "linux",
+    "arch": "x64",
+    "gpu": "unknown",
+    "displayScale": "unknown",
+    "zoom": "100",
+    "theme": "headless",
+    "workbenchFlags": {
+      "featureUnifiedShellAtom": false,
+      "featureWorkbenchAtom": false
+    },
+    "zenFlagDefault": false,
+    "host": "linux-cloud-agent",
+    "osRelease": "Linux 6.12.94+ x86_64",
+    "notes": "Native macOS/Windows/WebContentsView blocked on linux-cloud-agent. ChatDisplay.tsx and CloudRunsSettingsPage.tsx JSX parse errors on main block electron:build/webui:build/typecheck; recorded as baseline, not hidden."
+  },
+  "commands": [
+    {
+      "name": "typecheck:electron",
+      "exitCode": 2,
+      "elapsedSec": 4.57,
+      "result": "failed",
+      "baseline": true,
+      "note": "ChatDisplay.tsx / CloudRunsSettingsPage.tsx / CloudRunsChip.tsx JSX on main"
+    },
+    {
+      "name": "webui:typecheck",
+      "exitCode": 2,
+      "elapsedSec": 3.66,
+      "result": "failed",
+      "baseline": true,
+      "note": "same ChatDisplay/CloudRuns parse errors"
+    },
+    {
+      "name": "lint:electron",
+      "exitCode": 1,
+      "elapsedSec": 9.67,
+      "result": "failed",
+      "baseline": true,
+      "note": "23 errors including ChatDisplay parse and pre-existing shadow-class rules; no findings in zen-shell-qa files"
+    },
+    {
+      "name": "lint:i18n:parity",
+      "exitCode": 0,
+      "elapsedSec": 0.83,
+      "result": "passed"
+    },
+    {
+      "name": "lint:i18n:coverage",
+      "exitCode": 1,
+      "elapsedSec": 3.59,
+      "result": "failed",
+      "baseline": true,
+      "note": "71 missing keys already on main; playground/registry is excluded from the scanner"
+    },
+    {
+      "name": "test:perf-budgets",
+      "exitCode": 0,
+      "elapsedSec": 2.69,
+      "result": "passed"
+    },
+    {
+      "name": "electron:build",
+      "exitCode": 1,
+      "elapsedSec": 27.46,
+      "result": "failed",
+      "baseline": true,
+      "note": "vite/babel fails parsing ChatDisplay.tsx on main"
+    },
+    {
+      "name": "webui:build",
+      "exitCode": 1,
+      "elapsedSec": 6.25,
+      "result": "failed",
+      "baseline": true,
+      "note": "same ChatDisplay.tsx parse error"
+    },
+    {
+      "name": "bun test zen-shell QA modules",
+      "exitCode": 0,
+      "result": "passed",
+      "note": "zen-shell-acceptance, fixture, layout-commit, and prior ZS-01..07 unit files"
+    }
+  ],
+  "cases": [
+    {
+      "requirementId": "ZS-R01",
+      "caseId": "macos-outer-shadow",
+      "environment": "linux-cloud-agent",
+      "result": "blocked",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R02",
+      "caseId": "macos-native-controls",
+      "environment": "linux-cloud-agent",
+      "result": "blocked",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R02",
+      "caseId": "topbar-no-html-lights",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R03",
+      "caseId": "material-resolver-matrix",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R03",
+      "caseId": "windows-mica-build",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R04",
+      "caseId": "first-paint-policy",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R05",
+      "caseId": "a11y-beats-glass",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R06",
+      "caseId": "chrome-glass-content-opaque",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R07",
+      "caseId": "geometry-tokens",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R08",
+      "caseId": "state-tokens",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R09",
+      "caseId": "topbar-safe-area",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R10",
+      "caseId": "topbar-history-menu",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R11",
+      "caseId": "disclosure-no-text-shift",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R12",
+      "caseId": "disclosure-aria-keyboard",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R13",
+      "caseId": "splitter-hint",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R14",
+      "caseId": "splitter-commit-cancel",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R15",
+      "caseId": "splitter-keyboard",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R16",
+      "caseId": "splitter-minmax",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R17",
+      "caseId": "commit-only-persistence",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R18",
+      "caseId": "layout-migration",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R19",
+      "caseId": "window-isolation",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R20",
+      "caseId": "native-suppression-unit",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R20",
+      "caseId": "native-webcontents-occlusion",
+      "environment": "linux-cloud-agent",
+      "result": "blocked",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R21",
+      "caseId": "native-bounds-contract",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R21",
+      "caseId": "native-zoom-fullscreen-os",
+      "environment": "linux-cloud-agent",
+      "result": "blocked",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R22",
+      "caseId": "browserpanel-no-vps-viewport",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R22",
+      "caseId": "native-no-reload-os",
+      "environment": "linux-cloud-agent",
+      "result": "blocked",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R23",
+      "caseId": "classic-shell-default",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R23",
+      "caseId": "linux-web-honest-solid",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R23",
+      "caseId": "qa-fixture-scale",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "apps/electron/src/renderer/playground/registry/zen-shell-qa.tsx",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R24",
+      "caseId": "solve-split-budget",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R24",
+      "caseId": "pointer-layout-p95",
+      "environment": "linux-cloud-agent",
+      "result": "not_run",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R25",
+      "caseId": "reduced-motion-css",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R26",
+      "caseId": "i18n-parity",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R26",
+      "caseId": "contrast-measurement",
+      "environment": "linux-cloud-agent",
+      "result": "not_run",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R27",
+      "caseId": "flag-default-off",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R27",
+      "caseId": "off-delegates-legacy",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R27",
+      "caseId": "set-zen-shell-patch",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R28",
+      "caseId": "evidence-complete",
+      "environment": "linux-cloud-agent",
+      "result": "passed",
+      "evidencePath": "docs/qa/zen-shell-acceptance.md",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    },
+    {
+      "requirementId": "ZS-R28",
+      "caseId": "repo-qa-commands",
+      "environment": "linux-cloud-agent",
+      "result": "not_run",
+      "evidencePath": "docs/qa/zen-shell-evidence.json",
+      "measuredAt": "2026-09-13T05:00:00.000Z"
+    }
+  ]
+}
