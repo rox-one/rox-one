@@ -103,4 +103,6 @@ export {
   SessionApplyClient,
   DEFAULT_OPERATOR_ORIGIN,
   recordSessionApplyOnTeam,
+  SessionApplyFlagOffError,
+  SessionApplyHttpError,
 } from './session-apply/index.ts';
