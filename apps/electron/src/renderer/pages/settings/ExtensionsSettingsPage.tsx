@@ -31,6 +31,7 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Spinner } from '@craft-agent/ui'
 import { navigate, routes } from '@/lib/navigate'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
+import { isClaimableLive } from '@craft-agent/core/rox2'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type {
   CatalogCategory,
@@ -54,6 +55,7 @@ import {
 import { useAtomValue } from 'jotai'
 import { featureWorkbenchHarnessExtCenterV1Atom } from '@/atoms/unified-shell'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -515,35 +517,48 @@ export default function ExtensionsSettingsPage() {
 
   useEffect(() => {
     void load()
-    const off = window.electronAPI.onExtensionsChanged(() => {
+    const off = window.electronAPI.onExtensionsChanged?.(() => {
       void load()
     })
-    const offMp = window.electronAPI.onMarketplaceChanged(() => {
+    const offMp = window.electronAPI.onMarketplaceChanged?.(() => {
       void load()
     })
     return () => {
-      off()
-      offMp()
+      off?.()
+      offMp?.()
     }
   }, [load])
 
-  const runBusy = useCallback(async (id: string, fn: () => Promise<void>) => {
-    setBusy((b) => ({ ...b, [id]: true }))
-    try {
-      await fn()
-      setActionMsg(t('extensions.action.success', { defaultValue: 'Done' }))
-      window.setTimeout(() => setActionMsg(null), 2500)
-      await load()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-    } finally {
-      setBusy((b) => {
-        const next = { ...b }
-        delete next[id]
-        return next
+  const runBusy = useCallback(
+    async (id: string, fn: () => Promise<void>, action: 'install' | 'uninstall' | 'toggle' | 'pref-write') => {
+      const gate = settingsPageActionResult({
+        pageId: 'extensions',
+        action,
+        source: 'native',
+        granted: action === 'toggle' || action === 'pref-write' ? undefined : true,
       })
-    }
-  }, [load, t])
+      if (!isClaimableLive(gate)) {
+        setError(t('settings.rox2.grantRequired'))
+        return
+      }
+      setBusy((b) => ({ ...b, [id]: true }))
+      try {
+        await fn()
+        setActionMsg(t('extensions.action.success', { defaultValue: 'Done' }))
+        window.setTimeout(() => setActionMsg(null), 2500)
+        await load()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err))
+      } finally {
+        setBusy((b) => {
+          const next = { ...b }
+          delete next[id]
+          return next
+        })
+      }
+    },
+    [load, t],
+  )
 
   const catalogEntries = catalog?.entries ?? []
   const installedRecords = installed?.records ?? []
@@ -612,7 +627,7 @@ export default function ExtensionsSettingsPage() {
       }
       await runBusy(`host-${action}`, async () => {
         await fn({ workspaceId: workspaceId ?? undefined })
-      })
+      }, 'pref-write')
     },
     [runBusy, workspaceId],
   )
@@ -651,7 +666,7 @@ export default function ExtensionsSettingsPage() {
         prefixes: allowlistPrefixes,
       })
       setAllowlistPrefixes(prefixesFrom(next) ?? allowlistPrefixes)
-    })
+    }, 'pref-write')
   }, [allowlistExtId, allowlistPrefixes, runBusy])
 
   const addAllowlistPrefix = useCallback(() => {
@@ -677,7 +692,7 @@ export default function ExtensionsSettingsPage() {
           tokenHash,
           workspaceId: workspaceId ?? undefined,
         })
-      })
+      }, 'uninstall')
     },
     [runBusy, workspaceId],
   )
@@ -737,12 +752,12 @@ export default function ExtensionsSettingsPage() {
                     repoURL: bazaarCoords.repoURL,
                     repoHash: bazaarCoords.repoHash,
                   })
-                })
+                }, 'install')
             : canInstallMarketplace
               ? () =>
                   void runBusy(entry.id, async () => {
                     await window.electronAPI.installMarketplaceEntry(marketplaceId!)
-                  })
+                  }, 'install')
               : undefined
         }
         onUpdate={
@@ -750,7 +765,7 @@ export default function ExtensionsSettingsPage() {
             ? () =>
                 void runBusy(entry.id, async () => {
                   await window.electronAPI.updateMarketplaceEntry(marketplaceId!)
-                })
+                }, 'install')
             : undefined
         }
         onUninstall={
@@ -760,12 +775,12 @@ export default function ExtensionsSettingsPage() {
                   await window.electronAPI.pluginBridgeUninstallBazaar({
                     packageName: bareBazaarName,
                   })
-                })
+                }, 'uninstall')
             : curatedInstalled
               ? () =>
                   void runBusy(entry.id, async () => {
                     await window.electronAPI.removeMarketplaceEntry(marketplaceId!)
-                  })
+                  }, 'uninstall')
               : undefined
         }
         onToggle={
@@ -773,7 +788,7 @@ export default function ExtensionsSettingsPage() {
             ? (enabled) =>
                 void runBusy(entry.id, async () => {
                   await window.electronAPI.extensionsSetEnabled({ id: entry.id, enabled })
-                })
+                }, 'toggle')
             : undefined
         }
       />
@@ -816,7 +831,7 @@ export default function ExtensionsSettingsPage() {
             ? () =>
                 void runBusy(record.id, async () => {
                   await window.electronAPI.updateMarketplaceEntry(marketplaceId!)
-                })
+                }, 'install')
             : undefined
         }
         onUninstall={
@@ -826,31 +841,32 @@ export default function ExtensionsSettingsPage() {
                   await window.electronAPI.pluginBridgeUninstallBazaar({
                     packageName: bareBazaarName,
                   })
-                })
+                }, 'uninstall')
             : curated
               ? () =>
                   void runBusy(record.id, async () => {
                     await window.electronAPI.removeMarketplaceEntry(marketplaceId!)
-                  })
+                  }, 'uninstall')
               : undefined
         }
         onToggle={(enabled) =>
           void runBusy(record.id, async () => {
             await window.electronAPI.extensionsSetEnabled({ id: record.id, enabled })
-          })
+          }, 'toggle')
         }
       />
     )
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
         title={t('settings.extensions.title', { defaultValue: 'Extensions' })}
         actions={<HeaderMenu route={routes.view.settings('extensions')} />}
       />
 
-      <ScrollArea className="flex-1">
+      <div className="flex-1 min-h-0 mask-fade-y">
+      <ScrollArea className="h-full">
         <div className="px-5 pt-6 pb-10 max-w-3xl mx-auto w-full space-y-5">
           {/* Sections */}
           {!unifiedCenter ? (
@@ -1373,6 +1389,7 @@ export default function ExtensionsSettingsPage() {
           ) : null}
         </div>
       </ScrollArea>
+      </div>
     </div>
   )
 }
