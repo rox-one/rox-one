@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "program": "meeting-agents",
+  "issues": "373-390",
+  "parent": 356,
+  "killSwitch": false,
+  "notes": "AUD #333 and live Mail/CRM/Calendar Conation remain blocked. Fixture is not live. Parent #356 is not closed.",
+  "commands": [],
+  "cases": [
+    { "id": "i017-tracker-stubs", "issue": 373, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i018-followup", "issue": 374, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i019-recipes", "issue": 375, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i020-conation-capabilities", "issue": 376, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i021-notes-projects", "issue": 377, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i022-board-fund", "issue": 378, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i023-files", "issue": 379, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i024-mail", "issue": 380, "status": "blocked", "live": false, "evidenceLevel": "L4" },
+    { "id": "i025-crm", "issue": 381, "status": "blocked", "live": false, "evidenceLevel": "L4" },
+    { "id": "i026-calendar", "issue": 382, "status": "blocked", "live": false, "evidenceLevel": "L4" },
+    { "id": "i027-sync", "issue": 383, "status": "passed", "live": false, "evidenceLevel": "C2" },
+    { "id": "i028-security", "issue": 384, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i029-harness", "issue": 385, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i030-eval", "issue": 386, "status": "not_run", "live": false, "evidenceLevel": "E3" },
+    { "id": "i031-packaging", "issue": 387, "status": "blocked", "live": false, "evidenceLevel": "N5" },
+    { "id": "i032-sharing", "issue": 388, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i033-rooms", "issue": 389, "status": "blocked", "live": false, "evidenceLevel": "N5" },
+    { "id": "i034-release-gate", "issue": 390, "status": "passed", "live": false, "evidenceLevel": "U1" }
+  ]
+}
