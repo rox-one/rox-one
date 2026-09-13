@@ -31,6 +31,12 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
+import {
+  isClaimableLive,
+  soupProjectActResult,
+  soupProjectListResult,
+  soupProjectReadResult,
+} from '@craft-agent/core/rox2'
 import { PROJECT_COLOR_PALETTE } from '@/utils/project-colors'
 import { InlineColorPickerRow } from '@/components/ui/inline-color-picker-row'
 import type { LoadedProject, ProjectAsset } from '@craft-agent/shared/projects/types'
@@ -65,6 +71,9 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   // Load project (and re-load on broadcast)
   const loadProject = useCallback(async () => {
     if (!workspaceId) return
+    const listed = soupProjectListResult({ source: 'native', nativeIds: projectSlug ? [projectSlug] : [] })
+    const read = soupProjectReadResult({ source: 'native', nativeId: projectSlug })
+    if (!isClaimableLive(listed.result) || !isClaimableLive(read.result)) return
     setLoading(true)
     setError(null)
     try {
@@ -172,6 +181,12 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
 
   const handleSaveSettings = useCallback(async () => {
     if (!workspaceId || !project) return
+    const act = soupProjectActResult({
+      source: 'native',
+      action: 'write',
+      nativeId: project.config.slug,
+    })
+    if (!isClaimableLive(act)) return
     setSaving(true)
     try {
       await window.electronAPI.updateProject(workspaceId, project.config.slug, {
@@ -193,6 +208,13 @@ export default function ProjectInfoPage({ projectSlug }: ProjectInfoPageProps) {
   const handleDeleteProject = useCallback(async () => {
     if (!workspaceId || !project) return
     if (!window.confirm(t('projectInfo.deleteConfirm', { name: project.config.name }))) return
+    const act = soupProjectActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: project.config.slug,
+    })
+    if (!isClaimableLive(act)) return
     try {
       await window.electronAPI.deleteProject(workspaceId, project.config.slug)
       navigate(routes.view.projects())
