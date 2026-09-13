@@ -3,6 +3,7 @@
 // any renderer module that reads `window.electronAPI.*` at module-load time
 // (e.g. `SessionFilesSection.tsx`'s top-level `getRuntimeEnvironment()`
 // call) finds the mock in place before its own module is evaluated.
+import './playground-polyfills'
 import './playground/mock-utils'
 
 import React from 'react'

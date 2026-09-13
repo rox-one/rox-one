@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { resolve } from 'path'
+import { readFileSync } from 'fs'
+import { join, resolve } from 'path'
 
 // NOTE: Source map upload to Sentry is intentionally disabled.
 // To re-enable, uncomment the sentryVitePlugin below and add SENTRY_AUTH_TOKEN,
@@ -28,6 +29,37 @@ function stubNpmLocksPlugin() {
         clean.endsWith('/toolchain/npm-locks')
       ) {
         return stub
+      }
+      return null
+    },
+  }
+}
+
+function worktreeCraftPackagePlugin() {
+  const packages: Array<{ name: string; dir: string }> = [
+    { name: '@craft-agent/shared', dir: 'shared' },
+    { name: '@craft-agent/ui', dir: 'ui' },
+    { name: '@craft-agent/core', dir: 'core' },
+  ]
+  const maps = packages.map(({ name, dir }) => {
+    const pkgRoot = resolve(__dirname, `../../packages/${dir}`)
+    const pkg = JSON.parse(readFileSync(join(pkgRoot, 'package.json'), 'utf8')) as {
+      exports?: Record<string, string>
+    }
+    return { name, pkgRoot, exports: pkg.exports ?? {} }
+  })
+
+  return {
+    name: 'worktree-craft-packages',
+    enforce: 'pre' as const,
+    resolveId(id: string) {
+      const clean = (id.split('?')[0] || id).replace(/\\/g, '/')
+      for (const entry of maps) {
+        if (clean !== entry.name && !clean.startsWith(`${entry.name}/`)) continue
+        const sub = clean === entry.name ? '.' : `.${clean.slice(entry.name.length)}`
+        const target = entry.exports[sub]
+        if (typeof target !== 'string') return null
+        return resolve(entry.pkgRoot, target)
       }
       return null
     },
@@ -80,6 +112,7 @@ export default defineConfig({
     }),
     tailwindcss(),
     stubNpmLocksPlugin(),
+    worktreeCraftPackagePlugin(),
     nodeBuiltinStubPlugin(),
     // Sentry source map upload — intentionally disabled. See CLAUDE.md for re-enabling instructions.
     // sentryVitePlugin({
@@ -93,6 +126,7 @@ export default defineConfig({
     // }),
   ],
   root: resolve(__dirname, 'src/renderer'),
+  cacheDir: resolve(__dirname, '.vite-worktree'),
   base: './',
   build: {
     outDir: resolve(__dirname, 'dist/renderer'),
@@ -112,11 +146,8 @@ export default defineConfig({
     alias: {
       '@': resolve(__dirname, 'src/renderer'),
       '@config': resolve(__dirname, '../../packages/shared/src/config'),
-      // Force all React imports to use the root node_modules React
-      // Bun hoists deps to root. This prevents "multiple React copies" error from @craft-agent/ui
       'react': resolve(__dirname, '../../node_modules/react'),
       'react-dom': resolve(__dirname, '../../node_modules/react-dom'),
-      // The real SDK has a Node shebang and belongs exclusively to main/server.
       '@anthropic-ai/claude-agent-sdk': resolve(__dirname, 'src/renderer/shims/claude-agent-sdk-stub.ts'),
       'bash-parser': resolve(__dirname, 'src/renderer/shims/bash-parser-stub.ts'),
       tar: resolve(__dirname, 'src/renderer/shims/tar-stub.ts'),
@@ -128,16 +159,20 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['react', 'react-dom', 'jotai', 'pdfjs-dist'],
-    exclude: ['@craft-agent/ui', '@anthropic-ai/claude-agent-sdk', 'tar', 'glob'],
+    exclude: ['@craft-agent/ui', '@craft-agent/shared', '@craft-agent/core', '@anthropic-ai/claude-agent-sdk', 'tar', 'glob'],
     esbuildOptions: {
       supported: { 'top-level-await': true },
-      target: 'esnext'
-    }
+      target: 'esnext',
+      define: { global: 'globalThis' },
+    },
   },
   server: {
     host: true,
     port: 5173,
     strictPort: true,
-    open: false
-  }
+    open: false,
+  },
+  define: {
+    global: 'globalThis',
+  },
 })

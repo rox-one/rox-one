@@ -106,6 +106,8 @@ export const constants = dynamic
 export const constants_fs = dynamic
 export const copyFile = fn
 export const copyFileSync = binaryOrEmpty
+export const cp = fn
+export const cpSync = binaryOrEmpty
 export const cpus = fn
 export const createCipheriv = (..._args: unknown[]) => hash()
 export const createConnection = (..._args: unknown[]) => obj()
