@@ -28,12 +28,17 @@ import {
 } from './meetings/capture-rpc'
 import {
   buildMeetingImportGrant,
-  i18nKeyForImportError,
   importMediaViaRpc,
   resolveMeetingImportApi,
   specFromBytes,
   type MeetingImportApi,
 } from './meetings/import-rpc'
+import {
+  finalizeMeetingViaRpc,
+  i18nKeyForFinalizeError,
+  resolveMeetingFinalizeApi,
+  type MeetingFinalizeApi,
+} from './meetings/finalize-rpc'
 
 export type { MeetingListItem }
 
@@ -43,7 +48,7 @@ export default function MeetingsPage(props: {
   selectedId?: string | null
   workspaceId?: string | null
   actorId?: string
-  api?: (MeetingProposalApi & Partial<MeetingCatalogApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi>) | null
+  api?: (MeetingProposalApi & Partial<MeetingCatalogApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi>) | null
 }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
@@ -56,6 +61,7 @@ export default function MeetingsPage(props: {
   const catalogApi = resolveMeetingCatalogApi(props.api)
   const captureApi = resolveMeetingCaptureApi(props.api)
   const importApi = resolveMeetingImportApi(props.api)
+  const finalizeApi = resolveMeetingFinalizeApi(props.api)
   const [meetings, setMeetings] = useState<MeetingListItem[]>(props.meetings ?? [])
   const [selectedId, setSelectedId] = useState<string | null>(props.selectedId ?? meetings[0]?.id ?? null)
   const [items, setItems] = useState<MeetingProposalRow[]>(props.proposals ?? [])
@@ -164,6 +170,22 @@ export default function MeetingsPage(props: {
     setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
   }
 
+  async function handleFinalize() {
+    setBanner(null)
+    const result = await finalizeMeetingViaRpc({
+      api: finalizeApi,
+      workspaceId,
+      meetingId: selected?.id ?? null,
+      actorId,
+      grant: importGrant,
+    })
+    if (!result.ok) {
+      setBanner(result.code)
+      return
+    }
+    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+  }
+
   const createForm = (
     <div className="mt-4 flex flex-col gap-2" data-testid="meetings-create-form">
       <label>
@@ -189,7 +211,7 @@ export default function MeetingsPage(props: {
   )
 
   const bannerNode = banner ? (
-    <p data-testid="meetings-rpc-error">{t(i18nKeyForImportError(banner))}</p>
+    <p data-testid="meetings-rpc-error">{t(i18nKeyForFinalizeError(banner))}</p>
   ) : null
 
   const nativeNote = <p data-testid="meetings-native-catalog">{t('meetings.nativeCatalog')}</p>
@@ -219,6 +241,10 @@ export default function MeetingsPage(props: {
           }}
         />
       </label>
+      <p data-testid="meetings-finalize-intent">{t('meetings.finalizeIntent')}</p>
+      <button type="button" data-testid="meetings-finalize" onClick={() => void handleFinalize()}>
+        {t('meetings.finalize')}
+      </button>
     </div>
   ) : null
 
@@ -255,7 +281,9 @@ export default function MeetingsPage(props: {
       <section className="flex-1 p-4">
         {selected ? <MeetingDetail meeting={selected} /> : <p>{t('meetings.select')}</p>}
         {captureControls}
-        <p data-testid="meeting-live-transcript" className="mt-3 text-sm">{t('meetings.transcriptPending')}</p>
+        <p data-testid="meeting-live-transcript" className="mt-3 text-sm">
+          {t(selected?.status === 'completed' ? 'meetings.transcriptNone' : 'meetings.transcriptPending')}
+        </p>
         {bannerNode}
         {createForm}
         <ProposalInbox proposals={items} onApprove={(row) => void handleApprove(row)} approvingId={approvingId} />
