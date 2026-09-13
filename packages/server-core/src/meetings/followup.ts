@@ -2,9 +2,17 @@
  * RMA-I018 / #374 — meeting follow-up schedules.
  * Calendar cancel disables upcoming work; it does not erase history.
  * Fixture/simulator executors are not the production path.
+ * Send goes through a persisted outbox and fail-closes: no production mail.
  */
 
+import { dispatchOutbox, reserveOutbox, type OutboxEntry } from './outbox.ts'
 import { denied, unsupported, type MeetingOpResult } from './types.ts'
+
+export const FOLLOWUP_SEND_GATE = {
+  evidenceLevel: 'U1',
+  live: false,
+  l4: 'not_run',
+} as const
 
 export type FollowupKind = 'prepare' | 'finalize' | 'promise-check' | 'send'
 
@@ -25,6 +33,7 @@ export type FollowupSchedule = {
   readonly deviceAvailable?: boolean
   readonly grantExpired?: boolean
   readonly alreadyCompleted?: boolean
+  readonly freshSendGrant?: boolean
 }
 
 export type FollowupLedgerEntry = {
@@ -43,6 +52,7 @@ export type FollowupRuntime = {
     schedules: Map<string, FollowupSchedule>
     ledger: FollowupLedgerEntry[]
     occurrenceKeys: Set<string>
+    outbox: OutboxEntry[]
   }
 }
 
@@ -54,6 +64,7 @@ export function createFollowupRuntime(now = () => Date.now()): FollowupRuntime {
       schedules: new Map(),
       ledger: [],
       occurrenceKeys: new Set(),
+      outbox: [],
     },
   }
 }
@@ -119,7 +130,16 @@ export function runFollowup(
     return { status: 'pending', reason: 'waiting_device', live: false, evidenceLevel: 'U1' }
   }
   if (kind === 'send') {
-    return unsupported('send-requires-fresh-grant')
+    if (!schedule.freshSendGrant) {
+      return unsupported('send-requires-fresh-grant')
+    }
+    return enqueueFollowupOutbox(runtime, {
+      operationId: `${scheduleId}:${schedule.occurrenceKey}:send`,
+      idempotencyKey: `${scheduleId}:send:${schedule.occurrenceKey}`,
+      payloadHash: schedule.occurrenceKey,
+      kind: 'send',
+      status: 'queued',
+    })
   }
   const key = occurrenceKey(schedule.id, runtime.now(), schedule.timezone)
   if (runtime.persisted.occurrenceKeys.has(key)) {
@@ -139,4 +159,20 @@ export function disableSchedules(runtime: FollowupRuntime): void {
   for (const schedule of runtime.persisted.schedules.values()) {
     runtime.persisted.schedules.set(schedule.id, { ...schedule, optOut: true })
   }
+}
+
+export function queueFollowupDraft(
+  runtime: FollowupRuntime,
+  scheduleId: string,
+  operation: { operationId: string; idempotencyKey: string; payloadHash: string },
+): MeetingOpResult {
+  const schedule = runtime.persisted.schedules.get(scheduleId)
+  if (!schedule) return denied('schedule-missing')
+  return enqueueFollowupOutbox(runtime, { ...operation, kind: 'draft', status: 'queued' })
+}
+
+function enqueueFollowupOutbox(runtime: FollowupRuntime, next: OutboxEntry): MeetingOpResult {
+  const { reserved, entry } = reserveOutbox(runtime.persisted.outbox, next)
+  if (reserved) runtime.persisted.outbox.push(entry)
+  return dispatchOutbox(entry)
 }
