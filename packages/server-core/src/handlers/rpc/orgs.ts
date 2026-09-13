@@ -34,8 +34,9 @@ export const HANDLED_CHANNELS = [
 ] as const
 
 /**
- * Prefer CRAFT_SERVER_URL server-side invite redemption when present.
- * Local single-device path is the default implementation below.
+ * Prefer Rox Server URL (env CRAFT_SERVER_URL) server-side invite
+ * redemption when present. Local single-device path is the default.
+ * Invite RPC creates a local token only — there is no mailer.
  */
 function serverModeEnabled(): boolean {
   return Boolean(process.env.CRAFT_SERVER_URL && process.env.CRAFT_SERVER_URL.trim())

@@ -2,9 +2,9 @@ import { resolveConfigDir } from "../config/paths.ts"
 /**
  * Organization / team workspace types (P3.1).
  *
- * Local-first bookkeeping under CONFIG_DIR/orgs.json. When CRAFT_SERVER_URL
- * is set, invite redemption prefers the server path; pure local multi-user
- * stores pending invites redeemed on this device.
+ * Local-first bookkeeping under CONFIG_DIR/orgs.json. When the Rox Server URL
+ * (env CRAFT_SERVER_URL) is set, invite redemption prefers the server path;
+ * pure local multi-user stores pending invites redeemed on this device.
  */
 
 export type OrgRole = 'owner' | 'admin' | 'member'
@@ -23,6 +23,8 @@ export interface OrgMember {
   role: OrgRole
   /** Display hint only — may be email or username at invite time */
   displayLabel?: string
+  username?: string
+  email?: string
   joinedAt: number
 }
 
