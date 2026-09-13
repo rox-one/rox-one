@@ -344,7 +344,79 @@ export const mockElectronAPI = {
     nextThreshold: 100,
     currentThreshold: 0,
     recentEvents: [],
+    quests: [
+      { id: 'first_note' as const, status: 'available' as const },
+      { id: 'first_task' as const, status: 'available' as const },
+    ],
+    ratings: [],
+    analyticsConsent: false,
   }),
+  applyGamificationQuest: async (payload: unknown) => {
+    console.log('[Playground] applyGamificationQuest', payload)
+  },
+  getCloudRunsConfig: async () => ({
+    enabled: true,
+    provider: 'daytona',
+    notifyWebhookUrl: '',
+    cheapModelId: '',
+    personas: false,
+    tokenConfigured: false,
+    secretConfigured: false,
+    daytonaProjectId: '',
+    daytonaSnapshot: '',
+    daytonaSandbox: '',
+    daytonaRegion: '',
+    daytonaImage: '',
+    defaultTtlSec: 3600,
+    defaults: { maxWallClockSec: 3600, maxLlmTokens: 200_000, maxArtifactsBytes: 50_000_000 },
+  }),
+  setCloudRunsConfig: async (patch: unknown) => {
+    console.log('[Playground] setCloudRunsConfig', patch)
+  },
+  listCloudRuns: async () => [],
+  listCloudRunSchedules: async () => [],
+  submitCloudRun: async (payload: unknown) => {
+    console.log('[Playground] submitCloudRun', payload)
+  },
+  sessionTopicCloudRun: async () => ({ topic: '' }),
+  fabricInfisicalHealth: async () => ({ available: false }),
+  openclawRuntime: {
+    getStatus: async ({ workspaceId }: { workspaceId: string }) => ({
+      runtimeId: 'playground-runtime',
+      workspaceId,
+      state: 'unavailable' as const,
+      managed: true as const,
+    }),
+    install: async () => ({ runtimeId: 'playground-runtime', workspaceId: 'playground-workspace', state: 'installing' as const, managed: true as const }),
+    provision: async () => ({ runtimeId: 'playground-runtime', workspaceId: 'playground-workspace', state: 'provisioned' as const, managed: true as const }),
+    start: async () => ({ runtimeId: 'playground-runtime', workspaceId: 'playground-workspace', state: 'running' as const, managed: true as const }),
+    stop: async () => ({ runtimeId: 'playground-runtime', workspaceId: 'playground-workspace', state: 'stopped' as const, managed: true as const }),
+  },
+  securityAudit: {
+    getLatest: async ({ workspaceId }: { workspaceId: string }) => ({
+      id: 'playground-audit',
+      runtimeId: 'playground-runtime',
+      workspaceId,
+      mode: 'standard' as const,
+      startedAt: Date.now() - 60_000,
+      completedAt: Date.now() - 30_000,
+      coverage: { craft: 'checked' as const, openclaw: 'not-provisioned' as const, deep: 'not-requested' as const },
+      runtime: {
+        runtimeId: 'playground-runtime',
+        workspaceId,
+        state: 'unavailable' as const,
+        managed: true as const,
+      },
+      summary: { critical: 0, warn: 0, info: 0, pass: 0, unavailable: 0 },
+      domains: [],
+      findings: [],
+    }),
+    run: async () => {
+      throw new Error('playground-audit-not-run')
+    },
+    acceptRisk: async () => {},
+    revokeRiskAcceptance: async () => {},
+  },
   getPrivacyState: async () => ({
     schemaVersion: 'dg-01-v1',
     purposes: {

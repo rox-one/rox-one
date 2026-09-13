@@ -1,0 +1,27 @@
+import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+const playground = join(import.meta.dir, '../..')
+
+describe('uncovered playground screens', () => {
+  it('registers Security, Cloud Runs, quest empty, and Reauth stories', () => {
+    const settings = readFileSync(join(playground, 'registry/settings.tsx'), 'utf8')
+    const onboarding = readFileSync(join(playground, 'registry/onboarding.tsx'), 'utf8')
+    expect(settings).toContain("id: 'settings-security'")
+    expect(settings).toContain("id: 'settings-cloud-runs'")
+    expect(settings).toContain("id: 'home-quests-empty'")
+    expect(settings).toContain('quest-progress-card')
+    expect(onboarding).toContain("id: 'onboarding-reauth'")
+    expect(onboarding).toContain('ReauthScreen')
+  })
+
+  it('mocks cloud-run, security, and quest IPC for those screens', () => {
+    const mock = readFileSync(join(playground, 'mock-utils.ts'), 'utf8')
+    expect(mock).toContain('getCloudRunsConfig')
+    expect(mock).toContain('openclawRuntime')
+    expect(mock).toContain('securityAudit')
+    expect(mock).toContain("id: 'first_note'")
+    expect(mock).toContain('findings: []')
+  })
+})

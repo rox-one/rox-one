@@ -51,4 +51,11 @@ describe('CloudRunsChip compact dialog accessibility', () => {
     expect(source).toContain('PremiumMenuSelect')
     expect(source).not.toContain('<select')
   })
+
+  it('uses i18n for usage ledger and a Sparkles prefill control', () => {
+    expect(source).toContain("t('cloudRuns.usageTokens'")
+    expect(source).toContain('<Sparkles')
+    expect(source).not.toContain('✦')
+    expect(source).toContain('accent-foreground')
+  })
 })

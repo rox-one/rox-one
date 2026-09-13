@@ -7,6 +7,7 @@ import { CredentialsStep } from '@/components/onboarding/CredentialsStep'
 import { CompletionStep } from '@/components/onboarding/CompletionStep'
 import { GitBashWarning, type GitBashStatus } from '@/components/onboarding/GitBashWarning'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
+import { ReauthScreen } from '@/components/onboarding/ReauthScreen'
 import type { OnboardingState } from '@/components/onboarding/OnboardingWizard'
 
 const createOnboardingState = (overrides: Partial<OnboardingState> = {}): OnboardingState => ({
@@ -437,6 +438,22 @@ export const onboardingComponents: ComponentEntry[] = [
       onRecheckGitBash: noopHandler,
       onClearError: noopHandler,
       onSkipSetup: () => console.log('[Playground] Setup deferred'),
+    }),
+  },
+  {
+    id: 'onboarding-reauth',
+    name: 'ReauthScreen',
+    category: 'Onboarding',
+    description: 'Expired-session re-login with Rox copy and an i18n error fallback',
+    component: ReauthScreen,
+    props: [],
+    variants: [],
+    layout: 'full',
+    mockData: () => ({
+      onLogin: async () => {
+        console.log('[Playground] Reauth login')
+      },
+      onReset: noopHandler,
     }),
   },
 ]
