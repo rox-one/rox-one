@@ -15,7 +15,7 @@ describe('meetings UI create/approve/reject RPC wiring', () => {
     expect(inbox).toContain('proposal-reject')
     expect(inbox).toContain('onOpenTarget')
     expect(inbox).toContain('proposal-target-link')
-    expect(inbox).toContain('disabled={!proposal.revisionId}')
+    expect(inbox).toContain('disabled={!proposal.revisionId || !props.onOpenTarget}')
   })
 
   it('creates, approves, and rejects through meetings RPC helpers, not localStorage', () => {
