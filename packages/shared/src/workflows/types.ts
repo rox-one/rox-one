@@ -77,11 +77,28 @@ export type SessionWorkflowSpec = {
 
 export type WorkflowRunMode = 'node' | 'from-here' | 'selection' | 'pipeline'
 
-export type WorkflowNodeRunStatus = 'queued' | 'running' | 'done' | 'skipped' | 'blocked'
+export type WorkflowExecutionKind = 'simulate' | 'production'
+
+export type WorkflowNodeRunStatus =
+  | 'queued'
+  | 'running'
+  | 'done'
+  | 'skipped'
+  | 'blocked'
+  | 'simulated'
+  | 'waiting_approval'
+  | 'failed'
+  | 'cancelled'
 
 export type WorkflowArtifact = {
   nodeId: string
   kind: PortKind
+  value: string
+}
+
+export type WorkflowNodeReceipt = {
+  nodeId: string
+  effectId: string
   value: string
 }
 
@@ -90,9 +107,12 @@ export type WorkflowRun = {
   specId: string
   specVersionId: string
   mode: WorkflowRunMode
+  execution: WorkflowExecutionKind
   nodeIds: string[]
   status: Record<string, WorkflowNodeRunStatus>
   artifacts: Record<string, WorkflowArtifact>
+  receipts: Record<string, WorkflowNodeReceipt>
+  permissionRevision: string
   startedAt: number
   finishedAt?: number
 }

@@ -96,6 +96,7 @@ describe('calendar connectors (issue 18)', () => {
     store.markConnected(account.id)
     const first = new FixtureCalendarAdapter('mailru', [{ id: 'e1', title: 'A', startAt: morning, endAt: morning + 1000, etag: '1' }])
     await store.sync(account.id, first, morning)
+    store.updateLocalEvent(account.id, 'e1', { title: 'Local A' })
     const second = new FixtureCalendarAdapter('mailru', [{ id: 'e1', title: 'A2', startAt: morning, endAt: morning + 1000, etag: '2' }])
     await store.sync(account.id, second, morning + 1000)
     expect(store.conflicts().some((conflict) => conflict.kind === 'update')).toBe(true)
@@ -153,5 +154,89 @@ describe('calendar connectors (issue 18)', () => {
     expect(events).toHaveLength(2)
     expect(events.find((event) => event.accountId === google.id)?.title).toBe('Google copy')
     expect(events.find((event) => event.accountId === outlook.id)?.title).toBe('Outlook copy')
+  })
+
+  it('restores nextSeq so restore→create does not collide', () => {
+    const store = new CalendarStore()
+    const first = store.connect('google', 'A', 'UTC')
+    const restored = CalendarStore.fromJson(store.exportJson())
+    const second = restored.connect('google', 'B', 'UTC')
+    expect(second.id).not.toBe(first.id)
+    expect(restored.accounts().map((account) => account.id)).toEqual([first.id, second.id])
+  })
+
+  it('applies a remote-only etag change without a false conflict', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{
+      id: 'e1',
+      title: 'Standup',
+      startAt: morning,
+      endAt: morning + 1000,
+      etag: 'v1',
+    }]), morning)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{
+      id: 'e1',
+      title: 'Standup moved',
+      startAt: morning + 2000,
+      endAt: morning + 3000,
+      etag: 'v2',
+    }]), morning + 1)
+    expect(store.conflicts()).toHaveLength(0)
+    expect(store.events()[0]?.title).toBe('Standup moved')
+    expect(store.events()[0]?.localDirty).toBe(false)
+  })
+
+  it('conflicts when localDirty and remote etag both changed', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{
+      id: 'e1',
+      title: 'Standup',
+      startAt: morning,
+      endAt: morning + 1000,
+      etag: 'v1',
+    }]), morning)
+    store.updateLocalEvent(account.id, 'e1', { title: 'Local title' })
+    await store.sync(account.id, new FixtureCalendarAdapter('google', [{
+      id: 'e1',
+      title: 'Remote title',
+      startAt: morning,
+      endAt: morning + 1000,
+      etag: 'v2',
+    }]), morning + 1)
+    expect(store.conflicts().some((conflict) => conflict.kind === 'update' && conflict.eventId === 'e1')).toBe(true)
+    expect(store.events()[0]?.title).toBe('Local title')
+  })
+
+  it('does not apply a delayed fetch after revoke', async () => {
+    const store = new CalendarStore()
+    const account = store.connect('google', 'Work', 'UTC')
+    store.markConnected(account.id)
+    let release!: () => void
+    const gate = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const delayed = {
+      provider: 'google' as const,
+      capabilities: CALENDAR_CAPABILITIES.google,
+      available: () => true,
+      async listEvents(accountId: string) {
+        await gate
+        return new FixtureCalendarAdapter('google', [{
+          id: 'late',
+          title: 'Should not land',
+          startAt: morning,
+          endAt: morning + 1000,
+        }]).listEvents(accountId)
+      },
+    }
+    const pending = store.sync(account.id, delayed, morning)
+    store.revoke(account.id)
+    release()
+    await pending
+    expect(store.events()).toHaveLength(0)
   })
 })

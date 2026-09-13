@@ -740,7 +740,7 @@ function EditorInner({
         const next = recordRun(document, run)
         setWorkflowDoc(next)
         persistWorkflowDocument(next)
-        toast.success(t('entityView.mapRunComplete'))
+        toast.success(t('entityView.mapRunSimulated'))
       } catch (error) {
         toast.error(t('entityView.mapValidationBlocked'), {
           description: error instanceof Error ? error.message : String(error),
@@ -762,7 +762,7 @@ function EditorInner({
       const next = recordRun(workflowDoc, run)
       setWorkflowDoc(next)
       persistWorkflowDocument(next)
-      toast.success(t('entityView.mapRunComplete'))
+        toast.success(t('entityView.mapRunSimulated'))
     } catch (error) {
       toast.error(t('entityView.mapValidationBlocked'), {
         description: error instanceof Error ? error.message : String(error),

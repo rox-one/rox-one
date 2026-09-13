@@ -2,6 +2,8 @@ import { fingerprintSpec, mintId, reachableFrom, topologicalOrder } from './grap
 import type {
   SessionWorkflowSpec,
   WorkflowArtifact,
+  WorkflowExecutionKind,
+  WorkflowNodeReceipt,
   WorkflowNodeRunStatus,
   WorkflowRun,
   WorkflowRunMode,
@@ -19,11 +21,53 @@ export class WorkflowRunError extends Error {
   }
 }
 
-function artifactFor(spec: SessionWorkflowSpec, nodeId: string): WorkflowArtifact {
+export type WorkflowModelAdapter = {
+  complete(input: {
+    nodeId: string
+    prompt: string
+    permissionMode: string
+    specVersionId: string
+    effectId: string
+  }): Promise<{ text: string; revision?: string }>
+}
+
+export type WorkflowToolAdapter = {
+  invoke(input: {
+    nodeId: string
+    payload: string
+    permissionMode: string
+    specVersionId: string
+    effectId: string
+  }): Promise<{ text: string }>
+}
+
+export type WorkflowHumanAdapter = {
+  resolve(input: { nodeId: string }): Promise<{ answer: string } | null>
+}
+
+export type WorkflowSubflowAdapter = {
+  run(input: {
+    nodeId: string
+    payload: string
+    specVersionId: string
+    effectId: string
+  }): Promise<{ text: string }>
+}
+
+export type WorkflowAdapters = {
+  model?: WorkflowModelAdapter
+  tool?: WorkflowToolAdapter
+  human?: WorkflowHumanAdapter
+  subflow?: WorkflowSubflowAdapter
+}
+
+const GRAPH_LOCAL_KINDS = new Set(['note', 'memory', 'condition', 'merge', 'output'])
+
+function artifactFor(spec: SessionWorkflowSpec, nodeId: string, value?: string): WorkflowArtifact {
   const node = spec.nodes.find((item) => item.id === nodeId)!
   const kind = node.outputs[0]?.kind ?? 'any'
   const provenance = node.provenance?.messageIds.join(',') ?? node.title
-  return { nodeId, kind, value: `${node.kind}:${node.id}:${provenance}` }
+  return { nodeId, kind, value: value ?? `${node.kind}:${node.id}:${provenance}` }
 }
 
 function selectNodeIds(spec: SessionWorkflowSpec, mode: WorkflowRunMode, seedIds: string[]): string[] {
@@ -38,6 +82,33 @@ function selectNodeIds(spec: SessionWorkflowSpec, mode: WorkflowRunMode, seedIds
   return [...fromHere]
 }
 
+function permissionRevisionOf(spec: SessionWorkflowSpec): string {
+  return `${spec.versionId}:${spec.defaults.permissionMode}`
+}
+
+function effectIdFor(spec: SessionWorkflowSpec, nodeId: string): string {
+  return `${spec.versionId}:${nodeId}`
+}
+
+function emptyRun(spec: SessionWorkflowSpec, mode: WorkflowRunMode, nodeIds: string[], now: number, execution: WorkflowExecutionKind): WorkflowRun {
+  return {
+    id: mintId('run', now),
+    specId: spec.id,
+    specVersionId: spec.versionId,
+    mode,
+    execution,
+    nodeIds,
+    status: {},
+    artifacts: {},
+    receipts: {},
+    permissionRevision: permissionRevisionOf(spec),
+    startedAt: now,
+  }
+}
+
+/**
+ * Explicit simulate path. Executable nodes are never production `done`.
+ */
 export function runWorkflow({
   spec,
   mode,
@@ -55,36 +126,146 @@ export function runWorkflow({
   }
   const selected = new Set(selectNodeIds(spec, mode, seedIds))
   const order = topologicalOrder(spec.nodes, spec.edges) ?? spec.nodes.map((node) => node.id)
-  const status: Record<string, WorkflowNodeRunStatus> = {}
-  const artifacts: Record<string, WorkflowArtifact> = {}
+  const run = emptyRun(spec, mode, order.filter((id) => selected.has(id)), now, 'simulate')
   for (const node of spec.nodes) {
-    if (node.kind === 'annotation_frame') {
-      status[node.id] = 'skipped'
+    if (node.kind === 'annotation_frame' || !selected.has(node.id)) {
+      run.status[node.id] = 'skipped'
       continue
     }
-    if (!selected.has(node.id)) {
-      status[node.id] = 'skipped'
+    if (GRAPH_LOCAL_KINDS.has(node.kind)) {
+      run.status[node.id] = 'done'
+      run.artifacts[node.id] = artifactFor(spec, node.id)
       continue
     }
-    status[node.id] = isExecutableNodeKind(node.kind) || node.kind === 'note' || node.kind === 'memory' || node.kind === 'condition' || node.kind === 'merge' || node.kind === 'output'
-      ? 'done'
-      : 'skipped'
-    if (status[node.id] === 'done') {
-      artifacts[node.id] = artifactFor(spec, node.id)
+    if (isExecutableNodeKind(node.kind)) {
+      run.status[node.id] = 'simulated'
+      run.artifacts[node.id] = artifactFor(spec, node.id, `simulated:${node.kind}:${node.id}`)
+      continue
+    }
+    run.status[node.id] = 'skipped'
+  }
+  run.finishedAt = now
+  return run
+}
+
+export async function runWorkflowProduction({
+  spec,
+  mode,
+  seedIds = [],
+  now = Date.now(),
+  adapters = {},
+  receipts = {},
+}: {
+  spec: SessionWorkflowSpec
+  mode: WorkflowRunMode
+  seedIds?: string[]
+  now?: number
+  adapters?: WorkflowAdapters
+  receipts?: Record<string, WorkflowNodeReceipt>
+}): Promise<WorkflowRun> {
+  const validation = validateWorkflowSpec(spec)
+  if (!validation.valid) {
+    throw new WorkflowRunError('WorkflowSpec is invalid', validation.errors)
+  }
+  const selected = new Set(selectNodeIds(spec, mode, seedIds))
+  const order = topologicalOrder(spec.nodes, spec.edges) ?? spec.nodes.map((node) => node.id)
+  const run = emptyRun(spec, mode, order.filter((id) => selected.has(id)), now, 'production')
+  run.receipts = { ...receipts }
+  let waiting = false
+  for (const node of spec.nodes) {
+    if (node.kind === 'annotation_frame' || !selected.has(node.id)) {
+      run.status[node.id] = 'skipped'
+      continue
+    }
+    if (GRAPH_LOCAL_KINDS.has(node.kind)) {
+      run.status[node.id] = 'done'
+      run.artifacts[node.id] = artifactFor(spec, node.id)
+      continue
+    }
+    if (!isExecutableNodeKind(node.kind)) {
+      run.status[node.id] = 'skipped'
+      continue
+    }
+    const effectId = effectIdFor(spec, node.id)
+    const prior = run.receipts[effectId]
+    if (prior) {
+      run.status[node.id] = 'done'
+      run.artifacts[node.id] = artifactFor(spec, node.id, prior.value)
+      continue
+    }
+    try {
+      if (node.kind === 'human_input') {
+        const answer = adapters.human ? await adapters.human.resolve({ nodeId: node.id }) : null
+        if (!answer) {
+          run.status[node.id] = 'waiting_approval'
+          waiting = true
+          continue
+        }
+        run.status[node.id] = 'done'
+        run.artifacts[node.id] = artifactFor(spec, node.id, answer.answer)
+        run.receipts[effectId] = { nodeId: node.id, effectId, value: answer.answer }
+        continue
+      }
+      if (node.kind === 'model') {
+        if (!adapters.model) {
+          run.status[node.id] = 'failed'
+          run.artifacts[node.id] = artifactFor(spec, node.id, 'missing-model-adapter')
+          continue
+        }
+        const result = await adapters.model.complete({
+          nodeId: node.id,
+          prompt: node.title,
+          permissionMode: node.permissionMode ?? spec.defaults.permissionMode,
+          specVersionId: spec.versionId,
+          effectId,
+        })
+        run.status[node.id] = 'done'
+        run.artifacts[node.id] = artifactFor(spec, node.id, result.text)
+        run.receipts[effectId] = { nodeId: node.id, effectId, value: result.text }
+        continue
+      }
+      if (node.kind === 'tool') {
+        if (!adapters.tool) {
+          run.status[node.id] = 'failed'
+          run.artifacts[node.id] = artifactFor(spec, node.id, 'missing-tool-adapter')
+          continue
+        }
+        const result = await adapters.tool.invoke({
+          nodeId: node.id,
+          payload: node.title,
+          permissionMode: node.permissionMode ?? spec.defaults.permissionMode,
+          specVersionId: spec.versionId,
+          effectId,
+        })
+        run.status[node.id] = 'done'
+        run.artifacts[node.id] = artifactFor(spec, node.id, result.text)
+        run.receipts[effectId] = { nodeId: node.id, effectId, value: result.text }
+        continue
+      }
+      if (node.kind === 'subflow') {
+        if (!adapters.subflow) {
+          run.status[node.id] = 'failed'
+          run.artifacts[node.id] = artifactFor(spec, node.id, 'missing-subflow-adapter')
+          continue
+        }
+        const result = await adapters.subflow.run({
+          nodeId: node.id,
+          payload: node.title,
+          specVersionId: spec.versionId,
+          effectId,
+        })
+        run.status[node.id] = 'done'
+        run.artifacts[node.id] = artifactFor(spec, node.id, result.text)
+        run.receipts[effectId] = { nodeId: node.id, effectId, value: result.text }
+        continue
+      }
+    } catch (error) {
+      run.status[node.id] = 'failed'
+      run.artifacts[node.id] = artifactFor(spec, node.id, error instanceof Error ? error.message : String(error))
     }
   }
-  const ran = order.filter((id) => selected.has(id))
-  return {
-    id: mintId('run', now),
-    specId: spec.id,
-    specVersionId: spec.versionId,
-    mode,
-    nodeIds: ran,
-    status,
-    artifacts,
-    startedAt: now,
-    finishedAt: now,
-  }
+  if (!waiting) run.finishedAt = now
+  return run
 }
 
 export function replayRun(spec: SessionWorkflowSpec, previous: WorkflowRun, now = Date.now()): WorkflowRun {
@@ -93,8 +274,13 @@ export function replayRun(spec: SessionWorkflowSpec, previous: WorkflowRun, now 
       { path: 'specVersionId', message: `${previous.specVersionId} !== ${spec.versionId}` },
     ])
   }
+  if (previous.execution === 'production') {
+    throw new WorkflowRunError('Replay of a production run requires runWorkflowProduction with prior receipts', [
+      { path: 'execution', message: 'production replay is not the simulate path' },
+    ])
+  }
   const next = runWorkflow({ spec, mode: previous.mode, seedIds: previous.nodeIds, now })
-  return { ...next, specVersionId: previous.specVersionId }
+  return { ...next, specVersionId: previous.specVersionId, execution: 'simulate' }
 }
 
 export function compareRuns(a: WorkflowRun, b: WorkflowRun): { sameSpec: boolean; artifactDelta: string[] } {

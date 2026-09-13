@@ -60,6 +60,8 @@ export const CHANNEL_MAP = {
   getTask: invoke(RPC_CHANNELS.tasks.GET),
   listTasks: invoke(RPC_CHANNELS.tasks.LIST),
   getTaskResults: invoke(RPC_CHANNELS.tasks.GET_RESULTS),
+  loadPersonalTasks: invoke(RPC_CHANNELS.personalTasks.LOAD),
+  savePersonalTasks: invoke(RPC_CHANNELS.personalTasks.SAVE),
   onTaskGenerated: listener(RPC_CHANNELS.tasks.GENERATED),
   respondToPermission: invoke(RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION),
   respondToCredential: invoke(RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL),

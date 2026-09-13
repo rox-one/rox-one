@@ -14,6 +14,9 @@ describe('Issue 17 TasksPage', () => {
     expect(page).toContain("t('tasks.addLink')")
     expect(page).toContain('t(`tasks.linkKind.${link.kind}`)')
     expect(page).toContain('localStorage')
+    expect(page).toContain('loadPersonalTasks')
+    expect(page).toContain('savePersonalTasks')
+    expect(page).toContain("t('tasks.saveFailed')")
     expect(page).not.toMatch(/<select\b/)
   })
 

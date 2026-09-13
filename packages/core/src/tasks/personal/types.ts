@@ -3,7 +3,7 @@
  * Distinct from the DAG Conductor `tasks:` runner.
  */
 
-export const PERSONAL_TASK_BUNDLE_VERSION = 1
+export const PERSONAL_TASK_BUNDLE_VERSION = 2
 
 export type TaskListId = 'inbox' | 'today' | 'upcoming' | 'anytime' | 'someday'
 export type TaskProjectionId = TaskListId | 'logbook'
@@ -72,6 +72,8 @@ export interface TaskAuditEvent {
 
 export interface PersonalTaskBundle {
   version: number
+  nextSeq?: number
+  revision?: number
   tasks: PersonalTask[]
   projects: TaskProject[]
   areas: TaskArea[]
@@ -82,6 +84,8 @@ export interface PersonalTaskBundle {
 export function emptyBundle(): PersonalTaskBundle {
   return {
     version: PERSONAL_TASK_BUNDLE_VERSION,
+    nextSeq: 0,
+    revision: 0,
     tasks: [],
     projects: [],
     areas: [],

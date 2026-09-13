@@ -47,6 +47,7 @@ import { registerSourcesHandlers } from './sources'
 import { registerStatusesHandlers } from './statuses'
 import { registerSystemCoreHandlers } from './system'
 import { registerTasksHandlers } from './tasks'
+import { registerPersonalTasksHandlers } from './personal-tasks'
 import { registerToolchainHandlers } from './toolchain'
 import { registerTransferHandlers } from './transfer'
 import { registerWorkspaceCoreHandlers } from './workspace'
@@ -117,6 +118,7 @@ export function registerCoreRpcHandlers(
   registerStatusesHandlers(server, deps)
   registerSystemCoreHandlers(server, deps)
   registerTasksHandlers(server, deps)
+  registerPersonalTasksHandlers(server, deps)
   registerToolchainHandlers(server, deps)
   registerTransferHandlers(server)
   registerWorkspaceCoreHandlers(server, deps)

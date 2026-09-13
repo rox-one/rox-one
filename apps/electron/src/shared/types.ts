@@ -602,6 +602,8 @@ export interface ElectronAPI {
   getTask(workspaceId: string, slug: string, runId?: string): Promise<TaskGetResult>
   listTasks(workspaceId: string): Promise<string[]>
   getTaskResults(workspaceId: string, slug: string, runId?: string): Promise<TaskResultsDto>
+  loadPersonalTasks(legacyJson?: string | null): Promise<{ json: string; revision: number; sha256: string; backupPath?: string; scope: 'personal'; legacyKey: string }>
+  savePersonalTasks(input: { json: string; expectedRevision: number }): Promise<{ json: string; revision: number; sha256: string; scope: 'personal' }>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>

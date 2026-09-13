@@ -59,6 +59,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   'triggeredBy',
   // Project binding (workspace-scoped grouping)
   'projectId',
+  'projectIds',
   // Kanban: task/subtask hierarchy + board column
   'parentSessionId',
   'kanbanColumn',
@@ -230,6 +231,8 @@ export interface SessionConfig {
   triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
+  /** Additional project memberships. `projectId` remains the primary/legacy binding. */
+  projectIds?: string[];
   /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
   parentSessionId?: string;
   /** Kanban board column id ('todo' | 'in-progress' | 'done'). Drag-to-move target; independent of sessionStatus. */
@@ -350,6 +353,8 @@ export interface SessionHeader {
   triggeredBy?: { automationName?: string; event?: string; timestamp?: number };
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
+  /** Additional project memberships. `projectId` remains the primary/legacy binding. */
+  projectIds?: string[];
   /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
   parentSessionId?: string;
   /** Kanban board column id ('todo' | 'in-progress' | 'done'). Drag-to-move target; independent of sessionStatus. */
@@ -466,6 +471,8 @@ export interface SessionMetadata {
   branchFromMessageId?: string;
   /** Workspace-scoped project id this session belongs to (undefined = unbound). */
   projectId?: string;
+  /** Additional project memberships. `projectId` remains the primary/legacy binding. */
+  projectIds?: string[];
   /** Parent session id — conversation lineage only (ADR-0001). Do not add further user-task fields to Session. */
   parentSessionId?: string;
   /** Kanban board column id ('todo' | 'in-progress' | 'done'). Drag-to-move target; independent of sessionStatus. */

@@ -122,6 +122,8 @@ describe('session WorkflowSpec', () => {
     const second = runWorkflow({ spec, mode: 'pipeline', now: 11 })
     expect(first.specVersionId).toBe(spec.versionId)
     expect(second.specVersionId).toBe(spec.versionId)
+    expect(first.execution).toBe('simulate')
+    expect(first.status[spec.nodes[0]!.id]).toBe('simulated')
     expect(compareRuns(first, second)).toEqual({ sameSpec: true, artifactDelta: [] })
     const replayed = replayRun(spec, first, 12)
     expect(replayed.specVersionId).toBe(first.specVersionId)

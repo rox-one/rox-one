@@ -1,8 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  buildTodayPlan,
+  LEGACY_RENDERER_KEY,
   PersonalTaskStore,
+  buildTodayPlan,
   projectTasks,
   type PersonalTask,
   type TaskLinkKind,
@@ -10,42 +11,94 @@ import {
   type TaskProjectionId,
 } from '@craft-agent/core/tasks/personal'
 import { CalendarStatusStrip } from '@/components/calendar/CalendarStatusStrip'
+import { RPC_CHANNELS } from '../../shared/types'
 import { cn } from '@/lib/utils'
 
 const PROJECTIONS: TaskProjectionId[] = ['inbox', 'today', 'upcoming', 'anytime', 'someday', 'logbook']
 const LINK_KINDS: TaskLinkKind[] = ['note', 'session', 'message', 'workflowRun']
 const PRIORITIES: TaskPriority[] = ['none', 'low', 'medium', 'high']
-const STORAGE_KEY = 'rox.personal-tasks.v1'
+const STORAGE_KEY = LEGACY_RENDERER_KEY
 
-function loadStore(): PersonalTaskStore {
+function cacheStore(store: PersonalTaskStore): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, store.exportJson())
+  } catch {
+    // Quota on the renderer cache is not a canonical save.
+  }
+}
+
+function loadCachedStore(): PersonalTaskStore {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) return PersonalTaskStore.fromJson(raw)
   } catch {
-    // Corrupt local cache — start empty; import remains available.
+    // Corrupt local cache — start empty; canonical file store remains available.
   }
   return new PersonalTaskStore()
 }
 
 export default function TasksPage() {
   const { t } = useTranslation()
-  const [store, setStore] = useState(loadStore)
+  const [store, setStore] = useState(loadCachedStore)
   const [projection, setProjection] = useState<TaskProjectionId>('today')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
   const [linkKind, setLinkKind] = useState<TaskLinkKind>('note')
   const [linkId, setLinkId] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const revisionRef = useRef(0)
+  const savedRef = useRef(store)
   const now = Date.now()
 
-  const persist = useCallback((next: PersonalTaskStore) => {
+  useEffect(() => {
+    const api = window.electronAPI
+    if (!api?.isChannelAvailable?.(RPC_CHANNELS.personalTasks.LOAD)) return
+    let cancelled = false
+    const legacy = localStorage.getItem(STORAGE_KEY)
+    void api.loadPersonalTasks(legacy).then((loaded) => {
+      if (cancelled) return
+      const next = PersonalTaskStore.fromJson(loaded.json)
+      revisionRef.current = loaded.revision
+      savedRef.current = next
+      setStore(next)
+      cacheStore(next)
+    }).catch(() => {
+      if (!cancelled) setSaveError('load')
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  const persist = useCallback(async (next: PersonalTaskStore) => {
+    const previous = savedRef.current
     setStore(next)
-    localStorage.setItem(STORAGE_KEY, next.exportJson())
+    cacheStore(next)
+    const api = window.electronAPI
+    if (!api?.isChannelAvailable?.(RPC_CHANNELS.personalTasks.SAVE)) {
+      savedRef.current = next
+      return
+    }
+    try {
+      const saved = await api.savePersonalTasks({
+        json: next.exportJson(),
+        expectedRevision: revisionRef.current,
+      })
+      revisionRef.current = saved.revision
+      const confirmed = PersonalTaskStore.fromJson(saved.json)
+      savedRef.current = confirmed
+      setStore(confirmed)
+      cacheStore(confirmed)
+      setSaveError(null)
+    } catch {
+      setStore(previous)
+      cacheStore(previous)
+      setSaveError('save')
+    }
   }, [])
 
   const mutate = useCallback((fn: (current: PersonalTaskStore) => void) => {
     const next = PersonalTaskStore.fromJson(store.exportJson())
     fn(next)
-    persist(next)
+    void persist(next)
   }, [persist, store])
 
   const tasks = store.list()
@@ -124,7 +177,12 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 bg-background" data-testid="tasks-page">
+    <div className="relative flex h-full min-h-0 bg-background" data-testid="tasks-page">
+      {saveError ? (
+        <div className="absolute left-3 top-3 z-10 rounded-[6px] border border-destructive/40 bg-background px-2 py-1 text-[12px]" role="alert">
+          {t('tasks.saveFailed')}
+        </div>
+      ) : null}
       <aside className="w-[200px] shrink-0 border-r border-border p-3 flex flex-col gap-1">
         {PROJECTIONS.map((id) => (
           <button

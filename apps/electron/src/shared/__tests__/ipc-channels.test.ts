@@ -451,6 +451,8 @@ const EXPECTED_CHANNELS: string[] = [
   'pages:update',
   'permissions:defaultsChanged',
   'permissions:getDefaults',
+  'personalTasks:load',
+  'personalTasks:save',
   'pi:getApiKeyProviders',
   'pi:getProviderBaseUrl',
   'pi:getProviderModels',

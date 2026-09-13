@@ -1,14 +1,19 @@
 import { parseQuickEntry } from './dates.ts'
 import { emptyBundle, isOpenTask, type PersonalTask, type PersonalTaskBundle, type TaskLink, type TaskListId, type TaskPriority } from './types.ts'
 
-let seq = 0
-function mint(prefix: string): string {
-  seq += 1
-  return `${prefix}-${seq.toString(16)}`
+let testSeqSeed = 0
+
+function parseSeqFromId(id: string): number {
+  const match = /-([0-9a-f]+)$/i.exec(id)
+  return match ? Number.parseInt(match[1]!, 16) : 0
+}
+
+function maxSeqFrom(ids: readonly string[], stored = 0): number {
+  return ids.reduce((acc, id) => Math.max(acc, parseSeqFromId(id)), stored)
 }
 
 export function resetPersonalTaskIds(): void {
-  seq = 0
+  testSeqSeed = 0
 }
 
 export interface CreateTaskInput {
@@ -32,14 +37,27 @@ export interface CreateTaskInput {
 
 export class PersonalTaskStore {
   private bundle: PersonalTaskBundle
+  private seq: number
 
   constructor(bundle: PersonalTaskBundle = emptyBundle()) {
     this.bundle = structuredClone(bundle)
-    this.bundle.version = 1
+    this.bundle.version = 2
+    const ids = [
+      ...this.bundle.tasks.map((item) => item.id),
+      ...this.bundle.projects.map((item) => item.id),
+      ...this.bundle.areas.map((item) => item.id),
+      ...this.bundle.headings.map((item) => item.id),
+    ]
+    this.seq = maxSeqFrom(ids, this.bundle.nextSeq ?? testSeqSeed)
+    this.bundle.nextSeq = this.seq
+    this.bundle.revision = this.bundle.revision ?? 0
   }
 
   snapshot(): PersonalTaskBundle {
-    return structuredClone(this.bundle)
+    const snap = structuredClone(this.bundle)
+    snap.nextSeq = this.seq
+    snap.version = 2
+    return snap
   }
 
   exportJson(): string {
@@ -49,7 +67,9 @@ export class PersonalTaskStore {
   static fromJson(raw: string): PersonalTaskStore {
     const parsed = JSON.parse(raw) as Partial<PersonalTaskBundle>
     return new PersonalTaskStore({
-      version: 1,
+      version: 2,
+      nextSeq: typeof parsed.nextSeq === 'number' ? parsed.nextSeq : 0,
+      revision: typeof parsed.revision === 'number' ? parsed.revision : 0,
       tasks: Array.isArray(parsed.tasks) ? parsed.tasks : [],
       projects: Array.isArray(parsed.projects) ? parsed.projects : [],
       areas: Array.isArray(parsed.areas) ? parsed.areas : [],
@@ -99,7 +119,7 @@ export class PersonalTaskStore {
     }
     if (!title) throw new Error('Task title is required')
     const task: PersonalTask = {
-      id: mint('task'),
+      id: this.mint('task'),
       title,
       notes: input.notes ?? '',
       list,
@@ -185,21 +205,21 @@ export class PersonalTaskStore {
   }
 
   addProject(name: string, areaId?: string) {
-    const project = { id: mint('proj'), name, areaId, order: this.bundle.projects.length }
+    const project = { id: this.mint('proj'), name, areaId, order: this.bundle.projects.length }
     this.bundle.projects.push(project)
     this.audit('project.add', undefined, name)
     return project
   }
 
   addArea(name: string) {
-    const area = { id: mint('area'), name, order: this.bundle.areas.length }
+    const area = { id: this.mint('area'), name, order: this.bundle.areas.length }
     this.bundle.areas.push(area)
     this.audit('area.add', undefined, name)
     return area
   }
 
   addHeading(title: string, projectId: string) {
-    const heading = { id: mint('head'), title, projectId, order: this.bundle.headings.length }
+    const heading = { id: this.mint('head'), title, projectId, order: this.bundle.headings.length }
     this.bundle.headings.push(heading)
     this.audit('heading.add', undefined, title)
     return heading
@@ -229,6 +249,12 @@ export class PersonalTaskStore {
   private nextOrder(list: TaskListId): number {
     const max = this.bundle.tasks.filter((task) => task.list === list).reduce((acc, task) => Math.max(acc, task.order), -1)
     return max + 1
+  }
+
+  private mint(prefix: string): string {
+    this.seq += 1
+    this.bundle.nextSeq = this.seq
+    return `${prefix}-${this.seq.toString(16)}`
   }
 
   private require(id: string): PersonalTask {

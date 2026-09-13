@@ -4,6 +4,7 @@
 
 import type { SessionPriority } from '../protocol/dto.ts'
 import { classifyAgentFamily } from './collection-agent-family.ts'
+import { sessionProjectIds } from './membership.ts'
 import type {
   CollectionDisplay,
   CollectionFilters,
@@ -22,6 +23,7 @@ export interface CollectionSessionMeta {
   priority?: SessionPriority | null
   dueDate?: number | null
   projectId?: string | null
+  projectIds?: string[] | null
   labels?: string[]
   isFlagged?: boolean
   hasUnread?: boolean
@@ -151,8 +153,8 @@ export function filterSessionMeta(
   }
 
   if (f.projectId && f.projectId.length > 0) {
-    const pid = meta.projectId ?? ''
-    if (!f.projectId.includes(pid)) return false
+    const ids = sessionProjectIds(meta)
+    if (!f.projectId.some((id) => ids.includes(id))) return false
   }
 
   if (f.labels && f.labels.length > 0) {

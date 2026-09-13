@@ -32,6 +32,10 @@ export interface CalendarEvent {
   deleted: boolean
   etag?: string
   kind: 'event'
+  localDirty?: boolean
+  lastSyncedEtag?: string
+  lastSyncedRevision?: number
+  localRevision?: number
 }
 
 export interface CapabilityGap {
@@ -81,14 +85,15 @@ export type MergedTodayItem =
 
 export interface CalendarBundle {
   version: number
+  nextSeq?: number
   accounts: CalendarAccount[]
   events: CalendarEvent[]
   journals: SyncJournal[]
   proposals: ReminderProposal[]
 }
 
-export const CALENDAR_BUNDLE_VERSION = 1
+export const CALENDAR_BUNDLE_VERSION = 2
 
 export function emptyCalendarBundle(): CalendarBundle {
-  return { version: CALENDAR_BUNDLE_VERSION, accounts: [], events: [], journals: [], proposals: [] }
+  return { version: CALENDAR_BUNDLE_VERSION, nextSeq: 0, accounts: [], events: [], journals: [], proposals: [] }
 }

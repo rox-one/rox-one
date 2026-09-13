@@ -23,6 +23,11 @@ export type {
 
 // Field constants
 export { SESSION_PERSISTENT_FIELDS } from './types.ts';
+export {
+  sessionBelongsToProject,
+  sessionProjectIds,
+  withProjectMembership,
+} from './membership.ts';
 
 // Storage functions
 export {
@@ -54,6 +59,7 @@ export {
   setSessionStatus,
   setSessionLabels,
   setSessionProjectId,
+  setSessionProjectIds,
   unbindProjectFromSessions,
   // Pending plan execution (Accept & Compact flow)
   setPendingPlanExecution,

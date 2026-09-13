@@ -84,6 +84,8 @@ describe('personal tasks (issue 17)', () => {
     expect(restored.list()).toHaveLength(1)
     expect(restored.list()[0]?.title).toBe('Keep')
     expect(store.auditLog().some((event) => event.action === 'create')).toBe(true)
+    const restoredCreate = restored.create({ title: 'After restore', list: 'inbox', now: morning })
+    expect(restoredCreate.id).not.toBe(store.list()[0]?.id)
   })
 
   it('supports areas, headings, subtasks, tags, priority and recurrence', () => {
