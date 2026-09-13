@@ -12,6 +12,7 @@ export {
 // Individual steps
 export { ProviderSelectStep, type ProviderChoice } from './ProviderSelectStep'
 export { WelcomeStep } from './WelcomeStep'
+export { UsernameStep } from './UsernameStep'
 export { APISetupStep, type ApiSetupMethod } from './APISetupStep'
 export { CredentialsStep, type CredentialStatus } from './CredentialsStep'
 export { CompletionStep } from './CompletionStep'

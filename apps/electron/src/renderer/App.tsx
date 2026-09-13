@@ -715,17 +715,19 @@ export default function App() {
 
   // Onboarding hook — onConfigSaved fires immediately when billing is saved,
   // ensuring connection state updates before the wizard closes.
+  const usernameConfirmed = storage.get<boolean>(storage.KEYS.onboardingUsernameConfirmed, false) === true
   const onboarding = useOnboarding({
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
     initialSetupNeeds: setupNeeds || undefined,
+    initialStep: usernameConfirmed ? 'provider-select' : 'username',
   })
 
   // Reauth login handler - placeholder (reauth is not currently used)
   const handleReauthLogin = useCallback(async () => {
     // Re-check setup needs
     const needs = await window.electronAPI.getSetupNeeds()
-    if (needs.isFullyConfigured) {
+    if (needs.isFullyConfigured && usernameConfirmed) {
       setAppState('ready')
     } else {
       setSetupNeeds(needs)
@@ -749,7 +751,7 @@ export default function App() {
         const needs = await window.electronAPI.getSetupNeeds()
         setSetupNeeds(needs)
 
-        if (needs.isFullyConfigured) {
+        if (needs.isFullyConfigured && usernameConfirmed) {
           // If no workspace is selected (thin client without CRAFT_WORKSPACE_ID),
           // show workspace picker before entering the main app
           if (!wsId) {
@@ -758,7 +760,7 @@ export default function App() {
             setAppState('ready')
           }
         } else {
-          // New user or needs setup - show onboarding
+          // New user, incomplete setup, or unconfirmed display name
           setAppState('onboarding')
         }
       } catch (error) {
@@ -2102,6 +2104,7 @@ export default function App() {
           <OnboardingWizard
             state={onboarding.state}
             onContinue={onboarding.handleContinue}
+            onSubmitUsername={onboarding.handleSubmitUsername}
             onBack={onboarding.handleBack}
             onSelectProvider={onboarding.handleSelectProvider}
             onSkipSetup={onboarding.handleSkipSetup}
