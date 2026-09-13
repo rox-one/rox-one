@@ -192,6 +192,8 @@ describe('ROX2-056..058 native settings pages', () => {
   test('playground mocks labels and organizations without claiming live Conation', () => {
     const mock = source('apps/electron/src/renderer/playground/mock-utils.ts')
     expect(mock).toContain('createLabel')
+    expect(mock).toContain("light: '#3B82F6'")
+    expect(mock).not.toContain('h: 220')
     expect(mock).toContain('listOrganizations')
     expect(mock).toContain('openclawRuntime')
     expect(mock).toContain('Playground fixture. Not live.')

@@ -66,7 +66,7 @@ function colorToHex(color: EntityColor | undefined, isDark: boolean): string {
   }
   // System colors → resolved CSS is not always hex; fall back to empty for picker value
   const resolved = resolveEntityColor(color, isDark)
-  return resolved.startsWith('#') ? resolved : ''
+  return typeof resolved === 'string' && resolved.startsWith('#') ? resolved : ''
 }
 
 function hexToEntityColor(hex: string): EntityColor {
