@@ -268,7 +268,8 @@ export type Rox2BindingRegisterResult =
  * `registerExternalBinding` dual-reads the encoded key, then a distinct
  * historical unencoded four-slot key (e.g. `google:user@x.com:event:1` vs
  * `google:user%40x.com:event:1`). Hits persist only under the encoded key and
- * reuse the existing entity. Five-or-more-slot keys are not dual-read.
+ * reuse the existing entity, including a later re-import after the raw alias
+ * has been dropped. Five-or-more-slot keys are not dual-read.
  */
 const BINDING_KEY_SLOT_COUNT = 4
 
@@ -354,7 +355,12 @@ export function registerExternalBinding(
   if (existing && existing.workspaceId !== workspaceId) {
     return { status: 'quarantine', reason: 'workspace-mismatch', existing }
   }
-  if (fromEncoded && fromEncoded.entityId !== ref.entityId) {
+  const legacyEntityId = formatRox2EntityId(kind, rawKey)
+  if (
+    fromEncoded &&
+    fromEncoded.entityId !== ref.entityId &&
+    fromEncoded.entityId !== legacyEntityId
+  ) {
     return { status: 'quarantine', reason: 'binding-collision', existing: fromEncoded }
   }
   if (existing) {

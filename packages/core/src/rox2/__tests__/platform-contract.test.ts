@@ -376,6 +376,44 @@ describe('ROX2 platform contract', () => {
     expect(index.size).toBe(1)
   })
 
+  test('re-import after encoded migration of a legacy four-slot key reuses the entity', () => {
+    const binding = {
+      provider: 'google',
+      account: 'user@x.com',
+      remoteType: 'event',
+      remoteId: '1',
+    }
+    const encoded = formatRox2ExternalBindingKey(binding)
+    const legacy = 'google:user@x.com:event:1'
+    expect(encoded).toBe('google:user%40x.com:event:1')
+    const existingRef: Rox2EntityRef = {
+      workspaceId: 'ws-1',
+      entityId: 'calendar-event:google:user@x.com:event:1',
+      revisionId: 'rev-1',
+      accountNamespace: 'user@x.com',
+    }
+    const index = new Map<string, Rox2EntityRef>([[legacy, existingRef]])
+
+    const migrated = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-2')
+    expect(migrated.status).toBe('ok')
+    if (migrated.status === 'ok') {
+      expect(migrated.ref.entityId).toBe(existingRef.entityId)
+    }
+    expect(index.get(encoded)?.entityId).toBe(existingRef.entityId)
+    expect(index.has(legacy)).toBe(false)
+
+    const again = registerExternalBinding(index, 'ws-1', 'calendar-event', binding, 'rev-3')
+    expect(again.status).toBe('ok')
+    if (again.status === 'ok') {
+      expect(again.ref.entityId).toBe(existingRef.entityId)
+      expect(again.ref.revisionId).toBe('rev-3')
+    }
+    expect(index.get(encoded)?.entityId).toBe(existingRef.entityId)
+    expect(index.get(encoded)?.revisionId).toBe('rev-3')
+    expect(index.has(legacy)).toBe(false)
+    expect(index.size).toBe(1)
+  })
+
   test('legacy unencoded four-slot workspace mismatch quarantines without encoded write', () => {
     const binding = {
       provider: 'google',
