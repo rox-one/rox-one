@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, SquarePen, Trash2, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
@@ -25,7 +25,7 @@ import {
 } from '@/components/app-shell/EntityViewTabs'
 import { MindMapHost } from '@/mindmap/MindMapHost'
 import { deriveNoteMindMap, type MindMapGraph } from '@craft-agent/core/mindmap'
-import { NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
+import { NotesCommentComposer, NotesCommentHighlights, NotesCommentTooltip, NotesComments, NotesEditorHeadlineStyles, NotesToc } from './notes/NotesReadingChrome'
 import {
   NotesBreadcrumbs,
   NotesCommandPalette,
@@ -52,6 +52,8 @@ import {
   TWO_COLUMN_SNIPPET,
   upsertMarkdownComment,
 } from './notes/document-ia'
+import { selectionComposerOffset } from './notes/comment-highlights'
+import { NOTES_AI_MODEL, NOTES_AI_PROMPTS_STORAGE_KEY, parseNotesAiPrompts, resolveNotesAiInstruction } from './notes/note-ai'
 import {
   aliasesFromProperties,
   applyEntityMerge,
@@ -576,6 +578,9 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [query, setQuery] = React.useState('')
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null)
   const [commentDraftQuote, setCommentDraftQuote] = React.useState('')
+  const [commentComposerTop, setCommentComposerTop] = React.useState(48)
+  const [commentComposerBody, setCommentComposerBody] = React.useState('')
+  const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
   const [indexRebuilding, setIndexRebuilding] = React.useState(false)
@@ -1459,10 +1464,11 @@ h1,h2,h3{margin-top:1.5em}
   const handleAskAgent = async (mode: AIActionMode = 'extract-tasks') => {
     if (!activeWorkspaceId || !activeNote) return
     if (!await flushBeforeAction()) return
-    const { sessionNameKey, instructionKey } = AI_PROMPTS[mode]
+    const { sessionNameKey } = AI_PROMPTS[mode]
     const sessionName = `${t(sessionNameKey)}: ${activeNote.title}`
-    const instruction = t(instructionKey)
-    const session = await onCreateSession(activeWorkspaceId, { name: sessionName })
+    const session = await onCreateSession(activeWorkspaceId, { name: sessionName, model: NOTES_AI_MODEL })
+    const storedPrompts = parseNotesAiPrompts(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_AI_PROMPTS_STORAGE_KEY))
+    const instruction = resolveNotesAiInstruction(mode, t, storedPrompts)
 
     const attachPath = `notes/${activeNote.relativePath}`
     const attachTitle = activeNote.title
@@ -1494,6 +1500,25 @@ h1,h2,h3{margin-top:1.5em}
     setSideSessionId(session.id)
     setSideSessionPrompt(prompt)
     setSideNoteChip({ title: attachTitle, path: attachPath })
+  }
+
+  const handleBoundChat = async () => {
+    if (!activeWorkspaceId || !activeNote) return
+    if (!await flushBeforeAction()) return
+    const attachPath = `notes/${activeNote.relativePath}`
+    const session = await onCreateSession(activeWorkspaceId, {
+      name: activeNote.title,
+      model: NOTES_AI_MODEL,
+    })
+    const prompt = [
+      t('notes.ai.contextHeader', { title: activeNote.title }),
+      t('notes.ai.contextPath', { path: attachPath }),
+      '',
+    ].join('\n')
+    onInputChange(session.id, prompt)
+    setSideSessionId(session.id)
+    setSideSessionPrompt(prompt)
+    setSideNoteChip({ title: activeNote.title, path: attachPath })
   }
 
   const closeSideSession = React.useCallback(() => {
@@ -1902,6 +1927,15 @@ h1,h2,h3{margin-top:1.5em}
             </div>
           )}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
+          <button
+            className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
+            onClick={() => void handleBoundChat()}
+            disabled={!activeNote}
+            title={t('notes.sideSession.newChat')}
+            data-testid="notes-bound-chat"
+          >
+            <SquarePen className="h-4 w-4" />
+          </button>
           <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title="Attach asset">
             <Paperclip className="h-4 w-4" />
           </button>
@@ -2019,10 +2053,15 @@ h1,h2,h3{margin-top:1.5em}
               label={t('notes.layout.resizeToc')}
             />
             <div
-              className="notes-editor h-full min-w-0 flex-1 overflow-y-auto px-8 py-6"
-              onMouseUp={() => {
+              className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-8 py-6"
+              onMouseUp={(event) => {
                 const quote = window.getSelection()?.toString().trim() ?? ''
-                if (quote) setCommentDraftQuote(quote)
+                if (!quote) return
+                setCommentDraftQuote(quote)
+                setCommentTooltip(null)
+                const editor = event.currentTarget.getBoundingClientRect()
+                const range = window.getSelection()?.rangeCount ? window.getSelection()!.getRangeAt(0).getBoundingClientRect() : null
+                setCommentComposerTop(selectionComposerOffset(range?.top ?? editor.top + 48, editor.top, editor.height))
               }}
               onDoubleClick={() => {
                 const quote = window.getSelection()?.toString().trim() ?? ''
@@ -2149,6 +2188,49 @@ h1,h2,h3{margin-top:1.5em}
                 markdownEngine="legacy"
                 className="notes-editor-prose mx-auto w-full max-w-[640px] min-h-full"
               />
+              <NotesCommentHighlights
+                comments={markdownComments}
+                hidden={railLayout.commentsCollapsed}
+                contentKey={content}
+                onActivate={(comment, rect) => {
+                  const editor = document.querySelector('.notes-editor')?.getBoundingClientRect()
+                  setCommentTooltip({
+                    quote: comment.quote,
+                    body: comment.body,
+                    top: rect.bottom - (editor?.top ?? 0) + 6,
+                    left: rect.left - (editor?.left ?? 0),
+                  })
+                }}
+              />
+              {commentTooltip && railLayout.commentsCollapsed ? (
+                <NotesCommentTooltip comment={{ id: 'tooltip', quote: commentTooltip.quote, body: commentTooltip.body, createdAt: 0 }} top={commentTooltip.top} left={commentTooltip.left} />
+              ) : null}
+              {railLayout.commentsCollapsed && commentDraftQuote ? (
+                <NotesCommentComposer
+                  className="absolute right-3 z-20"
+                  top={commentComposerTop}
+                  quote={commentDraftQuote}
+                  body={commentComposerBody}
+                  onBodyChange={setCommentComposerBody}
+                  onCancel={() => {
+                    setCommentDraftQuote('')
+                    setCommentComposerBody('')
+                  }}
+                  onSubmit={() => {
+                    const text = commentComposerBody.trim()
+                    if (!text || !activeNote) return
+                    setContent(upsertMarkdownComment(content, {
+                      id: crypto.randomUUID(),
+                      quote: commentDraftQuote.trim(),
+                      body: text,
+                      createdAt: Date.now(),
+                    }))
+                    setDirty(true)
+                    setCommentDraftQuote('')
+                    setCommentComposerBody('')
+                  }}
+                />
+              ) : null}
               {richParts.frontmatter && (
                 <div className="mt-4 rounded-[6px] border border-border/60 bg-muted/30 px-3 py-2 text-[11px] text-muted-foreground">
                   {t('notes.frontmatterPreserved')}
@@ -2179,6 +2261,7 @@ h1,h2,h3{margin-top:1.5em}
                 draftQuote={commentDraftQuote}
                 markdownComments={markdownComments}
                 width={railLayout.comments}
+                composerTop={commentComposerTop}
                 onClearDraft={() => setCommentDraftQuote('')}
                 onJumpToQuote={(quote) => {
                   const root = document.querySelector('.notes-editor .ProseMirror')
