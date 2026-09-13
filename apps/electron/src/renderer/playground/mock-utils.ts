@@ -744,6 +744,14 @@ export const mockElectronAPI = {
     return { success: true }
   },
 
+  setMessagingDiscordGuildTrigger: async (
+    bindingId: string,
+    trigger: 'mention' | 'all',
+  ) => {
+    console.log('[Playground] setMessagingDiscordGuildTrigger called:', bindingId, trigger)
+    return { success: true }
+  },
+
   onMessagingPendingChanged: (_callback: (workspaceId: string) => void) => {
     // No-op listener; Phase 3 binding-changed events refresh state already.
     return () => {}

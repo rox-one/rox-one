@@ -863,6 +863,7 @@ export const CHANNEL_MAP = {
   dismissMessagingPendingSender: invoke(RPC_CHANNELS.messaging.DISMISS_PENDING_SENDER),
   allowMessagingPendingSender: invoke(RPC_CHANNELS.messaging.ALLOW_PENDING_SENDER),
   setMessagingBindingAccess: invoke(RPC_CHANNELS.messaging.SET_BINDING_ACCESS),
+  setMessagingDiscordGuildTrigger: invoke(RPC_CHANNELS.messaging.SET_DISCORD_GUILD_TRIGGER),
   onMessagingPendingChanged: listener(RPC_CHANNELS.messaging.PENDING_CHANGED),
   // Context documents (runtime context/*.md)
   listContextDocs: invoke(RPC_CHANNELS.contextDocs.LIST),

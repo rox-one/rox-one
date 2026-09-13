@@ -1979,7 +1979,7 @@ export interface ElectronAPI {
   saveDiscordCredentials(creds: { token: string }): Promise<void>
   disconnectMessagingPlatform(platform: string): Promise<void>
   forgetMessagingPlatform(platform: string): Promise<void>
-  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[] }>>
+  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[]; discordGuildTrigger?: 'mention' | 'all' }>>
   generateMessagingPairingCode(sessionId: string, platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
   /** Telegram supergroup pairing — returns a code typed in the supergroup to capture its chatId. */
   generateMessagingSupergroupCode(platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
@@ -2012,6 +2012,7 @@ export interface ElectronAPI {
     entryKey?: { reason?: MessagingPendingRejectReason; bindingId?: string },
   ): Promise<{ owners: MessagingPlatformOwnerInfo[]; bindingId?: string }>
   setMessagingBindingAccess(bindingId: string, access: { mode: MessagingBindingAccessMode; allowedSenderIds?: string[] }): Promise<{ success: boolean }>
+  setMessagingDiscordGuildTrigger(bindingId: string, trigger: 'mention' | 'all'): Promise<{ success: boolean }>
   onMessagingPendingChanged(callback: (workspaceId: string) => void): () => void
 
   // Context documents (runtime context/*.md — soul, rules, user docs)
