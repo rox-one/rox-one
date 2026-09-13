@@ -5,6 +5,7 @@
  * Boots a real Electron process with isolated userData, persists a JSON
  * store under ROX_CONFIG_DIR, and talks only to the loopback fixture gateway.
  * Does not mock React, RPC, or the product Task store.
+ * data:text/html fixture is U1 / entrypoint test-fixture — never E3 passed.
  */
 const { app, BrowserWindow, session } = require('electron')
 const {
@@ -156,6 +157,7 @@ app.whenReady().then(async () => {
     height: 600,
     webPreferences: { sandbox: true, nodeIntegration: false, contextIsolation: true },
   })
+  // data:text/html fixture — U1 / test-fixture only. Never stamp E3 passed.
   await win.loadURL(
     'data:text/html;charset=utf-8,' +
       encodeURIComponent(

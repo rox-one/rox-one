@@ -6,6 +6,7 @@ import {
   bootMeetingApp,
   evidenceRow,
   productionFixtureGuard,
+  stampHarnessEvidence,
   type BootMeetingAppResult,
 } from './harness.ts'
 import { createFixtureGateway } from './gateway.ts'
@@ -51,6 +52,37 @@ describe('meeting-agents harness (#385)', () => {
     expect(evidenceRow('E3', 'passed').level).toBe('E3')
     expect(evidenceRow('L4', 'blocked').status).toBe('blocked')
     expect(evidenceRow('N5', 'not_run').status).toBe('not_run')
+  })
+
+  it('never stamps E3 passed for fixture HTML / test-fixture entry', () => {
+    const fixture = stampHarnessEvidence({
+      entrypoint: 'test-fixture',
+      productStateExercised: true,
+    })
+    expect(fixture.level).toBe('U1')
+    expect(fixture.entrypoint).toBe('test-fixture')
+    expect(`${fixture.level}:${fixture.status}`).not.toBe('E3:passed')
+
+    const electronIdle = stampHarnessEvidence({
+      entrypoint: 'apps-electron',
+      productStateExercised: false,
+    })
+    expect(electronIdle).toMatchObject({
+      level: 'E3',
+      status: 'not_run',
+      entrypoint: 'apps-electron',
+      packaged: 'not_run',
+    })
+
+    const electronProduct = stampHarnessEvidence({
+      entrypoint: 'apps-electron',
+      productStateExercised: true,
+    })
+    expect(electronProduct).toMatchObject({
+      level: 'E3',
+      status: 'passed',
+      entrypoint: 'apps-electron',
+    })
   })
 
   it('bootMeetingApp refuses production + fixture entrypoint before spawn', async () => {
@@ -99,9 +131,17 @@ describe('meeting-agents harness (#385)', () => {
     expect(existsSync(join(h.profileDir, 'home'))).toBe(true)
     expect(existsSync(join(h.profileDir, 'config'))).toBe(true)
     expect(h.page).not.toHaveProperty('getByTestId')
-    expect(h.evidence.level).toBe('E3')
+    expect(h.entrypoint).toBe('test-fixture')
+    expect(h.evidence.level).toBe('U1')
     expect(h.evidence.status).toBe('passed')
+    expect(h.evidence.entrypoint).toBe('test-fixture')
     expect(h.evidence.packaged).toBe('not_run')
+    expect(`${h.evidence.level}:${h.evidence.status}`).not.toBe('E3:passed')
+    const onDisk = JSON.parse(
+      await readFile(join(h.profileDir, 'harness-evidence.json'), 'utf8'),
+    ) as { level: string; status: string; entrypoint: string }
+    expect(onDisk.entrypoint).toBe('test-fixture')
+    expect(`${onDisk.level}:${onDisk.status}`).not.toBe('E3:passed')
   }, 60_000)
 
   it('restart reopens the same profileDir and keeps storage', async () => {

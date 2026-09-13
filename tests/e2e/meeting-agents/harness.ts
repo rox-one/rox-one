@@ -31,9 +31,12 @@ export type MeetingAppHandles = {
   readonly entrypoint: 'apps-electron' | 'test-fixture'
 }
 
+export type EvidenceLevel = 'U1' | 'C2' | 'E3' | 'L4' | 'N5'
+export type EvidenceStatus = 'passed' | 'failed' | 'blocked' | 'not_run'
+
 export type HarnessEvidence = {
-  readonly level: 'E3'
-  readonly status: 'passed' | 'failed' | 'blocked' | 'not_run'
+  readonly level: EvidenceLevel
+  readonly status: EvidenceStatus
   readonly packaged: 'not_run'
   readonly entrypoint: MeetingAppHandles['entrypoint']
   readonly commitSha: string | null
@@ -71,10 +74,52 @@ export function productionFixtureGuard(input: {
 }
 
 export function evidenceRow(
-  level: 'U1' | 'C2' | 'E3' | 'L4' | 'N5',
-  status: 'passed' | 'failed' | 'blocked' | 'not_run',
-): { level: string; status: string } {
+  level: EvidenceLevel,
+  status: EvidenceStatus,
+): { level: EvidenceLevel; status: EvidenceStatus } {
   return { level, status }
+}
+
+/**
+ * Honesty stamp for I029 / #385.
+ * Fixture HTML (`fixture-entrypoint.cjs` / `data:text/html`) is U1 / test-fixture.
+ * E3 `passed` only when the packaged-or-dist Electron entrypoint actually
+ * exercised product state (UI → RPC → storage → readback). Boot alone is not that.
+ */
+export function stampHarnessEvidence(input: {
+  readonly entrypoint: MeetingAppHandles['entrypoint']
+  readonly productStateExercised?: boolean
+}): HarnessEvidence {
+  const commitSha = process.env.GITHUB_SHA ?? null
+  const packaged = 'not_run' as const
+
+  if (input.entrypoint !== 'apps-electron') {
+    return {
+      level: 'U1',
+      status: 'passed',
+      packaged,
+      entrypoint: 'test-fixture',
+      commitSha,
+    }
+  }
+
+  if (input.productStateExercised === true) {
+    return {
+      level: 'E3',
+      status: 'passed',
+      packaged,
+      entrypoint: 'apps-electron',
+      commitSha,
+    }
+  }
+
+  return {
+    level: 'E3',
+    status: 'not_run',
+    packaged,
+    entrypoint: 'apps-electron',
+    commitSha,
+  }
 }
 
 export class BootMeetingAppError extends Error {
@@ -346,13 +391,11 @@ export const bootMeetingApp: BootMeetingApp = async (input) => {
     throw err
   }
 
-  const evidence: HarnessEvidence = {
-    level: 'E3',
-    status: 'passed',
-    packaged: 'not_run',
+  // Boot of fixture HTML is not product E3. Product state is not exercised here.
+  const evidence = stampHarnessEvidence({
     entrypoint: entry.kind,
-    commitSha: process.env.GITHUB_SHA ?? null,
-  }
+    productStateExercised: false,
+  })
 
   const result: BootMeetingAppResult = {
     app: {
