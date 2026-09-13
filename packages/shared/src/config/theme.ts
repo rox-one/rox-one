@@ -243,6 +243,21 @@ export function getBackgroundColor(isDark: boolean): string {
 }
 
 /**
+ * Named solid palettes (GitHub, Ghostty, Pierre, …) ship explicit hex
+ * backgrounds. The 50% vibrancy overlay lets the desktop wallpaper tint
+ * those surfaces (warm/red wash). Keep the overlay for the default theme
+ * and for scenic wallpapers, which have their own ::before layer.
+ */
+export function shouldSetThemeOverride(
+  colorTheme: string | null | undefined,
+  scenic: boolean,
+): boolean {
+  if (scenic) return true
+  if (!colorTheme || colorTheme === 'default') return true
+  return false
+}
+
+/**
  * Default theme values (matches current index.css)
  */
 export const DEFAULT_THEME: ThemeOverrides = {

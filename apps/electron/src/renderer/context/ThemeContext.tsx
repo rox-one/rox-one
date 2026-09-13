@@ -5,6 +5,7 @@ import {
   themeToCSS,
   DEFAULT_SHIKI_THEME,
   getShikiTheme,
+  shouldSetThemeOverride,
   type ThemeOverrides,
   type ThemeFile,
   type ShikiThemeConfig,
@@ -336,10 +337,13 @@ export function ThemeProvider({
       delete root.dataset.theme
     }
 
-    // Always set theme override for semi-transparent background (vibrancy effect)
-    root.dataset.themeOverride = 'true'
+    if (shouldSetThemeOverride(effectiveColorTheme, isScenic)) {
+      root.dataset.themeOverride = 'true'
+    } else {
+      delete root.dataset.themeOverride
+    }
     root.dataset.contrast = resolvedContrast
-  }, [effectiveColorTheme, font, chatFont, terminalFont, resolvedContrast])
+  }, [effectiveColorTheme, font, chatFont, terminalFont, resolvedContrast, isScenic])
 
   // Apply dark/light class and theme-specific DOM attributes
   // This runs when preset loads or mode changes
