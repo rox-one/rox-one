@@ -1,7 +1,7 @@
 export { MeetingJournal } from './journal.ts'
 export { MeetingRepository, createMeetingRepository } from './repository.ts'
 export { migrateMeetingJournal, supportedMeetingSchema } from './migrations.ts'
-export { importMeetingMedia } from './import.ts'
+export { importMeetingMedia, applyNativeImportIntent, nativeImportBinding, NATIVE_IMPORT_PROVIDER, NATIVE_IMPORT_REMOTE_TYPE } from './import.ts'
 export { approveMeetingProposal, rejectMeetingProposal, editMeetingProposal, payloadHash, createMeetingProposal, loadProposalStore, saveProposalStore } from './proposals.ts'
 export { executeApprovedProposal } from './executor.ts'
 export { approveAndExecuteNative } from './approve-execute.ts'
