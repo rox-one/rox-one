@@ -735,7 +735,7 @@ The target session receives your message with a sender envelope containing your 
 Use with spawn_session + send_agent_message. This is NOT the Cordis plugin @nanmicoder/dsh-agent-teams (H6 skip-list). The Appearance flag workbench.harness.agentTeams stays default false — do not flip it.
 
 Actions: create, list, status, resume, add_member, set_member_session, upsert_task, append_mailbox, read_mailbox, archive.
-Resume restores roster + mailbox pointers for this session as captain or member. Refuse to write under $HOME.`,
+Roster, DAG, and archive are captain-only. Members may update tasks assigned to them and use their own mailbox. \`from\` must match the calling session; foreign/removed/ambiguous identities are rejected. Resume restores roster + mailbox pointers for this session as captain or member. Refuse to write under $HOME. The tool is blocked in safe/explore mode.`,
 
   list_messaging_channels: `List messaging channels (Telegram, WhatsApp) bound to a session.
 Shows which external chat apps are connected and can send/receive messages.`,
