@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { CalendarStore, resetCalendarIds } from './store.ts'
-import { FixtureCalendarAdapter, createProviderAdapter, liveCredentialsPresent } from './adapters.ts'
+import { FixtureCalendarAdapter, createProviderAdapter, isCalendarConnectorWired, liveCredentialsPresent } from './adapters.ts'
 import { CALENDAR_CAPABILITIES } from './capabilities.ts'
 import { mergeTodayUpcoming } from './merge.ts'
 import type { CalendarProvider, TaskLike } from './types.ts'
@@ -115,6 +115,24 @@ describe('calendar connectors (issue 18)', () => {
     }])
     await store.sync(account.id, adapter, morning)
     expect(store.uiStatus('Europe/Moscow')).toBe('timezone')
+  })
+
+  it('stores local reminders without a connected calendar', () => {
+    const store = new CalendarStore()
+    expect(store.uiStatus('UTC')).toBe('none')
+    const reminder = store.addLocalReminder('Stand up', morning + 3600000)
+    expect(reminder.sourceEventId).toBeUndefined()
+    expect(store.localReminders().map((item) => item.title)).toEqual(['Stand up'])
+    store.dismissProposal(reminder.id)
+    expect(store.localReminders()).toHaveLength(0)
+  })
+
+  it('does not treat unwired optional connectors as connected', () => {
+    expect(isCalendarConnectorWired('google')).toBe(false)
+    expect(isCalendarConnectorWired('outlook')).toBe(false)
+    expect(isCalendarConnectorWired('yandex')).toBe(false)
+    expect(isCalendarConnectorWired('mailru')).toBe(false)
+    expect(isCalendarConnectorWired('appleReminders')).toBe(false)
   })
 
   const providers: CalendarProvider[] = ['google', 'outlook', 'yandex', 'mailru', 'appleReminders']

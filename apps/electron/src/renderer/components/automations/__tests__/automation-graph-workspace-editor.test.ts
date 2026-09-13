@@ -35,4 +35,10 @@ describe('Automation graph workspace presentation', () => {
     expect(infoPage).toContain('<AutomationGraphWorkspaceEditor')
     expect(infoPage).toContain('workspaceId={workspace?.id}')
   })
+
+  it('renders the graph without a connected calendar and disables unwired connectors', () => {
+    expect(editor).toContain('automations.graphNoCalendar')
+    expect(editor).toContain('CalendarConnectorChips')
+    expect(editor).not.toContain('calendarRequired')
+  })
 })

@@ -131,6 +131,25 @@ export class CalendarStore {
     return proposal
   }
 
+  /** Local reminder store — no calendar account required. */
+  addLocalReminder(title: string, dueAt: number): ReminderProposal {
+    const trimmed = title.trim()
+    if (!trimmed) throw new Error('Reminder title is required')
+    const proposal: ReminderProposal = {
+      id: mint('prop'),
+      title: trimmed,
+      dueAt,
+      accepted: false,
+      dismissed: false,
+    }
+    this.bundle.proposals.push(proposal)
+    return proposal
+  }
+
+  localReminders(): ReminderProposal[] {
+    return this.proposals().filter((item) => item.sourceEventId == null)
+  }
+
   acceptProposal(id: string): ReminderProposal {
     const proposal = this.bundle.proposals.find((item) => item.id === id)
     if (!proposal) throw new Error(`Unknown proposal ${id}`)

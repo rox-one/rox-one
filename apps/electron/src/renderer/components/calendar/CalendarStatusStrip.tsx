@@ -3,15 +3,14 @@ import { useTranslation } from 'react-i18next'
 import {
   CalendarStore,
   FixtureCalendarAdapter,
-  createProviderAdapter,
   mergeTodayUpcoming,
   type CalendarProvider,
   type TaskLike,
 } from '@craft-agent/core/calendar'
+import { CalendarConnectorChips } from './CalendarConnectorChips'
 import { cn } from '@/lib/utils'
 
 const STORAGE_KEY = 'rox.calendar.v1'
-const PROVIDERS: CalendarProvider[] = ['google', 'outlook', 'yandex', 'mailru', 'appleReminders']
 
 function loadStore(): CalendarStore {
   try {
@@ -34,6 +33,7 @@ function localTimeZone(): string {
 export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]; now: number }) {
   const { t } = useTranslation()
   const [store, setStore] = useState(loadStore)
+  const [reminderDraft, setReminderDraft] = useState('')
   const tz = localTimeZone()
 
   const persist = useCallback((next: CalendarStore) => {
@@ -70,7 +70,7 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
         }])
         await current.sync(account.id, adapter, now)
       } catch {
-        // Apple helper missing or provider unavailable — status strip stays on none/pending.
+        // Unwired connector — chips stay disabled; status stays none/pending.
       }
     })
   }
@@ -81,26 +81,37 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
     })
   }
 
+  const addLocalReminder = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!reminderDraft.trim()) return
+    void mutate((current) => {
+      current.addLocalReminder(reminderDraft, now + 60 * 60 * 1000)
+    })
+    setReminderDraft('')
+  }
+
   return (
     <div className="flex flex-col gap-1 border-b border-border px-3 py-2 text-[11px]" data-testid="calendar-status-strip">
       <div className={cn('flex flex-wrap items-center gap-2', status === 'conflict' && 'text-amber-600', status === 'timezone' && 'text-amber-600')}>
         <span>{t(`calendar.status.${status}`)}</span>
-        {PROVIDERS.map((provider) => (
-          <button
-            key={provider}
-            type="button"
-            className="rounded-full border border-foreground/10 px-2 py-0.5"
-            onClick={() => connect(provider)}
-          >
-            {t(`calendar.provider.${provider}`)}
-          </button>
-        ))}
+        <CalendarConnectorChips onConnect={connect} />
         {store.accounts().filter((account) => account.status === 'connected').map((account) => (
           <button key={account.id} type="button" className="underline" onClick={() => revoke(account.id)}>
             {t('calendar.revoke')} · {t(`calendar.provider.${account.provider}`)}
           </button>
         ))}
       </div>
+      <p className="text-muted-foreground">{t('calendar.connectorOptional')}</p>
+      <form onSubmit={addLocalReminder} className="flex items-center gap-1">
+        <input
+          value={reminderDraft}
+          onChange={(event) => setReminderDraft(event.target.value)}
+          placeholder={t('calendar.localReminderPlaceholder')}
+          aria-label={t('calendar.localReminders')}
+          className="h-7 min-w-0 flex-1 rounded-[6px] border border-foreground/10 bg-transparent px-2"
+        />
+        <button type="submit" className="underline">{t('calendar.addLocalReminder')}</button>
+      </form>
       {events.length > 0 ? (
         <ul className="flex flex-wrap gap-2 text-muted-foreground">
           {events.map((item) => (
@@ -131,9 +142,6 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
             </li>
           ))}
         </ul>
-      ) : null}
-      {store.accounts()[0] ? (
-        <p className="text-muted-foreground">{t('calendar.capability')}: {createProviderAdapter(store.accounts()[0]!.provider).capabilities.notes}</p>
       ) : null}
     </div>
   )
