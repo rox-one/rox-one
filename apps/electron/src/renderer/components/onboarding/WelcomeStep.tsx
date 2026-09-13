@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import * as storage from "@/lib/local-storage"
 import { ONBOARDING_USERNAME_MAX, parseOnboardingUsername } from "./onboarding-username"
+import { createStorageAdapter, rememberLocalProfile } from "./first-result-ui"
 import { StepFormLayout, ContinueButton } from "./primitives"
 
 interface WelcomeStepProps {
@@ -78,6 +79,13 @@ export function WelcomeStep({
     try {
       await persistOnboardingUsername(parsed)
       storage.set(storage.KEYS.onboardingUsernameConfirmed, true)
+      try {
+        if (typeof localStorage !== "undefined") {
+          rememberLocalProfile(createStorageAdapter(localStorage), parsed)
+        }
+      } catch {
+        // Local first-result profile is optional; username still continues.
+      }
       onContinue()
     } catch {
       setError(t("onboarding.welcome.usernameSaveFailed"))
