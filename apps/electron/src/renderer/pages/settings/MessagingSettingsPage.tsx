@@ -286,7 +286,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   const handleAccessChange = React.useCallback(
     async (bindingId: string, next: BindingAccess) => {
       if (next.mode === 'owner-control' && !canCommitOwnerControl(next.allowedSenderIds)) {
-        toast.error('Select at least one allowed sender before saving owner control.')
+        toast.error(t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint'))
         return
       }
       try {
@@ -295,10 +295,12 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
           allowedSenderIds: next.allowedSenderIds,
         })
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to update access')
+        toast.error(
+          err instanceof Error ? err.message : t('settings.messaging.telegram.access.failedToUpdateAccess'),
+        )
       }
     },
-    [],
+    [t],
   )
 
   React.useEffect(() => {
@@ -576,6 +578,7 @@ function TelegramBindingsBody({
   onOpenSession,
   onUnbind,
 }: TelegramBindingsBodyProps) {
+  const { t } = useTranslation()
   const [workspaceOwners, setWorkspaceOwners] = React.useState<PlatformOwner[]>([])
 
   React.useEffect(() => {
@@ -598,7 +601,7 @@ function TelegramBindingsBody({
   const handleAccessChange = React.useCallback(
     async (bindingId: string, next: BindingAccess) => {
       if (next.mode === 'owner-control' && !canCommitOwnerControl(next.allowedSenderIds)) {
-        toast.error('Select at least one allowed sender before saving owner control.')
+        toast.error(t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint'))
         return
       }
       try {
@@ -607,12 +610,13 @@ function TelegramBindingsBody({
           allowedSenderIds: next.allowedSenderIds,
         })
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Failed to update access')
+        toast.error(
+          err instanceof Error ? err.message : t('settings.messaging.telegram.access.failedToUpdateAccess'),
+        )
       }
     },
-    [],
+    [t],
   )
-  const { t } = useTranslation()
   // Telegram bindings split cleanly on `threadId`:
   //   - undefined: DM ("direct session") — at most one per workspace
   //   - number:    topic in the paired supergroup
