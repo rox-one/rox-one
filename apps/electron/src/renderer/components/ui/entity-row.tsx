@@ -4,7 +4,8 @@
  * Extracted from SessionItem/SourceItem/SkillItem which all share the same layout:
  * - Absolutely-positioned icon on the left
  * - Title + badge/subtitle row
- * - Optional trailing content (timestamp, count)
+ * - Optional trailing content (timestamp, count) stacked with hover actions
+ *   in the same title-row slot so the title truncates instead of sitting under buttons
  * - Hover-visible MoreHorizontal dropdown + context menu
  * - Selection/multi-select styling
  * - Optional separator above
@@ -34,6 +35,7 @@ import {
   MOVE_TOLERANCE_PX,
   shouldFireLongPress,
 } from '@/components/ui/long-press-state'
+import { entityRowHoverPlacement } from '@/components/ui/entity-row-hover-slot'
 import { cn } from '@/lib/utils'
 
 /** Window the long-press / right-click handler keeps `suppressNextActivation`
@@ -51,8 +53,8 @@ export interface EntityRowProps {
   title: React.ReactNode
   /** Additional className on the title wrapper (e.g. shimmer animation) */
   titleClassName?: string
-  /** Content rendered inline after the title (e.g. timestamp). On hover, swapped with the more button.
-   *  When set, the title row becomes single-line (truncated) and the absolute more button is hidden. */
+  /** Content rendered inline after the title (e.g. timestamp). On hover, swapped with the more button
+   *  in the same trailing slot — never as an overlay on the title. */
   titleTrailing?: React.ReactNode
   /** Content rendered inline immediately after the title, on the same row.
    *  Lives between the title and the trailing slot. Use for tiny, high-priority
@@ -94,7 +96,7 @@ export interface EntityRowProps {
   menuContent?: React.ReactNode
   /** Context menu content when different from dropdown (e.g. batch menu in multi-select) */
   contextMenuContent?: React.ReactNode
-  /** Extra controls in the hover-more overlay, immediately before the MoreHorizontal button. */
+  /** Extra controls in the title-row hover cluster, immediately before the MoreHorizontal button. */
   hoverActions?: React.ReactNode
   /** Whether to hide the more button (e.g. when overlay is showing) */
   hideMoreButton?: boolean
@@ -269,6 +271,59 @@ export function EntityRow({
     ? null
     : contextMenuContent ?? menuContent
 
+  const showHoverSlot = entityRowHoverPlacement({
+    hasMenu: Boolean(menuContent) || useCompactMenu,
+    hideMoreButton,
+  }) === 'title-slot'
+  const hoverRevealed =
+    menuOpen || contextMenuOpen || compactMenuOpen || useCompactMenu
+
+  const moreControl = !showHoverSlot
+    ? null
+    : useCompactMenu
+      ? (
+        <button
+          type="button"
+          onClick={() => setCompactMenuOpen(true)}
+          className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+          aria-haspopup="dialog"
+          aria-expanded={compactMenuOpen}
+        >
+          <MoreHorizontal className="h-3.5 w-3.5 text-foreground/40" />
+        </button>
+      )
+      : (
+        <DropdownMenu modal={true} open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <div className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
+              <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+          </DropdownMenuTrigger>
+          <StyledDropdownMenuContent align="end">
+            <DropdownMenuProvider>
+              {menuContent}
+            </DropdownMenuProvider>
+          </StyledDropdownMenuContent>
+        </DropdownMenu>
+      )
+
+  const hoverCluster = showHoverSlot ? (
+    <div
+      data-entity-row-hover-slot=""
+      data-touch-reveal="true"
+      className={cn(
+        "flex items-center justify-end gap-0",
+        hoverRevealed
+          ? "opacity-100"
+          : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100",
+      )}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {hoverActions}
+      {moreControl}
+    </div>
+  ) : null
+
   // Build the inner content (shared between with-context-menu and without)
   const innerContent = (
     <div className="relative group select-none pl-2 mr-2">
@@ -308,81 +363,46 @@ export function EntityRow({
       >
         {/* Content column */}
         <div className="flex flex-col gap-1.5 min-w-0 flex-1">
-          {/* Title */}
-          {titleTrailing ? (
-            <div className="flex items-center gap-[10px] w-full min-w-0">
-              {icon && (
-                <div className="shrink-0 flex items-center gap-[10px] [&>*]:w-3 [&>*]:h-3">
-                  {icon}
-                </div>
-              )}
-              <div className={cn("font-sans truncate min-w-0", titleClassName)}>
-                {title}
+          <div className="flex items-center gap-[10px] w-full min-w-0">
+            {icon && (
+              <div className="shrink-0 flex items-center gap-[10px] [&>*]:w-3 [&>*]:h-3">
+                {icon}
               </div>
-              {titleSuffix && <div className="shrink-0 flex items-center">{titleSuffix}</div>}
-              <div className="shrink-0 ml-auto relative -mr-1">
-                <span className={cn(
-                  menuOpen || contextMenuOpen || compactMenuOpen
-                    ? "invisible"
-                    : useCompactMenu ? undefined : "group-hover:invisible group-focus-within:invisible",
-                )}>
-                  {titleTrailing}
-                </span>
-                {(menuContent || useCompactMenu) && !hideMoreButton && (
-                  <div
-                    data-touch-reveal="true"
+            )}
+            <div className={cn(
+              "font-sans min-w-0",
+              titleTrailing ? "truncate" : "font-medium line-clamp-2 -mb-[2px]",
+              titleClassName,
+            )}>
+              {title}
+            </div>
+            {titleSuffix && (
+              <div className={cn("shrink-0 flex items-center", !titleTrailing && "self-center")}>
+                {titleSuffix}
+              </div>
+            )}
+            {(titleTrailing || hoverCluster) ? (
+              <div
+                className="shrink-0 ml-auto grid items-center justify-items-end"
+                data-entity-row-trailing-slot=""
+              >
+                {titleTrailing ? (
+                  <span
                     className={cn(
-                      "absolute right-0 top-1/2 flex -translate-y-1/2 items-center justify-end gap-0 overflow-visible",
-                      menuOpen || contextMenuOpen || compactMenuOpen
-                        ? "opacity-100"
-                        : useCompactMenu
-                          ? "opacity-100"
-                          : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+                      "col-start-1 row-start-1",
+                      showHoverSlot && hoverRevealed && "invisible",
+                      showHoverSlot && !hoverRevealed && "group-hover:invisible group-focus-within:invisible",
                     )}
-                    onMouseDown={(e) => e.stopPropagation()}
                   >
-                    {hoverActions}
-                    {useCompactMenu ? (
-                      <button
-                        type="button"
-                        onClick={() => setCompactMenuOpen(true)}
-                        className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
-                        aria-haspopup="dialog"
-                        aria-expanded={compactMenuOpen}
-                      >
-                        <MoreHorizontal className="h-3.5 w-3.5 text-foreground/40" />
-                      </button>
-                    ) : (
-                      <DropdownMenu modal={true} open={menuOpen} onOpenChange={setMenuOpen}>
-                        <DropdownMenuTrigger asChild>
-                          <div className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
-                            <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                        </DropdownMenuTrigger>
-                        <StyledDropdownMenuContent align="end">
-                          <DropdownMenuProvider>
-                            {menuContent}
-                          </DropdownMenuProvider>
-                        </StyledDropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </div>
-                )}
+                    {titleTrailing}
+                  </span>
+                ) : null}
+                {hoverCluster ? (
+                  <div className="col-start-1 row-start-1">{hoverCluster}</div>
+                ) : null}
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-[10px] w-full pr-6 min-w-0">
-              {icon && (
-                <div className="shrink-0 flex items-center gap-[10px] [&>*]:w-3 [&>*]:h-3">
-                  {icon}
-                </div>
-              )}
-              <div className={cn("font-medium font-sans line-clamp-2 min-w-0 -mb-[2px]", titleClassName)}>
-                {title}
-              </div>
-              {titleSuffix && <div className="shrink-0 self-center flex items-center">{titleSuffix}</div>}
-            </div>
-          )}
+            ) : null}
+          </div>
 
           {/* Subtitle line */}
           {subtitle && (
@@ -434,50 +454,6 @@ export function EntityRow({
 
       {/* Overlay (e.g. match count badge) */}
       {overlay}
-
-      {/* More menu button — visible on hover or when menu is open (skipped when titleTrailing handles it inline) */}
-      {(menuContent || useCompactMenu) && !hideMoreButton && !titleTrailing && (
-        <div
-          data-touch-reveal="true"
-          className={cn(
-            "absolute right-2 top-2 transition-opacity z-10",
-            menuOpen || contextMenuOpen || compactMenuOpen
-              ? "opacity-100"
-              : useCompactMenu
-                ? "opacity-100"
-                : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
-          )}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center rounded-[8px] overflow-hidden border border-transparent hover:border-border/50">
-            {hoverActions}
-            {useCompactMenu ? (
-              <button
-                type="button"
-                onClick={() => setCompactMenuOpen(true)}
-                className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
-                aria-haspopup="dialog"
-                aria-expanded={compactMenuOpen}
-              >
-                <MoreHorizontal className="h-4 w-4 text-foreground/40" />
-              </button>
-            ) : (
-              <DropdownMenu modal={true} open={menuOpen} onOpenChange={setMenuOpen}>
-                <DropdownMenuTrigger asChild>
-                  <div className="p-1.5 hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
-                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </DropdownMenuTrigger>
-                <StyledDropdownMenuContent align="end">
-                  <DropdownMenuProvider>
-                    {menuContent}
-                  </DropdownMenuProvider>
-                </StyledDropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Compact drawer mount — the render-prop is rendered here as a
        *  sibling of the row so the drawer's portal can mount above the
