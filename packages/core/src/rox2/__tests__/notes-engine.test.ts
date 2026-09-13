@@ -173,4 +173,37 @@ describe('ROX-AUD-031 native notes engine', () => {
     const shifted = saved.note.blocks.filter((block) => block.text === 'Alpha paragraph' || block.text === 'Beta paragraph')
     expect(shifted.map((block) => block.id)).toEqual(originalIds)
   })
+
+  test('same markdown with different extra yields a new revision id and CAS conflict', () => {
+    const engine = createNativeNotesEngine()
+    const created = engine.create('daily', '# Daily\n\nBody', { color: 'red', order: 2 }, 1000)
+    const meta = engine.save({
+      noteId: 'daily',
+      markdown: '# Daily\n\nBody',
+      expectedRevision: created.revision,
+      extra: { order: 2, color: 'blue' },
+      now: 2000,
+    })
+    expect(meta.status).toBe('ok')
+    if (meta.status !== 'ok') throw new Error('expected metadata save to succeed')
+    expect(meta.note.revision).not.toBe(created.revision)
+    expect(meta.note.extra.color).toBe('blue')
+    expect(engine.revisions('daily').map((revision) => revision.id)).toEqual([
+      created.revision,
+      meta.note.revision,
+    ])
+
+    const stale = engine.save({
+      noteId: 'daily',
+      markdown: '# Daily\n\nBody',
+      expectedRevision: created.revision,
+      extra: { color: 'green' },
+      now: 3000,
+    })
+    expect(stale.status).toBe('conflict')
+    if (stale.status === 'conflict') {
+      expect(stale.currentRevision).toBe(meta.note.revision)
+    }
+    expect(engine.read('daily')?.extra.color).toBe('blue')
+  })
 })

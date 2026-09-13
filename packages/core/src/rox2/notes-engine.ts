@@ -77,6 +77,24 @@ export function contentHash(markdown: string): string {
   return `${markdown.length.toString(16)}-${(hash >>> 0).toString(16).padStart(8, '0')}`
 }
 
+function stableStringify(value: unknown): string {
+  if (value === undefined) return 'null'
+  if (value === null || typeof value !== 'object') return JSON.stringify(value)
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`
+  const keys = Object.keys(value as Record<string, unknown>).sort()
+  return `{${keys.map((key) => `${JSON.stringify(key)}:${stableStringify((value as Record<string, unknown>)[key])}`).join(',')}}`
+}
+
+function revisionId(markdown: string, sidecar: NoteSidecar): string {
+  return contentHash(`${markdown}\0${stableStringify({
+    title: sidecar.title,
+    blocks: sidecar.blocks.map((block) => ({ id: block.id, text: block.text })),
+    attachments: sidecar.attachments,
+    wikilinks: sidecar.wikilinks,
+    extra: sidecar.extra,
+  })}`)
+}
+
 export function extractWikilinks(markdown: string): string[] {
   const links: string[] = []
   const seen = new Set<string>()
@@ -295,7 +313,7 @@ export function createNativeNotesEngine(seed: readonly NativeNote[] = []): Nativ
       extra: { ...extra },
     }
     const revision: NoteRevision = {
-      id: contentHash(markdown),
+      id: revisionId(markdown, sidecar),
       parentId,
       markdown,
       sidecar,
