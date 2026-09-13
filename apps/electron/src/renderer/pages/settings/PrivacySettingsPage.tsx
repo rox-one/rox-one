@@ -17,7 +17,9 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { routes } from '@/lib/navigate'
+import { isClaimableLive, normalizeRox2Result } from '@craft-agent/core/rox2'
 import type { ConsentPurpose, PrivacyDto } from '@craft-agent/shared/privacy'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -72,6 +74,16 @@ export default function PrivacySettingsPage() {
   }
 
   const handleExport = async () => {
+    const gate = settingsPageActionResult({
+      pageId: 'privacy',
+      action: 'export',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) {
+      toast.error(t('settings.rox2.grantRequired'))
+      return
+    }
     try {
       setBusy(true)
       const next = await window.electronAPI.requestPrivacyExport()
@@ -85,11 +97,33 @@ export default function PrivacySettingsPage() {
   }
 
   const handleDeletion = async () => {
+    const gate = settingsPageActionResult({
+      pageId: 'privacy',
+      action: 'remote-deletion',
+      source: 'native',
+      granted: true,
+      deletionStatus: 'queued',
+    })
+    if (normalizeRox2Result(gate).code === 'settings.grant-required') {
+      toast.error(t('settings.rox2.grantRequired'))
+      return
+    }
     try {
       setBusy(true)
       const next = await window.electronAPI.requestPrivacyDeletion()
       setState(next)
-      toast.success(t('settings.privacy.deletionQueued'))
+      const result = settingsPageActionResult({
+        pageId: 'privacy',
+        action: 'remote-deletion',
+        source: 'native',
+        granted: true,
+        deletionStatus: next.latestDeletion?.status === 'completed' ? 'completed' : 'queued',
+      })
+      if (isClaimableLive(result)) {
+        toast.success(t('settings.privacy.deletionCompleted'))
+      } else {
+        toast.message(t('settings.privacy.deletionNotLive'))
+      }
     } catch (error) {
       toast.error(t('settings.privacy.loadFailed', { message: errorMessage(error) }))
     } finally {

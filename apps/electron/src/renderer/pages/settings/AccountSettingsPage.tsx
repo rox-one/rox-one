@@ -31,11 +31,13 @@ import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
 import { buildMiniDashboard } from '@/platform/mini-dashboard'
 import { isHomeSessionInWorkspace } from '@/platform/home-model'
 import { navigate, routes } from '@/lib/navigate'
+import { isClaimableLive } from '@craft-agent/core/rox2'
 import {
   PROFILE_PLANS,
   type Profile,
   type ProfilePlan,
 } from '../../../shared/types'
+import { settingsPageActionResult } from './settings-rox2-surface'
 import type { XpEventType } from '@craft-agent/shared/gamification'
 
 export const meta: DetailsPageMeta = {
@@ -167,6 +169,19 @@ export default function AccountSettingsPage() {
   }
 
   const handlePlanChange = async (plan: ProfilePlan) => {
+    const spend = settingsPageActionResult({
+      pageId: 'account',
+      action: 'spend',
+      source: 'native',
+      granted: true,
+    })
+    if (isClaimableLive(spend)) return
+    const write = settingsPageActionResult({
+      pageId: 'account',
+      action: 'plan-write',
+      source: 'native',
+    })
+    if (!isClaimableLive(write)) return
     try {
       await persist({ plan })
     } catch (error) {
@@ -175,6 +190,16 @@ export default function AccountSettingsPage() {
   }
 
   const handleChangeAvatar = async () => {
+    const read = settingsPageActionResult({
+      pageId: 'account',
+      action: 'avatar-read',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(read)) {
+      toast.error(t('settings.rox2.grantRequired'))
+      return
+    }
     setChangingAvatar(true)
     try {
       const dataUrl = await avatarDataUrlFromPickedFile()

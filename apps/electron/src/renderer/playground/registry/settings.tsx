@@ -1,5 +1,6 @@
 import * as React from 'react'
 import PrivacySettingsPage from '@/pages/settings/PrivacySettingsPage'
+import AccountSettingsPage from '@/pages/settings/AccountSettingsPage'
 import AppearanceSettingsPage from '@/pages/settings/AppearanceSettingsPage'
 import RuntimeSettingsPage from '@/pages/settings/RuntimeSettingsPage'
 import CloudRunsSettingsPage from '@/pages/settings/CloudRunsSettingsPage'
@@ -15,6 +16,14 @@ function SettingsScreen({ children }: { children: React.ReactNode }) {
     <PlaygroundAppShellProvider>
       <div className="h-full min-h-[520px] overflow-auto bg-background">{children}</div>
     </PlaygroundAppShellProvider>
+  )
+}
+
+function AccountPlayground() {
+  return (
+    <SettingsScreen>
+      <AccountSettingsPage />
+    </SettingsScreen>
   )
 }
 
@@ -109,6 +118,16 @@ function QuestActivePlayground() {
 }
 
 export const settingsComponents: ComponentEntry[] = [
+  {
+    id: 'settings-account',
+    name: 'Settings · Account',
+    category: 'Settings',
+    level: 'Screens',
+    description: 'ROX2-041 native account chrome; plan is not spend',
+    component: AccountPlayground,
+    props: [],
+    layout: 'full',
+  },
   {
     id: 'settings-privacy',
     name: 'Settings · Privacy',

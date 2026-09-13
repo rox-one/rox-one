@@ -33,6 +33,8 @@ import type { PermissionMode, ThinkingLevel, ToolchainToolName, ToolchainToolSta
 import { cn } from '@/lib/utils'
 import { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@craft-agent/shared/agent/thinking-levels'
 import { SecretRefsSection } from './SecretRefsSection'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -509,6 +511,12 @@ export default function RuntimeSettingsPage() {
 
   const handlePermissionModeChange = useCallback(async (mode: PermissionMode) => {
     if (!activeWorkspaceId) return
+    const write = settingsPageActionResult({
+      pageId: 'runtime',
+      action: 'permission-mode',
+      source: 'native',
+    })
+    if (!isClaimableLive(write)) return
     const previous = permissionMode
     setPermissionMode(mode)
     setPageError(null)
@@ -566,7 +574,7 @@ export default function RuntimeSettingsPage() {
   }, [envEntries, envDirty])
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
         title={t('settings.runtime.title')}
         actions={<HeaderMenu route={routes.view.settings('runtime')} />}
