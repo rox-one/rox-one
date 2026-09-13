@@ -235,6 +235,22 @@ public actor RPCTransport: NSObject {
                 throw envelope.error.map(TransportError.remote) ?? TransportError.invalidResponse
             }
             if envelope.type == .handshakeAck, envelope.id == expectedId {
+                let serverVersion = envelope.protocolVersion ?? ""
+                if !ProtocolVersionPolicy.isCompatible(
+                    client: ProtocolConstants.protocolVersion,
+                    server: serverVersion
+                ) {
+                    throw TransportError.remote(
+                        WireError(
+                            code: .protocolVersionUnsupported,
+                            message: ProtocolVersionPolicy.rejectionMessage(
+                                client: ProtocolConstants.protocolVersion,
+                                server: serverVersion
+                            ),
+                            data: nil
+                        )
+                    )
+                }
                 return envelope
             }
             // Ignore anything else while waiting for the ack (there should be nothing else yet).
