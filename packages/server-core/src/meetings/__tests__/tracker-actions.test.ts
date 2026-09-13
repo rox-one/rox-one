@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'bun:test'
+import { isLiveVerified } from '../types.ts'
 import {
   createLiveDisabledTrackerActions,
   createMemoryTrackerAdapter,
   createTrackerActions,
+  type TrackerAdapter,
   type TrackerCreateRequest,
   type TrackerTarget,
 } from '../tracker-actions.ts'
@@ -116,6 +118,36 @@ describe('tracker-actions fail-closed (#373)', () => {
     const result = await actions.createFromMeeting(request())
     expect(result.status).toBe('unsupported')
     expect(result.reason).toBe('live-disabled')
+  })
+
+  it('does not let a simulated adapter claim live', async () => {
+    const inner = createMemoryTrackerAdapter()
+    const simulated: TrackerAdapter = {
+      mode: 'live',
+      createIssue: (req) => inner.createIssue(req),
+      updateIssue: (req) => inner.updateIssue(req),
+    }
+    const actions = createTrackerActions(simulated)
+    const created = await actions.createFromMeeting(
+      request({ idempotencyKey: 'sim-live', operationId: 'op-sim' }),
+    )
+    expect(created.status).toBe('blocked')
+    expect(created.reason).toBe('fixture-not-live')
+    expect(created.live).toBe(false)
+    expect(created.evidenceLevel).toBe('U1')
+    expect(isLiveVerified(created)).toBe(false)
+    expect(created.payload?.mode).not.toBe('live')
+
+    const updated = await actions.updateFromMeeting({
+      ...request({ idempotencyKey: 'sim-live-upd', operationId: 'op-sim-upd' }),
+      remoteId: 'iss-sim',
+      baseRevision: '1',
+    })
+    expect(updated.status).toBe('blocked')
+    expect(updated.reason).toBe('fixture-not-live')
+    expect(updated.live).toBe(false)
+    expect(isLiveVerified(updated)).toBe(false)
+    expect(updated.payload?.mode).not.toBe('live')
   })
 
   it('requires exact Linear team IDs', async () => {
