@@ -131,11 +131,12 @@ export function isRichToolDescriptionsEnabled(): boolean {
 /**
  * Check if extended prompt cache (1h TTL) is enabled.
  * When enabled, the interceptor upgrades all cache_control blocks from 5m to 1h TTL.
- * Defaults to false if config is unreadable or field is not set.
+ * Defaults to true if config is unreadable or field is not set.
+ * Must stay in sync with getExtendedPromptCache() in config/storage.ts.
  */
 export function isExtendedPromptCacheEnabled(): boolean {
   const config = getInterceptorConfig();
-  return config?.extendedPromptCache === true;
+  return config?.extendedPromptCache !== false;
 }
 
 /**

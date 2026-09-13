@@ -1,9 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
+  CONFIG_FILE,
+  _resetConfigCacheForTesting,
   getLastApiError,
+  isExtendedPromptCacheEnabled,
   setStoredError,
   toolMetadataStore,
 } from '../interceptor-common.ts';
@@ -70,5 +73,46 @@ describe('interceptor-common', () => {
     const persisted = JSON.parse(readFileSync(join(sessionDirA, 'tool-metadata.json'), 'utf-8')) as Record<string, unknown>;
     expect(persisted.existingTool).toBeDefined();
     expect(persisted.newTool).toBeDefined();
+  });
+});
+
+describe('isExtendedPromptCacheEnabled', () => {
+  let originalConfig: string | null = null;
+
+  beforeEach(() => {
+    try {
+      originalConfig = readFileSync(CONFIG_FILE, 'utf-8');
+    } catch {
+      originalConfig = null;
+    }
+  });
+
+  afterEach(() => {
+    if (originalConfig !== null) {
+      writeFileSync(CONFIG_FILE, originalConfig);
+    } else {
+      try { unlinkSync(CONFIG_FILE); } catch { /* ignore */ }
+    }
+    _resetConfigCacheForTesting();
+  });
+
+  function writeConfig(payload: Record<string, unknown>): void {
+    mkdirSync(dirname(CONFIG_FILE), { recursive: true });
+    writeFileSync(CONFIG_FILE, JSON.stringify(payload));
+    _resetConfigCacheForTesting();
+  }
+
+  it('defaults on when the field is missing or config is unreadable', () => {
+    writeConfig({});
+    expect(isExtendedPromptCacheEnabled()).toBe(true);
+
+    try { unlinkSync(CONFIG_FILE); } catch { /* ignore */ }
+    _resetConfigCacheForTesting();
+    expect(isExtendedPromptCacheEnabled()).toBe(true);
+  });
+
+  it('honors an explicit off toggle', () => {
+    writeConfig({ extendedPromptCache: false });
+    expect(isExtendedPromptCacheEnabled()).toBe(false);
   });
 });
