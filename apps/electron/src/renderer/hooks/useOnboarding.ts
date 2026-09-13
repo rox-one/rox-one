@@ -894,13 +894,19 @@ export function useOnboarding({
         let slug = 'omp'
         let n = 2
         while (existingSlugs.has(slug)) slug = `omp-${n++}`
+        const visibleError = (raw: string | undefined, key: string) =>
+          raw && !/\bOMP\b|oh-my-pi|Craft Agents/i.test(raw) ? raw : t(key)
         const result = await window.electronAPI.setupLlmConnection({
           slug,
           name: 'Rox',
           providerType: 'omp',
         })
         if (!result.success) {
-          setState(s => ({ ...s, credentialStatus: 'error', errorMessage: result.error || 'Failed to create OMP connection' }))
+          setState(s => ({
+            ...s,
+            credentialStatus: 'error',
+            errorMessage: visibleError(result.error, 'onboarding.ompCredential.createFailed'),
+          }))
           return
         }
         const testResult = await window.electronAPI.testLlmConnection(slug)
@@ -911,7 +917,7 @@ export function useOnboarding({
             ...s,
             step: 'omp-credential',
             credentialStatus: 'error',
-            errorMessage: testResult.error || 'OMP connection test failed — check `omp` CLI and its model config',
+            errorMessage: visibleError(testResult.error, 'onboarding.ompCredential.testFailed'),
           }))
         }
       })()
@@ -932,7 +938,7 @@ export function useOnboarding({
       // Defer to next tick so state is updated before handleStartOAuth reads it
       setTimeout(() => handleStartOAuth(method), 0)
     }
-  }, [handleStartOAuth])
+  }, [afterProviderStep, existingSlugs, handleStartOAuth, t])
 
   // Submit authorization code (second step of OAuth flow)
   const handleSubmitAuthCode = useCallback(async (code: string) => {
