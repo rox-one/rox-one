@@ -8,11 +8,20 @@ export interface FlattenTableGroupsOptions<TItem> {
   rowHeight: number
   headerHeight: number
   getRowHeight?: (item: TItem) => number
+  /** Expanded empty groups keep a drop-lane row instead of a dead header. */
+  emptyLaneHeight?: number
 }
 
 export type VirtualTableEntry<TItem, TBucket extends { key: string }> =
   | {
       kind: 'header'
+      key: string
+      bucket: TBucket
+      offset: number
+      height: number
+    }
+  | {
+      kind: 'empty'
       key: string
       bucket: TBucket
       offset: number
@@ -34,13 +43,14 @@ export interface FlattenedTableGroups<TItem, TBucket extends { key: string }> {
 /**
  * Converts expanded table groups into a fixed-height render list. Headers remain
  * visible for collapsed groups; their rows are omitted from both DOM and height.
+ * Expanded empty groups keep a drop-lane entry when `emptyLaneHeight` is set.
  */
 export function flattenTableGroups<TItem, TBucket extends { key: string }>(
   groups: readonly VirtualTableGroup<TItem, TBucket>[],
   collapsed: ReadonlySet<string>,
   options: FlattenTableGroupsOptions<TItem>,
 ): FlattenedTableGroups<TItem, TBucket> {
-  const { getItemKey, rowHeight, headerHeight, getRowHeight } = options
+  const { getItemKey, rowHeight, headerHeight, getRowHeight, emptyLaneHeight } = options
   const entries: VirtualTableEntry<TItem, TBucket>[] = []
   let offset = 0
 
@@ -55,6 +65,17 @@ export function flattenTableGroups<TItem, TBucket extends { key: string }>(
       })
       offset += headerHeight
       if (collapsed.has(group.bucket.key)) continue
+      if (group.items.length === 0 && emptyLaneHeight && emptyLaneHeight > 0) {
+        entries.push({
+          kind: 'empty',
+          key: `empty:${group.bucket.key}`,
+          bucket: group.bucket,
+          offset,
+          height: emptyLaneHeight,
+        })
+        offset += emptyLaneHeight
+        continue
+      }
     }
 
     for (const item of group.items) {

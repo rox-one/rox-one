@@ -40,9 +40,14 @@ import { collectionViewRoute } from '../collection/collection-view-cycle'
 import { skipRailChipClearOnce, userSliceNavigation } from '../collection/collection-rail-filters'
 import { CollectionBulkBar } from '../collection/CollectionBulkBar'
 import { SessionTableRow } from './SessionTableRow'
-import { SessionTableGroupHeader } from './SessionTableGroupHeader'
+import { SessionTableEmptyDropLane, SessionTableGroupHeader } from './SessionTableGroupHeader'
 import { crossGroupDropAction } from './table-drag'
 import { flattenTableGroups, virtualTableWindow } from './table-virtualization'
+import {
+  TABLE_EMPTY_LANE_HEIGHT,
+  collapsibleTableGroupKeys,
+  selectTableGroupSessionIds,
+} from './table-group-chrome'
 import {
   emptyTableGroupBuckets,
   withEmptyTableGroups,
@@ -204,7 +209,7 @@ export function SessionTableHost() {
   const setFilters = useSetAtom(collectionFiltersAtom)
   const loadFilters = useSetAtom(loadCollectionFiltersAtom)
   const replaceFiltersMap = useSetAtom(replaceCollectionFiltersMapAtom)
-  const { toggle, selectRange, selectAll, clearMultiSelect, isSelected } = sessionSelection.useSelection()
+  const { toggle, selectRange, selectAll, addToSelection, clearMultiSelect, isSelected } = sessionSelection.useSelection()
 
   const [collapsed, setCollapsed] = React.useState<Set<string>>(() => new Set())
 
@@ -224,18 +229,28 @@ export function SessionTableHost() {
     return () => { cancelled = true }
   }, [t])
 
+  const persistCollapsed = React.useCallback((next: Set<string>) => {
+    void persistCollapsedGroups(next).catch((error) => {
+      console.error('[SessionTable] Failed to save collapsed groups:', error)
+      toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+    })
+  }, [t])
+
   const toggleCollapsedGroup = React.useCallback((key: string) => {
     setCollapsed((previous) => {
       const next = new Set(previous)
       if (next.has(key)) next.delete(key)
       else next.add(key)
-      void persistCollapsedGroups(next).catch((error) => {
-        console.error('[SessionTable] Failed to save collapsed groups:', error)
-        toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
-      })
+      persistCollapsed(next)
       return next
     })
-  }, [t])
+  }, [persistCollapsed])
+
+  const expandAllGroups = React.useCallback(() => {
+    const next = new Set<string>()
+    setCollapsed(next)
+    persistCollapsed(next)
+  }, [persistCollapsed])
 
   React.useEffect(() => {
     void loadDisplay(activeWorkspaceId)
@@ -297,6 +312,18 @@ export function SessionTableHost() {
     [metaMap, filters, display, statusById, projectNameById, labelById, t],
   )
 
+  const collapseAllGroups = React.useCallback(() => {
+    const next = new Set(collapsibleTableGroupKeys(rows))
+    setCollapsed(next)
+    persistCollapsed(next)
+  }, [persistCollapsed, rows])
+
+  const handleSelectGroup = React.useCallback((groupKey: string) => {
+    const ids = selectTableGroupSessionIds(rows, groupKey)
+    if (ids.length === 0) return
+    addToSelection(ids)
+  }, [addToSelection, rows])
+
   const totalRows = rows.reduce((acc, g) => acc + g.items.length, 0)
   const visibleRows = React.useMemo<SessionMeta[]>(
     () => rows.flatMap((group) => (group.bucket == null || !collapsed.has(group.bucket.key) ? group.items : [])),
@@ -325,6 +352,7 @@ export function SessionTableHost() {
         getItemKey: (meta) => meta.id,
         rowHeight: collectionTableRowHeight(display.density),
         headerHeight: TABLE_GROUP_HEADER_HEIGHT,
+        emptyLaneHeight: TABLE_EMPTY_LANE_HEIGHT,
       }),
     [rows, collapsed, display.density],
   )
@@ -373,6 +401,7 @@ export function SessionTableHost() {
   // B5: rank drag reorder via HTML5 DnD when orderBy === 'rank'.
   const dragIdRef = React.useRef<string | null>(null)
   const [dropTarget, setDropTarget] = React.useState<{ sessionId: string; before: boolean } | null>(null)
+  const [dropGroupKey, setDropGroupKey] = React.useState<string | null>(null)
 
   const handleRowDragStart = React.useCallback((id: string) => {
     dragIdRef.current = id
@@ -419,6 +448,7 @@ export function SessionTableHost() {
 
       e.preventDefault()
       e.dataTransfer.dropEffect = 'move'
+      setDropGroupKey(null)
       const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
       const before = e.clientY < rect.top + rect.height / 2
       setDropTarget({ sessionId: id, before })
@@ -554,22 +584,65 @@ export function SessionTableHost() {
     [display, filters, labelById, loadedSessionIds, metaMap, projectNameById, refreshMetadata, showGrip, statusById, t, updateMeta],
   )
 
+  const handleEmptyGroupDragOver = React.useCallback((groupKey: string, e: React.DragEvent) => {
+    if (!showGrip) return
+    const dragId = dragIdRef.current
+    if (!dragId || !crossGroupDropAction(display.groupBy, groupKey)) {
+      setDropGroupKey(null)
+      e.dataTransfer.dropEffect = 'none'
+      return
+    }
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    setDropTarget(null)
+    setDropGroupKey(groupKey)
+  }, [display.groupBy, showGrip])
+
+  const finalizeEmptyGroupDrop = React.useCallback(async (groupKey: string) => {
+    const dragId = dragIdRef.current
+    dragIdRef.current = null
+    setDropTarget(null)
+    setDropGroupKey(null)
+    if (!dragId || !showGrip) return
+    const dragMeta = metaMap.get(dragId)
+    const action = crossGroupDropAction(display.groupBy, groupKey)
+    if (!dragMeta || !action) return
+    const previousMetadataPatch =
+      action.command.type === 'setSessionStatus'
+        ? { sessionStatus: dragMeta.sessionStatus }
+        : action.command.type === 'setPriority'
+          ? { priority: dragMeta.priority }
+          : { projectId: dragMeta.projectId }
+    try {
+      updateMeta(dragId, action.metadataPatch)
+      await window.electronAPI.sessionCommand(dragId, action.command)
+    } catch (error) {
+      console.error('[SessionTable] Failed to move session into empty group:', error)
+      updateMeta(dragId, previousMetadataPatch)
+      toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+    }
+  }, [display.groupBy, metaMap, showGrip, t, updateMeta])
+
   const handleTableDrop = React.useCallback(
     (e: React.DragEvent) => {
       e.preventDefault()
-      if (dropTarget) {
+      if (dropGroupKey) {
+        void finalizeEmptyGroupDrop(dropGroupKey)
+      } else if (dropTarget) {
         void finalizeReorder(dropTarget.sessionId, dropTarget.before)
       } else {
         dragIdRef.current = null
         setDropTarget(null)
+        setDropGroupKey(null)
       }
     },
-    [dropTarget, finalizeReorder],
+    [dropGroupKey, dropTarget, finalizeEmptyGroupDrop, finalizeReorder],
   )
 
   const handleTableDragEnd = React.useCallback(() => {
     dragIdRef.current = null
     setDropTarget(null)
+    setDropGroupKey(null)
   }, [])
 
   return (
@@ -661,81 +734,101 @@ export function SessionTableHost() {
                 height: entry.height,
               }
 
-              if (entry.kind === 'header') {
-                return (
-                  <SessionTableGroupHeader
-                    key={entry.key}
-                    bucket={entry.bucket}
-                    collapsed={collapsed.has(entry.bucket.key)}
-                    onToggle={() => toggleCollapsedGroup(entry.bucket.key)}
-                    style={style}
-                  />
-                )
-              }
-
-              const meta = entry.item
-              return (
-                <SessionTableRow
-                  key={entry.key}
-                  meta={meta}
-                  statuses={sessionStatuses}
-                  projectNameById={projectNameById}
-                  labelById={labelById}
-                  selected={isSelected(meta.id)}
-                  onSelect={(_checked, shiftKey) => {
-                    const globalIndex = visibleIndexById.get(meta.id) ?? 0
-                    if (shiftKey) selectRange(globalIndex, visibleIds)
-                    else toggle(meta.id, globalIndex)
-                  }}
-                  onOpen={(id) => navigate(routes.view.allSessions(id))}
-                  onUpdate={(partial) => {
-                    updateMeta(meta.id, partial)
-                    const api = window.electronAPI
-                    const send = async (command: unknown): Promise<void> => {
-                      try {
-                        await api.sessionCommand(meta.id, command as never)
-                      } catch (error) {
-                        console.error('[SessionTable] Failed to update row:', error)
-                        updateMeta(meta.id, meta)
-                        toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+              switch (entry.kind) {
+                case 'header':
+                  return (
+                    <SessionTableGroupHeader
+                      key={entry.key}
+                      bucket={entry.bucket}
+                      collapsed={collapsed.has(entry.bucket.key)}
+                      onToggle={() => toggleCollapsedGroup(entry.bucket.key)}
+                      onSelectGroup={() => handleSelectGroup(entry.bucket.key)}
+                      onCollapseAll={collapseAllGroups}
+                      onExpandAll={expandAllGroups}
+                      style={style}
+                    />
+                  )
+                case 'empty':
+                  return (
+                    <SessionTableEmptyDropLane
+                      key={entry.key}
+                      bucketKey={entry.bucket.key}
+                      active={dropGroupKey === entry.bucket.key}
+                      onDragOver={handleEmptyGroupDragOver}
+                      style={style}
+                    />
+                  )
+                case 'row': {
+                  const meta = entry.item
+                  return (
+                    <SessionTableRow
+                      key={entry.key}
+                      meta={meta}
+                      statuses={sessionStatuses}
+                      projectNameById={projectNameById}
+                      labelById={labelById}
+                      selected={isSelected(meta.id)}
+                      onSelect={(_checked, shiftKey) => {
+                        const globalIndex = visibleIndexById.get(meta.id) ?? 0
+                        if (shiftKey) selectRange(globalIndex, visibleIds)
+                        else toggle(meta.id, globalIndex)
+                      }}
+                      onOpen={(id) => navigate(routes.view.allSessions(id))}
+                      onUpdate={(partial) => {
+                        updateMeta(meta.id, partial)
+                        const api = window.electronAPI
+                        const send = async (command: unknown): Promise<void> => {
+                          try {
+                            await api.sessionCommand(meta.id, command as never)
+                          } catch (error) {
+                            console.error('[SessionTable] Failed to update row:', error)
+                            updateMeta(meta.id, meta)
+                            toast.error(t('collection.bulk.failed', { message: error instanceof Error ? error.message : String(error) }))
+                          }
+                        }
+                        if (partial.priority !== undefined) void send({ type: 'setPriority', priority: partial.priority })
+                        if (partial.dueDate !== undefined) void send({ type: 'setDueDate', dueDate: partial.dueDate })
+                        if (partial.sessionStatus !== undefined) void send({ type: 'setSessionStatus', state: partial.sessionStatus })
+                        if (partial.isFlagged !== undefined) void send({ type: partial.isFlagged ? 'flag' : 'unflag' })
+                      }}
+                      showGrip={showGrip}
+                      showStatus={showCol('status')}
+                      showPriority={showCol('priority')}
+                      showProject={showCol('project')}
+                      showLabels={showCol('labels')}
+                      showDue={showCol('dueDate')}
+                      showModel={showCol('model')}
+                      showUpdated={showCol('updated')}
+                      showCreated={showCol('created')}
+                      showFlag={showCol('flag')}
+                      showMessages={showCol('messages')}
+                      showTokens={showCol('tokens')}
+                      showDuration={showCol('duration')}
+                      showSize={showCol('size')}
+                      showToolCalls={showCol('toolCalls')}
+                      showCommits={showCol('commits')}
+                      showParallelAgents={showCol('parallelAgents')}
+                      parallelAgentCount={parallelAgentCounts.get(meta.id) ?? 0}
+                      onDragStartRow={handleRowDragStart}
+                      onDragOverRow={handleRowDragOver}
+                      dropIndicator={
+                        dropTarget?.sessionId === meta.id
+                          ? dropTarget.before
+                            ? 'before'
+                            : 'after'
+                          : null
                       }
-                    }
-                    if (partial.priority !== undefined) void send({ type: 'setPriority', priority: partial.priority })
-                    if (partial.dueDate !== undefined) void send({ type: 'setDueDate', dueDate: partial.dueDate })
-                    if (partial.sessionStatus !== undefined) void send({ type: 'setSessionStatus', state: partial.sessionStatus })
-                    if (partial.isFlagged !== undefined) void send({ type: partial.isFlagged ? 'flag' : 'unflag' })
-                  }}
-                  showGrip={showGrip}
-                  showStatus={showCol('status')}
-                  showPriority={showCol('priority')}
-                  showProject={showCol('project')}
-                  showLabels={showCol('labels')}
-                  showDue={showCol('dueDate')}
-                  showModel={showCol('model')}
-                  showUpdated={showCol('updated')}
-                  showCreated={showCol('created')}
-                  showFlag={showCol('flag')}
-                  showMessages={showCol('messages')}
-                  showTokens={showCol('tokens')}
-                  showDuration={showCol('duration')}
-                  showSize={showCol('size')}
-                  showToolCalls={showCol('toolCalls')}
-                  showCommits={showCol('commits')}
-                  showParallelAgents={showCol('parallelAgents')}
-                  parallelAgentCount={parallelAgentCounts.get(meta.id) ?? 0}
-                  onDragStartRow={handleRowDragStart}
-                  onDragOverRow={handleRowDragOver}
-                  dropIndicator={
-                    dropTarget?.sessionId === meta.id
-                      ? dropTarget.before
-                        ? 'before'
-                        : 'after'
-                      : null
-                  }
-                  density={display.density}
-                  style={style}
-                />
-              )
+                      density={display.density}
+                      style={style}
+                    />
+                  )
+                }
+                default: {
+                  const _exhaustive: never = entry
+                  void _exhaustive
+                  return null
+                }
+              }
             })}
           </ul>
         )}
