@@ -25,6 +25,8 @@ import {
   SettingsMenuSelectRow,
 } from '@/components/settings'
 import { VoiceSettingsSection } from './VoiceSettingsSection'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -68,23 +70,29 @@ export default function InputSettingsPage() {
   }, [])
 
   const handleAutoCapitalisationChange = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'input', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setAutoCapitalisation(enabled)
     await window.electronAPI.setAutoCapitalisation(enabled)
   }, [])
 
   const handleSpellCheckChange = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'input', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setSpellCheck(enabled)
     await window.electronAPI.setSpellCheck(enabled)
   }, [])
 
   const handleSendMessageKeyChange = useCallback((value: string) => {
+    const gate = settingsPageActionResult({ pageId: 'input', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     const key = value as 'enter' | 'cmd-enter'
     setSendMessageKey(key)
     window.electronAPI.setSendMessageKey(key)
   }, [])
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t("settings.input.title")} actions={<HeaderMenu route={routes.view.settings('input')} />} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">

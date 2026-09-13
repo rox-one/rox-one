@@ -1,5 +1,5 @@
 /**
- * ROX2-031 hub + ROX2-041..049 settings pages.
+ * ROX2-031 hub + ROX2-041..052 settings pages.
  * Settings pages stay in SETTINGS_PAGES. Conation is not this surface.
  */
 import {
@@ -24,10 +24,13 @@ export const ROX2_SETTINGS_PAGE_IDS = ['account', 'privacy', 'runtime'] as const
 export const ROX2_SETTINGS_WAVE2_PAGE_IDS = ['context', 'marketplace', 'knowledge'] as const
 /** ROX2-047..049: extensions, import, app. */
 export const ROX2_SETTINGS_WAVE3_PAGE_IDS = ['extensions', 'import', 'app'] as const
+/** ROX2-050..052: ai, appearance, input. */
+export const ROX2_SETTINGS_WAVE4_PAGE_IDS = ['ai', 'appearance', 'input'] as const
 export type Rox2SettingsPageId =
   | (typeof ROX2_SETTINGS_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE2_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE3_PAGE_IDS)[number]
+  | (typeof ROX2_SETTINGS_WAVE4_PAGE_IDS)[number]
 
 export type SettingsPageActionKind =
   | 'profile-write'
@@ -47,6 +50,9 @@ export type SettingsPageActionKind =
   | 'persist'
   | 'pref-write'
   | 'toggle'
+  | 'connection-write'
+  | 'connection-delete'
+  | 'connection-test'
 
 const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'profile-write': 'write',
@@ -66,6 +72,9 @@ const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   persist: 'write',
   'pref-write': 'write',
   toggle: 'write',
+  'connection-write': 'write',
+  'connection-delete': 'destroy',
+  'connection-test': 'cloud-send',
 }
 
 export function bindSettingsHubContext(
@@ -104,7 +113,8 @@ export function settingsHubActionResult(opts: {
  * Per-page Rox2 action gate. Plan is a local label (not spend).
  * Remote deletion stays queued until a completed receipt exists.
  * Marketplace and extension install is cloud-send; it is never spend.
- * Import scan is device-read. App prefs are local writes.
+ * Import scan is device-read. App/appearance/input prefs are local writes.
+ * AI connection save is local; test is cloud-send; delete is destroy.
  */
 export function settingsPageActionResult(opts: {
   pageId: Rox2SettingsPageId

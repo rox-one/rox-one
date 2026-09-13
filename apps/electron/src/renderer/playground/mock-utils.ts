@@ -806,14 +806,37 @@ export const mockElectronAPI = {
 
   // FreeFormInput required mocks
   getAutoCapitalisation: async () => false,
+  setAutoCapitalisation: async () => {},
+  getSendMessageKey: async () => 'enter',
+  setSendMessageKey: async () => {},
+  getSpellCheck: async () => true,
+  setSpellCheck: async () => {},
+  getWorkspaces: async () => [],
+  getExtendedPromptCache: async () => true,
+  setExtendedPromptCache: async () => {},
+  getEnable1MContext: async () => false,
+  setEnable1MContext: async () => {},
+  getRtkEnabled: async () => false,
+  setRtkEnabled: async () => {},
+  getRtkStatus: async () => ({ installed: false, path: null, version: null }),
+  getRtkGain: async () => null,
+  getCredentialHealth: async () => ({ issues: [] }),
+  getKanbanConfig: async () => ({
+    version: 1 as const,
+    groupBy: 'project' as const,
+    columns: [],
+  }),
+  setKanbanConfig: async (_id: string, next: unknown) => next,
+  onKanbanConfigChanged: () => () => {},
+  getDefaultZoomLevel: async () => 90,
+  setDefaultZoomLevel: async () => {},
+  getRichToolDescriptions: async () => true,
+  setRichToolDescriptions: async () => {},
 
   getPendingPlanExecution: async (sessionId: string) => {
     console.log('[Playground] getPendingPlanExecution called:', sessionId)
     return null
   },
-
-  getSendMessageKey: async () => 'enter',
-  getSpellCheck: async () => true,
 
   // Pi provider discovery mocks
   getPiApiKeyProviders: async () => [
