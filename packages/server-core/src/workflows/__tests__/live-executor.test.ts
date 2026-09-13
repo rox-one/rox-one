@@ -1,0 +1,293 @@
+import { describe, expect, test } from 'bun:test'
+import {
+  createCanvasEdge,
+  createCanvasNode,
+  createDraftSpec,
+  isProductionWorkflowSuccess,
+  runWorkflow,
+} from '@craft-agent/shared/workflows'
+import {
+  createInMemoryReceiptStore,
+  createLoopbackModelGateway,
+  createLoopbackToolRegistry,
+  executeLiveWorkflow,
+  isLiveWorkflowProductionSuccess,
+  LiveWorkflowExecutor,
+} from '../index.ts'
+import type { SessionWorkflowSpec } from '@craft-agent/shared/workflows'
+
+const NOW = 1_700_000_000_000
+
+function provenance(nodeId: string) {
+  return { sessionId: 's1', messageIds: [nodeId] }
+}
+
+function specWith(nodes: SessionWorkflowSpec['nodes'], edges: SessionWorkflowSpec['edges'] = []): SessionWorkflowSpec {
+  const spec = createDraftSpec('s1', NOW)
+  spec.nodes = nodes
+  spec.edges = edges
+  spec.defaults.permissionMode = 'allow-all'
+  return spec
+}
+
+function note(id: string) {
+  return createCanvasNode({
+    id,
+    kind: 'note',
+    title: 'hello',
+    position: { x: 0, y: 0 },
+    provenance: provenance(id),
+    now: NOW,
+  })
+}
+
+function modelNode(id: string) {
+  return createCanvasNode({
+    id,
+    kind: 'model',
+    title: 'infer',
+    position: { x: 200, y: 0 },
+    permissionMode: 'allow-all',
+    provenance: provenance(id),
+    now: NOW,
+  })
+}
+
+function toolNode(id: string, title = 'echo') {
+  return createCanvasNode({
+    id,
+    kind: 'tool',
+    title,
+    position: { x: 400, y: 0 },
+    permissionMode: 'allow-all',
+    provenance: provenance(id),
+    now: NOW,
+  })
+}
+
+function humanNode(id: string) {
+  return createCanvasNode({
+    id,
+    kind: 'human_input',
+    title: 'confirm',
+    position: { x: 200, y: 80 },
+    permissionMode: 'ask',
+    provenance: provenance(id),
+    now: NOW,
+  })
+}
+
+describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
+  test('invokes an injected gateway for a model node and records a verified live receipt', async () => {
+    const gateway = createLoopbackModelGateway({ infer: 'loopback-complete' })
+    const tools = createLoopbackToolRegistry()
+    const n = note('n1')
+    const m = modelNode('m1')
+    const spec = specWith([n, m], [createCanvasEdge({ source: n.id, target: m.id, now: NOW })])
+
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [m.id],
+      now: NOW,
+      gateway,
+      tools,
+      bindings: { [m.id]: { prompt: 'say hi' } },
+    })
+
+    expect(run.evidence).toBe('live')
+    expect(run.status[m.id]).toBe('done')
+    expect(run.status[m.id]).not.toBe('simulated')
+    expect(run.artifacts[m.id]?.value).toBe('loopback-complete')
+    expect(run.operation.mode).toBe('production')
+    expect(run.operation.lifecycle).toBe('succeeded')
+    expect(run.operation.verification).toBe('verified')
+    expect(run.operation.receipt?.provider).toBe('loopback')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+    expect(gateway.calls).toHaveLength(1)
+    expect(gateway.calls[0]?.prompt).toBe('say hi')
+  })
+
+  test('invokes ToolRegistry for a tool node and records a verified live receipt', async () => {
+    const gateway = createLoopbackModelGateway()
+    const tools = createLoopbackToolRegistry({
+      echo: (input) => `echoed:${JSON.stringify(input)}`,
+    })
+    const t = toolNode('t1', 'echo')
+    const spec = specWith([t])
+
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [t.id],
+      now: NOW,
+      gateway,
+      tools,
+      bindings: { [t.id]: { toolName: 'echo', input: { ping: 1 } } },
+    })
+
+    expect(run.evidence).toBe('live')
+    expect(run.status[t.id]).toBe('done')
+    expect(run.artifacts[t.id]?.value).toBe('echoed:{"ping":1}')
+    expect(run.operation.lifecycle).toBe('succeeded')
+    expect(run.operation.verification).toBe('verified')
+    expect(run.operation.receipt?.provider).toBe('loopback-tools')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+    expect(tools.calls).toHaveLength(1)
+    expect(tools.calls[0]?.name).toBe('echo')
+  })
+
+  test('gateway error marks the node failed, not done, and is not production success', async () => {
+    const gateway = createLoopbackModelGateway({
+      infer: () => {
+        throw new Error('upstream 500')
+      },
+    })
+    const m = modelNode('m1')
+    const spec = specWith([m])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [m.id],
+      now: NOW,
+      gateway,
+      tools: createLoopbackToolRegistry(),
+      bindings: { [m.id]: { prompt: 'x' } },
+    })
+
+    expect(run.status[m.id]).toBe('failed')
+    expect(run.status[m.id]).not.toBe('done')
+    expect(run.operation.lifecycle).toBe('failed')
+    expect(run.operation.verification).not.toBe('verified')
+    expect(run.operation.error?.code).toBe('model_failed')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
+  })
+
+  test('human_input waits for approval and is not succeeded', async () => {
+    const h = humanNode('h1')
+    const spec = specWith([h])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [h.id],
+      now: NOW,
+      gateway: createLoopbackModelGateway(),
+      tools: createLoopbackToolRegistry(),
+    })
+
+    expect(run.status[h.id]).toBe('waiting_approval')
+    expect(run.operation.lifecycle).toBe('waiting_approval')
+    expect(run.operation.lifecycle).not.toBe('succeeded')
+    expect(run.finishedAt).toBeUndefined()
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
+  })
+
+  test('cancel stops an in-flight model call and leaves unstarted nodes queued, not failed', async () => {
+    let release!: () => void
+    const blocked = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    const gateway = createLoopbackModelGateway({
+      infer: async () => {
+        await blocked
+        return 'too-late'
+      },
+    })
+    const tools = createLoopbackToolRegistry({ echo: () => 'nope' })
+    const m = modelNode('m1')
+    const t = toolNode('t1')
+    const spec = specWith(
+      [m, t],
+      [createCanvasEdge({ source: m.id, target: t.id, now: NOW })],
+    )
+    const executor = new LiveWorkflowExecutor({ gateway, tools })
+    const pending = executor.execute({
+      spec,
+      mode: 'pipeline',
+      now: NOW,
+      bindings: {
+        [m.id]: { prompt: 'wait' },
+        [t.id]: { toolName: 'echo', input: {} },
+      },
+    })
+    await gateway.entered
+    executor.cancel()
+    release()
+    const run = await pending
+
+    expect(run.operation.lifecycle).toBe('cancelled')
+    expect(run.status[m.id]).toBe('cancelled')
+    expect(run.status[t.id]).toBe('queued')
+    expect(run.status[t.id]).not.toBe('failed')
+    expect(run.operation.error).toBeUndefined()
+    expect(tools.calls).toHaveLength(0)
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
+  })
+
+  test('restart with the same idempotency key does not double a tool side-effect', async () => {
+    const tools = createLoopbackToolRegistry({ echo: () => 'once' })
+    const receipts = createInMemoryReceiptStore()
+    const t = toolNode('t1', 'echo')
+    const spec = specWith([t])
+    const input = {
+      spec,
+      mode: 'node' as const,
+      seedIds: [t.id],
+      now: NOW,
+      gateway: createLoopbackModelGateway(),
+      tools,
+      receipts,
+      idempotencyKey: 'u1-tool-once',
+      bindings: { [t.id]: { toolName: 'echo', input: { n: 1 } } },
+    }
+
+    const first = await executeLiveWorkflow(input)
+    const second = await executeLiveWorkflow({ ...input, now: NOW + 1 })
+
+    expect(first.operation.receipt?.requestId).toBe(second.operation.receipt?.requestId)
+    expect(second.id).toBe(first.id)
+    expect(tools.calls).toHaveLength(1)
+    expect(isLiveWorkflowProductionSuccess(first)).toBe(true)
+    expect(isLiveWorkflowProductionSuccess(second)).toBe(true)
+  })
+
+  test('queued is not an error and simulated canvas runs are not live production success', async () => {
+    const m = modelNode('m1')
+    const t = toolNode('t1')
+    const spec = specWith(
+      [m, t],
+      [createCanvasEdge({ source: m.id, target: t.id, now: NOW })],
+    )
+    const simulated = runWorkflow({ spec, mode: 'pipeline', now: NOW })
+    expect(simulated.evidence).toBe('simulated')
+    expect(isProductionWorkflowSuccess(simulated)).toBe(false)
+    expect(simulated.status[m.id]).toBe('simulated')
+    expect(simulated.status[m.id]).not.toBe('done')
+
+    const live = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [],
+      now: NOW,
+      gateway: createLoopbackModelGateway(),
+      tools: createLoopbackToolRegistry(),
+    })
+    expect(live.evidence).toBe('live')
+    expect(live.operation.lifecycle).toBe('queued')
+    expect(live.operation.error).toBeUndefined()
+    expect(live.status[m.id]).toBe('queued')
+    expect(live.status[t.id]).toBe('queued')
+    expect(isLiveWorkflowProductionSuccess(live)).toBe(false)
+    expect(isLiveWorkflowProductionSuccess({
+      ...live,
+      evidence: 'simulated',
+      operation: {
+        ...live.operation,
+        mode: 'simulated',
+        lifecycle: 'succeeded',
+        verification: 'verified',
+        receipt: { provider: 'fake' },
+      },
+    })).toBe(false)
+  })
+})
