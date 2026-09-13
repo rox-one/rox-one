@@ -72,7 +72,59 @@ describe('meeting proposals (RMA-I009)', () => {
       payload: { title: 'прототип' },
     })).toThrow(/revoked/)
     const rejectStore: ProposalStore = { items: [proposal()] }
-    expect(rejectMeetingProposal(rejectStore, 'p1').status).toBe('rejected')
+    const rejected = rejectMeetingProposal({
+      store: rejectStore,
+      proposalId: 'p1',
+      actorId: 'user',
+      grant,
+    })
+    expect(rejected.ok).toBe(true)
+    if (!rejected.ok) throw new Error('expected reject')
+    expect(rejected.proposal.status).toBe('rejected')
+  })
+
+  test('reject is fail-closed without grant and does not undo applied', () => {
+    const store: ProposalStore = { items: [proposal()] }
+    expect(rejectMeetingProposal({
+      store,
+      proposalId: 'p1',
+      actorId: 'user',
+      grant: null,
+    })).toEqual({ ok: false, code: 'grant-required' })
+    expect(store.items[0]?.status).toBe('proposed')
+    expect(rejectMeetingProposal({
+      store,
+      proposalId: 'missing',
+      actorId: 'user',
+      grant,
+    })).toEqual({ ok: false, code: 'proposal-not-found' })
+    const appliedStore: ProposalStore = { items: [proposal('applied')] }
+    expect(rejectMeetingProposal({
+      store: appliedStore,
+      proposalId: 'p1',
+      actorId: 'user',
+      grant,
+    })).toEqual({ ok: false, code: 'already-applied' })
+    expect(appliedStore.items[0]?.status).toBe('applied')
+    const rejectedStore: ProposalStore = { items: [proposal('rejected')] }
+    const again = rejectMeetingProposal({
+      store: rejectedStore,
+      proposalId: 'p1',
+      actorId: 'user',
+      grant,
+    })
+    expect(again.ok).toBe(true)
+    if (!again.ok) throw new Error('expected idempotent reject')
+    expect(again.proposal.status).toBe('rejected')
+    const archiveGrant: MeetingGrant = { ...grant, capabilities: ['archive'] }
+    const proposed: ProposalStore = { items: [proposal()] }
+    expect(rejectMeetingProposal({
+      store: proposed,
+      proposalId: 'p1',
+      actorId: 'user',
+      grant: archiveGrant,
+    })).toEqual({ ok: false, code: 'capability-denied' })
+    expect(proposed.items[0]?.status).toBe('proposed')
   })
 
   test('create is fail-closed without grant and idempotent by payload hash', () => {

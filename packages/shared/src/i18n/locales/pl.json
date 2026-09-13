@@ -1679,6 +1679,8 @@
   "meetings.payloadConflict": "Inna propozycja już używa tego id",
   "meetings.proposalTitle": "Tytuł",
   "meetings.proposals": "Propozycje",
+  "meetings.reject": "Odrzuć",
+  "meetings.rejectFailed": "Nie udało się odrzucić",
   "meetings.revision": "Rewizja {{id}}",
   "meetings.rooms.undecided": "Pokoje zablokowane: nie wybrano dostawcy SFU",
   "meetings.rpcUnavailable": "RPC spotkań jest niedostępne",

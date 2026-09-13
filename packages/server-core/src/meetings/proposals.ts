@@ -129,11 +129,34 @@ export function approveMeetingProposal(input: {
   return proposal
 }
 
-export function rejectMeetingProposal(store: ProposalStore, proposalId: string): MeetingProposal {
-  const proposal = store.items.find((item) => item.id === proposalId)
-  if (!proposal) throw new Error('proposal not found')
+export type RejectProposalResult =
+  | { ok: true; proposal: MeetingProposal }
+  | { ok: false; code: string }
+
+const REJECT_BLOCKED_STATUSES = new Set<MeetingProposal['status']>(['applied', 'executing'])
+
+export function rejectMeetingProposal(input: {
+  store: ProposalStore
+  proposalId: string
+  actorId: string
+  grant: MeetingGrant | null
+}): RejectProposalResult {
+  if (!input.grant) return { ok: false, code: 'grant-required' }
+  if (!input.proposalId) return { ok: false, code: 'proposal-not-found' }
+  const proposal = input.store.items.find((item) => item.id === input.proposalId)
+  if (!proposal) return { ok: false, code: 'proposal-not-found' }
+  const auth = authorizeMeetingAction(input.grant, {
+    actorId: input.actorId,
+    workspaceId: proposal.workspaceId,
+    deviceId: input.grant.deviceId,
+    capability: 'send',
+    operation: 'reject',
+  })
+  if (!auth.ok) return { ok: false, code: auth.code }
+  if (proposal.status === 'rejected') return { ok: true, proposal }
+  if (REJECT_BLOCKED_STATUSES.has(proposal.status)) return { ok: false, code: 'already-applied' }
   proposal.status = 'rejected'
-  return proposal
+  return { ok: true, proposal }
 }
 
 export function editMeetingProposal(store: ProposalStore, proposalId: string, payload: Record<string, unknown>): MeetingProposal {
