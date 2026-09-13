@@ -18,7 +18,9 @@ import {
   type ForeignIndexEntry,
   type ForeignSessionKind,
 } from '@craft-agent/shared/sessions'
+import { isClaimableLive } from '@craft-agent/core/rox2'
 import BrowserProfileImportPanel from './BrowserProfileImportPanel'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -59,6 +61,16 @@ export default function ImportSettingsPage() {
 
   const scan = useCallback(async () => {
     if (!workspace?.id) return
+    const gate = settingsPageActionResult({
+      pageId: 'import',
+      action: 'scan',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) {
+      setError(t('settings.rox2.grantRequired'))
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -72,12 +84,21 @@ export default function ImportSettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [workspace?.id])
+  }, [t, workspace?.id])
 
   const persist = useCallback(async () => {
     if (!workspace?.id) return
     const sourcePaths = entries.filter((entry) => selected[entry.sourcePath] && !entry.skipReason).map((entry) => entry.sourcePath)
     if (sourcePaths.length === 0) return
+    const gate = settingsPageActionResult({
+      pageId: 'import',
+      action: 'persist',
+      source: 'native',
+    })
+    if (!isClaimableLive(gate)) {
+      setError(t('settings.rox2.grantRequired'))
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -96,7 +117,7 @@ export default function ImportSettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [entries, selected, workspace?.id])
+  }, [entries, selected, t, workspace?.id])
 
   const selectVisible = (on: boolean) => {
     setSelected((prev) => {
@@ -109,12 +130,13 @@ export default function ImportSettingsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader
         title={t('settings.import.title', { defaultValue: 'Import chats' })}
         actions={<HeaderMenu route={routes.view.settings('import')} />}
       />
-      <ScrollArea className="flex-1">
+      <div className="flex-1 min-h-0 mask-fade-y">
+      <ScrollArea className="h-full">
         <div className="px-5 pt-6 pb-24 max-w-3xl mx-auto w-full space-y-4" data-testid="session-import">
           <p className="text-sm opacity-70">{t('settings.import.scanHint')}</p>
           {truncated ? (
@@ -228,6 +250,7 @@ export default function ImportSettingsPage() {
           <BrowserProfileImportPanel />
         </div>
       </ScrollArea>
+      </div>
     </div>
   )
 }

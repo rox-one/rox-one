@@ -393,14 +393,31 @@ export const mockElectronAPI = {
     return () => {}
   },
 
-  // Debug menu actions invoked by the mobile menu's Debug sub-page in dev mode.
-  // The real implementations call into the auto-updater; the playground just logs.
-  checkForUpdates: () => {
+  // Debug menu / App settings auto-update. Fixture, not a live updater.
+  checkForUpdates: async () => {
     console.log('[Playground] checkForUpdates called')
+    return {
+      available: false,
+      currentVersion: 'playground',
+      latestVersion: null,
+      downloadState: 'idle' as const,
+      downloadProgress: 0,
+    }
   },
-  installUpdate: () => {
+  getUpdateInfo: async () => ({
+    available: false,
+    currentVersion: 'playground',
+    latestVersion: null,
+    downloadState: 'idle' as const,
+    downloadProgress: 0,
+  }),
+  installUpdate: async () => {
     console.log('[Playground] installUpdate called')
   },
+  dismissUpdate: async () => {},
+  getDismissedUpdateVersion: async () => null,
+  onUpdateAvailable: () => () => {},
+  onUpdateDownloadProgress: () => () => {},
 
   // ChatDisplay required mocks
   readPreferences: async () => {
@@ -552,6 +569,26 @@ export const mockElectronAPI = {
       format: 'craft-markdown' as const,
     }),
   },
+  extensionsListCatalog: async () => ({
+    entries: [],
+    providers: [{ id: 'playground', label: 'Playground' }],
+  }),
+  extensionsListInstalled: async () => ({
+    records: [],
+    state: { version: 1 as const, enabled: {} },
+  }),
+  onExtensionsChanged: () => () => {},
+  pluginBridgeInstallBazaar: async () => {},
+  pluginBridgeUninstallBazaar: async () => {},
+  extensionsSetEnabled: async () => {},
+  getNotificationsEnabled: async () => true,
+  setNotificationsEnabled: async () => {},
+  getKeepAwakeWhileRunning: async () => false,
+  setKeepAwakeWhileRunning: async () => {},
+  getBrowserToolEnabled: async () => true,
+  setBrowserToolEnabled: async () => {},
+  getNetworkProxySettings: async () => ({ enabled: false }),
+  setNetworkProxySettings: async () => ({ enabled: false }),
   foreignDiscoverSessions: async () => ({
     entries: [
       {

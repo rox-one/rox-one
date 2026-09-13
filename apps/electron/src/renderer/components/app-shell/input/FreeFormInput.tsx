@@ -1902,7 +1902,7 @@ export function FreeFormInput({
             {...addLabelEditConfig}
             defaultValue={addLabelPrefill}
             secondaryAction={workspaceRootPath ? {
-              label: 'Edit File',
+              label: t('common.editFile'),
               filePath: `${workspaceRootPath}/labels/config.json`,
             } : undefined}
             side="top"

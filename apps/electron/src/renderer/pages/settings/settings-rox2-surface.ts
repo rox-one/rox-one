@@ -1,5 +1,5 @@
 /**
- * ROX2-031 hub + ROX2-041..046 settings pages.
+ * ROX2-031 hub + ROX2-041..049 settings pages.
  * Settings pages stay in SETTINGS_PAGES. Conation is not this surface.
  */
 import {
@@ -22,9 +22,12 @@ export const SETTINGS_HUB_REQUIRES_CONATION_FLAG = false as const
 export const ROX2_SETTINGS_PAGE_IDS = ['account', 'privacy', 'runtime'] as const
 /** ROX2-044..046: next three SETTINGS_PAGES entries. */
 export const ROX2_SETTINGS_WAVE2_PAGE_IDS = ['context', 'marketplace', 'knowledge'] as const
+/** ROX2-047..049: extensions, import, app. */
+export const ROX2_SETTINGS_WAVE3_PAGE_IDS = ['extensions', 'import', 'app'] as const
 export type Rox2SettingsPageId =
   | (typeof ROX2_SETTINGS_PAGE_IDS)[number]
   | (typeof ROX2_SETTINGS_WAVE2_PAGE_IDS)[number]
+  | (typeof ROX2_SETTINGS_WAVE3_PAGE_IDS)[number]
 
 export type SettingsPageActionKind =
   | 'profile-write'
@@ -40,6 +43,10 @@ export type SettingsPageActionKind =
   | 'uninstall'
   | 'token-write'
   | 'migrate'
+  | 'scan'
+  | 'persist'
+  | 'pref-write'
+  | 'toggle'
 
 const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'profile-write': 'write',
@@ -55,6 +62,10 @@ const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   uninstall: 'destroy',
   'token-write': 'write',
   migrate: 'device-read',
+  scan: 'device-read',
+  persist: 'write',
+  'pref-write': 'write',
+  toggle: 'write',
 }
 
 export function bindSettingsHubContext(
@@ -92,7 +103,8 @@ export function settingsHubActionResult(opts: {
 /**
  * Per-page Rox2 action gate. Plan is a local label (not spend).
  * Remote deletion stays queued until a completed receipt exists.
- * Marketplace install is cloud-send; it is never spend.
+ * Marketplace and extension install is cloud-send; it is never spend.
+ * Import scan is device-read. App prefs are local writes.
  */
 export function settingsPageActionResult(opts: {
   pageId: Rox2SettingsPageId

@@ -33,6 +33,8 @@ import {
 } from '@/components/settings'
 import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { EnvironmentSettingsSection } from './EnvironmentSettingsSection'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -151,16 +153,22 @@ export default function AppSettingsPage() {
   }, [])
 
   const handleNotificationsEnabledChange = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setNotificationsEnabled(enabled)
     await window.electronAPI.setNotificationsEnabled(enabled)
   }, [])
 
   const handleKeepAwakeEnabledChange = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setKeepAwakeEnabled(enabled)
     await window.electronAPI.setKeepAwakeWhileRunning(enabled)
   }, [])
 
   const handleBrowserToolEnabledChange = useCallback(async (enabled: boolean) => {
+    const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) return
     setBrowserToolEnabled(enabled)
     await window.electronAPI.setBrowserToolEnabled(enabled)
   }, [])
@@ -179,6 +187,11 @@ export default function AppSettingsPage() {
       return
     }
     setProxyError(undefined)
+    const gate = settingsPageActionResult({ pageId: 'app', action: 'pref-write', source: 'native' })
+    if (!isClaimableLive(gate)) {
+      setProxyError(t('settings.rox2.grantRequired'))
+      return
+    }
     setIsSavingProxy(true)
     try {
       const settings = toNetworkProxySettings(proxyForm)
@@ -201,7 +214,7 @@ export default function AppSettingsPage() {
   }, [savedProxyForm])
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t("settings.app.title")} actions={<HeaderMenu route={routes.view.settings('app')} helpFeature="app-settings" />} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
