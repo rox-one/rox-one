@@ -199,9 +199,11 @@ export default function CloudRunsSettingsPage() {
           <p className="whitespace-normal break-words text-sm text-muted-foreground">
             {t('settings.cloudRuns.description')}
           </p>
-          <p className="text-xs text-muted-foreground" role="status">
-            {config?.enabled ? t('automations.statusActive') : t('automations.statusDisabled')}
-          </p>
+          {config && (
+            <p className="text-xs text-muted-foreground" role="status">
+              {config.enabled ? t('automations.statusActive') : t('automations.statusDisabled')}
+            </p>
+          )}
           {loadError && (
             <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
               <span className="min-w-0 whitespace-normal break-words">{loadError}</span>
