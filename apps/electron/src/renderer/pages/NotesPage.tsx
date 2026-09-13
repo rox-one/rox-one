@@ -750,23 +750,23 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to open note')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
       setActiveNote(null)
       setContent('')
       setDirty(false)
     } finally {
       setLoading(false)
     }
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, t])
 
   React.useEffect(() => {
     if (!externalChange) return
     const noteId = externalChange.noteId
-    externalChangeToastIdRef.current = toast('Note changed on disk', {
-      description: dirtyRef.current ? 'Another process updated this note. Reload to see changes?' : undefined,
+    externalChangeToastIdRef.current =     toast(t('notes.toast.changedOnDisk'), {
+      description: dirtyRef.current ? t('notes.toast.changedOnDiskDesc') : undefined,
       duration: 8000,
       action: {
-        label: 'Reload',
+        label: t('notes.toast.reload'),
         onClick: () => { setExternalChange(null); if (noteId) void openNote(noteId) },
       },
       onDismiss: () => { setExternalChange(null) },
@@ -777,7 +777,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
         toast.dismiss(externalChangeToastIdRef.current)
       }
     }
-  }, [externalChange, openNote])
+  }, [externalChange, openNote, t])
 
   React.useEffect(() => {
     refreshNotes()
@@ -785,7 +785,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     void refreshIndexHealth()
     if (!activeWorkspaceId) return
     window.electronAPI.watchNotes(activeWorkspaceId).catch(error => {
-      toast.error(error instanceof Error ? error.message : 'Failed to watch notes')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.watchFailed'))
     }).then(() => { void refreshIndexHealth() })
     const unsubscribe = window.electronAPI.onNotesChanged((rawPayload) => {
       const payload = normalizeChangedPayload(rawPayload)
@@ -812,7 +812,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       unsubscribe()
       window.electronAPI.unwatchNotes(activeWorkspaceId).catch(() => {})
     }
-  }, [activeWorkspaceId, openNote, refreshAssets, refreshIndexHealth, refreshNotes])
+  }, [activeWorkspaceId, openNote, refreshAssets, refreshIndexHealth, refreshNotes, t])
 
   React.useEffect(() => {
     if (selectedNoteId) {
@@ -856,7 +856,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
         setAllTasks([...taskCacheRef.current.values()].flat())
         return true
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Failed to save note'
+        const message = error instanceof Error ? error.message : t('notes.toast.saveFailed')
         setSaveError(message)
         toast.error(message)
         return false
@@ -867,7 +867,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     saveQueueRef.current = queued
     return queued
   // contentRef is a ref — intentionally excluded; activeNote.id and activeWorkspaceId are the real deps
-  }, [activeWorkspaceId, activeNote])
+  }, [activeWorkspaceId, activeNote, t])
 
   const flushBeforeAction = React.useCallback(async (): Promise<boolean> => {
     if (!dirtyRef.current) return true
@@ -898,12 +898,12 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
         const results = await window.electronAPI.searchNotes(activeWorkspaceId, q)
         setSearchResults(results)
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : 'Failed to search notes')
+        toast.error(error instanceof Error ? error.message : t('notes.toast.searchFailed'))
       }
     }, 180)
 
     return () => window.clearTimeout(timer)
-  }, [activeWorkspaceId, query])
+  }, [activeWorkspaceId, query, t])
 
   React.useEffect(() => {
     setWikiIndex(0)
@@ -1110,7 +1110,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       if (created) {
         await window.electronAPI.deleteNote(activeWorkspaceId, created.id).catch(() => {})
       }
-      toast.error(error instanceof Error ? error.message : 'Failed to move note')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.moveFailed'))
     }
   }
 
@@ -1128,7 +1128,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       toast.success(t('notes.toast.moved'))
     } catch (error) {
       if (created) await window.electronAPI.deleteNote(activeWorkspaceId, created.id).catch(() => {})
-      toast.error(error instanceof Error ? error.message : 'Failed to move note')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.moveFailed'))
     }
   }
 
@@ -1162,7 +1162,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       await refreshNotes()
       toast.success(t('notes.toast.folderRenamed'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to rename folder')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.renameFolderFailed'))
     }
   }
 
@@ -1186,7 +1186,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       await refreshNotes()
       toast.success(t('notes.toast.deletedFolder', { count: result.deletedNotes.length }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete folder')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.deleteFolderFailed'))
     }
   }
 
@@ -1256,9 +1256,9 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setTagDraft(updated.tags.join(', '))
       await refreshNotes()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to update note properties')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.updatePropertiesFailed'))
     }
-  }, [activeWorkspaceId, activeNote, flushBeforeAction, refreshNotes])
+  }, [activeWorkspaceId, activeNote, flushBeforeAction, refreshNotes, t])
 
   const applyTags = React.useCallback(() => {
     const tags = tagDraft.split(',').map(tag => tag.trim().replace(/^#/, '')).filter(Boolean)
@@ -1268,13 +1268,13 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const addProperty = React.useCallback(() => {
     const key = newPropertyKey.trim()
     if (!/^[A-Za-z0-9_-]+$/.test(key)) {
-      toast.error('Property keys can use letters, numbers, underscore, and dash')
+      toast.error(t('notes.toast.propertyKeyInvalid'))
       return
     }
     void updateProperty(key, inputToProperty(newPropertyValue))
     setNewPropertyKey('')
     setNewPropertyValue('')
-  }, [newPropertyKey, newPropertyValue, updateProperty])
+  }, [newPropertyKey, newPropertyValue, updateProperty, t])
 
   const insertAtCursor = (text: string) => {
     const editor = richEditorRef.current
@@ -1308,11 +1308,11 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       }
       insertAtCursor(snippets.join('\n'))
       await refreshAssets()
-      toast.success(`Imported ${list.length} asset${list.length === 1 ? '' : 's'}`)
+      toast.success(t('notes.toast.importedAssets', { count: list.length }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to import asset')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.importAssetFailed'))
     }
-  }, [activeWorkspaceId, activeNote, refreshAssets])
+  }, [activeWorkspaceId, activeNote, refreshAssets, t])
 
   const handleImportAsset = async () => {
     if (!activeWorkspaceId || !activeNote) return
@@ -1321,7 +1321,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!path) return
     const attachment = await window.electronAPI.readUserAttachment(path)
     if (!attachment) {
-      toast.error('Could not read selected file')
+      toast.error(t('notes.toast.readFileFailed'))
       return
     }
     const result = await window.electronAPI.importNoteAsset(activeWorkspaceId, attachment)
@@ -1339,7 +1339,7 @@ code{font-family:monospace;font-size:.9em}img{max-width:100%}
 h1,h2,h3{margin-top:1.5em}
 </style></head><body><h1>${activeNote.title.replace(/</g,'&lt;')}</h1>${editorDom.innerHTML}</body></html>`
     const result = await window.electronAPI.exportNotePdf({ html, defaultPath: `${activeNote.title}.pdf` })
-    if (!result.canceled) toast.success('Exported to PDF')
+    if (!result.canceled) toast.success(t('notes.toast.exportedPdf'))
   }
 
   const handleRichBodyChange = (nextBody: string) => {
@@ -1555,9 +1555,9 @@ h1,h2,h3{margin-top:1.5em}
       await refreshAssets()
       await refreshNotes()
       if (activeNote) await openNote(activeNote.id)
-      toast.success(`Updated ${result.updatedNotes.length} note${result.updatedNotes.length === 1 ? '' : 's'}`)
+      toast.success(t('notes.toast.updatedNotes', { count: result.updatedNotes.length }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to rename asset')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.renameAssetFailed'))
     } finally {
       setAssetBusy(false)
     }
@@ -1570,9 +1570,9 @@ h1,h2,h3{margin-top:1.5em}
       await window.electronAPI.deleteNoteAsset(activeWorkspaceId, asset.relativePath)
       await refreshAssets()
       await refreshNotes()
-      toast.success('Asset deleted')
+      toast.success(t('notes.toast.assetDeleted'))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete asset')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.deleteAssetFailed'))
     } finally {
       setAssetBusy(false)
     }
@@ -1586,9 +1586,9 @@ h1,h2,h3{margin-top:1.5em}
         await window.electronAPI.deleteNoteAsset(activeWorkspaceId, asset.relativePath)
       }
       await refreshAssets()
-      toast.success(`Deleted ${orphanAssets.length} unused asset${orphanAssets.length === 1 ? '' : 's'}`)
+      toast.success(t('notes.toast.cleanedAssets', { count: orphanAssets.length }))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to clean assets')
+      toast.error(error instanceof Error ? error.message : t('notes.toast.cleanAssetsFailed'))
     } finally {
       setAssetBusy(false)
     }
