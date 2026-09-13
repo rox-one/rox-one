@@ -6,12 +6,25 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
+import { isClaimableLive } from '@craft-agent/core/rox2'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { SettingsSection, SettingsCard, SettingsRow } from '@/components/settings'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { isMac } from '@/lib/platform'
 import { actionsByCategory, useActionLabel, type ActionId } from '@/actions'
+import { settingsPageActionResult } from './settings-rox2-surface'
+
+function shortcutsCatalogLive(granted = true): boolean {
+  return isClaimableLive(
+    settingsPageActionResult({
+      pageId: 'shortcuts',
+      action: 'config-read',
+      source: 'native',
+      granted,
+    }),
+  )
+}
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -135,39 +148,41 @@ function ActionShortcutRow({ actionId }: { actionId: ActionId }) {
 export default function ShortcutsPage() {
   const { t } = useTranslation()
   const componentSpecificSections = useComponentSpecificSections()
+  const catalogLive = shortcutsCatalogLive(true)
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t("settings.shortcuts.title")} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
           <div className="px-5 py-7 pb-24 max-w-3xl mx-auto space-y-8">
-            {/* Registry-driven sections */}
-            {Object.entries(actionsByCategory).map(([category, actions]) => (
-              <SettingsSection key={category} title={t(`shortcuts.category.${category.toLowerCase()}`)}>
-                <SettingsCard>
-                  {actions.map(action => (
-                    <ActionShortcutRow key={action.id} actionId={action.id as ActionId} />
-                  ))}
-                </SettingsCard>
-              </SettingsSection>
-            ))}
-
-            {/* Component-specific sections */}
-            {componentSpecificSections.map((section) => (
-              <SettingsSection key={section.title} title={section.title}>
-                <SettingsCard>
-                  {section.shortcuts.map((shortcut, index) => (
-                    <SettingsRow key={index} label={shortcut.description}>
-                      <div className="flex items-center gap-1">
-                        {shortcut.keys.map((key, keyIndex) => (
-                          <Kbd key={keyIndex}>{key}</Kbd>
-                        ))}
-                      </div>
-                    </SettingsRow>
-                  ))}
-                </SettingsCard>
-              </SettingsSection>
-            ))}
+            {catalogLive ? (
+              <>
+                {Object.entries(actionsByCategory).map(([category, actions]) => (
+                  <SettingsSection key={category} title={t(`shortcuts.category.${category.toLowerCase()}`)}>
+                    <SettingsCard>
+                      {actions.map(action => (
+                        <ActionShortcutRow key={action.id} actionId={action.id as ActionId} />
+                      ))}
+                    </SettingsCard>
+                  </SettingsSection>
+                ))}
+                {componentSpecificSections.map((section) => (
+                  <SettingsSection key={section.title} title={section.title}>
+                    <SettingsCard>
+                      {section.shortcuts.map((shortcut, index) => (
+                        <SettingsRow key={index} label={shortcut.description}>
+                          <div className="flex items-center gap-1">
+                            {shortcut.keys.map((key, keyIndex) => (
+                              <Kbd key={keyIndex}>{key}</Kbd>
+                            ))}
+                          </div>
+                        </SettingsRow>
+                      ))}
+                    </SettingsCard>
+                  </SettingsSection>
+                ))}
+              </>
+            ) : null}
           </div>
         </ScrollArea>
       </div>
