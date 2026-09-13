@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useTranslation } from "react-i18next"
 import { ArrowLeft, CheckCircle, XCircle, Plus } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -6,7 +6,7 @@ import { prepareRemoteWorkspace, type RemoteServerBinding } from "./remote-works
 import { needsRemoteTlsInspect, tlsTrustFromDecision } from "./remote-tls-connect"
 import type { RemoteTlsTrust } from "../../../shared/types"
 import { Input } from "../ui/input"
-import { PremiumMenuSelect } from "@craft-agent/ui"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select"
 import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspacePrimaryButton, AddWorkspaceSecondaryButton } from "./primitives"
 
 const CREATE_NEW_VALUE = '__create_new__'
@@ -60,6 +60,7 @@ export function AddWorkspaceStep_ConnectRemote({
   const [tlsGate, setTlsGate] = useState<'none' | 'inspecting' | 'review' | 'rollover'>('none')
   const [pendingInspect, setPendingInspect] = useState<{ nonce: string; origin: string; spkiSha256: string } | null>(null)
   const [tlsTrust, setTlsTrust] = useState<RemoteTlsTrust | undefined>(undefined)
+  const selectPortalRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     window.electronAPI.getHomeDir().then(setHomeDir)
@@ -230,7 +231,7 @@ export function AddWorkspaceStep_ConnectRemote({
 
   const showCreateMode = !isReconnectMode && (isCreateNew || isFreshServer)
   const buttonLabel = isReconnectMode
-    ? t('workspace.reconnectAction')
+    ? t('common.reconnect')
     : showCreateMode
       ? t('workspace.createAndConnect')
       : t('common.connect')
@@ -253,7 +254,7 @@ export function AddWorkspaceStep_ConnectRemote({
         )}
       >
         <ArrowLeft className="h-4 w-4" />
-        {t("common.back")}
+        {t('common.back')}
       </button>
 
       <AddWorkspaceStepHeader
@@ -267,13 +268,13 @@ export function AddWorkspaceStep_ConnectRemote({
         {/* Server URL */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-foreground">
-            {t("workspace.serverUrl")}
+            {t('workspace.serverUrl')}
           </label>
           <div className="bg-background shadow-minimal rounded-lg">
             <Input
               value={serverUrl}
               onChange={(e) => setServerUrl(e.target.value)}
-              placeholder={t("workspace.serverUrlPlaceholder")}
+              placeholder="ws://192.168.1.100:9100"
               disabled={isCreating}
               autoFocus
               className="border-0 bg-transparent shadow-none font-mono text-sm"
@@ -284,7 +285,7 @@ export function AddWorkspaceStep_ConnectRemote({
         {/* Token */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-foreground">
-            {t("workspace.tokenLabel")}
+            {t('workspace.tokenLabel')}
           </label>
           <div className="bg-background shadow-minimal rounded-lg">
             <Input
@@ -298,30 +299,20 @@ export function AddWorkspaceStep_ConnectRemote({
           </div>
         </div>
 
-        {/* Connection test */}
+        {/* Test Connection */}
         <div className="flex items-center gap-3">
           <AddWorkspaceSecondaryButton
             onClick={handleTestConnection}
             disabled={!serverUrl || !token || testState === 'testing' || isCreating}
           >
-            {tlsGate === 'inspecting' || testState === 'testing'
-              ? (tlsGate === 'inspecting' ? t('workspace.tlsInspecting') : t('workspace.testing'))
-              : t('workspace.testConnection')}
+            {tlsGate === 'inspecting' || testState === 'testing' ? (tlsGate === 'inspecting' ? t('workspace.tlsInspecting') : t('workspace.testing')) : t('workspace.testConnection')}
           </AddWorkspaceSecondaryButton>
-          {testState === 'ok' && !isFreshServer && (
+          {testState === 'ok' && (
             <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
               <CheckCircle className="h-3.5 w-3.5" />
-              {serverVersion
-                ? t('workspace.connectedVersion', { version: serverVersion })
-                : t('workspace.connected')}
-            </span>
-          )}
-          {testState === 'ok' && isFreshServer && (
-            <span className="flex items-center gap-1 text-xs text-green-600 dark:text-green-400">
-              <CheckCircle className="h-3.5 w-3.5" />
-              {serverVersion
-                ? t('workspace.connectedVersionEmpty', { version: serverVersion })
-                : t('workspace.connectedEmpty')}
+              {t('workspace.connected')}
+              {serverVersion ? ` — v${serverVersion}` : ''}
+              {isFreshServer ? ` — ${t('workspace.noWorkspacesYet')}` : ''}
             </span>
           )}
           {testState === 'error' && (
@@ -373,22 +364,32 @@ export function AddWorkspaceStep_ConnectRemote({
           </div>
         )}
 
+        {/* Portal container for Select — must be inside the Dialog to receive pointer events */}
+        <div ref={selectPortalRef} />
+
         {/* Workspace selector — pick existing or create new (hidden in reconnect mode) */}
         {!isReconnectMode && testState === 'ok' && remoteWorkspaces.length > 0 && !isCreateNew && (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-foreground">
-              {t("workspace.selectWorkspace")}
+              {t('workspace.workspaceLabel')}
             </label>
             <div className="bg-background shadow-minimal rounded-lg">
-              <PremiumMenuSelect
-                aria-label={t("workspace.selectWorkspace")}
-                className="h-9 w-full max-w-none border-0 bg-transparent shadow-none"
+              <Select
+                value={selectedValue ?? ''}
+                onValueChange={setSelectedValue}
                 disabled={isCreating}
-                items={remoteWorkspaces.map((ws) => ({ id: ws.id, label: ws.name }))}
-                placeholder={t("workspace.selectWorkspacePlaceholder")}
-                selectedId={selectedValue}
-                onSelect={(item) => setSelectedValue(item.id)}
-              />
+              >
+                <SelectTrigger className="border-0 bg-transparent shadow-none">
+                  <SelectValue placeholder={t("workspace.selectWorkspacePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent container={selectPortalRef.current}>
+                  {remoteWorkspaces.map(ws => (
+                    <SelectItem key={ws.id} value={ws.id}>
+                      {ws.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <button
               type="button"
@@ -397,16 +398,16 @@ export function AddWorkspaceStep_ConnectRemote({
               className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               <Plus className="h-3 w-3" />
-              {t("workspace.createOnServer")}
+              {t('workspace.createOnServer')}
             </button>
           </div>
         )}
 
-        {/* New workspace name — shown for fresh servers or create-new selection (hidden in reconnect mode) */}
+        {/* New workspace name — shown for fresh servers or "Create new" selection (hidden in reconnect mode) */}
         {!isReconnectMode && testState === 'ok' && showCreateMode && (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-foreground">
-              {t("workspace.nameLabel")}
+              {t('workspace.nameLabel')}
             </label>
             <div className="bg-background shadow-minimal rounded-lg">
               <Input
@@ -418,7 +419,7 @@ export function AddWorkspaceStep_ConnectRemote({
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              {t("workspace.createOnServerHint")}
+              {t('workspace.createOnServerHint')}
             </p>
             {isCreateNew && remoteWorkspaces.length > 0 && (
               <button
@@ -431,13 +432,13 @@ export function AddWorkspaceStep_ConnectRemote({
                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="h-3 w-3" />
-                {t("workspace.useExisting")}
+                {t('workspace.useExisting')}
               </button>
             )}
           </div>
         )}
 
-        {/* Connect / Create */}
+        {/* Connect / Create and Connect */}
         <AddWorkspacePrimaryButton
           onClick={handleConnect}
           disabled={!canConnect}
