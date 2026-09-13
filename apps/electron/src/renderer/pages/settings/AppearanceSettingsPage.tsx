@@ -124,6 +124,8 @@ export default function AppearanceSettingsPage() {
     setColorTheme,
     font,
     setFont,
+    contrast,
+    setContrast,
     activeWorkspaceId,
     setWorkspaceColorTheme,
     themeLoadError,
@@ -458,6 +460,20 @@ export default function AppearanceSettingsPage() {
                         { value: 'system', label: t("settings.appearance.system"), icon: <Monitor className="w-4 h-4" /> },
                         { value: 'light', label: t("settings.appearance.light"), icon: <Sun className="w-4 h-4" /> },
                         { value: 'dark', label: t("settings.appearance.dark"), icon: <Moon className="w-4 h-4" /> },
+                      ]}
+                    />
+                  </SettingsRow>
+                  <SettingsRow
+                    label={t("settings.appearance.contrast")}
+                    description={t("settings.appearance.contrastDesc")}
+                  >
+                    <SettingsSegmentedControl
+                      value={contrast}
+                      onValueChange={setContrast}
+                      options={[
+                        { value: 'system', label: t("settings.appearance.contrastSystem") },
+                        { value: 'normal', label: t("settings.appearance.contrastNormal") },
+                        { value: 'high', label: t("settings.appearance.contrastHigh") },
                       ]}
                     />
                   </SettingsRow>

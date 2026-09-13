@@ -17,4 +17,10 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(source).not.toMatch(/unifiedShell\s*&&\s*<WorkbenchChromeSettings/)
     expect(source).not.toMatch(/inspector\s*&&\s*<ConationShellSettings/)
   })
+
+  it('exposes an app-wide high-contrast control for dark and light themes', () => {
+    expect(source).toContain('settings.appearance.contrast')
+    expect(source).toContain('settings.appearance.contrastHigh')
+    expect(source).toContain('setContrast')
+  })
 })

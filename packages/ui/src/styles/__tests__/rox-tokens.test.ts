@@ -25,4 +25,10 @@ describe('Rox graphite token audit', () => {
     expect(css).toContain('.rox-rail')
     expect(css).toContain('.rox-card')
   })
+
+  it('declares app-wide high-contrast overrides on html[data-contrast=high]', () => {
+    expect(css).toContain('html[data-contrast="high"]')
+    expect(css).toContain('--chrome-glass-blur: 0px')
+    expect(css).toContain('html[data-contrast="high"] :focus-visible')
+  })
 })
