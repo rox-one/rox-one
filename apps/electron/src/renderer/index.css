@@ -984,11 +984,14 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 }
 
 /* TopBar / rail / tab / status glass polish — uses theme chrome tokens */
-.chrome-topbar {
-  background: var(--chrome-glass-bg, color-mix(in oklch, var(--background) 88%, transparent));
-  backdrop-filter: blur(var(--chrome-glass-blur, 14px));
-  -webkit-backdrop-filter: blur(var(--chrome-glass-blur, 14px));
-  border-bottom: 1px solid var(--chrome-glass-border, color-mix(in oklch, var(--foreground) 8%, transparent));
+html[data-shell-style="zen"] .header-icon-btn {
+  width: 32px;
+  height: 32px;
+}
+
+html[data-shell-style="zen"] .header-icon-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 html[data-scenic] .chrome-topbar,
