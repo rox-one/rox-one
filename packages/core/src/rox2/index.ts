@@ -58,3 +58,13 @@ export {
   type ProjectVisibility,
   type Rox2ProjectMembership,
 } from './project-membership.ts'
+export {
+  bindSurfaceContext,
+  rebaseLiveContext,
+  requiresContextGrant,
+  sameContextSnapshot,
+  visibleContextEntityRefs,
+  type Rox2ContextBinding,
+  type Rox2SnapshotPolicy,
+  type SurfaceContextInput,
+} from './surface-context.ts'

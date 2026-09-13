@@ -105,6 +105,13 @@ export type Rox2Context = {
   surfaceId?: string
   entityRefs: readonly string[]
   permissionMode: 'allow-all' | 'ask' | 'safe'
+  binding?: {
+    snapshotPolicy: 'snapshot' | 'live'
+    revisionByEntityId: Record<string, string>
+    selection?: { surfaceId: string; blockIds?: readonly string[] }
+    tokenEstimate?: number
+    acceptedOutcomeIds?: readonly string[]
+  }
 }
 
 export type Rox2OkResult = {
