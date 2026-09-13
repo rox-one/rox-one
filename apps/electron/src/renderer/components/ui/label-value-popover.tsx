@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils'
 import { openLabelLink } from '@/lib/open-label-link'
 import { parseDate } from 'chrono-node'
 import { format, parse } from 'date-fns'
+import { getDateLocale } from '@craft-agent/shared/i18n'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 
 export interface LabelValuePopoverProps {
@@ -49,7 +50,8 @@ export function LabelValuePopover({
   sessionId,
   children,
 }: LabelValuePopoverProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const dateLocale = getDateLocale(i18n.language)
   // Local draft value — resets to prop value when popover opens
   const [draft, setDraft] = React.useState(value ?? '')
   // Whether the inline calendar picker is visible (date labels only)
@@ -65,7 +67,7 @@ export function LabelValuePopover({
       if (label.valueType === 'date' && value) {
         try {
           const parsed = parse(value, 'yyyy-MM-dd', new Date())
-          setDraft(format(parsed, 'MMMM d, yyyy'))
+          setDraft(format(parsed, 'PPP', { locale: dateLocale }))
         } catch {
           setDraft(value)
         }
@@ -73,7 +75,7 @@ export function LabelValuePopover({
         setDraft(value ?? '')
       }
     }
-  }, [open, value, label.valueType])
+  }, [open, value, label.valueType, dateLocale])
 
   /** Move focus into the popover when it opens.
    *  Labels with valueType → focus the value input; boolean labels → focus remove button.
@@ -257,7 +259,7 @@ export function LabelValuePopover({
             {/* Show the resolved date below the input when parsing succeeds */}
             {parsedDate && (
               <div className="px-2 text-[11px] text-foreground/50">
-                {format(parsedDate, 'EEE, MMM d, yyyy')}
+                {format(parsedDate, 'EEE, MMM d, yyyy', { locale: dateLocale })}
               </div>
             )}
           </div>
@@ -274,7 +276,13 @@ export function LabelValuePopover({
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={handleKeyDown}
               onBlur={commitValue}
-              placeholder={label.valueType === 'number' ? 'Enter number...' : label.valueType === 'link' ? 'Enter URL...' : 'Enter value...'}
+              placeholder={
+                label.valueType === 'number'
+                  ? t('labels.numberPlaceholder')
+                  : label.valueType === 'link'
+                    ? t('labels.urlPlaceholder')
+                    : t('labels.valuePlaceholder')
+              }
               className={cn(
                 'w-full h-7 px-2 text-[13px]',
                 'bg-transparent',

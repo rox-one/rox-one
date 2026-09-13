@@ -16,6 +16,14 @@ const keys = [
   'kanban.editorFailed',
   'kanban.boardFailed',
   'ssh.placeholder.label',
+  'automations.cronCommonSchedules',
+  'automations.cronPresetEveryMinute',
+  'automations.cronEveryMinute',
+  'common.enterValue',
+  'common.minutesAgoShort',
+  'labels.numberPlaceholder',
+  'labels.urlPlaceholder',
+  'labels.valuePlaceholder',
 ]
 
 describe('finish-visual leftover chrome locales', () => {
@@ -27,5 +35,7 @@ describe('finish-visual leftover chrome locales', () => {
     }
     expect(ru['workspace.connectRemote']).toBe('Подключиться к удалённому серверу')
     expect(ru['kanban.backToBoard']).toBe('Назад к доске')
+    expect(ru['automations.cronCommonSchedules']).toBe('Готовые расписания')
+    expect(ru['labels.numberPlaceholder']).toBe('Введите число…')
   })
 })

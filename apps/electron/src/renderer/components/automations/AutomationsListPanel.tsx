@@ -130,11 +130,11 @@ function AutomationItem({
           <Tooltip>
             <TooltipTrigger asChild>
               <span className="shrink-0 text-[11px] text-foreground/40 whitespace-nowrap cursor-default">
-                {formatShortRelativeTime(automation.lastExecutedAt)}
+                {formatShortRelativeTime(automation.lastExecutedAt, t)}
               </span>
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={4}>
-              {t('automations.lastRan', { time: formatShortRelativeTime(automation.lastExecutedAt) })}
+              {t('automations.lastRan', { time: formatShortRelativeTime(automation.lastExecutedAt, t) })}
             </TooltipContent>
           </Tooltip>
         ) : undefined
