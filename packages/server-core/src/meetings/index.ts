@@ -6,3 +6,4 @@ export { approveMeetingProposal, rejectMeetingProposal, editMeetingProposal, pay
 export { executeApprovedProposal } from './executor.ts'
 export { reserveOutbox } from './outbox.ts'
 export { verificationLabel } from './verification.ts'
+export { applyNativeMeetingAction, readbackNative, createNativeActionHarness } from './native-actions.ts'
