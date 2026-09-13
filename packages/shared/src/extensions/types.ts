@@ -51,6 +51,12 @@ export const CATALOG_CATEGORIES = [
 export type ExtensionProviderId =
   | 'craft-curated'
   | 'siyuan-bazaar'
+  | 'community-anthropic'
+  | 'community-codex'
+  | 'community-cursor'
+  | 'community-hermes'
+  | 'community-opencode'
+  | 'community-openclaw'
   | 'local'
   | 'url'
   | 'installed'
@@ -196,7 +202,12 @@ export interface ExtensionsChangedPayload {
 
 export interface ExtensionsListCatalogResult {
   entries: CatalogEntry[]
-  providers: Array<{ id: ExtensionProviderId; label: string }>
+  providers: Array<{
+    id: ExtensionProviderId
+    label: string
+    docsUrl?: string
+    community?: boolean
+  }>
 }
 
 export interface ExtensionsListInstalledResult {

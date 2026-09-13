@@ -123,7 +123,7 @@ describe('extensions RPC', () => {
     }
   })
 
-  it('listCatalog includes craft-curated entries and siyuan stub provider', async () => {
+  it('listCatalog uses Rox Kiro plus community registries and omits SiYuan Bazaar', async () => {
     const server = createMockServer()
     registerExtensionsHandlers(server as never, {
       platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } },
@@ -131,9 +131,20 @@ describe('extensions RPC', () => {
     const list = server.handlers.get(RPC_CHANNELS.extensions.LIST_CATALOG)!
     const result = (await list({}, {})) as {
       entries: Array<{ id: string; runtime: string }>
-      providers: Array<{ id: string }>
+      providers: Array<{ id: string; label: string; community?: boolean; docsUrl?: string }>
     }
-    expect(result.providers.map((p) => p.id).sort()).toEqual(['craft-curated', 'siyuan-bazaar'])
+    const ids = result.providers.map((p) => p.id).sort()
+    expect(ids).toContain('craft-curated')
+    expect(ids).toContain('community-anthropic')
+    expect(ids).toContain('community-codex')
+    expect(ids).toContain('community-cursor')
+    expect(ids).toContain('community-hermes')
+    expect(ids).toContain('community-opencode')
+    expect(ids).toContain('community-openclaw')
+    expect(ids).not.toContain('siyuan-bazaar')
+    expect(result.providers.find((p) => p.id === 'craft-curated')?.label).toBe('Rox Kiro')
+    expect(result.providers.find((p) => p.id === 'community-openclaw')?.community).toBe(true)
+    expect(result.providers.find((p) => p.id === 'community-openclaw')?.docsUrl).toMatch(/^https:\/\//)
     expect(result.entries.some((e) => e.id === 'marketplace:demo-pack')).toBe(true)
     expect(result.entries.find((e) => e.id === 'marketplace:demo-pack')?.runtime).toBe('skill-pack')
   })
@@ -161,6 +172,29 @@ describe('extensions RPC', () => {
       records: Array<{ id: string; status: string }>
     }
     expect(after.records.find((r) => r.id === 'marketplace:demo-pack')?.status).toBe('disabled')
+  })
+
+  it('listInstalled default-installs shipped catalog entries and keeps disabled records', async () => {
+    writeFileSync(join(dir, 'marketplace', 'lock.json'), JSON.stringify({ version: 1, entries: {} }), 'utf8')
+    const server = createMockServer()
+    registerExtensionsHandlers(server as never, {
+      platform: { logger: { info() {}, error() {}, warn() {}, debug() {} } },
+    } as never)
+    const listInstalled = server.handlers.get(RPC_CHANNELS.extensions.LIST_INSTALLED)!
+    const first = (await listInstalled({}, {})) as {
+      records: Array<{ id: string; status: string }>
+    }
+    const pack = first.records.find((r) => r.id === 'marketplace:demo-pack')
+    expect(pack).toBeTruthy()
+    expect(pack?.status).toBe('enabled')
+
+    const setEnabled = server.handlers.get(RPC_CHANNELS.extensions.SET_ENABLED)!
+    await setEnabled({}, { id: 'marketplace:demo-pack', enabled: false })
+    const after = (await listInstalled({}, {})) as {
+      records: Array<{ id: string; status: string }>
+    }
+    expect(after.records.find((r) => r.id === 'marketplace:demo-pack')?.status).toBe('disabled')
+    expect(after.records.some((r) => r.id === 'marketplace:demo-pack')).toBe(true)
   })
 
   it('listInstalled projects siyuan-plugin from kernel-aware feed after mock install', async () => {
@@ -216,11 +250,10 @@ describe('extensions RPC', () => {
     expect(hit?.status).toBe('enabled')
 
     const catalog = (await listCatalog({}, {})) as {
-      entries: Array<{ id: string; bazaar?: unknown }>
+      entries: Array<{ id: string }>
+      providers: Array<{ id: string }>
     }
-    const catHit = catalog.entries.find((e) => e.id === 'siyuan-plugin:fresh-plugin')
-    expect(catHit).toBeTruthy()
-    // Installed half of catalog has no bazaar coords (Install button gone)
-    expect(catHit?.bazaar).toBeUndefined()
+    expect(catalog.entries.some((e) => e.id === 'siyuan-plugin:fresh-plugin')).toBe(false)
+    expect(catalog.providers.some((p) => p.id === 'siyuan-bazaar')).toBe(false)
   })
 })

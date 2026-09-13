@@ -20,9 +20,12 @@ describe('extension origin and permissions presentation', () => {
 
   it('chips marketplace permissions beside GitHub origin and highlights high-risk', () => {
     expect(marketplace).toContain('permissionsForMarketplaceKind(e.kind)')
+    expect(marketplace).toContain('groupExtensionPermissions')
     expect(marketplace).toContain('isHighRiskMarketplacePermission(permission)')
     expect(marketplace).toContain('data-marketplace-permission={permission}')
     expect(marketplace).toContain('e.source.repo')
+    expect(marketplace).toContain('marketplace-open-browser')
+    expect(marketplace).toContain('craft:open-vps-browser')
     expect(marketplace).not.toContain('CatalogProvider')
   })
 

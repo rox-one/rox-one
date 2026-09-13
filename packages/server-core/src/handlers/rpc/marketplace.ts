@@ -30,6 +30,8 @@ import {
   type MarketplaceMeta,
   type MarketplaceStatsFetch,
 } from '@craft-agent/shared/marketplace'
+import { getExtensionStateStore, seedDefaultMarketplaceInstalls } from '@craft-agent/shared/extensions'
+import { resolveConfigDir } from '@craft-agent/shared/config/paths'
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.marketplace.CATALOG,
   RPC_CHANNELS.marketplace.STATS,
@@ -68,7 +70,17 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
 
   const loadCatalogView = async (): Promise<MarketplaceCatalogResult> => {
     const result = await getCatalog({ metaStore, fetchFn: catalogFetch })
-    return { ...result, installs: readLock(marketplacePaths().lockFile).entries }
+    const dir = process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
+    try {
+      seedDefaultMarketplaceInstalls({
+        catalog: result.catalog,
+        configDir: dir,
+        stateStore: getExtensionStateStore(dir),
+      })
+    } catch {
+      /* default-install seed is best-effort and must not block the catalog view */
+    }
+    return { ...result, installs: readLock(marketplacePaths(dir).lockFile).entries }
   }
 
   const requireEntry = async (id: string): Promise<MarketplaceEntry> => {
