@@ -23,7 +23,6 @@ import { SettingsSection, SettingsCard, SettingsRow } from '@/components/setting
 import { PreferencesForm } from './PreferencesPage'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ContextDocContent, ContextDocInfo, Lesson } from '../../../shared/types'
-import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
 
@@ -69,10 +68,14 @@ export default function ContextSettingsPage() {
   const [showTemplateDiff, setShowTemplateDiff] = useState(false)
 
   const loadDocs = useCallback(() => {
-    window.electronAPI
-      .listContextDocs()
-      .then((list) => {
-        setDocs(list)
+    const list = window.electronAPI.listContextDocs
+    if (typeof list !== 'function') {
+      setLoadingDocs(false)
+      return
+    }
+    list()
+      .then((docs) => {
+        setDocs(docs)
         setLoadingDocs(false)
       })
       .catch((error) => {
@@ -84,9 +87,9 @@ export default function ContextSettingsPage() {
 
   useEffect(() => {
     loadDocs()
-    const offDocs = window.electronAPI.onContextDocsChanged(() => loadDocs())
+    const offDocs = window.electronAPI.onContextDocsChanged?.(() => loadDocs())
     return () => {
-      offDocs()
+      offDocs?.()
     }
   }, [loadDocs])
 
@@ -123,8 +126,14 @@ export default function ContextSettingsPage() {
   useEffect(() => {
     let cancelled = false
     setLessons(null)
-    window.electronAPI
-      .listMemoryLessons('both', activeWorkspaceId ?? undefined)
+    const listLessons = window.electronAPI.listMemoryLessons
+    if (typeof listLessons !== 'function') {
+      setLessons([])
+      return () => {
+        cancelled = true
+      }
+    }
+    listLessons('both', activeWorkspaceId ?? undefined)
       .then((list) => {
         if (!cancelled) setLessons(list)
       })

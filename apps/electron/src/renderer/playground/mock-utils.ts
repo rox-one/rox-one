@@ -224,6 +224,20 @@ export const playgroundAllowListHandle: PlaygroundAllowListHandle = {
   },
 }
 
+const playgroundMarketplaceInstalls: Record<
+  string,
+  {
+    id: string
+    kind: 'skillpack'
+    repo: string
+    ref: string
+    installedAt: number
+    status: 'installed'
+    targets: string[]
+    skills: string[]
+  }
+> = {}
+
 function playgroundMarketplaceCatalog() {
   return {
     catalog: {
@@ -247,7 +261,42 @@ function playgroundMarketplaceCatalog() {
     },
     origin: 'bundled' as const,
     lastCatalogFetchAt: Date.now(),
-    installs: {},
+    installs: { ...playgroundMarketplaceInstalls },
+  }
+}
+
+type PlaygroundContextDoc = {
+  filename: string
+  name: string
+  content: string
+  modifiedAt: number
+}
+
+const playgroundContextDocs: PlaygroundContextDoc[] = [
+  {
+    filename: 'soul.md',
+    name: 'soul',
+    content: '<!-- context-doc-version: 1 -->\n# Soul\n\nPlayground fixture. Not live.\n',
+    modifiedAt: Date.now(),
+  },
+  {
+    filename: 'rules.md',
+    name: 'rules',
+    content: '<!-- context-doc-version: 1 -->\n# Rules\n\nPlayground fixture. Not live.\n',
+    modifiedAt: Date.now(),
+  },
+]
+
+function playgroundContextDocInfo(doc: PlaygroundContextDoc) {
+  return {
+    name: doc.name,
+    filename: doc.filename,
+    size: doc.content.length,
+    modifiedAt: doc.modifiedAt,
+    version: 1,
+    templateVersion: 1,
+    templateStale: false,
+    locallyEdited: false,
   }
 }
 
@@ -407,8 +456,102 @@ export const mockElectronAPI = {
   getMarketplaceStats: async () => ({
     'playground-skill': { stars: 1280, npmWeeklyDownloads: 4200 },
   }),
+  installMarketplaceEntry: async (id: string) => {
+    playgroundMarketplaceInstalls[id] = {
+      id,
+      kind: 'skillpack',
+      repo: 'rox-one/playground',
+      ref: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+      installedAt: Date.now(),
+      status: 'installed',
+      targets: [`/tmp/playground/marketplace/${id}`],
+      skills: [id],
+    }
+    return { id, kind: 'skillpack' as const, status: 'installed' as const, ref: playgroundMarketplaceInstalls[id]!.ref, skills: [id], targets: playgroundMarketplaceInstalls[id]!.targets }
+  },
+  updateMarketplaceEntry: async (id: string) => {
+    const prev = playgroundMarketplaceInstalls[id]
+    if (prev) playgroundMarketplaceInstalls[id] = { ...prev, installedAt: Date.now() }
+    return { id, kind: 'skillpack' as const, status: 'installed' as const, ref: prev?.ref ?? 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', skills: [id], targets: prev?.targets ?? [] }
+  },
+  removeMarketplaceEntry: async (id: string) => {
+    delete playgroundMarketplaceInstalls[id]
+    return { id, removed: true }
+  },
   onMarketplaceChanged: () => () => {},
   onMarketplaceProgress: () => () => {},
+  listContextDocs: async () => playgroundContextDocs.map(playgroundContextDocInfo),
+  readContextDoc: async (filename: string) => {
+    const doc = playgroundContextDocs.find((item) => item.filename === filename)
+    if (!doc) throw new Error(`Unknown context doc: ${filename}`)
+    return { ...playgroundContextDocInfo(doc), content: doc.content }
+  },
+  writeContextDoc: async (filename: string, content: string) => {
+    const name = filename.replace(/\.md$/i, '')
+    const next = { filename, name, content, modifiedAt: Date.now() }
+    const index = playgroundContextDocs.findIndex((item) => item.filename === filename)
+    if (index >= 0) playgroundContextDocs[index] = next
+    else playgroundContextDocs.push(next)
+    return playgroundContextDocInfo(next)
+  },
+  deleteContextDoc: async (filename: string) => {
+    const index = playgroundContextDocs.findIndex((item) => item.filename === filename)
+    if (index >= 0) playgroundContextDocs.splice(index, 1)
+  },
+  readContextDocTemplate: async () => null,
+  acceptContextDocTemplate: async (filename: string) => {
+    const doc = playgroundContextDocs.find((item) => item.filename === filename)
+    if (!doc) throw new Error(`Unknown context doc: ${filename}`)
+    return playgroundContextDocInfo(doc)
+  },
+  keepMineContextDocTemplate: async (filename: string) => {
+    const doc = playgroundContextDocs.find((item) => item.filename === filename)
+    if (!doc) throw new Error(`Unknown context doc: ${filename}`)
+    return playgroundContextDocInfo(doc)
+  },
+  onContextDocsChanged: () => () => {},
+  listMemoryLessons: async () => [],
+  onMemoryChanged: () => () => {},
+  readFile: async (path: string) => {
+    throw new Error(`Playground has no file: ${path}`)
+  },
+  saveSourceCredentials: async () => {},
+  knowledge: {
+    detectEngine: async () => ({
+      installed: false,
+      runningOnDefaultPort: false,
+      suggestedBaseUrl: 'http://localhost:6806',
+      installPathsFound: [],
+      platform: 'linux',
+      canOpenApp: false,
+      installDocsUrl: 'https://github.com/siyuan-note/siyuan',
+    }),
+    listConnections: async () => [],
+    engineStatus: async () => ({
+      mode: 'external-local' as const,
+      running: false,
+      binaryFound: false,
+    }),
+    engineStart: async () => ({
+      ok: false,
+      started: false,
+      alreadyRunning: false,
+      method: 'none' as const,
+      binaryPath: null,
+      baseUrl: 'http://localhost:6806',
+      connectionId: '',
+      error: 'Playground fixture. Not live.',
+    }),
+    migrateNotes: async () => ({
+      migrated: 0,
+      skipped: 0,
+      failed: [],
+      mapPath: '/tmp/playground/knowledge-map.json',
+      sourceRoot: '/tmp/playground/notes',
+      destinationRoot: '/tmp/playground/knowledge',
+      format: 'craft-markdown' as const,
+    }),
+  },
   foreignDiscoverSessions: async () => ({
     entries: [
       {
