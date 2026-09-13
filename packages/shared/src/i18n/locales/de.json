@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "Einladung kopiert",
   "toast.joinNeedsLink": "Fügen Sie eine geteilte Sitzungs-URL ein",
   "toast.linkCopied": "Link in die Zwischenablage kopiert",
+  "toast.localPathUseOpenFile": "Wenn dies ein lokaler Pfad ist, verwenden Sie stattdessen „Datei öffnen“.",
   "toast.messagingNotConfigured": "Nachrichten sind nicht konfiguriert. Füge einen Bot-Token unter Einstellungen → Nachrichten hinzu.",
   "toast.messagingPaired": "Nachrichtenkanal gekoppelt",
   "toast.messagingRateLimited": "Zu viele Pairing-Code-Anfragen. Bitte warte kurz und versuche es erneut.",

@@ -4568,6 +4568,7 @@
   "toast.inviteCopied": "تم نسخ الدعوة",
   "toast.joinNeedsLink": "الصق عنوان جلسة مشتركة للانضمام",
   "toast.linkCopied": "تم نسخ الرابط إلى الحافظة",
+  "toast.localPathUseOpenFile": "إذا كان هذا مسارًا محليًا، استخدم «فتح ملف» بدلًا من ذلك.",
   "toast.messagingNotConfigured": "لم تُضبط المراسلة. أضف رمز البوت في الإعدادات ← المراسلة.",
   "toast.messagingPaired": "تم إقران قناة المراسلة",
   "toast.messagingRateLimited": "طلبات رمز الإقران كثيرة جدًا. يُرجى الانتظار قليلًا ثم المحاولة مرة أخرى.",
