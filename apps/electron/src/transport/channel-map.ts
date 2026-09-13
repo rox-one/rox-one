@@ -465,6 +465,13 @@ export const CHANNEL_MAP = {
   setGamificationAnalyticsConsent: invoke(RPC_CHANNELS.gamification.SET_CONSENT),
   onGamificationChanged: listener(RPC_CHANNELS.gamification.CHANGED),
 
+  getPrivacyState: invoke(RPC_CHANNELS.privacy.GET),
+  setPrivacyPurpose: invoke(RPC_CHANNELS.privacy.SET_PURPOSE),
+  requestPrivacyExport: invoke(RPC_CHANNELS.privacy.REQUEST_EXPORT),
+  requestPrivacyDeletion: invoke(RPC_CHANNELS.privacy.REQUEST_DELETION),
+  completePrivacyDeletion: invoke(RPC_CHANNELS.privacy.COMPLETE_DELETION),
+  onPrivacyChanged: listener(RPC_CHANNELS.privacy.CHANGED),
+
   getVoicePrefs: invoke(RPC_CHANNELS.voice.GET),
   saveVoicePrefs: invoke(RPC_CHANNELS.voice.SAVE),
   getVoiceHealth: invoke(RPC_CHANNELS.voice.HEALTH),

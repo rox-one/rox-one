@@ -15,6 +15,7 @@ import type { ComponentType } from 'react'
 import type { SettingsSubpage } from '../../../shared/settings-registry'
 
 import AccountSettingsPage from './AccountSettingsPage'
+import PrivacySettingsPage from './PrivacySettingsPage'
 import RuntimeSettingsPage from './RuntimeSettingsPage'
 import ContextSettingsPage from './ContextSettingsPage'
 import KnowledgeSettingsPage from './KnowledgeSettingsPage'
@@ -43,6 +44,7 @@ import ShortcutsPage from './ShortcutsPage'
  */
 export const SETTINGS_PAGE_COMPONENTS: Record<SettingsSubpage, ComponentType> = {
   account: AccountSettingsPage,
+  privacy: PrivacySettingsPage,
   runtime: RuntimeSettingsPage,
   context: ContextSettingsPage,
   knowledge: KnowledgeSettingsPage,

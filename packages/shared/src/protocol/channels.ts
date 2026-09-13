@@ -502,6 +502,14 @@ export const RPC_CHANNELS = {
     SET_CONSENT: 'gamification:setConsent',
     CHANGED: 'gamification:changed',
   },
+  privacy: {
+    GET: 'privacy:get',
+    SET_PURPOSE: 'privacy:setPurpose',
+    REQUEST_EXPORT: 'privacy:requestExport',
+    REQUEST_DELETION: 'privacy:requestDeletion',
+    COMPLETE_DELETION: 'privacy:completeDeletion',
+    CHANGED: 'privacy:changed',
+  },
   voice: {
     GET: 'voice:get',
     SAVE: 'voice:save',

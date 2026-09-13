@@ -3,7 +3,7 @@
  *
  * Allowed journal categories: notes, tasks, sessions, settings.
  * Credentials, cookies and passkeys never enter the replica.
- * DG-01 is open: this module does not record legal or training purposes.
+ * DG-01 consent lives in `privacy/` — this replica never records legal or training purposes.
  */
 
 export const REPLICA_CATEGORIES = ['notes', 'tasks', 'sessions', 'settings'] as const;

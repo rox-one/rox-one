@@ -36,6 +36,7 @@ export interface SettingsPageDefinition {
  */
 export const SETTINGS_PAGES = [
   { id: 'account' as const, labelKey: 'settings.account.title', descriptionKey: 'settings.account.description' },
+  { id: 'privacy' as const, labelKey: 'settings.privacy.title', descriptionKey: 'settings.privacy.description' },
   { id: 'runtime' as const, labelKey: 'settings.runtime.title', descriptionKey: 'settings.runtime.description' },
   { id: 'context' as const, labelKey: 'settings.context.title', descriptionKey: 'settings.context.description' },
   { id: 'marketplace' as const, labelKey: 'settings.marketplace.title', descriptionKey: 'settings.marketplace.description' },

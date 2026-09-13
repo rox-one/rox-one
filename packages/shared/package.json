@@ -88,6 +88,7 @@
     "./pages": "./src/pages/index.ts",
     "./pages/data-store": "./src/pages/data-store.ts",
     "./pages/types": "./src/pages/types.ts",
+    "./privacy": "./src/privacy/index.ts",
     "./projects": "./src/projects/index.ts",
     "./projects/types": "./src/projects/types.ts",
     "./prompts": "./src/prompts/index.ts",
