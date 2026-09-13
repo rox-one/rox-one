@@ -295,6 +295,7 @@
   "chat.dictateTooltip": "Dictate a message. Transcript stays editable. Shortcut: ⌘⇧D",
   "chat.enterSessionName": "セッション名を入力...",
   "chat.failedToLoadConversation": "会話を読み込めませんでした",
+  "chat.failedToSendMessage": "メッセージの送信に失敗しました: {{error}}",
   "chat.failedToStopSharing": "共有の停止に失敗しました",
   "chat.failedToUpdateShare": "共有の更新に失敗しました",
   "chat.filesCount_few": "{{count}} 件のファイル",

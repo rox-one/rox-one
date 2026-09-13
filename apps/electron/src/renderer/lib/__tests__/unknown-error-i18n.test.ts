@@ -45,12 +45,10 @@ describe('unknown-error toast fallbacks are i18n', () => {
     expect(source).not.toContain("'Unknown error'")
   })
 
-  it('App toast fallbacks use toast.unknownError; send-message card stays a later slice', () => {
+  it('App toast fallbacks use toast.unknownError', () => {
     const source = read('App.tsx')
     expect(source).toContain("t('toast.unknownError')")
-    expect(source.match(/t\('toast\.unknownError'\)/g)?.length).toBe(4)
-    expect(source).toContain(
-      "`Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`",
-    )
+    expect(source.match(/t\('toast\.unknownError'\)/g)?.length).toBe(5)
+    expect(source).not.toContain("'Unknown error'")
   })
 })

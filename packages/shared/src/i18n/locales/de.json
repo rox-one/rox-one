@@ -295,6 +295,7 @@
   "chat.dictateTooltip": "Nachricht diktieren. Transkript bleibt editierbar. Kürzel: ⌘⇧D",
   "chat.enterSessionName": "Sitzungsname eingeben...",
   "chat.failedToLoadConversation": "Unterhaltung konnte nicht geladen werden",
+  "chat.failedToSendMessage": "Nachricht konnte nicht gesendet werden: {{error}}",
   "chat.failedToStopSharing": "Freigabe konnte nicht beendet werden",
   "chat.failedToUpdateShare": "Freigabe konnte nicht aktualisiert werden",
   "chat.filesCount_few": "{{count}} Dateien",

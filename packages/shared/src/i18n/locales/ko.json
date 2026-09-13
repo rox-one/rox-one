@@ -295,6 +295,7 @@
   "chat.dictateTooltip": "Dictate a message. Transcript stays editable. Shortcut: ⌘⇧D",
   "chat.enterSessionName": "세션 이름 입력...",
   "chat.failedToLoadConversation": "대화를 불러오지 못했습니다",
+  "chat.failedToSendMessage": "메시지를 보내지 못했습니다: {{error}}",
   "chat.failedToStopSharing": "공유를 중지하지 못했습니다",
   "chat.failedToUpdateShare": "공유를 업데이트하지 못했습니다",
   "chat.filesCount_few": "파일 {{count}}개",
