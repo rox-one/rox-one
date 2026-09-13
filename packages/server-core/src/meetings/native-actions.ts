@@ -4,8 +4,9 @@ import {
   parseRox2EntityId,
   type NativeNotesEngine,
 } from '@craft-agent/core/rox2'
-import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
+import { PersonalTaskStore, type PersonalTask } from '@craft-agent/core/tasks/personal'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
+import { PersonalTaskPersistStore } from '../tasks/personal-persist.ts'
 
 export type NativeActionResult = {
   entityId: string
@@ -14,11 +15,6 @@ export type NativeActionResult = {
 }
 
 export { isNativeNotesEngine }
-
-/** Personal tasks have no CAS token locally; do not invent `'1'`. #439 persist is off this branch. */
-function missingTaskRevision(): string {
-  return ''
-}
 
 const appliedBySeen = new WeakMap<Set<string>, Map<string, NativeActionResult>>()
 
@@ -43,11 +39,35 @@ function replayNote(proposal: MeetingProposal, notes: NativeNotesEngine): Native
   return { entityId: note.entityId, revision: note.revision, kind: 'note' }
 }
 
+function persistRevision(persist: PersonalTaskPersistStore, task: PersonalTask): string {
+  return String(persist.put(task).revision)
+}
+
+function taskIdFromPayload(payload: Record<string, unknown>): string | null {
+  const raw = payload.entityId
+  if (typeof raw !== 'string') return null
+  try {
+    const parsed = parseRox2EntityId(raw)
+    return parsed.kind === 'task' ? parsed.id : null
+  } catch {
+    return null
+  }
+}
+
+function readPersistedTask(
+  persist: PersonalTaskPersistStore,
+  tasks: PersonalTaskStore,
+  taskId: string,
+): PersonalTask | null {
+  return persist.get(taskId)?.task ?? tasks.get(taskId) ?? null
+}
+
 export function applyNativeMeetingAction(
   proposal: MeetingProposal,
   notes: NativeNotesEngine,
   tasks: PersonalTaskStore,
   seenOperations: Set<string>,
+  persist: PersonalTaskPersistStore,
 ): NativeActionResult {
   const applied = appliedResults(seenOperations)
   const previous = applied.get(proposal.id)
@@ -57,7 +77,18 @@ export function applyNativeMeetingAction(
       const replayed = replayNote(proposal, notes)
       if (replayed) return remember(seenOperations, proposal.id, replayed)
     }
-    return { entityId: '', revision: missingTaskRevision(), kind: proposal.type === 'create_note' ? 'note' : 'task' }
+    const existingId = taskIdFromPayload(proposal.payload)
+    if (existingId) {
+      const saved = persist.get(existingId)
+      if (saved) {
+        return remember(seenOperations, proposal.id, {
+          entityId: `task:${saved.task.id}`,
+          revision: String(saved.revision),
+          kind: 'task',
+        })
+      }
+    }
+    return { entityId: '', revision: '', kind: proposal.type === 'create_note' ? 'note' : 'task' }
   }
   if (proposal.type === 'create_note') {
     const noteId = `meeting-${proposal.id}`
@@ -70,18 +101,42 @@ export function applyNativeMeetingAction(
       kind: 'note',
     })
   }
+  const existingTaskId = taskIdFromPayload(proposal.payload)
+  if (existingTaskId) {
+    const current = readPersistedTask(persist, tasks, existingTaskId)
+    if (!current) {
+      return { entityId: '', revision: '', kind: 'task' }
+    }
+    const nextTitle = typeof proposal.payload.title === 'string' ? proposal.payload.title : current.title
+    const nextDue = typeof proposal.payload.dueAt === 'number' ? proposal.payload.dueAt : current.dueAt
+    const updated = tasks.get(existingTaskId)
+      ? tasks.update(existingTaskId, { title: nextTitle, dueAt: nextDue })
+      : { ...current, title: nextTitle, dueAt: nextDue }
+    const revision = persistRevision(persist, updated)
+    return remember(seenOperations, proposal.id, {
+      entityId: `task:${updated.id}`,
+      revision,
+      kind: 'task',
+    })
+  }
   const task = tasks.create({
     title: String(proposal.payload.title ?? 'Meeting task'),
     dueAt: typeof proposal.payload.dueAt === 'number' ? proposal.payload.dueAt : undefined,
   })
+  const revision = persistRevision(persist, task)
   return remember(seenOperations, proposal.id, {
     entityId: `task:${task.id}`,
-    revision: missingTaskRevision(),
+    revision,
     kind: 'task',
   })
 }
 
-export function readbackNative(entityId: string, notes: NativeNotesEngine, tasks: PersonalTaskStore): { entityId: string; revision: string } | null {
+export function readbackNative(
+  entityId: string,
+  notes: NativeNotesEngine,
+  _tasks: PersonalTaskStore,
+  persist: PersonalTaskPersistStore,
+): { entityId: string; revision: string } | null {
   let parsed: ReturnType<typeof parseRox2EntityId>
   try {
     parsed = parseRox2EntityId(entityId)
@@ -94,15 +149,16 @@ export function readbackNative(entityId: string, notes: NativeNotesEngine, tasks
     return { entityId: note.entityId, revision: note.revision }
   }
   if (parsed.kind !== 'task') return null
-  const task = tasks.get(parsed.id)
-  if (!task) return null
-  return { entityId, revision: missingTaskRevision() }
+  const saved = persist.get(parsed.id)
+  if (!saved) return null
+  return { entityId: `task:${saved.task.id}`, revision: String(saved.revision) }
 }
 
-export function createNativeActionHarness() {
+export function createNativeActionHarness(rootDir: string) {
   return {
     notes: createNativeNotesEngine(),
     tasks: new PersonalTaskStore(),
+    persist: new PersonalTaskPersistStore(rootDir),
     seen: new Set<string>(),
   }
 }
