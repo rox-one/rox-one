@@ -1245,6 +1245,7 @@
   "extensions.updates.empty": "لا توجد تحديثات متاحة.",
   "fileViewer.clickToView": "انقر فوق مسار ملف في الدردشة لعرضه هنا",
   "fileViewer.errorLoading": "خطأ في تحميل الملف",
+  "fileViewer.failedToLoad": "تعذر تحميل الملف",
   "fileViewer.loadingContent": "جارٍ تحميل المحتوى...",
   "fileViewer.noFileSelected": "لم يتم تحديد أي ملف",
   "filter.exclude": "استبعاد",

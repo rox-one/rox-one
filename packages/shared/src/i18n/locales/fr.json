@@ -1245,6 +1245,7 @@
   "extensions.updates.empty": "No updates available.",
   "fileViewer.clickToView": "Cliquez sur un chemin de fichier dans le chat pour l'afficher ici",
   "fileViewer.errorLoading": "Erreur lors du chargement du fichier",
+  "fileViewer.failedToLoad": "Impossible de charger le fichier",
   "fileViewer.loadingContent": "Chargement du contenu...",
   "fileViewer.noFileSelected": "Aucun fichier sélectionné",
   "filter.exclude": "Exclure",

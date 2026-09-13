@@ -1247,6 +1247,7 @@
   "extensions.updates.empty": "No updates available.",
   "fileViewer.clickToView": "Kliknij ścieżkę pliku w czacie, aby go tutaj wyświetlić",
   "fileViewer.errorLoading": "Błąd ładowania pliku",
+  "fileViewer.failedToLoad": "Nie udało się wczytać pliku",
   "fileViewer.loadingContent": "Ładowanie zawartości...",
   "fileViewer.noFileSelected": "Nie wybrano pliku",
   "filter.exclude": "Wyklucz",

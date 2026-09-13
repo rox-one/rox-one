@@ -1245,6 +1245,7 @@
   "extensions.updates.empty": "No updates available.",
   "fileViewer.clickToView": "Kattints egy fájl útvonalra a chatben az itt való megtekintéshez",
   "fileViewer.errorLoading": "Hiba a fájl betöltésekor",
+  "fileViewer.failedToLoad": "Nem sikerült betölteni a fájlt",
   "fileViewer.loadingContent": "Tartalom betöltése...",
   "fileViewer.noFileSelected": "Nincs kiválasztott fájl",
   "filter.exclude": "Kizárás",
