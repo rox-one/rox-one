@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { parseNlDate, parseQuickEntry, startOfLocalDay } from './dates.ts'
 import { buildTodayPlan, filterAndSortTasks, projectTasks, tasksForProject, tasksLinkedTo } from './projections.ts'
+import {
+  loadPersonalTaskCache,
+  persistPersonalTaskCache,
+  PERSONAL_TASKS_QUARANTINE_KEY,
+  PERSONAL_TASKS_STORAGE_KEY,
+} from './cache.ts'
 import { PersonalTaskStore, resetPersonalTaskIds } from './store.ts'
 
 const morning = startOfLocalDay(Date.now()) + 9 * 60 * 60 * 1000
@@ -84,6 +90,27 @@ describe('personal tasks (issue 17)', () => {
     expect(restored.list()).toHaveLength(1)
     expect(restored.list()[0]?.title).toBe('Keep')
     expect(store.auditLog().some((event) => event.action === 'create')).toBe(true)
+  })
+
+  it('quarantines corrupt JSON and never overwrites the original cache key', () => {
+    const kv = new Map<string, string>()
+    const adapter = {
+      getItem: (key: string) => kv.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        kv.set(key, value)
+      },
+    }
+    kv.set(PERSONAL_TASKS_STORAGE_KEY, '{not-json')
+    const loaded = loadPersonalTaskCache(adapter)
+    expect(loaded.status).toBe('quarantine')
+    expect(kv.get(PERSONAL_TASKS_STORAGE_KEY)).toBe('{not-json')
+    expect(kv.get(PERSONAL_TASKS_QUARANTINE_KEY)).toBe('{not-json')
+    loaded.store.create({ title: 'Optimistic', list: 'inbox', now: morning })
+    const wrote = persistPersonalTaskCache(adapter, loaded.store, loaded.status)
+    expect(wrote.wrote).toBe('staging')
+    expect(kv.get(PERSONAL_TASKS_STORAGE_KEY)).toBe('{not-json')
+    expect(PersonalTaskStore.tryFromJson('{ "version": 99, "tasks": [] }').status).toBe('quarantine')
+    expect(PersonalTaskStore.tryFromJson('{ "version": 1, "tasks": {} }').status).toBe('quarantine')
   })
 
   it('supports areas, headings, subtasks, tags, priority and recurrence', () => {
