@@ -140,7 +140,7 @@ export default function ShortcutsPage() {
       <PanelHeader title={t("settings.shortcuts.title")} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto space-y-8">
+          <div className="px-5 py-7 pb-24 max-w-3xl mx-auto space-y-8">
             {/* Registry-driven sections */}
             {Object.entries(actionsByCategory).map(([category, actions]) => (
               <SettingsSection key={category} title={t(`shortcuts.category.${category.toLowerCase()}`)}>

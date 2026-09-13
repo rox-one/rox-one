@@ -32,6 +32,9 @@ describe('H5 import and advisor wiring', () => {
     expect(page).toContain("t('settings.import.truncated'")
     expect(page).not.toContain('spawn_session')
     expect(page).toContain('BrowserProfileImportPanel')
+    expect(page).toContain('session-import-select-all')
+    expect(page).toContain('filterForeignIndexEntries')
+    expect(page).toContain('session-import-search')
   })
 
   it('wires privileged browser profile import with separate OS credential approval', () => {

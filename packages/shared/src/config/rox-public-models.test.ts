@@ -6,6 +6,7 @@ import {
   isRoxPublicModelId,
   resolveOmpSetModelTarget,
   resolveSpawnSessionModel,
+  ROX_DEFAULT_CONNECTION_NAME,
   ROX_DEFAULT_PARENT_MODEL,
   ROX_DEFAULT_SUBAGENT_MODEL,
   ROX_PUBLIC_MODEL_CATALOG,
@@ -25,7 +26,8 @@ describe('ROX public model plane', () => {
       'rox/vision',
       'rox/fast',
     ]);
-    expect(ROX_PUBLIC_MODEL_CATALOG.map((entry) => entry.id)).toEqual([...ROX_PUBLIC_MODEL_IDS]);
+    expect(ROX_PUBLIC_MODEL_CATALOG.find((entry) => entry.id === 'rox/standard')?.name).toBe('ROX R1')
+    expect(ROX_DEFAULT_CONNECTION_NAME).toBe('ROX')
   });
 
   it('sends every public parent to the cheap public subagent endpoint', () => {

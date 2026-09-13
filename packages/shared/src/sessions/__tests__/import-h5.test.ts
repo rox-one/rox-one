@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { discoverForeignSessions } from '../import-discover.ts'
+import { discoverForeignSessions, filterForeignIndexEntries, MAX_SCAN_ENTRIES, MAX_SCAN_PER_KIND } from '../import-discover.ts'
 import { convertClaudeJsonl, convertGrokCatalog, inferForeignKind, redactSecrets } from '../import-convert.ts'
 import { isAllowedForeignSourcePath, isHomePath, isSensitiveAgentCwd } from '../import-home.ts'
 import { listImportedSessionFiles, persistForeignSession, readImportedSession } from '../import-persist.ts'
@@ -313,5 +313,21 @@ describe('H5 foreign import', () => {
     expect(discovered.entries.filter((entry) => entry.kind === 'grok')).toHaveLength(1)
     expect(discovered.entries.every((entry) => entry.userTurns > 0)).toBe(true)
     expect(discovered.truncated).toBe(true)
+  })
+
+  it('filters scanned entries by keyword and kind', () => {
+    const entries = [
+      { id: '1', kind: 'grok' as const, sourcePath: '/a/grok', title: 'Fix login', userTurns: 2 },
+      { id: '2', kind: 'claude' as const, sourcePath: '/b/claude', title: 'Review PR', userTurns: 3 },
+      { id: '3', kind: 'codex' as const, sourcePath: '/c/codex', title: 'login tests', userTurns: 1 },
+    ]
+    expect(filterForeignIndexEntries(entries, { query: 'login' }).map((e) => e.kind)).toEqual(['grok', 'codex'])
+    expect(filterForeignIndexEntries(entries, { kind: 'claude' }).map((e) => e.kind)).toEqual(['claude'])
+    expect(filterForeignIndexEntries(entries, { query: '  LOGIN  ', kind: 'all' })).toHaveLength(2)
+  })
+
+  it('keeps a large default scan budget', () => {
+    expect(MAX_SCAN_ENTRIES).toBe(100_000)
+    expect(MAX_SCAN_PER_KIND).toBe(20_000)
   })
 })

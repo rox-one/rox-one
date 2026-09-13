@@ -23,9 +23,7 @@ export function formatTokenCount(tokens: number): string {
  * provider-agnostic label in the picker (e.g., "pi/claude-opus" → "claude-opus").
  */
 export function stripPiPrefixForDisplay(value: string): string {
-  let next = value.startsWith('pi/') ? value.slice(3) : value
-  if (next.startsWith('ROX ')) next = next.slice(4)
-  return next
+  return value.startsWith('pi/') ? value.slice(3) : value
 }
 
 export type ConnectionGroup = [groupName: string, connections: LlmConnection[]]

@@ -13,9 +13,9 @@ describe('sidebar dashboard source contracts', () => {
     expect(appShell).not.toContain('Scheduling requires your machine to be running')
   })
 
-  it('mounts real mini-dashboard chrome above the profile strip', () => {
+  it('mounts usage cards on the account page, not the sidebar', () => {
     expect(appShell).toContain('<SidebarChrome')
-    expect(sidebarChrome).toContain('<MiniDashboardCards')
+    expect(sidebarChrome).not.toContain('<MiniDashboardCards')
     expect(sidebarChrome).toContain('<ProfileStrip')
     expect(miniCards).toContain('dashboard.unknown')
     expect(miniCards).toContain('snapshot.tokens == null')
