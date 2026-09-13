@@ -393,14 +393,31 @@ export const mockElectronAPI = {
     return () => {}
   },
 
-  // Debug menu actions invoked by the mobile menu's Debug sub-page in dev mode.
-  // The real implementations call into the auto-updater; the playground just logs.
-  checkForUpdates: () => {
+  // Debug menu / App settings auto-update. Fixture, not a live updater.
+  checkForUpdates: async () => {
     console.log('[Playground] checkForUpdates called')
+    return {
+      available: false,
+      currentVersion: 'playground',
+      latestVersion: null,
+      downloadState: 'idle' as const,
+      downloadProgress: 0,
+    }
   },
-  installUpdate: () => {
+  getUpdateInfo: async () => ({
+    available: false,
+    currentVersion: 'playground',
+    latestVersion: null,
+    downloadState: 'idle' as const,
+    downloadProgress: 0,
+  }),
+  installUpdate: async () => {
     console.log('[Playground] installUpdate called')
   },
+  dismissUpdate: async () => {},
+  getDismissedUpdateVersion: async () => null,
+  onUpdateAvailable: () => () => {},
+  onUpdateDownloadProgress: () => () => {},
 
   // ChatDisplay required mocks
   readPreferences: async () => {

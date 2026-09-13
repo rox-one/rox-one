@@ -39,6 +39,7 @@ describe('uncovered playground screens', () => {
     expect(mock).toContain('listContextDocs')
     expect(mock).toContain('installMarketplaceEntry')
     expect(mock).toContain('extensionsListCatalog')
+    expect(mock).toContain('getUpdateInfo')
     expect(mock).toContain('detectEngine')
     expect(mock).toContain('foreignDiscoverSessions')
     expect(mock).toContain('openclawRuntime')
