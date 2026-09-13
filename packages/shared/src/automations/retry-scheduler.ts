@@ -10,9 +10,13 @@
  *
  * After all deferred attempts fail, the entry is removed and a final history
  * entry is written. Queue entries survive app restarts.
+ *
+ * Queue mutations are serialized so enqueue during an in-flight tick cannot
+ * be overwritten. HTTP runs outside the lock; the rewrite re-reads the file
+ * and merges. Dispose cancels the bootstrap timer and owned in-flight requests.
  */
 
-import { readFile, writeFile, appendFile } from 'fs/promises';
+import { readFile, writeFile, appendFile, rename } from 'fs/promises';
 import { join } from 'path';
 import { createLogger } from '../utils/debug.ts';
 import { executeWebhookRequest, createWebhookHistoryEntry } from './webhook-utils.ts';
@@ -22,84 +26,93 @@ import type { WebhookAction, WebhookActionResult } from './types.ts';
 
 const log = createLogger('retry-scheduler');
 
-// Deferred retry delays: 5m, 30m, 1h
 const DEFERRED_DELAYS_MS = [
-  5 * 60_000,    // 5 minutes
-  30 * 60_000,   // 30 minutes
-  60 * 60_000,   // 1 hour
+  5 * 60_000,
+  30 * 60_000,
+  60 * 60_000,
 ];
 
 const MAX_DEFERRED_ATTEMPTS = DEFERRED_DELAYS_MS.length;
+const TICK_INTERVAL_MS = 60_000;
+const BOOTSTRAP_DELAY_MS = 5_000;
 
-/** Queue tick interval (how often we check the queue file) */
-const TICK_INTERVAL_MS = 60_000; // 1 minute
-
-// ============================================================================
-// Queue Entry
-// ============================================================================
+export type RetryExecuteRequest = (
+  action: WebhookAction,
+  options: { timeoutMs: number; signal?: AbortSignal },
+) => Promise<WebhookActionResult>;
 
 export interface RetryQueueEntry {
-  /** Unique entry ID */
   id: string;
-  /** Matcher ID (for history correlation) */
   matcherId: string;
-  /** The webhook action with expanded values (no env vars needed at retry time) */
   action: WebhookAction;
-  /** Expanded URL (post-env-expansion) for safe logging */
   expandedUrl: string;
-  /** Number of deferred attempts already made (0 = first deferred pending) */
   deferredAttempt: number;
-  /** Timestamp when the next retry should happen */
   nextRetryAt: number;
-  /** Timestamp when this entry was created */
   createdAt: number;
-  /** Last error message */
   lastError?: string;
 }
 
-// ============================================================================
-// RetryScheduler
-// ============================================================================
-
 export interface RetrySchedulerOptions {
   workspaceRootPath: string;
+  executeRequest?: RetryExecuteRequest;
+  bootstrapDelayMs?: number;
+  tickIntervalMs?: number;
 }
+
+type QueueOutcome = { kind: 'drop' } | { kind: 'keep'; entry: RetryQueueEntry };
 
 export class RetryScheduler {
   private readonly workspaceRootPath: string;
+  private readonly executeRequest: RetryExecuteRequest;
+  private readonly bootstrapDelayMs: number;
+  private readonly tickIntervalMs: number;
   private timer: ReturnType<typeof setInterval> | null = null;
+  private bootstrapTimer: ReturnType<typeof setTimeout> | null = null;
   private processing = false;
+  private stopped = false;
+  private generation = 0;
+  private requestAbort: AbortController | null = null;
+  private queueLock: Promise<void> = Promise.resolve();
 
   constructor(options: RetrySchedulerOptions) {
     this.workspaceRootPath = options.workspaceRootPath;
+    this.executeRequest = options.executeRequest ?? executeWebhookRequest;
+    this.bootstrapDelayMs = options.bootstrapDelayMs ?? BOOTSTRAP_DELAY_MS;
+    this.tickIntervalMs = options.tickIntervalMs ?? TICK_INTERVAL_MS;
   }
 
-  /**
-   * Start the scheduler. Checks queue every minute.
-   */
   start(): void {
     if (this.timer) return;
-    this.timer = setInterval(() => this.tick(), TICK_INTERVAL_MS);
+    this.stopped = false;
+    this.generation += 1;
+    this.requestAbort?.abort();
+    this.requestAbort = new AbortController();
+    this.timer = setInterval(() => {
+      void this.tick();
+    }, this.tickIntervalMs);
     log.debug('[RetryScheduler] Started');
-    // Run an initial tick after a short delay (don't block startup)
-    setTimeout(() => this.tick(), 5_000);
+    this.bootstrapTimer = setTimeout(() => {
+      this.bootstrapTimer = null;
+      void this.tick();
+    }, this.bootstrapDelayMs);
   }
 
-  /**
-   * Stop the scheduler and clean up.
-   */
   dispose(): void {
+    this.stopped = true;
+    this.generation += 1;
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
     }
+    if (this.bootstrapTimer) {
+      clearTimeout(this.bootstrapTimer);
+      this.bootstrapTimer = null;
+    }
+    this.requestAbort?.abort();
+    this.requestAbort = null;
     log.debug('[RetryScheduler] Disposed');
   }
 
-  /**
-   * Enqueue a failed webhook for deferred retry.
-   * Called by WebhookHandler when immediate retries are exhausted.
-   */
   async enqueue(
     matcherId: string,
     action: WebhookAction,
@@ -117,59 +130,37 @@ export class RetryScheduler {
       lastError,
     };
 
-    const queuePath = join(this.workspaceRootPath, AUTOMATIONS_RETRY_QUEUE_FILE);
-    await appendFile(queuePath, JSON.stringify(entry) + '\n', 'utf-8');
+    await this.withQueueLock(async () => {
+      const queuePath = join(this.workspaceRootPath, AUTOMATIONS_RETRY_QUEUE_FILE);
+      await appendFile(queuePath, JSON.stringify(entry) + '\n', 'utf-8');
+    });
     log.debug(`[RetryScheduler] Enqueued ${entry.id} — next retry in ${DEFERRED_DELAYS_MS[0]! / 60_000}m`);
   }
 
-  /**
-   * Process the queue: read entries, retry those that are due, rewrite the queue.
-   */
-  private async tick(): Promise<void> {
-    if (this.processing) return;
+  async tick(): Promise<void> {
+    if (this.processing || this.stopped) return;
     this.processing = true;
+    const generation = this.generation;
 
     try {
-      const queuePath = join(this.workspaceRootPath, AUTOMATIONS_RETRY_QUEUE_FILE);
-
-      // Read queue
-      let raw: string;
-      try {
-        raw = await readFile(queuePath, 'utf-8');
-      } catch {
-        // No queue file — nothing to do
-        return;
-      }
-
-      const lines = raw.trim().split('\n').filter(Boolean);
-      if (lines.length === 0) return;
-
-      const entries: RetryQueueEntry[] = [];
-      for (const line of lines) {
-        try {
-          entries.push(JSON.parse(line) as RetryQueueEntry);
-        } catch {
-          // Skip malformed lines
-        }
-      }
-
-      if (entries.length === 0) return;
+      const snapshot = await this.withQueueLock(() => this.readEntries());
+      if (snapshot.length === 0) return;
+      if (this.isStale(generation)) return;
 
       const now = Date.now();
-      const remaining: RetryQueueEntry[] = [];
+      const outcomes = new Map<string, QueueOutcome>();
 
-      for (const entry of entries) {
-        if (entry.nextRetryAt > now) {
-          // Not due yet — keep in queue
-          remaining.push(entry);
-          continue;
-        }
+      for (const entry of snapshot) {
+        if (entry.nextRetryAt > now) continue;
+        if (this.isStale(generation)) return;
 
-        // Attempt retry
         log.debug(`[RetryScheduler] Retrying ${entry.id} (deferred attempt ${entry.deferredAttempt + 1}/${MAX_DEFERRED_ATTEMPTS})`);
         let result: WebhookActionResult;
         try {
-          result = await executeWebhookRequest(entry.action, { timeoutMs: 30_000 });
+          result = await this.executeRequest(entry.action, {
+            timeoutMs: 30_000,
+            signal: this.requestAbort?.signal,
+          });
         } catch (err) {
           result = {
             type: 'webhook',
@@ -180,10 +171,11 @@ export class RetryScheduler {
           };
         }
 
+        if (this.isStale(generation)) return;
+
         if (result.success) {
-          // Success — write history entry and drop from queue
           log.debug(`[RetryScheduler] ${entry.id} succeeded on deferred attempt ${entry.deferredAttempt + 1}`);
-          const historyEntry = createWebhookHistoryEntry({
+          await this.writeHistory(generation, {
             matcherId: entry.matcherId,
             ok: true,
             method: entry.action.method,
@@ -192,16 +184,10 @@ export class RetryScheduler {
             durationMs: result.durationMs ?? 0,
             attempts: entry.deferredAttempt + 1,
           });
-          try {
-            await appendAutomationHistoryEntry(this.workspaceRootPath, historyEntry);
-          } catch (e) {
-            log.debug(`[RetryScheduler] Failed to write history: ${e}`);
-          }
-          // Don't add to remaining — drop from queue
+          outcomes.set(entry.id, { kind: 'drop' });
         } else if (entry.deferredAttempt + 1 >= MAX_DEFERRED_ATTEMPTS) {
-          // Final attempt failed — write permanent failure to history
           log.debug(`[RetryScheduler] ${entry.id} permanently failed after ${MAX_DEFERRED_ATTEMPTS} deferred attempts`);
-          const historyEntry = createWebhookHistoryEntry({
+          await this.writeHistory(generation, {
             matcherId: entry.matcherId,
             ok: false,
             method: entry.action.method,
@@ -211,32 +197,38 @@ export class RetryScheduler {
             attempts: entry.deferredAttempt + 1,
             error: result.error ?? 'Unknown error',
           });
-          try {
-            await appendAutomationHistoryEntry(this.workspaceRootPath, historyEntry);
-          } catch (e) {
-            log.debug(`[RetryScheduler] Failed to write history: ${e}`);
-          }
-          // Don't add to remaining — drop from queue
+          outcomes.set(entry.id, { kind: 'drop' });
         } else {
-          // Still retryable — schedule next deferred attempt
           const nextDelay = DEFERRED_DELAYS_MS[entry.deferredAttempt + 1]!;
-          remaining.push({
-            ...entry,
-            deferredAttempt: entry.deferredAttempt + 1,
-            nextRetryAt: Date.now() + nextDelay,
-            lastError: result.error,
+          outcomes.set(entry.id, {
+            kind: 'keep',
+            entry: {
+              ...entry,
+              deferredAttempt: entry.deferredAttempt + 1,
+              nextRetryAt: Date.now() + nextDelay,
+              lastError: result.error,
+            },
           });
           log.debug(`[RetryScheduler] ${entry.id} failed — next retry in ${nextDelay / 60_000}m`);
         }
       }
 
-      // Rewrite queue file with remaining entries
-      if (remaining.length === 0) {
-        await writeFile(queuePath, '', 'utf-8');
-      } else {
-        const content = remaining.map(e => JSON.stringify(e)).join('\n') + '\n';
-        await writeFile(queuePath, content, 'utf-8');
-      }
+      if (this.isStale(generation)) return;
+
+      await this.withQueueLock(async () => {
+        if (this.isStale(generation)) return;
+        const current = await this.readEntries();
+        const remaining: RetryQueueEntry[] = [];
+        for (const entry of current) {
+          const outcome = outcomes.get(entry.id);
+          if (!outcome) {
+            remaining.push(entry);
+            continue;
+          }
+          if (outcome.kind === 'keep') remaining.push(outcome.entry);
+        }
+        await this.writeEntriesAtomic(remaining);
+      });
     } catch (err) {
       log.debug(`[RetryScheduler] Tick error: ${err}`);
     } finally {
@@ -244,4 +236,59 @@ export class RetryScheduler {
     }
   }
 
+  private isStale(generation: number): boolean {
+    return this.stopped || generation !== this.generation;
+  }
+
+  private async writeHistory(
+    generation: number,
+    input: Parameters<typeof createWebhookHistoryEntry>[0],
+  ): Promise<void> {
+    if (this.isStale(generation)) return;
+    const historyEntry = createWebhookHistoryEntry(input);
+    try {
+      await appendAutomationHistoryEntry(this.workspaceRootPath, historyEntry);
+    } catch (e) {
+      log.debug(`[RetryScheduler] Failed to write history: ${e}`);
+    }
+  }
+
+  private withQueueLock<T>(fn: () => Promise<T>): Promise<T> {
+    const run = this.queueLock.then(fn, fn);
+    this.queueLock = run.then(() => undefined, () => undefined);
+    return run;
+  }
+
+  private queuePath(): string {
+    return join(this.workspaceRootPath, AUTOMATIONS_RETRY_QUEUE_FILE);
+  }
+
+  private async readEntries(): Promise<RetryQueueEntry[]> {
+    let raw: string;
+    try {
+      raw = await readFile(this.queuePath(), 'utf-8');
+    } catch {
+      return [];
+    }
+    const lines = raw.trim().split('\n').filter(Boolean);
+    const entries: RetryQueueEntry[] = [];
+    for (const line of lines) {
+      try {
+        entries.push(JSON.parse(line) as RetryQueueEntry);
+      } catch {
+        // Skip malformed lines
+      }
+    }
+    return entries;
+  }
+
+  private async writeEntriesAtomic(entries: RetryQueueEntry[]): Promise<void> {
+    const queuePath = this.queuePath();
+    const content = entries.length === 0
+      ? ''
+      : entries.map((e) => JSON.stringify(e)).join('\n') + '\n';
+    const tmpPath = `${queuePath}.${process.pid}.${this.generation}.tmp`;
+    await writeFile(tmpPath, content, 'utf-8');
+    await rename(tmpPath, queuePath);
+  }
 }

@@ -31,6 +31,7 @@ import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/ap
 import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
 import { cancelOnboardingOAuth, isProviderManagedOAuthMethod } from './oauth-cancel'
+import { visibleError } from './onboarding-visible-error'
 
 /**
  * Identifies how the setup surface was opened. Existing callers are explicit
@@ -368,7 +369,7 @@ export function useOnboarding({
         setState(s => ({
           ...s,
           completionStatus: 'saving',
-          errorMessage: result.error || 'Failed to save configuration',
+          errorMessage: visibleError(result.error, t('onboarding.errors.saveConfigFailed')),
         }))
         return false
       }
@@ -376,11 +377,14 @@ export function useOnboarding({
       console.error('[Onboarding] handleSaveConfig error:', error)
       setState(s => ({
         ...s,
-        errorMessage: error instanceof Error ? error.message : 'Failed to save configuration',
+        errorMessage: visibleError(
+          error instanceof Error ? error.message : undefined,
+          t('onboarding.errors.saveConfigFailed'),
+        ),
       }))
       return false
     }
-  }, [state.apiSetupMethod, onConfigSaved, editingSlug, existingSlugs])
+  }, [state.apiSetupMethod, onConfigSaved, editingSlug, existingSlugs, t])
 
   // Continue to next step
   const handleContinue = useCallback(async () => {
@@ -522,7 +526,7 @@ export function useOnboarding({
           setState(s => ({
             ...s,
             credentialStatus: 'error',
-            errorMessage: 'Please enter a valid API key',
+            errorMessage: t('onboarding.errors.apiKeyRequired'),
           }))
           return
         }
@@ -531,7 +535,7 @@ export function useOnboarding({
           setState(s => ({
             ...s,
             credentialStatus: 'error',
-            errorMessage: 'Please enter a valid API key',
+            errorMessage: t('onboarding.errors.apiKeyRequired'),
           }))
           return
         }
@@ -553,7 +557,7 @@ export function useOnboarding({
         setState(s => ({
           ...s,
           credentialStatus: 'error',
-          errorMessage: testResult.error || 'Connection test failed',
+          errorMessage: visibleError(testResult.error, t('onboarding.errors.connectionTestFailed')),
         }))
         return
       }
@@ -581,10 +585,13 @@ export function useOnboarding({
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Validation failed',
+        errorMessage: visibleError(
+          error instanceof Error ? error.message : undefined,
+          t('onboarding.errors.validationFailed'),
+        ),
       }))
     }
-  }, [handleSaveConfig, state.apiSetupMethod])
+  }, [handleSaveConfig, state.apiSetupMethod, t])
 
   // Save config, validate the connection, and update state accordingly.
   // Shared by all OAuth flows after tokens are captured.
@@ -602,10 +609,14 @@ export function useOnboarding({
       setState(s => ({ ...s, credentialStatus: 'success', step: afterProviderStep }))
       return true
     } else {
-      setState(s => ({ ...s, credentialStatus: 'error', errorMessage: testResult.error || 'Connection test failed' }))
+      setState(s => ({
+        ...s,
+        credentialStatus: 'error',
+        errorMessage: visibleError(testResult.error, t('onboarding.errors.connectionTestFailed')),
+      }))
       return false
     }
-  }, [handleSaveConfig])
+  }, [handleSaveConfig, t])
 
   // Two-step OAuth flow state
   const [isWaitingForCode, setIsWaitingForCode] = useState(false)
@@ -647,7 +658,7 @@ export function useOnboarding({
       const result = await window.electronAPI.startRoxConnect()
       if (!result?.success || !result.userCode || !result.verificationUri || !result.verificationUriComplete) {
         setRoxConnectStatus('error')
-        setRoxConnectError(result?.error || 'Failed to start Rox Connect')
+        setRoxConnectError(visibleError(result?.error, t('onboarding.errors.roxConnectFailed')))
         return
       }
       const userCode = result.userCode
@@ -655,7 +666,7 @@ export function useOnboarding({
       const verificationUriComplete = result.verificationUriComplete
       if (!userCode || !verificationUri || !verificationUriComplete) {
         setRoxConnectStatus('error')
-        setRoxConnectError('Rox Connect returned an incomplete device payload')
+        setRoxConnectError(t('onboarding.errors.roxConnectIncomplete'))
         return
       }
       setRoxConnectCodes({
@@ -728,7 +739,9 @@ export function useOnboarding({
       }, ROX_CONNECT_POLL_MS)
     } catch (err) {
       setRoxConnectStatus('error')
-      setRoxConnectError(err instanceof Error ? err.message : 'Connect failed')
+      setRoxConnectError(
+        visibleError(err instanceof Error ? err.message : undefined, t('onboarding.errors.connectFailed')),
+      )
     }
   }, [stopRoxConnectPoll, t])
 
@@ -760,7 +773,7 @@ export function useOnboarding({
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: 'Select an authentication method first.',
+        errorMessage: t('onboarding.errors.selectAuthMethod'),
       }))
       return
     }
@@ -784,7 +797,7 @@ export function useOnboarding({
             setState(s => ({
               ...s,
               credentialStatus: 'error',
-              errorMessage: result.error || 'ChatGPT authentication failed',
+              errorMessage: visibleError(result.error, t('onboarding.errors.chatgptAuthFailed')),
             }))
           }
         } finally {
@@ -817,7 +830,7 @@ export function useOnboarding({
             setState(s => ({
               ...s,
               credentialStatus: 'error',
-              errorMessage: result.error || 'GitHub authentication failed',
+              errorMessage: visibleError(result.error, t('onboarding.errors.githubAuthFailed')),
             }))
           }
         } finally {
@@ -834,7 +847,7 @@ export function useOnboarding({
         setState(s => ({
           ...s,
           credentialStatus: 'error',
-          errorMessage: 'This connection uses API keys, not OAuth.',
+          errorMessage: t('onboarding.errors.oauthNotSupported'),
         }))
         return
       }
@@ -849,17 +862,20 @@ export function useOnboarding({
         setState(s => ({
           ...s,
           credentialStatus: 'error',
-          errorMessage: result.error || 'Failed to start OAuth',
+          errorMessage: visibleError(result.error, t('onboarding.errors.oauthStartFailed')),
         }))
       }
     } catch (error) {
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: error instanceof Error ? error.message : 'OAuth failed',
+        errorMessage: visibleError(
+          error instanceof Error ? error.message : undefined,
+          t('onboarding.errors.oauthFailed'),
+        ),
       }))
     }
-  }, [state.apiSetupMethod, saveAndValidateConnection, editingSlug, existingSlugs])
+  }, [state.apiSetupMethod, saveAndValidateConnection, editingSlug, existingSlugs, t])
 
   // Map ProviderChoice → ApiSetupMethod and navigate to the right step
   const handleSelectProvider = useCallback((choice: ProviderChoice) => {
@@ -894,8 +910,6 @@ export function useOnboarding({
         let slug = 'omp'
         let n = 2
         while (existingSlugs.has(slug)) slug = `omp-${n++}`
-        const visibleError = (raw: string | undefined, key: string) =>
-          raw && !/\bOMP\b|oh-my-pi|Craft Agents/i.test(raw) ? raw : t(key)
         const result = await window.electronAPI.setupLlmConnection({
           slug,
           name: 'Rox',
@@ -905,7 +919,7 @@ export function useOnboarding({
           setState(s => ({
             ...s,
             credentialStatus: 'error',
-            errorMessage: visibleError(result.error, 'onboarding.ompCredential.createFailed'),
+            errorMessage: visibleError(result.error, t('onboarding.ompCredential.createFailed')),
           }))
           return
         }
@@ -917,7 +931,7 @@ export function useOnboarding({
             ...s,
             step: 'omp-credential',
             credentialStatus: 'error',
-            errorMessage: visibleError(testResult.error, 'onboarding.ompCredential.testFailed'),
+            errorMessage: visibleError(testResult.error, t('onboarding.ompCredential.testFailed')),
           }))
         }
       })()
@@ -946,7 +960,7 @@ export function useOnboarding({
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: 'Please enter the authorization code',
+        errorMessage: t('onboarding.errors.authCodeRequired'),
       }))
       return
     }
@@ -964,17 +978,20 @@ export function useOnboarding({
         setState(s => ({
           ...s,
           credentialStatus: 'error',
-          errorMessage: result.error || 'Failed to exchange code',
+          errorMessage: visibleError(result.error, t('onboarding.errors.exchangeFailed')),
         }))
       }
     } catch (error) {
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Failed to exchange code',
+        errorMessage: visibleError(
+          error instanceof Error ? error.message : undefined,
+          t('onboarding.errors.exchangeFailed'),
+        ),
       }))
     }
-  }, [saveAndValidateConnection, editingSlug, existingSlugs])
+  }, [saveAndValidateConnection, editingSlug, existingSlugs, t])
 
   const handleSubmitOmpCredential = useCallback(async (data: OmpCredentialSubmitData) => {
     setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
@@ -988,16 +1005,19 @@ export function useOnboarding({
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: result.error || 'Failed to save Rox API key',
+        errorMessage: visibleError(result.error, t('onboarding.errors.saveKeyFailed')),
       }))
     } catch (error) {
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Failed to save Rox API key',
+        errorMessage: visibleError(
+          error instanceof Error ? error.message : undefined,
+          t('onboarding.errors.saveKeyFailed'),
+        ),
       }))
     }
-  }, [onConfigSaved])
+  }, [onConfigSaved, t])
 
   // Submit local model configuration (Ollama or any OpenAI-compatible local server)
   const handleSubmitLocalModel = useCallback(async (data: LocalModelSubmitData) => {
@@ -1021,10 +1041,13 @@ export function useOnboarding({
       setState(s => ({
         ...s,
         credentialStatus: 'error',
-        errorMessage: error instanceof Error ? error.message : 'Failed to save configuration',
+        errorMessage: visibleError(
+          error instanceof Error ? error.message : undefined,
+          t('onboarding.errors.saveConfigFailed'),
+        ),
       }))
     }
-  }, [handleSaveConfig])
+  }, [handleSaveConfig, t])
 
   // Cancel OAuth flow
   const handleCancelOAuth = useCallback(async () => {
@@ -1055,10 +1078,10 @@ export function useOnboarding({
     } else {
       setState(s => ({
         ...s,
-        errorMessage: result.error || 'Invalid path',
+        errorMessage: visibleError(result.error, t('onboarding.errors.invalidPath')),
       }))
     }
-  }, [])
+  }, [t])
 
   const handleRecheckGitBash = useCallback(async () => {
     setState(s => ({ ...s, isRecheckingGitBash: true }))

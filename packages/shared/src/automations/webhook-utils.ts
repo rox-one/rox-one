@@ -242,6 +242,8 @@ export interface ExecuteWebhookOptions {
   retry?: RetryConfig;
   /** Injectable DNS lookup for tests. Defaults to dns.promises.lookup. */
   lookup?: WebhookDnsLookup;
+  /** Caller abort (scheduler dispose). Distinct from the timeout timer. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -294,6 +296,9 @@ export async function executeWebhookRequest(
   const start = Date.now();
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const onCallerAbort = () => controller.abort();
+  options?.signal?.addEventListener('abort', onCallerAbort, { once: true });
+  if (options?.signal?.aborted) controller.abort();
 
   try {
     // Build headers
@@ -389,10 +394,13 @@ export async function executeWebhookRequest(
       ...(responseBody !== undefined ? { responseBody } : {}),
     };
   } catch (err) {
-    const isTimeout = err instanceof DOMException && err.name === 'AbortError';
-    const error = isTimeout
+    const isAbort = err instanceof DOMException && err.name === 'AbortError';
+    const abortedByCaller = Boolean(options?.signal?.aborted);
+    const error = isAbort && !abortedByCaller
       ? `Request timed out after ${timeoutMs}ms`
-      : err instanceof Error ? err.message : 'Unknown error';
+      : abortedByCaller
+        ? 'Request aborted'
+        : err instanceof Error ? err.message : 'Unknown error';
 
     return {
       type: 'webhook',
@@ -404,6 +412,7 @@ export async function executeWebhookRequest(
     };
   } finally {
     clearTimeout(timeoutId);
+    options?.signal?.removeEventListener('abort', onCallerAbort);
   }
 }
 

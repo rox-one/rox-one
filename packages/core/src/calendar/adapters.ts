@@ -7,6 +7,7 @@ export interface CalendarListPage {
 }
 
 export interface CalendarAdapter {
+  readonly mode: 'fixture' | 'unavailable' | 'live'
   provider: CalendarProvider
   capabilities: CapabilityGap
   available(): boolean
@@ -26,7 +27,18 @@ export interface FixtureEventSeed {
   etag?: string
 }
 
+export class CalendarProviderUnavailableError extends Error {
+  readonly code = 'CALENDAR_PROVIDER_UNAVAILABLE' as const
+  readonly provider: CalendarProvider
+  constructor(provider: CalendarProvider) {
+    super(`Calendar provider "${provider}" is not connected`)
+    this.name = 'CalendarProviderUnavailableError'
+    this.provider = provider
+  }
+}
+
 export class FixtureCalendarAdapter implements CalendarAdapter {
+  readonly mode = 'fixture' as const
   readonly capabilities: CapabilityGap
   constructor(
     readonly provider: CalendarProvider,
@@ -59,12 +71,56 @@ export class FixtureCalendarAdapter implements CalendarAdapter {
   }
 }
 
-export function createProviderAdapter(provider: CalendarProvider, seeds: FixtureEventSeed[] = []): CalendarAdapter {
+/** Honest production stand-in until a verified provider adapter exists. Never lists fixture events. */
+export class UnavailableCalendarAdapter implements CalendarAdapter {
+  readonly mode = 'unavailable' as const
+  readonly capabilities: CapabilityGap
+  constructor(
+    readonly provider: CalendarProvider,
+    private readonly availableFlag = false,
+  ) {
+    this.capabilities = capabilityFor(provider)
+  }
+
+  available(): boolean {
+    return this.availableFlag
+  }
+
+  async listEvents(_accountId: string, _cursor?: string): Promise<CalendarListPage> {
+    throw new CalendarProviderUnavailableError(this.provider)
+  }
+}
+
+export function isFixtureCalendarAdapter(adapter: CalendarAdapter): boolean {
+  return adapter.mode === 'fixture'
+}
+
+/** Test-only. Never call from production connect/sync factories. */
+export function createFixtureAdapter(provider: CalendarProvider, seeds: FixtureEventSeed[] = []): FixtureCalendarAdapter {
   if (provider === 'appleReminders') {
     const helper = Boolean(process.env.ROX_APPLE_REMINDERS_HELPER)
     return new FixtureCalendarAdapter(provider, seeds, appleRemindersAvailable(process.platform, helper))
   }
   return new FixtureCalendarAdapter(provider, seeds, true)
+}
+
+/**
+ * Production factory. Never returns a fixture adapter.
+ * Env flags are not live evidence; HTTP providers stay unavailable until a verified adapter exists.
+ */
+export function createProductionAdapter(provider: CalendarProvider): CalendarAdapter {
+  if (provider === 'appleReminders') {
+    return new UnavailableCalendarAdapter(
+      provider,
+      appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER)),
+    )
+  }
+  return new UnavailableCalendarAdapter(provider, false)
+}
+
+/** Production alias. Does not accept fixture seeds. */
+export function createProviderAdapter(provider: CalendarProvider): CalendarAdapter {
+  return createProductionAdapter(provider)
 }
 
 const LIVE_ENV: Record<Exclude<CalendarProvider, 'appleReminders'>, string> = {
@@ -75,11 +131,14 @@ const LIVE_ENV: Record<Exclude<CalendarProvider, 'appleReminders'>, string> = {
 }
 
 export function liveCredentialsPresent(provider: CalendarProvider): boolean {
-  if (provider === 'appleReminders') return appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER))
+  if (provider === 'appleReminders') {
+    return appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER))
+  }
   return Boolean(process.env[LIVE_ENV[provider]])
 }
 
-/** Optional connectors are wired only when live credentials / helper exist. Never pretend. */
+/** Optional connectors are wired only with a verified production adapter. Env is not connected. */
 export function isCalendarConnectorWired(provider: CalendarProvider): boolean {
-  return liveCredentialsPresent(provider)
+  const adapter = createProductionAdapter(provider)
+  return adapter.available() && adapter.mode !== 'fixture'
 }
