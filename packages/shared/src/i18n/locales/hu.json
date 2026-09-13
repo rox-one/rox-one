@@ -295,6 +295,7 @@
   "chat.dictateTooltip": "Dictate a message. Transcript stays editable. Shortcut: ⌘⇧D",
   "chat.enterSessionName": "Add meg a munkamenet nevét...",
   "chat.failedToLoadConversation": "Nem sikerült betölteni a beszélgetést",
+  "chat.failedToSendMessage": "Nem sikerült elküldeni az üzenetet: {{error}}",
   "chat.failedToStopSharing": "A megosztás leállítása sikertelen",
   "chat.failedToUpdateShare": "A megosztás frissítése sikertelen",
   "chat.filesCount_few": "{{count}} fájl",

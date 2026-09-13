@@ -295,6 +295,7 @@
   "chat.dictateTooltip": "Dictate a message. Transcript stays editable. Shortcut: ⌘⇧D",
   "chat.enterSessionName": "输入会话名称...",
   "chat.failedToLoadConversation": "无法加载对话",
+  "chat.failedToSendMessage": "无法发送消息：{{error}}",
   "chat.failedToStopSharing": "无法停止共享",
   "chat.failedToUpdateShare": "无法更新共享",
   "chat.filesCount_few": "{{count}} 个文件",

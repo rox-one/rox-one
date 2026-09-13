@@ -1510,13 +1510,15 @@ export default function App() {
           {
             id: generateMessageId(),
             role: 'error' as const,
-            content: `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            content: t('chat.failedToSendMessage', {
+              error: error instanceof Error ? error.message : t('toast.unknownError'),
+            }),
             timestamp: Date.now()
           }
         ]
       }))
     }
-  }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId])
+  }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId, t])
 
   /**
    * Unified handler for all session option changes.
