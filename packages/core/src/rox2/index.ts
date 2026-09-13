@@ -118,6 +118,7 @@ export {
   contentHash,
   createNativeNotesEngine,
   extractWikilinks,
+  isNativeNotesEngine,
   migrateNotesVault,
   parseBlocks,
   rewriteWikilinks,
