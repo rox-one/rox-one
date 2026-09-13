@@ -83,11 +83,7 @@ export function TelegramSupergroupPairingDialog({ open, onOpenChange, botUsernam
         const sg = await window.electronAPI.getMessagingSupergroup()
         if (cancelled) return
         if (sg) {
-          toast.success(
-            t('settings.messaging.telegram.supergroup.pairedToast', {
-              defaultValue: 'Supergroup paired',
-            }),
-          )
+          toast.success(t('settings.messaging.telegram.supergroup.pairedToast'))
           onPairedRef.current?.()
           onOpenChange(false)
         }
@@ -122,15 +118,10 @@ export function TelegramSupergroupPairingDialog({ open, onOpenChange, botUsernam
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
           <DialogTitle>
-            {t('settings.messaging.telegram.supergroup.dialogTitle', {
-              defaultValue: 'Pair Telegram supergroup',
-            })}
+            {t('settings.messaging.telegram.supergroup.dialogTitle')}
           </DialogTitle>
           <DialogDescription>
-            {t('settings.messaging.telegram.supergroup.dialogDescription', {
-              defaultValue:
-                'Add the bot to your supergroup, then type the command in any topic. The bot needs privacy mode disabled (BotFather → /setprivacy → Disable) or admin rights to read non-command messages.',
-            })}
+            {t('settings.messaging.telegram.supergroup.dialogDescription')}
           </DialogDescription>
         </DialogHeader>
 
@@ -156,10 +147,7 @@ export function TelegramSupergroupPairingDialog({ open, onOpenChange, botUsernam
               </div>
 
               <p className="text-center text-sm text-muted-foreground">
-                {t('settings.messaging.telegram.supergroup.dialogSendHint', {
-                  defaultValue:
-                    'Send this command from any topic in your supergroup. The dialog closes once paired.',
-                })}
+                {t('settings.messaging.telegram.supergroup.dialogSendHint')}
               </p>
 
               {botLink && (
@@ -184,7 +172,7 @@ export function TelegramSupergroupPairingDialog({ open, onOpenChange, botUsernam
               )}
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">{t('common.loading', { defaultValue: 'Loading…' })}</p>
+            <p className="text-sm text-muted-foreground">{t('common.loading')}</p>
           )}
         </div>
       </DialogContent>
