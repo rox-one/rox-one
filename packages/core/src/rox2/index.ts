@@ -104,6 +104,20 @@ export {
   type SoupDocumentActionSource,
 } from './soup-document-actions.ts'
 export {
+  soupChatActResult,
+  soupChatListResult,
+  soupChatReadResult,
+  soupNativeActResult,
+  soupNativeListResult,
+  soupNativeReadResult,
+  soupProjectActResult,
+  soupProjectListResult,
+  soupProjectReadResult,
+  type SoupNativeActKind,
+  type SoupNativeActionSource,
+  type SoupNativeSurface,
+} from './soup-native-actions.ts'
+export {
   CONATION_API_SCHEMA_VERSION,
   CONATION_BLOCKED_OPERATIONS,
   CONATION_CONFIRMED_OPERATIONS,

@@ -32,6 +32,12 @@ import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loaded
 import { kanbanEditorTargetAtom } from '@/atoms/kanban'
 import { rememberCollectionView } from '@/components/app-shell/collection/collection-view-cycle'
 import { getSessionTitle } from '@/utils/session'
+import {
+  isClaimableLive,
+  soupChatActResult,
+  soupChatListResult,
+  soupChatReadResult,
+} from '@craft-agent/core/rox2'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
 import { resolveEffectiveConnectionSlug, isSessionConnectionUnavailable } from '@config/llm-connections'
 import {
@@ -171,6 +177,14 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       }
     }
 
+    const listed = soupChatListResult({ source: 'native', nativeIds: sessionId ? [sessionId] : [] })
+    const read = soupChatReadResult({ source: 'native', nativeId: sessionId })
+    if (!isClaimableLive(listed.result) || !isClaimableLive(read.result)) {
+      return () => {
+        cancelled = true
+      }
+    }
+
     const useForceReload = shouldForceInitialMessagesReload
     if (useForceReload) {
       autoForcedReloadSessionRef.current = sessionId
@@ -202,6 +216,11 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     setMessagesRetrying(true)
 
     try {
+      const read = soupChatReadResult({ source: 'native', nativeId: sessionId })
+      if (!isClaimableLive(read.result)) {
+        setMessagesLoadError('Session messages are not available')
+        return
+      }
       const loadedSession = await forceMessagesReload(sessionId)
       if (!loadedSession) {
         setMessagesLoadError('Session messages are not available')
@@ -799,6 +818,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   const handleRenameSubmit = React.useCallback(() => {
     if (renameName.trim() && renameName.trim() !== displayTitle) {
+      const act = soupChatActResult({ source: 'native', action: 'write', nativeId: sessionId })
+      if (!isClaimableLive(act)) return
       onRenameSession(sessionId, renameName.trim())
     }
     setRenameDialogOpen(false)
@@ -852,6 +873,13 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   }, [taskSlug, sessionId, sessionMeta, setKanbanEditorTarget])
 
   const handleDelete = React.useCallback(async () => {
+    const act = soupChatActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: sessionId,
+    })
+    if (!isClaimableLive(act)) return
     await onDeleteSession(sessionId)
   }, [sessionId, onDeleteSession])
 
@@ -1222,6 +1250,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
               session={session}
               onSendMessage={(message, attachments, skillSlugs) => {
                 if (session) {
+                  const act = soupChatActResult({ source: 'native', action: 'write', nativeId: session.id })
+                  if (!isClaimableLive(act)) return
                   onSendMessage(session.id, message, attachments, skillSlugs)
                 }
               }}
