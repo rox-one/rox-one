@@ -4,10 +4,16 @@ import { useTranslation, initReactI18next } from 'react-i18next'
 import LanguageDetector from 'i18next-browser-languagedetector'
 import { setupI18n } from '@craft-agent/shared/i18n'
 import type { OverlayState } from '@craft-agent/shared/voice'
+import { VOICE_OVERLAY_REQUIRES_CONATION_FLAG } from './voice-overlay-rox2-surface'
+
+export { VOICE_OVERLAY_REQUIRES_CONATION_FLAG, VOICE_OVERLAY_SURFACE_ID, voiceOverlaySurfaceResult } from './voice-overlay-rox2-surface'
 
 setupI18n([LanguageDetector, initReactI18next])
 
 function OverlayApp() {
+  if (VOICE_OVERLAY_REQUIRES_CONATION_FLAG) {
+    throw new Error('Voice overlay is native and must not require Conation')
+  }
   const { t } = useTranslation()
   const [state, setState] = useState<OverlayState>({
     recordingId: null,
