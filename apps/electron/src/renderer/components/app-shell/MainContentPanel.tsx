@@ -426,7 +426,7 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t('browser.noInstanceSelected', { defaultValue: 'No browser instance selected' })}</p>
+          <p className="text-sm">{t('browser.noInstanceSelected')}</p>
         </div>
       </Panel>
     )
