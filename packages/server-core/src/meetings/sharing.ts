@@ -1,7 +1,10 @@
 /**
  * RMA-I032 / #388 — sharing / export / retention.
- * Private notes never leak into recap/search/export. External copies stay external-retained.
+ * Private notes never leak into recap/search. Native export is fail-closed (U1);
+ * N5 native share/export evidence is not_run. No live share against production.
  */
+
+import { unsupported, type MeetingOpResult } from './types.ts'
 
 export type MeetingShareRecord = {
   readonly recap: string
@@ -11,6 +14,11 @@ export type MeetingShareRecord = {
   readonly exports: Array<{ kind: 'json' | 'markdown'; body: string }>
   readonly tombstones: string[]
   readonly externalRetained: readonly string[]
+}
+
+export type SharingNativeEvidence = {
+  readonly evidenceLevel: 'U1'
+  readonly native: 'not_run'
 }
 
 export function createShareRecord(): MeetingShareRecord {
@@ -25,6 +33,14 @@ export function createShareRecord(): MeetingShareRecord {
   }
 }
 
+export function nativeExportAvailable(): false {
+  return false
+}
+
+export function sharingNativeEvidence(): SharingNativeEvidence {
+  return { evidenceLevel: 'U1', native: 'not_run' }
+}
+
 export function audienceRecap(record: MeetingShareRecord, actorId: string): string | null {
   if (!record.members.includes(actorId)) return null
   return record.recap
@@ -36,24 +52,13 @@ export function searchVisible(record: MeetingShareRecord, actorId: string, query
   return record.recap.includes(query) ? [record.recap] : []
 }
 
-export function exportMeeting(record: MeetingShareRecord, kind: 'json' | 'markdown'): { body: string } {
-  const body = kind === 'json'
-    ? JSON.stringify({ recap: record.recap, revisions: 1 })
-    : record.recap
-  record.exports.push({ kind, body })
-  return { body }
+export function exportMeeting(
+  _record: MeetingShareRecord,
+  _kind: 'json' | 'markdown',
+): MeetingOpResult<'native-export-unavailable'> {
+  return unsupported('native-export-unavailable')
 }
 
 export function revokeMember(record: MeetingShareRecord, actorId: string): MeetingShareRecord {
   return { ...record, members: record.members.filter((id) => id !== actorId), links: [] }
-}
-
-export function deleteOwnedCopies(record: MeetingShareRecord): MeetingShareRecord {
-  return {
-    ...record,
-    recap: '',
-    exports: [],
-    tombstones: [...record.tombstones, 'deleted'],
-    externalRetained: record.externalRetained,
-  }
 }
