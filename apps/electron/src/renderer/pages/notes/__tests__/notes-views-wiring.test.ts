@@ -55,6 +55,9 @@ describe('issues 07–09 wiring', () => {
     expect(host).toContain('data-testid="notes-graph-kind"')
     expect(host).toContain('serializeOutlineFolds')
     expect(host).toContain('filterGraphByEdgeKind')
+    expect(host).toContain('toggleNoteViewSort')
+    expect(host).toContain('notes-graph-nearby')
+    expect(host).toContain('progressiveGraph')
     expect(notesPage).toMatch(/<EntityViewTabs[\s\S]{0,5000}map[\s\S]{0,5000}<MindMapHost/)
   })
 
