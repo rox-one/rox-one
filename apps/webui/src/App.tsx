@@ -12,6 +12,9 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { createWebApi } from './adapter/web-api'
 import type { WsRpcClient } from '../../electron/src/transport/client'
+import { WEBUI_REQUIRES_CONATION_FLAG } from './rox2-webui-surface'
+
+export { WEBUI_REQUIRES_CONATION_FLAG, WEBUI_SURFACE_ID, webuiSurfaceResult } from './rox2-webui-surface'
 
 // Lazy-load the Electron App after window.electronAPI is set up.
 // This prevents any Electron component from accessing window.electronAPI
@@ -61,6 +64,9 @@ function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => voi
 }
 
 export default function App() {
+  if (WEBUI_REQUIRES_CONATION_FLAG) {
+    throw new Error('Web UI is native and must not require Conation')
+  }
   const [phase, setPhase] = useState<Phase>('loading')
   const [error, setError] = useState('')
   const clientRef = useRef<WsRpcClient | null>(null)
