@@ -27,6 +27,7 @@ import { mobileWebUIComponents } from './mobile-webui'
 import { kanbanComponents } from './kanban'
 import { taskEditorComponents } from './task-editor'
 import { unifiedShellComponents } from './unified-shell'
+import { zenShellQaComponents } from './zen-shell-qa'
 import { premiumMenuComponents } from './premium-menu'
 
 export * from './types'
@@ -67,6 +68,7 @@ export const componentRegistry: ComponentEntry[] = [
   ...messagingComponents,
   ...imageSupportComponents,
   ...unifiedShellComponents,
+  ...zenShellQaComponents,
   ...premiumMenuComponents,
 ]
 
