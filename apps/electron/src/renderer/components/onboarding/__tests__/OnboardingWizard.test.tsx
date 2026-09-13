@@ -240,4 +240,35 @@ describe('OnboardingWizard', () => {
     expect(html).toContain('common.retry')
     expect(html).toContain('onboarding.welcome.getStarted')
   })
+
+  test('skipped import is labeled skipped and does not present a silent retry', async () => {
+    const { CompletionStep } = await import('../CompletionStep')
+    const storage = {
+      data: {
+        'rox.onboarding.first-result.v1': JSON.stringify({
+          schemaVersion: 1,
+          step: 'complete',
+          skipped: false,
+          accountAuthenticated: false,
+          noteId: 'n',
+          sessionId: 's',
+          outcomeId: 'o',
+          taskId: 't',
+          error: 'import-skipped',
+        }),
+      } as Record<string, string>,
+      getItem(key: string) {
+        return this.data[key] ?? null
+      },
+      setItem(key: string, value: string) {
+        this.data[key] = value
+      },
+    }
+    const html = renderToStaticMarkup(
+      <CompletionStep status="complete" onFinish={() => {}} storage={storage} />,
+    )
+    expect(html).toContain('knowledge.migrate.success')
+    expect(html).not.toContain('common.retry')
+    expect(html).toContain('onboarding.welcome.getStarted')
+  })
 })

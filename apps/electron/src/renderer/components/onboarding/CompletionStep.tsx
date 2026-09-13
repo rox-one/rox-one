@@ -6,9 +6,11 @@ import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
 import { StepFormLayout } from "./primitives"
 import { isAccountRegistered, type FirstResultCheckpoint } from "@craft-agent/core/rox2"
 import {
+  createDefaultFirstResultPorts,
   createOfflineFirstResult,
   createStorageAdapter,
   FIRST_RESULT_STORAGE_KEY,
+  isFirstResultImportSkipped,
   readCheckpointFromStorage,
   retryFirstResultServices,
   skipFirstResultOnStore,
@@ -28,20 +30,9 @@ interface CompletionStepProps {
 }
 
 export function defaultFirstResultPorts(): FirstResultPorts {
-  return {
-    persistNote: async (note) => {
-      const api = typeof window === "undefined" ? undefined : window.electronAPI
-      const workspaces = await api?.getWorkspaces?.()
-      const workspaceId = workspaces?.[0]?.id
-      if (!workspaceId || !api?.createNote) return
-      await api.createNote(workspaceId, note.title)
-    },
-    importNotes: async () => {
-      const api = typeof window === "undefined" ? undefined : window.electronAPI
-      if (!api?.knowledge?.migrateNotes) return
-      // First-result never opens a folder picker. Missing import is skip, not a block.
-    },
-  }
+  return createDefaultFirstResultPorts(
+    typeof window === "undefined" ? undefined : window.electronAPI,
+  )
 }
 
 /**
@@ -143,12 +134,12 @@ export function CompletionStep({
                 {t("onboarding.completion.firstResultSkip")}
               </Button>
             )}
-            {checkpoint.error ? (
+            {checkpoint.error && !isFirstResultImportSkipped(checkpoint.error) ? (
               <p role="status" className="text-xs text-destructive text-center">
                 {t("knowledge.migrate.failed")}
               </p>
             ) : null}
-            {checkpoint.error ? (
+            {checkpoint.error && !isFirstResultImportSkipped(checkpoint.error) ? (
               <Button
                 variant="ghost"
                 onClick={() => void runRetry()}
@@ -157,6 +148,11 @@ export function CompletionStep({
               >
                 {t("common.retry")}
               </Button>
+            ) : null}
+            {isFirstResultImportSkipped(checkpoint.error) ? (
+              <p role="status" className="text-xs text-muted-foreground text-center">
+                {t("knowledge.migrate.success", { migrated: 0, skipped: 1 })}
+              </p>
             ) : null}
             <p className="text-xs text-muted-foreground text-center">
               {isAccountRegistered(checkpoint)

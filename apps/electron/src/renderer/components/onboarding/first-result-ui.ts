@@ -61,6 +61,84 @@ export type FirstResultPorts = {
   importNotes?: () => Promise<void>
 }
 
+/** Host subset used by first-result persist/import. Injected in tests. */
+export type FirstResultHostApi = {
+  getWorkspaces?: () => Promise<ReadonlyArray<{ id: string }>>
+  createNote?: (
+    workspaceId: string,
+    title: string,
+    folder?: string,
+  ) => Promise<{ id: string; content?: string }>
+  saveNote?: (
+    workspaceId: string,
+    noteId: string,
+    content: string,
+    expectedRevision?: string,
+  ) => Promise<unknown>
+  openFolderDialog?: () => Promise<string | null>
+  knowledge?: {
+    migrateNotes?: (args: {
+      workspaceId: string
+      sourceRoot: string
+      format?: 'craft-markdown'
+    }) => Promise<{
+      migrated: number
+      skipped: number
+      failed?: Array<{ noteId: string; error: string }>
+    }>
+  }
+}
+
+export const FIRST_RESULT_IMPORT_SKIPPED = 'import-skipped'
+
+export function isFirstResultImportSkipped(error: string | undefined): boolean {
+  return error === FIRST_RESULT_IMPORT_SKIPPED
+}
+
+function skipImport(): never {
+  throw new Error(FIRST_RESULT_IMPORT_SKIPPED)
+}
+
+function firstResultNoteContent(existing: string | undefined, note: FirstResultNoteArtifact): string {
+  if (existing && existing.trim().length > 0) {
+    return existing.includes(note.body) ? existing : `${existing.trimEnd()}\n\n${note.body}\n`
+  }
+  return `# ${note.title}\n\n${note.body}\n`
+}
+
+export function createDefaultFirstResultPorts(api?: FirstResultHostApi | null): FirstResultPorts {
+  return {
+    persistNote: async (note) => {
+      const workspaces = await api?.getWorkspaces?.()
+      const workspaceId = workspaces?.[0]?.id
+      if (!workspaceId || !api?.createNote) return
+      const created = await api.createNote(workspaceId, note.title)
+      if (!api.saveNote) {
+        throw new Error('notes-unavailable')
+      }
+      await api.saveNote(workspaceId, created.id, firstResultNoteContent(created.content, note))
+    },
+    importNotes: async () => {
+      const workspaces = await api?.getWorkspaces?.()
+      const workspaceId = workspaces?.[0]?.id
+      const migrate = api?.knowledge?.migrateNotes
+      const pickFolder = api?.openFolderDialog
+      if (!workspaceId || !migrate || !pickFolder) skipImport()
+      const sourceRoot = await pickFolder()
+      if (!sourceRoot) skipImport()
+      const result = await migrate({
+        workspaceId,
+        sourceRoot,
+        format: 'craft-markdown',
+      })
+      const failedCount = result.failed?.length ?? 0
+      if (failedCount > 0 && result.migrated === 0) {
+        throw new Error(result.failed?.[0]?.error ?? 'import-refused')
+      }
+    },
+  }
+}
+
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }

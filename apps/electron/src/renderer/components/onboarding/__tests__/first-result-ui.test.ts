@@ -3,10 +3,13 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { isAccountRegistered } from '@craft-agent/core/rox2'
 import {
+  createDefaultFirstResultPorts,
   createOfflineFirstResult,
   createStorageAdapter,
   FIRST_RESULT_ARTIFACTS_KEY,
+  FIRST_RESULT_IMPORT_SKIPPED,
   FIRST_RESULT_STORAGE_KEY,
+  isFirstResultImportSkipped,
   loadFirstResultArtifacts,
   rememberLocalProfile,
   retryFirstResultServices,
@@ -154,5 +157,128 @@ describe('ROX-P1-ONBOARDING-UI first-result (evidence U1)', () => {
     expect(source).not.toContain('getUserMedia')
     expect(source).not.toContain('createTask(')
     expect(source).not.toContain('evaluateReleaseGate')
+  })
+
+  test('persistNote writes note body via saveNote, not title-only createNote', async () => {
+    const calls: Array<{ op: string; args: unknown[] }> = []
+    const ports = createDefaultFirstResultPorts({
+      getWorkspaces: async () => [{ id: 'ws-1' }],
+      createNote: async (workspaceId, title) => {
+        calls.push({ op: 'createNote', args: [workspaceId, title] })
+        return { id: 'n1', content: '---\ntitle: Hello\n---\n' }
+      },
+      saveNote: async (workspaceId, noteId, content) => {
+        calls.push({ op: 'saveNote', args: [workspaceId, noteId, content] })
+      },
+    })
+    await ports.persistNote?.({
+      id: 'welcome-1',
+      title: 'Hello',
+      body: 'Get a first result without waiting for every service.',
+    })
+    expect(calls.map((c) => c.op)).toEqual(['createNote', 'saveNote'])
+    expect(calls[1]?.args[0]).toBe('ws-1')
+    expect(calls[1]?.args[1]).toBe('n1')
+    expect(String(calls[1]?.args[2])).toContain('Get a first result without waiting for every service.')
+  })
+
+  test('persistNote does not succeed as title-only when saveNote is missing', async () => {
+    const ports = createDefaultFirstResultPorts({
+      getWorkspaces: async () => [{ id: 'ws-1' }],
+      createNote: async () => ({ id: 'n1', content: '' }),
+    })
+    await expect(
+      ports.persistNote?.({ id: 'welcome-1', title: 'Hello', body: 'Body must persist' }),
+    ).rejects.toBeDefined()
+  })
+
+  test('importNotes actually imports when a folder is chosen', async () => {
+    const migrateArgs: unknown[] = []
+    const ports = createDefaultFirstResultPorts({
+      getWorkspaces: async () => [{ id: 'ws-1' }],
+      openFolderDialog: async () => '/notes-root',
+      knowledge: {
+        migrateNotes: async (args) => {
+          migrateArgs.push(args)
+          return { migrated: 2, skipped: 0, failed: [] }
+        },
+      },
+    })
+    await ports.importNotes?.()
+    expect(migrateArgs).toEqual([
+      { workspaceId: 'ws-1', sourceRoot: '/notes-root', format: 'craft-markdown' },
+    ])
+  })
+
+  test('importNotes labels missing or cancelled import as skipped, not a silent success', async () => {
+    await expect(createDefaultFirstResultPorts({}).importNotes?.()).rejects.toMatchObject({
+      message: FIRST_RESULT_IMPORT_SKIPPED,
+    })
+    await expect(
+      createDefaultFirstResultPorts({
+        getWorkspaces: async () => [{ id: 'ws-1' }],
+        openFolderDialog: async () => null,
+        knowledge: {
+          migrateNotes: async () => ({ migrated: 0, skipped: 0, failed: [] }),
+        },
+      }).importNotes?.(),
+    ).rejects.toMatchObject({ message: FIRST_RESULT_IMPORT_SKIPPED })
+    expect(isFirstResultImportSkipped(FIRST_RESULT_IMPORT_SKIPPED)).toBe(true)
+    expect(isFirstResultImportSkipped('import-refused')).toBe(false)
+  })
+
+  test('retry of a no-op import is labeled skipped instead of clearing the error', async () => {
+    const storage = memoryStorage()
+    const store = createStorageAdapter(storage)
+    await createOfflineFirstResult(store, storage, {
+      copy: COPY,
+      ports: {
+        now: () => 6,
+        importNotes: async () => {
+          throw new Error('import-refused')
+        },
+      },
+    })
+    const retried = await retryFirstResultServices(
+      store,
+      storage,
+      createDefaultFirstResultPorts({
+        getWorkspaces: async () => [{ id: 'ws-1' }],
+      }),
+    )
+    expect(retried.step).toBe('complete')
+    expect(retried.error).toBe(FIRST_RESULT_IMPORT_SKIPPED)
+    expect(isFirstResultImportSkipped(retried.error)).toBe(true)
+  })
+
+  test('retry with migrateNotes actually imports and clears the import error', async () => {
+    const storage = memoryStorage()
+    const store = createStorageAdapter(storage)
+    await createOfflineFirstResult(store, storage, {
+      copy: COPY,
+      ports: {
+        now: () => 7,
+        importNotes: async () => {
+          throw new Error('import-refused')
+        },
+      },
+    })
+    let imported = false
+    const retried = await retryFirstResultServices(
+      store,
+      storage,
+      createDefaultFirstResultPorts({
+        getWorkspaces: async () => [{ id: 'ws-1' }],
+        openFolderDialog: async () => '/notes-root',
+        knowledge: {
+          migrateNotes: async () => {
+            imported = true
+            return { migrated: 1, skipped: 0, failed: [] }
+          },
+        },
+      }),
+    )
+    expect(imported).toBe(true)
+    expect(retried.error).toBeUndefined()
   })
 })
