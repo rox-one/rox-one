@@ -32,6 +32,7 @@ import type { VoicePrefs } from '../voice/types.ts'
 import type { OverlayState } from '../voice/overlay-types.ts'
 import type { VoiceJob } from '../voice/job-machine.ts'
 import type { EnvironmentPrefs } from '../environment'
+import type { PrivacyDto } from '../privacy/types.ts'
 
 /** Payload of marketplace:CHANGED — pushed after an install/update/remove completes. */
 export interface MarketplaceChangedPayload {
@@ -96,6 +97,7 @@ export interface BroadcastEventMap {
     xpForNext: number
     nextThreshold: number | null
   }]
+  [RPC_CHANNELS.privacy.CHANGED]: [payload: PrivacyDto]
   [RPC_CHANNELS.voice.CHANGED]: [payload: VoicePrefs]
   [RPC_CHANNELS.voice.JOB]: [payload: VoiceJob]
   [RPC_CHANNELS.voice.OVERLAY]: [payload: OverlayState]

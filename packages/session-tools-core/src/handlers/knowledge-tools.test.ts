@@ -34,9 +34,11 @@ import {
   handleKnowledgeGetBacklinks,
   KNOWLEDGE_BACKLINKS_MAX_ITEMS,
 } from './knowledge-backlinks.ts';
+import { handleKnowledgePropose, parseProposeOps } from './knowledge-propose.ts';
 import {
   SESSION_TOOL_REGISTRY,
   getSessionSafeAllowedToolNames,
+  getSessionSafeBlockedToolNames,
   getSessionToolNames,
 } from '../tool-defs.ts';
 import type { SessionToolContext } from '../context.ts';
@@ -137,6 +139,17 @@ describe('registration', () => {
       expect(def!.safeMode).toBe('allow');
       expect(def!.readOnly).toBe(true);
     }
+  });
+
+  it('registers knowledge_propose as a blocked write-back tool', () => {
+    const def = SESSION_TOOL_REGISTRY.get('knowledge_propose');
+    expect(def).toBeDefined();
+    expect(def!.safeMode).toBe('block');
+    expect(def!.readOnly).not.toBe(true);
+    expect(getSessionToolNames().has('knowledge_propose')).toBe(true);
+    expect(getSessionSafeBlockedToolNames().has('knowledge_propose')).toBe(true);
+    const safeAllowed = getSessionSafeAllowedToolNames({ prefix: 'mcp__session__' });
+    expect(safeAllowed.has('mcp__session__knowledge_propose')).toBe(false);
   });
 
   it('exposes the tools as safe-mode allowed with the mcp__session__ prefix', () => {
@@ -419,3 +432,62 @@ describe('knowledge_get_backlinks', () => {
     expect(res.content[0]!.text.toLowerCase()).toContain('no backlinks');
   });
 });
+
+describe('knowledge_propose', () => {
+  it('rejects an unparseable ref and empty ops without calling propose', async () => {
+    const { calls } = registerRuntimeDouble({
+      async propose() {
+        throw new Error('should not run')
+      },
+    });
+    const badRef = await handleKnowledgePropose(CTX, { ref: '', ops: [{ op: 'updateBlock', blockId: 'x', markdown: 'y' }] });
+    expect(badRef.isError).toBe(true);
+    expect(badRef.content[0]!.text).toContain('INVALID_REF');
+
+    const emptyOps = await handleKnowledgePropose(CTX, { ref: 'document/doc-1', ops: [] });
+    expect(emptyOps.isError).toBe(true);
+    expect(emptyOps.content[0]!.text).toContain('ops');
+    expect(calls.filter((c) => c.method === 'propose')).toHaveLength(0);
+  });
+
+  it('creates a pending proposal and never claims apply', async () => {
+    const { calls } = registerRuntimeDouble({
+      async propose(args) {
+        calls.push({ method: 'propose', args });
+        return {
+          id: 'prop-9',
+          connectionId: 'conn-1',
+          targetRef: args.input.targetRef,
+          ops: args.input.ops,
+          selectionProofs: [],
+          baseHash: 'hash-1',
+          baseReadAt: '2026-01-01T00:00:00.000Z',
+          preState: '',
+          hashAlgorithm: 'sha256-canonical-v1' as const,
+          status: 'pending_review' as const,
+          statusHistory: [],
+          actor: 'agent' as const,
+          createdAt: '2026-01-01T00:00:00.000Z',
+        };
+      },
+    });
+    const res = await handleKnowledgePropose(CTX, {
+      ref: 'document/doc-1',
+      ops: [{ op: 'updateBlock', blockId: 'doc-1', markdown: '# Next' }],
+      summary: 'rewrite kernel guide',
+    });
+    expect(res.isError).toBeFalsy();
+    const text = res.content.map((c) => c.text).join('\n');
+    expect(text).toContain('prop-9');
+    expect(text).toContain('pending_review');
+    expect(text.toLowerCase()).toContain('not applied');
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.method).toBe('propose');
+  });
+
+  it('parseProposeOps rejects unknown op kinds', () => {
+    const parsed = parseProposeOps([{ op: 'deleteBlock', blockId: 'x' }]);
+    expect('error' in parsed).toBe(true);
+  });
+});
+

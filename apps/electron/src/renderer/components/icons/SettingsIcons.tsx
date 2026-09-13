@@ -21,6 +21,7 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  Shield,
   ShoppingBag,
   Sparkles,
   Tag,
@@ -46,6 +47,7 @@ export const OrganizationsIcon = ({ className }: IconProps) => <Users className=
 export const MessagingSettingsIcon = ({ className }: IconProps) => <MessageSquare className={className} />
 export const ServerSettingsIcon = ({ className }: IconProps) => <Server className={className} />
 export const SecuritySettingsIcon = ({ className }: IconProps) => <ShieldAlert className={className} />
+export const PrivacySettingsIcon = ({ className }: IconProps) => <Shield className={className} />
 export const ShortcutsIcon = ({ className }: IconProps) => <Keyboard className={className} />
 export const RuntimeIcon = ({ className }: IconProps) => <Settings className={className} />
 export const ContextIcon = ({ className }: IconProps) => <FileText className={className} />
@@ -59,6 +61,7 @@ export const ImportIcon = ({ className }: IconProps) => <DownloadCloud className
  */
 export const SETTINGS_ICONS: Record<SettingsSubpage, React.ComponentType<IconProps>> = {
   account: AccountIcon,
+  privacy: PrivacySettingsIcon,
   runtime: RuntimeIcon,
   context: ContextIcon,
   knowledge: KnowledgeIcon,

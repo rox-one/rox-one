@@ -228,6 +228,7 @@ export {
   handleKnowledgeSearch,
   handleKnowledgeRead,
   handleKnowledgeGetBacklinks,
+  handleKnowledgePropose,
   KNOWLEDGE_SEARCH_MAX_LIMIT,
   KNOWLEDGE_READ_MAX_MARKDOWN_CHARS,
   KNOWLEDGE_BACKLINKS_MAX_ITEMS,
@@ -290,6 +291,7 @@ export {
   KnowledgeSearchSchema,
   KnowledgeReadSchema,
   KnowledgeGetBacklinksSchema,
+  KnowledgeProposeSchema,
   // Descriptions
   TOOL_DESCRIPTIONS,
   // Registry

@@ -34,6 +34,7 @@ export type { ServerHandlerContext } from '../../bootstrap/headless-start'
 export { getHealthCheck } from './server'
 import { registerSettingsHandlers } from './settings'
 import { registerGamificationHandlers } from './gamification'
+import { registerPrivacyHandlers } from './privacy'
 import { registerVoiceHandlers } from './voice'
 import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
@@ -104,6 +105,7 @@ export function registerCoreRpcHandlers(
   if (serverCtx) registerServerHandlers(server, deps, serverCtx)
   registerSettingsHandlers(server, deps)
   registerGamificationHandlers(server, deps)
+  registerPrivacyHandlers(server, deps)
   registerVoiceHandlers(server, deps)
   registerEnvironmentHandlers(server, deps)
   registerProjectsHandlers(server, deps)

@@ -56,6 +56,7 @@ import { handleListMessagingChannels, handleUnbindMessagingChannel } from './han
 import { handleKnowledgeSearch } from './handlers/knowledge-search.ts';
 import { handleKnowledgeRead } from './handlers/knowledge-read.ts';
 import { handleKnowledgeGetBacklinks } from './handlers/knowledge-backlinks.ts';
+import { handleKnowledgePropose } from './handlers/knowledge-propose.ts';
 
 // ============================================================
 // Canonical Zod Schemas
@@ -398,9 +399,24 @@ export const KnowledgeGetBacklinksSchema = z.object({
     .describe('Knowledge connection id. Omit to use the default (first) connection.'),
 });
 
+export const KnowledgeProposeSchema = z.object({
+  ref: z.string().describe(
+    'Target knowledge ref in any of these forms: [knowledge:document/<id>] mention, siyuan://blocks/<id> deep link, ' +
+    "siyuan/<kind>/<id>, or compact <kind>/<id>."
+  ),
+  ops: z.array(z.record(z.string(), z.unknown())).describe(
+    'Whitelist ops only: createDocument, appendBlock, updateBlock, setAttribute. Does not apply — the user must approve.',
+  ),
+  summary: z.string().optional().describe('Short human-readable description shown in the Knowledge diff UI.'),
+  baseHash: z.string().optional().describe('contentHash from knowledge_read, used as a conflict hint.'),
+  connectionId: z.string().optional()
+    .describe('Knowledge connection id. Omit to use the default (first) connection.'),
+});
+
 export type KnowledgeSearchArgs = z.infer<typeof KnowledgeSearchSchema>;
 export type KnowledgeReadArgs = z.infer<typeof KnowledgeReadSchema>;
 export type KnowledgeGetBacklinksArgs = z.infer<typeof KnowledgeGetBacklinksSchema>;
+export type KnowledgeProposeArgs = z.infer<typeof KnowledgeProposeSchema>;
 
 // ============================================================
 // Canonical Tool Descriptions (base — no DOC_REFS)
@@ -783,6 +799,17 @@ references the node yet — do not invent links.
 
 Errors are typed: INVALID_REF, NOT_FOUND, CONNECTION_UNAVAILABLE, PROVIDER_ERROR.`,
 
+  knowledge_propose: `Propose a write to the user's knowledge base (SiYuan). Does NOT apply the write.
+
+This is the P3 write-back capability. Create a mutation proposal from whitelist ops only
+(createDocument, appendBlock, updateBlock, setAttribute). The user must approve and apply
+in the Knowledge UI — never claim the note already changed.
+
+Pass the target \`ref\` from knowledge_search / knowledge_read. Include \`baseHash\` from
+knowledge_read when updating an existing node. Explore/Safe mode blocks this tool.
+
+Errors are typed: INVALID_REF, CONNECTION_UNAVAILABLE, CAPABILITY_DISABLED, PROVIDER_ERROR.`,
+
   unbind_messaging_channel: `Disconnect a messaging channel from the current session.
 Messages will no longer be forwarded between the chat app and this session.`,
 } as const;
@@ -880,6 +907,7 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'knowledge_search', description: TOOL_DESCRIPTIONS.knowledge_search, inputSchema: KnowledgeSearchSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeSearch },
   { name: 'knowledge_read', description: TOOL_DESCRIPTIONS.knowledge_read, inputSchema: KnowledgeReadSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeRead },
   { name: 'knowledge_get_backlinks', description: TOOL_DESCRIPTIONS.knowledge_get_backlinks, inputSchema: KnowledgeGetBacklinksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleKnowledgeGetBacklinks },
+  { name: 'knowledge_propose', description: TOOL_DESCRIPTIONS.knowledge_propose, inputSchema: KnowledgeProposeSchema, executionMode: 'registry', safeMode: 'block', handler: handleKnowledgePropose },
 ];
 
 export interface SessionToolFilterOptions {

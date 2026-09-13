@@ -11,6 +11,7 @@ import {
   selectFavoriteEnvelopes,
   selectRecentEnvelopes,
   uncontractedNavSectionPresentation,
+  navSectionPresentation,
   UNCONTRACTED_NAV_SECTION_IDS,
   type KnowledgeNavigatorApi,
 } from '../KnowledgeNotebookTree'
@@ -182,6 +183,14 @@ describe('uncontractedNavSectionPresentation', () => {
 
   it('lists items when a future provider actually returns some', () => {
     expect(uncontractedNavSectionPresentation(3)).toBe('items')
+  })
+
+  it('marks unsupported capabilities separately from hidden empty and kernel unavailable', () => {
+    expect(navSectionPresentation({ featureSupported: false, itemCount: 0 })).toBe('unsupported')
+    expect(navSectionPresentation({ featureSupported: false, itemCount: 3 })).toBe('unsupported')
+    expect(navSectionPresentation({ featureSupported: true, itemCount: 0 })).toBe('hidden')
+    expect(navSectionPresentation({ featureSupported: true, itemCount: 2 })).toBe('items')
+    expect(navSectionPresentation({ featureSupported: false, itemCount: 0 })).not.toBe('hidden')
   })
 })
 

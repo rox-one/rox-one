@@ -375,6 +375,14 @@ export default function AccountSettingsPage() {
                 {t('settings.account.openConnections')}
               </Button>
             </SettingsRow>
+            <SettingsRow
+              label={t('settings.privacy.title')}
+              description={t('settings.account.openPrivacyHint')}
+            >
+              <Button size="sm" variant="outline" onClick={() => navigate(routes.view.settings('privacy'))}>
+                {t('settings.account.openPrivacy')}
+              </Button>
+            </SettingsRow>
           </SettingsCard>
         </SettingsSection>
       </div>

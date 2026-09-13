@@ -89,6 +89,7 @@ export type { AgentTeamsArgs, AgentTeamsAction } from './agent-teams.ts';
 export { handleKnowledgeSearch, KNOWLEDGE_SEARCH_MAX_LIMIT } from './knowledge-search.ts';
 export { handleKnowledgeRead, KNOWLEDGE_READ_MAX_MARKDOWN_CHARS } from './knowledge-read.ts';
 export { handleKnowledgeGetBacklinks, KNOWLEDGE_BACKLINKS_MAX_ITEMS } from './knowledge-backlinks.ts';
+export { handleKnowledgePropose, parseProposeOps } from './knowledge-propose.ts';
 
 // Pages
 export {
