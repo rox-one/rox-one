@@ -2859,7 +2859,7 @@
   "settings.appearance.workbenchHarnessInspector": "Session inspector",
   "settings.appearance.workbenchHarnessInspectorDesc": "الملفات وgit والمتصفح في مفتش الجلسة. مفعّل افتراضياً.",
   "settings.appearance.workbenchModeBar": "Mode bar",
-  "settings.appearance.workbenchModeBarDesc": "Show Chat, Knowledge, and upcoming modes in the top bar",
+  "settings.appearance.workbenchModeBarDesc": "عرض الدردشة والمعرفة والأوضاع القادمة في الشريط العلوي",
   "settings.appearance.workbenchStatusBar": "Status bar",
   "settings.appearance.workbenchStatusBarDesc": "Durable Local / Remote / Offline status at the bottom of the window",
   "settings.appearance.workbenchTabGroups": "Tab groups",

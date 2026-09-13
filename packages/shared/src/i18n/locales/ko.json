@@ -2859,7 +2859,7 @@
   "settings.appearance.workbenchHarnessInspector": "Session inspector",
   "settings.appearance.workbenchHarnessInspectorDesc": "세션 인스펙터의 파일, git, 브라우저. 기본 켜짐.",
   "settings.appearance.workbenchModeBar": "Mode bar",
-  "settings.appearance.workbenchModeBarDesc": "Show Chat, Knowledge, and upcoming modes in the top bar",
+  "settings.appearance.workbenchModeBarDesc": "상단 바에 채팅, 지식, 예정된 모드를 표시합니다",
   "settings.appearance.workbenchStatusBar": "Status bar",
   "settings.appearance.workbenchStatusBarDesc": "Durable Local / Remote / Offline status at the bottom of the window",
   "settings.appearance.workbenchTabGroups": "Tab groups",

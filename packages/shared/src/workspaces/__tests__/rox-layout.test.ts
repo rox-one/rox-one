@@ -26,6 +26,10 @@ describe('rox layout helper', () => {
     expect(resolveRoxRoot({ homeDir: '', workspaceRoot: workspace })).toBe(join(workspace, 'rox'));
   });
 
+  it('uses workspace/rox in the test env when homeDir is omitted', () => {
+    expect(resolveRoxRoot({ workspaceRoot: workspace })).toBe(join(workspace, 'rox'));
+  });
+
   it('creates the full folder set', () => {
     const result = ensureRoxLayout({ homeDir: home, workspaceRoot: workspace });
     expect(result.root).toBe(join(home, 'rox'));

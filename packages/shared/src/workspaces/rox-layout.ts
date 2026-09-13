@@ -2,8 +2,8 @@
  * User-facing `~/rox` folder layout (Program 35 / P35-08).
  *
  * Prefer `$HOME/rox`. If home is unavailable or mkdir fails, fall back to
- * `<workspaceRoot>/rox`. Bun tests (`BUN_TEST`) always use the workspace
- * fallback so they never write into the developer's real home directory.
+ * `<workspaceRoot>/rox`. Isolated test runs (`NODE_ENV=test` or `BUN_TEST`)
+ * always use the workspace fallback so they never write into `$HOME/rox`.
  */
 
 import { existsSync, mkdirSync } from 'node:fs';
@@ -33,12 +33,18 @@ export interface RoxLayoutOptions {
   workspaceRoot?: string;
 }
 
+function isIsolatedLayoutEnv(): boolean {
+  return process.env.NODE_ENV === 'test' || Boolean(process.env.BUN_TEST);
+}
+
 export function resolveRoxRoot(opts: RoxLayoutOptions = {}): string {
-  const override = opts.homeDir ?? process.env.ROX_LAYOUT_HOME;
-  if (override && override.length > 0) {
+  const override = opts.homeDir !== undefined ? opts.homeDir : process.env.ROX_LAYOUT_HOME;
+  if (typeof override === 'string' && override.length > 0) {
     return join(override, 'rox');
   }
-  if (process.env.BUN_TEST && opts.workspaceRoot) {
+  const preferWorkspace =
+    (typeof override === 'string' && override.length === 0) || isIsolatedLayoutEnv();
+  if (preferWorkspace && opts.workspaceRoot) {
     return join(opts.workspaceRoot, 'rox');
   }
   try {

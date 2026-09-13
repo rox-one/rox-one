@@ -4,10 +4,10 @@ import { join } from 'path'
 
 const panel = readFileSync(join(__dirname, '../SourcesListPanel.tsx'), 'utf8')
 const settings = readFileSync(
-  join(__dirname, '../../pages/settings/WorkspaceSettingsPage.tsx'),
+  join(__dirname, '../../../pages/settings/WorkspaceSettingsPage.tsx'),
   'utf8',
 )
-const chip = readFileSync(join(__dirname, '../../atoms/background-finished.ts'), 'utf8')
+const chip = readFileSync(join(__dirname, '../../../atoms/background-finished.ts'), 'utf8')
 
 describe('P35-08 sources UI split and notification default', () => {
   it('groups microservices vs MCP in the sources list when unfiltered', () => {
@@ -19,8 +19,8 @@ describe('P35-08 sources UI split and notification default', () => {
   })
 
   it('splits default-source toggles into microservices vs MCP', () => {
-    expect(settings).toContain("t('sourcesList.groupMicroservices')")
-    expect(settings).toContain("t('sourcesList.groupMcp')")
+    expect(settings).toContain('sourcesList.groupMicroservices')
+    expect(settings).toContain('sourcesList.groupMcp')
     expect(settings).toContain('data-testid={`default-sources-${group.key}`}')
   })
 
