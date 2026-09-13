@@ -41,7 +41,8 @@
   --step-actions-margin: 2rem;
 }
 
-/* Theme Override - Semi-transparent background to allow vibrancy through */
+/* Theme Override - Semi-transparent background to allow vibrancy through.
+   Named solid palettes omit data-theme-override so GitHub/Ghostty hex fills stay opaque. */
 html[data-theme-override]::before {
   content: '';
   position: fixed;
