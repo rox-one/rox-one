@@ -5,7 +5,7 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
 import { queryMeetings } from '../../meetings/queries.ts'
-import { rejectMeetingProposal, type ProposalStore } from '../../meetings/proposals.ts'
+import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness } from '../../meetings/native-actions.ts'
 import type { OutboxJob } from '../../meetings/executor.ts'
@@ -34,9 +34,16 @@ const mailSeen = new Map<string, Set<string>>()
 function storeFor(workspaceId: string): ProposalStore {
   const existing = proposalStores.get(workspaceId)
   if (existing) return existing
-  const created: ProposalStore = { items: [] }
+  const persistRoot = meetingPersistRoot(workspaceId)
+  const created = persistRoot ? loadProposalStore(persistRoot) : { items: [] }
   proposalStores.set(workspaceId, created)
   return created
+}
+
+function persistStore(workspaceId: string, store: ProposalStore): void {
+  const persistRoot = meetingPersistRoot(workspaceId)
+  if (!persistRoot) return
+  saveProposalStore(persistRoot, store)
 }
 
 function jobsFor(workspaceId: string): OutboxJob[] {
@@ -68,10 +75,6 @@ export function resetMeetingHandlerStateForTests(): void {
   nativeRuntimes.clear()
 }
 
-export function seedMeetingProposalForTests(proposal: MeetingProposal): void {
-  storeFor(proposal.workspaceId).items.push(proposal)
-}
-
 function mailLedgerFor(workspaceId: string): Map<string, MailLedgerEntry> {
   const existing = mailLedgers.get(workspaceId)
   if (existing) return existing
@@ -100,6 +103,7 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.LIST,
   RPC_CHANNELS.meetings.GET,
   RPC_CHANNELS.meetings.SEARCH,
+  RPC_CHANNELS.meetings.CREATE_PROPOSAL,
   RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
   RPC_CHANNELS.meetings.REJECT_PROPOSAL,
   RPC_CHANNELS.meetings.MAIL_PREPARE,
@@ -138,10 +142,40 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       limit: 50,
     })
   })
+  server.handle(
+    RPC_CHANNELS.meetings.CREATE_PROPOSAL,
+    async (
+      _ctx,
+      workspaceId: string,
+      meetingId: string,
+      type: MeetingProposal['type'],
+      payload: Record<string, unknown>,
+      actorId: string,
+      grant: MeetingGrant | null,
+    ) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { proposal: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { proposal: null, error: { code: 'config-dir-required' } }
+      const store = storeFor(workspaceId)
+      const created = createMeetingProposal({
+        store,
+        actorId,
+        grant,
+        workspaceId,
+        meetingId,
+        type,
+        payload,
+      })
+      if (!created.ok) return { proposal: null, error: { code: created.code } }
+      persistStore(workspaceId, store)
+      return { proposal: created.proposal }
+    },
+  )
   server.handle(RPC_CHANNELS.meetings.APPROVE_PROPOSAL, async (_ctx, workspaceId: string, proposalId: string, actorId: string, grant: MeetingGrant | null, payload: Record<string, unknown>) => {
     const persistRootDir = meetingPersistRoot(workspaceId)
-    return approveAndExecuteNative({
-      store: storeFor(workspaceId),
+    const store = storeFor(workspaceId)
+    const result = approveAndExecuteNative({
+      store,
       proposalId,
       actorId,
       grant,
@@ -150,9 +184,14 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       persistRootDir,
       runtime: persistRootDir ? runtimeFor(workspaceId, persistRootDir) : undefined,
     })
+    persistStore(workspaceId, store)
+    return result
   })
   server.handle(RPC_CHANNELS.meetings.REJECT_PROPOSAL, async (_ctx, workspaceId: string, proposalId: string) => {
-    return rejectMeetingProposal(storeFor(workspaceId), proposalId)
+    const store = storeFor(workspaceId)
+    const rejected = rejectMeetingProposal(store, proposalId)
+    persistStore(workspaceId, store)
+    return rejected
   })
   server.handle(
     RPC_CHANNELS.meetings.MAIL_PREPARE,
