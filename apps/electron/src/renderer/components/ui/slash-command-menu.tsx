@@ -93,43 +93,43 @@ const permissionModeCommands: SlashCommand[] = PERMISSION_MODE_ORDER.map(mode =>
 
 const compactCommand: SlashCommand = {
   id: 'compact',
-  label: 'Compact Context',
-  description: 'Summarize conversation context to free up token budget',
+  label: 'compact',
+  description: '',
   icon: <Minimize2 className={MENU_ICON_SIZE} />,
 }
 
 const undoCommand: SlashCommand = {
   id: 'undo',
-  label: 'Undo Last Message',
-  description: 'Revert to before the previous user message and restore it to the input',
+  label: 'undo',
+  description: '',
   icon: <Undo2 className={MENU_ICON_SIZE} />,
 }
 
 const shareCommand: SlashCommand = {
   id: 'share',
-  label: 'Share',
-  description: 'Publish a read-only session link',
+  label: 'share',
+  description: '',
   icon: <CloudUpload className={MENU_ICON_SIZE} />,
 }
 
 const joinCommand: SlashCommand = {
   id: 'join',
-  label: 'Join',
-  description: 'Open a shared session link',
+  label: 'join',
+  description: '',
   icon: <Link2 className={MENU_ICON_SIZE} />,
 }
 
 const exportCommand: SlashCommand = {
   id: 'export',
-  label: 'Export',
-  description: 'Save a portable session bundle',
+  label: 'export',
+  description: '',
   icon: <Download className={MENU_ICON_SIZE} />,
 }
 
 const vibeCommand: SlashCommand = {
   id: 'vibe',
-  label: 'Vibe',
-  description: 'Creative Rox CLI workflow',
+  label: 'vibe',
+  description: '',
   icon: <Sparkles className={MENU_ICON_SIZE} />,
 }
 
@@ -158,13 +158,22 @@ const MENU_SECTION_HEADER = 'px-3 py-1.5 mb-0.5 text-[12px] font-medium text-mut
 // Shared: Filter utilities
 // ============================================================================
 
-function filterCommands(commands: SlashCommand[], filter: string): SlashCommand[] {
+const MODE_COMMAND_IDS = new Set<string>(['safe', 'ask', 'allow-all'])
+
+function commandDisplayLabel(command: SlashCommand, t: (key: string) => string): string {
+  if (MODE_COMMAND_IDS.has(command.id)) return t(`mode.${command.id}`)
+  const catalog = getCliCommand(command.id)
+  return catalog ? t(catalog.labelKey) : command.label
+}
+
+function filterCommands(commands: SlashCommand[], filter: string, t: (key: string) => string): SlashCommand[] {
   if (!filter) return commands
   const lowerFilter = filter.toLowerCase()
   return commands.filter(
     cmd =>
       cmd.label.toLowerCase().includes(lowerFilter) ||
-      cmd.id.toLowerCase().includes(lowerFilter)
+      cmd.id.toLowerCase().includes(lowerFilter) ||
+      commandDisplayLabel(cmd, t).toLowerCase().includes(lowerFilter)
   )
 }
 
@@ -174,7 +183,7 @@ function isFolder(item: SlashCommand | SlashFolderItem): item is SlashFolderItem
 }
 
 /** Filter sections by label/id, keeping sections grouped */
-function filterSections(sections: SlashSection[], filter: string): SlashSection[] {
+function filterSections(sections: SlashSection[], filter: string, t: (key: string) => string): SlashSection[] {
   if (!filter) return sections
   const lowerFilter = filter.toLowerCase()
 
@@ -182,11 +191,20 @@ function filterSections(sections: SlashSection[], filter: string): SlashSection[
   return sections
     .map(section => ({
       ...section,
-      items: section.items.filter(item =>
-        item.label.toLowerCase().includes(lowerFilter) ||
-        item.id.toLowerCase().includes(lowerFilter) ||
-        item.description?.toLowerCase().includes(lowerFilter)
-      ),
+      items: section.items.filter(item => {
+        if (isFolder(item)) {
+          return (
+            item.label.toLowerCase().includes(lowerFilter) ||
+            item.id.toLowerCase().includes(lowerFilter) ||
+            item.description?.toLowerCase().includes(lowerFilter)
+          )
+        }
+        return (
+          item.label.toLowerCase().includes(lowerFilter) ||
+          item.id.toLowerCase().includes(lowerFilter) ||
+          commandDisplayLabel(item, t).toLowerCase().includes(lowerFilter)
+        )
+      }),
     }))
     .filter(section => section.items.length > 0)
 }
@@ -200,16 +218,9 @@ function flattenSections(sections: SlashSection[]): (SlashCommand | SlashFolderI
 // Shared: Command Item Content
 // ============================================================================
 
-const MODE_COMMAND_IDS = new Set<string>(['safe', 'ask', 'allow-all'])
-
 function CommandItemContent({ command, isActive }: { command: SlashCommand; isActive: boolean }) {
   const { t } = useTranslation()
-  const catalog = getCliCommand(command.id)
-  const label = MODE_COMMAND_IDS.has(command.id)
-    ? t(`mode.${command.id}`, command.label)
-    : catalog
-      ? t(catalog.labelKey, command.label)
-      : command.label
+  const label = commandDisplayLabel(command, t)
   return (
     <>
       <div className="shrink-0 text-muted-foreground">{command.icon}</div>
@@ -258,18 +269,18 @@ export function SlashCommandMenu({
     if (commandGroups) {
       return commandGroups.map(group => ({
         ...group,
-        commands: filterCommands(group.commands, filter),
+        commands: filterCommands(group.commands, filter, t),
       })).filter(group => group.commands.length > 0)
     }
     return null
-  }, [commandGroups, filter])
+  }, [commandGroups, filter, t])
 
   const filteredCommands = React.useMemo(() => {
     if (commands && !commandGroups) {
-      return filterCommands(commands, filter)
+      return filterCommands(commands, filter, t)
     }
     return null
-  }, [commands, commandGroups, filter])
+  }, [commands, commandGroups, filter, t])
 
   // Get all commands for defaultValue calculation
   const allFilteredCommands = filteredGroups
@@ -382,7 +393,7 @@ export function InlineSlashCommand({
   const menuRef = React.useRef<HTMLDivElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
-  const filteredSections = filterSections(sections, filter)
+  const filteredSections = filterSections(sections, filter, t)
   const flatItems = flattenSections(filteredSections)
 
   // Reset selection when filter changes
@@ -665,7 +676,7 @@ export function useInlineSlashCommand({
       const filterText = slashMatch[1] || ''
       // Check if there are any filtered results before opening menu
       // This ensures Enter key works normally when no matches exist
-      const filteredSections = filterSections(sections, filterText)
+      const filteredSections = filterSections(sections, filterText, t)
       const hasFilteredItems = filteredSections.some(s => s.items.length > 0)
 
       if (!hasFilteredItems) {
@@ -708,7 +719,7 @@ export function useInlineSlashCommand({
       setFilter('')
       setSlashStart(-1)
     }
-  }, [inputRef, sections])
+  }, [inputRef, sections, t])
 
   const handleSelectCommand = React.useCallback((commandId: SlashCommandId): string => {
     // Capture values BEFORE any state changes to avoid race conditions
