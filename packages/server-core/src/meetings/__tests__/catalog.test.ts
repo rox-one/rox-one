@@ -3,7 +3,7 @@ import { existsSync, mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { MeetingGrant } from '@craft-agent/shared/meeting-agents'
-import { listNativeMeetings, startNativeMeeting } from '../catalog.ts'
+import { listNativeMeetings, searchNativeMeetings, startNativeMeeting } from '../catalog.ts'
 
 const grant: MeetingGrant = {
   id: 'g',
@@ -47,5 +47,41 @@ describe('native meeting catalog', () => {
     expect(listed).toHaveLength(1)
     expect(listed[0]?.meetingId).toBe('meeting-fixed')
     expect(listed[0]?.status).toBe('planned')
+  })
+
+  test('search reads journal snapshots and fail-closes without persist root', () => {
+    const root = mkdtempSync(join(tmpdir(), 'meeting-catalog-'))
+    expect(searchNativeMeetings({
+      persistRootDir: '',
+      workspaceId: 'ws',
+      query: 'локальная',
+    })).toEqual({ ok: false, code: 'config-dir-required' })
+    expect(startNativeMeeting({
+      persistRootDir: root,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      title: 'локальная',
+      now: 10,
+      meetingId: 'meeting-local',
+    }).ok).toBe(true)
+    expect(startNativeMeeting({
+      persistRootDir: root,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      title: 'другая',
+      now: 11,
+      meetingId: 'meeting-other',
+    }).ok).toBe(true)
+    const matched = searchNativeMeetings({
+      persistRootDir: root,
+      workspaceId: 'ws',
+      query: 'локал',
+    })
+    expect(matched.ok).toBe(true)
+    if (!matched.ok) throw new Error('expected search')
+    expect(matched.page.map((item) => item.meetingId)).toEqual(['meeting-local'])
+    expect(matched.page[0]?.sourceBinding).toBeUndefined()
   })
 })

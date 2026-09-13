@@ -53,6 +53,7 @@ export const PROPOSAL_ERROR_I18N: Record<string, string> = {
   'proposal-not-found': 'meetings.rejectFailed',
   'reject-failed': 'meetings.rejectFailed',
   'rpc-unavailable': 'meetings.rpcUnavailable',
+  'search-failed': 'meetings.searchFailed',
   'unsupported-native-kind': 'meetings.unsupportedKind',
   'workspace-required': 'meetings.workspaceRequired',
 }

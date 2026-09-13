@@ -18,4 +18,23 @@ describe('meeting queries (RMA-I012)', () => {
     expect(queryMeetings({ items, workspaceId: 'ws', readableWorkspaceId: 'ws', limit: 10 }).page.some((item) => item.meetingId === 'm4')).toBe(false)
     expect(queryMeetings({ items, workspaceId: 'ws', readableWorkspaceId: 'ws', cursor: 'nope', limit: 2 }).page).toEqual([])
   })
+
+  test('query filters journal titles and does not invent a live catalog', () => {
+    const page = queryMeetings({
+      items,
+      workspaceId: 'ws',
+      readableWorkspaceId: 'ws',
+      query: 'meet 1',
+      limit: 10,
+    })
+    expect(page.page.map((item) => item.meetingId)).toEqual(['m1'])
+    expect(page.denied).toBe(false)
+    expect(queryMeetings({
+      items,
+      workspaceId: 'ws',
+      readableWorkspaceId: 'ws',
+      query: 'live-sfu',
+      limit: 10,
+    }).page).toEqual([])
+  })
 })
