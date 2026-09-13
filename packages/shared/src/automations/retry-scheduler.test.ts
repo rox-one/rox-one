@@ -88,18 +88,18 @@ describe('RetryScheduler', () => {
     const scheduler = new RetryScheduler({
       workspaceRootPath: dir,
       executeRequest,
-      bootstrapDelayMs: 5_000,
+      bootstrapDelayMs: 30,
       tickIntervalMs: 60_000,
     });
-    jest.useFakeTimers();
     scheduler.start();
     scheduler.start();
     scheduler.dispose();
     scheduler.start();
-    jest.advanceTimersByTime(5_000);
-    await Promise.resolve();
+    await Bun.sleep(80);
     expect(calls).toBe(1);
     scheduler.dispose();
+    await Bun.sleep(80);
+    expect(calls).toBe(1);
   });
 
   it('late response after dispose does not write history or drop the queue', async () => {
