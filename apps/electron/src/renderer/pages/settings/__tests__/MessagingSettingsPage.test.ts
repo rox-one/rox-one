@@ -156,9 +156,9 @@ describe('MessagingSettingsPage source contracts', () => {
     expect(popover).not.toContain("'inherit'")
     expect(popover).not.toContain("'allow-list'")
     expect(popover).not.toMatch(/mode\.open\.label/)
-    expect(popover).toContain('Public inbox')
-    expect(popover).toContain('Owner control')
-    expect(popover).toContain('Disabled')
+    expect(popover).toContain('settings.messaging.telegram.access.bindingPopover.mode.publicInbox.label')
+    expect(popover).toContain('settings.messaging.telegram.access.bindingPopover.mode.ownerControl.label')
+    expect(popover).toContain('settings.messaging.telegram.access.bindingPopover.mode.disabled.label')
     expect(en['settings.messaging.telegram.access.bindingPopover.mode.publicInbox.label']).toBe(
       'Public inbox',
     )
@@ -177,8 +177,8 @@ describe('MessagingSettingsPage source contracts', () => {
     expect(bannerDescription.toLowerCase()).not.toMatch(/start a new session|run in an agent session/)
     expect(publicInboxDescription.toLowerCase()).toMatch(/do not start an agent session/)
     expect(banner).toContain('AccessModeBanner')
-    expect(banner).toContain('do not start an agent session')
-    expect(popover).toContain('do not start an agent session')
+    expect(banner).toContain("t('settings.messaging.telegram.access.banner.description')")
+    expect(popover).toContain('settings.messaging.telegram.access.bindingPopover.mode.publicInbox.description')
     expect(telegram).toContain("accessMode === 'public-inbox'")
     expect(telegram).not.toContain("accessMode === 'open'")
   })

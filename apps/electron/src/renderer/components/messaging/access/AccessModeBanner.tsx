@@ -22,22 +22,14 @@ export function AccessModeBanner({ onLockDown, description }: Props) {
       <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
       <div className="min-w-0 flex-1">
         <div className="text-sm font-medium">
-          {t('settings.messaging.telegram.access.banner.title', {
-            defaultValue: 'Public inbox',
-          })}
+          {t('settings.messaging.telegram.access.banner.title')}
         </div>
         <div className="mt-0.5 text-xs text-foreground/60">
-          {description ??
-            t('settings.messaging.telegram.access.banner.description', {
-              defaultValue:
-                'Unknown senders receive a pairing reply. Their messages do not start an agent session or run tools.',
-            })}
+          {description ?? t('settings.messaging.telegram.access.banner.description')}
         </div>
       </div>
       <Button size="sm" variant="outline" onClick={onLockDown}>
-        {t('settings.messaging.telegram.access.banner.lockDown', {
-          defaultValue: 'Switch to owner control',
-        })}
+        {t('settings.messaging.telegram.access.banner.lockDown')}
       </Button>
     </div>
   )
