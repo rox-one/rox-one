@@ -184,7 +184,7 @@ export function emptyListGroupBuckets({
     case 'project':
       return [
         ...projects.map((project) => ({ key: `project-${project.id}`, label: project.name })),
-        { key: 'project-__none__', label: t('sidebar.noProject', { defaultValue: 'No project' }) },
+        { key: 'project-__none__', label: t('sidebar.noProject') },
       ]
     case 'priority':
       return LIST_PRIORITY_ORDER.map((priority) => ({
@@ -199,7 +199,7 @@ export function emptyListGroupBuckets({
     case 'label':
       return [
         ...labels.map((label) => ({ key: `label:${label.id}`, label: label.name })),
-        { key: 'label:none', label: t('collection.display.labelNone', { defaultValue: 'No label' }) },
+        { key: 'label:none', label: t('collection.display.labelNone') },
       ]
     default:
       return []

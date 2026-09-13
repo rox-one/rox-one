@@ -32,6 +32,7 @@ describe('ROX-AUD-054 Map → Outcomes → Reduce', () => {
     expect(result.coverage.complete).toBe(true)
     expect(result.outcomes).toHaveLength(2)
     expect(result.summary).toContain('Alpha: first')
+    expect(result.outcomes.every((outcome) => outcome.verified === false)).toBe(true)
     const product = mapReduceProductResult(result)
     expect(isClaimableLive(product)).toBe(false)
     expect(product).not.toMatchObject({ ok: true, state: 'live' })

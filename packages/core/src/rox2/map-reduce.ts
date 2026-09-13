@@ -47,6 +47,7 @@ export type Outcome = {
   sourceId: string
   revision: string
   text: string
+  /** Receipt/readback only. Local excerpt and fail-closed gateway mapping stay false. */
   verified: boolean
 }
 
@@ -174,7 +175,7 @@ export async function runMapReduce(opts: {
           sourceId,
           revision: ref.revision,
           text: output,
-          verified: true,
+          verified: false,
         })
       } catch (error) {
         if (error instanceof MapReduceCancelled) throw error
