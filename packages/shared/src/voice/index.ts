@@ -84,7 +84,7 @@ export { normalizeVerboseJson, validateAudioLimits, AudioValidationError, type N
 export { VoiceHost, type VoiceHostEvent } from './host.ts'
 export { createVoiceJob, applyJobEvent, advanceJob, type VoiceJob } from './job-machine.ts'
 export { detectHotkeyCapabilities, canBindAccelerator, RIGHT_OPTION_PRESET, DEFAULT_TOGGLE_ACCELERATOR } from './hotkey-types.ts'
-export { overlayShouldStealFocus, overlayVisible, overlayFromCapture, type OverlayState } from './overlay-types.ts'
+export { overlayShouldStealFocus, overlayVisible, overlayFromCapture, type OverlayState, type OverlayPhase } from './overlay-types.ts'
 export { loadHistoryIndex, saveHistoryIndex, setFavorite, deleteRecording, exportRecording, historyPage } from './history-store.ts'
 export { compilePrompt, PROCESSOR_SYSTEM_CONTRACT } from './processing/compiler.ts'
 export { IMPROVE_MODULES, canonicalizeModules } from './processing/profiles.ts'
