@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import MeetingDetail from './meetings/MeetingDetail'
@@ -7,18 +7,21 @@ import {
   approveNativeProposalViaRpc,
   buildMeetingGrant,
   createNativeProposalViaRpc,
-  i18nKeyForProposalError,
   resolveMeetingProposalApi,
   type MeetingProposalApi,
   type MeetingProposalRow,
   type NativeProposalType,
 } from './meetings/proposal-rpc'
+import {
+  i18nKeyForStartError,
+  listNativeMeetingsViaRpc,
+  resolveMeetingCatalogApi,
+  startNativeMeetingViaRpc,
+  type MeetingCatalogApi,
+  type MeetingListItem,
+} from './meetings/start-rpc'
 
-export type MeetingListItem = {
-  id: string
-  title: string
-  status: string
-}
+export type { MeetingListItem }
 
 export default function MeetingsPage(props: {
   meetings?: MeetingListItem[]
@@ -26,14 +29,15 @@ export default function MeetingsPage(props: {
   selectedId?: string | null
   workspaceId?: string | null
   actorId?: string
-  api?: MeetingProposalApi | null
+  api?: (MeetingProposalApi & Partial<MeetingCatalogApi>) | null
 }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
   const workspaceId = props.workspaceId ?? shell?.activeWorkspaceId ?? null
   const actorId = props.actorId ?? 'local-actor'
   const grant = workspaceId ? buildMeetingGrant({ workspaceId, actorId }) : null
-  const api = resolveMeetingProposalApi(props.api)
+  const proposalApi = resolveMeetingProposalApi(props.api)
+  const catalogApi = resolveMeetingCatalogApi(props.api)
   const [meetings, setMeetings] = useState<MeetingListItem[]>(props.meetings ?? [])
   const [selectedId, setSelectedId] = useState<string | null>(props.selectedId ?? meetings[0]?.id ?? null)
   const [items, setItems] = useState<MeetingProposalRow[]>(props.proposals ?? [])
@@ -43,21 +47,35 @@ export default function MeetingsPage(props: {
   const [approvingId, setApprovingId] = useState<string | null>(null)
   const selected = useMemo(() => meetings.find((item) => item.id === selectedId) ?? null, [meetings, selectedId])
 
-  function startLocalMeeting() {
-    const meeting: MeetingListItem = {
-      id: `meeting-${crypto.randomUUID()}`,
-      title: t('meetings.localMeeting'),
-      status: 'open',
-    }
-    setMeetings((current) => [meeting, ...current])
-    setSelectedId(meeting.id)
+  useEffect(() => {
+    if (props.meetings !== undefined) return
+    void listNativeMeetingsViaRpc({ api: catalogApi, workspaceId }).then((listed) => {
+      if (!listed.ok) return
+      setMeetings(listed.meetings)
+    })
+  }, [catalogApi, props.meetings, workspaceId])
+
+  async function handleStart() {
     setBanner(null)
+    const result = await startNativeMeetingViaRpc({
+      api: catalogApi,
+      workspaceId,
+      actorId,
+      grant,
+      title: t('meetings.localMeeting'),
+    })
+    if (!result.ok) {
+      setBanner(result.code)
+      return
+    }
+    setMeetings((current) => [result.meeting, ...current.filter((item) => item.id !== result.meeting.id)])
+    setSelectedId(result.meeting.id)
   }
 
   async function handleCreate() {
     setBanner(null)
     const result = await createNativeProposalViaRpc({
-      api,
+      api: proposalApi,
       workspaceId,
       meetingId: selected?.id ?? null,
       actorId,
@@ -77,7 +95,7 @@ export default function MeetingsPage(props: {
     setBanner(null)
     setApprovingId(row.id)
     const result = await approveNativeProposalViaRpc({
-      api,
+      api: proposalApi,
       workspaceId,
       actorId,
       grant,
@@ -113,15 +131,18 @@ export default function MeetingsPage(props: {
   )
 
   const bannerNode = banner ? (
-    <p data-testid="meetings-rpc-error">{t(i18nKeyForProposalError(banner))}</p>
+    <p data-testid="meetings-rpc-error">{t(i18nKeyForStartError(banner))}</p>
   ) : null
+
+  const nativeNote = <p data-testid="meetings-native-catalog">{t('meetings.nativeCatalog')}</p>
 
   if (meetings.length === 0) {
     return (
       <div data-testid="meetings-empty" className="flex h-full flex-col gap-3 p-4">
         <h1>{t('meetings.title')}</h1>
         <p className="text-muted-foreground">{t('meetings.empty')}</p>
-        <button type="button" data-testid="meetings-start" onClick={startLocalMeeting}>{t('meetings.start')}</button>
+        {nativeNote}
+        <button type="button" data-testid="meetings-start" onClick={() => void handleStart()}>{t('meetings.start')}</button>
         {bannerNode}
         {createForm}
         <ProposalInbox proposals={items} onApprove={(row) => void handleApprove(row)} approvingId={approvingId} />
@@ -133,7 +154,8 @@ export default function MeetingsPage(props: {
     <div className="flex h-full" data-testid="meetings-page">
       <aside className="w-64 border-r p-3">
         <h1>{t('meetings.title')}</h1>
-        <button type="button" data-testid="meetings-start" onClick={startLocalMeeting}>{t('meetings.start')}</button>
+        {nativeNote}
+        <button type="button" data-testid="meetings-start" onClick={() => void handleStart()}>{t('meetings.start')}</button>
         <ul>
           {meetings.map((meeting) => (
             <li key={meeting.id}>

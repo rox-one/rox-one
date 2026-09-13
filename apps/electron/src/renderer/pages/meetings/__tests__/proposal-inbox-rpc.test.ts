@@ -16,8 +16,9 @@ describe('meetings UI create/approve RPC wiring', () => {
   it('creates and approves through meetings RPC helpers, not localStorage', () => {
     expect(page).toContain('createNativeProposalViaRpc')
     expect(page).toContain('approveNativeProposalViaRpc')
-    expect(page).toContain('buildMeetingGrant')
-    expect(page).toContain('meetings-create-proposal')
+    expect(page).toContain('startNativeMeetingViaRpc')
+    expect(page).toContain('meetings.nativeCatalog')
+    expect(page).not.toContain('crypto.randomUUID')
     expect(page).not.toContain('localStorage')
     expect(page).not.toContain('conation')
   })

@@ -3,8 +3,9 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getEnv } from '@craft-agent/shared/config'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import type { MeetingProposal } from '@craft-agent/core/meetings'
+import type { Meeting, MeetingProposal } from '@craft-agent/core/meetings'
 import { queryMeetings } from '../../meetings/queries.ts'
+import { listNativeMeetings, startNativeMeeting } from '../../meetings/catalog.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness } from '../../meetings/native-actions.ts'
@@ -99,10 +100,17 @@ function seenFor(workspaceId: string): Set<string> {
   return created
 }
 
+function catalogItems(workspaceId: string): Meeting[] {
+  const persistRoot = meetingPersistRoot(workspaceId)
+  if (!persistRoot) return []
+  return listNativeMeetings(persistRoot).filter((item) => item.workspaceId === workspaceId)
+}
+
 export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.LIST,
   RPC_CHANNELS.meetings.GET,
   RPC_CHANNELS.meetings.SEARCH,
+  RPC_CHANNELS.meetings.CREATE,
   RPC_CHANNELS.meetings.CREATE_PROPOSAL,
   RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
   RPC_CHANNELS.meetings.REJECT_PROPOSAL,
@@ -117,7 +125,7 @@ export const MEETING_HANDLED_CHANNELS = [
 export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.meetings.LIST, async (_ctx, workspaceId: string, cursor?: string, limit = 20) => {
     return queryMeetings({
-      items: [],
+      items: catalogItems(workspaceId),
       workspaceId,
       readableWorkspaceId: workspaceId,
       cursor,
@@ -125,23 +133,34 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
     })
   })
   server.handle(RPC_CHANNELS.meetings.GET, async (_ctx, workspaceId: string, meetingId: string) => {
-    return queryMeetings({
-      items: [],
-      workspaceId,
-      readableWorkspaceId: workspaceId,
-      query: meetingId,
-      limit: 1,
-    }).page[0] ?? null
+    return catalogItems(workspaceId).find((item) => item.meetingId === meetingId) ?? null
   })
   server.handle(RPC_CHANNELS.meetings.SEARCH, async (_ctx, workspaceId: string, query: string) => {
     return queryMeetings({
-      items: [],
+      items: catalogItems(workspaceId),
       workspaceId,
       readableWorkspaceId: workspaceId,
       query,
       limit: 50,
     })
   })
+  server.handle(
+    RPC_CHANNELS.meetings.CREATE,
+    async (_ctx, workspaceId: string, title: string, actorId: string, grant: MeetingGrant | null) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { meeting: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { meeting: null, error: { code: 'config-dir-required' } }
+      const created = startNativeMeeting({
+        persistRootDir,
+        workspaceId,
+        actorId,
+        grant,
+        title,
+      })
+      if (!created.ok) return { meeting: null, error: { code: created.code } }
+      return { meeting: created.meeting }
+    },
+  )
   server.handle(
     RPC_CHANNELS.meetings.CREATE_PROPOSAL,
     async (

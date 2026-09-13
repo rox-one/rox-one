@@ -281,6 +281,7 @@ const EXPECTED_CHANNELS: string[] = [
   'marketplace:update',
   'meetings:approveProposal',
   'meetings:calendarBind',
+  'meetings:create',
   'meetings:createProposal',
   'meetings:crmPropose',
   'meetings:get',

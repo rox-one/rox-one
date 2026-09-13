@@ -950,6 +950,7 @@ export const RPC_CHANNELS = {
     LIST: 'meetings:list',
     GET: 'meetings:get',
     SEARCH: 'meetings:search',
+    CREATE: 'meetings:create',
     CREATE_PROPOSAL: 'meetings:createProposal',
     APPROVE_PROPOSAL: 'meetings:approveProposal',
     REJECT_PROPOSAL: 'meetings:rejectProposal',

@@ -131,6 +131,20 @@ export class MeetingJournal {
     return { revision: snapshot.meeting.revision, duplicate: false }
   }
 
+  list(): Meeting[] {
+    const dir = join(this.rootDir, 'meetings')
+    if (!existsSync(dir)) return []
+    const items: Meeting[] = []
+    for (const meetingId of readdirSync(dir)) {
+      try {
+        items.push(this.read(meetingId).meeting)
+      } catch {
+        continue
+      }
+    }
+    return items
+  }
+
   pending(limit: number): MeetingOutboxEntry[] {
     const dir = join(this.rootDir, 'meetings')
     if (!existsSync(dir)) return []
