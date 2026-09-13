@@ -13,14 +13,15 @@ export function mapSourcesFromSessionMeta(
   ids: readonly string[],
   metaById: ReadonlyMap<string, SessionMeta>,
 ): MapSource[] {
-  return ids.map((id) => {
+  return ids.flatMap((id) => {
     const meta = metaById.get(id)
-    return {
+    if (!meta) return []
+    return [{
       id,
-      revision: String(meta?.lastMessageAt ?? 0),
-      title: meta?.name?.trim() || id,
-      preview: meta?.preview?.trim() || '',
-    }
+      revision: String(meta.lastMessageAt ?? 0),
+      title: meta.name?.trim() || id,
+      preview: meta.preview?.trim() || '',
+    }]
   })
 }
 
