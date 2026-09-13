@@ -9,10 +9,14 @@ import type {
 } from '@craft-agent/shared/openclaw'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { useActiveWorkspace } from '@/context/AppShellContext'
+import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SettingsCard, SettingsSection } from '@/components/settings'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
+import { routes } from '@/lib/navigate'
 import {
   Dialog,
   DialogContent,
@@ -315,20 +319,23 @@ export default function SecuritySettingsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-border/50 px-6 py-4">
-        <div className="min-w-0">
-          <h2 className="whitespace-normal break-words text-lg font-semibold">{t('settings.security.title')}</h2>
-          <p className="mt-1 whitespace-normal break-words text-sm text-muted-foreground">
+      <PanelHeader
+        title={t('settings.security.title')}
+        actions={
+          <>
+            <Button size="sm" variant="outline" disabled={loading || !workspaceId || !apiAvailable} onClick={() => void refresh()}>
+              {loading ? t('security.loading') : t('security.action.refresh')}
+            </Button>
+            <HeaderMenu route={routes.view.settings('security')} />
+          </>
+        }
+      />
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
+          <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
+          <p className="whitespace-normal break-words text-sm text-muted-foreground">
             {t('settings.security.description')}
           </p>
-        </div>
-        <Button size="sm" variant="outline" disabled={loading || !workspaceId || !apiAvailable} onClick={() => void refresh()}>
-          {loading ? t('security.loading') : t('security.action.refresh')}
-        </Button>
-      </header>
-
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="mx-auto w-full max-w-5xl space-y-8 px-6 py-5">
           {!workspaceId && (
             <div role="alert" className="rounded-md border border-border px-3 py-2 text-sm text-muted-foreground">
               {t('security.error.noWorkspace')}
@@ -660,7 +667,8 @@ export default function SecuritySettingsPage() {
               <p className="mt-1">{t('security.hostOnly.description')}</p>
             </div>
           )}
-        </div>
+          </div>
+        </ScrollArea>
       </div>
 
       <Dialog

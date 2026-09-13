@@ -82,4 +82,14 @@ describe('SecuritySettingsPage source contracts', () => {
     expect(source).not.toMatch(/type=["']password["']/)
     expect(source).not.toMatch(/error\.message|String\(error\)/)
   })
+
+  it('uses the shared settings PanelHeader chrome instead of a wrapping page header', () => {
+    expect(source).toContain('<PanelHeader')
+    expect(source).toContain('mask-fade-y')
+    expect(source).toContain('<ScrollArea')
+    expect(source).toContain("t('settings.security.description')")
+    expect(source).not.toContain('<header className="flex shrink-0')
+    expect(source).not.toContain('overflow-y-auto overscroll-contain')
+    expect(source).not.toContain('100dvh')
+  })
 })

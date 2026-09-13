@@ -2,7 +2,7 @@
  * PanelHeader - Standardized header component for panels
  *
  * Provides consistent header styling with:
- * - Fixed 50px height
+ * - Fixed 42px height
  * - Title with optional badge
  * - Optional action buttons
  * - Optional title dropdown menu (renders chevron and makes title interactive)
