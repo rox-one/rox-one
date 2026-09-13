@@ -1679,6 +1679,8 @@
   "meetings.payloadConflict": "Другое предложение уже использует этот id",
   "meetings.proposalTitle": "Название",
   "meetings.proposals": "Предложения",
+  "meetings.reject": "Отклонить",
+  "meetings.rejectFailed": "Не удалось отклонить",
   "meetings.revision": "Ревизия {{id}}",
   "meetings.rooms.undecided": "Комнаты заблокированы: SFU-провайдер не выбран",
   "meetings.rpcUnavailable": "RPC встреч недоступен",

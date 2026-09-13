@@ -6,6 +6,7 @@ import {
   buildMeetingGrant,
   createNativeProposalViaRpc,
   i18nKeyForProposalError,
+  rejectNativeProposalViaRpc,
   resolveMeetingProposalApi,
   type MeetingProposalApi,
 } from '../proposal-rpc'
@@ -61,6 +62,9 @@ describe('meetings proposal RPC client', () => {
     expect(i18nKeyForProposalError('outbox-required')).toBe('meetings.outboxRequired')
     expect(i18nKeyForProposalError('rpc-unavailable')).toBe('meetings.rpcUnavailable')
     expect(i18nKeyForProposalError('workspace-required')).toBe('meetings.workspaceRequired')
+    expect(i18nKeyForProposalError('reject-failed')).toBe('meetings.rejectFailed')
+    expect(i18nKeyForProposalError('already-applied')).toBe('meetings.rejectFailed')
+    expect(i18nKeyForProposalError('proposal-not-found')).toBe('meetings.rejectFailed')
   })
 
   it('fail-closes create without api, workspace, meeting, or grant and does not call RPC', async () => {
@@ -71,6 +75,7 @@ describe('meetings proposal RPC client', () => {
         return { proposal: proposal() }
       },
       approveMeetingProposal: async () => ({ proposal: proposal('applied'), operation: verified() }),
+      rejectMeetingProposal: async () => ({ proposal: proposal('rejected') }),
     }
     expect(await createNativeProposalViaRpc({
       api: null,
@@ -123,6 +128,7 @@ describe('meetings proposal RPC client', () => {
         calls.push({ channel: 'meetings:approveProposal', args })
         return { proposal: { ...created, status: 'applied' }, operation: verified() }
       },
+      rejectMeetingProposal: async () => ({ proposal: { ...created, status: 'rejected' } }),
     }
     const createdResult = await createNativeProposalViaRpc({
       api,
@@ -161,6 +167,7 @@ describe('meetings proposal RPC client', () => {
         proposal: proposal('approved'),
         operation: failed('outbox-required'),
       }),
+      rejectMeetingProposal: async () => ({ proposal: proposal('rejected') }),
     }
     const row = {
       id: 'prop-m1-abc',
@@ -197,8 +204,86 @@ describe('meetings proposal RPC client', () => {
     expect(outbox.row.status).toBe('approved')
   })
 
-  it('does not resolve window.electronAPI when create/approve are missing', () => {
+  it('does not resolve window.electronAPI when create/approve/reject are missing', () => {
     expect(resolveMeetingProposalApi(null)).toBeNull()
     expect(buildMeetingGrant({ workspaceId: 'ws', actorId: 'user' }).capabilities).toEqual(['send'])
+  })
+
+  it('fail-closes reject without api/workspace/grant and does not call RPC', async () => {
+    const calls: unknown[] = []
+    const api: MeetingProposalApi = {
+      createMeetingProposal: async () => ({ proposal: proposal() }),
+      approveMeetingProposal: async () => ({ proposal: proposal('applied'), operation: verified() }),
+      rejectMeetingProposal: async (...args) => {
+        calls.push(args)
+        return { proposal: proposal('rejected') }
+      },
+    }
+    const row = {
+      id: 'prop-m1-abc',
+      title: 'прототип',
+      status: 'proposed' as const,
+      source: 'native',
+      type: 'create_task' as const,
+      payload: { title: 'прототип' },
+    }
+    expect(await rejectNativeProposalViaRpc({
+      api: null,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row,
+    })).toMatchObject({ ok: false, code: 'rpc-unavailable' })
+    expect(await rejectNativeProposalViaRpc({
+      api,
+      workspaceId: null,
+      actorId: 'user',
+      grant,
+      row,
+    })).toMatchObject({ ok: false, code: 'workspace-required' })
+    expect(await rejectNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant: null,
+      row,
+    })).toMatchObject({ ok: false, code: 'grant-required' })
+    expect(calls).toEqual([])
+  })
+
+  it('reject goes through RPC args and does not invent a revision', async () => {
+    const created = proposal()
+    const calls: Array<{ channel: string; args: unknown[] }> = []
+    const api: MeetingProposalApi = {
+      createMeetingProposal: async () => ({ proposal: created }),
+      approveMeetingProposal: async () => ({ proposal: created, operation: verified() }),
+      rejectMeetingProposal: async (...args) => {
+        calls.push({ channel: 'meetings:rejectProposal', args })
+        return { proposal: { ...created, status: 'rejected' } }
+      },
+    }
+    const row = {
+      id: 'prop-m1-abc',
+      title: 'прототип',
+      status: 'proposed' as const,
+      source: 'native',
+      type: 'create_task' as const,
+      payload: { title: 'прототип' },
+    }
+    const rejected = await rejectNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row,
+    })
+    expect(rejected.ok).toBe(true)
+    if (!rejected.ok) throw new Error('expected reject')
+    expect(rejected.row.status).toBe('rejected')
+    expect(rejected.row.revisionId).toBeUndefined()
+    expect(calls).toEqual([{
+      channel: 'meetings:rejectProposal',
+      args: ['ws', 'prop-m1-abc', 'user', grant],
+    }])
   })
 })

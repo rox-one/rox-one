@@ -13,6 +13,7 @@ import type { OperationResultV2 } from '@craft-agent/core/meetings'
 import {
   approveNativeProposalViaRpc,
   createNativeProposalViaRpc,
+  rejectNativeProposalViaRpc,
   type MeetingProposalApi,
 } from '../proposal-rpc'
 
@@ -41,6 +42,10 @@ function apiFromHandlers(): MeetingProposalApi {
       {},
       ...args,
     ) as Promise<{ proposal: MeetingProposal; operation: OperationResultV2 }>,
+    rejectMeetingProposal: async (...args) => handlers.get(RPC_CHANNELS.meetings.REJECT_PROPOSAL)!(
+      {},
+      ...args,
+    ) as Promise<{ proposal: MeetingProposal | null; error?: { code: string } }>,
   }
 }
 
@@ -122,5 +127,57 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
       payload: { title: 'прототип' },
     })
     expect(noDir).toEqual({ ok: false, code: 'config-dir-required' })
+  })
+
+  it('reject persist is fail-closed without grant or CONFIG_DIR and does not invent a revision', async () => {
+    const api = apiFromHandlers()
+    const created = await createNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      meetingId: 'm1',
+      actorId: 'user',
+      grant,
+      type: 'create_task',
+      payload: { title: 'прототип' },
+    })
+    expect(created.ok).toBe(true)
+    if (!created.ok) throw new Error('expected create')
+    const noGrant = await rejectNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant: null,
+      row: created.row,
+    })
+    expect(noGrant.ok).toBe(false)
+    if (noGrant.ok) throw new Error('expected grant fail')
+    expect(noGrant.code).toBe('grant-required')
+    expect(noGrant.row.status).toBe('proposed')
+    expect(noGrant.row.revisionId).toBeUndefined()
+    delete process.env.ROX_CONFIG_DIR
+    delete process.env.CRAFT_CONFIG_DIR
+    const noDir = await rejectNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: created.row,
+    })
+    expect(noDir.ok).toBe(false)
+    if (noDir.ok) throw new Error('expected config fail')
+    expect(noDir.code).toBe('config-dir-required')
+    expect(noDir.row.status).toBe('proposed')
+    process.env.ROX_CONFIG_DIR = configDir
+    const rejected = await rejectNativeProposalViaRpc({
+      api,
+      workspaceId: 'ws',
+      actorId: 'user',
+      grant,
+      row: created.row,
+    })
+    expect(rejected.ok).toBe(true)
+    if (!rejected.ok) throw new Error('expected reject')
+    expect(rejected.row.status).toBe('rejected')
+    expect(rejected.row.revisionId).toBeUndefined()
   })
 })

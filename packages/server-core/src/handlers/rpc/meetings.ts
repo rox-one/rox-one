@@ -217,12 +217,24 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
     persistStore(workspaceId, store)
     return result
   })
-  server.handle(RPC_CHANNELS.meetings.REJECT_PROPOSAL, async (_ctx, workspaceId: string, proposalId: string) => {
-    const store = storeFor(workspaceId)
-    const rejected = rejectMeetingProposal(store, proposalId)
-    persistStore(workspaceId, store)
-    return rejected
-  })
+  server.handle(
+    RPC_CHANNELS.meetings.REJECT_PROPOSAL,
+    async (_ctx, workspaceId: string, proposalId: string, actorId: string, grant: MeetingGrant | null) => {
+      const persistRootDir = meetingPersistRoot(workspaceId)
+      if (!grant) return { proposal: null, error: { code: 'grant-required' } }
+      if (!persistRootDir) return { proposal: null, error: { code: 'config-dir-required' } }
+      const store = storeFor(workspaceId)
+      const rejected = rejectMeetingProposal({
+        store,
+        proposalId,
+        actorId,
+        grant,
+      })
+      if (!rejected.ok) return { proposal: null, error: { code: rejected.code } }
+      persistStore(workspaceId, store)
+      return { proposal: rejected.proposal }
+    },
+  )
   server.handle(
     RPC_CHANNELS.meetings.MAIL_PREPARE,
     async (_ctx, workspaceId: string, input: { id: string; threadId: string; to: string[]; attachments?: string[] }) => {

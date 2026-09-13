@@ -638,7 +638,12 @@ export interface ElectronAPI {
     proposal: import('@craft-agent/core/meetings').MeetingProposal
     operation: import('@craft-agent/core/meetings').OperationResultV2
   }>
-  rejectMeetingProposal(workspaceId: string, proposalId: string): Promise<import('@craft-agent/core/meetings').MeetingProposal>
+  rejectMeetingProposal(
+    workspaceId: string,
+    proposalId: string,
+    actorId: string,
+    grant: import('@craft-agent/shared/meeting-agents').MeetingGrant | null,
+  ): Promise<{ proposal: import('@craft-agent/core/meetings').MeetingProposal | null; error?: { code: string } }>
   startCapture(
     workspaceId: string,
     meetingId: string,

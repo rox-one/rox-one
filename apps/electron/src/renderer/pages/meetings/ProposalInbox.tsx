@@ -6,7 +6,8 @@ export type { MeetingProposalRow }
 export default function ProposalInbox(props: {
   proposals: MeetingProposalRow[]
   onApprove?: (proposal: MeetingProposalRow) => void
-  approvingId?: string | null
+  onReject?: (proposal: MeetingProposalRow) => void
+  pendingId?: string | null
 }) {
   const { t } = useTranslation()
 
@@ -27,16 +28,32 @@ export default function ProposalInbox(props: {
             <p data-testid="proposal-error">{t(i18nKeyForProposalError(proposal.errorCode))}</p>
           ) : null}
           {proposal.status === 'proposed' ? (
-            <button
-              type="button"
-              data-testid="proposal-approve"
-              disabled={!props.onApprove || props.approvingId === proposal.id}
-              onClick={() => props.onApprove?.(proposal)}
-            >
-              {t('meetings.approve')}
-            </button>
+            <>
+              <button
+                type="button"
+                data-testid="proposal-approve"
+                disabled={!props.onApprove || props.pendingId === proposal.id}
+                onClick={() => props.onApprove?.(proposal)}
+              >
+                {t('meetings.approve')}
+              </button>
+              <button
+                type="button"
+                data-testid="proposal-reject"
+                disabled={!props.onReject || props.pendingId === proposal.id}
+                onClick={() => props.onReject?.(proposal)}
+              >
+                {t('meetings.reject')}
+              </button>
+            </>
           ) : null}
-          <button type="button" data-testid="proposal-target-link">{t('meetings.openTarget')}</button>
+          <button
+            type="button"
+            data-testid="proposal-target-link"
+            disabled={!proposal.revisionId}
+          >
+            {t('meetings.openTarget')}
+          </button>
         </div>
       ))}
     </div>

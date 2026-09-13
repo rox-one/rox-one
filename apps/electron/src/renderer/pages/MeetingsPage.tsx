@@ -7,6 +7,7 @@ import {
   approveNativeProposalViaRpc,
   buildMeetingGrant,
   createNativeProposalViaRpc,
+  rejectNativeProposalViaRpc,
   resolveMeetingProposalApi,
   type MeetingProposalApi,
   type MeetingProposalRow,
@@ -130,6 +131,21 @@ export default function MeetingsPage(props: {
     setBanner(null)
     setApprovingId(row.id)
     const result = await approveNativeProposalViaRpc({
+      api: proposalApi,
+      workspaceId,
+      actorId,
+      grant,
+      row,
+    })
+    setApprovingId(null)
+    setItems((current) => current.map((item) => item.id === row.id ? result.row : item))
+    if (!result.ok) setBanner(result.code)
+  }
+
+  async function handleReject(row: MeetingProposalRow) {
+    setBanner(null)
+    setApprovingId(row.id)
+    const result = await rejectNativeProposalViaRpc({
       api: proposalApi,
       workspaceId,
       actorId,
@@ -336,7 +352,12 @@ export default function MeetingsPage(props: {
         <button type="button" data-testid="meetings-start" onClick={() => void handleStart()}>{t('meetings.start')}</button>
         {bannerNode}
         {createForm}
-        <ProposalInbox proposals={items} onApprove={(row) => void handleApprove(row)} approvingId={approvingId} />
+        <ProposalInbox
+          proposals={items}
+          onApprove={(row) => void handleApprove(row)}
+          onReject={(row) => void handleReject(row)}
+          pendingId={approvingId}
+        />
       </div>
     )
   }
@@ -365,7 +386,12 @@ export default function MeetingsPage(props: {
         </p>
         {bannerNode}
         {createForm}
-        <ProposalInbox proposals={items} onApprove={(row) => void handleApprove(row)} approvingId={approvingId} />
+        <ProposalInbox
+          proposals={items}
+          onApprove={(row) => void handleApprove(row)}
+          onReject={(row) => void handleReject(row)}
+          pendingId={approvingId}
+        />
       </section>
     </div>
   )

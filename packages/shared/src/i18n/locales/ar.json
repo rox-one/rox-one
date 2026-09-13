@@ -1677,6 +1677,8 @@
   "meetings.payloadConflict": "مقترح آخر يستخدم هذا المعرّف بالفعل",
   "meetings.proposalTitle": "العنوان",
   "meetings.proposals": "اقتراحات",
+  "meetings.reject": "رفض",
+  "meetings.rejectFailed": "فشل الرفض",
   "meetings.revision": "المراجعة {{id}}",
   "meetings.rooms.undecided": "Rooms blocked: SFU provider not chosen",
   "meetings.rpcUnavailable": "RPC الاجتماعات غير متاح",

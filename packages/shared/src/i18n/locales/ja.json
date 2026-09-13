@@ -1677,6 +1677,8 @@
   "meetings.payloadConflict": "別の提案がこの ID を既に使用しています",
   "meetings.proposalTitle": "タイトル",
   "meetings.proposals": "提案",
+  "meetings.reject": "却下",
+  "meetings.rejectFailed": "却下に失敗しました",
   "meetings.revision": "リビジョン {{id}}",
   "meetings.rooms.undecided": "ルームはブロック: SFU プロバイダー未選択",
   "meetings.rpcUnavailable": "ミーティング RPC を利用できません",

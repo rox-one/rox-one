@@ -1677,6 +1677,8 @@
   "meetings.payloadConflict": "다른 제안이 이미 이 id를 사용합니다",
   "meetings.proposalTitle": "제목",
   "meetings.proposals": "제안",
+  "meetings.reject": "거부",
+  "meetings.rejectFailed": "거부에 실패했습니다",
   "meetings.revision": "리비전 {{id}}",
   "meetings.rooms.undecided": "Rooms blocked: SFU provider not chosen",
   "meetings.rpcUnavailable": "미팅 RPC를 사용할 수 없습니다",

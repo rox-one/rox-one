@@ -23,6 +23,12 @@ export type MeetingProposalApi = {
     proposal: MeetingProposal
     operation: OperationResultV2
   }>
+  rejectMeetingProposal(
+    workspaceId: string,
+    proposalId: string,
+    actorId: string,
+    grant: MeetingGrant | null,
+  ): Promise<{ proposal: MeetingProposal | null; error?: { code: string } }>
 }
 
 export type MeetingProposalRow = {
@@ -37,12 +43,15 @@ export type MeetingProposalRow = {
 }
 
 export const PROPOSAL_ERROR_I18N: Record<string, string> = {
+  'already-applied': 'meetings.rejectFailed',
   'config-dir-required': 'meetings.configDirRequired',
   'create-failed': 'meetings.createFailed',
   'grant-required': 'meetings.grantRequired',
   'meeting-required': 'meetings.meetingRequired',
   'outbox-required': 'meetings.outboxRequired',
   'payload-conflict': 'meetings.payloadConflict',
+  'proposal-not-found': 'meetings.rejectFailed',
+  'reject-failed': 'meetings.rejectFailed',
   'rpc-unavailable': 'meetings.rpcUnavailable',
   'unsupported-native-kind': 'meetings.unsupportedKind',
   'workspace-required': 'meetings.workspaceRequired',
@@ -71,7 +80,7 @@ export function resolveMeetingProposalApi(injected?: MeetingProposalApi | null):
   if (injected) return injected
   if (typeof window === 'undefined') return null
   const api = window.electronAPI
-  if (!api?.createMeetingProposal || !api?.approveMeetingProposal) return null
+  if (!api?.createMeetingProposal || !api?.approveMeetingProposal || !api?.rejectMeetingProposal) return null
   return api
 }
 
@@ -192,4 +201,39 @@ export async function approveNativeProposalViaRpc(input: {
     ok: true,
     row: rowFromProposal(result.proposal, { revisionId }),
   }
+}
+
+export async function rejectNativeProposalViaRpc(input: {
+  api: MeetingProposalApi | null
+  workspaceId: string | null
+  actorId: string
+  grant: MeetingGrant | null
+  row: MeetingProposalRow
+}): Promise<{ ok: true; row: MeetingProposalRow } | { ok: false; code: string; row: MeetingProposalRow }> {
+  const gate = failClosedGate({
+    api: input.api,
+    workspaceId: input.workspaceId,
+    meetingId: input.row.id,
+    grant: input.grant,
+    requireMeeting: false,
+  })
+  if (!gate.ok) return { ok: false, code: gate.code, row: { ...input.row, errorCode: gate.code } }
+  const result = await gate.api.rejectMeetingProposal(
+    gate.workspaceId,
+    input.row.id,
+    input.actorId,
+    gate.grant,
+  )
+  if (!result.proposal) {
+    const code = result.error?.code ?? 'reject-failed'
+    return { ok: false, code, row: { ...input.row, errorCode: code } }
+  }
+  if (result.proposal.status !== 'rejected') {
+    return {
+      ok: false,
+      code: 'reject-failed',
+      row: rowFromProposal(result.proposal, { errorCode: 'reject-failed' }),
+    }
+  }
+  return { ok: true, row: rowFromProposal(result.proposal) }
 }

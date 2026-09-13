@@ -1677,6 +1677,8 @@
   "meetings.payloadConflict": "另一提案已使用此 id",
   "meetings.proposalTitle": "標題",
   "meetings.proposals": "提案",
+  "meetings.reject": "拒絕",
+  "meetings.rejectFailed": "拒絕失敗",
   "meetings.revision": "修訂 {{id}}",
   "meetings.rooms.undecided": "房間已阻止：尚未選擇 SFU 提供方",
   "meetings.rpcUnavailable": "會議 RPC 無法使用",

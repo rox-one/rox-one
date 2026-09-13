@@ -1677,6 +1677,8 @@
   "meetings.payloadConflict": "Egy másik javaslat már használja ezt az azonosítót",
   "meetings.proposalTitle": "Cím",
   "meetings.proposals": "Javaslatok",
+  "meetings.reject": "Elutasítás",
+  "meetings.rejectFailed": "Elutasítás sikertelen",
   "meetings.revision": "Revízió {{id}}",
   "meetings.rooms.undecided": "Szobák zárolva: nincs SFU-szolgáltató",
   "meetings.rpcUnavailable": "A megbeszélések RPC-je nem elérhető",
