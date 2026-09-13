@@ -14,6 +14,7 @@ const rail = readFileSync(
   'utf8',
 )
 const account = readFileSync(join(dir, 'AccountSettingsPage.tsx'), 'utf8')
+const privacy = readFileSync(join(dir, 'PrivacySettingsPage.tsx'), 'utf8')
 
 describe('Program 35 settings chrome', () => {
   it('sizes Cloud Runs and Security to the panel, not the window', () => {
@@ -48,5 +49,13 @@ describe('Program 35 settings chrome', () => {
   it('puts usage cards on the account page', () => {
     expect(account).toContain('<MiniDashboardCards')
     expect(account).toContain("t('settings.account.usageSection')")
+  })
+
+  it('keeps Privacy on the shared PanelHeader so switching settings tabs does not jump', () => {
+    expect(privacy).toContain('<PanelHeader')
+    expect(privacy).toContain('h-full min-h-0')
+    expect(privacy).toContain('mask-fade-y')
+    expect(privacy).not.toContain('100dvh')
+    expect(privacy).not.toContain("label={t('settings.privacy.requestExport')}")
   })
 })

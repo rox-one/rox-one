@@ -6,13 +6,17 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import {
   SettingsCard,
   SettingsRow,
   SettingsSection,
   SettingsToggle,
 } from '@/components/settings'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { routes } from '@/lib/navigate'
 import type { ConsentPurpose, PrivacyDto } from '@craft-agent/shared/privacy'
 
 export const meta: DetailsPageMeta = {
@@ -102,63 +106,69 @@ export default function PrivacySettingsPage() {
     : t('settings.privacy.none')
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="px-6 py-4 border-b border-border/60">
-        <h1 className="text-lg font-semibold">{t('settings.privacy.title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('settings.privacy.description')}</p>
-      </div>
+    <div className="flex h-full min-h-0 flex-col">
+      <PanelHeader
+        title={t('settings.privacy.title')}
+        actions={<HeaderMenu route={routes.view.settings('privacy')} />}
+      />
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
+          <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
+            <p className="whitespace-normal break-words text-sm text-muted-foreground">
+              {t('settings.privacy.description')}
+            </p>
+            <SettingsSection title={t('settings.privacy.purposes')}>
+              <SettingsCard>
+                <p className="px-4 pt-3 text-xs text-muted-foreground">{t('settings.privacy.legalNote')}</p>
+                {!state ? (
+                  <p className="px-4 pb-3 text-xs text-muted-foreground">{t('common.loading')}</p>
+                ) : null}
+                {PURPOSE_KEYS.map((row) => (
+                  <SettingsToggle
+                    key={row.purpose}
+                    label={t(row.label)}
+                    description={
+                      row.purpose === 'realtimeSync' && !recoveryOn
+                        ? t('settings.privacy.realtimeRequiresRecovery')
+                        : t(row.desc)
+                    }
+                    checked={state?.purposes[row.purpose] === true}
+                    disabled={busy || (row.purpose === 'realtimeSync' && !recoveryOn)}
+                    onCheckedChange={(checked) => {
+                      void setPurpose(row.purpose, checked)
+                    }}
+                  />
+                ))}
+              </SettingsCard>
+            </SettingsSection>
 
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-        <SettingsSection title={t('settings.privacy.purposes')}>
-          <SettingsCard>
-            <p className="px-4 pt-3 text-xs text-muted-foreground">{t('settings.privacy.legalNote')}</p>
-            {!state ? (
-              <p className="px-4 pb-3 text-xs text-muted-foreground">{t('common.loading')}</p>
-            ) : null}
-            {PURPOSE_KEYS.map((row) => (
-              <SettingsToggle
-                key={row.purpose}
-                label={t(row.label)}
-                description={
-                  row.purpose === 'realtimeSync' && !recoveryOn
-                    ? t('settings.privacy.realtimeRequiresRecovery')
-                    : t(row.desc)
-                }
-                checked={state?.purposes[row.purpose] === true}
-                disabled={busy || (row.purpose === 'realtimeSync' && !recoveryOn)}
-                onCheckedChange={(checked) => {
-                  void setPurpose(row.purpose, checked)
-                }}
-              />
-            ))}
-          </SettingsCard>
-        </SettingsSection>
+            <SettingsSection title={t('settings.privacy.requestExport')}>
+              <SettingsCard>
+                <SettingsRow label={t('settings.privacy.excludedHint')}>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => void handleExport()}>
+                    {t('settings.privacy.requestExport')}
+                  </Button>
+                </SettingsRow>
+              </SettingsCard>
+            </SettingsSection>
 
-        <SettingsSection title={t('settings.privacy.requestExport')}>
-          <SettingsCard>
-            <SettingsRow label={t('settings.privacy.requestExport')} description={t('settings.privacy.excludedHint')}>
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => void handleExport()}>
-                {t('settings.privacy.requestExport')}
-              </Button>
-            </SettingsRow>
-          </SettingsCard>
-        </SettingsSection>
-
-        <SettingsSection title={t('settings.privacy.deleteRemote')}>
-          <SettingsCard>
-            <SettingsRow
-              label={t('settings.privacy.deletionStatus')}
-              description={t('settings.privacy.deleteRemoteDesc')}
-            >
-              <span className="text-sm">{deletionLabel}</span>
-            </SettingsRow>
-            <SettingsRow label={t('settings.privacy.localKept')} description={t('settings.privacy.localKept')}>
-              <Button size="sm" variant="outline" disabled={busy} onClick={() => void handleDeletion()}>
-                {t('settings.privacy.requestDeletion')}
-              </Button>
-            </SettingsRow>
-          </SettingsCard>
-        </SettingsSection>
+            <SettingsSection title={t('settings.privacy.deleteRemote')}>
+              <SettingsCard>
+                <SettingsRow
+                  label={t('settings.privacy.deletionStatus')}
+                  description={t('settings.privacy.deleteRemoteDesc')}
+                >
+                  <span className="text-sm">{deletionLabel}</span>
+                </SettingsRow>
+                <SettingsRow label={t('settings.privacy.localKept')}>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => void handleDeletion()}>
+                    {t('settings.privacy.requestDeletion')}
+                  </Button>
+                </SettingsRow>
+              </SettingsCard>
+            </SettingsSection>
+          </div>
+        </ScrollArea>
       </div>
     </div>
   )
