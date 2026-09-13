@@ -32,6 +32,8 @@ import type {
 import type { Workspace } from '../../../shared/types'
 import { getTeamSpacesForOrganization } from './organization-team-spaces'
 import { formatOrgMemberIdentity } from './organization-member-identity'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -110,6 +112,12 @@ export default function OrganizationsSettingsPage() {
 
     setCreating(true)
     try {
+      const gate = settingsPageActionResult({
+        pageId: 'organizations',
+        action: 'pref-write',
+        source: 'native',
+      })
+      if (!isClaimableLive(gate)) return
       const organization = await window.electronAPI.createOrganization({ name })
       setNewOrgName('')
       setOrgs((current) => [...current, organization])
@@ -129,6 +137,13 @@ export default function OrganizationsSettingsPage() {
 
     setInviting(true)
     try {
+      const gate = settingsPageActionResult({
+        pageId: 'organizations',
+        action: 'org-invite',
+        source: 'native',
+        granted: true,
+      })
+      if (!isClaimableLive(gate)) return
       const invite = await window.electronAPI.inviteToOrganization({
         orgId: selected.id,
         emailOrUsername: inviteTarget.trim(),
@@ -167,6 +182,13 @@ export default function OrganizationsSettingsPage() {
 
     setAccepting(true)
     try {
+      const gate = settingsPageActionResult({
+        pageId: 'organizations',
+        action: 'org-invite',
+        source: 'native',
+        granted: true,
+      })
+      if (!isClaimableLive(gate)) return
       const result = await window.electronAPI.acceptOrganizationInvite({ token })
       setAcceptToken('')
       await refresh()
@@ -186,6 +208,12 @@ export default function OrganizationsSettingsPage() {
 
     setSavingIdentity(true)
     try {
+      const gate = settingsPageActionResult({
+        pageId: 'organizations',
+        action: 'profile-write',
+        source: 'native',
+      })
+      if (!isClaimableLive(gate)) return
       await window.electronAPI.updateOrgIdentity({
         username: usernameDraft.trim() || undefined,
         email: emailDraft.trim() || undefined,
@@ -213,7 +241,8 @@ export default function OrganizationsSettingsPage() {
         title={t('settings.orgs.title')}
         actions={<HeaderMenu route={routes.view.settings('organizations')} />}
       />
-      <ScrollArea className="min-h-0 flex-1">
+      <div className="flex-1 min-h-0 mask-fade-y">
+      <ScrollArea className="h-full">
         <div className="mx-auto flex w-full max-w-2xl flex-col gap-7 px-4 py-5 sm:px-6">
           <SettingsSection
             title={t('settings.orgs.yourOrgs')}
@@ -484,6 +513,7 @@ export default function OrganizationsSettingsPage() {
           </SettingsSection>
         </div>
       </ScrollArea>
+      </div>
     </div>
   )
 }

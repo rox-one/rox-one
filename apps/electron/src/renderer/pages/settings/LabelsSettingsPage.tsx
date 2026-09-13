@@ -38,6 +38,8 @@ import type { EntityColor } from '@craft-agent/shared/colors'
 import type { LabelConfig } from '@craft-agent/shared/labels'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { resolveLabelDisplayName } from '@/config/session-status-config'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -182,6 +184,12 @@ export default function LabelsSettingsPage() {
       }
       setSavingId(label.id)
       try {
+        const gate = settingsPageActionResult({
+          pageId: 'labels',
+          action: 'pref-write',
+          source: 'native',
+        })
+        if (!isClaimableLive(gate)) return
         await window.electronAPI.updateLabel(workspaceId, label.id, { name: next })
         setDraftNames((prev) => {
           const copy = { ...prev }
@@ -203,6 +211,12 @@ export default function LabelsSettingsPage() {
       if (!workspaceId || !hex) return
       setSavingId(label.id)
       try {
+        const gate = settingsPageActionResult({
+          pageId: 'labels',
+          action: 'pref-write',
+          source: 'native',
+        })
+        if (!isClaimableLive(gate)) return
         await window.electronAPI.updateLabel(workspaceId, label.id, {
           color: hexToEntityColor(hex),
         })
@@ -223,6 +237,13 @@ export default function LabelsSettingsPage() {
         t('settings.labels.deleteConfirm', { name: resolveLabelDisplayName(label, t) }),
       )
       if (!ok) return
+      const gate = settingsPageActionResult({
+        pageId: 'labels',
+        action: 'doc-delete',
+        source: 'native',
+        granted: true,
+      })
+      if (!isClaimableLive(gate)) return
       setSavingId(label.id)
       try {
         await window.electronAPI.deleteLabel(workspaceId, label.id)
@@ -246,6 +267,12 @@ export default function LabelsSettingsPage() {
     if (!workspaceId || !newName.trim()) return
     setCreating(true)
     try {
+      const gate = settingsPageActionResult({
+        pageId: 'labels',
+        action: 'pref-write',
+        source: 'native',
+      })
+      if (!isClaimableLive(gate)) return
       await window.electronAPI.createLabel(workspaceId, {
         name: newName.trim(),
         color: hexToEntityColor(newColor),
@@ -268,7 +295,7 @@ export default function LabelsSettingsPage() {
   const askAiLabel = t('common.askAi')
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full min-h-0 flex-col">
       <PanelHeader title={t('settings.labels.title')} actions={<HeaderMenu route={routes.view.settings('labels')} />} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">

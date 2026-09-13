@@ -33,6 +33,8 @@ import {
   getRiskAcceptanceDateLimits,
   validateRiskAcceptance,
 } from './security/security-validation'
+import { isClaimableLive } from '@craft-agent/core/rox2'
+import { settingsPageActionResult, type SettingsPageActionKind } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -55,6 +57,24 @@ type PendingSecurityAction =
   | { readonly kind: 'revoke'; readonly fingerprint: string; readonly checkId: string }
   | { readonly kind: 'openControlUi' }
   | { readonly kind: 'copySetupCredential' }
+
+function securityActionLive(kind: PendingSecurityAction['kind']): boolean {
+  const spec: { action: SettingsPageActionKind; granted?: boolean } =
+    kind === 'install' || kind === 'provision' || kind === 'start'
+      ? { action: 'install', granted: true }
+      : kind === 'stop'
+        ? { action: 'toggle' }
+        : kind === 'audit'
+          ? { action: 'scan', granted: true }
+          : kind === 'accept'
+            ? { action: 'persist' }
+            : kind === 'revoke'
+              ? { action: 'uninstall', granted: true }
+              : { action: 'config-read', granted: true }
+  return isClaimableLive(
+    settingsPageActionResult({ pageId: 'security', source: 'native', ...spec }),
+  )
+}
 
 type LoadState = 'idle' | 'unavailable' | 'failed'
 
@@ -209,6 +229,7 @@ export default function SecuritySettingsPage() {
       setLoadState('unavailable')
       return
     }
+    if (!securityActionLive(action.kind)) return
 
     switch (action.kind) {
       case 'install':
