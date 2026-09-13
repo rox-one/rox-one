@@ -12,6 +12,7 @@ import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
 import { applyNativeManualNote, applyNativeSegmentCorrection, type ManualNoteSpec, type SegmentCorrectionSpec } from '../../meetings/manual.ts'
 import { rejectMeetingProposal, createMeetingProposal, loadProposalStore, saveProposalStore, type ProposalStore } from '../../meetings/proposals.ts'
 import { appendProposalJournalEvent } from '../../meetings/proposal-journal.ts'
+import { appendOperationResultEvent } from '../../meetings/operation-journal.ts'
 import { approveAndExecuteNative, type NativeExecuteRuntime } from '../../meetings/approve-execute.ts'
 import { createNativeActionHarness, openNativePersistTarget } from '../../meetings/native-actions.ts'
 import type { OutboxJob } from '../../meetings/executor.ts'
@@ -252,6 +253,19 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
         persistStore(workspaceId, store)
         if (result.operation.verification === 'verified') {
           return { proposal: result.proposal, operation: journalFailOperation(result.proposal.id, journaled.code) }
+        }
+        return result
+      }
+      const opJournaled = appendOperationResultEvent({
+        persistRootDir,
+        workspaceId,
+        meetingId: result.proposal.meetingId,
+        result: result.operation,
+      })
+      if (!opJournaled.ok) {
+        persistStore(workspaceId, store)
+        if (result.operation.verification === 'verified') {
+          return { proposal: result.proposal, operation: journalFailOperation(result.proposal.id, opJournaled.code) }
         }
         return result
       }
