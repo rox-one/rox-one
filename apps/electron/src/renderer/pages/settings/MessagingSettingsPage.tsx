@@ -340,11 +340,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   const handleDisconnect = async () => {
     try {
       await window.electronAPI.disconnectMessagingPlatform(platform)
-      toast.success(
-        t(`settings.messaging.${platform}.disconnected`, {
-          defaultValue: 'Disconnected',
-        }),
-      )
+      toast.success(t(`settings.messaging.${platform}.disconnected`))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.error'))
     }
@@ -353,11 +349,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   const handleForget = async () => {
     try {
       await window.electronAPI.forgetMessagingPlatform(platform)
-      toast.success(
-        t(`settings.messaging.${platform}.disconnected`, {
-          defaultValue: 'Disconnected',
-        }),
-      )
+      toast.success(t(`settings.messaging.${platform}.disconnected`))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.error'))
     }
@@ -452,11 +444,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
               onUnpairSupergroup={async () => {
                 try {
                   await window.electronAPI.unbindMessagingSupergroup()
-                  toast.success(
-                    t('settings.messaging.telegram.supergroup.disconnected', {
-                      defaultValue: 'Supergroup disconnected',
-                    }),
-                  )
+                  toast.success(t('settings.messaging.telegram.supergroup.disconnected'))
                   refreshSupergroup()
                 } catch (err) {
                   toast.error(err instanceof Error ? err.message : t('common.error'))
@@ -478,9 +466,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
                   binding={binding}
                   sessionMetaMap={sessionMetaMap}
                   workspaceOwners={workspaceOwners}
-                  subtitle={t('settings.messaging.wechat.directSessionSubtitle', {
-                    defaultValue: 'Direct message session',
-                  })}
+                  subtitle={t('settings.messaging.wechat.directSessionSubtitle')}
                   onOpen={() => navigateToSession(binding.sessionId)}
                   onUnbind={() => handleUnbind(binding)}
                   onAccessChange={(next) => handleAccessChange(binding.id, next)}
@@ -622,9 +608,7 @@ function TelegramBindingsBody({
   //   - number:    topic in the paired supergroup
   const directBindings = React.useMemo(() => bindings.filter((b) => b.threadId === undefined), [bindings])
   const topicBindings = React.useMemo(() => bindings.filter((b) => b.threadId !== undefined), [bindings])
-  const directSubtitle = t('settings.messaging.telegram.directSessionSubtitle', {
-    defaultValue: 'Direct message session',
-  })
+  const directSubtitle = t('settings.messaging.telegram.directSessionSubtitle')
 
   return (
     <>
@@ -715,17 +699,15 @@ function UnpairedSupergroupRow({ onPair }: { onPair: () => void }) {
       <SubRowIcon icon={MessagesSquare} />
       <div className="min-w-0 flex-1">
         <div className="text-sm">
-          {t('settings.messaging.telegram.supergroup.label', { defaultValue: 'Supergroup' })}
+          {t('settings.messaging.telegram.supergroup.label')}
         </div>
         <div className="mt-0.5 truncate text-xs text-foreground/50">
-          {t('settings.messaging.telegram.supergroup.notConfigured', {
-            defaultValue: 'Not configured',
-          })}
+          {t('settings.messaging.telegram.supergroup.notConfigured')}
         </div>
       </div>
       <Button variant="outline" size="sm" onClick={onPair}>
         <Plus className="h-3.5 w-3.5" />
-        {t('settings.messaging.telegram.supergroup.pair', { defaultValue: 'Pair Supergroup' })}
+        {t('settings.messaging.telegram.supergroup.pair')}
       </Button>
     </div>
   )
@@ -761,7 +743,6 @@ function PairedSupergroupSection({
       ? t('settings.messaging.telegram.supergroup.autoTopicNote')
       : t('settings.messaging.telegram.supergroup.topicsBound', {
           count: topicBindings.length,
-          defaultValue: '{{count}} topics bound',
         })
 
   return (
@@ -800,10 +781,7 @@ function PairedSupergroupSection({
                 <div className="flex items-start gap-3 px-4 py-3 text-xs text-foreground/50">
                   <IconSpacer />
                   <span>
-                    {t('settings.messaging.telegram.supergroup.noTopicsHint', {
-                      defaultValue:
-                        'No topics bound yet — automations with `telegramTopic` will create them.',
-                    })}
+                    {t('settings.messaging.telegram.supergroup.noTopicsHint')}
                   </span>
                 </div>
               ) : (
@@ -961,15 +939,15 @@ function buildDescription(
     if (platform === 'telegram' && runtime.identity) {
       return t('settings.messaging.telegram.validBot', { username: runtime.identity })
     }
-    return t(`settings.messaging.${platform}.connected`, { defaultValue: 'Connected' })
+    return t(`settings.messaging.${platform}.connected`)
   }
   if (runtime.state === 'connecting') {
-    return t('dialog.whatsapp.starting', { defaultValue: 'Connecting…' })
+    return t('dialog.whatsapp.starting')
   }
   if (runtime.state === 'error' && runtime.lastError) {
     return runtime.lastError
   }
-  return t(`settings.messaging.${platform}.notConnected`, { defaultValue: 'Not connected' })
+  return t(`settings.messaging.${platform}.notConnected`)
 }
 
 function defaultRuntime(platform: Platform): MessagingPlatformRuntimeInfo {
