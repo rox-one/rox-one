@@ -130,10 +130,10 @@ export interface StoredConfig {
   browserToolEnabled?: boolean;  // Enable built-in browser tool (default: true). Disable for Playwright/Puppeteer.
   allowRemoteEvaluate?: boolean;  // Allow remote agents to call `browser_tool evaluate` on local browser (default: true).
   // Prompt caching & context
-  extendedPromptCache?: boolean;  // Use 1h prompt cache TTL instead of 5m (default: false)
+  extendedPromptCache?: boolean;  // Use 1h prompt cache TTL instead of 5m (default: true)
   enable1MContext?: boolean;  // Enable 1M context window for supported models (default: false — opt-in; requires Anthropic Tier 4+)
   // Token optimization
-  rtkEnabled?: boolean;  // Route Bash commands through rtk to compress tool output (default: false). https://github.com/rtk-ai/rtk
+  rtkEnabled?: boolean;  // Route Bash commands through rtk to compress tool output (default: true when unset). https://github.com/rtk-ai/rtk
   // Self-learning memory (distillation triggers). Missing keys fall back to DEFAULT_MEMORY_CONFIG.
   memory?: {
     enabled?: boolean;           // master switch (default: true)
@@ -695,7 +695,7 @@ const FALLBACK_CONFIG_DEFAULTS: ConfigDefaults = {
     keepAwakeWhileRunning: false,
     richToolDescriptions: true,
     defaultZoomLevel: 90,
-    extendedPromptCache: false,
+    extendedPromptCache: true,
     browserToolEnabled: true,
     allowRemoteEvaluate: true,
   },
@@ -1157,11 +1157,11 @@ export function setDefaultZoomLevel(level: number): void {
 /**
  * Get whether extended prompt cache (1h TTL) is enabled.
  * When enabled, the interceptor upgrades cache_control TTL from 5m to 1h.
- * Defaults to false if not set.
+ * Defaults to true if not set.
  */
 export function getExtendedPromptCache(): boolean {
   const config = loadStoredConfig();
-  return config?.extendedPromptCache ?? false;
+  return config?.extendedPromptCache ?? true;
 }
 
 /**
@@ -1288,12 +1288,12 @@ export function setEnable1MContext(enabled: boolean): void {
  * Get whether rtk Bash-output compression is enabled.
  * When enabled, the PreToolUse pipeline rewrites Bash commands to their `rtk` equivalents
  * to reduce token consumption on common dev commands (git, ls, grep, test runners, etc.).
- * Defaults to false — opt-in. Requires the `rtk` binary on PATH or bundled with the app.
+ * Defaults to true when unset. Requires the `rtk` binary on PATH or bundled with the app.
  * https://github.com/rtk-ai/rtk
  */
 export function getRtkEnabled(): boolean {
   const config = loadStoredConfig();
-  return config?.rtkEnabled === true;
+  return config?.rtkEnabled !== false;
 }
 
 /**

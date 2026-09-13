@@ -96,6 +96,9 @@ export default function SecuritySettingsPage() {
   const [acceptanceFinding, setAcceptanceFinding] = React.useState<SecurityFinding | null>(null)
   const [rationale, setRationale] = React.useState('')
   const [expiresOn, setExpiresOn] = React.useState('')
+  const [infisicalHealth, setInfisicalHealth] = React.useState<
+    'unknown' | 'checking' | 'available' | 'unavailable'
+  >('unknown')
 
   const dateFormatter = React.useMemo(
     () => new Intl.DateTimeFormat(i18n.language || 'ru-RU', { dateStyle: 'medium', timeStyle: 'short' }),
@@ -115,6 +118,25 @@ export default function SecuritySettingsPage() {
     typeof window.electronAPI?.securityAudit?.getLatest === 'function' &&
     typeof window.electronAPI?.securityAudit?.acceptRisk === 'function' &&
     typeof window.electronAPI?.securityAudit?.revokeRiskAcceptance === 'function'
+
+  const checkInfisicalHealth = React.useCallback(async () => {
+    const probe = window.electronAPI?.fabricInfisicalHealth
+    if (typeof probe !== 'function') {
+      setInfisicalHealth('unavailable')
+      return
+    }
+    setInfisicalHealth('checking')
+    try {
+      const result = await probe()
+      setInfisicalHealth(result.available ? 'available' : 'unavailable')
+    } catch {
+      setInfisicalHealth('unavailable')
+    }
+  }, [])
+
+  React.useEffect(() => {
+    void checkInfisicalHealth()
+  }, [checkInfisicalHealth])
 
   const refresh = React.useCallback(async () => {
     if (!workspaceId) {
@@ -396,6 +418,32 @@ export default function SecuritySettingsPage() {
                 </Button>
                 <Button size="sm" variant="outline" disabled={isBusy || !workspaceId || !apiAvailable} onClick={() => setPendingAction({ kind: 'audit', mode: 'deep' })}>
                   {t('security.action.deepAudit')}
+                </Button>
+              </div>
+            </SettingsCard>
+          </SettingsSection>
+
+          <SettingsSection title={t('security.section.vault')}>
+            <SettingsCard className="space-y-3">
+              <div>
+                <p className="text-sm font-medium">{t('security.infisical.title')}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{t('security.infisical.hint')}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-medium" role="status" aria-live="polite">
+                  {infisicalHealth === 'available'
+                    ? t('security.infisical.status.available')
+                    : infisicalHealth === 'unavailable'
+                      ? t('security.infisical.status.unavailable')
+                      : t('security.loading')}
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={infisicalHealth === 'checking'}
+                  onClick={() => void checkInfisicalHealth()}
+                >
+                  {t('security.infisical.check')}
                 </Button>
               </div>
             </SettingsCard>

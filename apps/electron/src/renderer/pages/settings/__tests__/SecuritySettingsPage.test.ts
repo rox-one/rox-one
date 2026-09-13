@@ -71,4 +71,15 @@ describe('SecuritySettingsPage source contracts', () => {
     expect(source).toContain("case 'openControlUi':")
     expect(source).toContain("case 'copySetupCredential':")
   })
+
+  it('shows Infisical-for-Rox health without an email or token login form', () => {
+    expect(source).toContain('fabricInfisicalHealth')
+    expect(source).toContain("t('security.infisical.title')")
+    expect(source).toContain("t('security.infisical.hint')")
+    expect(source).toContain("t('security.infisical.check')")
+    expect(source).toContain("t('security.section.vault')")
+    expect(source).not.toMatch(/type=["']email["']/)
+    expect(source).not.toMatch(/type=["']password["']/)
+    expect(source).not.toMatch(/error\.message|String\(error\)/)
+  })
 })
