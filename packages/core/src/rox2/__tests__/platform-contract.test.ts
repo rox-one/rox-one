@@ -26,6 +26,11 @@ import {
   wouldCreateRelationCycle,
   type Rox2EntityRef,
 } from '../platform-contract.ts'
+import {
+  soupDocumentActResult,
+  soupDocumentListResult,
+  soupDocumentReadResult,
+} from '../soup-document-actions.ts'
 
 const ALL_SOUP_TYPES: SoupEntityConcreteType[] = [
   'GraphqlSoupDocument',
@@ -524,5 +529,51 @@ describe('ROX2 platform contract', () => {
     const unsupported = parseRox2TypedRecord(future)
     expect(unsupported).toEqual({ ok: false, code: 'unsupported-version', preserved: future })
     expect(parseRox2TypedRecord({ schemaVersion: 1, kind: 'note', system: { id: 'n1', workspaceId: 'ws', displayName: 'x', updatedAt: Number.NaN } }).ok).toBe(false)
+  })
+})
+
+describe('ROX2-078..080 GraphqlSoupDocument list/read/act', () => {
+  test('list names live vs fixture; Soup list is not claimable', () => {
+    const nativeEmpty = soupDocumentListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+
+    const nativeRows = soupDocumentListResult({ source: 'native', nativeIds: ['daily'] })
+    expect(isClaimableLive(nativeRows.result)).toBe(true)
+    expect(nativeRows.entities).toEqual(['daily'])
+
+    expect(isClaimableLive(soupDocumentListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(soupDocumentListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing entity is not a fake record', () => {
+    const found = soupDocumentReadResult({ source: 'native', nativeId: 'daily' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('note:daily')
+
+    const missing = soupDocumentReadResult({ source: 'native' })
+    expect(isClaimableLive(missing.result)).toBe(false)
+    expect(missing.entityId).toBeNull()
+
+    expect(isClaimableLive(soupDocumentReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(soupDocumentReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; Soup, fixture, ungranted destroy, and spend are not', () => {
+    expect(
+      isClaimableLive(soupDocumentActResult({ source: 'native', action: 'write', nativeId: 'daily' })),
+    ).toBe(true)
+    expect(
+      isClaimableLive(
+        soupDocumentActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'daily' }),
+      ),
+    ).toBe(true)
+    expect(
+      isClaimableLive(soupDocumentActResult({ source: 'native', action: 'destroy', nativeId: 'daily' })),
+    ).toBe(false)
+    expect(isClaimableLive(soupDocumentActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(soupDocumentActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(soupDocumentActResult({ source: 'conation' }))).toBe(false)
   })
 })

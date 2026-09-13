@@ -97,6 +97,13 @@ export {
   type Rox2NoteRecord,
 } from './notes-repository.ts'
 export {
+  soupDocumentActResult,
+  soupDocumentListResult,
+  soupDocumentReadResult,
+  type SoupDocumentActKind,
+  type SoupDocumentActionSource,
+} from './soup-document-actions.ts'
+export {
   CONATION_API_SCHEMA_VERSION,
   CONATION_BLOCKED_OPERATIONS,
   CONATION_CONFIRMED_OPERATIONS,
