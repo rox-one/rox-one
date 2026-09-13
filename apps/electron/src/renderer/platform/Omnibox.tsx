@@ -196,23 +196,19 @@ export function Omnibox({
   const placeholder = useMemo(() => {
     switch (parsed.prefix) {
       case '>':
-        return t('omnibox.prefix.commands', { defaultValue: 'Search commands…' })
+        return t('omnibox.prefix.commands')
       case '@':
-        return t('omnibox.prefix.mentions', {
-          defaultValue: 'Search sessions, sources, knowledge…',
-        })
+        return t('omnibox.prefix.mentions')
       case '/':
-        return t('omnibox.prefix.skills', { defaultValue: 'Search skills…' })
+        return t('omnibox.prefix.skills')
       case '!':
-        return t('omnibox.prefix.automations', {
-          defaultValue: 'Search automations…',
-        })
+        return t('omnibox.prefix.automations')
       case '?':
-        return t('omnibox.prefix.search', { defaultValue: 'Full-text search…' })
+        return t('omnibox.prefix.search')
       case '#':
-        return t('omnibox.prefix.labels', { defaultValue: 'Search labels…' })
+        return t('omnibox.prefix.labels')
       default:
-        return t('omnibox.placeholder', { defaultValue: 'Search or jump to…' })
+        return t('omnibox.placeholder')
     }
   }, [parsed.prefix, t])
 
@@ -226,7 +222,7 @@ export function Omnibox({
   const showNavigation = parsed.prefix !== '>'
   const emptyHint =
     !loading && resourcesList.length === 0 && commandHits.length === 0
-      ? t('omnibox.empty', { defaultValue: 'No results' })
+      ? t('omnibox.empty')
       : null
 
   return (
@@ -237,7 +233,7 @@ export function Omnibox({
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">
-          {t('omnibox.placeholder', { defaultValue: 'Command Palette' })}
+          {t('omnibox.placeholder')}
         </DialogTitle>
         <Command
           shouldFilter={false}
@@ -254,9 +250,7 @@ export function Omnibox({
 
             {showNavigation && resourcesList.length > 0 && (
               <CommandGroup
-                heading={t('omnibox.section.navigation', {
-                  defaultValue: 'Navigation',
-                })}
+                heading={t('omnibox.section.navigation')}
               >
                 {resourcesList.map((item) => (
                   <CommandItem
@@ -277,7 +271,7 @@ export function Omnibox({
 
             {contextItems.length > 0 && (
               <CommandGroup
-                heading={t('omnibox.section.context', { defaultValue: 'Context' })}
+                heading={t('omnibox.section.context')}
               >
                 {contextItems.map((entry) => (
                   <CommandItem
@@ -287,7 +281,6 @@ export function Omnibox({
                   >
                     <span className="truncate flex-1">
                       {t('omnibox.context.open', {
-                        defaultValue: 'Open “{{title}}”',
                         title: entry.item.title,
                       })}
                     </span>
@@ -298,7 +291,7 @@ export function Omnibox({
 
             {showActions && commandHits.length > 0 && (
               <CommandGroup
-                heading={t('omnibox.section.actions', { defaultValue: 'Actions' })}
+                heading={t('omnibox.section.actions')}
               >
                 {commandHits.map((cmd) => {
                   const hotkey =
