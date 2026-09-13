@@ -77,3 +77,19 @@ export {
   type NotesRepository,
   type Rox2NoteRecord,
 } from './notes-repository.ts'
+export {
+  CONATION_API_SCHEMA_VERSION,
+  CONATION_BLOCKED_OPERATIONS,
+  CONATION_CONFIRMED_OPERATIONS,
+  applyConationWrite,
+  ingestConationRecord,
+  isConfirmedConationRead,
+  resolveConationOperation,
+  type ConationBlockedOperation,
+  type ConationConfirmedOperation,
+  type ConationIngestResult,
+  type ConationOperationKind,
+  type ConationOperationResolution,
+  type ConationPagination,
+  type ConationRecordStore,
+} from './conation-api.ts'
