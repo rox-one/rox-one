@@ -54,6 +54,12 @@ import {
 } from '@craft-agent/shared/knowledge/vault-insights'
 import { EMPTY_NOTE_INSIGHTS } from './notes/VaultInsightsPanel'
 import { EMPTY_NOTE_INDEX_HEALTH } from './notes/VaultIndexHealthPanel'
+import {
+  findNoteByWikiTarget,
+  matchWikiLinkCandidates,
+  parseWikiCreateTarget,
+  wikiMatchSubtitle,
+} from './notes/wiki-autocomplete'
 
 interface NotesPageProps {
   selectedNoteId: string | null
@@ -71,17 +77,8 @@ function normalizeNoteTarget(value: string): string {
   return stripMdExtension(value.trim()).toLowerCase()
 }
 
-function baseNoteTitle(noteId: string): string {
-  return noteId.split('/').pop() || noteId
-}
-
 function findNoteByTarget(notes: NoteSummary[], target: string): NoteSummary | null {
-  const normalized = normalizeNoteTarget(target)
-  return notes.find(note =>
-    normalizeNoteTarget(note.id) === normalized
-    || normalizeNoteTarget(note.title) === normalized
-    || normalizeNoteTarget(baseNoteTitle(note.id)) === normalized
-  ) ?? null
+  return findNoteByWikiTarget(notes, target)
 }
 
 function filterNotes(notes: NoteSummary[], query: string, tag: string | null): NoteSummary[] {
@@ -970,15 +967,14 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
 
   const wikiMatches = React.useMemo(() => {
     if (wikiQuery == null) return []
-    const q = wikiQuery.toLowerCase()
-    return notes
-      .filter(note => note.id !== activeNote?.id)
-      .filter(note => !q || note.title.toLowerCase().includes(q) || noteRelativeLabel(note).toLowerCase().includes(q))
-      .slice(0, 8)
+    return matchWikiLinkCandidates(notes, wikiQuery, { excludeId: activeNote?.id, limit: 8 })
   }, [notes, activeNote?.id, wikiQuery])
 
   const wikiCreateLabel = wikiQuery?.trim()
-  const showWikiMenu = wikiQuery != null && (wikiMatches.length > 0 || !!wikiCreateLabel)
+  const showWikiCreate = !!wikiCreateLabel && !findNoteByTarget(notes, wikiCreateLabel)
+  const wikiItemCount = wikiMatches.length + (showWikiCreate ? 1 : 0)
+  const wikiCreateSelected = showWikiCreate && wikiIndex >= wikiMatches.length
+  const showWikiMenu = wikiQuery != null && wikiItemCount > 0
 
   const handleCreate = async () => {
     if (!activeWorkspaceId || !createTitle.trim()) return
@@ -1387,6 +1383,19 @@ h1,h2,h3{margin-top:1.5em}
     setWikiQuery(null)
   }
 
+  const completeWikiCreate = async (raw: string) => {
+    if (!activeWorkspaceId || !raw.trim()) return
+    const { title, folder } = parseWikiCreateTarget(raw)
+    if (!title) return
+    try {
+      const created = await window.electronAPI.createNote(activeWorkspaceId, title, folder)
+      completeWikiText(created.title)
+      await refreshNotes()
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t('notes.editor.wikiCreateFailed'))
+    }
+  }
+
   const createMissingLinkNote = React.useCallback(async () => {
     if (!activeWorkspaceId || !missingLinkTarget) return
     const cleanTarget = stripMdExtension(missingLinkTarget)
@@ -1620,6 +1629,7 @@ h1,h2,h3{margin-top:1.5em}
   const wikiMenu = showWikiMenu ? (
     <div
       className="absolute z-20 w-80 rounded-[8px] border border-border/70 bg-popover p-1 shadow-strong"
+      data-testid="notes-wiki-menu"
       style={wikiAnchor
         ? { left: Math.max(4, wikiAnchor.x), top: wikiAnchor.y }
         : { left: 24, bottom: 24 }
@@ -1635,20 +1645,24 @@ h1,h2,h3{margin-top:1.5em}
           )}
         >
           <div className="truncate text-xs font-medium">{note.title}</div>
-          <div className="truncate text-[11px] text-muted-foreground">{noteRelativeLabel(note)}</div>
+          <div className="truncate text-[11px] text-muted-foreground">{wikiMatchSubtitle(note, wikiQuery ?? '')}</div>
         </button>
       ))}
-      {wikiCreateLabel && !findNoteByTarget(notes, wikiCreateLabel) && (
+      {showWikiCreate && wikiCreateLabel ? (
         <button
-          onClick={() => completeWikiText(wikiCreateLabel)}
-          className="mt-1 flex w-full items-center gap-2 rounded-[5px] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]"
+          data-testid="notes-wiki-create"
+          onClick={() => { void completeWikiCreate(wikiCreateLabel) }}
+          className={cn(
+            'mt-1 flex w-full items-center gap-2 rounded-[5px] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+            wikiCreateSelected && 'bg-foreground/[0.08]',
+          )}
         >
           <Plus className="h-3.5 w-3.5" />
-          Link to new note "{wikiCreateLabel}"
+          {t('notes.editor.wikiCreate', { title: wikiCreateLabel })}
         </button>
-      )}
+      ) : null}
       <div className="border-t border-border/50 px-2 py-1 text-[10px] text-muted-foreground">
-        Up/Down select · Enter insert · Esc close
+        {t('notes.editor.wikiHint')}
       </div>
     </div>
   ) : null
@@ -1997,7 +2011,7 @@ h1,h2,h3{margin-top:1.5em}
                 if (showWikiMenu) {
                   if (event.key === 'ArrowDown') {
                     event.preventDefault()
-                    setWikiIndex(index => Math.min(index + 1, Math.max(0, wikiMatches.length - 1)))
+                    setWikiIndex(index => Math.min(index + 1, Math.max(0, wikiItemCount - 1)))
                     return
                   }
                   if (event.key === 'ArrowUp') {
@@ -2014,7 +2028,7 @@ h1,h2,h3{margin-top:1.5em}
                     event.preventDefault()
                     const match = wikiMatches[wikiIndex]
                     if (match) completeWikiLink(match)
-                    else if (wikiCreateLabel) completeWikiText(wikiCreateLabel)
+                    else if (wikiCreateLabel) void completeWikiCreate(wikiCreateLabel)
                   }
                   return
                 }
