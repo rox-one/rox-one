@@ -3645,6 +3645,7 @@
   "settings.messaging.telegram.access.bindingPopover.trigger.inherit_other": "Örökli · {{count}} felhasználó",
   "settings.messaging.telegram.access.bindingPopover.trigger.open": "Nyitott",
   "settings.messaging.telegram.access.bindingPopover.trigger.ownerControl": "{count} engedélyezett feladó.",
+  "settings.messaging.telegram.access.bindingPopover.trigger.ownerControlCount": "Tulajdonosi vezérlés · {{count}}",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInbox": "Nyilvános beérkező – {count} tulajdonos ellenőrzi a bejövőket.",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInboxEmpty": "Nyilvános beérkező – tulajdonosok még nincsenek beállítva.",
   "settings.messaging.telegram.access.failedToAllowSender": "Nem sikerült engedélyezni a feladót",

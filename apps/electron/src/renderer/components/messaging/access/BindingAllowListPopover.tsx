@@ -45,20 +45,6 @@ const MODE_ICONS: Record<UiMessagingAccessMode, typeof Lock> = {
   disabled: Ban,
 }
 
-const MODE_LABEL_DEFAULTS: Record<UiMessagingAccessMode, string> = {
-  'public-inbox': 'Public inbox',
-  'owner-control': 'Owner control',
-  disabled: 'Disabled',
-}
-
-const MODE_DESCRIPTION_DEFAULTS: Record<UiMessagingAccessMode, string> = {
-  'public-inbox':
-    'Unknown senders get a pairing reply. Messages do not start an agent session or run tools.',
-  'owner-control':
-    'Only selected senders and workspace owners can route to this session.',
-  disabled: 'This binding does not route inbound messages.',
-}
-
 export function BindingAllowListPopover({ access, workspaceOwners, onChange }: Props) {
   const { t } = useTranslation()
   const [open, setOpen] = React.useState(false)
@@ -127,10 +113,7 @@ export function BindingAllowListPopover({ access, workspaceOwners, onChange }: P
             </div>
             {!canCommitOwnerControl(draftIds) && (
               <div className="mt-1 text-xs text-foreground/50">
-                {t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint', {
-                  defaultValue:
-                    'Select at least one allowed sender before saving owner control.',
-                })}
+                {t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint')}
               </div>
             )}
             <div className="mt-2 flex flex-col gap-1">
@@ -204,13 +187,11 @@ function ModeRow({
       />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-xs font-medium">
-          {t(MODE_LABEL_KEYS[mode], { defaultValue: MODE_LABEL_DEFAULTS[mode] })}
+          {t(MODE_LABEL_KEYS[mode])}
           {selected && <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />}
         </div>
         <div className="mt-0.5 text-xs text-foreground/50">
-          {t(MODE_DESCRIPTION_KEYS[mode], {
-            defaultValue: MODE_DESCRIPTION_DEFAULTS[mode],
-          })}
+          {t(MODE_DESCRIPTION_KEYS[mode])}
         </div>
       </div>
     </button>
@@ -222,17 +203,12 @@ function buildTriggerLabel(
   t: (key: string, opts?: Record<string, unknown>) => string,
 ): string {
   if (access.mode === 'public-inbox') {
-    return t('settings.messaging.telegram.access.bindingPopover.trigger.publicInbox', {
-      defaultValue: 'Public inbox',
-    })
+    return t(MODE_LABEL_KEYS['public-inbox'])
   }
   if (access.mode === 'disabled') {
-    return t('settings.messaging.telegram.access.bindingPopover.trigger.disabled', {
-      defaultValue: 'Disabled',
-    })
+    return t(MODE_LABEL_KEYS['disabled'])
   }
-  return t('settings.messaging.telegram.access.bindingPopover.trigger.ownerControl', {
+  return t('settings.messaging.telegram.access.bindingPopover.trigger.ownerControlCount', {
     count: access.allowedSenderIds.length,
-    defaultValue: 'Owner control · {{count}}',
   })
 }

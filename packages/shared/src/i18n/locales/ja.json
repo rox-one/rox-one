@@ -3645,6 +3645,7 @@
   "settings.messaging.telegram.access.bindingPopover.trigger.inherit_other": "継承 · {{count}}人のユーザー",
   "settings.messaging.telegram.access.bindingPopover.trigger.open": "オープン",
   "settings.messaging.telegram.access.bindingPopover.trigger.ownerControl": "許可された送信者 {count} 名。",
+  "settings.messaging.telegram.access.bindingPopover.trigger.ownerControlCount": "オーナー制御 · {{count}}",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInbox": "公開インボックス - {count} 名のオーナーが確認中。",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInboxEmpty": "公開インボックス - オーナーが未設定です。",
   "settings.messaging.telegram.access.failedToAllowSender": "送信者を許可できませんでした",

@@ -3645,6 +3645,7 @@
   "settings.messaging.telegram.access.bindingPopover.trigger.inherit_other": "Übernimmt · {{count}} Nutzer",
   "settings.messaging.telegram.access.bindingPopover.trigger.open": "Offen",
   "settings.messaging.telegram.access.bindingPopover.trigger.ownerControl": "{count} erlaubte Absender.",
+  "settings.messaging.telegram.access.bindingPopover.trigger.ownerControlCount": "Eigentümerkontrolle · {{count}}",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInbox": "Öffentlicher Posteingang – {count} Eigentümer prüfen eingehende.",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInboxEmpty": "Öffentlicher Posteingang – noch keine Eigentümer festgelegt.",
   "settings.messaging.telegram.access.failedToAllowSender": "Absender konnte nicht erlaubt werden",

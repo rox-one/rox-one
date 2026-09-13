@@ -3645,6 +3645,7 @@
   "settings.messaging.telegram.access.bindingPopover.trigger.inherit_other": "موروث · {{count}} مستخدمين",
   "settings.messaging.telegram.access.bindingPopover.trigger.open": "مفتوح",
   "settings.messaging.telegram.access.bindingPopover.trigger.ownerControl": "{count} allowed sender(s).",
+  "settings.messaging.telegram.access.bindingPopover.trigger.ownerControlCount": "Owner control · {{count}}",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInbox": "Public inbox — {count} owner(s) review incoming.",
   "settings.messaging.telegram.access.bindingPopover.trigger.publicInboxEmpty": "Public inbox — no owners set yet.",
   "settings.messaging.telegram.access.failedToAllowSender": "تعذر السماح للمرسل",
