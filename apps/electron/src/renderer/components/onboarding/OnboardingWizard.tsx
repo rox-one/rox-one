@@ -242,6 +242,7 @@ export function OnboardingWizard({
           <CompletionStep
             status={state.completionStatus}
             onFinish={onFinish}
+            accountAuthenticated={roxConnectStatus === 'success'}
           />
         )
 

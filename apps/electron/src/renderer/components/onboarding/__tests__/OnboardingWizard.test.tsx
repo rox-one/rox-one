@@ -185,4 +185,59 @@ describe('OnboardingWizard', () => {
     expect(html).toContain('errors.omp.authRequired.message')
     expect(html).toContain('OMP_AUTH_REQUIRED')
   })
+
+  test('complete step shows first-result chrome and Get Started', () => {
+    const html = renderToStaticMarkup(
+      <OnboardingWizard
+        state={{
+          ...roxConnectState,
+          step: 'complete',
+          completionStatus: 'complete',
+        }}
+        onContinue={() => {}}
+        onBack={() => {}}
+        onSelectApiSetupMethod={() => {}}
+        onSubmitCredential={() => {}}
+        onFinish={() => {}}
+      />,
+    )
+
+    expect(html).toContain('onboarding.completion.firstResultHint')
+    expect(html).toContain('onboarding.completion.firstResultCreate')
+    expect(html).toContain('onboarding.completion.firstResultSkip')
+    expect(html).toContain('onboarding.welcome.getStarted')
+    expect(html).toContain('onboarding.completion.localProfileHint')
+  })
+
+  test('import error still shows Get Started on the complete step', async () => {
+    const { CompletionStep } = await import('../CompletionStep')
+    const storage = {
+      data: {
+        'rox.onboarding.first-result.v1': JSON.stringify({
+          schemaVersion: 1,
+          step: 'complete',
+          skipped: false,
+          accountAuthenticated: false,
+          noteId: 'n',
+          sessionId: 's',
+          outcomeId: 'o',
+          taskId: 't',
+          error: 'import-refused',
+        }),
+      } as Record<string, string>,
+      getItem(key: string) {
+        return this.data[key] ?? null
+      },
+      setItem(key: string, value: string) {
+        this.data[key] = value
+      },
+    }
+    const html = renderToStaticMarkup(
+      <CompletionStep status="complete" onFinish={() => {}} storage={storage} />,
+    )
+    expect(html).toContain('onboarding.completion.firstResultReady')
+    expect(html).toContain('knowledge.migrate.failed')
+    expect(html).toContain('common.retry')
+    expect(html).toContain('onboarding.welcome.getStarted')
+  })
 })
