@@ -153,4 +153,17 @@ describe('ROX2-044..046 native settings pages', () => {
     expect(knowledge).toContain("action: 'migrate'")
     expect(knowledge).toContain('settingsPageActionResult')
   })
+
+  test('playground mocks context docs and knowledge without claiming live Conation', () => {
+    const mock = source('apps/electron/src/renderer/playground/mock-utils.ts')
+    expect(mock).toContain('listContextDocs')
+    expect(mock).toContain('writeContextDoc')
+    expect(mock).toContain('installMarketplaceEntry')
+    expect(mock).toContain('detectEngine')
+    expect(mock).toContain('Playground fixture. Not live.')
+    expect(mock).not.toContain('conation.dev')
+    const context = source(PAGE_FILES.context)
+    expect(context).toContain('onContextDocsChanged?.(')
+    expect(context).not.toContain('@craft-agent/shared/config/paths')
+  })
 })
