@@ -999,6 +999,7 @@
   "editor.italic": "Italic",
   "editor.math": "Math",
   "editor.noLanguagesFound": "No languages found",
+  "editor.placeholder": "Write something...",
   "editor.searchLanguages": "Search languages...",
   "editor.strikethrough": "Strikethrough",
   "entityList.collapse": "Collapse",

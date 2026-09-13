@@ -1001,6 +1001,7 @@
   "editor.italic": "Курсив",
   "editor.math": "Формула",
   "editor.noLanguagesFound": "Языки не найдены",
+  "editor.placeholder": "Пишите что-нибудь...",
   "editor.searchLanguages": "Поиск языков...",
   "editor.strikethrough": "Зачёркнутый",
   "entityList.collapse": "Свернуть",

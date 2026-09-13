@@ -999,6 +999,7 @@
   "editor.italic": "Kursiv",
   "editor.math": "Mathematik",
   "editor.noLanguagesFound": "Keine Sprachen gefunden",
+  "editor.placeholder": "Schreib etwas...",
   "editor.searchLanguages": "Sprachen suchen...",
   "editor.strikethrough": "Durchgestrichen",
   "entityList.collapse": "Einklappen",

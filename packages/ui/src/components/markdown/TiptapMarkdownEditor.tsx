@@ -225,7 +225,7 @@ export interface TiptapMarkdownEditorProps {
 export function TiptapMarkdownEditor({
   content,
   onUpdate,
-  placeholder = 'Write something...',
+  placeholder,
   className,
   editable = true,
   onEditorReady,
@@ -263,7 +263,7 @@ export function TiptapMarkdownEditor({
       }),
       MermaidBlock,
       LatexBlock,
-      Placeholder.configure({ placeholder }),
+      Placeholder.configure({ placeholder: placeholder ?? i18n.t('editor.placeholder') }),
       Image.configure({
         inline: false,
         allowBase64: true,

@@ -999,6 +999,7 @@
   "editor.italic": "斜體",
   "editor.math": "數學公式",
   "editor.noLanguagesFound": "未找到語言",
+  "editor.placeholder": "寫點什麼...",
   "editor.searchLanguages": "搜尋語言...",
   "editor.strikethrough": "刪除線",
   "entityList.collapse": "摺疊",
