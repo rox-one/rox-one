@@ -9,6 +9,10 @@
  * and `operation.mode: 'fixture'`. They never satisfy
  * `isLiveWorkflowProductionSuccess`.
  *
+ * `permissionMode: 'ask'` waits (`waiting_approval`); `'safe'` fails closed
+ * (`denied`). Neither calls gateway/tools until `approvedNodeIds` includes the
+ * node. Internal catch details stay in logs, not `safeMessage`.
+ *
  *   import {
  *     executeLiveWorkflow,
  *     createLoopbackModelGateway,

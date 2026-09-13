@@ -298,6 +298,8 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
     expect(run.operation.lifecycle).toBe('failed')
     expect(run.operation.verification).not.toBe('verified')
     expect(run.operation.error?.code).toBe('model_failed')
+    expect(run.operation.error?.safeMessage).toBe('Node failed')
+    expect(run.operation.error?.safeMessage).not.toContain('upstream 500')
     expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
   })
 
@@ -479,5 +481,237 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
         receipt: { provider: 'fake' },
       },
     })).toBe(false)
+  })
+
+  test('ask model node waits for approval and does not call the gateway', async () => {
+    let calls = 0
+    const gateway: WorkflowModelGateway = {
+      async complete(request) {
+        calls += 1
+        return productionGateway().complete(request)
+      },
+    }
+    const m = modelNode('m1')
+    m.permissionMode = 'ask'
+    const spec = specWith([m])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [m.id],
+      now: NOW,
+      gateway,
+      tools: productionTools(),
+      receipts: createInMemoryReceiptStore(),
+      bindings: { [m.id]: { prompt: 'say hi' } },
+    })
+
+    expect(calls).toBe(0)
+    expect(run.status[m.id]).toBe('waiting_approval')
+    expect(run.status[m.id]).not.toBe('done')
+    expect(run.operation.lifecycle).toBe('waiting_approval')
+    expect(run.operation.lifecycle).not.toBe('succeeded')
+    expect(run.finishedAt).toBeUndefined()
+    expect(run.artifacts[m.id]).toBeUndefined()
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
+  })
+
+  test('ask tool node waits for approval and does not call tools', async () => {
+    let calls = 0
+    const tools: WorkflowToolRegistry = {
+      async call(request) {
+        calls += 1
+        return productionTools().call(request)
+      },
+    }
+    const t = toolNode('t1')
+    t.permissionMode = 'ask'
+    const spec = specWith([t])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [t.id],
+      now: NOW,
+      gateway: productionGateway(),
+      tools,
+      receipts: createInMemoryReceiptStore(),
+      bindings: { [t.id]: { toolName: 'echo', input: { ping: 1 } } },
+    })
+
+    expect(calls).toBe(0)
+    expect(run.status[t.id]).toBe('waiting_approval')
+    expect(run.operation.lifecycle).toBe('waiting_approval')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
+  })
+
+  test('spec default ask is inherited when the node has no permissionMode', async () => {
+    let calls = 0
+    const gateway: WorkflowModelGateway = {
+      async complete() {
+        calls += 1
+        throw new Error('must not run')
+      },
+    }
+    const m = modelNode('m1')
+    delete m.permissionMode
+    const spec = specWith([m])
+    spec.defaults.permissionMode = 'ask'
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [m.id],
+      now: NOW,
+      gateway,
+      tools: productionTools(),
+      bindings: { [m.id]: { prompt: 'x' } },
+    })
+
+    expect(calls).toBe(0)
+    expect(run.status[m.id]).toBe('waiting_approval')
+    expect(run.operation.lifecycle).toBe('waiting_approval')
+  })
+
+  test('safe model node is denied and does not call the gateway', async () => {
+    let calls = 0
+    const gateway: WorkflowModelGateway = {
+      async complete() {
+        calls += 1
+        throw new Error('must not run')
+      },
+    }
+    const m = modelNode('m1')
+    m.permissionMode = 'safe'
+    const spec = specWith([m])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [m.id],
+      now: NOW,
+      gateway,
+      tools: productionTools(),
+      receipts: createInMemoryReceiptStore(),
+      bindings: { [m.id]: { prompt: 'say hi' } },
+    })
+
+    expect(calls).toBe(0)
+    expect(run.status[m.id]).toBe('failed')
+    expect(run.status[m.id]).not.toBe('done')
+    expect(run.operation.lifecycle).toBe('failed')
+    expect(run.operation.error?.code).toBe('denied')
+    expect(run.operation.error?.safeMessage).toBe('Live execution is not allowed in this permission mode')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
+  })
+
+  test('ask model executes only after the node is approved', async () => {
+    let calls = 0
+    const gateway: WorkflowModelGateway = {
+      async complete(request) {
+        calls += 1
+        return productionGateway().complete(request)
+      },
+    }
+    const m = modelNode('m1')
+    m.permissionMode = 'ask'
+    const spec = specWith([m])
+    const input = {
+      spec,
+      mode: 'node' as const,
+      seedIds: [m.id],
+      now: NOW,
+      gateway,
+      tools: productionTools(),
+      receipts: createInMemoryReceiptStore(),
+      bindings: { [m.id]: { prompt: 'say hi' } },
+    }
+
+    const waiting = await executeLiveWorkflow(input)
+    expect(calls).toBe(0)
+    expect(waiting.operation.lifecycle).toBe('waiting_approval')
+
+    const run = await executeLiveWorkflow({ ...input, approvedNodeIds: [m.id] })
+    expect(calls).toBe(1)
+    expect(run.status[m.id]).toBe('done')
+    expect(run.operation.lifecycle).toBe('succeeded')
+    expect(run.evidence).toBe('live')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+  })
+
+  test('safe tool executes only after the node is approved', async () => {
+    let calls = 0
+    const tools: WorkflowToolRegistry = {
+      async call(request) {
+        calls += 1
+        return productionTools().call(request)
+      },
+    }
+    const t = toolNode('t1')
+    t.permissionMode = 'safe'
+    const spec = specWith([t])
+    const denied = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [t.id],
+      now: NOW,
+      gateway: productionGateway(),
+      tools,
+      receipts: createInMemoryReceiptStore(),
+      bindings: { [t.id]: { toolName: 'echo', input: {} } },
+    })
+    expect(calls).toBe(0)
+    expect(denied.operation.error?.code).toBe('denied')
+
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [t.id],
+      now: NOW,
+      gateway: productionGateway(),
+      tools,
+      receipts: createInMemoryReceiptStore(),
+      approvedNodeIds: [t.id],
+      bindings: { [t.id]: { toolName: 'echo', input: {} } },
+    })
+    expect(calls).toBe(1)
+    expect(run.status[t.id]).toBe('done')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+  })
+
+  test('allow-all model then ask tool runs the model and stops before the tool', async () => {
+    let modelCalls = 0
+    let toolCalls = 0
+    const gateway: WorkflowModelGateway = {
+      async complete(request) {
+        modelCalls += 1
+        return productionGateway().complete(request)
+      },
+    }
+    const tools: WorkflowToolRegistry = {
+      async call(request) {
+        toolCalls += 1
+        return productionTools().call(request)
+      },
+    }
+    const m = modelNode('m1')
+    const t = toolNode('t1')
+    t.permissionMode = 'ask'
+    const spec = specWith([m, t], [createCanvasEdge({ source: m.id, target: t.id, now: NOW })])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'pipeline',
+      now: NOW,
+      gateway,
+      tools,
+      receipts: createInMemoryReceiptStore(),
+      bindings: {
+        [m.id]: { prompt: 'say hi' },
+        [t.id]: { toolName: 'echo', input: {} },
+      },
+    })
+
+    expect(modelCalls).toBe(1)
+    expect(toolCalls).toBe(0)
+    expect(run.status[m.id]).toBe('done')
+    expect(run.status[t.id]).toBe('waiting_approval')
+    expect(run.operation.lifecycle).toBe('waiting_approval')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
   })
 })

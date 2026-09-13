@@ -90,6 +90,8 @@ export type LiveWorkflowExecuteInput = {
   tools: WorkflowToolRegistry
   receipts?: WorkflowReceiptStore
   bindings?: Record<string, WorkflowNodeBinding>
+  /** Nodes the caller has already approved. Required to run `ask`/`safe` live. */
+  approvedNodeIds?: readonly string[]
 }
 
 export class LiveWorkflowError extends Error {

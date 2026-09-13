@@ -30,6 +30,9 @@ import { LiveWorkflowError } from './types.ts'
 export { LiveWorkflowError } from './types.ts'
 export { isLoopbackProvider, isLoopbackTransport } from './fakes.ts'
 
+const NODE_FAILED_SAFE_MESSAGE = 'Node failed'
+const PERMISSION_DENIED_SAFE_MESSAGE = 'Live execution is not allowed in this permission mode'
+
 /**
  * Production success is live evidence + production mode + succeeded +
  * verified non-loopback receipt + a caller-injected receipt store.
@@ -159,6 +162,7 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
   let lifecycle: OperationResultV2['lifecycle'] = 'running'
   let error: OperationResultV2['error']
   const signal = input.signal
+  const approved = new Set(input.approvedNodeIds ?? [])
 
   for (const nodeId of ran) {
     const node = input.spec.nodes.find((item) => item.id === nodeId)
@@ -181,6 +185,18 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
     if (node.kind !== 'model' && node.kind !== 'tool') {
       status[node.id] = 'skipped'
       continue
+    }
+    const gate = liveNodeGate(node, input.spec, approved)
+    if (gate === 'wait') {
+      status[node.id] = 'waiting_approval'
+      lifecycle = 'waiting_approval'
+      break
+    }
+    if (gate === 'deny') {
+      status[node.id] = 'failed'
+      lifecycle = 'failed'
+      error = { code: 'denied', retryable: false, safeMessage: PERMISSION_DENIED_SAFE_MESSAGE }
+      break
     }
     try {
       status[node.id] = 'running'
@@ -235,10 +251,15 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
       }
       status[node.id] = 'failed'
       lifecycle = 'failed'
+      console.error('[workflows] live node failed', {
+        nodeId: node.id,
+        kind: node.kind,
+        error: caught instanceof Error ? caught.message : caught,
+      })
       error = {
         code: node.kind === 'model' ? 'model_failed' : 'tool_failed',
         retryable: false,
-        safeMessage: caught instanceof Error ? caught.message : 'Node failed',
+        safeMessage: NODE_FAILED_SAFE_MESSAGE,
       }
       break
     }
@@ -283,6 +304,18 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
 
   if (lifecycle === 'succeeded' && receipt) store.put(key, run)
   return run
+}
+
+function liveNodeGate(
+  node: CanvasNode,
+  spec: SessionWorkflowSpec,
+  approved: ReadonlySet<string>,
+): 'allow' | 'wait' | 'deny' {
+  if (approved.has(node.id)) return 'allow'
+  const mode = node.permissionMode ?? spec.defaults.permissionMode
+  if (mode === 'allow-all') return 'allow'
+  if (mode === 'ask') return 'wait'
+  return 'deny'
 }
 
 function claimStamps(input: {
