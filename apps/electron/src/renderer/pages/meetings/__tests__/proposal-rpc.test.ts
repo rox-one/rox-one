@@ -71,6 +71,10 @@ describe('meetings proposal RPC client', () => {
     expect(i18nKeyForProposalError('open-failed')).toBe('meetings.openFailed')
     expect(i18nKeyForProposalError('already-applied')).toBe('meetings.rejectFailed')
     expect(i18nKeyForProposalError('proposal-not-found')).toBe('meetings.rejectFailed')
+    expect(i18nKeyForProposalError('meeting-not-found')).toBe('meetings.meetingNotFound')
+    expect(i18nKeyForProposalError('journal-locked')).toBe('meetings.createFailed')
+    expect(i18nKeyForProposalError('upsert-failed')).toBe('meetings.createFailed')
+    expect(i18nKeyForProposalError('workspace-mismatch')).toBe('meetings.workspaceRequired')
   })
 
   it('fail-closes create without api, workspace, meeting, or grant and does not call RPC', async () => {
