@@ -107,7 +107,7 @@ import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
-import { getResizeGradientStyle } from "@/hooks/useResizeGradient"
+import { usePanelResize } from "@/hooks/usePanelResize"
 import { useAction, useActionLabel } from "@/actions"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useFocusContext } from "@/context/FocusContext"
@@ -133,7 +133,7 @@ import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, e
 import type { LabelConfig, LabelTreeNode } from "@craft-agent/shared/labels"
 import { resolveEntityColor } from "@craft-agent/shared/colors"
 import * as storage from "@/lib/local-storage"
-import { commitShellLayout, loadShellLayout } from "@/lib/shell-layout-preferences"
+import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
 import {
@@ -177,13 +177,12 @@ import SettingsNavigator from "@/pages/settings/SettingsNavigator"
 import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
-  PANEL_SASH_HALF_HIT_WIDTH,
-  PANEL_SASH_HIT_WIDTH,
-  PANEL_SASH_LINE_WIDTH,
+  PANEL_MIN_WIDTH,
   PANEL_STACK_VERTICAL_OVERFLOW,
   RADIUS_EDGE,
   RADIUS_INNER,
 } from "./panel-constants"
+import { ResizeHandle, sashHitWidthPx } from "./ResizeHandle"
 import { hasOpenOverlay } from "@/lib/overlay-detection"
 import { clearSourceIconCaches } from "@/lib/icon-cache"
 import { dispatchFocusInputEvent } from "./input/focus-input-events"
@@ -412,10 +411,31 @@ function AppShellContent({
 
 
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
-  const [sidebarHandleY, setSidebarHandleY] = React.useState<number | null>(null)
-  const [sessionListHandleY, setSessionListHandleY] = React.useState<number | null>(null)
-  const resizeHandleRef = React.useRef<HTMLDivElement>(null)
-  const sessionListHandleRef = React.useRef<HTMLDivElement>(null)
+  const workspaceIdForLayout = activeWorkspaceId ?? '_default'
+  const sidebarResize = usePanelResize({
+    onPreview: (sizeA) => setSidebarWidth(sizeA),
+    onCommit: (sizeA) => {
+      setSidebarWidth(sizeA)
+      commitShellLayout({ workspaceId: workspaceIdForLayout, sidebarWidth: sizeA })
+      setIsResizing(null)
+    },
+    onCancel: (sizeA) => {
+      setSidebarWidth(sizeA)
+      setIsResizing(null)
+    },
+  })
+  const navigatorResize = usePanelResize({
+    onPreview: (sizeA) => setSessionListWidth(sizeA),
+    onCommit: (sizeA) => {
+      setSessionListWidth(sizeA)
+      commitShellLayout({ workspaceId: workspaceIdForLayout, navigatorWidth: sizeA })
+      setIsResizing(null)
+    },
+    onCancel: (sizeA) => {
+      setSessionListWidth(sizeA)
+      setIsResizing(null)
+    },
+  })
   const [session, setSession] = useSession()
   const { resolvedMode, isDark, setMode } = useTheme()
   const { canGoBack, canGoForward, goBack, goForward, navigateToSource, navigateToSession } = useNavigation()
@@ -1189,56 +1209,6 @@ function AppShellContent({
     document.addEventListener('paste', handleGlobalPaste)
     return () => document.removeEventListener('paste', handleGlobalPaste)
   }, [focusedSessionId, session.selected])
-
-  // Resize effect for sidebar, session list, browser host lane, and metadata right sidebar.
-  React.useEffect(() => {
-    if (!isResizing) return
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (isResizing === 'sidebar') {
-        const newWidth = Math.min(Math.max(e.clientX, 180), 360)
-        setSidebarWidth(newWidth)
-        if (resizeHandleRef.current) {
-          const rect = resizeHandleRef.current.getBoundingClientRect()
-          setSidebarHandleY(e.clientY - rect.top)
-        }
-      } else if (isResizing === 'session-list') {
-        const offset = isSidebarVisible ? sidebarWidth : 0
-        const newWidth = Math.min(Math.max(e.clientX - offset, 240), 480)
-        setSessionListWidth(newWidth)
-        if (sessionListHandleRef.current) {
-          const rect = sessionListHandleRef.current.getBoundingClientRect()
-          setSessionListHandleY(e.clientY - rect.top)
-        }
-      }
-    }
-
-    const handleMouseUp = () => {
-      const workspaceId = activeWorkspaceId ?? '_default'
-      if (isResizing === 'sidebar') {
-        commitShellLayout({ workspaceId, sidebarWidth })
-        setSidebarHandleY(null)
-      } else if (isResizing === 'session-list') {
-        commitShellLayout({ workspaceId, navigatorWidth: sessionListWidth })
-        setSessionListHandleY(null)
-      }
-      setIsResizing(null)
-    }
-
-    document.addEventListener('mousemove', handleMouseMove)
-    document.addEventListener('mouseup', handleMouseUp)
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove)
-      document.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [
-    isResizing,
-    sidebarWidth,
-    sessionListWidth,
-    isSidebarVisible,
-    activeWorkspaceId,
-  ])
 
   // Spring transition config - shared between sidebar and header
   // Critical damping (no bounce): damping = 2 * sqrt(stiffness * mass)
@@ -3075,71 +3045,134 @@ function AppShellContent({
 
         {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
         {!effectiveSidebarAndNavigatorHidden && (
-        <div
-          ref={resizeHandleRef}
-          onMouseDown={(e) => { e.preventDefault(); setIsResizing('sidebar') }}
-          onMouseMove={(e) => {
-            if (resizeHandleRef.current) {
-              const rect = resizeHandleRef.current.getBoundingClientRect()
-              setSidebarHandleY(e.clientY - rect.top)
-            }
-          }}
-          onMouseLeave={() => { if (!isResizing) setSidebarHandleY(null) }}
-          className="absolute cursor-col-resize z-panel flex justify-center"
+        <ResizeHandle
+          labelKey="shell.resize.sidebar"
+          controlsId="shell-sidebar"
+          valueNow={sidebarWidth}
+          valueMin={SIDEBAR_WIDTH_MIN}
+          valueMax={SIDEBAR_WIDTH_MAX}
+          dragging={sidebarResize.dragging || isResizing === 'sidebar'}
+          className="absolute z-panel"
           style={{
-            width: PANEL_SASH_HIT_WIDTH,
             top: PANEL_STACK_VERTICAL_OVERFLOW,
             bottom: PANEL_STACK_VERTICAL_OVERFLOW,
+            height: 'auto',
             left: unifiedRailOffset + (isSidebarVisible
-              ? sidebarWidth + (PANEL_GAP / 2) - PANEL_SASH_HALF_HIT_WIDTH
+              ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
               : -PANEL_GAP),
-            transition: isResizing === 'sidebar' ? undefined : 'left 0.15s ease-out',
+            transition: sidebarResize.dragging ? undefined : 'left 0.15s ease-out',
           }}
-        >
-          <div
-            className="h-full"
-            style={{
-              ...getResizeGradientStyle(sidebarHandleY, resizeHandleRef.current?.clientHeight ?? null),
-              width: PANEL_SASH_LINE_WIDTH,
-            }}
-          />
-        </div>
+          onPointerDown={(event) => {
+            setIsResizing('sidebar')
+            sidebarResize.handlePointerDown(event, {
+              leftId: 'shell-sidebar',
+              rightId: 'shell-rest',
+              total: window.innerWidth,
+              sizeA: sidebarWidth,
+              minA: SIDEBAR_WIDTH_MIN,
+              maxA: SIDEBAR_WIDTH_MAX,
+              minB: PANEL_MIN_WIDTH,
+              maxB: Number.POSITIVE_INFINITY,
+            })
+          }}
+          onPointerMove={sidebarResize.handlePointerMove}
+          onPointerUp={sidebarResize.handlePointerUp}
+          onPointerCancel={sidebarResize.handlePointerCancel}
+          onLostPointerCapture={sidebarResize.handleLostPointerCapture}
+          onKeyAdjust={(delta) => sidebarResize.handleKeyAdjust(delta, {
+            leftId: 'shell-sidebar',
+            rightId: 'shell-rest',
+            total: window.innerWidth,
+            sizeA: sidebarWidth,
+            minA: SIDEBAR_WIDTH_MIN,
+            maxA: SIDEBAR_WIDTH_MAX,
+            minB: PANEL_MIN_WIDTH,
+            maxB: Number.POSITIVE_INFINITY,
+          })}
+          onKeyCommit={sidebarResize.handleKeyCommit}
+          onKeyCancel={sidebarResize.handleKeyCancel}
+          onReset={() => sidebarResize.handleReset({
+            leftId: 'shell-sidebar',
+            rightId: 'shell-rest',
+            total: window.innerWidth,
+            sizeA: sidebarWidth,
+            minA: SIDEBAR_WIDTH_MIN,
+            maxA: SIDEBAR_WIDTH_MAX,
+            minB: PANEL_MIN_WIDTH,
+            maxB: Number.POSITIVE_INFINITY,
+          }, SIDEBAR_WIDTH_DEFAULT)}
+        />
         )}
 
         {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
         {!effectiveSidebarAndNavigatorHidden && !isBoardView && !isPagesView && !isTasksView && (
-        <div
-          ref={sessionListHandleRef}
-          onMouseDown={(e) => { e.preventDefault(); setIsResizing('session-list') }}
-          onMouseMove={(e) => {
-            if (sessionListHandleRef.current) {
-              const rect = sessionListHandleRef.current.getBoundingClientRect()
-              setSessionListHandleY(e.clientY - rect.top)
-            }
-          }}
-          onMouseLeave={() => { if (isResizing !== 'session-list') setSessionListHandleY(null) }}
-          className="absolute cursor-col-resize z-panel flex justify-center"
+        <ResizeHandle
+          labelKey="shell.resize.navigator"
+          controlsId="shell-navigator"
+          valueNow={sessionListWidth}
+          valueMin={NAVIGATOR_WIDTH_MIN}
+          valueMax={NAVIGATOR_WIDTH_MAX}
+          dragging={navigatorResize.dragging || isResizing === 'session-list'}
+          className="absolute z-panel"
           style={{
-            width: PANEL_SASH_HIT_WIDTH,
             top: PANEL_STACK_VERTICAL_OVERFLOW,
             bottom: PANEL_STACK_VERTICAL_OVERFLOW,
+            height: 'auto',
             left:
               unifiedRailOffset +
               (isSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
               sessionListWidth +
               (PANEL_GAP / 2) -
-              PANEL_SASH_HALF_HIT_WIDTH,
-            transition: isResizing === 'session-list' ? undefined : 'left 0.15s ease-out',
+              sashHitWidthPx() / 2,
+            transition: navigatorResize.dragging ? undefined : 'left 0.15s ease-out',
           }}
-        >
-          <div
-            className="h-full"
-            style={{
-              ...getResizeGradientStyle(sessionListHandleY, sessionListHandleRef.current?.clientHeight ?? null),
-              width: PANEL_SASH_LINE_WIDTH,
-            }}
-          />
-        </div>
+          onPointerDown={(event) => {
+            setIsResizing('session-list')
+            const offset = isSidebarVisible ? sidebarWidth : 0
+            navigatorResize.handlePointerDown(event, {
+              leftId: 'shell-navigator',
+              rightId: 'shell-content',
+              total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
+              sizeA: sessionListWidth,
+              minA: NAVIGATOR_WIDTH_MIN,
+              maxA: NAVIGATOR_WIDTH_MAX,
+              minB: PANEL_MIN_WIDTH,
+              maxB: Number.POSITIVE_INFINITY,
+            })
+          }}
+          onPointerMove={navigatorResize.handlePointerMove}
+          onPointerUp={navigatorResize.handlePointerUp}
+          onPointerCancel={navigatorResize.handlePointerCancel}
+          onLostPointerCapture={navigatorResize.handleLostPointerCapture}
+          onKeyAdjust={(delta) => {
+            const offset = isSidebarVisible ? sidebarWidth : 0
+            navigatorResize.handleKeyAdjust(delta, {
+              leftId: 'shell-navigator',
+              rightId: 'shell-content',
+              total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
+              sizeA: sessionListWidth,
+              minA: NAVIGATOR_WIDTH_MIN,
+              maxA: NAVIGATOR_WIDTH_MAX,
+              minB: PANEL_MIN_WIDTH,
+              maxB: Number.POSITIVE_INFINITY,
+            })
+          }}
+          onKeyCommit={navigatorResize.handleKeyCommit}
+          onKeyCancel={navigatorResize.handleKeyCancel}
+          onReset={() => {
+            const offset = isSidebarVisible ? sidebarWidth : 0
+            navigatorResize.handleReset({
+              leftId: 'shell-navigator',
+              rightId: 'shell-content',
+              total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
+              sizeA: sessionListWidth,
+              minA: NAVIGATOR_WIDTH_MIN,
+              maxA: NAVIGATOR_WIDTH_MAX,
+              minB: PANEL_MIN_WIDTH,
+              maxB: Number.POSITIVE_INFINITY,
+            }, NAVIGATOR_WIDTH_DEFAULT)
+          }}
+        />
         )}
 
       </div>

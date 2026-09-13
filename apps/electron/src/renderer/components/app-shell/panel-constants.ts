@@ -24,7 +24,8 @@ export const PANEL_STACK_VERTICAL_OVERFLOW = 8
  * Keep all seams (sidebar, navigator/content, panel/panel) aligned by deriving
  * offsets from these constants instead of hardcoded pixel literals.
  */
-export const PANEL_SASH_HIT_WIDTH = 8
+export const PANEL_SASH_HIT_WIDTH = 12
+export const PANEL_SASH_HIT_WIDTH_COARSE = 24
 export const PANEL_SASH_LINE_WIDTH = 2
 
 /**
