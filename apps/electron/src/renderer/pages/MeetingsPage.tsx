@@ -35,10 +35,16 @@ import {
 } from './meetings/import-rpc'
 import {
   finalizeMeetingViaRpc,
-  i18nKeyForFinalizeError,
   resolveMeetingFinalizeApi,
   type MeetingFinalizeApi,
 } from './meetings/finalize-rpc'
+import {
+  addManualNoteViaRpc,
+  correctSegmentViaRpc,
+  i18nKeyForManualError,
+  resolveMeetingManualApi,
+  type MeetingManualApi,
+} from './meetings/manual-rpc'
 
 export type { MeetingListItem }
 
@@ -48,7 +54,7 @@ export default function MeetingsPage(props: {
   selectedId?: string | null
   workspaceId?: string | null
   actorId?: string
-  api?: (MeetingProposalApi & Partial<MeetingCatalogApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi>) | null
+  api?: (MeetingProposalApi & Partial<MeetingCatalogApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi>) | null
 }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
@@ -62,6 +68,7 @@ export default function MeetingsPage(props: {
   const captureApi = resolveMeetingCaptureApi(props.api)
   const importApi = resolveMeetingImportApi(props.api)
   const finalizeApi = resolveMeetingFinalizeApi(props.api)
+  const manualApi = resolveMeetingManualApi(props.api)
   const [meetings, setMeetings] = useState<MeetingListItem[]>(props.meetings ?? [])
   const [selectedId, setSelectedId] = useState<string | null>(props.selectedId ?? meetings[0]?.id ?? null)
   const [items, setItems] = useState<MeetingProposalRow[]>(props.proposals ?? [])
@@ -69,6 +76,10 @@ export default function MeetingsPage(props: {
   const [kind, setKind] = useState<NativeProposalType>('create_task')
   const [banner, setBanner] = useState<string | null>(null)
   const [approvingId, setApprovingId] = useState<string | null>(null)
+  const [noteText, setNoteText] = useState('')
+  const [noteSeq, setNoteSeq] = useState(0)
+  const [segmentId, setSegmentId] = useState('')
+  const [replacement, setReplacement] = useState('')
   const selected = useMemo(() => meetings.find((item) => item.id === selectedId) ?? null, [meetings, selectedId])
 
   useEffect(() => {
@@ -186,6 +197,45 @@ export default function MeetingsPage(props: {
     setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
   }
 
+  async function handleManualNote() {
+    setBanner(null)
+    const text = noteText.trim()
+    const result = await addManualNoteViaRpc({
+      api: manualApi,
+      workspaceId,
+      meetingId: selected?.id ?? null,
+      actorId,
+      grant: importGrant,
+      spec: selected ? { noteId: `note-${selected.id}-${noteSeq}`, text } : null,
+    })
+    if (!result.ok) {
+      setBanner(result.code)
+      return
+    }
+    setNoteText('')
+    setNoteSeq((current) => current + 1)
+    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+  }
+
+  async function handleCorrectSegment() {
+    setBanner(null)
+    const result = await correctSegmentViaRpc({
+      api: manualApi,
+      workspaceId,
+      meetingId: selected?.id ?? null,
+      actorId,
+      grant: importGrant,
+      spec: { segmentId: segmentId.trim(), replacement: replacement.trim() },
+    })
+    if (!result.ok) {
+      setBanner(result.code)
+      return
+    }
+    setSegmentId('')
+    setReplacement('')
+    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+  }
+
   const createForm = (
     <div className="mt-4 flex flex-col gap-2" data-testid="meetings-create-form">
       <label>
@@ -211,7 +261,7 @@ export default function MeetingsPage(props: {
   )
 
   const bannerNode = banner ? (
-    <p data-testid="meetings-rpc-error">{t(i18nKeyForFinalizeError(banner))}</p>
+    <p data-testid="meetings-rpc-error">{t(i18nKeyForManualError(banner))}</p>
   ) : null
 
   const nativeNote = <p data-testid="meetings-native-catalog">{t('meetings.nativeCatalog')}</p>
@@ -244,6 +294,35 @@ export default function MeetingsPage(props: {
       <p data-testid="meetings-finalize-intent">{t('meetings.finalizeIntent')}</p>
       <button type="button" data-testid="meetings-finalize" onClick={() => void handleFinalize()}>
         {t('meetings.finalize')}
+      </button>
+      <p data-testid="meetings-add-manual-note-intent">{t('meetings.addManualNoteIntent')}</p>
+      <label>
+        {t('meetings.addManualNote')}
+        <input
+          data-testid="meetings-manual-note-text"
+          value={noteText}
+          onChange={(event) => setNoteText(event.target.value)}
+        />
+      </label>
+      <button type="button" data-testid="meetings-add-manual-note" onClick={() => void handleManualNote()}>
+        {t('meetings.addManualNote')}
+      </button>
+      <p data-testid="meetings-correct-intent">{t('meetings.correctIntent')}</p>
+      <label>
+        {t('meetings.correctSegment')}
+        <input
+          data-testid="meetings-correct-segment-id"
+          value={segmentId}
+          onChange={(event) => setSegmentId(event.target.value)}
+        />
+      </label>
+      <input
+        data-testid="meetings-correct-replacement"
+        value={replacement}
+        onChange={(event) => setReplacement(event.target.value)}
+      />
+      <button type="button" data-testid="meetings-correct-segment" onClick={() => void handleCorrectSegment()}>
+        {t('meetings.correctSegment')}
       </button>
     </div>
   ) : null
