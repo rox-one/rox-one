@@ -277,6 +277,73 @@ export function graphFromLinks(
   return { nodes, edges }
 }
 
+export type NoteGraphEdgeKindFilter = 'all' | 'wikilink' | 'backlink'
+
+export function filterGraphByEdgeKind(
+  graph: { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] },
+  kind: NoteGraphEdgeKindFilter,
+): { nodes: NoteGraphNode[]; edges: NoteGraphEdge[] } {
+  if (kind === 'all') return { nodes: [...graph.nodes], edges: [...graph.edges] }
+  const edges = graph.edges.filter((edge) => edge.kind === kind)
+  const used = new Set<string>()
+  for (const edge of edges) {
+    used.add(edge.from)
+    used.add(edge.to)
+  }
+  return { nodes: graph.nodes.filter((node) => used.has(node.id)), edges }
+}
+
+export const DEFAULT_VAULT_TABLE_VIEW: NoteBaseView = {
+  v: 1,
+  id: 'vault-table',
+  name: 'Vault',
+  kind: 'table',
+  filters: [],
+  formulas: [{ name: 'open', expr: 'openTaskCount' }],
+  sort: { field: 'title', dir: 'asc' },
+  columns: ['title', 'folder', 'tags', 'openTasks'],
+}
+
+export function loadSavedViews(raw: string | null): NoteBaseView[] {
+  const saved = restoreSavedViews(raw)
+  return saved.length > 0 ? saved : [{ ...DEFAULT_VAULT_TABLE_VIEW }]
+}
+
+export function tagFilterValue(view: NoteBaseView): string {
+  const match = view.filters.find((item) => item.field === 'tags' && item.op === 'includes')
+  return typeof match?.value === 'string' ? match.value : ''
+}
+
+export function withTagFilter(view: NoteBaseView, value: string): NoteBaseView {
+  const others = view.filters.filter((filter) => !(filter.field === 'tags' && filter.op === 'includes'))
+  const trimmed = value.trim()
+  return {
+    ...view,
+    filters: trimmed ? [...others, { field: 'tags', op: 'includes', value: trimmed }] : others,
+  }
+}
+
+export const NOTES_OUTLINE_FOLDS_PREFIX = 'notes:outline-folds:'
+
+export function notesOutlineFoldsStorageKey(workspaceId: string, noteId: string): string {
+  return `${NOTES_OUTLINE_FOLDS_PREFIX}${workspaceId}:${noteId}`
+}
+
+export function parseOutlineFolds(raw: string | null): Set<string> {
+  if (!raw) return new Set()
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!Array.isArray(parsed)) return new Set()
+    return new Set(parsed.filter((id): id is string => typeof id === 'string'))
+  } catch {
+    return new Set()
+  }
+}
+
+export function serializeOutlineFolds(ids: ReadonlySet<string>): string {
+  return JSON.stringify([...ids])
+}
+
 export function convertNote(note: ConvertibleNote, kind: 'session-draft' | 'task'): NoteConversion {
   if (kind === 'task') {
     return {

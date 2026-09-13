@@ -4,16 +4,23 @@ import {
   convertNote,
   createCanvasFileCard,
   dailyNoteDestination,
+  filterGraphByEdgeKind,
   formulaValue,
   graphFromLinks,
   groupNoteRows,
+  loadSavedViews,
+  notesOutlineFoldsStorageKey,
   outlineFromHeadings,
   parseJsonCanvas,
   parseNoteBaseView,
+  parseOutlineFolds,
   projectNoteRows,
   restoreSavedViews,
   serializeJsonCanvas,
   serializeNoteBaseView,
+  serializeOutlineFolds,
+  tagFilterValue,
+  withTagFilter,
 } from '../note-views'
 
 describe('notes views', () => {
@@ -98,5 +105,23 @@ describe('notes views', () => {
       folder: 'daily',
       title: '2026-09-12',
     })
+  })
+
+  test('table toolbar helpers, graph kind filter and outline folds round-trip', () => {
+    const views = loadSavedViews(null)
+    expect(views[0]?.id).toBe('vault-table')
+    const filtered = withTagFilter(views[0]!, 'ship')
+    expect(tagFilterValue(filtered)).toBe('ship')
+    expect(applyNoteBaseView(projectNoteRows(notes), filtered).map((row) => row.id)).toEqual(['ops/alpha'])
+    expect(groupNoteRows(projectNoteRows(notes), 'folder').map((group) => group.key)).toEqual(['ops'])
+
+    const graph = graphFromLinks(notes)
+    expect(filterGraphByEdgeKind(graph, 'wikilink').edges.every((edge) => edge.kind === 'wikilink')).toBe(true)
+    expect(filterGraphByEdgeKind(graph, 'backlink').edges.every((edge) => edge.kind === 'backlink')).toBe(true)
+    expect(filterGraphByEdgeKind(graph, 'wikilink').nodes.map((node) => node.id).sort()).toEqual(['ops/alpha', 'ops/beta'])
+
+    const folds = parseOutlineFolds(serializeOutlineFolds(new Set(['ops/alpha:0:Intro'])))
+    expect(folds.has('ops/alpha:0:Intro')).toBe(true)
+    expect(notesOutlineFoldsStorageKey('ws', 'ops/alpha')).toBe('notes:outline-folds:ws:ops/alpha')
   })
 })
