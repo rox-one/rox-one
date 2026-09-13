@@ -1,0 +1,73 @@
+# fleet-infra/windmill settings template.
+# Copy to settings.yml (gitignored) and fill values. Secrets are NEVER inline:
+# every secret value is an Infisical identity env reference (${ENV_NAME}).
+# Scripts resolve these names from the environment at runtime and fail loudly
+# when a referenced variable is unset.
+
+fleet_name: rox-fleet
+
+# Hosts probed by fleet_inventory_refresh.ts / update_report.ts.
+hosts:
+  - name: control-01
+    address: 192.0.2.10
+    user: root
+    ubuntu: "24.04"
+  - name: automation-01
+    address: 192.0.2.11
+    user: root
+    ubuntu: "24.04"
+  - name: observability-01
+    address: 192.0.2.12
+    user: root
+    ubuntu: "24.04"
+  - name: worker-01
+    address: 192.0.2.13
+    user: root
+    ubuntu: "24.04"
+
+# Worker groups scheduled on Windmill (README documents each).
+worker_groups:
+  linux-small: { workers: ["worker-01"], concurrency: 4 }
+  linux-heavy: { workers: ["control-01"], concurrency: 8 }
+  browser: { workers: ["control-01"], concurrency: 2 }
+  omp: { workers: ["control-01"], concurrency: 4 }
+  hermes: { workers: ["control-01"], concurrency: 2 }
+  mac-arm64: { workers: ["workstation-local"], concurrency: 4 }
+  privileged-ops: { workers: ["control-01"], concurrency: 1 }
+  backup: { workers: ["observability-01"], concurrency: 1 }
+
+# Windmill API for worker_drain.ts.
+windmill_api:
+  base_url: https://windmill.fleet.internal
+  workspace: fleet
+  token: ${WINDMILL_API_TOKEN}
+
+# Domains checked daily by cert_check.ts (expiry must exceed 14 days).
+cert_domains:
+  - windmill.fleet.internal
+  - infisical.fleet.internal
+
+# Backup trigger (backup_trigger.py) — restic configuration.
+restic:
+  repository: ${RESTIC_REPOSITORY}
+  password: ${RESTIC_PASSWORD}
+  aws_access_key_id: ${RESTIC_AWS_ACCESS_KEY_ID}
+  aws_secret_access_key: ${RESTIC_AWS_SECRET_ACCESS_KEY}
+
+# Restore verification marker created inside every backup by backup jobs;
+# restore_test_weekly.py requires it after restoring `latest`.
+restore_test:
+  marker_path: .restore-marker
+
+# Disk cleanup thresholds, percent used (disk_cleanup.py).
+disk_cleanup:
+  warn_percent: 85
+  clean_percent: 92
+  journal_vacuum_size: 200M
+
+# Failed-unit remediation allowlist: unit -> action. Unknown units are
+# reported only, never acted on (failed_unit_remediation.py).
+failed_unit_allowlist:
+  windmill-worker: restart
+  netbird: restart
+  tailscaled: restart

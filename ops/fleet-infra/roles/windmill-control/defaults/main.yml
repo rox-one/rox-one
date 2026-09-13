@@ -1,0 +1,12 @@
+---
+windmill_version: "1.594.0"
+windmill_image: "ghcr.io/windmill-labs/windmill:{{ windmill_version }}"
+windmill_postgres_image: "postgres:16"
+windmill_install_dir: /opt/windmill
+windmill_tailnet_ip: "{{ tailscale_ip }}"
+windmill_port: 8000
+windmill_project_id: "{{ infisical_project_id | default('') }}"
+windmill_secret_path: "/nodes/{{ inventory_hostname }}/windmill"
+windmill_infisical_domain: "{{ infisical_public_domain | default('https://infisical.example.internal') }}"
+windmill_infisical_token_file: /etc/infisical/runtime/access-token
+

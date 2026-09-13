@@ -1,0 +1,53 @@
+---
+# Fleet-wide defaults. Neutral values; per-host overrides in inventory/host_vars/.
+
+timezone: "Etc/UTC"
+
+ssh_port: 22
+
+# Infisical project/domain are operator overlays. Empty project id fail-closes
+# any role that would mint or fetch secrets.
+infisical_project_id: ""
+infisical_public_domain: "https://infisical.example.internal"
+
+# Coolify target port. Placeholder: default 22 -> 2222 mapping is documented but
+# NOT applied by default; hosts opting into coolify set this explicitly.
+coolify_port: 2222
+coolify_ssh_port_redirect:
+  enabled: false
+  from: 22
+  to: "{{ coolify_port }}"
+
+netbird:
+  install: false   # left uninstalled by decision; flip per-host/group when needed
+
+# Fail closed. A normal `site.yml` invocation performs no mutations until the
+# operator explicitly enables a bounded role for the selected hosts.
+fleet_role_enabled:
+  base: false
+  users: false
+  ssh: false
+  firewall: false
+  tailscale: false
+  docker: false
+  netdata: false
+  infisical_agent: false
+  coolify_target: false
+  windmill_worker: false
+  agent_runtime: false
+  backups: false
+
+# Group-driven role enablement/tags mapping consumed by playbooks/site.yml.
+tags_of_roles:
+  base: [base]
+  users: [users]
+  ssh: [ssh]
+  firewall: [firewall]
+  tailscale: [tailscale]
+  docker: [docker]
+  netdata: [netdata]
+  infisical-agent: [infisical-agent]
+  coolify-target: [coolify-target]
+  windmill-worker: [windmill-worker]
+  agent-runtime: [agent-runtime]
+  backups: [backups]

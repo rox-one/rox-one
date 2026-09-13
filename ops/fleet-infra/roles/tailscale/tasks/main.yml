@@ -1,0 +1,51 @@
+---
+# tailscale role: install pinned from pkgs.tailscale.com, auth key via env at runtime only.
+- name: Add Tailscale apt repo signing key
+  ansible.builtin.apt_key:
+    url: "{{ tailscale_repo_key_url }}"
+    keyring: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    state: present
+
+- name: Add Tailscale apt repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/tailscale-archive-keyring.gpg] {{ tailscale_repo_url }} {{ ansible_distribution_release }} main"
+    filename: tailscale
+    state: present
+
+- name: Install pinned tailscale package
+  ansible.builtin.apt:
+    name: "tailscale={{ tailscale_package_version }}"
+    state: present
+    force: true
+
+- name: Start tailscaled and enable at boot
+  ansible.builtin.systemd_service:
+    name: tailscaled
+    state: started
+    enabled: true
+  when: not tailscale_join_cluster
+
+- name: Join tailnet with advertised tags (auth key from env, never stored)
+  ansible.builtin.command:
+    cmd: >
+      tailscale up
+      --authkey={{ lookup('env', 'TS_AUTHKEY') }}
+      --advertise-tags={{ tailscale_advertise_tags | join(',') }}
+      --advertise-exit-node=false
+      --accept-routes=false
+      {{ '--hostname=' + inventory_hostname if tailscale_hostname | default(true) else '' }}
+  when:
+    - tailscale_join_cluster
+    - lookup('env', 'TS_AUTHKEY') | length > 0
+  register: tailscale_up_result
+  changed_when: tailscale_up_result.rc == 0
+  no_log: true
+
+- name: Fail loudly when joining is requested without TS_AUTHKEY
+  ansible.builtin.fail:
+    msg: "tailscale_join_cluster is true but TS_AUTHKEY env var is empty on the controller"
+  when:
+    - tailscale_join_cluster
+    - lookup('env', 'TS_AUTHKEY') | length == 0
+
+# Rollback: `sudo tailscale down && sudo tailscale logout`; downgrade with `apt install tailscale=<prev-version>`; remove repo file /etc/apt/sources.list.d/tailscale.list and the keyring.

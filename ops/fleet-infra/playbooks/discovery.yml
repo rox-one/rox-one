@@ -1,0 +1,63 @@
+---
+# Discovery: read-only fact gathering. Safe under --check.
+- name: Discover fleet facts
+  hosts: linux
+  become: true
+  gather_facts: true
+  any_errors_fatal: false
+  tasks:
+    - name: OS release
+      ansible.builtin.command: cat /etc/os-release
+      check_mode: false
+      changed_when: false
+      register: os_release
+
+    - name: Kernel and arch
+      ansible.builtin.command: uname -a
+      check_mode: false
+      changed_when: false
+      register: kernel_info
+
+    - name: Disk usage
+      ansible.builtin.command: df -h
+      check_mode: false
+      changed_when: false
+      register: disk_usage
+
+    - name: Listening ports
+      ansible.builtin.command: ss -tulpn
+      check_mode: false
+      changed_when: false
+      register: listening_ports
+      failed_when: false
+
+    - name: Installed service binaries present
+      ansible.builtin.command: >-
+        bash -c 'for b in docker tailscale netdata restic windmill netbird;
+        do command -v $b || echo "$b absent"; done'
+      check_mode: false
+      changed_when: false
+      register: binary_probe
+
+    - name: Write discovery report
+      ansible.builtin.copy:
+        dest: "{{ playbook_dir }}/../reports/before/{{ inventory_hostname }}.md"
+        content: |
+          # {{ inventory_hostname }}
+          - os: {{ os_release.stdout_lines[0] | default('unknown') }}
+          - kernel: {{ kernel_info.stdout | default('unknown') }}
+          - disks:
+          ```
+          {{ disk_usage.stdout | default('n/a') }}
+          ```
+          - listening ports:
+          ```
+          {{ listening_ports.stdout | default('n/a') }}
+          ```
+          - binaries:
+          ```
+          {{ binary_probe.stdout | default('n/a') }}
+          ```
+        mode: "0644"
+      delegate_to: localhost
+      become: false

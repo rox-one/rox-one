@@ -1,0 +1,50 @@
+---
+- name: Create install directory
+  ansible.builtin.file:
+    path: "{{ agent_runtime_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+# --- omp runtime (npm registry pin; conditional on worker group tag) ---
+- name: Install omp runtime
+  ansible.builtin.include_tasks: install-omp-npm.yml
+  when: "'omp' in agent_runtime_components"
+
+# --- hermes runtime (pinned git checkout; conditional on worker group tag) ---
+- name: Install hermes runtime
+  ansible.builtin.include_tasks: install-hermes-git.yml
+  when: "'hermes' in agent_runtime_components"
+
+- name: Deploy smoke test script
+  ansible.builtin.template:
+    src: runtime-smoke.sh.j2
+    dest: "{{ agent_runtime_install_dir }}/smoke.sh"
+    owner: root
+    group: root
+    mode: "0755"
+  notify: restart health timer
+
+- name: Deploy systemd health service + timer
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - agent-runtime-health.service
+    - agent-runtime-health.timer
+  notify:
+    - reload systemd
+    - restart health timer
+
+- name: Enable health timer
+  ansible.builtin.systemd:
+    name: agent-runtime-health.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+# Rollback: systemctl disable --now agent-runtime-health.timer;
+# rm -rf {{ agent_runtime_install_dir }} and bin symlinks; pin bumps are forward-only.

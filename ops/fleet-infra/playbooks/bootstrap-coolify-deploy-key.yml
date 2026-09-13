@@ -1,0 +1,102 @@
+---
+- name: Create the Coolify deploy identity only on the control plane
+  hosts: control_plane
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Ensure root SSH directory exists
+      ansible.builtin.file:
+        path: /root/.ssh
+        state: directory
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Generate the dedicated Coolify deploy key on control_plane
+      ansible.builtin.command:
+        argv:
+          - ssh-keygen
+          - -q
+          - -t
+          - ed25519
+          - -N
+          - ""
+          - -C
+          - coolify-deploy-control-plane
+          - -f
+          - /root/.ssh/coolify_deploy
+        creates: /root/.ssh/coolify_deploy
+      no_log: true
+
+    - name: Enforce private-key permissions
+      ansible.builtin.file:
+        path: /root/.ssh/coolify_deploy
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Read the public deploy key
+      ansible.builtin.slurp:
+        src: /root/.ssh/coolify_deploy.pub
+      register: coolify_deploy_pub
+      no_log: true
+
+    - name: Hold the public deploy key for target bootstrap
+      ansible.builtin.set_fact:
+        coolify_deploy_public_key: "{{ coolify_deploy_pub.content | b64decode | trim }}"
+      no_log: true
+
+    - name: Pin target host keys on control_plane from Tailscale evidence
+      ansible.builtin.known_hosts:
+        path: /root/.ssh/known_hosts
+        name: "{{ hostvars[item].tailscale_ip }}"
+        key: "{{ hostvars[item].tailscale_ip }} {{ hostvars[item].ssh_host_key_ed25519 }}"
+        state: present
+      loop: "{{ groups['coolify_targets'] }}"
+
+- name: Bootstrap the unprivileged Coolify deploy user
+  hosts: coolify_targets
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Configure the isolated Coolify deployment endpoint
+      ansible.builtin.include_role:
+        name: coolify-target
+      vars:
+        coolify_public_key_lookup: "{{ hostvars[groups['control_plane'][0]].coolify_deploy_public_key }}"
+      no_log: true
+
+- name: Prove control-plane access to every Coolify target
+  hosts: control_plane
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Test key login from control_plane over the tailnet
+      ansible.builtin.command:
+        argv:
+          - ssh
+          - -o
+          - BatchMode=yes
+          - -o
+          - StrictHostKeyChecking=yes
+          - -o
+          - UserKnownHostsFile=/root/.ssh/known_hosts
+          - -i
+          - /root/.ssh/coolify_deploy
+          - -p
+          - "2222"
+          - "coolify@{{ hostvars[item].tailscale_ip }}"
+          - id
+          - -un
+      loop: "{{ groups['coolify_targets'] }}"
+      register: control_origin_logins
+      changed_when: false
+
+    - name: Assert every target returned the Coolify identity
+      ansible.builtin.assert:
+        that:
+          - item.stdout == 'coolify'
+          - item.rc == 0
+        fail_msg: "Second-origin SSH proof failed for {{ item.item }}"
+      loop: "{{ control_origin_logins.results }}"
+      no_log: true

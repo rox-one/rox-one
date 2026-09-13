@@ -1,0 +1,18 @@
+[Unit]
+Description=ROX observability control stack
+After=docker.service infisical-agent.service tailscaled.service
+Requires=docker.service infisical-agent.service
+
+[Service]
+Type=simple
+WorkingDirectory={{ observability_install_dir }}
+ExecStart=/usr/local/sbin/observability-compose up --remove-orphans
+ExecStop=/usr/local/sbin/observability-compose down --timeout 30
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=300
+TimeoutStopSec=90
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,21 @@
+---
+netdata_kickstart_url: https://get.netdata.cloud/kickstart.sh
+# SHA256 of the pinned kickstart.sh revision. MUST be set in group_vars/versions.yml.
+netdata_kickstart_sha256: "f375829d447da142d3e30ef8224a6af149042225ec5d4d986d130643436c3508"
+
+# stream.conf labels — rendered from template placeholders.
+netdata_labels:
+  provider: "{{ provider | default('unknown') }}"
+  region: "{{ region | default('unknown') }}"
+  role: "{{ fleet_role | default('unassigned') }}"
+  arch: "{{ ansible_architecture | default('unknown') }}"
+  environment: "{{ fleet_environment | default('prod') }}"
+
+netdata_stream_enabled: false
+netdata_stream_destination: ""
+netdata_stream_api_key: ""
+
+# Cloud claim settings; token strictly via env at runtime.
+netdata_claim_enabled: false
+netdata_claim_url: https://app.netdata.cloud
+netdata_claim_rooms: []

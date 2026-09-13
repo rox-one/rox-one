@@ -1,0 +1,57 @@
+---
+- name: Assert worker group is a known value and digest pinned
+  ansible.builtin.assert:
+    that:
+      - windmill_worker_group in ['linux-small','linux-heavy','browser','omp','hermes','mac-arm64','privileged-ops','backup']
+      - windmill_image_digest | length > 0
+    fail_msg: "windmill-worker: set windmill_worker_group to a valid group and pin windmill_image_digest (sha256:...)"
+
+- name: Create install directory
+  ansible.builtin.file:
+    path: "{{ windmill_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Fail loudly if runtime env file missing (secrets come from Infisical agent)
+  ansible.builtin.stat:
+    path: "{{ windmill_env_file }}"
+  register: windmill_env_stat
+
+- name: Require env file present
+  ansible.builtin.fail:
+    msg: >-
+      {{ windmill_env_file }} must exist (rendered by roles/infisical-agent) with WINDMILL_BASE_URL,
+      WINDMILL_TOKEN and worker env. Never commit its contents.
+  when:
+    - not ansible_check_mode
+    - not windmill_env_stat.stat.exists
+
+- name: Deploy systemd unit with resource limits
+  ansible.builtin.template:
+    src: windmill-worker.service.j2
+    dest: /etc/systemd/system/{{ windmill_container_name }}.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart windmill worker
+
+- name: Install drain script
+  ansible.builtin.template:
+    src: windmill-drain.sh.j2
+    dest: "{{ windmill_install_dir }}/drain.sh"
+  vars:
+    _pinned_ref: "{{ windmill_image }}@{{ windmill_image_digest }}"
+  no_log: false
+
+- name: Enable and start worker
+  ansible.builtin.systemd:
+    name: "{{ windmill_container_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: not ansible_check_mode
+
+# Rollback: systemctl disable --now <unit>; rm unit file + /etc/windmill-worker.env reference;
+# docker image prune by digest; drain script removal.

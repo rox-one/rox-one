@@ -1,0 +1,5 @@
+---
+# Each entry: name, ssh_public_key (public half only), optional password_hash, groups, shell.
+fleet_deploy_users: []
+# Admin users get passwordless sudo; others get normal sudo group membership.
+fleet_admin_users: []

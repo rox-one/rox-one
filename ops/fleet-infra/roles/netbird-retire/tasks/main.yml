@@ -1,0 +1,62 @@
+---
+- name: Prove Tailscale is running before NetBird retirement
+  ansible.builtin.command: tailscale status --json
+  register: retire_tailscale_status
+  changed_when: false
+
+- name: Assert Tailscale backend is running
+  ansible.builtin.assert:
+    that:
+      - (retire_tailscale_status.stdout | from_json).BackendState == 'Running'
+
+- name: Check NetBird configuration
+  ansible.builtin.stat:
+    path: /etc/netbird
+  register: retire_netbird_config
+
+- name: Create root-only NetBird recovery archive
+  ansible.builtin.command:
+    argv:
+      - tar
+      - -C
+      - /etc
+      - -czf
+      - /var/backups/fleet-netbird-pre-retirement.tgz
+      - netbird
+    creates: /var/backups/fleet-netbird-pre-retirement.tgz
+  when: retire_netbird_config.stat.exists
+
+- name: Protect NetBird recovery archive
+  ansible.builtin.file:
+    path: /var/backups/fleet-netbird-pre-retirement.tgz
+    owner: root
+    group: root
+    mode: "0600"
+  when: retire_netbird_config.stat.exists
+
+- name: Stop and disable NetBird
+  ansible.builtin.systemd_service:
+    name: netbird.service
+    state: stopped
+    enabled: false
+  failed_when: false
+
+- name: Remove NetBird package
+  ansible.builtin.apt:
+    name: netbird
+    state: absent
+    purge: true
+
+- name: Verify NetBird binary is absent
+  ansible.builtin.command: test ! -x /usr/bin/netbird
+  changed_when: false
+
+- name: Verify Tailscale survived NetBird retirement
+  ansible.builtin.command: tailscale status --json
+  register: retire_tailscale_after
+  changed_when: false
+  failed_when: (retire_tailscale_after.stdout | from_json).BackendState != 'Running'
+
+# Rollback: reinstall the prior NetBird package version, restore
+# /var/backups/fleet-netbird-pre-retirement.tgz under /etc, and start the service.
+

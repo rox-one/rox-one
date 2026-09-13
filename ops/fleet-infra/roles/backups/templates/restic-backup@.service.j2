@@ -1,0 +1,7 @@
+[Unit]
+Description=restic backup for %i
+[Service]
+Type=oneshot
+ExecStart={{ restic_config_dir }}/backup-%i.sh
+NoNewPrivileges=true
+PrivateTmp=true

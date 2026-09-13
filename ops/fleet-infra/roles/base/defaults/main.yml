@@ -1,0 +1,26 @@
+---
+base_apt_cache_valid_time: 3600
+
+base_packages:
+  - jq
+  - curl
+  - git
+  - htop
+
+base_chrony_servers:
+  - pool.ntp.org iburst
+
+# Sysctl baseline. ip_forward deliberately NOT here; it is enforced absent.
+base_sysctl:
+  - { name: "net.ipv4.tcp_syncookies", value: "1" }
+  - { name: "net.ipv4.conf.all.rp_filter", value: "1" }
+  - { name: "net.ipv4.conf.default.rp_filter", value: "1" }
+  - { name: "net.ipv4.icmp_echo_ignore_broadcasts", value: "1" }
+  - { name: "net.ipv4.conf.all.accept_redirects", value: "0" }
+  - { name: "net.ipv6.conf.all.accept_redirects", value: "0" }
+  - { name: "net.ipv4.conf.all.send_redirects", value: "0" }
+  - { name: "kernel.randomize_va_space", value: "2" }
+  - { name: "fs.protected_symlinks", value: "1" }
+  - { name: "fs.protected_hardlinks", value: "1" }
+
+base_unattended_auto_reboot: "false"

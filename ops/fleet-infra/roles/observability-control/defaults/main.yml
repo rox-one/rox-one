@@ -1,0 +1,14 @@
+---
+observability_install_dir: /opt/observability
+observability_tailnet_ip: "{{ tailscale_ip }}"
+observability_project_id: "{{ infisical_project_id | default('') }}"
+observability_secret_path: "/nodes/{{ inventory_hostname }}/observability"
+observability_infisical_domain: "{{ infisical_public_domain | default('https://infisical.example.internal') }}"
+observability_infisical_token_file: /etc/infisical/runtime/access-token
+grafana_image: "grafana/grafana:13.2.0"
+victoria_image: "victoriametrics/victoria-metrics:v1.150.0"
+loki_image: "grafana/loki:3.7.6"
+alertmanager_image: "prom/alertmanager:v0.34.0"
+victoria_retention: 30d
+loki_retention: 168h
+

@@ -1,0 +1,8 @@
+---
+- name: Deploy Windmill automation control plane
+  hosts: automation_control
+  become: true
+  gather_facts: true
+  roles:
+    - windmill-control
+

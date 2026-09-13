@@ -1,0 +1,10 @@
+---
+ansible_user: root
+arch: x86_64
+fleet_role: automation
+reachable: true
+tailscale_ip: 192.0.2.11
+os_family: Debian
+os_release: "24.04"
+has_docker: true
+ssh_host_key_ed25519: "ssh-ed25519 AAAAEXAMPLE automation-01.example"

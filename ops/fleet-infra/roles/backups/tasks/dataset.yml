@@ -1,0 +1,26 @@
+---
+# One dataset -> script + per-dataset timer; service is generic (%i instance)
+- name: Deploy backup script for {{ dataset.name }}
+  ansible.builtin.template:
+    src: backup-dataset.sh.j2
+    dest: "{{ restic_config_dir }}/backup-{{ dataset.name }}.sh"
+    owner: root
+    group: root
+    mode: "0700"
+  notify: reload systemd
+
+- name: Deploy generic service unit
+  ansible.builtin.template:
+    src: restic-backup@.service.j2
+    dest: /etc/systemd/system/restic-backup@.service
+    mode: "0644"
+  notify: reload systemd
+
+- name: Deploy per-dataset timer
+  ansible.builtin.template:
+    src: restic-backup@.timer.j2
+    dest: "/etc/systemd/system/restic-backup@{{ dataset.name }}.timer"
+    mode: "0644"
+  vars:
+    dataset_schedule: "{{ dataset.schedule | default('*-*-* 03:00:00') }}"
+  notify: reload systemd

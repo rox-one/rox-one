@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Managed by Ansible - fleet-infra roles/agent-runtime
+set -euo pipefail
+fail=0
+{% set all_pins = {'omp': omp_version, 'hermes': hermes_version} %}
+{% set pins = {} %}
+{% for component in agent_runtime_components %}
+{% set _ = pins.update({component: all_pins[component]}) %}
+{% endfor %}
+{% for rt, ver in pins.items() %}
+if ! command -v {{ rt }} >/dev/null 2>&1; then
+  echo "health: {{ rt }} missing on worker" >&2
+  fail=1
+else
+  got="$(command {{ rt }} --version 2>/dev/null | sed -n '1p')"
+  case "$got" in
+    *{{ ver }}*) : ;;
+    *) echo "health: {{ rt }} version '${got:-none}' != pinned {{ ver }}" >&2; fail=1 ;;
+  esac
+fi
+{% endfor %}
+[ "$fail" -eq 0 ] || { echo "agent-runtime health check FAILED" >&2; exit 1; }
+echo "agent-runtime health check OK"

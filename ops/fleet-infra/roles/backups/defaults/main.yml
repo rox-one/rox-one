@@ -1,0 +1,23 @@
+---
+# Pins (keep in sync with inventory/group_vars/all/versions.yml)
+restic_version: "0.18.1"
+restic_checksum_map:
+  x86_64: "680838f19d67151adba227e1570cdd8af12c19cf1735783ed1ba928bc41f363d"
+  aarch64: "87f53fddde38764095e9c058a3b31834052c37e5826d2acf34e18923c006bd45"
+restic_binary_checksum_map:
+  x86_64: "01143daba61a1dc8afb0cb3d03ba83e6b118f55b6b146b27473a09efc3df13d6"
+  aarch64: "f04a6bf766a33fba44b5be068e29091259dda5ef37f1e68ba9a8e0cda053120e"
+restic_arch_map:
+  x86_64: amd64
+  aarch64: arm64
+
+restic_install_dir: /usr/local/bin
+restic_config_dir: /etc/restic
+restic_repository: ""
+restic_project_id: "{{ infisical_project_id | default('') }}"
+restic_secret_path: "/nodes/{{ inventory_hostname }}/observability"
+restic_infisical_domain: "{{ infisical_public_domain | default('https://infisical.example.internal') }}"
+restic_infisical_token_file: /etc/infisical/runtime/access-token
+
+# Each dataset: {name, paths: [], schedule: "", keep_daily: 14, keep_weekly: 8, keep_monthly: 12}
+backups_datasets: []

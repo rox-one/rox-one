@@ -1,0 +1,50 @@
+---
+- name: Assert hermes commit pin is a full sha256
+  ansible.builtin.assert:
+    that:
+      - hermes_commit | length == 40
+      - hermes_git_repo is match('^https://')
+    fail_msg: "agent-runtime: hermes_commit must be the full 40-hex sha of the pinned checkout"
+
+- name: Clone hermes fork checkout
+  ansible.builtin.git:
+    repo: "{{ hermes_git_repo }}"
+    dest: "{{ agent_runtime_install_dir }}/hermes-src"
+    version: "{{ hermes_commit }}"
+    depth: 1
+    force: true
+  register: hermes_clone
+
+- name: Discover in-repo builder
+  ansible.builtin.stat:
+    path: "{{ agent_runtime_install_dir }}/hermes-src/{{ item }}"
+  loop: ["install.sh", "setup.sh", "scripts/install.sh"]
+  register: builders
+
+- name: Build from pinned checkout (once per commit)
+  ansible.builtin.command: "./{{ item.item }}"
+  args:
+    chdir: "{{ agent_runtime_install_dir }}/hermes-src"
+    creates: "{{ agent_runtime_install_dir }}/hermes-src/.built-{{ hermes_commit[:12] }}"
+  loop: "{{ builders.results | selectattr('stat.exists', 'defined') | selectattr('stat.exists') | map(attribute='item') | list }}"
+  when: builders.results | selectattr('stat.exists') | selectattr('stat.exists') | list | length > 0
+
+- name: Stamp successful build
+  ansible.builtin.copy:
+    content: "built {{ hermes_commit }} at {{ ansible_date_time.iso8601 }}"
+    dest: "{{ agent_runtime_install_dir }}/hermes-src/.built-{{ hermes_commit[:12] }}"
+    mode: "0644"
+
+- name: Fail loudly when no builder exists in checkout
+  ansible.builtin.fail:
+    msg: "agent-runtime: no install.sh/setup.sh/scripts/install.sh in pinned hermes checkout — extend discovery"
+  when: builders.results | selectattr('stat.exists') | selectattr('stat.exists') | list | length == 0 and not (hermes_clone is changed)
+
+- name: Symlink hermes binary
+  ansible.builtin.file:
+    src: "{{ agent_runtime_install_dir }}/hermes-src/bin/hermes"
+    dest: "{{ agent_runtime_bin_dir }}/hermes"
+    state: link
+    force: true
+
+# Rollback: rm -rf {{ agent_runtime_install_dir }}/hermes-src; rm bin/hermes symlink.

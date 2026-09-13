@@ -1,0 +1,58 @@
+services:
+  victoria:
+    image: {{ victoria_image }}
+    restart: unless-stopped
+    command:
+      - -storageDataPath=/storage
+      - -retentionPeriod={{ victoria_retention }}
+      - -httpListenAddr=:8428
+      - -promscrape.config=/etc/victoria/scrape.yml
+    ports:
+      - "{{ observability_tailnet_ip }}:8428:8428"
+    volumes:
+      - victoria_data:/storage
+      - ./victoria-scrape.yml:/etc/victoria/scrape.yml:ro
+
+  loki:
+    image: {{ loki_image }}
+    restart: unless-stopped
+    command: [-config.file=/etc/loki/local-config.yaml]
+    ports:
+      - "{{ observability_tailnet_ip }}:3100:3100"
+    volumes:
+      - loki_data:/loki
+      - ./loki.yml:/etc/loki/local-config.yaml:ro
+
+  alertmanager:
+    image: {{ alertmanager_image }}
+    restart: unless-stopped
+    command: [--config.file=/etc/alertmanager/alertmanager.yml, --storage.path=/alertmanager]
+    ports:
+      - "{{ observability_tailnet_ip }}:9093:9093"
+    volumes:
+      - alertmanager_data:/alertmanager
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+
+  grafana:
+    image: {{ grafana_image }}
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      GF_SERVER_ROOT_URL: "http://{{ observability_tailnet_ip }}:3000"
+    ports:
+      - "{{ observability_tailnet_ip }}:3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on: [victoria, loki]
+
+volumes:
+  victoria_data:
+  loki_data:
+  alertmanager_data:
+  grafana_data:
+

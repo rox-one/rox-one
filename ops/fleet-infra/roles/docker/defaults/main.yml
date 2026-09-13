@@ -1,0 +1,26 @@
+---
+docker_repo_key_url: https://download.docker.com/linux/ubuntu/gpg
+docker_repo_url: https://download.docker.com/linux/ubuntu
+
+# `official` installs the pinned Docker CE stack below. `ubuntu` preserves the
+# distribution engine and installs the matching Compose v2 plugin.
+docker_package_source: official
+docker_ubuntu_packages:
+  - docker.io
+  - docker-compose-v2
+
+# Pin concrete versions available in the Docker Ubuntu noble repo.
+docker_ce_version: "5:27.3.1-1~ubuntu.24.04~noble"
+docker_containerd_version: "1.7.23-1"
+docker_buildx_version: "0.17.1-1~ubuntu.24.04~noble"
+docker_compose_version: "2.29.7-1~ubuntu.24.04~noble"
+
+# Rendered to /etc/docker/daemon.json.
+docker_daemon_json:
+  log-driver: json-file
+  log-opts:
+    max-size: "10m"
+    max-file: "3"
+  live-restore: true
+
+docker_users: []

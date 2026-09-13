@@ -1,0 +1,6 @@
+# {{ ansible_managed }}
+{% for server in base_chrony_servers %}
+pool {{ server }}
+{% endfor %}
+makestep 1.0 3
+rtcsync

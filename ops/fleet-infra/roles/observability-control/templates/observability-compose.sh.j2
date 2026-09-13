@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+token="$(<{{ observability_infisical_token_file }})"
+export INFISICAL_TOKEN="$token"
+export INFISICAL_DOMAIN="{{ observability_infisical_domain }}"
+unset token
+exec /usr/bin/infisical run \
+  --projectId={{ observability_project_id }} \
+  --env=prod \
+  --path={{ observability_secret_path }} \
+  -- /usr/bin/docker compose -f {{ observability_install_dir }}/compose.yml "$@"
+

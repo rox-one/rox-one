@@ -1,0 +1,15 @@
+---
+tailscale_repo_key_url: "https://pkgs.tailscale.com/stable/ubuntu/{{ ansible_distribution_release }}.gpg"
+tailscale_repo_url: https://pkgs.tailscale.com/stable/ubuntu
+# Pin to a concrete version, e.g. "1.78.1"; must exist in the stable repo.
+tailscale_package_version: "1.102.3"
+
+# Tags to advertise on join, e.g. ["tag:prod", "tag:docker-host"].
+tailscale_advertise_tags: []
+
+# Set true in host_vars/group_vars for hosts that should actually run `tailscale up`.
+tailscale_join_cluster: false
+tailscale_hostname: true
+
+# Explicitly NOT an exit node; explicitly ignores subnet routes.
+# Enforced as literal flags in tasks/main.yml.

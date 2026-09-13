@@ -1,0 +1,43 @@
+---
+# Site: converge the fleet. Role order matters: base -> ssh/firewall before platform.
+- name: Converge fleet
+  hosts: managed_linux
+  become: true
+  gather_facts: true
+  roles:
+    - role: base
+      tags: [base]
+      when: fleet_role_enabled.base | bool
+    - role: users
+      tags: [users]
+      when: fleet_role_enabled.users | bool
+    - role: ssh
+      tags: [ssh]
+      when: fleet_role_enabled.ssh | bool
+    - role: firewall
+      tags: [firewall]
+      when: fleet_role_enabled.firewall | bool
+    - role: tailscale
+      tags: [tailscale]
+      when: fleet_role_enabled.tailscale | bool
+    - role: docker
+      tags: [docker]
+      when: fleet_role_enabled.docker | bool
+    - role: netdata
+      tags: [netdata]
+      when: fleet_role_enabled.netdata | bool
+    - role: infisical-agent
+      tags: [infisical-agent]
+      when: fleet_role_enabled.infisical_agent | bool
+    - role: coolify-target
+      tags: [coolify-target]
+      when: fleet_role_enabled.coolify_target | bool
+    - role: windmill-worker
+      tags: [windmill-worker]
+      when: fleet_role_enabled.windmill_worker | bool
+    - role: agent-runtime
+      tags: [agent-runtime]
+      when: fleet_role_enabled.agent_runtime | bool
+    - role: backups
+      tags: [backups]
+      when: fleet_role_enabled.backups | bool
