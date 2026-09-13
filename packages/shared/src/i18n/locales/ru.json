@@ -2595,6 +2595,8 @@
   "session.simplifyPrompt": "@simplify Упрости текущий git diff в этой сессии. Не создавай скрытую сессию.",
   "session.unreadGroup": "Непрочитанные ({{count}})",
   "session.unreadLabel": "Непрочитанное",
+  "sessionItem.connectedTo": "Подключено к {{label}}",
+  "sessionItem.matchesFound": "Найдены совпадения ({{next}} далее, {{prev}} назад)",
   "sessionMenu.archive": "В архив",
   "sessionMenu.connectMessaging": "Подключить мессенджинг",
   "sessionMenu.copyLink": "Скопировать ссылку",

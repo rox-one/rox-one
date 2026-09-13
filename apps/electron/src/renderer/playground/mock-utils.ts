@@ -39,6 +39,25 @@ type WhatsAppEventListener = (payload: { workspaceId: string; event: WhatsAppUiE
 
 const PLAYGROUND_WORKSPACE_ID = 'playground-workspace'
 
+const DEFAULT_ZEN_SNAPSHOT = {
+  flag: 'shell.zen.v1' as const,
+  enabled: false,
+  preference: 'system' as const,
+  material: 'solid' as const,
+  platform: 'web' as const,
+  fallbackReason: 'zen-disabled' as const,
+}
+
+let playgroundZenState = { ...DEFAULT_ZEN_SNAPSHOT }
+const playgroundZenListeners = new Set<(snapshot: typeof DEFAULT_ZEN_SNAPSHOT) => void>()
+
+function playgroundZenSnapshot() {
+  return {
+    ...playgroundZenState,
+    fallbackReason: playgroundZenState.enabled ? undefined : 'zen-disabled',
+  }
+}
+
 type AllowListPlatform = 'telegram' | 'whatsapp' | 'lark' | 'discord'
 
 interface AllowListState {
@@ -408,6 +427,39 @@ export const mockElectronAPI = {
     updatedAt: 0,
   }),
   onPrivacyChanged: () => () => {},
+  getShellSnapshot: async () => playgroundZenSnapshot(),
+  setZenShell: async (patch: { enabled?: boolean; materialPreference?: 'system' | 'glass' | 'opaque' }) => {
+    playgroundZenState = {
+      ...playgroundZenState,
+      enabled: patch.enabled !== undefined ? patch.enabled === true : playgroundZenState.enabled,
+      preference: patch.materialPreference ?? playgroundZenState.preference,
+    }
+    const next = playgroundZenSnapshot()
+    for (const listener of playgroundZenListeners) listener(next)
+    return next
+  },
+  onShellChanged: (callback: (snapshot: ReturnType<typeof playgroundZenSnapshot>) => void) => {
+    playgroundZenListeners.add(callback)
+    return () => { playgroundZenListeners.delete(callback) }
+  },
+  getSecretRefs: async () => ({
+    refs: [
+      { name: 'demo', envVar: 'ROX_DEMO', provider: 'infisical' as const, ref: 'prod/demo' },
+    ],
+    infisical: { available: false, errorCode: 'INFISICAL_UNAVAILABLE' as const },
+  }),
+  setSecretRefs: async (refs: unknown) => refs,
+  getToolchainDisabled: async () => [],
+  setToolchainDisabled: async (next: string[]) => next,
+  getDefaultThinkingLevel: async () => 'medium',
+  setDefaultThinkingLevel: async () => ({ success: true }),
+  getEnvOverrides: async () => ({}),
+  setEnvOverrides: async (env: Record<string, string>) => env,
+  loadPresetThemes: async () => [],
+  getToolIconMappings: async () => ({}),
+  getHomeDir: async () => '/home/playground',
+  getAllWorkspaceThemes: async () => ({}),
+  getWorkspaceSettings: async () => ({ permissionMode: 'ask' }),
   awardGamificationXp: async (event: string) => {
     console.log('[Playground] awardGamificationXp', event)
     return {

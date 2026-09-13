@@ -29,6 +29,9 @@ import { taskEditorComponents } from './task-editor'
 import { unifiedShellComponents } from './unified-shell'
 import { zenShellQaComponents } from './zen-shell-qa'
 import { premiumMenuComponents } from './premium-menu'
+import { collectionComponents } from './collection'
+import { notesComponents } from './notes'
+import { settingsComponents } from './settings'
 
 export * from './types'
 export {
@@ -70,10 +73,13 @@ export const componentRegistry: ComponentEntry[] = [
   ...unifiedShellComponents,
   ...zenShellQaComponents,
   ...premiumMenuComponents,
+  ...collectionComponents,
+  ...notesComponents,
+  ...settingsComponents,
 ]
 
 export function getCategories(): CategoryGroup[] {
-  const categoryOrder: Category[] = ['Mobile WebUI', 'Automations', 'Onboarding', 'Agent Setup', 'Chat', 'Island', 'Browser', 'Planner', 'Custom Shadows', 'Session List', 'Kanban', 'Entity Lists', 'Edit Popover', 'Turn Cards', 'TurnCard Modes', 'Fullscreen', 'Chat Messages', 'Chat Inputs', 'Toast Messages', 'Markdown', 'Icons', 'OAuth', 'Messaging', 'Unified Shell', 'Premium Menu']
+  const categoryOrder: Category[] = ['Mobile WebUI', 'Automations', 'Onboarding', 'Agent Setup', 'Chat', 'Island', 'Browser', 'Planner', 'Custom Shadows', 'Session List', 'Collection', 'Notes', 'Kanban', 'Entity Lists', 'Edit Popover', 'Turn Cards', 'TurnCard Modes', 'Fullscreen', 'Chat Messages', 'Chat Inputs', 'Toast Messages', 'Markdown', 'Icons', 'OAuth', 'Messaging', 'Settings', 'Unified Shell', 'Premium Menu']
   const categoryMap = new Map<Category, ComponentEntry[]>()
 
   for (const entry of componentRegistry) {

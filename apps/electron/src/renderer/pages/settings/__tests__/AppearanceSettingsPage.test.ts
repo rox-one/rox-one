@@ -34,4 +34,17 @@ describe('AppearanceSettingsPage zoom default', () => {
     expect(source).toContain('setChatFont')
     expect(source).toContain('setTerminalFont')
   })
+
+  it('keeps Zen Shell behind shell.zen.v1 with default OFF', () => {
+    const zen = readFileSync(join(__dirname, '../ZenShellSettings.tsx'), 'utf8')
+    expect(zen).toContain("flag: 'shell.zen.v1'")
+    expect(zen).toContain('enabled: false')
+    expect(source).toContain('<ZenShellSettings />')
+  })
+
+  it('does not throw when playground IPC is missing preset themes or tool icons', () => {
+    expect(source).toContain('window.electronAPI.loadPresetThemes?.()')
+    expect(source).toContain('window.electronAPI.getToolIconMappings?.()')
+    expect(source).toContain('window.electronAPI.getHomeDir?.()')
+  })
 })

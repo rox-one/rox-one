@@ -302,7 +302,7 @@ export function SessionItem({
                   key={binding.id}
                   variant="text"
                   colorClass={pill.colorClass}
-                  tooltip={`Connected to ${pill.label}`}
+                  tooltip={t('sessionItem.connectedTo', { label: pill.label })}
                 >
                   {pill.label}
                 </EntityListBadge>
@@ -371,7 +371,7 @@ export function SessionItem({
           style={{
             '--shadow-color': isSelected ? '234, 179, 8' : '133, 77, 14',
           } as React.CSSProperties}
-          title={`Matches found (${nextHotkey} next, ${prevHotkey} prev)`}
+          title={t('sessionItem.matchesFound', { next: nextHotkey, prev: prevHotkey })}
         >
           {chatMatchCount}
         </span>

@@ -39,6 +39,8 @@ describe('issues 07–09 wiring', () => {
     expect(health).toContain("t('notes.inspector.indexRebuild')")
     expect(panel).toContain("t('notes.inspector.linkSuggestions')")
     expect(panel).toContain("t('notes.inspector.footnotes')")
+    expect(panel).toContain('mb-2 flex flex-col gap-1.5')
+    expect(panel).toContain('w-full min-w-0')
   })
 
   it('hosts table, canvas, outline and graph views without replacing Map', () => {
@@ -50,6 +52,8 @@ describe('issues 07–09 wiring', () => {
     const host = read('pages/notes/NotesViewHost.tsx')
     expect(host).toContain('data-testid="notes-table-toolbar"')
     expect(host).toContain('data-testid="notes-table-formula"')
+    expect(host).toContain('PremiumMenuSelect')
+    expect(host).not.toContain('<select')
     expect(host).toContain('addFormula')
     expect(host).toContain('formulaValue')
     expect(host).toContain('data-testid="notes-graph-kind"')
@@ -101,5 +105,20 @@ describe('issues 07–09 wiring', () => {
     expect(page).toContain('NOTES_AI_MODEL')
     expect(page).toContain('notes-bound-chat')
     expect(page).toContain('composerTop')
+  })
+
+  it('exposes playground stories for inspector, wiki, palette, comments and formula table', () => {
+    const notes = read('playground/registry/notes.tsx')
+    expect(notes).toContain("id: 'notes-table'")
+    expect(notes).toContain("id: 'notes-graph'")
+    expect(notes).toContain("id: 'notes-inspector'")
+    expect(notes).toContain("id: 'notes-wiki'")
+    expect(notes).toContain("id: 'notes-palette'")
+    expect(notes).toContain("id: 'notes-comments'")
+    expect(notes).toContain('VaultInsightsPanel')
+    expect(notes).toContain('matchWikiLinkCandidates')
+    expect(notes).toContain('NotesCommandPalette')
+    expect(notes).toContain('NotesComments')
+    expect(notes).not.toContain('<select')
   })
 })

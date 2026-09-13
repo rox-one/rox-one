@@ -27,6 +27,12 @@ describe("electron dev helpers", () => {
     expect(resolveVitePort({}, "/tmp/rox-one")).toBe("5173");
   });
 
+  test("ignores branch-id suffixes that would overflow the TCP port range", () => {
+    expect(detectInstanceNumber("/tmp/visual-qa-polish-1771")).toBe("1771");
+    expect(resolveVitePort({}, "/tmp/visual-qa-polish-1771")).toBe("5173");
+    expect(resolveVitePort({}, "/tmp/cursor/rox-issue05-heatmap-1771")).toBe("5173");
+  });
+
   test("rejects invalid explicit ports instead of silently starting elsewhere", () => {
     expect(() => resolveVitePort({ ROX_VITE_PORT: "not-a-port" }, "/tmp/craft-agents"))
       .toThrow("ROX_VITE_PORT must be an integer between 1 and 65535");

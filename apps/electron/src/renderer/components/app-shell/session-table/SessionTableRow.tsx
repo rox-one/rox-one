@@ -476,6 +476,8 @@ export function SessionTableRow({
             meta.isFlagged && 'text-amber-500',
           )}
           aria-pressed={Boolean(meta.isFlagged)}
+          aria-label={meta.isFlagged ? t('sessionMenu.unflag') : t('sessionMenu.flag')}
+          title={meta.isFlagged ? t('sessionMenu.unflag') : t('sessionMenu.flag')}
           onClick={() => onUpdate({ isFlagged: !meta.isFlagged })}
         >
           <FlagIcon className="h-3.5 w-3.5" fill={meta.isFlagged ? 'currentColor' : 'none'} />

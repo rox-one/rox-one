@@ -112,6 +112,9 @@ export default function PrivacySettingsPage() {
         <SettingsSection title={t('settings.privacy.purposes')}>
           <SettingsCard>
             <p className="px-4 pt-3 text-xs text-muted-foreground">{t('settings.privacy.legalNote')}</p>
+            {!state ? (
+              <p className="px-4 pb-3 text-xs text-muted-foreground">{t('common.loading')}</p>
+            ) : null}
             {PURPOSE_KEYS.map((row) => (
               <SettingsToggle
                 key={row.purpose}

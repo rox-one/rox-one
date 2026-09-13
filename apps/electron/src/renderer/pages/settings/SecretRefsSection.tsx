@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Plus, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Spinner } from '@craft-agent/ui'
+import { PremiumMenuSelect, Spinner } from '@craft-agent/ui'
 import { SettingsSection, SettingsCard } from '@/components/settings'
 import type { SecretRefEntry, SecretRefsSettingsPayload } from '../../../shared/types'
 import { InfisicalUnavailableRow, secretRefRowShowsUnavailable } from './secret-refs-ui'
@@ -174,23 +174,22 @@ export function SecretRefsSection({ onError }: { onError?: (message: string | nu
                       spellCheck={false}
                       className="font-mono text-xs flex-1"
                     />
-                    <select
-                      value={draft.provider}
-                      onChange={(e) => updateDraft(index, { provider: e.target.value as SecretProviderId | '' })}
+                    <PremiumMenuSelect
                       aria-label={t('settings.runtime.secretProvider')}
-                      className="h-8 rounded-md border border-foreground/15 bg-background px-2 font-mono text-xs"
-                    >
-                      <option value="">{t('settings.runtime.secretProviderAny')}</option>
-                      {SECRET_PROVIDER_IDS.map((id) => (
-                        <option key={id} value={id}>
-                          {id === 'environment'
-                            ? t('settings.runtime.secretProviderEnvironment')
-                            : id === 'local-encrypted'
-                              ? t('settings.runtime.secretProviderLocal')
-                              : t('settings.runtime.secretProviderInfisical')}
-                        </option>
-                      ))}
-                    </select>
+                      className="h-8 max-w-[140px] font-mono"
+                      items={[
+                        { id: 'any', label: t('settings.runtime.secretProviderAny') },
+                        { id: 'environment', label: t('settings.runtime.secretProviderEnvironment') },
+                        { id: 'local-encrypted', label: t('settings.runtime.secretProviderLocal') },
+                        { id: 'infisical', label: t('settings.runtime.secretProviderInfisical') },
+                      ]}
+                      selectedId={draft.provider || 'any'}
+                      placeholder={t('settings.runtime.secretProvider')}
+                      onSelect={(item) => updateDraft(index, {
+                        provider: item.id === 'any' ? '' : item.id as SecretProviderId,
+                      })}
+                      variant="compact"
+                    />
                     <Input
                       value={draft.ref}
                       onChange={(e) => updateDraft(index, { ref: e.target.value })}

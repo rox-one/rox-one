@@ -2593,6 +2593,8 @@
   "session.simplifyPrompt": "@simplify Simplify the current git diff in this session. Do not spawn a hidden session.",
   "session.unreadGroup": "غير مقروءة ({{count}})",
   "session.unreadLabel": "Unread",
+  "sessionItem.connectedTo": "متصل بـ {{label}}",
+  "sessionItem.matchesFound": "تم العثور على نتائج ({{next}} التالي، {{prev}} السابق)",
   "sessionMenu.archive": "أرشفة",
   "sessionMenu.connectMessaging": "ربط المراسلة",
   "sessionMenu.copyLink": "نسخ الرابط",

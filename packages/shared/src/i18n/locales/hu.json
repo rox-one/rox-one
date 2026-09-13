@@ -2593,6 +2593,8 @@
   "session.simplifyPrompt": "@simplify Simplify the current git diff in this session. Do not spawn a hidden session.",
   "session.unreadGroup": "Olvasatlan ({{count}})",
   "session.unreadLabel": "Olvasatlan",
+  "sessionItem.connectedTo": "Csatlakozva: {{label}}",
+  "sessionItem.matchesFound": "Találatok ({{next}} következő, {{prev}} előző)",
   "sessionMenu.archive": "Archiválás",
   "sessionMenu.connectMessaging": "Üzenetküldő csatlakoztatása",
   "sessionMenu.copyLink": "Link másolása",

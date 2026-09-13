@@ -2593,6 +2593,8 @@
   "session.simplifyPrompt": "@simplify Simplify the current git diff in this session. Do not spawn a hidden session.",
   "session.unreadGroup": "未讀 ({{count}})",
   "session.unreadLabel": "未讀",
+  "sessionItem.connectedTo": "已連線到 {{label}}",
+  "sessionItem.matchesFound": "找到相符項（{{next}} 下一個，{{prev}} 上一個）",
   "sessionMenu.archive": "歸檔",
   "sessionMenu.connectMessaging": "連線訊息平臺",
   "sessionMenu.copyLink": "複製連結",

@@ -39,7 +39,14 @@ describe('session table row chrome', () => {
     expect(ROW).toContain("t('collection.table.column.project')")
   })
 
-  it('renders optional metric columns when enabled', () => {
+  it('keeps the flag control on one row with an accessible name', () => {
+    expect(ROW).toContain('showFlag')
+    expect(ROW).toContain("t('sessionMenu.flag')")
+    expect(ROW).toContain("t('sessionMenu.unflag')")
+    expect(ROW).toContain('aria-label={meta.isFlagged ? t(\'sessionMenu.unflag\') : t(\'sessionMenu.flag\')}')
+  })
+
+  it('keeps optional metric columns behind display flags', () => {
     expect(ROW).toContain('showSize')
     expect(ROW).toContain('showToolCalls')
     expect(ROW).toContain('showCommits')

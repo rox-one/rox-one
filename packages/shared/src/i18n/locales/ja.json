@@ -2593,6 +2593,8 @@
   "session.simplifyPrompt": "@simplify Simplify the current git diff in this session. Do not spawn a hidden session.",
   "session.unreadGroup": "未読 ({{count}})",
   "session.unreadLabel": "未読",
+  "sessionItem.connectedTo": "{{label}} に接続済み",
+  "sessionItem.matchesFound": "一致あり（{{next}} 次、{{prev}} 前）",
   "sessionMenu.archive": "アーカイブ",
   "sessionMenu.connectMessaging": "メッセージングを接続",
   "sessionMenu.copyLink": "リンクをコピー",

@@ -388,23 +388,20 @@ export default function RuntimeSettingsPage() {
   }, [tools])
 
   useEffect(() => {
-    window.electronAPI
-      .getToolchainDisabled()
-      .then(setDisabledTools)
+    void window.electronAPI.getToolchainDisabled?.()
+      ?.then(setDisabledTools)
       .catch((error) => {
         console.error('Failed to load disabled toolchain tools:', error)
         setPageError(errorMessage(error))
       })
-    window.electronAPI
-      .getDefaultThinkingLevel()
-      .then(setThinkingLevel)
+    void window.electronAPI.getDefaultThinkingLevel?.()
+      ?.then(setThinkingLevel)
       .catch((error) => {
         console.error('Failed to load default thinking level:', error)
         setPageError(errorMessage(error))
       })
-    window.electronAPI
-      .getEnvOverrides()
-      .then((env) => {
+    void window.electronAPI.getEnvOverrides?.()
+      ?.then((env) => {
         const entries = Object.entries(env).map(([key, value]) => ({ key, value }))
         setEnvEntries(entries)
         setSavedEnvSnapshot(JSON.stringify(entries))
@@ -419,9 +416,8 @@ export default function RuntimeSettingsPage() {
 
   useEffect(() => {
     if (!activeWorkspaceId) return
-    window.electronAPI
-      .getWorkspaceSettings(activeWorkspaceId)
-      .then((settings) => setPermissionMode(settings?.permissionMode ?? 'ask'))
+    void window.electronAPI.getWorkspaceSettings?.(activeWorkspaceId)
+      ?.then((settings) => setPermissionMode(settings?.permissionMode ?? 'ask'))
       .catch((error) => {
         console.error('Failed to load workspace permission mode:', error)
         setPageError(errorMessage(error))
