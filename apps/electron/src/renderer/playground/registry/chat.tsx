@@ -594,7 +594,9 @@ function InputContainerPlayground({
   followUpCount = 2,
 }: InputContainerPlaygroundProps) {
   const { t } = useTranslation()
-  const resolvedPlaceholder = placeholder ?? t('playground.chat.messagePlaceholder')
+  const resolvedPlaceholder = placeholder?.trim()
+    ? placeholder
+    : t('playground.chat.messagePlaceholder')
   const playgroundSessionId = 'playground-session'
   const [model, setModel] = React.useState(currentModel)
   const [mode, setMode] = React.useState<PermissionMode>(permissionMode)
@@ -1314,7 +1316,7 @@ export const chatComponents: ComponentEntry[] = [
         name: 'placeholder',
         description: 'Textarea placeholder text',
         control: { type: 'string', placeholder: 'Message...' },
-        defaultValue: 'Message Craft Agent...',
+        defaultValue: '',
       },
       {
         name: 'currentModel',
