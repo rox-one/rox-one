@@ -1,9 +1,13 @@
-import type {
-  NotesBridge,
-  NotesBridgeOptions,
-  NotesDocument,
-  NotesPage,
-  NotesSoupClient,
+import {
+  NOTES_BRIDGE_MAX_PAGES,
+  NOTES_BRIDGE_PAGE_LIMIT,
+  type NotesBridge,
+  type NotesBridgeOptions,
+  type NotesDocument,
+  type NotesListOptions,
+  type NotesLookup,
+  type NotesPage,
+  type NotesSoupClient,
 } from './types.ts'
 
 const DOCUMENT_TYPENAMES = new Set([
@@ -75,12 +79,20 @@ async function allowed(
   }
 }
 
-async function loadDocuments(soup: NotesSoupClient): Promise<NotesPage> {
-  const page = await soup.queryUserSoupPage({
-    input: { entityType: 'document' },
-  })
+async function loadDocuments(
+  soup: NotesSoupClient,
+  opts: NotesListOptions = {},
+): Promise<NotesPage> {
+  const limit = opts.limit ?? NOTES_BRIDGE_PAGE_LIMIT
+  const input: Record<string, unknown> = { entityType: 'document', limit }
+  if (opts.cursor) input.cursor = opts.cursor
+  const page = await soup.queryUserSoupPage({ input })
   const items = page.items.filter(isNotesEntity).map(toDocument)
   return { items, nextCursor: page.nextCursor ?? null }
+}
+
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }
 
 /**
@@ -94,19 +106,39 @@ export function createNotesBridge(options: NotesBridgeOptions): NotesBridge | nu
   const claimLocker = options.claimLocker
   const importsAcl = options.importsAcl
 
+  async function lookupNote(id: string): Promise<NotesLookup> {
+    if (!(await allowed(id, claimLocker, importsAcl))) return { status: 'denied' }
+    let cursor: string | null | undefined
+    for (let pageIndex = 0; pageIndex < NOTES_BRIDGE_MAX_PAGES; pageIndex += 1) {
+      let page: NotesPage
+      try {
+        page = await loadDocuments(soup, { cursor, limit: NOTES_BRIDGE_PAGE_LIMIT })
+      } catch (err) {
+        return { status: 'unavailable', message: errorMessage(err) }
+      }
+      const hit = page.items.find((doc) => doc.id === id)
+      if (hit) return { status: 'ok', document: hit }
+      if (!page.nextCursor) return { status: 'not_found' }
+      cursor = page.nextCursor
+    }
+    return { status: 'incomplete' }
+  }
+
   return {
-    async listNotes() {
-      const page = await loadDocuments(soup)
+    async listNotes(opts) {
+      const page = await loadDocuments(soup, opts)
       const items: NotesDocument[] = []
       for (const doc of page.items) {
         if (await allowed(doc.id, claimLocker, importsAcl)) items.push(doc)
       }
       return { items, nextCursor: page.nextCursor }
     },
+    lookupNote,
     async getNote(id) {
-      if (!(await allowed(id, claimLocker, importsAcl))) return null
-      const page = await loadDocuments(soup)
-      return page.items.find((d) => d.id === id) ?? null
+      const result = await lookupNote(id)
+      if (result.status === 'ok') return result.document
+      if (result.status === 'unavailable') throw new Error(result.message)
+      return null
     },
   }
 }

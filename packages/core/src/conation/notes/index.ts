@@ -10,6 +10,9 @@ export type {
   NotesClaimLocker,
   NotesDocument,
   NotesImportsAcl,
+  NotesListOptions,
+  NotesLookup,
   NotesPage,
   NotesSoupClient,
 } from './types.ts'
+export { NOTES_BRIDGE_MAX_PAGES, NOTES_BRIDGE_PAGE_LIMIT } from './types.ts'
