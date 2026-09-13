@@ -3716,6 +3716,8 @@
   "sidebar.branchCount_one": "{{count}} ветка",
   "sidebar.branchCount_other": "{{count}} ветки",
   "sidebar.connections": "Соединения",
+  "sidebar.disclosure.collapse": "Свернуть {{section}}",
+  "sidebar.disclosure.expand": "Развернуть {{section}}",
   "sidebar.eventBased": "По событиям",
   "sidebar.filterChats": "Фильтр чатов",
   "sidebar.flagged": "Избранное",

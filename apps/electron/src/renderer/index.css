@@ -994,6 +994,16 @@ html[data-shell-style="zen"] .header-icon-btn svg {
   height: 16px;
 }
 
+html[data-shell-style="zen"] .sidebar-disclosure {
+  transition: opacity var(--shell-motion-fast, 120ms) ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-shell-style="zen"] .sidebar-disclosure {
+    transition: none;
+  }
+}
+
 html[data-scenic] .chrome-topbar,
 html[data-scenic] .chrome-rail,
 html[data-scenic] .chrome-strip {

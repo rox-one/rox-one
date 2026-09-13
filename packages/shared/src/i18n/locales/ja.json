@@ -3714,6 +3714,8 @@
   "sidebar.branchCount_one": "{{count}} 件のブランチ",
   "sidebar.branchCount_other": "{{count}} 件のブランチ",
   "sidebar.connections": "Connections",
+  "sidebar.disclosure.collapse": "{{section}}を折りたたむ",
+  "sidebar.disclosure.expand": "{{section}}を展開",
   "sidebar.eventBased": "イベントベース",
   "sidebar.filterChats": "チャットをフィルター",
   "sidebar.flagged": "お気に入り",

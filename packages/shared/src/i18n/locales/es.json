@@ -3714,6 +3714,8 @@
   "sidebar.branchCount_one": "{{count}} rama",
   "sidebar.branchCount_other": "{{count}} ramas",
   "sidebar.connections": "Connections",
+  "sidebar.disclosure.collapse": "Contraer {{section}}",
+  "sidebar.disclosure.expand": "Expandir {{section}}",
   "sidebar.eventBased": "Basadas en eventos",
   "sidebar.filterChats": "Filtrar chats",
   "sidebar.flagged": "Favoritos",

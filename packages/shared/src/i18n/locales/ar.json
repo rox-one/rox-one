@@ -3714,6 +3714,8 @@
   "sidebar.branchCount_one": "{{count}} فرع",
   "sidebar.branchCount_other": "{{count}} فرع",
   "sidebar.connections": "الاتصالات",
+  "sidebar.disclosure.collapse": "طي {{section}}",
+  "sidebar.disclosure.expand": "توسيع {{section}}",
   "sidebar.eventBased": "مستند إلى الأحداث",
   "sidebar.filterChats": "تصفية الدردشات",
   "sidebar.flagged": "المفضلة",

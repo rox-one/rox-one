@@ -3716,6 +3716,8 @@
   "sidebar.branchCount_one": "{{count}} gałąź",
   "sidebar.branchCount_other": "{{count}} gałęzi",
   "sidebar.connections": "Connections",
+  "sidebar.disclosure.collapse": "Zwiń {{section}}",
+  "sidebar.disclosure.expand": "Rozwiń {{section}}",
   "sidebar.eventBased": "Oparte na zdarzeniach",
   "sidebar.filterChats": "Filtruj czaty",
   "sidebar.flagged": "Ulubione",

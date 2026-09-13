@@ -3714,6 +3714,8 @@
   "sidebar.branchCount_one": "{{count}} 個分支",
   "sidebar.branchCount_other": "{{count}} 個分支",
   "sidebar.connections": "Connections",
+  "sidebar.disclosure.collapse": "摺疊{{section}}",
+  "sidebar.disclosure.expand": "展開{{section}}",
   "sidebar.eventBased": "事件觸發",
   "sidebar.filterChats": "篩選聊天",
   "sidebar.flagged": "收藏",
