@@ -97,6 +97,9 @@ export type Rox2Event = {
   at: number
   actor: string
   payload?: Record<string, unknown>
+  causationId?: string
+  correlationId?: string
+  aggregateRevision?: string
 }
 
 export type Rox2Context = {
@@ -170,6 +173,8 @@ export type Rox2EntityRef = {
   workspaceId: string
   entityId: string
   revisionId?: string
+  /** Remote-account namespace. Distinct from workspaceId. */
+  accountNamespace?: string
 }
 
 export type Rox2ExternalBinding = {
@@ -210,6 +215,7 @@ export function entityRefFromBinding(
     workspaceId,
     entityId: formatRox2EntityId(kind, formatRox2ExternalBindingKey(binding)),
     revisionId,
+    accountNamespace: binding.account,
   }
 }
 
@@ -323,6 +329,36 @@ export const SENSITIVE_PERMISSIONS: readonly Rox2Permission[] = [
 
 export function requiresExplicitGrant(permission: Rox2Permission): boolean {
   return (SENSITIVE_PERMISSIONS as readonly string[]).includes(permission)
+}
+
+export type Rox2ActorGrant = {
+  actorId: string
+  permission: Rox2Permission
+}
+
+/**
+ * Entity.permissions is a capability catalog, not actor-scoped authorization.
+ * Missing actor or grant always denies.
+ */
+export function authorizeRox2Action(input: {
+  actorId: string | undefined
+  grants: readonly Rox2ActorGrant[]
+  permission: Rox2Permission
+}): boolean {
+  if (!input.actorId) return false
+  return input.grants.some(
+    (grant) => grant.actorId === input.actorId && grant.permission === input.permission,
+  )
+}
+
+/** Mutating lineage needs both a revision and an account namespace. */
+export function isRevisionedEntityRef(ref: Rox2EntityRef): boolean {
+  return Boolean(ref.revisionId && ref.accountNamespace)
+}
+
+/** Product-audit events require causation, correlation, and aggregate revision. */
+export function isAuditableRox2Event(event: Rox2Event): boolean {
+  return Boolean(event.causationId && event.correlationId && event.aggregateRevision)
 }
 
 export const ROX2_SCHEMA_VERSION = 1

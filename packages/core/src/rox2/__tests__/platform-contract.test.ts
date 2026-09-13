@@ -3,12 +3,15 @@ import type { SoupEntityConcreteType } from '../../conation/soup/types.ts'
 import {
   ROX2_ENTITY_KINDS,
   ROX2_SCHEMA_VERSION,
+  authorizeRox2Action,
   entityRefFromBinding,
   fixtureResult,
   formatRox2EntityId,
   formatRox2ExternalBindingKey,
   isAllowedRox2Relation,
+  isAuditableRox2Event,
   isClaimableLive,
+  isRevisionedEntityRef,
   parseRox2EntityId,
   parseRox2ExternalBindingKey,
   parseRox2TypedRecord,
@@ -66,6 +69,67 @@ describe('ROX2 platform contract', () => {
     ).toBe(true)
   })
 
+  test('entity permission catalogs are not actor-scoped authorization', () => {
+    const entityPermissions = ['write'] as const
+    expect(entityPermissions).toContain('write')
+    expect(
+      authorizeRox2Action({
+        actorId: undefined,
+        grants: [{ actorId: 'user-1', permission: 'write' }],
+        permission: 'write',
+      }),
+    ).toBe(false)
+    expect(
+      authorizeRox2Action({
+        actorId: 'user-1',
+        grants: [],
+        permission: 'write',
+      }),
+    ).toBe(false)
+    expect(
+      authorizeRox2Action({
+        actorId: 'user-1',
+        grants: [{ actorId: 'user-1', permission: 'write' }],
+        permission: 'write',
+      }),
+    ).toBe(true)
+  })
+
+  test('mutating refs and audit events require revision, account, and causation', () => {
+    expect(
+      isRevisionedEntityRef({ workspaceId: 'ws-1', entityId: 'note:1' }),
+    ).toBe(false)
+    expect(
+      isRevisionedEntityRef({
+        workspaceId: 'ws-1',
+        entityId: 'note:1',
+        revisionId: 'rev-1',
+        accountNamespace: 'work',
+      }),
+    ).toBe(true)
+    expect(
+      isAuditableRox2Event({
+        id: 'e1',
+        entityId: 'note:1',
+        type: 'saved',
+        at: 1,
+        actor: 'user-1',
+      }),
+    ).toBe(false)
+    expect(
+      isAuditableRox2Event({
+        id: 'e1',
+        entityId: 'note:1',
+        type: 'saved',
+        at: 1,
+        actor: 'user-1',
+        causationId: 'cause-1',
+        correlationId: 'corr-1',
+        aggregateRevision: 'rev-1',
+      }),
+    ).toBe(true)
+  })
+
   test('sensitive actions require an explicit grant', () => {
     expect(requiresExplicitGrant('read')).toBe(false)
     expect(requiresExplicitGrant('write')).toBe(false)
@@ -102,6 +166,7 @@ describe('ROX2 platform contract', () => {
     }, 'rev-1')
     expect(workRef.entityId).toContain('google:work:event:e1')
     expect(workRef.revisionId).toBe('rev-1')
+    expect(workRef.accountNamespace).toBe('work')
     const index = new Map<string, Rox2EntityRef>()
     const first = registerExternalBinding(index, 'ws-1', 'calendar-event', {
       provider: 'google',
