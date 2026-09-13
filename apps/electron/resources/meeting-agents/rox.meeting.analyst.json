@@ -1,0 +1,9 @@
+{
+  "id": "rox.meeting.analyst",
+  "version": 1,
+  "packageId": "rox-one",
+  "protocol": "rox-agent",
+  "storage": "craft-agent",
+  "oauth": "rox",
+  "signed": false
+}
