@@ -15,12 +15,15 @@ import AiSettingsPage from '@/pages/settings/AiSettingsPage'
 import InputSettingsPage from '@/pages/settings/InputSettingsPage'
 import { QuestProgressCard } from '@/components/app-shell/QuestProgressCard'
 import { PlaygroundAppShellProvider } from '../PlaygroundAppShellProvider'
+import { ModalProvider } from '@/context/ModalContext'
 import type { ComponentEntry } from './types'
 
 function SettingsScreen({ children }: { children: React.ReactNode }) {
   return (
     <PlaygroundAppShellProvider>
-      <div className="h-full min-h-[520px] overflow-auto bg-background">{children}</div>
+      <ModalProvider>
+        <div className="h-full min-h-[520px] overflow-auto bg-background">{children}</div>
+      </ModalProvider>
     </PlaygroundAppShellProvider>
   )
 }
