@@ -3745,6 +3745,8 @@
   "sidebar.branchCount_one": "분기 {{count}}개",
   "sidebar.branchCount_other": "분기 {{count}}개",
   "sidebar.connections": "연결",
+  "sidebar.disclosure.collapse": "{{section}} 접기",
+  "sidebar.disclosure.expand": "{{section}} 펼치기",
   "sidebar.eventBased": "이벤트 기반",
   "sidebar.filterChats": "채팅 필터",
   "sidebar.flagged": "즐겨찾기",

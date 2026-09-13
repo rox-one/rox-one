@@ -3745,6 +3745,8 @@
   "sidebar.branchCount_one": "{{count}} ág",
   "sidebar.branchCount_other": "{{count}} ág",
   "sidebar.connections": "Connections",
+  "sidebar.disclosure.collapse": "{{section}} összecsukása",
+  "sidebar.disclosure.expand": "{{section}} kibontása",
   "sidebar.eventBased": "Esemény alapú",
   "sidebar.filterChats": "Chatok szűrése",
   "sidebar.flagged": "Kedvencek",

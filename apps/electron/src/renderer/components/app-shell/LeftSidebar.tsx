@@ -1,9 +1,17 @@
 import type { LucideIcon } from "lucide-react"
 import * as React from "react"
-import { AnimatePresence, motion, type Variants } from "motion/react"
-import { ChevronRight } from "lucide-react"
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "motion/react"
+
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
+import {
+  isNavigableExpandable,
+  restoreFocusToToggle,
+  SidebarDisclosureButton,
+  SidebarDisclosureChevron,
+  sidebarSectionDomId,
+} from './SidebarDisclosure'
 import {
   ContextMenu,
   ContextMenuTrigger,
@@ -114,23 +122,26 @@ interface LeftSidebarProps {
   isNested?: boolean
 }
 
-// Stagger animation for child items
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.025,
-      delayChildren: 0.01,
+// Stagger only small trees. A 500-row section must not pay sequential delays.
+function nestedContainerVariants(childCount: number): Variants {
+  const stagger = childCount > 24 ? 0 : 0.025
+  return {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: stagger,
+        delayChildren: stagger === 0 ? 0 : 0.01,
+      },
     },
-  },
-  exit: {
-    opacity: 0,
-    transition: {
-      staggerChildren: 0.015,
-      staggerDirection: -1,
+    exit: {
+      opacity: 0,
+      transition: {
+        staggerChildren: stagger === 0 ? 0 : 0.015,
+        staggerDirection: -1,
+      },
     },
-  },
+  }
 }
 
 const itemVariants: Variants = {
@@ -175,7 +186,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
   // For nested sidebars, wrap in motion container for stagger effect
   const NavWrapper = isNested ? motion.nav : 'nav'
   const navProps = isNested ? {
-    variants: containerVariants,
+    variants: nestedContainerVariants(links.length),
     initial: 'hidden',
     animate: 'visible',
     exit: 'exit',
@@ -211,74 +222,23 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
 
           const link = item
           const itemProps = getItemProps?.(link.id)
-          const isFocused = focusedItemId === link.id
 
-          // Button element shared by both expandable and non-expandable items
-          const buttonElement = (
-            <SidebarButton
+          const content = link.expandable ? (
+            <ExpandableSection
               link={link}
               itemProps={itemProps}
+              getItemProps={getItemProps}
+              focusedItemId={focusedItemId}
+              isNested={isNested}
             />
-          )
-
-          // Determine which expanded content to render (sortable vs regular)
-          const expandedContent = link.expandable && link.items && link.expanded
-            ? renderExpandedContent(link, getItemProps, focusedItemId, isNested)
-            : null
-
-          // Wrap with context menu if configured, scoped to button only.
-          // ContextMenuTrigger with asChild sets data-state="open" on the button
-          // so only the clicked item highlights, not the entire section.
-          const content = (
+          ) : (
             <div className="group/section">
-              {link.contextMenu ? (
-                <ContextMenu modal={true}>
-                  <ContextMenuTrigger asChild>
-                    {buttonElement}
-                  </ContextMenuTrigger>
-                  <StyledContextMenuContent>
-                    <ContextMenuProvider>
-                      <SidebarMenu
-                        type={link.contextMenu.type}
-                        statusId={link.contextMenu.statusId}
-                        labelId={link.contextMenu.labelId}
-                        onConfigureStatuses={link.contextMenu.onConfigureStatuses}
-                        onMarkAllRead={link.contextMenu.onMarkAllRead}
-                        onConfigureLabels={link.contextMenu.onConfigureLabels}
-                        onAddLabel={link.contextMenu.onAddLabel}
-                        onDeleteLabel={link.contextMenu.onDeleteLabel}
-                        onAddSource={link.contextMenu.onAddSource}
-                        onAddSkill={link.contextMenu.onAddSkill}
-                        onAddAutomation={link.contextMenu.onAddAutomation}
-                        onAddProject={link.contextMenu.onAddProject}
-                        sourceType={link.contextMenu.sourceType}
-                        onConfigureViews={link.contextMenu.onConfigureViews}
-                        viewId={link.contextMenu.viewId}
-                        onDeleteView={link.contextMenu.onDeleteView}
-                      />
-                    </ContextMenuProvider>
-                  </StyledContextMenuContent>
-                </ContextMenu>
-              ) : (
-                buttonElement
-              )}
-              {/* Expandable subitems — outside context menu scope so only the
-                * clicked button gets data-state="open", not nested children */}
-              {link.expandable && link.items && (
-                <AnimatePresence initial={false}>
-                  {link.expanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-                      animate={{ height: 'auto', opacity: 1, marginTop: 2, marginBottom: isNested ? 4 : 8 }}
-                      exit={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
-                      transition={{ duration: 0.2, ease: 'easeInOut' }}
-                      className="overflow-hidden"
-                    >
-                      {expandedContent}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              )}
+              {wrapWithContextMenu(link, (
+                <SidebarButton
+                  link={link}
+                  itemProps={itemProps}
+                />
+              ))}
             </div>
           )
 
@@ -294,6 +254,124 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
           )
         })}
       </NavWrapper>
+    </div>
+  )
+}
+
+function wrapWithContextMenu(link: LinkItem, button: React.ReactElement) {
+  if (!link.contextMenu) return button
+  return (
+    <ContextMenu modal={true}>
+      <ContextMenuTrigger asChild>
+        {button}
+      </ContextMenuTrigger>
+      <StyledContextMenuContent>
+        <ContextMenuProvider>
+          <SidebarMenu
+            type={link.contextMenu.type}
+            statusId={link.contextMenu.statusId}
+            labelId={link.contextMenu.labelId}
+            onConfigureStatuses={link.contextMenu.onConfigureStatuses}
+            onMarkAllRead={link.contextMenu.onMarkAllRead}
+            onConfigureLabels={link.contextMenu.onConfigureLabels}
+            onAddLabel={link.contextMenu.onAddLabel}
+            onDeleteLabel={link.contextMenu.onDeleteLabel}
+            onAddSource={link.contextMenu.onAddSource}
+            onAddSkill={link.contextMenu.onAddSkill}
+            onAddAutomation={link.contextMenu.onAddAutomation}
+            onAddProject={link.contextMenu.onAddProject}
+            sourceType={link.contextMenu.sourceType}
+            onConfigureViews={link.contextMenu.onConfigureViews}
+            viewId={link.contextMenu.viewId}
+            onDeleteView={link.contextMenu.onDeleteView}
+          />
+        </ContextMenuProvider>
+      </StyledContextMenuContent>
+    </ContextMenu>
+  )
+}
+
+function ExpandableSection({
+  link,
+  itemProps,
+  getItemProps,
+  focusedItemId,
+  isNested,
+}: {
+  link: LinkItem
+  itemProps: ReturnType<NonNullable<LeftSidebarProps['getItemProps']>> | undefined
+  getItemProps: LeftSidebarProps['getItemProps']
+  focusedItemId: string | null | undefined
+  isNested: boolean | undefined
+}) {
+  const { t } = useTranslation()
+  const reduceMotion = useReducedMotion()
+  const bodyRef = React.useRef<HTMLDivElement>(null)
+  const toggleRef = React.useRef<HTMLButtonElement>(null)
+  const sectionId = sidebarSectionDomId(link.id)
+  const navParent = isNavigableExpandable(link)
+  const duration = reduceMotion ? 0 : 0.18
+  const groupAriaLabel = !navParent
+    ? t(link.expanded ? 'sidebar.disclosure.collapse' : 'sidebar.disclosure.expand', { section: link.title })
+    : undefined
+
+  const handleToggle = React.useCallback(() => {
+    if (link.expanded) {
+      restoreFocusToToggle(bodyRef.current, toggleRef.current)
+    }
+    link.onToggle?.()
+  }, [link])
+
+  const navButton = (
+    <SidebarButton
+      link={link}
+      itemProps={itemProps}
+      groupDisclosure={!navParent}
+      sectionId={!navParent ? sectionId : undefined}
+      toggleRef={!navParent ? toggleRef : undefined}
+      onGroupToggle={!navParent ? handleToggle : undefined}
+      groupAriaLabel={groupAriaLabel}
+    />
+  )
+
+  return (
+    <div className="group/section">
+      {navParent ? (
+        <div className="group/row flex min-w-0 items-center gap-0.5" role="none">
+          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+            <SidebarDisclosureButton
+              ref={toggleRef}
+              expanded={!!link.expanded}
+              sectionId={sectionId}
+              sectionTitle={link.title}
+              onToggle={handleToggle}
+            />
+          </span>
+          <div className="min-w-0 flex-1">
+            {wrapWithContextMenu(link, navButton)}
+          </div>
+        </div>
+      ) : (
+        wrapWithContextMenu(link, navButton)
+      )}
+      {link.items && (
+        <AnimatePresence initial={false}>
+          {link.expanded && (
+            <motion.div
+              ref={bodyRef}
+              id={sectionId}
+              initial={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
+              animate={{ height: 'auto', opacity: 1, marginTop: 2, marginBottom: isNested ? 4 : 8 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0, marginBottom: 0 }}
+              transition={{ duration, ease: 'easeInOut' }}
+              className="overflow-hidden"
+              aria-hidden={!link.expanded}
+            >
+              {renderExpandedContent(link, getItemProps, focusedItemId, isNested)}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   )
 }
@@ -469,12 +547,18 @@ interface SidebarButtonProps {
   }
   /** True when rendering inside the DragOverlay (floating clone) */
   isOverlay?: boolean
+  /** Non-navigable expandable group: this button is the disclosure. */
+  groupDisclosure?: boolean
+  sectionId?: string
+  toggleRef?: React.Ref<HTMLButtonElement>
+  onGroupToggle?: () => void
+  groupAriaLabel?: string
 }
 
 // forwardRef is required so Radix's ContextMenuTrigger (asChild) can attach its ref
 // and pass props like data-state="open" directly onto this button element.
 const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
-  ({ link, itemProps, isOverlay, className: extraClassName, ...radixProps }, forwardedRef) => {
+  ({ link, itemProps, isOverlay, groupDisclosure, sectionId, toggleRef, onGroupToggle, groupAriaLabel, className: extraClassName, ...radixProps }, forwardedRef) => {
     return (
       <button
         {...(isOverlay ? {} : (() => {
@@ -488,11 +572,16 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           // Merge forwarded ref (from Radix) and itemProps ref (for keyboard nav)
           if (typeof forwardedRef === 'function') forwardedRef(el)
           else if (forwardedRef) forwardedRef.current = el
+          if (typeof toggleRef === 'function') toggleRef(el)
+          else if (toggleRef) (toggleRef as React.MutableRefObject<HTMLButtonElement | null>).current = el
           if (!isOverlay && itemProps?.ref) itemProps.ref(el)
         }}
-        onClick={isOverlay ? undefined : link.onClick}
+        onClick={isOverlay ? undefined : (groupDisclosure ? onGroupToggle : link.onClick)}
         title={link.tooltip}
         data-tutorial={link.dataTutorial}
+        aria-expanded={groupDisclosure ? !!link.expanded : undefined}
+        aria-controls={groupDisclosure ? sectionId : undefined}
+        aria-label={groupAriaLabel}
         className={cn(
           "group flex w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none",
           "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
@@ -506,35 +595,13 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           extraClassName,
         )}
       >
-        {/* Icon container with hover toggle for expandable items */}
+        {groupDisclosure && !isOverlay && (
+          <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center" aria-hidden>
+            <SidebarDisclosureChevron expanded={!!link.expanded} />
+          </span>
+        )}
         <span className="relative h-3.5 w-3.5 shrink-0 flex items-center justify-center">
-          {link.expandable && !isOverlay ? (
-            <>
-              {/* Main icon - hidden on hover */}
-              <span className="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-150">
-                {renderIcon(link)}
-              </span>
-              {/* Toggle chevron - shown on hover. data-no-dnd prevents drag activation on click. */}
-              <span
-                className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 cursor-pointer"
-                data-no-dnd="true"
-                data-touch-reveal="true"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  link.onToggle?.()
-                }}
-              >
-                <ChevronRight
-                  className={cn(
-                    "h-3.5 w-3.5 text-muted-foreground transition-transform duration-200",
-                    link.expanded && "rotate-90"
-                  )}
-                />
-              </span>
-            </>
-          ) : (
-            renderIcon(link)
-          )}
+          {renderIcon(link)}
         </span>
         {link.title}
         {/* After-title element: type indicator icon, right-aligned before count badge, revealed on hover */}

@@ -3745,6 +3745,8 @@
   "sidebar.branchCount_one": "{{count}} Branch",
   "sidebar.branchCount_other": "{{count}} Branches",
   "sidebar.connections": "Connections",
+  "sidebar.disclosure.collapse": "{{section}} einklappen",
+  "sidebar.disclosure.expand": "{{section}} ausklappen",
   "sidebar.eventBased": "Ereignisbasiert",
   "sidebar.filterChats": "Chats filtern",
   "sidebar.flagged": "Favoriten",
