@@ -103,6 +103,14 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.environment.CHANGED]: [payload: EnvironmentPrefs]
 
   // Theme broadcasts (global)
+  [RPC_CHANNELS.appearance.SHELL_CHANGED]: [snapshot: {
+    flag: 'shell.zen.v1'
+    enabled: boolean
+    preference: 'system' | 'glass' | 'opaque'
+    material: 'vibrancy' | 'mica' | 'solid'
+    platform: 'darwin' | 'win32' | 'linux' | 'web'
+    fallbackReason?: string
+  }]
   [RPC_CHANNELS.theme.APP_CHANGED]: [theme: ThemeOverrides | null]
   [RPC_CHANNELS.theme.SYSTEM_CHANGED]: [isDark: boolean]
   [RPC_CHANNELS.theme.PREFERENCES_CHANGED]: [preferences: { mode: string; colorTheme: string; font: string }]

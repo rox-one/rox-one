@@ -655,7 +655,7 @@ describe('legacy Opus migration to default Opus (integration)', () => {
 
     const migrated = JSON.parse(readFileSync(configPath, 'utf-8'))
     const connection = findConnection(configPath, 'rox-kimi')
-    expect(connection.name).toBe('ROX · OMP')
+    expect(connection.name).toBe('ROX')
     expect(connection.defaultModel).toBe('rox/standard')
     expect(modelIdsOf(connection)).toEqual([
       'rox/explore',
@@ -665,5 +665,6 @@ describe('legacy Opus migration to default Opus (integration)', () => {
       'rox/fast',
     ])
     expect(migrated.migrationsApplied).toContain('rox-kimi-public-models-v1')
+    expect(migrated.migrationsApplied).toContain('rox-connection-display-name-v1')
   })
 })

@@ -70,6 +70,7 @@ import {
 } from './models.ts';
 import {
   connectionUsesLegacyRoxInternalModels,
+  ROX_CONNECTION_DISPLAY_NAME_MIGRATION,
   ROX_DEFAULT_CONNECTION_NAME,
   ROX_DEFAULT_CONNECTION_SLUG,
   ROX_DEFAULT_PARENT_MODEL,
@@ -3266,6 +3267,31 @@ function migrateRoxKimiPublicModels(config: StoredConfig): boolean {
 }
 
 /**
+ * Rename leftover `ROX · OMP` connection labels to `ROX`.
+ */
+function migrateRoxConnectionDisplayName(config: StoredConfig): boolean {
+  if (config.migrationsApplied?.includes(ROX_CONNECTION_DISPLAY_NAME_MIGRATION)) {
+    return false;
+  }
+
+  for (const connection of config.llmConnections ?? []) {
+    if (connection.slug !== ROX_DEFAULT_CONNECTION_SLUG) continue;
+    if (connection.name !== ROX_DEFAULT_CONNECTION_NAME) {
+      if (connection.name === 'ROX · OMP' || /\bOMP\b/.test(connection.name ?? '')) {
+        connection.name = ROX_DEFAULT_CONNECTION_NAME;
+      }
+    }
+    connection.models = toRoxPublicConnectionModels();
+  }
+
+  config.migrationsApplied = [
+    ...(config.migrationsApplied ?? []),
+    ROX_CONNECTION_DISPLAY_NAME_MIGRATION,
+  ];
+  return true;
+}
+
+/**
  * Migrate legacy auth config to LLM connections.
  * Call this on app startup before any getLlmConnections() calls.
  *
@@ -3412,6 +3438,9 @@ export function migrateLegacyLlmConnectionsConfig(): void {
       needsSave = true;
     }
     if (migrateRoxKimiPublicModels(config)) {
+      needsSave = true;
+    }
+    if (migrateRoxConnectionDisplayName(config)) {
       needsSave = true;
     }
 

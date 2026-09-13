@@ -3,7 +3,7 @@
  * Consent for cookies/credentials is separate from history/bookmarks.
  */
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DownloadCloud, RefreshCw, RotateCcw, Trash2 } from 'lucide-react'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -46,6 +46,10 @@ export default function BrowserProfileImportPanel() {
       setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    void discover()
+  }, [discover])
 
   const runImport = useCallback(async (dryRun: boolean) => {
     if (!workspace?.id || !selectedId) return

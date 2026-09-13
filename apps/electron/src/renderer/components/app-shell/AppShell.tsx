@@ -81,13 +81,10 @@ import { LeftSidebar } from "./LeftSidebar"
 import { type ProfileStripData } from "./ProfileStrip"
 import { QuestProgressCard } from "./QuestProgressCard"
 import { SidebarChrome } from "./SidebarChrome"
-import { useTransportConnectionState } from "@/hooks/useTransportConnectionState"
-import { useWorkspaceTaskCount } from "@/hooks/useWorkspaceTaskCount"
 import { usePromoInsights } from "@/hooks/usePromoInsights"
-import { buildMiniDashboard } from "@/platform/mini-dashboard"
+import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
 import { viewportBand } from "@/platform/viewport-band"
-import { isHomeSessionInWorkspace } from "@/platform/home-model"
 import {
   clearStatusUnseen,
   getUnseenStatuses,
@@ -272,6 +269,7 @@ function AppShellContent({
   } = contextValue
 
   const { t } = useTranslation()
+  useShellAppearance()
 
   // Get hotkey labels from centralized action registry
   const newChatHotkey = useActionLabel('app.newChat').hotkey
@@ -347,8 +345,6 @@ function AppShellContent({
 
 
   // Profile strip (gamification footer)
-  const transportConnectionState = useTransportConnectionState()
-  const workspaceTaskCount = useWorkspaceTaskCount(activeWorkspaceId)
   const promoInsights = usePromoInsights(activeWorkspaceId ?? undefined)
   const [profileStrip, setProfileStrip] = React.useState<ProfileStripData>({
     displayName: '',
@@ -1252,17 +1248,6 @@ function AppShellContent({
   // Use session metadata from Jotai atom (lightweight, no messages)
   // This prevents closures from retaining full message arrays
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
-  const dashboardSnapshot = useMemo(() => {
-    const remoteWorkspaceId = activeWorkspace?.remoteServer?.remoteWorkspaceId
-    const sessions = [...sessionMetaMap.values()].filter((session) =>
-      isHomeSessionInWorkspace(session, activeWorkspaceId, remoteWorkspaceId),
-    )
-    return buildMiniDashboard({
-      sessions,
-      tasks: workspaceTaskCount,
-      connection: transportConnectionState,
-    })
-  }, [sessionMetaMap, activeWorkspaceId, activeWorkspace, workspaceTaskCount, transportConnectionState])
   const promoKind = resolvePromoSlot({
     insightsLoaded: promoInsights.loaded,
     onboarded: promoInsights.onboarded,
@@ -2463,7 +2448,8 @@ function AppShellContent({
             <div
               ref={sidebarRef}
               style={{ width: sidebarWidth }}
-              className="h-full font-sans relative"
+              className="h-full font-sans relative chrome-rail"
+              data-shell-role="chrome"
               data-focus-zone="sidebar"
               tabIndex={sidebarFocused ? 0 : -1}
               onKeyDown={handleSidebarKeyDown}
@@ -2853,7 +2839,6 @@ function AppShellContent({
                   <SidebarChrome
                     profile={profileStrip}
                     onProfileClick={() => handleSettingsClick('account')}
-                    snapshot={dashboardSnapshot}
                     promoKind={promoKind}
                     onPromoCta={handleMemoryClick}
                   />
@@ -2867,7 +2852,8 @@ function AppShellContent({
           navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState)) ? null : (
             <div
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
-              className="h-full flex flex-col min-w-0 relative z-panel"
+              className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
+              data-shell-role="chrome"
             >
             <PanelHeader
                 title={isSidebarVisible ? listTitle : undefined}

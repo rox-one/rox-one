@@ -7,6 +7,7 @@
 
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { toast } from 'sonner'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import {
@@ -19,6 +20,13 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
+import { useActiveWorkspace } from '@/context/AppShellContext'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
+import { useWorkspaceTaskCount } from '@/hooks/useWorkspaceTaskCount'
+import { buildMiniDashboard } from '@/platform/mini-dashboard'
+import { isHomeSessionInWorkspace } from '@/platform/home-model'
 import { navigate, routes } from '@/lib/navigate'
 import {
   PROFILE_PLANS,
@@ -93,6 +101,10 @@ async function avatarDataUrlFromPickedFile(): Promise<string | null> {
 
 export default function AccountSettingsPage() {
   const { t } = useTranslation()
+  const workspace = useActiveWorkspace()
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const connectionState = useTransportConnectionState()
+  const taskCount = useWorkspaceTaskCount(workspace?.id)
   const [profile, setProfile] = React.useState<Profile | null>(null)
   const [displayName, setDisplayName] = React.useState('')
   const [email, setEmail] = React.useState('')
@@ -185,6 +197,18 @@ export default function AccountSettingsPage() {
   const plan = profile?.plan ?? 'standard'
   const progressPct = Math.round((gamification?.progress ?? 0) * 100)
   const recent = gamification?.recentEvents ?? []
+  const dashboard = React.useMemo(() => {
+    const workspaceId = workspace?.id
+    const remoteWorkspaceId = workspace?.remoteServer?.remoteWorkspaceId
+    const sessions = [...sessionMetaMap.values()].filter((session) =>
+      isHomeSessionInWorkspace(session, workspaceId, remoteWorkspaceId),
+    )
+    return buildMiniDashboard({
+      sessions,
+      tasks: taskCount,
+      connection: connectionState,
+    })
+  }, [sessionMetaMap, workspace, taskCount, connectionState])
 
   return (
     <div className="flex h-full flex-col">
@@ -194,6 +218,10 @@ export default function AccountSettingsPage() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        <SettingsSection title={t('settings.account.usageSection')}>
+          <MiniDashboardCards snapshot={dashboard} className="grid-cols-2 sm:grid-cols-3" />
+        </SettingsSection>
+
         <SettingsSection title={t('settings.account.identitySection')}>
           <SettingsCard>
             <SettingsRow label={t('settings.account.avatar')}>

@@ -12,6 +12,7 @@ describe('AppearanceSettingsPage zoom default', () => {
   })
 
   it('always mounts workbench and Conation sections so settings is not blank with only shell+inspector on', () => {
+    expect(source).toContain('<ZenShellSettings />')
     expect(source).toContain('<WorkbenchChromeSettings />')
     expect(source).toContain('<ConationShellSettings />')
     expect(source).not.toMatch(/unifiedShell\s*&&\s*<WorkbenchChromeSettings/)

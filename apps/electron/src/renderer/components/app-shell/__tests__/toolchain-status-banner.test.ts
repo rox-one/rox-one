@@ -85,10 +85,16 @@ describe('getToolchainBannerCopy', () => {
   })
 
   it('maps downloading to info copy with percent and progress bar', () => {
-    const copy = getToolchainBannerCopy(tool({ phase: 'downloading', downloadedBytes: 25, totalBytes: 100 }))
+    const copy = getToolchainBannerCopy(tool({
+      phase: 'downloading',
+      downloadedBytes: 25 * 1024 * 1024,
+      totalBytes: 100 * 1024 * 1024,
+    }))
 
-    expect(copy?.text).toContain('Downloading AI runtime')
+    expect(copy?.text).toContain('Updating internal services')
     expect(copy?.text).toContain('25%')
+    expect(copy?.text).toMatch(/25\.0 MB/)
+    expect(copy?.text).toMatch(/100\.0 MB/)
     expect(copy?.tone).toBe('info')
     expect(copy?.showProgress).toBe(true)
     expect(copy?.showOpenToolchain).toBe(false)
@@ -97,7 +103,7 @@ describe('getToolchainBannerCopy', () => {
   it('maps downloading without totals to indeterminate copy', () => {
     const copy = getToolchainBannerCopy(tool({ phase: 'downloading' }))
 
-    expect(copy?.text).toBe('Downloading AI runtime…')
+    expect(copy?.text).toBe('Updating internal services and utilities…')
     expect(copy?.percent).toBe(undefined)
     expect(copy?.showProgress).toBe(true)
   })
@@ -105,7 +111,7 @@ describe('getToolchainBannerCopy', () => {
   it('maps installing to info copy without a progress bar', () => {
     const copy = getToolchainBannerCopy(tool({ phase: 'installing' }))
 
-    expect(copy?.text).toContain('Installing AI runtime')
+    expect(copy?.text).toContain('Updating internal services')
     expect(copy?.tone).toBe('info')
     expect(copy?.showProgress).toBe(false)
     expect(copy?.showOpenToolchain).toBe(false)

@@ -141,9 +141,9 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
     if (typeof body.sessionId !== 'string' || !body.sessionId) {
       throw new Error('sessionId required')
     }
-    const score = body.score
-    if (score !== 1 && score !== 2 && score !== 3 && score !== 4 && score !== 5) {
-      throw new Error('score must be 1-5')
+    const score = typeof body.score === 'number' ? body.score : Number.NaN
+    if (score < 1 || score > 100 || !Number.isFinite(score)) {
+      throw new Error('score must be 1-100')
     }
     const { state, analytics } = saveSessionRating({
       sessionId: body.sessionId,

@@ -9,6 +9,16 @@ describe('quest progress card', () => {
     expect(shell).toContain('QuestProgressCard')
     expect(card).toContain('quests.dismiss')
     expect(card).toContain('quests.snooze')
-    expect(card).toContain('rateGamificationSession')
+    expect(card).toContain('quests.next')
+    expect(card).not.toContain('rateGamificationSession')
+    expect(card).not.toContain('[1, 2, 3, 4, 5]')
+  })
+
+  it('mounts session rating pills on the composer, not the quest slider', () => {
+    const zone = readFileSync(join(import.meta.dir, '../input/ChatInputZone.tsx'), 'utf8')
+    const pill = readFileSync(join(import.meta.dir, '../SessionRatingPill.tsx'), 'utf8')
+    expect(zone).toContain('SessionRatingPill')
+    expect(pill).toContain('SESSION_RATING_PILLS')
+    expect(pill).toContain('session-composer')
   })
 })

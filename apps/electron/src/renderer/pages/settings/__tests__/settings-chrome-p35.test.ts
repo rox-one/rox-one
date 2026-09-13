@@ -1,0 +1,41 @@
+import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+const dir = join(__dirname, '..')
+const cloudRuns = readFileSync(join(dir, 'CloudRunsSettingsPage.tsx'), 'utf8')
+const security = readFileSync(join(dir, 'SecuritySettingsPage.tsx'), 'utf8')
+const overlay = readFileSync(
+  join(__dirname, '../../../components/workspace/WorkspaceCreationScreen.tsx'),
+  'utf8',
+)
+const rail = readFileSync(
+  join(__dirname, '../../../components/app-shell/WorkspaceIconRail.tsx'),
+  'utf8',
+)
+const account = readFileSync(join(dir, 'AccountSettingsPage.tsx'), 'utf8')
+
+describe('Program 35 settings chrome', () => {
+  it('sizes Cloud Runs and Security to the panel, not the window', () => {
+    expect(cloudRuns).not.toContain('100dvh')
+    expect(security).not.toContain('100dvh')
+    expect(cloudRuns).toContain('h-full min-h-0')
+    expect(security).toContain('h-full min-h-0')
+  })
+
+  it('keeps the new-workspace overlay opaque', () => {
+    expect(overlay).toContain('bg-background')
+    expect(overlay).not.toContain('bg-background/95')
+  })
+
+  it('falls back to the bundled Rox logo on the workspace rail', () => {
+    expect(rail).toContain('rox-logo.svg')
+    expect(rail).toContain('bundledRoxLogo')
+    expect(rail).not.toContain('fallback={workspace.name.charAt(0)}')
+  })
+
+  it('puts usage cards on the account page', () => {
+    expect(account).toContain('<MiniDashboardCards')
+    expect(account).toContain("t('settings.account.usageSection')")
+  })
+})

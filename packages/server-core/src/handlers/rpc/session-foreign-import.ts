@@ -18,7 +18,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.FOREIGN_PERSIST,
 ] as const
 
-const MAX_FOREIGN_PERSIST = 50
+const MAX_FOREIGN_PERSIST = 5_000
 
 export function registerSessionForeignImportHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(

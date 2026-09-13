@@ -1,12 +1,17 @@
 import { BrowserWindow } from 'electron'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
-import type { RpcServer } from '@craft-agent/server-core/transport'
+import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import { setZenShellPreference } from '@craft-agent/shared/config'
+import { parseZenShellPatch } from '../../shared/shell-appearance'
+import { peekZenShellSnapshot, reapplyZenShellOnAllWindows } from '../shell-material'
 import type { HandlerDeps } from './handler-deps'
 
 export const GUI_HANDLED_CHANNELS = [
   RPC_CHANNELS.power.SET_KEEP_AWAKE,
   RPC_CHANNELS.settings.SET_NETWORK_PROXY,
   RPC_CHANNELS.appearance.SET_DEFAULT_ZOOM_LEVEL,
+  RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT,
+  RPC_CHANNELS.appearance.SET_ZEN_SHELL,
 ] as const
 
 // ============================================================
@@ -40,5 +45,18 @@ export function registerSettingsGuiHandlers(server: RpcServer, _deps: HandlerDep
         win.webContents.setZoomFactor(zoomFactor)
       }
     }
+  })
+
+  server.handle(RPC_CHANNELS.appearance.GET_SHELL_SNAPSHOT, async () => {
+    return peekZenShellSnapshot()
+  })
+
+  server.handle(RPC_CHANNELS.appearance.SET_ZEN_SHELL, async (_ctx, raw: unknown) => {
+    const patch = parseZenShellPatch(raw)
+    setZenShellPreference(patch)
+    reapplyZenShellOnAllWindows()
+    const snapshot = peekZenShellSnapshot()
+    pushTyped(server, RPC_CHANNELS.appearance.SHELL_CHANGED, { to: 'all' }, snapshot)
+    return snapshot
   })
 }
