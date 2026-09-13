@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { routes } from '@/lib/navigate'
+import { isClaimableLive } from '@craft-agent/core/rox2'
 import type {
   KnowledgeConnection,
   KnowledgeDetectEngineResult,
@@ -29,6 +30,7 @@ import {
   parseNotesAiPrompts,
   serializeNotesAiPrompts,
 } from '../notes/note-ai'
+import { settingsPageActionResult } from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -117,6 +119,15 @@ export default function KnowledgeSettingsPage() {
   const handleSaveToken = async () => {
     const trimmed = token.trim()
     if (!workspaceId || !connection || !trimmed) return
+    const gate = settingsPageActionResult({
+      pageId: 'knowledge',
+      action: 'token-write',
+      source: 'native',
+    })
+    if (!isClaimableLive(gate)) {
+      toast.error(t('settings.rox2.grantRequired'))
+      return
+    }
     setSaving(true)
     try {
       await window.electronAPI.saveSourceCredentials(workspaceId, connection.id, trimmed)
@@ -200,6 +211,16 @@ export default function KnowledgeSettingsPage() {
 
   const handleMigrateNotes = async () => {
     if (!workspaceId || migrating) return
+    const gate = settingsPageActionResult({
+      pageId: 'knowledge',
+      action: 'migrate',
+      source: 'native',
+      granted: true,
+    })
+    if (!isClaimableLive(gate)) {
+      toast.error(t('settings.rox2.grantRequired'))
+      return
+    }
     const migrate = window.electronAPI.knowledge.migrateNotes
     if (typeof migrate !== 'function' || !window.electronAPI?.openFolderDialog) {
       toast.error(t('knowledge.migrate.failed'))
