@@ -30,7 +30,14 @@ export type NotesPage = {
   nextCursor?: string | null
 }
 
+export type NotesListQuery = {
+  cursor?: string | null
+  limit?: number
+}
+
 /** Minimal Soup page client Notes needs (WP-Soup createSoupClient). */
+export type NotesSoupClient = {
+  queryUserSoupPage: (args?: { input?: Record<string, unknown> }) => Promise<{
 export type NotesSoupClient = {
   queryUserSoupPage: (args?: { input?: Record<string, unknown> }) => Promise<{
     items: ReadonlyArray<{
@@ -54,6 +61,6 @@ export type NotesBridgeOptions = {
 }
 
 export type NotesBridge = {
-  listNotes: () => Promise<NotesPage>
+  listNotes: (query?: NotesListQuery) => Promise<NotesPage>
   getNote: (id: string) => Promise<NotesDocument | null>
 }

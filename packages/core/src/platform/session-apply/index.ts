@@ -9,6 +9,9 @@ export {
   DEFAULT_OPERATOR_ORIGIN,
   DEFAULT_READ_PATH,
   SessionApplyFlagOffError,
+  SessionApplyHttpError,
+  SESSION_APPLY_SUCCESS_STATUSES,
+  isSessionApplySuccessStatus,
 } from './types.ts';
 export type {
   SessionApplyApplyInput,

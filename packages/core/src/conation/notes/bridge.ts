@@ -2,6 +2,7 @@ import type {
   NotesBridge,
   NotesBridgeOptions,
   NotesDocument,
+  NotesListQuery,
   NotesPage,
   NotesSoupClient,
 } from './types.ts'
@@ -14,6 +15,26 @@ const DOCUMENT_TYPENAMES = new Set([
   'Note',
   'notes',
 ])
+
+const DEFAULT_PAGE_LIMIT = 50
+const MAX_PAGE_LIMIT = 100
+const MAX_GET_PAGES = 20
+
+export class NotesBridgeUnavailableError extends Error {
+  readonly code = 'NOTES_UNAVAILABLE' as const
+  constructor(message = 'Notes soup unavailable') {
+    super(message)
+    this.name = 'NotesBridgeUnavailableError'
+  }
+}
+
+export class NotesBridgeIncompleteError extends Error {
+  readonly code = 'NOTES_INCOMPLETE' as const
+  constructor(message = 'Notes lookup stopped before the last page') {
+    super(message)
+    this.name = 'NotesBridgeIncompleteError'
+  }
+}
 
 function isNotesEntity(entity: {
   entityType?: string | null
@@ -75,10 +96,24 @@ async function allowed(
   }
 }
 
-async function loadDocuments(soup: NotesSoupClient): Promise<NotesPage> {
-  const page = await soup.queryUserSoupPage({
-    input: { entityType: 'document' },
-  })
+async function loadDocuments(
+  soup: NotesSoupClient,
+  query: NotesListQuery = {},
+): Promise<NotesPage> {
+  const limit = Math.min(
+    Math.max(1, query.limit ?? DEFAULT_PAGE_LIMIT),
+    MAX_PAGE_LIMIT,
+  )
+  const input: Record<string, unknown> = { entityType: 'document', limit }
+  if (query.cursor) input.cursor = query.cursor
+  let page: Awaited<ReturnType<NotesSoupClient['queryUserSoupPage']>>
+  try {
+    page = await soup.queryUserSoupPage({ input })
+  } catch (error) {
+    throw new NotesBridgeUnavailableError(
+      error instanceof Error ? error.message : 'Notes soup unavailable',
+    )
+  }
   const items = page.items.filter(isNotesEntity).map(toDocument)
   return { items, nextCursor: page.nextCursor ?? null }
 }
@@ -95,8 +130,8 @@ export function createNotesBridge(options: NotesBridgeOptions): NotesBridge | nu
   const importsAcl = options.importsAcl
 
   return {
-    async listNotes() {
-      const page = await loadDocuments(soup)
+    async listNotes(query) {
+      const page = await loadDocuments(soup, query)
       const items: NotesDocument[] = []
       for (const doc of page.items) {
         if (await allowed(doc.id, claimLocker, importsAcl)) items.push(doc)
@@ -105,8 +140,18 @@ export function createNotesBridge(options: NotesBridgeOptions): NotesBridge | nu
     },
     async getNote(id) {
       if (!(await allowed(id, claimLocker, importsAcl))) return null
-      const page = await loadDocuments(soup)
-      return page.items.find((d) => d.id === id) ?? null
+      let cursor: string | null | undefined
+      for (let page = 0; page < MAX_GET_PAGES; page++) {
+        const result = await loadDocuments(soup, { cursor, limit: DEFAULT_PAGE_LIMIT })
+        const found = result.items.find((doc) => doc.id === id)
+        if (found) return found
+        if (!result.nextCursor) return null
+        if (result.nextCursor === cursor) {
+          throw new NotesBridgeIncompleteError('Notes soup cursor did not advance')
+        }
+        cursor = result.nextCursor
+      }
+      throw new NotesBridgeIncompleteError()
     },
   }
 }

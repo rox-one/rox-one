@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { CalendarStore, resetCalendarIds } from './store.ts'
-import { FixtureCalendarAdapter, createProviderAdapter, liveCredentialsPresent } from './adapters.ts'
+import { FixtureCalendarAdapter, UnavailableCalendarAdapter, createProviderAdapter, liveCredentialsPresent } from './adapters.ts'
 import { CALENDAR_CAPABILITIES } from './capabilities.ts'
 import { mergeTodayUpcoming } from './merge.ts'
 import type { CalendarProvider, TaskLike } from './types.ts'
@@ -119,15 +119,39 @@ describe('calendar connectors (issue 18)', () => {
 
   const providers: CalendarProvider[] = ['google', 'outlook', 'yandex', 'mailru', 'appleReminders']
   for (const provider of providers) {
-    it(`live ${provider} account test skips without credentials`, async () => {
-      if (!liveCredentialsPresent(provider)) {
-        expect(createProviderAdapter(provider).capabilities.provider).toBe(provider)
-        return
-      }
+    it(`production ${provider} factory never returns a fixture adapter`, async () => {
       const adapter = createProviderAdapter(provider)
-      expect(adapter.available()).toBe(true)
-      const page = await adapter.listEvents('live')
-      expect(Array.isArray(page.events)).toBe(true)
+      expect(adapter).toBeInstanceOf(UnavailableCalendarAdapter)
+      expect(adapter).not.toBeInstanceOf(FixtureCalendarAdapter)
+      expect(adapter.available()).toBe(false)
+      await expect(adapter.listEvents('acct')).rejects.toThrow(/not connected/)
+      if (liveCredentialsPresent(provider)) {
+        expect(adapter.available()).toBe(false)
+      }
     })
   }
+
+  it('keeps the same event id on two accounts as two events', async () => {
+    const store = new CalendarStore()
+    const google = store.connect('google', 'G', 'UTC')
+    const outlook = store.connect('outlook', 'O', 'UTC')
+    store.markConnected(google.id)
+    store.markConnected(outlook.id)
+    await store.sync(google.id, new FixtureCalendarAdapter('google', [{
+      id: 'shared',
+      title: 'Google copy',
+      startAt: morning,
+      endAt: morning + 1000,
+    }]), morning)
+    await store.sync(outlook.id, new FixtureCalendarAdapter('outlook', [{
+      id: 'shared',
+      title: 'Outlook copy',
+      startAt: morning,
+      endAt: morning + 1000,
+    }]), morning)
+    const events = store.events()
+    expect(events).toHaveLength(2)
+    expect(events.find((event) => event.accountId === google.id)?.title).toBe('Google copy')
+    expect(events.find((event) => event.accountId === outlook.id)?.title).toBe('Outlook copy')
+  })
 })

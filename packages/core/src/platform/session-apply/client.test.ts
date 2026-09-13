@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test';
 import type { HttpFetch } from '../http-fetch.ts';
 import { SessionApplyClient } from './client.ts';
-import { SessionApplyFlagOffError, DEFAULT_OPERATOR_ORIGIN } from './types.ts';
+import { SessionApplyFlagOffError, SessionApplyHttpError, DEFAULT_OPERATOR_ORIGIN } from './types.ts';
 
 describe('SessionApplyClient', () => {
   it('fails closed without calling fetch when flag is off', async () => {
@@ -50,4 +50,41 @@ describe('SessionApplyClient', () => {
     expect(result.pointer).toContain('https://conation.dev/session-apply');
     expect(result.pointer).toContain('team=alpha');
   });
+
+  it('treats 204 as success without a JSON body', async () => {
+    const fetch: HttpFetch = async () => new Response(null, { status: 204 });
+    const client = new SessionApplyClient({ flagEnabled: true, fetch });
+    const result = await client.read();
+    expect(result.ok).toBe(true);
+    expect(result.status).toBe(204);
+    expect(result.body).toBeNull();
+  });
+
+  for (const status of [401, 403, 404, 429, 500, 503]) {
+    it(`throws SessionApplyHttpError on ${status} without leaking the body`, async () => {
+      const fetch: HttpFetch = async () =>
+        new Response(JSON.stringify({ token: 'super-secret', error: 'nope' }), {
+          status,
+          headers: { 'content-type': 'application/json' },
+        });
+      const client = new SessionApplyClient({
+        flagEnabled: true,
+        origin: 'https://conation.dev',
+        fetch,
+      });
+      await expect(client.read()).rejects.toMatchObject({
+        name: 'SessionApplyHttpError',
+        status,
+        origin: 'https://conation.dev',
+      });
+      try {
+        await client.apply({ workspaceRoot: '/ws', teamId: 'alpha' });
+        throw new Error('expected apply to throw');
+      } catch (error) {
+        expect(error).toBeInstanceOf(SessionApplyHttpError);
+        expect(String(error)).not.toContain('super-secret');
+        expect(JSON.stringify(error)).not.toContain('super-secret');
+      }
+    });
+  }
 });

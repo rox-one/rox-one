@@ -26,6 +26,7 @@ export interface FixtureEventSeed {
   etag?: string
 }
 
+/** Test-only adapter. Production factories must not return this class. */
 export class FixtureCalendarAdapter implements CalendarAdapter {
   readonly capabilities: CapabilityGap
   constructor(
@@ -59,12 +60,31 @@ export class FixtureCalendarAdapter implements CalendarAdapter {
   }
 }
 
-export function createProviderAdapter(provider: CalendarProvider, seeds: FixtureEventSeed[] = []): CalendarAdapter {
-  if (provider === 'appleReminders') {
-    const helper = Boolean(process.env.ROX_APPLE_REMINDERS_HELPER)
-    return new FixtureCalendarAdapter(provider, seeds, appleRemindersAvailable(process.platform, helper))
+export function createFixtureAdapter(
+  provider: CalendarProvider,
+  seeds: FixtureEventSeed[] = [],
+  available = true,
+): FixtureCalendarAdapter {
+  return new FixtureCalendarAdapter(provider, seeds, available)
+}
+
+/**
+ * Honest production adapter: credentials/env are not live evidence.
+ * listEvents never invents events.
+ */
+export class UnavailableCalendarAdapter implements CalendarAdapter {
+  readonly capabilities: CapabilityGap
+  constructor(readonly provider: CalendarProvider) {
+    this.capabilities = capabilityFor(provider)
   }
-  return new FixtureCalendarAdapter(provider, seeds, true)
+
+  available(): boolean {
+    return false
+  }
+
+  async listEvents(_accountId: string, _cursor?: string): Promise<CalendarListPage> {
+    throw new Error(`Calendar provider ${this.provider} is not connected`)
+  }
 }
 
 const LIVE_ENV: Record<Exclude<CalendarProvider, 'appleReminders'>, string> = {
@@ -75,6 +95,16 @@ const LIVE_ENV: Record<Exclude<CalendarProvider, 'appleReminders'>, string> = {
 }
 
 export function liveCredentialsPresent(provider: CalendarProvider): boolean {
-  if (provider === 'appleReminders') return appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER))
+  if (provider === 'appleReminders') {
+    return appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER))
+  }
   return Boolean(process.env[LIVE_ENV[provider]])
+}
+
+/**
+ * Production factory. Never returns FixtureCalendarAdapter, even when live
+ * env vars are set. Env alone is not a verified account.
+ */
+export function createProviderAdapter(provider: CalendarProvider): CalendarAdapter {
+  return new UnavailableCalendarAdapter(provider)
 }

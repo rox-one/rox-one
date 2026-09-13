@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   CalendarStore,
-  FixtureCalendarAdapter,
   createProviderAdapter,
   mergeTodayUpcoming,
   type CalendarProvider,
@@ -59,15 +58,11 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
     void mutate(async (current) => {
       try {
         const account = current.connect(provider, provider, tz)
+        const adapter = createProviderAdapter(provider)
+        if (!adapter.available()) {
+          return
+        }
         current.markConnected(account.id)
-        const sampleStart = now + 60 * 60 * 1000
-        const adapter = new FixtureCalendarAdapter(provider, [{
-          id: `${provider}-demo`,
-          title: provider,
-          startAt: sampleStart,
-          endAt: sampleStart + 30 * 60 * 1000,
-          timeZone: tz,
-        }])
         await current.sync(account.id, adapter, now)
       } catch {
         // Apple helper missing or provider unavailable — status strip stays on none/pending.

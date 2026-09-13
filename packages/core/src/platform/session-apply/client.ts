@@ -10,6 +10,8 @@ import {
   DEFAULT_OPERATOR_ORIGIN,
   DEFAULT_READ_PATH,
   SessionApplyFlagOffError,
+  SessionApplyHttpError,
+  isSessionApplySuccessStatus,
   type SessionApplyApplyInput,
   type SessionApplyApplyResult,
   type SessionApplyClientOptions,
@@ -33,6 +35,19 @@ function fetcher(options: SessionApplyClientOptions): HttpFetch {
   return fn;
 }
 
+function dropBody(response: Response): void {
+  try {
+    void response.body?.cancel();
+  } catch {
+    // Best-effort: do not parse or log the error payload.
+  }
+}
+
+async function readSuccessBody(response: Response): Promise<unknown> {
+  if (response.status === 204) return null;
+  return response.json().catch(() => null);
+}
+
 export class SessionApplyClient {
   constructor(private readonly options: SessionApplyClientOptions) {}
 
@@ -44,7 +59,11 @@ export class SessionApplyClient {
       method: 'GET',
       headers: { accept: 'application/json' },
     });
-    const body: unknown = await response.json().catch(() => null);
+    if (!isSessionApplySuccessStatus(response.status)) {
+      dropBody(response);
+      throw new SessionApplyHttpError(response.status, origin);
+    }
+    const body: unknown = await readSuccessBody(response);
     return { ok: true, origin, status: response.status, body };
   }
 
@@ -61,7 +80,11 @@ export class SessionApplyClient {
         source: input.source,
       }),
     });
-    const body: unknown = await response.json().catch(() => null);
+    if (!isSessionApplySuccessStatus(response.status)) {
+      dropBody(response);
+      throw new SessionApplyHttpError(response.status, origin);
+    }
+    const body: unknown = await readSuccessBody(response);
     const pointer = `${origin}${path}#team=${input.teamId ?? ''}`;
     return { ok: true, origin, status: response.status, body, pointer };
   }

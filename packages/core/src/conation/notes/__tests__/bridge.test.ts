@@ -105,6 +105,89 @@ describe('createNotesBridge', () => {
     expect(note?.body).toBe('hello')
   })
 
+  it('getNote finds a document past the first Soup page', async () => {
+    const calls: Array<Record<string, unknown> | undefined> = []
+    const soup: NotesSoupClient = {
+      async queryUserSoupPage(args) {
+        calls.push(args?.input)
+        const cursor = typeof args?.input?.cursor === 'string' ? args.input.cursor : undefined
+        if (!cursor) {
+          return {
+            items: [{ id: 'n1', entityType: 'document', displayName: 'First' }],
+            nextCursor: 'page-2',
+          }
+        }
+        return {
+          items: [{ id: 'n2', entityType: 'document', displayName: 'Second' }],
+          nextCursor: null,
+        }
+      },
+    }
+    const bridge = createNotesBridge({
+      enabled: true,
+      soup,
+      claimLocker: { canRead: () => 'allow' },
+      importsAcl: { canView: () => true },
+    })
+    const note = await bridge!.getNote('n2')
+    expect(note?.id).toBe('n2')
+    expect(calls[0]).toMatchObject({ entityType: 'document' })
+    expect(calls[1]).toMatchObject({ cursor: 'page-2' })
+  })
+
+  it('listNotes forwards cursor and limit', async () => {
+    const calls: Array<Record<string, unknown> | undefined> = []
+    const soup: NotesSoupClient = {
+      async queryUserSoupPage(args) {
+        calls.push(args?.input)
+        return { items: docs, nextCursor: 'next' }
+      },
+    }
+    const bridge = createNotesBridge({
+      enabled: true,
+      soup,
+      claimLocker: { canRead: () => 'allow' },
+      importsAcl: { canView: () => true },
+    })
+    const page = await bridge!.listNotes({ cursor: 'c1', limit: 10 })
+    expect(page.nextCursor).toBe('next')
+    expect(calls[0]).toMatchObject({ cursor: 'c1', limit: 10, entityType: 'document' })
+  })
+
+  it('does not treat a Soup HTTP failure as an empty corpus', async () => {
+    const soup: NotesSoupClient = {
+      async queryUserSoupPage() {
+        throw new Error('Soup GraphQL HTTP 503')
+      },
+    }
+    const bridge = createNotesBridge({
+      enabled: true,
+      soup,
+      claimLocker: { canRead: () => 'allow' },
+      importsAcl: { canView: () => true },
+    })
+    await expect(bridge!.listNotes()).rejects.toMatchObject({ code: 'NOTES_UNAVAILABLE' })
+    await expect(bridge!.getNote('n1')).rejects.toMatchObject({ code: 'NOTES_UNAVAILABLE' })
+  })
+
+  it('stops getNote when the cursor does not advance', async () => {
+    const soup: NotesSoupClient = {
+      async queryUserSoupPage() {
+        return {
+          items: [{ id: 'n1', entityType: 'document', displayName: 'First' }],
+          nextCursor: 'stuck',
+        }
+      },
+    }
+    const bridge = createNotesBridge({
+      enabled: true,
+      soup,
+      claimLocker: { canRead: () => 'allow' },
+      importsAcl: { canView: () => true },
+    })
+    await expect(bridge!.getNote('missing')).rejects.toMatchObject({ code: 'NOTES_INCOMPLETE' })
+  })
+
   it('exposes no write helpers', () => {
     const bridge = createNotesBridge({
       enabled: true,

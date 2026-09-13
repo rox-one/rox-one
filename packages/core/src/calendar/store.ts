@@ -1,6 +1,6 @@
 import { emptyCalendarBundle, type CalendarAccount, type CalendarBundle, type CalendarEvent, type CalendarProvider, type CalendarUiStatus, type ReminderProposal, type TaskLike } from './types.ts'
-import { createProviderAdapter, type CalendarAdapter } from './adapters.ts'
-import { capabilityFor } from './capabilities.ts'
+import type { CalendarAdapter } from './adapters.ts'
+import { appleRemindersAvailable, capabilityFor } from './capabilities.ts'
 import { timezoneWarnings } from './merge.ts'
 
 let seq = 0
@@ -61,7 +61,7 @@ export class CalendarStore {
   }
 
   connect(provider: CalendarProvider, displayName: string, timeZone: string): CalendarAccount {
-    if (provider === 'appleReminders' && !createProviderAdapter(provider).available()) {
+    if (provider === 'appleReminders' && !appleRemindersAvailable(process.platform, Boolean(process.env.ROX_APPLE_REMINDERS_HELPER))) {
       throw new Error('Apple Reminders requires a privileged macOS helper')
     }
     const id = mint('cal')
@@ -100,7 +100,9 @@ export class CalendarStore {
     if (!journal) return
     const page = await adapter.listEvents(accountId, journal.cursor)
     for (const incoming of page.events) {
-      const existing = this.bundle.events.find((event) => event.id === incoming.id)
+      const existing = this.bundle.events.find(
+        (event) => event.id === incoming.id && event.accountId === accountId,
+      )
       if (existing && existing.etag && incoming.etag && existing.etag !== incoming.etag && !incoming.deleted) {
         journal.conflicts.push({ id: mint('conf'), kind: 'update', eventId: incoming.id })
       }

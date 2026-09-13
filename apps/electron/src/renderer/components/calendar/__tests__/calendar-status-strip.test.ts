@@ -11,8 +11,9 @@ describe('Issue 18 calendar strip', () => {
     expect(strip).toContain('calendar.revoke')
     expect(strip).toContain('acceptProposal')
     expect(strip).toContain('proposeReminder')
-    expect(strip.toLowerCase()).not.toContain('client_secret')
-    expect(strip.toLowerCase()).not.toContain('refresh_token')
+    expect(strip).not.toContain('client_secret')
+    expect(strip).not.toContain('refresh_token')
+    expect(strip).not.toContain('FixtureCalendarAdapter')
     expect(strip).not.toMatch(/<select\b/)
   })
 

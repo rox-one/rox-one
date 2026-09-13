@@ -18,6 +18,24 @@ export class SessionApplyFlagOffError extends Error {
   }
 }
 
+export class SessionApplyHttpError extends Error {
+  readonly code = 'SESSION_APPLY_HTTP' as const;
+  readonly status: number;
+  readonly origin: string;
+  constructor(status: number, origin: string) {
+    super(`SessionApply HTTP ${status}`);
+    this.name = 'SessionApplyHttpError';
+    this.status = status;
+    this.origin = origin;
+  }
+}
+
+export const SESSION_APPLY_SUCCESS_STATUSES = [200, 202, 204] as const;
+
+export function isSessionApplySuccessStatus(status: number): boolean {
+  return (SESSION_APPLY_SUCCESS_STATUSES as readonly number[]).includes(status);
+}
+
 export interface SessionApplyClientOptions {
   /** Operator origin. Default https://conation.dev */
   origin?: string;
