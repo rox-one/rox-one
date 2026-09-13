@@ -2371,6 +2371,7 @@
   "overlay.zoomPresets": "Zoom-Voreinstellungen",
   "overlay.zoomReset": "Zoom zurücksetzen (⌘0)",
   "overlay.zoomToFit": "Einpassen",
+  "pages.actionFailed": "Aktion fehlgeschlagen",
   "pages.askAgent": "Agent fragen",
   "pages.askAgentPrompt": "Erstelle mir eine Seite, die Folgendes zeigt: ",
   "pages.auth.credentialDescription": "Gib einen neuen Zugangsschlüssel für diese Quelle ein. Er wird verschlüsselt auf diesem Computer gespeichert.",

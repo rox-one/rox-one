@@ -2371,6 +2371,7 @@
   "overlay.zoomPresets": "Préréglages de zoom",
   "overlay.zoomReset": "Réinitialiser le zoom (⌘0)",
   "overlay.zoomToFit": "Zoom ajusté",
+  "pages.actionFailed": "L’action a échoué",
   "pages.askAgent": "Demander à un agent",
   "pages.askAgentPrompt": "Crée-moi une page qui montre ",
   "pages.auth.credentialDescription": "Saisissez un nouvel identifiant pour cette source. Il est stocké chiffré sur cet ordinateur.",

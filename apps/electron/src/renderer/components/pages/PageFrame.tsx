@@ -199,12 +199,12 @@ export function PageFrame({ workspaceId, page, lease, content, snapshot, classNa
         const result: PageActionResult = await window.electronAPI.executePageAction(workspaceId, request)
         postToFrame(buildPageActionResultMessage(result))
       } catch (err) {
-        reject(err instanceof Error ? err.message : 'Action failed')
+        reject(err instanceof Error ? err.message : t('pages.actionFailed'))
       } finally {
         limiter.finish(msg.requestId)
       }
     },
-    [workspaceId, pageSlug, lease.leaseId, lease.nonce, postToFrame],
+    [workspaceId, pageSlug, lease.leaseId, lease.nonce, postToFrame, t],
   )
 
   const handleGrantRequest = useCallback(
