@@ -2489,6 +2489,7 @@
   "premiumMenu.noResults": "一致する項目がありません",
   "premiumMenu.search": "検索...",
   "preview.expandPreview": "プレビューを展開",
+  "preview.failedToReadFile": "ファイルを読み込めませんでした",
   "preview.failedToRenderPdf": "PDFのレンダリングに失敗しました",
   "preview.htmlPreview": "HTMLプレビュー",
   "preview.loadingImage": "画像を読み込み中...",

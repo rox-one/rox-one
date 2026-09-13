@@ -2495,6 +2495,7 @@
   "premiumMenu.noResults": "Нет совпадений",
   "premiumMenu.search": "Поиск...",
   "preview.expandPreview": "Развернуть предпросмотр",
+  "preview.failedToReadFile": "Не удалось прочитать файл",
   "preview.failedToRenderPdf": "Не удалось отобразить PDF",
   "preview.htmlPreview": "Предпросмотр HTML",
   "preview.loadingImage": "Загрузка изображения...",

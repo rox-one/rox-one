@@ -2489,6 +2489,7 @@
   "premiumMenu.noResults": "No matching items",
   "premiumMenu.search": "Search...",
   "preview.expandPreview": "Expand Preview",
+  "preview.failedToReadFile": "Failed to read file",
   "preview.failedToRenderPdf": "Failed to render PDF",
   "preview.htmlPreview": "HTML Preview",
   "preview.loadingImage": "Loading image...",

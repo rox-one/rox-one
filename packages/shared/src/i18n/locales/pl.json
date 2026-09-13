@@ -2495,6 +2495,7 @@
   "premiumMenu.noResults": "Brak wyników",
   "premiumMenu.search": "Szukaj...",
   "preview.expandPreview": "Rozwiń podgląd",
+  "preview.failedToReadFile": "Nie udało się odczytać pliku",
   "preview.failedToRenderPdf": "Nie udało się wyrenderować PDF",
   "preview.htmlPreview": "Podgląd HTML",
   "preview.loadingImage": "Ładowanie obrazu...",
