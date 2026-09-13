@@ -91,6 +91,7 @@ import {
   runWorkflow,
   saveVersion,
   convertNodeKind,
+  isProductionWorkflowSuccess,
   type WorkflowRun,
 } from '@craft-agent/shared/workflows'
 
@@ -177,7 +178,36 @@ type DraftNodeData = {
 
 const DRAFT_NODE_ICONS: Record<SessionNodeKind, LucideIcon> = PALETTE_ICONS
 
+function notifyWorkflowRun(run: WorkflowRun, t: (key: string) => string) {
+  if (isProductionWorkflowSuccess(run)) {
+    toast.success(t('entityView.mapRunComplete'))
+    return
+  }
+  if (Object.values(run.status).includes('waiting_approval')) {
+    toast.warning(t('entityView.mapRunWaitingApproval'))
+    return
+  }
+  toast.info(t('entityView.mapRunSimulated'))
+}
+
+function draftRunStatusClassName(status: string): string {
+  if (status === 'waiting_approval') {
+    return 'border-amber-400/40 bg-amber-400/10 text-amber-100'
+  }
+  if (status === 'done') {
+    return 'border-emerald-400/30 bg-emerald-400/10 text-emerald-100'
+  }
+  return 'border-white/15 bg-white/5 text-muted-foreground'
+}
+
+function draftRunStatusLabel(status: string, t: (key: string) => string): string {
+  if (status === 'waiting_approval') return t('entityView.mapRunStatus.waiting_approval')
+  if (status === 'simulated') return t('entityView.mapRunStatus.simulated')
+  return status
+}
+
 function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) {
+  const { t } = useTranslation()
   const Icon = DRAFT_NODE_ICONS[data.draft.kind]
   const role = data.draft.role ?? 'node'
   return (
@@ -206,8 +236,13 @@ function DraftNode({ data, selected }: NodeProps<Node<DraftNodeData, 'draft'>>) 
           </span>
         ) : null}
         {data.runStatus ? (
-          <span className="shrink-0 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-100">
-            {data.runStatus}
+          <span
+            className={cn(
+              'shrink-0 rounded-md border px-1.5 py-0.5 font-mono text-[9px]',
+              draftRunStatusClassName(data.runStatus),
+            )}
+          >
+            {draftRunStatusLabel(data.runStatus, t)}
           </span>
         ) : null}
         <button
@@ -740,7 +775,7 @@ function EditorInner({
         const next = recordRun(document, run)
         setWorkflowDoc(next)
         persistWorkflowDocument(next)
-        toast.success(t('entityView.mapRunComplete'))
+        notifyWorkflowRun(run, t)
       } catch (error) {
         toast.error(t('entityView.mapValidationBlocked'), {
           description: error instanceof Error ? error.message : String(error),
@@ -762,7 +797,7 @@ function EditorInner({
       const next = recordRun(workflowDoc, run)
       setWorkflowDoc(next)
       persistWorkflowDocument(next)
-      toast.success(t('entityView.mapRunComplete'))
+      notifyWorkflowRun(run, t)
     } catch (error) {
       toast.error(t('entityView.mapValidationBlocked'), {
         description: error instanceof Error ? error.message : String(error),
