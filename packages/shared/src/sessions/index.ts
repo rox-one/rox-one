@@ -24,9 +24,19 @@ export type {
 // Field constants
 export { SESSION_PERSISTENT_FIELDS } from './types.ts';
 export {
+  filterProjectContextForViewer,
+  isProjectClosed,
+  membershipsFromSession,
+  projectContextVisibleToViewer,
   sessionBelongsToProject,
   sessionProjectIds,
+  uniquePortfolioSessionIds,
+  unlinkProjectMembership,
+  visibleMembershipsForViewer,
   withProjectMembership,
+  type ProjectLinkRole,
+  type ProjectMembership,
+  type ProjectVisibility,
 } from './membership.ts';
 
 // Storage functions

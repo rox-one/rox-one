@@ -52,6 +52,8 @@ export interface ProjectConfig {
   updatedAt: number;
   /** Set when project is archived (hidden from sidebar but kept on disk) */
   archivedAt?: number;
+  /** Closed projects must not leak context through a shared session (issue #335). */
+  closedAt?: number;
   /** Per-project Kanban columns. Absent → the board uses the default 3 columns. */
   kanbanColumns?: KanbanColumnDef[];
 }

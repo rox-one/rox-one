@@ -1,7 +1,9 @@
 export {
+  ROX2_ACYCLIC_RELATION_KINDS,
   ROX2_ENTITY_KINDS,
   ROX2_PERMISSIONS,
   ROX2_RELATION_CONSTRAINTS,
+  ROX2_RELATION_DELETION_POLICY,
   ROX2_RELATION_KINDS,
   ROX2_RUN_STATES,
   SENSITIVE_PERMISSIONS,
@@ -10,6 +12,7 @@ export {
   fixtureResult,
   formatRox2EntityId,
   formatRox2EntityRef,
+  isAcyclicRelationKind,
   isClaimableLive,
   isRox2EntityKind,
   parseRox2EntityId,
@@ -18,6 +21,7 @@ export {
   requiresExplicitGrant,
   simulatedResult,
   soupTypeToRox2Kind,
+  type Rox2AcyclicRelationKind,
   type Rox2Context,
   type Rox2Entity,
   type Rox2EntityKind,
@@ -32,7 +36,36 @@ export {
   type Rox2RelationKind,
   type Rox2Result,
   type Rox2RunState,
+  type Rox2Selection,
 } from './platform-contract.ts'
+
+export {
+  Rox2RelationCycleError,
+  Rox2RelationGraph,
+  deletionPolicyFor,
+  fingerprintRelations,
+  type Rox2GraphQuery,
+  type Rox2RelationEdge,
+  type Rox2RelationSnapshot,
+} from './relations.ts'
+
+export {
+  SurfaceContextProvider,
+  bindSurfaceContext,
+  closedSourceDenied,
+  type ContextBinding,
+  type ContextBindingPolicy,
+  type SurfaceContextEnvelope,
+} from './context.ts'
+
+export {
+  Rox2NoteRepository,
+  noteOriginIsConation,
+  type NoteOrigin,
+  type NoteSyncState,
+  type Rox2Note,
+  type Rox2NoteRecord,
+} from './notes-repository.ts'
 
 export {
   ROX2_ONTOLOGY_KINDS,

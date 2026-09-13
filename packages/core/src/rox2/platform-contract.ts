@@ -47,6 +47,11 @@ export const ROX2_RELATION_KINDS = [
   'in-calendar',
   'derived-from',
   'attached-to',
+  'membership',
+  'depends-on',
+  'discusses',
+  'produces',
+  'replaces',
 ] as const
 
 export type Rox2RelationKind = (typeof ROX2_RELATION_KINDS)[number]
@@ -119,12 +124,22 @@ export type Rox2Event = {
   payload?: Record<string, unknown>
 }
 
+export type Rox2Selection = {
+  blockIds?: readonly string[]
+  text?: string
+  filter?: string
+}
+
 export type Rox2Context = {
   workspaceId: string
   sessionId?: string
   surfaceId?: string
   entityRefs: readonly string[]
   permissionMode: 'allow-all' | 'ask' | 'safe'
+  /** Source revision per namespaced entity ref. */
+  revisions?: Readonly<Record<string, string>>
+  selection?: Rox2Selection
+  snapshotBudgetTokens?: number
 }
 
 export type Rox2OkResult = {
@@ -262,6 +277,50 @@ export const ROX2_RELATION_CONSTRAINTS: Record<Rox2RelationKind, { domain: reado
     domain: ['file', 'note'],
     range: ['session', 'note', 'task', 'project', 'workflow', 'person', 'crm-company'],
   },
+  membership: {
+    domain: ['session', 'note', 'task', 'file', 'workflow', 'outcome', 'calendar-event'],
+    range: ['project'],
+  },
+  'depends-on': {
+    domain: ['task', 'workflow', 'outcome'],
+    range: ['task', 'workflow', 'outcome'],
+  },
+  discusses: {
+    domain: ['note', 'session', 'channel-message'],
+    range: ['person', 'crm-company', 'note', 'session', 'task'],
+  },
+  produces: {
+    domain: ['session', 'note', 'workflow', 'task'],
+    range: ['outcome', 'file', 'note'],
+  },
+  replaces: {
+    domain: ['note', 'task', 'workflow', 'file', 'outcome'],
+    range: ['note', 'task', 'workflow', 'file', 'outcome'],
+  },
+}
+
+/** Directed kinds that must stay a DAG. Mutual mentions/discusses stay allowed. */
+export const ROX2_ACYCLIC_RELATION_KINDS = ['blocks', 'depends-on', 'replaces', 'parent'] as const
+
+export type Rox2AcyclicRelationKind = (typeof ROX2_ACYCLIC_RELATION_KINDS)[number]
+
+export const ROX2_RELATION_DELETION_POLICY: Record<Rox2RelationKind, 'cascade' | 'restrict' | 'detach'> = {
+  parent: 'detach',
+  mentions: 'detach',
+  blocks: 'detach',
+  assigned: 'detach',
+  'in-calendar': 'detach',
+  'derived-from': 'detach',
+  'attached-to': 'detach',
+  membership: 'detach',
+  'depends-on': 'detach',
+  discusses: 'detach',
+  produces: 'detach',
+  replaces: 'detach',
+}
+
+export function isAcyclicRelationKind(kind: Rox2RelationKind): kind is Rox2AcyclicRelationKind {
+  return (ROX2_ACYCLIC_RELATION_KINDS as readonly string[]).includes(kind)
 }
 
 export function assertRelationKinds(

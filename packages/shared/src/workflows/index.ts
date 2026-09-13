@@ -4,6 +4,7 @@ export * from './validate.ts'
 export * from './promote.ts'
 export * from './run.ts'
 export * from './version.ts'
+export * from './map-reduce.ts'
 export {
   MAGIC_WORKFLOWS,
   buildCancellationArtifact,

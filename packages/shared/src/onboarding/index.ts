@@ -1,0 +1,15 @@
+export {
+  ONBOARDING_CHECKPOINT_VERSION,
+  ONBOARDING_STEPS,
+  decideOnboardingStep,
+  emptyOnboardingCheckpoint,
+  isAccountRegistered,
+  memoryOnboardingStore,
+  parseOnboardingCheckpoint,
+  skipOnboardingStep,
+  type OnboardingAccountAuth,
+  type OnboardingCheckpoint,
+  type OnboardingCheckpointStep,
+  type OnboardingCheckpointStore,
+  type OnboardingLocalProfile,
+} from './checkpoint.ts'

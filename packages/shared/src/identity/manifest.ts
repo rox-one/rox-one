@@ -69,6 +69,26 @@ export const ROX_MIGRATION_MANIFEST = {
 
 export type RoxMigrationManifest = typeof ROX_MIGRATION_MANIFEST
 
+/** User-facing brand names for windows, menus, and installer copy (issue #341). */
+export const ROX_BRAND_MANIFEST = {
+  productName: ROX_PRODUCT_NAME,
+  windowTitle: ROX_PRODUCT_NAME,
+  aboutProduct: ROX_PRODUCT_NAME,
+  menu: {
+    aboutKey: 'menu.aboutCraftAgents',
+    hideKey: 'menu.hideCraftAgents',
+    quitKey: 'menu.quitCraftAgents',
+  },
+  installer: {
+    productName: ROX_PRODUCT_NAME,
+    appId: ROX_BUNDLE_ID,
+    legacyAppId: ROX_LEGACY_BUNDLE_ID,
+  },
+  noticesRequired: true,
+} as const
+
+export type RoxBrandManifest = typeof ROX_BRAND_MANIFEST
+
 const DEEPLINK_SCHEMES = new Set([
   `${ROX_DEEPLINK_SCHEME}:`,
   `${ROX_LEGACY_DEEPLINK_SCHEME}:`,

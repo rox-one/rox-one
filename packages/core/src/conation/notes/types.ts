@@ -38,8 +38,6 @@ export type NotesListQuery = {
 /** Minimal Soup page client Notes needs (WP-Soup createSoupClient). */
 export type NotesSoupClient = {
   queryUserSoupPage: (args?: { input?: Record<string, unknown> }) => Promise<{
-export type NotesSoupClient = {
-  queryUserSoupPage: (args?: { input?: Record<string, unknown> }) => Promise<{
     items: ReadonlyArray<{
       id: string
       entityType?: string | null

@@ -4,6 +4,7 @@ import {
   apiSetupMethodToConnectionSetup,
   BASE_SLUG_FOR_METHOD,
   shouldApplyOnboardingLaunchGate,
+  resolveOnboardingStartStep,
 } from '../useOnboarding'
 import type { ApiSetupMethod } from '@/components/onboarding'
 
@@ -30,6 +31,17 @@ describe('shouldApplyOnboardingLaunchGate', () => {
 
   it('treats older setup payloads without the new flag as non-blocking', () => {
     expect(shouldApplyOnboardingLaunchGate('startup', {})).toBe(false)
+  })
+})
+
+describe('resolveOnboardingStartStep', () => {
+  it('resumes a first-run checkpoint and ignores it while editing', () => {
+    expect(resolveOnboardingStartStep({ checkpoint: { version: 1, step: 'credentials', skipped: [] } })).toBe('credentials')
+    expect(resolveOnboardingStartStep({
+      editing: true,
+      checkpoint: { version: 1, step: 'credentials', skipped: [] },
+    })).toBe('provider-select')
+    expect(resolveOnboardingStartStep({ requested: 'environment' })).toBe('environment')
   })
 })
 // ============================================================

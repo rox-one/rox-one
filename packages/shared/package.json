@@ -80,6 +80,7 @@
     "./memory/proposals": "./src/memory/proposals.ts",
     "./memory/types": "./src/memory/types.ts",
     "./mentions": "./src/mentions/index.ts",
+    "./onboarding": "./src/onboarding/index.ts",
     "./openclaw": "./src/openclaw/index.ts",
     "./openclaw/types": "./src/openclaw/types.ts",
     "./orgs": "./src/orgs/index.ts",

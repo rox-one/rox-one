@@ -30,6 +30,52 @@ import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/ap
 import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
 import { cancelOnboardingOAuth, isProviderManagedOAuthMethod } from './oauth-cancel'
+import {
+  emptyOnboardingCheckpoint,
+  parseOnboardingCheckpoint,
+  ONBOARDING_CHECKPOINT_VERSION,
+  type OnboardingCheckpoint,
+  type OnboardingCheckpointStep,
+} from '@craft-agent/shared/onboarding'
+
+export const ONBOARDING_CHECKPOINT_KEY = 'rox.onboarding.checkpoint.v1'
+
+export function readRendererOnboardingCheckpoint(
+  storage: Pick<Storage, 'getItem'> | null = typeof globalThis.localStorage === 'undefined' ? null : globalThis.localStorage,
+): OnboardingCheckpoint | null {
+  if (!storage) return null
+  try {
+    const raw = storage.getItem(ONBOARDING_CHECKPOINT_KEY)
+    if (!raw) return null
+    return parseOnboardingCheckpoint(JSON.parse(raw))
+  } catch {
+    return null
+  }
+}
+
+export function writeRendererOnboardingCheckpoint(
+  checkpoint: OnboardingCheckpoint,
+  storage: Pick<Storage, 'setItem' | 'removeItem'> | null = typeof globalThis.localStorage === 'undefined' ? null : globalThis.localStorage,
+): void {
+  if (!storage) return
+  storage.setItem(ONBOARDING_CHECKPOINT_KEY, JSON.stringify(checkpoint))
+}
+
+export function clearRendererOnboardingCheckpoint(
+  storage: Pick<Storage, 'removeItem'> | null = typeof globalThis.localStorage === 'undefined' ? null : globalThis.localStorage,
+): void {
+  storage?.removeItem(ONBOARDING_CHECKPOINT_KEY)
+}
+
+export function resolveOnboardingStartStep(input: {
+  requested?: OnboardingStep
+  editing?: boolean
+  checkpoint?: OnboardingCheckpoint | null
+}): OnboardingStep {
+  if (input.requested) return input.requested
+  if (!input.editing && input.checkpoint?.step) return input.checkpoint.step as OnboardingStep
+  return 'provider-select'
+}
 
 /**
  * Identifies how the setup surface was opened. Existing callers are explicit
@@ -60,7 +106,7 @@ interface UseOnboardingOptions {
    * setup state alone cannot begin a credential, billing, or OAuth flow.
    */
   entryPoint?: OnboardingEntryPoint
-  /** Start the wizard at a specific step (default: 'welcome') */
+  /** Start the wizard at a specific step. Omit to resume a first-run checkpoint. */
   initialStep?: OnboardingStep
   /** Pre-select an API setup method (useful when editing an existing connection) */
   initialApiSetupMethod?: ApiSetupMethod
@@ -245,7 +291,7 @@ export function useOnboarding({
   onComplete,
   initialSetupNeeds,
   entryPoint = 'explicit',
-  initialStep = 'provider-select',
+  initialStep,
   initialApiSetupMethod,
   onDismiss,
   onConfigSaved,
@@ -256,10 +302,15 @@ export function useOnboarding({
   const { t } = useTranslation()
   const shouldApplyStartupGate = shouldApplyOnboardingLaunchGate(entryPoint, initialSetupNeeds)
   const afterProviderStep: OnboardingStep = includeEnvironmentQuestions ? 'environment' : 'complete'
+  const startStep = resolveOnboardingStartStep({
+    requested: initialStep,
+    editing: Boolean(editingSlug),
+    checkpoint: readRendererOnboardingCheckpoint(),
+  })
 
   // Main wizard state
   const [state, setState] = useState<OnboardingState>({
-    step: initialStep,
+    step: startStep,
     loginStatus: 'idle',
     credentialStatus: 'idle',
     completionStatus: 'saving',
@@ -306,6 +357,20 @@ export function useOnboarding({
     }
     checkGitBash()
   }, [])
+
+  useEffect(() => {
+    if (editingSlug) return
+    if (state.step === 'complete') {
+      clearRendererOnboardingCheckpoint()
+      return
+    }
+    const previous = readRendererOnboardingCheckpoint() ?? emptyOnboardingCheckpoint(state.step as OnboardingCheckpointStep)
+    writeRendererOnboardingCheckpoint({
+      ...previous,
+      version: ONBOARDING_CHECKPOINT_VERSION,
+      step: state.step as OnboardingCheckpointStep,
+    })
+  }, [editingSlug, state.step])
 
   // Save configuration using the new unified LLM connection API
   // Returns true on success, false on failure (sets errorMessage on failure)
@@ -1137,7 +1202,7 @@ export function useOnboarding({
       // Ignore cleanup errors during reset.
     })
     setState({
-      step: initialStep,
+      step: startStep,
       loginStatus: 'idle',
       credentialStatus: 'idle',
       completionStatus: 'saving',
@@ -1152,7 +1217,7 @@ export function useOnboarding({
     window.electronAPI.clearClaudeOAuthState().catch(() => {
       // Ignore errors - state may not exist
     })
-  }, [activeProviderOAuthMethod, initialStep, initialApiSetupMethod, isWaitingForCode])
+  }, [activeProviderOAuthMethod, startStep, initialApiSetupMethod, isWaitingForCode])
 
   return {
     state,

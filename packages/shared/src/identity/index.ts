@@ -39,14 +39,24 @@ export {
   ROX_LEGACY_DEEPLINK_SCHEME,
   ROX_LEGACY_UPDATE_CHANNEL,
   ROX_MIGRATION_MANIFEST,
+  ROX_BRAND_MANIFEST,
   ROX_PRODUCT_NAME,
   ROX_PUBLIC_ORIGIN,
   ROX_TYPOGRAPHY,
   ROX_UPDATE_CHANNEL,
   isRoxDeeplinkProtocol,
   isRoxDeeplinkUrl,
+  type RoxBrandManifest,
   type RoxMigrationManifest,
 } from './manifest.ts'
+
+export {
+  UI_BRAND_SCAN_ALLOWLIST,
+  localeMenuViolations,
+  menuCopyUsesBrand,
+  scanUiBrandSource,
+  uiBrandViolations,
+} from './ui-linter.ts'
 
 export {
   ROX_MIGRATION_STAMP_NAME,

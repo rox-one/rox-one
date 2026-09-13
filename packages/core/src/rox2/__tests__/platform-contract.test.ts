@@ -86,6 +86,9 @@ describe('ROX2 platform contract', () => {
     expect(() => assertRelationKinds({ kind: 'assigned' }, 'task', 'person')).not.toThrow()
     expect(() => assertRelationKinds({ kind: 'assigned' }, 'note', 'person')).toThrow(/domain/)
     expect(() => assertRelationKinds({ kind: 'assigned' }, 'task', 'note')).toThrow(/range/)
+    expect(() => assertRelationKinds({ kind: 'discusses' }, 'note', 'person')).not.toThrow()
+    expect(() => assertRelationKinds({ kind: 'membership' }, 'session', 'project')).not.toThrow()
+    expect(() => assertRelationKinds({ kind: 'depends-on' }, 'task', 'task')).not.toThrow()
   })
 })
 
