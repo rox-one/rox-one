@@ -10,9 +10,12 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SettingsCard, SettingsRow, SettingsSection } from '@/components/settings'
 import { Button } from '@/components/ui/button'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import type {
   CredentialHealthStatus,
@@ -202,12 +205,17 @@ export default function AccountsSettingsPage() {
   const issueCount = health?.issues?.length ?? 0
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="px-6 py-4 border-b border-border/60">
-        <h1 className="text-lg font-semibold">{t('settings.accounts.title')}</h1>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+    <div className="flex h-full min-h-0 flex-col">
+      <PanelHeader
+        title={t('settings.accounts.title')}
+        actions={<HeaderMenu route={routes.view.settings('accounts')} />}
+      />
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
+          <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
+            <p className="whitespace-normal break-words text-sm text-muted-foreground">
+              {t('settings.accounts.description')}
+            </p>
         {/* PROFILE */}
         <SettingsSection title={t('settings.accounts.profileSection')}>
           <SettingsCard>
@@ -476,6 +484,8 @@ export default function AccountsSettingsPage() {
           </SettingsCard>
           <CredentialMigrationCard />
         </SettingsSection>
+          </div>
+        </ScrollArea>
       </div>
     </div>
   )

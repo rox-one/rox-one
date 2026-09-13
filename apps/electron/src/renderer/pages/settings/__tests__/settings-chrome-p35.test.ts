@@ -14,6 +14,8 @@ const rail = readFileSync(
   'utf8',
 )
 const account = readFileSync(join(dir, 'AccountSettingsPage.tsx'), 'utf8')
+const accounts = readFileSync(join(dir, 'AccountsSettingsPage.tsx'), 'utf8')
+const knowledge = readFileSync(join(dir, 'KnowledgeSettingsPage.tsx'), 'utf8')
 const privacy = readFileSync(join(dir, 'PrivacySettingsPage.tsx'), 'utf8')
 
 describe('Program 35 settings chrome', () => {
@@ -57,5 +59,16 @@ describe('Program 35 settings chrome', () => {
     expect(privacy).toContain('mask-fade-y')
     expect(privacy).not.toContain('100dvh')
     expect(privacy).not.toContain("label={t('settings.privacy.requestExport')}")
+  })
+
+  it('keeps Account, Accounts, and Knowledge on the shared PanelHeader', () => {
+    for (const source of [account, accounts, knowledge]) {
+      expect(source).toContain('<PanelHeader')
+      expect(source).toContain('h-full min-h-0')
+      expect(source).toContain('mask-fade-y')
+      expect(source).not.toContain('100dvh')
+      expect(source).not.toContain('<h1 className="text-lg font-semibold">')
+    }
+    expect(knowledge).not.toContain('<h2 className="text-lg font-semibold">')
   })
 })

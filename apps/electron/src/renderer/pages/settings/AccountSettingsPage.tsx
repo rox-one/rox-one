@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { toast } from 'sonner'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
+import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import {
   SettingsCard,
   SettingsRow,
@@ -19,7 +20,9 @@ import {
 } from '@/components/settings'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { MiniDashboardCards } from '@/components/app-shell/MiniDashboardCards'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -211,13 +214,17 @@ export default function AccountSettingsPage() {
   }, [sessionMetaMap, workspace, taskCount, connectionState])
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="px-6 py-4 border-b border-border/60">
-        <h1 className="text-lg font-semibold">{t('settings.account.title')}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{t('settings.account.description')}</p>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+    <div className="flex h-full min-h-0 flex-col">
+      <PanelHeader
+        title={t('settings.account.title')}
+        actions={<HeaderMenu route={routes.view.settings('account')} />}
+      />
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
+          <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
+            <p className="whitespace-normal break-words text-sm text-muted-foreground">
+              {t('settings.account.description')}
+            </p>
         <SettingsSection title={t('settings.account.usageSection')}>
           <MiniDashboardCards snapshot={dashboard} className="grid-cols-2 sm:grid-cols-3" />
         </SettingsSection>
@@ -388,6 +395,8 @@ export default function AccountSettingsPage() {
             </SettingsRow>
           </SettingsCard>
         </SettingsSection>
+          </div>
+        </ScrollArea>
       </div>
     </div>
   )
