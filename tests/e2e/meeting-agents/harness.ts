@@ -18,6 +18,10 @@ const REPO_ROOT = join(HERE, '../../..')
 const FIXTURE_ENTRYPOINT = join(HERE, 'fixture-entrypoint.cjs')
 const APPS_ELECTRON_MAIN = join(REPO_ROOT, 'apps/electron/dist/main.cjs')
 const ELECTRON_BIN = join(REPO_ROOT, 'node_modules/electron/dist/electron')
+const HOST_HOME = process.env.HOME ?? ''
+const HOST_DISPLAY = process.env.DISPLAY || ':1'
+const HOST_XAUTHORITY =
+  process.env.XAUTHORITY || (HOST_HOME ? join(HOST_HOME, '.Xauthority') : '')
 
 export type MeetingAppHandles = {
   readonly caseId: string
@@ -192,6 +196,8 @@ function isolatedEnv(input: {
     XDG_CACHE_HOME: join(home, '.cache'),
     XDG_DATA_HOME: join(home, '.local', 'share'),
     TMPDIR: join(input.profileDir, 'tmp'),
+    DISPLAY: process.env.DISPLAY || HOST_DISPLAY,
+    XAUTHORITY: process.env.XAUTHORITY || (existsSync(HOST_XAUTHORITY) ? HOST_XAUTHORITY : undefined),
     ROX_CONFIG_DIR: config,
     CRAFT_CONFIG_DIR: config,
     ROX_USER_DATA_DIR: userData,
