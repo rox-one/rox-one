@@ -28,6 +28,7 @@ import {
   StyledDropdownMenuItem,
 } from '@/components/ui/styled-dropdown'
 import { TiptapMarkdownEditor } from '@craft-agent/ui'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { getResizeGradientStyle } from '@/hooks/useResizeGradient'
 import {
@@ -435,6 +436,7 @@ function uniqueOrdered(values: string[]): string[] {
 }
 
 function PlannerBoard() {
+  const { t } = useTranslation()
   const [activeProjectId, setActiveProjectId] = React.useState('p2')
   const [headingsState, setHeadingsState] = React.useState<PlannerHeading[]>(initialHeadings)
   const [tasksState, setTasksState] = React.useState<PlannerTask[]>(initialTasks)
@@ -979,7 +981,7 @@ function PlannerBoard() {
                   key={selectedTask.id + '-notes'}
                   content={selectedTask.notes}
                   onUpdate={(md) => updateTaskNotes(selectedTask.id, md)}
-                  placeholder="Add notes..."
+                  placeholder={t('playground.planner.addNotes')}
                   markdownEngine="official"
                   className="text-sm leading-relaxed text-foreground/75"
                 />

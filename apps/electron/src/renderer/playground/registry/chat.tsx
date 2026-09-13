@@ -572,7 +572,7 @@ interface InputContainerPlaygroundProps {
 function InputContainerPlayground({
   disabled = false,
   isProcessing = false,
-  placeholder = 'Message Craft Agent...',
+  placeholder,
   currentModel = 'claude-sonnet-4-6',
   permissionMode = 'ask',
   workingDirectory = '/Users/demo/projects/craft-agent',
@@ -594,6 +594,7 @@ function InputContainerPlayground({
   followUpCount = 2,
 }: InputContainerPlaygroundProps) {
   const { t } = useTranslation()
+  const resolvedPlaceholder = placeholder ?? t('playground.chat.messagePlaceholder')
   const playgroundSessionId = 'playground-session'
   const [model, setModel] = React.useState(currentModel)
   const [mode, setMode] = React.useState<PermissionMode>(permissionMode)
@@ -779,7 +780,7 @@ function InputContainerPlayground({
           currentSessionStatus={showStatuses ? currentSessionStatus : undefined}
           onSessionStatusChange={setCurrentSessionStatus}
           inputProps={{
-            placeholder,
+            placeholder: resolvedPlaceholder,
             disabled,
             isProcessing,
             structuredInput,
@@ -816,6 +817,7 @@ interface ActiveTasksBarContextProps {
 }
 
 function ActiveTasksBarContext({ tasks = sampleBackgroundTasks }: ActiveTasksBarContextProps) {
+  const { t } = useTranslation()
   const [permissionMode, setPermissionMode] = React.useState<PermissionMode>('ask')
 
   // Inject mock electronAPI for file attachments
@@ -855,7 +857,7 @@ function ActiveTasksBarContext({ tasks = sampleBackgroundTasks }: ActiveTasksBar
 
         {/* Real InputContainer */}
         <InputContainer
-          placeholder="Message Craft Agent..."
+          placeholder={t('playground.chat.messagePlaceholder')}
           disabled={false}
           isProcessing={false}
           currentModel="claude-sonnet-4-6"
@@ -890,6 +892,7 @@ interface PermissionInputToggleProps {
 }
 
 function PermissionInputToggle({ autoToggle = false, autoToggleInterval = 3000, useLongCommand = false }: PermissionInputToggleProps) {
+  const { t } = useTranslation()
   const [showPermission, setShowPermission] = React.useState(false)
   const [permissionMode, setPermissionMode] = React.useState<PermissionMode>('ask')
 
@@ -958,7 +961,7 @@ function PermissionInputToggle({ autoToggle = false, autoToggleInterval = 3000, 
 
       {/* Real InputContainer - handles animation automatically */}
       <InputContainer
-        placeholder="Message Craft Agent..."
+        placeholder={t('playground.chat.messagePlaceholder')}
         disabled={false}
         isProcessing={false}
         currentModel="claude-sonnet-4-6"
