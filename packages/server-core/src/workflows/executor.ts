@@ -14,8 +14,10 @@ import {
   type WorkflowNodeRunStatus,
   type WorkflowRunMode,
 } from '@craft-agent/shared/workflows'
+import { isLoopbackProvider, isLoopbackTransport } from './fakes.ts'
 import { createInMemoryReceiptStore, runIdempotencyKey } from './receipts.ts'
 import type {
+  LiveWorkflowEvidence,
   LiveWorkflowExecuteInput,
   LiveWorkflowRun,
   WorkflowNodeBinding,
@@ -26,16 +28,26 @@ import type {
 import { LiveWorkflowError } from './types.ts'
 
 export { LiveWorkflowError } from './types.ts'
+export { isLoopbackProvider, isLoopbackTransport } from './fakes.ts'
 
+/**
+ * Production success is live evidence + production mode + succeeded +
+ * verified non-loopback receipt + a caller-injected receipt store.
+ * Loopback/fake gateways can execute, but they are not claimable live.
+ * A per-call in-memory Map (U1) is not a durable store.
+ */
 export function isLiveWorkflowProductionSuccess(run: {
   evidence: string
   operation: OperationResultV2
+  receiptsInjected?: boolean
 }): boolean {
-  return (
-    run.evidence === 'live' &&
-    isUiVerified(run.operation) &&
-    run.operation.receipt != null
-  )
+  if (run.evidence !== 'live') return false
+  if (run.receiptsInjected !== true) return false
+  if (!isUiVerified(run.operation)) return false
+  const receipt = run.operation.receipt
+  if (receipt == null) return false
+  if (isLoopbackProvider(receipt.provider)) return false
+  return true
 }
 
 export class LiveWorkflowExecutor {
@@ -95,9 +107,11 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
     nodeIds: ran,
     explicit: input.idempotencyKey,
   })
+  const receiptsInjected = input.receipts != null
   const store = input.receipts ?? createInMemoryReceiptStore()
   const cached = store.get(key)
   if (cached) return cached
+  const loopbackTransport = isLoopbackTransport(input)
 
   const status: Record<string, WorkflowNodeRunStatus> = {}
   for (const node of input.spec.nodes) {
@@ -112,6 +126,7 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
     status[node.id] = 'queued'
   }
 
+  const stamps = claimStamps({ loopbackTransport, receipts: [] })
   const base = {
     id: `run_${now.toString(36)}`,
     specId: input.spec.id,
@@ -121,13 +136,15 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
     status,
     artifacts: {} as Record<string, WorkflowArtifact>,
     startedAt: now,
-    evidence: 'live' as const,
+    evidence: stamps.evidence,
+    receiptsInjected,
   }
 
   if (selected.size === 0) {
     return {
       ...base,
       operation: operation({
+        mode: stamps.mode,
         lifecycle: 'queued',
         verification: 'not_requested',
         operationId: base.id,
@@ -160,6 +177,10 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
       lifecycle = 'failed'
       error = { code: 'unsupported_node', retryable: false, safeMessage: 'subflow is not executed in this slice' }
       break
+    }
+    if (node.kind !== 'model' && node.kind !== 'tool') {
+      status[node.id] = 'skipped'
+      continue
     }
     try {
       status[node.id] = 'running'
@@ -204,12 +225,8 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
         status[node.id] = 'done'
         continue
       }
-      artifacts[node.id] = {
-        nodeId: node.id,
-        kind: node.outputs[0]?.kind ?? 'any',
-        value: binding?.prompt ?? node.title,
-      }
-      status[node.id] = 'done'
+      const unexpected: never = node.kind
+      throw new Error(`unexpected live node kind: ${unexpected}`)
     } catch (caught) {
       if (isAbort(caught) || signal?.aborted) {
         status[node.id] = 'cancelled'
@@ -219,7 +236,7 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
       status[node.id] = 'failed'
       lifecycle = 'failed'
       error = {
-        code: node.kind === 'model' ? 'model_failed' : node.kind === 'tool' ? 'tool_failed' : 'node_failed',
+        code: node.kind === 'model' ? 'model_failed' : 'tool_failed',
         retryable: false,
         safeMessage: caught instanceof Error ? caught.message : 'Node failed',
       }
@@ -232,19 +249,30 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
       .map((id) => input.spec.nodes.find((node) => node.id === id))
       .filter((node): node is CanvasNode => Boolean(node && (node.kind === 'model' || node.kind === 'tool')))
     const allDone = executable.every((node) => status[node.id] === 'done')
-    lifecycle = allDone && receipts.length === executable.length ? 'succeeded' : 'failed'
+    lifecycle =
+      executable.length > 0 && allDone && receipts.length === executable.length ? 'succeeded' : 'failed'
     if (lifecycle === 'failed' && !error) {
-      error = { code: 'incomplete', retryable: false, safeMessage: 'Live run did not produce a receipt for every executable node' }
+      error = {
+        code: 'incomplete',
+        retryable: false,
+        safeMessage:
+          executable.length === 0
+            ? 'Live run had no model or tool node to verify'
+            : 'Live run did not produce a receipt for every executable node',
+      }
     }
   }
 
   const verified = lifecycle === 'succeeded' && receipts.length > 0
   const receipt = verified ? receipts[receipts.length - 1] : undefined
+  const claimed = claimStamps({ loopbackTransport, receipts })
   const run: LiveWorkflowRun = {
     ...base,
+    evidence: claimed.evidence,
     artifacts,
     finishedAt: lifecycle === 'waiting_approval' ? undefined : now,
     operation: operation({
+      mode: claimed.mode,
       lifecycle,
       verification: verified ? 'verified' : lifecycle === 'succeeded' ? 'unknown' : 'not_requested',
       operationId: base.id,
@@ -257,7 +285,18 @@ export async function executeLiveWorkflow(input: LiveWorkflowExecuteInput): Prom
   return run
 }
 
+function claimStamps(input: {
+  loopbackTransport: boolean
+  receipts: readonly OperationReceipt[]
+}): { evidence: LiveWorkflowEvidence; mode: OperationResultV2['mode'] } {
+  if (input.loopbackTransport || input.receipts.some((item) => isLoopbackProvider(item.provider))) {
+    return { evidence: 'loopback', mode: 'fixture' }
+  }
+  return { evidence: 'live', mode: 'production' }
+}
+
 function operation(input: {
+  mode: OperationResultV2['mode']
   lifecycle: OperationResultV2['lifecycle']
   verification: OperationResultV2['verification']
   operationId: string
@@ -266,7 +305,7 @@ function operation(input: {
 }): OperationResultV2 {
   return {
     schemaVersion: OPERATION_RESULT_V2_SCHEMA,
-    mode: 'production',
+    mode: input.mode,
     lifecycle: input.lifecycle,
     verification: input.verification,
     operationId: input.operationId,

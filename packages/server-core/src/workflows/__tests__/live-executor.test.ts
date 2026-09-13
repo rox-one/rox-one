@@ -15,6 +15,8 @@ import {
   LiveWorkflowExecutor,
 } from '../index.ts'
 import type { SessionWorkflowSpec } from '@craft-agent/shared/workflows'
+import type { OperationResultV2 } from '@craft-agent/core/meetings'
+import type { WorkflowModelGateway, WorkflowToolRegistry } from '../types.ts'
 
 const NOW = 1_700_000_000_000
 
@@ -77,8 +79,66 @@ function humanNode(id: string) {
   })
 }
 
+function annotationNode(id: string) {
+  return createCanvasNode({
+    id,
+    kind: 'annotation_frame',
+    title: 'frame',
+    position: { x: 0, y: 80 },
+    provenance: provenance(id),
+    now: NOW,
+  })
+}
+
+function productionGateway(text = 'rox-complete'): WorkflowModelGateway {
+  return {
+    async complete(request) {
+      return {
+        text,
+        model: 'rox/fast',
+        receipt: {
+          provider: 'rox',
+          requestId: `model:${request.nodeId}`,
+          verifiedAt: new Date(NOW).toISOString(),
+        },
+      }
+    },
+  }
+}
+
+function productionTools(text = 'tool-ok'): WorkflowToolRegistry {
+  return {
+    async call(call) {
+      return {
+        text,
+        receipt: {
+          provider: 'rox-tools',
+          requestId: `tool:${call.nodeId}`,
+          verifiedAt: new Date(NOW).toISOString(),
+        },
+      }
+    },
+  }
+}
+
+function forgedLive(overrides: {
+  evidence?: string
+  receiptsInjected?: boolean
+  operation: Partial<OperationResultV2> & Pick<OperationResultV2, 'mode' | 'lifecycle' | 'verification'>
+}) {
+  return {
+    evidence: overrides.evidence ?? 'live',
+    receiptsInjected: overrides.receiptsInjected,
+    operation: {
+      schemaVersion: 2 as const,
+      operationId: 'forged',
+      ...overrides.operation,
+    },
+  }
+}
+
 describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
-  test('invokes an injected gateway for a model node and records a verified live receipt', async () => {
+  test('loopback gateway executes a model node but is not claimable live', async () => {
     const gateway = createLoopbackModelGateway({ infer: 'loopback-complete' })
     const tools = createLoopbackToolRegistry()
     const n = note('n1')
@@ -95,20 +155,23 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
       bindings: { [m.id]: { prompt: 'say hi' } },
     })
 
-    expect(run.evidence).toBe('live')
+    expect(run.evidence).toBe('loopback')
+    expect(run.evidence).not.toBe('live')
+    expect(run.operation.mode).toBe('fixture')
+    expect(run.operation.mode).not.toBe('production')
     expect(run.status[m.id]).toBe('done')
     expect(run.status[m.id]).not.toBe('simulated')
     expect(run.artifacts[m.id]?.value).toBe('loopback-complete')
-    expect(run.operation.mode).toBe('production')
     expect(run.operation.lifecycle).toBe('succeeded')
     expect(run.operation.verification).toBe('verified')
     expect(run.operation.receipt?.provider).toBe('loopback')
-    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+    expect(run.receiptsInjected).toBe(false)
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
     expect(gateway.calls).toHaveLength(1)
     expect(gateway.calls[0]?.prompt).toBe('say hi')
   })
 
-  test('invokes ToolRegistry for a tool node and records a verified live receipt', async () => {
+  test('loopback ToolRegistry executes a tool node but is not claimable live', async () => {
     const gateway = createLoopbackModelGateway()
     const tools = createLoopbackToolRegistry({
       echo: (input) => `echoed:${JSON.stringify(input)}`,
@@ -126,15 +189,88 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
       bindings: { [t.id]: { toolName: 'echo', input: { ping: 1 } } },
     })
 
-    expect(run.evidence).toBe('live')
+    expect(run.evidence).toBe('loopback')
+    expect(run.operation.mode).toBe('fixture')
     expect(run.status[t.id]).toBe('done')
     expect(run.artifacts[t.id]?.value).toBe('echoed:{"ping":1}')
     expect(run.operation.lifecycle).toBe('succeeded')
     expect(run.operation.verification).toBe('verified')
     expect(run.operation.receipt?.provider).toBe('loopback-tools')
-    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
     expect(tools.calls).toHaveLength(1)
     expect(tools.calls[0]?.name).toBe('echo')
+  })
+
+  test('injected store + production gateway is live production success', async () => {
+    const m = modelNode('m1')
+    const spec = specWith([m])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [m.id],
+      now: NOW,
+      gateway: productionGateway(),
+      tools: productionTools(),
+      receipts: createInMemoryReceiptStore(),
+      bindings: { [m.id]: { prompt: 'say hi' } },
+    })
+
+    expect(run.evidence).toBe('live')
+    expect(run.operation.mode).toBe('production')
+    expect(run.operation.lifecycle).toBe('succeeded')
+    expect(run.operation.verification).toBe('verified')
+    expect(run.operation.receipt?.provider).toBe('rox')
+    expect(run.receiptsInjected).toBe(true)
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+  })
+
+  test('production gateway with ephemeral per-call Map is not production success', async () => {
+    const m = modelNode('m1')
+    const spec = specWith([m])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'node',
+      seedIds: [m.id],
+      now: NOW,
+      gateway: productionGateway(),
+      tools: productionTools(),
+      bindings: { [m.id]: { prompt: 'say hi' } },
+    })
+
+    expect(run.evidence).toBe('live')
+    expect(run.operation.mode).toBe('production')
+    expect(run.operation.lifecycle).toBe('succeeded')
+    expect(run.receiptsInjected).toBe(false)
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
+  })
+
+  test('forged live + production + loopback receipt is not production success', () => {
+    expect(
+      isLiveWorkflowProductionSuccess(
+        forgedLive({
+          receiptsInjected: true,
+          operation: {
+            mode: 'production',
+            lifecycle: 'succeeded',
+            verification: 'verified',
+            receipt: { provider: 'loopback' },
+          },
+        }),
+      ),
+    ).toBe(false)
+    expect(
+      isLiveWorkflowProductionSuccess(
+        forgedLive({
+          receiptsInjected: true,
+          operation: {
+            mode: 'production',
+            lifecycle: 'succeeded',
+            verification: 'verified',
+            receipt: { provider: 'loopback-tools' },
+          },
+        }),
+      ),
+    ).toBe(false)
   })
 
   test('gateway error marks the node failed, not done, and is not production success', async () => {
@@ -157,6 +293,8 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
 
     expect(run.status[m.id]).toBe('failed')
     expect(run.status[m.id]).not.toBe('done')
+    expect(run.evidence).toBe('loopback')
+    expect(run.operation.mode).toBe('fixture')
     expect(run.operation.lifecycle).toBe('failed')
     expect(run.operation.verification).not.toBe('verified')
     expect(run.operation.error?.code).toBe('model_failed')
@@ -179,6 +317,7 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
     expect(run.operation.lifecycle).toBe('waiting_approval')
     expect(run.operation.lifecycle).not.toBe('succeeded')
     expect(run.finishedAt).toBeUndefined()
+    expect(run.evidence).toBe('loopback')
     expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
   })
 
@@ -220,6 +359,7 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
     expect(run.status[t.id]).toBe('queued')
     expect(run.status[t.id]).not.toBe('failed')
     expect(run.operation.error).toBeUndefined()
+    expect(run.evidence).toBe('loopback')
     expect(tools.calls).toHaveLength(0)
     expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
   })
@@ -247,8 +387,57 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
     expect(first.operation.receipt?.requestId).toBe(second.operation.receipt?.requestId)
     expect(second.id).toBe(first.id)
     expect(tools.calls).toHaveLength(1)
-    expect(isLiveWorkflowProductionSuccess(first)).toBe(true)
-    expect(isLiveWorkflowProductionSuccess(second)).toBe(true)
+    expect(first.receiptsInjected).toBe(true)
+    expect(first.evidence).toBe('loopback')
+    expect(isLiveWorkflowProductionSuccess(first)).toBe(false)
+    expect(isLiveWorkflowProductionSuccess(second)).toBe(false)
+  })
+
+  test('note and annotation_frame stay skipped and are not live-verified without a receipt', async () => {
+    const frame = annotationNode('a1')
+    const n = note('n1')
+    const m = modelNode('m1')
+    const spec = specWith(
+      [frame, n, m],
+      [createCanvasEdge({ source: n.id, target: m.id, now: NOW })],
+    )
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'pipeline',
+      now: NOW,
+      gateway: productionGateway(),
+      tools: productionTools(),
+      receipts: createInMemoryReceiptStore(),
+      bindings: { [m.id]: { prompt: 'say hi' } },
+    })
+
+    expect(run.status[frame.id]).toBe('skipped')
+    expect(run.status[n.id]).toBe('skipped')
+    expect(run.artifacts[frame.id]).toBeUndefined()
+    expect(run.artifacts[n.id]).toBeUndefined()
+    expect(run.status[m.id]).toBe('done')
+    expect(run.operation.lifecycle).toBe('succeeded')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(true)
+  })
+
+  test('pipeline of only notes is not live-verified', async () => {
+    const n = note('n1')
+    const spec = specWith([n, annotationNode('a1')])
+    const run = await executeLiveWorkflow({
+      spec,
+      mode: 'pipeline',
+      now: NOW,
+      gateway: productionGateway(),
+      tools: productionTools(),
+      receipts: createInMemoryReceiptStore(),
+    })
+
+    expect(run.status[n.id]).toBe('skipped')
+    expect(run.status.a1).toBe('skipped')
+    expect(run.operation.lifecycle).toBe('failed')
+    expect(run.operation.verification).not.toBe('verified')
+    expect(run.operation.error?.code).toBe('incomplete')
+    expect(isLiveWorkflowProductionSuccess(run)).toBe(false)
   })
 
   test('queued is not an error and simulated canvas runs are not live production success', async () => {
@@ -272,7 +461,8 @@ describe('LiveWorkflowExecutor (ROX-P0-WORKFLOW-LIVE-EXEC)', () => {
       gateway: createLoopbackModelGateway(),
       tools: createLoopbackToolRegistry(),
     })
-    expect(live.evidence).toBe('live')
+    expect(live.evidence).toBe('loopback')
+    expect(live.operation.mode).toBe('fixture')
     expect(live.operation.lifecycle).toBe('queued')
     expect(live.operation.error).toBeUndefined()
     expect(live.status[m.id]).toBe('queued')

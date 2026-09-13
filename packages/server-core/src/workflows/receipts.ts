@@ -1,5 +1,6 @@
 import type { LiveWorkflowRun, WorkflowReceiptStore } from './types.ts'
 
+/** Per-call / test Map. Injecting this counts as a store; auto-creating it does not. */
 export function createInMemoryReceiptStore(): WorkflowReceiptStore {
   const runs = new Map<string, LiveWorkflowRun>()
   return {

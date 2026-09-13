@@ -21,6 +21,8 @@ export type WorkflowModelCompletion = {
 }
 
 export interface WorkflowModelGateway {
+  /** `'loopback'` for injected fakes. Omitted on production gateways. */
+  readonly kind?: string
   complete(request: WorkflowModelRequest): Promise<WorkflowModelCompletion>
 }
 
@@ -37,6 +39,8 @@ export type WorkflowToolResult = {
 }
 
 export interface WorkflowToolRegistry {
+  /** `'loopback'` for injected fakes. Omitted on production registries. */
+  readonly kind?: string
   call(call: WorkflowToolCall): Promise<WorkflowToolResult>
 }
 
@@ -46,6 +50,8 @@ export type WorkflowNodeBinding = {
   toolName?: string
   input?: unknown
 }
+
+export type LiveWorkflowEvidence = 'live' | 'loopback'
 
 export type LiveWorkflowRun = {
   id: string
@@ -57,8 +63,14 @@ export type LiveWorkflowRun = {
   artifacts: Record<string, WorkflowArtifact>
   startedAt: number
   finishedAt?: number
-  /** This executor is live-only. Simulated canvas runs live in shared/workflows/run.ts. */
-  evidence: 'live'
+  /**
+   * `'live'` only when a non-fake gateway/registry ran.
+   * Injected loopback fakes are `'loopback'` and never production.
+   * Simulated canvas runs live in shared/workflows/run.ts.
+   */
+  evidence: LiveWorkflowEvidence
+  /** False when the executor allocated a per-call in-memory Map. */
+  receiptsInjected: boolean
   operation: OperationResultV2
 }
 
