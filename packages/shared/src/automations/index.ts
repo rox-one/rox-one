@@ -138,7 +138,7 @@ export {
 } from './script-executor.ts';
 
 // Retry scheduler
-export { RetryScheduler, type RetryQueueEntry, type RetrySchedulerOptions } from './retry-scheduler.ts';
+export { RetryScheduler, type RetryQueueEntry, type RetrySchedulerOptions, type RetryExecuteRequest } from './retry-scheduler.ts';
 
 // Config constants
 export { AUTOMATIONS_CONFIG_FILE, AUTOMATIONS_HISTORY_FILE, AUTOMATIONS_RETRY_QUEUE_FILE, HISTORY_FIELD_MAX_LENGTH, AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER, AUTOMATION_HISTORY_MAX_ENTRIES } from './constants.ts';
