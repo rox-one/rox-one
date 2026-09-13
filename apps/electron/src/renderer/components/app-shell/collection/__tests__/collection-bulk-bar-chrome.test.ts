@@ -24,6 +24,12 @@ describe('collection bulk chrome', () => {
     expect(BULK_MENU).toContain('variant="compact"')
     expect(BULK_MENU).toContain('PremiumMenu')
   })
+
+  it('exposes Map → Outcomes → Reduce on the bulk bar', () => {
+    expect(BULK_BAR).toContain("t('collection.bulk.map')")
+    expect(BULK_BAR).toContain('applyMapReduce')
+    expect(BULK_BAR).toContain('mapReduceVisibleSessions')
+  })
 })
 
 describe('heatmap collection chrome', () => {

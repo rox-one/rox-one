@@ -111,3 +111,21 @@ export {
   type NoteSidecar,
   type NotesEngineExport,
 } from './notes-engine.ts'
+
+export {
+  LOCAL_EXCERPT_TEMPLATE,
+  MAP_REDUCE_SCHEMA_VERSION,
+  gatewayMapper,
+  localExcerptMapper,
+  mapReduceProductResult,
+  runMapReduce,
+  snapshotSelection,
+  type EntityRefSnapshot,
+  type MapJob,
+  type MapMapper,
+  type MapSource,
+  type Outcome,
+  type PromptTemplate,
+  type ReduceResult,
+  type SelectionSnapshot,
+} from './map-reduce.ts'
