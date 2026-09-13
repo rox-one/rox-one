@@ -148,6 +148,9 @@ jobs:
             const fs = require("fs")
             const path = require("path")
             const workspace = path.join(process.env.RUNNER_TEMP, "opencode-review")
+            // OpenCode resolves the Read tool's filePath against --dir before checking
+            // permissions, so the allow rule must match the absolute input path.
+            const reviewInput = path.join(workspace, "review-input.json")
             fs.writeFileSync(path.join(workspace, "opencode.json"), JSON.stringify({
               "$schema": "https://opencode.ai/config.json",
               "share": "disabled",
@@ -162,7 +165,7 @@ jobs:
                   "permission": {
                     "read": {
                       "*": "deny",
-                      "review-input.json": "allow"
+                      [reviewInput]: "allow"
                     },
                     "edit": "deny",
                     "bash": "deny",
