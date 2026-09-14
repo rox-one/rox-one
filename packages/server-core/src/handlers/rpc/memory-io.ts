@@ -24,6 +24,12 @@ import type { Lesson, LessonScope } from '@craft-agent/shared/memory/types'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcMemoryIoActResult,
+  rpcMemoryIoListResult,
+  rpcMemoryIoReadResult,
+} from '@craft-agent/core/rox2'
 import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 
@@ -104,6 +110,10 @@ function normalizeImportLesson(l: Lesson, scope: LessonScope, ts: string): Lesso
 export function registerMemoryIoHandlers(server: RpcServer, deps: HandlerDeps): void {
   // ——— EXPORT(scope, workspaceId?) ———
   server.handle(RPC_CHANNELS.memory.EXPORT, async (_ctx, scope: LessonScope, workspaceId?: string): Promise<MemoryExportBundle> => {
+    const listed = rpcMemoryIoListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('memory export is not live')
+    const read = rpcMemoryIoReadResult({ source: 'native', nativeId: scope ?? 'bundle' })
+    if (!isClaimableLive(read.result)) throw new Error('memory export is not live')
     const globalFiles = new MemoryFileStore('global')
     const preferences = globalFiles.readPreferences()
     if (scope === 'global') {
@@ -131,6 +141,8 @@ export function registerMemoryIoHandlers(server: RpcServer, deps: HandlerDeps): 
       bundle: MemoryExportBundle,
       options?: MemoryImportOptions,
     ): Promise<MemoryImportResult> => {
+      const act = rpcMemoryIoActResult({ source: 'native', action: 'write', nativeId: scope ?? 'import' })
+      if (!isClaimableLive(act)) throw new Error('memory import is not live')
       assertBundle(bundle)
       const mode = options?.mode ?? 'merge'
       if (mode !== 'merge' && mode !== 'replace') throw new Error(`Invalid import mode: ${String(mode)}`)

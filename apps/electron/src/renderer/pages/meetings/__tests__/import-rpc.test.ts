@@ -33,6 +33,23 @@ function imported(spec: ImportMediaSpec): Meeting {
 }
 
 describe('meetings import RPC client', () => {
+  it('hashes only the selected byte range', async () => {
+    const bytes = new Uint8Array([0, 97, 98, 99, 0]).subarray(1, 4)
+    expect(await specFromBytes(bytes, 'audio/wav')).toEqual({
+      contentHash: 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+      byteLength: 3,
+      mimeType: 'audio/wav',
+    })
+  })
+
+  it('snapshots shared byte ranges into a Web Crypto compatible buffer', async () => {
+    const shared = new Uint8Array(new SharedArrayBuffer(5))
+    shared.set([0, 97, 98, 99, 0])
+    const spec = await specFromBytes(shared.subarray(1, 4))
+    expect(spec.contentHash).toBe('ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad')
+    expect(spec.byteLength).toBe(3)
+  })
+
   it('maps import fail-closed codes', () => {
     expect(i18nKeyForImportError('grant-required')).toBe('meetings.grantRequired')
     expect(i18nKeyForImportError('archive-denied')).toBe('meetings.archiveDenied')

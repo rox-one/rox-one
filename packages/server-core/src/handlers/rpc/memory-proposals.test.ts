@@ -100,6 +100,7 @@ describe('memory proposal RPC (Issue 13)', () => {
     expect(approved.projectId).toBe('proj_rox')
     expect(approved.sessionId).toBe('sess_learn')
     expect(approved.provenance.consentEventId).toBeTruthy()
+    if (!approved.provenance.consentEventId) throw new Error('expected persisted consent event')
     const memory = readFileSync(join(workspaceRoot, 'projects', 'rox', 'MEMORY.md'), 'utf-8')
     expect(memory).toContain('Rox desktop app')
     expect(memory).toContain('sess_learn')

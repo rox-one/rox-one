@@ -51,6 +51,12 @@ import {
   pluginBridgeBazaarCatalogListFn,
 } from './plugin-bridge'
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import {
+  isClaimableLive,
+  rpcExtensionsActResult,
+  rpcExtensionsListResult,
+  rpcExtensionsReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.extensions.LIST_CATALOG,
@@ -118,6 +124,8 @@ export function registerExtensionsHandlers(server: RpcServer, deps: HandlerDeps)
   server.handle(
     RPC_CHANNELS.extensions.LIST_CATALOG,
     async (_ctx, args?: ExtensionsListCatalogArgs): Promise<ExtensionsListCatalogResult> => {
+      const listed = rpcExtensionsListResult({ source: 'native' })
+      if (!isClaimableLive(listed.result)) return { entries: [], providers: [] }
       const registry = createDefaultCatalogRegistry(() => loadMarketplaceCatalog(), {
         bazaarListFn: pluginBridgeBazaarCatalogListFn,
       })
@@ -137,6 +145,8 @@ export function registerExtensionsHandlers(server: RpcServer, deps: HandlerDeps)
   server.handle(
     RPC_CHANNELS.extensions.LIST_INSTALLED,
     async (_ctx, args?: ExtensionsListInstalledArgs): Promise<ExtensionsListInstalledResult> => {
+      const listed = rpcExtensionsListResult({ source: 'native' })
+      if (!isClaimableLive(listed.result)) return { records: [], state: { version: 1, enabled: {} } }
       const dir = configDir()
       const store = getExtensionStateStore(dir)
       try {
@@ -254,6 +264,8 @@ export function registerExtensionsHandlers(server: RpcServer, deps: HandlerDeps)
       if (!args?.id || typeof args.enabled !== 'boolean') {
         throw new Error('extensions.setEnabled: id and enabled are required')
       }
+      const act = rpcExtensionsActResult({ source: 'native', action: 'write', nativeId: args.id })
+      if (!isClaimableLive(act)) throw new Error('extensions setEnabled is not live')
       const store = getExtensionStateStore(configDir())
       const state = store.setEnabled(args.id, args.enabled)
       broadcastChanged(server, { reason: 'state' })
@@ -264,6 +276,8 @@ export function registerExtensionsHandlers(server: RpcServer, deps: HandlerDeps)
   server.handle(
     RPC_CHANNELS.extensions.GET_STATE,
     async (_ctx): Promise<ExtensionsGetStateResult> => {
+      const read = rpcExtensionsReadResult({ source: 'native', nativeId: 'state' })
+      if (!isClaimableLive(read.result)) throw new Error('extensions state is not live')
       const store = getExtensionStateStore(configDir())
       return { state: store.getState() }
     },

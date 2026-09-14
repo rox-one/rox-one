@@ -57,7 +57,8 @@ export function CollectionMenuRow({
     <button
       type="button"
       role={asMenuItem ? 'menuitemcheckbox' : undefined}
-      aria-checked={selected}
+      aria-checked={asMenuItem ? selected : undefined}
+      aria-pressed={!asMenuItem ? selected : undefined}
       data-collection-dialog-item={!asMenuItem ? true : undefined}
       onClick={onClick}
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-surface-selected', className)}
@@ -88,7 +89,8 @@ export function CollectionMenuRadioRow({
     <button
       type="button"
       role={asMenuItem ? 'menuitemradio' : undefined}
-      aria-checked={selected}
+      aria-checked={asMenuItem ? selected : undefined}
+      aria-pressed={!asMenuItem ? selected : undefined}
       data-collection-dialog-item={!asMenuItem ? true : undefined}
       onClick={onClick}
       className={cn(COLLECTION_MENU_ROW, selected && 'bg-surface-selected', className)}
@@ -128,11 +130,14 @@ export function CollectionMenuDisclosure({
   defaultOpen?: boolean
 }) {
   const [open, setOpen] = React.useState(defaultOpen)
+  const id = React.useId()
   return (
     <div className="flex min-w-0 flex-col gap-0.5">
       <button
         type="button"
+        id={`${id}-trigger`}
         aria-expanded={open}
+        aria-controls={open ? `${id}-content` : undefined}
         data-collection-dialog-item
         onClick={() => setOpen((v) => !v)}
         className={cn(COLLECTION_MENU_ROW, 'text-foreground')}
@@ -147,7 +152,7 @@ export function CollectionMenuDisclosure({
           strokeWidth={2}
         />
       </button>
-      {open ? <div className="animate-in fade-in-0 slide-in-from-top-1 pb-0.5 duration-150 motion-reduce:animate-none">{children}</div> : null}
+      {open ? <div id={`${id}-content`} role="group" aria-labelledby={`${id}-trigger`} className="animate-in fade-in-0 slide-in-from-top-1 pb-0.5 duration-150 motion-reduce:animate-none">{children}</div> : null}
     </div>
   )
 }

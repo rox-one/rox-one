@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import {
   Paperclip,
   ArrowUp,
@@ -13,6 +13,7 @@ import {
   Globe,
   Image as ImageIcon,
   Sparkles,
+  SlidersHorizontal,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Icon_Home, Spinner } from '@craft-agent/ui'
@@ -371,6 +372,9 @@ export function FreeFormInput({
   onRequestExpand,
 }: FreeFormInputProps) {
   const { t } = useTranslation()
+  const prefersReducedMotion = useReducedMotion()
+  const contextToolsId = React.useId()
+  const [contextToolsOpen, setContextToolsOpen] = React.useState(false)
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
   const promptHistoryRef = React.useRef<PromptHistory>(EMPTY_PROMPT_HISTORY)
   React.useEffect(() => {
@@ -633,6 +637,11 @@ export function FreeFormInput({
   const [isDraggingOver, setIsDraggingOver] = React.useState(false)
   const [loadingCount, setLoadingCount] = React.useState(0)
   const [sourceDropdownOpen, setSourceDropdownOpen] = React.useState(false)
+
+  React.useEffect(() => {
+    // The selector renders in a portal, outside the hidden context row.
+    if (!contextToolsOpen) setSourceDropdownOpen(false)
+  }, [contextToolsOpen])
   const [isFocused, setIsFocused] = React.useState(false)
   const [inputMaxHeight, setInputMaxHeight] = React.useState(540)
   const [modelDropdownOpen, setModelDropdownOpen] = React.useState(false)
@@ -1268,17 +1277,8 @@ export function FreeFormInput({
     return () => observer.disconnect()
   }, [onHeightChange])
 
-  // In compact mode, immediately report collapsed height when the input is
-  // collapsed during processing. This ensures smooth animation timing.
-  // When the user expands (or processing ends), the ResizeObserver takes
-  // over and reports the actual rendered height.
-  React.useEffect(() => {
-    if (!onHeightChange) return
-    if (isCollapsedInCompact) {
-      // Collapsed state - only bottom bar visible (~44px)
-      onHeightChange(44)
-    }
-  }, [isCollapsedInCompact, onHeightChange])
+  // ResizeObserver also measures the collapsed toolbar. A fixed height would
+  // clip its wrapped controls or an expanded context row in narrow panels.
 
   // Check if running in Electron environment (has electronAPI)
   const hasElectronAPI = typeof window !== 'undefined' && !!window.electronAPI
@@ -1832,13 +1832,13 @@ export function FreeFormInput({
     && !modelSupportsImages(effectiveConnectionDetails, currentModel)
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="@container/composer min-w-0">
       <div
         ref={containerRef}
         className={cn(
-          'overflow-hidden transition-all',
+          'overflow-hidden transition-colors motion-reduce:transition-none',
           // Container styling - only when not wrapped by InputContainer
-          !unstyled && 'rounded-[16px] shadow-middle',
+          !unstyled && 'rounded-[12px] shadow-minimal',
           !unstyled && 'bg-background',
           isDraggingOver && 'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-foreground/5'
         )}
@@ -1954,15 +1954,15 @@ export function FreeFormInput({
           {followUpItems.length > 0 && (
             <motion.div
               key="follow-up-chips"
-              layout={animateFollowUpLayout}
-              initial={{ opacity: 0, height: 0 }}
+              layout={!prefersReducedMotion && animateFollowUpLayout}
+              initial={prefersReducedMotion ? false : { opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.18, ease: [0.2, 0, 0.2, 1] }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.18, ease: [0.2, 0, 0.2, 1] }}
               className="overflow-hidden"
             >
-              <motion.div layout={animateFollowUpLayout} className="px-3 pt-3.5 pb-0">
-                <motion.div layout={animateFollowUpLayout} className="flex flex-wrap gap-1">
+              <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="px-3 pt-2 pb-0">
+                <motion.div layout={!prefersReducedMotion && animateFollowUpLayout} className="flex flex-wrap gap-1">
                   <AnimatePresence initial={false}>
                     {followUpItems.map((item, idx) => {
                       const chipIndex = item.index ?? idx + 1
@@ -1971,29 +1971,21 @@ export function FreeFormInput({
                       const noteExcerpt = formatFollowUpChipText(item.noteLabel, t('chat.followUp'), 50)
 
                       return (
-                        <motion.button
+                        <motion.div
                           key={item.id}
-                          type="button"
-                          layout={animateFollowUpLayout}
-                          initial={{ opacity: 0, y: 6, scale: 0.98 }}
+                          layout={!prefersReducedMotion && animateFollowUpLayout}
+                          initial={prefersReducedMotion ? false : { opacity: 0, y: 6, scale: 0.98 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -4, scale: 0.98 }}
-                          transition={{ duration: 0.16, ease: [0.2, 0, 0.2, 1] }}
-                          className="inline-flex max-w-full items-center gap-1.5 overflow-hidden rounded-[6px] bg-foreground/2 pl-1.5 pr-2 py-1 text-[13px] text-foreground/80 select-none transition-colors hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                          onClick={(event) => {
-                            const rect = event.currentTarget.getBoundingClientRect()
-                            onFollowUpClick?.(item, {
-                              x: rect.left + rect.width / 2,
-                              y: rect.top - 8,
-                            })
-                          }}
+                          exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -4, scale: 0.98 }}
+                          transition={{ duration: prefersReducedMotion ? 0 : 0.16, ease: [0.2, 0, 0.2, 1] }}
+                          className="inline-flex max-w-full items-center gap-0.5 rounded-[6px] border border-border/50 bg-foreground/2 text-[13px] text-foreground/80"
                         >
                           <Tooltip delayDuration={250}>
                             <TooltipTrigger asChild>
-                              <span
-                                role="button"
-                                tabIndex={0}
-                                className="inline-flex h-4 min-w-4 cursor-pointer items-center justify-center rounded-[4px] bg-background px-0.5 text-[10px] font-medium text-foreground shadow-minimal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                              <button
+                                type="button"
+                                aria-label={`${t('chat.selectedText')} ${chipIndex}: ${tooltipText}`}
+                                className="input-toolbar-btn inline-flex h-7 min-w-7 cursor-pointer items-center justify-center rounded-[5px] px-1 text-[11px] font-medium text-muted-foreground hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                 onMouseDown={(event) => {
                                   event.preventDefault()
                                   event.stopPropagation()
@@ -2003,27 +1995,30 @@ export function FreeFormInput({
                                   event.stopPropagation()
                                   onFollowUpIndexClick?.(item)
                                 }}
-                                onKeyDown={(event) => {
-                                  if (event.key === 'Enter' || event.key === ' ') {
-                                    event.preventDefault()
-                                    event.stopPropagation()
-                                    onFollowUpIndexClick?.(item)
-                                  }
-                                }}
                               >
                                 {chipIndex}
-                              </span>
+                              </button>
                             </TooltipTrigger>
                             <TooltipContent side="top" className="max-w-[420px] break-words text-xs">
                               {tooltipText}
                             </TooltipContent>
                           </Tooltip>
-                          <span className="min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap pr-0.5 text-left">
+                          <button
+                            type="button"
+                            className="input-toolbar-btn min-h-7 min-w-0 max-w-full overflow-hidden text-ellipsis whitespace-nowrap rounded-[5px] px-1.5 text-left hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            onClick={(event) => {
+                              const rect = event.currentTarget.getBoundingClientRect()
+                              onFollowUpClick?.(item, {
+                                x: rect.left + rect.width / 2,
+                                y: rect.top - 8,
+                              })
+                            }}
+                          >
                             <span className="italic text-foreground/60">{selectedExcerpt}</span>
                             <span className="mx-1 text-foreground/40">·</span>
                             <span>{noteExcerpt}</span>
-                          </span>
-                        </motion.button>
+                          </button>
+                        </motion.div>
                       )
                     })}
                   </AnimatePresence>
@@ -2061,7 +2056,7 @@ export function FreeFormInput({
             'overflow-y-auto',
             compactMode && isWebUI
               ? 'px-3 pt-2 pb-1 min-h-[44px]'
-              : 'pl-5 pr-4 pt-4 pb-3 min-h-[88px]',
+              : 'px-3 pt-3 pb-2 min-h-[72px]',
           )}
           style={{ maxHeight: inputMaxHeight }}
           data-tutorial="chat-input"
@@ -2083,8 +2078,8 @@ export function FreeFormInput({
           />
 
           <div className={cn(
-            "flex items-center gap-1 px-2",
-            compactMode && isWebUI ? "py-1" : "py-2",
+            "grid grid-cols-1 items-center gap-1 px-2 @sm/composer:grid-cols-[auto_minmax(0,1fr)] [@media(pointer:coarse)]:grid-cols-1",
+            compactMode && isWebUI ? "py-1" : "py-1.5",
             !compactMode && "border-t border-border/50",
           )}>
           {/* Hidden file input for attach button (shared by compact and desktop) */}
@@ -2096,336 +2091,81 @@ export function FreeFormInput({
             onChange={handleFileInputChange}
           />
 
-          {/* Compact mode: permission mode drawer + standard icon badges for attach/sources/working dir.
-              Wrapper absorbs all squeeze so the model label truncates first and the send button stays
-              anchored to the right (craft-agents-oss#798). overflow-hidden is safe — Radix Drawer /
-              dropdowns inside render via portals, so they aren't clipped. */}
-          {compactMode && (
-          <div className="flex items-center gap-1 min-w-0 shrink overflow-hidden">
-          {onPermissionModeChange && (
-            <CompactPermissionModeSelector
-              permissionMode={permissionMode}
-              onPermissionModeChange={onPermissionModeChange}
-            />
-          )}
-          {enableCompactModelPicker && (
-            <>
-              <CompactModelSelector
-                currentModel={currentModel}
-                currentConnection={currentConnection}
-                onModelChange={onModelChange}
-                onConnectionChange={onConnectionChange}
-                thinkingLevel={thinkingLevel}
-                onThinkingLevelChange={onThinkingLevelChange}
-                isEmptySession={isEmptySession}
-                connectionUnavailable={connectionUnavailable}
-                contextStatus={contextStatus}
+          <div className="flex min-w-0 flex-wrap items-center gap-1">
+            {compactMode && onPermissionModeChange && (
+              <CompactPermissionModeSelector
+                permissionMode={permissionMode}
+                onPermissionModeChange={onPermissionModeChange}
               />
-              {chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
-                <span className="text-[11px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
-                  {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
-                </span>
-              )}
-            </>
-          )}
-          <FreeFormInputContextBadge
-            icon={<Paperclip className="h-4 w-4" />}
-            label={attachments.length > 0
-              ? t("chat.filesCount", { count: attachments.length })
-              : t("chat.attach")
-            }
-            isExpanded={false}
-            hasSelection={attachments.length > 0}
-            showChevron={false}
-            onClick={handleAttachClick}
-            tooltip={t("chat.attachFilesTooltip")}
-            disabled={disabled}
-          />
-          <VoiceDictationControl
-            disabled={disabled}
-            compactMode
-            inputValue={input}
-            onInputChange={onInputChange}
-          />
-          {isWebUI && (
+            )}
             <FreeFormInputContextBadge
-              icon={<Globe className="h-4 w-4" />}
-              label="浏览器"
+              icon={<Paperclip className="h-4 w-4" />}
+              label={attachments.length > 0
+                ? t('chat.filesCount', { count: attachments.length })
+                : t('chat.attachFiles')}
               isExpanded={false}
-              hasSelection={false}
               showChevron={false}
-              onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-              tooltip="打开 VPS 浏览器"
+              onClick={handleAttachClick}
+              tooltip={t('chat.attachFilesTooltip')}
               disabled={disabled}
             />
-          )}
-          <FreeFormInputContextBadge
-            icon={<Globe className="h-4 w-4" />}
-            label={t("browser.open")}
-            isExpanded={false}
-            hasSelection={false}
-            showChevron={false}
-            onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-            tooltip={t("browser.newWindow")}
-            disabled={disabled}
-          />
-          {onSourcesChange && (
-            <div className="relative shrink min-w-0">
-              <FreeFormInputContextBadge
-                buttonRef={sourceButtonRef}
-                icon={
-                  optimisticSourceSlugs.length === 0 ? (
-                    <DatabaseZap className="h-4 w-4" />
-                  ) : (
-                    <div className="flex items-center -ml-0.5">
-                      {(() => {
-                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
-                        const displaySources = enabledSources.slice(0, 3)
-                        const remainingCount = enabledSources.length - 3
-                        return (
-                          <>
-                            {displaySources.map((source, index) => (
-                              <div
-                                key={source.config.slug}
-                                className={cn("relative h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center", index > 0 && "-ml-1")}
-                                style={{ zIndex: index + 1 }}
-                              >
-                                <SourceAvatar source={source} size="xs" />
-                              </div>
-                            ))}
-                            {remainingCount > 0 && (
-                              <div
-                                className="-ml-1 h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
-                                style={{ zIndex: displaySources.length + 1 }}
-                              >
-                                +{remainingCount}
-                              </div>
-                            )}
-                          </>
-                        )
-                      })()}
-                    </div>
-                  )
-                }
-                label={
-                  optimisticSourceSlugs.length === 0
-                    ? t("chat.sourcesTooltip")
-                    : (() => {
-                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
-                        if (enabledSources.length === 1) return enabledSources[0].config.name
-                        return t("chat.sourcesCount", { count: enabledSources.length })
-                      })()
-                }
-                isExpanded={false}
-                hasSelection={optimisticSourceSlugs.length > 0}
-                showChevron={false}
-                isOpen={sourceDropdownOpen}
-                disabled={disabled}
-                onClick={() => setSourceDropdownOpen(prev => !prev)}
-                tooltip={t("chat.sourcesTooltip")}
-              />
-              <CompactSourceSelector
-                open={sourceDropdownOpen}
-                onOpenChange={setSourceDropdownOpen}
-                sources={sources}
-                selectedSlugs={optimisticSourceSlugs}
-                onToggleSlug={(slug) => {
-                  const isEnabled = optimisticSourceSlugs.includes(slug)
-                  const newSlugs = isEnabled
-                    ? optimisticSourceSlugs.filter(currentSlug => currentSlug !== slug)
-                    : [...optimisticSourceSlugs, slug]
-                  setOptimisticSourceSlugs(newSlugs)
-                  onSourcesChange?.(newSlugs)
-                }}
-              />
-            </div>
-          )}
-          {onWorkingDirectoryChange && (
-            <CompactWorkingDirectorySelector
-              workingDirectory={workingDirectory}
-              onWorkingDirectoryChange={onWorkingDirectoryChange}
-              sessionFolderPath={sessionFolderPath}
-              isEmptySession={false}
-              workspaceId={workspaceId}
-            />
-          )}
-          </div>
-          )}
-
-          {/* Desktop: full badges row with labels and working directory */}
-          {!compactMode && (
-          <div className="flex items-center gap-1 min-w-32 shrink overflow-hidden">
-          {/* 1. Attach Files Badge */}
-          <FreeFormInputContextBadge
-            icon={<Paperclip className="h-4 w-4" />}
-            label={attachments.length > 0
-              ? t("chat.filesCount", { count: attachments.length })
-              : t("chat.attachFiles")
-            }
-            isExpanded={isEmptySession}
-            hasSelection={attachments.length > 0}
-            showChevron={false}
-            onClick={handleAttachClick}
-            tooltip={t("chat.attachFilesTooltip")}
-            disabled={disabled}
-          />
-          <VoiceDictationControl
-            disabled={disabled}
-            inputValue={input}
-            onInputChange={onInputChange}
-          />
-
-          {isWebUI && (
-            <FreeFormInputContextBadge
-              icon={<Globe className="h-4 w-4" />}
-              label="浏览器"
-              isExpanded={false}
-              hasSelection={false}
-              showChevron={false}
-              onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-              tooltip="打开 VPS 浏览器"
+            <VoiceDictationControl
               disabled={disabled}
+              compactMode={compactMode}
+              inputValue={input}
+              sessionId={sessionId}
+              onInputChange={handleInputChange}
             />
-          )}
-          <FreeFormInputContextBadge
-            icon={<Globe className="h-4 w-4" />}
-            label={t("browser.open")}
-            isExpanded={isEmptySession}
-            hasSelection={false}
-            showChevron={false}
-            onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-            tooltip={t("browser.newWindow")}
-            disabled={disabled}
-          />
-
-          {/* 2. Source Selector Badge - only show if onSourcesChange is provided */}
-          {onSourcesChange && (
-            <div className="relative shrink min-w-0 overflow-hidden">
-              <FreeFormInputContextBadge
-                buttonRef={sourceButtonRef}
-                icon={
-                  optimisticSourceSlugs.length === 0 ? (
-                    <DatabaseZap className="h-4 w-4" />
-                  ) : (
-                    <div className="flex items-center -ml-0.5">
-                      {(() => {
-                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
-                        const displaySources = enabledSources.slice(0, 3)
-                        const remainingCount = enabledSources.length - 3
-                        return (
-                          <>
-                            {displaySources.map((source, index) => (
-                              <div
-                                key={source.config.slug}
-                                className={cn("relative h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center", index > 0 && "-ml-1")}
-                                style={{ zIndex: index + 1 }}
-                              >
-                                <SourceAvatar source={source} size="xs" />
-                              </div>
-                            ))}
-                            {remainingCount > 0 && (
-                              <div
-                                className="-ml-1 h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
-                                style={{ zIndex: displaySources.length + 1 }}
-                              >
-                                +{remainingCount}
-                              </div>
-                            )}
-                          </>
-                        )
-                      })()}
-                    </div>
-                  )
-                }
-                label={
-                  optimisticSourceSlugs.length === 0
-                    ? t("chat.chooseSources")
-                    : (() => {
-                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
-                        if (enabledSources.length === 1) return enabledSources[0].config.name
-                        if (enabledSources.length === 2) return enabledSources.map(s => s.config.name).join(', ')
-                        return t("chat.sourcesCount", { count: enabledSources.length })
-                      })()
-                }
-                isExpanded={isEmptySession}
-                hasSelection={optimisticSourceSlugs.length > 0}
-                showChevron={true}
-                isOpen={sourceDropdownOpen}
-                disabled={disabled}
-                data-tutorial="source-selector-button"
-                onClick={() => setSourceDropdownOpen(prev => !prev)}
-                tooltip={t("chat.sourcesTooltip")}
-              />
-
-              <SourceSelectorPopover
-                open={sourceDropdownOpen}
-                onOpenChange={setSourceDropdownOpen}
-                anchorRef={sourceButtonRef}
-                sources={sources}
-                selectedSlugs={optimisticSourceSlugs}
-                onToggleSlug={(slug) => {
-                  const isEnabled = optimisticSourceSlugs.includes(slug)
-                  const newSlugs = isEnabled
-                    ? optimisticSourceSlugs.filter(currentSlug => currentSlug !== slug)
-                    : [...optimisticSourceSlugs, slug]
-                  setOptimisticSourceSlugs(newSlugs)
-                  onSourcesChange?.(newSlugs)
-                }}
-              />
-            </div>
-          )}
-
-          {/* 3. Working Directory Selector Badge */}
-          {onWorkingDirectoryChange && (
-            <WorkingDirectoryBadge
-              workingDirectory={workingDirectory}
-              onWorkingDirectoryChange={onWorkingDirectoryChange}
-              sessionFolderPath={sessionFolderPath}
-              isEmptySession={isEmptySession}
-              workspaceId={workspaceId}
-            />
-          )}
-          </div>
-          )}
-
-          {sessionId && !compactMode && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  disabled={disabled || disableSend || improvingPrompt || !input.trim()}
-                  onClick={() => { void handleImprovePrompt() }}
-                  aria-label={t('chat.improvePromptAria')}
-                  className="input-toolbar-btn inline-flex items-center h-7 px-1.5 shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors disabled:opacity-40"
+                  aria-label={t('chat.composerTools')}
+                  aria-expanded={contextToolsOpen}
+                  aria-controls={contextToolsId}
+                  onClick={() => setContextToolsOpen((open) => !open)}
+                  className={cn(
+                    'input-toolbar-btn relative inline-flex h-7 shrink-0 items-center justify-center gap-1.5 rounded-[6px] px-1.5 text-[13px] transition-colors hover:bg-foreground/5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+                    contextToolsOpen && 'bg-foreground/5',
+                  )}
                 >
-                  {improvingPrompt ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  <span className="hidden @sm/composer:inline">{t('chat.context')}</span>
+                  {(optimisticSourceSlugs.length > 0 || workingDirectory) && (
+                    <span className="absolute right-1 top-1 h-1 w-1 rounded-full bg-accent" aria-hidden="true" />
+                  )}
                 </button>
               </TooltipTrigger>
-              <TooltipContent>
-                {improvingPrompt ? t('chat.improvingPrompt') : t('chat.improvePrompt')}
-              </TooltipContent>
+              <TooltipContent side="top">{t('chat.composerTools')}</TooltipContent>
             </Tooltip>
-          )}
+            {isCollapsedInCompact && (
+              <button
+                type="button"
+                onClick={onRequestExpand}
+                onMouseEnter={onRequestExpand}
+                aria-label={t('chat.tapToType')}
+                className="input-toolbar-btn flex h-7 w-7 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+            )}
+          </div>
 
-          {/* Spacer — doubles as a tap / hover target while the input is
-              collapsed during processing in compact mode, so the user can
-              type a follow-up without waiting for the agent to finish. */}
-          {isCollapsedInCompact ? (
-            <button
-              type="button"
-              onClick={onRequestExpand}
-              onMouseEnter={onRequestExpand}
-              aria-label={t('chat.tapToType')}
-              className="flex-1 h-7 mx-1 flex items-center justify-center text-foreground/30 hover:text-foreground/60 transition-colors cursor-pointer rounded-[6px] hover:bg-foreground/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              <ChevronUp className="h-4 w-4" />
-            </button>
-          ) : (
-            <div className="flex-1" />
+          {/* The model may truncate; send/stop always retain their target size. */}
+          <div className="flex min-w-0 items-center justify-end gap-0.5">
+          {compactMode && enableCompactModelPicker && (
+            <CompactModelSelector
+              currentModel={currentModel}
+              currentConnection={currentConnection}
+              onModelChange={onModelChange}
+              onConnectionChange={onConnectionChange}
+              thinkingLevel={thinkingLevel}
+              onThinkingLevelChange={onThinkingLevelChange}
+              isEmptySession={isEmptySession}
+              connectionUnavailable={connectionUnavailable}
+              contextStatus={contextStatus}
+            />
           )}
-
-          {/* Right side: Model + Send - never shrink so they're always visible */}
-          <div className="flex items-center shrink-0">
           {/* 5. Model/Connection Selector - Hidden in compact mode (EditPopover embedding) */}
           {!compactMode && (
           <DropdownMenu open={modelDropdownOpen} onOpenChange={setModelDropdownOpen}>
@@ -2434,8 +2174,9 @@ export function FreeFormInput({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
+                    aria-label={`${t('common.model')}: ${connectionUnavailable ? t('common.unavailable') : currentModelDisplayName}`}
                     className={cn(
-                      "input-toolbar-btn inline-flex items-center h-7 px-1.5 gap-0.5 text-[13px] shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors select-none",
+                      "input-toolbar-btn inline-flex items-center h-7 px-1.5 gap-0.5 text-[13px] min-w-0 shrink rounded-[6px] hover:bg-foreground/5 transition-colors select-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
                       modelDropdownOpen && "bg-foreground/5",
                       connectionUnavailable && "text-destructive",
                     )}
@@ -2443,12 +2184,12 @@ export function FreeFormInput({
                     {connectionUnavailable ? (
                       <>
                         <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                        {t('common.unavailable')}
+                        <span className="truncate">{t('common.unavailable')}</span>
                       </>
                     ) : (
                       <>
                         {effectiveConnectionDetails && llmConnections.length > 1 && storage.get(storage.KEYS.showConnectionIcons, true) && <ConnectionIcon connection={effectiveConnectionDetails} size={14} showTooltip />}
-                        {currentModelDisplayName}
+                        <span className="truncate">{currentModelDisplayName}</span>
                         {pickerMode !== 'locked-single' && <ChevronDown className="h-3 w-3 opacity-50 shrink-0" />}
                       </>
                     )}
@@ -2456,7 +2197,7 @@ export function FreeFormInput({
                 </DropdownMenuTrigger>
               </TooltipTrigger>
               <TooltipContent side="top">
-                {t('common.model')}
+                {t('common.model')}: {currentModelDisplayName}
               </TooltipContent>
             </Tooltip>
             <StyledDropdownMenuContent side="top" align="end" sideOffset={8} className="min-w-[260px]">
@@ -2818,7 +2559,8 @@ export function FreeFormInput({
                     type="button"
                     onClick={handleCompactClick}
                     disabled={isProcessing}
-                    className="inline-flex items-center h-6 px-2 text-[12px] font-medium bg-info/10 rounded-[6px] shadow-tinted select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label={t(isProcessing ? 'chat.contextUsageWait' : 'chat.contextUsageCompact', { percent: usagePercent })}
+                    className="input-toolbar-btn inline-flex shrink-0 items-center h-7 px-1.5 text-[12px] font-medium bg-info/10 rounded-[6px] select-none cursor-pointer hover:bg-info/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       '--shadow-color': 'var(--info-rgb)',
                       color: 'color-mix(in oklab, var(--info) 30%, var(--foreground))',
@@ -2828,10 +2570,7 @@ export function FreeFormInput({
                   </button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
-                  {isProcessing
-                    ? `${usagePercent}% context used — wait for current operation`
-                    : `${usagePercent}% context used — click to compact`
-                  }
+                  {t(isProcessing ? 'chat.contextUsageWait' : 'chat.contextUsageCompact', { percent: usagePercent })}
                 </TooltipContent>
               </Tooltip>
             )
@@ -2844,7 +2583,7 @@ export function FreeFormInput({
               size="icon"
               variant="secondary"
               aria-label={t('chat.stopResponse')}
-              className="send-btn h-7 w-7 rounded-full shrink-0 hover:bg-foreground/15 active:bg-foreground/20 ml-2"
+              className="send-btn h-7 w-7 rounded-full shrink-0 hover:bg-foreground/15 active:bg-foreground/20 ml-1"
               onClick={() => handleStop(false)}
             >
               <Square className="h-3 w-3 fill-current" />
@@ -2854,7 +2593,7 @@ export function FreeFormInput({
               type="submit"
               size="icon"
               aria-label={t('shortcuts.sendMessage')}
-              className="send-btn h-7 w-7 rounded-full shrink-0 ml-2"
+              className="send-btn h-7 w-7 rounded-full shrink-0 ml-1"
               disabled={!hasContent || disabled || disableSend}
               data-tutorial="send-button"
             >
@@ -2862,6 +2601,220 @@ export function FreeFormInput({
             </Button>
           )}
           </div>
+          </div>
+          <div
+            id={contextToolsId}
+            hidden={!contextToolsOpen}
+            className="border-t border-border/50 px-2 py-1.5"
+          >
+            <div className="flex min-w-0 flex-wrap items-center gap-1">
+              <FreeFormInputContextBadge
+                icon={<Globe className="h-4 w-4" />}
+                label={t('browser.open')}
+                isExpanded
+                onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
+                tooltip={t('browser.newWindow')}
+                disabled={disabled}
+              />
+              {compactMode ? (
+                <>
+          {onSourcesChange && (
+            <div className="relative shrink min-w-0">
+              <FreeFormInputContextBadge
+                buttonRef={sourceButtonRef}
+                icon={
+                  optimisticSourceSlugs.length === 0 ? (
+                    <DatabaseZap className="h-4 w-4" />
+                  ) : (
+                    <div className="flex items-center -ml-0.5">
+                      {(() => {
+                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
+                        const displaySources = enabledSources.slice(0, 3)
+                        const remainingCount = enabledSources.length - 3
+                        return (
+                          <>
+                            {displaySources.map((source, index) => (
+                              <div
+                                key={source.config.slug}
+                                className={cn("relative h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center", index > 0 && "-ml-1")}
+                                style={{ zIndex: index + 1 }}
+                              >
+                                <SourceAvatar source={source} size="xs" />
+                              </div>
+                            ))}
+                            {remainingCount > 0 && (
+                              <div
+                                className="-ml-1 h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
+                                style={{ zIndex: displaySources.length + 1 }}
+                              >
+                                +{remainingCount}
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  )
+                }
+                label={
+                  optimisticSourceSlugs.length === 0
+                    ? t("chat.sourcesTooltip")
+                    : (() => {
+                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
+                        if (enabledSources.length === 1) return enabledSources[0].config.name
+                        return t("chat.sourcesCount", { count: enabledSources.length })
+                      })()
+                }
+                isExpanded={false}
+                hasSelection={optimisticSourceSlugs.length > 0}
+                showChevron={false}
+                isOpen={sourceDropdownOpen}
+                disabled={disabled}
+                onClick={() => setSourceDropdownOpen(prev => !prev)}
+                tooltip={t("chat.sourcesTooltip")}
+              />
+              <CompactSourceSelector
+                open={sourceDropdownOpen}
+                onOpenChange={setSourceDropdownOpen}
+                sources={sources}
+                selectedSlugs={optimisticSourceSlugs}
+                onToggleSlug={(slug) => {
+                  const isEnabled = optimisticSourceSlugs.includes(slug)
+                  const newSlugs = isEnabled
+                    ? optimisticSourceSlugs.filter(currentSlug => currentSlug !== slug)
+                    : [...optimisticSourceSlugs, slug]
+                  setOptimisticSourceSlugs(newSlugs)
+                  onSourcesChange?.(newSlugs)
+                }}
+              />
+            </div>
+          )}
+          {onWorkingDirectoryChange && (
+            <CompactWorkingDirectorySelector
+              workingDirectory={workingDirectory}
+              onWorkingDirectoryChange={onWorkingDirectoryChange}
+              sessionFolderPath={sessionFolderPath}
+              isEmptySession={false}
+              workspaceId={workspaceId}
+            />
+          )}
+                </>
+              ) : (
+                <>
+          {/* 2. Source Selector Badge - only show if onSourcesChange is provided */}
+          {onSourcesChange && (
+            <div className="relative shrink min-w-0">
+              <FreeFormInputContextBadge
+                buttonRef={sourceButtonRef}
+                icon={
+                  optimisticSourceSlugs.length === 0 ? (
+                    <DatabaseZap className="h-4 w-4" />
+                  ) : (
+                    <div className="flex items-center -ml-0.5">
+                      {(() => {
+                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
+                        const displaySources = enabledSources.slice(0, 3)
+                        const remainingCount = enabledSources.length - 3
+                        return (
+                          <>
+                            {displaySources.map((source, index) => (
+                              <div
+                                key={source.config.slug}
+                                className={cn("relative h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center", index > 0 && "-ml-1")}
+                                style={{ zIndex: index + 1 }}
+                              >
+                                <SourceAvatar source={source} size="xs" />
+                              </div>
+                            ))}
+                            {remainingCount > 0 && (
+                              <div
+                                className="-ml-1 h-5 w-5 rounded-[4px] bg-background shadow-minimal flex items-center justify-center text-[8px] font-medium text-muted-foreground"
+                                style={{ zIndex: displaySources.length + 1 }}
+                              >
+                                +{remainingCount}
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  )
+                }
+                label={
+                  optimisticSourceSlugs.length === 0
+                    ? t("chat.chooseSources")
+                    : (() => {
+                        const enabledSources = sources.filter(s => optimisticSourceSlugs.includes(s.config.slug))
+                        if (enabledSources.length === 1) return enabledSources[0].config.name
+                        if (enabledSources.length === 2) return enabledSources.map(s => s.config.name).join(', ')
+                        return t("chat.sourcesCount", { count: enabledSources.length })
+                      })()
+                }
+                isExpanded={isEmptySession}
+                hasSelection={optimisticSourceSlugs.length > 0}
+                showChevron={true}
+                isOpen={sourceDropdownOpen}
+                disabled={disabled}
+                data-tutorial="source-selector-button"
+                onClick={() => setSourceDropdownOpen(prev => !prev)}
+                tooltip={t("chat.sourcesTooltip")}
+              />
+
+              <SourceSelectorPopover
+                open={sourceDropdownOpen}
+                onOpenChange={setSourceDropdownOpen}
+                anchorRef={sourceButtonRef}
+                sources={sources}
+                selectedSlugs={optimisticSourceSlugs}
+                onToggleSlug={(slug) => {
+                  const isEnabled = optimisticSourceSlugs.includes(slug)
+                  const newSlugs = isEnabled
+                    ? optimisticSourceSlugs.filter(currentSlug => currentSlug !== slug)
+                    : [...optimisticSourceSlugs, slug]
+                  setOptimisticSourceSlugs(newSlugs)
+                  onSourcesChange?.(newSlugs)
+                }}
+              />
+            </div>
+          )}
+
+          {/* 3. Working Directory Selector Badge */}
+          {onWorkingDirectoryChange && (
+            <WorkingDirectoryBadge
+              workingDirectory={workingDirectory}
+              onWorkingDirectoryChange={onWorkingDirectoryChange}
+              sessionFolderPath={sessionFolderPath}
+              isEmptySession={isEmptySession}
+              workspaceId={workspaceId}
+            />
+          )}
+                </>
+              )}
+          {sessionId && !compactMode && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  disabled={disabled || disableSend || improvingPrompt || !input.trim()}
+                  onClick={() => { void handleImprovePrompt() }}
+                  aria-label={t('chat.improvePromptAria')}
+                  className="input-toolbar-btn inline-flex items-center h-7 px-1.5 shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors disabled:opacity-40"
+                >
+                  {improvingPrompt ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {improvingPrompt ? t('chat.improvingPrompt') : t('chat.improvePrompt')}
+              </TooltipContent>
+            </Tooltip>
+          )}
+
+              {compactMode && enableCompactModelPicker && chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
+                <span className="px-1.5 text-[11px] text-muted-foreground tabular-nums" data-testid="chat-session-cost">
+                  {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -151,6 +151,7 @@ describe('ROX2-053..055 native settings pages', () => {
       action: 'pref-write',
       source: 'native',
     })
+    if (!isClaimableLive(verified)) throw new Error('expected a verified native action result')
     expect(verified.executionMode).toBe('live')
     expect(verified.lifecycle).toBe('succeeded')
     expect(verified.verification).toBe('receipt_verified')

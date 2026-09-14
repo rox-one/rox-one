@@ -45,6 +45,12 @@ import { createLogger } from '@craft-agent/shared/utils'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { TaskRunner, createTaskFromSpec, finishTaskOrchestrator } from '../../tasks'
+import {
+  isClaimableLive,
+  rpcTasksActResult,
+  rpcTasksListResult,
+  rpcTasksReadResult,
+} from '@craft-agent/core/rox2'
 
 const tasksLog = createLogger('tasks-generate')
 
@@ -117,6 +123,8 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   // tasks:create — write task.yaml + create the orchestrator parent session.
   server.handle(RPC_CHANNELS.tasks.CREATE, async (_ctx, workspaceId: string, req: TaskCreateRequest): Promise<TaskCreateResult> => {
+    const act = rpcTasksActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+    if (!isClaimableLive(act)) throw new Error('task create is not live')
     const ws = workspaceOrThrow(workspaceId)
     const parsed = parseTaskYaml(req.yaml)
     const validation = toValidationDto(parsed)
@@ -193,6 +201,8 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
   // discards an unadopted draft on close, and because drafts are hidden a give-up-early client
   // never leaves a visible orphan tile.
   server.handle(RPC_CHANNELS.tasks.GENERATE, async (_ctx, workspaceId: string, req: TaskGenerateRequest): Promise<TaskGenerateAck> => {
+    const act = rpcTasksActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+    if (!isClaimableLive(act)) throw new Error('task generate is not live')
     workspaceOrThrow(workspaceId) // validate the workspace exists; generate no longer writes task.yaml
     const orchestrator = await deps.sessionManager.createSession(workspaceId, {
       name: req.title?.trim() || 'New task',
@@ -311,6 +321,8 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   // tasks:run — start a run.
   server.handle(RPC_CHANNELS.tasks.RUN, async (_ctx, workspaceId: string, req: TaskRunRequest) => {
+    const act = rpcTasksActResult({ source: 'native', action: 'write', nativeId: req.slug })
+    if (!isClaimableLive(act)) throw new Error('task run is not live')
     return runnerFor(workspaceId).run(req.slug, {
       runId: req.runId,
       orchestratorSessionId: req.orchestratorSessionId,
@@ -327,11 +339,22 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.tasks.STOP, async (_ctx, workspaceId: string, slug: string, runId: string) => {
+    if (!slug) throw new Error('slug is required')
+    const act = rpcTasksActResult({ source: 'native', action: 'destroy', granted: true, nativeId: slug })
+    if (!isClaimableLive(act)) throw new Error('task stop is not live')
     await runnerFor(workspaceId).stop(slug, runId)
   })
 
   // tasks:get — spec + (optional) active run-state.
   server.handle(RPC_CHANNELS.tasks.GET, async (_ctx, workspaceId: string, slug: string, runId?: string): Promise<TaskGetResult> => {
+    const read = rpcTasksReadResult({ source: 'native', nativeId: slug })
+    if (!isClaimableLive(read.result)) {
+      return {
+        slug,
+        validation: { valid: false, errors: [{ path: 'root', message: `Task "${slug}" not found`, severity: 'error' }], warnings: [] },
+        run: null,
+      }
+    }
     const ws = workspaceOrThrow(workspaceId)
     const loaded = loadTaskSpec(ws.rootPath, slug)
     if (!loaded) {
@@ -347,6 +370,8 @@ export function registerTasksHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   // tasks:list — slugs with a task.yaml.
   server.handle(RPC_CHANNELS.tasks.LIST, async (_ctx, workspaceId: string): Promise<string[]> => {
+    const listed = rpcTasksListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     return listTaskSlugs(workspaceOrThrow(workspaceId).rootPath)
   })
 

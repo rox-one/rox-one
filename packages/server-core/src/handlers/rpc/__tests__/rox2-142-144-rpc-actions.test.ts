@@ -30,14 +30,15 @@ describe('ROX2-142..144 native RPC list/read/act gates', () => {
     expect(src).not.toContain('CompleteMutationRoot')
   })
 
-  test('cloud-runs.ts gates list/read/write/destroy; spend stays fail-closed and is not a SUBMIT claim', () => {
+  test('cloud-runs.ts gates list/read/write/destroy; SUBMIT is native spend (ROX2-191)', () => {
     const src = source('packages/server-core/src/handlers/rpc/cloud-runs.ts')
     expect(src).toContain('rpcCloudRunsListResult')
     expect(src).toContain('rpcCloudRunsReadResult')
     expect(src).toContain('rpcCloudRunsActResult')
     expect(src).toContain("action: 'write'")
     expect(src).toContain("action: 'destroy'")
-    expect(src).not.toContain("action: 'spend'")
+    expect(src).toContain("action: 'spend'")
+    expect(src).toContain("nativeId: 'submit'")
     expect(src).not.toContain('conation.dev')
     expect(src).not.toContain('CompleteMutationRoot')
   })

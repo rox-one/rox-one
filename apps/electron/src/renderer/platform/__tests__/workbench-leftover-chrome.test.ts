@@ -3,6 +3,15 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { resolveWorkspaceSurfaceLayout } from '../workspace-surface-layout'
 
+describe('single catalog chrome', () => {
+  it('omits an empty generic tab while keeping multiple panel tabs reachable', () => {
+    const options = { isCompact: false, panelCount: 1, catalogOnly: true, chrome: { showSurfaceTabs: true, showInspector: false } }
+    expect(resolveWorkspaceSurfaceLayout(options).showTabs).toBe(false)
+    expect(resolveWorkspaceSurfaceLayout({ ...options, panelCount: 4 }).showTabs).toBe(true)
+    expect(resolveWorkspaceSurfaceLayout({ ...options, catalogOnly: false }).showTabs).toBe(true)
+  })
+})
+
 const platformDir = join(import.meta.dir, '..')
 const host = readFileSync(join(platformDir, 'WorkspaceSurfaceHost.tsx'), 'utf8')
 const atoms = readFileSync(join(platformDir, '..', 'atoms', 'unified-shell.ts'), 'utf8')

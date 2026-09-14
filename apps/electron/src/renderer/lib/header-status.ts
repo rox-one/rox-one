@@ -23,6 +23,11 @@ export interface HeaderStatusState {
 export const HEADER_STATUS_DURATION_MS = 5_000
 const STATUS_DEDUPE_MS = 120_000
 
+/** A hidden workspace's unresolved status must not suppress the active context. */
+export function headerStatusForWorkspace(status: HeaderStatus | null, workspaceId: string | null | undefined): HeaderStatus | null {
+  return status?.workspaceId === workspaceId ? status : null
+}
+
 /** Errors and requests with an action never expire behind the user's back. */
 export function headerStatusDuration(status: HeaderStatus): number | null {
   return status.tone === 'error' || status.action || status.persistent

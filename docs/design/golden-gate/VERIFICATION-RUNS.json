@@ -1,0 +1,1584 @@
+{
+  "date": "2026-09-14",
+  "integration_base": "32f239b1cef02e80713984e80ebd43f4625498cb",
+  "branch": "codex/golden-gate-workspace",
+  "environment": {
+    "os": "Linux",
+    "bun": "1.3.9",
+    "node": "24",
+    "browser": "product URL blocked; no workaround",
+    "native_macos": "not run"
+  },
+  "deduplicated": {
+    "passed": 1748,
+    "failed": 0,
+    "file_count": 288,
+    "method": "Count each test file once; duplicate runs must agree on passed/failed totals."
+  },
+  "suites": [
+    {
+      "id": "shell",
+      "command": "bun test apps/electron/src/renderer/components/app-shell/__tests__ apps/electron/src/renderer/platform/__tests__ apps/electron/src/renderer/atoms/__tests__ apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+      "passed": 486,
+      "failed": 0,
+      "file_count": 93,
+      "test_files": [
+        "apps/electron/src/renderer/atoms/__tests__/browser-pane.test.ts",
+        "apps/electron/src/renderer/atoms/__tests__/collection-filters.test.ts",
+        "apps/electron/src/renderer/atoms/__tests__/header-status.test.ts",
+        "apps/electron/src/renderer/atoms/__tests__/panel-stack-knowledge.test.ts",
+        "apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts",
+        "apps/electron/src/renderer/atoms/__tests__/panel-workspace.test.ts",
+        "apps/electron/src/renderer/atoms/__tests__/sessions.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/ChatDisplay.follow-ups.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/account-menu-presentation.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/accounts-settings-presentation.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/background-task-chip-state.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/chat-display-branching.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/chat-scroll.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/compact-session-list-filter.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/edit-file-i18n.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/error-message-actions.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/extension-origin-permissions-presentation.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/header-status-presence.test.tsx",
+        "apps/electron/src/renderer/components/app-shell/__tests__/home-nav.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/invite-bro-chrome.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-browser-i18n.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-bulk.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/meetings-nav.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/memory-proposal-card.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/new-session-filter-inheritance.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/notes-local-entrypoints.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/premium-menu-chrome-hygiene.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-presentation.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/resize-math.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/service-navigation.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/session-list-families.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/session-row-click.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/sidebar-chrome-accessibility.test.tsx",
+        "apps/electron/src/renderer/components/app-shell/__tests__/sidebar-dashboard.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/sidebar-disclosure.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/sources-list-groups.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/tasks-nav.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/toolchain-status-banner.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/topbar-shortcuts.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/transfer-targets.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/voice-composer.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/workspace-rail.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-disclosure.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-layout-commit.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-roles.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-splitter.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar-safe-area.test.ts",
+        "apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/browser-surface-v2.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/chrome-density.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/chrome-hygiene.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/connection-inspector-model.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/core-panels-h1.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/core-panels.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/home-model.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/inspector-host-connections.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/inspector-host-h1.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/inspector-model.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/inspector-resize-accessibility.test.tsx",
+        "apps/electron/src/renderer/platform/__tests__/knowledge-tab-titles.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/mini-dashboard.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/modes-seed.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/omnibox-chrome-i18n.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/omnibox-conation.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/omnibox-helpers.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/omnibox-logic.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/omnibox-providers-i18n.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/omnibox-providers.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/os-browser-tabs.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/panel-host-wiring.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/panel-registry-state.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/plugin-command-id.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/promo-slot.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/ship-rox-notes-canvas-map.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/status-model.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/surface-tab-model.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/surface-tab-navigation.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/tab-groups.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/terminal-surface.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/terminal-xterm.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/viewport-band.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/workbench-chrome.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/workbench-leftover-chrome.test.ts",
+        "apps/electron/src/renderer/platform/__tests__/workbench-rollout.test.ts"
+      ],
+      "log_name": "final-shell-tests.log",
+      "log_sha256": "0fae0a675f5f412098976141cd444b90a0336df3593f48fd20989beb7fb54f88"
+    },
+    {
+      "id": "features",
+      "command": "bun test apps/electron/src/renderer/lib/__tests__/panel-workspace-layout.test.ts apps/electron/src/renderer/lib/__tests__/contextual-suggestions.test.ts apps/electron/src/renderer/lib/__tests__/pausable-deadline.test.ts apps/electron/src/renderer/lib/__tests__/native-surface-dom.test.ts apps/electron/src/renderer/lib/__tests__/native-surface-owners.test.ts apps/electron/src/renderer/lib/__tests__/native-surface-visibility.test.ts apps/electron/src/main/device-diagnostics-collector.test.ts apps/electron/src/main/device-diagnostics-ipc.test.ts apps/electron/src/renderer/components/app-shell/diagnostics apps/electron/src/renderer/actions/__tests__",
+      "passed": 79,
+      "failed": 0,
+      "file_count": 13,
+      "test_files": [
+        "apps/electron/src/main/device-diagnostics-collector.test.ts",
+        "apps/electron/src/main/device-diagnostics-ipc.test.ts",
+        "apps/electron/src/renderer/actions/__tests__/action-labels-i18n.test.ts",
+        "apps/electron/src/renderer/actions/__tests__/keybinding-context.test.ts",
+        "apps/electron/src/renderer/actions/__tests__/panel-focus-actions.test.ts",
+        "apps/electron/src/renderer/components/app-shell/diagnostics/diagnostics-model.test.ts",
+        "apps/electron/src/renderer/components/app-shell/diagnostics/diagnostics-poller.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/contextual-suggestions.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/native-surface-dom.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/native-surface-owners.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/native-surface-visibility.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/panel-workspace-layout.test.ts",
+        "apps/electron/src/renderer/lib/__tests__/pausable-deadline.test.ts"
+      ],
+      "log_name": "final-features-tests.log",
+      "log_sha256": "ee489d54bfc6c6404edc0313d7befb827a566efd937c588f7c3424290e625f0f"
+    },
+    {
+      "id": "screens",
+      "command": "bun test apps/electron/src/renderer/components/settings/__tests__ apps/electron/src/renderer/components/app-shell/collection/__tests__ apps/electron/src/renderer/pages/settings/__tests__ packages/ui/src/components/ui/__tests__/styled-dropdown.test.ts packages/ui/src/styles/__tests__ packages/shared/src/config/theme-vibrancy.test.ts packages/ui/src/components/markdown/__tests__/sourced-statement.test.tsx packages/ui/src/components/markdown/__tests__/markdown-link-routing.test.ts",
+      "passed": 311,
+      "failed": 0,
+      "file_count": 65,
+      "test_files": [
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/bulk-input.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-accessibility.test.tsx",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-bulk-bar-chrome.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-bulk-optimistic.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-dialog-keyboard.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-display-density.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-filter-chips-i18n.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-filter-count.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-map-reduce.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-premium-menu.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-rail-filters.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-slices.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-view-cycle.test.ts",
+        "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-viewport-chrome.test.ts",
+        "apps/electron/src/renderer/components/settings/__tests__/settings-accessibility.test.tsx",
+        "apps/electron/src/renderer/components/settings/__tests__/settings-menu-navigation.test.ts",
+        "apps/electron/src/renderer/components/settings/__tests__/settings-select-i18n.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/AccountSettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/AccountsSettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/AppSettingsPage.environment.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/AppearanceSettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/CloudRunsSettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/CredentialMigrationCard.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/InputSettingsPage.voice.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/MessagingSettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/OrganizationsSettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/PrivacySettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/SecretRefsSection.test.tsx",
+        "apps/electron/src/renderer/pages/settings/__tests__/SecuritySettingsPage.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/SecuritySnake.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/agent-teams-harness.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-identity.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/capability-ledger.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/extension-center-h4.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/extensions-defaultvalue-i18n.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/labels-ask-and-views.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/leftover-041-052-i18n.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/marketplace-select.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/messaging-defaultvalue-i18n.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/organization-member-identity.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/organization-team-spaces.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/preferences-identity.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-031-settings-hub.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-041-043-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-044-046-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-047-049-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-050-052-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-053-055-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-056-058-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-059-061-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-062-shortcuts-settings-page.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/security-validation.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/session-apply-consumer.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/session-import-h5.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/settings-chrome-p35.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/settings-command-center-presentation.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/voice-overlay.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/workbench-chrome-harness.test.ts",
+        "packages/shared/src/config/theme-vibrancy.test.ts",
+        "packages/ui/src/components/markdown/__tests__/markdown-link-routing.test.ts",
+        "packages/ui/src/components/markdown/__tests__/sourced-statement.test.tsx",
+        "packages/ui/src/components/ui/__tests__/styled-dropdown.test.ts",
+        "packages/ui/src/styles/__tests__/font-roles.test.ts",
+        "packages/ui/src/styles/__tests__/rox-tokens.test.ts",
+        "packages/ui/src/styles/__tests__/zen-shell-tokens.test.ts"
+      ],
+      "log_name": "final-screens-tests.log",
+      "log_sha256": "337fc318eb3c8107c69f9207aa8fd1ae27661e1837a24ad81c469a3d3e85307b"
+    },
+    {
+      "id": "notes",
+      "command": "bun test apps/electron/src/renderer/pages/notes/__tests__",
+      "passed": 64,
+      "failed": 0,
+      "file_count": 13,
+      "test_files": [
+        "apps/electron/src/renderer/pages/notes/__tests__/comment-highlights.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/document-ia-bang-i18n.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/document-ia.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/note-ai.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/note-views.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/notes-accessibility.test.tsx",
+        "apps/electron/src/renderer/pages/notes/__tests__/notes-focus-state.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/notes-playground-i18n.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/notes-request-state.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/notes-toast-i18n.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/notes-views-wiring.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/notes-workspace-layout.test.ts",
+        "apps/electron/src/renderer/pages/notes/__tests__/wiki-autocomplete.test.ts"
+      ],
+      "log_name": "final-notes-tests.log",
+      "log_sha256": "6b76fbc3514c7acb2ff93ac5e996c78abd93cf88ed998f6440c659feda6eda72"
+    },
+    {
+      "id": "input",
+      "command": "bun test apps/electron/src/renderer/components/app-shell/input/__tests__",
+      "passed": 83,
+      "failed": 0,
+      "file_count": 11,
+      "test_files": [
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/chat-chrome-h2.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/focus-input-events.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/input-event-guards.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/model-picker-helpers.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/picker-mode.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/prompt-history.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/structured-height.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/turn-progress.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/use-working-directory-state.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/voice-dictation-state.test.ts",
+        "apps/electron/src/renderer/components/app-shell/input/__tests__/working-directory-history.test.ts"
+      ],
+      "log_name": "final-input-tests.log",
+      "log_sha256": "6feebd7e0a0211d2a94ba02ea79826bd967171ccc6a305dd2562be4cbd84f199"
+    },
+    {
+      "id": "catalog",
+      "command": "bun test apps/electron/src/renderer/pages/tasks/__tests__ apps/electron/src/renderer/pages/meetings/__tests__ apps/electron/src/renderer/pages/__tests__/tasks-page.test.ts apps/electron/src/renderer/pages/__tests__/catalog-detail-routes.test.tsx apps/electron/src/renderer/components/calendar/__tests__/calendar-status-strip.test.ts",
+      "passed": 75,
+      "failed": 0,
+      "file_count": 16,
+      "test_files": [
+        "apps/electron/src/renderer/components/calendar/__tests__/calendar-status-strip.test.ts",
+        "apps/electron/src/renderer/pages/__tests__/catalog-detail-routes.test.tsx",
+        "apps/electron/src/renderer/pages/__tests__/tasks-page.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/capture-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/conation-panels.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/finalize-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/import-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/manual-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/proposal-inbox-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/proposal-rpc-handler.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/proposal-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/request-state.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/search-rpc-handler.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/start-rpc.test.ts",
+        "apps/electron/src/renderer/pages/tasks/__tests__/catalog-presentation.test.tsx",
+        "apps/electron/src/renderer/pages/tasks/__tests__/presentation.test.ts"
+      ],
+      "log_name": "final-catalog-tests.log",
+      "log_sha256": "1d92970a80f1f96b8a8f80aa006a303d3d60cd8207b56a2d7bf676bf05b40791"
+    },
+    {
+      "id": "postmerge-contracts",
+      "command": "bun test <test_files from this manifest>",
+      "passed": 618,
+      "failed": 0,
+      "file_count": 89,
+      "test_files": [
+        "apps/electron/src/renderer/pages/meetings/__tests__/capture-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/conation-panels.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/finalize-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/import-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/manual-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/proposal-inbox-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/proposal-rpc-handler.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/proposal-rpc.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/search-rpc-handler.test.ts",
+        "apps/electron/src/renderer/pages/meetings/__tests__/start-rpc.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-041-043-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-044-046-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-047-049-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-050-052-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-053-055-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-056-058-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-059-061-settings-pages.test.ts",
+        "apps/electron/src/renderer/pages/settings/__tests__/rox2-062-shortcuts-settings-page.test.ts",
+        "packages/core/src/calendar/calendar.test.ts",
+        "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts",
+        "packages/core/src/rox2/__tests__/platform-contract.test.ts",
+        "packages/pi-agent-server/src/custom-endpoint-models.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/meetings-conation-shells.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/onboarding.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-142-144-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-148-150-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-151-153-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-154-156-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-157-159-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-160-162-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-163-165-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-166-168-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-169-171-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-172-174-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-175-177-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-178-180-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-181-183-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-184-186-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-187-190-rpc-actions.test.ts",
+        "packages/server-core/src/handlers/rpc/__tests__/rox2-191-cloud-runs-native.test.ts",
+        "packages/server-core/src/handlers/rpc/memory-proposals.test.ts",
+        "packages/server-core/src/meetings/__tests__/approve-execute.test.ts",
+        "packages/server-core/src/meetings/__tests__/budgets.test.ts",
+        "packages/server-core/src/meetings/__tests__/capture.test.ts",
+        "packages/server-core/src/meetings/__tests__/catalog.test.ts",
+        "packages/server-core/src/meetings/__tests__/executor.test.ts",
+        "packages/server-core/src/meetings/__tests__/finalize.test.ts",
+        "packages/server-core/src/meetings/__tests__/followup.test.ts",
+        "packages/server-core/src/meetings/__tests__/import-intent.test.ts",
+        "packages/server-core/src/meetings/__tests__/import.test.ts",
+        "packages/server-core/src/meetings/__tests__/journal.test.ts",
+        "packages/server-core/src/meetings/__tests__/manual.test.ts",
+        "packages/server-core/src/meetings/__tests__/native-actions.test.ts",
+        "packages/server-core/src/meetings/__tests__/note-persist.test.ts",
+        "packages/server-core/src/meetings/__tests__/operation-journal.test.ts",
+        "packages/server-core/src/meetings/__tests__/packaging.test.ts",
+        "packages/server-core/src/meetings/__tests__/proposal-journal.test.ts",
+        "packages/server-core/src/meetings/__tests__/proposals.test.ts",
+        "packages/server-core/src/meetings/__tests__/queries.test.ts",
+        "packages/server-core/src/meetings/__tests__/release-gate.test.ts",
+        "packages/server-core/src/meetings/__tests__/rooms.test.ts",
+        "packages/server-core/src/meetings/__tests__/security.test.ts",
+        "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts",
+        "packages/server-core/src/meetings/__tests__/tracker-actions.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/board-fund.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/calendar-calls.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/capabilities.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/crm.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/files.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/mail-channels.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/native-shells.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/notes-projects.test.ts",
+        "packages/server-core/src/meetings/conation/__tests__/sync.test.ts",
+        "packages/shared/src/agent/__tests__/context-budget.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/artifacts.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/assist.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/bootstrap.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/extraction.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/knowledge.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/policies.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/recipes.test.ts",
+        "packages/shared/src/meeting-agents/__tests__/router.test.ts",
+        "packages/shared/src/voice/__tests__/meeting-stream.test.ts",
+        "packages/shared/src/voice/__tests__/transcript-reducer.test.ts",
+        "packages/shared/src/voice/__tests__/voice-evidence.test.ts",
+        "packages/shared/src/voice/__tests__/voice-policy.test.ts",
+        "packages/shared/src/voice/__tests__/voice-v2.test.ts",
+        "packages/shared/src/workflows/__tests__/canvas-spec.test.ts",
+        "plans/rox2/__tests__/rox2-192-200-leftover-honesty.test.ts"
+      ],
+      "log_name": "final-types-postmerge-tests.log",
+      "log_sha256": "4a4d9f006ca1eae8b89fd715535c6b31bb3c6dc4a7b098d3e9695786d9bb4e33"
+    },
+    {
+      "id": "isolated-workspace-guards",
+      "command": "bun test ./packages/server-core/src/handlers/rpc/__tests__/workspace-guards.isolated.ts",
+      "passed": 3,
+      "failed": 0,
+      "file_count": 1,
+      "test_files": [
+        "packages/server-core/src/handlers/rpc/__tests__/workspace-guards.isolated.ts"
+      ],
+      "log_name": "final-workspace-guards-tests.log",
+      "log_sha256": "e7b9f0b58320472c56715655989b2f31583cfa92576d8149005498b61e956591"
+    },
+    {
+      "id": "i18n",
+      "command": "bun test packages/shared/src/i18n",
+      "passed": 113,
+      "failed": 0,
+      "file_count": 5,
+      "test_files": [
+        "packages/shared/src/i18n/__tests__/continue-visual-3-locales.test.ts",
+        "packages/shared/src/i18n/__tests__/finish-visual-locales.test.ts",
+        "packages/shared/src/i18n/__tests__/locale-parity.test.ts",
+        "packages/shared/src/i18n/__tests__/locale-registry.test.ts",
+        "packages/shared/src/i18n/__tests__/security-settings-locales.test.ts"
+      ],
+      "log_name": "review-i18n-tests-final.log",
+      "log_sha256": "a179e95c11572fa81bd72a0279a7505be8338e03d256f4ba34e277b0787c6c7c"
+    }
+  ],
+  "per_file_results": {
+    "apps/electron/src/main/device-diagnostics-collector.test.ts": {
+      "passed": 11,
+      "failed": 0
+    },
+    "apps/electron/src/main/device-diagnostics-ipc.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/actions/__tests__/action-labels-i18n.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/actions/__tests__/keybinding-context.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/actions/__tests__/panel-focus-actions.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/atoms/__tests__/browser-pane.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/atoms/__tests__/collection-filters.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/atoms/__tests__/header-status.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/atoms/__tests__/panel-stack-knowledge.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/atoms/__tests__/panel-workspace.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/atoms/__tests__/sessions.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/ChatDisplay.follow-ups.test.ts": {
+      "passed": 13,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/account-menu-presentation.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/accounts-settings-presentation.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/background-task-chip-state.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/chat-display-branching.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/chat-scroll.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/compact-session-list-filter.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/compact-workspace-navigation.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/connections-nav.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/edit-file-i18n.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/error-message-actions.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/extension-origin-permissions-presentation.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/header-status-presence.test.tsx": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/home-nav.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/invite-bro-chrome.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-browser-i18n.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/main-content-panel-bulk.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/meetings-nav.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/memory-proposal-card.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/new-session-filter-inheritance.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/notes-canonical-navigation.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/notes-local-entrypoints.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/premium-menu-chrome-hygiene.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/profile-strip-presentation.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/quest-progress-card.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/resize-math.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/service-navigation.test.ts": {
+      "passed": 13,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/session-list-families.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/session-row-click.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/sidebar-chrome-accessibility.test.tsx": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/sidebar-dashboard.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/sidebar-disclosure.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/sources-list-groups.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/tasks-nav.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/toolchain-status-banner.test.ts": {
+      "passed": 16,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/topbar-shortcuts.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/transfer-targets.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/voice-composer.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/workspace-rail.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-disclosure.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-layout-commit.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-native-browser.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-roles.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-shell-splitter.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar-safe-area.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/zen-topbar.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/bulk-input.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-accessibility.test.tsx": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-bulk-bar-chrome.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-bulk-optimistic.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-dialog-keyboard.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-display-density.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-filter-chips-i18n.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-filter-count.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-map-reduce.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-premium-menu.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-rail-filters.test.ts": {
+      "passed": 11,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-slices.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-view-cycle.test.ts": {
+      "passed": 12,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/collection/__tests__/collection-viewport-chrome.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/diagnostics/diagnostics-model.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/diagnostics/diagnostics-poller.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/chat-chrome-h2.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/focus-input-events.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/input-event-guards.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/model-picker-helpers.test.ts": {
+      "passed": 20,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/picker-mode.test.ts": {
+      "passed": 12,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/prompt-history.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/structured-height.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/turn-progress.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/use-working-directory-state.test.ts": {
+      "passed": 14,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/voice-dictation-state.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/working-directory-history.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/calendar/__tests__/calendar-status-strip.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/settings/__tests__/settings-accessibility.test.tsx": {
+      "passed": 19,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/settings/__tests__/settings-menu-navigation.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/components/settings/__tests__/settings-select-i18n.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/contextual-suggestions.test.ts": {
+      "passed": 13,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/native-surface-dom.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/native-surface-owners.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/native-surface-visibility.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/nav-helpers.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/panel-workspace-layout.test.ts": {
+      "passed": 12,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/pausable-deadline.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/lib/__tests__/shell-layout-preferences.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/__tests__/catalog-detail-routes.test.tsx": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/__tests__/tasks-page.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/capture-rpc.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/conation-panels.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/finalize-rpc.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/import-rpc.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/manual-rpc.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/proposal-inbox-rpc.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/proposal-rpc-handler.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/proposal-rpc.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/request-state.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/search-rpc-handler.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/meetings/__tests__/start-rpc.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/comment-highlights.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/document-ia-bang-i18n.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/document-ia.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/note-ai.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/note-views.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/notes-accessibility.test.tsx": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/notes-focus-state.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/notes-playground-i18n.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/notes-request-state.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/notes-toast-i18n.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/notes-views-wiring.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/notes-workspace-layout.test.ts": {
+      "passed": 12,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/notes/__tests__/wiki-autocomplete.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/AccountSettingsPage.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/AccountsSettingsPage.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/AppSettingsPage.environment.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/AppearanceSettingsPage.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/CloudRunsSettingsPage.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/CredentialMigrationCard.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/InputSettingsPage.voice.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/MessagingSettingsPage.test.ts": {
+      "passed": 17,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/OrganizationsSettingsPage.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/PrivacySettingsPage.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/SecretRefsSection.test.tsx": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/SecuritySettingsPage.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/SecuritySnake.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/agent-teams-harness.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-identity.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/capability-ledger.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/extension-center-h4.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/extensions-defaultvalue-i18n.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/labels-ask-and-views.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/leftover-041-052-i18n.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/marketplace-select.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/messaging-defaultvalue-i18n.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/organization-member-identity.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/organization-team-spaces.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/preferences-identity.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-031-settings-hub.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-041-043-settings-pages.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-044-046-settings-pages.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-047-049-settings-pages.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-050-052-settings-pages.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-053-055-settings-pages.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-056-058-settings-pages.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-059-061-settings-pages.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/rox2-062-shortcuts-settings-page.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/security-validation.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/session-apply-consumer.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/session-import-h5.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/settings-chrome-p35.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/settings-command-center-presentation.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/voice-overlay.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/workbench-chrome-harness.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/tasks/__tests__/catalog-presentation.test.tsx": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/pages/tasks/__tests__/presentation.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/browser-surface-v2.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/chrome-density.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/chrome-hygiene.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/connection-inspector-model.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/core-panels-h1.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/core-panels.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/home-model.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/inspector-host-connections.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/inspector-host-h1.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/inspector-model.test.ts": {
+      "passed": 15,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/inspector-resize-accessibility.test.tsx": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/knowledge-tab-titles.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/layout-snapshot.test.ts": {
+      "passed": 16,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/mini-dashboard.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/modes-seed.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/omnibox-chrome-i18n.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/omnibox-conation.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/omnibox-helpers.test.ts": {
+      "passed": 13,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/omnibox-logic.test.ts": {
+      "passed": 14,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/omnibox-providers-i18n.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/omnibox-providers.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/os-browser-tabs.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/panel-host-wiring.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/panel-registry-state.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/plugin-command-id.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/promo-slot.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/ship-rox-notes-canvas-map.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/status-model.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/surface-tab-model.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/surface-tab-navigation.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/tab-groups.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/terminal-surface.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/terminal-xterm.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/viewport-band.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/workbench-chrome.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/workbench-leftover-chrome.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "apps/electron/src/renderer/platform/__tests__/workbench-rollout.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "packages/core/src/calendar/calendar.test.ts": {
+      "passed": 22,
+      "failed": 0
+    },
+    "packages/core/src/rox2/__tests__/meeting-conation-shell.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packages/core/src/rox2/__tests__/platform-contract.test.ts": {
+      "passed": 191,
+      "failed": 0
+    },
+    "packages/pi-agent-server/src/custom-endpoint-models.test.ts": {
+      "passed": 13,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/meetings-conation-shells.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/onboarding.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-142-144-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-148-150-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-151-153-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-154-156-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-157-159-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-160-162-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-163-165-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-166-168-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-169-171-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-172-174-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-175-177-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-178-180-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-181-183-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-184-186-rpc-actions.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-187-190-rpc-actions.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/rox2-191-cloud-runs-native.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/__tests__/workspace-guards.isolated.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/handlers/rpc/memory-proposals.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/approve-execute.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/budgets.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/capture.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/catalog.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/executor.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/finalize.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/followup.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/import-intent.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/import.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/journal.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/manual.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/native-actions.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/note-persist.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/operation-journal.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/packaging.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/proposal-journal.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/proposals.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/queries.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/release-gate.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/rooms.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/security.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/sharing-retention.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/__tests__/tracker-actions.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/board-fund.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/calendar-calls.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/capabilities.test.ts": {
+      "passed": 11,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/crm.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/files.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/mail-channels.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/native-shells.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/notes-projects.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packages/server-core/src/meetings/conation/__tests__/sync.test.ts": {
+      "passed": 8,
+      "failed": 0
+    },
+    "packages/shared/src/agent/__tests__/context-budget.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "packages/shared/src/config/theme-vibrancy.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "packages/shared/src/i18n/__tests__/continue-visual-3-locales.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "packages/shared/src/i18n/__tests__/finish-visual-locales.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "packages/shared/src/i18n/__tests__/locale-parity.test.ts": {
+      "passed": 57,
+      "failed": 0
+    },
+    "packages/shared/src/i18n/__tests__/locale-registry.test.ts": {
+      "passed": 52,
+      "failed": 0
+    },
+    "packages/shared/src/i18n/__tests__/security-settings-locales.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/artifacts.test.ts": {
+      "passed": 2,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/assist.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/bootstrap.test.ts": {
+      "passed": 5,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/extraction.test.ts": {
+      "passed": 7,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/knowledge.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/policies.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/recipes.test.ts": {
+      "passed": 6,
+      "failed": 0
+    },
+    "packages/shared/src/meeting-agents/__tests__/router.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/shared/src/voice/__tests__/meeting-stream.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/shared/src/voice/__tests__/transcript-reducer.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/shared/src/voice/__tests__/voice-evidence.test.ts": {
+      "passed": 9,
+      "failed": 0
+    },
+    "packages/shared/src/voice/__tests__/voice-policy.test.ts": {
+      "passed": 14,
+      "failed": 0
+    },
+    "packages/shared/src/voice/__tests__/voice-v2.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "packages/shared/src/workflows/__tests__/canvas-spec.test.ts": {
+      "passed": 10,
+      "failed": 0
+    },
+    "packages/ui/src/components/markdown/__tests__/markdown-link-routing.test.ts": {
+      "passed": 21,
+      "failed": 0
+    },
+    "packages/ui/src/components/markdown/__tests__/sourced-statement.test.tsx": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/ui/src/components/ui/__tests__/styled-dropdown.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "packages/ui/src/styles/__tests__/font-roles.test.ts": {
+      "passed": 1,
+      "failed": 0
+    },
+    "packages/ui/src/styles/__tests__/rox-tokens.test.ts": {
+      "passed": 3,
+      "failed": 0
+    },
+    "packages/ui/src/styles/__tests__/zen-shell-tokens.test.ts": {
+      "passed": 4,
+      "failed": 0
+    },
+    "plans/rox2/__tests__/rox2-192-200-leftover-honesty.test.ts": {
+      "passed": 9,
+      "failed": 0
+    }
+  },
+  "limitations": [
+    "Unit, SSR, wiring and handler fixtures are not visual or native acceptance.",
+    "This is a selected regression set, not every repository test.",
+    "Synthetic performance budgets do not measure renderer GPU, frame time or real device CPU."
+  ]
+}

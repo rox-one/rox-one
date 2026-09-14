@@ -26,12 +26,12 @@ describe('assembleContextShares', () => {
     })
 
     const byKind = Object.fromEntries(shares.map((share) => [share.kind, share]))
-    expect(byKind.system.chars).toBe(systemPrompt.length)
-    expect(byKind.skills.chars).toBe(skillBodies.join('').length)
-    expect(byKind.mcp.chars).toBe(mcpToolSchemas.join('').length)
-    expect(byKind.transcript.chars).toBe('Please inspect the repo.Looking at AGENTS.md and the inspector slot.'.length)
-    expect(byKind.attachments.chars).toBe(attachments[0]!.text!.length)
-    expect(byKind.system.tokens).toBe(estimateTokensFromChars(systemPrompt.length))
+    expect(byKind.system?.chars).toBe(systemPrompt.length)
+    expect(byKind.skills?.chars).toBe(skillBodies.join('').length)
+    expect(byKind.mcp?.chars).toBe(mcpToolSchemas.join('').length)
+    expect(byKind.transcript?.chars).toBe('Please inspect the repo.Looking at AGENTS.md and the inspector slot.'.length)
+    expect(byKind.attachments?.chars).toBe(attachments[0]!.text!.length)
+    expect(byKind.system?.tokens).toBe(estimateTokensFromChars(systemPrompt.length))
     expect(shares.reduce((sum, share) => sum + share.percent, 0)).toBeCloseTo(100, 5)
     expect(shares.map((share) => share.kind)).toEqual([
       'system',

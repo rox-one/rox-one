@@ -11,6 +11,12 @@ import {
   type SecurityDomain,
   type SecurityFinding,
 } from '@craft-agent/shared/openclaw'
+import {
+  isClaimableLive,
+  rpcOpenclawActResult,
+  rpcOpenclawListResult,
+  rpcOpenclawReadResult,
+} from '@craft-agent/core/rox2'
 import type { RpcServer, RequestContext } from '../../transport/types'
 import type {
   HandlerDeps,
@@ -375,6 +381,8 @@ function projectSnapshot(
  */
 export function registerOpenClawHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.openclawRuntime.GET_STATUS, async (context, rawInput: unknown) => {
+    const listed = rpcOpenclawListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new CodedError('PROVIDER_ERROR', 'openclaw status is not live')
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
     const service = requireService(deps)
     const result = await callService(() => service.getRuntimeStatus(input))
@@ -383,6 +391,8 @@ export function registerOpenClawHandlers(server: RpcServer, deps: HandlerDeps): 
 
   server.handle(RPC_CHANNELS.openclawRuntime.INSTALL, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
+    const act = rpcOpenclawActResult({ source: 'native', action: 'write', nativeId: input.workspaceId })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'openclaw install is not live')
     const service = requireService(deps)
     const result = await callService(() => service.installRuntime(input))
     return projectRuntimeStatus(result, input.workspaceId)
@@ -390,6 +400,8 @@ export function registerOpenClawHandlers(server: RpcServer, deps: HandlerDeps): 
 
   server.handle(RPC_CHANNELS.openclawRuntime.PROVISION, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
+    const act = rpcOpenclawActResult({ source: 'native', action: 'write', nativeId: input.workspaceId })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'openclaw provision is not live')
     const service = requireService(deps)
     const result = await callService(() => service.provisionRuntime(input))
     return projectRuntimeStatus(result, input.workspaceId)
@@ -397,6 +409,8 @@ export function registerOpenClawHandlers(server: RpcServer, deps: HandlerDeps): 
 
   server.handle(RPC_CHANNELS.openclawRuntime.START, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
+    const act = rpcOpenclawActResult({ source: 'native', action: 'write', nativeId: input.workspaceId })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'openclaw start is not live')
     const service = requireService(deps)
     const result = await callService(() => service.startRuntime(input))
     return projectRuntimeStatus(result, input.workspaceId)
@@ -404,6 +418,13 @@ export function registerOpenClawHandlers(server: RpcServer, deps: HandlerDeps): 
 
   server.handle(RPC_CHANNELS.openclawRuntime.STOP, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
+    const act = rpcOpenclawActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: input.workspaceId,
+    })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'openclaw stop is not live')
     const service = requireService(deps)
     const result = await callService(() => service.stopRuntime(input))
     return projectRuntimeStatus(result, input.workspaceId)
@@ -411,6 +432,8 @@ export function registerOpenClawHandlers(server: RpcServer, deps: HandlerDeps): 
 
   server.handle(RPC_CHANNELS.securityAudit.RUN, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseAuditInput(rawInput))
+    const act = rpcOpenclawActResult({ source: 'native', action: 'write', nativeId: input.workspaceId })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'openclaw audit is not live')
     const service = requireService(deps)
     const result = await callService(() => service.runAudit(input))
     return projectSnapshot(result, input.workspaceId, input.mode)
@@ -420,17 +443,32 @@ export function registerOpenClawHandlers(server: RpcServer, deps: HandlerDeps): 
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
     const service = requireService(deps)
     const result = await callService(() => service.getLatestAudit(input))
-    return result === null ? null : projectSnapshot(result, input.workspaceId)
+    if (result === null) {
+      rpcOpenclawReadResult({ source: 'native' })
+      return null
+    }
+    const read = rpcOpenclawReadResult({ source: 'native', nativeId: result.id })
+    if (!isClaimableLive(read.result)) return null
+    return projectSnapshot(result, input.workspaceId)
   })
 
   server.handle(RPC_CHANNELS.securityAudit.ACCEPT_RISK, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseAcceptRiskInput(rawInput))
+    const act = rpcOpenclawActResult({ source: 'native', action: 'write', nativeId: input.fingerprint })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'openclaw accept risk is not live')
     const service = requireService(deps)
     await callService(() => service.acceptRisk(input))
   })
 
   server.handle(RPC_CHANNELS.securityAudit.REVOKE_RISK_ACCEPTANCE, async (context, rawInput: unknown) => {
     const input = authorizeWorkspace(context, deps, parseRevokeRiskInput(rawInput))
+    const act = rpcOpenclawActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: input.fingerprint,
+    })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'openclaw revoke risk is not live')
     const service = requireService(deps)
     await callService(() => service.revokeRiskAcceptance(input))
   })

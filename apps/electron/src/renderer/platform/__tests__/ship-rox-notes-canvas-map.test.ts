@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { createInstance } from 'i18next'
+import { I18nextProvider } from 'react-i18next'
 import { createPanelRegistry } from '@craft-agent/core/platform'
+import { defaultNoteEntityCapabilities } from '../../components/app-shell/EntityViewTabs'
+import { NotesViewMenu } from '../../pages/notes/NotesWorkspaceChrome'
 import {
   CONATION_BOARD_PANEL_ID,
   registerBoardPanel,
@@ -19,6 +25,7 @@ const readRendererSource = (path: string): string =>
 const notesNavigationSource = readRendererSource('components/app-shell/nav-destinations.ts')
 const entityViewTabsSource = readRendererSource('components/app-shell/EntityViewTabs.tsx')
 const notesPageSource = readRendererSource('pages/NotesPage.tsx')
+const notesWorkspaceChromeSource = readRendererSource('pages/notes/NotesWorkspaceChrome.tsx')
 const knowledgeEntityPageSource = readRendererSource('pages/KnowledgeEntityPage.tsx')
 const chatPageSource = readRendererSource('pages/ChatPage.tsx')
 const appShellSource = readRendererSource('components/app-shell/AppShell.tsx')
@@ -38,17 +45,46 @@ describe('ship-rox Notes, Canvas, and Map wiring', () => {
     expect(notesPageSource).toContain('window.electronAPI.saveNote')
   })
 
-  it('mounts existing note and session Map surfaces through EntityViewTabs', () => {
+  it('connects the compact note view menu and existing session tabs to real Map/Canvas surfaces', () => {
     expect(entityViewTabsSource).toContain("id: 'map'")
-    expect(notesPageSource).toMatch(
-      /<EntityViewTabs[\s\S]{0,5000}map[\s\S]{0,5000}<MindMapHost/,
-    )
+    expect(notesPageSource).toContain('defaultNoteEntityCapabilities()')
+    expect(notesPageSource).toMatch(/<NotesViewMenu\s+value=\{noteView\}\s+onChange=\{setNoteView\}\s+capabilities=\{noteViewCapabilities\}/)
+    expect(notesWorkspaceChromeSource).toContain('capabilities.filter((capability) => capability.available)')
+    expect(notesWorkspaceChromeSource).toContain('onSelect={() => onChange(id)}')
+    expect(notesPageSource).toMatch(/noteView === 'map'\s*\?\s*\(\s*<MindMapHost/)
+    expect(notesPageSource).toMatch(/noteView === 'canvas'[\s\S]{0,150}<NotesViewHost\s+view=\{noteView\}/)
     expect(knowledgeEntityPageSource).toMatch(
       /view === 'map'[\s\S]{0,2000}<MindMapHost/,
     )
     expect(chatPageSource).toMatch(
       /view === 'map'[\s\S]*<SessionWorkflowEditor/,
     )
+  })
+
+  it('keeps Map and Canvas selectable and announces their names in compact note controls', async () => {
+    const capabilities = defaultNoteEntityCapabilities()
+    const i18n = createInstance()
+    await i18n.init({
+      lng: 'en', fallbackLng: 'en',
+      resources: { en: { translation: {
+        'entityView.tabsLabel': 'View', 'entityView.map': 'Map', 'entityView.canvas': 'Canvas',
+      } } },
+    })
+    for (const value of ['map', 'canvas'] as const) {
+      expect(capabilities.find((capability) => capability.id === value)?.available).toBe(true)
+      const html = renderToStaticMarkup(createElement(I18nextProvider, { i18n },
+        createElement(NotesViewMenu, { value, capabilities, compact: true, onChange: () => {} }),
+      ))
+      const trigger = html.match(/<button\b[^>]*>/)?.[0]
+      expect(trigger).toBeDefined()
+      expect(trigger).toContain('aria-haspopup="menu"')
+      expect(trigger).toContain('aria-expanded="false"')
+      expect(trigger).not.toContain('disabled=""')
+      // Other shell suites use a global key-returning translation mock.
+      const expectedName = value === 'map' ? /aria-label="(?:View: Map|entityView.tabsLabel: entityView.map)"/
+        : /aria-label="(?:View: Canvas|entityView.tabsLabel: entityView.canvas)"/
+      expect(trigger).toMatch(expectedName)
+    }
   })
 
   it('opens the focused session Map from a dedicated TopBar affordance', () => {

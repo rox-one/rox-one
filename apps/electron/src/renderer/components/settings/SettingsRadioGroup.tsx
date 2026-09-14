@@ -6,15 +6,17 @@
  */
 
 import * as React from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
+import { motion, AnimatePresence, useIsPresent, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+import { useSettingsFieldDescription } from './SettingsFieldContext'
 
 // ============================================
 // Context
 // ============================================
 
 interface RadioGroupContextValue {
+  name: string
   value: string
   onValueChange: (value: string) => void
 }
@@ -38,6 +40,8 @@ export interface SettingsRadioGroupProps<T extends string = string> {
   children: React.ReactNode
   /** Additional className */
   className?: string
+  'aria-label'?: string
+  'aria-labelledby'?: string
 }
 
 /**
@@ -54,25 +58,33 @@ export function SettingsRadioGroup<T extends string = string>({
   onValueChange,
   children,
   className,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }: SettingsRadioGroupProps<T>) {
   const childArray = React.Children.toArray(children).filter(Boolean)
+  const name = React.useId()
+  const field = useSettingsFieldDescription()
 
   return (
     <RadioGroupContext.Provider
       value={{
+        name,
         value,
         onValueChange: onValueChange as (value: string) => void,
       }}
     >
       <div
         role="radiogroup"
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabelledBy ?? (ariaLabel ? undefined : field.labelId)}
+        aria-describedby={field.descriptionId}
         className={cn(
           settingsUI.card,
           className
         )}
       >
         {childArray.map((child, index) => (
-          <React.Fragment key={index}>
+          <React.Fragment key={React.isValidElement(child) ? child.key : index}>
             {index > 0 && <div className="h-px bg-border-subtle mx-[var(--settings-row-x)]" />}
             {child}
           </React.Fragment>
@@ -136,10 +148,8 @@ export function SettingsRadioCard({
   inCard,
 }: SettingsRadioCardProps) {
   const context = useRadioGroupContext()
-  const reduceMotion = useReducedMotion()
   // Support both context-based and standalone usage
   const isSelected = context ? context.value === value : (selected ?? false)
-  const handleClick = context ? () => context.onValueChange(value) : onClick
   const id = React.useId()
 
   // Apply card styling only in standalone mode and not inside a SettingsCard
@@ -155,21 +165,30 @@ export function SettingsRadioCard({
         className
       )}
     >
-      <button
-        type="button"
-        role="radio"
-        id={id}
-        aria-checked={isSelected}
-        disabled={disabled}
-        onClick={() => !disabled && handleClick?.()}
+      <label
         className={cn(
           settingsUI.rowPadding,
-          'min-h-[44px] w-full text-left flex items-start gap-3',
+          'relative min-h-[44px] w-full text-left flex items-start gap-3',
+          'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-focus',
           !disabled && 'cursor-pointer'
         )}
       >
+        <input
+          id={id}
+          type="radio"
+          name={context?.name ?? id}
+          value={value}
+          checked={isSelected}
+          disabled={disabled}
+          onChange={() => context?.onValueChange(value)}
+          onClick={context ? undefined : onClick}
+          aria-labelledby={`${id}-label`}
+          aria-describedby={description ? `${id}-description` : undefined}
+          className="sr-only"
+        />
         {/* Radio circle */}
         <div
+          aria-hidden="true"
           className={cn(
             'w-4 h-4 rounded-full border-[1.5px] mt-[3px] shrink-0',
             'grid place-items-center transition-colors',
@@ -186,37 +205,47 @@ export function SettingsRadioCard({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className={settingsUI.label}>{label}</span>
+            <span id={`${id}-label`} className={settingsUI.label}>{label}</span>
             {badge}
           </div>
           {description && (
-            <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>
+            <div id={`${id}-description`} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>
               {description}
             </div>
           )}
         </div>
 
         {/* Right icon */}
-        {icon && <div className="shrink-0 ml-2">{icon}</div>}
-      </button>
+        {icon && <div aria-hidden="true" className="shrink-0 ml-2">{icon}</div>}
+      </label>
 
       {/* Expanded content */}
       <AnimatePresence initial={false}>
         {isSelected && expandedContent && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
-            className="overflow-hidden"
-          >
-            <div className="px-[var(--settings-row-x)] pb-[var(--settings-row-y)] pt-0">
-              <div className="pl-[30px]">{expandedContent}</div>
-            </div>
-          </motion.div>
+          <ExpandedRadioContent>{expandedContent}</ExpandedRadioContent>
         )}
       </AnimatePresence>
     </div>
+  )
+}
+
+function ExpandedRadioContent({ children }: { children: React.ReactNode }) {
+  const isPresent = useIsPresent()
+  const reduceMotion = useReducedMotion()
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
+      aria-hidden={!isPresent || undefined}
+      {...(!isPresent ? { inert: '' } : {})}
+      className="overflow-hidden"
+    >
+      <div className="px-[var(--settings-row-x)] pb-[var(--settings-row-y)] pt-0">
+        <div className="pl-[30px]">{children}</div>
+      </div>
+    </motion.div>
   )
 }
 
@@ -258,24 +287,32 @@ export function SettingsRadioOption({
   const id = React.useId()
 
   return (
-    <button
-      type="button"
-      role="radio"
-      id={id}
-      aria-checked={isSelected}
-      disabled={disabled}
-      onClick={() => !disabled && onValueChange(value)}
+    <label
       className={cn(
         settingsUI.rowPadding,
-        'min-h-[44px] w-full text-left flex items-center gap-3',
+        'relative min-h-[44px] w-full text-left flex items-center gap-3',
+        'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-focus',
         settingsUI.interactive,
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'cursor-pointer',
         className
       )}
     >
+      <input
+        id={id}
+        type="radio"
+        name={context.name}
+        value={value}
+        checked={isSelected}
+        disabled={disabled}
+        onChange={() => onValueChange(value)}
+        aria-labelledby={`${id}-label`}
+        aria-describedby={description ? `${id}-description` : undefined}
+        className="sr-only"
+      />
       {/* Radio circle */}
       <div
+        aria-hidden="true"
         className={cn(
           'w-4 h-4 rounded-full border-[1.5px] shrink-0',
           'grid place-items-center transition-colors',
@@ -291,13 +328,13 @@ export function SettingsRadioOption({
 
       {/* Label */}
       <div className="flex-1 min-w-0 flex items-center">
-        <span className="text-sm">{label}</span>
+        <span id={`${id}-label`} className="text-sm">{label}</span>
         {description && (
-          <span className="text-sm text-muted-foreground ml-1.5">
+          <span id={`${id}-description`} className="text-sm text-muted-foreground ml-1.5">
             · {description}
           </span>
         )}
       </div>
-    </button>
+    </label>
   )
 }

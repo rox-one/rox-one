@@ -24,6 +24,12 @@ import type { HandlerDeps } from '../handler-deps'
 import { isValidWorkingDirectory, isValidWorkspaceRootPath, resolveContainedRelativePath } from '../../utils/path-validation'
 import { isSensitiveAgentCwd } from '@craft-agent/shared/sessions'
 import type { RemoteServerConfig, Workspace } from '@craft-agent/core/types'
+import {
+  isClaimableLive,
+  rpcWorkspaceActResult,
+  rpcWorkspaceListResult,
+  rpcWorkspaceReadResult,
+} from '@craft-agent/core/rox2'
 
 export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.workspaces.GET,
@@ -85,6 +91,8 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Get workspaces (LOCAL_ONLY — includes rootPath for local Electron renderer)
   server.handle(RPC_CHANNELS.workspaces.GET, async () => {
+    const listed = rpcWorkspaceListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     return sessionManager.getWorkspaces()
   })
 
@@ -99,6 +107,8 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
       remoteServer?: RemoteServerConfig,
       authority?: WorkspaceAuthorityInput,
     ) => {
+      const act = rpcWorkspaceActResult({ source: 'native', action: 'write', nativeId: name || 'workspace' })
+      if (!isClaimableLive(act)) throw new Error('workspace create is not live')
       const rootPath = typeof folderPath === 'string' ? folderPath.trim() : ''
       const trimmedName = typeof name === 'string' ? name.trim() : ''
       const validation = isValidWorkspaceRootPath(rootPath)
@@ -168,6 +178,8 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Update remote server config for an existing workspace (reconnect flow)
   server.handle(RPC_CHANNELS.workspaces.UPDATE_REMOTE, async (_ctx, workspaceId: string, remoteServer: RemoteServerConfig) => {
+    const act = rpcWorkspaceActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+    if (!isClaimableLive(act)) throw new Error('workspace remote update is not live')
     updateWorkspaceRemoteServer(workspaceId, remoteServer)
     deps.platform.logger.info(`Updated remote server for workspace ${workspaceId}: ${remoteServer.url}`)
     return { success: true }
@@ -266,6 +278,8 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Generic workspace image loading (for source icons, status icons, etc.)
   server.handle(RPC_CHANNELS.workspace.READ_IMAGE, async (_ctx, workspaceId: string, relativePath: string) => {
+    const read = rpcWorkspaceReadResult({ source: 'native', nativeId: relativePath })
+    if (!isClaimableLive(read.result)) return null
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 

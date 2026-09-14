@@ -39,7 +39,7 @@ export function SettingsCard({ children, className, divided = true }: SettingsCa
     >
       {divided && childArray.length > 1
         ? childArray.map((child, index) => (
-            <React.Fragment key={index}>
+            <React.Fragment key={React.isValidElement(child) ? child.key : index}>
               {index > 0 && <div className="h-px bg-border-subtle mx-[var(--settings-row-x)]" />}
               {child}
             </React.Fragment>

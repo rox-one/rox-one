@@ -8,6 +8,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+import { useSettingsFieldDescription } from './SettingsFieldContext'
 
 export interface SettingsSegmentedOption<T extends string = string> {
   /** Value for this option */
@@ -16,6 +17,7 @@ export interface SettingsSegmentedOption<T extends string = string> {
   label: string
   /** Optional icon */
   icon?: React.ReactNode
+  disabled?: boolean
 }
 
 export interface SettingsSegmentedControlProps<T extends string = string> {
@@ -29,6 +31,8 @@ export interface SettingsSegmentedControlProps<T extends string = string> {
   size?: 'sm' | 'md'
   /** Additional className */
   className?: string
+  'aria-label'?: string
+  'aria-labelledby'?: string
 }
 
 /**
@@ -51,33 +55,48 @@ export function SettingsSegmentedControl<T extends string = string>({
   options,
   size = 'md',
   className,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }: SettingsSegmentedControlProps<T>) {
+  const groupName = React.useId()
+  const field = useSettingsFieldDescription()
   return (
     <div
       role="radiogroup"
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy ?? (ariaLabel ? undefined : field.labelId)}
+      aria-describedby={field.descriptionId}
       className={cn('inline-flex flex-wrap gap-0.5 rounded-md bg-surface-input p-0.5', className)}
     >
       {options.map((option) => {
         const isSelected = option.value === value
 
         return (
-          <button
+          <label
             key={option.value}
-            type="button"
             data-slot="button"
-            role="radio"
-            aria-checked={isSelected}
-            onClick={() => onValueChange(option.value)}
             className={cn(
-              'flex items-center gap-1.5 rounded-[5px] transition-colors duration-[var(--motion-fast)]',
+              'relative flex min-w-0 items-center gap-1.5 rounded-[5px] transition-colors duration-[var(--motion-fast)]',
+              'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-focus has-[:focus-visible]:ring-offset-1',
+              option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
               size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm',
               isSelected
                 ? 'bg-surface-elevated shadow-minimal'
                 : 'bg-transparent hover:bg-surface-hover'
             )}
           >
+            <input
+              type="radio"
+              name={groupName}
+              value={option.value}
+              checked={isSelected}
+              disabled={option.disabled}
+              onChange={() => onValueChange(option.value)}
+              className="sr-only"
+            />
             {option.icon && (
               <span
+                aria-hidden="true"
                 className={cn(
                   'w-4 h-4',
                   isSelected ? 'text-foreground' : 'text-muted-foreground'
@@ -93,7 +112,7 @@ export function SettingsSegmentedControl<T extends string = string>({
             >
               {option.label}
             </span>
-          </button>
+          </label>
         )
       })}
     </div>
@@ -109,6 +128,7 @@ export interface SettingsSegmentedCardOption<T extends string = string> {
   value: T
   label: string
   icon?: React.ReactNode
+  disabled?: boolean
 }
 
 export interface SettingsSegmentedControlCardProps<T extends string = string> {
@@ -118,6 +138,8 @@ export interface SettingsSegmentedControlCardProps<T extends string = string> {
   /** Number of columns */
   columns?: 2 | 3 | 4
   className?: string
+  'aria-label'?: string
+  'aria-labelledby'?: string
 }
 
 export function SettingsSegmentedControlCard<T extends string = string>({
@@ -126,10 +148,17 @@ export function SettingsSegmentedControlCard<T extends string = string>({
   options,
   columns = 3,
   className,
+  'aria-label': ariaLabel,
+  'aria-labelledby': ariaLabelledBy,
 }: SettingsSegmentedControlCardProps<T>) {
+  const groupName = React.useId()
+  const field = useSettingsFieldDescription()
   return (
     <div
       role="radiogroup"
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy ?? (ariaLabel ? undefined : field.labelId)}
+      aria-describedby={field.descriptionId}
       className={cn(
         'grid gap-2',
         columns === 2 && 'grid-cols-2',
@@ -142,21 +171,29 @@ export function SettingsSegmentedControlCard<T extends string = string>({
         const isSelected = option.value === value
 
         return (
-          <button
+          <label
             key={option.value}
-            type="button"
             data-slot="button"
-            role="radio"
-            aria-checked={isSelected}
-            onClick={() => onValueChange(option.value)}
             className={cn(
-              'flex items-center gap-2 px-3 py-2.5 rounded-md text-left shadow-minimal',
+              'relative flex min-w-0 items-center gap-2 px-3 py-2.5 rounded-md text-left shadow-minimal',
+              'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-inset has-[:focus-visible]:ring-focus',
+              option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
               settingsUI.interactive,
               isSelected ? 'bg-surface-selected' : 'bg-surface-input'
             )}
           >
+            <input
+              type="radio"
+              name={groupName}
+              value={option.value}
+              checked={isSelected}
+              disabled={option.disabled}
+              onChange={() => onValueChange(option.value)}
+              className="sr-only"
+            />
             {/* Radio indicator */}
             <div
+              aria-hidden="true"
               className={cn(
                 'w-[16px] h-[16px] rounded-full border-2 shrink-0',
                 'flex items-center justify-center transition-colors',
@@ -175,9 +212,9 @@ export function SettingsSegmentedControlCard<T extends string = string>({
 
             {/* Icon on right */}
             {option.icon && (
-              <span className="ml-auto shrink-0">{option.icon}</span>
+              <span aria-hidden="true" className="ml-auto shrink-0">{option.icon}</span>
             )}
-          </button>
+          </label>
         )
       })}
     </div>

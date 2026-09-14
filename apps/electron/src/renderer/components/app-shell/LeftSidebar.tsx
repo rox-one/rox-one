@@ -570,8 +570,11 @@ interface SidebarButtonProps {
 // and pass props like data-state="open" directly onto this button element.
 const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & React.ButtonHTMLAttributes<HTMLButtonElement>>(
   ({ link, itemProps, isOverlay, groupDisclosure, sectionId, toggleRef, onGroupToggle, groupAriaLabel, className: extraClassName, ...radixProps }, forwardedRef) => {
+    // Empty buckets remain navigable, without repeating a column of zeroes.
+    const badge = link.label === '0' ? undefined : link.label
     return (
       <button
+        type="button"
         {...(isOverlay ? {} : (() => {
           // Separate ref from itemProps so we can merge it with forwardedRef
           const { ref: _itemRef, ...rest } = itemProps || { ref: undefined }
@@ -628,15 +631,15 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
           <span
             className={cn(
               'h-1.5 w-1.5 shrink-0 rounded-full bg-accent',
-              !link.afterTitle && !link.label && 'ml-auto'
+              !link.afterTitle && !badge && 'ml-auto'
             )}
             aria-hidden
           />
         )}
-        {/* Label Badge: count/status always visible (muted) */}
-        {link.label && (
-          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'text-xs text-foreground/30 opacity-100')}>
-            {link.label}
+        {/* Useful counts and nonnumeric status labels keep a stable right edge. */}
+        {badge && (
+          <span data-touch-reveal="true" className={cn(link.afterTitle || link.hasUnseen ? 'ml-0' : 'ml-auto', 'shrink-0 text-xs tabular-nums text-muted-foreground opacity-100')}>
+            {badge}
           </span>
         )}
       </button>

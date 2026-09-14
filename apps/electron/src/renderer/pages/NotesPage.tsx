@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, SquarePen, Trash2 } from 'lucide-react'
+import { AlertCircle, Check, ListTree, Loader2, MessageSquare, MoreHorizontal, PanelLeft, PanelRight, SlidersHorizontal, Tag, CalendarDays, ChevronDown, ChevronLeft, ChevronRight, Copy, ExternalLink, FileDown, FilePlus2, FileText, Folder, FolderInput, FolderOpen, FolderPlus, Link2, Paperclip, Pencil, Plus, Search, SquarePen, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
@@ -29,11 +29,13 @@ import { ContextMenu, ContextMenuTrigger, StyledContextMenuContent, StyledContex
 import { NoteInspector } from './notes/NoteInspector'
 import type { NoteTask } from './notes/NoteInspector'
 import { NotesAIMenu } from './notes/NotesAIMenu'
+import { NotesResponsiveRail, NotesViewMenu, useNotesPanelWidth } from './notes/NotesWorkspaceChrome'
+import { maximumNotesRailWidth, visibleNotesRails, type NotesRail } from './notes/notes-layout'
+import { DropdownMenu, DropdownMenuTrigger, StyledDropdownMenuContent, StyledDropdownMenuItem, StyledDropdownMenuSeparator } from '@/components/ui/styled-dropdown'
 import type { AIActionMode } from './notes/NotesAIMenu'
 import { NotesDialogs } from './notes/NotesDialogs'
 import {
   defaultNoteEntityCapabilities,
-  EntityViewTabs,
   useEntityView,
 } from '@/components/app-shell/EntityViewTabs'
 import { MindMapHost } from '@/mindmap/MindMapHost'
@@ -66,7 +68,9 @@ import {
   TWO_COLUMN_SNIPPET,
   upsertMarkdownComment,
 } from './notes/document-ia'
-import { selectionComposerOffset } from './notes/comment-highlights'
+import { selectedNoteQuote, selectionComposerOffset } from './notes/comment-highlights'
+import { EMPTY_COMMENT_DRAFT, noteCommentDraftKey, updateCommentDraft, type NoteCommentDraft } from './notes/comment-drafts'
+import { NotesRequestTracker, noteSaveAcknowledgesCurrentDraft } from './notes/request-state'
 import { NOTES_AI_MODEL, NOTES_AI_PROMPTS_STORAGE_KEY, parseNotesAiPrompts, resolveNotesAiInstruction } from './notes/note-ai'
 import { NOTES_SURFACE_ID, bindNativeNote } from './notes-rox2-surface'
 import {
@@ -412,9 +416,11 @@ function FolderTreeItem({
         {(isOver) => (
           <ContextMenu>
             <ContextMenuTrigger asChild>
-              <div
+              <button
+                type="button"
+                aria-expanded={!isCollapsed}
                 className={cn(
-                  'mb-0.5 flex h-7 cursor-pointer items-center gap-1 rounded-[5px] pr-2 text-sm font-medium text-muted-foreground hover:bg-foreground/[0.04]',
+                  'mb-0.5 flex h-7 w-full cursor-pointer items-center gap-1 rounded-[5px] pr-2 text-sm font-medium text-muted-foreground hover:bg-foreground/[0.04]',
                   isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]'
                 )}
                 style={{ paddingLeft: `${8 + indent}px` }}
@@ -432,7 +438,7 @@ function FolderTreeItem({
                 <span className="text-xs text-muted-foreground/50 tabular-nums">
                   {countFolderNotes(node)}
                 </span>
-              </div>
+              </button>
             </ContextMenuTrigger>
             <StyledContextMenuContent>
               <StyledContextMenuItem onClick={() => onOpenCreateNoteDialog(node.fullPath)}>
@@ -595,9 +601,15 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const [content, setContent] = React.useState('')
   const [query, setQuery] = React.useState('')
   const [selectedTag, setSelectedTag] = React.useState<string | null>(null)
-  const [commentDraftQuote, setCommentDraftQuote] = React.useState('')
+  const [commentDrafts, setCommentDrafts] = React.useState<ReadonlyMap<string, NoteCommentDraft>>(() => new Map())
+  const commentDraftKey = noteCommentDraftKey(activeWorkspaceId ?? null, activeNote?.id ?? null)
+  const commentDraft = (commentDraftKey ? commentDrafts.get(commentDraftKey) : null) ?? EMPTY_COMMENT_DRAFT
+  const commentDraftQuote = commentDraft.quote
+  const commentComposerBody = commentDraft.body
+  const setCommentDraftQuote = React.useCallback((quote: string) => setCommentDrafts((drafts) => updateCommentDraft(drafts, commentDraftKey, { quote })), [commentDraftKey])
+  const setCommentComposerBody = React.useCallback((body: string) => setCommentDrafts((drafts) => updateCommentDraft(drafts, commentDraftKey, { body })), [commentDraftKey])
   const [commentComposerTop, setCommentComposerTop] = React.useState(48)
-  const [commentComposerBody, setCommentComposerBody] = React.useState('')
+  const [focusCommentComposer, setFocusCommentComposer] = React.useState(false)
   const [commentTooltip, setCommentTooltip] = React.useState<{ body: string; quote: string; top: number; left: number } | null>(null)
   const [footnoteDraft, setFootnoteDraft] = React.useState('')
   const [indexHealth, setIndexHealth] = React.useState<NoteIndexHealth>(EMPTY_NOTE_INDEX_HEALTH)
@@ -647,6 +659,12 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     catch { return true }
   })
   const [railLayout, setRailLayout] = useNotesRailLayout()
+  const [shellRef, shellWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const [panelRef, panelWidth] = useNotesPanelWidth<HTMLDivElement>()
+  const editorContainerRef = React.useRef<HTMLDivElement>(null)
+  const railMenuRef = React.useRef<HTMLButtonElement>(null)
+  const [sheet, setSheet] = React.useState<NotesRail | null>(null)
+  const [inspectorSheetOpen, setInspectorSheetOpen] = React.useState(false)
   const [foldedHeadingIds, setFoldedHeadingIds] = React.useState<string[]>([])
   const [commandQuery, setCommandQuery] = React.useState<string | null>(null)
   const [commandIndex, setCommandIndex] = React.useState(0)
@@ -655,12 +673,30 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const taskCacheRef = React.useRef<Map<string, NoteTask[]>>(new Map())
   const dirtyRef = React.useRef(dirty)
   const contentRef = React.useRef(content)
+  const workspaceIdRef = React.useRef(activeWorkspaceId)
+  const selectedNoteIdRef = React.useRef(selectedNoteId)
+  const requestsRef = React.useRef(new NotesRequestTracker())
+  workspaceIdRef.current = activeWorkspaceId
+  selectedNoteIdRef.current = selectedNoteId
+  requestsRef.current.setScope(activeWorkspaceId ?? null)
   const noteViewCapabilities = React.useMemo(() => defaultNoteEntityCapabilities(), [])
   const [noteView, setNoteView] = useEntityView(
     activeNote ? `note:${activeNote.id}` : 'note:none',
     noteViewCapabilities,
     'standard',
   )
+  const inlineRails = visibleNotesRails(railLayout, panelWidth, noteView === 'standard')
+  const toolbarWidth = panelWidth - (inlineRails.vault ? railLayout.vault : 0)
+  const inlineAuxiliary = shellWidth >= 1100
+  const showRail = React.useCallback((rail: NotesRail) => {
+    if (inlineRails[rail]) {
+      setRailLayout({ [`${rail}Collapsed`]: true })
+      return
+    }
+    const next = { ...railLayout, [`${rail}Collapsed`]: false }
+    if (visibleNotesRails(next, panelWidth, noteView === 'standard')[rail]) setRailLayout(next)
+    else setSheet(rail)
+  }, [inlineRails, railLayout, panelWidth, noteView, setRailLayout])
   const noteMindMapGraph = React.useMemo((): MindMapGraph | null => {
     if (!activeNote) return null
     if (noteView !== 'map') return null
@@ -678,15 +714,41 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
   const richEditorRef = React.useRef<TiptapEditorHandle | null>(null)
   const dndSensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }))
 
-  React.useEffect(() => { dirtyRef.current = dirty }, [dirty])
-  React.useEffect(() => { contentRef.current = content }, [content])
-  React.useEffect(() => { activeNoteIdRef.current = activeNote?.id ?? null }, [activeNote?.id])
+  dirtyRef.current = dirty
+  contentRef.current = content
+  activeNoteIdRef.current = activeNote?.id ?? null
+
+  React.useEffect(() => () => requestsRef.current.cancelAll(), [])
+  React.useLayoutEffect(() => {
+    setNotes([])
+    setSidebarOrder([])
+    setSearchResults(null)
+    setActiveNote(null)
+    setContent('')
+    setDirty(false)
+    setSaveError(null)
+    setSaving(false)
+    setAllAssets([])
+    setAllTasks([])
+    setIndexHealth(EMPTY_NOTE_INDEX_HEALTH)
+    setIndexRebuilding(false)
+    taskCacheRef.current.clear()
+    setSheet(null)
+    setInspectorSheetOpen(false)
+  }, [activeWorkspaceId])
+
+  React.useEffect(() => {
+    setCommentTooltip(null)
+    setFocusCommentComposer(false)
+    setWikiQuery(null)
+    setCommandQuery(null)
+  }, [activeWorkspaceId, activeNote?.id])
 
   const toggleFolder = React.useCallback((folder: string) => {
     setCollapsedFolders(prev => {
       const next = new Set(prev)
       next.has(folder) ? next.delete(folder) : next.add(folder)
-      localStorage.setItem('notes:collapsed-folders', JSON.stringify([...next]))
+      try { localStorage.setItem('notes:collapsed-folders', JSON.stringify([...next])) } catch { /* Session preference still applies. */ }
       return next
     })
   }, [])
@@ -695,7 +757,10 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     if (!activeWorkspaceId) return
     const listed = soupDocumentListResult({ source: 'native' })
     if (!isClaimableLive(listed.result)) return
+    const request = requestsRef.current.begin('catalog', activeWorkspaceId)
+    if (!request.isCurrent()) return
     const next = await window.electronAPI.listNotes(activeWorkspaceId)
+    if (!request.isCurrent()) return
     setNotes(next)
     setSidebarOrder(next.map(n => n.id))
   }, [activeWorkspaceId])
@@ -705,23 +770,30 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setIndexHealth(EMPTY_NOTE_INDEX_HEALTH)
       return
     }
+    const request = requestsRef.current.begin('health', activeWorkspaceId)
+    if (!request.isCurrent()) return
     try {
-      setIndexHealth(await window.electronAPI.getNoteIndexHealth(activeWorkspaceId))
+      const next = await window.electronAPI.getNoteIndexHealth(activeWorkspaceId)
+      if (request.isCurrent()) setIndexHealth(next)
     } catch {
-      setIndexHealth(EMPTY_NOTE_INDEX_HEALTH)
+      if (request.isCurrent()) setIndexHealth(EMPTY_NOTE_INDEX_HEALTH)
     }
   }, [activeWorkspaceId])
 
   const rebuildIndex = React.useCallback(async () => {
     if (!activeWorkspaceId) return
+    const request = requestsRef.current.begin('rebuild', activeWorkspaceId)
+    if (!request.isCurrent()) return
     setIndexRebuilding(true)
     try {
-      setIndexHealth(await window.electronAPI.rebuildNoteIndex(activeWorkspaceId))
+      const health = await window.electronAPI.rebuildNoteIndex(activeWorkspaceId)
+      if (!request.isCurrent()) return
+      setIndexHealth(health)
       await refreshNotes()
     } catch {
-      await refreshIndexHealth()
+      if (request.isCurrent()) await refreshIndexHealth()
     } finally {
-      setIndexRebuilding(false)
+      if (request.isCurrent()) setIndexRebuilding(false)
     }
   }, [activeWorkspaceId, refreshNotes, refreshIndexHealth])
 
@@ -730,8 +802,10 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setAllAssets([])
       return
     }
+    const request = requestsRef.current.begin('assets', activeWorkspaceId)
+    if (!request.isCurrent()) return
     const next = await window.electronAPI.listNoteAssets(activeWorkspaceId)
-    setAllAssets(next)
+    if (request.isCurrent()) setAllAssets(next)
   }, [activeWorkspaceId])
 
   const refreshTasks = React.useCallback(async (sourceNotes?: NoteSummary[]) => {
@@ -740,6 +814,8 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       taskCacheRef.current.clear()
       return
     }
+    const request = requestsRef.current.begin('tasks', activeWorkspaceId)
+    if (!request.isCurrent()) return
     const baseNotes = sourceNotes ?? notes
     const currentIds = new Set(baseNotes.map(n => n.id))
     for (const id of taskCacheRef.current.keys()) {
@@ -749,6 +825,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     const results = await Promise.allSettled(
       toFetch.map(note => window.electronAPI.readNote(activeWorkspaceId, note.id))
     )
+    if (!request.isCurrent()) return
     for (const result of results) {
       if (result.status === 'fulfilled') {
         taskCacheRef.current.set(result.value.id, extractTasks(result.value, result.value.content))
@@ -757,13 +834,27 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     setAllTasks([...taskCacheRef.current.values()].flat())
   }, [activeWorkspaceId, notes])
 
-  const openNote = React.useCallback(async (noteId: string) => {
+  const openNote = React.useCallback(async (noteId: string, discardDraft = false) => {
     if (!activeWorkspaceId) return
     const read = soupDocumentReadResult({ source: 'native', nativeId: noteId })
     if (!isClaimableLive(read.result)) return
+    const previousContent = contentRef.current
+    const refreshingCurrentNote = activeNoteIdRef.current === noteId
+    if (refreshingCurrentNote && dirtyRef.current && !discardDraft) return
+    const request = requestsRef.current.begin('document', activeWorkspaceId)
+    if (!request.isCurrent()) return
+    if (!refreshingCurrentNote) {
+      setActiveNote(null)
+      setContent('')
+      setDirty(false)
+      setSaving(false)
+    }
     setLoading(true)
     try {
       const note = await window.electronAPI.readNote(activeWorkspaceId, noteId)
+      if (!request.isCurrent() || selectedNoteIdRef.current !== noteId) return
+      // A disk refresh started before typing must not replace that newer edit.
+      if (refreshingCurrentNote && contentRef.current !== previousContent) return
       setActiveNote(note)
       setContent(note.content)
       setDirty(false)
@@ -771,12 +862,13 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       setExternalChange(null)
       setTagDraft(note.tags.join(', '))
     } catch (error) {
+      if (!request.isCurrent() || selectedNoteIdRef.current !== noteId) return
       toast.error(error instanceof Error ? error.message : t('notes.toast.openFailed'))
       setActiveNote(null)
       setContent('')
       setDirty(false)
     } finally {
-      setLoading(false)
+      if (request.isCurrent()) setLoading(false)
     }
   }, [activeWorkspaceId, t])
 
@@ -788,7 +880,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       duration: 8000,
       action: {
         label: t('notes.toast.reload'),
-        onClick: () => { setExternalChange(null); if (noteId) void openNote(noteId) },
+        onClick: () => { setExternalChange(null); if (noteId) void openNote(noteId, true) },
       },
       onDismiss: () => { setExternalChange(null) },
       onAutoClose: () => { setExternalChange(null) },
@@ -840,6 +932,8 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
       openNote(selectedNoteId)
       return
     }
+    requestsRef.current.cancel('document')
+    setLoading(false)
     setActiveNote(null)
     setContent('')
     setDirty(false)
@@ -851,7 +945,7 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     void refreshTasks(notes)
     // Only re-run when the set of note IDs changes, not on every content/metadata update.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [noteIds])
+  }, [activeWorkspaceId, noteIds])
 
   const saveCurrentNote = React.useCallback(async (): Promise<boolean> => {
     if (!activeWorkspaceId || !activeNote) return true
@@ -861,30 +955,35 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     }
     const noteId = activeNote.id
     const currentContent = contentRef.current
+    const stillActive = () => workspaceIdRef.current === activeWorkspaceId && activeNoteIdRef.current === noteId
     const queued = saveQueueRef.current.then(async () => {
-      setSaving(true)
-      setSaveError(null)
+      if (stillActive()) { setSaving(true); setSaveError(null) }
       try {
         const act = soupDocumentActResult({ source: 'native', action: 'write', nativeId: noteId })
         if (!isClaimableLive(act)) return false
         const saved = await window.electronAPI.saveNote(activeWorkspaceId, noteId, currentContent)
-        if (activeNoteIdRef.current === noteId) {
+        const acknowledged = noteSaveAcknowledgesCurrentDraft(
+          { workspaceId: activeWorkspaceId, noteId, content: currentContent },
+          { workspaceId: workspaceIdRef.current ?? null, noteId: activeNoteIdRef.current, content: contentRef.current },
+        )
+        if (acknowledged) {
           setActiveNote(saved)
           setDirty(false)
           setTagDraft(saved.tags.join(', '))
         }
         // Optimistically update sidebar — no refreshNotes() round-trip needed
-        setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
-        taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
-        setAllTasks([...taskCacheRef.current.values()].flat())
-        return true
+        if (workspaceIdRef.current === activeWorkspaceId) {
+          setNotes(prev => prev.map(n => n.id === saved.id ? saved : n))
+          taskCacheRef.current.set(saved.id, extractTasks(saved, saved.content))
+          setAllTasks([...taskCacheRef.current.values()].flat())
+        }
+        return acknowledged
       } catch (error) {
         const message = error instanceof Error ? error.message : t('notes.toast.saveFailed')
-        setSaveError(message)
-        toast.error(message)
+        if (stillActive()) { setSaveError(message); toast.error(message) }
         return false
       } finally {
-        setSaving(false)
+        if (stillActive()) setSaving(false)
       }
     }).catch((): boolean => false)
     saveQueueRef.current = queued
@@ -906,26 +1005,29 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     return () => {
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current)
     }
-  }, [activeWorkspaceId, activeNote, dirty, saveCurrentNote])
+  }, [activeWorkspaceId, activeNote, content, dirty, saveCurrentNote])
 
   React.useEffect(() => {
-    if (!activeWorkspaceId) return
+    if (!activeWorkspaceId) { setSearchResults(null); return }
     const q = query.trim()
     if (!q) {
       setSearchResults(null)
       return
     }
 
+    let cancelled = false
+    setSearchResults(null)
     const timer = window.setTimeout(async () => {
       try {
         const results = await window.electronAPI.searchNotes(activeWorkspaceId, q)
-        setSearchResults(results)
+        if (!cancelled) setSearchResults(results)
       } catch (error) {
+        if (cancelled) return
         toast.error(error instanceof Error ? error.message : t('notes.toast.searchFailed'))
       }
     }, 180)
 
-    return () => window.clearTimeout(timer)
+    return () => { cancelled = true; window.clearTimeout(timer) }
   }, [activeWorkspaceId, query, t])
 
   React.useEffect(() => {
@@ -1067,8 +1169,12 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
 
   const openRenameDialogForNote = async (note: NoteSummary) => {
     if (!activeWorkspaceId) return
+    const request = requestsRef.current.begin('document', activeWorkspaceId)
+    const previousSelection = selectedNoteIdRef.current
     if (!await flushBeforeAction()) return
+    if (!request.isCurrent() || selectedNoteIdRef.current !== previousSelection) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
+    if (!request.isCurrent() || selectedNoteIdRef.current !== previousSelection) return
     setActiveNote(document)
     setContent(document.content)
     setDirty(false)
@@ -1076,18 +1182,24 @@ export default function NotesPage({ selectedNoteId }: NotesPageProps) {
     setRenameTitle(document.title)
     setRenameImpact(null)
     setRenameDialogOpen(true)
+    setLoading(false)
     navigate(routes.view.notes(document.id))
   }
 
   const openDeleteDialogForNote = async (note: NoteSummary) => {
     if (!activeWorkspaceId) return
+    const request = requestsRef.current.begin('document', activeWorkspaceId)
+    const previousSelection = selectedNoteIdRef.current
     if (!await flushBeforeAction()) return
+    if (!request.isCurrent() || selectedNoteIdRef.current !== previousSelection) return
     const document = await window.electronAPI.readNote(activeWorkspaceId, note.id)
+    if (!request.isCurrent() || selectedNoteIdRef.current !== previousSelection) return
     setActiveNote(document)
     setContent(document.content)
     setDirty(false)
     setTagDraft(document.tags.join(', '))
     setDeleteDialogOpen(true)
+    setLoading(false)
     navigate(routes.view.notes(document.id))
   }
 
@@ -1670,12 +1782,13 @@ h1,h2,h3{margin-top:1.5em}
   }
 
   const toggleInspector = React.useCallback(() => {
+    if (!inlineAuxiliary) { setInspectorSheetOpen((open) => !open); return }
     setInspectorCollapsed(prev => {
       const next = !prev
-      localStorage.setItem('notes:inspector-collapsed', JSON.stringify(next))
+      try { localStorage.setItem('notes:inspector-collapsed', JSON.stringify(next)) } catch { /* Session preference still applies. */ }
       return next
     })
-  }, [])
+  }, [inlineAuxiliary])
 
   const handleRichEditorReady = React.useCallback((editor: TiptapEditorHandle | null) => {
     richEditorRef.current = editor
@@ -1784,59 +1897,42 @@ h1,h2,h3{margin-top:1.5em}
   return (
     <>
     <NotesEditorHeadlineStyles />
-    <div className="flex h-full min-w-0 bg-background">
+    <div ref={shellRef} className="flex h-full min-w-0 overflow-hidden bg-background">
+      <div ref={panelRef} className="flex min-w-0 flex-1">
+      <NotesResponsiveRail inline={inlineRails.vault} open={sheet === 'vault'} title={t('notes.breadcrumb.vault')} onClose={() => setSheet(null)} returnFocus={railMenuRef}>
       <aside
         className="shrink-0 border-r border-border/60 flex flex-col min-h-0 bg-muted/[0.16]"
-        style={{ width: railLayout.vaultCollapsed ? 0 : railLayout.vault }}
-        hidden={railLayout.vaultCollapsed}
+        style={{ width: railLayout.vault }}
         data-testid="notes-vault-rail"
       >
-        <div className="shrink-0 px-3 py-2 border-b border-border/60">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <div className="shrink-0 border-b border-border-subtle p-2">
+          <div className="flex min-w-0 items-center gap-1">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-text-muted" aria-hidden="true" />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder={t('notes.search.placeholder')}
-                className="h-7 w-full rounded-[6px] border border-border/60 bg-background pl-7 pr-2 text-xs outline-none focus:border-foreground/30"
+                aria-label={t('notes.search.placeholder')}
+                className="h-7 w-full rounded-[6px] border border-border-subtle bg-background pl-7 pr-2 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </div>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')}>
-              <CalendarDays className="h-4 w-4" />
-            </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')}>
-              <FolderPlus className="h-4 w-4" />
-            </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')}>
-              <FilePlus2 className="h-4 w-4" />
-            </button>
+            {allTags.length > 0 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button type="button" className={cn('rox-control shrink-0', selectedTag && 'bg-accent/10 text-accent')} title={selectedTag ? `#${selectedTag}` : t('notes.inspector.tags')} aria-label={t('notes.views.filterTags')}>
+                    <Tag className="size-3.5" aria-hidden="true" />
+                  </button>
+                </DropdownMenuTrigger>
+                <StyledDropdownMenuContent align="start" className="max-h-72 w-48 overflow-y-auto">
+                  <StyledDropdownMenuItem onSelect={() => setSelectedTag(null)} role="menuitemradio" aria-checked={!selectedTag}><span className="flex-1">{t('notes.layout.allNotes')}</span>{!selectedTag ? <Check className="size-3.5" /> : null}</StyledDropdownMenuItem>
+                  {allTags.map((tag) => <StyledDropdownMenuItem key={tag} onSelect={() => setSelectedTag(selectedTag === tag ? null : tag)} role="menuitemradio" aria-checked={selectedTag === tag}><span className="min-w-0 flex-1 truncate">#{tag}</span>{selectedTag === tag ? <Check className="size-3.5" /> : null}</StyledDropdownMenuItem>)}
+                </StyledDropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+            <button type="button" className="rox-control shrink-0" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')} aria-label={t('notes.toolbar.newNote')}><Plus className="size-3.5" aria-hidden="true" /></button>
           </div>
-          {allTags.length > 0 && (
-            <div className="mt-2 max-h-36 overflow-y-auto rounded-[6px] border border-border/50 bg-background/60 p-1">
-              <button
-                className={cn(
-                  'flex w-full items-center rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
-                  !selectedTag && 'bg-foreground/[0.08]'
-                )}
-                onClick={() => setSelectedTag(null)}
-              >
-                All
-              </button>
-              {allTags.map(tag => (
-                <button
-                  key={tag}
-                  className={cn(
-                    'flex w-full items-center rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
-                    selectedTag === tag && 'bg-foreground/[0.08]'
-                  )}
-                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                >
-                  #{tag}
-                </button>
-              ))}
-            </div>
-          )}
+          {selectedTag ? <button type="button" onClick={() => setSelectedTag(null)} className="rox-control mt-1 flex max-w-full gap-1 px-1.5 text-[11px] text-text-secondary" aria-label={t('notes.layout.clearTag', { tag: selectedTag })}><Tag className="size-3 shrink-0" aria-hidden="true" /><span className="truncate">#{selectedTag}</span><span aria-hidden="true">×</span></button> : null}
         </div>
         <DndContext sensors={dndSensors} onDragEnd={handleSidebarDragEnd}>
         <div className="flex-1 min-h-0 overflow-y-auto p-2">
@@ -1849,7 +1945,7 @@ h1,h2,h3{margin-top:1.5em}
                     <ContextMenu>
                       <ContextMenuTrigger asChild>
                         <button
-                          onClick={() => handleOpenNote(note.id)}
+                          onClick={() => { void handleOpenNote(note.id); setSheet(null) }}
                           style={{ contentVisibility: 'auto', containIntrinsicSize: '0 44px' }}
                           className={cn(
                             'mb-0.5 w-full rounded-[6px] px-2.5 py-1.5 text-left hover:bg-foreground/[0.05]',
@@ -1872,7 +1968,7 @@ h1,h2,h3{margin-top:1.5em}
                         </button>
                       </ContextMenuTrigger>
                       <StyledContextMenuContent>
-                        <StyledContextMenuItem onClick={() => handleOpenNote(note.id)}>
+                        <StyledContextMenuItem onClick={() => { void handleOpenNote(note.id); setSheet(null) }}>
                           <FileText className="h-3.5 w-3.5" />
                           {t('common.open')}
                         </StyledContextMenuItem>
@@ -1925,7 +2021,7 @@ h1,h2,h3{margin-top:1.5em}
                   activeNoteId={activeNote?.id}
                   collapsedFolders={collapsedFolders}
                   onToggleFolder={toggleFolder}
-                  onOpenNote={handleOpenNote}
+                  onOpenNote={(noteId) => { void handleOpenNote(noteId); setSheet(null) }}
                   onOpenCreateNoteDialog={openCreateNoteDialog}
                   onOpenRenameFolder={openRenameFolderDialog}
                   onOpenDeleteFolder={openDeleteFolderDialog}
@@ -1950,69 +2046,68 @@ h1,h2,h3{margin-top:1.5em}
           {t('notes.vault.noteCount', { count: notes.length })} · {t('notes.vault.assetCount', { count: allAssets.length })}
         </div>
       </aside>
-      <NotesRailSash
+      </NotesResponsiveRail>
+      {inlineRails.vault ? <NotesRailSash
         width={railLayout.vault}
-        onWidth={(vault) => setRailLayout({ vault })}
+        maximumWidth={maximumNotesRailWidth('vault', railLayout, panelWidth, inlineRails)}
+        onWidth={(vault) => setRailLayout({ vault: Math.min(vault, maximumNotesRailWidth('vault', railLayout, panelWidth, inlineRails)) })}
         collapsed={railLayout.vaultCollapsed}
         onToggle={() => setRailLayout({ vaultCollapsed: !railLayout.vaultCollapsed })}
         label={t('notes.layout.resizeVault')}
-      />
+      /> : null}
 
       <main className="flex-1 min-w-0 flex flex-col">
-        <div className="h-[42px] shrink-0 border-b border-border/60 px-3 flex items-center gap-2">
-          <div className="min-w-0 flex-1 flex items-center gap-2">
+        <div className="flex min-h-10 shrink-0 items-center gap-1 border-b border-border-subtle px-2" data-testid="notes-document-toolbar">
+          <button ref={railMenuRef} type="button" className="rox-control shrink-0" onClick={() => showRail('vault')} aria-label={t('notes.breadcrumb.vault')} title={t('notes.breadcrumb.vault')} aria-expanded={inlineRails.vault || sheet === 'vault'}>
+            <PanelLeft className="size-3.5" aria-hidden="true" />
+          </button>
+          <div className="min-w-0 flex-1">
             {activeNote ? (
-              <NotesBreadcrumbs noteId={activeNote.id} title={activeNote.title} onOpenFolder={(folder) => setQuery(folder ?? '')} />
-            ) : (
-              <div className="truncate text-sm font-medium">{t('notes.header.title')}</div>
-            )}
-            {activeNote && <div className="shrink-0 text-[11px] text-muted-foreground/60">{activeNoteStats}</div>}
+              <NotesBreadcrumbs noteId={activeNote.id} title={activeNote.title} onOpenFolder={(folder) => { setQuery(folder ?? ''); if (!inlineRails.vault) showRail('vault') }} />
+            ) : <div className="truncate px-1 text-[13px] font-medium">{t('notes.header.title')}</div>}
           </div>
-          {dailyDate && (
-            <div className="mr-1 flex items-center gap-1">
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <span className="text-xs text-muted-foreground">{dailyDate}</span>
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          )}
-          <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
-          <button
-            className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
-            onClick={() => void handleBoundChat()}
-            disabled={!activeNote}
-            title={t('notes.sideSession.newChat')}
-            data-testid="notes-bound-chat"
-          >
-            <SquarePen className="h-4 w-4" />
-          </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title={t('notes.toolbar.attachAsset')}>
-            <Paperclip className="h-4 w-4" />
-          </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
-            <FileDown className="h-4 w-4" />
-          </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
-            <Trash2 className="h-4 w-4" />
-          </button>
-          <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>
-            {saveError ? t('notes.save.failed') : saving ? t('common.saving') : dirty ? t('notes.save.autosaving') : activeNote ? t('notes.save.saved') : ''}
-          </span>
+          {activeNote ? <NotesViewMenu value={noteView} onChange={setNoteView} capabilities={noteViewCapabilities} compact={toolbarWidth < 560} /> : null}
+          {activeNote ? (
+            <span className={cn('flex shrink-0 items-center gap-1.5 px-1 text-[11px]', saveError ? 'text-destructive' : 'text-text-muted')} role="status" aria-live="polite" title={saveError || t('notes.save.autosaveHint')}>
+              {saveError ? <AlertCircle className="size-3.5" aria-hidden="true" /> : saving || dirty ? <Loader2 className="size-3.5 motion-safe:animate-spin" aria-hidden="true" /> : <Check className="size-3.5" aria-hidden="true" />}
+              <span className={toolbarWidth < 640 ? 'sr-only' : ''}>{saveError ? t('notes.save.failed') : saving ? t('common.saving') : dirty ? t('notes.save.autosaving') : t('notes.save.saved')}</span>
+            </span>
+          ) : null}
+          <NotesAIMenu compact activeNote={activeNote} onAction={handleAskAgent} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="rox-control shrink-0" aria-label={t('notes.layout.tools')} title={t('notes.layout.tools')}><SlidersHorizontal className="size-3.5" aria-hidden="true" /></button>
+            </DropdownMenuTrigger>
+            <StyledDropdownMenuContent align="end" className="w-52">
+              <StyledDropdownMenuItem onSelect={() => showRail('vault')} role="menuitemcheckbox" aria-checked={inlineRails.vault || sheet === 'vault'}><PanelLeft className="size-3.5" /><span className="flex-1">{t('notes.breadcrumb.vault')}</span>{inlineRails.vault ? <Check className="size-3.5" /> : null}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem disabled={!activeNote || noteView !== 'standard'} onSelect={() => showRail('toc')} role="menuitemcheckbox" aria-checked={inlineRails.toc || sheet === 'toc'}><ListTree className="size-3.5" /><span className="flex-1">{t('notes.toc.title')}</span>{inlineRails.toc ? <Check className="size-3.5" /> : null}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem disabled={!activeNote || noteView !== 'standard'} onSelect={() => showRail('comments')} role="menuitemcheckbox" aria-checked={inlineRails.comments || sheet === 'comments'}><MessageSquare className="size-3.5" /><span className="flex-1">{t('notes.comments.title')}</span>{inlineRails.comments ? <Check className="size-3.5" /> : null}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem onSelect={toggleInspector} role="menuitemcheckbox" aria-checked={inlineAuxiliary ? !inspectorCollapsed : inspectorSheetOpen}><PanelRight className="size-3.5" /><span className="flex-1">{t('notes.inspector.title')}</span>{(inlineAuxiliary ? !inspectorCollapsed : inspectorSheetOpen) ? <Check className="size-3.5" /> : null}</StyledDropdownMenuItem>
+            </StyledDropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type="button" className="rox-control shrink-0" aria-label={t('common.more')} title={t('common.more')}><MoreHorizontal className="size-3.5" aria-hidden="true" /></button>
+            </DropdownMenuTrigger>
+            <StyledDropdownMenuContent align="end" className="w-56">
+              {activeNoteStats ? <div className="px-2 py-1.5 text-[11px] text-text-muted">{activeNoteStats}</div> : null}
+              <StyledDropdownMenuItem onSelect={() => openCreateNoteDialog()}><FilePlus2 className="size-3.5" />{t('notes.toolbar.newNote')}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem onSelect={() => setCreateFolderDialogOpen(true)}><FolderPlus className="size-3.5" />{t('notes.toolbar.newFolder')}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem onSelect={() => handleDaily()}><CalendarDays className="size-3.5" />{t('notes.toolbar.daily')}</StyledDropdownMenuItem>
+              {dailyDate ? <>
+                <StyledDropdownMenuItem onSelect={() => handleDailyShift(-1)}><ChevronLeft className="size-3.5" />{t('notes.toolbar.previousDaily')}</StyledDropdownMenuItem>
+                <StyledDropdownMenuItem onSelect={() => handleDailyShift(1)}><ChevronRight className="size-3.5" />{t('notes.toolbar.nextDaily')}</StyledDropdownMenuItem>
+              </> : null}
+              <StyledDropdownMenuSeparator />
+              <StyledDropdownMenuItem disabled={!activeNote} onSelect={() => void handleBoundChat()} data-testid="notes-bound-chat"><SquarePen className="size-3.5" />{t('notes.sideSession.newChat')}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem disabled={!activeNote} onSelect={handleImportAsset}><Paperclip className="size-3.5" />{t('notes.toolbar.attachAsset')}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem disabled={!activeNote} onSelect={handleExportPdf}><FileDown className="size-3.5" />{t('notes.toolbar.exportPdf')}</StyledDropdownMenuItem>
+              <StyledDropdownMenuItem disabled={!activeNote} onSelect={openRenameDialog}><Pencil className="size-3.5" />{t('notes.toolbar.rename')}</StyledDropdownMenuItem>
+              <StyledDropdownMenuSeparator />
+              <StyledDropdownMenuItem disabled={!activeNote} onSelect={() => setDeleteDialogOpen(true)} className="text-destructive"><Trash2 className="size-3.5" />{t('notes.toolbar.delete')}</StyledDropdownMenuItem>
+            </StyledDropdownMenuContent>
+          </DropdownMenu>
         </div>
-
-        {activeNote ? (
-          <EntityViewTabs
-            value={noteView}
-            onChange={setNoteView}
-            capabilities={noteViewCapabilities}
-          />
-        ) : null}
 
         <div className="relative flex-1 min-h-0">
           {!activeNote ? (
@@ -2020,10 +2115,10 @@ h1,h2,h3{margin-top:1.5em}
               {loading ? (
                 <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
               ) : (
-                <div className="w-[360px] max-w-[calc(100%-48px)] rounded-[8px] border border-border/60 bg-muted/[0.16] p-4 text-center">
+                <div className="w-[360px] max-w-[calc(100%-24px)] rounded-[8px] border border-border/60 bg-muted/[0.16] p-4 text-center">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>
                   <div className="mt-1 text-xs text-muted-foreground">{t('notes.empty.noNoteHint')}</div>
-                  <div className="mt-3 flex justify-center gap-2">
+                  <div className="mt-3 flex flex-wrap justify-center gap-2">
                     <Button variant="outline" size="sm" onClick={() => handleDaily()}>
                       <CalendarDays className="h-3.5 w-3.5" />
                       {t('notes.toolbar.daily')}
@@ -2037,7 +2132,8 @@ h1,h2,h3{margin-top:1.5em}
                 </div>
               )}
             </div>
-          ) : noteView === 'map' ? (
+          ) : (<>
+          {noteView === 'map' ? (
             <MindMapHost
               entity={{ type: 'note', noteId: activeNote.id }}
               graph={noteMindMapGraph}
@@ -2071,9 +2167,9 @@ h1,h2,h3{margin-top:1.5em}
                 else toast.success(t('notes.views.convertTaskDone'))
               }}
             />
-          ) : (
-            <div className="flex h-full min-h-0">
-            {!railLayout.tocCollapsed ? (
+          ) : null}
+            <div className="flex h-full min-h-0" style={noteView === 'standard' ? undefined : { display: 'none' }} aria-hidden={noteView !== 'standard' || undefined} ref={(element) => element?.toggleAttribute('inert', noteView !== 'standard')} data-testid="notes-retained-editor">
+            <NotesResponsiveRail inline={inlineRails.toc} open={sheet === 'toc'} title={t('notes.toc.title')} onClose={() => setSheet(null)} returnFocus={railMenuRef}>
             <NotesToc
               markdown={content}
               width={railLayout.toc}
@@ -2084,31 +2180,34 @@ h1,h2,h3{margin-top:1.5em}
                   ? foldedHeadingIds.filter((item) => item !== id)
                   : [...foldedHeadingIds, id]
                 setFoldedHeadingIds(next)
-                localStorage.setItem(notesFoldStorageKey(activeNote.id), serializePersistedFolds(next))
+                try { localStorage.setItem(notesFoldStorageKey(activeNote.id), serializePersistedFolds(next)) } catch { /* Markdown still persists the folds. */ }
                 setContent(applyPersistentFolds(content, next))
                 setDirty(true)
               }}
               onJump={(text) => {
-                const root = document.querySelector('.notes-editor .ProseMirror')
+                setSheet(null)
+                const root = editorContainerRef.current?.querySelector('.ProseMirror')
                 if (!root) return
                 const heading = Array.from(root.querySelectorAll('h1,h2,h3,h4,h5,h6')).find(
                   (node) => node.textContent?.trim() === text,
                 )
-                heading?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                heading?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
               }}
             />
-            ) : null}
-            <NotesRailSash
+            </NotesResponsiveRail>
+            {inlineRails.toc ? <NotesRailSash
               width={railLayout.toc}
-              onWidth={(toc) => setRailLayout({ toc })}
+              maximumWidth={maximumNotesRailWidth('toc', railLayout, panelWidth, inlineRails)}
+              onWidth={(toc) => setRailLayout({ toc: Math.min(toc, maximumNotesRailWidth('toc', railLayout, panelWidth, inlineRails)) })}
               collapsed={railLayout.tocCollapsed}
               onToggle={() => setRailLayout({ tocCollapsed: !railLayout.tocCollapsed })}
               label={t('notes.layout.resizeToc')}
-            />
+            /> : null}
             <div
-              className="notes-editor relative h-full min-w-0 flex-1 overflow-y-auto px-8 py-6"
+              ref={editorContainerRef}
+              className={cn('notes-editor relative h-full min-w-0 flex-1 overflow-y-auto py-5', panelWidth < 640 ? 'px-4' : 'px-6')}
               onMouseUp={(event) => {
-                const quote = window.getSelection()?.toString().trim() ?? ''
+                const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
                 if (!quote) return
                 setCommentDraftQuote(quote)
                 setCommentTooltip(null)
@@ -2116,12 +2215,15 @@ h1,h2,h3{margin-top:1.5em}
                 const range = window.getSelection()?.rangeCount ? window.getSelection()!.getRangeAt(0).getBoundingClientRect() : null
                 setCommentComposerTop(selectionComposerOffset(range?.top ?? editor.top + 48, editor.top, editor.height))
               }}
-              onDoubleClick={() => {
-                const quote = window.getSelection()?.toString().trim() ?? ''
+              onDoubleClick={(event) => {
+                if ((event.target as HTMLElement).closest('[data-testid="notes-comments-compose"]')) return
+                const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
                 if (quote) setCommentDraftQuote(quote)
-                setRailLayout({ commentsCollapsed: false })
+                if (quote) setFocusCommentComposer(true)
+                if (!inlineRails.comments) showRail('comments')
               }}
               onKeyDownCapture={(event) => {
+                if ((event.target as HTMLElement).closest('[data-testid="notes-comments-compose"]')) return
                 if ((event.metaKey || event.ctrlKey) && event.shiftKey && event.key === '-') {
                   event.preventDefault()
                   richEditorRef.current?.chain().focus().setHorizontalRule().run()
@@ -2129,9 +2231,10 @@ h1,h2,h3{margin-top:1.5em}
                 }
                 if (noteCommentKeyboardAction(event) === 'open') {
                   event.preventDefault()
-                  const quote = window.getSelection()?.toString().trim() ?? ''
+                  const quote = selectedNoteQuote(event.currentTarget.querySelector('.ProseMirror'), event.currentTarget.ownerDocument.getSelection())
                   if (quote) setCommentDraftQuote(quote)
-                  setRailLayout({ commentsCollapsed: false })
+                  if (quote || commentDraftQuote) setFocusCommentComposer(true)
+                  if (!inlineRails.comments) showRail('comments')
                   return
                 }
                 const columnAction = noteColumnKeyboardAction(event)
@@ -2243,10 +2346,11 @@ h1,h2,h3{margin-top:1.5em}
               />
               <NotesCommentHighlights
                 comments={markdownComments}
-                hidden={railLayout.commentsCollapsed}
+                editorRef={editorContainerRef}
+                hidden={!inlineRails.comments}
                 contentKey={content}
                 onActivate={(comment, rect) => {
-                  const editor = document.querySelector('.notes-editor')?.getBoundingClientRect()
+                  const editor = editorContainerRef.current?.getBoundingClientRect()
                   setCommentTooltip({
                     quote: comment.quote,
                     body: comment.body,
@@ -2255,16 +2359,18 @@ h1,h2,h3{margin-top:1.5em}
                   })
                 }}
               />
-              {commentTooltip && railLayout.commentsCollapsed ? (
+              {commentTooltip && !inlineRails.comments ? (
                 <NotesCommentTooltip comment={{ id: 'tooltip', quote: commentTooltip.quote, body: commentTooltip.body, createdAt: 0 }} top={commentTooltip.top} left={commentTooltip.left} />
               ) : null}
-              {railLayout.commentsCollapsed && commentDraftQuote ? (
+              {!inlineRails.comments && sheet !== 'comments' && commentDraftQuote ? (
                 <NotesCommentComposer
                   className="absolute right-3 z-20"
                   top={commentComposerTop}
                   quote={commentDraftQuote}
                   body={commentComposerBody}
                   onBodyChange={setCommentComposerBody}
+                  focusRequested={focusCommentComposer}
+                  onFocusHandled={() => setFocusCommentComposer(false)}
                   onCancel={() => {
                     setCommentDraftQuote('')
                     setCommentComposerBody('')
@@ -2300,29 +2406,35 @@ h1,h2,h3{margin-top:1.5em}
                 />
               ) : null}
             </div>
-            <NotesRailSash
+            {inlineRails.comments ? <NotesRailSash
               width={railLayout.comments}
+              maximumWidth={maximumNotesRailWidth('comments', railLayout, panelWidth, inlineRails)}
               invert
-              onWidth={(comments) => setRailLayout({ comments })}
+              onWidth={(comments) => setRailLayout({ comments: Math.min(comments, maximumNotesRailWidth('comments', railLayout, panelWidth, inlineRails)) })}
               collapsed={railLayout.commentsCollapsed}
               onToggle={() => setRailLayout({ commentsCollapsed: !railLayout.commentsCollapsed })}
               label={t('notes.layout.resizeComments')}
-            />
-            {activeNote && !railLayout.commentsCollapsed ? (
+            /> : null}
+            <NotesResponsiveRail inline={inlineRails.comments} open={sheet === 'comments'} title={t('notes.comments.title')} onClose={() => setSheet(null)} returnFocus={railMenuRef}>
               <NotesComments
                 noteId={activeNote.id}
                 draftQuote={commentDraftQuote}
                 markdownComments={markdownComments}
                 width={railLayout.comments}
                 composerTop={commentComposerTop}
+                draftBody={commentComposerBody}
+                onDraftBodyChange={setCommentComposerBody}
+                focusRequested={focusCommentComposer}
+                onFocusHandled={() => setFocusCommentComposer(false)}
                 onClearDraft={() => setCommentDraftQuote('')}
                 onJumpToQuote={(quote) => {
-                  const root = document.querySelector('.notes-editor .ProseMirror')
+                  setSheet(null)
+                  const root = editorContainerRef.current?.querySelector('.ProseMirror')
                   if (!root || !quote) return
                   const hit = Array.from(root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6')).find(
                     (node) => node.textContent?.includes(quote),
                   )
-                  hit?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  hit?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' })
                 }}
                 onCommit={(comments) => {
                   let next = content
@@ -2331,13 +2443,15 @@ h1,h2,h3{margin-top:1.5em}
                   setDirty(true)
                 }}
               />
-            ) : null}
+            </NotesResponsiveRail>
             </div>
-          )}
+          </>)}
         </div>
       </main>
+      </div>
 
       {rightSessionContext && (
+        <NotesResponsiveRail inline={inlineAuxiliary} open={!inlineAuxiliary} title={t('notes.sideSession.title')} onClose={closeSideSession} returnFocus={railMenuRef}>
         <RightSessionShell
           context={rightSessionContext}
           prompt={sideSessionPrompt}
@@ -2350,8 +2464,10 @@ h1,h2,h3{margin-top:1.5em}
           onSend={sendSideSession}
           onClose={closeSideSession}
         />
+        </NotesResponsiveRail>
       )}
 
+      <NotesResponsiveRail inline={inlineAuxiliary && !inspectorCollapsed} open={!inlineAuxiliary && inspectorSheetOpen} title={t('notes.inspector.title')} onClose={() => setInspectorSheetOpen(false)} returnFocus={railMenuRef}>
       <NoteInspector
         activeNote={activeNote}
         content={content}
@@ -2421,9 +2537,10 @@ h1,h2,h3{margin-top:1.5em}
             }
           }
         }}
-        collapsed={inspectorCollapsed}
+        collapsed={false}
         onToggleCollapsed={toggleInspector}
       />
+      </NotesResponsiveRail>
     </div>
     <NotesDialogs
       createDialogOpen={createDialogOpen}

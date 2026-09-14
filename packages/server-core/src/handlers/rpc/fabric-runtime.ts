@@ -15,6 +15,12 @@ import {
   createInfisicalImporter,
 } from '@craft-agent/core/platform'
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import {
+  isClaimableLive,
+  rpcFabricRuntimeActResult,
+  rpcFabricRuntimeListResult,
+  rpcFabricRuntimeReadResult,
+} from '@craft-agent/core/rox2'
 
 export interface FabricRuntime {
   readonly directory: string
@@ -31,10 +37,21 @@ export interface FabricRuntime {
 let cached: FabricRuntime | undefined
 
 export function resetFabricRuntime(): void {
+  const act = rpcFabricRuntimeActResult({
+    source: 'native',
+    action: 'destroy',
+    granted: true,
+    nativeId: 'runtime',
+  })
+  if (!isClaimableLive(act)) return
   cached = undefined
 }
 
 export function getFabricRuntime(): FabricRuntime {
+  const listed = rpcFabricRuntimeListResult({ source: 'native' })
+  if (!isClaimableLive(listed.result)) throw new Error('fabric runtime is not live')
+  const read = rpcFabricRuntimeReadResult({ source: 'native', nativeId: 'runtime' })
+  if (!isClaimableLive(read.result)) throw new Error('fabric runtime is not live')
   const directory = join(process.env.CRAFT_CONFIG_DIR || resolveConfigDir(), 'connection-fabric')
   if (cached?.directory === directory) return cached
 

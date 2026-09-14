@@ -8,6 +8,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+import { SettingsFieldContext } from './SettingsFieldContext'
 
 export interface SettingsRowProps {
   /** Row label (can be string or JSX for custom rendering) */
@@ -49,8 +50,12 @@ export function SettingsRow({
   'data-testid': testId,
 }: SettingsRowProps) {
   const Component = onClick ? 'button' : 'div'
+  const id = React.useId()
+  const labelId = `${id}-label`
+  const descriptionId = description ? `${id}-description` : undefined
 
   return (
+    <SettingsFieldContext.Provider value={{ labelId, descriptionId }}>
     <Component
       type={onClick ? 'button' : undefined}
       onClick={onClick}
@@ -64,9 +69,9 @@ export function SettingsRow({
       )}
     >
       <div className="flex-1 min-w-0">
-        <div className={settingsUI.label}>{label}</div>
+        <div id={labelId} className={settingsUI.label}>{label}</div>
         {description && (
-          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap, 'break-words')}>
+          <div id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap, 'break-words')}>
             {description}
           </div>
         )}
@@ -78,6 +83,7 @@ export function SettingsRow({
         </div>
       )}
     </Component>
+    </SettingsFieldContext.Provider>
   )
 }
 

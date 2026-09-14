@@ -137,6 +137,7 @@ describe('ROX2-050..052 native settings pages', () => {
       source: 'native',
       granted: true,
     })
+    if (!isClaimableLive(verified)) throw new Error('expected a verified native action result')
     expect(verified.executionMode).toBe('live')
     expect(verified.lifecycle).toBe('succeeded')
     expect(verified.verification).toBe('receipt_verified')

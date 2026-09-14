@@ -16,6 +16,7 @@ import {
   selectContextualSuggestion,
   SUGGESTION_IDLE_MS,
 } from '../lib/contextual-suggestions'
+import { headerStatusForWorkspace } from '../lib/header-status'
 
 interface ContextualSuggestionsOptions {
   session: Session | null
@@ -41,7 +42,8 @@ export function useContextualSuggestions(options: ContextualSuggestionsOptions):
   const store = useStore()
   const ownerId = useId()
   const processes = useAtomValue(reusableProcessesAtom)
-  const status = useAtomValue(headerStatusAtom).current
+  const headerStatus = useAtomValue(headerStatusAtom).current
+  const status = headerStatusForWorkspace(headerStatus, options.session?.workspaceId)
   const process = options.session ? processes[options.session.id] : undefined
   const [visible, setVisible] = useState(() => document.visibilityState !== 'hidden')
   const latest = useRef(options)
@@ -75,7 +77,7 @@ export function useContextualSuggestions(options: ContextualSuggestionsOptions):
       const liveProcess = liveOptions.session ? store.get(reusableProcessesAtom)[liveOptions.session.id] : undefined
       // Metadata matching runs after the typing pause, never on every keystroke.
       const candidate = selectContextualSuggestion({ ...liveOptions, process: liveProcess, now: Date.now() })
-      if (!candidate || store.get(headerStatusAtom).current) return
+      if (!candidate || headerStatusForWorkspace(store.get(headerStatusAtom).current, candidate.workspaceId)) return
       const history = store.get(suggestionHistoryAtom)
       if (offeredId.current !== candidate.id && !canOfferSuggestion(history, candidate.id, Date.now())) return
 

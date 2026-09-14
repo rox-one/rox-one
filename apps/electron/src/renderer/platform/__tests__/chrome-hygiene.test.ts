@@ -21,8 +21,8 @@ describe('ship-rox-chrome-hygiene', () => {
   })
 
   it('keeps true zero-width R-hide and moves terminal toggle to TopBar when collapsed', () => {
-    expect(inspectorHostSource).toContain('if (chromeCollapsed) {')
-    expect(inspectorHostSource).toContain('return null')
+    expect(inspectorHostSource).toContain('<RetainedSurface visible={!chromeCollapsed}>')
+    expect(inspectorHostSource).toContain('<RetainedSurface visible={browserVisible}>')
     // Expanded rail still hosts terminalControl once; collapsed must not be the only mount.
     expect(inspectorHostSource.match(/\{terminalControl\}/g)).toHaveLength(1)
     expect(topBarSource).toContain('inspectorChromeCollapsed &&')

@@ -14,6 +14,12 @@ import { MarkItDown } from 'markitdown-js'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { requestClientOpenFileDialog } from '@craft-agent/server-core/transport'
+import {
+  isClaimableLive,
+  rpcFilesActResult,
+  rpcFilesListResult,
+  rpcFilesReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.file.READ,
@@ -32,6 +38,8 @@ export const HANDLED_CHANNELS = [
 export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): void {
   // Read a file (with path validation to prevent traversal attacks)
   server.handle(RPC_CHANNELS.file.READ, async (ctx, path: string) => {
+    const read = rpcFilesReadResult({ source: 'native', nativeId: path })
+    if (!isClaimableLive(read.result)) throw new Error('file read is not live')
     try {
       const workspaceId = ctx.workspaceId ?? deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId!)
       const safePath = await validateFilePath(path, getWorkspaceAllowedDirs(workspaceId))
@@ -219,6 +227,8 @@ export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): voi
   // Store an attachment to disk and generate thumbnail/markdown conversion
   // This is the core of the persistent file attachment system
   server.handle(RPC_CHANNELS.file.STORE_ATTACHMENT, async (ctx, sessionId: string, attachment: FileAttachment): Promise<StoredAttachment> => {
+    const act = rpcFilesActResult({ source: 'native', action: 'write', nativeId: sessionId })
+    if (!isClaimableLive(act)) throw new Error('file store is not live')
     // Track files we've written for cleanup on error
     const filesToCleanup: string[] = []
 
@@ -540,6 +550,8 @@ export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): voi
   // Contained to homedir + tmp + workspace roots so a token-bearing client
   // cannot walk /etc, /root, or other hosts' files.
   server.handle(RPC_CHANNELS.fs.LIST_DIRECTORY, async (ctx, dirPath: string) => {
+    const listed = rpcFilesListResult({ source: 'native', nativeIds: dirPath ? [dirPath] : [] })
+    if (!isClaimableLive(listed.result)) throw new Error('directory list is not live')
     // Resolve ~ to server's home directory (thin clients don't know the server's home)
     if (dirPath === '~' || dirPath.startsWith('~/')) {
       dirPath = dirPath === '~' ? homedir() : join(homedir(), dirPath.slice(2))

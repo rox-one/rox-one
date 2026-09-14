@@ -68,7 +68,7 @@ describe('calendar connectors (issue 18)', () => {
     const merged = mergeTodayUpcoming(tasks, events, morning)
     expect(merged.some((item) => item.kind === 'task' && item.id === 't1')).toBe(true)
     expect(merged.some((item) => item.kind === 'event' && item.event.kind === 'event')).toBe(true)
-    expect(merged.filter((item) => item.kind === 'event').every((item) => item.kind !== 'task')).toBe(true)
+    expect(merged.filter((item) => item.kind === 'task').map((item) => item.id)).not.toContain('e1')
   })
 
   it('creates editable reminder proposals and never auto-spams tasks', async () => {

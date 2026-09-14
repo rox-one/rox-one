@@ -20,6 +20,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
+import { MessageSquarePlus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -578,12 +581,16 @@ export function MainContentPanel({
         </Panel>
       )
     }
-    // No session selected - empty state
+    // Focus mode or an explicitly added empty tile still offers a useful action.
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("session.noSessionSelected")}</p>
-        </div>
+        <EntityListEmptyScreen icon={<MessageSquarePlus />} title={t('session.noSessionSelected')} description={t('session.selectConversation')} className="h-full">
+          <Button type="button" variant="secondary" size="sm" onClick={() => {
+            const params = navState.filter.kind === 'state' ? { status: navState.filter.stateId }
+              : navState.filter.kind === 'label' ? { label: navState.filter.labelId } : undefined
+            navigate(routes.action.newSession(params))
+          }}>{t('session.newSession')}</Button>
+        </EntityListEmptyScreen>
         {sessionsBulkBar}
       </Panel>
     )

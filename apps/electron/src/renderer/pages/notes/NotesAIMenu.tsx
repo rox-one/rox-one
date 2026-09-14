@@ -16,6 +16,7 @@ export interface NotesAIMenuProps {
   activeNote: NoteDocument | null
   onAction(mode: AIActionMode): void
   disabled?: boolean
+  compact?: boolean
 }
 
 const ACTIONS: Array<{
@@ -50,14 +51,15 @@ const ACTIONS: Array<{
   },
 ]
 
-export function NotesAIMenu({ activeNote, onAction, disabled }: NotesAIMenuProps) {
+export function NotesAIMenu({ activeNote, onAction, disabled, compact = false }: NotesAIMenuProps) {
   const { t } = useTranslation()
   const isDisabled = disabled || !activeNote
   const primary = ACTIONS[0]
 
   return (
     <div className="flex items-center">
-      <button
+      {!compact ? <button
+        type="button"
         className="flex h-7 items-center gap-1.5 rounded-l-[6px] border border-border/60 bg-background px-2.5 text-xs hover:bg-foreground/[0.06] disabled:pointer-events-none disabled:opacity-40"
         onClick={() => onAction(primary.mode)}
         disabled={isDisabled}
@@ -65,15 +67,17 @@ export function NotesAIMenu({ activeNote, onAction, disabled }: NotesAIMenuProps
       >
         <ListChecks className="h-3.5 w-3.5" />
         {t('notes.ai.extractTasks')}
-      </button>
+      </button> : null}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button
-            className="-ml-px flex h-7 items-center rounded-r-[6px] border border-border/60 bg-background px-1.5 hover:bg-foreground/[0.06] disabled:pointer-events-none disabled:opacity-40"
+            type="button"
+            className={compact ? 'rox-control shrink-0 disabled:opacity-40' : '-ml-px flex h-7 items-center rounded-r-[6px] border border-border/60 bg-background px-1.5 hover:bg-foreground/[0.06] disabled:pointer-events-none disabled:opacity-40'}
             disabled={isDisabled}
             title={t('notes.ai.moreActions')}
+            aria-label={t('notes.ai.moreActions')}
           >
-            <ChevronDown className="h-3.5 w-3.5" />
+            {compact ? <Sparkles className="size-3.5" aria-hidden="true" /> : <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />}
           </button>
         </DropdownMenuTrigger>
         <StyledDropdownMenuContent align="end" className="w-56">

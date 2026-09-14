@@ -19,9 +19,7 @@ import { useTranslation } from 'react-i18next'
 import {
   closePanelAtom,
   focusedPanelIdAtom,
-  focusedSessionIdAtom,
   panelStackAtom,
-  type PanelType,
 } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -29,7 +27,8 @@ import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
 import { CHROME_DENSITY } from './chrome-density'
-import { surfaceTabKeyboardTarget, surfaceTabRovingId } from './surface-tab-navigation'
+import { surfaceTabCloseTarget, surfaceTabKeyboardTarget, surfaceTabRovingId } from './surface-tab-navigation'
+import { createKnowledgeTabTitleLoader } from './knowledge-tab-titles'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
@@ -69,6 +68,7 @@ function SurfaceTabItem({ tab, isTabStop, onNavigate, onClose }: {
   return (
     <div
       role="presentation"
+      data-surface-tab-item={tab.panelId}
       onAuxClick={(event) => {
         if (event.button === 1) {
           event.preventDefault()
@@ -125,7 +125,6 @@ export function SurfaceTabs() {
   const tabListRef = useRef<HTMLDivElement>(null)
   const entries = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
-  const focusedSessionId = useAtomValue(focusedSessionIdAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const workspace = useActiveWorkspace()
   const workspaceId = workspace?.id
@@ -153,39 +152,15 @@ export function SurfaceTabs() {
   }, [entries])
 
   const [knowledgeTitles, setKnowledgeTitles] = useState<ReadonlyMap<string, string>>(new Map())
-  const requestedRefKeys = useRef(new Set<string>())
+  const titleLoader = useRef(createKnowledgeTabTitleLoader())
   useEffect(() => {
     if (knowledgeRefs.length === 0 || !workspaceId) return
     const api = typeof window === 'undefined' ? undefined : window.electronAPI?.knowledge
     if (!api?.get || !api?.listConnections) return
     let cancelled = false
-    void (async () => {
-      let connectionId: string | null = null
-      const resolved: Array<readonly [string, string]> = []
-      for (const ref of knowledgeRefs) {
-        const key = `${workspaceId}:${knowledgeRefKey(ref)}`
-        if (requestedRefKeys.current.has(key)) continue
-        requestedRefKeys.current.add(key)
-        if (connectionId === null) {
-          connectionId = (await api.listConnections().catch(() => []))[0]?.id ?? ''
-          if (!connectionId) return
-        }
-        try {
-          const node = await api.get({ workspaceId, connectionId, ref })
-          const title = node?.title?.trim()
-          if (title) resolved.push([key, title] as const)
-        } catch {
-          // Title unavailable — the tab keeps its kind-qualified fallback.
-        }
-      }
-      if (!cancelled && resolved.length > 0) {
-        setKnowledgeTitles((prev) => {
-          const next = new Map(prev)
-          for (const [key, title] of resolved) next.set(key, title)
-          return next
-        })
-      }
-    })()
+    void titleLoader.current.load(workspaceId, knowledgeRefs, api).then(resolved => {
+      if (!cancelled) setKnowledgeTitles(resolved)
+    })
     return () => {
       cancelled = true
     }
@@ -216,8 +191,8 @@ export function SurfaceTabs() {
   })
   const panelTabs = tabs.filter((tab) => tab.kind !== 'browser')
   const rovingTabId = surfaceTabRovingId(panelTabs, focusedPanelId)
-  const focusTab = (panelId: string) => {
-    setFocusedPanelId(panelId)
+  const focusTab = (panelId: string, activate = true) => {
+    if (activate) setFocusedPanelId(panelId)
     requestAnimationFrame(() => {
       const buttons = tabListRef.current?.querySelectorAll<HTMLButtonElement>('[data-surface-tab]')
       const button = Array.from(buttons ?? []).find(element => element.dataset.surfaceTab === panelId)
@@ -230,11 +205,11 @@ export function SurfaceTabs() {
     if (target) focusTab(target)
   }
   const closeTab = (panelId: string) => {
-    const index = panelTabs.findIndex(tab => tab.panelId === panelId)
-    const next = panelTabs[index + 1] ?? panelTabs[index - 1]
+    const nextId = surfaceTabCloseTarget(panelTabs, panelId, focusedPanelId)
     const wasFocused = panelId === focusedPanelId
+    const closingHasDOMFocus = document.activeElement?.closest<HTMLElement>('[data-surface-tab-item]')?.dataset.surfaceTabItem === panelId
     closePanel(panelId)
-    if (wasFocused && next) focusTab(next.panelId)
+    if (nextId && (wasFocused || closingHasDOMFocus)) focusTab(nextId, wasFocused)
   }
 
   // Embedded-default desktop path: do not mount OS BrowserWindow chips in SurfaceTabs.

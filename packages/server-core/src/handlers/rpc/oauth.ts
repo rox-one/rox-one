@@ -4,6 +4,12 @@ import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { loadSource, loadWorkspaceSources, getSourceCredentialManager } from '@craft-agent/shared/sources'
 import { createPendingFlow } from '@craft-agent/shared/auth'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
+import {
+  isClaimableLive,
+  rpcOauthActResult,
+  rpcOauthListResult,
+  rpcOauthReadResult,
+} from '@craft-agent/core/rox2'
 import type { HandlerDeps } from '../handler-deps'
 
 export const HANDLED_CHANNELS = [
@@ -90,6 +96,12 @@ export function registerOAuthHandlers(server: RpcServer, deps: HandlerDeps): voi
   }) => {
     const { sourceSlug, callbackPort, callbackUrl, sessionId, authRequestId } = args
 
+    if (!sourceSlug) throw new Error('oauth.start: sourceSlug is required')
+    const listed = rpcOauthListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('oauth start is not live')
+    const act = rpcOauthActResult({ source: 'native', action: 'write', nativeId: sourceSlug })
+    if (!isClaimableLive(act)) throw new Error('oauth start is not live')
+
     if (!ctx.workspaceId) {
       throw new Error('No workspace bound to this client')
     }
@@ -136,6 +148,12 @@ export function registerOAuthHandlers(server: RpcServer, deps: HandlerDeps): voi
   }) => {
     const { flowId, code, state } = args
 
+    if (!state) throw new Error('oauth.complete: state is required')
+    const read = rpcOauthReadResult({ source: 'native', nativeId: state })
+    if (!isClaimableLive(read.result)) throw new Error('oauth complete is not live')
+    const act = rpcOauthActResult({ source: 'native', action: 'write', nativeId: flowId || state })
+    if (!isClaimableLive(act)) throw new Error('oauth complete is not live')
+
     // Validate flowId match before delegating
     const flow = flowStore.getByState(state)
     if (!flow) throw new Error('Unknown or expired OAuth flow')
@@ -164,6 +182,9 @@ export function registerOAuthHandlers(server: RpcServer, deps: HandlerDeps): voi
     state: string
   }) => {
     const { flowId, state } = args
+    if (!flowId) throw new Error('oauth.cancel: flowId is required')
+    const act = rpcOauthActResult({ source: 'native', action: 'destroy', granted: true, nativeId: flowId })
+    if (!isClaimableLive(act)) return
     const flow = flowStore.getByState(state)
     if (flow && flow.flowId === flowId && flow.ownerClientId === ctx.clientId) {
       flowStore.remove(state)
@@ -176,6 +197,10 @@ export function registerOAuthHandlers(server: RpcServer, deps: HandlerDeps): voi
     sourceSlug: string
   }) => {
     const { sourceSlug } = args
+
+    if (!sourceSlug) throw new Error('oauth.revoke: sourceSlug is required')
+    const act = rpcOauthActResult({ source: 'native', action: 'destroy', granted: true, nativeId: sourceSlug })
+    if (!isClaimableLive(act)) return { success: false }
 
     if (!ctx.workspaceId) {
       throw new Error('No workspace bound to this client')

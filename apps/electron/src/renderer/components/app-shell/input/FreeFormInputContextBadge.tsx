@@ -29,6 +29,7 @@ export interface FreeFormInputContextBadgeProps {
   buttonRef?: React.RefObject<HTMLButtonElement>
   /** Data attribute for tutorials */
   'data-tutorial'?: string
+  'aria-pressed'?: boolean
 }
 
 /**
@@ -55,6 +56,7 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
       className,
       buttonRef,
       'data-tutorial': dataTutorial,
+      'aria-pressed': ariaPressed,
     },
     ref
   ) {
@@ -69,13 +71,14 @@ export const FreeFormInputContextBadge = React.forwardRef<HTMLButtonElement, Fre
         ref={mergedRef as React.Ref<HTMLButtonElement>}
         type="button"
         aria-label={label}
+        aria-pressed={ariaPressed}
         onClick={onClick}
         disabled={disabled}
         data-tutorial={dataTutorial}
         className={cn(
           // Base styles - shrink + min-w-0 allows badge to compress in tight layouts
           "input-toolbar-btn inline-flex items-center gap-1.5 h-7 rounded-[6px] text-[13px] text-foreground transition-colors select-none shrink min-w-0",
-          "disabled:opacity-50 disabled:pointer-events-none",
+          "disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none",
           // Padding: more padding when showing label
           showLabel ? "px-2" : "px-1.5",
           // Collapsed with selection: visible background + thin 1px border + margin

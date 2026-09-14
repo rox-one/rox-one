@@ -1,7 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test'
 import { createStore } from 'jotai'
 import type { Session } from '../../../shared/types'
-import { headerStatusDuration, type HeaderStatus } from '../../lib/header-status'
+import { headerStatusDuration, headerStatusForWorkspace, type HeaderStatus } from '../../lib/header-status'
 import { dismissHeaderStatusAtom, headerStatusAtom, publishHeaderStatusAtom, recordSuccessfulCompletionAtom, reusableProcessesAtom } from '../header-status'
 
 const status = (extra: Partial<HeaderStatus> = {}): HeaderStatus => ({
@@ -10,6 +10,14 @@ const status = (extra: Partial<HeaderStatus> = {}): HeaderStatus => ({
 })
 
 describe('header status lifecycle', () => {
+  it('keeps an inactive workspace error out of the active status and suggestion lane', () => {
+    const error = status({ tone: 'error' })
+    expect(headerStatusForWorkspace(error, 'workspace')).toBe(error)
+    expect(headerStatusForWorkspace(error, 'other-workspace')).toBeNull()
+    expect(headerStatusForWorkspace(error, undefined)).toBeNull()
+    expect(headerStatusForWorkspace(null, 'workspace')).toBeNull()
+  })
+
   it('deduplicates success and safely replaces it with the latest signal', () => {
     const store = createStore()
     store.set(publishHeaderStatusAtom, status())

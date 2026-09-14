@@ -29,6 +29,8 @@ export interface WorkspaceSurfaceHostProps {
   /** Optional test/integration override; omitted reads the persisted atom. */
   userPreference?: unknown
   isCompact?: boolean
+  /** A single list does not need a generic empty "Panel" tab above it. */
+  catalogOnly?: boolean
   onOpenBrowser?: () => void
 }
 
@@ -37,6 +39,7 @@ export function WorkspaceSurfaceHost({
   operatorCapability,
   userPreference,
   isCompact = false,
+  catalogOnly = false,
   onOpenBrowser,
 }: WorkspaceSurfaceHostProps) {
   const panels = useAtomValue(panelStackAtom)
@@ -64,6 +67,7 @@ export function WorkspaceSurfaceHost({
   const { showServiceRail, showTabs, showInspector, showAuxiliaryPanels } = resolveWorkspaceSurfaceLayout({
     isCompact,
     panelCount: panels.length,
+    catalogOnly,
     chrome,
     browser: { isWebUI, visible: inspectorVisible, chromeCollapsed: inspectorCollapsed, section: inspectorSection },
   })

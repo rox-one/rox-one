@@ -37,16 +37,30 @@ export interface ActiveTasksBarProps {
  */
 export function ActiveTasksBar({ tasks, sessionId, onKillTask, onInsertMessage, onShowTerminalOverlay, className }: ActiveTasksBarProps) {
   const setTasks = useSetAtom(backgroundTasksAtomFamily(sessionId))
+  const hasTasks = tasks.length > 0
 
   // Stop an unconfirmed chip from spinning forever without pretending the task
   // died. Old no-signal tasks become `stale` and remain recoverable; only real
   // terminal/orphaned states are auto-pruned by the pure lifecycle helper.
   React.useEffect(() => {
-    const interval = setInterval(() => {
+    if (!hasTasks) return
+    let interval: ReturnType<typeof setInterval> | undefined
+    const advance = () => {
       setTasks((prev) => advanceBackgroundTaskChips(prev, Date.now()))
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [sessionId, setTasks])
+    }
+    const updateVisibility = () => {
+      clearInterval(interval)
+      if (document.visibilityState === 'hidden') return
+      advance()
+      interval = setInterval(advance, 1000)
+    }
+    updateVisibility()
+    document.addEventListener('visibilitychange', updateVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', updateVisibility)
+    }
+  }, [sessionId, setTasks, hasTasks])
 
   // Don't render if no tasks
   if (tasks.length === 0) return null

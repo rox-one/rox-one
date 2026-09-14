@@ -19,6 +19,12 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { HandlerFn, RequestContext, RpcServer } from '../../transport/types'
+import {
+  isClaimableLive,
+  rpcTransferActResult,
+  rpcTransferListResult,
+  rpcTransferReadResult,
+} from '@craft-agent/core/rox2'
 
 interface TransferState {
   id: string
@@ -105,6 +111,10 @@ export function registerTransferHandlers(server: RpcServer): void {
     largeArgIndex: number
     checksum?: string
   }) => {
+    const listed = rpcTransferListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('transfer start is not live')
+    const act = rpcTransferActResult({ source: 'native', action: 'write', nativeId: opts?.channel })
+    if (!isClaimableLive(act)) throw new Error('transfer start is not live')
     if (!opts || typeof opts.chunkCount !== 'number' || opts.chunkCount < 1) {
       throw new Error('Invalid chunkCount')
     }
@@ -155,6 +165,8 @@ export function registerTransferHandlers(server: RpcServer): void {
     index: number
     data: string
   }) => {
+    const read = rpcTransferReadResult({ source: 'native', nativeId: opts?.transferId })
+    if (!isClaimableLive(read.result)) throw new Error(`Unknown transfer: ${opts?.transferId}`)
     const transfer = activeTransfers.get(opts.transferId)
     if (!transfer) {
       console.error(`[Transfer:server] Unknown transfer: ${opts.transferId}`)
@@ -257,6 +269,9 @@ export function registerTransferHandlers(server: RpcServer): void {
   })
 
   server.handle(RPC_CHANNELS.transfer.ABORT, async (ctx, opts: { transferId: string }) => {
+    if (!opts?.transferId) throw new Error('transferId is required')
+    const act = rpcTransferActResult({ source: 'native', action: 'destroy', granted: true, nativeId: opts.transferId })
+    if (!isClaimableLive(act)) throw new Error('transfer abort is not live')
     const transfer = activeTransfers.get(opts.transferId)
     if (!transfer) {
       return { aborted: false }

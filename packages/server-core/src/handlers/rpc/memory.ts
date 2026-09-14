@@ -6,6 +6,12 @@ import type { Lesson, LessonCategory, LessonScope, ProjectMemoryDto, WorkspaceMe
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcMemoryActResult,
+  rpcMemoryListResult,
+  rpcMemoryReadResult,
+} from '@craft-agent/core/rox2'
 import { LessonStore, lessonKey } from '../../memory/LessonStore'
 import { buildConflictPrompt, parseConflicts, promoteLessonToGlobal, scanPromotionCandidates } from '../../memory/lesson-graph'
 import type { LessonConflictVerdict } from '../../memory/lesson-graph'
@@ -104,6 +110,8 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
 
   // List lessons for one scope or both.
   server.handle(RPC_CHANNELS.memory.LIST_LESSONS, async (_ctx, scope: LessonScope | 'both', workspaceId?: string) => {
+    const listed = rpcMemoryListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const scopes: LessonScope[] = scope === 'both' ? ['global', 'workspace'] : [scope]
     const lessons: Lesson[] = []
     for (const s of scopes) {
@@ -121,6 +129,8 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
   // the L2 conflict list is best-effort and empty whenever the check is
   // unavailable (no LLM, parse failure) — it never blocks the write.
   server.handle(RPC_CHANNELS.memory.ADD_LESSON, async (_ctx, workspaceId: string | null, input: LessonInput): Promise<AddLessonResult> => {
+    const act = rpcMemoryActResult({ source: 'native', action: 'write', nativeId: input?.scope ?? 'lesson' })
+    if (!isClaimableLive(act)) throw new Error('memory add is not live')
     const scope: LessonScope = input.scope ?? 'global'
     const store = lessonStoreFor(scope, workspaceId ?? undefined)
     if (!store) throw new Error('Workspace not found')
@@ -152,6 +162,16 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
 
   // Delete a lesson by rule text or index.
   server.handle(RPC_CHANNELS.memory.DELETE_LESSON, async (_ctx, workspaceId: string | null, scope: LessonScope, match: string | number) => {
+    if (match === undefined || match === null || match === '') {
+      throw new Error('memory.delete: match is required')
+    }
+    const act = rpcMemoryActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: String(match),
+    })
+    if (!isClaimableLive(act)) throw new Error('memory delete is not live')
     const store = lessonStoreFor(scope, workspaceId ?? undefined)
     if (!store) throw new Error('Workspace not found')
     const deleted = store.delete(match)
@@ -179,6 +199,8 @@ export function registerMemoryHandlers(server: RpcServer, deps: HandlerDeps): vo
   // memory.ftsLimit). Missing query, any index error, or zero hits fall back
   // to the full recent bundle.
   server.handle(RPC_CHANNELS.memory.GET_CONTEXT, async (_ctx, workspaceId?: string, query?: string): Promise<MemoryContextDto> => {
+    const read = rpcMemoryReadResult({ source: 'native', nativeId: workspaceId ?? 'global' })
+    if (!isClaimableLive(read.result)) throw new Error('memory context is not live')
     const globalStore = new MemoryFileStore('global')
     const preferences = globalStore.readPreferences()
     if (!workspaceId) return { preferences, context: '', workspaceMemory: null }

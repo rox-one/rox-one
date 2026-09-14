@@ -8,6 +8,7 @@ import * as storage from './local-storage'
 export const PANEL_WORKSPACE_LAYOUT_MODES = ['auto', 'columns', 'grid-2', 'grid-3', 'focus'] as const
 export type PanelWorkspaceLayoutMode = typeof PANEL_WORKSPACE_LAYOUT_MODES[number]
 export type PanelResizeAxis = 'x' | 'y'
+export type PanelFocusDirection = 'left' | 'right' | 'up' | 'down'
 
 export interface PanelGridShape {
   columns: number
@@ -44,6 +45,32 @@ export function panelGridShape(count: number, mode: PanelWorkspaceLayoutMode): P
 
 export function panelGridKey(shape: PanelGridShape): string {
   return `${shape.columns}x${shape.rows}`
+}
+
+/**
+ * Follow visible grid topology, never wrap across a row or select an empty
+ * cell. A ragged final row uses the nearest surviving column for vertical
+ * movement. Layout changes do not create or replace panel identities.
+ */
+export function panelGridFocusTarget(
+  panelIds: readonly string[],
+  focusedId: string | null | undefined,
+  shape: PanelGridShape,
+  direction: PanelFocusDirection,
+): string | null {
+  const index = panelIds.indexOf(focusedId ?? '')
+  if (index < 0 || !Number.isSafeInteger(shape.columns) || shape.columns < 1 || shape.rows < 1) return null
+  const row = Math.floor(index / shape.columns)
+  if (row >= shape.rows) return null
+  const column = index % shape.columns
+  if (direction === 'left' || direction === 'right') {
+    const nextColumn = column + (direction === 'left' ? -1 : 1)
+    if (nextColumn < 0 || nextColumn >= shape.columns) return null
+    return panelIds[row * shape.columns + nextColumn] ?? null
+  }
+  const nextRow = row + (direction === 'up' ? -1 : 1)
+  if (nextRow < 0 || nextRow >= shape.rows || nextRow * shape.columns >= panelIds.length) return null
+  return panelIds[Math.min(nextRow * shape.columns + column, panelIds.length - 1)] ?? null
 }
 
 /** Dedicated services have no list navigator and must remain visible on small windows. */
@@ -138,4 +165,21 @@ export function resizePanelTracks(
   const combined = tracks[index] + tracks[index + 1]
   return tracks.map((weight, position) => position === index ? combined * sizeA / total
     : position === index + 1 ? combined * sizeB / total : weight)
+}
+
+/**
+ * CSS minmax can clamp a saved fraction to a pixel minimum. Begin a gesture
+ * from all rendered track sizes, otherwise even a zero-delta preview changes
+ * neighboring tracks and shifts an unrelated column or row.
+ */
+export function capturePanelResizeTracks(
+  tracks: PanelGridTracks,
+  axis: PanelResizeAxis,
+  measuredSizes: readonly number[],
+): PanelGridTracks {
+  const key = axis === 'x' ? 'columns' : 'rows'
+  if (measuredSizes.length !== tracks[key].length || measuredSizes.some(size => !Number.isFinite(size) || size <= 0)) {
+    return tracks
+  }
+  return { ...tracks, [key]: normalizePanelTracks(measuredSizes, tracks[key].length) }
 }

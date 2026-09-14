@@ -32,6 +32,12 @@ import {
 } from '@craft-agent/shared/marketplace'
 import { getExtensionStateStore, seedDefaultMarketplaceInstalls } from '@craft-agent/shared/extensions'
 import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import {
+  isClaimableLive,
+  rpcMarketplaceActResult,
+  rpcMarketplaceListResult,
+  rpcMarketplaceReadResult,
+} from '@craft-agent/core/rox2'
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.marketplace.CATALOG,
   RPC_CHANNELS.marketplace.STATS,
@@ -84,6 +90,10 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
   }
 
   const requireEntry = async (id: string): Promise<MarketplaceEntry> => {
+    const read = rpcMarketplaceReadResult({ source: 'native', nativeId: id })
+    if (!isClaimableLive(read.result)) {
+      throw new CodedError('MARKETPLACE_ENTRY_NOT_FOUND', 'marketplace entry is not live')
+    }
     const { catalog } = await getCatalog({ metaStore, fetchFn: catalogFetch })
     const entry = catalog.entries.find((e) => e.id === id)
     if (!entry) {
@@ -110,6 +120,8 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
 
   // Catalog view + install registry (ETag/24h TTL handled inside getCatalog)
   server.handle(RPC_CHANNELS.marketplace.CATALOG, async () => {
+    const listed = rpcMarketplaceListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('marketplace catalog is not live')
     return loadCatalogView()
   })
 
@@ -172,6 +184,8 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
 
   // Install by catalog id. kind:tool → lock intent + toolchain.update; ready → installed.
   server.handle(RPC_CHANNELS.marketplace.INSTALL, async (_ctx, id: string) => {
+    const act = rpcMarketplaceActResult({ source: 'native', action: 'write', nativeId: id })
+    if (!isClaimableLive(act)) throw new Error('marketplace install is not live')
     return exclusive(id, async () => {
       const entry = await requireEntry(id)
       const onProgress = (phase: 'clone' | 'verify' | 'install' | 'fetch' | 'collision', detail?: string) => {
@@ -191,6 +205,9 @@ export function registerMarketplaceHandlers(server: RpcServer, _deps: HandlerDep
   // Remove artifacts we own (soft-clean: locally-edited targets are kept).
   // kind:tool: lock only — we do NOT uninstall toolchain binaries (shared).
   server.handle(RPC_CHANNELS.marketplace.REMOVE, async (_ctx, id: string) => {
+    if (!id) throw new CodedError('MARKETPLACE_ENTRY_NOT_FOUND', 'marketplace.remove: id is required')
+    const act = rpcMarketplaceActResult({ source: 'native', action: 'destroy', granted: true, nativeId: id })
+    if (!isClaimableLive(act)) throw new Error('marketplace remove is not live')
     return exclusive(id, async () => {
       const ref = readLock(marketplacePaths().lockFile).entries[id]?.ref
       const result = removeEntry(id)

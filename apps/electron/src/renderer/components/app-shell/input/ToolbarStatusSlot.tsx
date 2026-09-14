@@ -1,26 +1,25 @@
 /**
  * ToolbarStatusSlot
  *
- * Priority-based overlay slot for the input toolbar bottom row.
+ * Priority-based status row above the composer controls.
  * Shows contextual status indicators — escape-to-interrupt hint (highest priority),
  * browser session state, or future status types.
  *
- * Positioned absolute inset-0 over the toolbar's relative container.
- * Uses AnimatePresence for smooth fade transitions between states.
+ * Uses document flow so a status never covers model, dictation, or stop actions.
  *
  * Browser state is consumed directly from Jotai atoms (same pattern as BrowserTabStrip)
  * to avoid threading props through 4 component levels.
  */
 
 import * as React from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { Globe } from 'lucide-react'
 import { useAtomValue } from 'jotai'
 import { useTranslation, Trans } from 'react-i18next'
 import { Spinner } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
 import { Kbd } from '@/components/ui/kbd'
-import { getHostname, getThemeLuminance } from '@/components/browser/utils'
+import { getHostname } from '@/components/browser/utils'
 import { browserInstancesAtom, filterInstancesForWorkspace } from '@/atoms/browser-pane'
 import { useAppShellContext } from '@/context/AppShellContext'
 import type { BrowserInstanceInfo } from '../../../../shared/types'
@@ -45,11 +44,12 @@ export function ToolbarStatusSlot({
   turnProgress = null,
 }: ToolbarStatusSlotProps) {
   const { t } = useTranslation()
+  const prefersReducedMotion = useReducedMotion()
   // Filter to the active workspace so a session here doesn't surface a
   // browser-status banner for an agent running in a different workspace.
   // Accept both the local workspace id (manual tabs) and the remote-mirror
   // workspace id (tabs stamped by the remote agent over the WS bridge).
-  const { activeWorkspaceId, workspaces } = useAppShellContext()
+  const { activeWorkspaceId, workspaces, isFocusedPanel = true } = useAppShellContext()
   const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId)
   const remoteWorkspaceId = activeWorkspace?.remoteServer?.remoteWorkspaceId ?? null
   const allInstances = useAtomValue(browserInstancesAtom)
@@ -72,14 +72,25 @@ export function ToolbarStatusSlot({
   }, [browserInstances, sessionId])
 
   const [now, setNow] = React.useState(() => Date.now())
+  const progressActive = turnProgress !== null && isFocusedPanel
   React.useEffect(() => {
-    if (!turnProgress) return
-    setNow(Date.now())
-    const id = window.setInterval(() => setNow(Date.now()), 500)
-    return () => window.clearInterval(id)
-  }, [turnProgress])
+    if (!progressActive) return
+    let interval: ReturnType<typeof setInterval> | undefined
+    const updateVisibility = () => {
+      clearInterval(interval)
+      if (document.visibilityState === 'hidden') return
+      setNow(Date.now())
+      interval = setInterval(() => setNow(Date.now()), 500)
+    }
+    updateVisibility()
+    document.addEventListener('visibilitychange', updateVisibility)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', updateVisibility)
+    }
+  }, [progressActive])
 
-  const tokensPerSecond = turnProgress
+  const tokensPerSecond = turnProgress && progressActive
     ? computeTokensPerSecond(
         turnProgress.outputTokens,
         Math.max(0, now - (turnProgress.startedAt ?? now)),
@@ -95,20 +106,16 @@ export function ToolbarStatusSlot({
   }, [])
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait" initial={false}>
       {showEscapeOverlay && (
         <motion.div
           key="escape"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
           className={cn(
-            "absolute inset-0 z-10",
-            "rounded-b-[12px]",
-            "shadow-tinted",
-            "flex items-center justify-center",
-            "pointer-events-auto",
+            "relative flex min-h-7 items-center justify-center border-b border-border/50 px-3 py-1",
           )}
           style={{
             '--shadow-color': 'var(--info-rgb)',
@@ -116,7 +123,7 @@ export function ToolbarStatusSlot({
             color: 'color-mix(in oklab, var(--info) 30%, var(--foreground))',
           } as React.CSSProperties}
         >
-          <span className="text-sm font-medium flex items-center gap-1.5">
+          <span className="text-xs font-medium flex flex-wrap items-center justify-center gap-1.5" role="status">
             <Trans
               i18nKey="toolbar.escapeToInterrupt"
               components={{ kbd: <Kbd className="text-inherit bg-current/10" /> }}
@@ -131,16 +138,13 @@ export function ToolbarStatusSlot({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
           className={cn(
-            "absolute inset-0 z-10",
-            "rounded-b-[12px]",
-            "flex items-center justify-center",
-            "pointer-events-none",
+            "relative flex min-h-7 items-center justify-center border-b border-border/50 px-3 py-1",
           )}
           data-testid="chat-turn-progress"
         >
-          <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground flex flex-wrap items-center justify-center gap-1.5">
             {t(`chat.turnPhase.${turnProgress.phase}`)}
             {tokensPerSecond != null && (
               <>
@@ -158,6 +162,7 @@ export function ToolbarStatusSlot({
         <BrowserStatusBar
           key="browser"
           instance={browserInstance}
+          prefersReducedMotion={!!prefersReducedMotion}
           onClick={() => handleBrowserClick(browserInstance.id)}
         />
       )}
@@ -167,29 +172,19 @@ export function ToolbarStatusSlot({
 
 /**
  * Browser status bar — shows when the agent is actively using a browser window.
- * Uses the site's theme color as background with luminance-based text contrast.
+ * Shares the composer material instead of importing an unrelated site's palette.
  */
 function BrowserStatusBar({
   instance,
   onClick,
+  prefersReducedMotion,
 }: {
   instance: BrowserInstanceInfo
   onClick: () => void
+  prefersReducedMotion: boolean
 }) {
   const { t } = useTranslation()
   const hostname = getHostname(instance.url)
-  const themeColor = instance.themeColor
-  const themeLuminance = themeColor ? getThemeLuminance(themeColor) : null
-  const isDarkTheme = themeLuminance !== null && themeLuminance < 0.42
-
-  // Compute styles based on whether we have a theme color
-  const backgroundStyle = themeColor
-    ? { backgroundColor: themeColor }
-    : { backgroundColor: 'color-mix(in srgb, var(--accent) 15%, var(--background))' }
-
-  const textColorClass = themeColor
-    ? (isDarkTheme ? 'text-white/90' : 'text-black/80')
-    : ''
 
   const [faviconFailed, setFaviconFailed] = React.useState(false)
 
@@ -203,56 +198,29 @@ function BrowserStatusBar({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.15 }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
       className={cn(
-        "absolute inset-0 z-10",
-        "rounded-b-[12px]",
-        "flex items-center justify-center gap-2",
-        "pointer-events-auto cursor-pointer",
-        "transition-[background-color] duration-200",
-        textColorClass,
+        "relative flex min-h-7 w-full items-center justify-center gap-2 border-b border-border/50 px-3 py-1",
+        "bg-foreground/2 text-muted-foreground hover:bg-foreground/5 cursor-pointer",
+        "transition-colors motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
       )}
-      style={{
-        ...backgroundStyle,
-      } as React.CSSProperties}
       onClick={onClick}
     >
-      {/* Accent gradient loading line at top of banner */}
-      <div className="absolute top-0 left-0 right-0 h-[2px] z-10 overflow-hidden">
-        <div
-          className="h-full w-full animate-shimmer-loading"
-          style={{
-            background: 'linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%)',
-          }}
-        />
-      </div>
-
-      <span className={`shrink-0 flex items-center justify-center ${isDarkTheme ? 'h-4 w-4' : 'h-3.5 w-3.5'}`}>
+      <span className="shrink-0 flex h-3.5 w-3.5 items-center justify-center">
         {instance.isLoading ? (
           <Spinner className="text-[10px] leading-none" />
         ) : instance.favicon && !faviconFailed ? (
-          isDarkTheme ? (
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-[5px] bg-white/90 p-[1px] leading-none">
-              <img
-                src={instance.favicon}
-                alt=""
-                className="h-3.5 w-3.5 aspect-square rounded-none object-cover block"
-                onError={() => setFaviconFailed(true)}
-              />
-            </span>
-          ) : (
             <img
               src={instance.favicon}
               alt=""
               className="h-3.5 w-3.5 rounded-sm block"
               onError={() => setFaviconFailed(true)}
             />
-          )
         ) : (
           <Globe className="h-3.5 w-3.5" />
         )}
       </span>
-      <span className="text-sm font-medium truncate max-w-[200px]">
+      <span className="min-w-0 truncate text-xs">
         {t('chat.usingConnection', { name: hostname })}
       </span>
     </motion.button>

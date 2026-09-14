@@ -1,17 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from 'motion/react'
 import { AlertCircle, BookOpen, CheckCircle2, Info, MoreHorizontal, Sparkles, X } from 'lucide-react'
 import { headerStatusAtom, dismissHeaderStatusAtom, headerSuggestionAtom } from '@/atoms/header-status'
 import { focusedSessionIdAtom } from '@/atoms/panel-stack'
 import { windowWorkspaceIdAtom } from '@/atoms/sessions'
-import { headerStatusDuration } from '@/lib/header-status'
+import { headerStatusDuration, headerStatusForWorkspace } from '@/lib/header-status'
+import { useHeaderStatusDeadline } from '@/hooks/useHeaderStatusDeadline'
 import { cn } from '@/lib/utils'
 import { DropdownMenu, DropdownMenuTrigger, StyledDropdownMenuContent, StyledDropdownMenuItem } from '@/components/ui/styled-dropdown'
 
 export interface HeaderStatusLaneProps {
   className?: string
+}
+
+/** Exiting notices remain painted briefly, but their actions must already be gone. */
+export function HeaderStatusPresence({ children, ...props }: Omit<ComponentProps<typeof motion.div>, 'children'> & {
+  children: (isPresent: boolean) => ReactNode
+}) {
+  const isPresent = useIsPresent()
+  return (
+    <motion.div {...props} aria-hidden={!isPresent || undefined} {...(!isPresent ? { inert: '' } : {})}>
+      {children(isPresent)}
+    </motion.div>
+  )
 }
 
 /** Mount once in the stable header. This lane never moves keyboard focus. */
@@ -27,15 +40,13 @@ export function HeaderStatusLane({ className }: HeaderStatusLaneProps) {
   const [focused, setFocused] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  useEffect(() => {
-    if (!status || hovered || focused || menuOpen) return
-    const duration = headerStatusDuration(status)
-    if (duration === null) return
-    const timer = window.setTimeout(() => dismissStatus(status.id), duration)
-    return () => window.clearTimeout(timer)
-  }, [status, hovered, focused, menuOpen, dismissStatus])
-
-  const visibleStatus = status?.workspaceId === workspaceId ? status : null
+  const visibleStatus = headerStatusForWorkspace(status, workspaceId)
+  useHeaderStatusDeadline(
+    status?.id,
+    status ? headerStatusDuration(status) : null,
+    Boolean(visibleStatus) && !hovered && !focused && !menuOpen,
+    dismissStatus,
+  )
   const visibleSuggestion = !visibleStatus
     && suggestion?.workspaceId === workspaceId
     && suggestion.sessionId === focusedSessionId ? suggestion : null
@@ -64,7 +75,7 @@ export function HeaderStatusLane({ className }: HeaderStatusLaneProps) {
       <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{message}</span>
       <AnimatePresence initial={false} mode="wait">
         {id && (
-          <motion.div
+          <HeaderStatusPresence
             key={id}
             initial={{ opacity: 0, y: reduceMotion ? 0 : -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -81,6 +92,7 @@ export function HeaderStatusLane({ className }: HeaderStatusLaneProps) {
               visibleStatus?.tone === 'error' && 'border-destructive/30 text-destructive',
             )}
           >
+            {isPresent => <>
             <Icon aria-hidden="true" className={cn('size-3.5 shrink-0', visibleStatus?.tone !== 'error' && 'text-accent')} />
             <span className="min-w-0 flex-1 truncate px-1" title={message}>{message}</span>
             {actions.map(action => (
@@ -91,18 +103,18 @@ export function HeaderStatusLane({ className }: HeaderStatusLaneProps) {
                   action.onClick()
                   if (visibleStatus) dismissStatus(visibleStatus.id)
                 }}
-                className="min-h-7 shrink-0 rounded-full px-2 font-medium text-accent outline-none transition-colors hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring max-xl:hidden motion-reduce:transition-none"
+                className="min-h-[var(--control-hit-min)] shrink-0 rounded-full px-2 font-medium text-accent outline-none transition-colors hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring max-xl:hidden motion-reduce:transition-none"
               >
                 {t(action.labelKey)}
               </button>
             ))}
             {actions.length > 0 && (
-              <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+              <DropdownMenu open={isPresent && menuOpen} onOpenChange={setMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
                     aria-label={t('common.more')}
-                    className="flex size-7 shrink-0 items-center justify-center rounded-full text-accent outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring xl:hidden"
+                    className="flex size-7 min-h-[var(--control-hit-min)] min-w-[var(--control-hit-min)] shrink-0 items-center justify-center rounded-full text-accent outline-none hover:bg-foreground/5 focus-visible:ring-2 focus-visible:ring-ring xl:hidden"
                   >
                     <MoreHorizontal aria-hidden="true" className="size-3.5" />
                   </button>
@@ -124,11 +136,12 @@ export function HeaderStatusLane({ className }: HeaderStatusLaneProps) {
               aria-label={t('headerStatus.dismiss')}
               title={t('headerStatus.dismiss')}
               onClick={dismiss}
-              className="flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
+              className="flex size-7 min-h-[var(--control-hit-min)] min-w-[var(--control-hit-min)] shrink-0 items-center justify-center rounded-full text-muted-foreground outline-none transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
             >
               <X aria-hidden="true" className="size-3" />
             </button>
-          </motion.div>
+            </>}
+          </HeaderStatusPresence>
         )}
       </AnimatePresence>
     </div>

@@ -50,6 +50,8 @@ export function SettingsToggle({
   inCard = true,
 }: SettingsToggleProps) {
   const id = React.useId()
+  const labelId = `${id}-label`
+  const descriptionId = description ? `${id}-description` : undefined
 
   return (
     <div
@@ -62,13 +64,15 @@ export function SettingsToggle({
       )}
     >
       <label htmlFor={id} className="flex-1 min-w-0 cursor-pointer select-none">
-        <div className={settingsUI.label}>{label}</div>
+        <div id={labelId} className={settingsUI.label}>{label}</div>
         {description && (
-          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</div>
+          <div id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</div>
         )}
       </label>
       <Switch
         id={id}
+        aria-labelledby={labelId}
+        aria-describedby={descriptionId}
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}

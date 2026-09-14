@@ -21,6 +21,12 @@ import {
   requestClientShowInFolder,
   requestClientOpenFileDialog,
 } from '@craft-agent/server-core/transport'
+import {
+  isClaimableLive,
+  rpcSystemActResult,
+  rpcSystemListResult,
+  rpcSystemReadResult,
+} from '@craft-agent/core/rox2'
 
 export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.GET_SYSTEM_PREFERENCE,
@@ -159,6 +165,8 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get runtime versions (previously handled locally in preload via process.versions)
   server.handle(RPC_CHANNELS.system.VERSIONS, async () => {
+    const listed = rpcSystemListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('system versions is not live')
     return {
       node: process.versions.node,
       chrome: process.versions.chrome ?? undefined,
@@ -189,6 +197,8 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get git branch for a directory (returns null if not a git repo or git unavailable)
   server.handle(RPC_CHANNELS.git.GET_BRANCH, async (_ctx, dirPath: string) => {
+    const read = rpcSystemReadResult({ source: 'native', nativeId: dirPath })
+    if (!isClaimableLive(read.result)) return null
     if (typeof dirPath !== 'string' || dirPath.length === 0) return null
     if (!isValidWorkingDirectory(dirPath).valid || isSensitiveAgentCwd(dirPath)) return null
     return readGitBranchName(dirPath)
@@ -270,6 +280,8 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
   })
 
   server.handle(RPC_CHANNELS.gitbash.SET_PATH, async (_ctx, bashPath: string) => {
+    const act = rpcSystemActResult({ source: 'native', action: 'write', nativeId: bashPath })
+    if (!isClaimableLive(act)) return { success: false, error: 'gitbash set path is not live' }
     const validation = await validateGitBashPath(bashPath)
     if (!validation.valid) {
       return { success: false, error: validation.error }

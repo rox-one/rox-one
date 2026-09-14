@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { notesRailKeyWidth } from './notes-layout'
 import {
   NOTES_RAIL_STORAGE_KEY,
   groupNoteCommands,
@@ -17,7 +18,10 @@ import {
 
 export function useNotesRailLayout(): [NotesRailLayout, (patch: Partial<NotesRailLayout>) => void] {
   const [layout, setLayout] = React.useState<NotesRailLayout>(() =>
-    parseNotesRailLayout(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_RAIL_STORAGE_KEY)),
+    {
+      try { return parseNotesRailLayout(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_RAIL_STORAGE_KEY)) }
+      catch { return parseNotesRailLayout(null) }
+    },
   )
 
   const update = React.useCallback((patch: Partial<NotesRailLayout>) => {
@@ -51,10 +55,10 @@ export function NotesBreadcrumbs({
       {crumbs.map((crumb, index) => (
         <React.Fragment key={crumb.id}>
           {index > 0 ? <ChevronRight className="h-3 w-3 shrink-0 opacity-50" /> : null}
-          <button
+          {index === crumbs.length - 1 ? <span aria-current="page" className="min-w-0 truncate px-1 font-medium text-foreground" title={crumb.label}>{crumb.label}</span> : <button
             type="button"
             className={cn(
-              'max-w-[9rem] truncate rounded-[4px] px-1 py-0.5 hover:bg-foreground/[0.06] hover:text-foreground',
+              'rox-control max-w-[9rem] truncate px-1 hover:text-foreground',
               index === crumbs.length - 1 && 'font-medium text-foreground',
             )}
             onClick={() => {
@@ -63,7 +67,7 @@ export function NotesBreadcrumbs({
             }}
           >
             {crumb.id === 'vault' ? t('notes.breadcrumb.vault') : crumb.label}
-          </button>
+          </button>}
         </React.Fragment>
       ))}
     </nav>
@@ -77,6 +81,7 @@ export function NotesRailSash({
   collapsed,
   onToggle,
   label,
+  maximumWidth = 480,
 }: {
   width: number
   onWidth: (width: number) => void
@@ -84,29 +89,59 @@ export function NotesRailSash({
   collapsed?: boolean
   onToggle?: () => void
   label: string
+  maximumWidth?: number
 }) {
+  const cleanupRef = React.useRef<(() => void) | null>(null)
+  React.useEffect(() => () => cleanupRef.current?.(), [])
   return (
     <div className="relative z-10 w-0 shrink-0">
       <button
         type="button"
+        role="separator"
+        aria-orientation="vertical"
         aria-label={label}
-        aria-pressed={collapsed}
-        className="absolute inset-y-0 -left-1 w-2 cursor-col-resize bg-transparent hover:bg-foreground/15"
+        aria-valuenow={width}
+        aria-valuemin={140}
+        aria-valuemax={maximumWidth}
+        className="absolute inset-y-0 -left-1 w-2 cursor-col-resize bg-transparent hover:bg-foreground/15 focus-visible:bg-accent/40 focus-visible:outline-none"
         onDoubleClick={onToggle}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') { event.preventDefault(); onToggle?.(); return }
+          const next = notesRailKeyWidth(width, event.key, invert, event.shiftKey)
+          if (next != null) { event.preventDefault(); onWidth(Math.min(maximumWidth, next)) }
+        }}
         onPointerDown={(event) => {
+          if (event.button !== 0 || collapsed) return
           event.preventDefault()
+          cleanupRef.current?.()
+          event.currentTarget.focus()
           const origin = event.clientX
           const start = width
           const move = (next: PointerEvent) => {
+            if (next.pointerId !== event.pointerId) return
             const delta = invert ? origin - next.clientX : next.clientX - origin
             onWidth(start + delta)
           }
           const up = () => {
             window.removeEventListener('pointermove', move)
             window.removeEventListener('pointerup', up)
+            window.removeEventListener('pointercancel', up)
+            window.removeEventListener('blur', up)
+            window.removeEventListener('keydown', keyDown)
+            cleanupRef.current = null
           }
+          const keyDown = (key: KeyboardEvent) => {
+            if (key.key !== 'Escape') return
+            key.preventDefault()
+            onWidth(start)
+            up()
+          }
+          cleanupRef.current = up
           window.addEventListener('pointermove', move)
           window.addEventListener('pointerup', up)
+          window.addEventListener('pointercancel', up)
+          window.addEventListener('blur', up)
+          window.addEventListener('keydown', keyDown)
         }}
       />
     </div>

@@ -5,6 +5,12 @@ import type { HandlerDeps } from '../handler-deps'
 import type { PageActionRequest } from '@craft-agent/shared/pages'
 import type { PageActionBroker, PageActionExecutors } from '@craft-agent/shared/pages'
 import { assertPageSourceUsable } from '../../pages/source-gate'
+import {
+  isClaimableLive,
+  rpcPagesActResult,
+  rpcPagesListResult,
+  rpcPagesReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.pages.GET,
@@ -169,6 +175,8 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   // List all pages for a workspace
   server.handle(RPC_CHANNELS.pages.GET, async (_ctx, workspaceId: string) => {
+    const listed = rpcPagesListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
       log.error(`PAGES_GET: Workspace not found: ${workspaceId}`)
@@ -180,6 +188,8 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   // Get one page (by slug or id)
   server.handle(RPC_CHANNELS.pages.GET_ONE, async (_ctx, workspaceId: string, pageIdOrSlug: string) => {
+    const read = rpcPagesReadResult({ source: 'native', nativeId: pageIdOrSlug })
+    if (!isClaimableLive(read.result)) return null
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
     const { loadPage, loadPageById } = await import('@craft-agent/shared/pages')
@@ -189,6 +199,8 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   // Create a new page
   server.handle(RPC_CHANNELS.pages.CREATE, async (_ctx, workspaceId: string, input: import('@craft-agent/shared/pages').CreatePageInput) => {
+    const act = rpcPagesActResult({ source: 'native', action: 'write', nativeId: input?.name || 'page' })
+    if (!isClaimableLive(act)) throw new Error('page create is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { createPage } = await import('@craft-agent/shared/pages')
@@ -231,6 +243,9 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
   // silently outlive the local page — deletePageWithUnpublish is shared
   // verbatim with the delete_page session tool.
   server.handle(RPC_CHANNELS.pages.DELETE, async (_ctx, workspaceId: string, pageSlug: string) => {
+    if (!pageSlug) throw new Error('pageSlug is required')
+    const act = rpcPagesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: pageSlug })
+    if (!isClaimableLive(act)) throw new Error('page delete is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { deletePageWithUnpublish } = await import('@craft-agent/shared/pages')
@@ -427,6 +442,9 @@ export function registerPagesHandlers(server: RpcServer, deps: HandlerDeps): voi
 
   // Unpublish (revoke the public copy, clear the local pointer + vault token)
   server.handle(RPC_CHANNELS.pages.UNPUBLISH, async (_ctx, workspaceId: string, pageSlug: string) => {
+    if (!pageSlug) throw new Error('pageSlug is required')
+    const act = rpcPagesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: pageSlug })
+    if (!isClaimableLive(act)) throw new Error('page unpublish is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const publisher = await buildPublisher()

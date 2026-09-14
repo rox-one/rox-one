@@ -47,6 +47,10 @@ const EXISTING_LABEL_KEYS = [
 
 const NEW_LABEL_KEYS = [
   'shortcuts.action.advisorReview',
+  'shortcuts.action.focusPanelDown',
+  'shortcuts.action.focusPanelLeft',
+  'shortcuts.action.focusPanelRight',
+  'shortcuts.action.focusPanelUp',
   'shortcuts.action.sessionWorkflow',
   'shortcuts.action.simplifyDiff',
 ] as const

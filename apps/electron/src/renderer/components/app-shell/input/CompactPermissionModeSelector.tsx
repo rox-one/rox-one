@@ -90,6 +90,7 @@ export function CompactPermissionModeSelector({
           aria-label={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[optimisticMode].name)}`}
           title={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[optimisticMode].name)}`}
           className={cn(
+            "input-toolbar-btn focus-visible:ring-1 focus-visible:ring-ring motion-reduce:transition-none",
             isWebUI
               ? "h-7 w-7 p-0 text-xs font-medium rounded-[6px] flex items-center justify-center outline-none select-none shrink-0 text-foreground/70 hover:bg-foreground/5 transition-colors"
               : "h-7 pl-2 pr-2.5 text-xs font-medium rounded-[6px] flex items-center gap-1.5 outline-none select-none shrink-0 hover:bg-foreground/5",

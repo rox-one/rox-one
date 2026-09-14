@@ -11,6 +11,12 @@ import type {
   MessagingPlatformAccessMode,
   MessagingPlatformOwnerInfo,
 } from '../messaging-registry-interface'
+import {
+  isClaimableLive,
+  rpcMessagingActResult,
+  rpcMessagingListResult,
+  rpcMessagingReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.messaging.GET_CONFIG,
@@ -52,11 +58,19 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
   if (!registry) return
 
   server.handle(RPC_CHANNELS.messaging.GET_CONFIG, async (ctx) => {
+    const listed = rpcMessagingListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('messaging config is not live')
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
     return registry.getConfig(ctx.workspaceId)
   })
 
   server.handle(RPC_CHANNELS.messaging.UPDATE_CONFIG, async (ctx, config: Record<string, unknown>) => {
+    const act = rpcMessagingActResult({
+      source: 'native',
+      action: 'write',
+      nativeId: ctx.workspaceId ?? 'config',
+    })
+    if (!isClaimableLive(act)) return { success: false }
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
     await registry.updateConfig(ctx.workspaceId, config)
     return { success: true }
@@ -105,6 +119,14 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
   })
 
   server.handle(RPC_CHANNELS.messaging.DISCONNECT, async (ctx, platform: string) => {
+    if (!platform) throw new Error('messaging.disconnect: platform is required')
+    const act = rpcMessagingActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: platform,
+    })
+    if (!isClaimableLive(act)) return { success: false }
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
     await registry.disconnectPlatform(ctx.workspaceId, platform)
     return { success: true }
@@ -118,6 +140,8 @@ export function registerMessagingHandlers(server: RpcServer, deps: HandlerDeps):
 
   server.handle(RPC_CHANNELS.messaging.GET_BINDINGS, async (ctx) => {
     if (!ctx.workspaceId) throw new Error('Missing workspaceId')
+    const read = rpcMessagingReadResult({ source: 'native', nativeId: ctx.workspaceId })
+    if (!isClaimableLive(read.result)) return []
     return registry.getBindings(ctx.workspaceId)
   })
 

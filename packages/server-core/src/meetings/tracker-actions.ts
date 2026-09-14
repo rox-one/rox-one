@@ -145,7 +145,7 @@ function canClaimLive(adapter: TrackerAdapter, result: TrackerAdapterResult): fa
   return false
 }
 
-function validateRequest(request: TrackerCreateRequest): MeetingOpResult<string> | null {
+function validateRequest(request: TrackerCreateRequest): MeetingOpResult<string, never> | null {
   if (!targetIdsPresent(request.target) || !targetIdsPresent(request.approvedTarget)) {
     return denied('missing-exact-ids')
   }

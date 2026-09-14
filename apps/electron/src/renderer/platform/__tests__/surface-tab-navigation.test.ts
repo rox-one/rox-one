@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { createStore } from 'jotai'
 import { focusedPanelIdAtom, panelStackAtom, pushPanelAtom } from '../../atoms/panel-stack'
 import { routes } from '../../../shared/routes'
-import { surfaceTabKeyboardTarget, surfaceTabRovingId } from '../surface-tab-navigation'
+import { surfaceTabCloseTarget, surfaceTabKeyboardTarget, surfaceTabRovingId } from '../surface-tab-navigation'
 
 describe('surface tab keyboard navigation', () => {
   it('has no keyboard target for empty and browser-only strips', () => {
@@ -35,5 +35,16 @@ describe('surface tab keyboard navigation', () => {
     expect(surfaceTabKeyboardTarget(tabs, 'first', 'End')).toBe('last')
     expect(surfaceTabKeyboardTarget(tabs, 'first', 'Delete')).toBeNull()
     expect(surfaceTabRovingId(tabs, 'closed-panel')).toBe('first')
+  })
+
+  it('restores the surviving tab stop on close while preserving an independently focused browser', () => {
+    const tabs = [{ panelId: 'first' }, { panelId: 'middle' }, { panelId: 'last' }]
+    expect(surfaceTabCloseTarget(tabs, 'first', 'browser')).toBe('middle')
+    expect(surfaceTabCloseTarget(tabs, 'middle', 'browser')).toBe('first')
+    expect(surfaceTabCloseTarget(tabs, 'middle', 'last')).toBe('last')
+    expect(surfaceTabCloseTarget(tabs, 'middle', 'middle')).toBe('last')
+    expect(surfaceTabCloseTarget(tabs, 'last', 'last')).toBe('middle')
+    expect(surfaceTabCloseTarget([{ panelId: 'only' }], 'only', 'browser')).toBeNull()
+    expect(surfaceTabCloseTarget(tabs, 'missing', 'first')).toBeNull()
   })
 })

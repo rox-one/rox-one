@@ -204,7 +204,8 @@ export default function LazyDiagnostics({ transport }: { transport: TransportCon
     </div>
     <div className="flex min-h-8 items-center justify-between gap-3 border-t border-border/60 px-4 py-2 text-[10px] text-muted-foreground">
       <span>{t(paused ? 'deviceDiagnostics.paused' : ['overview', 'network', 'processes'].includes(tab) ? 'deviceDiagnostics.autoRefresh' : 'deviceDiagnostics.onDemand')}</span>
-      <span role="status" aria-live="polite">{copyFailed ? t('deviceDiagnostics.copyFailed') : copied ? t('common.copied') : snapshot ? t('deviceDiagnostics.updated', { time: new Intl.DateTimeFormat(i18n.language, { timeStyle: 'medium' }).format(snapshot.sampledAt) }) : ''}</span>
+      <span aria-live="off">{copyFailed ? t('deviceDiagnostics.copyFailed') : copied ? t('common.copied') : snapshot ? t('deviceDiagnostics.updated', { time: new Intl.DateTimeFormat(i18n.language, { timeStyle: 'medium' }).format(snapshot.sampledAt) }) : ''}</span>
+      <span className="sr-only" role="status" aria-live="polite" aria-atomic="true">{copyFailed ? t('deviceDiagnostics.copyFailed') : copied ? t('common.copied') : ''}</span>
     </div>
   </div>
 }

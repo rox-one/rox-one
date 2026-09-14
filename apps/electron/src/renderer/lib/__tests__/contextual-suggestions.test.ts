@@ -4,6 +4,7 @@ import {
   addSkillToDraft,
   canOfferSuggestion,
   matchingSavedSkill,
+  normalizeSuggestionHistory,
   rememberSuggestion,
   reusableProcessFromCompletion,
   selectContextualSuggestion,
@@ -120,6 +121,25 @@ describe('saved skill suggestions', () => {
 })
 
 describe('suggestion frequency', () => {
+  it('recovers from old or malformed storage without crashing or blocking suggestions forever', () => {
+    for (const stored of [null, false, 'old', [], {}, { seen: null }, { seen: ['old'] }]) {
+      expect(canOfferSuggestion(stored, 'first', now)).toBe(true)
+      expect(rememberSuggestion(stored, 'first', now)).toEqual({ seen: { first: now }, lastShownAt: now })
+    }
+    const damaged = { seen: { first: now + 86_400_000, second: 'yesterday', third: -1 }, lastShownAt: Infinity }
+    expect(normalizeSuggestionHistory(damaged, now)).toEqual({ seen: {}, lastShownAt: 0 })
+    expect(canOfferSuggestion(damaged, 'first', now)).toBe(true)
+  })
+
+  it('evicts the oldest timestamps and retains an existing suggestion refreshed out of insertion order', () => {
+    const seen = Object.fromEntries(Array.from({ length: 120 }, (_, index) => [`id-${index}`, now - index]))
+    const history = rememberSuggestion({ seen, lastShownAt: now - 1 }, 'id-119', now)
+    expect(Object.keys(history.seen)).toHaveLength(100)
+    expect(history.seen['id-0']).toBe(now)
+    expect(history.seen['id-119']).toBe(now)
+    expect(history.seen['id-118']).toBeUndefined()
+  })
+
   it('remembers an offered/dismissed suggestion and observes the cooldown for other suggestions', () => {
     const empty = { seen: {}, lastShownAt: 0 }
     expect(canOfferSuggestion(empty, 'first', now)).toBe(true)

@@ -12,6 +12,12 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcEnvironmentActResult,
+  rpcEnvironmentListResult,
+  rpcEnvironmentReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.environment.GET,
@@ -36,10 +42,16 @@ function broadcast(server: RpcServer, prefs: EnvironmentPrefs): void {
 
 export function registerEnvironmentHandlers(server: RpcServer, _deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.environment.GET, async () => {
+    const listed = rpcEnvironmentListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('environment prefs are not live')
+    const read = rpcEnvironmentReadResult({ source: 'native', nativeId: 'prefs' })
+    if (!isClaimableLive(read.result)) throw new Error('environment prefs are not live')
     return toDto(loadEnvironmentPrefs())
   })
 
   server.handle(RPC_CHANNELS.environment.SAVE, async (_ctx, patch: unknown) => {
+    const act = rpcEnvironmentActResult({ source: 'native', action: 'write', nativeId: 'prefs' })
+    if (!isClaimableLive(act)) throw new Error('environment prefs write is not live')
     const next = saveEnvironmentPrefs(
       (patch && typeof patch === 'object' ? patch : {}) as Partial<EnvironmentPrefs> & {
         completeQuestionnaire?: boolean

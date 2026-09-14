@@ -141,14 +141,33 @@ export function selectContextualSuggestion(options: {
   return { id: process.id, workspaceId: process.workspaceId, sessionId: process.sessionId, kind: 'save-process' }
 }
 
-export function canOfferSuggestion(history: SuggestionHistory, id: string, now: number): boolean {
+/** Local storage can contain an older schema or a damaged clock value. */
+export function normalizeSuggestionHistory(value: unknown, now: number): SuggestionHistory {
+  const data = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown> : {}
+  const validTime = (at: unknown): at is number => typeof at === 'number' && Number.isFinite(at) && at >= 0 && at <= now
+  const seen = data.seen && typeof data.seen === 'object' && !Array.isArray(data.seen)
+    ? Object.entries(data.seen)
+      .filter((entry): entry is [string, number] => validTime(entry[1]) && now - entry[1] < HISTORY_MAX_AGE_MS)
+      .sort((a, b) => a[1] - b[1])
+      .slice(-100)
+    : []
+  return {
+    seen: Object.fromEntries(seen),
+    lastShownAt: validTime(data.lastShownAt) ? data.lastShownAt : 0,
+  }
+}
+
+export function canOfferSuggestion(value: unknown, id: string, now: number): boolean {
+  const history = normalizeSuggestionHistory(value, now)
   const seenAt = history.seen[id]
   if (seenAt !== undefined && now - seenAt < HISTORY_MAX_AGE_MS) return false
   return history.lastShownAt === 0 || now - history.lastShownAt >= SUGGESTION_COOLDOWN_MS
 }
 
-export function rememberSuggestion(history: SuggestionHistory, id: string, now: number): SuggestionHistory {
-  const recent = Object.entries(history.seen).filter(([, at]) => now - at < HISTORY_MAX_AGE_MS).slice(-99)
+export function rememberSuggestion(value: unknown, id: string, now: number): SuggestionHistory {
+  const history = normalizeSuggestionHistory(value, now)
+  const recent = Object.entries(history.seen).filter(([key]) => key !== id).slice(-99)
   return { seen: { ...Object.fromEntries(recent), [id]: now }, lastShownAt: now }
 }
 

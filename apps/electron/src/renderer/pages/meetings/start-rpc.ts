@@ -35,7 +35,7 @@ export type MeetingSearchApi = {
 }
 
 export function resolveMeetingCatalogApi(injected?: MeetingCatalogApi | null): MeetingCatalogApi | null {
-  if (injected?.createMeeting && injected.listMeetings) return injected
+  if (typeof injected?.createMeeting === 'function' && typeof injected.listMeetings === 'function') return injected
   if (typeof window === 'undefined') return null
   const api = window.electronAPI
   if (!api?.createMeeting || !api?.listMeetings) return null
@@ -83,6 +83,7 @@ export async function listNativeMeetingsViaRpc(input: {
   if (!input.api) return { ok: false, code: 'rpc-unavailable' }
   if (!input.workspaceId) return { ok: false, code: 'workspace-required' }
   const result = await input.api.listMeetings(input.workspaceId)
+  if (result.denied) return { ok: false, code: 'workspace-required' }
   return { ok: true, meetings: (result.page ?? []).map(rowFromMeeting) }
 }
 

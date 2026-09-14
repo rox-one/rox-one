@@ -167,6 +167,8 @@ export function CollectionDisplayPopover({
                 <button
                   key={dir}
                   type="button"
+                  aria-pressed={active}
+                  data-collection-dialog-item
                   onClick={() => patch({ orderDir: dir })}
                   className={cn(
                     'h-6 flex-1 rounded-[4px] text-[11px] font-medium transition-colors',
@@ -199,17 +201,17 @@ export function CollectionDisplayPopover({
 
         <div className="mx-1 my-1 h-px bg-foreground/8" />
 
-        <ToggleRow
+        <CollectionDisplayToggleRow
           label={t('collection.display.showCompleted')}
           checked={display.showCompleted}
           onCheckedChange={(checked) => patch({ showCompleted: checked })}
         />
-        <ToggleRow
+        <CollectionDisplayToggleRow
           label={t('collection.display.showEmptyGroups')}
           checked={display.showEmptyGroups}
           onCheckedChange={(checked) => patch({ showEmptyGroups: checked })}
         />
-        <ToggleRow
+        <CollectionDisplayToggleRow
           label={t('collection.display.hoverActions')}
           checked={display.hoverActions !== false}
           onCheckedChange={(checked) => patch({ hoverActions: checked })}
@@ -235,7 +237,7 @@ export function CollectionDisplayPopover({
   )
 }
 
-function ToggleRow({
+export function CollectionDisplayToggleRow({
   label,
   checked,
   onCheckedChange,
@@ -244,14 +246,14 @@ function ToggleRow({
   checked: boolean
   onCheckedChange: (checked: boolean) => void
 }) {
+  const id = React.useId()
   return (
     <label
-      data-collection-dialog-item
-      tabIndex={0}
-      className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[12.5px] text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground focus-visible:bg-foreground/[0.07] focus-visible:text-foreground focus-visible:ring-1 focus-visible:ring-ring/70 outline-none motion-reduce:transition-none"
+      htmlFor={id}
+      className="flex cursor-pointer items-center justify-between gap-3 rounded-[4px] px-2 py-1.5 text-[12.5px] text-foreground/90 transition-colors hover:bg-foreground/[0.04] hover:text-foreground has-[:focus-visible]:bg-foreground/[0.07] has-[:focus-visible]:text-foreground motion-reduce:transition-none"
     >
       <span>{label}</span>
-      <Switch checked={checked} onCheckedChange={onCheckedChange} />
+      <Switch id={id} data-collection-dialog-item checked={checked} onCheckedChange={onCheckedChange} />
     </label>
   )
 }

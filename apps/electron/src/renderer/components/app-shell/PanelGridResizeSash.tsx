@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
+  capturePanelResizeTracks,
   resizePanelTracks,
   type PanelGridShape,
   type PanelGridTracks,
@@ -24,6 +25,7 @@ interface PanelGridResizeSashProps {
 export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTracksChange }: PanelGridResizeSashProps) {
   const anchorRef = useRef<HTMLSpanElement>(null)
   const snapshotRef = useRef(tracks)
+  const resizeBaseRef = useRef(tracks)
   const minimum = axis === 'x' ? PANEL_GRID_MIN_WIDTH : PANEL_GRID_MIN_HEIGHT
   const hitSize = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches ? 44 : 28
   const [values, setValues] = useState({ now: minimum, max: minimum })
@@ -35,7 +37,7 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
   const firstId = firstIds.join('|')
   const secondId = secondIds.join('|')
 
-  const getBounds = useCallback((): ResizeBounds | null => {
+  const getMeasurement = useCallback((): { bounds: ResizeBounds; sizes: number[] } | null => {
     const grid = anchorRef.current?.parentElement
     if (!grid) return null
     const computed = getComputedStyle(grid)
@@ -45,7 +47,7 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
     const sizeB = sizes[index + 1]
     if (!Number.isFinite(sizeA) || !Number.isFinite(sizeB)) return null
     const total = sizeA + sizeB
-    return {
+    return { sizes, bounds: {
       leftId: firstId,
       rightId: secondId,
       sizeA,
@@ -55,11 +57,11 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
       minB: minimum,
       maxA: Math.max(minimum, total - minimum),
       maxB: Math.max(minimum, total - minimum),
-    }
+    } }
   }, [axis, index, minimum, firstId, secondId])
 
   const apply = useCallback((a: number, b: number, commit: boolean) => {
-    const snapshot = snapshotRef.current
+    const snapshot = resizeBaseRef.current
     const key = axis === 'x' ? 'columns' : 'rows'
     onTracksChange(shape, { ...snapshot, [key]: resizePanelTracks(snapshot[key], index, a, b) }, commit)
   }, [axis, index, shape, onTracksChange])
@@ -76,11 +78,12 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
   }, [firstId, secondId, neighborChanged])
 
   const measure = useCallback(() => {
-    const bounds = getBounds()
-    if (!bounds) return
+    const measurement = getMeasurement()
+    if (!measurement) return
+    const { bounds } = measurement
     setValues((previous) => previous.now === bounds.sizeA && previous.max === bounds.maxA
       ? previous : { now: bounds.sizeA, max: bounds.maxA })
-  }, [getBounds])
+  }, [getMeasurement])
 
   useLayoutEffect(measure, [measure, tracks])
   useEffect(() => {
@@ -92,8 +95,13 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
   }, [measure])
 
   const begin = () => {
-    if (!resize.controller.current?.active) snapshotRef.current = tracks
-    return getBounds()
+    const measurement = getMeasurement()
+    if (!measurement) return null
+    if (!resize.controller.current?.active) {
+      snapshotRef.current = tracks
+      resizeBaseRef.current = capturePanelResizeTracks(tracks, axis, measurement.sizes)
+    }
+    return measurement.bounds
   }
 
   return (
@@ -124,7 +132,13 @@ export function PanelGridResizeSash({ axis, index, shape, tracks, panelIds, onTr
           alignSelf: 'end',
           transform: `translateY(calc(50% + ${PANEL_GAP / 2}px))`,
         }}
-        onPointerDown={(event) => resize.handlePointerDown(event, begin())}
+        onPointerDown={(event) => {
+          if (event.button !== 0 || event.isPrimary === false) return
+          // Finish a keyboard gesture before taking the pointer's cancel
+          // snapshot; Escape must keep the already committed keyboard size.
+          resize.handleKeyCommit()
+          resize.handlePointerDown(event, begin())
+        }}
         onPointerMove={resize.handlePointerMove}
         onPointerUp={resize.handlePointerUp}
         onPointerCancel={resize.handlePointerCancel}

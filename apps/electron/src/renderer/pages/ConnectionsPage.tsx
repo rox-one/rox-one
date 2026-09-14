@@ -299,7 +299,7 @@ export default function ConnectionsPage() {
             className={`rounded-t px-3 py-2 text-sm ${tab === id ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}
             onClick={() => setTab(id)}
           >
-            {t(`connections.tab.${id}`)}
+            {t(`connections.tabs.${id}`)}
           </button>
         ))}
         <button

@@ -42,7 +42,11 @@ export function buildMeetingCaptureGrant(input: {
 }
 
 export function resolveMeetingCaptureApi(injected?: MeetingCaptureApi | null): MeetingCaptureApi | null {
-  if (injected?.startCapture && injected.pauseCapture && injected.stopCapture) return injected
+  if (
+    typeof injected?.startCapture === 'function'
+    && typeof injected.pauseCapture === 'function'
+    && typeof injected.stopCapture === 'function'
+  ) return injected
   if (typeof window === 'undefined') return null
   const api = window.electronAPI
   if (!api?.startCapture || !api?.pauseCapture || !api?.stopCapture) return null

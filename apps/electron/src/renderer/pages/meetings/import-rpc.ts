@@ -54,7 +54,12 @@ export function i18nKeyForImportError(code: string | undefined): string {
 }
 
 export async function specFromBytes(bytes: Uint8Array, mimeType?: string): Promise<ImportMediaSpec> {
-  const digest = await crypto.subtle.digest('SHA-256', bytes)
+  // Web Crypto needs an ArrayBuffer-backed view. Preserve the selected range
+  // without copying ordinary file bytes; snapshot shared memory before hashing.
+  const source = bytes.buffer instanceof ArrayBuffer
+    ? new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    : new Uint8Array(bytes)
+  const digest = await crypto.subtle.digest('SHA-256', source)
   const contentHash = [...new Uint8Array(digest)].map((value) => value.toString(16).padStart(2, '0')).join('')
   return { contentHash, byteLength: bytes.byteLength, mimeType }
 }

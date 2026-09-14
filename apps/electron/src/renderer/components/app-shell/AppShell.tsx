@@ -95,13 +95,11 @@ import { APP_NAV_DESTINATIONS_BY_ID } from "./nav-destinations"
 import { getActiveService, getSidebarKeyboardTargets, serviceHasNavigator } from "./service-navigation"
 import {
   WorkspaceSurfaceHost,
-  ACTIVITY_RAIL_WIDTH,
-  ACTIVITY_RAIL_COLLAPSED_WIDTH,
   StatusBarHost,
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -133,6 +131,7 @@ import { buildLabelTree, getDescendantIds, getLabelDisplayName, flattenLabels, e
 import type { LabelConfig, LabelTreeNode } from "@craft-agent/shared/labels"
 import { resolveEntityColor } from "@craft-agent/shared/colors"
 import * as storage from "@/lib/local-storage"
+import { sessionCatalogOwnsWorkspace } from "@/lib/nav-helpers"
 import { commitShellLayout, loadShellLayout, NAVIGATOR_WIDTH_DEFAULT, NAVIGATOR_WIDTH_MAX, NAVIGATOR_WIDTH_MIN, SIDEBAR_WIDTH_DEFAULT, SIDEBAR_WIDTH_MAX, SIDEBAR_WIDTH_MIN } from "@/lib/shell-layout-preferences"
 import { toast } from "sonner"
 import { navigate, routes } from "@/lib/navigate"
@@ -179,7 +178,6 @@ import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
   PANEL_MIN_WIDTH,
-  PANEL_STACK_VERTICAL_OVERFLOW,
   RADIUS_EDGE,
   RADIUS_INNER,
 } from "./panel-constants"
@@ -278,27 +276,24 @@ function AppShellContent({
   const [isSidebarVisible, setIsSidebarVisible] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
-  // W1 unified shell: when the activity rail is mounted, the absolute sidebar
-  // sashes shift right by the rail width (+ one PANEL_GAP); zero when OFF.
+  // Feature preferences control optional workbench chrome.
   const unifiedShellEnabled = useAtomValue(featureUnifiedShellAtom)
   const topChromeEnabled = useAtomValue(featureWorkbenchTopChromeV2Atom)
   const harnessInspectorEnabled = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const statusBarEnabled = useAtomValue(featureWorkbenchStatusBarV1Atom)
-  // PR-2: the rail offset follows the same two-key decision as the host.
+  // Use the same capability/preference decision as the workspace host.
   const workbenchUserPreference = useAtomValue(featureWorkbenchAtom)
   const workbenchAvailability = resolveWorkbenchAvailability(
     workbenchOperatorCapability,
     workbenchUserPreference,
   )
   const workbenchEnabled = workbenchAvailability === 'enabled'
-  const activityRailCollapsed = useAtomValue(activityRailCollapsedAtom)
-  const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const [sidebarWidth, setSidebarWidth] = React.useState(() => {
-    return loadShellLayout(null).sidebarWidth
+    return loadShellLayout(activeWorkspaceId).sidebarWidth
   })
   // Session list width in pixels (min 240, max 480)
   const [sessionListWidth, setSessionListWidth] = React.useState(() => {
-    return loadShellLayout(null).navigatorWidth
+    return loadShellLayout(activeWorkspaceId).navigatorWidth
   })
 
   // Hides both sidebar and navigator (CMD+. toggle)
@@ -338,7 +333,6 @@ function AppShellContent({
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
   const showStatusBar = shouldShowStatusBar(statusBarEnabled, isAutoCompact)
-  const unifiedRailOffset = isAutoCompact ? 0 : (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH)
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -496,6 +490,11 @@ function AppShellContent({
     ['sessions', 'sources', 'skills', 'automations', 'projects', 'pages'].includes(activeService)
   const contextSidebarVisible = isSidebarVisible && hasContextSidebar
   const hasServiceNavigator = serviceHasNavigator(navState)
+  const navigatorExpanded = sessionCatalogOwnsWorkspace(navState, {
+    panelCount,
+    isCompact: isAutoCompact,
+    navigatorHidden: effectiveSidebarAndNavigatorHidden,
+  })
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -808,21 +807,20 @@ function AppShellContent({
   const [focusedSidebarItemId, setFocusedSidebarItemId] = React.useState<string | null>(null)
   const sidebarItemRefs = React.useRef<Map<string, HTMLElement>>(new Map())
   // Track which expandable sidebar items are collapsed
-  // Labels are collapsed by default; user preference is persisted once toggled
+  // Compact defaults apply only when no preference exists; [] means expand all.
   const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(() => {
-    const saved = loadShellLayout(null).collapsedSectionIds
-    if (saved.length > 0) return new Set(saved)
-    return new Set(['nav:labels'])
+    return new Set(loadShellLayout(activeWorkspaceId).collapsedSectionIds)
   })
   const isExpanded = React.useCallback((id: string) => !collapsedItems.has(id), [collapsedItems])
   const toggleExpanded = React.useCallback((id: string) => {
-    setCollapsedItems(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }, [])
+    const next = new Set(collapsedItems)
+    if (next.has(id)) next.delete(id)
+    else next.add(id)
+    setCollapsedItems(next)
+    // Persist user gestures only. A workspace change must not write the old
+    // workspace's state before its restored state has reached the next render.
+    if (activeWorkspaceId) commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...next] })
+  }, [collapsedItems, activeWorkspaceId])
   // Sources state (workspace-scoped)
   const [sources, setSources] = React.useState<LoadedSource[]>([])
   // Sync sources to atom for NavigationContext auto-selection
@@ -914,18 +912,25 @@ function AppShellContent({
     // Load workspace-scoped state on BOTH initial mount AND workspace switch
     // This fixes CMD+R losing filters - previously only ran on workspace switch
     if (previousWorkspaceId !== activeWorkspaceId) {
+      // A pending gesture belongs to the old workspace. Cancel its preview and
+      // keyboard timer before restoring the new snapshot, without committing it.
+      sidebarResize.handleKeyCancel()
+      navigatorResize.handleKeyCancel()
+      const layout = loadShellLayout(activeWorkspaceId)
+      setSidebarWidth(layout.sidebarWidth)
+      setSessionListWidth(layout.navigatorWidth)
+
       const newViewFilters = storage.get<ViewFiltersMap>(storage.KEYS.viewFilters, {}, activeWorkspaceId)
       setViewFiltersMap(newViewFilters)
 
       const newExpandedFolders = storage.get<string[]>(storage.KEYS.expandedFolders, [], activeWorkspaceId)
       setExpandedFolders(new Set(newExpandedFolders))
 
-      const newCollapsedItems = storage.get<string[] | null>(storage.KEYS.collapsedSidebarItems, null, activeWorkspaceId)
-      setCollapsedItems(newCollapsedItems !== null ? new Set(newCollapsedItems) : new Set(['nav:labels']))
+      setCollapsedItems(new Set(layout.collapsedSectionIds))
     }
 
     previousWorkspaceRef.current = activeWorkspaceId
-  }, [activeWorkspaceId])
+  }, [activeWorkspaceId, sidebarResize.handleKeyCancel, navigatorResize.handleKeyCancel])
 
   // Load sources from backend on mount
   React.useEffect(() => {
@@ -1659,13 +1664,6 @@ function AppShellContent({
     storage.set(storage.KEYS.viewFilters, viewFiltersMap, activeWorkspaceId)
   }, [viewFiltersMap, activeWorkspaceId])
 
-  // Persist sidebar section collapsed states (workspace-scoped)
-  React.useEffect(() => {
-    if (!activeWorkspaceId) return
-    storage.set(storage.KEYS.collapsedSidebarItems, [...collapsedItems], activeWorkspaceId)
-    commitShellLayout({ workspaceId: activeWorkspaceId, collapsedSectionIds: [...collapsedItems] })
-  }, [collapsedItems, activeWorkspaceId])
-
   const handleAllSessionsClick = useCallback(() => {
     navigate(routes.view.allSessions())
   }, [navigate])
@@ -2389,8 +2387,9 @@ function AppShellContent({
       >
         {/* PR-2 Workbench host: legacy children remain unchanged until both
             operator capability and explicit user preference are true. */}
-        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} isCompact={isAutoCompact} onOpenBrowser={() => { void handleNewBrowserWindow() }}>
+        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} isCompact={isAutoCompact} catalogOnly={navigatorExpanded} onOpenBrowser={() => { void handleNewBrowserWindow() }}>
           <PanelStackContainer
+          navigatorExpanded={navigatorExpanded}
           sidebarSlot={
             <div
               ref={sidebarRef}
@@ -2786,6 +2785,7 @@ function AppShellContent({
                 </div>
                 <div className="shrink-0">
                   <SidebarChrome
+                    workspaceId={activeWorkspaceId ?? undefined}
                     profile={profileStrip}
                     onProfileClick={() => handleSettingsClick('account')}
                     promoKind={promoKind}
@@ -2800,7 +2800,7 @@ function AppShellContent({
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (contextSidebarVisible ? sidebarWidth : 0)}
           navigatorSlot={!hasServiceNavigator ? null : (
             <div
-              style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
+              style={{ width: isAutoCompact || navigatorExpanded ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
               data-shell-role="chrome"
             >
@@ -3015,140 +3015,140 @@ function AppShellContent({
           isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}
           isResizing={!!isResizing}
+          resizeHandles={<>
+            {/* Resize handles share the panels’ scroll and coordinate owner */}
+            {!effectiveSidebarAndNavigatorHidden && contextSidebarVisible && (
+            <ResizeHandle
+              labelKey="shell.resize.sidebar"
+              controlsId="shell-sidebar"
+              valueNow={sidebarWidth}
+              valueMin={SIDEBAR_WIDTH_MIN}
+              valueMax={SIDEBAR_WIDTH_MAX}
+              dragging={sidebarResize.dragging || isResizing === 'sidebar'}
+              className="absolute z-panel"
+              style={{
+                top: 0,
+                bottom: 0,
+                height: 'auto',
+                left: (contextSidebarVisible
+                  ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
+                  : -PANEL_GAP),
+                transition: sidebarResize.dragging ? undefined : 'left 0.15s ease-out',
+              }}
+              onPointerDown={(event) => {
+                setIsResizing('sidebar')
+                sidebarResize.handlePointerDown(event, {
+                  leftId: 'shell-sidebar',
+                  rightId: 'shell-rest',
+                  total: window.innerWidth,
+                  sizeA: sidebarWidth,
+                  minA: SIDEBAR_WIDTH_MIN,
+                  maxA: SIDEBAR_WIDTH_MAX,
+                  minB: PANEL_MIN_WIDTH,
+                  maxB: Number.POSITIVE_INFINITY,
+                })
+              }}
+              onPointerMove={sidebarResize.handlePointerMove}
+              onPointerUp={sidebarResize.handlePointerUp}
+              onPointerCancel={sidebarResize.handlePointerCancel}
+              onLostPointerCapture={sidebarResize.handleLostPointerCapture}
+              onKeyAdjust={(delta) => sidebarResize.handleKeyAdjust(delta, {
+                leftId: 'shell-sidebar',
+                rightId: 'shell-rest',
+                total: window.innerWidth,
+                sizeA: sidebarWidth,
+                minA: SIDEBAR_WIDTH_MIN,
+                maxA: SIDEBAR_WIDTH_MAX,
+                minB: PANEL_MIN_WIDTH,
+                maxB: Number.POSITIVE_INFINITY,
+              })}
+              onKeyCommit={sidebarResize.handleKeyCommit}
+              onKeyCancel={sidebarResize.handleKeyCancel}
+              onReset={() => sidebarResize.handleReset({
+                leftId: 'shell-sidebar',
+                rightId: 'shell-rest',
+                total: window.innerWidth,
+                sizeA: sidebarWidth,
+                minA: SIDEBAR_WIDTH_MIN,
+                maxA: SIDEBAR_WIDTH_MAX,
+                minB: PANEL_MIN_WIDTH,
+                maxB: Number.POSITIVE_INFINITY,
+              }, SIDEBAR_WIDTH_DEFAULT)}
+            />
+            )}
+
+            {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
+            {!effectiveSidebarAndNavigatorHidden && hasServiceNavigator && !isBoardView && !navigatorExpanded && (
+            <ResizeHandle
+              labelKey="shell.resize.navigator"
+              controlsId="shell-navigator"
+              valueNow={sessionListWidth}
+              valueMin={NAVIGATOR_WIDTH_MIN}
+              valueMax={NAVIGATOR_WIDTH_MAX}
+              dragging={navigatorResize.dragging || isResizing === 'session-list'}
+              className="absolute z-panel"
+              style={{
+                top: 0,
+                bottom: 0,
+                height: 'auto',
+                left:
+                  (contextSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
+                  sessionListWidth +
+                  (PANEL_GAP / 2) -
+                  sashHitWidthPx() / 2,
+                transition: navigatorResize.dragging ? undefined : 'left 0.15s ease-out',
+              }}
+              onPointerDown={(event) => {
+                setIsResizing('session-list')
+                const offset = contextSidebarVisible ? sidebarWidth : 0
+                navigatorResize.handlePointerDown(event, {
+                  leftId: 'shell-navigator',
+                  rightId: 'shell-content',
+                  total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
+                  sizeA: sessionListWidth,
+                  minA: NAVIGATOR_WIDTH_MIN,
+                  maxA: NAVIGATOR_WIDTH_MAX,
+                  minB: PANEL_MIN_WIDTH,
+                  maxB: Number.POSITIVE_INFINITY,
+                })
+              }}
+              onPointerMove={navigatorResize.handlePointerMove}
+              onPointerUp={navigatorResize.handlePointerUp}
+              onPointerCancel={navigatorResize.handlePointerCancel}
+              onLostPointerCapture={navigatorResize.handleLostPointerCapture}
+              onKeyAdjust={(delta) => {
+                const offset = contextSidebarVisible ? sidebarWidth : 0
+                navigatorResize.handleKeyAdjust(delta, {
+                  leftId: 'shell-navigator',
+                  rightId: 'shell-content',
+                  total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
+                  sizeA: sessionListWidth,
+                  minA: NAVIGATOR_WIDTH_MIN,
+                  maxA: NAVIGATOR_WIDTH_MAX,
+                  minB: PANEL_MIN_WIDTH,
+                  maxB: Number.POSITIVE_INFINITY,
+                })
+              }}
+              onKeyCommit={navigatorResize.handleKeyCommit}
+              onKeyCancel={navigatorResize.handleKeyCancel}
+              onReset={() => {
+                const offset = contextSidebarVisible ? sidebarWidth : 0
+                navigatorResize.handleReset({
+                  leftId: 'shell-navigator',
+                  rightId: 'shell-content',
+                  total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
+                  sizeA: sessionListWidth,
+                  minA: NAVIGATOR_WIDTH_MIN,
+                  maxA: NAVIGATOR_WIDTH_MAX,
+                  minB: PANEL_MIN_WIDTH,
+                  maxB: Number.POSITIVE_INFINITY,
+                }, NAVIGATOR_WIDTH_DEFAULT)
+              }}
+            />
+            )}
+          </>}
         />
         </WorkspaceSurfaceHost>
-
-        {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
-        {!effectiveSidebarAndNavigatorHidden && contextSidebarVisible && (
-        <ResizeHandle
-          labelKey="shell.resize.sidebar"
-          controlsId="shell-sidebar"
-          valueNow={sidebarWidth}
-          valueMin={SIDEBAR_WIDTH_MIN}
-          valueMax={SIDEBAR_WIDTH_MAX}
-          dragging={sidebarResize.dragging || isResizing === 'sidebar'}
-          className="absolute z-panel"
-          style={{
-            top: PANEL_STACK_VERTICAL_OVERFLOW,
-            bottom: PANEL_STACK_VERTICAL_OVERFLOW,
-            height: 'auto',
-            left: unifiedRailOffset + (contextSidebarVisible
-              ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
-              : -PANEL_GAP),
-            transition: sidebarResize.dragging ? undefined : 'left 0.15s ease-out',
-          }}
-          onPointerDown={(event) => {
-            setIsResizing('sidebar')
-            sidebarResize.handlePointerDown(event, {
-              leftId: 'shell-sidebar',
-              rightId: 'shell-rest',
-              total: window.innerWidth,
-              sizeA: sidebarWidth,
-              minA: SIDEBAR_WIDTH_MIN,
-              maxA: SIDEBAR_WIDTH_MAX,
-              minB: PANEL_MIN_WIDTH,
-              maxB: Number.POSITIVE_INFINITY,
-            })
-          }}
-          onPointerMove={sidebarResize.handlePointerMove}
-          onPointerUp={sidebarResize.handlePointerUp}
-          onPointerCancel={sidebarResize.handlePointerCancel}
-          onLostPointerCapture={sidebarResize.handleLostPointerCapture}
-          onKeyAdjust={(delta) => sidebarResize.handleKeyAdjust(delta, {
-            leftId: 'shell-sidebar',
-            rightId: 'shell-rest',
-            total: window.innerWidth,
-            sizeA: sidebarWidth,
-            minA: SIDEBAR_WIDTH_MIN,
-            maxA: SIDEBAR_WIDTH_MAX,
-            minB: PANEL_MIN_WIDTH,
-            maxB: Number.POSITIVE_INFINITY,
-          })}
-          onKeyCommit={sidebarResize.handleKeyCommit}
-          onKeyCancel={sidebarResize.handleKeyCancel}
-          onReset={() => sidebarResize.handleReset({
-            leftId: 'shell-sidebar',
-            rightId: 'shell-rest',
-            total: window.innerWidth,
-            sizeA: sidebarWidth,
-            minA: SIDEBAR_WIDTH_MIN,
-            maxA: SIDEBAR_WIDTH_MAX,
-            minB: PANEL_MIN_WIDTH,
-            maxB: Number.POSITIVE_INFINITY,
-          }, SIDEBAR_WIDTH_DEFAULT)}
-        />
-        )}
-
-        {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
-        {!effectiveSidebarAndNavigatorHidden && hasServiceNavigator && !isBoardView && (
-        <ResizeHandle
-          labelKey="shell.resize.navigator"
-          controlsId="shell-navigator"
-          valueNow={sessionListWidth}
-          valueMin={NAVIGATOR_WIDTH_MIN}
-          valueMax={NAVIGATOR_WIDTH_MAX}
-          dragging={navigatorResize.dragging || isResizing === 'session-list'}
-          className="absolute z-panel"
-          style={{
-            top: PANEL_STACK_VERTICAL_OVERFLOW,
-            bottom: PANEL_STACK_VERTICAL_OVERFLOW,
-            height: 'auto',
-            left:
-              unifiedRailOffset +
-              (contextSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
-              sessionListWidth +
-              (PANEL_GAP / 2) -
-              sashHitWidthPx() / 2,
-            transition: navigatorResize.dragging ? undefined : 'left 0.15s ease-out',
-          }}
-          onPointerDown={(event) => {
-            setIsResizing('session-list')
-            const offset = contextSidebarVisible ? sidebarWidth : 0
-            navigatorResize.handlePointerDown(event, {
-              leftId: 'shell-navigator',
-              rightId: 'shell-content',
-              total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
-              sizeA: sessionListWidth,
-              minA: NAVIGATOR_WIDTH_MIN,
-              maxA: NAVIGATOR_WIDTH_MAX,
-              minB: PANEL_MIN_WIDTH,
-              maxB: Number.POSITIVE_INFINITY,
-            })
-          }}
-          onPointerMove={navigatorResize.handlePointerMove}
-          onPointerUp={navigatorResize.handlePointerUp}
-          onPointerCancel={navigatorResize.handlePointerCancel}
-          onLostPointerCapture={navigatorResize.handleLostPointerCapture}
-          onKeyAdjust={(delta) => {
-            const offset = contextSidebarVisible ? sidebarWidth : 0
-            navigatorResize.handleKeyAdjust(delta, {
-              leftId: 'shell-navigator',
-              rightId: 'shell-content',
-              total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
-              sizeA: sessionListWidth,
-              minA: NAVIGATOR_WIDTH_MIN,
-              maxA: NAVIGATOR_WIDTH_MAX,
-              minB: PANEL_MIN_WIDTH,
-              maxB: Number.POSITIVE_INFINITY,
-            })
-          }}
-          onKeyCommit={navigatorResize.handleKeyCommit}
-          onKeyCancel={navigatorResize.handleKeyCancel}
-          onReset={() => {
-            const offset = contextSidebarVisible ? sidebarWidth : 0
-            navigatorResize.handleReset({
-              leftId: 'shell-navigator',
-              rightId: 'shell-content',
-              total: Math.max(NAVIGATOR_WIDTH_MIN + PANEL_MIN_WIDTH, window.innerWidth - offset),
-              sizeA: sessionListWidth,
-              minA: NAVIGATOR_WIDTH_MIN,
-              maxA: NAVIGATOR_WIDTH_MAX,
-              minB: PANEL_MIN_WIDTH,
-              maxB: Number.POSITIVE_INFINITY,
-            }, NAVIGATOR_WIDTH_DEFAULT)
-          }}
-        />
-        )}
 
       </div>
       {showStatusBar && <StatusBarHost />}
