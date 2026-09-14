@@ -114,7 +114,7 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
         // Fallback when no overlay handler is wired: copy the full output to the
         // clipboard so it's still retrievable. (Running tasks have no output yet.)
         await navigator.clipboard?.writeText(output)
-        toast.success(t('toast.taskOutputCopied', 'Task output copied to clipboard'))
+        toast.success(t('toast.taskOutputCopied'))
       } else {
         toast.info(t('chat.noOutputYet'))
       }
@@ -165,15 +165,15 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
   }
 
   const statusLabel: Record<string, string> = {
-    completed: t('chat.taskStatusDone', 'done'),
-    failed: t('chat.taskStatusFailed', 'failed'),
-    stopped: t('chat.taskStatusStopped', 'stopped'),
-    orphaned: t('chat.taskStatusOrphaned', 'orphaned'),
+    completed: t('chat.taskStatusDone'),
+    failed: t('chat.taskStatusFailed'),
+    stopped: t('chat.taskStatusStopped'),
+    orphaned: t('chat.taskStatusOrphaned'),
     stale: t('common.unknown'),
   }
 
   const chipTitle = task.status === 'orphaned'
-    ? t('chat.taskOrphanedHint', 'This background task was terminated when its turn ended.')
+    ? t('chat.taskOrphanedHint')
     : task.status === 'stale'
       ? t('chat.taskStaleHint')
       : t("chat.clickForTaskActions")
