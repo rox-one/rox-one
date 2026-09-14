@@ -1241,6 +1241,8 @@ app.whenReady().then(async () => {
       rebindVoiceHotkeys()
       const { registerVoiceOverlayIpc } = await import('./voice-overlay')
       registerVoiceOverlayIpc()
+      const { registerMeetingCaptureIpc } = await import('./meetings/ipc')
+      registerMeetingCaptureIpc()
       app.on('browser-window-created', (_event, win) => {
         attachVoicePttToWebContents(win.webContents)
       })
@@ -1512,6 +1514,7 @@ app.on('before-quit', async (event) => {
   windowManager?.setAppQuitting(true)
 
   void import('./voice-hotkeys').then(({ unbindVoiceHotkeys }) => unbindVoiceHotkeys())
+  void import('./meetings/overlay').then(({ destroyMeetingOverlay }) => destroyMeetingOverlay())
   void import('./voice-overlay').then(({ destroyVoiceOverlay }) => destroyVoiceOverlay())
   void import('@craft-agent/server-core/handlers/rpc').then(({ shutdownVoiceHandlers }) => shutdownVoiceHandlers())
 

@@ -9,7 +9,7 @@ import {
   type VoiceOverlayState,
 } from '../shared/voice-overlay-ipc'
 
-const ACTIONS: readonly VoiceOverlayCommand[] = ['toggle', 'cancel']
+const ACTIONS: readonly VoiceOverlayCommand[] = ['toggle', 'cancel', 'pause', 'stop', 'ask', 'catch-up']
 
 contextBridge.exposeInMainWorld('voiceOverlay', {
   dispatch: (action: VoiceOverlayCommand) => {
