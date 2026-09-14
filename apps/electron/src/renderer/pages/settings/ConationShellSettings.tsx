@@ -61,56 +61,38 @@ export function ConationShellSettings() {
           onCheckedChange={setSurfacesSkill}
         />
         <SettingsToggle
-          label={t('settings.appearance.conationSoupClient', 'Soup client')}
-          description={t(
-            'settings.appearance.conationSoupClientDesc',
-            'Read-only Conation Soup GraphQL client (workbench.conation.soupClient). Default off.',
-          )}
+          label={t('settings.appearance.conationSoupClient')}
+          description={t('settings.appearance.conationSoupClientDesc')}
           checked={soupClient}
           onCheckedChange={setSoupClient}
         />
         <SettingsToggle
-          label={t('settings.appearance.conationNotesBridge', 'Notes bridge')}
-          description={t(
-            'settings.appearance.conationNotesBridgeDesc',
-            'Read-only Conation Notes bridge (workbench.conation.notesBridge). Default off.',
-          )}
+          label={t('settings.appearance.conationNotesBridge')}
+          description={t('settings.appearance.conationNotesBridgeDesc')}
           checked={notesBridge}
           onCheckedChange={setNotesBridge}
         />
         <SettingsToggle
-          label={t('settings.appearance.conationDssClient', 'DSS client')}
-          description={t(
-            'settings.appearance.conationDssClientDesc',
-            'Read-only Conation DSS/Drive HTTP client (workbench.conation.dssClient). Default off.',
-          )}
+          label={t('settings.appearance.conationDssClient')}
+          description={t('settings.appearance.conationDssClientDesc')}
           checked={dssClient}
           onCheckedChange={setDssClient}
         />
         <SettingsToggle
-          label={t('settings.appearance.conationSessionApply', 'SessionApply (Conation)')}
-          description={t(
-            'settings.appearance.conationSessionApplyDesc',
-            'SessionApply consumer stub linked to AgentTeamsStore (workbench.conation.sessionApply). Default off. HTTP 202 is transport-accepted, not business-completed. No receipt or readback. Not Cordis.',
-          )}
+          label={t('settings.appearance.conationSessionApply')}
+          description={`${t('settings.appearance.conationSessionApplyDesc')} ${t('settings.appearance.conationSessionApplyHonesty')}`}
           checked={sessionApply}
           onCheckedChange={setSessionApply}
         />
         <SettingsToggle
-          label={t('settings.appearance.conationCanvas', 'Fund canvas deep-link')}
-          description={t(
-            'settings.appearance.conationCanvasDesc',
-            'Open Fund canvas on Conation via deep-link (workbench.conation.canvas). Default off. No live in-pane until Perf.',
-          )}
+          label={t('settings.appearance.conationCanvas')}
+          description={t('settings.appearance.conationCanvasDesc')}
           checked={canvas}
           onCheckedChange={setCanvas}
         />
         <SettingsToggle
-          label={t('settings.appearance.conationBoard', 'Board deep-link')}
-          description={t(
-            'settings.appearance.conationBoardDesc',
-            'Open Board on Conation via deep-link (workbench.conation.board). Default off. No second in-pane kanban.',
-          )}
+          label={t('settings.appearance.conationBoard')}
+          description={t('settings.appearance.conationBoardDesc')}
           checked={board}
           onCheckedChange={setBoard}
         />

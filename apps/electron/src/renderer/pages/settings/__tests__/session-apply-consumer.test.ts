@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'fs'
 import { join } from 'path'
+import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
+import i18n from 'i18next'
 
 const repoRoot = join(__dirname, '..', '..', '..', '..', '..', '..', '..')
 const flags = readFileSync(
@@ -49,10 +51,23 @@ describe('SessionApply consumer stub wiring', () => {
     expect(atoms).toMatch(/featureWorkbenchConationSessionApplyAtom[\s\S]*?false/)
   })
 
-  it('settings copy does not imply receipt or readback exists', () => {
-    expect(settings).toContain('transport-accepted, not business-completed')
-    expect(settings).toContain('No receipt or readback')
-    expect(settings).not.toMatch(/receipt id|live readback|readback operator/i)
-    expect(settings).toContain('Default off')
+  it('settings copy does not imply receipt or readback exists', async () => {
+    expect(settings).toContain("t('settings.appearance.conationSessionApply')")
+    expect(settings).toContain("t('settings.appearance.conationSessionApplyDesc')")
+    expect(settings).toContain("t('settings.appearance.conationSessionApplyHonesty')")
+    expect(settings).not.toContain('HTTP 202 is transport-accepted, not business-completed')
+    expect(settings).not.toMatch(/t\([^)]+,\s*['"]/)
+    await setupI18n().changeLanguage('en')
+    expect(i18n.t('settings.appearance.conationSessionApplyHonesty')).toContain(
+      'transport-accepted, not business-completed',
+    )
+    expect(i18n.t('settings.appearance.conationSessionApplyHonesty')).toContain(
+      'No receipt or readback',
+    )
+    expect(i18n.t('settings.appearance.conationSessionApplyDesc')).toContain('Default off')
+    const copy = `${i18n.t('settings.appearance.conationSessionApplyDesc')} ${i18n.t(
+      'settings.appearance.conationSessionApplyHonesty',
+    )}`
+    expect(copy).not.toMatch(/receipt id|live readback|readback operator/i)
   })
 })
