@@ -24,6 +24,12 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { PushTarget } from '@craft-agent/shared/protocol'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcMemoryProposalsActResult,
+  rpcMemoryProposalsListResult,
+  rpcMemoryProposalsReadResult,
+} from '@craft-agent/core/rox2'
 import { LessonStore } from '../../memory/LessonStore'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
 import { MemoryProposalStore } from '../../memory/MemoryProposalStore'
@@ -78,12 +84,20 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
   }
 
   server.handle(RPC_CHANNELS.memory.LIST_PROPOSALS, async (_ctx, workspaceId: string, sessionId?: string) => {
+    const listed = rpcMemoryProposalsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const ctx = storeFor(workspaceId)
     if (!ctx) return []
     return ctx.store.list().filter((p) => (!sessionId || p.sessionId === sessionId) && p.status !== 'deleted')
   })
 
   server.handle(RPC_CHANNELS.memory.EXTRACT_PROPOSALS, async (_ctx, args: ExtractProposalsArgs) => {
+    const act = rpcMemoryProposalsActResult({
+      source: 'native',
+      action: 'write',
+      nativeId: args?.sessionId ?? 'extract',
+    })
+    if (!isClaimableLive(act)) throw new Error('memory extract is not live')
     const ctx = storeFor(args.workspaceId)
     if (!ctx) return { disabled: false, proposals: [] as MemoryProposal[], preview: [] as string[] }
     if (!workspaceMemoryEnabled(ctx.root)) {
@@ -116,6 +130,10 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
       editedText?: string,
       projectId?: string,
     ) => {
+      const read = rpcMemoryProposalsReadResult({ source: 'native', nativeId: proposalId })
+      if (!isClaimableLive(read.result)) return null
+      const act = rpcMemoryProposalsActResult({ source: 'native', action: 'write', nativeId: proposalId })
+      if (!isClaimableLive(act)) return null
       const ctx = storeFor(workspaceId)
       if (!ctx) return null
       const current = ctx.store.get(proposalId)
@@ -177,6 +195,14 @@ export function registerMemoryProposalHandlers(server: RpcServer, deps: HandlerD
   })
 
   server.handle(RPC_CHANNELS.memory.DELETE_PROPOSAL, async (_ctx, workspaceId: string, proposalId: string) => {
+    if (!proposalId) return false
+    const act = rpcMemoryProposalsActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: proposalId,
+    })
+    if (!isClaimableLive(act)) return false
     const ctx = storeFor(workspaceId)
     if (!ctx) return false
     const current = ctx.store.get(proposalId)

@@ -103,6 +103,15 @@ import {
   rpcMarketplaceActResult,
   rpcMarketplaceListResult,
   rpcMarketplaceReadResult,
+  rpcMemoryInsightsActResult,
+  rpcMemoryInsightsListResult,
+  rpcMemoryInsightsReadResult,
+  rpcMemoryIoActResult,
+  rpcMemoryIoListResult,
+  rpcMemoryIoReadResult,
+  rpcMemoryProposalsActResult,
+  rpcMemoryProposalsListResult,
+  rpcMemoryProposalsReadResult,
 } from '../rpc-native-actions.ts'
 
 const ALL_SOUP_TYPES: SoupEntityConcreteType[] = [
@@ -1422,5 +1431,112 @@ describe('ROX2-159 RPC marketplace.ts list/read/act', () => {
     expect(isClaimableLive(rpcMarketplaceActResult({ source: 'native', action: 'spend' }))).toBe(false)
     expect(isClaimableLive(rpcMarketplaceActResult({ source: 'fixture' }))).toBe(false)
     expect(isClaimableLive(rpcMarketplaceActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-160 RPC memory-insights.ts list/read/act', () => {
+  test('list names live vs fixture; Conation memory-insights list is not claimable', () => {
+    const nativeEmpty = rpcMemoryInsightsListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(isClaimableLive(rpcMemoryInsightsListResult({ source: 'native', nativeIds: ['insights'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcMemoryInsightsListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcMemoryInsightsListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing insights is not a fake record', () => {
+    const found = rpcMemoryInsightsReadResult({ source: 'native', nativeId: 'insights' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('memory:insights')
+    expect(isClaimableLive(rpcMemoryInsightsReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcMemoryInsightsReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcMemoryInsightsReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcMemoryInsightsReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcMemoryInsightsActResult({ source: 'native', action: 'write', nativeId: 'onboarded' }))).toBe(
+      true,
+    )
+    expect(
+      isClaimableLive(
+        rpcMemoryInsightsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'onboarded' }),
+      ),
+    ).toBe(true)
+    expect(isClaimableLive(rpcMemoryInsightsActResult({ source: 'native', action: 'destroy', nativeId: 'onboarded' }))).toBe(
+      false,
+    )
+    expect(isClaimableLive(rpcMemoryInsightsActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcMemoryInsightsActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcMemoryInsightsActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-161 RPC memory-io.ts list/read/act', () => {
+  test('list names live vs fixture; Conation memory-io list is not claimable', () => {
+    const nativeEmpty = rpcMemoryIoListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcMemoryIoListResult({ source: 'native', nativeIds: ['global'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcMemoryIoListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcMemoryIoListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing bundle is not a fake record', () => {
+    const found = rpcMemoryIoReadResult({ source: 'native', nativeId: 'global' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('memory:global')
+    expect(isClaimableLive(rpcMemoryIoReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcMemoryIoReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcMemoryIoReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcMemoryIoReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcMemoryIoActResult({ source: 'native', action: 'write', nativeId: 'import' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcMemoryIoActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'import' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcMemoryIoActResult({ source: 'native', action: 'destroy', nativeId: 'import' }))).toBe(false)
+    expect(isClaimableLive(rpcMemoryIoActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcMemoryIoActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcMemoryIoActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-162 RPC memory-proposals.ts list/read/act', () => {
+  test('list names live vs fixture; Conation memory-proposals list is not claimable', () => {
+    const nativeEmpty = rpcMemoryProposalsListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcMemoryProposalsListResult({ source: 'native', nativeIds: ['p1'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcMemoryProposalsListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcMemoryProposalsListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing proposal is not a fake record', () => {
+    const found = rpcMemoryProposalsReadResult({ source: 'native', nativeId: 'p1' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('memory:p1')
+    expect(isClaimableLive(rpcMemoryProposalsReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcMemoryProposalsReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcMemoryProposalsReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcMemoryProposalsReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcMemoryProposalsActResult({ source: 'native', action: 'write', nativeId: 'p1' }))).toBe(true)
+    expect(
+      isClaimableLive(
+        rpcMemoryProposalsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'p1' }),
+      ),
+    ).toBe(true)
+    expect(isClaimableLive(rpcMemoryProposalsActResult({ source: 'native', action: 'destroy', nativeId: 'p1' }))).toBe(
+      false,
+    )
+    expect(isClaimableLive(rpcMemoryProposalsActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcMemoryProposalsActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcMemoryProposalsActResult({ source: 'conation' }))).toBe(false)
   })
 })
