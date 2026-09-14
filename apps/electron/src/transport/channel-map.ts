@@ -68,6 +68,8 @@ export const CHANNEL_MAP = {
   deleteMeeting: invoke(RPC_CHANNELS.meetings.DELETE),
   exportMeeting: invoke(RPC_CHANNELS.meetings.EXPORT),
   importMeeting: invoke(RPC_CHANNELS.meetings.IMPORT),
+  shareMeeting: invoke(RPC_CHANNELS.meetings.SHARE),
+  revokeMeetingShare: invoke(RPC_CHANNELS.meetings.REVOKE_SHARE),
   createMeeting: invoke(RPC_CHANNELS.meetings.CREATE),
   readMeeting: invoke(RPC_CHANNELS.meetings.READ),
   startMeeting: invoke(RPC_CHANNELS.meetings.START),

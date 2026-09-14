@@ -67,10 +67,14 @@ describe('meetingProposals RPC (SPEC §10)', () => {
       payloadHash: rpc.proposal.payloadHash,
     })
     expect(approved.status).toBe('approved')
-    const executed = await rpc.invoke<{ status: string }>(RPC_CHANNELS.meetingProposals.EXECUTE, 'ws-a', {
-      proposalId: 'p1',
-    })
+    const executed = await rpc.invoke<{ status: string; result?: { mode?: string; verification?: string } }>(
+      RPC_CHANNELS.meetingProposals.EXECUTE,
+      'ws-a',
+      { proposalId: 'p1' },
+    )
     expect(executed.status).toBe('acked')
+    expect(executed.result?.mode).toBe('fixture')
+    expect(executed.result?.verification).not.toBe('verified')
     const status = await rpc.invoke<{ proposal: { status: string } }>(RPC_CHANNELS.meetingProposals.STATUS, 'ws-a', {
       proposalId: 'p1',
     })

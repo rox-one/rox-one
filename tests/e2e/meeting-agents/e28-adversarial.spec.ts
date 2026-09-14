@@ -33,6 +33,10 @@ test('E28 adversarial corpus: injection, forged RPC, secrets, and private-note l
   expect(gate.counts.remoteWrites).toBe(0)
   expect(JSON.stringify(gate.audit)).not.toMatch(/attacker@|salary-band/)
 
+  const w2 = gate.retrieve({ speech: 'W-2 SSN 123-45-6789' })
+  expect(w2.ok).toBe(false)
+  expect(JSON.stringify(gate.audit)).not.toMatch(/123-45-6789/)
+
   expect(productionSourcesForbidFixtureEnv()).toEqual([])
   if (!isElectronAppBuilt()) {
     writeEvidence(evidenceRow('E3', 'not_run', {

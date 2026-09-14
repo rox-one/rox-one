@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { MeetingArtifactView, MeetingKnowledgeView, MeetingPageItem, MeetingTrackerView } from './meeting-page-model'
 
@@ -8,6 +9,9 @@ export function MeetingDetail({
   onOpenTracker,
   onDelete,
   onExport,
+  onShare,
+  onRevokeShare,
+  actionStatus,
 }: {
   meeting: MeetingPageItem
   knowledge?: MeetingKnowledgeView
@@ -15,14 +19,31 @@ export function MeetingDetail({
   onOpenTracker?: (tracker: MeetingTrackerView) => void
   onDelete?: () => void
   onExport?: (format: 'json' | 'markdown') => void
+  onShare?: (accountId: string) => void
+  onRevokeShare?: (accountId: string) => void
+  actionStatus?: 'deleted' | 'exported' | 'shared' | 'revoked' | 'denied' | 'private-excluded'
 }) {
   const { t } = useTranslation()
+  const [shareAccount, setShareAccount] = useState('')
+  const statusText = actionStatus === 'deleted'
+    ? t('meetings.deleted')
+    : actionStatus === 'denied'
+      ? t('meetings.denied')
+      : actionStatus === 'private-excluded'
+        ? t('meetings.privateNoteExcluded')
+        : actionStatus === 'exported'
+          ? t('meetings.export')
+          : actionStatus === 'shared'
+            ? t('meetings.share')
+            : actionStatus === 'revoked'
+              ? t('meetings.revokeShare')
+              : null
   return (
     <article className="space-y-2" data-testid="meeting-detail" data-entity-id={meeting.id}>
       <h2 className="text-sm font-medium">{meeting.title}</h2>
       <div className="flex flex-wrap gap-2">
         <button type="button" data-testid="meeting-export" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onExport?.('json')}>
-          {t('meetings.export')}
+          {t('meetings.exportJson')}
         </button>
         <button type="button" data-testid="meeting-export-markdown" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onExport?.('markdown')}>
           {t('meetings.exportMarkdown')}
@@ -30,7 +51,21 @@ export function MeetingDetail({
         <button type="button" data-testid="meeting-delete" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onDelete?.()}>
           {t('meetings.delete')}
         </button>
+        <input
+          data-testid="meeting-share-account"
+          aria-label={t('meetings.share')}
+          className="rounded-md border border-border bg-background px-2 py-1 text-xs"
+          value={shareAccount}
+          onChange={(event) => setShareAccount(event.target.value)}
+        />
+        <button type="button" data-testid="meeting-share" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onShare?.(shareAccount)}>
+          {t('meetings.share')}
+        </button>
+        <button type="button" data-testid="meeting-revoke-share" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onRevokeShare?.(shareAccount)}>
+          {t('meetings.revokeShare')}
+        </button>
       </div>
+      {statusText ? <p data-testid="meeting-action-status">{statusText}</p> : null}
       <section>
         <h3 className="text-xs text-muted-foreground">{t('meetings.manualNotes')}</h3>
         <p data-testid="meeting-manual-notes">{meeting.manualNotes ?? ''}</p>

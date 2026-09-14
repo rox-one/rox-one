@@ -630,6 +630,8 @@ export const RPC_CHANNELS = {
     DELETE: 'meetings:delete',
     EXPORT: 'meetings:export',
     IMPORT: 'meetings:import',
+    SHARE: 'meetings:share',
+    REVOKE_SHARE: 'meetings:revokeShare',
   },
   memory: {
     LIST_LESSONS: 'memory:listLessons',

@@ -11,6 +11,8 @@ import {
 } from '@craft-agent/shared/voice'
 import {
   answerMeetingQuestion,
+  containsSensitiveIdentifier,
+  isUntrustedInstruction,
   type AnswerMeetingQuestionInput,
 } from '@craft-agent/shared/meeting-agents'
 import {
@@ -175,10 +177,22 @@ export function dispatchMeetingOverlayCommand(action: MeetingOverlayCommand): Me
     lastState = parseMeetingOverlayState({ ...lastState, phase: action, error: undefined, visible: lastState.visible })
     if (!usingTestRuntime) void occupyHost(lastState, { keepOccupant: true })
     assistPromise = Promise.resolve().then(async () => {
+      const question = action === 'ask' ? (assistContext.question ?? lastState.liveTranscript ?? '') : assistContext.question
+      const inspected = [question, ...(assistContext.transcript ?? []).map((segment) => segment.text)]
+        .filter((value): value is string => typeof value === 'string' && value.length > 0)
+      if (inspected.some((text) => isUntrustedInstruction(text) || containsSensitiveIdentifier(text))) {
+        lastState = parseMeetingOverlayState({
+          ...lastState,
+          phase: 'error',
+          error: 'untrusted-input',
+        })
+        if (!usingTestRuntime) void occupyHost(lastState, { keepOccupant: true })
+        return getMeetingOverlayState()
+      }
       const result = await answerMeetingQuestion({
         ...assistContext,
         intent: action,
-        question: action === 'ask' ? (assistContext.question ?? lastState.liveTranscript ?? '') : assistContext.question,
+        question,
       })
       if (!result.ok) {
         lastState = parseMeetingOverlayState({

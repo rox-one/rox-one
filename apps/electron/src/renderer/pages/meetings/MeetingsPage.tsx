@@ -21,6 +21,10 @@ export type MeetingsPageProps = {
   onOpenTracker?: (tracker: MeetingTrackerView) => void
   onDelete?: () => void
   onExport?: (format: 'json' | 'markdown') => void
+  onShare?: (accountId: string) => void
+  onRevokeShare?: (accountId: string) => void
+  onSelect?: (id: string) => void
+  actionStatus?: 'deleted' | 'exported' | 'shared' | 'revoked' | 'denied' | 'private-excluded'
   readiness?: AgentReadinessProps
   captureState?: string
 }
@@ -39,6 +43,10 @@ export function MeetingsPage({
   onOpenTracker,
   onDelete,
   onExport,
+  onShare,
+  onRevokeShare,
+  onSelect,
+  actionStatus,
   readiness,
   captureState,
 }: MeetingsPageProps) {
@@ -96,7 +104,17 @@ export function MeetingsPage({
             <div className="flex min-h-0 flex-1">
               <ul className="w-64 overflow-auto border-r border-border p-2 text-sm">
                 {items.map((meeting) => (
-                  <li key={meeting.id} data-testid="meeting-row">{meeting.title}</li>
+                  <li key={meeting.id} data-testid="meeting-row">
+                    <button
+                      type="button"
+                      data-testid="meeting-select"
+                      data-entity-id={meeting.id}
+                      className="w-full text-left"
+                      onClick={() => onSelect?.(meeting.id)}
+                    >
+                      {meeting.title}
+                    </button>
+                  </li>
                 ))}
               </ul>
               <section className="flex min-h-0 flex-1 flex-col gap-3 p-3">
@@ -114,6 +132,9 @@ export function MeetingsPage({
                     onOpenTracker={onOpenTracker}
                     onDelete={onDelete}
                     onExport={onExport}
+                    onShare={onShare}
+                    onRevokeShare={onRevokeShare}
+                    actionStatus={actionStatus}
                   />
                 ) : null}
                 {proposalHandlers ? (

@@ -59,6 +59,7 @@ export {
   buildSharedRecap,
   createShareLink,
   emptyMeetingShare,
+  inviteMember,
   revokeMember,
   revokeShareLink,
   searchShareVisible,
@@ -90,6 +91,7 @@ export {
   type MeetingRetentionCascade,
 } from './retention.ts'
 export { loadMeetingShareIndex, saveMeetingShareIndex } from './share-store.ts'
+export { containsSensitiveIdentifier, redactSensitiveIdentifiers } from './sensitive.ts'
 export {
   MeetingSecurityGate,
   authorizeMeetingRpc,

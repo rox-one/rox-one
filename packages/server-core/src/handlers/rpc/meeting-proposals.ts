@@ -47,6 +47,7 @@ export function registerMeetingProposalsHandlers(
   const inboxes = runtime.inboxes ?? new Map<string, ProposalInbox>()
   const executor = runtime.executor ?? new MeetingExecutor({
     idempotent: true,
+    mode: 'fixture',
     async execute({ operationId, payload }) {
       return {
         remoteId: typeof payload.remoteId === 'string' ? payload.remoteId : `native-${operationId}`,

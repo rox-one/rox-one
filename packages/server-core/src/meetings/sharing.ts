@@ -264,3 +264,26 @@ export function addLinkedNote(
     notes: [...record.notes.filter((item) => item.id !== note.id), note],
   }
 }
+
+export function inviteMember(
+  record: MeetingShareRecord,
+  actor: MeetingShareActor,
+  accountId: string,
+  now = 0,
+): MeetingShareRecord | MeetingShareDenied {
+  const auth = authorizeShareActor(record, actor, now)
+  if (!auth.ok) return auth
+  if (auth.member.role !== 'owner') {
+    return { ok: false, code: 'denied', message: 'Only the owner can invite members' }
+  }
+  const existing = record.members.find((item) => item.accountId === accountId)
+  if (existing && existing.revokedAt === undefined) return record
+  return {
+    ...record,
+    revision: record.revision + 1,
+    members: [
+      ...record.members.filter((item) => item.accountId !== accountId),
+      { accountId, role: 'member' },
+    ],
+  }
+}

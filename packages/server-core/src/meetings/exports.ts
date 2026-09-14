@@ -12,6 +12,7 @@ import {
   type MeetingShareActor,
   type MeetingShareRecord,
 } from './sharing.ts'
+import { containsSensitiveIdentifier, redactSensitiveIdentifiers } from './sensitive.ts'
 
 export const MEETING_EXPORT_SCHEMA_VERSION = 1 as const
 
@@ -75,20 +76,24 @@ export function exportMeeting(
   }
   const audience = opts.audience ?? (auth.member.role === 'owner' ? 'owner' : 'shared')
   const visible = audienceIntersection(record, actor, opts.now)
-  const notes = audience === 'shared'
+  const notes = (audience === 'shared'
     ? visible.filter((note) => note.audience === 'shared')
     : visible
+  ).filter((note) => audience !== 'shared' || !containsSensitiveIdentifier(note.text))
+  const transcript = audience === 'shared'
+    ? redactSensitiveIdentifiers(clipTranscript(record.transcript, opts.clip) ?? '')
+    : clipTranscript(record.transcript, opts.clip)
   const bundle: MeetingExportBundle = {
     schemaVersion: MEETING_EXPORT_SCHEMA_VERSION,
     format: opts.format,
     meetingId: record.meetingId,
     workspaceId: record.workspaceId,
     title: record.title,
-    transcript: clipTranscript(record.transcript, opts.clip),
+    transcript: transcript || undefined,
     notes: notes.map((note) => ({
       id: note.id,
       audience: note.audience,
-      text: note.text,
+      text: audience === 'shared' ? redactSensitiveIdentifiers(note.text) : note.text,
       ownerId: note.ownerId,
     })),
     clips: opts.clip ? [opts.clip] : [],

@@ -235,6 +235,7 @@ export class NativeMeetingActions {
   private adapter(): EffectAdapter {
     return {
       idempotent: true,
+      mode: 'production',
       execute: async ({ operationId, payload }) => {
         const proposal = this.pending
         if (!proposal) throw new Error('No approved proposal in flight')

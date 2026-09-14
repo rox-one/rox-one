@@ -169,6 +169,7 @@ export {
   MeetingAssistQueue,
   answerMeetingQuestion,
   citationOpenTarget,
+  containsSensitiveIdentifier,
   isUntrustedInstruction,
   type AnswerMeetingQuestionInput,
   type AssistCitation,

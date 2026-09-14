@@ -71,6 +71,23 @@ describe('meeting executor (issue 366)', () => {
     expect(first.status).toBe('acked')
     expect(second.operationId).toBe(first.operationId)
     expect(exec.effectCount()).toBe(1)
+    expect(first.result?.mode).toBe('fixture')
+    expect(first.result && isVerifiedEffect(first.result)).toBe(false)
+  })
+
+  test('production adapter with matching readback is a verified live effect', async () => {
+    const exec = new MeetingExecutor({ ...adapter(), mode: 'production' })
+    const first = await exec.executeApprovedProposal({
+      proposal: approvedProposal(),
+      actorId: 'acct-1',
+      workspaceId: 'ws-a',
+      deviceId: 'dev-1',
+      now: 1,
+      grants: [grant],
+      expectedFields: { title: 'прототип' },
+    })
+    expect(first.status).toBe('acked')
+    expect(first.result?.mode).toBe('live')
     expect(first.result && isVerifiedEffect(first.result)).toBe(true)
   })
 

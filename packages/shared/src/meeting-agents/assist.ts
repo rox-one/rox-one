@@ -131,6 +131,8 @@ export type AnswerMeetingQuestionInput = {
 }
 
 const INJECTION_RE = /игнорируй правила|ignore (all )?rules|ignore previous instructions|attacker@|system prompt|send all documents/i
+const SSN_RE = /\b\d{3}-\d{2}-\d{4}\b/
+const W2_RE = /\bW-?2\b/i
 
 function deny(
   code: AssistDeniedCode,
@@ -151,6 +153,10 @@ function deny(
 
 export function isUntrustedInstruction(text: string): boolean {
   return INJECTION_RE.test(text)
+}
+
+export function containsSensitiveIdentifier(text: string): boolean {
+  return SSN_RE.test(text) || (W2_RE.test(text) && /\d{3}-\d{2}-\d{4}/.test(text))
 }
 
 export function citationOpenTarget(citation: AssistCitation): { sourceId: string; revision: string } | null {

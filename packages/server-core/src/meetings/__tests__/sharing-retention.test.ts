@@ -12,6 +12,7 @@ import {
   buildSharedRecap,
   createShareLink,
   emptyMeetingShare,
+  inviteMember,
   revokeMember,
   revokeShareLink,
   searchShareVisible,
@@ -125,6 +126,18 @@ describe('meeting sharing, export, and retention (I032)', () => {
     if (!imported.ok) return
     expect(imported.record.notes.map((note) => note.id).sort()).toEqual(['note-private', 'note-shared'])
     expect(exportMeeting(record, outsider, { format: 'json' }).ok).toBe(false)
+    const invited = inviteMember(record, owner, 'acct-3')
+    if ('ok' in invited) throw new Error('expected record')
+    expect(invited.members.some((member) => member.accountId === 'acct-3')).toBe(true)
+    const withW2 = {
+      ...record,
+      transcript: 'W-2 123-45-6789',
+      notes: [{ id: 'w2', ownerId: 'acct-1', audience: 'shared' as const, text: 'W-2 123-45-6789', revision: 1 }],
+    }
+    const redacted = exportMeeting(withW2, owner, { format: 'json', audience: 'shared' })
+    expect(redacted.ok).toBe(true)
+    if (!redacted.ok) return
+    expect(JSON.stringify(redacted.bundle)).not.toMatch(/123-45-6789/)
   })
 
   test('delete tombstones the meeting, cascades indexes, and marks external copies retained', () => {

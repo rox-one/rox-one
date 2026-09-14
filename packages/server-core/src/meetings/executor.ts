@@ -21,6 +21,11 @@ export type OutboxJob = {
 
 export type EffectAdapter = {
   idempotent: boolean
+  /**
+   * Production adapters (canonical FileTaskRepository / live provider + readback)
+   * may stamp a verified live effect. In-memory / RPC stubs stay fixture.
+   */
+  mode?: 'production' | 'fixture' | 'simulated'
   execute(input: { operationId: string; payload: Record<string, unknown> }): Promise<{
     remoteId: string
     requestId: string
@@ -58,6 +63,23 @@ export class MeetingExecutor {
 
   effectCount(): number {
     return this.effects
+  }
+
+  private effectMode(): 'live' | 'fixture' | 'simulated' {
+    if (this.adapter.mode === 'production') return 'live'
+    if (this.adapter.mode === 'simulated') return 'simulated'
+    return 'fixture'
+  }
+
+  private successResult(entityId: string): Rox2V2Result {
+    const production = this.adapter.mode === 'production'
+    return {
+      ok: true,
+      mode: this.effectMode(),
+      lifecycle: 'applied',
+      verification: production ? 'verified' : 'unverified',
+      entityId,
+    }
   }
 
   async executeApprovedProposal(input: ExecuteInput): Promise<OutboxJob> {
@@ -133,7 +155,7 @@ export class MeetingExecutor {
         job.status = 'failed'
         job.result = {
           ok: true,
-          mode: 'live',
+          mode: this.effectMode(),
           lifecycle: 'applied',
           verification: 'unverified',
           entityId: effect.remoteId,
@@ -143,14 +165,8 @@ export class MeetingExecutor {
         return structuredClone(job)
       }
       job.status = 'acked'
-      job.result = {
-        ok: true,
-        mode: 'live',
-        lifecycle: 'applied',
-        verification: 'verified',
-        entityId: effect.remoteId,
-      }
-      if (!isVerifiedEffect(job.result)) {
+      job.result = this.successResult(effect.remoteId)
+      if (this.adapter.mode === 'production' && !isVerifiedEffect(job.result)) {
         throw new Error('Verified result contract broken')
       }
       this.jobs.set(idempotencyKey, job)

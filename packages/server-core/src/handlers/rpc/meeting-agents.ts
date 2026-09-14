@@ -18,7 +18,7 @@ import {
 } from '@craft-agent/shared/meeting-agents'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
-import { authorizeMeetingRpc } from '../../meetings/security.ts'
+import { authorizeMeetingRpc, inspectUntrustedInput } from '../../meetings/security.ts'
 import type { MeetingQueryActor } from '../../meetings/queries.ts'
 
 export const HANDLED_CHANNELS = [
@@ -107,6 +107,25 @@ export function registerMeetingAgentsHandlers(
 
   server.handle(RPC_CHANNELS.meetingAgents.ASK, async (ctx, workspaceId: string, opts: AskOpts): Promise<MeetingAssistResult> => {
     scoped(ctx, workspaceId, await actorFor(workspaceId))
+    const texts = [
+      opts.question,
+      ...(opts.transcript ?? []).map((segment) => segment.text),
+    ].filter((value): value is string => typeof value === 'string' && value.length > 0)
+    for (const text of texts) {
+      const decision = inspectUntrustedInput(text, 'speech')
+      if (!decision.ok) {
+        return {
+          ok: false,
+          code: 'forbidden-source',
+          message: decision.message,
+          citations: [],
+          modelCalls: 0,
+          externalActions: [],
+          policyBypass: false,
+          usedScreen: false,
+        }
+      }
+    }
     return answerMeetingQuestion({
       question: opts.question,
       intent: opts.intent ?? 'ask',

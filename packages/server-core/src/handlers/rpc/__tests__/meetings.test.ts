@@ -61,6 +61,8 @@ describe('meetings RPC (issue 368)', () => {
       RPC_CHANNELS.meetings.DELETE,
       RPC_CHANNELS.meetings.EXPORT,
       RPC_CHANNELS.meetings.IMPORT,
+      RPC_CHANNELS.meetings.SHARE,
+      RPC_CHANNELS.meetings.REVOKE_SHARE,
     ])
   })
 
@@ -183,5 +185,46 @@ describe('meetings RPC (issue 368)', () => {
     expect(read.meeting?.id).toBe('m-new')
     const subscribed = await rpc.invoke<{ items: unknown[] }>(RPC_CHANNELS.meetings.SUBSCRIBE, 'ws-a', 'm-new')
     expect(subscribed.items).toHaveLength(1)
+  })
+
+  it('shares and revokes a member without leaking private notes', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rox-meetings-share-'))
+    await saveMeetingQueryIndex(dir, [meeting({
+      id: 'm1',
+      title: 'Standup',
+      sources: [
+        { id: 'public', text: 'roadmap' },
+        { id: 'secret', private: true, text: '123-45-6789' },
+      ],
+    })])
+    const handlers = new Map<string, Handler>()
+    const server = {
+      handle(channel: string, handler: Handler) {
+        handlers.set(channel, handler)
+      },
+    }
+    registerMeetingsHandlers(server as unknown as RpcServer, {} as never, {
+      resolveActor: (workspaceId) => ({ workspaceId, allowed: true, accountId: 'acct-1' }),
+      resolveStoreDir: () => dir,
+    })
+    const invoke = <T>(channel: string, ...args: unknown[]) => {
+      const handler = handlers.get(channel)
+      if (!handler) throw new Error(`missing ${channel}`)
+      return handler({}, ...args) as Promise<T>
+    }
+    const shared = await invoke<{ members: Array<{ accountId: string }> }>(
+      RPC_CHANNELS.meetings.SHARE,
+      'ws-a',
+      'm1',
+      { accountId: 'acct-2' },
+    )
+    expect(shared.members.some((member) => member.accountId === 'acct-2')).toBe(true)
+    const revoked = await invoke<{ members: Array<{ accountId: string; revokedAt?: number }> }>(
+      RPC_CHANNELS.meetings.REVOKE_SHARE,
+      'ws-a',
+      'm1',
+      { accountId: 'acct-2' },
+    )
+    expect(revoked.members.find((member) => member.accountId === 'acct-2')?.revokedAt).toBeDefined()
   })
 })

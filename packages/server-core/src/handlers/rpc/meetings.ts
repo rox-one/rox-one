@@ -28,7 +28,11 @@ import { deleteMeetingWithRetention } from '../../meetings/retention.ts'
 import { authorizeMeetingRpc } from '../../meetings/security.ts'
 import {
   addLinkedNote,
+  createShareLink,
   emptyMeetingShare,
+  inviteMember,
+  revokeMember,
+  revokeShareLink,
   type MeetingShareRecord,
 } from '../../meetings/sharing.ts'
 import { loadMeetingShareIndex, saveMeetingShareIndex } from '../../meetings/share-store.ts'
@@ -50,6 +54,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.DELETE,
   RPC_CHANNELS.meetings.EXPORT,
   RPC_CHANNELS.meetings.IMPORT,
+  RPC_CHANNELS.meetings.SHARE,
+  RPC_CHANNELS.meetings.REVOKE_SHARE,
 ] as const
 
 export type MeetingsListOpts = {
@@ -63,6 +69,13 @@ export type MeetingsExportOpts = {
   format?: MeetingExportFormat
   audience?: 'owner' | 'shared'
   clip?: { startMs: number; endMs: number; text: string }
+}
+
+export type MeetingsShareOpts = {
+  commandId?: string
+  accountId?: string
+  audienceIds?: readonly string[]
+  linkId?: string
 }
 
 export type MeetingsWriteOpts = {
@@ -366,5 +379,65 @@ export function registerMeetingsHandlers(
       result.record,
     ])
     return result.record
+  })
+
+  const persistShare = async (
+    workspaceId: string,
+    actor: MeetingQueryActor,
+    id: string,
+    next: MeetingShareRecord,
+  ) => {
+    const dir = dirFor(workspaceId)
+    const meetings = await load(workspaceId, actor)
+    const meeting = getMeeting(meetings, id, actor).meeting
+    if (!meeting) throw Object.assign(new Error('not-found'), { code: 'not-found' })
+    const shares = await loadMeetingShareIndex(dir)
+    await saveMeetingShareIndex(dir, [
+      ...shares.filter((item) => item.meetingId !== id),
+      next,
+    ])
+    return next
+  }
+
+  server.handle(RPC_CHANNELS.meetings.SHARE, async (ctx, workspaceId: string, id: string, opts?: MeetingsShareOpts) => {
+    const actor = scoped(ctx, workspaceId, await actorFor(workspaceId))
+    if (!actor.allowed || !actor.accountId) {
+      throw Object.assign(new Error('denied'), { code: 'denied' })
+    }
+    const meetings = await load(workspaceId, actor)
+    const meeting = getMeeting(meetings, id, actor).meeting
+    if (!meeting) throw Object.assign(new Error('not-found'), { code: 'not-found' })
+    const shares = await loadMeetingShareIndex(dirFor(workspaceId))
+    const shareActor = { accountId: actor.accountId, workspaceId }
+    let record = shares.find((item) => item.meetingId === id) ?? shareFromQuery(meeting, actor.accountId)
+    if (opts?.accountId) {
+      const invited = inviteMember(record, shareActor, opts.accountId)
+      if ('ok' in invited) throw Object.assign(new Error(invited.code), { code: invited.code })
+      record = invited
+    }
+    if (opts?.audienceIds) {
+      const created = createShareLink(record, shareActor, opts.audienceIds)
+      if ('ok' in created) throw Object.assign(new Error(created.code), { code: created.code })
+      return persistShare(workspaceId, actor, id, created.record)
+    }
+    return persistShare(workspaceId, actor, id, record)
+  })
+
+  server.handle(RPC_CHANNELS.meetings.REVOKE_SHARE, async (ctx, workspaceId: string, id: string, opts?: MeetingsShareOpts) => {
+    const actor = scoped(ctx, workspaceId, await actorFor(workspaceId))
+    if (!actor.allowed || !actor.accountId) {
+      throw Object.assign(new Error('denied'), { code: 'denied' })
+    }
+    const meetings = await load(workspaceId, actor)
+    const meeting = getMeeting(meetings, id, actor).meeting
+    if (!meeting) throw Object.assign(new Error('not-found'), { code: 'not-found' })
+    const shares = await loadMeetingShareIndex(dirFor(workspaceId))
+    const shareActor = { accountId: actor.accountId, workspaceId }
+    const record = shares.find((item) => item.meetingId === id) ?? shareFromQuery(meeting, actor.accountId)
+    const next = opts?.linkId
+      ? revokeShareLink(record, shareActor, opts.linkId, Date.now())
+      : revokeMember(record, shareActor, opts?.accountId ?? '', Date.now())
+    if ('ok' in next) throw Object.assign(new Error(next.code), { code: next.code })
+    return persistShare(workspaceId, actor, id, next)
   })
 }

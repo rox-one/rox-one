@@ -15,6 +15,9 @@ import { MeetingExecutor, type EffectAdapter } from './executor.ts'
 import { exportMeeting, type MeetingExportFormat } from './exports.ts'
 import type { InboxProposal } from './proposals.ts'
 import { buildSharedRecap, type MeetingShareActor, type MeetingShareRecord } from './sharing.ts'
+import { containsSensitiveIdentifier } from './sensitive.ts'
+
+export { containsSensitiveIdentifier, redactSensitiveIdentifiers } from './sensitive.ts'
 
 export type MeetingSecuritySource = 'speech' | 'screen' | 'doc'
 
@@ -69,6 +72,9 @@ export function inspectUntrustedInput(text: string, _source: MeetingSecuritySour
   if (isUntrustedInstruction(text)) {
     return { ok: false, code: 'injection', message: 'Untrusted instruction in speech, screen, or document' }
   }
+  if (containsSensitiveIdentifier(text)) {
+    return { ok: false, code: 'sensitive-identifier', message: 'W2 / tax identifiers cannot be retrieved or published' }
+  }
   return { ok: true }
 }
 
@@ -105,7 +111,7 @@ export function sanitizeMeetingAudit(event: MeetingAuditEvent): SanitizedMeeting
   const raw = [event.transcript, event.token, event.apiKey, event.text, event.quote]
     .filter((value): value is string => typeof value === 'string' && value.length > 0)
     .join(' ')
-  const leaked = TOKEN_RE.test(raw) || EMAIL_RE.test(raw) || /attacker@/i.test(raw)
+  const leaked = TOKEN_RE.test(raw) || EMAIL_RE.test(raw) || /attacker@/i.test(raw) || containsSensitiveIdentifier(raw)
   TOKEN_RE.lastIndex = 0
   EMAIL_RE.lastIndex = 0
   return {
@@ -169,6 +175,15 @@ export class MeetingSecurityGate {
       }))
       return { ok: false, code: 'private-note-leak', message: 'Private notes cannot be published to a shared recap' }
     }
+    if (containsSensitiveIdentifier(recap.text) || (input.record.transcript && containsSensitiveIdentifier(input.record.transcript))) {
+      this.counts.forbiddenCalls += 1
+      this.audit.push(sanitizeMeetingAudit({
+        code: 'sensitive-identifier',
+        decision: 'deny',
+        text: recap.text,
+      }))
+      return { ok: false, code: 'sensitive-identifier', message: 'W2 / tax identifiers cannot be published' }
+    }
     return { ok: true }
   }
 
@@ -192,6 +207,18 @@ export class MeetingSecurityGate {
     format: MeetingExportFormat = 'json',
     now = 0,
   ): MeetingSecurityDecision {
+    const sourceLeak = [record.transcript, ...record.notes.filter((note) => note.audience === 'shared').map((note) => note.text)]
+      .filter((value): value is string => typeof value === 'string')
+      .some((text) => containsSensitiveIdentifier(text))
+    if (sourceLeak) {
+      this.counts.forbiddenCalls += 1
+      this.audit.push(sanitizeMeetingAudit({
+        code: 'sensitive-identifier',
+        decision: 'deny',
+        text: record.transcript,
+      }))
+      return { ok: false, code: 'sensitive-identifier', message: 'Shared export cannot include W2 / tax identifiers' }
+    }
     const result = exportMeeting(record, actor, { format, audience: 'shared', now })
     if (!result.ok) {
       this.counts.forbiddenCalls += 1
@@ -205,6 +232,13 @@ export class MeetingSecurityGate {
     if (result.bundle.notes.some((note) => note.audience === 'private')) {
       this.counts.forbiddenCalls += 1
       return { ok: false, code: 'private-note-leak', message: 'Shared export cannot include private notes' }
+    }
+    const leaked = [result.bundle.transcript, ...result.bundle.notes.map((note) => note.text)]
+      .filter((value): value is string => typeof value === 'string')
+      .some((text) => containsSensitiveIdentifier(text))
+    if (leaked) {
+      this.counts.forbiddenCalls += 1
+      return { ok: false, code: 'sensitive-identifier', message: 'Shared export cannot include W2 / tax identifiers' }
     }
     return { ok: true }
   }

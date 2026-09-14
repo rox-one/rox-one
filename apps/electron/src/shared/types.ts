@@ -610,6 +610,8 @@ export interface ElectronAPI {
   deleteMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
   exportMeeting(workspaceId: string, id: string, opts?: { format?: 'json' | 'markdown' | 'media'; audience?: 'owner' | 'shared'; clip?: { startMs: number; endMs: number; text: string } }): Promise<unknown>
   importMeeting(workspaceId: string, bundle: unknown): Promise<unknown>
+  shareMeeting(workspaceId: string, id: string, opts?: { accountId?: string; audienceIds?: readonly string[]; commandId?: string }): Promise<unknown>
+  revokeMeetingShare(workspaceId: string, id: string, opts?: { accountId?: string; linkId?: string; commandId?: string }): Promise<unknown>
   createMeeting(workspaceId: string, opts?: { commandId?: string; id?: string; title?: string }): Promise<{ state: string; meeting?: unknown }>
   readMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
   startMeeting(workspaceId: string, id: string, opts?: { commandId?: string; capture?: string }): Promise<{ state: string; meeting?: unknown }>
