@@ -73,6 +73,9 @@ export function authorizeMeetingAction(request: MeetingActionRequest): MeetingAu
   }
   const grant = request.grants.find((item) => grantMatches(item, request, required))
   if (!grant) {
+    if (request.permissionMode === 'ask') {
+      return deny('challenge', 'Meeting capability requires an explicit grant')
+    }
     return deny('grant-missing', 'Meeting capability is not granted')
   }
   if (grant.revokedAt && grant.revokedAt <= request.now) {

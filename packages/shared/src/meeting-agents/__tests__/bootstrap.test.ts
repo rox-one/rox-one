@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, test } from 'bun:test'
-import { BUILTIN_MEETING_AGENT_IDS } from '../catalog.ts'
+import { BUILTIN_MEETING_AGENTS, BUILTIN_MEETING_AGENT_IDS } from '../catalog.ts'
 import {
   emptyMeetingAgentStore,
   ensureBuiltinMeetingAgents,
+  meetingBootstrapModelCalls,
+  resetMeetingAgentOverrides,
+  resetMeetingBootstrapModelCalls,
   setMeetingAgentEnabled,
 } from '../bootstrap.ts'
 
@@ -47,5 +50,38 @@ describe('meeting agent bootstrap (issue 358)', () => {
       { available: false, reason: 'no-route' },
     )
     expect(readiness.every((row) => row.healthy === false)).toBe(true)
+  })
+
+  test('reset restores enabled without dropping the ledger', () => {
+    const first = ensureBuiltinMeetingAgents('ws-1', '1.0.0', emptyMeetingAgentStore())
+    const disabled = setMeetingAgentEnabled(first.store, 'rox.meeting.assist', false)
+    const reset = resetMeetingAgentOverrides(disabled, 'rox.meeting.assist')
+    const { readiness } = ensureBuiltinMeetingAgents('ws-1', '1.0.0', reset)
+    const assist = readiness.find((row) => row.id === 'rox.meeting.assist')
+    expect(assist?.enabled).toBe(true)
+    expect(reset.ledger).toHaveLength(8)
+  })
+
+  test('expanded required scopes require authorization and never auto-grant', () => {
+    const first = ensureBuiltinMeetingAgents('ws-1', '1.0.0', emptyMeetingAgentStore())
+    const granted = {
+      ...first.store,
+      grantedCapabilities: [...(BUILTIN_MEETING_AGENTS.find((role) => role.id === 'rox.meeting.coordinator')?.allowedCapabilityIds ?? [])],
+    }
+    const expanded = BUILTIN_MEETING_AGENTS.map((role) => (
+      role.id === 'rox.meeting.coordinator'
+        ? { ...role, allowedCapabilityIds: [...role.allowedCapabilityIds, 'processing.cloud'] as const }
+        : role
+    ))
+    const upgraded = ensureBuiltinMeetingAgents('ws-1', '1.1.0', granted, { available: true }, expanded)
+    const coordinator = upgraded.readiness.find((row) => row.id === 'rox.meeting.coordinator')
+    expect(coordinator?.authorizationRequired).toBe(true)
+    expect(upgraded.store.grantedCapabilities).not.toContain('processing.cloud')
+  })
+
+  test('bootstrap does not issue idle model calls', () => {
+    resetMeetingBootstrapModelCalls()
+    ensureBuiltinMeetingAgents('ws-1', '1.0.0', emptyMeetingAgentStore())
+    expect(meetingBootstrapModelCalls).toBe(0)
   })
 })

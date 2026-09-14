@@ -116,4 +116,42 @@ describe('meeting grants (issue 359)', () => {
     })
     expect(result.ok).toBe(false)
   })
+
+  test('archive=no and cloud=no stay denied even with other grants', () => {
+    expect(authorizeMeetingAction({
+      actor,
+      capability: 'archive.durable',
+      operation: 'journal',
+      source: 'archive',
+      payloadHash: 'hash-1',
+      now: 1_000,
+      permissionMode: 'allow-all',
+      grants: [{ ...grant, capabilities: ['capture.microphone'] }],
+    }).ok).toBe(false)
+    expect(authorizeMeetingAction({
+      actor,
+      capability: 'processing.cloud',
+      operation: 'transcribe',
+      source: 'cloud',
+      payloadHash: 'hash-1',
+      now: 1_000,
+      permissionMode: 'allow-all',
+      grants: [{ ...grant, capabilities: ['capture.microphone', 'archive.durable'] }],
+    }).ok).toBe(false)
+  })
+
+  test('ask mode without a grant is a challenge, not a silent allow', () => {
+    const result = authorizeMeetingAction({
+      actor,
+      capability: 'capture.microphone',
+      operation: 'start',
+      source: 'microphone',
+      payloadHash: 'hash-1',
+      now: 1_000,
+      permissionMode: 'ask',
+      grants: [],
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.code).toBe('challenge')
+  })
 })

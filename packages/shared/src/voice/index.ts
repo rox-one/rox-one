@@ -108,6 +108,16 @@ export {
 } from './capabilities.ts'
 
 export {
+  MeetingStreamError,
+  collectMeetingStream,
+  openMeetingStream,
+  type MeetingStream,
+  type MeetingStreamFrame,
+  type MeetingStreamMode,
+  type MeetingStreamSegment,
+} from './meeting-stream.ts'
+
+export {
   usesCloudStt,
   shouldUploadAudio,
   resolveAudioRetention,

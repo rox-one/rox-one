@@ -56,6 +56,72 @@ export interface SessionToolDefBuildOptions {
    * Default false so OMP keeps every host tool `essential` (v1 bridge).
    */
   mcpLens?: boolean;
+  /**
+   * Advertise meeting-agent host tools (issue #363). Default false so Pi/OMP
+   * session frames stay unchanged. Meeting dispatch is the only caller that
+   * opts in — this file remains the single tool catalog owner.
+   */
+  includeMeetingAgentTools?: boolean;
+}
+
+const MEETING_TOOL_INPUT_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  properties: {
+    meetingId: { type: 'string' },
+    snapshotRevision: { type: 'number' },
+    finalizedWatermark: { type: 'number' },
+  },
+  additionalProperties: false,
+};
+
+const MEETING_ARTIFACT_TOOL_INPUT_SCHEMA: Record<string, unknown> = {
+  type: 'object',
+  properties: {
+    meetingId: { type: 'string' },
+    snapshotRevision: { type: 'number' },
+    finalizedWatermark: { type: 'number' },
+    format: { type: 'string' },
+    relativePath: { type: 'string' },
+    expectedRevision: { type: 'string' },
+    repo: { type: 'string' },
+    branch: { type: 'string' },
+  },
+  additionalProperties: false,
+};
+
+/** Host tools for builtin meeting roles. Names match catalog skillIds. */
+export const MEETING_AGENT_TOOL_DEFS: readonly SessionToolDef[] = [
+  { name: 'meeting.brief', description: 'Prepare a meeting brief from the current snapshot.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.coverage', description: 'Check assignment coverage for the current meeting.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.assist', description: 'Answer an explicit in-meeting question with citations.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.screen-explain', description: 'Explain the selected screen frame when screen capture is granted.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.transcript', description: 'Transcribe finalized meeting audio into timestamped segments.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.notes', description: 'Extract notes, decisions, and commitments with evidence spans.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.knowledge-diff', description: 'Propose a knowledge diff against the current base revision.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.execute', description: 'Execute an already-approved meeting operation payload.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author', description: 'Draft a versioned meeting artifact without publishing it.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.code', description: 'Open a coding handoff that may create a draft PR in an approved repo/branch.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.csv', description: 'Write a parseable CSV artifact and verify it on readback.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.docx', description: 'Write an openable DOCX artifact and verify it on readback.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.markdown', description: 'Write a markdown artifact and verify it on readback.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.pdf', description: 'Write an openable PDF artifact and verify it on readback.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.pptx', description: 'Write an openable PPTX artifact and verify it on readback.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.research', description: 'Write a research note from allowed sources without gaining new rights.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.author.xlsx', description: 'Write an openable XLSX artifact and verify it on readback.', inputSchema: MEETING_ARTIFACT_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.followup', description: 'Prepare follow-up reminders from meeting promises.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.risks', description: 'Surface measurable risks and blockers from the meeting snapshot.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+  { name: 'meeting.crm', description: 'Suggest CRM updates without inventing contact identity.', inputSchema: MEETING_TOOL_INPUT_SCHEMA },
+];
+
+export const MEETING_AGENT_TOOL_NAMES = new Set(MEETING_AGENT_TOOL_DEFS.map((d) => d.name));
+
+export function hostToolsForMeetingSkills(skillIds: readonly string[]): SessionToolDef[] {
+  const allowed = new Set(skillIds);
+  return MEETING_AGENT_TOOL_DEFS.filter((d) => allowed.has(d.name)).map((d) => ({ ...d }));
+}
+
+export function isKnownSessionToolName(name: string): boolean {
+  return buildSessionToolDefs({ includeMeetingAgentTools: true }).some((d) => d.name === name);
 }
 
 export function buildSessionToolDefs(options: SessionToolDefBuildOptions = {}): SessionToolDef[] {
@@ -96,6 +162,14 @@ export function buildSessionToolDefs(options: SessionToolDefBuildOptions = {}): 
     const prefixed = unique.find((d) => d.name === 'mcp__session__bash');
     if (prefixed && !seen.has('bash')) {
       unique.push({ ...prefixed, name: 'bash' });
+    }
+  }
+
+  if (options.includeMeetingAgentTools) {
+    for (const meetingDef of MEETING_AGENT_TOOL_DEFS) {
+      if (seen.has(meetingDef.name)) continue;
+      seen.add(meetingDef.name);
+      unique.push({ ...meetingDef });
     }
   }
 

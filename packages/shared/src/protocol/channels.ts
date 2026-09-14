@@ -623,6 +623,12 @@ export const RPC_CHANNELS = {
     DELETE_PROPOSAL: 'memory:deleteProposal',
     CHANGED: 'memory:changed',
   },
+  meetings: {
+    LIST: 'meetings:list',
+    GET: 'meetings:get',
+    SEARCH: 'meetings:search',
+    DELETE: 'meetings:delete',
+  },
   statuses: {
     LIST: 'statuses:list',
     REORDER: 'statuses:reorder',

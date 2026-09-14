@@ -19,4 +19,13 @@ describe('buildSessionToolDefs host-tool bash', () => {
     expect(alias?.description).toBe(prefixed?.description);
     expect(alias?.inputSchema).toEqual(prefixed?.inputSchema);
   });
+
+  it('does not advertise meeting-agent tools unless opted in', () => {
+    const defaultNames = buildSessionToolDefs().map((d) => d.name);
+    expect(defaultNames).not.toContain('meeting.brief');
+    expect(defaultNames).not.toContain('meeting.author.docx');
+    const meeting = buildSessionToolDefs({ includeMeetingAgentTools: true });
+    expect(meeting.map((d) => d.name)).toContain('meeting.notes');
+    expect(meeting.map((d) => d.name)).toContain('meeting.author.docx');
+  });
 });
