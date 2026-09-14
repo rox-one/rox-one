@@ -21,6 +21,12 @@ import { KnowledgeConnectionsStore } from '../../knowledge/connections-store'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import {
+  isClaimableLive,
+  rpcIdentityActResult,
+  rpcIdentityListResult,
+  rpcIdentityReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.identity.GET_STATE,
@@ -151,10 +157,14 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
   const configDir = () => process.env.CRAFT_CONFIG_DIR || resolveConfigDir()
 
   server.handle(RPC_CHANNELS.identity.GET_STATE, async (_ctx, args?: IdentityGetStateArgs) => {
+    const listed = rpcIdentityListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('identity state is not live')
     return buildAggregatedState(args?.workspaceId)
   })
 
   server.handle(RPC_CHANNELS.identity.UPDATE_PROFILE, async (_ctx, input: UpdateProfileInput = {}) => {
+    const act = rpcIdentityActResult({ source: 'native', action: 'write', nativeId: 'profile' })
+    if (!isClaimableLive(act)) throw new Error('identity profile write is not live')
     const store = getIdentityStore(configDir())
     store.updateProfile(input ?? {})
     broadcastChanged(server)
@@ -162,6 +172,8 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   server.handle(RPC_CHANNELS.identity.CONNECT, async (_ctx, args: IdentityConnectArgs) => {
+    const act = rpcIdentityActResult({ source: 'native', action: 'write', nativeId: args?.connectionId ?? 'connection' })
+    if (!isClaimableLive(act)) throw new Error('identity connect is not live')
     if (!args?.provider || !args?.workspaceId) {
       throw new Error('identity.connect: provider and workspaceId are required')
     }
@@ -221,6 +233,13 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
     if (!args?.connectionId) {
       throw new Error('identity.disconnect: connectionId is required')
     }
+    const act = rpcIdentityActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: args.connectionId,
+    })
+    if (!isClaimableLive(act)) throw new Error('identity disconnect is not live')
     const store = getIdentityStore(configDir())
     const prior = store.getConnection(args.connectionId)
     if (!prior) {
@@ -258,6 +277,8 @@ export function registerIdentityHandlers(server: RpcServer, deps: HandlerDeps): 
   })
 
   server.handle(RPC_CHANNELS.identity.REFRESH_STATUS, async (_ctx, args?: IdentityRefreshArgs) => {
+    const read = rpcIdentityReadResult({ source: 'native', nativeId: 'profile' })
+    if (!isClaimableLive(read.result)) throw new Error('identity status is not live')
     const store = getIdentityStore(configDir())
     const workspaceId = args?.workspaceId
     const owned = store.listConnections().filter((c) => !c.readOnly)
