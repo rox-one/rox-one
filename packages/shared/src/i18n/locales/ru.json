@@ -3936,7 +3936,7 @@
   "settings.runtime.approvalMode": "Режим разрешений",
   "settings.runtime.approvalModeDesc": "Применяется к текущей рабочей области.",
   "settings.runtime.approvalRespawnNote": "Применяется к новым сессиям; для активных сессий сработает после перезапуска.",
-  "settings.runtime.approvalSelectWorkspace": "Выберите воркспейс, чтобы управлять подтверждениями.",
+  "settings.runtime.approvalSelectWorkspace": "Выберите рабочее пространство, чтобы управлять подтверждениями.",
   "settings.runtime.approvalTitle": "Подтверждения",
   "settings.runtime.description": "AI-рантайм, уровень размышлений и консольные инструменты",
   "settings.runtime.envAdd": "Добавить переменную",
