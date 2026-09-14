@@ -50,7 +50,6 @@ import {
   groupExtensionCenterRecords,
   groupExtensionPermissions,
   HIGH_RISK_PERMISSIONS,
-  RUNTIME_PLACEMENT,
 } from '@craft-agent/shared/extensions/browser'
 import { useAtomValue } from 'jotai'
 import { featureWorkbenchHarnessExtCenterV1Atom } from '@/atoms/unified-shell'
@@ -337,7 +336,7 @@ function RuntimeBadge({ runtime }: { runtime: ExtensionRuntime }) {
     <span
       className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium opacity-90"
       title={t(`extensions.runtime.${runtime}.hint`, {
-        defaultValue: RUNTIME_PLACEMENT[runtime],
+        defaultValue: runtime,
       })}
     >
       <span className="opacity-70">{t('extensions.card.runtime')}:</span>
@@ -1324,7 +1323,7 @@ export default function ExtensionsSettingsPage() {
                 <div key={p.id} className="border rounded-lg p-3 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <div className="font-medium text-sm">
-                      {t(`extensions.registries.provider.${p.id}`, { defaultValue: p.label })}
+                      {t(`extensions.registries.provider.${p.id}`, { defaultValue: p.id })}
                     </div>
                     <div className="text-xs opacity-60 font-mono">{p.id}</div>
                     {p.docsUrl ? (

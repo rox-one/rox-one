@@ -13,6 +13,10 @@ describe('marketplace and import native-select chrome', () => {
     expect(source).not.toMatch(/<select[\s\S]*marketplace.sortStars/)
     expect(source).toContain("t('extensions.action.openBrowser')")
     expect(source).not.toContain("defaultValue: 'Open browser'")
+    expect(source).toContain(
+      't(`extensions.permissionGroup.${group.group}`, { defaultValue: group.group })',
+    )
+    expect(source).not.toMatch(/defaultValue:\s*['"]/)
   })
 
   it('uses PremiumMenuSelect for the import kind filter', () => {
