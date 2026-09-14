@@ -84,7 +84,7 @@
   "auth.sourceConnected": "{{source}} подключён",
   "auth.sourceFailed": "{{source}}: ошибка",
   "auth.username": "Имя пользователя",
-  "auth.workspaceNamed": "Воркспейс: {{workspace}}",
+  "auth.workspaceNamed": "Рабочее пространство: {{workspace}}",
   "automations.addAutomation": "Добавить автоматизацию",
   "automations.at": "в",
   "automations.badgePrompt": "Промпт",
