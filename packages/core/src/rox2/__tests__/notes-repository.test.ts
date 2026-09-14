@@ -15,6 +15,21 @@ describe('Rox2NoteRepository (issue 324)', () => {
     expect(repo.get(note.ref)?.origin).toBe('local')
   })
 
+  test('rename keeps EntityId and CAS rejects a stale revision (issue 371)', () => {
+    const repo = new Rox2NoteRepository()
+    const created = repo.createLocal({
+      ref: { workspaceId: 'ws', entityId: 'stable', revisionId: '1' },
+      title: 'Old',
+      body: 'one',
+      properties: { decisionKey: 'k1' },
+    })
+    const renamed = repo.rename(created.ref, 'New', created.ref.revisionId)
+    expect(renamed.ref.entityId).toBe('stable')
+    expect(repo.getByEntityId('ws', 'stable')?.title).toBe('New')
+    expect(() => repo.update(created.ref, { body: 'two' }, created.ref.revisionId)).toThrow()
+    expect(repo.getByEntityId('ws', 'stable')?.body).toBe('one')
+  })
+
   test('remote notes without a live adapter stay cached/offline/denied', () => {
     const repo = new Rox2NoteRepository()
     const binding = { provider: 'conation', account: 'a', remoteType: 'document', remoteId: 'soup-1' }

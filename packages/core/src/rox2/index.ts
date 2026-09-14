@@ -70,7 +70,10 @@ export {
 
 export {
   Rox2NoteRepository,
+  bumpNoteRevision,
+  noteIdentityKey,
   noteOriginIsConation,
+  type NoteAudience,
   type NoteOrigin,
   type NoteSyncState,
   type Rox2Note,
