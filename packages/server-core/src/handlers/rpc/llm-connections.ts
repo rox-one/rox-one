@@ -12,6 +12,12 @@ import { parseTestConnectionError, createBuiltInConnection, validateModelList, p
 import { getWorkspaceOrThrow, buildBackendHostRuntimeContext } from '@craft-agent/server-core/handlers'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcLlmConnectionsActResult,
+  rpcLlmConnectionsListResult,
+  rpcLlmConnectionsReadResult,
+} from '@craft-agent/core/rox2'
 import { randomUUID } from 'node:crypto'
 import { CLIENT_OPEN_EXTERNAL } from '@craft-agent/server-core/transport'
 import { CHATGPT_OAUTH_CONFIG } from '@craft-agent/shared/auth'
@@ -535,6 +541,8 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
 
   // List all LLM connections (includes built-in and custom)
   server.handle(RPC_CHANNELS.llmConnections.LIST, async (): Promise<LlmConnection[]> => {
+    const listed = rpcLlmConnectionsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     return getLlmConnections()
   })
 
@@ -606,6 +614,8 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
 
   // Get a specific LLM connection by slug
   server.handle(RPC_CHANNELS.llmConnections.GET, async (_ctx, slug: string): Promise<LlmConnection | null> => {
+    const read = rpcLlmConnectionsReadResult({ source: 'native', nativeId: slug })
+    if (!isClaimableLive(read.result)) return null
     return getLlmConnection(slug)
   })
 
@@ -619,6 +629,12 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
   // Save (create or update) an LLM connection
   // If connection.slug exists and is found, updates it; otherwise creates new
   server.handle(RPC_CHANNELS.llmConnections.SAVE, async (_ctx, connection: LlmConnection): Promise<{ success: boolean; error?: string }> => {
+    const act = rpcLlmConnectionsActResult({
+      source: 'native',
+      action: 'write',
+      nativeId: connection?.slug ?? 'connection',
+    })
+    if (!isClaimableLive(act)) return { success: false, error: 'llm connection write is not live' }
     try {
       // Check if this is an update or create
       const existing = getLlmConnection(connection.slug)
@@ -663,6 +679,14 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
 
   // Delete an LLM connection (at least one connection must remain)
   server.handle(RPC_CHANNELS.llmConnections.DELETE, async (_ctx, slug: string): Promise<{ success: boolean; error?: string }> => {
+    if (!slug) return { success: false, error: 'slug is required' }
+    const act = rpcLlmConnectionsActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: slug,
+    })
+    if (!isClaimableLive(act)) return { success: false, error: 'llm connection destroy is not live' }
     try {
       const connection = getLlmConnection(slug)
       if (!connection) {

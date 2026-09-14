@@ -1,5 +1,5 @@
 /**
- * ROX2-139..156: native RPC list/read/act.
+ * ROX2-139..159: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -34,6 +34,9 @@ export type RpcNativeSurface =
   | 'identity'
   | 'kanban'
   | 'knowledge'
+  | 'labels'
+  | 'llm-connections'
+  | 'marketplace'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -146,6 +149,24 @@ const SURFACE: Record<
     label: 'knowledge RPC',
     store: 'native knowledge connections',
     prefix: 'rpc.knowledge',
+  },
+  labels: {
+    kind: 'file',
+    label: 'labels RPC',
+    store: 'native workspace labels',
+    prefix: 'rpc.labels',
+  },
+  'llm-connections': {
+    kind: 'connection',
+    label: 'llm-connections RPC',
+    store: 'native llm connections',
+    prefix: 'rpc.llm-connections',
+  },
+  marketplace: {
+    kind: 'skill',
+    label: 'marketplace RPC',
+    store: 'native marketplace lock',
+    prefix: 'rpc.marketplace',
   },
 }
 
@@ -553,4 +574,55 @@ export function rpcKnowledgeActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'knowledge', ...opts })
+}
+
+export function rpcLabelsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'labels', ...opts })
+}
+
+export function rpcLabelsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'labels', ...opts })
+}
+
+export function rpcLabelsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'labels', ...opts })
+}
+
+export function rpcLlmConnectionsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'llm-connections', ...opts })
+}
+
+export function rpcLlmConnectionsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'llm-connections', ...opts })
+}
+
+export function rpcLlmConnectionsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'llm-connections', ...opts })
+}
+
+export function rpcMarketplaceListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'marketplace', ...opts })
+}
+
+export function rpcMarketplaceReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'marketplace', ...opts })
+}
+
+export function rpcMarketplaceActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'marketplace', ...opts })
 }
