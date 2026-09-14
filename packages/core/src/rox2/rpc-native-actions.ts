@@ -1,5 +1,5 @@
 /**
- * ROX2-139..171: native RPC list/read/act.
+ * ROX2-139..174: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -49,6 +49,9 @@ export type RpcNativeSurface =
   | 'onboarding'
   | 'openclaw'
   | 'orgs'
+  | 'pages'
+  | 'plugin-bridge'
+  | 'privacy'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -251,6 +254,24 @@ const SURFACE: Record<
     label: 'orgs RPC',
     store: 'native organizations',
     prefix: 'rpc.orgs',
+  },
+  pages: {
+    kind: 'page',
+    label: 'pages RPC',
+    store: 'native workspace pages',
+    prefix: 'rpc.pages',
+  },
+  'plugin-bridge': {
+    kind: 'skill',
+    label: 'plugin-bridge RPC',
+    store: 'native SiYuan plugins',
+    prefix: 'rpc.plugin-bridge',
+  },
+  privacy: {
+    kind: 'person',
+    label: 'privacy RPC',
+    store: 'native privacy ledger',
+    prefix: 'rpc.privacy',
   },
 }
 
@@ -913,4 +934,55 @@ export function rpcOrgsActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'orgs', ...opts })
+}
+
+export function rpcPagesListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'pages', ...opts })
+}
+
+export function rpcPagesReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'pages', ...opts })
+}
+
+export function rpcPagesActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'pages', ...opts })
+}
+
+export function rpcPluginBridgeListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'plugin-bridge', ...opts })
+}
+
+export function rpcPluginBridgeReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'plugin-bridge', ...opts })
+}
+
+export function rpcPluginBridgeActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'plugin-bridge', ...opts })
+}
+
+export function rpcPrivacyListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'privacy', ...opts })
+}
+
+export function rpcPrivacyReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'privacy', ...opts })
+}
+
+export function rpcPrivacyActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'privacy', ...opts })
 }

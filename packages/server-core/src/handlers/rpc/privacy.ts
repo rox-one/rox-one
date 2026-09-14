@@ -17,6 +17,12 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcPrivacyActResult,
+  rpcPrivacyListResult,
+  rpcPrivacyReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.privacy.GET,
@@ -31,7 +37,13 @@ function broadcast(server: RpcServer, dto: ReturnType<typeof toPrivacyDto>): voi
 }
 
 export function registerPrivacyHandlers(server: RpcServer, _deps: HandlerDeps): void {
-  server.handle(RPC_CHANNELS.privacy.GET, async () => toPrivacyDto(loadPrivacyState()))
+  server.handle(RPC_CHANNELS.privacy.GET, async () => {
+    const listed = rpcPrivacyListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('privacy ledger is not live')
+    const read = rpcPrivacyReadResult({ source: 'native', nativeId: 'ledger' })
+    if (!isClaimableLive(read.result)) throw new Error('privacy ledger is not live')
+    return toPrivacyDto(loadPrivacyState())
+  })
 
   server.handle(RPC_CHANNELS.privacy.SET_PURPOSE, async (_ctx, payload: unknown) => {
     if (!payload || typeof payload !== 'object') throw new Error('purpose payload required')
@@ -39,12 +51,20 @@ export function registerPrivacyHandlers(server: RpcServer, _deps: HandlerDeps): 
     if (typeof body.purpose !== 'string' || !isConsentPurpose(body.purpose)) {
       throw new Error(`Unknown consent purpose: ${String(body.purpose)}`)
     }
+    const act = rpcPrivacyActResult({
+      source: 'native',
+      action: 'write',
+      nativeId: body.purpose,
+    })
+    if (!isClaimableLive(act)) throw new Error('privacy purpose write is not live')
     const dto = toPrivacyDto(setPurpose(body.purpose as ConsentPurpose, body.granted === true))
     broadcast(server, dto)
     return dto
   })
 
   server.handle(RPC_CHANNELS.privacy.REQUEST_EXPORT, async () => {
+    const act = rpcPrivacyActResult({ source: 'native', action: 'write', nativeId: 'export' })
+    if (!isClaimableLive(act)) throw new Error('privacy export is not live')
     const { state, receipt } = requestExport()
     const dto = toPrivacyDto(state)
     broadcast(server, dto)
@@ -52,6 +72,8 @@ export function registerPrivacyHandlers(server: RpcServer, _deps: HandlerDeps): 
   })
 
   server.handle(RPC_CHANNELS.privacy.REQUEST_DELETION, async () => {
+    const act = rpcPrivacyActResult({ source: 'native', action: 'write', nativeId: 'deletion' })
+    if (!isClaimableLive(act)) throw new Error('privacy deletion request is not live')
     const { state, receipt } = requestDeletion()
     const dto = toPrivacyDto(state)
     broadcast(server, dto)
@@ -64,6 +86,13 @@ export function registerPrivacyHandlers(server: RpcServer, _deps: HandlerDeps): 
     if (typeof body.deletionId !== 'string' || !body.deletionId) {
       throw new Error('deletionId required')
     }
+    const act = rpcPrivacyActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: body.deletionId,
+    })
+    if (!isClaimableLive(act)) throw new Error('privacy deletion complete is not live')
     const dto = toPrivacyDto(completeDeletion(body.deletionId))
     broadcast(server, dto)
     return dto

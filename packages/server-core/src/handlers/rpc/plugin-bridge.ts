@@ -53,6 +53,12 @@ import {
   type InstalledPluginFeedItem,
 } from '../../knowledge/siyuan-plugins-fs'
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import {
+  isClaimableLive,
+  rpcPluginBridgeActResult,
+  rpcPluginBridgeListResult,
+  rpcPluginBridgeReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.pluginBridge.LIST_PLUGINS,
@@ -601,6 +607,14 @@ export function registerPluginBridgeHandlers(
         plugins.length === 0
           ? loaded.residual ?? EMPTY_RESIDUAL
           : residualForSource(loaded.source, loaded.residual)
+      const source = loaded.fixture ? 'fixture' : 'native'
+      const listed = rpcPluginBridgeListResult({
+        source,
+        nativeIds: plugins.map((plugin) => plugin.id),
+      })
+      if (source === 'native' && !isClaimableLive(listed.result)) {
+        return { plugins: [], ...(residual ? { residual } : {}) }
+      }
       return {
         plugins,
         ...(loaded.fixture ? { fixture: true } : {}),
@@ -617,11 +631,22 @@ export function registerPluginBridgeHandlers(
     ): Promise<BridgeProjectedContributions> => {
       const pluginId = args?.pluginId ?? ''
       let manifest: SiYuanBridgeManifest | null = null
+      let feedFixture = false
       if (args?.manifest !== undefined) {
         manifest = parseSiYuanPluginManifest(args.manifest)
       } else {
         const loaded = await loadPluginBridgeManifests()
+        feedFixture = loaded.fixture
         manifest = findManifest(pluginId, undefined, loaded.manifests)
+      }
+      const nativeId = pluginId || (args?.manifest !== undefined ? 'inline' : undefined)
+      const source = feedFixture ? 'fixture' : 'native'
+      const read = rpcPluginBridgeReadResult({ source, nativeId })
+      if (source === 'native' && !isClaimableLive(read.result)) {
+        return projectBridgeContributions(null, {
+          grantedPermissions: args?.grantedPermissions,
+          capabilityProbeFailed: args?.capabilityProbeFailed,
+        })
       }
       // grantedPermissions omitted → install-time default from declared
       // craft.contributes permissions (projectBridgeContributions / S-05).
@@ -643,6 +668,8 @@ export function registerPluginBridgeHandlers(
       }
       const bare = barePluginId(args.pluginId)
       const id = extensionIdFor(bare)
+      const act = rpcPluginBridgeActResult({ source: 'native', action: 'write', nativeId: id })
+      if (!isClaimableLive(act)) throw new Error('pluginBridge.setEnabled is not live')
 
       let localOk = false
       try {
@@ -730,6 +757,10 @@ export function registerPluginBridgeHandlers(
       }
       const packageName = barePluginId(packageNameRaw)
       const id = extensionIdFor(packageName)
+      const act = rpcPluginBridgeActResult({ source: 'native', action: 'write', nativeId: packageName })
+      if (!isClaimableLive(act)) {
+        throw new CodedError('PROVIDER_ERROR', 'pluginBridge.installBazaar is not live')
+      }
 
       if (filterBazaarPackages([{ name: packageName }]).length === 0) {
         throw new CodedError(
@@ -784,6 +815,15 @@ export function registerPluginBridgeHandlers(
           'INVALID_REF',
           'pluginBridge.uninstallBazaar: packageName is required',
         )
+      }
+      const act = rpcPluginBridgeActResult({
+        source: 'native',
+        action: 'destroy',
+        granted: true,
+        nativeId: packageName,
+      })
+      if (!isClaimableLive(act)) {
+        throw new CodedError('PROVIDER_ERROR', 'pluginBridge.uninstallBazaar is not live')
       }
       const bare = barePluginId(packageName)
       const id = extensionIdFor(bare)
