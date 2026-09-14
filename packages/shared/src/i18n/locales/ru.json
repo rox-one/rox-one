@@ -3327,7 +3327,7 @@
   "settings.cloudRuns.tokenSet": "Токен найден в cloud-runs.env",
   "settings.cloudRuns.ttl": "TTL sandbox (сек)",
   "settings.cloudRuns.ttlHint": "Уничтожить sandbox через столько секунд",
-  "settings.cloudRuns.webhook": "Webhook по завершению",
+  "settings.cloudRuns.webhook": "Вебхук по завершению",
   "settings.cloudRuns.webhookHint": "Опциональный URL — POST при завершении рана (уведомления вне приложения)",
   "settings.cloudRuns.webhookPlaceholder": "https://example.com/cloud-runs-hook",
   "settings.commandGateway.approve": "Одобрить",
