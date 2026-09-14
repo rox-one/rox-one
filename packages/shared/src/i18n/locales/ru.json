@@ -1143,7 +1143,7 @@
   "extensions.action.uninstallBazaar": "Удалить из Bazaar",
   "extensions.card.compatLevel": "У{{level}}",
   "extensions.card.compatLevelHint": "Уровень совместимости {{level}}",
-  "extensions.card.installTarget": "Install to",
+  "extensions.card.installTarget": "Установить в",
   "extensions.card.noPermissions": "No permissions",
   "extensions.card.permissions": "Permissions",
   "extensions.card.readOnly": "projection",
