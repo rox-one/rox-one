@@ -2856,7 +2856,7 @@
   "serverDirectory.wrongPlatform": "Das sieht nach einem Pfad eines anderen Betriebssystems aus. Geben Sie einen Pfad ein, der auf dem Server existiert.",
   "session.advisorNeedChat": "Zuerst einen Chat öffnen",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "Aktiviere zuerst Agent Teams unter Darstellung → Workbench.",
+  "session.agentTeamsFlagOff": "Aktiviere zuerst {{toggle}} unter Darstellung → Workbench.",
   "session.agentTeamsPrompt": "@agent-teams Plane ein Captain-Team für dieses Ziel. Roster und Task-DAG zuerst; warte auf Freigabe vor spawn_session.",
   "session.clearSearch": "Suche leeren",
   "session.closeSearch": "Suche schließen",

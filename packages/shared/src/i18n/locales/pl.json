@@ -2862,7 +2862,7 @@
   "serverDirectory.wrongPlatform": "To wygląda na ścieżkę z innego systemu. Wpisz ścieżkę, która istnieje na serwerze.",
   "session.advisorNeedChat": "Najpierw otwórz czat",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "Najpierw włącz Agent Teams w Wygląd → Workbench.",
+  "session.agentTeamsFlagOff": "Najpierw włącz {{toggle}} w Wygląd → Workbench.",
   "session.agentTeamsPrompt": "@agent-teams Zaplanuj zespół z kapitanem. Najpierw skład i DAG zadań; czekaj na akceptację przed spawn_session.",
   "session.clearSearch": "Wyczyść wyszukiwanie",
   "session.closeSearch": "Zamknij wyszukiwanie",

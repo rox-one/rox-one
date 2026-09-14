@@ -2856,7 +2856,7 @@
   "serverDirectory.wrongPlatform": "Ez egy másik operációs rendszer útvonalának tűnik. Adjon meg egy a szerveren létező útvonalat.",
   "session.advisorNeedChat": "Előbb nyiss egy chatet",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "Először kapcsold be az Agent Teams-et: Megjelenés → Workbench.",
+  "session.agentTeamsFlagOff": "Először kapcsold be az {{toggle}}-et: Megjelenés → Workbench.",
   "session.agentTeamsPrompt": "@agent-teams Tervezz kapitány-vezérelt csapatot. Előbb roster és feladat-DAG; jóváhagyás előtt ne hívd a spawn_session-t.",
   "session.clearSearch": "Keresés törlése",
   "session.closeSearch": "Keresés bezárása",

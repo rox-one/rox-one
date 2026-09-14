@@ -2856,7 +2856,7 @@
   "serverDirectory.wrongPlatform": "다른 OS의 경로처럼 보입니다. 서버에 있는 경로를 입력하세요.",
   "session.advisorNeedChat": "Open a chat first",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "Enable Agent Teams in Appearance → Workbench first.",
+  "session.agentTeamsFlagOff": "Enable {{toggle}} in Appearance → Workbench first.",
   "session.agentTeamsPrompt": "@agent-teams Plan a captain-led team for this goal. Stage the roster and task DAG; wait for approval before spawn_session.",
   "session.clearSearch": "검색 지우기",
   "session.closeSearch": "검색 닫기",

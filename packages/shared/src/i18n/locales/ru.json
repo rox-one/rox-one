@@ -2862,7 +2862,7 @@
   "serverDirectory.wrongPlatform": "Похоже, это путь с другой ОС. Введите путь, который есть на сервере.",
   "session.advisorNeedChat": "Сначала открой чат",
   "session.advisorPrompt": "@advisor Проверь текущую работу в этой сессии. Не создавай скрытую сессию.",
-  "session.agentTeamsFlagOff": "Сначала включите Команды агентов в Внешний вид → Верстак.",
+  "session.agentTeamsFlagOff": "Сначала включите {{toggle}} в Внешний вид → Верстак.",
   "session.agentTeamsPrompt": "@agent-teams Составьте план команды с капитаном для этой цели. Сначала состав и DAG задач; не вызывайте spawn_session до одобрения.",
   "session.clearSearch": "Очистить поиск",
   "session.closeSearch": "Закрыть поиск",

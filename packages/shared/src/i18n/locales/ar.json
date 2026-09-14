@@ -2856,7 +2856,7 @@
   "serverDirectory.wrongPlatform": "يبدو هذا مسارًا من نظام تشغيل مختلف. أدخل مسارًا موجودًا على الخادم.",
   "session.advisorNeedChat": "Open a chat first",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "فعّل Agent Teams أولاً من المظهر → Workbench.",
+  "session.agentTeamsFlagOff": "فعّل {{toggle}} أولاً من المظهر → Workbench.",
   "session.agentTeamsPrompt": "@agent-teams خطّط لفريق بقيادة القبطان لهذا الهدف. اعرض القائمة وDAG المهام أولاً؛ انتظر الموافقة قبل spawn_session.",
   "session.clearSearch": "مسح البحث",
   "session.closeSearch": "إغلاق البحث",

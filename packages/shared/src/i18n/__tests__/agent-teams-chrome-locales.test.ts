@@ -14,14 +14,14 @@ const keys = [
 ] as const
 
 const EN: Record<(typeof keys)[number], string> = {
-  'session.agentTeamsFlagOff': 'Enable Agent Teams in Appearance → Workbench first.',
+  'session.agentTeamsFlagOff': 'Enable {{toggle}} in Appearance → Workbench first.',
   'session.agentTeamsPrompt':
     '@agent-teams Plan a captain-led team for this goal. Stage the roster and task DAG; wait for approval before spawn_session.',
   'settings.appearance.harnessSkip.agentTeamsRuntime': 'Agent-teams runtime',
 }
 
 const RU: Record<(typeof keys)[number], string> = {
-  'session.agentTeamsFlagOff': 'Сначала включите Команды агентов в Внешний вид → Верстак.',
+  'session.agentTeamsFlagOff': 'Сначала включите {{toggle}} в Внешний вид → Верстак.',
   'session.agentTeamsPrompt':
     '@agent-teams Составьте план команды с капитаном для этой цели. Сначала состав и DAG задач; не вызывайте spawn_session до одобрения.',
   'settings.appearance.harnessSkip.agentTeamsRuntime': 'Runtime команд агентов',
@@ -57,5 +57,21 @@ describe('agent-teams leftover chrome locales', () => {
     for (const key of keys) {
       expect(i18n.t(key)).toBe(EN[key])
     }
+  })
+
+  it('interpolates the Appearance Workbench toggle label', async () => {
+    await setupI18n().changeLanguage('ru')
+    const ruToggle = i18n.t('settings.appearance.workbenchHarnessAgentTeams')
+    expect(i18n.t('session.agentTeamsFlagOff', { toggle: ruToggle })).toBe(
+      `Сначала включите ${ruToggle} в Внешний вид → Верстак.`,
+    )
+    expect(i18n.t('session.agentTeamsFlagOff', { toggle: ruToggle })).toContain(ruToggle)
+
+    await setupI18n().changeLanguage('en')
+    const enToggle = i18n.t('settings.appearance.workbenchHarnessAgentTeams')
+    expect(i18n.t('session.agentTeamsFlagOff', { toggle: enToggle })).toBe(
+      `Enable ${enToggle} in Appearance → Workbench first.`,
+    )
+    expect(enToggle).toBe('Agent Teams')
   })
 })
