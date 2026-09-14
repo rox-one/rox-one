@@ -22,7 +22,7 @@
   "accountMenu.siyuanCloudStatus": "SiYuan Cloud: {status}",
   "accountReplica.deletionComplete": "Облачная копия удалена",
   "accountReplica.deletionQueued": "Удаляем облачную копию. Локальные данные останутся",
-  "accountReplica.excludedCredentials": "Пароли, cookie и ключи доступа остаются на этом устройстве",
+  "accountReplica.excludedCredentials": "Пароли, файлы cookie и ключи доступа остаются на этом устройстве",
   "accountReplica.exportLocal": "Экспорт локальных данных",
   "accountReplica.statusView": "Смотреть статус",
   "accountReplica.title": "Восстановление на устройстве",
