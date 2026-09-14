@@ -1,10 +1,23 @@
 /**
  * RMA-I021 / #377 — Conation Notes/Projects identity.
  * One EntityId. Unconfirmed writes stay BLOCKED. Offline cache is stale.
+ * In-memory Maps are not a live Notes/Projects receipt: stamps stay pending
+ * (live:false, not verified; L4 remains not_run).
  */
 
 import { confirmWrite } from './capabilities.ts'
-import { blocked, denied, type MeetingOpResult } from '../types.ts'
+import { blocked, denied, type EvidenceLevel, type MeetingOpResult } from '../types.ts'
+
+/** Local native identity only. Never a live/L4 verified receipt. */
+function localApplied<T extends string, P = unknown>(
+  reason: T,
+  evidenceLevel: EvidenceLevel = 'C2',
+  payload?: P,
+): MeetingOpResult<T, P> {
+  return payload === undefined
+    ? { status: 'pending', reason, live: false, evidenceLevel }
+    : { status: 'pending', reason, live: false, evidenceLevel, payload }
+}
 
 export type NoteRecord = {
   readonly id: string
@@ -42,7 +55,7 @@ export function getNote(store: NotesProjectsStore, id: string): MeetingOpResult<
       payload: { ...note, stale: true },
     }
   }
-  return { status: 'verified', reason: 'read', live: false, evidenceLevel: 'C2', payload: note }
+  return localApplied('read', 'C2', note)
 }
 
 export function renameNote(
@@ -67,7 +80,7 @@ export function renameNote(
   }
   const next = { ...existing, title, revision: String(Number(existing.revision) + 1) }
   store.notes.set(id, next)
-  return { status: 'verified', reason: 'renamed', live: false, evidenceLevel: 'C2', payload: next }
+  return localApplied('renamed', 'C2', next)
 }
 
 export function replayImport(store: NotesProjectsStore, note: NoteRecord): MeetingOpResult {
@@ -75,5 +88,5 @@ export function replayImport(store: NotesProjectsStore, note: NoteRecord): Meeti
     return { status: 'duplicate', reason: 'replay-import', live: false, evidenceLevel: 'C2', payload: store.notes.get(note.id) }
   }
   store.notes.set(note.id, note)
-  return { status: 'verified', reason: 'imported', live: false, evidenceLevel: 'C2' }
+  return localApplied('imported')
 }
