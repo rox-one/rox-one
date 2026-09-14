@@ -61,7 +61,7 @@ export function getSessionTitle(session: SessionLike | SessionMeta): string {
     }
   }
 
-  return i18next.t('session.defaultTitle', 'New chat')
+  return i18next.t('session.defaultTitle')
 }
 
 /**
