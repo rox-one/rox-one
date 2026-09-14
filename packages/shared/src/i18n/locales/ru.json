@@ -54,7 +54,7 @@
   "apiSetup.searchModels": "Поиск моделей...",
   "apiSetup.secretAccessKey": "Secret Access Key",
   "apiSetup.selectModel": "Выберите модель...",
-  "apiSetup.sessionTokenOptional": "Session Token · необязательно",
+  "apiSetup.sessionTokenOptional": "Токен сессии · необязательно",
   "apiSetup.temporaryCredentials": "Для временных учётных данных (STS)",
   "auth.addCredentials": "Добавить учётные данные",
   "auth.apiCredentialsRequired": "Требуются учётные данные API",
