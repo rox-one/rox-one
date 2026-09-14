@@ -150,6 +150,8 @@ describe('action labels are i18n', () => {
     expect(i18n.t('shortcuts.action.sessionWorkflow')).toBe('Рабочий процесс сессии')
     expect(i18n.t('shortcuts.action.simplifyDiff')).toBe('Упростить diff')
     expect(i18n.t('shortcuts.action.newChat')).not.toBe('New Chat')
+    expect(i18n.t('settings.appearance.workbenchHarnessAgentTeams')).toBe('Команды агентов')
+    expect(i18n.t('settings.appearance.workbenchHarnessAgentTeams')).not.toBe('Agent Teams')
   })
 
   it('all 12 locales define the wired action label keys', () => {
