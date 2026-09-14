@@ -1,5 +1,5 @@
 /**
- * ROX2-139..159: native RPC list/read/act.
+ * ROX2-139..162: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -37,6 +37,9 @@ export type RpcNativeSurface =
   | 'labels'
   | 'llm-connections'
   | 'marketplace'
+  | 'memory-insights'
+  | 'memory-io'
+  | 'memory-proposals'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -167,6 +170,24 @@ const SURFACE: Record<
     label: 'marketplace RPC',
     store: 'native marketplace lock',
     prefix: 'rpc.marketplace',
+  },
+  'memory-insights': {
+    kind: 'memory',
+    label: 'memory-insights RPC',
+    store: 'native memory insights',
+    prefix: 'rpc.memory-insights',
+  },
+  'memory-io': {
+    kind: 'memory',
+    label: 'memory-io RPC',
+    store: 'native memory export',
+    prefix: 'rpc.memory-io',
+  },
+  'memory-proposals': {
+    kind: 'memory',
+    label: 'memory-proposals RPC',
+    store: 'native memory proposals',
+    prefix: 'rpc.memory-proposals',
   },
 }
 
@@ -625,4 +646,55 @@ export function rpcMarketplaceActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'marketplace', ...opts })
+}
+
+export function rpcMemoryInsightsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'memory-insights', ...opts })
+}
+
+export function rpcMemoryInsightsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'memory-insights', ...opts })
+}
+
+export function rpcMemoryInsightsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'memory-insights', ...opts })
+}
+
+export function rpcMemoryIoListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'memory-io', ...opts })
+}
+
+export function rpcMemoryIoReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'memory-io', ...opts })
+}
+
+export function rpcMemoryIoActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'memory-io', ...opts })
+}
+
+export function rpcMemoryProposalsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'memory-proposals', ...opts })
+}
+
+export function rpcMemoryProposalsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'memory-proposals', ...opts })
+}
+
+export function rpcMemoryProposalsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'memory-proposals', ...opts })
 }

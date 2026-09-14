@@ -15,6 +15,12 @@ import type { AuditEntry, MemoryInsights } from '@craft-agent/shared/memory/type
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcMemoryInsightsActResult,
+  rpcMemoryInsightsListResult,
+  rpcMemoryInsightsReadResult,
+} from '@craft-agent/core/rox2'
 import { AuditLog } from '../../memory/AuditLog'
 import { LessonStore } from '../../memory/LessonStore'
 import { MemoryFileStore } from '../../memory/MemoryFileStore'
@@ -32,6 +38,10 @@ export const ONBOARDED_MARKER = '.onboarded'
 
 export function registerMemoryInsightsHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.memory.INSIGHTS, async (_ctx, workspaceId?: string): Promise<MemoryInsights> => {
+    const listed = rpcMemoryInsightsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('memory insights are not live')
+    const read = rpcMemoryInsightsReadResult({ source: 'native', nativeId: 'insights' })
+    if (!isClaimableLive(read.result)) throw new Error('memory insights are not live')
     const workspace = workspaceId ? getWorkspaceByNameOrId(workspaceId) : null
     const workspaceRoot = workspace?.rootPath ?? null
 
@@ -87,6 +97,8 @@ export function registerMemoryInsightsHandlers(server: RpcServer, deps: HandlerD
   // Y4: stamp the marker once the onboarding dialog closes (either action) —
   // best-effort so a read-only config dir never breaks the app flow.
   server.handle(RPC_CHANNELS.memory.MARK_ONBOARDED, async (): Promise<void> => {
+    const act = rpcMemoryInsightsActResult({ source: 'native', action: 'write', nativeId: 'onboarded' })
+    if (!isClaimableLive(act)) throw new Error('memory onboarded write is not live')
     try {
       const dir = new AuditLog('global').memoryDir
       mkdirSync(dir, { recursive: true })
