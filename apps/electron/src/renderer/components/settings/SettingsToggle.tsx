@@ -55,8 +55,8 @@ export function SettingsToggle({
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         disabled && 'opacity-50',
         className
       )}
@@ -73,7 +73,7 @@ export function SettingsToggle({
         onCheckedChange={onCheckedChange}
         disabled={disabled}
         data-layout="settings-control"
-        className="ml-4 shrink-0"
+        className="shrink-0"
       />
     </div>
   )

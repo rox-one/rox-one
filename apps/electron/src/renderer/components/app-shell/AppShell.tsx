@@ -92,6 +92,7 @@ import {
 } from '@/lib/sidebar-unseen-status'
 
 import { APP_NAV_DESTINATIONS_BY_ID } from "./nav-destinations"
+import { getActiveService, getSidebarKeyboardTargets, serviceHasNavigator } from "./service-navigation"
 import {
   WorkspaceSurfaceHost,
   ACTIVITY_RAIL_WIDTH,
@@ -292,9 +293,6 @@ function AppShellContent({
   const workbenchEnabled = workbenchAvailability === 'enabled'
   const activityRailCollapsed = useAtomValue(activityRailCollapsedAtom)
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
-  const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
-    ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
-    : 0
   const [sidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(null).sidebarWidth
   })
@@ -340,6 +338,7 @@ function AppShellContent({
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
   const showStatusBar = shouldShowStatusBar(statusBarEnabled, isAutoCompact)
+  const unifiedRailOffset = isAutoCompact ? 0 : (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH)
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
@@ -490,7 +489,13 @@ function AppShellContent({
   // Pages library + open page both render full-width in the content area;
   // collapse the middle navigator because pages has no navigator list.
   const isPagesView = isPagesNavigation(navState)
-  const isTasksView = isTasksNavigation(navState)
+  const activeService = getActiveService(navState)
+  // Dedicated services already own their tree/list; keep the generic sidebar
+  // only where its filters and actions add context.
+  const hasContextSidebar = activeService !== null &&
+    ['sessions', 'sources', 'skills', 'automations', 'projects', 'pages'].includes(activeService)
+  const contextSidebarVisible = isSidebarVisible && hasContextSidebar
+  const hasServiceNavigator = serviceHasNavigator(navState)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -1050,7 +1055,7 @@ function AppShellContent({
   const { focusZone, focusNextZone, focusPreviousZone } = useFocusContext()
 
   // Register focus zones
-  const { zoneRef: sidebarRef, isFocused: sidebarFocused } = useFocusZone({ zoneId: 'sidebar' })
+  const { zoneRef: sidebarRef, isFocused: sidebarFocused, shouldMoveDOMFocus: sidebarShouldMoveDOMFocus } = useFocusZone({ zoneId: 'sidebar' })
 
   // Global keyboard shortcuts using centralized action registry
   // Actions are defined in @/actions/definitions.ts
@@ -2072,57 +2077,6 @@ function AppShellContent({
     handleNewChat()
   }, [menuNewChatTrigger, handleNewChat])
 
-  // Unified sidebar items: nav buttons only (agents system removed)
-  type SidebarItem = {
-    id: string
-    type: 'nav'
-    action?: () => void
-  }
-
-  const unifiedSidebarItems = React.useMemo((): SidebarItem[] => {
-    const result: SidebarItem[] = []
-
-    // 1. Sessions section: All Sessions (expandable) with status items, Flagged, Archived as children
-    result.push({ id: 'nav:allSessions', type: 'nav', action: handleAllSessionsClick })
-    for (const state of effectiveSessionStatuses) {
-      result.push({ id: `nav:state:${state.id}`, type: 'nav', action: () => handleSessionStatusClick(state.id) })
-    }
-    result.push({ id: 'nav:flagged', type: 'nav', action: handleFlaggedClick })
-    result.push({ id: 'nav:archived', type: 'nav', action: handleArchivedClick })
-
-    // 2. Labels section header + regular label tree for keyboard nav
-    result.push({ id: 'nav:labels', type: 'nav', action: () => handleLabelClick('__all__') })
-    // Flatten regular label tree for keyboard navigation (depth-first)
-    const flattenTree = (nodes: LabelTreeNode[]) => {
-      for (const node of nodes) {
-        if (node.label) {
-          result.push({ id: `nav:label:${node.fullId}`, type: 'nav', action: () => handleLabelClick(node.fullId) })
-        }
-        if (node.children.length > 0) flattenTree(node.children)
-      }
-    }
-    flattenTree(labelTree)
-
-    result.push({ id: 'nav:views', type: 'nav', action: handleViewsAllClick })
-    for (const view of sessionViewConfigs) {
-      result.push({ id: `nav:view:${view.id}`, type: 'nav', action: () => handleViewClick(view.id) })
-    }
-
-    // 3. Destinations (matches APP_NAV_DESTINATIONS / sidebar order)
-    result.push({ id: 'nav:projects', type: 'nav', action: handleProjectsClick })
-    result.push({ id: 'nav:pages', type: 'nav', action: handlePagesClick })
-    result.push({ id: 'nav:memory', type: 'nav', action: handleMemoryClick })
-    result.push({ id: 'nav:tasks', type: 'nav', action: handleTasksClick })
-    result.push({ id: 'nav:meetings', type: 'nav', action: handleMeetingsClick })
-    result.push({ id: 'nav:sources', type: 'nav', action: handleSourcesClick })
-    result.push({ id: 'nav:skills', type: 'nav', action: handleSkillsClick })
-    result.push({ id: 'nav:notes', type: 'nav', action: handleNotesClick })
-    result.push({ id: 'nav:automations', type: 'nav', action: handleAutomationsClick })
-    result.push({ id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() })
-
-    return result
-  }, [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSessionStatusClick, effectiveSessionStatuses, handleLabelClick, labelTree, sessionViewConfigs, handleViewClick, handleViewsAllClick, handleSourcesClick, handleSkillsClick, handleMemoryClick, handleTasksClick, handleMeetingsClick, handleNotesClick, handleProjectsClick, handlePagesClick, handleAutomationsClick, handleSettingsClick])
-
   // Toggle folder expanded state
   const handleToggleFolder = React.useCallback((path: string) => {
     setExpandedFolders(prev => {
@@ -2151,26 +2105,31 @@ function AppShellContent({
 
   // Unified sidebar keyboard navigation
   const handleSidebarKeyDown = React.useCallback((e: React.KeyboardEvent) => {
-    if (!sidebarFocused || unifiedSidebarItems.length === 0) return
+    const visibleItems = getSidebarKeyboardTargets(sidebarItemRefs.current)
+    if (!sidebarFocused || visibleItems.length === 0) return
+    const target = e.target as HTMLElement
+    if (target.closest('input, textarea, select, [contenteditable="true"]')) return
+    if ((e.key === 'Enter' || e.key === ' ') && target.closest('button, a')) return
 
-    const currentIndex = unifiedSidebarItems.findIndex(item => item.id === focusedSidebarItemId)
-    const currentItem = currentIndex >= 0 ? unifiedSidebarItems[currentIndex] : null
+    const targetId = target.closest('[data-sidebar-item-id]')?.getAttribute('data-sidebar-item-id')
+    const currentIndex = visibleItems.findIndex(item => item.id === (targetId ?? focusedSidebarItemId))
+    const currentItem = currentIndex >= 0 ? visibleItems[currentIndex] : null
 
     switch (e.key) {
       case 'ArrowDown': {
         e.preventDefault()
-        const nextIndex = currentIndex < unifiedSidebarItems.length - 1 ? currentIndex + 1 : 0
-        const nextItem = unifiedSidebarItems[nextIndex]
+        const nextIndex = currentIndex < visibleItems.length - 1 ? currentIndex + 1 : 0
+        const nextItem = visibleItems[nextIndex]
         setFocusedSidebarItemId(nextItem.id)
-        sidebarItemRefs.current.get(nextItem.id)?.focus()
+        nextItem.element.focus()
         break
       }
       case 'ArrowUp': {
         e.preventDefault()
-        const prevIndex = currentIndex > 0 ? currentIndex - 1 : unifiedSidebarItems.length - 1
-        const prevItem = unifiedSidebarItems[prevIndex]
+        const prevIndex = currentIndex > 0 ? currentIndex - 1 : visibleItems.length - 1
+        const prevItem = visibleItems[prevIndex]
         setFocusedSidebarItemId(prevItem.id)
-        sidebarItemRefs.current.get(prevItem.id)?.focus()
+        prevItem.element.focus()
         break
       }
       case 'ArrowLeft': {
@@ -2187,46 +2146,51 @@ function AppShellContent({
       case 'Enter':
       case ' ': {
         e.preventDefault()
-        if (currentItem?.type === 'nav' && currentItem.action) {
-          currentItem.action()
-        }
+        currentItem?.element.click()
         break
       }
       case 'Home': {
         e.preventDefault()
-        if (unifiedSidebarItems.length > 0) {
-          const firstItem = unifiedSidebarItems[0]
+        if (visibleItems.length > 0) {
+          const firstItem = visibleItems[0]
           setFocusedSidebarItemId(firstItem.id)
-          sidebarItemRefs.current.get(firstItem.id)?.focus()
+          firstItem.element.focus()
         }
         break
       }
       case 'End': {
         e.preventDefault()
-        if (unifiedSidebarItems.length > 0) {
-          const lastItem = unifiedSidebarItems[unifiedSidebarItems.length - 1]
+        if (visibleItems.length > 0) {
+          const lastItem = visibleItems[visibleItems.length - 1]
           setFocusedSidebarItemId(lastItem.id)
-          sidebarItemRefs.current.get(lastItem.id)?.focus()
+          lastItem.element.focus()
         }
         break
       }
     }
-  }, [sidebarFocused, unifiedSidebarItems, focusedSidebarItemId, focusZone])
+  }, [sidebarFocused, focusedSidebarItemId, focusZone])
 
   // Focus sidebar item when sidebar zone gains focus
   React.useEffect(() => {
-    if (sidebarFocused && unifiedSidebarItems.length > 0) {
-      // Set focused item if not already set
-      const itemId = focusedSidebarItemId || unifiedSidebarItems[0].id
-      if (!focusedSidebarItemId) {
+    if (!sidebarFocused || !sidebarShouldMoveDOMFocus) return
+    const visibleItems = getSidebarKeyboardTargets(sidebarItemRefs.current)
+    if (visibleItems.length > 0) {
+      const activeId = document.activeElement?.closest('[data-sidebar-item-id]')?.getAttribute('data-sidebar-item-id')
+      const activeItem = visibleItems.find(item => item.id === activeId)
+      const itemId = activeItem?.id ?? (visibleItems.some(item => item.id === focusedSidebarItemId)
+        ? focusedSidebarItemId! : visibleItems[0].id)
+      if (itemId !== focusedSidebarItemId) {
         setFocusedSidebarItemId(itemId)
       }
-      // Actually focus the DOM element
-      requestAnimationFrame(() => {
-        sidebarItemRefs.current.get(itemId)?.focus()
-      })
+      // Keep a focused disclosure button in place; only move focus into the zone.
+      if (!activeItem) {
+        const frame = requestAnimationFrame(() => {
+          getSidebarKeyboardTargets(sidebarItemRefs.current).find(item => item.id === itemId)?.element.focus()
+        })
+        return () => cancelAnimationFrame(frame)
+      }
     }
-  }, [sidebarFocused, focusedSidebarItemId, unifiedSidebarItems])
+  }, [sidebarFocused, sidebarShouldMoveDOMFocus, focusedSidebarItemId, activeService, collapsedItems, contextSidebarVisible])
 
   // Get title based on navigation state
   const listTitle = React.useMemo(() => {
@@ -2425,7 +2389,7 @@ function AppShellContent({
       >
         {/* PR-2 Workbench host: legacy children remain unchanged until both
             operator capability and explicit user preference are true. */}
-        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability}>
+        <WorkspaceSurfaceHost operatorCapability={workbenchOperatorCapability} isCompact={isAutoCompact} onOpenBrowser={() => { void handleNewBrowserWindow() }}>
           <PanelStackContainer
           sidebarSlot={
             <div
@@ -2441,7 +2405,7 @@ function AppShellContent({
               {/* Sidebar Top Section */}
               <div className="flex-1 flex flex-col min-h-0">
                 {/* New Session Button - Gmail-style, with context menu for "Open in New Window" */}
-                <div className="px-2 pb-2 shrink-0">
+                {activeService === 'sessions' && <div className="px-2 pb-2 shrink-0">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
@@ -2467,11 +2431,12 @@ function AppShellContent({
                     </TooltipTrigger>
                     <TooltipContent side="right">{newChatHotkey}</TooltipContent>
                   </Tooltip>
-                </div>
+                </div>}
                 {/* Primary Nav: Sessions → Labels → Projects → Pages | Memory…Knowledge | Automations → Settings */}
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
                 <LeftSidebar
+                  serviceId={activeService}
                   isCollapsed={false}
                   getItemProps={getSidebarItemProps}
                   focusedItemId={focusedSidebarItemId}
@@ -2832,8 +2797,8 @@ function AppShellContent({
             </div>
           </div>
           }
-          sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (isSidebarVisible ? sidebarWidth : 0)}
-          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState)) ? null : (
+          sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (contextSidebarVisible ? sidebarWidth : 0)}
+          navigatorSlot={!hasServiceNavigator ? null : (
             <div
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
@@ -3045,7 +3010,7 @@ function AppShellContent({
             )}
             </div>
           )}
-          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView || isTasksView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView || isTasksView ? 0 : sessionListWidth))}
+          navigatorWidth={!hasServiceNavigator ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}
@@ -3054,7 +3019,7 @@ function AppShellContent({
         </WorkspaceSurfaceHost>
 
         {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
-        {!effectiveSidebarAndNavigatorHidden && (
+        {!effectiveSidebarAndNavigatorHidden && contextSidebarVisible && (
         <ResizeHandle
           labelKey="shell.resize.sidebar"
           controlsId="shell-sidebar"
@@ -3067,7 +3032,7 @@ function AppShellContent({
             top: PANEL_STACK_VERTICAL_OVERFLOW,
             bottom: PANEL_STACK_VERTICAL_OVERFLOW,
             height: 'auto',
-            left: unifiedRailOffset + (isSidebarVisible
+            left: unifiedRailOffset + (contextSidebarVisible
               ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
               : -PANEL_GAP),
             transition: sidebarResize.dragging ? undefined : 'left 0.15s ease-out',
@@ -3115,7 +3080,7 @@ function AppShellContent({
         )}
 
         {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
-        {!effectiveSidebarAndNavigatorHidden && !isBoardView && !isPagesView && !isTasksView && (
+        {!effectiveSidebarAndNavigatorHidden && hasServiceNavigator && !isBoardView && (
         <ResizeHandle
           labelKey="shell.resize.navigator"
           controlsId="shell-navigator"
@@ -3130,7 +3095,7 @@ function AppShellContent({
             height: 'auto',
             left:
               unifiedRailOffset +
-              (isSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
+              (contextSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
               sessionListWidth +
               (PANEL_GAP / 2) -
               sashHitWidthPx() / 2,
@@ -3138,7 +3103,7 @@ function AppShellContent({
           }}
           onPointerDown={(event) => {
             setIsResizing('session-list')
-            const offset = isSidebarVisible ? sidebarWidth : 0
+            const offset = contextSidebarVisible ? sidebarWidth : 0
             navigatorResize.handlePointerDown(event, {
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3155,7 +3120,7 @@ function AppShellContent({
           onPointerCancel={navigatorResize.handlePointerCancel}
           onLostPointerCapture={navigatorResize.handleLostPointerCapture}
           onKeyAdjust={(delta) => {
-            const offset = isSidebarVisible ? sidebarWidth : 0
+            const offset = contextSidebarVisible ? sidebarWidth : 0
             navigatorResize.handleKeyAdjust(delta, {
               leftId: 'shell-navigator',
               rightId: 'shell-content',
@@ -3170,7 +3135,7 @@ function AppShellContent({
           onKeyCommit={navigatorResize.handleKeyCommit}
           onKeyCancel={navigatorResize.handleKeyCancel}
           onReset={() => {
-            const offset = isSidebarVisible ? sidebarWidth : 0
+            const offset = contextSidebarVisible ? sidebarWidth : 0
             navigatorResize.handleReset({
               leftId: 'shell-navigator',
               rightId: 'shell-content',

@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
 import { CHROME_DENSITY } from './chrome-density'
+import { surfaceTabKeyboardTarget, surfaceTabRovingId } from './surface-tab-navigation'
 import {
   buildSurfaceTabViews,
   knowledgeRefKey,
@@ -55,54 +56,63 @@ function tabIcon(tab: SurfaceTabView): LucideIcon {
   }
 }
 
-function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
+function SurfaceTabItem({ tab, isTabStop, onNavigate, onClose }: {
+  tab: SurfaceTabView
+  isTabStop: boolean
+  onNavigate: (panelId: string, key: string) => void
+  onClose: (panelId: string) => void
+}) {
   const { t } = useTranslation()
   const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
-  const closePanel = useSetAtom(closePanelAtom)
   const Icon = tabIcon(tab)
 
   return (
     <div
-      role="tab"
-      aria-selected={tab.focused}
-      tabIndex={0}
-      title={tab.title}
-      onClick={() => setFocusedPanelId(tab.panelId)}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault()
-          setFocusedPanelId(tab.panelId)
-        }
-      }}
-      onAuxClick={(e) => {
-        // Middle-click closes, matching browser tab conventions.
-        if (e.button === 1) {
-          e.preventDefault()
-          closePanel(tab.panelId)
+      role="presentation"
+      onAuxClick={(event) => {
+        if (event.button === 1) {
+          event.preventDefault()
+          onClose(tab.panelId)
         }
       }}
       className={cn(
-        'group chrome-label flex h-6 max-w-[200px] min-w-0 shrink-0 cursor-default items-center gap-1 rounded-[5px] px-2 transition-colors',
-        tab.focused
-          ? 'bg-background text-foreground shadow-minimal'
-          : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+        'group chrome-label flex min-h-7 max-w-[220px] min-w-0 shrink-0 items-center rounded-md transition-colors',
+        tab.focused ? 'bg-background text-foreground shadow-minimal' : 'text-muted-foreground hover:bg-foreground/5',
       )}
     >
-      <Icon className="h-3.5 w-3.5 shrink-0 opacity-70" />
-      <span className="min-w-0 flex-1 truncate">{tab.title}</span>
       <button
         type="button"
-        aria-label={t('surfaceTabs.closeTab')}
-        onClick={(e) => {
-          e.stopPropagation()
-          closePanel(tab.panelId)
+        role="tab"
+        aria-selected={tab.focused}
+        tabIndex={isTabStop ? 0 : -1}
+        data-surface-tab={tab.panelId}
+        title={tab.title}
+        onClick={() => setFocusedPanelId(tab.panelId)}
+        onKeyDown={(event) => {
+          if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+            event.preventDefault()
+            onNavigate(tab.panelId, event.key)
+          } else if (event.key === 'Delete') {
+            event.preventDefault()
+            onClose(tab.panelId)
+          }
         }}
+        className="flex min-h-7 min-w-0 flex-1 items-center gap-1.5 rounded-md px-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Icon className="size-3.5 shrink-0 opacity-70" aria-hidden />
+        <span className="min-w-0 truncate">{tab.title}</span>
+      </button>
+      <button
+        type="button"
+        tabIndex={isTabStop ? 0 : -1}
+        aria-label={`${t('surfaceTabs.closeTab')}: ${tab.title}`}
+        onClick={() => onClose(tab.panelId)}
         className={cn(
-          'flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] transition-all hover:bg-foreground/10',
-          tab.focused ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60',
+          'flex size-7 shrink-0 items-center justify-center rounded-md outline-none transition-opacity hover:bg-foreground/10 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring',
+          tab.focused ? 'opacity-70' : 'opacity-0 group-hover:opacity-70 group-focus-within:opacity-70 [@media(pointer:coarse)]:opacity-100',
         )}
       >
-        <X className="h-3 w-3" />
+        <X className="size-3" aria-hidden />
       </button>
     </div>
   )
@@ -110,6 +120,9 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
 
 export function SurfaceTabs() {
   const { t } = useTranslation()
+  const setFocusedPanelId = useSetAtom(focusedPanelIdAtom)
+  const closePanel = useSetAtom(closePanelAtom)
+  const tabListRef = useRef<HTMLDivElement>(null)
   const entries = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const focusedSessionId = useAtomValue(focusedSessionIdAtom)
@@ -202,6 +215,28 @@ export function SurfaceTabs() {
     },
   })
   const panelTabs = tabs.filter((tab) => tab.kind !== 'browser')
+  const rovingTabId = surfaceTabRovingId(panelTabs, focusedPanelId)
+  const focusTab = (panelId: string) => {
+    setFocusedPanelId(panelId)
+    requestAnimationFrame(() => {
+      const buttons = tabListRef.current?.querySelectorAll<HTMLButtonElement>('[data-surface-tab]')
+      const button = Array.from(buttons ?? []).find(element => element.dataset.surfaceTab === panelId)
+      button?.focus()
+      button?.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+    })
+  }
+  const navigateTab = (panelId: string, key: string) => {
+    const target = surfaceTabKeyboardTarget(panelTabs, panelId, key)
+    if (target) focusTab(target)
+  }
+  const closeTab = (panelId: string) => {
+    const index = panelTabs.findIndex(tab => tab.panelId === panelId)
+    const next = panelTabs[index + 1] ?? panelTabs[index - 1]
+    const wasFocused = panelId === focusedPanelId
+    closePanel(panelId)
+    if (wasFocused && next) focusTab(next.panelId)
+  }
+
   // Embedded-default desktop path: do not mount OS BrowserWindow chips in SurfaceTabs.
   // Browser lives in the inspector via createEmbedded(); os-browser-tabs helper remains
   // available for legacy callers/tests but is not product chrome here.
@@ -214,8 +249,8 @@ export function SurfaceTabs() {
       {panelTabs.length === 0 ? (
         <span className="chrome-label px-1 text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
-        <div role="tablist" className="flex shrink-0 items-center gap-1">
-          {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
+        <div ref={tabListRef} role="tablist" aria-label={t('panelWorkspace.openPanels')} className="flex shrink-0 items-center gap-1">
+          {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} isTabStop={tab.panelId === rovingTabId} onNavigate={navigateTab} onClose={closeTab} />)}
         </div>
       )}
     </div>

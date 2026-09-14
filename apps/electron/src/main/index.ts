@@ -122,7 +122,8 @@ import { handleDeepLink } from './deep-link'
 import { BrowserPaneManager } from './browser-pane-manager'
 import { OAuthFlowStore } from '@craft-agent/shared/auth'
 import { registerThumbnailScheme, registerThumbnailHandler } from './thumbnail-protocol'
-import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import log, { isDebugMode, mainLog, getLogFilePath, getMessagingGatewayLogFilePath, getAutoUpdateLogFilePath, messagingGatewayLog, autoUpdateLog } from './logger'
+import { registerDeviceDiagnosticsIpc } from './device-diagnostics-ipc'
 import { setPerfEnabled, enableDebug } from '@craft-agent/shared/utils'
 import { registerPiModelResolver } from '@craft-agent/shared/config'
 import { getPiModelsForAuthProvider, getAllPiModels } from '@craft-agent/shared/config'
@@ -527,6 +528,18 @@ app.whenReady().then(async () => {
     })
 
     // Bootstrap IPC handlers — preload uses sendSync for window-local details
+    registerDeviceDiagnosticsIpc({
+      ipcMain,
+      windowManager,
+      rendererFilePath: join(__dirname, 'renderer/index.html'),
+      devServerUrl: process.env.VITE_DEV_SERVER_URL,
+      getLogPaths: () => ({
+        main: getLogFilePath(),
+        messaging: getMessagingGatewayLogFilePath(),
+        updates: getAutoUpdateLogFilePath(),
+      }),
+    })
+
     ipcMain.on('__get-web-contents-id', (e) => {
       e.returnValue = e.sender.id
     })

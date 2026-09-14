@@ -77,7 +77,7 @@ export function SettingsSelect({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
@@ -92,7 +92,7 @@ export function SettingsSelect({
         </div>
       )}
       <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-        <SelectTrigger id={id} className="w-full bg-muted/50">
+        <SelectTrigger id={id} className="w-full">
           <SelectValue placeholder={effectivePlaceholder} />
         </SelectTrigger>
         <SelectContent>
@@ -152,8 +152,8 @@ export function SettingsSelectRow({
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         className
       )}
     >
@@ -165,9 +165,9 @@ export function SettingsSelectRow({
           <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
         )}
       </div>
-      <div data-layout="settings-control" className="ml-4 shrink-0">
+      <div data-layout="settings-control" className={settingsUI.control}>
         <Select value={value} onValueChange={onValueChange} disabled={disabled}>
-          <SelectTrigger id={id} className="w-[180px] bg-muted/50">
+          <SelectTrigger id={id} className="w-[180px]">
             <SelectValue placeholder={effectivePlaceholder} />
           </SelectTrigger>
           <SelectContent>

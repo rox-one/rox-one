@@ -7,6 +7,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { settingsUI } from '@/components/settings/SettingsUIConstants'
 
 export interface Info_SectionProps {
   /** Section title */
@@ -28,19 +29,19 @@ export function Info_Section({
   className,
 }: Info_SectionProps) {
   return (
-    <section className={cn('space-y-3 pt-2', className)}>
-      <div className="flex items-start justify-between pl-1">
-        <div className="space-y-0.5">
-          <h3 className="text-base font-semibold">
+    <section data-layout="info-section" className={cn(settingsUI.section, className)}>
+      <div className={settingsUI.sectionHeader}>
+        <div className="min-w-0 space-y-0.5">
+          <h3 className={settingsUI.sectionTitle}>
             {title}
           </h3>
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className={settingsUI.description}>{description}</p>
           )}
         </div>
         {actions}
       </div>
-      <div className="bg-background shadow-minimal rounded-[8px] overflow-hidden">
+      <div className={settingsUI.card}>
         {children}
       </div>
     </section>

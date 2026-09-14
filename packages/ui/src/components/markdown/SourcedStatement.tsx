@@ -7,9 +7,11 @@ export interface SourcedStatementProps {
   source: SourceCitationView
   children: React.ReactNode
   className?: string
+  /** A surrounding anchor owns the underline and keyboard stop. */
+  withinLink?: boolean
 }
 
-export function SourcedStatement({ source, children, className }: SourcedStatementProps) {
+export function SourcedStatement({ source, children, className, withinLink = false }: SourcedStatementProps) {
   const { t } = useTranslation()
   const dateLabel = source.publishedAt
     ? t('research.citation.published', { date: source.publishedAt })
@@ -25,9 +27,9 @@ export function SourcedStatement({ source, children, className }: SourcedStateme
       data-rox-primary={source.primary ? 'true' : 'false'}
     >
       <span
-        className="cursor-help underline decoration-dotted decoration-foreground/45 underline-offset-[3px]"
-        tabIndex={0}
-        aria-label={t('research.citation.hoverAria', { title: source.title })}
+        className={withinLink ? undefined : 'cursor-help underline decoration-dotted decoration-foreground/45 underline-offset-[3px]'}
+        tabIndex={withinLink ? undefined : 0}
+        aria-label={withinLink ? undefined : t('research.citation.hoverAria', { title: source.title })}
       >
         {children}
       </span>

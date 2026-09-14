@@ -7,6 +7,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { settingsUI } from './SettingsUIConstants'
 
 export interface SettingsSegmentedOption<T extends string = string> {
   /** Value for this option */
@@ -54,7 +55,7 @@ export function SettingsSegmentedControl<T extends string = string>({
   return (
     <div
       role="radiogroup"
-      className={cn('inline-flex gap-1', className)}
+      className={cn('inline-flex flex-wrap gap-0.5 rounded-md bg-surface-input p-0.5', className)}
     >
       {options.map((option) => {
         const isSelected = option.value === value
@@ -63,15 +64,16 @@ export function SettingsSegmentedControl<T extends string = string>({
           <button
             key={option.value}
             type="button"
+            data-slot="button"
             role="radio"
             aria-checked={isSelected}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'flex items-center gap-1.5 rounded-lg transition-all',
+              'flex items-center gap-1.5 rounded-[5px] transition-colors duration-[var(--motion-fast)]',
               size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm',
               isSelected
-                ? 'bg-background shadow-minimal'
-                : 'bg-transparent hover:bg-foreground/5'
+                ? 'bg-surface-elevated shadow-minimal'
+                : 'bg-transparent hover:bg-surface-hover'
             )}
           >
             {option.icon && (
@@ -143,12 +145,14 @@ export function SettingsSegmentedControlCard<T extends string = string>({
           <button
             key={option.value}
             type="button"
+            data-slot="button"
             role="radio"
             aria-checked={isSelected}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'flex items-center gap-2 px-3 py-2.5 rounded-xl transition-colors text-left',
-              isSelected ? 'bg-muted' : 'bg-muted/50 hover:bg-muted/70'
+              'flex items-center gap-2 px-3 py-2.5 rounded-md text-left shadow-minimal',
+              settingsUI.interactive,
+              isSelected ? 'bg-surface-selected' : 'bg-surface-input'
             )}
           >
             {/* Radio indicator */}

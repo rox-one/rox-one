@@ -62,6 +62,7 @@ import {
 } from '@/atoms/sessions'
 import { sourcesAtom } from '@/atoms/sources'
 import { skillsAtom } from '@/atoms/skills'
+import { recordSuccessfulCompletionAtom } from '@/atoms/header-status'
 import {
   showBackgroundFinishedChipAtom,
   pushBackgroundFinishedAtom,
@@ -1081,6 +1082,13 @@ export default function App() {
               completeEvent.didReceiveNewFinalMessage !== false
 
             if (isSuccessfulCompletion) {
+              store.set(recordSuccessfulCompletionAtom, {
+                session: updatedSession,
+                event: completeEvent,
+                title: getSessionTitle(updatedSession),
+                notifyInHeader: store.get(visibleSessionIdsAtom).has(sessionId),
+                now: Date.now(),
+              })
             // Get the last assistant/plan message as preview
             const lastMessage = updatedSession.messages.findLast(
               m => (m.role === 'assistant' || m.role === 'plan') && !m.isIntermediate

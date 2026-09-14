@@ -37,7 +37,13 @@ function filterPurposeKey(id: TaskFilterId): string | null {
   return null
 }
 
-export default function TasksPage() {
+export interface TasksPageProps {
+  /** Undefined keeps standalone usage local; null is the catalog route. */
+  selectedId?: string | null
+  onSelect?: (id: string | null) => void
+}
+
+export default function TasksPage(props: TasksPageProps = {}) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const { projects } = useProjects(workspace?.id)
@@ -45,7 +51,9 @@ export default function TasksPage() {
   const [filter, setFilter] = useState<TaskFilterId>('all')
   const [sort, setSort] = useState<TaskSortId>('order')
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
+  const selectedId = props.selectedId === undefined ? localSelectedId : props.selectedId
+  const selectTask = props.onSelect ?? setLocalSelectedId
   const [draft, setDraft] = useState('')
   const [linkKind, setLinkKind] = useState<TaskLinkKind>('note')
   const [linkId, setLinkId] = useState('')
@@ -86,7 +94,7 @@ export default function TasksPage() {
         projectId: projectFilter ?? undefined,
         quickEntry: true,
       })
-      setSelectedId(created.id)
+      selectTask(created.id)
     })
     setDraft('')
   }
@@ -262,7 +270,8 @@ export default function TasksPage() {
             >
               <button
                 type="button"
-                onClick={() => setSelectedId(task.id)}
+                onClick={() => selectTask(task.id)}
+                aria-current={selectedId === task.id ? 'true' : undefined}
                 className={cn(
                   'flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[13px]',
                   selectedId === task.id ? 'bg-foreground/10' : 'hover:bg-foreground/5',
@@ -284,7 +293,7 @@ export default function TasksPage() {
 
       <aside className="w-[280px] shrink-0 border-l border-border p-3 text-[13px]">
         {selected ? (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2" data-testid="task-detail" data-entity-id={selected.id}>
             <h2 className="font-medium">{selected.title}</h2>
             <div className="flex flex-wrap gap-1" role="group" aria-label={t('tasks.assignProject')}>
               <button

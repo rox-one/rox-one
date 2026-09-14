@@ -34,6 +34,9 @@ import { focusedPanelIdAtom } from '@/atoms/panel-stack'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { isKnowledgeFeatureEnabled } from '@/lib/feature-flags'
 import { cn } from '@/lib/utils'
+import { useNativeSurfaceBounds } from '@/hooks/useNativeSurfaceBounds'
+import { NativeSurfacePlaceholder } from '@/components/browser/NativeSurfacePlaceholder'
+import { releaseNativeSurface } from '@/lib/native-surface-dom'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -103,7 +106,6 @@ export default function KnowledgeSurfacePage({
 }: KnowledgeSurfacePageProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
-  const frameRef = useRef(0)
   const baseUrlRef = useRef(DEFAULT_BASE_URL)
   const surfaceModeRef = useRef<SiyuanSurfaceMode>(modeProp)
   const dockOpenedForKeyRef = useRef<string | null>(null)
@@ -112,13 +114,20 @@ export default function KnowledgeSurfacePage({
   const [removed, setRemoved] = useState(false)
   const [surfaceMode, setSurfaceMode] = useState<SiyuanSurfaceMode>(modeProp)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
-  const { activeWorkspaceId } = useAppShellContext()
+  const { activeWorkspaceId, isFocusedPanel } = useAppShellContext()
   // Evaluated once at hook scope (P1-9): when the feature is off, effects
   // early-return — no listConnections, no createEmbedded, no registry entries
   // — and the render below shows the disabled copy instead of the surface.
   const [knowledgeEnabled] = useState(() => isKnowledgeFeatureEnabled())
-  // Without a panelId (rendered outside the panel stack) assume focused.
-  const isFocused = panelId === undefined || focusedPanelId === panelId
+  // Session graph tabs inherit their owning panel's focus through context.
+  const isFocused = isFocusedPanel ?? (panelId === undefined || focusedPanelId === panelId)
+  const presentation = useNativeSurfaceBounds({
+    containerRef,
+    instanceId,
+    focused: isFocused,
+    removed: removed || Boolean(error) || !knowledgeEnabled,
+    syncBounds: (nativeId, rect) => window.electronAPI.siyuanEngine.syncBounds({ instanceId: nativeId, rect }),
+  })
 
   const ref = useMemo<SiyuanSurfaceRef>(() => ({ kind, id }), [kind, id])
   const isCompat = compat === true || isSiyuanCompatRef(ref)
@@ -275,7 +284,7 @@ export default function KnowledgeSurfacePage({
       const orphanId = createdId
       void (async () => {
         try {
-          await window.electronAPI.siyuanEngine.syncBounds({ instanceId: orphanId, rect: null })
+          await releaseNativeSurface(orphanId, (nativeId, rect) => window.electronAPI.siyuanEngine.syncBounds({ instanceId: nativeId, rect }))
         } catch {
           // Best-effort hide; instance cleanup continues regardless
         }
@@ -342,51 +351,6 @@ export default function KnowledgeSurfacePage({
     [surfaceMode, instanceId, navigateToMode],
   )
 
-  // Push current bounds (or null when hidden) to the main process
-  const syncBounds = useCallback(() => {
-    if (!instanceId) return
-    const el = containerRef.current
-    if (!el || !isFocused || removed) {
-      window.electronAPI.siyuanEngine.syncBounds({ instanceId, rect: null })
-      return
-    }
-    const rect = el.getBoundingClientRect()
-    window.electronAPI.siyuanEngine.syncBounds({
-      instanceId,
-      rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
-    })
-  }, [instanceId, isFocused, removed])
-
-  // rAF-throttled bounds sync
-  const scheduleSync = useCallback(() => {
-    if (frameRef.current) return
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = 0
-      syncBounds()
-    })
-  }, [syncBounds])
-
-  // Observe geometry changes: element resize, window resize
-  useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const observer = new ResizeObserver(scheduleSync)
-    observer.observe(el)
-    window.addEventListener('resize', scheduleSync)
-    scheduleSync()
-    return () => {
-      observer.disconnect()
-      window.removeEventListener('resize', scheduleSync)
-      if (frameRef.current) cancelAnimationFrame(frameRef.current)
-      frameRef.current = 0
-    }
-  }, [scheduleSync])
-
-  // Re-sync when focus or removal state flips (hide when unfocused, restore when focused)
-  useEffect(() => {
-    scheduleSync()
-  }, [isFocused, removed, scheduleSync])
-
   // Track instance lifecycle: show placeholder if main reports this id removed
   useEffect(() => {
     if (!instanceId) return
@@ -409,7 +373,7 @@ export default function KnowledgeSurfacePage({
       if (!instanceId) return
       void (async () => {
         try {
-          await window.electronAPI.siyuanEngine.syncBounds({ instanceId, rect: null })
+          await releaseNativeSurface(instanceId, (nativeId, rect) => window.electronAPI.siyuanEngine.syncBounds({ instanceId: nativeId, rect }))
         } catch {
           // Best-effort hide; instance cleanup continues regardless
         }
@@ -422,7 +386,11 @@ export default function KnowledgeSurfacePage({
     }
   }, [instanceId])
 
-  const fullSurface = <div ref={containerRef} className="h-full w-full bg-background" />
+  const fullSurface = (
+    <div ref={containerRef} className="relative h-full w-full bg-background">
+      <NativeSurfacePlaceholder presentation={presentation} surfaceRef={containerRef} />
+    </div>
+  )
 
   const toolbar =
     knowledgeEnabled && instanceId ? (

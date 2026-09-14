@@ -2,7 +2,7 @@
  * Sidebar profile strip — compact identity trigger.
  *
  * Opens the personal account page. Account switching stays in AccountMenu.
- * Level and XP also live on the account page. This strip shows name, plan, level, and balance.
+ * Level and XP live on the account page. This strip shows name, plan, and balance.
  */
 
 import * as React from 'react'
@@ -85,7 +85,7 @@ export function ProfileStrip({
           {displayName}
         </span>
         <span className="block truncate text-[11px] text-muted-foreground">
-          {t(`settings.account.plan.${plan}`)} · {t('profile.level', { level: data.level })} · {t('profile.balanceLabel')} {balanceLabel}
+          {t(`settings.account.plan.${plan}`)} · {t('profile.balanceLabel')} {balanceLabel}
         </span>
       </span>
     </button>

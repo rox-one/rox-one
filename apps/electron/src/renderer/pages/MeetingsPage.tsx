@@ -53,6 +53,7 @@ import {
   resolveMeetingManualApi,
   type MeetingManualApi,
 } from './meetings/manual-rpc'
+import { loadMeetingSelection, resolveMeetingSelectionApi, type MeetingSelectionApi } from './meetings/selection'
 
 export type { MeetingListItem }
 
@@ -60,9 +61,10 @@ export default function MeetingsPage(props: {
   meetings?: MeetingListItem[]
   proposals?: MeetingProposalRow[]
   selectedId?: string | null
+  onSelect?: (id: string | null) => void
   workspaceId?: string | null
   actorId?: string
-  api?: (MeetingProposalApi & Partial<MeetingOpenTargetApi> & Partial<MeetingCatalogApi> & Partial<MeetingSearchApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi>) | null
+  api?: (MeetingProposalApi & Partial<MeetingOpenTargetApi> & Partial<MeetingCatalogApi> & Partial<MeetingSearchApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi> & Partial<MeetingSelectionApi>) | null
 }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
@@ -72,15 +74,23 @@ export default function MeetingsPage(props: {
   const captureGrant = workspaceId ? buildMeetingCaptureGrant({ workspaceId, actorId }) : null
   const importGrant = workspaceId ? buildMeetingImportGrant({ workspaceId, actorId }) : null
   const proposalApi = resolveMeetingProposalApi(props.api)
-  const openTargetApi = resolveMeetingOpenTargetApi(props.api)
-  const catalogApi = resolveMeetingCatalogApi(props.api)
+  const openTargetApi = resolveMeetingOpenTargetApi(props.api?.openMeetingTarget ? props.api as MeetingOpenTargetApi : undefined)
+  const catalogApi = resolveMeetingCatalogApi(props.api?.createMeeting && props.api.listMeetings ? props.api as MeetingCatalogApi : undefined)
   const searchApi = resolveMeetingSearchApi(props.api)
-  const captureApi = resolveMeetingCaptureApi(props.api)
-  const importApi = resolveMeetingImportApi(props.api)
-  const finalizeApi = resolveMeetingFinalizeApi(props.api)
-  const manualApi = resolveMeetingManualApi(props.api)
+  const captureApi = resolveMeetingCaptureApi(props.api?.startCapture && props.api.pauseCapture && props.api.stopCapture ? props.api as MeetingCaptureApi : undefined)
+  const importApi = resolveMeetingImportApi(props.api?.importMedia ? props.api as MeetingImportApi : undefined)
+  const finalizeApi = resolveMeetingFinalizeApi(props.api?.finalizeMeeting ? props.api as MeetingFinalizeApi : undefined)
+  const manualApi = resolveMeetingManualApi(props.api?.addManualNote && props.api.correctSegment ? props.api as MeetingManualApi : undefined)
+  const selectionApi = resolveMeetingSelectionApi(props.api)
   const [meetings, setMeetings] = useState<MeetingListItem[]>(props.meetings ?? [])
-  const [selectedId, setSelectedId] = useState<string | null>(props.selectedId ?? meetings[0]?.id ?? null)
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
+  const selectedId = props.selectedId === undefined ? localSelectedId : props.selectedId
+  const selectMeeting = props.onSelect ?? setLocalSelectedId
+  const [loadedSelection, setLoadedSelection] = useState<{
+    workspaceId: string | null
+    id: string
+    meeting: MeetingListItem | null
+  } | null>(null)
   const [items, setItems] = useState<MeetingProposalRow[]>(props.proposals ?? [])
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<NativeProposalType>('create_task')
@@ -92,15 +102,41 @@ export default function MeetingsPage(props: {
   const [replacement, setReplacement] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchApplied, setSearchApplied] = useState(false)
-  const selected = useMemo(() => meetings.find((item) => item.id === selectedId) ?? null, [meetings, selectedId])
+  const listedSelection = useMemo(() => meetings.find((item) => item.id === selectedId) ?? null, [meetings, selectedId])
+  const currentLoadedSelection = loadedSelection?.workspaceId === workspaceId && loadedSelection.id === selectedId
+    ? loadedSelection : null
+  const selected = listedSelection ?? currentLoadedSelection?.meeting ?? null
+  const selectedMissing = !!selectedId && !selected && (props.meetings !== undefined || currentLoadedSelection !== null)
 
   useEffect(() => {
-    if (props.meetings !== undefined) return
+    if (props.meetings !== undefined) {
+      setMeetings(props.meetings)
+      return
+    }
+    let cancelled = false
     void listNativeMeetingsViaRpc({ api: catalogApi, workspaceId }).then((listed) => {
-      if (!listed.ok) return
+      if (cancelled || !listed.ok) return
       setMeetings(listed.meetings)
     })
+    return () => { cancelled = true }
   }, [catalogApi, props.meetings, workspaceId])
+
+  useEffect(() => {
+    if (!selectedId || listedSelection || props.meetings !== undefined) return
+    let cancelled = false
+    void loadMeetingSelection({ api: selectionApi, workspaceId, meetingId: selectedId })
+      .catch(() => null)
+      .then((meeting) => {
+        if (!cancelled) setLoadedSelection({ workspaceId, id: selectedId, meeting })
+      })
+    return () => { cancelled = true }
+  }, [selectionApi, workspaceId, selectedId, listedSelection, props.meetings])
+
+  const updateMeeting = (meeting: MeetingListItem) => {
+    setMeetings((current) => current.map((item) => item.id === meeting.id ? meeting : item))
+    setLoadedSelection((current) => current?.id === meeting.id
+      ? { ...current, meeting } : current)
+  }
 
   async function handleStart() {
     setBanner(null)
@@ -116,7 +152,7 @@ export default function MeetingsPage(props: {
       return
     }
     setMeetings((current) => [result.meeting, ...current.filter((item) => item.id !== result.meeting.id)])
-    setSelectedId(result.meeting.id)
+    selectMeeting(result.meeting.id)
   }
 
   async function handleSearch() {
@@ -132,7 +168,9 @@ export default function MeetingsPage(props: {
     }
     setSearchApplied(true)
     setMeetings(result.meetings)
-    setSelectedId((current) => result.meetings.some((item) => item.id === current) ? current : (result.meetings[0]?.id ?? null))
+    if (props.selectedId === undefined) {
+      setLocalSelectedId((current) => result.meetings.some((item) => item.id === current) ? current : null)
+    }
   }
 
   async function handleCreate() {
@@ -214,7 +252,7 @@ export default function MeetingsPage(props: {
       setBanner(result.code)
       return
     }
-    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+    updateMeeting(result.meeting)
   }
 
   async function handleImport(file: File | null) {
@@ -237,7 +275,7 @@ export default function MeetingsPage(props: {
       setBanner(result.code)
       return
     }
-    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+    updateMeeting(result.meeting)
   }
 
   async function handleFinalize() {
@@ -253,7 +291,7 @@ export default function MeetingsPage(props: {
       setBanner(result.code)
       return
     }
-    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+    updateMeeting(result.meeting)
   }
 
   async function handleManualNote() {
@@ -273,7 +311,7 @@ export default function MeetingsPage(props: {
     }
     setNoteText('')
     setNoteSeq((current) => current + 1)
-    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+    updateMeeting(result.meeting)
   }
 
   async function handleCorrectSegment() {
@@ -292,7 +330,7 @@ export default function MeetingsPage(props: {
     }
     setSegmentId('')
     setReplacement('')
-    setMeetings((current) => current.map((item) => item.id === result.meeting.id ? result.meeting : item))
+    updateMeeting(result.meeting)
   }
 
   const createForm = (
@@ -399,7 +437,7 @@ export default function MeetingsPage(props: {
     </div>
   ) : null
 
-  if (meetings.length === 0 && !searchApplied) {
+  if (meetings.length === 0 && !searchApplied && !selectedId) {
     return (
       <div data-testid="meetings-empty" className="flex h-full flex-col gap-3 p-4">
         <h1>{t('meetings.title')}</h1>
@@ -433,7 +471,7 @@ export default function MeetingsPage(props: {
         <ul>
           {meetings.map((meeting) => (
             <li key={meeting.id}>
-              <button type="button" data-testid={`meeting-row-${meeting.id}`} onClick={() => setSelectedId(meeting.id)}>
+              <button type="button" data-testid={`meeting-row-${meeting.id}`} aria-current={selectedId === meeting.id ? 'true' : undefined} onClick={() => selectMeeting(meeting.id)}>
                 {meeting.title}
               </button>
             </li>
@@ -441,7 +479,7 @@ export default function MeetingsPage(props: {
         </ul>
       </aside>
       <section className="flex-1 p-4">
-        {selected ? <MeetingDetail meeting={selected} /> : <p>{t('meetings.select')}</p>}
+        {selected ? <MeetingDetail meeting={selected} /> : <p>{t(selectedMissing ? 'meetings.meetingNotFound' : 'meetings.select')}</p>}
         {captureControls}
         <p data-testid="meeting-live-transcript" className="mt-3 text-sm">
           {t(selected?.status === 'completed' ? 'meetings.transcriptNone' : 'meetings.transcriptPending')}

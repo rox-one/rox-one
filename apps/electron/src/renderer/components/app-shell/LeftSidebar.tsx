@@ -20,6 +20,8 @@ import {
 import { ContextMenuProvider } from '@/components/ui/menu-context'
 import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
 import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
+import type { AppNavDestinationId } from './nav-destinations'
+import { getServiceContextLinks } from './service-navigation'
 
 /** Context menu configuration for sidebar items */
 export interface SidebarContextMenuConfig {
@@ -120,6 +122,8 @@ interface LeftSidebarProps {
   focusedItemId?: string | null
   /** Whether this is a nested sidebar (child of expandable item) */
   isNested?: boolean
+  /** Limit the outer sidebar to its service; nested sections keep their children. */
+  serviceId?: AppNavDestinationId | null
 }
 
 // Stagger only small trees. A 500-row section must not pay sequential delays.
@@ -182,11 +186,16 @@ const itemVariants: Variants = {
  * - Uses @dnd-kit with DragOverlay portaled to document.body (no clipping)
  * - Two-phase drop animation: overlay fades out, ghost fades in
  */
-export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested }: LeftSidebarProps) {
+export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested, serviceId }: LeftSidebarProps) {
+  const { t } = useTranslation()
+  const reduceMotion = useReducedMotion()
+  const visibleLinks = !isNested && serviceId !== undefined
+    ? getServiceContextLinks(links, serviceId)
+    : links
   // For nested sidebars, wrap in motion container for stagger effect
-  const NavWrapper = isNested ? motion.nav : 'nav'
-  const navProps = isNested ? {
-    variants: nestedContainerVariants(links.length),
+  const NavWrapper = isNested && !reduceMotion ? motion.nav : 'nav'
+  const navProps = isNested && !reduceMotion ? {
+    variants: nestedContainerVariants(visibleLinks.length),
     initial: 'hidden',
     animate: 'visible',
     exit: 'exit',
@@ -200,7 +209,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
           isNested ? "pl-5 pr-0 relative" : "px-2"
         )}
         role="navigation"
-        aria-label={isNested ? "Sub navigation" : "Main navigation"}
+        aria-label={t(isNested ? 'sidebar.subNavigation' : 'sidebar.contextNavigation')}
         {...navProps}
       >
         {/* Vertical line for nested items - 4px left of chevron center */}
@@ -210,7 +219,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
             aria-hidden="true"
           />
         )}
-        {links.map((item) => {
+        {visibleLinks.map((item) => {
           // Handle separator items
           if (isSeparatorItem(item)) {
             return (
@@ -243,7 +252,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
           )
 
           // For nested items, wrap in motion.div for stagger animation
-          return isNested ? (
+          return isNested && !reduceMotion ? (
             <motion.div key={link.id} variants={itemVariants}>
               {content}
             </motion.div>
@@ -337,7 +346,7 @@ function ExpandableSection({
   return (
     <div className="group/section">
       {navParent ? (
-        <div className="group/row flex min-w-0 items-center gap-0.5" role="none">
+        <div className="group/row flex min-w-0 items-center gap-0.5" role="none" data-sidebar-item-id={link.id}>
           <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
             <SidebarDisclosureButton
               ref={toggleRef}
@@ -355,6 +364,7 @@ function ExpandableSection({
         wrapWithContextMenu(link, navButton)
       )}
       {link.items && (
+        <div aria-hidden={!link.expanded || undefined} {...(!link.expanded ? { inert: '' } : {})}>
         <AnimatePresence initial={false}>
           {link.expanded && (
             <motion.div
@@ -371,6 +381,7 @@ function ExpandableSection({
             </motion.div>
           )}
         </AnimatePresence>
+        </div>
       )}
     </div>
   )
@@ -579,11 +590,13 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         onClick={isOverlay ? undefined : (groupDisclosure ? onGroupToggle : link.onClick)}
         title={link.tooltip}
         data-tutorial={link.dataTutorial}
+        data-sidebar-item-id={link.id}
+        aria-current={link.variant === 'default' && !groupDisclosure ? 'page' : undefined}
         aria-expanded={groupDisclosure ? !!link.expanded : undefined}
         aria-controls={groupDisclosure ? sectionId : undefined}
         aria-label={groupAriaLabel}
         className={cn(
-          "group flex w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none",
+          "group flex min-h-7 w-full items-center gap-2 rounded-[6px] text-[13px] select-none outline-none [@media(pointer:coarse)]:min-h-11",
           "focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring",
           // Compact mode: 4px less total height (py-[3px] vs py-[5px])
           link.compact ? "py-[3px]" : "py-[5px]",
@@ -603,7 +616,7 @@ const SidebarButton = React.forwardRef<HTMLButtonElement, SidebarButtonProps & R
         <span className="relative h-3.5 w-3.5 shrink-0 flex items-center justify-center">
           {renderIcon(link)}
         </span>
-        {link.title}
+        <span className="min-w-0 truncate text-left">{link.title}</span>
         {/* After-title element: type indicator icon, right-aligned before count badge, revealed on hover */}
         {link.afterTitle && (
           <span data-touch-reveal="true" className="ml-auto opacity-100">

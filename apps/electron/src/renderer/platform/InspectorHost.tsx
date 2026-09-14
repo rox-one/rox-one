@@ -282,17 +282,8 @@ export function InspectorHost() {
     }
   }, [sessionMode, navigationState.rightSidebar, setChromeCollapsed, setSection, setVisible])
 
-  useEffect(() => {
-    if (visible && !chromeCollapsed && !terminalOpen && activeSection === 'browser') return
-    void (async () => {
-      const list = await window.electronAPI.browserPane.list().catch(() => [])
-      await Promise.all(
-        list
-          .filter((item) => item.embedded)
-          .map((item) => window.electronAPI.browserPane.syncBounds(item.id, null).catch(() => undefined)),
-      )
-    })()
-  }, [visible, chromeCollapsed, terminalOpen, activeSection])
+  // InspectorBrowserPane owns its instance cleanup. Hiding the inspector must
+  // never enumerate and hide unrelated browser/SiYuan/extension grid panels.
 
   const handleSectionClick = (clicked: InspectorSectionId) => {
     if (terminalOpen) setBottomTerminalOpen(true)

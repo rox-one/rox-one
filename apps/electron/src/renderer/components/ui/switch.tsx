@@ -13,17 +13,20 @@ function Switch({
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        "peer data-[state=checked]:bg-foreground data-[state=unchecked]:bg-foreground/55 focus-visible:border-foreground/40 focus-visible:ring-foreground/20 dark:data-[state=unchecked]:bg-foreground/50 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-foreground/45 shadow-xs transition-all outline-none focus-visible:ring-1 disabled:cursor-not-allowed disabled:opacity-50",
+        "peer group relative inline-flex h-[28px] w-[36px] shrink-0 items-center justify-center rounded-full bg-transparent outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:cursor-not-allowed disabled:opacity-50",
         className
       )}
       {...props}
     >
-      <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className={cn(
-          "bg-background dark:data-[state=unchecked]:bg-foreground dark:data-[state=checked]:bg-background pointer-events-none block size-4 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0"
-        )}
-      />
+      <span
+        aria-hidden="true"
+        className="pointer-events-none flex h-[18px] w-[32px] items-center rounded-full bg-foreground/30 p-[2px] transition-colors duration-[var(--motion-fast)] group-data-[state=checked]:bg-accent"
+      >
+        <SwitchPrimitive.Thumb
+          data-slot="switch-thumb"
+          className="pointer-events-none block size-[14px] shrink-0 rounded-full bg-surface-document shadow-sm transition-transform duration-[var(--motion-fast)] data-[state=checked]:translate-x-[14px] data-[state=unchecked]:translate-x-0"
+        />
+      </span>
     </SwitchPrimitive.Root>
   )
 }

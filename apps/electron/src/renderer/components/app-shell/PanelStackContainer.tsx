@@ -1,49 +1,31 @@
 /**
- * PanelStackContainer
+ * Persistent workspace for sidebar, navigator and content panels.
  *
- * Horizontal layout container for ALL panels:
- * Sidebar → Navigator → Content Panel(s) with resize sashes.
- *
- * Content panels use CSS flex-grow with their proportions as weights:
- * - Each panel gets `flex: <proportion> 1 0px` with `min-width: PANEL_MIN_WIDTH`
- * - Flex distributes available space proportionally — panels fill the viewport
- * - When panels hit min-width, overflow-x: auto kicks in naturally
- *
- * Sidebar and Navigator are NOT part of the proportional layout —
- * they have their own fixed/user-resizable widths managed by AppShell.
- * They just reduce the available width for content panels and scroll with everything else.
- *
- * The right sidebar stays OUTSIDE this container.
- *
- * Compact mode (mobile / narrow window):
- * The flex layout is replaced with an absolute-positioned, transform-animated
- * stack — navigator and the focused content panel both stay mounted and slide
- * in/out via CompactPanelTransition. This produces an iOS UINavigationController
- * feel rather than a CSS reflow.
+ * Content slots are one flat, keyed list in every arrangement. Grid, focus and
+ * compact navigation only change placement/visibility; they never reparent a
+ * panel, so its draft, scroll position and embedded surface survive.
  */
-
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo } from 'react'
 import { useAtomValue } from 'jotai'
-import { motion } from 'motion/react'
-import { cn } from '@/lib/utils'
+import { motion, useReducedMotion } from 'motion/react'
 import { panelStackAtom, focusedPanelIdAtom, focusedPanelRouteAtom } from '@/atoms/panel-stack'
 import { parseRouteToNavigationState } from '../../../shared/route-parser'
 import { isDetailNavState } from '@/lib/nav-helpers'
+import { compactPanelShowsContent, panelGridKey, panelGridShape, resolvePanelGridTracks } from '@/lib/panel-workspace-layout'
+import { usePanelWorkspaceLayout } from '@/hooks/usePanelWorkspaceLayout'
 import { PanelSlot } from './PanelSlot'
-import { PanelResizeSash } from './PanelResizeSash'
-import { CompactPanelTransition } from './CompactPanelTransition'
+import { PanelGridResizeSash } from './PanelGridResizeSash'
 import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
+  PANEL_GRID_MIN_HEIGHT,
+  PANEL_GRID_MIN_WIDTH,
   PANEL_STACK_VERTICAL_OVERFLOW,
   RADIUS_EDGE,
   RADIUS_INNER,
 } from './panel-constants'
 
-/** Spring transition matching AppShell's sidebar/navigator animation */
-const PANEL_SPRING = { type: 'spring' as const, stiffness: 600, damping: 49 }
-
-/** Visual breathing room between the fixed compact TopBar and the first panel. */
+const PANEL_TRANSITION = { type: 'tween' as const, duration: 0.18, ease: [0.2, 0.8, 0.2, 1] as [number, number, number, number] }
 const COMPACT_PANEL_TOP_GAP = 8
 
 interface PanelStackContainerProps {
@@ -53,7 +35,6 @@ interface PanelStackContainerProps {
   navigatorWidth: number
   isSidebarAndNavigatorHidden: boolean
   isRightSidebarVisible?: boolean
-  /** Compact mode: single-panel, list/content toggle (mobile or narrow window) */
   isCompact?: boolean
   isResizing?: boolean
 }
@@ -68,141 +49,66 @@ export function PanelStackContainer({
   isCompact = false,
   isResizing,
 }: PanelStackContainerProps) {
-  const panelStack = useAtomValue(panelStackAtom)
+  const panels = useAtomValue(panelStackAtom)
   const focusedPanelId = useAtomValue(focusedPanelIdAtom)
   const focusedRoute = useAtomValue(focusedPanelRouteAtom)
-
-  const contentPanels = panelStack
-
-  // Compact mode: drill-in is "detail focused", not just "session selected".
-  // For sessions: a session is selected. For settings: Overview and every
-  // subpage are detail surfaces so compact shows Overview on bare settings.
-  const focusedNavState = focusedRoute ? parseRouteToNavigationState(focusedRoute) : null
-  const isDetailFocused = isDetailNavState(focusedNavState)
-  const hasSelectedContent = isCompact && isDetailFocused
-
-  const visiblePanels = isCompact
-    ? contentPanels.filter(e => e.id === focusedPanelId).slice(0, 1)
-    : contentPanels
-
+  const { mode, preferences, setTracks } = usePanelWorkspaceLayout()
+  const reduceMotion = useReducedMotion()
   const scrollRef = useRef<HTMLDivElement>(null)
-  const prevCountRef = useRef(contentPanels.length)
-
-  const hasSidebar = sidebarWidth > 0
-  // Desktop: navigator is shown when AppShell asks for it. Compact: navigator
-  // is always mounted (transform-hidden when detail-focused) so the slide can
-  // animate both slots in lockstep.
-  const hasNavigator = isCompact ? navigatorWidth > 0 : navigatorWidth > 0
-  const isMultiPanel = visiblePanels.length > 1
+  const focusedId = panels.some((entry) => entry.id === focusedPanelId) ? focusedPanelId : panels[0]?.id
+  const singlePanel = isCompact || mode === 'focus' || panels.length <= 1
+  const shape = useMemo(() => panelGridShape(panels.length, singlePanel ? 'focus' : mode), [panels.length, singlePanel, mode])
+  const tracks = useMemo(() => resolvePanelGridTracks(preferences, shape, panels.map((entry) => entry.proportion)), [preferences, shape, panels])
+  const gridKey = panelGridKey(shape)
+  const panelIds = useMemo(() => panels.map((entry) => entry.id), [panels])
+  const panelIdentity = `${preferences.workspaceId}:${panelIds.join(':')}`
+  const hasSidebar = !isCompact && sidebarWidth > 0
+  const hasNavigator = navigatorWidth > 0
   const isLeftEdge = !hasSidebar && !hasNavigator
+  const focusedNavState = focusedRoute ? parseRouteToNavigationState(focusedRoute) : null
+  const hasSelectedContent = isCompact && compactPanelShowsContent(panels.length, hasNavigator, isDetailNavState(focusedNavState))
+  const transition = isResizing || reduceMotion ? { duration: 0 } : PANEL_TRANSITION
+  const gridMinWidth = singlePanel ? 0 : shape.columns * PANEL_GRID_MIN_WIDTH + (shape.columns - 1) * PANEL_GAP
+  const gridMinHeight = shape.rows <= 1 ? 0 : shape.rows * PANEL_GRID_MIN_HEIGHT + (shape.rows - 1) * PANEL_GAP
 
-  // Auto-scroll to newly pushed content panel (desktop multi-panel only).
-  // Compact mode is single-panel so there's nothing to scroll into view.
+  // Focus via tabs, shortcuts and opening a panel all reveal the actual cell,
+  // including the lower rows of a workspace that is smaller than its contents.
   useEffect(() => {
-    if (contentPanels.length > prevCountRef.current && scrollRef.current && !isCompact) {
-      requestAnimationFrame(() => {
-        scrollRef.current?.scrollTo({
-          left: scrollRef.current.scrollWidth,
-          behavior: 'smooth',
-        })
-      })
-    }
-    prevCountRef.current = contentPanels.length
-  }, [contentPanels.length, isCompact])
+    if (singlePanel || !focusedId) return
+    const frame = requestAnimationFrame(() => {
+      const panel = document.getElementById(focusedId)
+      if (panel && scrollRef.current?.contains(panel)) {
+        panel.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' })
+      }
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [focusedId, panels.length, singlePanel, mode, reduceMotion])
 
-  const transition = (isResizing || isCompact) ? { duration: 0 } : PANEL_SPRING
-
-  // === COMPACT BRANCH ===
-  // Single-panel layout with iOS-style slide between navigator and detail.
-  // Both stay in the DOM; CompactPanelTransition transforms whichever should be
-  // off-screen. Sidebar is hidden by AppShell in compact mode (sidebarWidth = 0).
-  if (isCompact) {
-    const focusedEntry = visiblePanels[0]
-    return (
-      <div
-        ref={scrollRef}
-        data-mobile-menu-root="true"
-        data-shell-density="compact"
-        className="flex-1 min-w-0 relative panel-scroll @container/shell"
-        style={{
-          paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
-          marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
-          marginBottom: -6,
-          paddingBottom: 6,
-          '--compact-panel-stack-top': `${PANEL_STACK_VERTICAL_OVERFLOW + COMPACT_PANEL_TOP_GAP}px`,
-        } as React.CSSProperties}
-      >
-        {/* Navigator slot — full width, slides left to -30% when detail focused. */}
-        {hasNavigator && (
-          <CompactPanelTransition role="navigator" isDetailActive={hasSelectedContent}>
-            <div
-              data-panel-role="navigator"
-              className={cn(
-                'h-full w-full overflow-hidden relative',
-                'bg-background shadow-middle rox-panel',
-              )}
-              style={{
-                // Compact mode runs flush to the viewport floor — no rounded bottom.
-                borderTopLeftRadius: RADIUS_INNER,
-                borderBottomLeftRadius: 0,
-                borderTopRightRadius: RADIUS_INNER,
-                borderBottomRightRadius: 0,
-              }}
-            >
-              {navigatorSlot}
-            </div>
-          </CompactPanelTransition>
-        )}
-
-        {/* Content slot — full width, slides in from the right when detail focused. */}
-        {focusedEntry && (
-          <CompactPanelTransition role="detail" isDetailActive={hasSelectedContent}>
-            <div className="h-full w-full flex">
-              <PanelSlot
-                key={focusedEntry.id}
-                entry={focusedEntry}
-                isOnly={true}
-                isFocusedPanel={true}
-                isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
-                isAtLeftEdge={isLeftEdge}
-                isAtRightEdge={!isRightSidebarVisible}
-                proportion={focusedEntry.proportion}
-                isCompact={true}
-              />
-            </div>
-          </CompactPanelTransition>
-        )}
-      </div>
-    )
-  }
-
-  // === DESKTOP BRANCH ===
-  // Same flex-row layout as before; behavior is unchanged.
   return (
     <div
       ref={scrollRef}
       data-mobile-menu-root="true"
       data-shell-density={isCompact ? 'compact' : 'regular'}
-      className="flex-1 min-w-0 flex relative z-panel panel-scroll @container/shell"
+      data-panel-layout={isCompact ? 'compact' : mode}
+      className="flex-1 min-h-0 min-w-0 flex relative z-panel panel-scroll @container/shell"
       style={{
-        overflowX: 'auto',
-        overflowY: 'hidden',
+        overflowX: isCompact ? 'hidden' : 'auto',
+        overflowY: isCompact ? 'hidden' : 'auto',
         paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
         marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
         marginBottom: -6,
         paddingBottom: 6,
-        paddingRight: 8,
-        marginRight: -8,
+        paddingRight: isCompact ? 0 : 8,
+        marginRight: isCompact ? 0 : -8,
       }}
     >
       <motion.div
-        className="flex h-full"
+        className="flex h-full relative"
         initial={false}
-        animate={{ paddingLeft: !hasSidebar ? PANEL_EDGE_INSET : 0 }}
+        animate={{ paddingLeft: !hasSidebar && !isCompact ? PANEL_EDGE_INSET : 0 }}
         transition={transition}
-        style={{ gap: PANEL_GAP, flexGrow: 1, minWidth: 0 }}
+        style={{ gap: PANEL_GAP, flexGrow: 1, minWidth: 0, minHeight: gridMinHeight }}
       >
-        {/* === SIDEBAR SLOT === */}
         <motion.div
           data-panel-role="sidebar"
           initial={false}
@@ -212,64 +118,103 @@ export function PanelStackContainer({
             opacity: hasSidebar ? 1 : 0,
           }}
           transition={transition}
+          aria-hidden={!hasSidebar || undefined}
+          {...(!hasSidebar ? { inert: '' } : {})}
           className="h-full relative shrink-0"
-          style={{ overflowX: 'clip', overflowY: 'visible' }}
+          style={{ overflowX: 'clip', overflowY: 'visible', display: isCompact ? 'none' : undefined }}
         >
-          <div className="h-full" style={{ width: sidebarWidth }}>
-            {sidebarSlot}
-          </div>
+          <div className="h-full" style={{ width: sidebarWidth }}>{sidebarSlot}</div>
         </motion.div>
 
-        {/* === NAVIGATOR SLOT === */}
         <motion.div
           data-panel-role="navigator"
           initial={false}
           animate={{
-            width: hasNavigator ? navigatorWidth : 0,
-            marginRight: hasNavigator ? 0 : -PANEL_GAP,
+            width: isCompact ? '100%' : hasNavigator ? navigatorWidth : 0,
+            marginRight: isCompact || hasNavigator ? 0 : -PANEL_GAP,
             opacity: hasNavigator ? 1 : 0,
+            x: isCompact && hasSelectedContent ? '-30%' : '0%',
           }}
           transition={transition}
-          className={cn(
-            'h-full overflow-hidden relative shrink-0 z-[2]',
-            'bg-background shadow-middle rox-panel',
-          )}
+          aria-hidden={!hasNavigator || (isCompact && hasSelectedContent) || undefined}
+          {...(!hasNavigator || (isCompact && hasSelectedContent) ? { inert: '' } : {})}
+          className="overflow-hidden shrink-0 z-[2] bg-background shadow-middle rox-panel"
           style={{
+            position: isCompact ? 'absolute' : 'relative',
+            height: isCompact ? undefined : '100%',
+            top: isCompact ? COMPACT_PANEL_TOP_GAP : undefined,
+            bottom: isCompact ? 0 : undefined,
+            left: isCompact ? 0 : undefined,
+            pointerEvents: !hasNavigator || (isCompact && hasSelectedContent) ? 'none' : 'auto',
             borderTopLeftRadius: RADIUS_INNER,
-            borderBottomLeftRadius: !hasSidebar ? RADIUS_EDGE : RADIUS_INNER,
+            borderBottomLeftRadius: isCompact ? 0 : !hasSidebar ? RADIUS_EDGE : RADIUS_INNER,
             borderTopRightRadius: RADIUS_INNER,
-            borderBottomRightRadius: RADIUS_INNER,
+            borderBottomRightRadius: isCompact ? 0 : RADIUS_INNER,
           }}
         >
-          <div className="h-full" style={{ width: navigatorWidth }}>
-            {navigatorSlot}
-          </div>
+          <div className="h-full" style={{ width: isCompact ? '100%' : navigatorWidth }}>{navigatorSlot}</div>
         </motion.div>
 
-        {/* === CONTENT PANELS WITH SASHES === */}
-        {visiblePanels.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center" />
-        ) : (
-          visiblePanels.map((entry, index) => (
-            <PanelSlot
-              key={entry.id}
-              entry={entry}
-              isOnly={visiblePanels.length === 1}
-              isFocusedPanel={isMultiPanel ? entry.id === focusedPanelId : true}
-              isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
-              isAtLeftEdge={index === 0 && isLeftEdge}
-              isAtRightEdge={index === visiblePanels.length - 1 && !isRightSidebarVisible}
-              proportion={entry.proportion}
-              isCompact={false}
-              sash={index > 0 ? (
-                <PanelResizeSash
-                  leftIndex={index - 1}
-                  rightIndex={index}
-                />
-              ) : undefined}
-            />
-          ))
-        )}
+        <motion.div
+          data-panel-grid={gridKey}
+          data-panel-role="workspace"
+          initial={false}
+          animate={{ x: isCompact && !hasSelectedContent ? '100%' : '0%' }}
+          transition={transition}
+          aria-hidden={(isCompact && !hasSelectedContent) || undefined}
+          {...(isCompact && !hasSelectedContent ? { inert: '' } : {})}
+          className="grid flex-1 min-h-0 isolate"
+          style={{
+            position: isCompact ? 'absolute' : 'relative',
+            width: isCompact ? '100%' : undefined,
+            height: isCompact ? undefined : '100%',
+            top: isCompact ? COMPACT_PANEL_TOP_GAP : undefined,
+            bottom: isCompact ? 0 : undefined,
+            left: isCompact ? 0 : undefined,
+            zIndex: isCompact ? 10 : undefined,
+            minWidth: gridMinWidth,
+            minHeight: gridMinHeight,
+            gridTemplateColumns: singlePanel ? 'minmax(0, 1fr)' : tracks.columns.map((weight) => `minmax(${PANEL_GRID_MIN_WIDTH}px, ${weight}fr)`).join(' '),
+            gridTemplateRows: shape.rows === 1 ? 'minmax(0, 1fr)' : tracks.rows.map((weight) => `minmax(${PANEL_GRID_MIN_HEIGHT}px, ${weight}fr)`).join(' '),
+            gap: PANEL_GAP,
+            pointerEvents: isCompact && !hasSelectedContent ? 'none' : 'auto',
+          }}
+        >
+          {panels.map((entry, index) => {
+            const isFocused = entry.id === focusedId
+            const isHidden = singlePanel && !isFocused
+            const column = singlePanel ? 0 : index % shape.columns
+            return (
+              <PanelSlot
+                key={entry.id}
+                entry={entry}
+                isOnly={singlePanel}
+                isFocusedPanel={isFocused}
+                isHidden={isHidden}
+                isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
+                isAtLeftEdge={column === 0 && isLeftEdge}
+                isAtRightEdge={(singlePanel || column === shape.columns - 1) && !isRightSidebarVisible}
+                proportion={entry.proportion}
+                isCompact={isCompact}
+                layoutStyle={{
+                  gridColumn: column + 1,
+                  gridRow: singlePanel ? 1 : Math.floor(index / shape.columns) + 1,
+                  minWidth: 0,
+                  minHeight: 0,
+                  width: '100%',
+                  position: isHidden ? 'absolute' : 'relative',
+                  inset: isHidden ? 0 : undefined,
+                }}
+              />
+            )
+          })}
+          {!singlePanel && Array.from({ length: shape.columns - 1 }, (_, index) => (
+            <PanelGridResizeSash key={`${gridKey}:x:${index}:${panelIdentity}`} axis="x" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
+          ))}
+          {!singlePanel && Array.from({ length: shape.rows - 1 }, (_, index) => (
+            <PanelGridResizeSash key={`${gridKey}:y:${index}:${panelIdentity}`} axis="y" index={index} shape={shape} tracks={tracks} panelIds={panelIds} onTracksChange={setTracks} />
+          ))}
+        </motion.div>
       </motion.div>
     </div>
   )

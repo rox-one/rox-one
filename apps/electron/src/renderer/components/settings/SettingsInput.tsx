@@ -78,7 +78,7 @@ export function SettingsInput({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
@@ -94,7 +94,8 @@ export function SettingsInput({
       )}
       <div className="flex gap-2">
         <div className={cn(
-          'relative flex-1 rounded-md shadow-minimal has-[:focus-visible]:bg-background',
+          settingsUI.fieldFrame,
+          'flex-1',
           error && 'ring-1 ring-destructive'
         )}>
           <Input
@@ -107,15 +108,15 @@ export function SettingsInput({
             onBlur={onBlur}
             onKeyDown={onKeyDown}
             className={cn(
-              'bg-muted/50 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
-              isPassword && 'pr-10'
+              'shadow-none',
+              isPassword && 'pr-12'
             )}
           />
           {isPassword && (
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              className="rox-control absolute right-1 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
               tabIndex={-1}
             >
               {showPassword ? (
@@ -179,8 +180,8 @@ export function SettingsInputRow({
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         className
       )}
     >
@@ -194,7 +195,8 @@ export function SettingsInputRow({
         {error && <p className={cn('text-sm text-destructive', settingsUI.labelDescriptionGap)}>{error}</p>}
       </div>
       <div data-layout="settings-control" className={cn(
-        'ml-4 shrink-0 rounded-md shadow-minimal has-[:focus-visible]:bg-background',
+        settingsUI.fieldFrame,
+        'shrink-0',
         error && 'ring-1 ring-destructive'
       )}>
         <Input
@@ -204,7 +206,7 @@ export function SettingsInputRow({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-[200px] bg-muted/50 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent"
+          className="w-[200px] shadow-none"
         />
       </div>
     </div>
@@ -260,7 +262,7 @@ export function SettingsSecretInput({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
@@ -275,7 +277,7 @@ export function SettingsSecretInput({
         </div>
       )}
       <div className={cn(
-        'relative rounded-md shadow-minimal bg-muted/50 has-[:focus-visible]:bg-background',
+        settingsUI.fieldFrame,
         error && 'ring-1 ring-destructive'
       )}>
         <Input
@@ -286,12 +288,12 @@ export function SettingsSecretInput({
           placeholder={resolvedPlaceholder}
           disabled={disabled}
           onBlur={onBlur}
-          className="pr-10 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+          className="pr-12 shadow-none"
         />
         <button
           type="button"
           onClick={() => setShowValue(!showValue)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+          className="rox-control absolute right-1 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary"
           tabIndex={-1}
         >
           {showValue ? (

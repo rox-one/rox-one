@@ -6,7 +6,7 @@
  */
 
 import * as React from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
 
@@ -67,13 +67,13 @@ export function SettingsRadioGroup<T extends string = string>({
       <div
         role="radiogroup"
         className={cn(
-          'rounded-xl bg-background shadow-minimal overflow-hidden',
+          settingsUI.card,
           className
         )}
       >
         {childArray.map((child, index) => (
           <React.Fragment key={index}>
-            {index > 0 && <div className="h-px bg-border/50 mx-4" />}
+            {index > 0 && <div className="h-px bg-border-subtle mx-[var(--settings-row-x)]" />}
             {child}
           </React.Fragment>
         ))}
@@ -136,6 +136,7 @@ export function SettingsRadioCard({
   inCard,
 }: SettingsRadioCardProps) {
   const context = useRadioGroupContext()
+  const reduceMotion = useReducedMotion()
   // Support both context-based and standalone usage
   const isSelected = context ? context.value === value : (selected ?? false)
   const handleClick = context ? () => context.onValueChange(value) : onClick
@@ -148,8 +149,8 @@ export function SettingsRadioCard({
     <div
       className={cn(
         'overflow-hidden transition-colors',
-        needsCardStyling && 'rounded-xl shadow-minimal bg-background',
-        !disabled && 'hover:bg-foreground-3',
+        needsCardStyling && settingsUI.card,
+        !disabled && settingsUI.interactive,
         disabled && 'opacity-50 cursor-not-allowed',
         className
       )}
@@ -162,7 +163,8 @@ export function SettingsRadioCard({
         disabled={disabled}
         onClick={() => !disabled && handleClick?.()}
         className={cn(
-          'w-full px-4 py-3.5 text-left flex items-start gap-3',
+          settingsUI.rowPadding,
+          'min-h-[44px] w-full text-left flex items-start gap-3',
           !disabled && 'cursor-pointer'
         )}
       >
@@ -205,10 +207,10 @@ export function SettingsRadioCard({
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 40 }}
+            transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-4 pt-0">
+            <div className="px-[var(--settings-row-x)] pb-[var(--settings-row-y)] pt-0">
               <div className="pl-[30px]">{expandedContent}</div>
             </div>
           </motion.div>
@@ -264,8 +266,9 @@ export function SettingsRadioOption({
       disabled={disabled}
       onClick={() => !disabled && onValueChange(value)}
       className={cn(
-        'w-full px-4 py-3 text-left flex items-center gap-3',
-        'hover:bg-muted/50 transition-colors',
+        settingsUI.rowPadding,
+        'min-h-[44px] w-full text-left flex items-center gap-3',
+        settingsUI.interactive,
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'cursor-pointer',
         className

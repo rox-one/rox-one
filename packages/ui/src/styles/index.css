@@ -1,25 +1,22 @@
 /**
  * @craft-agent/ui - Shared Tailwind CSS v4 theme
  *
- * This file provides the base theme configuration for all Craft Agent UIs.
- * Import this in your app's main CSS file:
+ * This file provides the shared theme configuration for all Craft Agent UIs.
+ * The consuming app owns one Tailwind entry and its source declarations:
  *
+ *   @import "tailwindcss" source(none);
+ *   @plugin "@tailwindcss/typography";
  *   @import "@craft-agent/ui/styles";
- *
- * The consuming app can then add its own source directive:
- *
  *   @source "../**\/*.{tsx,ts,jsx,js}";
  *
- * Compact console token system:
+ * Golden Gate token system:
  * - surfaces: canvas, elevated, rail, input, popover
  * - hierarchy: subtle and strong borders; primary, secondary, and muted text
- * - interaction: a blue focus ring and semantic status colors
+ * - interaction: a restrained warm accent and semantic status colors
  *
  * The legacy background/foreground aliases remain available for existing
  * Tailwind utilities and shared components.
-
-@import "tailwindcss";
-@plugin "@tailwindcss/typography";
+ */
 
 /* =============================================================================
    SEMANTIC TOKENS
@@ -27,36 +24,43 @@
 
 :root {
   /* Core color roles */
-  --background: oklch(0.985 0.004 255);
-  --foreground: oklch(0.225 0.014 255);
-  --foreground-rgb: 35, 41, 50;
-  --accent: oklch(0.58 0.16 250);
-  --accent-rgb: 29, 103, 184;
-  --info: oklch(0.64 0.16 65);
-  --info-rgb: 184, 102, 29;
-  --success: oklch(0.52 0.15 145);
-  --success-rgb: 37, 126, 72;
-  --destructive: oklch(0.57 0.19 28);
-  --destructive-rgb: 184, 55, 48;
+  --background: #f7f7f5;
+  --foreground: #262624;
+  --foreground-rgb: 38, 38, 36;
+  --accent: #a65c3a;
+  --accent-rgb: 166, 92, 58;
+  --info: #97681e;
+  --info-rgb: 151, 104, 30;
+  --success: #347a51;
+  --success-rgb: 52, 122, 81;
+  --destructive: #bc4844;
+  --destructive-rgb: 188, 72, 68;
 
   /* Surfaces */
   --canvas: var(--background);
-  --paper: color-mix(in oklch, var(--foreground) 2%, var(--background));
+  --paper: color-mix(in oklch, white 48%, var(--background));
   --navigator: color-mix(in oklch, var(--foreground) 4%, var(--background));
-  --input-surface: color-mix(in oklch, var(--foreground) 3%, var(--background));
+  --input-surface: color-mix(in oklch, var(--foreground) 2%, var(--background));
   --popover-solid: var(--paper);
   --surface-canvas: var(--canvas);
   --surface-elevated: var(--paper);
   --surface-rail: var(--navigator);
   --surface-input: var(--input-surface);
   --surface-popover: var(--popover-solid);
+  --surface-document: oklch(from var(--background) l c h);
 
   /* Borders, text, focus, and status */
   --border-subtle: color-mix(in oklch, var(--foreground) 12%, var(--canvas));
-  --border-strong: color-mix(in oklch, var(--foreground) 22%, var(--canvas));
+  --border-strong: color-mix(in oklch, var(--foreground) 24%, var(--canvas));
   --text-primary: var(--foreground);
-  --text-secondary: color-mix(in oklch, var(--foreground) 68%, var(--canvas));
-  --text-muted: color-mix(in oklch, var(--foreground) 48%, var(--canvas));
+  --text-secondary: color-mix(in oklch, var(--foreground) 74%, var(--canvas));
+  --text-muted: color-mix(in oklch, var(--foreground) 64%, var(--canvas));
+  --accent-text: color-mix(in oklch, var(--accent) 88%, var(--foreground));
+  --accent-foreground: var(--canvas);
+  --surface-hover: color-mix(in oklch, var(--foreground) 5%, var(--surface-elevated));
+  --surface-pressed: color-mix(in oklch, var(--foreground) 8%, var(--surface-elevated));
+  --surface-selected: color-mix(in oklch, var(--accent) 11%, var(--surface-elevated));
+  --selection: color-mix(in oklch, var(--accent) 22%, var(--canvas));
   --focus: var(--accent);
   --focus-ring: var(--focus);
   --status-neutral: var(--text-secondary);
@@ -88,12 +92,15 @@
   --user-message-bubble: color-mix(in oklch, var(--foreground) 3%, var(--canvas));
   --user-message-bubble-dimmed: color-mix(in oklch, var(--foreground) 2%, var(--canvas));
 
-  /* Compact console elevation: borders, not diffuse shadows */
+  /* Borders anchor content; finite shadows lift transient controls. */
   --shadow-border-opacity: 0.24;
   --shadow-blur-opacity: 0;
   --shadow-minimal: inset 0 0 0 1px var(--border-subtle);
   --shadow-minimal-flat: var(--shadow-minimal);
-  --shadow-modal-small: var(--shadow-minimal);
+  --shadow-control: inset 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-panel: inset 0 0 0 1px var(--border-subtle), 0 1px 3px rgb(0 0 0 / 0.025);
+  --shadow-popover: inset 0 0 0 1px var(--border-subtle), 0 4px 12px rgb(0 0 0 / 0.08), 0 16px 36px rgb(0 0 0 / 0.06);
+  --shadow-modal-small: var(--shadow-popover);
 
   /* Shadcn compatibility */
   --secondary: var(--surface-elevated);
@@ -108,7 +115,7 @@
   --input: var(--border-strong);
   --ring: var(--focus-ring);
   --ring-width: 2px;
-  --ring-offset: 4px;
+  --ring-offset: 2px;
   --md-bullets: var(--text-muted);
   --md-counters: var(--text-muted);
 
@@ -121,37 +128,60 @@
 
   /* Layout scale */
   --font-size-base: 15px;
-  --radius: 0.25rem;
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.5rem;
+  --radius: 8px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
   --spacing: 0.25rem;
   --tracking-normal: 0em;
 
-  /* Workbench chrome density (design-compact) */
+  /* Mouse density is compact; coarse pointers get explicit hit-target floors. */
+  --control-hit-min: 28px;
+  --control-height: 32px;
+  --motion-fast: 120ms;
+  --motion-normal: 180ms;
+  --motion-slow: 220ms;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --text-body-leading: 1.65;
+  --text-heading-tracking: -0.015em;
+  --text-code-size: 13px;
+  --settings-row-x: 14px;
+  --settings-row-y: 10px;
+  --settings-section-gap: 8px;
+  --page-content-x: 20px;
+  --page-content-y: 20px;
+  --page-content-max: 960px;
+  --page-section-gap: 20px;
+  --menu-font-size: 13px;
+  --dialog-padding: 20px;
+  --dialog-backdrop: rgb(0 0 0 / 0.32);
+
+  /* Workbench chrome density */
   --chrome-topbar-height: 40px;
   --chrome-rail-width: 44px;
-  --chrome-control: 24px;
-  --chrome-control-lg: 26px;
+  --chrome-control: 28px;
+  --chrome-control-lg: 32px;
   --chrome-tab-strip-height: 34px;
   --chrome-status-height: 24px;
   --chrome-panel-header-height: 32px;
   --chrome-gap: 4px;
   --chrome-font-size: 12px;
   --chrome-font-size-sm: 11px;
-  --chrome-tracking: 0.01em;
-  --chrome-glass-blur: 14px;
-  --chrome-glass-bg: color-mix(in oklch, var(--surface-elevated) 86%, transparent);
+  --chrome-tracking: 0em;
+  --chrome-glass-blur: 12px;
+  --chrome-glass-bg: color-mix(in oklch, var(--surface-elevated) 90%, transparent);
   --chrome-glass-border: color-mix(in oklch, var(--border-subtle) 70%, transparent);
 
   /* Rox graphite language (issue 32) — ink / graphite / mint, 6/8px radii */
-  --ink: oklch(0.22 0.014 255);
-  --graphite: oklch(0.46 0.012 255);
-  --rox-mint: oklch(0.72 0.08 165);
+  --ink: var(--text-primary);
+  --graphite: var(--text-secondary);
+  --rox-mint: var(--success);
   --rox-radius-sm: 6px;
   --rox-radius-md: 8px;
   --rox-gutter: 8px;
-  --rox-elev-panel: inset 0 0 0 1px var(--border-subtle);
+  --rox-elev-panel: var(--shadow-panel);
 
   /* Z-index scale */
   --z-base: 0;
@@ -177,24 +207,26 @@
 ============================================================================= */
 
 .dark {
-  --background: oklch(0.17 0.012 255);
-  --foreground: oklch(0.92 0.012 255);
-  --foreground-rgb: 211, 218, 229;
-  --accent: oklch(0.72 0.14 250);
-  --accent-rgb: 76, 153, 224;
-  --info: oklch(0.76 0.15 70);
-  --info-rgb: 232, 167, 73;
-  --success: oklch(0.7 0.15 145);
-  --success-rgb: 70, 182, 109;
-  --destructive: oklch(0.7 0.16 28);
-  --destructive-rgb: 235, 99, 92;
+  --background: #202120;
+  --foreground: #ededeb;
+  --foreground-rgb: 237, 237, 235;
+  --accent: #d9936c;
+  --accent-rgb: 217, 147, 108;
+  --info: #dfb567;
+  --info-rgb: 223, 181, 103;
+  --success: #79b78f;
+  --success-rgb: 121, 183, 143;
+  --destructive: #e48078;
+  --destructive-rgb: 228, 128, 120;
 
   --paper: color-mix(in oklch, var(--foreground) 5%, var(--background));
-  --navigator: oklch(0.145 0.011 255);
+  --navigator: color-mix(in oklch, black 13%, var(--background));
   --input-surface: color-mix(in oklch, var(--foreground) 4%, var(--background));
   --popover-solid: color-mix(in oklch, var(--foreground) 7%, var(--background));
-  --ink: oklch(0.92 0.012 255);
-  --graphite: oklch(0.62 0.01 255);
+  --shadow-control: inset 0 0 0 1px var(--border-subtle), 0 1px 2px rgb(0 0 0 / 0.12);
+  --shadow-panel: inset 0 0 0 1px var(--border-subtle), 0 1px 3px rgb(0 0 0 / 0.08);
+  --shadow-popover: inset 0 0 0 1px var(--border-strong), 0 4px 12px rgb(0 0 0 / 0.18), 0 16px 36px rgb(0 0 0 / 0.16);
+  --dialog-backdrop: rgb(0 0 0 / 0.48);
 }
 
 /* Rox is the product SF-first stack (same look as the previous system default). */
@@ -260,6 +292,9 @@ html[data-contrast="high"] {
   --chrome-glass-border: var(--border-strong);
   --rox-elev-panel: inset 0 0 0 2px var(--border-strong);
   --shadow-minimal: inset 0 0 0 2px var(--border-strong);
+  --shadow-control: var(--shadow-minimal);
+  --shadow-panel: var(--shadow-minimal);
+  --shadow-popover: var(--shadow-minimal);
 }
 
 html[data-contrast="high"][data-scenic]::before {
@@ -290,11 +325,17 @@ html[data-contrast="high"] :focus-visible {
   --color-surface-rail: var(--surface-rail);
   --color-surface-input: var(--surface-input);
   --color-surface-popover: var(--surface-popover);
+  --color-surface-document: var(--surface-document);
+  --color-surface-hover: var(--surface-hover);
+  --color-surface-pressed: var(--surface-pressed);
+  --color-surface-selected: var(--surface-selected);
   --color-border-subtle: var(--border-subtle);
   --color-border-strong: var(--border-strong);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
+  --color-accent-text: var(--accent-text);
+  --color-accent-foreground: var(--accent-foreground);
   --color-focus: var(--focus);
   --color-focus-ring: var(--focus-ring);
   --color-status-neutral: var(--status-neutral);
@@ -373,6 +414,11 @@ html[data-contrast="high"] :focus-visible {
     -moz-osx-font-smoothing: grayscale;
   }
 
+  ::selection {
+    background: var(--selection);
+    color: var(--text-primary);
+  }
+
   /* Scrollbar styling */
   ::-webkit-scrollbar {
     width: 8px;
@@ -434,14 +480,20 @@ html[data-contrast="high"] :focus-visible {
     background: var(--muted-foreground);
   }
 
-  /* Compact console elevation keeps hierarchy in borders, never haze. */
-  .shadow-minimal,
+  /* Content stays grounded; menus have a separate, finite elevation. */
+  .shadow-minimal {
+    box-shadow: var(--shadow-minimal);
+  }
+
   .shadow-middle,
   .shadow-medium,
   .shadow-hero,
-  .shadow-strong,
+  .shadow-strong {
+    box-shadow: var(--shadow-panel);
+  }
+
   .shadow-modal-small {
-    box-shadow: var(--shadow-minimal);
+    box-shadow: var(--shadow-modal-small);
   }
 
   /* Semantic status borders retain color meaning without a glow. */
@@ -491,10 +543,153 @@ html[data-contrast="high"] :focus-visible {
   .popover-styled {
     background: var(--surface-popover);
     color: var(--text-primary);
-    border-radius: var(--radius-md);
+    border-radius: var(--popover-radius, var(--radius-md));
     border: none;
-    box-shadow: var(--shadow-minimal);
+    box-shadow: var(--shadow-popover);
   }
+}
+
+/* Shared controls opt into a hit-target floor without changing text density. */
+[data-slot="button"],
+[data-slot="dialog-close"],
+[data-slot="switch"],
+[data-slot="input"],
+[data-slot="select-trigger"],
+[data-slot="select-item"],
+[data-slot="dropdown-menu-item"],
+[data-slot="dropdown-menu-sub-trigger"],
+[data-slot="dropdown-menu-checkbox-item"],
+[data-slot="dropdown-menu-radio-item"],
+[data-slot="context-menu-item"],
+[data-slot="context-menu-sub-trigger"],
+[data-slot="context-menu-checkbox-item"],
+[data-slot="context-menu-radio-item"],
+.rox-control,
+.tiptap-hover-action-btn,
+.tiptap-bubble-btn,
+.tiptap-slash-item {
+  min-height: var(--control-hit-min);
+  min-width: var(--control-hit-min);
+}
+
+.rox-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out), opacity var(--motion-fast) var(--ease-out);
+}
+
+.rox-control:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.rox-control:hover:not(:disabled) {
+  background: var(--surface-hover);
+}
+
+.rox-control:active:not(:disabled) {
+  background: var(--surface-pressed);
+}
+
+/* Radix owns positioning and focus; this finite motion only reveals content. */
+@keyframes rox-overlay-in {
+  from { opacity: 0; transform: translateY(2px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes rox-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes rox-opacity-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+[data-overlay-motion="true"][data-state="open"] {
+  animation: rox-overlay-in var(--motion-fast) var(--ease-out) both;
+}
+
+[data-overlay-motion="true"][data-state="closed"] {
+  animation: rox-overlay-out var(--motion-fast) ease both;
+}
+
+[data-slot="dialog-overlay"][data-state="open"] {
+  animation-name: rox-opacity-in;
+}
+
+[data-slot="popover-content"][data-state="open"],
+[data-slot="tooltip-content"][data-state="delayed-open"],
+[data-slot="tooltip-content"][data-state="instant-open"] {
+  animation: rox-overlay-in var(--motion-fast) var(--ease-out) both;
+}
+
+[data-slot="popover-content"][data-state="closed"],
+[data-slot="tooltip-content"][data-state="closed"] {
+  animation: rox-overlay-out var(--motion-fast) ease both;
+}
+
+/* Text semantics stay consistent across rendered answers and documents. */
+.markdown-content {
+  color: var(--text-primary);
+  line-height: var(--text-body-leading);
+  overflow-wrap: anywhere;
+}
+
+.markdown-content > :first-child,
+.markdown-content [data-section-id] > :first-child {
+  margin-top: 0;
+}
+
+.markdown-content > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content :is(h1, h2, h3, h4, h5, h6) {
+  line-height: 1.35;
+  letter-spacing: var(--text-heading-tracking);
+  text-wrap: pretty;
+}
+
+.markdown-content a,
+.tiptap-editor .tiptap-prose a {
+  color: var(--accent-text);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-skip-ink: auto;
+}
+
+.markdown-content a:hover,
+.tiptap-editor .tiptap-prose a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.markdown-content mark,
+.tiptap-editor .tiptap-prose mark {
+  background: var(--selection);
+  color: var(--text-primary);
+  border-radius: 2px;
+  padding-inline: 0.12em;
+}
+
+.markdown-content :is(ul, ol) > li + li {
+  margin-top: 0.25em;
+}
+
+.markdown-content li::marker {
+  color: var(--text-muted);
+}
+
+.markdown-content :is(th, td) {
+  vertical-align: top;
+}
+
+.markdown-content input[type="checkbox"] {
+  accent-color: var(--accent);
 }
 
 /* =============================================================================
@@ -611,14 +806,15 @@ html[data-contrast="high"] :focus-visible {
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
   background: var(--surface-popover);
-  box-shadow: var(--shadow-minimal);
+  box-shadow: var(--shadow-popover);
   color: var(--text-primary);
   white-space: normal;
   pointer-events: none;
 }
 
 .rox-sourced:hover .rox-sourced-card,
-.rox-sourced:focus-within .rox-sourced-card {
+.rox-sourced:focus-within .rox-sourced-card,
+.markdown-content a:focus-visible .rox-sourced-card {
   display: block;
 }
 
@@ -631,7 +827,7 @@ html[data-contrast="high"] :focus-visible {
 html[data-shell-style="zen"] {
   --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 6%, transparent);
   --shell-border: color-mix(in oklch, var(--foreground) 12%, transparent);
-  --shell-content: oklch(0.985 0.004 255);
+  --shell-content: var(--surface-document);
   --shell-hover: color-mix(in oklch, var(--foreground) 7%, transparent);
   --shell-selected: color-mix(in oklch, var(--accent) 18%, transparent);
   --shell-focus: var(--focus);
@@ -642,7 +838,6 @@ html[data-shell-style="zen"] {
 
 html[data-shell-style="zen"].dark {
   --shell-backdrop-tint: color-mix(in oklch, var(--foreground) 8%, transparent);
-  --shell-content: oklch(0.17 0.012 255);
   --shell-hover: color-mix(in oklch, var(--foreground) 10%, transparent);
   --shell-selected: color-mix(in oklch, var(--accent) 22%, transparent);
   --shell-sash: color-mix(in oklch, var(--foreground) 28%, transparent);
@@ -683,3 +878,64 @@ html[data-shell-style="zen"] [data-shell-role="sash"] {
   background: var(--shell-sash);
 }
 
+/* Accessibility preferences apply to shared surfaces in every host app. */
+@media (pointer: coarse) {
+  :root {
+    --control-hit-min: 44px;
+    --chrome-control: 44px;
+    --chrome-control-lg: 44px;
+    --chrome-topbar-height: 56px;
+    --chrome-panel-header-height: 48px;
+  }
+
+  .rox-hover-action,
+  .tiptap-editor .tiptap-hover-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  [data-slot="input"] {
+    font-size: 16px;
+  }
+}
+
+html[data-shell-material="solid"] {
+  --chrome-glass-bg: var(--surface-elevated);
+  --chrome-glass-blur: 0px;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root,
+  html[data-shell-style="zen"] {
+    --chrome-glass-bg: var(--surface-elevated);
+    --chrome-glass-blur: 0px;
+    --shell-backdrop-tint: var(--surface-elevated);
+  }
+
+  .chrome-surface {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+    --motion-slow: 0ms;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .spinner-cube,
+  .animate-shimmer::after {
+    animation: none !important;
+  }
+}

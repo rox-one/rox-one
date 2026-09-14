@@ -25,6 +25,7 @@ import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { StoplightProvider } from '@/context/StoplightContext'
+import { navigate, routes } from '@/lib/navigate'
 import {
   useNavigationState,
   isSessionsNavigation,
@@ -495,7 +496,10 @@ export function MainContentPanel({
   if (isTasksNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <TasksPage />
+        <TasksPage
+          selectedId={navState.details?.taskId ?? null}
+          onSelect={(taskId) => navigate(routes.view.tasks(taskId ?? undefined))}
+        />
       </Panel>
     )
   }
@@ -503,7 +507,10 @@ export function MainContentPanel({
   if (isMeetingsNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <MeetingsPage />
+        <MeetingsPage
+          selectedId={navState.details?.meetingId ?? null}
+          onSelect={(meetingId) => navigate(routes.view.meetings(meetingId ?? undefined))}
+        />
       </Panel>
     )
   }

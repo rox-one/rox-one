@@ -4,30 +4,31 @@ import { useTranslation } from 'react-i18next'
 import BrowserPanelPage from '@/pages/BrowserPanelPage'
 import { INTERNAL_BROWSER_OPEN_EVENT, planRetainedBrowserOpen } from '@craft-agent/shared/browser/retained-pane'
 import { takePendingInternalBrowserUrl } from '@/components/browser/internal-browser-queue'
+import { createNativeSurfaceLifetime } from '@/lib/native-surface-owners'
+import { releaseNativeSurface } from '@/lib/native-surface-dom'
 
 /** Embedded BrowserView hosted in the inspector column. */
 export function InspectorBrowserPane() {
   const { t } = useTranslation()
   const [instanceId, setInstanceId] = React.useState<string | null>(null)
   const [error, setError] = React.useState<string | null>(null)
-  const createdRef = React.useRef<string | null>(null)
-
-  const attach = React.useCallback(async (url?: string) => {
-    const existing = await window.electronAPI.browserPane.list()
-    const plan = planRetainedBrowserOpen(existing, url)
-    if (plan.action === 'navigate') {
-      createdRef.current = plan.id
-      setInstanceId(plan.id)
-      if (plan.url) await window.electronAPI.browserPane.navigate(plan.id, plan.url)
-      return
-    }
-    const id = await window.electronAPI.browserPane.createEmbedded(plan.url ? { url: plan.url } : undefined)
-    createdRef.current = id
-    setInstanceId(id)
-  }, [])
 
   React.useEffect(() => {
     let cancelled = false
+    const lifetime = createNativeSurfaceLifetime(id => {
+      releaseNativeSurface(id, (nativeId, rect) => window.electronAPI.browserPane.syncBounds(nativeId, rect))
+    })
+    const attach = async (url?: string) => {
+      const existing = await window.electronAPI.browserPane.list()
+      if (cancelled) return
+      const plan = planRetainedBrowserOpen(existing, url)
+      const id = plan.action === 'navigate' ? plan.id
+        : await window.electronAPI.browserPane.createEmbedded(plan.url ? { url: plan.url } : undefined)
+      if (!lifetime.claim(id)) return
+      setInstanceId(id)
+      setError(null)
+      if (plan.action === 'navigate' && plan.url) await window.electronAPI.browserPane.navigate(id, plan.url)
+    }
     void attach(takePendingInternalBrowserUrl()).catch((err) => {
       if (!cancelled) setError(err instanceof Error ? err.message : String(err))
     })
@@ -41,12 +42,9 @@ export function InspectorBrowserPane() {
     return () => {
       cancelled = true
       window.removeEventListener(INTERNAL_BROWSER_OPEN_EVENT, onOpen)
-      const id = createdRef.current
-      if (id) {
-        void window.electronAPI.browserPane.syncBounds(id, null).catch(() => undefined)
-      }
+      lifetime.release()
     }
-  }, [attach])
+  }, [])
 
   if (error) {
     return (

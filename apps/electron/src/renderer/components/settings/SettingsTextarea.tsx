@@ -69,7 +69,7 @@ export function SettingsTextarea({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
@@ -84,7 +84,7 @@ export function SettingsTextarea({
         </div>
       )}
       <div className={cn(
-        'relative rounded-md shadow-minimal has-[:focus-visible]:bg-background',
+        settingsUI.fieldFrame,
         error && 'ring-1 ring-destructive',
         isOverLimit && 'ring-1 ring-destructive'
       )}>
@@ -96,7 +96,7 @@ export function SettingsTextarea({
           rows={rows}
           disabled={disabled}
           className={cn(
-            'bg-muted/50 border-0 shadow-none resize-y min-h-[120px] focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
+            'shadow-none resize-y min-h-[120px]',
             maxLength && 'pb-6'
           )}
         />

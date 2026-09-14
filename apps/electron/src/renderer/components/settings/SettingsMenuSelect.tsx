@@ -113,12 +113,13 @@ export function SettingsMenuSelect({
       <PopoverTrigger asChild disabled={disabled}>
         <button
           type="button"
+          data-slot="button"
           className={cn(
-            'inline-flex items-center h-8 px-3 gap-1 text-sm rounded-lg',
-            'bg-background shadow-minimal',
-            'hover:bg-foreground/[0.02] transition-colors',
+            'inline-flex items-center h-8 px-3 gap-1.5 text-[13px] rounded-md',
+            'bg-surface-input text-text-primary shadow-minimal',
+            settingsUI.interactive,
             'disabled:cursor-not-allowed disabled:opacity-50',
-            isOpen && 'bg-foreground/[0.02]',
+            isOpen && 'bg-surface-selected',
             className
           )}
         >
@@ -138,6 +139,7 @@ export function SettingsMenuSelect({
           <div className="relative mb-1.5">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
             <input
+              data-slot="input"
               ref={searchInputRef}
               type="text"
               value={searchQuery}
@@ -145,9 +147,9 @@ export function SettingsMenuSelect({
               placeholder={effectiveSearchPlaceholder}
               className={cn(
                 'w-full h-8 pl-8 pr-3 text-sm rounded-md',
-                'bg-foreground/5 border-0',
-                'placeholder:text-muted-foreground',
-                'focus:outline-none focus:ring-1 focus:ring-foreground/20'
+                'bg-surface-input text-text-primary border border-border-strong',
+                'placeholder:text-text-muted',
+                'focus-visible:outline-none focus-visible:border-focus focus-visible:ring-2 focus-visible:ring-focus/25'
               )}
             />
           </div>
@@ -164,12 +166,14 @@ export function SettingsMenuSelect({
                 <button
                   key={option.value}
                   type="button"
+                  data-slot="button"
+                  aria-pressed={isSelected}
                   onClick={() => handleSelect(option.value)}
                   onMouseEnter={() => onHover?.(option.value)}
                   className={cn(
-                    'w-full flex items-center justify-between px-2.5 py-2 rounded-lg',
-                    'hover:bg-foreground/5 transition-colors text-left',
-                    isSelected && 'bg-foreground/3'
+                    'w-full flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-md text-left',
+                    settingsUI.interactive,
+                    isSelected && 'bg-surface-selected'
                   )}
                 >
                   <div className="flex-1 min-w-0">
@@ -244,8 +248,8 @@ export function SettingsMenuSelectRow({
     <div
       data-layout="settings-row"
       className={cn(
-        'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
         className
       )}
     >
@@ -255,7 +259,7 @@ export function SettingsMenuSelectRow({
           <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
         )}
       </div>
-      <div data-layout="settings-control" className="ml-4 shrink-0">
+      <div data-layout="settings-control" className={settingsUI.control}>
         <SettingsMenuSelect
           value={value}
           onValueChange={onValueChange}

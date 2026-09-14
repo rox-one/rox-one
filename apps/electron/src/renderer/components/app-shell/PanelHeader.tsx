@@ -2,7 +2,7 @@
  * PanelHeader - Standardized header component for panels
  *
  * Provides consistent header styling with:
- * - Fixed 42px height
+ * - Token-based compact header height
  * - Title with optional badge
  * - Optional action buttons
  * - Optional title dropdown menu (renders chevron and makes title interactive)
@@ -30,7 +30,7 @@
 import * as React from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { ChevronDown, Menu } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCompensateForStoplight } from '@/context/StoplightContext'
@@ -49,9 +49,6 @@ import {
 } from '@/components/ui/drawer'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { AccountMenu } from './AccountMenu'
-
-// Spring transition for smooth animations (matches sidebar)
-const springTransition = { type: 'spring' as const, stiffness: 300, damping: 30 }
 
 // Padding to compensate for macOS traffic lights (stoplight buttons)
 // Traffic lights positioned at x:18, ~52px wide = 70px + 14px gap
@@ -209,6 +206,7 @@ export function PanelHeader({
   className,
   isRegeneratingTitle,
 }: PanelHeaderProps) {
+  const reduceMotion = useReducedMotion()
   // Fall back to AppShellContext.leadingAction so per-panel back buttons (set by
   // PanelSlot in compact mode) propagate to every page's PanelHeader without each
   // page having to forward the prop manually. ChatPage explicitly passes its own
@@ -247,11 +245,11 @@ export function PanelHeader({
     <motion.div
       initial={false}
       animate={{ opacity: title ? 1 : 0 }}
-      transition={{ duration: 0.15 }}
+      transition={{ duration: reduceMotion ? 0 : 0.12 }}
       className="flex items-center gap-1"
     >
       <h1 className={cn(
-        "text-sm font-semibold truncate font-sans leading-tight",
+        "text-[13px] font-semibold truncate font-sans leading-tight text-text-primary",
         isRegeneratingTitle && "animate-shimmer-text"
       )}>{title}</h1>
       {badge}
@@ -267,12 +265,13 @@ export function PanelHeader({
     <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
       {/* Wrapper button for the whole clickable area */}
       <button
+        type="button"
         onClick={() => setDropdownOpen(true)}
         className={cn(
-          "flex items-center gap-1 px-2 py-1 rounded-md titlebar-no-drag min-w-0",
-          "hover:bg-foreground/[0.03] transition-colors",
-          "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-          dropdownOpen && "bg-foreground/[0.03]"
+          "flex min-h-[var(--control-hit-min)] items-center gap-1 px-2 py-1 rounded-md titlebar-no-drag min-w-0",
+          "hover:bg-surface-hover transition-colors duration-[var(--motion-fast)]",
+          "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus",
+          dropdownOpen && "bg-surface-selected"
         )}
       >
         {titleContent}
@@ -435,7 +434,7 @@ export function PanelHeader({
   const basePadding = leadingAction ? 8 : 16
 
   const baseClassName = cn(
-    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-panel h-[42px]',
+    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-panel h-[var(--chrome-panel-header-height)] bg-surface-elevated border-b border-border-subtle',
     // Only use static paddingLeft class when not animating
     !shouldCompensate && (paddingLeft || (leadingAction ? 'pl-2' : 'pl-4')),
     className
@@ -446,7 +445,8 @@ export function PanelHeader({
     <motion.div
       initial={false}
       animate={{ paddingLeft: shouldCompensate ? STOPLIGHT_PADDING : basePadding }}
-      transition={springTransition}
+      transition={{ duration: reduceMotion ? 0 : 0.18, ease: 'easeOut' }}
+      data-layout="panel-header"
       className={baseClassName}
     >
       {content}

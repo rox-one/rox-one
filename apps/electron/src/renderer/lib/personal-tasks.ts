@@ -11,6 +11,7 @@ import {
   PERSONAL_TASKS_QUARANTINE_KEY,
   type PersonalTaskCacheLoad,
   type PersonalTask,
+  type PersonalTaskStore,
 } from '@craft-agent/core/tasks/personal'
 
 export {

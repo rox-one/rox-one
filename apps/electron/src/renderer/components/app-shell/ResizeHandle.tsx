@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 import { useResizeGradient } from '@/hooks/useResizeGradient'
+import { useHorizontalResizeGradient } from '@/hooks/useHorizontalResizeGradient'
 import {
   PANEL_SASH_HIT_WIDTH,
   PANEL_SASH_HIT_WIDTH_COARSE,
@@ -68,8 +69,10 @@ export function ResizeHandle({
   ...rest
 }: ResizeHandleProps & React.HTMLAttributes<HTMLDivElement>) {
   const { t } = useTranslation()
-  const { ref, handlers, gradientStyle } = useResizeGradient()
   const vertical = orientation === 'vertical'
+  const verticalGradient = useResizeGradient()
+  const horizontalGradient = useHorizontalResizeGradient()
+  const { ref, handlers, gradientStyle } = vertical ? verticalGradient : horizontalGradient
   const hit = sashHitWidthPx()
   const label = t(labelKey)
   const valueText = t('shell.resize.valuePx', { value: Math.round(valueNow) })
@@ -77,12 +80,12 @@ export function ResizeHandle({
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     if (disabled) return
     const step = event.shiftKey ? KEYBOARD_RESIZE_LARGE_STEP : KEYBOARD_RESIZE_STEP
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    if (event.key === (vertical ? 'ArrowLeft' : 'ArrowUp')) {
       event.preventDefault()
       onKeyAdjust?.(-step)
       return
     }
-    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    if (event.key === (vertical ? 'ArrowRight' : 'ArrowDown')) {
       event.preventDefault()
       onKeyAdjust?.(step)
       return
@@ -131,7 +134,7 @@ export function ResizeHandle({
         dragging && 'shell-sash-active',
         className,
       )}
-      style={{ width: hit, ...style }}
+      style={{ ...(vertical ? { width: hit } : { height: hit, width: '100%' }), touchAction: 'none', ...style }}
       onPointerDown={(event) => {
         if (disabled || event.button !== 0) return
         handlers.onMouseDown()
@@ -147,12 +150,12 @@ export function ResizeHandle({
       onPointerLeave={handlers.onMouseLeave}
       onDoubleClick={() => { if (!disabled) onReset?.() }}
       onKeyDown={handleKeyDown}
-      onBlur={() => { if (!dragging) onKeyCommit?.() }}
+      onBlur={() => { if (document.hasFocus()) onKeyCommit?.() }}
     >
       <div
         className="h-full"
         style={{
-          width: vertical ? PANEL_SASH_LINE_WIDTH : hit,
+          width: vertical ? PANEL_SASH_LINE_WIDTH : '100%',
           height: vertical ? undefined : PANEL_SASH_LINE_WIDTH,
           ...(dragging
             ? { background: 'var(--shell-sash, color-mix(in oklch, var(--foreground) 36%, transparent))' }
