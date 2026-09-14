@@ -191,11 +191,16 @@ describe('MessagingSettingsPage source contracts', () => {
   })
 
   it('pending allow is a narrow allow-list mutation with an audit reason', () => {
-    expect(pending).toContain('settings.messaging.telegram.access.pending.audit')
-    expect(pending).toContain('exact sender')
+    expect(pending).toContain('settings.messaging.telegram.access.pending.audit.notOnBindingAllowlist')
+    expect(pending).toContain('settings.messaging.telegram.access.pending.audit.notOwner')
+    expect(pending).not.toMatch(/defaultValue:\s*['"]/)
+    expect(pending).not.toContain('Rejected on this chat')
     expect(pending).not.toMatch(/unlock all/i)
     expect(mocks).toContain('applyDisplayedSenderApproval')
     expect(en['settings.messaging.telegram.access.pending.audit.notOnBindingAllowlist']).toMatch(
+      /exact sender/i,
+    )
+    expect(en['settings.messaging.telegram.access.pending.audit.notOwner']).toMatch(
       /exact sender/i,
     )
   })

@@ -76,12 +76,7 @@ function PendingRow({
             isBindingScoped
               ? 'settings.messaging.telegram.access.pending.audit.notOnBindingAllowlist'
               : 'settings.messaging.telegram.access.pending.audit.notOwner',
-            {
-              userId: sender.userId,
-              defaultValue: isBindingScoped
-                ? 'Rejected on this chat. Allow adds this exact sender id to the binding allow-list.'
-                : 'Rejected as a workspace non-owner. Allow adds this exact sender id as an owner.',
-            },
+            { userId: sender.userId },
           )}
         </div>
       </div>
