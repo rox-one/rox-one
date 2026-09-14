@@ -30,6 +30,7 @@ import {
   type MailLedgerEntry,
   type ReminderLedgerEntry,
 } from '../../meetings/conation/native-shells.ts'
+import { gateMeetingConationShell } from '@craft-agent/core/rox2'
 
 const proposalStores = new Map<string, ProposalStore>()
 const jobStores = new Map<string, OutboxJob[]>()
@@ -307,17 +308,20 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
     RPC_CHANNELS.meetings.MAIL_PREPARE,
     async (_ctx, workspaceId: string, input: { id: string; threadId: string; to: string[]; attachments?: string[] }) => {
       const entry = prepareMailDraft(mailLedgerFor(workspaceId), input)
-      return approveMailDraft(mailLedgerFor(workspaceId), entry.id) ?? entry
+      return gateMeetingConationShell('mail', approveMailDraft(mailLedgerFor(workspaceId), entry.id) ?? entry)
     },
   )
   server.handle(
     RPC_CHANNELS.meetings.MAIL_SEND,
     async (_ctx, workspaceId: string, draftId: string, credentialsPresent = false) => {
-      return sendPreparedMail(
-        mailLedgerFor(workspaceId),
-        draftId,
-        { present: credentialsPresent },
-        seenFor(workspaceId),
+      return gateMeetingConationShell(
+        'mail',
+        sendPreparedMail(
+          mailLedgerFor(workspaceId),
+          draftId,
+          { present: credentialsPresent },
+          seenFor(workspaceId),
+        ),
       )
     },
   )
@@ -331,29 +335,35 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
       credentialsPresent = false,
     ) => {
       void workspaceId
-      return proposeCrmCard(candidates, wanted, { present: credentialsPresent }, {
-        dealCapability: true,
-        baseRevision: '1',
-        currentRevision: '1',
-      })
+      return gateMeetingConationShell(
+        'crm',
+        proposeCrmCard(candidates, wanted, { present: credentialsPresent }, {
+          dealCapability: true,
+          baseRevision: '1',
+          currentRevision: '1',
+        }),
+      )
     },
   )
   server.handle(
     RPC_CHANNELS.meetings.CALENDAR_BIND,
     async (_ctx, workspaceId: string, row: CalendarOccurrence, credentialsPresent = false) => {
-      return bindCalendarOccurrence(row, { present: credentialsPresent }, reminderLedgerFor(workspaceId))
+      return gateMeetingConationShell(
+        'calendar',
+        bindCalendarOccurrence(row, { present: credentialsPresent }, reminderLedgerFor(workspaceId)),
+      )
     },
   )
   server.handle(
     RPC_CHANNELS.meetings.ROOM_JOIN,
     async (_ctx, _workspaceId: string, roomId: string, actorId: string) => {
-      return joinNativeRoom({ roomId, actorId, recordingConsent: true })
+      return gateMeetingConationShell('room', joinNativeRoom({ roomId, actorId, recordingConsent: true }))
     },
   )
   server.handle(
     RPC_CHANNELS.meetings.MAIL_THREADS,
     async (_ctx, _workspaceId: string, credentialsPresent = false) => {
-      return listMailThreads({ present: credentialsPresent })
+      return gateMeetingConationShell('mail', listMailThreads({ present: credentialsPresent }))
     },
   )
   function handleCapture(action: CaptureIntentAction) {
