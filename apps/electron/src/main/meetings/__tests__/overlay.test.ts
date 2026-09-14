@@ -5,9 +5,11 @@ import { mapMeetingOverlayPhase, parseMeetingOverlayState, resolveOverlayDisplay
 import {
   destroyMeetingOverlay,
   dispatchMeetingOverlayCommand,
+  flushMeetingOverlayAssist,
   hideMeetingOverlay,
   openMeetingOverlay,
   rebindMeetingHotkeys,
+  setMeetingOverlayAssistContext,
   setMeetingStopHandler,
   stopMeetingFromHost,
   type MeetingOverlayRuntime,
@@ -119,6 +121,25 @@ describe('meeting overlay (issue 369)', () => {
     stopMeetingFromHost()
     expect(stopped).toBe(2)
     expect(stopMeetingFromHost().phase).toBe('stopped')
+  })
+
+  test('ask and catch-up call answerMeetingQuestion instead of only setting phase', async () => {
+    await openMeetingOverlay({ visible: true, phase: 'recording' }, runtime())
+    setMeetingOverlayAssistContext({
+      transcript: [
+        { sourceId: 'seg:final', revision: '1', text: 'Решили запустить прототип.', final: true },
+        { sourceId: 'seg:partial', revision: '2', text: 'может быть бюджет...', final: false },
+      ],
+    })
+    expect(dispatchMeetingOverlayCommand('ask').phase).toBe('ask')
+    const asked = await flushMeetingOverlayAssist()
+    expect(asked.liveTranscript).toContain('прототип')
+    expect(asked.phase).not.toBe('error')
+    expect(asked.phase).not.toBe('ready')
+    expect(dispatchMeetingOverlayCommand('catch-up').phase).toBe('catch-up')
+    const caught = await flushMeetingOverlayAssist()
+    expect(caught.liveTranscript).toContain('прототип')
+    expect(caught.liveTranscript).not.toContain('бюджет')
   })
 
   test('monitor disconnect falls back to the remaining display', () => {

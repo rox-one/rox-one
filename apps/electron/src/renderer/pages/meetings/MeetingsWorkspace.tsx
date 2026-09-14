@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { meetingCaptureCapability } from '@craft-agent/shared/meeting-agents'
 import { RPC_CHANNELS } from '../../../shared/types'
 import { MeetingsPage } from './MeetingsPage'
 import type { MeetingPageItem, MeetingPageState } from './meeting-page-model'
@@ -60,13 +61,28 @@ export default function MeetingsWorkspace({ workspaceId }: MeetingsWorkspaceProp
 
   const onStart = useCallback(async () => {
     const api = window.electronAPI
+    const webui = Boolean((import.meta as { env?: { IS_WEBUI?: boolean } }).env?.IS_WEBUI)
+    const capability = meetingCaptureCapability({
+      isWebui: webui,
+      hasDeviceIpc: Boolean(api?.startMeetingCapture),
+    })
+    if (!capability.supported) {
+      setCaptureStatus('unsupported')
+      if (workspaceId && selected && api?.isChannelAvailable?.(RPC_CHANNELS.meetings.START)) {
+        await api.startMeeting(workspaceId, selected.id, { capture: 'web-unsupported' })
+      }
+      return
+    }
     if (!api?.startMeetingCapture) {
       setCaptureStatus('denied')
       return
     }
     const status = await api.startMeetingCapture({ mic: true, system: false }) as CaptureStatus
     setCaptureStatus(status.state)
-  }, [])
+    if (workspaceId && selected && api.isChannelAvailable?.(RPC_CHANNELS.meetings.START)) {
+      await api.startMeeting(workspaceId, selected.id, { capture: 'device-ipc' })
+    }
+  }, [workspaceId, selected])
 
   const onSearch = useCallback(async (query: string) => {
     const api = window.electronAPI

@@ -1509,6 +1509,7 @@
   "meetings.artifactVerified": "已验证",
   "meetings.artifacts": "产物",
   "meetings.captureDenied": "未授予采集权限",
+  "meetings.captureUnsupported": "此客户端不支持采集",
   "meetings.codingHandoff": "草稿拉取请求",
   "meetings.crmUnavailable": "无法更新 CRM",
   "meetings.delete": "删除",

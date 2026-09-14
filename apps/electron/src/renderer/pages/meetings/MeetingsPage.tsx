@@ -71,7 +71,11 @@ export function MeetingsPage({
         </button>
         {captureState ? (
           <p className="text-xs" data-testid="meetings-capture-status">
-            {captureState === 'denied' ? t('meetings.captureDenied') : captureState}
+            {captureState === 'denied'
+              ? t('meetings.captureDenied')
+              : captureState === 'unsupported'
+                ? t('meetings.captureUnsupported')
+                : captureState}
           </p>
         ) : null}
       </header>

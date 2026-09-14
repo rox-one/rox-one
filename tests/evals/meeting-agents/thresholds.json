@@ -1,7 +1,10 @@
 {
   "schemaVersion": 1,
-  "status": "not_run",
-  "note": "I030 owns live holdout thresholds. I029 only creates the eval entrypoint.",
-  "taskPrecisionMin": null,
-  "falsePositiveMax": null
+  "status": "fixture",
+  "note": "I030 fixture thresholds for in-repo semantic-cases.json. Live holdout stays not_run.",
+  "taskPrecisionMin": 0.5,
+  "falsePositiveMax": 0.5,
+  "taskRecallMin": 0.5,
+  "abstainRateMax": 1,
+  "citationValidityMin": 0.5
 }

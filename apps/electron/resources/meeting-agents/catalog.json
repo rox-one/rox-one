@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "packageVersion": "1.0.0",
+  "ids": [
+    "rox.meeting.coordinator",
+    "rox.meeting.assist",
+    "rox.meeting.scribe",
+    "rox.meeting.knowledge",
+    "rox.meeting.executor",
+    "rox.meeting.author",
+    "rox.meeting.followup",
+    "rox.meeting.analyst"
+  ]
+}

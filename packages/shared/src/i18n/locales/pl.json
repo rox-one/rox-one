@@ -1511,6 +1511,7 @@
   "meetings.artifactVerified": "Zweryfikowano",
   "meetings.artifacts": "Artefakty",
   "meetings.captureDenied": "Przechwytywanie nie jest dozwolone",
+  "meetings.captureUnsupported": "Ten klient nie obsługuje przechwytywania",
   "meetings.codingHandoff": "Szkic pull requestu",
   "meetings.crmUnavailable": "Aktualizacja CRM jest niedostępna",
   "meetings.delete": "Usuń",

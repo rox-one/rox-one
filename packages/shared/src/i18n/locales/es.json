@@ -1509,6 +1509,7 @@
   "meetings.artifactVerified": "Verificado",
   "meetings.artifacts": "Artefactos",
   "meetings.captureDenied": "La captura no está permitida",
+  "meetings.captureUnsupported": "La captura no es compatible con este cliente",
   "meetings.codingHandoff": "Pull request en borrador",
   "meetings.crmUnavailable": "La actualización de CRM no está disponible",
   "meetings.delete": "Eliminar",

@@ -10,10 +10,15 @@ import {
   type VoiceOverlayPosition,
 } from '@craft-agent/shared/voice'
 import {
+  answerMeetingQuestion,
+  type AnswerMeetingQuestionInput,
+} from '@craft-agent/shared/meeting-agents'
+import {
   emptyMeetingOverlayState,
   parseMeetingOverlayState,
   resolveOverlayDisplay,
   type MeetingOverlayCommand,
+  type MeetingOverlayPhase,
   type MeetingOverlayState,
   type OverlayDisplay,
 } from '../../shared/meeting-overlay-ipc'
@@ -49,6 +54,17 @@ let lastDisplayId: number | undefined
 let stopHandler: (() => void) | null = null
 let sessionClaimed = false
 let usingTestRuntime = false
+let assistContext: AnswerMeetingQuestionInput = {}
+let assistPromise: Promise<MeetingOverlayState> | null = null
+let phaseBeforeAssist: MeetingOverlayPhase = 'recording'
+
+export function setMeetingOverlayAssistContext(context: AnswerMeetingQuestionInput): void {
+  assistContext = { ...context }
+}
+
+export function flushMeetingOverlayAssist(): Promise<MeetingOverlayState> {
+  return assistPromise ?? Promise.resolve(getMeetingOverlayState())
+}
 
 export function getMeetingOverlayState(): MeetingOverlayState {
   return { ...lastState }
@@ -153,8 +169,41 @@ export function dispatchMeetingOverlayCommand(action: MeetingOverlayCommand): Me
     return getMeetingOverlayState()
   }
   if (action === 'ask' || action === 'catch-up') {
+    if (lastState.phase !== 'ask' && lastState.phase !== 'catch-up') {
+      phaseBeforeAssist = lastState.phase === 'paused' ? 'paused' : 'recording'
+    }
     lastState = parseMeetingOverlayState({ ...lastState, phase: action, error: undefined, visible: lastState.visible })
     if (!usingTestRuntime) void occupyHost(lastState, { keepOccupant: true })
+    assistPromise = Promise.resolve().then(async () => {
+      const result = await answerMeetingQuestion({
+        ...assistContext,
+        intent: action,
+        question: action === 'ask' ? (assistContext.question ?? lastState.liveTranscript ?? '') : assistContext.question,
+      })
+      if (!result.ok) {
+        lastState = parseMeetingOverlayState({
+          ...lastState,
+          phase: 'error',
+          error: result.message,
+        })
+      } else {
+        lastState = parseMeetingOverlayState({
+          ...lastState,
+          phase: phaseBeforeAssist,
+          liveTranscript: result.text,
+          error: undefined,
+        })
+      }
+      if (!usingTestRuntime) void occupyHost(lastState, { keepOccupant: true })
+      return getMeetingOverlayState()
+    }).catch((error: unknown) => {
+      lastState = parseMeetingOverlayState({
+        ...lastState,
+        phase: 'error',
+        error: error instanceof Error ? error.message : 'assist-failed',
+      })
+      return getMeetingOverlayState()
+    })
     return getMeetingOverlayState()
   }
   return getMeetingOverlayState()
@@ -173,6 +222,8 @@ export function destroyMeetingOverlay(): void {
   lastState = emptyMeetingOverlayState()
   sessionClaimed = false
   lastDisplayId = undefined
+  assistContext = {}
+  assistPromise = null
   if (!usingTestRuntime) void releaseHost()
   usingTestRuntime = false
 }
