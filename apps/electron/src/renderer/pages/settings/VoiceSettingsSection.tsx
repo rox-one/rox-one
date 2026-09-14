@@ -22,7 +22,7 @@ export function VoiceSettingsSection() {
   const [prefs, setPrefs] = useState<VoicePrefs | null>(null)
   const [health, setHealth] = useState<VoiceHealth | null>(null)
   const [history, setHistory] = useState<Array<{ id: string; favorite: boolean; state: string }>>([])
-  const [brand, setBrand] = useState('rocks transcription (rocks t1)')
+  const [brand, setBrand] = useState('')
 
   const reload = useCallback(async () => {
     if (!window.electronAPI.getVoicePrefs) return
@@ -72,7 +72,7 @@ export function VoiceSettingsSection() {
         <SettingsCard>
           <SettingsMenuSelectRow
             label={t('settings.input.sttEngine')}
-            description={`${t('settings.input.sttEngineDesc')} · ${brand}`}
+            description={`${t('settings.input.sttEngineDesc')} · ${brand || t('settings.input.voiceRocksT1')}`}
             value={prefs.sttEngine}
             onValueChange={(value) => void save({ sttEngine: value as SttEngine, cloudAsrConsent: value !== 'local-whisper' })}
             options={[
