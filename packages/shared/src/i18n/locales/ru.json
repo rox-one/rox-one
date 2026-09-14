@@ -1733,7 +1733,7 @@
   "memory.historyLoadFailed": "Не удалось загрузить запись истории",
   "memory.historySection": "История",
   "memory.insightsChip": "{{label}} · {{count}}",
-  "memory.insightsLine": "7 дней: {{lessonsAdded7d}} уроков · {{conflicts7d}} конфликтов · {{pendingCount}} pending · {{approved7d}} одобрено",
+  "memory.insightsLine": "7 дней: {{lessonsAdded7d}} уроков · {{conflicts7d}} конфликтов · {{pendingCount}} в ожидании · {{approved7d}} одобрено",
   "memory.keepBoth": "Оставить оба",
   "memory.lessonAddFailed": "Не удалось добавить урок",
   "memory.lessonAdded": "Урок добавлен",
