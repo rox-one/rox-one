@@ -3,6 +3,7 @@ import type { BrowserScreenshotOptions } from '../browser-pane-manager-interface
 import type { RpcServer } from '../../transport'
 import { pushTyped } from '../../transport'
 import type { HandlerDeps } from '../handler-deps'
+import { isClaimableLive, rpcBrowserPaneActResult, rpcBrowserPaneListResult, rpcBrowserPaneReadResult } from '@craft-agent/core/rox2'
 
 type BrowserPaneCreateOptions = { id?: string; show?: boolean; bindToSessionId?: string }
 type BrowserManagerWithEvents = NonNullable<HandlerDeps['browserPaneManager']> & {
@@ -32,22 +33,40 @@ export function registerBrowserPaneHandlers(server: RpcServer, deps: HandlerDeps
   const workspace = (ctx: { workspaceId: string | null }) => ctx.workspaceId ?? null
 
   server.handle(RPC_CHANNELS.browserPane.CREATE, (ctx, input?: string | BrowserPaneCreateOptions) => {
+    const act = rpcBrowserPaneActResult({ source: 'native', action: 'write', nativeId: 'create' })
+    if (!isClaimableLive(act)) return undefined
     const workspaceId = workspace(ctx)
     if (typeof input === 'string') return manager.createInstance?.(input, { workspaceId }) ?? manager.createForSession(input, { show: true, workspaceId })
     if (input?.bindToSessionId) return manager.createForSession(input.bindToSessionId, { show: input.show ?? true, workspaceId })
     return manager.createInstance?.(input?.id, { show: input?.show ?? true, workspaceId })
       ?? manager.createForSession('__web__', { show: input?.show ?? true, workspaceId })
   })
-  server.handle(RPC_CHANNELS.browserPane.DESTROY, (_ctx, id: string) => manager.destroyInstance(id))
-  server.handle(RPC_CHANNELS.browserPane.LIST, () => manager.listInstancesAsync())
-  server.handle(RPC_CHANNELS.browserPane.NAVIGATE, (_ctx, id: string, url: string) => manager.navigate(id, url))
+  server.handle(RPC_CHANNELS.browserPane.DESTROY, (_ctx, id: string) => {
+    const act = rpcBrowserPaneActResult({ source: 'native', action: 'destroy', granted: true, nativeId: id })
+    if (!isClaimableLive(act)) return
+    return manager.destroyInstance(id)
+  })
+  server.handle(RPC_CHANNELS.browserPane.LIST, () => {
+    const listed = rpcBrowserPaneListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
+    return manager.listInstancesAsync()
+  })
+  server.handle(RPC_CHANNELS.browserPane.NAVIGATE, (_ctx, id: string, url: string) => {
+    const act = rpcBrowserPaneActResult({ source: 'native', action: 'write', nativeId: id })
+    if (!isClaimableLive(act)) return
+    return manager.navigate(id, url)
+  })
   server.handle(RPC_CHANNELS.browserPane.GO_BACK, (_ctx, id: string) => manager.goBack(id))
   server.handle(RPC_CHANNELS.browserPane.GO_FORWARD, (_ctx, id: string) => manager.goForward(id))
   server.handle(RPC_CHANNELS.browserPane.RELOAD, (_ctx, id: string) => manager.reload?.(id))
   server.handle(RPC_CHANNELS.browserPane.STOP, (_ctx, id: string) => manager.stop?.(id))
   server.handle(RPC_CHANNELS.browserPane.FOCUS, (_ctx, id: string) => manager.focus(id))
   server.handle(RPC_CHANNELS.browserPane.RESIZE, (_ctx, id: string, width: number, height: number) => manager.windowResize(id, width, height))
-  server.handle(RPC_CHANNELS.browserPane.SNAPSHOT, (_ctx, id: string) => manager.getAccessibilitySnapshot(id))
+  server.handle(RPC_CHANNELS.browserPane.SNAPSHOT, (_ctx, id: string) => {
+    const read = rpcBrowserPaneReadResult({ source: 'native', nativeId: id })
+    if (!isClaimableLive(read.result)) return undefined
+    return manager.getAccessibilitySnapshot(id)
+  })
   server.handle(RPC_CHANNELS.browserPane.CLICK, (_ctx, id: string, ref: string) => manager.clickElement(id, ref))
   server.handle(RPC_CHANNELS.browserPane.CLICK_AT, (_ctx, id: string, x: number, y: number) => manager.clickAtCoordinates(id, x, y))
   server.handle(RPC_CHANNELS.browserPane.FILL, (_ctx, id: string, ref: string, value: string) => manager.fillElement(id, ref, value))
