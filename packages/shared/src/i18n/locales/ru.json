@@ -3122,7 +3122,7 @@
   "settings.appearance.conationDssClient": "Клиент DSS",
   "settings.appearance.conationDssClientDesc": "HTTP-клиент Conation DSS/Drive только для чтения (workbench.conation.dssClient). По умолчанию выкл.",
   "settings.appearance.conationInspectorFlag": "Хост инспектора Conation",
-  "settings.appearance.conationInspectorFlagDesc": "Пустой хост инспектора для следующих доменных WP (workbench.conation.inspector). Нужен shell. По умолчанию выкл.",
+  "settings.appearance.conationInspectorFlagDesc": "Пустой хост инспектора для следующих доменных WP (workbench.conation.inspector). Нужна оболочка. По умолчанию выкл.",
   "settings.appearance.conationNotesBridge": "Мост Notes",
   "settings.appearance.conationNotesBridgeDesc": "Мост Conation Notes только для чтения (workbench.conation.notesBridge). По умолчанию выкл.",
   "settings.appearance.conationSessionApply": "SessionApply (Conation)",
