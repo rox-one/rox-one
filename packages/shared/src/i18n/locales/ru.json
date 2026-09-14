@@ -1338,7 +1338,7 @@
   "kanban.column.add": "Добавить колонку",
   "kanban.column.autoPrompt": "Авто-промпт",
   "kanban.column.autoPromptPlaceholder": "Промпт при переносе карточки сюда…",
-  "kanban.column.backlog": "Backlog",
+  "kanban.column.backlog": "Бэклог",
   "kanban.column.collapse": "Свернуть колонку",
   "kanban.column.color": "Цвет",
   "kanban.column.columnsFrom": "Колонки из {{project}}",
