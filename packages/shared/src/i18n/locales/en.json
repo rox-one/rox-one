@@ -238,6 +238,8 @@
   "browser.safetyHint": "Rox agents only control browser windows when you ask them to.",
   "browser.stopLoading": "Stop loading",
   "browser.urlPlaceholder": "Enter URL or search…",
+  "browser.vps.label": "Browser",
+  "browser.vps.tooltip": "Open VPS browser",
   "browser.windowOptions": "Browser window options",
   "calendar.acceptProposal": "Accept suggestion",
   "calendar.addLocalReminder": "Add reminder",

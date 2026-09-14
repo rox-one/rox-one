@@ -238,6 +238,8 @@
   "browser.safetyHint": "Roxはあなたが依頼した時のみブラウザウィンドウを操作します。",
   "browser.stopLoading": "読み込み停止",
   "browser.urlPlaceholder": "URL を入力または検索...",
+  "browser.vps.label": "ブラウザ",
+  "browser.vps.tooltip": "VPS ブラウザを開く",
   "browser.windowOptions": "ブラウザウィンドウのオプション",
   "calendar.acceptProposal": "提案を承認",
   "calendar.addLocalReminder": "リマインダーを追加",

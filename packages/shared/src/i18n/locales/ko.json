@@ -238,6 +238,8 @@
   "browser.safetyHint": "Rox는 사용자가 요청한 경우에만 브라우저 창을 제어합니다.",
   "browser.stopLoading": "로딩 중지",
   "browser.urlPlaceholder": "URL 입력 또는 검색…",
+  "browser.vps.label": "브라우저",
+  "browser.vps.tooltip": "VPS 브라우저 열기",
   "browser.windowOptions": "브라우저 창 옵션",
   "calendar.acceptProposal": "제안 수락",
   "calendar.addLocalReminder": "알림 추가",

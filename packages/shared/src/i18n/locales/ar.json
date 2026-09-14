@@ -238,6 +238,8 @@
   "browser.safetyHint": "لا تتحكم Rox في نوافذ المتصفح إلا عندما تطلب منها ذلك.",
   "browser.stopLoading": "إيقاف التحميل",
   "browser.urlPlaceholder": "أدخل URL أو ابحث…",
+  "browser.vps.label": "المتصفح",
+  "browser.vps.tooltip": "فتح متصفح VPS",
   "browser.windowOptions": "خيارات نافذة المتصفح",
   "calendar.acceptProposal": "قبول الاقتراح",
   "calendar.addLocalReminder": "إضافة تذكير",
