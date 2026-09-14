@@ -164,16 +164,19 @@ export interface EmptyListGroupOptions {
 
 /**
  * Known catalog keys go through `t()` with no English `defaultValue`.
- * Missing keys (`t()` returns the key or a non-string) fall back to the identifier.
+ * Catalog misses (`t()` returns the key or a non-string) use the user's
+ * non-empty label when present, otherwise the identifier.
  */
 export function catalogLabelOrId(
   t: (key: string, options?: Record<string, unknown>) => unknown,
   key: string,
   identifier: string,
+  userLabel?: string | null,
 ): string {
   const translated = t(key)
-  if (typeof translated !== 'string' || translated === key) return identifier
-  return translated
+  if (typeof translated === 'string' && translated !== key) return translated
+  if (typeof userLabel === 'string' && userLabel.trim() !== '') return userLabel
+  return identifier
 }
 
 /** Configured buckets for Display "Show empty groups". Date has no finite set. */
@@ -188,7 +191,7 @@ export function emptyListGroupBuckets({
     case 'status':
       return statuses.map((status) => ({
         key: `status-${status.id}`,
-        label: catalogLabelOrId(t, `status.${status.id}`, status.id),
+        label: catalogLabelOrId(t, `status.${status.id}`, status.id, status.label),
       }))
     case 'unread':
       return [

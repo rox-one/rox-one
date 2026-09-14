@@ -493,7 +493,7 @@ export function SessionList({
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
-          label: catalogLabelOrId(t, `status.${state.id}`, state.id),
+          label: catalogLabelOrId(t, `status.${state.id}`, state.id, state.label),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),

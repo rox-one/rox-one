@@ -72,25 +72,30 @@ describe('P35-61 SessionList / list-grouping leftover chrome is i18n', () => {
     expect(sessionList).toContain("t('collection.display.labelNone')")
     expect(grouping).toContain("t('sidebar.noProject')")
     expect(grouping).toContain("t('collection.display.labelNone')")
-    expect(grouping).toContain('catalogLabelOrId(t, `status.${status.id}`, status.id)')
-    expect(sessionList).toContain('catalogLabelOrId(t, `status.${state.id}`, state.id)')
+    expect(grouping).toContain('catalogLabelOrId(t, `status.${status.id}`, status.id, status.label)')
+    expect(sessionList).toContain('catalogLabelOrId(t, `status.${state.id}`, state.id, state.label)')
     expect(sessionList).toContain('catalogLabelOrId(t, `priority.${priority}`, priority)')
     expect(grouping).toContain('catalogLabelOrId(t, `priority.${priority}`, priority)')
     expect(sessionList).toContain('catalogLabelOrId(t, `collection.display.dueBucket.${bucket}`, bucket)')
     expect(grouping).toContain('catalogLabelOrId(t, `collection.display.dueBucket.${bucket}`, bucket)')
   })
 
-  it('falls back to the identifier for custom status/priority/dueBucket ids', async () => {
+  it('falls back to the user label, then the identifier, for custom ids', async () => {
     await setupI18n().changeLanguage('en')
     const translate = (key: string) => i18n.t(key)
-    expect(catalogLabelOrId(translate, 'status.todo', 'todo')).toBe('Todo')
+    expect(catalogLabelOrId(translate, 'status.todo', 'todo', 'Inbox')).toBe('Todo')
     expect(catalogLabelOrId(translate, 'priority.urgent', 'urgent')).toBe('Urgent')
     expect(catalogLabelOrId(translate, 'collection.display.dueBucket.overdue', 'overdue')).toBe('Overdue')
     expect(i18n.t('status.waiting-on-legal')).toBe('status.waiting-on-legal')
+    expect(
+      catalogLabelOrId(translate, 'status.waiting-on-legal', 'waiting-on-legal', 'Waiting on legal'),
+    ).toBe('Waiting on legal')
+    expect(
+      catalogLabelOrId(translate, 'status.waiting-on-legal', 'waiting-on-legal', 'Waiting on legal'),
+    ).not.toBe('status.waiting-on-legal')
     expect(catalogLabelOrId(translate, 'status.waiting-on-legal', 'waiting-on-legal')).toBe('waiting-on-legal')
     expect(catalogLabelOrId(translate, 'priority.custom-sla', 'custom-sla')).toBe('custom-sla')
     expect(catalogLabelOrId(translate, 'collection.display.dueBucket.someday', 'someday')).toBe('someday')
-    expect(catalogLabelOrId(translate, 'status.waiting-on-legal', 'waiting-on-legal')).not.toBe('status.waiting-on-legal')
   })
 
   it('English locale matches the previous hardcoded leftovers', async () => {
