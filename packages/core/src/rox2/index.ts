@@ -282,6 +282,14 @@ export {
   type RpcNativeSurface,
 } from './rpc-native-actions.ts'
 export {
+  MEETING_CONATION_SHELLS,
+  assertMeetingConationShellNotLive,
+  gateMeetingConationShell,
+  meetingConationShellResult,
+  type MeetingConationShellKind,
+  type MeetingConationShellSource,
+} from './meeting-conation-shell.ts'
+export {
   CONATION_API_SCHEMA_VERSION,
   CONATION_BLOCKED_OPERATIONS,
   CONATION_CONFIRMED_OPERATIONS,
