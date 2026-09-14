@@ -118,6 +118,23 @@ export {
   type SoupNativeSurface,
 } from './soup-native-actions.ts'
 export {
+  rpcAuthActResult,
+  rpcAuthListResult,
+  rpcAuthReadResult,
+  rpcAutomationsActResult,
+  rpcAutomationsListResult,
+  rpcAutomationsReadResult,
+  rpcBrowserPaneActResult,
+  rpcBrowserPaneListResult,
+  rpcBrowserPaneReadResult,
+  rpcNativeActResult,
+  rpcNativeListResult,
+  rpcNativeReadResult,
+  type RpcNativeActKind,
+  type RpcNativeActionSource,
+  type RpcNativeSurface,
+} from './rpc-native-actions.ts'
+export {
   CONATION_API_SCHEMA_VERSION,
   CONATION_BLOCKED_OPERATIONS,
   CONATION_CONFIRMED_OPERATIONS,

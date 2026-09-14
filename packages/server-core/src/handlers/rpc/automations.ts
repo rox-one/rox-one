@@ -16,6 +16,7 @@ import { ensureDefaultAutomations } from '@craft-agent/shared/automations/defaul
 import { validateAutomationsConfig } from '@craft-agent/shared/automations/validation'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { isClaimableLive, rpcAutomationsActResult, rpcAutomationsListResult, rpcAutomationsReadResult } from '@craft-agent/core/rox2'
 
 // History file name — matches AUTOMATIONS_HISTORY_FILE from @craft-agent/shared/automations/constants
 const HISTORY_FILE = 'automations-history.jsonl'
@@ -81,6 +82,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Get automations config for a workspace (read-only, resolves path server-side)
   server.handle(RPC_CHANNELS.automations.GET, async (_ctx, workspaceId: string) => {
+    const listed = rpcAutomationsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return null
     log.info(`AUTOMATIONS_GET: Loading automations for workspace: ${workspaceId}`)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
@@ -113,6 +116,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   // particular, do not call ensureDefaultAutomations here: an absent document
   // projects a default graph without creating a config file.
   server.handle(RPC_CHANNELS.automations.GET_GRAPH, async (_ctx, workspaceId: string) => {
+    const listed = rpcAutomationsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('automations graph list is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
@@ -133,6 +138,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
   // Compile graph metadata into canonical matchers/actions, then atomically
   // replace automations.json while holding the same mutex as legacy mutations.
   server.handle(RPC_CHANNELS.automations.SAVE_GRAPH, async (_ctx, rawPayload: unknown) => {
+    const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: 'graph' })
+    if (!isClaimableLive(act)) throw new Error('automations graph write is not live')
     const payload = parseSaveAutomationGraphPayload(rawPayload)
     const workspace = getWorkspaceByNameOrId(payload.workspaceId)
     if (!workspace) throw new Error('Workspace not found')
@@ -318,6 +325,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Automation enabled state management (toggle enabled/disabled in automations.json)
   server.handle(RPC_CHANNELS.automations.SET_ENABLED, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean) => {
+    const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
+    if (!isClaimableLive(act)) return
     await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx) => {
       if (enabled) {
         delete matchers[idx].enabled
@@ -329,6 +338,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Duplicate an automation matcher
   server.handle(RPC_CHANNELS.automations.DUPLICATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number) => {
+    const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
+    if (!isClaimableLive(act)) return
     await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, _config, genId) => {
       const clone = JSON.parse(JSON.stringify(matchers[idx]))
       clone.id = genId()
@@ -339,6 +350,13 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Delete an automation matcher
   server.handle(RPC_CHANNELS.automations.DELETE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number) => {
+    const act = rpcAutomationsActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: eventName,
+    })
+    if (!isClaimableLive(act)) return
     await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, config) => {
       matchers.splice(idx, 1)
       if (matchers.length === 0) {
@@ -350,6 +368,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Read execution history for a specific automation
   server.handle(RPC_CHANNELS.automations.GET_HISTORY, async (_ctx, workspaceId: string, automationId: string, limit = AUTOMATION_HISTORY_MAX_RUNS_PER_MATCHER) => {
+    const read = rpcAutomationsReadResult({ source: 'native', nativeId: automationId })
+    if (!isClaimableLive(read.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
@@ -371,6 +391,8 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
 
   // Replay webhook actions for a specific automation matcher
   server.handle(RPC_CHANNELS.automations.REPLAY, async (_ctx, workspaceId: string, automationId: string, eventName: string) => {
+    const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: automationId })
+    if (!isClaimableLive(act)) throw new Error('automations replay is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 

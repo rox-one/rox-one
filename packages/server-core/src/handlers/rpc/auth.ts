@@ -21,6 +21,7 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { requestClientConfirmDialog } from '@craft-agent/server-core/transport'
 import { resolveConfigDir } from '@craft-agent/shared/config/paths'
+import { isClaimableLive, rpcAuthActResult, rpcAuthListResult, rpcAuthReadResult } from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.auth.LOGOUT,
@@ -143,6 +144,8 @@ export function registerAuthHandlers(server: RpcServer, deps: HandlerDeps): void
 
   // Logout - clear all credentials, identity, and config
   server.handle(RPC_CHANNELS.auth.LOGOUT, async () => {
+    const act = rpcAuthActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'logout' })
+    if (!isClaimableLive(act)) return
     try {
       const manager = getCredentialManager()
 
@@ -177,11 +180,15 @@ export function registerAuthHandlers(server: RpcServer, deps: HandlerDeps): void
   // Credential health check - validates credential store is readable and usable
   // Called on app startup to detect corruption, machine migration, or missing credentials
   server.handle(RPC_CHANNELS.credentials.HEALTH_CHECK, async () => {
+    const listed = rpcAuthListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return { healthy: false, issues: ['queued'] }
     const manager = getCredentialManager()
     return manager.checkHealth()
   })
 
   server.handle(RPC_CHANNELS.credentials.PREVIEW_MIGRATION, async (): Promise<CredentialMigrationResult<CredentialMigrationPreviewDto>> => {
+    const listed = rpcAuthListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return fail('unavailable')
     try {
       return ok(publicCounts(await previewCredentialMigration()))
     } catch (error) {
@@ -190,6 +197,8 @@ export function registerAuthHandlers(server: RpcServer, deps: HandlerDeps): void
   })
 
   server.handle(RPC_CHANNELS.credentials.APPLY_MIGRATION, async (): Promise<CredentialMigrationResult<CredentialMigrationApplyDto>> => {
+    const act = rpcAuthActResult({ source: 'native', action: 'write', nativeId: 'migration' })
+    if (!isClaimableLive(act)) return fail('unavailable')
     try {
       const result = await applyCredentialMigration()
       if (!result.migrationId || result.applied === 0 || result.state !== 'applied') {
@@ -210,6 +219,15 @@ export function registerAuthHandlers(server: RpcServer, deps: HandlerDeps): void
   server.handle(RPC_CHANNELS.credentials.GET_MIGRATION_STATUS, async (): Promise<CredentialMigrationResult<CredentialMigrationStatusDto>> => {
     try {
       const status = await getCredentialMigrationStatus()
+      const listed = rpcAuthListResult({
+        source: 'native',
+        nativeIds: status?.migrationId ? [status.migrationId] : [],
+      })
+      if (!isClaimableLive(listed.result)) return fail('unavailable')
+      if (status?.migrationId) {
+        const read = rpcAuthReadResult({ source: 'native', nativeId: status.migrationId })
+        if (!isClaimableLive(read.result)) return fail('unavailable')
+      }
       if (!status) {
         return ok(emptyStatus())
       }
@@ -235,6 +253,13 @@ export function registerAuthHandlers(server: RpcServer, deps: HandlerDeps): void
     if (!isCredentialMigrationId(migrationId)) {
       return fail('rollback_unavailable')
     }
+    const act = rpcAuthActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: migrationId,
+    })
+    if (!isClaimableLive(act)) return fail('unavailable')
     try {
       const result = await rollbackCredentialMigration(migrationId)
       const data: CredentialMigrationRollbackDto = {
