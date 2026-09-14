@@ -238,6 +238,8 @@
   "browser.safetyHint": "Rox steuert Browserfenster nur, wenn du es verlangst.",
   "browser.stopLoading": "Laden stoppen",
   "browser.urlPlaceholder": "URL eingeben oder suchen…",
+  "browser.vps.label": "Browser",
+  "browser.vps.tooltip": "VPS-Browser öffnen",
   "browser.windowOptions": "Browserfenster-Optionen",
   "calendar.acceptProposal": "Vorschlag annehmen",
   "calendar.addLocalReminder": "Erinnerung hinzufügen",

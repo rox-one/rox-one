@@ -238,6 +238,8 @@
   "browser.safetyHint": "A Rox csak akkor irányítja a böngészőablakokat, ha te kéred.",
   "browser.stopLoading": "Betöltés leállítása",
   "browser.urlPlaceholder": "Írj be egy URL-t vagy keress…",
+  "browser.vps.label": "Böngésző",
+  "browser.vps.tooltip": "VPS-böngésző megnyitása",
   "browser.windowOptions": "Böngészőablak beállításai",
   "calendar.acceptProposal": "Javaslat elfogadása",
   "calendar.addLocalReminder": "Emlékeztető hozzáadása",

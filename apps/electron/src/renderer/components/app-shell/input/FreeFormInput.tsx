@@ -2150,12 +2150,12 @@ export function FreeFormInput({
           {isWebUI && (
             <FreeFormInputContextBadge
               icon={<Globe className="h-4 w-4" />}
-              label="浏览器"
+              label={t("browser.vps.label")}
               isExpanded={false}
               hasSelection={false}
               showChevron={false}
               onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-              tooltip="打开 VPS 浏览器"
+              tooltip={t("browser.vps.tooltip")}
               disabled={disabled}
             />
           )}
@@ -2278,12 +2278,12 @@ export function FreeFormInput({
           {isWebUI && (
             <FreeFormInputContextBadge
               icon={<Globe className="h-4 w-4" />}
-              label="浏览器"
+              label={t("browser.vps.label")}
               isExpanded={false}
               hasSelection={false}
               showChevron={false}
               onClick={() => window.dispatchEvent(new Event('craft:open-vps-browser'))}
-              tooltip="打开 VPS 浏览器"
+              tooltip={t("browser.vps.tooltip")}
               disabled={disabled}
             />
           )}

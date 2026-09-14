@@ -238,6 +238,8 @@
   "browser.safetyHint": "Rox 僅在您要求時才會控制瀏覽器視窗。",
   "browser.stopLoading": "停止載入",
   "browser.urlPlaceholder": "輸入網址或搜尋…",
+  "browser.vps.label": "瀏覽器",
+  "browser.vps.tooltip": "開啟 VPS 瀏覽器",
   "browser.windowOptions": "瀏覽器視窗選項",
   "calendar.acceptProposal": "接受建議",
   "calendar.addLocalReminder": "新增提醒",

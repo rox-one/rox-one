@@ -238,6 +238,8 @@
   "browser.safetyHint": "Rox управляет окнами браузера только по вашему запросу.",
   "browser.stopLoading": "Остановить загрузку",
   "browser.urlPlaceholder": "Введите URL или запрос…",
+  "browser.vps.label": "Браузер",
+  "browser.vps.tooltip": "Открыть VPS-браузер",
   "browser.windowOptions": "Параметры окна браузера",
   "calendar.acceptProposal": "Принять предложение",
   "calendar.addLocalReminder": "Добавить напоминание",
