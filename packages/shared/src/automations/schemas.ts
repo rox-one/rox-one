@@ -126,6 +126,12 @@ export const CloudRunSubmitActionSchema = z.object({
   sessionId: z.string().optional(),
 });
 
+export const MeetingFollowupActionSchema = z.object({
+  type: z.literal('meeting.followup'),
+  scheduleId: z.string().min(1, 'scheduleId is required'),
+  kind: z.enum(['prepare', 'finalize', 'promise-check', 'send', 'capture']).optional(),
+});
+
 export const ScriptActionSchema = z.object({
   type: z.literal('script'),
   script: z.string().min(1, 'Script path cannot be empty').superRefine((script, ctx) => {
@@ -155,6 +161,7 @@ export const ActionDefinitionSchema = z.union([
   KnowledgeAutomationActionSchema.strict(),
   CloudRunSubmitActionSchema.strict(),
   ScriptActionSchema.strict(),
+  MeetingFollowupActionSchema.strict(),
   z.object({ type: z.string() }).passthrough(),
 ]);
 
