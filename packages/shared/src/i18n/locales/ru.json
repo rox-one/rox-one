@@ -1827,7 +1827,7 @@
   "menu.resetZoom": "Сбросить масштаб",
   "menu.selectAll": "Выделить всё",
   "menu.settings": "Настройки...",
-  "menu.toggleDevTools": "Показать/скрыть DevTools",
+  "menu.toggleDevTools": "Показать/скрыть инструменты разработчика",
   "menu.toggleFocusMode": "Режим фокусирования",
   "menu.toggleSidebar": "Показать/скрыть боковую панель",
   "menu.undo": "Отменить",
