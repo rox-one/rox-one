@@ -3619,6 +3619,7 @@
   "settings.messaging.lark.testOk": "자격 증명이 승인되었습니다",
   "settings.messaging.lark.title": "Lark / Feishu",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "아직 이 봇을 사용할 수 있는 사용자가 없습니다. Telegram에서 페어링하거나 대기 중인 요청을 승인하세요.",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "공개 받은편지함 — 메시지는 에이전트 세션을 시작하지 않습니다.",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "Public inbox — messages do not start an agent session.",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "사용자 1명 허용됨",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "사용자 {{count}}명 허용됨",

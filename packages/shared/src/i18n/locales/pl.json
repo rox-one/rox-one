@@ -3625,6 +3625,7 @@
   "settings.messaging.lark.testOk": "Dane zaakceptowane",
   "settings.messaging.lark.title": "Lark / Feishu",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "Nikt nie może jeszcze używać tego bota — sparuj z Telegrama lub zaakceptuj oczekujące żądanie.",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "Skrzynka publiczna — wiadomości nie uruchamiają sesji agenta.",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "Nieegzekwowane — bot jest publicznie dostępny.",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "1 dozwolony użytkownik",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "Dozwoleni użytkownicy: {{count}}",

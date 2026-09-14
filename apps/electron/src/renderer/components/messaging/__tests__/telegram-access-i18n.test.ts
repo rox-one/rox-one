@@ -9,6 +9,7 @@ const localesDir = join(import.meta.dir, '../../../../../../../packages/shared/s
 
 const WIRED_KEYS = [
   'common.loading',
+  'settings.messaging.telegram.access.allowedUsersSubtitleInbox',
   'settings.messaging.telegram.access.banner.description',
   'settings.messaging.telegram.access.banner.lockDown',
   'settings.messaging.telegram.access.banner.title',
@@ -43,6 +44,14 @@ describe('Telegram / access leftover English chrome is i18n', () => {
     expect(dialog).not.toContain("defaultValue: 'Supergroup paired'")
     expect(dialog).not.toContain("defaultValue: 'Pair Telegram supergroup'")
     expect(dialog).not.toContain("defaultValue: 'Loading…'")
+  })
+
+  it('TelegramAccessSection wires the public-inbox allowed-users subtitle', () => {
+    const telegram = read('access/TelegramAccessSection.tsx')
+
+    expect(telegram).toContain("t('settings.messaging.telegram.access.allowedUsersSubtitleInbox')")
+    expect(telegram).toContain("accessMode === 'public-inbox'")
+    expect(telegram).not.toMatch(/defaultValue:\s*['"]/)
   })
 
   it('AccessModeBanner uses catalog keys and skips English defaultValue', () => {
@@ -86,6 +95,9 @@ describe('Telegram / access leftover English chrome is i18n', () => {
       'This bot is publicly accessible',
     )
     expect(i18n.t('settings.messaging.telegram.access.banner.lockDown')).toBe('Lock down')
+    expect(i18n.t('settings.messaging.telegram.access.allowedUsersSubtitleInbox')).toBe(
+      'Public inbox — messages do not start an agent session.',
+    )
     expect(i18n.t('settings.messaging.telegram.access.bindingPopover.mode.publicInbox.label')).toBe(
       'Public inbox',
     )
@@ -103,6 +115,12 @@ describe('Telegram / access leftover English chrome is i18n', () => {
     await setupI18n().changeLanguage('ru')
     expect(i18n.t('settings.messaging.telegram.supergroup.pairedToast')).toBe('Супергруппа привязана')
     expect(i18n.t('settings.messaging.telegram.access.banner.lockDown')).toBe('Ограничить доступ')
+    expect(i18n.t('settings.messaging.telegram.access.allowedUsersSubtitleInbox')).toBe(
+      'Публичный inbox — сообщения не запускают сессию агента.',
+    )
+    expect(i18n.t('settings.messaging.telegram.access.allowedUsersSubtitleInbox')).not.toBe(
+      'Public inbox — messages do not start an agent session.',
+    )
     expect(
       i18n.t('settings.messaging.telegram.access.bindingPopover.trigger.ownerControlCount', {
         count: 3,
