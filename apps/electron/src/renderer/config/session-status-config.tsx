@@ -2,6 +2,7 @@ import * as React from 'react'
 import type { CSSProperties } from 'react'
 import type { TFunction } from "i18next"
 import type { StatusConfig } from '@craft-agent/shared/statuses'
+import { LOCALE_REGISTRY } from '@craft-agent/shared/i18n'
 import { isEmoji } from '@craft-agent/shared/utils/icon-constants'
 import { resolveEntityColor, getDefaultStatusColor } from '@craft-agent/shared/colors'
 import type { EntityColor } from '@craft-agent/shared/colors'
@@ -108,85 +109,75 @@ export function statusConfigsToSessionStatuses(
  * These are the only statuses that receive i18n translation — user-created
  * or renamed statuses are always displayed as-is.
  */
-export const DEFAULT_STATUS_IDS = new Set(['backlog', 'todo', 'needs-review', 'done', 'cancelled'])
+export const DEFAULT_STATUS_IDS = new Set([
+  'backlog',
+  'todo',
+  'in-progress',
+  'needs-review',
+  'done',
+  'cancelled',
+])
+
+function englishCatalog(key: string): string | undefined {
+  const value = LOCALE_REGISTRY.en.messages[key]
+  return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+function matchesEnglishSeed(key: string, persisted: string | undefined): boolean {
+  const seed = englishCatalog(key)
+  return seed !== undefined && persisted === seed
+}
 
 /**
- * Default English labels for built-in statuses.
- * Used to detect whether a persisted status label is still the default
- * (i.e. the user hasn't customized it) so we can safely apply i18n.
+ * Catalog hit → translated string. Catalog miss → user label if present,
+ * else identifier. Never the raw `status.<id>` (or sibling) key.
  */
-const DEFAULT_STATUS_ENGLISH_LABELS: Record<string, string> = {
-  backlog: 'Backlog',
-  todo: 'Todo',
-  'needs-review': 'Needs Review',
-  done: 'Done',
-  cancelled: 'Cancelled',
+function catalogOrFallback(
+  t: TFunction,
+  key: string,
+  userLabel: string | undefined,
+  identifier: string,
+): string {
+  const translated = t(key)
+  if (typeof translated === 'string' && translated.length > 0 && translated !== key) {
+    return translated
+  }
+  const trimmed = userLabel?.trim()
+  return trimmed || identifier
 }
 
 /**
  * Resolve the display label for a status, respecting user customizations.
  *
- * For built-in default statuses, applies i18n translation when the persisted
- * label still matches the default English seed. Custom statuses or renamed
- * defaults are returned as-is.
+ * Built-in statuses translate when the persisted label still matches the
+ * English catalog seed. Custom statuses or renamed defaults stay as-is.
  */
 export function resolveStatusDisplayLabel(
   state: { id: string; label: string },
   t: TFunction,
 ): string {
-  if (DEFAULT_STATUS_IDS.has(state.id)) {
-    const defaultEnglish = DEFAULT_STATUS_ENGLISH_LABELS[state.id]
-    // Only translate when the persisted label matches the default English seed
-    if (state.label === defaultEnglish) {
-      return t(`status.${state.id}`, defaultEnglish)
-    }
+  const key = `status.${state.id}`
+  if (DEFAULT_STATUS_IDS.has(state.id) && matchesEnglishSeed(key, state.label)) {
+    return catalogOrFallback(t, key, state.label, state.id)
   }
-  return state.label
-}
-
-/**
- * Default English names for built-in default labels.
- * Matches the seed labels in labels/storage.ts getDefaultLabelConfig().
- */
-const DEFAULT_LABEL_ENGLISH_NAMES: Record<string, string> = {
-  development: 'Development',
-  code: 'Code',
-  bug: 'Bug',
-  automation: 'Automation',
-  content: 'Content',
-  writing: 'Writing',
-  research: 'Research',
-  design: 'Design',
-  marketing: 'Marketing',
-  sales: 'Sales',
-  'new-contracts': 'New Contracts',
-  outreach: 'Outreach',
-  responses: 'Responses',
-  product: 'Product',
-  discovery: 'Discovery',
-  specs: 'Specs',
-  launch: 'Launch',
-  feedback: 'Feedback',
-  priority: 'Priority',
-  project: 'Project',
+  return state.label?.trim() || state.id
 }
 
 /**
  * Resolve the display name for a label, respecting user customizations.
  *
- * For built-in default labels, applies i18n translation when the persisted
- * name still matches the default English seed. Custom labels or renamed
- * defaults are returned as-is.
+ * Built-in default labels translate when the persisted name still matches
+ * the English catalog seed. Custom labels or renamed defaults stay as-is.
  */
 export function resolveLabelDisplayName(
   label: { id: string; name: string },
   t: TFunction,
 ): string {
-  const defaultEnglish = DEFAULT_LABEL_ENGLISH_NAMES[label.id]
-  if (defaultEnglish && label.name === defaultEnglish) {
-    return t(`label.default.${label.id}`, defaultEnglish)
+  const key = `label.default.${label.id}`
+  if (matchesEnglishSeed(key, label.name)) {
+    return catalogOrFallback(t, key, label.name, label.id)
   }
-  return label.name
+  return label.name?.trim() || label.id
 }
 
 // ============================================================================
@@ -197,44 +188,29 @@ export function resolveLabelDisplayName(
  * Get the icon for a todo state
  */
 
-/**
- * Default English names for built-in session views (getDefaultViews seeds).
- */
-const DEFAULT_VIEW_ENGLISH_NAMES: Record<string, string> = {
-  'view-new': 'New',
-  'view-plan': 'Plan',
-  'view-explore': 'Explore',
-  'view-processing': 'Processing',
+const DEFAULT_VIEW_PURPOSE_KEYS: Record<string, string> = {
+  'view-new': 'sidebar.view.overviewPurpose',
+  'view-plan': 'sidebar.view.planPurpose',
+  'view-processing': 'sidebar.view.processPurpose',
 }
 
-const DEFAULT_VIEW_ENGLISH_DESCRIPTIONS: Record<string, string> = {
-  'view-new': 'Sessions with unread messages',
-  'view-plan': 'Sessions with a pending plan awaiting approval',
-  'view-explore': 'Sessions in Explore (read-only) mode',
-  'view-processing': 'Sessions where the agent is currently running',
+function viewCatalogSlug(viewId: string): string {
+  return viewId.replace(/^view-/, '')
 }
 
 /**
  * Resolve the display name for a built-in session view.
- * Translates only when id is a default view and the persisted name still
- * equals the English seed (same pattern as resolveStatusDisplayLabel).
+ * Translates only when the persisted name still equals the English catalog seed.
  */
 export function resolveViewDisplayName(
   view: { id: string; name: string },
   t: TFunction,
 ): string {
-  const defaultEnglish = DEFAULT_VIEW_ENGLISH_NAMES[view.id]
-  if (defaultEnglish && view.name === defaultEnglish) {
-    const key = view.id.replace(/^view-/, '')
-    return t(`sidebar.view.${key}`, defaultEnglish)
+  const key = `sidebar.view.${viewCatalogSlug(view.id)}`
+  if (matchesEnglishSeed(key, view.name)) {
+    return catalogOrFallback(t, key, view.name, view.id)
   }
-  return view.name
-}
-
-const DEFAULT_VIEW_PURPOSE_KEYS: Record<string, string> = {
-  'view-new': 'sidebar.view.overviewPurpose',
-  'view-plan': 'sidebar.view.planPurpose',
-  'view-processing': 'sidebar.view.processPurpose',
+  return view.name?.trim() || view.id
 }
 
 /** Resolve tooltip/description for a built-in session view when still seeded. */
@@ -242,14 +218,18 @@ export function resolveViewDisplayDescription(
   view: { id: string; description?: string },
   t: TFunction,
 ): string | undefined {
-  const defaultEnglish = DEFAULT_VIEW_ENGLISH_DESCRIPTIONS[view.id]
-  if (defaultEnglish && (view.description === defaultEnglish || !view.description)) {
-    const purposeKey = DEFAULT_VIEW_PURPOSE_KEYS[view.id]
-    if (purposeKey) return t(purposeKey, defaultEnglish)
-    const key = view.id.replace(/^view-/, '')
-    return t(`sidebar.view.${key}Desc`, defaultEnglish)
+  const descKey = `sidebar.view.${viewCatalogSlug(view.id)}Desc`
+  const purposeKey = DEFAULT_VIEW_PURPOSE_KEYS[view.id]
+  const catalogKey = purposeKey ?? descKey
+  const shouldTranslate =
+    !view.description || matchesEnglishSeed(descKey, view.description)
+  if (!shouldTranslate) return view.description
+  const translated = t(catalogKey)
+  if (typeof translated === 'string' && translated.length > 0 && translated !== catalogKey) {
+    return translated
   }
-  return view.description
+  const trimmed = view.description?.trim()
+  return trimmed || undefined
 }
 
 export function getStateIcon(
