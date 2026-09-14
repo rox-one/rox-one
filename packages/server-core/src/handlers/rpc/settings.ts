@@ -12,6 +12,12 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { requestClientOpenFileDialog } from '@craft-agent/server-core/transport'
 import { isValidWorkingDirectory, isValidNotesPath } from '../../utils/path-validation'
+import {
+  isClaimableLive,
+  rpcSettingsActResult,
+  rpcSettingsListResult,
+  rpcSettingsReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.workspace.SETTINGS_GET,
@@ -60,6 +66,10 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
   // ============================================================
 
   server.handle(RPC_CHANNELS.settings.GET_DEFAULT_THINKING_LEVEL, async () => {
+    const listed = rpcSettingsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('settings thinking level is not live')
+    const read = rpcSettingsReadResult({ source: 'native', nativeId: 'thinking' })
+    if (!isClaimableLive(read.result)) throw new Error('settings thinking level is not live')
     return getDefaultThinkingLevel()
   })
 
@@ -67,6 +77,8 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
     if (!isValidThinkingLevel(level)) {
       throw new Error(`Invalid thinking level: ${level}. Valid values: ${VALID_THINKING_LEVELS_LIST}`)
     }
+    const act = rpcSettingsActResult({ source: 'native', action: 'write', nativeId: 'thinking' })
+    if (!isClaimableLive(act)) throw new Error('settings thinking write is not live')
     const success = setDefaultThinkingLevel(level)
     if (!success) {
       throw new Error('Failed to persist default thinking level')
@@ -289,6 +301,9 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Delete draft for a session
   server.handle(RPC_CHANNELS.drafts.DELETE, async (_ctx, sessionId: string) => {
+    if (!sessionId) throw new Error('sessionId is required')
+    const act = rpcSettingsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: sessionId })
+    if (!isClaimableLive(act)) throw new Error('draft delete is not live')
     deleteSessionDraft(sessionId)
   })
 

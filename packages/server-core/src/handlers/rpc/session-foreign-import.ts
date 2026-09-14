@@ -12,6 +12,12 @@ import {
 } from '@craft-agent/shared/sessions'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcSessionForeignImportActResult,
+  rpcSessionForeignImportListResult,
+  rpcSessionForeignImportReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
@@ -26,6 +32,10 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
     async (_ctx, args: { workspaceId?: string } | undefined) => {
       const workspaceId = args?.workspaceId
       if (!workspaceId) throw new Error('sessions.foreignDiscover: workspaceId is required')
+      const listed = rpcSessionForeignImportListResult({ source: 'native' })
+      if (!isClaimableLive(listed.result)) return []
+      const read = rpcSessionForeignImportReadResult({ source: 'native', nativeId: workspaceId })
+      if (!isClaimableLive(read.result)) throw new Error('sessions.foreignDiscover is not live')
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error('sessions.foreignDiscover: workspace not found')
       return discoverForeignSessions({ workspaceRoot: workspace.rootPath })
@@ -40,6 +50,8 @@ export function registerSessionForeignImportHandlers(server: RpcServer, deps: Ha
     ) => {
       const workspaceId = args?.workspaceId
       if (!workspaceId) throw new Error('sessions.foreignPersist: workspaceId is required')
+      const act = rpcSessionForeignImportActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+      if (!isClaimableLive(act)) throw new Error('sessions.foreignPersist is not live')
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error('sessions.foreignPersist: workspace not found')
       const sourcePaths = (args?.sourcePaths ?? [])
