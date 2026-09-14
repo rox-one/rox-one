@@ -3774,7 +3774,7 @@
   "settings.openclawAudit.accepted": "принято",
   "settings.openclawAudit.description": "Статус управляемого рантайма OpenClaw и находки аудита. Принятие риска требует обоснования и истекает через 30 дней.",
   "settings.openclawAudit.lastRun": "Последний запуск",
-  "settings.openclawAudit.noFindings": "Находок пока нет. Запустите аудит для проверки воркспейса.",
+  "settings.openclawAudit.noFindings": "Находок пока нет. Запустите аудит для проверки рабочего пространства.",
   "settings.openclawAudit.revoke": "Отозвать",
   "settings.openclawAudit.runDeep": "Глубокий аудит",
   "settings.openclawAudit.runStandard": "Стандартный аудит",
