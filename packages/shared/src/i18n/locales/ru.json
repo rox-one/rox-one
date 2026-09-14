@@ -2463,7 +2463,7 @@
   "pages.deletePage": "Удалить страницу",
   "pages.deleteSharedNote": "Публичная копия будет снята с публикации вместе с удалением.",
   "pages.designWithAgent": "Сверстать с агентом",
-  "pages.designWithAgentPrompt": "Сверстай страницу «{{name}}» (slug: {{slug}}). Она есть в воркспейсе, но пока без содержимого — напиши index.html через update_page по гайду Pages.",
+  "pages.designWithAgentPrompt": "Сверстай страницу «{{name}}» (slug: {{slug}}). Она есть в рабочем пространстве, но пока без содержимого — напиши index.html через update_page по гайду Pages.",
   "pages.emptyDescription": "Страницы — небольшие живые дашборды, которые агенты собирают и обновляют. Попросите агента создать одну или начните с пустой страницы.",
   "pages.emptyTitle": "Страниц пока нет",
   "pages.grants.apiAction": "{{method}} «{{path}}» на {{source}}",
