@@ -17,6 +17,12 @@ import {
 } from '@craft-agent/shared/browser/profile-import'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcBrowserProfileImportActResult,
+  rpcBrowserProfileImportListResult,
+  rpcBrowserProfileImportReadResult,
+} from '@craft-agent/core/rox2'
 
 export const BROWSER_PROFILE_CHANNELS = [
   RPC_CHANNELS.browserProfile.DISCOVER,
@@ -57,6 +63,11 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: H
   const fs = nodeFs()
 
   server.handle(RPC_CHANNELS.browserProfile.DISCOVER, (_ctx, explicitId?: string) => {
+    const listed = rpcBrowserProfileImportListResult({
+      source: 'native',
+      nativeIds: explicitId ? [explicitId] : [],
+    })
+    if (!isClaimableLive(listed.result)) return []
     return discoverBrowserProfiles({
       home: homedir(),
       platform: process.platform,
@@ -68,6 +79,12 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: H
   server.handle(
     RPC_CHANNELS.browserProfile.IMPORT,
     (_ctx, args: { workspaceId: string; profileId: string; consent: ImportConsent; dryRun?: boolean }) => {
+      const act = rpcBrowserProfileImportActResult({
+        source: 'native',
+        action: 'write',
+        nativeId: args.profileId,
+      })
+      if (!isClaimableLive(act)) throw new Error('browser profile import is not live')
       const paths = pathsFor(args.workspaceId)
       if (!paths) throw new Error('Workspace not found')
       const profiles = discoverBrowserProfiles({
@@ -90,14 +107,30 @@ export function registerBrowserProfileImportHandlers(server: RpcServer, _deps: H
   )
 
   server.handle(RPC_CHANNELS.browserProfile.ROLLBACK, (_ctx, args: { workspaceId: string; token: string }) => {
+    const act = rpcBrowserProfileImportActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: args.token,
+    })
+    if (!isClaimableLive(act)) return { ok: false }
     const paths = pathsFor(args.workspaceId)
     if (!paths) throw new Error('Workspace not found')
     return { ok: rollbackImport(fs, paths.indexPath, args.token) }
   })
 
   server.handle(RPC_CHANNELS.browserProfile.DELETE, (_ctx, workspaceId: string) => {
+    const act = rpcBrowserProfileImportActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: workspaceId,
+    })
+    if (!isClaimableLive(act)) return { ok: false }
     const paths = pathsFor(workspaceId)
     if (!paths) throw new Error('Workspace not found')
+    const read = rpcBrowserProfileImportReadResult({ source: 'native', nativeId: workspaceId })
+    if (!isClaimableLive(read.result)) return { ok: false }
     return deleteImportedProfile({ fs, indexPath: paths.indexPath, vaultPath: paths.vaultPath })
   })
 }
