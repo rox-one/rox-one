@@ -1,5 +1,5 @@
 /**
- * ROX2-139..141: auth / automations / browser-pane RPC list/read/act.
+ * ROX2-139..144: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A CredentialMigrationResult `{ ok: true, data }` is not a Rox2 live claim.
@@ -15,7 +15,13 @@ import {
 
 export type RpcNativeActionSource = 'native' | 'fixture' | 'conation'
 export type RpcNativeActKind = 'write' | 'destroy' | 'spend'
-export type RpcNativeSurface = 'auth' | 'automations' | 'browser-pane'
+export type RpcNativeSurface =
+  | 'auth'
+  | 'automations'
+  | 'browser-pane'
+  | 'browser-profile-import'
+  | 'bundled-skills'
+  | 'cloud-runs'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -38,6 +44,24 @@ const SURFACE: Record<
     label: 'browser-pane RPC',
     store: 'native browser pane',
     prefix: 'rpc.browser-pane',
+  },
+  'browser-profile-import': {
+    kind: 'file',
+    label: 'browser-profile-import RPC',
+    store: 'native browser profiles',
+    prefix: 'rpc.browser-profile-import',
+  },
+  'bundled-skills': {
+    kind: 'skill',
+    label: 'bundled-skills RPC',
+    store: 'native bundled skills',
+    prefix: 'rpc.bundled-skills',
+  },
+  'cloud-runs': {
+    kind: 'workflow',
+    label: 'cloud-runs RPC',
+    store: 'native cloud-runs config',
+    prefix: 'rpc.cloud-runs',
   },
 }
 
@@ -187,4 +211,58 @@ export function rpcBrowserPaneActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'browser-pane', ...opts })
+}
+
+export function rpcBrowserProfileImportListResult(opts: {
+  source: RpcNativeActionSource
+  nativeIds?: readonly string[]
+}) {
+  return rpcNativeListResult({ surface: 'browser-profile-import', ...opts })
+}
+
+export function rpcBrowserProfileImportReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'browser-profile-import', ...opts })
+}
+
+export function rpcBrowserProfileImportActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'browser-profile-import', ...opts })
+}
+
+export function rpcBundledSkillsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'bundled-skills', ...opts })
+}
+
+export function rpcBundledSkillsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'bundled-skills', ...opts })
+}
+
+export function rpcBundledSkillsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'bundled-skills', ...opts })
+}
+
+export function rpcCloudRunsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'cloud-runs', ...opts })
+}
+
+export function rpcCloudRunsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'cloud-runs', ...opts })
+}
+
+export function rpcCloudRunsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'cloud-runs', ...opts })
 }

@@ -7,6 +7,12 @@ import { getBundledSkillsDisabled, setBundledSkillsDisabled } from '@craft-agent
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import {
+  isClaimableLive,
+  rpcBundledSkillsActResult,
+  rpcBundledSkillsListResult,
+  rpcBundledSkillsReadResult,
+} from '@craft-agent/core/rox2'
+import {
   ensureBundledSkills,
   invalidateSkillsCache,
   listBundledSkillPacks,
@@ -21,14 +27,20 @@ export const HANDLED_CHANNELS = [
 
 export function registerBundledSkillsHandlers(server: RpcServer, _deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.bundledSkills.LIST, async () => {
+    const listed = rpcBundledSkillsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     return listBundledSkillPacks()
   })
 
   server.handle(RPC_CHANNELS.bundledSkills.GET_DISABLED, async () => {
+    const read = rpcBundledSkillsReadResult({ source: 'native', nativeId: 'disabled' })
+    if (!isClaimableLive(read.result)) return []
     return getBundledSkillsDisabled()
   })
 
   server.handle(RPC_CHANNELS.bundledSkills.SET_DISABLED, async (_ctx, slugs: string[]) => {
+    const act = rpcBundledSkillsActResult({ source: 'native', action: 'write', nativeId: 'disabled' })
+    if (!isClaimableLive(act)) return getBundledSkillsDisabled()
     const list = Array.isArray(slugs) ? slugs.filter((s): s is string => typeof s === 'string') : []
     setBundledSkillsDisabled(list)
     // Re-run sync so newly enabled packs install immediately; disabled packs

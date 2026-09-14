@@ -55,6 +55,12 @@ import { isNativeSidecarEnabled } from '@craft-agent/shared/feature-flags';
 import { getNativeSidecarClient } from '../../native/supervisor.ts';
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
 import { registerSecretValues, resolveSecretsForSpawn } from '@craft-agent/shared/secrets';
+import {
+  isClaimableLive,
+  rpcCloudRunsActResult,
+  rpcCloudRunsListResult,
+  rpcCloudRunsReadResult,
+} from '@craft-agent/core/rox2';
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.cloudRuns.GET_CONFIG,
@@ -662,6 +668,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   startCompletionWatcher(deps);
 
   server.handle(RPC_CHANNELS.cloudRuns.GET_CONFIG, async () => {
+    const listed = rpcCloudRunsListResult({ source: 'native' });
+    if (!isClaimableLive(listed.result)) return { enabled: false, tokenConfigured: false };
     const settings = readSettings();
     const usages = readRegistry()
       .map((r) => r.lastUsage)
@@ -687,6 +695,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
       patch: Partial<Pick<CloudRunsSettings, 'enabled' | 'provider' | 'gatewayUrl' | 'daytonaProjectId' | 'daytonaSnapshot' | 'daytonaSandbox' | 'daytonaRegion' | 'daytonaImage' | 'daytonaApiUrl' | 'daytonaSecretRef' | 'defaultTtlSec'>> &
         { defaultMaxWallClockSec?: number; defaultMaxLlmTokens?: number; defaultMaxArtifactsBytes?: number; notifyWebhookUrl?: string; cheapModelId?: string; personas?: boolean },
     ) => {
+      const act = rpcCloudRunsActResult({ source: 'native', action: 'write', nativeId: 'config' });
+      if (!isClaimableLive(act)) throw new CloudRunnerError('cloud-runs config write is not live', 'provider_error');
       denyIfKillSwitch(ctx);
       assertCredentialReferenceOnly(patch, 'cloudRuns');
       const stored = loadStoredConfig();
@@ -706,6 +716,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   );
 
   server.handle(RPC_CHANNELS.cloudRuns.LIST_SCHEDULES, async (ctx) => {
+    const listed = rpcCloudRunsListResult({ source: 'native' });
+    if (!isClaimableLive(listed.result)) return [];
     const caller = resolveCallerWorkspaceId(ctx);
     if (!caller) return [];
     return readSchedules().filter((schedule) => schedule.workspaceId === caller);
@@ -714,6 +726,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.cloudRuns.SAVE_SCHEDULE,
     async (ctx, args: { schedule: Partial<CloudRunSchedule> & { topic?: string; everyHours?: number; sessionId?: string } }) => {
+      const act = rpcCloudRunsActResult({ source: 'native', action: 'write', nativeId: 'schedule' });
+      if (!isClaimableLive(act)) throw new CloudRunnerError('cloud-runs schedule write is not live', 'provider_error');
       denyIfKillSwitch(ctx);
       const caller = resolveCallerWorkspaceId(ctx);
       assertCallerOwnsWorkspace(ctx, caller ?? '', audit, 'schedule');
@@ -747,6 +761,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   );
 
   server.handle(RPC_CHANNELS.cloudRuns.DELETE_SCHEDULE, async (ctx, args: { id: string }) => {
+    const act = rpcCloudRunsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: args?.id });
+    if (!isClaimableLive(act)) throw new CloudRunnerError('cloud-runs schedule destroy is not live', 'provider_error');
     denyIfKillSwitch(ctx);
     const id = args?.id;
     if (!id) throw new CloudRunnerError('id is required', 'invalid_spec');
@@ -764,6 +780,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.cloudRuns.SUBMIT,
     async (ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; omp?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
+      const act = rpcCloudRunsActResult({ source: 'native', action: 'write', nativeId: 'submit' });
+      if (!isClaimableLive(act)) throw new CloudRunnerError('cloud-runs submit is not live', 'provider_error');
       denyIfKillSwitch(ctx);
       const settings = requireEnabled();
       if (!args?.topic?.trim()) throw new CloudRunnerError('topic is required', 'invalid_spec');
@@ -828,6 +846,11 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   );
 
   server.handle(RPC_CHANNELS.cloudRuns.LIST, async (ctx) => {
+    const listed = rpcCloudRunsListResult({ source: 'native' });
+    if (!isClaimableLive(listed.result)) {
+      const settings = readSettings();
+      return { enabled: false, provider: settings.provider, runs: [] };
+    }
     const settings = readSettings();
     const caller = resolveCallerWorkspaceId(ctx);
     const registry = readRegistry();
@@ -900,6 +923,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   });
 
   server.handle(RPC_CHANNELS.cloudRuns.REVOKE_SHARE, async (ctx, args: { runId: string }) => {
+    const act = rpcCloudRunsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: args.runId });
+    if (!isClaimableLive(act)) throw new CloudRunnerError('cloud-runs revoke-share is not live', 'provider_error');
     denyIfKillSwitch(ctx);
     requireOwnedRun(ctx, args.runId);
     const settings = requireEnabled();
@@ -934,6 +959,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   );
 
   server.handle(RPC_CHANNELS.cloudRuns.GET_STATUS, async (ctx, id: string) => {
+    const read = rpcCloudRunsReadResult({ source: 'native', nativeId: id });
+    if (!isClaimableLive(read.result)) throw new CloudRunnerError('cloud-runs status is not live', 'provider_error');
     requireOwnedRun(ctx, id);
     return providerForRun(requireEnabled(), id).getStatus(id);
   });
@@ -946,6 +973,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   });
 
   server.handle(RPC_CHANNELS.cloudRuns.KILL, async (ctx, id: string) => {
+    const act = rpcCloudRunsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: id });
+    if (!isClaimableLive(act)) throw new CloudRunnerError('cloud-runs kill is not live', 'provider_error');
     denyIfKillSwitch(ctx);
     requireOwnedRun(ctx, id);
     const provider = providerForRun(requireEnabled(), id);

@@ -49,6 +49,15 @@ import {
   rpcBrowserPaneActResult,
   rpcBrowserPaneListResult,
   rpcBrowserPaneReadResult,
+  rpcBrowserProfileImportActResult,
+  rpcBrowserProfileImportListResult,
+  rpcBrowserProfileImportReadResult,
+  rpcBundledSkillsActResult,
+  rpcBundledSkillsListResult,
+  rpcBundledSkillsReadResult,
+  rpcCloudRunsActResult,
+  rpcCloudRunsListResult,
+  rpcCloudRunsReadResult,
 } from '../rpc-native-actions.ts'
 
 const ALL_SOUP_TYPES: SoupEntityConcreteType[] = [
@@ -762,5 +771,104 @@ describe('ROX2-141 RPC browser-pane.ts list/read/act', () => {
     expect(isClaimableLive(rpcBrowserPaneActResult({ source: 'native', action: 'spend' }))).toBe(false)
     expect(isClaimableLive(rpcBrowserPaneActResult({ source: 'fixture' }))).toBe(false)
     expect(isClaimableLive(rpcBrowserPaneActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-142 RPC browser-profile-import.ts list/read/act', () => {
+  test('list names live vs fixture; Conation profile list is not claimable', () => {
+    const nativeEmpty = rpcBrowserProfileImportListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(isClaimableLive(rpcBrowserProfileImportListResult({ source: 'native', nativeIds: ['chromium'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcBrowserProfileImportListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcBrowserProfileImportListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing profile is not a fake record', () => {
+    const found = rpcBrowserProfileImportReadResult({ source: 'native', nativeId: 'chromium' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('file:chromium')
+    expect(isClaimableLive(rpcBrowserProfileImportReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcBrowserProfileImportReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcBrowserProfileImportReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcBrowserProfileImportReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcBrowserProfileImportActResult({ source: 'native', action: 'write', nativeId: 'chromium' }))).toBe(true)
+    expect(
+      isClaimableLive(
+        rpcBrowserProfileImportActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'chromium' }),
+      ),
+    ).toBe(true)
+    expect(isClaimableLive(rpcBrowserProfileImportActResult({ source: 'native', action: 'destroy', nativeId: 'chromium' }))).toBe(false)
+    expect(isClaimableLive(rpcBrowserProfileImportActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcBrowserProfileImportActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcBrowserProfileImportActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-143 RPC bundled-skills.ts list/read/act', () => {
+  test('list names live vs fixture; Conation skills list is not claimable', () => {
+    const nativeEmpty = rpcBundledSkillsListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcBundledSkillsListResult({ source: 'native', nativeIds: ['pack'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcBundledSkillsListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcBundledSkillsListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing skill is not a fake record', () => {
+    const found = rpcBundledSkillsReadResult({ source: 'native', nativeId: 'pack' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('skill:pack')
+    expect(isClaimableLive(rpcBundledSkillsReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcBundledSkillsReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcBundledSkillsReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcBundledSkillsReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcBundledSkillsActResult({ source: 'native', action: 'write', nativeId: 'pack' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcBundledSkillsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'pack' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcBundledSkillsActResult({ source: 'native', action: 'destroy', nativeId: 'pack' }))).toBe(false)
+    expect(isClaimableLive(rpcBundledSkillsActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcBundledSkillsActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcBundledSkillsActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-144 RPC cloud-runs.ts list/read/act', () => {
+  test('list names live vs fixture; Conation cloud-runs list is not claimable', () => {
+    const nativeEmpty = rpcCloudRunsListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcCloudRunsListResult({ source: 'native', nativeIds: ['run-1'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcCloudRunsListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcCloudRunsListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing run is not a fake record', () => {
+    const found = rpcCloudRunsReadResult({ source: 'native', nativeId: 'run-1' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('workflow:run-1')
+    expect(isClaimableLive(rpcCloudRunsReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcCloudRunsReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcCloudRunsReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcCloudRunsReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'write', nativeId: 'run-1' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'run-1' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'destroy', nativeId: 'run-1' }))).toBe(false)
+    expect(isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcCloudRunsActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcCloudRunsActResult({ source: 'conation' }))).toBe(false)
   })
 })
