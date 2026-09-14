@@ -1,5 +1,5 @@
 /**
- * ROX2-139..165: native RPC list/read/act.
+ * ROX2-139..168: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -43,6 +43,9 @@ export type RpcNativeSurface =
   | 'memory'
   | 'messaging'
   | 'mindmap'
+  | 'notes-import'
+  | 'notes'
+  | 'oauth'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -209,6 +212,24 @@ const SURFACE: Record<
     label: 'mindmap RPC',
     store: 'native mindmap pins',
     prefix: 'rpc.mindmap',
+  },
+  'notes-import': {
+    kind: 'file',
+    label: 'notes-import RPC',
+    store: 'native notes imports',
+    prefix: 'rpc.notes-import',
+  },
+  notes: {
+    kind: 'note',
+    label: 'notes RPC',
+    store: 'native notes',
+    prefix: 'rpc.notes',
+  },
+  oauth: {
+    kind: 'connection',
+    label: 'oauth RPC',
+    store: 'native oauth credentials',
+    prefix: 'rpc.oauth',
   },
 }
 
@@ -769,4 +790,55 @@ export function rpcMindmapActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'mindmap', ...opts })
+}
+
+export function rpcNotesImportListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'notes-import', ...opts })
+}
+
+export function rpcNotesImportReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'notes-import', ...opts })
+}
+
+export function rpcNotesImportActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'notes-import', ...opts })
+}
+
+export function rpcNotesListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'notes', ...opts })
+}
+
+export function rpcNotesReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'notes', ...opts })
+}
+
+export function rpcNotesActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'notes', ...opts })
+}
+
+export function rpcOauthListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'oauth', ...opts })
+}
+
+export function rpcOauthReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'oauth', ...opts })
+}
+
+export function rpcOauthActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'oauth', ...opts })
 }

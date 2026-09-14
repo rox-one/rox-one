@@ -10,6 +10,12 @@
 
 import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
+import {
+  isClaimableLive,
+  rpcNotesImportActResult,
+  rpcNotesImportListResult,
+  rpcNotesImportReadResult,
+} from '@craft-agent/core/rox2'
 import type { RpcServer } from '../../transport/types'
 import { scanSourceFolder, materializeImport, NotesImportError } from '../../knowledge/notes-import'
 import { join } from 'node:path'
@@ -60,6 +66,10 @@ export const HANDLED_CHANNELS = [
 export function registerNotesImportHandlers(server: RpcServer): void {
   server.handle(RPC_CHANNELS.notesImport.PREVIEW, async (_context, rawInput: unknown) => {
     const { sourcePath } = parseInput(rawInput)
+    const listed = rpcNotesImportListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new CodedError('PROVIDER_ERROR', 'notes import preview is not live')
+    const read = rpcNotesImportReadResult({ source: 'native', nativeId: sourcePath })
+    if (!isClaimableLive(read.result)) throw new CodedError('PROVIDER_ERROR', 'notes import preview is not live')
     try {
       return scanSourceFolder(sourcePath)
     } catch (err) {
@@ -69,6 +79,8 @@ export function registerNotesImportHandlers(server: RpcServer): void {
 
   server.handle(RPC_CHANNELS.notesImport.EXECUTE, async (_context, rawInput: unknown) => {
     const { workspaceId, sourcePath } = parseInput(rawInput)
+    const act = rpcNotesImportActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+    if (!isClaimableLive(act)) throw new CodedError('PROVIDER_ERROR', 'notes import execute is not live')
     const workspaceRoot = requireWorkspaceRoot(workspaceId)
     try {
       const scan = scanSourceFolder(sourcePath)

@@ -11,7 +11,13 @@ import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { sanitizeFilename } from '@craft-agent/server-core/handlers'
 import type { HandlerDeps } from '../handler-deps'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
-import { contentHash } from '@craft-agent/core/rox2'
+import {
+  contentHash,
+  isClaimableLive,
+  rpcNotesActResult,
+  rpcNotesListResult,
+  rpcNotesReadResult,
+} from '@craft-agent/core/rox2'
 import {
   applyVaultWatchTick,
   ensureVaultIndex,
@@ -971,6 +977,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   }
 
   server.handle(RPC_CHANNELS.notes.LIST, async (_ctx, workspaceId: string) => {
+    const listed = rpcNotesListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureDailyNotes(notesRoot, sessionsFromDeps(deps, workspaceId))
     refreshVaultIndex(notesRoot)
@@ -978,10 +986,14 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.notes.READ, async (_ctx, workspaceId: string, noteId: string) => {
+    const read = rpcNotesReadResult({ source: 'native', nativeId: noteId })
+    if (!isClaimableLive(read.result)) throw new Error('note read is not live')
     return readNote(getWorkspaceNotesRoot(workspaceId), noteId)
   })
 
   server.handle(RPC_CHANNELS.notes.SAVE, async (_ctx, workspaceId: string, noteId: string, content: string, expectedRevision?: string) => {
+    const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: noteId })
+    if (!isClaimableLive(act)) throw new Error('note save is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     let previousLinkCount = 0
     try {
@@ -1001,6 +1013,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.notes.CREATE, async (_ctx, workspaceId: string, title: string, folder?: string) => {
+    const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: title || 'untitled' })
+    if (!isClaimableLive(act)) throw new Error('note create is not live')
     const note = await createNote(getWorkspaceNotesRoot(workspaceId), title, folder)
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'create', noteId: note.id })
@@ -1015,6 +1029,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.notes.DELETE, async (_ctx, workspaceId: string, noteId: string) => {
+    if (!noteId) throw new Error('notes.delete: noteId is required')
+    const act = rpcNotesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: noteId })
+    if (!isClaimableLive(act)) throw new Error('note delete is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     await ensureNotesDirs(notesRoot)
     await unlink(notePathFromId(notesRoot, noteId))
@@ -1031,6 +1048,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.notes.DELETE_FOLDER, async (_ctx, workspaceId: string, folder: string) => {
+    if (!folder) throw new Error('notes.deleteFolder: folder is required')
+    const act = rpcNotesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: folder })
+    if (!isClaimableLive(act)) throw new Error('note folder delete is not live')
     const result = await deleteFolder(getWorkspaceNotesRoot(workspaceId), folder)
     refreshVaultIndex(getWorkspaceNotesRoot(workspaceId))
     changed({ workspaceId, reason: 'delete' })
@@ -1091,6 +1111,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.notes.REBUILD_INDEX, async (_ctx, workspaceId: string) => {
+    const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+    if (!isClaimableLive(act)) throw new Error('note index rebuild is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     try {
       rebuildVaultIndex(notesRoot)
@@ -1105,6 +1127,8 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.notes.GET_DAILY_NOTE, async (_ctx, workspaceId: string, date?: string) => {
+    const act = rpcNotesActResult({ source: 'native', action: 'write', nativeId: date || 'daily' })
+    if (!isClaimableLive(act)) throw new Error('daily note upsert is not live')
     const notesRoot = getWorkspaceNotesRoot(workspaceId)
     const sessions = sessionsFromDeps(deps, workspaceId)
     await ensureDailyNotes(notesRoot, sessions)
@@ -1128,6 +1152,9 @@ export function registerNotesHandlers(server: RpcServer, deps: HandlerDeps): voi
   })
 
   server.handle(RPC_CHANNELS.notes.DELETE_ASSET, async (_ctx, workspaceId: string, relativePath: string) => {
+    if (!relativePath) throw new Error('notes.deleteAsset: relativePath is required')
+    const act = rpcNotesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: relativePath })
+    if (!isClaimableLive(act)) throw new Error('note asset delete is not live')
     const result = await deleteAsset(getWorkspaceNotesRoot(workspaceId), relativePath)
     changed({ workspaceId, reason: 'asset' })
     return result
