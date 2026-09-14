@@ -55,7 +55,7 @@ export interface ParsedRoute {
 // Compound Route Types (new format)
 // =============================================================================
 
-export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'connections' | 'home'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'notes' | 'automations' | 'projects' | 'pages' | 'settings' | 'browser' | 'memory' | 'tasks' | 'meetings' | 'connections' | 'home'
   // Unified-shell surface navigators (W1 scaffolding; hosts land in W2/W5)
   | 'knowledge' | 'cloud-run' | 'extension' | 'diff' | 'terminal'
 
@@ -92,7 +92,7 @@ export interface ParsedCompoundRoute {
  * Known prefixes that indicate a compound route
  */
 const COMPOUND_ROUTE_PREFIXES = [
-  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'connections', 'home',
+  'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'connections', 'home',
   // Unified-shell surfaces (W1)
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
 ]
@@ -253,6 +253,16 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
       }
     }
     return { navigator: 'tasks', details: null }
+  }
+
+  if (first === 'meetings') {
+    if (segments[1] === 'meeting' && segments[2]) {
+      return {
+        navigator: 'meetings',
+        details: { type: 'meeting', id: decodeURIComponent(segments[2]) },
+      }
+    }
+    return { navigator: 'meetings', details: null }
   }
 
   if (first === 'connections') {
@@ -560,6 +570,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
     return `tasks/task/${encodeURIComponent(parsed.details.id)}`
   }
 
+  if (parsed.navigator === 'meetings') {
+    if (!parsed.details) return 'meetings'
+    return `meetings/meeting/${encodeURIComponent(parsed.details.id)}`
+  }
+
   if (parsed.navigator === 'connections') {
     return 'connections'
   }
@@ -754,6 +769,13 @@ function convertCompoundToViewRoute(compound: ParsedCompoundRoute): ParsedRoute 
     return { type: 'view', name: 'task-info', id: compound.details.id, params: {} }
   }
 
+  if (compound.navigator === 'meetings') {
+    if (!compound.details) {
+      return { type: 'view', name: 'meetings', params: {} }
+    }
+    return { type: 'view', name: 'meeting-info', id: compound.details.id, params: {} }
+  }
+
   if (compound.navigator === 'connections') {
     return { type: 'view', name: 'connections', params: {} }
   }
@@ -933,6 +955,16 @@ function convertCompoundToNavigationState(compound: ParsedCompoundRoute): Naviga
     return {
       navigator: 'tasks',
       details: { type: 'task', taskId: compound.details.id },
+    }
+  }
+
+  if (compound.navigator === 'meetings') {
+    if (!compound.details) {
+      return { navigator: 'meetings', details: null }
+    }
+    return {
+      navigator: 'meetings',
+      details: { type: 'meeting', meetingId: compound.details.id },
     }
   }
 
@@ -1135,6 +1167,16 @@ function convertParsedRouteToNavigationState(parsed: ParsedRoute): NavigationSta
         }
       }
       return { navigator: 'tasks', details: null }
+    case 'meetings':
+      return { navigator: 'meetings', details: null }
+    case 'meeting-info':
+      if (parsed.id) {
+        return {
+          navigator: 'meetings',
+          details: { type: 'meeting', meetingId: parsed.id },
+        }
+      }
+      return { navigator: 'meetings', details: null }
     case 'connections':
       return { navigator: 'connections', details: null }
     case 'home':
@@ -1354,6 +1396,13 @@ function navigationStateToCompoundRoute(state: NavigationState): ParsedCompoundR
     return {
       navigator: 'tasks',
       details: state.details ? { type: 'task', id: state.details.taskId } : null,
+    }
+  }
+
+  if (state.navigator === 'meetings') {
+    return {
+      navigator: 'meetings',
+      details: state.details ? { type: 'meeting', id: state.details.meetingId } : null,
     }
   }
 

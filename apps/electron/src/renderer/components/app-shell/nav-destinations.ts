@@ -25,6 +25,7 @@ import {
   NotebookPen,
   PanelsTopLeft,
   Settings,
+  Video,
   Zap,
   type LucideIcon,
 } from 'lucide-react'
@@ -36,6 +37,7 @@ import {
   isNotesNavigation,
   isMemoryNavigation,
   isTasksNavigation,
+  isMeetingsNavigation,
   isPagesNavigation,
   isProjectsNavigation,
   isSessionsNavigation,
@@ -52,6 +54,7 @@ export type AppNavDestinationId =
   | 'skills'
   | 'memory'
   | 'tasks'
+  | 'meetings'
   | 'projects'
   | 'pages'
   | 'automations'
@@ -121,6 +124,14 @@ export const APP_NAV_DESTINATIONS: readonly AppNavDestination[] = [
     labelKey: 'sidebar.tasks',
     route: () => routes.view.tasks(),
     isActive: isTasksNavigation,
+  },
+  {
+    id: 'meetings',
+    linkId: 'nav:meetings',
+    icon: Video,
+    labelKey: 'sidebar.meetings',
+    route: () => routes.view.meetings(),
+    isActive: isMeetingsNavigation,
   },
   {
     id: 'sources',

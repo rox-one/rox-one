@@ -148,6 +148,7 @@ import {
   isSkillsNavigation,
   isMemoryNavigation,
   isTasksNavigation,
+  isMeetingsNavigation,
   isHomeNavigation,
   isConnectionsNavigation,
   isNotesNavigation,
@@ -474,6 +475,7 @@ function AppShellContent({
   // collapse the middle navigator because pages has no navigator list.
   const isPagesView = isPagesNavigation(navState)
   const isTasksView = isTasksNavigation(navState)
+  const isMeetingsView = isMeetingsNavigation(navState)
 
   // Derive source filter from navigation state (only when in sources navigator)
   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
@@ -2290,6 +2292,10 @@ function AppShellContent({
       return t("sidebar.tasks")
     }
 
+    if (isMeetingsNavigation(navState)) {
+      return t("sidebar.meetings")
+    }
+
     if (isHomeNavigation(navState)) {
       return t("workbench.home.title")
     }
@@ -2864,7 +2870,7 @@ function AppShellContent({
           </div>
           }
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (isSidebarVisible ? sidebarWidth : 0)}
-          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState)) ? null : (
+          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isMeetingsNavigation(navState)) ? null : (
             <div
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel"
@@ -3075,7 +3081,7 @@ function AppShellContent({
             )}
             </div>
           )}
-          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView || isTasksView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView || isTasksView ? 0 : sessionListWidth))}
+          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isMeetingsView || isPagesView || isTasksView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView || isTasksView || isMeetingsView ? 0 : sessionListWidth))}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
           isCompact={isAutoCompact}

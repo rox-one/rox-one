@@ -42,6 +42,7 @@ function RailItem({ dest }: { dest: AppNavDestination }) {
   const button = (
     <button
       type="button"
+      data-testid={`${dest.id}-nav`}
       aria-label={label}
       aria-disabled={disabled || undefined}
       onClick={disabled ? undefined : () => void navigate(dest.route!())}

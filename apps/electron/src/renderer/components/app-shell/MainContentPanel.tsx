@@ -33,6 +33,7 @@ import {
   isSkillsNavigation,
   isMemoryNavigation,
   isTasksNavigation,
+  isMeetingsNavigation,
   isNotesNavigation,
   isAutomationsNavigation,
   isProjectsNavigation,
@@ -49,6 +50,7 @@ import { SourceInfoPage, ChatPage, BrowserPanelPage, KnowledgeSurfacePage, Exten
 import NotesPage from '@/pages/NotesPage'
 import ConnectionsPage from '@/pages/ConnectionsPage'
 import TasksPage from '@/pages/TasksPage'
+import MeetingsWorkspace from '@/pages/meetings/MeetingsWorkspace'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import KnowledgeEntityPage from '@/pages/KnowledgeEntityPage'
 import SkillInfoPage from '@/pages/SkillInfoPage'
@@ -496,6 +498,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <TasksPage />
+      </Panel>
+    )
+  }
+
+  if (isMeetingsNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <MeetingsWorkspace workspaceId={activeWorkspaceId} />
       </Panel>
     )
   }

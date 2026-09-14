@@ -170,6 +170,10 @@ export const routes = {
     tasks: (taskId?: string) =>
       taskId ? `tasks/task/${encodeURIComponent(taskId)}` as const : 'tasks' as const,
 
+    /** Meeting archive (issue #368 / I012). */
+    meetings: (meetingId?: string) =>
+      meetingId ? `meetings/meeting/${encodeURIComponent(meetingId)}` as const : 'meetings' as const,
+
     /** Canonical local Markdown Notes route. */
     notes: buildNotesRoute,
 

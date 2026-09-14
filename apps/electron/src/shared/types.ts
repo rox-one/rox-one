@@ -604,6 +604,14 @@ export interface ElectronAPI {
   getTaskResults(workspaceId: string, slug: string, runId?: string): Promise<TaskResultsDto>
   loadPersonalTasks(legacyJson?: string | null): Promise<{ json: string; revision: number; sha256: string; backupPath?: string; scope: 'personal'; legacyKey: string }>
   savePersonalTasks(input: { json: string; expectedRevision: number }): Promise<{ json: string; revision: number; sha256: string; scope: 'personal' }>
+  listMeetings(workspaceId: string, opts?: { query?: string; cursor?: string; limit?: number; offline?: boolean }): Promise<{ items: unknown[]; nextCursor?: string; state: string }>
+  getMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
+  searchMeetings(workspaceId: string, query: string, opts?: { cursor?: string; limit?: number; offline?: boolean }): Promise<{ items: unknown[]; nextCursor?: string; state: string }>
+  deleteMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
+  startMeetingCapture(input?: { mic?: boolean; system?: boolean }): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>
+  pauseMeetingCapture(): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>
+  stopMeetingCapture(): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>
+
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
@@ -2215,6 +2223,12 @@ export interface TasksNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface MeetingsNavigationState {
+  navigator: 'meetings'
+  details: { type: 'meeting'; meetingId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface ConnectionsNavigationState {
   navigator: 'connections'
   details: null
@@ -2303,6 +2317,7 @@ export type NavigationState =
   | BrowserNavigationState
   | MemoryNavigationState
   | TasksNavigationState
+  | MeetingsNavigationState
   | KnowledgeNavigationState
   | CloudRunNavigationState
   | ExtensionNavigationState
@@ -2353,6 +2368,10 @@ export const isMemoryNavigation = (
 export const isTasksNavigation = (
   state: NavigationState
 ): state is TasksNavigationState => state.navigator === 'tasks'
+
+export const isMeetingsNavigation = (
+  state: NavigationState
+): state is MeetingsNavigationState => state.navigator === 'meetings'
 
 export const isConnectionsNavigation = (
   state: NavigationState
@@ -2440,6 +2459,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'tasks') {
     return state.details?.type === 'task' ? `tasks/task/${encodeURIComponent(state.details.taskId)}` : 'tasks'
+  }
+  if (state.navigator === 'meetings') {
+    return state.details?.type === 'meeting' ? `meetings/meeting/${encodeURIComponent(state.details.meetingId)}` : 'meetings'
   }
   if (state.navigator === 'connections') {
     return 'connections'
@@ -2653,6 +2675,12 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
     const taskId = decodeURIComponent(key.slice('tasks/task/'.length))
     if (taskId) return { navigator: 'tasks', details: { type: 'task', taskId } }
     return { navigator: 'tasks', details: null }
+  }
+  if (key === 'meetings') return { navigator: 'meetings', details: null }
+  if (key.startsWith('meetings/meeting/')) {
+    const meetingId = decodeURIComponent(key.slice('meetings/meeting/'.length))
+    if (meetingId) return { navigator: 'meetings', details: { type: 'meeting', meetingId } }
+    return { navigator: 'meetings', details: null }
   }
 
   // Handle sessions
