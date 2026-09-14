@@ -999,7 +999,7 @@ describe('ROX2-144 RPC cloud-runs.ts list/read/act', () => {
     expect(isClaimableLive(rpcCloudRunsReadResult({ source: 'conation' }).result)).toBe(false)
   })
 
-  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+  test('act is live for native write; fixture, ungranted destroy, and ungranted spend are not', () => {
     expect(isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'write', nativeId: 'run-1' }))).toBe(true)
     expect(
       isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'run-1' })),
@@ -1008,6 +1008,34 @@ describe('ROX2-144 RPC cloud-runs.ts list/read/act', () => {
     expect(isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'spend' }))).toBe(false)
     expect(isClaimableLive(rpcCloudRunsActResult({ source: 'fixture' }))).toBe(false)
     expect(isClaimableLive(rpcCloudRunsActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-191 cloud-runs SUBMIT is native spend, not Conation', () => {
+  test('granted native spend is claimable; ungranted, fixture, and Conation are not', () => {
+    expect(
+      isClaimableLive(
+        rpcCloudRunsActResult({ source: 'native', action: 'spend', granted: true, nativeId: 'submit' }),
+      ),
+    ).toBe(true)
+    expect(isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'spend', nativeId: 'submit' }))).toBe(
+      false,
+    )
+    expect(
+      isClaimableLive(rpcCloudRunsActResult({ source: 'native', action: 'spend', granted: false, nativeId: 'submit' })),
+    ).toBe(false)
+    expect(
+      isClaimableLive(rpcCloudRunsActResult({ source: 'fixture', action: 'spend', granted: true, nativeId: 'submit' })),
+    ).toBe(false)
+    expect(
+      isClaimableLive(rpcCloudRunsActResult({ source: 'conation', action: 'spend', granted: true, nativeId: 'submit' })),
+    ).toBe(false)
+  })
+
+  test('granted spend on other native RPC stores stays queued', () => {
+    expect(
+      isClaimableLive(rpcAuthActResult({ source: 'native', action: 'spend', granted: true, nativeId: 'act' })),
+    ).toBe(false)
   })
 })
 

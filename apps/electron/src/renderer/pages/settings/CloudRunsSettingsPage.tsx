@@ -5,6 +5,7 @@
  * Reads/writes config.json via cloudRuns RPC. The provider token is NOT
  * editable here: it lives in <configDir>/cloud-runs.env (0600,
  * user-managed); the page only shows whether it's present.
+ * Submit of a paid run is not this page: cloud-runs RPC SUBMIT uses spend.
  */
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
