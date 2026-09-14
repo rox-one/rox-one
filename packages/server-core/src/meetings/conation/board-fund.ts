@@ -2,10 +2,20 @@
  * RMA-I022 / #378 — Board/Fund native identity.
  * One Task id across meeting/board/canvas. Layout is not a semantic relation.
  * Unknown Conation ops stay unsupported. Iframe is not native.
+ * In-memory Maps are not a live Board/Fund receipt: stamps stay pending
+ * (live:false, not verified; L4 remains not_run).
  */
 
 import { confirmWrite } from './capabilities.ts'
-import { blocked, denied, unsupported, type MeetingOpResult } from '../types.ts'
+import { blocked, denied, unsupported, type EvidenceLevel, type MeetingOpResult } from '../types.ts'
+
+/** Local native identity only. Never a live/L4 verified receipt. */
+function localApplied<T extends string>(
+  reason: T,
+  evidenceLevel: EvidenceLevel = 'C2',
+): MeetingOpResult<T> {
+  return { status: 'pending', reason, live: false, evidenceLevel }
+}
 
 export type BoardFundSurfaceKind = 'native' | 'iframe' | 'deeplink' | 'second-shell'
 
@@ -30,7 +40,7 @@ export function presentBoardFundSurface(
   if (kind === 'iframe') return unsupported('iframe-is-not-native')
   if (kind === 'deeplink') return unsupported('deeplink-is-not-native')
   if (kind === 'second-shell') return unsupported('second-shell-forbidden')
-  return { status: 'verified', reason: 'native-surface', live: false, evidenceLevel: 'U1' }
+  return localApplied('native-surface', 'U1')
 }
 
 export function applyUnknownConationOp(_op: string): MeetingOpResult {
@@ -76,7 +86,7 @@ export function renameTask(views: BoardViews, id: string, title: string, origin:
     if (!existing) return denied('not_found')
     view.set(id, { ...existing, title, revision: String(Number(existing.revision) + 1) })
   }
-  return { status: 'verified', reason: 'renamed', live: false, evidenceLevel: 'C2' }
+  return localApplied('renamed')
 }
 
 export function unlinkTask(views: BoardViews, id: string): void {
@@ -106,7 +116,7 @@ export function dragTask(
     return { status: 'conflict', reason: 'concurrent-drag', live: false, evidenceLevel: 'C2' }
   }
   views.layout.set(id, pos)
-  return { status: 'verified', reason: 'moved', live: false, evidenceLevel: 'C2' }
+  return localApplied('moved')
 }
 
 export function linkRelation(
@@ -119,7 +129,7 @@ export function linkRelation(
     return denied('cycle')
   }
   views.relations.push([from, to, kind])
-  return { status: 'verified', reason: 'linked', live: false, evidenceLevel: 'C2' }
+  return localApplied('linked')
 }
 
 function wouldCycle(relations: Array<[string, string, string]>, from: string, to: string): boolean {
