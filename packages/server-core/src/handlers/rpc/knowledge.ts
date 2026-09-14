@@ -66,6 +66,12 @@ import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import { registerKnowledgeToolRuntime } from '@craft-agent/session-tools-core'
 import type { HandlerDeps } from '../handler-deps'
 import {
+  isClaimableLive,
+  rpcKnowledgeActResult,
+  rpcKnowledgeListResult,
+  rpcKnowledgeReadResult,
+} from '@craft-agent/core/rox2'
+import {
   createKnowledgeRegistry,
   KnowledgeError,
   MutationValidationError,
@@ -653,9 +659,11 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— LIST_CONNECTIONS({}) → KnowledgeConnection[] ———
   // Pure read: local Notes must work before any optional knowledge engine is
   // configured. ENGINE_START is the explicit opt-in that can seed a connection.
-  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, () =>
-    new KnowledgeConnectionsStore().list().map(toContractConnection),
-  )
+  server.handle(RPC_CHANNELS.knowledge.LIST_CONNECTIONS, () => {
+    const listed = rpcKnowledgeListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
+    return new KnowledgeConnectionsStore().list().map(toContractConnection)
+  })
 
   // ——— CAPABILITIES({connectionId}) → KnowledgeCapabilities ———
   server.handle(RPC_CHANNELS.knowledge.CAPABILITIES, (_ctx, args: KnowledgeConnectionArgs) =>
@@ -672,6 +680,8 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
 
   // ——— GET({connectionId, ref}) → KnowledgeNode ———
   server.handle(RPC_CHANNELS.knowledge.GET, (_ctx, args: KnowledgeRefArgs) => {
+    const read = rpcKnowledgeReadResult({ source: 'native', nativeId: args?.connectionId })
+    if (!isClaimableLive(read.result)) throw new Error('knowledge node is not live')
     assertKnowledgeRef(args?.ref)
     return callProvider(args.connectionId, (provider) => provider.get(args.ref))
   })
@@ -808,6 +818,12 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.knowledge.USER_CREATE,
     async (_ctx, args: KnowledgeUserCreateArgs): Promise<KnowledgeUserCreateResult> => {
+      const act = rpcKnowledgeActResult({
+        source: 'native',
+        action: 'write',
+        nativeId: typeof args?.connectionId === 'string' ? args.connectionId : 'create',
+      })
+      if (!isClaimableLive(act)) throw new Error('knowledge userCreate is not live')
       if (typeof args?.connectionId !== 'string' || args.connectionId.length === 0) {
         throw new CodedError('INVALID_REF', 'knowledge.userCreate: connectionId is required')
       }
@@ -1105,6 +1121,13 @@ export function registerKnowledgeHandlers(server: RpcServer, deps: HandlerDeps):
   // ——— REJECT_PROPOSAL({proposalId}) → { ok: true } ———
   server.handle(RPC_CHANNELS.knowledge.REJECT_PROPOSAL, async (_ctx, args: KnowledgeProposalArgs): Promise<{ ok: true }> => {
     const proposalId = requireProposalId(args)
+    const act = rpcKnowledgeActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: proposalId,
+    })
+    if (!isClaimableLive(act)) throw new Error('knowledge reject is not live')
     const { bridge } = await locateProposalBridge(proposalId)
     return withProposalTransitions(() => bridge.reject(proposalId))
   })

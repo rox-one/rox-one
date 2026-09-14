@@ -1,5 +1,5 @@
 /**
- * ROX2-139..153: native RPC list/read/act.
+ * ROX2-139..156: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -31,6 +31,9 @@ export type RpcNativeSurface =
   | 'fabric'
   | 'files'
   | 'gamification'
+  | 'identity'
+  | 'kanban'
+  | 'knowledge'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -125,6 +128,24 @@ const SURFACE: Record<
     label: 'gamification RPC',
     store: 'native gamification state',
     prefix: 'rpc.gamification',
+  },
+  identity: {
+    kind: 'person',
+    label: 'identity RPC',
+    store: 'native identity profile',
+    prefix: 'rpc.identity',
+  },
+  kanban: {
+    kind: 'task',
+    label: 'kanban RPC',
+    store: 'native kanban board',
+    prefix: 'rpc.kanban',
+  },
+  knowledge: {
+    kind: 'note',
+    label: 'knowledge RPC',
+    store: 'native knowledge connections',
+    prefix: 'rpc.knowledge',
   },
 }
 
@@ -481,4 +502,55 @@ export function rpcGamificationActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'gamification', ...opts })
+}
+
+export function rpcIdentityListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'identity', ...opts })
+}
+
+export function rpcIdentityReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'identity', ...opts })
+}
+
+export function rpcIdentityActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'identity', ...opts })
+}
+
+export function rpcKanbanListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'kanban', ...opts })
+}
+
+export function rpcKanbanReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'kanban', ...opts })
+}
+
+export function rpcKanbanActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'kanban', ...opts })
+}
+
+export function rpcKnowledgeListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'knowledge', ...opts })
+}
+
+export function rpcKnowledgeReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'knowledge', ...opts })
+}
+
+export function rpcKnowledgeActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'knowledge', ...opts })
 }
