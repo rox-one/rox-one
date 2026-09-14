@@ -41,6 +41,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return true
     case 'memory':
     case 'tasks':
+    case 'meetings':
     case 'connections':
       return false
     case 'home':
