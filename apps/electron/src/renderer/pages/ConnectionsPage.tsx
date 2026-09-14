@@ -283,7 +283,7 @@ export default function ConnectionsPage() {
 
   const empty = (
     <div className="flex flex-1 items-center justify-center">
-      <p className="text-sm">{t('connections.empty')}</p>
+      <p className="text-sm">{t(`connections.${tab}.empty`)}</p>
     </div>
   )
 
@@ -299,7 +299,7 @@ export default function ConnectionsPage() {
             className={`rounded-t px-3 py-2 text-sm ${tab === id ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}
             onClick={() => setTab(id)}
           >
-            {t(`connections.tab.${id}`)}
+            {t(`connections.tabs.${id}`)}
           </button>
         ))}
         <button
@@ -343,7 +343,7 @@ export default function ConnectionsPage() {
                 ])
               }}
             >
-              {t('connections.import.discover')}
+              {t('connections.imports.discover')}
             </button>
             <label className="block">
               <span className="text-muted-foreground">{t('connections.import.gitConfigPath')}</span>
@@ -530,7 +530,7 @@ export default function ConnectionsPage() {
                       await refreshRows(workspaceId)
                     }}
                   >
-                    {t('connections.import.commit')}
+                    {t('connections.imports.commit')}
                   </button>
                 </li>
               ))}
