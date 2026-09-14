@@ -18,3 +18,4 @@ preload = [
   "./packages/shared/src/test-preload-pdfjs-url.ts",
   "./scripts/test-vite-url-shim.ts",
 ]
+pathIgnorePatterns = ["tests/e2e/meeting-agents/**/*.spec.ts"]

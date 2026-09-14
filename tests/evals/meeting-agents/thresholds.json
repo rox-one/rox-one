@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "status": "not_run",
+  "note": "I030 owns live holdout thresholds. I029 only creates the eval entrypoint.",
+  "taskPrecisionMin": null,
+  "falsePositiveMax": null
+}
