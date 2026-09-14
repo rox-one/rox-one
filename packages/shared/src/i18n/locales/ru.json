@@ -2353,7 +2353,7 @@
   "onboarding.gitBash.alreadyInstalled": "Git уже установлен?",
   "onboarding.gitBash.browse": "Обзор...",
   "onboarding.gitBash.customPath": "Если Git установлен в нестандартном расположении, укажите путь к bash.exe.",
-  "onboarding.gitBash.description": "Rox требуется Git Bash для выполнения команд shell в Windows. Он не найден в вашей системе.",
+  "onboarding.gitBash.description": "Rox требуется Git Bash для выполнения команд оболочки в Windows. Он не найден в вашей системе.",
   "onboarding.gitBash.download": "Скачать Git для Windows",
   "onboarding.gitBash.installDesc": "Самый простой способ получить Git Bash. Бесплатно и включает всё необходимое.",
   "onboarding.gitBash.installTitle": "Установить Git для Windows",
