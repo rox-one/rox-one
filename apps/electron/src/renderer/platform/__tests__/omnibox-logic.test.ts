@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeEach } from 'bun:test'
 import { createStore } from 'jotai'
+import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
+import i18n from 'i18next'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { createCommandRegistry, type CommandContribution } from '@craft-agent/core/platform'
 import { parsePrefix, scoreMatch } from '../omnibox-helpers'
@@ -66,7 +68,7 @@ describe('app.omnibox action definition', () => {
     expect(actions['app.omnibox']).toBeDefined()
     expect(actions['app.omnibox'].defaultHotkey).toBe('mod+k')
     expect(actions['app.omnibox'].category).toBe('General')
-    expect(actions['app.omnibox'].label).toBe('Command Palette')
+    expect(actions['app.omnibox'].labelKey).toBe('shortcuts.action.omnibox')
   })
 
   it('does not collide with app.search hotkey', () => {
@@ -78,19 +80,20 @@ describe('app.omnibox action definition', () => {
 describe('omnibox command filter logic', () => {
   let registry: ReturnType<typeof createCommandRegistry>
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    await setupI18n().changeLanguage('en')
     registry = createCommandRegistry()
     for (const def of Object.values(actions)) {
       const action = def as {
         id: string
-        label: string
+        labelKey: string
         category: string
         description?: string
         defaultHotkey: string | null
       }
       registry.register({
         id: action.id,
-        title: action.label,
+        title: i18n.t(action.labelKey),
         category: action.category,
         source: 'craft',
         keywords: action.description ? [action.description] : undefined,

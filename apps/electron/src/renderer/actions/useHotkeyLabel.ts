@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useActionRegistry } from './registry'
 import type { ActionId } from './definitions'
 
@@ -24,10 +25,11 @@ export function useHotkeyLabel(actionId: ActionId): string | null {
  * // label: "New Chat", hotkey: "⌘N"
  */
 export function useActionLabel(actionId: ActionId) {
+  const { t } = useTranslation()
   const { getAction, getHotkeyDisplay } = useActionRegistry()
   const action = getAction(actionId)
   return {
-    label: action.label,
+    label: t(action.labelKey),
     description: 'description' in action ? action.description : undefined,
     hotkey: getHotkeyDisplay(actionId),
   }
