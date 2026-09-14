@@ -225,14 +225,27 @@ export interface ExtensionsSetEnabledResult {
   state: ExtensionStateFile
 }
 
-/** Human-readable runtime placement copy keys (UI resolves via i18n). */
-export const RUNTIME_PLACEMENT: Record<ExtensionRuntime, string> = {
-  'craft-native': 'First-party Craft code (main/renderer)',
-  'craft-sandbox': 'Extension Host utilityProcess (sandboxed)',
-  'siyuan-plugin': 'Inside SiYuan runtime (not Craft main)',
-  'mcp-source': 'server-core SourceServerBuilder',
-  'skill-pack': 'SKILL.md documents read by the agent',
-  'automation-pack': 'Automation engine (server-core)',
-  'web-widget': 'Sandboxed webContents only',
-  'agent-runtime': 'External agent process supervisor',
+/** Catalog keys for runtime placement hints (UI resolves via i18n). */
+export const RUNTIME_PLACEMENT: Record<
+  ExtensionRuntime,
+  `extensions.runtime.${ExtensionRuntime}.hint`
+> = {
+  'craft-native': 'extensions.runtime.craft-native.hint',
+  'craft-sandbox': 'extensions.runtime.craft-sandbox.hint',
+  'siyuan-plugin': 'extensions.runtime.siyuan-plugin.hint',
+  'mcp-source': 'extensions.runtime.mcp-source.hint',
+  'skill-pack': 'extensions.runtime.skill-pack.hint',
+  'automation-pack': 'extensions.runtime.automation-pack.hint',
+  'web-widget': 'extensions.runtime.web-widget.hint',
+  'agent-runtime': 'extensions.runtime.agent-runtime.hint',
+}
+
+/** Catalog miss returns undefined so the UI never shows the raw key id. */
+export function resolveRuntimePlacementHint(
+  t: (key: string) => string,
+  runtime: ExtensionRuntime,
+): string | undefined {
+  const key = RUNTIME_PLACEMENT[runtime]
+  const translated = t(key)
+  return translated === key ? undefined : translated
 }
