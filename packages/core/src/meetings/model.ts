@@ -181,11 +181,11 @@ export function isUiVerified(result: OperationResultV2): boolean {
   return result.mode === 'production' && result.lifecycle === 'succeeded' && result.verification === 'verified'
 }
 
-/** Old live transport success is unknown verification, never verified. */
+/** Old `{ ok: true, state: 'live' }` is fixture, not production. Never UI-verified. */
 export function decodeLegacyLiveResult(legacy: LegacyLiveResult, operationId: string): OperationResultV2 {
   return {
     schemaVersion: OPERATION_RESULT_V2_SCHEMA,
-    mode: 'production',
+    mode: 'fixture',
     lifecycle: 'succeeded',
     verification: 'unknown',
     operationId,

@@ -41,6 +41,18 @@ describe('meeting model (RMA-I001)', () => {
     expect(isUiVerified(decoded)).toBe(false)
   })
 
+  test('legacy {ok:true, state:live} does not stamp mode production', async () => {
+    const decoded = decodeLegacyLiveResult({ ok: true, state: 'live', entityId: 'call:m1' }, 'op-1')
+    expect(decoded.mode).toBe('fixture')
+    expect(decoded.mode).not.toBe('production')
+    expect(decoded.verification).toBe('unknown')
+    expect(isUiVerified(decoded)).toBe(false)
+
+    const src = await Bun.file(new URL('../model.ts', import.meta.url)).text()
+    const fn = src.slice(src.indexOf('export function decodeLegacyLiveResult'))
+    expect(fn).not.toMatch(/mode:\s*'production'/)
+  })
+
   test('unknown schema blocks writes', () => {
     const blocked = parseMeeting({
       schemaVersion: 99,
