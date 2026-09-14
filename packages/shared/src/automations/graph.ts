@@ -12,6 +12,7 @@ import {
   AutomationsConfigSchema,
   CloudRunSubmitActionSchema,
   KnowledgeAutomationActionSchema,
+  MeetingFollowupActionSchema,
   PromptActionSchema,
   SaveAutomationGraphPayloadSchema,
   WebhookActionSchema,
@@ -123,6 +124,9 @@ function narrowRuntimeAction(
     if (parsed.success) return parsed.data;
   } else if (type === 'cloud_run.submit') {
     const parsed = CloudRunSubmitActionSchema.safeParse(action);
+    if (parsed.success) return parsed.data;
+  } else if (type === 'meeting.followup') {
+    const parsed = MeetingFollowupActionSchema.safeParse(action);
     if (parsed.success) return parsed.data;
   }
 
