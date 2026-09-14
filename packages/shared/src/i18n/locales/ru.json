@@ -921,7 +921,7 @@
   "dialog.updateFailed.message": "Не удалось установить обновление.",
   "dialog.updateFailed.title": "Ошибка обновления",
   "dialog.wechat.connected": "Подключено к WeChat",
-  "dialog.wechat.description": "Привяжите ваш личный WeChat, чтобы отправлять и получать сообщения из этого воркспейса.",
+  "dialog.wechat.description": "Привяжите ваш личный WeChat, чтобы отправлять и получать сообщения из этого рабочего пространства.",
   "dialog.wechat.qrInstructions": "Откройте WeChat на телефоне и отсканируйте код выше, чтобы привязать аккаунт.",
   "dialog.wechat.starting": "Запуск подключения WeChat…",
   "dialog.wechat.submit": "Отправить",
