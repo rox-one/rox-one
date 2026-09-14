@@ -88,7 +88,7 @@
   "automations.addAutomation": "Добавить автоматизацию",
   "automations.at": "в",
   "automations.badgePrompt": "Промпт",
-  "automations.badgeWebhook": "Webhook",
+  "automations.badgeWebhook": "Вебхук",
   "automations.batchDeleted_few": "Удалено {{count}} автоматизации",
   "automations.batchDeleted_many": "Удалено {{count}} автоматизаций",
   "automations.batchDeleted_one": "Удалена {{count}} автоматизация",
