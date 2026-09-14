@@ -1,5 +1,5 @@
 /**
- * ROX2-139..177: native RPC list/read/act.
+ * ROX2-139..180: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -55,6 +55,9 @@ export type RpcNativeSurface =
   | 'projects'
   | 'resources'
   | 'server'
+  | 'session-foreign-import'
+  | 'sessions'
+  | 'settings'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -293,6 +296,24 @@ const SURFACE: Record<
     label: 'server RPC',
     store: 'native local server',
     prefix: 'rpc.server',
+  },
+  'session-foreign-import': {
+    kind: 'session',
+    label: 'session-foreign-import RPC',
+    store: 'native foreign transcripts',
+    prefix: 'rpc.session-foreign-import',
+  },
+  sessions: {
+    kind: 'session',
+    label: 'sessions RPC',
+    store: 'native sessions',
+    prefix: 'rpc.sessions',
+  },
+  settings: {
+    kind: 'memory',
+    label: 'settings RPC',
+    store: 'native settings prefs',
+    prefix: 'rpc.settings',
   },
 }
 
@@ -1057,4 +1078,58 @@ export function rpcServerActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'server', ...opts })
+}
+
+export function rpcSessionForeignImportListResult(opts: {
+  source: RpcNativeActionSource
+  nativeIds?: readonly string[]
+}) {
+  return rpcNativeListResult({ surface: 'session-foreign-import', ...opts })
+}
+
+export function rpcSessionForeignImportReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'session-foreign-import', ...opts })
+}
+
+export function rpcSessionForeignImportActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'session-foreign-import', ...opts })
+}
+
+export function rpcSessionsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'sessions', ...opts })
+}
+
+export function rpcSessionsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'sessions', ...opts })
+}
+
+export function rpcSessionsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'sessions', ...opts })
+}
+
+export function rpcSettingsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'settings', ...opts })
+}
+
+export function rpcSettingsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'settings', ...opts })
+}
+
+export function rpcSettingsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'settings', ...opts })
 }

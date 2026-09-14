@@ -19,6 +19,12 @@ import type { HandlerDeps } from '../handler-deps'
 import { setTransferableHandler } from './transfer'
 import { assertValidBulkUpdateInput, assertValidBulkUpdatePatch } from '../../sessions/bulk-labels'
 import { getBroInviteService } from '../../collaboration/bro-invite-service.ts'
+import {
+  isClaimableLive,
+  rpcSessionsActResult,
+  rpcSessionsListResult,
+  rpcSessionsReadResult,
+} from '@craft-agent/core/rox2'
 
 interface ClientSessionWatchState {
   watcher: import('fs').FSWatcher
@@ -148,6 +154,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Get all sessions for the calling window's workspace
   // Waits for initialization to complete so sessions are never returned empty during startup
   server.handle(RPC_CHANNELS.sessions.GET, async (ctx) => {
+    const listed = rpcSessionsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     try {
       await sessionManager.waitForInit()
     } catch (error) {
@@ -190,6 +198,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get a single session with messages (for lazy loading)
   server.handle(RPC_CHANNELS.sessions.GET_MESSAGES, async (_ctx, sessionId: string) => {
+    const read = rpcSessionsReadResult({ source: 'native', nativeId: sessionId })
+    if (!isClaimableLive(read.result)) return null
     const end = perf.start('rpc.getSessionMessages')
     const session = await sessionManager.getSession(sessionId)
     end()
@@ -198,6 +208,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Create a new session
   server.handle(RPC_CHANNELS.sessions.CREATE, async (_ctx, workspaceId: string, options?: import('@craft-agent/shared/protocol').CreateSessionOptions) => {
+    const act = rpcSessionsActResult({ source: 'native', action: 'write', nativeId: workspaceId || 'session' })
+    if (!isClaimableLive(act)) throw new Error('session create is not live')
     const end = perf.start('rpc.createSession', { workspaceId })
     // The renderer adds the session synchronously from this return value (App.tsx handleCreateSession),
     // so suppress the broadcast to avoid a redundant hydrate round-trip.
@@ -208,6 +220,9 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Delete a session
   server.handle(RPC_CHANNELS.sessions.DELETE, async (_ctx, sessionId: string) => {
+    if (!sessionId) throw new Error('sessionId is required')
+    const act = rpcSessionsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: sessionId })
+    if (!isClaimableLive(act)) throw new Error('session delete is not live')
     return sessionManager.deleteSession(sessionId)
   })
 
