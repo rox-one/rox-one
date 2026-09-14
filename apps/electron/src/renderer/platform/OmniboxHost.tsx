@@ -43,7 +43,7 @@ export function OmniboxHost() {
   const platform = useMemo(() => {
     return bootstrapOmnibox({
       t: (key, fallback) => {
-        const value = t(key, { defaultValue: fallback })
+        const value = t(key)
         return typeof value === 'string' ? value : fallback
       },
     })
