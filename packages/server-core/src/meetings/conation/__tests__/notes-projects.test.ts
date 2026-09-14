@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { isLiveVerified } from '../../types.ts'
 import {
   createNotesProjectsStore,
   getNote,
@@ -19,6 +21,11 @@ describe('notes-projects (#377)', () => {
   it('reads a note that lives on page 2 by stable id', () => {
     const store = createNotesProjectsStore([page2])
     const result = getNote(store, 'note-page-2')
+    expect(result.status).toBe('pending')
+    expect(result.status).not.toBe('verified')
+    expect(result.reason).toBe('read')
+    expect(result.live).toBe(false)
+    expect(isLiveVerified(result)).toBe(false)
     expect(result.payload?.page).toBe(2)
     expect(result.payload?.id).toBe('note-page-2')
   })
@@ -26,7 +33,11 @@ describe('notes-projects (#377)', () => {
   it('renames native notes without changing id', () => {
     const store = createNotesProjectsStore([page2])
     const renamed = renameNote(store, 'note-page-2', 'Renamed', '1')
-    expect(renamed.status).toBe('verified')
+    expect(renamed.status).toBe('pending')
+    expect(renamed.status).not.toBe('verified')
+    expect(renamed.reason).toBe('renamed')
+    expect(renamed.live).toBe(false)
+    expect(isLiveVerified(renamed)).toBe(false)
     expect(renamed.payload?.id).toBe('note-page-2')
     expect(renamed.payload?.title).toBe('Renamed')
   })
@@ -44,11 +55,38 @@ describe('notes-projects (#377)', () => {
     store.offline = true
     expect(getNote(store, 'note-page-2').reason).toBe('offline-stale')
     expect(getNote(store, 'note-page-2').payload?.stale).toBe(true)
+    expect(getNote(store, 'note-page-2').status).toBe('pending')
+    expect(getNote(store, 'note-page-2').live).toBe(false)
   })
 
   it('returns conflict on stale revision and ignores replay imports', () => {
     const store = createNotesProjectsStore([page2])
     expect(renameNote(store, 'note-page-2', 'X', '0').reason).toBe('conflicting-edit')
     expect(replayImport(store, page2).status).toBe('duplicate')
+    const imported = replayImport(store, { ...page2, id: 'note-imported' })
+    expect(imported.status).toBe('pending')
+    expect(imported.status).not.toBe('verified')
+    expect(imported.reason).toBe('imported')
+    expect(imported.live).toBe(false)
+    expect(isLiveVerified(imported)).toBe(false)
+  })
+
+  it('does not stamp verified / live:true / L4 on native Notes/Projects stubs', () => {
+    const src = readFileSync(new URL('../notes-projects.ts', import.meta.url), 'utf8')
+    expect(src).not.toMatch(/status:\s*'verified'/)
+    expect(src).not.toMatch(/live:\s*true/)
+    expect(src).not.toMatch(/evidenceLevel:\s*'L4'/)
+
+    const store = createNotesProjectsStore([page2])
+    for (const result of [
+      getNote(store, 'note-page-2'),
+      renameNote(store, 'note-page-2', 'Renamed', '1'),
+      replayImport(store, { ...page2, id: 'note-fresh' }),
+    ]) {
+      expect(result.status).not.toBe('verified')
+      expect(result.live).toBe(false)
+      expect(result.evidenceLevel).not.toBe('L4')
+      expect(isLiveVerified(result)).toBe(false)
+    }
   })
 })
