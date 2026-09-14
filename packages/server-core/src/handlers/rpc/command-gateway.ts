@@ -10,6 +10,12 @@
 import { CodedError, RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { RpcServer, RequestContext } from '../../transport/types'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcCommandGatewayActResult,
+  rpcCommandGatewayListResult,
+  rpcCommandGatewayReadResult,
+} from '@craft-agent/core/rox2'
 
 const WORKSPACE_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,191}$/
 
@@ -68,12 +74,18 @@ export const HANDLED_CHANNELS = [
 
 export function registerCommandGatewayHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.commandGateway.LIST, async (context, rawInput: unknown) => {
+    const listed = rpcCommandGatewayListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const input = authorizeWorkspace(context, deps, parseWorkspaceInput(rawInput))
     return requireStore(deps).listPending(input.workspaceId)
   })
 
   server.handle(RPC_CHANNELS.commandGateway.APPROVE, async (context, rawInput: unknown) => {
     const input = parseAndAuthorizeDecision(context, deps, rawInput)
+    const read = rpcCommandGatewayReadResult({ source: 'native', nativeId: input.id })
+    if (!isClaimableLive(read.result)) invalidRequest()
+    const act = rpcCommandGatewayActResult({ source: 'native', action: 'write', nativeId: input.id })
+    if (!isClaimableLive(act)) invalidRequest()
     const cmd = requireStore(deps).decide(
       input.id,
       input.workspaceId,
@@ -86,6 +98,15 @@ export function registerCommandGatewayHandlers(server: RpcServer, deps: HandlerD
 
   server.handle(RPC_CHANNELS.commandGateway.DENY, async (context, rawInput: unknown) => {
     const input = parseAndAuthorizeDecision(context, deps, rawInput)
+    const read = rpcCommandGatewayReadResult({ source: 'native', nativeId: input.id })
+    if (!isClaimableLive(read.result)) invalidRequest()
+    const act = rpcCommandGatewayActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: input.id,
+    })
+    if (!isClaimableLive(act)) invalidRequest()
     const cmd = requireStore(deps).decide(input.id, input.workspaceId, 'denied', 'owner')
     if (!cmd) invalidRequest()
     return { ok: true as const }
