@@ -1,5 +1,5 @@
 /**
- * ROX2-139..162: native RPC list/read/act.
+ * ROX2-139..165: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -40,6 +40,9 @@ export type RpcNativeSurface =
   | 'memory-insights'
   | 'memory-io'
   | 'memory-proposals'
+  | 'memory'
+  | 'messaging'
+  | 'mindmap'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -188,6 +191,24 @@ const SURFACE: Record<
     label: 'memory-proposals RPC',
     store: 'native memory proposals',
     prefix: 'rpc.memory-proposals',
+  },
+  memory: {
+    kind: 'memory',
+    label: 'memory RPC',
+    store: 'native lessons',
+    prefix: 'rpc.memory',
+  },
+  messaging: {
+    kind: 'connection',
+    label: 'messaging RPC',
+    store: 'native messaging config',
+    prefix: 'rpc.messaging',
+  },
+  mindmap: {
+    kind: 'note',
+    label: 'mindmap RPC',
+    store: 'native mindmap pins',
+    prefix: 'rpc.mindmap',
   },
 }
 
@@ -697,4 +718,55 @@ export function rpcMemoryProposalsActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'memory-proposals', ...opts })
+}
+
+export function rpcMemoryListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'memory', ...opts })
+}
+
+export function rpcMemoryReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'memory', ...opts })
+}
+
+export function rpcMemoryActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'memory', ...opts })
+}
+
+export function rpcMessagingListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'messaging', ...opts })
+}
+
+export function rpcMessagingReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'messaging', ...opts })
+}
+
+export function rpcMessagingActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'messaging', ...opts })
+}
+
+export function rpcMindmapListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'mindmap', ...opts })
+}
+
+export function rpcMindmapReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'mindmap', ...opts })
+}
+
+export function rpcMindmapActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'mindmap', ...opts })
 }

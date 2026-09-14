@@ -22,6 +22,12 @@ import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcMindmapActResult,
+  rpcMindmapListResult,
+  rpcMindmapReadResult,
+} from '@craft-agent/core/rox2'
 import { isPathInsideBase } from '../../utils/path-validation'
 
 export const HANDLED_CHANNELS = [
@@ -65,6 +71,10 @@ function assertSafePinPath(dir: string, entity: MindMapEntityRef): string {
 
 export function registerMindmapHandlers(server: RpcServer, deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.mindmap.ENRICH, async (_ctx, input: MindmapEnrichRequest): Promise<MindmapEnrichResponse> => {
+    const listed = rpcMindmapListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) {
+      return { ok: false, error: 'mindmap enrich is not live', graph: input?.graph ?? ({} as MindMapGraph), mode: 'passthrough' }
+    }
     const original = input?.graph
     if (!original || typeof original !== 'object' || !original.nodes || !original.rootId) {
       return {
@@ -124,6 +134,9 @@ export function registerMindmapHandlers(server: RpcServer, deps: HandlerDeps): v
   })
 
   server.handle(RPC_CHANNELS.mindmap.PIN_LOAD, async (_ctx, input: MindmapPinLoadRequest) => {
+    const nativeId = input?.entity ? pinFilename(input.entity) : undefined
+    const read = rpcMindmapReadResult({ source: 'native', nativeId })
+    if (!isClaimableLive(read.result)) return null
     if (!input?.workspaceId || !input.entity) return null
     try {
       const dir = resolveMindmapDir(input.workspaceId)
@@ -147,6 +160,12 @@ export function registerMindmapHandlers(server: RpcServer, deps: HandlerDeps): v
   })
 
   server.handle(RPC_CHANNELS.mindmap.PIN_SAVE, async (_ctx, input: MindmapPinSaveRequest) => {
+    const act = rpcMindmapActResult({
+      source: 'native',
+      action: 'write',
+      nativeId: input?.pin?.entity ? pinFilename(input.pin.entity) : 'pin',
+    })
+    if (!isClaimableLive(act)) return { ok: false as const, error: 'mindmap pin write is not live' }
     if (!input?.workspaceId || !input.pin?.entity || !input.pin?.graph) {
       return { ok: false as const, error: 'workspaceId and pin required' }
     }
@@ -175,6 +194,13 @@ export function registerMindmapHandlers(server: RpcServer, deps: HandlerDeps): v
     if (!input?.workspaceId || !input.entity) {
       return { ok: false as const, error: 'workspaceId and entity required' }
     }
+    const act = rpcMindmapActResult({
+      source: 'native',
+      action: 'destroy',
+      granted: true,
+      nativeId: pinFilename(input.entity),
+    })
+    if (!isClaimableLive(act)) return { ok: false as const, error: 'mindmap pin destroy is not live' }
     try {
       const dir = resolveMindmapDir(input.workspaceId)
       const path = assertSafePinPath(dir, input.entity)
