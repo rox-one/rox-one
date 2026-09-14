@@ -1509,6 +1509,7 @@
   "meetings.artifactVerified": "検証済み",
   "meetings.artifacts": "成果物",
   "meetings.captureDenied": "キャプチャは許可されていません",
+  "meetings.captureUnsupported": "このクライアントではキャプチャに対応していません",
   "meetings.codingHandoff": "下書きプルリクエスト",
   "meetings.crmUnavailable": "CRM 更新は利用できません",
   "meetings.delete": "削除",

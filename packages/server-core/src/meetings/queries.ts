@@ -6,6 +6,29 @@
 
 export type MeetingQueryState = 'ready' | 'empty' | 'denied' | 'offline' | 'incomplete' | 'deleted'
 
+export type MeetingLifecycleStatus =
+  | 'planned'
+  | 'permission_required'
+  | 'capturing'
+  | 'paused'
+  | 'finalizing'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'waiting_device'
+
+export type MeetingQuerySegment = {
+  id: string
+  streamId: string
+  revision: number
+  sequence: number
+  startMs: number
+  endMs: number
+  text: string
+  final: boolean
+  speakerId?: string | null
+}
+
 export type MeetingQueryRecord = {
   id: string
   workspaceId: string
@@ -16,6 +39,9 @@ export type MeetingQueryRecord = {
   sources?: Array<{ id: string; private?: boolean; text: string }>
   deleted?: boolean
   incomplete?: boolean
+  status?: MeetingLifecycleStatus
+  segments?: MeetingQuerySegment[]
+  capture?: 'device-ipc' | 'device-required' | 'web-unsupported'
 }
 
 export type MeetingQueryActor = {
@@ -138,4 +164,108 @@ export function deleteMeeting(
       ? { ...meeting, deleted: true }
       : meeting
   ))
+}
+
+export function createMeeting(
+  meetings: readonly MeetingQueryRecord[],
+  input: {
+    id: string
+    workspaceId: string
+    title: string
+    updatedAt: number
+    commandId?: string
+  },
+  actor: MeetingQueryActor,
+): MeetingQueryRecord[] {
+  if (!actor.allowed || actor.workspaceId !== input.workspaceId) {
+    throw Object.assign(new Error('denied'), { code: 'denied' })
+  }
+  if (meetings.some((meeting) => meeting.id === input.id && !meeting.deleted)) {
+    return [...meetings]
+  }
+  return [
+    ...meetings,
+    {
+      id: input.id,
+      workspaceId: input.workspaceId,
+      title: input.title,
+      updatedAt: input.updatedAt,
+      status: 'planned',
+    },
+  ]
+}
+
+export function setMeetingLifecycle(
+  meetings: readonly MeetingQueryRecord[],
+  id: string,
+  status: MeetingLifecycleStatus,
+  actor: MeetingQueryActor,
+  now: number,
+  capture?: MeetingQueryRecord['capture'],
+): MeetingQueryRecord[] {
+  if (!actor.allowed) {
+    throw Object.assign(new Error('denied'), { code: 'denied' })
+  }
+  return meetings.map((meeting) => (
+    meeting.id === id && meeting.workspaceId === actor.workspaceId
+      ? { ...meeting, status, updatedAt: now, capture: capture ?? meeting.capture }
+      : meeting
+  ))
+}
+
+export function addManualNote(
+  meetings: readonly MeetingQueryRecord[],
+  id: string,
+  note: string,
+  actor: MeetingQueryActor,
+  now: number,
+): MeetingQueryRecord[] {
+  if (!actor.allowed) {
+    throw Object.assign(new Error('denied'), { code: 'denied' })
+  }
+  return meetings.map((meeting) => {
+    if (meeting.id !== id || meeting.workspaceId !== actor.workspaceId) return meeting
+    const previous = meeting.manualNotes?.trim() ? `${meeting.manualNotes}\n` : ''
+    return { ...meeting, manualNotes: `${previous}${note}`, updatedAt: now }
+  })
+}
+
+export function correctSegment(
+  meetings: readonly MeetingQueryRecord[],
+  id: string,
+  patch: { streamId: string; segmentId: string; revision: number; text: string },
+  actor: MeetingQueryActor,
+  now: number,
+): MeetingQueryRecord[] {
+  if (!actor.allowed) {
+    throw Object.assign(new Error('denied'), { code: 'denied' })
+  }
+  return meetings.map((meeting) => {
+    if (meeting.id !== id || meeting.workspaceId !== actor.workspaceId) return meeting
+    const segments = [...(meeting.segments ?? [])]
+    const keyMatch = (segment: MeetingQuerySegment) => segment.streamId === patch.streamId && segment.id === patch.segmentId
+    const index = segments.findIndex(keyMatch)
+    if (index === -1) {
+      segments.push({
+        id: patch.segmentId,
+        streamId: patch.streamId,
+        revision: patch.revision,
+        sequence: segments.length,
+        startMs: 0,
+        endMs: 0,
+        text: patch.text,
+        final: true,
+      })
+    } else {
+      const current = segments[index]!
+      if (patch.revision >= current.revision) {
+        segments[index] = { ...current, revision: patch.revision, text: patch.text, final: true }
+      }
+    }
+    return { ...meeting, segments, updatedAt: now }
+  })
+}
+
+export function meetingSegments(meeting: MeetingQueryRecord | undefined): MeetingQuerySegment[] {
+  return meeting?.segments ? meeting.segments.map((segment) => ({ ...segment })) : []
 }

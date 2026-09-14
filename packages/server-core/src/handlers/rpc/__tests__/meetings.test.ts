@@ -43,11 +43,21 @@ function meeting(partial: Partial<MeetingQueryRecord> & Pick<MeetingQueryRecord,
 }
 
 describe('meetings RPC (issue 368)', () => {
-  it('registers list/get/search/delete/export/import', () => {
+  it('registers list/read/lifecycle/segments and export channels', () => {
     expect([...HANDLED_CHANNELS]).toEqual([
       RPC_CHANNELS.meetings.LIST,
+      RPC_CHANNELS.meetings.READ,
       RPC_CHANNELS.meetings.GET,
+      RPC_CHANNELS.meetings.CREATE,
+      RPC_CHANNELS.meetings.START,
+      RPC_CHANNELS.meetings.PAUSE,
+      RPC_CHANNELS.meetings.RESUME,
+      RPC_CHANNELS.meetings.STOP,
       RPC_CHANNELS.meetings.SEARCH,
+      RPC_CHANNELS.meetings.SEGMENTS,
+      RPC_CHANNELS.meetings.SUBSCRIBE,
+      RPC_CHANNELS.meetings.CORRECT_SEGMENT,
+      RPC_CHANNELS.meetings.ADD_MANUAL_NOTE,
       RPC_CHANNELS.meetings.DELETE,
       RPC_CHANNELS.meetings.EXPORT,
       RPC_CHANNELS.meetings.IMPORT,
@@ -146,5 +156,32 @@ describe('meetings RPC (issue 368)', () => {
     )
     expect(bundle.notes.some((note) => note.text.includes('salary-band'))).toBe(false)
     expect(bundle.notes.some((note) => note.text.includes('roadmap'))).toBe(true)
+  })
+
+  it('creates, starts, notes, and corrects a segment through RPC', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rox-meetings-rpc-'))
+    const rpc = createHarness({ dir })
+    const created = await rpc.invoke<{ meeting?: MeetingQueryRecord }>(RPC_CHANNELS.meetings.CREATE, 'ws-a', {
+      commandId: 'cmd-1',
+      id: 'm-new',
+      title: 'Standup',
+    })
+    expect(created.meeting?.id).toBe('m-new')
+    const started = await rpc.invoke<{ meeting?: MeetingQueryRecord }>(RPC_CHANNELS.meetings.START, 'ws-a', 'm-new')
+    expect(started.meeting?.status).toBe('capturing')
+    expect(started.meeting?.capture).toBe('device-required')
+    await rpc.invoke(RPC_CHANNELS.meetings.ADD_MANUAL_NOTE, 'ws-a', 'm-new', { note: 'keep this' })
+    const corrected = await rpc.invoke<{ meeting?: MeetingQueryRecord }>(RPC_CHANNELS.meetings.CORRECT_SEGMENT, 'ws-a', 'm-new', {
+      streamId: 's1',
+      segmentId: 'seg1',
+      revision: 2,
+      text: 'Срок — понедельник',
+    })
+    expect(corrected.meeting?.manualNotes).toContain('keep this')
+    expect(corrected.meeting?.segments?.[0]?.text).toBe('Срок — понедельник')
+    const read = await rpc.invoke<{ meeting?: MeetingQueryRecord }>(RPC_CHANNELS.meetings.READ, 'ws-a', 'm-new')
+    expect(read.meeting?.id).toBe('m-new')
+    const subscribed = await rpc.invoke<{ items: unknown[] }>(RPC_CHANNELS.meetings.SUBSCRIBE, 'ws-a', 'm-new')
+    expect(subscribed.items).toHaveLength(1)
   })
 })

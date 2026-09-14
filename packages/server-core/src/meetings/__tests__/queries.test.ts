@@ -1,10 +1,14 @@
 import { describe, expect, test } from 'bun:test'
 import {
+  addManualNote,
   applyMeetingSummary,
+  createMeeting,
+  correctSegment,
   deleteMeeting,
   encodeMeetingCursor,
   getMeeting,
   listMeetings,
+  setMeetingLifecycle,
   type MeetingQueryRecord,
 } from '../queries.ts'
 
@@ -81,5 +85,21 @@ describe('meeting queries (issue 368)', () => {
     expect(summarized.transcript).toBe('AI сводка')
     expect(listMeetings({ meetings: [original], actor, limit: 10, offline: true }).state).toBe('offline')
     expect(getMeeting([meeting({ id: 'm1', incomplete: true })], 'm1', actor).state).toBe('incomplete')
+  })
+
+  test('create, lifecycle, manual note, and segment correction stay on the query record', () => {
+    const created = createMeeting([], { id: 'm1', workspaceId: 'ws-a', title: 'Standup', updatedAt: 1 }, actor)
+    expect(created[0]?.status).toBe('planned')
+    const started = setMeetingLifecycle(created, 'm1', 'capturing', actor, 2, 'device-required')
+    expect(started[0]?.status).toBe('capturing')
+    const noted = addManualNote(started, 'm1', 'keep this', actor, 3)
+    const patched = correctSegment(noted, 'm1', {
+      streamId: 's1',
+      segmentId: 'seg1',
+      revision: 2,
+      text: 'Срок — понедельник',
+    }, actor, 4)
+    expect(patched[0]?.manualNotes).toBe('keep this')
+    expect(patched[0]?.segments?.[0]?.text).toBe('Срок — понедельник')
   })
 })

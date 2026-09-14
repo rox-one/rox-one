@@ -1509,6 +1509,7 @@
   "meetings.artifactVerified": "Ellenőrizve",
   "meetings.artifacts": "Artifactok",
   "meetings.captureDenied": "A rögzítés nincs engedélyezve",
+  "meetings.captureUnsupported": "A rögzítés ebben a kliensben nem támogatott",
   "meetings.codingHandoff": "Pull request vázlat",
   "meetings.crmUnavailable": "A CRM-frissítés nem érhető el",
   "meetings.delete": "Törlés",

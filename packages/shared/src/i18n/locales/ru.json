@@ -1511,6 +1511,7 @@
   "meetings.artifactVerified": "Проверено",
   "meetings.artifacts": "Артефакты",
   "meetings.captureDenied": "Захват не разрешён",
+  "meetings.captureUnsupported": "Захват недоступен в этом клиенте",
   "meetings.codingHandoff": "Черновик pull request",
   "meetings.crmUnavailable": "Обновление CRM недоступно",
   "meetings.delete": "Удалить",

@@ -30,17 +30,24 @@ export {
   type NativeTaskRecord,
 } from './native-actions.ts'
 export {
+  addManualNote,
   applyMeetingSummary,
+  createMeeting,
+  correctSegment,
   decodeMeetingCursor,
   deleteMeeting,
   encodeMeetingCursor,
   getMeeting,
   listMeetings,
+  meetingSegments,
   queryVisibleMeetings,
   searchMatches,
+  setMeetingLifecycle,
+  type MeetingLifecycleStatus,
   type MeetingQueryActor,
   type MeetingQueryPage,
   type MeetingQueryRecord,
+  type MeetingQuerySegment,
   type MeetingQueryState,
 } from './queries.ts'
 export { loadMeetingQueryIndex, saveMeetingQueryIndex } from './query-store.ts'
@@ -123,6 +130,22 @@ export {
   type TrackerTarget,
   type TrackerUpdateRequest,
 } from './tracker-actions.ts'
+export {
+  MeetingBackpressureQueue,
+  MeetingBudgetLedger,
+  conversationMetrics,
+  createMeetingTrace,
+  finishMeetingTrace,
+  percentile,
+  traceOmitsSecrets,
+  type BudgetReserveDenied,
+  type BudgetReserveOk,
+  type BudgetReservation,
+  type MeetingBackpressureSnapshot,
+  type MeetingTrace,
+  type MeetingTraceLifecycle,
+  type MeetingTraceStage,
+} from './observability.ts'
 export {
   MeetingFollowupService,
   createMeetingFollowupExecutor,

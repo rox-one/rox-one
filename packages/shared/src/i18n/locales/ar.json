@@ -1509,6 +1509,7 @@
   "meetings.artifactVerified": "تم التحقق",
   "meetings.artifacts": "المخرجات",
   "meetings.captureDenied": "الالتقاط غير مسموح",
+  "meetings.captureUnsupported": "الالتقاط غير مدعوم في هذا العميل",
   "meetings.codingHandoff": "مسودة طلب السحب",
   "meetings.crmUnavailable": "تحديث CRM غير متاح",
   "meetings.delete": "حذف",

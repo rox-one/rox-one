@@ -54,6 +54,8 @@ import { registerWorkspaceCoreHandlers } from './workspace'
 import { registerMessagingHandlers } from './messaging'
 import { registerMemoryHandlers } from './memory'
 import { registerMeetingsHandlers } from './meetings'
+import { registerMeetingAgentsHandlers } from './meeting-agents'
+import { registerMeetingProposalsHandlers } from './meeting-proposals'
 import { registerMemoryProposalHandlers } from './memory-proposals'
 import { registerMemoryIoHandlers } from './memory-io'
 import { registerMemoryInsightsHandlers } from './memory-insights'
@@ -126,6 +128,8 @@ export function registerCoreRpcHandlers(
   registerMessagingHandlers(server, deps)
   registerMemoryHandlers(server, deps)
   registerMeetingsHandlers(server, deps)
+  registerMeetingAgentsHandlers(server, deps)
+  registerMeetingProposalsHandlers(server, deps)
   registerMemoryProposalHandlers(server, deps)
   registerMemoryIoHandlers(server, deps)
   registerMemoryInsightsHandlers(server, deps)

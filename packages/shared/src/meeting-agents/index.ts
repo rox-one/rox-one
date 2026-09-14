@@ -185,3 +185,8 @@ export {
   type SelectedFrame,
   type TranscriptStability,
 } from './assist.ts'
+
+export {
+  meetingCaptureCapability,
+  type MeetingCaptureCapability,
+} from './client-capabilities.ts'

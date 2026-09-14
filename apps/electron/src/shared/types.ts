@@ -610,6 +610,27 @@ export interface ElectronAPI {
   deleteMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
   exportMeeting(workspaceId: string, id: string, opts?: { format?: 'json' | 'markdown' | 'media'; audience?: 'owner' | 'shared'; clip?: { startMs: number; endMs: number; text: string } }): Promise<unknown>
   importMeeting(workspaceId: string, bundle: unknown): Promise<unknown>
+  createMeeting(workspaceId: string, opts?: { commandId?: string; id?: string; title?: string }): Promise<{ state: string; meeting?: unknown }>
+  readMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
+  startMeeting(workspaceId: string, id: string, opts?: { commandId?: string; capture?: string }): Promise<{ state: string; meeting?: unknown }>
+  pauseMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
+  resumeMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
+  stopMeetingSession(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
+  listMeetingSegments(workspaceId: string, id: string): Promise<{ state: string; items: unknown[] }>
+  subscribeMeeting(workspaceId: string, id: string): Promise<{ state: string; cursor: string | null; items: unknown[] }>
+  correctMeetingSegment(workspaceId: string, id: string, opts: { streamId: string; segmentId: string; revision: number; text: string }): Promise<{ state: string; meeting?: unknown }>
+  addMeetingManualNote(workspaceId: string, id: string, opts: { note: string; commandId?: string }): Promise<{ state: string; meeting?: unknown }>
+  listMeetingAgents(workspaceId: string): Promise<{ items: unknown[]; state: string }>
+  configureMeetingAgent(workspaceId: string, opts: { id: string; enabled: boolean; commandId?: string }): Promise<{ items: unknown[]; state: string }>
+  meetingAgentReadiness(workspaceId: string): Promise<{ items: unknown[]; state: string }>
+  askMeetingAgent(workspaceId: string, opts: { question?: string; intent?: 'ask' | 'catch-up'; transcript?: unknown; commandId?: string; meetingId?: string }): Promise<unknown>
+  runMeetingSkill(workspaceId: string, opts: { meetingId: string; text: string; commandId?: string }): Promise<unknown>
+  listMeetingProposals(workspaceId: string): Promise<{ items: unknown[]; state: string }>
+  clarifyMeetingProposal(workspaceId: string, opts: { proposalId: string; commandId?: string }): Promise<unknown>
+  approveMeetingProposal(workspaceId: string, opts: { proposalId: string; payloadHash?: string; expectedRevision?: number; commandId?: string }): Promise<unknown>
+  rejectMeetingProposal(workspaceId: string, opts: { proposalId: string; commandId?: string }): Promise<unknown>
+  executeMeetingProposal(workspaceId: string, opts: { proposalId: string; commandId?: string }): Promise<unknown>
+  meetingProposalStatus(workspaceId: string, opts: { proposalId: string }): Promise<unknown>
   startMeetingCapture(input?: { mic?: boolean; system?: boolean }): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>
   pauseMeetingCapture(): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>
   stopMeetingCapture(): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>

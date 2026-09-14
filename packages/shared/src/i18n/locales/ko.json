@@ -1509,6 +1509,7 @@
   "meetings.artifactVerified": "확인됨",
   "meetings.artifacts": "산출물",
   "meetings.captureDenied": "캡처가 허용되지 않았습니다",
+  "meetings.captureUnsupported": "이 클라이언트에서는 캡처가 지원되지 않습니다",
   "meetings.codingHandoff": "초안 끌어오기 요청",
   "meetings.crmUnavailable": "CRM 업데이트를 사용할 수 없음",
   "meetings.delete": "삭제",
