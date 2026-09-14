@@ -6,6 +6,7 @@
 import {
   fixtureResult,
   formatRox2EntityId,
+  liveResult,
   queuedResult,
   type Rox2Entity,
   type Rox2EntityKind,
@@ -67,11 +68,12 @@ export function nativeSurfaceListResult(
   entities: readonly Rox2Entity[],
 ): Rox2Result {
   const kind = kindForNativeSurface(surfaceId)
-  return {
-    ok: true,
-    state: 'live',
+  return liveResult({
     entityId: entities[0]?.id ?? formatRox2EntityId(kind, 'empty-list'),
-  }
+    lifecycle: 'succeeded',
+    verification: 'unverified',
+    message: 'Native empty list is identity, not a verified receipt',
+  })
 }
 
 export function nativeSurfaceResult(
@@ -85,5 +87,10 @@ export function nativeSurfaceResult(
     return queuedResult(`${surfaceId}.conation`, `Conation is not the native ${surfaceId} surface`)
   }
   const kind = surfaceId === 'browser' ? 'file' : kindForNativeSurface(surfaceId)
-  return { ok: true, state: 'live', entityId: formatRox2EntityId(kind, 'surface') }
+  return liveResult({
+    entityId: formatRox2EntityId(kind, 'surface'),
+    lifecycle: 'succeeded',
+    verification: 'unverified',
+    message: 'Native surface identity is not a verified receipt',
+  })
 }
