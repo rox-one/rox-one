@@ -2,7 +2,7 @@ export type ActionScope = 'global' | 'navigator' | 'chat' | 'sidebar'
 
 export interface ActionDefinition {
   id: string
-  label: string
+  labelKey: string
   description?: string
   defaultHotkey: string | null  // null = no default hotkey
   category: string
