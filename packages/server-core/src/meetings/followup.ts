@@ -3,10 +3,20 @@
  * Calendar cancel disables upcoming work; it does not erase history.
  * Fixture/simulator executors are not the production path.
  * Send goes through a persisted outbox and fail-closes: no production mail.
+ * In-memory followup identity is not a live receipt: stamps stay pending
+ * (live:false, not verified; L4 remains not_run).
  */
 
 import { dispatchOutbox, reserveOutbox, type OutboxEntry } from './outbox.ts'
-import { denied, unsupported, type MeetingOpResult } from './types.ts'
+import { denied, unsupported, type EvidenceLevel, type MeetingOpResult } from './types.ts'
+
+/** Local in-memory followup identity only. Never a live/L4 verified receipt. */
+function localApplied<T extends string>(
+  reason: T,
+  evidenceLevel: EvidenceLevel = 'C2',
+): MeetingOpResult<T> {
+  return { status: 'pending', reason, live: false, evidenceLevel }
+}
 
 export const FOLLOWUP_SEND_GATE = {
   evidenceLevel: 'U1',
@@ -107,7 +117,7 @@ export function runFollowup(
   if (schedule.optOut) return { status: 'pending', reason: 'opt-out', live: false, evidenceLevel: 'U1' }
   if (schedule.grantExpired) return denied('expired-grant')
   if (schedule.alreadyCompleted && kind === 'promise-check') {
-    return { status: 'verified', reason: 'already-completed', live: false, evidenceLevel: 'U1' }
+    return localApplied('already-completed', 'U1')
   }
   if (schedule.calendarCanceled && (kind === 'prepare' || kind === 'finalize')) {
     runtime.persisted.ledger.push({
@@ -152,7 +162,7 @@ export function runFollowup(
     status: 'ran',
     at: runtime.now(),
   })
-  return { status: 'verified', reason: 'ran', live: false, evidenceLevel: 'C2' }
+  return localApplied('ran')
 }
 
 export function disableSchedules(runtime: FollowupRuntime): void {

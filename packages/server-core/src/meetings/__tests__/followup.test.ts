@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
 import {
   cancelCalendar,
   createFollowupRuntime,
@@ -36,7 +37,11 @@ describe('followup schedules (#374)', () => {
     upsertSchedule(runtime, schedule())
     const first = runFollowup(runtime, 'sched-1', 'prepare')
     const second = runFollowup(runtime, 'sched-1', 'prepare')
-    expect(first.status).toBe('verified')
+    expect(first.status).toBe('pending')
+    expect(first.status).not.toBe('verified')
+    expect(first.reason).toBe('ran')
+    expect(first.live).toBe(false)
+    expect(isLiveVerified(first)).toBe(false)
     expect(second.status).toBe('duplicate')
     const before = occurrenceKey('sched-1', Date.UTC(2026, 2, 8, 6, 0), 'America/New_York')
     const after = occurrenceKey('sched-1', Date.UTC(2026, 2, 8, 7, 0), 'America/New_York')
@@ -47,7 +52,11 @@ describe('followup schedules (#374)', () => {
     const runtime = createFollowupRuntime(() => Date.UTC(2026, 5, 1))
     upsertSchedule(runtime, schedule())
     const first = runFollowup(runtime, 'sched-1', 'prepare')
-    expect(first.status).toBe('verified')
+    expect(first.status).toBe('pending')
+    expect(first.status).not.toBe('verified')
+    expect(first.reason).toBe('ran')
+    expect(first.live).toBe(false)
+    expect(isLiveVerified(first)).toBe(false)
     cancelCalendar(runtime, 'cal-1')
     const next = runFollowup(runtime, 'sched-1', 'prepare')
     expect(next.reason).toBe('calendar-canceled')
@@ -64,7 +73,13 @@ describe('followup schedules (#374)', () => {
   it('reports already-completed promises honestly and denies expired grants', () => {
     const runtime = createFollowupRuntime()
     upsertSchedule(runtime, schedule({ alreadyCompleted: true }))
-    expect(runFollowup(runtime, 'sched-1', 'promise-check').reason).toBe('already-completed')
+    const completed = runFollowup(runtime, 'sched-1', 'promise-check')
+    expect(completed.reason).toBe('already-completed')
+    expect(completed.status).toBe('pending')
+    expect(completed.status).not.toBe('verified')
+    expect(completed.live).toBe(false)
+    expect(completed.evidenceLevel).toBe('U1')
+    expect(isLiveVerified(completed)).toBe(false)
     upsertSchedule(runtime, schedule({ id: 'sched-2', grantExpired: true }))
     expect(runFollowup(runtime, 'sched-2', 'prepare').reason).toBe('expired-grant')
   })
@@ -135,5 +150,26 @@ describe('followup schedules (#374)', () => {
     expect(drafted.live).toBe(false)
     expect(dispatchOutbox(runtime.persisted.outbox[0]!).reason).toBe('draft-not-send')
     expect(runtime.persisted.outbox[0]?.kind).toBe('draft')
+  })
+
+  it('does not stamp verified / live:true / L4 on in-memory followup identity', () => {
+    const src = readFileSync(new URL('../followup.ts', import.meta.url), 'utf8')
+    expect(src).not.toMatch(/status:\s*'verified'/)
+    expect(src).not.toMatch(/live:\s*true/)
+    expect(src).not.toMatch(/evidenceLevel:\s*'L4'/)
+
+    const runtime = createFollowupRuntime(() => Date.UTC(2026, 5, 1))
+    upsertSchedule(runtime, schedule())
+    const ran = runFollowup(runtime, 'sched-1', 'prepare')
+    const completedRuntime = createFollowupRuntime()
+    upsertSchedule(completedRuntime, schedule({ alreadyCompleted: true }))
+    const completed = runFollowup(completedRuntime, 'sched-1', 'promise-check')
+    for (const result of [ran, completed]) {
+      expect(result.status).toBe('pending')
+      expect(result.status).not.toBe('verified')
+      expect(result.live).toBe(false)
+      expect(result.evidenceLevel).not.toBe('L4')
+      expect(isLiveVerified(result)).toBe(false)
+    }
   })
 })
