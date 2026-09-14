@@ -260,7 +260,7 @@ function ChipGroup({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-w-0 flex-wrap items-center gap-1">
+    <div role="group" aria-label={label} className="flex min-w-0 flex-wrap items-center gap-1">
       <span className="mr-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/80">
         {label}
       </span>

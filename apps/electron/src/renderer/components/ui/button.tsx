@@ -4,20 +4,20 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors duration-[var(--motion-fast)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 select-none",
   {
     variants: {
       variant: {
         default:
-          "bg-foreground text-background hover:bg-foreground/90",
+          "bg-foreground text-background hover:bg-foreground/90 active:bg-foreground/80",
         destructive:
           "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         outline:
-          "border border-foreground/15 bg-background hover:bg-foreground/3",
+          "border border-border-strong bg-surface-elevated text-text-primary hover:bg-surface-hover active:bg-surface-pressed",
         secondary:
-          "bg-foreground/5 text-foreground hover:bg-foreground/10",
-        ghost: "hover:bg-foreground/3",
-        link: "text-foreground underline-offset-4 hover:underline",
+          "bg-surface-input text-text-primary hover:bg-surface-hover active:bg-surface-pressed",
+        ghost: "text-text-secondary hover:bg-surface-hover hover:text-text-primary active:bg-surface-pressed",
+        link: "text-accent-text underline underline-offset-[3px] hover:decoration-2",
       },
       size: {
         default: "h-9 px-4 py-2",

@@ -9,11 +9,11 @@ export type RoomProviderDecision = {
   readonly decided: boolean
 }
 
-export const ROOM_PROVIDER_DECISION: RoomProviderDecision = {
+export const ROOM_PROVIDER_DECISION = {
   provider: null,
   license: null,
   decided: false,
-}
+} as const satisfies RoomProviderDecision
 
 export type RoomJoinRequest = {
   readonly roomId: string

@@ -1,7 +1,9 @@
+import type { CustomEndpointApi } from '../../shared/src/config/llm-connections.ts'
+
 export type CustomEndpointInput = 'text' | 'image'
 
 /** Custom endpoint protocol — determines which streaming adapter Pi SDK uses. */
-export type CustomEndpointApi = 'openai-completions' | 'anthropic-messages'
+export type { CustomEndpointApi }
 
 export interface CustomEndpointModelDefaults {
   supportsImages?: boolean

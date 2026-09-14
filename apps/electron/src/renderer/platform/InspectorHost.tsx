@@ -1,7 +1,7 @@
 /**
  * InspectorHost (W1 unified shell, spec S-03 §3.1/§3.3) — right-side
- * collapsible inspector: compact section rail (always visible) plus one
- * resizable inspector panel (design-compact density).
+ * collapsible inspector: compact section rail plus one resizable panel.
+ * Fresh installations start closed; the common TopBar restores the inspector.
  *
  * Behavior contract (S-03 §3.3, implemented by `inspector-model.ts`):
  * clicking an inactive section icon opens the panel with that section;
@@ -15,7 +15,7 @@
  * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
  * workbench rollout or harness inspector flag is enabled.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { useAtom, useAtomValue } from 'jotai'
 import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, SquareTerminal, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -49,18 +49,21 @@ import { InspectorTerminal } from '@/components/session-inspector/InspectorTermi
 import { WORKBENCH_FLAG } from '@craft-agent/core/platform'
 import {
   INSPECTOR_LIVE_SECTIONS,
+  inspectorSectionNeedsSession,
   inspectorSectionsForMode,
+  isInspectorPanelVisible,
   isSessionInspectorSection,
   normalizeInspectorSection,
+  normalizeInspectorWidth,
   resolveBottomTerminalToggle,
   resolveInspectorToggle,
 } from './inspector-model'
 import { CHROME_DENSITY } from './chrome-density'
 import { panelTypeToSurfaceKind } from './surface-tab-model'
+import { RetainedSurface } from './RetainedSurface'
+import { InspectorResizeSash } from './InspectorResizeSash'
 
 const INSPECTOR_RAIL_WIDTH = CHROME_DENSITY.railWidth
-const INSPECTOR_MIN_WIDTH = 280
-const INSPECTOR_MAX_WIDTH = 1400
 
 const SECTION_ICONS: Record<InspectorSectionId, LucideIcon> = {
   info: Info,
@@ -252,7 +255,9 @@ export function InspectorHost() {
   const [sectionRaw, setSection] = useAtom(inspectorSectionAtom)
   const [panelWidth, setPanelWidth] = useAtom(inspectorPanelWidthAtom)
   const [bottomTerminalOpen, setBottomTerminalOpen] = useAtom(bottomTerminalOpenAtom)
-  const widthDrag = useRef<{ startX: number; startW: number } | null>(null)
+  const [previewWidth, setPreviewWidth] = useState<number | null>(null)
+  const [viewportWidth, setViewportWidth] = useState(() => typeof window === 'undefined' ? 1280 : window.innerWidth)
+  const panelContentId = useId()
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const route = useAtomValue(focusedPanelRouteAtom)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
@@ -264,6 +269,8 @@ export function InspectorHost() {
   const activeSection = sectionIds.includes(section) ? section : sectionIds[0]!
   const sessionId = route ? parseSessionIdFromRoute(route) : null
   const sessionMeta = sessionId ? sessionMetaMap.get(sessionId) : undefined
+  const hasSession = !!sessionMeta
+  const availableSectionIds = sectionIds.filter((id) => !inspectorSectionNeedsSession(id) || hasSession)
   const shell = useOptionalAppShellContext()
   const workspace = shell?.workspaces.find((item) => item.id === (sessionMeta?.workspaceId ?? shell.activeWorkspaceId))
   const sessionFolderPath =
@@ -271,34 +278,36 @@ export function InspectorHost() {
       ? `${workspace.rootPath.replace(/[\\/]+$/, '')}/sessions/${sessionId}`
       : undefined
   const [terminalOpen, setTerminalOpen] = useState(false)
+  const panelVisible = isInspectorPanelVisible({
+    visible, chromeCollapsed, section: activeSection, hasSession, terminalOpen,
+  })
+  const browserVisible = panelVisible && activeSection === 'browser' && !terminalOpen
+  const renderedWidth = normalizeInspectorWidth(previewWidth ?? panelWidth, viewportWidth)
+
+  useEffect(() => {
+    const onResize = () => setViewportWidth(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     const sidebar = navigationState.rightSidebar
-    if (!sessionMode || !sidebar) return
+    if (!sidebar || (sidebar.type !== 'browser' && (!sessionMode || !hasSession))) return
     if (sidebar.type === 'files' || sidebar.type === 'git' || sidebar.type === 'browser' || sidebar.type === 'context') {
       setChromeCollapsed(false)
       setSection(sidebar.type)
       setVisible(true)
     }
-  }, [sessionMode, navigationState.rightSidebar, setChromeCollapsed, setSection, setVisible])
+  }, [sessionMode, hasSession, navigationState.rightSidebar, setChromeCollapsed, setSection, setVisible])
 
-  useEffect(() => {
-    if (visible && !chromeCollapsed && !terminalOpen && activeSection === 'browser') return
-    void (async () => {
-      const list = await window.electronAPI.browserPane.list().catch(() => [])
-      await Promise.all(
-        list
-          .filter((item) => item.embedded)
-          .map((item) => window.electronAPI.browserPane.syncBounds(item.id, null).catch(() => undefined)),
-      )
-    })()
-  }, [visible, chromeCollapsed, terminalOpen, activeSection])
+  // InspectorBrowserPane owns its instance cleanup. Hiding the inspector must
+  // never enumerate and hide unrelated browser/SiYuan/extension grid panels.
 
   const handleSectionClick = (clicked: InspectorSectionId) => {
     if (terminalOpen) setBottomTerminalOpen(true)
     setTerminalOpen(false)
     setChromeCollapsed(false)
-    const next = resolveInspectorToggle({ visible, section: activeSection }, clicked)
+    const next = resolveInspectorToggle({ visible: panelVisible, section: activeSection }, clicked)
     setVisible(next.visible)
     setSection(next.section)
     if (sessionMode && isSessionInspectorSection(clicked) && next.visible) {
@@ -341,7 +350,7 @@ export function InspectorHost() {
           data-terminal-flag={WORKBENCH_FLAG.terminalV1}
           onClick={handleBottomTerminalToggle}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-[7px] border border-border/60 transition-colors',
+            'flex size-[var(--chrome-control)] items-center justify-center rounded-md border border-border/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             (terminalOpen && visible) || bottomTerminalOpen
               ? 'bg-accent/10 text-accent'
               : 'bg-foreground/[0.025] text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
@@ -354,142 +363,120 @@ export function InspectorHost() {
     </Tooltip>
   )
 
-  // R-hide = zero chrome: TopBar restores via inspector expand. No collapse-to-strip rail.
-  if (chromeCollapsed) {
-    return null
-  }
-
+  // Zero-width chrome when hidden. Retain an opened browser so its owner and
+  // local state survive collapse; its native bounds follow the hidden ancestor.
   return (
-    <div className="flex h-full shrink-0 items-stretch" data-session-inspector={sessionMode ? 'true' : 'false'}>
-      {visible && (
-        <div
-          className="relative flex h-full flex-col overflow-hidden bg-background shadow-middle"
-          style={{
-            width: Math.min(
-              INSPECTOR_MAX_WIDTH,
-              Math.max(INSPECTOR_MIN_WIDTH, panelWidth),
-              Math.max(INSPECTOR_MIN_WIDTH, Math.floor(typeof window !== 'undefined' ? window.innerWidth * 0.72 : INSPECTOR_MAX_WIDTH)),
-            ),
-            borderRadius: RADIUS_INNER,
-          }}
-        >
+    <RetainedSurface visible={!chromeCollapsed}>
+      <div className="flex h-full shrink-0 items-stretch" data-session-inspector={sessionMode ? 'true' : 'false'}>
+        <RetainedSurface visible={panelVisible}>
           <div
-            className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize hover:bg-foreground/15"
-            onPointerDown={(event) => {
-              event.preventDefault()
-              widthDrag.current = { startX: event.clientX, startW: panelWidth }
-              const move = (e: PointerEvent) => {
-                const drag = widthDrag.current
-                if (!drag) return
-                const viewportCap = Math.max(
-                  INSPECTOR_MIN_WIDTH,
-                  Math.floor(window.innerWidth * 0.72),
-                )
-                const next = Math.min(
-                  INSPECTOR_MAX_WIDTH,
-                  viewportCap,
-                  Math.max(INSPECTOR_MIN_WIDTH, drag.startW + (drag.startX - e.clientX)),
-                )
-                setPanelWidth(next)
-              }
-              const up = () => {
-                widthDrag.current = null
-                window.removeEventListener('pointermove', move)
-                window.removeEventListener('pointerup', up)
-                window.removeEventListener('pointercancel', up)
-              }
-              window.addEventListener('pointermove', move)
-              window.addEventListener('pointerup', up)
-              window.addEventListener('pointercancel', up)
+            id={panelContentId}
+            role="complementary"
+            aria-label={t(titleKey)}
+            className="relative flex h-full flex-col overflow-hidden bg-background shadow-middle"
+            style={{
+              width: renderedWidth,
+              borderRadius: RADIUS_INNER,
             }}
-          />
-          <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-foreground/5 pl-2.5 pr-1.5">
-            <span className="chrome-label truncate font-medium tracking-tight">{t(titleKey)}</span>
+          >
+            <InspectorResizeSash
+              width={renderedWidth}
+              viewportWidth={viewportWidth}
+              controlsId={panelContentId}
+              active={panelVisible}
+              onPreview={setPreviewWidth}
+              onCommit={(width) => { setPanelWidth(width); setPreviewWidth(null) }}
+              onCancel={() => setPreviewWidth(null)}
+            />
+            <div className="flex h-[var(--chrome-panel-header-height)] shrink-0 items-center justify-between gap-2 border-b border-border pl-3.5 pr-1.5">
+              <span className="chrome-label truncate font-medium tracking-tight">{t(titleKey)}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={t('inspector.hide')}
+                    onClick={collapseChrome}
+                    className="flex size-[var(--chrome-control)] items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <ChevronsRight className="h-3.5 w-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col">
+            <RetainedSurface visible={browserVisible}>
+              <InspectorBrowserPane />
+            </RetainedSurface>
+            {terminalOpen ? (
+              <InspectorTerminal cwd={sessionMeta?.workingDirectory} />
+            ) : activeSection === 'browser' ? null : sessionMode && sessionMeta ? (
+              <SessionInspectorBody
+                section={activeSection}
+                sessionId={sessionId}
+                sessionFolderPath={sessionFolderPath}
+                cwd={sessionMeta?.workingDirectory}
+              />
+            ) : INSPECTOR_LIVE_SECTIONS.includes(activeSection) ? (
+              <InfoSection />
+            ) : (
+              <EmptySection section={activeSection} />
+            )}
+            </div>
+          </div>
+        </RetainedSurface>
+        <div
+          className="chrome-rail flex h-full shrink-0 flex-col items-center gap-0.5 py-1.5"
+          style={{ width: INSPECTOR_RAIL_WIDTH }}
+        >
+          {availableSectionIds.map((sectionId) => {
+            const Icon = SECTION_ICONS[sectionId]
+            const active = panelVisible && activeSection === sectionId && !terminalOpen
+            const labelKey = sectionId === 'browser'
+              ? 'inspector.tab.browser'
+              : sessionMode
+                ? `inspector.tab.${sectionId}`
+                : `inspector.${sectionId}`
+            return (
+              <Tooltip key={sectionId}>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={t(labelKey)}
+                    aria-pressed={active}
+                    onClick={() => handleSectionClick(sectionId)}
+                    className={cn(
+                      'flex size-[var(--chrome-control)] items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      active
+                        ? 'bg-accent/10 text-accent'
+                        : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="left">{t(labelKey)}</TooltipContent>
+              </Tooltip>
+            )
+          })}
+          <div className="mt-auto flex flex-col items-center gap-0.5">
+            {terminalControl}
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   aria-label={t('inspector.hide')}
                   onClick={collapseChrome}
-                  className="flex h-6 w-6 items-center justify-center rounded-[6px] text-muted-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                  className="flex size-[var(--chrome-control)] items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <ChevronsRight className="h-3.5 w-3.5" />
+                  <ChevronsRight className="h-4 w-4" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
             </Tooltip>
           </div>
-          <div className="flex min-h-0 flex-1 flex-col">
-          {terminalOpen ? (
-            <InspectorTerminal cwd={sessionMeta?.workingDirectory} />
-          ) : activeSection === 'browser' ? (
-            <InspectorBrowserPane />
-          ) : sessionMode ? (
-            <SessionInspectorBody
-              section={activeSection}
-              sessionId={sessionId}
-              sessionFolderPath={sessionFolderPath}
-              cwd={sessionMeta?.workingDirectory}
-            />
-          ) : INSPECTOR_LIVE_SECTIONS.includes(activeSection) ? (
-            <InfoSection />
-          ) : (
-            <EmptySection section={activeSection} />
-          )}
-          </div>
-        </div>
-      )}
-      <div
-        className="chrome-rail flex h-full shrink-0 flex-col items-center gap-0.5 py-1.5"
-        style={{ width: INSPECTOR_RAIL_WIDTH }}
-      >
-        {sectionIds.map((sectionId) => {
-          const Icon = SECTION_ICONS[sectionId]
-          const active = visible && activeSection === sectionId
-          const labelKey = sectionId === 'browser'
-            ? 'inspector.tab.browser'
-            : sessionMode
-              ? `inspector.tab.${sectionId}`
-              : `inspector.${sectionId}`
-          return (
-            <Tooltip key={sectionId}>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  aria-label={t(labelKey)}
-                  aria-pressed={active}
-                  onClick={() => handleSectionClick(sectionId)}
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-[7px] transition-colors',
-                    active
-                      ? 'bg-accent/10 text-accent'
-                      : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="left">{t(labelKey)}</TooltipContent>
-            </Tooltip>
-          )
-        })}
-        <div className="mt-auto flex flex-col items-center gap-0.5">
-          {terminalControl}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                aria-label={t('inspector.hide')}
-                onClick={collapseChrome}
-                className="flex h-8 w-8 items-center justify-center rounded-[7px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="left">{t('inspector.hide')}</TooltipContent>
-          </Tooltip>
         </div>
       </div>
-    </div>
+    </RetainedSurface>
   )
 }

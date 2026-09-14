@@ -284,7 +284,7 @@ export function CollectionBulkBar({
       role="toolbar"
       aria-label={`${t('collection.bulk.title')}: ${t('collection.bulk.selected', { count: visibleSelection.count })}`}
     >
-      <div className="inline-flex flex-wrap items-center gap-1.5 rounded-xl border border-border bg-card/95 px-3 py-2 shadow-modal-small backdrop-blur">
+      <div data-layout="collection-controls" className="inline-flex max-w-[calc(100vw-24px)] flex-wrap items-center gap-1.5 rounded-lg border border-border-subtle bg-surface-popover px-3 py-2 shadow-modal-small">
         <span className="text-xs font-semibold text-foreground/90" aria-live="polite">
           {t('collection.bulk.selected', { count: visibleSelection.count })}
         </span>

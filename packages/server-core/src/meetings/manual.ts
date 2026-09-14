@@ -42,7 +42,7 @@ function guardWrite(input: {
   meetingId: string
   operation: string
   notReadyCode: string
-}): ManualNativeResult | { ok: true; meeting: Meeting; journal: MeetingJournal } {
+}): { ok: false; code: string } | { ok: true; meeting: Meeting; journal: MeetingJournal } {
   if (!input.grant) return { ok: false, code: 'grant-required' }
   if (!input.persistRootDir) return { ok: false, code: 'config-dir-required' }
   if (!input.workspaceId) return { ok: false, code: 'workspace-required' }

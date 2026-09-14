@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+import { settingsDescriptionIds, useSettingsFieldDescription } from './SettingsFieldContext'
 
 export interface SettingsTextareaProps {
   /** Textarea label */
@@ -61,7 +62,11 @@ export function SettingsTextarea({
   className,
   inCard = false,
 }: SettingsTextareaProps) {
+  const field = useSettingsFieldDescription()
   const id = React.useId()
+  const descriptionId = description ? `${id}-description` : undefined
+  const errorId = error ? `${id}-error` : undefined
+  const countId = maxLength !== undefined ? `${id}-count` : undefined
   const charCount = value.length
   const isOverLimit = maxLength !== undefined && charCount > maxLength
 
@@ -69,22 +74,22 @@ export function SettingsTextarea({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.rowPadding,
         className
       )}
     >
-      {label && (
+      {(label || description) && (
         <div className={settingsUI.labelGroup}>
-          <Label htmlFor={id} className={settingsUI.label}>
+          {label && <Label htmlFor={id} className={settingsUI.label}>
             {label}
-          </Label>
+          </Label>}
           {description && (
-            <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
+            <p id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
           )}
         </div>
       )}
       <div className={cn(
-        'relative rounded-md shadow-minimal has-[:focus-visible]:bg-background',
+        settingsUI.fieldFrame,
         error && 'ring-1 ring-destructive',
         isOverLimit && 'ring-1 ring-destructive'
       )}>
@@ -95,13 +100,17 @@ export function SettingsTextarea({
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
+          aria-labelledby={label ? undefined : field.labelId}
+          aria-describedby={settingsDescriptionIds(descriptionId ?? field.descriptionId, countId, errorId)}
+          aria-invalid={error || isOverLimit ? true : undefined}
           className={cn(
-            'bg-muted/50 border-0 shadow-none resize-y min-h-[120px] focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
-            maxLength && 'pb-6'
+            'shadow-none resize-y min-h-[120px]',
+            maxLength !== undefined && 'pb-6'
           )}
         />
         {maxLength !== undefined && (
           <div
+            id={countId}
             className={cn(
               'absolute bottom-2 right-3 text-xs',
               isOverLimit ? 'text-destructive' : 'text-muted-foreground'
@@ -111,7 +120,7 @@ export function SettingsTextarea({
           </div>
         )}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p id={errorId} role="alert" className="text-sm text-destructive">{error}</p>}
     </div>
   )
 }

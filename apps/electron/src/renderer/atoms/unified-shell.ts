@@ -11,7 +11,8 @@
  * Granular workbench.* experimental flags default ON (P35-08). Conation stays off.
  */
 import { atomWithStorage } from 'jotai/utils'
-import { KEYS, getKeyString } from '@/lib/local-storage'
+import { KEYS, get, getKeyString } from '@/lib/local-storage'
+import { INSPECTOR_DEFAULT_WIDTH, resolveInspectorDefaults } from '@/platform/inspector-model'
 
 /** Wave flag: unified shell chrome (ActivityRail + SurfaceTabs + InspectorHost). Master stays off. */
 export const featureUnifiedShellAtom = atomWithStorage<boolean>(
@@ -166,18 +167,23 @@ export const activityRailCollapsedAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
-/** Inspector panel visibility (the 48px section rail itself always renders). */
+const inspectorDefaults = resolveInspectorDefaults({
+  visible: get<unknown>(KEYS.inspectorVisible, undefined),
+  chromeCollapsed: get<unknown>(KEYS.inspectorChromeCollapsed, undefined),
+})
+
+/** Fresh installs keep the inspector closed; persisted user choices still win. */
 export const inspectorVisibleAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorVisible),
-  true,
+  inspectorDefaults.visible,
   undefined,
   { getOnInit: true },
 )
 
-/** Entire inspector chrome (panel + section rail) collapsed to a restore strip. */
+/** Entire inspector chrome hidden; the common TopBar supplies its restore action. */
 export const inspectorChromeCollapsedAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorChromeCollapsed),
-  false,
+  inspectorDefaults.chromeCollapsed,
   undefined,
   { getOnInit: true },
 )
@@ -204,7 +210,7 @@ export const inspectorSectionAtom = atomWithStorage<InspectorSectionId>(
 /** Inspector panel width in px (drag-resized). */
 export const inspectorPanelWidthAtom = atomWithStorage<number>(
   getKeyString(KEYS.inspectorPanelWidth),
-  420,
+  INSPECTOR_DEFAULT_WIDTH,
   undefined,
   { getOnInit: true },
 )

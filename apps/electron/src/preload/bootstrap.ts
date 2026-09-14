@@ -45,6 +45,7 @@ import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../
 import { isSshBacked } from '../shared/ssh'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
+import { createDeviceDiagnosticsBridge } from './device-diagnostics'
 
 // ---------------------------------------------------------------------------
 // Client interface — common surface for both RoutedClient and WsRpcClient
@@ -551,6 +552,13 @@ client.onConnectionStateChanged((state) => {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
+// Host diagnostics stay on this device even when a workspace is remote.
+// Main-process authorization rejects embedded webviews and non-app frames.
+if (process.isMainFrame) {
+  contextBridge.exposeInMainWorld('deviceDiagnostics', createDeviceDiagnosticsBridge(
+    (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  ))
+}
 if (openClawHostControl) {
   contextBridge.exposeInMainWorld('openClawHostControl', openClawHostControl)
 }

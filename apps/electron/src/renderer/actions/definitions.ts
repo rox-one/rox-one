@@ -226,6 +226,34 @@ export const actions = {
     defaultHotkey: 'mod+shift+[',
     category: 'Navigation',
   },
+  'panel.focusLeft': {
+    id: 'panel.focusLeft',
+    labelKey: 'shortcuts.action.focusPanelLeft',
+    defaultHotkey: 'mod+alt+left',
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
+  'panel.focusRight': {
+    id: 'panel.focusRight',
+    labelKey: 'shortcuts.action.focusPanelRight',
+    defaultHotkey: 'mod+alt+right',
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
+  'panel.focusUp': {
+    id: 'panel.focusUp',
+    labelKey: 'shortcuts.action.focusPanelUp',
+    defaultHotkey: 'mod+alt+up',
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
+  'panel.focusDown': {
+    id: 'panel.focusDown',
+    labelKey: 'shortcuts.action.focusPanelDown',
+    defaultHotkey: 'mod+alt+down',
+    category: 'Navigation',
+    when: '!inputFocus && !menuOpen',
+  },
 
   // ═══════════════════════════════════════════
   // Chat

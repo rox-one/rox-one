@@ -180,15 +180,16 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 
   // Full mode: rich styling with header and copy button
   return (
-    <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/30', className)}>
+    <div className={cn('relative group rounded-md overflow-hidden border border-border-subtle bg-surface-input', className)}>
       {/* Language label + copy button */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-xs">
-        <span className="text-muted-foreground font-medium uppercase tracking-wide">
+      <div className="flex min-h-9 items-center justify-between gap-2 px-3 py-1 bg-surface-elevated border-b border-border-subtle text-xs">
+        <span className="text-text-secondary font-medium">
           {resolvedLang !== 'text' ? resolvedLang : 'plain text'}
         </span>
         <button
           onClick={handleCopy}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+          type="button"
+          className="rox-control rox-hover-action opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 text-text-secondary hover:text-text-primary"
           aria-label={t('common.copyCode')}
         >
           {copied ? (
@@ -227,7 +228,7 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 export function InlineCode({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <code className={cn(
-      'pl-1 pr-1 py-0 rounded bg-foreground/[0.04] font-mono text-[13px]',
+      'px-1 py-0.5 rounded-[4px] bg-surface-input font-mono text-[length:var(--text-code-size)] text-text-primary box-decoration-clone',
       className
     )}>
       {children}

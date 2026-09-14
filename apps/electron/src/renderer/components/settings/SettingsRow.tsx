@@ -8,6 +8,7 @@
 import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+import { SettingsFieldContext } from './SettingsFieldContext'
 
 export interface SettingsRowProps {
   /** Row label (can be string or JSX for custom rendering) */
@@ -49,35 +50,40 @@ export function SettingsRow({
   'data-testid': testId,
 }: SettingsRowProps) {
   const Component = onClick ? 'button' : 'div'
+  const id = React.useId()
+  const labelId = `${id}-label`
+  const descriptionId = description ? `${id}-description` : undefined
 
   return (
+    <SettingsFieldContext.Provider value={{ labelId, descriptionId }}>
     <Component
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       data-testid={testId}
       data-layout="settings-row"
       className={cn(
-        'w-full flex items-center justify-between text-left',
-        inCard ? 'px-4 py-3.5' : 'py-3',
-        onClick && 'hover:bg-muted/70 transition-colors cursor-pointer',
+        settingsUI.row,
+        inCard ? settingsUI.rowPadding : settingsUI.rowPaddingStandalone,
+        onClick && cn(settingsUI.interactive, 'cursor-pointer'),
         className
       )}
     >
       <div className="flex-1 min-w-0">
-        <div className={settingsUI.label}>{label}</div>
+        <div id={labelId} className={settingsUI.label}>{label}</div>
         {description && (
-          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap, 'truncate')}>
+          <div id={descriptionId} className={cn(settingsUI.description, settingsUI.labelDescriptionGap, 'break-words')}>
             {description}
           </div>
         )}
       </div>
       {(children || action) && (
-        <div data-layout="settings-control" className="flex items-center gap-3 ml-4 shrink-0">
+        <div data-layout="settings-control" className={settingsUI.control}>
           {children}
           {action}
         </div>
       )}
     </Component>
+    </SettingsFieldContext.Provider>
   )
 }
 

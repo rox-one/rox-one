@@ -25,7 +25,7 @@ export type CSSColor = string;
 export interface ThemeColors {
   background?: CSSColor;
   foreground?: CSSColor;
-  accent?: CSSColor; // Brand purple (Execute mode)
+  accent?: CSSColor; // Theme accent (primary actions and focus)
   info?: CSSColor; // Amber (Ask mode, warnings)
   success?: CSSColor; // Green
   destructive?: CSSColor; // Red
@@ -194,23 +194,27 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
   }
   if (colors.accent) {
     vars.push(`--accent: ${colors.accent};`);
-    // Also output darkened RGB version for shadow-tinted (only works with hex colors)
-    // Use 70% brightness for a proper shadow effect
-    const rgbValues = hexToRgbValues(colors.accent, 0.7);
+    // Keep the semantic RGB alias in sync for tinted surfaces and status UI.
+    const rgbValues = hexToRgbValues(colors.accent);
     if (rgbValues) {
       vars.push(`--accent-rgb: ${rgbValues};`);
     }
   }
-  if (colors.info) vars.push(`--info: ${colors.info};`);
-  if (colors.success) vars.push(`--success: ${colors.success};`);
-  if (colors.destructive) vars.push(`--destructive: ${colors.destructive};`);
+  for (const role of ['info', 'success', 'destructive'] as const) {
+    const color = colors[role];
+    if (!color) continue;
+    vars.push(`--${role}: ${color};`);
+    const rgbValues = hexToRgbValues(color);
+    if (rgbValues) vars.push(`--${role}-rgb: ${rgbValues};`);
+  }
 
   // Surface color variables (fall back to background if not set)
   // These enable fine-grained control over specific UI regions
   const bg = colors.background || 'var(--background)';
   vars.push(`--paper: ${colors.paper || bg};`);
   vars.push(`--navigator: ${colors.navigator || bg};`);
-  vars.push(`--input: ${colors.input || bg};`);
+  // `--input` is the shared border alias; presets supply the input surface.
+  vars.push(`--input-surface: ${colors.input || bg};`);
   vars.push(`--popover: ${colors.popover || bg};`);
   // popoverSolid: guaranteed 100% opaque for scenic mode popovers
   // Falls back to popover, then background (should always be solid in scenic themes)
@@ -226,12 +230,11 @@ export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): stri
 
 /**
  * Hex equivalents of background colors for Electron BrowserWindow.
- * The main process cannot use CSS/oklch colors, so we provide hex values
- * that visually match the DEFAULT_THEME oklch colors.
+ * The main process and CSS share the same opaque default window colors.
  */
 export const BACKGROUND_HEX = {
-  light: '#faf9fb', // matches oklch(0.98 0.003 265)
-  dark: '#302f33', // matches oklch(0.2 0.005 270)
+  light: '#f7f7f5',
+  dark: '#202120',
 } as const;
 
 /**
@@ -261,19 +264,19 @@ export function shouldSetThemeOverride(
  * Default theme values (matches current index.css)
  */
 export const DEFAULT_THEME: ThemeOverrides = {
-  background: 'oklch(0.98 0.003 265)',
-  foreground: 'oklch(0.185 0.01 270)',
-  accent: 'oklch(0.58 0.22 293)',
-  info: 'oklch(0.75 0.16 70)',
-  success: 'oklch(0.55 0.17 145)',
-  destructive: 'oklch(0.58 0.24 28)',
+  background: BACKGROUND_HEX.light,
+  foreground: '#262624',
+  accent: '#a65c3a',
+  info: '#97681e',
+  success: '#347a51',
+  destructive: '#bc4844',
   dark: {
-    background: 'oklch(0.145 0.015 270)',
-    foreground: 'oklch(0.95 0.01 270)',
-    accent: 'oklch(0.65 0.22 293)',
-    info: 'oklch(0.78 0.14 70)',
-    success: 'oklch(0.60 0.17 145)',
-    destructive: 'oklch(0.65 0.22 28)',
+    background: BACKGROUND_HEX.dark,
+    foreground: '#ededeb',
+    accent: '#d9936c',
+    info: '#dfb567',
+    success: '#79b78f',
+    destructive: '#e48078',
   },
 };
 

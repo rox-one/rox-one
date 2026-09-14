@@ -4,6 +4,8 @@
  * Imports the shared UI theme and adds viewer-specific styles.
  */
 
+@import "tailwindcss" source(none);
+@plugin "@tailwindcss/typography";
 @import "@craft-agent/ui/styles";
 
 /* Scan this app's source files for Tailwind classes */

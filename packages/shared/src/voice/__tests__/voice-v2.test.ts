@@ -33,7 +33,7 @@ import {
   writeAtomicFile,
 } from '../index.ts'
 
-function wavSilence(): Uint8Array {
+function wavSilence(): Uint8Array<ArrayBuffer> {
   const bytes = new Uint8Array(44)
   bytes.set([0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45])
   return bytes
@@ -112,8 +112,11 @@ describe('rox transcription adapter', () => {
       identity,
       http,
     })
+    const originalAudio = wavSilence()
+    const paddedAudio = new Uint8Array(originalAudio.length + 8)
+    paddedAudio.set(originalAudio, 4)
     const result = await adapter.transcribe({
-      audio: wavSilence(),
+      audio: paddedAudio.subarray(4, 4 + originalAudio.length),
       mimeType: 'audio/wav',
       language: 'auto',
     })
@@ -125,6 +128,9 @@ describe('rox transcription adapter', () => {
     expect(form?.get('model')).toBe('rocks-t1')
     expect(form?.get('language')).toBeNull()
     expect(form?.get('response_format')).toBe('verbose_json')
+    const file = form?.get('file')
+    if (!(file instanceof Blob)) throw new Error('expected an audio file in the multipart request')
+    expect(new Uint8Array(await file.arrayBuffer())).toEqual(originalAudio)
   })
 
   it('does not treat empty ASR text as success unless no-speech', async () => {

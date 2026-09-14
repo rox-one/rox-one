@@ -20,6 +20,7 @@ export const KEYS = {
   viewFilters: 'view-filters', // Per-view filter map: { [viewKey]: { statuses, labels } }
   expandedFolders: 'expanded-folders',
   collapsedSidebarItems: 'collapsed-sidebar-items',
+  sidebarDismissedGuidance: 'sidebar-dismissed-guidance',
   chatGroupingMode: 'chat-grouping-mode', // How to group chats: 'date' | 'status'
   collapsedSessionGroups: 'collapsed-session-groups', // Collapsed group keys in session list
 
@@ -118,6 +119,8 @@ export const KEYS = {
   panelState: 'panel-registry-state',
   // Zen Shell geometry snapshot (ZS-06). Workspace-scoped; dual-writes legacy width keys.
   shellLayout: 'shell-layout-v1',
+  // Geometry only; open panel routes remain owned by NavigationContext.
+  panelWorkspaceLayout: 'panel-workspace-layout-v1',
 } as const
 
 export const EVENTS = {

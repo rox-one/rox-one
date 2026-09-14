@@ -13,7 +13,7 @@
  * when the stack becomes empty.
  */
 
-import { useCallback, useMemo } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSetAtom } from 'jotai'
 import { cn } from '@/lib/utils'
@@ -41,6 +41,10 @@ interface PanelSlotProps {
   sash?: React.ReactNode
   /** Compact (mobile) mode — shows back button in panel header */
   isCompact?: boolean
+  /** Hidden focus/compact siblings stay mounted, preserving drafts and scroll. */
+  isHidden?: boolean
+  /** Grid placement supplied by the persistent workspace container. */
+  layoutStyle?: React.CSSProperties
 }
 
 export function PanelSlot({
@@ -53,12 +57,24 @@ export function PanelSlot({
   proportion,
   sash,
   isCompact,
+  isHidden = false,
+  layoutStyle,
 }: PanelSlotProps) {
   const { t } = useTranslation()
   const closePanel = useSetAtom(closePanelAtom)
   const setFocusedPanel = useSetAtom(focusedPanelIdAtom)
   const parentContext = useAppShellContext()
-  const navState = parseRouteToNavigationState(entry.route)
+  const navState = useMemo(() => parseRouteToNavigationState(entry.route), [entry.route])
+  const panelRef = useRef<HTMLDivElement>(null)
+
+  useLayoutEffect(() => {
+    const panel = panelRef.current
+    if (!panel) return
+    panel.inert = isHidden
+    if (isHidden && panel.contains(document.activeElement)) {
+      ;(document.activeElement as HTMLElement | null)?.blur()
+    }
+  }, [isHidden])
 
   const handleClose = useCallback(() => {
     closePanel(entry.id)
@@ -73,7 +89,7 @@ export function PanelSlot({
         tooltip={t("common.close")}
       />
     )
-  }, [handleClose])
+  }, [handleClose, t])
 
   // Build back button for compact mode — closes the panel to reveal the session list.
   // Same PanelHeaderCenterButton style as X and share, just on the left side.
@@ -86,7 +102,7 @@ export function PanelSlot({
         tooltip={t("common.backToList")}
       />
     )
-  }, [isCompact, handleClose])
+  }, [isCompact, handleClose, t])
 
   // Override AppShellContext so ChatPage/PanelHeader gets our per-panel close button,
   // back button (compact mode), and isFocusedPanel for input field appearance
@@ -98,23 +114,42 @@ export function PanelSlot({
   }), [parentContext, closeButton, backButton, isFocusedPanel])
 
   const handlePointerDown = useCallback(() => {
-    if (!isFocusedPanel) {
+    if (!isHidden && !isFocusedPanel) {
       setFocusedPanel(entry.id)
     }
-  }, [isFocusedPanel, setFocusedPanel, entry.id])
+  }, [isHidden, isFocusedPanel, setFocusedPanel, entry.id])
+
+  // Geometry changes should not rerender expensive editors or message trees.
+  const content = useMemo(() => (
+    <AppShellProvider value={contextOverride}>
+      <MainContentPanel
+        navStateOverride={navState}
+        isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
+        panelId={entry.id}
+      />
+    </AppShellProvider>
+  ), [contextOverride, navState, isSidebarAndNavigatorHidden, entry.id])
 
   return (
     <>
       {sash}
       <div
+        ref={panelRef}
+        id={entry.id}
         onPointerDown={handlePointerDown}
+        onFocusCapture={handlePointerDown}
+        tabIndex={-1}
+        aria-hidden={isHidden || undefined}
+        data-panel-id={entry.id}
+        data-panel-focused={isFocusedPanel || undefined}
         data-panel-role="content"
         data-shell-role="content"
         data-compact={isCompact || undefined}
         className={cn(
-          'h-full overflow-hidden relative @container/panel',
+          'h-full min-h-0 overflow-hidden relative @container/panel',
           !isOnly && isFocusedPanel ? 'shadow-panel-focused z-[1]' : 'shadow-middle z-0',
           'bg-foreground-2',
+          'transition-[box-shadow,background-color] duration-150 ease-out motion-reduce:transition-none',
         )}
         style={{
           // In multi-panel, unfocused panels override --background so all
@@ -137,16 +172,12 @@ export function PanelSlot({
             ? { flexGrow: 1, minWidth: 0 }
             : { flexGrow: proportion, flexShrink: 1, flexBasis: 0, minWidth: PANEL_MIN_WIDTH }
           ),
+          ...layoutStyle,
+          ...(isHidden ? { visibility: 'hidden', pointerEvents: 'none' } : {}),
         }}
       >
-        <div className="h-full flex flex-col">
-          <AppShellProvider value={contextOverride}>
-            <MainContentPanel
-              navStateOverride={navState}
-              isSidebarAndNavigatorHidden={isSidebarAndNavigatorHidden}
-              panelId={entry.id}
-            />
-          </AppShellProvider>
+        <div className="h-full min-h-0 flex flex-col">
+          {content}
         </div>
       </div>
     </>

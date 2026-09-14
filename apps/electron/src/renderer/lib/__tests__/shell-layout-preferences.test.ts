@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import type { StorageKey } from '../local-storage'
 import {
   NAVIGATOR_WIDTH_DEFAULT,
+  DEFAULT_COLLAPSED_SIDEBAR_SECTIONS,
   SHELL_LAYOUT_KEYBOARD_DEBOUNCE_MS,
   SIDEBAR_WIDTH_DEFAULT,
   SIDEBAR_WIDTH_MAX,
@@ -35,6 +36,24 @@ function memoryStore(seed: Record<string, unknown> = {}): ShellLayoutStore & { w
 }
 
 describe('shell layout preferences (ZS-06)', () => {
+  it('starts with compact sections only when no preference exists, without writing on read', () => {
+    const store = memoryStore()
+    expect(loadShellLayout('fresh', store).collapsedSectionIds).toEqual([...DEFAULT_COLLAPSED_SIDEBAR_SECTIONS])
+    expect(store.writes).toEqual([])
+    store.data['collapsed-sidebar-items:fresh'] = []
+    expect(loadShellLayout('fresh', store).collapsedSectionIds).toEqual([])
+    commitShellLayout({ workspaceId: 'fresh', collapsedSectionIds: [] }, store)
+    expect(loadShellLayout('fresh', store).collapsedSectionIds).toEqual([])
+  })
+
+  it('restores independent section choices without rewriting another workspace', () => {
+    const store = memoryStore({ 'collapsed-sidebar-items:a': [], 'collapsed-sidebar-items:b': ['nav:views'] })
+    expect(loadShellLayout('a', store).collapsedSectionIds).toEqual([])
+    expect(loadShellLayout('b', store).collapsedSectionIds).toEqual(['nav:views'])
+    expect(loadShellLayout('a', store).collapsedSectionIds).toEqual([])
+    expect(store.writes).toEqual([])
+  })
+
   it('clamps sidebar 180–360 and navigator 240–480', () => {
     expect(clampSidebarWidth(100)).toBe(180)
     expect(clampSidebarWidth(400)).toBe(SIDEBAR_WIDTH_MAX)

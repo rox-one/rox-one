@@ -7,6 +7,7 @@
 
 import * as React from 'react'
 import { cn } from '@/lib/utils'
+import { settingsUI } from './SettingsUIConstants'
 
 export interface SettingsCardProps {
   /** Card content */
@@ -32,14 +33,14 @@ export function SettingsCard({ children, className, divided = true }: SettingsCa
   return (
     <div
       className={cn(
-        'rounded-xl bg-background shadow-minimal overflow-hidden',
+        settingsUI.card,
         className
       )}
     >
       {divided && childArray.length > 1
         ? childArray.map((child, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <div className="h-px bg-border/50 mx-4" />}
+            <React.Fragment key={React.isValidElement(child) ? child.key : index}>
+              {index > 0 && <div className="h-px bg-border-subtle mx-[var(--settings-row-x)]" />}
               {child}
             </React.Fragment>
           ))
@@ -60,7 +61,7 @@ export function SettingsCardContent({
   children: React.ReactNode
   className?: string
 }) {
-  return <div className={cn('px-4 py-3.5', className)}>{children}</div>
+  return <div className={cn(settingsUI.rowPadding, className)}>{children}</div>
 }
 
 /**
@@ -76,7 +77,8 @@ export function SettingsCardFooter({
   return (
     <div
       className={cn(
-        'px-4 py-3 border-t border-border/50 bg-muted/30 flex items-center justify-end gap-2',
+        settingsUI.rowPadding,
+        'border-t border-border-subtle bg-surface-input flex flex-wrap items-center justify-end gap-2',
         className
       )}
     >

@@ -3,6 +3,7 @@ import { readFileSync } from 'fs'
 import { join } from 'path'
 import { commitAfterBrowserWindowAction } from '../../components/browser/use-workspace-browser-windows'
 import { osBrowserSurfaceTabs, type OsBrowserInstanceLike } from '../os-browser-tabs'
+import { resolveWorkspaceSurfaceLayout } from '../workspace-surface-layout'
 
 const platformDir = join(import.meta.dir, '..')
 const rendererDir = join(platformDir, '..')
@@ -157,9 +158,11 @@ describe('browser surface v2 source wiring', () => {
 
   it('mounts one persistent SurfaceTabs owner from WorkspaceSurfaceHost', () => {
     expect(workspaceSurfaceHostSource).toContain("import { SurfaceTabs } from './SurfaceTabs'")
-    expect(workspaceSurfaceHostSource).toContain(
-      '{chrome.showSurfaceTabs && <SurfaceTabs />}',
-    )
+    expect(resolveWorkspaceSurfaceLayout({
+      isCompact: false,
+      panelCount: 1,
+      chrome: { showSurfaceTabs: true, showInspector: false },
+    }).showTabs).toBe(true)
     expect(workspaceSurfaceHostSource.indexOf('<SurfaceTabs />')).toBeLessThan(
       workspaceSurfaceHostSource.lastIndexOf('{children}'),
     )

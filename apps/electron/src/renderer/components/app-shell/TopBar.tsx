@@ -49,6 +49,10 @@ import { ModeBar } from "@/platform/ModeBar"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 import { resolveBottomTerminalToggle } from "@/platform/inspector-model"
 import { WORKBENCH_FLAG } from "@craft-agent/core/platform"
+import { PanelWorkspaceMenu } from './PanelWorkspaceMenu'
+import { HeaderStatusLane } from './HeaderStatusLane'
+import { DeviceStatusChip } from './DeviceStatusChip'
+import { CompactWorkspaceMenu } from './CompactWorkspaceMenu'
 
 const RIGHT_SLOT_FULL_BADGES_THRESHOLD = 420
 const RIGHT_SLOT_TWO_BADGES_THRESHOLD = 300
@@ -330,9 +334,23 @@ export function TopBar({
       </div>
       )}
 
+      {isCompact && (
+        <div className="titlebar-no-drag shrink-0 pr-2">
+          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} />
+        </div>
+      )}
+
+      {!isCompact && (
+        <div className="titlebar-no-drag min-w-0 max-w-[min(560px,42vw)] shrink">
+          <HeaderStatusLane />
+        </div>
+      )}
+
       {/* === RIGHT: Browser strip + add + help === */}
       {!isCompact && (
       <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-0.5" style={{ paddingRight: 8 }}>
+        <PanelWorkspaceMenu />
+        <DeviceStatusChip />
         {chrome.utilityRail && (
           <TopBarUsageSlot />
         )}

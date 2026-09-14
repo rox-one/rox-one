@@ -12,9 +12,10 @@ import {
   Info,
   X,
 } from "lucide-react"
-import { motion, AnimatePresence } from "motion/react"
+import { motion, AnimatePresence, useReducedMotion } from "motion/react"
 import { toast } from "sonner"
 import { SessionMemoryProposalLane } from "./MemoryProposalCard"
+import { followChatOutput } from "./chat-scroll"
 
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -446,21 +447,21 @@ function ProcessingIndicator({ startTime, statusMessage }: ProcessingIndicatorPr
 }
 
 /**
- * Scrolls to target element on mount, before browser paint.
+ * Scrolls the chat viewport on mount, leaving the workspace position intact.
  * Uses useLayoutEffect to ensure scroll happens before content is visible.
  */
 function ScrollOnMount({
-  targetRef,
+  viewportRef,
   onScroll,
   skip = false
 }: {
-  targetRef: React.RefObject<HTMLDivElement | null>
+  viewportRef: React.RefObject<HTMLDivElement | null>
   onScroll?: () => void
   skip?: boolean
 }) {
   React.useLayoutEffect(() => {
     if (skip) return
-    targetRef.current?.scrollIntoView({ behavior: 'instant' })
+    followChatOutput(viewportRef.current, { stickToBottom: true, focused: false, reducedMotion: true, documentVisible: document.visibilityState !== 'hidden' })
     onScroll?.()
   }, [skip])
   return null
@@ -570,6 +571,9 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
+  const prefersReducedMotion = useReducedMotion()
+  const reducedMotionRef = React.useRef(!!prefersReducedMotion)
+  reducedMotionRef.current = !!prefersReducedMotion
 
   // Input is only disabled when explicitly disabled (e.g., agent needs activation)
   // User can type during streaming - submitting will stop the stream and send
@@ -1236,27 +1240,29 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       setVisibleTurnCount(TURNS_PER_PAGE)
     }
 
-    // Debounced scroll for streaming - waits for layout to settle
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null
-
+    // Preserve the user's reading position even after another panel gains focus.
+    // Scroll only this viewport: scrollIntoView would also move the workspace canvas.
+    let scrollTimer: ReturnType<typeof setTimeout> | null = null
+    const followOutput = () => {
+      if (Date.now() < skipSmoothScrollUntilRef.current) return
+      followChatOutput(viewport, {
+        stickToBottom: isStickToBottomRef.current,
+        focused: isFocusedPanelRef.current,
+        reducedMotion: reducedMotionRef.current,
+        documentVisible: document.visibilityState !== 'hidden',
+      })
+    }
     const resizeObserver = new ResizeObserver(() => {
-      // Unfocused panels: always scroll to bottom instantly (user isn't reading them)
-      if (!isFocusedPanelRef.current) {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'instant' })
-        return
-      }
-
-      // Focused panel: respect sticky-bottom preference
-      if (!isStickToBottomRef.current) return
-
-      // Clear pending scroll and wait for layout to settle
-      if (debounceTimer) clearTimeout(debounceTimer)
-      debounceTimer = setTimeout(() => {
-        // Skip smooth scroll if we just did an instant scroll (session switch/lazy load)
-        if (Date.now() < skipSmoothScrollUntilRef.current) return
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-      }, 200)
+      if (!isStickToBottomRef.current || document.visibilityState === 'hidden') return
+      // Coalesce frequent updates without postponing scrolling indefinitely
+      // while a fast stream keeps changing the content height.
+      if (scrollTimer !== null) return
+      scrollTimer = setTimeout(() => {
+        scrollTimer = null
+        followOutput()
+      }, isFocusedPanelRef.current ? 120 : 0)
     })
+    document.addEventListener('visibilitychange', followOutput)
 
     // Observe the scroll content container (first child of viewport)
     const content = viewport.firstElementChild
@@ -1266,7 +1272,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
     return () => {
       resizeObserver.disconnect()
-      if (debounceTimer) clearTimeout(debounceTimer)
+      document.removeEventListener('visibilitychange', followOutput)
+      if (scrollTimer !== null) clearTimeout(scrollTimer)
     }
   }, [session?.id])
 
@@ -1300,9 +1307,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     isStickToBottomRef.current = true
 
     requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: isFocusedPanelRef.current ? 'smooth' : 'instant',
-      })
+      followChatOutput(scrollViewportRef.current, { stickToBottom: isStickToBottomRef.current, focused: isFocusedPanelRef.current, reducedMotion: reducedMotionRef.current, documentVisible: document.visibilityState !== 'hidden' })
     })
   }, [session?.id, messageCount, lastMessageId, lastMessageRole])
 
@@ -1355,7 +1360,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     // Immediately scroll to bottom after sending - use requestAnimationFrame
     // to ensure the DOM has updated with the new message
     requestAnimationFrame(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      followChatOutput(scrollViewportRef.current, { stickToBottom: isStickToBottomRef.current, focused: isFocusedPanelRef.current, reducedMotion: reducedMotionRef.current, documentVisible: document.visibilityState !== 'hidden' })
     })
   }
 
@@ -1614,7 +1619,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       const turnContainer = turnRefs.current.get(turnKey)
       if (!turnContainer) return false
 
-      turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
       return true
     }
 
@@ -1671,12 +1676,12 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         // Last resort: element with message id (assistant markdown)
         const byId = document.getElementById(messageId)
         if (byId) {
-          byId.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          byId.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
           return true
         }
         return false
       }
-      turnContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      turnContainer.scrollIntoView({ behavior: reducedMotionRef.current ? 'instant' : 'smooth', block: 'center' })
       return true
     }
 
@@ -1846,7 +1851,7 @@ const handleFollowUpChipClick = useCallback((item: {
                   {/* Scroll to bottom before paint - fires via useLayoutEffect */}
                   {/* Skip when search is active on session switch - scroll to first match instead */}
                   <ScrollOnMount
-                    targetRef={messagesEndRef}
+                    viewportRef={scrollViewportRef}
                     skip={skipScrollToBottom}
                     onScroll={() => {
                       skipSmoothScrollUntilRef.current = Date.now() + 500

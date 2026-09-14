@@ -39,4 +39,13 @@ describe('SourcedStatement', () => {
     expect(src).toContain("t('research.citation.hoverAria'")
     expect(src).toContain('useTranslation')
   })
+
+  it('leaves the underline and keyboard stop to a surrounding link', () => {
+    const html = renderToStaticMarkup(
+      React.createElement(SourcedStatement, { source, withinLink: true }, 'Example paper'),
+    )
+    expect(html).not.toContain('tabindex')
+    expect(html).not.toContain('decoration-dotted')
+    expect(html).toContain('role="tooltip"')
+  })
 })

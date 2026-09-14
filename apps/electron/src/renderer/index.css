@@ -62,11 +62,15 @@ html[data-theme]:not([data-scenic]):not([data-theme-override]) #root {
 
 html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-rail {
   background: var(--surface-rail);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-strip,
 html[data-theme]:not([data-scenic]):not([data-theme-override]) .chrome-topbar {
   background: var(--surface-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Theme Mismatch - Solid background when theme doesn't support current mode
@@ -134,11 +138,18 @@ html[data-scenic][data-theme-override]::before {
   background-repeat: no-repeat;
 }
 
-/* Scenic mode: Make background color semi-transparent for glass effect
-   Panels with bg-background will become translucent glass */
+/* Scenic material is confined to chrome. Content keeps its theme's opaque fill. */
 html[data-scenic] {
-  /* Raise panel opacity so wallpaper bleed does not wash out text */
-  --background: oklch(0.2 0.005 270 / 0.88);
+  --chrome-glass-bg: color-mix(in oklch, var(--surface-elevated) 84%, transparent);
+  --surface-document: oklch(from var(--popover-solid) l c h);
+  --surface-input: var(--surface-document);
+}
+
+html[data-scenic] [data-shell-role="content"] {
+  --background: var(--surface-document);
+  background: var(--surface-document);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* Zen Shell: scenic wallpaper stays on ::before. Documents stay opaque. */
@@ -258,126 +269,45 @@ html[data-shell-style="zen"][data-scenic] .chrome-strip {
   app-region: no-drag;
 }
 
-/* =============================================================================
-   SCENIC MODE - GLASS PANEL EFFECTS
-
-   In scenic mode, panels become translucent with backdrop blur (glassmorphism).
-   The glass effect provides visual depth while showing the background image through.
-   Target panels by their shadow classes (shadow-middle, shadow-strong).
-============================================================================= */
-
-  html[data-scenic] .shadow-middle,
-  html[data-scenic] .shadow-strong {
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  position: relative;
-  /* Ensure panels are above the titlebar drag region (z-titlebar: 40) so header buttons are clickable.
-     Without this, the position:relative creates a stacking context at z-index:auto which is below the fixed titlebar. */
-  z-index: var(--z-panel);
-}
-
-/* Scenic mode: Input field gets more transparency to show background through
-   Uses a much lighter overlay to let the blurred background image show through */
+/* Scenic documents, inputs, and transient menus remain readable and opaque. */
 html[data-scenic] .input-container {
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--surface-input);
 }
 
-/* Scenic mode: Gradient border effect for glass panels
-   Uses a pseudo-element with a white linear gradient (40% at top, 5% at bottom).
-   The mask-composite technique creates a border-only effect from a filled gradient. */
-html[data-scenic] .shadow-middle::before,
-html[data-scenic] .shadow-strong::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 255, 255, 0.1)
-  );
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
-  z-index: 1;
-  mix-blend-mode: soft-light;
-}
-
-/* Scenic mode: Ensure panel content is above the gradient border pseudo-element.
-   Without this, interactive elements (buttons, dropdowns) in the header area
-   can be visually obscured or have click issues due to stacking context with backdrop-filter.
-   Creates explicit stacking for direct children so they sit above ::before (z-index: 1). */
-html[data-scenic] .shadow-middle > *,
-html[data-scenic] .shadow-strong > * {
-  position: relative;
-  z-index: 2;
-}
-
-
-/* Scenic mode: Popovers get glass effect too */
-html[data-scenic] .popover-styled {
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-/* Scenic mode: Fullscreen overlay background gets glass effect
-   Applied to the AI response fullscreen view background so it blends
-   with the scenic background image when viewing expanded content. */
+html[data-scenic] .popover-styled,
 html[data-scenic] .fullscreen-overlay-background {
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-}
-
-html[data-scenic]:not(.dark) .fullscreen-overlay-background {
-  background: color-mix(in srgb, var(--foreground-3) 70%, transparent);
-}
-
-html.dark[data-scenic] .fullscreen-overlay-background {
-  background: color-mix(in srgb, var(--foreground-3) 60%, transparent);
+  background: var(--surface-popover);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* =============================================================================
-   DISABLE ANIMATIONS FOR DIALOGS, DROPDOWNS, AND POPOVERS
+   EXISTING DIALOG AND MENU MOTION POLICY
 
    Radix UI (used by shadcn/ui) applies animations via data-state attributes.
-   This globally disables enter/exit animations for overlay components.
-
-   To re-enable for specific components, use: animation: revert !important;
+   Shared Popover and Tooltip primitives own their finite reveal animations.
+   Keep existing dialog/menu behavior until those components opt into motion.
 ============================================================================= */
 
 /* Dialog overlay (backdrop) */
-[data-radix-dialog-overlay] {
+[data-radix-dialog-overlay]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
 /* Dialog content */
-[role="dialog"][data-state],
-[data-radix-dialog-content] {
+[role="dialog"][data-state]:not([data-overlay-motion]),
+[data-radix-dialog-content]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
 /* Dropdown menu content */
-[data-radix-menu-content],
-[data-radix-dropdown-menu-content] {
-  animation: none !important;
-}
-
-/* Popover content */
-[data-radix-popover-content] {
+[data-radix-menu-content]:not([data-overlay-motion]),
+[data-radix-dropdown-menu-content]:not([data-overlay-motion]) {
   animation: none !important;
 }
 
 /* Select content */
 [data-radix-select-content] {
-  animation: none !important;
-}
-
-/* Tooltip content (if you want tooltips instant too) */
-[data-radix-tooltip-content] {
   animation: none !important;
 }
 
@@ -866,6 +796,15 @@ html.dark[data-scenic] .fullscreen-overlay-background {
     max-width: 100%;
     min-width: 0;
   }
+
+  [data-layout="info-property"] {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  [data-layout="info-property"] > dt {
+    width: auto !important;
+  }
 }
 
 /* ==========================================================================
@@ -1029,9 +968,9 @@ html[data-shell-style="zen"] .shell-sash-active {
 html[data-scenic] .chrome-topbar,
 html[data-scenic] .chrome-rail,
 html[data-scenic] .chrome-strip {
-  background: color-mix(in oklch, var(--surface-elevated) 70%, transparent);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  background: var(--chrome-glass-bg);
+  backdrop-filter: blur(var(--chrome-glass-blur));
+  -webkit-backdrop-filter: blur(var(--chrome-glass-blur));
 }
 
 .chrome-rail {
@@ -1057,5 +996,58 @@ html[data-scenic] .chrome-strip {
     animation: none !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Chrome controls keep a mouse target floor without enlarging content rows. */
+.header-icon-btn,
+.panel-header-btn,
+.input-toolbar-btn,
+.send-btn {
+  min-width: var(--control-hit-min);
+  min-height: var(--control-hit-min);
+}
+
+[data-layout="collection-controls"] :is(button, input, select) {
+  min-width: var(--control-hit-min);
+  min-height: var(--control-hit-min);
+}
+
+@media (pointer: coarse) {
+  .header-icon-btn,
+  html[data-shell-style="zen"] .header-icon-btn,
+  .input-toolbar-btn,
+  .send-btn,
+  [data-compact] .turn-action-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* Native reduced transparency resolves to solid; browser hosts use media queries. */
+html[data-shell-material="solid"] :is(.chrome-surface, .chrome-topbar, .chrome-rail, .chrome-strip),
+html[data-contrast="high"] :is(.chrome-surface, .chrome-topbar, .chrome-rail, .chrome-strip) {
+  background: var(--surface-elevated);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-shell-material="solid"][data-theme-override]::before,
+html[data-contrast="high"][data-theme-override]::before {
+  background: var(--surface-document);
+  background-image: none;
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  html[data-theme-override]::before,
+  html[data-scenic]::before {
+    background: var(--surface-document);
+    background-image: none;
+  }
+
+  html :is(.chrome-surface, .chrome-topbar, .chrome-rail, .chrome-strip) {
+    background: var(--surface-elevated) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 }

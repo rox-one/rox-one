@@ -1,6 +1,6 @@
 {
   "name": "Default",
-  "description": "Clean purple-tinted neutral theme",
+  "description": "Neutral surfaces with a restrained warm accent",
   "author": "Craft Agent",
   "license": "MIT",
   "supportedModes": ["light", "dark"],
@@ -8,18 +8,18 @@
     "light": "github-light",
     "dark": "github-dark"
   },
-  "background": "#faf9fb",
-  "foreground": "#1a1625",
-  "accent": "#8b5cf6",
-  "info": "#d97706",
-  "success": "#16a34a",
-  "destructive": "#dc2626",
+  "background": "#f7f7f5",
+  "foreground": "#262624",
+  "accent": "#a65c3a",
+  "info": "#97681e",
+  "success": "#347a51",
+  "destructive": "#bc4844",
   "dark": {
-    "background": "#1e1d21",
-    "foreground": "#f5f5f7",
-    "accent": "#a78bfa",
-    "info": "#fbbf24",
-    "success": "#22c55e",
-    "destructive": "#ef4444"
+    "background": "#202120",
+    "foreground": "#ededeb",
+    "accent": "#d9936c",
+    "info": "#dfb567",
+    "success": "#79b78f",
+    "destructive": "#e48078"
   }
 }

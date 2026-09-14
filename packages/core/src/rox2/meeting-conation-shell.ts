@@ -26,10 +26,10 @@ export function assertMeetingConationShellNotLive(result: Rox2Result): void {
   if (isClaimableLive(result)) {
     throw new Error('meeting Conation shell must not claim live')
   }
-  if (status.lifecycle === 'queued' && status.verification === 'verified') {
+  if (status.lifecycle === 'queued' && status.verification !== 'unverified') {
     throw new Error('queued meeting Conation shell must not report verified')
   }
-  if (status.lifecycle === 'queued' && status.ok === true) {
+  if (status.lifecycle === 'queued' && result.ok === true) {
     throw new Error('queued meeting Conation shell must not report success')
   }
 }

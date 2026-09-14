@@ -55,6 +55,10 @@ import { SessionWorkflowEditor } from '@/components/session-workbench/SessionWor
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
 import { deriveSessionMindMap, type MindMapGraph, type SceneMessage } from '@craft-agent/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
+import { useContextualSuggestions } from '@/hooks/useContextualSuggestions'
+import type { LoadedSkill } from '../../shared/types'
+
+const EMPTY_SKILLS: LoadedSkill[] = []
 
 function buildSessionEntityCapabilities(siyuanConnected: boolean): EntityViewCapability[] {
   return defaultSessionEntityCapabilities({ siyuanConnected }).map((cap) => {
@@ -337,6 +341,16 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     inputValueRef.current = nextText
     onInputChange(sessionId, nextText)
   }, [sessionId, onInputChange])
+
+  useContextualSuggestions({
+    session,
+    skills: skills ?? EMPTY_SKILLS,
+    draft: inputValue,
+    active: messagesLoaded && isWindowFocused && isFocusedPanel !== false && sessionView === 'standard',
+    hasPendingRequest: Boolean(pendingPermission || pendingCredential),
+    onDraftChange: handleInputChange,
+    onOpenWorkflow: () => setSessionView('map'),
+  })
 
   // Attachments draft state — hydrated async from persisted refs on session switch.
   // `[]` is the safe default while hydration is in flight; FreeFormInput seeds its

@@ -15,6 +15,10 @@ export const RADIUS_INNER = 8
 /** Minimum width for any content panel */
 export const PANEL_MIN_WIDTH = 440
 
+/** Grid cells remain usable on laptop displays; overflow preserves this minimum. */
+export const PANEL_GRID_MIN_WIDTH = 320
+export const PANEL_GRID_MIN_HEIGHT = 240
+
 /** Extra vertical space reserved in panel stack for box-shadows. */
 export const PANEL_STACK_VERTICAL_OVERFLOW = 8
 

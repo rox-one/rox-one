@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, animate } from 'motion/react'
+import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, useReducedMotion, animate } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { FreeFormInput, type FreeFormInputProps } from './FreeFormInput'
 import { StructuredInput } from './StructuredInput'
@@ -60,6 +60,7 @@ export function InputContainer({
   ...freeFormProps
 }: InputContainerProps) {
   const appShellContext = useOptionalAppShellContext()
+  const prefersReducedMotion = useReducedMotion()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const mode: InputMode = structuredInput ? 'structured' : 'freeform'
   const measureRef = React.useRef<HTMLDivElement>(null)
@@ -86,10 +87,10 @@ export function InputContainer({
   const isTransitioning = prevContentKeyRef.current !== contentKey
 
   // Should animate if we're in a transition OR still in the animation window
-  const shouldAnimateHeight = isTransitioning || isAnimating
+  const shouldAnimateHeight = !prefersReducedMotion && (isTransitioning || isAnimating)
 
   React.useEffect(() => {
-    if (isTransitioning) {
+    if (prevContentKeyRef.current !== contentKey) {
       prevContentKeyRef.current = contentKey
       setIsAnimating(true)
       // Keep animating for the transition duration + a bit extra for measurement settle
@@ -98,7 +99,9 @@ export function InputContainer({
       }, TRANSITION_DURATION * 1000 + 100)
       return () => clearTimeout(timer)
     }
-  }, [contentKey, isTransitioning])
+    // isTransitioning becomes false as soon as setIsAnimating re-renders us.
+    // Depending on it would cancel this timer before it resets isAnimating.
+  }, [contentKey])
 
   // Compact-mode collapse-during-thinking is escapable: the user can hover or
   // click the collapsed bar to bring the input back without waiting for the
@@ -211,10 +214,11 @@ export function InputContainer({
   // Animate height changes using motion value
   React.useEffect(() => {
     if (shouldAnimateHeight) {
-      animate(heightMotionValue, targetHeight, {
+      const animation = animate(heightMotionValue, targetHeight, {
         duration: TRANSITION_DURATION,
         ease: TRANSITION_EASE
       })
+      return () => animation.stop()
     } else {
       // Instant update - no animation
       heightMotionValue.set(targetHeight)
@@ -260,6 +264,7 @@ export function InputContainer({
           ref={measureRef}
           className="absolute top-0 left-0 right-0 invisible pointer-events-none"
           aria-hidden="true"
+          {...{ inert: '' }}
         >
           <div className="rounded-[8px] bg-background overflow-hidden">
             {renderContent(true)}
@@ -270,8 +275,8 @@ export function InputContainer({
       {/* Visible animated container */}
       <motion.div
         className={cn(
-          "input-container relative rounded-[12px] overflow-hidden transition-colors",
-          isFocusedPanel ? "shadow-middle" : "shadow-minimal",
+          "input-container relative rounded-[12px] ring-1 ring-inset shadow-minimal overflow-hidden transition-colors motion-reduce:transition-none",
+          isFocusedPanel && isFocused ? "ring-ring/40" : "ring-border/70",
           "bg-background"
         )}
         style={{
@@ -284,10 +289,10 @@ export function InputContainer({
           <motion.div
             key={contentKey}
             className={mode === 'freeform' ? "absolute bottom-0 left-0 right-0" : "absolute inset-0"}
-            initial={{ opacity: 0 }}
+            initial={prefersReducedMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: TRANSITION_DURATION, ease: TRANSITION_EASE }}
+            transition={{ duration: prefersReducedMotion ? 0 : TRANSITION_DURATION, ease: TRANSITION_EASE }}
           >
             {renderContent(false)}
           </motion.div>

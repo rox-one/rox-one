@@ -266,6 +266,7 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
     if (!opened.ok) throw new Error('expected open')
     expect(opened.route.startsWith('tasks/task/')).toBe(true)
     expect(opened.target.kind).toBe('task')
+    if (!approved.row.revisionId) throw new Error('expected persisted approval revision')
     expect(opened.target.revisionId).toBe(approved.row.revisionId)
     delete process.env.ROX_CONFIG_DIR
     delete process.env.CRAFT_CONFIG_DIR
