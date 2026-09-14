@@ -871,8 +871,10 @@ function permissionDrafts(): Draft[] {
 }
 
 function rpcDrafts(): Draft[] {
+  // meetings.ts is mixed Conation leftover, not a native RPC card. Keep the
+  // 200-card leftover ids stable; do not treat a handler DTO as live Mail.
   const files = rpcHandlerFiles().filter(
-    (file) => !file.endsWith('memory-test-setup.ts'),
+    (file) => !file.endsWith('memory-test-setup.ts') && !file.endsWith('meetings.ts'),
   )
   return files.map((file) => {
     const name = file.split('/').pop() ?? file

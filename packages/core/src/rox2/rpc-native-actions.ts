@@ -476,7 +476,17 @@ export function rpcNativeActResult(opts: {
   }
   const action = opts.action ?? 'write'
   if (action === 'spend') {
-    return queuedResult(`${meta.prefix}.not-spend`, `${meta.store} writes are local, not spend`)
+    // ROX2-191: native cloud-run SUBMIT is paid compute. Other RPC stores
+    // treat spend as a mis-tagged local write and stay queued.
+    if (opts.surface === 'cloud-runs' && opts.granted === true) {
+      return nativeLive(opts.surface, 'act', formatRox2EntityId(meta.kind, opts.nativeId ?? 'act'))
+    }
+    return queuedResult(
+      `${meta.prefix}.not-spend`,
+      opts.surface === 'cloud-runs'
+        ? 'cloud-runs spend requires an explicit grant'
+        : `${meta.store} writes are local, not spend`,
+    )
   }
   if (action === 'destroy' && opts.granted !== true) {
     return queuedResult(`${meta.prefix}.grant-required`, 'destroy requires an explicit grant')

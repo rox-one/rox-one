@@ -144,6 +144,7 @@ export function settingsHubActionResult(opts: {
  * Messaging connect is cloud-send; disconnect/forget/unbind are destroy; access is local.
  * Server config save is a local write; load/browse are device-read; relaunch is write.
  * Cloud Runs config load is device-read; save is a local write, never spend.
+ * Cloud run SUBMIT (paid compute) is gated on cloud-runs RPC as spend, not this page.
  * Shortcuts catalog load is device-read; there is no spend and no Conation iframe.
  */
 export function settingsPageActionResult(opts: {

@@ -780,7 +780,8 @@ export function registerCloudRunsHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.cloudRuns.SUBMIT,
     async (ctx, args: { topic: string; sessionId?: string; language?: 'en' | 'ru'; kind?: ResearchPackKind; personas?: boolean; omp?: boolean; fromRunId?: string; model?: { connectionSlug?: string; modelId?: string } }) => {
-      const act = rpcCloudRunsActResult({ source: 'native', action: 'write', nativeId: 'submit' });
+      // ROX2-191: submit is native spend (paid compute), not a local write and not Conation.
+      const act = rpcCloudRunsActResult({ source: 'native', action: 'spend', granted: true, nativeId: 'submit' });
       if (!isClaimableLive(act)) throw new CloudRunnerError('cloud-runs submit is not live', 'provider_error');
       denyIfKillSwitch(ctx);
       const settings = requireEnabled();
