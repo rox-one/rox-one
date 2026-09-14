@@ -3,8 +3,10 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { setupI18n } from '@craft-agent/shared/i18n/setupI18n'
 import i18n from 'i18next'
+import { bulkStatusColumnLabel } from '../bulk-status-label'
 
 const bar = readFileSync(join(import.meta.dir, '../CollectionBulkBar.tsx'), 'utf8')
+const helper = readFileSync(join(import.meta.dir, '../bulk-status-label.ts'), 'utf8')
 const localesDir = join(import.meta.dir, '../../../../../../../../packages/shared/src/i18n/locales')
 
 const STATUS_COLUMN_KEYS = [
@@ -15,14 +17,21 @@ const STATUS_COLUMN_KEYS = [
   'kanban.column.todo',
 ] as const
 
+function catalogLabel(status: string): string {
+  return bulkStatusColumnLabel(status, (key) => i18n.t(key), (key) => i18n.exists(key))
+}
+
 describe('CollectionBulkBar leftover English chrome is i18n', () => {
   it('uses catalog keys and skips English defaultValue leftovers', () => {
-    expect(bar).toContain('t(`kanban.column.${status}`)')
+    expect(bar).toContain('bulkStatusColumnLabel(status, (key) => t(key), (key) => i18n.exists(key))')
     expect(bar).toContain("t(`priority.${priority}`)")
     expect(bar).not.toContain('defaultValue: status')
     expect(bar).not.toContain("{ defaultValue: status }")
     expect(bar).not.toMatch(/defaultValue:\s*['"]/)
+    expect(helper).not.toMatch(/defaultValue:\s*['"]/)
     expect(bar).not.toContain("t(`kanban.column.${status}`, { defaultValue: status })")
+    expect(helper).toContain('value !== key')
+    expect(helper).toContain('kanban.column.${status}')
   })
 
   it('English locale keeps the existing column labels', async () => {
@@ -32,6 +41,32 @@ describe('CollectionBulkBar leftover English chrome is i18n', () => {
     expect(i18n.t('kanban.column.needs-review')).toBe('Needs review')
     expect(i18n.t('kanban.column.done')).toBe('Done')
     expect(i18n.t('kanban.column.cancelled')).toBe('Cancelled')
+  })
+
+  it('known kebab statuses still hit the catalog', async () => {
+    await setupI18n().changeLanguage('en')
+    expect(catalogLabel('todo')).toBe('Task')
+    expect(catalogLabel('in-progress')).toBe('In progress')
+    expect(catalogLabel('needs-review')).toBe('Needs review')
+    expect(catalogLabel('done')).toBe('Done')
+    expect(catalogLabel('cancelled')).toBe('Cancelled')
+    await setupI18n().changeLanguage('ru')
+    expect(catalogLabel('in-progress')).toBe('В работе')
+    expect(catalogLabel('needs-review')).toBe('Требует проверки')
+    expect(catalogLabel('cancelled')).toBe('Отменено')
+  })
+
+  it('custom status ids fall back to the identifier, not the raw i18n key', async () => {
+    await setupI18n().changeLanguage('en')
+    const status = 'my-custom-status'
+    const key = `kanban.column.${status}`
+    expect(i18n.exists(key)).toBe(false)
+    expect(i18n.t(key)).toBe(key)
+    expect(catalogLabel(status)).toBe(status)
+    expect(catalogLabel(status)).not.toBe(key)
+    expect(catalogLabel(status)).not.toContain('kanban.column.')
+    expect(bulkStatusColumnLabel(status, () => key, () => true)).toBe(status)
+    expect(bulkStatusColumnLabel(status, () => ({ nested: true }), () => true)).toBe(status)
   })
 
   it('Russian copy is distinct from English', async () => {

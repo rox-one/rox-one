@@ -13,6 +13,7 @@ import { sessionSelection } from '@/hooks/useEntitySelection'
 import type { SessionStatus, SessionStatusId } from '@/config/session-status-config'
 import { cn } from '@/lib/utils'
 import { NO_PROJECT_VALUE, projectPatchForBulkValue } from './bulk-input'
+import { bulkStatusColumnLabel } from './bulk-status-label'
 import { CollectionBulkMenu } from './CollectionBulkMenu'
 import {
   applyOptimisticCollectionBulkOperation,
@@ -53,7 +54,7 @@ export function CollectionBulkBar({
   labels = [],
   className,
 }: CollectionBulkBarProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const store = useStore()
   const selection = sessionSelection.useSelection()
   const [busy, setBusy] = React.useState(false)
@@ -294,7 +295,7 @@ export function CollectionBulkBar({
           disabled={busy}
           items={statusOptions.map((status) => ({
             id: status,
-            label: t(`kanban.column.${status}`),
+            label: bulkStatusColumnLabel(status, (key) => t(key), (key) => i18n.exists(key)),
           }))}
           onPick={(id) => apply({ sessionStatus: id as SessionStatusId })}
         />
