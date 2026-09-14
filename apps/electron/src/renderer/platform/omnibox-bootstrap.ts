@@ -21,6 +21,7 @@ import {
   type ResourceProviderRegistry,
 } from '@craft-agent/core/platform'
 import { getDefaultStore } from 'jotai'
+import i18n from 'i18next'
 import { actions, type ActionId } from '@/actions/definitions'
 import {
   sessionMetaMapAtom,
@@ -152,7 +153,7 @@ function registerActionCommands(commands: CommandRegistry): void {
   for (const def of Object.values(actions)) {
     const action = def as {
       id: string
-      label: string
+      labelKey: string
       category: string
       description?: string
       defaultHotkey: string | null
@@ -165,7 +166,7 @@ function registerActionCommands(commands: CommandRegistry): void {
 
     const contribution: CommandContribution = {
       id: action.id,
-      title: action.label,
+      title: i18n.t(action.labelKey),
       category: action.category,
       source: 'craft',
       when,
