@@ -1,5 +1,5 @@
 /**
- * ROX2-139..150: native RPC list/read/act.
+ * ROX2-139..153: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -28,6 +28,9 @@ export type RpcNativeSurface =
   | 'environment'
   | 'extensions'
   | 'fabric-runtime'
+  | 'fabric'
+  | 'files'
+  | 'gamification'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -104,6 +107,24 @@ const SURFACE: Record<
     label: 'fabric-runtime',
     store: 'native connection fabric',
     prefix: 'rpc.fabric-runtime',
+  },
+  fabric: {
+    kind: 'connection',
+    label: 'fabric RPC',
+    store: 'native fabric connections',
+    prefix: 'rpc.fabric',
+  },
+  files: {
+    kind: 'file',
+    label: 'files RPC',
+    store: 'native workspace files',
+    prefix: 'rpc.files',
+  },
+  gamification: {
+    kind: 'task',
+    label: 'gamification RPC',
+    store: 'native gamification state',
+    prefix: 'rpc.gamification',
   },
 }
 
@@ -409,4 +430,55 @@ export function rpcFabricRuntimeActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'fabric-runtime', ...opts })
+}
+
+export function rpcFabricListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'fabric', ...opts })
+}
+
+export function rpcFabricReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'fabric', ...opts })
+}
+
+export function rpcFabricActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'fabric', ...opts })
+}
+
+export function rpcFilesListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'files', ...opts })
+}
+
+export function rpcFilesReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'files', ...opts })
+}
+
+export function rpcFilesActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'files', ...opts })
+}
+
+export function rpcGamificationListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'gamification', ...opts })
+}
+
+export function rpcGamificationReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'gamification', ...opts })
+}
+
+export function rpcGamificationActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'gamification', ...opts })
 }
