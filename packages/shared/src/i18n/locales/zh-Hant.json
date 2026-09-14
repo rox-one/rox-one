@@ -2856,7 +2856,7 @@
   "serverDirectory.wrongPlatform": "這看起來像是其他作業系統的路徑。請輸入伺服器上存在的路徑。",
   "session.advisorNeedChat": "請先開啟一個對話",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "請先在「外觀 → Workbench」啟用 Agent Teams。",
+  "session.agentTeamsFlagOff": "請先在「外觀 → Workbench」啟用 {{toggle}}。",
   "session.agentTeamsPrompt": "@agent-teams 為本目標規劃隊長制團隊。先給出名單與任務 DAG；核准前不要呼叫 spawn_session。",
   "session.clearSearch": "清除搜尋",
   "session.closeSearch": "關閉搜尋",

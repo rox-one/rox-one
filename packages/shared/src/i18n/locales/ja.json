@@ -2856,7 +2856,7 @@
   "serverDirectory.wrongPlatform": "別の OS のパスのようです。サーバー上に存在するパスを入力してください。",
   "session.advisorNeedChat": "先にチャットを開いてください",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "先に「外観 → Workbench」で Agent Teams を有効にしてください。",
+  "session.agentTeamsFlagOff": "先に「外観 → Workbench」で {{toggle}} を有効にしてください。",
   "session.agentTeamsPrompt": "@agent-teams この目標のキャプテン主導チームを計画してください。先に名簿とタスク DAG。承認前に spawn_session しないでください。",
   "session.clearSearch": "検索をクリア",
   "session.closeSearch": "検索を閉じる",

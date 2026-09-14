@@ -42,7 +42,8 @@ describe('Agent Teams first-party wiring', () => {
     expect(lock).toContain('"agent-teams"')
     expect(shell).toContain("'session.agentTeams'")
     expect(shell).toContain('featureWorkbenchHarnessAgentTeamsAtom')
-    expect(shell).toContain("t('session.agentTeamsFlagOff')")
+    expect(shell).toContain("t('session.agentTeamsFlagOff'")
+    expect(shell).toContain("toggle: t('settings.appearance.workbenchHarnessAgentTeams')")
   })
 
   it('does not add dsh-cordis or npm agent-teams as a Rox dependency', () => {

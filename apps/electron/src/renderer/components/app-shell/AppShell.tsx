@@ -1290,7 +1290,7 @@ function AppShellContent({
 
   useAction('session.agentTeams', () => {
     if (!harnessAgentTeams) {
-      toast.error(t('session.agentTeamsFlagOff'))
+      toast.error(t('session.agentTeamsFlagOff', { toggle: t('settings.appearance.workbenchHarnessAgentTeams') }))
       return
     }
     const id = focusedSessionId ?? session.selected

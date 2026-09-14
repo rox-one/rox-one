@@ -2856,7 +2856,7 @@
   "serverDirectory.wrongPlatform": "This looks like a path from a different OS. Enter a path that exists on the server.",
   "session.advisorNeedChat": "Open a chat first",
   "session.advisorPrompt": "@advisor Review the current work in this session. Do not spawn a hidden session.",
-  "session.agentTeamsFlagOff": "Enable Agent Teams in Appearance → Workbench first.",
+  "session.agentTeamsFlagOff": "Enable {{toggle}} in Appearance → Workbench first.",
   "session.agentTeamsPrompt": "@agent-teams Plan a captain-led team for this goal. Stage the roster and task DAG; wait for approval before spawn_session.",
   "session.clearSearch": "Clear search",
   "session.closeSearch": "Close search",
