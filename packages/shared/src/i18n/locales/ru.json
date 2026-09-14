@@ -3304,7 +3304,7 @@
   "settings.cloudRuns.providerLocal": "Локально (этот компьютер)",
   "settings.cloudRuns.providerNative": "Нативный sidecar (этот компьютер)",
   "settings.cloudRuns.region": "Регион",
-  "settings.cloudRuns.regionHint": "Регион или target Daytona",
+  "settings.cloudRuns.regionHint": "Регион или цель Daytona",
   "settings.cloudRuns.sandbox": "Префикс имени sandbox",
   "settings.cloudRuns.sandboxGated": "Платные песочницы Daytona недоступны, пока не заданы квоты",
   "settings.cloudRuns.sandboxHint": "Префикс имени sandbox; id рана добавляется",
