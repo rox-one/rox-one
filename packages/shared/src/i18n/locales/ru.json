@@ -2022,7 +2022,7 @@
   "notes.empty.selectWorkspace": "Выберите рабочее пространство, чтобы пользоваться заметками.",
   "notes.fold.collapse": "Свернуть раздел",
   "notes.fold.expand": "Развернуть раздел",
-  "notes.frontmatterPreserved": "Frontmatter сохраняется при записи",
+  "notes.frontmatterPreserved": "YAML-шапка сохраняется при записи",
   "notes.header.title": "Заметки",
   "notes.inspector.addProperty": "Добавить свойство",
   "notes.inspector.allLinksResolve": "Все wiki-ссылки резолвятся",
