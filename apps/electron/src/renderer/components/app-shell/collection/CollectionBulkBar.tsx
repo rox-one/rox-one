@@ -294,7 +294,7 @@ export function CollectionBulkBar({
           disabled={busy}
           items={statusOptions.map((status) => ({
             id: status,
-            label: t(`kanban.column.${status}`, { defaultValue: status }),
+            label: t(`kanban.column.${status}`),
           }))}
           onPick={(id) => apply({ sessionStatus: id as SessionStatusId })}
         />
