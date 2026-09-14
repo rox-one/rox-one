@@ -1,8 +1,8 @@
 /**
- * ROX2-139..144: native RPC list/read/act.
+ * ROX2-139..147: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
- * A CredentialMigrationResult `{ ok: true, data }` is not a Rox2 live claim.
+ * A handler `{ ok: true }` DTO is not a Rox2 live claim.
  */
 import {
   fixtureResult,
@@ -22,6 +22,9 @@ export type RpcNativeSurface =
   | 'browser-profile-import'
   | 'bundled-skills'
   | 'cloud-runs'
+  | 'collection'
+  | 'command-gateway'
+  | 'context-docs'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -62,6 +65,24 @@ const SURFACE: Record<
     label: 'cloud-runs RPC',
     store: 'native cloud-runs config',
     prefix: 'rpc.cloud-runs',
+  },
+  collection: {
+    kind: 'session',
+    label: 'collection RPC',
+    store: 'native collection display',
+    prefix: 'rpc.collection',
+  },
+  'command-gateway': {
+    kind: 'task',
+    label: 'command-gateway RPC',
+    store: 'native pending commands',
+    prefix: 'rpc.command-gateway',
+  },
+  'context-docs': {
+    kind: 'file',
+    label: 'context-docs RPC',
+    store: 'native context docs',
+    prefix: 'rpc.context-docs',
   },
 }
 
@@ -265,4 +286,55 @@ export function rpcCloudRunsActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'cloud-runs', ...opts })
+}
+
+export function rpcCollectionListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'collection', ...opts })
+}
+
+export function rpcCollectionReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'collection', ...opts })
+}
+
+export function rpcCollectionActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'collection', ...opts })
+}
+
+export function rpcCommandGatewayListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'command-gateway', ...opts })
+}
+
+export function rpcCommandGatewayReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'command-gateway', ...opts })
+}
+
+export function rpcCommandGatewayActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'command-gateway', ...opts })
+}
+
+export function rpcContextDocsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'context-docs', ...opts })
+}
+
+export function rpcContextDocsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'context-docs', ...opts })
+}
+
+export function rpcContextDocsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'context-docs', ...opts })
 }
