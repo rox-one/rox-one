@@ -45,7 +45,11 @@ import {
   createSourcesProvider,
 } from './omnibox-providers'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
-import { registerConationOmniboxCommands } from './omnibox-conation'
+import {
+  CONATION_OPEN_BOARD_COMMAND_ID,
+  CONATION_OPEN_FUND_COMMAND_ID,
+  registerConationOmniboxCommands,
+} from './omnibox-conation'
 
 export interface OmniboxPlatform {
   commands: CommandRegistry
@@ -78,8 +82,12 @@ export function setOmniboxActionExecutor(execute: (actionId: ActionId) => void):
   actionExecute = execute
 }
 
-/** Optional i18n label resolver for settings pages (defaults to id). */
-export type LabelResolver = (key: string, fallback: string) => string
+/** Optional i18n label resolver. Second arg is the identifier used on catalog miss. */
+export type LabelResolver = (key: string, identifier: string) => string
+
+function catalogLabel(t: LabelResolver | undefined, key: string, identifier: string): string {
+  return t ? t(key, identifier) : identifier
+}
 
 /**
  * Idempotent bootstrap: register craft actions as commands + resource providers.
@@ -189,12 +197,11 @@ function openSiyuanCompatSurface(): void {
 }
 
 function registerConationCommands(commands: CommandRegistry, t?: LabelResolver): void {
-  const label = (key: string, fallback: string) => (t ? t(key, fallback) : fallback)
   try {
     for (const d of registerConationOmniboxCommands(commands, {
-      fundTitle: label('conation.fund.open', 'Open Fund in Conation'),
-      boardTitle: label('conation.board.open', 'Open Board in Conation'),
-      category: label('settings.appearance.conationShell', 'Conation'),
+      fundTitle: catalogLabel(t, 'conation.fund.open', CONATION_OPEN_FUND_COMMAND_ID),
+      boardTitle: catalogLabel(t, 'conation.board.open', CONATION_OPEN_BOARD_COMMAND_ID),
+      category: catalogLabel(t, 'settings.appearance.conationShell', 'conation'),
       openUrl: (url) => {
         const openUrl = typeof window === 'undefined' ? undefined : window.electronAPI?.openUrl
         return openUrl?.(url)
@@ -208,10 +215,11 @@ function registerConationCommands(commands: CommandRegistry, t?: LabelResolver):
 }
 
 function registerKnowledgeCommands(commands: CommandRegistry): void {
+  const knowledgeCategory = i18n.t('sidebar.knowledge')
   const openHome: CommandContribution = {
     id: 'knowledge.openHome',
-    title: 'Open Knowledge',
-    category: 'Knowledge',
+    title: i18n.t('knowledge.openHome'),
+    category: knowledgeCategory,
     source: 'craft',
     keywords: ['knowledge', 'siyuan', 'notes', 'docs'],
     async execute() {
@@ -220,8 +228,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const search: CommandContribution = {
     id: 'knowledge.search',
-    title: 'Search Knowledge',
-    category: 'Knowledge',
+    title: i18n.t('knowledge.search'),
+    category: knowledgeCategory,
     source: 'craft',
     keywords: ['knowledge', 'search', 'find', 'docs'],
     async execute() {
@@ -230,8 +238,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const openCompat: CommandContribution = {
     id: 'knowledge.openCompat',
-    title: 'Open SiYuan compatibility view',
-    category: 'Knowledge',
+    title: i18n.t('knowledge.openCompat'),
+    category: knowledgeCategory,
     source: 'craft',
     keywords: ['knowledge', 'siyuan', 'compat', 'full', 'interface', 'plugin'],
     async execute() {
@@ -240,8 +248,8 @@ function registerKnowledgeCommands(commands: CommandRegistry): void {
   }
   const openCompatAlias: CommandContribution = {
     id: 'siyuan.openCompat',
-    title: 'Open SiYuan compatibility view',
-    category: 'Knowledge',
+    title: i18n.t('siyuan.openCompat'),
+    category: knowledgeCategory,
     source: 'craft',
     keywords: ['siyuan', 'compat', 'full', 'interface', 'plugin'],
     async execute() {
@@ -366,7 +374,7 @@ async function refreshPluginBridgeCommands(commands: CommandRegistry): Promise<v
             contributions.push({
               id,
               title: cmd.title,
-              category: 'SiYuan Plugin',
+              category: i18n.t('omnibox.category.siyuanPlugin'),
               // Domain lands `siyuan-plugin` on the source union; cast keeps bootstrap green either way.
               source: 'siyuan-plugin' as CommandContribution['source'],
               when: cmd.when,
