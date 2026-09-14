@@ -3397,7 +3397,7 @@
   "settings.import.filterKind": "Источник",
   "settings.import.persist": "Сохранить выбранные",
   "settings.import.scan": "Сканировать",
-  "settings.import.scanHint": "Скан ≠ импорт. Persist пишет чаты Rox в этот workspace.",
+  "settings.import.scanHint": "Скан ≠ импорт. Persist пишет чаты Rox в это рабочее пространство.",
   "settings.import.searchPlaceholder": "Поиск чатов…",
   "settings.import.selectAll": "Выбрать все",
   "settings.import.selectedCount": "Выбрано {{count}}",
