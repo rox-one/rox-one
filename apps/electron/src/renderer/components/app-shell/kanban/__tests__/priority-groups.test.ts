@@ -7,7 +7,7 @@ import {
   priorityGroupId,
 } from '../priority-groups'
 
-const t = (key: string, opts?: { defaultValue?: string }) => opts?.defaultValue ?? key
+const t = (key: string) => key
 
 function task(id: string, priority?: SessionPriority | string): KanbanTask {
   return {
@@ -52,6 +52,26 @@ describe('B6 priority groups (board Display.groupBy=priority)', () => {
 
   it('empty task list yields zero groups', () => {
     expect(buildPriorityGroups([], t)).toEqual([])
+  })
+
+  it('uses catalog labels when t() resolves the priority key', () => {
+    const catalog = (key: string) => {
+      if (key === 'priority.urgent') return 'Urgent'
+      if (key === 'priority.none') return 'None'
+      return key
+    }
+    const groups = buildPriorityGroups([task('a', 'urgent'), task('b')], catalog)
+    expect(groups.map((g) => g.name)).toEqual(['Urgent', 'None'])
+    expect(groups[0]!.name).not.toBe('urgent')
+    expect(groups[1]!.name).not.toBe('none')
+  })
+
+  it('falls back to the priority identifier when the catalog misses', () => {
+    const groups = buildPriorityGroups([task('a', 'urgent'), task('b', 'none')], t)
+    expect(groups.map((g) => g.name)).toEqual(['urgent', 'none'])
+    expect(groups[0]!.name).not.toBe('priority.urgent')
+    expect(groups[1]!.name).not.toBe('priority.none')
+    expect(groups[0]!.name).not.toBe('Urgent')
   })
 
   it('parsePriorityGroupId round-trips known and unknown values', () => {

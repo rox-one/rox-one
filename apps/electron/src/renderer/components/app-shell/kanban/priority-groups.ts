@@ -24,10 +24,11 @@ export function parsePriorityGroupId(projectId: string | null | undefined): stri
  * Bucket tasks into priority subsections for a single column.
  * Known priorities keep PRIORITY_GROUP_ORDER; unknown values append after.
  * Empty buckets are omitted. Mirrors the production KanbanBoard memo (B6 / FR-30).
+ * Catalog miss falls back to the priority identifier, not the raw i18n key.
  */
 export function buildPriorityGroups(
   tasks: readonly KanbanTask[],
-  t: (key: string, opts?: { defaultValue?: string }) => string,
+  t: (key: string) => string,
 ): KanbanProjectGroup[] {
   const byPrio = new Map<string, KanbanTask[]>()
   for (const task of tasks) {
@@ -41,9 +42,10 @@ export function buildPriorityGroups(
   for (const prio of PRIORITY_GROUP_ORDER) {
     const list = byPrio.get(prio)
     if (!list || list.length === 0) continue
+    const translated = t(`priority.${prio}`)
     groups.push({
       projectId: priorityGroupId(prio),
-      name: t(`priority.${prio}`, { defaultValue: prio }),
+      name: translated === `priority.${prio}` ? prio : translated,
       tasks: list,
     })
     byPrio.delete(prio)
