@@ -1,5 +1,5 @@
 /**
- * ROX2-139..147: native RPC list/read/act.
+ * ROX2-139..150: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -25,6 +25,9 @@ export type RpcNativeSurface =
   | 'collection'
   | 'command-gateway'
   | 'context-docs'
+  | 'environment'
+  | 'extensions'
+  | 'fabric-runtime'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -83,6 +86,24 @@ const SURFACE: Record<
     label: 'context-docs RPC',
     store: 'native context docs',
     prefix: 'rpc.context-docs',
+  },
+  environment: {
+    kind: 'memory',
+    label: 'environment RPC',
+    store: 'native environment prefs',
+    prefix: 'rpc.environment',
+  },
+  extensions: {
+    kind: 'skill',
+    label: 'extensions RPC',
+    store: 'native extension state',
+    prefix: 'rpc.extensions',
+  },
+  'fabric-runtime': {
+    kind: 'connection',
+    label: 'fabric-runtime',
+    store: 'native connection fabric',
+    prefix: 'rpc.fabric-runtime',
   },
 }
 
@@ -337,4 +358,55 @@ export function rpcContextDocsActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'context-docs', ...opts })
+}
+
+export function rpcEnvironmentListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'environment', ...opts })
+}
+
+export function rpcEnvironmentReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'environment', ...opts })
+}
+
+export function rpcEnvironmentActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'environment', ...opts })
+}
+
+export function rpcExtensionsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'extensions', ...opts })
+}
+
+export function rpcExtensionsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'extensions', ...opts })
+}
+
+export function rpcExtensionsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'extensions', ...opts })
+}
+
+export function rpcFabricRuntimeListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'fabric-runtime', ...opts })
+}
+
+export function rpcFabricRuntimeReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'fabric-runtime', ...opts })
+}
+
+export function rpcFabricRuntimeActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'fabric-runtime', ...opts })
 }
