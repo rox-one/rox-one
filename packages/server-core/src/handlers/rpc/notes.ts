@@ -1166,3 +1166,81 @@ export function registerNotesHandlers(server: RpcServer, _deps: HandlerDeps): vo
     cleanupNotesWatchForClient(ctx.clientId)
   })
 }
+
+/** Canonical local note writer for meeting evidence (issue #367). Conation is not used. */
+export async function createMeetingEvidenceNote(
+  workspaceId: string,
+  title: string,
+  body: string,
+): Promise<{ id: string }> {
+  const notesRoot = getWorkspaceNotesRoot(workspaceId)
+  const created = await createNote(notesRoot, title)
+  const saved = await saveNote(notesRoot, created.id, stringifyNoteContent(body, { title }))
+  return { id: saved.id }
+}
+
+/**
+ * Meeting knowledge writes go through canonical Notes (issue #371 / I015).
+ * Stable `roxEntityId` survives rename; CAS uses `roxRevision`.
+ */
+export async function applyMeetingKnowledgeNoteChange(
+  workspaceId: string,
+  input: {
+    entityId?: string
+    title: string
+    body: string
+    properties?: Record<string, unknown>
+    expectedRevision?: string
+  },
+): Promise<{ id: string; entityId: string; created: boolean; revision: string }> {
+  const notesRoot = getWorkspaceNotesRoot(workspaceId)
+  const notes = await listNotes(notesRoot)
+  const existing = notes.find((note) => {
+    const stableId = typeof note.properties.roxEntityId === 'string' ? note.properties.roxEntityId : note.id
+    if (input.entityId && (stableId === input.entityId || note.id === input.entityId)) return true
+    return !input.entityId && note.title === input.title
+  })
+  if (existing) {
+    const currentRevision = typeof existing.properties.roxRevision === 'string' || typeof existing.properties.roxRevision === 'number'
+      ? String(existing.properties.roxRevision)
+      : '1'
+    if (input.expectedRevision != null && currentRevision !== input.expectedRevision) {
+      const error = new Error('conflict') as Error & { code: string }
+      error.code = 'conflict'
+      throw error
+    }
+    const entityId = typeof existing.properties.roxEntityId === 'string' ? existing.properties.roxEntityId : existing.id
+    const revision = bumpRoxNoteRevision(currentRevision)
+    const saved = await saveNote(
+      notesRoot,
+      existing.id,
+      stringifyNoteContent(input.body, {
+        ...existing.properties,
+        ...(input.properties ?? {}),
+        title: input.title,
+        roxEntityId: entityId,
+        roxRevision: revision,
+      }),
+    )
+    return { id: saved.id, entityId, created: false, revision }
+  }
+  const created = await createNote(notesRoot, input.title)
+  const entityId = input.entityId ?? created.id
+  const saved = await saveNote(
+    notesRoot,
+    created.id,
+    stringifyNoteContent(input.body, {
+      ...(input.properties ?? {}),
+      title: input.title,
+      roxEntityId: entityId,
+      roxRevision: '1',
+    }),
+  )
+  return { id: saved.id, entityId, created: true, revision: '1' }
+}
+
+function bumpRoxNoteRevision(revisionId: string): string {
+  const n = Number(revisionId)
+  if (Number.isInteger(n) && n >= 0) return String(n + 1)
+  return `${revisionId}.1`
+}

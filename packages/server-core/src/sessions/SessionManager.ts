@@ -136,6 +136,7 @@ import { extractLabelId, resolveSessionLabels, findTaskItemLabelId } from '@craf
 import { ensureLabelsExist, ensureTaskItemLabel } from '@craft-agent/shared/labels/crud'
 import { loadStatusConfig } from '@craft-agent/shared/statuses/storage'
 import { AutomationSystem, createPromptHistoryEntry, appendAutomationHistoryEntry, type AutomationSystemMetadataSnapshot, type KnowledgeActionExecutor, type CloudRunSubmitExecutor, type KnowledgeActionExecutorContext, type KnowledgeAutomationAction, type CloudRunSubmitAction, type CloudRunSubmitExecutorContext } from '@craft-agent/shared/automations'
+import { createMeetingFollowupExecutor, loadMeetingFollowupMatchers, MeetingFollowupService } from '../meetings/followup.ts'
 import { awardXpSafe } from '@craft-agent/shared/gamification'
 import { ServerKnowledgeActionExecutor } from '../knowledge/automation-actions'
 import { KnowledgeBridgeService } from '../knowledge/bridge-service'
@@ -1848,6 +1849,20 @@ export class SessionManager implements ISessionManager {
         enableScheduler: true,
         knowledgeExecutor: this.createKnowledgeActionExecutor(workspaceRootPath, workspaceId),
         cloudRunSubmitExecutor: this.createCloudRunSubmitExecutor(workspaceRootPath, workspaceId),
+        meetingFollowupExecutor: {
+          execute: async (action, ctx) => {
+            const service = await MeetingFollowupService.load({
+              workspaceId,
+              actorId: 'system',
+              deviceId: 'host',
+              grants: [],
+              persistDir: join(workspaceRootPath, 'meetings'),
+              deviceAvailable: true,
+            })
+            return createMeetingFollowupExecutor(service).execute(action, ctx)
+          },
+        },
+        meetingFollowupMatchers: () => loadMeetingFollowupMatchers(join(workspaceRootPath, 'meetings')),
         onPromptsReady: async (prompts) => {
           // Execute prompt automations by creating new sessions
           const settled = await Promise.allSettled(

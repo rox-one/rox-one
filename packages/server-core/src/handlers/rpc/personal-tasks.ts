@@ -28,6 +28,11 @@ export function resetPersonalTasksRepositoryForTests(filePath?: string): void {
   repo = filePath ? new FileTaskRepository(filePath) : null
 }
 
+/** Canonical personal-task writer for meeting native actions (issue #367). */
+export function personalTasksRepository(): FileTaskRepository {
+  return repository()
+}
+
 export type PersonalTaskLoadDto = {
   json: string
   revision: number

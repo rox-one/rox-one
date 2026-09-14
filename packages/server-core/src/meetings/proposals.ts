@@ -79,6 +79,18 @@ export class ProposalInbox {
     return structuredClone(current)
   }
 
+  clarify(id: string): InboxProposal {
+    const current = this.require(id)
+    if (current.status === 'rejected' || current.status === 'applied') {
+      throw new Error(`Proposal ${current.status} cannot be clarified`)
+    }
+    current.status = 'needs_clarification'
+    current.approvedBy = undefined
+    current.approvedPayloadHash = undefined
+    this.proposals.set(id, current)
+    return structuredClone(current)
+  }
+
   approve(input: {
     proposalId: string
     actorId: string
@@ -141,4 +153,57 @@ export class ProposalInbox {
     if (!current) throw new Error(`Unknown proposal ${id}`)
     return current
   }
+}
+
+export type ApproveMeetingProposalInput = {
+  proposalId: string
+  actorId: string
+  workspaceId: string
+  deviceId: string
+  payloadHash: string
+  baseRevision: number
+  target?: string
+  now: number
+  grants: readonly MeetingGrant[]
+}
+
+export type BatchApproveResult = {
+  proposalId: string
+  ok: boolean
+  proposal?: InboxProposal
+  error?: string
+}
+
+/** Approve a specific payload version. Approved is not applied. */
+export function approveMeetingProposal(
+  inbox: ProposalInbox,
+  input: ApproveMeetingProposalInput,
+): InboxProposal {
+  const current = inbox.get(input.proposalId)
+  if (!current) throw new Error('Unknown proposal')
+  if (current.sourceRevision !== input.baseRevision) {
+    return inbox.markStaleIfSourceChanged(input.proposalId, input.baseRevision)
+  }
+  if (input.target !== undefined && current.target !== input.target) {
+    throw new Error('Approval target does not match')
+  }
+  return inbox.approve(input)
+}
+
+/** Batch approve is N validated operations, not a global allow-all. */
+export function approveMeetingProposals(
+  inbox: ProposalInbox,
+  items: readonly ApproveMeetingProposalInput[],
+): BatchApproveResult[] {
+  return items.map((item) => {
+    try {
+      return { proposalId: item.proposalId, ok: true, proposal: approveMeetingProposal(inbox, item) }
+    } catch (error) {
+      return {
+        proposalId: item.proposalId,
+        ok: false,
+        error: error instanceof Error ? error.message : String(error),
+      }
+    }
+  })
 }
