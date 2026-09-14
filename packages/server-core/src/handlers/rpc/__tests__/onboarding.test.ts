@@ -64,7 +64,7 @@ mock.module('@craft-agent/shared/auth', () => ({
   },
 }))
 
-mock.module('@craft-agent/shared/config/storage', () => ({
+mock.module('@craft-agent/shared/config', () => ({
   isSetupDeferred: () => {
     setupDeferredReadCount += 1
     return setupDeferred
