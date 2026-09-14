@@ -8,6 +8,12 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { getFabricRuntime } from './fabric-runtime'
+import {
+  isClaimableLive,
+  rpcFabricActResult,
+  rpcFabricListResult,
+  rpcFabricReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.fabric.LIST_CONNECTIONS,
@@ -116,12 +122,16 @@ function withRegistrySyncWrite<T>(
 
 export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): void {
   server.handle(RPC_CHANNELS.fabric.LIST_CONNECTIONS, async (_ctx, workspaceIdOrArgs?: unknown) => {
+    const listed = rpcFabricListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const runtime = getFabricRuntime()
     const workspaceId = workspaceIdOf(workspaceIdOrArgs)
     return stripSecrets(await runtime.graph.listConnections(workspaceId))
   })
 
   server.handle(RPC_CHANNELS.fabric.CREATE_CONNECTION, async (_ctx, args: unknown) => {
+    const act = rpcFabricActResult({ source: 'native', action: 'write', nativeId: 'connection' })
+    if (!isClaimableLive(act)) throw new Error('fabric connection write is not live')
     const runtime = getFabricRuntime()
     const bag = objectArg(args)
     return stripSecrets(
@@ -265,6 +275,8 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
     const workspaceId = nonEmptyString(bag.workspaceId) ?? DEFAULT_WORKSPACE_ID
     const connectionId = nonEmptyString(bag.connectionId)
     if (!connectionId) throw new Error('fabric.revokeConnection: connectionId required')
+    const act = rpcFabricActResult({ source: 'native', action: 'destroy', granted: true, nativeId: connectionId })
+    if (!isClaimableLive(act)) throw new Error('fabric connection destroy is not live')
     return stripSecrets(
       await revokeConnectionAndRevalidate({
         kernel: runtime.graph,
@@ -278,6 +290,8 @@ export function registerFabricHandlers(server: RpcServer, _deps: HandlerDeps): v
   })
 
   server.handle(RPC_CHANNELS.fabric.GITHUB_STATUS, async (_ctx, args?: unknown) => {
+    const read = rpcFabricReadResult({ source: 'native', nativeId: 'github' })
+    if (!isClaimableLive(read.result)) return { available: false, reason: 'not-live' }
     const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
     if (!token) return { available: false, reason: 'not-configured' }
 

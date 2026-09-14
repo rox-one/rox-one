@@ -76,6 +76,15 @@ import {
   rpcFabricRuntimeActResult,
   rpcFabricRuntimeListResult,
   rpcFabricRuntimeReadResult,
+  rpcFabricActResult,
+  rpcFabricListResult,
+  rpcFabricReadResult,
+  rpcFilesActResult,
+  rpcFilesListResult,
+  rpcFilesReadResult,
+  rpcGamificationActResult,
+  rpcGamificationListResult,
+  rpcGamificationReadResult,
 } from '../rpc-native-actions.ts'
 
 const ALL_SOUP_TYPES: SoupEntityConcreteType[] = [
@@ -1086,5 +1095,104 @@ describe('ROX2-150 RPC fabric-runtime.ts list/read/act', () => {
     expect(isClaimableLive(rpcFabricRuntimeActResult({ source: 'native', action: 'spend' }))).toBe(false)
     expect(isClaimableLive(rpcFabricRuntimeActResult({ source: 'fixture' }))).toBe(false)
     expect(isClaimableLive(rpcFabricRuntimeActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-151 RPC fabric.ts list/read/act', () => {
+  test('list names live vs fixture; Conation fabric list is not claimable', () => {
+    const nativeEmpty = rpcFabricListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(nativeEmpty.result.verification).toBe('receipt_verified')
+    expect(isClaimableLive(rpcFabricListResult({ source: 'native', nativeIds: ['conn-1'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcFabricListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcFabricListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing connection is not a fake record', () => {
+    const found = rpcFabricReadResult({ source: 'native', nativeId: 'github' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('connection:github')
+    expect(isClaimableLive(rpcFabricReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcFabricReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcFabricReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcFabricReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcFabricActResult({ source: 'native', action: 'write', nativeId: 'conn-1' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcFabricActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'conn-1' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcFabricActResult({ source: 'native', action: 'destroy', nativeId: 'conn-1' }))).toBe(false)
+    expect(isClaimableLive(rpcFabricActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcFabricActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcFabricActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-152 RPC files.ts list/read/act', () => {
+  test('list names live vs fixture; Conation files list is not claimable', () => {
+    const nativeEmpty = rpcFilesListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcFilesListResult({ source: 'native', nativeIds: ['readme.md'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcFilesListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcFilesListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing file is not a fake record', () => {
+    const found = rpcFilesReadResult({ source: 'native', nativeId: 'readme.md' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('file:readme.md')
+    expect(isClaimableLive(rpcFilesReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcFilesReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcFilesReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcFilesReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcFilesActResult({ source: 'native', action: 'write', nativeId: 'readme.md' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcFilesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'readme.md' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcFilesActResult({ source: 'native', action: 'destroy', nativeId: 'readme.md' }))).toBe(false)
+    expect(isClaimableLive(rpcFilesActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcFilesActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcFilesActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-153 RPC gamification.ts list/read/act', () => {
+  test('list names live vs fixture; Conation gamification list is not claimable', () => {
+    const nativeEmpty = rpcGamificationListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcGamificationListResult({ source: 'native', nativeIds: ['profile'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcGamificationListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcGamificationListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing profile is not a fake record', () => {
+    const found = rpcGamificationReadResult({ source: 'native', nativeId: 'profile' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe('task:profile')
+    expect(isClaimableLive(rpcGamificationReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcGamificationReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcGamificationReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcGamificationReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'profile' }))).toBe(true)
+    expect(
+      isClaimableLive(
+        rpcGamificationActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'profile' }),
+      ),
+    ).toBe(true)
+    expect(isClaimableLive(rpcGamificationActResult({ source: 'native', action: 'destroy', nativeId: 'profile' }))).toBe(false)
+    expect(isClaimableLive(rpcGamificationActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcGamificationActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcGamificationActResult({ source: 'conation' }))).toBe(false)
   })
 })

@@ -29,6 +29,12 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { resolveConfigDir } from "@craft-agent/shared/config/paths"
+import {
+  isClaimableLive,
+  rpcGamificationActResult,
+  rpcGamificationListResult,
+  rpcGamificationReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.gamification.GET,
@@ -96,11 +102,17 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
   })
 
   server.handle(RPC_CHANNELS.gamification.GET, async () => {
+    const listed = rpcGamificationListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('gamification profile is not live')
+    const read = rpcGamificationReadResult({ source: 'native', nativeId: 'profile' })
+    if (!isClaimableLive(read.result)) throw new Error('gamification profile is not live')
     const { state } = getGamificationProgress()
     return toDto(state)
   })
 
   server.handle(RPC_CHANNELS.gamification.AWARD, async (_ctx, event: unknown) => {
+    const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'award' })
+    if (!isClaimableLive(act)) throw new Error('gamification award is not live')
     if (!isXpEventType(event)) {
       throw new Error(`Unknown XP event: ${String(event)}`)
     }
@@ -116,6 +128,8 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
   })
 
   server.handle(RPC_CHANNELS.gamification.QUEST, async (_ctx, payload: unknown) => {
+    const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'quest' })
+    if (!isClaimableLive(act)) throw new Error('gamification quest is not live')
     if (!payload || typeof payload !== 'object') {
       throw new Error('quest payload required')
     }
@@ -134,6 +148,8 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
   })
 
   server.handle(RPC_CHANNELS.gamification.RATE, async (_ctx, payload: unknown) => {
+    const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'rate' })
+    if (!isClaimableLive(act)) throw new Error('gamification rate is not live')
     if (!payload || typeof payload !== 'object') {
       throw new Error('rating payload required')
     }
@@ -156,6 +172,8 @@ export function registerGamificationHandlers(server: RpcServer, _deps: HandlerDe
   })
 
   server.handle(RPC_CHANNELS.gamification.SET_CONSENT, async (_ctx, consent: unknown) => {
+    const act = rpcGamificationActResult({ source: 'native', action: 'write', nativeId: 'consent' })
+    if (!isClaimableLive(act)) throw new Error('gamification consent write is not live')
     const state = setAnalyticsConsent(consent === true)
     broadcast(server, state)
     return toDto(state)
