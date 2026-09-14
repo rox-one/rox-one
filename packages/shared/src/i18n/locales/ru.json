@@ -3300,7 +3300,7 @@
   "settings.cloudRuns.projectHint": "Идентификатор проекта Daytona для этого воркспейса",
   "settings.cloudRuns.provider": "Провайдер",
   "settings.cloudRuns.providerDaytona": "Daytona",
-  "settings.cloudRuns.providerHint": "Daytona — облачный раннер; local и native остаются на этой машине",
+  "settings.cloudRuns.providerHint": "Daytona — облачный раннер; локальный и нативный sidecar остаются на этой машине",
   "settings.cloudRuns.providerLocal": "Локально (этот компьютер)",
   "settings.cloudRuns.providerNative": "Нативный sidecar (этот компьютер)",
   "settings.cloudRuns.region": "Регион",
