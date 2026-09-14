@@ -1,5 +1,5 @@
 /**
- * ROX2-139..186: native RPC list/read/act.
+ * ROX2-139..190: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -64,6 +64,10 @@ export type RpcNativeSurface =
   | 'statuses'
   | 'system'
   | 'tasks'
+  | 'toolchain'
+  | 'transfer'
+  | 'voice'
+  | 'workspace'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -356,6 +360,30 @@ const SURFACE: Record<
     label: 'tasks RPC',
     store: 'native task conductor',
     prefix: 'rpc.tasks',
+  },
+  toolchain: {
+    kind: 'skill',
+    label: 'toolchain RPC',
+    store: 'native toolchain runtime',
+    prefix: 'rpc.toolchain',
+  },
+  transfer: {
+    kind: 'file',
+    label: 'transfer RPC',
+    store: 'native chunked transfer',
+    prefix: 'rpc.transfer',
+  },
+  voice: {
+    kind: 'memory',
+    label: 'voice RPC',
+    store: 'native voice prefs',
+    prefix: 'rpc.voice',
+  },
+  workspace: {
+    kind: 'session',
+    label: 'workspace RPC',
+    store: 'native workspaces',
+    prefix: 'rpc.workspace',
   },
 }
 
@@ -1276,4 +1304,72 @@ export function rpcTasksActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'tasks', ...opts })
+}
+
+export function rpcToolchainListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'toolchain', ...opts })
+}
+
+export function rpcToolchainReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'toolchain', ...opts })
+}
+
+export function rpcToolchainActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'toolchain', ...opts })
+}
+
+export function rpcTransferListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'transfer', ...opts })
+}
+
+export function rpcTransferReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'transfer', ...opts })
+}
+
+export function rpcTransferActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'transfer', ...opts })
+}
+
+export function rpcVoiceListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'voice', ...opts })
+}
+
+export function rpcVoiceReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'voice', ...opts })
+}
+
+export function rpcVoiceActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'voice', ...opts })
+}
+
+export function rpcWorkspaceListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'workspace', ...opts })
+}
+
+export function rpcWorkspaceReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'workspace', ...opts })
+}
+
+export function rpcWorkspaceActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'workspace', ...opts })
 }

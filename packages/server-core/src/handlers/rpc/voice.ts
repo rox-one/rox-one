@@ -47,6 +47,12 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcVoiceActResult,
+  rpcVoiceListResult,
+  rpcVoiceReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.voice.GET,
@@ -171,9 +177,15 @@ function broadcast(server: RpcServer, prefs: VoicePrefs): void {
 }
 
 export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): void {
-  server.handle(RPC_CHANNELS.voice.GET, async () => loadVoicePrefs())
+  server.handle(RPC_CHANNELS.voice.GET, async () => {
+    const listed = rpcVoiceListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('voice prefs are not live')
+    return loadVoicePrefs()
+  })
 
   server.handle(RPC_CHANNELS.voice.SAVE, async (_ctx, patch: unknown) => {
+    const act = rpcVoiceActResult({ source: 'native', action: 'write', nativeId: 'prefs' })
+    if (!isClaimableLive(act)) throw new Error('voice save is not live')
     const current = loadVoicePrefs()
     const next = saveVoicePrefs({
       ...current,
@@ -273,6 +285,10 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
   server.handle(RPC_CHANNELS.voice.HISTORY_GET, async (_ctx, payload: unknown) => {
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
     const id = typeof body.id === 'string' ? body.id : ''
+    const read = rpcVoiceReadResult({ source: 'native', nativeId: id })
+    if (!isClaimableLive(read.result)) {
+      return { recording: null, revisions: [], runs: loadHistoryIndex(resolveConfigDir()).runs }
+    }
     const index = loadHistoryIndex(resolveConfigDir())
     return {
       recording: index.recordings.find((item) => item.id === id) ?? null,
@@ -290,7 +306,11 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
 
   server.handle(RPC_CHANNELS.voice.HISTORY_DELETE, async (_ctx, payload: unknown) => {
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
-    saveHistoryIndex(resolveConfigDir(), deleteRecording(loadHistoryIndex(resolveConfigDir()), String(body.id)))
+    const id = String(body.id ?? '')
+    if (!id) throw new Error('id is required')
+    const act = rpcVoiceActResult({ source: 'native', action: 'destroy', granted: true, nativeId: id })
+    if (!isClaimableLive(act)) throw new Error('voice history delete is not live')
+    saveHistoryIndex(resolveConfigDir(), deleteRecording(loadHistoryIndex(resolveConfigDir()), id))
     return { ok: true }
   })
 
