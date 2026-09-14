@@ -1,5 +1,5 @@
 /**
- * ROX2-139..183: native RPC list/read/act.
+ * ROX2-139..186: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -61,6 +61,9 @@ export type RpcNativeSurface =
   | 'skills-pending'
   | 'skills'
   | 'sources'
+  | 'statuses'
+  | 'system'
+  | 'tasks'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -335,6 +338,24 @@ const SURFACE: Record<
     label: 'sources RPC',
     store: 'native workspace sources',
     prefix: 'rpc.sources',
+  },
+  statuses: {
+    kind: 'session',
+    label: 'statuses RPC',
+    store: 'native workspace statuses',
+    prefix: 'rpc.statuses',
+  },
+  system: {
+    kind: 'memory',
+    label: 'system RPC',
+    store: 'native system prefs',
+    prefix: 'rpc.system',
+  },
+  tasks: {
+    kind: 'task',
+    label: 'tasks RPC',
+    store: 'native task conductor',
+    prefix: 'rpc.tasks',
   },
 }
 
@@ -1204,4 +1225,55 @@ export function rpcSourcesActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'sources', ...opts })
+}
+
+export function rpcStatusesListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'statuses', ...opts })
+}
+
+export function rpcStatusesReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'statuses', ...opts })
+}
+
+export function rpcStatusesActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'statuses', ...opts })
+}
+
+export function rpcSystemListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'system', ...opts })
+}
+
+export function rpcSystemReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'system', ...opts })
+}
+
+export function rpcSystemActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'system', ...opts })
+}
+
+export function rpcTasksListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'tasks', ...opts })
+}
+
+export function rpcTasksReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'tasks', ...opts })
+}
+
+export function rpcTasksActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'tasks', ...opts })
 }
