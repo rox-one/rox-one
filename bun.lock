@@ -227,6 +227,7 @@
       "name": "@craft-agent/webui",
       "version": "0.11.5",
       "dependencies": {
+        "@craft-agent/core": "workspace:*",
         "@craft-agent/shared": "workspace:*",
         "@craft-agent/ui": "workspace:*",
         "i18next": "^26.0.3",
@@ -300,6 +301,7 @@
         "pi-agent-server": "./dist/index.js",
       },
       "dependencies": {
+        "@craft-agent/core": "workspace:*",
         "@craft-agent/session-tools-core": "workspace:*",
         "@earendil-works/pi-agent-core": "0.85.1",
         "@earendil-works/pi-ai": "0.85.1",
