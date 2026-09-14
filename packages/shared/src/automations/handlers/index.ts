@@ -24,3 +24,10 @@ export {
   type CloudRunSubmitExecutorResult,
 } from './knowledge-handler.ts';
 export { ScriptHandler, type ScriptHandlerOptions } from './script-handler.ts';
+export {
+  MeetingFollowupHandler,
+  type MeetingFollowupHandlerOptions,
+  type MeetingFollowupExecutor,
+  type MeetingFollowupExecutorContext,
+  type MeetingFollowupExecutorResult,
+} from './meeting-followup-handler.ts';
