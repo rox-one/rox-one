@@ -1563,7 +1563,7 @@
   "marketplace.catalogVersion": "Версия каталога",
   "marketplace.deferred": "Отложено",
   "marketplace.deferredHint": "Устанавливается через toolchain Runtime при повторе.",
-  "marketplace.downloadsHint": "Загрузки за неделю (npm + GitHub releases)",
+  "marketplace.downloadsHint": "Загрузки за неделю (npm + релизов GitHub)",
   "marketplace.emptyDescription": "Попробуйте изменить запрос или фильтры.",
   "marketplace.emptyTitle": "Ничего не найдено",
   "marketplace.filterAllKinds": "Все типы",
