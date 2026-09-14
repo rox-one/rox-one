@@ -628,6 +628,8 @@ export const RPC_CHANNELS = {
     GET: 'meetings:get',
     SEARCH: 'meetings:search',
     DELETE: 'meetings:delete',
+    EXPORT: 'meetings:export',
+    IMPORT: 'meetings:import',
   },
   statuses: {
     LIST: 'statuses:list',

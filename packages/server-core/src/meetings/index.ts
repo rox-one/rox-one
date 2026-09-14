@@ -45,6 +45,61 @@ export {
 } from './queries.ts'
 export { loadMeetingQueryIndex, saveMeetingQueryIndex } from './query-store.ts'
 export {
+  addLinkedNote,
+  applyCollaborativeCorrection,
+  audienceIntersection,
+  authorizeShareActor,
+  buildSharedRecap,
+  createShareLink,
+  emptyMeetingShare,
+  revokeMember,
+  revokeShareLink,
+  searchShareVisible,
+  shareLinkAllows,
+  type MeetingCorrection,
+  type MeetingExternalCopy,
+  type MeetingLinkedNote,
+  type MeetingShareActor,
+  type MeetingShareDenied,
+  type MeetingShareLink,
+  type MeetingShareMember,
+  type MeetingShareRecord,
+} from './sharing.ts'
+export {
+  MEETING_EXPORT_SCHEMA_VERSION,
+  exportMeeting,
+  importMeeting,
+  renderMeetingMarkdown,
+  type MeetingClipRange,
+  type MeetingExportBundle,
+  type MeetingExportFormat,
+  type MeetingExportLink,
+  type MeetingExportResult,
+  type MeetingImportResult,
+} from './exports.ts'
+export {
+  deleteMeetingWithRetention,
+  type MeetingDeleteResult,
+  type MeetingRetentionCascade,
+} from './retention.ts'
+export { loadMeetingShareIndex, saveMeetingShareIndex } from './share-store.ts'
+export {
+  MeetingSecurityGate,
+  authorizeMeetingRpc,
+  authorizeMeetingTool,
+  emptyMeetingSecurityCounts,
+  executeUnlessRevoked,
+  inspectUntrustedInput,
+  sanitizeMeetingAudit,
+  type MeetingAuditEvent,
+  type MeetingRpcClaim,
+  type MeetingRpcSession,
+  type MeetingSecurityCounts,
+  type MeetingSecurityDecision,
+  type MeetingSecuritySource,
+  type SanitizedMeetingAudit,
+} from './security.ts'
+export {
   TrackerMeetingActions,
   createDisabledTrackerAdapter,
   createLiveDisabledTrackerActions,

@@ -21,6 +21,7 @@ export type MeetingQueryRecord = {
 export type MeetingQueryActor = {
   workspaceId: string
   allowed: boolean
+  accountId?: string
 }
 
 export type MeetingQueryPage = {

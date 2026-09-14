@@ -66,6 +66,8 @@ export const CHANNEL_MAP = {
   getMeeting: invoke(RPC_CHANNELS.meetings.GET),
   searchMeetings: invoke(RPC_CHANNELS.meetings.SEARCH),
   deleteMeeting: invoke(RPC_CHANNELS.meetings.DELETE),
+  exportMeeting: invoke(RPC_CHANNELS.meetings.EXPORT),
+  importMeeting: invoke(RPC_CHANNELS.meetings.IMPORT),
   onTaskGenerated: listener(RPC_CHANNELS.tasks.GENERATED),
   respondToPermission: invoke(RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION),
   respondToCredential: invoke(RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL),

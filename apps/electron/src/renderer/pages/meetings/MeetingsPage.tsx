@@ -19,6 +19,8 @@ export type MeetingsPageProps = {
   knowledge?: MeetingKnowledgeView
   onOpenArtifact?: (artifact: MeetingArtifactView) => void
   onOpenTracker?: (tracker: MeetingTrackerView) => void
+  onDelete?: () => void
+  onExport?: (format: 'json' | 'markdown') => void
   readiness?: AgentReadinessProps
   captureState?: string
 }
@@ -35,6 +37,8 @@ export function MeetingsPage({
   knowledge,
   onOpenArtifact,
   onOpenTracker,
+  onDelete,
+  onExport,
   readiness,
   captureState,
 }: MeetingsPageProps) {
@@ -104,6 +108,8 @@ export function MeetingsPage({
                     knowledge={knowledge}
                     onOpenArtifact={onOpenArtifact}
                     onOpenTracker={onOpenTracker}
+                    onDelete={onDelete}
+                    onExport={onExport}
                   />
                 ) : null}
                 {proposalHandlers ? (

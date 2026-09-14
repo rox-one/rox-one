@@ -43,12 +43,14 @@ function meeting(partial: Partial<MeetingQueryRecord> & Pick<MeetingQueryRecord,
 }
 
 describe('meetings RPC (issue 368)', () => {
-  it('registers list/get/search/delete', () => {
+  it('registers list/get/search/delete/export/import', () => {
     expect([...HANDLED_CHANNELS]).toEqual([
       RPC_CHANNELS.meetings.LIST,
       RPC_CHANNELS.meetings.GET,
       RPC_CHANNELS.meetings.SEARCH,
       RPC_CHANNELS.meetings.DELETE,
+      RPC_CHANNELS.meetings.EXPORT,
+      RPC_CHANNELS.meetings.IMPORT,
     ])
   })
 
@@ -107,5 +109,42 @@ describe('meetings RPC (issue 368)', () => {
     const hidden = await rpc.invoke<{ items: MeetingQueryRecord[]; state: string }>(RPC_CHANNELS.meetings.SEARCH, 'ws-a', 'salary-band')
     expect(hidden.items).toEqual([])
     expect(hidden.state).toBe('empty')
+  })
+
+  it('rejects a forged session workspace and exports without private notes', async () => {
+    const dir = mkdtempSync(join(tmpdir(), 'rox-meetings-rpc-'))
+    await saveMeetingQueryIndex(dir, [meeting({
+      id: 'm1',
+      title: 'Standup',
+      sources: [
+        { id: 'public', text: 'roadmap' },
+        { id: 'secret', private: true, text: 'salary-band' },
+      ],
+    })])
+    const handlers = new Map<string, Handler>()
+    const server = {
+      handle(channel: string, handler: Handler) {
+        handlers.set(channel, handler)
+      },
+    }
+    registerMeetingsHandlers(server as unknown as RpcServer, {} as never, {
+      resolveActor: (workspaceId) => ({ workspaceId, allowed: true, accountId: 'acct-1' }),
+      resolveStoreDir: () => dir,
+    })
+    const invoke = <T>(channel: string, ctx: unknown, ...args: unknown[]) => {
+      const handler = handlers.get(channel)
+      if (!handler) throw new Error(`missing ${channel}`)
+      return handler(ctx, ...args) as Promise<T>
+    }
+    await expect(invoke(RPC_CHANNELS.meetings.LIST, { workspaceId: 'ws-a' }, 'ws-other')).rejects.toThrow('forged-workspace')
+    const bundle = await invoke<{ notes: Array<{ audience: string; text: string }> }>(
+      RPC_CHANNELS.meetings.EXPORT,
+      { workspaceId: 'ws-a' },
+      'ws-a',
+      'm1',
+      { format: 'json', audience: 'shared' },
+    )
+    expect(bundle.notes.some((note) => note.text.includes('salary-band'))).toBe(false)
+    expect(bundle.notes.some((note) => note.text.includes('roadmap'))).toBe(true)
   })
 })
