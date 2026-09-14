@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
 import { isLiveVerified } from '../types.ts'
 import {
   createLiveDisabledTrackerActions,
@@ -65,14 +66,45 @@ describe('tracker-actions fail-closed (#373)', () => {
     expect(expired.reason).toBe('permissions')
   })
 
+  it('does not stamp verified / live:true / L4 on fixture tracker stubs', async () => {
+    const src = readFileSync(new URL('../tracker-actions.ts', import.meta.url), 'utf8')
+    expect(src).not.toMatch(/status:\s*'verified'/)
+    expect(src).not.toMatch(/live:\s*true/)
+    expect(src).not.toMatch(/evidenceLevel:\s*'L4'/)
+
+    const actions = createTrackerActions(createMemoryTrackerAdapter())
+    const created = await actions.createFromMeeting(request())
+    expect(created.status).not.toBe('verified')
+    expect(created.status).toBe('blocked')
+    expect(created.reason).toBe('tracker-not-live')
+    expect(created.live).toBe(false)
+    expect(created.evidenceLevel).not.toBe('L4')
+    expect(isLiveVerified(created)).toBe(false)
+    expect(created.payload?.mode).not.toBe('live')
+
+    const updated = await actions.updateFromMeeting({
+      ...request({ idempotencyKey: 'upd-1', operationId: 'op-upd' }),
+      remoteId: 'iss-1',
+      baseRevision: '1',
+    })
+    expect(updated.status).not.toBe('verified')
+    expect(updated.status).toBe('blocked')
+    expect(updated.reason).toBe('tracker-not-live')
+    expect(updated.live).toBe(false)
+    expect(updated.evidenceLevel).not.toBe('L4')
+    expect(isLiveVerified(updated)).toBe(false)
+  })
+
   it('does not duplicate creates with the same idempotency key', async () => {
     const actions = createTrackerActions(createMemoryTrackerAdapter())
     const first = await actions.createFromMeeting(request())
     const second = await actions.createFromMeeting(request())
-    expect(first.status).toBe('verified')
+    expect(first.status).toBe('blocked')
+    expect(first.reason).toBe('tracker-not-live')
     expect(first.live).toBe(false)
     expect(second.status).toBe('duplicate')
-    expect(first.payload?.remoteId).toBe(second.payload?.remoteId)
+    expect(second.reason).toBe('idempotent')
+    expect(first.payload?.operationId).toBe(second.payload?.operationId)
   })
 
   it('maps post-write timeout to unknown for reconciliation', async () => {
@@ -108,7 +140,8 @@ describe('tracker-actions fail-closed (#373)', () => {
     expect(merge.reason).toBe('draft-pr-no-auto-merge')
 
     const created = await actions.createFromMeeting(request({ idempotencyKey: 'idem-2', operationId: 'op-2' }))
-    expect(created.status).toBe('verified')
+    expect(created.status).toBe('blocked')
+    expect(created.reason).toBe('tracker-not-live')
     expect(created.live).toBe(false)
     expect(created.evidenceLevel).toBe('U1')
   })
@@ -171,7 +204,8 @@ describe('tracker-actions fail-closed (#373)', () => {
         grant: { actions: ['tracker.create'], resources: ['linear:acct_l:team_1'] },
       }),
     )
-    expect(ok.status).toBe('verified')
+    expect(ok.status).toBe('blocked')
+    expect(ok.reason).toBe('tracker-not-live')
     expect(ok.live).toBe(false)
   })
 })
