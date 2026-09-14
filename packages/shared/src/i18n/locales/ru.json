@@ -4799,7 +4799,7 @@
   "workbench.status.approvals_other": "{{count}} согласований",
   "workbench.status.cost": "{{amount}}",
   "workbench.status.fallbackSwitched": "Переключено на {{model}}",
-  "workbench.status.fallbackUnverified": "Fallback live не проверено",
+  "workbench.status.fallbackUnverified": "Резервный вариант вживую не проверен",
   "workbench.status.local": "Локально",
   "workbench.status.offline": "Офлайн",
   "workbench.status.people_few": "{{count}} человека",
