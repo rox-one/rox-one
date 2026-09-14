@@ -3830,7 +3830,7 @@
   "settings.orgs.roleMember": "Участник",
   "settings.orgs.roleMemberHint": "Участник: может работать в командных пространствах. Не может приглашать и менять роли.",
   "settings.orgs.roleOwner": "Владелец",
-  "settings.orgs.roxServerUrl": "Rox Server URL",
+  "settings.orgs.roxServerUrl": "URL сервера Rox",
   "settings.orgs.roxServerUrlHint": "Необязательный удалённый сервер для погашения приглашений. Локальные приглашения работают и без него.",
   "settings.orgs.selectedOrgDesc": "Участники, приглашения и командные пространства для {{name}}.",
   "settings.orgs.sendInvite": "Создать приглашение",
