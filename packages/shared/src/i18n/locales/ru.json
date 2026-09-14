@@ -3487,7 +3487,7 @@
   "settings.input.wakeWordPhrase": "Так, Рокс!",
   "settings.knowledge.baseUrl": "Базовый URL",
   "settings.knowledge.baseUrlHint": "Адрес API ядра SiYuan (режим external-local).",
-  "settings.knowledge.connectionEmptyBody": "Чтобы подключить SiYuan:\n1. Запустите SiYuan на этом устройстве.\n2. В SiYuan откройте «Настройки → О программе → API token» и скопируйте токен.\n3. Локальное подключение (http://localhost:6806) появится здесь после настройки на стороне сервера.\n4. Вставьте токен выше и нажмите «Проверить подключение».",
+  "settings.knowledge.connectionEmptyBody": "Чтобы подключить SiYuan:\n1. Запустите SiYuan на этом устройстве.\n2. В SiYuan откройте «Настройки → О программе → API-токен» и скопируйте токен.\n3. Локальное подключение (http://localhost:6806) появится здесь после настройки на стороне сервера.\n4. Вставьте токен выше и нажмите «Проверить подключение».",
   "settings.knowledge.connectionEmptyTitle": "Нет подключения",
   "settings.knowledge.connectionSaveFailed": "Не удалось сохранить подключение: {{message}}",
   "settings.knowledge.connectionSaved": "Подключение сохранено",
