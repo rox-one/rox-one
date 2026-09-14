@@ -166,6 +166,15 @@ import {
   rpcSettingsActResult,
   rpcSettingsListResult,
   rpcSettingsReadResult,
+  rpcSkillsPendingActResult,
+  rpcSkillsPendingListResult,
+  rpcSkillsPendingReadResult,
+  rpcSkillsActResult,
+  rpcSkillsListResult,
+  rpcSkillsReadResult,
+  rpcSourcesActResult,
+  rpcSourcesListResult,
+  rpcSourcesReadResult,
 } from '../rpc-native-actions.ts'
 
 const ALL_SOUP_TYPES: SoupEntityConcreteType[] = [
@@ -2173,5 +2182,101 @@ describe('ROX2-180 RPC settings.ts list/read/act', () => {
     expect(isClaimableLive(rpcSettingsActResult({ source: 'native', action: 'spend' }))).toBe(false)
     expect(isClaimableLive(rpcSettingsActResult({ source: 'fixture' }))).toBe(false)
     expect(isClaimableLive(rpcSettingsActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-181 RPC skills-pending.ts list/read/act', () => {
+  test('list names live vs fixture; Conation skills-pending list is not claimable', () => {
+    const nativeEmpty = rpcSkillsPendingListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcSkillsPendingListResult({ source: 'native', nativeIds: ['cand'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcSkillsPendingListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcSkillsPendingListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing candidate is not a fake record', () => {
+    const found = rpcSkillsPendingReadResult({ source: 'native', nativeId: 'cand' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe(formatRox2EntityId('skill', 'cand'))
+    expect(isClaimableLive(rpcSkillsPendingReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcSkillsPendingReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcSkillsPendingReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcSkillsPendingReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcSkillsPendingActResult({ source: 'native', action: 'write', nativeId: 'cand' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcSkillsPendingActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'cand' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcSkillsPendingActResult({ source: 'native', action: 'destroy', nativeId: 'cand' }))).toBe(false)
+    expect(isClaimableLive(rpcSkillsPendingActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcSkillsPendingActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcSkillsPendingActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-182 RPC skills.ts list/read/act', () => {
+  test('list names live vs fixture; Conation skills list is not claimable', () => {
+    const nativeEmpty = rpcSkillsListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcSkillsListResult({ source: 'native', nativeIds: ['pack'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcSkillsListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcSkillsListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing skill is not a fake record', () => {
+    const found = rpcSkillsReadResult({ source: 'native', nativeId: 'pack' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe(formatRox2EntityId('skill', 'pack'))
+    expect(isClaimableLive(rpcSkillsReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcSkillsReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcSkillsReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcSkillsReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcSkillsActResult({ source: 'native', action: 'write', nativeId: 'pack' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcSkillsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'pack' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcSkillsActResult({ source: 'native', action: 'destroy', nativeId: 'pack' }))).toBe(false)
+    expect(isClaimableLive(rpcSkillsActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcSkillsActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcSkillsActResult({ source: 'conation' }))).toBe(false)
+  })
+})
+
+describe('ROX2-183 RPC sources.ts list/read/act', () => {
+  test('list names live vs fixture; Conation sources list is not claimable', () => {
+    const nativeEmpty = rpcSourcesListResult({ source: 'native' })
+    expect(isClaimableLive(nativeEmpty.result)).toBe(true)
+    expect(nativeEmpty.entities).toEqual([])
+    expect(isClaimableLive(rpcSourcesListResult({ source: 'native', nativeIds: ['src'] }).result)).toBe(true)
+    expect(isClaimableLive(rpcSourcesListResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcSourcesListResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('read names live vs fixture; missing source is not a fake record', () => {
+    const found = rpcSourcesReadResult({ source: 'native', nativeId: 'src' })
+    expect(isClaimableLive(found.result)).toBe(true)
+    expect(found.entityId).toBe(formatRox2EntityId('connection', 'src'))
+    expect(isClaimableLive(rpcSourcesReadResult({ source: 'native' }).result)).toBe(false)
+    expect(rpcSourcesReadResult({ source: 'native' }).entityId).toBeNull()
+    expect(isClaimableLive(rpcSourcesReadResult({ source: 'fixture' }).result)).toBe(false)
+    expect(isClaimableLive(rpcSourcesReadResult({ source: 'conation' }).result)).toBe(false)
+  })
+
+  test('act is live for native write; fixture, ungranted destroy, and spend are not', () => {
+    expect(isClaimableLive(rpcSourcesActResult({ source: 'native', action: 'write', nativeId: 'src' }))).toBe(true)
+    expect(
+      isClaimableLive(rpcSourcesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'src' })),
+    ).toBe(true)
+    expect(isClaimableLive(rpcSourcesActResult({ source: 'native', action: 'destroy', nativeId: 'src' }))).toBe(false)
+    expect(isClaimableLive(rpcSourcesActResult({ source: 'native', action: 'spend' }))).toBe(false)
+    expect(isClaimableLive(rpcSourcesActResult({ source: 'fixture' }))).toBe(false)
+    expect(isClaimableLive(rpcSourcesActResult({ source: 'conation' }))).toBe(false)
   })
 })

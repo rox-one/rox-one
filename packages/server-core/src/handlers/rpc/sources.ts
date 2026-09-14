@@ -8,6 +8,12 @@ import { ensureRoxLayout, loadWorkspaceConfig, saveWorkspaceConfig } from '@craf
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { KnowledgeConnectionsStore, credentialIdFromRef } from '../../knowledge'
+import {
+  isClaimableLive,
+  rpcSourcesActResult,
+  rpcSourcesListResult,
+  rpcSourcesReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sources.GET,
@@ -36,6 +42,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
 
   // Get all sources for a workspace
   server.handle(RPC_CHANNELS.sources.GET, async (_ctx, workspaceId: string) => {
+    const listed = rpcSourcesListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
       log.error(`SOURCES_GET: Workspace not found: ${workspaceId}`)
@@ -47,6 +55,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
 
   // Create a new source
   server.handle(RPC_CHANNELS.sources.CREATE, async (_ctx, workspaceId: string, config: Partial<import('@craft-agent/shared/sources').CreateSourceInput>) => {
+    const act = rpcSourcesActResult({ source: 'native', action: 'write', nativeId: config.name || 'source' })
+    if (!isClaimableLive(act)) throw new Error('source create is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { createSource } = await import('@craft-agent/shared/sources')
@@ -86,6 +96,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
       guide?: string
     },
   ) => {
+    const act = rpcSourcesActResult({ source: 'native', action: 'write', nativeId: sourceSlug })
+    if (!isClaimableLive(act)) throw new Error('source update is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 
@@ -144,6 +156,9 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
 
   // Delete a source
   server.handle(RPC_CHANNELS.sources.DELETE, async (_ctx, workspaceId: string, sourceSlug: string) => {
+    if (!sourceSlug) throw new Error('sourceSlug is required')
+    const act = rpcSourcesActResult({ source: 'native', action: 'destroy', granted: true, nativeId: sourceSlug })
+    if (!isClaimableLive(act)) throw new Error('source delete is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { deleteSource } = await import('@craft-agent/shared/sources')
@@ -169,6 +184,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
 
   // Save credentials for a source (bearer token or API key)
   server.handle(RPC_CHANNELS.sources.SAVE_CREDENTIALS, async (_ctx, workspaceId: string, sourceSlug: string, credential: string) => {
+    const act = rpcSourcesActResult({ source: 'native', action: 'write', nativeId: sourceSlug })
+    if (!isClaimableLive(act)) throw new Error('source save credentials is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { loadSource, getSourceCredentialManager, markSourceAuthenticated } = await import('@craft-agent/shared/sources')
@@ -211,6 +228,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
 
   // Get permissions config for a source (raw format for UI display)
   server.handle(RPC_CHANNELS.sources.GET_PERMISSIONS, async (_ctx, workspaceId: string, sourceSlug: string) => {
+    const read = rpcSourcesReadResult({ source: 'native', nativeId: sourceSlug })
+    if (!isClaimableLive(read.result)) return null
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
 
@@ -366,6 +385,8 @@ export function registerSourcesHandlers(server: RpcServer, deps: HandlerDeps): v
 
   // Rebuild local FTS/keyword index under {workspace}/.craft/source-index.sqlite
   server.handle(RPC_CHANNELS.sources.REINDEX, async (_ctx, workspaceId: string) => {
+    const act = rpcSourcesActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+    if (!isClaimableLive(act)) throw new Error('source reindex is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 

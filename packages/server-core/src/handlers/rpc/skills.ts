@@ -7,6 +7,12 @@ import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { exportSkillToProject, pruneUnusedSkills, readUsage } from '../../memory/skill-usage'
+import {
+  isClaimableLive,
+  rpcSkillsActResult,
+  rpcSkillsListResult,
+  rpcSkillsReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.skills.GET,
@@ -31,6 +37,8 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
 
   // Get all skills for a workspace (and optionally project-level skills from workingDirectory)
   server.handle(RPC_CHANNELS.skills.GET, async (_ctx, workspaceId: string, workingDirectory?: string) => {
+    const listed = rpcSkillsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     deps.platform.logger?.info(`SKILLS_GET: Loading skills for workspace: ${workspaceId}${workingDirectory ? `, workingDirectory: ${workingDirectory}` : ''}`)
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
@@ -52,6 +60,8 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
 
   // Get files in a skill directory
   server.handle(RPC_CHANNELS.skills.GET_FILES, async (_ctx, workspaceId: string, skillSlug: string) => {
+    const read = rpcSkillsReadResult({ source: 'native', nativeId: skillSlug })
+    if (!isClaimableLive(read.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
       deps.platform.logger?.error(`SKILLS_GET_FILES: Workspace not found: ${workspaceId}`)
@@ -106,6 +116,9 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
 
   // Delete a skill from a workspace
   server.handle(RPC_CHANNELS.skills.DELETE, async (_ctx, workspaceId: string, skillSlug: string) => {
+    if (!skillSlug) throw new Error('skillSlug is required')
+    const act = rpcSkillsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: skillSlug })
+    if (!isClaimableLive(act)) throw new Error('skill delete is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
@@ -121,6 +134,8 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
     skillSlug: string,
     updates: import('@craft-agent/shared/skills').UpdateSkillContentInput,
   ) => {
+    const act = rpcSkillsActResult({ source: 'native', action: 'write', nativeId: skillSlug })
+    if (!isClaimableLive(act)) throw new Error('skill update is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
@@ -136,6 +151,8 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
   // Import an OMP skill into the workspace as a regular craft skill.
   // Copies SKILL.md + all resources; on slug conflict appends `-omp` (then a counter).
   server.handle(RPC_CHANNELS.skills.IMPORT_OMP, async (_ctx, workspaceId: string, slug: string) => {
+    const act = rpcSkillsActResult({ source: 'native', action: 'write', nativeId: slug })
+    if (!isClaimableLive(act)) throw new Error('skill importOmp is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')
 
