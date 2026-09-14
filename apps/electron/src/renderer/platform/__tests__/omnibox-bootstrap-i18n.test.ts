@@ -7,6 +7,10 @@ import {
   CONATION_OPEN_BOARD_COMMAND_ID,
   CONATION_OPEN_FUND_COMMAND_ID,
 } from '../omnibox-conation'
+import {
+  __resetOmniboxBootstrapForTests,
+  bootstrapOmnibox,
+} from '../omnibox-bootstrap'
 
 const platformDir = join(import.meta.dir, '..')
 const localesDir = join(import.meta.dir, '../../../../../../packages/shared/src/i18n/locales')
@@ -74,6 +78,21 @@ describe('omnibox bootstrap labels are i18n', () => {
     expect(i18n.t('omnibox.category.siyuanPlugin')).toBe('SiYuan Plugin')
     expect(CONATION_OPEN_FUND_COMMAND_ID).toBe('conation.openFund')
     expect(CONATION_OPEN_BOARD_COMMAND_ID).toBe('conation.openBoard')
+
+    __resetOmniboxBootstrapForTests()
+    const platform = bootstrapOmnibox()
+    expect(platform.commands.get(CONATION_OPEN_FUND_COMMAND_ID)?.title).toBe(
+      CONATION_OPEN_FUND_COMMAND_ID,
+    )
+    expect(platform.commands.get(CONATION_OPEN_BOARD_COMMAND_ID)?.title).toBe(
+      CONATION_OPEN_BOARD_COMMAND_ID,
+    )
+    expect(platform.commands.get(CONATION_OPEN_FUND_COMMAND_ID)?.category).toBe('conation')
+    expect(platform.commands.get('knowledge.openHome')?.title).toBe('Open Knowledge')
+    expect(platform.commands.get('knowledge.search')?.title).toBe('Search Knowledge')
+    expect(platform.commands.get('knowledge.openCompat')?.title).toBe('Open compatibility view')
+    expect(platform.commands.get('siyuan.openCompat')?.title).toBe('Open SiYuan compatibility view')
+    expect(platform.commands.get('knowledge.openHome')?.category).toBe('Knowledge')
   })
 
   it('Russian copy is distinct from English', async () => {
