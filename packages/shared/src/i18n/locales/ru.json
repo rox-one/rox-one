@@ -3756,7 +3756,7 @@
   "settings.network.proxyErrorProtocol": "URL должен начинаться с http://, https://, socks4:// или socks5://",
   "settings.network.proxyPlaceholder": "http://proxy.example.com:8080",
   "settings.network.title": "Сеть",
-  "settings.notesImport.consentLabel": "Согласен на копирование этих файлов в воркспейс (с манифестом происхождения).",
+  "settings.notesImport.consentLabel": "Согласен на копирование этих файлов в рабочее пространство (с манифестом происхождения).",
   "settings.notesImport.doneToast": "Импортировано {{copied}} (пропущено {{skipped}}).",
   "settings.notesImport.executeButton": "Импортировать {{count}} файл(ов)",
   "settings.notesImport.importButton": "Импорт папки…",
