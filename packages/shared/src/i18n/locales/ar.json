@@ -3619,6 +3619,7 @@
   "settings.messaging.lark.testOk": "تم قبول بيانات الاعتماد",
   "settings.messaging.lark.title": "Lark / Feishu",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "لا يمكن لأي شخص استخدام هذا الروبوت بعد — اقترن عبر Telegram أو اقبل طلبًا معلّقًا.",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "صندوق وارد عام — الرسائل لا تبدأ جلسة وكيل.",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "Public inbox — messages do not start an agent session.",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "مستخدم واحد مسموح له",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "{{count}} مستخدمًا مسموحًا له",

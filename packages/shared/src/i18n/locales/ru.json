@@ -3625,6 +3625,7 @@
   "settings.messaging.lark.testOk": "Учётные данные приняты",
   "settings.messaging.lark.title": "Lark / Feishu",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "Этот бот пока никому недоступен — выполните привязку из Telegram или примите ожидающий запрос.",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "Публичный inbox — сообщения не запускают сессию агента.",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "Не применяется — бот общедоступен.",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "Разрешён 1 пользователь",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "Разрешено {{count}} пользователям",

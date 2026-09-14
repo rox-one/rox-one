@@ -3619,6 +3619,7 @@
   "settings.messaging.lark.testOk": "憑證已接受",
   "settings.messaging.lark.title": "Lark / 飛書",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "目前還沒有人可以使用此機器人——從 Telegram 配對或接受待處理請求。",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "公開收件匣——訊息不會啟動代理工作階段。",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "未強制執行——機器人為公開可存取。",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "已允許 1 位使用者",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "已允許 {{count}} 位使用者",

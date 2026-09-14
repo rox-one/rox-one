@@ -3619,6 +3619,7 @@
   "settings.messaging.lark.testOk": "Hitelesítő adatok elfogadva",
   "settings.messaging.lark.title": "Lark / Feishu",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "Még senki nem használhatja ezt a botot — párosítsd Telegramról vagy fogadj el egy függő kérést.",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "Nyilvános beérkező — az üzenetek nem indítanak ügynök-munkamenetet.",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "Nincs érvényesítve — a bot nyilvánosan elérhető.",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "1 felhasználó engedélyezve",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "{{count}} felhasználó engedélyezve",

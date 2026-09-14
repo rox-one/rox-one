@@ -3619,6 +3619,7 @@
   "settings.messaging.lark.testOk": "Credentials accepted",
   "settings.messaging.lark.title": "Lark / Feishu",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "No one can use this bot yet — pair from Telegram or accept a pending request.",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "Public inbox — messages do not start an agent session.",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "Not enforced — bot is publicly accessible.",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "1 user allowed",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "{{count}} users allowed",

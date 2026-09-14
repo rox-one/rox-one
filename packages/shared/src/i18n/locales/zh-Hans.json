@@ -3619,6 +3619,7 @@
   "settings.messaging.lark.testOk": "凭证已接受",
   "settings.messaging.lark.title": "Lark / 飞书",
   "settings.messaging.telegram.access.allowedUsersSubtitleEmpty": "目前还没有人可以使用此机器人——从 Telegram 配对或接受待处理请求。",
+  "settings.messaging.telegram.access.allowedUsersSubtitleInbox": "公开收件箱——消息不会启动代理会话。",
   "settings.messaging.telegram.access.allowedUsersSubtitleOpen": "Public inbox — messages do not start an agent session.",
   "settings.messaging.telegram.access.allowedUsersSubtitle_one": "已允许 1 位用户",
   "settings.messaging.telegram.access.allowedUsersSubtitle_other": "已允许 {{count}} 位用户",
