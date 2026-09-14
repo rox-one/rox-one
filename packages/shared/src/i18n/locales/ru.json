@@ -4371,7 +4371,7 @@
   "ssh.bootstrap.phase.building-server": "Подготовка сборки сервера",
   "ssh.bootstrap.phase.checking-server": "Проверка существующего сервера",
   "ssh.bootstrap.phase.connecting-tunnel": "Открытие защищённого туннеля",
-  "ssh.bootstrap.phase.creating-workspace": "Создание воркспейса",
+  "ssh.bootstrap.phase.creating-workspace": "Создание рабочего пространства",
   "ssh.bootstrap.phase.detecting-os": "Определение удалённой системы",
   "ssh.bootstrap.phase.installing-server": "Установка сервера",
   "ssh.bootstrap.phase.starting-server": "Запуск сервера",
