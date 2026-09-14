@@ -98,7 +98,8 @@ export function approveAndExecuteNative(input: ApproveAndExecuteInput): ApproveE
     },
     now: input.now,
   })
-  if (operation.verification === 'verified') {
+  // In-memory native apply is fixture/pending, not UI-verified.
+  if (operation.lifecycle === 'succeeded' && !operation.error) {
     proposal.status = 'applied'
     proposal.operationId = operation.operationId
   }
