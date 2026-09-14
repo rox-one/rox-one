@@ -9,6 +9,12 @@ import { nativeSidecarHealthCheck } from '../../native/supervisor.ts'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { ServerHandlerContext } from '../../bootstrap/headless-start'
+import {
+  isClaimableLive,
+  rpcServerActResult,
+  rpcServerListResult,
+  rpcServerReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.server.GET_WORKSPACES,
@@ -31,6 +37,8 @@ export function registerServerHandlers(
   // -----------------------------------------------------------------------
 
   server.handle(RPC_CHANNELS.server.GET_WORKSPACES, async () => {
+    const listed = rpcServerListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const workspaces = sessionManager.getWorkspacesInfo()
     deps.platform.logger.info(`[server:getWorkspaces] returning ${workspaces.length} workspaces: ${JSON.stringify(workspaces.map(w => ({ id: w.id, name: w.name })))}`)
     return workspaces
@@ -44,6 +52,8 @@ export function registerServerHandlers(
       authority?: { kind?: 'personal' | 'team'; orgId?: string },
     ) => {
       if (!name?.trim()) throw new Error('Workspace name is required')
+      const act = rpcServerActResult({ source: 'native', action: 'write', nativeId: name.trim() })
+      if (!isClaimableLive(act)) throw new Error('workspace create is not live')
       if (
         authority?.kind !== undefined &&
         authority.kind !== 'personal' &&
@@ -106,6 +116,8 @@ export function registerServerHandlers(
   // -----------------------------------------------------------------------
 
   server.handle(RPC_CHANNELS.server.GET_STATUS, async () => {
+    const read = rpcServerReadResult({ source: 'native', nativeId: 'status' })
+    if (!isClaimableLive(read.result)) throw new Error('server status is not live')
     const workspaces = sessionManager.getWorkspacesInfo()
     const workspaceStatuses = workspaces.map(ws => {
       const summary = sessionManager.getWorkspaceAutomationSummary(ws.id)

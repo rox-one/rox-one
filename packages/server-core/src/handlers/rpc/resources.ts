@@ -14,6 +14,12 @@ import type {
   ResourceImportMode,
   ExportResourcesOptions,
 } from '@craft-agent/shared/resources'
+import {
+  isClaimableLive,
+  rpcResourcesActResult,
+  rpcResourcesListResult,
+  rpcResourcesReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.resources.EXPORT,
@@ -25,6 +31,10 @@ export function registerResourcesHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.resources.EXPORT,
     async (_ctx, workspaceId: string, options: ExportResourcesOptions) => {
+      const listed = rpcResourcesListResult({ source: 'native' })
+      if (!isClaimableLive(listed.result)) throw new Error('resources export is not live')
+      const read = rpcResourcesReadResult({ source: 'native', nativeId: workspaceId })
+      if (!isClaimableLive(read.result)) throw new Error('resources export is not live')
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 
@@ -47,6 +57,8 @@ export function registerResourcesHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(
     RPC_CHANNELS.resources.IMPORT,
     async (_ctx, workspaceId: string, bundle: ResourceBundle, mode: ResourceImportMode) => {
+      const act = rpcResourcesActResult({ source: 'native', action: 'write', nativeId: workspaceId })
+      if (!isClaimableLive(act)) throw new Error('resources import is not live')
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 
