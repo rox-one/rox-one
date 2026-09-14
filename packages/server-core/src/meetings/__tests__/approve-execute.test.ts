@@ -66,7 +66,10 @@ describe('approve then native execute (RMA-I010/I011)', () => {
       runtime,
     })
     expect(result.proposal.status).toBe('applied')
-    expect(result.operation.verification).toBe('verified')
+    expect(result.operation.mode).toBe('fixture')
+    expect(result.operation.verification).toBe('pending')
+    expect(result.operation.verification).not.toBe('verified')
+    expect(result.operation.mode).not.toBe('production')
     expect(result.operation.lifecycle).toBe('succeeded')
     const revision = result.operation.entityRef?.revisionId
     expect(revision).toBeDefined()
@@ -120,7 +123,10 @@ describe('approve then native execute (RMA-I010/I011)', () => {
       runtime,
     })
     expect(result.proposal.status).toBe('applied')
-    expect(result.operation.verification).toBe('verified')
+    expect(result.operation.mode).toBe('fixture')
+    expect(result.operation.verification).toBe('pending')
+    expect(result.operation.verification).not.toBe('verified')
+    expect(result.operation.mode).not.toBe('production')
     const entityId = result.operation.entityRef!.entityId
     const revision = result.operation.entityRef!.revisionId
     expect(entityId).toBe('note:meeting-p-note')

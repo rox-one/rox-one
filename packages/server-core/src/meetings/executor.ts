@@ -16,6 +16,16 @@ export type ExecutorHooks = {
   readback: (entityId: string) => { entityId: string; revision: string } | null
 }
 
+/**
+ * In-memory native apply/readback is not a live production receipt.
+ * Local apply still runs; stamps stay fixture, never verified/production.
+ */
+function nativeLocalResult(
+  rest: Omit<OperationResultV2, 'schemaVersion' | 'mode'>,
+): OperationResultV2 {
+  return { schemaVersion: 2, mode: 'fixture', ...rest }
+}
+
 export function executeApprovedProposal(input: {
   proposal: MeetingProposal
   grant: MeetingGrant | null
@@ -30,11 +40,9 @@ export function executeApprovedProposal(input: {
 }): OperationResultV2 {
   const existing = input.jobs.find((job) => job.idempotencyKey === input.proposal.id)
   if (existing?.status === 'done') {
-    return {
-      schemaVersion: 2,
-      mode: 'production',
+    return nativeLocalResult({
       lifecycle: 'succeeded',
-      verification: 'verified',
+      verification: 'pending',
       operationId: existing.operationId,
       entityRef: existing.entityId
         ? {
@@ -46,27 +54,23 @@ export function executeApprovedProposal(input: {
       receipt: existing.entityId
         ? { provider: 'native', remoteId: existing.entityId, observedRevision: existing.revision }
         : undefined,
-    }
+    })
   }
   if (input.proposal.status !== 'approved') {
-    return {
-      schemaVersion: 2,
-      mode: 'production',
+    return nativeLocalResult({
       lifecycle: 'failed',
       verification: 'not_requested',
       operationId: input.proposal.id,
       error: { code: 'not-approved', retryable: false, safeMessage: 'Proposal is not approved' },
-    }
+    })
   }
   if (input.revoke || input.grant?.revokedAt != null) {
-    return {
-      schemaVersion: 2,
-      mode: 'production',
+    return nativeLocalResult({
       lifecycle: 'cancelled',
       verification: 'not_requested',
       operationId: input.proposal.id,
       error: { code: 'revoked', retryable: false, safeMessage: 'Grant revoked' },
-    }
+    })
   }
   const auth = authorizeMeetingAction(input.grant, {
     actorId: input.actorId,
@@ -78,45 +82,37 @@ export function executeApprovedProposal(input: {
     now: input.now,
   })
   if (!auth.ok) {
-    return {
-      schemaVersion: 2,
-      mode: 'production',
+    return nativeLocalResult({
       lifecycle: 'failed',
       verification: 'not_requested',
       operationId: input.proposal.id,
       error: { code: auth.code, retryable: false, safeMessage: auth.code },
-    }
+    })
   }
   if (input.crashBeforeApply) {
-    return {
-      schemaVersion: 2,
-      mode: 'production',
+    return nativeLocalResult({
       lifecycle: 'unknown',
       verification: 'unknown',
       operationId: input.proposal.id,
-    }
+    })
   }
   const applied = input.hooks.apply(input.proposal)
   if (input.crashAfterApply) {
-    return {
-      schemaVersion: 2,
-      mode: 'production',
+    return nativeLocalResult({
       lifecycle: 'unknown',
       verification: 'unknown',
       operationId: input.proposal.id,
       entityRef: { workspaceId: input.proposal.workspaceId, entityId: applied.entityId, revisionId: applied.revision },
-    }
+    })
   }
   const seen = input.hooks.readback(applied.entityId)
   if (!seen || seen.entityId !== applied.entityId || seen.revision !== applied.revision) {
-    return {
-      schemaVersion: 2,
-      mode: 'production',
+    return nativeLocalResult({
       lifecycle: 'succeeded',
       verification: 'mismatch',
       operationId: input.proposal.id,
       error: { code: 'readback-mismatch', retryable: false, safeMessage: 'Readback did not match' },
-    }
+    })
   }
   input.jobs.push({
     operationId: input.proposal.id,
@@ -126,13 +122,11 @@ export function executeApprovedProposal(input: {
     entityId: applied.entityId,
     revision: applied.revision,
   })
-  return {
-    schemaVersion: 2,
-    mode: 'production',
+  return nativeLocalResult({
     lifecycle: 'succeeded',
-    verification: 'verified',
+    verification: 'pending',
     operationId: input.proposal.id,
     entityRef: { workspaceId: input.proposal.workspaceId, entityId: applied.entityId, revisionId: applied.revision },
     receipt: { provider: 'native', remoteId: applied.entityId, observedRevision: seen.revision },
-  }
+  })
 }

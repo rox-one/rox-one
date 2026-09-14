@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { isUiVerified } from '@craft-agent/core/meetings'
 import { executeApprovedProposal, type OutboxJob } from '../executor.ts'
 import { payloadHash } from '../proposals.ts'
 import type { MeetingProposal } from '@craft-agent/core/meetings'
@@ -36,11 +38,23 @@ describe('meeting executor (RMA-I010)', () => {
     }
     const jobs: OutboxJob[] = []
     const first = executeApprovedProposal({ proposal: approved(), grant, actorId: 'user', deviceId: 'dev', jobs, hooks })
-    expect(first.verification).toBe('verified')
+    expect(first.lifecycle).toBe('succeeded')
+    expect(first.mode).toBe('fixture')
+    expect(first.verification).toBe('pending')
+    expect(first.verification).not.toBe('verified')
+    expect(first.mode).not.toBe('production')
+    expect(isUiVerified(first)).toBe(false)
+    expect(first.entityRef?.entityId).toBe('task:p1')
+    expect(jobs).toHaveLength(1)
+    expect(jobs[0]?.status).toBe('done')
     const dup = executeApprovedProposal({ proposal: approved(), grant, actorId: 'user', deviceId: 'dev', jobs, hooks })
     expect(dup.operationId).toBe(first.operationId)
     expect(dup.entityRef?.revisionId).toBe('1')
     expect(dup.entityRef?.entityId).toBe('task:p1')
+    expect(dup.mode).toBe('fixture')
+    expect(dup.verification).toBe('pending')
+    expect(dup.verification).not.toBe('verified')
+    expect(isUiVerified(dup)).toBe(false)
     const crashBefore = executeApprovedProposal({
       proposal: { ...approved(), id: 'p2' },
       grant,
@@ -79,5 +93,13 @@ describe('meeting executor (RMA-I010)', () => {
       hooks: { apply: hooks.apply, readback: () => null },
     })
     expect(mismatch.verification).toBe('mismatch')
+    expect(mismatch.mode).toBe('fixture')
+    expect(mismatch.mode).not.toBe('production')
+  })
+
+  test('does not stamp verified or production on native in-memory apply', () => {
+    const src = readFileSync(new URL('../executor.ts', import.meta.url), 'utf8')
+    expect(src).not.toMatch(/verification:\s*'verified'/)
+    expect(src).not.toMatch(/mode:\s*'production'/)
   })
 })
