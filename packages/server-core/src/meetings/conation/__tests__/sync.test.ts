@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test'
+import { readFileSync } from 'node:fs'
+import { isLiveVerified } from '../../types.ts'
 import { CONATION_FIXTURE_SCHEMA_HASH } from '../capabilities.ts'
 import {
   createSyncState,
@@ -15,7 +17,12 @@ describe('conation sync (#383)', () => {
       nextCursor: null,
       items: [{ id: 'n1', revision: '1' }],
     }
-    expect(syncConationPage(state, page, { authPresent: true, revokeGeneration: 0 }).reason).toBe('checkpoint')
+    const first = syncConationPage(state, page, { authPresent: true, revokeGeneration: 0 })
+    expect(first.reason).toBe('checkpoint')
+    expect(first.status).toBe('pending')
+    expect(first.status).not.toBe('verified')
+    expect(first.live).toBe(false)
+    expect(isLiveVerified(first)).toBe(false)
     expect(syncConationPage(state, page, { authPresent: true, revokeGeneration: 0 }).status).toBe('duplicate')
   })
 
@@ -28,6 +35,10 @@ describe('conation sync (#383)', () => {
       { authPresent: true, revokeGeneration: 0 },
     )
     expect(result.reason).toBe('empty-page-not-delete-all')
+    expect(result.status).toBe('pending')
+    expect(result.status).not.toBe('verified')
+    expect(result.live).toBe(false)
+    expect(isLiveVerified(result)).toBe(false)
     expect(state.applied.size).toBe(1)
   })
 
@@ -96,5 +107,32 @@ describe('conation sync (#383)', () => {
     )
     expect(result.status).toBe('blocked')
     expect(CONATION_FIXTURE_SCHEMA_HASH).toBe('fixture-not-live')
+  })
+
+  it('does not stamp verified / live:true / L4 on in-memory sync checkpoints', () => {
+    const src = readFileSync(new URL('../sync.ts', import.meta.url), 'utf8')
+    expect(src).not.toMatch(/status:\s*'verified'/)
+    expect(src).not.toMatch(/live:\s*true/)
+    expect(src).not.toMatch(/evidenceLevel:\s*'L4'/)
+
+    const state = createSyncState()
+    state.applied.set('n1', { id: 'n1', revision: '1' })
+    const empty = syncConationPage(
+      state,
+      { cursor: 'empty', nextCursor: null, items: [] },
+      { authPresent: true, revokeGeneration: 0 },
+    )
+    const checkpoint = syncConationPage(
+      createSyncState(),
+      { cursor: 'c1', nextCursor: null, items: [{ id: 'n1', revision: '1' }] },
+      { authPresent: true, revokeGeneration: 0 },
+    )
+    for (const result of [empty, checkpoint]) {
+      expect(result.status).toBe('pending')
+      expect(result.status).not.toBe('verified')
+      expect(result.live).toBe(false)
+      expect(result.evidenceLevel).not.toBe('L4')
+      expect(isLiveVerified(result)).toBe(false)
+    }
   })
 })

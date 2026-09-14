@@ -2,10 +2,23 @@
  * RMA-I027 / #383 — Conation sync checkpoints.
  * Empty page is not delete-all. Offline writes stay pending.
  * Revoke after await is re-checked before commit. Origin markers stop echo loops.
+ * In-memory sync identity is not a live receipt: stamps stay pending
+ * (live:false, not verified; L4 remains not_run).
  */
 
 import { confirmWrite, CONATION_FIXTURE_SCHEMA_HASH } from './capabilities.ts'
-import { blocked, denied, type MeetingOpResult } from '../types.ts'
+import { blocked, denied, type EvidenceLevel, type MeetingOpResult } from '../types.ts'
+
+/** Local in-memory sync identity only. Never a live/L4 verified receipt. */
+function localApplied<T extends string, P = unknown>(
+  reason: T,
+  evidenceLevel: EvidenceLevel = 'C2',
+  payload?: P,
+): MeetingOpResult<T, P> {
+  return payload === undefined
+    ? { status: 'pending', reason, live: false, evidenceLevel }
+    : { status: 'pending', reason, live: false, evidenceLevel, payload }
+}
 
 export type SyncPage = {
   readonly cursor: string
@@ -68,7 +81,7 @@ export function syncConationPage(
     return { status: 'duplicate', reason: 'repeated-cursor', live: false, evidenceLevel: 'C2' }
   }
   if (page.items.length === 0) {
-    return { status: 'verified', reason: 'empty-page-not-delete-all', live: false, evidenceLevel: 'C2', payload: { retained: state.applied.size } }
+    return localApplied('empty-page-not-delete-all', 'C2', { retained: state.applied.size })
   }
   for (const item of page.items) {
     if (item.origin === 'rox') continue
@@ -93,7 +106,7 @@ export function syncConationPage(
   }
   state.checkpoint = page.cursor
   state.seenCursors.push(page.cursor)
-  return { status: 'verified', reason: 'checkpoint', live: false, evidenceLevel: 'C2' }
+  return localApplied('checkpoint')
 }
 
 export function queueOfflineWrite(state: SyncState, item: SyncItem): MeetingOpResult {
