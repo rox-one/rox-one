@@ -3468,6 +3468,8 @@
   "settings.input.voiceHotkeyToggle": "Переключение",
   "settings.input.voiceLanguage": "Язык распознавания",
   "settings.input.voiceLanguageAuto": "Автоопределение",
+  "settings.input.voiceLanguageEn": "Английский",
+  "settings.input.voiceLanguageRu": "Русский",
   "settings.input.voiceMigrationPending": "Старые локальные настройки голоса сохранены. Подтвердите облачное ASR перед новыми облачными записями.",
   "settings.input.voiceModeClean": "Чистый транскрипт",
   "settings.input.voiceModeImprove": "Улучшить промпт",
