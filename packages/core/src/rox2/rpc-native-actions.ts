@@ -1,5 +1,5 @@
 /**
- * ROX2-139..180: native RPC list/read/act.
+ * ROX2-139..183: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -58,6 +58,9 @@ export type RpcNativeSurface =
   | 'session-foreign-import'
   | 'sessions'
   | 'settings'
+  | 'skills-pending'
+  | 'skills'
+  | 'sources'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -314,6 +317,24 @@ const SURFACE: Record<
     label: 'settings RPC',
     store: 'native settings prefs',
     prefix: 'rpc.settings',
+  },
+  'skills-pending': {
+    kind: 'skill',
+    label: 'skills-pending RPC',
+    store: 'native pending skills',
+    prefix: 'rpc.skills-pending',
+  },
+  skills: {
+    kind: 'skill',
+    label: 'skills RPC',
+    store: 'native workspace skills',
+    prefix: 'rpc.skills',
+  },
+  sources: {
+    kind: 'connection',
+    label: 'sources RPC',
+    store: 'native workspace sources',
+    prefix: 'rpc.sources',
   },
 }
 
@@ -1132,4 +1153,55 @@ export function rpcSettingsActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'settings', ...opts })
+}
+
+export function rpcSkillsPendingListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'skills-pending', ...opts })
+}
+
+export function rpcSkillsPendingReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'skills-pending', ...opts })
+}
+
+export function rpcSkillsPendingActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'skills-pending', ...opts })
+}
+
+export function rpcSkillsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'skills', ...opts })
+}
+
+export function rpcSkillsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'skills', ...opts })
+}
+
+export function rpcSkillsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'skills', ...opts })
+}
+
+export function rpcSourcesListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'sources', ...opts })
+}
+
+export function rpcSourcesReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'sources', ...opts })
+}
+
+export function rpcSourcesActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'sources', ...opts })
 }
