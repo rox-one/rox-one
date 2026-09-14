@@ -3380,7 +3380,7 @@
   "settings.environment.description": "Те же вопросы, что при первом запуске. Правка здесь не стирает прежние выборы.",
   "settings.environment.pending": "Есть новые вопросы настройки. Они необязательны.",
   "settings.environment.title": "Настройка окружения",
-  "settings.extensions.description": "Управление навыками, источниками, автоматизациями и пакетами marketplace в одном месте",
+  "settings.extensions.description": "Управление навыками, источниками, автоматизациями и пакетами маркетплейса в одном месте",
   "settings.extensions.title": "Расширения",
   "settings.identity.description": "Имя и персона, которые используются в новых сессиях. Имена рантайма и провайдера остаются в технических деталях.",
   "settings.identity.name": "Имя агента",
