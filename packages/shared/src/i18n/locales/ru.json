@@ -458,7 +458,7 @@
   "chatInput.placeholder.focusMode": "Нажмите {{key}} + . для режима фокуса",
   "chatInput.placeholder.labels": "Введите #, чтобы применить метки к этой переписке",
   "chatInput.placeholder.mention": "Введите @, чтобы упомянуть файлы, папки или навыки",
-  "chatInput.placeholder.newLine": "Нажмите Shift + Return, чтобы добавить новую строку",
+  "chatInput.placeholder.newLine": "Нажмите Shift + Enter, чтобы добавить новую строку",
   "chatInput.placeholder.shiftTab": "Используйте Shift + Tab для переключения между «Исследование» и «Выполнение»",
   "chatInput.placeholder.sidebar": "Нажмите {{key}} + B, чтобы переключить боковую панель",
   "chatInput.placeholder.typeMessage": "Введите сообщение...",
