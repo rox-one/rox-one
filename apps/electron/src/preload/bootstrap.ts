@@ -474,6 +474,9 @@ client.onConnectionStateChanged((state) => {
 
 // App lifecycle — direct IPC (not WS RPC) since it restarts the server itself
 ;(api as ElectronAPI).relaunchApp = () => ipcRenderer.invoke('app:relaunch')
+;(api as ElectronAPI).startMeetingCapture = (input) => ipcRenderer.invoke('meeting-capture:start', input)
+;(api as ElectronAPI).pauseMeetingCapture = () => ipcRenderer.invoke('meeting-capture:pause')
+;(api as ElectronAPI).stopMeetingCapture = () => ipcRenderer.invoke('meeting-capture:stop')
 ;(api as ElectronAPI).removeWorkspace = (workspaceId: string) => ipcRenderer.invoke('workspace:remove', workspaceId)
 ;(api as ElectronAPI).invokeOnServer = (url: string, token: string, channel: string, ...args: any[]) =>
   ipcRenderer.invoke('server:invokeOnServer', url, token, channel, ...args)

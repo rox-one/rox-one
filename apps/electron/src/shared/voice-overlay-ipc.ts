@@ -3,7 +3,20 @@ export const VOICE_OVERLAY_IPC = {
   STATE: 'voice-overlay:state',
 } as const
 
-export type VoiceOverlayCommand = 'toggle' | 'cancel'
+export type VoiceOverlayCommand = 'toggle' | 'cancel' | 'pause' | 'stop' | 'ask' | 'catch-up'
+
+export const VOICE_OVERLAY_COMMANDS: readonly VoiceOverlayCommand[] = [
+  'toggle',
+  'cancel',
+  'pause',
+  'stop',
+  'ask',
+  'catch-up',
+] as const
+
+export function isVoiceOverlayCommand(value: unknown): value is VoiceOverlayCommand {
+  return typeof value === 'string' && (VOICE_OVERLAY_COMMANDS as readonly string[]).includes(value)
+}
 
 export interface VoiceOverlayState {
   visible: boolean
