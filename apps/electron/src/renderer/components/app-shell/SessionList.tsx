@@ -492,7 +492,7 @@ export function SessionList({
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
-          label: t(`status.${state.id}`, state.label),
+          label: t(`status.${state.id}`),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
@@ -602,7 +602,7 @@ export function SessionList({
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
-          label: t(`priority.${priority}`, { defaultValue: priority }),
+          label: t(`priority.${priority}`),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
@@ -650,7 +650,7 @@ export function SessionList({
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
-          label: t(`collection.display.dueBucket.${bucket}`, { defaultValue: bucket }),
+          label: t(`collection.display.dueBucket.${bucket}`),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),

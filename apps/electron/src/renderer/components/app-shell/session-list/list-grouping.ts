@@ -174,7 +174,7 @@ export function emptyListGroupBuckets({
     case 'status':
       return statuses.map((status) => ({
         key: `status-${status.id}`,
-        label: t(`status.${status.id}`, { defaultValue: status.label }),
+        label: t(`status.${status.id}`),
       }))
     case 'unread':
       return [
@@ -189,12 +189,12 @@ export function emptyListGroupBuckets({
     case 'priority':
       return LIST_PRIORITY_ORDER.map((priority) => ({
         key: `priority:${priority}`,
-        label: t(`priority.${priority}`, { defaultValue: priority }),
+        label: t(`priority.${priority}`),
       }))
     case 'dueDate':
       return LIST_DUE_ORDER.map((bucket) => ({
         key: `due:${bucket}`,
-        label: t(`collection.display.dueBucket.${bucket}`, { defaultValue: bucket }),
+        label: t(`collection.display.dueBucket.${bucket}`),
       }))
     case 'label':
       return [

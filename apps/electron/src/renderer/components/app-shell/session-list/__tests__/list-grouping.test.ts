@@ -147,10 +147,7 @@ describe('listRankReorderRequest (FR-45)', () => {
 })
 
 describe('withEmptyListGroups', () => {
-  const t = (key: string, options?: Record<string, unknown>) => {
-    if (typeof options?.defaultValue === 'string') return options.defaultValue
-    return key
-  }
+  const t = (key: string) => key
 
   it('is a no-op when showEmptyGroups is false or buckets are empty', () => {
     const groups = [{ key: 'status-todo', label: 'Todo', items: [{ id: 'a' }] }]
@@ -174,6 +171,36 @@ describe('withEmptyListGroups', () => {
     expect(next.map((g) => g.key)).toEqual(['status-todo', 'status-done'])
     expect(next[0].items).toEqual([{ id: 'a' }])
     expect(next[1].items).toEqual([])
+  })
+
+  it('labels empty grouping buckets via t() keys, not identifier/English defaultValue', () => {
+    const empty = { statuses: [], projects: [], labels: [], t }
+    expect(
+      emptyListGroupBuckets({
+        mode: 'status',
+        statuses: [
+          { id: 'todo', label: 'Todo' },
+          { id: 'done', label: 'Done' },
+        ],
+        projects: [],
+        labels: [],
+        t,
+      }).map((bucket) => bucket.label),
+    ).toEqual(['status.todo', 'status.done'])
+    expect(emptyListGroupBuckets({ ...empty, mode: 'priority' }).map((bucket) => bucket.label)).toEqual([
+      'priority.urgent',
+      'priority.high',
+      'priority.medium',
+      'priority.low',
+      'priority.none',
+    ])
+    expect(emptyListGroupBuckets({ ...empty, mode: 'dueDate' }).map((bucket) => bucket.label)).toEqual([
+      'collection.display.dueBucket.overdue',
+      'collection.display.dueBucket.today',
+      'collection.display.dueBucket.this_week',
+      'collection.display.dueBucket.later',
+      'collection.display.dueBucket.none',
+    ])
   })
 })
 

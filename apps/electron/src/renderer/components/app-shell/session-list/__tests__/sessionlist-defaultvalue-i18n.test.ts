@@ -14,15 +14,55 @@ const STATIC_KEYS = [
   'sidebar.unknownProject',
 ] as const
 
-describe('P35-53 SessionList / list-grouping leftover chrome is i18n', () => {
+const DYNAMIC_KEYS = [
+  'collection.display.dueBucket.later',
+  'collection.display.dueBucket.none',
+  'collection.display.dueBucket.overdue',
+  'collection.display.dueBucket.this_week',
+  'collection.display.dueBucket.today',
+  'priority.high',
+  'priority.low',
+  'priority.medium',
+  'priority.none',
+  'priority.urgent',
+  'status.backlog',
+  'status.cancelled',
+  'status.done',
+  'status.in-progress',
+  'status.needs-review',
+  'status.todo',
+] as const
+
+const LOCALE_FILES = [
+  'ar.json',
+  'de.json',
+  'en.json',
+  'es.json',
+  'fr.json',
+  'hu.json',
+  'ja.json',
+  'ko.json',
+  'pl.json',
+  'ru.json',
+  'zh-Hans.json',
+  'zh-Hant.json',
+] as const
+
+describe('P35-61 SessionList / list-grouping leftover chrome is i18n', () => {
   it('does not inject English string defaultValue leftovers', () => {
-    expect(sessionList).not.toMatch(/defaultValue:\s*['"]/)
-    expect(grouping).not.toMatch(/defaultValue:\s*['"]/)
+    expect(sessionList).not.toMatch(/defaultValue:/)
+    expect(grouping).not.toMatch(/defaultValue:/)
     expect(sessionList).not.toContain("defaultValue: 'Unknown project'")
     expect(sessionList).not.toContain("defaultValue: 'No project'")
     expect(sessionList).not.toContain("defaultValue: 'No label'")
     expect(grouping).not.toContain("defaultValue: 'No project'")
     expect(grouping).not.toContain("defaultValue: 'No label'")
+    expect(sessionList).not.toContain('defaultValue: priority')
+    expect(sessionList).not.toContain('defaultValue: bucket')
+    expect(grouping).not.toContain('defaultValue: status.label')
+    expect(grouping).not.toContain('defaultValue: priority')
+    expect(grouping).not.toContain('defaultValue: bucket')
+    expect(sessionList).not.toContain('t(`status.${state.id}`, state.label)')
   })
 
   it('keeps t() callsites on the existing grouping keys', () => {
@@ -31,15 +71,12 @@ describe('P35-53 SessionList / list-grouping leftover chrome is i18n', () => {
     expect(sessionList).toContain("t('collection.display.labelNone')")
     expect(grouping).toContain("t('sidebar.noProject')")
     expect(grouping).toContain("t('collection.display.labelNone')")
-    expect(grouping).toContain('t(`status.${status.id}`, { defaultValue: status.label })')
-    expect(sessionList).toContain('t(`priority.${priority}`, { defaultValue: priority })')
-    expect(grouping).toContain('t(`priority.${priority}`, { defaultValue: priority })')
-    expect(sessionList).toContain(
-      't(`collection.display.dueBucket.${bucket}`, { defaultValue: bucket })',
-    )
-    expect(grouping).toContain(
-      't(`collection.display.dueBucket.${bucket}`, { defaultValue: bucket })',
-    )
+    expect(grouping).toContain('t(`status.${status.id}`)')
+    expect(sessionList).toContain('t(`status.${state.id}`)')
+    expect(sessionList).toContain('t(`priority.${priority}`)')
+    expect(grouping).toContain('t(`priority.${priority}`)')
+    expect(sessionList).toContain('t(`collection.display.dueBucket.${bucket}`)')
+    expect(grouping).toContain('t(`collection.display.dueBucket.${bucket}`)')
   })
 
   it('English locale matches the previous hardcoded leftovers', async () => {
@@ -47,6 +84,22 @@ describe('P35-53 SessionList / list-grouping leftover chrome is i18n', () => {
     expect(i18n.t('sidebar.unknownProject')).toBe('Unknown project')
     expect(i18n.t('sidebar.noProject')).toBe('No project')
     expect(i18n.t('collection.display.labelNone')).toBe('No label')
+    expect(i18n.t('priority.urgent')).toBe('Urgent')
+    expect(i18n.t('priority.high')).toBe('High')
+    expect(i18n.t('priority.medium')).toBe('Medium')
+    expect(i18n.t('priority.low')).toBe('Low')
+    expect(i18n.t('priority.none')).toBe('None')
+    expect(i18n.t('collection.display.dueBucket.overdue')).toBe('Overdue')
+    expect(i18n.t('collection.display.dueBucket.today')).toBe('Today')
+    expect(i18n.t('collection.display.dueBucket.this_week')).toBe('This week')
+    expect(i18n.t('collection.display.dueBucket.later')).toBe('Later')
+    expect(i18n.t('collection.display.dueBucket.none')).toBe('No date')
+    expect(i18n.t('status.todo')).toBe('Todo')
+    expect(i18n.t('status.in-progress')).toBe('In Progress')
+    expect(i18n.t('status.needs-review')).toBe('Needs Review')
+    expect(i18n.t('status.done')).toBe('Done')
+    expect(i18n.t('status.backlog')).toBe('Backlog')
+    expect(i18n.t('status.cancelled')).toBe('Cancelled')
   })
 
   it('Russian copy is distinct from English', async () => {
@@ -57,27 +110,25 @@ describe('P35-53 SessionList / list-grouping leftover chrome is i18n', () => {
     expect(i18n.t('sidebar.unknownProject')).not.toBe('Unknown project')
     expect(i18n.t('sidebar.noProject')).not.toBe('No project')
     expect(i18n.t('collection.display.labelNone')).not.toBe('No label')
+    expect(i18n.t('priority.urgent')).toBe('Срочный')
+    expect(i18n.t('priority.urgent')).not.toBe('Urgent')
+    expect(i18n.t('collection.display.dueBucket.overdue')).toBe('Просрочено')
+    expect(i18n.t('collection.display.dueBucket.overdue')).not.toBe('Overdue')
+    expect(i18n.t('status.todo')).toBe('К выполнению')
+    expect(i18n.t('status.todo')).not.toBe('Todo')
+    expect(i18n.t('status.in-progress')).toBe('В работе')
+    expect(i18n.t('status.in-progress')).not.toBe('In Progress')
   })
 
-  it('wires static keys in all 12 locales', () => {
+  it('wires static and dynamic grouping keys in all 12 locales', () => {
     const files = readdirSync(localesDir).filter((name) => name.endsWith('.json')).sort()
-    expect(files).toEqual([
-      'ar.json',
-      'de.json',
-      'en.json',
-      'es.json',
-      'fr.json',
-      'hu.json',
-      'ja.json',
-      'ko.json',
-      'pl.json',
-      'ru.json',
-      'zh-Hans.json',
-      'zh-Hant.json',
-    ])
+    expect(files).toEqual([...LOCALE_FILES])
     for (const file of files) {
       const locale = JSON.parse(readFileSync(join(localesDir, file), 'utf8')) as Record<string, string>
       for (const key of STATIC_KEYS) {
+        expect(locale[key]?.length, `${file} ${key}`).toBeGreaterThan(0)
+      }
+      for (const key of DYNAMIC_KEYS) {
         expect(locale[key]?.length, `${file} ${key}`).toBeGreaterThan(0)
       }
     }
