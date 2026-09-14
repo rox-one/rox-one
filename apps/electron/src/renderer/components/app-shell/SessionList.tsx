@@ -43,6 +43,7 @@ import { activeFilterCount } from "./collection/collection-filter-count"
 import { compareSessions, lexorankBetween } from "@craft-agent/shared/sessions/collection"
 import { isStaleRankNeighborsError, retryStaleRankReorder } from "@/lib/collection-reorder"
 import {
+  catalogLabelOrId,
   emptyListGroupBuckets,
   getListGroupKey,
   listCrossGroupDropAction,
@@ -492,7 +493,7 @@ export function SessionList({
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
-          label: t(`status.${state.id}`),
+          label: catalogLabelOrId(t, `status.${state.id}`, state.id),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
@@ -602,7 +603,7 @@ export function SessionList({
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
-          label: t(`priority.${priority}`),
+          label: catalogLabelOrId(t, `priority.${priority}`, priority),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
@@ -650,7 +651,7 @@ export function SessionList({
         const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
         orderedGroups.push({
           key,
-          label: t(`collection.display.dueBucket.${bucket}`),
+          label: catalogLabelOrId(t, `collection.display.dueBucket.${bucket}`, bucket),
           items: hydrateFamilyRows(groupUnits),
           collapsible: true,
           ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),

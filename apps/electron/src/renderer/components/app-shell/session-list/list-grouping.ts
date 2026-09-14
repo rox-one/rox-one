@@ -162,6 +162,20 @@ export interface EmptyListGroupOptions {
   t: (key: string, options?: Record<string, unknown>) => string
 }
 
+/**
+ * Known catalog keys go through `t()` with no English `defaultValue`.
+ * Missing keys (`t()` returns the key or a non-string) fall back to the identifier.
+ */
+export function catalogLabelOrId(
+  t: (key: string, options?: Record<string, unknown>) => unknown,
+  key: string,
+  identifier: string,
+): string {
+  const translated = t(key)
+  if (typeof translated !== 'string' || translated === key) return identifier
+  return translated
+}
+
 /** Configured buckets for Display "Show empty groups". Date has no finite set. */
 export function emptyListGroupBuckets({
   mode,
@@ -174,7 +188,7 @@ export function emptyListGroupBuckets({
     case 'status':
       return statuses.map((status) => ({
         key: `status-${status.id}`,
-        label: t(`status.${status.id}`),
+        label: catalogLabelOrId(t, `status.${status.id}`, status.id),
       }))
     case 'unread':
       return [
@@ -189,12 +203,12 @@ export function emptyListGroupBuckets({
     case 'priority':
       return LIST_PRIORITY_ORDER.map((priority) => ({
         key: `priority:${priority}`,
-        label: t(`priority.${priority}`),
+        label: catalogLabelOrId(t, `priority.${priority}`, priority),
       }))
     case 'dueDate':
       return LIST_DUE_ORDER.map((bucket) => ({
         key: `due:${bucket}`,
-        label: t(`collection.display.dueBucket.${bucket}`),
+        label: catalogLabelOrId(t, `collection.display.dueBucket.${bucket}`, bucket),
       }))
     case 'label':
       return [

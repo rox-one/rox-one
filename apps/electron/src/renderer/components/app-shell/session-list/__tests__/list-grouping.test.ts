@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { startOfDay } from 'date-fns'
 import {
+  catalogLabelOrId,
   emptyListGroupBuckets,
   getListGroupKey,
   listCrossGroupDropAction,
@@ -173,34 +174,64 @@ describe('withEmptyListGroups', () => {
     expect(next[1].items).toEqual([])
   })
 
-  it('labels empty grouping buckets via t() keys, not identifier/English defaultValue', () => {
-    const empty = { statuses: [], projects: [], labels: [], t }
+  it('labels known catalog buckets via t() and custom ids via the identifier', () => {
+    const catalog: Record<string, string> = {
+      'status.todo': 'Todo',
+      'status.done': 'Done',
+      'priority.urgent': 'Urgent',
+      'priority.high': 'High',
+      'priority.medium': 'Medium',
+      'priority.low': 'Low',
+      'priority.none': 'None',
+      'collection.display.dueBucket.overdue': 'Overdue',
+      'collection.display.dueBucket.today': 'Today',
+      'collection.display.dueBucket.this_week': 'This week',
+      'collection.display.dueBucket.later': 'Later',
+      'collection.display.dueBucket.none': 'No date',
+    }
+    const translate = (key: string) => catalog[key] ?? key
+    const empty = { statuses: [], projects: [], labels: [], t: translate }
     expect(
       emptyListGroupBuckets({
         mode: 'status',
         statuses: [
           { id: 'todo', label: 'Todo' },
           { id: 'done', label: 'Done' },
+          { id: 'waiting-on-legal', label: 'Waiting on Legal' },
         ],
         projects: [],
         labels: [],
-        t,
+        t: translate,
       }).map((bucket) => bucket.label),
-    ).toEqual(['status.todo', 'status.done'])
+    ).toEqual(['Todo', 'Done', 'waiting-on-legal'])
     expect(emptyListGroupBuckets({ ...empty, mode: 'priority' }).map((bucket) => bucket.label)).toEqual([
-      'priority.urgent',
-      'priority.high',
-      'priority.medium',
-      'priority.low',
-      'priority.none',
+      'Urgent',
+      'High',
+      'Medium',
+      'Low',
+      'None',
     ])
     expect(emptyListGroupBuckets({ ...empty, mode: 'dueDate' }).map((bucket) => bucket.label)).toEqual([
-      'collection.display.dueBucket.overdue',
-      'collection.display.dueBucket.today',
-      'collection.display.dueBucket.this_week',
-      'collection.display.dueBucket.later',
-      'collection.display.dueBucket.none',
+      'Overdue',
+      'Today',
+      'This week',
+      'Later',
+      'No date',
     ])
+  })
+})
+
+describe('catalogLabelOrId', () => {
+  it('returns the catalog string for known keys', () => {
+    const t = (key: string) => (key === 'status.todo' ? 'Todo' : key)
+    expect(catalogLabelOrId(t, 'status.todo', 'todo')).toBe('Todo')
+    expect(catalogLabelOrId(t, 'priority.urgent', 'urgent')).toBe('urgent')
+  })
+
+  it('falls back to the identifier when t() returns the key or a non-string', () => {
+    expect(catalogLabelOrId((key) => key, 'status.waiting-on-legal', 'waiting-on-legal')).toBe('waiting-on-legal')
+    expect(catalogLabelOrId(() => ({ nested: true }), 'priority.custom', 'custom')).toBe('custom')
+    expect(catalogLabelOrId(() => 12, 'collection.display.dueBucket.someday', 'someday')).toBe('someday')
   })
 })
 
