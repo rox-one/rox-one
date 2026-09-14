@@ -19,6 +19,12 @@ import {
   loadPreferences,
   updatePreferences,
 } from '@craft-agent/shared/config/preferences'
+import {
+  isClaimableLive,
+  rpcOrgsActResult,
+  rpcOrgsListResult,
+  rpcOrgsReadResult,
+} from '@craft-agent/core/rox2'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
@@ -47,10 +53,14 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
   ensureLocalUserIdentity()
 
   server.handle(RPC_CHANNELS.orgs.LIST, async () => {
+    const listed = rpcOrgsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     return listOrganizations()
   })
 
   server.handle(RPC_CHANNELS.orgs.CREATE, async (_ctx, input: CreateOrganizationInput) => {
+    const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.name || 'org' })
+    if (!isClaimableLive(act)) throw new Error('org create is not live')
     const org = createOrganization(input ?? { name: '' })
     deps.platform.logger.info?.(`Created organization "${org.name}" (${org.id})`)
     return org
@@ -58,7 +68,10 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
 
   server.handle(RPC_CHANNELS.orgs.INVITE, async (_ctx, input: InviteToOrgInput) => {
     // Server mode: still write local invite bookkeeping; remote multi-user
-    // redemption can proxy later. Local-first always persists.
+    // redemption can proxy later. Local-first always persists. Invite is a
+    // local token — not live Mail.
+    const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.orgId || 'invite' })
+    if (!isClaimableLive(act)) throw new Error('org invite is not live')
     const invite = inviteToOrganization(input)
     if (serverModeEnabled()) {
       deps.platform.logger.info?.(
@@ -69,6 +82,8 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
   })
 
   server.handle(RPC_CHANNELS.orgs.ACCEPT, async (_ctx, input: AcceptInviteInput) => {
+    const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: input?.token || 'invite' })
+    if (!isClaimableLive(act)) throw new Error('org accept is not live')
     // Prefer server path when CRAFT_SERVER_URL is set — currently local accept
     // is the only implemented redeemer; keep the branch for ops visibility.
     if (serverModeEnabled()) {
@@ -78,10 +93,14 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
   })
 
   server.handle(RPC_CHANNELS.orgs.LIST_MEMBERS, async (_ctx, orgId: string) => {
+    const read = rpcOrgsReadResult({ source: 'native', nativeId: orgId })
+    if (!isClaimableLive(read.result)) return []
     return listOrgMembers(orgId)
   })
 
   server.handle(RPC_CHANNELS.orgs.GET_IDENTITY, async () => {
+    const read = rpcOrgsReadResult({ source: 'native', nativeId: 'local' })
+    if (!isClaimableLive(read.result)) throw new Error('org identity is not live')
     return getLocalIdentity()
   })
 
@@ -91,6 +110,8 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
       _ctx,
       updates: { username?: string; email?: string; name?: string },
     ) => {
+      const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: 'local' })
+      if (!isClaimableLive(act)) throw new Error('org identity update is not live')
       ensureLocalUserIdentity()
       const patch: { username?: string; email?: string; name?: string } = {}
       if (typeof updates?.username === 'string') {
@@ -121,6 +142,8 @@ export function registerOrgsHandlers(server: RpcServer, deps: HandlerDeps): void
       if (orgId !== null && typeof orgId !== 'string') {
         throw new Error('orgId must be a string or null')
       }
+      const act = rpcOrgsActResult({ source: 'native', action: 'write', nativeId: workspaceId.trim() })
+      if (!isClaimableLive(act)) throw new Error('org workspace bind is not live')
 
       // The storage lifecycle resolves the local server identity and requires
       // durable membership before it writes either folder or registry metadata.

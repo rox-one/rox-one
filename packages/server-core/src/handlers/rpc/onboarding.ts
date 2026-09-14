@@ -9,6 +9,12 @@ import { isSetupDeferred, setSetupDeferred } from '@craft-agent/shared/config'
 import { prepareClaudeOAuth, exchangeClaudeCode, hasValidOAuthState, clearOAuthState, prepareMcpOAuth } from '@craft-agent/shared/auth'
 import { validateMcpConnection } from '@craft-agent/shared/mcp'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import {
+  isClaimableLive,
+  rpcOnboardingActResult,
+  rpcOnboardingListResult,
+  rpcOnboardingReadResult,
+} from '@craft-agent/core/rox2'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 
@@ -33,6 +39,8 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Get current auth state
   server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {
+    const listed = rpcOnboardingListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) throw new Error('onboarding auth state is not live')
     // Honor "Setup later" like the Electron main handler does — without the
     // flag, headless/WebUI clients re-enter onboarding on every reload.
     const { authState, setupNeeds } = await getOnboardingAuthPayload(isSetupDeferred())
@@ -69,6 +77,8 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   // NOTE: Currently unused in renderer. If re-enabled, needs client-side
   // orchestration (callback server + browser open) like performOAuth().
   server.handle(RPC_CHANNELS.onboarding.START_MCP_OAUTH, async (_ctx, mcpUrl: string, callbackPort?: number) => {
+    const act = rpcOnboardingActResult({ source: 'native', action: 'write', nativeId: mcpUrl || 'mcp' })
+    if (!isClaimableLive(act)) return { success: false, error: 'onboarding mcp oauth is not live' }
     log.info('[Onboarding:Main] ONBOARDING_START_MCP_OAUTH received')
     try {
       if (!callbackPort) {
@@ -96,6 +106,8 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
   // Prepare Claude OAuth flow (server-side only — no browser open).
   // Returns authUrl for the client to open locally via shell.openExternal.
   server.handle(RPC_CHANNELS.onboarding.START_CLAUDE_OAUTH, async () => {
+    const act = rpcOnboardingActResult({ source: 'native', action: 'write', nativeId: 'claude' })
+    if (!isClaimableLive(act)) return { success: false, error: 'onboarding claude oauth is not live' }
     try {
       log.info('[Onboarding] Preparing Claude OAuth flow...')
 
@@ -112,6 +124,9 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Exchange authorization code for tokens
   server.handle(RPC_CHANNELS.onboarding.EXCHANGE_CLAUDE_CODE, async (_ctx, authorizationCode: string, connectionSlug: string) => {
+    if (!connectionSlug) return { success: false, error: 'onboarding.exchange: connectionSlug is required' }
+    const act = rpcOnboardingActResult({ source: 'native', action: 'write', nativeId: connectionSlug })
+    if (!isClaimableLive(act)) return { success: false, error: 'onboarding exchange is not live' }
     try {
       log.info(`[Onboarding] Exchanging Claude authorization code for connection: ${connectionSlug}`)
 
@@ -160,23 +175,32 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
 
   // Check if there's a valid OAuth state in progress
   server.handle(RPC_CHANNELS.onboarding.HAS_CLAUDE_OAUTH_STATE, async () => {
-    return hasValidOAuthState()
+    const valid = hasValidOAuthState()
+    const read = rpcOnboardingReadResult({ source: 'native', nativeId: valid ? 'claude' : undefined })
+    if (!isClaimableLive(read.result)) return false
+    return true
   })
 
   // Clear OAuth state (for cancel/reset)
   server.handle(RPC_CHANNELS.onboarding.CLEAR_CLAUDE_OAUTH_STATE, async () => {
+    const act = rpcOnboardingActResult({ source: 'native', action: 'destroy', granted: true, nativeId: 'claude' })
+    if (!isClaimableLive(act)) return { success: false }
     clearOAuthState()
     return { success: true }
   })
 
   // User chose "Setup later" — persist so onboarding doesn't re-show on next launch
   server.handle(RPC_CHANNELS.onboarding.DEFER_SETUP, async () => {
+    const act = rpcOnboardingActResult({ source: 'native', action: 'write', nativeId: 'defer' })
+    if (!isClaimableLive(act)) return { success: false }
     setSetupDeferred(true)
     log?.info('[Onboarding] User deferred setup')
     return { success: true }
   })
 
   server.handle(RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL, async (_ctx, apiKey: string) => {
+    const act = rpcOnboardingActResult({ source: 'native', action: 'write', nativeId: 'omp' })
+    if (!isClaimableLive(act)) return { success: false, error: 'onboarding omp credential is not live' }
     return saveOmpRoxCredential(typeof apiKey === 'string' ? apiKey : '')
   })
 }

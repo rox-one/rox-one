@@ -1,5 +1,5 @@
 /**
- * ROX2-139..168: native RPC list/read/act.
+ * ROX2-139..171: native RPC list/read/act.
  *
  * Native RPC mutations can be live. Fixture DTOs and Conation payloads are not.
  * A handler `{ ok: true }` DTO is not a Rox2 live claim.
@@ -46,6 +46,9 @@ export type RpcNativeSurface =
   | 'notes-import'
   | 'notes'
   | 'oauth'
+  | 'onboarding'
+  | 'openclaw'
+  | 'orgs'
 
 const SURFACE: Record<
   RpcNativeSurface,
@@ -230,6 +233,24 @@ const SURFACE: Record<
     label: 'oauth RPC',
     store: 'native oauth credentials',
     prefix: 'rpc.oauth',
+  },
+  onboarding: {
+    kind: 'connection',
+    label: 'onboarding RPC',
+    store: 'native onboarding credentials',
+    prefix: 'rpc.onboarding',
+  },
+  openclaw: {
+    kind: 'connection',
+    label: 'openclaw RPC',
+    store: 'native openclaw runtime',
+    prefix: 'rpc.openclaw',
+  },
+  orgs: {
+    kind: 'project',
+    label: 'orgs RPC',
+    store: 'native organizations',
+    prefix: 'rpc.orgs',
   },
 }
 
@@ -841,4 +862,55 @@ export function rpcOauthActResult(opts: {
   nativeId?: string
 }) {
   return rpcNativeActResult({ surface: 'oauth', ...opts })
+}
+
+export function rpcOnboardingListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'onboarding', ...opts })
+}
+
+export function rpcOnboardingReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'onboarding', ...opts })
+}
+
+export function rpcOnboardingActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'onboarding', ...opts })
+}
+
+export function rpcOpenclawListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'openclaw', ...opts })
+}
+
+export function rpcOpenclawReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'openclaw', ...opts })
+}
+
+export function rpcOpenclawActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'openclaw', ...opts })
+}
+
+export function rpcOrgsListResult(opts: { source: RpcNativeActionSource; nativeIds?: readonly string[] }) {
+  return rpcNativeListResult({ surface: 'orgs', ...opts })
+}
+
+export function rpcOrgsReadResult(opts: { source: RpcNativeActionSource; nativeId?: string }) {
+  return rpcNativeReadResult({ surface: 'orgs', ...opts })
+}
+
+export function rpcOrgsActResult(opts: {
+  source: RpcNativeActionSource
+  action?: RpcNativeActKind
+  granted?: boolean
+  nativeId?: string
+}) {
+  return rpcNativeActResult({ surface: 'orgs', ...opts })
 }
