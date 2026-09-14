@@ -4857,7 +4857,7 @@
   "workspace.connectedVersion": "Подключено — v{{version}}",
   "workspace.connectedVersionEmpty": "Подключено — v{{version}} — рабочих пространств пока нет",
   "workspace.connectionFailed": "Не удалось подключиться",
-  "workspace.connectionTimeout": "Не удалось дождаться подключения к воркспейсу за {{ms}} мс",
+  "workspace.connectionTimeout": "Не удалось дождаться подключения к рабочему пространству за {{ms}} мс",
   "workspace.createAndConnect": "Создать и подключить",
   "workspace.createNew": "Создать новое",
   "workspace.createNewDesc": "Начните с чистого листа в пустом рабочем пространстве.",
