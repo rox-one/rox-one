@@ -123,10 +123,13 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
       operation: { verification: string; entityRef?: { entityId: string; revisionId: string } }
     }
     expect(result.proposal.status).toBe('applied')
-    expect(result.operation.verification).toBe('verified')
+    expect(result.operation.verification).toBe('pending')
+    expect(result.operation.verification).not.toBe('verified')
     expect(upserts('m1').map((event) => event.proposal.status)).toEqual(['proposed', 'applied'])
     expect(operationResults('m1')).toHaveLength(1)
-    expect(operationResults('m1')[0]?.result.verification).toBe('verified')
+    expect(operationResults('m1')[0]?.result.verification).toBe('pending')
+    expect(operationResults('m1')[0]?.result.verification).not.toBe('verified')
+    expect(operationResults('m1')[0]?.result.mode).toBe('fixture')
     expect(operationResults('m1')[0]?.result.operationId).toBe(created.proposal!.id)
     const entityId = result.operation.entityRef?.entityId
     const revision = result.operation.entityRef?.revisionId
@@ -165,7 +168,8 @@ describe('meetings RPC createProposal then APPROVE_PROPOSAL', () => {
       payload,
     ) as { proposal: MeetingProposal; operation: { verification: string } }
     expect(result.proposal.status).toBe('applied')
-    expect(result.operation.verification).toBe('verified')
+    expect(result.operation.verification).toBe('pending')
+    expect(result.operation.verification).not.toBe('verified')
     expect(loadProposalStore(join(configDir, 'meetings', 'ws')).items[0]?.status).toBe('applied')
   })
 
