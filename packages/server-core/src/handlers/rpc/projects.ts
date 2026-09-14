@@ -6,6 +6,12 @@ import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import {
+  isClaimableLive,
+  rpcProjectsActResult,
+  rpcProjectsListResult,
+  rpcProjectsReadResult,
+} from '@craft-agent/core/rox2'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.projects.GET,
@@ -29,6 +35,8 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // List all projects for a workspace
   server.handle(RPC_CHANNELS.projects.GET, async (_ctx, workspaceId: string) => {
+    const listed = rpcProjectsListResult({ source: 'native' })
+    if (!isClaimableLive(listed.result)) return []
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) {
       log.error(`PROJECTS_GET: Workspace not found: ${workspaceId}`)
@@ -40,6 +48,8 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Get one project (by id or slug)
   server.handle(RPC_CHANNELS.projects.GET_ONE, async (_ctx, workspaceId: string, projectIdOrSlug: string) => {
+    const read = rpcProjectsReadResult({ source: 'native', nativeId: projectIdOrSlug })
+    if (!isClaimableLive(read.result)) return null
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) return null
     const { loadProject, loadProjectById } = await import('@craft-agent/shared/projects')
@@ -49,6 +59,8 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Create a new project
   server.handle(RPC_CHANNELS.projects.CREATE, async (_ctx, workspaceId: string, input: import('@craft-agent/shared/projects').CreateProjectInput) => {
+    const act = rpcProjectsActResult({ source: 'native', action: 'write', nativeId: input?.name || 'project' })
+    if (!isClaimableLive(act)) throw new Error('project create is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { createProject } = await import('@craft-agent/shared/projects')
@@ -95,6 +107,9 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
 
   // Delete a project; unbinds projectId from any sessions that referenced it.
   server.handle(RPC_CHANNELS.projects.DELETE, async (_ctx, workspaceId: string, projectSlug: string) => {
+    if (!projectSlug) throw new Error('projectSlug is required')
+    const act = rpcProjectsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: projectSlug })
+    if (!isClaimableLive(act)) throw new Error('project delete is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
 
@@ -145,6 +160,9 @@ export function registerProjectsHandlers(server: RpcServer, deps: HandlerDeps): 
     projectSlug: string,
     filename: string,
   ) => {
+    if (!filename) throw new Error('filename is required')
+    const act = rpcProjectsActResult({ source: 'native', action: 'destroy', granted: true, nativeId: filename })
+    if (!isClaimableLive(act)) throw new Error('project asset delete is not live')
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const { deleteProjectAsset } = await import('@craft-agent/shared/projects')
