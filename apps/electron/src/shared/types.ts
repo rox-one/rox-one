@@ -608,6 +608,8 @@ export interface ElectronAPI {
   getMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
   searchMeetings(workspaceId: string, query: string, opts?: { cursor?: string; limit?: number; offline?: boolean }): Promise<{ items: unknown[]; nextCursor?: string; state: string }>
   deleteMeeting(workspaceId: string, id: string): Promise<{ state: string; meeting?: unknown }>
+  exportMeeting(workspaceId: string, id: string, opts?: { format?: 'json' | 'markdown' | 'media'; audience?: 'owner' | 'shared'; clip?: { startMs: number; endMs: number; text: string } }): Promise<unknown>
+  importMeeting(workspaceId: string, bundle: unknown): Promise<unknown>
   startMeetingCapture(input?: { mic?: boolean; system?: boolean }): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>
   pauseMeetingCapture(): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>
   stopMeetingCapture(): Promise<{ state: string; mic: boolean; system: boolean; error?: string }>

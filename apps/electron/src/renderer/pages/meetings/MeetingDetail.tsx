@@ -6,16 +6,31 @@ export function MeetingDetail({
   knowledge,
   onOpenArtifact,
   onOpenTracker,
+  onDelete,
+  onExport,
 }: {
   meeting: MeetingPageItem
   knowledge?: MeetingKnowledgeView
   onOpenArtifact?: (artifact: MeetingArtifactView) => void
   onOpenTracker?: (tracker: MeetingTrackerView) => void
+  onDelete?: () => void
+  onExport?: (format: 'json' | 'markdown') => void
 }) {
   const { t } = useTranslation()
   return (
     <article className="space-y-2" data-testid="meeting-detail" data-entity-id={meeting.id}>
       <h2 className="text-sm font-medium">{meeting.title}</h2>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" data-testid="meeting-export" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onExport?.('json')}>
+          {t('meetings.export')}
+        </button>
+        <button type="button" data-testid="meeting-export-markdown" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onExport?.('markdown')}>
+          {t('meetings.exportMarkdown')}
+        </button>
+        <button type="button" data-testid="meeting-delete" className="rounded-md border border-border px-2 py-1 text-xs" onClick={() => onDelete?.()}>
+          {t('meetings.delete')}
+        </button>
+      </div>
       <section>
         <h3 className="text-xs text-muted-foreground">{t('meetings.manualNotes')}</h3>
         <p data-testid="meeting-manual-notes">{meeting.manualNotes ?? ''}</p>

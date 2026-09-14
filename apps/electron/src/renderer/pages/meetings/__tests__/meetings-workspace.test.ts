@@ -8,6 +8,10 @@ const ipc = readFileSync(join(import.meta.dir, '../../../../main/meetings/ipc.ts
 describe('meetings workspace (I029 / I012 wiring)', () => {
   test('uses existing meetings RPC and device capture IPC, not server-core or localStorage', () => {
     expect(source).toContain('RPC_CHANNELS.meetings.LIST')
+    expect(source).toContain('RPC_CHANNELS.meetings.EXPORT')
+    expect(source).toContain('RPC_CHANNELS.meetings.DELETE')
+    expect(source).toContain('exportMeeting')
+    expect(source).toContain('deleteMeeting')
     expect(source).toContain('startMeetingCapture')
     expect(source).toContain('MeetingsPage')
     expect(source).not.toContain('@craft-agent/server-core')

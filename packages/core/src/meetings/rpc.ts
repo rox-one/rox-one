@@ -4,6 +4,9 @@ export const MEETING_COMMAND_TYPES = [
   'create-meeting',
   'append-proposal',
   'apply-operation',
+  'export-meeting',
+  'import-meeting',
+  'delete-meeting',
 ] as const
 
 export type MeetingCommandType = (typeof MEETING_COMMAND_TYPES)[number]

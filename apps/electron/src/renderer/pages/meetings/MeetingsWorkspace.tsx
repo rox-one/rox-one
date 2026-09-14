@@ -86,6 +86,19 @@ export default function MeetingsWorkspace({ workspaceId }: MeetingsWorkspaceProp
     })))
   }, [workspaceId])
 
+  const onDelete = useCallback(async () => {
+    const api = window.electronAPI
+    if (!workspaceId || !selected || !api?.isChannelAvailable?.(RPC_CHANNELS.meetings.DELETE)) return
+    await api.deleteMeeting(workspaceId, selected.id)
+    await load()
+  }, [workspaceId, selected, load])
+
+  const onExport = useCallback(async (format: 'json' | 'markdown') => {
+    const api = window.electronAPI
+    if (!workspaceId || !selected || !api?.isChannelAvailable?.(RPC_CHANNELS.meetings.EXPORT)) return
+    await api.exportMeeting(workspaceId, selected.id, { format, audience: 'shared' })
+  }, [workspaceId, selected])
+
   return (
     <MeetingsPage
       items={items}
@@ -93,6 +106,8 @@ export default function MeetingsWorkspace({ workspaceId }: MeetingsWorkspaceProp
       selected={selected}
       onStart={() => { void onStart() }}
       onSearch={onSearch}
+      onDelete={() => { void onDelete() }}
+      onExport={(format) => { void onExport(format) }}
       captureState={captureState}
     />
   )
