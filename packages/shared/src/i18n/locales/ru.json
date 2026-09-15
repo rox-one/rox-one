@@ -2604,7 +2604,7 @@
   "projectInfo.icon": "Иконка",
   "projectInfo.iconClear": "Убрать",
   "projectInfo.iconCleared": "Иконка проекта удалена",
-  "projectInfo.iconHint": "Отображается в списке проектов и на карточках канбана.",
+  "projectInfo.iconHint": "Отображается в списке проектов и на карточках доски.",
   "projectInfo.iconInvalidType": "Используйте PNG, JPEG, WebP, GIF, SVG или ICO",
   "projectInfo.iconUpload": "Загрузить иконку",
   "projectInfo.iconUploadFailed": "Не удалось обновить иконку проекта",
