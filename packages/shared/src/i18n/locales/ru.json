@@ -3289,7 +3289,7 @@
   "settings.cloudRuns.image": "Образ",
   "settings.cloudRuns.imageHint": "Необязательная замена контейнерного образа",
   "settings.cloudRuns.maxArtifacts": "Бюджет артефактов (байты)",
-  "settings.cloudRuns.maxArtifactsHint": "Максимум байт артефактов на завершённый ран",
+  "settings.cloudRuns.maxArtifactsHint": "Максимум байт артефактов на завершённый запуск",
   "settings.cloudRuns.maxLlmTokens": "Бюджет LLM-токенов",
   "settings.cloudRuns.maxLlmTokensHint": "Жёсткий потолок prompt+completion токенов на ран",
   "settings.cloudRuns.maxWallClock": "Лимит времени рана (сек)",
