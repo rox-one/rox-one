@@ -50,7 +50,7 @@
   "apiSetup.optionalField": "необязательно",
   "apiSetup.pasteAuthCode": "Вставьте код авторизации",
   "apiSetup.pasteKeyHere": "Вставьте сюда свой ключ...",
-  "apiSetup.protocolThirdPartyHint": "Большинство сторонних API (Ollama, vLLM, DashScope) используют протокол OpenAI Compatible.",
+  "apiSetup.protocolThirdPartyHint": "Большинство сторонних API (Ollama, vLLM, DashScope) используют протокол, совместимый с OpenAI.",
   "apiSetup.searchModels": "Поиск моделей...",
   "apiSetup.secretAccessKey": "Secret Access Key",
   "apiSetup.selectModel": "Выберите модель...",
