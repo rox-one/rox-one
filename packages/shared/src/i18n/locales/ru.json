@@ -315,7 +315,7 @@
   "chat.imageWarning.title": "{{modelName}} настроена как текстовая модель. Изображения будут удалены перед отправкой.",
   "chat.improvePrompt": "Улучшить промпт",
   "chat.improvePromptAria": "Улучшить промпт",
-  "chat.improvePromptFailed": "Не удалось улучшить промпт",
+  "chat.improvePromptFailed": "Не удалось улучшить запрос",
   "chat.improvingPrompt": "Улучшаю…",
   "chat.inputFailedDescription": "Остальная часть чата по-прежнему доступна. Можно повторить попытку или очистить локальный черновик, если он повреждён.",
   "chat.inputFailedTitle": "Не удалось загрузить ввод",
