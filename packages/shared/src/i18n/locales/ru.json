@@ -3180,7 +3180,7 @@
   "settings.appearance.harnessSkipTitle": "Не устанавливаем",
   "settings.appearance.iconHeader": "Значок",
   "settings.appearance.interface": "Интерфейс",
-  "settings.appearance.kanbanBoard": "Канбан-доска",
+  "settings.appearance.kanbanBoard": "Доска",
   "settings.appearance.kanbanBoardDesc": "Настройте цвета колонок и анимацию доски",
   "settings.appearance.kanbanColumnColor": "Цвет для {{column}}",
   "settings.appearance.kanbanColumnColorReset": "Сбросить на умолчание",
