@@ -480,7 +480,7 @@
   "cli.command.undo.label": "Отменить последнее сообщение",
   "cli.command.undo.useCase": "Вернуть последний ход пользователя в композер.",
   "cli.command.vibe.label": "Вайб",
-  "cli.command.vibe.useCase": "Творческий сценарий Rox CLI. Нативный контроль: Настройки → Расширения; слэш вторичен.",
+  "cli.command.vibe.useCase": "Творческий сценарий Rox CLI. Нативный контроль: Настройки → Расширения; косая черта вторична.",
   "cli.section.commands": "Команды",
   "cli.section.folders": "Недавние рабочие каталоги",
   "cli.section.modes": "Режимы",
