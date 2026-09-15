@@ -4641,7 +4641,7 @@
   "toast.failedToDeleteSource": "Не удалось удалить источник",
   "toast.failedToDuplicateAutomation": "Не удалось дублировать автоматизацию",
   "toast.failedToExport": "Не удалось экспортировать сессию",
-  "toast.failedToExportSkill": "Не удалось экспортировать скилл",
+  "toast.failedToExportSkill": "Не удалось экспортировать навык",
   "toast.failedToInstallUpdate": "Не удалось установить обновление",
   "toast.failedToInvite": "Не удалось создать приглашение",
   "toast.failedToLoadTaskOutput": "Не удалось загрузить вывод задачи",
