@@ -4140,7 +4140,7 @@
   "sideThread.action.research": "Исследовать",
   "sideThread.action.rewrite": "Переписать",
   "sideThread.action.verify": "Проверить",
-  "sideThread.applyPrompt": "Применить промпт",
+  "sideThread.applyPrompt": "Применить запрос",
   "sideThread.childBanner": "Побочный тред · {{status}}",
   "sideThread.magic": "Магия",
   "sideThread.magicImprove": "Улучшить промпт",
