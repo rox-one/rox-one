@@ -313,7 +313,7 @@
   "chat.highlightPassage": "Выделить фрагмент",
   "chat.imageWarning.action": "Включить поддержку изображений",
   "chat.imageWarning.title": "{{modelName}} настроена как текстовая модель. Изображения будут удалены перед отправкой.",
-  "chat.improvePrompt": "Улучшить промпт",
+  "chat.improvePrompt": "Улучшить запрос",
   "chat.improvePromptAria": "Улучшить промпт",
   "chat.improvePromptFailed": "Не удалось улучшить промпт",
   "chat.improvingPrompt": "Улучшаю…",
