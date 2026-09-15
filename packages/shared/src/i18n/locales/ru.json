@@ -3217,7 +3217,7 @@
   "settings.appearance.workbench": "Верстак (экспериментально)",
   "settings.appearance.workbenchBrowserSurface": "Браузер как поверхность",
   "settings.appearance.workbenchBrowserSurfaceDesc": "Показывать окна браузера в полоске вкладок, а не бейджами в верхней панели",
-  "settings.appearance.workbenchDesc": "Предпросмотр следующего хрома оболочки. Экспериментальные флаги включены по умолчанию; мастер unified-shell остаётся выкл.",
+  "settings.appearance.workbenchDesc": "Предпросмотр следующей панели оболочки. Экспериментальные флаги включены по умолчанию; мастер unified-shell остаётся выкл.",
   "settings.appearance.workbenchHarnessAgentIntel": "Контекст агента",
   "settings.appearance.workbenchHarnessAgentIntelDesc": "Дашборд контекста, нарезка MCP и статус запасной модели. Нужен инспектор сессии.",
   "settings.appearance.workbenchHarnessAgentTeams": "Agent Teams",
