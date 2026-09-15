@@ -4143,7 +4143,7 @@
   "sideThread.applyPrompt": "Применить промпт",
   "sideThread.childBanner": "Побочный тред · {{status}}",
   "sideThread.magic": "Магия",
-  "sideThread.magicImprove": "Улучшить промпт",
+  "sideThread.magicImprove": "Улучшить запрос",
   "sideThread.menu": "Побочный тред",
   "sideThread.openThread": "Открыть тред",
   "sideThread.previewHint": "Просмотрите и отредактируйте промпт перед отправкой",
