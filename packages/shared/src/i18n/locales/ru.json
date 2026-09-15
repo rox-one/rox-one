@@ -4266,7 +4266,7 @@
   "skills.exported": "Скилл «{{slug}}» экспортирован в проект",
   "skills.pruneButton": "Архивировать неиспользуемые",
   "skills.pruneConfirm": "Архивировать {{count}} неиспользуемых скиллов?",
-  "skills.pruned": "Архивировано скиллов: {{count}}",
+  "skills.pruned": "Архивировано навыков: {{count}}",
   "skills.usageChip": "использован {{count}}×, последний — {{date}}",
   "skillsList.addInSettings": "Добавьте навыки в Настройках.",
   "skillsList.addSkill": "Добавить навык",
