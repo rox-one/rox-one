@@ -1688,7 +1688,7 @@
   "meetings.rejectFailed": "Не удалось отклонить",
   "meetings.revision": "Ревизия {{id}}",
   "meetings.revisionRequired": "Открытие заблокировано: нужна persist-ревизия",
-  "meetings.rooms.undecided": "Комнаты заблокированы: SFU-провайдер не выбран",
+  "meetings.rooms.undecided": "Комнаты заблокированы: SFU-поставщик не выбран",
   "meetings.rpcUnavailable": "RPC встреч недоступен",
   "meetings.search": "Найти",
   "meetings.searchEmpty": "Нет совпадений в снимках журнала",
