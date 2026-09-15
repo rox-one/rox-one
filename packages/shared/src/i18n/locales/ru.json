@@ -4044,7 +4044,7 @@
   "settings.tools.builtInBrowserDesc": "Отключите, если используете внешние браузерные инструменты, такие как Playwright, Puppeteer или браузерные MCP-серверы.",
   "settings.tools.title": "Инструменты",
   "settings.unifiedShell.enable": "Единая оболочка (превью)",
-  "settings.unifiedShell.enableDesc": "Рейка активности, вкладки поверхностей и инспектор. Волна W1 единой оболочки.",
+  "settings.unifiedShell.enableDesc": "Панель активности, вкладки поверхностей и инспектор. Волна W1 единой оболочки.",
   "settings.workspace.advanced": "Дополнительно",
   "settings.workspace.atLeast2Modes": "Требуется не менее 2 режимов",
   "settings.workspace.defaultMode": "Режим по умолчанию",
