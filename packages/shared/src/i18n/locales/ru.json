@@ -496,7 +496,7 @@
   "cloudRuns.everyHours": "каждые {{hours}}ч",
   "cloudRuns.everyHoursHint": "Каждые N часов от последнего срабатывания",
   "cloudRuns.finished": "Облачный ран завершён: {{name}}",
-  "cloudRuns.footer": "Раны продолжаются, даже если приложение закрыто.",
+  "cloudRuns.footer": "Запуски продолжаются, даже если приложение закрыто.",
   "cloudRuns.fork": "Fork (углубление)",
   "cloudRuns.forkPlaceholder": "Что уточнить или углубить?",
   "cloudRuns.import": "Импорт артефактов",
