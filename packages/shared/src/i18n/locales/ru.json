@@ -3292,7 +3292,7 @@
   "settings.cloudRuns.maxArtifactsHint": "Максимум байт артефактов на завершённый ран",
   "settings.cloudRuns.maxLlmTokens": "Бюджет LLM-токенов",
   "settings.cloudRuns.maxLlmTokensHint": "Жёсткий потолок prompt+completion токенов на ран",
-  "settings.cloudRuns.maxWallClock": "Лимит времени рана (сек)",
+  "settings.cloudRuns.maxWallClock": "Лимит времени запуска (сек)",
   "settings.cloudRuns.maxWallClockHint": "Wall-clock бюджет рана; watchdog убьёт ран по превышении",
   "settings.cloudRuns.personasHint": "Предустановленная галочка персон в диалоге облачного запуска",
   "settings.cloudRuns.personasLbl": "Персоны по умолчанию",
