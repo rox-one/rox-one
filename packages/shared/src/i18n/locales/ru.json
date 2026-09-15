@@ -3517,7 +3517,7 @@
   "settings.knowledge.installDocs": "Документация по установке",
   "settings.knowledge.loadFailed": "Не удалось загрузить подключения: {{message}}",
   "settings.knowledge.metrics.automationProposals": "Предложения автоматизации",
-  "settings.knowledge.metrics.automationRuns": "Cloud-запуски автоматизации",
+  "settings.knowledge.metrics.automationRuns": "Облачные запуски автоматизации",
   "settings.knowledge.metrics.connectionsActive": "Активные подключения",
   "settings.knowledge.metrics.g1Note": "Шлюз G1: пороги TBD — managed-ядро заблокировано до продакшен-данных + юридического решения G2.",
   "settings.knowledge.metrics.publicationsLast7d": "Публикации (7 дн.)",
