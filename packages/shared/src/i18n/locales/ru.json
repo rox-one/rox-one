@@ -1273,7 +1273,7 @@
   "filter.include": "Включить",
   "hints.analyzeSpreadsheet": "Проанализируй {file:таблицу} и опубликуй выводы в {source:Slack}",
   "hints.combineSlackThreads": "Объедини треды {source:Slack} в еженедельный дайджест для {source:Notion}",
-  "hints.fetchFigmaDesigns": "Забери дизайны из {source:Figma} и сгенерируй React-компоненты в {folder}",
+  "hints.fetchFigmaDesigns": "Забери дизайны из {source:Figma} и сгенерируй компоненты React в {folder}",
   "hints.meetingNotesToTickets": "Автоматически превращай {file:заметки} с встреч в задачи {source:Jira}",
   "hints.parseInvoicePDF": "Распознай {file:счёт в PDF} и запиши его в {source:Google Sheets}",
   "hints.pullIssuesLinear": "Забери задачи из {source:Linear}, изучи в {source:Slack}, внеси исправление",
