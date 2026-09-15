@@ -58,6 +58,9 @@ describe('Knowledge/Extension surface fallbacks are i18n', () => {
     await setupI18n().changeLanguage('ru')
     expect(i18n.t('knowledge.surface.error')).toBe('Не удалось загрузить документ')
     expect(i18n.t('extensions.surface.error')).toBe('Не удалось открыть поверхность расширения')
+    expect(i18n.t('extensions.surface.loadUrlHint')).toBe('Загрузить URL интерфейса расширения')
+    expect(i18n.t('extensions.surface.loadUrlHint')).not.toBe('Загрузить URL UI расширения')
+    expect(i18n.t('extensions.surface.loadUrlHint')).not.toBe('Load extension UI URL')
     expect(i18n.t('knowledge.surface.error')).not.toBe("Couldn't load the document")
   })
 

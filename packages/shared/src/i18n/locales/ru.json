@@ -1259,7 +1259,7 @@
   "extensions.status.installed": "installed",
   "extensions.status.update-available": "update",
   "extensions.surface.error": "Не удалось открыть поверхность расширения",
-  "extensions.surface.loadUrlHint": "Загрузить URL UI расширения",
+  "extensions.surface.loadUrlHint": "Загрузить URL интерфейса расширения",
   "extensions.surface.loading": "Загрузка поверхности расширения…",
   "extensions.surface.noViewSelected": "Не выбран вид расширения",
   "extensions.surface.removed": "Поверхность расширения закрыта",
