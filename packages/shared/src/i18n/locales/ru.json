@@ -2441,7 +2441,7 @@
   "overlay.terminal": "Терминал",
   "overlay.zoomIn": "Увеличить (⌘+)",
   "overlay.zoomOut": "Уменьшить (⌘−)",
-  "overlay.zoomPresets": "Пресеты масштаба",
+  "overlay.zoomPresets": "Шаблоны масштаба",
   "overlay.zoomReset": "Сбросить масштаб (⌘0)",
   "overlay.zoomToFit": "По размеру окна",
   "pages.actionFailed": "Действие не выполнено",
