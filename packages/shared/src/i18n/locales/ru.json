@@ -2395,7 +2395,7 @@
   "onboarding.providerSelect.localModelDesc": "Локальные модели через Ollama.",
   "onboarding.providerSelect.omp": "Rox",
   "onboarding.providerSelect.ompDesc": "Локальный агентный рантайм Rox (Rox CLI). Конфигурация моделей остаётся на этой машине.",
-  "onboarding.providerSelect.otherProvider": "Я использую другого провайдера",
+  "onboarding.providerSelect.otherProvider": "Я использую другого поставщика",
   "onboarding.providerSelect.otherProviderDesc": "Anthropic, AWS Bedrock, OpenRouter, Google или любой совместимый сервис.",
   "onboarding.providerSelect.setupLater": "Настроить позже",
   "onboarding.providerSelect.title": "Добро пожаловать в Rox",
