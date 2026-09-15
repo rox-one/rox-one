@@ -1386,7 +1386,7 @@
   "knowledge.diff.current": "Текущее в ядре знаний",
   "knowledge.diff.discard": "Отменить",
   "knowledge.diff.openInSiyuan": "Открыть в ядре знаний",
-  "knowledge.diff.patch": "Патч",
+  "knowledge.diff.patch": "Правка",
   "knowledge.diff.rebase": "Перечитать и пересобрать",
   "knowledge.diff.reject": "Отклонить",
   "knowledge.diff.review": "Проверка изменений",
