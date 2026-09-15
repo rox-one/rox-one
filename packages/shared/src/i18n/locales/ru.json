@@ -2544,7 +2544,7 @@
   "pendingSkills.riskSudo": "Использует sudo",
   "pendingSkills.section": "Ожидают одобрения",
   "pendingSkills.updatesNote": "Обновляет существующий скилл «{{slug}}» (станет v{{version}})",
-  "pendingSkills.violation.curlPipeShell": "curl/wget с пайпом в шелл",
+  "pendingSkills.violation.curlPipeShell": "curl/wget с пайпом в оболочку",
   "pendingSkills.violation.eval": "eval",
   "pendingSkills.violation.hardcodedSecret": "зашитый секрет",
   "pendingSkills.violation.rmRfRoot": "rm -rf по корню/домашней папке",
