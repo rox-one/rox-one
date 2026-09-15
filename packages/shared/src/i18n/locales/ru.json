@@ -464,7 +464,7 @@
   "chatInput.placeholder.typeMessage": "Введите сообщение...",
   "chatInput.placeholder.workOn": "Над чем хотите поработать?",
   "cli.command.allowAll.label": "Выполнение",
-  "cli.command.allowAll.useCase": "Запускать инструменты без подтверждения. Нативный контроль: бейдж режима.",
+  "cli.command.allowAll.useCase": "Запускать инструменты без подтверждения. Нативный контроль: значок режима.",
   "cli.command.ask.label": "Спрашивать",
   "cli.command.ask.useCase": "Подтверждать чувствительные инструменты. Нативный контроль: бейдж режима.",
   "cli.command.compact.label": "Сжать контекст",
