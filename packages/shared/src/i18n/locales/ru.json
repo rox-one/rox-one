@@ -4648,7 +4648,7 @@
   "toast.failedToOpenFile": "Не удалось открыть файл",
   "toast.failedToOpenFolderPicker": "Не удалось открыть выбор папки",
   "toast.failedToOpenLink": "Не удалось открыть ссылку",
-  "toast.failedToPruneSkills": "Не удалось архивировать скиллы",
+  "toast.failedToPruneSkills": "Не удалось архивировать навыки",
   "toast.failedToRefreshTitle": "Не удалось обновить заголовок",
   "toast.failedToReveal": "Не удалось показать в {{fileManager}}",
   "toast.failedToSaveSetting": "Не удалось сохранить {{setting}}",
