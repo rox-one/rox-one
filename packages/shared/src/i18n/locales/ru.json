@@ -148,7 +148,7 @@
   "automations.labelRepeats": "Повторение",
   "automations.labelScheduleExpression": "Выражение расписания",
   "automations.labelStatus": "Статус",
-  "automations.labelTelegramTopic": "Топик Telegram",
+  "automations.labelTelegramTopic": "Тема Telegram",
   "automations.labelThinking": "Размышление",
   "automations.labelTimezone": "Часовой пояс",
   "automations.labelTiming": "Время",
