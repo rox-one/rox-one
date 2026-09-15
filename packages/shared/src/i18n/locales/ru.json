@@ -135,7 +135,7 @@
   "automations.cronWeekdaysAt": "Будни в {{time}}",
   "automations.cronWeekendsAt": "Выходные в {{time}}",
   "automations.editFile": "Редактировать файл",
-  "automations.emptyDescription": "Автоматизации выполняют действия при наступлении событий — запускают команды по расписанию, реагируют на изменения меток или автоматически вызывают промпты.",
+  "automations.emptyDescription": "Автоматизации выполняют действия при наступлении событий — запускают команды по расписанию, реагируют на изменения меток или автоматически вызывают запросы.",
   "automations.emptyPrompt": "Пустой промпт",
   "automations.graphNoCalendar": "Граф автоматизаций работает без подключённого календаря.",
   "automations.labelAccessLevel": "Уровень доступа",
