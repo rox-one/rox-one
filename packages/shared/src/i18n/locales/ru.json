@@ -136,7 +136,7 @@
   "automations.cronWeekendsAt": "Выходные в {{time}}",
   "automations.editFile": "Редактировать файл",
   "automations.emptyDescription": "Автоматизации выполняют действия при наступлении событий — запускают команды по расписанию, реагируют на изменения меток или автоматически вызывают промпты.",
-  "automations.emptyPrompt": "Пустой промпт",
+  "automations.emptyPrompt": "Пустой запрос",
   "automations.graphNoCalendar": "Граф автоматизаций работает без подключённого календаря.",
   "automations.labelAccessLevel": "Уровень доступа",
   "automations.labelConnection": "Подключение",
