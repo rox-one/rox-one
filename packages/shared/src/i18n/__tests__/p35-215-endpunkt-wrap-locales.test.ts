@@ -34,6 +34,7 @@ const RU_VALUES: Record<(typeof KEYS)[number], string> = {
 }
 
 const LEFTOVER_CALQUE = /эндпоинт/i
+const SIBLING_WRAP = /конечн/i
 
 const en = JSON.parse(readFileSync(join(import.meta.dir, '../locales/en.json'), 'utf8')) as Record<string, string>
 const ru = JSON.parse(readFileSync(join(import.meta.dir, '../locales/ru.json'), 'utf8')) as Record<string, string>
@@ -51,7 +52,7 @@ describe('leftover Russian эндпоинт wrapping in ru endpoint copy', () =>
     for (const key of KEYS) {
       expect(ru[key]).toBe(RU_VALUES[key])
       expect(ru[key]).not.toMatch(LEFTOVER_CALQUE)
-      expect(ru[key]).toContain('конечн')
+      expect(ru[key]).toMatch(SIBLING_WRAP)
       expect(ru[key]).not.toBe(en[key])
     }
   })
@@ -61,7 +62,7 @@ describe('leftover Russian эндпоинт wrapping in ru endpoint copy', () =>
     for (const key of KEYS) {
       expect(i18n.t(key)).toBe(RU_VALUES[key])
       expect(i18n.t(key)).not.toMatch(LEFTOVER_CALQUE)
-      expect(i18n.t(key)).toContain('конечн')
+      expect(i18n.t(key)).toMatch(SIBLING_WRAP)
     }
   })
 
@@ -71,7 +72,7 @@ describe('leftover Russian эндпоинт wrapping in ru endpoint copy', () =>
       expect(i18n.t(key)).toBe(EN_VALUES[key])
       expect(i18n.t(key)).toMatch(/endpoint/i)
       expect(i18n.t(key)).not.toMatch(LEFTOVER_CALQUE)
-      expect(i18n.t(key)).not.toContain('конечн')
+      expect(i18n.t(key)).not.toMatch(SIBLING_WRAP)
     }
   })
 })
