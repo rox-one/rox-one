@@ -25,7 +25,8 @@ describe('MainContentPanel browser empty state is i18n', () => {
 
   it('Russian copy is distinct from English', async () => {
     await setupI18n().changeLanguage('ru')
-    expect(i18n.t(BROWSER_INSTANCE_KEY)).toBe('Браузерный инстанс не выбран')
+    expect(i18n.t(BROWSER_INSTANCE_KEY)).toBe('Браузерный экземпляр не выбран')
+    expect(i18n.t(BROWSER_INSTANCE_KEY)).not.toContain('инстанс')
     expect(i18n.t(BROWSER_INSTANCE_KEY)).not.toBe('No browser instance selected')
   })
 
