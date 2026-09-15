@@ -518,7 +518,7 @@
   "cloudRuns.presetVendor": "Оценка вендора",
   "cloudRuns.preview": "Просмотр брифа",
   "cloudRuns.resume": "Продолжить ран",
-  "cloudRuns.resumed": "Ран продолжается",
+  "cloudRuns.resumed": "Запуск продолжается",
   "cloudRuns.retry": "Повторить ран",
   "cloudRuns.scheduleSaved": "Расписание добавлено",
   "cloudRuns.scheduleTopicPlaceholder": "Тема расписания…",
