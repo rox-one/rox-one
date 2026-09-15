@@ -834,7 +834,7 @@
   "connections.credentials.columns.id": "ID",
   "connections.credentials.columns.kind": "Тип",
   "connections.credentials.columns.mode": "Режим",
-  "connections.credentials.columns.provider": "Провайдер",
+  "connections.credentials.columns.provider": "Поставщик",
   "connections.credentials.empty": "Нет метаданных учётных данных.",
   "connections.credentials.runtimeNotWired": "Рантайм не подключён",
   "connections.github.available": "Доступен",
