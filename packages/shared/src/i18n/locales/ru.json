@@ -3922,7 +3922,7 @@
   "settings.privacy.productImprovement": "Улучшение продукта",
   "settings.privacy.productImprovementDesc": "Необязательные сигналы использования. Учётные данные, cookie и ключи доступа не входят.",
   "settings.privacy.purposes": "Цели",
-  "settings.privacy.realtimeRequiresRecovery": "Синхронизация в реальном времени требует согласия на реплику восстановления.",
+  "settings.privacy.realtimeRequiresRecovery": "Синхронизация в реальном времени требует согласия на копию восстановления.",
   "settings.privacy.realtimeSync": "Синхронизация в реальном времени",
   "settings.privacy.realtimeSyncDesc": "Отправлять изменения реплики во время работы. Отзыв не удаляет локальные данные.",
   "settings.privacy.recovery": "Реплика восстановления аккаунта",
