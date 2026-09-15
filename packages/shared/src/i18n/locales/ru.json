@@ -1227,7 +1227,7 @@
   "extensions.registries.provider.community-opencode": "OpenCode",
   "extensions.registries.provider.craft-curated": "Rox Kiro",
   "extensions.registries.stub": "stub (W6)",
-  "extensions.registries.title": "Провайдеры каталога",
+  "extensions.registries.title": "Поставщики каталога",
   "extensions.runtime.agent-runtime": "agent-runtime",
   "extensions.runtime.agent-runtime.hint": "External agent process supervisor",
   "extensions.runtime.automation-pack": "automation-pack",
