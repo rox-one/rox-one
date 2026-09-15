@@ -3906,7 +3906,7 @@
   "settings.privacy.cloudInference": "Облачный вывод",
   "settings.privacy.cloudInferenceDesc": "Отправлять запросы в облачную модель. Учётные данные, cookie и ключи доступа с устройства не уходят.",
   "settings.privacy.deleteRemote": "Удалённое удаление",
-  "settings.privacy.deleteRemoteDesc": "Поставить в очередь удаление удалённой реплики. Локальные заметки, задачи и сессии остаются на этом устройстве.",
+  "settings.privacy.deleteRemoteDesc": "Поставить в очередь удаление удалённой копии. Локальные заметки, задачи и сессии остаются на этом устройстве.",
   "settings.privacy.deletionCompleted": "Удалённое удаление завершено",
   "settings.privacy.deletionNotLive": "Удалённое удаление в очереди, не завершено",
   "settings.privacy.deletionQueued": "Удалённое удаление в очереди",
