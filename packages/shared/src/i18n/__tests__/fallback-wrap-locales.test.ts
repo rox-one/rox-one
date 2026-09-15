@@ -18,7 +18,7 @@ describe('P35-184 leftover Fallback/live wrapping in workbench.status.fallbackUn
     expect(ru[KEY]).toBe(RU)
     expect(ru[KEY]).not.toMatch(/\bFallback\b/)
     expect(ru[KEY]).not.toMatch(/\blive\b/i)
-    expect(ru[KEY]).toContain('резервный вариант')
+    expect(ru[KEY]).toContain('Резервный вариант')
     expect(ru[KEY]).toContain('вживую')
   })
 
