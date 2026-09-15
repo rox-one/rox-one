@@ -1278,7 +1278,7 @@
   "hints.parseInvoicePDF": "Распознай {file:счёт в PDF} и запиши его в {source:Google Sheets}",
   "hints.pullIssuesLinear": "Забери задачи из {source:Linear}, изучи в {source:Slack}, внеси исправление",
   "hints.queryDatabase": "Выполни запрос к {source:базе данных} и визуализируй результаты в новом {file:документе}",
-  "hints.refactorCode": "Отрефактори код в {folder}, затем запушь в {source:GitHub}",
+  "hints.refactorCode": "Переработай код в {folder}, затем отправь в {source:GitHub}",
   "hints.researchExa": "Проведи исследование с {source:Exa}, оформи его и сохрани в хранилище {source:Obsidian}",
   "hints.reviewGitHubPRs": "Проверь PR в {source:GitHub} и опиши изменения в {source:Craft}",
   "hints.runSkillAnalyze": "Запусти {skill} для анализа кодовой базы и исправь проблемы в {folder}",
