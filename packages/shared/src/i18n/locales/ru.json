@@ -519,7 +519,7 @@
   "cloudRuns.preview": "Просмотр брифа",
   "cloudRuns.resume": "Продолжить ран",
   "cloudRuns.resumed": "Ран продолжается",
-  "cloudRuns.retry": "Повторить ран",
+  "cloudRuns.retry": "Повторить запуск",
   "cloudRuns.scheduleSaved": "Расписание добавлено",
   "cloudRuns.scheduleTopicPlaceholder": "Тема расписания…",
   "cloudRuns.schedules": "Расписания ({{count}})",
