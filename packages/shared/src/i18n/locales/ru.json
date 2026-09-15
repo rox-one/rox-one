@@ -492,7 +492,7 @@
   "cloudRuns.deleteSchedule": "Удалить расписание",
   "cloudRuns.empty": "Запусков пока нет",
   "cloudRuns.error": "Ошибка облачного рана",
-  "cloudRuns.estimate": "Обычный ран ≈ {{tokens}} токенов",
+  "cloudRuns.estimate": "Обычный запуск ≈ {{tokens}} токенов",
   "cloudRuns.everyHours": "каждые {{hours}}ч",
   "cloudRuns.everyHoursHint": "Каждые N часов от последнего срабатывания",
   "cloudRuns.finished": "Облачный ран завершён: {{name}}",
