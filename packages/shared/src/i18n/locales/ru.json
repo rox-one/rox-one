@@ -241,7 +241,7 @@
   "browser.windowOptions": "Параметры окна браузера",
   "calendar.acceptProposal": "Принять предложение",
   "calendar.addLocalReminder": "Добавить напоминание",
-  "calendar.capability": "Ограничения провайдера",
+  "calendar.capability": "Ограничения поставщика",
   "calendar.connectorOptional": "Календари необязательны — задачи и напоминания остаются локальными.",
   "calendar.connectorUnavailable": "{{provider}} не подключён на этом устройстве",
   "calendar.dismissProposal": "Отклонить",
