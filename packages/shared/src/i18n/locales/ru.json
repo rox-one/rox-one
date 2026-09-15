@@ -2538,7 +2538,7 @@
   "pendingSkills.dismiss": "Отклонить",
   "pendingSkills.dismissFailed": "Не удалось отклонить навык",
   "pendingSkills.dismissed": "Навык «{{slug}}» отклонён",
-  "pendingSkills.riskFsOutside": "Файловая система вне cwd",
+  "pendingSkills.riskFsOutside": "Файловая система вне текущей рабочей директории cwd",
   "pendingSkills.riskNetwork": "Сетевой доступ",
   "pendingSkills.riskSecrets": "Упоминает секреты",
   "pendingSkills.riskSudo": "Использует sudo",
