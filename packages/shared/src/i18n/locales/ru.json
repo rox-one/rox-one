@@ -1215,7 +1215,7 @@
   "extensions.permissions.summary": "Granted permissions by extension",
   "extensions.refresh": "Обновить",
   "extensions.registries.active": "active",
-  "extensions.registries.bazaarEmpty": "Лента Bazaar пуста без плагинов ядра",
+  "extensions.registries.bazaarEmpty": "Лента Bazaar пуста без расширений ядра",
   "extensions.registries.community": "сообщество",
   "extensions.registries.docsLink": "Документация",
   "extensions.registries.hint": "Каждый реестр — каталог расширений. Источники сообщества ведут на публичную документацию и не содержат учётных данных.",
