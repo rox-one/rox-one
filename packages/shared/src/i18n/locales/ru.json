@@ -495,7 +495,7 @@
   "cloudRuns.estimate": "Обычный ран ≈ {{tokens}} токенов",
   "cloudRuns.everyHours": "каждые {{hours}}ч",
   "cloudRuns.everyHoursHint": "Каждые N часов от последнего срабатывания",
-  "cloudRuns.finished": "Облачный ран завершён: {{name}}",
+  "cloudRuns.finished": "Облачный запуск завершён: {{name}}",
   "cloudRuns.footer": "Раны продолжаются, даже если приложение закрыто.",
   "cloudRuns.fork": "Fork (углубление)",
   "cloudRuns.forkPlaceholder": "Что уточнить или углубить?",
