@@ -4713,7 +4713,7 @@
   "toast.vcRedistNotFound": "Microsoft Visual C++ Redistributable не найден",
   "toast.vcRedistNotFoundDesc": "Инструменты документов (PDF, PPTX, DOCX, XLSX) требуют его для работы. Перезапустите после установки.",
   "toast.versionIsLatest": "Версия {{version}} — последняя.",
-  "toast.vibeHint": "Вайб живёт в Настройках; слэш-синтаксис вторичен",
+  "toast.vibeHint": "Вайб живёт в Настройках; синтаксис косой черты вторичен",
   "toast.webhookReplayCompleted": "Повтор вебхука завершён",
   "toast.workspaceReconnected": "Рабочее пространство переподключено",
   "toolbar.escapeToInterrupt": "Нажмите <kbd>Esc</kbd> ещё раз, чтобы прервать",
