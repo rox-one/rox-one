@@ -4704,7 +4704,7 @@
   "toast.sessionRestoredDesc": "Перемещено из архива",
   "toast.taskOutputCopied": "Вывод задачи скопирован в буфер обмена",
   "toast.telegramNotConfiguredOpenSettings": "Telegram ещё не подключён. Добавьте токен бота в Настройки → Сообщения.",
-  "toast.terminalOverlayNotAvailable": "Оверлей терминала недоступен",
+  "toast.terminalOverlayNotAvailable": "Предпросмотр терминала недоступен",
   "toast.titleRefreshed": "Заголовок обновлён",
   "toast.undo": "Отменить",
   "toast.unknownError": "Неизвестная ошибка",
