@@ -3449,7 +3449,7 @@
   "settings.input.voiceDesc": "Диктовка, озвучивание, слово активации и состояние модели.",
   "settings.input.voiceDevice": "Микрофон",
   "settings.input.voiceDeviceDesc": "Устройство записи для диктовки.",
-  "settings.input.voiceEnhancementConsent": "Разрешить облачное улучшение промпта",
+  "settings.input.voiceEnhancementConsent": "Разрешить облачное улучшение запроса",
   "settings.input.voiceEnhancementConsentDesc": "Отправляет текст транскрипта (не аудио) в Spark/Compound. По умолчанию выключено.",
   "settings.input.voiceEnhancementMode": "Режим улучшения",
   "settings.input.voiceGroupGeneral": "Голос — Общие",
