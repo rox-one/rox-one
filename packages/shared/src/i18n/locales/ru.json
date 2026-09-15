@@ -4338,7 +4338,7 @@
   "sourcesList.filterMcp": "MCP",
   "sourcesList.groupMcp": "MCP",
   "sourcesList.groupMicroservices": "Микросервисы приложения",
-  "sourcesList.indexEngineNative": "Native",
+  "sourcesList.indexEngineNative": "Нативный",
   "sourcesList.indexEngineTs": "JS",
   "sourcesList.indexHitCount": "{{count}} в индексе",
   "sourcesList.indexStatusHintNative": "Основной индекс источников — Rust sidecar",
