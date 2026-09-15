@@ -3475,7 +3475,7 @@
   "settings.input.voiceModelsHint": "Whisper Large v3 Turbo, Nemotron 3.5 streaming 0.6B и GigaAM v3 e2e_rnnt ставятся из подписанного каталога. Ready — это прошедший smoke inference, а не переключатель в настройках.",
   "settings.input.voiceOffline": "Офлайн — облачная речь недоступна.",
   "settings.input.voiceOverlayBottom": "Снизу",
-  "settings.input.voiceOverlayPosition": "Положение оверлея",
+  "settings.input.voiceOverlayPosition": "Положение предпросмотра",
   "settings.input.voiceOverlayTop": "Сверху",
   "settings.input.voiceRocksT1": "rocks transcription (rocks t1)",
   "settings.input.voiceWebEnrichment": "Разрешить веб-обогащение",
