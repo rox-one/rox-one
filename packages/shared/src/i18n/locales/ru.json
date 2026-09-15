@@ -3235,7 +3235,7 @@
   "settings.appearance.workbenchTabGroups": "Группы вкладок",
   "settings.appearance.workbenchTabGroupsDesc": "Группировать полоску вкладок по колонкам сплита",
   "settings.appearance.workbenchTopChrome": "Верхний хром v2",
-  "settings.appearance.workbenchTopChromeDesc": "Панель режимов и утилитарная рейка (поиск, новая сессия, настройки)",
+  "settings.appearance.workbenchTopChromeDesc": "Панель режимов и утилитарная панель (поиск, новая сессия, настройки)",
   "settings.appearance.workbenchUnifiedShell": "Рейка, вкладки, инспектор",
   "settings.appearance.workbenchUnifiedShellDesc": "Макет unified shell W1 вокруг стека панелей",
   "settings.appearance.workspaceAvatarColor": "Цвет аватара рабочего пространства",
