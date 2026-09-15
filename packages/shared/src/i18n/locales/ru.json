@@ -3701,7 +3701,7 @@
   "settings.messaging.telegram.saveFailed": "Не удалось сохранить токен Telegram",
   "settings.messaging.telegram.saved": "Бот Telegram сохранён",
   "settings.messaging.telegram.supergroup.autoTopicNote": "Автоматизации с заданным 'telegramTopic' будут публиковать в соответствующие темы здесь (создаются при первом использовании).",
-  "settings.messaging.telegram.supergroup.dialogDescription": "Добавьте бота в свою супергруппу, затем введите команду в любой теме. У бота должен быть отключён режим приватности (BotFather → /setprivacy → Disable) или права администратора, чтобы читать сообщения, не являющиеся командами.",
+  "settings.messaging.telegram.supergroup.dialogDescription": "Добавьте бота в свою супергруппу, затем введите команду в любой теме. У бота должен быть отключён режим приватности (BotFather → команда /setprivacy → пункт Disable) или права администратора, чтобы читать сообщения, не являющиеся командами.",
   "settings.messaging.telegram.supergroup.dialogSendHint": "Отправьте эту команду из любой темы вашей супергруппы. Диалог закроется после привязки.",
   "settings.messaging.telegram.supergroup.dialogTitle": "Привязать супергруппу Telegram",
   "settings.messaging.telegram.supergroup.disconnect": "Отключить",
