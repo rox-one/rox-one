@@ -3925,7 +3925,7 @@
   "settings.privacy.realtimeRequiresRecovery": "Синхронизация в реальном времени требует согласия на реплику восстановления.",
   "settings.privacy.realtimeSync": "Синхронизация в реальном времени",
   "settings.privacy.realtimeSyncDesc": "Отправлять изменения реплики во время работы. Отзыв не удаляет локальные данные.",
-  "settings.privacy.recovery": "Реплика восстановления аккаунта",
+  "settings.privacy.recovery": "Копия восстановления аккаунта",
   "settings.privacy.recoveryDesc": "Зашифрованная реплика заметок, задач, сессий и настроек. Учётные данные исключены.",
   "settings.privacy.requestDeletion": "Запросить удалённое удаление",
   "settings.privacy.requestExport": "Экспортировать мои данные",
