@@ -4675,7 +4675,7 @@
   "toast.pageGrantsIssued": "Доступ к странице разрешён",
   "toast.pagePasswordUpdateFailed": "Не удалось обновить пароль",
   "toast.pagePasswordUpdated": "Пароль обновлён",
-  "toast.pagePreviewFailed": "Не удалось обновить превью",
+  "toast.pagePreviewFailed": "Не удалось обновить предпросмотр",
   "toast.pagePreviewQueued": "Обновляем превью…",
   "toast.pagePublicCopyMayRemain": "Публичную копию не удалось удалить, и она всё ещё может быть доступна в интернете.",
   "toast.pagePublishFailed": "Не удалось опубликовать страницу",
