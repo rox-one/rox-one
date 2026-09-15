@@ -87,7 +87,7 @@
   "auth.workspaceNamed": "Воркспейс: {{workspace}}",
   "automations.addAutomation": "Добавить автоматизацию",
   "automations.at": "в",
-  "automations.badgePrompt": "Промпт",
+  "automations.badgePrompt": "Запрос",
   "automations.badgeWebhook": "Webhook",
   "automations.batchDeleted_few": "Удалено {{count}} автоматизации",
   "automations.batchDeleted_many": "Удалено {{count}} автоматизаций",
