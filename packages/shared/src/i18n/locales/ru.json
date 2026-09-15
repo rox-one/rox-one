@@ -4058,7 +4058,7 @@
   "settings.workspace.failedToSave": "Не удалось сохранить {{setting}}",
   "settings.workspace.icon": "Значок",
   "settings.workspace.localMcpServers": "Локальные MCP-серверы",
-  "settings.workspace.localMcpServersDesc": "Включить серверы подпроцессов stdio",
+  "settings.workspace.localMcpServersDesc": "Включить серверы подпроцессов с транспортом stdio",
   "settings.workspace.modeCycling": "Переключение режимов",
   "settings.workspace.modeCyclingDesc": "Выберите, по каким режимам переключаться по Shift+Tab",
   "settings.workspace.noSourcesConfigured": "В этом рабочем пространстве нет настроенных источников.",
