@@ -4263,7 +4263,7 @@
   "skillInfo.sourceProject": "Проект (.agents/skills/)",
   "skillInfo.sourceWorkspace": "Рабочее пространство",
   "skills.exportToProject": "Экспорт в проект",
-  "skills.exported": "Скилл «{{slug}}» экспортирован в проект",
+  "skills.exported": "Навык «{{slug}}» экспортирован в проект",
   "skills.pruneButton": "Архивировать неиспользуемые",
   "skills.pruneConfirm": "Архивировать {{count}} неиспользуемых скиллов?",
   "skills.pruned": "Архивировано скиллов: {{count}}",
