@@ -502,7 +502,7 @@
   "cloudRuns.import": "Импорт артефактов",
   "cloudRuns.imported": "Импортировано файлов: {{count}}",
   "cloudRuns.kill": "Убить ран",
-  "cloudRuns.killed": "Ран остановлен",
+  "cloudRuns.killed": "Запуск остановлен",
   "cloudRuns.newRun": "Новый запуск",
   "cloudRuns.omp": "Раннер Rox",
   "cloudRuns.ompHint": "Запускать цикл агента Rox внутри песочницы Daytona",
