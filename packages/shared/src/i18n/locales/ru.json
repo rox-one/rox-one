@@ -3322,7 +3322,7 @@
   "settings.cloudRuns.snapshot": "Снимок",
   "settings.cloudRuns.snapshotHint": "Снимок, из которого создаётся sandbox",
   "settings.cloudRuns.title": "Облачные запуски",
-  "settings.cloudRuns.token": "Токен провайдера",
+  "settings.cloudRuns.token": "Токен поставщика",
   "settings.cloudRuns.tokenMissing": "Добавьте CLOUD_RUNS_TOKEN в <config>/cloud-runs.env",
   "settings.cloudRuns.tokenSet": "Токен найден в cloud-runs.env",
   "settings.cloudRuns.ttl": "TTL sandbox (сек)",
