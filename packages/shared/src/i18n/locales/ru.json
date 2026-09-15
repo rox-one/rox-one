@@ -106,7 +106,7 @@
   "automations.batchSelected_one": "Выбрана {{count}} автоматизация",
   "automations.batchSelected_other": "Выбрано {{count}} автоматизаций",
   "automations.clearSearch": "Очистить поиск",
-  "automations.connectorsOptional": "Apple Reminders, Mail.ru, Яндекс, Outlook и Google необязательны.",
+  "automations.connectorsOptional": "Напоминания Apple, Mail.ru, Яндекс, Outlook и Google необязательны.",
   "automations.copyPayload": "Копировать данные",
   "automations.cronAdvanced": "Дополнительно",
   "automations.cronAtWeekday": "В {{time}} (день недели: {{dow}})",
