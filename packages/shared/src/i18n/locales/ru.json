@@ -3298,7 +3298,7 @@
   "settings.cloudRuns.personasLbl": "Персоны по умолчанию",
   "settings.cloudRuns.project": "Проект Daytona",
   "settings.cloudRuns.projectHint": "Идентификатор проекта Daytona для этого воркспейса",
-  "settings.cloudRuns.provider": "Провайдер",
+  "settings.cloudRuns.provider": "Поставщик",
   "settings.cloudRuns.providerDaytona": "Daytona",
   "settings.cloudRuns.providerHint": "Daytona — облачный раннер; local и native остаются на этой машине",
   "settings.cloudRuns.providerLocal": "Локально (этот компьютер)",
