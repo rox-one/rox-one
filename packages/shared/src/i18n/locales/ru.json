@@ -195,7 +195,7 @@
   "automations.statusDisabled": "Отключена",
   "automations.systemDefault": "Системное значение по умолчанию",
   "automations.telegramTopicHintBound": "Сессии этой автоматизации публикуются в этом топике привязанной супергруппы Telegram.",
-  "automations.telegramTopicHintNoSupergroup": "Привяжите супергруппу Telegram в Настройки → Сообщения, чтобы включить маршрутизацию по топикам.",
+  "automations.telegramTopicHintNoSupergroup": "Привяжите супергруппу Telegram в Настройки → Сообщения, чтобы включить маршрутизацию по темам.",
   "automations.testFailed": "Тест не пройден",
   "automations.testPassed": "Тест пройден",
   "automations.testRunning": "Выполнение теста...",
