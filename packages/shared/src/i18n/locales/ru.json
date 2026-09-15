@@ -2982,7 +2982,7 @@
   "settings.account.xpHint": "Накопленный XP. Уровень считается по локальной таблице 1–20.",
   "settings.account.xpSources": "Откуда берётся XP",
   "settings.accounts.account": "Account",
-  "settings.accounts.accountLabelPlaceholder": "Account label (email)",
+  "settings.accounts.accountLabelPlaceholder": "Метка аккаунта (email)",
   "settings.accounts.connect": "Подключить",
   "settings.accounts.connectCloud": "Connect SiYuan Cloud",
   "settings.accounts.connectFailed": "Connect failed: {message}",
