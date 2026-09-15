@@ -3571,7 +3571,7 @@
   "settings.labels.noLabelsDesc": "Добавьте метку ниже или спросите ИИ, чтобы предложить структуру.",
   "settings.labels.saveFailed": "Не удалось сохранить метку",
   "settings.labels.title": "Метки",
-  "settings.marketplace.description": "Установка навыков, пресетов и наборов инструментов",
+  "settings.marketplace.description": "Установка навыков, шаблонов и наборов инструментов",
   "settings.marketplace.redirect": "Переход в Расширения…",
   "settings.marketplace.title": "Маркетплейс",
   "settings.messaging.bindings.empty": "Нет активных привязок",
