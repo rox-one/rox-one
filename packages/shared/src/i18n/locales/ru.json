@@ -1785,7 +1785,7 @@
   "memory.scope.workspace": "Рабочее пространство",
   "memory.scopeLabel": "Область",
   "memory.seed1": "Запускай тесты перед финальным ответом",
-  "memory.seed2": "Не коммить секреты в код",
+  "memory.seed2": "Не фиксируй секреты в код",
   "memory.seed3": "Отвечай кратко и по делу",
   "memory.tabAll": "Все ({{count}})",
   "memory.tokenEstimate": "≈{{count}} ток.",
