@@ -4815,7 +4815,7 @@
   "workbench.status.runs_many": "{{count}} запусков",
   "workbench.status.runs_one": "{{count}} запуск",
   "workbench.status.runs_other": "{{count}} запусков",
-  "workbench.status.syncOk": "Синхронизация OK",
+  "workbench.status.syncOk": "Синхронизация в порядке",
   "workbench.status.usagePlaceholder": "Использование",
   "workflows.confirm": "Подтвердите запуск",
   "workflows.confirmBody": "Запустить дорогостоящий или высокодоверенный сценарий {{names}}?",
