@@ -933,7 +933,7 @@
   "dialog.whatsapp.description": "Привяжите аккаунт WhatsApp, чтобы получать и отправлять сообщения из этого рабочего пространства.",
   "dialog.whatsapp.loggedOut": "Выполнен выход из WhatsApp. Подключитесь заново.",
   "dialog.whatsapp.qrInstructions": "На телефоне: WhatsApp → Настройки → Связанные устройства → Привязка устройства. Отсканируйте код выше.",
-  "dialog.whatsapp.selfChatHint": "Поддерживается чат с собой: после подключения откройте свой чат с самим собой в WhatsApp и введите /new, чтобы начать сессию, или /pair <code>, чтобы привязать сессию из приложения.",
+  "dialog.whatsapp.selfChatHint": "Поддерживается чат с собой: после подключения откройте свой чат с самим собой в WhatsApp и введите команду /new, чтобы начать сессию, или команду /pair <code>, чтобы привязать сессию из приложения.",
   "dialog.whatsapp.starting": "Запуск службы WhatsApp…",
   "dialog.whatsapp.title": "Подключить WhatsApp",
   "diff.disableBackground": "Отключить подсветку фона",
