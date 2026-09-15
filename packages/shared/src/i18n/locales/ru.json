@@ -3470,7 +3470,7 @@
   "settings.input.voiceLanguageAuto": "Автоопределение",
   "settings.input.voiceMigrationPending": "Старые локальные настройки голоса сохранены. Подтвердите облачное ASR перед новыми облачными записями.",
   "settings.input.voiceModeClean": "Чистый транскрипт",
-  "settings.input.voiceModeImprove": "Улучшить промпт",
+  "settings.input.voiceModeImprove": "Улучшить запрос",
   "settings.input.voiceModeVerbatim": "Дословно",
   "settings.input.voiceModelsHint": "Whisper Large v3 Turbo, Nemotron 3.5 streaming 0.6B и GigaAM v3 e2e_rnnt ставятся из подписанного каталога. Ready — это прошедший smoke inference, а не переключатель в настройках.",
   "settings.input.voiceOffline": "Офлайн — облачная речь недоступна.",
