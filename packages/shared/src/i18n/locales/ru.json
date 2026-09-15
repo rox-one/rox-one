@@ -890,7 +890,7 @@
   "datatable.rowCount_many": "{{count}} строк",
   "datatable.rowCount_one": "{{count}} строка",
   "datatable.rowCount_other": "{{count}} строк",
-  "dialog.deleteAutomation.description": "Вы уверены, что хотите удалить <strong>{{name}}</strong>? Автоматизация будет удалена из конфигурации automations.json.",
+  "dialog.deleteAutomation.description": "Вы уверены, что хотите удалить <strong>{{name}}</strong>? Автоматизация будет удалена из файла automations.json.",
   "dialog.deleteAutomation.title": "Удалить автоматизацию",
   "dialog.deleteSessionConfirmation": "Удалить сессию «{{name}}»?",
   "dialog.logoutConfirmation": "Вы уверены, что хотите выйти?",
