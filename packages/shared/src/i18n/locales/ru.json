@@ -2543,7 +2543,7 @@
   "pendingSkills.riskSecrets": "Упоминает секреты",
   "pendingSkills.riskSudo": "Использует sudo",
   "pendingSkills.section": "Ожидают одобрения",
-  "pendingSkills.updatesNote": "Обновляет существующий скилл «{{slug}}» (станет v{{version}})",
+  "pendingSkills.updatesNote": "Обновляет существующий навык «{{slug}}» (станет v{{version}})",
   "pendingSkills.violation.curlPipeShell": "curl/wget с пайпом в шелл",
   "pendingSkills.violation.eval": "eval",
   "pendingSkills.violation.hardcodedSecret": "зашитый секрет",
