@@ -474,7 +474,7 @@
   "cli.command.join.label": "Присоединиться",
   "cli.command.join.useCase": "Открыть ссылку на общую сессию Rox. Нативный контроль: меню сессии → Присоединиться.",
   "cli.command.safe.label": "Безопасный",
-  "cli.command.safe.useCase": "Только чтение. Нативный контроль: бейдж режима.",
+  "cli.command.safe.useCase": "Только чтение. Нативный контроль: значок режима.",
   "cli.command.share.label": "Поделиться",
   "cli.command.share.useCase": "Опубликовать ссылку только для чтения. Нативный контроль: меню сессии → Поделиться.",
   "cli.command.undo.label": "Отменить последнее сообщение",
