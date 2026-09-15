@@ -3427,7 +3427,7 @@
   "settings.input.sttCloudDeepgram": "Deepgram (облако)",
   "settings.input.sttCloudDeepgramDesc": "Аудио уходит в Deepgram. Хранение — по облачной политике.",
   "settings.input.sttCloudRox": "Rox облачный STT",
-  "settings.input.sttCloudRoxDesc": "Аудио уходит в Rox Speech. Политика хранения видна до использования.",
+  "settings.input.sttCloudRoxDesc": "Аудио уходит в облачную речь Rox. Политика хранения видна до использования.",
   "settings.input.sttEngine": "Речь в текст",
   "settings.input.sttEngineDesc": "Локальный Whisper остаётся на этом компьютере. Облако загружает аудио.",
   "settings.input.sttLocal": "Локальный Whisper",
