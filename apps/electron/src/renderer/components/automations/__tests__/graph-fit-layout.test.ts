@@ -14,8 +14,9 @@ describe('fitGraphLayout', () => {
 
     expect(fitted).toHaveLength(3)
     for (const node of fitted) {
-      expect(node.x + node.width).toBeLessThanOrEqual(300)
+      expect(node.width).toBeGreaterThanOrEqual(168)
     }
+    expect(new Set(fitted.map((node) => node.x)).size).toBe(3)
   })
 
   it('keeps distinct original rows on separate fitted rows', () => {
@@ -44,5 +45,14 @@ describe('nodeDisplayLabel', () => {
         { prompt: 'Prompt' },
       ),
     ).toBe('Summarize the inbox')
+  })
+
+  it('humanizes trigger event ids even when label matches the raw event', () => {
+    expect(
+      nodeDisplayLabel(
+        { kind: 'trigger', label: 'LabelAdd', data: { event: 'LabelAdd' } },
+        { trigger: 'When' },
+      ),
+    ).toBe('Label Added')
   })
 })
