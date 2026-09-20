@@ -46,35 +46,57 @@ import {
   isHomeNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
-import { SourceInfoPage, ChatPage, BrowserPanelPage, KnowledgeSurfacePage, ExtensionSurfacePage } from '@/pages'
-import NotesPage from '@/pages/NotesPage'
-import ConnectionsPage from '@/pages/ConnectionsPage'
-import TasksPage from '@/pages/TasksPage'
-import MeetingsPage from '@/pages/MeetingsPage'
+import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
-import KnowledgeEntityPage from '@/pages/KnowledgeEntityPage'
-import SkillInfoPage from '@/pages/SkillInfoPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 import { SettingsOverviewPage } from '@/pages/settings/SettingsOverviewPage'
 import { recordRecentSetting } from '@/lib/settings-recent'
-import { AutomationInfoPage } from '../automations/AutomationInfoPage'
-import { AutomationGraphWorkspaceEditor } from '../automations/AutomationGraphWorkspaceEditor'
-import ProjectInfoPage from '@/pages/ProjectInfoPage'
-import { PagesHome } from '../pages/PagesHome'
 import { PageView } from '../pages/PageView'
-import { KanbanBoardContainer } from './kanban/KanbanBoardContainer'
-import { SessionTableHost } from './session-table/SessionTableHost'
 import { SessionHeatmapHost } from './session-heatmap/SessionHeatmapHost'
 import type { ExecutionEntry } from '../automations/types'
 import { automationsAtom } from '@/atoms/automations'
 import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
-import { KnowledgeDiff } from '../../knowledge/KnowledgeDiff'
 import {
-  KnowledgeHome,
   knowledgeActiveViewIdAtom,
   knowledgeHomeViewAtom,
 } from '../../knowledge/KnowledgeHome'
-import { KnowledgeProposals } from '../../knowledge/KnowledgeProposals'
+
+const NotesPage = React.lazy(() => import('@/pages/NotesPage'))
+const ConnectionsPage = React.lazy(() => import('@/pages/ConnectionsPage'))
+const TasksPage = React.lazy(() => import('@/pages/TasksPage'))
+const MeetingsPage = React.lazy(() => import('@/pages/MeetingsPage'))
+const KnowledgeEntityPage = React.lazy(() => import('@/pages/KnowledgeEntityPage'))
+const SkillInfoPage = React.lazy(() => import('@/pages/SkillInfoPage'))
+const SourceInfoPage = React.lazy(() => import('@/pages/SourceInfoPage'))
+const ProjectInfoPage = React.lazy(() => import('@/pages/ProjectInfoPage'))
+const BrowserPanelPage = React.lazy(() => import('@/pages/BrowserPanelPage'))
+const ExtensionSurfacePage = React.lazy(() => import('@/pages/ExtensionSurfacePage'))
+const PagesHome = React.lazy(() =>
+  import('../pages/PagesHome').then((m) => ({ default: m.PagesHome })),
+)
+const KanbanBoardContainer = React.lazy(() =>
+  import('./kanban/KanbanBoardContainer').then((m) => ({ default: m.KanbanBoardContainer })),
+)
+const SessionTableHost = React.lazy(() =>
+  import('./session-table/SessionTableHost').then((m) => ({ default: m.SessionTableHost })),
+)
+const AutomationInfoPage = React.lazy(() =>
+  import('../automations/AutomationInfoPage').then((m) => ({ default: m.AutomationInfoPage })),
+)
+const AutomationGraphWorkspaceEditor = React.lazy(() =>
+  import('../automations/AutomationGraphWorkspaceEditor').then((m) => ({
+    default: m.AutomationGraphWorkspaceEditor,
+  })),
+)
+const KnowledgeDiff = React.lazy(() =>
+  import('../../knowledge/KnowledgeDiff').then((m) => ({ default: m.KnowledgeDiff })),
+)
+const KnowledgeHome = React.lazy(() =>
+  import('../../knowledge/KnowledgeHome').then((m) => ({ default: m.KnowledgeHome })),
+)
+const KnowledgeProposals = React.lazy(() =>
+  import('../../knowledge/KnowledgeProposals').then((m) => ({ default: m.KnowledgeProposals })),
+)
 
 export interface MainContentPanelProps {
   /** Whether both sidebar and navigator are hidden (focus mode / CMD+.) */
@@ -213,9 +235,19 @@ export function MainContentPanel({
 
   // Wrap content with StoplightProvider so PanelHeaders auto-compensate in focused mode.
   // Also renders the Send to Workspace dialog (portal-based, so it overlays regardless of position).
+  const pageFallback = (
+    <Panel variant="grow" className={className}>
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        <p className="text-sm">{t('common.loading')}</p>
+      </div>
+    </Panel>
+  )
+
   const wrapWithStoplight = (content: React.ReactNode) => (
     <StoplightProvider value={isSidebarAndNavigatorHidden}>
-      {content}
+      <React.Suspense fallback={pageFallback}>
+        {content}
+      </React.Suspense>
       <SendResourceToWorkspaceDialog
         open={sendDialogOpen}
         onOpenChange={setSendDialogOpen}
