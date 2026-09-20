@@ -13,8 +13,10 @@ describe('terminal dock chrome', () => {
     expect(openTree).not.toContain("{t('inspector.terminal')}")
     expect(openTree).toContain('h-5 w-5')
     expect(openTree).toContain('ChevronsDown')
-    expect(openTree).toContain('rounded-xl')
-    expect(openTree).toContain('mx-2 mb-2')
+    expect(openTree).toContain('rounded-lg')
+    expect(openTree).not.toContain('rounded-xl')
+    expect(openTree).toContain('mx-1 mb-1')
+    expect(openTree).not.toContain('mx-2 mb-2')
 
     expect(terminal).not.toMatch(/cwd \? <div/)
     expect(terminal).not.toContain('text-white/30">{cwd}')
