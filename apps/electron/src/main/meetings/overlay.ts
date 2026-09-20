@@ -1,7 +1,27 @@
 import { overlayShouldStealFocus, overlayVisible, type OverlayPhase, type OverlayState } from '@craft-agent/shared/voice'
 import { answerMeetingQuestion, type AssistAnswer } from '@craft-agent/shared/meeting-agents'
 
-export type MeetingOverlay = OverlayState & { showInactive: boolean; monitorId?: string }
+export type CaptureExclusion = { attempted: boolean; supported: boolean }
+
+export type MeetingOverlay = OverlayState & {
+  showInactive: boolean
+  monitorId?: string
+  captureExclusion?: CaptureExclusion
+}
+
+/** Existing overlay host only — never a second BrowserWindow. */
+export type MeetingOverlayWindow = {
+  setContentProtection?(enable: boolean): void
+}
+
+export function applyCaptureExclusion(win: MeetingOverlayWindow): CaptureExclusion {
+  try {
+    win.setContentProtection?.(true)
+    return { attempted: true, supported: process.platform === 'darwin' || process.platform === 'win32' }
+  } catch {
+    return { attempted: true, supported: false }
+  }
+}
 
 export function createMeetingOverlay(partial: Partial<MeetingOverlay> = {}): MeetingOverlay {
   return {
@@ -15,11 +35,26 @@ export function createMeetingOverlay(partial: Partial<MeetingOverlay> = {}): Mee
   }
 }
 
-export function openMeetingOverlay(current: MeetingOverlay, recordingId: string): MeetingOverlay {
+export function openMeetingOverlay(
+  current: MeetingOverlay,
+  recordingId: string,
+  window?: MeetingOverlayWindow,
+): MeetingOverlay {
+  const captureExclusion = window ? applyCaptureExclusion(window) : undefined
   if (current.phase !== 'hidden' && current.phase !== 'error') {
-    return { ...current, error: 'duplicate-open' }
+    return {
+      ...current,
+      error: 'duplicate-open',
+      ...(captureExclusion ? { captureExclusion } : {}),
+    }
   }
-  return { ...current, recordingId, phase: 'recording', error: undefined }
+  return {
+    ...current,
+    recordingId,
+    phase: 'recording',
+    error: undefined,
+    ...(captureExclusion ? { captureExclusion } : {}),
+  }
 }
 
 export function mapOverlayError(message: string): OverlayPhase {
