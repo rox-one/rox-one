@@ -21,7 +21,7 @@ import { resolveAutomationsConfigPath, generateShortId } from './resolve-config-
 import { compactAutomationHistorySync } from './history-store.ts';
 import { createLogger } from '../utils/debug.ts';
 import { WorkspaceEventBus, type EventPayloadMap } from './event-bus.ts';
-import { PromptHandler, EventLogHandler, WebhookHandler, ScriptHandler, KnowledgeHandler, type AutomationsConfigProvider, type KnowledgeActionExecutor, type CloudRunSubmitExecutor } from './handlers/index.ts';
+import { PromptHandler, EventLogHandler, WebhookHandler, ScriptHandler, KnowledgeHandler, MeetingFollowupHandler, type AutomationsConfigProvider, type KnowledgeActionExecutor, type CloudRunSubmitExecutor, type MeetingFollowupExecutor } from './handlers/index.ts';
 import { type AutomationsConfig, type AutomationEvent, type AutomationMatcher, type PendingPrompt, type WebhookActionResult, type ScriptActionResult, type AppEvent, type AgentEvent, type SdkAutomationCallbackMatcher, type SdkAutomationInput } from './types.ts';
 import { buildPageRefreshMatchers } from '../pages/refresh.ts';
 import { validateAutomationsConfig } from './validation.ts';
@@ -63,6 +63,14 @@ export interface AutomationSystemOptions {
   knowledgeExecutor?: KnowledgeActionExecutor;
   /** Cloud run submit executor. Optional even when knowledgeExecutor is set. */
   cloudRunSubmitExecutor?: CloudRunSubmitExecutor;
+  /** Meeting follow-up executor (server-core). When provided, registers MeetingFollowupHandler. */
+  meetingFollowupExecutor?: MeetingFollowupExecutor;
+  /** Extra SchedulerTick matchers compiled from persisted meeting schedules. */
+  meetingFollowupMatchers?: () => AutomationMatcher[];
+  /** Device/UI availability for device-scoped meeting jobs. */
+  uiClosed?: () => boolean;
+  /** Injected clock for meeting follow-up ticks. */
+  now?: () => number;
 }
 
 // ============================================================================
@@ -80,6 +88,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
   private scheduler: SchedulerService | null = null;
   private knowledgeHandler: KnowledgeHandler | null = null;
   private scriptHandler: ScriptHandler | null = null;
+  private meetingFollowupHandler: MeetingFollowupHandler | null = null;
   private disposed = false;
   /** Synthetic SchedulerTick matchers derived from page refresh specs */
   private pageRefreshMatchers: AutomationMatcher[] = [];
@@ -248,11 +257,16 @@ export class AutomationSystem implements AutomationsConfigProvider {
 
   getMatchersForEvent(event: AutomationEvent): AutomationMatcher[] {
     const configured = this.config?.automations[event] ?? [];
-    // Page refreshes are cron-driven: synthetic matchers only join SchedulerTick
-    if (event === 'SchedulerTick' && this.pageRefreshMatchers.length > 0) {
-      return [...configured, ...this.pageRefreshMatchers];
+    if (event !== 'SchedulerTick') return configured
+    const extras: AutomationMatcher[] = []
+    if (this.pageRefreshMatchers.length > 0) extras.push(...this.pageRefreshMatchers)
+    try {
+      const meeting = this.options.meetingFollowupMatchers?.() ?? []
+      extras.push(...meeting)
+    } catch (error) {
+      log.debug(`[AutomationSystem] Failed to load meeting follow-up matchers: ${error}`)
     }
-    return configured;
+    return extras.length > 0 ? [...configured, ...extras] : configured
   }
 
   /**
@@ -339,6 +353,21 @@ export class AutomationSystem implements AutomationsConfigProvider {
         this,
       );
       this.knowledgeHandler.subscribe(this.eventBus);
+    }
+
+    if (this.options.meetingFollowupExecutor) {
+      this.meetingFollowupHandler = new MeetingFollowupHandler(
+        {
+          workspaceId: this.options.workspaceId,
+          workspaceRootPath: this.options.workspaceRootPath,
+          executor: this.options.meetingFollowupExecutor,
+          uiClosed: this.options.uiClosed,
+          now: this.options.now,
+          onError: this.options.onError,
+        },
+        this,
+      )
+      this.meetingFollowupHandler.subscribe(this.eventBus)
     }
 
     log.debug(`[AutomationSystem] Handlers created and subscribed`);
@@ -616,6 +645,7 @@ export class AutomationSystem implements AutomationsConfigProvider {
     this.webhookHandler?.dispose();
     this.scriptHandler?.dispose();
     this.knowledgeHandler?.dispose();
+    this.meetingFollowupHandler?.dispose();
     await this.eventLogHandler?.dispose();
 
     // Dispose event bus

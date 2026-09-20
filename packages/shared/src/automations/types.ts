@@ -174,6 +174,19 @@ export interface CloudRunSubmitAction {
 /** Runtime a script action executes under (resolved via resolveScriptRuntime) */
 export type ScriptActionRuntime = 'bun' | 'node' | 'python3';
 
+/** Meeting follow-up kinds dispatched from SchedulerTick (I018). */
+export type MeetingFollowupKind = 'prepare' | 'finalize' | 'promise-check' | 'send' | 'capture'
+
+/**
+ * Durable meeting follow-up. Not a prompt, not workflows/run.ts, and not
+ * an automatic send. The production executor lives in server-core.
+ */
+export interface MeetingFollowupAction {
+  type: 'meeting.followup'
+  scheduleId: string
+  kind?: MeetingFollowupKind
+}
+
 /**
  * A script action — spawns a workspace-local script via argv (never a shell).
  *
@@ -208,7 +221,8 @@ export type AutomationAction =
   | WebhookAction
   | KnowledgeAutomationAction
   | CloudRunSubmitAction
-  | ScriptAction;
+  | ScriptAction
+  | MeetingFollowupAction;
 
 // ============================================================================
 // Condition Types

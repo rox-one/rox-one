@@ -31,6 +31,8 @@ export type {
   CloudRunSubmitAction,
   ScriptAction,
   ScriptActionRuntime,
+  MeetingFollowupKind,
+  MeetingFollowupAction,
   AutomationAction,
   AutomationMatcher,
   AutomationsConfig,
@@ -110,6 +112,7 @@ export {
   PromptActionSchema,
   WebhookActionSchema,
   ScriptActionSchema,
+  MeetingFollowupActionSchema,
   AutomationGraphNodeSchema,
   AutomationGraphEdgeSchema,
   AutomationGraphSchema,
@@ -151,6 +154,13 @@ export { resolveAutomationsConfigPath, generateShortId } from './resolve-config-
 
 // Cron matching
 export { matchesCron } from './cron-matcher.ts';
+
+export {
+  compileMeetingFollowupMatcher,
+  cronMatchesAt,
+  meetingFollowupOccurrenceKey,
+  type MeetingFollowupScheduleSpec,
+} from './meeting-followup.ts';
 
 // Graph authoring projection
 export {
@@ -212,6 +222,7 @@ export {
   WebhookHandler,
   ScriptHandler,
   KnowledgeHandler,
+  MeetingFollowupHandler,
   type AutomationHandler,
   type PromptHandlerOptions,
   type EventLogHandlerOptions,
@@ -224,5 +235,9 @@ export {
   type CloudRunSubmitExecutor,
   type CloudRunSubmitExecutorContext,
   type CloudRunSubmitExecutorResult,
+  type MeetingFollowupExecutor,
+  type MeetingFollowupExecutorContext,
+  type MeetingFollowupExecutorResult,
+  type MeetingFollowupHandlerOptions,
   type AutomationsConfigProvider,
 } from './handlers/index.ts';
