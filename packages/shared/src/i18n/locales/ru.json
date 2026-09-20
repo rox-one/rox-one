@@ -3340,7 +3340,7 @@
   "settings.cloudRuns.ttl": "TTL песочницы (сек)",
   "settings.cloudRuns.ttlHint": "Уничтожить песочницу через столько секунд",
   "settings.cloudRuns.webhook": "Вебхук по завершению",
-  "settings.cloudRuns.webhookHint": "Опциональный URL — POST при завершении рана (уведомления вне приложения)",
+  "settings.cloudRuns.webhookHint": "Необязательный URL — POST при завершении рана (уведомления вне приложения)",
   "settings.cloudRuns.webhookPlaceholder": "https://example.com/cloud-runs-hook",
   "settings.commandGateway.approve": "Одобрить",
   "settings.commandGateway.deny": "Отклонить",
