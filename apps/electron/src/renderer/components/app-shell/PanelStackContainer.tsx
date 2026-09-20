@@ -37,6 +37,7 @@ import {
   PANEL_EDGE_INSET,
   PANEL_STACK_VERTICAL_OVERFLOW,
   PANEL_STACK_TOP_INSET,
+  PANEL_STACK_BOTTOM_INSET,
   RADIUS_EDGE,
   RADIUS_INNER,
 } from './panel-constants'
@@ -192,7 +193,7 @@ export function PanelStackContainer({
         paddingTop: PANEL_STACK_TOP_INSET,
         marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
         marginBottom: -6,
-        paddingBottom: 6,
+        paddingBottom: PANEL_STACK_BOTTOM_INSET + 6,
         paddingRight: 8,
         marginRight: -8,
       }}
