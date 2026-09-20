@@ -1668,7 +1668,7 @@
   "meetings.finalizeFailed": "Не удалось завершить без транскрипта",
   "meetings.finalizeIntent": "Завершение в журнале — без транскрипта ASR",
   "meetings.finalizeNotReady": "Встреча ещё не готова к завершению без транскрипта",
-  "meetings.grantRequired": "Применение заблокировано: нужен грант",
+  "meetings.grantRequired": "Применение заблокировано: нужно разрешение",
   "meetings.importBadFormat": "Принимается только намерение импорта аудио",
   "meetings.importEmpty": "Для импорта нужен отпечаток аудио",
   "meetings.importFailed": "Не удалось записать намерение импорта",
