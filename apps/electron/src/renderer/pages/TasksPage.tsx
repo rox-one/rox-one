@@ -11,7 +11,6 @@ import {
   type TaskSortId,
 } from '@craft-agent/core/tasks/personal'
 import { CalendarStatusStrip } from '@/components/calendar/CalendarStatusStrip'
-import { ViewPurposeList } from '@/components/views/ViewPurposeList'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { useProjects } from '@/hooks/useProjects'
 import {
@@ -28,13 +27,6 @@ const PRIORITIES: TaskPriority[] = ['none', 'low', 'medium', 'high']
 
 function filterLabelKey(id: TaskFilterId): string {
   return id === 'all' ? 'tasks.filterAll' : `tasks.projection.${id}`
-}
-
-function filterPurposeKey(id: TaskFilterId): string | null {
-  if (id === 'all') return 'tasks.view.overviewPurpose'
-  if (id === 'today') return 'tasks.view.planPurpose'
-  if (id === 'logbook') return 'tasks.view.processPurpose'
-  return null
 }
 
 export default function TasksPage() {
@@ -151,29 +143,19 @@ export default function TasksPage() {
   return (
     <div className="flex h-full min-h-0 bg-background" data-testid="tasks-page">
       <aside className="w-[200px] shrink-0 border-r border-border p-3 flex flex-col gap-1 overflow-auto">
-        {FILTERS.map((id) => {
-          const purposeKey = filterPurposeKey(id)
-          return (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setFilter(id)}
-              className={cn(
-                'text-left rounded-[6px] px-2 py-1.5 text-[13px]',
-                filter === id ? 'bg-foreground/10 font-medium' : 'hover:bg-foreground/5',
-              )}
-            >
-              <span className="block">{t(filterLabelKey(id))}</span>
-              {purposeKey ? (
-                <span className="block text-[11px] font-normal text-muted-foreground">{t(purposeKey)}</span>
-              ) : null}
-            </button>
-          )
-        })}
-        <div className="mt-3 border-t border-border pt-3">
-          <p className="px-2 text-[11px] text-muted-foreground">{t('sidebar.views')}</p>
-          <ViewPurposeList className="mt-1 px-2" />
-        </div>
+        {FILTERS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setFilter(id)}
+            className={cn(
+              'text-left rounded-[6px] px-2 py-1.5 text-[13px]',
+              filter === id ? 'bg-foreground/10 font-medium' : 'hover:bg-foreground/5',
+            )}
+          >
+            {t(filterLabelKey(id))}
+          </button>
+        ))}
       </aside>
 
       <section className="flex-1 min-w-0 flex flex-col">
