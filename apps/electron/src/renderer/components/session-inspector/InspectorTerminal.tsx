@@ -41,7 +41,6 @@ export function InspectorTerminal({ cwd }: { cwd?: string }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111214] text-[#e8e8ea]">
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-[11px] leading-5">
-        {cwd ? <div className="mb-1 truncate text-white/30">{cwd}</div> : null}
         {log.length === 0 ? (
           <div className="text-white/40">{t('inspector.terminalHint')}</div>
         ) : (
