@@ -32,6 +32,8 @@ import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
 import { getDocUrl } from "@craft-agent/shared/docs/doc-links"
 import { AppMenu } from "../AppMenu"
+import { HeaderStatusLane } from "./HeaderStatusLane"
+import { CompactWorkspaceMenu } from "./CompactWorkspaceMenu"
 import type { ReactNode } from "react"
 import {
   featureUnifiedShellAtom,
@@ -249,6 +251,7 @@ export function TopBar({
       {isCompact && (isCompactChatMode || isCompactSettingsMode) ? (
         <div className="pointer-events-auto flex min-w-0 flex-1 items-center px-3">
           {compactHeaderRenderer?.()}
+          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} />
         </div>
       ) : (
       <div
@@ -276,6 +279,9 @@ export function TopBar({
           onToggleSidebar={onToggleSidebar}
           onToggleFocusMode={onToggleFocusMode}
         />
+        {isCompact && (
+          <CompactWorkspaceMenu onOpenBrowser={onAddBrowserPanel} />
+        )}
         </div>
 
         {/* Back / Forward / Workspace selector (moved from center).
@@ -335,6 +341,7 @@ export function TopBar({
             {compactHeaderRenderer()}
           </div>
         )}
+        <HeaderStatusLane className="flex-1 min-w-0" />
       </div>
       )}
 
