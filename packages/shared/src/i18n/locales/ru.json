@@ -2956,7 +2956,7 @@
   "settings.account.emailEmpty": "—",
   "settings.account.emailHint": "Необязательно. Хранится локально, это не вход в аккаунт.",
   "settings.account.event.automationRan": "Автоматизация выполнена",
-  "settings.account.event.cloudRunImported": "Облачный ран импортирован",
+  "settings.account.event.cloudRunImported": "Облачный запуск импортирован",
   "settings.account.event.firstBrowser": "Первое действие в браузере",
   "settings.account.event.firstNote": "Первая заметка",
   "settings.account.event.firstTask": "Первая задача",
