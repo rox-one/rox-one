@@ -326,7 +326,7 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.cloudRuns.maxWallClockHint": "Бюджет реального времени запуска; watchdog убьёт запуск по превышении",
   "settings.cloudRuns.projectHint": "Идентификатор проекта Daytona для этого рабочего пространства",
   "settings.cloudRuns.provider": "Поставщик",
-  "settings.cloudRuns.providerHint": "Daytona — облачный раннер; локальный и нативный sidecar остаются на этой машине",
+  "settings.cloudRuns.providerHint": "Daytona — облачный запуск; локальный и нативный sidecar остаются на этой машине",
   "settings.cloudRuns.regionHint": "Регион или цель Daytona",
   "settings.cloudRuns.sandbox": "Префикс имени песочницы",
   "settings.cloudRuns.sandboxHint": "Префикс имени песочницы; id запуска добавляется",
