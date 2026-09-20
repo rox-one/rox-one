@@ -541,7 +541,7 @@
   "cloudRuns.submit": "Запустить облако",
   "cloudRuns.submitted": "Облачный запуск начат",
   "cloudRuns.title": "Облачные запуски",
-  "cloudRuns.topicHelp": "Тема — бриф исследования, который уходит в облачный раннер.",
+  "cloudRuns.topicHelp": "Тема — бриф исследования, который уходит в облачный запуск.",
   "cloudRuns.topicPlaceholder": "Тема запуска…",
   "cloudRuns.usageHint": "LLM-токены (вход+выход) · время работы раннера",
   "cloudRuns.usageTokens": "{{prompt}}+{{completion}} ток{{cpu}}",
