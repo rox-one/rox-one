@@ -1,3 +1,5 @@
+import { getEventDisplayName, type AutomationTrigger } from './types'
+
 export const NODE_WIDTH = 208
 export const NODE_HEIGHT = 64
 export const NODE_GAP = 16
@@ -20,6 +22,7 @@ export type GraphLabelNode = {
   kind: string
   label?: string
   data?: {
+    event?: string
     prompt?: string
     text?: string
   }
@@ -63,10 +66,7 @@ export function fitGraphLayout(
   const inner = Math.max(160, viewportWidth - 24)
   const gaps = NODE_GAP * (colCount - 1)
   const computed = Math.floor((inner - gaps) / colCount)
-  let nodeWidth = Math.min(NODE_WIDTH, Math.max(112, computed))
-  if (colCount * nodeWidth + gaps > viewportWidth) {
-    nodeWidth = Math.min(NODE_WIDTH, Math.max(1, Math.floor((viewportWidth - gaps) / colCount)))
-  }
+  const nodeWidth = Math.min(NODE_WIDTH, Math.max(168, computed))
 
   return nodes.map((node) => {
     const column = colIndex.get(node.position.x) ?? 0
@@ -84,6 +84,10 @@ export function nodeDisplayLabel(
   node: GraphLabelNode,
   kindLabels: Record<string, string | undefined>,
 ): string {
+  if (node.kind === 'trigger' && node.data?.event) {
+    return getEventDisplayName(node.data.event as AutomationTrigger)
+  }
+
   const trimmedLabel = node.label?.trim()
   if (trimmedLabel) return trimmedLabel
 

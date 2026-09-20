@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Braces, GitBranch, Group, MessageSquare, Plus, Save, Trash2, Webhook } from 'lucide-react'
+import { Braces, Clock, Filter, GitBranch, Group, MessageSquare, Save, Trash2, Webhook } from 'lucide-react'
 import { compileAutomationGraph } from '@craft-agent/shared/automations/graph'
 import type { AutomationGraph, AutomationGraphNode } from '@craft-agent/shared/automations/types'
 import { cn } from '@/lib/utils'
@@ -16,8 +16,6 @@ export interface AutomationGraphEditorProps {
   className?: string
 }
 
-type MetadataKind = 'annotation' | 'group' | 'decision'
-
 const NODE_ACCENT: Record<AutomationGraphNode['kind'], string> = {
   trigger: 'border-sky-500/70 bg-card text-foreground',
   matcher: 'border-violet-500/70 bg-card text-foreground',
@@ -28,20 +26,14 @@ const NODE_ACCENT: Record<AutomationGraphNode['kind'], string> = {
   decision: 'border-orange-500/70 bg-card text-foreground',
 }
 
-function createMetadataNode(kind: MetadataKind, graph: AutomationGraph): AutomationGraphNode {
-  const rightmost = graph.nodes.reduce((right, node) => Math.max(right, node.position.x), 0)
-  const lowest = graph.nodes.reduce((bottom, node) => Math.max(bottom, node.position.y), 0)
-  const id = `${kind}:${Date.now()}:${graph.nodes.length}`
-  const position = { x: rightmost + 48, y: lowest + 48 }
-
-  switch (kind) {
-    case 'annotation':
-      return { id, kind, position, data: {} }
-    case 'group':
-      return { id, kind, position, data: {} }
-    case 'decision':
-      return { id, kind, position, data: {} }
-  }
+const NODE_ICON: Record<AutomationGraphNode['kind'], React.ComponentType<{ className?: string }>> = {
+  trigger: Clock,
+  matcher: Filter,
+  prompt: MessageSquare,
+  webhook: Webhook,
+  annotation: Braces,
+  group: Group,
+  decision: GitBranch,
 }
 
 export function AutomationGraphEditor({
@@ -78,11 +70,6 @@ export function AutomationGraphEditor({
     group: t('common.selected'),
     decision: t('automations.sectionIf'),
   }
-  const metadataChoices: Array<{ kind: MetadataKind; icon: React.ComponentType<{ className?: string }>; label: string }> = [
-    { kind: 'annotation', icon: Braces, label: nodeKindLabels.annotation },
-    { kind: 'group', icon: Group, label: nodeKindLabels.group },
-    { kind: 'decision', icon: GitBranch, label: nodeKindLabels.decision },
-  ]
 
   const selectNode = React.useCallback((nodeId: string | null) => {
     if (selectedNodeId === undefined) setInternalSelectedNodeId(nodeId)
@@ -95,12 +82,6 @@ export function AutomationGraphEditor({
       nodes: graph.nodes.map((node) => node.id === nextNode.id ? nextNode : node),
     })
   }, [graph, onChange])
-
-  const addMetadata = React.useCallback((kind: MetadataKind) => {
-    const node = createMetadataNode(kind, graph)
-    onChange({ ...graph, nodes: [...graph.nodes, node] })
-    selectNode(node.id)
-  }, [graph, onChange, selectNode])
 
   const deleteSelectedMetadata = React.useCallback(() => {
     if (!selectedNode || (selectedNode.kind !== 'annotation' && selectedNode.kind !== 'group' && selectedNode.kind !== 'decision')) return
@@ -171,23 +152,7 @@ export function AutomationGraphEditor({
 
   return (
     <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background', className)}>
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-border/60 px-3 py-2">
-        <div className="flex items-center gap-1">
-          {metadataChoices.map(({ kind, icon: Icon, label }) => (
-            <button
-              key={kind}
-              type="button"
-              aria-label={label}
-              title={label}
-              disabled={disabled || isSaving}
-              onClick={() => addMetadata(kind)}
-              className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-            >
-              <Plus className="size-3" />
-              <Icon className="-ml-1 size-3" />
-            </button>
-          ))}
-        </div>
+      <header className="flex shrink-0 items-center justify-end gap-2 border-b border-border/60 px-3 py-2">
         <button
           type="button"
           disabled={disabled || isSaving}
@@ -238,7 +203,7 @@ export function AutomationGraphEditor({
                 {graph.nodes.map((node) => {
                   const layout = fittedById.get(node.id)
                   if (!layout) return null
-                  const Icon = node.kind === 'prompt' ? MessageSquare : node.kind === 'webhook' ? Webhook : node.kind === 'decision' ? GitBranch : node.kind === 'group' ? Group : Braces
+                  const Icon = NODE_ICON[node.kind]
                   const label = nodeDisplayLabel(node, nodeKindLabels)
                   const isSelected = node.id === selectedId
                   return (
@@ -273,7 +238,10 @@ export function AutomationGraphEditor({
                       )}
                     >
                       <Icon className="size-4 shrink-0" />
-                      <span className="min-w-0 truncate text-xs font-medium">{label}</span>
+                      <span className="min-w-0">
+                        <span className="block text-[10px] text-muted-foreground">{nodeKindLabels[node.kind]}</span>
+                        <span className="block text-[11px] font-medium leading-snug line-clamp-2">{label}</span>
+                      </span>
                     </button>
                   )
                 })}
@@ -282,8 +250,8 @@ export function AutomationGraphEditor({
           </div>
         </div>
 
-        <aside className="w-56 shrink-0 border-l border-border/60 p-3">
-          {selectedNode && (
+        {selectedNode && (
+          <aside className="w-56 shrink-0 border-l border-border/60 p-3">
             <div className="space-y-3">
               <input
                 value={selectedNode.label ?? ''}
@@ -322,8 +290,8 @@ export function AutomationGraphEditor({
                 </button>
               )}
             </div>
-          )}
-        </aside>
+          </aside>
+        )}
       </div>
 
       {saveError && <p className="border-t border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive" role="alert">{saveError}</p>}
