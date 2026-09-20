@@ -1118,7 +1118,7 @@
   "entityView.teamChat": "Командный чат",
   "entityView.workbenchCameraFlow": "Поток",
   "entityView.workbenchCameraMap": "Карта",
-  "entityView.workbenchFork": "Форк",
+  "entityView.workbenchFork": "Ветка",
   "entityView.workbenchForkHint": "Форк создаёт дочернюю сессию (ветка), не переписывает историю. Рассылка: до 8 параллельно / 32 за запуск.",
   "entityView.workbenchInspector": "Инспектор",
   "entityView.workbenchMemo": "Памятка",
