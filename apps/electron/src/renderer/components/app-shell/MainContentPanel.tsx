@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
+import { MemoryListPanel } from './MemoryListPanel'
 import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -348,13 +349,11 @@ export function MainContentPanel({
     )
   }
 
-  // Memory navigator - the panel lives in the navigator column; main content shows a hint
+  // Memory navigator — full list lives in main content (navigator column is hidden)
   if (isMemoryNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("memory.emptyHint")}</p>
-        </div>
+        <MemoryListPanel workspaceId={activeWorkspaceId ?? undefined} />
       </Panel>
     )
   }
