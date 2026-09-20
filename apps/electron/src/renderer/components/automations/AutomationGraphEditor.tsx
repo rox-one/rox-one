@@ -18,13 +18,13 @@ export interface AutomationGraphEditorProps {
 type MetadataKind = 'annotation' | 'group' | 'decision'
 
 const NODE_ACCENT: Record<AutomationGraphNode['kind'], string> = {
-  trigger: 'border-sky-500/35 bg-sky-500/[0.08] text-sky-700 dark:text-sky-300',
-  matcher: 'border-violet-500/35 bg-violet-500/[0.08] text-violet-700 dark:text-violet-300',
-  prompt: 'border-emerald-500/35 bg-emerald-500/[0.08] text-emerald-700 dark:text-emerald-300',
-  webhook: 'border-amber-500/35 bg-amber-500/[0.08] text-amber-700 dark:text-amber-300',
-  annotation: 'border-muted-foreground/25 bg-muted/50 text-muted-foreground',
-  group: 'border-muted-foreground/25 bg-muted/30 text-muted-foreground',
-  decision: 'border-orange-500/35 bg-orange-500/[0.08] text-orange-700 dark:text-orange-300',
+  trigger: 'border-sky-500/70 bg-card text-foreground',
+  matcher: 'border-violet-500/70 bg-card text-foreground',
+  prompt: 'border-emerald-500/70 bg-card text-foreground',
+  webhook: 'border-amber-500/70 bg-card text-foreground',
+  annotation: 'border-border bg-card text-foreground',
+  group: 'border-border bg-card text-foreground',
+  decision: 'border-orange-500/70 bg-card text-foreground',
 }
 
 function createMetadataNode(kind: MetadataKind, graph: AutomationGraph): AutomationGraphNode {
@@ -182,70 +182,80 @@ export function AutomationGraphEditor({
       <div className="flex min-h-0 flex-1">
         <div className="min-w-0 flex-1 overflow-auto bg-muted/[0.14] p-3">
           <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
-            <svg className="pointer-events-none absolute inset-0 size-full overflow-visible" aria-hidden="true">
-              <defs>
-                <marker id={markerId} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                  <path d="M0,0 L0,6 L6,3 z" className="fill-muted-foreground/55" />
-                </marker>
-              </defs>
-              {graph.edges.map((edge) => {
-                const source = graph.nodes.find((node) => node.id === edge.source)
-                const target = graph.nodes.find((node) => node.id === edge.target)
-                if (!source || !target) return null
-                return (
-                  <line
-                    key={edge.id}
-                    x1={source.position.x + 208}
-                    y1={source.position.y + 40}
-                    x2={target.position.x + 4}
-                    y2={target.position.y + 40}
-                    markerEnd={`url(#${markerId})`}
-                    className={edge.kind === 'flow' ? 'stroke-muted-foreground/55' : 'stroke-muted-foreground/30'}
-                    strokeDasharray={edge.kind === 'flow' ? undefined : '4 4'}
-                  />
-                )
-              })}
-            </svg>
+            {graph.nodes.length === 0 ? (
+              <p className="flex h-full items-center justify-center px-6 text-center text-sm text-foreground/70">
+                {t('automations.noAutomationsConfigured')}
+              </p>
+            ) : (
+              <>
+                <svg className="pointer-events-none absolute inset-0 size-full overflow-visible" aria-hidden="true">
+                  <defs>
+                    <marker id={markerId} markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                      <path d="M0,0 L0,6 L6,3 z" className="fill-foreground/70" />
+                    </marker>
+                  </defs>
+                  {graph.edges.map((edge) => {
+                    const source = graph.nodes.find((node) => node.id === edge.source)
+                    const target = graph.nodes.find((node) => node.id === edge.target)
+                    if (!source || !target) return null
+                    const isFlow = edge.kind === 'flow'
+                    return (
+                      <line
+                        key={edge.id}
+                        x1={source.position.x + 208}
+                        y1={source.position.y + 40}
+                        x2={target.position.x + 4}
+                        y2={target.position.y + 40}
+                        markerEnd={isFlow ? `url(#${markerId})` : undefined}
+                        className={isFlow ? 'stroke-foreground/70' : 'stroke-foreground/50'}
+                        strokeWidth={isFlow ? 2 : 1.5}
+                        strokeDasharray={isFlow ? undefined : '4 4'}
+                      />
+                    )
+                  })}
+                </svg>
 
-            {graph.nodes.map((node) => {
-              const Icon = node.kind === 'prompt' ? MessageSquare : node.kind === 'webhook' ? Webhook : node.kind === 'decision' ? GitBranch : node.kind === 'group' ? Group : Braces
-              const label = node.label ?? nodeKindLabels[node.kind]
-              const isSelected = node.id === selectedId
-              return (
-                <button
-                  key={node.id}
-                  type="button"
-                  aria-label={label}
-                  aria-pressed={isSelected}
-                  onPointerDown={(event) => {
-                    if (disabled || isSaving || event.button !== 0) return
-                    event.currentTarget.setPointerCapture(event.pointerId)
-                    dragState.current = {
-                      nodeId: node.id,
-                      originX: node.position.x,
-                      originY: node.position.y,
-                      startX: event.clientX,
-                      startY: event.clientY,
-                    }
-                  }}
-                  onPointerUp={(event) => {
-                    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-                      event.currentTarget.releasePointerCapture(event.pointerId)
-                    }
-                    dragState.current = null
-                  }}
-                  onClick={() => selectNode(node.id)}
-                  className={cn(
-                    'absolute flex h-16 w-52 cursor-grab items-center gap-2 rounded-lg border px-3 text-left shadow-thin transition-shadow hover:shadow-modal-small active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    NODE_ACCENT[node.kind],
-                    isSelected && 'ring-2 ring-ring ring-offset-2 ring-offset-background',
-                  )}
-                >
-                  <Icon className="size-4 shrink-0" />
-                  <span className="min-w-0 truncate text-xs font-medium">{label}</span>
-                </button>
-              )
-            })}
+                {graph.nodes.map((node) => {
+                  const Icon = node.kind === 'prompt' ? MessageSquare : node.kind === 'webhook' ? Webhook : node.kind === 'decision' ? GitBranch : node.kind === 'group' ? Group : Braces
+                  const label = node.label ?? nodeKindLabels[node.kind]
+                  const isSelected = node.id === selectedId
+                  return (
+                    <button
+                      key={node.id}
+                      type="button"
+                      aria-label={label}
+                      aria-pressed={isSelected}
+                      onPointerDown={(event) => {
+                        if (disabled || isSaving || event.button !== 0) return
+                        event.currentTarget.setPointerCapture(event.pointerId)
+                        dragState.current = {
+                          nodeId: node.id,
+                          originX: node.position.x,
+                          originY: node.position.y,
+                          startX: event.clientX,
+                          startY: event.clientY,
+                        }
+                      }}
+                      onPointerUp={(event) => {
+                        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                          event.currentTarget.releasePointerCapture(event.pointerId)
+                        }
+                        dragState.current = null
+                      }}
+                      onClick={() => selectNode(node.id)}
+                      className={cn(
+                        'absolute flex h-16 w-52 cursor-grab items-center gap-2 rounded-lg border px-3 text-left shadow-thin transition-shadow hover:shadow-modal-small active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        NODE_ACCENT[node.kind],
+                        isSelected && 'ring-2 ring-ring ring-offset-2 ring-offset-background',
+                      )}
+                    >
+                      <Icon className="size-4 shrink-0" />
+                      <span className="min-w-0 truncate text-xs font-medium">{label}</span>
+                    </button>
+                  )
+                })}
+              </>
+            )}
           </div>
         </div>
 
