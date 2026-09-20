@@ -242,7 +242,7 @@ function EmptySection({ section }: { section: InspectorSectionId }) {
 }
 
 // -----------------------------------------------------------------------------
-// Host: panel when visible; R-hide collapses to zero width (TopBar restores).
+// Host: panel when visible; R-hide collapses to a 28px restore strip.
 // -----------------------------------------------------------------------------
 
 export function InspectorHost() {
@@ -354,9 +354,23 @@ export function InspectorHost() {
     </Tooltip>
   )
 
-  // R-hide = zero chrome: TopBar restores via inspector expand. No collapse-to-strip rail.
+  // R-hide = 28px restore strip. Click expands chrome and shows the panel.
   if (chromeCollapsed) {
-    return null
+    return (
+      <button
+        type="button"
+        aria-label={t('inspector.expand')}
+        onClick={() => {
+          setChromeCollapsed(false)
+          setVisible(true)
+        }}
+        className="chrome-strip pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center border-l border-foreground/5 bg-background"
+        data-session-inspector={sessionMode ? 'true' : 'false'}
+        data-inspector="collapsed"
+      >
+        <ChevronsRight className="h-3.5 w-3.5 rotate-180" />
+      </button>
+    )
   }
 
   return (

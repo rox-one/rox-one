@@ -29,14 +29,15 @@ describe('InspectorHost H1 session inspector', () => {
     expect(src).not.toContain('inspector.browserDisabled')
   })
 
-  it('keeps the terminal control on the expanded rail; R-hide is true zero-width', () => {
+  it('keeps the terminal control on the expanded rail; collapsed strip restores chrome', () => {
     expect(src.match(/\{terminalControl\}/g)).toHaveLength(1)
     expect(src).toContain('onClick={handleBottomTerminalToggle}')
     expect(src).toContain('data-testid="bottom-terminal-toggle"')
     expect(src).toContain('setTerminalOpen(next.sideOpen)')
     expect(src).toContain('setBottomTerminalOpen(next.bottomOpen)')
     expect(src).toContain('if (chromeCollapsed) {')
-    expect(src).toContain('return null')
+    expect(src).toContain('data-inspector="collapsed"')
+    expect(src).not.toContain('return null')
     expect(src).not.toContain('Movable cycle')
   })
 })
