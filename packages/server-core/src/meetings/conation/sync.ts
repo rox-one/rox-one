@@ -4,6 +4,7 @@
  * Revoke after await is re-checked before commit. Origin markers stop echo loops.
  * In-memory sync identity is not a live receipt: stamps stay pending
  * (live:false, not verified; L4 remains not_run).
+ * Unconfirmed live writes stay blocked — never a verified checkpoint.
  */
 
 import { confirmWrite, CONATION_FIXTURE_SCHEMA_HASH } from './capabilities.ts'
@@ -71,11 +72,11 @@ export function syncConationPage(
     schemaHash: options.schemaHash ?? CONATION_FIXTURE_SCHEMA_HASH,
     authPresent: true,
   })
-  if (!write.allowed && ['create', 'edit'].includes('edit') && options.schemaHash && options.schemaHash !== CONATION_FIXTURE_SCHEMA_HASH) {
-    return blocked('incompatible-schema')
-  }
   if (options.revokeGeneration !== state.revokeGeneration) {
     return denied('revoked')
+  }
+  if (!write.allowed) {
+    return blocked(write.reason)
   }
   if (state.seenCursors.includes(page.cursor) && page.cursor === state.checkpoint) {
     return { status: 'duplicate', reason: 'repeated-cursor', live: false, evidenceLevel: 'C2' }
