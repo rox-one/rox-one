@@ -37,7 +37,7 @@ function OverlayApp() {
     transcribing: 'voice.overlay.transcribing',
     enhancing: 'voice.overlay.enhancing',
     ready: 'voice.overlay.ready',
-    error: 'voice.overlay.ready',
+    error: 'voice.overlay.error',
   }
 
   return (
@@ -57,11 +57,11 @@ function OverlayApp() {
       }} />
       <span style={{ fontSize: 12, minWidth: 64 }}>{phaseKey[state.phase] ? t(phaseKey[state.phase]) : ''}</span>
       <span style={{ width: 48, height: 8, background: '#27272a', borderRadius: 4, overflow: 'hidden' }}>
-        <span style={{ display: 'block', height: '100%', width: `${Math.min(100, state.rms * 400)}%`, background: '#f4f4f5' }} />
+        <span style={{ display: 'block', height: '100%', width: `${Math.min(100, state.rms * 400)}%`, background: '#f4f4f5', transition: 'width 150ms linear' }} />
       </span>
       {state.streaming && state.partialTranscript ? <span style={{ fontSize: 11 }}>{state.partialTranscript}</span> : null}
-      <button type="button" onClick={() => void window.electronAPI.stopVoiceCapture?.()}>{t('voice.overlay.stop')}</button>
-      <button type="button" onClick={() => void window.electronAPI.cancelVoiceCapture?.()}>{t('voice.overlay.cancel')}</button>
+      <button type="button" className="rounded-md px-2 py-0.5 text-xs hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40" onClick={() => void window.electronAPI.stopVoiceCapture?.()}>{t('voice.overlay.stop')}</button>
+      <button type="button" className="rounded-md px-2 py-0.5 text-xs hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40" onClick={() => void window.electronAPI.cancelVoiceCapture?.()}>{t('voice.overlay.cancel')}</button>
     </div>
   )
 }
