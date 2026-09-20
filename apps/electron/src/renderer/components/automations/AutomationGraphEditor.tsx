@@ -4,6 +4,7 @@ import { Braces, GitBranch, Group, MessageSquare, Plus, Save, Trash2, Webhook } 
 import { compileAutomationGraph } from '@craft-agent/shared/automations/graph'
 import type { AutomationGraph, AutomationGraphNode } from '@craft-agent/shared/automations/types'
 import { cn } from '@/lib/utils'
+import { NODE_HEIGHT, fitGraphLayout, nodeDisplayLabel } from './graph-fit-layout'
 
 export interface AutomationGraphEditorProps {
   graph: AutomationGraph
@@ -57,6 +58,8 @@ export function AutomationGraphEditor({
   const [isSaving, setIsSaving] = React.useState(false)
   const [saveError, setSaveError] = React.useState<string | null>(null)
   const markerId = React.useId()
+  const canvasRef = React.useRef<HTMLDivElement>(null)
+  const [viewportWidth, setViewportWidth] = React.useState(0)
   const dragState = React.useRef<{
     nodeId: string
     originX: number
@@ -146,8 +149,25 @@ export function AutomationGraphEditor({
     }
   }, [graph, onChange])
 
-  const graphWidth = Math.max(640, ...graph.nodes.map((node) => node.position.x + 230))
-  const graphHeight = Math.max(320, ...graph.nodes.map((node) => node.position.y + 96))
+  React.useEffect(() => {
+    const el = canvasRef.current
+    if (!el) return
+    setViewportWidth(el.clientWidth)
+    const observer = new ResizeObserver(() => setViewportWidth(el.clientWidth))
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
+  const fittedNodes = React.useMemo(
+    () => fitGraphLayout(graph.nodes, viewportWidth),
+    [graph.nodes, viewportWidth],
+  )
+  const fittedById = React.useMemo(
+    () => new Map(fittedNodes.map((node) => [node.id, node])),
+    [fittedNodes],
+  )
+  const graphWidth = fittedNodes.reduce((max, node) => Math.max(max, node.x + node.width + 8), 1)
+  const graphHeight = fittedNodes.reduce((max, node) => Math.max(max, node.y + NODE_HEIGHT + 8), 1)
 
   return (
     <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background', className)}>
@@ -180,7 +200,7 @@ export function AutomationGraphEditor({
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <div className="min-w-0 flex-1 overflow-auto bg-muted/[0.14] p-3">
+        <div ref={canvasRef} className="min-w-0 flex-1 overflow-auto bg-muted/[0.14] p-3">
           <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
             {graph.nodes.length === 0 ? (
               <p className="flex h-full items-center justify-center px-6 text-center text-sm text-foreground/70">
@@ -195,17 +215,17 @@ export function AutomationGraphEditor({
                     </marker>
                   </defs>
                   {graph.edges.map((edge) => {
-                    const source = graph.nodes.find((node) => node.id === edge.source)
-                    const target = graph.nodes.find((node) => node.id === edge.target)
+                    const source = fittedById.get(edge.source)
+                    const target = fittedById.get(edge.target)
                     if (!source || !target) return null
                     const isFlow = edge.kind === 'flow'
                     return (
                       <line
                         key={edge.id}
-                        x1={source.position.x + 208}
-                        y1={source.position.y + 40}
-                        x2={target.position.x + 4}
-                        y2={target.position.y + 40}
+                        x1={source.x + source.width}
+                        y1={source.y + 32}
+                        x2={target.x}
+                        y2={target.y + 32}
                         markerEnd={isFlow ? `url(#${markerId})` : undefined}
                         className={isFlow ? 'stroke-foreground/70' : 'stroke-foreground/50'}
                         strokeWidth={isFlow ? 2 : 1.5}
@@ -216,8 +236,10 @@ export function AutomationGraphEditor({
                 </svg>
 
                 {graph.nodes.map((node) => {
+                  const layout = fittedById.get(node.id)
+                  if (!layout) return null
                   const Icon = node.kind === 'prompt' ? MessageSquare : node.kind === 'webhook' ? Webhook : node.kind === 'decision' ? GitBranch : node.kind === 'group' ? Group : Braces
-                  const label = node.label ?? nodeKindLabels[node.kind]
+                  const label = nodeDisplayLabel(node, nodeKindLabels)
                   const isSelected = node.id === selectedId
                   return (
                     <button
@@ -225,6 +247,7 @@ export function AutomationGraphEditor({
                       type="button"
                       aria-label={label}
                       aria-pressed={isSelected}
+                      style={{ left: layout.x, top: layout.y, width: layout.width }}
                       onPointerDown={(event) => {
                         if (disabled || isSaving || event.button !== 0) return
                         event.currentTarget.setPointerCapture(event.pointerId)
@@ -244,7 +267,7 @@ export function AutomationGraphEditor({
                       }}
                       onClick={() => selectNode(node.id)}
                       className={cn(
-                        'absolute flex h-16 w-52 cursor-grab items-center gap-2 rounded-lg border px-3 text-left shadow-thin transition-shadow hover:shadow-modal-small active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        'absolute flex h-16 cursor-grab items-center gap-2 rounded-lg border px-3 text-left shadow-thin transition-shadow hover:shadow-modal-small active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         NODE_ACCENT[node.kind],
                         isSelected && 'ring-2 ring-ring ring-offset-2 ring-offset-background',
                       )}
