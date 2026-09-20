@@ -349,7 +349,7 @@
   "chat.permissionShadow.allow": "Теневое ревью: разрешить",
   "chat.permissionShadow.deny": "Теневое ревью: запретить",
   "chat.permissionShadow.hint": "«Разрешить» и «Запретить» по-прежнему нажимаете вы",
-  "chat.permissionShadow.timeout": "Теневое ревью истекло",
+  "chat.permissionShadow.timeout": "Теневая проверка истекла",
   "chat.permissionShadow.unverified": "Теневое ревью не настроено",
   "chat.processing.almost": "Почти готово...",
   "chat.processing.baking": "Выпекаю...",
