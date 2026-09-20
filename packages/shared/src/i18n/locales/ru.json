@@ -3138,7 +3138,7 @@
   "settings.appearance.conationSessionApply": "Заглушка SessionApply (Conation)",
   "settings.appearance.conationSessionApplyDesc": "Заглушка SessionApply, связанная с AgentTeamsStore (workbench.conation.sessionApply). По умолчанию выкл. Не Cordis.",
   "settings.appearance.conationShell": "Conation",
-  "settings.appearance.conationShellDesc": "Опциональные панели данных Conation в Rox. Все выключены по умолчанию; режима Timeline нет.",
+  "settings.appearance.conationShellDesc": "Необязательные панели данных Conation в Rox. Все выключены по умолчанию; режима Timeline нет.",
   "settings.appearance.conationShellFlag": "Оболочка Conation",
   "settings.appearance.conationShellFlagDesc": "Главный переключатель панелей Conation (workbench.conation.shell). По умолчанию выкл.",
   "settings.appearance.conationSoupClient": "Клиент Soup",
