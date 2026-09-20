@@ -39,8 +39,10 @@ describe('CF-6.3 connection list sanitizer', () => {
       actorId: 'owner',
       outcome: 'committed',
       payloadDigest: 'abc',
+      action: 'connection.grant',
     }])
     expect(rows[0]?.eventType).toBe('connection-revoked')
+    expect(rows[0]?.action).toBe('connection.grant')
     expect(JSON.stringify(rows)).not.toContain('super-secret')
     expect(() => sanitizeConnectionAuditRows([{
       connectionId: 'c1',

@@ -1,5 +1,5 @@
 import { useAtom } from 'jotai'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { useActiveWorkspace } from '@/context/AppShellContext'
@@ -11,11 +11,22 @@ import {
   type ConnectionBindingRow,
   type ConnectionListRow,
 } from './connections-list'
+import {
+  IMPORT_PLACEHOLDERS,
+  createDraftError,
+  firstPickedPath,
+  grantDraftError,
+  isImportPanelVisible,
+  matchesConnectSource,
+  parseCsvList,
+  removeCommittedPreview,
+  type ConnectSource,
+  type PreviewSource,
+} from './connections-ui'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent'] as const
 type ConnectionsTab = (typeof TABS)[number]
-type PreviewSource = 'env' | 'git-helper' | 'docker' | 'aws' | 'keychain' | 'adc' | 'ssh-agent'
 type PreviewRow = {
   candidateId: string
   label: string
@@ -29,6 +40,23 @@ function classifyFailClosed(error: unknown): SurfaceState {
   if (/unsupported_test|_unavailable|unavailable/i.test(message)) return 'unavailable'
   if (/not found/i.test(message)) return 'error'
   return 'error'
+}
+
+function ImportPanel({
+  source,
+  active,
+  children,
+}: {
+  source: PreviewSource
+  active: ConnectSource | null
+  children: ReactNode
+}) {
+  if (!isImportPanelVisible(source, active)) return null
+  return (
+    <div data-testid="connections-import-panel" data-source={source} className="space-y-3">
+      {children}
+    </div>
+  )
 }
 
 export default function ConnectionsPage() {
@@ -51,6 +79,15 @@ export default function ConnectionsPage() {
   const [previews, setPreviews] = useState<PreviewRow[]>([])
   const [auditRows, setAuditRows] = useState<ConnectionAuditRow[]>([])
   const [bindingRows, setBindingRows] = useState<ConnectionBindingRow[]>([])
+  const [activeSource, setActiveSource] = useState<ConnectSource | null>(null)
+  const [createIntegration, setCreateIntegration] = useState('github')
+  const [createCredentialRef, setCreateCredentialRef] = useState('')
+  const [createStorageMode, setCreateStorageMode] = useState<'copy' | 'reference'>('copy')
+  const [grantConsumer, setGrantConsumer] = useState('')
+  const [grantPurpose, setGrantPurpose] = useState('')
+  const [grantActions, setGrantActions] = useState('github.api')
+  const [grantResources, setGrantResources] = useState('github:user')
+  const [grantTargetId, setGrantTargetId] = useState('')
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -144,6 +181,7 @@ export default function ConnectionsPage() {
   const credentialRows = tab === 'credentials' ? listed : []
   const policyRows = tab === 'policies' ? listed : []
   const failClosed = tab === 'services' && surface !== 'ready'
+  const visiblePreviews = matchesConnectSource(previews, activeSource)
 
   const confirmRevoke = async (connectionId: string) => {
     const workspaceId = workspace?.id
@@ -242,6 +280,101 @@ export default function ConnectionsPage() {
     }
   }
 
+  const confirmCreate = async () => {
+    const workspaceId = workspace?.id
+    const createConnection = window.electronAPI?.workgraph?.createConnection
+    if (!workspaceId || typeof createConnection !== 'function') {
+      setSurface('unavailable')
+      return
+    }
+    if (createDraftError({ integrationId: createIntegration, credentialRefId: createCredentialRef })) return
+    try {
+      await createConnection({
+        workspaceId,
+        integrationId: createIntegration.trim(),
+        credentialRefId: createCredentialRef.trim(),
+        storageMode: createStorageMode,
+      })
+      setCreateCredentialRef('')
+      await refreshRows(workspaceId)
+    } catch (error) {
+      setSurface(classifyFailClosed(error))
+    }
+  }
+
+  const confirmGrant = async () => {
+    const workspaceId = workspace?.id
+    const grantConnection = window.electronAPI?.workgraph?.grantConnection
+    if (!workspaceId || typeof grantConnection !== 'function') {
+      setSurface('unavailable')
+      return
+    }
+    const connectionId = grantTargetId.trim() || selected?.id || ''
+    const actions = parseCsvList(grantActions)
+    const resources = parseCsvList(grantResources)
+    if (grantDraftError({
+      connectionId,
+      consumerId: grantConsumer,
+      purpose: grantPurpose,
+      actions: grantActions,
+      resources: grantResources,
+    })) return
+    try {
+      await grantConnection({
+        workspaceId,
+        connectionId,
+        consumerId: grantConsumer.trim(),
+        purpose: grantPurpose.trim(),
+        actions,
+        resources,
+      })
+      setGrantConsumer('')
+      setGrantPurpose('')
+      const listConnectionBindings = window.electronAPI?.workgraph?.listConnectionBindings
+      if (typeof listConnectionBindings === 'function') {
+        setBindingRows(sanitizeConnectionBindingRows(await listConnectionBindings({ workspaceId })))
+      }
+    } catch (error) {
+      setSurface(classifyFailClosed(error))
+    }
+  }
+
+  const pickImportPath = async (setPath: (path: string) => void) => {
+    const openFileDialog = window.electronAPI?.openFileDialog
+    if (typeof openFileDialog !== 'function') return
+    const next = firstPickedPath(await openFileDialog())
+    if (next) setPath(next)
+  }
+
+  const pathField = (
+    labelKey: string,
+    value: string,
+    setValue: (path: string) => void,
+    placeholder: string,
+  ) => (
+    <label className="block">
+      <span className="text-muted-foreground">{t(labelKey)}</span>
+      <div className="mt-1 flex gap-1">
+        <input
+          className="w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => setValue(event.target.value)}
+          spellCheck={false}
+        />
+        <button
+          type="button"
+          data-testid="connections-pick-path"
+          aria-label={t(labelKey)}
+          className="rounded border px-2 py-1"
+          onClick={() => void pickImportPath(setValue)}
+        >
+          …
+        </button>
+      </div>
+    </label>
+  )
+
   const renderRevokeControls = (row: ConnectionListRow) => (
     confirmingId === row.id ? (
       <div className="flex flex-col items-end gap-1">
@@ -315,191 +448,167 @@ export default function ConnectionsPage() {
           <div className="space-y-3 text-sm text-foreground">
             <ul className="flex flex-wrap gap-2 text-xs">
               {CONNECT_SOURCES.map((source) => (
-                <li key={source} className="rounded border px-2 py-1">{source}</li>
+                <li key={source}>
+                  <button
+                    type="button"
+                    data-testid="connections-source-chip"
+                    aria-pressed={activeSource === source}
+                    className={`rounded border px-2 py-1 ${activeSource === source ? 'bg-accent/10 text-accent' : ''}`}
+                    onClick={() => setActiveSource((current) => current === source ? null : source)}
+                  >
+                    {source}
+                  </button>
+                </li>
               ))}
             </ul>
-            <label className="block">
-              <span className="text-muted-foreground">{t('connections.import.envPath')}</span>
-              <input
-                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                value={envPath}
-                onChange={(event) => setEnvPath(event.target.value)}
-                spellCheck={false}
-              />
-            </label>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={async () => {
-                const previewGithubEnv = window.electronAPI?.workgraph?.previewGithubEnv
-                if (typeof previewGithubEnv !== 'function' || !envPath) {
-                  setPreviews((current) => current.filter((row) => row.source !== 'env'))
-                  return
-                }
-                const next = await previewGithubEnv(envPath)
-                setPreviews((current) => [
-                  ...current.filter((row) => row.source !== 'env'),
-                  ...next.map((row) => ({ ...row, source: 'env' as const })),
-                ])
-              }}
-            >
-              {t('connections.import.discover')}
-            </button>
-            <label className="block">
-              <span className="text-muted-foreground">{t('connections.import.gitConfigPath')}</span>
-              <input
-                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                value={gitConfigPath}
-                onChange={(event) => setGitConfigPath(event.target.value)}
-                spellCheck={false}
-              />
-            </label>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={async () => {
-                const previewGitHelper = window.electronAPI?.workgraph?.previewGitHelper
-                if (typeof previewGitHelper !== 'function' || !gitConfigPath) {
-                  setPreviews((current) => current.filter((row) => row.source !== 'git-helper'))
-                  return
-                }
-                const next = await previewGitHelper(gitConfigPath)
-                setPreviews((current) => [
-                  ...current.filter((row) => row.source !== 'git-helper'),
-                  ...next.map((row) => ({ ...row, source: 'git-helper' as const })),
-                ])
-              }}
-            >
-              {t('connections.import.discoverGitHelper')}
-            </button>
-            <label className="block">
-              <span className="text-muted-foreground">{t('connections.import.dockerConfigPath')}</span>
-              <input
-                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                value={dockerConfigPath}
-                onChange={(event) => setDockerConfigPath(event.target.value)}
-                spellCheck={false}
-              />
-            </label>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={async () => {
-                const previewDockerHelper = window.electronAPI?.workgraph?.previewDockerHelper
-                if (typeof previewDockerHelper !== 'function' || !dockerConfigPath) {
-                  setPreviews((current) => current.filter((row) => row.source !== 'docker'))
-                  return
-                }
-                const next = await previewDockerHelper(dockerConfigPath)
-                setPreviews((current) => [
-                  ...current.filter((row) => row.source !== 'docker'),
-                  ...next.map((row) => ({ ...row, source: 'docker' as const })),
-                ])
-              }}
-            >
-              {t('connections.import.discoverDocker')}
-            </button>
-            <label className="block">
-              <span className="text-muted-foreground">{t('connections.import.awsCredentialsPath')}</span>
-              <input
-                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                value={awsCredentialsPath}
-                onChange={(event) => setAwsCredentialsPath(event.target.value)}
-                spellCheck={false}
-              />
-            </label>
-            <label className="block">
-              <span className="text-muted-foreground">{t('connections.import.awsConfigPath')}</span>
-              <input
-                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                value={awsConfigPath}
-                onChange={(event) => setAwsConfigPath(event.target.value)}
-                spellCheck={false}
-              />
-            </label>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={async () => {
-                const previewAwsProfiles = window.electronAPI?.workgraph?.previewAwsProfiles
-                if (typeof previewAwsProfiles !== 'function') {
-                  setPreviews((current) => current.filter((row) => row.source !== 'aws'))
-                  return
-                }
-                const next = await previewAwsProfiles({ credentialsPath: awsCredentialsPath, configPath: awsConfigPath })
-                setPreviews((current) => [
-                  ...current.filter((row) => row.source !== 'aws'),
-                  ...next.map((row) => ({ ...row, source: 'aws' as const })),
-                ])
-              }}
-            >
-              {t('connections.import.discoverAws')}
-            </button>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={async () => {
-                const previewKeychain = window.electronAPI?.workgraph?.previewKeychain
-                if (typeof previewKeychain !== 'function') {
-                  setPreviews((current) => current.filter((row) => row.source !== 'keychain'))
-                  return
-                }
-                const next = await previewKeychain()
-                setPreviews((current) => [
-                  ...current.filter((row) => row.source !== 'keychain'),
-                  ...next.map((row) => ({ ...row, source: 'keychain' as const })),
-                ])
-              }}
-            >
-              {t('connections.import.discoverKeychain')}
-            </button>
-            <label className="block">
-              <span className="text-muted-foreground">{t('connections.import.adcPath')}</span>
-              <input
-                className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                value={adcPath}
-                onChange={(event) => setAdcPath(event.target.value)}
-                spellCheck={false}
-              />
-            </label>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={async () => {
-                const previewAdc = window.electronAPI?.workgraph?.previewAdc
-                if (typeof previewAdc !== 'function' || !adcPath) {
-                  setPreviews((current) => current.filter((row) => row.source !== 'adc'))
-                  return
-                }
-                const next = await previewAdc(adcPath)
-                setPreviews((current) => [
-                  ...current.filter((row) => row.source !== 'adc'),
-                  ...next.map((row) => ({ ...row, source: 'adc' as const })),
-                ])
-              }}
-            >
-              {t('connections.import.discoverAdc')}
-            </button>
-            <button
-              type="button"
-              className="rounded border px-3 py-1"
-              onClick={async () => {
-                const previewSshAgent = window.electronAPI?.workgraph?.previewSshAgent
-                if (typeof previewSshAgent !== 'function') {
-                  setPreviews((current) => current.filter((row) => row.source !== 'ssh-agent'))
-                  return
-                }
-                const next = await previewSshAgent()
-                setPreviews((current) => [
-                  ...current.filter((row) => row.source !== 'ssh-agent'),
-                  ...next.map((row) => ({ ...row, source: 'ssh-agent' as const })),
-                ])
-              }}
-            >
-              {t('connections.import.discoverSshAgent')}
-            </button>
+            <ImportPanel source="env" active={activeSource}>
+              {pathField('connections.import.envPath', envPath, setEnvPath, IMPORT_PLACEHOLDERS.env)}
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const previewGithubEnv = window.electronAPI?.workgraph?.previewGithubEnv
+                  if (typeof previewGithubEnv !== 'function' || !envPath) {
+                    setPreviews((current) => current.filter((row) => row.source !== 'env'))
+                    return
+                  }
+                  const next = await previewGithubEnv(envPath)
+                  setPreviews((current) => [
+                    ...current.filter((row) => row.source !== 'env'),
+                    ...next.map((row) => ({ ...row, source: 'env' as const })),
+                  ])
+                }}
+              >
+                {t('connections.import.discover')}
+              </button>
+            </ImportPanel>
+            <ImportPanel source="git-helper" active={activeSource}>
+              {pathField('connections.import.gitConfigPath', gitConfigPath, setGitConfigPath, IMPORT_PLACEHOLDERS.gitConfig)}
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const previewGitHelper = window.electronAPI?.workgraph?.previewGitHelper
+                  if (typeof previewGitHelper !== 'function' || !gitConfigPath) {
+                    setPreviews((current) => current.filter((row) => row.source !== 'git-helper'))
+                    return
+                  }
+                  const next = await previewGitHelper(gitConfigPath)
+                  setPreviews((current) => [
+                    ...current.filter((row) => row.source !== 'git-helper'),
+                    ...next.map((row) => ({ ...row, source: 'git-helper' as const })),
+                  ])
+                }}
+              >
+                {t('connections.import.discoverGitHelper')}
+              </button>
+            </ImportPanel>
+            <ImportPanel source="docker" active={activeSource}>
+              {pathField('connections.import.dockerConfigPath', dockerConfigPath, setDockerConfigPath, IMPORT_PLACEHOLDERS.dockerConfig)}
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const previewDockerHelper = window.electronAPI?.workgraph?.previewDockerHelper
+                  if (typeof previewDockerHelper !== 'function' || !dockerConfigPath) {
+                    setPreviews((current) => current.filter((row) => row.source !== 'docker'))
+                    return
+                  }
+                  const next = await previewDockerHelper(dockerConfigPath)
+                  setPreviews((current) => [
+                    ...current.filter((row) => row.source !== 'docker'),
+                    ...next.map((row) => ({ ...row, source: 'docker' as const })),
+                  ])
+                }}
+              >
+                {t('connections.import.discoverDocker')}
+              </button>
+            </ImportPanel>
+            <ImportPanel source="aws" active={activeSource}>
+              {pathField('connections.import.awsCredentialsPath', awsCredentialsPath, setAwsCredentialsPath, IMPORT_PLACEHOLDERS.awsCredentials)}
+              {pathField('connections.import.awsConfigPath', awsConfigPath, setAwsConfigPath, IMPORT_PLACEHOLDERS.awsConfig)}
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const previewAwsProfiles = window.electronAPI?.workgraph?.previewAwsProfiles
+                  if (typeof previewAwsProfiles !== 'function') {
+                    setPreviews((current) => current.filter((row) => row.source !== 'aws'))
+                    return
+                  }
+                  const next = await previewAwsProfiles({ credentialsPath: awsCredentialsPath, configPath: awsConfigPath })
+                  setPreviews((current) => [
+                    ...current.filter((row) => row.source !== 'aws'),
+                    ...next.map((row) => ({ ...row, source: 'aws' as const })),
+                  ])
+                }}
+              >
+                {t('connections.import.discoverAws')}
+              </button>
+            </ImportPanel>
+            <ImportPanel source="keychain" active={activeSource}>
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const previewKeychain = window.electronAPI?.workgraph?.previewKeychain
+                  if (typeof previewKeychain !== 'function') {
+                    setPreviews((current) => current.filter((row) => row.source !== 'keychain'))
+                    return
+                  }
+                  const next = await previewKeychain()
+                  setPreviews((current) => [
+                    ...current.filter((row) => row.source !== 'keychain'),
+                    ...next.map((row) => ({ ...row, source: 'keychain' as const })),
+                  ])
+                }}
+              >
+                {t('connections.import.discoverKeychain')}
+              </button>
+            </ImportPanel>
+            <ImportPanel source="adc" active={activeSource}>
+              {pathField('connections.import.adcPath', adcPath, setAdcPath, IMPORT_PLACEHOLDERS.adc)}
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const previewAdc = window.electronAPI?.workgraph?.previewAdc
+                  if (typeof previewAdc !== 'function' || !adcPath) {
+                    setPreviews((current) => current.filter((row) => row.source !== 'adc'))
+                    return
+                  }
+                  const next = await previewAdc(adcPath)
+                  setPreviews((current) => [
+                    ...current.filter((row) => row.source !== 'adc'),
+                    ...next.map((row) => ({ ...row, source: 'adc' as const })),
+                  ])
+                }}
+              >
+                {t('connections.import.discoverAdc')}
+              </button>
+            </ImportPanel>
+            <ImportPanel source="ssh-agent" active={activeSource}>
+              <button
+                type="button"
+                className="rounded border px-3 py-1"
+                onClick={async () => {
+                  const previewSshAgent = window.electronAPI?.workgraph?.previewSshAgent
+                  if (typeof previewSshAgent !== 'function') {
+                    setPreviews((current) => current.filter((row) => row.source !== 'ssh-agent'))
+                    return
+                  }
+                  const next = await previewSshAgent()
+                  setPreviews((current) => [
+                    ...current.filter((row) => row.source !== 'ssh-agent'),
+                    ...next.map((row) => ({ ...row, source: 'ssh-agent' as const })),
+                  ])
+                }}
+              >
+                {t('connections.import.discoverSshAgent')}
+              </button>
+            </ImportPanel>
             <ul className="space-y-2">
-              {previews.map((row) => (
+              {visiblePreviews.map((row) => (
                 <li key={`${row.source}:${row.candidateId}`} className="flex items-center justify-between rounded border px-3 py-2">
                   <div>
                     <div className="font-medium">{row.label}</div>
@@ -527,6 +636,7 @@ export default function ConnectionsPage() {
                       } else if (row.source === 'ssh-agent' && api.importSshAgent) {
                         await api.importSshAgent({ candidateId: row.candidateId, workspaceId })
                       }
+                      setPreviews((current) => removeCommittedPreview(current, row))
                       await refreshRows(workspaceId)
                     }}
                   >
@@ -546,32 +656,70 @@ export default function ConnectionsPage() {
               {t(surface === 'unavailable' ? 'sidebar.connectionsUnavailable' : 'chat.connectionUnavailable')}
             </p>
           </div>
-        ) : tab === 'services' && services.length > 0 ? (
-          <ul className="space-y-2 text-sm text-foreground">
-            {services.map((row) => (
-              <li key={row.id} className="flex items-center gap-2">
-                <button
-                  type="button"
-                  data-testid="connections-row"
-                  aria-selected={selected?.id === row.id}
-                  className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
-                  onClick={() => setSelected(row)}
+        ) : tab === 'services' ? (
+          <div className="space-y-4 text-sm text-foreground">
+            <div data-testid="connections-create-form" className="space-y-2 rounded border p-3">
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.createIntegration')}</span>
+                <input
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={createIntegration}
+                  onChange={(event) => setCreateIntegration(event.target.value)}
+                  spellCheck={false}
+                />
+              </label>
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.createCredentialRef')}</span>
+                <input
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={createCredentialRef}
+                  onChange={(event) => setCreateCredentialRef(event.target.value)}
+                  spellCheck={false}
+                />
+              </label>
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.createStorageMode')}</span>
+                <select
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={createStorageMode}
+                  onChange={(event) => setCreateStorageMode(event.target.value === 'reference' ? 'reference' : 'copy')}
                 >
-                  <div className="font-medium">{row.integrationId}</div>
-                  <div className="text-muted-foreground">{row.storageMode}</div>
-                  <div className="font-mono text-xs">{row.credentialRefId}</div>
-                </button>
-                <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
-                  {t('connections.test')}
-                </button>
-                <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
-                  {t('connections.repair')}
-                </button>
-                {renderRevokeControls(row)}
-                {renderRotateControls(row)}
-              </li>
-            ))}
-          </ul>
+                  <option value="copy">copy</option>
+                  <option value="reference">reference</option>
+                </select>
+              </label>
+              <button type="button" className="rounded border px-3 py-1" onClick={() => void confirmCreate()}>
+                {t('connections.create')}
+              </button>
+            </div>
+            {services.length > 0 ? (
+              <ul className="space-y-2 text-sm text-foreground">
+                {services.map((row) => (
+                  <li key={row.id} className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      data-testid="connections-row"
+                      aria-selected={selected?.id === row.id}
+                      className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
+                      onClick={() => setSelected(row)}
+                    >
+                      <div className="font-medium">{row.integrationId}</div>
+                      <div className="text-muted-foreground">{row.storageMode}</div>
+                      <div className="font-mono text-xs">{row.credentialRefId}</div>
+                    </button>
+                    <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
+                      {t('connections.test')}
+                    </button>
+                    <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
+                      {t('connections.repair')}
+                    </button>
+                    {renderRevokeControls(row)}
+                    {renderRotateControls(row)}
+                  </li>
+                ))}
+              </ul>
+            ) : empty}
+          </div>
         ) : tab === 'credentials' && credentialRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {credentialRows.map((row) => (
@@ -603,8 +751,62 @@ export default function ConnectionsPage() {
               </li>
             ))}
           </ul>
-        ) : tab === 'policies' && (bindingRows.length > 0 || policyRows.length > 0) ? (
+        ) : tab === 'policies' ? (
           <div className="space-y-4 text-sm text-foreground">
+            <div data-testid="connections-grant-form" className="space-y-2 rounded border p-3">
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.grantConsumer')}</span>
+                <input
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={grantConsumer}
+                  onChange={(event) => setGrantConsumer(event.target.value)}
+                  spellCheck={false}
+                />
+              </label>
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.grantPurpose')}</span>
+                <input
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={grantPurpose}
+                  onChange={(event) => setGrantPurpose(event.target.value)}
+                  spellCheck={false}
+                />
+              </label>
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.grantActions')}</span>
+                <input
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={grantActions}
+                  onChange={(event) => setGrantActions(event.target.value)}
+                  spellCheck={false}
+                />
+              </label>
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.grantResources')}</span>
+                <input
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={grantResources}
+                  onChange={(event) => setGrantResources(event.target.value)}
+                  spellCheck={false}
+                />
+              </label>
+              <label className="block">
+                <span className="text-muted-foreground">{t('connections.grantTarget')}</span>
+                <select
+                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  value={grantTargetId || selected?.id || ''}
+                  onChange={(event) => setGrantTargetId(event.target.value)}
+                >
+                  <option value="">{t('connections.empty')}</option>
+                  {listed.map((row) => (
+                    <option key={row.id} value={row.id}>{row.id}</option>
+                  ))}
+                </select>
+              </label>
+              <button type="button" className="rounded border px-3 py-1" onClick={() => void confirmGrant()}>
+                {t('connections.grant')}
+              </button>
+            </div>
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
                 {policyRows.map((row) => (
@@ -651,6 +853,7 @@ export default function ConnectionsPage() {
                 <div className="text-muted-foreground">{row.outcome}</div>
                 <div className="font-mono text-xs">{row.connectionId}</div>
                 <div className="font-mono text-xs">{row.payloadDigest}</div>
+                {row.action ? <div className="font-mono text-xs">{row.action}</div> : null}
               </li>
             ))}
           </ul>
