@@ -339,7 +339,10 @@ function AppShellContent({
   const shellWidth = useContainerWidth(shellRef)
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
-  const showStatusBar = shouldShowStatusBar(statusBarEnabled, isAutoCompact)
+  const showStatusBar = shouldShowStatusBar(
+    statusBarEnabled && (unifiedShellEnabled || workbenchEnabled),
+    isAutoCompact,
+  )
 
   const effectiveSidebarAndNavigatorHidden = isSidebarAndNavigatorHidden || isAutoCompact
 
