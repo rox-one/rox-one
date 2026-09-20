@@ -1119,7 +1119,7 @@
   "entityView.workbenchCameraFlow": "Поток",
   "entityView.workbenchCameraMap": "Карта",
   "entityView.workbenchFork": "Форк",
-  "entityView.workbenchForkHint": "Форк создаёт дочернюю сессию (ветка), не переписывает историю. Рассылка: до 8 параллельно / 32 за запуск.",
+  "entityView.workbenchForkHint": "Ветка создаёт дочернюю сессию (ветка), не переписывает историю. Рассылка: до 8 параллельно / 32 за запуск.",
   "entityView.workbenchInspector": "Инспектор",
   "entityView.workbenchMemo": "Памятка",
   "entityView.workbenchModel": "Модель",
