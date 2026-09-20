@@ -3319,7 +3319,7 @@
   "settings.cloudRuns.regionHint": "Регион или цель Daytona",
   "settings.cloudRuns.sandbox": "Префикс имени песочницы",
   "settings.cloudRuns.sandboxGated": "Платные песочницы Daytona недоступны, пока не заданы квоты",
-  "settings.cloudRuns.sandboxHint": "Префикс имени песочницы; id рана добавляется",
+  "settings.cloudRuns.sandboxHint": "Префикс имени песочницы; id запуска добавляется",
   "settings.cloudRuns.sandboxTab": "Песочница Rox",
   "settings.cloudRuns.scheduleHelp": "Повторяющиеся облачные запуски настраиваются в диалоге чипа «Облако» в поле чата (секция «Расписания»).",
   "settings.cloudRuns.secretRef": "API-ключ Daytona",

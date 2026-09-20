@@ -329,7 +329,7 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.cloudRuns.providerHint": "Daytona — облачный раннер; локальный и нативный sidecar остаются на этой машине",
   "settings.cloudRuns.regionHint": "Регион или цель Daytona",
   "settings.cloudRuns.sandbox": "Префикс имени песочницы",
-  "settings.cloudRuns.sandboxHint": "Префикс имени песочницы; id рана добавляется",
+  "settings.cloudRuns.sandboxHint": "Префикс имени песочницы; id запуска добавляется",
   "settings.cloudRuns.scheduleHelp": "Повторяющиеся облачные запуски настраиваются в диалоге чипа «Облако» в поле чата (секция «Расписания»).",
   "settings.cloudRuns.snapshotHint": "Снимок, из которого создаётся песочница",
   "settings.cloudRuns.token": "Токен поставщика",
