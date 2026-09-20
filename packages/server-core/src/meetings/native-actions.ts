@@ -77,6 +77,26 @@ function readPersistedTask(
   return persist.get(taskId)?.task ?? tasks.get(taskId) ?? null
 }
 
+const EVIDENCE_TAG = 'rox:meeting-evidence'
+
+export function encodeMeetingTaskNotes(input: {
+  quote: string
+  due?: string
+  meetingId: string
+  noteId: string
+  operationId: string
+  payloadHash: string
+  segmentId: string
+  segmentRevision: number
+}): string {
+  const lines = [input.quote.trim()]
+  if (input.due) lines.push(`Due: ${input.due}`)
+  lines.push(
+    `<!-- ${EVIDENCE_TAG} meetingId="${input.meetingId}" noteId="${input.noteId}" operationId="${input.operationId}" payloadHash="${input.payloadHash}" segmentId="${input.segmentId}" segmentRevision="${input.segmentRevision}" -->`,
+  )
+  return lines.join('\n')
+}
+
 export function applyNativeMeetingAction(
   proposal: MeetingProposal,
   notes: NativeNotesEngine,
