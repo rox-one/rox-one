@@ -133,6 +133,7 @@ import { validateGitBashPath, checkVCRedistInstalled } from '@craft-agent/server
 import { createOpenClawSecurityComposition } from './openclaw-security'
 import { createOpenClawHostControlConfirmation, registerOpenClawHostControlIpc } from './openclaw-host-control'
 import { createLocalClientBindingRegistry } from './local-client-binding'
+import { registerMeetingCaptureIpc } from './meetings/ipc'
 import type { OpenClawRuntimeManager, OpenClawSecurityAuditService } from '@craft-agent/server-core/openclaw'
 
 // Initialize electron-log for renderer process support
@@ -513,6 +514,7 @@ app.whenReady().then(async () => {
     registerVoiceHotkeys(() => {
       showVoiceOverlay()
     })
+    registerMeetingCaptureIpc()
 
     // Build real PlatformServices from Electron APIs
     const platform: PlatformServices = createElectronPlatform({
