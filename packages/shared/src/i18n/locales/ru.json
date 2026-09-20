@@ -543,7 +543,7 @@
   "cloudRuns.title": "Облачные запуски",
   "cloudRuns.topicHelp": "Тема — бриф исследования, который уходит в облачный запуск.",
   "cloudRuns.topicPlaceholder": "Тема запуска…",
-  "cloudRuns.usageHint": "LLM-токены (вход+выход) · время работы раннера",
+  "cloudRuns.usageHint": "LLM-токены (вход+выход) · время работы запуска",
   "cloudRuns.usageTokens": "{{prompt}}+{{completion}} ток{{cpu}}",
   "codeIntel.citation": "источник",
   "codeIntel.empty": "Символы ещё не проиндексированы",
