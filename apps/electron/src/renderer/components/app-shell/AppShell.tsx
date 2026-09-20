@@ -293,7 +293,7 @@ function AppShellContent({
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const bottomTerminalOpen = useAtomValue(bottomTerminalOpenAtom)
   const bottomDockHeight = useAtomValue(bottomDockHeightAtom)
-  const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 28) + PANEL_EDGE_INSET + 8
+  const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 28) + PANEL_EDGE_INSET + 4
   const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0

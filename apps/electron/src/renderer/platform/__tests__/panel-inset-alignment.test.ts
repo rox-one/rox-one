@@ -15,9 +15,9 @@ const constants = readFileSync(
 )
 
 describe('panel inset alignment', () => {
-  it('matches inspector and desktop stack top/bottom gaps at 8px', () => {
-    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 8')
-    expect(constants).toContain('export const PANEL_STACK_BOTTOM_INSET = 8')
+  it('matches inspector and desktop stack top/bottom gaps at 4px', () => {
+    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 4')
+    expect(constants).toContain('export const PANEL_STACK_BOTTOM_INSET = 4')
     expect(constants).toContain('export const PANEL_STACK_VERTICAL_OVERFLOW = 0')
 
     const collapsedStart = inspector.indexOf('if (chromeCollapsed)')
@@ -26,12 +26,12 @@ describe('panel inset alignment', () => {
     const collapsed = inspector.slice(collapsedStart, expandedReturn)
     const expanded = inspector.slice(expandedReturn)
 
-    expect(expanded).toContain('rounded-xl')
-    expect(expanded).toContain('mt-2 mb-2')
-    expect(expanded).toContain('mr-2')
+    expect(expanded).toContain('rounded-lg')
+    expect(expanded).toContain('mt-1 mb-1')
+    expect(expanded).toContain('mr-1')
     expect(expanded).toContain('overflow-hidden')
 
-    expect(collapsed).toContain('mt-2 mb-2 mr-2')
+    expect(collapsed).toContain('mt-1 mb-1 mr-1')
     expect(collapsed).toContain('rounded-md')
     expect(collapsed).toContain('data-inspector="collapsed"')
 
