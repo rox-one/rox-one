@@ -34,6 +34,8 @@ import { getDocUrl } from "@craft-agent/shared/docs/doc-links"
 import { AppMenu } from "../AppMenu"
 import type { ReactNode } from "react"
 import {
+  featureUnifiedShellAtom,
+  featureWorkbenchAtom,
   featureWorkbenchBrowserSurfaceV2Atom,
   featureWorkbenchHarnessChatChromeV1Atom,
   featureWorkbenchModeRegistryV1Atom,
@@ -127,12 +129,18 @@ export function TopBar({
   const rightSlotRef = useRef<HTMLDivElement | null>(null)
   const [inspectorVisible, setInspectorVisible] = useAtom(inspectorVisibleAtom)
   const [inspectorChromeCollapsed, setInspectorChromeCollapsed] = useAtom(inspectorChromeCollapsedAtom)
+  const workbenchEnabled = useAtomValue(featureWorkbenchAtom)
+  const unifiedShell = useAtomValue(featureUnifiedShellAtom)
+  const modeRegistry = useAtomValue(featureWorkbenchModeRegistryV1Atom)
+  const topChrome = useAtomValue(featureWorkbenchTopChromeV2Atom)
+  const browserSurface = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
+  const workbenchChromeEnabled = workbenchEnabled || unifiedShell
   const chrome = resolveWorkbenchChrome({
     unifiedShell: false,
-    modeRegistry: useAtomValue(featureWorkbenchModeRegistryV1Atom),
-    topChrome: useAtomValue(featureWorkbenchTopChromeV2Atom),
+    modeRegistry: workbenchChromeEnabled && modeRegistry,
+    topChrome: workbenchChromeEnabled && topChrome,
     tabGroups: false,
-    browserSurface: useAtomValue(featureWorkbenchBrowserSurfaceV2Atom),
+    browserSurface: workbenchChromeEnabled && browserSurface,
     statusBar: false,
   })
 

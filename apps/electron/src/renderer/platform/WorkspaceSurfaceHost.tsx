@@ -29,19 +29,25 @@ export function WorkspaceSurfaceHost({
   userPreference,
 }: WorkspaceSurfaceHostProps) {
   const persistedPreference = useAtomValue(featureWorkbenchAtom)
+  const unifiedShell = useAtomValue(featureUnifiedShellAtom)
+  const topChrome = useAtomValue(featureWorkbenchTopChromeV2Atom)
+  const tabGroups = useAtomValue(featureWorkbenchTabGroupsV2Atom)
+  const browserSurface = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
+  const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const availability = resolveWorkbenchAvailability(
     operatorCapability,
     userPreference === undefined ? persistedPreference : userPreference,
   )
   const workbenchEnabled = availability === 'enabled'
+  const granularChrome = unifiedShell || workbenchEnabled
   const chrome = resolveWorkbenchChrome({
-    unifiedShell: useAtomValue(featureUnifiedShellAtom) || workbenchEnabled,
+    unifiedShell,
     modeRegistry: false,
-    topChrome: useAtomValue(featureWorkbenchTopChromeV2Atom) || workbenchEnabled,
-    tabGroups: useAtomValue(featureWorkbenchTabGroupsV2Atom) || workbenchEnabled,
-    browserSurface: useAtomValue(featureWorkbenchBrowserSurfaceV2Atom),
+    topChrome: granularChrome && topChrome,
+    tabGroups: granularChrome && tabGroups,
+    browserSurface: granularChrome && browserSurface,
     statusBar: false,
-    harnessInspector: useAtomValue(featureWorkbenchHarnessInspectorV1Atom) || workbenchEnabled,
+    harnessInspector: granularChrome && harnessInspector,
   })
 
   if (!chrome.showRail && !chrome.showSurfaceTabs && !chrome.showInspector) {
