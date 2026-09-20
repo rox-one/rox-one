@@ -72,6 +72,7 @@ import { MemoryProvenanceStrip } from "./MemoryProvenanceStrip"
 import type { RichTextInputHandle } from "@/components/ui/rich-text-input"
 import { useBackgroundTasks } from "@/hooks/useBackgroundTasks"
 import { useTurnCardExpansion } from "@/hooks/useTurnCardExpansion"
+import { useContextualSuggestions } from "@/hooks/useContextualSuggestions"
 import { useNavigation } from "@/contexts/NavigationContext"
 import { useAppShellContext } from "@/context/AppShellContext"
 import { navigate, routes } from "@/lib/navigate"
@@ -466,6 +467,8 @@ function ScrollOnMount({
   return null
 }
 
+const EMPTY_SKILLS: LoadedSkill[] = []
+
 /**
  * ChatDisplay - Main chat interface for a selected session
  *
@@ -570,6 +573,25 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
+
+  const handleOpenWorkflow = useCallback(() => {
+    if (!session?.id) return
+    window.dispatchEvent(new CustomEvent('craft:session-view', {
+      detail: { sessionId: session.id, view: 'map' },
+    }))
+  }, [session?.id])
+
+  useContextualSuggestions({
+    session,
+    skills: skills ?? EMPTY_SKILLS,
+    draft: inputValue ?? '',
+    active: isFocusedPanel,
+    hasPendingRequest: Boolean(pendingPermission || pendingCredential),
+    onDraftChange: (draft) => {
+      onInputChange?.(draft)
+    },
+    onOpenWorkflow: handleOpenWorkflow,
+  })
 
   // Input is only disabled when explicitly disabled (e.g., agent needs activation)
   // User can type during streaming - submitting will stop the stream and send
