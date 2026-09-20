@@ -7,6 +7,7 @@ import {
   featureWorkbenchHarnessInspectorV1Atom,
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
+  inspectorVisibleAtom,
 } from '@/atoms/unified-shell'
 import { BottomTerminalDock } from '@/components/session-inspector/BottomTerminalDock'
 import { ActivityRail } from './ActivityRail'
@@ -34,6 +35,7 @@ export function WorkspaceSurfaceHost({
   const tabGroups = useAtomValue(featureWorkbenchTabGroupsV2Atom)
   const browserSurface = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
+  const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const availability = resolveWorkbenchAvailability(
     operatorCapability,
     userPreference === undefined ? persistedPreference : userPreference,
@@ -50,10 +52,6 @@ export function WorkspaceSurfaceHost({
     harnessInspector: granularChrome && harnessInspector,
   })
 
-  if (!chrome.showRail && !chrome.showSurfaceTabs && !chrome.showInspector) {
-    return <>{children}</>
-  }
-
   return (
     <div className="flex min-h-0 min-w-0 flex-1 items-stretch">
       {chrome.showRail && <ActivityRail />}
@@ -64,7 +62,7 @@ export function WorkspaceSurfaceHost({
         <BottomTerminalDock />
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
-      {chrome.showInspector && <InspectorHost />}
+      {(chrome.showInspector || inspectorVisible) && <InspectorHost />}
       <PanelHost slot="inspector" />
     </div>
   )
