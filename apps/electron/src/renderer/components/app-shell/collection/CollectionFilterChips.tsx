@@ -129,6 +129,24 @@ export function CollectionFilterChips({
     onFiltersChange({ ...filters, due })
   }
 
+  const toggleFlagged = () => {
+    if (filters.flagged === true) {
+      const { flagged: _flagged, ...rest } = filters
+      onFiltersChange(rest)
+      return
+    }
+    onFiltersChange({ ...filters, flagged: true })
+  }
+
+  const toggleHasUnread = () => {
+    if (filters.hasUnread === true) {
+      const { hasUnread: _hasUnread, ...rest } = filters
+      onFiltersChange(rest)
+      return
+    }
+    onFiltersChange({ ...filters, hasUnread: true })
+  }
+
   const clearAll = () => onFiltersChange({})
 
   const activeDue = dueType(filters)
@@ -169,6 +187,24 @@ export function CollectionFilterChips({
     onClick: () => toggleDue(type),
     radio: true,
   }))
+  const flaggedOptions = [
+    {
+      key: 'flagged',
+      selected: filters.flagged === true,
+      label: t('collection.slice.flagged'),
+      onClick: toggleFlagged,
+      radio: false,
+    },
+  ]
+  const unreadOptions = [
+    {
+      key: 'unread',
+      selected: filters.hasUnread === true,
+      label: t('collection.slice.unread'),
+      onClick: toggleHasUnread,
+      radio: false,
+    },
+  ]
   const agentOptions = COLLECTION_AGENT_FAMILY_VALUES.map((family) => ({
     key: family,
     selected: (filters.agentFamily ?? []).includes(family),
@@ -183,6 +219,8 @@ export function CollectionFilterChips({
     projects.length > 0 ? { label: t('collection.filter.project'), options: projectOptions } : null,
     labels.length > 0 ? { label: t('collection.filter.label'), options: labelOptions } : null,
     { label: t('collection.filter.due'), options: dueOptions },
+    { label: t('collection.slice.flagged'), options: flaggedOptions },
+    { label: t('collection.slice.unread'), options: unreadOptions },
     { label: t('collection.filter.agentFamily'), options: agentOptions },
   ].filter(Boolean) as Array<{
     label: string
