@@ -1,14 +1,14 @@
 import { createPage, loadWorkspacePages } from './storage.ts'
 import type { PageConfig } from './types.ts'
 
-export const DEMO_PAGE_NAME = 'Getting started'
+export const DEMO_PAGE_NAME = 'С чего начать'
 
 export const DEMO_PAGE_HTML = `<!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Getting started</title>
+  <title>С чего начать</title>
   <style>
     :root { color-scheme: light dark; }
     body { margin: 0; font: 16px/1.5 system-ui, sans-serif; padding: 2rem; }
@@ -19,8 +19,8 @@ export const DEMO_PAGE_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <main>
-    <h1>Getting started</h1>
-    <p>This is a Page — a persistent HTML document in this workspace. Ask an agent to design it, or edit it yourself.</p>
+    <h1>С чего начать</h1>
+    <p>Страница — постоянный HTML-документ в этом рабочем пространстве. Попросите агента сверстать её или отредактируйте сами.</p>
   </main>
 </body>
 </html>
@@ -31,7 +31,7 @@ export function ensureDemoPage(workspaceRootPath: string): PageConfig | null {
   if (loadWorkspacePages(workspaceRootPath).length > 0) return null
   return createPage(workspaceRootPath, {
     name: DEMO_PAGE_NAME,
-    description: 'Starter page for this workspace',
+    description: 'Стартовая страница этого рабочего пространства',
     kind: 'static',
     content: DEMO_PAGE_HTML,
   })
