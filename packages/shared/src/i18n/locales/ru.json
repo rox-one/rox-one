@@ -3080,7 +3080,7 @@
   "settings.ai.enterConnectionName": "Введите название подключения...",
   "settings.ai.extendedContext": "Расширенный контекст (1M)",
   "settings.ai.extendedContextDesc": "Использовать контекстное окно в 1M токенов для текущих моделей Opus. Отключите, чтобы использовать 200K и экономить лимиты.",
-  "settings.ai.extendedPromptCache": "Расширенный кэш промптов (1 час)",
+  "settings.ai.extendedPromptCache": "Расширенный кэш запросов (1 час)",
   "settings.ai.extendedPromptCacheDesc": "Кэшировать промпты на 1 час вместо 5 минут. Применяется только к моделям Claude через Anthropic API. Снижает стоимость длинных сессий, но увеличивает стоимость записи в кэш.",
   "settings.ai.inheritFromApp": "Наследовать из настроек приложения",
   "settings.ai.installingRuntime": "Установка рантайма… {{percent}}%",
