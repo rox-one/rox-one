@@ -3359,7 +3359,7 @@
   "settings.context.bundledEmpty": "В этой сборке нет пресет-пакетов скиллов.",
   "settings.context.bundledLocalModified": "изменено локально",
   "settings.context.bundledSkillsCount": "навыков",
-  "settings.context.bundledTitle": "Пресет-пакеты навыков",
+  "settings.context.bundledTitle": "Шаблон-пакеты навыков",
   "settings.context.delete": "Удалить",
   "settings.context.deleteConfirm": "Удалить {{filename}}? Это действие нельзя отменить.",
   "settings.context.description": "Пользовательские настройки, контекстные документы и память агента",
