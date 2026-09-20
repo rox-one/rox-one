@@ -51,7 +51,7 @@ export function BottomTerminalDock() {
         type="button"
         aria-label={t('inspector.terminal')}
         onClick={() => setOpen(true)}
-        className="chrome-strip pointer-events-auto mx-2 mb-2 flex h-[28px] shrink-0 items-center rounded-md border border-border/40 bg-background px-2.5 text-left"
+        className="chrome-strip pointer-events-auto mx-1 mb-1 flex h-[28px] shrink-0 items-center rounded-md border border-border/40 bg-background px-2.5 text-left"
         data-bottom-terminal="collapsed"
       >
         <span className="chrome-label truncate font-medium tracking-tight">{t('inspector.terminal')}</span>
@@ -61,7 +61,7 @@ export function BottomTerminalDock() {
 
   return (
     <div
-      className="relative mx-2 mb-2 flex shrink-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background shadow-middle pointer-events-auto"
+      className="relative mx-1 mb-1 flex shrink-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-background shadow-middle pointer-events-auto"
       style={{ height }}
       data-bottom-terminal="true"
     >
