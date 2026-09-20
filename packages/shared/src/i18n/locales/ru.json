@@ -554,7 +554,7 @@
   "collaboration.inviteRevoked": "Приглашение отозвано",
   "collaboration.membershipRequired": "Для присоединения нужен аккаунт Rox",
   "collaboration.presenceAria": "{{count}} участников",
-  "collaboration.publicationGated": "Публикация недоступна, пока не утверждена политика шаринга",
+  "collaboration.publicationGated": "Публикация недоступна, пока не утверждена политика общего доступа",
   "collaboration.redactionPreview": "Предпросмотр редактуры",
   "collection.bulk.addLabel": "Добавить метку",
   "collection.bulk.applied": "Применено к {{count}} сессиям",
