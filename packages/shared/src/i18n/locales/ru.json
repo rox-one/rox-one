@@ -2120,7 +2120,7 @@
   "notes.sideSession.close": "Закрыть панель",
   "notes.sideSession.hint": "Проверьте промпт и отправьте, когда будете готовы. Заметка остаётся открытой.",
   "notes.sideSession.newChat": "Новый чат",
-  "notes.sideSession.promptPlaceholder": "Промпт для агента…",
+  "notes.sideSession.promptPlaceholder": "Запрос для агента…",
   "notes.sideSession.send": "Отправить",
   "notes.sideSession.title": "Сессия",
   "notes.slash.bulletList": "Маркированный список",
