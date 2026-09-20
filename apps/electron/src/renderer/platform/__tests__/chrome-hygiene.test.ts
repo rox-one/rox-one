@@ -20,12 +20,11 @@ describe('ship-rox-chrome-hygiene', () => {
     expect(osBrowserTabsSource).toContain('export function osBrowserSurfaceTabs')
   })
 
-  it('keeps true zero-width R-hide and moves terminal toggle to TopBar when collapsed', () => {
+  it('keeps true zero-width R-hide and mounts terminal toggle on TopBar', () => {
     expect(inspectorHostSource).toContain('if (chromeCollapsed) {')
     expect(inspectorHostSource).toContain('return null')
     // Expanded rail still hosts terminalControl once; collapsed must not be the only mount.
     expect(inspectorHostSource.match(/\{terminalControl\}/g)).toHaveLength(1)
-    expect(topBarSource).toContain('inspectorChromeCollapsed &&')
     expect(topBarSource).toContain('handleTopBarTerminalToggle')
     expect(topBarSource).toContain('data-testid="bottom-terminal-toggle"')
     expect(topBarSource).toContain('resolveBottomTerminalToggle')

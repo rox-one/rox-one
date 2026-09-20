@@ -454,7 +454,7 @@ export function TopBar({
           </TooltipTrigger>
           <TooltipContent side="bottom">{inspectorToggleLabel}</TooltipContent>
         </Tooltip>}
-        {showInspectorToggle && inspectorChromeCollapsed && (
+        {showInspectorToggle && (
           <Tooltip>
             <TooltipTrigger asChild>
               <TopBarButton
