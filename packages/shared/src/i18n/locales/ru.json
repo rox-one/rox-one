@@ -2609,7 +2609,7 @@
   "projectInfo.description": "Описание",
   "projectInfo.descriptionPlaceholder": "О чём этот проект?",
   "projectInfo.details": "Детали (инструкции для системного промпта)",
-  "projectInfo.detailsHelpText": "Произвольный текст, добавляемый в системный промпт агента, когда сессия привязана к этому проекту.",
+  "projectInfo.detailsHelpText": "Произвольный текст, добавляемый в системный запрос агента, когда сессия привязана к этому проекту.",
   "projectInfo.detailsPlaceholder": "Добавьте контекст проекта, который агент должен знать всегда — соглашения о коде, ссылки, глоссарий…",
   "projectInfo.icon": "Иконка",
   "projectInfo.iconClear": "Убрать",
