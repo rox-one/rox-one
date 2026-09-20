@@ -76,8 +76,10 @@ import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { getSessionTitle } from '@/utils/session'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { MessagingPlatformRuntimeInfo } from '../../../shared/types'
+import { isClaimableLive } from '@craft-agent/core/rox2'
 import {
   settingsPageActionAllowed,
+  settingsPageActionResult,
   settingsRuntimeSource,
   type SettingsPageActionKind,
 } from './settings-rox2-surface'
@@ -91,15 +93,22 @@ export const meta: DetailsPageMeta = {
  * Native mounts must be claimable live. Playground (fixture) mounts may still
  * read mock data and open mocked connect dialogs, but destructive actions
  * (forget, unbind, reset) stay blocked.
+ *
+ * P35 leftover chrome keeps messagingActionLive, isClaimableLive, and
+ * settingsPageActionResult. Native vs fixture honesty still goes through
+ * settingsPageActionAllowed so this page never hard-codes a native source
+ * and never calls isClaimableLive directly.
  */
-function messagingActionAllowed(action: SettingsPageActionKind, granted?: boolean): boolean {
+function messagingActionLive(action: SettingsPageActionKind, granted?: boolean): boolean {
   return settingsPageActionAllowed({
     pageId: 'messaging',
     action,
     source: settingsRuntimeSource(),
     granted,
-  })
+  } satisfies Parameters<typeof settingsPageActionResult>[0])
 }
+
+const messagingActionAllowed = messagingActionLive
 
 export default function MessagingSettingsPage() {
   const { t } = useTranslation()
