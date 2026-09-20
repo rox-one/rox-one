@@ -18,6 +18,9 @@ export const PANEL_MIN_WIDTH = 440
 /** Extra vertical space reserved in panel stack for box-shadows. */
 export const PANEL_STACK_VERTICAL_OVERFLOW = 0
 
+/** Breathing room between the TopBar and the desktop panel stack. */
+export const PANEL_STACK_TOP_INSET = 8
+
 /**
  * Shared resize sash geometry.
  *
