@@ -93,6 +93,10 @@ export default function MeetingsPage(props: {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchApplied, setSearchApplied] = useState(false)
   const selected = useMemo(() => meetings.find((item) => item.id === selectedId) ?? null, [meetings, selectedId])
+  const weekHeaders = useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(undefined, { weekday: 'short' })
+    return Array.from({ length: 7 }, (_, index) => formatter.format(new Date(2024, 0, 1 + index)))
+  }, [])
 
   useEffect(() => {
     if (props.meetings !== undefined) return
@@ -401,12 +405,42 @@ export default function MeetingsPage(props: {
 
   if (meetings.length === 0 && !searchApplied) {
     return (
-      <div data-testid="meetings-empty" className="flex h-full flex-col gap-3 p-4">
+      <div data-testid="meetings-empty" className="mx-auto flex w-full max-w-xl flex-col gap-4 p-6">
         <h1>{t('meetings.title')}</h1>
         <p className="text-muted-foreground">{t('meetings.empty')}</p>
-        {nativeNote}
-        {searchForm}
-        <button type="button" data-testid="meetings-start" onClick={() => void handleStart()}>{t('meetings.start')}</button>
+        <div
+          data-testid="meetings-week-strip"
+          className="grid grid-cols-7 overflow-hidden rounded-md border border-border"
+          role="presentation"
+        >
+          {weekHeaders.map((label, index) => (
+            <div
+              key={index}
+              className="border-r border-border px-1 py-2 text-center text-xs font-medium text-muted-foreground last:border-r-0"
+            >
+              {label}
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" data-testid="meetings-start" onClick={() => void handleStart()}>
+            {t('meetings.start')}
+          </button>
+          <div className="flex min-w-0 flex-1 items-center gap-2" data-testid="meetings-search">
+            <input
+              data-testid="meetings-search-query"
+              className="h-8 min-w-0 flex-1 rounded-md border bg-background px-2 text-sm"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+            <button type="button" data-testid="meetings-search-submit" onClick={() => void handleSearch()}>
+              {t('meetings.search')}
+            </button>
+          </div>
+        </div>
+        <p data-testid="meetings-native-catalog" className="text-xs text-muted-foreground">
+          {t('meetings.nativeCatalog')}
+        </p>
         {bannerNode}
         {createForm}
         <ProposalInbox
