@@ -60,7 +60,6 @@ import type {
   Session,
   NavigationState,
   SessionFilter,
-  SourceFilter,
   RightSidebarPanel,
   ContentBadge,
 } from '../../shared/types'
@@ -86,7 +85,6 @@ import {
   DEFAULT_NAVIGATION_STATE,
 } from '../../shared/types'
 import { sessionMetaMapAtom, updateSessionMetaAtom, type SessionMeta } from '@/atoms/sessions'
-import { sourcesAtom } from '@/atoms/sources'
 import { skillsAtom } from '@/atoms/skills'
 import {
   panelStackAtom,
@@ -189,9 +187,6 @@ export function NavigationProvider({
 
   // Store reference for reading fresh atom values in callbacks (avoids stale closures)
   const store = useStore()
-
-  // Read sources from atom (populated by AppShell)
-  const sources = useAtomValue(sourcesAtom)
 
   // Read skills from atom (populated by AppShell)
   const skills = useAtomValue(skillsAtom)
@@ -603,17 +598,6 @@ export function NavigationProvider({
     [workspaceId, filterSessionsByFilter]
   )
 
-  const getFirstSourceSlug = useCallback(
-    (filter?: SourceFilter | null): string | null => {
-      if (!filter) {
-        return sources[0]?.config.slug ?? null
-      }
-      const filtered = sources.filter(s => s.config.type === filter.sourceType)
-      return filtered[0]?.config.slug ?? null
-    },
-    [sources]
-  )
-
   const getFirstSkillSlug = useCallback(
     (): string | null => {
       return skills[0]?.slug ?? null
@@ -665,14 +649,8 @@ export function NavigationProvider({
         return nextState
       }
 
-      // Sources: auto-select first source
-      if (isSourcesNavigation(nextState) && !nextState.details && !options?.skipAutoSelect) {
-        const firstSourceSlug = getFirstSourceSlug(nextState.filter)
-        if (firstSourceSlug) {
-          return { ...nextState, details: { type: 'source', sourceSlug: firstSourceSlug } }
-        }
-        return nextState
-      }
+      // Sources: stay on the list route. Explicit row click in SourcesListPanel
+      // opens sources/source/<slug>. Do not auto-drill to the first source.
 
       // Skills: auto-select first skill
       if (isSkillsNavigation(nextState) && !nextState.details && !options?.skipAutoSelect) {
@@ -685,7 +663,7 @@ export function NavigationProvider({
 
       return nextState
     },
-    [store, workspaceId, remoteWorkspaceId, getLastSelectedSessionId, getFirstSessionId, getFirstSourceSlug, getFirstSkillSlug]
+    [store, workspaceId, remoteWorkspaceId, getLastSelectedSessionId, getFirstSessionId, getFirstSkillSlug]
   )
 
   // Ref keeps resolveAutoSelection fresh for reconcileFromUrlParams (defined earlier in the file)
