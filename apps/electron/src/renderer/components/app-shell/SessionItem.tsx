@@ -220,11 +220,6 @@ export function SessionItem({
       )}
       leading={
         <div className={cn("flex items-center", !isComfortable ? "pt-1.5" : "pt-3")}>
-          <SessionStatusIcon item={item} />
-        </div>
-      }
-      icon={
-        <>
           <button
             type="button"
             aria-pressed={isInMultiSelect}
@@ -246,6 +241,7 @@ export function SessionItem({
               if (e.shiftKey && onRangeSelect) onRangeSelect()
               else if (onToggleSelect) onToggleSelect()
             }}
+            onKeyDown={(e) => e.stopPropagation()}
           >
             <Check
               className={cn(
@@ -255,6 +251,11 @@ export function SessionItem({
               strokeWidth={2.25}
             />
           </button>
+          <SessionStatusIcon item={item} />
+        </div>
+      }
+      icon={
+        <>
           <div className={cn(
             "flex items-center justify-center overflow-hidden gap-1",
             "transition-all duration-200 ease-out",

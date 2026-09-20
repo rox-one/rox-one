@@ -9,7 +9,7 @@
  * - Hover-visible MoreHorizontal dropdown + context menu
  * - Selection/multi-select styling
  * - Optional separator above
- * - Optional children below the button (e.g. expanded child list)
+ * - Optional children below the row (e.g. expanded child list)
  * - Optional overlay (e.g. match count badge)
  *
  * Domain-specific logic (what icon, what badges, what menu items) is injected via slots.
@@ -17,6 +17,7 @@
 
 import * as React from 'react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MoreHorizontal } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -67,11 +68,11 @@ export interface EntityRowProps {
   badges?: React.ReactNode
   /** Right-aligned content in the badge row (timestamp, child toggle) */
   trailing?: React.ReactNode
-  /** Content rendered below the main button (e.g. expanded child list) */
+  /** Content rendered below the main row (e.g. expanded child list) */
   children?: React.ReactNode
   /** Absolutely-positioned overlay (e.g. match count badge) */
   overlay?: React.ReactNode
-  /** Rendered beside the row button (not inside it). Use for nested controls like status. */
+  /** Rendered beside the row (not inside it). Use for nested controls like status. */
   leading?: React.ReactNode
 
   // --- Interaction ---
@@ -115,7 +116,7 @@ export interface EntityRowProps {
   }) => React.ReactNode
 
   // --- Passthrough ---
-  /** Additional props spread onto the <button> (aria attrs, keyboard handlers, tabIndex, ref) */
+  /** Additional props spread onto the row (aria attrs, keyboard handlers, tabIndex, ref) */
   buttonProps?: Record<string, unknown>
   /** Data attributes on the outer wrapper div */
   dataAttributes?: Record<string, string | undefined>
@@ -154,6 +155,7 @@ export function EntityRow({
   className,
   separatorClassName = 'pl-12 pr-4',
 }: EntityRowProps) {
+  const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const [contextMenuOpen, setContextMenuOpen] = useState(false)
   const [compactMenuOpen, setCompactMenuOpen] = useState(false)
@@ -284,8 +286,12 @@ export function EntityRow({
       ? (
         <button
           type="button"
-          onClick={() => setCompactMenuOpen(true)}
+          onClick={(e) => {
+            e.stopPropagation()
+            setCompactMenuOpen(true)
+          }}
           className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+          aria-label={t('common.more')}
           aria-haspopup="dialog"
           aria-expanded={compactMenuOpen}
         >
@@ -295,9 +301,15 @@ export function EntityRow({
       : (
         <DropdownMenu modal={true} open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
-            <div className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer">
+            <button
+              type="button"
+              aria-label={t('common.more')}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              className="p-1 rounded-[6px] hover:bg-foreground/10 data-[state=open]:bg-foreground/10 cursor-pointer"
+            >
               <MoreHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
+            </button>
           </DropdownMenuTrigger>
           <StyledDropdownMenuContent align="end">
             <DropdownMenuProvider>
@@ -318,6 +330,8 @@ export function EntityRow({
           : "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100",
       )}
       onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
     >
       {hoverActions}
       {moreControl}
@@ -329,7 +343,7 @@ export function EntityRow({
     <div className="relative group select-none pl-2 mr-2">
       {/* Selection indicator bar — suppressed when an outer wrapper draws its
           own leading stripe (e.g. project color) so they don't stack on top of
-          each other. Background tint on the inner button still indicates selection. */}
+          each other. Background tint on the inner row still indicates selection. */}
       {(isSelected || isInMultiSelect) && !suppressSelectionBar && (
         <div className="absolute left-0 inset-y-0 w-[2px] bg-accent" />
       )}
@@ -340,11 +354,13 @@ export function EntityRow({
           {leading}
         </div>
       ) : null}
-      {/* Main content button */}
-      <button
-        {...(buttonProps as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+      {/* Main content row — div role=option so checkbox/hover-action buttons are not nested in a <button>. */}
+      <div
+        tabIndex={0}
+        {...(buttonProps as React.HTMLAttributes<HTMLDivElement>)}
+        role="option"
         className={cn(
-          "entity-row-btn flex items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[8px] focus-visible:ring-1 focus-visible:ring-ring/60",
+          "entity-row-btn flex items-start gap-2 pl-2 pr-4 py-3 text-left text-sm outline-none rounded-[8px] focus-visible:ring-1 focus-visible:ring-ring/60 cursor-pointer",
           leading ? "min-w-0 flex-1" : "w-full",
           "transition-[background-color] duration-75 motion-reduce:transition-none",
           (isSelected || isInMultiSelect)
@@ -354,6 +370,14 @@ export function EntityRow({
         )}
         onMouseDown={wrappedOnMouseDown}
         onClick={!onMouseDown ? wrappedOnClick : undefined}
+        onKeyDown={(e) => {
+          ;(buttonProps as React.HTMLAttributes<HTMLDivElement> | undefined)?.onKeyDown?.(e)
+          if (e.defaultPrevented || e.target !== e.currentTarget) return
+          if (!onMouseDown && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            wrappedOnClick()
+          }
+        }}
         onPointerDown={useCompactMenu ? onPointerDown : undefined}
         onPointerMove={useCompactMenu ? onPointerMove : undefined}
         onPointerUp={useCompactMenu ? cancelLongPress : undefined}
@@ -446,10 +470,10 @@ export function EntityRow({
             </div>
           )}
         </div>
-      </button>
+      </div>
       </div>
 
-      {/* Children rendered below the button */}
+      {/* Children rendered below the row */}
       {children}
 
       {/* Overlay (e.g. match count badge) */}
