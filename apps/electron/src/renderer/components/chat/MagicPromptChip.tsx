@@ -36,7 +36,7 @@ export function MagicPromptChip({ draft, onApply }: MagicPromptChipProps) {
         title={t('sideThread.magicImprove')}
         disabled={!draft.trim()}
         onClick={handleOpen}
-        className="flex h-6 items-center gap-1 rounded-[6px] px-1.5 text-xs text-muted-foreground/70 hover:bg-foreground/5 hover:text-muted-foreground disabled:opacity-40"
+        className="flex h-6 items-center gap-1 rounded-[6px] border border-border/60 bg-background px-1.5 text-xs text-foreground/80 hover:bg-foreground/5 hover:text-foreground disabled:opacity-50"
       >
         <Sparkles className="h-3 w-3" />
         {t('sideThread.magic')}
