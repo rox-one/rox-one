@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import { SESSION_RATING_PILLS } from '@craft-agent/shared/gamification'
 
 interface SessionRatingPillProps {
@@ -33,24 +34,33 @@ export function SessionRatingPill({ sessionId }: SessionRatingPillProps) {
     >
       <span className="text-[10px] text-muted-foreground">{t('quests.rateSession')}</span>
       {SESSION_RATING_PILLS.map((value) => {
-        const filled = score != null && score >= value
+        const selected = score === value
         return (
           <button
             key={value}
             type="button"
             title={t('quests.rateOf', { score: value })}
+            aria-pressed={selected}
             className={
-              filled
-                ? 'h-5 min-w-5 rounded-full bg-foreground/80 px-1.5 text-[10px] font-medium text-background'
-                : 'h-5 min-w-5 rounded-full bg-foreground/10 px-1.5 text-[10px] text-muted-foreground hover:bg-foreground/20'
+              selected
+                ? 'h-5 min-w-5 rounded-full bg-foreground px-1.5 text-[10px] font-medium text-background'
+                : 'h-5 min-w-5 rounded-full border border-border/50 bg-background px-1.5 text-[10px] text-foreground/80'
             }
-            onClick={() => {
+            onClick={async () => {
+              const previous = score
               setScore(value)
-              void window.electronAPI.rateGamificationSession({
-                sessionId,
-                score: value,
-                provenance: 'session-composer',
-              })
+              const rate = window.electronAPI.rateGamificationSession
+              if (!rate) return
+              try {
+                await rate({
+                  sessionId,
+                  score: value,
+                  provenance: 'session-composer',
+                })
+              } catch {
+                toast.error(t('common.failed'))
+                setScore(previous)
+              }
             }}
           >
             {value}
