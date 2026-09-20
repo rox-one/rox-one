@@ -1347,7 +1347,7 @@
   "kanban.changeStatus": "Изменить статус",
   "kanban.column.add": "Добавить колонку",
   "kanban.column.autoPrompt": "Авто-промпт",
-  "kanban.column.autoPromptPlaceholder": "Промпт при переносе карточки сюда…",
+  "kanban.column.autoPromptPlaceholder": "Запрос при переносе карточки сюда…",
   "kanban.column.backlog": "Бэклог",
   "kanban.column.collapse": "Свернуть колонку",
   "kanban.column.color": "Цвет",
