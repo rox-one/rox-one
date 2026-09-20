@@ -4762,6 +4762,7 @@
   "voice.history.unfavorite": "Unfavorite",
   "voice.overlay.cancel": "Cancel",
   "voice.overlay.enhancing": "Enhancing",
+  "voice.overlay.error": "错误",
   "voice.overlay.permission": "Microphone permission",
   "voice.overlay.ready": "Ready",
   "voice.overlay.recording": "Recording",

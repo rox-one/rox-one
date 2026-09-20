@@ -4768,6 +4768,7 @@
   "voice.history.unfavorite": "Убрать из избранного",
   "voice.overlay.cancel": "Отмена",
   "voice.overlay.enhancing": "Улучшение",
+  "voice.overlay.error": "Ошибка",
   "voice.overlay.permission": "Доступ к микрофону",
   "voice.overlay.ready": "Готово",
   "voice.overlay.recording": "Запись",
