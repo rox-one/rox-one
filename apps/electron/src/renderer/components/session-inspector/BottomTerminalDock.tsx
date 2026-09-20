@@ -45,11 +45,23 @@ export function BottomTerminalDock() {
     window.addEventListener('pointercancel', up)
   }
 
-  if (!open) return null
+  if (!open) {
+    return (
+      <button
+        type="button"
+        aria-label={t('inspector.terminal')}
+        onClick={() => setOpen(true)}
+        className="chrome-strip pointer-events-auto flex h-[28px] w-full shrink-0 items-center border-t border-foreground/5 bg-background px-2.5 text-left"
+        data-bottom-terminal="collapsed"
+      >
+        <span className="chrome-label truncate font-medium tracking-tight">{t('inspector.terminal')}</span>
+      </button>
+    )
+  }
 
   return (
     <div
-      className="relative flex shrink-0 flex-col overflow-hidden border-t border-foreground/5 bg-background"
+      className="relative flex shrink-0 flex-col overflow-hidden border-t border-foreground/5 bg-background pointer-events-auto"
       style={{ height }}
       data-bottom-terminal="true"
     >
