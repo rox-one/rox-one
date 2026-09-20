@@ -26,6 +26,14 @@ const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'sudo': TriangleAlert,
 }
 
+/** Placeholder height for offscreen EntityRow (py-3 + title + description). */
+const SKILL_ROW_CONTAIN_SIZE = 'auto 80px'
+
+const SKILL_ROW_STYLE: React.CSSProperties = {
+  contentVisibility: 'auto',
+  containIntrinsicSize: SKILL_ROW_CONTAIN_SIZE,
+}
+
 export interface SkillsListPanelProps {
   skills: LoadedSkill[]
   onDeleteSkill: (skillSlug: string) => void
@@ -262,6 +270,12 @@ export function SkillsListPanel({
 
   return (
     <>
+    <style>{`
+      [data-list-role="skills"] [data-skill-row] {
+        content-visibility: auto;
+        contain-intrinsic-size: ${SKILL_ROW_CONTAIN_SIZE};
+      }
+    `}</style>
     {/* S4 header: prune (archive) never-used workspace skills. Hidden when
         every workspace skill saw at least one prompt hit. */}
     {effectiveWorkspaceId && pruneCandidates.length > 0 && (
@@ -383,6 +397,7 @@ export function SkillsListPanel({
             } : undefined}
           />
         ),
+        dataAttributes: { 'data-skill-row': '' },
       })}
     />
 
@@ -399,7 +414,7 @@ export function SkillsListPanel({
           {pendingSkills.map((candidate) => {
             const expanded = expandedPendingSlug === candidate.slug
             return (
-              <li key={candidate.slug} className="mx-0 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03]">
+              <li key={candidate.slug} style={SKILL_ROW_STYLE} className="mx-0 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03]">
                 <button
                   type="button"
                   className="w-full text-left"
@@ -539,7 +554,7 @@ export function SkillsListPanel({
         </p>
         <ul>
           {bundledPacks.map((pack) => (
-            <li key={pack.slug} className="flex items-center gap-2 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03]">
+            <li key={pack.slug} style={SKILL_ROW_STYLE} className="flex items-center gap-2 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03]">
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm">{pack.slug}</span>
                 <span className="block truncate text-[11px] text-muted-foreground">
@@ -584,6 +599,7 @@ export function SkillsListPanel({
               key={skill.slug}
               title={skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
               className={`flex items-center gap-2 px-2 py-1.5 rounded-[8px] ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
+              style={SKILL_ROW_STYLE}
             >
               <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
               <span className="min-w-0 flex-1">
