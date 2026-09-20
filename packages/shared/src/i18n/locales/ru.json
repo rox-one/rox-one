@@ -1346,7 +1346,7 @@
   "kanban.boardFailed": "Не удалось открыть доску.",
   "kanban.changeStatus": "Изменить статус",
   "kanban.column.add": "Добавить колонку",
-  "kanban.column.autoPrompt": "Авто-промпт",
+  "kanban.column.autoPrompt": "Авто-запрос",
   "kanban.column.autoPromptPlaceholder": "Промпт при переносе карточки сюда…",
   "kanban.column.backlog": "Бэклог",
   "kanban.column.collapse": "Свернуть колонку",
