@@ -3233,7 +3233,7 @@
   "settings.appearance.workbenchHarnessAgentTeams": "Команды агентов",
   "settings.appearance.workbenchHarnessAgentTeamsDesc": "Навык капитана через spawn_session и сообщения. Cordis dsh-agent-teams не ставится. По умолчанию вкл.",
   "settings.appearance.workbenchHarnessChatChrome": "Панель чата",
-  "settings.appearance.workbenchHarnessChatChromeDesc": "История промптов, прогресс хода и стоимость в статусе. По умолчанию включено.",
+  "settings.appearance.workbenchHarnessChatChromeDesc": "История запросов, прогресс хода и стоимость в статусе. По умолчанию включено.",
   "settings.appearance.workbenchHarnessExtCenter": "Центр расширений",
   "settings.appearance.workbenchHarnessExtCenterDesc": "Навыки, источники и автоматизации на одном экране. По умолчанию включено.",
   "settings.appearance.workbenchHarnessInspector": "Инспектор сессии",
