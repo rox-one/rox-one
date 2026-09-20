@@ -134,6 +134,37 @@ describe('CF-6.2 ConnectionsPage', () => {
     expect(page).toContain('importSshAgent')
     expect(page.toLowerCase()).not.toContain('infisical')
   })
+
+  it('scopes import forms to the active Connect chip', () => {
+    expect(page).toContain('isImportPanelVisible')
+    expect(page).toContain('connections-import-panel')
+    expect(page).toContain('data-source')
+  })
+
+  it('picks an import path through the existing file dialog', () => {
+    expect(page).toContain('openFileDialog')
+    expect(page).toContain('firstPickedPath')
+    expect(page).toContain('connections-pick-path')
+    expect(page.toLowerCase()).not.toContain('infisical')
+  })
+
+  it('creates a metadata-only connection from the Services tab', () => {
+    expect(page).toContain('createConnection')
+    expect(page).toContain('connections.create')
+    expect(page).toContain('connections-create-form')
+    expect(page).toContain('createCredentialRef')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
+
+  it('grants a named consumer on the Policies tab', () => {
+    expect(page).toContain('grantConnection')
+    expect(page).toContain('connections.grant')
+    expect(page).toContain('connections-grant-form')
+    expect(page).toContain('grantConsumer')
+    expect(page.toLowerCase()).not.toContain('infisical')
+    expect(page).not.toMatch(/\bpayload\b|\bsecret\b|\brefreshToken\b/)
+  })
 })
 
 
