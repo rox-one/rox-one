@@ -1,13 +1,15 @@
 import { AgentReadiness, type AgentReadinessProps } from './AgentReadiness'
+import MeetingsWorkspace from './MeetingsWorkspace'
 import { useLocalMeetingReadiness } from './use-local-meeting-readiness'
 
 export type MeetingsPageProps = {
   meetingId?: string
   readiness?: AgentReadinessProps
+  workspaceId?: string | null
 }
 
-/** Mounts AgentReadiness. Catalog/search/detail live on pages/MeetingsPage.tsx. */
-export function MeetingsPage({ meetingId = 'local', readiness }: MeetingsPageProps) {
+/** Mounts AgentReadiness and MeetingsWorkspace. Catalog/search/detail live on pages/MeetingsPage.tsx. */
+export function MeetingsPage({ meetingId = 'local', readiness, workspaceId = null }: MeetingsPageProps) {
   const localReadiness = useLocalMeetingReadiness(meetingId)
   const readinessPanel = readiness ?? localReadiness
 
@@ -18,6 +20,7 @@ export function MeetingsPage({ meetingId = 'local', readiness }: MeetingsPagePro
           <AgentReadiness {...readinessPanel} />
         </div>
       ) : null}
+      <MeetingsWorkspace workspaceId={workspaceId} />
     </div>
   )
 }
