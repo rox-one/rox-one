@@ -100,7 +100,7 @@ import {
   shouldShowStatusBar,
   resolveWorkbenchAvailability,
 } from "../../platform"
-import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom } from "@/atoms/unified-shell"
+import { featureUnifiedShellAtom, featureWorkbenchAtom, featureWorkbenchTopChromeV2Atom, featureWorkbenchStatusBarV1Atom, featureWorkbenchHarnessInspectorV1Atom, featureWorkbenchHarnessChatChromeV1Atom, featureWorkbenchHarnessAgentTeamsAtom, activityRailCollapsedAtom, inspectorVisibleAtom, inspectorChromeCollapsedAtom, inspectorSectionAtom, inspectorPanelWidthAtom, bottomTerminalOpenAtom, bottomDockHeightAtom } from "@/atoms/unified-shell"
 import { useSession, useSessionSelection } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -177,7 +177,7 @@ import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
   PANEL_MIN_WIDTH,
-  PANEL_STACK_VERTICAL_OVERFLOW,
+  PANEL_STACK_TOP_INSET,
   RADIUS_EDGE,
   RADIUS_INNER,
 } from "./panel-constants"
@@ -291,6 +291,9 @@ function AppShellContent({
   const workbenchEnabled = workbenchAvailability === 'enabled'
   const activityRailCollapsed = useAtomValue(activityRailCollapsedAtom)
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
+  const bottomTerminalOpen = useAtomValue(bottomTerminalOpenAtom)
+  const bottomDockHeight = useAtomValue(bottomDockHeightAtom)
+  const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 28) + PANEL_EDGE_INSET + 8
   const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
@@ -3043,8 +3046,8 @@ function AppShellContent({
           dragging={sidebarResize.dragging || isResizing === 'sidebar'}
           className="absolute z-panel"
           style={{
-            top: PANEL_STACK_VERTICAL_OVERFLOW,
-            bottom: PANEL_STACK_VERTICAL_OVERFLOW,
+            top: PANEL_STACK_TOP_INSET,
+            bottom: terminalClearance,
             height: 'auto',
             left: unifiedRailOffset + (isSidebarVisible
               ? sidebarWidth + (PANEL_GAP / 2) - sashHitWidthPx() / 2
@@ -3104,8 +3107,8 @@ function AppShellContent({
           dragging={navigatorResize.dragging || isResizing === 'session-list'}
           className="absolute z-panel"
           style={{
-            top: PANEL_STACK_VERTICAL_OVERFLOW,
-            bottom: PANEL_STACK_VERTICAL_OVERFLOW,
+            top: PANEL_STACK_TOP_INSET,
+            bottom: terminalClearance,
             height: 'auto',
             left:
               unifiedRailOffset +

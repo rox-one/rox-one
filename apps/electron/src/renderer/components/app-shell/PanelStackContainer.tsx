@@ -36,6 +36,7 @@ import {
   PANEL_GAP,
   PANEL_EDGE_INSET,
   PANEL_STACK_VERTICAL_OVERFLOW,
+  PANEL_STACK_TOP_INSET,
   RADIUS_EDGE,
   RADIUS_INNER,
 } from './panel-constants'
@@ -188,6 +189,7 @@ export function PanelStackContainer({
         overflowX: 'auto',
         overflowY: 'hidden',
         paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
+        paddingTop: PANEL_STACK_TOP_INSET,
         marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
         marginBottom: -6,
         paddingBottom: 6,
