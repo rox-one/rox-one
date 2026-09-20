@@ -242,9 +242,6 @@ export default function AccountsSettingsPage() {
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
           <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
-            <p className="whitespace-normal break-words text-sm text-muted-foreground">
-              {t('settings.accounts.description')}
-            </p>
         {/* PROFILE */}
         <SettingsSection title={t('settings.accounts.profileSection')}>
           <SettingsCard>
