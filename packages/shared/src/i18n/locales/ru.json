@@ -2118,7 +2118,7 @@
   "notes.search.placeholder": "Поиск заметок…",
   "notes.sideSession.cancel": "Отмена",
   "notes.sideSession.close": "Закрыть панель",
-  "notes.sideSession.hint": "Проверьте промпт и отправьте, когда будете готовы. Заметка остаётся открытой.",
+  "notes.sideSession.hint": "Проверьте запрос и отправьте, когда будете готовы. Заметка остаётся открытой.",
   "notes.sideSession.newChat": "Новый чат",
   "notes.sideSession.promptPlaceholder": "Промпт для агента…",
   "notes.sideSession.send": "Отправить",
