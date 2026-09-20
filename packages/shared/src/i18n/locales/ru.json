@@ -1039,7 +1039,7 @@
   "entityView.mapAddNode": "Добавить узел",
   "entityView.mapAlign": "Выровнять",
   "entityView.mapCompareVersions": "Сравнить версии",
-  "entityView.mapComposeLabel": "Промпт",
+  "entityView.mapComposeLabel": "Запрос",
   "entityView.mapComposePlaceholder": "Продолжить с этой сцены…",
   "entityView.mapConvertNode": "Преобразовать узел",
   "entityView.mapDeleteConnection": "Удалить связь",
