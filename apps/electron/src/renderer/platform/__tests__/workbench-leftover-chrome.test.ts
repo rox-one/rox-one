@@ -20,9 +20,13 @@ describe('workbench leftover chrome (flags stay default off)', () => {
     expect(host).toContain('browserSurface:')
   })
 
-  it('returns children only when every chrome surface is off', () => {
-    expect(host).toContain('if (!chrome.showRail && !chrome.showSurfaceTabs && !chrome.showInspector)')
-    expect(host).toContain('return <>{children}</>')
+  it('still docks the bottom terminal and files inspector when chrome surfaces are off', () => {
+    expect(host).not.toContain('return <>{children}</>')
+    expect(host).toContain('<BottomTerminalDock />')
+    expect(host).toContain('inspectorVisibleAtom')
+    expect(host).toContain('(chrome.showInspector || inspectorVisible) && <InspectorHost />')
+    expect(host).toContain('{chrome.showRail && <ActivityRail />}')
+    expect(host).toContain('{chrome.showSurfaceTabs && <SurfaceTabs />}')
   })
 
   it('does not default unified-shell or workbench atoms on', () => {
