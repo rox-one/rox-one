@@ -26,10 +26,9 @@ describe('TopBar navigation cutover', () => {
     expect(source).toContain('aria-label={t("menu.toggleSidebar")}')
   })
 
-  it('exposes bottom-terminal toggle in TopBar while inspector chrome is collapsed', () => {
+  it('exposes bottom-terminal toggle in TopBar whenever the inspector toggle is shown', () => {
     expect(source).toContain('bottomTerminalOpenAtom')
     expect(source).toContain('handleTopBarTerminalToggle')
-    expect(source).toContain('inspectorChromeCollapsed &&')
     expect(source).toContain('data-testid="bottom-terminal-toggle"')
     expect(source).toContain('resolveBottomTerminalToggle')
   })
