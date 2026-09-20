@@ -107,7 +107,7 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
     return new MeetingJournal(persistRoot()).read(meetingId).events.filter((event) => event.type === 'proposal.upsert')
   }
 
-  it('create then approve returns persist revision', async () => {
+  it('create then approve fail-closes when native operation is fixture/unverified', async () => {
     const api = apiFromHandlers()
     startMeeting()
     const created = await createNativeProposalViaRpc({
@@ -128,10 +128,12 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
       grant,
       row: created.row,
     })
-    expect(approved.ok).toBe(true)
-    if (!approved.ok) throw new Error('expected approve')
-    expect(approved.row.status).toBe('applied')
-    expect(Number(approved.row.revisionId)).toBeGreaterThan(0)
+    expect(approved.ok).toBe(false)
+    if (approved.ok) throw new Error('expected fixture fail-closed')
+    expect(approved.code).toBe('approve-failed')
+    expect(approved.row.errorCode).toBe('approve-failed')
+    expect(approved.row.revisionId).toBeUndefined()
+    expect(approved.row.entityId).toBeUndefined()
     expect(upserts('m1').map((event) => event.proposal.status)).toEqual(['proposed', 'applied'])
   })
 
@@ -231,7 +233,7 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
     expect(upserts('m1').map((event) => event.proposal.status)).toEqual(['proposed', 'rejected'])
   })
 
-  it('openTarget navigates only after persist revision verify and fail-closes without CONFIG_DIR', async () => {
+  it('openTarget does not navigate after fixture approve and fail-closes without CONFIG_DIR', async () => {
     const api = apiFromHandlers()
     startMeeting()
     const created = await createNativeProposalViaRpc({
@@ -252,9 +254,10 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
       grant,
       row: created.row,
     })
-    expect(approved.ok).toBe(true)
-    if (!approved.ok) throw new Error('expected approve')
-    expect(approved.row.entityId?.startsWith('task:')).toBe(true)
+    expect(approved.ok).toBe(false)
+    if (approved.ok) throw new Error('expected fixture fail-closed')
+    expect(approved.row.revisionId).toBeUndefined()
+    expect(approved.row.entityId).toBeUndefined()
     const opened = await openNativeProposalTargetViaRpc({
       api,
       workspaceId: 'ws',
@@ -262,11 +265,7 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
       grant,
       row: approved.row,
     })
-    expect(opened.ok).toBe(true)
-    if (!opened.ok) throw new Error('expected open')
-    expect(opened.route.startsWith('tasks/task/')).toBe(true)
-    expect(opened.target.kind).toBe('task')
-    expect(opened.target.revisionId).toBe(approved.row.revisionId)
+    expect(opened).toEqual({ ok: false, code: 'revision-required' })
     delete process.env.ROX_CONFIG_DIR
     delete process.env.CRAFT_CONFIG_DIR
     const noDir = await openNativeProposalTargetViaRpc({
@@ -274,7 +273,7 @@ describe('meetings UI client against CREATE_PROPOSAL + APPROVE_PROPOSAL handlers
       workspaceId: 'ws',
       actorId: 'user',
       grant,
-      row: approved.row,
+      row: { ...approved.row, revisionId: '1', entityId: 'task:fixture' },
     })
     expect(noDir).toEqual({ ok: false, code: 'config-dir-required' })
   })
