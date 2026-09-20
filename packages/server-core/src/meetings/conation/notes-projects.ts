@@ -3,6 +3,7 @@
  * One EntityId. Unconfirmed writes stay BLOCKED. Offline cache is stale.
  * In-memory Maps are not a live Notes/Projects receipt: stamps stay pending
  * (live:false, not verified; L4 remains not_run).
+ * Replay import of a Conation note is a write: never a verified stamp.
  */
 
 import { confirmWrite } from './capabilities.ts'
@@ -84,6 +85,14 @@ export function renameNote(
 }
 
 export function replayImport(store: NotesProjectsStore, note: NoteRecord): MeetingOpResult {
+  if (note.origin === 'conation') {
+    const write = confirmWrite({
+      moduleId: 'GraphqlSoupDocument',
+      operation: 'create',
+      authPresent: true,
+    })
+    if (!write.allowed) return blocked('unconfirmed-write')
+  }
   if (store.notes.has(note.id)) {
     return { status: 'duplicate', reason: 'replay-import', live: false, evidenceLevel: 'C2', payload: store.notes.get(note.id) }
   }
