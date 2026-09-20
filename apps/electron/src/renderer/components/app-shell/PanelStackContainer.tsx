@@ -194,8 +194,8 @@ export function PanelStackContainer({
         marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
         marginBottom: -6,
         paddingBottom: PANEL_STACK_BOTTOM_INSET + 6,
-        paddingRight: 8,
-        marginRight: -8,
+        paddingRight: 4,
+        marginRight: -4,
       }}
     >
       <motion.div

@@ -1,13 +1,11 @@
-import { isMac } from '@/lib/platform'
-
 /** Gap between any adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar) */
-export const PANEL_GAP = 8
+export const PANEL_GAP = 4
 
 /** Padding from window edges to outermost panels (right, bottom, left when sidebar hidden) */
 export const PANEL_EDGE_INSET = 4
 
-/** Corner radius for panel edges touching the window boundary (macOS native corners → larger) */
-export const RADIUS_EDGE = isMac ? 14 : 8
+/** Corner radius for panel edges touching the window boundary */
+export const RADIUS_EDGE = 8
 
 /** Corner radius for interior corners between panels */
 export const RADIUS_INNER = 8
@@ -19,10 +17,10 @@ export const PANEL_MIN_WIDTH = 440
 export const PANEL_STACK_VERTICAL_OVERFLOW = 0
 
 /** Breathing room between the TopBar and the desktop panel stack. */
-export const PANEL_STACK_TOP_INSET = 8
+export const PANEL_STACK_TOP_INSET = 4
 
 /** Breathing room under the desktop panel stack. */
-export const PANEL_STACK_BOTTOM_INSET = 8
+export const PANEL_STACK_BOTTOM_INSET = 4
 
 /**
  * Shared resize sash geometry.
