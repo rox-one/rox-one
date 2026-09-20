@@ -94,7 +94,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
           data-tutorial="permission-allow-button"
         >
           <Check className="h-3.5 w-3.5" />
-          Allow
+          {t('chat.allow')}
         </Button>
         <Button
           size="sm"
