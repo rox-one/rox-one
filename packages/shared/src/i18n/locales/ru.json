@@ -508,7 +508,7 @@
   "cloudRuns.kill": "Убить запуск",
   "cloudRuns.killed": "Запуск остановлен",
   "cloudRuns.newRun": "Новый запуск",
-  "cloudRuns.omp": "Раннер Rox",
+  "cloudRuns.omp": "Запуск Rox",
   "cloudRuns.ompHint": "Запускать цикл агента Rox внутри песочницы Daytona",
   "cloudRuns.open": "Облако",
   "cloudRuns.personas": "Персоны",
