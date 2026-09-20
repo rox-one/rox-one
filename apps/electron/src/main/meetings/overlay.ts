@@ -35,6 +35,18 @@ export function bindMeetingHotkey(existing: readonly string[], next: string): { 
   return { ok: true }
 }
 
+export function rebindMeetingHotkeys(prefs: { hotkeyToggle: string; hotkeyCancel: string }): { ok: boolean; conflict?: string } {
+  if (prefs.hotkeyToggle.replace(/CommandOrControl/gi, 'CmdOrCtrl').toLowerCase()
+    === prefs.hotkeyCancel.replace(/CommandOrControl/gi, 'CmdOrCtrl').toLowerCase()) {
+    return { ok: false, conflict: prefs.hotkeyToggle }
+  }
+  const toggleBind = bindMeetingHotkey([prefs.hotkeyCancel], prefs.hotkeyToggle)
+  if (!toggleBind.ok) return { ok: false, conflict: prefs.hotkeyToggle }
+  const cancelBind = bindMeetingHotkey([prefs.hotkeyToggle], prefs.hotkeyCancel)
+  if (!cancelBind.ok) return { ok: false, conflict: prefs.hotkeyCancel }
+  return { ok: true }
+}
+
 export type OverlayCommand = 'ask' | 'catch-up'
 
 export function dispatchOverlayCommand(
