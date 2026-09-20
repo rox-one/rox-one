@@ -1427,7 +1427,7 @@
   "knowledge.kernel.statusStopped": "Ядро не запущено",
   "knowledge.legacyNotes.banner": "Markdown-заметки устарели — основной рабочий стол это База знаний.",
   "knowledge.legacyNotes.open": "Открыть старые заметки",
-  "knowledge.local.aiPrompts": "Промпты ИИ для заметок",
+  "knowledge.local.aiPrompts": "Запросы ИИ для заметок",
   "knowledge.local.body": "Знания по умолчанию хранятся локально. Внешний движок не обязателен.",
   "knowledge.local.engineOptional": "Внешний движок — необязательно",
   "knowledge.local.promptsSaved": "Промпты сохранены",
