@@ -79,7 +79,7 @@ describe('ROX2 native rail and browser surfaces', () => {
     }
   })
 
-  test('native binds and empty lists are live; fixture/conation are not', () => {
+  test('native binds and empty lists are live identity, not ok/state:live or claimable', () => {
     for (const id of NATIVE_RAIL_SURFACE_IDS) {
       const entity = bindNativeSurfaceEntity(id, {
         id: 'item-1',
@@ -89,13 +89,27 @@ describe('ROX2 native rail and browser surfaces', () => {
       })
       expect(entity.kind).toBe(kindForNativeSurface(id))
       expect(entity.source).toBe('native')
-      expect(isClaimableLive(nativeSurfaceListResult(id, []))).toBe(false)
-      expect(isClaimableLive(nativeSurfaceResult(id, 'native'))).toBe(false)
+      const empty = nativeSurfaceListResult(id, [])
+      expect(empty.ok).not.toBe(true)
+      expect(empty.state).not.toBe('live')
+      expect(empty.executionMode).toBe('live')
+      expect(empty.lifecycle).toBe('succeeded')
+      expect(empty.verification).toBe('unverified')
+      expect(isClaimableLive(empty)).toBe(false)
+      const native = nativeSurfaceResult(id, 'native')
+      expect(native.ok).not.toBe(true)
+      expect(native.state).not.toBe('live')
+      expect(native.verification).toBe('unverified')
+      expect(isClaimableLive(native)).toBe(false)
       expect(isClaimableLive(nativeSurfaceResult(id, 'fixture'))).toBe(false)
       expect(isClaimableLive(nativeSurfaceResult(id, 'conation'))).toBe(false)
     }
     expect(BROWSER_SURFACE_ID).toBe('browser')
-    expect(isClaimableLive(nativeSurfaceResult('browser', 'native'))).toBe(false)
+    const browser = nativeSurfaceResult('browser', 'native')
+    expect(browser.ok).not.toBe(true)
+    expect(browser.state).not.toBe('live')
+    expect(browser.verification).toBe('unverified')
+    expect(isClaimableLive(browser)).toBe(false)
     expect(isClaimableLive(nativeSurfaceResult('browser', 'fixture'))).toBe(false)
     expect(isClaimableLive(nativeSurfaceResult('browser', 'conation'))).toBe(false)
   })
@@ -103,6 +117,8 @@ describe('ROX2 native rail and browser surfaces', () => {
   test('connections binder does not claim Drive, Mail, or CRM live', () => {
     const text = source('apps/electron/src/renderer/pages/rox2-native-surfaces.ts')
     expect(text).toContain('Drive/Mail/CRM are not claimed live')
+    expect(text).not.toMatch(/ok:\s*true/)
+    expect(text).not.toMatch(/state:\s*'live'/)
     expect(isClaimableLive(nativeSurfaceResult('connections', 'conation'))).toBe(false)
   })
 })
