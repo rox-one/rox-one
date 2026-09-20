@@ -364,7 +364,7 @@ export function InspectorHost() {
           setChromeCollapsed(false)
           setVisible(true)
         }}
-        className="chrome-strip pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center border-l border-foreground/5 bg-background"
+        className="chrome-strip pointer-events-auto mt-2 mb-2 mr-2 flex w-[28px] shrink-0 items-center justify-center rounded-md border-l border-foreground/5 bg-background"
         data-session-inspector={sessionMode ? 'true' : 'false'}
         data-inspector="collapsed"
       >
@@ -374,7 +374,7 @@ export function InspectorHost() {
   }
 
   return (
-    <div className="flex h-full shrink-0 items-stretch" data-session-inspector={sessionMode ? 'true' : 'false'}>
+    <div className="mt-2 mb-2 mr-2 flex shrink-0 items-stretch overflow-hidden rounded-xl" data-session-inspector={sessionMode ? 'true' : 'false'}>
       {visible && (
         <div
           className="relative flex h-full flex-col overflow-hidden bg-background shadow-middle"
