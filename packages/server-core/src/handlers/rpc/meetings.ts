@@ -4,8 +4,9 @@ import { getEnv } from '@craft-agent/shared/config'
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import type { Meeting, MeetingProposal, OperationResultV2 } from '@craft-agent/core/meetings'
-import { queryMeetings } from '../../meetings/queries.ts'
+import { deleteMeeting, getMeeting, queryMeetings, type MeetingQueryActor } from '../../meetings/queries.ts'
 import { listNativeMeetings, startNativeMeeting, searchNativeMeetings } from '../../meetings/catalog.ts'
+import { loadMeetingQueryIndex, saveMeetingQueryIndex } from '../../meetings/query-store.ts'
 import { applyNativeCaptureIntent, type CaptureIntentAction } from '../../meetings/capture.ts'
 import { applyNativeImportIntent, type ImportIntentSpec } from '../../meetings/import.ts'
 import { applyNativeFinalizeIntent } from '../../meetings/finalize.ts'
@@ -128,6 +129,7 @@ export const MEETING_HANDLED_CHANNELS = [
   RPC_CHANNELS.meetings.LIST,
   RPC_CHANNELS.meetings.GET,
   RPC_CHANNELS.meetings.SEARCH,
+  RPC_CHANNELS.meetings.DELETE,
   RPC_CHANNELS.meetings.CREATE,
   RPC_CHANNELS.meetings.CREATE_PROPOSAL,
   RPC_CHANNELS.meetings.APPROVE_PROPOSAL,
@@ -171,6 +173,34 @@ export function registerMeetingHandlers(server: RpcServer, _deps: HandlerDeps): 
     })
     if (!searched.ok) return { page: [], continueCursor: null, denied: false, error: { code: searched.code } }
     return { page: searched.page, continueCursor: searched.continueCursor, denied: false }
+  })
+  server.handle(RPC_CHANNELS.meetings.DELETE, async (ctx, workspaceId: string, id: string) => {
+    const actor: MeetingQueryActor = {
+      workspaceId,
+      allowed: ctx.workspaceId == null || ctx.workspaceId === workspaceId,
+    }
+    if (!actor.allowed) {
+      throw Object.assign(new Error('denied'), { code: 'denied' })
+    }
+    const persistRootDir = meetingPersistRoot(workspaceId)
+    if (!persistRootDir) {
+      throw Object.assign(new Error('denied'), { code: 'denied' })
+    }
+    const stored = await loadMeetingQueryIndex(persistRootDir)
+    const known = new Map(stored.map((item) => [item.id, item]))
+    for (const item of catalogItems(workspaceId)) {
+      if (!known.has(item.meetingId)) {
+        known.set(item.meetingId, {
+          id: item.meetingId,
+          workspaceId: item.workspaceId,
+          title: item.title,
+          updatedAt: item.updatedAt,
+        })
+      }
+    }
+    const next = deleteMeeting([...known.values()], id, actor)
+    await saveMeetingQueryIndex(persistRootDir, next)
+    return getMeeting(next, id, actor)
   })
   server.handle(
     RPC_CHANNELS.meetings.CREATE,
