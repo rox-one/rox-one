@@ -20,14 +20,15 @@ export interface SettingsGroupDefinition {
 }
 
 /**
- * Four stable navigator groups. Extra registry pages (`account`, `security`)
- * sit in Application so every SETTINGS_PAGES id appears exactly once.
+ * Four stable navigator groups. Extra registry pages (`account`, `security`,
+ * `permissions`) sit in Application so every SETTINGS_PAGES id appears exactly
+ * once. Permissions is agent-mode policy, not file upload.
  */
 export const SETTINGS_GROUPS: readonly SettingsGroupDefinition[] = [
   {
     id: 'agent',
     labelKey: 'settings.navigator.groupAgent',
-    pageIds: ['runtime', 'context', 'ai', 'permissions', 'input'],
+    pageIds: ['runtime', 'context', 'ai', 'input'],
   },
   {
     id: 'workspace',
@@ -42,7 +43,7 @@ export const SETTINGS_GROUPS: readonly SettingsGroupDefinition[] = [
   {
     id: 'application',
     labelKey: 'settings.navigator.groupApplication',
-    pageIds: ['account', 'privacy', 'app', 'appearance', 'security', 'shortcuts'],
+    pageIds: ['account', 'privacy', 'app', 'appearance', 'security', 'permissions', 'shortcuts'],
   },
 ]
 
