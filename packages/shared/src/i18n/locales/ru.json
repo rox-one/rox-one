@@ -4544,7 +4544,7 @@
   "tasks.projection.someday": "Когда-нибудь",
   "tasks.projection.today": "Сегодня",
   "tasks.projection.upcoming": "Предстоящие",
-  "tasks.promptPlaceholder": "Промпт — что должен делать этот узел. Ссылайтесь на вывод вышестоящего узла через ${nodes.<id>.output}.",
+  "tasks.promptPlaceholder": "Запрос — что должен делать этот узел. Ссылайтесь на вывод вышестоящего узла через ${nodes.<id>.output}.",
   "tasks.quickEntryPlaceholder": "Новая задача — например «завтра вечером»",
   "tasks.removeDependency": "Удалить зависимость",
   "tasks.removeSubtask": "Удалить подзадачу",
