@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { SquareTerminal } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
@@ -40,12 +39,9 @@ export function InspectorTerminal({ cwd }: { cwd?: string }) {
   }, [busy, cmd, cwd, t])
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#111214] text-[#e8e8ea]">
-      <div className="flex h-8 shrink-0 items-center gap-2 border-b border-white/5 px-3 text-[11px] text-white/50">
-        <SquareTerminal className="h-3.5 w-3.5" />
-        <span className="truncate">{cwd || '~'}</span>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#111214] text-[#e8e8ea]">
       <div ref={scroller} className="min-h-0 flex-1 overflow-y-auto px-3 py-2 font-mono text-[11px] leading-5">
+        {cwd ? <div className="mb-1 truncate text-white/30">{cwd}</div> : null}
         {log.length === 0 ? (
           <div className="text-white/40">{t('inspector.terminalHint')}</div>
         ) : (
