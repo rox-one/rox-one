@@ -272,6 +272,7 @@
   "capabilities.pack.security-sbom": "Безопасность / SBOM",
   "capabilities.title": "Пакеты возможностей",
   "chat.adminApprovalRequired": "Требуется одобрение администратора",
+  "chat.allow": "Разрешить",
   "chat.alwaysAllow": "Всегда разрешать",
   "chat.alwaysAllowTip": "«Всегда разрешать» запоминает эту команду на сессию",
   "chat.annotationPlaceholder": "Добавьте комментарии, которые агент должен учесть в следующем ходе…",

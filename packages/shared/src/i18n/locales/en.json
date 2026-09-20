@@ -272,6 +272,7 @@
   "capabilities.pack.security-sbom": "Security / SBOM",
   "capabilities.title": "Capability packs",
   "chat.adminApprovalRequired": "Admin approval required",
+  "chat.allow": "Allow",
   "chat.alwaysAllow": "Always Allow",
   "chat.alwaysAllowTip": "\"Always Allow\" remembers this command for the session",
   "chat.annotationPlaceholder": "Add comments the agent should consider in the next turn…",
