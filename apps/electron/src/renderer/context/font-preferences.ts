@@ -10,7 +10,7 @@ function isOneOf<T extends string>(value: unknown, allowed: readonly T[]): value
   return typeof value === 'string' && (allowed as readonly string[]).includes(value)
 }
 
-/** Fresh installs use the Rox UI stack (same SF-first family as the previous system default). */
+/** Fresh installs use the embedded Rox face. */
 export function normalizeUiFont(value: unknown, fallback: UiFontFamily = 'rox'): UiFontFamily {
   return isOneOf(value, UI_FONTS) ? value : fallback
 }
@@ -21,7 +21,7 @@ export function normalizeChatFont(value: unknown, fallback: ChatFontFamily = 'ro
 
 export function normalizeTerminalFont(
   value: unknown,
-  fallback: TerminalFontFamily = 'jetbrains',
+  fallback: TerminalFontFamily = 'rox',
 ): TerminalFontFamily {
   return isOneOf(value, TERMINAL_FONTS) ? value : fallback
 }

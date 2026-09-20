@@ -112,10 +112,10 @@
   --md-bullets: var(--text-muted);
   --md-counters: var(--text-muted);
 
-  /* SF UI leads on Apple platforms; existing explicit font preferences remain intact. */
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Rox is the product default face; Inter/system/JetBrains remain explicit preferences. */
+  --font-sans: "Rox", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-serif: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-mono: "Rox", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-chat: var(--font-sans);
   --font-default: var(--font-sans);
 
@@ -197,13 +197,61 @@
   --graphite: oklch(0.62 0.01 255);
 }
 
-/* Rox is the product SF-first stack (same look as the previous system default). */
+/* Embedded Rox (Ioskeley Mono) — SIL OFL 1.1. */
+@font-face {
+  font-family: "Rox";
+  src: url("../fonts/rox/Rox-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rox";
+  src: url("../fonts/rox/Rox-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rox";
+  src: url("../fonts/rox/Rox-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rox";
+  src: url("../fonts/rox/Rox-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rox";
+  src: url("../fonts/rox/Rox-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rox";
+  src: url("../fonts/rox/Rox-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
 html[data-font="rox"] {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Rox", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   --font-default: var(--font-sans);
 }
 
-/* Inter remains an explicit user preference; the default stays SF UI-first. */
+/* Inter remains an explicit user preference. */
 html[data-font="inter"] {
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
   --font-default: var(--font-sans);
@@ -217,7 +265,7 @@ html[data-font="system"] {
 }
 
 html[data-chat-font="rox"] {
-  --font-chat: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-chat: "Rox", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 }
 
 html[data-chat-font="inter"] {
@@ -232,7 +280,10 @@ html[data-terminal-font="jetbrains"] {
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
-html[data-terminal-font="rox"],
+html[data-terminal-font="rox"] {
+  --font-mono: "Rox", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
 html[data-terminal-font="system"] {
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
