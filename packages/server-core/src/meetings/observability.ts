@@ -99,7 +99,8 @@ export class MeetingBudgetLedger {
     if (existing && existing.status !== 'settled') {
       return { ok: false, code: 'already-reserved', remaining: this.remaining() }
     }
-    if (this.held() + amount > this.cap) {
+    const replaced = existing?.settled ?? 0
+    if (this.held() - replaced + amount > this.cap) {
       return { ok: false, code: 'cap-exceeded', remaining: this.remaining() }
     }
     this.rows.set(operationId, { operationId, amount, status: 'reserved' })

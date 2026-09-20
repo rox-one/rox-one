@@ -64,4 +64,13 @@ describe('MeetingBudgetLedger (issue 386 / I030)', () => {
     expect(ledger.settle('op-a', 4).settled).toBe(4)
     expect(ledger.remaining()).toBe(36)
   })
+
+  test('re-reserving a settled operation does not double count the old row', () => {
+    const ledger = new MeetingBudgetLedger(10)
+    expect(ledger.reserve('op-a', 10).ok).toBe(true)
+    expect(ledger.settle('op-a', 8).settled).toBe(8)
+    const again = ledger.reserve('op-a', 10)
+    expect(again.ok).toBe(true)
+    expect(ledger.remaining()).toBe(0)
+  })
 })
