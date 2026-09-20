@@ -18,7 +18,7 @@ const WRAPPED_RU: Record<string, string> = {
   'mindmap.enrichDraftBanner': 'Предпросмотр улучшенной карты — принять (закрепить) или отменить.',
   'settings.appearance.conationShellDesc':
     'Необязательные панели данных Conation в Rox. Все выключены по умолчанию; режима Timeline нет.',
-  'settings.cloudRuns.webhookHint': 'Необязательный URL — POST при завершении рана (уведомления вне приложения)',
+  'settings.cloudRuns.webhookHint': 'Необязательный URL — POST при завершении запуска (уведомления вне приложения)',
   'settings.runtime.llmConnectionsDesc': 'Подключения, модели и поставщики настраиваются в настройках ИИ.',
 }
 
