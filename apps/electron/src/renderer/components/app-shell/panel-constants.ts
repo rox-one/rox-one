@@ -16,7 +16,7 @@ export const RADIUS_INNER = 8
 export const PANEL_MIN_WIDTH = 440
 
 /** Extra vertical space reserved in panel stack for box-shadows. */
-export const PANEL_STACK_VERTICAL_OVERFLOW = 8
+export const PANEL_STACK_VERTICAL_OVERFLOW = 0
 
 /**
  * Shared resize sash geometry.
