@@ -44,7 +44,7 @@ const STATUSES_QUICK: SessionStatusId[] = ['todo', 'in-progress', 'needs-review'
 const PRIORITIES: SessionPriority[] = ['none', 'urgent', 'high', 'medium', 'low']
 const BULK_REQUEST_TIMEOUT_MS = 15_000
 
-/** Bottom-center floating bulk actions for sessions multi-select. */
+/** In-flow bulk actions at the bottom of the collection/navigator column. */
 export function CollectionBulkBar({
   workspaceId,
   visibleSessionIds,
@@ -280,7 +280,7 @@ export function CollectionBulkBar({
 
   return (
     <div
-      className={cn('pointer-events-auto fixed inset-x-0 bottom-6 z-50 flex justify-center', className)}
+      className={cn('pointer-events-auto sticky bottom-0 z-20 flex w-full shrink-0 justify-center', className)}
       role="toolbar"
       aria-label={`${t('collection.bulk.title')}: ${t('collection.bulk.selected', { count: visibleSelection.count })}`}
     >
