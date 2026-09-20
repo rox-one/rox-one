@@ -119,7 +119,7 @@ export function VoiceSettingsSection() {
             label={t('settings.input.voiceAutoSubmit')}
             description={t('settings.input.voiceAutoSubmitDesc')}
             checked={prefs.autoSubmit}
-            onCheckedChange={() => undefined}
+            onCheckedChange={(checked) => void save({ autoSubmit: checked })}
           />
           <SettingsMenuSelectRow
             label={t('settings.input.ttsEngine')}
