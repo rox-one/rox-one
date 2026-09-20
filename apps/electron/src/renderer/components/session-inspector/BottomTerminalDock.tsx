@@ -11,7 +11,7 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { bottomDockHeightAtom, bottomTerminalOpenAtom } from '@/atoms/unified-shell'
 import { InspectorTerminal } from './InspectorTerminal'
 
-const MIN_HEIGHT = 120
+const MIN_HEIGHT = 96
 const MAX_HEIGHT = 560
 
 export function BottomTerminalDock() {
@@ -30,7 +30,7 @@ export function BottomTerminalDock() {
     const move = (e: PointerEvent) => {
       const state = drag.current
       if (!state) return
-      const viewportCap = Math.max(MIN_HEIGHT, Math.floor(window.innerHeight * 0.42))
+      const viewportCap = Math.max(MIN_HEIGHT, Math.floor(window.innerHeight * 0.36))
       const next = Math.min(MAX_HEIGHT, viewportCap, Math.max(MIN_HEIGHT, state.startH + (state.startY - e.clientY)))
       setHeight(next)
     }
@@ -69,22 +69,19 @@ export function BottomTerminalDock() {
         className="absolute inset-x-0 top-0 z-10 h-1.5 cursor-ns-resize hover:bg-foreground/15"
         onPointerDown={onPointerDown}
       />
-      <div className="chrome-strip flex h-7 shrink-0 items-center justify-between border-b border-white/5 px-2.5">
-        <span className="chrome-label truncate font-medium tracking-tight">{t('inspector.terminal')}</span>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={t('inspector.hide')}
-              onClick={() => setOpen(false)}
-              className="flex h-6 w-6 items-center justify-center rounded-[6px] text-muted-foreground/60 hover:bg-foreground/5 hover:text-foreground"
-            >
-              <ChevronsDown className="h-3.5 w-3.5" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('inspector.hide')}</TooltipContent>
-        </Tooltip>
-      </div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            aria-label={t('inspector.hide')}
+            onClick={() => setOpen(false)}
+            className="absolute right-1.5 top-1.5 z-20 flex h-5 w-5 items-center justify-center rounded-[6px] text-muted-foreground/60 hover:bg-foreground/5 hover:text-foreground"
+          >
+            <ChevronsDown className="h-3.5 w-3.5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{t('inspector.hide')}</TooltipContent>
+      </Tooltip>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <InspectorTerminal cwd={cwd} />
       </div>

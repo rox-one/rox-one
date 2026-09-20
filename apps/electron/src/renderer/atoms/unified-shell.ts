@@ -220,7 +220,7 @@ export const bottomTerminalOpenAtom = atomWithStorage<boolean>(
 /** Bottom terminal dock height in px. */
 export const bottomDockHeightAtom = atomWithStorage<number>(
   getKeyString(KEYS.bottomDockHeight),
-  168,
+  128,
   undefined,
   { getOnInit: true },
 )
