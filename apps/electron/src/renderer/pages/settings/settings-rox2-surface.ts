@@ -5,7 +5,9 @@
 import {
   fixtureResult,
   formatRox2EntityId,
+  isClaimableLive,
   liveResult,
+  normalizeRox2Result,
   queuedResult,
   requiresExplicitGrant,
   type Rox2Context,
@@ -97,6 +99,21 @@ const PAGE_ACTION_PERMISSION: Record<SettingsPageActionKind, Rox2Permission> = {
   'org-invite': 'cloud-send',
 }
 
+/**
+ * ROX2-015: playground mounts install `window.__playgroundFixture` from
+ * mock-utils. Pages pass this as `source` so fixture stories never claim
+ * live and never reach the throwing destructive mocks.
+ */
+export function settingsRuntimeSource(): 'native' | 'fixture' {
+  if (
+    typeof window !== 'undefined' &&
+    (window as { __playgroundFixture?: boolean }).__playgroundFixture === true
+  ) {
+    return 'fixture'
+  }
+  return 'native'
+}
+
 export function bindSettingsHubContext(
   workspaceId: string,
   pageId: string,
@@ -180,4 +197,26 @@ export function settingsPageActionResult(opts: {
       requestId: `settings.${opts.pageId}.${opts.action}`,
     },
   })
+}
+
+/**
+ * Whether a page may run an action against `window.electronAPI`.
+ * Native (and Conation) sources must be claimable live. A fixture source
+ * never claims live, but playground stories still need to render mock data
+ * and open mocked connect dialogs, so non-destructive fixture actions pass.
+ * `destroy` actions (forget, unbind, reset, delete) and spend stay blocked
+ * so fixture mounts never reach the deliberately throwing mocks.
+ */
+export function settingsPageActionAllowed(
+  opts: Parameters<typeof settingsPageActionResult>[0],
+): boolean {
+  const result = settingsPageActionResult(opts)
+  if (opts.source === 'fixture') {
+    return (
+      normalizeRox2Result(result).executionMode === 'fixture' &&
+      opts.action !== 'spend' &&
+      PAGE_ACTION_PERMISSION[opts.action] !== 'destroy'
+    )
+  }
+  return isClaimableLive(result)
 }

@@ -76,23 +76,29 @@ import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { getSessionTitle } from '@/utils/session'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { MessagingPlatformRuntimeInfo } from '../../../shared/types'
-import { isClaimableLive } from '@craft-agent/core/rox2'
-import { settingsPageActionResult, type SettingsPageActionKind } from './settings-rox2-surface'
+import {
+  settingsPageActionAllowed,
+  settingsRuntimeSource,
+  type SettingsPageActionKind,
+} from './settings-rox2-surface'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
   slug: 'messaging',
 }
 
-function messagingActionLive(action: SettingsPageActionKind, granted?: boolean): boolean {
-  return isClaimableLive(
-    settingsPageActionResult({
-      pageId: 'messaging',
-      action,
-      source: 'native',
-      granted,
-    }),
-  )
+/**
+ * Native mounts must be claimable live. Playground (fixture) mounts may still
+ * read mock data and open mocked connect dialogs, but destructive actions
+ * (forget, unbind, reset) stay blocked.
+ */
+function messagingActionAllowed(action: SettingsPageActionKind, granted?: boolean): boolean {
+  return settingsPageActionAllowed({
+    pageId: 'messaging',
+    action,
+    source: settingsRuntimeSource(),
+    granted,
+  })
 }
 
 export default function MessagingSettingsPage() {
@@ -101,13 +107,17 @@ export default function MessagingSettingsPage() {
   const setBindings = useSetAtom(setMessagingBindingsAtom)
   const workspaceId = activeWorkspace?.id
 
+  // config-read is device-read: the user must explicitly grant it before
+  // connections or bindings are read. Opening the page is not a grant.
+  const [granted, setGranted] = React.useState(false)
+
   // Single fetch + subscription at the page level so both PlatformRows read
   // from the already-populated atom instead of subscribing twice.
   React.useEffect(() => {
-    if (!workspaceId) return
+    if (!workspaceId || !granted) return
     let cancelled = false
     const load = async () => {
-      if (!messagingActionLive('config-read', true)) return
+      if (!messagingActionAllowed('config-read', granted)) return
       try {
         const rows = await window.electronAPI.getMessagingBindings()
         if (!cancelled) setBindings(rows as MessagingBinding[])
@@ -123,7 +133,7 @@ export default function MessagingSettingsPage() {
       cancelled = true
       off()
     }
-  }, [workspaceId, setBindings])
+  }, [workspaceId, granted, setBindings])
 
   if (!activeWorkspace) return null
 
@@ -134,21 +144,36 @@ export default function MessagingSettingsPage() {
         <ScrollArea className="h-full">
         <div className="space-y-6 p-6">
           <SettingsSection title={t('settings.messaging.title')}>
-            <SettingsCard>
-              <PlatformRow platform="telegram" workspaceId={activeWorkspace.id} />
-            </SettingsCard>
-            <SettingsCard>
-              <PlatformRow platform="whatsapp" workspaceId={activeWorkspace.id} />
-            </SettingsCard>
-            <SettingsCard>
-              <PlatformRow platform="lark" workspaceId={activeWorkspace.id} />
-            </SettingsCard>
-            <SettingsCard>
-              <PlatformRow platform="discord" workspaceId={activeWorkspace.id} />
-            </SettingsCard>
-            <SettingsCard>
-              <PlatformRow platform="wechat" workspaceId={activeWorkspace.id} />
-            </SettingsCard>
+            {!granted ? (
+              <SettingsCard className="px-4 py-3.5">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {t('settings.messaging.loadConfigDesc')}
+                  </p>
+                  <Button size="sm" onClick={() => setGranted(true)}>
+                    {t('settings.messaging.loadConfig')}
+                  </Button>
+                </div>
+              </SettingsCard>
+            ) : (
+              <>
+                <SettingsCard>
+                  <PlatformRow platform="telegram" workspaceId={activeWorkspace.id} />
+                </SettingsCard>
+                <SettingsCard>
+                  <PlatformRow platform="whatsapp" workspaceId={activeWorkspace.id} />
+                </SettingsCard>
+                <SettingsCard>
+                  <PlatformRow platform="lark" workspaceId={activeWorkspace.id} />
+                </SettingsCard>
+                <SettingsCard>
+                  <PlatformRow platform="discord" workspaceId={activeWorkspace.id} />
+                </SettingsCard>
+                <SettingsCard>
+                  <PlatformRow platform="wechat" workspaceId={activeWorkspace.id} />
+                </SettingsCard>
+              </>
+            )}
           </SettingsSection>
         </div>
         </ScrollArea>
@@ -305,7 +330,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
         toast.error(t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint'))
         return
       }
-      if (!messagingActionLive('pref-write')) return
+      if (!messagingActionAllowed('pref-write')) return
       try {
         await window.electronAPI.setMessagingBindingAccess(bindingId, {
           mode: next.mode as BindingAccessMode,
@@ -345,19 +370,19 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   }, [])
 
   const handleConnect = () => {
-    if (!messagingActionLive('identity-connect', true)) return
+    if (!messagingActionAllowed('identity-connect', true)) return
     setReconfigure(false)
     setConnectOpen(true)
   }
 
   const handleReconfigure = () => {
-    if (!messagingActionLive('identity-connect', true)) return
+    if (!messagingActionAllowed('identity-connect', true)) return
     setReconfigure(true)
     setConnectOpen(true)
   }
 
   const handleDisconnect = async () => {
-    if (!messagingActionLive('identity-reset', true)) return
+    if (!messagingActionAllowed('identity-reset', true)) return
     try {
       await window.electronAPI.disconnectMessagingPlatform(platform)
       toast.success(t(`settings.messaging.${platform}.disconnected`))
@@ -367,7 +392,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   }
 
   const handleForget = async () => {
-    if (!messagingActionLive('identity-reset', true)) return
+    if (!messagingActionAllowed('identity-reset', true)) return
     try {
       await window.electronAPI.forgetMessagingPlatform(platform)
       toast.success(t(`settings.messaging.${platform}.disconnected`))
@@ -377,7 +402,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
   }
 
   const handleUnbind = async (binding: MessagingBinding) => {
-    if (!messagingActionLive('connection-delete', true)) return
+    if (!messagingActionAllowed('connection-delete', true)) return
     try {
       await window.electronAPI.unbindMessagingBinding(binding.id)
     } catch (err) {
@@ -463,11 +488,11 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
               sessionMetaMap={sessionMetaMap}
               supergroup={supergroup}
               onPairSupergroup={() => {
-                if (!messagingActionLive('identity-connect', true)) return
+                if (!messagingActionAllowed('identity-connect', true)) return
                 setSupergroupDialogOpen(true)
               }}
               onUnpairSupergroup={async () => {
-                if (!messagingActionLive('identity-reset', true)) return
+                if (!messagingActionAllowed('identity-reset', true)) return
                 try {
                   await window.electronAPI.unbindMessagingSupergroup()
                   toast.success(t('settings.messaging.telegram.supergroup.disconnected'))
@@ -514,7 +539,7 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
                   onDiscordTriggerChange={
                     platform === 'discord'
                       ? async (bindingId, trigger) => {
-                          if (!messagingActionLive('pref-write')) return
+                          if (!messagingActionAllowed('pref-write')) return
                           try {
                             await window.electronAPI.setMessagingDiscordGuildTrigger(bindingId, trigger)
                             toast.success(t('settings.messaging.discord.guildTriggerUpdated'))
@@ -617,7 +642,7 @@ function TelegramBindingsBody({
         toast.error(t('settings.messaging.telegram.access.bindingPopover.saveDisabledHint'))
         return
       }
-      if (!messagingActionLive('pref-write')) return
+      if (!messagingActionAllowed('pref-write')) return
       try {
         await window.electronAPI.setMessagingBindingAccess(bindingId, {
           mode: next.mode as BindingAccessMode,
