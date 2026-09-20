@@ -185,7 +185,7 @@ const WRAPPED_RU: Record<string, string> = {
   "memory.promotionWorkspaces": "рабочих пространств: {{count}}",
   "memory.seed2": "Не фиксируй секреты в код",
   "menu.toggleDevTools": "Показать/скрыть инструменты разработчика",
-  "mindmap.enrichDraftBanner": "Превью улучшенной карты — принять (закрепить) или отменить.",
+  "mindmap.enrichDraftBanner": "Предпросмотр улучшенной карты — принять (закрепить) или отменить.",
   "mindmap.enrichNoWorkspace": "Нет рабочего пространства для улучшения карты",
   "mindmap.enrichReady": "Улучшенная структура готова",
   "mindmap.enrichUnavailable": "Улучшение недоступно",

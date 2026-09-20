@@ -1857,7 +1857,7 @@
   "mindmap.enrichAccept": "Принять",
   "mindmap.enrichAccepted": "Улучшенная карта закреплена",
   "mindmap.enrichDiscard": "Отменить",
-  "mindmap.enrichDraftBanner": "Превью улучшенной карты — принять (закрепить) или отменить.",
+  "mindmap.enrichDraftBanner": "Предпросмотр улучшенной карты — принять (закрепить) или отменить.",
   "mindmap.enrichFailed": "Не удалось улучшить карту",
   "mindmap.enrichHeuristic": "Карта почищена (офлайн)",
   "mindmap.enrichNoWorkspace": "Нет рабочего пространства для улучшения карты",
