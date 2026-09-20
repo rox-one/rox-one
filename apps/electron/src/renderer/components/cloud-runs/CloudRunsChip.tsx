@@ -224,7 +224,7 @@ function CloudRunsChipInner({
         aria-label={t('cloudRuns.open')}
         title={t('cloudRuns.open')}
         onClick={() => setOpen(true)}
-        className="flex h-6 items-center gap-1 rounded-[6px] px-1.5 text-xs text-muted-foreground/70 hover:bg-foreground/5 hover:text-muted-foreground"
+        className="flex h-6 items-center gap-1 rounded-[6px] border border-border/60 bg-background px-1.5 text-xs text-foreground/80 hover:bg-foreground/5 hover:text-foreground"
       >
         {availability === 'loading' || activeCount > 0 ? <RefreshCw className="h-3 w-3 animate-spin" /> : <Cloud className="h-3 w-3" />}
         {activeCount > 0 ? t('cloudRuns.active', { count: activeCount }) : t('cloudRuns.open')}
