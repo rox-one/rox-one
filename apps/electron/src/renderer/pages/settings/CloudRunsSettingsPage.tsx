@@ -118,12 +118,12 @@ export default function CloudRunsSettingsPage() {
   const [saveError, setSaveError] = React.useState<string | null>(null)
   const [failedPatch, setFailedPatch] = React.useState<ConfigPatch | null>(null)
 
-  const load = React.useCallback(async (isGranted: boolean) => {
+  const load = React.useCallback(async () => {
     const allowed = settingsPageActionAllowed({
       pageId: 'cloudRuns',
       action: 'config-read',
       source: settingsRuntimeSource(),
-      granted: isGranted,
+      granted,
     })
     if (!allowed) return
     setLoading(true)
@@ -139,11 +139,11 @@ export default function CloudRunsSettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [t])
+  }, [granted, t])
 
   React.useEffect(() => {
     if (!granted) return
-    void load(granted)
+    void load()
   }, [granted, load])
 
   const patch = (nextPatch: ConfigPatch) => {
@@ -187,7 +187,7 @@ export default function CloudRunsSettingsPage() {
         title={t('settings.cloudRuns.title')}
         actions={
           <>
-            <Button size="sm" variant="outline" disabled={loading || !granted} onClick={() => void load(granted)}>
+            <Button size="sm" variant="outline" disabled={loading || !granted} onClick={() => void load()}>
               {loading ? t('common.loading') : t('common.refresh')}
             </Button>
             <HeaderMenu route={routes.view.settings('cloudRuns')} />
@@ -208,7 +208,7 @@ export default function CloudRunsSettingsPage() {
           {loadError && (
             <div role="alert" className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-destructive/40 px-3 py-2 text-sm text-destructive">
               <span className="min-w-0 whitespace-normal break-words">{loadError}</span>
-              <Button size="sm" variant="outline" onClick={() => void load(granted)}>
+              <Button size="sm" variant="outline" onClick={() => void load()}>
                 {t('common.retry')}
               </Button>
             </div>
