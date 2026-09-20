@@ -1430,7 +1430,7 @@
   "knowledge.local.aiPrompts": "Промпты ИИ для заметок",
   "knowledge.local.body": "Знания по умолчанию хранятся локально. Внешний движок не обязателен.",
   "knowledge.local.engineOptional": "Внешний движок — необязательно",
-  "knowledge.local.promptsSaved": "Промпты сохранены",
+  "knowledge.local.promptsSaved": "Запросы сохранены",
   "knowledge.local.savePrompts": "Сохранить промпты",
   "knowledge.local.title": "Локальные заметки",
   "knowledge.migrate.button": "Импортировать заметки Craft",
