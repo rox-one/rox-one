@@ -5,8 +5,12 @@
  * Send goes through a persisted outbox and fail-closes: no production mail.
  * In-memory followup identity is not a live receipt: stamps stay pending
  * (live:false, not verified; L4 remains not_run).
+ * Optional persistDir load/saves a JSON snapshot of schedules+ledger
+ * (mkdir/writeFile); that file is not a live receipt.
  */
 
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 import { dispatchOutbox, reserveOutbox, type OutboxEntry } from './outbox.ts'
 import { denied, unsupported, type EvidenceLevel, type MeetingOpResult } from './types.ts'
 
@@ -55,9 +59,16 @@ export type FollowupLedgerEntry = {
 
 export type FollowupExecutor = 'production' | 'simulator'
 
+export type FollowupSnapshot = {
+  schedules: FollowupSchedule[]
+  ledger: FollowupLedgerEntry[]
+  occurrenceKeys: string[]
+}
+
 export type FollowupRuntime = {
   readonly now: () => number
   readonly executor: FollowupExecutor
+  readonly persistDir?: string
   readonly persisted: {
     schedules: Map<string, FollowupSchedule>
     ledger: FollowupLedgerEntry[]
@@ -66,10 +77,13 @@ export type FollowupRuntime = {
   }
 }
 
-export function createFollowupRuntime(now = () => Date.now()): FollowupRuntime {
+const FILE = 'followup-ledger.json'
+
+export function createFollowupRuntime(now = () => Date.now(), persistDir?: string): FollowupRuntime {
   return {
     now,
     executor: 'production',
+    persistDir,
     persisted: {
       schedules: new Map(),
       ledger: [],
@@ -77,6 +91,50 @@ export function createFollowupRuntime(now = () => Date.now()): FollowupRuntime {
       outbox: [],
     },
   }
+}
+
+export function snapshotFollowup(runtime: FollowupRuntime): FollowupSnapshot {
+  return {
+    schedules: [...runtime.persisted.schedules.values()].map((item) => ({ ...item })),
+    ledger: runtime.persisted.ledger.map((entry) => ({ ...entry })),
+    occurrenceKeys: [...runtime.persisted.occurrenceKeys],
+  }
+}
+
+export function restoreFollowupFrom(runtime: FollowupRuntime, snapshot: FollowupSnapshot): void {
+  runtime.persisted.schedules.clear()
+  for (const schedule of snapshot.schedules) runtime.persisted.schedules.set(schedule.id, { ...schedule })
+  runtime.persisted.ledger.length = 0
+  for (const entry of snapshot.ledger) runtime.persisted.ledger.push({ ...entry })
+  runtime.persisted.occurrenceKeys.clear()
+  for (const key of snapshot.occurrenceKeys) runtime.persisted.occurrenceKeys.add(key)
+}
+
+export async function restoreFollowup(runtime: FollowupRuntime): Promise<void> {
+  if (!runtime.persistDir) return
+  try {
+    const parsed = JSON.parse(await readFile(join(runtime.persistDir, FILE), 'utf8')) as FollowupSnapshot
+    if (!parsed || !Array.isArray(parsed.schedules)) return
+    restoreFollowupFrom(runtime, {
+      schedules: parsed.schedules,
+      ledger: Array.isArray(parsed.ledger) ? parsed.ledger : [],
+      occurrenceKeys: Array.isArray(parsed.occurrenceKeys) ? parsed.occurrenceKeys : [],
+    })
+  } catch {
+    /* missing ledger is a fresh store */
+  }
+}
+
+export async function persistFollowup(runtime: FollowupRuntime): Promise<void> {
+  if (!runtime.persistDir) return
+  await mkdir(runtime.persistDir, { recursive: true })
+  await writeFile(join(runtime.persistDir, FILE), `${JSON.stringify(snapshotFollowup(runtime), null, 2)}\n`, 'utf8')
+}
+
+export async function loadFollowupRuntime(now = () => Date.now(), persistDir?: string): Promise<FollowupRuntime> {
+  const runtime = createFollowupRuntime(now, persistDir)
+  await restoreFollowup(runtime)
+  return runtime
 }
 
 export function occurrenceKey(scheduleId: string, instant: number, timezone: string): string {
