@@ -235,7 +235,7 @@ const WRAPPED_RU: Record<string, string> = {
   "session.agentTeamsPrompt": "@agent-teams Составьте план команды с капитаном для этой цели. Сначала состав и DAG задач; не вызывайте spawn_session до одобрения.",
   "session.simplifyPrompt": "@simplify Упрости текущую git-разницу в этой сессии. Не создавай скрытую сессию.",
   "settings.account.event.cloudRunImported": "Облачный запуск импортирован",
-  "settings.account.source.cloudRunImported": "Импортировать облачный ран · +40",
+  "settings.account.source.cloudRunImported": "Импортировать облачный запуск · +40",
   "settings.accounts.account": "Аккаунт",
   "settings.accounts.accountLabelPlaceholder": "Метка аккаунта (email)",
   "settings.accounts.connectCloud": "Подключить SiYuan Cloud",
