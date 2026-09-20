@@ -3659,7 +3659,7 @@
   "settings.messaging.telegram.access.bindingPopover.mode.inherit.label": "Наследует рабочее пространство",
   "settings.messaging.telegram.access.bindingPopover.mode.open.description": "Эту привязку может использовать любой в принятом чате. Используйте только для публичных ботов.",
   "settings.messaging.telegram.access.bindingPopover.mode.open.label": "Открыто для всех",
-  "settings.messaging.telegram.access.bindingPopover.mode.ownerControl.description": "Только явно разрешённые пользователи могут использовать этот биндинг.",
+  "settings.messaging.telegram.access.bindingPopover.mode.ownerControl.description": "Только явно разрешённые пользователи могут использовать эту привязку.",
   "settings.messaging.telegram.access.bindingPopover.mode.ownerControl.label": "Контроль владельца",
   "settings.messaging.telegram.access.bindingPopover.mode.publicInbox.description": "Неизвестные отправители получают ответ о сопряжении. Сообщения не запускают сессию агента и не выполняют инструменты.",
   "settings.messaging.telegram.access.bindingPopover.mode.publicInbox.label": "Публичные входящие",
