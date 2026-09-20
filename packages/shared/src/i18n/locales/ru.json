@@ -3965,7 +3965,7 @@
   "settings.runtime.llmAuthenticated": "Аутентифицировано",
   "settings.runtime.llmBaseUrl": "Базовый URL",
   "settings.runtime.llmConnections": "Подключения LLM",
-  "settings.runtime.llmConnectionsDesc": "Подключения, модели и провайдеры настраиваются в настройках ИИ.",
+  "settings.runtime.llmConnectionsDesc": "Подключения, модели и поставщики настраиваются в настройках ИИ.",
   "settings.runtime.llmDefault": "Подключение по умолчанию",
   "settings.runtime.llmEmpty": "Пока нет LLM-подключений. Добавьте в настройках ИИ.",
   "settings.runtime.llmModel": "Модель",
