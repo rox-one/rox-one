@@ -2,7 +2,6 @@ import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import type { AutomationGraphProjection } from '@craft-agent/shared/automations/graph'
 import type { AutomationGraph } from '@craft-agent/shared/automations/types'
-import { CalendarConnectorChips } from '@/components/calendar/CalendarConnectorChips'
 import { cn } from '@/lib/utils'
 import { AutomationGraphEditor } from './AutomationGraphEditor'
 
@@ -101,9 +100,8 @@ export function AutomationGraphWorkspaceEditor({
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col gap-3', className)} data-testid="automation-graph-workspace">
       <div className="shrink-0 space-y-1">
-        <p className="text-sm text-muted-foreground">{t('automations.graphNoCalendar')}</p>
-        <p className="text-xs text-muted-foreground">{t('automations.connectorsOptional')}</p>
-        <CalendarConnectorChips />
+        <p className="text-[11px] text-muted-foreground">{t('automations.graphNoCalendar')}</p>
+        <p className="text-[11px] text-muted-foreground">{t('automations.connectorsOptional')}</p>
       </div>
       <AutomationGraphEditor
         graph={projection.graph}
