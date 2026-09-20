@@ -14,4 +14,15 @@ describe('font role CSS', () => {
     expect(css).toContain('html[data-terminal-font="rox"]')
     expect(css).toContain('[data-focus-zone="chat"]')
   })
+
+  it('embeds Rox as the real face for UI and terminal', () => {
+    expect(css).toContain('@font-face')
+    expect(css).toMatch(/font-family:\s*["']Rox["']/)
+
+    const uiBlock = css.match(/html\[data-font="rox"\]\s*\{[^}]+\}/)?.[0] ?? ''
+    expect(uiBlock).toMatch(/["']Rox["']/)
+
+    const terminalBlock = css.match(/html\[data-terminal-font="rox"\]\s*\{[^}]+\}/)?.[0] ?? ''
+    expect(terminalBlock).toMatch(/["']Rox["']/)
+  })
 })

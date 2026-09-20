@@ -7,10 +7,10 @@ import {
 } from '../font-preferences'
 
 describe('font preferences', () => {
-  it('defaults UI and chat to Rox and terminal to JetBrains Mono', () => {
+  it('defaults UI, chat, and terminal to Rox', () => {
     expect(normalizeUiFont(undefined)).toBe('rox')
     expect(normalizeChatFont(undefined)).toBe('rox')
-    expect(normalizeTerminalFont(undefined)).toBe('jetbrains')
+    expect(normalizeTerminalFont(undefined)).toBe('rox')
   })
 
   it('keeps stored inter/system/jetbrains choices', () => {
@@ -19,11 +19,12 @@ describe('font preferences', () => {
     expect(normalizeChatFont('inter')).toBe('inter')
     expect(normalizeTerminalFont('system')).toBe('system')
     expect(normalizeTerminalFont('rox')).toBe('rox')
+    expect(normalizeTerminalFont('jetbrains')).toBe('jetbrains')
   })
 
   it('rejects unknown ids', () => {
     expect(normalizeUiFont('comic-sans')).toBe('rox')
-    expect(normalizeTerminalFont('courier')).toBe('jetbrains')
+    expect(normalizeTerminalFont('courier')).toBe('rox')
   })
 
   it('migrates the legacy SF-as-system default to Rox, but keeps an explicit system choice', () => {
