@@ -157,7 +157,6 @@ import {
 import type { SettingsSubpage } from "../../../shared/types"
 import { SourcesListPanel } from "./SourcesListPanel"
 import { SkillsListPanel } from "./SkillsListPanel"
-import { MemoryListPanel } from "./MemoryListPanel"
 import { AutomationsListPanel } from "../automations/AutomationsListPanel"
 import { ProjectsListPanel } from "./ProjectsListPanel"
 import { APP_EVENTS, AGENT_EVENTS, type AutomationFilterKind, AUTOMATION_TYPE_TO_FILTER_KIND } from "../automations/types"
@@ -2453,7 +2452,7 @@ function AppShellContent({
                             <Button
                               variant="ghost"
                               onClick={(e) => handleNewChat(e.metaKey || e.ctrlKey)}
-                              className="w-full justify-start gap-2 py-[7px] px-2 text-[13px] font-normal rounded-[6px] shadow-minimal bg-background"
+                              className="w-full justify-start gap-2 py-[7px] px-2 text-[13px] font-normal rounded-[6px]"
                               data-tutorial="new-chat-button"
                             >
                               <SquarePenRounded className="h-3.5 w-3.5 shrink-0" />
@@ -2747,25 +2746,6 @@ function AppShellContent({
                     // --- Separator before footer ---
                     { id: "separator:notes-automations", type: "separator" },
                     {
-                      id: "nav:pages",
-                      title: t("sidebar.pages"),
-                      label: String(pages.length),
-                      icon: PanelsTopLeft,
-                      // Highlight on the library grid only, not when a page is open (mirrors Projects)
-                      variant: (isPagesNavigation(navState) && !navState.details) ? "default" : "ghost",
-                      onClick: handlePagesClick,
-                      expandable: pages.length > 0,
-                      expanded: isExpanded('nav:pages'),
-                      onToggle: () => toggleExpanded('nav:pages'),
-                      items: pages.map(p => ({
-                        id: `nav:pages:${p.config.id}`,
-                        title: p.config.name,
-                        icon: PanelsTopLeft,
-                        variant: (isPagesNavigation(navState) && navState.details?.pageSlug === p.config.slug) ? "default" as const : "ghost" as const,
-                        onClick: () => navigate(routes.view.pages(p.config.slug)),
-                      })),
-                    },
-                    {
                       id: "nav:automations",
                       title: t(APP_NAV_DESTINATIONS_BY_ID.automations.labelKey),
                       label: String(automations.length),
@@ -2836,7 +2816,7 @@ function AppShellContent({
           </div>
           }
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (isSidebarVisible ? sidebarWidth : 0)}
-          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isMeetingsNavigation(navState) || isTasksNavigation(navState)) ? null : (
+          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isMeetingsNavigation(navState) || isTasksNavigation(navState) || isMemoryNavigation(navState)) ? null : (
             <div
               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
@@ -2943,10 +2923,6 @@ function AppShellContent({
                 onDeleteSkill={handleDeleteSkill}
                 selectedSkillSlug={isSkillsNavigation(navState) && navState.details?.type === 'skill' ? navState.details.skillSlug : null}
               />
-            )}
-            {isMemoryNavigation(navState) && (
-              /* Memory (self-learning lessons / context / history) */
-              <MemoryListPanel workspaceId={activeWorkspaceId ?? undefined} />
             )}
             {isProjectsNavigation(navState) && activeWorkspaceId && (
               /* Projects List */
