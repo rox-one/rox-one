@@ -323,7 +323,7 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.cloudRuns.maxArtifactsHint": "Максимум байт артефактов на завершённый запуск",
   "settings.cloudRuns.maxLlmTokensHint": "Жёсткий потолок токенов ввода и вывода (prompt+completion) на запуск",
   "settings.cloudRuns.maxWallClock": "Лимит времени запуска (сек)",
-  "settings.cloudRuns.maxWallClockHint": "Бюджет реального времени рана; watchdog убьёт ран по превышении",
+  "settings.cloudRuns.maxWallClockHint": "Бюджет реального времени запуска; watchdog убьёт запуск по превышении",
   "settings.cloudRuns.projectHint": "Идентификатор проекта Daytona для этого рабочего пространства",
   "settings.cloudRuns.provider": "Поставщик",
   "settings.cloudRuns.providerHint": "Daytona — облачный раннер; локальный и нативный sidecar остаются на этой машине",
