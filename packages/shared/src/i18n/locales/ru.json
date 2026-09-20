@@ -347,7 +347,7 @@
   "chat.openedClosestMatch": "Открыто ближайшее совпадение: {{path}}",
   "chat.permissionRequired": "Требуется разрешение",
   "chat.permissionShadow.allow": "Теневое ревью: разрешить",
-  "chat.permissionShadow.deny": "Теневое ревью: запретить",
+  "chat.permissionShadow.deny": "Теневая проверка: запретить",
   "chat.permissionShadow.hint": "«Разрешить» и «Запретить» по-прежнему нажимаете вы",
   "chat.permissionShadow.timeout": "Теневое ревью истекло",
   "chat.permissionShadow.unverified": "Теневое ревью не настроено",
