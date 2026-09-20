@@ -61,7 +61,6 @@ export default function OrganizationsSettingsPage() {
   const [inviteTarget, setInviteTarget] = useState('')
   const [inviteRole, setInviteRole] = useState<'admin' | 'member'>('member')
   const [inviting, setInviting] = useState(false)
-  const [lastInviteToken, setLastInviteToken] = useState<string | null>(null)
 
   const [acceptToken, setAcceptToken] = useState('')
   const [accepting, setAccepting] = useState(false)
@@ -122,7 +121,6 @@ export default function OrganizationsSettingsPage() {
       setNewOrgName('')
       setOrgs((current) => [...current, organization])
       setSelectedOrgId(organization.id)
-      setLastInviteToken(null)
       toast.success(t('settings.orgs.created', { name: organization.name }))
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -150,8 +148,14 @@ export default function OrganizationsSettingsPage() {
         role: inviteRole,
       })
       setInviteTarget('')
-      setLastInviteToken(invite.token)
-      const { token: _token, ...publicInvite } = invite
+      const { token, ...publicInvite } = invite
+      let copied = false
+      try {
+        await navigator.clipboard.writeText(token)
+        copied = true
+      } catch {
+        toast.error(t('toast.copyFailed'))
+      }
       setOrgs((current) =>
         current.map((organization) =>
           organization.id === selected.id
@@ -166,7 +170,7 @@ export default function OrganizationsSettingsPage() {
         ),
       )
       toast.success(t('settings.orgs.inviteSent', { target: invite.emailOrUsername }), {
-        description: t('settings.orgs.inviteNoMailer'),
+        description: copied ? t('toast.inviteCopied') : t('settings.orgs.inviteNoMailer'),
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -193,7 +197,6 @@ export default function OrganizationsSettingsPage() {
       setAcceptToken('')
       await refresh()
       setSelectedOrgId(result.org.id)
-      setLastInviteToken(null)
       toast.success(t('settings.orgs.inviteAccepted', { name: result.org.name }))
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
@@ -261,7 +264,6 @@ export default function OrganizationsSettingsPage() {
                       type="button"
                       onClick={() => {
                         setSelectedOrgId(organization.id)
-                        setLastInviteToken(null)
                       }}
                       aria-pressed={selectedOrgId === organization.id}
                       className={`flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm transition-colors ${
@@ -441,14 +443,6 @@ export default function OrganizationsSettingsPage() {
                         {inviting ? t('common.sending') : t('settings.orgs.sendInvite')}
                       </Button>
                     </div>
-                    {lastInviteToken && (
-                      <div className="border-t border-border/40 px-4 py-3">
-                        <p className="break-all text-[11px] text-muted-foreground">
-                          {t('settings.orgs.lastToken')}:{' '}
-                          <code className="font-mono">{lastInviteToken}</code>
-                        </p>
-                      </div>
-                    )}
                   </SettingsCard>
                 </section>
               </div>
