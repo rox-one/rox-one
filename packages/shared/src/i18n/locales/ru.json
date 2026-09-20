@@ -2608,7 +2608,7 @@
   "projectInfo.deleteProject": "Удалить проект",
   "projectInfo.description": "Описание",
   "projectInfo.descriptionPlaceholder": "О чём этот проект?",
-  "projectInfo.details": "Детали (инструкции для системного промпта)",
+  "projectInfo.details": "Детали (инструкции для системного запроса)",
   "projectInfo.detailsHelpText": "Произвольный текст, добавляемый в системный промпт агента, когда сессия привязана к этому проекту.",
   "projectInfo.detailsPlaceholder": "Добавьте контекст проекта, который агент должен знать всегда — соглашения о коде, ссылки, глоссарий…",
   "projectInfo.icon": "Иконка",
