@@ -1302,7 +1302,7 @@
   "inspector.context.attachments": "Вложения",
   "inspector.context.hiddenTools": "Скрыто инструментов: {{count}}",
   "inspector.context.mcp": "MCP",
-  "inspector.context.readOnly": "Только просмотр текущего окна промпта",
+  "inspector.context.readOnly": "Только просмотр текущего окна запроса",
   "inspector.context.skills": "Навыки",
   "inspector.context.system": "Система",
   "inspector.context.transcript": "Транскрипт",
