@@ -622,6 +622,10 @@ export interface ElectronAPI {
     denied?: boolean
     error?: { code: string }
   }>
+  deleteMeeting(
+    workspaceId: string,
+    meetingId: string,
+  ): Promise<{ state: string; meeting?: unknown }>
   createMeeting(
     workspaceId: string,
     title: string,

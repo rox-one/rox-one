@@ -286,6 +286,7 @@ const EXPECTED_CHANNELS: string[] = [
   'meetings:create',
   'meetings:createProposal',
   'meetings:crmPropose',
+  'meetings:delete',
   'meetings:finalize',
   'meetings:get',
   'meetings:importMedia',
