@@ -1122,7 +1122,7 @@
   "entityView.workbenchNoData": "Нет данных",
   "entityView.workbenchNoScenes": "Пока нет сцен",
   "entityView.workbenchPin": "Закрепить",
-  "entityView.workbenchPrompt": "Промпт",
+  "entityView.workbenchPrompt": "Запрос",
   "entityView.workbenchRewrite": "Переписать",
   "entityView.workbenchScenes": "Сцены",
   "entityView.workbenchShelfArtifacts": "Артефакты",
