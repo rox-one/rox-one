@@ -26,7 +26,7 @@ describe('panel inset alignment', () => {
     const collapsed = inspector.slice(collapsedStart, expandedReturn)
     const expanded = inspector.slice(expandedReturn)
 
-    expect(expanded).toContain('rounded-lg')
+    expect(expanded).toContain('rounded-md')
     expect(expanded).toContain('mt-0.5 mb-0.5')
     expect(expanded).toContain('mr-0.5')
     expect(expanded).toContain('overflow-hidden')

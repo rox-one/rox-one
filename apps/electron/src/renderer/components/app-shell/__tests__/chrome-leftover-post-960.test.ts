@@ -50,6 +50,8 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     const constants = readFileSync(join(appShell, 'panel-constants.ts'), 'utf8')
     expect(constants).toContain('PANEL_STACK_TOP_INSET = 2')
     expect(constants).toContain('PANEL_STACK_BOTTOM_INSET = 2')
+    expect(constants).toContain('PANEL_GAP = 2')
+    expect(constants).toContain('PANEL_EDGE_INSET = 2')
     expect(stack).toContain('COMPACT_PANEL_TOP_GAP = 4')
     const dock = readFileSync(join(appShell, '../session-inspector/BottomTerminalDock.tsx'), 'utf8')
     expect(dock).toContain('mx-0.5 mb-0.5')
