@@ -322,7 +322,7 @@ export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) 
               label={navigatorRowLabel(row)}
               title={row.envelope.knowledgeRef.id}
               onClick={() =>
-                navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
+                navigate(routes.view.notes())
               }
 
               mobile={mobile}
@@ -345,7 +345,7 @@ export function KnowledgeNotebookTree({ mobile = false }: { mobile?: boolean }) 
               label={navigatorRowLabel(row)}
               title={row.envelope.knowledgeRef.id}
               onClick={() =>
-                navigate(routes.view.siyuan({ kind: row.envelope.knowledgeRef.kind, id: row.envelope.knowledgeRef.id }))
+                navigate(routes.view.notes())
               }
 
               mobile={mobile}
@@ -417,7 +417,7 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
           title: t('knowledge.nav.newNote'),
         }),
       )
-      if (result?.id) navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+      if (result?.id) navigate(routes.view.notes())
       return
     }
     await api.userCreate({
@@ -479,8 +479,8 @@ function NotebookList({ notebooks, mobile }: { notebooks: KnowledgeNotebookInfo[
           icon={nodeIcon(node.kind)}
           label={node.name || node.id}
           onClick={() => {
-            if (node.kind === 'database') navigate(routes.view.siyuan({ kind: 'database', id: node.id }))
-            else if (node.kind === 'document') navigate(routes.view.siyuan({ kind: 'document', id: node.id }))
+            if (node.kind === 'database') navigate(routes.view.notes())
+            else if (node.kind === 'document') navigate(routes.view.notes())
             else if (node.kind === 'folder') void loadFolderChildren(notebookId, node)
           }}
 

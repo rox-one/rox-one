@@ -101,6 +101,15 @@ export default function KnowledgeSurfacePage({
   compat,
   mode: modeProp = 'editor',
 }: KnowledgeSurfacePageProps) {
+  // Product path purged: never embed SiYuan — send users to Rox Notes.
+  React.useEffect(() => {
+    try {
+      window.location.hash = '#/notes'
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const frameRef = useRef(0)
@@ -116,7 +125,7 @@ export default function KnowledgeSurfacePage({
   // Evaluated once at hook scope (P1-9): when the feature is off, effects
   // early-return — no listConnections, no createEmbedded, no registry entries
   // — and the render below shows the disabled copy instead of the surface.
-  const [knowledgeEnabled] = useState(() => isKnowledgeFeatureEnabled())
+  const [knowledgeEnabled] = useState(() => false) // SiYuan surface purged; Rox Notes only
   // Without a panelId (rendered outside the panel stack) assume focused.
   const isFocused = panelId === undefined || focusedPanelId === panelId
 

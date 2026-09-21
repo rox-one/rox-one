@@ -953,7 +953,7 @@
   "blockedTools": [
     {
       "pattern": "knowledge.propose_update",
-      "comment": "P3 knowledge WRITE capability (spec 05 §3.6): blocked in Explore. All SiYuan writes still flow through the approved MutationProposal pipeline even in Ask/Auto — no auto-approve."
+      "comment": "P3 knowledge WRITE capability (spec 05 §3.6): blocked in Explore. All knowledge writes flow through the approved MutationProposal / Rox Notes pipeline even in Ask/Auto — no auto-approve."
     },
     {
       "pattern": "knowledge.create_document",

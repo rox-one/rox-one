@@ -252,14 +252,10 @@ export function KnowledgeDiff({ proposalId }: { proposalId: string }) {
             size="sm"
             variant="outline"
             disabled={busy}
-            onClick={() =>
-              navigate(
-                routes.view.siyuan({ kind: proposal.targetRef.kind, id: proposal.targetRef.id }),
-              )
-            }
+            onClick={() => navigate(routes.view.notes())}
           >
             <ExternalLink className="size-3.5" aria-hidden />
-            {t('knowledge.diff.openInSiyuan')}
+            {t('knowledge.roxNotes.openNotesCta')}
           </Button>
         )
       case 'rollback':

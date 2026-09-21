@@ -6,7 +6,7 @@
  * - Search box (`knowledge.search.placeholder`); typing ≥2 chars searches
  *   after a short debounce, Enter searches immediately. Queries the FIRST
  *   connection from `knowledge.listConnections()`.
- * - Result click → `navigate(routes.view.siyuan({ kind, id }))`.
+ * - Result click → `navigate(routes.view.notes())`.
  * - Saved views: `knowledge.viewsList` → click runs `knowledge.viewRun` and
  *   renders hits in EntityList (optional groupBy headers). Preset
  *   `set_attribute` actions go through `knowledge.viewSetAttribute`
@@ -115,7 +115,7 @@ export async function searchKnowledge(
 
 /** Route for a search hit — the in-app SiYuan surface for this document/block. */
 export function searchHitRoute(hit: Pick<SearchHit, 'ref'>) {
-  return routes.view.siyuan({ kind: hit.ref.kind, id: hit.ref.id })
+  return routes.view.notes()
 }
 
 /** Route for a saved knowledge view deep-link. */
@@ -264,7 +264,7 @@ export function defaultKnowledgeEditorRoute(
 ): string {
   const doc = pickDefaultKnowledgeDocument(envelopes)
   if (!doc) return 'knowledge'
-  return routes.view.siyuan({ kind: doc.kind, id: doc.id })
+  return routes.view.notes()
 }
 
 // ---------------------------------------------------------------------------
@@ -345,7 +345,7 @@ export function KnowledgeHome() {
   }, [workspaceId])
 
   // Probe whether the legacy external knowledge engine is up. Empty state
-  // no longer offers a SiYuan install/start CTA — Rox Notes is the path.
+  // Rox Notes only — no SiYuan install/start CTA and no SiYuan document routes.
   useEffect(() => {
     if (typeof window === 'undefined') return
     let cancelled = false

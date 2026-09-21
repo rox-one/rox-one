@@ -557,14 +557,7 @@ export function PublishSessionDialog({
                 <button
                   type="button"
                   className="block text-left text-accent underline-offset-2 hover:underline"
-                  onClick={() =>
-                    navigate(
-                      routes.view.siyuan({
-                        kind: docRef.kind as 'document' | 'block' | 'notebook' | 'database' | 'asset',
-                        id: docRef.id,
-                      }),
-                    )
-                  }
+                  onClick={() => navigate(routes.view.notes())}
                 >
                   {t('knowledge.publish.publishedTo', {
                     target: `${docRef.kind}/${docRef.id}`,
