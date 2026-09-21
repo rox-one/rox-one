@@ -6,11 +6,15 @@
  * Runs before jotai atomWithStorage getOnInit reads localStorage (see bootstrap.ts).
  * Marker craft-migrate-conation-flags-default-off-v1 makes this idempotent so a
  * user who later opts in keeps ON.
+ *
+ * Prefer-FAIL: stamp the v1 marker ONLY after a re-scan shows zero sticky-truthy
+ * conation keys remain. If setItem/clear failed and leftovers remain, omit the
+ * marker so a later boot retries.
  */
 
 import { KEYS, getKeyString } from './local-storage'
 
-/** Persisted once the upgrade wipe has run. */
+/** Persisted once the upgrade wipe has run cleanly. */
 export const CONATION_FLAGS_DEFAULT_OFF_MIGRATE_KEY =
   'craft-migrate-conation-flags-default-off-v1'
 
@@ -60,6 +64,13 @@ function collectConationKeys(storage: Storage): string[] {
   return [...found]
 }
 
+function hasStickyTruthyConationKeys(storage: Storage): boolean {
+  for (const key of collectConationKeys(storage)) {
+    if (isStickyTruthy(storage.getItem(key))) return true
+  }
+  return false
+}
+
 export type MigrateConationFlagsResult = {
   ran: boolean
   cleared: string[]
@@ -67,7 +78,8 @@ export type MigrateConationFlagsResult = {
 
 /**
  * Clear/rewrite sticky true → false for conation workbench (+ skills sibling) keys.
- * No-ops after the v1 marker is set.
+ * No-ops after the v1 marker is set. Marker is stamped only when a post-loop
+ * re-scan finds zero sticky-truthy conation keys (failed writes omit marker).
  */
 export function migrateConationFlagsDefaultOff(
   storage: Storage | null | undefined = typeof globalThis !== 'undefined'
@@ -89,14 +101,17 @@ export function migrateConationFlagsDefaultOff(
       storage.setItem(key, JSON.stringify(false))
       cleared.push(key)
     } catch {
-      // Quota / private mode — still mark migrate so we do not loop forever.
+      // Quota / private mode — leave sticky key; omit marker so later boot retries.
     }
   }
 
-  try {
-    storage.setItem(CONATION_FLAGS_DEFAULT_OFF_MIGRATE_KEY, '1')
-  } catch {
-    // ignore
+  // Prefer-FAIL: only stamp v1 after a clean re-scan (no sticky-truthy leftovers).
+  if (!hasStickyTruthyConationKeys(storage)) {
+    try {
+      storage.setItem(CONATION_FLAGS_DEFAULT_OFF_MIGRATE_KEY, '1')
+    } catch {
+      // ignore — without marker a later boot will retry
+    }
   }
 
   return { ran: true, cleared }
