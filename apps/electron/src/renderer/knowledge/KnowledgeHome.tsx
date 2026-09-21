@@ -6,7 +6,8 @@
  * - Search box (`knowledge.search.placeholder`); typing ≥2 chars searches
  *   after a short debounce, Enter searches immediately. Queries the FIRST
  *   connection from `knowledge.listConnections()`.
- * - Result click → `navigate(routes.view.notes())`.
+ * - Result click → `navigate(searchHitRoute(hit))` (Rox Notes deep link when
+ *   the hit resolves to a note id, else the Notes home).
  * - Saved views: `knowledge.viewsList` → click runs `knowledge.viewRun` and
  *   renders hits in EntityList (optional groupBy headers). Preset
  *   `set_attribute` actions go through `knowledge.viewSetAttribute`
@@ -113,9 +114,24 @@ export async function searchKnowledge(
   return page.items
 }
 
-/** Route for a search hit — the in-app SiYuan surface for this document/block. */
-export function searchHitRoute(hit: Pick<SearchHit, 'ref'>) {
-  return routes.view.notes()
+/** Explicit Rox Notes id attribute a knowledge hit may carry. */
+const ROX_NOTE_ID_ATTRIBUTE = 'rox-note-id'
+
+/**
+ * Resolves the Rox Notes id a search hit deep-links to, or `null` when the hit
+ * only carries an opaque SiYuan id (no Notes counterpart → Notes home).
+ * An explicit `rox-note-id` attribute wins; otherwise path-like ids are notes.
+ */
+export function resolveSearchHitNoteId(hit: Pick<SearchHit, 'ref' | 'attributes'>): string | null {
+  const explicit = hit.attributes?.[ROX_NOTE_ID_ATTRIBUTE]?.trim()
+  if (explicit) return explicit
+  const id = hit.ref.id
+  return id.includes('/') ? id : null
+}
+
+/** Route for a search hit — Rox Notes deep link, else the Notes home. */
+export function searchHitRoute(hit: Pick<SearchHit, 'ref' | 'attributes'>) {
+  return routes.view.notes(resolveSearchHitNoteId(hit) ?? undefined)
 }
 
 /** Route for a saved knowledge view deep-link. */
@@ -258,13 +274,12 @@ export function pickDefaultKnowledgeDocument(
   return { kind: 'document', id: best.knowledgeRef.id }
 }
 
-/** In-app editor route for the default document, else the knowledge home. */
+/** Rox Notes route for the default document, else the Notes home. */
 export function defaultKnowledgeEditorRoute(
   envelopes: readonly KnowledgeEnvelopeLike[],
 ): string {
   const doc = pickDefaultKnowledgeDocument(envelopes)
-  if (!doc) return 'knowledge'
-  return routes.view.notes()
+  return routes.view.notes(doc?.id)
 }
 
 // ---------------------------------------------------------------------------
