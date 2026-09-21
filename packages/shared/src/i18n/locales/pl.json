@@ -3522,7 +3522,7 @@
   "settings.knowledge.detectResult.running": "Działa na :6806",
   "settings.knowledge.detectResult.suggestedUrl": "Sugerowany bazowy URL",
   "settings.knowledge.detectResult.yes": "Tak",
-  "settings.knowledge.detectRunning": "SiYuan nasłuchuje na domyślnym porcie",
+  "settings.knowledge.detectRunning": "Default port is responding",
   "settings.knowledge.detectSection": "Local engine",
   "settings.knowledge.detectStopped": "Default port is idle",
   "settings.knowledge.detecting": "Wykrywanie…",

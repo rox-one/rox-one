@@ -3516,7 +3516,7 @@
   "settings.knowledge.detectResult.running": "執行於 :6806",
   "settings.knowledge.detectResult.suggestedUrl": "建議的基礎 URL",
   "settings.knowledge.detectResult.yes": "是",
-  "settings.knowledge.detectRunning": "SiYuan 正在預設埠監聽",
+  "settings.knowledge.detectRunning": "Default port is responding",
   "settings.knowledge.detectSection": "Local engine",
   "settings.knowledge.detectStopped": "Default port is idle",
   "settings.knowledge.detecting": "正在偵測…",

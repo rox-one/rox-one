@@ -3516,7 +3516,7 @@
   "settings.knowledge.detectResult.running": ":6806에서 실행 중",
   "settings.knowledge.detectResult.suggestedUrl": "권장 기본 URL",
   "settings.knowledge.detectResult.yes": "예",
-  "settings.knowledge.detectRunning": "SiYuan이 기본 포트에서 수신 대기 중입니다.",
+  "settings.knowledge.detectRunning": "Default port is responding",
   "settings.knowledge.detectSection": "Local engine",
   "settings.knowledge.detectStopped": "Default port is idle",
   "settings.knowledge.detecting": "감지 중…",

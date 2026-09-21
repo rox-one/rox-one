@@ -3516,7 +3516,7 @@
   "settings.knowledge.detectResult.running": "运行于 :6806",
   "settings.knowledge.detectResult.suggestedUrl": "建议的基础 URL",
   "settings.knowledge.detectResult.yes": "是",
-  "settings.knowledge.detectRunning": "SiYuan 正在默认端口监听",
+  "settings.knowledge.detectRunning": "Default port is responding",
   "settings.knowledge.detectSection": "Local engine",
   "settings.knowledge.detectStopped": "Default port is idle",
   "settings.knowledge.detecting": "正在检测…",

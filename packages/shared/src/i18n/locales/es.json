@@ -3516,7 +3516,7 @@
   "settings.knowledge.detectResult.running": "En ejecución en :6806",
   "settings.knowledge.detectResult.suggestedUrl": "URL base sugerida",
   "settings.knowledge.detectResult.yes": "Sí",
-  "settings.knowledge.detectRunning": "SiYuan escucha en el puerto predeterminado",
+  "settings.knowledge.detectRunning": "Default port is responding",
   "settings.knowledge.detectSection": "Local engine",
   "settings.knowledge.detectStopped": "Default port is idle",
   "settings.knowledge.detecting": "Detectando…",

@@ -3516,7 +3516,7 @@
   "settings.knowledge.detectResult.running": "Fut a :6806-on",
   "settings.knowledge.detectResult.suggestedUrl": "Javasolt alap URL",
   "settings.knowledge.detectResult.yes": "Igen",
-  "settings.knowledge.detectRunning": "A SiYuan a default porton figyel",
+  "settings.knowledge.detectRunning": "Default port is responding",
   "settings.knowledge.detectSection": "Local engine",
   "settings.knowledge.detectStopped": "Default port is idle",
   "settings.knowledge.detecting": "Észlelés…",

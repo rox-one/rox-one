@@ -3516,7 +3516,7 @@
   "settings.knowledge.detectResult.running": "يعمل على :6806",
   "settings.knowledge.detectResult.suggestedUrl": "عنوان URL الأساسي المقترح",
   "settings.knowledge.detectResult.yes": "نعم",
-  "settings.knowledge.detectRunning": "يستمع SiYuan على المنفذ الافتراضي",
+  "settings.knowledge.detectRunning": "Default port is responding",
   "settings.knowledge.detectSection": "Local engine",
   "settings.knowledge.detectStopped": "Default port is idle",
   "settings.knowledge.detecting": "جارٍ الاكتشاف…",
