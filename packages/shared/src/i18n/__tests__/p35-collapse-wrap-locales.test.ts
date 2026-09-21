@@ -217,7 +217,7 @@ const WRAPPED_RU: Record<string, string> = {
   "onboarding.roxConnect.expired": "Код подключения Rox истёк. Начните заново.",
   "onboarding.roxConnect.pollFailed": "Не удалось проверить статус подключения Rox.",
   "overlay.zoomPresets": "Шаблоны масштаба",
-  "pages.designWithAgentPrompt": "Сверстай страницу «{{name}}» (slug: {{slug}}). Она есть в рабочем пространстве, но пока без содержимого — напиши index.html через update_page по гайду Pages.",
+  "pages.designWithAgentPrompt": "Сверстай страницу «{{name}}» (slug: {{slug}}). Она есть в рабочем пространстве, но пока без содержимого — напиши index.html через update_page по гайду страниц.",
   "pages.refreshPreview": "Обновить предпросмотр",
   "pendingSkills.riskFsOutside": "Файловая система вне текущей рабочей директории cwd",
   "pendingSkills.updatesNote": "Обновляет существующий навык «{{slug}}» (станет v{{version}})",
