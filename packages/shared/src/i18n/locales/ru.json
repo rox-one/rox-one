@@ -1249,7 +1249,7 @@
   "extensions.runtime.craft-native": "craft-native",
   "extensions.runtime.craft-native.hint": "Собственный код Craft (main/renderer)",
   "extensions.runtime.craft-sandbox": "craft-sandbox",
-  "extensions.runtime.craft-sandbox.hint": "Extension Host utilityProcess (в песочнице)",
+  "extensions.runtime.craft-sandbox.hint": "Хост расширений utilityProcess (в песочнице)",
   "extensions.runtime.mcp-source": "mcp-source",
   "extensions.runtime.mcp-source.hint": "SourceServerBuilder в server-core",
   "extensions.runtime.siyuan-plugin": "siyuan-plugin",
