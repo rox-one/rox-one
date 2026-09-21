@@ -1,19 +1,15 @@
 /**
- * Splash / sessionsLoaded gate helper.
+ * Splash / cold_ready: mark sessionsLoaded before permission-mode N+1 IPC.
  *
- * isFullyReady = appState === 'ready' && sessionsLoaded. Permission mode is
- * already seeded from getSessions(), so the per-session permission-mode
- * reconcile (N+1 IPC) must not block splash dismiss. Mark ready first, then
- * kick off the reconcile in the background without awaiting it.
+ * getSessions() already seeds permissionMode. Awaiting per-session
+ * getSessionPermissionModeState before setSessionsLoaded keeps SplashScreen
+ * up for O(n) IPC (perf probe detectSessionMetadataNPlusOne). Call markReady
+ * first; fire reconcile in the background.
  */
-export interface MarkSessionsReadyThenReconcileArgs {
-  /** Flip the splash gate (e.g. setSessionsLoaded(true)). */
+export function markSessionsReadyThenReconcile(args: {
   markReady: () => void
-  /** Background per-session reconcile; never awaited by the caller. */
   reconcileAll: () => Promise<unknown>
-}
-
-export function markSessionsReadyThenReconcile(args: MarkSessionsReadyThenReconcileArgs): void {
+}): void {
   args.markReady()
   void args.reconcileAll()
 }
