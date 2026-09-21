@@ -1586,7 +1586,7 @@
   "marketplace.installed": "Установлено",
   "marketplace.installedSuccess": "Установлено",
   "marketplace.kind.context-doc": "Контекст-док",
-  "marketplace.kind.skillpack": "Пак навыков",
+  "marketplace.kind.skillpack": "Пакет навыков",
   "marketplace.kind.tool": "Инструмент",
   "marketplace.lastFetchDaysAgo_few": "{{count}} дня назад",
   "marketplace.lastFetchDaysAgo_many": "{{count}} дней назад",
