@@ -55,4 +55,11 @@ describe('settings command center presentation', () => {
     expect(css).toContain('@import "tailwindcss" source(none)')
     expect(css).toContain('@import "@craft-agent/ui/styles"')
   })
+
+  it('labels the bare settings home as Overview hub (not a second Settings title)', () => {
+    expect(overviewSrc).toContain("t('settings.overview.title'")
+    expect(overviewSrc).toContain("t('settings.overview.subtitle'")
+    expect(overviewSrc).toContain('data-testid="settings-overview-subtitle"')
+    expect(overviewSrc).not.toContain("title={t('sidebar.settings')}")
+  })
 })
