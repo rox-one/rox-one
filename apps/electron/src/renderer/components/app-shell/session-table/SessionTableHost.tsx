@@ -667,6 +667,11 @@ export function SessionTableHost() {
         className={isCompactMode ? 'w-full border-b border-border/50 px-2 py-1.5' : 'border-b border-border/50'}
       />
 
+      {/*
+        Virtualized session table: role=table/row/columnheader (not role=grid).
+        Absolute-positioned virtual rows keep their offsets; we only stamp ARIA
+        roles on the sticky header + row/group shells without rewriting virtualization.
+      */}
       <div
         ref={scrollContainerRef}
         role="table"
@@ -679,7 +684,11 @@ export function SessionTableHost() {
         }}
         onDragEnd={handleTableDragEnd}
       >
-        <div ref={tableHeaderRef} role="row" className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground backdrop-blur">
+        <div
+          ref={tableHeaderRef}
+          role="row"
+          className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground backdrop-blur"
+        >
           <span role="columnheader" className="w-6 shrink-0">
             <input
               type="checkbox"
@@ -691,7 +700,7 @@ export function SessionTableHost() {
               aria-label={t('collection.table.selectAll')}
             />
           </span>
-          {showGrip && <span role="columnheader" className="w-4 shrink-0" />}
+          {showGrip && <span role="columnheader" className="w-4 shrink-0" aria-hidden="true" />}
           <span role="columnheader" className="min-w-0 flex-1">{t('collection.table.column.title')}</span>
           <SessionTablePropertyHeader
             showStatus={showCol('status')}
@@ -710,7 +719,7 @@ export function SessionTableHost() {
           {showCol('toolCalls') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.toolCalls')}</span>}
           {showCol('commits') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.commits')}</span>}
           {showCol('parallelAgents') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.parallelAgents')}</span>}
-          {showCol('flag') && <span role="columnheader" className="w-8 shrink-0" />}
+          {showCol('flag') && <span role="columnheader" className="w-8 shrink-0" aria-hidden="true" />}
         </div>
 
         {totalRows === 0 ? (

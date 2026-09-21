@@ -231,6 +231,7 @@ export function SessionTablePropertyHeader({
 
   const icon = (key: string, node: React.ReactNode) => (
     <span
+      role="columnheader"
       className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground"
       aria-label={t(key)}
       title={t(key)}
@@ -240,7 +241,7 @@ export function SessionTablePropertyHeader({
   )
 
   return (
-    <span data-property-cluster className={PROPERTY_CLUSTER_CLASS} role="columnheader">
+    <span data-property-cluster className={PROPERTY_CLUSTER_CLASS} role="presentation">
       {showStatus && icon('collection.table.column.status', <Circle className="h-3.5 w-3.5" />)}
       {showLabels && icon('collection.table.column.labels', <Tag className="h-3.5 w-3.5" />)}
       {showPriority && icon('collection.table.column.priority', <ChevronsUp className="h-3.5 w-3.5" />)}
@@ -353,7 +354,7 @@ export function SessionTableRow({
         onDragOverRow(meta.id, e)
       }}
     >
-      <span role="cell" className="w-6 shrink-0">
+      <span className="w-6 shrink-0">
         <input
           type="checkbox"
           checked={selected}
@@ -363,24 +364,22 @@ export function SessionTableRow({
         />
       </span>
       {showGrip && (
-        <span role="cell" className="w-4 shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing">
+        <span className="w-4 shrink-0 cursor-grab text-muted-foreground/50 active:cursor-grabbing">
           <GripVertical className="h-3.5 w-3.5" />
         </span>
       )}
 
-      <span role="cell" className="flex min-w-0 flex-1">
-        <button
-          type="button"
-          className="min-w-0 flex-1 truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 rounded-[3px]"
-          onClick={() => onOpen(meta.id)}
-          title={title}
-        >
-          {title}
-        </button>
-      </span>
+      <button
+        type="button"
+        className="min-w-0 flex-1 truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 rounded-[3px]"
+        onClick={() => onOpen(meta.id)}
+        title={title}
+      >
+        {title}
+      </button>
 
       {showPropertyCluster && (
-        <span data-property-cluster role="cell" className={PROPERTY_CLUSTER_CLASS}>
+        <span data-property-cluster className={PROPERTY_CLUSTER_CLASS}>
           {showStatus && (
             <SessionRowCompactMenu
               label={t('collection.table.column.status')}
@@ -444,49 +443,47 @@ export function SessionTableRow({
       )}
 
       {showUpdated && (
-        <span role="cell" className="w-20 shrink-0 text-xs text-muted-foreground">{formatRelative(meta.lastMessageAt)}</span>
+        <span className="w-20 shrink-0 text-xs text-muted-foreground">{formatRelative(meta.lastMessageAt)}</span>
       )}
       {showCreated && (
-        <span role="cell" className="w-20 shrink-0 text-xs text-muted-foreground">{formatDate(meta.createdAt)}</span>
+        <span className="w-20 shrink-0 text-xs text-muted-foreground">{formatDate(meta.createdAt)}</span>
       )}
       {showMessages && (
-        <span role="cell" className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.messageCount ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.messageCount ?? '—'}</span>
       )}
       {showTokens && (
-        <span role="cell" className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.tokenUsage?.totalTokens ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.tokenUsage?.totalTokens ?? '—'}</span>
       )}
       {showDuration && (
-        <span role="cell" className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatDuration(sessionDuration(meta))}</span>
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatDuration(sessionDuration(meta))}</span>
       )}
       {showSize && (
-        <span role="cell" className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatTranscriptSize(meta.transcriptBytes)}</span>
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{formatTranscriptSize(meta.transcriptBytes)}</span>
       )}
       {showToolCalls && (
-        <span role="cell" className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.toolCallCount ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.toolCallCount ?? '—'}</span>
       )}
       {showCommits && (
-        <span role="cell" className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.commitCount ?? '—'}</span>
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{meta.commitCount ?? '—'}</span>
       )}
       {showParallelAgents && (
-        <span role="cell" className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{parallelAgentCount}</span>
+        <span className="w-20 shrink-0 text-xs tabular-nums text-muted-foreground">{parallelAgentCount}</span>
       )}
 
       {showFlag && (
-        <span role="cell" className="w-8 shrink-0">
-          <button
-            type="button"
-            className={cn(
-              'text-muted-foreground/50 hover:text-amber-400',
-              meta.isFlagged && 'text-amber-500',
-            )}
-            aria-pressed={Boolean(meta.isFlagged)}
-            aria-label={meta.isFlagged ? t('sessionMenu.unflag') : t('sessionMenu.flag')}
-            title={meta.isFlagged ? t('sessionMenu.unflag') : t('sessionMenu.flag')}
-            onClick={() => onUpdate({ isFlagged: !meta.isFlagged })}
-          >
-            <FlagIcon className="h-3.5 w-3.5" fill={meta.isFlagged ? 'currentColor' : 'none'} />
-          </button>
-        </span>
+        <button
+          type="button"
+          className={cn(
+            'w-8 shrink-0 text-muted-foreground/50 hover:text-amber-400',
+            meta.isFlagged && 'text-amber-500',
+          )}
+          aria-pressed={Boolean(meta.isFlagged)}
+          aria-label={meta.isFlagged ? t('sessionMenu.unflag') : t('sessionMenu.flag')}
+          title={meta.isFlagged ? t('sessionMenu.unflag') : t('sessionMenu.flag')}
+          onClick={() => onUpdate({ isFlagged: !meta.isFlagged })}
+        >
+          <FlagIcon className="h-3.5 w-3.5" fill={meta.isFlagged ? 'currentColor' : 'none'} />
+        </button>
       )}
     </li>
   )
