@@ -576,7 +576,7 @@
   "collection.bulk.setProject": "Установить проект",
   "collection.bulk.setStatus": "Установить статус",
   "collection.bulk.title": "Массовые действия",
-  "collection.bulk.unflag": "Снять флаг",
+  "collection.bulk.unflag": "Снять пометку",
   "collection.display.boardHint": "На доске колонки задаются настройками доски; порядок применяется внутри колонок.",
   "collection.display.boardNote": "Колонки доски по-прежнему из настроек доски. Порядок — внутри колонок.",
   "collection.display.density.comfortable": "Комфортный",
