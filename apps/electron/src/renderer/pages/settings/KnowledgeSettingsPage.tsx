@@ -14,11 +14,10 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useActiveWorkspace } from '@/context/AppShellContext'
-import { routes } from '@/lib/navigate'
+import { navigate, routes } from '@/lib/navigate'
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import type {
   KnowledgeConnection,
-  KnowledgeDetectEngineResult,
   KnowledgeEngineStatus,
 } from '../../../shared/types'
 import type { AIActionMode } from '../notes/NotesAIMenu'
@@ -70,11 +69,9 @@ export default function KnowledgeSettingsPage() {
 
   const [connections, setConnections] = React.useState<KnowledgeConnection[] | null>(null)
   const [engineStatus, setEngineStatus] = React.useState<KnowledgeEngineStatus | null>(null)
-  const [detectResult, setDetectResult] = React.useState<KnowledgeDetectEngineResult | null>(null)
   const [token, setToken] = React.useState('')
   const [saving, setSaving] = React.useState(false)
   const [testing, setTesting] = React.useState(false)
-  const [starting, setStarting] = React.useState(false)
   const [migrating, setMigrating] = React.useState(false)
   const [aiPrompts, setAiPrompts] = React.useState(() =>
     parseNotesAiPrompts(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_AI_PROMPTS_STORAGE_KEY)),
@@ -82,39 +79,6 @@ export default function KnowledgeSettingsPage() {
   // MVP: a single external-local connection (spec K-03 §3.3); the list still
   // renders every entry so additional providers stay visible.
   const connection = connections?.[0] ?? null
-
-  React.useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const detected = await window.electronAPI.knowledge.detectEngine()
-        if (!cancelled) setDetectResult(detected)
-      } catch (error) {
-        if (!cancelled) {
-          toast.error(t('settings.knowledge.detectFailed', { message: errorMessage(error) }))
-        }
-      }
-      if (!workspaceId) return
-      try {
-        const list = await window.electronAPI.knowledge.listConnections()
-        if (cancelled) return
-        setConnections(list)
-        const first = list[0]
-        if (first) {
-          const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId: first.id })
-          if (!cancelled) setEngineStatus(status)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          toast.error(t('settings.knowledge.loadFailed', { message: errorMessage(error) }))
-        }
-      }
-    }
-    void load()
-    return () => {
-      cancelled = true
-    }
-  }, [t, workspaceId])
 
   const handleSaveToken = async () => {
     const trimmed = token.trim()
@@ -160,27 +124,8 @@ export default function KnowledgeSettingsPage() {
     }
   }
 
-  // SiYuan kernel start/install removed — Rox Notes is the only knowledge path.
-  const handleStartKernel = async () => {
-    toast.message(t('knowledge.roxNotes.emptyTitle'))
-  }
-
-  const openInstallPage = () => {
-    // Intentionally no-op: do not open SiYuan/b3log install docs.
-  }
-
-  const openDetectDocs = () => {
-    // Intentionally no-op: do not open SiYuan install docs.
-  }
-
   const openRoxNotes = () => {
-    // Soft navigate via hash route used elsewhere for notes.
-    window.location.hash = '#/notes'
-  }
-
-  const yesNoUnknown = (value: boolean | undefined) => {
-    if (detectResult == null || value === undefined) return t('settings.knowledge.status.unknown')
-    return value ? t('settings.knowledge.detectResult.yes') : t('settings.knowledge.detectResult.no')
+    navigate(routes.view.notes())
   }
 
   const handleMigrateNotes = async () => {
@@ -307,41 +252,6 @@ export default function KnowledgeSettingsPage() {
                 {t('knowledge.local.savePrompts')}
               </Button>
             </div>
-          </SettingsRow>
-        </SettingsCard>
-      </SettingsSection>
-
-      <SettingsSection title={t('knowledge.local.engineOptional')}>
-        <SettingsCard>
-          <SettingsRow
-            label={t('settings.knowledge.detectResult.installed')}
-            description={t('settings.knowledge.detectNeverDownload')}
-          >
-            <span className="text-sm text-muted-foreground">{yesNoUnknown(detectResult?.installed)}</span>
-          </SettingsRow>
-          <SettingsRow label={t('settings.knowledge.detectResult.running')}>
-            <span className="text-sm text-muted-foreground">
-              {yesNoUnknown(detectResult?.runningOnDefaultPort)}
-            </span>
-          </SettingsRow>
-          <SettingsRow label={t('settings.knowledge.detectResult.paths')}>
-            <span className="text-sm text-muted-foreground whitespace-pre-line">
-              {detectResult == null
-                ? t('settings.knowledge.status.unknown')
-                : detectResult.installPathsFound.length > 0
-                  ? detectResult.installPathsFound.join('\n')
-                  : t('settings.knowledge.detectNone')}
-            </span>
-          </SettingsRow>
-          <SettingsRow label="">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={openDetectDocs}
-              disabled={!detectResult?.installDocsUrl}
-            >
-              {t('settings.knowledge.installDocs')}
-            </Button>
           </SettingsRow>
         </SettingsCard>
       </SettingsSection>
