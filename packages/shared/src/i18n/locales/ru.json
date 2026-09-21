@@ -3653,7 +3653,7 @@
   "settings.messaging.telegram.access.banner.title": "Этот бот общедоступен",
   "settings.messaging.telegram.access.bindingPopover.mode.allowList.description": "Эту привязку могут использовать только явно отмеченные пользователи.",
   "settings.messaging.telegram.access.bindingPopover.mode.allowList.label": "Свой список разрешённых",
-  "settings.messaging.telegram.access.bindingPopover.mode.disabled.description": "Бот игнорирует все сообщения этого биндинга.",
+  "settings.messaging.telegram.access.bindingPopover.mode.disabled.description": "Бот игнорирует все сообщения этой привязки.",
   "settings.messaging.telegram.access.bindingPopover.mode.disabled.label": "Отключено",
   "settings.messaging.telegram.access.bindingPopover.mode.inherit.description": "Эту привязку могут использовать все владельцы рабочего пространства.",
   "settings.messaging.telegram.access.bindingPopover.mode.inherit.label": "Наследует рабочее пространство",
