@@ -21,7 +21,7 @@ describe('ship-rox-inspector-strip-host', () => {
     expect(collapsed).toContain('data-inspector="collapsed"')
     expect(collapsed).toContain('w-[28px]')
     expect(collapsed).toContain('h-full')
-    expect(collapsed).toContain('mr-1')
+    expect(collapsed).toContain('mr-0.5')
     expect(collapsed).not.toMatch(/mt-1 mb-1/)
   })
 
