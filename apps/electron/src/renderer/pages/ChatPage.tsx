@@ -1,2 +1,1 @@
-// probe only - will be replaced with full ChatPage.tsx
-export default function ChatPage() { return null }
+__CURSOR_READ_FILE__/tmp/chatpage_plain.tsx
