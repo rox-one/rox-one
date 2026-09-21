@@ -1,1 +1,540 @@
-SIZE_TEST_8000_PLACEHOLDER_WILL_REPLACE
+import * as React from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useAtomValue, useSetAtom } from 'jotai'
+import { useTranslation } from 'react-i18next'
+import { Panel } from './Panel'
+import { MemoryListPanel } from './MemoryListPanel'
+import { ProjectsHomeInMain } from './ProjectsHomeInMain'
+import { MultiSelectPanel } from './MultiSelectPanel'
+import { CollectionBulkBar } from './collection/CollectionBulkBar'
+import { useAppShellContext } from '@/context/AppShellContext'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { StoplightProvider } from '@/context/StoplightContext'
+import {
+  useNavigationState,
+  isSessionsNavigation,
+  isSourcesNavigation,
+  isSettingsNavigation,
+  isSkillsNavigation,
+  isMemoryNavigation,
+  isTasksNavigation,
+  isMeetingsNavigation,
+  isNotesNavigation,
+  isAutomationsNavigation,
+  isProjectsNavigation,
+  isPagesNavigation,
+  isBrowserNavigation,
+  isKnowledgeNavigation,
+  isDiffNavigation,
+  isExtensionNavigation,
+  isConnectionsNavigation,
+  isHomeNavigation,
+} from '@/contexts/NavigationContext'
+import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
+import ChatPage from '@/pages/ChatPage'
+import { HomeFrontPage } from '@/platform/HomeFrontPage'
+import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
+import { SettingsOverviewPage } from '@/pages/settings/SettingsOverviewPage'
+import { recordRecentSetting } from '@/lib/settings-recent'
+import { PageView } from '../pages/PageView'
+import { SessionHeatmapHost } from './session-heatmap/SessionHeatmapHost'
+import type { ExecutionEntry } from '../automations/types'
+import { automationsAtom } from '@/atoms/automations'
+import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
+import {
+  knowledgeActiveViewIdAtom,
+  knowledgeHomeViewAtom,
+} from '../../knowledge/KnowledgeHome'
+
+const NotesPage = React.lazy(() => import('@/pages/NotesPage'))
+const ConnectionsPage = React.lazy(() => import('@/pages/ConnectionsPage'))
+const TasksPage = React.lazy(() => import('@/pages/TasksPage'))
+const MeetingsPage = React.lazy(() => import('@/pages/MeetingsPage'))
+const KnowledgeEntityPage = React.lazy(() => import('@/pages/KnowledgeEntityPage'))
+const SkillInfoPage = React.lazy(() => import('@/pages/SkillInfoPage'))
+const SourceInfoPage = React.lazy(() => import('@/pages/SourceInfoPage'))
+const ProjectInfoPage = React.lazy(() => import('@/pages/ProjectInfoPage'))
+const BrowserPanelPage = React.lazy(() => import('@/pages/BrowserPanelPage'))
+const ExtensionSurfacePage = React.lazy(() => import('@/pages/ExtensionSurfacePage'))
+const PagesHome = React.lazy(() =>
+  import('../pages/PagesHome').then((m) => ({ default: m.PagesHome })),
+)
+const KanbanBoardContainer = React.lazy(() =>
+  import('./kanban/KanbanBoardContainer').then((m) => ({ default: m.KanbanBoardContainer })),
+)
+const SessionTableHost = React.lazy(() =>
+  import('./session-table/SessionTableHost').then((m) => ({ default: m.SessionTableHost })),
+)
+const AutomationInfoPage = React.lazy(() =>
+  import('../automations/AutomationInfoPage').then((m) => ({ default: m.AutomationInfoPage })),
+)
+const AutomationGraphWorkspaceEditor = React.lazy(() =>
+  import('../automations/AutomationGraphWorkspaceEditor').then((m) => ({
+    default: m.AutomationGraphWorkspaceEditor,
+  })),
+)
+const KnowledgeDiff = React.lazy(() =>
+  import('../../knowledge/KnowledgeDiff').then((m) => ({ default: m.KnowledgeDiff })),
+)
+const KnowledgeHome = React.lazy(() =>
+  import('../../knowledge/KnowledgeHome').then((m) => ({ default: m.KnowledgeHome })),
+)
+const KnowledgeProposals = React.lazy(() =>
+  import('../../knowledge/KnowledgeProposals').then((m) => ({ default: m.KnowledgeProposals })),
+)
+
+export interface MainContentPanelProps {
+  isSidebarAndNavigatorHidden?: boolean
+  className?: string
+  navStateOverride?: import('../../../shared/types').NavigationState | null
+  panelId?: string
+}
+
+export function MainContentPanel({
+  isSidebarAndNavigatorHidden = false,
+  className,
+  navStateOverride,
+  panelId,
+}: MainContentPanelProps) {
+  const { t } = useTranslation()
+  const globalNavState = useNavigationState()
+  const navState = navStateOverride ?? globalNavState
+  const {
+    activeWorkspaceId,
+    workspaces,
+    sessionStatuses,
+    projects,
+    labels,
+    onTestAutomation,
+    onToggleAutomation,
+    onDuplicateAutomation,
+    onDeleteAutomation,
+    onReplayAutomation,
+    automationTestResults,
+    getAutomationHistory,
+    activeSessionWorkingDirectory,
+  } = useAppShellContext()
+
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
+  const visibleSessionIds = useMemo(
+    () =>
+      [...sessionMetaMap.values()]
+        .filter((meta) => !activeWorkspaceId || meta.workspaceId === activeWorkspaceId)
+        .map((meta) => meta.id),
+    [sessionMetaMap, activeWorkspaceId],
+  )
+  const automations = useAtomValue(automationsAtom)
+  const setKnowledgeHomeView = useSetAtom(knowledgeHomeViewAtom)
+  const setKnowledgeActiveViewId = useSetAtom(knowledgeActiveViewIdAtom)
+
+  useEffect(() => {
+    if (!isKnowledgeNavigation(navState)) return
+    if (navState.details?.type === 'knowledge-view') {
+      setKnowledgeActiveViewId(navState.details.viewId)
+      setKnowledgeHomeView('view')
+      return
+    }
+    setKnowledgeActiveViewId(null)
+    setKnowledgeHomeView('search')
+  }, [navState, setKnowledgeActiveViewId, setKnowledgeHomeView])
+
+  useEffect(() => {
+    if (!isSettingsNavigation(navState) || navState.subpage === null || !activeWorkspaceId) return
+    const controller = new AbortController()
+    void recordRecentSetting(activeWorkspaceId, navState.subpage, { signal: controller.signal })
+    return () => { controller.abort() }
+  }, [navState, activeWorkspaceId])
+
+  const selectedAutomationId = isAutomationsNavigation(navState) ? navState.details?.automationId : undefined
+  const [executions, setExecutions] = useState<ExecutionEntry[]>([])
+  useEffect(() => {
+    if (!selectedAutomationId || !getAutomationHistory) {
+      setExecutions([])
+      return
+    }
+    let stale = false
+    getAutomationHistory(selectedAutomationId).then(entries => {
+      if (!stale) setExecutions(entries)
+    })
+    const cleanup = window.electronAPI.onAutomationsChanged(() => {
+      if (!stale) {
+        getAutomationHistory(selectedAutomationId).then(entries => {
+          if (!stale) setExecutions(entries)
+        })
+      }
+    })
+    return () => { stale = true; cleanup() }
+  }, [selectedAutomationId, getAutomationHistory])
+
+  const isSourceMultiSelectActive = sourceSelection.useIsMultiSelectActive()
+  const sourceSelectionCount = sourceSelection.useSelectionCount()
+  const selectedSourceIds = sourceSelection.useSelectedIds()
+  const { clearMultiSelect: clearSourceSelection } = sourceSelection.useSelection()
+  const isSkillMultiSelectActive = skillSelection.useIsMultiSelectActive()
+  const skillSelectionCount = skillSelection.useSelectionCount()
+  const selectedSkillIds = skillSelection.useSelectedIds()
+  const { clearMultiSelect: clearSkillSelection } = skillSelection.useSelection()
+  const isAutomationMultiSelectActive = automationSelection.useIsMultiSelectActive()
+  const automationSelectionCount = automationSelection.useSelectionCount()
+  const selectedAutomationIds = automationSelection.useSelectedIds()
+  const { clearMultiSelect: clearAutomationSelection } = automationSelection.useSelection()
+
+  const [sendDialogOpen, setSendDialogOpen] = useState(false)
+  const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
+  const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
+  const [sendResourceLabel, setSendResourceLabel] = useState('')
+  const hasOtherWorkspaces = workspaces.length > 1
+
+  const openSendDialog = useCallback((type: SendResourceType, ids: Set<string>) => {
+    const count = ids.size
+    setSendResourceType(type)
+    setSendResourceIds([...ids])
+    setSendResourceLabel(`${count} ${type}${count !== 1 ? 's' : ''}`)
+    setSendDialogOpen(true)
+  }, [])
+
+  const pageFallback = (
+    <Panel variant="grow" className={className}>
+      <div className="flex h-full items-center justify-center text-muted-foreground">
+        <p className="text-sm">{t('common.loading')}</p>
+      </div>
+    </Panel>
+  )
+
+  const wrapWithStoplight = (content: React.ReactNode) => (
+    <StoplightProvider value={isSidebarAndNavigatorHidden}>
+      <React.Suspense fallback={pageFallback}>
+        {content}
+      </React.Suspense>
+      <SendResourceToWorkspaceDialog
+        open={sendDialogOpen}
+        onOpenChange={setSendDialogOpen}
+        resourceType={sendResourceType}
+        resourceIds={sendResourceIds}
+        resourceLabel={sendResourceLabel}
+        workspaces={workspaces}
+        activeWorkspaceId={activeWorkspaceId || ''}
+      />
+    </StoplightProvider>
+  )
+
+  if (isSettingsNavigation(navState)) {
+    if (navState.subpage === null) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SettingsOverviewPage />
+        </Panel>
+      )
+    }
+    const SettingsPageComponent = getSettingsPageComponent(navState.subpage)
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <SettingsPageComponent />
+      </Panel>
+    )
+  }
+
+  if (isSourcesNavigation(navState)) {
+    if (isSourceMultiSelectActive) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <MultiSelectPanel
+            count={sourceSelectionCount}
+            entityType="source"
+            onSendToWorkspace={hasOtherWorkspaces ? () => openSendDialog('source', selectedSourceIds) : undefined}
+            onClearSelection={clearSourceSelection}
+          />
+        </Panel>
+      )
+    }
+    if (navState.details) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SourceInfoPage sourceSlug={navState.details.sourceSlug} workspaceId={activeWorkspaceId || ''} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p className="text-sm">{t("sourcesList.noSourcesConfigured")}</p>
+        </div>
+      </Panel>
+    )
+  }
+
+  if (isSkillsNavigation(navState)) {
+    if (isSkillMultiSelectActive) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <MultiSelectPanel
+            count={skillSelectionCount}
+            entityType="skill"
+            onSendToWorkspace={hasOtherWorkspaces ? () => openSendDialog('skill', selectedSkillIds) : undefined}
+            onClearSelection={clearSkillSelection}
+          />
+        </Panel>
+      )
+    }
+    if (navState.details?.type === 'skill') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SkillInfoPage
+            skillSlug={navState.details.skillSlug}
+            workspaceId={activeWorkspaceId || ''}
+            workingDirectory={activeSessionWorkingDirectory}
+          />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p className="text-sm">{t("skillsList.noSkillsConfigured")}</p>
+        </div>
+      </Panel>
+    )
+  }
+
+  if (isMemoryNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <MemoryListPanel workspaceId={activeWorkspaceId ?? undefined} />
+      </Panel>
+    )
+  }
+
+  if (isAutomationsNavigation(navState)) {
+    if (isAutomationMultiSelectActive) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <MultiSelectPanel
+            count={automationSelectionCount}
+            entityType="automation"
+            onSendToWorkspace={hasOtherWorkspaces ? () => openSendDialog('automation', selectedAutomationIds) : undefined}
+            onClearSelection={clearAutomationSelection}
+          />
+        </Panel>
+      )
+    }
+    if (navState.details) {
+      const automation = automations.find(h => h.id === navState.details!.automationId)
+      if (automation) {
+        return wrapWithStoplight(
+          <Panel variant="grow" className={className}>
+            <AutomationInfoPage
+              automation={automation}
+              executions={executions}
+              testResult={automationTestResults?.[automation.id]}
+              onTest={onTestAutomation ? () => onTestAutomation(automation.id) : undefined}
+              onToggleEnabled={onToggleAutomation ? () => onToggleAutomation(automation.id) : undefined}
+              onDuplicate={onDuplicateAutomation ? () => onDuplicateAutomation(automation.id) : undefined}
+              onDelete={onDeleteAutomation ? () => onDeleteAutomation(automation.id) : undefined}
+              onReplay={onReplayAutomation}
+            />
+          </Panel>
+        )
+      }
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex h-full min-h-0 flex-col gap-3 p-4">
+          <div className="shrink-0">
+            <h1 className="text-lg font-semibold">{t('entityView.graph')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('automations.emptyDescription')}</p>
+          </div>
+          <AutomationGraphWorkspaceEditor workspaceId={activeWorkspaceId} className="min-h-0 flex-1" />
+        </div>
+      </Panel>
+    )
+  }
+
+  if (isPagesNavigation(navState)) {
+    if (navState.details?.type === 'page') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <PageView key={navState.details.pageSlug} pageSlug={navState.details.pageSlug} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <PagesHome />
+      </Panel>
+    )
+  }
+
+  if (isProjectsNavigation(navState)) {
+    const projectDetails = navState.details
+    if (projectDetails && projectDetails.type === 'project') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <ProjectInfoPage projectSlug={projectDetails.projectSlug} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <ProjectsHomeInMain projects={projects} workspaceId={activeWorkspaceId || ''} />
+      </Panel>
+    )
+  }
+
+  if (isBrowserNavigation(navState)) {
+    const instanceId = navState.details?.type === 'browser' ? navState.details.id : null
+    if (instanceId) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <BrowserPanelPage instanceId={instanceId} panelId={panelId} persist />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p className="text-sm">{t('browser.noInstanceSelected')}</p>
+        </div>
+      </Panel>
+    )
+  }
+
+  if (isKnowledgeNavigation(navState)) {
+    const details = navState.details?.type === 'knowledge' ? navState.details : null
+    if (details) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <KnowledgeEntityPage kind={details.kind} id={details.id} panelId={panelId} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <KnowledgeHome />
+      </Panel>
+    )
+  }
+
+  if (isExtensionNavigation(navState)) {
+    const details = navState.details?.type === 'extension' ? navState.details : null
+    if (details?.extensionId && details.viewId) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <ExtensionSurfacePage extensionId={details.extensionId} viewId={details.viewId} panelId={panelId} />
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p className="text-sm">{t('extensions.surface.noViewSelected')}</p>
+        </div>
+      </Panel>
+    )
+  }
+
+  if (isDiffNavigation(navState)) {
+    const proposalId = navState.details?.type === 'diff' ? navState.details.proposalId : null
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        {proposalId ? <KnowledgeDiff proposalId={proposalId} /> : <KnowledgeProposals className="h-full" />}
+      </Panel>
+    )
+  }
+
+  if (isHomeNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <HomeFrontPage />
+      </Panel>
+    )
+  }
+
+  if (isTasksNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <TasksPage />
+      </Panel>
+    )
+  }
+
+  if (isMeetingsNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <MeetingsPage />
+      </Panel>
+    )
+  }
+
+  if (isConnectionsNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <ConnectionsPage />
+      </Panel>
+    )
+  }
+
+  if (isNotesNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <NotesPage selectedNoteId={navState.details?.type === 'note' ? navState.details.noteId : null} />
+      </Panel>
+    )
+  }
+
+  if (isSessionsNavigation(navState)) {
+    if (navState.viewMode === 'board') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <KanbanBoardContainer />
+        </Panel>
+      )
+    }
+    if (navState.viewMode === 'table') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SessionTableHost />
+        </Panel>
+      )
+    }
+    if (navState.viewMode === 'heatmap') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SessionHeatmapHost />
+        </Panel>
+      )
+    }
+    const sessionsBulkBar = (
+      <CollectionBulkBar
+        workspaceId={activeWorkspaceId}
+        visibleSessionIds={visibleSessionIds}
+        statuses={sessionStatuses}
+        projects={projects}
+        labels={labels}
+      />
+    )
+    if (navState.details) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <ChatPage sessionId={navState.details.sessionId} />
+          {sessionsBulkBar}
+        </Panel>
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p className="text-sm">{t("session.noSessionSelected")}</p>
+        </div>
+        {sessionsBulkBar}
+      </Panel>
+    )
+  }
+
+  return wrapWithStoplight(
+    <Panel variant="grow" className={className}>
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        <p className="text-sm">{t("session.selectConversation")}</p>
+      </div>
+    </Panel>
+  )
+}
