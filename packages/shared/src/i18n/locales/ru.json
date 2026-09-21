@@ -1187,7 +1187,7 @@
   "extensions.developer.capabilitiesTitle": "Токены возможностей",
   "extensions.developer.extensionIdPlaceholder": "my-extension",
   "extensions.developer.hint": "Просматривайте изолированные хосты расширений для рабочей области и ограничивайте URL-запросы.",
-  "extensions.developer.hostRestart": "Перезапустить хост",
+  "extensions.developer.hostRestart": "Перезапустить хост расширений",
   "extensions.developer.hostStart": "Запустить хост",
   "extensions.developer.hostStatus": "Статус хоста",
   "extensions.developer.hostStop": "Остановить хост",
