@@ -683,6 +683,7 @@
   "collection.slice.saved": "Slices",
   "collection.slice.today": "À rendre aujourd’hui",
   "collection.slice.unread": "Non lues",
+  "collection.table.a11yLabel": "Sessions table",
   "collection.table.clearFilters": "Clear filters",
   "collection.table.column.commits": "Commits",
   "collection.table.column.created": "Created",

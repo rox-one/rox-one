@@ -683,6 +683,7 @@
   "collection.slice.saved": "切片",
   "collection.slice.today": "今日到期",
   "collection.slice.unread": "未读",
+  "collection.table.a11yLabel": "Sessions table",
   "collection.table.clearFilters": "Clear filters",
   "collection.table.column.commits": "提交",
   "collection.table.column.created": "Created",

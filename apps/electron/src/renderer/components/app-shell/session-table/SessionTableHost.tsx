@@ -669,6 +669,8 @@ export function SessionTableHost() {
 
       <div
         ref={scrollContainerRef}
+        role="table"
+        aria-label={t('collection.table.a11yLabel')}
         className="min-h-0 flex-1 overflow-auto"
         onScroll={updateScrollMetrics}
         onDrop={handleTableDrop}
@@ -677,8 +679,8 @@ export function SessionTableHost() {
         }}
         onDragEnd={handleTableDragEnd}
       >
-        <div ref={tableHeaderRef} className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground backdrop-blur">
-          <span className="w-6 shrink-0">
+        <div ref={tableHeaderRef} role="row" className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-[11px] font-semibold text-muted-foreground backdrop-blur">
+          <span role="columnheader" className="w-6 shrink-0">
             <input
               type="checkbox"
               checked={allSelectedVisible}
@@ -689,8 +691,8 @@ export function SessionTableHost() {
               aria-label={t('collection.table.selectAll')}
             />
           </span>
-          {showGrip && <span className="w-4 shrink-0" />}
-          <span className="min-w-0 flex-1">{t('collection.table.column.title')}</span>
+          {showGrip && <span role="columnheader" className="w-4 shrink-0" />}
+          <span role="columnheader" className="min-w-0 flex-1">{t('collection.table.column.title')}</span>
           <SessionTablePropertyHeader
             showStatus={showCol('status')}
             showLabels={showCol('labels')}
@@ -699,16 +701,16 @@ export function SessionTableHost() {
             showModel={showCol('model')}
             showProject={showCol('project')}
           />
-          {showCol('updated') && <span className="w-20 shrink-0">{t('collection.table.column.updated')}</span>}
-          {showCol('created') && <span className="w-20 shrink-0">{t('collection.table.column.created')}</span>}
-          {showCol('messages') && <span className="w-20 shrink-0">{t('collection.table.column.messages')}</span>}
-          {showCol('tokens') && <span className="w-20 shrink-0">{t('collection.table.column.tokens')}</span>}
-          {showCol('duration') && <span className="w-20 shrink-0">{t('collection.table.column.duration')}</span>}
-          {showCol('size') && <span className="w-20 shrink-0">{t('collection.table.column.size')}</span>}
-          {showCol('toolCalls') && <span className="w-20 shrink-0">{t('collection.table.column.toolCalls')}</span>}
-          {showCol('commits') && <span className="w-20 shrink-0">{t('collection.table.column.commits')}</span>}
-          {showCol('parallelAgents') && <span className="w-20 shrink-0">{t('collection.table.column.parallelAgents')}</span>}
-          {showCol('flag') && <span className="w-8 shrink-0" />}
+          {showCol('updated') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.updated')}</span>}
+          {showCol('created') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.created')}</span>}
+          {showCol('messages') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.messages')}</span>}
+          {showCol('tokens') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.tokens')}</span>}
+          {showCol('duration') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.duration')}</span>}
+          {showCol('size') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.size')}</span>}
+          {showCol('toolCalls') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.toolCalls')}</span>}
+          {showCol('commits') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.commits')}</span>}
+          {showCol('parallelAgents') && <span role="columnheader" className="w-20 shrink-0">{t('collection.table.column.parallelAgents')}</span>}
+          {showCol('flag') && <span role="columnheader" className="w-8 shrink-0" />}
         </div>
 
         {totalRows === 0 ? (
@@ -724,6 +726,7 @@ export function SessionTableHost() {
           </div>
         ) : (
           <ul
+            role="rowgroup"
             className="relative"
             style={{ height: virtualRows.totalHeight }}
           >

@@ -686,6 +686,7 @@
   "collection.slice.saved": "Слайсы",
   "collection.slice.today": "На сегодня",
   "collection.slice.unread": "Непрочитанное",
+  "collection.table.a11yLabel": "Таблица сессий",
   "collection.table.clearFilters": "Очистить фильтры",
   "collection.table.column.commits": "Коммиты",
   "collection.table.column.created": "Создано",

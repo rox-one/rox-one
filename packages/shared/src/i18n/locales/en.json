@@ -684,6 +684,7 @@
   "collection.slice.saved": "Slices",
   "collection.slice.today": "Due today",
   "collection.slice.unread": "Unread",
+  "collection.table.a11yLabel": "Sessions table",
   "collection.table.clearFilters": "Clear filters",
   "collection.table.column.commits": "Commits",
   "collection.table.column.created": "Created",

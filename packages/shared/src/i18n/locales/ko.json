@@ -683,6 +683,7 @@
   "collection.slice.saved": "Slices",
   "collection.slice.today": "Due today",
   "collection.slice.unread": "Unread",
+  "collection.table.a11yLabel": "세션 테이블",
   "collection.table.clearFilters": "필터 지우기",
   "collection.table.column.commits": "커밋",
   "collection.table.column.created": "생성일",

@@ -683,6 +683,7 @@
   "collection.slice.saved": "Slices",
   "collection.slice.today": "Due today",
   "collection.slice.unread": "Unread",
+  "collection.table.a11yLabel": "جدول الجلسات",
   "collection.table.clearFilters": "مسح عوامل التصفية",
   "collection.table.column.commits": "الكوميتات",
   "collection.table.column.created": "تاريخ الإنشاء",

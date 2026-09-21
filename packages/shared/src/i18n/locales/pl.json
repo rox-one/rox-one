@@ -685,6 +685,7 @@
   "collection.slice.saved": "Wycinki",
   "collection.slice.today": "Na dzisiaj",
   "collection.slice.unread": "Nieprzeczytane",
+  "collection.table.a11yLabel": "Sessions table",
   "collection.table.clearFilters": "Clear filters",
   "collection.table.column.commits": "Commity",
   "collection.table.column.created": "Created",

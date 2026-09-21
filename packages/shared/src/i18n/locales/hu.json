@@ -683,6 +683,7 @@
   "collection.slice.saved": "Szeletek",
   "collection.slice.today": "Ma esedékes",
   "collection.slice.unread": "Olvasatlan",
+  "collection.table.a11yLabel": "Sessions table",
   "collection.table.clearFilters": "Clear filters",
   "collection.table.column.commits": "Commitok",
   "collection.table.column.created": "Created",
