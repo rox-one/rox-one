@@ -1,0 +1,6 @@
+/* Chat chrome footer type: Rox mono reads large — drop toolbar type ~2–3px.
+   Overrides Tailwind text-[11px] leftovers on FreeFormInput model trigger.
+   Height left to Tailwind / compact overrides so touch targets stay intact. */
+button.input-toolbar-btn {
+  font-size: 9px;
+}
