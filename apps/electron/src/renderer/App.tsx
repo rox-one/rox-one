@@ -39,6 +39,7 @@ import { stripMarkdown } from './utils/text'
 import { coerceInputText } from './lib/input-text'
 import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recovery'
 import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
+import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
 import { extractWorkspaceSlugFromPath } from '@craft-agent/shared/utils/workspace-slug'
 import { DEFAULT_THINKING_LEVEL } from '@craft-agent/shared/agent/thinking-levels'
 import { initRendererPerf } from './lib/perf'
@@ -573,11 +574,17 @@ export default function App() {
       }
       setSessionOptions(optionsMap)
 
-      await Promise.allSettled(
-        loadedSessions.map((s) => reconcilePermissionModeState(s.id))
-      )
-
-      setSessionsLoaded(true)
+      // Splash exit gates on sessionsLoaded. Permission mode is already seeded
+      // from getSessions() above; per-session getSessionPermissionModeState is
+      // N+1 IPC (perf probe detectSessionMetadataNPlusOne) and must not block
+      // first paint / splash dismiss. Reconcile in the background.
+      markSessionsReadyThenReconcile({
+        markReady: () => setSessionsLoaded(true),
+        reconcileAll: () =>
+          Promise.allSettled(
+            loadedSessions.map((s) => reconcilePermissionModeState(s.id)),
+          ),
+      })
 
       if (initialSessionId && windowWorkspaceId) {
         const session = loadedSessions.find(s => s.id === initialSessionId)
