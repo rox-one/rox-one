@@ -143,11 +143,10 @@ export function PanelStackContainer({
                 'bg-background shadow-middle rox-panel',
               )}
               style={{
-                // Compact mode runs flush to the viewport floor — no rounded bottom.
-                borderTopLeftRadius: RADIUS_INNER,
-                borderBottomLeftRadius: 0,
+                borderTopLeftRadius: RADIUS_EDGE,
+                borderBottomLeftRadius: RADIUS_EDGE,
                 borderTopRightRadius: RADIUS_INNER,
-                borderBottomRightRadius: 0,
+                borderBottomRightRadius: RADIUS_INNER,
               }}
             >
               {navigatorSlot}
@@ -199,7 +198,7 @@ export function PanelStackContainer({
       <motion.div
         className="flex h-full"
         initial={false}
-        animate={{ paddingLeft: !hasSidebar ? PANEL_EDGE_INSET : 0 }}
+        animate={{ paddingLeft: PANEL_EDGE_INSET }}
         transition={transition}
         style={{ gap: PANEL_GAP, flexGrow: 1, minWidth: 0 }}
       >
@@ -213,8 +212,16 @@ export function PanelStackContainer({
             opacity: hasSidebar ? 1 : 0,
           }}
           transition={transition}
-          className="h-full relative shrink-0"
-          style={{ overflowX: 'clip', overflowY: 'visible' }}
+          className={cn(
+            'h-full relative shrink-0 overflow-hidden',
+            'bg-background shadow-middle rox-panel',
+          )}
+          style={{
+            borderTopLeftRadius: RADIUS_EDGE,
+            borderBottomLeftRadius: RADIUS_EDGE,
+            borderTopRightRadius: RADIUS_INNER,
+            borderBottomRightRadius: RADIUS_INNER,
+          }}
         >
           <div className="h-full" style={{ width: sidebarWidth }}>
             {sidebarSlot}
@@ -236,7 +243,7 @@ export function PanelStackContainer({
             'bg-background shadow-middle rox-panel',
           )}
           style={{
-            borderTopLeftRadius: RADIUS_INNER,
+            borderTopLeftRadius: !hasSidebar ? RADIUS_EDGE : RADIUS_INNER,
             borderBottomLeftRadius: !hasSidebar ? RADIUS_EDGE : RADIUS_INNER,
             borderTopRightRadius: RADIUS_INNER,
             borderBottomRightRadius: RADIUS_INNER,

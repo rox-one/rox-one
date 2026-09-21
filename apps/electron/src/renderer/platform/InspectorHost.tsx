@@ -41,7 +41,7 @@ import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/co
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
-import { RADIUS_INNER } from '@/components/app-shell/panel-constants'
+import { RADIUS_EDGE, RADIUS_INNER } from '@/components/app-shell/panel-constants'
 import { projectConnectionInspector } from './connection-inspector-model'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
 import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
@@ -364,7 +364,7 @@ export function InspectorHost() {
           setChromeCollapsed(false)
           setVisible(true)
         }}
-        className="chrome-strip pointer-events-auto mr-0.5 flex h-full w-[28px] shrink-0 items-center justify-center rounded-md border-l border-foreground/5 bg-background"
+        className="chrome-strip pointer-events-auto mr-0.5 flex h-full w-[28px] shrink-0 items-center justify-center rounded-lg border-l border-foreground/5 bg-background"
         data-session-inspector={sessionMode ? 'true' : 'false'}
         data-inspector="collapsed"
       >
@@ -374,7 +374,7 @@ export function InspectorHost() {
   }
 
   return (
-    <div className="mt-0.5 mb-0.5 mr-0.5 flex shrink-0 items-stretch overflow-hidden rounded-md" data-session-inspector={sessionMode ? 'true' : 'false'}>
+    <div className="mt-0.5 mb-0.5 mr-0.5 flex shrink-0 items-stretch overflow-hidden rounded-lg" style={{ borderRadius: RADIUS_EDGE }} data-session-inspector={sessionMode ? 'true' : 'false'}>
       {visible && (
         <div
           className="relative flex h-full flex-col overflow-hidden bg-background shadow-middle"
