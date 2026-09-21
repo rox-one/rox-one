@@ -3307,7 +3307,7 @@
   "settings.cloudRuns.maxArtifacts": "Бюджет артефактов (байты)",
   "settings.cloudRuns.maxArtifactsHint": "Максимум байт артефактов на завершённый запуск",
   "settings.cloudRuns.maxLlmTokens": "Бюджет LLM-токенов",
-  "settings.cloudRuns.maxLlmTokensHint": "Жёсткий потолок токенов ввода и вывода (prompt+completion) на запуск",
+  "settings.cloudRuns.maxLlmTokensHint": "Жёсткий потолок токенов ввода и вывода (вход+выход) на запуск",
   "settings.cloudRuns.maxWallClock": "Лимит времени запуска (сек)",
   "settings.cloudRuns.maxWallClockHint": "Бюджет реального времени запуска; watchdog убьёт запуск по превышении",
   "settings.cloudRuns.personasHint": "Предустановленная галочка персон в диалоге облачного запуска",

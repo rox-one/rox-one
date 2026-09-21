@@ -321,7 +321,7 @@ const WRAPPED_RU: Record<string, string> = {
   "settings.cloudRuns.gatewayUrl": "URL шлюза",
   "settings.cloudRuns.gatewayUrlHint": "Базовый URL развёрнутого cloud-gateway",
   "settings.cloudRuns.maxArtifactsHint": "Максимум байт артефактов на завершённый запуск",
-  "settings.cloudRuns.maxLlmTokensHint": "Жёсткий потолок токенов ввода и вывода (prompt+completion) на запуск",
+  "settings.cloudRuns.maxLlmTokensHint": "Жёсткий потолок токенов ввода и вывода (вход+выход) на запуск",
   "settings.cloudRuns.maxWallClock": "Лимит времени запуска (сек)",
   "settings.cloudRuns.maxWallClockHint": "Бюджет реального времени запуска; watchdog убьёт запуск по превышении",
   "settings.cloudRuns.projectHint": "Идентификатор проекта Daytona для этого рабочего пространства",
