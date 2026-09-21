@@ -1513,7 +1513,7 @@
   "knowledge.surface.copy.failed": "Не удалось скопировать",
   "knowledge.surface.copy.hPath": "Копировать путь",
   "knowledge.surface.copy.id": "Копировать ID",
-  "knowledge.surface.copy.markdown": "Копировать markdown",
+  "knowledge.surface.copy.markdown": "Копировать Markdown",
   "knowledge.surface.copy.menu": "Копировать / экспорт",
   "knowledge.surface.copy.success": "Скопировано",
   "knowledge.surface.error": "Не удалось загрузить документ",
