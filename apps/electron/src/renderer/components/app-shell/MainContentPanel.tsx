@@ -1,26 +1,10 @@
-/**
- * MainContentPanel - Right panel component for displaying content
- *
- * Renders content based on the unified NavigationState:
- * - Chats navigator: ChatPage for selected session, or empty state
- * - Sources navigator: SourceInfoPage for selected source, or empty state
- * - Settings navigator: Settings, Preferences, or Shortcuts page
- *
- * The NavigationState is the single source of truth for what to display.
- *
- * In focused mode (single window), wraps content with StoplightProvider
- * so PanelHeader components automatically compensate for macOS traffic lights.
- *
- * When multiple sessions are selected (multi-select mode), CollectionBulkBar
- * is the sessions bulk UI. MultiSelectPanel stays for sources/skills/automations.
- */
-
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
 import { MemoryListPanel } from './MemoryListPanel'
+import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
 import { useAppShellContext } from '@/context/AppShellContext'
@@ -100,17 +84,9 @@ const KnowledgeProposals = React.lazy(() =>
 )
 
 export interface MainContentPanelProps {
-  /** Whether both sidebar and navigator are hidden (focus mode / CMD+.) */
   isSidebarAndNavigatorHidden?: boolean
-  /** Optional className for the container */
   className?: string
-  /**
-   * Override the navigation state for this panel.
-   * When provided, this panel renders based on the override instead of the global NavigationState.
-   * Used by PanelSlot to render panels in the panel stack.
-   */
   navStateOverride?: import('../../../shared/types').NavigationState | null
-  /** Owning panel id in the panel stack (used by embedded surfaces like browser panels) */
   panelId?: string
 }
 
@@ -151,8 +127,6 @@ export function MainContentPanel({
   const setKnowledgeHomeView = useSetAtom(knowledgeHomeViewAtom)
   const setKnowledgeActiveViewId = useSetAtom(knowledgeActiveViewIdAtom)
 
-  // P5: deep-link knowledge/view/{viewId} → KnowledgeHome saved-view surface.
-  // Leaving a view route (bare knowledge nav or other knowledge details) clears the atom.
   useEffect(() => {
     if (!isKnowledgeNavigation(navState)) return
     if (navState.details?.type === 'knowledge-view') {
@@ -161,7 +135,6 @@ export function MainContentPanel({
       return
     }
     setKnowledgeActiveViewId(null)
-    // Leaving a view deep-link returns to search (proposals stays if user toggled it).
     setKnowledgeHomeView('search')
   }, [navState, setKnowledgeActiveViewId, setKnowledgeHomeView])
 
@@ -169,12 +142,9 @@ export function MainContentPanel({
     if (!isSettingsNavigation(navState) || navState.subpage === null || !activeWorkspaceId) return
     const controller = new AbortController()
     void recordRecentSetting(activeWorkspaceId, navState.subpage, { signal: controller.signal })
-    return () => {
-      controller.abort()
-    }
+    return () => { controller.abort() }
   }, [navState, activeWorkspaceId])
 
-  // Execution history for the selected automation
   const selectedAutomationId = isAutomationsNavigation(navState) ? navState.details?.automationId : undefined
   const [executions, setExecutions] = useState<ExecutionEntry[]>([])
   useEffect(() => {
@@ -183,13 +153,9 @@ export function MainContentPanel({
       return
     }
     let stale = false
-
-    // Initial fetch
     getAutomationHistory(selectedAutomationId).then(entries => {
       if (!stale) setExecutions(entries)
     })
-
-    // Re-fetch on automation changes (live updates when automations fire)
     const cleanup = window.electronAPI.onAutomationsChanged(() => {
       if (!stale) {
         getAutomationHistory(selectedAutomationId).then(entries => {
@@ -197,29 +163,22 @@ export function MainContentPanel({
         })
       }
     })
-
     return () => { stale = true; cleanup() }
   }, [selectedAutomationId, getAutomationHistory])
 
-  // Source multi-select state
   const isSourceMultiSelectActive = sourceSelection.useIsMultiSelectActive()
   const sourceSelectionCount = sourceSelection.useSelectionCount()
   const selectedSourceIds = sourceSelection.useSelectedIds()
   const { clearMultiSelect: clearSourceSelection } = sourceSelection.useSelection()
-
-  // Skill multi-select state
   const isSkillMultiSelectActive = skillSelection.useIsMultiSelectActive()
   const skillSelectionCount = skillSelection.useSelectionCount()
   const selectedSkillIds = skillSelection.useSelectedIds()
   const { clearMultiSelect: clearSkillSelection } = skillSelection.useSelection()
-
-  // Automation multi-select state
   const isAutomationMultiSelectActive = automationSelection.useIsMultiSelectActive()
   const automationSelectionCount = automationSelection.useSelectionCount()
   const selectedAutomationIds = automationSelection.useSelectedIds()
   const { clearMultiSelect: clearAutomationSelection } = automationSelection.useSelection()
 
-  // Send to Workspace dialog state (shared across resource types)
   const [sendDialogOpen, setSendDialogOpen] = useState(false)
   const [sendResourceType, setSendResourceType] = useState<SendResourceType>('source')
   const [sendResourceIds, setSendResourceIds] = useState<string[]>([])
@@ -234,8 +193,6 @@ export function MainContentPanel({
     setSendDialogOpen(true)
   }, [])
 
-  // Wrap content with StoplightProvider so PanelHeaders auto-compensate in focused mode.
-  // Also renders the Send to Workspace dialog (portal-based, so it overlays regardless of position).
   const pageFallback = (
     <Panel variant="grow" className={className}>
       <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -261,9 +218,6 @@ export function MainContentPanel({
     </StoplightProvider>
   )
 
-  // Settings navigator - uses component map from settings-pages.ts.
-  // Bare `settings` route (subpage === null) renders the overview on desktop.
-  // PanelStackContainer still hides this panel in compact mode until drill-in.
   if (isSettingsNavigation(navState)) {
     if (navState.subpage === null) {
       return wrapWithStoplight(
@@ -280,7 +234,6 @@ export function MainContentPanel({
     )
   }
 
-  // Sources navigator - show source info, multi-select panel, or empty state
   if (isSourcesNavigation(navState)) {
     if (isSourceMultiSelectActive) {
       return wrapWithStoplight(
@@ -297,14 +250,10 @@ export function MainContentPanel({
     if (navState.details) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
-          <SourceInfoPage
-            sourceSlug={navState.details.sourceSlug}
-            workspaceId={activeWorkspaceId || ''}
-          />
+          <SourceInfoPage sourceSlug={navState.details.sourceSlug} workspaceId={activeWorkspaceId || ''} />
         </Panel>
       )
     }
-    // No source selected - empty state
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -314,7 +263,6 @@ export function MainContentPanel({
     )
   }
 
-  // Skills navigator - show skill info, multi-select panel, or empty state
   if (isSkillsNavigation(navState)) {
     if (isSkillMultiSelectActive) {
       return wrapWithStoplight(
@@ -339,7 +287,6 @@ export function MainContentPanel({
         </Panel>
       )
     }
-    // No skill selected - empty state
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -349,7 +296,6 @@ export function MainContentPanel({
     )
   }
 
-  // Memory navigator — full list lives in main content (navigator column is hidden)
   if (isMemoryNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
@@ -358,7 +304,6 @@ export function MainContentPanel({
     )
   }
 
-  // Automations navigator - show automation info, multi-select panel, or empty state
   if (isAutomationsNavigation(navState)) {
     if (isAutomationMultiSelectActive) {
       return wrapWithStoplight(
@@ -396,20 +341,14 @@ export function MainContentPanel({
         <div className="flex h-full min-h-0 flex-col gap-3 p-4">
           <div className="shrink-0">
             <h1 className="text-lg font-semibold">{t('entityView.graph')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {t('automations.emptyDescription')}
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t('automations.emptyDescription')}</p>
           </div>
-          <AutomationGraphWorkspaceEditor
-            workspaceId={activeWorkspaceId}
-            className="min-h-0 flex-1"
-          />
+          <AutomationGraphWorkspaceEditor workspaceId={activeWorkspaceId} className="min-h-0 flex-1" />
         </div>
       </Panel>
     )
   }
 
-  // Pages navigator — full-width library or an open page (no middle list)
   if (isPagesNavigation(navState)) {
     if (navState.details?.type === 'page') {
       return wrapWithStoplight(
@@ -425,7 +364,6 @@ export function MainContentPanel({
     )
   }
 
-  // Projects navigator - show project detail page or empty state
   if (isProjectsNavigation(navState)) {
     const projectDetails = navState.details
     if (projectDetails && projectDetails.type === 'project') {
@@ -437,14 +375,11 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("projectsList.noProjectSelected")}</p>
-        </div>
+        <ProjectsHomeInMain projects={projects} workspaceId={activeWorkspaceId || ''} />
       </Panel>
     )
   }
 
-  // Browser navigator - embedded browser instance panel
   if (isBrowserNavigation(navState)) {
     const instanceId = navState.details?.type === 'browser' ? navState.details.id : null
     if (instanceId) {
@@ -463,7 +398,6 @@ export function MainContentPanel({
     )
   }
 
-  // Knowledge navigator - embedded SiYuan surface panel (W2)
   if (isKnowledgeNavigation(navState)) {
     const details = navState.details?.type === 'knowledge' ? navState.details : null
     if (details) {
@@ -480,32 +414,24 @@ export function MainContentPanel({
     )
   }
 
-  // Extension navigator - sandboxed extension UI surface (S-05)
   if (isExtensionNavigation(navState)) {
     const details = navState.details?.type === 'extension' ? navState.details : null
     if (details?.extensionId && details.viewId) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
-          <ExtensionSurfacePage
-            extensionId={details.extensionId}
-            viewId={details.viewId}
-            panelId={panelId}
-          />
+          <ExtensionSurfacePage extensionId={details.extensionId} viewId={details.viewId} panelId={panelId} />
         </Panel>
       )
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">
-            {t('extensions.surface.noViewSelected')}
-          </p>
+          <p className="text-sm">{t('extensions.surface.noViewSelected')}</p>
         </div>
       </Panel>
     )
   }
 
-  // Diff navigator - mutation-proposal review/conflict surface (P3, spec K-05 §3.5)
   if (isDiffNavigation(navState)) {
     const proposalId = navState.details?.type === 'diff' ? navState.details.proposalId : null
     return wrapWithStoplight(
@@ -547,7 +473,6 @@ export function MainContentPanel({
     )
   }
 
-  // Notes navigator - self-contained notes workspace
   if (isNotesNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
@@ -556,9 +481,7 @@ export function MainContentPanel({
     )
   }
 
-  // Chats navigator - show chat, multi-select panel, or empty state
   if (isSessionsNavigation(navState)) {
-    // Board view: full-width Kanban over all sessions (placement independent of status)
     if (navState.viewMode === 'board') {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
@@ -566,8 +489,6 @@ export function MainContentPanel({
         </Panel>
       )
     }
-
-    // Table view: full-width sessions table shell (B0 placeholder host)
     if (navState.viewMode === 'table') {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
@@ -575,7 +496,6 @@ export function MainContentPanel({
         </Panel>
       )
     }
-
     if (navState.viewMode === 'heatmap') {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
@@ -583,7 +503,6 @@ export function MainContentPanel({
         </Panel>
       )
     }
-
     const sessionsBulkBar = (
       <CollectionBulkBar
         workspaceId={activeWorkspaceId}
@@ -593,7 +512,6 @@ export function MainContentPanel({
         labels={labels}
       />
     )
-
     if (navState.details) {
       return wrapWithStoplight(
         <Panel variant="grow" className={className}>
@@ -602,7 +520,6 @@ export function MainContentPanel({
         </Panel>
       )
     }
-    // No session selected - empty state
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
@@ -613,7 +530,6 @@ export function MainContentPanel({
     )
   }
 
-  // Fallback (should not happen with proper NavigationState)
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
       <div className="flex items-center justify-center h-full text-muted-foreground">

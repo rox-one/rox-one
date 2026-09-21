@@ -1,0 +1,47 @@
+--- a/apps/electron/src/renderer/components/app-shell/AppShell.tsx
++++ b/apps/electron/src/renderer/components/app-shell/AppShell.tsx
+@@ -492,10 +492,15 @@
+   const isBoardView =
+     isSessionsNavigation(navState) && isCollectionCanvasView(navState.viewMode)
+ 
+-  // Pages library + open page both render full-width in the content area;
+-  // collapse the middle navigator because pages has no navigator list.
++  // Memory / Tasks / Meetings / Projects / Pages: full-width home in main
++  // (PagesHome pattern); collapse the middle navigator for all five.
+   const isPagesView = isPagesNavigation(navState)
+   const isTasksView = isTasksNavigation(navState)
++  const isMeetingsView = isMeetingsNavigation(navState)
++  const isMemoryView = isMemoryNavigation(navState)
++  const isProjectsView = isProjectsNavigation(navState)
++  const hideModuleMiddleNav =
++    isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView
+ 
+   // Derive source filter from navigation state (only when in sources navigator)
+   const sourceFilter: SourceFilter | null = isSourcesNavigation(navState) ? navState.filter ?? null : null
+@@ -2819,7 +2824,7 @@
+           </div>
+           }
+           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (isSidebarVisible ? sidebarWidth : 0)}
+-          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isMeetingsNavigation(navState) || isTasksNavigation(navState) || isMemoryNavigation(navState)) ? null : (
++          navigatorSlot={(isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav) ? null : (
+             <div
+               style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
+               className="h-full flex flex-col min-w-0 relative z-panel chrome-strip"
+@@ -3027,7 +3032,7 @@
+             )}
+             </div>
+           )}
+-          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || isPagesView || isTasksView ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || isPagesView || isTasksView ? 0 : sessionListWidth))}
++          navigatorWidth={isNotesNavigation(navState) || isHomeNavigation(navState) || isConnectionsNavigation(navState) || hideModuleMiddleNav ? 0 : (isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden || isBoardView || hideModuleMiddleNav ? 0 : sessionListWidth))}
+           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
+           isRightSidebarVisible={false} // H1 session inspector is InspectorHost (harness flag), not this legacy slot
+           isCompact={isAutoCompact}
+@@ -3097,7 +3102,7 @@
+         )}
+ 
+         {/* Session List Resize Handle (absolute, hidden in focused mode, board view, and pages) */}
+-        {!effectiveSidebarAndNavigatorHidden && !isBoardView && !isPagesView && !isTasksView && (
++        {!effectiveSidebarAndNavigatorHidden && !isBoardView && !hideModuleMiddleNav && (
+         <ResizeHandle
+           labelKey="shell.resize.navigator"
+           controlsId="shell-navigator"

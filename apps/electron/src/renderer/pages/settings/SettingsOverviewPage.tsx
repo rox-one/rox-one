@@ -11,6 +11,7 @@ import { navigate, routes } from '@/lib/navigate'
 import { readRecentSettings, recordRecentSetting } from '@/lib/settings-recent'
 import { getSettingsPage, type SettingsSubpage } from '../../../shared/settings-registry'
 
+/** Hub shortcuts — Permissions is Agent-grouped (allowlists); Runtime owns approval mode. */
 const QUICK_ACTIONS: SettingsSubpage[] = [
   'runtime',
   'ai',
@@ -74,11 +75,17 @@ export function SettingsOverviewPage() {
 
   return (
     <div className="h-full flex flex-col" data-testid="settings-overview">
-      <PanelHeader title={t('settings.overview.title')} />
+      {/* Detail title is Overview (hub), not Settings — nav already says Settings.
+          Use hubTitle/hubSubtitle keys (not present in locales yet) so defaultValue wins and
+          avoids dual Settings/Настройки when settings.overview.title still says Settings. */}
+      <PanelHeader title={t('settings.overview.hubTitle', { defaultValue: 'Overview' })} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
           <div className="px-5 py-7 max-w-3xl mx-auto">
             <div className="space-y-8">
+              <p className="text-sm text-muted-foreground" data-testid="settings-overview-subtitle">
+                {t('settings.overview.hubSubtitle', { defaultValue: 'Command center: quick actions, needs attention, and recent settings.' })}
+              </p>
               <SettingsSection title={t('settings.overview.workspace')}>
                 <SettingsCard>
                   {activeWorkspace ? (

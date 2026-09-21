@@ -1,0 +1,25 @@
+name: apply-settings-ia-appshell-patch
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cursor/settings-ia-hub
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply AppShell patch
+        run: |
+          set -euo pipefail
+          git apply --verbose patches/settings-ia-appshell.patch
+          git config user.name "id-2"
+          git config user.email "gronxie@yandex.com"
+          git add apps/electron/src/renderer/components/app-shell/AppShell.tsx
+          git commit -m "feat(shell): hide middle nav for Memory/Tasks/Meetings/Projects/Pages"
+          git push origin HEAD:cursor/settings-ia-hub
