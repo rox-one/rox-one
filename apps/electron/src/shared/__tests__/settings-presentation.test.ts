@@ -32,6 +32,8 @@ describe('settings presentation', () => {
 
   it('looks up the group for a registered page', () => {
     expect(getSettingsGroup('runtime').id).toBe('agent')
+    expect(getSettingsGroup('permissions').id).toBe('agent')
+    expect(getSettingsGroup('ai').id).toBe('agent')
     expect(getSettingsGroup('account').id).toBe('application')
     expect(getSettingsGroup('marketplace').id).toBe('integrations')
   })
@@ -45,5 +47,12 @@ describe('settings presentation', () => {
     expect(grouped.map((entry) => entry.group.id)).toEqual(['agent', 'application'])
     expect(grouped[0]?.pages.map((page) => page.id)).toEqual(['ai'])
     expect(grouped[1]?.pages.map((page) => page.id)).toEqual(['shortcuts'])
+  })
+
+  it('places permissions in Agent after ai (not Application)', () => {
+    const agent = SETTINGS_GROUPS.find(group => group.id === 'agent')
+    expect(agent?.pageIds).toEqual(['runtime', 'context', 'ai', 'permissions', 'input'])
+    const application = SETTINGS_GROUPS.find(group => group.id === 'application')
+    expect(application?.pageIds).not.toContain('permissions')
   })
 })
