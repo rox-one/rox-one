@@ -60,7 +60,7 @@ const WRAPPED_RU: Record<string, string> = {
   "cloudRuns.estimate": "Обычный запуск ≈ {{tokens}} токенов",
   "cloudRuns.finished": "Облачный запуск завершён: {{name}}",
   "cloudRuns.footer": "Запуски продолжаются, даже если приложение закрыто.",
-  "cloudRuns.fork": "Форк (углубление)",
+  "cloudRuns.fork": "Ветка (углубление)",
   "cloudRuns.kill": "Убить запуск",
   "cloudRuns.killed": "Запуск остановлен",
   "cloudRuns.personasHint": "Аналитик · скептик · оптимист на каждую подзадачу (дольше, глубже)",
