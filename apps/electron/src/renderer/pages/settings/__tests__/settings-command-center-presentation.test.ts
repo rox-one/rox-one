@@ -57,8 +57,8 @@ describe('settings command center presentation', () => {
   })
 
   it('labels the bare settings home as Overview hub (not a second Settings title)', () => {
-    expect(overviewSrc).toContain("t('settings.overview.title'")
-    expect(overviewSrc).toContain("t('settings.overview.subtitle'")
+    expect(overviewSrc).toContain("t('settings.overview.hubTitle'")
+    expect(overviewSrc).toContain("t('settings.overview.hubSubtitle'")
     expect(overviewSrc).toContain('data-testid="settings-overview-subtitle"')
     expect(overviewSrc).not.toContain("title={t('sidebar.settings')}")
   })
