@@ -194,7 +194,7 @@ export default function KnowledgeSettingsPage() {
 
   const openInstallPage = () => {
     const url =
-      detectResult?.installDocsUrl ?? engineStatus?.installUrl ?? 'https://b3log.org/siyuan/'
+      detectResult?.installDocsUrl ?? engineStatus?.installUrl ?? 'https://github.com/rox-one/rox-one'
     void window.electronAPI?.openUrl?.(url)
   }
 
