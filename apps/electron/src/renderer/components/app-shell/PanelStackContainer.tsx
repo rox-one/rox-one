@@ -46,7 +46,7 @@ import {
 const PANEL_SPRING = { type: 'spring' as const, stiffness: 600, damping: 49 }
 
 /** Visual breathing room between the fixed compact TopBar and the first panel. */
-const COMPACT_PANEL_TOP_GAP = 8
+const COMPACT_PANEL_TOP_GAP = 4
 
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode

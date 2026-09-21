@@ -16,8 +16,10 @@ describe('terminal dock chrome', () => {
     expect(openTree).toContain('rounded-md')
     expect(openTree).not.toContain('rounded-xl')
     expect(openTree).not.toContain('rounded-lg')
-    expect(openTree).toContain('mx-1 mb-1')
+    expect(openTree).toContain('mx-0.5 mb-0.5')
     expect(openTree).not.toContain('mx-2 mb-2')
+    expect(openTree).not.toContain('absolute right-1.5 top-1.5')
+    expect(openTree).toContain('flex h-6 shrink-0 items-center border-b')
 
     expect(terminal).not.toMatch(/cwd \? <div/)
     expect(terminal).not.toContain('text-white/30">{cwd}')
