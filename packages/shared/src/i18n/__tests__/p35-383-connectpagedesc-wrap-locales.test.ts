@@ -10,7 +10,7 @@ describe('P35-383 leftover Russian Server wrapping on workspace.connectRemotePag
     await setupI18n().changeLanguage('ru')
     const ru = i18n.t(KEY)
     expect(ru).toBe(RU_WRAPPED)
-    expect(ru).toContain('сервер Rox')
+    expect(ru).toContain('серверу Rox')
     expect(ru).toContain('Rox')
     expect(ru).toContain('рабочей области')
     expect(ru).not.toContain('Rox Server')
