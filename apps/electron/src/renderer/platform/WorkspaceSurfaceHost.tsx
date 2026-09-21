@@ -7,6 +7,7 @@ import {
   featureWorkbenchHarnessInspectorV1Atom,
   featureWorkbenchTabGroupsV2Atom,
   featureWorkbenchTopChromeV2Atom,
+  inspectorChromeCollapsedAtom,
   inspectorVisibleAtom,
 } from '@/atoms/unified-shell'
 import { BottomTerminalDock } from '@/components/session-inspector/BottomTerminalDock'
@@ -36,6 +37,7 @@ export function WorkspaceSurfaceHost({
   const browserSurface = useAtomValue(featureWorkbenchBrowserSurfaceV2Atom)
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
+  const chromeCollapsed = useAtomValue(inspectorChromeCollapsedAtom)
   const availability = resolveWorkbenchAvailability(
     operatorCapability,
     userPreference === undefined ? persistedPreference : userPreference,
@@ -62,7 +64,7 @@ export function WorkspaceSurfaceHost({
         <BottomTerminalDock />
         <PanelHost slot="bottom" className="border-t border-foreground/5" />
       </div>
-      {(chrome.showInspector || inspectorVisible) && <InspectorHost />}
+      {(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />}
       <PanelHost slot="inspector" />
     </div>
   )
