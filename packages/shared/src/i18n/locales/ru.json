@@ -1077,7 +1077,7 @@
   "entityView.mapKindOutput": "Выход",
   "entityView.mapKindSubflow": "Подпоток",
   "entityView.mapKindTool": "Инструмент",
-  "entityView.mapPromoteTrace": "Собрать черновик из прогона",
+  "entityView.mapPromoteTrace": "В черновик с прогона",
   "entityView.mapReplayRun": "Повторить запуск",
   "entityView.mapResetLayout": "Сброс раскладки",
   "entityView.mapRun": "Запуск",
@@ -4955,5 +4955,6 @@
   "workspaceRail.removeLink": "Удалить ссылку",
   "knowledge.roxNotes.emptyTitle": "Заметки Rox",
   "knowledge.roxNotes.emptyBody": "Внешнее ядро заметок больше не используется. Пишите и ищите в собственном заметочнике Rox.",
-  "knowledge.roxNotes.openNotesCta": "Открыть заметки Rox"
+  "knowledge.roxNotes.openNotesCta": "Открыть заметки Rox",
+  "entityView.mapMoreActions": "Ещё действия карты"
 }

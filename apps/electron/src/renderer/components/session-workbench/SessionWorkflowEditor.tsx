@@ -946,9 +946,9 @@ function EditorInner({
           <div
             role="toolbar"
             aria-label={t('entityView.map')}
-            className="relative z-10 flex min-w-0 shrink-0 flex-wrap items-center gap-2 px-3 py-1.5 text-[11px]"
+            className="relative z-10 flex min-w-0 shrink-0 flex-nowrap items-center gap-2 overflow-x-auto px-3 py-1.5 text-[11px]"
           >
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-nowrap items-center gap-2">
               <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
                 {t('entityView.flowLive')}
               </span>
@@ -1034,7 +1034,7 @@ function EditorInner({
                     variant="outline"
                     className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                     data-testid="map-toolbar-more"
-                    aria-label="More map actions"
+                    aria-label={t('entityView.mapMoreActions')}
                   >
                     ⋯
                   </Button>

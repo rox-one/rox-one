@@ -4949,5 +4949,6 @@
   "workspaceRail.removeLink": "Remove link",
   "knowledge.roxNotes.emptyTitle": "Rox Notes",
   "knowledge.roxNotes.emptyBody": "An external notes kernel is no longer used. Write and search in Rox’s own notes.",
-  "knowledge.roxNotes.openNotesCta": "Open Rox Notes"
+  "knowledge.roxNotes.openNotesCta": "Open Rox Notes",
+  "entityView.mapMoreActions": "More map actions"
 }
