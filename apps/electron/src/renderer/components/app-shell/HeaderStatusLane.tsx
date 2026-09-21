@@ -108,7 +108,7 @@ export function HeaderStatusLane({ className }: HeaderStatusLaneProps) {
               if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
             }}
             className={cn(
-              'flex min-h-7 min-w-0 max-w-[560px] items-center gap-1 rounded-full border border-border/60 bg-background/95 pl-2 pr-0.5 text-xs shadow-minimal',
+              'flex min-h-7 min-w-0 max-w-[560px] items-center gap-1 rounded-full border border-border/60 bg-background pl-2 pr-0.5 text-xs shadow-minimal',
               visibleStatus?.tone === 'error' && 'border-destructive/30 text-destructive',
             )}
           >
