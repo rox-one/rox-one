@@ -4449,7 +4449,7 @@
   "table.copyAsMarkdown": "Копировать как Markdown",
   "table.downloadAsXlsx": "Скачать как XLSX",
   "table.exportTable": "Экспорт таблицы",
-  "table.flags": "Флаги",
+  "table.flags": "Пометки",
   "table.groupBy": "Группировка",
   "table.label": "Метка",
   "table.labelCount_few": "{{count}} метки",
