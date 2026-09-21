@@ -37,6 +37,7 @@ export function SessionTableGroupHeader({
     <ContextMenu modal>
       <ContextMenuTrigger asChild>
         <li
+          role="row"
           className={cn(
             'sticky top-[29px] z-[5] flex min-h-8 items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-1.5 text-xs font-semibold text-foreground/80 backdrop-blur',
           )}
@@ -97,7 +98,7 @@ export function SessionTableEmptyDropLane({
 }) {
   const { t } = useTranslation()
   return (
-    <li className="flex items-center px-3" style={style}>
+    <li role="row" className="flex items-center px-3" style={style}>
       <div
         data-empty-group={bucketKey}
         className={cn(
