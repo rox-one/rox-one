@@ -51,7 +51,7 @@ export function BottomTerminalDock() {
         type="button"
         aria-label={t('inspector.terminal')}
         onClick={() => setOpen(true)}
-        className="chrome-strip pointer-events-auto mx-1 mb-1 flex h-[26px] shrink-0 items-center rounded-md border border-border/40 bg-background px-2 text-left"
+        className="chrome-strip pointer-events-auto mx-0.5 mb-0.5 flex h-[22px] shrink-0 items-center rounded-md border border-border/40 bg-background px-2 text-left"
         data-bottom-terminal="collapsed"
       >
         <span className="chrome-label truncate font-medium tracking-tight">{t('inspector.terminal')}</span>
@@ -61,27 +61,30 @@ export function BottomTerminalDock() {
 
   return (
     <div
-      className="relative mx-1 mb-1 flex shrink-0 flex-col overflow-hidden rounded-md border border-border/50 bg-background shadow-middle pointer-events-auto"
+      className="relative mx-0.5 mb-0.5 flex shrink-0 flex-col overflow-hidden rounded-md border border-border/50 bg-background shadow-middle pointer-events-auto"
       style={{ height }}
       data-bottom-terminal="true"
     >
-      <div
-        className="absolute inset-x-0 top-0 z-10 h-1.5 cursor-ns-resize hover:bg-foreground/15"
-        onPointerDown={onPointerDown}
-      />
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label={t('inspector.hide')}
-            onClick={() => setOpen(false)}
-            className="absolute right-1.5 top-1.5 z-20 flex h-5 w-5 items-center justify-center rounded-[6px] text-muted-foreground/60 hover:bg-foreground/5 hover:text-foreground"
-          >
-            <ChevronsDown className="h-3.5 w-3.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="top">{t('inspector.hide')}</TooltipContent>
-      </Tooltip>
+      <div className="flex h-6 shrink-0 items-center border-b border-border/40 bg-background pl-1.5 pr-1">
+        <div
+          className="h-full min-w-0 flex-1 cursor-ns-resize hover:bg-foreground/5"
+          onPointerDown={onPointerDown}
+          aria-hidden
+        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              aria-label={t('inspector.hide')}
+              onClick={() => setOpen(false)}
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[6px] text-muted-foreground/60 hover:bg-foreground/5 hover:text-foreground"
+            >
+              <ChevronsDown className="h-3.5 w-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top">{t('inspector.hide')}</TooltipContent>
+        </Tooltip>
+      </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <InspectorTerminal cwd={cwd} />
       </div>

@@ -46,7 +46,7 @@ import {
 const PANEL_SPRING = { type: 'spring' as const, stiffness: 600, damping: 49 }
 
 /** Visual breathing room between the fixed compact TopBar and the first panel. */
-const COMPACT_PANEL_TOP_GAP = 8
+const COMPACT_PANEL_TOP_GAP = 4
 
 interface PanelStackContainerProps {
   sidebarSlot: React.ReactNode
@@ -129,8 +129,7 @@ export function PanelStackContainer({
         style={{
           paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
           marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
-          marginBottom: -6,
-          paddingBottom: 6,
+          paddingBottom: PANEL_STACK_BOTTOM_INSET,
           '--compact-panel-stack-top': `${PANEL_STACK_VERTICAL_OVERFLOW + COMPACT_PANEL_TOP_GAP}px`,
         } as React.CSSProperties}
       >
@@ -193,8 +192,8 @@ export function PanelStackContainer({
         paddingTop: PANEL_STACK_TOP_INSET,
         marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
         paddingBottom: PANEL_STACK_BOTTOM_INSET,
-        paddingRight: 4,
-        marginRight: -4,
+        paddingRight: PANEL_EDGE_INSET,
+        marginRight: -PANEL_EDGE_INSET,
       }}
     >
       <motion.div
