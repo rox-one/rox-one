@@ -2122,7 +2122,7 @@ export function FreeFormInput({
                 contextStatus={contextStatus}
               />
               {chatChromeEnabled && formatCostUsd(contextStatus?.costUsd) && (
-                <span className="text-[9px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
+                <span className="text-[11px] text-muted-foreground tabular-nums shrink-0" data-testid="chat-session-cost">
                   {t('workbench.status.cost', { amount: formatCostUsd(contextStatus?.costUsd) })}
                 </span>
               )}
@@ -2396,7 +2396,7 @@ export function FreeFormInput({
                   disabled={disabled || disableSend || improvingPrompt || !input.trim()}
                   onClick={() => { void handleImprovePrompt() }}
                   aria-label={t('chat.improvePromptAria')}
-                  className="input-toolbar-btn inline-flex items-center h-6 px-1.5 shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors disabled:opacity-40"
+                  className="input-toolbar-btn inline-flex items-center h-7 px-1.5 shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors disabled:opacity-40"
                 >
                   {improvingPrompt ? <Spinner className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
                 </button>
@@ -2416,7 +2416,7 @@ export function FreeFormInput({
               onClick={onRequestExpand}
               onMouseEnter={onRequestExpand}
               aria-label={t('chat.tapToType')}
-              className="flex-1 h-6 mx-1 flex items-center justify-center text-foreground/30 hover:text-foreground/60 transition-colors cursor-pointer rounded-[6px] hover:bg-foreground/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              className="flex-1 h-7 mx-1 flex items-center justify-center text-foreground/30 hover:text-foreground/60 transition-colors cursor-pointer rounded-[6px] hover:bg-foreground/5 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               <ChevronUp className="h-4 w-4" />
             </button>
@@ -2435,7 +2435,7 @@ export function FreeFormInput({
                   <button
                     type="button"
                     className={cn(
-                      "input-toolbar-btn inline-flex items-center h-6 px-1.5 gap-0.5 text-[9px] shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors select-none",
+                      "input-toolbar-btn inline-flex items-center h-7 px-1.5 gap-0.5 text-[11px] shrink-0 rounded-[6px] hover:bg-foreground/5 transition-colors select-none",
                       modelDropdownOpen && "bg-foreground/5",
                       connectionUnavailable && "text-destructive",
                     )}
