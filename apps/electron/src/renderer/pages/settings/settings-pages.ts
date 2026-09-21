@@ -4,45 +4,51 @@
  * Maps settings subpage IDs to their React components.
  * TypeScript enforces that all pages defined in settings-registry have a component here.
  *
+ * Each page is React.lazy so the settings chunk graph is not pulled into the cold
+ * renderer bundle. Callers must render under Suspense (MainContentPanel already does
+ * via wrapWithStoplight).
+ *
  * To add a new settings page:
  * 1. Add to SETTINGS_PAGES in shared/settings-registry.ts
  * 2. Create the page component (e.g., NewSettingsPage.tsx)
- * 3. Add to SETTINGS_PAGE_COMPONENTS below
+ * 3. Add a lazy() entry to SETTINGS_PAGE_COMPONENTS below
  * 4. Add icon to SETTINGS_ICONS in components/icons/SettingsIcons.tsx
  */
 
-import type { ComponentType } from 'react'
+import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 import type { SettingsSubpage } from '../../../shared/settings-registry'
 
-import AccountSettingsPage from './AccountSettingsPage'
-import PrivacySettingsPage from './PrivacySettingsPage'
-import RuntimeSettingsPage from './RuntimeSettingsPage'
-import ContextSettingsPage from './ContextSettingsPage'
-import KnowledgeSettingsPage from './KnowledgeSettingsPage'
-import MarketplaceSettingsPage from './MarketplaceSettingsPage'
-import ExtensionsSettingsPage from './ExtensionsSettingsPage'
-import ImportSettingsPage from './ImportSettingsPage'
-import AppSettingsPage from './AppSettingsPage'
-import AiSettingsPage from './AiSettingsPage'
-import AppearanceSettingsPage from './AppearanceSettingsPage'
-import InputSettingsPage from './InputSettingsPage'
-import WorkspaceSettingsPage from './WorkspaceSettingsPage'
-import AccountsSettingsPage from './AccountsSettingsPage'
-import PermissionsSettingsPage from './PermissionsSettingsPage'
-import LabelsSettingsPage from './LabelsSettingsPage'
-import OrganizationsSettingsPage from './OrganizationsSettingsPage'
-import MessagingSettingsPage from './MessagingSettingsPage'
-import ServerSettingsPage from './ServerSettingsPage'
-import CloudRunsSettingsPage from './CloudRunsSettingsPage'
-import SecuritySettingsPage from './SecuritySettingsPage'
-import ShortcutsPage from './ShortcutsPage'
-
+const AccountSettingsPage = lazy(() => import('./AccountSettingsPage'))
+const PrivacySettingsPage = lazy(() => import('./PrivacySettingsPage'))
+const RuntimeSettingsPage = lazy(() => import('./RuntimeSettingsPage'))
+const ContextSettingsPage = lazy(() => import('./ContextSettingsPage'))
+const KnowledgeSettingsPage = lazy(() => import('./KnowledgeSettingsPage'))
+const MarketplaceSettingsPage = lazy(() => import('./MarketplaceSettingsPage'))
+const ExtensionsSettingsPage = lazy(() => import('./ExtensionsSettingsPage'))
+const ImportSettingsPage = lazy(() => import('./ImportSettingsPage'))
+const AppSettingsPage = lazy(() => import('./AppSettingsPage'))
+const AiSettingsPage = lazy(() => import('./AiSettingsPage'))
+const AppearanceSettingsPage = lazy(() => import('./AppearanceSettingsPage'))
+const InputSettingsPage = lazy(() => import('./InputSettingsPage'))
+const WorkspaceSettingsPage = lazy(() => import('./WorkspaceSettingsPage'))
+const AccountsSettingsPage = lazy(() => import('./AccountsSettingsPage'))
+const PermissionsSettingsPage = lazy(() => import('./PermissionsSettingsPage'))
+const LabelsSettingsPage = lazy(() => import('./LabelsSettingsPage'))
+const OrganizationsSettingsPage = lazy(() => import('./OrganizationsSettingsPage'))
+const MessagingSettingsPage = lazy(() => import('./MessagingSettingsPage'))
+const ServerSettingsPage = lazy(() => import('./ServerSettingsPage'))
+const CloudRunsSettingsPage = lazy(() => import('./CloudRunsSettingsPage'))
+const SecuritySettingsPage = lazy(() => import('./SecuritySettingsPage'))
+const ShortcutsPage = lazy(() => import('./ShortcutsPage'))
 
 /**
  * Map of settings subpage IDs to their page components.
  * TypeScript will error if a page from SETTINGS_PAGES is missing here.
  */
-export const SETTINGS_PAGE_COMPONENTS: Record<SettingsSubpage, ComponentType> = {
+export const SETTINGS_PAGE_COMPONENTS: Record<
+  SettingsSubpage,
+  LazyExoticComponent<ComponentType>
+> = {
   account: AccountSettingsPage,
   privacy: PrivacySettingsPage,
   runtime: RuntimeSettingsPage,
@@ -68,7 +74,8 @@ export const SETTINGS_PAGE_COMPONENTS: Record<SettingsSubpage, ComponentType> = 
 }
 
 /**
- * Get the component for a settings subpage
+ * Get the component for a settings subpage.
+ * Caller must wrap usage in <Suspense> (already done in MainContentPanel).
  */
 export function getSettingsPageComponent(subpage: SettingsSubpage): ComponentType {
   return SETTINGS_PAGE_COMPONENTS[subpage]
