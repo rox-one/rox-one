@@ -31,7 +31,8 @@ describe('panel inset alignment', () => {
     expect(expanded).toContain('mr-1')
     expect(expanded).toContain('overflow-hidden')
 
-    expect(collapsed).toContain('mt-1 mb-1 mr-1')
+    expect(collapsed).not.toContain('mt-1 mb-1')
+    expect(collapsed).toContain('mr-1')
     expect(collapsed).toContain('h-full')
     expect(collapsed).toContain('w-[28px]')
     expect(collapsed).toContain('rounded-md')
@@ -44,7 +45,7 @@ describe('panel inset alignment', () => {
     expect(desktop).not.toContain('marginBottom: -PANEL_STACK_TOP_INSET')
 
     expect(host).toContain('<BottomTerminalDock />')
-    expect(host).toContain('(chrome.showInspector || inspectorVisible) && <InspectorHost />')
+    expect(host).toContain('(chrome.showInspector || inspectorVisible || chromeCollapsed) && <InspectorHost />')
     expect(host.indexOf('<BottomTerminalDock />')).toBeLessThan(host.indexOf('<InspectorHost />'))
   })
 })
