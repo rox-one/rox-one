@@ -3251,7 +3251,7 @@
   "settings.appearance.workbenchTopChrome": "Верхняя панель v2",
   "settings.appearance.workbenchTopChromeDesc": "Панель режимов и утилитарная панель (поиск, новая сессия, настройки)",
   "settings.appearance.workbenchUnifiedShell": "Панель, вкладки, инспектор",
-  "settings.appearance.workbenchUnifiedShellDesc": "Макет unified shell W1 вокруг стека панелей",
+  "settings.appearance.workbenchUnifiedShellDesc": "Макет единой оболочки W1 вокруг стека панелей",
   "settings.appearance.workspaceAvatarColor": "Цвет аватара рабочего пространства",
   "settings.appearance.workspaceAvatarReset": "Сбросить на автоматический цвет",
   "settings.appearance.workspaceIconRail": "Панель иконок рабочих пространств",
