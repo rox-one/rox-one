@@ -22,7 +22,13 @@ export interface SettingsGroupDefinition {
 /**
  * Four stable navigator groups. Extra registry pages (`account`, `security`,
  * `privacy`) sit in Application so every SETTINGS_PAGES id appears exactly
- * once. Permissions is agent-mode policy (after AI), not Application chrome.
+ * once.
+ *
+ * Coherent permissions IA:
+ * - Permissions page (allowlists) → Agent after AI
+ * - Runtime "Permission mode" (approvals) stays on Runtime
+ * - Import chats stays under Workspace (not OS uploads)
+ * - Tool install/download stays under Runtime → Tools
  */
 export const SETTINGS_GROUPS: readonly SettingsGroupDefinition[] = [
   {
