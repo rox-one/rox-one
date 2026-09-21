@@ -207,7 +207,7 @@ const WRAPPED_RU: Record<string, string> = {
   "onboarding.apiSetup.githubCopilotDesc": "Используйте подписку GitHub Copilot с бэкендом Rox.",
   "onboarding.apiSetup.piDesc": "Использовать бэкенд Rox в качестве основного агента. Подключение через ChatGPT, GitHub Copilot или ключ API.",
   "onboarding.credentials.anthropicApiKeyHint": "Введите API-ключ. При необходимости укажите свою конечную точку для OpenRouter, Ollama или совместимых API.",
-  "onboarding.credentials.piApiKeyHint": "Выберите пресет провайдера и введите API-ключ. Для произвольных Anthropic-совместимых конечных точек используйте режим Anthropic API Key.",
+  "onboarding.credentials.piApiKeyHint": "Выберите пресет провайдера и введите API-ключ. Для произвольных Anthropic-совместимых конечных точек используйте режим «Ключ Anthropic API».",
   "onboarding.errors.roxConnectFailed": "Не удалось запустить подключение Rox",
   "onboarding.errors.roxConnectIncomplete": "Подключение Rox вернуло неполный ответ устройства",
   "onboarding.gitBash.description": "Rox требуется Git Bash для выполнения команд оболочки в Windows. Он не найден в вашей системе.",
