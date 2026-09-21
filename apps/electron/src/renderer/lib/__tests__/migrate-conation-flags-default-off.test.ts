@@ -96,6 +96,55 @@ describe('migrateConationFlagsDefaultOff', () => {
     expect(migrateConationFlagsDefaultOff(undefined)).toEqual({ ran: false, cleared: [] })
   })
 
+  it('omits migrate marker when setItem throws and sticky-truthy keys remain', () => {
+    const storage = memoryStorage({
+      'craft-feature-workbench-conation-canvas': 'true',
+      'craft-feature-workbench-conation-board': 'true',
+    })
+    const originalSetItem = storage.setItem.bind(storage)
+    storage.setItem = (key: string, value: string) => {
+      if (key.startsWith(CONATION_WORKBENCH_KEY_PREFIX)) {
+        throw new Error('QuotaExceededError')
+      }
+      return originalSetItem(key, value)
+    }
+
+    const result = migrateConationFlagsDefaultOff(storage)
+
+    expect(result.ran).toBe(true)
+    expect(result.cleared).toEqual([])
+    // Sticky leftovers must remain so later boot can retry
+    expect(storage.getItem('craft-feature-workbench-conation-canvas')).toBe('true')
+    expect(storage.getItem('craft-feature-workbench-conation-board')).toBe('true')
+    // Prefer-FAIL: do NOT stamp marker when sticky-truthy keys remain
+    expect(storage.getItem(CONATION_FLAGS_DEFAULT_OFF_MIGRATE_KEY)).toBeNull()
+  })
+
+  it('retries on later boot after prior setItem failure, then stamps marker', () => {
+    const storage = memoryStorage({
+      'craft-feature-workbench-conation-canvas': 'true',
+    })
+    let failWrites = true
+    const originalSetItem = storage.setItem.bind(storage)
+    storage.setItem = (key: string, value: string) => {
+      if (failWrites && key.startsWith(CONATION_WORKBENCH_KEY_PREFIX)) {
+        throw new Error('QuotaExceededError')
+      }
+      return originalSetItem(key, value)
+    }
+
+    const first = migrateConationFlagsDefaultOff(storage)
+    expect(first.ran).toBe(true)
+    expect(storage.getItem(CONATION_FLAGS_DEFAULT_OFF_MIGRATE_KEY)).toBeNull()
+
+    failWrites = false
+    const second = migrateConationFlagsDefaultOff(storage)
+    expect(second.ran).toBe(true)
+    expect(second.cleared).toContain('craft-feature-workbench-conation-canvas')
+    expect(storage.getItem('craft-feature-workbench-conation-canvas')).toBe('false')
+    expect(storage.getItem(CONATION_FLAGS_DEFAULT_OFF_MIGRATE_KEY)).toBe('1')
+  })
+
   it('exports every KEYS conation storage string under the craft- prefix', () => {
     expect(CONATION_FEATURE_STORAGE_KEYS.length).toBeGreaterThanOrEqual(12)
     for (const key of CONATION_FEATURE_STORAGE_KEYS) {
