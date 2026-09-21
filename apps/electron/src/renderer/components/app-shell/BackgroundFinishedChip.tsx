@@ -132,7 +132,7 @@ export function BackgroundFinishedChip({ sessionId }: BackgroundFinishedChipProp
               'flex items-center gap-1.5 h-[26px] pl-2 pr-2.5 rounded-full',
               'text-xs font-medium select-none outline-none transition-colors',
               'text-purple-700 dark:text-purple-200',
-              'bg-purple-100 hover:bg-purple-200/90 dark:bg-purple-950 dark:hover:bg-purple-900',
+              'bg-purple-100 hover:bg-purple-200 dark:bg-purple-950 dark:hover:bg-purple-900',
               'ring-1 ring-inset ring-purple-400/30 dark:ring-purple-300/25',
               'shadow-tinted',
             )}
