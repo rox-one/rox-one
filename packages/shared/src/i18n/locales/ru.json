@@ -1178,7 +1178,7 @@
   "extensions.center.marketplace": "Маркетплейс",
   "extensions.center.skills": "Навыки",
   "extensions.center.sources": "Источники",
-  "extensions.developer.allHosts": "Все хосты",
+  "extensions.developer.allHosts": "Все хосты расширений",
   "extensions.developer.body": "Для каждой рабочей области хост расширений запускает модули craft-sandbox в изолированном процессе. Здесь задаётся список разрешённых URL для network.request. Плагины SiYuan в этом хосте не выполняются.",
   "extensions.developer.capabilitiesEmpty": "Нет выпущенных или отозванных возможностей",
   "extensions.developer.capabilitiesHint": "Выпущенные и отозванные возможности. Токены и секреты не показываются.",
