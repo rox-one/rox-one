@@ -1418,11 +1418,11 @@
   "knowledge.inspector.properties": "Свойства",
   "knowledge.inspector.title": "Инспектор",
   "knowledge.kernel.binaryFound": "Ядро знаний установлено",
-  "knowledge.kernel.binaryMissing": "Ядро знаний не установлено",
-  "knowledge.kernel.installCta": "Установить ядро знаний",
-  "knowledge.kernel.installHint": "Скачайте и установите ядро знаний, затем вернитесь сюда для подключения.",
-  "knowledge.kernel.offlineBody": "Локальное ядро знаний не запущено. Запустите его, чтобы искать и открывать заметки.",
-  "knowledge.kernel.offlineTitle": "Ядро знаний не запущено",
+  "knowledge.kernel.binaryMissing": "Внешнее ядро не требуется",
+  "knowledge.kernel.installCta": "Открыть заметки Rox",
+  "knowledge.kernel.installHint": "Внешнее ядро заметок (SiYuan) больше не поддерживается в Rox.",
+  "knowledge.kernel.offlineBody": "Используйте заметки Rox — отдельное внешнее ядро не требуется.",
+  "knowledge.kernel.offlineTitle": "База знаний недоступна",
   "knowledge.kernel.startCta": "Запустить локальное ядро знаний",
   "knowledge.kernel.startFailed": "Не удалось запустить ядро знаний: {{message}}",
   "knowledge.kernel.startOk": "Запрос на запуск ядра знаний отправлен",
@@ -4952,5 +4952,8 @@
   "workspaceRail.linkMissingUrl": "Введите URL",
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "ID заметки (необяз.)",
-  "workspaceRail.removeLink": "Удалить ссылку"
+  "workspaceRail.removeLink": "Удалить ссылку",
+  "knowledge.roxNotes.emptyTitle": "Заметки Rox",
+  "knowledge.roxNotes.emptyBody": "Внешнее ядро заметок больше не используется. Пишите и ищите в собственном заметочнике Rox.",
+  "knowledge.roxNotes.openNotesCta": "Открыть заметки Rox"
 }

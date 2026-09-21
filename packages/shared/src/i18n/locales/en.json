@@ -1416,11 +1416,11 @@
   "knowledge.inspector.properties": "Properties",
   "knowledge.inspector.title": "Inspector",
   "knowledge.kernel.binaryFound": "Knowledge engine installed",
-  "knowledge.kernel.binaryMissing": "Knowledge engine not installed",
-  "knowledge.kernel.installCta": "Install knowledge engine",
-  "knowledge.kernel.installHint": "Download and install the knowledge engine, then return here to connect.",
-  "knowledge.kernel.offlineBody": "The local knowledge kernel is not running. Start it to search and open notes.",
-  "knowledge.kernel.offlineTitle": "Knowledge kernel is not running",
+  "knowledge.kernel.binaryMissing": "External kernel not required",
+  "knowledge.kernel.installCta": "Open Rox Notes",
+  "knowledge.kernel.installHint": "An external notes kernel (SiYuan) is no longer supported in Rox.",
+  "knowledge.kernel.offlineBody": "Use Rox Notes — a separate external kernel is not required.",
+  "knowledge.kernel.offlineTitle": "Knowledge unavailable",
   "knowledge.kernel.startCta": "Start local knowledge kernel",
   "knowledge.kernel.startFailed": "Could not start the knowledge kernel: {{message}}",
   "knowledge.kernel.startOk": "Knowledge kernel start requested",
@@ -4946,5 +4946,8 @@
   "workspaceRail.linkMissingUrl": "Enter a URL",
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "Note id (optional)",
-  "workspaceRail.removeLink": "Remove link"
+  "workspaceRail.removeLink": "Remove link",
+  "knowledge.roxNotes.emptyTitle": "Rox Notes",
+  "knowledge.roxNotes.emptyBody": "An external notes kernel is no longer used. Write and search in Rox’s own notes.",
+  "knowledge.roxNotes.openNotesCta": "Open Rox Notes"
 }

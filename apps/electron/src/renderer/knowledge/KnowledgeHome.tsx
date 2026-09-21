@@ -285,9 +285,6 @@ export function KnowledgeHome() {
   const [status, setStatus] = useState<SearchStatus>('idle')
   const [noConnections, setNoConnections] = useState(false)
   const [kernelOffline, setKernelOffline] = useState(false)
-  const [kernelBinaryFound, setKernelBinaryFound] = useState<boolean | null>(null)
-  const [kernelInstallUrl, setKernelInstallUrl] = useState<string | null>(null)
-  const [startingKernel, setStartingKernel] = useState(false)
   const [view, setView] = useAtom(knowledgeHomeViewAtom)
   const [activeViewId, setActiveViewId] = useAtom(knowledgeActiveViewIdAtom)
   const [actionableProposalCount, setActionableProposalCount] = useState(0)
@@ -347,13 +344,17 @@ export function KnowledgeHome() {
     }
   }, [workspaceId])
 
-  // Probe kernel health for empty-state CTA (binary / install / start).
+  // Probe whether the legacy external knowledge engine is up. Empty state
+  // no longer offers a SiYuan install/start CTA — Rox Notes is the path.
   useEffect(() => {
     if (typeof window === 'undefined') return
     let cancelled = false
     const probe = async () => {
       const api = window.electronAPI?.knowledge
-      if (!api?.engineStatus) return
+      if (!api?.engineStatus) {
+        if (!cancelled) setKernelOffline(true)
+        return
+      }
       try {
         const connections = api.listConnections ? await api.listConnections() : []
         const connectionId = connections[0]?.id
@@ -363,8 +364,6 @@ export function KnowledgeHome() {
         })
         if (cancelled) return
         setKernelOffline(!status.running)
-        setKernelBinaryFound(status.binaryFound ?? null)
-        setKernelInstallUrl(status.installUrl ?? null)
         if (connections.length === 0) setNoConnections(true)
       } catch {
         if (!cancelled) setKernelOffline(true)
@@ -375,48 +374,6 @@ export function KnowledgeHome() {
       cancelled = true
     }
   }, [workspaceId])
-
-  const handleStartKernel = useCallback(async () => {
-    const start = window.electronAPI?.knowledge?.engineStart
-    if (typeof start !== 'function') {
-      toast.error(t('knowledge.kernel.startFailed', { message: 'unavailable' }))
-      return
-    }
-    setStartingKernel(true)
-    try {
-      const result = await start(workspaceId ? { workspaceId } : undefined)
-      if (!result.ok && result.error === 'siyuan-not-installed') {
-        setKernelBinaryFound(false)
-        toast.error(t('knowledge.kernel.binaryMissing'))
-        return
-      }
-      if (!result.ok) {
-        toast.error(t('knowledge.kernel.startFailed', { message: result.error ?? 'unknown' }))
-        return
-      }
-      toast.success(t('knowledge.kernel.startOk'))
-      setNoConnections(false)
-      // Re-probe after a short delay (kernel boot is async)
-      window.setTimeout(() => {
-        void window.electronAPI?.knowledge
-          ?.engineStatus?.({
-            ...(workspaceId ? { workspaceId } : {}),
-            ...(result.connectionId ? { connectionId: result.connectionId } : {}),
-          })
-          .then((status) => {
-            setKernelOffline(!status.running)
-            setKernelBinaryFound(status.binaryFound ?? null)
-          })
-          .catch(() => {})
-      }, 1500)
-    } catch (error) {
-      toast.error(t('knowledge.kernel.startFailed', {
-        message: error instanceof Error ? error.message : String(error),
-      }))
-    } finally {
-      setStartingKernel(false)
-    }
-  }, [workspaceId, t])
 
   // Deep-link / atom-driven view selection → run viewRun.
   useEffect(() => {
@@ -628,36 +585,20 @@ export function KnowledgeHome() {
     status === 'idle' && (noConnections || kernelOffline) ? (
       <div className="flex flex-col items-center gap-3 px-4 py-8 text-center">
         <p className="text-[13px] font-medium text-foreground">
-          {t('knowledge.kernel.offlineTitle')}
+          {t('knowledge.roxNotes.emptyTitle')}
         </p>
         <p className="max-w-sm text-[12px] leading-snug text-muted-foreground">
-          {kernelBinaryFound === false
-            ? t('knowledge.kernel.installHint')
-            : t('knowledge.kernel.offlineBody')}
+          {t('knowledge.roxNotes.emptyBody')}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2">
-          {kernelBinaryFound === false ? (
-            <button
-              type="button"
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
-              onClick={() =>
-                void window.electronAPI?.openUrl?.(
-                  kernelInstallUrl ?? 'https://b3log.org/siyuan/',
-                )
-              }
-            >
-              {t('knowledge.kernel.installCta')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              disabled={startingKernel}
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted disabled:opacity-50"
-              onClick={() => void handleStartKernel()}
-            >
-              {startingKernel ? t('knowledge.kernel.starting') : t('knowledge.kernel.startCta')}
-            </button>
-          )}
+          <button
+            type="button"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-[12px] font-medium hover:bg-muted"
+            onClick={() => navigate(routes.view.notes())}
+            data-testid="knowledge-open-rox-notes"
+          >
+            {t('knowledge.roxNotes.openNotesCta')}
+          </button>
         </div>
       </div>
     ) : status === 'idle' ? (
