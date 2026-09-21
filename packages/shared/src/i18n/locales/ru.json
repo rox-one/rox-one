@@ -3879,7 +3879,7 @@
   "settings.permissions.aboutText2": "Хороший рабочий процесс: начните в режиме Обзор, чтобы агент исследовал задачу, проверьте предложенный план, затем выполняйте с уверенностью.",
   "settings.permissions.allowedWritePath": "Разрешённый путь записи",
   "settings.permissions.customApiEndpoint": "Пользовательская точка API",
-  "settings.permissions.customBashPattern": "Пользовательский шаблон bash",
+  "settings.permissions.customBashPattern": "Пользовательский шаблон Bash",
   "settings.permissions.customBlockedTool": "Пользовательский заблокированный инструмент",
   "settings.permissions.customMcpPattern": "Пользовательский шаблон MCP",
   "settings.permissions.defaultPermissions": "Разрешения по умолчанию",
