@@ -774,8 +774,11 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                 relatedBranches={relatedBranches}
                 onCheckoutMessage={(id) => {
                   setSessionView('standard')
+                  // Defer until ChatDisplay is mounted for standard view.
                   requestAnimationFrame(() => {
-                    chatDisplayRef?.current?.scrollToMessage?.(id)
+                    requestAnimationFrame(() => {
+                      chatDisplayRef?.current?.scrollToMessage?.(id)
+                    })
                   })
                 }}
                 onFork={handleWorkbenchFork}
