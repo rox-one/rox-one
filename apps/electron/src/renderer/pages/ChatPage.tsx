@@ -1,1 +1,1 @@
-@file:/workspace/agent-ship/ChatPage.tsx
+$include:/workspace/agent-ship/ChatPage.tsx
