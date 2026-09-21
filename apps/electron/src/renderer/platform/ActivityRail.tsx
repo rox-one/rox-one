@@ -76,8 +76,9 @@ export function ActivityRail() {
     return (
       <nav
         aria-label={t('rail.title')}
-        className="chrome-rail flex h-full shrink-0 flex-col items-center py-1.5"
+        className="chrome-rail ml-0.5 my-0.5 flex h-[calc(100%-4px)] shrink-0 flex-col items-center overflow-hidden rounded-lg border border-border/40 bg-background py-1.5 shadow-middle"
         style={{ width: ACTIVITY_RAIL_COLLAPSED_WIDTH }}
+        data-shell-role="activity-rail"
       >
         <Tooltip>
           <TooltipTrigger asChild>
@@ -99,8 +100,9 @@ export function ActivityRail() {
   return (
     <nav
       aria-label={t('rail.title')}
-      className="chrome-rail flex h-full shrink-0 flex-col items-center py-1.5"
+      className="chrome-rail ml-0.5 my-0.5 flex h-[calc(100%-4px)] shrink-0 flex-col items-center overflow-hidden rounded-lg border border-border/40 bg-background py-1.5 shadow-middle"
       style={{ width: ACTIVITY_RAIL_WIDTH }}
+      data-shell-role="activity-rail"
     >
       <div className="flex flex-col items-center gap-0.5">
         {APP_NAV_DESTINATIONS.map((dest) => (
