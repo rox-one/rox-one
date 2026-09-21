@@ -196,7 +196,7 @@ const WRAPPED_RU: Record<string, string> = {
   "model.roxMaxDesc": "Конечная точка с контекстом 1M; без тихого понижения контекста",
   "model.roxStandardDesc": "Конечная точка по умолчанию для кода",
   "model.roxVisionDesc": "Мультимодальная конечная точка",
-  "notes.dialog.renameNoteDesc": "Переименовать markdown-файл и обновить совпадающие вики-ссылки.",
+  "notes.dialog.renameNoteDesc": "Переименовать Markdown-файл и обновить совпадающие вики-ссылки.",
   "notes.frontmatterPreserved": "YAML-шапка сохраняется при записи",
   "notes.inspector.allLinksResolve": "Все вики-ссылки разрешаются",
   "notes.inspector.frontmatter": "YAML-шапка",
