@@ -1,0 +1,36 @@
+name: apply-settings-ia-remaining
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cursor/settings-ia-hub
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply AppShell patch + locale keys
+        run: |
+          set -euo pipefail
+          if git apply --check patches/settings-ia-appshell.patch 2>/dev/null; then
+            git apply --verbose patches/settings-ia-appshell.patch
+          else
+            echo "AppShell patch already applied or not applicable"
+          fi
+          node scripts/patch-settings-ia-locales.mjs
+          git config user.name "id-2"
+          git config user.email "gronxie@yandex.com"
+          git add apps/electron/src/renderer/components/app-shell/AppShell.tsx \
+            packages/shared/src/i18n/locales/en.json \
+            packages/shared/src/i18n/locales/ru.json || true
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "feat(shell+i18n): hide module middle nav; Overview/Обзор titles"
+          git push origin HEAD:cursor/settings-ia-hub
