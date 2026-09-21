@@ -8,6 +8,7 @@ describe('session rating pill', () => {
     expect(src).toContain('aria-pressed')
     expect(src).toContain('score === value')
     expect(src).toContain('toast.error')
+    expect(src).toContain('toast.success')
     expect(src).not.toContain('score >= value')
     expect(src).not.toContain('bg-foreground/10')
     expect(src).toContain('bg-background')

@@ -132,9 +132,9 @@ export function BackgroundFinishedChip({ sessionId }: BackgroundFinishedChipProp
               'flex items-center gap-1.5 h-[26px] pl-2 pr-2.5 rounded-full',
               'text-xs font-medium select-none outline-none transition-colors',
               'text-purple-700 dark:text-purple-200',
-              'bg-purple-500/12 hover:bg-purple-500/20',
+              'bg-purple-100 hover:bg-purple-200 dark:bg-purple-950 dark:hover:bg-purple-900',
               'ring-1 ring-inset ring-purple-400/30 dark:ring-purple-300/25',
-              'shadow-tinted backdrop-blur-md',
+              'shadow-tinted',
             )}
           >
             <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-purple-500 dark:text-purple-300" />

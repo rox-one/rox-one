@@ -26,7 +26,7 @@ describe('composer cloud and magic chip contrast', () => {
     expect(magic).toContain('bg-background')
     expect(input).toContain('bg-background')
     expect(input).toContain('absolute top-2 right-2 z-20')
-    expect(input).toContain('rounded-md bg-background/95 p-0.5')
+    expect(input).toContain('rounded-md bg-background p-0.5')
     expect(magicTrigger).toContain('disabled:opacity-50')
     expect(magicTrigger).not.toContain('disabled:opacity-40')
   })

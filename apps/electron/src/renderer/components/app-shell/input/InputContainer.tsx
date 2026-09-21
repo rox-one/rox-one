@@ -306,7 +306,7 @@ export function InputContainer({
        * self-contained, renders nothing when the feature is disabled.
        * Hidden in compactMode (EditPopover) even if showCloudRunsChip is true. */}
       {showCloudRunsChip && !compactMode && mode === 'freeform' && freeFormProps.sessionId && (
-        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 rounded-md bg-background/95 p-0.5">
+        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 rounded-md bg-background p-0.5">
           <MagicPromptChip
             draft={freeFormProps.inputValue ?? ''}
             onApply={(prompt) => freeFormProps.onInputChange?.(prompt)}
