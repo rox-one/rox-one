@@ -1111,7 +1111,7 @@
   "entityView.outlineNoVariables": "Переменные не найдены",
   "entityView.outlineVariables": "Переменные",
   "entityView.playbookHoleEmpty": "Нет дыр плейбука",
-  "entityView.playbookHoles": "Дыры плейбука",
+  "entityView.playbookHoles": "Дыры сценария",
   "entityView.standard": "Стандарт",
   "entityView.table": "Таблица",
   "entityView.tabsLabel": "Виды",
