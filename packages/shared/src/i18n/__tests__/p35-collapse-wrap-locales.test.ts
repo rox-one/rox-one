@@ -412,7 +412,7 @@ const WRAPPED_RU: Record<string, string> = {
   "toast.pagePreviewFailed": "Не удалось обновить предпросмотр",
   "toast.pagePreviewQueued": "Обновляем предпросмотр…",
   "toast.terminalOverlayNotAvailable": "Предпросмотр терминала недоступен",
-  "toast.vibeHint": "Вайб живёт в Настройках; синтаксис косой черты вторичен",
+  "toast.vibeHint": "Творческий сценарий живёт в Настройках; синтаксис косой черты вторичен",
   "workbench.status.fallbackUnverified": "Живой резерв не проверен",
   "workbench.status.syncOk": "Синхронизация в порядке",
   "workspace.connectionTimeout": "Не удалось дождаться подключения к рабочему пространству за {{ms}} мс"
