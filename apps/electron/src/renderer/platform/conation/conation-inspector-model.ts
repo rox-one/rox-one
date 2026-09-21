@@ -2,4 +2,4 @@
 export const CONATION_INSPECTOR_PANEL_ID = 'conation.inspector'
 
 export const CONATION_INSPECTOR_PLACEHOLDER =
-  'Conation inspector host (empty — domain panes land in later WPs)'
+  'Панели Conation появятся здесь. Fund и Board открываются по глубокой ссылке.'
