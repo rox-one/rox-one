@@ -2165,7 +2165,7 @@
   "notes.toast.moveFailed": "Не удалось переместить заметку",
   "notes.toast.moved": "Заметка перемещена",
   "notes.toast.openFailed": "Не удалось открыть заметку",
-  "notes.toast.pathCopied": "Путь markdown скопирован",
+  "notes.toast.pathCopied": "Путь Markdown скопирован",
   "notes.toast.propertyKeyInvalid": "В ключах свойств допустимы буквы, цифры, подчёркивание и дефис",
   "notes.toast.readFileFailed": "Не удалось прочитать выбранный файл",
   "notes.toast.reload": "Перезагрузить",
