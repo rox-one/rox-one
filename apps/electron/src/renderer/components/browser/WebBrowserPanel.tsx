@@ -120,39 +120,39 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
       ? 'flex h-full min-h-0 w-full flex-col bg-background'
       : 'fixed inset-x-0 bottom-0 top-[var(--topbar-height)] z-40 flex flex-col bg-[#f4f5f7] shadow-strong'
     }>
-      <header className="flex min-h-14 shrink-0 items-center gap-1 border-b border-black/[0.08] bg-background/95 px-2 backdrop-blur sm:px-3">
+      <header className="flex h-[42px] min-h-0 shrink-0 items-center gap-1 border-b border-border/40 bg-background/95 px-2 backdrop-blur sm:px-3">
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 shrink-0 rounded-full"
+          className="size-7 shrink-0 rounded-full"
           disabled={busy || !instanceId}
           onClick={() => void run(async () => { await window.electronAPI.browserPane.goBack(instanceId!) })}
           title="后退"
           aria-label="后退"
         >
-          <ArrowLeft className="size-5" />
+          <ArrowLeft className="size-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 shrink-0 rounded-full"
+          className="size-7 shrink-0 rounded-full"
           disabled={busy || !instanceId}
           onClick={() => void run(async () => { await window.electronAPI.browserPane.goForward(instanceId!) })}
           title="前进"
           aria-label="前进"
         >
-          <ArrowRight className="size-5" />
+          <ArrowRight className="size-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="size-9 shrink-0 rounded-full"
+          className="size-7 shrink-0 rounded-full"
           disabled={busy || !instanceId}
           onClick={() => void run(async () => { await window.electronAPI.browserPane.reload(instanceId!) })}
           title="刷新"
           aria-label="刷新"
         >
-          <RefreshCw className={cn('size-5', busy && 'animate-spin')} />
+          <RefreshCw className={cn('size-4', busy && 'animate-spin')} />
         </Button>
 
         <form className="min-w-0 flex-1" onSubmit={(event) => { event.preventDefault(); navigate() }}>
@@ -179,10 +179,10 @@ export function WebBrowserPanel({ open, onClose, embedded = false }: WebBrowserP
           title="在新标签页打开"
           aria-label="在新标签页打开"
         >
-          <ExternalLink className="size-5" />
+          <ExternalLink className="size-4" />
         </Button>
-        <Button variant="ghost" size="icon" className="size-9 shrink-0 rounded-full" onClick={onClose} title="关闭浏览器" aria-label="关闭浏览器">
-          <X className="size-5" />
+        <Button variant="ghost" size="icon" className="size-7 shrink-0 rounded-full" onClick={onClose} title="关闭浏览器" aria-label="关闭浏览器">
+          <X className="size-4" />
         </Button>
       </header>
 

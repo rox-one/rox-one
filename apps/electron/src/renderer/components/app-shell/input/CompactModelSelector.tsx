@@ -189,8 +189,8 @@ export function CompactModelSelector({
             : `${t('common.model')}: ${currentModelDisplayName}`}
           className={cn(
             isWebUI
-              ? 'h-7 w-7 p-0 text-xs font-medium rounded-[6px] flex items-center justify-center outline-none select-none shrink-0'
-              : 'h-7 pl-2 pr-2 text-xs font-medium rounded-[6px] flex items-center gap-1.5 outline-none select-none min-w-[64px] shrink',
+              ? 'h-6 w-6 p-0 text-[9px] font-medium rounded-[6px] flex items-center justify-center outline-none select-none shrink-0'
+              : 'h-6 pl-1.5 pr-1.5 text-[9px] font-medium rounded-[6px] flex items-center gap-1 outline-none select-none min-w-[56px] shrink',
             isWebUI
               ? (connectionUnavailable ? 'text-destructive hover:bg-destructive/10' : 'text-foreground/70 hover:bg-foreground/5')
               : (connectionUnavailable ? 'bg-destructive/10 text-destructive' : 'text-foreground/70 hover:bg-foreground/5'),

@@ -364,7 +364,7 @@ export function InspectorHost() {
           setChromeCollapsed(false)
           setVisible(true)
         }}
-        className="chrome-strip pointer-events-auto mt-1 mb-1 mr-1 flex w-[28px] shrink-0 items-center justify-center rounded-md border-l border-foreground/5 bg-background"
+        className="chrome-strip pointer-events-auto mt-1 mb-1 mr-1 flex h-full w-[28px] shrink-0 items-center justify-center rounded-md border-l border-foreground/5 bg-background"
         data-session-inspector={sessionMode ? 'true' : 'false'}
         data-inspector="collapsed"
       >

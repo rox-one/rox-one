@@ -32,6 +32,8 @@ describe('panel inset alignment', () => {
     expect(expanded).toContain('overflow-hidden')
 
     expect(collapsed).toContain('mt-1 mb-1 mr-1')
+    expect(collapsed).toContain('h-full')
+    expect(collapsed).toContain('w-[28px]')
     expect(collapsed).toContain('rounded-md')
     expect(collapsed).toContain('data-inspector="collapsed"')
 

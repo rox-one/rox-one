@@ -11,8 +11,8 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import { bottomDockHeightAtom, bottomTerminalOpenAtom } from '@/atoms/unified-shell'
 import { InspectorTerminal } from './InspectorTerminal'
 
-const MIN_HEIGHT = 96
-const MAX_HEIGHT = 560
+const MIN_HEIGHT = 88
+const MAX_HEIGHT = 480
 
 export function BottomTerminalDock() {
   const { t } = useTranslation()
@@ -30,7 +30,7 @@ export function BottomTerminalDock() {
     const move = (e: PointerEvent) => {
       const state = drag.current
       if (!state) return
-      const viewportCap = Math.max(MIN_HEIGHT, Math.floor(window.innerHeight * 0.36))
+      const viewportCap = Math.max(MIN_HEIGHT, Math.floor(window.innerHeight * 0.30))
       const next = Math.min(MAX_HEIGHT, viewportCap, Math.max(MIN_HEIGHT, state.startH + (state.startY - e.clientY)))
       setHeight(next)
     }
@@ -51,7 +51,7 @@ export function BottomTerminalDock() {
         type="button"
         aria-label={t('inspector.terminal')}
         onClick={() => setOpen(true)}
-        className="chrome-strip pointer-events-auto mx-1 mb-1 flex h-[28px] shrink-0 items-center rounded-md border border-border/40 bg-background px-2.5 text-left"
+        className="chrome-strip pointer-events-auto mx-1 mb-1 flex h-[26px] shrink-0 items-center rounded-md border border-border/40 bg-background px-2 text-left"
         data-bottom-terminal="collapsed"
       >
         <span className="chrome-label truncate font-medium tracking-tight">{t('inspector.terminal')}</span>
@@ -61,7 +61,7 @@ export function BottomTerminalDock() {
 
   return (
     <div
-      className="relative mx-1 mb-1 flex shrink-0 flex-col overflow-hidden rounded-lg border border-border/60 bg-background shadow-middle pointer-events-auto"
+      className="relative mx-1 mb-1 flex shrink-0 flex-col overflow-hidden rounded-md border border-border/50 bg-background shadow-middle pointer-events-auto"
       style={{ height }}
       data-bottom-terminal="true"
     >
