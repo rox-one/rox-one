@@ -573,11 +573,14 @@ export default function App() {
       }
       setSessionOptions(optionsMap)
 
-      await Promise.allSettled(
-        loadedSessions.map((s) => reconcilePermissionModeState(s.id))
-      )
-
+      // Splash exit gates on sessionsLoaded. Permission mode is already seeded
+      // from getSessions() above; per-session getSessionPermissionModeState is
+      // N+1 IPC (perf probe detectSessionMetadataNPlusOne) and must not block
+      // first paint / splash dismiss. Reconcile in the background.
       setSessionsLoaded(true)
+      void Promise.allSettled(
+        loadedSessions.map((s) => reconcilePermissionModeState(s.id)),
+      )
 
       if (initialSessionId && windowWorkspaceId) {
         const session = loadedSessions.find(s => s.id === initialSessionId)
