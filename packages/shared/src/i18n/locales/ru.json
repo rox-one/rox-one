@@ -1077,7 +1077,7 @@
   "entityView.mapKindOutput": "Выход",
   "entityView.mapKindSubflow": "Подпоток",
   "entityView.mapKindTool": "Инструмент",
-  "entityView.mapPromoteTrace": "Повысить след",
+  "entityView.mapPromoteTrace": "Собрать черновик из прогона",
   "entityView.mapReplayRun": "Повторить запуск",
   "entityView.mapResetLayout": "Сброс раскладки",
   "entityView.mapRun": "Запуск",

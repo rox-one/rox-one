@@ -53,6 +53,12 @@ import {
   type SessionMapPin,
 } from '@craft-agent/core/mindmap'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { SessionFanOutSheet, type FanOutChildJob } from './SessionFanOutSheet'
 import { SceneNode } from './SceneNode'
@@ -958,7 +964,7 @@ function EditorInner({
                 </span>
               ) : null}
             </div>
-            <div className="ml-auto inline-flex min-w-0 flex-wrap items-center justify-end gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl">
+            <div className="ml-auto inline-flex min-w-0 flex-nowrap items-center justify-end gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl">
               <div className="inline-flex rounded-full border border-border/70 bg-background/60 p-0.5">
                 <Button
                   type="button"
@@ -1020,42 +1026,40 @@ function EditorInner({
               >
                 {t('entityView.mapRun')}
               </Button>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('left')}>
-                {t('entityView.mapAlign')}
-              </Button>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('horizontal')}>
-                {t('entityView.mapDistribute')}
-              </Button>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('tile')}>
-                {t('entityView.mapTile')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                onClick={handlePromoteTrace}
-              >
-                {t('entityView.mapPromoteTrace')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                onClick={handleSaveVersion}
-              >
-                {t('entityView.mapSaveVersion')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                onClick={() => handleRun('pipeline')}
-              >
-                {t('entityView.mapRunPipeline')}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                    data-testid="map-toolbar-more"
+                    aria-label="More map actions"
+                  >
+                    ⋯
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[12rem]">
+                  <DropdownMenuItem onClick={() => applyCanvasLayout('left')}>
+                    {t('entityView.mapAlign')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => applyCanvasLayout('horizontal')}>
+                    {t('entityView.mapDistribute')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => applyCanvasLayout('tile')}>
+                    {t('entityView.mapTile')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handlePromoteTrace}>
+                    {t('entityView.mapPromoteTrace')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleSaveVersion}>
+                    {t('entityView.mapSaveVersion')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleRun('pipeline')}>
+                    {t('entityView.mapRunPipeline')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
               <input
                 ref={importRef}
                 type="file"

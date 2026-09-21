@@ -1075,7 +1075,7 @@
   "entityView.mapKindOutput": "Output",
   "entityView.mapKindSubflow": "Subflow",
   "entityView.mapKindTool": "Tool",
-  "entityView.mapPromoteTrace": "Promote trace",
+  "entityView.mapPromoteTrace": "Build draft from run",
   "entityView.mapReplayRun": "Replay run",
   "entityView.mapResetLayout": "Reset layout",
   "entityView.mapRun": "Run",

@@ -16,8 +16,9 @@ describe('workflow spec editor wiring', () => {
     expect(editorSource).toContain('mapConvertNode')
     expect(editorSource).toContain('SESSION_NODE_KINDS.map')
     expect(editorSource).not.toMatch(/<\/Button>\s+className=/)
+    expect(editorSource).toContain('data-testid="map-toolbar-more"')
     expect(editorSource).toMatch(
-      /<Button\b[\s\S]*?onClick=\{handlePromoteTrace\}[\s\S]*?entityView\.mapPromoteTrace/,
+      /onClick=\{handlePromoteTrace\}[\s\S]*?entityView\.mapPromoteTrace/,
     )
   })
 
