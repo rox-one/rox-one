@@ -6,7 +6,7 @@ const inputPath = join(__dirname, '../input/FreeFormInput.tsx')
 const badgePath = join(__dirname, '../input/FreeFormInputContextBadge.tsx')
 
 describe('composer toolbar type', () => {
-  it('uses 11px on input-toolbar-btn and the context badge', () => {
+  it('uses 9px on input-toolbar-btn and the context badge', () => {
     const input = readFileSync(inputPath, 'utf8')
     const badge = readFileSync(badgePath, 'utf8')
 
@@ -15,8 +15,8 @@ describe('composer toolbar type', () => {
       ...badge.split('\n').filter((line) => line.includes('input-toolbar-btn')),
     ]
 
-    expect(input.split('\n').some((line) => line.includes('input-toolbar-btn') && line.includes('text-[11px]'))).toBe(true)
-    expect(badge.split('\n').some((line) => line.includes('input-toolbar-btn') && line.includes('text-[11px]'))).toBe(true)
-    expect(toolbarLines.every((line) => !line.includes('text-[13px]'))).toBe(true)
+    expect(input.split('\n').some((line) => line.includes('input-toolbar-btn') && line.includes('text-[9px]'))).toBe(true)
+    expect(badge.split('\n').some((line) => line.includes('input-toolbar-btn') && line.includes('text-[9px]'))).toBe(true)
+    expect(toolbarLines.every((line) => !line.includes('text-[13px]') && !line.includes('text-[11px]'))).toBe(true)
   })
 })
