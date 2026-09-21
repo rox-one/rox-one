@@ -57,6 +57,7 @@ export function SessionRatingPill({ sessionId }: SessionRatingPillProps) {
                   score: value,
                   provenance: 'session-composer',
                 })
+                toast.success(t('quests.rateOf', { score: value }))
               } catch {
                 toast.error(t('common.failed'))
                 setScore(previous)
