@@ -19,6 +19,13 @@ function pidAlive(pid: number): boolean {
 }
 
 test.describe('meeting-agents RED lifecycle (#385 / E29)', () => {
+  test.beforeAll(() => {
+    if (process.env.ROX_MEETING_E2E_FIXTURE !== '1' && process.env.ROX_MEETING_USE_PACKAGED_APP !== '1') {
+      throw new Error(
+        'blocked: no product Electron→RPC→storage path; set ROX_MEETING_E2E_FIXTURE=1 (U1) or ROX_MEETING_USE_PACKAGED_APP=1',
+      )
+    }
+  })
   test('production + fixture entrypoint is denied (env alone is not transport)', () => {
     expect(
       productionFixtureGuard({
@@ -41,7 +48,6 @@ test.describe('meeting-agents RED lifecycle (#385 / E29)', () => {
       expect((await gw.counts()).forbiddenCalls).toBe(0)
       await gw.recordForbidden()
       expect((await gw.counts()).forbiddenCalls).toBe(1)
-      // Unauthenticated / non-loopback clients must not read counts
       const denied = await fetch(`${gw.origin}/counts`)
       expect(denied.status).toBe(401)
     } finally {
