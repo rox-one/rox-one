@@ -1188,7 +1188,7 @@
   "extensions.developer.extensionIdPlaceholder": "my-extension",
   "extensions.developer.hint": "Просматривайте изолированные хосты расширений для рабочей области и ограничивайте URL-запросы.",
   "extensions.developer.hostRestart": "Перезапустить хост",
-  "extensions.developer.hostStart": "Запустить хост",
+  "extensions.developer.hostStart": "Запустить хост расширений",
   "extensions.developer.hostStatus": "Статус хоста",
   "extensions.developer.hostStop": "Остановить хост",
   "extensions.developer.noHosts": "Нет запущенных Extension Host",
