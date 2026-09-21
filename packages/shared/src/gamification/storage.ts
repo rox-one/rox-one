@@ -140,11 +140,8 @@ function normalizeState(raw: unknown): GamificationState {
     for (const entry of obj.ratings) {
       if (!entry || typeof entry !== 'object') continue
       const rec = entry as Record<string, unknown>
-      const score = rec.score
-      if (
-        typeof rec.sessionId !== 'string' ||
-        (score !== 1 && score !== 2 && score !== 3 && score !== 4 && score !== 5)
-      ) continue
+      const score = normalizeSessionRatingScore(rec.score)
+      if (typeof rec.sessionId !== 'string' || score == null) continue
       ratings.push({
         sessionId: rec.sessionId,
         score,
