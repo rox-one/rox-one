@@ -3022,7 +3022,7 @@
   "settings.accounts.healthUnknown": "Неизвестно",
   "settings.accounts.knowledgeSyncSection": "Синхронизация знаний",
   "settings.accounts.loadFailed": "Не удалось загрузить данные аккаунта: {message}",
-  "settings.accounts.localProfileDesc": "На этом устройстве используется локальный профиль. Это не облачный вход. Необязательный Rox Server URL подключает удалённый экземпляр Rox.",
+  "settings.accounts.localProfileDesc": "На этом устройстве используется локальный профиль. Это не облачный вход. Необязательный URL сервера Rox подключает удалённый экземпляр Rox.",
   "settings.accounts.managedInAi": "Управляется в настройках ИИ",
   "settings.accounts.managedInKnowledge": "Управляется в настройках «База знаний»",
   "settings.accounts.noConnections": "Сервисных подключений пока нет. Подключите облачную синхронизацию ниже или добавьте сервисы позже.",
