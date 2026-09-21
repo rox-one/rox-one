@@ -90,12 +90,7 @@ export function SessionPublishedChip({ sessionId, className }: SessionPublishedC
         title={t('knowledge.publish.publishedTo', { target })}
         onClick={() => {
           if (latest.targetRef?.id) {
-            navigate(
-              routes.view.siyuan({
-                kind: latest.targetRef.kind as 'document' | 'block' | 'notebook' | 'database' | 'asset',
-                id: latest.targetRef.id,
-              }),
-            )
+            navigate(routes.view.notes())
           } else {
             setPublishDialog({ open: true, sessionId })
           }

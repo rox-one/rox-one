@@ -14,11 +14,10 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useActiveWorkspace } from '@/context/AppShellContext'
-import { routes } from '@/lib/navigate'
+import { navigate, routes } from '@/lib/navigate'
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import type {
   KnowledgeConnection,
-  KnowledgeDetectEngineResult,
   KnowledgeEngineStatus,
 } from '../../../shared/types'
 import type { AIActionMode } from '../notes/NotesAIMenu'
@@ -70,11 +69,9 @@ export default function KnowledgeSettingsPage() {
 
   const [connections, setConnections] = React.useState<KnowledgeConnection[] | null>(null)
   const [engineStatus, setEngineStatus] = React.useState<KnowledgeEngineStatus | null>(null)
-  const [detectResult, setDetectResult] = React.useState<KnowledgeDetectEngineResult | null>(null)
   const [token, setToken] = React.useState('')
   const [saving, setSaving] = React.useState(false)
   const [testing, setTesting] = React.useState(false)
-  const [starting, setStarting] = React.useState(false)
   const [migrating, setMigrating] = React.useState(false)
   const [aiPrompts, setAiPrompts] = React.useState(() =>
     parseNotesAiPrompts(typeof localStorage === 'undefined' ? null : localStorage.getItem(NOTES_AI_PROMPTS_STORAGE_KEY)),
@@ -82,39 +79,6 @@ export default function KnowledgeSettingsPage() {
   // MVP: a single external-local connection (spec K-03 §3.3); the list still
   // renders every entry so additional providers stay visible.
   const connection = connections?.[0] ?? null
-
-  React.useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const detected = await window.electronAPI.knowledge.detectEngine()
-        if (!cancelled) setDetectResult(detected)
-      } catch (error) {
-        if (!cancelled) {
-          toast.error(t('settings.knowledge.detectFailed', { message: errorMessage(error) }))
-        }
-      }
-      if (!workspaceId) return
-      try {
-        const list = await window.electronAPI.knowledge.listConnections()
-        if (cancelled) return
-        setConnections(list)
-        const first = list[0]
-        if (first) {
-          const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId: first.id })
-          if (!cancelled) setEngineStatus(status)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          toast.error(t('settings.knowledge.loadFailed', { message: errorMessage(error) }))
-        }
-      }
-    }
-    void load()
-    return () => {
-      cancelled = true
-    }
-  }, [t, workspaceId])
 
   const handleSaveToken = async () => {
     const trimmed = token.trim()
@@ -160,53 +124,8 @@ export default function KnowledgeSettingsPage() {
     }
   }
 
-  const handleStartKernel = async () => {
-    const start = window.electronAPI.knowledge.engineStart
-    if (typeof start !== 'function') {
-      toast.error(t('knowledge.kernel.startFailed', { message: 'unavailable' }))
-      return
-    }
-    setStarting(true)
-    try {
-      const result = await start({ workspaceId })
-      if (!result.ok && result.error === 'siyuan-not-installed') {
-        toast.error(t('knowledge.kernel.binaryMissing'))
-        return
-      }
-      if (!result.ok) {
-        toast.error(t('knowledge.kernel.startFailed', { message: result.error ?? 'unknown' }))
-        return
-      }
-      toast.success(t('knowledge.kernel.startOk'))
-      const list = await window.electronAPI.knowledge.listConnections()
-      setConnections(list)
-      const connectionId = result.connectionId || list[0]?.id
-      if (connectionId && workspaceId) {
-        const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId })
-        setEngineStatus(status)
-      }
-    } catch (error) {
-      toast.error(t('knowledge.kernel.startFailed', { message: errorMessage(error) }))
-    } finally {
-      setStarting(false)
-    }
-  }
-
-  const openInstallPage = () => {
-    const url =
-      detectResult?.installDocsUrl ?? engineStatus?.installUrl ?? 'https://github.com/rox-one/rox-one'
-    void window.electronAPI?.openUrl?.(url)
-  }
-
-  const openDetectDocs = () => {
-    const url = detectResult?.installDocsUrl
-    if (!url) return
-    void window.electronAPI?.openUrl?.(url)
-  }
-
-  const yesNoUnknown = (value: boolean | undefined) => {
-    if (detectResult == null || value === undefined) return t('settings.knowledge.status.unknown')
-    return value ? t('settings.knowledge.detectResult.yes') : t('settings.knowledge.detectResult.no')
+  const openRoxNotes = () => {
+    navigate(routes.view.notes())
   }
 
   const handleMigrateNotes = async () => {
@@ -337,41 +256,6 @@ export default function KnowledgeSettingsPage() {
         </SettingsCard>
       </SettingsSection>
 
-      <SettingsSection title={t('knowledge.local.engineOptional')}>
-        <SettingsCard>
-          <SettingsRow
-            label={t('settings.knowledge.detectResult.installed')}
-            description={t('settings.knowledge.detectNeverDownload')}
-          >
-            <span className="text-sm text-muted-foreground">{yesNoUnknown(detectResult?.installed)}</span>
-          </SettingsRow>
-          <SettingsRow label={t('settings.knowledge.detectResult.running')}>
-            <span className="text-sm text-muted-foreground">
-              {yesNoUnknown(detectResult?.runningOnDefaultPort)}
-            </span>
-          </SettingsRow>
-          <SettingsRow label={t('settings.knowledge.detectResult.paths')}>
-            <span className="text-sm text-muted-foreground whitespace-pre-line">
-              {detectResult == null
-                ? t('settings.knowledge.status.unknown')
-                : detectResult.installPathsFound.length > 0
-                  ? detectResult.installPathsFound.join('\n')
-                  : t('settings.knowledge.detectNone')}
-            </span>
-          </SettingsRow>
-          <SettingsRow label="">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={openDetectDocs}
-              disabled={!detectResult?.installDocsUrl}
-            >
-              {t('settings.knowledge.installDocs')}
-            </Button>
-          </SettingsRow>
-        </SettingsCard>
-      </SettingsSection>
-
       <SettingsSection title={t('settings.knowledge.sectionConnection')}>
         <SettingsCard>
           <SettingsRow
@@ -439,32 +323,18 @@ export default function KnowledgeSettingsPage() {
             <span className="text-sm text-muted-foreground">{engineStatus?.version ?? '—'}</span>
           </SettingsRow>
           <SettingsRow
-            label={engineStatus?.binaryFound ? t('knowledge.kernel.binaryFound') : t('knowledge.kernel.binaryMissing')}
-            description={
-              engineStatus?.running
-                ? undefined
-                : engineStatus?.binaryFound === false
-                  ? t('knowledge.kernel.installHint')
-                  : t('knowledge.kernel.offlineBody')
-            }
+            label={t('knowledge.roxNotes.emptyTitle')}
+            description={t('knowledge.roxNotes.openNotesCta')}
           >
             <div className="flex gap-2 pt-1">
-              {engineStatus?.binaryFound === false ? (
-                <Button size="sm" variant="outline" onClick={openInstallPage}>
-                  {t('knowledge.kernel.installCta')}
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void handleStartKernel()}
-                  disabled={starting || engineStatus?.running === true}
-                >
-                  {starting || engineStatus?.starting
-                    ? t('knowledge.kernel.starting')
-                    : t('knowledge.kernel.startCta')}
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="outline"
+                data-testid="settings-knowledge-open-rox-notes"
+                onClick={openRoxNotes}
+              >
+                {t('knowledge.roxNotes.openNotesCta')}
+              </Button>
             </div>
           </SettingsRow>
         </SettingsCard>
@@ -496,11 +366,12 @@ export default function KnowledgeSettingsPage() {
                   {t('settings.knowledge.connectionEmptyBody')}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => void handleStartKernel()} disabled={starting}>
-                    {starting ? t('knowledge.kernel.starting') : t('knowledge.kernel.startCta')}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={openInstallPage}>
-                    {t('knowledge.kernel.installCta')}
+                  <Button
+                    size="sm"
+                    data-testid="settings-knowledge-empty-rox-notes"
+                    onClick={openRoxNotes}
+                  >
+                    {t('knowledge.roxNotes.openNotesCta')}
                   </Button>
                 </div>
               </div>

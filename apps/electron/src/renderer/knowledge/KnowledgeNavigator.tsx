@@ -92,7 +92,7 @@ export function KnowledgeNavigator({ layout }: KnowledgeNavigatorProps = {}) {
             type="button"
             data-testid="knowledge-open-full-interface"
             onClick={() => {
-              navigate(routes.view.siyuan({ kind: 'notebook', id: SIYUAN_FULL_SURFACE_ID }))
+              navigate(routes.view.notes())
             }}
             className={cn(
               'w-full rounded-md px-2 py-1.5 text-left text-[11px] leading-snug text-muted-foreground',

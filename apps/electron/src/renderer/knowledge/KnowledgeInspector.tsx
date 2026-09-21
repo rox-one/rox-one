@@ -3,7 +3,7 @@
  *
  * Sections, each hidden when empty:
  * - PROPERTIES: node attributes (the provider already surfaces custom-* IAL keys only).
- * - BACKLINKS: provider backlinks; clicking navigates via routes.view.siyuan.
+ * - BACKLINKS: provider backlinks; clicking navigates to Rox Notes.
  * - OUTLINE: headings parsed locally from node markdown (./outline-parser — no new dep).
  *
  * Data flows through the P1 read-only RPC surface only
@@ -115,7 +115,7 @@ export function KnowledgeInspector({ knowledgeRef }: KnowledgeInspectorProps) {
                   type="button"
                   className="w-full truncate text-left text-xs text-foreground hover:underline"
                   onClick={() =>
-                    navigate(routes.view.siyuan({ kind: backlink.ref.kind, id: backlink.ref.id }))
+                    navigate(routes.view.notes())
                   }
                 >
                   {backlink.title || backlink.ref.id}

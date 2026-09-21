@@ -688,7 +688,7 @@ export default function ExtensionsSettingsPage() {
   )
 
   const openSiyuanCompat = useCallback(() => {
-    navigate(routes.view.siyuan({ kind: 'notebook', id: SIYUAN_FULL_SURFACE_ID }))
+    navigate(routes.view.notes())
   }, [])
 
 

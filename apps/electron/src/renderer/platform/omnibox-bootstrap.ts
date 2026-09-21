@@ -185,7 +185,7 @@ function registerActionCommands(commands: CommandRegistry): void {
 }
 
 function openSiyuanCompatSurface(): void {
-  navigate(routes.view.siyuan({ kind: 'notebook', id: SIYUAN_FULL_SURFACE_ID }))
+  navigate(routes.view.notes())
 }
 
 function registerConationCommands(commands: CommandRegistry, t?: LabelResolver): void {
