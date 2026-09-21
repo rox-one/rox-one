@@ -48,13 +48,32 @@ import {
   type EntityViewCapability,
   type EntityViewId,
 } from '@/components/app-shell/EntityViewTabs'
-import KnowledgeSurfacePage from '@/pages/KnowledgeSurfacePage'
 import { SIYUAN_FULL_SURFACE_ID } from '@/knowledge/siyuan-url'
-import { SessionGitOutline } from '@/components/session-workbench/SessionGitOutline'
-import { SessionWorkflowEditor } from '@/components/session-workbench/SessionWorkflowEditor'
 import type { FanOutChildJob } from '@/components/session-workbench/fan-out-jobs'
-import { deriveSessionMindMap, type MindMapGraph, type SceneMessage } from '@craft-agent/core/mindmap'
+import type { SceneMessage } from '@craft-agent/core/mindmap'
 import { useSiyuanConnected } from '@/hooks/useSiyuanConnected'
+
+// Secondary session tabs (workflow xyflow, knowledge surface, mindmap outline) — lazy so
+// the default standard chat transcript path stays on the eager ChatPage chunk.
+const KnowledgeSurfacePage = React.lazy(() => import('@/pages/KnowledgeSurfacePage'))
+const SessionWorkflowEditor = React.lazy(() =>
+  import('@/components/session-workbench/SessionWorkflowEditor').then((m) => ({
+    default: m.SessionWorkflowEditor,
+  })),
+)
+const SessionGitOutline = React.lazy(() =>
+  import('@/components/session-workbench/SessionGitOutline').then((m) => ({
+    default: m.SessionGitOutline,
+  })),
+)
+
+function SessionSecondaryFallback() {
+  return (
+    <div className="flex h-full min-h-0 min-w-0 flex-1 items-center justify-center text-muted-foreground">
+      <p className="text-sm">Loading…</p>
+    </div>
+  )
+}
 
 function buildSessionEntityCapabilities(siyuanConnected: boolean): EntityViewCapability[] {
   return defaultSessionEntityCapabilities({ siyuanConnected }).map((cap) => {
@@ -563,28 +582,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   // Use isAsyncOperationOngoing for shimmer effect (sharing, updating share, revoking, title regeneration)
   const isAsyncOperationOngoing = session?.isAsyncOperationOngoing || sessionMeta?.isAsyncOperationOngoing || false
 
-  // Craft mind-map projection for map/outline tabs (live derive; no pin yet).
-  const sessionMindMapGraph = React.useMemo((): MindMapGraph | null => {
-    if (sessionView !== 'map' && sessionView !== 'outline') return null
-    const messages = session?.messages ?? []
-    // Wait until messages are loaded (or confirmed empty) before deriving.
-    if (!messagesLoaded && messages.length === 0) return null
-    return deriveSessionMindMap({
-      sessionId,
-      title: displayTitle,
-      messages: messages.map((m) => ({
-        id: m.id,
-        type: m.role,
-        content: m.content ?? '',
-        toolName: m.toolName,
-        toolUseId: m.toolUseId,
-        parentToolUseId: m.parentToolUseId,
-        turnId: m.turnId,
-        statusType: m.statusType,
-      })),
-    })
-  }, [sessionView, session?.messages, messagesLoaded, sessionId, displayTitle])
-
+  // map/outline loading gate only — mindmap derive lives inside lazy workbench chunks.
   const sessionMindMapLoading =
     (sessionView === 'map' || sessionView === 'outline') &&
     !messagesLoaded &&
@@ -698,21 +696,25 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     (chatDisplay: React.ReactNode) => {
       if (sessionView === 'graph') {
         return (
-          <KnowledgeSurfacePage
-            kind="notebook"
-            id={SIYUAN_FULL_SURFACE_ID}
-            mode="global-graph"
-          />
+          <React.Suspense fallback={<SessionSecondaryFallback />}>
+            <KnowledgeSurfacePage
+              kind="notebook"
+              id={SIYUAN_FULL_SURFACE_ID}
+              mode="global-graph"
+            />
+          </React.Suspense>
         )
       }
       if (sessionView === 'mindmap') {
         // Legacy SiYuan mind-map/graph dock (not Craft projection).
         return (
-          <KnowledgeSurfacePage
-            kind="notebook"
-            id={SIYUAN_FULL_SURFACE_ID}
-            mode="graph"
-          />
+          <React.Suspense fallback={<SessionSecondaryFallback />}>
+            <KnowledgeSurfacePage
+              kind="notebook"
+              id={SIYUAN_FULL_SURFACE_ID}
+              mode="graph"
+            />
+          </React.Suspense>
         )
       }
       const workbenchMessages: SceneMessage[] = (session?.messages ?? []).map((m) => ({
@@ -739,16 +741,18 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           }))
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-            <SessionWorkflowEditor
-              sessionId={sessionId}
-              messages={workbenchMessages}
-              relatedBranches={relatedBranches}
-              onFork={handleWorkbenchFork}
-              onRewrite={handleWorkbenchRewrite}
-              onCreateChildSessions={handleCreateChildSessions}
-              onOpenMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
-              onOpenSession={(id) => navigate(routes.view.allSessions(id))}
-            />
+            <React.Suspense fallback={<SessionSecondaryFallback />}>
+              <SessionWorkflowEditor
+                sessionId={sessionId}
+                messages={workbenchMessages}
+                relatedBranches={relatedBranches}
+                onFork={handleWorkbenchFork}
+                onRewrite={handleWorkbenchRewrite}
+                onCreateChildSessions={handleCreateChildSessions}
+                onOpenMessage={(id) => handleMindMapNavigate({ kind: 'message', id })}
+                onOpenSession={(id) => navigate(routes.view.allSessions(id))}
+              />
+            </React.Suspense>
           </div>
         )
       }
@@ -762,26 +766,29 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           }))
         return (
           <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col">
-            <SessionGitOutline
-              sessionId={sessionId}
-              messages={workbenchMessages}
-              loading={sessionMindMapLoading}
-              relatedBranches={relatedBranches}
-              onCheckoutMessage={(id) => {
-                setSessionView('standard')
-                requestAnimationFrame(() => {
+            <React.Suspense fallback={<SessionSecondaryFallback />}>
+              <SessionGitOutline
+                sessionId={sessionId}
+                messages={workbenchMessages}
+                loading={sessionMindMapLoading}
+                relatedBranches={relatedBranches}
+                onCheckoutMessage={(id) => {
+                  setSessionView('standard')
+                  // Defer until ChatDisplay is mounted for standard view.
                   requestAnimationFrame(() => {
-                    chatDisplayRef?.current?.scrollToMessage?.(id)
+                    requestAnimationFrame(() => {
+                      chatDisplayRef?.current?.scrollToMessage?.(id)
+                    })
                   })
-                })
-              }}
-              onFork={handleWorkbenchFork}
-              onOpenSession={(id) => navigate(routes.view.allSessions(id))}
-              onInsertVariable={(name, value) => {
-                const token = value ? `${name}=${value}` : `{{${name}}}`
-                handleInputChange(`${inputValueRef.current} ${token}`.trim())
-              }}
-            />
+                }}
+                onFork={handleWorkbenchFork}
+                onOpenSession={(id) => navigate(routes.view.allSessions(id))}
+                onInsertVariable={(name, value) => {
+                  const token = value ? `${name}=${value}` : `{{${name}}}`
+                  handleInputChange(`${inputValueRef.current} ${token}`.trim())
+                }}
+              />
+            </React.Suspense>
           </div>
         )
       }
@@ -790,7 +797,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     [
       sessionView,
       sessionId,
-      sessionMindMapGraph,
       sessionMindMapLoading,
       messageLoadState.error,
       handleMindMapNavigate,
