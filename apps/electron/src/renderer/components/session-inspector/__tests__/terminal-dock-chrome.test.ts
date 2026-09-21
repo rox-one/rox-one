@@ -13,8 +13,9 @@ describe('terminal dock chrome', () => {
     expect(openTree).not.toContain("{t('inspector.terminal')}")
     expect(openTree).toContain('h-5 w-5')
     expect(openTree).toContain('ChevronsDown')
-    expect(openTree).toContain('rounded-lg')
+    expect(openTree).toContain('rounded-md')
     expect(openTree).not.toContain('rounded-xl')
+    expect(openTree).not.toContain('rounded-lg')
     expect(openTree).toContain('mx-1 mb-1')
     expect(openTree).not.toContain('mx-2 mb-2')
 
@@ -23,8 +24,8 @@ describe('terminal dock chrome', () => {
     expect(terminal).toContain("t('inspector.terminalHint')")
 
     expect(shell).toContain('export const bottomDockHeightAtom')
-    expect(shell).toMatch(/bottomDockHeightAtom[\s\S]*?\n\s*128,/)
-    expect(dock).toContain('const MIN_HEIGHT = 96')
-    expect(dock).toContain('window.innerHeight * 0.36')
+    expect(shell).toMatch(/bottomDockHeightAtom[\s\S]*?\n\s*104,/)
+    expect(dock).toContain('const MIN_HEIGHT = 88')
+    expect(dock).toContain('window.innerHeight * 0.30')
   })
 })

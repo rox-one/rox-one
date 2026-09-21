@@ -192,8 +192,7 @@ export function PanelStackContainer({
         paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
         paddingTop: PANEL_STACK_TOP_INSET,
         marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
-        marginBottom: -6,
-        paddingBottom: PANEL_STACK_BOTTOM_INSET + 6,
+        paddingBottom: PANEL_STACK_BOTTOM_INSET,
         paddingRight: 4,
         marginRight: -4,
       }}
