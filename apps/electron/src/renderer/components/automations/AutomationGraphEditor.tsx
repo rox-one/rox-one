@@ -152,18 +152,6 @@ export function AutomationGraphEditor({
 
   return (
     <section className={cn('flex min-h-0 flex-col overflow-hidden rounded-xl border border-border/60 bg-background', className)}>
-      <header className="flex shrink-0 items-center justify-end gap-2 border-b border-border/60 px-3 py-2">
-        <button
-          type="button"
-          disabled={disabled || isSaving}
-          onClick={() => { void save() }}
-          className="inline-flex h-7 items-center gap-1.5 rounded-md bg-foreground px-2.5 text-xs font-medium text-background transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
-        >
-          <Save className="size-3.5" />
-          {isSaving ? t('common.saving') : t('common.save')}
-        </button>
-      </header>
-
       <div className="flex min-h-0 flex-1">
         <div ref={canvasRef} className="min-w-0 flex-1 overflow-auto bg-muted/[0.14] p-3">
           <div className="relative" style={{ width: graphWidth, height: graphHeight }}>
@@ -250,48 +238,66 @@ export function AutomationGraphEditor({
           </div>
         </div>
 
-        {selectedNode && (
-          <aside className="w-56 shrink-0 border-l border-border/60 p-3">
-            <div className="space-y-3">
-              <input
-                value={selectedNode.label ?? ''}
-                onChange={(event) => updateNode({ ...selectedNode, label: event.target.value || undefined })}
-                disabled={disabled || isSaving}
-                aria-label={t('common.edit')}
-                className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-              />
-              {selectedNode.kind === 'annotation' && (
-                <textarea
-                  value={selectedNode.data.text ?? ''}
-                  onChange={(event) => updateNode({ ...selectedNode, data: { ...selectedNode.data, text: event.target.value || undefined } })}
+        <aside className="flex w-56 shrink-0 flex-col border-l border-border/60">
+          <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
+            {selectedNode ? (
+              <>
+                <input
+                  value={selectedNode.label ?? ''}
+                  onChange={(event) => updateNode({ ...selectedNode, label: event.target.value || undefined })}
                   disabled={disabled || isSaving}
-                  aria-label={t('common.description')}
-                  className="min-h-20 w-full resize-y rounded-md border border-input bg-background p-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                  aria-label={t('common.edit')}
+                  className="h-8 w-full rounded-md border border-input bg-background px-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
                 />
-              )}
-              {selectedNode.kind === 'decision' && (
-                <textarea
-                  value={selectedNode.data.expression ?? ''}
-                  onChange={(event) => updateNode({ ...selectedNode, data: { ...selectedNode.data, expression: event.target.value || undefined } })}
-                  disabled={disabled || isSaving}
-                  aria-label={t('automations.sectionIf')}
-                  className="min-h-20 w-full resize-y rounded-md border border-input bg-background p-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
-                />
-              )}
-              {(selectedNode.kind === 'annotation' || selectedNode.kind === 'group' || selectedNode.kind === 'decision') && (
-                <button
-                  type="button"
-                  disabled={disabled || isSaving}
-                  onClick={deleteSelectedMetadata}
-                  className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-destructive hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
-                >
-                  <Trash2 className="size-3.5" />
-                  {t('common.delete')}
-                </button>
-              )}
-            </div>
-          </aside>
-        )}
+                {selectedNode.kind === 'annotation' && (
+                  <textarea
+                    value={selectedNode.data.text ?? ''}
+                    onChange={(event) => updateNode({ ...selectedNode, data: { ...selectedNode.data, text: event.target.value || undefined } })}
+                    disabled={disabled || isSaving}
+                    aria-label={t('common.description')}
+                    className="min-h-20 w-full resize-y rounded-md border border-input bg-background p-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                  />
+                )}
+                {selectedNode.kind === 'decision' && (
+                  <textarea
+                    value={selectedNode.data.expression ?? ''}
+                    onChange={(event) => updateNode({ ...selectedNode, data: { ...selectedNode.data, expression: event.target.value || undefined } })}
+                    disabled={disabled || isSaving}
+                    aria-label={t('automations.sectionIf')}
+                    className="min-h-20 w-full resize-y rounded-md border border-input bg-background p-2 text-xs outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+                  />
+                )}
+                {(selectedNode.kind === 'annotation' || selectedNode.kind === 'group' || selectedNode.kind === 'decision') && (
+                  <button
+                    type="button"
+                    disabled={disabled || isSaving}
+                    onClick={deleteSelectedMetadata}
+                    className="inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs text-destructive hover:bg-destructive/10 disabled:pointer-events-none disabled:opacity-50"
+                  >
+                    <Trash2 className="size-3.5" />
+                    {t('common.delete')}
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="text-xs text-muted-foreground" data-testid="automation-graph-select-node">
+                {t('overlay.selectItem')}
+              </p>
+            )}
+          </div>
+
+          <div className="shrink-0 border-t border-border/60 p-3">
+            <button
+              type="button"
+              disabled={disabled || isSaving}
+              onClick={() => { void save() }}
+              className="inline-flex h-7 w-full items-center justify-center gap-1.5 rounded-md bg-foreground px-2.5 text-xs font-medium text-background transition-opacity hover:opacity-90 disabled:pointer-events-none disabled:opacity-50"
+            >
+              <Save className="size-3.5" />
+              {isSaving ? t('common.saving') : t('common.save')}
+            </button>
+          </div>
+        </aside>
       </div>
 
       {saveError && <p className="border-t border-destructive/20 bg-destructive/5 px-3 py-2 text-xs text-destructive" role="alert">{saveError}</p>}

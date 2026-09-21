@@ -55,4 +55,40 @@ describe('nodeDisplayLabel', () => {
       ),
     ).toBe('Label Added')
   })
+
+  it('uses matcher pattern when label and name are missing', () => {
+    expect(
+      nodeDisplayLabel(
+        { kind: 'matcher', data: { matcher: 'inbox|urgent' } },
+        { matcher: 'matching' },
+      ),
+    ).toBe('inbox|urgent')
+  })
+
+  it('uses cron when matcher pattern is also missing', () => {
+    expect(
+      nodeDisplayLabel(
+        { kind: 'matcher', data: { cron: '0 9 * * 1-5' } },
+        { matcher: 'matching' },
+      ),
+    ).toBe('0 9 * * 1-5')
+  })
+
+  it('uses matcher name before pattern', () => {
+    expect(
+      nodeDisplayLabel(
+        { kind: 'matcher', data: { name: 'Morning triage', matcher: 'inbox' } },
+        { matcher: 'matching' },
+      ),
+    ).toBe('Morning triage')
+  })
+
+  it('compacts webhook method and url', () => {
+    expect(
+      nodeDisplayLabel(
+        { kind: 'webhook', data: { method: 'post', url: 'https://hooks.example.com/catch/abc' } },
+        { webhook: 'Webhook' },
+      ),
+    ).toBe('POST hooks.example.com/catch/abc')
+  })
 })

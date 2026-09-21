@@ -25,6 +25,14 @@ export type GraphLabelNode = {
     event?: string
     prompt?: string
     text?: string
+    expression?: string
+    /** Matcher node fields (AutomationInfoPage / AutomationGraphMatcherData). */
+    name?: string
+    matcher?: string
+    cron?: string
+    /** Webhook action fields. */
+    url?: string
+    method?: string
   }
 }
 
@@ -80,6 +88,28 @@ export function fitGraphLayout(
   })
 }
 
+function firstLine(raw: string | undefined, max = 48): string {
+  const line = raw?.split(/\r?\n/, 1)[0]?.trim() ?? ''
+  return line ? line.slice(0, max) : ''
+}
+
+function compactWebhookUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  try {
+    const parsed = new URL(trimmed)
+    const path = parsed.pathname === '/' ? '' : parsed.pathname
+    const hostPath = `${parsed.host}${path}`
+    return hostPath.length > 48 ? `${hostPath.slice(0, 45)}…` : hostPath
+  } catch {
+    return firstLine(trimmed)
+  }
+}
+
+/**
+ * Prefer real automation fields (event / matcher / cron / webhook / prompt)
+ * over empty kind chrome so graph nodes stay informative.
+ */
 export function nodeDisplayLabel(
   node: GraphLabelNode,
   kindLabels: Record<string, string | undefined>,
@@ -91,9 +121,30 @@ export function nodeDisplayLabel(
   const trimmedLabel = node.label?.trim()
   if (trimmedLabel) return trimmedLabel
 
-  const raw = node.data?.prompt ?? node.data?.text ?? ''
-  const firstLine = raw.split(/\r?\n/, 1)[0]?.trim() ?? ''
-  if (firstLine) return firstLine.slice(0, 48)
+  if (node.kind === 'matcher') {
+    const name = node.data?.name?.trim()
+    if (name) return name
+    const matcher = node.data?.matcher?.trim()
+    if (matcher) return matcher
+    const cron = node.data?.cron?.trim()
+    if (cron) return cron
+  }
+
+  if (node.kind === 'webhook') {
+    const url = node.data?.url ? compactWebhookUrl(node.data.url) : ''
+    if (url) {
+      const method = node.data?.method?.trim().toUpperCase()
+      return method ? `${method} ${url}` : url
+    }
+  }
+
+  const fromPromptOrText = firstLine(node.data?.prompt ?? node.data?.text)
+  if (fromPromptOrText) return fromPromptOrText
+
+  if (node.kind === 'decision') {
+    const expression = firstLine(node.data?.expression)
+    if (expression) return expression
+  }
 
   return kindLabels[node.kind] ?? ''
 }
