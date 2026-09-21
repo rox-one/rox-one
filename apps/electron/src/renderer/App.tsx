@@ -33,6 +33,7 @@ import { useUpdateChecker } from '@/hooks/useUpdateChecker'
 import { NavigationProvider } from '@/contexts/NavigationContext'
 import * as storage from '@/lib/local-storage'
 import { markStatusUnseen } from '@/lib/sidebar-unseen-status'
+import { markSessionsReadyThenReconcile } from '@/lib/splash-sessions-ready'
 import { navigate, routes } from './lib/navigate'
 import { attachmentFromContentRef, toDraftRef } from './lib/drafts'
 import { stripMarkdown } from './utils/text'
@@ -577,10 +578,13 @@ export default function App() {
       // from getSessions() above; per-session getSessionPermissionModeState is
       // N+1 IPC (perf probe detectSessionMetadataNPlusOne) and must not block
       // first paint / splash dismiss. Reconcile in the background.
-      setSessionsLoaded(true)
-      void Promise.allSettled(
-        loadedSessions.map((s) => reconcilePermissionModeState(s.id)),
-      )
+      markSessionsReadyThenReconcile({
+        markReady: () => setSessionsLoaded(true),
+        reconcileAll: () =>
+          Promise.allSettled(
+            loadedSessions.map((s) => reconcilePermissionModeState(s.id)),
+          ),
+      })
 
       if (initialSessionId && windowWorkspaceId) {
         const session = loadedSessions.find(s => s.id === initialSessionId)
