@@ -1,8 +1,8 @@
 /** Gap between any adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar) */
-export const PANEL_GAP = 4
+export const PANEL_GAP = 2
 
 /** Padding from window edges to outermost panels (right, bottom, left when sidebar hidden) */
-export const PANEL_EDGE_INSET = 4
+export const PANEL_EDGE_INSET = 2
 
 /** Corner radius for panel edges touching the window boundary */
 export const RADIUS_EDGE = 8
