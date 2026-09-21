@@ -1,1 +1,2 @@
-@file:///workspace/rox-perf-chat-secondary-lazy/apps/electron/src/renderer/pages/ChatPage.tsx
+// probe only - will be replaced with full ChatPage.tsx
+export default function ChatPage() { return null }
