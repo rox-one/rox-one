@@ -1104,7 +1104,7 @@
   "entityView.outline": "Оглавление",
   "entityView.outlineBranches": "Ветки",
   "entityView.outlineCheckout": "Перейти",
-  "entityView.outlineFork": "форк",
+  "entityView.outlineFork": "ветка",
   "entityView.outlineInject": "Подставить",
   "entityView.outlineLog": "Журнал",
   "entityView.outlineNoBranches": "Нет дочерних веток",
