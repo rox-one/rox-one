@@ -129,8 +129,7 @@ export function PanelStackContainer({
         style={{
           paddingBlock: PANEL_STACK_VERTICAL_OVERFLOW,
           marginBlock: -PANEL_STACK_VERTICAL_OVERFLOW,
-          marginBottom: -6,
-          paddingBottom: 6,
+          paddingBottom: PANEL_STACK_BOTTOM_INSET,
           '--compact-panel-stack-top': `${PANEL_STACK_VERTICAL_OVERFLOW + COMPACT_PANEL_TOP_GAP}px`,
         } as React.CSSProperties}
       >
