@@ -1,0 +1,55 @@
+name: restore-chatpage-from-factory-payload
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [cursor/perf-chat-secondary-lazy-a3f1]
+    paths:
+      - .factory/ship-rox-perf-chat-secondary-lazy/ChatPage.tsx.gz.b64
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: cursor/perf-chat-secondary-lazy-a3f1
+      - name: Decode gzip+b64 payload into ChatPage.tsx
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, gzip, hashlib, pathlib
+          src = pathlib.Path('.factory/ship-rox-perf-chat-secondary-lazy/ChatPage.tsx.gz.b64')
+          dst = pathlib.Path('apps/electron/src/renderer/pages/ChatPage.tsx')
+          raw = gzip.decompress(base64.b64decode(src.read_text().strip()))
+          dst.write_bytes(raw)
+          print('wrote', dst, 'bytes', len(raw), 'sha16', hashlib.sha256(raw).hexdigest()[:16])
+          assert b'React.lazy' in raw
+          assert b'SessionWorkflowEditor' in raw or b'@xyflow' in raw or b'KnowledgeSurfacePage' in raw
+          PY
+      - name: Commit restored ChatPage
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/electron/src/renderer/pages/ChatPage.tsx
+          git add -u .factory/ship-rox-perf-chat-secondary-lazy || true
+          if git diff --cached --quiet; then
+            echo 'nothing to commit'
+            exit 0
+          fi
+          git commit -m "$(cat <<'EOF'
+          perf(chat): lazy-load secondary ChatPage views (xyflow, knowledge, mindmap)
+
+          Keep ChatPage and the default standard transcript path eager. React.lazy +
+          Suspense for SessionWorkflowEditor (@xyflow/react), KnowledgeSurfacePage, and
+          SessionGitOutline so those chunks load only when the entity tab is selected.
+          Drop unused eager deriveSessionMindMap from the chat module graph.
+
+          Factory: ship-rox-perf-chat-secondary-lazy. Draft only.
+          EOF
+          )"
+          git push origin HEAD:cursor/perf-chat-secondary-lazy-a3f1
