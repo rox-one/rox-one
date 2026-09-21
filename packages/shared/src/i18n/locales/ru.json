@@ -2079,7 +2079,7 @@
   "notes.inspector.noFootnotes": "Нет сносок",
   "notes.inspector.noOutgoingLinks": "Нет исходящих ссылок",
   "notes.inspector.noSuggestions": "Нет предложенных ссылок",
-  "notes.inspector.noTasks": "Нет markdown-задач",
+  "notes.inspector.noTasks": "Нет Markdown-задач",
   "notes.inspector.none": "Нет",
   "notes.inspector.openCount": "{{count}} открыто",
   "notes.inspector.outgoingLinks": "Исходящие ссылки",
