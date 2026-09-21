@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import {
@@ -12,7 +12,7 @@ function memoryStorage(seed: Record<string, string> = {}): Storage & {
   data: Record<string, string>
 } {
   const data: Record<string, string> = { ...seed }
-  const api: Storage & { data: Record<string, string> } = {
+  return {
     data,
     get length() {
       return Object.keys(data).length
@@ -33,14 +33,9 @@ function memoryStorage(seed: Record<string, string> = {}): Storage & {
       return Object.keys(data)[index] ?? null
     },
   }
-  return api
 }
 
 describe('migrateConationFlagsDefaultOff', () => {
-  beforeEach(() => {
-    // no shared global — each test builds its own Storage
-  })
-
   it('rewrites sticky JSON true → false for known conation keys', () => {
     const storage = memoryStorage({
       'craft-feature-workbench-conation-canvas': 'true',
@@ -117,20 +112,19 @@ describe('migrateConationFlagsDefaultOff', () => {
 describe('conation atom source defaults stay false', () => {
   it('conation-shell.ts atomWithStorage defaults are false', () => {
     const source = readFileSync(join(import.meta.dir, '../../atoms/conation-shell.ts'), 'utf8')
-    expect(source).toContain("KEYS.featureWorkbenchConationShell")
-    expect(source).toContain("KEYS.featureWorkbenchConationInspector")
-    expect(source).toContain("KEYS.featureSkillsConationSurfaces")
-    // Every atomWithStorage boolean default in this file must be false
-    const defaults = [...source.matchAll(/atomWithStorage<boolean>\(\s*[^,]+,\s*(true|false)/g)].map(
-      (m) => m[1],
-    )
+    expect(source).toContain('KEYS.featureWorkbenchConationShell')
+    expect(source).toContain('KEYS.featureWorkbenchConationInspector')
+    expect(source).toContain('KEYS.featureSkillsConationSurfaces')
+    const defaults = [
+      ...source.matchAll(/atomWithStorage<boolean>\(\s*[\s\S]*?,\s*(true|false)/g),
+    ].map((m) => m[1])
     expect(defaults.length).toBeGreaterThanOrEqual(3)
     expect(defaults.every((d) => d === 'false')).toBe(true)
   })
 
   it('unified-shell.ts conation atomWithStorage defaults are false', () => {
     const source = readFileSync(join(import.meta.dir, '../../atoms/unified-shell.ts'), 'utf8')
-    const conationBlocks = [
+    const conationKeys = [
       'featureWorkbenchConationSoupClient',
       'featureWorkbenchConationNotesBridge',
       'featureWorkbenchConationDriveRead',
@@ -140,12 +134,8 @@ describe('conation atom source defaults stay false', () => {
       'featureWorkbenchConationDssClient',
       'featureWorkbenchConationSessionApply',
     ]
-    for (const key of conationBlocks) {
+    for (const key of conationKeys) {
       expect(source).toContain(`KEYS.${key}`)
-      const re = new RegExp(
-        `KEYS\\.${key}\\)[\\s\\S]*?atomWithStorage<boolean>\\([\\s\\S]*?,\\s*(true|false)`,
-      )
-      // Fallback: find the atom declaration near the KEYS reference
       const idx = source.indexOf(`KEYS.${key}`)
       expect(idx).toBeGreaterThanOrEqual(0)
       const window = source.slice(idx, idx + 220)
@@ -156,7 +146,7 @@ describe('conation atom source defaults stay false', () => {
 
   it('bootstrap runs migrate before dynamic main import', () => {
     const bootstrap = readFileSync(join(import.meta.dir, '../../bootstrap.ts'), 'utf8')
-    expect(bootstrap).toContain("migrateConationFlagsDefaultOff")
+    expect(bootstrap).toContain('migrateConationFlagsDefaultOff')
     expect(bootstrap).toContain("from './lib/migrate-conation-flags-default-off'")
     const migrateCall = bootstrap.indexOf('migrateConationFlagsDefaultOff(')
     const mainImport = bootstrap.indexOf("import('./main')")
