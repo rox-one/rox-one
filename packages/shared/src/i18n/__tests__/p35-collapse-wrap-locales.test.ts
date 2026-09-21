@@ -92,7 +92,7 @@ const WRAPPED_RU: Record<string, string> = {
   "entityView.flowLive": "Живой",
   "entityView.mapEmptyHint": "Напишите в Стандарт, чтобы появилась сцена.",
   "entityView.outlineCheckout": "Перейти",
-  "entityView.workbenchForkHint": "Форк создаёт дочернюю сессию (ветка), не переписывает историю. Рассылка: до 8 параллельно / 32 за запуск.",
+  "entityView.workbenchForkHint": "Ветка создаёт дочернюю сессию (ветка), не переписывает историю. Рассылка: до 8 параллельно / 32 за запуск.",
   "extensions.card.installTarget": "Установить в",
   "extensions.card.noPermissions": "Нет разрешений",
   "extensions.card.permissions": "Разрешения",
