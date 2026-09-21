@@ -1519,7 +1519,7 @@
   "knowledge.surface.error": "Не удалось загрузить документ",
   "knowledge.surface.export.clipboardFallback": "Скопировано — вставьте в файл",
   "knowledge.surface.export.failed": "Не удалось экспортировать",
-  "knowledge.surface.export.markdown": "Экспорт markdown…",
+  "knowledge.surface.export.markdown": "Экспорт Markdown…",
   "knowledge.surface.export.success": "Экспортировано",
   "knowledge.surface.loading": "Загрузка документа…",
   "knowledge.surface.removed": "Эта поверхность закрыта. Откройте документ заново из раздела «База знаний».",
