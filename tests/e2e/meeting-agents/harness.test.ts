@@ -29,6 +29,28 @@ function pidAlive(pid: number): boolean {
   }
 }
 
+
+function withFixtureOptIn<T>(fn: () => Promise<T> | T): Promise<T> | T {
+  const prev = process.env.ROX_MEETING_E2E_FIXTURE
+  process.env.ROX_MEETING_E2E_FIXTURE = '1'
+  const restore = () => {
+    if (prev === undefined) delete process.env.ROX_MEETING_E2E_FIXTURE
+    else process.env.ROX_MEETING_E2E_FIXTURE = prev
+  }
+  try {
+    const out = fn()
+    if (out && typeof (out as Promise<T>).then === 'function') {
+      return (out as Promise<T>).finally(restore)
+    }
+    restore()
+    return out
+  } catch (err) {
+    restore()
+    throw err
+  }
+}
+
+
 describe('meeting-agents harness (#385)', () => {
   it('fails closed when production would ship a fixture entrypoint', () => {
     expect(
@@ -85,9 +107,28 @@ describe('meeting-agents harness (#385)', () => {
     })
   })
 
+  it('bootMeetingApp fail-closed without fixture/product opt-in (Gate G1)', async () => {
+    const prevFixture = process.env.ROX_MEETING_E2E_FIXTURE
+    const prevPackaged = process.env.ROX_MEETING_USE_PACKAGED_APP
+    delete process.env.ROX_MEETING_E2E_FIXTURE
+    delete process.env.ROX_MEETING_USE_PACKAGED_APP
+    try {
+      await expect(bootMeetingApp({ caseId: 'g1-default' })).rejects.toThrow(
+        /no product Electron→RPC→storage path|fail-closed|E3 blocked/,
+      )
+    } finally {
+      if (prevFixture === undefined) delete process.env.ROX_MEETING_E2E_FIXTURE
+      else process.env.ROX_MEETING_E2E_FIXTURE = prevFixture
+      if (prevPackaged === undefined) delete process.env.ROX_MEETING_USE_PACKAGED_APP
+      else process.env.ROX_MEETING_USE_PACKAGED_APP = prevPackaged
+    }
+  })
+
   it('bootMeetingApp refuses production + fixture entrypoint before spawn', async () => {
     const prev = process.env.NODE_ENV
+    const prevFixture = process.env.ROX_MEETING_E2E_FIXTURE
     process.env.NODE_ENV = 'production'
+    process.env.ROX_MEETING_E2E_FIXTURE = '1'
     try {
       await expect(bootMeetingApp({ caseId: 'bootstrap' })).rejects.toThrow(
         /production-fixture-entrypoint|fail-closed/,
@@ -95,6 +136,8 @@ describe('meeting-agents harness (#385)', () => {
     } finally {
       if (prev === undefined) delete process.env.NODE_ENV
       else process.env.NODE_ENV = prev
+      if (prevFixture === undefined) delete process.env.ROX_MEETING_E2E_FIXTURE
+      else process.env.ROX_MEETING_E2E_FIXTURE = prevFixture
     }
   })
 
@@ -121,7 +164,7 @@ describe('meeting-agents harness (#385)', () => {
   })
 
   it('bootMeetingApp starts a live Electron pid on an isolated profile', async () => {
-    const h = await bootMeetingApp({ caseId: 'bootstrap' })
+    const h = await withFixtureOptIn(() => bootMeetingApp({ caseId: 'bootstrap' }))
     handles.push(h)
     expect(h.pid).toBeGreaterThan(0)
     expect(pidAlive(h.pid)).toBe(true)
@@ -145,7 +188,7 @@ describe('meeting-agents harness (#385)', () => {
   }, 60_000)
 
   it('restart reopens the same profileDir and keeps storage', async () => {
-    const h = await bootMeetingApp({ caseId: 'bootstrap' })
+    const h = await withFixtureOptIn(() => bootMeetingApp({ caseId: 'bootstrap' }))
     handles.push(h)
     const profileDir = h.profileDir
     const pid1 = h.pid
@@ -169,7 +212,7 @@ describe('meeting-agents harness (#385)', () => {
   }, 60_000)
 
   it('dispose stops Electron and removes only the owned temp profile', async () => {
-    const h = await bootMeetingApp({ caseId: 'bootstrap' })
+    const h = await withFixtureOptIn(() => bootMeetingApp({ caseId: 'bootstrap' }))
     const pid = h.pid
     const profileDir = h.profileDir
     await h.dispose()
