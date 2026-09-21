@@ -96,8 +96,6 @@ asar: false
 extraResources:
   - from: resources/oem-kernel-pin.json
     to: oem-kernel-pin.json
-  - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
-    to: g2-decision-record.md
   - from: resources/oem-kernel
     to: oem-kernel
     filter:
@@ -158,8 +156,6 @@ mac:
       to: messaging-discord-worker/worker.cjs
     - from: resources/oem-kernel-pin.json
       to: oem-kernel-pin.json
-    - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
-      to: g2-decision-record.md
     - from: resources/oem-kernel
       to: oem-kernel
       filter:
@@ -235,8 +231,6 @@ win:
       to: messaging-discord-worker/worker.cjs
     - from: resources/oem-kernel-pin.json
       to: oem-kernel-pin.json
-    - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
-      to: g2-decision-record.md
     - from: resources/oem-kernel
       to: oem-kernel
       filter:
@@ -274,8 +268,6 @@ linux:
       to: messaging-discord-worker/worker.cjs
     - from: resources/oem-kernel-pin.json
       to: oem-kernel-pin.json
-    - from: ../../docs/specs/2026-08-07-siyuan-integration/g2-decision-record.md
-      to: g2-decision-record.md
     - from: resources/oem-kernel
       to: oem-kernel
       filter:

@@ -160,48 +160,22 @@ export default function KnowledgeSettingsPage() {
     }
   }
 
+  // SiYuan kernel start/install removed — Rox Notes is the only knowledge path.
   const handleStartKernel = async () => {
-    const start = window.electronAPI.knowledge.engineStart
-    if (typeof start !== 'function') {
-      toast.error(t('knowledge.kernel.startFailed', { message: 'unavailable' }))
-      return
-    }
-    setStarting(true)
-    try {
-      const result = await start({ workspaceId })
-      if (!result.ok && result.error === 'siyuan-not-installed') {
-        toast.error(t('knowledge.kernel.binaryMissing'))
-        return
-      }
-      if (!result.ok) {
-        toast.error(t('knowledge.kernel.startFailed', { message: result.error ?? 'unknown' }))
-        return
-      }
-      toast.success(t('knowledge.kernel.startOk'))
-      const list = await window.electronAPI.knowledge.listConnections()
-      setConnections(list)
-      const connectionId = result.connectionId || list[0]?.id
-      if (connectionId && workspaceId) {
-        const status = await window.electronAPI.knowledge.engineStatus({ workspaceId, connectionId })
-        setEngineStatus(status)
-      }
-    } catch (error) {
-      toast.error(t('knowledge.kernel.startFailed', { message: errorMessage(error) }))
-    } finally {
-      setStarting(false)
-    }
+    toast.message(t('knowledge.roxNotes.emptyTitle'))
   }
 
   const openInstallPage = () => {
-    const url =
-      detectResult?.installDocsUrl ?? engineStatus?.installUrl ?? 'https://github.com/rox-one/rox-one'
-    void window.electronAPI?.openUrl?.(url)
+    // Intentionally no-op: do not open SiYuan/b3log install docs.
   }
 
   const openDetectDocs = () => {
-    const url = detectResult?.installDocsUrl
-    if (!url) return
-    void window.electronAPI?.openUrl?.(url)
+    // Intentionally no-op: do not open SiYuan install docs.
+  }
+
+  const openRoxNotes = () => {
+    // Soft navigate via hash route used elsewhere for notes.
+    window.location.hash = '#/notes'
   }
 
   const yesNoUnknown = (value: boolean | undefined) => {
@@ -439,32 +413,18 @@ export default function KnowledgeSettingsPage() {
             <span className="text-sm text-muted-foreground">{engineStatus?.version ?? '—'}</span>
           </SettingsRow>
           <SettingsRow
-            label={engineStatus?.binaryFound ? t('knowledge.kernel.binaryFound') : t('knowledge.kernel.binaryMissing')}
-            description={
-              engineStatus?.running
-                ? undefined
-                : engineStatus?.binaryFound === false
-                  ? t('knowledge.kernel.installHint')
-                  : t('knowledge.kernel.offlineBody')
-            }
+            label={t('knowledge.roxNotes.emptyTitle')}
+            description={t('knowledge.roxNotes.openNotesCta')}
           >
             <div className="flex gap-2 pt-1">
-              {engineStatus?.binaryFound === false ? (
-                <Button size="sm" variant="outline" onClick={openInstallPage}>
-                  {t('knowledge.kernel.installCta')}
-                </Button>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => void handleStartKernel()}
-                  disabled={starting || engineStatus?.running === true}
-                >
-                  {starting || engineStatus?.starting
-                    ? t('knowledge.kernel.starting')
-                    : t('knowledge.kernel.startCta')}
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant="outline"
+                data-testid="settings-knowledge-open-rox-notes"
+                onClick={openRoxNotes}
+              >
+                {t('knowledge.roxNotes.openNotesCta')}
+              </Button>
             </div>
           </SettingsRow>
         </SettingsCard>
@@ -496,11 +456,12 @@ export default function KnowledgeSettingsPage() {
                   {t('settings.knowledge.connectionEmptyBody')}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <Button size="sm" onClick={() => void handleStartKernel()} disabled={starting}>
-                    {starting ? t('knowledge.kernel.starting') : t('knowledge.kernel.startCta')}
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={openInstallPage}>
-                    {t('knowledge.kernel.installCta')}
+                  <Button
+                    size="sm"
+                    data-testid="settings-knowledge-empty-rox-notes"
+                    onClick={openRoxNotes}
+                  >
+                    {t('knowledge.roxNotes.openNotesCta')}
                   </Button>
                 </div>
               </div>

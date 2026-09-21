@@ -1,19 +1,19 @@
 ---
 name: Дистилляция сессии в знание
-description: Превратить завершённую рабочую сессию Craft (или результат cloud run) в структурированный черновик знания для ревью и публикации в SiYuan. Use when a session or cloud run result is being prepared for publication into the knowledge base.
+description: Превратить завершённую рабочую сессию Craft (или результат cloud run) в структурированный черновик для ревью и публикации в Rox Notes. Use when a session or cloud run result is being prepared for the Rox Notes knowledge base.
 alwaysAllow:
   - knowledge.search
   - knowledge.read
   - knowledge.get_backlinks
 requiredSources:
-  - siyuan
+  - notes
 ---
 
 # Knowledge distill
 
-Turn a finished Craft session (and optional cloud-run artifacts) into a structured knowledge draft for human review and publication into SiYuan.
+Turn a finished Craft session (and optional cloud-run artifacts) into a structured knowledge draft for human review and publication into **Rox Notes**.
 
-This skill is **read-only**. Never call write/publish capabilities. The PublishSessionDialog + mutation-proposal flow owns every write.
+This skill is **read-only**. Never call write/publish capabilities. The host Publish/Notes flow owns every write.
 
 ## Input
 
@@ -21,7 +21,7 @@ You receive some of:
 
 - Session transcript messages (`role`, `content`, message ids)
 - Optional cloud-run artifact text (e.g. `notes.md`)
-- Optional related SiYuan blocks already in context (via the `knowledge_read` / `knowledge_search` / `knowledge_get_backlinks` session tools — the read capabilities listed in `alwaysAllow`)
+- Optional related Rox Notes already in context (via `knowledge_read` / `knowledge_search` / `knowledge_get_backlinks`)
 
 ## Distillation rules
 
@@ -39,7 +39,7 @@ You receive some of:
 6. `title` — first markdown heading, else first user goal, truncated.
 7. `summary` — at most 3 short sentences for the review step.
 8. `outline` — one entry per `##` heading with a rough `blockCount`.
-9. `sourceBlocks` — `siyuan://blocks/...` refs you actually used.
+9. `sourceBlocks` — Rox Notes / knowledge refs you actually used (never `siyuan://`).
 10. `sourceMessages` — `{ sessionId, messageId }` pairs that grounded the draft.
 11. `contentHash` — sha256 hex of the final `markdown` string.
 12. Cap `markdown` at **256_000** characters; overflow goes to `excluded` with `size-cap`.
@@ -49,15 +49,13 @@ You receive some of:
 
 Respond with **exactly one JSON object** and nothing else — no markdown fences, no prose before/after.
 
-Shape (PublishDraft body fields the service validates):
-
 ```json
 {
   "title": "string",
   "markdown": "string",
   "summary": "string",
   "outline": [{ "heading": "string", "blockCount": 0 }],
-  "sourceBlocks": ["siyuan://blocks/..."],
+  "sourceBlocks": ["notes://..."],
   "sourceMessages": [{ "sessionId": "string", "messageId": "string" }],
   "excluded": [
     {
@@ -71,4 +69,4 @@ Shape (PublishDraft body fields the service validates):
 }
 ```
 
-The host fills `id`, `status`, `connectionId`, `model`, timestamps, and target fields. Your job is only the distill body above.
+The host fills `id`, `status`, `connectionId`, `model`, timestamps, and target fields.

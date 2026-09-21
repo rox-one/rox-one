@@ -1983,7 +1983,8 @@ function AppShellContent({
         }),
       )
       if (result?.id) {
-        navigate(routes.view.siyuan({ kind: 'document', id: result.id }))
+        // Rox Notes only — do not open embedded SiYuan document surface.
+        navigate(routes.view.notes())
       }
     } catch (error) {
       console.error('[AppShell] Failed to create knowledge note:', error)
