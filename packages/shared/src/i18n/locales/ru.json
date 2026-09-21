@@ -692,7 +692,7 @@
   "collection.table.column.due": "Срок",
   "collection.table.column.dueDate": "Срок",
   "collection.table.column.duration": "Длительность",
-  "collection.table.column.flag": "Флаг",
+  "collection.table.column.flag": "Пометка",
   "collection.table.column.labels": "Метки",
   "collection.table.column.messages": "Сообщения",
   "collection.table.column.model": "Модель",
