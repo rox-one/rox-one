@@ -102,7 +102,7 @@ const WRAPPED_RU: Record<string, string> = {
   "extensions.catalog.count": "{{count}} записей каталога",
   "extensions.catalog.empty": "Нет совпадающих записей каталога.",
   "extensions.center.skills": "Навыки",
-  "extensions.developer.body": "Для каждой рабочей области хост расширений запускает модули craft-sandbox в изолированном процессе. Здесь задаётся список разрешённых URL для network.request. Плагины SiYuan в этом хосте не выполняются.",
+  "extensions.developer.body": "Для каждой рабочей области хост расширений запускает модули craft-sandbox в изолированном процессе. Здесь задаётся список разрешённых URL для network.request. Плагины SiYuan в этом хосте расширений не выполняются.",
   "extensions.developer.noHosts": "Нет запущенных Extension Host",
   "extensions.developer.urlAllowlistEmpty": "Предупреждение: нет списка разрешённых URL — разрешены все URL",
   "extensions.developer.urlAllowlistHint": "Разрешённые префиксы URL для network.request / proxyFetch. Пустой список разрешает все URL (по умолчанию в режиме разработки).",
