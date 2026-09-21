@@ -29,6 +29,7 @@ import {
   GitMerge,
   Split,
   Square,
+  MoreHorizontal,
   Trash2,
   UserRound,
   type LucideIcon,
@@ -53,6 +54,15 @@ import {
   type SessionMapPin,
 } from '@craft-agent/core/mindmap'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  StyledDropdownMenuContent,
+  StyledDropdownMenuItem,
+  StyledDropdownMenuSeparator,
+} from '@/components/ui/styled-dropdown'
 import { cn } from '@/lib/utils'
 import { SessionFanOutSheet, type FanOutChildJob } from './SessionFanOutSheet'
 import { SceneNode } from './SceneNode'
@@ -940,25 +950,25 @@ function EditorInner({
           <div
             role="toolbar"
             aria-label={t('entityView.map')}
-            className="relative z-10 flex min-w-0 shrink-0 flex-wrap items-center gap-2 px-3 py-1.5 text-[11px]"
+            className="relative z-10 flex min-w-0 shrink-0 flex-nowrap items-center gap-2 overflow-hidden px-3 py-1.5 text-[11px]"
           >
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
+            <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-2 overflow-hidden">
+              <span className="shrink-0 rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
                 {t('entityView.flowLive')}
               </span>
-              <span className="text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
+              <span className="shrink-0 text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
               {selected ? (
-                <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
+                <span className="min-w-0 truncate rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
                   {selectedKindLabel}
                 </span>
               ) : null}
               {selectedDraft ? (
-                <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
+                <span className="min-w-0 truncate rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
                   {t(SESSION_NODE_KIND_I18N[selectedDraft.kind])}
                 </span>
               ) : null}
             </div>
-            <div className="ml-auto inline-flex min-w-0 flex-wrap items-center justify-end gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl">
+            <div className="ml-auto flex shrink-0 flex-nowrap items-center justify-end gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl">
               <div className="inline-flex rounded-full border border-border/70 bg-background/60 p-0.5">
                 <Button
                   type="button"
@@ -1003,15 +1013,6 @@ function EditorInner({
                 size="sm"
                 variant="outline"
                 className="h-7 rounded-md border-border/70 bg-background/70 px-2.5 text-[11px]"
-                onClick={resetLayout}
-              >
-                {t('entityView.mapResetLayout')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 rounded-md border-border/70 bg-background/70 px-2.5 text-[11px]"
                 disabled={!selected}
                 onClick={() => {
                   const prompt = draft.trim() || selected?.triggerPreview
@@ -1019,15 +1020,6 @@ function EditorInner({
                 }}
               >
                 {t('entityView.mapRun')}
-              </Button>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('left')}>
-                {t('entityView.mapAlign')}
-              </Button>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('horizontal')}>
-                {t('entityView.mapDistribute')}
-              </Button>
-              <Button type="button" size="sm" variant="ghost" className="h-7 px-2 text-[11px]" onClick={() => applyCanvasLayout('tile')}>
-                {t('entityView.mapTile')}
               </Button>
               <Button
                 type="button"
@@ -1038,24 +1030,43 @@ function EditorInner({
               >
                 {t('entityView.mapPromoteTrace')}
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                onClick={handleSaveVersion}
-              >
-                {t('entityView.mapSaveVersion')}
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
-                onClick={() => handleRun('pipeline')}
-              >
-                {t('entityView.mapRunPipeline')}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 shrink-0 rounded-full px-0"
+                    aria-label={t('common.more')}
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <StyledDropdownMenuContent align="end" sideOffset={6} className="min-w-48">
+                  <StyledDropdownMenuItem onSelect={resetLayout}>
+                    {t('entityView.mapResetLayout')}
+                  </StyledDropdownMenuItem>
+                  <StyledDropdownMenuItem onSelect={() => applyCanvasLayout('left')}>
+                    {t('entityView.mapAlign')}
+                  </StyledDropdownMenuItem>
+                  <StyledDropdownMenuItem onSelect={() => applyCanvasLayout('horizontal')}>
+                    {t('entityView.mapDistribute')}
+                  </StyledDropdownMenuItem>
+                  <StyledDropdownMenuItem onSelect={() => applyCanvasLayout('tile')}>
+                    {t('entityView.mapTile')}
+                  </StyledDropdownMenuItem>
+                  <StyledDropdownMenuSeparator />
+                  <StyledDropdownMenuItem onSelect={handleSaveVersion}>
+                    {t('entityView.mapSaveVersion')}
+                  </StyledDropdownMenuItem>
+                  <StyledDropdownMenuItem onSelect={() => handleRun('pipeline')}>
+                    {t('entityView.mapRunPipeline')}
+                  </StyledDropdownMenuItem>
+                  <StyledDropdownMenuItem onSelect={() => importRef.current?.click()}>
+                    {t('entityView.mapImportSpec')}
+                  </StyledDropdownMenuItem>
+                </StyledDropdownMenuContent>
+              </DropdownMenu>
               <input
                 ref={importRef}
                 type="file"
@@ -1101,7 +1112,7 @@ function EditorInner({
                   }
                 }}
               />
-              <div className="inline-flex min-w-0 flex-wrap items-center gap-1">
+              <div className="inline-flex min-w-0 flex-nowrap items-center gap-1 overflow-x-auto">
                 <Button
                   type="button"
                   size="sm"
