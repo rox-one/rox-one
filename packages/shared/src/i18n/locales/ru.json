@@ -1110,7 +1110,7 @@
   "entityView.outlineNoBranches": "Нет дочерних веток",
   "entityView.outlineNoVariables": "Переменные не найдены",
   "entityView.outlineVariables": "Переменные",
-  "entityView.playbookHoleEmpty": "Нет дыр плейбука",
+  "entityView.playbookHoleEmpty": "Нет дыр сценария",
   "entityView.playbookHoles": "Дыры сценария",
   "entityView.standard": "Стандарт",
   "entityView.table": "Таблица",
