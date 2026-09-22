@@ -1,0 +1,14 @@
+/* Scenic border dial-down — imported early; !important beats later gradient frames. */
+html[data-scenic]:not([data-contrast="high"]) .shadow-middle::before,
+html[data-scenic]:not([data-contrast="high"]) .shadow-strong::before {
+  content: none !important;
+}
+
+html[data-scenic]:not([data-contrast="high"]) .chrome-topbar.shadow-middle,
+html[data-scenic]:not([data-contrast="high"]) .chrome-rail.shadow-middle,
+html[data-scenic]:not([data-contrast="high"]) .chrome-strip.shadow-middle,
+html[data-scenic]:not([data-contrast="high"]) .chrome-topbar.shadow-strong,
+html[data-scenic]:not([data-contrast="high"]) .chrome-rail.shadow-strong,
+html[data-scenic]:not([data-contrast="high"]) .chrome-strip.shadow-strong {
+  box-shadow: none;
+}
