@@ -231,6 +231,7 @@ export function SessionTablePropertyHeader({
 
   const icon = (key: string, node: React.ReactNode) => (
     <span
+      role="columnheader"
       className="inline-flex h-7 w-7 items-center justify-center text-muted-foreground"
       aria-label={t(key)}
       title={t(key)}
@@ -240,7 +241,7 @@ export function SessionTablePropertyHeader({
   )
 
   return (
-    <span data-property-cluster className={PROPERTY_CLUSTER_CLASS} role="group">
+    <span data-property-cluster className={PROPERTY_CLUSTER_CLASS} role="presentation">
       {showStatus && icon('collection.table.column.status', <Circle className="h-3.5 w-3.5" />)}
       {showLabels && icon('collection.table.column.labels', <Tag className="h-3.5 w-3.5" />)}
       {showPriority && icon('collection.table.column.priority', <ChevronsUp className="h-3.5 w-3.5" />)}
@@ -335,6 +336,7 @@ export function SessionTableRow({
 
   return (
     <li
+      role="row"
       className={cn(
         'group flex items-center gap-2 border-b border-border/30 px-3 text-sm hover:bg-foreground/[0.02] focus-within:bg-foreground/[0.03]',
         collectionTableRowClass(density),
