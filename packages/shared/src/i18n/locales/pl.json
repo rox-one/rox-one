@@ -4539,6 +4539,7 @@
   "tasks.nodeStateRunning": "W toku",
   "tasks.nodeStateSkipped": "Pominięto",
   "tasks.noneSelected": "Brak",
+  "tasks.notFound": "Nie znaleziono tego zadania.",
   "tasks.notes": "Notatki",
   "tasks.openSession": "Otwórz sesję",
   "tasks.orchestratorModel": "Model orkiestratora",

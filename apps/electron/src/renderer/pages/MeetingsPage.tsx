@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
-import { navigate } from '@/lib/navigate'
+import { navigate, routes } from '@/lib/navigate'
 import MeetingDetail from './meetings/MeetingDetail'
 import ProposalInbox from './meetings/ProposalInbox'
 import {
@@ -53,6 +53,11 @@ import {
   resolveMeetingManualApi,
   type MeetingManualApi,
 } from './meetings/manual-rpc'
+import {
+  loadMeetingSelection,
+  resolveMeetingSelectionApi,
+  type MeetingSelectionApi,
+} from './meetings/selection'
 
 export type { MeetingListItem }
 
@@ -62,7 +67,7 @@ export default function MeetingsPage(props: {
   selectedId?: string | null
   workspaceId?: string | null
   actorId?: string
-  api?: (MeetingProposalApi & Partial<MeetingOpenTargetApi> & Partial<MeetingCatalogApi> & Partial<MeetingSearchApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi>) | null
+  api?: (MeetingProposalApi & Partial<MeetingOpenTargetApi> & Partial<MeetingCatalogApi> & Partial<MeetingSearchApi> & Partial<MeetingCaptureApi> & Partial<MeetingImportApi> & Partial<MeetingFinalizeApi> & Partial<MeetingManualApi> & Partial<MeetingSelectionApi>) | null
 }) {
   const { t } = useTranslation()
   const shell = useOptionalAppShellContext()
@@ -79,8 +84,22 @@ export default function MeetingsPage(props: {
   const importApi = resolveMeetingImportApi(props.api)
   const finalizeApi = resolveMeetingFinalizeApi(props.api)
   const manualApi = resolveMeetingManualApi(props.api)
+  const selectionApi = resolveMeetingSelectionApi(props.api)
   const [meetings, setMeetings] = useState<MeetingListItem[]>(props.meetings ?? [])
-  const [selectedId, setSelectedId] = useState<string | null>(props.selectedId ?? meetings[0]?.id ?? null)
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
+  const routeBound = props.selectedId !== undefined
+  const selectedId = routeBound ? props.selectedId ?? null : localSelectedId
+  const selectMeeting = (id: string | null) => {
+    if (routeBound) navigate(routes.view.meetings(id ?? undefined))
+    else setLocalSelectedId(id)
+  }
+  const [loadedSelection, setLoadedSelection] = useState<{
+    workspaceId: string | null
+    id: string
+    meeting: MeetingListItem | null
+    error?: string
+  } | null>(null)
+  const [selectionReload, setSelectionReload] = useState(0)
   const [items, setItems] = useState<MeetingProposalRow[]>(props.proposals ?? [])
   const [title, setTitle] = useState('')
   const [kind, setKind] = useState<NativeProposalType>('create_task')
@@ -92,7 +111,12 @@ export default function MeetingsPage(props: {
   const [replacement, setReplacement] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchApplied, setSearchApplied] = useState(false)
-  const selected = useMemo(() => meetings.find((item) => item.id === selectedId) ?? null, [meetings, selectedId])
+  const listedSelection = useMemo(() => meetings.find((item) => item.id === selectedId) ?? null, [meetings, selectedId])
+  const currentLoadedSelection = loadedSelection?.workspaceId === workspaceId && loadedSelection.id === selectedId ? loadedSelection : null
+  const selected = listedSelection ?? currentLoadedSelection?.meeting ?? null
+  const selectionError = !selected ? currentLoadedSelection?.error : undefined
+  const selectedMissing = !!selectedId && !selected && !selectionError && (props.meetings !== undefined || currentLoadedSelection !== null)
+  const selectedLoading = !!selectedId && !selected && !selectedMissing && !selectionError
   const weekHeaders = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(undefined, { weekday: 'short' })
     return Array.from({ length: 7 }, (_, index) => formatter.format(new Date(2024, 0, 1 + index)))
@@ -105,6 +129,22 @@ export default function MeetingsPage(props: {
       setMeetings(listed.meetings)
     })
   }, [catalogApi, props.meetings, workspaceId])
+
+  useEffect(() => {
+    if (!selectedId || listedSelection || props.meetings !== undefined) return
+    let cancelled = false
+    setLoadedSelection(null)
+    if (!selectionApi || !workspaceId) {
+      setLoadedSelection({ workspaceId, id: selectedId, meeting: null, error: 'rpc-unavailable' })
+      return
+    }
+    void loadMeetingSelection({ api: selectionApi, workspaceId, meetingId: selectedId }).then((meeting) => {
+      if (!cancelled) setLoadedSelection({ workspaceId, id: selectedId, meeting })
+    }).catch(() => {
+      if (!cancelled) setLoadedSelection({ workspaceId, id: selectedId, meeting: null, error: 'rpc-unavailable' })
+    })
+    return () => { cancelled = true }
+  }, [selectionApi, workspaceId, selectedId, listedSelection, props.meetings, selectionReload])
 
   async function handleStart() {
     setBanner(null)
@@ -120,7 +160,7 @@ export default function MeetingsPage(props: {
       return
     }
     setMeetings((current) => [result.meeting, ...current.filter((item) => item.id !== result.meeting.id)])
-    setSelectedId(result.meeting.id)
+    selectMeeting(result.meeting.id)
   }
 
   async function handleSearch() {
@@ -136,7 +176,9 @@ export default function MeetingsPage(props: {
     }
     setSearchApplied(true)
     setMeetings(result.meetings)
-    setSelectedId((current) => result.meetings.some((item) => item.id === current) ? current : (result.meetings[0]?.id ?? null))
+    if (!routeBound) {
+      setLocalSelectedId((current) => result.meetings.some((item) => item.id === current) ? current : null)
+    }
   }
 
   async function handleCreate() {
@@ -403,7 +445,8 @@ export default function MeetingsPage(props: {
     </div>
   ) : null
 
-  if (meetings.length === 0 && !searchApplied) {
+  // Prefer-FAIL F1: keep deep-link selection UI when catalog empty
+  if (meetings.length === 0 && !searchApplied && !selectedId) {
     return (
       <div data-testid="meetings-empty" className="mx-auto flex w-full max-w-xl flex-col gap-4 p-6">
         <h1>{t('meetings.title')}</h1>
@@ -467,7 +510,7 @@ export default function MeetingsPage(props: {
         <ul>
           {meetings.map((meeting) => (
             <li key={meeting.id}>
-              <button type="button" data-testid={`meeting-row-${meeting.id}`} onClick={() => setSelectedId(meeting.id)}>
+              <button type="button" data-testid={`meeting-row-${meeting.id}`} onClick={() => selectMeeting(meeting.id)}>
                 {meeting.title}
               </button>
             </li>
@@ -475,7 +518,33 @@ export default function MeetingsPage(props: {
         </ul>
       </aside>
       <section className="flex-1 p-4">
-        {selected ? <MeetingDetail meeting={selected} /> : <p>{t('meetings.select')}</p>}
+        {selected ? (
+          <MeetingDetail meeting={selected} />
+        ) : (
+          <div className="flex flex-col gap-2" data-testid="meetings-selection-status">
+            <p role={selectionError ? 'alert' : 'status'}>
+              {t(
+                selectionError
+                  ? i18nKeyForManualError(selectionError)
+                  : selectedLoading
+                    ? 'common.loading'
+                    : selectedMissing
+                      ? 'meetings.meetingNotFound'
+                      : 'meetings.select',
+              )}
+            </p>
+            {selectionError ? (
+              <button type="button" data-testid="meetings-selection-retry" onClick={() => setSelectionReload((n) => n + 1)}>
+                {t('common.retry')}
+              </button>
+            ) : null}
+            {selectedId ? (
+              <button type="button" data-testid="meetings-back-to-list" onClick={() => selectMeeting(null)}>
+                {t('common.backToList')}
+              </button>
+            ) : null}
+          </div>
+        )}
         {captureControls}
         <p data-testid="meeting-live-transcript" className="mt-3 text-sm">
           {t(selected?.status === 'completed' ? 'meetings.transcriptNone' : 'meetings.transcriptPending')}

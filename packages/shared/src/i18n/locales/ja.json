@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "実行中",
   "tasks.nodeStateSkipped": "スキップ",
   "tasks.noneSelected": "なし",
+  "tasks.notFound": "このタスクが見つかりません。",
   "tasks.notes": "メモ",
   "tasks.openSession": "セッションを開く",
   "tasks.orchestratorModel": "オーケストレーターモデル",

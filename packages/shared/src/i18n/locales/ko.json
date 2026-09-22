@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "실행 중",
   "tasks.nodeStateSkipped": "건너뜀",
   "tasks.noneSelected": "없음",
+  "tasks.notFound": "이 작업을 찾을 수 없습니다.",
   "tasks.notes": "메모",
   "tasks.openSession": "세션 열기",
   "tasks.orchestratorModel": "오케스트레이터 모델",

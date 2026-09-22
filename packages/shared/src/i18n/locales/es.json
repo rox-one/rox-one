@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "En curso",
   "tasks.nodeStateSkipped": "Omitido",
   "tasks.noneSelected": "Ninguno",
+  "tasks.notFound": "No se encontró esta tarea.",
   "tasks.notes": "Notas",
   "tasks.openSession": "Abrir sesión",
   "tasks.orchestratorModel": "Modelo del orquestador",

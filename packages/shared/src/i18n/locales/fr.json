@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "Running",
   "tasks.nodeStateSkipped": "Skipped",
   "tasks.noneSelected": "None",
+  "tasks.notFound": "Cette tâche est introuvable.",
   "tasks.notes": "Notes",
   "tasks.openSession": "Open session",
   "tasks.orchestratorModel": "Orchestrator model",
