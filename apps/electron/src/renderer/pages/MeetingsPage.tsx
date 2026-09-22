@@ -445,7 +445,8 @@ export default function MeetingsPage(props: {
     </div>
   ) : null
 
-  if (meetings.length === 0 && !searchApplied) {
+  // Prefer-FAIL F1: keep deep-link selection UI when catalog empty
+  if (meetings.length === 0 && !searchApplied && !selectedId) {
     return (
       <div data-testid="meetings-empty" className="mx-auto flex w-full max-w-xl flex-col gap-4 p-6">
         <h1>{t('meetings.title')}</h1>
