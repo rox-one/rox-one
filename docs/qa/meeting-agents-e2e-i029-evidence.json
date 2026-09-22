@@ -1,0 +1,21 @@
+{
+  "caseId": "E29",
+  "result": "blocked",
+  "level": "E3",
+  "commitSha": "f1ca2ef0141e0f3dcf7d1686db00b77f0398c203",
+  "platform": "linux-box-executor",
+  "appVersion": null,
+  "modelRoute": null,
+  "schemaHash": null,
+  "command": "bun run test:meetings:e2e",
+  "startedAt": "2026-09-21T16:20:00Z",
+  "finishedAt": "2026-09-21T16:20:00Z",
+  "artifacts": [
+    "tests/e2e/meeting-agents/harness.ts",
+    "tests/e2e/meeting-agents/gateway.ts",
+    "tests/e2e/meeting-agents/fixture-entrypoint.cjs",
+    "tests/e2e/meeting-agents/bootstrap-permissions.spec.ts",
+    "tests/e2e/meeting-agents/lifecycle.spec.ts"
+  ],
+  "blocker": "no product Electron→RPC→storage path; bootMeetingApp fail-closed by default (Gate G1). Fixture only behind ROX_MEETING_E2E_FIXTURE=1 and never labeled E3. U1 guards may pass separately."
+}

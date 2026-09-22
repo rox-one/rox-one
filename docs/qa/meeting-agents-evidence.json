@@ -4,7 +4,7 @@
   "issues": "373-390",
   "parent": 356,
   "killSwitch": false,
-  "notes": "Native Mail/CRM/Calendar shells and unsigned linux resource staging shipped. AUD #333 and live Mail/CRM/Calendar Conation remain blocked. Fixture is not live. Parent #356 is not closed.",
+  "notes": "Native Mail/CRM/Calendar shells and unsigned linux resource staging shipped. AUD #333 and live Mail/CRM/Calendar Conation remain blocked. Fixture is not live. Parent #356 is not closed. I029: U1 guards may pass; E3 blocked — no product Electron→RPC→storage path (Gate G1 fail-closed; see meeting-agents-e2e-i029-evidence.json).",
   "commands": [],
   "cases": [
     { "id": "i017-tracker-stubs", "issue": 373, "status": "passed", "live": false, "evidenceLevel": "U1" },
@@ -19,7 +19,7 @@
     { "id": "i026-calendar", "issue": 382, "status": "blocked", "live": false, "evidenceLevel": "L4" },
     { "id": "i027-sync", "issue": 383, "status": "passed", "live": false, "evidenceLevel": "C2" },
     { "id": "i028-security", "issue": 384, "status": "passed", "live": false, "evidenceLevel": "U1" },
-    { "id": "i029-harness", "issue": 385, "status": "passed", "live": false, "evidenceLevel": "U1" },
+    { "id": "i029-harness", "issue": 385, "status": "passed", "live": false, "evidenceLevel": "U1", "note": "U1 guards/fixture-opt-in only; E3 blocked — no product Electron→RPC→storage path (bootMeetingApp fail-closed unless ROX_MEETING_E2E_FIXTURE=1 / USE_PACKAGED_APP=1)" },
     { "id": "i030-eval", "issue": 386, "status": "not_run", "live": false, "evidenceLevel": "E3" },
     { "id": "i031-packaging", "issue": 387, "status": "blocked", "live": false, "evidenceLevel": "N5" },
     { "id": "i032-sharing", "issue": 388, "status": "passed", "live": false, "evidenceLevel": "U1" },
