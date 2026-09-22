@@ -14,21 +14,16 @@ jobs:
         with:
           ref: factory/ship-rox-gg-terminal-cloudrun-hosts-a5fb8016
           token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Apply terminal + cloud-run hosts remaining patch
+      - name: Apply code patch + i18n keys
         run: |
           set -euo pipefail
-          git apply --verbose patches/571-terminal-cloudrun-remaining.patch
+          git apply --verbose patches/571-terminal-cloudrun-code.patch
+          node patches/571-apply-i18n.cjs
           git config user.name "id-2"
           git config user.email "gronxie@yandex.com"
           git add \
             apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx \
             apps/electron/src/renderer/contexts/NavigationContext.tsx \
             packages/shared/src/i18n/locales/
-          git commit -m "$(cat <<'EOF'
-fix(ui): wire MainContentPanel terminal + cloud-run hosts + i18n (#571)
-
-Honest hosts for terminal/{id} and cloud-run/{runId}; never mute-fallthrough
-to session.selectConversation. Browser/ext hosts untouched.
-EOF
-)"
+          git commit -m "fix(ui): wire MainContentPanel terminal + cloud-run hosts + i18n (#571)"
           git push origin HEAD:factory/ship-rox-gg-terminal-cloudrun-hosts-a5fb8016
