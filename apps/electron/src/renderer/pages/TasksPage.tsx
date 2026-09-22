@@ -18,6 +18,7 @@ import {
   persistPersonalTaskStore,
   subscribePersonalTasks,
 } from '@/lib/personal-tasks'
+import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 
 const FILTERS: TaskFilterId[] = ['all', 'inbox', 'today', 'upcoming', 'anytime', 'someday', 'logbook']
@@ -29,7 +30,12 @@ function filterLabelKey(id: TaskFilterId): string {
   return id === 'all' ? 'tasks.filterAll' : `tasks.projection.${id}`
 }
 
-export default function TasksPage() {
+export interface TasksPageProps {
+  /** Undefined keeps standalone/local selection; null/string is route-bound. */
+  selectedId?: string | null
+}
+
+export default function TasksPage(props: TasksPageProps = {}) {
   const { t } = useTranslation()
   const workspace = useActiveWorkspace()
   const { projects } = useProjects(workspace?.id)
@@ -37,7 +43,13 @@ export default function TasksPage() {
   const [filter, setFilter] = useState<TaskFilterId>('all')
   const [sort, setSort] = useState<TaskSortId>('order')
   const [projectFilter, setProjectFilter] = useState<string | null>(null)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(null)
+  const routeBound = props.selectedId !== undefined
+  const selectedId = routeBound ? props.selectedId ?? null : localSelectedId
+  const selectTask = (id: string | null) => {
+    if (routeBound) navigate(routes.view.tasks(id ?? undefined))
+    else setLocalSelectedId(id)
+  }
   const [draft, setDraft] = useState('')
   const [linkKind, setLinkKind] = useState<TaskLinkKind>('note')
   const [linkId, setLinkId] = useState('')
@@ -78,7 +90,7 @@ export default function TasksPage() {
         projectId: projectFilter ?? undefined,
         quickEntry: true,
       })
-      setSelectedId(created.id)
+      selectTask(created.id)
     })
     setDraft('')
   }
@@ -244,7 +256,7 @@ export default function TasksPage() {
             >
               <button
                 type="button"
-                onClick={() => setSelectedId(task.id)}
+                onClick={() => selectTask(task.id)}
                 className={cn(
                   'flex w-full items-center gap-2 rounded-[6px] px-2 py-1.5 text-left text-[13px]',
                   selectedId === task.id ? 'bg-foreground/10' : 'hover:bg-foreground/5',
@@ -377,7 +389,16 @@ export default function TasksPage() {
             </div>
           </div>
         ) : (
-          <p className="text-muted-foreground">{t('tasks.selectHint')}</p>
+          <div className="flex flex-col gap-2">
+            <p className="text-muted-foreground" role="status" data-testid={selectedId ? 'tasks-not-found' : 'tasks-select-hint'}>
+              {t(selectedId ? 'tasks.notFound' : 'tasks.selectHint')}
+            </p>
+            {selectedId ? (
+              <button type="button" className="self-start text-[12px] underline" onClick={() => selectTask(null)}>
+                {t('common.backToList')}
+              </button>
+            ) : null}
+          </div>
         )}
         <div className="mt-4 flex gap-2">
           <button type="button" className="text-[12px] underline" onClick={onExport}>{t('tasks.export')}</button>
