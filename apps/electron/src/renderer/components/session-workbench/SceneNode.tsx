@@ -57,9 +57,9 @@ export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
   return (
     <div
       className={cn(
-        'group relative w-[198px] min-w-0 overflow-hidden rounded-lg border bg-card/80 px-2.5 py-2 text-left shadow-strong backdrop-blur-xl',
+        'group relative w-[198px] min-w-0 overflow-hidden rounded-lg border bg-card/80 px-2.5 py-2 text-left backdrop-blur-xl',
         canvasStatusClass(status),
-        scene.orphaned ? 'border-amber-400/50' : 'border-border/70',
+        scene.orphaned ? 'border-amber-400/50' : 'border-border/40',
         selected && 'border-violet-400/70 ring-1 ring-violet-400/30',
       )}
       data-status={status}
