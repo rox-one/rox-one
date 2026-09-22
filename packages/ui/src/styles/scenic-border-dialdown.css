@@ -1,0 +1,23 @@
+/* =============================================================================
+   SCENIC BORDER DIAL-DOWN (ship-rox-ui-border-dialdown)
+
+   Scenic glass + inset elevation + Tailwind borders stacked into wireframes.
+   Prefer a single soft hairline; high-contrast keeps stronger borders via the
+   existing html[data-contrast="high"] token overrides above.
+============================================================================= */
+
+html[data-scenic]:not([data-contrast="high"]) {
+  --shadow-border-opacity: 0.12;
+  --shadow-minimal: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent);
+  --shadow-minimal-flat: var(--shadow-minimal);
+  --shadow-modal-small: var(--shadow-minimal);
+  --rox-elev-panel: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 10%, transparent);
+}
+
+/* Session workbench: chips/nodes often pair border-white/10 with shadow-strong.
+   Drop the inset elevation so one hairline remains. */
+html[data-scenic]:not([data-contrast="high"]) .session-workflow-editor .shadow-strong,
+html[data-scenic]:not([data-contrast="high"]) .session-workflow-editor .shadow-middle,
+html[data-scenic]:not([data-contrast="high"]) .session-workflow-editor .shadow-minimal {
+  box-shadow: none;
+}
