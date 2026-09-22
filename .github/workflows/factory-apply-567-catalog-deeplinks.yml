@@ -1,0 +1,23 @@
+name: factory-apply-567-catalog-deeplinks
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: factory/ship-rox-gg-catalog-deeplinks-a5fb8016
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply remaining patch
+        run: git apply .factory/567/remaining.patch
+      - name: Commit
+        run: |
+          git config user.name "id-2"
+          git config user.email "gronxie@yandex.com"
+          git add -A
+          git status
+          git commit -m "fix(shell): MeetingsPage load-by-id + tasks.notFound i18n (#567 #568)"
+          git push origin HEAD:factory/ship-rox-gg-catalog-deeplinks-a5fb8016
