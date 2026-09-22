@@ -43,11 +43,13 @@ describe('P35-10 TasksPage', () => {
     expect(page).toContain('tasks.filterProject')
   })
 
-  it('shows one-line purposes for plan / overview / process', () => {
-    expect(page).toContain('ViewPurposeList')
-    expect(page).toContain('tasks.view.overviewPurpose')
-    expect(page).toContain('tasks.view.planPurpose')
-    expect(page).toContain('tasks.view.processPurpose')
+  it('accepts route selectedId and shows notFound for unknown ids', () => {
+    expect(page).toContain('TasksPageProps')
+    expect(page).toContain('selectedId?: string | null')
+    expect(page).toContain("tasks.notFound")
+    expect(page).toContain('routes.view.tasks')
+    expect(page).toContain('tasks-not-found')
+    expect(page).toContain('common.backToList')
   })
 })
 
