@@ -22,6 +22,24 @@ describe('workflow spec editor wiring', () => {
     )
   })
 
+  test('disables layout/run/promote overflow and context actions when canvas is empty', () => {
+    expect(editorSource).toContain(
+      'const canvasIsEmpty = graph.scenes.length === 0 && draftNodes.length === 0',
+    )
+    expect(editorSource).toContain('disabled={canvasIsEmpty} onClick={() => applyCanvasLayout(')
+    expect(editorSource).toContain('disabled={canvasIsEmpty} onClick={handlePromoteTrace}')
+    expect(editorSource).toContain('disabled={canvasIsEmpty} onClick={handleSaveVersion}')
+    expect(editorSource).toContain("disabled={canvasIsEmpty} onClick={() => handleRun('pipeline')}")
+    expect(editorSource).toContain('disabled={canvasIsEmpty} onSelect={resetLayout}')
+    expect(editorSource).toContain('disabled={canvasIsEmpty} onSelect={handlePromoteTrace}')
+    expect(editorSource).toContain('disabled={canvasIsEmpty} onSelect={handleSaveVersion}')
+    // Empty-canvas creation affordances stay available.
+    expect(editorSource).toContain('handleCreateNode(kind)')
+    expect(editorSource).toContain("handleCreateChrome('sticky')")
+    expect(editorSource).toContain("handleCreateChrome('frame')")
+    expect(editorSource).toContain('mapImportSpec')
+  })
+
   test('round-trips expanded kinds through the workflow document adapter', () => {
     const node = createSessionDraftNode({
       id: 'draft_subflow_1',
