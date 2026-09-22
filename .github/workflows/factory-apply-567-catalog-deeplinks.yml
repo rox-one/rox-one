@@ -1,8 +1,17 @@
 name: factory-apply-567-catalog-deeplinks
+
 on:
+  push:
+    branches:
+      - factory/ship-rox-gg-catalog-deeplinks-a5fb8016
+    paths:
+      - '.factory/567/**'
+      - '.github/workflows/factory-apply-567-catalog-deeplinks.yml'
   workflow_dispatch:
+
 permissions:
   contents: write
+
 jobs:
   apply:
     runs-on: ubuntu-latest
