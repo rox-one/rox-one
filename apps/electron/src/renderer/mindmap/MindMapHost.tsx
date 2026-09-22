@@ -648,7 +648,7 @@ export function MindMapHost({
             disabled={materializing || !graph}
             onClick={() => void handleMaterialize()}
           >
-            <FileDown className={cn('h-3.5 w-3.5', materializing && 'animate-pulse')} />
+            <FileDown className={cn('h-3.5 w-3.5', materializing && 'motion-safe:animate-pulse')} />
             <span className="text-[11px] font-medium">
               {materializing ? t('mindmap.materializing') : t('mindmap.materialize')}
             </span>
@@ -668,7 +668,7 @@ export function MindMapHost({
             disabled={enriching || !graph}
             onClick={() => void handleEnrich()}
           >
-            <Sparkles className={cn('h-3.5 w-3.5', enriching && 'animate-pulse')} />
+            <Sparkles className={cn('h-3.5 w-3.5', enriching && 'motion-safe:animate-pulse')} />
             <span className="text-[11px] font-medium">
               {enriching ? t('mindmap.enriching') : t('mindmap.enrich')}
             </span>

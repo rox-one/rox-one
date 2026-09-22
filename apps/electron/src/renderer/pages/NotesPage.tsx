@@ -48,6 +48,11 @@ import {
 import { NotesViewHost } from './notes/NotesViewHost'
 import { convertNote, dailyNoteDestination } from './notes/note-views'
 import {
+  loadPersonalTaskStore,
+  persistPersonalTaskStore,
+} from '@/lib/personal-tasks'
+import { PersonalTaskStore } from '@craft-agent/core/tasks/personal'
+import {
   applyPersistentFolds,
   defaultNoteCommands,
   extractComments,
@@ -2063,12 +2068,47 @@ h1,h2,h3{margin-top:1.5em}
               onCreateNote={(folder) => openCreateNoteDialog(folder ?? dailyNoteDestination().folder)}
               onConvert={(noteId, kind) => {
                 if (noteId !== activeNote.id) return
-                const converted = convertNote(
-                  { id: activeNote.id, title: activeNote.title, markdown: content, tags: activeNote.tags },
-                  kind,
-                )
-                if (converted.kind === 'session-draft') void handleAskAgent('summarize')
-                else toast.success(t('notes.views.convertTaskDone'))
+                void (async () => {
+                  const converted = convertNote(
+                    { id: activeNote.id, title: activeNote.title, markdown: content, tags: activeNote.tags },
+                    kind,
+                  )
+                  if (converted.kind === 'task') {
+                    try {
+                      const current = loadPersonalTaskStore()
+                      const next = PersonalTaskStore.fromJson(current.exportJson())
+                      const created = next.create({
+                        title: converted.title,
+                        notes: converted.body,
+                        list: 'inbox',
+                        links: [{ kind: 'note', id: converted.provenance.noteId }],
+                        tags: activeNote.tags ?? [],
+                      })
+                      persistPersonalTaskStore(next)
+                      toast.success(t('notes.views.convertTaskDone'))
+                      navigate(routes.view.tasks(created.id))
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : String(err))
+                    }
+                    return
+                  }
+                  // Real session with provenance.noteId — not toast-only / not summarize-as-proxy.
+                  if (!activeWorkspaceId) return
+                  try {
+                    const session = await onCreateSession(activeWorkspaceId, {
+                      name: converted.title,
+                    })
+                    const prompt = [
+                      `provenance.noteId: ${converted.provenance.noteId}`,
+                      '',
+                      converted.prompt,
+                    ].join('\n')
+                    onInputChange(session.id, prompt)
+                    navigate(routes.view.allSessions(session.id))
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : String(err))
+                  }
+                })()
               }}
             />
           ) : (
