@@ -29,6 +29,8 @@ import {
   isExtensionNavigation,
   isConnectionsNavigation,
   isHomeNavigation,
+  isCloudRunNavigation,
+  isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
 import ChatPage from '@/pages/ChatPage'
@@ -56,6 +58,8 @@ const SourceInfoPage = React.lazy(() => import('@/pages/SourceInfoPage'))
 const ProjectInfoPage = React.lazy(() => import('@/pages/ProjectInfoPage'))
 const BrowserPanelPage = React.lazy(() => import('@/pages/BrowserPanelPage'))
 const ExtensionSurfacePage = React.lazy(() => import('@/pages/ExtensionSurfacePage'))
+const TerminalSurfacePage = React.lazy(() => import('@/pages/TerminalSurfacePage'))
+const CloudRunSurfacePage = React.lazy(() => import('@/pages/CloudRunSurfacePage'))
 const PagesHome = React.lazy(() =>
   import('../pages/PagesHome').then((m) => ({ default: m.PagesHome })),
 )
@@ -428,6 +432,25 @@ export function MainContentPanel({
         <div className="flex items-center justify-center h-full text-muted-foreground">
           <p className="text-sm">{t('extensions.surface.noViewSelected')}</p>
         </div>
+      </Panel>
+    )
+  }
+
+  // terminal/{id} + cloud-run/{runId}: honest hosts — never mute-fallthrough to selectConversation
+  if (isTerminalNavigation(navState)) {
+    const terminalId = navState.details?.type === 'terminal' ? navState.details.id : null
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <TerminalSurfacePage terminalId={terminalId} />
+      </Panel>
+    )
+  }
+
+  if (isCloudRunNavigation(navState)) {
+    const runId = navState.details?.type === 'cloud-run' ? navState.details.runId : null
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <CloudRunSurfacePage runId={runId} />
       </Panel>
     )
   }
