@@ -1,0 +1,34 @@
+name: apply-571-terminal-cloudrun-hosts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: factory/ship-rox-gg-terminal-cloudrun-hosts-a5fb8016
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Apply terminal + cloud-run hosts remaining patch
+        run: |
+          set -euo pipefail
+          git apply --verbose patches/571-terminal-cloudrun-remaining.patch
+          git config user.name "id-2"
+          git config user.email "gronxie@yandex.com"
+          git add \
+            apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx \
+            apps/electron/src/renderer/contexts/NavigationContext.tsx \
+            packages/shared/src/i18n/locales/
+          git commit -m "$(cat <<'EOF'
+fix(ui): wire MainContentPanel terminal + cloud-run hosts + i18n (#571)
+
+Honest hosts for terminal/{id} and cloud-run/{runId}; never mute-fallthrough
+to session.selectConversation. Browser/ext hosts untouched.
+EOF
+)"
+          git push origin HEAD:factory/ship-rox-gg-terminal-cloudrun-hosts-a5fb8016
