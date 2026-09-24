@@ -2028,7 +2028,7 @@
   "notes.dialog.noteTitlePlaceholder": "Название заметки",
   "notes.dialog.rename": "Переименовать",
   "notes.dialog.renameAsset": "Переименовать вложение",
-  "notes.dialog.renameAssetDesc": "Переименовать файл вложения и обновить markdown-ссылки на него.",
+  "notes.dialog.renameAssetDesc": "Переименовать файл вложения и обновить Markdown-ссылки на него.",
   "notes.dialog.renameFolder": "Переименовать папку «{{folder}}»",
   "notes.dialog.renameImpact": "Будет обновлено {{replacements}} ссылок в {{notes}} заметках.",
   "notes.dialog.renameNoLinks": "Подходящих ссылок пока не найдено.",
