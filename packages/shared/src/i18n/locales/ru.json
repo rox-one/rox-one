@@ -2106,7 +2106,7 @@
   "notes.layout.resizeToc": "Изменить ширину содержания",
   "notes.layout.resizeVault": "Изменить ширину заметок",
   "notes.menu.copyLink": "Скопировать ссылку на заметку",
-  "notes.menu.copyPath": "Скопировать путь к markdown",
+  "notes.menu.copyPath": "Скопировать путь к Markdown",
   "notes.menu.deleteFolder": "Удалить папку",
   "notes.menu.duplicate": "Дублировать",
   "notes.menu.moveToFolder": "Переместить в папку",
