@@ -3623,7 +3623,7 @@
   "settings.messaging.discord.testConnection": "Проверить подключение",
   "settings.messaging.discord.testOk": "Токен принят",
   "settings.messaging.discord.title": "Discord",
-  "settings.messaging.discord.tokenLabel": "Bot Token",
+  "settings.messaging.discord.tokenLabel": "Токен бота",
   "settings.messaging.discord.tokenPlaceholder": "Токен бота из Developer Portal",
   "settings.messaging.lark.apiType": "Open Platform API",
   "settings.messaging.lark.appIdLabel": "App ID",
