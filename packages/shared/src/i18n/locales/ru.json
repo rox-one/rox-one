@@ -1192,7 +1192,7 @@
   "extensions.developer.hostStart": "Запустить хост",
   "extensions.developer.hostStatus": "Статус хоста",
   "extensions.developer.hostStop": "Остановить хост",
-  "extensions.developer.noHosts": "Нет запущенных Extension Host",
+  "extensions.developer.noHosts": "Нет запущенных хостов расширений",
   "extensions.developer.title": "Режим разработчика",
   "extensions.developer.urlAllowlistAdd": "Добавить префикс",
   "extensions.developer.urlAllowlistEmpty": "Предупреждение: нет списка разрешённых URL — разрешены все URL",
