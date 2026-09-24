@@ -1501,7 +1501,7 @@
   "knowledge.publish.error.generic": "Не удалось выполнить шаг публикации. Попробуйте ещё раз.",
   "knowledge.publish.excludedCount": "Исключено фрагментов: {{count}}",
   "knowledge.publish.field.notebookId": "ID блокнота",
-  "knowledge.publish.field.notebookIdPlaceholder": "id блокнота",
+  "knowledge.publish.field.notebookIdPlaceholder": "ID блокнота",
   "knowledge.publish.field.path": "Путь",
   "knowledge.publish.field.pathPlaceholder": "/folder/doc",
   "knowledge.publish.menu": "Опубликовать в базу знаний…",
