@@ -1191,7 +1191,7 @@
   "extensions.developer.hostRestart": "Перезапустить хост",
   "extensions.developer.hostStart": "Запустить хост",
   "extensions.developer.hostStatus": "Статус хоста",
-  "extensions.developer.hostStop": "Остановить хост",
+  "extensions.developer.hostStop": "Остановить хост расширений",
   "extensions.developer.noHosts": "Нет запущенных Extension Host",
   "extensions.developer.title": "Режим разработчика",
   "extensions.developer.urlAllowlistAdd": "Добавить префикс",
