@@ -1207,7 +1207,7 @@
   "extensions.disabled.count": "{{count}} отключено",
   "extensions.disabled.empty": "Нет отключённых расширений.",
   "extensions.error.kernelRequired": "Для установки/удаления Bazaar требуется ядро SiYuan",
-  "extensions.host.noSiyuanExec": "Плагины SiYuan выполняются в рантайме SiYuan, не в Extension Host",
+  "extensions.host.noSiyuanExec": "Плагины SiYuan выполняются в рантайме SiYuan, не в хосте расширений",
   "extensions.host.status": "Хост расширений: {{status}}",
   "extensions.installTarget.global": "Глобально",
   "extensions.installTarget.project": "Проект",
