@@ -2033,7 +2033,7 @@
   "notes.dialog.renameImpact": "Будет обновлено {{replacements}} ссылок в {{notes}} заметках.",
   "notes.dialog.renameNoLinks": "Подходящих ссылок пока не найдено.",
   "notes.dialog.renameNote": "Переименовать заметку",
-  "notes.dialog.renameNoteDesc": "Переименовать markdown-файл и обновить совпадающие вики-ссылки.",
+  "notes.dialog.renameNoteDesc": "Переименовать Markdown-файл и обновить совпадающие вики-ссылки.",
   "notes.editor.placeholder": "Пишите заметку…",
   "notes.editor.wikiCreate": "Ссылка на новую заметку «{{title}}»",
   "notes.editor.wikiCreateFailed": "Не удалось создать заметку",
