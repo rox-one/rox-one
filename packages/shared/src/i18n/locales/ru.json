@@ -4878,7 +4878,7 @@
   "workspace.chooseLocation": "Выберите расположение",
   "workspace.connectRemote": "Подключиться к удалённому серверу",
   "workspace.connectRemoteDesc": "Использовать удалённый Rox Server.",
-  "workspace.connectRemotePageDesc": "Подключиться к удалённому Rox Server для этой рабочей области.",
+  "workspace.connectRemotePageDesc": "Подключиться к удалённому серверу Rox для этой рабочей области.",
   "workspace.connectSsh": "Подключиться по SSH",
   "workspace.connectSshDesc": "Туннель к удалённому серверу через SSH.",
   "workspace.connected": "Подключено",
