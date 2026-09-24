@@ -2788,7 +2788,7 @@
   "security.hostOnly.description": "Эти действия выполняются только на этом компьютере.",
   "security.hostOnly.title": "Только на этом компьютере",
   "security.infisical.check": "Проверить",
-  "security.infisical.hint": "Rox читает Infisical из переменных окружения этой машины. Вход по email и токену здесь не нужен.",
+  "security.infisical.hint": "Rox читает Infisical из переменных окружения этой машины. Вход по почте и токену здесь не нужен.",
   "security.infisical.status.available": "Доступно",
   "security.infisical.status.unavailable": "Недоступно",
   "security.infisical.title": "Хранилище паролей Rox",
