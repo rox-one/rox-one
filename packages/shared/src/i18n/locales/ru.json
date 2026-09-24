@@ -3614,7 +3614,7 @@
   "settings.messaging.discord.guildTriggerLabel": "Сообщения на сервере",
   "settings.messaging.discord.guildTriggerMention": "Только упоминания",
   "settings.messaging.discord.guildTriggerUpdated": "Правило канала Discord обновлено",
-  "settings.messaging.discord.instructions": "1. Откройте Discord Developer Portal и создайте Application, затем добавьте Bot\n2. В разделе Bot → Privileged Gateway Intents включите Message Content Intent\n3. Скопируйте Bot Token (при необходимости нажмите Reset Token)\n4. Пригласите бота на сервер со scope bot и правом Send Messages\n5. Напишите боту в ЛС или упомяните его в канале, чтобы начать",
+  "settings.messaging.discord.instructions": "1. Откройте Discord Developer Portal и создайте Application, затем добавьте Bot\n2. В разделе Bot → Privileged Gateway Intents включите Message Content Intent\n3. Скопируйте токен бота (при необходимости нажмите Reset Token)\n4. Пригласите бота на сервер со scope bot и правом Send Messages\n5. Напишите боту в ЛС или упомяните его в канале, чтобы начать",
   "settings.messaging.discord.notConnected": "Не подключено",
   "settings.messaging.discord.reconfigureTitle": "Заменить токен Discord-бота",
   "settings.messaging.discord.save": "Сохранить",
