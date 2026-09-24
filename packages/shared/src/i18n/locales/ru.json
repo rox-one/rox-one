@@ -1196,7 +1196,7 @@
   "extensions.developer.title": "Режим разработчика",
   "extensions.developer.urlAllowlistAdd": "Добавить префикс",
   "extensions.developer.urlAllowlistEmpty": "Предупреждение: нет списка разрешённых URL — разрешены все URL",
-  "extensions.developer.urlAllowlistExtensionId": "Id расширения",
+  "extensions.developer.urlAllowlistExtensionId": "ID расширения",
   "extensions.developer.urlAllowlistHint": "Разрешённые префиксы URL для network.request / proxyFetch. Пустой список разрешает все URL (по умолчанию в режиме разработки).",
   "extensions.developer.urlAllowlistLoad": "Загрузить",
   "extensions.developer.urlAllowlistRemove": "Удалить",
