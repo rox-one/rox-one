@@ -3697,7 +3697,7 @@
   "settings.messaging.telegram.access.pending.allowForBinding": "Разрешить для этого чата",
   "settings.messaging.telegram.access.pending.attempts_one": "1 попытка",
   "settings.messaging.telegram.access.pending.attempts_other": "{{count}} попыток",
-  "settings.messaging.telegram.access.pending.audit.notOnBindingAllowlist": "Отклонён в этом чате. Разрешить добавляет этот точный id отправителя в список доступа привязки.",
+  "settings.messaging.telegram.access.pending.audit.notOnBindingAllowlist": "Отклонён в этом чате. Разрешить добавляет этот точный идентификатор отправителя в список доступа привязки.",
   "settings.messaging.telegram.access.pending.audit.notOwner": "Отклонён как не-владелец рабочего пространства. Разрешить добавляет этот точный id отправителя как владельца.",
   "settings.messaging.telegram.access.pending.daysAgo_one": "1 день назад",
   "settings.messaging.telegram.access.pending.daysAgo_other": "{{count}} дней назад",
