@@ -2264,7 +2264,7 @@
   "onboarding.apiSetup.claudeDesc": "Использовать Claude Agent SDK в качестве основного агента. Настройте с подпиской Claude или ключом API.",
   "onboarding.apiSetup.claudeProMax": "Claude Pro / Max",
   "onboarding.apiSetup.claudeProMaxDesc": "Используйте подписку Claude для безлимитного доступа.",
-  "onboarding.apiSetup.craftAgentsBackend": "Rox Backend",
+  "onboarding.apiSetup.craftAgentsBackend": "Бэкенд Rox",
   "onboarding.apiSetup.description": "Выберите, от чего будут работать ваши ИИ-агенты. Дополнительные подключения можно добавить позже.",
   "onboarding.apiSetup.githubCopilotDesc": "Используйте подписку GitHub Copilot с бэкендом Rox.",
   "onboarding.apiSetup.piDesc": "Использовать бэкенд Rox в качестве основного агента. Подключение через ChatGPT, GitHub Copilot или ключ API.",
