@@ -3829,7 +3829,7 @@
   "settings.orgs.inviteFailed": "Не удалось создать приглашение",
   "settings.orgs.inviteNoMailer": "Приглашения не отправляются по почте. Передайте токен ниже. Почтового сервиса нет.",
   "settings.orgs.inviteSent": "Приглашение для {{target}} создано",
-  "settings.orgs.inviteTarget": "email или имя пользователя",
+  "settings.orgs.inviteTarget": "почта или имя пользователя",
   "settings.orgs.inviteTargetPlaceholder": "teammate@example.com",
   "settings.orgs.inviteToken": "Токен приглашения",
   "settings.orgs.inviteTokenPlaceholder": "Вставьте токен…",
