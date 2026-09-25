@@ -678,7 +678,7 @@
   "collection.ops.count": "{{count}} сессий",
   "collection.row.openBoardCard": "Открыть карточку доски",
   "collection.slice.duplicateName": "Такое имя уже есть",
-  "collection.slice.flagged": "С флажком",
+  "collection.slice.flagged": "С пометкой",
   "collection.slice.overdue": "Просрочено",
   "collection.slice.rename": "Переименовать",
   "collection.slice.save": "Сохранить слайс",
