@@ -59,3 +59,21 @@ describe('CloudRunsChip compact dialog accessibility', () => {
     expect(source).toContain('accent-foreground')
   })
 })
+
+describe('CloudRunsChip missing Daytona key', () => {
+  it('shows a «connect Daytona key» banner with a settings button and disables submit', () => {
+    expect(source).toContain('tokenConfigured === false')
+    expect(source).toContain("t('cloudRuns.keyMissingTitle')")
+    expect(source).toContain("routes.view.settings('cloudRuns')")
+    expect(source).toContain('disabled={!canSubmit || !topic.trim()')
+    expect(source).toContain('disabled={!canSubmit || !forkQuestion.trim()')
+  })
+
+  it('maps the raw secret-ref error to a human-readable message', async () => {
+    const { isDaytonaKeyMissingError } = await import('../CloudRunsChip')
+    expect(isDaytonaKeyMissingError('daytona requires secret reference DAYTONA_API_KEY')).toBe(true)
+    expect(isDaytonaKeyMissingError('Error invoking remote method: daytona requires secret reference DAYTONA_API_KEY')).toBe(true)
+    expect(isDaytonaKeyMissingError('topic is required')).toBe(false)
+    expect(source).toContain("t('cloudRuns.keyMissingError')")
+  })
+})

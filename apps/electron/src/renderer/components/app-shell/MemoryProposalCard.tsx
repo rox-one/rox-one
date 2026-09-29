@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 import type { MemoryProposal, MemoryProposalScope } from '@craft-agent/shared/memory/proposals'
 
 export interface MemoryProposalCardProps {
@@ -91,6 +92,9 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
   const [proposals, setProposals] = React.useState<MemoryProposal[]>([])
   const [disabled, setDisabled] = React.useState(false)
   const [preview, setPreview] = React.useState<string[]>([])
+  const [learning, setLearning] = React.useState(false)
+  /** Result of the last explicit «learn» click; null until the user clicks. */
+  const [lastRun, setLastRun] = React.useState<{ found: number; scanned: number } | null>(null)
 
   const reload = React.useCallback(() => {
     if (!workspaceId) return
@@ -106,7 +110,9 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
   }, [reload, workspaceId])
 
   const learn = async () => {
-    if (!workspaceId) return
+    if (!workspaceId || learning) return
+    setLearning(true)
+    setLastRun(null)
     try {
       const result = await window.electronAPI.extractMemoryProposals({
         workspaceId,
@@ -118,8 +124,21 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
       setDisabled(result.disabled)
       setPreview(result.preview)
       setProposals(result.proposals)
+      if (!result.disabled) {
+        const scanned = result.scannedMessages
+          ?? messages.filter((m) => (m.role === 'user' || m.role === 'assistant') && m.content.trim()).length
+        setLastRun({ found: result.proposals.length, scanned })
+      }
+      if (result.warning) {
+        // The model call failed; the regex fallback ran instead. Show the real reason.
+        toast.error(t('memory.proposal.llmFailed'), { description: result.warning })
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t('memory.proposal.actionFailed'))
+      toast.error(t('memory.proposal.actionFailed'), {
+        description: error instanceof Error ? error.message : undefined,
+      })
+    } finally {
+      setLearning(false)
     }
   }
 
@@ -131,14 +150,22 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
         <button
           type="button"
           onClick={() => void learn()}
-          className="inline-flex h-7 items-center rounded-md bg-info/15 px-2.5 text-xs font-medium text-info hover:bg-info/25"
+          disabled={learning}
+          aria-busy={learning}
+          className="inline-flex h-7 items-center gap-1.5 rounded-md bg-info/15 px-2.5 text-xs font-medium text-info hover:bg-info/25 disabled:opacity-60"
         >
-          {t('memory.proposal.learn')}
+          {learning && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+          {learning ? t('memory.proposal.learning') : t('memory.proposal.learn')}
         </button>
-        {preview.length > 0 && (
+        {!learning && preview.length > 0 && (
           <span className="text-[11px] text-muted-foreground">{t('memory.proposal.preview')}</span>
         )}
       </div>
+      {!learning && !disabled && lastRun && lastRun.found === 0 && (
+        <p role="status" className="text-xs text-muted-foreground" data-memory-proposal-empty>
+          {t('memory.proposal.nothingFound', { n: lastRun.scanned })}
+        </p>
+      )}
       {disabled && <p className="text-xs text-muted-foreground">{t('memory.proposal.disabled')}</p>}
       {proposals.map((proposal) => (
         <MemoryProposalCard key={proposal.id} proposal={proposal} workspaceId={workspaceId} onChanged={reload} />

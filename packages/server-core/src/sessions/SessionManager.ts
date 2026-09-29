@@ -126,7 +126,7 @@ import { formatPathsToRelative, formatToolInputPaths, perf, encodeIconToDataUrlA
 import { loadAllSkills, loadSkillBySlug, invalidateSkillsCache, type LoadedSkill } from '@craft-agent/shared/skills'
 import { invalidateContextFileCache, formatSourceRetrieveForPrompt } from '@craft-agent/shared/prompts/system'
 import { retrieveSourcesForPrompt } from '../sources/source-index-facade'
-import { getToolIconsDir, getMiniModel } from '@craft-agent/shared/config'
+import { getToolIconsDir, getMiniModel, isRoxPublicModelId, ROX_DEFAULT_SUBAGENT_MODEL } from '@craft-agent/shared/config'
 import { getDefaultSummarizationModel } from '@craft-agent/shared/config/models'
 import type { SummarizeCallback } from '@craft-agent/shared/sources'
 import { type ThinkingLevel, DEFAULT_THINKING_LEVEL, normalizeThinkingLevel } from '@craft-agent/shared/agent/thinking-levels'
@@ -5993,73 +5993,132 @@ export class SessionManager implements ISessionManager {
 
 
   /**
-   * Rewrite a user draft prompt via a short mini-completion.
+   * One-shot LLM query on the session's own connection and model.
+   *
+   * Spawns a scratch backend (so a running turn is never disturbed), injects
+   * auth via postInit, calls queryLlm and destroys the agent. Errors are
+   * thrown with their real message — callers surface them to the user.
+   *
+   * `preferFastModel` picks the cheap tier: `rox/fast` on a public ROX model,
+   * otherwise the connection's mini model.
+   */
+  async querySessionLlm(
+    sessionId: string,
+    request: SessionLlmQueryRequest,
+    options: { preferFastModel?: boolean } = {},
+  ): Promise<SessionLlmQueryResult> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) throw new Error('Session not found')
+
+    const workspaceRootPath = managed.workspace.rootPath
+    const wsConfig = loadWorkspaceConfig(workspaceRootPath)
+    const sessionModel = managed.model || wsConfig?.defaults?.model
+    const backendContext = resolveBackendContext({
+      sessionConnectionSlug: managed.llmConnection,
+      workspaceDefaultConnectionSlug: wsConfig?.defaults?.defaultLlmConnection,
+      managedModel: sessionModel,
+    })
+    if (!backendContext.connection) {
+      throw new Error('No LLM connection is configured for this session')
+    }
+    const connection = backendContext.connection
+    const miniModel = getMiniModel(connection) ?? connection.defaultModel ?? getDefaultSummarizationModel()
+
+    let model: string | undefined = sessionModel || backendContext.resolvedModel || connection.defaultModel
+    if (options.preferFastModel) {
+      model = model && isRoxPublicModelId(model) ? ROX_DEFAULT_SUBAGENT_MODEL : (miniModel ?? model)
+    }
+
+    const agent = createBackendFromResolvedContext({
+      context: backendContext,
+      hostRuntime: buildBackendHostRuntimeContext(),
+      coreConfig: {
+        workspace: managed.workspace,
+        session: {
+          id: `${managed.id}-oneshot-${Date.now().toString(36)}`,
+          workspaceRootPath,
+          createdAt: Date.now(),
+          lastUsedAt: Date.now(),
+          workingDirectory: managed.workingDirectory,
+          sdkCwd: managed.sdkCwd,
+          model: managed.model,
+          llmConnection: managed.llmConnection,
+          permissionMode: 'safe',
+        },
+        miniModel,
+        envOverrides: {
+          CRAFT_WORKSPACE_PATH: workspaceRootPath,
+          ...(miniModel ? { ANTHROPIC_DEFAULT_HAIKU_MODEL: miniModel } : {}),
+        },
+        isHeadless: true,
+      },
+      providerOptions: { piAuthProvider: connection.piAuthProvider },
+    }) as AgentInstance
+
+    try {
+      const init = await agent.postInit()
+      if (init && init.authInjected === false && init.authWarningLevel === 'error') {
+        throw new Error(init.authWarning || `Connection "${connection.name ?? managed.llmConnection}" is not signed in`)
+      }
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error('The model did not answer in time (120 s)')), 120_000)
+      })
+      try {
+        // Every concrete backend extends BaseAgent.queryLlm; the AgentBackend
+        // interface does not declare it, so narrow here instead of widening it.
+        const queryable = agent as AgentInstance & {
+          queryLlm?: (req: SessionLlmQueryRequest & { model?: string }) => Promise<{ text: string; model?: string; warning?: string }>
+        }
+        if (typeof queryable.queryLlm !== 'function') {
+          throw new Error('This connection does not support one-shot LLM queries')
+        }
+        const result = await Promise.race([queryable.queryLlm({ ...request, model }), timeout])
+        return { text: result.text ?? '', model: result.model ?? model, warning: result.warning }
+      } finally {
+        if (timer) clearTimeout(timer)
+      }
+    } finally {
+      agent.destroy()
+    }
+  }
+
+  /**
+   * Rewrite a user draft prompt with the session's connection and model.
    * Does not persist; the renderer replaces the composer text.
+   * Real provider errors are returned so the renderer can show them.
    */
   async improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }> {
     const trimmed = text.trim()
     if (!trimmed) {
       return { success: false, error: 'Draft is empty' }
     }
-    const managed = this.sessions.get(sessionId)
-    if (!managed) {
+    if (!this.sessions.has(sessionId)) {
       sessionLog.warn(`improveDraft: Session ${sessionId} not found`)
       return { success: false, error: 'Session not found' }
     }
 
-    let agent: AgentInstance | null = managed.agent
-    let isTemporary = false
-
-    if (!agent && managed.llmConnection) {
-      try {
-        const connection = getLlmConnection(managed.llmConnection)
-        const resolvedMiniModel = connection ? (getMiniModel(connection) ?? connection.defaultModel) : undefined
-        agent = createBackendFromConnection(managed.llmConnection, {
-          workspace: managed.workspace,
-          miniModel: resolvedMiniModel,
-          session: {
-            id: `improve-${managed.id}`,
-            workspaceRootPath: managed.workspace.rootPath,
-            llmConnection: managed.llmConnection,
-            createdAt: Date.now(),
-            lastUsedAt: Date.now(),
-          },
-          isHeadless: true,
-        }, buildBackendHostRuntimeContext()) as AgentInstance
-        await agent.postInit()
-        isTemporary = true
-      } catch (error) {
-        sessionLog.error(`improveDraft: Failed to create temporary agent:`, error)
-        return { success: false, error: 'Failed to create agent' }
-      }
-    }
-
-    if (!agent) {
-      return { success: false, error: 'No agent available' }
-    }
-
-    const prompt = [
-      'Rewrite the user draft so it is clearer, more specific, and more effective for an AI coding agent.',
-      'Keep the original language. Return ONLY the improved prompt with no quotes or commentary.',
-      '',
-      'Draft:',
-      trimmed,
+    const systemPrompt = [
+      'You rewrite a user\'s draft message to an AI assistant so it is clearer, more specific, and more effective.',
+      'Keep the original language, intent and any concrete details (names, paths, numbers).',
+      'Do not answer the request. Return ONLY the improved message, with no quotes, headings or commentary.',
     ].join('\n')
 
     try {
-      const improved = await agent.runMiniCompletion(prompt)
-      if (!improved?.trim()) {
-        return { success: false, error: 'Empty improvement' }
+      const result = await this.querySessionLlm(sessionId, {
+        systemPrompt,
+        prompt: `Draft:\n${trimmed}`,
+        temperature: 0.3,
+      })
+      const improved = stripImprovedDraft(result.text)
+      if (!improved) {
+        return { success: false, error: 'The model returned an empty answer' }
       }
-      return { success: true, text: improved.trim() }
+      return { success: true, text: improved }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown error'
+      const message = error instanceof Error ? error.message : String(error)
       sessionLog.error(`improveDraft failed for session ${sessionId}:`, error)
-      return { success: false, error: message }
-    } finally {
-      if (isTemporary && agent) {
-        agent.destroy()
-      }
+      return { success: false, error: message || 'Unknown error' }
     }
   }
 
@@ -10255,4 +10314,29 @@ export class SessionManager implements ISessionManager {
 
     sessionLog.info('Cleanup complete')
   }
+}
+
+
+export interface SessionLlmQueryRequest {
+  prompt: string
+  systemPrompt?: string
+  maxTokens?: number
+  temperature?: number
+}
+
+export interface SessionLlmQueryResult {
+  text: string
+  model?: string
+  warning?: string
+}
+
+/** Trim quotes / code fences a model sometimes wraps around the rewritten draft. */
+export function stripImprovedDraft(text: string | null | undefined): string {
+  let out = (text ?? '').trim()
+  const fence = out.match(/^```[a-zA-Z]*\n([\s\S]*?)\n```$/)
+  if (fence) out = fence[1]!.trim()
+  if (out.length >= 2 && ((out.startsWith('"') && out.endsWith('"')) || (out.startsWith('«') && out.endsWith('»')))) {
+    out = out.slice(1, -1).trim()
+  }
+  return out
 }

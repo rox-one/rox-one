@@ -93,6 +93,34 @@ const RECURRING_HINT = /\b(every|each)\s+(day|week|month|monday|tuesday|wednesda
 const EVENT_HINT = /\b(on|due|meeting|deadline)\b.{0,40}\b(20\d{2}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec|\d{1,2}\/\d{1,2})\b/i
 const PREFERENCE_HINT = /\b(prefer|i like|please use|i want)\b/i
 
+/**
+ * Russian hints. `\b` is ASCII-only in JS regexes, so it never matches next to
+ * Cyrillic letters; these use Unicode-aware letter lookarounds with the `u` flag.
+ */
+const L_START = '(?<![\\p{L}\\p{N}_])'
+const L_END = '(?![\\p{L}\\p{N}_])'
+function ruWords(body: string): RegExp {
+  return new RegExp(`${L_START}(?:${body})${L_END}`, 'iu')
+}
+const RULE_HINT_RU = ruWords('всегда|никогда|нельзя|не надо|не нужно|не стоит|обязательно|запомни|запомните|не забывай|должен|должна|должны|не используй|не делай|только через')
+const PREFERENCE_HINT_RU = ruWords('предпочитаю|предпочитаем|мне нравится|мне удобнее|я хочу|хочу чтобы|хочу, чтобы|используй|пиши|отвечай|лучше всего')
+const RECURRING_HINT_RU = ruWords('(?:каждый|каждую|каждое|каждые)\\s+(?:день|утро|вечер|неделю|месяц|понедельник|вторник|среду|четверг|пятницу|субботу|воскресенье|дня|недели)|ежедневно|еженедельно|ежемесячно|по утрам|по вечерам|по понедельникам|по вторникам|по средам|по четвергам|по пятницам|по субботам|по воскресеньям')
+const EVENT_HINT_RU = new RegExp(`${L_START}(?:встреча|встречу|созвон|дедлайн|срок|до|к)${L_END}.{0,40}(?:\\d{1,2}[./]\\d{1,2}|20\\d{2}|${L_START}(?:января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)${L_END})`, 'iu')
+const CREDENTIAL_HINT_RU = ruWords('пароль|пароля|токен|токена|api-ключ|ключ api|секрет|секретный ключ')
+
+export function isRuleHint(text: string): boolean {
+  return RULE_HINT.test(text) || RULE_HINT_RU.test(text)
+}
+export function isPreferenceHint(text: string): boolean {
+  return PREFERENCE_HINT.test(text) || PREFERENCE_HINT_RU.test(text)
+}
+export function isRecurringHint(text: string): boolean {
+  return RECURRING_HINT.test(text) || RECURRING_HINT_RU.test(text)
+}
+export function isEventHint(text: string): boolean {
+  return EVENT_HINT.test(text) || EVENT_HINT_RU.test(text)
+}
+
 function nextId(factory?: () => string): string {
   if (factory) return factory()
   return `mp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`
@@ -124,13 +152,18 @@ export function redactProposalSecrets(text: string): string {
 }
 
 export function classifyProposalKind(text: string): MemoryProposalKind {
-  if (looksLikeSecret(text) || /\b(api[_-]?key|password|secret|token|passkey)\b/i.test(text)) {
+  if (
+    looksLikeSecret(text)
+    || /\b(api[_-]?key|password|secret|token|passkey)\b/i.test(text)
+    || CREDENTIAL_HINT_RU.test(text)
+  ) {
     return 'credential_ref'
   }
-  if (RECURRING_HINT.test(text)) return 'recurring_action'
-  if (EVENT_HINT.test(text)) return 'event'
-  if (PREFERENCE_HINT.test(text) && !RULE_HINT.test(text.replace(PREFERENCE_HINT, ''))) return 'preference'
-  if (RULE_HINT.test(text)) return 'rule'
+  if (isRecurringHint(text)) return 'recurring_action'
+  if (isEventHint(text)) return 'event'
+  const withoutPreference = text.replace(PREFERENCE_HINT, '').replace(PREFERENCE_HINT_RU, '')
+  if (isPreferenceHint(text) && !isRuleHint(withoutPreference)) return 'preference'
+  if (isRuleHint(text)) return 'rule'
   return 'fact'
 }
 
@@ -161,10 +194,10 @@ function candidateLines(messages: TranscriptMessage[]): Array<{ id: string; text
       const text = raw.trim()
       if (text.length < 12 || text.length > 280) continue
       if (
-        RULE_HINT.test(text)
-        || PREFERENCE_HINT.test(text)
-        || RECURRING_HINT.test(text)
-        || EVENT_HINT.test(text)
+        isRuleHint(text)
+        || isPreferenceHint(text)
+        || isRecurringHint(text)
+        || isEventHint(text)
         || looksLikeSecret(text)
       ) {
         out.push({ id: message.id, text })
@@ -174,23 +207,36 @@ function candidateLines(messages: TranscriptMessage[]): Array<{ id: string; text
   return out
 }
 
-export function extractProposalsFromTranscript(input: ExtractProposalsInput): MemoryProposal[] {
+interface ProposalCandidate {
+  text: string
+  kind?: MemoryProposalKind
+  sourceMessageIds: string[]
+}
+
+function buildProposalsFromCandidates(
+  input: ExtractProposalsInput,
+  candidates: ProposalCandidate[],
+  model: string,
+): MemoryProposal[] {
   const now = (input.now ?? new Date()).toISOString()
   const seen = new Set<string>()
   const proposals: MemoryProposal[] = []
 
-  for (const line of candidateLines(input.messages)) {
+  for (const candidate of candidates) {
     if (proposals.length >= ROX_PROPOSAL_MODEL_POLICY.maxProposalsPerExtract) break
-    const kind = classifyProposalKind(line.text)
-    const text = kind === 'credential_ref' ? redactProposalSecrets(line.text) : line.text
+    const raw = candidate.text.trim()
+    if (!raw) continue
+    const secret = looksLikeSecret(raw)
+    const kind: MemoryProposalKind = secret ? 'credential_ref' : (candidate.kind ?? classifyProposalKind(raw))
+    const text = kind === 'credential_ref' || secret ? redactProposalSecrets(raw) : raw
     const key = `${kind}:${text.trim().toLowerCase()}`
     if (seen.has(key)) continue
     seen.add(key)
 
-    const credentialRef = kind === 'credential_ref' ? credentialRefFromText(line.text) : undefined
+    const credentialRef = kind === 'credential_ref' ? credentialRefFromText(raw) : undefined
     const riskFlags: string[] = []
     if (kind === 'credential_ref') riskFlags.push('credential-reference-only')
-    if (looksLikeSecret(line.text)) riskFlags.push('secret-redacted')
+    if (secret) riskFlags.push('secret-redacted')
 
     const tokens = estimateProposalTokens(text)
     proposals.push({
@@ -201,7 +247,7 @@ export function extractProposalsFromTranscript(input: ExtractProposalsInput): Me
       sessionId: input.sessionId,
       workspaceId: input.workspaceId,
       projectId: input.projectId,
-      sourceMessageIds: [line.id],
+      sourceMessageIds: candidate.sourceMessageIds,
       provenance: { trigger: input.trigger },
       riskFlags,
       conflicts: detectProposalConflicts(text, input.existingRules ?? []),
@@ -209,11 +255,146 @@ export function extractProposalsFromTranscript(input: ExtractProposalsInput): Me
       editHistory: [],
       createdAt: now,
       updatedAt: now,
-      cost: { tokens, model: ROX_PROPOSAL_MODEL_POLICY.model },
+      cost: { tokens, model },
     })
   }
 
   return proposals
+}
+
+export function extractProposalsFromTranscript(input: ExtractProposalsInput): MemoryProposal[] {
+  const candidates = candidateLines(input.messages).map((line) => ({
+    text: line.text,
+    sourceMessageIds: [line.id],
+  }))
+  return buildProposalsFromCandidates(input, candidates, ROX_PROPOSAL_MODEL_POLICY.model)
+}
+
+/** Messages the extractor actually reads (user/assistant turns with text). */
+export function proposalTranscriptMessages(messages: TranscriptMessage[]): TranscriptMessage[] {
+  return messages.filter(
+    (m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim().length > 0,
+  )
+}
+
+const LLM_TRANSCRIPT_MAX_CHARS = 24_000
+const LLM_MESSAGE_MAX_CHARS = 1_500
+const LLM_PROPOSAL_KINDS: ReadonlyArray<MemoryProposalKind> = [
+  'fact',
+  'preference',
+  'rule',
+  'event',
+  'recurring_action',
+]
+
+export interface ProposalExtractionPrompt {
+  systemPrompt: string
+  prompt: string
+  /** 1-based index in the prompt → message id, for mapping sources back. */
+  indexToMessageId: string[]
+}
+
+/**
+ * Prompt for real LLM extraction (rox/fast or the connection's mini model).
+ * The most recent messages are kept when the transcript is long.
+ */
+export function buildProposalExtractionPrompt(
+  messages: TranscriptMessage[],
+  existingRules: string[] = [],
+): ProposalExtractionPrompt {
+  const usable = proposalTranscriptMessages(messages)
+  const picked: TranscriptMessage[] = []
+  let budget = LLM_TRANSCRIPT_MAX_CHARS
+  for (let i = usable.length - 1; i >= 0 && budget > 0; i--) {
+    const m = usable[i]!
+    const content = m.content.length > LLM_MESSAGE_MAX_CHARS ? `${m.content.slice(0, LLM_MESSAGE_MAX_CHARS)}…` : m.content
+    budget -= content.length
+    picked.unshift({ ...m, content })
+  }
+  const indexToMessageId = picked.map((m) => m.id)
+  const transcript = picked
+    .map((m, i) => `#${i + 1} [${m.role}]\n${redactProposalSecrets(m.content)}`)
+    .join('\n\n')
+  const rules = existingRules.slice(0, 40).map((r) => `- ${r}`).join('\n')
+
+  const systemPrompt = [
+    'You extract durable memory from a chat between a user and an AI assistant.',
+    'Return things worth remembering for FUTURE sessions: stable facts about the user or their projects,',
+    'preferences, explicit rules ("always/never"), upcoming events with dates, and recurring actions.',
+    'Skip one-off task details, chit-chat, and anything already covered by the existing rules.',
+    'Never include secret values (passwords, tokens, keys); mention only which service needs a credential.',
+    'Write each item as one short standalone sentence in the language of the conversation.',
+    `Return at most ${ROX_PROPOSAL_MODEL_POLICY.maxProposalsPerExtract} items. It is fine to return none.`,
+    'Respond with JSON only, no prose, in this exact shape:',
+    '{"proposals":[{"text":"...","kind":"fact|preference|rule|event|recurring_action","sources":[1]}]}',
+    '"sources" are the #numbers of the messages the item came from.',
+  ].join('\n')
+
+  const prompt = [
+    rules ? `Existing rules (do not repeat):\n${rules}\n` : '',
+    'Conversation:',
+    transcript,
+  ].filter(Boolean).join('\n')
+
+  return { systemPrompt, prompt, indexToMessageId }
+}
+
+/**
+ * Parse the model's JSON answer. Returns null when the output is not the
+ * expected shape (caller falls back to the regex extractor).
+ */
+export function parseProposalExtractionResponse(
+  text: string,
+  indexToMessageId: string[],
+): ProposalCandidate[] | null {
+  if (!text) return null
+  let body = text.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
+  const firstBrace = body.search(/[[{]/)
+  if (firstBrace < 0) return null
+  body = body.slice(firstBrace)
+  const lastBrace = Math.max(body.lastIndexOf('}'), body.lastIndexOf(']'))
+  if (lastBrace < 0) return null
+  body = body.slice(0, lastBrace + 1)
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(body)
+  } catch {
+    return null
+  }
+  const list = Array.isArray(parsed)
+    ? parsed
+    : (parsed && typeof parsed === 'object' && Array.isArray((parsed as { proposals?: unknown }).proposals))
+      ? (parsed as { proposals: unknown[] }).proposals
+      : null
+  if (!list) return null
+  const out: ProposalCandidate[] = []
+  for (const item of list) {
+    const obj = typeof item === 'string' ? { text: item } : item
+    if (!obj || typeof obj !== 'object') continue
+    const rawText = (obj as { text?: unknown }).text
+    if (typeof rawText !== 'string' || !rawText.trim()) continue
+    const rawKind = (obj as { kind?: unknown }).kind
+    const kind = typeof rawKind === 'string' && (LLM_PROPOSAL_KINDS as readonly string[]).includes(rawKind)
+      ? (rawKind as MemoryProposalKind)
+      : undefined
+    const rawSources = (obj as { sources?: unknown }).sources
+    const sourceMessageIds = Array.isArray(rawSources)
+      ? rawSources
+        .map((n) => (typeof n === 'number' ? indexToMessageId[n - 1] : typeof n === 'string' ? indexToMessageId[Number(n) - 1] : undefined))
+        .filter((id): id is string => typeof id === 'string')
+      : []
+    out.push({ text: rawText.trim().slice(0, 280), kind, sourceMessageIds })
+  }
+  return out
+}
+
+/** Build proposals from a parsed LLM answer (same validation/redaction as the regex path). */
+export function proposalsFromLlmCandidates(
+  input: ExtractProposalsInput,
+  candidates: ProposalCandidate[],
+  model: string = ROX_PROPOSAL_MODEL_POLICY.model,
+): MemoryProposal[] {
+  return buildProposalsFromCandidates(input, candidates, model)
 }
 
 export interface ApproveProposalInput {

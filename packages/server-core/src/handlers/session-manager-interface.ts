@@ -254,6 +254,12 @@ export interface ISessionManager {
   runDistillOneShot(workspaceId: string, prompt: string): Promise<string>
   refreshTitle(sessionId: string): Promise<{ success: boolean; title?: string; error?: string }>
   improveDraft(sessionId: string, text: string): Promise<{ success: boolean; text?: string; error?: string }>
+  /** One-shot LLM query on the session's connection/model; throws the real provider error. */
+  querySessionLlm?(
+    sessionId: string,
+    request: { prompt: string; systemPrompt?: string; maxTokens?: number; temperature?: number },
+    options?: { preferFastModel?: boolean },
+  ): Promise<{ text: string; model?: string; warning?: string }>
   refreshBadge(): void
   getUnreadSummary(): UnreadSummary
 
