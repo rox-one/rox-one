@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   DndContext,
   DragOverlay,
+  KeyboardSensor,
   closestCorners,
   useSensor,
   useSensors,
@@ -263,9 +264,72 @@ export function KanbanBoard({
   const columnColors = useKanbanColumnColors()
 
   const [activeId, setActiveId] = React.useState<string | null>(null)
-  const sensors = useSensors(useSensor(SmartPointerSensor, { activationConstraint: { distance: 5 } }))
+  // Mirror sortable-list: pointer (5px / data-no-dnd) + KeyboardSensor for a11y moves.
+  const sensors = useSensors(
+    useSensor(SmartPointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor),
+  )
 
   const activeTask = activeId ? tasks.find(task => task.id === activeId) ?? null : null
+
+  const columnLabel = React.useCallback(
+    (columnId: string) => {
+      const column = columns.find(c => c.id === columnId)
+      if (!column) return columnId
+      if (column.name?.trim()) return column.name
+      if (column.labelKey) return t(column.labelKey)
+      return columnId
+    },
+    [columns, t],
+  )
+
+  const taskTitle = React.useCallback(
+    (taskId: string) => tasks.find(task => task.id === taskId)?.title?.trim() || taskId,
+    [tasks],
+  )
+
+  const announcements = React.useMemo(
+    () => ({
+      onDragStart({ active }: DragStartEvent) {
+        return t('kanban.a11y.dragStart', { title: taskTitle(String(active.id)) })
+      },
+      onDragOver({ over }: { over: { id: string | number } | null }) {
+        if (!over) return t('kanban.a11y.dragOver', { column: t('kanban.a11y.noDropTarget') })
+        const overId = String(over.id)
+        const groupTarget = parseProjectGroupDropId(overId)
+        if (groupTarget) {
+          return t('kanban.a11y.dragOver', { column: columnLabel(groupTarget.columnId) })
+        }
+        if (columns.some(c => c.id === overId)) {
+          return t('kanban.a11y.dragOver', { column: columnLabel(overId) })
+        }
+        const overTask = tasks.find(task => task.id === overId)
+        if (overTask) {
+          return t('kanban.a11y.dragOver', { column: columnLabel(overTask.column) })
+        }
+        return t('kanban.a11y.dragOver', { column: t('kanban.a11y.noDropTarget') })
+      },
+      onDragEnd({ active, over }: DragEndEvent) {
+        if (!over) return t('kanban.a11y.dragCancel', { title: taskTitle(String(active.id)) })
+        const overId = String(over.id)
+        const groupTarget = parseProjectGroupDropId(overId)
+        const dest =
+          groupTarget?.columnId ??
+          (columns.some(c => c.id === overId)
+            ? overId
+            : tasks.find(task => task.id === overId)?.column)
+        if (!dest) return t('kanban.a11y.dragCancel', { title: taskTitle(String(active.id)) })
+        return t('kanban.a11y.dragEnd', {
+          title: taskTitle(String(active.id)),
+          column: columnLabel(dest),
+        })
+      },
+      onDragCancel({ active }: { active: { id: string | number } }) {
+        return t('kanban.a11y.dragCancel', { title: taskTitle(String(active.id)) })
+      },
+    }),
+    [columnLabel, columns, t, taskTitle, tasks],
+  )
 
   const handleDragStart = React.useCallback((event: DragStartEvent) => {
     setActiveId(String(event.active.id))
@@ -293,10 +357,15 @@ export function KanbanBoard({
         return
       }
 
-      const toColumn = overId as KanbanColumnId
-      // Ignore drops onto non-column ids (e.g. other tiles) — closestCorners may
-      // report a tile id; only accept known column ids.
-      if (!columns.some(c => c.id === toColumn)) return
+      // Column droppable id, or another tile (keyboard/pointer) → that tile's column.
+      let toColumn: KanbanColumnId | null = null
+      if (columns.some(c => c.id === overId)) {
+        toColumn = overId as KanbanColumnId
+      } else {
+        const overTask = tasks.find(t => t.id === overId)
+        if (overTask) toColumn = overTask.column
+      }
+      if (!toColumn) return
       if (task.column === toColumn) return
       onMoveTask?.(String(active.id), { columnId: toColumn })
     },
@@ -319,6 +388,12 @@ export function KanbanBoard({
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      accessibility={{
+        announcements,
+        screenReaderInstructions: {
+          draggable: t('kanban.a11y.instructions'),
+        },
+      }}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}

@@ -283,7 +283,8 @@ html[data-scenic] .input-container {
 }
 
 /* Scenic mode: Gradient border effect for glass panels
-   Uses a pseudo-element with a white linear gradient (40% at top, 5% at bottom).
+   Uses a pseudo-element with a faint white linear gradient (8% at top, 0% at bottom).
+   Kept barely-there so nested glass panels don't stack into wireframe outlines.
    The mask-composite technique creates a border-only effect from a filled gradient. */
 html[data-scenic] .shadow-middle::before,
 html[data-scenic] .shadow-strong::before {
@@ -294,8 +295,8 @@ html[data-scenic] .shadow-strong::before {
   padding: 1px;
   background: linear-gradient(
     to bottom,
-    rgba(255, 255, 255, 0.3),
-    rgba(255, 255, 255, 0.1)
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0)
   );
   -webkit-mask:
     linear-gradient(#fff 0 0) content-box,
