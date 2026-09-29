@@ -701,7 +701,7 @@ export function RecordingPanel({ compact }: { compact?: boolean }) {
       <span className={cn('shrink-0 font-semibold tabular-nums', compact ? 'text-[15px]' : 'text-[22px]')} data-testid="meeting-rec-timer">{formatRecClock(recordedMs(rec))}</span>
       <span className="flex h-4 min-w-0 flex-1 items-end gap-[2px]" aria-label={t('meetings.local.level')} role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(rec.level * 100)}>
         {Array.from({ length: bars }, (_, i) => (
-          <span key={i} className={cn('w-1 rounded-[1px]', i < lit ? (i > bars * 0.85 ? 'bg-destructive' : 'bg-success') : 'bg-foreground/[0.1]')} style={{ height: `${30 + (i / bars) * 70}%` }} />
+          <span key={i} className={cn('w-1 rounded-full', i < lit ? (i > bars * 0.85 ? 'bg-destructive' : 'bg-success') : 'bg-foreground/[0.1]')} style={{ height: `${30 + (i / bars) * 70}%` }} />
         ))}
       </span>
       <span className="shrink-0 text-[11px] text-text-muted">{rec.status === 'stopping' ? t('meetings.local.saving') : rec.status === 'paused' ? t('meetings.local.paused') : t('meetings.local.micOnly')}</span>
