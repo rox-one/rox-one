@@ -192,7 +192,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
           <button
             type="submit"
             data-testid="new-task-button"
-            className="h-9 shrink-0 rounded-[8px] border border-foreground/15 bg-foreground/10 px-3 text-[13px] font-medium"
+            className="h-9 shrink-0 rounded-[8px] border border-foreground/[0.07] bg-foreground/10 px-3 text-[13px] font-medium"
           >
             {t('tasks.newTask')}
           </button>
