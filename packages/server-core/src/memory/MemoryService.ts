@@ -468,7 +468,7 @@ export class MemoryService {
       if (!gHits || !wHits) return null
       const pickRanked = (store: LessonStore, hits: Array<{ rule: string; rank: number }>): Array<{ lesson: Lesson; rank: number }> => {
         if (hits.length === 0) return []
-        const byKey = new Map(store.list().map(l => [lessonKey(l.rule), l]))
+        const byKey = new Map(store.list().filter(l => !l.disabled).map(l => [lessonKey(l.rule), l]))
         const out: Array<{ lesson: Lesson; rank: number }> = []
         for (const hit of hits) {
           const lesson = byKey.get(lessonKey(hit.rule))
@@ -476,9 +476,15 @@ export class MemoryService {
         }
         return out
       }
-      const merged = [...pickRanked(globalStore, gHits.lessons), ...pickRanked(workspaceStore, wHits.lessons)]
+      const ranked = [...pickRanked(globalStore, gHits.lessons), ...pickRanked(workspaceStore, wHits.lessons)]
         .sort((a, b) => a.rank - b.rank)
-        .slice(0, limit)
+      // Pinned lessons are always injected, ahead of the query-ranked ones.
+      const pinned = [...globalStore.list(), ...workspaceStore.list()]
+        .filter(l => l.pinned && !l.disabled)
+        .map(lesson => ({ lesson, rank: Number.NEGATIVE_INFINITY }))
+      const pinnedKeys = new Set(pinned.map(p => `${p.lesson.scope}:${lessonKey(p.lesson.rule)}`))
+      const merged = [...pinned, ...ranked.filter(r => !pinnedKeys.has(`${r.lesson.scope}:${lessonKey(r.lesson.rule)}`))]
+        .slice(0, Math.max(limit, pinned.length))
       const memory: WorkspaceMemory = {
         context: wHits.context.find(h => h.kind === 'context')?.text ?? '',
         preferences: gHits.context.find(h => h.kind === 'preferences')?.text ?? '',

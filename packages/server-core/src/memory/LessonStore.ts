@@ -17,8 +17,9 @@
  *
  * See docs/superpowers/specs/2026-08-06-self-learning-memory-design.md §1.
  */
-import { existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync, writeFileSync } from 'fs'
 import { dirname, join } from 'path'
+import { selectContextLessons } from '@craft-agent/shared/memory/context-select'
 import { LESSON_LIMITS, type AuditActor, type Lesson, type LessonConflict, type LessonScope } from '@craft-agent/shared/memory/types'
 import { AuditLog, type AuditInput } from './AuditLog'
 import { removeLesson as ftsRemoveLesson, upsertLesson as ftsUpsertLesson } from './fts-index'
@@ -44,6 +45,21 @@ function normalizeLesson(lesson: Lesson): Lesson {
           .filter(c => c && typeof c.sessionId === 'string' && typeof c.ts === 'string' && (c.reason === 'branch' || c.reason === 'interrupted' || c.reason === 'error'))
           .slice(-LESSON_LIMITS.conflicts)
       : undefined
+  }
+  if (lesson.pinned !== undefined && typeof lesson.pinned !== 'boolean') delete lesson.pinned
+  if (lesson.disabled !== undefined && typeof lesson.disabled !== 'boolean') delete lesson.disabled
+  if (lesson.editedAt !== undefined && typeof lesson.editedAt !== 'string') delete lesson.editedAt
+  if (lesson.tags !== undefined) {
+    if (Array.isArray(lesson.tags)) lesson.tags = lesson.tags.filter((tag): tag is string => typeof tag === 'string' && tag.trim().length > 0)
+    else delete lesson.tags
+  }
+  if (lesson.mergedFrom !== undefined) {
+    if (Array.isArray(lesson.mergedFrom)) lesson.mergedFrom = lesson.mergedFrom.filter((rule): rule is string => typeof rule === 'string')
+    else delete lesson.mergedFrom
+  }
+  if (lesson.usedAt !== undefined) {
+    if (Array.isArray(lesson.usedAt)) lesson.usedAt = lesson.usedAt.filter((ts): ts is string => typeof ts === 'string').slice(-LESSON_LIMITS.usedAt)
+    else delete lesson.usedAt
   }
   if (lesson.promoted !== undefined) {
     const p = lesson.promoted
@@ -72,6 +88,14 @@ export function parseLessons(content: string): Lesson[] {
     }
   }
   return lessons
+}
+
+/** Snapshots of lessons.jsonl kept in memory/backups/. */
+export const LESSON_BACKUPS_KEPT = 30
+const backedUp = new Set<string>()
+/** Test hook: forget which files were snapshotted this process. */
+export function resetLessonBackupsForTests(): void {
+  backedUp.clear()
 }
 
 export class LessonStore {
@@ -180,7 +204,12 @@ export class LessonStore {
     let touched = 0
     for (let i = 0; i < lessons.length; i++) {
       if (!keys.has(lessonKey(lessons[i].rule))) continue
-      lessons[i] = { ...lessons[i], usageCount: (lessons[i].usageCount ?? 0) + 1, lastUsedAt: now }
+      lessons[i] = {
+        ...lessons[i],
+        usageCount: (lessons[i].usageCount ?? 0) + 1,
+        lastUsedAt: now,
+        usedAt: [...(lessons[i].usedAt ?? []), now].slice(-LESSON_LIMITS.usedAt),
+      }
       touched++
     }
     if (touched > 0) this.rewrite(lessons)
@@ -205,9 +234,12 @@ export class LessonStore {
     return lessons[idx]
   }
 
-  /** Most recent lessons (max LESSON_LIMITS.context), most recent first. */
+  /**
+   * Lessons injected into a prompt (max LESSON_LIMITS.context): disabled
+   * lessons skipped, pinned first, then the most recent — most recent first.
+   */
   forContext(): Lesson[] {
-    return this.read().slice(-LESSON_LIMITS.context).reverse()
+    return selectContextLessons(this.read(), LESSON_LIMITS.context)
   }
 
   /** Drop the cache so the next list() re-reads the file. */
@@ -273,10 +305,48 @@ export class LessonStore {
     return lessons
   }
 
+  /**
+   * One verbatim snapshot of lessons.jsonl per file per process, taken before
+   * the first full rewrite (memory/backups/lessons-<stamp>.jsonl). The most
+   * recent LESSON_BACKUPS_KEPT snapshots are kept. Best-effort.
+   */
+  private backupOnce(): void {
+    if (backedUp.has(this.filePath) || !existsSync(this.filePath)) return
+    backedUp.add(this.filePath)
+    try {
+      const dir = join(dirname(this.filePath), 'backups')
+      mkdirSync(dir, { recursive: true })
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+      copyFileSync(this.filePath, join(dir, `lessons-${stamp}.jsonl`))
+      const snapshots = readdirSync(dir).filter(name => /^lessons-.*\.jsonl$/.test(name)).sort()
+      for (const old of snapshots.slice(0, Math.max(0, snapshots.length - LESSON_BACKUPS_KEPT))) {
+        try { unlinkSync(join(dir, old)) } catch { /* keep going */ }
+      }
+    } catch {
+      // a failed backup must not block the write
+    }
+  }
+
+  /**
+   * Over LESSON_LIMITS.total: the oldest non-pinned lessons leave the active
+   * file but are appended verbatim to lessons.archive.jsonl — never lost.
+   */
+  private prune(lessons: Lesson[]): Lesson[] {
+    const overflow = lessons.length - LESSON_LIMITS.total
+    if (overflow <= 0) return lessons
+    const drop = new Set<number>()
+    for (let i = 0; i < lessons.length && drop.size < overflow; i++) if (!lessons[i].pinned) drop.add(i)
+    for (let i = 0; i < lessons.length && drop.size < overflow; i++) drop.add(i)
+    const archived = lessons.filter((_, i) => drop.has(i))
+    writeFileSync(join(dirname(this.filePath), 'lessons.archive.jsonl'), archived.map(l => JSON.stringify(l)).join('\n') + '\n', { flag: 'a' })
+    return lessons.filter((_, i) => !drop.has(i))
+  }
+
   /** Full atomic rewrite: write a tmp file in the same dir, then rename. */
   private rewrite(lessons: Lesson[]): void {
-    const pruned = lessons.slice(-LESSON_LIMITS.total)
     mkdirSync(dirname(this.filePath), { recursive: true })
+    this.backupOnce()
+    const pruned = this.prune(lessons)
     const tmp = join(dirname(this.filePath), `.${Date.now()}-${process.pid}.lessons.tmp`)
     writeFileSync(tmp, pruned.map(l => JSON.stringify(l)).join('\n') + (pruned.length ? '\n' : ''))
     renameSync(tmp, this.filePath)
