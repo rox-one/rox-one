@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
  * Inspector command surface. Uses /bin/zsh -lc via IPC when available;
  * otherwise keeps a local transcript so the dock is usable immediately.
  */
-export function InspectorTerminal({ cwd }: { cwd?: string }) {
+export function InspectorTerminal({ cwd, autoFocus = false }: { cwd?: string; autoFocus?: boolean }) {
   const { t } = useTranslation()
   const [cmd, setCmd] = React.useState('')
   const [log, setLog] = React.useState<string[]>([])
@@ -52,7 +52,7 @@ export function InspectorTerminal({ cwd }: { cwd?: string }) {
         )}
       </div>
       <form
-        className="flex shrink-0 items-center gap-2 border-t border-white/5 px-2 py-1.5"
+        className="rox-terminal-prompt flex shrink-0 items-center gap-2 border-t border-white/5 px-2 py-1.5"
         onSubmit={(event) => {
           event.preventDefault()
           void run()
@@ -63,9 +63,12 @@ export function InspectorTerminal({ cwd }: { cwd?: string }) {
           value={cmd}
           onChange={(event) => setCmd(event.target.value)}
           disabled={busy}
-          autoFocus
+          // Focus only when the user explicitly opened the terminal, so the
+          // resting state at launch is flat (no focus indicator).
+          autoFocus={autoFocus}
           spellCheck={false}
-          className="h-7 min-w-0 flex-1 bg-transparent font-mono text-[12px] text-white outline-none placeholder:text-white/30"
+          aria-label={t('inspector.terminalPlaceholder')}
+          className="rox-terminal-input h-7 min-w-0 flex-1 bg-transparent font-mono text-[12px] text-white outline-none placeholder:text-white/30"
           placeholder={busy ? t('common.loading') : t('inspector.terminalPlaceholder')}
         />
       </form>

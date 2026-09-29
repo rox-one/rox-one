@@ -81,7 +81,8 @@ describe('issues 07–09 wiring', () => {
     expect(editor).toContain("handleCreateChrome('sticky')")
     expect(editor).toContain("handleCreateChrome('frame')")
     expect(editor).toContain("handleCreateChrome('group')")
-    expect(editor).toContain('!bg-background/45')
+    // Minimap is a flat subtle fill (no outline) and only renders with scenes.
+    expect(editor).toContain('!bg-foreground/[0.04]')
   })
 
   it('wires column keyboard, grouped @ palette and comment rail', () => {
