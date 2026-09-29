@@ -8,6 +8,10 @@
  * are skipped. Dynamic keys are intentionally skipped because they cannot be
  * proven statically.
  *
+ * Also verifies that every locale string uses i18next `{{var}}` interpolation;
+ * a single-brace `{var}` is rendered verbatim by i18next. Keys under
+ * CUSTOM_PLACEHOLDER_PREFIXES use their own `{source:Name}` syntax and are skipped.
+ *
  * Pass --all to print every missing key (default truncates to 20).
  */
 
@@ -48,7 +52,32 @@ type Reference = {
   column: number
 }
 
+const CUSTOM_PLACEHOLDER_PREFIXES = ['hints.']
+const SINGLE_BRACE = /(?<!\{)\{(\w+)\}(?!\})/
+
+function checkInterpolation(): string[] {
+  const problems: string[] = []
+  for (const file of readdirSync(LOCALES_DIR).filter(f => f.endsWith('.json')).sort()) {
+    const locale = JSON.parse(readFileSync(resolve(LOCALES_DIR, file), 'utf-8')) as Locale
+    for (const [key, value] of Object.entries(locale)) {
+      if (CUSTOM_PLACEHOLDER_PREFIXES.some(prefix => key.startsWith(prefix))) continue
+      if (typeof value === 'string' && SINGLE_BRACE.test(value)) {
+        problems.push(`${file}: ${key} uses {var} instead of {{var}}: ${value}`)
+      }
+    }
+  }
+  return problems
+}
+
 function main(): void {
+  const interpolationProblems = checkInterpolation()
+  if (interpolationProblems.length > 0) {
+    console.error(`i18n interpolation check failed: ${interpolationProblems.length} string(s)`)
+    for (const problem of interpolationProblems) console.error(`  ${problem}`)
+    console.error('')
+    process.exitCode = 1
+  }
+
   const en = JSON.parse(readFileSync(EN_LOCALE_PATH, 'utf-8')) as Locale
   const enKeys = new Set(Object.keys(en))
 
@@ -62,6 +91,7 @@ function main(): void {
     console.log(
       `i18n coverage OK (${references.length} literal references, ${uniqueKeys.size} unique keys, ${enKeys.size} English keys)`,
     )
+    if (process.exitCode) process.exit(process.exitCode)
     return
   }
 

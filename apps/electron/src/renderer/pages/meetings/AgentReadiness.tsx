@@ -104,7 +104,7 @@ export function AgentReadiness({
           data-testid="meeting-skill-slash"
           className="min-w-0 flex-1 rounded-md border border-border bg-background px-2 py-1 text-xs"
           defaultValue={skillDraft}
-          aria-label={t('meetings.skillUnknown')}
+          aria-label={t('meetings.skillCommand')}
         />
         <button type="submit" className="rounded-md border border-border px-2 py-1 text-xs">
           {t('meetings.start')}
