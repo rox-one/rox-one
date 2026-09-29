@@ -951,17 +951,17 @@ function EditorInner({
             className="relative z-10 flex min-w-0 shrink-0 flex-nowrap items-center gap-2 overflow-x-auto px-3 py-1.5 text-[11px]"
           >
             <div className="flex min-w-0 flex-nowrap items-center gap-2">
-              <span className="rounded-full bg-background/65 px-2 py-1 text-muted-foreground shadow-thin backdrop-blur-xl">
+              <span className="rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
                 {t('entityView.flowLive')}
               </span>
               <span className="text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
               {selected ? (
-                <span className="rounded-full bg-background/65 px-2 py-1 text-muted-foreground shadow-thin backdrop-blur-xl">
+                <span className="rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
                   {selectedKindLabel}
                 </span>
               ) : null}
               {selectedDraft ? (
-                <span className="rounded-full bg-background/65 px-2 py-1 text-muted-foreground shadow-thin backdrop-blur-xl">
+                <span className="rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
                   {t(SESSION_NODE_KIND_I18N[selectedDraft.kind])}
                 </span>
               ) : null}
