@@ -59,9 +59,16 @@ export function useAutomations(
     try {
       const items = await loadAutomationsFromServer(activeWorkspaceId)
       try {
-        const map = await window.electronAPI.getAutomationLastExecuted(activeWorkspaceId)
+        const map = await window.electronAPI.getAutomationLastExecuted(activeWorkspaceId, true)
         for (const item of items) {
-          item.lastExecutedAt = map[item.id] ?? item.lastExecutedAt
+          const last = map[item.id]
+          if (last && typeof last === 'object') {
+            item.lastExecutedAt = last.ts
+            item.lastRunOk = last.ok
+          } else if (typeof last === 'number') {
+            // Older server without the detailed flag.
+            item.lastExecutedAt = last
+          }
         }
       } catch { /* history unavailable — timestamps stay undefined */ }
       setAutomations(items)
@@ -126,15 +133,20 @@ export function useAutomations(
   const handleToggleAutomation = useCallback((automationId: string) => {
     const automation = findAutomation(automationId)
     if (!automation || !activeWorkspaceId) return
+    const nextEnabled = !automation.enabled
+    // Optimistic flip so the switch responds instantly; the CHANGED push (or
+    // the explicit reload below) reconciles with what landed on disk.
+    setAutomations(prev => prev.map(a => a.id === automationId ? { ...a, enabled: nextEnabled } : a))
     window.electronAPI.setAutomationEnabled(
       activeWorkspaceId,
       automation.event,
       automation.matcherIndex,
-      !automation.enabled,
-    ).catch(() => {
+      nextEnabled,
+    ).then(() => loadAndHydrate()).catch(() => {
+      setAutomations(prev => prev.map(a => a.id === automationId ? { ...a, enabled: automation.enabled } : a))
       toast.error(t('toast.failedToToggleAutomation'))
     })
-  }, [findAutomation, activeWorkspaceId])
+  }, [findAutomation, activeWorkspaceId, loadAndHydrate, t])
 
   const handleDuplicateAutomation = useCallback((automationId: string) => {
     const automation = findAutomation(automationId)

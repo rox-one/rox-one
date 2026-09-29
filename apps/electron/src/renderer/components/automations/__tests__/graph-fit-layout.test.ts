@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'bun:test'
 import { fitGraphLayout, nodeDisplayLabel } from '../graph-fit-layout'
+import { getEventDisplayName } from '../types'
 
 describe('fitGraphLayout', () => {
   it('fits three original columns into a 300px viewport', () => {
@@ -53,7 +54,8 @@ describe('nodeDisplayLabel', () => {
         { kind: 'trigger', label: 'LabelAdd', data: { event: 'LabelAdd' } },
         { trigger: 'When' },
       ),
-    ).toBe('Label Added')
+    ).toBe(getEventDisplayName('LabelAdd'))
+    expect(getEventDisplayName('LabelAdd')).not.toBe('LabelAdd')
   })
 
   it('uses matcher pattern when label and name are missing', () => {

@@ -795,6 +795,8 @@ export const RPC_CHANNELS = {
     TEST: 'automations:test',
     SET_ENABLED: 'automations:setEnabled',
     DUPLICATE: 'automations:duplicate',
+    UPDATE: 'automations:update',
+    CREATE: 'automations:create',
     DELETE: 'automations:delete',
     GET_HISTORY: 'automations:getHistory',
     GET_LAST_EXECUTED: 'automations:getLastExecuted',

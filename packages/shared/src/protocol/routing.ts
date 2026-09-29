@@ -828,6 +828,8 @@ export const REMOTE_ELIGIBLE_CHANNELS = new Set<string>([
   RPC_CHANNELS.automations.TEST,
   RPC_CHANNELS.automations.SET_ENABLED,
   RPC_CHANNELS.automations.DUPLICATE,
+  RPC_CHANNELS.automations.UPDATE,
+  RPC_CHANNELS.automations.CREATE,
   RPC_CHANNELS.automations.DELETE,
   RPC_CHANNELS.automations.GET_HISTORY,
   RPC_CHANNELS.automations.GET_LAST_EXECUTED,

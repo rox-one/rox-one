@@ -2134,10 +2134,15 @@ export interface ElectronAPI {
 
   // Automation state management
   setAutomationEnabled(workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean): Promise<void>
-  duplicateAutomation(workspaceId: string, eventName: string, matcherIndex: number): Promise<void>
+  duplicateAutomation(workspaceId: string, eventName: string, matcherIndex: number): Promise<{ id: string } | void>
+  /** Replace one matcher (keeps its id). Changing `event` moves it to that event's list. */
+  updateAutomation(workspaceId: string, eventName: string, matcherIndex: number, next: { event: string; matcher: Record<string, unknown> }): Promise<{ id: string; event: string; matcherIndex: number }>
+  /** Append a new matcher under `event`; returns its generated id. */
+  createAutomation(workspaceId: string, next: { event: string; matcher: Record<string, unknown> }): Promise<{ id: string; event: string; matcherIndex: number }>
   deleteAutomation(workspaceId: string, eventName: string, matcherIndex: number): Promise<void>
   getAutomationHistory(workspaceId: string, automationId: string, limit?: number): Promise<Array<{ id: string; ts: number; ok: boolean; sessionId?: string; prompt?: string; error?: string; webhook?: { method: string; url: string; statusCode: number; durationMs: number; attempts?: number; error?: string; responseBody?: string } }>>
   getAutomationLastExecuted(workspaceId: string): Promise<Record<string, number>>
+  getAutomationLastExecuted(workspaceId: string, detailed: true): Promise<Record<string, { ts: number; ok: boolean }>>
   replayAutomation(workspaceId: string, automationId: string, eventName: string): Promise<{ results: Array<{ type: string; url: string; statusCode: number; success: boolean; error?: string; duration: number }> }>
 
   // Automations change listener

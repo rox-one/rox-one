@@ -24,16 +24,16 @@ describe('Automation graph workspace presentation', () => {
     expect(electronApiTypes).toContain('saveAutomationGraph(payload: SaveAutomationGraphPayload)')
   })
 
-  it('keeps the editable graph reachable from both automation navigation states', () => {
+  it('uses the step editor (not the wall graph) as the default automations view', () => {
     const automationNavigation = mainContent.slice(
       mainContent.indexOf('if (isAutomationsNavigation(navState))'),
       mainContent.indexOf('// Projects navigator'),
     )
 
-    expect(automationNavigation).toContain('<AutomationGraphWorkspaceEditor')
+    expect(automationNavigation).toContain('<AutomationEditor')
     expect(automationNavigation).toContain('workspaceId={activeWorkspaceId}')
-    expect(infoPage).toContain('<AutomationGraphWorkspaceEditor')
-    expect(infoPage).toContain('workspaceId={workspace?.id}')
+    expect(automationNavigation).not.toContain('<AutomationGraphWorkspaceEditor')
+    expect(infoPage).not.toContain('<AutomationGraphWorkspaceEditor')
   })
 
   it('renders the graph without a connected calendar and without unwired connectors', () => {
