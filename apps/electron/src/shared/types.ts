@@ -8,6 +8,7 @@ export * from '@craft-agent/shared/protocol'
 // =============================================================================
 
 // Core types
+import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import type {
   Message as CoreMessage,
   MessageRole as CoreMessageRole,
@@ -2432,6 +2433,17 @@ export interface HomeNavigationState {
 }
 
 /**
+ * Extra workbench screens («Ещё» rail group: Досье, Радар, Решения, Центр
+ * агентов, Фокус) — one navigator; route `<screen>[/item/<itemId>]`.
+ */
+export interface ScreenNavigationState {
+  navigator: 'screen'
+  screen: ExtraScreenId
+  details: { type: 'item'; itemId: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
+/**
  * Knowledge ref kinds, mirrored from the Knowledge Provider contract
  * (spec K-03 §3.1: `KnowledgeRef { scheme:'siyuan'; kind; id }`). Declared
  * locally because apps/electron does not import @craft-agent/core.
@@ -2512,6 +2524,7 @@ export type NavigationState =
   | TerminalNavigationState
   | ConnectionsNavigationState
   | HomeNavigationState
+  | ScreenNavigationState
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -2563,6 +2576,10 @@ export const isMeetingsNavigation = (
 export const isConnectionsNavigation = (
   state: NavigationState
 ): state is ConnectionsNavigationState => state.navigator === 'connections'
+
+export const isScreenNavigation = (
+  state: NavigationState
+): state is ScreenNavigationState => state.navigator === 'screen'
 
 export const isHomeNavigation = (
   state: NavigationState
@@ -2655,6 +2672,9 @@ export const getNavigationStateKey = (state: NavigationState): string => {
   }
   if (state.navigator === 'home') {
     return 'home'
+  }
+  if (state.navigator === 'screen') {
+    return buildExtraScreenRoute(state.screen, state.details?.itemId)
   }
   // Unified-shell surfaces (W1) — key format mirrors the route format
   if (state.navigator === 'knowledge') {
@@ -2857,6 +2877,16 @@ export const parseNavigationStateKey = (key: string): NavigationState | null => 
 
   if (key === 'connections') return { navigator: 'connections', details: null }
   if (key === 'home') return { navigator: 'home', details: null }
+  {
+    const extraScreen = parseExtraScreenSegments(key.split('/'))
+    if (extraScreen) {
+      return {
+        navigator: 'screen',
+        screen: extraScreen.screen,
+        details: extraScreen.itemId ? { type: 'item', itemId: extraScreen.itemId } : null,
+      }
+    }
+  }
   if (key === 'meetings') return { navigator: 'meetings', details: null }
   if (key.startsWith('meetings/meeting/')) {
     const meetingId = decodeURIComponent(key.slice('meetings/meeting/'.length))

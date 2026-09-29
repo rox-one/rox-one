@@ -18,6 +18,7 @@
 import type { SettingsSubpage } from './settings-registry'
 import type { PermissionMode } from '@craft-agent/shared/agent/mode-types'
 import type { KnowledgeRefKind } from './types'
+import { buildExtraScreenRoute, type ExtraScreenId } from './extra-screens'
 
 // Helper to build query strings from params
 function toQueryString(params?: Record<string, string | undefined>): string {
@@ -277,6 +278,9 @@ export const routes = {
     /** Write-proposal diff surface — `diff/{proposalId}` (spec K-05 contour) */
     proposal: (proposalId: string) =>
       `diff/${encodeURIComponent(proposalId)}` as const,
+
+    /** Extra workbench screen («Ещё»: Досье, Радар…) — `{screen}[/item/{itemId}]` */
+    screen: (screen: ExtraScreenId, itemId?: string) => buildExtraScreenRoute(screen, itemId),
 
     /** Local terminal surface — `terminal/{terminalId}` */
     terminal: (terminalId: string) =>

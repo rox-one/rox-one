@@ -33,6 +33,7 @@ import {
   isTerminalNavigation,
 } from '@/contexts/NavigationContext'
 import { sourceSelection, skillSelection, automationSelection } from '@/hooks/useEntitySelection'
+import { isScreenNavigation } from '../../../shared/types'
 import ChatPage from '@/pages/ChatPage'
 import { HomeFrontPage } from '@/platform/HomeFrontPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
@@ -50,6 +51,7 @@ import {
 
 const NotesPage = React.lazy(() => import('@/pages/NotesPage'))
 const ConnectionsPage = React.lazy(() => import('@/pages/ConnectionsPage'))
+const ExtraScreenHost = React.lazy(() => import('@/pages/extra-screens/ExtraScreenHost'))
 const TasksPage = React.lazy(() => import('@/pages/TasksPage'))
 const MeetingsPage = React.lazy(() => import('@/pages/MeetingsPage'))
 const KnowledgeEntityPage = React.lazy(() => import('@/pages/KnowledgeEntityPage'))
@@ -484,6 +486,14 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <MeetingsPage selectedId={navState.details?.meetingId ?? null} />
+      </Panel>
+    )
+  }
+
+  if (isScreenNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <ExtraScreenHost screen={navState.screen} itemId={navState.details?.itemId ?? null} />
       </Panel>
     )
   }

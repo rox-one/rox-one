@@ -20,6 +20,7 @@ import {
 } from '@/atoms/unified-shell'
 import { HARNESS_SKIP_LIST } from '@craft-agent/core/platform'
 import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
+import { ExtraScreensSettings } from './ExtraScreensSettings'
 
 export function WorkbenchChromeSettings() {
   const { t } = useTranslation()
@@ -116,6 +117,7 @@ export function WorkbenchChromeSettings() {
         />
       </SettingsCard>
     </SettingsSection>
+    <ExtraScreensSettings />
     <SettingsSection
       title={t('settings.appearance.harnessSkipTitle')}
       description={t('settings.appearance.harnessSkipDesc')}

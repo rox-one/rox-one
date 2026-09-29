@@ -8,6 +8,8 @@
  * off. The unified-shell master is a renderer atom, not this list.
  */
 
+import { EXTRA_SCREEN_FEATURE_FLAGS } from './extra-screen-flags.ts';
+
 export interface FeatureFlagDefinition {
   id: string;
   defaultValue: boolean;
@@ -199,6 +201,8 @@ export const WORKBENCH_FEATURE_FLAGS: readonly FeatureFlagDefinition[] = [
     dependencies: [],
     rollbackSafe: true,
   },
+  // Extra screens («Ещё»): workbench.mode.<id>.v1, default ON
+  ...EXTRA_SCREEN_FEATURE_FLAGS,
 ];
 
 export function resolveEnabledFlags(
