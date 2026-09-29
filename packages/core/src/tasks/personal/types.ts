@@ -6,22 +6,37 @@
 export const PERSONAL_TASK_BUNDLE_VERSION = 1
 
 export type TaskListId = 'inbox' | 'today' | 'upcoming' | 'anytime' | 'someday'
-export type TaskProjectionId = TaskListId | 'logbook'
+export type TaskProjectionId = TaskListId | 'logbook' | 'trash'
 /** Unified list (`all`) plus the classic projections, used as filters not the only model. */
 export type TaskFilterId = TaskProjectionId | 'all'
 export type TaskSortId = 'order' | 'due' | 'priority' | 'project' | 'title'
 export type TaskPriority = 'none' | 'low' | 'medium' | 'high'
-export type TaskLinkKind = 'note' | 'session' | 'message' | 'workflowRun'
+export type TaskLinkKind = 'note' | 'session' | 'message' | 'workflowRun' | 'meeting' | 'feed' | 'mail' | 'decision'
 export type RecurrenceRule = 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 export interface TaskLink {
   kind: TaskLinkKind
   id: string
+  /** Human label captured when the link was made (source title), optional. */
+  label?: string
 }
 
 export interface Recurrence {
   rule: RecurrenceRule
   interval: number
+  /** weekly only: local weekdays (0 = Sunday … 6 = Saturday). Empty/absent = same weekday. */
+  weekdays?: number[]
+  /** 'fixed' (default): next date from the schedule; 'after': N units after completion. */
+  mode?: 'fixed' | 'after'
+  /** Stop repeating after this local timestamp. */
+  until?: number
+}
+
+/** Lightweight checklist line inside a task (Things-style, not a task of its own). */
+export interface ChecklistItem {
+  id: string
+  title: string
+  done: boolean
 }
 
 export interface PersonalTask {
@@ -44,6 +59,19 @@ export interface PersonalTask {
   createdAt: number
   completedAt?: number
   cancelledAt?: number
+  // — Things-style additions (all optional; v1 bundles load unchanged) —
+  /** Checklist lines. */
+  checklist?: ChecklistItem[]
+  /** Local timestamp of a reminder notification. */
+  reminderAt?: number
+  /** Set when the task was moved to Корзина (restorable until emptied). */
+  trashedAt?: number
+  /** Where the task came from (meeting, feed item, mail, session…). Also kept in links. */
+  source?: TaskLink
+  /** Id of the task this one was spawned from by a repeat rule. */
+  repeatOf?: string
+  /** Last modification time (for sync/debug; optional). */
+  updatedAt?: number
 }
 
 export interface TaskProject {
@@ -51,12 +79,20 @@ export interface TaskProject {
   name: string
   areaId?: string
   order: number
+  notes?: string
+  /** Deadline of the whole project. */
+  deadlineAt?: number
+  completedAt?: number
+  trashedAt?: number
+  createdAt?: number
 }
 
 export interface TaskArea {
   id: string
   name: string
   order: number
+  collapsed?: boolean
+  trashedAt?: number
 }
 
 export interface TaskHeading {
@@ -94,5 +130,9 @@ export function emptyBundle(): PersonalTaskBundle {
 }
 
 export function isOpenTask(task: PersonalTask): boolean {
-  return task.completedAt == null && task.cancelledAt == null
+  return task.completedAt == null && task.cancelledAt == null && task.trashedAt == null
+}
+
+export function isTrashedTask(task: PersonalTask): boolean {
+  return task.trashedAt != null
 }

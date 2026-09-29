@@ -119,3 +119,21 @@ describe('PersonalTaskPersistStore', () => {
     expect(readFileSync(join(store.dir, 'bad.json'), 'utf8')).toBe('not json {{{')
   })
 })
+
+describe('schema v2 backup (Things-style fields)', () => {
+  it('copies every task file and meta verbatim once, then is idempotent', () => {
+    const store = new PersonalTaskPersistStore(root)
+    store.put(makeTask())
+    store.put(makeTask({ id: 'task-two', title: 'Two' }))
+    store.writeMeta({ projects: [{ id: 'proj-1', name: 'P', order: 0 }], areas: [], headings: [], audit: [] })
+    const dir = store.ensureSchemaBackup(2, 1_790_000_000_000)
+    expect(dir).not.toBeNull()
+    const files = readdirSync(join(dir!, 'personal-tasks')).sort()
+    expect(files).toEqual(['task-buy-milk.json', 'task-two.json'])
+    expect(readFileSync(join(dir!, 'personal-tasks', 'task-two.json'), 'utf8')).toBe(readFileSync(join(store.dir, 'task-two.json'), 'utf8'))
+    expect(existsSync(join(dir!, 'personal-tasks-meta.json'))).toBe(true)
+    expect(store.ensureSchemaBackup(2)).toBeNull()
+    // originals untouched
+    expect(store.list()).toHaveLength(2)
+  })
+})

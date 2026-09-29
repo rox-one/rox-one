@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'bun:test'
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-const page = readFileSync(join(__dirname, '../TasksPage.tsx'), 'utf8')
+// The Things-style page is split into TasksPage.tsx + pages/tasks/*.tsx parts.
+const tasksDir = join(__dirname, '../tasks')
+const page = [
+  readFileSync(join(__dirname, '../TasksPage.tsx'), 'utf8'),
+  ...readdirSync(tasksDir).filter((name) => name.endsWith('.tsx')).map((name) => readFileSync(join(tasksDir, name), 'utf8')),
+].join('\n')
 const personalTasks = readFileSync(join(__dirname, '../../lib/personal-tasks.ts'), 'utf8')
 const projectPage = readFileSync(join(__dirname, '../ProjectInfoPage.tsx'), 'utf8')
 

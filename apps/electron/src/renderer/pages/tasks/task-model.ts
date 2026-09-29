@@ -4,8 +4,10 @@
 import {
   isOpenTask,
   matchesFilter,
+  matchesTaskSearch,
   type PersonalTask,
   type TaskFilterId,
+  type TaskLink,
 } from '@craft-agent/core/tasks/personal'
 
 export type AgentViewId = 'board' | 'running' | 'review' | 'conductor'
@@ -13,6 +15,8 @@ export type AgentViewId = 'board' | 'running' | 'review' | 'conductor'
 export type TasksView =
   | { kind: 'list'; id: TaskFilterId }
   | { kind: 'project'; id: string }
+  | { kind: 'area'; id: string }
+  | { kind: 'tag'; id: string }
   | { kind: 'agents'; id: AgentViewId }
 
 /** Minimal session shape the Агенты section needs (subset of SessionMeta). */
@@ -115,4 +119,68 @@ export function parseAgentMention(title: string): { title: string; delegate: boo
   const re = /(^|\s)@(агент|agent)(?=\s|$)/iu
   if (!re.test(title)) return { title, delegate: false }
   return { title: title.replace(re, ' ').replace(/\s+/g, ' ').trim(), delegate: true }
+}
+
+
+// ── Things-style helpers ────────────────────────────────────────────────────
+
+const EVIDENCE_RE = /rox:meeting-evidence\s+meetingId="([^"]+)"/
+
+/**
+ * Where the task came from: explicit `source`, else the first non-session
+ * provenance link, else a meeting evidence marker in the notes (tasks
+ * created by meeting actions on the server), else the first session link.
+ */
+export function deriveTaskSource(task: PersonalTask): TaskLink | null {
+  if (task.source) return task.source
+  const provenance = task.links.find((link) => link.kind === 'meeting' || link.kind === 'feed' || link.kind === 'mail' || link.kind === 'message' || link.kind === 'decision' || link.kind === 'note')
+  if (provenance) return provenance
+  const evidence = EVIDENCE_RE.exec(task.notes)
+  if (evidence) return { kind: 'meeting', id: evidence[1]! }
+  return null
+}
+
+/** Notes without machine markers (HTML comments) — what the user should read/edit. */
+export function visibleNotes(notes: string): string {
+  return notes.replace(/<!--[\s\S]*?-->/g, '').trim()
+}
+
+/** Re-attach the hidden markers of `previous` to edited visible notes. */
+export function mergeNotesMarkers(previous: string, edited: string): string {
+  const markers = previous.match(/<!--[\s\S]*?-->/g) ?? []
+  return markers.length ? `${edited.trimEnd()}\n${markers.join('\n')}` : edited
+}
+
+export interface SearchQuery {
+  text: string
+  tags: string[]
+}
+
+/** «отчёт #работа» → text «отчёт», tags [работа]. */
+export function parseSearch(raw: string): SearchQuery {
+  const tags: string[] = []
+  const text = raw.replace(/(^|\s)#([\p{L}\p{N}_\-/]+)/gu, (_m, _s, tag: string) => {
+    tags.push(tag.toLowerCase())
+    return ' '
+  }).trim()
+  return { text, tags }
+}
+
+export function matchesSearch(task: PersonalTask, query: SearchQuery): boolean {
+  if (query.tags.length && !query.tags.every((tag) => task.tags.some((own) => own.toLowerCase() === tag))) return false
+  return matchesTaskSearch(task, query.text)
+}
+
+export function checklistProgress(task: PersonalTask): { done: number; total: number } {
+  const items = task.checklist ?? []
+  return { done: items.filter((item) => item.done).length, total: items.length }
+}
+
+/** Days until a deadline (negative = overdue), by local calendar days. */
+export function daysUntil(at: number, now: number): number {
+  const a = new Date(at)
+  a.setHours(0, 0, 0, 0)
+  const b = new Date(now)
+  b.setHours(0, 0, 0, 0)
+  return Math.round((a.getTime() - b.getTime()) / 86400000)
 }
