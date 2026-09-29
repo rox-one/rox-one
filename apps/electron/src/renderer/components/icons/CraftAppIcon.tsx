@@ -14,6 +14,8 @@ export function CraftAppIcon({ className, size = 64 }: CraftAppIconProps) {
       width={size}
       height={size}
       className={className}
+      style={{ borderRadius: "22%", objectFit: "cover", aspectRatio: "1 / 1" }}
+      draggable={false}
     />
   )
 }
