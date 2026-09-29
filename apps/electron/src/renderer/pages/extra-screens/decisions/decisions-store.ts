@@ -90,6 +90,10 @@ export async function loadSourceTranscript(workspaceId: string, source: Decision
     const session = (await api.getSessionMessages(source.id)) as { messages?: { role?: string; content?: string; isIntermediate?: boolean }[] } | null
     return sessionTranscript(session?.messages)
   }
+  if (source.kind === 'meeting' && source.id && api.meetingsLocal) {
+    const [meeting, transcript] = await Promise.all([api.meetingsLocal.get(source.id), api.meetingsLocal.readTranscript(source.id)])
+    if (meeting || transcript) return meetingTranscript({ summary: meeting?.summary?.text, notes: meeting?.notes ? [{ text: meeting.notes }] : [], segments: transcript?.segments ?? [] })
+  }
   if (source.kind === 'meeting' && source.id && typeof api.getMeeting === 'function') {
     return meetingTranscript(await api.getMeeting(workspaceId, source.id))
   }

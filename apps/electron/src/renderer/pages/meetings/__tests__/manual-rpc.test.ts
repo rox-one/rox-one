@@ -169,15 +169,14 @@ describe('meetings manual note / correction RPC client', () => {
     })).toEqual({ ok: false, code: 'correct-failed' })
   })
 
-  it('wires MeetingsPage through manual RPCs, not invented ASR text', () => {
+  it('MeetingsPage reads real local meetings, never browser speech APIs or fabricated segments', () => {
     const page = readFileSync(join(__dirname, '../../MeetingsPage.tsx'), 'utf8')
-    expect(page).toContain('addManualNoteViaRpc')
-    expect(page).toContain('correctSegmentViaRpc')
-    expect(page).toContain('meetings.addManualNoteIntent')
-    expect(page).toContain('meetings.correctIntent')
-    expect(page).toContain('meetings-add-manual-note')
-    expect(page).toContain('meetings-correct-segment')
-    expect(page).not.toContain('segment.upsert')
-    expect(page).not.toContain('webkitSpeechRecognition')
+    const detail = readFileSync(join(__dirname, '../LocalMeetingDetail.tsx'), 'utf8')
+    expect(page).toContain('meetingsApi()')
+    expect(detail).toContain('api.readTranscript(m.id)')
+    for (const source of [page, detail]) {
+      expect(source).not.toContain('segment.upsert')
+      expect(source).not.toContain('webkitSpeechRecognition')
+    }
   })
 })

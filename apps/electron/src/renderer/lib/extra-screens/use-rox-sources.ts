@@ -62,6 +62,17 @@ export function useMeetings(workspaceId: string | null | undefined): { meetings:
   useEffect(() => {
     let cancelled = false
     const api = window.electronAPI
+    // Local recordings (Встречи) are the source of real meetings on this device.
+    const local = api?.meetingsLocal
+    if (local) {
+      const load = () => local.list(workspaceId ?? null).then(
+        (listed) => { if (!cancelled) setState({ meetings: normalizeMeetingList(listed), available: true }) },
+        () => { if (!cancelled) setState({ meetings: [], available: false }) },
+      )
+      void load()
+      const off = local.onChanged(() => { void load() })
+      return () => { cancelled = true; off() }
+    }
     if (!workspaceId || typeof api?.listMeetings !== 'function') {
       setState({ meetings: [], available: false })
       return

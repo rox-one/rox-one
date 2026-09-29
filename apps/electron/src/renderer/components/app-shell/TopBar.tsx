@@ -33,6 +33,7 @@ import { AccountMenu } from "./AccountMenu"
 import { getDocUrl } from "@craft-agent/shared/docs/doc-links"
 import { AppMenu } from "../AppMenu"
 import { HeaderStatusLane } from "./HeaderStatusLane"
+import { MeetingRecordingIndicator } from "../meetings/MeetingRecordingIndicator"
 import { CompactWorkspaceMenu } from "./CompactWorkspaceMenu"
 import type { ReactNode } from "react"
 import {
@@ -401,6 +402,7 @@ export function TopBar({
             {compactHeaderRenderer()}
           </div>
         )}
+        <MeetingRecordingIndicator />
         <HeaderStatusLane className="flex-1 min-w-0" />
       </div>
       )}

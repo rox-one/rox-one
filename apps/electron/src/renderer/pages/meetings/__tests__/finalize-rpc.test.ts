@@ -118,13 +118,12 @@ describe('meetings finalize RPC client', () => {
     })).toEqual({ ok: false, code: 'finalize-failed' })
   })
 
-  it('wires MeetingsPage through finalize RPC, not invented ASR text', () => {
-    const page = readFileSync(join(__dirname, '../../MeetingsPage.tsx'), 'utf8')
-    expect(page).toContain('finalizeMeetingViaRpc')
-    expect(page).toContain('meetings.finalizeIntent')
-    expect(page).toContain('meetings.transcriptNone')
-    expect(page).toContain('meetings-finalize')
-    expect(page).not.toContain('segment.upsert')
-    expect(page).not.toContain('webkitSpeechRecognition')
+  it('meeting detail shows the local whisper transcript state honestly, not invented ASR text', () => {
+    const detail = readFileSync(join(__dirname, '../LocalMeetingDetail.tsx'), 'utf8')
+    expect(detail).toContain('meetings.local.tr.unavailableTitle')
+    expect(detail).toContain('meetings.local.tr.emptyTitle')
+    expect(detail).toContain('meeting-transcript-progress')
+    expect(detail).not.toContain('segment.upsert')
+    expect(detail).not.toContain('webkitSpeechRecognition')
   })
 })

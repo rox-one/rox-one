@@ -8,6 +8,7 @@ export * from '@craft-agent/shared/protocol'
 // =============================================================================
 
 // Core types
+import type { MeetingsLocalApi } from './meetings-local'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import type {
   Message as CoreMessage,
@@ -914,6 +915,8 @@ export interface ElectronAPI {
   generateThumbnail(base64: string, mimeType: string): Promise<string | null>
   /** Returns the absolute filesystem path for a File (only works for file-picker / OS-drag Files). */
   getFilePath(file: File): string | null
+  /** Local meeting recordings (device-local IPC, Electron only). */
+  meetingsLocal?: MeetingsLocalApi
 
   // Filesystem search (for @ mention file selection)
   searchFiles(basePath: string, query: string): Promise<FileSearchResult[]>

@@ -113,6 +113,9 @@ mac:
     # and prompt for permission. Without it the app is silently denied LAN access
     # and never appears in the privacy pane (craft-agents-oss#938).
     NSLocalNetworkUsageDescription: "Rox uses your local network to reach LAN addresses and devices you ask an agent to access, such as local servers or APIs."
+    # Встречи: meeting recording and voice dictation capture the microphone.
+    # Without this key macOS never shows its one-time permission prompt.
+    NSMicrophoneUsageDescription: "Rox records meetings and dictation from your microphone. Audio is saved and transcribed locally on this Mac."
   target:
     - target: dmg
       arch:

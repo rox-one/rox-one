@@ -43,6 +43,7 @@ import type { RpcClient } from '@craft-agent/server-core/transport'
 import type { RemoteServerConfig } from '@craft-agent/core/types'
 import type { ElectronAPI, SshBootstrapProgress, SshConnectionStatus } from '../shared/types'
 import { isSshBacked } from '../shared/ssh'
+import { MEETINGS_LOCAL_IPC, type MeetingsLocalApi } from '../shared/meetings-local'
 import { peerTrustOptionsForRemote } from '../shared/remote-tls-client-options.ts'
 import { createOpenClawHostControlBridge } from './openclaw-host-control'
 
@@ -538,6 +539,40 @@ client.onConnectionStateChanged((state) => {
   defaultPath: string
   filters?: Array<{ name: string; extensions: string[] }>
 }) => ipcRenderer.invoke('file:saveText', opts)
+
+// Local meeting recordings — direct IPC: microphone audio, files and the
+// whisper.cpp transcriber are device-local (see main/meetings/local-ipc.ts).
+{
+  const M = MEETINGS_LOCAL_IPC
+  const meetingsLocal: MeetingsLocalApi = {
+    list: (workspaceId) => ipcRenderer.invoke(M.LIST, workspaceId),
+    get: (id) => ipcRenderer.invoke(M.GET, id),
+    create: (input) => ipcRenderer.invoke(M.CREATE, input),
+    update: (id, patch) => ipcRenderer.invoke(M.UPDATE, id, patch),
+    trash: (id) => ipcRenderer.invoke(M.TRASH, id),
+    recStart: (input) => ipcRenderer.invoke(M.REC_START, input),
+    recChunk: (id, chunk) => ipcRenderer.invoke(M.REC_CHUNK, id, chunk),
+    recState: (id, state) => ipcRenderer.invoke(M.REC_STATE, id, state),
+    recStop: (id, input) => ipcRenderer.invoke(M.REC_STOP, id, input),
+    recover: () => ipcRenderer.invoke(M.RECOVER),
+    importAudio: (input) => ipcRenderer.invoke(M.IMPORT_AUDIO, input),
+    readAudio: (id) => ipcRenderer.invoke(M.READ_AUDIO, id),
+    readTranscript: (id) => ipcRenderer.invoke(M.READ_TRANSCRIPT, id),
+    transcribe: (id) => ipcRenderer.invoke(M.TRANSCRIBE, id),
+    engine: () => ipcRenderer.invoke(M.ENGINE),
+    micAccess: (ask) => ipcRenderer.invoke(M.MIC_ACCESS, ask),
+    attach: (id, paths) => ipcRenderer.invoke(M.ATTACH, id, paths),
+    openDocument: (id, docId) => ipcRenderer.invoke(M.OPEN_DOC, id, docId),
+    reveal: (id, docId) => ipcRenderer.invoke(M.REVEAL, id, docId),
+    removeDocument: (id, docId) => ipcRenderer.invoke(M.REMOVE_DOC, id, docId),
+    onChanged: (cb) => {
+      const handler = (_e: unknown, event: { id: string }) => cb(event)
+      ipcRenderer.on(M.CHANGED, handler)
+      return () => { ipcRenderer.removeListener(M.CHANGED, handler) }
+    },
+  }
+  ;(api as ElectronAPI).meetingsLocal = meetingsLocal
+}
 
 // webUtils.getPathForFile: returns the absolute OS path of a File object obtained
 // from <input type="file"> or OS drag-drop. Returns null for Files fabricated from

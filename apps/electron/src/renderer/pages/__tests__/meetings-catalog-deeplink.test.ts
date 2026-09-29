@@ -12,7 +12,7 @@ describe('GG catalog deeplinks — meetings + wiring', () => {
     expect(page).not.toContain('meetings[0]?.id')
     expect(page).toContain('routeBound')
     expect(page).toContain('meetings.meetingNotFound')
-    expect(page).toContain('loadMeetingSelection')
+    expect(page).toContain('selectedMissing')
   })
 
   it('loads missing route ids via selection helper', () => {

@@ -28,8 +28,9 @@ export function ModeScreenLayout({
         <nav className="flex w-[220px] shrink-0 flex-col gap-0.5 overflow-y-auto bg-surface-rail px-2 py-3">
           {navigator}
         </nav>
-        <section className="flex w-[440px] min-w-[320px] shrink flex-col bg-foreground/[0.025]">{list}</section>
-        <section className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-background">{detail}</section>
+        <section className="flex w-[440px] min-w-[240px] shrink flex-col bg-foreground/[0.025]">{list}</section>
+        {/* The detail keeps a readable width; the list gives way first in narrow windows. */}
+        <section className="flex min-w-[320px] flex-1 flex-col overflow-y-auto bg-background">{detail}</section>
       </div>
       {status ? (
         <div className="flex h-7 shrink-0 items-center gap-2 bg-surface-rail px-3 text-[11px] text-text-muted" role="status">
