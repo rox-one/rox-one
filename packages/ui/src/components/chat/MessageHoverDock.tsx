@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { Copy, Heart, Highlighter, MessageSquareQuote, MoreHorizontal, Share2, SmilePlus, Sparkles, Swords } from 'lucide-react'
+import { Check, Copy, Heart, MessageSquareQuote, MoreHorizontal, SmilePlus, Sparkles, Swords } from 'lucide-react'
 import { SIDE_THREAD_ACTIONS, type SideThreadAction } from '@craft-agent/shared/side-threads'
 import { cn } from '../../lib/utils'
 import {
@@ -36,11 +36,10 @@ export type MessageHoverDockProps = {
   onToggleHeart: () => void
   onToggleEmoji: (emoji: string) => void
   onTogglePicker?: () => void
-  onCopy: () => void
+  /** May return a promise; the copy icon flips to a check once it resolves. */
+  onCopy: () => void | Promise<void>
   onQuote?: () => void
-  onShare?: () => void
   onLearn?: () => void
-  onHighlight?: () => void
   /** Side-thread actions (rendered as a submenu of «…»). */
   onPickSideThread?: (action: SideThreadAction) => void
   /** Additional overflow actions (Markdown, Listen, Branch…). */
@@ -62,9 +61,7 @@ export function MessageHoverDock({
   onToggleEmoji,
   onCopy,
   onQuote,
-  onShare,
   onLearn,
-  onHighlight,
   onPickSideThread,
   extraActions = [],
   className,
@@ -72,8 +69,19 @@ export function MessageHoverDock({
   const { t } = useTranslation()
   const heart = reactionCounts.find((item) => item.emoji === DEFAULT_REACTION_EMOJI)
   const otherReactions = reactionCounts.filter((item) => item.emoji !== DEFAULT_REACTION_EMOJI && item.count > 0)
-  // Quote is visible when available; otherwise share takes the third slot.
-  const shareVisible = !onQuote && !!onShare
+  const [copied, setCopied] = React.useState(false)
+  const copyTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+  React.useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current) }, [])
+  const handleCopy = React.useCallback(async () => {
+    try {
+      await onCopy()
+      setCopied(true)
+      if (copyTimer.current) clearTimeout(copyTimer.current)
+      copyTimer.current = setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setCopied(false)
+    }
+  }, [onCopy])
 
   return (
     <div
@@ -95,16 +103,18 @@ export function MessageHoverDock({
         <Heart className={cn('h-3.5 w-3.5', heart?.mine && 'fill-current')} />
         {heart?.count ? <span>{heart.count}</span> : null}
       </button>
-      <button type="button" aria-label={t('common.copy')} className={iconButton} onClick={onCopy}>
-        <Copy className="h-3.5 w-3.5" />
+      <button
+        type="button"
+        aria-label={t('common.copy')}
+        data-copied={copied ? 'true' : undefined}
+        className={iconButton}
+        onClick={() => { void handleCopy() }}
+      >
+        {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
       </button>
       {onQuote ? (
         <button type="button" aria-label={t('chat.quoteReply')} className={iconButton} onClick={onQuote}>
           <MessageSquareQuote className="h-3.5 w-3.5" />
-        </button>
-      ) : shareVisible ? (
-        <button type="button" aria-label={t('chat.shareMessage')} className={iconButton} onClick={onShare}>
-          <Share2 className="h-3.5 w-3.5" />
         </button>
       ) : null}
       {otherReactions.map((item) => (
@@ -151,18 +161,6 @@ export function MessageHoverDock({
               </div>
             </StyledDropdownMenuSubContent>
           </DropdownMenuSub>
-          {onHighlight ? (
-            <StyledDropdownMenuItem onSelect={onHighlight}>
-              <Highlighter />
-              <span>{t('chat.highlightPassage')}</span>
-            </StyledDropdownMenuItem>
-          ) : null}
-          {onShare && !shareVisible ? (
-            <StyledDropdownMenuItem onSelect={onShare}>
-              <Share2 />
-              <span>{t('chat.shareMessage')}</span>
-            </StyledDropdownMenuItem>
-          ) : null}
           {onLearn ? (
             <StyledDropdownMenuItem onSelect={onLearn}>
               <Sparkles />

@@ -338,7 +338,6 @@ export interface UserMessageBubbleProps {
   onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
   onRemoveAnnotation?: (messageId: string, annotationId: string) => void
   onQuote?: (text: string) => void
-  onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
 }
@@ -364,7 +363,6 @@ export function UserMessageBubble({
   onAddAnnotation,
   onRemoveAnnotation,
   onQuote,
-  onShareMessage,
   onLearnFromMessage,
   onPickSideThread,
 }: UserMessageBubbleProps) {
@@ -570,9 +568,8 @@ export function UserMessageBubble({
           reactionCounts={reactionCounts}
           onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
           onToggleEmoji={handleToggleEmoji}
-          onCopy={() => { void navigator.clipboard.writeText(displayContent) }}
+          onCopy={() => navigator.clipboard.writeText(displayContent)}
           onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(displayContent)) : undefined}
-          onShare={onShareMessage ? () => onShareMessage(displayContent) : undefined}
           onLearn={onLearnFromMessage ? () => onLearnFromMessage(displayContent) : undefined}
           onPickSideThread={onPickSideThread && messageId ? (action) => onPickSideThread(action, displayContent, messageId) : undefined}
         />

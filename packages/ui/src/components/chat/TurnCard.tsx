@@ -374,7 +374,6 @@ export interface TurnCardProps {
   /** Callback to branch the session from a specific message */
   onBranch?: (messageId: string, options?: { newPanel?: boolean }) => void
   onQuote?: (text: string) => void
-  onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
   /** Callback to add an annotation to a response message */
@@ -1483,7 +1482,6 @@ export interface ResponseCardProps {
   /** Callback to branch the session from this response */
   onBranch?: (options?: { newPanel?: boolean }) => void
   onQuote?: (text: string) => void
-  onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
   /** Callback to add annotation from selected text */
@@ -1695,7 +1693,6 @@ export function ResponseCard({
   compactMode = false,
   onBranch,
   onQuote,
-  onShareMessage,
   onLearnFromMessage,
   onPickSideThread,
   onAddAnnotation,
@@ -1712,7 +1709,6 @@ export function ResponseCard({
   const [displayedText, setDisplayedText] = useState(text)
   const lastUpdateRef = useRef(Date.now())
   // Copy to clipboard state
-  const [copied, setCopied] = useState(false)
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false)
   // Dark mode detection - scroll fade only shown in dark mode
@@ -1805,16 +1801,6 @@ export function ResponseCard({
     anchor: activeMenuAnchor,
     sourceKey: selectionMenuSourceKey,
   })
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
-    }
-  }, [text])
 
   const reactionCounts = useMemo(() => aggregateReactions(annotations, LOCAL_REACTION_ACTOR.id), [annotations])
   const handleToggleEmoji = useCallback(
@@ -2527,11 +2513,9 @@ export function ResponseCard({
         reactionCounts={reactionCounts}
         onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
         onToggleEmoji={handleToggleEmoji}
-        onCopy={handleCopy}
+        onCopy={() => navigator.clipboard.writeText(text)}
         onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(text)) : undefined}
-        onShare={onShareMessage ? () => onShareMessage(text) : undefined}
         onLearn={onLearnFromMessage ? () => onLearnFromMessage(text) : undefined}
-        onHighlight={canAnnotate ? () => contentLayerRef.current?.focus() : undefined}
         onPickSideThread={onPickSideThread && messageId ? (action) => onPickSideThread(action, text, messageId) : undefined}
         extraActions={overflowActions}
         className="opacity-100 group-focus-within:opacity-100"
@@ -2856,7 +2840,6 @@ export const TurnCard = React.memo(function TurnCard({
   compactMode = false,
   onBranch,
   onQuote,
-  onShareMessage,
   onLearnFromMessage,
   onPickSideThread,
   onAddAnnotation,
@@ -3236,7 +3219,6 @@ export const TurnCard = React.memo(function TurnCard({
             onBranch={onBranch ? (options?: { newPanel?: boolean }) => onBranch(planActivity.messageId ?? planActivity.id, options) : undefined}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
-            onShareMessage={onShareMessage}
             onLearnFromMessage={onLearnFromMessage}
             onPickSideThread={onPickSideThread}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
@@ -3288,7 +3270,6 @@ export const TurnCard = React.memo(function TurnCard({
                 onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
                 sendMessageKey={sendMessageKey}
                 onQuote={onQuote}
-                onShareMessage={onShareMessage}
                 onLearnFromMessage={onLearnFromMessage}
                 onPickSideThread={onPickSideThread}
                 hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
@@ -3326,7 +3307,6 @@ export const TurnCard = React.memo(function TurnCard({
             onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
-            onShareMessage={onShareMessage}
             onLearnFromMessage={onLearnFromMessage}
             onPickSideThread={onPickSideThread}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}

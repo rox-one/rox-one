@@ -47,6 +47,7 @@ import {
 import type { RpcServer } from '@craft-agent/server-core/transport'
 import { pushTyped } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { createSystemSpeaker } from './system-tts'
 import {
   isClaimableLive,
   rpcVoiceActResult,
@@ -143,6 +144,7 @@ let cachedCaps: VoiceCapabilities = {
   quota: { asr: { remaining: 100, resetAt: 0 }, process: { remaining: 100, resetAt: 0 } },
 }
 let host: VoiceHost | null = null
+const systemSpeaker = createSystemSpeaker()
 
 function getHost(server: RpcServer): VoiceHost {
   if (!host) {
@@ -255,11 +257,24 @@ export function registerVoiceHandlers(server: RpcServer, _deps: HandlerDeps): vo
 
   server.handle(RPC_CHANNELS.voice.SPEAK, async (_ctx, payload: unknown) => {
     const body = payload && typeof payload === 'object' ? payload as Record<string, unknown> : {}
+    if (body.status === true) {
+      return { engine: 'system', uploaded: false as const, playback: 'none' as const, speaking: systemSpeaker.isSpeaking() }
+    }
+    if (body.stop === true) {
+      const stopped = systemSpeaker.stop()
+      return { engine: 'system', uploaded: false as const, playback: 'none' as const, stopped }
+    }
     const text = assertEditableTranscript(typeof body.text === 'string' ? body.text : '')
-    return speakWithPolicy(loadVoicePrefs(), { text }, {
+    const policy = await speakWithPolicy(loadVoicePrefs(), { text }, {
       edge: edgeSpeakAdapter(),
       fish: fishSpeakAdapter(),
     })
+    // edge/fish adapters do not synthesize audio yet — speak via the OS engine
+    // (macOS `say`), otherwise let the renderer use the Web Speech API.
+    const { played } = await systemSpeaker.speak(text)
+    return played
+      ? { engine: 'macos-say', uploaded: false as const, playback: 'native' as const }
+      : { ...policy, playback: 'renderer' as const }
   })
 
   server.handle(RPC_CHANNELS.voice.START, async () => getHost(server).start(loadVoicePrefs()))
