@@ -129,6 +129,7 @@
   "automations.condTime": "Heure",
   "automations.condValuePlaceholder": "valeur",
   "automations.connectorsOptional": "Apple Reminders, Mail.ru, Yandex, Outlook et Google sont facultatifs.",
+  "automations.copyName": "{{name}} (copie)",
   "automations.copyPayload": "Copier le payload",
   "automations.createFailed": "Impossible de créer l’automatisation",
   "automations.cronAdvanced": "Avancé",

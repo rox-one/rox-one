@@ -462,6 +462,24 @@ function AppShellContent({
 
 
 
+  // Real rox.one balance for the connected Rox cloud account (null → «—»).
+  const [roxCloudBalance, setRoxCloudBalance] = React.useState<number | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      try {
+        const res = await window.electronAPI.getRoxBalance?.()
+        if (cancelled || !res) return
+        setRoxCloudBalance(res.status === 'ok' ? res.balance : null)
+      } catch {
+        if (!cancelled) setRoxCloudBalance(null)
+      }
+    }
+    void load()
+    const timer = window.setInterval(() => { void load() }, 5 * 60 * 1000)
+    return () => { cancelled = true; window.clearInterval(timer) }
+  }, [])
+
   const [isResizing, setIsResizing] = React.useState<'sidebar' | 'session-list' | null>(null)
   const workspaceIdForLayout = activeWorkspaceId ?? '_default'
   const sidebarResize = usePanelResize({
@@ -1414,8 +1432,8 @@ function AppShellContent({
     return known ? total : null
   }, [workspaceSessionMetas])
   const profileStripWithSpend = useMemo(
-    () => ({ ...profileStrip, spentUsd: workspaceSpentUsd }),
-    [profileStrip, workspaceSpentUsd],
+    () => ({ ...profileStrip, balance: roxCloudBalance ?? profileStrip.balance, spentUsd: workspaceSpentUsd }),
+    [profileStrip, roxCloudBalance, workspaceSpentUsd],
   )
 
   // Active sessions exclude archived - use this for all counts and filters except archived view

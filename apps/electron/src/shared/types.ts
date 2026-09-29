@@ -1501,6 +1501,12 @@ export interface ElectronAPI {
     connectExpiresAt?: number | null
   }>
   clearRoxCloud(): Promise<{ success: boolean }>
+  /** Real rox.one balance (GET /api/me/balance) for the connected Rox cloud account. */
+  getRoxBalance(): Promise<
+    | { status: 'ok'; balance: number }
+    | { status: 'disconnected' }
+    | { status: 'error'; message: string }
+  >
   deferSetup(): Promise<{ success: boolean }>
   saveOmpCredential(apiKey: string): Promise<{ success: boolean; ready: boolean; code?: string; error?: string }>
 
@@ -2143,7 +2149,7 @@ export interface ElectronAPI {
 
   // Automation state management
   setAutomationEnabled(workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean): Promise<void>
-  duplicateAutomation(workspaceId: string, eventName: string, matcherIndex: number): Promise<{ id: string } | void>
+  duplicateAutomation(workspaceId: string, eventName: string, matcherIndex: number, copyName?: string): Promise<{ id: string } | void>
   /** Replace one matcher (keeps its id). Changing `event` moves it to that event's list. */
   updateAutomation(workspaceId: string, eventName: string, matcherIndex: number, next: { event: string; matcher: Record<string, unknown> }): Promise<{ id: string; event: string; matcherIndex: number }>
   /** Append a new matcher under `event`; returns its generated id. */

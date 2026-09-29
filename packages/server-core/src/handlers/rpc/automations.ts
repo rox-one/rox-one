@@ -417,14 +417,17 @@ export function registerAutomationsHandlers(server: RpcServer, deps: HandlerDeps
     notifyChanged(workspaceId)
   })
 
-  // Duplicate an automation matcher
-  server.handle(RPC_CHANNELS.automations.DUPLICATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number) => {
+  // Duplicate an automation matcher. `copyName` is the clone's name already
+  // localized by the client (e.g. «Имя (копия)»); without it the legacy
+  // English " Copy" suffix is used.
+  server.handle(RPC_CHANNELS.automations.DUPLICATE, async (_ctx, workspaceId: string, eventName: string, matcherIndex: number, copyName?: unknown) => {
+    const localizedName = typeof copyName === 'string' ? copyName.trim().slice(0, 200) : ''
     const act = rpcAutomationsActResult({ source: 'native', action: 'write', nativeId: eventName })
     if (!isClaimableLive(act)) return
     const id = await withAutomationMatcher(workspaceId, eventName, matcherIndex, (matchers, idx, _config, genId) => {
       const clone = JSON.parse(JSON.stringify(matchers[idx]))
       clone.id = genId()
-      clone.name = clone.name ? `${clone.name} Copy` : 'Untitled Copy'
+      clone.name = localizedName || (clone.name ? `${clone.name} Copy` : 'Untitled Copy')
       matchers.splice(idx + 1, 0, clone)
       return clone.id as string
     })

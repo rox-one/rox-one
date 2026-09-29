@@ -125,7 +125,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
 
   return (
     <ScreenRoot>
-      <ScreenColumn width={340}>
+      <ScreenColumn width="clamp(220px, 32%, 340px)">
         <ScreenHeader
           title={t('extraScreens.focus.title')}
           subtitle={new Date(now).toLocaleDateString(i18n.language, { weekday: 'short', day: 'numeric', month: 'long' })}
@@ -168,11 +168,11 @@ export default function FocusPage(_props: { itemId: string | null }) {
         </div>
       </ScreenColumn>
 
-      <ScreenDetail>
-        <div className="max-w-[860px]">
+      <ScreenDetail className="overflow-x-hidden">
+        <div className="min-w-0 max-w-[860px]">
           <Card accent={running} className="mt-0">
-            <div className="flex items-center gap-4">
-              <div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+              <div className="min-w-0">
                 <CardTitle>{t('extraScreens.focus.deepWork')}</CardTitle>
                 <div className="mt-1 text-[44px] font-bold tabular-nums leading-none" role="timer" aria-live="off">
                   {running && focus.active ? mmss(focus.active.endsAt - now) : mmss(25 * 60000)}
@@ -182,11 +182,11 @@ export default function FocusPage(_props: { itemId: string | null }) {
                 </div>
               </div>
               <span className="flex-1" />
-              <div className="flex flex-col items-end gap-1.5">
+              <div className="flex min-w-0 flex-col items-end gap-1.5">
                 {running ? (
                   <ScreenButton variant="danger" onClick={() => update(stopFocus(focus, Date.now()))}>{t('extraScreens.focus.stop')}</ScreenButton>
                 ) : (
-                  <div className="flex gap-1.5">
+                  <div className="flex flex-wrap justify-end gap-1.5">
                     {PRESETS.map((minutes) => (
                       <ScreenButton key={minutes} variant={minutes === 25 ? 'primary' : 'default'} onClick={() => update(startFocus(focus, minutes, Date.now()))}>
                         {t('extraScreens.focus.startMinutes', { n: minutes })}
@@ -194,7 +194,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
                     ))}
                   </div>
                 )}
-                <div className="text-[12px] text-muted-foreground">{t('extraScreens.focus.todayStats', { n: stats.sessions, minutes: stats.minutes })}</div>
+                <div className="text-right text-[12px] text-muted-foreground">{t('extraScreens.focus.todayStats', { n: stats.sessions, minutes: stats.minutes })}</div>
               </div>
             </div>
             {queueToday.length > 0 && (
@@ -249,7 +249,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
           </Card>
 
           <Card>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <CardTitle>{t('extraScreens.focus.summary')}</CardTitle>
               <span className="flex-1" />
               <label className="flex items-center gap-1.5 text-[12px] text-muted-foreground">
@@ -265,7 +265,7 @@ export default function FocusPage(_props: { itemId: string | null }) {
                 {summaryState === 'writing' ? t('extraScreens.decisions.saving') : t('extraScreens.focus.writeSummary')}
               </ScreenButton>
             </div>
-            {summary && <pre className="mt-2 whitespace-pre-wrap font-[inherit] text-[12px] leading-[1.5] text-foreground/85">{summary}</pre>}
+            {summary && <pre className="mt-2 whitespace-pre-wrap [overflow-wrap:anywhere] font-[inherit] text-[12px] leading-[1.5] text-foreground/85">{summary}</pre>}
             <div className="mt-1 text-[12px] text-muted-foreground">
               {summaryState === 'written'
                 ? <button type="button" className="text-accent" onClick={() => summaryNoteId && navigate(routes.view.notes(summaryNoteId))}>{t('extraScreens.focus.summaryWritten')}</button>

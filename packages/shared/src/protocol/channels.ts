@@ -442,6 +442,7 @@ export const RPC_CHANNELS = {
     START_ROX_CONNECT: 'onboarding:startRoxConnect',
     GET_ROX_CLOUD_STATE: 'onboarding:getRoxCloudState',
     CLEAR_ROX_CLOUD: 'onboarding:clearRoxCloud',
+    GET_ROX_BALANCE: 'onboarding:getRoxBalance',
     SAVE_OMP_CREDENTIAL: 'onboarding:saveOmpCredential',
   },
   llmConnections: {

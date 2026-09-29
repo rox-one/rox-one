@@ -186,7 +186,7 @@ export interface AppShellContextType {
   onTestAutomation?: (automationId: string) => void
   /** Toggle an automation's enabled state by ID */
   onToggleAutomation?: (automationId: string) => void
-  /** Duplicate an automation by ID — clones config with " Copy" suffix */
+  /** Duplicate an automation by ID — clones config with a localized «(копия)» name */
   onDuplicateAutomation?: (automationId: string) => void
   /** Delete an automation by ID — removes from automations config */
   onDeleteAutomation?: (automationId: string) => void

@@ -564,12 +564,12 @@ export function AutomationEditor({ automation, workspaceId, className }: Automat
   const duplicate = React.useCallback(async () => {
     if (!workspaceId) return
     try {
-      const res = await window.electronAPI.duplicateAutomation(workspaceId, automation.event, automation.matcherIndex)
+      const res = await window.electronAPI.duplicateAutomation(workspaceId, automation.event, automation.matcherIndex, t('automations.copyName', { name: automation.name }))
       if (res && typeof res === 'object' && res.id) navigate(routes.view.automations({ automationId: res.id }))
     } catch {
       toast.error(t('toast.failedToDuplicateAutomation'))
     }
-  }, [workspaceId, automation.event, automation.matcherIndex, t])
+  }, [workspaceId, automation.event, automation.matcherIndex, automation.name, t])
 
   const group = getAutomationGroup(draft.event)
   const matchField = EVENT_MATCH_FIELD[draft.event]

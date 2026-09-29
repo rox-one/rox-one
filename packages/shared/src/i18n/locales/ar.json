@@ -129,6 +129,7 @@
   "automations.condTime": "الوقت",
   "automations.condValuePlaceholder": "القيمة",
   "automations.connectorsOptional": "Apple Reminders وMail.ru وYandex وOutlook وGoogle اختيارية.",
+  "automations.copyName": "{{name}} (نسخة)",
   "automations.copyPayload": "نسخ الحمولة",
   "automations.createFailed": "تعذّر إنشاء الأتمتة",
   "automations.cronAdvanced": "متقدم",

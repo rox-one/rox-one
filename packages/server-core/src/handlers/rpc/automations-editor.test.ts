@@ -135,6 +135,22 @@ describe('automations editor RPC', () => {
     expect(list[1].id).toBe(id)
     expect(id).not.toBe('bbb222')
   })
+
+  test('duplicate uses the client-localized copy name when given', async () => {
+    writeInitial()
+    const { invoke } = createHarness()
+    const { id } = await invoke(RPC_CHANNELS.automations.DUPLICATE, 'ws1', 'LabelAdd', 0, '  Разбор (копия) ') as { id: string }
+    const list = readConfig().automations.LabelAdd
+    expect(list[1]).toMatchObject({ id, name: 'Разбор (копия)' })
+  })
+
+  test('duplicate falls back to the legacy suffix without a copy name', async () => {
+    writeInitial()
+    const { invoke } = createHarness()
+    await invoke(RPC_CHANNELS.automations.DUPLICATE, 'ws1', 'LabelAdd', 0)
+    const list = readConfig().automations.LabelAdd
+    expect(String(list[1].name)).toMatch(/Copy$/)
+  })
 })
 
 test('last-executed detailed mode reports the last run status', async () => {

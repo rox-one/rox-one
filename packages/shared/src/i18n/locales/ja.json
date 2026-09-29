@@ -129,6 +129,7 @@
   "automations.condTime": "時間",
   "automations.condValuePlaceholder": "値",
   "automations.connectorsOptional": "Apple Reminders、Mail.ru、Yandex、Outlook、Google は任意です。",
+  "automations.copyName": "{{name}}（コピー）",
   "automations.copyPayload": "ペイロードをコピー",
   "automations.createFailed": "自動化を作成できませんでした",
   "automations.cronAdvanced": "詳細",

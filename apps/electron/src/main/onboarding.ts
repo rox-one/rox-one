@@ -5,6 +5,7 @@
  */
 import { getOnboardingAuthPayload, saveOmpRoxCredential } from '@craft-agent/shared/auth'
 import {
+  fetchRoxBalance,
   getRoxAuthBaseUrl,
   isRoxCloudRequired,
   startRoxDeviceFlow,
@@ -34,6 +35,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.onboarding.START_ROX_CONNECT,
   RPC_CHANNELS.onboarding.GET_ROX_CLOUD_STATE,
   RPC_CHANNELS.onboarding.CLEAR_ROX_CLOUD,
+  RPC_CHANNELS.onboarding.GET_ROX_BALANCE,
   RPC_CHANNELS.onboarding.SAVE_OMP_CREDENTIAL,
 ] as const
 
@@ -212,6 +214,25 @@ export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps)
         : null,
       connectError: roxConnectError,
       connectExpiresAt: roxConnectExpiresAt,
+    }
+  })
+
+  // Real balance from rox.one for the connected account. The token never
+  // leaves the main process; without a live session the UI keeps its «—».
+  server.handle(RPC_CHANNELS.onboarding.GET_ROX_BALANCE, async () => {
+    const manager = getCredentialManager()
+    if (!(await manager.hasRoxCloudSession())) return { status: 'disconnected' as const }
+    const session = await manager.getRoxCloudSession()
+    if (!session?.accessToken) return { status: 'disconnected' as const }
+    try {
+      const { balanceRox } = await fetchRoxBalance(session.accessToken)
+      const balance = Number.parseFloat(String(balanceRox))
+      if (!Number.isFinite(balance)) return { status: 'error' as const, message: 'invalid balance payload' }
+      return { status: 'ok' as const, balance }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      log.warn('[Onboarding] Rox balance fetch failed:', message)
+      return { status: 'error' as const, message }
     }
   })
 
