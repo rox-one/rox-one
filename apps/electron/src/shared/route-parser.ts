@@ -89,11 +89,13 @@ export interface ParsedCompoundRoute {
 // =============================================================================
 
 /**
- * Known prefixes that indicate a compound route
+ * Known prefixes that indicate a compound route.
+ *
+ * Exported so the main-process deep-link handler (`rox://<route>`) accepts
+ * exactly the same set of view routes the renderer can navigate to.
  */
-const COMPOUND_ROUTE_PREFIXES = [
+export const COMPOUND_ROUTE_PREFIXES: readonly string[] = [
   'allSessions', 'flagged', 'archived', 'state', 'label', 'view', 'board', 'table', 'heatmap', 'sources', 'skills', 'notes', 'automations', 'projects', 'pages', 'settings', 'browser', 'memory', 'tasks', 'meetings', 'connections', 'home',
-  // Unified-shell surfaces (W1)
   'knowledge', 'cloud-run', 'extension', 'diff', 'terminal',
 ]
 

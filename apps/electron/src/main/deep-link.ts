@@ -11,6 +11,10 @@
  *   craftagents://state/{stateId}[/session/{sessionId}]     - Session list (state filter)
  *   craftagents://sources[/source/{sourceSlug}]          - Sources list
  *   craftagents://settings[/{subpage}]                   - Settings (general, shortcuts, context)
+ *   craftagents://{home|tasks|notes|meetings|knowledge|projects|pages|memory|
+ *                  automations|connections|skills|archived|label|view|board|
+ *                  table|heatmap|browser|terminal|...}[/...]  - Any renderer view route
+ *                  (see COMPOUND_ROUTE_PREFIXES in shared/route-parser.ts)
  *
  * Action format:
  *   craftagents://action/{actionName}[/{id}][?params]
@@ -40,6 +44,7 @@ import type { WindowManager } from './window-manager'
 import { RPC_CHANNELS } from '../shared/types'
 import type { EventSink } from '@craft-agent/server-core/transport'
 import { isRoxDeeplinkProtocol } from '@craft-agent/shared/identity'
+import { COMPOUND_ROUTE_PREFIXES } from '../shared/route-parser'
 
 export interface DeepLinkTarget {
   /** Workspace ID - undefined means use active window */
@@ -114,11 +119,9 @@ export function parseDeepLink(url: string): DeepLinkTarget | null {
       return null
     }
 
-    // Compound route prefixes
-    const COMPOUND_ROUTE_PREFIXES = [
-      'allSessions', 'flagged', 'state', 'sources', 'settings', 'skills'
-    ]
-
+    // Compound route prefixes — shared with the renderer route parser so every
+    // navigable view (home, tasks, notes, meetings, knowledge, projects, …)
+    // is reachable via rox://<route>.
     // craftagents://allSessions/..., craftagents://settings/..., etc. (compound routes)
     if (COMPOUND_ROUTE_PREFIXES.includes(host)) {
       // Reconstruct the full compound route from host + pathname
