@@ -1102,6 +1102,7 @@
   "entityView.mapStatus.waiting": "Várakozik",
   "entityView.mapSticky": "Ragadós jegyzet",
   "entityView.mapTile": "Csempézés",
+  "entityView.mapToolbarView": "View",
   "entityView.mapValidationBlocked": "A munkafolyamat érvénytelen",
   "entityView.mapVersionSaved": "Verzió mentve",
   "entityView.mindmapSiyuan": "SiYuan map",

@@ -1102,6 +1102,7 @@
   "entityView.mapStatus.waiting": "En attente",
   "entityView.mapSticky": "Note collante",
   "entityView.mapTile": "Tuiler",
+  "entityView.mapToolbarView": "View",
   "entityView.mapValidationBlocked": "Le flux est invalide",
   "entityView.mapVersionSaved": "Version enregistrée",
   "entityView.mindmapSiyuan": "SiYuan map",

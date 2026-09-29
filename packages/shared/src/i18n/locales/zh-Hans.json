@@ -1102,6 +1102,7 @@
   "entityView.mapStatus.waiting": "等待",
   "entityView.mapSticky": "便利贴",
   "entityView.mapTile": "平铺",
+  "entityView.mapToolbarView": "View",
   "entityView.mapValidationBlocked": "工作流无效",
   "entityView.mapVersionSaved": "版本已保存",
   "entityView.mindmapSiyuan": "SiYuan map",

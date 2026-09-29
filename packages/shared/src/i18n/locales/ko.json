@@ -1102,6 +1102,7 @@
   "entityView.mapStatus.waiting": "보류",
   "entityView.mapSticky": "스티키 노트",
   "entityView.mapTile": "타일",
+  "entityView.mapToolbarView": "View",
   "entityView.mapValidationBlocked": "워크플로가 유효하지 않습니다",
   "entityView.mapVersionSaved": "버전이 저장되었습니다",
   "entityView.mindmapSiyuan": "SiYuan 맵",

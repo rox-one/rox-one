@@ -57,6 +57,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
@@ -65,6 +69,7 @@ import { SceneNode } from './SceneNode'
 import { toFlowElements, type FlowSceneNode, type SceneNodeData } from './to-flow-elements'
 import { holesFromScene } from './holes-from-scene'
 import { isSessionMapEmpty } from './map-empty-actions'
+import { mapToolbarDensity, mapToolbarLayout } from './map-toolbar-density'
 import {
   canPersistDraftEdge,
   createSessionDraftEdge,
@@ -330,6 +335,22 @@ function EditorInner({
   const viewportRef = React.useRef<Viewport | undefined>(loadPin(sessionId)?.viewport)
   const persistTimer = React.useRef<number | undefined>(undefined)
   const flowRef = React.useRef<ReactFlowInstance | null>(null)
+  // Toolbar row width drives which controls stay inline vs. move into ⋯.
+  const toolbarRef = React.useRef<HTMLDivElement>(null)
+  const [toolbarWidth, setToolbarWidth] = React.useState<number | null>(null)
+  React.useLayoutEffect(() => {
+    const el = toolbarRef.current
+    if (!el) return
+    setToolbarWidth(el.getBoundingClientRect().width)
+    if (typeof ResizeObserver === 'undefined') return
+    // Border-box width (same measure as the initial read above).
+    const observer = new ResizeObserver(() => {
+      setToolbarWidth(el.getBoundingClientRect().width)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  const toolbarLayout = mapToolbarLayout(mapToolbarDensity(toolbarWidth))
   const contextPositionRef = React.useRef<{ x: number; y: number }>({ x: 24, y: 24 })
   const hasContextPositionRef = React.useRef(false)
   const draftNodes = draftGraph.nodes
@@ -946,27 +967,34 @@ function EditorInner({
         >
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.12),transparent_30%)]" />
           <div
+            ref={toolbarRef}
             role="toolbar"
             aria-label={t('entityView.map')}
+            data-testid="map-toolbar"
             className="relative z-10 flex min-w-0 shrink-0 flex-nowrap items-center gap-2 overflow-x-auto px-3 py-1.5 text-[11px]"
           >
-            <div className="flex min-w-0 flex-nowrap items-center gap-2">
-              <span className="rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
-                {t('entityView.flowLive')}
-              </span>
-              <span className="text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
-              {selected ? (
-                <span className="rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
+            <div className="flex min-w-0 flex-nowrap items-center gap-2 overflow-hidden whitespace-nowrap">
+              {toolbarLayout.showLiveChip ? (
+                <span className="shrink-0 rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
+                  {t('entityView.flowLive')}
+                </span>
+              ) : null}
+              {toolbarLayout.showSceneCount ? (
+                <span className="shrink-0 text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
+              ) : null}
+              {toolbarLayout.showKindChips && selected ? (
+                <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
                   {selectedKindLabel}
                 </span>
               ) : null}
-              {selectedDraft ? (
-                <span className="rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
+              {toolbarLayout.showKindChips && selectedDraft ? (
+                <span className="min-w-0 truncate rounded-full bg-foreground/[0.06] px-2 py-1 text-muted-foreground backdrop-blur-xl">
                   {t(SESSION_NODE_KIND_I18N[selectedDraft.kind])}
                 </span>
               ) : null}
             </div>
-            <div className="ml-auto inline-flex min-w-0 flex-nowrap items-center justify-end gap-1 rounded-full bg-background/60 p-1 shadow-strong backdrop-blur-xl">
+            <div className="ml-auto inline-flex shrink-0 flex-nowrap items-center gap-1 whitespace-nowrap rounded-full bg-background/60 p-1 shadow-strong backdrop-blur-xl">
+              {toolbarLayout.inlineCamera ? (
               <div className="inline-flex rounded-full bg-foreground/[0.04] p-0.5">
                 <Button
                   type="button"
@@ -995,6 +1023,9 @@ function EditorInner({
                   {t('entityView.workbenchCameraFlow')}
                 </Button>
               </div>
+              ) : null}
+              {toolbarLayout.inlineLayoutActions ? (
+              <>
               <Button
                 type="button"
                 size="sm"
@@ -1015,6 +1046,8 @@ function EditorInner({
               >
                 {t('entityView.mapResetLayout')}
               </Button>
+              </>
+              ) : null}
               <Button
                 type="button"
                 size="sm"
@@ -1048,6 +1081,41 @@ function EditorInner({
                     </DropdownMenuItem>
                   ) : (
                     <>
+                      {!toolbarLayout.inlineCamera ? (
+                        <>
+                          <DropdownMenuLabel className="text-xs text-muted-foreground">
+                            {t('entityView.mapToolbarView')}
+                          </DropdownMenuLabel>
+                          <DropdownMenuRadioGroup
+                            value={camera}
+                            onValueChange={(value) => persistCamera(value === 'flow' ? 'flow' : 'map')}
+                          >
+                            <DropdownMenuRadioItem value="map" data-testid="map-toolbar-menu-camera-map">
+                              {t('entityView.workbenchCameraMap')}
+                            </DropdownMenuRadioItem>
+                            <DropdownMenuRadioItem value="flow" data-testid="map-toolbar-menu-camera-flow">
+                              {t('entityView.workbenchCameraFlow')}
+                            </DropdownMenuRadioItem>
+                          </DropdownMenuRadioGroup>
+                          <DropdownMenuSeparator />
+                        </>
+                      ) : null}
+                      {!toolbarLayout.inlineLayoutActions ? (
+                        <>
+                          <DropdownMenuItem
+                            data-testid="map-toolbar-menu-fit"
+                            onClick={() => {
+                              flowRef.current?.fitView({ padding: 0.2 })
+                            }}
+                          >
+                            {t('entityView.mapFit')}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem data-testid="map-toolbar-menu-reset-layout" onClick={resetLayout}>
+                            {t('entityView.mapResetLayout')}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                        </>
+                      ) : null}
                       <DropdownMenuItem onClick={() => applyCanvasLayout('left')}>
                         {t('entityView.mapAlign')}
                       </DropdownMenuItem>
