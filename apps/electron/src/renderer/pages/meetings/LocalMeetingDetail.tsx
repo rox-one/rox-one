@@ -474,11 +474,15 @@ export function LocalMeetingDetail(props: {
   const addDecision = async () => {
     const title = decisionDraft.trim()
     if (!title) return
+    const why = decisionWhy.trim()
+    // Clear the form first: the lesson sync below can take a while.
+    setDecisionDraft('')
+    setDecisionWhy('')
     const now = Date.now()
     await commitDecision({
       id: newLocalId('dec'),
       title,
-      why: decisionWhy.trim(),
+      why,
       who: m.participants,
       decidedAt: m.startedAt ?? now,
       status: 'accepted',
@@ -490,8 +494,6 @@ export function LocalMeetingDetail(props: {
       createdAt: now,
       updatedAt: now,
     })
-    setDecisionDraft('')
-    setDecisionWhy('')
   }
   const decisionsTab = (
     <div className="flex flex-col gap-1">
