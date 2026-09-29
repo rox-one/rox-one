@@ -256,7 +256,9 @@ html[data-shell-style="zen"][data-scenic] .chrome-strip {
    makes them distinguishable with a stronger fill; the pressed camera segment
    gets a stronger one still. Focus keeps the high-contrast focus outline. */
 html[data-contrast="high"] .map-toolbar-btn {
-  background-color: color-mix(in oklch, var(--foreground) 14%, transparent);
+  /* Flat at rest (full-opacity label); hover/pressed get the stronger fills. */
+  background-color: transparent;
+  color: var(--foreground);
 }
 
 /* Session header icons stay flat in high contrast too (no filled boxes in the

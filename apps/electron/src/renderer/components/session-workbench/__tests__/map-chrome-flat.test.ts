@@ -25,6 +25,8 @@ describe('flat map + terminal chrome', () => {
   it('toolbar row shares the content background (no radial glow band)', () => {
     expect(editor).not.toContain('radial-gradient(circle_at_top')
     expect(editor).toContain("background: 'var(--background)'")
+    expect(editor).toMatch(/<Background[^>]*bgColor="transparent"/)
+    expect(css).toMatch(/html\[data-contrast="high"\] \.map-toolbar-btn \{[^}]*background-color: transparent;/)
   })
 
   it('minimap renders only with scenes and without an outline', () => {
