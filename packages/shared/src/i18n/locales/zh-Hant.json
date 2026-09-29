@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "摺疊章節",
   "notes.fold.expand": "展開章節",
   "notes.frontmatterPreserved": "儲存時會保留 frontmatter",
+  "notes.header.charCount": "{{count}} 字元",
   "notes.header.title": "筆記",
   "notes.inspector.addProperty": "新增屬性",
   "notes.inspector.allLinksResolve": "所有 wiki 連結均可解析",

@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "섹션 접기",
   "notes.fold.expand": "섹션 펼치기",
   "notes.frontmatterPreserved": "저장 시 프론트매터가 유지됩니다",
+  "notes.header.charCount": "{{count}}자",
   "notes.header.title": "노트",
   "notes.inspector.addProperty": "속성 추가",
   "notes.inspector.allLinksResolve": "모든 위키 링크가 정상적으로 연결됩니다",

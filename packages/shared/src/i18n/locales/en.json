@@ -2079,6 +2079,7 @@
   "notes.fold.collapse": "Collapse section",
   "notes.fold.expand": "Expand section",
   "notes.frontmatterPreserved": "Frontmatter is preserved on save",
+  "notes.header.charCount": "{{count}} chars",
   "notes.header.title": "Notes",
   "notes.inspector.addProperty": "Add property",
   "notes.inspector.allLinksResolve": "All wiki links resolve",

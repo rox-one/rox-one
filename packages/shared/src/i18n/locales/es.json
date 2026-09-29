@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "Contraer sección",
   "notes.fold.expand": "Expandir sección",
   "notes.frontmatterPreserved": "El frontmatter se conserva al guardar",
+  "notes.header.charCount": "{{count}} caract.",
   "notes.header.title": "Notas",
   "notes.inspector.addProperty": "Añadir propiedad",
   "notes.inspector.allLinksResolve": "Todos los enlaces wiki se resuelven",

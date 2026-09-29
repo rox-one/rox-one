@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "طي القسم",
   "notes.fold.expand": "توسيع القسم",
   "notes.frontmatterPreserved": "يُحفظ الـ frontmatter عند الحفظ",
+  "notes.header.charCount": "{{count}} حرف",
   "notes.header.title": "ملاحظات",
   "notes.inspector.addProperty": "إضافة خاصية",
   "notes.inspector.allLinksResolve": "تم حل جميع روابط الويكي",

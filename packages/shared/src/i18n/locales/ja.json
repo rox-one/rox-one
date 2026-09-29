@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "セクションを折りたたむ",
   "notes.fold.expand": "セクションを展開",
   "notes.frontmatterPreserved": "保存時に frontmatter は保持されます",
+  "notes.header.charCount": "{{count}} 文字",
   "notes.header.title": "ノート",
   "notes.inspector.addProperty": "プロパティを追加",
   "notes.inspector.allLinksResolve": "すべての wiki リンクが解決済み",

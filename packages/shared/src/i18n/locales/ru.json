@@ -2081,6 +2081,7 @@
   "notes.fold.collapse": "Свернуть раздел",
   "notes.fold.expand": "Развернуть раздел",
   "notes.frontmatterPreserved": "YAML-шапка сохраняется при записи",
+  "notes.header.charCount": "{{count}} симв.",
   "notes.header.title": "Заметки",
   "notes.inspector.addProperty": "Добавить свойство",
   "notes.inspector.allLinksResolve": "Все вики-ссылки разрешаются",
