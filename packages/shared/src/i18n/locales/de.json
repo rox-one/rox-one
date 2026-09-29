@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "Abschnitt einklappen",
   "notes.fold.expand": "Abschnitt ausklappen",
   "notes.frontmatterPreserved": "Frontmatter bleibt beim Speichern erhalten",
+  "notes.header.charCount": "{{count}} Zeichen",
   "notes.header.title": "Notizen",
   "notes.inspector.addProperty": "Eigenschaft hinzufügen",
   "notes.inspector.allLinksResolve": "Alle Wiki-Links sind aufgelöst",

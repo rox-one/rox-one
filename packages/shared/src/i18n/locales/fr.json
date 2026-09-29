@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "Replier la section",
   "notes.fold.expand": "Déplier la section",
   "notes.frontmatterPreserved": "Le frontmatter est conservé à l’enregistrement",
+  "notes.header.charCount": "{{count}} caract.",
   "notes.header.title": "Notes",
   "notes.inspector.addProperty": "Ajouter une propriété",
   "notes.inspector.allLinksResolve": "Tous les liens wiki sont résolus",

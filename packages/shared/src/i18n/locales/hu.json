@@ -2078,6 +2078,7 @@
   "notes.fold.collapse": "Szakasz összecsukása",
   "notes.fold.expand": "Szakasz kinyitása",
   "notes.frontmatterPreserved": "A frontmatter mentéskor megmarad",
+  "notes.header.charCount": "{{count}} karakter",
   "notes.header.title": "Jegyzetek",
   "notes.inspector.addProperty": "Tulajdonság hozzáadása",
   "notes.inspector.allLinksResolve": "Minden wiki link feloldódik",

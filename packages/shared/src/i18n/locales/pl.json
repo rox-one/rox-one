@@ -2080,6 +2080,7 @@
   "notes.fold.collapse": "Zwiń sekcję",
   "notes.fold.expand": "Rozwiń sekcję",
   "notes.frontmatterPreserved": "Frontmatter jest zachowywany przy zapisie",
+  "notes.header.charCount": "{{count}} znaków",
   "notes.header.title": "Notatki",
   "notes.inspector.addProperty": "Dodaj właściwość",
   "notes.inspector.allLinksResolve": "Wszystkie linki wiki są rozwiązane",
