@@ -647,123 +647,169 @@ function KanbanBoardContainerInner() {
 
   const handleMoveTask = React.useCallback(
     (taskId: string, to: KanbanColumnId | KanbanMoveTarget) => {
-      const target: KanbanMoveTarget = typeof to === 'string' ? { columnId: to } : to
-      const toColumn = target.columnId
+      void (async () => {
+        const target: KanbanMoveTarget = typeof to === 'string' ? { columnId: to } : to
+        const toColumn = target.columnId
 
-      // Capture prior column before optimistic writes so same-column project
-      // drops never re-trigger auto-run.
-      const priorMeta = metaMap.get(taskId)
-      const previousColumn: KanbanColumnId =
-        (priorMeta?.kanbanColumn as KanbanColumnId | undefined) ??
-        statusToColumn(priorMeta?.sessionStatus ?? 'todo')
+        // Capture prior column/status before optimistic writes so failures can roll back.
+        const priorMeta = metaMap.get(taskId)
+        const previousColumn: KanbanColumnId =
+          (priorMeta?.kanbanColumn as KanbanColumnId | undefined) ??
+          statusToColumn(priorMeta?.sessionStatus ?? 'todo')
+        const previousStatusId = priorMeta?.sessionStatus
+        const previousPriority = priorMeta?.priority
+        const previousProjectId = priorMeta?.projectId
 
-      // Optimistic column placement.
-      updateSessionMeta(taskId, { kanbanColumn: toColumn })
-      void window.electronAPI.sessionCommand(taskId, { type: 'setKanbanColumn', column: toColumn })
+        // Optimistic column placement.
+        updateSessionMeta(taskId, { kanbanColumn: toColumn })
 
-      // B6: pseudo group '__priority_<value>' assigns priority instead of project (FR-30/FR-47).
-      const priorityDrop = parsePriorityGroupId(target.projectId)
-      if (priorityDrop !== null) {
-        const prio = priorityDrop as SessionPriority
-        updateSessionMeta(taskId, { priority: prio })
-        void window.electronAPI.sessionCommand(taskId, { type: 'setPriority', priority: prio })
-      } else if (target.projectId !== undefined) {
-        const nextProjectId = target.projectId
-        updateSessionMeta(taskId, {
-          projectId: nextProjectId === null ? undefined : nextProjectId,
-        })
-        void window.electronAPI.sessionCommand(taskId, {
-          type: 'setProjectId',
-          projectId: nextProjectId,
-        })
-      }
-
-      // B5: re-rank within destination column when Display orderBy === 'rank'.
-      if (collectionDisplay.orderBy === 'rank') {
-        const destSiblings = visibleTasks
-          .filter((t) => t.column === toColumn)
-          .filter((t) => t.id !== taskId)
-          .sort(displayDrivenSort)
-        const last = destSiblings[destSiblings.length - 1]
-        void window.electronAPI.sessionCommand(taskId, {
-          type: 'reorderRank',
-          prevId: last?.id,
-        })
-      }
-
-      // Optionally fold the status to the column's configured target.
-      const autoStatus =
-        activeColumns.find(c => c.id === toColumn)?.dropStatusId ?? columnStatus[toColumn]
-      if (autoStatus && statusesById.has(autoStatus)) {
-        handleChangeStatus(taskId, autoStatus)
-      }
-
-      // P1.4 auto-run hook — only when the column actually changes.
-      // In-progress always starts; other columns need prompt.
-      const destColumn = activeColumns.find(c => c.id === toColumn)
-      if (!activeWorkspaceId) return
-      if (previousColumn === toColumn) return
-      if (!shouldAutoRunOnDrop(toColumn, destColumn)) return
-      const meta = metaMap.get(taskId)
-      if (!meta || meta.isProcessing || processingRef.current.has(taskId)) return
-
-      const title = getSessionTitle(meta) || meta.name?.trim() || ''
-      const kick = (goalText: string) => {
-        enqueueKanbanColumnRun(
-          {
-            workspaceId: activeWorkspaceId,
-            sessionId: taskId,
-            columnId: toColumn,
-            columnPrompt: destColumn?.prompt?.trim() ?? '',
-            title,
-            goalText,
-            taskSlug: meta.taskSlug,
-            enqueuedAt: Date.now(),
-          },
-          {
-            sendMessage: onSendMessage,
-            runTask: (wsId, args) => window.electronAPI.runTask(wsId, args),
-            isProcessing: id =>
-              processingRef.current.has(id) || !!metaMap.get(id)?.isProcessing,
-            markProcessing: id => {
-              processingRef.current.add(id)
-              updateSessionMeta(id, { isProcessing: true })
-            },
-            onError: (err, job) => {
-              processingRef.current.delete(job.sessionId)
-              updateSessionMeta(job.sessionId, { isProcessing: false })
-              toast.error(t('kanban.toastAutoRunFailed'), {
-                description: err instanceof Error ? err.message : String(err),
-              })
-            },
-          },
-        )
-      }
-
-      // Spec-backed: load goal/acceptance from task.yaml; plain tiles use
-      // title + any acceptance/goal-like text from session meta preview.
-      if (meta.taskSlug) {
-        void window.electronAPI
-          .getTask(activeWorkspaceId, meta.taskSlug)
-          .then(res => {
-            const spec = res.spec as
-              | { goal?: string; acceptance_criteria?: string; title?: string }
-              | undefined
-            const parts = [spec?.goal, spec?.acceptance_criteria].filter(
-              (s): s is string => typeof s === 'string' && s.trim().length > 0,
-            )
-            kick(parts.join('\n\n') || title)
+        // B6: pseudo group '__priority_<value>' assigns priority instead of project (FR-30/FR-47).
+        const priorityDrop = parsePriorityGroupId(target.projectId)
+        let appliedPriority: SessionPriority | null = null
+        let appliedProjectId: string | null | undefined = undefined
+        if (priorityDrop !== null) {
+          appliedPriority = priorityDrop as SessionPriority
+          updateSessionMeta(taskId, { priority: appliedPriority })
+        } else if (target.projectId !== undefined) {
+          appliedProjectId = target.projectId
+          updateSessionMeta(taskId, {
+            projectId: appliedProjectId === null ? undefined : appliedProjectId,
           })
-          .catch(() => kick(title))
-      } else {
-        const preview = typeof meta.preview === 'string' ? meta.preview.trim() : ''
-        // Prefer preview when it carries more than the bare title (acceptance/goal context).
-        if (preview && preview !== title) {
-          kick(preview)
-        } else {
-          kick(title)
         }
-      }
+
+        // Optionally fold the status to the column's configured target (optimistic).
+        const autoStatus =
+          activeColumns.find(c => c.id === toColumn)?.dropStatusId ?? columnStatus[toColumn]
+        let appliedAutoStatus: string | undefined
+        if (autoStatus && statusesById.has(autoStatus)) {
+          appliedAutoStatus = autoStatus
+          updateSessionMeta(taskId, { sessionStatus: autoStatus })
+        }
+
+        const restorePrior = () => {
+          updateSessionMeta(taskId, {
+            kanbanColumn: previousColumn,
+            ...(appliedAutoStatus !== undefined
+              ? { sessionStatus: previousStatusId }
+              : {}),
+            ...(appliedPriority !== null ? { priority: previousPriority } : {}),
+            ...(appliedProjectId !== undefined
+              ? { projectId: previousProjectId }
+              : {}),
+          })
+        }
+
+        try {
+          await window.electronAPI.sessionCommand(taskId, {
+            type: 'setKanbanColumn',
+            column: toColumn,
+          })
+
+          if (appliedPriority !== null) {
+            await window.electronAPI.sessionCommand(taskId, {
+              type: 'setPriority',
+              priority: appliedPriority,
+            })
+          } else if (appliedProjectId !== undefined) {
+            await window.electronAPI.sessionCommand(taskId, {
+              type: 'setProjectId',
+              projectId: appliedProjectId,
+            })
+          }
+
+          // B5: re-rank within destination column when Display orderBy === 'rank'.
+          if (collectionDisplay.orderBy === 'rank') {
+            const destSiblings = visibleTasks
+              .filter((t) => t.column === toColumn)
+              .filter((t) => t.id !== taskId)
+              .sort(displayDrivenSort)
+            const last = destSiblings[destSiblings.length - 1]
+            await window.electronAPI.sessionCommand(taskId, {
+              type: 'reorderRank',
+              prevId: last?.id,
+            })
+          }
+
+          if (appliedAutoStatus) {
+            await window.electronAPI.sessionCommand(taskId, {
+              type: 'setSessionStatus',
+              state: appliedAutoStatus,
+            })
+          }
+        } catch (error) {
+          restorePrior()
+          toast.error(t('kanban.toastMoveFailed'), {
+            description: error instanceof Error ? error.message : String(error),
+          })
+          return
+        }
+
+        // P1.4 auto-run hook — only after persist succeeds and the column actually changes.
+        const destColumn = activeColumns.find(c => c.id === toColumn)
+        if (!activeWorkspaceId) return
+        if (previousColumn === toColumn) return
+        if (!shouldAutoRunOnDrop(toColumn, destColumn)) return
+        const meta = metaMap.get(taskId)
+        if (!meta || meta.isProcessing || processingRef.current.has(taskId)) return
+
+        const title = getSessionTitle(meta) || meta.name?.trim() || ''
+        const kick = (goalText: string) => {
+          enqueueKanbanColumnRun(
+            {
+              workspaceId: activeWorkspaceId,
+              sessionId: taskId,
+              columnId: toColumn,
+              columnPrompt: destColumn?.prompt?.trim() ?? '',
+              title,
+              goalText,
+              taskSlug: meta.taskSlug,
+              enqueuedAt: Date.now(),
+            },
+            {
+              sendMessage: onSendMessage,
+              runTask: (wsId, args) => window.electronAPI.runTask(wsId, args),
+              isProcessing: id =>
+                processingRef.current.has(id) || !!metaMap.get(id)?.isProcessing,
+              markProcessing: id => {
+                processingRef.current.add(id)
+                updateSessionMeta(id, { isProcessing: true })
+              },
+              onError: (err, job) => {
+                processingRef.current.delete(job.sessionId)
+                updateSessionMeta(job.sessionId, { isProcessing: false })
+                toast.error(t('kanban.toastAutoRunFailed'), {
+                  description: err instanceof Error ? err.message : String(err),
+                })
+              },
+            },
+          )
+        }
+
+        // Spec-backed: load goal/acceptance from task.yaml; plain tiles use
+        // title + any acceptance/goal-like text from session meta preview.
+        if (meta.taskSlug) {
+          void window.electronAPI
+            .getTask(activeWorkspaceId, meta.taskSlug)
+            .then(res => {
+              const spec = res.spec as
+                | { goal?: string; acceptance_criteria?: string; title?: string }
+                | undefined
+              const parts = [spec?.goal, spec?.acceptance_criteria].filter(
+                (s): s is string => typeof s === 'string' && s.trim().length > 0,
+              )
+              kick(parts.join('\n\n') || title)
+            })
+            .catch(() => kick(title))
+        } else {
+          const preview = typeof meta.preview === 'string' ? meta.preview.trim() : ''
+          // Prefer preview when it carries more than the bare title (acceptance/goal context).
+          if (preview && preview !== title) {
+            kick(preview)
+          } else {
+            kick(title)
+          }
+        }
+      })()
     },
     [
       updateSessionMeta,
@@ -772,7 +818,6 @@ function KanbanBoardContainerInner() {
       columnStatus,
       displayDrivenSort,
       statusesById,
-      handleChangeStatus,
       activeWorkspaceId,
       metaMap,
       onSendMessage,
