@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Badge, Button, EmptyState } from '@/components/mode-screen/ModeScreen'
 import { i18nKeyForProposalError, type MeetingProposalRow } from './proposal-rpc'
 
 export type { MeetingProposalRow }
@@ -20,23 +21,31 @@ export default function ProposalInbox(props: {
   )
 
   return (
-    <div data-testid="proposal-inbox" className="mt-4">
-      <h3>{t('meetings.proposals')}</h3>
-      <button
-        type="button"
-        data-testid="proposal-batch-approve"
-        disabled={batch.length === 0 || !props.onApprove}
-        onClick={() => {
-          for (const proposal of batch) props.onApprove?.(proposal)
-        }}
-      >
-        {t('meetings.approve')}
-      </button>
+    <div data-testid="proposal-inbox" className="flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <h3 className="text-[13px] font-semibold">{t('meetings.proposals')}</h3>
+        <Button
+          className="ml-auto"
+          variant="primary"
+          data-testid="proposal-batch-approve"
+          disabled={batch.length === 0 || !props.onApprove}
+          onClick={() => {
+            for (const proposal of batch) props.onApprove?.(proposal)
+          }}
+        >
+          {t('meetings.approve')}{batch.length ? ` (${batch.length})` : ''}
+        </Button>
+      </div>
+      {props.proposals.length === 0 ? (
+        <EmptyState title={t('meetings.screen.proposalsEmptyTitle')} body={t('meetings.screen.proposalsEmptyBody')} />
+      ) : null}
       {props.proposals.map((proposal) => (
-        <div key={proposal.id} data-testid="meeting-proposal" className="border p-2">
+        <div key={proposal.id} data-testid="meeting-proposal" className="flex items-start gap-2 rounded-[6px] px-2 py-1.5 hover:bg-foreground/[0.04]">
           {proposal.status === 'proposed' ? (
             <input
               type="checkbox"
+              className="mt-0.5 accent-[var(--accent)]"
+              aria-label={proposal.title}
               checked={selected.includes(proposal.id)}
               disabled={!props.onApprove || props.pendingId === proposal.id}
               onChange={(event) => {
@@ -47,54 +56,65 @@ export default function ProposalInbox(props: {
                 ))
               }}
             />
-          ) : null}
-          <p>{proposal.title}</p>
-          <p>{t('meetings.source')}: {proposal.source}</p>
-          <p data-testid="operation-verification">
-            {proposal.status === 'applied' && proposal.revisionId ? t('meetings.verified') : t('meetings.notApplied')}
-          </p>
-          {proposal.revisionId ? (
-            <p data-testid="proposal-revision">{t('meetings.revision', { id: proposal.revisionId })}</p>
-          ) : null}
-          {proposal.errorCode ? (
-            <p data-testid="proposal-error">{t(i18nKeyForProposalError(proposal.errorCode))}</p>
-          ) : null}
-          {proposal.status === 'proposed' ? (
-            <>
-              <button
-                type="button"
-                data-testid="proposal-approve"
-                disabled={!props.onApprove || props.pendingId === proposal.id}
-                onClick={() => props.onApprove?.(proposal)}
-              >
-                {t('meetings.approve')}
-              </button>
-              <button
-                type="button"
-                data-testid="proposal-reject"
-                disabled={!props.onReject || props.pendingId === proposal.id}
-                onClick={() => props.onReject?.(proposal)}
-              >
-                {t('meetings.reject')}
-              </button>
-              <button
-                type="button"
-                data-testid="proposal-clarify"
-                disabled={!props.onClarify || props.pendingId === proposal.id}
-                onClick={() => props.onClarify?.(proposal)}
-              >
-                {t('meetings.correctSegment')}
-              </button>
-            </>
-          ) : null}
-          <button
-            type="button"
-            data-testid="proposal-target-link"
-            disabled={!proposal.revisionId || !props.onOpenTarget}
-            onClick={() => props.onOpenTarget?.(proposal)}
-          >
-            {t('meetings.openTarget')}
-          </button>
+          ) : <span className="w-[13px] shrink-0" />}
+          <div className="min-w-0 flex-1">
+            <p className="text-[13px]">{proposal.title}</p>
+            <p className="flex flex-wrap items-center gap-1.5 text-[11px] text-text-muted">
+              <span>{proposal.type === 'create_note' ? t('meetings.kindNote') : t('meetings.kindTask')}</span>
+              <span>·</span>
+              <span>{t('meetings.source')}: {proposal.source}</span>
+              <span data-testid="operation-verification">
+                <Badge tone={proposal.status === 'applied' && proposal.revisionId ? 'success' : 'muted'}>
+                  {proposal.status === 'applied' && proposal.revisionId ? t('meetings.verified') : t('meetings.notApplied')}
+                </Badge>
+              </span>
+              {proposal.revisionId ? (
+                <span data-testid="proposal-revision" className="font-mono">{t('meetings.revision', { id: proposal.revisionId })}</span>
+              ) : null}
+            </p>
+            {proposal.errorCode ? (
+              <p data-testid="proposal-error" className="text-[11px] text-destructive">{t(i18nKeyForProposalError(proposal.errorCode))}</p>
+            ) : null}
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            {proposal.status === 'proposed' ? (
+              <>
+                <Button
+                  data-testid="proposal-approve"
+                  disabled={!props.onApprove || props.pendingId === proposal.id}
+                  onClick={() => props.onApprove?.(proposal)}
+                >
+                  {t('meetings.approve')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  data-testid="proposal-reject"
+                  disabled={!props.onReject || props.pendingId === proposal.id}
+                  onClick={() => props.onReject?.(proposal)}
+                >
+                  {t('meetings.reject')}
+                </Button>
+                {props.onClarify ? (
+                  <Button
+                    variant="ghost"
+                    data-testid="proposal-clarify"
+                    disabled={props.pendingId === proposal.id}
+                    onClick={() => props.onClarify?.(proposal)}
+                  >
+                    {t('meetings.correctSegment')}
+                  </Button>
+                ) : null}
+              </>
+            ) : null}
+            <Button
+              variant="ghost"
+              data-testid="proposal-target-link"
+              disabled={!proposal.revisionId || !props.onOpenTarget}
+              onClick={() => props.onOpenTarget?.(proposal)}
+            >
+              {t('meetings.openTarget')}
+            </Button>
+          </div>
         </div>
       ))}
     </div>
