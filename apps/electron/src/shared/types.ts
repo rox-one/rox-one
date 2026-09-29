@@ -34,6 +34,22 @@ import type {
   ImportConsent,
   ImportSummary,
 } from '@craft-agent/shared/browser/profile-import'
+import type { ForeignAutoImportStatus } from '@craft-agent/shared/sessions'
+
+/** Automatic browser cookie import (in-app browser). Values never cross RPC. */
+export interface BrowserCookieAutoStatus {
+  /** Explicit in-app consent; nothing is read while false. */
+  consent: boolean
+  supported: boolean
+  state: 'off' | 'idle' | 'importing' | 'done' | 'error'
+  /** Installed Chromium-family browsers that have a cookie store. */
+  browsers: string[]
+  browser: string | null
+  profileName: string | null
+  imported: number
+  lastRunAt: number | null
+  error?: string
+}
 export type { PermissionMode };
 export { PERMISSION_MODE_CONFIG } from '@craft-agent/shared/agent/modes';
 
@@ -786,7 +802,13 @@ export interface ElectronAPI {
       reason?: string
     }>
   }>
+  foreignAutoImportStatus(args: { workspaceId?: string }): Promise<ForeignAutoImportStatus>
+  foreignAutoImportRun(args: { workspaceId?: string; all?: boolean }): Promise<ForeignAutoImportStatus>
+  foreignAutoImportSet(args: { workspaceId?: string; enabled: boolean }): Promise<ForeignAutoImportStatus>
   discoverBrowserProfiles(explicitId?: string): Promise<DiscoveredProfile[]>
+  browserCookieAutoStatus(): Promise<BrowserCookieAutoStatus>
+  browserCookieAutoSet(args: { consent: boolean }): Promise<BrowserCookieAutoStatus>
+  browserCookieAutoRun(): Promise<BrowserCookieAutoStatus>
   importBrowserProfile(args: {
     workspaceId: string
     profileId: string

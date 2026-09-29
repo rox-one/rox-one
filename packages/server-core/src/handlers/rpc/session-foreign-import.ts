@@ -6,7 +6,7 @@
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
 import { getWorkspaceByNameOrId } from '@craft-agent/shared/config'
 import {
-  discoverForeignSessions,
+  discoverForeignSessionsAsync,
   persistForeignSession,
   type ForeignImportMode,
 } from '@craft-agent/shared/sessions'
@@ -18,27 +18,62 @@ import {
   rpcSessionForeignImportListResult,
   rpcSessionForeignImportReadResult,
 } from '@craft-agent/core/rox2'
+import { ForeignAutoImporter } from './session-foreign-auto-import'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
   RPC_CHANNELS.sessions.FOREIGN_PERSIST,
+  RPC_CHANNELS.sessions.FOREIGN_AUTO_STATUS,
+  RPC_CHANNELS.sessions.FOREIGN_AUTO_RUN,
+  RPC_CHANNELS.sessions.FOREIGN_AUTO_SET,
 ] as const
 
 const MAX_FOREIGN_PERSIST = 5_000
 
 export function registerSessionForeignImportHandlers(server: RpcServer, deps: HandlerDeps): void {
+  const autoImporter = new ForeignAutoImporter(deps)
+  // Background import only runs inside the desktop app (never in tests or
+  // headless servers, which have no local chat sources of the user).
+  if (process.versions.electron && process.env.NODE_ENV !== 'test') autoImporter.start()
+
+  const autoGate = (workspaceId: string | undefined) => {
+    const act = rpcSessionForeignImportActResult({ source: 'native', action: 'write', nativeId: workspaceId ?? 'active' })
+    if (!isClaimableLive(act)) throw new Error('sessions.foreignAuto is not live')
+  }
+
+  server.handle(RPC_CHANNELS.sessions.FOREIGN_AUTO_STATUS, async (_ctx, args: { workspaceId?: string } | undefined) =>
+    autoImporter.status(args?.workspaceId),
+  )
+
+  server.handle(
+    RPC_CHANNELS.sessions.FOREIGN_AUTO_RUN,
+    async (_ctx, args: { workspaceId?: string; all?: boolean } | undefined) => {
+      autoGate(args?.workspaceId)
+      return autoImporter.run({ workspaceId: args?.workspaceId, all: args?.all === true, force: true })
+    },
+  )
+
+  server.handle(
+    RPC_CHANNELS.sessions.FOREIGN_AUTO_SET,
+    async (_ctx, args: { workspaceId?: string; enabled?: boolean } | undefined) => {
+      autoGate(args?.workspaceId)
+      return autoImporter.setEnabled(args?.workspaceId, args?.enabled !== false)
+    },
+  )
+
   server.handle(
     RPC_CHANNELS.sessions.FOREIGN_DISCOVER,
     async (_ctx, args: { workspaceId?: string } | undefined) => {
       const workspaceId = args?.workspaceId
       if (!workspaceId) throw new Error('sessions.foreignDiscover: workspaceId is required')
       const listed = rpcSessionForeignImportListResult({ source: 'native' })
-      if (!isClaimableLive(listed.result)) return []
+      if (!isClaimableLive(listed.result)) return { entries: [], scannedAt: Date.now(), cachePath: '', truncated: false }
       const read = rpcSessionForeignImportReadResult({ source: 'native', nativeId: workspaceId })
       if (!isClaimableLive(read.result)) throw new Error('sessions.foreignDiscover is not live')
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (!workspace) throw new Error('sessions.foreignDiscover: workspace not found')
-      return discoverForeignSessions({ workspaceRoot: workspace.rootPath })
+      // Async + incremental: never block the main process on a big scan.
+      return discoverForeignSessionsAsync({ workspaceRoot: workspace.rootPath, reuseCache: true })
     },
   )
 

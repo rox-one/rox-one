@@ -1,8 +1,8 @@
 /**
  * MessagingSettingsPage
  *
- * Configure messaging platform connections (Telegram, WhatsApp, Lark) and
- * view active session bindings.
+ * Configure messaging platform connections (Telegram, Discord, Lark, WeChat,
+ * WhatsApp; Slack listed as coming soon) and view active session bindings.
  *
  * Layout:
  *  - One SettingsCard per platform
@@ -116,17 +116,14 @@ export default function MessagingSettingsPage() {
   const setBindings = useSetAtom(setMessagingBindingsAtom)
   const workspaceId = activeWorkspace?.id
 
-  // config-read is device-read: the user must explicitly grant it before
-  // connections or bindings are read. Opening the page is not a grant.
-  const [granted, setGranted] = React.useState(false)
-
-  // Single fetch + subscription at the page level so both PlatformRows read
-  // from the already-populated atom instead of subscribing twice.
+  // Messaging config and bindings are this app's own local state (no third
+  // party store is read), so the page loads them on mount like every other
+  // settings page. Destructive and connect actions keep their explicit grants.
   React.useEffect(() => {
-    if (!workspaceId || !granted) return
+    if (!workspaceId) return
     let cancelled = false
     const load = async () => {
-      if (!messagingActionAllowed('config-read', granted)) return
+      if (!messagingActionAllowed('config-read', true)) return
       try {
         const rows = await window.electronAPI.getMessagingBindings()
         if (!cancelled) setBindings(rows as MessagingBinding[])
@@ -142,7 +139,7 @@ export default function MessagingSettingsPage() {
       cancelled = true
       off()
     }
-  }, [workspaceId, granted, setBindings])
+  }, [workspaceId, setBindings])
 
   if (!activeWorkspace) return null
 
@@ -151,42 +148,48 @@ export default function MessagingSettingsPage() {
       <PanelHeader title={t('settings.messaging.title')} />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
-        <div className="space-y-6 p-6">
-          <SettingsSection title={t('settings.messaging.title')}>
-            {!granted ? (
-              <SettingsCard className="px-4 py-3.5">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {t('settings.messaging.loadConfigDesc')}
-                  </p>
-                  <Button size="sm" onClick={() => setGranted(true)}>
-                    {t('settings.messaging.loadConfig')}
-                  </Button>
-                </div>
+        <div className="mx-auto w-full max-w-3xl space-y-6 px-5 py-7">
+          <SettingsSection
+            title={t('settings.messaging.title')}
+            description={t('settings.messaging.description')}
+          >
+            {LIVE_PLATFORMS.map((platform) => (
+              <SettingsCard key={platform}>
+                <PlatformRow platform={platform} workspaceId={activeWorkspace.id} />
               </SettingsCard>
-            ) : (
-              <>
-                <SettingsCard>
-                  <PlatformRow platform="telegram" workspaceId={activeWorkspace.id} />
-                </SettingsCard>
-                <SettingsCard>
-                  <PlatformRow platform="whatsapp" workspaceId={activeWorkspace.id} />
-                </SettingsCard>
-                <SettingsCard>
-                  <PlatformRow platform="lark" workspaceId={activeWorkspace.id} />
-                </SettingsCard>
-                <SettingsCard>
-                  <PlatformRow platform="discord" workspaceId={activeWorkspace.id} />
-                </SettingsCard>
-                <SettingsCard>
-                  <PlatformRow platform="wechat" workspaceId={activeWorkspace.id} />
-                </SettingsCard>
-              </>
-            )}
+            ))}
+            {COMING_SOON_PLATFORMS.map((platform) => (
+              <SettingsCard key={platform}>
+                <ComingSoonRow platform={platform} />
+              </SettingsCard>
+            ))}
           </SettingsSection>
         </div>
         </ScrollArea>
       </div>
+    </div>
+  )
+}
+
+/** Messengers with a working bridge in packages/messaging-gateway. */
+const LIVE_PLATFORMS = ['telegram', 'discord', 'lark', 'wechat', 'whatsapp'] as const
+/** Listed honestly without a fake connect button until a bridge exists. */
+const COMING_SOON_PLATFORMS = ['slack'] as const
+
+function ComingSoonRow({ platform }: { platform: (typeof COMING_SOON_PLATFORMS)[number] }) {
+  const { t } = useTranslation()
+  return (
+    <div className="flex items-center gap-3 px-4 py-3.5" data-testid={`messaging-coming-soon-${platform}`}>
+      <MessagingPlatformIcon platform={platform} size={22} />
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium">{t(`settings.messaging.${platform}.title`)}</div>
+        <div className="mt-0.5 text-xs text-muted-foreground">
+          {t(`settings.messaging.${platform}.comingSoonHint`)}
+        </div>
+      </div>
+      <span className="rounded-md bg-foreground/5 px-2 py-1 text-xs text-muted-foreground">
+        {t('settings.messaging.comingSoon')}
+      </span>
     </div>
   )
 }
@@ -429,7 +432,10 @@ function PlatformRow({ platform, workspaceId }: { platform: Platform; workspaceI
           <MessagingPlatformIcon platform={platform} size={22} />
           <div className="min-w-0 flex-1">
             <div className="text-sm font-medium">{label}</div>
-            <div className="mt-0.5 truncate text-xs text-muted-foreground">
+            <div
+              className={`mt-0.5 truncate text-xs ${runtime.state === 'error' ? 'text-destructive' : 'text-muted-foreground'}`}
+              title={description}
+            >
               {t(`settings.messaging.${platform}.apiType`)} · {description}
             </div>
           </div>

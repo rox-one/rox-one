@@ -26,6 +26,8 @@ export interface SettingsRowProps {
   inCard?: boolean
   /** Optional test id for automated UI drivers */
   'data-testid'?: string
+  /** Let long descriptions wrap instead of truncating to one line */
+  wrapDescription?: boolean
 }
 
 /**
@@ -47,6 +49,7 @@ export function SettingsRow({
   className,
   inCard = true,
   'data-testid': testId,
+  wrapDescription = false,
 }: SettingsRowProps) {
   const Component = onClick ? 'button' : 'div'
 
@@ -66,7 +69,7 @@ export function SettingsRow({
       <div className="flex-1 min-w-0">
         <div className={settingsUI.label}>{label}</div>
         {description && (
-          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap, 'truncate')}>
+          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap, wrapDescription ? 'whitespace-normal break-words' : 'truncate')}>
             {description}
           </div>
         )}

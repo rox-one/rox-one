@@ -1,20 +1,28 @@
 /**
- * Settings → Import (H5). Scan is not persist. Persist writes Rox sessions.
+ * Settings → Import (H5).
+ *
+ * Chats from supported local sources are imported automatically in the
+ * background (see session-foreign-auto-import.ts); this page shows the live
+ * status, the on/off switch and "import all". The manual scan → persist list
+ * stays available under "Choose manually".
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DownloadCloud, RefreshCw } from 'lucide-react'
+import { ChevronDown, ChevronRight, DownloadCloud, RefreshCw } from 'lucide-react'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { Spinner, PremiumMenuSelect } from '@craft-agent/ui'
+import { SettingsCard, SettingsRow, SettingsSection, SettingsToggle } from '@/components/settings'
+import { Button } from '@/components/ui/button'
 import { routes } from '@/lib/navigate'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import {
   FOREIGN_SESSION_KINDS,
   filterForeignIndexEntries,
+  type ForeignAutoImportStatus,
   type ForeignIndexEntry,
   type ForeignSessionKind,
 } from '@craft-agent/shared/sessions'
@@ -37,7 +45,7 @@ type ScanEntry = {
 }
 
 export default function ImportSettingsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -47,6 +55,76 @@ export default function ImportSettingsPage() {
   const [truncated, setTruncated] = useState(false)
   const [query, setQuery] = useState('')
   const [kindFilter, setKindFilter] = useState<ForeignSessionKind | 'all'>('all')
+  const [manualOpen, setManualOpen] = useState(false)
+  const [auto, setAuto] = useState<ForeignAutoImportStatus | null>(null)
+  const [autoError, setAutoError] = useState<string | null>(null)
+
+  const refreshAuto = useCallback(async () => {
+    try {
+      const next = await window.electronAPI.foreignAutoImportStatus({ workspaceId: workspace?.id })
+      setAuto(next)
+    } catch (err) {
+      setAutoError(err instanceof Error ? err.message : String(err))
+    }
+  }, [workspace?.id])
+
+  const autoBusy = auto?.state === 'scanning' || auto?.state === 'importing'
+  useEffect(() => {
+    void refreshAuto()
+    const timer = window.setInterval(() => void refreshAuto(), autoBusy ? 1500 : 10_000)
+    return () => window.clearInterval(timer)
+  }, [refreshAuto, autoBusy])
+
+  const runAuto = useCallback(
+    async (all: boolean) => {
+      setAutoError(null)
+      setAuto((prev) => (prev ? { ...prev, state: 'scanning' } : prev))
+      try {
+        setAuto(await window.electronAPI.foreignAutoImportRun({ workspaceId: workspace?.id, all }))
+      } catch (err) {
+        setAutoError(err instanceof Error ? err.message : String(err))
+        void refreshAuto()
+      }
+    },
+    [refreshAuto, workspace?.id],
+  )
+
+  const setAutoEnabled = useCallback(
+    async (enabled: boolean) => {
+      setAutoError(null)
+      try {
+        setAuto(await window.electronAPI.foreignAutoImportSet({ workspaceId: workspace?.id, enabled }))
+      } catch (err) {
+        setAutoError(err instanceof Error ? err.message : String(err))
+      }
+    },
+    [workspace?.id],
+  )
+
+  const autoLine = useMemo(() => {
+    if (!auto) return t('settings.import.auto.loading')
+    if (auto.state === 'disabled') return t('settings.import.auto.off')
+    if (auto.state === 'scanning') return t('settings.import.auto.scanning')
+    if (auto.state === 'importing') {
+      return t('settings.import.auto.importing', { imported: auto.imported, updated: auto.updated })
+    }
+    if (auto.state === 'error') return t('settings.import.auto.error', { error: auto.error ?? '' })
+    if (!auto.lastRunAt) return t('settings.import.auto.pending')
+    return t('settings.import.auto.done', {
+      found: auto.found,
+      total: auto.alreadyImported,
+      imported: auto.imported,
+      updated: auto.updated,
+      time: new Date(auto.lastRunAt).toLocaleString(i18n.language),
+    })
+  }, [auto, i18n.language, t])
+
+  const sourceSummary = auto
+    ? Object.entries(auto.bySource)
+        .sort((a, b) => b[1] - a[1])
+        .map(([kind, count]) => `${kind} ${count}`)
+        .join(' · ')
+    : ''
 
   const visible = useMemo(
     () =>
@@ -107,6 +185,7 @@ export default function ImportSettingsPage() {
         sourcePaths,
         mode: 'skip',
       })
+      void refreshAuto()
       setResults(
         persisted.results.map((row) =>
           `${row.action}${row.sessionId ? ` ${row.sessionId}` : ''}${row.reason ? ` (${row.reason})` : ''}`,
@@ -117,7 +196,7 @@ export default function ImportSettingsPage() {
     } finally {
       setLoading(false)
     }
-  }, [entries, selected, t, workspace?.id])
+  }, [entries, refreshAuto, selected, t, workspace?.id])
 
   const selectVisible = (on: boolean) => {
     setSelected((prev) => {
@@ -137,7 +216,61 @@ export default function ImportSettingsPage() {
       />
       <div className="flex-1 min-h-0 mask-fade-y">
       <ScrollArea className="h-full">
-        <div className="px-5 pt-6 pb-24 max-w-3xl mx-auto w-full space-y-4" data-testid="session-import">
+        <div className="px-5 pt-6 pb-24 max-w-3xl mx-auto w-full space-y-6" data-testid="session-import">
+          <SettingsSection title={t('settings.import.auto.title')} description={t('settings.import.auto.description')}>
+            <SettingsCard>
+              <SettingsToggle
+                label={t('settings.import.auto.toggle')}
+                description={t('settings.import.auto.toggleHint')}
+                checked={auto?.enabled ?? true}
+                disabled={!auto}
+                onCheckedChange={(on) => void setAutoEnabled(on)}
+              />
+              <SettingsRow
+                label={t('settings.import.auto.status')}
+                description={autoLine}
+                wrapDescription
+                action={
+                  <div className="flex items-center gap-2" data-testid="session-import-auto">
+                    {autoBusy ? <Spinner className="w-4 h-4" /> : null}
+                    <Button size="sm" variant="secondary" disabled={autoBusy} onClick={() => void runAuto(false)}>
+                      <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                      {t('settings.import.auto.runNow')}
+                    </Button>
+                  </div>
+                }
+              />
+              {sourceSummary ? (
+                <SettingsRow label={t('settings.import.auto.sources')} description={sourceSummary} wrapDescription />
+              ) : null}
+              {auto && auto.remaining > 0 ? (
+                <SettingsRow
+                  label={t('settings.import.auto.older', { count: auto.remaining })}
+                  description={t('settings.import.auto.olderHint')}
+                  wrapDescription
+                  action={
+                    <Button size="sm" variant="secondary" disabled={autoBusy} onClick={() => void runAuto(true)}>
+                      <DownloadCloud className="w-3.5 h-3.5 mr-1" />
+                      {t('settings.import.auto.importAll')}
+                    </Button>
+                  }
+                />
+              ) : null}
+            </SettingsCard>
+            {autoError ? <div className="mt-2 text-xs text-destructive">{autoError}</div> : null}
+          </SettingsSection>
+
+          <button
+            type="button"
+            data-testid="session-import-manual-toggle"
+            onClick={() => setManualOpen((open) => !open)}
+            className="inline-flex items-center gap-1 text-sm font-medium text-foreground/80 hover:text-foreground"
+          >
+            {manualOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            {t('settings.import.manual.title')}
+          </button>
+          {manualOpen ? (
+          <div className="space-y-4">
           <p className="text-sm opacity-70">{t('settings.import.scanHint')}</p>
           {truncated ? (
             <p className="text-sm text-amber-600 dark:text-amber-400" data-testid="session-import-truncated">
@@ -246,6 +379,8 @@ export default function ImportSettingsPage() {
                 <li key={row}>{row}</li>
               ))}
             </ul>
+          ) : null}
+          </div>
           ) : null}
           <BrowserProfileImportPanel />
         </div>

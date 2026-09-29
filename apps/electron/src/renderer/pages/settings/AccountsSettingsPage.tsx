@@ -232,6 +232,11 @@ export default function AccountsSettingsPage() {
 
   const healthOk = health ? health.healthy : null
   const issueCount = health?.issues?.length ?? 0
+  const profileDirty = Boolean(state) && displayName.trim() !== (state?.profile.displayName ?? '').trim()
+  const notesCloudActive = Boolean(notesCloud && notesCloud.status !== 'disconnected')
+  const showCloudForm = cloudFormOpen
+
+  const statusText = (status: ServiceConnection['status']) => t(`settings.accounts.status.${status}`)
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -241,24 +246,30 @@ export default function AccountsSettingsPage() {
       />
       <div className="flex-1 min-h-0 mask-fade-y">
         <ScrollArea className="h-full">
-          <div className="mx-auto w-full max-w-5xl space-y-8 px-5 py-7">
+          <div className="mx-auto w-full max-w-3xl space-y-8 px-5 py-7">
         {/* PROFILE */}
         <SettingsSection title={t('settings.accounts.profileSection')}>
           <SettingsCard>
             <SettingsRow
               label={t('settings.accounts.displayName')}
+              description={t('settings.accounts.displayNameHint')}
+              wrapDescription
             >
-              <div className="flex items-center gap-2 min-w-[240px]">
+              <div className="flex items-center gap-2">
                 <Input
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="h-8"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && profileDirty) void handleSaveProfile()
+                  }}
+                  className="h-8 w-56"
                   aria-label={t('settings.accounts.displayName')}
                 />
                 <Button
                   size="sm"
+                  variant="secondary"
                   onClick={() => void handleSaveProfile()}
-                  disabled={savingProfile || !displayName.trim()}
+                  disabled={savingProfile || !displayName.trim() || !profileDirty}
                 >
                   {t('common.save')}
                 </Button>
@@ -267,124 +278,131 @@ export default function AccountsSettingsPage() {
           </SettingsCard>
         </SettingsSection>
 
-        {genericConnections.length > 0 && (
-          <SettingsSection
-            title={t('settings.accounts.connectionsSection')}
-            action={
-              <Button variant="ghost" size="sm" onClick={() => void handleRefresh()}>
-                {t('settings.accounts.refresh')}
-              </Button>
-            }
-          >
-            <SettingsCard>
-              {owned.map((conn) => (
-                <SettingsRow
-                  key={conn.id}
-                  label={providerLabel(conn.provider, t)}
-                  description={
-                    conn.accountLabel
-                      ? `${conn.accountLabel} · ${t(`settings.accounts.status.${conn.status}`)}`
-                      : t(`settings.accounts.status.${conn.status}`)
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs ${STATUS_TONE[conn.status]}`}>
-                      {t(`settings.accounts.status.${conn.status}`)}
-                    </span>
-                    {conn.status !== 'disconnected' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busyId === conn.id}
-                        onClick={() => void handleDisconnect(conn.id)}
-                      >
-                        {t('settings.accounts.signOut')}
-                      </Button>
-                    )}
-                  </div>
-                </SettingsRow>
-              ))}
-              {reflections.map((conn) => {
-                const managedLabel = t('settings.accounts.managedInAi')
-                return (
-                  <SettingsRow
-                    key={conn.id}
-                    label={providerLabel(conn.provider, t)}
-                    description={
-                      conn.accountLabel
-                        ? `${conn.accountLabel} · ${managedLabel}`
-                        : managedLabel
-                    }
+        {/* SERVICE CONNECTIONS */}
+        <SettingsSection
+          title={t('settings.accounts.connectionsSection')}
+          action={
+            <Button variant="ghost" size="sm" onClick={() => void handleRefresh()}>
+              {t('settings.accounts.refresh')}
+            </Button>
+          }
+        >
+          <SettingsCard>
+            {genericConnections.length === 0 && (
+              <SettingsRow
+                label={t('settings.accounts.notConnected')}
+                description={t('settings.accounts.noConnections')}
+                wrapDescription
+              />
+            )}
+            {owned.map((conn) => (
+              <SettingsRow
+                key={conn.id}
+                label={providerLabel(conn.provider, t)}
+                description={conn.accountLabel || undefined}
+              >
+                <span className={`text-xs ${STATUS_TONE[conn.status]}`}>{statusText(conn.status)}</span>
+                {conn.status !== 'disconnected' && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={busyId === conn.id}
+                    onClick={() => void handleDisconnect(conn.id)}
                   >
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => navigate(routes.view.settings('ai'))}
-                    >
-                      {t('settings.accounts.openAiSettings')}
-                    </Button>
-                  </SettingsRow>
-                )
-              })}
-            </SettingsCard>
-          </SettingsSection>
-        )}
+                    {t('settings.accounts.signOut')}
+                  </Button>
+                )}
+              </SettingsRow>
+            ))}
+            {reflections.map((conn) => (
+              <SettingsRow
+                key={conn.id}
+                label={providerLabel(conn.provider, t)}
+                description={
+                  conn.accountLabel
+                    ? `${conn.accountLabel} · ${t('settings.accounts.managedInAi')}`
+                    : t('settings.accounts.managedInAi')
+                }
+              >
+                <span className={`text-xs ${STATUS_TONE[conn.status]}`}>{statusText(conn.status)}</span>
+                <Button size="sm" variant="ghost" onClick={() => navigate(routes.view.settings('ai'))}>
+                  {t('settings.accounts.openAiSettings')}
+                </Button>
+              </SettingsRow>
+            ))}
+          </SettingsCard>
+        </SettingsSection>
 
         {/* NOTES — sole owner of Notes connection presentation */}
         <SettingsSection title={t('sidebar.notes')}>
           <SettingsCard>
             {notesLocal && (
               <SettingsRow
-                label={t('sidebar.notes')}
+                label={t('settings.accounts.provider.siyuan-local')}
                 description={
                   notesLocal.readOnly
                     ? t('settings.accounts.managedInKnowledge')
-                    : t(`settings.accounts.status.${notesLocal.status}`)
+                    : notesLocal.accountLabel || undefined
                 }
               >
+                <span className={`text-xs ${STATUS_TONE[notesLocal.status]}`}>{statusText(notesLocal.status)}</span>
                 {notesLocal.readOnly ? (
+                  <Button size="sm" variant="ghost" onClick={() => navigate(routes.view.settings('knowledge'))}>
+                    {t('settings.accounts.openKnowledgeSettings')}
+                  </Button>
+                ) : notesLocal.status !== 'disconnected' ? (
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => navigate(routes.view.settings('knowledge'))}
+                    disabled={busyId === notesLocal.id}
+                    onClick={() => void handleDisconnect(notesLocal.id)}
                   >
-                    {t('settings.accounts.openKnowledgeSettings')}
+                    {t('settings.accounts.signOut')}
                   </Button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs ${STATUS_TONE[notesLocal.status]}`}>
-                      {t(`settings.accounts.status.${notesLocal.status}`)}
-                    </span>
-                    {notesLocal.status !== 'disconnected' && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busyId === notesLocal.id}
-                        onClick={() => void handleDisconnect(notesLocal.id)}
-                      >
-                        {t('settings.accounts.signOut')}
-                      </Button>
-                    )}
-                  </div>
-                )}
+                ) : null}
               </SettingsRow>
             )}
 
-            <SettingsRow label={t('settings.accounts.account')}>
-              <span className="text-sm text-muted-foreground">
-                {notesCloud?.accountLabel || t('settings.accounts.notConnected')}
+            <SettingsRow
+              label={t('settings.accounts.provider.siyuan-cloud')}
+              description={
+                notesCloudActive
+                  ? notesCloud?.accountLabel || t('settings.accounts.notesCloudConnectedHint')
+                  : t('settings.accounts.notesCloudHint')
+              }
+              wrapDescription
+            >
+              <span
+                className={`text-xs ${notesCloud ? STATUS_TONE[notesCloud.status] : 'text-muted-foreground'}`}
+              >
+                {notesCloud ? statusText(notesCloud.status) : t('settings.accounts.notConnected')}
               </span>
+              {!showCloudForm && (
+                <Button
+                  size="sm"
+                  variant={notesCloudActive ? 'ghost' : 'secondary'}
+                  disabled={connecting || !workspaceId}
+                  onClick={() => {
+                    setCloudLabel(notesCloud?.accountLabel || '')
+                    setCloudToken('')
+                    setCloudFormOpen(true)
+                  }}
+                >
+                  {notesCloudActive ? t('settings.accounts.reconnect') : t('settings.accounts.connect')}
+                </Button>
+              )}
+              {notesCloud && notesCloudActive && !showCloudForm && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busyId === notesCloud.id}
+                  onClick={() => void handleDisconnect(notesCloud.id)}
+                >
+                  {t('settings.accounts.signOut')}
+                </Button>
+              )}
             </SettingsRow>
 
-            <SettingsRow label={t('settings.accounts.syncStatus')}>
-              <span
-                className={`text-sm ${notesCloud ? STATUS_TONE[notesCloud.status] : 'text-muted-foreground'}`}
-              >
-                {notesCloud
-                  ? t(`settings.accounts.status.${notesCloud.status}`)
-                  : t('settings.accounts.status.disconnected')}
-              </span>
-            </SettingsRow>
             {entitlement && (
               <SettingsRow label={t('settings.accounts.subscription')}>
                 <span className="text-sm text-muted-foreground">
@@ -395,76 +413,59 @@ export default function AccountsSettingsPage() {
               </SettingsRow>
             )}
 
-            {(!notesCloud || notesCloud.status === 'disconnected' || cloudFormOpen) && (
-              <div className="px-4 py-3 space-y-2 border-t border-border/40">
-                <div className="text-xs font-medium text-muted-foreground">
-                  {cloudFormOpen && notesCloud && notesCloud.status !== 'disconnected'
-                    ? t('settings.accounts.reconnect')
-                    : t('settings.accounts.connect')}
-                </div>
-                <Input
-                  placeholder={t('settings.accounts.accountLabelPlaceholder')}
-                  value={cloudLabel}
-                  onChange={(e) => setCloudLabel(e.target.value)}
-                  className="h-8"
-                />
-                <Input
-                  placeholder={t('settings.accounts.tokenPlaceholder')}
-                  value={cloudToken}
-                  onChange={(e) => setCloudToken(e.target.value)}
-                  type="password"
-                  className="h-8"
-                />
-                <div className="flex gap-2">
+            {showCloudForm && (
+              <form
+                className="grid gap-3 px-4 pb-4 pt-1 sm:grid-cols-2"
+                onSubmit={(e) => {
+                  e.preventDefault()
+                  void handleConnectCloud()
+                }}
+              >
+                <label className="space-y-1">
+                  <span className="text-xs text-muted-foreground">{t('settings.accounts.accountLabelField')}</span>
+                  <Input
+                    placeholder={t('settings.accounts.accountLabelPlaceholder')}
+                    value={cloudLabel}
+                    onChange={(e) => setCloudLabel(e.target.value)}
+                    autoComplete="email"
+                    className="h-8"
+                  />
+                </label>
+                <label className="space-y-1">
+                  <span className="text-xs text-muted-foreground">{t('settings.accounts.tokenField')}</span>
+                  <Input
+                    placeholder={t('settings.accounts.tokenPlaceholder')}
+                    value={cloudToken}
+                    onChange={(e) => setCloudToken(e.target.value)}
+                    type="password"
+                    autoComplete="off"
+                    className="h-8"
+                  />
+                </label>
+                <p className="text-xs text-muted-foreground sm:col-span-2">{t('settings.accounts.tokenStorageHint')}</p>
+                <div className="flex gap-2 sm:col-span-2">
                   <Button
+                    type="submit"
                     size="sm"
-                    onClick={() => void handleConnectCloud()}
+                    variant="secondary"
                     disabled={connecting || !workspaceId || !cloudToken.trim()}
                   >
-                    {cloudFormOpen && notesCloud && notesCloud.status !== 'disconnected'
-                      ? t('settings.accounts.reconnect')
-                      : t('settings.accounts.connect')}
+                    {notesCloudActive ? t('settings.accounts.reconnect') : t('settings.accounts.connect')}
                   </Button>
-                  {cloudFormOpen && notesCloud && notesCloud.status !== 'disconnected' && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={connecting}
-                      onClick={() => {
-                        setCloudFormOpen(false)
-                        setCloudToken('')
-                      }}
-                    >
-                      {t('common.cancel')}
-                    </Button>
-                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={connecting}
+                    onClick={() => {
+                      setCloudFormOpen(false)
+                      setCloudToken('')
+                    }}
+                  >
+                    {t('common.cancel')}
+                  </Button>
                 </div>
-              </div>
-            )}
-
-            {notesCloud && notesCloud.status !== 'disconnected' && !cloudFormOpen && (
-              <div className="px-4 py-3 flex gap-2 border-t border-border/40">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setCloudLabel(notesCloud.accountLabel || '')
-                    setCloudToken('')
-                    setCloudFormOpen(true)
-                  }}
-                  disabled={connecting}
-                >
-                  {t('settings.accounts.reconnect')}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={busyId === notesCloud.id}
-                  onClick={() => void handleDisconnect(notesCloud.id)}
-                >
-                  {t('settings.accounts.signOut')}
-                </Button>
-              </div>
+              </form>
             )}
           </SettingsCard>
         </SettingsSection>
@@ -478,7 +479,12 @@ export default function AccountsSettingsPage() {
             <SettingsRow
               label={t('settings.accounts.roxServerUrl')}
               description={t('settings.accounts.roxServerUrlHint')}
-            />
+              wrapDescription
+            >
+              <Button size="sm" variant="ghost" onClick={() => navigate(routes.view.settings('server'))}>
+                {t('settings.accounts.openServerSettings')}
+              </Button>
+            </SettingsRow>
             <SettingsRow
               label={t('settings.accounts.credentialHealth')}
               description={
@@ -489,26 +495,42 @@ export default function AccountsSettingsPage() {
                     })
                   : t('settings.accounts.healthUnknown')
               }
+              wrapDescription
             >
+              <span className={`text-xs ${healthOk === null ? 'text-muted-foreground' : healthOk ? 'text-success' : 'text-warning'}`}>
+                {healthOk === null ? '' : healthOk ? t('settings.accounts.healthOk') : t('settings.accounts.healthIssues')}
+              </span>
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 disabled={checkingHealth}
                 onClick={() => void runHealthCheck()}
               >
                 {t('settings.accounts.runHealthCheck')}
               </Button>
             </SettingsRow>
+            {health && issueCount > 0 && (
+              <ul className="space-y-1 px-4 pb-3 text-xs text-muted-foreground">
+                {health.issues.map((issue, index) => (
+                  <li key={`${issue.type}-${index}`} className="break-words">
+                    • {issue.message}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SettingsCard>
+          <CredentialMigrationCard />
+          <SettingsCard>
             <SettingsRow
               label={t('settings.accounts.resetAppData')}
               description={t('settings.accounts.resetAppDataDesc')}
+              wrapDescription
             >
-              <Button size="sm" variant="destructive" onClick={() => void handleReset()}>
+              <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => void handleReset()}>
                 {t('settings.accounts.resetAppData')}
               </Button>
             </SettingsRow>
           </SettingsCard>
-          <CredentialMigrationCard />
         </SettingsSection>
           </div>
         </ScrollArea>
