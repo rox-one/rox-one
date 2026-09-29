@@ -536,7 +536,7 @@ export default function AppearanceSettingsPage() {
                         setFont(value as typeof font)
                       }}
                       options={[
-                        { value: 'rox', label: t("settings.appearance.fontRox") },
+                        { value: 'rox', label: t("settings.appearance.fontArialNarrow") },
                         { value: 'inter', label: t("settings.appearance.fontInter") },
                         { value: 'system', label: t("settings.appearance.fontSystem") },
                       ]}
@@ -553,7 +553,7 @@ export default function AppearanceSettingsPage() {
                         setChatFont(value as typeof chatFont)
                       }}
                       options={[
-                        { value: 'rox', label: t("settings.appearance.fontRox") },
+                        { value: 'rox', label: t("settings.appearance.fontArialNarrow") },
                         { value: 'inter', label: t("settings.appearance.fontInter") },
                         { value: 'system', label: t("settings.appearance.fontSystem") },
                       ]}

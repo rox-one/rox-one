@@ -23,7 +23,7 @@ import { closePanelAtom, focusedPanelIdAtom, type PanelStackEntry } from '@/atom
 import { useAppShellContext, AppShellProvider } from '@/context/AppShellContext'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { MainContentPanel } from './MainContentPanel'
-import { PANEL_MIN_WIDTH, RADIUS_EDGE, RADIUS_INNER } from './panel-constants'
+import { PANEL_MIN_WIDTH } from './panel-constants'
 
 interface PanelSlotProps {
   entry: PanelStackEntry
@@ -31,7 +31,7 @@ interface PanelSlotProps {
   /** Whether this panel is the focused panel in a multi-panel layout */
   isFocusedPanel: boolean
   isSidebarAndNavigatorHidden: boolean
-  /** Whether this panel's left corners touch the window edge (no sidebar/navigator before it) */
+  /** Whether this panel touches the window's left edge (kept for callers; flush shell has no corner radii) */
   isAtLeftEdge: boolean
   /** Whether this panel's right corners touch the window edge (no right sidebar after it) */
   isAtRightEdge: boolean
@@ -48,8 +48,6 @@ export function PanelSlot({
   isOnly,
   isFocusedPanel,
   isSidebarAndNavigatorHidden,
-  isAtLeftEdge,
-  isAtRightEdge,
   proportion,
   sash,
   isCompact,
@@ -113,8 +111,11 @@ export function PanelSlot({
         data-compact={isCompact || undefined}
         className={cn(
           'h-full overflow-hidden relative @container/panel',
-          !isOnly && isFocusedPanel ? 'shadow-panel-focused z-[1]' : 'shadow-middle z-0',
-          'bg-foreground-2',
+          // One-surface shell: flush pane on the shared background. Split view
+          // keeps a hairline between panels and a thin focus accent (no boxes).
+          'rox-shell-pane',
+          sash && 'rox-shell-divider-l',
+          !isOnly && isFocusedPanel ? 'shadow-panel-focused z-[1]' : 'z-0',
         )}
         style={{
           // In multi-panel, unfocused panels override --background so all
@@ -127,12 +128,6 @@ export function PanelSlot({
               } as React.CSSProperties
             : {}
           ),
-          // Corner radii: edge corners (touching window boundary) vs interior corners.
-          // ship-rox-radius-everywhere: no sharp 90° — compact keeps RADIUS_* too.
-          borderTopLeftRadius: isAtLeftEdge ? RADIUS_EDGE : RADIUS_INNER,
-          borderBottomLeftRadius: isAtLeftEdge ? RADIUS_EDGE : RADIUS_INNER,
-          borderTopRightRadius: isAtRightEdge ? RADIUS_EDGE : RADIUS_INNER,
-          borderBottomRightRadius: isAtRightEdge ? RADIUS_EDGE : RADIUS_INNER,
           ...(isOnly
             ? { flexGrow: 1, minWidth: 0 }
             : { flexGrow: proportion, flexShrink: 1, flexBasis: 0, minWidth: PANEL_MIN_WIDTH }

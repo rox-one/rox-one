@@ -15,6 +15,7 @@ import {
   Share2,
   type LucideIcon,
 } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
 import * as storage from '@/lib/local-storage'
 
@@ -141,11 +142,61 @@ export interface EntityViewTabsProps {
   onChange: (id: EntityViewId) => void
   capabilities: EntityViewCapability[]
   className?: string
+  /**
+   * `row` (default): full-width strip under a header (notes / knowledge).
+   * `segmented`: compact control that lives inside a panel header row next to
+   * the title. Labels collapse to icons in narrow panels (container query on
+   * `@container/panel`), so it never clips; every item keeps a tooltip and an
+   * aria-label.
+   */
+  variant?: 'row' | 'segmented'
 }
 
-export function EntityViewTabs({ value, onChange, capabilities, className }: EntityViewTabsProps) {
+export function EntityViewTabs({ value, onChange, capabilities, className, variant = 'row' }: EntityViewTabsProps) {
   const { t } = useTranslation()
   const visible = capabilities.filter((c) => c.available || c.id === value)
+
+  if (variant === 'segmented') {
+    return (
+      <div
+        className={cn('rox-view-switch titlebar-no-drag inline-flex shrink-0 items-center gap-0.5 rounded-[8px] p-0.5', className)}
+        role="tablist"
+        aria-label={t('entityView.tabsLabel')}
+        data-entity-view-switch="segmented"
+      >
+        {visible.map(({ id, labelKey, icon: Icon, available }) => {
+          const active = value === id
+          const label = t(labelKey)
+          return (
+            <Tooltip key={id}>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  aria-label={label}
+                  disabled={!available && !active}
+                  onClick={() => available && onChange(id)}
+                  className={cn(
+                    'rox-view-switch-item inline-flex h-6 min-w-6 items-center justify-center gap-1 rounded-[6px] px-1.5 text-xs font-medium transition-colors',
+                    'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    active
+                      ? 'bg-foreground/10 text-foreground'
+                      : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
+                    !available && 'opacity-50 cursor-not-allowed',
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+                  <span className="rox-view-switch-label whitespace-nowrap">{label}</span>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">{label}</TooltipContent>
+            </Tooltip>
+          )
+        })}
+      </div>
+    )
+  }
 
   return (
     <div

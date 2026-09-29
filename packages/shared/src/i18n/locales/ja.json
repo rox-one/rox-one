@@ -4964,5 +4964,7 @@
   "workspaceRail.linkMissingUrl": "URL を入力してください",
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "ノート ID（任意）",
-  "workspaceRail.removeLink": "リンクを削除"
+  "workspaceRail.removeLink": "リンクを削除",
+  "settings.appearance.fontArialNarrow": "Arial Narrow",
+  "surfaceTabs.label": "Open tabs"
 }

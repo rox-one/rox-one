@@ -76,12 +76,13 @@ function compactTitleInset(controlCount: number): number {
 interface CompactChatHeaderProps {
   leadingAction?: React.ReactNode
   titleNode: React.ReactNode
+  viewSwitch?: React.ReactNode
   centerButton?: React.ReactNode
   actions?: React.ReactNode
   rightSidebarButton?: React.ReactNode
 }
 
-function CompactChatHeader({ leadingAction, titleNode, centerButton, actions, rightSidebarButton }: CompactChatHeaderProps) {
+function CompactChatHeader({ leadingAction, titleNode, viewSwitch, centerButton, actions, rightSidebarButton }: CompactChatHeaderProps) {
   const { t } = useTranslation()
   const {
     workspaces,
@@ -121,6 +122,7 @@ function CompactChatHeader({ leadingAction, titleNode, centerButton, actions, ri
               onWorkspaceCreated={onRefreshWorkspaces}
               onWorkspaceRemoved={onRefreshWorkspaces}
             />
+            {viewSwitch && <div className="flex items-center justify-start">{viewSwitch}</div>}
             {(centerButton || actions) && (
               <div className="flex items-center justify-end gap-2">
                 {centerButton}
@@ -174,6 +176,12 @@ export interface PanelHeaderProps {
    * this lets consumers swap to a vaul `Drawer` instead.
    */
   compactTitleMenu?: React.ReactNode
+  /**
+   * Optional view switch (e.g. session Стандарт / Карта) rendered in the same
+   * row right after the title. The title truncates first; the switch never
+   * clips (it folds to icons via container queries).
+   */
+  viewSwitch?: React.ReactNode
   /** Optional leading action rendered before the title (e.g., back button in compact mode) */
   leadingAction?: React.ReactNode
   /** Optional center button rendered between title and right actions */
@@ -200,6 +208,7 @@ export function PanelHeader({
   badge,
   titleMenu,
   compactTitleMenu,
+  viewSwitch,
   leadingAction: explicitLeadingAction,
   centerButton,
   actions,
@@ -301,6 +310,7 @@ export function PanelHeader({
       <CompactChatHeader
         leadingAction={leadingAction}
         titleNode={titleNode}
+        viewSwitch={viewSwitch}
         centerButton={centerButton}
         actions={actions}
         rightSidebarButton={rightSidebarButton}
@@ -323,6 +333,11 @@ export function PanelHeader({
         <div className="min-w-0 flex-1 overflow-hidden [&>button]:max-w-full">
           {titleNode}
         </div>
+        {viewSwitch && (
+          <div className="titlebar-no-drag shrink-0">
+            {viewSwitch}
+          </div>
+        )}
         {centerButton && (
           <div className="titlebar-no-drag shrink-0">
             {centerButton}
@@ -357,7 +372,7 @@ export function PanelHeader({
   // The side insets are based on the actual number of control slots so a long
   // title truncates before the right-side action cluster instead of overlapping it.
   const compactLeadingControlCount = leadingAction ? 1 : 0
-  const compactTrailingControlCount = [centerButton, actions, rightSidebarButton].filter(Boolean).length
+  const compactTrailingControlCount = [viewSwitch, centerButton, actions, rightSidebarButton].filter(Boolean).length
   const compactTitleInsetStyle = isCompactMode
     ? {
         left: compactTitleInset(compactLeadingControlCount),
@@ -373,6 +388,11 @@ export function PanelHeader({
         </div>
       )}
       <div className="flex-1" />
+      {viewSwitch && (
+        <div className="titlebar-no-drag shrink-0 z-[1]">
+          {viewSwitch}
+        </div>
+      )}
       {centerButton && (
         <div className="titlebar-no-drag shrink-0 z-[1]">
           {centerButton}
@@ -404,11 +424,24 @@ export function PanelHeader({
           {leadingAction}
         </div>
       )}
-      <div className="flex-1 min-w-0 flex items-center select-none">
-        <div className={cn("max-w-full overflow-hidden", !leadingAction && "mx-auto")}>
-          {titleNode}
+      {viewSwitch ? (
+        // Title + view switch share one row, left-aligned; the title truncates
+        // before the switch does.
+        <div className="flex-1 min-w-0 flex items-center gap-2 select-none">
+          <div className="min-w-0 overflow-hidden [&>button]:max-w-full">
+            {titleNode}
+          </div>
+          <div className="titlebar-no-drag shrink-0">
+            {viewSwitch}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex-1 min-w-0 flex items-center select-none">
+          <div className={cn("max-w-full overflow-hidden", !leadingAction && "mx-auto")}>
+            {titleNode}
+          </div>
+        </div>
+      )}
       {centerButton && (
         <div className="titlebar-no-drag shrink-0">
           {centerButton}

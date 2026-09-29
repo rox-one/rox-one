@@ -115,8 +115,11 @@
   --md-bullets: var(--text-muted);
   --md-counters: var(--text-muted);
 
-  /* Rox is the product default face; Inter/system/JetBrains remain explicit preferences. */
-  --font-sans: "Rox", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  /* Arial Narrow (macOS system font, not bundled) is the product UI face.
+     Rox (Ioskeley Mono) stays the monospace face for code, terminal and
+     command input via --font-mono. Inter/system remain explicit preferences. */
+  --font-ui-narrow: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
+  --font-sans: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
   --font-serif: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-mono: "Rox", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   --font-chat: var(--font-sans);
@@ -157,6 +160,9 @@
   /* Panels sit on a same-colour canvas: keep a half-strength hairline for the
      edge plus a soft lift, instead of the full-strength inset ring. */
   --rox-elev-panel: 0 0 0 1px color-mix(in oklch, var(--border-subtle) 50%, transparent), var(--shadow-soft);
+  /* One-surface shell: panes sit flush on one background and are separated
+     by a single low-alpha hairline instead of rounded outlined boxes. */
+  --rox-shell-divider: color-mix(in oklch, var(--foreground) 9%, transparent);
 
   /* Z-index scale */
   --z-base: 0;
@@ -252,8 +258,9 @@
   font-display: swap;
 }
 
+/* The default ("rox") UI preset renders in Arial Narrow; code stays on --font-mono. */
 html[data-font="rox"] {
-  --font-sans: "Rox", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
   --font-default: var(--font-sans);
 }
 
@@ -271,7 +278,7 @@ html[data-font="system"] {
 }
 
 html[data-chat-font="rox"] {
-  --font-chat: "Rox", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-chat: "Arial Narrow", "Arial Narrow", Arial, sans-serif;
 }
 
 html[data-chat-font="inter"] {
@@ -320,6 +327,8 @@ html[data-contrast="high"] {
   --chrome-glass-blur: 0px;
   --chrome-glass-border: var(--border-subtle);
   --rox-elev-panel: inset 0 0 0 1px var(--border-subtle);
+  /* One clear divider line between shell panes (still no boxes). */
+  --rox-shell-divider: var(--border-subtle);
   --shadow-minimal: inset 0 0 0 1px var(--border-subtle);
   /* High contrast keeps an explicit (1px) ring on raised surfaces. */
   --shadow-soft: inset 0 0 0 1px var(--border-subtle);
@@ -522,6 +531,29 @@ html[data-contrast="high"] :focus-visible {
     border-radius: var(--rox-radius-md);
     box-shadow: var(--rox-elev-panel);
     background: var(--surface-elevated);
+  }
+
+  /* One-surface shell pane: flush, no radius, no outline, no shadow. */
+  .rox-shell-pane {
+    background: var(--background);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .rox-shell-divider-r {
+    border-right: 1px solid var(--rox-shell-divider);
+  }
+
+  .rox-shell-divider-l {
+    border-left: 1px solid var(--rox-shell-divider);
+  }
+
+  .rox-shell-divider-t {
+    border-top: 1px solid var(--rox-shell-divider);
+  }
+
+  .rox-shell-divider-b {
+    border-bottom: 1px solid var(--rox-shell-divider);
   }
 
   .rox-rail {

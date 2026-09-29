@@ -84,6 +84,8 @@ import { usePromoInsights } from "@/hooks/usePromoInsights"
 import { useShellAppearance } from "@/hooks/useShellAppearance"
 import { resolvePromoSlot } from "@/platform/promo-slot"
 import { viewportBand } from "@/platform/viewport-band"
+import { CHROME_DENSITY } from "@/platform/chrome-density"
+import { clampShellColumns } from "./shell-width-clamp"
 import {
   clearStatusUnseen,
   getUnseenStatuses,
@@ -178,6 +180,7 @@ import {
   PANEL_EDGE_INSET,
   PANEL_MIN_WIDTH,
   PANEL_STACK_TOP_INSET,
+  CENTER_MIN_WIDTH,
   RADIUS_EDGE,
   RADIUS_INNER,
 } from "./panel-constants"
@@ -297,11 +300,11 @@ function AppShellContent({
   const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
-  const [sidebarWidth, setSidebarWidth] = React.useState(() => {
+  const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(null).sidebarWidth
   })
   // Session list width in pixels (min 240, max 480)
-  const [sessionListWidth, setSessionListWidth] = React.useState(() => {
+  const [storedSessionListWidth, setSessionListWidth] = React.useState(() => {
     return loadShellLayout(null).navigatorWidth
   })
 
@@ -341,6 +344,21 @@ function AppShellContent({
   const shellWidth = useContainerWidth(shellRef)
   const MOBILE_THRESHOLD = 768
   const isAutoCompact = shellWidth > 0 && shellWidth < MOBILE_THRESHOLD
+  // One-surface shell: restored sidebar/list widths must not squeeze the
+  // session column below CENTER_MIN_WIDTH when the window is wide enough.
+  // Display-only; the persisted widths are untouched. The right inspector
+  // yields first (InspectorHost), then the list, then the sidebar.
+  const { sidebar: sidebarWidth, navigator: sessionListWidth } = clampShellColumns({
+    shellWidth: isAutoCompact ? 0 : shellWidth,
+    reserved: unifiedRailOffset + CHROME_DENSITY.railWidth,
+    sidebar: storedSidebarWidth,
+    navigator: storedSessionListWidth,
+    sidebarVisible: isSidebarVisible && !isSidebarAndNavigatorHidden,
+    navigatorVisible: !isSidebarAndNavigatorHidden,
+    sidebarMin: SIDEBAR_WIDTH_MIN,
+    navigatorMin: NAVIGATOR_WIDTH_MIN,
+    centerMin: CENTER_MIN_WIDTH,
+  })
   const showStatusBar = shouldShowStatusBar(
     statusBarEnabled && (unifiedShellEnabled || workbenchEnabled),
     isAutoCompact,

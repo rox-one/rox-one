@@ -15,9 +15,9 @@ const constants = readFileSync(
 )
 
 describe('panel inset alignment', () => {
-  it('matches inspector and desktop stack top/bottom gaps at 2px', () => {
-    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 2')
-    expect(constants).toContain('export const PANEL_STACK_BOTTOM_INSET = 2')
+  it('keeps inspector and desktop stack flush (one-surface shell, no insets)', () => {
+    expect(constants).toContain('export const PANEL_STACK_TOP_INSET = 0')
+    expect(constants).toContain('export const PANEL_STACK_BOTTOM_INSET = 0')
     expect(constants).toContain('export const PANEL_STACK_VERTICAL_OVERFLOW = 0')
 
     const collapsedStart = inspector.indexOf('if (chromeCollapsed)')
@@ -26,16 +26,17 @@ describe('panel inset alignment', () => {
     const collapsed = inspector.slice(collapsedStart, expandedReturn)
     const expanded = inspector.slice(expandedReturn)
 
-    expect(expanded).toContain('rounded-lg')
-    expect(expanded).toContain('mt-0.5 mb-0.5')
-    expect(expanded).toContain('mr-0.5')
+    expect(expanded).toContain('rox-shell-divider-l')
+    expect(expanded).not.toContain('rounded-lg')
+    expect(expanded).not.toContain('mt-0.5 mb-0.5')
+    expect(expanded).not.toContain('shadow-middle')
     expect(expanded).toContain('overflow-hidden')
 
     expect(collapsed).not.toContain('mt-1 mb-1')
-    expect(collapsed).toContain('mr-0.5')
+    expect(collapsed).not.toContain('mr-0.5')
     expect(collapsed).toContain('h-full')
     expect(collapsed).toContain('w-[28px]')
-    expect(collapsed).toContain('rounded-lg')
+    expect(collapsed).toContain('rox-shell-divider-l')
     expect(collapsed).toContain('data-inspector="collapsed"')
 
     const desktop = stack.slice(stack.indexOf('DESKTOP BRANCH'))

@@ -4975,5 +4975,7 @@
   "knowledge.roxNotes.emptyTitle": "Заметки Rox",
   "knowledge.roxNotes.emptyBody": "Внешнее ядро заметок больше не используется. Пишите и ищите в собственном заметочнике Rox.",
   "knowledge.roxNotes.openNotesCta": "Открыть заметки Rox",
-  "entityView.mapMoreActions": "Ещё действия карты"
+  "entityView.mapMoreActions": "Ещё действия карты",
+  "settings.appearance.fontArialNarrow": "Arial Narrow",
+  "surfaceTabs.label": "Открытые вкладки"
 }

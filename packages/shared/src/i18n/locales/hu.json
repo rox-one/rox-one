@@ -4964,5 +4964,7 @@
   "workspaceRail.linkMissingUrl": "Adjon meg egy URL-t",
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "Jegyzetazonosító (opcionális)",
-  "workspaceRail.removeLink": "Hivatkozás eltávolítása"
+  "workspaceRail.removeLink": "Hivatkozás eltávolítása",
+  "settings.appearance.fontArialNarrow": "Arial Narrow",
+  "surfaceTabs.label": "Open tabs"
 }

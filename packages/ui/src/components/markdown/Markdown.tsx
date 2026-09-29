@@ -335,7 +335,7 @@ function createComponents(
       li: ({ children }) => <li className="my-0.5">{children}</li>,
       // Plain tables
       table: ({ children }) => (
-        <table className="my-2 font-mono text-sm">{children}</table>
+        <table className="my-2 font-sans text-sm">{children}</table>
       ),
       th: ({ children }) => <th className="text-left pr-4">{children}</th>,
       td: ({ children }) => <td className="pr-4">{children}</td>,

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/styled-dropdown"
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
 import { useEffect, useRef, useState } from "react"
-import { useAtom, useAtomValue } from "jotai"
+import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
 import { AccountMenu } from "./AccountMenu"
@@ -43,8 +43,11 @@ import {
   featureWorkbenchModeRegistryV1Atom,
   featureWorkbenchTopChromeV2Atom,
   bottomTerminalOpenAtom,
+  inspectorAutoCollapsedAtom,
   inspectorChromeCollapsedAtom,
+  inspectorUserOpenedAtom,
   inspectorVisibleAtom,
+  topBarSurfaceTabsSlotAtom,
 } from "@/atoms/unified-shell"
 import { focusedSessionIdAtom } from "@/atoms/panel-stack"
 import { sessionMetaMapAtom } from "@/atoms/sessions"
@@ -131,6 +134,9 @@ export function TopBar({
   const rightSlotRef = useRef<HTMLDivElement | null>(null)
   const [inspectorVisible, setInspectorVisible] = useAtom(inspectorVisibleAtom)
   const [inspectorChromeCollapsed, setInspectorChromeCollapsed] = useAtom(inspectorChromeCollapsedAtom)
+  const inspectorAutoCollapsed = useAtomValue(inspectorAutoCollapsedAtom)
+  const setInspectorUserOpened = useSetAtom(inspectorUserOpenedAtom)
+  const setSurfaceTabsSlot = useSetAtom(topBarSurfaceTabsSlotAtom)
   const workbenchEnabled = useAtomValue(featureWorkbenchAtom)
   const unifiedShell = useAtomValue(featureUnifiedShellAtom)
   const modeRegistry = useAtomValue(featureWorkbenchModeRegistryV1Atom)
@@ -148,13 +154,14 @@ export function TopBar({
 
   const goBackHotkey = useActionLabel('nav.goBackAlt').hotkey
   const goForwardHotkey = useActionLabel('nav.goForwardAlt').hotkey
-  const inspectorOpen = inspectorVisible && !inspectorChromeCollapsed
+  const inspectorOpen = inspectorVisible && !inspectorChromeCollapsed && !inspectorAutoCollapsed
   const inspectorToggleLabel = t(inspectorOpen ? 'inspector.hide' : 'inspector.expand')
 
   const handleToggleInspector = () => {
     if (!inspectorOpen) {
       setInspectorChromeCollapsed(false)
       setInspectorVisible(true)
+      setInspectorUserOpened(true)
       return
     }
     setInspectorChromeCollapsed(true)
@@ -291,7 +298,9 @@ export function TopBar({
             actually fit on phone-width viewports. */}
         <div className={cn(
           "ml-1 flex min-w-0 items-center gap-1",
-          isCompact ? "w-[clamp(108px,32vw,180px)] shrink-0" : "w-[clamp(220px,42vw,640px)]",
+          isCompact
+            ? "w-[clamp(108px,32vw,180px)] shrink-0"
+            : showWorkspaceSelector ? "w-[clamp(220px,42vw,640px)]" : "shrink-0",
         )}>
           {!isCompact && (
             <>
@@ -329,6 +338,16 @@ export function TopBar({
             </div>
           )}
         </div>
+
+        {/* Session/surface tabs live in this title-bar row (portalled from
+            SurfaceTabs) instead of a separate strip above the panels. */}
+        {!isCompact && (
+          <div
+            ref={setSurfaceTabsSlot}
+            className="ml-2 flex min-w-0 max-w-[45%] shrink items-center empty:hidden"
+            data-topbar-slot="surface-tabs"
+          />
+        )}
 
         {chrome.showModeBar && !isCompact && (
           <div className="ml-2 min-w-0 flex-1">

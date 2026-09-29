@@ -4969,5 +4969,7 @@
   "knowledge.roxNotes.emptyTitle": "Rox Notes",
   "knowledge.roxNotes.emptyBody": "An external notes kernel is no longer used. Write and search in Rox’s own notes.",
   "knowledge.roxNotes.openNotesCta": "Open Rox Notes",
-  "entityView.mapMoreActions": "More map actions"
+  "entityView.mapMoreActions": "More map actions",
+  "settings.appearance.fontArialNarrow": "Arial Narrow",
+  "surfaceTabs.label": "Open tabs"
 }

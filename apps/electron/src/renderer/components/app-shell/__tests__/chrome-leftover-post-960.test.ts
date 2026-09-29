@@ -46,17 +46,18 @@ describe('ship-rox-chrome-leftover-post-960', () => {
     expect(collapsed).not.toContain('mt-1 mb-1')
   })
 
-  it('keeps panel stack insets compact (2px) and terminal dock margins tight', () => {
+  it('keeps the one-surface shell flush: no panel gaps, insets or dock margins', () => {
     const constants = readFileSync(join(appShell, 'panel-constants.ts'), 'utf8')
-    expect(constants).toContain('PANEL_STACK_TOP_INSET = 2')
-    expect(constants).toContain('PANEL_STACK_BOTTOM_INSET = 2')
-    expect(constants).toContain('PANEL_GAP = 2')
-    expect(constants).toContain('PANEL_EDGE_INSET = 2')
+    expect(constants).toContain('PANEL_STACK_TOP_INSET = 0')
+    expect(constants).toContain('PANEL_STACK_BOTTOM_INSET = 0')
+    expect(constants).toContain('PANEL_GAP = 0')
+    expect(constants).toContain('PANEL_EDGE_INSET = 0')
     expect(stack).toContain('COMPACT_PANEL_TOP_GAP = 4')
     const dock = readFileSync(join(appShell, '../session-inspector/BottomTerminalDock.tsx'), 'utf8')
-    expect(dock).toContain('mx-0.5 mb-0.5')
+    expect(dock).not.toContain('mx-0.5 mb-0.5')
     expect(dock).not.toContain('mx-1 mb-1')
-    expect(dock).toContain('flex h-6 shrink-0 items-center border-b')
+    expect(dock).toContain('rox-shell-divider-t')
+    expect(dock).toContain('flex h-6 shrink-0 items-center')
     expect(dock).not.toContain('absolute right-1.5 top-1.5')
   })
 

@@ -4964,5 +4964,7 @@
   "workspaceRail.linkMissingUrl": "أدخل URL",
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "معرّف الملاحظة (اختياري)",
-  "workspaceRail.removeLink": "إزالة الرابط"
+  "workspaceRail.removeLink": "إزالة الرابط",
+  "settings.appearance.fontArialNarrow": "Arial Narrow",
+  "surfaceTabs.label": "Open tabs"
 }

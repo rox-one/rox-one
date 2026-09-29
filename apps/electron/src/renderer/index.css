@@ -242,11 +242,11 @@ html[data-shell-style="zen"][data-scenic] .chrome-strip {
     box-shadow: var(--shadow-dragging);
   }
 
+  /* Split view focus: a thin top accent on the flush pane instead of a ring
+     that boxed the panel (one-surface shell). */
   .shadow-panel-focused {
     position: relative;
-    box-shadow:
-      inset 0 0 0 1px var(--focus),
-      0 0 0 4px color-mix(in oklch, var(--focus) 14%, transparent);
+    box-shadow: inset 0 2px 0 color-mix(in oklch, var(--focus) 70%, transparent);
   }
 }
 
@@ -255,9 +255,15 @@ html[data-shell-style="zen"][data-scenic] .chrome-strip {
    High contrast keeps them outline-free too (one container edge at most) and
    makes them distinguishable with a stronger fill; the pressed camera segment
    gets a stronger one still. Focus keeps the high-contrast focus outline. */
-html[data-contrast="high"] .panel-header-btn,
 html[data-contrast="high"] .map-toolbar-btn {
   background-color: color-mix(in oklch, var(--foreground) 14%, transparent);
+}
+
+/* Session header icons stay flat in high contrast too (no filled boxes in the
+   header row): full-opacity glyphs, stronger hover fill, focus outline. */
+html[data-contrast="high"] .panel-header-btn {
+  background-color: transparent;
+  opacity: 1;
 }
 
 html[data-contrast="high"] .panel-header-btn:hover,
@@ -296,6 +302,16 @@ html[data-contrast="high"] .map-toolbar-btn[aria-pressed="true"] {
   /* Ensure panels are above the titlebar drag region (z-titlebar: 40) so header buttons are clickable.
      Without this, the position:relative creates a stacking context at z-index:auto which is below the fixed titlebar. */
   z-index: var(--z-panel);
+}
+
+/* One-surface shell (scenic): panes are flush glass on one shared background.
+   Same stacking as the old .shadow-middle panels (above the titlebar drag
+   region) but no gradient border ring, no radius, no gap. */
+html[data-scenic] .rox-shell-pane {
+  position: relative;
+  z-index: var(--z-panel);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
 }
 
 /* Scenic mode: Input field gets more transparency to show background through
@@ -898,8 +914,10 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 @container shell (max-width: 768px) {
   /* Panel header buttons: X, share, back chevron.
      Apple HIG minimum tap target is 44pt; min-width/height enforces the floor
-     even if internal padding alone wouldn't reach it. */
-  .panel-header-btn {
+     even if internal padding alone wouldn't reach it.
+     Scoped to the compact (single-pane) shell: a desktop stack that is merely
+     narrowed by the right inspector must not get 44px mobile boxes. */
+  [data-shell-density="compact"] .panel-header-btn {
     padding: 10px;
     border-radius: 10px;
     min-width: 44px;
@@ -1081,4 +1099,43 @@ html[data-scenic] .chrome-strip {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* =============================================================================
+   SESSION HEADER ROW (one-surface shell)
+   The session view switch (Стандарт / Карта / …) and the header actions share
+   the header row. Container queries on the panel keep it from clipping:
+   labels fold to icons, then eye/share fold into the ⋯ menu.
+============================================================================= */
+
+.rox-view-switch-label {
+  display: none;
+}
+
+@container panel (min-width: 640px) {
+  .rox-view-switch-label {
+    display: inline;
+  }
+}
+
+.rox-header-actions-full {
+  display: none;
+}
+
+.rox-header-actions-overflow {
+  display: inline-flex;
+}
+
+@container panel (min-width: 560px) {
+  .rox-header-actions-full {
+    display: flex;
+  }
+
+  .rox-header-actions-overflow {
+    display: none;
+  }
+}
+
+html[data-contrast="high"] .rox-view-switch-item[aria-selected="true"] {
+  background-color: color-mix(in oklch, var(--foreground) 24%, transparent);
 }

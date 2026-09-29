@@ -15,12 +15,23 @@ describe('font role CSS', () => {
     expect(css).toContain('[data-focus-zone="chat"]')
   })
 
-  it('embeds Rox as the real face for UI and terminal', () => {
+  it('uses Arial Narrow for UI/chat and keeps embedded Rox mono for the terminal', () => {
     expect(css).toContain('@font-face')
     expect(css).toMatch(/font-family:\s*["']Rox["']/)
 
+    const arialNarrow = '"Arial Narrow", "Arial Narrow", Arial, sans-serif'
+    const rootSans = css.match(/--font-sans:\s*([^;]+);/)?.[1] ?? ''
+    expect(rootSans.trim()).toBe(arialNarrow)
+
     const uiBlock = css.match(/html\[data-font="rox"\]\s*\{[^}]+\}/)?.[0] ?? ''
-    expect(uiBlock).toMatch(/["']Rox["']/)
+    expect(uiBlock).toContain(arialNarrow)
+    expect(uiBlock).not.toMatch(/["']Rox["']/)
+
+    const chatBlock = css.match(/html\[data-chat-font="rox"\]\s*\{[^}]+\}/)?.[0] ?? ''
+    expect(chatBlock).toContain(arialNarrow)
+
+    const rootMono = css.match(/--font-mono:\s*([^;]+);/)?.[1] ?? ''
+    expect(rootMono).toMatch(/^["']Rox["'].*monospace$/)
 
     const terminalBlock = css.match(/html\[data-terminal-font="rox"\]\s*\{[^}]+\}/)?.[0] ?? ''
     expect(terminalBlock).toMatch(/["']Rox["']/)

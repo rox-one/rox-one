@@ -21,7 +21,10 @@ describe('ship-rox-inspector-strip-host', () => {
     expect(collapsed).toContain('data-inspector="collapsed"')
     expect(collapsed).toContain('w-[28px]')
     expect(collapsed).toContain('h-full')
-    expect(collapsed).toContain('mr-0.5')
+    // Flush strip with a single left hairline (one-surface shell).
+    expect(collapsed).toContain('rox-shell-divider-l')
+    expect(collapsed).not.toContain('mr-0.5')
+    expect(collapsed).not.toContain('rounded-lg')
     expect(collapsed).not.toMatch(/mt-1 mb-1/)
   })
 

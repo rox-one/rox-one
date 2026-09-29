@@ -4964,5 +4964,7 @@
   "workspaceRail.linkMissingUrl": "URL을 입력하세요",
   "workspaceRail.linkUrlPlaceholder": "https://…",
   "workspaceRail.notesPathPlaceholder": "메모 ID(선택 사항)",
-  "workspaceRail.removeLink": "링크 제거"
+  "workspaceRail.removeLink": "링크 제거",
+  "settings.appearance.fontArialNarrow": "Arial Narrow",
+  "surfaceTabs.label": "Open tabs"
 }
