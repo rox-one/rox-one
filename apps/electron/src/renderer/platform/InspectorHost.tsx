@@ -15,8 +15,8 @@
  * Mounted by `WorkspaceSurfaceHost` / `UnifiedShellLayout` when the
  * workbench rollout or harness inspector flag is enabled.
  */
-import { useEffect, useRef, useState } from 'react'
-import { useAtom, useAtomValue } from 'jotai'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, SquareTerminal, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
@@ -30,8 +30,10 @@ import { sessionMetaMapAtom } from '@/atoms/sessions'
 import {
   bottomTerminalOpenAtom,
   featureWorkbenchHarnessInspectorV1Atom,
+  inspectorAutoCollapsedAtom,
   inspectorChromeCollapsedAtom,
   inspectorPanelWidthAtom,
+  inspectorUserOpenedAtom,
   inspectorSectionAtom,
   inspectorVisibleAtom,
   type InspectorSectionId,
@@ -41,7 +43,7 @@ import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/co
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
-import { RADIUS_EDGE, RADIUS_INNER } from '@/components/app-shell/panel-constants'
+import { CENTER_MIN_WIDTH, PANEL_MIN_WIDTH } from '@/components/app-shell/panel-constants'
 import { projectConnectionInspector } from './connection-inspector-model'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
 import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
@@ -57,6 +59,7 @@ import {
 } from './inspector-model'
 import { CHROME_DENSITY } from './chrome-density'
 import { panelTypeToSurfaceKind } from './surface-tab-model'
+import { countSessionFiles, resolveInspectorLayout } from './inspector-layout'
 
 const INSPECTOR_RAIL_WIDTH = CHROME_DENSITY.railWidth
 const INSPECTOR_MIN_WIDTH = 280
@@ -271,6 +274,91 @@ export function InspectorHost() {
       ? `${workspace.rootPath.replace(/[\\/]+$/, '')}/sessions/${sessionId}`
       : undefined
   const [terminalOpen, setTerminalOpen] = useState(false)
+  const [userOpened, setUserOpened] = useAtom(inspectorUserOpenedAtom)
+  const setAutoCollapsed = useSetAtom(inspectorAutoCollapsedAtom)
+
+  // One-surface shell: an empty session Files panel is collapsed by default.
+  // Re-count files when the session changes or finishes a turn.
+  const [fileCount, setFileCount] = useState<number | null>(null)
+  const sessionActivityKey = `${sessionMeta?.lastMessageAt ?? ''}:${sessionMeta?.isProcessing ? 1 : 0}`
+  useEffect(() => {
+    if (!sessionMode || !sessionId) {
+      setFileCount(null)
+      return
+    }
+    const api = typeof window === 'undefined' ? undefined : window.electronAPI
+    if (typeof api?.getSessionFiles !== 'function') return
+    let cancelled = false
+    const load = () => {
+      api.getSessionFiles(sessionId)
+        .then((files) => { if (!cancelled) setFileCount(countSessionFiles(files)) })
+        .catch(() => { if (!cancelled) setFileCount(null) })
+    }
+    load()
+    const unsubscribe = typeof api.onSessionFilesChanged === 'function'
+      ? api.onSessionFilesChanged((changedId) => { if (changedId === sessionId) load() })
+      : undefined
+    return () => {
+      cancelled = true
+      unsubscribe?.()
+    }
+  }, [sessionMode, sessionId, sessionActivityKey])
+
+  // An explicit open applies to the session it was made in.
+  useEffect(() => {
+    setUserOpened(false)
+  }, [sessionId, setUserOpened])
+
+  // Width available to the panel without squeezing the center column below
+  // CENTER_MIN_WIDTH (split view: PANEL_MIN_WIDTH per panel). The content
+  // panels' left edge does not depend on the inspector width, so this does not
+  // feed back into itself.
+  const [availableWidth, setAvailableWidth] = useState<number>(Number.POSITIVE_INFINITY)
+  const measureAvailable = useCallback(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return
+    const panels = document.querySelectorAll<HTMLElement>('[data-panel-role="content"]')
+    const first = panels[0]
+    if (!first) {
+      setAvailableWidth(Number.POSITIVE_INFINITY)
+      return
+    }
+    const required = panels.length > 1 ? panels.length * PANEL_MIN_WIDTH : CENTER_MIN_WIDTH
+    const next = window.innerWidth - first.getBoundingClientRect().left - INSPECTOR_RAIL_WIDTH - required
+    setAvailableWidth((prev) => (Math.abs(prev - next) < 1 ? prev : next))
+  }, [])
+  useLayoutEffect(() => {
+    measureAvailable()
+    if (typeof window === 'undefined') return
+    window.addEventListener('resize', measureAvailable)
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measureAvailable)
+    const first = document.querySelector<HTMLElement>('[data-panel-role="content"]')
+    if (observer && first) observer.observe(first)
+    if (observer && first?.parentElement) observer.observe(first.parentElement)
+    return () => {
+      window.removeEventListener('resize', measureAvailable)
+      observer?.disconnect()
+    }
+  }, [measureAvailable, route])
+
+  const layout = resolveInspectorLayout({
+    visible,
+    userOpened,
+    sessionMode,
+    activeSection,
+    fileCount,
+    terminalOpen,
+    availableWidth,
+    storedWidth: panelWidth,
+    minWidth: INSPECTOR_MIN_WIDTH,
+    maxWidth: INSPECTOR_MAX_WIDTH,
+    viewportCap: Math.floor(typeof window !== 'undefined' ? window.innerWidth * 0.72 : INSPECTOR_MAX_WIDTH),
+  })
+  const panelShown = layout.panelShown && !chromeCollapsed
+  const autoCollapsed = !chromeCollapsed && layout.collapsedReason !== null
+  useEffect(() => {
+    setAutoCollapsed(autoCollapsed)
+  }, [autoCollapsed, setAutoCollapsed])
+  useEffect(() => () => setAutoCollapsed(false), [setAutoCollapsed])
 
   useEffect(() => {
     const sidebar = navigationState.rightSidebar
@@ -283,7 +371,7 @@ export function InspectorHost() {
   }, [sessionMode, navigationState.rightSidebar, setChromeCollapsed, setSection, setVisible])
 
   useEffect(() => {
-    if (visible && !chromeCollapsed && !terminalOpen && activeSection === 'browser') return
+    if (panelShown && !terminalOpen && activeSection === 'browser') return
     void (async () => {
       const list = await window.electronAPI.browserPane.list().catch(() => [])
       await Promise.all(
@@ -292,15 +380,18 @@ export function InspectorHost() {
           .map((item) => window.electronAPI.browserPane.syncBounds(item.id, null).catch(() => undefined)),
       )
     })()
-  }, [visible, chromeCollapsed, terminalOpen, activeSection])
+  }, [panelShown, terminalOpen, activeSection])
 
   const handleSectionClick = (clicked: InspectorSectionId) => {
     if (terminalOpen) setBottomTerminalOpen(true)
     setTerminalOpen(false)
     setChromeCollapsed(false)
-    const next = resolveInspectorToggle({ visible, section: activeSection }, clicked)
+    // Toggle against what is on screen: an auto-collapsed panel counts as
+    // closed, so its rail icon opens it.
+    const next = resolveInspectorToggle({ visible: panelShown, section: activeSection }, clicked)
     setVisible(next.visible)
     setSection(next.section)
+    setUserOpened(next.visible)
     if (sessionMode && isSessionInspectorSection(clicked) && next.visible) {
       updateRightSidebar({ type: clicked })
     }
@@ -327,6 +418,7 @@ export function InspectorHost() {
     })
     setTerminalOpen(next.sideOpen)
     setBottomTerminalOpen(next.bottomOpen)
+    if (next.sideOpen) setUserOpened(true)
   }
 
   const terminalControl = (
@@ -335,14 +427,14 @@ export function InspectorHost() {
         <button
           type="button"
           aria-label={t('inspector.terminal')}
-          aria-pressed={(terminalOpen && visible) || bottomTerminalOpen}
+          aria-pressed={(terminalOpen && panelShown) || bottomTerminalOpen}
           title={t('inspector.terminal')}
           data-testid="bottom-terminal-toggle"
           data-terminal-flag={WORKBENCH_FLAG.terminalV1}
           onClick={handleBottomTerminalToggle}
           className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-[7px] border border-border/60 transition-colors',
-            (terminalOpen && visible) || bottomTerminalOpen
+            'flex h-8 w-8 items-center justify-center rounded-[7px] transition-colors',
+            (terminalOpen && panelShown) || bottomTerminalOpen
               ? 'bg-accent/10 text-accent'
               : 'bg-foreground/[0.025] text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
           )}
@@ -363,8 +455,9 @@ export function InspectorHost() {
         onClick={() => {
           setChromeCollapsed(false)
           setVisible(true)
+          setUserOpened(true)
         }}
-        className="chrome-strip pointer-events-auto mr-0.5 flex h-full w-[28px] shrink-0 items-center justify-center rounded-lg border-l border-foreground/5 bg-background"
+        className="chrome-strip rox-shell-pane rox-shell-divider-l pointer-events-auto flex h-full w-[28px] shrink-0 items-center justify-center hover:bg-foreground/5"
         data-session-inspector={sessionMode ? 'true' : 'false'}
         data-inspector="collapsed"
       >
@@ -374,24 +467,21 @@ export function InspectorHost() {
   }
 
   return (
-    <div className="mt-0.5 mb-0.5 mr-0.5 flex shrink-0 items-stretch overflow-hidden rounded-lg" style={{ borderRadius: RADIUS_EDGE }} data-session-inspector={sessionMode ? 'true' : 'false'}>
-      {visible && (
+    <div
+      className="rox-shell-divider-l flex shrink-0 items-stretch overflow-hidden"
+      data-session-inspector={sessionMode ? 'true' : 'false'}
+      data-inspector-collapsed-reason={layout.collapsedReason ?? undefined}
+    >
+      {panelShown && (
         <div
-          className="relative flex h-full flex-col overflow-hidden bg-background shadow-middle"
-          style={{
-            width: Math.min(
-              INSPECTOR_MAX_WIDTH,
-              Math.max(INSPECTOR_MIN_WIDTH, panelWidth),
-              Math.max(INSPECTOR_MIN_WIDTH, Math.floor(typeof window !== 'undefined' ? window.innerWidth * 0.72 : INSPECTOR_MAX_WIDTH)),
-            ),
-            borderRadius: RADIUS_INNER,
-          }}
+          className="rox-shell-pane relative flex h-full flex-col overflow-hidden"
+          style={{ width: layout.width }}
         >
           <div
             className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize hover:bg-foreground/15"
             onPointerDown={(event) => {
               event.preventDefault()
-              widthDrag.current = { startX: event.clientX, startW: panelWidth }
+              widthDrag.current = { startX: event.clientX, startW: layout.width }
               const move = (e: PointerEvent) => {
                 const drag = widthDrag.current
                 if (!drag) return
@@ -417,7 +507,7 @@ export function InspectorHost() {
               window.addEventListener('pointercancel', up)
             }}
           />
-          <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-foreground/5 pl-2.5 pr-1.5">
+          <div className="rox-shell-divider-b flex h-8 shrink-0 items-center justify-between gap-2 pl-2.5 pr-1.5">
             <span className="chrome-label truncate font-medium tracking-tight">{t(titleKey)}</span>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -454,12 +544,15 @@ export function InspectorHost() {
         </div>
       )}
       <div
-        className="chrome-rail flex h-full shrink-0 flex-col items-center gap-0.5 py-1.5"
+        className={cn(
+          'chrome-rail rox-shell-pane flex h-full shrink-0 flex-col items-center gap-0.5 py-1.5',
+          panelShown && 'rox-shell-divider-l',
+        )}
         style={{ width: INSPECTOR_RAIL_WIDTH }}
       >
         {sectionIds.map((sectionId) => {
           const Icon = SECTION_ICONS[sectionId]
-          const active = visible && activeSection === sectionId
+          const active = panelShown && activeSection === sectionId
           const labelKey = sectionId === 'browser'
             ? 'inspector.tab.browser'
             : sessionMode

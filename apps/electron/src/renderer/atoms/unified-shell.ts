@@ -10,6 +10,7 @@
  * ship independently. Unified shell / workbench masters default OFF.
  * Granular workbench.* experimental flags default ON (P35-08). Conation stays off.
  */
+import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 import { KEYS, getKeyString } from '@/lib/local-storage'
 
@@ -173,6 +174,28 @@ export const inspectorVisibleAtom = atomWithStorage<boolean>(
   undefined,
   { getOnInit: true },
 )
+
+/**
+ * Session-scoped (not persisted): the user explicitly opened the inspector
+ * panel. Overrides the one-surface auto-collapse (empty Files section or a
+ * squeezed center column). InspectorHost resets it when the focused session
+ * changes.
+ */
+export const inspectorUserOpenedAtom = atom<boolean>(false)
+
+/**
+ * Not persisted: InspectorHost is currently hiding a persisted-visible panel
+ * (empty Files or squeezed center). TopBar's inspector toggle reads it so
+ * "open" means actually open.
+ */
+export const inspectorAutoCollapsedAtom = atom<boolean>(false)
+
+/**
+ * DOM slot in the TopBar row that hosts the session/surface tab strip, so the
+ * tabs sit in the title-bar row instead of a separate strip above the panels.
+ * Null in compact mode (SurfaceTabs then renders inline).
+ */
+export const topBarSurfaceTabsSlotAtom = atom<HTMLElement | null>(null)
 
 /** Entire inspector chrome (panel + section rail) collapsed to a restore strip. */
 export const inspectorChromeCollapsedAtom = atomWithStorage<boolean>(

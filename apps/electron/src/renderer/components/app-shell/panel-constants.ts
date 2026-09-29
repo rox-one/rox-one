@@ -1,9 +1,17 @@
-/** Gap between any adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar) */
-export const PANEL_GAP = 2
+/**
+ * Gap between adjacent panels (sidebar ↔ navigator ↔ content ↔ right sidebar).
+ * One-surface shell: panes sit flush and are separated by a 1px hairline
+ * (`rox-shell-divider-*`), not by gaps between rounded boxes.
+ */
+export const PANEL_GAP = 0
 
-/** Padding from window edges to outermost panels (right, bottom, left when sidebar hidden) */
-export const PANEL_EDGE_INSET = 2
+/** Padding from window edges to outermost panels (flush in the one-surface shell) */
+export const PANEL_EDGE_INSET = 0
 
+/**
+ * Corner radius tokens for floating surfaces (conation cards etc.). Shell panes
+ * no longer use them: the one-surface shell has no per-panel rounded boxes.
+ */
 /** Corner radius for panel edges touching the window boundary */
 export const RADIUS_EDGE = 8
 
@@ -13,14 +21,21 @@ export const RADIUS_INNER = 8
 /** Minimum width for any content panel */
 export const PANEL_MIN_WIDTH = 440
 
+/**
+ * Minimum width the single session/center column keeps before the shell
+ * collapses the right inspector panel and then narrows the restored list and
+ * navigator widths (see shell-width-clamp.ts / inspector-layout.ts).
+ */
+export const CENTER_MIN_WIDTH = 420
+
 /** Extra vertical space reserved in panel stack for box-shadows. */
 export const PANEL_STACK_VERTICAL_OVERFLOW = 0
 
-/** Breathing room between the TopBar and the desktop panel stack. */
-export const PANEL_STACK_TOP_INSET = 2
+/** Space between the TopBar and the desktop panel stack (flush: one surface). */
+export const PANEL_STACK_TOP_INSET = 0
 
-/** Breathing room under the desktop panel stack. */
-export const PANEL_STACK_BOTTOM_INSET = 2
+/** Space under the desktop panel stack (flush: one surface). */
+export const PANEL_STACK_BOTTOM_INSET = 0
 
 /**
  * Shared resize sash geometry.

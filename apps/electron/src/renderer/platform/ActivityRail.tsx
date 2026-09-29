@@ -76,7 +76,7 @@ export function ActivityRail() {
     return (
       <nav
         aria-label={t('rail.title')}
-        className="chrome-rail ml-0.5 my-0.5 flex h-[calc(100%-4px)] shrink-0 flex-col items-center overflow-hidden rounded-lg border border-border/40 bg-background py-1.5 shadow-middle"
+        className="chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col items-center overflow-hidden py-1.5"
         style={{ width: ACTIVITY_RAIL_COLLAPSED_WIDTH }}
         data-shell-role="activity-rail"
       >
@@ -100,7 +100,7 @@ export function ActivityRail() {
   return (
     <nav
       aria-label={t('rail.title')}
-      className="chrome-rail ml-0.5 my-0.5 flex h-[calc(100%-4px)] shrink-0 flex-col items-center overflow-hidden rounded-lg border border-border/40 bg-background py-1.5 shadow-middle"
+      className="chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col items-center overflow-hidden py-1.5"
       style={{ width: ACTIVITY_RAIL_WIDTH }}
       data-shell-role="activity-rail"
     >

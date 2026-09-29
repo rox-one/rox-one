@@ -13,6 +13,7 @@
  * the two-key Workbench rollout is enabled.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { BookOpen, DatabaseZap, Globe, MessageSquare, PanelTop, Settings, X, Zap, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -24,6 +25,7 @@ import {
   type PanelType,
 } from '@/atoms/panel-stack'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
+import { topBarSurfaceTabsSlotAtom } from '@/atoms/unified-shell'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
@@ -82,9 +84,10 @@ function SurfaceTabItem({ tab }: { tab: SurfaceTabView }) {
         }
       }}
       className={cn(
-        'group chrome-label flex h-6 max-w-[200px] min-w-0 shrink-0 cursor-default items-center gap-1 rounded-[5px] px-2 transition-colors',
+        'group chrome-label titlebar-no-drag flex h-6 max-w-[200px] min-w-0 shrink cursor-default items-center gap-1 rounded-[6px] px-2 transition-colors',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         tab.focused
-          ? 'bg-background text-foreground shadow-minimal'
+          ? 'bg-foreground/10 text-foreground'
           : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
       )}
     >
@@ -206,6 +209,26 @@ export function SurfaceTabs() {
   // Browser lives in the inspector via createEmbedded(); os-browser-tabs helper remains
   // available for legacy callers/tests but is not product chrome here.
 
+  // One tab row: on desktop the strip is portalled into the TopBar row (next to
+  // back/forward), so tabs no longer take a separate strip above the panels.
+  // Compact mode has no TopBar slot and keeps the inline strip.
+  const topBarSlot = useAtomValue(topBarSurfaceTabsSlotAtom)
+  const tabList = panelTabs.length === 0 ? null : (
+    <div
+      role="tablist"
+      aria-label={t('surfaceTabs.label')}
+      className={topBarSlot
+        ? 'flex min-w-0 items-center gap-0.5 overflow-x-auto scrollbar-hide'
+        : 'flex shrink-0 items-center gap-1'}
+      data-surface-tabs={topBarSlot ? 'topbar' : 'strip'}
+    >
+      {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
+    </div>
+  )
+  if (topBarSlot) {
+    return tabList ? createPortal(tabList, topBarSlot) : null
+  }
+
   return (
     <div
       className="chrome-strip flex shrink-0 items-center gap-0.5 overflow-x-auto border-b border-foreground/5 px-2"
@@ -214,9 +237,7 @@ export function SurfaceTabs() {
       {panelTabs.length === 0 ? (
         <span className="chrome-label px-1 text-muted-foreground/50">{t('surfaceTabs.empty')}</span>
       ) : (
-        <div role="tablist" className="flex shrink-0 items-center gap-1">
-          {panelTabs.map((tab) => <SurfaceTabItem key={tab.panelId} tab={tab} />)}
-        </div>
+        tabList
       )}
     </div>
   )

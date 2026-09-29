@@ -13,13 +13,17 @@ describe('terminal dock chrome', () => {
     expect(openTree).not.toContain("{t('inspector.terminal')}")
     expect(openTree).toContain('h-5 w-5')
     expect(openTree).toContain('ChevronsDown')
-    expect(openTree).toContain('rounded-md')
+    // One-surface shell: the dock is a flush pane under the columns with a
+    // single top hairline — no rounded outlined box, no margins, no shadow.
+    expect(openTree).toContain('rox-shell-pane rox-shell-divider-t')
+    expect(openTree).not.toContain('rounded-md border')
     expect(openTree).not.toContain('rounded-xl')
     expect(openTree).not.toContain('rounded-lg')
-    expect(openTree).toContain('mx-0.5 mb-0.5')
+    expect(openTree).not.toContain('shadow-middle')
+    expect(openTree).not.toContain('mx-0.5 mb-0.5')
     expect(openTree).not.toContain('mx-2 mb-2')
     expect(openTree).not.toContain('absolute right-1.5 top-1.5')
-    expect(openTree).toContain('flex h-6 shrink-0 items-center border-b')
+    expect(openTree).toContain('flex h-6 shrink-0 items-center')
 
     expect(terminal).not.toMatch(/cwd \? <div/)
     expect(terminal).not.toContain('text-white/30">{cwd}')

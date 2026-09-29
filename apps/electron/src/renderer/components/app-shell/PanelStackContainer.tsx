@@ -38,8 +38,6 @@ import {
   PANEL_STACK_VERTICAL_OVERFLOW,
   PANEL_STACK_TOP_INSET,
   PANEL_STACK_BOTTOM_INSET,
-  RADIUS_EDGE,
-  RADIUS_INNER,
 } from './panel-constants'
 
 /** Spring transition matching AppShell's sidebar/navigator animation */
@@ -140,14 +138,9 @@ export function PanelStackContainer({
               data-panel-role="navigator"
               className={cn(
                 'h-full w-full overflow-hidden relative',
-                'bg-background shadow-middle rox-panel',
+                // One-surface shell: flush pane, no rounded outlined box.
+                'rox-shell-pane',
               )}
-              style={{
-                borderTopLeftRadius: RADIUS_EDGE,
-                borderBottomLeftRadius: RADIUS_EDGE,
-                borderTopRightRadius: RADIUS_INNER,
-                borderBottomRightRadius: RADIUS_INNER,
-              }}
             >
               {navigatorSlot}
             </div>
@@ -214,14 +207,10 @@ export function PanelStackContainer({
           transition={transition}
           className={cn(
             'h-full relative shrink-0 overflow-hidden',
-            'bg-background shadow-middle rox-panel',
+            // One-surface shell: flush pane + a single hairline divider.
+            'rox-shell-pane',
+            hasSidebar && 'rox-shell-divider-r',
           )}
-          style={{
-            borderTopLeftRadius: RADIUS_EDGE,
-            borderBottomLeftRadius: RADIUS_EDGE,
-            borderTopRightRadius: RADIUS_INNER,
-            borderBottomRightRadius: RADIUS_INNER,
-          }}
         >
           <div className="h-full" style={{ width: sidebarWidth }}>
             {sidebarSlot}
@@ -240,14 +229,9 @@ export function PanelStackContainer({
           transition={transition}
           className={cn(
             'h-full overflow-hidden relative shrink-0 z-[2]',
-            'bg-background shadow-middle rox-panel',
+            'rox-shell-pane',
+            hasNavigator && 'rox-shell-divider-r',
           )}
-          style={{
-            borderTopLeftRadius: !hasSidebar ? RADIUS_EDGE : RADIUS_INNER,
-            borderBottomLeftRadius: !hasSidebar ? RADIUS_EDGE : RADIUS_INNER,
-            borderTopRightRadius: RADIUS_INNER,
-            borderBottomRightRadius: RADIUS_INNER,
-          }}
         >
           <div className="h-full" style={{ width: navigatorWidth }}>
             {navigatorSlot}

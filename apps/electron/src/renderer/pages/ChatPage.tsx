@@ -8,7 +8,7 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash } from 'lucide-react'
+import { AlertCircle, Globe, Copy, RefreshCw, Link2Off, Info, Pencil, Eye, EyeOff, SquareSlash, MoreHorizontal } from 'lucide-react'
 import { ChatDisplay } from '@/components/app-shell/ChatDisplay'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SessionMenu } from '@/components/app-shell/SessionMenu'
@@ -1059,14 +1059,94 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     )
   }, [session?.memoryMode, sessionId, t])
 
-  const headerActions = (
+  // Narrow panels fold edit/memory/share into one ⋯ menu (container query on
+  // @container/panel, see .rox-header-actions-* in index.css); info stays.
+  const memoryModeNow = session?.memoryMode ?? 'persistent'
+  const memoryModeNext = memoryModeNow === 'persistent' ? 'incognito' : memoryModeNow === 'incognito' ? 'temporary' : 'persistent'
+  const overflowActionsMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <PanelHeaderCenterButton
+          icon={<MoreHorizontal className="h-4 w-4" />}
+          aria-label={t('common.more')}
+          title={t('common.more')}
+        />
+      </DropdownMenuTrigger>
+      <StyledDropdownMenuContent align="end" sideOffset={8}>
+        {isTaskOrchestrator && (
+          <StyledDropdownMenuItem onClick={handleEditTask}>
+            <Pencil className="h-3.5 w-3.5" />
+            <span className="flex-1">{t('kanban.editTask')}</span>
+          </StyledDropdownMenuItem>
+        )}
+        <StyledDropdownMenuItem onClick={() => { void window.electronAPI.setMemoryMode(sessionId, memoryModeNext) }}>
+          {memoryModeNow === 'persistent'
+            ? <Eye className="h-3.5 w-3.5" />
+            : memoryModeNow === 'incognito'
+              ? <EyeOff className="h-3.5 w-3.5" />
+              : <SquareSlash className="h-3.5 w-3.5" />}
+          <span className="flex-1">{t(`memory.mode.${memoryModeNow}`)}</span>
+        </StyledDropdownMenuItem>
+        <StyledDropdownMenuSeparator />
+        {sharedUrl ? (
+          <>
+            <StyledDropdownMenuItem onClick={handleOpenInBrowser}>
+              <Globe className="h-3.5 w-3.5" />
+              <span className="flex-1">{t('sessionMenu.openInBrowser')}</span>
+            </StyledDropdownMenuItem>
+            <StyledDropdownMenuItem onClick={handleCopyLink}>
+              <Copy className="h-3.5 w-3.5" />
+              <span className="flex-1">{t('sessionMenu.copyLink')}</span>
+            </StyledDropdownMenuItem>
+            <StyledDropdownMenuItem onClick={handleUpdateShare}>
+              <RefreshCw className="h-3.5 w-3.5" />
+              <span className="flex-1">{t('sessionMenu.updateShare')}</span>
+            </StyledDropdownMenuItem>
+            <StyledDropdownMenuItem onClick={handleRevokeShare} variant="destructive">
+              <Link2Off className="h-3.5 w-3.5" />
+              <span className="flex-1">{t('sessionMenu.stopSharing')}</span>
+            </StyledDropdownMenuItem>
+          </>
+        ) : (
+          <StyledDropdownMenuItem onClick={handleShare}>
+            <Globe className="h-3.5 w-3.5" />
+            <span className="flex-1">{t('chat.shareOnline')}</span>
+          </StyledDropdownMenuItem>
+        )}
+      </StyledDropdownMenuContent>
+    </DropdownMenu>
+  )
+
+  const headerActions = isCompactMode ? (
     <div className="flex items-center gap-1.5">
       {editTaskButton}
       {memoryModeButton}
       <SessionPresenceAvatars sessionId={sessionId} />
-      {!isCompactMode && shareButton}
       {infoButton}
     </div>
+  ) : (
+    <div className="flex items-center gap-1">
+      <div className="rox-header-actions-full items-center gap-1">
+        {editTaskButton}
+        {memoryModeButton}
+        <SessionPresenceAvatars sessionId={sessionId} />
+        {shareButton}
+      </div>
+      <div className="rox-header-actions-overflow items-center">
+        {overflowActionsMenu}
+      </div>
+      {infoButton}
+    </div>
+  )
+
+  // Session view switch lives in the header row next to the title.
+  const sessionViewSwitch = (
+    <EntityViewTabs
+      variant="segmented"
+      value={sessionView}
+      onChange={setSessionView}
+      capabilities={sessionEntityCapabilities}
+    />
   )
 
   // Build title menu content for chat sessions using shared SessionMenu.
@@ -1163,12 +1243,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       return (
         <>
           <div className="h-full flex flex-col">
-            <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
-            <EntityViewTabs
-              value={sessionView}
-              onChange={setSessionView}
-              capabilities={sessionEntityCapabilities}
-            />
+            <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} viewSwitch={sessionViewSwitch} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
             <div className="flex-1 flex flex-col min-h-0">
               {renderSessionViewBody(
               <ChatDisplay
@@ -1243,12 +1318,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   return (
     <>
       <div className="h-full flex flex-col">
-        <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
-        <EntityViewTabs
-          value={sessionView}
-          onChange={setSessionView}
-          capabilities={sessionEntityCapabilities}
-        />
+        <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} viewSwitch={sessionViewSwitch} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
         <div className="flex-1 flex flex-col min-h-0">
           {renderSessionViewBody(
             <ChatDisplay
