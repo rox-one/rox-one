@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { createSessionDraftNode, serializeSessionDraftGraph, parseSessionDraftGraph } from '../draft-nodes'
 import { draftGraphToSpec, specToDraftGraph } from '../workflow-document'
+import { isSessionMapEmpty } from '../map-empty-actions'
 
 const editorSource = readFileSync(join(__dirname, '..', 'SessionWorkflowEditor.tsx'), 'utf8')
 
@@ -37,5 +38,22 @@ describe('workflow spec editor wiring', () => {
     const spec = draftGraphToSpec(graph, 2)
     expect(spec.nodes[0]?.kind).toBe('subflow')
     expect(specToDraftGraph(spec).nodes[0]?.kind).toBe('subflow')
+  })
+
+  test('empty map hides layout and document actions in both menus', () => {
+    expect(isSessionMapEmpty({ scenes: [], draftNodes: [] })).toBe(true)
+    expect(isSessionMapEmpty({ scenes: undefined, draftNodes: null })).toBe(true)
+    expect(isSessionMapEmpty({ scenes: [{}], draftNodes: [] })).toBe(false)
+    expect(isSessionMapEmpty({ scenes: [], draftNodes: [{}] })).toBe(false)
+
+    expect(editorSource).toContain('const mapEmpty = isSessionMapEmpty(')
+    // Toolbar ⋯ menu: a single disabled hint row replaces every action when empty.
+    expect(editorSource).toMatch(
+      /\{mapEmpty \? \(\s*<DropdownMenuItem disabled data-testid="map-toolbar-empty-hint">\s*\{t\('entityView\.mapEmptyHint'\)\}[\s\S]*?applyCanvasLayout\('left'\)[\s\S]*?applyCanvasLayout\('tile'\)[\s\S]*?onClick=\{handleSaveVersion\}[\s\S]*?handleRun\('pipeline'\)/,
+    )
+    // Canvas context menu: promote trace + save version sit behind the guard.
+    expect(editorSource).toMatch(
+      /\{mapEmpty \? null : \(\s*<>\s*<StyledContextMenuItem onSelect=\{handlePromoteTrace\}>[\s\S]*?<StyledContextMenuItem onSelect=\{handleSaveVersion\}>/,
+    )
   })
 })
