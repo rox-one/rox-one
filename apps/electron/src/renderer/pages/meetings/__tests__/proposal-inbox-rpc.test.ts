@@ -18,16 +18,10 @@ describe('meetings UI create/approve/reject RPC wiring', () => {
     expect(inbox).toContain('disabled={!proposal.revisionId || !props.onOpenTarget}')
   })
 
-  it('creates, approves, and rejects through meetings RPC helpers, not localStorage', () => {
-    expect(page).toContain('createNativeProposalViaRpc')
-    expect(page).toContain('approveNativeProposalViaRpc')
-    expect(page).toContain('rejectNativeProposalViaRpc')
-    expect(page).toContain('openNativeProposalTargetViaRpc')
-    expect(page).toContain('navigate(result.route)')
-    expect(page).toContain('startNativeMeetingViaRpc')
-    expect(page).toContain('searchNativeMeetingsViaRpc')
-    expect(page).toContain('meetings.nativeCatalog')
-    expect(page).toContain('meetings.searchIntent')
+  it('Встречи persists through the local meetings IPC (files on disk), not localStorage', () => {
+    expect(page).toContain('api.list(workspaceId)')
+    expect(page).toContain('api.importAudio(')
+    expect(page).toContain('startRecording(')
     expect(page).not.toContain('crypto.randomUUID')
     expect(page).not.toContain('localStorage')
     expect(page).not.toContain('conation')

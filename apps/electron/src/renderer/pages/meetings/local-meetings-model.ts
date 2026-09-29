@@ -1,0 +1,186 @@
+/**
+ * Встречи — pure view model over local meetings (lists, buckets, groups,
+ * transcript search, summary prompt/parse). No I/O.
+ */
+import type { LocalMeeting, LocalTranscriptSegment } from '../../../shared/meetings-local'
+
+export type LocalBucket = 'all' | 'today' | 'upcoming' | 'past' | 'live' | 'needsAction'
+
+export function meetingTime(m: Pick<LocalMeeting, 'startedAt' | 'scheduledAt' | 'createdAt'>): number {
+  return m.startedAt ?? m.scheduledAt ?? m.createdAt
+}
+
+export function startOfDay(ts: number): number {
+  const d = new Date(ts)
+  d.setHours(0, 0, 0, 0)
+  return d.getTime()
+}
+
+export function isLiveMeeting(m: Pick<LocalMeeting, 'status'>): boolean {
+  return m.status === 'recording' || m.status === 'paused'
+}
+
+export function isUpcoming(m: Pick<LocalMeeting, 'status' | 'scheduledAt'>, now: number): boolean {
+  return m.status === 'planned' && (m.scheduledAt ?? 0) > now
+}
+
+export function openActionCount(m: Pick<LocalMeeting, 'actions'>): number {
+  return m.actions.filter((a) => !a.done && !a.taskId).length
+}
+
+export function needsAction(m: LocalMeeting): boolean {
+  if (m.audio && (m.transcript.status === 'failed' || m.transcript.status === 'unavailable')) return true
+  return openActionCount(m) > 0
+}
+
+export function inLocalBucket(m: LocalMeeting, bucket: LocalBucket, now: number): boolean {
+  switch (bucket) {
+    case 'all': return true
+    case 'today': return startOfDay(meetingTime(m)) === startOfDay(now)
+    case 'upcoming': return isUpcoming(m, now)
+    case 'past': return !isLiveMeeting(m) && !isUpcoming(m, now)
+    case 'live': return isLiveMeeting(m)
+    case 'needsAction': return needsAction(m)
+  }
+}
+
+export function localBucketCounts(list: readonly LocalMeeting[], now: number): Record<LocalBucket, number> {
+  const out: Record<LocalBucket, number> = { all: 0, today: 0, upcoming: 0, past: 0, live: 0, needsAction: 0 }
+  for (const m of list) {
+    for (const b of Object.keys(out) as LocalBucket[]) if (inLocalBucket(m, b, now)) out[b] += 1
+  }
+  return out
+}
+
+export type LocalGroupKind = 'now' | 'planned' | 'today' | 'yesterday' | 'day'
+export interface LocalGroup {
+  key: string
+  kind: LocalGroupKind
+  day?: number
+  items: LocalMeeting[]
+}
+
+/** Live first, then upcoming (soonest first), then by day (newest first). */
+export function groupLocalMeetings(list: readonly LocalMeeting[], now: number): LocalGroup[] {
+  const live = list.filter(isLiveMeeting)
+  const planned = list.filter((m) => isUpcoming(m, now)).sort((a, b) => (a.scheduledAt ?? 0) - (b.scheduledAt ?? 0))
+  const rest = list.filter((m) => !isLiveMeeting(m) && !isUpcoming(m, now)).sort((a, b) => meetingTime(b) - meetingTime(a))
+  const groups: LocalGroup[] = []
+  if (live.length) groups.push({ key: 'now', kind: 'now', items: live })
+  if (planned.length) groups.push({ key: 'planned', kind: 'planned', items: planned })
+  const today = startOfDay(now)
+  const yesterday = startOfDay(today - 1)
+  const byDay = new Map<number, LocalMeeting[]>()
+  for (const m of rest) {
+    const day = startOfDay(meetingTime(m))
+    byDay.set(day, [...(byDay.get(day) ?? []), m])
+  }
+  for (const [day, items] of byDay) {
+    const kind: LocalGroupKind = day === today ? 'today' : day === yesterday ? 'yesterday' : 'day'
+    groups.push({ key: `d${day}`, kind, day, items })
+  }
+  return groups
+}
+
+export function normalizeQuery(q: string): string[] {
+  return q.toLowerCase().split(/\s+/).map((s) => s.trim()).filter(Boolean)
+}
+
+export function textMatches(text: string, terms: readonly string[]): boolean {
+  if (terms.length === 0) return true
+  const hay = text.toLowerCase()
+  return terms.every((t) => hay.includes(t))
+}
+
+export function meetingMatches(m: LocalMeeting, terms: readonly string[], transcriptText?: string): boolean {
+  if (terms.length === 0) return true
+  const hay = [m.title, m.participants.join(' '), m.notes, m.summary?.text ?? '', m.actions.map((a) => a.text).join(' '), m.documents.map((d) => d.name).join(' '), transcriptText ?? ''].join('\n')
+  return textMatches(hay, terms)
+}
+
+export function filterSegments(segments: readonly LocalTranscriptSegment[], query: string): LocalTranscriptSegment[] {
+  const terms = normalizeQuery(query)
+  return terms.length ? segments.filter((s) => textMatches(s.text, terms)) : [...segments]
+}
+
+/** Index of the segment playing at `ms` (last segment that started at or before it). */
+export function activeSegmentIndex(segments: readonly LocalTranscriptSegment[], ms: number): number {
+  let found = -1
+  for (let i = 0; i < segments.length; i += 1) {
+    if (segments[i]!.startMs <= ms) found = i
+    else break
+  }
+  return found
+}
+
+export function transcriptPlainText(segments: readonly LocalTranscriptSegment[]): string {
+  return segments.map((s) => s.text).join(' ')
+}
+
+export function formatDuration(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000))
+  const h = Math.floor(total / 3600)
+  const m = Math.floor((total % 3600) / 60)
+  const s = total % 60
+  const p = (n: number) => String(n).padStart(2, '0')
+  return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${m}:${p(s)}`
+}
+
+export function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`
+}
+
+export interface SummaryExtraction {
+  summary: string
+  decisions: Array<{ title: string; why: string; who: string[] }>
+  actions: string[]
+}
+
+export function buildSummaryPrompt(input: { title: string; participants: readonly string[]; transcript: string; language: 'ru' | 'en' }): string {
+  const clipped = input.transcript.length > 30000 ? `…\n${input.transcript.slice(-30000)}` : input.transcript
+  const head = input.language === 'ru'
+    ? [
+        `Подведи итоги встречи «${input.title}»${input.participants.length ? ` (участники: ${input.participants.join(', ')})` : ''} по транскрипту ниже.`,
+        'Ничего не отправляй и не меняй — только прочитай и ответь.',
+        'Ответь ОДНИМ блоком ```json: {"summary": "3–6 предложений", "decisions": [{"title": "что решили", "why": "почему", "who": ["кто"]}], "actions": ["конкретное действие — кто, до когда"]}.',
+        'Только то, что есть в тексте; если решений или действий нет — пустые списки.',
+        '',
+        '--- Транскрипт ---',
+      ]
+    : [
+        `Summarize the meeting “${input.title}”${input.participants.length ? ` (participants: ${input.participants.join(', ')})` : ''} from the transcript below.`,
+        'Do not send or change anything — only read and answer.',
+        'Answer with ONE ```json block: {"summary": "3–6 sentences", "decisions": [{"title": "what was decided", "why": "why", "who": ["who"]}], "actions": ["concrete action — who, by when"]}.',
+        'Only what is in the text; empty lists when there are no decisions or actions.',
+        '',
+        '--- Transcript ---',
+      ]
+  return [...head, clipped].join('\n')
+}
+
+export function parseSummaryExtraction(parsed: unknown): SummaryExtraction | null {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
+  const o = parsed as Record<string, unknown>
+  const summary = typeof o.summary === 'string' ? o.summary.trim() : ''
+  const decisions = Array.isArray(o.decisions)
+    ? o.decisions.flatMap((d) => {
+        if (!d || typeof d !== 'object') return []
+        const r = d as Record<string, unknown>
+        const title = typeof r.title === 'string' ? r.title.trim() : ''
+        if (!title) return []
+        return [{
+          title,
+          why: typeof r.why === 'string' ? r.why.trim() : '',
+          who: Array.isArray(r.who) ? r.who.filter((w): w is string => typeof w === 'string' && !!w.trim()).map((w) => w.trim()) : [],
+        }]
+      }).slice(0, 20)
+    : []
+  const actions = Array.isArray(o.actions)
+    ? o.actions.map((a) => (typeof a === 'string' ? a.trim() : a && typeof a === 'object' && typeof (a as { text?: unknown }).text === 'string' ? String((a as { text: string }).text).trim() : '')).filter(Boolean).slice(0, 30)
+    : []
+  if (!summary && decisions.length === 0 && actions.length === 0) return null
+  return { summary, decisions, actions }
+}
