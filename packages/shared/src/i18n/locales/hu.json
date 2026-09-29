@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "Fut",
   "tasks.nodeStateSkipped": "Kihagyva",
   "tasks.noneSelected": "Nincs",
+  "tasks.notFound": "Ez a feladat nem található.",
   "tasks.notes": "Jegyzetek",
   "tasks.openSession": "Munkamenet megnyitása",
   "tasks.orchestratorModel": "Orchesztrátor modell",

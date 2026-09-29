@@ -452,7 +452,7 @@ export function MainContentPanel({
   if (isTasksNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <TasksPage />
+        <TasksPage selectedId={navState.details?.taskId ?? null} />
       </Panel>
     )
   }
@@ -460,7 +460,7 @@ export function MainContentPanel({
   if (isMeetingsNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <MeetingsPage />
+        <MeetingsPage selectedId={navState.details?.meetingId ?? null} />
       </Panel>
     )
   }

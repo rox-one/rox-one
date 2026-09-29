@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "Läuft",
   "tasks.nodeStateSkipped": "Übersprungen",
   "tasks.noneSelected": "Keine",
+  "tasks.notFound": "Diese Aufgabe wurde nicht gefunden.",
   "tasks.notes": "Notizen",
   "tasks.openSession": "Sitzung öffnen",
   "tasks.orchestratorModel": "Orchestrator-Modell",

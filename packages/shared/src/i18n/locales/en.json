@@ -4534,6 +4534,7 @@
   "tasks.nodeStateRunning": "Running",
   "tasks.nodeStateSkipped": "Skipped",
   "tasks.noneSelected": "None",
+  "tasks.notFound": "This task could not be found.",
   "tasks.notes": "Notes",
   "tasks.openSession": "Open session",
   "tasks.orchestratorModel": "Orchestrator model",

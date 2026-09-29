@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "執行中",
   "tasks.nodeStateSkipped": "已跳過",
   "tasks.noneSelected": "無",
+  "tasks.notFound": "找不到此工作。",
   "tasks.notes": "備註",
   "tasks.openSession": "開啟會話",
   "tasks.orchestratorModel": "編排器模型",

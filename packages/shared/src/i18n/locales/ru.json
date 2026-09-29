@@ -4540,6 +4540,7 @@
   "tasks.nodeStateRunning": "Выполняется",
   "tasks.nodeStateSkipped": "Пропущено",
   "tasks.noneSelected": "Не выбрано",
+  "tasks.notFound": "Не удалось найти эту задачу.",
   "tasks.notes": "Заметки",
   "tasks.openSession": "Открыть сессию",
   "tasks.orchestratorModel": "Модель оркестратора",

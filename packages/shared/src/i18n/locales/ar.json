@@ -4533,6 +4533,7 @@
   "tasks.nodeStateRunning": "قيد التشغيل",
   "tasks.nodeStateSkipped": "تم تخطيها",
   "tasks.noneSelected": "لا شيء",
+  "tasks.notFound": "تعذر العثور على هذه المهمة.",
   "tasks.notes": "ملاحظات",
   "tasks.openSession": "فتح الجلسة",
   "tasks.orchestratorModel": "نموذج المنسّق",
