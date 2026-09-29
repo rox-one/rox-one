@@ -65,7 +65,7 @@ function RailItem({ dest, collapsed }: { dest: AppNavDestination; collapsed: boo
 
 function RailSection({ collapsed, children }: { collapsed: boolean; children: ReactNode }) {
   return (
-    <div className={cn('flex flex-col gap-0.5', collapsed ? 'items-center' : 'items-stretch')}>{children}</div>
+    <div className={cn('flex flex-col gap-[4px]', collapsed ? 'items-center' : 'items-stretch')}>{children}</div>
   )
 }
 
@@ -78,8 +78,8 @@ export function ActivityRail() {
     <nav
       aria-label={t('rail.title')}
       className={cn(
-        'chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col overflow-y-auto overflow-x-hidden py-1.5 font-sans',
-        collapsed ? 'items-center' : 'items-stretch px-2',
+        'chrome-rail rox-shell-pane rox-shell-divider-r flex h-full shrink-0 flex-col overflow-y-auto overflow-x-hidden py-[8px] font-sans',
+        collapsed ? 'items-center' : 'items-stretch px-[8px]',
       )}
       style={{ width: activityRailWidth(collapsed) }}
       data-shell-role="activity-rail"
@@ -91,7 +91,7 @@ export function ActivityRail() {
         ))}
       </RailSection>
       <ExtraScreensRailGroup collapsed={collapsed} />
-      <div className={cn('mt-auto pt-2', collapsed ? '' : 'flex')}>
+      <div className={cn('mt-auto pt-[8px]', collapsed ? '' : 'flex')}>
         <RailRow
           icon={collapsed ? ChevronsRight : ChevronsLeft}
           label={toggleLabel}

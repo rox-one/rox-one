@@ -23,7 +23,7 @@ export function ExtraScreensRailGroup({ collapsed = false }: { collapsed?: boole
   const header = t('extraScreens.more')
   return (
     <div
-      className={cn('mt-3 flex flex-col gap-0.5', collapsed ? 'items-center' : 'items-stretch')}
+      className={cn('mt-[12px] flex flex-col gap-[4px]', collapsed ? 'items-center' : 'items-stretch')}
       role="group"
       aria-label={header}
       data-testid="rail-extra-screens"
@@ -33,8 +33,8 @@ export function ExtraScreensRailGroup({ collapsed = false }: { collapsed?: boole
         className={cn(
           'uppercase text-muted-foreground',
           collapsed
-            ? 'pb-0.5 text-[9px] tracking-[0.04em]'
-            : 'flex h-6 items-end px-2 pb-1 text-[11px] font-medium tracking-[0.06em]',
+            ? 'pb-[2px] text-[9px] tracking-[0.04em]'
+            : 'flex h-[24px] items-end px-[8px] pb-[4px] text-[11px] font-medium tracking-[0.06em]',
         )}
       >
         {header}

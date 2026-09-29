@@ -28,7 +28,7 @@ describe('activity rail: expanded with labels by default', () => {
   })
 
   it('rows are 28px, radius 6, label visible when expanded, tooltip when collapsed', () => {
-    expect(row).toContain('h-7')
+    expect(row).toContain('h-[28px]')
     expect(row).toContain('rounded-[6px]')
     expect(row).toContain('{!collapsed && <span')
     expect(row).toContain('<TooltipContent side="right"')
