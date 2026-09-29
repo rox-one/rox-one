@@ -10,8 +10,7 @@ describe('InspectorHost H1 session inspector', () => {
   it('does not pull node-pty and hosts a command-runner terminal', () => {
     expect(src).not.toMatch(/node-pty/)
     expect(src).toContain('InspectorTerminal')
-    expect(src).toContain('WORKBENCH_FLAG.terminalV1')
-    expect(src).toContain("t('inspector.terminal')")
+    expect(src).toContain("'inspector.terminal'")
     expect(src).not.toContain('const terminalEnabled = false')
     expect(src).not.toContain('disabled={!terminalEnabled}')
   })
@@ -29,12 +28,9 @@ describe('InspectorHost H1 session inspector', () => {
     expect(src).not.toContain('inspector.browserDisabled')
   })
 
-  it('keeps the terminal control on the expanded rail; collapsed strip restores chrome', () => {
-    expect(src.match(/\{terminalControl\}/g)).toHaveLength(1)
-    expect(src).toContain('onClick={handleBottomTerminalToggle}')
-    expect(src).toContain('data-testid="bottom-terminal-toggle"')
-    expect(src).toContain('setTerminalOpen(next.sideOpen)')
-    expect(src).toContain('setBottomTerminalOpen(next.bottomOpen)')
+  it('has no rail terminal button (one entry point: TopBar); collapsed strip restores chrome', () => {
+    expect(src).not.toContain('{terminalControl}')
+    expect(src).not.toContain('data-testid="bottom-terminal-toggle"')
     expect(src).toContain('if (chromeCollapsed) {')
     expect(src).toContain('data-inspector="collapsed"')
     expect(src).not.toContain('return null')

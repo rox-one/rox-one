@@ -15,7 +15,7 @@ import {
   StyledDropdownMenuSubContent,
   DropdownMenuSub,
 } from '@/components/ui/styled-dropdown'
-import { Check, ChevronDown, FolderKanban, Info, Tag } from 'lucide-react'
+import { Check, ChevronDown, FolderKanban, Tag } from 'lucide-react'
 import { PERMISSION_MODE_CONFIG, type PermissionMode } from '@craft-agent/shared/agent/modes'
 import { ActiveTasksBar, type BackgroundTask } from './ActiveTasksBar'
 import type { TerminalOverlayData } from './TaskActionMenu'
@@ -31,7 +31,6 @@ import { getState, resolveStatusDisplayLabel, resolveLabelDisplayName } from '@/
 import { SessionStatusMenu } from '@/components/ui/session-status-menu'
 import { MetadataBadge } from '@/components/ui/metadata-badge'
 import { openLabelLink } from '@/lib/open-label-link'
-import { SessionInfoPopover } from './SessionInfoPopover'
 import { LabelMenuItems } from './SessionMenuParts'
 
 // ============================================================================
@@ -290,10 +289,6 @@ export function ActiveOptionBadges({
 
       </div>
 
-      {/* Right side. Improve Prompt lives only in the composer (Sparkles). */}
-      <div className="flex shrink-0 items-center gap-1">
-        <FilesPopoverButton sessionId={sessionId} sessionFolderPath={sessionFolderPath} />
-      </div>
     </div>
     </>
   )
@@ -585,35 +580,6 @@ function LabelsAssignBadge({
         />
       </StyledDropdownMenuContent>
     </DropdownMenu>
-  )
-}
-
-function FilesPopoverButton({ sessionId, sessionFolderPath }: { sessionId?: string; sessionFolderPath?: string }) {
-  const { t } = useTranslation()
-  const [open, setOpen] = React.useState(false)
-
-  if (!sessionId) return null
-
-  return (
-    <SessionInfoPopover
-      sessionId={sessionId}
-      sessionFolderPath={sessionFolderPath}
-      trigger={(
-        <button
-          type="button"
-          className={cn(
-            "h-[30px] pl-[12px] pr-[14px] text-xs font-medium rounded-[8px] flex items-center gap-1.5 shrink-0",
-            "outline-none select-none transition-colors shadow-minimal",
-            "hover:bg-foreground/5 data-[state=open]:bg-foreground/5",
-            "bg-[color-mix(in_srgb,var(--background)_97%,var(--foreground)_3%)]",
-            "text-foreground/80",
-          )}
-        >
-          <Info className="h-3.5 w-3.5 shrink-0" />
-          <span className="whitespace-nowrap">{t("common.info")}</span>
-        </button>
-      )}
-    />
   )
 }
 

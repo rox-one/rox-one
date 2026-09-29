@@ -17,7 +17,7 @@
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
-import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, SquareTerminal, type LucideIcon } from 'lucide-react'
+import { Bot, ChevronsRight, Folder, GitBranch, Globe, Info, Link2, ListTree, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import {
@@ -50,13 +50,11 @@ import { projectConnectionInspector } from './connection-inspector-model'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
 import { InspectorBrowserPane } from '@/components/session-inspector/InspectorBrowserPane'
 import { InspectorTerminal } from '@/components/session-inspector/InspectorTerminal'
-import { WORKBENCH_FLAG } from '@craft-agent/core/platform'
 import {
   INSPECTOR_LIVE_SECTIONS,
   inspectorSectionsForMode,
   isSessionInspectorSection,
   normalizeInspectorSection,
-  resolveBottomTerminalToggle,
   resolveInspectorToggle,
 } from './inspector-model'
 import { CHROME_DENSITY } from './chrome-density'
@@ -276,7 +274,8 @@ export function InspectorHost() {
   const [chromeCollapsed, setChromeCollapsed] = useAtom(inspectorChromeCollapsedAtom)
   const [sectionRaw, setSection] = useAtom(inspectorSectionAtom)
   const [panelWidth, setPanelWidth] = useAtom(inspectorPanelWidthAtom)
-  const [bottomTerminalOpen, setBottomTerminalOpen] = useAtom(bottomTerminalOpenAtom)
+  // The bottom dock owns the terminal (one entry point: the top-bar button).
+  const setBottomTerminalOpen = useSetAtom(bottomTerminalOpenAtom)
   const widthDrag = useRef<{ startX: number; startW: number } | null>(null)
   const harnessInspector = useAtomValue(featureWorkbenchHarnessInspectorV1Atom)
   const route = useAtomValue(focusedPanelRouteAtom)
@@ -433,41 +432,6 @@ export function InspectorHost() {
     setTerminalOpen(false)
   }
 
-  const handleBottomTerminalToggle = () => {
-    const next = resolveBottomTerminalToggle({
-      bottomOpen: bottomTerminalOpen,
-      sideOpen: terminalOpen,
-    })
-    setTerminalOpen(next.sideOpen)
-    setBottomTerminalOpen(next.bottomOpen)
-    if (next.sideOpen) setUserOpened(true)
-  }
-
-  const terminalControl = (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          aria-label={t('inspector.terminal')}
-          aria-pressed={(terminalOpen && panelShown) || bottomTerminalOpen}
-          title={t('inspector.terminal')}
-          data-testid="bottom-terminal-toggle"
-          data-terminal-flag={WORKBENCH_FLAG.terminalV1}
-          onClick={handleBottomTerminalToggle}
-          className={cn(
-            'flex h-8 w-8 items-center justify-center rounded-[7px] transition-colors',
-            (terminalOpen && panelShown) || bottomTerminalOpen
-              ? 'bg-accent/10 text-accent'
-              : 'bg-foreground/[0.025] text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
-          )}
-        >
-          <SquareTerminal className="h-4 w-4" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="left">{t('inspector.terminal')}</TooltipContent>
-    </Tooltip>
-  )
-
   // R-hide = 28px restore strip. Click expands chrome and shows the panel.
   if (chromeCollapsed) {
     return (
@@ -490,14 +454,26 @@ export function InspectorHost() {
 
   return (
     <div
-      className="rox-shell-divider-l flex shrink-0 items-stretch overflow-hidden"
+      className={cn(
+        'rox-shell-divider-l relative flex shrink-0 items-stretch',
+        layout.overlay && panelShown ? 'overflow-visible' : 'overflow-hidden',
+      )}
       data-session-inspector={sessionMode ? 'true' : 'false'}
       data-inspector-collapsed-reason={layout.collapsedReason ?? undefined}
+      data-inspector-overlay={layout.overlay && panelShown ? 'true' : undefined}
     >
       {panelShown && (
         <div
-          className="rox-shell-pane relative flex h-full flex-col overflow-hidden"
-          style={{ width: layout.width }}
+          className={cn(
+            'rox-shell-pane flex h-full flex-col overflow-hidden',
+            // Not enough room beside the center column: float over the content
+            // instead of squeezing the chat below CENTER_MIN_WIDTH.
+            layout.overlay
+              ? 'absolute inset-y-0 z-40 shadow-[-12px_0_32px_rgba(0,0,0,0.28)]'
+              : 'relative',
+          )}
+          style={layout.overlay ? { width: layout.width, right: INSPECTOR_RAIL_WIDTH } : { width: layout.width }}
+          data-inspector-panel={layout.overlay ? 'overlay' : 'docked'}
         >
           <div
             className="absolute inset-y-0 left-0 z-10 w-1.5 cursor-ew-resize hover:bg-foreground/15"
@@ -603,7 +579,6 @@ export function InspectorHost() {
           )
         })}
         <div className="mt-auto flex flex-col items-center gap-0.5">
-          {terminalControl}
           <Tooltip>
             <TooltipTrigger asChild>
               <button

@@ -74,6 +74,9 @@ export const RPC_CHANNELS = {
     IMPORT_REMOTE_TRANSFER: 'sessions:importRemoteTransfer',
     FOREIGN_DISCOVER: 'sessions:foreignDiscover',
     FOREIGN_PERSIST: 'sessions:foreignPersist',
+    FOREIGN_AUTO_STATUS: 'sessions:foreignAutoStatus',
+    FOREIGN_AUTO_RUN: 'sessions:foreignAutoRun',
+    FOREIGN_AUTO_SET: 'sessions:foreignAutoSet',
   },
   transfer: {
     START: 'transfer:start',
@@ -781,6 +784,9 @@ export const RPC_CHANNELS = {
     IMPORT: 'browserProfile:import',
     ROLLBACK: 'browserProfile:rollback',
     DELETE: 'browserProfile:delete',
+    COOKIE_AUTO_STATUS: 'browserProfile:cookieAutoStatus',
+    COOKIE_AUTO_SET: 'browserProfile:cookieAutoSet',
+    COOKIE_AUTO_RUN: 'browserProfile:cookieAutoRun',
   },
   automations: {
     GET: 'automations:get',

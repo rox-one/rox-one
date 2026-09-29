@@ -39,8 +39,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '../tooltip'
 import { parseDiffFromFile, type FileContents } from '@pierre/diffs'
 import { getDiffStats, getUnifiedDiffStats } from '../code-viewer'
 import { TurnCardActionsMenu } from './TurnCardActionsMenu'
-import { MessageHoverDock } from './MessageHoverDock'
-import { SideThreadMenu } from './SideThreadMenu'
+import { MessageHoverDock, type MessageDockExtraAction } from './MessageHoverDock'
 import type { SideThreadAction } from '@craft-agent/shared/side-threads'
 import {
   aggregateReactions,
@@ -375,7 +374,6 @@ export interface TurnCardProps {
   /** Callback to branch the session from a specific message */
   onBranch?: (messageId: string, options?: { newPanel?: boolean }) => void
   onQuote?: (text: string) => void
-  onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
   /** Callback to add an annotation to a response message */
@@ -1484,7 +1482,6 @@ export interface ResponseCardProps {
   /** Callback to branch the session from this response */
   onBranch?: (options?: { newPanel?: boolean }) => void
   onQuote?: (text: string) => void
-  onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
   /** Callback to add annotation from selected text */
@@ -1503,48 +1500,6 @@ export interface ResponseCardProps {
   openAnnotationRequest?: OpenAnnotationRequest | null
   /** Annotation interaction mode (viewer uses tooltip-only to suppress the island) */
   annotationInteractionMode?: AnnotationInteractionMode
-}
-
-interface BranchDropdownProps {
-  onBranch: (options?: { newPanel?: boolean }) => void
-}
-
-function BranchDropdown({ onBranch }: BranchDropdownProps) {
-  const { t } = useTranslation()
-  const handleBranchClick = () => {
-    onBranch({ newPanel: true })
-  }
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label={t('chat.branchOptions')}
-          title={t('chat.branch')}
-          className={cn(
-            "p-1 rounded-[4px] transition-colors select-none",
-            "text-muted-foreground hover:text-foreground hover:bg-foreground/5",
-            "data-[state=open]:text-foreground data-[state=open]:bg-foreground/5",
-            "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          )}
-        >
-          <GitBranch className={SIZE_CONFIG.iconSize} />
-        </button>
-      </DropdownMenuTrigger>
-
-      <StyledDropdownMenuContent align="end" minWidth="min-w-64" sideOffset={6}>
-        <StyledDropdownMenuItem onClick={handleBranchClick} className="items-start py-2">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[13px] leading-tight">{t('chat.branchFromThisMessage')}</span>
-            <span className="max-w-[220px] whitespace-normal text-xs leading-tight text-muted-foreground">
-              {t('chat.branchFromThisMessageDescription')}
-            </span>
-          </div>
-        </StyledDropdownMenuItem>
-      </StyledDropdownMenuContent>
-    </DropdownMenu>
-  )
 }
 
 const MAX_HEIGHT = 540
@@ -1738,7 +1693,6 @@ export function ResponseCard({
   compactMode = false,
   onBranch,
   onQuote,
-  onShareMessage,
   onLearnFromMessage,
   onPickSideThread,
   onAddAnnotation,
@@ -1755,8 +1709,6 @@ export function ResponseCard({
   const [displayedText, setDisplayedText] = useState(text)
   const lastUpdateRef = useRef(Date.now())
   // Copy to clipboard state
-  const [copied, setCopied] = useState(false)
-  const [reactionPickerOpen, setReactionPickerOpen] = useState(false)
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false)
   // Dark mode detection - scroll fade only shown in dark mode
@@ -1849,16 +1801,6 @@ export function ResponseCard({
     anchor: activeMenuAnchor,
     sourceKey: selectionMenuSourceKey,
   })
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
-    }
-  }, [text])
 
   const reactionCounts = useMemo(() => aggregateReactions(annotations, LOCAL_REACTION_ACTOR.id), [annotations])
   const handleToggleEmoji = useCallback(
@@ -2546,25 +2488,38 @@ export function ResponseCard({
   // Completed response or plan - show with max height and footer
   if (isCompleted || variant === 'plan') {
     const isPlan = variant === 'plan'
+    const overflowActions: MessageDockExtraAction[] = []
+    if (onPopOut) {
+      overflowActions.push({ id: 'markdown', label: 'Markdown', icon: <FileText />, onSelect: onPopOut })
+    }
+    if (onListen) {
+      overflowActions.push({
+        id: 'listen',
+        label: isListening ? t("chat.listenStop") : t("chat.listen"),
+        icon: <Volume2 />,
+        onSelect: onListen,
+      })
+    }
+    if (onBranch && !compactMode) {
+      overflowActions.push({
+        id: 'branch',
+        label: t('chat.branchFromThisMessage'),
+        icon: <GitBranch />,
+        onSelect: () => onBranch({ newPanel: true }),
+      })
+    }
     const hoverDock = (
-      <div className="flex flex-wrap items-center gap-1">
-        <MessageHoverDock
-          reactionCounts={reactionCounts}
-          pickerOpen={reactionPickerOpen}
-          onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
-          onToggleEmoji={handleToggleEmoji}
-          onTogglePicker={() => setReactionPickerOpen((open) => !open)}
-          onCopy={handleCopy}
-          onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(text)) : undefined}
-          onShare={onShareMessage ? () => onShareMessage(text) : undefined}
-          onLearn={onLearnFromMessage ? () => onLearnFromMessage(text) : undefined}
-          onHighlight={canAnnotate ? () => contentLayerRef.current?.focus() : undefined}
-          className="opacity-100 group-focus-within:opacity-100"
-        />
-        {onPickSideThread && messageId ? (
-          <SideThreadMenu onSelect={(action) => onPickSideThread(action, text, messageId)} />
-        ) : null}
-      </div>
+      <MessageHoverDock
+        reactionCounts={reactionCounts}
+        onToggleHeart={() => handleToggleEmoji(DEFAULT_REACTION_EMOJI)}
+        onToggleEmoji={handleToggleEmoji}
+        onCopy={() => navigator.clipboard.writeText(text)}
+        onQuote={onQuote ? () => onQuote(quoteMessageMarkdown(text)) : undefined}
+        onLearn={onLearnFromMessage ? () => onLearnFromMessage(text) : undefined}
+        onPickSideThread={onPickSideThread && messageId ? (action) => onPickSideThread(action, text, messageId) : undefined}
+        extraActions={overflowActions}
+        className="opacity-100 group-focus-within:opacity-100"
+      />
     )
 
     return (
@@ -2638,34 +2593,6 @@ export function ResponseCard({
               {/* Left side - Copy, View as Markdown, Annotation hint */}
               <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
                 {hoverDock}
-                {onPopOut && (
-                  <button
-                    onClick={onPopOut}
-                    className={cn(
-                      "turn-action-btn flex items-center gap-1.5 transition-colors select-none",
-                      "text-muted-foreground hover:text-foreground",
-                      "focus:outline-none focus-visible:underline"
-                    )}
-                  >
-                    <FileText className={SIZE_CONFIG.iconSize} />
-                    <span>Markdown</span>
-                  </button>
-                )}
-                {onListen && (
-                  <button
-                    type="button"
-                    onClick={onListen}
-                    className={cn(
-                      "turn-action-btn flex items-center gap-1.5 transition-colors select-none",
-                      isListening ? "text-foreground" : "text-muted-foreground hover:text-foreground",
-                      "focus:outline-none focus-visible:underline"
-                    )}
-                    aria-label={t("chat.listen")}
-                  >
-                    <Volume2 className={SIZE_CONFIG.iconSize} />
-                    <span>{isListening ? t("chat.listenStop") : t("chat.listen")}</span>
-                  </button>
-                )}
               </div>
 
               {/* Right side */}
@@ -2688,7 +2615,6 @@ export function ResponseCard({
                     />
                   </div>
                 )}
-                {onBranch && <BranchDropdown onBranch={onBranch} />}
               </div>
             </div>
           )}
@@ -2914,7 +2840,6 @@ export const TurnCard = React.memo(function TurnCard({
   compactMode = false,
   onBranch,
   onQuote,
-  onShareMessage,
   onLearnFromMessage,
   onPickSideThread,
   onAddAnnotation,
@@ -3294,7 +3219,6 @@ export const TurnCard = React.memo(function TurnCard({
             onBranch={onBranch ? (options?: { newPanel?: boolean }) => onBranch(planActivity.messageId ?? planActivity.id, options) : undefined}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
-            onShareMessage={onShareMessage}
             onLearnFromMessage={onLearnFromMessage}
             onPickSideThread={onPickSideThread}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
@@ -3346,7 +3270,6 @@ export const TurnCard = React.memo(function TurnCard({
                 onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
                 sendMessageKey={sendMessageKey}
                 onQuote={onQuote}
-                onShareMessage={onShareMessage}
                 onLearnFromMessage={onLearnFromMessage}
                 onPickSideThread={onPickSideThread}
                 hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}
@@ -3384,7 +3307,6 @@ export const TurnCard = React.memo(function TurnCard({
             onBranch={onBranch && response.messageId ? (options?: { newPanel?: boolean }) => onBranch(response.messageId!, options) : undefined}
             sendMessageKey={sendMessageKey}
             onQuote={onQuote}
-            onShareMessage={onShareMessage}
             onLearnFromMessage={onLearnFromMessage}
             onPickSideThread={onPickSideThread}
             hasActiveFollowUpAnnotations={hasActiveFollowUpAnnotations}

@@ -2,6 +2,7 @@ import { RPC_CHANNELS, type BrowserPaneCreateOptions, type BrowserEmptyStateLaun
 import type { BrowserScreenshotOptions } from '../browser-pane-manager'
 import { pushTyped, type RpcServer } from '@craft-agent/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
+import { getBrowserCookieAutoImporter } from '../browser-cookie-auto-import'
 
 export const HANDLED_CHANNELS = [
   RPC_CHANNELS.browserPane.CREATE,
@@ -27,11 +28,23 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.browserPane.SCREENSHOT,
   RPC_CHANNELS.browserPane.EVALUATE,
   RPC_CHANNELS.browserPane.SCROLL,
+  RPC_CHANNELS.browserProfile.COOKIE_AUTO_STATUS,
+  RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET,
+  RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN,
 ] as const
 
 export function registerBrowserHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { browserPaneManager, platform } = deps
   if (!browserPaneManager) return
+
+  // Cookie import for the in-app browser: gated by one explicit consent switch.
+  const cookieImporter = getBrowserCookieAutoImporter()
+  if (process.versions.electron && process.env.NODE_ENV !== 'test') cookieImporter.start()
+  server.handle(RPC_CHANNELS.browserProfile.COOKIE_AUTO_STATUS, () => cookieImporter.status())
+  server.handle(RPC_CHANNELS.browserProfile.COOKIE_AUTO_SET, (_ctx, args: { consent?: boolean } | undefined) =>
+    cookieImporter.setConsent(args?.consent === true),
+  )
+  server.handle(RPC_CHANNELS.browserProfile.COOKIE_AUTO_RUN, () => cookieImporter.run(true))
 
   server.handle(RPC_CHANNELS.browserPane.CREATE, (ctx, input?: string | BrowserPaneCreateOptions) => {
     // Stamp the window with the requester's workspace so manual UI-opened
