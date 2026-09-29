@@ -1,4 +1,6 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
+import { resolveLabelDisplayName } from "@/config/session-status-config"
 import { parseLabelEntry, formatLabelEntry, formatDisplayValue } from "@craft-agent/shared/labels"
 import { resolveEntityColor } from "@craft-agent/shared/colors"
 import { useTheme } from "@/context/ThemeContext"
@@ -17,7 +19,9 @@ interface EntityListLabelBadgeProps {
 
 export function EntityListLabelBadge({ label, rawValue, sessionLabels, onLabelsChange }: EntityListLabelBadgeProps) {
   const [open, setOpen] = useState(false)
+  const { t } = useTranslation()
   const { isDark } = useTheme()
+  const labelName = resolveLabelDisplayName(label, t)
   const color = label.color ? resolveEntityColor(label.color, isDark) : null
   const displayValue = rawValue ? formatDisplayValue(rawValue, label.valueType) : undefined
   const isLink = label.valueType === 'link' && !!rawValue
@@ -47,7 +51,7 @@ export function EntityListLabelBadge({ label, rawValue, sessionLabels, onLabelsC
       <div
         role="button"
         tabIndex={0}
-        title={displayValue ? `${label.name} · ${displayValue}` : label.name}
+        title={displayValue ? `${labelName} · ${displayValue}` : labelName}
         className="shrink-0 h-[18px] max-w-[120px] px-1.5 text-[10px] font-medium rounded flex items-center whitespace-nowrap gap-0.5 cursor-pointer overflow-hidden"
         onMouseDown={(e) => { e.stopPropagation(); e.preventDefault() }}
         style={color ? {
@@ -58,7 +62,7 @@ export function EntityListLabelBadge({ label, rawValue, sessionLabels, onLabelsC
           color: 'rgba(var(--foreground-rgb), 0.8)',
         }}
       >
-        <span className="truncate min-w-0">{label.name}</span>
+        <span className="truncate min-w-0">{labelName}</span>
         {displayValue ? (
           <>
             <span className="shrink-0" style={{ opacity: 0.4 }}>·</span>

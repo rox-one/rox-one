@@ -22,6 +22,7 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import type { AuditSeverity, SecurityFinding } from '@craft-agent/shared/openclaw'
 import { useOpenClawAudit } from '@/hooks/useOpenClawAudit'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 const SEVERITY_ORDER: readonly AuditSeverity[] = ['critical', 'warn', 'info', 'pass']
 
@@ -101,7 +102,7 @@ export function OpenClawAuditSection({ workspaceId }: OpenClawAuditSectionProps)
           </Button>
           {audit.snapshot ? (
             <span className="text-xs text-muted-foreground">
-              {t("settings.openclawAudit.lastRun")}: {new Date(audit.snapshot.completedAt).toLocaleString()}
+              {t("settings.openclawAudit.lastRun")}: {new Date(audit.snapshot.completedAt).toLocaleString(getAppLocale())}
             </span>
           ) : null}
         </div>

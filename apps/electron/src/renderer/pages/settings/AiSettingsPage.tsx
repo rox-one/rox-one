@@ -61,6 +61,7 @@ import { getModelShortName, type ModelDefinition } from '@config/models'
 import type { CustomEndpointModelInput } from '@/components/apisetup'
 import { getModelsForProviderType, resolveMidStreamBehavior, type CustomEndpointApi, type MidStreamBehavior } from '@config/llm-connections'
 import { toast } from 'sonner'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 /**
  * Compact token count: 1234 → "1.2K", 1234567 → "1.2M". Used by the RTK
@@ -89,7 +90,7 @@ function getOAuthStatusLine(connection: LlmConnectionWithStatus, t: ReturnType<t
     if (connection.oauthTimeRemainingMs <= 0) return t('settings.ai.oauthExpired')
     return t('settings.ai.oauthExpiresIn', {
       time: formatDurationShort(connection.oauthTimeRemainingMs),
-      expiresAt: new Date(connection.oauthExpiresAt).toLocaleString(undefined, {
+      expiresAt: new Date(connection.oauthExpiresAt).toLocaleString(getAppLocale(), {
         month: 'short',
         day: 'numeric',
         hour: 'numeric',

@@ -5044,5 +5044,6 @@
   "workspace.organization": "Organization",
   "workspace.organizationRequired": "A team workspace belongs to an organization.",
   "workspace.organizationSelect": "Select an organization",
-  "workspace.organizationEmpty": "You have no organizations yet — create one first."
+  "workspace.organizationEmpty": "You have no organizations yet — create one first.",
+  "label.default.scheduled": "Scheduled"
 }

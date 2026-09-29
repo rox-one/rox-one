@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react'
 import { SettingsSection, SettingsCard } from '@/components/settings'
 import { Button } from '@/components/ui/button'
 import { useCommandGateway } from '@/hooks/useCommandGateway'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 export interface CommandGatewaySectionProps {
   workspaceId: string | undefined
@@ -45,7 +46,7 @@ export function CommandGatewaySection({ workspaceId }: CommandGatewaySectionProp
                     ) : null}
                     <p className="mt-1 text-xs text-muted-foreground">
                       {t("settings.commandGateway.expires")}:{' '}
-                      {new Date(c.expiresAt).toLocaleTimeString()}
+                      {new Date(c.expiresAt).toLocaleTimeString(getAppLocale())}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-1">

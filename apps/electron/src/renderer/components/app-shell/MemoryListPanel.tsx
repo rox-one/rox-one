@@ -9,6 +9,7 @@ import type { MemoryProposal } from '@craft-agent/shared/memory/proposals'
 import { MemoryProposalCard } from './MemoryProposalCard'
 import { useNavigation, routes } from '@/contexts/NavigationContext'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 export interface MemoryListPanelProps {
   workspaceId?: string
@@ -361,7 +362,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
                 className="text-destructive"
                 title={(lesson.conflicts ?? [])
                   .slice(-3)
-                  .map((c) => `${new Date(c.ts).toLocaleString()} — ${c.reason}`)
+                  .map((c) => `${new Date(c.ts).toLocaleString(getAppLocale())} — ${c.reason}`)
                   .join('\n')}
               >
                 {t('memory.conflictCount', { count: lesson.conflicts?.length ?? 0 })}

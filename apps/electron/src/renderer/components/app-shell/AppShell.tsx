@@ -2373,7 +2373,9 @@ function AppShellContent({
 
       const item: any = {
         id: `nav:label:${node.fullId}`,
-        title: node.label?.name || node.segment.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+        title: node.label?.name
+          ? resolveLabelDisplayName(node.label, t)
+          : resolveLabelDisplayName({ id: node.segment, name: node.segment.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') }, t),
         label: count > 0 ? String(count) : undefined,
         // Show label type icon (Hash/Calendar/Type) right-aligned before count, with tooltip explaining the type
         afterTitle: node.label?.valueType ? (

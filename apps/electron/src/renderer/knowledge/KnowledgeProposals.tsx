@@ -19,6 +19,7 @@ import { useNavigation } from '@/contexts/NavigationContext'
 import { routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import { resolveKnowledgeMutationsApi } from './proposal-actions'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 const PROPOSAL_STATUS_FILTERS: readonly MutationProposalStatus[] = [
   'draft',
@@ -147,7 +148,7 @@ export function KnowledgeProposals({ className }: { className?: string }) {
             <span className="truncate text-[11px] text-muted-foreground">
               {proposal.ops.map((op) => op.op).join(', ') || proposal.id}
               {' · '}
-              {new Date(proposal.createdAt).toLocaleString()}
+              {new Date(proposal.createdAt).toLocaleString(getAppLocale())}
             </span>
           </button>
         )}

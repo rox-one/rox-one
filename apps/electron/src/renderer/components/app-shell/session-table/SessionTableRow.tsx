@@ -14,12 +14,13 @@ import { PremiumMenu, type PremiumMenuItem } from '@craft-agent/ui'
 import type { CollectionDensity, SessionPriority } from '@craft-agent/shared/sessions/collection'
 import { formatTranscriptSize } from '@craft-agent/shared/sessions/collection'
 import type { SessionMeta } from '@/atoms/sessions'
-import type { SessionStatusConfig } from '@/config/session-status-config'
+import { resolveLabelDisplayName, resolveStatusDisplayLabel, type SessionStatusConfig } from '@/config/session-status-config'
 import { getSessionTitle } from '@/utils/session'
 import { cn } from '@/lib/utils'
 import { isDueOverdue } from './table-due'
 import { collectionTableRowClass } from './table-density'
 import { NO_PROJECT_VALUE } from '../collection/bulk-input'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 export interface SessionTableRowProps {
   meta: SessionMeta
@@ -177,7 +178,7 @@ function formatRelative(ts: number | null | undefined): string {
 
 function formatDate(ts: number | null | undefined): string {
   if (ts == null || !Number.isFinite(ts)) return '—'
-  return new Date(ts).toLocaleDateString()
+  return new Date(ts).toLocaleDateString(getAppLocale())
 }
 
 
@@ -188,7 +189,7 @@ function formatDue(
   if (dueDate == null || !Number.isFinite(dueDate)) return { text: '—', overdue: false }
   const d = new Date(dueDate)
   return {
-    text: d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    text: d.toLocaleDateString(getAppLocale(), { month: 'short', day: 'numeric' }),
     overdue: isDueOverdue(dueDate, sessionStatus),
   }
 }
@@ -294,7 +295,12 @@ export function SessionTableRow({
   const sessionStatus: string = meta.sessionStatus ?? 'todo'
 
   const projectName = meta.projectId ? (projectNameById.get(meta.projectId) ?? meta.projectId) : t('collection.bulk.noProject')
-  const labelNames = (meta.labels ?? []).map((id) => labelById.get(id) ?? id).join(', ')
+  const labelNames = (meta.labels ?? [])
+    .map((id) => {
+      const name = labelById.get(id)
+      return name ? resolveLabelDisplayName({ id, name }, t) : id
+    })
+    .join(', ')
   const modelLabel = meta.model || '—'
   const showPropertyCluster =
     showStatus || showLabels || showPriority || showDue || showModel || showProject
@@ -321,11 +327,11 @@ export function SessionTableRow({
 
   const statusItems = (statuses.length > 0 ? statuses : [{ id: sessionStatus, label: sessionStatus }]).map((s) => ({
     id: s.id,
-    label: s.label ?? s.id,
+    label: s.label ? resolveStatusDisplayLabel({ id: s.id, label: s.label }, t) : s.id,
   }))
   const labelItems: PremiumMenuItem[] = [
     { id: NONE_LABEL_VALUE, label: t('collection.display.labelNone') },
-    ...labels.map((item) => ({ id: item.id, label: item.name })),
+    ...labels.map((item) => ({ id: item.id, label: resolveLabelDisplayName(item, t) })),
   ]
   const projectItems: PremiumMenuItem[] = [
     { id: NO_PROJECT_VALUE, label: t('collection.bulk.noProject') },

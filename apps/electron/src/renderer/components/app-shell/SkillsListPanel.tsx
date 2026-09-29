@@ -18,6 +18,7 @@ import type { PendingSkill, PendingSkillDiff, SkillUsageMap } from '@craft-agent
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { projectsAtom } from '@/atoms/projects'
 import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -348,7 +349,7 @@ export function SkillsListPanel({
                 <span
                   title={t('skills.usageChip', {
                     count: used,
-                    date: lastUsedAt ? new Date(lastUsedAt).toLocaleDateString() : '—',
+                    date: lastUsedAt ? new Date(lastUsedAt).toLocaleDateString(getAppLocale()) : '—',
                   })}
                   className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground"
                 >

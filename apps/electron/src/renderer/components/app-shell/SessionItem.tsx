@@ -25,11 +25,12 @@ import { messagingBindingsBySessionAtom } from "@/atoms/messaging"
 import { collectionDisplayAtom } from "@/atoms/collection-display"
 import { useAtomValue } from "jotai"
 import { extractLabelId } from "@craft-agent/shared/labels"
+import { getAppLocale } from '@craft-agent/shared/i18n'
 
 function formatSessionDue(item: SessionMeta): string | undefined {
   const dueValue = item.dueDate ?? (item as SessionMeta & { due?: number | null }).due
   if (dueValue == null || !Number.isFinite(dueValue)) return undefined
-  return new Date(dueValue).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+  return new Date(dueValue).toLocaleDateString(getAppLocale(), { month: "short", day: "numeric" })
 }
 
 function formatLastActivity(lastMessageAt: number | undefined): string | undefined {
