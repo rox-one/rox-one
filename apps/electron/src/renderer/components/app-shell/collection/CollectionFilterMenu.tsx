@@ -203,9 +203,9 @@ export function CollectionFilterMenu({
                       setRenamingId(null)
                     }
                   }}
-                  className="h-7 min-w-0 flex-1 rounded-[5px] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none"
+                  className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none"
                 />
-                <button type="submit" className="h-7 rounded-[5px] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]">
+                <button type="submit" className="h-7 rounded-[6px] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]">
                   {t('collection.slice.rename')}
                 </button>
               </form>
@@ -271,7 +271,7 @@ export function CollectionFilterMenu({
           {count > 0 && !saving && (
             <button
               type="button"
-              className="mx-1 mt-0.5 h-7 rounded-[5px] px-2 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.055] hover:text-foreground"
+              className="mx-1 mt-0.5 h-7 rounded-[6px] px-2 text-left text-[11px] font-medium text-muted-foreground transition-colors hover:bg-foreground/[0.055] hover:text-foreground"
               onClick={() => setSaving(true)}
             >
               {t('collection.slice.save')}
@@ -290,11 +290,11 @@ export function CollectionFilterMenu({
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 placeholder={t('collection.slice.savePlaceholder')}
-                className="h-7 min-w-0 flex-1 rounded-[5px] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none placeholder:text-muted-foreground/70 focus:border-foreground/25"
+                className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-foreground/[0.03] px-2 text-[12px] outline-none placeholder:text-muted-foreground/70 focus:border-foreground/25"
               />
               <button
                 type="submit"
-                className="h-7 rounded-[5px] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]"
+                className="h-7 rounded-[6px] px-2 text-[11px] font-medium hover:bg-foreground/[0.055]"
               >
                 {t('collection.slice.save')}
               </button>

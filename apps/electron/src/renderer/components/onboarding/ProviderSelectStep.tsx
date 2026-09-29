@@ -22,9 +22,9 @@ interface ProviderOption {
 }
 
 const PROVIDER_ICONS: Record<ProviderChoice, React.ReactNode> = {
-  claude: <img src={claudeIcon} alt="" className="size-5 rounded-[3px]" />,
-  chatgpt: <img src={openaiIcon} alt="" className="size-5 rounded-[3px]" />,
-  copilot: <img src={copilotIcon} alt="" className="size-5 rounded-[3px]" />,
+  claude: <img src={claudeIcon} alt="" className="size-5 rounded-[4px]" />,
+  chatgpt: <img src={openaiIcon} alt="" className="size-5 rounded-[4px]" />,
+  copilot: <img src={copilotIcon} alt="" className="size-5 rounded-[4px]" />,
   api_key: <Key className="size-5" />,
   omp: <Cpu className="size-5" />,
   local: <Monitor className="size-5" />,

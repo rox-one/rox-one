@@ -377,7 +377,7 @@ export function SessionTableRow({
 
       <button
         type="button"
-        className="min-w-0 flex-1 truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 rounded-[3px]"
+        className="min-w-0 flex-1 truncate text-left hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring/70 rounded-[4px]"
         onClick={() => onOpen(meta.id)}
         title={title}
       >

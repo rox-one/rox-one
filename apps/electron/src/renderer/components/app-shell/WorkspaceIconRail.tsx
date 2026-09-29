@@ -366,7 +366,7 @@ export function WorkspaceIconRail({
 										}}
 										onClick={(event) => handleWorkspaceClick(workspace, event)}
 										className={cn(
-											"group relative flex h-11 w-11 items-center justify-center rounded-[14px] transition-colors duration-150",
+											"group relative flex h-11 w-11 items-center justify-center rounded-[12px] transition-colors duration-150",
 											"focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 											selected ? "bg-foreground/12" : "hover:bg-foreground/7",
 											disconnected && "opacity-60",
@@ -540,7 +540,7 @@ export function WorkspaceIconRail({
 							type="button"
 							aria-label={t("workspace.addWorkspace")}
 							onClick={handleNewWorkspace}
-							className="flex h-11 w-11 items-center justify-center rounded-[14px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+							className="flex h-11 w-11 items-center justify-center rounded-[12px] text-muted-foreground transition-colors duration-150 hover:bg-foreground/7 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
 						>
 							<FolderPlus className="h-5 w-5" />
 						</button>

@@ -47,7 +47,7 @@ function RailItem({ dest }: { dest: AppNavDestination }) {
       aria-disabled={disabled || undefined}
       onClick={disabled ? undefined : () => void navigate(dest.route!())}
       className={cn(
-        'flex h-8 w-8 items-center justify-center rounded-[7px] transition-colors',
+        'flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors',
         disabled
           ? 'cursor-not-allowed text-muted-foreground/40'
           : dest.isActive(navState)
@@ -87,7 +87,7 @@ export function ActivityRail() {
               type="button"
               aria-label={t('rail.expand')}
               onClick={() => setCollapsed(false)}
-              className="flex h-8 w-8 items-center justify-center rounded-[7px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-[6px] text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
               <ChevronsRight className="h-4 w-4" />
             </button>
@@ -118,7 +118,7 @@ export function ActivityRail() {
               type="button"
               aria-label={t('rail.collapse')}
               onClick={() => setCollapsed(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-[7px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
+              className="flex h-8 w-8 items-center justify-center rounded-[6px] text-muted-foreground/50 transition-colors hover:bg-foreground/5 hover:text-foreground"
             >
               <ChevronsLeft className="h-4 w-4" />
             </button>

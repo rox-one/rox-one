@@ -72,7 +72,7 @@ export function MentionBadge({
             e.stopPropagation()
             onRemove()
           }}
-          className="shrink-0 h-4 w-4 rounded-[3px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-colors"
+          className="shrink-0 h-4 w-4 rounded-[4px] flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-colors"
         >
           <X className="h-3 w-3" />
         </button>

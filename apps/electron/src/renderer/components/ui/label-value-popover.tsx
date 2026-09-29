@@ -224,7 +224,7 @@ export function LabelValuePopover({
                       type="button"
                       aria-label={t('labels.selectDate')}
                       className={cn(
-                        'flex items-center justify-center w-7 h-7 rounded-[5px]',
+                        'flex items-center justify-center w-7 h-7 rounded-[6px]',
                         'hover:bg-foreground/5 transition-colors cursor-pointer',
                         'outline-none',
                         calendarOpen && 'bg-foreground/5'

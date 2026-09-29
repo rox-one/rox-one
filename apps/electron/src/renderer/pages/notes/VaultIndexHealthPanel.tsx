@@ -66,7 +66,7 @@ export function VaultIndexHealthPanel({
         ) : null}
         <button
           type="button"
-          className="mt-1 inline-flex h-6 items-center gap-1 rounded-[5px] px-2 text-[11px] hover:bg-foreground/[0.06]"
+          className="mt-1 inline-flex h-6 items-center gap-1 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]"
           onClick={onRebuild}
           disabled={rebuilding}
         >

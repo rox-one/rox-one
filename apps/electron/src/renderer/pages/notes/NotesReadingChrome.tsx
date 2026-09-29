@@ -278,7 +278,7 @@ export function NotesCommentComposer({
       <button
         type="submit"
         disabled={!body.trim()}
-        className="mt-1.5 h-7 w-full rounded-[5px] bg-foreground/12 text-[11px] font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
+        className="mt-1.5 h-7 w-full rounded-[6px] bg-foreground/12 text-[11px] font-medium text-foreground hover:bg-foreground/18 disabled:opacity-40"
       >
         {t('notes.comments.add')}
       </button>

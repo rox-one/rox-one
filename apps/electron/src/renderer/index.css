@@ -203,6 +203,12 @@ html[data-shell-style="zen"][data-scenic] .chrome-strip {
 /* Renderer-only utilities. Shared shadow and popover classes come from
    @craft-agent/ui/styles. */
 @layer utilities {
+  /* Bare `rounded` compiles to a literal .25rem (3.75px at the 15px root);
+     pin it to the xs token so it sits on the 4/6/8/10/12 radius scale. */
+  .rounded {
+    border-radius: var(--radius-xs);
+  }
+
   /* .ring-1 is left to Tailwind (a true 1px ring): it is used for faint
      decorative edges (avatars, chips), which must not scale to --ring-width
      (2px, 3px in high contrast) like selection/focus rings do. */

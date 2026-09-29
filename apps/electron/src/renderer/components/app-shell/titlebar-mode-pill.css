@@ -15,7 +15,7 @@
   height: 26px;
   padding: 2px;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   box-shadow: none;
   background: color-mix(in oklch, var(--foreground) 5%, transparent);
   font-family: var(--font-sans);
@@ -38,7 +38,7 @@
   height: 22px;
   padding: 0 9px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 6px;
   background: transparent;
   color: color-mix(in oklch, var(--foreground) 62%, transparent);
   font: inherit;
@@ -110,7 +110,7 @@ html[data-contrast="high"] .rox-mode-pill-badge {
   top: 2px;
   left: 0;
   height: 22px;
-  border-radius: 7px;
+  border-radius: 6px;
   background: color-mix(in oklch, var(--accent) 16%, transparent);
   opacity: 0;
   pointer-events: none;

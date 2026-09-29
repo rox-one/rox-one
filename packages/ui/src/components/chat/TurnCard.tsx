@@ -970,7 +970,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
                 }
               }}
               className={cn(
-                "p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
+                "p-0.5 rounded-[4px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
                 "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               )}
             >
@@ -1221,7 +1221,7 @@ function ActivityRow({ activity, onOpenDetails, isLastChild, sessionFolderPath, 
               }
             }}
             className={cn(
-              "p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
+              "p-0.5 rounded-[4px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
               "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             )}
           >
@@ -1392,7 +1392,7 @@ function ActivityGroupRow({
               }
             }}
             className={cn(
-              "p-0.5 rounded-[3px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
+              "p-0.5 rounded-[4px] opacity-0 group-hover/row:opacity-100 transition-opacity shrink-0",
               "hover:bg-muted/80 focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             )}
           >
