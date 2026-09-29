@@ -1,9 +1,8 @@
 /**
- * «Ещё» group in the ActivityRail: the extra workbench screens whose
- * `workbench.mode.<id>.v1` flag is on. Separated from the main destinations
- * by a tone gap (no line); rows are the shared `RailRow` (icon + label when
- * the rail is expanded, icon + tooltip when collapsed). The group header is
- * a visible label when expanded and a tiny caption when collapsed.
+ * Extra workbench screens in the ActivityRail (flag `workbench.mode.<id>.v1`).
+ * They simply continue the list after a 12px spacing gap: no visible header,
+ * no divider (Mark). The group keeps an accessible name («Ещё») for screen
+ * readers only. Rows are the shared `RailRow`.
  */
 import { useAtomValue } from 'jotai'
 import { useTranslation } from 'react-i18next'
@@ -20,25 +19,13 @@ export function ExtraScreensRailGroup({ collapsed = false }: { collapsed?: boole
   const navState = useNavigationState()
   const screens = visibleExtraScreens(useAtomValue(enabledExtraScreenIdsAtom))
   if (screens.length === 0) return null
-  const header = t('extraScreens.more')
   return (
     <div
       className={cn('mt-[12px] flex flex-col gap-[4px]', collapsed ? 'items-center' : 'items-stretch')}
       role="group"
-      aria-label={header}
+      aria-label={t('extraScreens.more')}
       data-testid="rail-extra-screens"
     >
-      <div
-        aria-hidden
-        className={cn(
-          'uppercase text-muted-foreground',
-          collapsed
-            ? 'pb-[2px] text-[9px] tracking-[0.04em]'
-            : 'flex h-[24px] items-end px-[8px] pb-[4px] text-[11px] font-medium tracking-[0.06em]',
-        )}
-      >
-        {header}
-      </div>
       {screens.map((screen) => (
         <RailRow
           key={screen.id}

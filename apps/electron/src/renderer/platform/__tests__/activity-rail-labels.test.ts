@@ -37,8 +37,10 @@ describe('activity rail: expanded with labels by default', () => {
     expect(row).toContain('aria-current')
   })
 
-  it('«Ещё» header and extra screens use the shared row', () => {
-    expect(group).toContain("t('extraScreens.more')")
+  it('extra screens continue the list: no visible «Ещё» header, shared row', () => {
+    expect(group).toContain("aria-label={t('extraScreens.more')}")
+    expect(group).not.toContain('aria-hidden')
+    expect(group).not.toContain('uppercase')
     expect(group).toContain('<RailRow')
     expect(group).toContain('collapsed={collapsed}')
   })
