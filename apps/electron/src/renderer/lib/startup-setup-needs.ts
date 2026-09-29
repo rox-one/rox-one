@@ -9,42 +9,76 @@
  * config (connection + setupDeferred) was intact.
  *
  * Rules:
- * - retry the RPC with a short backoff before giving up;
+ * - retry the startup RPCs with a short backoff, bounded by an overall
+ *   deadline (a hung request cannot stretch startup to minutes);
  * - a definitive answer (`isFullyConfigured`) always wins;
- * - if every attempt failed, a user who already finished the Welcome step
- *   goes to the app (it has its own reconnect UI) instead of onboarding;
- *   only a genuinely new user (no confirmed name) falls back to onboarding.
+ * - if every attempt failed, App waits for the transport to reconnect and
+ *   probes once more; only then does a user who already finished the Welcome
+ *   step go to the app (never onboarding). A genuinely new user (no confirmed
+ *   name) falls back to onboarding.
  */
 import type { SetupNeeds } from '../../shared/types'
 
 export type StartupAppState = 'onboarding' | 'workspace-picker' | 'ready'
 
-export const STARTUP_SETUP_NEEDS_RETRY_DELAYS_MS = [300, 700, 1500, 2500, 4000] as const
+export const STARTUP_RETRY_DELAYS_MS = [300, 700, 1500, 2500, 4000] as const
+/** Overall budget for one probe (all attempts + backoff). */
+export const STARTUP_PROBE_DEADLINE_MS = 12_000
 
-export type SetupNeedsProbe =
-  | { ok: true; needs: SetupNeeds; attempts: number }
+export type ProbeResult<T> =
+  | { ok: true; value: T; attempts: number }
   | { ok: false; error: unknown; attempts: number }
 
-export async function probeSetupNeeds(
-  fetchNeeds: () => Promise<SetupNeeds>,
-  options: {
-    delaysMs?: readonly number[]
-    sleep?: (ms: number) => Promise<void>
-  } = {},
-): Promise<SetupNeedsProbe> {
-  const delays = options.delaysMs ?? STARTUP_SETUP_NEEDS_RETRY_DELAYS_MS
-  const sleep = options.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)))
+export type SetupNeedsProbe = ProbeResult<SetupNeeds>
+
+export interface ProbeOptions {
+  delaysMs?: readonly number[]
+  deadlineMs?: number
+  sleep?: (ms: number) => Promise<void>
+  now?: () => number
+}
+
+const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+
+class ProbeDeadlineError extends Error {
+  constructor() {
+    super('startup probe deadline exceeded')
+    this.name = 'ProbeDeadlineError'
+  }
+}
+
+/** Retry `fn` with backoff; every attempt is raced against the remaining deadline. */
+export async function probeWithRetry<T>(fn: () => Promise<T>, options: ProbeOptions = {}): Promise<ProbeResult<T>> {
+  const delays = options.delaysMs ?? STARTUP_RETRY_DELAYS_MS
+  const sleep = options.sleep ?? defaultSleep
+  const now = options.now ?? Date.now
+  const deadline = now() + (options.deadlineMs ?? STARTUP_PROBE_DEADLINE_MS)
   let lastError: unknown
+  let attempts = 0
   for (let attempt = 0; attempt <= delays.length; attempt++) {
+    const remaining = deadline - now()
+    if (remaining <= 0) break
+    attempts++
     try {
-      const needs = await fetchNeeds()
-      return { ok: true, needs, attempts: attempt + 1 }
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const value = await Promise.race([
+        fn(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new ProbeDeadlineError()), remaining)
+        }),
+      ]).finally(() => { if (timer) clearTimeout(timer) })
+      return { ok: true, value, attempts }
     } catch (error) {
       lastError = error
-      if (attempt < delays.length) await sleep(delays[attempt]!)
+      if (error instanceof ProbeDeadlineError) break
+      if (attempt < delays.length) await sleep(Math.min(delays[attempt]!, Math.max(0, deadline - now())))
     }
   }
-  return { ok: false, error: lastError, attempts: delays.length + 1 }
+  return { ok: false, error: lastError ?? new ProbeDeadlineError(), attempts }
+}
+
+export function probeSetupNeeds(fetchNeeds: () => Promise<SetupNeeds>, options: ProbeOptions = {}): Promise<SetupNeedsProbe> {
+  return probeWithRetry(fetchNeeds, options)
 }
 
 export function decideStartupAppState(input: {
@@ -53,7 +87,7 @@ export function decideStartupAppState(input: {
   workspaceId: string | null | undefined
 }): StartupAppState {
   const { probe, usernameConfirmed, workspaceId } = input
-  const configured = probe.ok ? probe.needs.isFullyConfigured : usernameConfirmed
+  const configured = probe.ok ? probe.value.isFullyConfigured : usernameConfirmed
   if (!configured || !usernameConfirmed) return 'onboarding'
   return workspaceId ? 'ready' : 'workspace-picker'
 }

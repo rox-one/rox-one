@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { CHROME_DENSITY } from '../chrome-density'
+import { RAIL_AUTO_COLLAPSE_BELOW, resolveRailCollapsed } from '../ActivityRail'
 import { APP_NAV_DESTINATIONS } from '../../components/app-shell/nav-destinations'
 import { KEYS } from '../../lib/local-storage'
 
@@ -71,5 +72,18 @@ describe('activity rail: expanded with labels by default', () => {
     const ru = JSON.parse(readFileSync(join(locales, 'ru.json'), 'utf8')) as Record<string, string>
     expect(ru['sidebar.allSessions']).toBe('Сессии')
     expect(ru['extraScreens.more']).toBe('Ещё')
+  })
+  it('auto-collapses on narrow windows without touching the persisted choice; user can override', () => {
+    expect(RAIL_AUTO_COLLAPSE_BELOW).toBeLessThanOrEqual(1280)
+    expect(resolveRailCollapsed({ persisted: false, narrow: false, override: false })).toBe(false)
+    expect(resolveRailCollapsed({ persisted: false, narrow: true, override: false })).toBe(true)
+    expect(resolveRailCollapsed({ persisted: false, narrow: true, override: true })).toBe(false)
+    expect(resolveRailCollapsed({ persisted: true, narrow: false, override: false })).toBe(true)
+  })
+
+  it('AppShell reserves rail width only when the rail renders (same predicate as the host)', () => {
+    const shell = read('../../components/app-shell/AppShell.tsx')
+    expect(shell).toContain('useEffectiveRailCollapsed()')
+    expect(shell).toMatch(/activityRailRendered = unifiedShellEnabled\s*\|\| \(\(unifiedShellEnabled \|\| workbenchEnabled\) && topChromeEnabled\)/)
   })
 })

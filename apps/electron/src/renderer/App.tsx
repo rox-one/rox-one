@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { decideStartupAppState, probeSetupNeeds } from './lib/startup-setup-needs'
+import { waitForTransportConnected } from './lib/transport-wait'
+import { decideStartupAppState, probeSetupNeeds, probeWithRetry } from './lib/startup-setup-needs'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
@@ -752,15 +753,29 @@ export default function App() {
   useEffect(() => {
     const initialize = async () => {
       try {
-        // Get this window's workspace ID (passed via URL query param from main process)
-        const wsId = await window.electronAPI.getWindowWorkspace()
+        // Startup RPCs share the local transport: retry transient failures
+        // (server booting, reconnect, lock clash) so an error never sends an
+        // already set-up user to onboarding or the workspace picker.
+        const wsProbe = await probeWithRetry(() => window.electronAPI.getWindowWorkspace())
+        const wsId = wsProbe.ok ? wsProbe.value : null
+        if (!wsProbe.ok) console.error('[App] getWindowWorkspace failed after retries:', wsProbe.error)
         setWindowWorkspaceId(wsId)
 
-        // Retry transient RPC failures (server booting, reconnect, lock clash):
-        // an error must not send an already set-up user back to onboarding.
-        const probe = await probeSetupNeeds(() => window.electronAPI.getSetupNeeds())
+        let probe = await probeSetupNeeds(() => window.electronAPI.getSetupNeeds())
+        if (!probe.ok && usernameConfirmed) {
+          // Still unreachable: wait for the transport to (re)connect and ask
+          // once more before falling back, so the app does not boot on a dead
+          // transport with empty one-shot reads.
+          console.warn('[App] getSetupNeeds failed; waiting for transport:', probe.error)
+          try {
+            await waitForTransportConnected(window.electronAPI, { timeoutMs: 60_000 })
+            probe = await probeSetupNeeds(() => window.electronAPI.getSetupNeeds())
+          } catch (error) {
+            console.error('[App] transport did not reconnect:', error)
+          }
+        }
         if (probe.ok) {
-          setSetupNeeds(probe.needs)
+          setSetupNeeds(probe.value)
         } else {
           console.error('[App] getSetupNeeds failed after retries:', probe.error)
         }

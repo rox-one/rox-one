@@ -17,11 +17,11 @@
  * Mounted by `WorkspaceSurfaceHost` (platform/index.tsx) — rendered only when
  * the two-key Workbench rollout is enabled, so there is no flag check here.
  */
-import type { ReactNode } from 'react'
+import { useSyncExternalStore, type ReactNode } from 'react'
 import { useAtom } from 'jotai'
 import { ChevronsLeft, ChevronsRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { activityRailCollapsedAtom } from '@/atoms/unified-shell'
+import { activityRailCollapsedAtom, activityRailNarrowOverrideAtom } from '@/atoms/unified-shell'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import {
@@ -41,6 +41,51 @@ export const ACTIVITY_RAIL_COLLAPSED_WIDTH = CHROME_DENSITY.railWidth
 
 export function activityRailWidth(collapsed: boolean): number {
   return collapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH
+}
+
+/**
+ * Below this window width the expanded rail would push sidebar (180) +
+ * navigator (240) + centre (420) + workspace/inspector rails past the edge,
+ * so the rail auto-collapses to icons (display-only; persisted state kept).
+ */
+export const RAIL_AUTO_COLLAPSE_BELOW = 1140
+
+function subscribeResize(cb: () => void): () => void {
+  window.addEventListener('resize', cb)
+  return () => window.removeEventListener('resize', cb)
+}
+
+export function useNarrowWindow(threshold = RAIL_AUTO_COLLAPSE_BELOW): boolean {
+  return useSyncExternalStore(
+    subscribeResize,
+    () => window.innerWidth < threshold,
+    () => false,
+  )
+}
+
+export function resolveRailCollapsed(input: { persisted: boolean; narrow: boolean; override: boolean }): boolean {
+  return input.persisted || (input.narrow && !input.override)
+}
+
+/** Effective rail state shared by the rail and AppShell's sash offset. */
+export function useEffectiveRailCollapsed(): {
+  collapsed: boolean
+  toggle: () => void
+} {
+  const [persisted, setPersisted] = useAtom(activityRailCollapsedAtom)
+  const [override, setOverride] = useAtom(activityRailNarrowOverrideAtom)
+  const narrow = useNarrowWindow()
+  const collapsed = resolveRailCollapsed({ persisted, narrow, override })
+  const toggle = () => {
+    if (collapsed) {
+      setPersisted(false)
+      setOverride(narrow)
+    } else {
+      setPersisted(true)
+      setOverride(false)
+    }
+  }
+  return { collapsed, toggle }
 }
 
 function RailItem({ dest, collapsed }: { dest: AppNavDestination; collapsed: boolean }) {
@@ -71,7 +116,7 @@ function RailSection({ collapsed, children }: { collapsed: boolean; children: Re
 
 export function ActivityRail() {
   const { t } = useTranslation()
-  const [collapsed, setCollapsed] = useAtom(activityRailCollapsedAtom)
+  const { collapsed, toggle } = useEffectiveRailCollapsed()
   const toggleLabel = collapsed ? t('rail.expand') : t('rail.collapse')
 
   return (
@@ -97,7 +142,7 @@ export function ActivityRail() {
           label={toggleLabel}
           collapsed
           muted
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggle}
           testId="rail-toggle"
         />
       </div>

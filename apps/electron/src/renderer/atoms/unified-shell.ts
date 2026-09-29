@@ -172,6 +172,12 @@ export const activityRailCollapsedAtom = atomWithStorage<boolean>(
   { getOnInit: true },
 )
 
+/**
+ * Not persisted: the user expanded the rail while the window is narrow enough
+ * to auto-collapse it (see `useEffectiveRailCollapsed`).
+ */
+export const activityRailNarrowOverrideAtom = atom<boolean>(false)
+
 /** Inspector panel visibility (the 48px section rail itself always renders). */
 export const inspectorVisibleAtom = atomWithStorage<boolean>(
   getKeyString(KEYS.inspectorVisible),

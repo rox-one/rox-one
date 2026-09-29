@@ -1279,6 +1279,8 @@ app.whenReady().then(async () => {
     if (!isHeadless) {
       await createInitialWindows()
     }
+    // Windows are restored: from here on a quit's window snapshot is real.
+    appInitialized = true
 
     // Run credential health check at startup to detect issues early
     // (corruption, machine migration, missing credentials for default connection)
@@ -1369,7 +1371,6 @@ app.whenReady().then(async () => {
       pendingDeepLink = null
     }
 
-    appInitialized = true
     mainLog.info('App initialized successfully')
     if (isDebugMode) {
       mainLog.info('Debug mode enabled - logs at:', getLogFilePath())

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { decideStartupAppState, probeSetupNeeds } from '../startup-setup-needs'
+import { decideStartupAppState, probeSetupNeeds, probeWithRetry } from '../startup-setup-needs'
 import type { SetupNeeds } from '../../../shared/types'
 
 const configured = { isFullyConfigured: true, needsBillingConfig: false, needsCredentials: false } as SetupNeeds
@@ -16,6 +16,7 @@ describe('startup setup-needs gate', () => {
     }, { sleep: noSleep })
     expect(probe.ok).toBe(true)
     expect(probe.attempts).toBe(3)
+    if (probe.ok) expect(probe.value).toBe(configured)
     expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: 'ws' })).toBe('ready')
   })
 
@@ -35,5 +36,22 @@ describe('startup setup-needs gate', () => {
   it('a definitive "not configured" answer shows onboarding', async () => {
     const probe = await probeSetupNeeds(async () => notConfigured, { sleep: noSleep })
     expect(decideStartupAppState({ probe, usernameConfirmed: true, workspaceId: 'ws' })).toBe('onboarding')
+  })
+  it('a hung request cannot stretch startup past the overall deadline', async () => {
+    const started = Date.now()
+    const probe = await probeWithRetry(() => new Promise<never>(() => {}), { deadlineMs: 50, delaysMs: [10, 10, 10] })
+    expect(probe.ok).toBe(false)
+    expect(probe.attempts).toBe(1)
+    expect(Date.now() - started).toBeLessThan(1000)
+  })
+
+  it('stops retrying once the deadline is spent', async () => {
+    let t = 0
+    let calls = 0
+    const probe = await probeWithRetry(async () => { calls++; t += 400; throw new Error('boom') }, {
+      deadlineMs: 1000, delaysMs: [300, 300, 300, 300], sleep: async (ms) => { t += ms }, now: () => t,
+    })
+    expect(probe.ok).toBe(false)
+    expect(calls).toBeLessThanOrEqual(2)
   })
 })
