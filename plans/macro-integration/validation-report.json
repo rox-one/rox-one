@@ -1,0 +1,295 @@
+{
+  "schemaVersion": 1,
+  "status": "PASSED",
+  "checkedAt": "2026-09-29T22:18:47.618Z",
+  "baseline": {
+    "macro": {
+      "repository": "macro-inc/macro",
+      "sha": "c966b79d40798c6c726a3b15fe90517941fc6e61"
+    },
+    "rox": {
+      "repository": "rox-one/rox-one",
+      "sha": "f63294ba4fffa7238b46b24e918925a313ad0b12"
+    }
+  },
+  "scope": "Architecture artifacts only; source readback, schema/DAG/evidence/link/Mermaid checks. Product runtime E2Es are future gates and were not executed.",
+  "counts": {
+    "requiredDocs": 24,
+    "totalDocs": 26,
+    "surfaces": 38,
+    "capabilities": 162,
+    "entities": 38,
+    "workPackages": 52,
+    "dependencyEdges": 154,
+    "evidenceRecords": 308,
+    "compiledJsonSchemas": 104,
+    "parsedMermaidDiagrams": 30,
+    "checkedCommitSourceLinks": 612,
+    "negativeControls": 7
+  },
+  "negativeControls": [
+    {
+      "name": "missing prerequisite",
+      "rejected": true,
+      "reasons": [
+        "WP-02 invalid dependency WP-999",
+        "WP-02 stale inputs",
+        "DAG WP-02 before WP-999"
+      ]
+    },
+    {
+      "name": "duplicate ID",
+      "rejected": true,
+      "reasons": [
+        "Duplicate package ID",
+        "WP-01 invalid dependency WP-01",
+        "WP-03 invalid dependency WP-02"
+      ]
+    },
+    {
+      "name": "invalid approach",
+      "rejected": true,
+      "reasons": [
+        "CAP-shell-1 invalid approach"
+      ]
+    },
+    {
+      "name": "unresolved schema ref",
+      "rejected": true,
+      "reasons": [
+        "WP-01 request unresolved #/$defs/Missing"
+      ]
+    },
+    {
+      "name": "stale DAG",
+      "rejected": true,
+      "reasons": [
+        "DAG edges differ from package prerequisites"
+      ]
+    },
+    {
+      "name": "evidence missing",
+      "rejected": true,
+      "reasons": [
+        "shell missing code evidence"
+      ]
+    },
+    {
+      "name": "invalid schema primitive",
+      "rejected": true,
+      "reasons": [
+        "WP-01 request invalid type collaborative_document"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "artifacts": [
+    {
+      "path": "docs/macro-integration/00-executive-summary.md",
+      "sha256": "a68e6751b83f237a5e29d6f7be256970ba67a50fb8ad50bd9fa2f6464abb7736"
+    },
+    {
+      "path": "docs/macro-integration/10-crm.md",
+      "sha256": "2431e398e87979235759d30d0efa3b0886e2b3dcf4c87804127d2819fabcc34a"
+    },
+    {
+      "path": "docs/macro-integration/14-permissions-sharing.md",
+      "sha256": "b6c51a9ed150e79fabd6bff769cc5a7d695de2b4293147fc1ae8cc6b5a8d7c38"
+    },
+    {
+      "path": "docs/macro-integration/04-surface-parity-matrix.md",
+      "sha256": "671e373a0d8063c060070ded5db78e0a41cf55025047e0930213b5531028d766"
+    },
+    {
+      "path": "docs/macro-integration/08-chat-and-messaging.md",
+      "sha256": "f27c24e6f2dcefde8bb6672d64efe3058873e7abb2446e85c8553cda2f068975"
+    },
+    {
+      "path": "docs/macro-integration/19-target-architecture.md",
+      "sha256": "951c4bef1bb4146f9868b48f1c319f92b1369c30d534be29975f4743db5b17c3"
+    },
+    {
+      "path": "docs/macro-integration/18-licensing.md",
+      "sha256": "e433a3e9c6b4db406e39335382249a6a0b71f799f385ec3af5543845de926cf1"
+    },
+    {
+      "path": "docs/macro-integration/05-domain-model.md",
+      "sha256": "0fe45ddfbb59d08103ce7106bfca2457a4a385ae72efb1283ce1185b26c58eca"
+    },
+    {
+      "path": "docs/macro-integration/README.md",
+      "sha256": "3867fe49fbdcca596835368e61508ce8d094a007b78ea0831cc79d1d9688fd79"
+    },
+    {
+      "path": "docs/macro-integration/16-agent-integration.md",
+      "sha256": "bc4709eb7cb944ba0fc7a7b7f599f58095aa92480308b2079be1b97428069c55"
+    },
+    {
+      "path": "docs/macro-integration/11-mail.md",
+      "sha256": "8659c62f5255e9148032073495a3772b27f1f175552fecafea156beb6a0cb49f"
+    },
+    {
+      "path": "docs/macro-integration/01-macro-product-map.md",
+      "sha256": "4c8967e1c40aa401f6d7c5dd6d033a3522348f44b13db553cda65404249371be"
+    },
+    {
+      "path": "docs/macro-integration/17-infrastructure.md",
+      "sha256": "93a0320edfa1ebf253baa9b9280fc3a335006c1079a81f535e8a604b61a05b6d"
+    },
+    {
+      "path": "docs/macro-integration/07-collaboration-runtime.md",
+      "sha256": "30fe966a3513efc58f00cd36ddb90f364f3319d1061205d2d4a0c8d84e372864"
+    },
+    {
+      "path": "docs/macro-integration/23-open-questions.md",
+      "sha256": "b71640dcd863f552f4808f9d6aadc65a250de280b4332e1930d76b705d5e3265"
+    },
+    {
+      "path": "docs/macro-integration/13-calls-meetings.md",
+      "sha256": "8848402afeb0aa3c1fb5924d8befc4c1f146c5e9e181bed718cb04c6b9bbfcb4"
+    },
+    {
+      "path": "docs/macro-integration/21-implementation-plan.md",
+      "sha256": "b77093ccd9596e6671590feb5fff81b68b038615f006a40662ac026649b6b7e9"
+    },
+    {
+      "path": "docs/macro-integration/02-macro-architecture.md",
+      "sha256": "cbe78fc32e7908923177d75916ad3d81b21b6351ebf9f1c27656cb32b572cf28"
+    },
+    {
+      "path": "docs/macro-integration/architecture-review.md",
+      "sha256": "c702c772b95424328a1807e2804f1bda8195888bf23db6b54bd303f73df33564"
+    },
+    {
+      "path": "docs/macro-integration/03-rox-current-state.md",
+      "sha256": "804bfcd33ce8492d168682a15067923e7534f1ff12f98da78fb670bedb7ab62f"
+    },
+    {
+      "path": "docs/macro-integration/15-search-notifications.md",
+      "sha256": "fbd1c22519623c2e5474c6e83f81074dfa87a29b7414959af1bf296454eb90d6"
+    },
+    {
+      "path": "docs/macro-integration/06-entity-graph.md",
+      "sha256": "41b69c6e43d5cb847064567ba26cca973b57aaa3ad40985347c6b0ac28d2ff5c"
+    },
+    {
+      "path": "docs/macro-integration/22-test-plan.md",
+      "sha256": "55f7c0ff150c70e5795094f3bff3b6abd08727bf4465169de3d2f84cdcb3c33d"
+    },
+    {
+      "path": "docs/macro-integration/20-migration-dag.md",
+      "sha256": "1b7dcfd277a2e17a540e2316d3a4349b8928c905fbf2acd45e3541c9b155d4c5"
+    },
+    {
+      "path": "docs/macro-integration/09-tasks-projects.md",
+      "sha256": "f48d29ffb41f8e862098bb1efb3e760b7bd695569e12e9f0e87b820b5b6766cd"
+    },
+    {
+      "path": "docs/macro-integration/12-calendar.md",
+      "sha256": "4a81b44f3d365143ad9cd6e92496671a7112b914aa1ea3cc16e6df35a97104ed"
+    },
+    {
+      "path": "plans/macro-integration/evidence-domains.json",
+      "sha256": "082b8caf1b51c23f283f63a85da8f7a1593344901008e7529834ad491756ef12"
+    },
+    {
+      "path": "plans/macro-integration/evidence-inventory.json",
+      "sha256": "56fca557206238cbcaeb7e7be3c84dc53fe7eb00d433b039bf943c21ceefc7ca"
+    },
+    {
+      "path": "plans/macro-integration/validation-attempts.json",
+      "sha256": "dac86e1c56d445d069c238d271f24d2a5c5188b111556543a8acf92927e689e4"
+    },
+    {
+      "path": "plans/macro-integration/work-packages.json",
+      "sha256": "79988de46e07d3f5cc103d2c4ccf16d1c2a21f858d3b428a5088dcbae081eac0"
+    },
+    {
+      "path": "plans/macro-integration/capabilities.json",
+      "sha256": "aa8ab4632a2d116d486b02fd15c02430d2d924d0d8423f364224dd5e3ece9eda"
+    },
+    {
+      "path": "plans/macro-integration/entity-map.json",
+      "sha256": "8df9f88d7060e91b01bb11a03c502e7dd1622665302ef7fb68e6b566fb371646"
+    },
+    {
+      "path": "plans/macro-integration/dependency-dag.json",
+      "sha256": "f74014a13fb1a3b78ef6c5d778a6bdd448af7944e92fb05ab96c21517c8e3c35"
+    },
+    {
+      "path": "plans/macro-integration/license-inventory.json",
+      "sha256": "9bdf939512a1355c3a1ff7e9d17e20d70bd89e78f6e8fec3e64ab8e1aa7dd06a"
+    },
+    {
+      "path": "plans/macro-integration/evidence-collab.json",
+      "sha256": "03806f515b092e20e771d7785bddfcd2c5340acdcee5e20c49936c0d59de0fb8"
+    },
+    {
+      "path": "plans/macro-integration/macro-backend-dependencies.json",
+      "sha256": "e11a14a00246586f0013b74ad9973dba6b8f4596deb83b63ef8f9b2eb357986e"
+    },
+    {
+      "path": "plans/macro-integration/source-snapshots.json",
+      "sha256": "935fd0553493c13e731ee44ba6e79bccb29fcaff48fd3a91831606a6237bd475"
+    },
+    {
+      "path": "plans/macro-integration/macro-route-inventory.json",
+      "sha256": "c59b23ba7c1e0616c35fa629d16f5898119d4d59fea18f5ce57d74fe76b7d2ea"
+    },
+    {
+      "path": "plans/macro-integration/dependency-license-report.json",
+      "sha256": "b27b8097e21626021b35dc85303c9d3b2a697c9b984a74cd6930a7850b2d10c2"
+    },
+    {
+      "path": "plans/macro-integration/evidence-rox.json",
+      "sha256": "323d0d66df2212ba0d0a8ed181b97c7751ee83ae4e41982081a824bc61290b65"
+    },
+    {
+      "path": "plans/macro-integration/domain-package-amendments.json",
+      "sha256": "3d57e0f6a6bb95b74058824cb4b3247754248845cdfd02ddf5e62b85284dc96a"
+    },
+    {
+      "path": "scripts/macro-integration/validate.mjs",
+      "sha256": "33d7fde761ce86a48170661783b59d7e32b58c5076ff16ddd86157b7288d185f"
+    },
+    {
+      "path": "scripts/macro-integration/build-entity-map.mjs",
+      "sha256": "1e1097f969b25d40f43f7c2693762b4cda2dac140e30333ea4734c40aee1269e"
+    },
+    {
+      "path": "scripts/macro-integration/build-inventory.mjs",
+      "sha256": "a5c43c2559f30cbe5a40cea5de9d287e2a212956f72b4a574f57af0789fc2d63"
+    },
+    {
+      "path": "scripts/macro-integration/README.md",
+      "sha256": "ae7b17d124e40cc29dc09b3265edc3556bb44225f1b3840d0f1e165e989e9003"
+    },
+    {
+      "path": "scripts/macro-integration/build-plan.mjs",
+      "sha256": "9bc6106556a002b823084de15e9c7bc2de44dff777b80b7cd2f441e7cbd5e8bd"
+    },
+    {
+      "path": "scripts/macro-integration/integrate-plan-amendments.mjs",
+      "sha256": "1ff25cdb714c4305a3d492f773fbbc1163c99176737d5aee211cffc0bb5449b5"
+    },
+    {
+      "path": "scripts/macro-integration/audit-source.mjs",
+      "sha256": "f9594332bf46051e9f1c7ad025e6f7845f152f727654e2c2284928ed635231ad"
+    },
+    {
+      "path": "scripts/macro-integration/dependency-licenses.mjs",
+      "sha256": "82db524df5695bcc0a0b6613666809a815070b6998e2236fea40d8613f2f3a73"
+    },
+    {
+      "path": "scripts/macro-integration/enrich-plan.mjs",
+      "sha256": "d2fe1b001ddc02e910a15e026833d8d5c288b4d6f11f3a22e500f13efbba33af"
+    }
+  ],
+  "tooling": {
+    "bun": "1.4.2",
+    "mermaid": "11.12.0",
+    "ajv": "8.17.1",
+    "ajvFormats": "3.0.1"
+  }
+}
