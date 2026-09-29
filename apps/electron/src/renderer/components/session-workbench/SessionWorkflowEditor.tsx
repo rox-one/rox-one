@@ -965,7 +965,6 @@ function EditorInner({
             void magnet
           }}
         >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.06),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.12),transparent_30%)]" />
           <div
             ref={toolbarRef}
             role="toolbar"
@@ -993,16 +992,16 @@ function EditorInner({
                 </span>
               ) : null}
             </div>
-            <div className="ml-auto inline-flex shrink-0 flex-nowrap items-center gap-1 whitespace-nowrap rounded-full bg-background/60 p-1 shadow-strong backdrop-blur-xl">
+            <div className="map-toolbar-group ml-auto inline-flex shrink-0 flex-nowrap items-center gap-1 whitespace-nowrap">
               {toolbarLayout.inlineCamera ? (
-              <div className="inline-flex rounded-full bg-foreground/[0.04] p-0.5">
+              <div className="inline-flex gap-0.5" role="group" aria-label={t('entityView.mapToolbarView')}>
                 <Button
                   type="button"
                   size="sm"
                   variant="ghost"
                   aria-pressed={camera === 'map'}
                   className={cn(
-                    'map-toolbar-btn h-7 rounded-full px-2.5 text-[11px] hover:bg-foreground/[0.06]',
+                    'map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground',
                     camera === 'map' && 'bg-foreground/10 text-foreground hover:bg-foreground/10',
                   )}
                   onClick={() => persistCamera('map')}
@@ -1015,7 +1014,7 @@ function EditorInner({
                   variant="ghost"
                   aria-pressed={camera === 'flow'}
                   className={cn(
-                    'map-toolbar-btn h-7 rounded-full px-2.5 text-[11px] hover:bg-foreground/[0.06]',
+                    'map-toolbar-btn h-7 rounded-md px-2.5 text-[11px] text-muted-foreground hover:bg-foreground/[0.06] hover:text-foreground',
                     camera === 'flow' && 'bg-foreground/10 text-foreground hover:bg-foreground/10',
                   )}
                   onClick={() => persistCamera('flow')}
@@ -1030,7 +1029,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
+                className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
                 onClick={() => {
                   flowRef.current?.fitView({ padding: 0.2 })
                 }}
@@ -1041,7 +1040,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
+                className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
                 onClick={resetLayout}
               >
                 {t('entityView.mapResetLayout')}
@@ -1052,7 +1051,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
+                className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
                 disabled={!selected}
                 onClick={() => {
                   const prompt = draft.trim() || selected?.triggerPreview
@@ -1067,7 +1066,7 @@ function EditorInner({
                     type="button"
                     size="sm"
                     variant="ghost"
-                    className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
+                    className="map-toolbar-btn h-7 rounded-md bg-foreground/[0.04] px-2.5 text-[11px] hover:bg-foreground/10"
                     data-testid="map-toolbar-more"
                     aria-label={t('entityView.mapMoreActions')}
                   >
@@ -1337,18 +1336,21 @@ function EditorInner({
             style={{
               width: '100%',
               height: '100%',
-              background: 'hsl(var(--background))',
+              background: 'var(--background)',
             }}
           >
             <Background gap={24} size={1} color="hsl(var(--border) / 0.4)" />
-            <MiniMap
-              position="bottom-right"
-              pannable
-              zoomable
-              className="!rounded-xl !border !border-white/10 !bg-background/45 !shadow-strong !backdrop-blur-xl"
-              maskColor="rgba(15, 16, 20, 0.18)"
-              nodeColor="rgba(255, 255, 255, 0.22)"
-            />
+            {!mapEmpty ? (
+              <MiniMap
+                position="bottom-right"
+                pannable
+                zoomable
+                bgColor="transparent"
+                className="rox-map-minimap !rounded-lg !border-0 !bg-foreground/[0.04] !shadow-none"
+                maskColor="rgba(15, 16, 20, 0.18)"
+                nodeColor="rgba(255, 255, 255, 0.22)"
+              />
+            ) : null}
           </ReactFlow>
           </div>
 

@@ -1139,3 +1139,43 @@ html[data-scenic] .chrome-strip {
 html[data-contrast="high"] .rox-view-switch-item[aria-selected="true"] {
   background-color: color-mix(in oklch, var(--foreground) 24%, transparent);
 }
+
+/* Map toolbar: flat group on the header background (no pill outline/shadow).
+   High contrast differentiates with stronger fills (see .map-toolbar-btn
+   rules above), never an outline. */
+html[data-contrast="high"] .map-toolbar-group .map-toolbar-btn {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* Map minimap: no outline, just a subtle fill (shown only when scenes exist). */
+.rox-map-minimap {
+  --xy-minimap-background-color: transparent;
+  --xy-minimap-background-color-props: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+html[data-contrast="high"] .rox-map-minimap {
+  background-color: color-mix(in oklch, var(--foreground) 10%, transparent) !important;
+}
+
+/* Bottom terminal command input: flat at rest. Text inputs match
+   :focus-visible whenever focused, so instead of an outline box (the global,
+   zen and high-contrast :focus-visible outlines) the prompt row gets a subtle
+   tint + 1px underline; high contrast uses a clear 2px underline in the focus
+   colour rather than a permanent neon box. */
+html .rox-terminal-prompt .rox-terminal-input.rox-terminal-input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.rox-terminal-prompt:has(.rox-terminal-input:focus-visible) {
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.14);
+}
+
+html[data-contrast="high"] .rox-terminal-prompt:has(.rox-terminal-input:focus-visible) {
+  background-color: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 -2px 0 var(--focus);
+}
