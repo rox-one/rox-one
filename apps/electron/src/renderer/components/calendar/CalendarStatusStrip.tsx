@@ -91,7 +91,7 @@ export function CalendarStatusStrip({ tasks, now }: { tasks: readonly TaskLike[]
   }
 
   return (
-    <div className="flex flex-col gap-1 border-b border-border px-3 py-2 text-[11px]" data-testid="calendar-status-strip">
+    <div className="flex flex-col gap-1 px-3 py-2 text-[11px]" data-testid="calendar-status-strip">
       <div className={cn('flex flex-wrap items-center gap-2', status === 'conflict' && 'text-amber-600', status === 'timezone' && 'text-amber-600')}>
         <span>{t(`calendar.status.${status}`)}</span>
         <CalendarConnectorChips onConnect={connect} />

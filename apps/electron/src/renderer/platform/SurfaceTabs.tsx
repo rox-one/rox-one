@@ -30,6 +30,9 @@ import { useActiveWorkspace } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
 import { surfaceTabFromRoute, type SurfaceKnowledgeRef } from './layout-snapshot'
+import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
+import { EXTRA_SCREENS } from '@/pages/extra-screens/registry'
+import { getModeRegistry } from './mode-registry-bootstrap'
 import { CHROME_DENSITY } from './chrome-density'
 import {
   buildSurfaceTabViews,
@@ -187,11 +190,34 @@ export function SurfaceTabs() {
     [knowledgeTitles, workspaceId],
   )
 
+  // Route root → screen title, from the same registries the rail, the mode
+  // pill and the «Ещё» group read (one name per screen everywhere).
+  const routeTitleKeys = useMemo(() => {
+    const map = new Map<string, string>()
+    const root = (route: string) => route.split('?')[0].split('/')[0]
+    for (const dest of APP_NAV_DESTINATIONS) {
+      if (dest.route) map.set(root(dest.route()), dest.labelKey)
+    }
+    for (const mode of getModeRegistry().list()) {
+      if (mode.rootRoute) map.set(root(mode.rootRoute), mode.titleKey)
+    }
+    for (const screen of EXTRA_SCREENS) map.set(screen.id, screen.labelKey)
+    return map
+  }, [])
+  const resolveRouteTitle = useCallback(
+    (route: string) => {
+      const key = routeTitleKeys.get(route.split('?')[0].split('/')[0])
+      return key ? t(key) : null
+    },
+    [routeTitleKeys, t],
+  )
+
   const tabs = buildSurfaceTabViews({
     entries,
     focusedPanelId,
     resolveSessionTitle,
     resolveKnowledgeTitle,
+    resolveRouteTitle,
     labels: {
       untitled: t('surfaceTabs.untitled'),
       browser: t('surfaceTabs.browser'),

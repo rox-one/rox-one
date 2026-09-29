@@ -107,6 +107,7 @@ import {
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
 import { VoiceDictationControl } from './VoiceDictationControl'
+import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@craft-agent/shared/config'
 
 function dedupModelsById<T extends string | ModelDefinition>(models: T[]): T[] {
   const seen = new Set<string>()
@@ -1841,7 +1842,7 @@ export function FreeFormInput({
         className={cn(
           'overflow-hidden transition-all',
           // Container styling - only when not wrapped by InputContainer
-          !unstyled && 'rounded-[16px] shadow-middle',
+          !unstyled && 'rounded-[12px] shadow-middle',
           !unstyled && 'bg-background',
           isDraggingOver && 'ring-2 ring-foreground ring-offset-2 ring-offset-background bg-foreground/5'
         )}
@@ -2663,7 +2664,11 @@ export function FreeFormInput({
                       ? stripPiPrefixForDisplay(getModelShortName(model))
                       : (model.name ?? stripPiPrefixForDisplay(model.id))
                     const isSelected = currentModel === modelId
-                    const descriptionKey = typeof model !== 'string' && 'descriptionKey' in model ? (model.descriptionKey as string) : undefined
+                    // Connections saved before descriptionKey existed carry only the
+                    // English description — resolve ROX models by id so the menu stays Russian.
+                    const storedKey = typeof model !== 'string' && 'descriptionKey' in model ? (model.descriptionKey as string | undefined) : undefined
+                    const bareId = modelId.replace(/^pi\//, '')
+                    const descriptionKey = storedKey ?? (isRoxPublicModelId(bareId) ? ROX_PUBLIC_MODEL_DESCRIPTION_KEYS[bareId] : undefined)
                     const description = descriptionKey ? t(descriptionKey) : (typeof model !== 'string' && 'description' in model ? (model.description as string) : '')
                     const showVisionToggle =
                       !!effectiveConnectionDetails && isCompatProvider(effectiveConnectionDetails.providerType)

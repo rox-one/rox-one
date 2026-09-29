@@ -55,6 +55,7 @@ import {
   type DossierTouch,
   type NoteSource,
 } from './dossier-model'
+import { getSessionTitle } from '@/utils/session'
 
 const NS = 'dossier'
 const AVATAR_TONES = ['bg-accent/25', 'bg-info/25', 'bg-success/25', 'bg-warning/25', 'bg-foreground/15']
@@ -467,7 +468,7 @@ function DossierDetail({
               placeholder={t('extraScreens.dossier.orgPlaceholder')}
               defaultValue={entity.org ?? ''}
               onBlur={(event) => onUpdate({ org: event.target.value.trim() || undefined })}
-              className="h-6 min-w-[160px] rounded-[5px] bg-transparent px-1.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:bg-foreground/[0.06]"
+              className="h-6 min-w-[160px] rounded-[6px] bg-transparent px-1.5 text-[12px] text-foreground outline-none placeholder:text-muted-foreground focus-visible:bg-foreground/[0.06]"
             />
           </div>
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
@@ -483,7 +484,7 @@ function DossierDetail({
               onKeyDown={(event) => { if (event.key === 'Enter') { event.preventDefault(); addAlias() } }}
               placeholder={t('extraScreens.dossier.aliasPlaceholder')}
               aria-label={t('extraScreens.dossier.aliasPlaceholder')}
-              className="h-6 w-[180px] rounded-[5px] bg-foreground/[0.05] px-1.5 text-[12px] outline-none placeholder:text-muted-foreground"
+              className="h-6 w-[180px] rounded-[6px] bg-foreground/[0.05] px-1.5 text-[12px] outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -514,7 +515,7 @@ function DossierDetail({
             {summary.unreadSessions.map((session) => (
               <button key={session.id} type="button" onClick={() => navigate(routes.view.allSessions(session.id))} className="flex w-full items-center gap-2 py-0.5 text-left hover:text-accent">
                 <Chip tone="warn">{t('extraScreens.dossier.unread')}</Chip>
-                <span className="truncate">{session.name}</span>
+                <span className="truncate">{getSessionTitle(session)}</span>
               </button>
             ))}
           </div>

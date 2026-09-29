@@ -22,6 +22,7 @@ import {
 import { DEFAULT_THEME, loadAppTheme, getAllowRemoteEvaluate } from '@craft-agent/shared/config'
 import { CodedError } from '@craft-agent/shared/protocol'
 import { getBrowserLiveFxCornerRadii } from '../shared/browser-live-fx'
+import { i18n } from '@craft-agent/shared/i18n'
 import type {
   IBrowserPaneManager,
   BrowserInstanceSnapshot,
@@ -30,6 +31,10 @@ import type {
   BrowserCapabilityRequest,
   ScreenshotResultWire,
 } from '@craft-agent/server-core/transport'
+
+function escapeOverlayText(value: string): string {
+  return value.replace(/[&<>"']/g, (ch) => `&#${ch.charCodeAt(0)};`)
+}
 
 export type { BrowserInstanceInfo }
 
@@ -1972,10 +1977,10 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   private getAgentControlLabel(agentControl: Pick<AgentControlState, 'displayName' | 'intent'> | null | undefined): string {
     if (agentControl?.intent) {
-      return `${agentControl.displayName ?? 'Agent'} — ${agentControl.intent}`
+      return `${agentControl.displayName ?? i18n.t('browser.agentControl.agent')} — ${agentControl.intent}`
     }
 
-    return agentControl?.displayName ?? 'Agent is working…'
+    return agentControl?.displayName ?? i18n.t('browser.agentControl.working')
   }
 
   private reapplyAgentControlVisual(instance: BrowserInstance): void {
@@ -2053,7 +2058,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   <body>
     <div id="overlay">
       <div id="shield"></div>
-      <div id="chip">Agent is working…</div>
+      <div id="chip">${escapeOverlayText(i18n.t('browser.agentControl.working'))}</div>
     </div>
   </body>
 </html>`

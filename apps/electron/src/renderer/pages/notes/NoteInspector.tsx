@@ -172,9 +172,9 @@ export function NoteInspector({
 
   if (collapsed) {
     return (
-      <aside className="w-8 shrink-0 border-l border-border/60 bg-muted/[0.12] flex flex-col items-center pt-2">
+      <aside className="w-8 shrink-0 bg-muted/[0.12] flex flex-col items-center pt-2">
         <button
-          className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+          className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
           onClick={onToggleCollapsed}
           title={t('notes.inspector.expand')}
         >
@@ -189,7 +189,7 @@ export function NoteInspector({
       <aside className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
         <div className="mb-2 flex items-center justify-end">
           <button
-            className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+            className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
             onClick={onToggleCollapsed}
             title={t('notes.inspector.collapse')}
           >
@@ -217,7 +217,7 @@ export function NoteInspector({
     <aside className="w-[320px] shrink-0 border-l border-border/60 overflow-y-auto bg-muted/[0.12] p-3">
       <div className="mb-3 flex items-center justify-end">
         <button
-          className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+          className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
           onClick={onToggleCollapsed}
           title={t('notes.inspector.collapse')}
         >
@@ -242,7 +242,7 @@ export function NoteInspector({
             placeholder={t('notes.inspector.tagsPlaceholder')}
             className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/60 bg-background px-2 text-xs outline-none focus:border-foreground/30"
           />
-          <button className="h-7 rounded-[5px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onApplyTags}>
+          <button className="h-7 rounded-[6px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onApplyTags}>
             {t('notes.inspector.apply')}
           </button>
         </div>
@@ -251,7 +251,7 @@ export function NoteInspector({
             <button
               key={tag}
               className={cn(
-                'rounded-[5px] bg-foreground/[0.06] px-2 py-1 text-[11px] hover:bg-foreground/[0.1]',
+                'rounded-[6px] bg-foreground/[0.06] px-2 py-1 text-[11px] hover:bg-foreground/[0.1]',
                 selectedTag === tag && 'bg-accent/15 text-accent',
               )}
               onClick={() => onTagClick(tag)}
@@ -270,7 +270,7 @@ export function NoteInspector({
                 <button
                   key={tag}
                   type="button"
-                  className="rounded-[5px] border border-dashed border-border/70 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-foreground/[0.06]"
+                  className="rounded-[6px] border border-dashed border-border/70 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-foreground/[0.06]"
                   onClick={() => onAddTag?.(tag)}
                 >
                   #{tag}
@@ -341,7 +341,7 @@ export function NoteInspector({
                 defaultValue={propertyToInput(value)}
                 onBlur={(e) => onUpdateProperty(key, inputToProperty(e.target.value))}
                 onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
-                className="h-7 w-full rounded-[5px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+                className="h-7 w-full rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
               />
             </div>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.none')}</span>}
@@ -356,16 +356,16 @@ export function NoteInspector({
               value={newPropertyKey}
               onChange={(e) => onNewPropertyKeyChange(e.target.value)}
               placeholder={t('notes.inspector.propertyKey')}
-              className="h-7 min-w-0 flex-1 rounded-[5px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+              className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
             />
             <input
               value={newPropertyValue}
               onChange={(e) => onNewPropertyValueChange(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') onAddProperty() }}
               placeholder={t('notes.inspector.propertyValue')}
-              className="h-7 min-w-0 flex-1 rounded-[5px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+              className="h-7 min-w-0 flex-1 rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
             />
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={onAddProperty} title={t('notes.inspector.addProperty')}>
+            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={onAddProperty} title={t('notes.inspector.addProperty')}>
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -380,7 +380,7 @@ export function NoteInspector({
             {t('notes.inspector.assets')}
           </div>
           <button
-            className="h-6 rounded-[5px] px-2 text-[11px] hover:bg-foreground/[0.06]"
+            className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]"
             onClick={onOpenAssetDialog}
           >
             {t('notes.inspector.manage')}

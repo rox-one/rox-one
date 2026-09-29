@@ -23,6 +23,7 @@ import {
   type CenterCloudRun,
   type CenterSession,
 } from './agent-center-model'
+import { getSessionTitle } from '@/utils/session'
 
 const NS = 'agent-center'
 
@@ -237,7 +238,7 @@ export default function AgentCenterPage(_props: { itemId: string | null }) {
           {center.waiting.length > 0 && (
             <Section title={t('extraScreens.agents.waiting')} count={center.waiting.length}>
               {center.waiting.map(({ session, permissions, credentials }) => (
-                <Row key={session.id} title={session.name} meta={[permissions ? t('extraScreens.agents.permissions', { n: permissions }) : null, credentials ? t('extraScreens.agents.credentials', { n: credentials }) : null].filter(Boolean).join(' · ')}>
+                <Row key={session.id} title={getSessionTitle(session)} meta={[permissions ? t('extraScreens.agents.permissions', { n: permissions }) : null, credentials ? t('extraScreens.agents.credentials', { n: credentials }) : null].filter(Boolean).join(' · ')}>
                   <Chip tone="warn">{t('extraScreens.agents.needsYou')}</Chip>
                   <ScreenButton variant="primary" onClick={() => openSession(session.id)}>{t('extraScreens.agents.answer')}</ScreenButton>
                 </Row>
