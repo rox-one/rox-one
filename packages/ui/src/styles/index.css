@@ -94,6 +94,9 @@
   --shadow-minimal: inset 0 0 0 1px var(--border-subtle);
   --shadow-minimal-flat: var(--shadow-minimal);
   --shadow-modal-small: var(--shadow-minimal);
+  /* Raised surfaces (panels, floating toolbars): soft lift, no hard 1px ring,
+     so nested containers read as surfaces instead of stacked wireframes. */
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px -6px rgb(0 0 0 / 0.10);
 
   /* Shadcn compatibility */
   --secondary: var(--surface-elevated);
@@ -151,7 +154,9 @@
   --rox-radius-sm: 6px;
   --rox-radius-md: 8px;
   --rox-gutter: 8px;
-  --rox-elev-panel: inset 0 0 0 1px var(--border-subtle);
+  /* Panels sit on a same-colour canvas: keep a half-strength hairline for the
+     edge plus a soft lift, instead of the full-strength inset ring. */
+  --rox-elev-panel: 0 0 0 1px color-mix(in oklch, var(--border-subtle) 50%, transparent), var(--shadow-soft);
 
   /* Z-index scale */
   --z-base: 0;
@@ -195,6 +200,7 @@
   --popover-solid: color-mix(in oklch, var(--foreground) 7%, var(--background));
   --ink: oklch(0.92 0.012 255);
   --graphite: oklch(0.62 0.01 255);
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.20), 0 6px 20px -8px rgb(0 0 0 / 0.45);
 }
 
 /* Embedded Rox (Ioskeley Mono) — SIL OFL 1.1. */
@@ -311,6 +317,8 @@ html[data-contrast="high"] {
   --chrome-glass-border: var(--border-strong);
   --rox-elev-panel: inset 0 0 0 2px var(--border-strong);
   --shadow-minimal: inset 0 0 0 2px var(--border-strong);
+  /* High contrast keeps an explicit ring on raised surfaces. */
+  --shadow-soft: inset 0 0 0 2px var(--border-strong);
 }
 
 html[data-contrast="high"][data-scenic]::before {
@@ -485,14 +493,19 @@ html[data-contrast="high"] :focus-visible {
     background: var(--muted-foreground);
   }
 
-  /* Compact console elevation keeps hierarchy in borders, never haze. */
+  /* Compact console elevation: controls keep a hairline; raised panels get a
+     soft lift instead of a second 1px ring (high contrast restores the ring
+     via --shadow-soft). */
   .shadow-minimal,
   .shadow-middle,
   .shadow-medium,
   .shadow-hero,
-  .shadow-strong,
   .shadow-modal-small {
     box-shadow: var(--shadow-minimal);
+  }
+
+  .shadow-strong {
+    box-shadow: var(--shadow-soft);
   }
 
   /* Semantic status borders retain color meaning without a glow. */
