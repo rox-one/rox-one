@@ -6,6 +6,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Pause, Play } from 'lucide-react'
 import { navigate, routes } from '@/lib/navigate'
 import { cn } from '@/lib/utils'
 import { Badge, Button, EmptyState, SectionLabel, Tabs, type Tone } from '@/components/mode-screen/ModeScreen'
@@ -108,9 +109,16 @@ export function LocalMeetingDetail(props: {
   const audioRef = useRef<HTMLAudioElement>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [playMs, setPlayMs] = useState(0)
+  const [playing, setPlaying] = useState(false)
+  const [mediaMs, setMediaMs] = useState(0)
+  // MediaRecorder webm has no duration header (Infinity) — fall back to the stored duration.
+  const totalMs = mediaMs || m.durationMs
   const audioKey = m.audio ? `${m.id}:${m.audio.file}:${m.audio.bytes}` : null
   useEffect(() => {
     setAudioUrl(null)
+    setPlayMs(0)
+    setPlaying(false)
+    setMediaMs(0)
     if (!api || !audioKey) return
     let cancelled = false
     let url: string | null = null
@@ -253,17 +261,44 @@ export function LocalMeetingDetail(props: {
         {m.participants.length ? ` · ${t('meetings.local.participantsCount', { count: m.participants.length })}` : ''}
       </p>
       {audioUrl ? (
-        <audio
-          ref={audioRef}
-          data-testid="meeting-audio"
-          src={audioUrl}
-          controls
-          preload="metadata"
-          onTimeUpdate={(e) => setPlayMs(Math.round(e.currentTarget.currentTime * 1000))}
-          className="mt-2 h-8 w-full"
-        />
+        <div className="mt-2 flex h-7 items-center gap-2" data-testid="meeting-player">
+          <audio
+            ref={audioRef}
+            data-testid="meeting-audio"
+            src={audioUrl}
+            preload="metadata"
+            onTimeUpdate={(e) => setPlayMs(Math.round(e.currentTarget.currentTime * 1000))}
+            onPlay={() => setPlaying(true)}
+            onPause={() => setPlaying(false)}
+            onEnded={() => setPlaying(false)}
+            onLoadedMetadata={(e) => { const d = e.currentTarget.duration; if (Number.isFinite(d) && d > 0) setMediaMs(Math.round(d * 1000)) }}
+            className="hidden"
+          />
+          <button
+            type="button"
+            data-testid="meeting-play"
+            aria-label={playing ? t('meetings.local.pausePlayback') : t('meetings.local.play')}
+            onClick={() => { const el = audioRef.current; if (!el) return; if (el.paused) void el.play().catch(() => {}); else el.pause() }}
+            className="grid size-7 shrink-0 place-items-center rounded-[6px] bg-foreground/[0.06] text-foreground outline-none hover:bg-foreground/[0.1] focus-visible:bg-foreground/[0.1]"
+          >
+            {playing ? <Pause className="size-3.5" aria-hidden /> : <Play className="size-3.5" aria-hidden />}
+          </button>
+          <span className="shrink-0 font-mono text-[11px] tabular-nums text-text-muted">
+            {formatDuration(playMs)} / {formatDuration(totalMs)}
+          </span>
+          <input
+            type="range"
+            aria-label={t('meetings.local.seek')}
+            min={0}
+            max={Math.max(totalMs, 1)}
+            step={100}
+            value={Math.min(playMs, Math.max(totalMs, 1))}
+            onChange={(e) => { const el = audioRef.current; const v = Number(e.target.value); if (el) el.currentTime = v / 1000; setPlayMs(v) }}
+            className="h-1 min-w-0 flex-1 cursor-pointer accent-accent"
+          />
+        </div>
       ) : null}
-      <div className="pt-2">
+      <div className="-mx-1 overflow-x-auto px-1 pt-2 [scrollbar-width:none] [&>[role=tablist]]:w-max">
         <Tabs tabs={tabs} value={tab} onChange={onTab} label={t('meetings.title')} />
       </div>
     </header>

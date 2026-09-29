@@ -237,8 +237,16 @@ export function formatClock(ms: number): string {
   return h > 0 ? `${h}:${p(m)}:${p(s)}` : `${p(m)}:${p(s)}`
 }
 
+/** ISO-8601 in the machine's local zone with its offset, e.g. 2026-09-29T17:51:14+03:00. */
+export function localIsoString(d: Date): string {
+  const p = (n: number) => String(Math.floor(Math.abs(n))).padStart(2, '0')
+  const off = -d.getTimezoneOffset()
+  const sign = off >= 0 ? '+' : '-'
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}${sign}${p(off / 60)}:${p(off % 60)}`
+}
+
 export function transcriptMarkdown(meeting: Pick<LocalMeeting, 'title' | 'startedAt' | 'createdAt' | 'durationMs'>, transcript: LocalTranscript): string {
-  const when = new Date(meeting.startedAt ?? meeting.createdAt).toISOString()
+  const when = localIsoString(new Date(meeting.startedAt ?? meeting.createdAt))
   const lines = [
     `# ${meeting.title}`,
     '',
