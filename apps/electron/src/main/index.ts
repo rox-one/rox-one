@@ -74,6 +74,7 @@ const machineId = createHash('sha256').update(hostname() + homedir()).digest('he
 Sentry.setUser({ id: machineId })
 
 import { join, delimiter } from 'path'
+import { refreshLegacySeededWorkspaceIcons } from './brand-icon-migration'
 import { copyFileSync, existsSync, mkdirSync, readFileSync } from 'fs'
 import { resolveOemManagedLayout } from '@craft-agent/shared/knowledge/oem-pin'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
@@ -374,6 +375,20 @@ async function createInitialWindows(): Promise<void> {
     }
     workspaces = getWorkspaces() // Refresh after creation
     mainLog.info(`Created default workspace on first run (name=${workspaceName})`)
+  }
+
+  // Refresh workspace avatars that are still an auto-seeded legacy app mark
+  // (byte-identical to an old bundled icon.png). User-chosen icons are untouched.
+  try {
+    const avatarPath = [
+      join(__dirname, 'resources/workspace-icon.png'),
+      join(__dirname, '../resources/workspace-icon.png'),
+      join(process.resourcesPath ?? '', 'app/resources/workspace-icon.png'),
+    ].find((p) => p && existsSync(p))
+    const refreshed = refreshLegacySeededWorkspaceIcons(workspaces, avatarPath)
+    if (refreshed.length > 0) mainLog.info(`Refreshed legacy seeded workspace icon(s): ${refreshed.length}`)
+  } catch (err) {
+    mainLog.warn('Failed to refresh legacy workspace icons', err)
   }
 
   const validWorkspaceIds = workspaces.map(ws => ws.id)
