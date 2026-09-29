@@ -164,9 +164,14 @@ function matchesHotkey(e: KeyboardEvent, hotkey: string): boolean {
   // Important: for text shortcuts (A-Z/0-9), match logical key only.
   // Mixing in physical code (e.g. KeyQ) causes AZERTY/QWERTZ collisions such as
   // Cmd+A incorrectly matching a Cmd+Q binding.
+  // ⌥ turns digits into symbols on macOS (⌥1 = ¡), so ⌥-digit chords match
+  // the physical digit key instead of the logical character.
+  const altDigitCode = needsAlt && /^[0-9]$/.test(key) ? `Digit${key}` : null
   const codeMatches = specialCode
     ? e.code === specialCode
-    : logicalKeyMatches
+    : altDigitCode
+      ? e.code === altDigitCode || logicalKeyMatches
+      : logicalKeyMatches
 
   // Check modifier requirements
   const modCorrect = needsMod ? modPressed : !modPressed

@@ -78,6 +78,7 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.projects.CHANGED]: [workspaceId: string, projects: LoadedProject[]]
   [RPC_CHANNELS.pages.CHANGED]: [workspaceId: string, pages: LoadedPage[]]
   [RPC_CHANNELS.kanban.CHANGED]: [workspaceId: string, config: KanbanBoardConfig]
+  [RPC_CHANNELS.personalTasks.CHANGED]: [payload: { at: number }]
   [RPC_CHANNELS.collection.CHANGED]: [workspaceId: string, display: CollectionDisplay]
   [RPC_CHANNELS.collection.FILTERS_CHANGED]: [workspaceId: string, filtersByKey: Record<string, CollectionFilters>]
 

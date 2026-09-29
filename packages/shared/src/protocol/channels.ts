@@ -835,6 +835,14 @@ export const RPC_CHANNELS = {
     REGENERATE_THUMBNAIL: 'pages:regenerateThumbnail',
     CHANGED: 'pages:changed',
   },
+  /** Things-style personal tasks persisted under the config dir (personal-persist.ts). */
+  personalTasks: {
+    LIST: 'personalTasks:list',
+    PUT: 'personalTasks:put',
+    DELETE: 'personalTasks:delete',
+    MIGRATE: 'personalTasks:migrate',
+    CHANGED: 'personalTasks:changed',
+  },
   kanban: {
     GET_CONFIG: 'kanban:getConfig',
     SET_CONFIG: 'kanban:setConfig',

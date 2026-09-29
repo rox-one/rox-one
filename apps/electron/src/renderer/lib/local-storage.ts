@@ -98,6 +98,11 @@ export const KEYS = {
   featureWorkbenchHarnessAgentIntelV1: 'feature-workbench-harness-agent-intel-v1',
   featureWorkbenchHarnessExtCenterV1: 'feature-workbench-harness-ext-center-v1',
   featureWorkbenchHarnessAgentTeams: 'feature-workbench-harness-agent-teams',
+  // Mode screens (workbench.mode.<id>.v1) — default ON, rollback-safe
+  featureWorkbenchModeTasksV1: 'feature-workbench-mode-tasks-v1',
+  featureWorkbenchModeMeetingsV1: 'feature-workbench-mode-meetings-v1',
+  featureWorkbenchModeInboxV1: 'feature-workbench-mode-inbox-v1',
+  featureWorkbenchModeFeedV1: 'feature-workbench-mode-feed-v1',
   featureWorkbenchConationShell: 'feature-workbench-conation-shell',
   featureWorkbenchConationInspector: 'feature-workbench-conation-inspector',
   featureSkillsConationSurfaces: 'feature-skills-conation-surfaces',
