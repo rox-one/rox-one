@@ -45,7 +45,7 @@ type ScanEntry = {
 }
 
 export default function ImportSettingsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -115,9 +115,9 @@ export default function ImportSettingsPage() {
       total: auto.alreadyImported,
       imported: auto.imported,
       updated: auto.updated,
-      time: new Date(auto.lastRunAt).toLocaleString(),
+      time: new Date(auto.lastRunAt).toLocaleString(i18n.language),
     })
-  }, [auto, t])
+  }, [auto, i18n.language, t])
 
   const sourceSummary = auto
     ? Object.entries(auto.bySource)

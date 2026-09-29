@@ -24,7 +24,7 @@ const STATE_KEYS: Record<DiscoveredProfile['state'], string> = {
 }
 
 export default function BrowserProfileImportPanel() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const workspace = useActiveWorkspace()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -91,7 +91,7 @@ export default function BrowserProfileImportPanel() {
       count: cookieAuto.imported,
       browser: cookieAuto.browser ?? '',
       profile: cookieAuto.profileName ?? '',
-      time: new Date(cookieAuto.lastRunAt).toLocaleString(),
+      time: new Date(cookieAuto.lastRunAt).toLocaleString(i18n.language),
     })
   })()
 
