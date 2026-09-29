@@ -64,6 +64,7 @@ import { SessionFanOutSheet, type FanOutChildJob } from './SessionFanOutSheet'
 import { SceneNode } from './SceneNode'
 import { toFlowElements, type FlowSceneNode, type SceneNodeData } from './to-flow-elements'
 import { holesFromScene } from './holes-from-scene'
+import { isSessionMapEmpty } from './map-empty-actions'
 import {
   canPersistDraftEdge,
   createSessionDraftEdge,
@@ -878,6 +879,7 @@ function EditorInner({
   )
 
   const selected = graph.scenes.find((s) => s.id === selectedId) ?? null
+  const mapEmpty = isSessionMapEmpty({ scenes: graph.scenes, draftNodes })
   const selectedDraft = draftNodes.find((node) => node.id === selectedId) ?? null
 
   const resetLayout = () => {
@@ -1040,24 +1042,32 @@ function EditorInner({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-[12rem]">
-                  <DropdownMenuItem onClick={() => applyCanvasLayout('left')}>
-                    {t('entityView.mapAlign')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => applyCanvasLayout('horizontal')}>
-                    {t('entityView.mapDistribute')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => applyCanvasLayout('tile')}>
-                    {t('entityView.mapTile')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handlePromoteTrace}>
-                    {t('entityView.mapPromoteTrace')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSaveVersion}>
-                    {t('entityView.mapSaveVersion')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleRun('pipeline')}>
-                    {t('entityView.mapRunPipeline')}
-                  </DropdownMenuItem>
+                  {mapEmpty ? (
+                    <DropdownMenuItem disabled data-testid="map-toolbar-empty-hint">
+                      {t('entityView.mapEmptyHint')}
+                    </DropdownMenuItem>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={() => applyCanvasLayout('left')}>
+                        {t('entityView.mapAlign')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => applyCanvasLayout('horizontal')}>
+                        {t('entityView.mapDistribute')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => applyCanvasLayout('tile')}>
+                        {t('entityView.mapTile')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handlePromoteTrace}>
+                        {t('entityView.mapPromoteTrace')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleSaveVersion}>
+                        {t('entityView.mapSaveVersion')}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleRun('pipeline')}>
+                        {t('entityView.mapRunPipeline')}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
               <input
@@ -1314,12 +1324,16 @@ function EditorInner({
         <StyledContextMenuItem onSelect={resetLayout}>
           {t('entityView.mapResetLayout')}
         </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={handlePromoteTrace}>
-          {t('entityView.mapPromoteTrace')}
-        </StyledContextMenuItem>
-        <StyledContextMenuItem onSelect={handleSaveVersion}>
-          {t('entityView.mapSaveVersion')}
-        </StyledContextMenuItem>
+        {mapEmpty ? null : (
+          <>
+            <StyledContextMenuItem onSelect={handlePromoteTrace}>
+              {t('entityView.mapPromoteTrace')}
+            </StyledContextMenuItem>
+            <StyledContextMenuItem onSelect={handleSaveVersion}>
+              {t('entityView.mapSaveVersion')}
+            </StyledContextMenuItem>
+          </>
+        )}
         <StyledContextMenuItem onSelect={handleExport}>
           {t('entityView.mapExportSpec')}
         </StyledContextMenuItem>
