@@ -232,7 +232,7 @@ function BrowserStatusBar({
           <Spinner className="text-[10px] leading-none" />
         ) : instance.favicon && !faviconFailed ? (
           isDarkTheme ? (
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-[5px] bg-white/90 p-[1px] leading-none">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-[6px] bg-white/90 p-[1px] leading-none">
               <img
                 src={instance.favicon}
                 alt=""

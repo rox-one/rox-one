@@ -34,7 +34,7 @@ export function ExtraScreensRailGroup() {
                 aria-current={active ? 'page' : undefined}
                 onClick={() => void navigate(routes.view.screen(screen.id))}
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-[7px] transition-colors',
+                  'flex h-8 w-8 items-center justify-center rounded-[6px] transition-colors',
                   active ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground',
                 )}
               >

@@ -193,7 +193,7 @@ function NotesTableView({
         <label className="flex items-center gap-1 text-[11px] text-muted-foreground">
           {t('notes.views.filterTags')}
           <input
-            className="h-7 w-36 rounded-[5px] border border-border/60 bg-background px-2 text-xs"
+            className="h-7 w-36 rounded-[6px] border border-border/60 bg-background px-2 text-xs"
             value={tagFilterValue(view)}
             onChange={(event) => patchView(withTagFilter(view, event.target.value))}
           />
@@ -218,7 +218,7 @@ function NotesTableView({
             key={formula.expr}
             type="button"
             data-testid={`notes-table-formula-${formula.expr}`}
-            className="inline-flex h-7 items-center gap-1 rounded-[5px] border border-border/60 px-2 text-[11px] hover:bg-foreground/[0.06]"
+            className="inline-flex h-7 items-center gap-1 rounded-[6px] border border-border/60 px-2 text-[11px] hover:bg-foreground/[0.06]"
             onClick={() => patchView(removeFormula(view, formula.expr))}
             aria-label={t('notes.views.formulaRemove')}
           >
@@ -547,7 +547,7 @@ function NotesGraphView({
               key={value}
               type="button"
               className={cn(
-                'rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                'rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                 kind === value && 'bg-foreground/[0.08]',
               )}
               aria-pressed={kind === value}
@@ -566,7 +566,7 @@ function NotesGraphView({
           <button
             type="button"
             className={cn(
-              'rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+              'rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
               nearby && 'bg-foreground/[0.08]',
             )}
             aria-pressed={nearby}
@@ -587,7 +587,7 @@ function NotesGraphView({
               key={node.id}
               type="button"
               className={cn(
-                'mb-0.5 w-full truncate rounded-[5px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+                'mb-0.5 w-full truncate rounded-[6px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
                 node.id === activeNoteId && 'bg-foreground/[0.08]',
               )}
               onClick={() => onOpenNote(node.id)}
@@ -606,7 +606,7 @@ function NotesGraphView({
         {graph.hidden > 0 ? (
           <button
             type="button"
-            className="mt-2 rounded-[5px] border border-border/60 px-2 py-1 text-[11px] hover:bg-foreground/[0.06]"
+            className="mt-2 rounded-[6px] border border-border/60 px-2 py-1 text-[11px] hover:bg-foreground/[0.06]"
             data-testid="notes-graph-more"
             onClick={() => setLimit((prev) => prev + NOTE_GRAPH_PAGE_SIZE)}
           >

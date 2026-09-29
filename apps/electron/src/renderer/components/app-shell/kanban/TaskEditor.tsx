@@ -916,13 +916,13 @@ export function TaskEditor({
 
         {/* Definition / Results tabs — edit mode only (results need a backing task to read). */}
         {isEdit && (
-          <div className="ml-3 inline-flex rounded-[9px] bg-foreground/[0.05] p-0.5">
+          <div className="ml-3 inline-flex rounded-[8px] bg-foreground/[0.05] p-0.5">
             {(['definition', 'results'] as Tab[]).map((tb) => (
               <button
                 key={tb}
                 onClick={() => setTab(tb)}
                 className={cn(
-                  'rounded-[7px] px-3 py-1 text-[12.5px] font-semibold transition-colors',
+                  'rounded-[6px] px-3 py-1 text-[12.5px] font-semibold transition-colors',
                   tab === tb ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80',
                 )}
               >
@@ -973,13 +973,13 @@ export function TaskEditor({
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto rounded-xl border border-border bg-card p-4 shadow-minimal">
           <div className="text-[15px] font-bold">{t('tasks.definition')}</div>
 
-          <div className="inline-flex w-fit rounded-[9px] bg-foreground/[0.05] p-0.5">
+          <div className="inline-flex w-fit rounded-[8px] bg-foreground/[0.05] p-0.5">
             {(['manual', 'generate'] as Mode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setMode(m)}
                 className={cn(
-                  'inline-flex items-center gap-1.5 rounded-[7px] px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
+                  'inline-flex items-center gap-1.5 rounded-[6px] px-3 py-1.5 text-[12.5px] font-semibold transition-colors',
                   mode === m ? 'bg-card text-foreground shadow-minimal' : 'text-foreground/55 hover:text-foreground/80',
                 )}
               >

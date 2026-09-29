@@ -22,7 +22,7 @@
   border: 0;
   outline: none;
   box-shadow: none;
-  border-radius: 7px;
+  border-radius: 6px;
   background: color-mix(in oklch, var(--foreground) 5%, transparent);
   color: var(--foreground);
   font: inherit;
@@ -59,7 +59,7 @@
   height: 28px;
   padding: 0 10px;
   border: 0;
-  border-radius: 7px;
+  border-radius: 6px;
   background: color-mix(in oklch, var(--foreground) 6%, transparent);
   color: var(--foreground);
   font: inherit;
@@ -188,7 +188,7 @@
   font-size: 20px;
   line-height: 1.2;
   padding: 4px 6px;
-  border-radius: 7px;
+  border-radius: 6px;
 }
 .rox-autom-title-input:hover,
 .rox-autom-title-input:focus-visible { background: color-mix(in oklch, var(--foreground) 5%, transparent); }
@@ -223,7 +223,7 @@
 .rox-autom-note { font-size: 12px; color: color-mix(in oklch, var(--foreground) 52%, transparent); }
 .rox-autom-error { font-size: 12px; color: var(--destructive); }
 .rox-autom-cond { display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 10px; border-radius: 8px; background: color-mix(in oklch, var(--foreground) 3.5%, transparent); flex-wrap: wrap; }
-.rox-autom-history-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 7px; font-size: 13px; }
+.rox-autom-history-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 6px; font-size: 13px; }
 .rox-autom-history-row:hover { background: color-mix(in oklch, var(--foreground) 4%, transparent); }
 .rox-autom-history-row .rox-autom-when { width: 132px; flex-shrink: 0; color: color-mix(in oklch, var(--foreground) 60%, transparent); font-variant-numeric: tabular-nums; }
 .rox-autom-history-row .rox-autom-what { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

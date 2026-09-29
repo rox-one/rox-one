@@ -152,7 +152,7 @@ export function Chip({
   tone?: 'neutral' | 'ok' | 'warn' | 'err'
 }) {
   const cls = cn(
-    'inline-flex items-center gap-1 whitespace-nowrap rounded-[5px] px-2 py-0.5 text-[12px]',
+    'inline-flex items-center gap-1 whitespace-nowrap rounded-[6px] px-2 py-0.5 text-[12px]',
     active
       ? 'bg-accent/10 text-accent'
       : tone === 'ok'

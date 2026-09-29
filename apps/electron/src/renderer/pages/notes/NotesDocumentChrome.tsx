@@ -177,7 +177,7 @@ export function NotesCommandPalette({
                   key={item.id}
                   type="button"
                   className={cn(
-                    'flex w-full items-center justify-between rounded-[5px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+                    'flex w-full items-center justify-between rounded-[6px] px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
                     flatIndex === selected && 'bg-foreground/[0.10] text-foreground',
                   )}
                   onClick={() => onSelect(item)}

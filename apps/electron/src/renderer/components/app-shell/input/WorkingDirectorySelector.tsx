@@ -191,7 +191,7 @@ export function WorkingDirectorySelector({
                       type="button"
                       onClick={(e) => handleRemoveRecent(e, path)}
                       data-touch-reveal="true"
-                      className="shrink-0 h-3 w-3 rounded-[3px] flex items-center justify-center opacity-0 group-hover/item:opacity-100 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
+                      className="shrink-0 h-3 w-3 rounded-[4px] flex items-center justify-center opacity-0 group-hover/item:opacity-100 text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
                     >
                       <X className="h-3 w-3" />
                     </button>

@@ -383,7 +383,7 @@ export function SessionHeatmapHost() {
                 <div key={weekIndex} className="flex flex-col gap-px">
                   {week.map((cell, row) => {
                     if (!cell.inYear || !cell.key) {
-                      return <span key={`${weekIndex}-${row}`} className="h-3 w-3 rounded-[3px]" />
+                      return <span key={`${weekIndex}-${row}`} className="h-3 w-3 rounded-[4px]" />
                     }
                     const focused = cell.key === focusedKey
                     const isToday = cell.key === heatmap.todayKey
@@ -400,7 +400,7 @@ export function SessionHeatmapHost() {
                         })}
                         title={t('collection.heatmap.cell', { date: cell.key, count: cell.count })}
                         className={cn(
-                          'h-3 w-3 rounded-[3px] outline-none',
+                          'h-3 w-3 rounded-[4px] outline-none',
                           levelClass(cell.level),
                           focused && 'ring-1 ring-foreground ring-offset-1 ring-offset-background',
                           isToday && !focused && 'ring-1 ring-foreground/40',

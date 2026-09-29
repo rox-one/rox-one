@@ -130,10 +130,17 @@
 
   /* Layout scale */
   --font-size-base: 15px;
-  --radius: 0.25rem;
-  --radius-xs: 0.25rem;
-  --radius-sm: 0.5rem;
-  --radius-md: 0.5rem;
+  /* Radius scale — px, not rem (root is 15px, rem gave 3.75/7.5/11.25px).
+     xs 4: badges, chips, checkboxes · sm/md 6: controls, rows, menu items ·
+     lg 8: cards, grouped sections · xl 10: popovers, menus · 2xl 12: dialogs,
+     composer. Nested surfaces use outer = inner + padding. */
+  --radius: 4px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
   --spacing: 0.25rem;
   --tracking-normal: 0em;
 

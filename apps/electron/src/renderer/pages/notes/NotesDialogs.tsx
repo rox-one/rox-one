@@ -270,7 +270,7 @@ export function NotesDialogs({
               </Button>
             </div>
           </div>
-          <div className="max-h-[420px] overflow-y-auto rounded-[7px] border border-border/60">
+          <div className="max-h-[420px] overflow-y-auto rounded-[6px] border border-border/60">
             {allAssets.length ? allAssets.map(asset => {
               const refCount = asset.referencedBy?.length ?? 0
               const refLabel = asset.referencedBy?.slice(0, 2).map(ref => ref.title).join(', ')

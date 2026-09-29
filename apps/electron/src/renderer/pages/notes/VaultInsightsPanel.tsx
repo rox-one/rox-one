@@ -57,7 +57,7 @@ export function VaultInsightsPanel({
               <div className="line-clamp-2 text-[11px] text-muted-foreground">{suggestion.preview}</div>
               <button
                 type="button"
-                className="mt-1 h-6 rounded-[5px] px-2 text-[11px] hover:bg-foreground/[0.06]"
+                className="mt-1 h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]"
                 onClick={() => onApplyLink(suggestion)}
               >
                 {t('notes.inspector.applyLink')}
@@ -87,11 +87,11 @@ export function VaultInsightsPanel({
                 <div className="text-xs">{t('notes.inspector.mergeEntities', { name: merge.toName })}</div>
                 <div className="text-[11px] text-muted-foreground">{merge.fromName} → {merge.toName}</div>
                 <div className="mt-1 flex gap-1">
-                  <button type="button" className="h-6 rounded-[5px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onApplyMerge(merge)}>
+                  <button type="button" className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onApplyMerge(merge)}>
                     <Merge className="mr-1 inline h-3 w-3" />
                     {t('notes.inspector.applyMerge')}
                   </button>
-                  <button type="button" className="h-6 rounded-[5px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onUndoMerge(merge)}>
+                  <button type="button" className="h-6 rounded-[6px] px-2 text-[11px] hover:bg-foreground/[0.06]" onClick={() => onUndoMerge(merge)}>
                     {t('notes.inspector.undoMerge')}
                   </button>
                 </div>
@@ -113,7 +113,7 @@ export function VaultInsightsPanel({
             placeholder={t('notes.inspector.footnotePlaceholder')}
             className="h-7 w-full min-w-0 rounded-[6px] border border-border/60 bg-background px-2 text-xs outline-none focus:border-foreground/30"
           />
-          <button type="button" className="inline-flex h-7 w-fit shrink-0 items-center gap-1 rounded-[5px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onCreateFootnote}>
+          <button type="button" className="inline-flex h-7 w-fit shrink-0 items-center gap-1 rounded-[6px] px-2 text-xs hover:bg-foreground/[0.06]" onClick={onCreateFootnote}>
             <Plus className="h-3.5 w-3.5" />
             {t('notes.inspector.createFootnote')}
           </button>
@@ -131,7 +131,7 @@ export function VaultInsightsPanel({
                 defaultValue={footnote.text}
                 onBlur={(event) => onUpdateFootnote(footnote, event.target.value)}
                 onKeyDown={(event) => { if (event.key === 'Enter') event.currentTarget.blur() }}
-                className="mt-1 h-7 w-full rounded-[5px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
+                className="mt-1 h-7 w-full rounded-[6px] border border-border/50 bg-background px-2 text-xs outline-none focus:border-foreground/30"
               />
             </div>
           )) : <span className="text-xs text-muted-foreground">{t('notes.inspector.noFootnotes')}</span>}

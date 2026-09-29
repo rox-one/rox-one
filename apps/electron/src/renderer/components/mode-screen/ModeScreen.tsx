@@ -234,7 +234,7 @@ export function Chip({ active, onClick, children }: { active?: boolean; onClick?
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'inline-flex h-6 items-center rounded-[5px] px-2 text-[12px] outline-none',
+        'inline-flex h-6 items-center rounded-[6px] px-2 text-[12px] outline-none',
         active ? 'bg-accent/15 font-semibold text-foreground' : 'bg-foreground/[0.05] text-text-secondary hover:bg-foreground/[0.09]',
       )}
     >

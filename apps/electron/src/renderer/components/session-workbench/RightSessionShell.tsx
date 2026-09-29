@@ -54,7 +54,7 @@ export function RightSessionShell({
         <div className="min-w-0 flex-1 truncate text-sm font-medium">{t('notes.sideSession.title')}</div>
         <button
           type="button"
-          className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
+          className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center text-muted-foreground"
           onClick={onClose}
           title={t('notes.sideSession.close')}
         >
