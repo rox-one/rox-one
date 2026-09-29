@@ -5,8 +5,11 @@ export type SessionMapPin = {
   sessionId: string;
   camera: SessionMapCamera;
   viewport?: { x: number; y: number; zoom: number };
-  nodes: Record<string, { x: number; y: number }>;
+  /** Pinned position; width/height present only after the user resized the node. */
+  nodes: Record<string, SessionMapPinNode>;
 };
+
+export type SessionMapPinNode = { x: number; y: number; width?: number; height?: number };
 
 export function sessionMapPinStorageKey(sessionId: string): string {
   return `rox.sessionMap.layout.${sessionId}`;
@@ -29,12 +32,17 @@ function parseViewport(value: unknown): { x: number; y: number; zoom: number } |
   return { x: value.x, y: value.y, zoom: value.zoom };
 }
 
-function parseNodes(value: unknown): Record<string, { x: number; y: number }> | null {
+function parseNodes(value: unknown): Record<string, SessionMapPinNode> | null {
   if (!isRecord(value)) return null;
-  const nodes: Record<string, { x: number; y: number }> = {};
+  const nodes: Record<string, SessionMapPinNode> = {};
   for (const [id, pos] of Object.entries(value)) {
     if (!isRecord(pos) || !isFiniteNumber(pos.x) || !isFiniteNumber(pos.y)) continue;
-    nodes[id] = { x: pos.x, y: pos.y };
+    const node: SessionMapPinNode = { x: pos.x, y: pos.y };
+    if (isFiniteNumber(pos.width) && pos.width > 0 && isFiniteNumber(pos.height) && pos.height > 0) {
+      node.width = pos.width;
+      node.height = pos.height;
+    }
+    nodes[id] = node;
   }
   return nodes;
 }
@@ -79,7 +87,7 @@ export function pruneSessionMapPin(
   pin: SessionMapPin,
   knownSceneIds: ReadonlySet<string>,
 ): SessionMapPin {
-  const nodes: Record<string, { x: number; y: number }> = {};
+  const nodes: Record<string, SessionMapPinNode> = {};
   for (const [id, pos] of Object.entries(pin.nodes)) {
     if (knownSceneIds.has(id)) nodes[id] = pos;
   }

@@ -118,6 +118,7 @@ export {
   sessionMapPinStorageKey,
   type SessionMapCamera,
   type SessionMapPin,
+  type SessionMapPinNode,
 } from './session-map-pin.ts';
 
 export {

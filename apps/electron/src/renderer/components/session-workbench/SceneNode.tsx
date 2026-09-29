@@ -1,9 +1,11 @@
 import * as React from 'react'
-import { Handle, Position, type Node, type NodeProps } from '@xyflow/react'
+import { Handle, NodeResizer, Position, type Node, type NodeProps } from '@xyflow/react'
 import { cn } from '@/lib/utils'
 import type { SceneNodeData } from './to-flow-elements'
 import type { SessionNodeKind } from './node-kinds'
 import { canvasNodeStatus, canvasStatusClass, type CanvasRunStatus } from './canvas-layout'
+import { formatToolGroup, groupSceneTools } from './scene-tools'
+import { MIN_SCENE_SIZE } from './map-node-size'
 
 export type SceneFlowNode = Node<SceneNodeData, 'scene'>
 
@@ -23,25 +25,25 @@ export function sceneVisualStatus(tools: SceneNodeData['scene']['tools'], select
 function kindTone(kind: SessionNodeKind): string {
   switch (kind) {
     case 'note':
-      return 'bg-amber-500/15 text-amber-100 ring-amber-400/20'
+      return 'bg-amber-500/15 text-amber-100'
     case 'model':
-      return 'bg-violet-500/15 text-violet-100 ring-violet-400/20'
+      return 'bg-violet-500/15 text-violet-100'
     case 'tool':
-      return 'bg-cyan-500/15 text-cyan-100 ring-cyan-400/20'
+      return 'bg-cyan-500/15 text-cyan-100'
     case 'memory':
-      return 'bg-emerald-500/15 text-emerald-100 ring-emerald-400/20'
+      return 'bg-emerald-500/15 text-emerald-100'
     case 'subflow':
-      return 'bg-sky-500/15 text-sky-100 ring-sky-400/20'
+      return 'bg-sky-500/15 text-sky-100'
     case 'condition':
-      return 'bg-orange-500/15 text-orange-100 ring-orange-400/20'
+      return 'bg-orange-500/15 text-orange-100'
     case 'merge':
-      return 'bg-pink-500/15 text-pink-100 ring-pink-400/20'
+      return 'bg-pink-500/15 text-pink-100'
     case 'human_input':
-      return 'bg-blue-500/15 text-blue-100 ring-blue-400/20'
+      return 'bg-blue-500/15 text-blue-100'
     case 'output':
-      return 'bg-lime-500/15 text-lime-100 ring-lime-400/20'
+      return 'bg-lime-500/15 text-lime-100'
     case 'annotation_frame':
-      return 'bg-white/10 text-white/80 ring-white/15'
+      return 'bg-white/10 text-white/80'
     default: {
       const _exhaustive: never = kind
       return _exhaustive
@@ -49,65 +51,75 @@ function kindTone(kind: SessionNodeKind): string {
   }
 }
 
-export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
+export function SceneNode({ id, data, selected }: NodeProps<SceneFlowNode>) {
   const scene = data.scene
   const kind = data.kind
   const kindLabel = data.kindLabel ?? kind
   const status = sceneVisualStatus(scene.tools, selected)
+  const toolGroups = groupSceneTools(scene.tools)
   return (
     <div
       className={cn(
-        'group relative w-[198px] min-w-0 overflow-hidden rounded-lg border bg-card/80 px-2.5 py-2 text-left shadow-strong backdrop-blur-xl',
+        // Flat surface, no outline; selection is a single accent ring.
+        'group relative flex h-full w-full min-w-0 flex-col overflow-hidden rounded-lg bg-foreground/[0.05] px-2.5 py-2 text-left',
         canvasStatusClass(status),
-        scene.orphaned ? 'border-amber-400/50' : 'border-border/70',
-        selected && 'border-violet-400/70 ring-1 ring-violet-400/30',
+        scene.orphaned && 'bg-amber-400/[0.08]',
+        selected && 'ring-2 ring-accent',
       )}
       data-status={status}
       title={scene.triggerPreview || scene.id}
     >
-      <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-border !bg-background" />
-      <div className="mb-1.5 flex min-w-0 items-start gap-2">
+      <NodeResizer
+        isVisible={Boolean(selected)}
+        minWidth={MIN_SCENE_SIZE.width}
+        minHeight={MIN_SCENE_SIZE.height}
+        lineClassName="!border-accent/60"
+        handleClassName="!h-2 !w-2 !rounded-sm !border-0 !bg-accent"
+        onResizeEnd={(_event, box) => data.onResize?.(id, box)}
+      />
+      <Handle type="target" position={Position.Left} className="rox-map-handle !h-2 !w-2 !border-0 !bg-foreground/40" />
+      <div className="mb-1 flex min-w-0 items-center gap-1.5">
         <div
           aria-hidden
           className={cn(
-            'mt-1.5 h-2 w-2 shrink-0 rounded-full ring-4 ring-white/[0.02]',
+            'h-1.5 w-1.5 shrink-0 rounded-full',
             status === 'error' && 'bg-rose-400',
             status === 'waiting' && 'animate-pulse bg-amber-300',
             status === 'running' && 'animate-pulse bg-sky-400',
             (status === 'idle' || status === 'selected') && 'bg-emerald-400',
           )}
         />
-        <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <div className="min-w-0 flex-1 truncate text-[12px] font-medium leading-4 text-foreground">
-              {scene.triggerPreview || scene.id}
-            </div>
+        <span
+          className={cn(
+            'min-w-0 truncate rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.12em]',
+            kindTone(kind),
+          )}
+        >
+          {kindLabel}
+        </span>
+        {scene.orphaned ? (
+          <span className="shrink-0 text-[9px] uppercase tracking-[0.12em] text-amber-300/80">orphaned</span>
+        ) : null}
+      </div>
+      <div className="line-clamp-2 min-w-0 break-words text-[12px] font-medium leading-4 text-foreground">
+        {scene.triggerPreview || scene.id}
+      </div>
+      {toolGroups.length > 0 && (
+        <div className="mt-1.5 flex flex-wrap gap-0.5">
+          {toolGroups.slice(0, 4).map((group) => (
             <span
+              key={group.name}
               className={cn(
-                'shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-[0.16em] ring-1',
-                kindTone(kind),
+                'rounded-md bg-foreground/[0.06] px-1.5 py-0.5 text-[10px] text-muted-foreground',
+                group.status === 'error' && 'text-rose-300',
               )}
             >
-              {kindLabel}
-            </span>
-          </div>
-          {scene.orphaned ? (
-            <div className="mt-1 text-[10px] uppercase tracking-[0.16em] text-amber-300/80">
-              orphaned
-            </div>
-          ) : null}
-        </div>
-      </div>
-      {scene.tools.length > 0 && (
-        <div className="mt-1 flex flex-wrap gap-0.5">
-          {scene.tools.slice(0, 4).map((tool) => (
-            <span
-              key={tool.toolCallId}
-              className="rounded-md border border-white/5 bg-white/5 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground"
-            >
-              {tool.name}
+              {formatToolGroup(group)}
             </span>
           ))}
+          {toolGroups.length > 4 ? (
+            <span className="px-1 py-0.5 text-[10px] text-muted-foreground/70">+{toolGroups.length - 4}</span>
+          ) : null}
         </div>
       )}
       {scene.outcomePreview ? (
@@ -115,7 +127,7 @@ export function SceneNode({ data, selected }: NodeProps<SceneFlowNode>) {
           {scene.outcomePreview}
         </div>
       ) : null}
-      <Handle type="source" position={Position.Right} className="!h-2 !w-2 !border-border !bg-background" />
+      <Handle type="source" position={Position.Right} className="rox-map-handle !h-2 !w-2 !border-0 !bg-foreground/40" />
     </div>
   )
 }
