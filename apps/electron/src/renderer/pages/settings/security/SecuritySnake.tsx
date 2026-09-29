@@ -27,13 +27,13 @@ const RISK_DIRECTION_BY_DOMAIN: Record<SecuritySnakeDomain, Exclude<SnakeDirecti
 }
 
 const SNAKE_POSITION_CLASSES = [
-  'md:translate-y-0',
-  'md:translate-y-3',
-  'md:translate-y-0',
-  'md:translate-y-3',
-  'md:translate-y-0',
-  'md:translate-y-3',
-  'md:translate-y-0',
+  '@4xl:translate-y-0',
+  '@4xl:translate-y-3',
+  '@4xl:translate-y-0',
+  '@4xl:translate-y-3',
+  '@4xl:translate-y-0',
+  '@4xl:translate-y-3',
+  '@4xl:translate-y-0',
 ] as const
 
 const SEVERITY_CLASSES: Record<SecurityDomainSummary['severity'], string> = {
@@ -63,14 +63,16 @@ export function SecuritySnake({ domains, selectedDomain, onSelectDomain }: Secur
   const { t } = useTranslation()
 
   return (
-    <section aria-labelledby="security-snake-heading" className="space-y-3">
+    <section aria-labelledby="security-snake-heading" className="@container space-y-3">
       <div>
         <h3 id="security-snake-heading" className="text-sm font-semibold">
           {t('security.section.snake')}
         </h3>
         <p className="mt-1 text-xs text-muted-foreground">{t('security.snake.hint')}</p>
       </div>
-      <ol className="grid grid-cols-1 gap-2 md:grid-cols-7 md:gap-1" aria-label={t('security.section.snake')}>
+      {/* Container-sized (not viewport-sized): seven columns only when the
+          settings pane itself is wide; otherwise blocks wrap instead of overlapping. */}
+      <ol className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2 @4xl:grid-cols-7 @4xl:gap-1" aria-label={t('security.section.snake')}>
         {SECURITY_SNAKE_DOMAINS.map((domain, index) => {
           const summary = domains.find((entry) => entry.domain === domain)
           const coverage = summary?.coverage ?? 'none'
