@@ -1339,7 +1339,9 @@ function EditorInner({
               background: 'var(--background)',
             }}
           >
-            <Background gap={24} size={1} color="hsl(var(--border) / 0.4)" />
+            {/* bgColor transparent: React Flow otherwise paints its own darker default
+                canvas colour, which made the toolbar row read as a separate band. */}
+            <Background gap={24} size={1} bgColor="transparent" color="hsl(var(--border) / 0.4)" />
             {!mapEmpty ? (
               <MiniMap
                 position="bottom-right"
