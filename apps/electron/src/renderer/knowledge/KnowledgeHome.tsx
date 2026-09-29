@@ -6,7 +6,8 @@
  * - Search box (`knowledge.search.placeholder`); typing ≥2 chars searches
  *   after a short debounce, Enter searches immediately. Queries the FIRST
  *   connection from `knowledge.listConnections()`.
- * - Result click → `navigate(routes.view.notes())`.
+ * - Result click → Rox Notes deep link when note id resolvable;
+ *   otherwise Notes home + honest empty/hint (never SiYuan document routes).
  * - Saved views: `knowledge.viewsList` → click runs `knowledge.viewRun` and
  *   renders hits in EntityList (optional groupBy headers). Preset
  *   `set_attribute` actions go through `knowledge.viewSetAttribute`
@@ -27,6 +28,8 @@ import { windowWorkspaceIdAtom } from '@/atoms/sessions'
 import { EntityList } from '@/components/ui/entity-list'
 import { useNavigation } from '@/contexts/NavigationContext'
 import { navigate, routes } from '@/lib/navigate'
+import { lookupImportedNote } from '@/lib/notes-migration-map'
+import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import type { ViewConfig as KnowledgeViewConfig } from '@craft-agent/shared/views'
 import { KnowledgeProposals } from './KnowledgeProposals'
@@ -113,9 +116,37 @@ export async function searchKnowledge(
   return page.items
 }
 
-/** Route for a search hit — the in-app SiYuan surface for this document/block. */
-export function searchHitRoute(hit: Pick<SearchHit, 'ref'>) {
-  return routes.view.notes()
+/**
+ * Sync note-id resolution for a knowledge search hit.
+ * Prefer explicit Rox attributes; accept path-like local ids. Opaque SiYuan
+ * document/block ids return null here — callers may async-lookup the import map.
+ */
+export function resolveSearchHitNoteId(
+  hit: Pick<SearchHit, 'ref'> & { attributes?: Record<string, string> },
+): string | null {
+  const attrs = hit.attributes ?? {}
+  for (const key of ['rox-note-id', 'noteId', 'note_id', 'destinationNoteId', 'notePath', 'path'] as const) {
+    const raw = attrs[key]
+    if (typeof raw === 'string' && raw.trim()) {
+      let cleaned = raw.trim().replace(/\\/g, '/')
+      if (cleaned.toLowerCase().startsWith('notes/')) cleaned = cleaned.slice('notes/'.length)
+      if (cleaned.toLowerCase().endsWith('.md')) cleaned = cleaned.slice(0, -3)
+      if (cleaned) return cleaned
+    }
+  }
+  const id = hit.ref?.id?.trim()
+  if (!id) return null
+  // Path-like / daily ids are treated as local Rox Notes ids.
+  if (id.includes('/') || id.startsWith('daily')) return id
+  return null
+}
+
+/** Route for a search hit — Rox Notes deep link when resolvable, else Notes home. */
+export function searchHitRoute(
+  hit: Pick<SearchHit, 'ref'> & { attributes?: Record<string, string> },
+) {
+  const noteId = resolveSearchHitNoteId(hit)
+  return noteId ? routes.view.notes(noteId) : routes.view.notes()
 }
 
 /** Route for a saved knowledge view deep-link. */
@@ -258,13 +289,13 @@ export function pickDefaultKnowledgeDocument(
   return { kind: 'document', id: best.knowledgeRef.id }
 }
 
-/** In-app editor route for the default document, else the knowledge home. */
+/** In-app editor route for the default document, else Rox Notes home. */
 export function defaultKnowledgeEditorRoute(
   envelopes: readonly KnowledgeEnvelopeLike[],
 ): string {
   const doc = pickDefaultKnowledgeDocument(envelopes)
-  if (!doc) return 'knowledge'
-  return routes.view.notes()
+  if (!doc) return routes.view.notes()
+  return routes.view.notes(doc.id)
 }
 
 // ---------------------------------------------------------------------------
@@ -280,6 +311,9 @@ export function KnowledgeHome() {
   const { t } = useTranslation()
   const { navigate } = useNavigation()
   const workspaceId = useAtomValue(windowWorkspaceIdAtom)
+  const appShell = useOptionalAppShellContext()
+  const activeWorkspaceRoot =
+    appShell?.workspaces.find((w) => w.id === (appShell.activeWorkspaceId ?? workspaceId))?.rootPath
   const [query, setQuery] = useState('')
   const [hits, setHits] = useState<SearchHit[]>([])
   const [status, setStatus] = useState<SearchStatus>('idle')
@@ -455,8 +489,27 @@ export function KnowledgeHome() {
   }, [query, runSearch])
 
   const openHit = useCallback(
-    (hit: SearchHit) => navigate(searchHitRoute(hit)),
-    [navigate],
+    async (hit: SearchHit) => {
+      const syncId = resolveSearchHitNoteId(hit)
+      if (syncId) {
+        navigate(routes.view.notes(syncId))
+        return
+      }
+      const migrated = await lookupImportedNote(
+        activeWorkspaceRoot,
+        hit.ref.id,
+      ).catch(() => null)
+      if (migrated?.destinationNoteId) {
+        navigate(routes.view.notes(migrated.destinationNoteId))
+        return
+      }
+      // Honest empty: Notes home + hint — never SiYuan document product routes.
+      toast.message(t('knowledge.roxNotes.emptyTitle'), {
+        description: t('knowledge.roxNotes.emptyBody'),
+      })
+      navigate(routes.view.notes())
+    },
+    [activeWorkspaceRoot, navigate, t],
   )
 
   const openSavedView = useCallback(
@@ -722,7 +775,7 @@ export function KnowledgeHome() {
                     >
                       <button
                         type="button"
-                        onClick={() => openHit(hit)}
+                        onClick={() => void openHit(hit)}
                         className={cn(
                           'min-w-0 flex-1 flex flex-col gap-0.5 text-left',
                           'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-sm',
@@ -832,7 +885,7 @@ export function KnowledgeHome() {
           <button
             type="button"
             key={`${hit.ref.kind}:${hit.ref.id}`}
-            onClick={() => openHit(hit)}
+            onClick={() => void openHit(hit)}
             className={cn(
               'flex w-full flex-col gap-0.5 rounded-md px-3 py-2 text-left',
               'hover:bg-accent focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',

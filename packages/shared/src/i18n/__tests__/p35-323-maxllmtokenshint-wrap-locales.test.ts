@@ -3,7 +3,7 @@ import { i18n, setupI18n } from '../setupI18n'
 
 const KEY = 'settings.cloudRuns.maxLlmTokensHint'
 const RU_WRAPPED =
-  'Жёсткий потолок токенов ввода и вывода (prompt+completion) на запуск'
+  'Жёсткий потолок токенов ввода и вывода (вход+выход) на запуск'
 const EN_VALUE = 'Hard cap on prompt+completion tokens per run'
 
 describe('P35-323 leftover Russian ран wrapping on settings.cloudRuns.maxLlmTokensHint', () => {
@@ -11,7 +11,7 @@ describe('P35-323 leftover Russian ран wrapping on settings.cloudRuns.maxLlmT
     await setupI18n().changeLanguage('ru')
     const ru = i18n.t(KEY)
     expect(ru).toBe(RU_WRAPPED)
-    expect(ru).toContain('prompt+completion')
+    expect(ru).toContain('запуск')
     expect(ru.toLowerCase()).not.toContain('ран')
 
     await setupI18n().changeLanguage('en')

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
-import { FilePlus2, ScanSearch } from 'lucide-react'
+import { FilePlus2, ScanSearch, ZoomIn, ZoomOut } from 'lucide-react'
 import { PremiumMenuSelect } from '@craft-agent/ui'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -338,9 +338,44 @@ function NotesCanvasView({
     }
   }, [canvas, storageKey])
 
-  const applyFit = () => {
+  const applyFit = React.useCallback(() => {
     const viewport = viewportRef.current?.getBoundingClientRect()
     setFit(canvasFitTransform(canvas.nodes, { width: viewport?.width ?? 800, height: viewport?.height ?? 600 }))
+  }, [canvas.nodes])
+
+  const zoomBy = React.useCallback((factor: number) => {
+    setFit((prev) => {
+      const nextScale = Math.min(4, Math.max(0.25, prev.scale * factor))
+      const viewport = viewportRef.current?.getBoundingClientRect()
+      const cx = (viewport?.width ?? 800) / 2
+      const cy = (viewport?.height ?? 600) / 2
+      const ratio = nextScale / prev.scale
+      return {
+        scale: nextScale,
+        x: cx - (cx - prev.x) * ratio,
+        y: cy - (cy - prev.y) * ratio,
+      }
+    })
+  }, [])
+
+  const onCanvasKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement | null
+    if (target?.closest('input, textarea, [contenteditable="true"]')) return
+    const key = event.key
+    if (key === 'f' || key === 'F' || key === '0') {
+      event.preventDefault()
+      applyFit()
+      return
+    }
+    if (key === '=' || key === '+') {
+      event.preventDefault()
+      zoomBy(1.1)
+      return
+    }
+    if (key === '-' || key === '_') {
+      event.preventDefault()
+      zoomBy(1 / 1.1)
+    }
   }
 
   return (
@@ -348,6 +383,10 @@ function NotesCanvasView({
       ref={viewportRef}
       className="relative h-full min-h-0 overflow-hidden bg-muted/10"
       data-testid="notes-canvas-view"
+      tabIndex={0}
+      role="application"
+      aria-label={t('entityView.canvas')}
+      onKeyDown={onCanvasKeyDown}
       onDoubleClick={(event) => {
         if (event.target !== event.currentTarget) return
         const dest = dailyNoteDestination()
@@ -406,7 +445,13 @@ function NotesCanvasView({
         ))}
       </div>
       <div className="absolute bottom-3 right-3 flex gap-2">
-        <Button type="button" size="sm" variant="outline" data-testid="notes-canvas-fit" onClick={applyFit}>
+        <Button type="button" size="sm" variant="outline" data-testid="notes-canvas-zoom-out" onClick={() => zoomBy(1 / 1.1)} title={t('menu.zoomOut')} aria-label={t('menu.zoomOut')}>
+          <ZoomOut className="h-3.5 w-3.5" />
+        </Button>
+        <Button type="button" size="sm" variant="outline" data-testid="notes-canvas-zoom-in" onClick={() => zoomBy(1.1)} title={t('menu.zoomIn')} aria-label={t('menu.zoomIn')}>
+          <ZoomIn className="h-3.5 w-3.5" />
+        </Button>
+        <Button type="button" size="sm" variant="outline" data-testid="notes-canvas-fit" onClick={applyFit} title={t('notes.canvas.fit')} aria-label={t('notes.canvas.fit')}>
           <ScanSearch className="h-3.5 w-3.5" />
           {t('notes.canvas.fit')}
         </Button>

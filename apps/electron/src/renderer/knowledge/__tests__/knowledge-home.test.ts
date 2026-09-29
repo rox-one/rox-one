@@ -19,6 +19,7 @@ import {
   runKnowledgeView,
   defaultKnowledgeEditorRoute,
   pickDefaultKnowledgeDocument,
+  resolveSearchHitNoteId,
   searchHitRoute,
   searchKnowledge,
   selectKnowledgeView,
@@ -62,7 +63,7 @@ afterEach(() => {
 })
 
 describe('searchKnowledge', () => {
-  it('searches the first connection and maps hits to siYuan routes (happy path)', async () => {
+  it('searches the first connection and maps hits to Rox Notes routes (happy path)', async () => {
     const searchCalls: unknown[] = []
     const api: KnowledgeSearchApi = {
       listConnections: async () => [{ id: 'conn-1' }, { id: 'conn-2' }],
@@ -81,8 +82,17 @@ describe('searchKnowledge', () => {
       { workspaceId: 'ws-42', connectionId: 'conn-1', input: { query: 'craft agents' } },
     ])
     expect(items).toHaveLength(2)
-    expect(searchHitRoute(items![0])).toBe('knowledge/document/doc-1')
-    expect(searchHitRoute(items![1])).toBe('knowledge/block/blk-2')
+    // Opaque SiYuan ids without note attributes → Notes home (not knowledge/document)
+    expect(searchHitRoute(items![0])).toBe('notes')
+    expect(searchHitRoute(items![1])).toBe('notes')
+    expect(resolveSearchHitNoteId(items![0]!)).toBeNull()
+    // Path-like / attributed ids deep-link into Notes
+    expect(searchHitRoute(makeHit('document', 'ops/alpha'))).toBe('notes/note/ops%2Falpha')
+    expect(
+      searchHitRoute(
+        makeHit('document', 'doc-opaque', { attributes: { 'rox-note-id': 'daily/2026-09-21' } }),
+      ),
+    ).toBe('notes/note/daily%2F2026-09-21')
   })
 
   it('returns null and never searches when no connections exist (empty state)', async () => {
@@ -104,9 +114,9 @@ describe('searchKnowledge', () => {
     expect(await searchKnowledge(resolveKnowledgeApi(), 'ws-42', 'q')).toBeNull()
   })
 
-  it('URI-encodes ids so deep-link ids with separators stay a single route segment', () => {
+  it('URI-encodes path-like note ids so separators stay a single route segment', () => {
     expect(searchHitRoute(makeHit('document', '20200812/abc def'))).toBe(
-      'knowledge/document/20200812%2Fabc%20def',
+      'notes/note/20200812%2Fabc%20def',
     )
   })
 })
@@ -295,11 +305,11 @@ describe('default knowledge editor', () => {
       },
     ]
     expect(pickDefaultKnowledgeDocument(envelopes)).toEqual({ kind: 'document', id: 'fresh' })
-    expect(defaultKnowledgeEditorRoute(envelopes)).toBe('knowledge/document/fresh')
+    expect(defaultKnowledgeEditorRoute(envelopes)).toBe('notes/note/fresh')
   })
 
   it('falls back to the knowledge home route when there are no envelopes', () => {
     expect(pickDefaultKnowledgeDocument([])).toBeNull()
-    expect(defaultKnowledgeEditorRoute([])).toBe('knowledge')
+    expect(defaultKnowledgeEditorRoute([])).toBe('notes')
   })
 })
