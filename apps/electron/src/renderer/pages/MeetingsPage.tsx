@@ -352,7 +352,7 @@ export default function MeetingsPage(props: { selectedId?: string | null; worksp
                       <span className="block truncate text-[11px] text-text-muted">
                         {live
                           ? (rec.meetingId === m.id ? formatDuration(recordedMs(rec)) : t('meetings.local.recShort'))
-                          : m.durationMs ? formatDuration(m.durationMs) : m.status === 'planned' ? t('meetings.badge.planned') : '—'}
+                          : m.durationMs ? formatDuration(m.durationMs) : m.status === 'planned' ? `${t('meetings.badge.planned')} · ${dayFmt.format(meetingTime(m))}` : '—'}
                         {m.participants.length ? ` · ${m.participants.slice(0, 3).join(', ')}` : ''}
                         {m.documents.length ? ` · ${t('meetings.local.docsCount', { count: m.documents.length })}` : ''}
                       </span>
