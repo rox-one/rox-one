@@ -4877,6 +4877,7 @@
   "workbench.status.runs_many": "実行 {{count}}",
   "workbench.status.runs_one": "実行 {{count}}",
   "workbench.status.runs_other": "実行 {{count}}",
+  "workbench.status.sessionCostTooltip": "現在のセッションのコスト",
   "workbench.status.syncOk": "同期 OK",
   "workbench.status.usagePlaceholder": "使用量",
   "workflows.confirm": "実行前に確認",

@@ -4878,6 +4878,7 @@
   "workbench.status.runs_many": "{{count}} runs",
   "workbench.status.runs_one": "{{count}} run",
   "workbench.status.runs_other": "{{count}} runs",
+  "workbench.status.sessionCostTooltip": "Focused session cost",
   "workbench.status.syncOk": "Sync OK",
   "workbench.status.usagePlaceholder": "Usage",
   "workflows.confirm": "Confirm before running",

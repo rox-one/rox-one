@@ -1,0 +1,177 @@
+/* =============================================================================
+   TITLEBAR MODE PILL — one centered segmented control for every screen mode.
+   Flat: no borders, no shadows. The track is a faint foreground tint; the
+   active segment is an accent-tinted fill that slides between items.
+   High contrast strengthens fills (never outlines) and inverts the active
+   segment to a solid accent.
+   ============================================================================= */
+
+.rox-mode-pill {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  height: 26px;
+  padding: 2px;
+  border: 0;
+  border-radius: 9px;
+  box-shadow: none;
+  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+  font-family: var(--font-sans);
+  font-size: var(--chrome-font-size, 12px);
+  letter-spacing: var(--chrome-tracking, normal);
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.rox-mode-pill-item {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: color-mix(in oklch, var(--foreground) 62%, transparent);
+  font: inherit;
+  cursor: default;
+  outline: none;
+  transition: color 140ms ease, background-color 140ms ease;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.rox-mode-pill-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.rox-mode-pill-item:not([aria-disabled="true"]):not([aria-current="page"]):hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+}
+
+.rox-mode-pill-item[aria-current="page"] {
+  color: var(--accent);
+}
+
+.rox-mode-pill-item[aria-disabled="true"] {
+  color: color-mix(in oklch, var(--foreground) 32%, transparent);
+  cursor: not-allowed;
+}
+
+.rox-mode-pill-item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--focus, var(--accent));
+}
+
+.rox-mode-pill[data-collapsed] .rox-mode-pill-item {
+  width: 28px;
+  padding: 0;
+}
+
+.rox-mode-pill-indicator {
+  position: absolute;
+  z-index: 0;
+  top: 2px;
+  left: 0;
+  height: 22px;
+  border-radius: 7px;
+  background: color-mix(in oklch, var(--accent) 16%, transparent);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.rox-mode-pill-indicator[data-visible] {
+  opacity: 1;
+}
+
+.rox-mode-pill[data-ready] .rox-mode-pill-indicator {
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    width 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rox-mode-pill[data-ready] .rox-mode-pill-indicator,
+  .rox-mode-pill-item {
+    transition: none;
+  }
+}
+
+/* Off-screen measuring copies (full + icon-only) for the collapse decision. */
+.rox-mode-pill-ghost {
+  position: absolute;
+  top: 0;
+  left: -10000px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Centered in the WINDOW (not the space between the side groups). */
+.rox-mode-pill-anchor {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  z-index: 1;
+}
+
+html[data-contrast="high"] .rox-mode-pill {
+  background: color-mix(in oklch, var(--foreground) 11%, transparent);
+}
+
+html[data-contrast="high"] .rox-mode-pill-item {
+  color: color-mix(in oklch, var(--foreground) 90%, transparent);
+}
+
+html[data-contrast="high"] .rox-mode-pill-item[aria-disabled="true"] {
+  color: color-mix(in oklch, var(--foreground) 50%, transparent);
+}
+
+html[data-contrast="high"] .rox-mode-pill-item:not([aria-disabled="true"]):not([aria-current="page"]):hover {
+  background: color-mix(in oklch, var(--foreground) 14%, transparent);
+}
+
+html[data-contrast="high"] .rox-mode-pill-indicator {
+  background: var(--accent);
+}
+
+html[data-contrast="high"] .rox-mode-pill-item[aria-current="page"] {
+  color: var(--background);
+}
+
+/* Session cost chip (icon + value) in the titlebar's right group. */
+.rox-titlebar-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  color: color-mix(in oklch, var(--foreground) 55%, transparent);
+  font-family: var(--font-sans);
+  font-size: var(--chrome-font-size-sm, 11px);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.rox-titlebar-cost:hover {
+  color: var(--foreground);
+  background: color-mix(in oklch, var(--foreground) 5%, transparent);
+}
+
+html[data-contrast="high"] .rox-titlebar-cost {
+  color: color-mix(in oklch, var(--foreground) 90%, transparent);
+}

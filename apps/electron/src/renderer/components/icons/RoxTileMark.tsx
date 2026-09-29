@@ -1,6 +1,6 @@
-import tile18 from "@/assets/rox-mark-tile-18.png"
-import tile36 from "@/assets/rox-mark-tile-36.png"
-import tile54 from "@/assets/rox-mark-tile-54.png"
+import mark18 from "@/assets/rox-mark-portrait-18.png"
+import mark36 from "@/assets/rox-mark-portrait-36.png"
+import mark54 from "@/assets/rox-mark-portrait-54.png"
 
 interface RoxTileMarkProps {
   className?: string
@@ -9,20 +9,21 @@ interface RoxTileMarkProps {
 }
 
 /**
- * Small Rox app mark for chrome (titlebar / app menu trigger): the app icon's
- * rounded-square plate with the portrait, rendered from size-tuned 1x/2x/3x
- * rasters so it stays crisp instead of downscaling the large avatar.
+ * Small Rox app mark for chrome (titlebar / app menu trigger): the bare
+ * portrait on a transparent background (no plate), cropped to the head from
+ * the transparent brand master and rendered from size-tuned 1x/2x/3x rasters
+ * so it stays crisp instead of downscaling the large artwork.
  */
 export function RoxTileMark({ className, size = 18 }: RoxTileMarkProps) {
   return (
     <img
-      src={tile36}
-      srcSet={`${tile18} 1x, ${tile36} 2x, ${tile54} 3x`}
+      src={mark36}
+      srcSet={`${mark18} 1x, ${mark36} 2x, ${mark54} 3x`}
       alt="Rox"
       width={size}
       height={size}
       className={className}
-      style={{ width: size, height: size, flexShrink: 0 }}
+      style={{ width: size, height: size, flexShrink: 0, background: "transparent" }}
       draggable={false}
     />
   )

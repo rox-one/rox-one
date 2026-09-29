@@ -4883,6 +4883,7 @@
   "workbench.status.runs_many": "{{count}} uruchomień",
   "workbench.status.runs_one": "{{count}} uruchomienie",
   "workbench.status.runs_other": "{{count}} uruchomień",
+  "workbench.status.sessionCostTooltip": "Koszt bieżącej sesji",
   "workbench.status.syncOk": "Sync OK",
   "workbench.status.usagePlaceholder": "Użycie",
   "workflows.confirm": "Potwierdź przed uruchomieniem",

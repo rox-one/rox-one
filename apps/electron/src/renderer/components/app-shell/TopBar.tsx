@@ -25,7 +25,7 @@ import {
   StyledDropdownMenuSeparator,
 } from "@/components/ui/styled-dropdown"
 import type { SettingsMenuItem } from "../../../shared/menu-schema"
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { BrowserTabStrip } from "../browser/BrowserTabStrip"
 import type { Workspace } from "../../../shared/types"
@@ -52,7 +52,8 @@ import {
 import { focusedSessionIdAtom } from "@/atoms/panel-stack"
 import { sessionMetaMapAtom } from "@/atoms/sessions"
 import { formatCostUsd } from "./input/turn-progress"
-import { ModeBar } from "@/platform/ModeBar"
+import { ModeBar, type ModeBarMetrics } from "@/platform/ModeBar"
+import { resolveModePillLayout } from "./mode-pill-layout"
 import { resolveWorkbenchChrome } from "@/platform/workbench-chrome"
 import { resolveBottomTerminalToggle } from "@/platform/inspector-model"
 import { WORKBENCH_FLAG } from "@craft-agent/core/platform"
@@ -152,6 +153,50 @@ export function TopBar({
     statusBar: false,
   })
 
+  const showModePill = chrome.showModeBar && !isCompact
+  const topbarRef = useRef<HTMLDivElement | null>(null)
+  const leftFixedRef = useRef<HTMLDivElement | null>(null)
+  const [modePillMetrics, setModePillMetrics] = useState<ModeBarMetrics | null>(null)
+  const [modePillLayout, setModePillLayout] = useState<{ collapsed: boolean; leftMax: number } | null>(null)
+  const handleModePillMeasure = useCallback((metrics: ModeBarMetrics) => {
+    setModePillMetrics((prev) => (prev && prev.full === metrics.full && prev.compact === metrics.compact ? prev : metrics))
+  }, [])
+
+  useEffect(() => {
+    if (!showModePill || !modePillMetrics) {
+      setModePillLayout(null)
+      return
+    }
+    const root = topbarRef.current
+    if (!root) return
+    let frame = 0
+    const update = () => {
+      const rootRect = root.getBoundingClientRect()
+      const leftFixed = leftFixedRef.current?.getBoundingClientRect()
+      const next = resolveModePillLayout({
+        topbarWidth: rootRect.width,
+        leftInset,
+        leftFixedEdge: leftFixed ? leftFixed.right - rootRect.left : 0,
+        rightWidth: rightSlotRef.current?.getBoundingClientRect().width ?? 0,
+        metrics: modePillMetrics,
+      })
+      setModePillLayout((prev) => (prev && prev.collapsed === next.collapsed && prev.leftMax === next.leftMax ? prev : next))
+    }
+    const schedule = () => {
+      if (frame) cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(update)
+    }
+    const observer = new ResizeObserver(schedule)
+    observer.observe(root)
+    if (leftFixedRef.current) observer.observe(leftFixedRef.current)
+    if (rightSlotRef.current) observer.observe(rightSlotRef.current)
+    update()
+    return () => {
+      if (frame) cancelAnimationFrame(frame)
+      observer.disconnect()
+    }
+  }, [showModePill, modePillMetrics, leftInset])
+
   const goBackHotkey = useActionLabel('nav.goBackAlt').hotkey
   const goForwardHotkey = useActionLabel('nav.goForwardAlt').hotkey
   const inspectorOpen = inspectorVisible && !inspectorChromeCollapsed && !inspectorAutoCollapsed
@@ -246,6 +291,7 @@ export function TopBar({
 
   return (
     <div
+      ref={topbarRef}
       className="chrome-topbar fixed top-0 right-0 z-panel titlebar-drag-region"
       data-shell-role="chrome"
       style={{ left: leftInset, height: 'var(--topbar-height)' }}
@@ -263,7 +309,12 @@ export function TopBar({
       ) : (
       <div
         className="pointer-events-auto flex min-w-0 flex-1 items-center gap-0.5"
-        style={{ paddingLeft: menuLeftPadding, paddingRight: isCompact ? 8 : 0 }}
+        style={{
+          paddingLeft: menuLeftPadding,
+          paddingRight: isCompact ? 8 : 0,
+          // Never slide under the centered mode pill.
+          maxWidth: showModePill && modePillLayout ? modePillLayout.leftMax : undefined,
+        }}
       >
         <div className="flex items-center gap-0.5">
         {!isCompact && (
@@ -296,7 +347,7 @@ export function TopBar({
             drill-in chevron in PanelHeader plus the browser's native back gesture
             cover that affordance, and the freed width lets the workspace pill
             actually fit on phone-width viewports. */}
-        <div className={cn(
+        <div ref={leftFixedRef} className={cn(
           "ml-1 flex min-w-0 items-center gap-1",
           isCompact
             ? "w-[clamp(108px,32vw,180px)] shrink-0"
@@ -347,12 +398,6 @@ export function TopBar({
             className="ml-2 flex min-w-0 max-w-[45%] shrink items-center empty:hidden"
             data-topbar-slot="surface-tabs"
           />
-        )}
-
-        {chrome.showModeBar && !isCompact && (
-          <div className="ml-2 min-w-0 flex-1">
-            <ModeBar />
-          </div>
         )}
 
         {isCompact && compactHeaderRenderer && (
@@ -493,10 +538,26 @@ export function TopBar({
       </div>
       )}
       </div>
+
+      {/* === CENTER: one segmented pill for every screen mode, centered in
+          the window (not between the side groups). The anchor stays in the
+          drag region; the pill itself is no-drag. === */}
+      {showModePill && (
+        <div
+          className="rox-mode-pill-anchor"
+          style={{ left: `calc(50% - ${leftInset / 2}px)`, visibility: modePillLayout ? undefined : 'hidden' }}
+        >
+          <ModeBar collapsed={modePillLayout?.collapsed ?? false} onMeasure={handleModePillMeasure} />
+        </div>
+      )}
     </div>
   )
 }
 
+/**
+ * Focused-session cost as a compact icon + value. Hidden when there is no
+ * cost to show (the old "Presence"/"Usage" text placeholders were inert).
+ */
 function TopBarUsageSlot() {
   const { t } = useTranslation()
   const chatChromeEnabled = useAtomValue(featureWorkbenchHarnessChatChromeV1Atom)
@@ -505,14 +566,22 @@ function TopBarUsageSlot() {
   const costLabel = chatChromeEnabled
     ? formatCostUsd(focusedSessionId ? sessionMetaMap.get(focusedSessionId)?.tokenUsage?.costUsd : undefined)
     : null
+  if (!costLabel) return null
+  const tooltip = t("workbench.status.sessionCostTooltip")
   return (
-    <div className="chrome-label-sm mr-1 hidden items-center gap-1.5 text-muted-foreground/50 sm:flex">
-      <span>{t("workbench.presence.placeholder")}</span>
-      <span data-testid="topbar-session-cost">
-        {costLabel
-          ? t("workbench.status.cost", { amount: costLabel })
-          : t("workbench.status.usagePlaceholder")}
-      </span>
-    </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="rox-titlebar-cost titlebar-no-drag mr-1"
+          data-testid="topbar-session-cost"
+          aria-label={`${tooltip}: ${costLabel}`}
+          role="status"
+        >
+          <Icons.Coins className="h-3.5 w-3.5 shrink-0" strokeWidth={1.5} aria-hidden />
+          <span>{t("workbench.status.cost", { amount: costLabel })}</span>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom">{tooltip}</TooltipContent>
+    </Tooltip>
   )
 }

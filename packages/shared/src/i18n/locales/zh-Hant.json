@@ -4877,6 +4877,7 @@
   "workbench.status.runs_many": "{{count}} 次執行",
   "workbench.status.runs_one": "{{count}} 次執行",
   "workbench.status.runs_other": "{{count}} 次執行",
+  "workbench.status.sessionCostTooltip": "目前工作階段費用",
   "workbench.status.syncOk": "同步正常",
   "workbench.status.usagePlaceholder": "用量",
   "workflows.confirm": "執行前確認",

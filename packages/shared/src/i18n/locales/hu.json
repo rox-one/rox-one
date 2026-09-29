@@ -4877,6 +4877,7 @@
   "workbench.status.runs_many": "{{count}} futtatás",
   "workbench.status.runs_one": "{{count}} futtatás",
   "workbench.status.runs_other": "{{count}} futtatás",
+  "workbench.status.sessionCostTooltip": "Az aktív munkamenet költsége",
   "workbench.status.syncOk": "Szinkron OK",
   "workbench.status.usagePlaceholder": "Használat",
   "workflows.confirm": "Megerősítés futtatás előtt",
