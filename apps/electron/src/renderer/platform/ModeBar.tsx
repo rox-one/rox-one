@@ -23,12 +23,14 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useAtomValue } from 'jotai'
 import { isModeNavigable, type ModeContribution } from '@craft-agent/core/platform'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@craft-agent/ui'
 import { useNavigation, useNavigationState } from '@/contexts/NavigationContext'
 import type { Route } from '../../shared/routes'
 import { getModeRegistry } from './mode-registry-bootstrap'
-import { CORE_MODES } from './modes-seed'
+import { CORE_MODES, resolveSeededModes } from './modes-seed'
+import { modeScreenFlagsAtom } from '@/atoms/mode-flags'
 
 const MODE_ICONS: Record<string, LucideIcon> = {
   BookOpen,
@@ -119,7 +121,8 @@ function PillItems({
 export function ModeBar({ collapsed = false, onMeasure }: ModeBarProps = {}) {
   const { t, i18n } = useTranslation()
   const navState = useNavigationState()
-  const modes = getModeRegistry().list()
+  const flags = useAtomValue(modeScreenFlagsAtom)
+  const modes = resolveSeededModes(getModeRegistry().list(), flags)
   const activeId = modes.find((mode) => seedById.get(mode.id)?.isActive(navState))?.id ?? null
 
   const navRef = useRef<HTMLElement | null>(null)

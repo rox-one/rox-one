@@ -41,6 +41,7 @@ import { registerEnvironmentHandlers } from './environment'
 import { registerProjectsHandlers } from './projects'
 import { registerPagesHandlers } from './pages'
 import { registerKanbanHandlers } from './kanban'
+import { registerPersonalTasksHandlers } from './personal-tasks'
 import { registerCollectionHandlers } from './collection'
 
 import { registerSkillsHandlers } from './skills'
@@ -113,6 +114,7 @@ export function registerCoreRpcHandlers(
   registerProjectsHandlers(server, deps)
   registerPagesHandlers(server, deps)
   registerKanbanHandlers(server, deps)
+  registerPersonalTasksHandlers(server, deps)
   registerCollectionHandlers(server, deps)
 
   registerSkillsHandlers(server, deps)

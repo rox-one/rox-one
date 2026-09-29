@@ -802,6 +802,13 @@ export const CHANNEL_MAP = {
   regeneratePageThumbnail: invoke(RPC_CHANNELS.pages.REGENERATE_THUMBNAIL),
   onPagesChanged: listener(RPC_CHANNELS.pages.CHANGED),
 
+  // Personal tasks (config-dir persist)
+  personalTasksList: invoke(RPC_CHANNELS.personalTasks.LIST),
+  personalTasksPut: invoke(RPC_CHANNELS.personalTasks.PUT),
+  personalTasksDelete: invoke(RPC_CHANNELS.personalTasks.DELETE),
+  personalTasksMigrate: invoke(RPC_CHANNELS.personalTasks.MIGRATE),
+  onPersonalTasksChanged: listener(RPC_CHANNELS.personalTasks.CHANGED),
+
   // Kanban board config
   getKanbanConfig: invoke(RPC_CHANNELS.kanban.GET_CONFIG),
   enrichMindMap: invoke(RPC_CHANNELS.mindmap.ENRICH),

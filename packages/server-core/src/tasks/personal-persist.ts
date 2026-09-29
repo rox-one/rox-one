@@ -16,9 +16,11 @@
  */
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
-import type { PersonalTask } from '@craft-agent/core/tasks/personal'
+import type { PersonalTask, PersonalTaskMeta, PersonalTaskMigrationMarker } from '@craft-agent/core/tasks/personal'
 
 const TASK_ID_RE = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/
+
+export type { PersonalTaskMeta, PersonalTaskMigrationMarker } from '@craft-agent/core/tasks/personal'
 
 export interface PersistedPersonalTask {
   task: PersonalTask
@@ -97,6 +99,72 @@ export class PersonalTaskPersistStore {
 
   list(): PersistedPersonalTask[] {
     return this.readAll().map((record) => ({ task: record.task, revision: record.revision }))
+  }
+
+  /** Remove one task file. Unknown/unsafe ids are a no-op (false). */
+  delete(id: string): boolean {
+    if (!TASK_ID_RE.test(id)) return false
+    const path = this.recordPath(id)
+    if (!existsSync(path)) return false
+    unlinkSync(path)
+    return true
+  }
+
+  /** {root}/personal-tasks-meta.json — projects/areas/headings/audit (fail-soft). */
+  readMeta(): PersonalTaskMeta | null {
+    const parsed = this.readJson(this.metaPath)
+    if (!isPlainRecord(parsed)) return null
+    const arr = (key: string) => (Array.isArray(parsed[key]) ? parsed[key] : [])
+    return {
+      projects: arr('projects') as PersonalTaskMeta['projects'],
+      areas: arr('areas') as PersonalTaskMeta['areas'],
+      headings: arr('headings') as PersonalTaskMeta['headings'],
+      audit: arr('audit') as PersonalTaskMeta['audit'],
+    }
+  }
+
+  writeMeta(meta: PersonalTaskMeta): void {
+    this.writeJsonAtomic(this.metaPath, {
+      projects: meta.projects ?? [],
+      areas: meta.areas ?? [],
+      headings: meta.headings ?? [],
+      // Audit is append-only history; keep it bounded on disk.
+      audit: (meta.audit ?? []).slice(-2000),
+    })
+  }
+
+  readMigration(): PersonalTaskMigrationMarker | null {
+    const parsed = this.readJson(this.migrationPath)
+    if (!isPlainRecord(parsed) || typeof parsed.migratedAt !== 'number') return null
+    return parsed as unknown as PersonalTaskMigrationMarker
+  }
+
+  writeMigration(marker: PersonalTaskMigrationMarker): void {
+    this.writeJsonAtomic(this.migrationPath, marker)
+  }
+
+  private get metaPath(): string {
+    return join(this.dir, '..', 'personal-tasks-meta.json')
+  }
+
+  private get migrationPath(): string {
+    return join(this.dir, '..', 'personal-tasks-migration.json')
+  }
+
+  private readJson(path: string): unknown {
+    try {
+      if (!existsSync(path)) return null
+      return JSON.parse(readFileSync(path, 'utf8'))
+    } catch {
+      return null
+    }
+  }
+
+  private writeJsonAtomic(path: string, value: unknown): void {
+    mkdirSync(join(this.dir, '..'), { recursive: true })
+    const tmp = `${path}.${Date.now()}-${process.pid}.tmp`
+    writeFileSync(tmp, `${JSON.stringify(value)}\n`)
+    renameSync(tmp, path)
   }
 
   private readRecord(id: string): PersistFile | null {
