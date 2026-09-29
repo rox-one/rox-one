@@ -251,8 +251,9 @@ export function LocalMeetingDetail(props: {
           onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
           className="min-w-0 flex-1 truncate rounded-[6px] bg-transparent px-1 -mx-1 text-[17px] font-semibold outline-none hover:bg-foreground/[0.04] focus:bg-foreground/[0.06]"
         />
-        {recordingThis ? <Badge tone="danger">● {t('meetings.local.recShort')}</Badge> : null}
-        <Badge tone={tr.tone}>{t(tr.key, { progress: m.transcript.progress })}</Badge>
+        {recordingThis
+          ? <Badge tone="danger">● {t('meetings.local.recShort')}</Badge>
+          : <Badge tone={tr.tone}>{t(tr.key, { progress: m.transcript.progress })}</Badge>}
       </div>
       <p className="pt-1 text-[12px] text-text-muted" data-testid="meeting-meta">
         {m.status === 'planned' && m.scheduledAt ? `${t('meetings.local.plannedFor')} ${dateFmt.format(m.scheduledAt)}` : dateFmt.format(meetingTime(m))}
@@ -283,7 +284,7 @@ export function LocalMeetingDetail(props: {
           >
             {playing ? <Pause className="size-3.5" aria-hidden /> : <Play className="size-3.5" aria-hidden />}
           </button>
-          <span className="shrink-0 font-mono text-[11px] tabular-nums text-text-muted">
+          <span className="shrink-0 text-[12px] tabular-nums text-text-muted">
             {formatDuration(playMs)} / {formatDuration(totalMs)}
           </span>
           <input
@@ -368,7 +369,7 @@ export function LocalMeetingDetail(props: {
         <dt className="text-text-muted">{t('meetings.local.ended')}</dt>
         <dd>{m.endedAt ? shortFmt.format(m.endedAt) : '—'}</dd>
         <dt className="text-text-muted">{t('meetings.local.duration')}</dt>
-        <dd className="tabular-nums">{m.durationMs ? formatDuration(m.durationMs) : '—'}</dd>
+        <dd className="tabular-nums">{recordingThis ? formatDuration(recordedMs(rec)) : m.durationMs ? formatDuration(m.durationMs) : '—'}</dd>
         <dt className="text-text-muted">{t('meetings.local.transcriptEngine')}</dt>
         <dd>{m.transcript.engine ? `${m.transcript.engine} · ${m.transcript.model ?? ''}${m.transcript.language ? ` · ${m.transcript.language}` : ''}` : '—'}</dd>
       </dl>
