@@ -14,7 +14,7 @@ describe('module home navigator parity (Memory/Tasks/Meetings/Projects/Pages)', 
   })
 
   it('hosts PagesHome-pattern surfaces in main content', () => {
-    expect(mainContentSource).toContain('MemoryListPanel')
+    expect(mainContentSource).toContain('MemoryScreen')
     expect(mainContentSource).toContain('TasksPage')
     expect(mainContentSource).toContain('MeetingsPage')
     expect(mainContentSource).toContain('PagesHome')

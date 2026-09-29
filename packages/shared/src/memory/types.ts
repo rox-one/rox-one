@@ -37,6 +37,19 @@ export interface Lesson {
   }
   /** true when written by distillation (vs an explicit user/branch rule). */
   generated?: boolean
+  // — Memory screen (all optional, additive; older files load unchanged). —
+  /** Always injected into agent context (ahead of recency), kept on prune. */
+  pinned?: boolean
+  /** Kept on disk but never injected into agent context. */
+  disabled?: boolean
+  /** Free-form user tags (lowercase, no '#'). */
+  tags?: string[]
+  /** Rules folded into this one by a user merge (provenance). */
+  mergedFrom?: string[]
+  /** ISO timestamps of the most recent prompt inclusions (capped, newest last). */
+  usedAt?: string[]
+  /** ISO timestamp of the last user edit of the rule text. */
+  editedAt?: string
 }
 
 /** One recorded violation of a lesson (spec F1). */
@@ -178,6 +191,8 @@ export const LESSON_LIMITS = {
   context: 50,
   /** max conflict events kept per lesson (spec F1: cap last 20) */
   conflicts: 20,
+  /** max injection timestamps kept per lesson (usage history) */
+  usedAt: 20,
 } as const
 
 export interface SkillCandidate {

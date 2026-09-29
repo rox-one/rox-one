@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
-import { MemoryListPanel } from './MemoryListPanel'
+import { MemoryScreen } from '../memory/MemoryScreen'
 import { ProjectsHomeInMain } from './ProjectsHomeInMain'
 import { MultiSelectPanel } from './MultiSelectPanel'
 import { CollectionBulkBar } from './collection/CollectionBulkBar'
@@ -276,7 +276,7 @@ export function MainContentPanel({
   if (isMemoryNavigation(navState)) {
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <MemoryListPanel workspaceId={activeWorkspaceId ?? undefined} />
+        <MemoryScreen workspaceId={activeWorkspaceId ?? undefined} />
       </Panel>
     )
   }

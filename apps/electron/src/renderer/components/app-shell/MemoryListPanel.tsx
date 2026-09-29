@@ -14,6 +14,8 @@ import { dedupeSimilarLessons } from '@/lib/lesson-dedupe'
 export interface MemoryListPanelProps {
   workspaceId?: string
   className?: string
+  /** 'files': only memory files (proposals, context, project, history, insights) — lessons live in MemoryScreen. */
+  variant?: 'full' | 'files'
 }
 
 const BUILTIN_CATEGORIES: LessonCategory[] = ['correction', 'preference', 'workflow', 'knowledge']
@@ -35,7 +37,8 @@ function sectionTitleClass(): string {
 // Rule identity across stores mirrors server-core lessonKey: trim + lowercase.
 const ruleKey = (rule: string): string => rule.trim().toLowerCase()
 
-export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps) {
+export function MemoryListPanel({ workspaceId, className, variant = 'full' }: MemoryListPanelProps) {
+  const lessonsUi = variant !== 'files'
   const { t } = useTranslation()
   const { navigate } = useNavigation()
 
@@ -525,6 +528,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
 
   return (
     <div className={`flex flex-col gap-2 px-1 pb-4 overflow-y-auto ${className ?? ''}`} data-list-role="memory">
+      {lessonsUi && (<>
       {/* Title row: Global left, Remember right */}
       <div className="mx-1 flex items-center gap-2 pt-1">
         <div className="min-w-0 flex-1 text-sm font-medium text-foreground">
@@ -541,6 +545,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
           </button>
         )}
       </div>
+      </>)}
 
       {workspaceId && proposals.filter((p) => p.status === 'pending' || p.status === 'approved_project').length > 0 && (
         <div className="mx-1 flex flex-col gap-2" data-memory-proposal-review>
@@ -551,6 +556,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
         </div>
       )}
 
+      {lessonsUi && (<>
       {/* Category tabs with counters */}
       <div className="mx-1 flex flex-wrap items-center gap-1">
         <button
@@ -613,9 +619,10 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
           </ul>
         </div>
       )}
+      </>)}
 
       {/* Remember form */}
-      {formOpen && (
+      {lessonsUi && formOpen && (
         <div className="mx-1 space-y-1.5 rounded-[8px] bg-foreground/[0.03] p-2">
           <textarea
             value={formRule}
@@ -714,8 +721,8 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
       )}
 
       {/* Lessons grouped by scope */}
-      {renderScopeGroup(t('memory.globalLessons'), filteredGlobal)}
-      {renderScopeGroup(t('memory.workspaceLessons'), filteredWorkspace)}
+      {lessonsUi && renderScopeGroup(t('memory.globalLessons'), filteredGlobal)}
+      {lessonsUi && renderScopeGroup(t('memory.workspaceLessons'), filteredWorkspace)}
 
       {/* Context — collapsible */}
       <div className="border-t border-foreground/5 pt-1.5">
@@ -830,7 +837,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
         </div>
       )}
 
-      {lessons.length === 0 && !formOpen && !preferences && !context && (
+      {(lessonsUi ? lessons.length === 0 : true) && !formOpen && !preferences && !context && (
         <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-muted-foreground">
           <Brain className="size-6 opacity-40" />
           <span className="text-sm">{t('memory.emptyHint')}</span>
