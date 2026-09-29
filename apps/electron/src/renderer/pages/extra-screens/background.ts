@@ -10,6 +10,8 @@ import i18n from 'i18next'
 import { extraScreenFlagAtoms } from '@/atoms/extra-screens'
 import { localDateKey, shouldRunDailySweep } from './radar/radar-model'
 import { loadRadar, runRadarSweep } from './radar/radar-store'
+import { loadFocusState, localDay as focusDay, type FocusState } from '@/lib/focus-session'
+import { collectDaySummary, writeDaySummary } from './focus/focus-summary'
 
 const CHECK_EVERY_MS = 10 * 60 * 1000
 const FIRST_CHECK_MS = 30 * 1000
@@ -49,8 +51,46 @@ export async function maybeRunDailyRadar(workspaceId: string, now = Date.now()):
   }
 }
 
+let focusSummaryInflight = false
+
+/** End-of-day summary: once per local day after `summaryHour` (null = manual only). */
+export function shouldAutoWriteSummary(state: Pick<FocusState, 'summaryHour' | 'summaryWrittenFor'>, now: number): boolean {
+  if (state.summaryHour == null) return false
+  if (new Date(now).getHours() < state.summaryHour) return false
+  return state.summaryWrittenFor !== focusDay(now)
+}
+
+export async function maybeWriteDaySummary(workspaceId: string, now = Date.now()): Promise<boolean> {
+  if (focusSummaryInflight || !shouldAutoWriteSummary(loadFocusState(), now)) return false
+  focusSummaryInflight = true
+  try {
+    const ru = (i18n.language ?? 'ru').startsWith('ru')
+    const { text, hasActivity } = await collectDaySummary(workspaceId, now, ru ? 'ru' : 'en', null)
+    // Nothing happened today — don't write an empty section.
+    if (!hasActivity) return false
+    await writeDaySummary(workspaceId, text, now)
+    return true
+  } catch (error) {
+    console.warn('[focus] day summary failed', error)
+    return false
+  } finally {
+    focusSummaryInflight = false
+  }
+}
+
 export function useExtraScreensBackground(workspaceId: string | null): void {
   const radarOn = useAtomValue(extraScreenFlagAtoms.radar)
+  const focusOn = useAtomValue(extraScreenFlagAtoms.focus)
+  useEffect(() => {
+    if (!workspaceId || !focusOn) return
+    const tick = () => { void maybeWriteDaySummary(workspaceId) }
+    const first = window.setTimeout(tick, FIRST_CHECK_MS * 2)
+    const timer = window.setInterval(tick, CHECK_EVERY_MS)
+    return () => {
+      window.clearTimeout(first)
+      window.clearInterval(timer)
+    }
+  }, [workspaceId, focusOn])
   useEffect(() => {
     if (!workspaceId || !radarOn) return
     const tick = () => { void maybeRunDailyRadar(workspaceId) }

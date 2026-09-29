@@ -9,6 +9,9 @@ import type { FeatureFlagDefinition } from './flags.ts';
 export const EXTRA_SCREEN_FLAG = {
   dossier: 'workbench.mode.dossier.v1',
   radar: 'workbench.mode.radar.v1',
+  decisions: 'workbench.mode.decisions.v1',
+  agents: 'workbench.mode.agents.v1',
+  focus: 'workbench.mode.focus.v1',
 } as const;
 
 export type ExtraScreenFlagId = (typeof EXTRA_SCREEN_FLAG)[keyof typeof EXTRA_SCREEN_FLAG];
