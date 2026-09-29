@@ -33,8 +33,15 @@ function normalizeTitleCasing(title: string): string {
  * Priority: custom name > first user message > preview (from metadata) > "New chat"
  * Works with both Session (full) and SessionMeta (lightweight)
  */
+/** Imported transcript file stems (`2026-09-29T13-28-35-700Z_01a0…`) are ids, not titles. */
+const RAW_TRANSCRIPT_NAME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:-\d{3})?Z_[0-9a-f-]{8,}$/i
+
+export function isRawTranscriptName(name: string | undefined | null): boolean {
+  return typeof name === 'string' && RAW_TRANSCRIPT_NAME_RE.test(name.trim())
+}
+
 export function getSessionTitle(session: SessionLike | SessionMeta): string {
-  if (session.name) {
+  if (session.name && !isRawTranscriptName(session.name)) {
     return normalizeTitleCasing(session.name)
   }
 

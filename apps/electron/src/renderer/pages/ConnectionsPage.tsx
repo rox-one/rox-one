@@ -458,7 +458,7 @@ export default function ConnectionsPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
-      <div className="flex items-center gap-3 px-6 pt-5 pb-3">
+      <div className="mx-auto flex w-full max-w-4xl items-center gap-3 px-6 pt-5 pb-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-semibold text-foreground">{t('connections.title')}</h1>
           <p className="truncate text-sm text-muted-foreground">{t('connections.subtitle')}</p>
@@ -471,7 +471,7 @@ export default function ConnectionsPage() {
           {t('connections.connect')}
         </Button>
       </div>
-      <div role="tablist" aria-label={t('sidebar.connections')} className="flex gap-1 px-5 pb-2">
+      <div role="tablist" aria-label={t('sidebar.connections')} className="mx-auto flex w-full max-w-4xl gap-1 px-3 pb-2">
         {TABS.map((id) => (
           <button
             key={id}
@@ -714,7 +714,7 @@ export default function ConnectionsPage() {
                   <OverviewRow
                     key={row.id}
                     testId="connections-credential-row"
-                    icon={<span className="h-5 w-5 rounded-[5px] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{row.integrationId.slice(0, 1).toUpperCase()}</span>}
+                    icon={<span className="h-5 w-5 rounded-[6px] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{row.integrationId.slice(0, 1).toUpperCase()}</span>}
                     title={row.integrationId}
                     subtitle={[row.credentialRefId, row.storageMode, rowNote[row.id]].filter(Boolean).join(' · ')}
                     status={rowStatus[row.id] ?? 'pending'}

@@ -251,7 +251,7 @@ export function SourcesListPanel({
         onClick={() => void handleReindex()}
         disabled={reindexing || !activeWorkspaceId}
         className={cn(
-          'inline-flex h-7 items-center gap-1.5 rounded-[8px] border border-border/50 bg-background px-2.5',
+          'inline-flex h-7 items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2.5 hover:bg-foreground/[0.1]',
           'text-[11px] font-medium text-muted-foreground shadow-minimal',
           'hover:bg-foreground/[0.03] hover:text-foreground disabled:opacity-50',
         )}

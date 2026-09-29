@@ -195,6 +195,7 @@ import { dispatchFocusInputEvent } from "./input/focus-input-events"
 import { WebBrowserPanel } from "../browser/WebBrowserPanel"
 import { KnowledgeNavigator } from "../../knowledge/KnowledgeNavigator"
 import { buildNewDocumentCreateArgs, pickOpenNotebook } from "../../knowledge/knowledge-new-note"
+import { isScreenNavigation } from '../../../shared/types'
 
 /**
  * AppShellProps - Minimal props interface for AppShell component
@@ -232,6 +233,7 @@ export function shouldHideSessionsSidebar(navState: NavigationState): boolean {
     || isMeetingsNavigation(navState)
     || isInboxNavigation(navState)
     || isFeedNavigation(navState)
+    || isScreenNavigation(navState)
     || isNotesNavigation(navState)
     || isMemoryNavigation(navState)
     || isProjectsNavigation(navState)
@@ -565,7 +567,9 @@ function AppShellContent({
   const isMemoryView = isMemoryNavigation(navState)
   const isProjectsView = isProjectsNavigation(navState)
   // Mode screens (Входящие, Лента) render their own three panels too.
-  const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState)
+  // «Ещё» screens (Досье, Радар, Решения, Центр агентов, Фокус) do the same —
+  // without this the navigator column stayed mounted and empty beside them.
+  const isModeScreenView = isInboxNavigation(navState) || isFeedNavigation(navState) || isScreenNavigation(navState)
   const hideModuleMiddleNav =
     isMemoryView || isTasksView || isMeetingsView || isProjectsView || isPagesView || isModeScreenView
 
@@ -2892,7 +2896,7 @@ function AppShellContent({
               data-shell-role="chrome"
             >
             <PanelHeader
-                title={isSidebarVisible ? listTitle : undefined}
+                title={listTitle}
                 compensateForStoplight={!isSidebarVisible}
                 badge={automationFilter?.automationType === 'scheduled' ? (
                 <Tooltip>

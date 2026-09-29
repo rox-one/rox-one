@@ -26,7 +26,7 @@ export function CalendarConnectorChips({
             type="button"
             disabled={!wired}
             className={cn(
-              'rounded-full border border-foreground/10 px-2 py-0.5',
+              'rounded-full bg-foreground/[0.05] px-2 py-0.5',
               !wired && 'cursor-not-allowed opacity-50',
             )}
             onClick={() => {

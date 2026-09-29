@@ -127,7 +127,7 @@ export function PagesHome() {
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Sticky header: title + count, project filter, primary action */}
-      <div className="flex items-center justify-between gap-2 border-b border-border/50 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-2 px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="text-sm font-medium">{t('sidebar.pages')}</span>
           <span className="text-xs text-foreground/40">{pages.length}</span>
@@ -144,7 +144,7 @@ export function PagesHome() {
           type="button"
           onClick={handleCreatePage}
           disabled={!activeWorkspaceId}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.03] disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
         >
           <Plus className="h-3.5 w-3.5" strokeWidth={2.5} /> {t('pages.newPage')}
         </button>

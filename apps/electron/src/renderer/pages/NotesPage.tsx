@@ -419,7 +419,7 @@ function FolderTreeItem({
             <ContextMenuTrigger asChild>
               <div
                 className={cn(
-                  'mb-0.5 flex h-7 cursor-pointer items-center gap-1 rounded-[5px] pr-2 text-sm font-medium text-muted-foreground hover:bg-foreground/[0.04]',
+                  'mb-0.5 flex h-7 cursor-pointer items-center gap-1 rounded-[6px] pr-2 text-sm font-medium text-muted-foreground hover:bg-foreground/[0.04]',
                   isOver && 'ring-2 ring-primary/40 bg-primary/[0.06]'
                 )}
                 style={{ paddingLeft: `${8 + indent}px` }}
@@ -1765,7 +1765,7 @@ h1,h2,h3{margin-top:1.5em}
           key={note.id}
           onClick={() => completeWikiLink(note)}
           className={cn(
-            'w-full rounded-[5px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]',
+            'w-full rounded-[6px] px-2 py-1.5 text-left hover:bg-foreground/[0.06]',
             wikiMatches[wikiIndex]?.id === note.id && 'bg-foreground/[0.08]'
           )}
         >
@@ -1778,7 +1778,7 @@ h1,h2,h3{margin-top:1.5em}
           data-testid="notes-wiki-create"
           onClick={() => { void completeWikiCreate(wikiCreateLabel) }}
           className={cn(
-            'mt-1 flex w-full items-center gap-2 rounded-[5px] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
+            'mt-1 flex w-full items-center gap-2 rounded-[6px] border-t border-border/60 px-2 py-1.5 text-left text-xs hover:bg-foreground/[0.06]',
             wikiCreateSelected && 'bg-foreground/[0.08]',
           )}
         >
@@ -1829,32 +1829,32 @@ h1,h2,h3{margin-top:1.5em}
                 className="h-7 w-full rounded-[6px] border-0 bg-foreground/[0.06] pl-7 pr-2 text-xs outline-none placeholder:text-muted-foreground/70 focus:bg-foreground/[0.09]"
               />
             </div>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')}>
+            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDaily()} title={t('notes.toolbar.daily')}>
               <CalendarDays className="h-4 w-4" />
             </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')}>
+            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => setCreateFolderDialogOpen(true)} title={t('notes.toolbar.newFolder')}>
               <FolderPlus className="h-4 w-4" />
             </button>
-            <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')}>
+            <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => openCreateNoteDialog()} title={t('notes.toolbar.newNote')}>
               <FilePlus2 className="h-4 w-4" />
             </button>
           </div>
           {allTags.length > 0 && (
-            <div className="mt-2 max-h-36 overflow-y-auto rounded-[6px] bg-foreground/[0.03] p-1">
+            <div className="mt-2 max-h-36 overflow-y-auto rounded-[10px] bg-foreground/[0.03] p-1">
               <button
                 className={cn(
-                  'flex w-full items-center rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                  'flex w-full items-center rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                   !selectedTag && 'bg-foreground/[0.08]'
                 )}
                 onClick={() => setSelectedTag(null)}
               >
-                All
+                {t('notes.tags.all')}
               </button>
               {allTags.map(tag => (
                 <button
                   key={tag}
                   className={cn(
-                    'flex w-full items-center rounded-[5px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
+                    'flex w-full items-center rounded-[6px] px-2 py-1 text-left text-[11px] hover:bg-foreground/[0.06]',
                     selectedTag === tag && 'bg-foreground/[0.08]'
                   )}
                   onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
@@ -1997,18 +1997,18 @@ h1,h2,h3{margin-top:1.5em}
           </div>
           {dailyDate && (
             <div className="mr-1 flex items-center gap-1">
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
+              <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(-1)} title={t('notes.toolbar.previousDaily')}>
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <span className="text-xs text-muted-foreground">{dailyDate}</span>
-              <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
+              <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={() => handleDailyShift(1)} title={t('notes.toolbar.nextDaily')}>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           )}
           <NotesAIMenu activeNote={activeNote} onAction={handleAskAgent} />
           <button
-            className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
+            className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40"
             onClick={() => void handleBoundChat()}
             disabled={!activeNote}
             title={t('notes.sideSession.newChat')}
@@ -2016,16 +2016,16 @@ h1,h2,h3{margin-top:1.5em}
           >
             <SquarePen className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title={t('notes.toolbar.attachAsset')}>
+          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleImportAsset} disabled={!activeNote} title={t('notes.toolbar.attachAsset')}>
             <Paperclip className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
+          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center disabled:opacity-40" onClick={handleExportPdf} disabled={!activeNote} title={t('notes.toolbar.exportPdf')}>
             <FileDown className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
+          <button className="h-7 w-7 rounded-[6px] hover:bg-foreground/[0.06] grid place-items-center" onClick={openRenameDialog} disabled={!activeNote} title={t('notes.toolbar.rename')}>
             <Pencil className="h-4 w-4" />
           </button>
-          <button className="h-7 w-7 rounded-[5px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
+          <button className="h-7 w-7 rounded-[6px] hover:bg-destructive/10 hover:text-destructive text-muted-foreground grid place-items-center disabled:opacity-40" onClick={() => setDeleteDialogOpen(true)} disabled={!activeNote} title={t('notes.toolbar.delete')}>
             <Trash2 className="h-4 w-4" />
           </button>
           <span className={cn('w-20 text-right text-[11px]', saveError ? 'text-destructive' : 'text-muted-foreground')} title={t('notes.save.autosaveHint')}>

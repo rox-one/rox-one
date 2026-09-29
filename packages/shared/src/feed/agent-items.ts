@@ -43,6 +43,17 @@ function clip(s: string | undefined, n = 200): string | undefined {
   return v.length > n ? `${v.slice(0, n - 1)}…` : v
 }
 
+/**
+ * Imported transcripts keep their file stem as `name`
+ * (`2026-09-29T13-28-35-700Z_01a0ed5a-5674-…`). That is an id, not a title:
+ * callers fall back to the first user message instead.
+ */
+export const RAW_TRANSCRIPT_NAME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:-\d{3})?Z_[0-9a-f-]{8,}$/i
+
+export function isRawTranscriptName(name: string | undefined | null): boolean {
+  return typeof name === 'string' && RAW_TRANSCRIPT_NAME_RE.test(name.trim())
+}
+
 export function buildSessionFeedItems(sessions: readonly FeedSessionLike[], limit = 150): FeedItem[] {
   return sessions
     .filter((s) => !s.hidden && !s.isArchived && Number.isFinite(s.lastMessageAt) && s.lastMessageAt > 0)
@@ -51,12 +62,13 @@ export function buildSessionFeedItems(sessions: readonly FeedSessionLike[], limi
     .filter((s) => !isInternalAgentPrompt(s.preview))
     .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
     .slice(0, limit)
-    .map((s) => ({
+    .map((s) => ({ s, name: isRawTranscriptName(s.name) ? undefined : s.name }))
+    .map(({ s, name }) => ({
       id: `session:${s.id}`,
       tab: 'agents' as const,
       kind: 'session' as const,
-      title: clip(s.name, 120) ?? clip(s.preview, 120) ?? '',
-      summary: clip(s.currentStatus?.message) ?? (s.name ? clip(s.preview) : undefined),
+      title: clip(name, 120) ?? clip(s.preview, 120) ?? '',
+      summary: clip(s.currentStatus?.message) ?? (name ? clip(s.preview) : undefined),
       at: s.lastMessageAt,
       status: sessionStatus(s),
       ref: { type: 'session' as const, id: s.id, ...(s.workspaceId ? { workspaceId: s.workspaceId } : {}) },

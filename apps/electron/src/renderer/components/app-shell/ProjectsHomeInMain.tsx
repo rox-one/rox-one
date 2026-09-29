@@ -59,7 +59,7 @@ export function ProjectsHomeInMain({
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex items-center justify-between gap-2 border-b border-border/50 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-2 px-4 py-2.5">
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="text-sm font-medium">{t('sidebar.allProjects')}</span>
           <span className="text-xs text-foreground/40">{projects.length}</span>
@@ -68,7 +68,7 @@ export function ProjectsHomeInMain({
           type="button"
           onClick={openAdd}
           disabled={!workspaceId}
-          className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.03] disabled:opacity-50"
+          className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-foreground/[0.06] px-2.5 text-[12.5px] font-semibold text-foreground transition-colors hover:bg-foreground/[0.1] disabled:opacity-50"
         >
           {t('projectsList.addProject')}
         </button>

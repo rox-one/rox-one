@@ -84,6 +84,12 @@ export interface BuildSurfaceTabViewsInput {
    * the generic panel label.
    */
   resolveKnowledgeTitle?: (ref: SurfaceKnowledgeRef) => string | null
+  /**
+   * Name a navigator panel by its route (Задачи, Встречи, Лента, Фокус…) so
+   * the tab matches the screen instead of the generic «Панель». Return null
+   * to keep the legacy label.
+   */
+  resolveRouteTitle?: (route: string) => string | null
   labels: SurfaceTabLabels
 }
 
@@ -101,7 +107,7 @@ function legacyPanelTitle(panelType: PanelType, labels: SurfaceTabLabels): strin
 }
 
 export function buildSurfaceTabViews(input: BuildSurfaceTabViewsInput): SurfaceTabView[] {
-  const { entries, focusedPanelId, resolveSessionTitle, resolveKnowledgeTitle, labels } = input
+  const { entries, focusedPanelId, resolveSessionTitle, resolveKnowledgeTitle, resolveRouteTitle, labels } = input
   return entries.map((entry) => {
     // Compute from the live route rather than the stamped `entry.panelType`
     // so route updates (updateFocusedPanelRouteAtom) stay reflected.
@@ -130,7 +136,7 @@ export function buildSurfaceTabViews(input: BuildSurfaceTabViewsInput): SurfaceT
     } else if (entry.route.split('?')[0] === 'home') {
       title = labels.home
     } else {
-      title = legacyPanelTitle(panelType, labels)
+      title = (panelType === 'other' ? resolveRouteTitle?.(entry.route) : null) ?? legacyPanelTitle(panelType, labels)
     }
     return {
       panelId: entry.id,

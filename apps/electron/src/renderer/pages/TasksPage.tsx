@@ -66,6 +66,7 @@ import {
   type AgentSessionLike,
   type AgentViewId,
 } from './tasks/task-model'
+import { getSessionTitle } from '@/utils/session'
 
 const NAV_FILTERS: TaskFilterId[] = ['inbox', 'today', 'upcoming', 'anytime', 'someday', 'logbook']
 const AGENT_VIEWS: AgentViewId[] = ['board', 'running', 'review', 'conductor']
@@ -463,7 +464,7 @@ export default function TasksPage(props: TasksPageProps = {}) {
       <ListRow key={session.id} onClick={() => openSession(session.id)} testId={`tasks-agent-session-${session.id}`}>
         <span aria-hidden className={cn('mt-1.5 size-1.5 shrink-0 rounded-full', session.isProcessing ? 'bg-success' : 'bg-text-muted')} />
         <div className="min-w-0 flex-1">
-          <div className="truncate">{session.name || session.preview || t('tasks.agents.untitled')}</div>
+          <div className="truncate">{session.name || session.preview ? getSessionTitle(session) : t('tasks.agents.untitled')}</div>
           <div className="truncate text-[11px] text-text-muted">
             {[session.sessionStatus ? t(`tasks.sessionStatus.${session.sessionStatus}`, { defaultValue: session.sessionStatus }) : null,
               session.isProcessing ? t('tasks.chip.running') : null].filter(Boolean).join(' · ')}

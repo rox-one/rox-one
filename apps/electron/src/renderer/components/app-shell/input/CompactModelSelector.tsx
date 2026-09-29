@@ -49,6 +49,7 @@ import { useModelVisionToggle } from './useModelVisionToggle'
 import { useAtomValue } from 'jotai'
 import { featureWorkbenchHarnessChatChromeV1Atom } from '@/atoms/unified-shell'
 import { formatCostUsd } from './turn-progress'
+import { ROX_PUBLIC_MODEL_DESCRIPTION_KEYS, isRoxPublicModelId } from '@craft-agent/shared/config'
 
 interface CompactModelSelectorProps {
   currentModel: string
@@ -362,10 +363,11 @@ export function CompactModelSelector({
                 ? stripPiPrefixForDisplay(getModelShortName(model))
                 : (model.name ?? stripPiPrefixForDisplay(model.id))
               const isSelected = currentModel === modelId
+              const bareId = modelId.replace(/^pi\//, '')
               const descriptionKey =
-                typeof model !== 'string' && 'descriptionKey' in model
-                  ? (model.descriptionKey as string)
-                  : undefined
+                (typeof model !== 'string' && 'descriptionKey' in model
+                  ? (model.descriptionKey as string | undefined)
+                  : undefined) ?? (isRoxPublicModelId(bareId) ? ROX_PUBLIC_MODEL_DESCRIPTION_KEYS[bareId] : undefined)
               const description = descriptionKey
                 ? t(descriptionKey)
                 : (typeof model !== 'string' && 'description' in model
