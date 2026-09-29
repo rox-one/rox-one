@@ -2047,16 +2047,17 @@ h1,h2,h3{margin-top:1.5em}
               {loading ? (
                 <div className="text-sm text-muted-foreground">{t('notes.empty.loading')}</div>
               ) : (
-                <div className="w-[360px] max-w-[calc(100%-48px)] rounded-[8px] border border-border/60 bg-muted/[0.16] p-4 text-center">
+                <div className="w-[420px] max-w-[calc(100%-48px)] p-4 text-center" data-notes-empty="">
                   <div className="text-sm font-medium">{t('notes.empty.noNote')}</div>
                   <div className="mt-1 text-xs text-muted-foreground">{t('notes.empty.noNoteHint')}</div>
-                  <div className="mt-3 flex justify-center gap-2">
+                  {/* Flat, wrapping action row: never wider than the empty state. */}
+                  <div className="mt-3 flex flex-wrap justify-center gap-1.5">
                     <Button variant="outline" size="sm" onClick={() => handleDaily()}>
                       <CalendarDays className="h-3.5 w-3.5" />
                       {t('notes.toolbar.daily')}
                     </Button>
                     <NotesImportButton workspaceId={activeWorkspaceId || undefined} onImported={() => void refreshNotes()} />
-                    <Button size="sm" onClick={() => openCreateNoteDialog()}>
+                    <Button variant="outline" size="sm" onClick={() => openCreateNoteDialog()}>
                       <FilePlus2 className="h-3.5 w-3.5" />
                       {t('notes.toolbar.newNote')}
                     </Button>

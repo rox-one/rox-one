@@ -46,10 +46,13 @@ describe('SecuritySnake semantics', () => {
     expect(source).toContain("t('security.snake.hint')")
   })
 
-  it('waits for a medium-width layout before seven columns and permits Russian labels to wrap', () => {
+  it('waits for a wide settings pane (container query) before seven columns and permits Russian labels to wrap', () => {
     const source = readFileSync(join(import.meta.dir, '..', 'security', 'SecuritySnake.tsx'), 'utf8')
 
-    expect(source).toContain('md:grid-cols-7')
+    expect(source).toContain('@container')
+    expect(source).toContain('@4xl:grid-cols-7')
+    expect(source).toContain('repeat(auto-fill,minmax(7.5rem,1fr))')
+    expect(source).not.toContain('md:grid-cols-7')
     expect(source).not.toContain('sm:grid-cols-7')
     expect(source).toContain('min-w-0')
     expect(source).toContain('break-words')
