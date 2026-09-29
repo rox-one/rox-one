@@ -3,6 +3,8 @@
  * Domain state stays in session storage; this only sorts a projection.
  */
 
+import { isInternalAgentSession } from '@craft-agent/shared/sessions/internal-prompts'
+
 export const HOME_RECENT_LIMIT = 8
 
 export interface HomeSessionLike {
@@ -12,6 +14,8 @@ export interface HomeSessionLike {
   lastMessageAt?: number
   createdAt?: number
   workspaceId?: string
+  name?: string
+  preview?: string
 }
 
 /** Match AppShell workspace lists, including remote workspace ids. */
@@ -33,6 +37,8 @@ export function pickRecentHomeSessions<T extends HomeSessionLike>(
 ): T[] {
   return sessions
     .filter((session) => !session.hidden && !session.isArchived)
+    // Rox-internal one-shot runs (memory distiller…) are not conversations.
+    .filter((session) => !isInternalAgentSession(session))
     .slice()
     .sort((a, b) => {
       const aAt = a.lastMessageAt ?? a.createdAt ?? 0

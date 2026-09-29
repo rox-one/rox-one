@@ -100,6 +100,7 @@
     "./sessions": "./src/sessions/index.ts",
     "./sessions/collection": "./src/sessions/collection.ts",
     "./sessions/journal-shadow": "./src/sessions/journal-shadow.ts",
+    "./sessions/internal-prompts": "./src/sessions/internal-prompts.ts",
     "./side-threads": "./src/side-threads/index.ts",
     "./skills": "./src/skills/index.ts",
     "./skills/types": "./src/skills/types.ts",

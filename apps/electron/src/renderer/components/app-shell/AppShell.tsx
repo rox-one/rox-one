@@ -1,5 +1,6 @@
 import * as React from "react"
 import { useTranslation, Trans } from "react-i18next"
+import { isInternalAgentSession } from "@craft-agent/shared/sessions/internal-prompts"
 import { useRef, useState, useEffect, useCallback, useMemo } from "react"
 import { useAtomValue, useStore } from "jotai"
 import { motion, AnimatePresence } from "motion/react"
@@ -1414,7 +1415,8 @@ function AppShellContent({
   // so we match against both the local and remote workspace IDs.
   const remoteWorkspaceId = activeWorkspace?.remoteServer?.remoteWorkspaceId
   const workspaceSessionMetas = useMemo(() => {
-    const metas = Array.from(sessionMetaMap.values())
+    // Rox-internal one-shot runs (memory distiller…) are not user sessions.
+    const metas = Array.from(sessionMetaMap.values()).filter(s => !isInternalAgentSession(s))
     if (!activeWorkspaceId) return metas.filter(s => !s.hidden)
     return metas.filter(s =>
       !s.hidden && (s.workspaceId === activeWorkspaceId || (remoteWorkspaceId && s.workspaceId === remoteWorkspaceId))

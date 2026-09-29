@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { isInternalAgentPrompt } from '../internal-prompts.ts'
+import { isInternalAgentPrompt, isInternalAgentSession } from '../internal-prompts.ts'
 import { convertForeignSource } from '../import-convert.ts'
 
 describe('internal agent prompts', () => {
@@ -12,6 +12,13 @@ describe('internal agent prompts', () => {
     expect(isInternalAgentPrompt('What is the memory distiller?')).toBe(false)
     expect(isInternalAgentPrompt('')).toBe(false)
     expect(isInternalAgentPrompt(undefined)).toBe(false)
+  })
+
+  it('flags a session row by its preview or its auto title', () => {
+    expect(isInternalAgentSession({ preview: 'You are the memory distiller for a coding agent. …' })).toBe(true)
+    expect(isInternalAgentSession({ name: 'You are the memory distiller for a coding agent.', preview: '' })).toBe(true)
+    expect(isInternalAgentSession({ name: 'Рефакторинг', preview: 'Помоги с кодом' })).toBe(false)
+    expect(isInternalAgentSession(undefined)).toBe(false)
   })
 
   it('an omp session whose first user turn is the distiller prompt converts to that text', () => {

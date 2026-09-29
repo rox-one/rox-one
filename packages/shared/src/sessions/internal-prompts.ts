@@ -18,3 +18,14 @@ export function isInternalAgentPrompt(text: string | null | undefined): boolean 
   const head = text.trimStart()
   return INTERNAL_PROMPT_PREFIXES.some((prefix) => head.startsWith(prefix))
 }
+
+/**
+ * True for a session row (SessionMeta-like) that is a Rox-internal one-shot
+ * run: its first user message (`preview`) or an auto title derived from it
+ * (`name`) starts with an internal prompt. Lists and counts (Главная, Сессии,
+ * Задачи, Входящие) hide these, like Лента does.
+ */
+export function isInternalAgentSession(session: { name?: string | null; preview?: string | null } | null | undefined): boolean {
+  if (!session) return false
+  return isInternalAgentPrompt(session.preview) || isInternalAgentPrompt(session.name)
+}
