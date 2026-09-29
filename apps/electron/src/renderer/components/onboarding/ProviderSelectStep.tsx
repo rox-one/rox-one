@@ -39,17 +39,15 @@ const PROVIDER_GROUPS: Array<{ id: 'rox' | 'subscriptions' | 'custom'; ids: Prov
 interface ProviderSelectStepProps {
   /** Called when the user selects a provider */
   onSelect: (choice: ProviderChoice) => void
-  /** Called when the user chooses to skip setup */
-  onSkip?: () => void
 }
 
 /**
- * ProviderSelectStep — First screen after install.
+ * ProviderSelectStep — «Добавить подключение» in Settings → ИИ.
  *
- * Welcomes the user and asks them to pick their subscription / auth method.
+ * Not part of first-run onboarding (new users get the Rox runtime by default).
  * Selecting a card immediately advances to the next step.
  */
-export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps) {
+export function ProviderSelectStep({ onSelect }: ProviderSelectStepProps) {
   const { t } = useTranslation()
 
   const PROVIDER_OPTIONS: ProviderOption[] = [
@@ -143,17 +141,6 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
           </div>
         ))}
       </div>
-
-      {onSkip && (
-        <div className="mt-4 text-center">
-          <button
-            onClick={onSkip}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            {t("onboarding.providerSelect.setupLater")}
-          </button>
-        </div>
-      )}
     </StepFormLayout>
   )
 }

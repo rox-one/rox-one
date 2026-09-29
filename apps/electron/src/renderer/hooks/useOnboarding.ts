@@ -2,12 +2,15 @@
  * useOnboarding Hook
  *
  * Manages the state machine for the onboarding wizard.
- * Flow:
- * 1. Welcome
- * 2. Git Bash (Windows only, if not found)
- * 3. API Setup (API Key / Claude OAuth)
- * 4. Credentials (API Key or Claude OAuth)
- * 5. Complete
+ *
+ * First run (initialStep 'welcome'):
+ * 1. Welcome — the only screen: username + «Начать»
+ * 2. Git Bash (Windows only, if not found) / Rox Connect (explicit startup gate only)
+ * 3. Finish — the Rox runtime becomes the default connection automatically and
+ *    the app opens. There is no provider picker or completion screen.
+ *
+ * Settings → ИИ (initialStep 'provider-select'): provider picker →
+ * credentials / local model → closes as soon as the connection is saved.
  */
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -23,11 +26,10 @@ import type {
   RoxConnectCodes,
 } from '@/components/onboarding'
 import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
-import type { EnvironmentPrefs } from '@craft-agent/shared/environment'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { OmpCredentialSubmitData } from '@/components/onboarding/OmpCredentialStep'
 import { nextStepAfterUsername } from '@/components/onboarding/onboarding-username'
-import { skipSetupLandingStep } from '@/components/onboarding/first-result-ui'
+import { ensureRoxRuntimeDefault } from '@/components/onboarding/rox-runtime-default'
 import type { ApiKeySubmitData, CustomEndpointModelInput } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
 import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
@@ -76,8 +78,6 @@ interface UseOnboardingOptions {
   editingSlug?: string | null
   /** Set of slugs already in use (for generating unique slugs when creating new) */
   existingSlugs?: Set<string>
-  /** First-run wizard asks environment questions; Settings provider edit skips them. */
-  includeEnvironmentQuestions?: boolean
 }
 
 interface UseOnboardingReturn {
@@ -124,11 +124,6 @@ interface UseOnboardingReturn {
   handleUseGitBashPath: (path: string) => void
   handleRecheckGitBash: () => void
   handleClearError: () => void
-
-  // Skip setup ("Setup later")
-  handleSkipSetup: () => void
-  handleSaveEnvironment: (prefs: EnvironmentPrefs, completeQuestionnaire: boolean) => void
-  handleSkipEnvironment: () => void
 
   // Completion
   handleFinish: () => void
@@ -254,11 +249,13 @@ export function useOnboarding({
   onConfigSaved,
   editingSlug = null,
   existingSlugs = new Set(),
-  includeEnvironmentQuestions = true,
 }: UseOnboardingOptions): UseOnboardingReturn {
   const { t } = useTranslation()
   const shouldApplyStartupGate = shouldApplyOnboardingLaunchGate(entryPoint, initialSetupNeeds)
-  const afterProviderStep: OnboardingStep = includeEnvironmentQuestions ? 'environment' : 'complete'
+  // A saved provider connection closes the wizard right away (no completion screen).
+  const afterProviderStep: OnboardingStep = 'complete'
+  // First run starts on the name screen; Settings starts on the provider picker.
+  const isFirstRun = initialStep === 'welcome'
 
   // Main wizard state
   const [state, setState] = useState<OnboardingState>({
@@ -283,11 +280,14 @@ export function useOnboarding({
   }, [initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
 
   // Seeded OMP connection without ~/.omp models / Rox key — one credential step.
+  // First run never stops on it: the name screen leads straight into the app and
+  // the Rox key can be added later in Settings → ИИ.
   useEffect(() => {
+    if (isFirstRun) return
     if (initialSetupNeeds?.needsOmpCredential && !initialSetupNeeds?.needsRoxCloud) {
       setState(s => (s.step === 'omp-credential' || s.step === 'welcome' ? s : { ...s, step: 'omp-credential' }))
     }
-  }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud])
+  }, [initialSetupNeeds?.needsOmpCredential, initialSetupNeeds?.needsRoxCloud, isFirstRun])
 
   // Check Git Bash on Windows at mount. If missing, redirect to git-bash step
   // regardless of the initial step (provider-select skips the welcome gate).
@@ -387,6 +387,19 @@ export function useOnboarding({
     }
   }, [state.apiSetupMethod, onConfigSaved, editingSlug, existingSlugs, t])
 
+  // First run: make the Rox runtime the default connection, then open the app.
+  // Never blocks — a failure only means the user picks a provider in Settings.
+  const finishFirstRun = useCallback(async () => {
+    setState(s => ({ ...s, isFinishing: true }))
+    const result = await ensureRoxRuntimeDefault(window.electronAPI)
+    if (result.status === 'failed') {
+      console.warn('[Onboarding] Could not set the Rox runtime as default:', result.error)
+    } else {
+      onConfigSaved?.()
+    }
+    setState(s => ({ ...s, isFinishing: false, step: 'complete', completionStatus: 'complete' }))
+  }, [onConfigSaved])
+
   // Continue to next step
   const handleContinue = useCallback(async () => {
     switch (state.step) {
@@ -399,7 +412,11 @@ export function useOnboarding({
           applyRoxConnectGate: Boolean(shouldApplyStartupGate && initialSetupNeeds?.needsRoxCloud),
           gitBashMissing: state.gitBashStatus?.platform === 'win32' && !state.gitBashStatus?.found,
         })
-        setState(s => ({ ...s, step: next }))
+        if (next === 'finish') {
+          void finishFirstRun()
+        } else {
+          setState(s => ({ ...s, step: next }))
+        }
         break
       }
 
@@ -408,7 +425,8 @@ export function useOnboarding({
         break
 
       case 'git-bash':
-        setState(s => ({ ...s, step: 'provider-select' }))
+        if (isFirstRun) void finishFirstRun()
+        else setState(s => ({ ...s, step: 'provider-select' }))
         break
 
       case 'local-model':
@@ -419,14 +437,11 @@ export function useOnboarding({
         // Handled by handleSubmitCredential
         break
 
-      case 'environment':
-        break
-
       case 'complete':
         onComplete()
         break
     }
-  }, [state.step, state.gitBashStatus, state.apiSetupMethod, onComplete, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate])
+  }, [state.step, state.gitBashStatus, onComplete, initialSetupNeeds?.needsRoxCloud, shouldApplyStartupGate, isFirstRun, finishFirstRun])
 
   // Go back to previous step. If at the initial step, call onDismiss instead.
   const handleBack = useCallback(() => {
@@ -460,9 +475,6 @@ export function useOnboarding({
         break
       case 'omp-credential':
         setState(s => ({ ...s, step: 'provider-select', credentialStatus: 'idle', errorMessage: undefined }))
-        break
-      case 'environment':
-        setState(s => ({ ...s, step: afterProviderStep === 'environment' ? 'complete' : 'provider-select' }))
         break
     }
   }, [state.step, state.gitBashStatus, initialStep, onDismiss])
@@ -635,6 +647,8 @@ export function useOnboarding({
   const [roxAuthBaseUrl, setRoxAuthBaseUrl] = useState('https://rox.one')
   const roxPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const roxPollGeneration = useRef(0)
+  const gitBashMissingRef = useRef(false)
+  gitBashMissingRef.current = state.gitBashStatus?.platform === 'win32' && state.gitBashStatus?.found === false
 
   const stopRoxConnectPoll = useCallback(() => {
     if (roxPollRef.current) {
@@ -692,12 +706,13 @@ export function useOnboarding({
           setRoxConnectStatus('success')
           setTimeout(() => {
             if (roxPollGeneration.current !== generation) return
-            setState(s => {
-              if (s.gitBashStatus?.platform === 'win32' && !s.gitBashStatus?.found) {
-                return { ...s, step: 'git-bash' }
-              }
-              return { ...s, step: 'provider-select' }
-            })
+            if (gitBashMissingRef.current) {
+              setState(s => ({ ...s, step: 'git-bash' }))
+            } else if (isFirstRun) {
+              void finishFirstRun()
+            } else {
+              setState(s => ({ ...s, step: 'provider-select' }))
+            }
           }, 400)
           return
         }
@@ -744,7 +759,7 @@ export function useOnboarding({
         visibleError(err instanceof Error ? err.message : undefined, t('onboarding.errors.connectFailed')),
       )
     }
-  }, [stopRoxConnectPoll, t])
+  }, [stopRoxConnectPoll, t, isFirstRun, finishFirstRun])
 
   const handleOpenRoxConnectBrowser = useCallback(async () => {
     const uri = roxConnectCodes?.verificationUriComplete
@@ -1074,15 +1089,16 @@ export function useOnboarding({
       setState(s => ({
         ...s,
         gitBashStatus: { ...s.gitBashStatus!, found: true, path },
-        step: 'provider-select',
+        ...(isFirstRun ? {} : { step: 'provider-select' as const }),
       }))
+      if (isFirstRun) void finishFirstRun()
     } else {
       setState(s => ({
         ...s,
         errorMessage: visibleError(result.error, t('onboarding.errors.invalidPath')),
       }))
     }
-  }, [t])
+  }, [t, isFirstRun, finishFirstRun])
 
   const handleRecheckGitBash = useCallback(async () => {
     setState(s => ({ ...s, isRecheckingGitBash: true }))
@@ -1093,51 +1109,17 @@ export function useOnboarding({
         gitBashStatus: status,
         isRecheckingGitBash: false,
         // If found, automatically continue to next step
-        step: status.found ? 'provider-select' : s.step,
+        step: status.found && !isFirstRun ? 'provider-select' : s.step,
       }))
+      if (status.found && isFirstRun) void finishFirstRun()
     } catch (error) {
       console.error('[Onboarding] Failed to recheck Git Bash:', error)
       setState(s => ({ ...s, isRecheckingGitBash: false }))
     }
-  }, [])
+  }, [isFirstRun, finishFirstRun])
 
   const handleClearError = useCallback(() => {
     setState(s => ({ ...s, errorMessage: undefined }))
-  }, [])
-
-  // Skip setup — user chose "Setup later". Still land on first-result;
-  // deferring cloud credentials must not skip the offline Note→Task chain.
-  const handleSkipSetup = useCallback(async () => {
-    try {
-      await window.electronAPI.deferSetup()
-    } catch (error) {
-      console.error('[Onboarding] Failed to defer setup:', error)
-    }
-    setState(s => ({ ...s, step: skipSetupLandingStep(), completionStatus: 'complete' }))
-  }, [])
-
-  const handleSaveEnvironment = useCallback(async (prefs: EnvironmentPrefs, completeQuestionnaire: boolean) => {
-    try {
-      await window.electronAPI.saveEnvironmentSetup({
-        ...prefs,
-        completeQuestionnaire,
-      })
-      if (prefs.notifications.status === 'answered' && typeof prefs.notifications.value === 'boolean') {
-        await window.electronAPI.setNotificationsEnabled(prefs.notifications.value)
-      }
-    } catch (error) {
-      console.error('[Onboarding] Failed to save environment:', error)
-    }
-    setState(s => ({ ...s, step: 'complete', completionStatus: 'complete' }))
-  }, [])
-
-  const handleSkipEnvironment = useCallback(async () => {
-    try {
-      await window.electronAPI.saveEnvironmentSetup({ completeQuestionnaire: true })
-    } catch (error) {
-      console.error('[Onboarding] Failed to skip environment:', error)
-    }
-    setState(s => ({ ...s, step: 'complete', completionStatus: 'complete' }))
   }, [])
 
   // Finish onboarding
@@ -1216,9 +1198,6 @@ export function useOnboarding({
     handleUseGitBashPath,
     handleRecheckGitBash,
     handleClearError,
-    handleSkipSetup,
-    handleSaveEnvironment,
-    handleSkipEnvironment,
     handleFinish,
     handleCancel,
     jumpToCredentials,

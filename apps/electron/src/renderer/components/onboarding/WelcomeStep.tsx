@@ -14,6 +14,8 @@ interface WelcomeStepProps {
   isExistingUser?: boolean
   /** Whether the app is loading (e.g., checking Git Bash on Windows) */
   isLoading?: boolean
+  /** First run: the default Rox runtime is being applied before the app opens */
+  isFinishing?: boolean
 }
 
 function persistOnboardingUsername(username: string): Promise<void> {
@@ -28,15 +30,17 @@ function persistOnboardingUsername(username: string): Promise<void> {
 }
 
 /**
- * WelcomeStep - Initial welcome screen for onboarding
+ * WelcomeStep - the only onboarding screen
  *
- * First-run collects a username (in-app DisplayName). Workspace name stays
- * the OS user/computer name. Existing-user settings edits skip the gate.
+ * First-run collects a username (in-app DisplayName), then «Начать» opens the
+ * app directly with the Rox runtime. Workspace name stays the OS
+ * user/computer name. Existing-user settings edits skip the gate.
  */
 export function WelcomeStep({
   onContinue,
   isExistingUser = false,
-  isLoading = false
+  isLoading = false,
+  isFinishing = false,
 }: WelcomeStepProps) {
   const { t } = useTranslation()
   const [username, setUsername] = useState("")
@@ -73,7 +77,7 @@ export function WelcomeStep({
       return
     }
     const parsed = parseOnboardingUsername(username)
-    if (!parsed || saving) return
+    if (!parsed || saving || isFinishing) return
     setSaving(true)
     setError(null)
     try {
@@ -95,8 +99,8 @@ export function WelcomeStep({
   }
 
   const continueDisabled = isExistingUser
-    ? isLoading
-    : isLoading || saving || !parseOnboardingUsername(username)
+    ? isLoading || isFinishing
+    : isLoading || isFinishing || saving || !parseOnboardingUsername(username)
 
   return (
     <StepFormLayout
@@ -116,8 +120,8 @@ export function WelcomeStep({
           onClick={() => void handleContinue()}
           className="w-full"
           disabled={continueDisabled}
-          loading={isLoading || saving}
-          loadingText={t("common.checking")}
+          loading={isLoading || saving || isFinishing}
+          loadingText={isFinishing ? t("onboarding.completion.settingUp") : t("common.checking")}
         >
           {isExistingUser ? t("onboarding.welcome.continue") : t("onboarding.welcome.getStarted")}
         </ContinueButton>

@@ -368,7 +368,8 @@ export function WorkspaceIconRail({
 										className={cn(
 											"group relative flex h-11 w-11 items-center justify-center rounded-[12px] transition-colors duration-150",
 											"focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-											selected ? "bg-foreground/12" : "hover:bg-foreground/7",
+											// No filled tile behind the (transparent) avatar: selection is the accent bar + ring.
+											!selected && "hover:bg-foreground/7",
 											disconnected && "opacity-60",
 										)}
 									>
@@ -388,12 +389,12 @@ export function WorkspaceIconRail({
 												"h-8 w-8 rounded-full ring-1 ring-border/60 transition-transform duration-150",
 												selected && "ring-2 ring-accent/55",
 											)}
-											fallbackClassName="bg-muted text-xs font-medium rounded-full"
+											fallbackClassName="bg-transparent text-xs font-medium rounded-full"
 											fallback={
 												<img
 													src={bundledRoxLogo}
 													alt=""
-													className="h-full w-full object-cover"
+													className="h-full w-full object-contain"
 												/>
 											}
 										/>

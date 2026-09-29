@@ -13,6 +13,8 @@ export const LEGACY_SEEDED_WORKSPACE_ICON_SHA256 = new Set<string>([
   '38a694c1cce7ba0594da42a704f2c9bf5b123ebdb3b5d006b2f62c341cfecc04',
   'aa9a0c2a92d65f8cb0dce9b359d6857e9e24e62749a289ecfb70e7bbce9386db',
   '47dbf62d365dc28e42ecc8fad63c132f6612ae55a1194909317b037b8484423f',
+  // Opaque dark-plate portrait avatar (resources/workspace-icon.png, #1043).
+  '5490cf31fb58056bf66fa7f27a18a6ba29e4860f47cbae3365d298f944602470',
 ])
 
 function sha256File(path: string): string {

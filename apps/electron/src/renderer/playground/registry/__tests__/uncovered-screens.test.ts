@@ -43,8 +43,9 @@ describe('uncovered playground screens', () => {
     expect(settings).toContain('QuestProgressCard')
     expect(onboarding).toContain("id: 'onboarding-reauth'")
     expect(onboarding).toContain('ReauthScreen')
-    expect(onboarding).toContain("id: 'onboarding-environment'")
-    expect(onboarding).toContain('EnvironmentSetupStep')
+    // First-run onboarding is the name screen only: no environment or completion step.
+    expect(onboarding).not.toContain('EnvironmentSetupStep')
+    expect(onboarding).not.toContain('CompletionStep')
     const chat = readFileSync(join(playground, 'registry/chat.tsx'), 'utf8')
     expect(chat).toContain("inputMode: 'credential'")
     expect(chat).toContain('sampleCredentialRequest')

@@ -4,11 +4,9 @@ import { ProviderSelectStep } from '@/components/onboarding/ProviderSelectStep'
 import { WelcomeStep } from '@/components/onboarding/WelcomeStep'
 import { APISetupStep } from '@/components/onboarding/APISetupStep'
 import { CredentialsStep } from '@/components/onboarding/CredentialsStep'
-import { CompletionStep } from '@/components/onboarding/CompletionStep'
 import { GitBashWarning, type GitBashStatus } from '@/components/onboarding/GitBashWarning'
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard'
 import { ReauthScreen } from '@/components/onboarding/ReauthScreen'
-import { EnvironmentSetupStep } from '@/components/onboarding/EnvironmentSetupStep'
 import type { OnboardingState } from '@/components/onboarding/OnboardingWizard'
 
 const createOnboardingState = (overrides: Partial<OnboardingState> = {}): OnboardingState => ({
@@ -31,7 +29,7 @@ export const onboardingComponents: ComponentEntry[] = [
     id: 'onboarding-flow-demo',
     name: 'Onboarding Flow (Interactive)',
     category: 'Onboarding',
-    description: 'Click through the full onboarding: Welcome → Provider → Credentials → Done',
+    description: 'Welcome (name) → app; provider setup lives in Settings → ИИ',
     component: OnboardingFlowDemo,
     props: [],
     variants: [],
@@ -41,13 +39,12 @@ export const onboardingComponents: ComponentEntry[] = [
     id: 'provider-select-step',
     name: 'ProviderSelectStep',
     category: 'Onboarding',
-    description: 'First-launch screen — pick your subscription or API key',
+    description: 'Settings → ИИ: pick a subscription, API key, or local model',
     component: ProviderSelectStep,
     props: [],
     variants: [],
     mockData: () => ({
       onSelect: (choice: string) => console.log('[Playground] Provider selected:', choice),
-      onSkip: () => console.log('[Playground] Setup deferred'),
     }),
   },
   {
@@ -281,34 +278,6 @@ export const onboardingComponents: ComponentEntry[] = [
     }),
   },
   {
-    id: 'completion-step',
-    name: 'CompletionStep',
-    category: 'Onboarding',
-    description: 'Success screen after completing onboarding',
-    component: CompletionStep,
-    props: [
-      {
-        name: 'status',
-        description: 'Completion status',
-        control: {
-          type: 'select',
-          options: [
-            { label: 'Saving', value: 'saving' },
-            { label: 'Complete', value: 'complete' },
-          ],
-        },
-        defaultValue: 'complete',
-      },
-    ],
-    variants: [
-      { name: 'Saving', props: { status: 'saving' } },
-      { name: 'Complete', props: { status: 'complete' } },
-    ],
-    mockData: () => ({
-      onFinish: noopHandler,
-    }),
-  },
-  {
     id: 'git-bash-warning',
     name: 'GitBashWarning',
     category: 'Onboarding',
@@ -406,21 +375,6 @@ export const onboardingComponents: ComponentEntry[] = [
           state: createOnboardingState({ step: 'credentials', apiSetupMethod: 'claude_oauth' }),
         },
       },
-      {
-        name: 'Complete - Saving',
-        props: {
-          state: createOnboardingState({ step: 'complete', completionStatus: 'saving' }),
-        },
-      },
-      {
-        name: 'Complete - Done',
-        props: {
-          state: createOnboardingState({
-            step: 'complete',
-            completionStatus: 'complete',
-          }),
-        },
-      },
     ],
     mockData: () => ({
       state: createOnboardingState(),
@@ -438,7 +392,6 @@ export const onboardingComponents: ComponentEntry[] = [
       onUseGitBashPath: (path: string) => console.log('[Playground] Use Git Bash path:', path),
       onRecheckGitBash: noopHandler,
       onClearError: noopHandler,
-      onSkipSetup: () => console.log('[Playground] Setup deferred'),
     }),
   },
   {
@@ -455,22 +408,6 @@ export const onboardingComponents: ComponentEntry[] = [
         console.log('[Playground] Reauth login')
       },
       onReset: noopHandler,
-    }),
-  },
-  {
-    id: 'onboarding-environment',
-    name: 'Environment setup',
-    category: 'Onboarding',
-    description: 'Optional environment questionnaire with PremiumMenuSelect agent-rule labels',
-    component: EnvironmentSetupStep,
-    props: [],
-    variants: [],
-    layout: 'full',
-    mockData: () => ({
-      onContinue: (prefs: unknown, complete: boolean) => {
-        console.log('[Playground] Environment continue', complete, prefs)
-      },
-      onSkip: noopHandler,
     }),
   },
 ]

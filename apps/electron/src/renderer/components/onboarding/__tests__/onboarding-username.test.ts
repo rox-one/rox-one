@@ -34,11 +34,11 @@ describe('nextStepAfterUsername', () => {
     })).toBe('git-bash')
   })
 
-  it('continues to provider select even when OMP setup is already complete', () => {
+  it('goes straight into the app (no provider picker) after the name', () => {
     expect(nextStepAfterUsername({
       applyRoxConnectGate: false,
       gitBashMissing: false,
-    })).toBe('provider-select')
+    })).toBe('finish')
   })
 })
 
@@ -57,13 +57,22 @@ describe('WelcomeStep username gate', () => {
 })
 
 describe('useOnboarding welcome advance', () => {
-  it('does not treat isFullyConfigured as wizard-complete and always shows the name field on Welcome', () => {
+  it('finishes the first run with the Rox runtime instead of a provider picker', () => {
     const source = readFileSync(join(import.meta.dir, '../../../hooks/useOnboarding.ts'), 'utf8')
     expect(source).toContain('nextStepAfterUsername')
     expect(source).not.toMatch(/nextStepAfterUsername\(\{[\s\S]*isFullyConfigured/)
-    expect(source).not.toMatch(/if \(next === 'complete'\)/)
+    expect(source).toMatch(/if \(next === 'finish'\)/)
+    expect(source).toContain('ensureRoxRuntimeDefault')
     expect(source).toContain("initialStep === 'welcome' ? false")
-    expect(source).toContain('skipSetupLandingStep')
+    expect(source).not.toContain('skipSetupLandingStep')
+    expect(source).not.toContain("step: 'environment'")
     expect(source).toContain('completionStatus: \'complete\'')
+  })
+
+  it('App opens onboarding only for an unconfirmed name', () => {
+    const app = readFileSync(join(import.meta.dir, '../../../App.tsx'), 'utf8')
+    expect(app).toContain("initialStep: 'welcome'")
+    expect(app).not.toContain("usernameConfirmed ? 'provider-select'")
+    expect(app).not.toMatch(/needs\.isFullyConfigured && usernameConfirmed/)
   })
 })
