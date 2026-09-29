@@ -24,8 +24,8 @@ describe('ship-rox-chrome-hygiene', () => {
     expect(inspectorHostSource).toContain('if (chromeCollapsed) {')
     expect(inspectorHostSource).not.toContain('return null')
     expect(inspectorHostSource).toContain('data-inspector="collapsed"')
-    // Expanded rail still hosts terminalControl once; collapsed strip must not duplicate it.
-    expect(inspectorHostSource.match(/\{terminalControl\}/g)).toHaveLength(1)
+    // One terminal entry point: the TopBar button (no rail duplicate).
+    expect(inspectorHostSource).not.toContain('{terminalControl}')
     expect(topBarSource).toContain('handleTopBarTerminalToggle')
     expect(topBarSource).toContain('data-testid="bottom-terminal-toggle"')
     expect(topBarSource).toContain('resolveBottomTerminalToggle')

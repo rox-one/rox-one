@@ -220,6 +220,20 @@ interface AppShellProps {
   workbenchOperatorCapability?: unknown
 }
 
+/** Screens that render full-width and do not use the sessions sidebar. */
+export function shouldHideSessionsSidebar(navState: NavigationState): boolean {
+  return isSettingsNavigation(navState)
+    || isHomeNavigation(navState)
+    || isTasksNavigation(navState)
+    || isMeetingsNavigation(navState)
+    || isNotesNavigation(navState)
+    || isMemoryNavigation(navState)
+    || isProjectsNavigation(navState)
+    || isPagesNavigation(navState)
+    || isKnowledgeNavigation(navState)
+    || isConnectionsNavigation(navState)
+}
+
 export function AppShell(props: AppShellProps) {
   // Wrap with EscapeInterruptProvider so AppShellContent can use useEscapeInterrupt
   return (
@@ -276,7 +290,7 @@ function AppShellContent({
   // Get hotkey labels from centralized action registry
   const newChatHotkey = useActionLabel('app.newChat').hotkey
 
-  const [isSidebarVisible, setIsSidebarVisible] = React.useState(() => {
+  const [storedSidebarVisible, setIsSidebarVisible] = React.useState(() => {
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
   // W1 unified shell: when the activity rail is mounted, the absolute sidebar
@@ -296,10 +310,19 @@ function AppShellContent({
   const inspectorVisible = useAtomValue(inspectorVisibleAtom)
   const bottomTerminalOpen = useAtomValue(bottomTerminalOpenAtom)
   const bottomDockHeight = useAtomValue(bottomDockHeightAtom)
-  const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 28) + PANEL_EDGE_INSET + 4
+  // Collapsed terminal has no bottom strip (the TopBar button is the entry point).
+  const terminalClearance = (bottomTerminalOpen ? bottomDockHeight : 0) + PANEL_EDGE_INSET + 4
   const unifiedRailOffset = (unifiedShellEnabled || topChromeEnabled || workbenchEnabled)
     ? (activityRailCollapsed ? ACTIVITY_RAIL_COLLAPSED_WIDTH : ACTIVITY_RAIL_WIDTH) + PANEL_GAP
     : 0
+  // The sessions sidebar (statuses / labels / views) is contextual to Chats:
+  // Settings and the full-width module screens hide it so their content is
+  // not squeezed. Only when the activity rail is mounted (it keeps navigation
+  // reachable). Display-only: the persisted visibility is untouched.
+  const earlyNavState = useNavigationState()
+  const routeHidesSessionsSidebar = (unifiedShellEnabled || topChromeEnabled)
+    && shouldHideSessionsSidebar(earlyNavState)
+  const isSidebarVisible = storedSidebarVisible && !routeHidesSessionsSidebar
   const [storedSidebarWidth, setSidebarWidth] = React.useState(() => {
     return loadShellLayout(null).sidebarWidth
   })
@@ -1659,8 +1682,8 @@ function AppShellContent({
 
   // Persist sidebar visibility to localStorage
   React.useEffect(() => {
-    storage.set(storage.KEYS.sidebarVisible, isSidebarVisible)
-  }, [isSidebarVisible])
+    storage.set(storage.KEYS.sidebarVisible, storedSidebarVisible)
+  }, [storedSidebarVisible])
 
   // Persist focus mode state to localStorage
   React.useEffect(() => {
