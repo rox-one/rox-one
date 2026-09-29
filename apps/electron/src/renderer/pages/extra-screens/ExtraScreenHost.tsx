@@ -16,6 +16,7 @@ const PAGES: Record<ExtraScreenId, React.LazyExoticComponent<React.ComponentType
   radar: React.lazy(() => import('./radar/RadarPage')),
   decisions: React.lazy(() => import('./decisions/DecisionsPage')),
   agents: React.lazy(() => import('./agents/AgentCenterPage')),
+  focus: React.lazy(() => import('./focus/FocusPage')),
 }
 
 export interface ExtraScreenHostProps {

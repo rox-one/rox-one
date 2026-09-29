@@ -11,6 +11,7 @@ export const EXTRA_SCREEN_FLAG = {
   radar: 'workbench.mode.radar.v1',
   decisions: 'workbench.mode.decisions.v1',
   agents: 'workbench.mode.agents.v1',
+  focus: 'workbench.mode.focus.v1',
 } as const;
 
 export type ExtraScreenFlagId = (typeof EXTRA_SCREEN_FLAG)[keyof typeof EXTRA_SCREEN_FLAG];
