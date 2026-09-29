@@ -951,23 +951,23 @@ function EditorInner({
             className="relative z-10 flex min-w-0 shrink-0 flex-nowrap items-center gap-2 overflow-x-auto px-3 py-1.5 text-[11px]"
           >
             <div className="flex min-w-0 flex-nowrap items-center gap-2">
-              <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
+              <span className="rounded-full bg-background/65 px-2 py-1 text-muted-foreground shadow-thin backdrop-blur-xl">
                 {t('entityView.flowLive')}
               </span>
               <span className="text-muted-foreground/80">· {graph.scenes.length + draftNodes.length}</span>
               {selected ? (
-                <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
+                <span className="rounded-full bg-background/65 px-2 py-1 text-muted-foreground shadow-thin backdrop-blur-xl">
                   {selectedKindLabel}
                 </span>
               ) : null}
               {selectedDraft ? (
-                <span className="rounded-full border border-white/10 bg-background/65 px-2 py-1 text-muted-foreground shadow-strong backdrop-blur-xl">
+                <span className="rounded-full bg-background/65 px-2 py-1 text-muted-foreground shadow-thin backdrop-blur-xl">
                   {t(SESSION_NODE_KIND_I18N[selectedDraft.kind])}
                 </span>
               ) : null}
             </div>
             <div className="ml-auto inline-flex min-w-0 flex-nowrap items-center justify-end gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl">
-              <div className="inline-flex rounded-full border border-border/70 bg-background/60 p-0.5">
+              <div className="inline-flex rounded-full bg-foreground/[0.04] p-0.5">
                 <Button
                   type="button"
                   size="sm"
@@ -999,7 +999,7 @@ function EditorInner({
                 type="button"
                 size="sm"
                 variant="outline"
-                className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                 onClick={() => {
                   flowRef.current?.fitView({ padding: 0.2 })
                 }}
@@ -1034,7 +1034,7 @@ function EditorInner({
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                    className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                     data-testid="map-toolbar-more"
                     aria-label={t('entityView.mapMoreActions')}
                   >
@@ -1103,7 +1103,7 @@ function EditorInner({
               </label>
               <textarea
                 id="session-map-compose"
-                className="min-h-[96px] w-full resize-y rounded-[16px] border border-white/10 bg-background/55 px-2.5 py-2 text-xs shadow-minimal outline-none ring-0 backdrop-blur-xl placeholder:text-muted-foreground/60 focus:border-violet-400/60"
+                className="min-h-[96px] w-full resize-y rounded-[16px] border border-transparent bg-background/55 px-2.5 py-2 text-xs shadow-minimal outline-none ring-0 backdrop-blur-xl placeholder:text-muted-foreground/60 focus:border-violet-400/60"
                 placeholder={t('entityView.mapComposePlaceholder')}
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
@@ -1120,7 +1120,7 @@ function EditorInner({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                  className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                   onClick={() => onFork?.(selected.triggerMessageId)}
                 >
                   {t('entityView.workbenchFork')}
@@ -1129,7 +1129,7 @@ function EditorInner({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                  className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                   onClick={() => setFanOutOpen(true)}
                 >
                   {t('entityView.fanOutShort')}
@@ -1138,7 +1138,7 @@ function EditorInner({
                   type="button"
                   size="sm"
                   variant="outline"
-                  className="h-7 rounded-full border-white/10 bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                  className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
                   disabled={!draft.trim()}
                   onClick={() => {
                     const prompt = draft.trim()
