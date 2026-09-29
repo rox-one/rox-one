@@ -36,7 +36,7 @@ export interface ForeignIndexEntry {
   cwd?: string
   userTurns: number
   mtimeMs?: number
-  skipReason?: 'empty'
+  skipReason?: 'empty' | 'internal'
 }
 
 export interface ConvertedForeignMessage {

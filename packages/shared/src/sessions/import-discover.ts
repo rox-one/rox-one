@@ -15,6 +15,7 @@ import {
 import { isSensitiveAgentCwd, splitForeignSourceRef } from './import-home.ts'
 import { foreignImportScanCachePath, loadForeignImportScanCacheFile } from './import-registry.ts'
 import type { ForeignDiscoverResult, ForeignIndexEntry, ForeignSessionKind } from './import-types.ts'
+import { isInternalAgentPrompt } from './internal-prompts.ts'
 
 export const MAX_SCAN_ENTRIES = 100_000
 export const MAX_SCAN_PER_KIND = 20_000
@@ -171,7 +172,11 @@ function toEntry(
     cwd,
     userTurns: converted.userTurns,
     mtimeMs: mtimeMs(sourcePath),
-    skipReason: converted.userTurns === 0 ? 'empty' : undefined,
+    skipReason: converted.userTurns === 0
+      ? 'empty'
+      : isInternalAgentPrompt(converted.messages.find((m) => m.role === 'user')?.content)
+        ? 'internal'
+        : undefined,
   }
 }
 

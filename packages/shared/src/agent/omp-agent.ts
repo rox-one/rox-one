@@ -2168,7 +2168,10 @@ export class OmpAgent extends BaseAgent {
     // default piped stdin makes omp read the prompt from stdin and wait for
     // EOF forever (title generation / one-shot completions hang to timeout).
     // We explicitly end stdin → omp treats the argv prompt as authoritative.
-    const args = model ? ['--model', model, '-p', prompt] : ['-p', prompt];
+    // --no-session: one-shots (titles, memory distillation, summaries) are
+    // internal — never persist them as OMP sessions, or the foreign auto
+    // importer brings them back as Rox sessions (Лента noise).
+    const args = model ? ['--no-session', '--model', model, '-p', prompt] : ['--no-session', '-p', prompt];
     this.debug('runOneShot: spawning -p child');
     return new Promise<string>((resolve, reject) => {
       const child = spawn(bin, args, { cwd, env });
