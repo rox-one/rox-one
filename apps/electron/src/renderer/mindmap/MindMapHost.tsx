@@ -739,7 +739,7 @@ export function MindMapHost({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('common.search')}
-            className="w-full h-8 rounded-[8px] border border-border/50 bg-background px-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-foreground/30 placeholder:text-muted-foreground"
+            className="w-full h-8 rounded-[8px] border border-border/50 bg-background px-2.5 text-sm text-foreground outline-none focus-visible:ring-1 focus-visible:ring-foreground/30 placeholder:text-muted-foreground"
           />
         </div>
       ) : null}

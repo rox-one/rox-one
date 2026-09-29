@@ -743,7 +743,7 @@ export const SvgMindMapView = React.forwardRef<SvgMindMapViewHandle, SvgMindMapV
                       autoFocus
                       required
                       maxLength={MAX_CUSTOM_MIND_MAP_LABEL_LENGTH}
-                      className="h-7 w-full rounded-md border border-border/60 bg-background px-1.5 text-xs text-foreground outline-none focus:ring-1 focus:ring-foreground/30"
+                      className="h-7 w-full rounded-md border border-border/60 bg-background px-1.5 text-xs text-foreground outline-none focus-visible:ring-1 focus-visible:ring-foreground/30"
                       value={structureEditor.label}
                       aria-invalid={Boolean(structureError)}
                       onChange={(event) => {
