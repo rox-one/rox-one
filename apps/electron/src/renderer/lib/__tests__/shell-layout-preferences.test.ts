@@ -137,6 +137,23 @@ describe('side panel defaults (layout v2)', () => {
     expect(loadShellLayout(null, store).sidebarWidth).toBe(350)
   })
 
+  it('narrows workspace snapshots so a later commit cannot restore the old width', () => {
+    const ws = 'ws-1'
+    const store = memoryStore({
+      'sidebar-width': 360,
+      [`shell-layout-v1:${ws}`]: { schemaVersion: 1, workspaceId: ws, sidebarWidth: 360, navigatorWidth: 300, collapsedSectionIds: [] },
+    })
+    const withSuffixes = {
+      ...store,
+      suffixes: () => Object.keys(store.data).filter((k) => k.startsWith('shell-layout-v1:')).map((k) => k.slice('shell-layout-v1:'.length)),
+    }
+    migrateSidePanelDefaults(withSuffixes)
+    // A commit that only touches another field merges from the workspace snapshot.
+    commitShellLayout({ workspaceId: ws, collapsedSectionIds: ['nav:labels'] }, store)
+    expect(store.data['sidebar-width']).toBe(SIDE_PANEL_DEFAULT_WIDTH)
+    expect((store.data[`shell-layout-v1:${ws}`] as { sidebarWidth: number }).sidebarWidth).toBe(SIDE_PANEL_DEFAULT_WIDTH)
+  })
+
   it('leaves narrower user widths and fresh installs untouched', () => {
     const narrow = memoryStore({ 'sidebar-width': 200, 'inspector-panel-width': 300 })
     migrateSidePanelDefaults(narrow)
