@@ -5243,5 +5243,12 @@
   "settings.overview.hubSubtitle": "Quick actions, what needs attention and recently opened settings.",
   "workspace.organizationRequired": "A team workspace belongs to an organization.",
   "workspace.organizationEmpty": "You have no organizations yet — create one first.",
-  "label.default.scheduled": "Scheduled"
+  "label.default.scheduled": "Scheduled",
+  "workbench.mode.notes": "Notes",
+  "inspector.kind.session": "Session",
+  "inspector.field.status": "Status",
+  "inspector.field.created": "Created",
+  "inspector.field.updated": "Last activity",
+  "inspector.field.model": "Model",
+  "inspector.field.messages": "Messages"
 }

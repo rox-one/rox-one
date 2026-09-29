@@ -11,6 +11,8 @@ import { routes } from '../../shared/routes'
 import {
   isHomeNavigation,
   isKnowledgeNavigation,
+  isMeetingsNavigation,
+  isNotesNavigation,
   isSessionsNavigation,
   isTasksNavigation,
   type NavigationState,
@@ -54,13 +56,15 @@ export const CORE_MODES: readonly SeededMode[] = [
       id: 'meetings',
       titleKey: 'workbench.mode.meetings',
       icon: 'Calendar',
-      rootRoute: null,
+      // The Встречи page works (rail + deep link); gated only by its
+      // workbench.mode.meetings.v1 flag like Задачи.
+      rootRoute: routes.view.meetings(),
       order: 30,
       defaultPinned: true,
       layoutProfileId: 'agent',
-      requiredCapabilities: ['meetings.pipeline.v1'],
     },
-    isActive: () => false,
+    isActive: isMeetingsNavigation,
+    flag: 'meetings',
   },
   {
     contribution: {
@@ -79,15 +83,17 @@ export const CORE_MODES: readonly SeededMode[] = [
   },
   {
     contribution: {
-      id: 'knowledge',
-      titleKey: 'workbench.mode.knowledge',
-      icon: 'BookOpen',
-      rootRoute: routes.view.knowledge(),
+      // One notes surface: the legacy Knowledge surface (external core) is
+      // folded into Rox Notes; its deep links still resolve and highlight here.
+      id: 'notes',
+      titleKey: 'workbench.mode.notes',
+      icon: 'NotebookPen',
+      rootRoute: routes.view.notes(),
       order: 50,
       defaultPinned: true,
       layoutProfileId: 'knowledge',
     },
-    isActive: isKnowledgeNavigation,
+    isActive: (navState) => isNotesNavigation(navState) || isKnowledgeNavigation(navState),
   },
   {
     contribution: {

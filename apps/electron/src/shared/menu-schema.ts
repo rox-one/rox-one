@@ -366,6 +366,7 @@ export const DEBUG_MENU: MenuSection = {
  * Used by both AppMenu (logo dropdown) and SettingsNavigator (sidebar panel)
  */
 import { SETTINGS_PAGES, type SettingsSubpage } from './settings-registry'
+import { isSettingsPageHidden } from './settings-presentation'
 
 export interface SettingsMenuItem {
   id: SettingsSubpage
@@ -409,6 +410,8 @@ const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
  */
 export const SETTINGS_ITEMS: SettingsMenuItem[] = SETTINGS_PAGES
   .filter(page => page.id !== 'server' || FEATURE_FLAGS.embeddedServer)
+  // Hidden pages stay deep-linkable (settings-presentation HIDDEN_SETTINGS_PAGE_IDS)
+  .filter(page => !isSettingsPageHidden(page.id))
   .map(page => ({
     id: page.id,
     labelKey: page.labelKey,

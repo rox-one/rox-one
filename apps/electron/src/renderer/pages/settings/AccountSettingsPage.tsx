@@ -38,6 +38,12 @@ import {
   type ProfilePlan,
 } from '../../../shared/types'
 import { settingsPageActionResult } from './settings-rox2-surface'
+
+/**
+ * The Standard/Pro/Team/Max picker is only a local label with no billing
+ * behind it (audit 2026-09-29: fake control). Hidden until real plans exist.
+ */
+const SHOW_PLAN_PICKER = false
 import type { XpEventType } from '@craft-agent/shared/gamification'
 
 export const meta: DetailsPageMeta = {
@@ -313,20 +319,22 @@ export default function AccountSettingsPage() {
 
         <SettingsSection title={t('settings.account.planSection')}>
           <SettingsCard>
-            <SettingsRow
-              label={t('settings.account.plan')}
-              description={t('settings.account.planHint')}
-            >
-              <SettingsSegmentedControl
-                size="sm"
-                value={plan}
-                onValueChange={(next) => void handlePlanChange(next)}
-                options={PROFILE_PLANS.map((value) => ({
-                  value,
-                  label: t(`settings.account.plan.${value}`),
-                }))}
-              />
-            </SettingsRow>
+            {SHOW_PLAN_PICKER ? (
+              <SettingsRow
+                label={t('settings.account.plan')}
+                description={t('settings.account.planHint')}
+              >
+                <SettingsSegmentedControl
+                  size="sm"
+                  value={plan}
+                  onValueChange={(next) => void handlePlanChange(next)}
+                  options={PROFILE_PLANS.map((value) => ({
+                    value,
+                    label: t(`settings.account.plan.${value}`),
+                  }))}
+                />
+              </SettingsRow>
+            ) : null}
             <SettingsRow label={t('profile.balanceLabel')} description={t('settings.account.balanceHint')}>
               <span className="text-sm tabular-nums">{formatBalance(gamification?.balance ?? null, t)}</span>
             </SettingsRow>

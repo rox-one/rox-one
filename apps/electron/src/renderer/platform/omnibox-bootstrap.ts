@@ -32,6 +32,7 @@ import { sourcesAtom } from '@/atoms/sources'
 import { automationsAtom } from '@/atoms/automations'
 import { navigate, routes } from '@/lib/navigate'
 import { SETTINGS_PAGES, type SettingsSubpage } from '../../shared/settings-registry'
+import { isSettingsPageHidden } from '../../shared/settings-presentation'
 import {
   searchKnowledge,
   resolveKnowledgeApi,
@@ -434,7 +435,7 @@ function registerResourceProviders(
     ),
   )
 
-  const pages = SETTINGS_PAGES.map((page) => ({
+  const pages = SETTINGS_PAGES.filter((page) => !isSettingsPageHidden(page.id)).map((page) => ({
     id: page.id,
     label: t ? t(page.labelKey, page.id) : page.id,
     description: t ? t(page.descriptionKey, '') : undefined,
