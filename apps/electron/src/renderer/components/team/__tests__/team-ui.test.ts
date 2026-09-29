@@ -62,6 +62,9 @@ describe('team wiring', () => {
   it('mounts the session button in the chat header and the section in Organizations', () => {
     expect(read('pages/ChatPage.tsx')).toContain('<TeamSessionButton')
     expect(read('pages/settings/OrganizationsSettingsPage.tsx')).toContain('<TeamOrgSettingsSection')
+    const inbox = read('pages/InboxPage.tsx')
+    expect(inbox).toContain('useTeamInboxNav()')
+    expect(inbox).toContain("t('teamCollab.inboxNav')")
   })
 
   it('never ships fake teammates in team components', () => {
@@ -72,7 +75,7 @@ describe('team wiring', () => {
   })
 
   it('has every teamCollab key in all locales', () => {
-    const used = new Set<string>()
+    const used = new Set<string>(['teamCollab.inboxNav'])
     for (const f of readdirSync(join(rendererDir, 'components/team')).filter((n) => /\.tsx?$/.test(n))) {
       for (const m of read(`components/team/${f}`).matchAll(/t\('(teamCollab\.[\w.-]+)'/g)) used.add(m[1]!)
     }
