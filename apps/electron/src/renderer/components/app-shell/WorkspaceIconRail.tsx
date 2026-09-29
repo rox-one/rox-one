@@ -459,7 +459,7 @@ export function WorkspaceIconRail({
 						})}
 
 						{showAddLink ? (
-							<div className="w-full rounded-xl border border-border/50 bg-background/90 p-2">
+							<div className="w-full rounded-xl border border-border/50 bg-background/90 p-2 shadow-minimal">
 								<div className="mb-1.5 flex items-center justify-between gap-1">
 									<span className="text-[10px] font-medium text-muted-foreground">
 										{t("workspaceRail.addLink")}
