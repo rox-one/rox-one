@@ -15,6 +15,8 @@ import { loadWorkspaceJson, newLocalId, saveWorkspaceJson, subscribeWorkspaceJso
 import {
   sessionTitle,
   useMeetings,
+  externalFeedItems,
+  useFeedItems,
   useMessengerBindings,
   usePersonalTasks,
   useWorkspaceSessions,
@@ -120,6 +122,7 @@ export default function DossierPage({ itemId }: { itemId: string | null }) {
   const tasks = usePersonalTasks()
   const { meetings } = useMeetings(workspaceId)
   const bindings = useMessengerBindings()
+  const feed = useFeedItems(workspaceId)
   const now = Date.now()
 
   const messengerBySession = useMemo(() => {
@@ -145,8 +148,10 @@ export default function DossierPage({ itemId }: { itemId: string | null }) {
       dueAt: task.dueAt,
       createdAt: task.createdAt,
     })),
-    feed: null,
-  }), [sessions, meetings, tasks, messengerBySession])
+    feed: feed.available
+      ? externalFeedItems(feed.items).map((item) => ({ id: item.id, title: item.title, at: item.at, summary: item.summary, author: item.author, sourceTitle: item.sourceTitle }))
+      : null,
+  }), [sessions, meetings, tasks, messengerBySession, feed])
 
   const rows = useMemo(() => {
     const filtered = filterEntities(data.entities, query, kindFilter)
@@ -335,6 +340,7 @@ function openTouch(touch: DossierTouch) {
       navigate(routes.view.notes(touch.id))
       return
     case 'feed':
+      navigate(routes.view.feed(touch.id))
       return
   }
 }
@@ -603,7 +609,7 @@ function DossierDetail({
           >
             <span aria-hidden className="w-4 shrink-0 text-center text-muted-foreground">{touchIcon(touch.kind)}</span>
             <span className="w-16 shrink-0 text-[12px] text-muted-foreground">{relDate(touch.at)}</span>
-            <span className="text-[12px] text-muted-foreground">{t(`extraScreens.dossier.touchKind.${touch.kind}`)}{touch.hint && touch.kind === 'messenger' ? ` · ${touch.hint}` : ''}</span>
+            <span className="text-[12px] text-muted-foreground">{t(`extraScreens.dossier.touchKind.${touch.kind}`)}{touch.hint && (touch.kind === 'messenger' || touch.kind === 'feed') ? ` · ${touch.hint}` : ''}</span>
             <span className="min-w-0 flex-1 truncate">{touch.title}</span>
           </button>
         ))}

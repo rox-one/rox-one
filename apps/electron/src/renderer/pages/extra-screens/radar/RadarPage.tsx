@@ -10,7 +10,7 @@ import { useActiveWorkspace } from '@/context/AppShellContext'
 import { navigate, routes } from '@/lib/navigate'
 import { createPersonalTask } from '@/lib/extra-screens/personal-task-bridge'
 import { newLocalId, subscribeWorkspaceJson } from '@/lib/extra-screens/storage'
-import { sessionTitle, useMeetings, useWorkspaceSessions } from '@/lib/extra-screens/use-rox-sources'
+import { externalFeedItems, sessionTitle, useFeedItems, useMeetings, useWorkspaceSessions } from '@/lib/extra-screens/use-rox-sources'
 import {
   Card,
   CardTitle,
@@ -51,6 +51,7 @@ function openRef(ref: NonNullable<RadarItem['ref']>) {
   if (ref.kind === 'session') navigate(routes.view.allSessions(ref.id))
   else if (ref.kind === 'meeting') navigate(routes.view.meetings(ref.id))
   else if (ref.kind === 'note') navigate(routes.view.notes(ref.id))
+  else if (ref.kind === 'feed') navigate(routes.view.feed(ref.id))
   else navigate(routes.view.tasks(ref.id))
 }
 
@@ -78,6 +79,7 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
 
   const sessions = useWorkspaceSessions(workspaceId)
   const { meetings } = useMeetings(workspaceId)
+  const feed = useFeedItems(workspaceId)
   useEffect(() => {
     let cancelled = false
     const api = window.electronAPI
@@ -110,7 +112,8 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
     sessions: sessions.filter((s) => !sweepSessionIds.has(s.id)).map((s) => ({ id: s.id, name: sessionTitle(s), lastMessageAt: s.lastMessageAt })),
     meetings: meetings.map((m) => ({ id: m.id, title: m.title, at: m.at })),
     notes,
-  }, Date.now()), [data.topics, sessions, meetings, notes, sweepSessionIds])
+    feed: externalFeedItems(feed.items),
+  }, Date.now()), [data.topics, sessions, meetings, notes, sweepSessionIds, feed.items])
 
   const items = useMemo(
     () => [...(sweep?.items ?? []), ...(isLatest || !sweep ? localSignals : [])],
@@ -216,6 +219,15 @@ export default function RadarPage({ itemId }: { itemId: string | null }) {
             />
           ) : (
             <>
+              {feed.loaded && !feed.available && (
+                <div className="px-4 pt-2 text-[12px] text-muted-foreground">{t('extraScreens.radar.feedUnavailable')}</div>
+              )}
+              {feed.loaded && feed.available && feed.sourceCount === 0 && !feed.xConnected && (
+                <div className="px-4 pt-2 text-[12px] text-muted-foreground">
+                  {t('extraScreens.radar.feedNoSources')}{' '}
+                  <button type="button" className="text-accent" onClick={() => navigate(routes.view.feed())}>{t('extraScreens.radar.openFeed')}</button>
+                </div>
+              )}
               {!sweep && (
                 <div className="px-4 py-3 text-muted-foreground">{t('extraScreens.radar.noSweepYet', { hour: String(data.dailyHour).padStart(2, '0') })}</div>
               )}

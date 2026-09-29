@@ -46,6 +46,21 @@ const sources: DossierSources = {
 }
 
 describe('dossier model', () => {
+  test('matches real Лента items by title, summary or author', () => {
+    const summary = buildDossierSummary(entity(), {
+      ...sources,
+      feed: [
+        { id: 'f1', title: 'Интервью', summary: 'Анна Королёва о рынке', at: NOW - DAY, sourceTitle: 'VC.ru' },
+        { id: 'f2', title: 'Пост', author: 'Анна К.', at: NOW - 2 * DAY },
+        { id: 'f3', title: 'Не про неё', summary: 'Иван', at: NOW },
+      ],
+    }, NOW)
+    expect(summary.feedAvailable).toBe(true)
+    const feedTouches = summary.touches.filter((t) => t.kind === 'feed')
+    expect(feedTouches.map((t) => t.id).sort()).toEqual(['f1', 'f2'])
+    expect(feedTouches.find((t) => t.id === 'f1')?.hint).toBe('VC.ru')
+  })
+
   test('aggregates touches across sources by name and aliases (ё-insensitive)', () => {
     const summary = buildDossierSummary(entity(), sources, NOW)
     const ids = summary.touches.map((touch) => touch.id)

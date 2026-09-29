@@ -99,3 +99,50 @@ export function useMessengerBindings(): MessengerBinding[] {
   }, [])
   return bindings
 }
+
+export type FeedItemRow = import('@craft-agent/shared/feed').FeedItem
+
+export interface FeedState {
+  /** false = no feed:list IPC (honest «Лента недоступна»). */
+  available: boolean
+  loaded: boolean
+  items: FeedItemRow[]
+  /** User news/X sources configured in Лента. */
+  sourceCount: number
+  xConnected: boolean
+}
+
+/** Real items from the Лента aggregator (feed:list), live via feed:changed. */
+export async function loadFeed(workspaceId: string | null | undefined): Promise<Omit<FeedState, 'loaded'>> {
+  const api = typeof window !== 'undefined' ? window.electronAPI : undefined
+  if (!api || typeof api.feedList !== 'function') return { available: false, items: [], sourceCount: 0, xConnected: false }
+  const res = await api.feedList(workspaceId ?? null)
+  return {
+    available: true,
+    items: Array.isArray(res?.items) ? res.items : [],
+    sourceCount: Array.isArray(res?.sources) ? res.sources.length : 0,
+    xConnected: res?.x?.state === 'connected',
+  }
+}
+
+export function useFeedItems(workspaceId: string | null | undefined): FeedState {
+  const [state, setState] = useState<FeedState>({ available: true, loaded: false, items: [], sourceCount: 0, xConnected: false })
+  useEffect(() => {
+    let cancelled = false
+    const load = () => {
+      loadFeed(workspaceId).then(
+        (next) => { if (!cancelled) setState({ ...next, loaded: true }) },
+        () => { if (!cancelled) setState({ available: false, loaded: true, items: [], sourceCount: 0, xConnected: false }) },
+      )
+    }
+    load()
+    const off = window.electronAPI?.onFeedChanged?.(() => load())
+    return () => { cancelled = true; off?.() }
+  }, [workspaceId])
+  return state
+}
+
+/** Feed items that are not Rox's own agent activity (news, X, page changes, team). */
+export function externalFeedItems(items: readonly FeedItemRow[]): FeedItemRow[] {
+  return items.filter((item) => item.tab !== 'agents')
+}

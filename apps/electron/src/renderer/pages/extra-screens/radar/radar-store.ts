@@ -5,6 +5,7 @@
  */
 import { extractJsonBlock, readAgentRun, startAgentRun } from '@/lib/extra-screens/agent-run'
 import { loadWorkspaceJson, newLocalId, saveWorkspaceJson } from '@/lib/extra-screens/storage'
+import { externalFeedItems, loadFeed } from '@/lib/extra-screens/use-rox-sources'
 import {
   MAX_SWEEPS,
   buildRadarPrompt,
@@ -34,10 +35,19 @@ export async function runRadarSweep(
   const now = Date.now()
   const data = loadRadar(workspaceId)
   if (data.topics.length === 0) throw new Error('no topics')
+  let feedContext: { title: string; url?: string; source?: string }[] = []
+  try {
+    const feed = await loadFeed(workspaceId)
+    feedContext = externalFeedItems(feed.items)
+      .filter((item) => item.at >= now - 24 * 3600 * 1000)
+      .map((item) => ({ title: item.title, url: item.url, source: item.sourceTitle }))
+  } catch {
+    feedContext = []
+  }
   const sessionId = await startAgentRun({
     workspaceId,
     name: sessionName,
-    prompt: buildRadarPrompt(data.topics, now, language),
+    prompt: buildRadarPrompt(data.topics, now, language, feedContext),
   })
   const sweep: RadarSweep = { id: newLocalId('sw'), sessionId, date: localDateKey(now), startedAt: now, trigger }
   const fresh = loadRadar(workspaceId)
