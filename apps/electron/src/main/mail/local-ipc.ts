@@ -57,6 +57,20 @@ async function identityHints(): Promise<{ ownerUuid?: string | null; handles: Ar
   return { ownerUuid, handles }
 }
 
+async function senderName(): Promise<string | null> {
+  try {
+    const cloud = await getCredentialManager().getRoxCloudSession()
+    if (cloud?.name) return cloud.name
+  } catch { /* not connected */ }
+  try {
+    const { getIdentityStore } = await import('@craft-agent/core/platform/identity/store')
+    const profile = getIdentityStore(CONFIG_DIR).getState().profile as { displayName?: string }
+    return profile?.displayName || null
+  } catch {
+    return null
+  }
+}
+
 function uniquePath(dir: string, name: string): string {
   const safe = safeFileName(name)
   const ext = extname(safe)
@@ -80,6 +94,7 @@ export function registerMailIpc(log?: (message: string, error?: unknown) => void
     configDir: CONFIG_DIR,
     secrets: credentialManagerSecrets(),
     identity: identityHints,
+    senderName,
     emit: broadcast,
     log,
     deviceLabel: `rox-desktop:${process.platform}:${app.getName()}`,

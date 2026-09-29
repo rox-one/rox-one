@@ -106,7 +106,7 @@ export async function provisionMailbox(input: ProvisionInput): Promise<MailboxRe
     const found = await admin.findAccount(handle, domainId)
     if (!found) {
       const password = generateMailboxPassword()
-      const accountId = await admin.createAccount({ name: handle, domainId, description: marker, password, locale: 'ru' })
+      const accountId = await admin.createAccount({ name: handle, domainId, description: marker, password })
       chosen = { handle, accountId, created: true }
       // Mint the device credential while we still hold the password, then drop it.
       const address = `${handle}@${input.domain}`

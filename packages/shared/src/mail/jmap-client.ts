@@ -274,8 +274,15 @@ export class JmapClient {
 
   async ensureIdentity(email: string, name: string): Promise<JmapIdentity> {
     const existing = (await this.identities()).find((i) => i.email.toLowerCase() === email.toLowerCase())
-    if (existing) return existing
     const accountId = await this.accountId(JMAP_SUBMISSION)
+    if (existing) {
+      // Stalwart seeds the default identity name from the account description
+      // (our "rox:<uuid>" owner marker) — never let that leak into From.
+      if (existing.name !== name) {
+        await this.call([['Identity/set', { accountId, update: { [existing.id]: { name } } }, 'u']]).catch(() => undefined)
+      }
+      return { ...existing, name }
+    }
     const [[, res]] = await this.call([['Identity/set', { accountId, create: { i: { email, name } } }, 'c']])
     const created = res.created?.i
     if (!created?.id) throw new JmapError('Could not create a sending identity', 'method')

@@ -56,6 +56,8 @@ export interface MailServiceDeps {
   log?: (message: string, error?: unknown) => void
   deviceLabel?: string
   fetch?: typeof fetch
+  /** Display name for From (Rox profile); empty → address only. */
+  senderName?: () => Promise<string | null>
 }
 
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024
@@ -109,6 +111,15 @@ export class MailService {
     this.dir = join(deps.configDir, 'mail')
     this.env = deps.env ?? process.env
     this.record = this.readJson<MailboxRecord>('mailbox.json')
+  }
+
+  private async senderName(): Promise<string> {
+    try {
+      const name = (await this.deps.senderName?.())?.trim() ?? ''
+      return name.startsWith('rox:') ? '' : name.slice(0, 120)
+    } catch {
+      return ''
+    }
   }
 
   // ------------------------------------------------------------ config/state
@@ -392,7 +403,7 @@ export class MailService {
         throw new MailError('external-blocked', `Local mail server: only @${p.cfg.domain} recipients are delivered (${external.join(', ')})`)
       }
     }
-    const identity = await p.c.ensureIdentity(p.record.address, p.record.handle)
+    const identity = await p.c.ensureIdentity(p.record.address, await this.senderName())
     const result = await p.c.compose({
       from: { name: identity.name || null, email: p.record.address },
       to: p.to, cc: p.cc, bcc: p.bcc,
@@ -412,7 +423,7 @@ export class MailService {
   async saveDraft(input: MailComposeInput): Promise<{ draftId: string }> {
     const p = await this.prepare(input)
     const res = await p.c.compose({
-      from: { name: p.record.handle, email: p.record.address },
+      from: { name: (await this.senderName()) || null, email: p.record.address },
       to: p.to, cc: p.cc, bcc: p.bcc,
       subject: p.subject, text: input.text,
       inReplyTo: p.headers.inReplyTo, references: p.headers.references,

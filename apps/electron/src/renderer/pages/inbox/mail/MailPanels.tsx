@@ -319,7 +319,7 @@ export function MailReader({ mail, message, onCompose, onEditDraft, onAfterRemov
   const [busy, setBusy] = useState(false)
   useEffect(() => { setNotice(null); setPicking(false) }, [message.id])
   const inTrash = message.folderIds.some((id) => mail.folders.find((f) => f.id === id)?.role === 'trash')
-  const inArchive = message.folderIds.some((id) => mail.folders.find((f) => f.id === id)?.role === 'archive')
+  const inArchive = message.folderIds.some((id) => { const role = mail.folders.find((f) => f.id === id)?.role; return role === 'archive' || role === 'junk' })
 
   const run = async (fn: () => Promise<unknown>, after?: () => void) => {
     setBusy(true)
@@ -470,7 +470,7 @@ export function MailCompose({ mail, draft, source, onClose }: {
     setError(null)
     try {
       const r = await window.electronAPI.mailLocal!.send(input())
-      if (!r.ok) throw new Error(r.code === 'external-blocked' ? `${t('inbox.mail.externalBlocked', { domain })} ${r.message}` : r.message)
+      if (!r.ok) throw new Error(r.code === 'external-blocked' ? `${t('inbox.mail.externalBlocked', { domain })}: ${r.message.match(/\(([^)]+)\)\s*$/)?.[1] ?? ''}` : r.message)
       void mail.refresh()
       onClose(true)
     } catch (e) {

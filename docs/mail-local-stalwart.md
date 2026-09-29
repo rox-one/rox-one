@@ -29,6 +29,20 @@ launchctl bootout gui/$(id -u)/one.rox.mail.stalwart        # stop
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:8480/healthz/live
 ```
 
+### Local-only configuration applied
+
+* Listeners bound to `127.0.0.1` only (no `[::]`, nothing on LAN/Tailscale).
+* `MtaStageAuth.require` = `local_port != 25 && local_port != 2525` (and the same
+  exclusion in `saslMechanisms`): port 2525 acts as the unauthenticated inbound MX
+  port for local simulation; 2587 stays authenticated submission. Stalwart's defaults
+  key "inbound MX" on port 25, so the SPF/DKIM/DMARC inbound checks keyed on port 25
+  do not run on 2525.
+* Outbound `MtaRoute "mx"` replaced by a relay to `127.0.0.1:9`: mail to other domains
+  never leaves the Mac. Rox additionally refuses to send to non-@rox.one recipients
+  while the server URL is loopback.
+* Config changes made through the management API need a restart
+  (`launchctl kickstart -k …`); startup takes 10–60 s.
+
 ## App wiring
 
 * `packages/shared/src/mail/` — JMAP client (`jmap-client.ts`), Stalwart management API

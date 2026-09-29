@@ -2116,7 +2116,7 @@
   "inbox.mail.copied": "Copied",
   "inbox.mail.copy": "Copy",
   "inbox.mail.delete": "Delete",
-  "inbox.mail.discard": "Discard",
+  "inbox.mail.discard": "Close",
   "inbox.mail.draftSaved": "Draft saved",
   "inbox.mail.editDraft": "Continue",
   "inbox.mail.empty.body": "Mail sent to {{address}} will appear here.",

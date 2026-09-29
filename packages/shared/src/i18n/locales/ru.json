@@ -2118,7 +2118,7 @@
   "inbox.mail.copied": "Скопировано",
   "inbox.mail.copy": "Копировать",
   "inbox.mail.delete": "Удалить",
-  "inbox.mail.discard": "Отменить",
+  "inbox.mail.discard": "Закрыть",
   "inbox.mail.draftSaved": "Черновик сохранён",
   "inbox.mail.editDraft": "Продолжить",
   "inbox.mail.empty.body": "Письма на {{address}} появятся здесь.",

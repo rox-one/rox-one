@@ -128,6 +128,8 @@ export function formatBytes(n: number): string {
 
 /** Text appended to a meeting's notes when an email is linked to it. */
 export function meetingNoteLine(m: Pick<MailSummary, 'id' | 'subject' | 'from' | 'receivedAt'>, label: string, noSubject: string): string {
-  const when = new Date(m.receivedAt).toISOString().slice(0, 16).replace('T', ' ')
+  const d = new Date(m.receivedAt)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const when = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
   return `${label}: «${m.subject.trim() || noSubject}» — ${fromLabel(m)}, ${when} (mail:${m.id})`
 }
