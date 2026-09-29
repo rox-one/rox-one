@@ -60,6 +60,7 @@ export interface MailServiceDeps {
   senderName?: () => Promise<string | null>
 }
 
+const LOCAL_AGENT_LABEL = 'one.rox.mail.stalwart'
 const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024
 
 function parseBool(v: string | undefined): boolean | undefined {
@@ -185,6 +186,33 @@ export class MailService {
     }
   }
 
+  private lastStartAttempt = 0
+
+  /**
+   * Local pilot: if the Stalwart LaunchAgent exists but is not loaded (macOS
+   * can block legacy login agents in Login Items), load it for this session.
+   * Only ever touches our own user agent label; at most once a minute.
+   */
+  private startLocalServer(): void {
+    if (process.platform !== 'darwin' || this.env.ROX_MAIL_NO_AUTOSTART === '1') return
+    const now = Date.now()
+    if (now - this.lastStartAttempt < 60_000) return
+    this.lastStartAttempt = now
+    const home = this.env.HOME
+    if (!home) return
+    const plist = join(home, 'Library', 'LaunchAgents', `${LOCAL_AGENT_LABEL}.plist`)
+    if (!existsSync(plist)) return
+    const uid = typeof process.getuid === 'function' ? process.getuid() : null
+    if (uid === null) return
+    const domain = `gui/${uid}`
+    execFile('/bin/launchctl', ['print', `${domain}/${LOCAL_AGENT_LABEL}`], { timeout: 10_000 }, (notLoaded) => {
+      const args = notLoaded ? ['bootstrap', domain, plist] : ['kickstart', `${domain}/${LOCAL_AGENT_LABEL}`]
+      execFile('/bin/launchctl', args, { timeout: 15_000 }, (error) => {
+        this.deps.log?.(`[mail] local Stalwart ${notLoaded ? 'bootstrap' : 'kickstart'}${error ? ' failed' : ' requested'}`, error ?? undefined)
+      })
+    })
+  }
+
   async status(): Promise<MailStatus> {
     const cfg = this.config()
     const base: MailStatus = {
@@ -201,7 +229,10 @@ export class MailService {
     }
     if (!cfg.enabled) return base
     base.reachable = await this.reachable(cfg.serverUrl)
-    if (!base.reachable) return { ...base, state: 'unreachable' }
+    if (!base.reachable) {
+      if (base.local) this.startLocalServer()
+      return { ...base, state: 'unreachable' }
+    }
     if (this.provisioning) return { ...base, state: 'provisioning' }
     if (!this.record || this.record.state !== 'READY') return { ...base, state: this.lastError ? 'error' : 'no-mailbox' }
     if (!(await this.deps.secrets.get(this.record.address))) return { ...base, state: 'no-mailbox' }

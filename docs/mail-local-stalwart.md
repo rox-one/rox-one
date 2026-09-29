@@ -20,6 +20,11 @@ outbound delivery to other domains is disabled.
 | Domain | `rox.one`, hostname `mx.rox.one`, DKIM ed25519 generated (not published) |
 | Outbound | remote route relays to `127.0.0.1:9` → messages to other domains stay queued locally |
 
+macOS may list the agent as *disallowed* under System Settings → General → Login Items
+(«Allow in the Background» for `stalwart`, Unknown Developer). Enable it there for
+reliable start at login. As a fallback, Rox loads the agent itself (`launchctl bootstrap`)
+when the local server is unreachable (at most once a minute; `ROX_MAIL_NO_AUTOSTART=1` turns this off).
+
 Credentials live in the macOS Keychain, service `rox.mail.stalwart`
 (accounts `admin@rox.one` and `recovery-admin`). Never commit or print them.
 
