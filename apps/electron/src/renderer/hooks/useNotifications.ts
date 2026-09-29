@@ -11,6 +11,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Session } from '../../shared/types'
 import { RPC_CHANNELS } from '@craft-agent/shared/protocol'
+import { deferIfDeepWork } from '@/lib/focus-session'
 
 /**
  * Draw a badge onto an icon image using Canvas
@@ -218,6 +219,14 @@ export function useNotifications({
 
   // Show notification for a session
   const showSessionNotification = useCallback((session: Session, messagePreview?: string) => {
+    // «Фокус»: while a deep-work timer runs, queue instead of notifying.
+    if (workspaceId && deferIfDeepWork({
+      sessionId: session.id,
+      workspaceId,
+      title: session.name || t('notifications.newMessageTitle'),
+      body: messagePreview?.slice(0, 140),
+      at: Date.now(),
+    })) return
     // Don't show notification if disabled in settings
     if (!enabled) return
     // Don't show notification if window is focused

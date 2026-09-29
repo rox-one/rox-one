@@ -2,7 +2,7 @@
  * Registry of the extra workbench screens shown in the ActivityRail «Ещё»
  * group (spec: rox-shots/screens-spec2). Order = rail order.
  */
-import { Bot, Contact, Gavel, Radar, type LucideIcon } from 'lucide-react'
+import { Bot, Contact, Gavel, Radar, Timer, type LucideIcon } from 'lucide-react'
 import { EXTRA_SCREEN_FLAG } from '@craft-agent/core/platform'
 import type { ExtraScreenId } from '../../../shared/extra-screens'
 
@@ -20,6 +20,7 @@ export const EXTRA_SCREENS: readonly ExtraScreenDef[] = [
   { id: 'radar', icon: Radar, labelKey: 'extraScreens.radar.title', flag: EXTRA_SCREEN_FLAG.radar },
   { id: 'decisions', icon: Gavel, labelKey: 'extraScreens.decisions.title', flag: EXTRA_SCREEN_FLAG.decisions },
   { id: 'agents', icon: Bot, labelKey: 'extraScreens.agents.title', flag: EXTRA_SCREEN_FLAG.agents },
+  { id: 'focus', icon: Timer, labelKey: 'extraScreens.focus.title', flag: EXTRA_SCREEN_FLAG.focus },
 ]
 
 export function extraScreenDef(id: ExtraScreenId): ExtraScreenDef | undefined {
