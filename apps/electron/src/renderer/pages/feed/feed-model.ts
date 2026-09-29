@@ -4,7 +4,7 @@
  * agents/news/subscriptions; the team tab is merged here because the team
  * model lives in renderer storage.
  */
-import type { FeedItem, FeedSource, FeedSourceKind, FeedTab } from '@craft-agent/shared/feed'
+import type { FeedColor, FeedItem, FeedItemAnnotation, FeedSource, FeedSourceKind, FeedTab } from '@craft-agent/shared/feed'
 import type { TeamActivityEvent } from '@craft-agent/shared/team'
 
 export type FeedChip =
@@ -181,5 +181,178 @@ export function sourceLabel(s: FeedSource): string {
     return `${u.hostname.replace(/^www\./, '')}${u.pathname === '/' ? '' : u.pathname}`
   } catch {
     return s.url
+  }
+}
+
+// ── redesign: annotations, filters, sort, sources health ─────────────────────
+
+/** Item with user annotations applied; color/tags fall back to the source's. */
+export interface FeedViewItem extends FeedItem {
+  /** Effective tags: own ∪ source defaults. */
+  tags: string[]
+  ownTags: string[]
+  /** Effective color: own ?? source color. */
+  color?: FeedColor
+  ownColor?: FeedColor
+  starred: boolean
+  read: boolean
+}
+
+export function applyAnnotations(
+  items: readonly FeedItem[],
+  annotations: Readonly<Record<string, FeedItemAnnotation>> = {},
+  sources: ReadonlyMap<string, FeedSource> = new Map(),
+): FeedViewItem[] {
+  return items.map((it) => {
+    const a = annotations[it.id]
+    const src = it.sourceId ? sources.get(it.sourceId) : undefined
+    const ownTags = a?.tags ?? []
+    const seen = new Set(ownTags.map((x) => x.toLowerCase()))
+    const tags = [...ownTags, ...(src?.tags ?? []).filter((x) => !seen.has(x.toLowerCase()))]
+    const color = a?.color ?? src?.color
+    return {
+      ...it,
+      tags,
+      ownTags,
+      ...(color ? { color } : {}),
+      ...(a?.color ? { ownColor: a.color } : {}),
+      starred: !!a?.starred,
+      read: !!a?.readAt,
+    }
+  })
+}
+
+export type FeedOrder = 'newest' | 'oldest'
+export type FeedMark = 'all' | 'unread' | 'starred'
+
+export interface FeedViewFilter {
+  tab: FeedTab
+  chip: FeedChip
+  sourceId?: string | null
+  query?: string
+  colors?: ReadonlySet<FeedColor>
+  tag?: string | null
+  mark?: FeedMark
+}
+
+export function itemSearchText(i: FeedViewItem): string {
+  return `${i.title} ${i.summary ?? ''} ${i.author ?? ''} ${i.sourceTitle ?? ''} ${i.url ?? ''} ${i.tags.map((x) => `#${x}`).join(' ')}`.toLowerCase()
+}
+
+export function filterView(items: readonly FeedViewItem[], f: FeedViewFilter, now: number, sources: readonly FeedSource[] = []): FeedViewItem[] {
+  const byId = new Map(sources.map((s) => [s.id, s]))
+  const words = (f.query ?? '').trim().toLowerCase().split(/\s+/).filter(Boolean)
+  const tag = f.tag?.toLowerCase()
+  return items.filter((i) =>
+    i.tab === f.tab
+    && (!f.sourceId || i.sourceId === f.sourceId)
+    && matchesChip(i, f.chip, now, byId)
+    && (!f.colors?.size || (!!i.color && f.colors.has(i.color)))
+    && (!tag || i.tags.some((x) => x.toLowerCase() === tag))
+    && (f.mark !== 'unread' || !i.read)
+    && (f.mark !== 'starred' || i.starred)
+    && (!words.length || (() => { const hay = itemSearchText(i); return words.every((w) => hay.includes(w)) })()),
+  )
+}
+
+export interface OrderedDayGroup<T extends FeedItem = FeedItem> {
+  key: string
+  label: 'today' | 'yesterday' | 'earlier'
+  day: number
+  order: FeedOrder
+  items: T[]
+}
+
+/** Days follow the global order; items inside a day follow the per-day override or the global order. */
+export function groupOrdered<T extends FeedItem>(items: readonly T[], now: number, order: FeedOrder, perDay: Readonly<Record<string, FeedOrder>> = {}): OrderedDayGroup<T>[] {
+  const today = startOfDay(now)
+  const groups = new Map<number, T[]>()
+  for (const it of items) {
+    const d = startOfDay(it.at)
+    const list = groups.get(d)
+    if (list) list.push(it)
+    else groups.set(d, [it])
+  }
+  const dir = (o: FeedOrder) => (o === 'newest' ? -1 : 1)
+  return [...groups.entries()]
+    .sort((a, b) => dir(order) * (a[0] - b[0]))
+    .map(([day, list]) => {
+      const key = String(day)
+      const o = perDay[key] ?? order
+      return {
+        key,
+        day,
+        order: o,
+        label: day >= today ? ('today' as const) : day >= today - DAY ? ('yesterday' as const) : ('earlier' as const),
+        items: [...list].sort((a, b) => dir(o) * (a.at - b.at) || a.id.localeCompare(b.id)),
+      }
+    })
+}
+
+/** Items per day for the last `days` days (oldest first) — source sparkline. */
+export function itemsPerDay(items: readonly FeedItem[], sourceId: string, now: number, days = 14): number[] {
+  const today = startOfDay(now)
+  const out = new Array<number>(days).fill(0)
+  for (const i of items) {
+    if (i.sourceId !== sourceId) continue
+    const idx = days - 1 - Math.round((today - startOfDay(i.at)) / DAY)
+    if (idx >= 0 && idx < days) out[idx]!++
+  }
+  return out
+}
+
+export const DEFAULT_TAG_SUGGESTIONS = ['важное', 'прочитать', 'идея', 'работа', 'релиз'] as const
+
+/** Tags by frequency across items and sources, then defaults; excludes `exclude`. */
+export function suggestTags(items: readonly FeedViewItem[], sources: readonly FeedSource[], exclude: readonly string[] = [], limit = 8, defaults: readonly string[] = DEFAULT_TAG_SUGGESTIONS): string[] {
+  const count = new Map<string, { name: string; n: number }>()
+  const bump = (name: string, w = 1) => {
+    const k = name.toLowerCase()
+    const cur = count.get(k)
+    if (cur) cur.n += w
+    else count.set(k, { name, n: w })
+  }
+  for (const i of items) for (const x of i.ownTags) bump(x)
+  for (const s of sources) for (const x of s.tags ?? []) bump(x, 2)
+  const ex = new Set(exclude.map((x) => x.toLowerCase()))
+  const used = [...count.values()].sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).map((x) => x.name)
+  const out: string[] = []
+  for (const name of [...used, ...defaults]) {
+    const k = name.toLowerCase()
+    if (ex.has(k) || out.some((x) => x.toLowerCase() === k)) continue
+    out.push(name)
+    if (out.length >= limit) break
+  }
+  return out
+}
+
+/** All tags in use (own + source defaults), sorted by frequency. */
+export function tagsInUse(items: readonly FeedViewItem[]): Array<{ tag: string; count: number }> {
+  const m = new Map<string, { tag: string; count: number }>()
+  for (const i of items) for (const t of i.tags) {
+    const k = t.toLowerCase()
+    const cur = m.get(k)
+    if (cur) cur.count++
+    else m.set(k, { tag: t, count: 1 })
+  }
+  return [...m.values()].sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+}
+
+export type SourceHealth = 'checking' | 'ok' | 'error' | 'paused' | 'pending' | 'needs-x'
+
+export function sourceHealth(s: FeedSource): SourceHealth {
+  if (s.checking) return 'checking'
+  if (s.paused) return 'paused'
+  if (s.lastStatus === 'ok') return 'ok'
+  if (s.lastStatus === 'error') return 'error'
+  if (s.lastStatus === 'unsupported') return 'needs-x'
+  return 'pending'
+}
+
+export function sourceHost(s: Pick<FeedSource, 'url'>): string | null {
+  try {
+    return new URL(s.url).hostname
+  } catch {
+    return null
   }
 }

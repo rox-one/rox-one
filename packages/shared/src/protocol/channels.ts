@@ -862,6 +862,8 @@ export const RPC_CHANNELS = {
     REFRESH: 'feed:refresh',
     X_SET_TOKEN: 'feed:x:setToken',
     X_CLEAR: 'feed:x:clear',
+    SOURCES_PREVIEW: 'feed:sources:preview',
+    ITEMS_ANNOTATE: 'feed:items:annotate',
   },
   kanban: {
     GET_CONFIG: 'kanban:getConfig',
