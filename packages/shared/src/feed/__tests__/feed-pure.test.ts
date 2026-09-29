@@ -108,6 +108,15 @@ describe('agent items + merge', () => {
     expect(items[1]!.title).toBe('Plan please')
     expect(items.every((i) => i.tab === 'agents')).toBe(true)
   })
+  it('hides internal one-shot sessions (memory distiller) but keeps real ones', () => {
+    const items = buildSessionFeedItems([
+      { id: 'd1', name: '2026-09-29T12-37-04-198Z_01a0ed2b-2a46-7000-aaa2-fced77de2761', preview: 'You are the memory distiller for a coding agent. Distill the session…', lastMessageAt: 9 },
+      { id: 'd2', preview: '  You extract durable memory from a chat between a user and an AI assistant.', lastMessageAt: 8 },
+      { id: 'r1', name: '2026-09-29T10-00-00-000Z_real', preview: 'Почини сборку', lastMessageAt: 7 },
+      { id: 'r2', name: 'Talk', preview: 'Can you explain what a memory distiller is?', lastMessageAt: 6 },
+    ])
+    expect(items.map((i) => i.id)).toEqual(['session:r1', 'session:r2'])
+  })
   it('maps automation runs with retry target and error', () => {
     const [bad, good] = buildAutomationRunItems([
       { id: 'a1', ts: 10, ok: true, sessionId: 's9', prompt: 'Daily digest' },

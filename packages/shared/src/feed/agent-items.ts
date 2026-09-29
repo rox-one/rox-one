@@ -3,6 +3,7 @@
  * runs (automations-history.jsonl). Used by the feed:list server aggregator.
  */
 import type { FeedItem, FeedItemStatus } from './types'
+import { isInternalAgentPrompt } from '../sessions/internal-prompts'
 
 export interface FeedSessionLike {
   id: string
@@ -45,6 +46,9 @@ function clip(s: string | undefined, n = 200): string | undefined {
 export function buildSessionFeedItems(sessions: readonly FeedSessionLike[], limit = 150): FeedItem[] {
   return sessions
     .filter((s) => !s.hidden && !s.isArchived && Number.isFinite(s.lastMessageAt) && s.lastMessageAt > 0)
+    // Internal one-shot runs (memory distiller…) imported before omp one-shots
+    // stopped persisting sessions: identified by their first user message.
+    .filter((s) => !isInternalAgentPrompt(s.preview))
     .sort((a, b) => b.lastMessageAt - a.lastMessageAt)
     .slice(0, limit)
     .map((s) => ({

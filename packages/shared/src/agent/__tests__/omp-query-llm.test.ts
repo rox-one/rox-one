@@ -68,6 +68,15 @@ describe('OmpAgent.queryLlm — model honesty', () => {
     expect(printCalls[0]).not.toContain('--model');
   });
 
+  it('never persists one-shots as OMP sessions (--no-session)', async () => {
+    const { agent, fake } = setup();
+    await agent.queryLlm({ prompt: 'summarize' });
+    await agent.queryLlm({ prompt: 'summarize', model: 'kimi-k2' });
+    const printCalls = fake.readArgvLog().filter((argv) => argv.includes('-p'));
+    expect(printCalls.length).toBeGreaterThanOrEqual(2);
+    for (const argv of printCalls) expect(argv).toContain('--no-session');
+  });
+
   it('falls back to the OMP default with a truthful warning when the requested model is rejected', async () => {
     const { agent, fake } = setup();
 
