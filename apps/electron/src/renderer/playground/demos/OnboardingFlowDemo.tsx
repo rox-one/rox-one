@@ -1,10 +1,11 @@
 /**
- * OnboardingFlowDemo — Interactive walkthrough of the new onboarding flow.
+ * OnboardingFlowDemo — Interactive walkthrough of onboarding + provider setup.
  *
  * Manages its own state so you can click through the entire sequence
  * in the playground without needing real IPC or OAuth.
  *
- * Flow: WelcomeStep → ProviderSelectStep → CredentialsStep / LocalModelStep → CompletionStep
+ * First run: WelcomeStep → app (Rox runtime by default, no further screens).
+ * Settings → ИИ: ProviderSelectStep → CredentialsStep / LocalModelStep → closes.
  */
 import { useState, useCallback, useEffect } from 'react'
 import { ensureMockElectronAPI } from '../mock-utils'
@@ -12,7 +13,6 @@ import { WelcomeStep } from '@/components/onboarding/WelcomeStep'
 import { ProviderSelectStep, type ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import { CredentialsStep } from '@/components/onboarding/CredentialsStep'
 import { LocalModelStep } from '@/components/onboarding/LocalModelStep'
-import { CompletionStep } from '@/components/onboarding/CompletionStep'
 import type { ApiSetupMethod } from '@/components/onboarding/APISetupStep'
 import type { CredentialStatus } from '@/components/onboarding/CredentialsStep'
 
@@ -104,20 +104,13 @@ export function OnboardingFlowDemo() {
     setErrorMessage(undefined)
   }, [])
 
-  const handleSkip = useCallback(() => {
-    console.log('[Playground] Setup deferred — dismissing onboarding')
-    // In the real app this calls onComplete() which dismisses onboarding
-    // and shows the main app. In the playground we restart the demo.
-    handleRestart()
-  }, [handleRestart])
-
   // Step labels for the breadcrumb
   const activeStepLabel = step === 'local-model' ? 'Local Model' : 'Credentials'
   const STEP_ORDER: { key: DemoStep; label: string }[] = [
     { key: 'welcome', label: 'Welcome' },
-    { key: 'provider-select', label: 'Provider' },
+    { key: 'complete', label: 'App' },
+    { key: 'provider-select', label: 'Settings → Provider' },
     { key: step === 'local-model' ? 'local-model' : 'credentials', label: activeStepLabel },
-    { key: 'complete', label: 'Done' },
   ]
 
   const currentIndex = STEP_ORDER.findIndex(s => s.key === step)
@@ -157,12 +150,12 @@ export function OnboardingFlowDemo() {
         {step === 'welcome' && (
           <WelcomeStep
             isExistingUser={false}
-            onContinue={() => setStep('provider-select')}
+            onContinue={() => setStep('complete')}
           />
         )}
 
         {step === 'provider-select' && (
-          <ProviderSelectStep onSelect={handleProviderSelect} onSkip={handleSkip} />
+          <ProviderSelectStep onSelect={handleProviderSelect} />
         )}
 
         {step === 'credentials' && method && (
@@ -194,10 +187,15 @@ export function OnboardingFlowDemo() {
         )}
 
         {step === 'complete' && (
-          <CompletionStep
-            status="complete"
-            onFinish={handleRestart}
-          />
+          <div className="flex flex-col items-center gap-3 text-sm text-muted-foreground">
+            <p>App opens here (default runtime: Rox).</p>
+            <button
+              onClick={() => setStep('provider-select')}
+              className="text-xs text-foreground px-2 py-1 rounded hover:bg-foreground/5"
+            >
+              Settings → ИИ → add provider
+            </button>
+          </div>
         )}
       </div>
     </div>

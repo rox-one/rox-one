@@ -186,10 +186,6 @@ function writeArtifacts(storage: StorageLike, artifacts: FirstResultArtifacts): 
   storage.setItem(FIRST_RESULT_ARTIFACTS_KEY, JSON.stringify(artifacts))
 }
 
-export function skipSetupLandingStep(): 'complete' {
-  return 'complete'
-}
-
 export function rememberLocalProfile(store: FirstResultStore, name: string): FirstResultCheckpoint {
   const current = resumeFirstResult(store)
   const next: FirstResultCheckpoint = {

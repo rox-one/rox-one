@@ -14,7 +14,6 @@ import {
   rememberLocalProfile,
   retryFirstResultServices,
   skipFirstResultOnStore,
-  skipSetupLandingStep,
   type FirstResultCopy,
 } from '../first-result-ui.ts'
 
@@ -39,10 +38,6 @@ const COPY: FirstResultCopy = {
 }
 
 describe('ROX-P1-ONBOARDING-UI first-result (evidence U1)', () => {
-  test('skipping provider setup still lands on the first-result step', () => {
-    expect(skipSetupLandingStep()).toBe('complete')
-  })
-
   test('offline seed writes usable note and task artifacts and completes', async () => {
     const storage = memoryStorage()
     const store = createStorageAdapter(storage)

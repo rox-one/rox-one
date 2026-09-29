@@ -727,14 +727,15 @@ export default function App() {
     onComplete: handleOnboardingComplete,
     onConfigSaved: refreshLlmConnections,
     initialSetupNeeds: setupNeeds || undefined,
-    initialStep: usernameConfirmed ? 'provider-select' : 'welcome',
+    // Onboarding is the single name screen; provider setup lives in Settings → ИИ.
+    initialStep: 'welcome',
   })
 
   // Reauth login handler - placeholder (reauth is not currently used)
   const handleReauthLogin = useCallback(async () => {
     // Re-check setup needs
     const needs = await window.electronAPI.getSetupNeeds()
-    if (needs.isFullyConfigured && usernameConfirmed) {
+    if (usernameConfirmed) {
       setAppState('ready')
     } else {
       setSetupNeeds(needs)
@@ -758,7 +759,10 @@ export default function App() {
         const needs = await window.electronAPI.getSetupNeeds()
         setSetupNeeds(needs)
 
-        if (needs.isFullyConfigured && usernameConfirmed) {
+        // Onboarding is only the name screen. Once the name is confirmed the
+        // app opens even when no provider is ready: new users default to the
+        // Rox runtime and every other provider is added in Settings → ИИ.
+        if (usernameConfirmed) {
           // If no workspace is selected (thin client without CRAFT_WORKSPACE_ID),
           // show workspace picker before entering the main app
           if (!wsId) {
@@ -767,7 +771,7 @@ export default function App() {
             setAppState('ready')
           }
         } else {
-          // New user, incomplete setup, or unconfirmed display name
+          // New user (display name not confirmed yet)
           setAppState('onboarding')
         }
       } catch (error) {
@@ -2115,9 +2119,6 @@ export default function App() {
             onContinue={onboarding.handleContinue}
             onBack={onboarding.handleBack}
             onSelectProvider={onboarding.handleSelectProvider}
-            onSkipSetup={onboarding.handleSkipSetup}
-            onSaveEnvironment={onboarding.handleSaveEnvironment}
-            onSkipEnvironment={onboarding.handleSkipEnvironment}
             roxConnectCodes={onboarding.roxConnectCodes}
             roxConnectStatus={onboarding.roxConnectStatus}
             roxConnectError={onboarding.roxConnectError}
