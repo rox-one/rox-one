@@ -41,7 +41,6 @@ import { SettingsOverviewPage } from '@/pages/settings/SettingsOverviewPage'
 import { recordRecentSetting } from '@/lib/settings-recent'
 import { PageView } from '../pages/PageView'
 import { SessionHeatmapHost } from './session-heatmap/SessionHeatmapHost'
-import type { ExecutionEntry } from '../automations/types'
 import { automationsAtom } from '@/atoms/automations'
 import { SendResourceToWorkspaceDialog, type SendResourceType } from './SendResourceToWorkspaceDialog'
 import {
@@ -71,13 +70,8 @@ const KanbanBoardContainer = React.lazy(() =>
 const SessionTableHost = React.lazy(() =>
   import('./session-table/SessionTableHost').then((m) => ({ default: m.SessionTableHost })),
 )
-const AutomationInfoPage = React.lazy(() =>
-  import('../automations/AutomationInfoPage').then((m) => ({ default: m.AutomationInfoPage })),
-)
-const AutomationGraphWorkspaceEditor = React.lazy(() =>
-  import('../automations/AutomationGraphWorkspaceEditor').then((m) => ({
-    default: m.AutomationGraphWorkspaceEditor,
-  })),
+const AutomationEditor = React.lazy(() =>
+  import('../automations/AutomationEditor').then((m) => ({ default: m.AutomationEditor })),
 )
 const KnowledgeDiff = React.lazy(() =>
   import('../../knowledge/KnowledgeDiff').then((m) => ({ default: m.KnowledgeDiff })),
@@ -111,13 +105,6 @@ export function MainContentPanel({
     sessionStatuses,
     projects,
     labels,
-    onTestAutomation,
-    onToggleAutomation,
-    onDuplicateAutomation,
-    onDeleteAutomation,
-    onReplayAutomation,
-    automationTestResults,
-    getAutomationHistory,
     activeSessionWorkingDirectory,
   } = useAppShellContext()
 
@@ -150,27 +137,6 @@ export function MainContentPanel({
     void recordRecentSetting(activeWorkspaceId, navState.subpage, { signal: controller.signal })
     return () => { controller.abort() }
   }, [navState, activeWorkspaceId])
-
-  const selectedAutomationId = isAutomationsNavigation(navState) ? navState.details?.automationId : undefined
-  const [executions, setExecutions] = useState<ExecutionEntry[]>([])
-  useEffect(() => {
-    if (!selectedAutomationId || !getAutomationHistory) {
-      setExecutions([])
-      return
-    }
-    let stale = false
-    getAutomationHistory(selectedAutomationId).then(entries => {
-      if (!stale) setExecutions(entries)
-    })
-    const cleanup = window.electronAPI.onAutomationsChanged(() => {
-      if (!stale) {
-        getAutomationHistory(selectedAutomationId).then(entries => {
-          if (!stale) setExecutions(entries)
-        })
-      }
-    })
-    return () => { stale = true; cleanup() }
-  }, [selectedAutomationId, getAutomationHistory])
 
   const isSourceMultiSelectActive = sourceSelection.useIsMultiSelectActive()
   const sourceSelectionCount = sourceSelection.useSelectionCount()
@@ -324,33 +290,26 @@ export function MainContentPanel({
         </Panel>
       )
     }
-    if (navState.details) {
-      const automation = automations.find(h => h.id === navState.details!.automationId)
-      if (automation) {
-        return wrapWithStoplight(
-          <Panel variant="grow" className={className}>
-            <AutomationInfoPage
-              automation={automation}
-              executions={executions}
-              testResult={automationTestResults?.[automation.id]}
-              onTest={onTestAutomation ? () => onTestAutomation(automation.id) : undefined}
-              onToggleEnabled={onToggleAutomation ? () => onToggleAutomation(automation.id) : undefined}
-              onDuplicate={onDuplicateAutomation ? () => onDuplicateAutomation(automation.id) : undefined}
-              onDelete={onDeleteAutomation ? () => onDeleteAutomation(automation.id) : undefined}
-              onReplay={onReplayAutomation}
-            />
-          </Panel>
-        )
-      }
+    const automation = navState.details
+      ? automations.find(h => h.id === navState.details!.automationId)
+      : undefined
+    if (automation) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <AutomationEditor key={automation.id} automation={automation} workspaceId={activeWorkspaceId} />
+        </Panel>
+      )
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex h-full min-h-0 flex-col gap-3 p-4">
-          <div className="shrink-0">
-            <h1 className="text-lg font-semibold">{t('entityView.graph')}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{t('automations.emptyDescription')}</p>
+        <div className="flex h-full items-center justify-center p-8" data-testid="automations-empty-editor">
+          <div className="max-w-sm text-center text-sm text-muted-foreground">
+            <p className="text-base text-foreground">
+              {/* A stale selection (e.g. just deleted) falls back to the picker once the list has loaded. */}
+              {navState.details && automations.length === 0 ? t('common.loading') : t('automations.pickOne')}
+            </p>
+            <p className="mt-2">{t('automations.emptyDescription')}</p>
           </div>
-          <AutomationGraphWorkspaceEditor workspaceId={activeWorkspaceId} className="min-h-0 flex-1" />
         </div>
       </Panel>
     )
