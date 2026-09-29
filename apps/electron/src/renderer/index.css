@@ -250,6 +250,15 @@ html[data-shell-style="zen"][data-scenic] .chrome-strip {
   }
 }
 
+/* Panel header icon buttons and map toolbar buttons are flat fills (no
+   per-button outline, so they don't box inside their panel/toolbar pill).
+   High contrast gives them back a hairline edge so they stay distinguishable;
+   focused buttons keep their focus ring/outline instead. */
+html[data-contrast="high"] .panel-header-btn:not(:focus-visible),
+html[data-contrast="high"] .map-toolbar-btn:not(:focus-visible) {
+  box-shadow: var(--shadow-minimal);
+}
+
 /* Draggable title bar region for transparent window */
 .titlebar-drag-region {
   -webkit-app-region: drag;

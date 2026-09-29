@@ -966,7 +966,7 @@ function EditorInner({
                 </span>
               ) : null}
             </div>
-            <div className="ml-auto inline-flex min-w-0 flex-nowrap items-center justify-end gap-1 rounded-full border border-white/10 bg-background/60 p-1 shadow-strong backdrop-blur-xl">
+            <div className="ml-auto inline-flex min-w-0 flex-nowrap items-center justify-end gap-1 rounded-full bg-background/60 p-1 shadow-strong backdrop-blur-xl">
               <div className="inline-flex rounded-full bg-foreground/[0.04] p-0.5">
                 <Button
                   type="button"
@@ -974,8 +974,8 @@ function EditorInner({
                   variant="ghost"
                   aria-pressed={camera === 'map'}
                   className={cn(
-                    'h-7 rounded-full px-2.5 text-[11px]',
-                    camera === 'map' && 'bg-foreground/10 shadow-thin',
+                    'map-toolbar-btn h-7 rounded-full px-2.5 text-[11px] hover:bg-foreground/[0.06]',
+                    camera === 'map' && 'bg-foreground/10 text-foreground hover:bg-foreground/10',
                   )}
                   onClick={() => persistCamera('map')}
                 >
@@ -987,8 +987,8 @@ function EditorInner({
                   variant="ghost"
                   aria-pressed={camera === 'flow'}
                   className={cn(
-                    'h-7 rounded-full px-2.5 text-[11px]',
-                    camera === 'flow' && 'bg-foreground/10 shadow-thin',
+                    'map-toolbar-btn h-7 rounded-full px-2.5 text-[11px] hover:bg-foreground/[0.06]',
+                    camera === 'flow' && 'bg-foreground/10 text-foreground hover:bg-foreground/10',
                   )}
                   onClick={() => persistCamera('flow')}
                 >
@@ -998,8 +998,8 @@ function EditorInner({
               <Button
                 type="button"
                 size="sm"
-                variant="outline"
-                className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                variant="ghost"
+                className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
                 onClick={() => {
                   flowRef.current?.fitView({ padding: 0.2 })
                 }}
@@ -1009,8 +1009,8 @@ function EditorInner({
               <Button
                 type="button"
                 size="sm"
-                variant="outline"
-                className="h-7 rounded-md border-border/70 bg-background/70 px-2.5 text-[11px]"
+                variant="ghost"
+                className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
                 onClick={resetLayout}
               >
                 {t('entityView.mapResetLayout')}
@@ -1018,8 +1018,8 @@ function EditorInner({
               <Button
                 type="button"
                 size="sm"
-                variant="outline"
-                className="h-7 rounded-md border-border/70 bg-background/70 px-2.5 text-[11px]"
+                variant="ghost"
+                className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
                 disabled={!selected}
                 onClick={() => {
                   const prompt = draft.trim() || selected?.triggerPreview
@@ -1033,8 +1033,8 @@ function EditorInner({
                   <Button
                     type="button"
                     size="sm"
-                    variant="outline"
-                    className="h-7 rounded-full border-transparent bg-background/45 px-2.5 text-[11px] shadow-thin backdrop-blur-xl"
+                    variant="ghost"
+                    className="map-toolbar-btn h-7 rounded-full bg-foreground/[0.05] px-2.5 text-[11px] hover:bg-foreground/10"
                     data-testid="map-toolbar-more"
                     aria-label={t('entityView.mapMoreActions')}
                   >
