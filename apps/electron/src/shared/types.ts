@@ -9,6 +9,7 @@ export * from '@craft-agent/shared/protocol'
 
 // Core types
 import type { MeetingsLocalApi } from './meetings-local'
+import type { MailLocalApi } from './mail-local'
 import { buildExtraScreenRoute, parseExtraScreenSegments, type ExtraScreenId } from './extra-screens'
 import type {
   Message as CoreMessage,
@@ -917,6 +918,8 @@ export interface ElectronAPI {
   getFilePath(file: File): string | null
   /** Local meeting recordings (device-local IPC, Electron only). */
   meetingsLocal?: MeetingsLocalApi
+  /** Rox Mail over JMAP (local Stalwart pilot). */
+  mailLocal?: MailLocalApi
 
   // Filesystem search (for @ mention file selection)
   searchFiles(basePath: string, query: string): Promise<FileSearchResult[]>
