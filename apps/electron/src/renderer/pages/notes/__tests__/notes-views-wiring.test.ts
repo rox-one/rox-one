@@ -73,9 +73,9 @@ describe('issues 07–09 wiring', () => {
     expect(notesPage).toMatch(/<EntityViewTabs[\s\S]{0,5000}map[\s\S]{0,5000}<MindMapHost/)
   })
 
-  it('exposes Fit/Reset/Run, inspector status and sticky/frame/group chrome on session canvas', () => {
+  it('exposes Fit/Reset/Rewrite node, inspector status and sticky/frame/group chrome on session canvas', () => {
     const editor = read('components/session-workbench/SessionWorkflowEditor.tsx')
-    expect(editor).toContain("t('entityView.mapRun')")
+    expect(editor).toContain("t('entityView.mapRewriteNode')")
     expect(editor).toContain("t('entityView.mapAlign')")
     expect(editor).toContain("data-testid=\"session-canvas-inspector\"")
     expect(editor).toContain("handleCreateChrome('sticky')")

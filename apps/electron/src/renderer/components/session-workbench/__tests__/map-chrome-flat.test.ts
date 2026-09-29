@@ -30,7 +30,7 @@ describe('flat map + terminal chrome', () => {
   })
 
   it('minimap renders only with scenes and without an outline', () => {
-    expect(editor).toMatch(/\{!mapEmpty \? \(\s*<MiniMap/)
+    expect(editor).toMatch(/\{!mapEmpty && showMinimap \? \(\s*<MiniMap/)
     const mini = editor.slice(editor.indexOf('<MiniMap'), editor.indexOf('/>', editor.indexOf('<MiniMap')))
     expect(mini).toContain('!border-0')
     expect(mini).toContain('!shadow-none')

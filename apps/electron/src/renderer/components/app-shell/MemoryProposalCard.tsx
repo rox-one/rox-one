@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import type { MemoryProposal, MemoryProposalScope } from '@craft-agent/shared/memory/proposals'
+import { consumeLearnFromSessionRequest, LEARN_FROM_SESSION_EVENT } from '@/lib/session-learn-request'
 
 export interface MemoryProposalCardProps {
   proposal: MemoryProposal
@@ -109,6 +110,21 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
     return window.electronAPI.onMemoryChanged(() => reload())
   }, [reload, workspaceId])
 
+  // The «learn» action lives in the session menu; it posts a request that
+  // this lane (mounted in the open chat) consumes.
+  const learnRef = React.useRef<() => Promise<void>>(async () => {})
+  React.useEffect(() => {
+    if (!workspaceId) return
+    if (consumeLearnFromSessionRequest(sessionId)) void learnRef.current()
+    const onRequest = (event: Event) => {
+      const detail = (event as CustomEvent<{ sessionId?: string }>).detail
+      if (detail?.sessionId !== sessionId) return
+      if (consumeLearnFromSessionRequest(sessionId)) void learnRef.current()
+    }
+    window.addEventListener(LEARN_FROM_SESSION_EVENT, onRequest)
+    return () => window.removeEventListener(LEARN_FROM_SESSION_EVENT, onRequest)
+  }, [workspaceId, sessionId])
+
   const learn = async () => {
     if (!workspaceId || learning) return
     setLearning(true)
@@ -142,25 +158,20 @@ export function SessionMemoryProposalLane({ workspaceId, sessionId, projectId, m
     }
   }
 
+  learnRef.current = learn
+
   if (!workspaceId) return null
+  // Nothing to show until the user asks (session menu) or proposals exist.
+  if (!learning && !disabled && !lastRun && proposals.length === 0) return null
 
   return (
     <div className="mt-3 flex flex-col gap-2 px-1" data-memory-proposal-lane={sessionId}>
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => void learn()}
-          disabled={learning}
-          aria-busy={learning}
-          className="inline-flex h-7 items-center gap-1.5 rounded-md bg-info/15 px-2.5 text-xs font-medium text-info hover:bg-info/25 disabled:opacity-60"
-        >
+      {(learning || preview.length > 0) && (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           {learning && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
-          {learning ? t('memory.proposal.learning') : t('memory.proposal.learn')}
-        </button>
-        {!learning && preview.length > 0 && (
-          <span className="text-[11px] text-muted-foreground">{t('memory.proposal.preview')}</span>
-        )}
-      </div>
+          {learning ? t('memory.proposal.learning') : <span className="text-[11px]">{t('memory.proposal.preview')}</span>}
+        </div>
+      )}
       {!learning && !disabled && lastRun && lastRun.found === 0 && (
         <p role="status" className="text-xs text-muted-foreground" data-memory-proposal-empty>
           {t('memory.proposal.nothingFound', { n: lastRun.scanned })}

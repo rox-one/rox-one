@@ -1597,7 +1597,17 @@ export interface ElectronAPI {
     mimeType?: string
     language?: string
   }): Promise<{ text: string; engine: string; uploaded: boolean; noSpeech?: boolean; requestId?: string }>
-  speakVoice(payload: { text: string }): Promise<{ engine: string; uploaded: false }>
+  /**
+   * Start speaking `text` (resolves once playback started), stop with
+   * `{ stop: true }`, or poll native playback with `{ status: true }`.
+   */
+  speakVoice(payload: { text?: string; stop?: boolean; status?: boolean }): Promise<{
+    engine: string
+    uploaded: false
+    playback?: 'native' | 'renderer' | 'none'
+    stopped?: boolean
+    speaking?: boolean
+  }>
   onVoiceChanged(callback: (prefs: VoicePrefs) => void): () => void
   bootstrapVoice(): Promise<{ installationId: string; expiresAt: number; scopes: string[] }>
   getVoiceCapabilities(): Promise<{ displayName: string; languageCount: number; show74Badge: boolean; modelId: string }>
