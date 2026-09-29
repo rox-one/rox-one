@@ -39,7 +39,7 @@ interface PageSourceAuthBannerProps {
   className?: string
 }
 
-type ReconnectFlavor = 'oauth' | 'secret' | 'agent'
+export type ReconnectFlavor = 'oauth' | 'secret' | 'agent'
 
 /**
  * How this source gets reconnected from here:
@@ -48,7 +48,7 @@ type ReconnectFlavor = 'oauth' | 'secret' | 'agent'
  * - agent  → multi-field auth (basic, multi-header) — hand off to a chat,
  *            where the full credential form already exists
  */
-function reconnectFlavor(config: LoadedSource['config']): ReconnectFlavor {
+export function reconnectFlavor(config: LoadedSource['config']): ReconnectFlavor {
   if (config.mcp?.authType === 'oauth' || config.api?.authType === 'oauth') return 'oauth'
   const api = config.api
   if (api?.authType === 'basic') return 'agent'
@@ -160,7 +160,7 @@ export function PageSourceAuthBanner({ workspaceId, page, sources, className }: 
  * Saving goes through sources:saveCredentials, which stores the credential
  * encrypted and clears the source's needs_auth state.
  */
-function ReconnectCredentialDialog({
+export function ReconnectCredentialDialog({
   workspaceId,
   source,
   onClose,

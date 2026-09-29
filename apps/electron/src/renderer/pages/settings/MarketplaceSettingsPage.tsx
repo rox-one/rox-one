@@ -623,8 +623,9 @@ export default function MarketplaceSettingsPage() {
                         </div>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 min-w-0">
+                      {/* Wrapping footer: tags/permissions and actions never overlap. */}
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+                        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                           <span
                             title={`${e.source.repo}@${e.source.ref}`}
                             className="group relative text-[10px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground cursor-help inline-flex items-center gap-1"
@@ -673,10 +674,10 @@ export default function MarketplaceSettingsPage() {
                             </span>
                           ))}
                         </div>
-                        <div className="flex gap-2 shrink-0">
+                        <div className="ml-auto flex shrink-0 flex-wrap items-center justify-end gap-2">
                           {state === 'installed' ? (
                             <>
-                              <span className="text-xs py-1 px-3 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 flex items-center gap-1">
+                              <span className="whitespace-nowrap text-xs py-1 px-3 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 flex items-center gap-1">
                                 <CheckCircle2 className="w-3 h-3" />
                                 {t('marketplace.installed')}
                               </span>

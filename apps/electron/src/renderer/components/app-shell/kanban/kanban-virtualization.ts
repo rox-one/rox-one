@@ -23,15 +23,26 @@ export function kanbanTileRowHeight(task: KanbanTask, expanded: boolean): number
   return body + KANBAN_TILE_STACK_GAP
 }
 
+/**
+ * `measuredHeights` (task id → rendered tile height, without the stack gap)
+ * replaces the estimate once a tile has been laid out, so taller cards
+ * (labels, model chip, subtask affordance) never overlap their neighbours.
+ */
 export function flattenKanbanColumnTasks(
   tasks: readonly KanbanTask[],
   expandedTaskIds: ReadonlySet<string>,
+  measuredHeights?: ReadonlyMap<string, number>,
 ): FlattenedTableGroups<KanbanTask, { key: string }> {
   return flattenTableGroups([{ bucket: null, items: tasks }], new Set(), {
     getItemKey: (task) => task.id,
     rowHeight: KANBAN_TILE_BASE_HEIGHT + KANBAN_TILE_STACK_GAP,
     headerHeight: 0,
-    getRowHeight: (task) => kanbanTileRowHeight(task, expandedTaskIds.has(task.id)),
+    getRowHeight: (task) => {
+      const measured = measuredHeights?.get(task.id)
+      return measured != null && measured > 0
+        ? Math.ceil(measured) + KANBAN_TILE_STACK_GAP
+        : kanbanTileRowHeight(task, expandedTaskIds.has(task.id))
+    },
   })
 }
 

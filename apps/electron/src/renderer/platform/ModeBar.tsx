@@ -19,6 +19,7 @@ import {
   Inbox,
   ListTodo,
   MessageSquare,
+  NotebookPen,
   Rss,
   type LucideIcon,
 } from 'lucide-react'
@@ -39,6 +40,7 @@ const MODE_ICONS: Record<string, LucideIcon> = {
   Inbox,
   ListTodo,
   MessageSquare,
+  NotebookPen,
   Rss,
 }
 

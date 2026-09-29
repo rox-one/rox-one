@@ -14,6 +14,7 @@
 
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
+import i18n from "i18next"
 import {
   Archive,
   ArchiveRestore,
@@ -36,6 +37,9 @@ import {
   FolderKanban,
   Check,
   BookOpen,
+  Sparkles,
+  ThumbsUp,
+  ThumbsDown,
 } from 'lucide-react'
 import { useSetAtom } from 'jotai'
 import { useMenuComponents } from '@/components/ui/menu-context'
@@ -49,7 +53,25 @@ import { getSessionStatus, hasUnreadMeta, hasMessagesMeta } from '@/utils/sessio
 import { MessagingSessionMenuItem } from '@/components/messaging/MessagingSessionMenuItem'
 import { useSessionMenuActions } from '@/hooks/useSessionMenuActions'
 import { publishSessionDialogAtom } from '@/atoms/knowledge-publish'
+import { navigate, routes } from '@/lib/navigate'
+import { requestLearnFromSession } from '@/lib/session-learn-request'
+import { toast } from 'sonner'
 
+
+/** 👍/👎 map onto the extremes of the gamification rating scale. */
+const SESSION_RATING_UP = 100
+const SESSION_RATING_DOWN = 1
+
+async function rateSession(sessionId: string, score: number): Promise<void> {
+  const rate = window.electronAPI.rateGamificationSession
+  if (!rate) return
+  try {
+    await rate({ sessionId, score, provenance: 'session-menu' })
+    toast.success(score === SESSION_RATING_UP ? '👍' : '👎')
+  } catch {
+    toast.error(i18n.t('common.failed'))
+  }
+}
 
 export interface SessionMenuProjectOption {
   id: string
@@ -201,6 +223,35 @@ export function SessionMenu({
         <BookOpen className="h-3.5 w-3.5" />
         <span className="flex-1">{t('knowledge.publish.menu')}</span>
       </MenuItem>
+
+      {/* Learn from this session — moved here from the chip above the composer */}
+      <MenuItem
+        onClick={() => {
+          requestLearnFromSession(sessionId)
+          navigate(routes.view.allSessions(sessionId))
+        }}
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        <span className="flex-1">{t('memory.proposal.learn')}</span>
+      </MenuItem>
+
+      {/* Rate session — simple 👍/👎 (feeds the gamification rating) */}
+      <Sub>
+        <SubTrigger className="pr-2">
+          <ThumbsUp className="h-3.5 w-3.5" />
+          <span className="flex-1">{t('quests.rateSession')}</span>
+        </SubTrigger>
+        <SubContent>
+          <MenuItem onClick={() => void rateSession(sessionId, SESSION_RATING_UP)}>
+            <ThumbsUp className="h-3.5 w-3.5" />
+            <span className="flex-1">👍</span>
+          </MenuItem>
+          <MenuItem onClick={() => void rateSession(sessionId, SESSION_RATING_DOWN)}>
+            <ThumbsDown className="h-3.5 w-3.5" />
+            <span className="flex-1">👎</span>
+          </MenuItem>
+        </SubContent>
+      </Sub>
       <Separator />
 
       {/* Status submenu - includes all statuses plus Flag/Unflag at the bottom */}

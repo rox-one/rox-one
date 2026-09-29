@@ -1,4 +1,5 @@
 import type { EventSink, RpcServer } from '@craft-agent/server-core/transport'
+import { annotationPayloadRejection } from './annotation-payload'
 import { CLIENT_BROWSER_INVOKE } from '@craft-agent/server-core/transport'
 import type { ISessionManager, IBrowserPaneManager, ExecutePromptAutomationInput } from '@craft-agent/server-core/handlers'
 import { RemoteBrowserPaneManager } from './RemoteBrowserPaneManager'
@@ -6255,12 +6256,13 @@ export class SessionManager implements ISessionManager {
       return
     }
 
-    if (!annotation?.id || !annotation?.target?.selectors?.length) {
+    const rejection = annotationPayloadRejection(annotation, messageId)
+    if (rejection === 'invalid') {
       sessionLog.warn(`Cannot add annotation: invalid annotation payload for message ${messageId}`)
       return
     }
 
-    if (annotation.target.source.messageId !== messageId) {
+    if (rejection === 'message-mismatch') {
       sessionLog.warn(`Cannot add annotation: target source.messageId mismatch (${annotation.target.source.messageId} !== ${messageId})`)
       return
     }

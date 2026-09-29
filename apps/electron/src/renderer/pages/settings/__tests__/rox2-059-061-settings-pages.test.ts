@@ -226,7 +226,15 @@ describe('ROX2-059..061 native settings pages', () => {
       // config-read is device-read: mount-time loaders collect a real grant
       // from the user instead of asserting `granted: true`.
       expect(text, id).not.toContain('granted: true')
-      expect(text, id).toContain('setGranted(true)')
+      if (id === 'messaging') {
+        // Messaging config/bindings are Rox's own local state: the page loads
+        // them on mount (no "load connections" permission wall). Connect,
+        // disconnect and unbind keep their explicit grants.
+        expect(text, id).not.toContain('setGranted(true)')
+        expect(text, id).toContain("messagingActionAllowed('config-read', true)")
+      } else {
+        expect(text, id).toContain('setGranted(true)')
+      }
     }
   })
 

@@ -4,8 +4,9 @@
  * Priorities (widest-first): the session/center column keeps
  * `CENTER_MIN_WIDTH`; the right inspector panel yields first. The inspector
  * panel is also collapsed by default while its section is the session Files
- * list and that list is empty. An explicit user toggle always wins: the panel
- * then opens (at its minimum width if space is tight).
+ * list and that list is empty. An explicit user toggle always wins: when there
+ * is not enough room beside the center column, the panel opens as an overlay
+ * on top of the content instead of squeezing it below `CENTER_MIN_WIDTH`.
  *
  * Nothing here writes persisted state: a squeezed or empty-collapsed panel is
  * a display decision, so the user's saved visibility/width survive untouched.
@@ -38,6 +39,11 @@ export interface InspectorLayout {
   panelShown: boolean
   /** Why a persisted-visible panel is hidden, for data attributes / tests. */
   collapsedReason: 'empty-files' | 'squeezed' | null
+  /**
+   * The panel floats over the content (no layout width) because docking it
+   * would squeeze the center column below its minimum.
+   */
+  overlay: boolean
   width: number
 }
 
@@ -53,24 +59,25 @@ export function resolveInspectorLayout(input: InspectorLayoutInput): InspectorLa
   const preferred = Math.min(cap, Math.max(input.minWidth, input.storedWidth))
 
   if (!input.visible) {
-    return { panelShown: false, collapsedReason: null, width: preferred }
+    return { panelShown: false, collapsedReason: null, overlay: false, width: preferred }
   }
 
   if (!input.userOpened && isEmptyFilesSection(input)) {
-    return { panelShown: false, collapsedReason: 'empty-files', width: preferred }
+    return { panelShown: false, collapsedReason: 'empty-files', overlay: false, width: preferred }
   }
 
   const available = Number.isFinite(input.availableWidth) ? Math.floor(input.availableWidth) : Number.POSITIVE_INFINITY
   if (available < input.minWidth) {
     if (input.userOpened) {
-      return { panelShown: true, collapsedReason: null, width: input.minWidth }
+      return { panelShown: true, collapsedReason: null, overlay: true, width: preferred }
     }
-    return { panelShown: false, collapsedReason: 'squeezed', width: preferred }
+    return { panelShown: false, collapsedReason: 'squeezed', overlay: false, width: preferred }
   }
 
   return {
     panelShown: true,
     collapsedReason: null,
+    overlay: false,
     width: Math.max(input.minWidth, Math.min(preferred, available)),
   }
 }

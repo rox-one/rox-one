@@ -28,6 +28,10 @@ describe('terminal dock chrome', () => {
     expect(terminal).not.toMatch(/cwd \? <div/)
     expect(terminal).not.toContain('text-white/30">{cwd}')
     expect(terminal).toContain("t('inspector.terminalHint')")
+    // One prompt (placeholder only) and no permanent collapsed strip.
+    expect(terminal).not.toContain('text-white/40">{t(\'inspector.terminalHint\')}')
+    expect(dock).toContain('if (!open) return null')
+    expect(dock).not.toContain('data-bottom-terminal="collapsed"')
 
     expect(shell).toContain('export const bottomDockHeightAtom')
     expect(shell).toMatch(/bottomDockHeightAtom[\s\S]*?\n\s*104,/)

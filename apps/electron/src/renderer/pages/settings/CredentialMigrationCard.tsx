@@ -234,15 +234,21 @@ export function CredentialMigrationCard() {
         <SettingsRow
           label={t('settings.accounts.migration.title')}
           description={t('settings.accounts.migration.description')}
+          wrapDescription
         >
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => void handleCheck()}>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => void handleCheck()}>
             {t('settings.accounts.migration.check')}
           </Button>
         </SettingsRow>
-        <SettingsRow label={t('settings.accounts.migration.statusLabel')} description={previewDescription()}>
+        <SettingsRow
+          label={t('settings.accounts.migration.statusLabel')}
+          description={previewDescription()}
+          wrapDescription
+        >
           <div className="flex items-center gap-2">
             <Button
               size="sm"
+              variant="secondary"
               disabled={busy || !canApply}
               onClick={() => setApplyDialogOpen(true)}
             >
@@ -250,7 +256,7 @@ export function CredentialMigrationCard() {
             </Button>
             <Button
               size="sm"
-              variant="outline"
+              variant="ghost"
               disabled={busy || !canRollback}
               onClick={() => setRollbackDialogOpen(true)}
             >

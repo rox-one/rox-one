@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 describe('quest progress card', () => {
-  it('is mounted on Home and never blocks core chrome', () => {
+  it('is not mounted on Home (no promo carousel) and never blocks core chrome', () => {
     const shell = readFileSync(join(import.meta.dir, '../AppShell.tsx'), 'utf8')
     const home = readFileSync(join(import.meta.dir, '../../../platform/HomeFrontPage.tsx'), 'utf8')
     const card = readFileSync(join(import.meta.dir, '../QuestProgressCard.tsx'), 'utf8')
-    expect(home).toContain('QuestProgressCard')
+    expect(home).not.toContain('QuestProgressCard')
     expect(shell).not.toContain('QuestProgressCard')
     expect(card).toContain('quests.dismiss')
     expect(card).toContain('quests.snooze')
@@ -20,11 +20,11 @@ describe('quest progress card', () => {
     expect(card).not.toContain('[1, 2, 3, 4, 5]')
   })
 
-  it('mounts session rating pills on the composer, not the quest slider', () => {
+  it('rates sessions with 👍/👎 from the session menu, not a composer scale', () => {
     const zone = readFileSync(join(import.meta.dir, '../input/ChatInputZone.tsx'), 'utf8')
-    const pill = readFileSync(join(import.meta.dir, '../SessionRatingPill.tsx'), 'utf8')
-    expect(zone).toContain('SessionRatingPill')
-    expect(pill).toContain('SESSION_RATING_PILLS')
-    expect(pill).toContain('session-composer')
+    const menu = readFileSync(join(import.meta.dir, '../SessionMenu.tsx'), 'utf8')
+    expect(zone).not.toContain('SessionRatingPill')
+    expect(menu).toContain('rateGamificationSession')
+    expect(menu).toContain('quests.rateSession')
   })
 })

@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue } from 'jotai'
-import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput } from 'lucide-react'
+import { Zap, PackageOpen, Check, ChevronDown, ChevronRight, X, Network, FolderX, KeyRound, TriangleAlert, RefreshCw, Archive, FolderOutput, MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { EntityPanel } from '@/components/ui/entity-panel'
 import { EntityListEmptyScreen } from '@/components/ui/entity-list-empty'
 import { skillSelection } from '@/hooks/useEntitySelection'
@@ -18,7 +19,6 @@ import type { PendingSkill, PendingSkillDiff, SkillUsageMap } from '@craft-agent
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { projectsAtom } from '@/atoms/projects'
 import type { BundledSkillPackStatus, LoadedSkill } from '../../../shared/types'
-import { getAppLocale } from '@craft-agent/shared/i18n'
 
 const RISK_FLAG_ICON: Record<SkillRiskFlag, typeof Network> = {
   'network': Network,
@@ -349,7 +349,7 @@ export function SkillsListPanel({
                 <span
                   title={t('skills.usageChip', {
                     count: used,
-                    date: lastUsedAt ? new Date(lastUsedAt).toLocaleDateString(getAppLocale()) : '—',
+                    date: lastUsedAt ? new Date(lastUsedAt).toLocaleDateString() : '—',
                   })}
                   className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground"
                 >
@@ -590,7 +590,7 @@ export function SkillsListPanel({
 
     {/* Runtime skills — read-only group with export action */}
     {ompSkills.length > 0 && (
-      <div className="mt-2 border-t border-foreground/5 pt-1.5" data-list-role="omp-skills">
+      <div className="mt-3 pt-1.5" data-list-role="omp-skills">
         <div className="px-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/70">
           {t('skillsList.ompSection')}
         </div>
@@ -599,7 +599,7 @@ export function SkillsListPanel({
             <li
               key={skill.slug}
               title={skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
-              className={`flex items-center gap-2 px-2 py-1.5 rounded-[8px] ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
+              className={`group flex min-w-0 items-center gap-2 px-2 py-1.5 rounded-[8px] hover:bg-foreground/[0.03] ${skill.shadowedByCraft ? 'opacity-50' : ''}`}
               style={SKILL_ROW_STYLE}
             >
               <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />
@@ -614,15 +614,26 @@ export function SkillsListPanel({
                   {skill.shadowedByCraft ? t('skillsList.ompShadowed') : skill.metadata.description}
                 </span>
               </span>
-              <button
-                type="button"
-                disabled={exportingSlug !== null}
-                onClick={() => void handleExportOmpSkill(skill)}
-                className="shrink-0 inline-flex items-center gap-1 h-6 px-2 text-[11px] font-medium rounded-[6px] bg-foreground/5 text-muted-foreground hover:bg-foreground/10 hover:text-foreground transition-colors disabled:opacity-50"
-              >
-                <PackageOpen className="size-3" />
-                {t('skillsList.ompExport')}
-              </button>
+              {/* Export lives in a hover «…» menu so the name keeps the row. */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label={t('common.more')}
+                    title={t('common.more')}
+                    disabled={exportingSlug !== null}
+                    className="shrink-0 inline-flex size-6 items-center justify-center rounded-[6px] text-muted-foreground opacity-0 transition-opacity hover:bg-foreground/10 hover:text-foreground focus-visible:opacity-100 group-hover:opacity-100 data-[state=open]:opacity-100 disabled:opacity-50"
+                  >
+                    <MoreHorizontal className="size-3.5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => void handleExportOmpSkill(skill)}>
+                    <PackageOpen className="size-3.5" />
+                    {t('skillsList.ompExport')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </li>
           ))}
         </ul>

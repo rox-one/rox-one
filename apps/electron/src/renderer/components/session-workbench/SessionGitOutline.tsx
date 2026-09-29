@@ -19,6 +19,15 @@ export type SessionGitOutlineProps = {
   onFork?: (messageId: string) => void
   onOpenSession?: (sessionId: string) => void
   onInsertVariable?: (name: string, value?: string) => void
+  /** Message id → creation time (ms), for «Ход N · 14:32» labels. */
+  messageTimes?: ReadonlyMap<string, number>
+}
+
+/** Collapse a tool chain into «12× read, 4× bash» (first-seen order). */
+export function summarizeSceneTools(tools: ReadonlyArray<{ name: string }>): string {
+  const counts = new Map<string, number>()
+  for (const tool of tools) counts.set(tool.name, (counts.get(tool.name) ?? 0) + 1)
+  return [...counts.entries()].map(([name, n]) => `${n}× ${name}`).join(', ')
 }
 
 export function SessionGitOutline({
@@ -30,8 +39,13 @@ export function SessionGitOutline({
   onFork,
   onOpenSession,
   onInsertVariable,
+  messageTimes,
 }: SessionGitOutlineProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const timeFormat = React.useMemo(
+    () => new Intl.DateTimeFormat(i18n.language || undefined, { hour: '2-digit', minute: '2-digit' }),
+    [i18n.language],
+  )
   const graph = React.useMemo(
     () => projectSessionScenes(sessionId, messages),
     [sessionId, messages],
@@ -62,21 +76,25 @@ export function SessionGitOutline({
         </p>
       ) : (
       <ul>
-        {graph.scenes.map((scene) => {
+        {graph.scenes.map((scene, index) => {
           const isFork =
             scene.childSceneIds.length > 1 || incomingForkIds.has(scene.id)
-          const hash = scene.id.slice(-7)
+          const time = messageTimes?.get(scene.triggerMessageId)
+          const turnLabel = time
+            ? `${t('entityView.outlineTurn', { n: index + 1 })} · ${timeFormat.format(new Date(time))}`
+            : t('entityView.outlineTurn', { n: index + 1 })
+          const toolSummary = summarizeSceneTools(scene.tools)
           return (
             <li
               key={scene.id}
-              className="border-l border-border/60 py-2 pl-3"
+              className="py-2"
             >
               <div className="flex items-start gap-2">
                 <GitCommit className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-mono text-[11px] text-muted-foreground">
-                      {hash}
+                    <span className="text-[11px] text-muted-foreground" title={scene.id}>
+                      {turnLabel}
                     </span>
                     {isFork ? (
                       <span className="inline-flex items-center gap-0.5 rounded bg-violet-500/10 px-1 py-0.5 text-[10px] uppercase tracking-wide text-violet-500">
@@ -88,24 +106,17 @@ export function SessionGitOutline({
                   <div className="mt-0.5 truncate">
                     {scene.triggerPreview || scene.id}
                   </div>
-                  {scene.tools.length > 0 ? (
-                    <div className="mt-1 flex flex-wrap gap-0.5">
-                      {scene.tools.map((tool) => (
-                        <span
-                          key={tool.toolCallId}
-                          className="rounded bg-foreground/5 px-1 font-mono text-[10px] text-muted-foreground"
-                        >
-                          {tool.name}
-                        </span>
-                      ))}
+                  {toolSummary ? (
+                    <div className="mt-0.5 truncate text-[11px] text-muted-foreground" title={toolSummary}>
+                      {toolSummary}
                     </div>
                   ) : null}
                   <div className="mt-1.5 flex flex-wrap gap-1">
                     <button
                       type="button"
                       className={cn(
-                        'rounded border border-border px-2 py-0.5 text-[11px]',
-                        'hover:bg-foreground/5',
+                        'rounded bg-foreground/[0.04] px-2 py-0.5 text-[11px]',
+                        'hover:bg-foreground/[0.08]',
                       )}
                       onClick={() =>
                         onCheckoutMessage?.(scene.triggerMessageId)
@@ -116,8 +127,8 @@ export function SessionGitOutline({
                     <button
                       type="button"
                       className={cn(
-                        'inline-flex items-center gap-1 rounded border border-border px-2 py-0.5 text-[11px]',
-                        'hover:bg-foreground/5',
+                        'inline-flex items-center gap-1 rounded bg-foreground/[0.04] px-2 py-0.5 text-[11px]',
+                        'hover:bg-foreground/[0.08]',
                       )}
                       onClick={() => onFork?.(scene.triggerMessageId)}
                     >
@@ -133,14 +144,11 @@ export function SessionGitOutline({
       </ul>
       )}
 
+      {relatedBranches.length > 0 ? (
+        <>
       <div className="mb-2 mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {t('entityView.outlineBranches')}
       </div>
-      {relatedBranches.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          {t('entityView.outlineNoBranches')}
-        </p>
-      ) : (
         <ul className="space-y-1">
           {relatedBranches.map((branch) => (
             <li key={branch.id}>
@@ -156,16 +164,14 @@ export function SessionGitOutline({
             </li>
           ))}
         </ul>
-      )}
+        </>
+      ) : null}
 
+      {variables.length > 0 ? (
+        <>
       <div className="mb-2 mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         {t('entityView.outlineVariables')}
       </div>
-      {variables.length === 0 ? (
-        <p className="text-xs text-muted-foreground">
-          {t('entityView.outlineNoVariables')}
-        </p>
-      ) : (
         <ul className="space-y-1">
           {variables.map((variable) => (
             <li
@@ -183,7 +189,7 @@ export function SessionGitOutline({
               </span>
               <button
                 type="button"
-                className="shrink-0 rounded border border-border px-2 py-0.5 text-[11px] hover:bg-foreground/5"
+                className="shrink-0 rounded bg-foreground/[0.04] px-2 py-0.5 text-[11px] hover:bg-foreground/[0.08]"
                 onClick={() =>
                   onInsertVariable?.(variable.name, variable.value)
                 }
@@ -193,7 +199,8 @@ export function SessionGitOutline({
             </li>
           ))}
         </ul>
-      )}
+        </>
+      ) : null}
     </div>
   )
 }

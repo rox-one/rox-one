@@ -6,11 +6,13 @@
  */
 import type { InspectorSectionId } from '@/atoms/unified-shell'
 
+/**
+ * Sections shown in the rail outside sessions. `agent`, `outline` and
+ * `backlinks` stay valid ids (persisted state from older builds normalizes
+ * cleanly) but are not offered until they have real content.
+ */
 export const KNOWLEDGE_INSPECTOR_SECTION_IDS: readonly InspectorSectionId[] = [
   'info',
-  'agent',
-  'outline',
-  'backlinks',
   'browser',
 ]
 

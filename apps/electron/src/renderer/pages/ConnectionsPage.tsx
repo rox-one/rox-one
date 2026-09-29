@@ -1,6 +1,10 @@
 import { useAtom } from 'jotai'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
+import { RefreshCw } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { selectedConnectionAtom } from '@/atoms/connections'
 import { useActiveWorkspace } from '@/context/AppShellContext'
 import {
@@ -23,6 +27,7 @@ import {
   type ConnectSource,
   type PreviewSource,
 } from './connections-ui'
+import { ConnectionsOverview, OverviewGroup, OverviewRow, type OverviewStatus } from './connections-overview'
 
 const TABS = ['services', 'credentials', 'imports', 'policies', 'audit'] as const
 const CONNECT_SOURCES = ['github-env', 'git-helper', 'docker', 'aws', 'keychain', 'adc', 'ssh-agent'] as const
@@ -88,6 +93,10 @@ export default function ConnectionsPage() {
   const [grantActions, setGrantActions] = useState('github.api')
   const [grantResources, setGrantResources] = useState('github:user')
   const [grantTargetId, setGrantTargetId] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
+  const [rowStatus, setRowStatus] = useState<Record<string, OverviewStatus>>({})
+  const [rowNote, setRowNote] = useState<Record<string, string>>({})
+  const [showCreate, setShowCreate] = useState(false)
 
   useEffect(() => {
     const workspaceId = workspace?.id
@@ -196,7 +205,7 @@ export default function ConnectionsPage() {
       setConfirmingId(null)
       await refreshRows(workspaceId)
     } catch (error) {
-      setSurface(classifyFailClosed(error))
+      actionError(connectionId, error)
     }
   }
 
@@ -212,7 +221,7 @@ export default function ConnectionsPage() {
       setRotatingId(null)
       await refreshRows(workspaceId)
     } catch (error) {
-      setSurface(classifyFailClosed(error))
+      actionError(connectionId, error)
     }
   }
 
@@ -228,7 +237,7 @@ export default function ConnectionsPage() {
       setConvertingId(null)
       await refreshRows(workspaceId)
     } catch (error) {
-      setSurface(classifyFailClosed(error))
+      actionError(connectionId, error)
     }
   }
 
@@ -251,6 +260,25 @@ export default function ConnectionsPage() {
     }
   }
 
+  function formError(error: unknown) {
+    if (classifyFailClosed(error) === 'unavailable') {
+      setSurface('unavailable')
+      return
+    }
+    toast.error(error instanceof Error ? error.message : String(error ?? ''))
+  }
+
+  function actionError(connectionId: string, error: unknown) {
+    const message = error instanceof Error ? error.message : String(error ?? '')
+    if (classifyFailClosed(error) === 'unavailable') {
+      setSurface('unavailable')
+      return
+    }
+    setRowStatus((current) => ({ ...current, [connectionId]: 'error' }))
+    setRowNote((current) => ({ ...current, [connectionId]: message }))
+    toast.error(message || t('chat.connectionUnavailable'))
+  }
+
   const runTest = async (connectionId: string) => {
     const workspaceId = workspace?.id
     const testConnection = window.electronAPI?.workgraph?.testConnection
@@ -259,9 +287,11 @@ export default function ConnectionsPage() {
       return
     }
     try {
-      await testConnection({ workspaceId, connectionId })
+      const result = await testConnection({ workspaceId, connectionId })
+      setRowStatus((current) => ({ ...current, [connectionId]: 'connected' }))
+      setRowNote((current) => ({ ...current, [connectionId]: result?.login ?? '' }))
     } catch (error) {
-      setSurface(classifyFailClosed(error))
+      actionError(connectionId, error)
     }
   }
 
@@ -275,8 +305,9 @@ export default function ConnectionsPage() {
     try {
       await repairConnection({ workspaceId, connectionId })
       await refreshRows(workspaceId)
+      await runTest(connectionId)
     } catch (error) {
-      setSurface(classifyFailClosed(error))
+      actionError(connectionId, error)
     }
   }
 
@@ -298,7 +329,7 @@ export default function ConnectionsPage() {
       setCreateCredentialRef('')
       await refreshRows(workspaceId)
     } catch (error) {
-      setSurface(classifyFailClosed(error))
+      formError(error)
     }
   }
 
@@ -335,7 +366,7 @@ export default function ConnectionsPage() {
         setBindingRows(sanitizeConnectionBindingRows(await listConnectionBindings({ workspaceId })))
       }
     } catch (error) {
-      setSurface(classifyFailClosed(error))
+      formError(error)
     }
   }
 
@@ -356,7 +387,7 @@ export default function ConnectionsPage() {
       <span className="text-muted-foreground">{t(labelKey)}</span>
       <div className="mt-1 flex gap-1">
         <input
-          className="w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+          className="w-full rounded-md bg-foreground/[0.04] px-2 py-1 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
           value={value}
           placeholder={placeholder}
           onChange={(event) => setValue(event.target.value)}
@@ -366,7 +397,7 @@ export default function ConnectionsPage() {
           type="button"
           data-testid="connections-pick-path"
           aria-label={t(labelKey)}
-          className="rounded border px-2 py-1"
+          className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
           onClick={() => void pickImportPath(setValue)}
         >
           …
@@ -382,16 +413,16 @@ export default function ConnectionsPage() {
           {row.id} {row.credentialRefId}
         </div>
         <div className="flex gap-1">
-        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRevoke(row.id)}>
+        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => confirmRevoke(row.id)}>
           {t('connections.revokeConfirm')}
         </button>
-        <button type="button" className="rounded border px-2 py-1" onClick={() => setConfirmingId(null)}>
+        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setConfirmingId(null)}>
           {t('connections.revokeCancel')}
         </button>
         </div>
       </div>
     ) : (
-      <button type="button" className="rounded border px-2 py-1" onClick={() => setConfirmingId(row.id)}>
+      <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setConfirmingId(row.id)}>
         {t('connections.revoke')}
       </button>
     )
@@ -400,15 +431,15 @@ export default function ConnectionsPage() {
   const renderRotateControls = (row: ConnectionListRow) => (
     rotatingId === row.id ? (
       <div className="flex gap-1">
-        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmRotate(row.id)}>
+        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => confirmRotate(row.id)}>
           {t('connections.rotateConfirm')}
         </button>
-        <button type="button" className="rounded border px-2 py-1" onClick={() => setRotatingId(null)}>
+        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setRotatingId(null)}>
           {t('connections.rotateCancel')}
         </button>
       </div>
     ) : (
-      <button type="button" className="rounded border px-2 py-1" onClick={() => setRotatingId(row.id)}>
+      <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setRotatingId(row.id)}>
         {t('connections.rotate')}
       </button>
     )
@@ -420,30 +451,42 @@ export default function ConnectionsPage() {
     </div>
   )
 
+  const refreshAll = () => {
+    setReloadKey((key) => key + 1)
+    if (workspace?.id) void refreshRows(workspace.id)
+  }
+
   return (
     <div className="flex h-full min-h-0 flex-col" data-testid="connections-page">
-      <div role="tablist" aria-label={t('sidebar.connections')} className="flex gap-2 border-b px-4 pt-3">
+      <div className="flex items-center gap-3 px-6 pt-5 pb-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg font-semibold text-foreground">{t('connections.title')}</h1>
+          <p className="truncate text-sm text-muted-foreground">{t('connections.subtitle')}</p>
+        </div>
+        <Button size="sm" variant="ghost" onClick={refreshAll} aria-label={t('common.refresh')}>
+          <RefreshCw className="h-3.5 w-3.5" />
+          {t('common.refresh')}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={() => setTab('imports')}>
+          {t('connections.connect')}
+        </Button>
+      </div>
+      <div role="tablist" aria-label={t('sidebar.connections')} className="flex gap-1 px-5 pb-2">
         {TABS.map((id) => (
           <button
             key={id}
             type="button"
             role="tab"
             aria-selected={tab === id}
-            className={`rounded-t px-3 py-2 text-sm ${tab === id ? 'bg-accent/10 text-accent' : 'text-muted-foreground'}`}
+            className={`rounded-md px-3 py-1.5 text-sm transition-colors ${tab === id ? 'bg-foreground/[0.07] text-foreground' : 'text-muted-foreground hover:bg-foreground/[0.04] hover:text-foreground'}`}
             onClick={() => setTab(id)}
           >
-            {t(`connections.tab.${id}`)}
+            {t(`connections.tabs.${id}`)}
           </button>
         ))}
-        <button
-          type="button"
-          className="ml-auto rounded border px-3 py-1 text-sm text-foreground"
-          onClick={() => setTab('imports')}
-        >
-          {t('connections.connect')}
-        </button>
       </div>
-      <div className="flex flex-1 min-h-0 flex-col p-6 text-muted-foreground">
+      <ScrollArea className="flex-1 min-h-0">
+      <div className="mx-auto flex w-full max-w-4xl flex-col px-6 pt-2 pb-16 text-muted-foreground">
         {tab === 'imports' ? (
           <div className="space-y-3 text-sm text-foreground">
             <ul className="flex flex-wrap gap-2 text-xs">
@@ -453,7 +496,7 @@ export default function ConnectionsPage() {
                     type="button"
                     data-testid="connections-source-chip"
                     aria-pressed={activeSource === source}
-                    className={`rounded border px-2 py-1 ${activeSource === source ? 'bg-accent/10 text-accent' : ''}`}
+                    className={`rounded-md px-2.5 py-1 ${activeSource === source ? 'bg-foreground/[0.08] text-foreground' : 'bg-foreground/[0.03] text-muted-foreground hover:text-foreground'}`}
                     onClick={() => setActiveSource((current) => current === source ? null : source)}
                   >
                     {source}
@@ -465,7 +508,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.envPath', envPath, setEnvPath, IMPORT_PLACEHOLDERS.env)}
               <button
                 type="button"
-                className="rounded border px-3 py-1"
+                className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]"
                 onClick={async () => {
                   const previewGithubEnv = window.electronAPI?.workgraph?.previewGithubEnv
                   if (typeof previewGithubEnv !== 'function' || !envPath) {
@@ -486,7 +529,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.gitConfigPath', gitConfigPath, setGitConfigPath, IMPORT_PLACEHOLDERS.gitConfig)}
               <button
                 type="button"
-                className="rounded border px-3 py-1"
+                className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]"
                 onClick={async () => {
                   const previewGitHelper = window.electronAPI?.workgraph?.previewGitHelper
                   if (typeof previewGitHelper !== 'function' || !gitConfigPath) {
@@ -507,7 +550,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.dockerConfigPath', dockerConfigPath, setDockerConfigPath, IMPORT_PLACEHOLDERS.dockerConfig)}
               <button
                 type="button"
-                className="rounded border px-3 py-1"
+                className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]"
                 onClick={async () => {
                   const previewDockerHelper = window.electronAPI?.workgraph?.previewDockerHelper
                   if (typeof previewDockerHelper !== 'function' || !dockerConfigPath) {
@@ -529,7 +572,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.awsConfigPath', awsConfigPath, setAwsConfigPath, IMPORT_PLACEHOLDERS.awsConfig)}
               <button
                 type="button"
-                className="rounded border px-3 py-1"
+                className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]"
                 onClick={async () => {
                   const previewAwsProfiles = window.electronAPI?.workgraph?.previewAwsProfiles
                   if (typeof previewAwsProfiles !== 'function') {
@@ -549,7 +592,7 @@ export default function ConnectionsPage() {
             <ImportPanel source="keychain" active={activeSource}>
               <button
                 type="button"
-                className="rounded border px-3 py-1"
+                className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]"
                 onClick={async () => {
                   const previewKeychain = window.electronAPI?.workgraph?.previewKeychain
                   if (typeof previewKeychain !== 'function') {
@@ -570,7 +613,7 @@ export default function ConnectionsPage() {
               {pathField('connections.import.adcPath', adcPath, setAdcPath, IMPORT_PLACEHOLDERS.adc)}
               <button
                 type="button"
-                className="rounded border px-3 py-1"
+                className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]"
                 onClick={async () => {
                   const previewAdc = window.electronAPI?.workgraph?.previewAdc
                   if (typeof previewAdc !== 'function' || !adcPath) {
@@ -590,7 +633,7 @@ export default function ConnectionsPage() {
             <ImportPanel source="ssh-agent" active={activeSource}>
               <button
                 type="button"
-                className="rounded border px-3 py-1"
+                className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]"
                 onClick={async () => {
                   const previewSshAgent = window.electronAPI?.workgraph?.previewSshAgent
                   if (typeof previewSshAgent !== 'function') {
@@ -609,14 +652,14 @@ export default function ConnectionsPage() {
             </ImportPanel>
             <ul className="space-y-2">
               {visiblePreviews.map((row) => (
-                <li key={`${row.source}:${row.candidateId}`} className="flex items-center justify-between rounded border px-3 py-2">
+                <li key={`${row.source}:${row.candidateId}`} className="flex items-center justify-between rounded-[10px] bg-foreground/[0.02] px-3 py-2">
                   <div>
                     <div className="font-medium">{row.label}</div>
                     <div className="font-mono text-xs text-muted-foreground">{row.maskedSummary}</div>
                   </div>
                   <button
                     type="button"
-                    className="rounded border px-2 py-1"
+                    className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground"
                     onClick={async () => {
                       const workspaceId = workspace?.id
                       const api = window.electronAPI?.workgraph
@@ -646,84 +689,104 @@ export default function ConnectionsPage() {
               ))}
             </ul>
           </div>
-        ) : failClosed ? (
-          <div
-            className="flex flex-1 items-center justify-center"
-            data-testid="connections-services-unavailable"
-            role="alert"
-          >
-            <p className="text-sm">
-              {t(surface === 'unavailable' ? 'sidebar.connectionsUnavailable' : 'chat.connectionUnavailable')}
-            </p>
-          </div>
         ) : tab === 'services' ? (
-          <div className="space-y-4 text-sm text-foreground">
-            <div data-testid="connections-create-form" className="space-y-2 rounded border p-3">
-              <label className="block">
-                <span className="text-muted-foreground">{t('connections.createIntegration')}</span>
-                <input
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                  value={createIntegration}
-                  onChange={(event) => setCreateIntegration(event.target.value)}
-                  spellCheck={false}
-                />
-              </label>
-              <label className="block">
-                <span className="text-muted-foreground">{t('connections.createCredentialRef')}</span>
-                <input
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                  value={createCredentialRef}
-                  onChange={(event) => setCreateCredentialRef(event.target.value)}
-                  spellCheck={false}
-                />
-              </label>
-              <label className="block">
-                <span className="text-muted-foreground">{t('connections.createStorageMode')}</span>
-                <select
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
-                  value={createStorageMode}
-                  onChange={(event) => setCreateStorageMode(event.target.value === 'reference' ? 'reference' : 'copy')}
+          <div className="space-y-6 text-sm text-foreground">
+            {workspace?.id ? <ConnectionsOverview workspaceId={workspace.id} reloadKey={reloadKey} /> : null}
+            <OverviewGroup
+              title={t('connections.overview.credentials')}
+              count={services.length}
+              action={
+                <Button size="sm" variant="ghost" onClick={() => setShowCreate((open) => !open)}>
+                  {t('connections.create')}
+                </Button>
+              }
+            >
+              {failClosed ? (
+                <li
+                  className="px-4 py-3 text-sm text-muted-foreground"
+                  data-testid="connections-services-unavailable"
+                  role="alert"
                 >
-                  <option value="copy">copy</option>
-                  <option value="reference">reference</option>
-                </select>
-              </label>
-              <button type="button" className="rounded border px-3 py-1" onClick={() => void confirmCreate()}>
-                {t('connections.create')}
-              </button>
-            </div>
-            {services.length > 0 ? (
-              <ul className="space-y-2 text-sm text-foreground">
-                {services.map((row) => (
-                  <li key={row.id} className="flex items-center gap-2">
+                  {t(surface === 'unavailable' ? 'sidebar.connectionsUnavailable' : 'chat.connectionUnavailable')}
+                </li>
+              ) : services.length > 0 ? (
+                services.map((row) => (
+                  <OverviewRow
+                    key={row.id}
+                    testId="connections-credential-row"
+                    icon={<span className="h-5 w-5 rounded-[5px] bg-foreground/10 text-center text-[11px] font-semibold leading-5 text-foreground/70">{row.integrationId.slice(0, 1).toUpperCase()}</span>}
+                    title={row.integrationId}
+                    subtitle={[row.credentialRefId, row.storageMode, rowNote[row.id]].filter(Boolean).join(' · ')}
+                    status={rowStatus[row.id] ?? 'pending'}
+                  >
                     <button
                       type="button"
                       data-testid="connections-row"
                       aria-selected={selected?.id === row.id}
-                      className={`min-w-0 flex-1 rounded border px-3 py-2 text-left ${selected?.id === row.id ? 'bg-accent/10' : ''}`}
+                      className={`rounded-md px-2 py-1 text-xs ${selected?.id === row.id ? 'bg-accent/10 text-accent' : 'text-muted-foreground hover:bg-foreground/[0.05]'}`}
                       onClick={() => setSelected(row)}
                     >
-                      <div className="font-medium">{row.integrationId}</div>
-                      <div className="text-muted-foreground">{row.storageMode}</div>
-                      <div className="font-mono text-xs">{row.credentialRefId}</div>
+                      {t('connections.overview.details')}
                     </button>
-                    <button type="button" className="rounded border px-2 py-1" onClick={() => runTest(row.id)}>
+                    <Button size="sm" variant="secondary" onClick={() => runTest(row.id)}>
                       {t('connections.test')}
-                    </button>
-                    <button type="button" className="rounded border px-2 py-1" onClick={() => runRepair(row.id)}>
-                      {t('connections.repair')}
-                    </button>
-                    {renderRevokeControls(row)}
+                    </Button>
+                    {rowStatus[row.id] === 'error' ? (
+                      <Button size="sm" variant="ghost" onClick={() => runRepair(row.id)}>
+                        {t('connections.repair')}
+                      </Button>
+                    ) : null}
                     {renderRotateControls(row)}
-                  </li>
-                ))}
-              </ul>
-            ) : empty}
+                    {renderRevokeControls(row)}
+                  </OverviewRow>
+                ))
+              ) : (
+                <li className="px-4 py-3 text-sm text-muted-foreground">{t('connections.overview.noCredentials')}</li>
+              )}
+            </OverviewGroup>
+            {showCreate ? (
+              <div data-testid="connections-create-form" className="grid gap-3 rounded-[10px] bg-foreground/[0.02] p-4 sm:grid-cols-3">
+                <label className="block">
+                  <span className="text-xs text-muted-foreground">{t('connections.createIntegration')}</span>
+                  <input
+                    className="mt-1 h-8 w-full rounded-md bg-foreground/[0.04] px-2 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
+                    value={createIntegration}
+                    onChange={(event) => setCreateIntegration(event.target.value)}
+                    spellCheck={false}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-muted-foreground">{t('connections.createCredentialRef')}</span>
+                  <input
+                    className="mt-1 h-8 w-full rounded-md bg-foreground/[0.04] px-2 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
+                    value={createCredentialRef}
+                    onChange={(event) => setCreateCredentialRef(event.target.value)}
+                    spellCheck={false}
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-xs text-muted-foreground">{t('connections.createStorageMode')}</span>
+                  <select
+                    className="mt-1 h-8 w-full rounded-md bg-foreground/[0.04] px-2 font-mono text-xs outline-none"
+                    value={createStorageMode}
+                    onChange={(event) => setCreateStorageMode(event.target.value === 'reference' ? 'reference' : 'copy')}
+                  >
+                    <option value="copy">copy</option>
+                    <option value="reference">reference</option>
+                  </select>
+                </label>
+                <div className="sm:col-span-3">
+                  <Button size="sm" variant="secondary" onClick={() => void confirmCreate()}>
+                    {t('connections.create')}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : tab === 'credentials' && credentialRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {credentialRows.map((row) => (
-              <li key={row.id} className="flex items-center gap-2 rounded border px-3 py-2">
+              <li key={row.id} className="flex items-center gap-2 rounded-[10px] bg-foreground/[0.02] px-3 py-2">
                 <div className="min-w-0 flex-1">
                   <div className="font-medium">{row.integrationId}</div>
                   <div className="font-mono text-xs">{row.credentialRefId}</div>
@@ -734,16 +797,16 @@ export default function ConnectionsPage() {
                     <div className="flex flex-col items-end gap-1">
                       <div className="font-mono text-[11px]">{row.id} {row.credentialRefId}</div>
                       <div className="flex gap-1">
-                        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmConvert(row.id)}>
+                        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => confirmConvert(row.id)}>
                           {t('connections.convertConfirm')}
                         </button>
-                        <button type="button" className="rounded border px-2 py-1" onClick={() => setConvertingId(null)}>
+                        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setConvertingId(null)}>
                           {t('connections.convertCancel')}
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <button type="button" className="rounded border px-2 py-1" onClick={() => setConvertingId(row.id)}>
+                    <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setConvertingId(row.id)}>
                       {t('connections.convert')}
                     </button>
                   )
@@ -753,11 +816,11 @@ export default function ConnectionsPage() {
           </ul>
         ) : tab === 'policies' ? (
           <div className="space-y-4 text-sm text-foreground">
-            <div data-testid="connections-grant-form" className="space-y-2 rounded border p-3">
+            <div data-testid="connections-grant-form" className="space-y-2 rounded-[10px] bg-foreground/[0.02] p-4">
               <label className="block">
                 <span className="text-muted-foreground">{t('connections.grantConsumer')}</span>
                 <input
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  className="mt-1 w-full rounded-md bg-foreground/[0.04] px-2 py-1 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
                   value={grantConsumer}
                   onChange={(event) => setGrantConsumer(event.target.value)}
                   spellCheck={false}
@@ -766,7 +829,7 @@ export default function ConnectionsPage() {
               <label className="block">
                 <span className="text-muted-foreground">{t('connections.grantPurpose')}</span>
                 <input
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  className="mt-1 w-full rounded-md bg-foreground/[0.04] px-2 py-1 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
                   value={grantPurpose}
                   onChange={(event) => setGrantPurpose(event.target.value)}
                   spellCheck={false}
@@ -775,7 +838,7 @@ export default function ConnectionsPage() {
               <label className="block">
                 <span className="text-muted-foreground">{t('connections.grantActions')}</span>
                 <input
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  className="mt-1 w-full rounded-md bg-foreground/[0.04] px-2 py-1 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
                   value={grantActions}
                   onChange={(event) => setGrantActions(event.target.value)}
                   spellCheck={false}
@@ -784,7 +847,7 @@ export default function ConnectionsPage() {
               <label className="block">
                 <span className="text-muted-foreground">{t('connections.grantResources')}</span>
                 <input
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  className="mt-1 w-full rounded-md bg-foreground/[0.04] px-2 py-1 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
                   value={grantResources}
                   onChange={(event) => setGrantResources(event.target.value)}
                   spellCheck={false}
@@ -793,7 +856,7 @@ export default function ConnectionsPage() {
               <label className="block">
                 <span className="text-muted-foreground">{t('connections.grantTarget')}</span>
                 <select
-                  className="mt-1 w-full rounded border bg-transparent px-2 py-1 font-mono text-xs"
+                  className="mt-1 w-full rounded-md bg-foreground/[0.04] px-2 py-1 font-mono text-xs outline-none focus:ring-1 focus:ring-accent/40"
                   value={grantTargetId || selected?.id || ''}
                   onChange={(event) => setGrantTargetId(event.target.value)}
                 >
@@ -803,14 +866,14 @@ export default function ConnectionsPage() {
                   ))}
                 </select>
               </label>
-              <button type="button" className="rounded border px-3 py-1" onClick={() => void confirmGrant()}>
+              <button type="button" className="rounded-md bg-foreground/[0.05] px-3 py-1.5 text-xs text-foreground hover:bg-foreground/[0.08]" onClick={() => void confirmGrant()}>
                 {t('connections.grant')}
               </button>
             </div>
             {policyRows.length > 0 ? (
               <ul className="space-y-2">
                 {policyRows.map((row) => (
-                  <li key={row.id} className="rounded border px-3 py-2">
+                  <li key={row.id} className="rounded-[10px] bg-foreground/[0.02] px-3 py-2">
                     <div className="font-medium">{row.integrationId}</div>
                     <div className="font-mono text-xs">{row.scopes.join(', ') || '—'}</div>
                   </li>
@@ -820,7 +883,7 @@ export default function ConnectionsPage() {
             {bindingRows.length > 0 ? (
               <ul className="space-y-2">
                 {bindingRows.map((row) => (
-                  <li key={row.id} className="flex items-center gap-2 rounded border px-3 py-2">
+                  <li key={row.id} className="flex items-center gap-2 rounded-[10px] bg-foreground/[0.02] px-3 py-2">
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{row.consumerId}</div>
                       <div className="text-muted-foreground">{row.purpose}</div>
@@ -828,15 +891,15 @@ export default function ConnectionsPage() {
                     </div>
                     {unbindingId === row.id ? (
                       <div className="flex gap-1">
-                        <button type="button" className="rounded border px-2 py-1" onClick={() => confirmUnbind(row.id)}>
+                        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => confirmUnbind(row.id)}>
                           {t('connections.unbindConfirm')}
                         </button>
-                        <button type="button" className="rounded border px-2 py-1" onClick={() => setUnbindingId(null)}>
+                        <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setUnbindingId(null)}>
                           {t('connections.unbindCancel')}
                         </button>
                       </div>
                     ) : (
-                      <button type="button" className="rounded border px-2 py-1" onClick={() => setUnbindingId(row.id)}>
+                      <button type="button" className="rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-foreground/[0.05] hover:text-foreground" onClick={() => setUnbindingId(row.id)}>
                         {t('connections.unbind')}
                       </button>
                     )}
@@ -848,7 +911,7 @@ export default function ConnectionsPage() {
         ) : tab === 'audit' && auditRows.length > 0 ? (
           <ul className="space-y-2 text-sm text-foreground">
             {auditRows.map((row) => (
-              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded border px-3 py-2">
+              <li key={`${row.connectionId}:${row.occurredAt}:${row.payloadDigest}`} className="rounded-[10px] bg-foreground/[0.02] px-3 py-2">
                 <div className="font-medium">{row.eventType}</div>
                 <div className="text-muted-foreground">{row.outcome}</div>
                 <div className="font-mono text-xs">{row.connectionId}</div>
@@ -861,6 +924,7 @@ export default function ConnectionsPage() {
           empty
         )}
       </div>
+      </ScrollArea>
     </div>
   )
 }

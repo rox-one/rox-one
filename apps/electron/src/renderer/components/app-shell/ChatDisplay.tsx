@@ -1,4 +1,5 @@
 import * as React from "react"
+import { createMessageTts } from '@/lib/message-tts'
 import { useTranslation } from "react-i18next"
 import { useEffect, useState, useMemo, useCallback } from "react"
 import {
@@ -545,30 +546,35 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   const { t } = useTranslation()
   const [listeningTurnId, setListeningTurnId] = React.useState<string | null>(null)
 
+  const messageTts = React.useMemo(() => createMessageTts({
+    speakVoice: window.electronAPI?.speakVoice,
+    synth: typeof window !== 'undefined' ? window.speechSynthesis ?? null : null,
+    createUtterance: typeof SpeechSynthesisUtterance !== 'undefined'
+      ? (text, onEnd) => {
+          const utterance = new SpeechSynthesisUtterance(text)
+          utterance.onend = () => onEnd()
+          utterance.onerror = () => onEnd()
+          return utterance
+        }
+      : undefined,
+  }), [])
+  React.useEffect(() => () => messageTts.stop(), [messageTts])
+
   const handleListen = useCallback(async (text: string, turnId: string) => {
     if (!text.trim()) return
     if (listeningTurnId === turnId) {
-      window.speechSynthesis?.cancel()
+      messageTts.stop()
       setListeningTurnId(null)
       return
     }
     setListeningTurnId(turnId)
-    try {
-      await window.electronAPI.speakVoice({ text })
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel()
-        const utterance = new SpeechSynthesisUtterance(text)
-        utterance.onend = () => setListeningTurnId((current) => current === turnId ? null : current)
-        utterance.onerror = () => setListeningTurnId(null)
-        window.speechSynthesis.speak(utterance)
-      } else {
-        setListeningTurnId(null)
-      }
-    } catch (error) {
-      setListeningTurnId(null)
-      toast.error(error instanceof Error ? error.message : t('chat.listen'))
+    const playback = await messageTts.speak(text, () => {
+      setListeningTurnId((current) => current === turnId ? null : current)
+    })
+    if (playback === 'unavailable') {
+      setListeningTurnId((current) => current === turnId ? null : current)
     }
-  }, [listeningTurnId, t])
+  }, [listeningTurnId, messageTts])
 
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
@@ -1440,25 +1446,6 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     onInputChange?.(next)
   }, [inputValue, onInputChange])
 
-  const handleShareMessage = useCallback(async (text: string) => {
-    try {
-      if (typeof navigator.share === 'function') {
-        await navigator.share({ text })
-        return
-      }
-      await navigator.clipboard.writeText(text)
-      toast.success(t('chat.shareCopied'))
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') return
-      try {
-        await navigator.clipboard.writeText(text)
-        toast.success(t('chat.shareCopied'))
-      } catch {
-        toast.error(t('chat.shareMessage'))
-      }
-    }
-  }, [t])
-
   const handleLearnFromMessage = useCallback((text: string) => {
     onInputChange?.(t('chat.learnFromMessageDraft', { text }))
   }, [onInputChange, t])
@@ -1925,7 +1912,6 @@ const handleFollowUpChipClick = useCallback((item: {
                             onAddAnnotation={persistAnnotation}
                             onRemoveAnnotation={removeAnnotation}
                             onQuote={handleQuoteMessage}
-                            onShareMessage={(text) => { void handleShareMessage(text) }}
                             onLearnFromMessage={handleLearnFromMessage}
                             onPickSideThread={handlePickSideThread}
                           />
@@ -2035,7 +2021,6 @@ const handleFollowUpChipClick = useCallback((item: {
                         sendMessageKey={sendMessageKey}
                         openAnnotationRequest={openAnnotationRequest}
                         onQuote={handleQuoteMessage}
-                        onShareMessage={(text) => { void handleShareMessage(text) }}
                         onLearnFromMessage={handleLearnFromMessage}
                         onPickSideThread={handlePickSideThread}
                         onBranch={session?.supportsBranching ? async (messageId: string, options?: { newPanel?: boolean }) => {
@@ -2458,7 +2443,6 @@ interface MessageBubbleProps {
   onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void | Promise<void>
   onRemoveAnnotation?: (messageId: string, annotationId: string) => void | Promise<void>
   onQuote?: (text: string) => void
-  onShareMessage?: (text: string) => void
   onLearnFromMessage?: (text: string) => void
   onPickSideThread?: (action: SideThreadAction, text: string, messageId: string) => void
 }
@@ -2551,7 +2535,6 @@ function MessageBubble({
   onAddAnnotation,
   onRemoveAnnotation,
   onQuote,
-  onShareMessage,
   onLearnFromMessage,
   onPickSideThread,
 }: MessageBubbleProps) {
@@ -2576,7 +2559,6 @@ function MessageBubble({
         onAddAnnotation={onAddAnnotation}
         onRemoveAnnotation={onRemoveAnnotation}
         onQuote={onQuote}
-        onShareMessage={onShareMessage}
         onLearnFromMessage={onLearnFromMessage}
         onPickSideThread={onPickSideThread}
       />
@@ -2735,7 +2717,6 @@ const MemoizedMessageBubble = React.memo(MessageBubble, (prev, next) => {
     prev.compactMode === next.compactMode &&
     prev.message.annotations === next.message.annotations &&
     prev.onQuote === next.onQuote &&
-    prev.onShareMessage === next.onShareMessage &&
     prev.onLearnFromMessage === next.onLearnFromMessage &&
     prev.onPickSideThread === next.onPickSideThread
   )

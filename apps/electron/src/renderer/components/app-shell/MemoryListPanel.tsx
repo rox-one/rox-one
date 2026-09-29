@@ -9,7 +9,7 @@ import type { MemoryProposal } from '@craft-agent/shared/memory/proposals'
 import { MemoryProposalCard } from './MemoryProposalCard'
 import { useNavigation, routes } from '@/contexts/NavigationContext'
 import { activeSessionIdAtom, sessionMetaMapAtom } from '@/atoms/sessions'
-import { getAppLocale } from '@craft-agent/shared/i18n'
+import { dedupeSimilarLessons } from '@/lib/lesson-dedupe'
 
 export interface MemoryListPanelProps {
   workspaceId?: string
@@ -40,6 +40,8 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
   const { navigate } = useNavigation()
 
   const [lessons, setLessons] = React.useState<Lesson[]>([])
+  /** Per-scope toggle for near-duplicate lessons (hidden by default). */
+  const [showSimilarByScope, setShowSimilarByScope] = React.useState<Partial<Record<LessonScope, boolean>>>({})
   const [preferences, setPreferences] = React.useState('')
   const [context, setContext] = React.useState('')
   // M5: read-only project MEMORY.md of the project the active session is bound
@@ -362,7 +364,7 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
                 className="text-destructive"
                 title={(lesson.conflicts ?? [])
                   .slice(-3)
-                  .map((c) => `${new Date(c.ts).toLocaleString(getAppLocale())} — ${c.reason}`)
+                  .map((c) => `${new Date(c.ts).toLocaleString()} — ${c.reason}`)
                   .join('\n')}
               >
                 {t('memory.conflictCount', { count: lesson.conflicts?.length ?? 0 })}
@@ -437,21 +439,41 @@ export function MemoryListPanel({ workspaceId, className }: MemoryListPanelProps
     )
   }
 
-  const renderScopeGroup = (title: string, items: Lesson[]) => (
-    <div className="mb-1">
-      <div className={`${sectionTitleClass()} flex items-center gap-1.5`}>
-        {title}
-        <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-semibold normal-case ${scopeChipClass(items[0]?.scope ?? 'workspace')}`}>
-          {items.length}
-        </span>
+  const renderScopeGroup = (title: string, allItems: Lesson[]) => {
+    // The same rule is often stored in two wordings; show one, keep the rest
+    // behind a toggle so they stay editable/deletable.
+    const { unique, similar } = dedupeSimilarLessons(allItems)
+    const scopeKey = allItems[0]?.scope ?? 'workspace'
+    const showSimilar = !!showSimilarByScope[scopeKey]
+    const items = showSimilar ? allItems : unique
+    return (
+      <div className="mb-1">
+        <div className={`${sectionTitleClass()} flex items-center gap-1.5`}>
+          {title}
+          <span className={`inline-flex items-center justify-center min-w-4 h-4 px-1 rounded-full text-[10px] font-semibold normal-case ${scopeChipClass(scopeKey)}`}>
+            {unique.length}
+          </span>
+        </div>
+        {items.length === 0 ? (
+          <div className="px-2 pb-1 text-xs text-muted-foreground/70">{t('memory.noLessons')}</div>
+        ) : (
+          <ul>{items.map(renderLesson)}</ul>
+        )}
+        {similar.length > 0 ? (
+          <button
+            type="button"
+            data-memory-similar-toggle={scopeKey}
+            onClick={() => setShowSimilarByScope((prev) => ({ ...prev, [scopeKey]: !showSimilar }))}
+            className="mx-2 mt-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            {showSimilar
+              ? t('memory.similarHide')
+              : t('memory.similarShow', { count: similar.length })}
+          </button>
+        ) : null}
       </div>
-      {items.length === 0 ? (
-        <div className="px-2 pb-1 text-xs text-muted-foreground/70">{t('memory.noLessons')}</div>
-      ) : (
-        <ul>{items.map(renderLesson)}</ul>
-      )}
-    </div>
-  )
+    )
+  }
 
   // Y1: hiding the card entirely when there is nothing to report keeps the
   // fresh-install panel calm (and matches the onboarding dialog's stage).

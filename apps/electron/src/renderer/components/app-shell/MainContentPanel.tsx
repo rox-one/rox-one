@@ -261,7 +261,8 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("sourcesList.noSourcesConfigured")}</p>
+          {/* Detail pane placeholder; the list owns the real «none configured» state. */}
+          <p className="text-sm">{t("sourcesList.selectSource")}</p>
         </div>
       </Panel>
     )
@@ -294,7 +295,7 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t("skillsList.noSkillsConfigured")}</p>
+          <p className="text-sm">{t("skillsList.selectSkill")}</p>
         </div>
       </Panel>
     )
