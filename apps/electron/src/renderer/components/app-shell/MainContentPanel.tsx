@@ -305,7 +305,8 @@ export function MainContentPanel({
         <div className="flex h-full items-center justify-center p-8" data-testid="automations-empty-editor">
           <div className="max-w-sm text-center text-sm text-muted-foreground">
             <p className="text-base text-foreground">
-              {navState.details ? t('common.loading') : t('automations.pickOne')}
+              {/* A stale selection (e.g. just deleted) falls back to the picker once the list has loaded. */}
+              {navState.details && automations.length === 0 ? t('common.loading') : t('automations.pickOne')}
             </p>
             <p className="mt-2">{t('automations.emptyDescription')}</p>
           </div>

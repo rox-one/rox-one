@@ -29,6 +29,12 @@ export type AppEvent =
   | 'TodoStateChange'
   | 'SessionStatusChange'
   | 'SchedulerTick'
+  | 'KnowledgeDocumentCreated'
+  | 'KnowledgeDocumentUpdated'
+  | 'KnowledgeAttributeChanged'
+  | 'KnowledgeDatabaseRowChanged'
+  | 'KnowledgeDocumentStale'
+  | 'CloudRunCompleted'
 
 export type AgentEvent =
   | 'PreToolUse'
@@ -49,7 +55,9 @@ export type AutomationTrigger = AppEvent | AgentEvent
 
 export const APP_EVENTS: AppEvent[] = [
   'LabelAdd', 'LabelRemove', 'LabelConfigChange',
-  'PermissionModeChange', 'FlagChange', 'TodoStateChange', 'SessionStatusChange', 'SchedulerTick'
+  'PermissionModeChange', 'FlagChange', 'TodoStateChange', 'SessionStatusChange', 'SchedulerTick',
+  'KnowledgeDocumentCreated', 'KnowledgeDocumentUpdated', 'KnowledgeAttributeChanged',
+  'KnowledgeDatabaseRowChanged', 'KnowledgeDocumentStale', 'CloudRunCompleted',
 ]
 
 export const AGENT_EVENTS: AgentEvent[] = [
@@ -315,6 +323,12 @@ export const EVENT_DISPLAY_NAMES: Record<AutomationTrigger, string> = {
   TodoStateChange:      'Task Updated',
   SessionStatusChange:  'Status Changed',
   SchedulerTick:        'Scheduled',
+  KnowledgeDocumentCreated:    'Note Created',
+  KnowledgeDocumentUpdated:    'Note Updated',
+  KnowledgeAttributeChanged:   'Note Property Changed',
+  KnowledgeDatabaseRowChanged: 'Database Row Changed',
+  KnowledgeDocumentStale:      'Note Is Stale',
+  CloudRunCompleted:           'Cloud Run Completed',
 
   // Agent events
   PreToolUse:           'Before Tool Runs',
@@ -364,7 +378,7 @@ export function getAutomationGroup(event: AutomationTrigger | string): Automatio
 /** Events offered in the trigger picker, per group (order = picker order). */
 export const EVENT_PICKER_GROUPS: Record<AutomationGroup, AutomationTrigger[]> = {
   scheduled: ['SchedulerTick'],
-  event: ['LabelAdd', 'LabelRemove', 'SessionStatusChange', 'FlagChange', 'PermissionModeChange', 'TodoStateChange', 'LabelConfigChange'],
+  event: ['LabelAdd', 'LabelRemove', 'SessionStatusChange', 'FlagChange', 'PermissionModeChange', 'TodoStateChange', 'LabelConfigChange', 'KnowledgeDocumentCreated', 'KnowledgeDocumentUpdated', 'KnowledgeAttributeChanged', 'KnowledgeDatabaseRowChanged', 'KnowledgeDocumentStale', 'CloudRunCompleted'],
   agent: ['SessionStart', 'SessionEnd', 'Stop', 'UserPromptSubmit', 'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PermissionRequest', 'Notification', 'SubagentStart', 'SubagentStop', 'PreCompact', 'Setup'],
 }
 
