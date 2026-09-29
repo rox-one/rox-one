@@ -86,6 +86,30 @@ describe('radar model', () => {
     expect(signals.every((s) => s.origin === 'local' && s.bucket === 'changed')).toBe(true)
   })
 
+  test('local signals include real Лента items (title/summary/author), last 24h only, safe urls', () => {
+    const now = at(12)
+    const signals = matchLocalSignals([topic('Cursor', ['IDE'])], {
+      sessions: [], meetings: [], notes: [],
+      feed: [
+        { id: 'f1', title: 'Новый релиз', summary: 'Cursor выпустил агента', url: 'https://example.com/a', sourceTitle: 'TechCrunch', at: now - 3600e3 },
+        { id: 'f2', title: 'IDE wars', url: 'javascript:alert(1)', at: now - 60e3 },
+        { id: 'f3', title: 'Cursor старое', at: now - 48 * 3600e3 },
+        { id: 'f4', title: 'Прочее', author: 'Иван', at: now },
+      ],
+    }, now)
+    expect(signals.map((s) => s.ref)).toEqual([{ kind: 'feed', id: 'f2' }, { kind: 'feed', id: 'f1' }])
+    const f1 = signals.find((s) => s.ref?.id === 'f1')!
+    expect(f1).toMatchObject({ source: 'TechCrunch', url: 'https://example.com/a', summary: 'Cursor выпустил агента', origin: 'local' })
+    expect(signals.find((s) => s.ref?.id === 'f2')!.url).toBeUndefined()
+  })
+
+  test('sweep prompt carries Лента context when provided', () => {
+    const withFeed = buildRadarPrompt([topic('Cursor')], at(9), 'ru', [{ title: 'Cursor 2.0', url: 'https://example.com/c', source: 'HN' }])
+    expect(withFeed).toContain('Материалы Ленты Rox')
+    expect(withFeed).toContain('[HN] Cursor 2.0 — https://example.com/c')
+    expect(buildRadarPrompt([topic('Cursor')], at(9), 'en')).not.toContain('Rox Feed items')
+  })
+
   test('group digest hides dismissed; topic counts', () => {
     const items = parseRadarDigest({ items: [{ title: 'A', bucket: 'important', topic: 'AI' }, { title: 'B', bucket: 'reaction', topic: 'ai' }] })!.items
     const groups = groupDigest(items, [items[0].id])

@@ -31,7 +31,7 @@ export interface RadarItem {
   origin: 'agent' | 'local'
   at?: number
   /** Local signals link back to a Rox object. */
-  ref?: { kind: 'session' | 'meeting' | 'note' | 'task'; id: string }
+  ref?: { kind: 'session' | 'meeting' | 'note' | 'task' | 'feed'; id: string }
 }
 
 export interface RadarSweep {
@@ -137,7 +137,13 @@ function topicLine(topic: RadarTopic): string {
   return `- [${kind}] ${topic.label}${words}`
 }
 
-export function buildRadarPrompt(topics: readonly RadarTopic[], now: number, language: 'ru' | 'en'): string {
+export interface RadarFeedContext {
+  title: string
+  url?: string
+  source?: string
+}
+
+export function buildRadarPrompt(topics: readonly RadarTopic[], now: number, language: 'ru' | 'en', feed: readonly RadarFeedContext[] = []): string {
   const since = new Date(now - 24 * 3600 * 1000).toISOString()
   const lines = language === 'ru'
     ? [
@@ -154,6 +160,11 @@ export function buildRadarPrompt(topics: readonly RadarTopic[], now: number, lan
       ]
   lines.push(...topics.map(topicLine))
   lines.push('')
+  if (feed.length) {
+    lines.push(language === 'ru' ? 'Материалы Ленты Rox за последние 24 часа (используй их в первую очередь, ссылки не выдумывай):' : 'Rox Feed items from the last 24 hours (use them first; never invent links):')
+    for (const item of feed.slice(0, 40)) lines.push(`- ${item.source ? `[${item.source}] ` : ''}${item.title}${item.url ? ` — ${item.url}` : ''}`)
+    lines.push('')
+  }
   lines.push(language === 'ru'
     ? 'Ответь ОДНИМ блоком ```json в формате:'
     : 'Answer with ONE ```json block shaped like:')
@@ -223,9 +234,11 @@ export interface LocalSignalSources {
   sessions: readonly { id: string; name: string; lastMessageAt?: number }[]
   meetings: readonly { id: string; title: string; at?: number }[]
   notes: readonly { id: string; title: string; updatedAt?: number }[]
+  /** Real Лента items (news, X, page changes, team) from feed:list. */
+  feed?: readonly { id: string; title: string; summary?: string; author?: string; url?: string; sourceTitle?: string; at: number }[]
 }
 
-/** Keyword matches in Rox data from the last 24 h (Лента stand-in until feed:list lands). */
+/** Keyword matches from the last 24 h in Лента (feed:list) and in Rox sessions, meetings and notes. */
 export function matchLocalSignals(topics: readonly RadarTopic[], sources: LocalSignalSources, now: number): RadarItem[] {
   const since = now - 24 * 3600 * 1000
   const out: RadarItem[] = []
@@ -248,6 +261,21 @@ export function matchLocalSignals(topics: readonly RadarTopic[], sources: LocalS
     for (const s of sources.sessions) push('session', s.id, s.name, s.lastMessageAt, 'session')
     for (const m of sources.meetings) push('meeting', m.id, m.title, m.at, 'meeting')
     for (const n of sources.notes) push('note', n.id, n.title, n.updatedAt, 'note')
+    for (const f of sources.feed ?? []) {
+      if (f.at < since || !matchesAnyTerm([f.title, f.summary, f.author].filter(Boolean).join(' '), terms)) continue
+      out.push({
+        id: `feed-${f.id}-${topic.id}`,
+        title: f.title,
+        summary: f.summary ?? '',
+        url: f.url && /^https?:\/\//i.test(f.url) ? f.url : undefined,
+        source: f.sourceTitle ?? 'feed',
+        topic: topic.label,
+        bucket: 'changed',
+        origin: 'local',
+        at: f.at,
+        ref: { kind: 'feed', id: f.id },
+      })
+    }
   }
   return out.sort((a, b) => (b.at ?? 0) - (a.at ?? 0))
 }

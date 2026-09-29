@@ -63,6 +63,9 @@ export interface FeedSource {
   id: string
   title: string
   at?: number
+  summary?: string
+  author?: string
+  sourceTitle?: string
 }
 
 export interface DossierSources {
@@ -195,7 +198,9 @@ export function buildDossierSummary(entity: DossierEntity, sources: DossierSourc
     touches.push({ kind: 'note', id: note.id, title: note.title, at: note.updatedAt ?? null })
   }
   for (const item of sources.feed ?? []) {
-    if (matchesAnyTerm(item.title, terms)) touches.push({ kind: 'feed', id: item.id, title: item.title, at: item.at ?? null })
+    if (matchesAnyTerm([item.title, item.summary, item.author].filter(Boolean).join(' '), terms)) {
+      touches.push({ kind: 'feed', id: item.id, title: item.title, at: item.at ?? null, hint: item.sourceTitle })
+    }
   }
   touches.sort((a, b) => (b.at ?? 0) - (a.at ?? 0))
   const dated = touches.filter((touch) => touch.at != null && touch.at <= now + DAY)
