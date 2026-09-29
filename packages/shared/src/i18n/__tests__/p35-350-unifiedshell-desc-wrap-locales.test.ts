@@ -2,8 +2,8 @@ import { describe, expect, it } from 'bun:test'
 import { i18n, setupI18n } from '../setupI18n'
 
 const KEY = 'settings.appearance.workbenchUnifiedShellDesc'
-const RU_WRAPPED = 'Макет единой оболочки W1 вокруг стека панелей'
-const EN_VALUE = 'W1 unified shell layout around the panel stack'
+const RU_WRAPPED = 'Макет единой оболочки с вкладками вокруг стека панелей'
+const EN_VALUE = 'Unified shell layout with tabs around the panel stack'
 
 describe('P35-350 leftover Russian unified shell wrapping on settings.appearance.workbenchUnifiedShellDesc', () => {
   it('wraps leftover unified shell as sibling единая оболочка, then English stays English', async () => {
@@ -12,7 +12,8 @@ describe('P35-350 leftover Russian unified shell wrapping on settings.appearance
     expect(ru).toBe(RU_WRAPPED)
     expect(ru.toLowerCase()).toContain('единой оболочки')
     expect(ru.toLowerCase()).not.toContain('unified shell')
-    expect(ru).toContain('W1')
+    // Internal wave codes (W1) are not user-facing copy.
+    expect(ru).not.toContain('W1')
 
     await setupI18n().changeLanguage('en')
     expect(i18n.t(KEY)).toBe(EN_VALUE)
@@ -21,7 +22,7 @@ describe('P35-350 leftover Russian unified shell wrapping on settings.appearance
   it('resolves English through setupI18n after changeLanguage(en)', async () => {
     await setupI18n().changeLanguage('en')
     expect(i18n.t(KEY)).toBe(EN_VALUE)
-    expect(i18n.t(KEY)).toContain('unified shell')
+    expect(i18n.t(KEY).toLowerCase()).toContain('unified shell')
     expect(i18n.t(KEY).toLowerCase()).not.toContain('единой оболоч')
   })
 })

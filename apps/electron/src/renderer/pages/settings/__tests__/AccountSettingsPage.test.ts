@@ -18,6 +18,8 @@ describe('AccountSettingsPage', () => {
     expect(source).toContain('window.electronAPI.readUserAttachment(path)')
     expect(source).toContain('t(`settings.account.plan.${value}`)')
     expect(source).toContain('PROFILE_PLANS')
+    // Fake plan picker (local label, no billing) stays hidden.
+    expect(source).toContain('const SHOW_PLAN_PICKER = false')
     expect(source).toContain("t('profile.balanceEmpty')")
     expect(source).not.toContain('checkout')
     expect(source).not.toContain('stripe')

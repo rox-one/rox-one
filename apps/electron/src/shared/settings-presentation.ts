@@ -53,6 +53,18 @@ export const SETTINGS_GROUPS: readonly SettingsGroupDefinition[] = [
   },
 ]
 
+/**
+ * Registered pages that stay reachable by deep link (rox://settings/<id>) but
+ * are not listed in the navigator. `knowledge` configures the external
+ * knowledge engine (localhost:6806), which Rox no longer uses — notes live in
+ * Rox Notes.
+ */
+export const HIDDEN_SETTINGS_PAGE_IDS: ReadonlySet<SettingsSubpage> = new Set<SettingsSubpage>(['knowledge'])
+
+export function isSettingsPageHidden(id: SettingsSubpage): boolean {
+  return HIDDEN_SETTINGS_PAGE_IDS.has(id)
+}
+
 export interface SettingsPageRow {
   id: SettingsSubpage
   label: string
@@ -103,6 +115,7 @@ export function groupSettingsPages<T extends { id: SettingsSubpage }>(
   return SETTINGS_GROUPS.map((group) => ({
     group,
     pages: group.pageIds
+      .filter((pageId) => !HIDDEN_SETTINGS_PAGE_IDS.has(pageId))
       .map((pageId) => byId.get(pageId))
       .filter((page): page is T => page !== undefined),
   })).filter((grouped) => grouped.pages.length > 0)

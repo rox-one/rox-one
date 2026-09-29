@@ -6,7 +6,7 @@
  */
 import { useMemo } from 'react'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { BookOpen, MessageSquare, Search, SquarePen } from 'lucide-react'
+import { MessageSquare, NotebookPen, Search, SquarePen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { omniboxOpenAtom } from '@/atoms/omnibox'
 import { sessionMetaMapAtom } from '@/atoms/sessions'
@@ -90,10 +90,10 @@ export function HomeFrontPage() {
             variant="outline"
             size="sm"
             className="gap-1.5"
-            onClick={() => void navigate(routes.view.knowledge())}
+            onClick={() => void navigate(routes.view.notes())}
           >
-            <BookOpen className="h-3.5 w-3.5" />
-            {t('workbench.mode.knowledge')}
+            <NotebookPen className="h-3.5 w-3.5" />
+            {t('workbench.mode.notes')}
           </Button>
         </div>
 

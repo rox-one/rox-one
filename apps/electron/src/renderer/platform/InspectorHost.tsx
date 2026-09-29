@@ -43,6 +43,8 @@ import { isConnectionsNavigation, useNavigation, useNavigationState } from '@/co
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import { cn } from '@/lib/utils'
 import { getSessionTitle } from '@/utils/session'
+import { getAppLocale } from '@craft-agent/shared/i18n'
+import { APP_NAV_DESTINATIONS } from '@/components/app-shell/nav-destinations'
 import { CENTER_MIN_WIDTH, PANEL_MIN_WIDTH } from '@/components/app-shell/panel-constants'
 import { projectConnectionInspector } from './connection-inspector-model'
 import { SessionInspectorBody } from '@/components/session-inspector/SessionInspectorBody'
@@ -58,7 +60,6 @@ import {
   resolveInspectorToggle,
 } from './inspector-model'
 import { CHROME_DENSITY } from './chrome-density'
-import { panelTypeToSurfaceKind } from './surface-tab-model'
 import { countSessionFiles, resolveInspectorLayout } from './inspector-layout'
 
 const INSPECTOR_RAIL_WIDTH = CHROME_DENSITY.railWidth
@@ -201,25 +202,46 @@ function InfoSection() {
   }
 
   const sessionId = route ? parseSessionIdFromRoute(route) : null
-  const panelType = route ? getPanelTypeFromRoute(route) : null
-  const surfaceKind = panelType ? panelTypeToSurfaceKind(panelType) : null
   const sessionMeta = sessionId ? sessionMetaMap.get(sessionId) : undefined
+  const locale = getAppLocale()
+  const formatDate = (ts?: number) =>
+    ts ? new Date(ts).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }) : null
+
+  // Object properties, not routing internals: what is open and its key facts.
+  const destination = APP_NAV_DESTINATIONS.find((dest) => dest.isActive(navState))
+  const sectionLabel = sessionId
+    ? t('inspector.kind.session')
+    : navState.navigator === 'home'
+      ? t('workbench.mode.home')
+      : destination
+        ? t(destination.labelKey)
+        : null
+  const title = sessionMeta ? getSessionTitle(sessionMeta) : (sectionLabel ?? t('surfaceTabs.untitled'))
+  const created = formatDate(sessionMeta?.createdAt)
+  const updated = formatDate(sessionMeta?.lastMessageAt)
+  const status = sessionMeta?.sessionStatus
+    ? t(`status.${sessionMeta.sessionStatus}`, { defaultValue: sessionMeta.sessionStatus })
+    : null
+  const showDebug = Boolean(import.meta.env?.DEV)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col divide-y divide-foreground/5 overflow-y-auto">
-      <InfoRow
-        label={t('inspector.field.title')}
-        value={sessionMeta ? getSessionTitle(sessionMeta) : t('surfaceTabs.untitled')}
-      />
-      <InfoRow
-        label={t('inspector.field.kind')}
-        value={surfaceKind ?? panelType ?? '—'}
-        mono
-      />
-      <InfoRow label={t('inspector.field.navigator')} value={navState.navigator} mono />
-      <InfoRow label={t('inspector.field.session')} value={sessionId ?? '—'} mono />
-      <InfoRow label={t('inspector.field.panel')} value={panelId ?? '—'} mono />
-      <InfoRow label={t('inspector.field.route')} value={route ?? '—'} mono />
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <InfoRow label={t('inspector.field.title')} value={title} />
+      {sectionLabel && sessionMeta ? <InfoRow label={t('inspector.field.kind')} value={sectionLabel} /> : null}
+      {status ? <InfoRow label={t('inspector.field.status')} value={status} /> : null}
+      {created ? <InfoRow label={t('inspector.field.created')} value={created} /> : null}
+      {updated ? <InfoRow label={t('inspector.field.updated')} value={updated} /> : null}
+      {sessionMeta?.model ? <InfoRow label={t('inspector.field.model')} value={sessionMeta.model} /> : null}
+      {sessionMeta?.messageCount ? (
+        <InfoRow label={t('inspector.field.messages')} value={String(sessionMeta.messageCount)} />
+      ) : null}
+      {showDebug ? (
+        <>
+          <InfoRow label={t('inspector.field.navigator')} value={navState.navigator} mono />
+          <InfoRow label={t('inspector.field.panel')} value={panelId ?? '—'} mono />
+          <InfoRow label={t('inspector.field.route')} value={route ?? '—'} mono />
+        </>
+      ) : null}
     </div>
   )
 }

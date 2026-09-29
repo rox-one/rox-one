@@ -819,14 +819,7 @@ export function KnowledgeHome() {
     <div className="flex h-full flex-col">
       <div className="border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground flex items-center justify-between gap-2">
         <div className="flex shrink-0 items-center gap-3">
-          <button
-            type="button"
-            className="underline underline-offset-2 hover:text-foreground disabled:opacity-50"
-            disabled={migrating}
-            onClick={() => void handleMigrateNotes()}
-          >
-            {migrating ? t('knowledge.migrate.progress') : t('knowledge.migrate.button')}
-          </button>
+          {/* Legacy «Import Craft notes» entry hidden: the external core is no longer used. */}
           <button
             type="button"
             className="underline underline-offset-2 hover:text-foreground"
