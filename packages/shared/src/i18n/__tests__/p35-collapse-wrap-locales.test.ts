@@ -109,7 +109,7 @@ const WRAPPED_RU: Record<string, string> = {
   "extensions.developer.urlAllowlistSave": "Сохранить список",
   "extensions.developer.urlAllowlistTitle": "Список разрешённых URL",
   "extensions.disabled.empty": "Нет отключённых расширений.",
-  "extensions.host.noSiyuanExec": "Плагины SiYuan выполняются в рантайме SiYuan, не в Extension Host",
+  "extensions.host.noSiyuanExec": "Плагины SiYuan выполняются в рантайме SiYuan, не в хосте расширений",
   "extensions.host.status": "Хост расширений: {{status}}",
   "extensions.installTarget.global": "Глобально",
   "extensions.installTarget.project": "Проект",
