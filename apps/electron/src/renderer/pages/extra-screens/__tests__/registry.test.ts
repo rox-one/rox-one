@@ -23,5 +23,6 @@ describe('extra screens registry', () => {
   test('disabled screens are hidden from the rail group', () => {
     expect(visibleExtraScreens([])).toEqual([])
     expect(visibleExtraScreens(['dossier']).map((screen) => screen.id)).toEqual(['dossier'])
+    expect(visibleExtraScreens(['radar', 'dossier']).map((screen) => screen.id)).toEqual(['dossier', 'radar'])
   })
 })

@@ -14,6 +14,7 @@ import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { SessionMenu } from '@/components/app-shell/SessionMenu'
 import { CompactSessionMenu } from '@/components/app-shell/CompactSessionMenu'
 import { SessionPresenceAvatars } from '@/components/app-shell/SessionPresenceAvatars'
+import { TeamSessionButton } from '@/components/team/TeamSessionButton'
 import { SessionInfoPopover } from '@/components/app-shell/SessionInfoPopover'
 import { RenameDialog } from '@/components/ui/rename-dialog'
 import { toast } from 'sonner'
@@ -1123,6 +1124,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       {editTaskButton}
       {memoryModeButton}
       <SessionPresenceAvatars sessionId={sessionId} />
+      <TeamSessionButton sessionId={sessionId} sessionTitle={sessionMeta?.name} />
       {infoButton}
     </div>
   ) : (
@@ -1131,6 +1133,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         {editTaskButton}
         {memoryModeButton}
         <SessionPresenceAvatars sessionId={sessionId} />
+        <TeamSessionButton sessionId={sessionId} sessionTitle={sessionMeta?.name} />
         {shareButton}
       </div>
       <div className="rox-header-actions-overflow items-center">

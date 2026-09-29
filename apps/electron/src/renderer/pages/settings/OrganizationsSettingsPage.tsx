@@ -34,6 +34,7 @@ import { getTeamSpacesForOrganization } from './organization-team-spaces'
 import { formatOrgMemberIdentity } from './organization-member-identity'
 import { isClaimableLive } from '@craft-agent/core/rox2'
 import { settingsPageActionResult } from './settings-rox2-surface'
+import { TeamOrgSettingsSection } from '@/components/team/TeamOrgSettingsSection'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -505,6 +506,8 @@ export default function OrganizationsSettingsPage() {
               </div>
             </SettingsCard>
           </SettingsSection>
+
+          <TeamOrgSettingsSection />
         </div>
       </ScrollArea>
       </div>
