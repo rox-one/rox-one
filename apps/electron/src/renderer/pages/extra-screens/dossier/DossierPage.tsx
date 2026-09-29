@@ -220,7 +220,7 @@ export default function DossierPage({ itemId }: { itemId: string | null }) {
         <ScreenHeader
           title={t('extraScreens.dossier.title')}
           subtitle={data.entities.length || undefined}
-          actions={<ScreenButton variant="primary" onClick={() => setAdding((v) => !v)}>＋ {t('extraScreens.dossier.add')}</ScreenButton>}
+          actions={data.entities.length > 0 || adding ? <ScreenButton variant="primary" onClick={() => setAdding((v) => !v)}>＋ {t('extraScreens.dossier.add')}</ScreenButton> : undefined}
         />
         {adding && (
           <div className="flex flex-col gap-1.5 px-3 pb-2">
