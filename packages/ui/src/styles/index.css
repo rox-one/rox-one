@@ -309,16 +309,20 @@ html[data-contrast="high"] {
   --text-secondary: color-mix(in oklch, var(--foreground) 90%, var(--canvas));
   --text-muted: color-mix(in oklch, var(--foreground) 78%, var(--canvas));
   --muted-foreground: var(--text-muted);
-  --border: var(--border-strong);
+  /* Edges stay explicit but hairline: --border-subtle here is 46% foreground
+     (>= 3:1 non-text contrast), drawn 1px. The 72% --border-strong is kept for
+     form inputs, scrollbars and sashes; 2px/72% rings on every panel, card and
+     button read as bright wireframes over scenic wallpapers. */
+  --border: var(--border-subtle);
   --input: var(--border-strong);
   --ring-width: 3px;
   --chrome-glass-bg: var(--surface-elevated);
   --chrome-glass-blur: 0px;
-  --chrome-glass-border: var(--border-strong);
-  --rox-elev-panel: inset 0 0 0 2px var(--border-strong);
-  --shadow-minimal: inset 0 0 0 2px var(--border-strong);
-  /* High contrast keeps an explicit ring on raised surfaces. */
-  --shadow-soft: inset 0 0 0 2px var(--border-strong);
+  --chrome-glass-border: var(--border-subtle);
+  --rox-elev-panel: inset 0 0 0 1px var(--border-subtle);
+  --shadow-minimal: inset 0 0 0 1px var(--border-subtle);
+  /* High contrast keeps an explicit (1px) ring on raised surfaces. */
+  --shadow-soft: inset 0 0 0 1px var(--border-subtle);
 }
 
 html[data-contrast="high"][data-scenic]::before {
@@ -719,7 +723,7 @@ html[data-shell-style="zen"][data-shell-material="solid"] {
 html[data-shell-style="zen"][data-contrast="high"] {
   --shell-backdrop-tint: var(--surface-elevated);
   --shell-content: var(--canvas);
-  --shell-border: var(--border-strong);
+  --shell-border: var(--border-subtle);
   --shell-hover: color-mix(in oklch, var(--foreground) 14%, var(--canvas));
   --shell-selected: color-mix(in oklch, var(--accent) 28%, var(--canvas));
   --shell-focus: var(--focus);
