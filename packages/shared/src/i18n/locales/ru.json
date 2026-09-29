@@ -5395,6 +5395,7 @@
   "teamCollab.inboxKind.assign": "Назначение",
   "teamCollab.inboxKind.handoff": "Передача",
   "teamCollab.inboxKind.mention": "Упоминание",
+  "teamCollab.inboxNav": "Команда — нужен сервер организации",
   "teamCollab.inboxNeedsServer": "Упоминания, передачи и запросы от коллег будут приходить сюда после подключения сервера организации.",
   "teamCollab.loading": "Загрузка…",
   "teamCollab.members": "Участники",

@@ -7,6 +7,7 @@
  * list RPC yet — both are stated, not faked.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTeamInboxNav } from '@/components/team/TeamInboxNavItem'
 import { useTranslation } from 'react-i18next'
 import { navigate, routes } from '@/lib/navigate'
 import { useInboxItems } from '@/hooks/useInboxItems'
@@ -72,6 +73,7 @@ function sameFilter(a: InboxFilter, b: InboxFilter): boolean {
 }
 
 export default function InboxPage({ selectedId }: { selectedId?: string | null }) {
+  const teamInbox = useTeamInboxNav()
   const { t, i18n } = useTranslation()
   const { items, state, setState, counts, now, errors, reload, workspaceId, shell } = useInboxItems({ withRemote: true })
   const [filter, setFilter] = useState<InboxFilter>('all')
@@ -178,6 +180,9 @@ export default function InboxPage({ selectedId }: { selectedId?: string | null }
       <NavSection title={t('inbox.notConnected')}>
         <NavItem label={t('inbox.kind.meetingProposals')} dot="muted" onClick={() => navigate(routes.view.meetings())} testId="inbox-nav-meetings" />
         <NavItem label={t('inbox.kind.mail')} dot="muted" disabled />
+        {teamInbox.enabled && !teamInbox.connected ? (
+          <NavItem label={t('teamCollab.inboxNav')} count={teamInbox.count || undefined} dot="muted" onClick={() => navigate(routes.view.settings('organizations'))} testId="inbox-nav-team" />
+        ) : null}
       </NavSection>
     </>
   )

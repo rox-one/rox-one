@@ -5395,6 +5395,7 @@
   "teamCollab.inboxKind.assign": "Assignment",
   "teamCollab.inboxKind.handoff": "Handoff",
   "teamCollab.inboxKind.mention": "Mention",
+  "teamCollab.inboxNav": "Team — organization server required",
   "teamCollab.inboxNeedsServer": "Mentions, handoffs and requests from teammates will arrive here once an organization server is connected.",
   "teamCollab.loading": "Loading…",
   "teamCollab.members": "Members",
