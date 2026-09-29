@@ -433,6 +433,8 @@ export function MailCompose({ mail, draft, source, onClose }: {
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const draftId = useRef<string | undefined>(draft.draftId)
   const dirty = useRef(false)
+  const sending = useRef(false)
+  const saving = useRef<Promise<void> | null>(null)
   const domain = mail.status?.domain ?? 'rox.one'
 
   const input = useCallback(() => ({
@@ -441,19 +443,26 @@ export function MailCompose({ mail, draft, source, onClose }: {
   }), [d, files, forwardAtt])
 
   const saveDraft = useCallback(async (quiet = false) => {
-    if (!draftHasContent(d)) return
+    // Never race a send: it replaces the current draft itself.
+    if (!draftHasContent(d) || sending.current) return
+    if (saving.current) await saving.current
     if (!quiet) setBusy('draft')
-    try {
-      const r = await window.electronAPI.mailLocal!.saveDraft(input())
-      if (!r.ok) throw new Error(r.message)
-      draftId.current = r.value.draftId
-      dirty.current = false
-      setSavedAt(Date.now())
-    } catch (e) {
-      if (!quiet) setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      if (!quiet) setBusy(null)
-    }
+    const run = (async () => {
+      try {
+        const r = await window.electronAPI.mailLocal!.saveDraft(input())
+        if (!r.ok) throw new Error(r.message)
+        draftId.current = r.value.draftId
+        dirty.current = false
+        setSavedAt(Date.now())
+      } catch (e) {
+        if (!quiet) setError(e instanceof Error ? e.message : String(e))
+      } finally {
+        if (!quiet) setBusy(null)
+      }
+    })()
+    saving.current = run
+    await run
+    if (saving.current === run) saving.current = null
   }, [d, input])
 
   // Autosave to Drafts 4 s after the last edit.
@@ -466,16 +475,19 @@ export function MailCompose({ mail, draft, source, onClose }: {
   const set = (patch: Partial<ComposeDraft>) => { dirty.current = true; setD((prev) => ({ ...prev, ...patch })) }
 
   const send = async () => {
+    sending.current = true
     setBusy('send')
     setError(null)
     try {
-      const r = await window.electronAPI.mailLocal!.send(input())
+      if (saving.current) await saving.current
+      const r = await window.electronAPI.mailLocal!.send({ ...input(), draftId: draftId.current })
       if (!r.ok) throw new Error(r.code === 'external-blocked' ? `${t('inbox.mail.externalBlocked', { domain })}: ${r.message.match(/\(([^)]+)\)\s*$/)?.[1] ?? ''}` : r.message)
       void mail.refresh()
       onClose(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     } finally {
+      sending.current = false
       setBusy(null)
     }
   }
