@@ -267,7 +267,7 @@ export function EntityList<T>({
                             'mx-3 mb-2 rounded-[6px] border border-dashed px-3 py-2 text-[11px] text-muted-foreground/70',
                             dropGroupKey === group.key
                               ? 'border-foreground/40 bg-foreground/5 text-foreground/80'
-                              : 'border-foreground/15',
+                              : 'border-foreground/[0.07]',
                           )}
                           onDragOver={(event) => onEmptyGroupDragOver?.(group.key, event)}
                         >

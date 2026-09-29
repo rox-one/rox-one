@@ -632,7 +632,7 @@ export default function AppearanceSettingsPage() {
                                 trigger={
                                   <button
                                     type="button"
-                                    className="cursor-pointer rounded hover:ring-2 hover:ring-foreground/20 transition-shadow"
+                                    className="cursor-pointer rounded hover:opacity-80 transition-opacity"
                                     aria-label={t("settings.appearance.workspaceAvatarColor")}
                                   >
                                     <WorkspaceAvatar

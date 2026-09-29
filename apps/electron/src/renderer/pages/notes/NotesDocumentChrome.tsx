@@ -137,7 +137,7 @@ export function NotesCommandPalette({
   let offset = 0
   return (
     <div
-      className="notes-authoring-palette absolute z-30 w-80 rounded-[8px] border border-foreground/35 bg-popover p-1 shadow-strong"
+      className="notes-authoring-palette absolute z-30 w-80 rounded-[8px] border border-foreground/[0.08] bg-popover p-1 shadow-strong"
       role="listbox"
       aria-label={t('notes.palette.title')}
       data-testid="notes-command-palette"
@@ -190,7 +190,7 @@ export function NotesCommandPalette({
           </div>
         )
       })}
-      <div className="border-t border-foreground/20 px-2 py-1 text-[10px] text-foreground/70">
+      <div className="border-t border-foreground/[0.06] px-2 py-1 text-[10px] text-foreground/70">
         {t('notes.palette.hint')}
       </div>
     </div>

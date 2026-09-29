@@ -60,8 +60,8 @@ describe('one-surface shell', () => {
   })
 
   it('defines divider tokens for standard and high contrast', () => {
-    expect(uiCss).toContain('--rox-shell-divider: color-mix(in oklch, var(--foreground) 9%, transparent);')
-    expect(uiCss).toContain('--rox-shell-divider: var(--border-subtle);')
+    expect(uiCss).toContain('--rox-shell-divider: color-mix(in oklch, var(--foreground) 6%, transparent);')
+    expect(uiCss).toContain('--rox-shell-divider: color-mix(in oklch, var(--foreground) 10%, transparent);')
     expect(uiCss).toMatch(/\.rox-shell-pane\s*\{[^}]*border-radius:\s*0;[^}]*box-shadow:\s*none;/)
     expect(rendererCss).toContain('html[data-scenic] .rox-shell-pane')
   })

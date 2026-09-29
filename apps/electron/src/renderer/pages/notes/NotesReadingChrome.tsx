@@ -165,7 +165,7 @@ export function NotesCommentComposer({
   return (
     <form
       className={cn(
-        'w-[240px] rounded-[8px] border border-foreground/30 bg-background p-2 shadow-thin',
+        'w-[240px] rounded-[8px] border border-foreground/[0.08] bg-background p-2 shadow-thin',
         className,
       )}
       data-testid="notes-comments-compose"
@@ -196,8 +196,8 @@ export function NotesCommentComposer({
         rows={3}
         placeholder={quote ? t('notes.comments.placeholderOnSelection') : t('notes.comments.placeholder')}
         className={cn(
-          'w-full resize-none rounded-[6px] border border-foreground/30 bg-background px-2 py-1.5 text-[12px] outline-none',
-          'focus:border-foreground/55',
+          'w-full resize-none rounded-[6px] border border-foreground/[0.08] bg-background px-2 py-1.5 text-[12px] outline-none',
+          'focus-visible:border-foreground/40',
         )}
       />
       <p className="mt-1 px-0.5 text-[10px] text-muted-foreground">{t('notes.comments.submitHint')}</p>
@@ -223,7 +223,7 @@ export function NotesCommentTooltip({
 }) {
   return (
     <div
-      className="pointer-events-none absolute z-20 max-w-[240px] rounded-[6px] border border-foreground/25 bg-background px-2.5 py-2 text-[12px] shadow-thin"
+      className="pointer-events-none absolute z-20 max-w-[240px] rounded-[6px] border border-foreground/[0.08] bg-background px-2.5 py-2 text-[12px] shadow-thin"
       data-testid="notes-comment-tooltip"
       style={{ top, left }}
       role="tooltip"
@@ -277,8 +277,8 @@ export function NotesComments({
   }, [body, comments, draftQuote, noteId, onClearDraft, onCommit])
 
   return (
-    <aside className="relative flex shrink-0 flex-col border-l border-foreground/25 bg-background" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
-      <div className="flex h-9 shrink-0 items-center gap-1.5 border-b border-foreground/20 px-3 text-[10px] font-medium uppercase tracking-wider text-foreground/70">
+    <aside className="relative flex shrink-0 flex-col border-l border-foreground/[0.06] bg-background" style={{ width: width ?? 220 }} data-testid="notes-comments-rail">
+      <div className="flex h-9 shrink-0 items-center gap-1.5 border-b border-foreground/[0.06] px-3 text-[10px] font-medium uppercase tracking-wider text-foreground/70">
         <MessageSquarePlus className="h-3.5 w-3.5" />
         {t('notes.comments.title')}
       </div>
@@ -289,7 +289,7 @@ export function NotesComments({
           </p>
         ) : null}
         {comments.map((comment) => (
-          <article key={comment.id} className="mb-3 rounded-[6px] border border-foreground/25 bg-background px-2.5 py-2">
+          <article key={comment.id} className="mb-3 rounded-[6px] border border-foreground/[0.08] bg-background px-2.5 py-2">
             {comment.quote ? (
               <button
                 type="button"
